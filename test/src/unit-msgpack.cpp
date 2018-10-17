@@ -1124,7 +1124,7 @@ TEST_CASE("MessagePack")
         {
             CHECK_THROWS_AS(json::from_msgpack(std::vector<uint8_t>()), json::parse_error&);
             CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>()),
-                              "[json.exception.parse_error.110] parse error at byte 1: unexpected end of input");
+                              "[json.exception.parse_error.110] parse error at byte 1: syntax error while parsing MessagePack value: unexpected end of input");
             CHECK(json::from_msgpack(std::vector<uint8_t>(), true, false).is_discarded());
         }
 
@@ -1151,43 +1151,43 @@ TEST_CASE("MessagePack")
             CHECK_THROWS_AS(json::from_msgpack(std::vector<uint8_t>({0x81, 0xa1, 0x61})), json::parse_error&);
 
             CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0x87})),
-                              "[json.exception.parse_error.110] parse error at byte 2: unexpected end of input");
+                              "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing MessagePack string: unexpected end of input");
             CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0xcc})),
-                              "[json.exception.parse_error.110] parse error at byte 2: unexpected end of input");
+                              "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing MessagePack number: unexpected end of input");
             CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0xcd})),
-                              "[json.exception.parse_error.110] parse error at byte 2: unexpected end of input");
+                              "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing MessagePack number: unexpected end of input");
             CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0xcd, 0x00})),
-                              "[json.exception.parse_error.110] parse error at byte 3: unexpected end of input");
+                              "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing MessagePack number: unexpected end of input");
             CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0xce})),
-                              "[json.exception.parse_error.110] parse error at byte 2: unexpected end of input");
+                              "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing MessagePack number: unexpected end of input");
             CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0xce, 0x00})),
-                              "[json.exception.parse_error.110] parse error at byte 3: unexpected end of input");
+                              "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing MessagePack number: unexpected end of input");
             CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0xce, 0x00, 0x00})),
-                              "[json.exception.parse_error.110] parse error at byte 4: unexpected end of input");
+                              "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing MessagePack number: unexpected end of input");
             CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0xce, 0x00, 0x00, 0x00})),
-                              "[json.exception.parse_error.110] parse error at byte 5: unexpected end of input");
+                              "[json.exception.parse_error.110] parse error at byte 5: syntax error while parsing MessagePack number: unexpected end of input");
             CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0xcf})),
-                              "[json.exception.parse_error.110] parse error at byte 2: unexpected end of input");
+                              "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing MessagePack number: unexpected end of input");
             CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0xcf, 0x00})),
-                              "[json.exception.parse_error.110] parse error at byte 3: unexpected end of input");
+                              "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing MessagePack number: unexpected end of input");
             CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0xcf, 0x00, 0x00})),
-                              "[json.exception.parse_error.110] parse error at byte 4: unexpected end of input");
+                              "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing MessagePack number: unexpected end of input");
             CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0xcf, 0x00, 0x00, 0x00})),
-                              "[json.exception.parse_error.110] parse error at byte 5: unexpected end of input");
+                              "[json.exception.parse_error.110] parse error at byte 5: syntax error while parsing MessagePack number: unexpected end of input");
             CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0xcf, 0x00, 0x00, 0x00, 0x00})),
-                              "[json.exception.parse_error.110] parse error at byte 6: unexpected end of input");
+                              "[json.exception.parse_error.110] parse error at byte 6: syntax error while parsing MessagePack number: unexpected end of input");
             CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0xcf, 0x00, 0x00, 0x00, 0x00, 0x00})),
-                              "[json.exception.parse_error.110] parse error at byte 7: unexpected end of input");
+                              "[json.exception.parse_error.110] parse error at byte 7: syntax error while parsing MessagePack number: unexpected end of input");
             CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0xcf, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00})),
-                              "[json.exception.parse_error.110] parse error at byte 8: unexpected end of input");
+                              "[json.exception.parse_error.110] parse error at byte 8: syntax error while parsing MessagePack number: unexpected end of input");
             CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0xcf, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00})),
-                              "[json.exception.parse_error.110] parse error at byte 9: unexpected end of input");
+                              "[json.exception.parse_error.110] parse error at byte 9: syntax error while parsing MessagePack number: unexpected end of input");
             CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0xa5, 0x68, 0x65})),
-                              "[json.exception.parse_error.110] parse error at byte 4: unexpected end of input");
+                              "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing MessagePack string: unexpected end of input");
             CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0x92, 0x01})),
-                              "[json.exception.parse_error.110] parse error at byte 3: unexpected end of input");
+                              "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing MessagePack value: unexpected end of input");
             CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0x81, 0xa1, 0x61})),
-                              "[json.exception.parse_error.110] parse error at byte 4: unexpected end of input");
+                              "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing MessagePack value: unexpected end of input");
 
             CHECK(json::from_msgpack(std::vector<uint8_t>({0x87}), true, false).is_discarded());
             CHECK(json::from_msgpack(std::vector<uint8_t>({0xcc}), true, false).is_discarded());
@@ -1216,12 +1216,12 @@ TEST_CASE("MessagePack")
             {
                 CHECK_THROWS_AS(json::from_msgpack(std::vector<uint8_t>({0xc1})), json::parse_error&);
                 CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0xc1})),
-                                  "[json.exception.parse_error.112] parse error at byte 1: error reading MessagePack; last byte: 0xC1");
+                                  "[json.exception.parse_error.112] parse error at byte 1: syntax error while parsing MessagePack value: invalid byte: 0xC1");
                 CHECK(json::from_msgpack(std::vector<uint8_t>({0xc6}), true, false).is_discarded());
 
                 CHECK_THROWS_AS(json::from_msgpack(std::vector<uint8_t>({0xc6})), json::parse_error&);
                 CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0xc6})),
-                                  "[json.exception.parse_error.112] parse error at byte 1: error reading MessagePack; last byte: 0xC6");
+                                  "[json.exception.parse_error.112] parse error at byte 1: syntax error while parsing MessagePack value: invalid byte: 0xC6");
                 CHECK(json::from_msgpack(std::vector<uint8_t>({0xc6}), true, false).is_discarded());
             }
 
@@ -1249,7 +1249,7 @@ TEST_CASE("MessagePack")
         {
             CHECK_THROWS_AS(json::from_msgpack(std::vector<uint8_t>({0x81, 0xff, 0x01})), json::parse_error&);
             CHECK_THROWS_WITH(json::from_msgpack(std::vector<uint8_t>({0x81, 0xff, 0x01})),
-                              "[json.exception.parse_error.113] parse error at byte 2: expected a MessagePack string; last byte: 0xFF");
+                              "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing MessagePack string: expected length specification (0xA0-0xBF, 0xD9-0xDB); last byte: 0xFF");
             CHECK(json::from_msgpack(std::vector<uint8_t>({0x81, 0xff, 0x01}), true, false).is_discarded());
         }
 
@@ -1266,7 +1266,7 @@ TEST_CASE("MessagePack")
             {
                 CHECK_THROWS_AS(json::from_msgpack(vec), json::parse_error&);
                 CHECK_THROWS_WITH(json::from_msgpack(vec),
-                                  "[json.exception.parse_error.110] parse error at byte 2: expected end of input");
+                                  "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing MessagePack value: expected end of input; last byte: 0xC0");
                 CHECK(json::from_msgpack(vec, true, false).is_discarded());
             }
         }
