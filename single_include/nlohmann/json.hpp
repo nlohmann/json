@@ -386,6 +386,15 @@ namespace detail
 // helpers //
 /////////////
 
+// Note to maintainers:
+//
+// Every trait in this file expects a non CV-qualified type.
+// The only exceptions are in the 'aliases for detected' section
+// (i.e. those of the form: decltype(T::member_function(std::declval<T>())))
+//
+// In this case, T has to be properly CV-qualified to constraint the function arguments
+// (e.g. to_json(BasicJsonType&, const T&))
+
 template<typename> struct is_basic_json : std::false_type {};
 
 NLOHMANN_BASIC_JSON_TPL_DECLARATION
