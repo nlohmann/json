@@ -54,7 +54,7 @@ all:
 	@echo "json_unit - create single-file test executable"
 	@echo "pedantic_clang - run Clang with maximal warning flags"
 	@echo "pedantic_gcc - run GCC with maximal warning flags"
-	@echo "pretty - beautify code with Artistic Style"
+	@echo "pretty - beautify code with Artistic Style and clang-format"
 	@echo "run_benchmarks - build and run benchmarks"
 
 ##########################################################################
@@ -276,9 +276,12 @@ clang_analyze:
 ##########################################################################
 # maintainer targets
 ##########################################################################
+ASTYLE := $(shell command -v astyle 2> /dev/null)
+CLANG_FORMAT := $(shell command -v clang-format 2> /dev/null)
 
 # pretty printer
 pretty:
+ifdef ASTYLE
 	astyle --style=allman --indent=spaces=4 --indent-modifiers \
 	   --indent-switches --indent-preproc-block --indent-preproc-define \
 	   --indent-col1-comments --pad-oper --pad-header --align-pointer=type \
@@ -286,6 +289,11 @@ pretty:
 	   --lineend=linux --preserve-date --suffix=none --formatted \
 	   $(SRCS) $(AMALGAMATED_FILE) test/src/*.cpp \
 	   benchmarks/src/benchmarks.cpp doc/examples/*.cpp
+endif
+
+ifdef CLANG_FORMAT
+	clang-format -i $(SRCS)
+endif
 
 # create single header file
 amalgamate: $(AMALGAMATED_FILE)
