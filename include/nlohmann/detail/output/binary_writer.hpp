@@ -683,9 +683,11 @@ class binary_writer
     */
     static std::size_t calc_bson_entry_header_size(const typename BasicJsonType::string_t& name)
     {
-        if (name.find(static_cast<typename BasicJsonType::string_t::value_type>(0)) != BasicJsonType::string_t::npos)
+        const auto it = name.find(static_cast<typename BasicJsonType::string_t::value_type>(0));
+        if (it != BasicJsonType::string_t::npos)
         {
-            JSON_THROW(out_of_range::create(409, "BSON key cannot contain code point U+0000"));
+            JSON_THROW(out_of_range::create(409,
+                                            "BSON key cannot contain code point U+0000 (at byte " + std::to_string(it) + ")"));
         }
 
         return /*id*/ 1ul + name.size() + /*zero-terminator*/1u;
