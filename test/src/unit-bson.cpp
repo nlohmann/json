@@ -869,7 +869,7 @@ TEST_CASE("BSON numerical data")
                     };
                     CHECK(j.at("entry").is_number_integer());
 
-                    std::uint64_t iu = *reinterpret_cast<std::uint64_t*>(&i);
+                    std::uint32_t iu = *reinterpret_cast<std::uint32_t*>(&i);
                     std::vector<uint8_t> expected_bson =
                     {
                         0x10u, 0x00u, 0x00u, 0x00u, // size (little endian)
