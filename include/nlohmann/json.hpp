@@ -208,6 +208,8 @@ class basic_json
     using json_pointer = ::nlohmann::json_pointer<basic_json>;
     template<typename T, typename SFINAE>
     using json_serializer = JSONSerializer<T, SFINAE>;
+    /// how to treat decoding errors
+    using error_handler_t = detail::error_handler_t;
     /// helper type for initializer lists of basic_json values
     using initializer_list_t = std::initializer_list<detail::json_ref<basic_json>>;
 
@@ -1932,6 +1934,10 @@ class basic_json
     @param[in] ensure_ascii If @a ensure_ascii is true, all non-ASCII characters
     in the output are escaped with `\uXXXX` sequences, and the result consists
     of ASCII characters only.
+    @param[in] error_handler  how to react on decoding errors; there are three
+    possible values: `strict` (throws and exception in case a decoding error
+    occurs; default), `replace` (replace invalid UTF-8 sequences with U+FFFD),
+    and `ignore` (ignore invalid UTF-8 sequences during serialization).
 
     @return string containing the serialization of the JSON value
 
@@ -1950,13 +1956,16 @@ class basic_json
     @see https://docs.python.org/2/library/json.html#json.dump
 
     @since version 1.0.0; indentation character @a indent_char, option
-           @a ensure_ascii and exceptions added in version 3.0.0
+           @a ensure_ascii and exceptions added in version 3.0.0; error
+           handlers added in version 3.4.0.
     */
-    string_t dump(const int indent = -1, const char indent_char = ' ',
-                  const bool ensure_ascii = false) const
+    string_t dump(const int indent = -1,
+                  const char indent_char = ' ',
+                  const bool ensure_ascii = false,
+                  const error_handler_t error_handler = error_handler_t::strict) const
     {
         string_t result;
-        serializer s(detail::output_adapter<char, string_t>(result), indent_char);
+        serializer s(detail::output_adapter<char, string_t>(result), indent_char, error_handler);
 
         if (indent >= 0)
         {

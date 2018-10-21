@@ -9980,6 +9980,14 @@ namespace detail
 // serialization //
 ///////////////////
 
+/// how to treat decoding errors
+enum class error_handler_t
+{
+    strict,  ///< throw a type_error exception in case of invalid UTF-8
+    replace, ///< replace invalid UTF-8 sequences with U+FFFD
+    ignore   ///< ignore invalid UTF-8 sequences
+};
+
 template<typename BasicJsonType>
 class serializer
 {
@@ -9991,23 +9999,20 @@ class serializer
     static constexpr uint8_t UTF8_REJECT = 1;
 
   public:
-    /// how to treat decoding errors
-    enum class error_handler_t
-    {
-        strict,  ///< throw a type_error exception in case of invalid UTF-8
-        replace, ///< replace invalid UTF-8 sequences with U+FFFD
-        ignore   ///< ignore invalid UTF-8 sequences
-    };
-
     /*!
     @param[in] s  output stream to serialize to
     @param[in] ichar  indentation character to use
+    @param[in] error_handler_  how to react on decoding errors
     */
-    serializer(output_adapter_t<char> s, const char ichar)
-        : o(std::move(s)), loc(std::localeconv()),
-          thousands_sep(loc->thousands_sep == nullptr ? '\0' : * (loc->thousands_sep)),
-          decimal_point(loc->decimal_point == nullptr ? '\0' : * (loc->decimal_point)),
-          indent_char(ichar), indent_string(512, indent_char)
+    serializer(output_adapter_t<char> s, const char ichar,
+               error_handler_t error_handler_ = error_handler_t::strict)
+        : o(std::move(s))
+        , loc(std::localeconv())
+        , thousands_sep(loc->thousands_sep == nullptr ? '\0' : * (loc->thousands_sep))
+        , decimal_point(loc->decimal_point == nullptr ? '\0' : * (loc->decimal_point))
+        , indent_char(ichar)
+        , indent_string(512, indent_char)
+        , error_handler(error_handler_)
     {}
 
     // delete because of pointer members
@@ -10238,16 +10243,17 @@ class serializer
     @param[in] s  the string to escape
     @param[in] ensure_ascii  whether to escape non-ASCII characters with
                              \uXXXX sequences
-    @param[in] error_handler how to react on decoding errors
 
     @complexity Linear in the length of string @a s.
     */
-    void dump_escaped(const string_t& s, const bool ensure_ascii,
-                      const error_handler_t error_handler = error_handler_t::strict)
+    void dump_escaped(const string_t& s, const bool ensure_ascii)
     {
         uint32_t codepoint;
         uint8_t state = UTF8_ACCEPT;
         std::size_t bytes = 0;  // number of bytes written to string_buffer
+
+        // number of bytes written at the point of the last valid byte
+        std::size_t bytes_after_last_accept = 0;
 
         for (std::size_t i = 0; i < s.size(); ++i)
         {
@@ -10346,6 +10352,9 @@ class serializer
                         o->write_characters(string_buffer.data(), bytes);
                         bytes = 0;
                     }
+
+                    // remember the byte position of this accept
+                    bytes_after_last_accept = bytes;
                     break;
                 }
 
@@ -10361,19 +10370,33 @@ class serializer
                         }
 
                         case error_handler_t::ignore:
-                        {
-                            state = UTF8_ACCEPT;
-                            continue;
-                        }
-
                         case error_handler_t::replace:
                         {
-                            string_buffer[bytes++] = '\\';
-                            string_buffer[bytes++] = 'u';
-                            string_buffer[bytes++] = 'f';
-                            string_buffer[bytes++] = 'f';
-                            string_buffer[bytes++] = 'f';
-                            string_buffer[bytes++] = 'd';
+                            // in case we saw this chatacter the first time, we
+                            // would like to read it again, because the byte
+                            // may be OK for itself, but just not OK for the
+                            // previous sequence
+                            if (bytes_after_last_accept != bytes)
+                            {
+                                --i;
+                            }
+
+                            // reset length buffer to the last accepted index;
+                            // thus removing/ignoring the invalid characters
+                            bytes = bytes_after_last_accept;
+
+                            if (error_handler == error_handler_t::replace)
+                            {
+                                // add a replacement character
+                                string_buffer[bytes++] = '\\';
+                                string_buffer[bytes++] = 'u';
+                                string_buffer[bytes++] = 'f';
+                                string_buffer[bytes++] = 'f';
+                                string_buffer[bytes++] = 'f';
+                                string_buffer[bytes++] = 'd';
+                            }
+
+                            // continue processing the string
                             state = UTF8_ACCEPT;
                             continue;
                         }
@@ -10392,6 +10415,7 @@ class serializer
             }
         }
 
+        // we finished processing the string
         if (JSON_LIKELY(state == UTF8_ACCEPT))
         {
             // write buffer
@@ -10414,13 +10438,16 @@ class serializer
 
                 case error_handler_t::ignore:
                 {
+                    // write all accepted bytes
+                    o->write_characters(string_buffer.data(), bytes_after_last_accept);
                     break;
                 }
 
                 case error_handler_t::replace:
                 {
-                    // write buffer, but replace last byte
-                    o->write_characters(string_buffer.data(), bytes - 1);
+                    // write all accepted bytes
+                    o->write_characters(string_buffer.data(), bytes_after_last_accept);
+                    // add a replacement character
                     o->write_characters("\\ufffd", 6);
                     break;
                 }
@@ -10634,6 +10661,9 @@ class serializer
     const char indent_char;
     /// the indentation string
     string_t indent_string;
+
+    /// error_handler how to react on decoding errors
+    const error_handler_t error_handler;
 };
 }  // namespace detail
 }  // namespace nlohmann
@@ -11603,6 +11633,8 @@ class basic_json
     using json_pointer = ::nlohmann::json_pointer<basic_json>;
     template<typename T, typename SFINAE>
     using json_serializer = JSONSerializer<T, SFINAE>;
+    /// how to treat decoding errors
+    using error_handler_t = detail::error_handler_t;
     /// helper type for initializer lists of basic_json values
     using initializer_list_t = std::initializer_list<detail::json_ref<basic_json>>;
 
@@ -13327,6 +13359,10 @@ class basic_json
     @param[in] ensure_ascii If @a ensure_ascii is true, all non-ASCII characters
     in the output are escaped with `\uXXXX` sequences, and the result consists
     of ASCII characters only.
+    @param[in] error_handler  how to react on decoding errors; there are three
+    possible values: `strict` (throws and exception in case a decoding error
+    occurs; default), `replace` (replace invalid UTF-8 sequences with U+FFFD),
+    and `ignore` (ignore invalid UTF-8 sequences during serialization).
 
     @return string containing the serialization of the JSON value
 
@@ -13345,13 +13381,16 @@ class basic_json
     @see https://docs.python.org/2/library/json.html#json.dump
 
     @since version 1.0.0; indentation character @a indent_char, option
-           @a ensure_ascii and exceptions added in version 3.0.0
+           @a ensure_ascii and exceptions added in version 3.0.0; error
+           handlers added in version 3.4.0.
     */
-    string_t dump(const int indent = -1, const char indent_char = ' ',
-                  const bool ensure_ascii = false) const
+    string_t dump(const int indent = -1,
+                  const char indent_char = ' ',
+                  const bool ensure_ascii = false,
+                  const error_handler_t error_handler = error_handler_t::strict) const
     {
         string_t result;
-        serializer s(detail::output_adapter<char, string_t>(result), indent_char);
+        serializer s(detail::output_adapter<char, string_t>(result), indent_char, error_handler);
 
         if (indent >= 0)
         {

@@ -94,4 +94,41 @@ TEST_CASE("serialization")
                   "[\n\t\"foo\",\n\t1,\n\t2,\n\t3,\n\tfalse,\n\t{\n\t\t\"one\": 1\n\t}\n]");
         }
     }
+
+    SECTION("dump")
+    {
+        SECTION("invalid character")
+        {
+            json j = "ä\xA9ü";
+
+            CHECK_THROWS_AS(j.dump(), json::type_error&);
+            CHECK_THROWS_WITH(j.dump(), "[json.exception.type_error.316] invalid UTF-8 byte at index 2: 0xA9");
+            CHECK_THROWS_AS(j.dump(1, ' ', false, json::error_handler_t::strict), json::type_error&);
+            CHECK_THROWS_WITH(j.dump(1, ' ', false, json::error_handler_t::strict), "[json.exception.type_error.316] invalid UTF-8 byte at index 2: 0xA9");
+            CHECK(j.dump(-1, ' ', false, json::error_handler_t::ignore) == "\"äü\"");
+            CHECK(j.dump(-1, ' ', false, json::error_handler_t::replace) == "\"ä\\ufffdü\"");
+        }
+
+        SECTION("ending with incomplete character")
+        {
+            json j = "123\xC2";
+
+            CHECK_THROWS_AS(j.dump(), json::type_error&);
+            CHECK_THROWS_WITH(j.dump(), "[json.exception.type_error.316] incomplete UTF-8 string; last byte: 0xC2");
+            CHECK_THROWS_AS(j.dump(1, ' ', false, json::error_handler_t::strict), json::type_error&);
+            CHECK(j.dump(-1, ' ', false, json::error_handler_t::ignore) == "\"123\"");
+            CHECK(j.dump(-1, ' ', false, json::error_handler_t::replace) == "\"123\\ufffd\"");
+        }
+
+        SECTION("unexpected character")
+        {
+            json j = "123\xF1\xB0\x34\x35\x36";
+
+            CHECK_THROWS_AS(j.dump(), json::type_error&);
+            CHECK_THROWS_WITH(j.dump(), "[json.exception.type_error.316] invalid UTF-8 byte at index 5: 0x34");
+            CHECK_THROWS_AS(j.dump(1, ' ', false, json::error_handler_t::strict), json::type_error&);
+            CHECK(j.dump(-1, ' ', false, json::error_handler_t::ignore) == "\"123456\"");
+            CHECK(j.dump(-1, ' ', false, json::error_handler_t::replace) == "\"123\\ufffd456\"");
+        }
+    }
 }
