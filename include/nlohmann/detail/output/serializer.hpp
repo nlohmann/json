@@ -442,6 +442,7 @@ class serializer
                                 string_buffer[bytes++] = 'f';
                                 string_buffer[bytes++] = 'f';
                                 string_buffer[bytes++] = 'd';
+                                bytes_after_last_accept = bytes;
                             }
 
                             // continue processing the string
