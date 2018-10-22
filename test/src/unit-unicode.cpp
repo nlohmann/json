@@ -76,8 +76,12 @@ void check_utf8dump(bool success_expected, int byte1, int byte2 = -1, int byte3 
     // dumping with ignore/replace must not throw in any case
     auto s_ignored = j.dump(-1, ' ', false, json::error_handler_t::ignore);
     auto s_ignored2 = j2.dump(-1, ' ', false, json::error_handler_t::ignore);
+    auto s_ignored_ascii = j.dump(-1, ' ', true, json::error_handler_t::ignore);
+    auto s_ignored2_ascii = j2.dump(-1, ' ', true, json::error_handler_t::ignore);
     auto s_replaced = j.dump(-1, ' ', false, json::error_handler_t::replace);
     auto s_replaced2 = j2.dump(-1, ' ', false, json::error_handler_t::replace);
+    auto s_replaced_ascii = j.dump(-1, ' ', true, json::error_handler_t::replace);
+    auto s_replaced2_ascii = j2.dump(-1, ' ', true, json::error_handler_t::replace);
 
     if (success_expected)
     {
@@ -102,8 +106,12 @@ void check_utf8dump(bool success_expected, int byte1, int byte2 = -1, int byte3 
     // check that prefix and suffix are preserved
     CHECK(s_ignored2.substr(1, 3) == "abc");
     CHECK(s_ignored2.substr(s_ignored2.size() - 4, 3) == "xyz");
+    CHECK(s_ignored2_ascii.substr(1, 3) == "abc");
+    CHECK(s_ignored2_ascii.substr(s_ignored2_ascii.size() - 4, 3) == "xyz");
     CHECK(s_replaced2.substr(1, 3) == "abc");
     CHECK(s_replaced2.substr(s_replaced2.size() - 4, 3) == "xyz");
+    CHECK(s_replaced2_ascii.substr(1, 3) == "abc");
+    CHECK(s_replaced2_ascii.substr(s_replaced2_ascii.size() - 4, 3) == "xyz");
 }
 
 void check_utf8string(bool success_expected, int byte1, int byte2, int byte3, int byte4);

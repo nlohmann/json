@@ -10254,6 +10254,7 @@ class serializer
 
         // number of bytes written at the point of the last valid byte
         std::size_t bytes_after_last_accept = 0;
+        std::size_t undumped_chars = 0;
 
         for (std::size_t i = 0; i < s.size(); ++i)
         {
@@ -10355,6 +10356,7 @@ class serializer
 
                     // remember the byte position of this accept
                     bytes_after_last_accept = bytes;
+                    undumped_chars = 0;
                     break;
                 }
 
@@ -10376,7 +10378,7 @@ class serializer
                             // would like to read it again, because the byte
                             // may be OK for itself, but just not OK for the
                             // previous sequence
-                            if (bytes_after_last_accept != bytes)
+                            if (undumped_chars > 0)
                             {
                                 --i;
                             }
@@ -10406,6 +10408,8 @@ class serializer
                                 bytes_after_last_accept = bytes;
                             }
 
+                            undumped_chars = 0;
+
                             // continue processing the string
                             state = UTF8_ACCEPT;
                             continue;
@@ -10420,6 +10424,7 @@ class serializer
                         // code point will not be escaped - copy byte to buffer
                         string_buffer[bytes++] = s[i];
                     }
+                    ++undumped_chars;
                     break;
                 }
             }
