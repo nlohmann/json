@@ -10388,12 +10388,21 @@ class serializer
                             if (error_handler == error_handler_t::replace)
                             {
                                 // add a replacement character
-                                string_buffer[bytes++] = '\\';
-                                string_buffer[bytes++] = 'u';
-                                string_buffer[bytes++] = 'f';
-                                string_buffer[bytes++] = 'f';
-                                string_buffer[bytes++] = 'f';
-                                string_buffer[bytes++] = 'd';
+                                if (ensure_ascii)
+                                {
+                                    string_buffer[bytes++] = '\\';
+                                    string_buffer[bytes++] = 'u';
+                                    string_buffer[bytes++] = 'f';
+                                    string_buffer[bytes++] = 'f';
+                                    string_buffer[bytes++] = 'f';
+                                    string_buffer[bytes++] = 'd';
+                                }
+                                else
+                                {
+                                    string_buffer[bytes++] = '\xEF';
+                                    string_buffer[bytes++] = '\xBF';
+                                    string_buffer[bytes++] = '\xBD';
+                                }
                                 bytes_after_last_accept = bytes;
                             }
 
@@ -10449,7 +10458,14 @@ class serializer
                     // write all accepted bytes
                     o->write_characters(string_buffer.data(), bytes_after_last_accept);
                     // add a replacement character
-                    o->write_characters("\\ufffd", 6);
+                    if (ensure_ascii)
+                    {
+                        o->write_characters("\\ufffd", 6);
+                    }
+                    else
+                    {
+                        o->write_characters("\xEF\xBF\xBD", 3);
+                    }
                     break;
                 }
             }

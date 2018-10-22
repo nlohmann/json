@@ -86,10 +86,6 @@ void check_utf8dump(bool success_expected, int byte1, int byte2 = -1, int byte3 
         // all dumps should agree on the string
         CHECK(s_strict == s_ignored);
         CHECK(s_strict == s_replaced);
-
-        // check that ignore/replace string does not contain a replacement character
-        CHECK(s_ignored.find("\\ufffd") == std::string::npos);
-        CHECK(s_replaced.find("\\ufffd") == std::string::npos);
     }
     else
     {
@@ -98,10 +94,8 @@ void check_utf8dump(bool success_expected, int byte1, int byte2 = -1, int byte3 
         // ignore and replace must create different dumps
         CHECK(s_ignored != s_replaced);
 
-        // check that ignore string does not contain a replacement character
-        CHECK(s_ignored.find("\\ufffd") == std::string::npos);
         // check that replace string contains a replacement character
-        CHECK(s_replaced.find("\\ufffd") != std::string::npos);
+        CHECK(s_replaced.find("\xEF\xBF\xBD") != std::string::npos);
 
     }
 
