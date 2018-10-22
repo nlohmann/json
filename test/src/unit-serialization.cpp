@@ -106,7 +106,8 @@ TEST_CASE("serialization")
             CHECK_THROWS_AS(j.dump(1, ' ', false, json::error_handler_t::strict), json::type_error&);
             CHECK_THROWS_WITH(j.dump(1, ' ', false, json::error_handler_t::strict), "[json.exception.type_error.316] invalid UTF-8 byte at index 2: 0xA9");
             CHECK(j.dump(-1, ' ', false, json::error_handler_t::ignore) == "\"äü\"");
-            CHECK(j.dump(-1, ' ', false, json::error_handler_t::replace) == "\"ä\\ufffdü\"");
+            CHECK(j.dump(-1, ' ', false, json::error_handler_t::replace) == "\"ä\xEF\xBF\xBDü\"");
+            CHECK(j.dump(-1, ' ', true, json::error_handler_t::replace) == "\"\\u00e4\\ufffd\\u00fc\"");
         }
 
         SECTION("ending with incomplete character")
@@ -117,7 +118,8 @@ TEST_CASE("serialization")
             CHECK_THROWS_WITH(j.dump(), "[json.exception.type_error.316] incomplete UTF-8 string; last byte: 0xC2");
             CHECK_THROWS_AS(j.dump(1, ' ', false, json::error_handler_t::strict), json::type_error&);
             CHECK(j.dump(-1, ' ', false, json::error_handler_t::ignore) == "\"123\"");
-            CHECK(j.dump(-1, ' ', false, json::error_handler_t::replace) == "\"123\\ufffd\"");
+            CHECK(j.dump(-1, ' ', false, json::error_handler_t::replace) == "\"123\xEF\xBF\xBD\"");
+            CHECK(j.dump(-1, ' ', true, json::error_handler_t::replace) == "\"123\\ufffd\"");
         }
 
         SECTION("unexpected character")
@@ -128,7 +130,8 @@ TEST_CASE("serialization")
             CHECK_THROWS_WITH(j.dump(), "[json.exception.type_error.316] invalid UTF-8 byte at index 5: 0x34");
             CHECK_THROWS_AS(j.dump(1, ' ', false, json::error_handler_t::strict), json::type_error&);
             CHECK(j.dump(-1, ' ', false, json::error_handler_t::ignore) == "\"123456\"");
-            CHECK(j.dump(-1, ' ', false, json::error_handler_t::replace) == "\"123\\ufffd456\"");
+            CHECK(j.dump(-1, ' ', false, json::error_handler_t::replace) == "\"123\xEF\xBF\xBD\x34\x35\x36\"");
+            CHECK(j.dump(-1, ' ', true, json::error_handler_t::replace) == "\"123\\ufffd456\"");
         }
     }
 }

@@ -100,7 +100,6 @@ void check_utf8dump(bool success_expected, int byte1, int byte2 = -1, int byte3 
 
         // check that replace string contains a replacement character
         CHECK(s_replaced.find("\xEF\xBF\xBD") != std::string::npos);
-
     }
 
     // check that prefix and suffix are preserved
