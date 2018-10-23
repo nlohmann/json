@@ -8981,6 +8981,10 @@ class binary_writer
         return 'D';  // float 64
     }
 
+    // The following to_char_type functions are implement the conversion
+    // between uint8_t and CharType. In case CharType is not unsigned,
+    // such a conversion is required to allow values greater than 128.
+    // See <https://github.com/nlohmann/json/issues/1286> for a discussion.
     template < typename C = CharType,
                enable_if_t < std::is_signed<C>::value and std::is_signed<char>::value > * = nullptr >
     static constexpr CharType to_char_type(std::uint8_t x) noexcept
