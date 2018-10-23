@@ -10374,7 +10374,7 @@ class serializer
                         case error_handler_t::ignore:
                         case error_handler_t::replace:
                         {
-                            // in case we saw this chatacter the first time, we
+                            // in case we saw this character the first time, we
                             // would like to read it again, because the byte
                             // may be OK for itself, but just not OK for the
                             // previous sequence
