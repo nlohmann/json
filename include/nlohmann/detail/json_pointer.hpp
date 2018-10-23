@@ -348,6 +348,80 @@ class json_pointer
     }
 
     /*!
+    @throw parse_error.106   if an array index begins with '0'
+    @throw parse_error.109   if an array index was not a number
+    @throw out_of_range.402  if the array index '-' is used
+    @throw out_of_range.404  if the JSON pointer can not be resolved
+    */
+    void erase_checked(BasicJsonType* ptr) const
+    {
+        BasicJsonType* previous = nullptr;
+
+        using size_type = typename BasicJsonType::size_type;
+        for (const auto& reference_token : reference_tokens)
+        {
+            previous = ptr;
+
+            switch (ptr->m_type)
+            {
+                case detail::value_t::object:
+                {
+                    // note: at performs range check
+                    ptr = &ptr->at(reference_token);
+                    break;
+                }
+
+                case detail::value_t::array:
+                {
+                    if (JSON_UNLIKELY(reference_token == "-"))
+                    {
+                        // "-" always fails the range check
+                        JSON_THROW(detail::out_of_range::create(402,
+                                                                "array index '-' (" + std::to_string(ptr->m_value.array->size()) +
+                                                                ") is out of range"));
+                    }
+
+                    // error condition (cf. RFC 6901, Sect. 4)
+                    if (JSON_UNLIKELY(reference_token.size() > 1 and reference_token[0] == '0'))
+                    {
+                        JSON_THROW(detail::parse_error::create(106, 0,
+                                                               "array index '" + reference_token +
+                                                               "' must not begin with '0'"));
+                    }
+
+                    // note: at performs range check
+                    JSON_TRY
+                    {
+                        ptr = &ptr->at(static_cast<size_type>(array_index(reference_token)));
+                    }
+                    JSON_CATCH(std::invalid_argument&)
+                    {
+                        JSON_THROW(detail::parse_error::create(109, 0, "array index '" + reference_token + "' is not a number"));
+                    }
+                    break;
+                }
+
+                default:
+                    JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + reference_token + "'"));
+            }
+        }
+
+        // if we get here, it means that no exception was thrown, so therefore the value specified to
+        // erase exists
+
+        // if previous exists, it means that the specified json value was not a root, so, we use the previous
+        // object and erase from it
+		if (previous)
+        {
+			previous->erase(reference_tokens.back());
+        }
+        else
+        {
+            // what to do
+        }
+    }
+
+    /*!
     @brief return a const reference to the pointed to value
 
     @param[in] ptr  a JSON value

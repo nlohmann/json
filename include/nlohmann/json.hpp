@@ -7085,6 +7085,45 @@ class basic_json
     {
         return ptr.get_checked(this);
     }
+	
+	
+    /*!
+    @brief remove element from a JSON tree given a pointer
+
+    Removes elements from a JSON tree with the pointer value @ptr
+
+    @param[in] pointer value of the elements to remove
+
+    @post References and iterators to the erased elements are invalidated.
+    Other references and iterators are not affected.
+
+    @throw parse_error.106 if an array index in the passed JSON pointer @a ptr
+    begins with '0'. See example below.
+
+    @throw parse_error.109 if an array index in the passed JSON pointer @a ptr
+    is not a number. See example below.
+
+    @throw out_of_range.401 if an array index in the passed JSON pointer @a ptr
+    is out of range. See example below.
+
+    @throw out_of_range.402 if the array index '-' is used in the passed JSON
+    pointer @a ptr. As `at` provides checked access (and no elements are
+    implicitly inserted), the index '-' is always invalid. See example below.
+
+    @throw out_of_range.403 if the JSON pointer describes a key of an object
+    which cannot be found. See example below.
+
+    @throw out_of_range.404 if the JSON pointer @a ptr can not be resolved.
+    See example below.
+
+    @complexity
+
+    @since version
+    */
+    void erase(const json_pointer& ptr)
+    {
+        ptr.erase_checked(this);
+    }
 
     /*!
     @brief return flattened JSON value
