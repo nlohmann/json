@@ -5647,6 +5647,55 @@ class iter_impl
     }
 
   public:
+
+    /// return whether the iterator can be dereferenced
+    constexpr bool is_begin() const noexcept
+    {
+        assert(m_object != nullptr);
+
+        switch (m_object->m_type)
+        {
+            case value_t::object:
+            {
+                return m_it.object_iterator == m_object->m_value.object->begin();
+            }
+            case value_t::array:
+            {
+                return m_it.array_iterator == m_object->m_value.array->begin();
+            }
+            case value_t::null:
+                JSON_THROW(invalid_iterator::create(214, "cannot get value"));
+            default:
+            {
+                return m_it.primitive_iterator.is_begin();
+            }
+        }
+    }
+
+    /// return whether the iterator is at end
+    constexpr bool is_end() const noexcept
+    {
+        assert(m_object != nullptr);
+
+        switch (m_object->m_type)
+        {
+            case value_t::object:
+            {
+                return m_it.object_iterator == m_object->m_value.object->end();
+            }
+            case value_t::array:
+            {
+                return m_it.array_iterator == m_object->m_value.array->end();
+            }
+            case value_t::null:
+                JSON_THROW(invalid_iterator::create(214, "cannot get value"));
+            default:
+            {
+                return m_it.primitive_iterator.is_end();
+            }
+        }
+    }
+
     /*!
     @brief return a reference to the value pointed to by the iterator
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
