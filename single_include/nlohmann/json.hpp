@@ -5647,7 +5647,6 @@ class iter_impl
     }
 
   public:
-
     /// return whether the iterator can be dereferenced
     constexpr bool is_begin() const noexcept
     {
