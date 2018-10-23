@@ -133,5 +133,41 @@ TEST_CASE("serialization")
             CHECK(j.dump(-1, ' ', false, json::error_handler_t::replace) == "\"123\xEF\xBF\xBD\x34\x35\x36\"");
             CHECK(j.dump(-1, ' ', true, json::error_handler_t::replace) == "\"123\\ufffd456\"");
         }
+
+        SECTION("U+FFFD Substitution of Maximal Subparts")
+        {
+            // Some tests (mostly) from
+            // https://www.unicode.org/versions/Unicode11.0.0/ch03.pdf
+            // Section 3.9 -- U+FFFD Substitution of Maximal Subparts
+
+            auto test = [&](std::string const & input, std::string const & expected)
+            {
+                json j = input;
+                CHECK(j.dump(-1, ' ', true, json::error_handler_t::replace) == "\"" + expected + "\"");
+            };
+
+            test("\xC2", "\\ufffd");
+            test("\xC2\x41\x42", "\\ufffd" "\x41" "\x42");
+            test("\xC2\xF4", "\\ufffd" "\\ufffd");
+
+            test("\xF0\x80\x80\x41", "\\ufffd" "\\ufffd" "\\ufffd" "\x41");
+            test("\xF1\x80\x80\x41", "\\ufffd" "\x41");
+            test("\xF2\x80\x80\x41", "\\ufffd" "\x41");
+            test("\xF3\x80\x80\x41", "\\ufffd" "\x41");
+            test("\xF4\x80\x80\x41", "\\ufffd" "\x41");
+            test("\xF5\x80\x80\x41", "\\ufffd" "\\ufffd" "\\ufffd" "\x41");
+
+            test("\xF0\x90\x80\x41", "\\ufffd" "\x41");
+            test("\xF1\x90\x80\x41", "\\ufffd" "\x41");
+            test("\xF2\x90\x80\x41", "\\ufffd" "\x41");
+            test("\xF3\x90\x80\x41", "\\ufffd" "\x41");
+            test("\xF4\x90\x80\x41", "\\ufffd" "\\ufffd" "\\ufffd" "\x41");
+            test("\xF5\x90\x80\x41", "\\ufffd" "\\ufffd" "\\ufffd" "\x41");
+
+            test("\xC0\xAF\xE0\x80\xBF\xF0\x81\x82\x41", "\\ufffd" "\\ufffd" "\\ufffd" "\\ufffd" "\\ufffd" "\\ufffd" "\\ufffd" "\\ufffd" "\x41");
+            test("\xED\xA0\x80\xED\xBF\xBF\xED\xAF\x41", "\\ufffd" "\\ufffd" "\\ufffd" "\\ufffd" "\\ufffd" "\\ufffd" "\\ufffd" "\\ufffd" "\x41");
+            test("\xF4\x91\x92\x93\xFF\x41\x80\xBF\x42", "\\ufffd" "\\ufffd" "\\ufffd" "\\ufffd" "\\ufffd" "\x41" "\\ufffd""\\ufffd" "\x42");
+            test("\xE1\x80\xE2\xF0\x91\x92\xF1\xBF\x41", "\\ufffd" "\\ufffd" "\\ufffd" "\\ufffd" "\x41");
+        }
     }
 }
