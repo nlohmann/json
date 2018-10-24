@@ -80,6 +80,10 @@ class binary_reader
                 result = parse_ubjson_internal();
                 break;
 
+            case input_format_t::bson:
+                result = parse_bson_internal();
+                break;
+
             // LCOV_EXCL_START
             default:
                 assert(false);
@@ -121,6 +125,207 @@ class binary_reader
     }
 
   private:
+
+    /*!
+    @brief Parses a C-style string from the BSON input.
+    @param [out] result A reference to the string variable where the read string
+                        is to be stored.
+    @return `true` if the \x00-byte indicating the end of the
+            string was encountered before the EOF.
+            `false` indicates an unexpected EOF.
+    */
+    bool get_bson_cstr(string_t& result)
+    {
+        auto out = std::back_inserter(result);
+        while (true)
+        {
+            get();
+            if (JSON_UNLIKELY(not unexpect_eof(input_format_t::bson, "cstring")))
+            {
+                return false;
+            }
+            if (current == 0x00)
+            {
+                return true;
+            }
+            *out++ = static_cast<char>(current);
+        }
+
+        return true;
+    }
+
+    /*!
+    @brief Parses a zero-terminated string of length @a len from the BSON input.
+    @param [in]  len    The length (including the zero-byte at the end) of the string to be read.
+    @param [out] result A reference to the string variable where the read string
+                        is to be stored.
+    @tparam NumberType The type of the length @a len
+    @pre len > 0
+    @return `true` if the string was successfully parsed
+    */
+    template <typename NumberType>
+    bool get_bson_string(const NumberType len, string_t& result)
+    {
+        return get_string(input_format_t::bson, len - static_cast<NumberType>(1), result)
+               && get() != std::char_traits<char>::eof();
+    }
+
+    /*!
+    @return A hexadecimal string representation of the given @a byte
+    @param byte The byte to convert to a string
+    */
+    static std::string byte_hexstring(unsigned char byte)
+    {
+        char cr[3];
+        snprintf(cr, sizeof(cr), "%02hhX", byte);
+        return std::string{cr};
+    }
+
+    /*!
+    @brief Read a BSON document element of the given @a element_type.
+    @param element_type The BSON element type, c.f. http://bsonspec.org/spec.html
+    @param element_type_parse_position The position in the input stream, where the `element_type` was read.
+    @warning Not all BSON element types are supported yet. An unsupported @a element_type will
+             give rise to a parse_error.114: Unsupported BSON record type 0x...
+    @return whether a valid BSON-object/array was passed to the SAX parser
+    */
+    bool parse_bson_element_internal(int element_type, std::size_t element_type_parse_position)
+    {
+        switch (element_type)
+        {
+            case 0x01: // double
+            {
+                double number;
+                return get_number<double, true>(input_format_t::bson, number)
+                       && sax->number_float(static_cast<number_float_t>(number), "");
+            }
+            case 0x02: // string
+            {
+                std::int32_t len;
+                string_t value;
+                return get_number<std::int32_t, true>(input_format_t::bson, len)
+                       && get_bson_string(len, value)
+                       && sax->string(value);
+            }
+            case 0x08: // boolean
+            {
+                return sax->boolean(static_cast<bool>(get()));
+            }
+            case 0x10: // int32
+            {
+                std::int32_t value;
+                return get_number<std::int32_t, true>(input_format_t::bson, value)
+                       && sax->number_integer(static_cast<std::int32_t>(value));
+            }
+            case 0x12: // int64
+            {
+                std::int64_t value;
+                return get_number<std::int64_t, true>(input_format_t::bson, value)
+                       && sax->number_integer(static_cast<std::int64_t>(value));
+            }
+            case 0x0A: // null
+            {
+                return sax->null();
+            }
+            case 0x03: // object
+            {
+                return parse_bson_internal();
+            }
+            case 0x04: // array
+            {
+                return parse_bson_array();
+            }
+            default: // anything else not supported (yet)
+            {
+                auto element_type_str = byte_hexstring(element_type);
+                return sax->parse_error(element_type_parse_position, element_type_str, parse_error::create(114, element_type_parse_position, "Unsupported BSON record type 0x" + element_type_str));
+            }
+        }
+    }
+
+    /*!
+    @brief Read a BSON element list (as specified in the BSON-spec) from the input
+           and passes it to the SAX-parser.
+           The same binary layout is used for objects and arrays, hence it must
+           be indicated with the argument @a is_array which one is expected
+           (true --> array, false --> object).
+    @param is_array Determines if the element list being read is to be treated as
+           an object (@a is_array == false), or as an array (@a is_array == true).
+    @return whether a valid BSON-object/array was passed to the SAX parser
+    */
+    bool parse_bson_element_list(bool is_array)
+    {
+        while (auto element_type = get())
+        {
+            if (JSON_UNLIKELY(not unexpect_eof(input_format_t::bson, "element list")))
+            {
+                return false;
+            }
+
+            const std::size_t element_type_parse_position = chars_read;
+            string_t key;
+            if (JSON_UNLIKELY(not get_bson_cstr(key)))
+            {
+                return false;
+            }
+
+            if (!is_array)
+            {
+                sax->key(key);
+            }
+
+            if (JSON_UNLIKELY(not parse_bson_element_internal(element_type, element_type_parse_position)))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /*!
+    @brief Reads an array from the BSON input and passes it to the SAX-parser.
+    @return whether a valid BSON-array was passed to the SAX parser
+    */
+    bool parse_bson_array()
+    {
+        std::int32_t documentSize;
+        get_number<std::int32_t, true>(input_format_t::bson, documentSize);
+
+        if (JSON_UNLIKELY(not sax->start_array(-1)))
+        {
+            return false;
+        }
+
+        if (JSON_UNLIKELY(not parse_bson_element_list(/*is_array*/true)))
+        {
+            return false;
+        }
+
+        return sax->end_array();
+    }
+
+    /*!
+    @brief Reads in a BSON-object and pass it to the SAX-parser.
+    @return whether a valid BSON-value was passed to the SAX parser
+    */
+    bool parse_bson_internal()
+    {
+        std::int32_t documentSize;
+        get_number<std::int32_t, true>(input_format_t::bson, documentSize);
+
+        if (JSON_UNLIKELY(not sax->start_object(-1)))
+        {
+            return false;
+        }
+
+        if (JSON_UNLIKELY(not parse_bson_element_list(/*is_array*/false)))
+        {
+            return false;
+        }
+
+        return sax->end_object();
+    }
+
     /*!
     @param[in] get_char  whether a new character should be retrieved from the
                          input (true, default) or whether the last read
@@ -875,7 +1080,7 @@ class binary_reader
           bytes in CBOR, MessagePack, and UBJSON are stored in network order
           (big endian) and therefore need reordering on little endian systems.
     */
-    template<typename NumberType>
+    template<typename NumberType, bool InputIsLittleEndian = false>
     bool get_number(const input_format_t format, NumberType& result)
     {
         // step 1: read input into array with system's byte order
@@ -889,7 +1094,7 @@ class binary_reader
             }
 
             // reverse byte order prior to conversion if necessary
-            if (is_little_endian)
+            if (is_little_endian && !InputIsLittleEndian)
             {
                 vec[sizeof(NumberType) - i - 1] = static_cast<uint8_t>(current);
             }
@@ -903,6 +1108,7 @@ class binary_reader
         std::memcpy(&result, vec.data(), sizeof(NumberType));
         return true;
     }
+
 
     /*!
     @brief create a string by reading characters from the input
@@ -1713,6 +1919,10 @@ class binary_reader
 
             case input_format_t::ubjson:
                 error_msg += "UBJSON";
+                break;
+
+            case input_format_t::bson:
+                error_msg += "BSON";
                 break;
 
             // LCOV_EXCL_START
