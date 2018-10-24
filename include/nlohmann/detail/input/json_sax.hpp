@@ -6,6 +6,7 @@
 
 #include <nlohmann/detail/input/parser.hpp>
 #include <nlohmann/detail/exceptions.hpp>
+#include <nlohmann/detail/json_string_view.hpp>
 
 namespace nlohmann
 {
@@ -21,6 +22,7 @@ input.
 template<typename BasicJsonType>
 struct json_sax
 {
+    using object_t = typename BasicJsonType::object_t;
     /// type for (signed) integers
     using number_integer_t = typename BasicJsonType::number_integer_t;
     /// type for unsigned integers
@@ -143,6 +145,7 @@ template<typename BasicJsonType>
 class json_sax_dom_parser
 {
   public:
+    using object_t = typename BasicJsonType::object_t;
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
@@ -209,7 +212,7 @@ class json_sax_dom_parser
     bool key(string_t& val)
     {
         // add null at given key and store the reference for later
-        object_element = &(ref_stack.back()->m_value.object->operator[](val));
+        object_element = &(ref_stack.back()->m_value.object->operator[](to_map_key<typename object_t::key_type>(val)));
         return true;
     }
 
@@ -318,6 +321,7 @@ template<typename BasicJsonType>
 class json_sax_dom_callback_parser
 {
   public:
+    using object_t = typename BasicJsonType::object_t;
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
@@ -402,7 +406,7 @@ class json_sax_dom_callback_parser
         // add discarded value at given key and store the reference for later
         if (keep and ref_stack.back())
         {
-            object_element = &(ref_stack.back()->m_value.object->operator[](val) = discarded);
+            object_element = &(ref_stack.back()->m_value.object->operator[](to_map_key<typename object_t::key_type>(val)) = discarded);
         }
 
         return true;

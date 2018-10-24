@@ -14,6 +14,7 @@
 #include <nlohmann/detail/input/json_sax.hpp>
 #include <nlohmann/detail/input/lexer.hpp>
 #include <nlohmann/detail/value_t.hpp>
+#include <nlohmann/detail/json_string_view.hpp>
 
 namespace nlohmann
 {
@@ -31,6 +32,7 @@ This class implements a recursive decent parser.
 template<typename BasicJsonType>
 class parser
 {
+    using object_t = typename BasicJsonType::object_t;
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;

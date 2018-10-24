@@ -68,6 +68,7 @@ SOFTWARE.
 #include <nlohmann/detail/output/serializer.hpp>
 #include <nlohmann/detail/json_ref.hpp>
 #include <nlohmann/detail/json_pointer.hpp>
+#include <nlohmann/detail/json_string_view.hpp>
 #include <nlohmann/adl_serializer.hpp>
 
 /*!
@@ -162,6 +163,10 @@ Format](http://rfc7159.net/rfc7159)
 NLOHMANN_BASIC_JSON_TPL_DECLARATION
 class basic_json
 {
+  public:
+	// these definitions should come
+	typedef json_string_view map_key_type;
+
   private:
     template<detail::value_t> friend struct detail::external_constructor;
     friend ::nlohmann::json_pointer<basic_json>;
@@ -471,7 +476,7 @@ class basic_json
     7159](http://rfc7159.net/rfc7159), because any order implements the
     specified "unordered" nature of JSON objects.
     */
-    using object_t = ObjectType<StringType,
+    using object_t = ObjectType<map_key_type,
           basic_json,
           object_comparator_t,
           AllocatorType<std::pair<const StringType,
@@ -1436,7 +1441,7 @@ class basic_json
             {
                 auto element = element_ref.moved_or_copied();
                 m_value.object->emplace(
-                    std::move(*((*element.m_value.array)[0].m_value.string)),
+                    std::move(to_map_key<typename object_t::key_type>(*((*element.m_value.array)[0].m_value.string))),
                     std::move((*element.m_value.array)[1]));
             });
         }
@@ -3006,13 +3011,20 @@ class basic_json
             JSON_CATCH (std::out_of_range&)
             {
                 // create better exception explanation
-                JSON_THROW(out_of_range::create(403, "key '" + key + "' not found"));
+                JSON_THROW(out_of_range::create(403, "key '" + to_concatable_string(key) + "' not found"));
             }
         }
         else
         {
             JSON_THROW(type_error::create(304, "cannot use at() with " + std::string(type_name())));
         }
+    }
+	
+	template<typename T>
+    reference at(const T& key_)
+    {
+		auto key = to_lookup_key<typename object_t::key_type>(key_);
+		return at(key);
     }
 
     /*!
@@ -3045,7 +3057,7 @@ class basic_json
     `at()`. It also demonstrates the different exceptions that can be thrown.,
     at__object_t_key_type_const}
     */
-    const_reference at(const typename object_t::key_type& key) const
+	const_reference at(const typename object_t::key_type & key) const
     {
         // at only works for objects
         if (JSON_LIKELY(is_object()))
@@ -3057,13 +3069,20 @@ class basic_json
             JSON_CATCH (std::out_of_range&)
             {
                 // create better exception explanation
-                JSON_THROW(out_of_range::create(403, "key '" + key + "' not found"));
+                JSON_THROW(out_of_range::create(403, "key '" + to_concatable_string(key) + "' not found"));
             }
         }
         else
         {
             JSON_THROW(type_error::create(304, "cannot use at() with " + std::string(type_name())));
         }
+    }
+
+	template<typename T>
+    const_reference at(const T& key_) const
+    {
+		auto key = to_lookup_key<typename object_t::key_type>(key_);
+		return at(key);
     }
 
     /*!
@@ -3117,6 +3136,12 @@ class basic_json
 
         JSON_THROW(type_error::create(305, "cannot use operator[] with a numeric argument with " + std::string(type_name())));
     }
+	
+    reference operator[](int idx)
+	{
+		return operator[](size_t(idx));
+	}
+	
 
     /*!
     @brief access specified array element
@@ -3148,6 +3173,11 @@ class basic_json
         JSON_THROW(type_error::create(305, "cannot use operator[] with a numeric argument with " + std::string(type_name())));
     }
 
+    const_reference operator[](int idx) const
+	{
+		return operator[](size_t(idx));
+	}
+
     /*!
     @brief access specified object element
 
@@ -3175,7 +3205,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    reference operator[](const typename object_t::key_type& key)
+    reference operator[](const typename object_t::key_type& key_)
     {
         // implicitly convert null value to an empty object
         if (is_null())
@@ -3188,6 +3218,11 @@ class basic_json
         // operator[] only works for objects
         if (JSON_LIKELY(is_object()))
         {
+			auto i = m_value.object->find(key_);
+			if (i != m_value.object->end())
+				return i->second;
+			
+			auto key = to_map_key<typename object_t::key_type>(key_);
             return m_value.object->operator[](key);
         }
 
@@ -3263,25 +3298,24 @@ class basic_json
 
     @since version 1.1.0
     */
-    template<typename T>
-    reference operator[](T* key)
+	template<typename T>
+    reference operator[](const T &key_)
     {
-        // implicitly convert null to object
-        if (is_null())
-        {
-            m_type = value_t::object;
-            m_value = value_t::object;
-            assert_invariant();
-        }
-
-        // at only works for objects
-        if (JSON_LIKELY(is_object()))
-        {
-            return m_value.object->operator[](key);
-        }
-
-        JSON_THROW(type_error::create(305, "cannot use operator[] with a string argument with " + std::string(type_name())));
+		auto key = to_lookup_key<typename object_t::key_type>(key_);
+		return operator[](key);
     }
+
+//    reference operator[](const std::string &key_)
+//    {
+//		auto key = to_map_key<typename object_t::key_type>(key_);
+//		return operator[](key);
+//    }
+//
+//    reference operator[](const char *key_)
+//    {
+//		auto key = to_map_key<typename object_t::key_type>(key_);
+//		return operator[](key);
+//    }
 
     /*!
     @brief read-only access specified object element
@@ -3313,18 +3347,24 @@ class basic_json
 
     @since version 1.1.0
     */
-    template<typename T>
-    const_reference operator[](T* key) const
+	template<typename T>
+    const_reference operator[](const T &key_) const
     {
-        // at only works for objects
-        if (JSON_LIKELY(is_object()))
-        {
-            assert(m_value.object->find(key) != m_value.object->end());
-            return m_value.object->find(key)->second;
-        }
-
-        JSON_THROW(type_error::create(305, "cannot use operator[] with a string argument with " + std::string(type_name())));
+		auto key = to_lookup_key<typename object_t::key_type>(key_);
+		return operator[](key);
     }
+
+//    const_reference operator[](const std::string &key_) const
+//    {
+//		auto key = to_map_key<typename object_t::key_type>(key_);
+//		return operator[](key);
+//    }
+//
+//    const_reference operator[](const char *key_) const
+//    {
+//		auto key = to_map_key<typename object_t::key_type>(key_);
+//		return operator[](key);
+//    }
 
     /*!
     @brief access specified object element with default value
@@ -3802,7 +3842,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    size_type erase(const typename object_t::key_type& key)
+    size_type erase(const typename object_t::key_type & key)
     {
         // this erase only works for objects
         if (JSON_LIKELY(is_object()))
@@ -3813,6 +3853,24 @@ class basic_json
         JSON_THROW(type_error::create(307, "cannot use erase() with " + std::string(type_name())));
     }
 
+	template<typename T>
+    size_type erase(const T& key_)
+    {
+		auto key = to_map_key<typename object_t::key_type>(key_);
+		return erase(key);
+    }
+
+    void erase(const iterator &key)
+	{
+        // this erase only works for objects
+        if (JSON_LIKELY(is_object()))
+        {
+            m_value.object->erase(key.m_it.object_iterator);
+        }
+
+        JSON_THROW(type_error::create(307, "cannot use erase() with " + std::string(type_name())));
+	}
+	
     /*!
     @brief remove element from a JSON array given an index
 
@@ -3855,6 +3913,10 @@ class basic_json
         }
     }
 
+    void erase(int idx)
+    {
+		erase(static_cast<size_t>(idx));
+	}
     /// @}
 
 
