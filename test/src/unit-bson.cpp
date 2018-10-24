@@ -48,7 +48,7 @@ TEST_CASE("BSON")
         SECTION("null")
         {
             json j = nullptr;
-            REQUIRE_THROWS_AS(json::to_bson(j), json::type_error&);
+            CHECK_THROWS_AS(json::to_bson(j), json::type_error&);
             CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is null");
         }
 
@@ -57,14 +57,14 @@ TEST_CASE("BSON")
             SECTION("true")
             {
                 json j = true;
-                REQUIRE_THROWS_AS(json::to_bson(j), json::type_error&);
+                CHECK_THROWS_AS(json::to_bson(j), json::type_error&);
                 CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is boolean");
             }
 
             SECTION("false")
             {
                 json j = false;
-                REQUIRE_THROWS_AS(json::to_bson(j), json::type_error&);
+                CHECK_THROWS_AS(json::to_bson(j), json::type_error&);
                 CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is boolean");
             }
         }
@@ -72,29 +72,29 @@ TEST_CASE("BSON")
         SECTION("number")
         {
             json j = 42;
-            REQUIRE_THROWS_AS(json::to_bson(j), json::type_error&);
-                CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is number");
+            CHECK_THROWS_AS(json::to_bson(j), json::type_error&);
+            CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is number");
         }
 
         SECTION("float")
         {
             json j = 4.2;
-            REQUIRE_THROWS_AS(json::to_bson(j), json::type_error&);
-                CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is number");
+            CHECK_THROWS_AS(json::to_bson(j), json::type_error&);
+            CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is number");
         }
 
         SECTION("string")
         {
             json j = "not supported";
-            REQUIRE_THROWS_AS(json::to_bson(j), json::type_error&);
-                CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is string");
+            CHECK_THROWS_AS(json::to_bson(j), json::type_error&);
+            CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is string");
         }
 
         SECTION("array")
         {
             json j = std::vector<int> {1, 2, 3, 4, 5, 6, 7};
-            REQUIRE_THROWS_AS(json::to_bson(j), json::type_error&);
-                CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is array");
+            CHECK_THROWS_AS(json::to_bson(j), json::type_error&);
+            CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is array");
         }
     }
 
@@ -104,7 +104,7 @@ TEST_CASE("BSON")
         {
             { std::string("en\0try", 6), true }
         };
-        REQUIRE_THROWS_AS(json::to_bson(j), json::out_of_range&);
+        CHECK_THROWS_AS(json::to_bson(j), json::out_of_range&);
         CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.out_of_range.409] BSON key cannot contain code point U+0000 (at byte 2)");
     }
 
@@ -541,6 +541,30 @@ TEST_CASE("BSON")
             CHECK(json::from_bson(result, true, false) == j);
         }
     }
+
+    SECTION("Examples from http://bsonspec.org/faq.html")
+    {
+        SECTION("Example 1")
+        {
+            std::vector<std::uint8_t> input = {0x16, 0x00, 0x00, 0x00, 0x02, 'h', 'e', 'l', 'l', 'o', 0x00, 0x06, 0x00, 0x00, 0x00, 'w', 'o', 'r', 'l', 'd', 0x00, 0x00};
+            json parsed = json::from_bson(input);
+            json expected = {{"hello", "world"}};
+            CHECK(parsed == expected);
+            auto dumped = json::to_bson(parsed);
+            CHECK(dumped == input);
+        }
+
+        SECTION("Example 2")
+        {
+            std::vector<std::uint8_t> input = {0x31, 0x00, 0x00, 0x00, 0x04, 'B', 'S', 'O', 'N', 0x00, 0x26, 0x00, 0x00, 0x00, 0x02, 0x30, 0x00, 0x08, 0x00, 0x00, 0x00, 'a', 'w', 'e', 's', 'o', 'm', 'e', 0x00, 0x01, 0x31, 0x00, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x14, 0x40, 0x10, 0x32, 0x00, 0xc2, 0x07, 0x00, 0x00, 0x00, 0x00};
+            json parsed = json::from_bson(input);
+            json expected = {{"BSON", {"awesome", 5.05, 1986}}};
+            CHECK(parsed == expected);
+            auto dumped = json::to_bson(parsed);
+            //CHECK(dumped == input); // see https://github.com/nlohmann/json/pull/1254#issuecomment-432831216
+            CHECK(json::from_bson(dumped) == expected);
+        }
+    }
 }
 
 TEST_CASE("BSON input/output_adapters")
@@ -600,10 +624,6 @@ TEST_CASE("BSON input/output_adapters")
         }
     }
 }
-
-
-
-
 
 class SaxCountdown
 {
@@ -675,85 +695,83 @@ class SaxCountdown
     int events_left = 0;
 };
 
-
-TEST_CASE("Incomplete BSON INPUT")
+TEST_CASE("Incomplete BSON Input")
 {
-    std::vector<uint8_t> incomplete_bson =
+    SECTION("Incomplete BSON Input 1")
     {
-        0x0D, 0x00, 0x00, 0x00, // size (little endian)
-        0x08,                   // entry: boolean
-        'e', 'n', 't'           // unexpected EOF
-    };
+        std::vector<uint8_t> incomplete_bson =
+        {
+            0x0D, 0x00, 0x00, 0x00, // size (little endian)
+            0x08,                   // entry: boolean
+            'e', 'n', 't'           // unexpected EOF
+        };
 
-    CHECK_THROWS_AS(json::from_bson(incomplete_bson), json::parse_error&);
-    CHECK_THROWS_WITH(json::from_bson(incomplete_bson),
-                      "[json.exception.parse_error.110] parse error at byte 9: syntax error while parsing BSON cstring: unexpected end of input");
+        CHECK_THROWS_AS(json::from_bson(incomplete_bson), json::parse_error&);
+        CHECK_THROWS_WITH(json::from_bson(incomplete_bson),
+                          "[json.exception.parse_error.110] parse error at byte 9: syntax error while parsing BSON cstring: unexpected end of input");
 
-    CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
+        CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
 
-    SaxCountdown scp(0);
-    CHECK(not json::sax_parse(incomplete_bson, &scp, json::input_format_t::bson));
-}
+        SaxCountdown scp(0);
+        CHECK(not json::sax_parse(incomplete_bson, &scp, json::input_format_t::bson));
+    }
 
-TEST_CASE("Incomplete BSON INPUT 2")
-{
-    std::vector<uint8_t> incomplete_bson =
+    SECTION("Incomplete BSON Input 2")
     {
-        0x0D, 0x00, 0x00, 0x00, // size (little endian)
-        0x08,                   // entry: boolean, unexpected EOF
-    };
+        std::vector<uint8_t> incomplete_bson =
+        {
+            0x0D, 0x00, 0x00, 0x00, // size (little endian)
+            0x08,                   // entry: boolean, unexpected EOF
+        };
 
-    CHECK_THROWS_AS(json::from_bson(incomplete_bson), json::parse_error&);
-    CHECK_THROWS_WITH(json::from_bson(incomplete_bson),
-                      "[json.exception.parse_error.110] parse error at byte 6: syntax error while parsing BSON cstring: unexpected end of input");
-    CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
+        CHECK_THROWS_AS(json::from_bson(incomplete_bson), json::parse_error&);
+        CHECK_THROWS_WITH(json::from_bson(incomplete_bson),
+                          "[json.exception.parse_error.110] parse error at byte 6: syntax error while parsing BSON cstring: unexpected end of input");
+        CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
 
-    SaxCountdown scp(0);
-    CHECK(not json::sax_parse(incomplete_bson, &scp, json::input_format_t::bson));
-}
+        SaxCountdown scp(0);
+        CHECK(not json::sax_parse(incomplete_bson, &scp, json::input_format_t::bson));
+    }
 
-
-TEST_CASE("Incomplete BSON INPUT 3")
-{
-    std::vector<uint8_t> incomplete_bson =
+    SECTION("Incomplete BSON Input 3")
     {
-        0x41, 0x00, 0x00, 0x00, // size (little endian)
-        0x04, /// entry: embedded document
-        'e', 'n', 't', 'r', 'y', '\x00',
+        std::vector<uint8_t> incomplete_bson =
+        {
+            0x41, 0x00, 0x00, 0x00, // size (little endian)
+            0x04, /// entry: embedded document
+            'e', 'n', 't', 'r', 'y', '\x00',
 
-        0x35, 0x00, 0x00, 0x00, // size (little endian)
-        0x10, 0x00, 0x01, 0x00, 0x00, 0x00,
-        0x10, 0x00, 0x02, 0x00, 0x00, 0x00
-        // missing input data...
-    };
+            0x35, 0x00, 0x00, 0x00, // size (little endian)
+            0x10, 0x00, 0x01, 0x00, 0x00, 0x00,
+            0x10, 0x00, 0x02, 0x00, 0x00, 0x00
+            // missing input data...
+        };
 
-    CHECK_THROWS_AS(json::from_bson(incomplete_bson), json::parse_error&);
-    CHECK_THROWS_WITH(json::from_bson(incomplete_bson),
-                      "[json.exception.parse_error.110] parse error at byte 28: syntax error while parsing BSON element list: unexpected end of input");
-    CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
+        CHECK_THROWS_AS(json::from_bson(incomplete_bson), json::parse_error&);
+        CHECK_THROWS_WITH(json::from_bson(incomplete_bson),
+                          "[json.exception.parse_error.110] parse error at byte 28: syntax error while parsing BSON element list: unexpected end of input");
+        CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
 
-    SaxCountdown scp(1);
-    CHECK(not json::sax_parse(incomplete_bson, &scp, json::input_format_t::bson));
-}
+        SaxCountdown scp(1);
+        CHECK(not json::sax_parse(incomplete_bson, &scp, json::input_format_t::bson));
+    }
 
-
-
-TEST_CASE("Incomplete BSON INPUT 4")
-{
-    std::vector<uint8_t> incomplete_bson =
+    SECTION("Incomplete BSON Input 4")
     {
-        0x0D, 0x00, // size (incomplete), unexpected EOF
-    };
+        std::vector<uint8_t> incomplete_bson =
+        {
+            0x0D, 0x00, // size (incomplete), unexpected EOF
+        };
 
-    CHECK_THROWS_AS(json::from_bson(incomplete_bson), json::parse_error&);
-    CHECK_THROWS_WITH(json::from_bson(incomplete_bson),
-                      "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing BSON number: unexpected end of input");
-    CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
+        CHECK_THROWS_AS(json::from_bson(incomplete_bson), json::parse_error&);
+        CHECK_THROWS_WITH(json::from_bson(incomplete_bson),
+                          "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing BSON number: unexpected end of input");
+        CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
 
-    SaxCountdown scp(0);
-    CHECK(not json::sax_parse(incomplete_bson, &scp, json::input_format_t::bson));
+        SaxCountdown scp(0);
+        CHECK(not json::sax_parse(incomplete_bson, &scp, json::input_format_t::bson));
+    }
 }
-
 
 TEST_CASE("Unsupported BSON input")
 {
@@ -773,8 +791,6 @@ TEST_CASE("Unsupported BSON input")
     SaxCountdown scp(0);
     CHECK(not json::sax_parse(bson, &scp, json::input_format_t::bson));
 }
-
-
 
 TEST_CASE("BSON numerical data")
 {
@@ -1205,12 +1221,12 @@ TEST_CASE("BSON roundtrips", "[hide]")
                     (std::istreambuf_iterator<char>(f_bson)),
                     std::istreambuf_iterator<char>());
 
-                    SECTION(filename + ": output adapters: std::vector<uint8_t>")
-                    {
-                        std::vector<uint8_t> vec;
-                        json::to_bson(j1, vec);
-                        CHECK(vec == packed);
-                    }
+                SECTION(filename + ": output adapters: std::vector<uint8_t>")
+                {
+                    std::vector<uint8_t> vec;
+                    json::to_bson(j1, vec);
+                    CHECK(vec == packed);
+                }
             }
         }
     }

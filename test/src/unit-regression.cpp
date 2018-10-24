@@ -139,10 +139,10 @@ bool operator==(Data const& lhs, Data const& rhs)
     return lhs.a == rhs.a && lhs.b == rhs.b;
 }
 
-bool operator!=(Data const& lhs, Data const& rhs)
-{
-    return !(lhs == rhs);
-}
+//bool operator!=(Data const& lhs, Data const& rhs)
+//{
+//    return !(lhs == rhs);
+//}
 }
 
 /////////////////////////////////////////////////////////////////////
