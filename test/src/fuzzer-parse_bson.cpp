@@ -33,6 +33,11 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
         std::vector<uint8_t> vec1(data, data + size);
         json j1 = json::from_bson(vec1);
 
+        if (j1.is_discarded())
+        {
+            return 0;
+        }
+
         try
         {
             // step 2: round trip
