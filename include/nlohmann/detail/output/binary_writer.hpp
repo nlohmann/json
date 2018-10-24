@@ -976,14 +976,22 @@ class binary_writer
     {
         switch (j.type())
         {
-            default:
-                JSON_THROW(type_error::create(317, "JSON value of type " + std::to_string(static_cast<std::uint8_t>(j.type())) + " cannot be serialized to requested format"));
-                break;
-            case value_t::discarded:
-                break;
             case value_t::object:
+            {
                 write_bson_object(*j.m_value.object);
                 break;
+            }
+
+            case value_t::discarded:
+            {
+                break;
+            }
+
+            default:
+            {
+                JSON_THROW(type_error::create(317, "to serialize to BSON, top-level type must be object, but is " + std::string(j.type_name())));
+                break;
+            }
         }
     }
 
@@ -1009,7 +1017,7 @@ class binary_writer
         std::memcpy(vec.data(), &n, sizeof(NumberType));
 
         // step 2: write array to output (with possible reordering)
-        if (is_little_endian && !OutputIsLittleEndian)
+        if (is_little_endian and not OutputIsLittleEndian)
         {
             // reverse byte order prior to conversion if necessary
             std::reverse(vec.begin(), vec.end());

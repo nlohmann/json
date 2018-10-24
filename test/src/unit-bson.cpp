@@ -49,7 +49,7 @@ TEST_CASE("BSON")
         {
             json j = nullptr;
             REQUIRE_THROWS_AS(json::to_bson(j), json::type_error&);
-            CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.type_error.317] JSON value of type 0 cannot be serialized to requested format");
+            CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is null");
         }
 
         SECTION("boolean")
@@ -58,14 +58,14 @@ TEST_CASE("BSON")
             {
                 json j = true;
                 REQUIRE_THROWS_AS(json::to_bson(j), json::type_error&);
-                CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.type_error.317] JSON value of type 4 cannot be serialized to requested format");
+                CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is boolean");
             }
 
             SECTION("false")
             {
                 json j = false;
                 REQUIRE_THROWS_AS(json::to_bson(j), json::type_error&);
-                CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.type_error.317] JSON value of type 4 cannot be serialized to requested format");
+                CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is boolean");
             }
         }
 
@@ -73,28 +73,28 @@ TEST_CASE("BSON")
         {
             json j = 42;
             REQUIRE_THROWS_AS(json::to_bson(j), json::type_error&);
-            CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.type_error.317] JSON value of type 5 cannot be serialized to requested format");
+                CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is number");
         }
 
         SECTION("float")
         {
             json j = 4.2;
             REQUIRE_THROWS_AS(json::to_bson(j), json::type_error&);
-            CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.type_error.317] JSON value of type 7 cannot be serialized to requested format");
+                CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is number");
         }
 
         SECTION("string")
         {
             json j = "not supported";
             REQUIRE_THROWS_AS(json::to_bson(j), json::type_error&);
-            CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.type_error.317] JSON value of type 3 cannot be serialized to requested format");
+                CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is string");
         }
 
         SECTION("array")
         {
             json j = std::vector<int> {1, 2, 3, 4, 5, 6, 7};
             REQUIRE_THROWS_AS(json::to_bson(j), json::type_error&);
-            CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.type_error.317] JSON value of type 2 cannot be serialized to requested format");
+                CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is array");
         }
     }
 
@@ -1123,6 +1123,95 @@ TEST_CASE("BSON numerical data")
                 }
             }
 
+        }
+    }
+}
+
+TEST_CASE("BSON roundtrips", "[hide]")
+{
+    SECTION("reference files")
+    {
+        for (std::string filename :
+                {
+                    "test/data/json.org/1.json",
+                    "test/data/json.org/2.json",
+                    "test/data/json.org/3.json",
+                    "test/data/json.org/4.json",
+                    "test/data/json.org/5.json"
+                })
+        {
+            CAPTURE(filename);
+
+            SECTION(filename + ": std::vector<uint8_t>")
+            {
+                // parse JSON file
+                std::ifstream f_json(filename);
+                json j1 = json::parse(f_json);
+
+                // parse BSON file
+                std::ifstream f_bson(filename + ".bson", std::ios::binary);
+                std::vector<uint8_t> packed(
+                    (std::istreambuf_iterator<char>(f_bson)),
+                    std::istreambuf_iterator<char>());
+                json j2;
+                CHECK_NOTHROW(j2 = json::from_bson(packed));
+
+                // compare parsed JSON values
+                CHECK(j1 == j2);
+            }
+
+            SECTION(filename + ": std::ifstream")
+            {
+                // parse JSON file
+                std::ifstream f_json(filename);
+                json j1 = json::parse(f_json);
+
+                // parse BSON file
+                std::ifstream f_bson(filename + ".bson", std::ios::binary);
+                json j2;
+                CHECK_NOTHROW(j2 = json::from_bson(f_bson));
+
+                // compare parsed JSON values
+                CHECK(j1 == j2);
+            }
+
+            SECTION(filename + ": uint8_t* and size")
+            {
+                // parse JSON file
+                std::ifstream f_json(filename);
+                json j1 = json::parse(f_json);
+
+                // parse BSON file
+                std::ifstream f_bson(filename + ".bson", std::ios::binary);
+                std::vector<uint8_t> packed(
+                    (std::istreambuf_iterator<char>(f_bson)),
+                    std::istreambuf_iterator<char>());
+                json j2;
+                CHECK_NOTHROW(j2 = json::from_bson({packed.data(), packed.size()}));
+
+                // compare parsed JSON values
+                CHECK(j1 == j2);
+            }
+
+            SECTION(filename + ": output to output adapters")
+            {
+                // parse JSON file
+                std::ifstream f_json(filename);
+                json j1 = json::parse(f_json);
+
+                // parse BSON file
+                std::ifstream f_bson(filename + ".bson", std::ios::binary);
+                std::vector<uint8_t> packed(
+                    (std::istreambuf_iterator<char>(f_bson)),
+                    std::istreambuf_iterator<char>());
+
+                    SECTION(filename + ": output adapters: std::vector<uint8_t>")
+                    {
+                        std::vector<uint8_t> vec;
+                        json::to_bson(j1, vec);
+                        CHECK(vec == packed);
+                    }
+            }
         }
     }
 }
