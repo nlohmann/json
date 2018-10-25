@@ -463,6 +463,7 @@ class serializer
                             continue;
                         }
                     }
+                    break;
                 }
 
                 default:  // decode found yet incomplete multi-byte code point

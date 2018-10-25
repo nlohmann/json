@@ -6547,13 +6547,13 @@ class binary_reader
             case 0x10: // int32
             {
                 std::int32_t value;
-                return get_number<std::int32_t, true>(input_format_t::bson, value) and sax->number_integer(static_cast<std::int32_t>(value));
+                return get_number<std::int32_t, true>(input_format_t::bson, value) and sax->number_integer(value);
             }
 
             case 0x12: // int64
             {
                 std::int64_t value;
-                return get_number<std::int64_t, true>(input_format_t::bson, value) and sax->number_integer(static_cast<std::int64_t>(value));
+                return get_number<std::int64_t, true>(input_format_t::bson, value) and sax->number_integer(value);
             }
 
             default: // anything else not supported (yet)
@@ -11161,6 +11161,7 @@ class serializer
                             continue;
                         }
                     }
+                    break;
                 }
 
                 default:  // decode found yet incomplete multi-byte code point

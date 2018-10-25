@@ -61,10 +61,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     }
     catch (const json::out_of_range&)
     {
-        // parse errors are ok, because input may be random bytes
-    }
-    catch (const json::out_of_range&)
-    {
         // out of range errors may happen if provided sizes are excessive
     }
 

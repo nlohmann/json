@@ -1013,7 +1013,7 @@ TEST_CASE("BSON numerical data")
                         { "entry", i }
                     };
 
-                    std::uint64_t iu = *reinterpret_cast<std::uint64_t*>(&i);
+                    auto iu = i;
                     std::vector<uint8_t> expected_bson =
                     {
                         0x10u, 0x00u, 0x00u, 0x00u, // size (little endian)
@@ -1068,7 +1068,7 @@ TEST_CASE("BSON numerical data")
                         { "entry", i }
                     };
 
-                    std::uint64_t iu = *reinterpret_cast<std::uint64_t*>(&i);
+                    auto iu = i;
                     std::vector<uint8_t> expected_bson =
                     {
                         0x14u, 0x00u, 0x00u, 0x00u, // size (little endian)
@@ -1118,7 +1118,7 @@ TEST_CASE("BSON numerical data")
                         { "entry", i }
                     };
 
-                    std::uint64_t iu = *reinterpret_cast<std::uint64_t*>(&i);
+                    auto iu = i;
                     std::vector<uint8_t> expected_bson =
                     {
                         0x14u, 0x00u, 0x00u, 0x00u, // size (little endian)
