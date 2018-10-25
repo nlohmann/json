@@ -164,8 +164,26 @@ NLOHMANN_BASIC_JSON_TPL_DECLARATION
 class basic_json
 {
   public:
-	// these definitions should come
-	typedef json_string_view map_key_type;
+    // these definitions should come
+    typedef json_string_view map_key_type;
+
+    template<typename T>
+    static map_key_type to_map_key_(const T& t)
+    {
+        return to_map_key<map_key_type>(t);
+    }
+
+    template<typename T>
+    static map_key_type to_lookup_key_(const T& t)
+    {
+        return to_lookup_key<map_key_type>(t);
+    }
+
+    template<typename T>
+    static StringType to_concatable_string_(const T& t)
+    {
+        return to_concatable_string<StringType>(t);
+    }
 
   private:
     template<detail::value_t> friend struct detail::external_constructor;
@@ -390,7 +408,7 @@ class basic_json
     // on find() and count() calls prevents unnecessary string construction.
     using object_comparator_t = std::less<>;
 #else
-    using object_comparator_t = std::less<StringType>;
+    using object_comparator_t = std::less<map_key_type>;
 #endif
 
     /*!
@@ -479,7 +497,7 @@ class basic_json
     using object_t = ObjectType<map_key_type,
           basic_json,
           object_comparator_t,
-          AllocatorType<std::pair<const StringType,
+          AllocatorType<std::pair<const map_key_type,
           basic_json>>>;
 
     /*!
@@ -1441,7 +1459,7 @@ class basic_json
             {
                 auto element = element_ref.moved_or_copied();
                 m_value.object->emplace(
-                    std::move(to_map_key<typename object_t::key_type>(*((*element.m_value.array)[0].m_value.string))),
+                    std::move(to_map_key_(*((*element.m_value.array)[0].m_value.string))),
                     std::move((*element.m_value.array)[1]));
             });
         }
@@ -2922,6 +2940,13 @@ class basic_json
         }
     }
 
+    // I'm not exactly sure why the compiler doesn't opt for the size_t when proposed x[0]
+    // but for some reason it needs this bit of help
+    reference at(int idx)
+    {
+        return at(static_cast<size_t>(idx));
+    }
+
     /*!
     @brief access specified array element with bounds checking
 
@@ -2969,6 +2994,13 @@ class basic_json
         }
     }
 
+    // I'm not exactly sure why the compiler doesn't opt for the size_t when proposed x[0]
+    // but for some reason it needs this bit of help
+    const_reference at(int idx) const
+    {
+        return at(static_cast<size_t>(idx));
+    }
+
     /*!
     @brief access specified object element with bounds checking
 
@@ -3011,7 +3043,7 @@ class basic_json
             JSON_CATCH (std::out_of_range&)
             {
                 // create better exception explanation
-                JSON_THROW(out_of_range::create(403, "key '" + to_concatable_string(key) + "' not found"));
+                JSON_THROW(out_of_range::create(403, "key '" + to_concatable_string_(key) + "' not found"));
             }
         }
         else
@@ -3019,13 +3051,17 @@ class basic_json
             JSON_THROW(type_error::create(304, "cannot use at() with " + std::string(type_name())));
         }
     }
-	
-	template<typename T>
-    reference at(const T& key_)
-    {
-		auto key = to_lookup_key<typename object_t::key_type>(key_);
-		return at(key);
-    }
+
+    /*
+        // this might be necessary later, not sure
+
+        template<typename T>
+        reference at(const T& key_)
+        {
+            auto key = to_lookup_key(key_);
+            return at(key);
+        }
+    */
 
     /*!
     @brief access specified object element with bounds checking
@@ -3057,7 +3093,7 @@ class basic_json
     `at()`. It also demonstrates the different exceptions that can be thrown.,
     at__object_t_key_type_const}
     */
-	const_reference at(const typename object_t::key_type & key) const
+    const_reference at(const typename object_t::key_type& key) const
     {
         // at only works for objects
         if (JSON_LIKELY(is_object()))
@@ -3069,7 +3105,7 @@ class basic_json
             JSON_CATCH (std::out_of_range&)
             {
                 // create better exception explanation
-                JSON_THROW(out_of_range::create(403, "key '" + to_concatable_string(key) + "' not found"));
+                JSON_THROW(out_of_range::create(403, "key '" + to_concatable_string_(key) + "' not found"));
             }
         }
         else
@@ -3078,12 +3114,16 @@ class basic_json
         }
     }
 
-	template<typename T>
-    const_reference at(const T& key_) const
-    {
-		auto key = to_lookup_key<typename object_t::key_type>(key_);
-		return at(key);
-    }
+    /*
+        // this might be necessary later, not sure
+
+        template<typename T>
+        const_reference at(const T& key_) const
+        {
+            auto key = to_lookup_key(key_);
+            return at(key);
+        }
+    */
 
     /*!
     @brief access specified array element
@@ -3136,12 +3176,14 @@ class basic_json
 
         JSON_THROW(type_error::create(305, "cannot use operator[] with a numeric argument with " + std::string(type_name())));
     }
-	
+
+    // I'm not exactly sure why the compiler doesn't opt for the size_t when proposed x[0]
+    // but for some reason it needs this bit of help
     reference operator[](int idx)
-	{
-		return operator[](size_t(idx));
-	}
-	
+    {
+        return operator[](size_t(idx));
+    }
+
 
     /*!
     @brief access specified array element
@@ -3173,10 +3215,12 @@ class basic_json
         JSON_THROW(type_error::create(305, "cannot use operator[] with a numeric argument with " + std::string(type_name())));
     }
 
+    // I'm not exactly sure why the compiler doesn't opt for the size_t when proposed x[0]
+    // but for some reason it needs this bit of help
     const_reference operator[](int idx) const
-	{
-		return operator[](size_t(idx));
-	}
+    {
+        return operator[](size_t(idx));
+    }
 
     /*!
     @brief access specified object element
@@ -3218,11 +3262,13 @@ class basic_json
         // operator[] only works for objects
         if (JSON_LIKELY(is_object()))
         {
-			auto i = m_value.object->find(key_);
-			if (i != m_value.object->end())
-				return i->second;
-			
-			auto key = to_map_key<typename object_t::key_type>(key_);
+            auto i = m_value.object->find(key_);
+            if (i != m_value.object->end())
+            {
+                return i->second;
+            }
+
+            auto key = to_map_key_(key_);
             return m_value.object->operator[](key);
         }
 
@@ -3298,24 +3344,25 @@ class basic_json
 
     @since version 1.1.0
     */
-	template<typename T>
-    reference operator[](const T &key_)
+    template<typename T>
+    reference operator[](const T& key_)
     {
-		auto key = to_lookup_key<typename object_t::key_type>(key_);
-		return operator[](key);
+        auto key = to_lookup_key_(key_);
+        return operator[](key);
     }
 
-//    reference operator[](const std::string &key_)
-//    {
-//		auto key = to_map_key<typename object_t::key_type>(key_);
-//		return operator[](key);
-//    }
-//
-//    reference operator[](const char *key_)
-//    {
-//		auto key = to_map_key<typename object_t::key_type>(key_);
-//		return operator[](key);
-//    }
+    // might be neccessary later
+    //    reference operator[](const std::string &key_)
+    //    {
+    //      auto key = to_lookup_key_(key_);
+    //      return operator[](key);
+    //    }
+    //
+    //    reference operator[](const char *key_)
+    //    {
+    //      auto key = to_lookup_key_(key_);
+    //      return operator[](key);
+    //    }
 
     /*!
     @brief read-only access specified object element
@@ -3347,24 +3394,25 @@ class basic_json
 
     @since version 1.1.0
     */
-	template<typename T>
-    const_reference operator[](const T &key_) const
+    template<typename T>
+    const_reference operator[](const T& key_) const
     {
-		auto key = to_lookup_key<typename object_t::key_type>(key_);
-		return operator[](key);
+        auto key = to_lookup_key_(key_);
+        return operator[](key);
     }
 
-//    const_reference operator[](const std::string &key_) const
-//    {
-//		auto key = to_map_key<typename object_t::key_type>(key_);
-//		return operator[](key);
-//    }
-//
-//    const_reference operator[](const char *key_) const
-//    {
-//		auto key = to_map_key<typename object_t::key_type>(key_);
-//		return operator[](key);
-//    }
+    // might be necessary later
+    //    const_reference operator[](const std::string &key_) const
+    //    {
+    //      auto key = to_lookup_key_(key_);
+    //      return operator[](key);
+    //    }
+    //
+    //    const_reference operator[](const char *key_) const
+    //    {
+    //      auto key = to_lookup_key_(key_);
+    //      return operator[](key);
+    //    }
 
     /*!
     @brief access specified object element with default value
@@ -3842,7 +3890,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    size_type erase(const typename object_t::key_type & key)
+    size_type erase(const typename object_t::key_type& key)
     {
         // this erase only works for objects
         if (JSON_LIKELY(is_object()))
@@ -3853,24 +3901,27 @@ class basic_json
         JSON_THROW(type_error::create(307, "cannot use erase() with " + std::string(type_name())));
     }
 
-	template<typename T>
-    size_type erase(const T& key_)
-    {
-		auto key = to_map_key<typename object_t::key_type>(key_);
-		return erase(key);
-    }
-
-    void erase(const iterator &key)
-	{
-        // this erase only works for objects
-        if (JSON_LIKELY(is_object()))
+    /*
+        template<typename T>
+        size_type erase(const T& key_)
         {
-            m_value.object->erase(key.m_it.object_iterator);
+            auto key = to_lookup_key(key_);
+            return erase(key);
         }
+    */
+    /*
+        void erase(const iterator& key)
+        {
+            // this erase only works for objects
+            if (JSON_LIKELY(is_object()))
+            {
+                m_value.object->erase(key.m_it.object_iterator);
+            }
 
-        JSON_THROW(type_error::create(307, "cannot use erase() with " + std::string(type_name())));
-	}
-	
+            JSON_THROW(type_error::create(307, "cannot use erase() with " + std::string(type_name())));
+        }
+    */
+
     /*!
     @brief remove element from a JSON array given an index
 
@@ -3915,8 +3966,8 @@ class basic_json
 
     void erase(int idx)
     {
-		erase(static_cast<size_t>(idx));
-	}
+        erase(static_cast<size_t>(idx));
+    }
     /// @}
 
 
@@ -3956,7 +4007,7 @@ class basic_json
 
         if (is_object())
         {
-            result.m_it.object_iterator = m_value.object->find(std::forward<KeyT>(key));
+            result.m_it.object_iterator = m_value.object->find(std::forward<map_key_type>(to_lookup_key_(key)));
         }
 
         return result;
@@ -3973,7 +4024,7 @@ class basic_json
 
         if (is_object())
         {
-            result.m_it.object_iterator = m_value.object->find(std::forward<KeyT>(key));
+            result.m_it.object_iterator = m_value.object->find(std::forward<map_key_type>(to_lookup_key_(key)));
         }
 
         return result;
@@ -4004,7 +4055,7 @@ class basic_json
     size_type count(KeyT&& key) const
     {
         // return 0 for all nonobject types
-        return is_object() ? m_value.object->count(std::forward<KeyT>(key)) : 0;
+        return is_object() ? m_value.object->count(std::forward<map_key_type>(to_lookup_key_(key))) : 0;
     }
 
     /// @}
@@ -4909,7 +4960,7 @@ class basic_json
         {
             basic_json&& key = init.begin()->moved_or_copied();
             push_back(typename object_t::value_type(
-                          std::move(key.get_ref<string_t&>()), (init.begin() + 1)->moved_or_copied()));
+                          std::move(to_map_key_(key.get_ref<string_t&>())), (init.begin() + 1)->moved_or_copied()));
         }
         else
         {
@@ -5014,7 +5065,14 @@ class basic_json
         }
 
         // add element to array (perfect forwarding)
-        auto res = m_value.object->emplace(std::forward<Args>(args)...);
+        std::vector<basic_json> args_ = { args... };
+        // we should check for even numbers of args
+        auto res = m_value.object->emplace(to_map_key_(args_[0]), args_[1]);
+        for (auto i = 2; i < args_.size(); i += 2)
+        {
+            m_value.object->emplace(to_map_key_(args_[i]), args_[i + 1]);
+        }
+
         // create result iterator and set iterator to the result of emplace
         auto it = begin();
         it.m_it.object_iterator = res.first;
@@ -7147,8 +7205,8 @@ class basic_json
     {
         return ptr.get_checked(this);
     }
-	
-	
+
+
     /*!
     @brief remove element from a JSON tree given a pointer
 

@@ -212,7 +212,7 @@ class json_sax_dom_parser
     bool key(string_t& val)
     {
         // add null at given key and store the reference for later
-        object_element = &(ref_stack.back()->m_value.object->operator[](to_map_key<typename object_t::key_type>(val)));
+        object_element = &(ref_stack.back()->m_value.object->operator[](BasicJsonType::to_map_key_(val)));
         return true;
     }
 
@@ -406,7 +406,7 @@ class json_sax_dom_callback_parser
         // add discarded value at given key and store the reference for later
         if (keep and ref_stack.back())
         {
-            object_element = &(ref_stack.back()->m_value.object->operator[](to_map_key<typename object_t::key_type>(val)) = discarded);
+            object_element = &(ref_stack.back()->m_value.object->operator[](BasicJsonType::to_map_key_(val)) = discarded);
         }
 
         return true;

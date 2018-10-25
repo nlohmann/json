@@ -143,7 +143,7 @@ class alt_string
         str_impl.clear();
     }
 
-    const value_type* data()
+    const value_type* data() const
     {
         return str_impl.data();
     }
@@ -154,6 +154,68 @@ class alt_string
     friend bool ::operator<(const char*, const alt_string&);
 };
 
+
+// ---------------------------------
+
+template<typename R> inline R to_map_key(const alt_string& s);
+template<typename R> inline R to_lookup_key(const alt_string& s);
+
+template<>
+inline std::string to_map_key(const alt_string& s)
+{
+    return nlohmann::to_map_key<std::string>(std::string(s.data(), s.size()));
+}
+template<>
+inline nlohmann::json_string_view to_map_key(const alt_string& s)
+{
+    return nlohmann::to_map_key<nlohmann::json_string_view>(std::string(s.data(), s.size()));
+}
+template<>
+inline nlohmann::json_const_char_star to_map_key(const alt_string& s)
+{
+    return nlohmann::to_map_key<nlohmann::json_const_char_star>(std::string(s.data(), s.size()));
+}
+
+template<>
+inline std::string to_lookup_key(const alt_string& s)
+{
+    return to_map_key<std::string>(s);
+}
+
+template<>
+inline nlohmann::json_string_view to_lookup_key(const alt_string& s)
+{
+    return to_map_key<nlohmann::json_string_view>(s);
+}
+
+template<>
+inline nlohmann::json_const_char_star to_lookup_key(const alt_string& s)
+{
+    return to_map_key<nlohmann::json_const_char_star>(s);
+}
+
+// I can't believe this is the right syntax.  It works, but by golly!
+template<>
+inline alt_string nlohmann::to_concatable_string(const std::string& s)
+{
+    return alt_string(s.data(), s.size());
+}
+
+// I can't believe this is the right syntax.  It works, but by golly!
+template<>
+inline alt_string nlohmann::to_concatable_string(const nlohmann::json_string_view& s)
+{
+    return alt_string(s.data(), s.size());
+}
+
+// I can't believe this is the right syntax.  It works, but by golly!
+template<>
+inline alt_string nlohmann::to_concatable_string(const nlohmann::json_const_char_star& s)
+{
+    return alt_string(s.data, strlen(s.data));
+}
+
+// ---------------------------------
 
 using alt_json = nlohmann::basic_json <
                  std::map,

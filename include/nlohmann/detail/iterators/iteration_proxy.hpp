@@ -67,6 +67,7 @@ template<typename IteratorType> class iteration_proxy
         }
 
         /// return key of the iterator
+        // this code is strange, why are returning a std::string & instead of just a std::string
         const std::string& key() const
         {
             assert(anchor.m_object != nullptr);
@@ -86,7 +87,8 @@ template<typename IteratorType> class iteration_proxy
 
                 // use key from the object
                 case value_t::object:
-                    return anchor.key();
+                    array_index_str = anchor.key();
+                    return array_index_str;
 
                 // use an empty key for all primitive types
                 default:

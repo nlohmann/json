@@ -659,9 +659,10 @@ class binary_writer
                 for (const auto& el : *j.m_value.object)
                 {
                     write_number_with_ubjson_prefix(el.first.size(), true);
+                    auto writable = BasicJsonType::to_concatable_string_(el.first);
                     oa->write_characters(
-                        reinterpret_cast<const CharType*>(el.first.c_str()),
-                        el.first.size());
+                        reinterpret_cast<const CharType*>(writable.c_str()),
+                        writable.size());
                     write_ubjson(el.second, use_count, use_type, prefix_required);
                 }
 

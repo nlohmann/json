@@ -20,6 +20,7 @@
 //
 // ------------------------------------------------------------------------
 
+#include <functional>
 
 #ifdef USE_EXPERIMENTAL_STRINGVIEW
 #include <experimental/string_view>
@@ -42,10 +43,27 @@ struct json_string_view
 	json_string_view(const char *data, size_t size) :
 		data_(data), size_(size)
 	{}
+
+	json_string_view(const char *data) :
+		data_(data), size_(strlen(data))
+	{}
 	
 	json_string_view(const std::string &s) :
 		data_(s.c_str()), size_(s.size())
 	{
+	}
+	
+	json_string_view (const json_string_view &rhs) :
+		data_(rhs.data_), size_(rhs.size_)
+	{}
+
+	json_string_view (json_string_view &&rhs) :
+		data_(rhs.data_), size_(rhs.size_)
+	{}
+	
+	const char *data() const
+	{
+		return data_;
 	}
 	
 	size_t size() const
@@ -93,12 +111,50 @@ bool operator <(const json_string_view &l, const json_string_view &r)
 	return ls < rs;
 }
 
+inline
+std::ostream &operator <<(std::ostream &l, const json_string_view &r)
+{
+	return l << std::string(r);
+}
+
+} // namespace
+
+// this is gross, yes I know, it probably shouldn't be done this way, copied from example
+// on the internetz
+namespace std {
+
+template <>
+struct hash<nlohmann::json_string_view>
+{
+	hash<std::string> hasher;
+	
+	size_t operator()(const nlohmann::json_string_view& k_) const
+	{
+		std::string k(k_.data(), k_.size());
+		// Compute individual hash values for two data members and combine them using XOR and bit shifting
+		return hasher(k);
+	}
+};
+
+} // namespace
+
+
 #endif
+
+namespace nlohmann {
 
 // -----------------------
 
+
 struct json_const_char_star {
 	const char *data;
+	
+	json_const_char_star(const char *s);
+	json_const_char_star(const std::string &s);
+	json_const_char_star(const json_const_char_star &rhs) :
+		data(rhs.data) {}
+	json_const_char_star(json_const_char_star &&rhs) :
+		data(rhs.data) {}
 } ;
 
 inline
@@ -120,6 +176,35 @@ bool operator <(const json_const_char_star &l, const json_const_char_star &r)
 	return l.data < r.data;
 }
 
+inline
+std::ostream &operator <<(std::ostream &l, const json_const_char_star &r)
+{
+	return l << std::string(r.data);
+}
+
+} // namespace
+
+// this is gross, yes I know, it probably shouldn't be done this way, copied from example
+// on the internetz
+namespace std {
+
+template <>
+struct hash<nlohmann::json_const_char_star>
+{
+	hash<unsigned long long> hasher;
+	
+	size_t operator()(const nlohmann::json_const_char_star& k) const
+	{
+		// Compute individual hash values for two data members and combine them using XOR and bit shifting
+		return hasher(reinterpret_cast<unsigned long long>(k.data));
+	}
+};
+	
+} // namespace
+
+
+namespace nlohmann {
+
 // -------------------
 
 // why am I having trouble getting rid of this? it must be too late
@@ -135,10 +220,28 @@ template<typename R> inline R to_lookup_key(const json_string_view &s);
 template<typename R> inline R to_lookup_key(const std::string &s);
 template<typename R> inline R to_lookup_key(const json_const_char_star &s);
 
-template<typename T, typename R=std::string>
-inline R to_concatable_string(const T &t)
+template<typename R, typename T> R to_concatable_string(const T &t);
+
+
+template<>
+inline
+std::string to_map_key(const std::string &t)
 {
-	return R(t);
+	return t;
+}
+
+template<>
+inline
+std::string to_lookup_key(const std::string &t)
+{
+	return t;
+}
+
+template<>
+inline
+std::string to_concatable_string(const std::string &t)
+{
+	return t;
 }
 
 // -------------------
@@ -196,11 +299,17 @@ inline json_string_view to_lookup_key(const __stupid_const_char_typedef &s)
 	return json_string_view(s, strlen(s));
 } ;
 
+template<>
+inline
+std::string to_concatable_string(const json_string_view &t)
+{
+	return std::string(t.data(), t.size());
+}
+
 // -----------------------
 
 
-template<>
-inline json_const_char_star to_map_key(const std::string &s)
+inline const char *generate_json_const_char_star(const std::string &s)
 {
 	static std::set<std::string> strings;
 
@@ -213,8 +322,14 @@ inline json_const_char_star to_map_key(const std::string &s)
 		i = strings.find(str);
 	}
 
-	return { i->c_str() };
+	return i->c_str();
 } ;
+
+template<>
+inline json_const_char_star to_map_key(const std::string &s)
+{
+	return json_const_char_star(s);
+}
 
 template<>
 inline json_const_char_star to_map_key(const __stupid_const_char_typedef &s)
@@ -253,5 +368,16 @@ std::string to_concatable_string(const json_const_char_star &t)
 	return std::string(t.data);
 }
 
+// ---------------------------------------
+
+inline json_const_char_star::json_const_char_star(const std::string &s) :
+	data(generate_json_const_char_star(s))
+{
+}
+
+inline json_const_char_star::json_const_char_star(const char *s) :
+	data(generate_json_const_char_star(s))
+{
+}
 
 } // namespace

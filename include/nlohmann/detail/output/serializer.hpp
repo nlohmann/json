@@ -106,7 +106,7 @@ class serializer
                     {
                         o->write_characters(indent_string.c_str(), new_indent);
                         o->write_character('\"');
-                        dump_escaped(to_concatable_string(i->first), ensure_ascii);
+                        dump_escaped(BasicJsonType::to_concatable_string_(i->first), ensure_ascii);
                         o->write_characters("\": ", 3);
                         dump(i->second, true, ensure_ascii, indent_step, new_indent);
                         o->write_characters(",\n", 2);
@@ -117,7 +117,7 @@ class serializer
                     assert(std::next(i) == val.m_value.object->cend());
                     o->write_characters(indent_string.c_str(), new_indent);
                     o->write_character('\"');
-                    dump_escaped(to_concatable_string(i->first), ensure_ascii);
+                    dump_escaped(BasicJsonType::to_concatable_string_(i->first), ensure_ascii);
                     o->write_characters("\": ", 3);
                     dump(i->second, true, ensure_ascii, indent_step, new_indent);
 
@@ -134,7 +134,7 @@ class serializer
                     for (std::size_t cnt = 0; cnt < val.m_value.object->size() - 1; ++cnt, ++i)
                     {
                         o->write_character('\"');
-                        dump_escaped(to_concatable_string(i->first), ensure_ascii);
+                        dump_escaped(BasicJsonType::to_concatable_string_(i->first), ensure_ascii);
                         o->write_characters("\":", 2);
                         dump(i->second, false, ensure_ascii, indent_step, current_indent);
                         o->write_character(',');
@@ -144,7 +144,7 @@ class serializer
                     assert(i != val.m_value.object->cend());
                     assert(std::next(i) == val.m_value.object->cend());
                     o->write_character('\"');
-                    dump_escaped(to_concatable_string(i->first), ensure_ascii);
+                    dump_escaped(BasicJsonType::to_concatable_string_(i->first), ensure_ascii);
                     o->write_characters("\":", 2);
                     dump(i->second, false, ensure_ascii, indent_step, current_indent);
 
