@@ -51,7 +51,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
         }
         catch (const json::parse_error&)
         {
-            // parsing a CBOR serialization must not fail
+            // parsing a BSON serialization must not fail
             assert(false);
         }
     }
