@@ -9010,6 +9010,17 @@ class binary_writer
         return x;
     }
 
+    template < typename InputCharType, typename C = CharType,
+               enable_if_t <
+                   std::is_signed<C>::value and
+                   std::is_signed<char>::value and
+                   std::is_same<char, typename std::remove_cv<InputCharType>::type>::value
+                   > * = nullptr >
+    static constexpr CharType to_char_type(InputCharType x) noexcept
+    {
+        return x;
+    }
+
   private:
     /// whether we can assume little endianess
     const bool is_little_endian = binary_reader<BasicJsonType>::little_endianess();
