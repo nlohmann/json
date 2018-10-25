@@ -1630,6 +1630,7 @@ template<typename IteratorType> class iteration_proxy
         }
 
         /// return key of the iterator
+        // this code is strange, why are returning a std::string & instead of just a std::string
         const std::string& key() const
         {
             assert(anchor.m_object != nullptr);
@@ -1649,7 +1650,8 @@ template<typename IteratorType> class iteration_proxy
 
                 // use key from the object
                 case value_t::object:
-                    return anchor.key();
+                    array_index_str = anchor.key();
+                    return array_index_str;
 
                 // use an empty key for all primitive types
                 default:
@@ -4092,6 +4094,398 @@ struct is_sax_static_asserts
 
 // #include <nlohmann/detail/exceptions.hpp>
 
+// #include <nlohmann/detail/json_string_view.hpp>
+
+
+// ------------------------------------------------------------------------
+// This header, and the associated changes in json.hpp enable string_view and struct { const char * } as a map_key type.
+//
+// Why would you want this?  In my case, I am using millions of json objects, each one uses the same keys.
+// Why use objects at all?  This is a question for another time.
+//
+// In any case, since my keys are known, and finite, I would rather there be a key look-up table, so as to no have a billion copies
+// of "transform" lying around.  I would rather just have one.
+//
+// The differences of string_view and const char * are simple.
+// string_view uses a strcmp in it's core of the map lookup, so there is no performance increase.
+// struct { const char * } uses a pure pointer comparison, so map operations are super fast, and as well, the map should probably be changed
+// into a hash map using the pointers.
+//
+// The draw back of the struct { const char * }, is that, for the full performance, you must cache the correct to_map_key("my_key_value")
+// and use that (so it doesn't need to look up the correct pointer first).  This is trivial to do however, so, the performance increase
+// is great.
+//
+// ------------------------------------------------------------------------
+
+#include <functional>
+
+#ifdef USE_EXPERIMENTAL_STRINGVIEW
+    #include <experimental/string_view>
+#endif
+
+namespace nlohmann
+{
+
+
+#ifdef USE_EXPERIMENTAL_STRINGVIEW
+using json_string_view = std::experimental::string_view;
+#else
+
+// a minimum implementation of string_view
+struct json_string_view
+{
+    const char* data_;
+    size_t size_;
+
+    json_string_view(const char* data, size_t size) :
+        data_(data), size_(size)
+    {}
+
+    json_string_view(const char* data) :
+        data_(data), size_(strlen(data))
+    {}
+
+    json_string_view(const std::string& s) :
+        data_(s.c_str()), size_(s.size())
+    {
+    }
+
+    json_string_view (const json_string_view& rhs) :
+        data_(rhs.data_), size_(rhs.size_)
+    {}
+
+    json_string_view (json_string_view&& rhs) :
+        data_(rhs.data_), size_(rhs.size_)
+    {}
+
+    const char* data() const
+    {
+        return data_;
+    }
+
+    size_t size() const
+    {
+        return size_;
+    }
+
+    operator std::string() const
+    {
+        return std::string(data_, size_);
+    }
+
+    const char* begin() const
+    {
+        return data_;
+    }
+
+    const char* end () const
+    {
+        return data_ + size_;
+    }
+} ;
+
+inline
+bool operator ==(const json_string_view& l, const json_string_view& r)
+{
+    if (l.data_ == r.data_ && l.size_ == r.size_)
+    {
+        return true;
+    }
+
+    return l.size_ == r.size_ && strncmp(l.data_, r.data_, l.size_) == 0;
+}
+
+inline
+bool operator !=(const json_string_view& l, const json_string_view& r)
+{
+    return !(l == r);
+}
+
+inline
+bool operator <(const json_string_view& l, const json_string_view& r)
+{
+    // will implement, i need to look up proper way to do this
+    std::string ls(l);
+    std::string rs(r);
+    return ls < rs;
+}
+
+inline
+std::ostream& operator <<(std::ostream& l, const json_string_view& r)
+{
+    return l << std::string(r);
+}
+
+} // namespace
+
+// this is gross, yes I know, it probably shouldn't be done this way, copied from example
+// on the internetz
+namespace std
+{
+
+template <>
+struct hash<nlohmann::json_string_view>
+{
+    hash<std::string> hasher;
+
+    size_t operator()(const nlohmann::json_string_view& k_) const
+    {
+        std::string k(k_.data(), k_.size());
+        // Compute individual hash values for two data members and combine them using XOR and bit shifting
+        return hasher(k);
+    }
+};
+
+} // namespace
+
+
+#endif
+
+namespace nlohmann
+{
+
+// -----------------------
+
+
+struct json_const_char_star
+{
+    const char* data;
+
+    json_const_char_star(const char* s);
+    json_const_char_star(const std::string& s);
+    json_const_char_star(const json_const_char_star& rhs) :
+        data(rhs.data) {}
+    json_const_char_star(json_const_char_star&& rhs) :
+        data(rhs.data) {}
+} ;
+
+inline
+bool operator ==(const json_const_char_star& l, const json_const_char_star& r)
+{
+    return (l.data == r.data);
+}
+
+inline
+bool operator !=(const json_const_char_star& l, const json_const_char_star& r)
+{
+    return !(l == r);
+}
+
+inline
+bool operator <(const json_const_char_star& l, const json_const_char_star& r)
+{
+    // pure pointer compare
+    return l.data < r.data;
+}
+
+inline
+std::ostream& operator <<(std::ostream& l, const json_const_char_star& r)
+{
+    return l << std::string(r.data);
+}
+
+} // namespace
+
+// this is gross, yes I know, it probably shouldn't be done this way, copied from example
+// on the internetz
+namespace std
+{
+
+template <>
+struct hash<nlohmann::json_const_char_star>
+{
+    hash<unsigned long long> hasher;
+
+    size_t operator()(const nlohmann::json_const_char_star& k) const
+    {
+        // Compute individual hash values for two data members and combine them using XOR and bit shifting
+        return hasher(reinterpret_cast<unsigned long long>(k.data));
+    }
+};
+
+} // namespace
+
+
+namespace nlohmann
+{
+
+// -------------------
+
+// why am I having trouble getting rid of this? it must be too late
+typedef const char* __stupid_const_char_typedef;
+
+template<typename R> inline R to_map_key(const __stupid_const_char_typedef& s);
+template<typename R> inline R to_map_key(const json_string_view& s);
+template<typename R> inline R to_map_key(const std::string& s);
+template<typename R> inline R to_map_key(const json_const_char_star& s);
+
+template<typename R> inline R to_lookup_key(const __stupid_const_char_typedef& s);
+template<typename R> inline R to_lookup_key(const json_string_view& s);
+template<typename R> inline R to_lookup_key(const std::string& s);
+template<typename R> inline R to_lookup_key(const json_const_char_star& s);
+
+template<typename R, typename T> R to_concatable_string(const T& t);
+
+
+template<>
+inline
+std::string to_map_key(const std::string& t)
+{
+    return t;
+}
+
+template<>
+inline
+std::string to_lookup_key(const std::string& t)
+{
+    return t;
+}
+
+template<>
+inline
+std::string to_concatable_string(const std::string& t)
+{
+    return t;
+}
+
+// -------------------
+
+template<>
+inline json_string_view to_map_key(const json_string_view& s)
+{
+    static std::set<std::string> strings;
+    static std::set<json_string_view> internals;
+
+    auto i = internals.find(s);
+    if (i == internals.end())
+    {
+        std::string str(s.begin(), s.end());
+        strings.insert(str);
+
+        auto sv = json_string_view(*strings.find(str));
+
+        internals.insert(sv);
+        return sv;
+    }
+
+    return *i;
+} ;
+
+template<>
+inline json_string_view to_map_key(const std::string& s)
+{
+    return to_map_key<json_string_view>(json_string_view(s));
+} ;
+
+template<>
+inline json_string_view to_map_key(const __stupid_const_char_typedef& s)
+{
+    return to_map_key<json_string_view>(json_string_view(s, strlen(s)));
+}
+
+// -----------------------
+
+template<>
+inline json_string_view to_lookup_key(const json_string_view& s)
+{
+    return s;
+}
+
+template<>
+inline json_string_view to_lookup_key(const std::string& s)
+{
+    return json_string_view(s);
+} ;
+
+template<>
+inline json_string_view to_lookup_key(const __stupid_const_char_typedef& s)
+{
+    return json_string_view(s, strlen(s));
+} ;
+
+template<>
+inline
+std::string to_concatable_string(const json_string_view& t)
+{
+    return std::string(t.data(), t.size());
+}
+
+// -----------------------
+
+
+inline const char* generate_json_const_char_star(const std::string& s)
+{
+    static std::set<std::string> strings;
+
+    auto i = strings.find(s);
+    if (i == strings.end())
+    {
+        std::string str(s);
+        strings.insert(str);
+
+        i = strings.find(str);
+    }
+
+    return i->c_str();
+} ;
+
+template<>
+inline json_const_char_star to_map_key(const std::string& s)
+{
+    return json_const_char_star(s);
+}
+
+template<>
+inline json_const_char_star to_map_key(const __stupid_const_char_typedef& s)
+{
+    return to_map_key<json_const_char_star>(std::string(s));
+}
+
+template<>
+inline json_const_char_star to_map_key(const json_const_char_star& s)
+{
+    return s;
+}
+
+template<>
+inline json_const_char_star to_lookup_key(const std::string& s)
+{
+    return to_map_key<json_const_char_star>(s);
+} ;
+
+template<>
+inline json_const_char_star to_lookup_key(const __stupid_const_char_typedef& s)
+{
+    return to_map_key<json_const_char_star>(s);
+}
+
+template<>
+inline json_const_char_star to_lookup_key(const json_const_char_star& s)
+{
+    return s;
+}
+
+template<>
+inline
+std::string to_concatable_string(const json_const_char_star& t)
+{
+    return std::string(t.data);
+}
+
+// ---------------------------------------
+
+inline json_const_char_star::json_const_char_star(const std::string& s) :
+    data(generate_json_const_char_star(s))
+{
+}
+
+inline json_const_char_star::json_const_char_star(const char* s) :
+    data(generate_json_const_char_star(s))
+{
+}
+
+} // namespace
+
 
 namespace nlohmann
 {
@@ -4107,6 +4501,7 @@ input.
 template<typename BasicJsonType>
 struct json_sax
 {
+    using object_t = typename BasicJsonType::object_t;
     /// type for (signed) integers
     using number_integer_t = typename BasicJsonType::number_integer_t;
     /// type for unsigned integers
@@ -4229,6 +4624,7 @@ template<typename BasicJsonType>
 class json_sax_dom_parser
 {
   public:
+    using object_t = typename BasicJsonType::object_t;
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
@@ -4295,7 +4691,7 @@ class json_sax_dom_parser
     bool key(string_t& val)
     {
         // add null at given key and store the reference for later
-        object_element = &(ref_stack.back()->m_value.object->operator[](val));
+        object_element = &(ref_stack.back()->m_value.object->operator[](BasicJsonType::to_map_key_(val)));
         return true;
     }
 
@@ -4404,6 +4800,7 @@ template<typename BasicJsonType>
 class json_sax_dom_callback_parser
 {
   public:
+    using object_t = typename BasicJsonType::object_t;
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
@@ -4488,7 +4885,7 @@ class json_sax_dom_callback_parser
         // add discarded value at given key and store the reference for later
         if (keep and ref_stack.back())
         {
-            object_element = &(ref_stack.back()->m_value.object->operator[](val) = discarded);
+            object_element = &(ref_stack.back()->m_value.object->operator[](BasicJsonType::to_map_key_(val)) = discarded);
         }
 
         return true;
@@ -4790,6 +5187,8 @@ class json_sax_acceptor
 
 // #include <nlohmann/detail/value_t.hpp>
 
+// #include <nlohmann/detail/json_string_view.hpp>
+
 
 namespace nlohmann
 {
@@ -4807,6 +5206,7 @@ This class implements a recursive decent parser.
 template<typename BasicJsonType>
 class parser
 {
+    using object_t = typename BasicJsonType::object_t;
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
@@ -8704,9 +9104,10 @@ class binary_writer
                 for (const auto& el : *j.m_value.object)
                 {
                     write_number_with_ubjson_prefix(el.first.size(), true);
+                    auto writable = BasicJsonType::to_concatable_string_(el.first);
                     oa->write_characters(
-                        reinterpret_cast<const CharType*>(el.first.c_str()),
-                        el.first.size());
+                        reinterpret_cast<const CharType*>(writable.c_str()),
+                        writable.size());
                     write_ubjson(el.second, use_count, use_type, prefix_required);
                 }
 
@@ -10200,7 +10601,7 @@ class serializer
                     {
                         o->write_characters(indent_string.c_str(), new_indent);
                         o->write_character('\"');
-                        dump_escaped(i->first, ensure_ascii);
+                        dump_escaped(BasicJsonType::to_concatable_string_(i->first), ensure_ascii);
                         o->write_characters("\": ", 3);
                         dump(i->second, true, ensure_ascii, indent_step, new_indent);
                         o->write_characters(",\n", 2);
@@ -10211,7 +10612,7 @@ class serializer
                     assert(std::next(i) == val.m_value.object->cend());
                     o->write_characters(indent_string.c_str(), new_indent);
                     o->write_character('\"');
-                    dump_escaped(i->first, ensure_ascii);
+                    dump_escaped(BasicJsonType::to_concatable_string_(i->first), ensure_ascii);
                     o->write_characters("\": ", 3);
                     dump(i->second, true, ensure_ascii, indent_step, new_indent);
 
@@ -10228,7 +10629,7 @@ class serializer
                     for (std::size_t cnt = 0; cnt < val.m_value.object->size() - 1; ++cnt, ++i)
                     {
                         o->write_character('\"');
-                        dump_escaped(i->first, ensure_ascii);
+                        dump_escaped(BasicJsonType::to_concatable_string_(i->first), ensure_ascii);
                         o->write_characters("\":", 2);
                         dump(i->second, false, ensure_ascii, indent_step, current_indent);
                         o->write_character(',');
@@ -10238,7 +10639,7 @@ class serializer
                     assert(i != val.m_value.object->cend());
                     assert(std::next(i) == val.m_value.object->cend());
                     o->write_character('\"');
-                    dump_escaped(i->first, ensure_ascii);
+                    dump_escaped(BasicJsonType::to_concatable_string_(i->first), ensure_ascii);
                     o->write_characters("\":", 2);
                     dump(i->second, false, ensure_ascii, indent_step, current_indent);
 
@@ -11576,6 +11977,8 @@ class json_pointer
 };
 }  // namespace nlohmann
 
+// #include <nlohmann/detail/json_string_view.hpp>
+
 // #include <nlohmann/adl_serializer.hpp>
 
 
@@ -11722,6 +12125,28 @@ Format](http://rfc7159.net/rfc7159)
 NLOHMANN_BASIC_JSON_TPL_DECLARATION
 class basic_json
 {
+  public:
+    // these definitions should come
+    typedef json_string_view map_key_type;
+
+    template<typename T>
+    static map_key_type to_map_key_(const T& t)
+    {
+        return to_map_key<map_key_type>(t);
+    }
+
+    template<typename T>
+    static map_key_type to_lookup_key_(const T& t)
+    {
+        return to_lookup_key<map_key_type>(t);
+    }
+
+    template<typename T>
+    static StringType to_concatable_string_(const T& t)
+    {
+        return to_concatable_string<StringType>(t);
+    }
+
   private:
     template<detail::value_t> friend struct detail::external_constructor;
     friend ::nlohmann::json_pointer<basic_json>;
@@ -11945,7 +12370,7 @@ class basic_json
     // on find() and count() calls prevents unnecessary string construction.
     using object_comparator_t = std::less<>;
 #else
-    using object_comparator_t = std::less<StringType>;
+    using object_comparator_t = std::less<map_key_type>;
 #endif
 
     /*!
@@ -12031,10 +12456,10 @@ class basic_json
     7159](http://rfc7159.net/rfc7159), because any order implements the
     specified "unordered" nature of JSON objects.
     */
-    using object_t = ObjectType<StringType,
+    using object_t = ObjectType<map_key_type,
           basic_json,
           object_comparator_t,
-          AllocatorType<std::pair<const StringType,
+          AllocatorType<std::pair<const map_key_type,
           basic_json>>>;
 
     /*!
@@ -12996,7 +13421,7 @@ class basic_json
             {
                 auto element = element_ref.moved_or_copied();
                 m_value.object->emplace(
-                    std::move(*((*element.m_value.array)[0].m_value.string)),
+                    std::move(to_map_key_(*((*element.m_value.array)[0].m_value.string))),
                     std::move((*element.m_value.array)[1]));
             });
         }
@@ -14477,6 +14902,13 @@ class basic_json
         }
     }
 
+    // I'm not exactly sure why the compiler doesn't opt for the size_t when proposed x[0]
+    // but for some reason it needs this bit of help
+    reference at(int idx)
+    {
+        return at(static_cast<size_t>(idx));
+    }
+
     /*!
     @brief access specified array element with bounds checking
 
@@ -14524,6 +14956,13 @@ class basic_json
         }
     }
 
+    // I'm not exactly sure why the compiler doesn't opt for the size_t when proposed x[0]
+    // but for some reason it needs this bit of help
+    const_reference at(int idx) const
+    {
+        return at(static_cast<size_t>(idx));
+    }
+
     /*!
     @brief access specified object element with bounds checking
 
@@ -14566,7 +15005,7 @@ class basic_json
             JSON_CATCH (std::out_of_range&)
             {
                 // create better exception explanation
-                JSON_THROW(out_of_range::create(403, "key '" + key + "' not found"));
+                JSON_THROW(out_of_range::create(403, "key '" + to_concatable_string_(key) + "' not found"));
             }
         }
         else
@@ -14574,6 +15013,17 @@ class basic_json
             JSON_THROW(type_error::create(304, "cannot use at() with " + std::string(type_name())));
         }
     }
+
+    /*
+        // this might be necessary later, not sure
+
+        template<typename T>
+        reference at(const T& key_)
+        {
+            auto key = to_lookup_key(key_);
+            return at(key);
+        }
+    */
 
     /*!
     @brief access specified object element with bounds checking
@@ -14617,7 +15067,7 @@ class basic_json
             JSON_CATCH (std::out_of_range&)
             {
                 // create better exception explanation
-                JSON_THROW(out_of_range::create(403, "key '" + key + "' not found"));
+                JSON_THROW(out_of_range::create(403, "key '" + to_concatable_string_(key) + "' not found"));
             }
         }
         else
@@ -14625,6 +15075,17 @@ class basic_json
             JSON_THROW(type_error::create(304, "cannot use at() with " + std::string(type_name())));
         }
     }
+
+    /*
+        // this might be necessary later, not sure
+
+        template<typename T>
+        const_reference at(const T& key_) const
+        {
+            auto key = to_lookup_key(key_);
+            return at(key);
+        }
+    */
 
     /*!
     @brief access specified array element
@@ -14678,6 +15139,14 @@ class basic_json
         JSON_THROW(type_error::create(305, "cannot use operator[] with a numeric argument with " + std::string(type_name())));
     }
 
+    // I'm not exactly sure why the compiler doesn't opt for the size_t when proposed x[0]
+    // but for some reason it needs this bit of help
+    reference operator[](int idx)
+    {
+        return operator[](size_t(idx));
+    }
+
+
     /*!
     @brief access specified array element
 
@@ -14708,6 +15177,13 @@ class basic_json
         JSON_THROW(type_error::create(305, "cannot use operator[] with a numeric argument with " + std::string(type_name())));
     }
 
+    // I'm not exactly sure why the compiler doesn't opt for the size_t when proposed x[0]
+    // but for some reason it needs this bit of help
+    const_reference operator[](int idx) const
+    {
+        return operator[](size_t(idx));
+    }
+
     /*!
     @brief access specified object element
 
@@ -14735,7 +15211,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    reference operator[](const typename object_t::key_type& key)
+    reference operator[](const typename object_t::key_type& key_)
     {
         // implicitly convert null value to an empty object
         if (is_null())
@@ -14748,6 +15224,13 @@ class basic_json
         // operator[] only works for objects
         if (JSON_LIKELY(is_object()))
         {
+            auto i = m_value.object->find(key_);
+            if (i != m_value.object->end())
+            {
+                return i->second;
+            }
+
+            auto key = to_map_key_(key_);
             return m_value.object->operator[](key);
         }
 
@@ -14824,24 +15307,24 @@ class basic_json
     @since version 1.1.0
     */
     template<typename T>
-    reference operator[](T* key)
+    reference operator[](const T& key_)
     {
-        // implicitly convert null to object
-        if (is_null())
-        {
-            m_type = value_t::object;
-            m_value = value_t::object;
-            assert_invariant();
-        }
-
-        // at only works for objects
-        if (JSON_LIKELY(is_object()))
-        {
-            return m_value.object->operator[](key);
-        }
-
-        JSON_THROW(type_error::create(305, "cannot use operator[] with a string argument with " + std::string(type_name())));
+        auto key = to_lookup_key_(key_);
+        return operator[](key);
     }
+
+    // might be neccessary later
+    //    reference operator[](const std::string &key_)
+    //    {
+    //      auto key = to_lookup_key_(key_);
+    //      return operator[](key);
+    //    }
+    //
+    //    reference operator[](const char *key_)
+    //    {
+    //      auto key = to_lookup_key_(key_);
+    //      return operator[](key);
+    //    }
 
     /*!
     @brief read-only access specified object element
@@ -14874,17 +15357,24 @@ class basic_json
     @since version 1.1.0
     */
     template<typename T>
-    const_reference operator[](T* key) const
+    const_reference operator[](const T& key_) const
     {
-        // at only works for objects
-        if (JSON_LIKELY(is_object()))
-        {
-            assert(m_value.object->find(key) != m_value.object->end());
-            return m_value.object->find(key)->second;
-        }
-
-        JSON_THROW(type_error::create(305, "cannot use operator[] with a string argument with " + std::string(type_name())));
+        auto key = to_lookup_key_(key_);
+        return operator[](key);
     }
+
+    // might be necessary later
+    //    const_reference operator[](const std::string &key_) const
+    //    {
+    //      auto key = to_lookup_key_(key_);
+    //      return operator[](key);
+    //    }
+    //
+    //    const_reference operator[](const char *key_) const
+    //    {
+    //      auto key = to_lookup_key_(key_);
+    //      return operator[](key);
+    //    }
 
     /*!
     @brief access specified object element with default value
@@ -15373,6 +15863,27 @@ class basic_json
         JSON_THROW(type_error::create(307, "cannot use erase() with " + std::string(type_name())));
     }
 
+    /*
+        template<typename T>
+        size_type erase(const T& key_)
+        {
+            auto key = to_lookup_key(key_);
+            return erase(key);
+        }
+    */
+    /*
+        void erase(const iterator& key)
+        {
+            // this erase only works for objects
+            if (JSON_LIKELY(is_object()))
+            {
+                m_value.object->erase(key.m_it.object_iterator);
+            }
+
+            JSON_THROW(type_error::create(307, "cannot use erase() with " + std::string(type_name())));
+        }
+    */
+
     /*!
     @brief remove element from a JSON array given an index
 
@@ -15415,6 +15926,10 @@ class basic_json
         }
     }
 
+    void erase(int idx)
+    {
+        erase(static_cast<size_t>(idx));
+    }
     /// @}
 
 
@@ -15454,7 +15969,7 @@ class basic_json
 
         if (is_object())
         {
-            result.m_it.object_iterator = m_value.object->find(std::forward<KeyT>(key));
+            result.m_it.object_iterator = m_value.object->find(std::forward<map_key_type>(to_lookup_key_(key)));
         }
 
         return result;
@@ -15471,7 +15986,7 @@ class basic_json
 
         if (is_object())
         {
-            result.m_it.object_iterator = m_value.object->find(std::forward<KeyT>(key));
+            result.m_it.object_iterator = m_value.object->find(std::forward<map_key_type>(to_lookup_key_(key)));
         }
 
         return result;
@@ -15502,7 +16017,7 @@ class basic_json
     size_type count(KeyT&& key) const
     {
         // return 0 for all nonobject types
-        return is_object() ? m_value.object->count(std::forward<KeyT>(key)) : 0;
+        return is_object() ? m_value.object->count(std::forward<map_key_type>(to_lookup_key_(key))) : 0;
     }
 
     /// @}
@@ -16407,7 +16922,7 @@ class basic_json
         {
             basic_json&& key = init.begin()->moved_or_copied();
             push_back(typename object_t::value_type(
-                          std::move(key.get_ref<string_t&>()), (init.begin() + 1)->moved_or_copied()));
+                          std::move(to_map_key_(key.get_ref<string_t&>())), (init.begin() + 1)->moved_or_copied()));
         }
         else
         {
@@ -16512,7 +17027,14 @@ class basic_json
         }
 
         // add element to array (perfect forwarding)
-        auto res = m_value.object->emplace(std::forward<Args>(args)...);
+        std::vector<basic_json> args_ = { args... };
+        // we should check for even numbers of args
+        auto res = m_value.object->emplace(to_map_key_(args_[0]), args_[1]);
+        for (auto i = 2; i < args_.size(); i += 2)
+        {
+            m_value.object->emplace(to_map_key_(args_[i]), args_[i + 1]);
+        }
+
         // create result iterator and set iterator to the result of emplace
         auto it = begin();
         it.m_it.object_iterator = res.first;
