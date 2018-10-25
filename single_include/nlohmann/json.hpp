@@ -11161,7 +11161,7 @@ class serializer
                             continue;
                         }
                     }
-                    break;
+                    break;  // LCOV_EXCL_LINE
                 }
 
                 default:  // decode found yet incomplete multi-byte code point
