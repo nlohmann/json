@@ -32,6 +32,7 @@ SOFTWARE.
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 #include <fstream>
+#include <sstream>
 
 TEST_CASE("BSON")
 {
@@ -483,19 +484,19 @@ TEST_CASE("BSON")
 
             std::vector<uint8_t> expected =
             {
-                0x41, 0x00, 0x00, 0x00, // size (little endian)
+                0x49, 0x00, 0x00, 0x00, // size (little endian)
                 0x04, /// entry: embedded document
                 'e', 'n', 't', 'r', 'y', '\x00',
 
-                0x35, 0x00, 0x00, 0x00, // size (little endian)
-                0x10, 0x00, 0x01, 0x00, 0x00, 0x00,
-                0x10, 0x00, 0x02, 0x00, 0x00, 0x00,
-                0x10, 0x00, 0x03, 0x00, 0x00, 0x00,
-                0x10, 0x00, 0x04, 0x00, 0x00, 0x00,
-                0x10, 0x00, 0x05, 0x00, 0x00, 0x00,
-                0x10, 0x00, 0x06, 0x00, 0x00, 0x00,
-                0x10, 0x00, 0x07, 0x00, 0x00, 0x00,
-                0x10, 0x00, 0x08, 0x00, 0x00, 0x00,
+                0x3D, 0x00, 0x00, 0x00, // size (little endian)
+                0x10, '0', 0x00, 0x01, 0x00, 0x00, 0x00,
+                0x10, '1', 0x00, 0x02, 0x00, 0x00, 0x00,
+                0x10, '2', 0x00, 0x03, 0x00, 0x00, 0x00,
+                0x10, '3', 0x00, 0x04, 0x00, 0x00, 0x00,
+                0x10, '4', 0x00, 0x05, 0x00, 0x00, 0x00,
+                0x10, '5', 0x00, 0x06, 0x00, 0x00, 0x00,
+                0x10, '6', 0x00, 0x07, 0x00, 0x00, 0x00,
+                0x10, '7', 0x00, 0x08, 0x00, 0x00, 0x00,
                 0x00, // end marker (embedded document)
 
                 0x00 // end marker
@@ -1118,11 +1119,68 @@ TEST_CASE("BSON numerical data")
                         0x00u // end marker
                     };
 
-                    CHECK_THROWS_AS(json::to_bson(j), json::out_of_range&);
+                    CHECK_THROWS_AS(json::to_bson(j), json::out_of_range);
                     CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.out_of_range.407] number overflow serializing " + std::to_string(i));
                 }
             }
 
         }
     }
+}
+
+// use this testcase outside [hide] to run it with Valgrind
+TEST_CASE("Single BSON roundtrip: sample_cstr_keys.json")
+{
+    std::ifstream f_json("test/data/json_testsuite/sample_cstr_keys.json");
+    json j1 = json::parse(f_json);
+
+    {
+        SECTION("std::vector")
+        {
+            auto packed = json::to_bson(j1);
+            json j2 = json::from_bson(packed);
+            CHECK(j1 == j2);
+        }
+
+        SECTION("std::ostringstream")
+        {
+            std::ostringstream ss, ss2;
+            json::to_bson(j1, ss);
+            json j2 = json::from_bson(ss.str());
+            CHECK(j1 == j2);
+        }
+
+        SECTION("std::string")
+        {
+            std::string s;
+            json::to_bson(j1, s);
+            json j2 = json::from_bson(s);
+            CHECK(j1 == j2);
+        }
+
+    }
+
+}
+
+TEST_CASE("BSON FAQ Examples")
+{
+    std::vector<std::uint8_t> bson
+    {
+        0x31, 0x00, 0x00, 0x00,
+        0x04, 'B', 'S', 'O', 'N', 0x00,  // array
+        0x26, 0x00, 0x00, 0x00,  // array size
+        0x02, 0x30, 0x00, // string
+        0x08, 0x00, 0x00, 0x00, 'a', 'w', 'e', 's', 'o', 'm', 'e', 0x00,
+        0x01, 0x31, 0x00, // double
+        0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x14, 0x40,
+        0x10, 0x32, 0x00,  // int32
+        0xc2, 0x07, 0x00, 0x00,
+        0x00,
+        0x00};
+
+    json expected{ {"BSON", json::array({std::string("awesome"), 5.05, 1986})}};
+    json json1 = json::from_bson(bson);
+    CHECK(expected == json1);
+
+    CHECK(bson == json::to_bson(json1));
 }
