@@ -483,19 +483,19 @@ TEST_CASE("BSON")
 
             std::vector<uint8_t> expected =
             {
-                0x41, 0x00, 0x00, 0x00, // size (little endian)
+                0x49, 0x00, 0x00, 0x00, // size (little endian)
                 0x04, /// entry: embedded document
                 'e', 'n', 't', 'r', 'y', '\x00',
 
-                0x35, 0x00, 0x00, 0x00, // size (little endian)
-                0x10, 0x00, 0x01, 0x00, 0x00, 0x00,
-                0x10, 0x00, 0x02, 0x00, 0x00, 0x00,
-                0x10, 0x00, 0x03, 0x00, 0x00, 0x00,
-                0x10, 0x00, 0x04, 0x00, 0x00, 0x00,
-                0x10, 0x00, 0x05, 0x00, 0x00, 0x00,
-                0x10, 0x00, 0x06, 0x00, 0x00, 0x00,
-                0x10, 0x00, 0x07, 0x00, 0x00, 0x00,
-                0x10, 0x00, 0x08, 0x00, 0x00, 0x00,
+                0x3D, 0x00, 0x00, 0x00, // size (little endian)
+                0x10, '0', 0x00, 0x01, 0x00, 0x00, 0x00,
+                0x10, '1', 0x00, 0x02, 0x00, 0x00, 0x00,
+                0x10, '2', 0x00, 0x03, 0x00, 0x00, 0x00,
+                0x10, '3', 0x00, 0x04, 0x00, 0x00, 0x00,
+                0x10, '4', 0x00, 0x05, 0x00, 0x00, 0x00,
+                0x10, '5', 0x00, 0x06, 0x00, 0x00, 0x00,
+                0x10, '6', 0x00, 0x07, 0x00, 0x00, 0x00,
+                0x10, '7', 0x00, 0x08, 0x00, 0x00, 0x00,
                 0x00, // end marker (embedded document)
 
                 0x00 // end marker
@@ -552,6 +552,7 @@ TEST_CASE("BSON")
             CHECK(parsed == expected);
             auto dumped = json::to_bson(parsed);
             CHECK(dumped == input);
+            CHECK(json::from_bson(dumped) == expected);
         }
 
         SECTION("Example 2")
@@ -561,7 +562,7 @@ TEST_CASE("BSON")
             json expected = {{"BSON", {"awesome", 5.05, 1986}}};
             CHECK(parsed == expected);
             auto dumped = json::to_bson(parsed);
-            //CHECK(dumped == input); // see https://github.com/nlohmann/json/pull/1254#issuecomment-432831216
+            CHECK(dumped == input);
             CHECK(json::from_bson(dumped) == expected);
         }
     }
@@ -1225,7 +1226,14 @@ TEST_CASE("BSON roundtrips", "[hide]")
                 {
                     std::vector<uint8_t> vec;
                     json::to_bson(j1, vec);
-                    CHECK(vec == packed);
+
+                    if (vec != packed)
+                    {
+                        // the exact serializations may differ due to the order of
+                        // object keys; in these cases, just compare whether both
+                        // serializations create the same JSON value
+                        CHECK(json::from_bson(vec) == json::from_bson(packed));
+                    }
                 }
             }
         }

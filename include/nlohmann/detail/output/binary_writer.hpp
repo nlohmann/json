@@ -875,10 +875,11 @@ class binary_writer
     static std::size_t calc_bson_array_size(const typename BasicJsonType::array_t& value)
     {
         std::size_t embedded_document_size = 0ul;
+        std::size_t array_index = 0ul;
 
         for (const auto& el : value)
         {
-            embedded_document_size += calc_bson_element_size("", el);
+            embedded_document_size += calc_bson_element_size(std::to_string(array_index++), el);
         }
 
         return sizeof(std::int32_t) + embedded_document_size + 1ul;
@@ -893,9 +894,11 @@ class binary_writer
         write_bson_entry_header(name, 0x04); // array
         write_number<std::int32_t, true>(static_cast<std::int32_t>(calc_bson_array_size(value)));
 
+        std::size_t array_index = 0ul;
+
         for (const auto& el : value)
         {
-            write_bson_element("", el);
+            write_bson_element(std::to_string(array_index++), el);
         }
 
         oa->write_character(static_cast<CharType>(0x00));
