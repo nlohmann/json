@@ -409,17 +409,17 @@ class json_pointer
         // if we get here, it means that no exception was thrown, so therefore the value specified to
         // erase exists
 
-		if (previous)
+        if (previous)
         {
-			// if previous exists, it means that the specified json value was not a root, so, we use the previous
-			// object and erase from it
-			previous->erase(reference_tokens.back());
+            // if previous exists, it means that the specified json value was not a root, so, we use the previous
+            // object and erase from it
+            previous->erase(reference_tokens.back());
         }
         else
         {
-			// else it means the root was referenced, so we nullify it.
-			if (ptr != nullptr)
-				*ptr = {};
+            // else it means the root was referenced, so we nullify it.
+            if (ptr != nullptr)
+                *ptr = {};
         }
     }
 

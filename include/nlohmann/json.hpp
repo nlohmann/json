@@ -7085,8 +7085,8 @@ class basic_json
     {
         return ptr.get_checked(this);
     }
-	
-	
+
+
     /*!
     @brief remove element from a JSON tree given a pointer
 
