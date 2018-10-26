@@ -202,6 +202,37 @@ using json = basic_json<>;
     #define JSON_HAS_CPP_14
 #endif
 
+/*!
+@brief macro to briefly define a mapping between an enum and JSON
+@macro NLOHMANN_JSON_SERIALIZE_ENUM
+@since version 3.4.0
+*/
+#define NLOHMANN_JSON_SERIALIZE_ENUM(ENUM_TYPE, ...)                                           \
+    template<typename BasicJsonType>                                                           \
+    inline void to_json(BasicJsonType& j, const ENUM_TYPE& e)                                  \
+    {                                                                                          \
+        static_assert(std::is_enum<ENUM_TYPE>::value, #ENUM_TYPE " must be an enum!");         \
+        static const std::vector<std::pair<ENUM_TYPE, BasicJsonType>> m = __VA_ARGS__;         \
+        auto it = std::find_if(m.cbegin(), m.cend(),                                           \
+                               [e](const std::pair<ENUM_TYPE, BasicJsonType>& ej_pair) -> bool \
+        {                                                                                      \
+            return ej_pair.first == e;                                                         \
+        });                                                                                    \
+        j = ((it != m.cend()) ? it : m.cbegin())->second;                                      \
+    }                                                                                          \
+    template<typename BasicJsonType>                                                           \
+    inline void from_json(const BasicJsonType& j, ENUM_TYPE& e)                                \
+    {                                                                                          \
+        static_assert(std::is_enum<ENUM_TYPE>::value, #ENUM_TYPE " must be an enum!");         \
+        static const std::vector<std::pair<ENUM_TYPE, BasicJsonType>> m = __VA_ARGS__;         \
+        auto it = std::find_if(m.cbegin(), m.cend(),                                           \
+                               [j](const std::pair<ENUM_TYPE, BasicJsonType>& ej_pair) -> bool \
+        {                                                                                      \
+            return ej_pair.second == j;                                                        \
+        });                                                                                    \
+        e = ((it != m.cend()) ? it : m.cbegin())->first;                                       \
+    }
+
 // Ugly macros to avoid uglier copy-paste when specializing basic_json. They
 // may be removed in the future once the class is split.
 
