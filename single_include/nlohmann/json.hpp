@@ -11158,10 +11158,10 @@ class serializer
 
                             // continue processing the string
                             state = UTF8_ACCEPT;
-                            continue;
+                            break;
                         }
                     }
-                    break;  // LCOV_EXCL_LINE
+                    break;
                 }
 
                 default:  // decode found yet incomplete multi-byte code point
