@@ -8336,7 +8336,6 @@ class binary_writer
             default:
             {
                 JSON_THROW(type_error::create(317, "to serialize to BSON, top-level type must be object, but is " + std::string(j.type_name())));
-                break;
             }
         }
     }
