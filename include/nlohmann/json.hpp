@@ -7092,7 +7092,7 @@ class basic_json
 
     Removes elements from a JSON tree with the pointer value @ptr
 
-    @param[in] pointer value of the elements to remove
+    @param[in] ptr pointer to the value to remove
 
     @post References and iterators to the erased elements are invalidated.
     Other references and iterators are not affected.
