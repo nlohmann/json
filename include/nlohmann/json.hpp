@@ -7116,7 +7116,7 @@ class basic_json
     @throw out_of_range.404 if the JSON pointer @a ptr can not be resolved.
     See example below.
 
-    @complexity
+    @complexity Logarithmic.
 
     @since version
     */
