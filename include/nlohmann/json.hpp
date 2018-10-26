@@ -7090,7 +7090,7 @@ class basic_json
     /*!
     @brief remove element from a JSON tree given a pointer
 
-    Removes elements from a JSON tree with the pointer value @ptr
+    Removes elements from a JSON tree with the pointer value @a ptr
 
     @param[in] ptr pointer to the value to remove
 
