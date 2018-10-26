@@ -7118,7 +7118,7 @@ class basic_json
 
     @complexity Logarithmic.
 
-    @since version
+    @since version 3.4.0
     */
     void erase(const json_pointer& ptr)
     {
