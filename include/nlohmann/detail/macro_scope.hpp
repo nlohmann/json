@@ -97,25 +97,25 @@
     inline void to_json(BasicJsonType& j, const ENUM_TYPE& e)                                  \
     {                                                                                          \
         static_assert(std::is_enum<ENUM_TYPE>::value, #ENUM_TYPE " must be an enum!");         \
-        static const std::vector<std::pair<ENUM_TYPE, BasicJsonType>> m = __VA_ARGS__;         \
-        auto it = std::find_if(m.cbegin(), m.cend(),                                           \
+        static const std::pair<ENUM_TYPE, BasicJsonType> m[] = __VA_ARGS__;                    \
+        auto it = std::find_if(std::begin(m), std::end(m),                                     \
                                [e](const std::pair<ENUM_TYPE, BasicJsonType>& ej_pair) -> bool \
         {                                                                                      \
             return ej_pair.first == e;                                                         \
         });                                                                                    \
-        j = ((it != m.cend()) ? it : m.cbegin())->second;                                      \
+        j = ((it != std::end(m)) ? it : std::begin(m))->second;                                \
     }                                                                                          \
     template<typename BasicJsonType>                                                           \
     inline void from_json(const BasicJsonType& j, ENUM_TYPE& e)                                \
     {                                                                                          \
         static_assert(std::is_enum<ENUM_TYPE>::value, #ENUM_TYPE " must be an enum!");         \
-        static const std::vector<std::pair<ENUM_TYPE, BasicJsonType>> m = __VA_ARGS__;         \
-        auto it = std::find_if(m.cbegin(), m.cend(),                                           \
+        static const std::pair<ENUM_TYPE, BasicJsonType> m[] = __VA_ARGS__;                    \
+        auto it = std::find_if(std::begin(m), std::end(m),                                     \
                                [j](const std::pair<ENUM_TYPE, BasicJsonType>& ej_pair) -> bool \
         {                                                                                      \
             return ej_pair.second == j;                                                        \
         });                                                                                    \
-        e = ((it != m.cend()) ? it : m.cbegin())->first;                                       \
+        e = ((it != std::end(m)) ? it : std::begin(m))->first;                                 \
     }
 
 // Ugly macros to avoid uglier copy-paste when specializing basic_json. They
