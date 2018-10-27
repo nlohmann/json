@@ -28,7 +28,7 @@
   - [Implicit conversions](#implicit-conversions)
   - [Conversions to/from arbitrary types](#arbitrary-types-conversions)
   - [Specializing enum conversion](#specializing-enum-conversion)
-  - [Binary formats (CBOR, MessagePack, and UBJSON)](#binary-formats-cbor-messagepack-and-ubjson)
+  - [Binary formats (BSON, CBOR, MessagePack, and UBJSON)](#binary-formats-bson-cbor-messagepack-and-ubjson)
 - [Supported compilers](#supported-compilers)
 - [License](#license)
 - [Contact](#contact)
@@ -925,13 +925,21 @@ Other Important points:
 - When using `get<ENUM_TYPE>()`, undefined JSON values will default to the first pair specified in your map. Select this default pair carefully.
 - If an enum or JSON value is specified more than once in your map, the first matching occurrence from the top of the map will be returned when converting to or from JSON.
 
-### Binary formats (CBOR, MessagePack, and UBJSON)
+### Binary formats (BSON, CBOR, MessagePack, and UBJSON
 
-Though JSON is a ubiquitous data format, it is not a very compact format suitable for data exchange, for instance over a network. Hence, the library supports [CBOR](http://cbor.io) (Concise Binary Object Representation), [MessagePack](http://msgpack.org), and [UBJSON](http://ubjson.org) (Universal Binary JSON Specification) to efficiently encode JSON values to byte vectors and to decode such vectors.
+Though JSON is a ubiquitous data format, it is not a very compact format suitable for data exchange, for instance over a network. Hence, the library supports [BSON](http://bsonspec.org) (Binary JSON), [CBOR](http://cbor.io) (Concise Binary Object Representation), [MessagePack](http://msgpack.org), and [UBJSON](http://ubjson.org) (Universal Binary JSON Specification) to efficiently encode JSON values to byte vectors and to decode such vectors.
 
 ```cpp
 // create a JSON value
 json j = R"({"compact": true, "schema": 0})"_json;
+
+// serialize to BSON
+std::vector<std::uint8_t> v_bson = json::to_bson(j);
+
+// 0x1B, 0x00, 0x00, 0x00, 0x08, 0x63, 0x6F, 0x6D, 0x70, 0x61, 0x63, 0x74, 0x00, 0x01, 0x10, 0x73, 0x63, 0x68, 0x65, 0x6D, 0x61, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+
+// roundtrip
+json j_from_bson = json::from_bson(v_bson);
 
 // serialize to CBOR
 std::vector<std::uint8_t> v_cbor = json::to_cbor(j);
@@ -1190,6 +1198,8 @@ I deeply appreciate the help of the following people.
 - [knilch](https://github.com/knilch0r) made sure the test suite does not stall when run in the wrong directory.
 - [Antonio Borondo](https://github.com/antonioborondo) fixed an MSVC 2017 warning.
 - [Dan Gendreau](https://github.com/dgendreau) implemented the `NLOHMANN_JSON_SERIALIZE_ENUM` macro to quickly define a enum/JSON mapping.
+- [efp](https://github.com/efp) added line and column information to parse errors.
+- [julian-becker](https://github.com/julian-becker) added BSON support.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 

@@ -460,9 +460,10 @@ class serializer
 
                             // continue processing the string
                             state = UTF8_ACCEPT;
-                            continue;
+                            break;
                         }
                     }
+                    break;
                 }
 
                 default:  // decode found yet incomplete multi-byte code point

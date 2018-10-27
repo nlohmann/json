@@ -584,13 +584,13 @@ struct is_constructible_object_type_impl <
     static constexpr bool value =
         std::is_constructible<typename ConstructibleObjectType::key_type,
         typename object_t::key_type>::value and
-        std::is_same<typename object_t::mapped_type,
-        typename ConstructibleObjectType::mapped_type>::value or
-        (has_from_json<BasicJsonType,
+        (std::is_same<typename object_t::mapped_type,
          typename ConstructibleObjectType::mapped_type>::value or
-         has_non_default_from_json <
-         BasicJsonType,
-         typename ConstructibleObjectType::mapped_type >::value);
+         (has_from_json<BasicJsonType,
+          typename ConstructibleObjectType::mapped_type>::value or
+          has_non_default_from_json <
+          BasicJsonType,
+          typename ConstructibleObjectType::mapped_type >::value));
 };
 
 template <typename BasicJsonType, typename ConstructibleObjectType>
@@ -866,6 +866,7 @@ json.exception.parse_error.109 | parse error: array index 'one' is not a number 
 json.exception.parse_error.110 | parse error at 1: cannot read 2 bytes from vector | When parsing CBOR or MessagePack, the byte vector ends before the complete value has been read.
 json.exception.parse_error.112 | parse error at 1: error reading CBOR; last byte: 0xF8 | Not all types of CBOR or MessagePack are supported. This exception occurs if an unsupported byte was read.
 json.exception.parse_error.113 | parse error at 2: expected a CBOR string; last byte: 0x98 | While parsing a map key, a value that is not a string has been read.
+json.exception.parse_error.114 | parse error: Unsupported BSON record type 0x0F | The parsing of the corresponding BSON record type is not implemented (yet).
 
 @note For an input with n bytes, 1 is the index of the first character and n+1
       is the index of the terminating null byte or the end of file. This also
@@ -1009,6 +1010,7 @@ json.exception.type_error.313 | invalid value to unflatten | The @ref unflatten 
 json.exception.type_error.314 | only objects can be unflattened | The @ref unflatten function only works for an object whose keys are JSON Pointers.
 json.exception.type_error.315 | values in object must be primitive | The @ref unflatten function only works for an object whose keys are JSON Pointers and whose values are primitive.
 json.exception.type_error.316 | invalid UTF-8 byte at index 10: 0x7E | The @ref dump function only works with UTF-8 encoded strings; that is, if you assign a `std::string` to a JSON value, make sure it is UTF-8 encoded. |
+json.exception.type_error.317 | JSON value cannot be serialized to requested format | The dynamic type of the object cannot be represented in the requested serialization format (e.g. a raw `true` or `null` JSON object cannot be serialized to BSON) |
 
 @liveexample{The following code shows how a `type_error` exception can be
 caught.,type_error}
@@ -1051,8 +1053,9 @@ json.exception.out_of_range.403 | key 'foo' not found | The provided key was not
 json.exception.out_of_range.404 | unresolved reference token 'foo' | A reference token in a JSON Pointer could not be resolved.
 json.exception.out_of_range.405 | JSON pointer has no parent | The JSON Patch operations 'remove' and 'add' can not be applied to the root element of the JSON value.
 json.exception.out_of_range.406 | number overflow parsing '10E1000' | A parsed number could not be stored as without changing it to NaN or INF.
-json.exception.out_of_range.407 | number overflow serializing '9223372036854775808' | UBJSON only supports integers numbers up to 9223372036854775807. |
+json.exception.out_of_range.407 | number overflow serializing '9223372036854775808' | UBJSON and BSON only support integer numbers up to 9223372036854775807. |
 json.exception.out_of_range.408 | excessive array size: 8658170730974374167 | The size (following `#`) of an UBJSON array or object exceeds the maximal capacity. |
+json.exception.out_of_range.409 | BSON key cannot contain code point U+0000 (at byte 2) | Key identifiers to be serialized to BSON cannot contain code point U+0000, since the key is stored as zero-terminated c-string |
 
 @liveexample{The following code shows how an `out_of_range` exception can be
 caught.,out_of_range}
@@ -2069,7 +2072,7 @@ namespace nlohmann
 namespace detail
 {
 /// the supported input formats
-enum class input_format_t { json, cbor, msgpack, ubjson };
+enum class input_format_t { json, cbor, msgpack, ubjson, bson };
 
 ////////////////////
 // input adapters //
@@ -6409,6 +6412,10 @@ class binary_reader
                 result = parse_ubjson_internal();
                 break;
 
+            case input_format_t::bson:
+                result = parse_bson_internal();
+                break;
+
             // LCOV_EXCL_START
             default:
                 assert(false);
@@ -6450,6 +6457,216 @@ class binary_reader
     }
 
   private:
+    //////////
+    // BSON //
+    //////////
+
+    /*!
+    @brief Reads in a BSON-object and passes it to the SAX-parser.
+    @return whether a valid BSON-value was passed to the SAX parser
+    */
+    bool parse_bson_internal()
+    {
+        std::int32_t documentSize;
+        get_number<std::int32_t, true>(input_format_t::bson, documentSize);
+
+        if (JSON_UNLIKELY(not sax->start_object(std::size_t(-1))))
+        {
+            return false;
+        }
+
+        if (JSON_UNLIKELY(not parse_bson_element_list(/*is_array*/false)))
+        {
+            return false;
+        }
+
+        return sax->end_object();
+    }
+
+    /*!
+    @brief Parses a C-style string from the BSON input.
+    @param[in, out] result  A reference to the string variable where the read
+                            string is to be stored.
+    @return `true` if the \x00-byte indicating the end of the string was
+             encountered before the EOF; false` indicates an unexpected EOF.
+    */
+    bool get_bson_cstr(string_t& result)
+    {
+        auto out = std::back_inserter(result);
+        while (true)
+        {
+            get();
+            if (JSON_UNLIKELY(not unexpect_eof(input_format_t::bson, "cstring")))
+            {
+                return false;
+            }
+            if (current == 0x00)
+            {
+                return true;
+            }
+            *out++ = static_cast<char>(current);
+        }
+
+        return true;
+    }
+
+    /*!
+    @brief Parses a zero-terminated string of length @a len from the BSON
+           input.
+    @param[in] len  The length (including the zero-byte at the end) of the
+                    string to be read.
+    @param[in, out] result  A reference to the string variable where the read
+                            string is to be stored.
+    @tparam NumberType The type of the length @a len
+    @pre len > 0
+    @return `true` if the string was successfully parsed
+    */
+    template<typename NumberType>
+    bool get_bson_string(const NumberType len, string_t& result)
+    {
+        return get_string(input_format_t::bson, len - static_cast<NumberType>(1), result) and get() != std::char_traits<char>::eof();
+    }
+
+    /*!
+    @brief Read a BSON document element of the given @a element_type.
+    @param[in] element_type The BSON element type, c.f. http://bsonspec.org/spec.html
+    @param[in] element_type_parse_position The position in the input stream,
+               where the `element_type` was read.
+    @warning Not all BSON element types are supported yet. An unsupported
+             @a element_type will give rise to a parse_error.114:
+             Unsupported BSON record type 0x...
+    @return whether a valid BSON-object/array was passed to the SAX parser
+    */
+    bool parse_bson_element_internal(const int element_type,
+                                     const std::size_t element_type_parse_position)
+    {
+        switch (element_type)
+        {
+            case 0x01: // double
+            {
+                double number;
+                return get_number<double, true>(input_format_t::bson, number) and sax->number_float(static_cast<number_float_t>(number), "");
+            }
+
+            case 0x02: // string
+            {
+                std::int32_t len;
+                string_t value;
+                return get_number<std::int32_t, true>(input_format_t::bson, len) and get_bson_string(len, value) and sax->string(value);
+            }
+
+            case 0x03: // object
+            {
+                return parse_bson_internal();
+            }
+
+            case 0x04: // array
+            {
+                return parse_bson_array();
+            }
+
+            case 0x08: // boolean
+            {
+                return sax->boolean(static_cast<bool>(get()));
+            }
+
+            case 0x0A: // null
+            {
+                return sax->null();
+            }
+
+            case 0x10: // int32
+            {
+                std::int32_t value;
+                return get_number<std::int32_t, true>(input_format_t::bson, value) and sax->number_integer(value);
+            }
+
+            case 0x12: // int64
+            {
+                std::int64_t value;
+                return get_number<std::int64_t, true>(input_format_t::bson, value) and sax->number_integer(value);
+            }
+
+            default: // anything else not supported (yet)
+            {
+                char cr[3];
+                snprintf(cr, sizeof(cr), "%.2hhX", static_cast<unsigned char>(element_type));
+                return sax->parse_error(element_type_parse_position, std::string(cr), parse_error::create(114, element_type_parse_position, "Unsupported BSON record type 0x" + std::string(cr)));
+            }
+        }
+    }
+
+    /*!
+    @brief Read a BSON element list (as specified in the BSON-spec)
+
+    The same binary layout is used for objects and arrays, hence it must be
+    indicated with the argument @a is_array which one is expected
+    (true --> array, false --> object).
+
+    @param[in] is_array Determines if the element list being read is to be
+                        treated as an object (@a is_array == false), or as an
+                        array (@a is_array == true).
+    @return whether a valid BSON-object/array was passed to the SAX parser
+    */
+    bool parse_bson_element_list(const bool is_array)
+    {
+        string_t key;
+        while (int element_type = get())
+        {
+            if (JSON_UNLIKELY(not unexpect_eof(input_format_t::bson, "element list")))
+            {
+                return false;
+            }
+
+            const std::size_t element_type_parse_position = chars_read;
+            if (JSON_UNLIKELY(not get_bson_cstr(key)))
+            {
+                return false;
+            }
+
+            if (not is_array)
+            {
+                sax->key(key);
+            }
+
+            if (JSON_UNLIKELY(not parse_bson_element_internal(element_type, element_type_parse_position)))
+            {
+                return false;
+            }
+
+            // get_bson_cstr only appends
+            key.clear();
+        }
+
+        return true;
+    }
+
+    /*!
+    @brief Reads an array from the BSON input and passes it to the SAX-parser.
+    @return whether a valid BSON-array was passed to the SAX parser
+    */
+    bool parse_bson_array()
+    {
+        std::int32_t documentSize;
+        get_number<std::int32_t, true>(input_format_t::bson, documentSize);
+
+        if (JSON_UNLIKELY(not sax->start_array(std::size_t(-1))))
+        {
+            return false;
+        }
+
+        if (JSON_UNLIKELY(not parse_bson_element_list(/*is_array*/true)))
+        {
+            return false;
+        }
+
+        return sax->end_array();
+    }
+
+    //////////
+    // CBOR //
+    //////////
+
     /*!
     @param[in] get_char  whether a new character should be retrieved from the
                          input (true, default) or whether the last read
@@ -6787,6 +7004,191 @@ class binary_reader
             }
         }
     }
+
+    /*!
+    @brief reads a CBOR string
+
+    This function first reads starting bytes to determine the expected
+    string length and then copies this number of bytes into a string.
+    Additionally, CBOR's strings with indefinite lengths are supported.
+
+    @param[out] result  created string
+
+    @return whether string creation completed
+    */
+    bool get_cbor_string(string_t& result)
+    {
+        if (JSON_UNLIKELY(not unexpect_eof(input_format_t::cbor, "string")))
+        {
+            return false;
+        }
+
+        switch (current)
+        {
+            // UTF-8 string (0x00..0x17 bytes follow)
+            case 0x60:
+            case 0x61:
+            case 0x62:
+            case 0x63:
+            case 0x64:
+            case 0x65:
+            case 0x66:
+            case 0x67:
+            case 0x68:
+            case 0x69:
+            case 0x6A:
+            case 0x6B:
+            case 0x6C:
+            case 0x6D:
+            case 0x6E:
+            case 0x6F:
+            case 0x70:
+            case 0x71:
+            case 0x72:
+            case 0x73:
+            case 0x74:
+            case 0x75:
+            case 0x76:
+            case 0x77:
+            {
+                return get_string(input_format_t::cbor, current & 0x1F, result);
+            }
+
+            case 0x78: // UTF-8 string (one-byte uint8_t for n follows)
+            {
+                uint8_t len;
+                return get_number(input_format_t::cbor, len) and get_string(input_format_t::cbor, len, result);
+            }
+
+            case 0x79: // UTF-8 string (two-byte uint16_t for n follow)
+            {
+                uint16_t len;
+                return get_number(input_format_t::cbor, len) and get_string(input_format_t::cbor, len, result);
+            }
+
+            case 0x7A: // UTF-8 string (four-byte uint32_t for n follow)
+            {
+                uint32_t len;
+                return get_number(input_format_t::cbor, len) and get_string(input_format_t::cbor, len, result);
+            }
+
+            case 0x7B: // UTF-8 string (eight-byte uint64_t for n follow)
+            {
+                uint64_t len;
+                return get_number(input_format_t::cbor, len) and get_string(input_format_t::cbor, len, result);
+            }
+
+            case 0x7F: // UTF-8 string (indefinite length)
+            {
+                while (get() != 0xFF)
+                {
+                    string_t chunk;
+                    if (not get_cbor_string(chunk))
+                    {
+                        return false;
+                    }
+                    result.append(chunk);
+                }
+                return true;
+            }
+
+            default:
+            {
+                auto last_token = get_token_string();
+                return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format_t::cbor, "expected length specification (0x60-0x7B) or indefinite string type (0x7F); last byte: 0x" + last_token, "string")));
+            }
+        }
+    }
+
+    /*!
+    @param[in] len  the length of the array or std::size_t(-1) for an
+                    array of indefinite size
+    @return whether array creation completed
+    */
+    bool get_cbor_array(const std::size_t len)
+    {
+        if (JSON_UNLIKELY(not sax->start_array(len)))
+        {
+            return false;
+        }
+
+        if (len != std::size_t(-1))
+        {
+            for (std::size_t i = 0; i < len; ++i)
+            {
+                if (JSON_UNLIKELY(not parse_cbor_internal()))
+                {
+                    return false;
+                }
+            }
+        }
+        else
+        {
+            while (get() != 0xFF)
+            {
+                if (JSON_UNLIKELY(not parse_cbor_internal(false)))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return sax->end_array();
+    }
+
+    /*!
+    @param[in] len  the length of the object or std::size_t(-1) for an
+                    object of indefinite size
+    @return whether object creation completed
+    */
+    bool get_cbor_object(const std::size_t len)
+    {
+        if (not JSON_UNLIKELY(sax->start_object(len)))
+        {
+            return false;
+        }
+
+        string_t key;
+        if (len != std::size_t(-1))
+        {
+            for (std::size_t i = 0; i < len; ++i)
+            {
+                get();
+                if (JSON_UNLIKELY(not get_cbor_string(key) or not sax->key(key)))
+                {
+                    return false;
+                }
+
+                if (JSON_UNLIKELY(not parse_cbor_internal()))
+                {
+                    return false;
+                }
+                key.clear();
+            }
+        }
+        else
+        {
+            while (get() != 0xFF)
+            {
+                if (JSON_UNLIKELY(not get_cbor_string(key) or not sax->key(key)))
+                {
+                    return false;
+                }
+
+                if (JSON_UNLIKELY(not parse_cbor_internal()))
+                {
+                    return false;
+                }
+                key.clear();
+            }
+        }
+
+        return sax->end_object();
+    }
+
+    /////////////
+    // MsgPack //
+    /////////////
 
     /*!
     @return whether a valid MessagePack value was passed to the SAX parser
@@ -7151,300 +7553,6 @@ class binary_reader
     }
 
     /*!
-    @param[in] get_char  whether a new character should be retrieved from the
-                         input (true, default) or whether the last read
-                         character should be considered instead
-
-    @return whether a valid UBJSON value was passed to the SAX parser
-    */
-    bool parse_ubjson_internal(const bool get_char = true)
-    {
-        return get_ubjson_value(get_char ? get_ignore_noop() : current);
-    }
-
-    /*!
-    @brief get next character from the input
-
-    This function provides the interface to the used input adapter. It does
-    not throw in case the input reached EOF, but returns a -'ve valued
-    `std::char_traits<char>::eof()` in that case.
-
-    @return character read from the input
-    */
-    int get()
-    {
-        ++chars_read;
-        return (current = ia->get_character());
-    }
-
-    /*!
-    @return character read from the input after ignoring all 'N' entries
-    */
-    int get_ignore_noop()
-    {
-        do
-        {
-            get();
-        }
-        while (current == 'N');
-
-        return current;
-    }
-
-    /*
-    @brief read a number from the input
-
-    @tparam NumberType the type of the number
-    @param[in] format   the current format (for diagnostics)
-    @param[out] result  number of type @a NumberType
-
-    @return whether conversion completed
-
-    @note This function needs to respect the system's endianess, because
-          bytes in CBOR, MessagePack, and UBJSON are stored in network order
-          (big endian) and therefore need reordering on little endian systems.
-    */
-    template<typename NumberType>
-    bool get_number(const input_format_t format, NumberType& result)
-    {
-        // step 1: read input into array with system's byte order
-        std::array<uint8_t, sizeof(NumberType)> vec;
-        for (std::size_t i = 0; i < sizeof(NumberType); ++i)
-        {
-            get();
-            if (JSON_UNLIKELY(not unexpect_eof(format, "number")))
-            {
-                return false;
-            }
-
-            // reverse byte order prior to conversion if necessary
-            if (is_little_endian)
-            {
-                vec[sizeof(NumberType) - i - 1] = static_cast<uint8_t>(current);
-            }
-            else
-            {
-                vec[i] = static_cast<uint8_t>(current); // LCOV_EXCL_LINE
-            }
-        }
-
-        // step 2: convert array into number of type T and return
-        std::memcpy(&result, vec.data(), sizeof(NumberType));
-        return true;
-    }
-
-    /*!
-    @brief create a string by reading characters from the input
-
-    @tparam NumberType the type of the number
-    @param[in] format the current format (for diagnostics)
-    @param[in] len number of characters to read
-    @param[out] result string created by reading @a len bytes
-
-    @return whether string creation completed
-
-    @note We can not reserve @a len bytes for the result, because @a len
-          may be too large. Usually, @ref unexpect_eof() detects the end of
-          the input before we run out of string memory.
-    */
-    template<typename NumberType>
-    bool get_string(const input_format_t format, const NumberType len, string_t& result)
-    {
-        bool success = true;
-        std::generate_n(std::back_inserter(result), len, [this, &success, &format]()
-        {
-            get();
-            if (JSON_UNLIKELY(not unexpect_eof(format, "string")))
-            {
-                success = false;
-            }
-            return static_cast<char>(current);
-        });
-        return success;
-    }
-
-    /*!
-    @brief reads a CBOR string
-
-    This function first reads starting bytes to determine the expected
-    string length and then copies this number of bytes into a string.
-    Additionally, CBOR's strings with indefinite lengths are supported.
-
-    @param[out] result  created string
-
-    @return whether string creation completed
-    */
-    bool get_cbor_string(string_t& result)
-    {
-        if (JSON_UNLIKELY(not unexpect_eof(input_format_t::cbor, "string")))
-        {
-            return false;
-        }
-
-        switch (current)
-        {
-            // UTF-8 string (0x00..0x17 bytes follow)
-            case 0x60:
-            case 0x61:
-            case 0x62:
-            case 0x63:
-            case 0x64:
-            case 0x65:
-            case 0x66:
-            case 0x67:
-            case 0x68:
-            case 0x69:
-            case 0x6A:
-            case 0x6B:
-            case 0x6C:
-            case 0x6D:
-            case 0x6E:
-            case 0x6F:
-            case 0x70:
-            case 0x71:
-            case 0x72:
-            case 0x73:
-            case 0x74:
-            case 0x75:
-            case 0x76:
-            case 0x77:
-            {
-                return get_string(input_format_t::cbor, current & 0x1F, result);
-            }
-
-            case 0x78: // UTF-8 string (one-byte uint8_t for n follows)
-            {
-                uint8_t len;
-                return get_number(input_format_t::cbor, len) and get_string(input_format_t::cbor, len, result);
-            }
-
-            case 0x79: // UTF-8 string (two-byte uint16_t for n follow)
-            {
-                uint16_t len;
-                return get_number(input_format_t::cbor, len) and get_string(input_format_t::cbor, len, result);
-            }
-
-            case 0x7A: // UTF-8 string (four-byte uint32_t for n follow)
-            {
-                uint32_t len;
-                return get_number(input_format_t::cbor, len) and get_string(input_format_t::cbor, len, result);
-            }
-
-            case 0x7B: // UTF-8 string (eight-byte uint64_t for n follow)
-            {
-                uint64_t len;
-                return get_number(input_format_t::cbor, len) and get_string(input_format_t::cbor, len, result);
-            }
-
-            case 0x7F: // UTF-8 string (indefinite length)
-            {
-                while (get() != 0xFF)
-                {
-                    string_t chunk;
-                    if (not get_cbor_string(chunk))
-                    {
-                        return false;
-                    }
-                    result.append(chunk);
-                }
-                return true;
-            }
-
-            default:
-            {
-                auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format_t::cbor, "expected length specification (0x60-0x7B) or indefinite string type (0x7F); last byte: 0x" + last_token, "string")));
-            }
-        }
-    }
-
-    /*!
-    @param[in] len  the length of the array or std::size_t(-1) for an
-                    array of indefinite size
-    @return whether array creation completed
-    */
-    bool get_cbor_array(const std::size_t len)
-    {
-        if (JSON_UNLIKELY(not sax->start_array(len)))
-        {
-            return false;
-        }
-
-        if (len != std::size_t(-1))
-        {
-            for (std::size_t i = 0; i < len; ++i)
-            {
-                if (JSON_UNLIKELY(not parse_cbor_internal()))
-                {
-                    return false;
-                }
-            }
-        }
-        else
-        {
-            while (get() != 0xFF)
-            {
-                if (JSON_UNLIKELY(not parse_cbor_internal(false)))
-                {
-                    return false;
-                }
-            }
-        }
-
-        return sax->end_array();
-    }
-
-    /*!
-    @param[in] len  the length of the object or std::size_t(-1) for an
-                    object of indefinite size
-    @return whether object creation completed
-    */
-    bool get_cbor_object(const std::size_t len)
-    {
-        if (not JSON_UNLIKELY(sax->start_object(len)))
-        {
-            return false;
-        }
-
-        string_t key;
-        if (len != std::size_t(-1))
-        {
-            for (std::size_t i = 0; i < len; ++i)
-            {
-                get();
-                if (JSON_UNLIKELY(not get_cbor_string(key) or not sax->key(key)))
-                {
-                    return false;
-                }
-
-                if (JSON_UNLIKELY(not parse_cbor_internal()))
-                {
-                    return false;
-                }
-                key.clear();
-            }
-        }
-        else
-        {
-            while (get() != 0xFF)
-            {
-                if (JSON_UNLIKELY(not get_cbor_string(key) or not sax->key(key)))
-                {
-                    return false;
-                }
-
-                if (JSON_UNLIKELY(not parse_cbor_internal()))
-                {
-                    return false;
-                }
-                key.clear();
-            }
-        }
-
-        return sax->end_object();
-    }
-
-    /*!
     @brief reads a MessagePack string
 
     This function first reads starting bytes to determine the expected
@@ -7576,6 +7684,22 @@ class binary_reader
         }
 
         return sax->end_object();
+    }
+
+    ////////////
+    // UBJSON //
+    ////////////
+
+    /*!
+    @param[in] get_char  whether a new character should be retrieved from the
+                         input (true, default) or whether the last read
+                         character should be considered instead
+
+    @return whether a valid UBJSON value was passed to the SAX parser
+    */
+    bool parse_ubjson_internal(const bool get_char = true)
+    {
+        return get_ubjson_value(get_char ? get_ignore_noop() : current);
     }
 
     /*!
@@ -7992,6 +8116,113 @@ class binary_reader
         return sax->end_object();
     }
 
+    ///////////////////////
+    // Utility functions //
+    ///////////////////////
+
+    /*!
+    @brief get next character from the input
+
+    This function provides the interface to the used input adapter. It does
+    not throw in case the input reached EOF, but returns a -'ve valued
+    `std::char_traits<char>::eof()` in that case.
+
+    @return character read from the input
+    */
+    int get()
+    {
+        ++chars_read;
+        return (current = ia->get_character());
+    }
+
+    /*!
+    @return character read from the input after ignoring all 'N' entries
+    */
+    int get_ignore_noop()
+    {
+        do
+        {
+            get();
+        }
+        while (current == 'N');
+
+        return current;
+    }
+
+    /*
+    @brief read a number from the input
+
+    @tparam NumberType the type of the number
+    @param[in] format   the current format (for diagnostics)
+    @param[out] result  number of type @a NumberType
+
+    @return whether conversion completed
+
+    @note This function needs to respect the system's endianess, because
+          bytes in CBOR, MessagePack, and UBJSON are stored in network order
+          (big endian) and therefore need reordering on little endian systems.
+    */
+    template<typename NumberType, bool InputIsLittleEndian = false>
+    bool get_number(const input_format_t format, NumberType& result)
+    {
+        // step 1: read input into array with system's byte order
+        std::array<uint8_t, sizeof(NumberType)> vec;
+        for (std::size_t i = 0; i < sizeof(NumberType); ++i)
+        {
+            get();
+            if (JSON_UNLIKELY(not unexpect_eof(format, "number")))
+            {
+                return false;
+            }
+
+            // reverse byte order prior to conversion if necessary
+            if (is_little_endian && !InputIsLittleEndian)
+            {
+                vec[sizeof(NumberType) - i - 1] = static_cast<uint8_t>(current);
+            }
+            else
+            {
+                vec[i] = static_cast<uint8_t>(current); // LCOV_EXCL_LINE
+            }
+        }
+
+        // step 2: convert array into number of type T and return
+        std::memcpy(&result, vec.data(), sizeof(NumberType));
+        return true;
+    }
+
+    /*!
+    @brief create a string by reading characters from the input
+
+    @tparam NumberType the type of the number
+    @param[in] format the current format (for diagnostics)
+    @param[in] len number of characters to read
+    @param[out] result string created by reading @a len bytes
+
+    @return whether string creation completed
+
+    @note We can not reserve @a len bytes for the result, because @a len
+          may be too large. Usually, @ref unexpect_eof() detects the end of
+          the input before we run out of string memory.
+    */
+    template<typename NumberType>
+    bool get_string(const input_format_t format,
+                    const NumberType len,
+                    string_t& result)
+    {
+        bool success = true;
+        std::generate_n(std::back_inserter(result), len, [this, &success, &format]()
+        {
+            get();
+            if (JSON_UNLIKELY(not unexpect_eof(format, "string")))
+            {
+                success = false;
+            }
+            return static_cast<char>(current);
+        });
+        return success;
+    }
+
     /*!
     @param[in] format   the current format (for diagnostics)
     @param[in] context  further context information (for diagnostics)
@@ -8017,7 +8248,6 @@ class binary_reader
         return std::string{cr};
     }
 
-  private:
     /*!
     @param[in] format   the current format
     @param[in] detail   a detailed error message
@@ -8044,6 +8274,10 @@ class binary_reader
                 error_msg += "UBJSON";
                 break;
 
+            case input_format_t::bson:
+                error_msg += "BSON";
+                break;
+
             // LCOV_EXCL_START
             default:
                 assert(false);
@@ -8053,6 +8287,7 @@ class binary_reader
         return error_msg + " " + context + ": " + detail;
     }
 
+  private:
     /// input adapter
     input_adapter_t ia = nullptr;
 
@@ -8111,7 +8346,33 @@ class binary_writer
     }
 
     /*!
-    @brief[in] j  JSON value to serialize
+    @param[in] j  JSON value to serialize
+    @pre       j.type() == value_t::object
+    */
+    void write_bson(const BasicJsonType& j)
+    {
+        switch (j.type())
+        {
+            case value_t::object:
+            {
+                write_bson_object(*j.m_value.object);
+                break;
+            }
+
+            case value_t::discarded:
+            {
+                break;
+            }
+
+            default:
+            {
+                JSON_THROW(type_error::create(317, "to serialize to BSON, top-level type must be object, but is " + std::string(j.type_name())));
+            }
+        }
+    }
+
+    /*!
+    @param[in] j  JSON value to serialize
     */
     void write_cbor(const BasicJsonType& j)
     {
@@ -8355,7 +8616,7 @@ class binary_writer
     }
 
     /*!
-    @brief[in] j  JSON value to serialize
+    @param[in] j  JSON value to serialize
     */
     void write_msgpack(const BasicJsonType& j)
     {
@@ -8755,32 +9016,361 @@ class binary_writer
     }
 
   private:
-    /*
-    @brief write a number to output input
+    //////////
+    // BSON //
+    //////////
 
-    @param[in] n number of type @a NumberType
-    @tparam NumberType the type of the number
-
-    @note This function needs to respect the system's endianess, because bytes
-          in CBOR, MessagePack, and UBJSON are stored in network order (big
-          endian) and therefore need reordering on little endian systems.
+    /*!
+    @return The size of a BSON document entry header, including the id marker
+            and the entry name size (and its null-terminator).
     */
-    template<typename NumberType>
-    void write_number(const NumberType n)
+    static std::size_t calc_bson_entry_header_size(const typename BasicJsonType::string_t& name)
     {
-        // step 1: write number to array of length NumberType
-        std::array<CharType, sizeof(NumberType)> vec;
-        std::memcpy(vec.data(), &n, sizeof(NumberType));
-
-        // step 2: write array to output (with possible reordering)
-        if (is_little_endian)
+        const auto it = name.find(static_cast<typename BasicJsonType::string_t::value_type>(0));
+        if (JSON_UNLIKELY(it != BasicJsonType::string_t::npos))
         {
-            // reverse byte order prior to conversion if necessary
-            std::reverse(vec.begin(), vec.end());
+            JSON_THROW(out_of_range::create(409,
+                                            "BSON key cannot contain code point U+0000 (at byte " + std::to_string(it) + ")"));
         }
 
-        oa->write_characters(vec.data(), sizeof(NumberType));
+        return /*id*/ 1ul + name.size() + /*zero-terminator*/1u;
     }
+
+    /*!
+    @brief Writes the given @a element_type and @a name to the output adapter
+    */
+    void write_bson_entry_header(const typename BasicJsonType::string_t& name,
+                                 std::uint8_t element_type)
+    {
+        oa->write_character(static_cast<CharType>(element_type)); // boolean
+        oa->write_characters(
+            reinterpret_cast<const CharType*>(name.c_str()),
+            name.size() + 1u);
+    }
+
+    /*!
+    @brief Writes a BSON element with key @a name and boolean value @a value
+    */
+    void write_bson_boolean(const typename BasicJsonType::string_t& name,
+                            const bool value)
+    {
+        write_bson_entry_header(name, 0x08);
+        oa->write_character(value ? static_cast<CharType>(0x01) : static_cast<CharType>(0x00));
+    }
+
+    /*!
+    @brief Writes a BSON element with key @a name and double value @a value
+    */
+    void write_bson_double(const typename BasicJsonType::string_t& name,
+                           const double value)
+    {
+        write_bson_entry_header(name, 0x01);
+        write_number<double, true>(value);
+    }
+
+    /*!
+    @return The size of the BSON-encoded string in @a value
+    */
+    static std::size_t calc_bson_string_size(const typename BasicJsonType::string_t& value)
+    {
+        return sizeof(std::int32_t) + value.size() + 1ul;
+    }
+
+    /*!
+    @brief Writes a BSON element with key @a name and string value @a value
+    */
+    void write_bson_string(const typename BasicJsonType::string_t& name,
+                           const typename BasicJsonType::string_t& value)
+    {
+        write_bson_entry_header(name, 0x02);
+
+        write_number<std::int32_t, true>(static_cast<std::int32_t>(value.size() + 1ul));
+        oa->write_characters(
+            reinterpret_cast<const CharType*>(value.c_str()),
+            value.size() + 1);
+    }
+
+    /*!
+    @brief Writes a BSON element with key @a name and null value
+    */
+    void write_bson_null(const typename BasicJsonType::string_t& name)
+    {
+        write_bson_entry_header(name, 0x0A);
+    }
+
+    /*!
+    @return The size of the BSON-encoded integer @a value
+    */
+    static std::size_t calc_bson_integer_size(const std::int64_t value)
+    {
+        if ((std::numeric_limits<std::int32_t>::min)() <= value and value <= (std::numeric_limits<std::int32_t>::max)())
+        {
+            return sizeof(std::int32_t);
+        }
+        else
+        {
+            return sizeof(std::int64_t);
+        }
+    }
+
+    /*!
+    @brief Writes a BSON element with key @a name and integer @a value
+    */
+    void write_bson_integer(const typename BasicJsonType::string_t& name,
+                            const std::int64_t value)
+    {
+        if ((std::numeric_limits<std::int32_t>::min)() <= value and value <= (std::numeric_limits<std::int32_t>::max)())
+        {
+            write_bson_entry_header(name, 0x10); // int32
+            write_number<std::int32_t, true>(static_cast<std::int32_t>(value));
+        }
+        else
+        {
+            write_bson_entry_header(name, 0x12); // int64
+            write_number<std::int64_t, true>(static_cast<std::int64_t>(value));
+        }
+    }
+
+    /*!
+    @return The size of the BSON-encoded unsigned integer in @a j
+    */
+    static std::size_t calc_bson_unsigned_size(const std::uint64_t value)
+    {
+        if (value <= static_cast<std::uint64_t>((std::numeric_limits<std::int32_t>::max)()))
+        {
+            return sizeof(std::int32_t);
+        }
+        else
+        {
+            return sizeof(std::int64_t);
+        }
+    }
+
+    /*!
+    @brief Writes a BSON element with key @a name and unsigned @a value
+    */
+    void write_bson_unsigned(const typename BasicJsonType::string_t& name,
+                             const std::uint64_t value)
+    {
+        if (value <= static_cast<std::uint64_t>((std::numeric_limits<std::int32_t>::max)()))
+        {
+            write_bson_entry_header(name, 0x10); // int32
+            write_number<std::int32_t, true>(static_cast<std::int32_t>(value));
+        }
+        else if (value <= static_cast<std::uint64_t>((std::numeric_limits<std::int64_t>::max)()))
+        {
+            write_bson_entry_header(name, 0x12); // int64
+            write_number<std::int64_t, true>(static_cast<std::int64_t>(value));
+        }
+        else
+        {
+            JSON_THROW(out_of_range::create(407, "number overflow serializing " + std::to_string(value)));
+        }
+
+    }
+
+    /*!
+    @brief Writes a BSON element with key @a name and object @a value
+    */
+    void write_bson_object_entry(const typename BasicJsonType::string_t& name,
+                                 const typename BasicJsonType::object_t& value)
+    {
+        write_bson_entry_header(name, 0x03); // object
+        write_bson_object(value);
+    }
+
+    /*!
+    @return The size of the BSON-encoded array @a value
+    */
+    static std::size_t calc_bson_array_size(const typename BasicJsonType::array_t& value)
+    {
+        std::size_t embedded_document_size = 0ul;
+        std::size_t array_index = 0ul;
+
+        for (const auto& el : value)
+        {
+            embedded_document_size += calc_bson_element_size(std::to_string(array_index++), el);
+        }
+
+        return sizeof(std::int32_t) + embedded_document_size + 1ul;
+    }
+
+    /*!
+    @brief Writes a BSON element with key @a name and array @a value
+    */
+    void write_bson_array(const typename BasicJsonType::string_t& name,
+                          const typename BasicJsonType::array_t& value)
+    {
+        write_bson_entry_header(name, 0x04); // array
+        write_number<std::int32_t, true>(static_cast<std::int32_t>(calc_bson_array_size(value)));
+
+        std::size_t array_index = 0ul;
+
+        for (const auto& el : value)
+        {
+            write_bson_element(std::to_string(array_index++), el);
+        }
+
+        oa->write_character(static_cast<CharType>(0x00));
+    }
+
+    /*!
+    @brief Calculates the size necessary to serialize the JSON value @a j with its @a name
+    @return The calculated size for the BSON document entry for @a j with the given @a name.
+    */
+    static std::size_t calc_bson_element_size(const typename BasicJsonType::string_t& name,
+            const BasicJsonType& j)
+    {
+        const auto header_size = calc_bson_entry_header_size(name);
+        switch (j.type())
+        {
+            case value_t::discarded:
+                return 0ul;
+
+            case value_t::object:
+                return header_size + calc_bson_object_size(*j.m_value.object);
+
+            case value_t::array:
+                return header_size + calc_bson_array_size(*j.m_value.array);
+
+            case value_t::boolean:
+                return header_size + 1ul;
+
+            case value_t::number_float:
+                return header_size + 8ul;
+
+            case value_t::number_integer:
+                return header_size + calc_bson_integer_size(j.m_value.number_integer);
+
+            case value_t::number_unsigned:
+                return header_size + calc_bson_unsigned_size(j.m_value.number_unsigned);
+
+            case value_t::string:
+                return header_size + calc_bson_string_size(*j.m_value.string);
+
+            case value_t::null:
+                return header_size + 0ul;
+
+            // LCOV_EXCL_START
+            default:
+                assert(false);
+                return 0ul;
+                // LCOV_EXCL_STOP
+        };
+    }
+
+    /*!
+    @brief Serializes the JSON value @a j to BSON and associates it with the
+           key @a name.
+    @param name The name to associate with the JSON entity @a j within the
+                current BSON document
+    @return The size of the BSON entry
+    */
+    void write_bson_element(const typename BasicJsonType::string_t& name,
+                            const BasicJsonType& j)
+    {
+        switch (j.type())
+        {
+            case value_t::discarded:
+                return;
+
+            case value_t::object:
+                return write_bson_object_entry(name, *j.m_value.object);
+
+            case value_t::array:
+                return write_bson_array(name, *j.m_value.array);
+
+            case value_t::boolean:
+                return write_bson_boolean(name, j.m_value.boolean);
+
+            case value_t::number_float:
+                return write_bson_double(name, j.m_value.number_float);
+
+            case value_t::number_integer:
+                return write_bson_integer(name, j.m_value.number_integer);
+
+            case value_t::number_unsigned:
+                return write_bson_unsigned(name, j.m_value.number_unsigned);
+
+            case value_t::string:
+                return write_bson_string(name, *j.m_value.string);
+
+            case value_t::null:
+                return write_bson_null(name);
+
+            // LCOV_EXCL_START
+            default:
+                assert(false);
+                return;
+                // LCOV_EXCL_STOP
+        };
+    }
+
+    /*!
+    @brief Calculates the size of the BSON serialization of the given
+           JSON-object @a j.
+    @param[in] j  JSON value to serialize
+    @pre       j.type() == value_t::object
+    */
+    static std::size_t calc_bson_object_size(const typename BasicJsonType::object_t& value)
+    {
+        std::size_t document_size = 0;
+
+        for (const auto& el : value)
+        {
+            document_size += calc_bson_element_size(el.first, el.second);
+        }
+
+        return sizeof(std::int32_t) + document_size + 1ul;
+    }
+
+    /*!
+    @param[in] j  JSON value to serialize
+    @pre       j.type() == value_t::object
+    */
+    void write_bson_object(const typename BasicJsonType::object_t& value)
+    {
+        write_number<std::int32_t, true>(static_cast<std::int32_t>(calc_bson_object_size(value)));
+
+        for (const auto& el : value)
+        {
+            write_bson_element(el.first, el.second);
+        }
+
+        oa->write_character(static_cast<CharType>(0x00));
+    }
+
+    //////////
+    // CBOR //
+    //////////
+
+    static constexpr CharType get_cbor_float_prefix(float /*unused*/)
+    {
+        return static_cast<CharType>(0xFA);  // Single-Precision Float
+    }
+
+    static constexpr CharType get_cbor_float_prefix(double /*unused*/)
+    {
+        return static_cast<CharType>(0xFB);  // Double-Precision Float
+    }
+
+    /////////////
+    // MsgPack //
+    /////////////
+
+    static constexpr CharType get_msgpack_float_prefix(float /*unused*/)
+    {
+        return static_cast<CharType>(0xCA);  // float 32
+    }
+
+    static constexpr CharType get_msgpack_float_prefix(double /*unused*/)
+    {
+        return static_cast<CharType>(0xCB);  // float 64
+    }
+
+    ////////////
+    // UBJSON //
+    ////////////
 
     // UBJSON: write number (floating point)
     template<typename NumberType, typename std::enable_if<
@@ -8982,26 +9572,6 @@ class binary_writer
         }
     }
 
-    static constexpr CharType get_cbor_float_prefix(float /*unused*/)
-    {
-        return static_cast<CharType>(0xFA);  // Single-Precision Float
-    }
-
-    static constexpr CharType get_cbor_float_prefix(double /*unused*/)
-    {
-        return static_cast<CharType>(0xFB);  // Double-Precision Float
-    }
-
-    static constexpr CharType get_msgpack_float_prefix(float /*unused*/)
-    {
-        return static_cast<CharType>(0xCA);  // float 32
-    }
-
-    static constexpr CharType get_msgpack_float_prefix(double /*unused*/)
-    {
-        return static_cast<CharType>(0xCB);  // float 64
-    }
-
     static constexpr CharType get_ubjson_float_prefix(float /*unused*/)
     {
         return 'd';  // float 32
@@ -9010,6 +9580,39 @@ class binary_writer
     static constexpr CharType get_ubjson_float_prefix(double /*unused*/)
     {
         return 'D';  // float 64
+    }
+
+    ///////////////////////
+    // Utility functions //
+    ///////////////////////
+
+    /*
+    @brief write a number to output input
+
+    @param[in] n number of type @a NumberType
+    @tparam NumberType the type of the number
+    @tparam OutputIsLittleEndian Set to true if output data is
+                                 required to be little endian
+
+    @note This function needs to respect the system's endianess, because bytes
+          in CBOR, MessagePack, and UBJSON are stored in network order (big
+          endian) and therefore need reordering on little endian systems.
+    */
+    template<typename NumberType, bool OutputIsLittleEndian = false>
+    void write_number(const NumberType n)
+    {
+        // step 1: write number to array of length NumberType
+        std::array<CharType, sizeof(NumberType)> vec;
+        std::memcpy(vec.data(), &n, sizeof(NumberType));
+
+        // step 2: write array to output (with possible reordering)
+        if (is_little_endian and not OutputIsLittleEndian)
+        {
+            // reverse byte order prior to conversion if necessary
+            std::reverse(vec.begin(), vec.end());
+        }
+
+        oa->write_characters(vec.data(), sizeof(NumberType));
     }
 
   private:
@@ -10585,9 +11188,10 @@ class serializer
 
                             // continue processing the string
                             state = UTF8_ACCEPT;
-                            continue;
+                            break;
                         }
                     }
+                    break;
                 }
 
                 default:  // decode found yet incomplete multi-byte code point
@@ -18247,6 +18851,87 @@ class basic_json
         binary_writer<char>(o).write_ubjson(j, use_size, use_type);
     }
 
+
+    /*!
+    @brief Serializes the given JSON object `j` to BSON and returns a vector
+           containing the corresponding BSON-representation.
+
+    BSON (Binary JSON) is a binary format in which zero or more ordered key/value pairs are
+    stored as a single entity (a so-called document).
+
+    The library uses the following mapping from JSON values types to BSON types:
+
+    JSON value type | value/range                       | BSON type   | marker
+    --------------- | --------------------------------- | ----------- | ------
+    null            | `null`                            | null        | 0x0A
+    boolean         | `true`, `false`                   | boolean     | 0x08
+    number_integer  | -9223372036854775808..-2147483649 | int64       | 0x12
+    number_integer  | -2147483648..2147483647           | int32       | 0x10
+    number_integer  | 2147483648..9223372036854775807   | int64       | 0x12
+    number_unsigned | 0..2147483647                     | int32       | 0x10
+    number_unsigned | 2147483648..9223372036854775807   | int64       | 0x12
+    number_unsigned | 9223372036854775808..18446744073709551615| --   | --
+    number_float    | *any value*                       | double      | 0x01
+    string          | *any value*                       | string      | 0x02
+    array           | *any value*                       | document    | 0x04
+    object          | *any value*                       | document    | 0x03
+
+    @warning The mapping is **incomplete**, since only JSON-objects (and things
+    contained therein) can be serialized to BSON.
+    Also, integers larger than 9223372036854775807 cannot be serialized to BSON,
+    and the keys may not contain U+0000, since they are serialized a
+    zero-terminated c-strings.
+
+    @throw out_of_range.407  if `j.is_number_unsigned() && j.get<std::uint64_t>() > 9223372036854775807`
+    @throw out_of_range.409  if a key in `j` contains a NULL (U+0000)
+    @throw type_error.317    if `!j.is_object()`
+
+    @pre The input `j` is required to be an object: `j.is_object() == true`.
+
+    @note Any BSON output created via @ref to_bson can be successfully parsed
+          by @ref from_bson.
+
+    @param[in] j  JSON value to serialize
+    @return BSON serialization as byte vector
+
+    @complexity Linear in the size of the JSON value @a j.
+
+    @sa http://bsonspec.org/spec.html
+    @sa @ref from_bson(detail::input_adapter, const bool strict) for the
+        analogous deserialization
+    @sa @ref to_ubjson(const basic_json&) for the related UBJSON format
+    @sa @ref to_cbor(const basic_json&) for the related CBOR format
+    @sa @ref to_msgpack(const basic_json&) for the related MessagePack format
+    */
+    static std::vector<uint8_t> to_bson(const basic_json& j)
+    {
+        std::vector<uint8_t> result;
+        to_bson(j, result);
+        return result;
+    }
+
+    /*!
+    @brief Serializes the given JSON object `j` to BSON and forwards the
+           corresponding BSON-representation to the given output_adapter `o`.
+    @param j The JSON object to convert to BSON.
+    @param o The output adapter that receives the binary BSON representation.
+    @pre The input `j` shall be an object: `j.is_object() == true`
+    @sa @ref to_bson(const basic_json&)
+    */
+    static void to_bson(const basic_json& j, detail::output_adapter<uint8_t> o)
+    {
+        binary_writer<uint8_t>(o).write_bson(j);
+    }
+
+    /*!
+    @copydoc to_bson(const basic_json&, detail::output_adapter<uint8_t>)
+    */
+    static void to_bson(const basic_json& j, detail::output_adapter<char> o)
+    {
+        binary_writer<char>(o).write_bson(j);
+    }
+
+
     /*!
     @brief create a JSON value from an input in CBOR format
 
@@ -18441,6 +19126,8 @@ class basic_json
         related CBOR format
     @sa @ref from_ubjson(detail::input_adapter&&, const bool, const bool) for
         the related UBJSON format
+    @sa @ref from_bson(detail::input_adapter, const bool, const bool) for
+        the related BSON format
 
     @since version 2.0.9; parameter @a start_index since 2.1.1; changed to
            consume input adapters, removed start_index parameter, and added
@@ -18526,6 +19213,8 @@ class basic_json
         related CBOR format
     @sa @ref from_msgpack(detail::input_adapter&&, const bool, const bool) for
         the related MessagePack format
+    @sa @ref from_bson(detail::input_adapter, const bool, const bool) for
+        the related BSON format
 
     @since version 3.1.0; added @a allow_exceptions parameter since 3.2.0
     */
@@ -18553,6 +19242,91 @@ class basic_json
         const bool res = binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).sax_parse(input_format_t::ubjson, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
+
+
+
+
+    /*!
+    @brief Create a JSON value from an input in BSON format
+
+    Deserializes a given input @a i to a JSON value using the BSON (Binary JSON)
+    serialization format.
+
+    The library maps BSON record types to JSON value types as follows:
+
+    BSON type       | BSON marker byte | JSON value type
+    --------------- | ---------------- | ---------------------------
+    double          | 0x01             | number_float
+    string          | 0x02             | string
+    document        | 0x03             | object
+    array           | 0x04             | array
+    binary          | 0x05             | still unsupported
+    undefined       | 0x06             | still unsupported
+    ObjectId        | 0x07             | still unsupported
+    boolean         | 0x08             | boolean
+    UTC Date-Time   | 0x09             | still unsupported
+    null            | 0x0A             | null
+    Regular Expr.   | 0x0B             | still unsupported
+    DB Pointer      | 0x0C             | still unsupported
+    JavaScript Code | 0x0D             | still unsupported
+    Symbol          | 0x0E             | still unsupported
+    JavaScript Code | 0x0F             | still unsupported
+    int32           | 0x10             | number_integer
+    Timestamp       | 0x11             | still unsupported
+    128-bit decimal float | 0x13       | still unsupported
+    Max Key         | 0x7F             | still unsupported
+    Min Key         | 0xFF             | still unsupported
+
+
+    @warning The mapping is **incomplete**. The unsupported mappings
+             are indicated in the table above.
+
+    @param[in] i  an input in BSON format convertible to an input adapter
+    @param[in] strict  whether to expect the input to be consumed until EOF
+                       (true by default)
+    @param[in] allow_exceptions  whether to throw exceptions in case of a
+    parse error (optional, true by default)
+
+    @return deserialized JSON value
+
+    @throw parse_error.114 if an unsupported BSON record type is encountered
+
+    @sa http://bsonspec.org/spec.html
+    @sa @ref to_bson(const basic_json&, const bool, const bool) for the
+             analogous serialization
+    @sa @ref from_cbor(detail::input_adapter, const bool, const bool) for the
+        related CBOR format
+    @sa @ref from_msgpack(detail::input_adapter, const bool, const bool) for
+        the related MessagePack format
+    @sa @ref from_ubjson(detail::input_adapter, const bool, const bool) for the
+        related UBJSON format
+    */
+    static basic_json from_bson(detail::input_adapter&& i,
+                                const bool strict = true,
+                                const bool allow_exceptions = true)
+    {
+        basic_json result;
+        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        const bool res = binary_reader(detail::input_adapter(i)).sax_parse(input_format_t::bson, &sdp, strict);
+        return res ? result : basic_json(value_t::discarded);
+    }
+
+    /*!
+    @copydoc from_bson(detail::input_adapter&&, const bool, const bool)
+    */
+    template<typename A1, typename A2,
+             detail::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
+    static basic_json from_bson(A1 && a1, A2 && a2,
+                                const bool strict = true,
+                                const bool allow_exceptions = true)
+    {
+        basic_json result;
+        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        const bool res = binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).sax_parse(input_format_t::bson, &sdp, strict);
+        return res ? result : basic_json(value_t::discarded);
+    }
+
+
 
     /// @}
 
