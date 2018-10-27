@@ -988,7 +988,7 @@ class binary_writer
     */
     static std::size_t calc_bson_object_size(const typename BasicJsonType::object_t& value)
     {
-        std::size_t document_size = std::accumulate(value.begin(), value.end(), 0,
+        std::size_t document_size = std::accumulate(value.begin(), value.end(), 0ul,
                                     [](size_t result, const typename BasicJsonType::object_t::value_type & el)
         {
             return result += calc_bson_element_size(el.first, el.second);
