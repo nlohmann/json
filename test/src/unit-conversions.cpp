@@ -1368,3 +1368,69 @@ TEST_CASE("value conversion")
         }
     }
 }
+
+enum class cards {kreuz, pik, herz, karo};
+
+NLOHMANN_JSON_SERIALIZE_ENUM(cards,
+{
+    {cards::kreuz, "kreuz"},
+    {cards::pik, "pik"},
+    {cards::pik, "puk"},  // second entry for cards::puk; will not be used
+    {cards::herz, "herz"},
+    {cards::karo, "karo"}
+});
+
+enum TaskState
+{
+    TS_STOPPED,
+    TS_RUNNING,
+    TS_COMPLETED,
+    TS_INVALID = -1,
+};
+
+NLOHMANN_JSON_SERIALIZE_ENUM(TaskState,
+{
+    {TS_INVALID, nullptr},
+    {TS_STOPPED, "stopped"},
+    {TS_RUNNING, "running"},
+    {TS_COMPLETED, "completed"},
+});
+
+TEST_CASE("JSON to enum mapping")
+{
+    SECTION("enum class")
+    {
+        // enum -> json
+        CHECK(json(cards::kreuz) == "kreuz");
+        CHECK(json(cards::pik) == "pik");
+        CHECK(json(cards::herz) == "herz");
+        CHECK(json(cards::karo) == "karo");
+
+        // json -> enum
+        CHECK(cards::kreuz == json("kreuz"));
+        CHECK(cards::pik == json("pik"));
+        CHECK(cards::herz == json("herz"));
+        CHECK(cards::karo == json("karo"));
+
+        // invalid json -> first enum
+        CHECK(cards::kreuz == json("what?").get<cards>());
+    }
+
+    SECTION("traditional enum")
+    {
+        // enum -> json
+        CHECK(json(TS_STOPPED) == "stopped");
+        CHECK(json(TS_RUNNING) == "running");
+        CHECK(json(TS_COMPLETED) == "completed");
+        CHECK(json(TS_INVALID) == json());
+
+        // json -> enum
+        CHECK(TS_STOPPED == json("stopped"));
+        CHECK(TS_RUNNING == json("running"));
+        CHECK(TS_COMPLETED == json("completed"));
+        CHECK(TS_INVALID == json());
+
+        // invalid json -> first enum
+        CHECK(TS_INVALID == json("what?").get<TaskState>());
+    }
+}

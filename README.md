@@ -27,7 +27,8 @@
   - [JSON Merge Patch](#json-merge-patch)
   - [Implicit conversions](#implicit-conversions)
   - [Conversions to/from arbitrary types](#arbitrary-types-conversions)
-  - [Binary formats (CBOR, BSON, MessagePack, and UBJSON)](#binary-formats-bson-cbor-messagepack-and-ubjson)
+  - [Specializing enum conversion](#specializing-enum-conversion)
+  - [Binary formats (BSON, CBOR, MessagePack, and UBJSON)](#binary-formats-bson-cbor-messagepack-and-ubjson)
 - [Supported compilers](#supported-compilers)
 - [License](#license)
 - [Contact](#contact)
@@ -874,7 +875,57 @@ struct bad_serializer
 };
 ```
 
-### Binary formats (CBOR, BSON, MessagePack, and UBJSON
+### Specializing enum conversion
+
+By default, enum values are serialized to JSON as integers. In some cases this could result in undesired behavior. If an enum is modified or re-ordered after data has been serialized to JSON, the later de-serialized JSON data may be undefined or a different enum value than was originally intended.
+
+It is possible to more precisely specify how a given enum is mapped to and from JSON as shown below:
+
+```cpp
+// example enum type declaration
+enum TaskState {
+    TS_STOPPED,
+    TS_RUNNING,
+    TS_COMPLETED,
+    TS_INVALID=-1,
+};
+
+// map TaskState values to JSON as strings
+NLOHMANN_JSON_SERIALIZE_ENUM( TaskState, {
+    {TS_INVALID, nullptr},
+    {TS_STOPPED, "stopped"},
+    {TS_RUNNING, "running"},
+    {TS_COMPLETED, "completed"},
+});
+```
+
+The `NLOHMANN_JSON_SERIALIZE_ENUM()` macro declares a set of `to_json()` / `from_json()` functions for type `TaskState` while avoiding repetition and boilerplate serilization code.
+
+**Usage:**
+
+```cpp
+// enum to JSON as string
+json j = TS_STOPPED;
+assert(j == "stopped");
+
+// json string to enum
+json j3 = "running";
+assert(j3.get<TaskState>() == TS_RUNNING);
+
+// undefined json value to enum (where the first map entry above is the default)
+json jPi = 3.14;
+assert(jPi.get<TaskState>() == TS_INVALID );
+```
+
+Just as in [Arbitrary Type Conversions](#arbitrary-types-conversions) above,
+- `NLOHMANN_JSON_SERIALIZE_ENUM()` MUST be declared in your enum type's namespace (which can be the global namespace), or the library will not be able to locate it and it will default to integer serialization.
+- It MUST be available (e.g., proper headers must be included) everywhere you use the conversions.
+
+Other Important points:
+- When using `get<ENUM_TYPE>()`, undefined JSON values will default to the first pair specified in your map. Select this default pair carefully.
+- If an enum or JSON value is specified more than once in your map, the first matching occurrence from the top of the map will be returned when converting to or from JSON.
+
+### Binary formats (BSON, CBOR, MessagePack, and UBJSON
 
 Though JSON is a ubiquitous data format, it is not a very compact format suitable for data exchange, for instance over a network. Hence, the library supports [BSON](http://bsonspec.org) (Binary JSON), [CBOR](http://cbor.io) (Concise Binary Object Representation), [MessagePack](http://msgpack.org), and [UBJSON](http://ubjson.org) (Universal Binary JSON Specification) to efficiently encode JSON values to byte vectors and to decode such vectors.
 
@@ -1146,6 +1197,7 @@ I deeply appreciate the help of the following people.
 - [Henry Schreiner](https://github.com/henryiii) added support for GCC 4.8.
 - [knilch](https://github.com/knilch0r) made sure the test suite does not stall when run in the wrong directory.
 - [Antonio Borondo](https://github.com/antonioborondo) fixed an MSVC 2017 warning.
+- [Dan Gendreau](https://github.com/dgendreau) implemented the `NLOHMANN_JSON_SERIALIZE_ENUM` macro to quickly define a enum/JSON mapping.
 - [efp](https://github.com/efp) added line and column information to parse errors.
 - [julian-becker](https://github.com/julian-becker) added BSON support.
 
