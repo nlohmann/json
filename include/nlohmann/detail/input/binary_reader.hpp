@@ -68,6 +68,10 @@ class binary_reader
 
         switch (format)
         {
+            case input_format_t::bson:
+                result = parse_bson_internal();
+                break;
+
             case input_format_t::cbor:
                 result = parse_cbor_internal();
                 break;
@@ -78,10 +82,6 @@ class binary_reader
 
             case input_format_t::ubjson:
                 result = parse_ubjson_internal();
-                break;
-
-            case input_format_t::bson:
-                result = parse_bson_internal();
                 break;
 
             // LCOV_EXCL_START
@@ -135,8 +135,8 @@ class binary_reader
     */
     bool parse_bson_internal()
     {
-        std::int32_t documentSize;
-        get_number<std::int32_t, true>(input_format_t::bson, documentSize);
+        std::int32_t document_size;
+        get_number<std::int32_t, true>(input_format_t::bson, document_size);
 
         if (JSON_UNLIKELY(not sax->start_object(std::size_t(-1))))
         {
@@ -315,8 +315,8 @@ class binary_reader
     */
     bool parse_bson_array()
     {
-        std::int32_t documentSize;
-        get_number<std::int32_t, true>(input_format_t::bson, documentSize);
+        std::int32_t document_size;
+        get_number<std::int32_t, true>(input_format_t::bson, document_size);
 
         if (JSON_UNLIKELY(not sax->start_array(std::size_t(-1))))
         {

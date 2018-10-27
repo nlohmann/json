@@ -92,7 +92,7 @@ class input_stream_adapter : public input_adapter_protocol
 class input_buffer_adapter : public input_adapter_protocol
 {
   public:
-    input_buffer_adapter(const char* b, const std::size_t l)
+    input_buffer_adapter(const char* b, const std::size_t l) noexcept
         : cursor(b), limit(b + l)
     {}
 
@@ -240,7 +240,9 @@ template<typename WideStringType>
 class wide_string_input_adapter : public input_adapter_protocol
 {
   public:
-    explicit wide_string_input_adapter(const WideStringType& w) : str(w) {}
+    explicit wide_string_input_adapter(const WideStringType& w)  noexcept
+        : str(w)
+    {}
 
     std::char_traits<char>::int_type get_character() noexcept override
     {
