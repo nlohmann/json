@@ -1261,7 +1261,6 @@ class binary_writer
 
     /*
     @brief write a number to output input
-
     @param[in] n number of type @a NumberType
     @tparam NumberType the type of the number
     @tparam OutputIsLittleEndian Set to true if output data is
