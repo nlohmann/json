@@ -100,6 +100,20 @@ TEST_CASE("BSON")
         CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.out_of_range.409] BSON key cannot contain code point U+0000 (at byte 2)");
     }
 
+    SECTION("string length must be at least 1")
+    {
+        // from https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=11175
+        std::vector<uint8_t> v =
+        {
+            0x20, 0x20, 0x20, 0x20,
+            0x02,
+            0x00,
+            0x00, 0x00, 0x00, 0x80
+        };
+        CHECK_THROWS_AS(json::from_bson(v), json::parse_error&);
+        CHECK_THROWS_WITH(json::from_bson(v), "[json.exception.parse_error.112] parse error at byte 10: syntax error while parsing BSON string: string length must be at least 1, is -2147483648");
+    }
+
     SECTION("objects")
     {
         SECTION("empty object")

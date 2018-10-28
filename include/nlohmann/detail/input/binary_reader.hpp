@@ -186,12 +186,18 @@ class binary_reader
     @param[in, out] result  A reference to the string variable where the read
                             string is to be stored.
     @tparam NumberType The type of the length @a len
-    @pre len > 0
+    @pre len >= 1
     @return `true` if the string was successfully parsed
     */
     template<typename NumberType>
     bool get_bson_string(const NumberType len, string_t& result)
     {
+        if (JSON_UNLIKELY(len < 1))
+        {
+            auto last_token = get_token_string();
+            return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message(input_format_t::bson, "string length must be at least 1, is " + std::to_string(len), "string")));
+        }
+
         return get_string(input_format_t::bson, len - static_cast<NumberType>(1), result) and get() != std::char_traits<char>::eof();
     }
 
