@@ -89,7 +89,7 @@
 
 /*!
 @brief macro to briefly define a mapping between an enum and JSON
-@macro NLOHMANN_JSON_SERIALIZE_ENUM
+@def NLOHMANN_JSON_SERIALIZE_ENUM
 @since version 3.4.0
 */
 #define NLOHMANN_JSON_SERIALIZE_ENUM(ENUM_TYPE, ...)                                           \

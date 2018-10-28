@@ -59,7 +59,7 @@ class json_pointer
 
     @since version 2.0.0
     */
-    std::string to_string() const noexcept
+    std::string to_string() const
     {
         return std::accumulate(reference_tokens.begin(), reference_tokens.end(),
                                std::string{},
@@ -114,7 +114,7 @@ class json_pointer
     }
 
     /// return whether pointer points to the root document
-    bool is_root() const
+    bool is_root() const noexcept
     {
         return reference_tokens.empty();
     }
@@ -566,7 +566,7 @@ class json_pointer
         {}
     }
 
-    /// escape "~"" to "~0" and "/" to "~1"
+    /// escape "~" to "~0" and "/" to "~1"
     static std::string escape(std::string s)
     {
         replace_substring(s, "~", "~0");

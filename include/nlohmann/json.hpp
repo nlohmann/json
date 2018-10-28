@@ -3405,7 +3405,7 @@ class basic_json
 
     /*!
     @brief overload for a default value of type const char*
-    @copydoc basic_json::value(const typename object_t::key_type&, ValueType) const
+    @copydoc basic_json::value(const typename object_t::key_type&, const ValueType&) const
     */
     string_t value(const typename object_t::key_type& key, const char* default_value) const
     {
@@ -6673,9 +6673,10 @@ class basic_json
     @complexity Linear in the size of the JSON value @a j.
 
     @sa http://bsonspec.org/spec.html
-    @sa @ref from_bson(detail::input_adapter, const bool strict) for the
+    @sa @ref from_bson(detail::input_adapter&&, const bool strict) for the
         analogous deserialization
-    @sa @ref to_ubjson(const basic_json&) for the related UBJSON format
+    @sa @ref to_ubjson(const basic_json&, const bool, const bool) for the
+             related UBJSON format
     @sa @ref to_cbor(const basic_json&) for the related CBOR format
     @sa @ref to_msgpack(const basic_json&) for the related MessagePack format
     */
@@ -6902,7 +6903,7 @@ class basic_json
         related CBOR format
     @sa @ref from_ubjson(detail::input_adapter&&, const bool, const bool) for
         the related UBJSON format
-    @sa @ref from_bson(detail::input_adapter, const bool, const bool) for
+    @sa @ref from_bson(detail::input_adapter&&, const bool, const bool) for
         the related BSON format
 
     @since version 2.0.9; parameter @a start_index since 2.1.1; changed to
@@ -6989,7 +6990,7 @@ class basic_json
         related CBOR format
     @sa @ref from_msgpack(detail::input_adapter&&, const bool, const bool) for
         the related MessagePack format
-    @sa @ref from_bson(detail::input_adapter, const bool, const bool) for
+    @sa @ref from_bson(detail::input_adapter&&, const bool, const bool) for
         the related BSON format
 
     @since version 3.1.0; added @a allow_exceptions parameter since 3.2.0
@@ -7068,13 +7069,12 @@ class basic_json
     @throw parse_error.114 if an unsupported BSON record type is encountered
 
     @sa http://bsonspec.org/spec.html
-    @sa @ref to_bson(const basic_json&, const bool, const bool) for the
-             analogous serialization
-    @sa @ref from_cbor(detail::input_adapter, const bool, const bool) for the
+    @sa @ref to_bson(const basic_json&) for the analogous serialization
+    @sa @ref from_cbor(detail::input_adapter&&, const bool, const bool) for the
         related CBOR format
-    @sa @ref from_msgpack(detail::input_adapter, const bool, const bool) for
+    @sa @ref from_msgpack(detail::input_adapter&&, const bool, const bool) for
         the related MessagePack format
-    @sa @ref from_ubjson(detail::input_adapter, const bool, const bool) for the
+    @sa @ref from_ubjson(detail::input_adapter&&, const bool, const bool) for the
         related UBJSON format
     */
     static basic_json from_bson(detail::input_adapter&& i,

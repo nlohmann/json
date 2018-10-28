@@ -204,7 +204,7 @@ using json = basic_json<>;
 
 /*!
 @brief macro to briefly define a mapping between an enum and JSON
-@macro NLOHMANN_JSON_SERIALIZE_ENUM
+@def NLOHMANN_JSON_SERIALIZE_ENUM
 @since version 3.4.0
 */
 #define NLOHMANN_JSON_SERIALIZE_ENUM(ENUM_TYPE, ...)                                           \
@@ -11635,7 +11635,7 @@ class json_pointer
 
     @since version 2.0.0
     */
-    std::string to_string() const noexcept
+    std::string to_string() const
     {
         return std::accumulate(reference_tokens.begin(), reference_tokens.end(),
                                std::string{},
@@ -11690,7 +11690,7 @@ class json_pointer
     }
 
     /// return whether pointer points to the root document
-    bool is_root() const
+    bool is_root() const noexcept
     {
         return reference_tokens.empty();
     }
@@ -12142,7 +12142,7 @@ class json_pointer
         {}
     }
 
-    /// escape "~"" to "~0" and "/" to "~1"
+    /// escape "~" to "~0" and "/" to "~1"
     static std::string escape(std::string s)
     {
         replace_substring(s, "~", "~0");
@@ -12283,6 +12283,7 @@ class json_pointer
 
 namespace nlohmann
 {
+
 template<typename, typename>
 struct adl_serializer
 {
@@ -12292,14 +12293,13 @@ struct adl_serializer
     This function is usually called by the `get()` function of the
     @ref basic_json class (either explicit or via conversion operators).
 
-    @param[in] j         JSON value to read from
+    @param[in] j        JSON value to read from
     @param[in,out] val  value to write to
     */
     template<typename BasicJsonType, typename ValueType>
     static auto from_json(BasicJsonType&& j, ValueType& val) noexcept(
-        noexcept(::nlohmann::from_json(std::forward<BasicJsonType>(j), val))) -> decltype(
-            ::nlohmann::from_json(std::forward<BasicJsonType>(j), val), void()
-        )
+        noexcept(::nlohmann::from_json(std::forward<BasicJsonType>(j), val)))
+    -> decltype(::nlohmann::from_json(std::forward<BasicJsonType>(j), val), void())
     {
         ::nlohmann::from_json(std::forward<BasicJsonType>(j), val);
     }
@@ -12311,17 +12311,17 @@ struct adl_serializer
     class.
 
     @param[in,out] j  JSON value to write to
-    @param[in] val     value to read from
+    @param[in] val    value to read from
     */
     template <typename BasicJsonType, typename ValueType>
     static auto to_json(BasicJsonType& j, ValueType&& val) noexcept(
         noexcept(::nlohmann::to_json(j, std::forward<ValueType>(val))))
-    -> decltype(::nlohmann::to_json(j, std::forward<ValueType>(val)),
-                void())
+    -> decltype(::nlohmann::to_json(j, std::forward<ValueType>(val)), void())
     {
         ::nlohmann::to_json(j, std::forward<ValueType>(val));
     }
 };
+
 }  // namespace nlohmann
 
 
@@ -15660,7 +15660,7 @@ class basic_json
 
     /*!
     @brief overload for a default value of type const char*
-    @copydoc basic_json::value(const typename object_t::key_type&, ValueType) const
+    @copydoc basic_json::value(const typename object_t::key_type&, const ValueType&) const
     */
     string_t value(const typename object_t::key_type& key, const char* default_value) const
     {
@@ -18928,9 +18928,10 @@ class basic_json
     @complexity Linear in the size of the JSON value @a j.
 
     @sa http://bsonspec.org/spec.html
-    @sa @ref from_bson(detail::input_adapter, const bool strict) for the
+    @sa @ref from_bson(detail::input_adapter&&, const bool strict) for the
         analogous deserialization
-    @sa @ref to_ubjson(const basic_json&) for the related UBJSON format
+    @sa @ref to_ubjson(const basic_json&, const bool, const bool) for the
+             related UBJSON format
     @sa @ref to_cbor(const basic_json&) for the related CBOR format
     @sa @ref to_msgpack(const basic_json&) for the related MessagePack format
     */
@@ -19157,7 +19158,7 @@ class basic_json
         related CBOR format
     @sa @ref from_ubjson(detail::input_adapter&&, const bool, const bool) for
         the related UBJSON format
-    @sa @ref from_bson(detail::input_adapter, const bool, const bool) for
+    @sa @ref from_bson(detail::input_adapter&&, const bool, const bool) for
         the related BSON format
 
     @since version 2.0.9; parameter @a start_index since 2.1.1; changed to
@@ -19244,7 +19245,7 @@ class basic_json
         related CBOR format
     @sa @ref from_msgpack(detail::input_adapter&&, const bool, const bool) for
         the related MessagePack format
-    @sa @ref from_bson(detail::input_adapter, const bool, const bool) for
+    @sa @ref from_bson(detail::input_adapter&&, const bool, const bool) for
         the related BSON format
 
     @since version 3.1.0; added @a allow_exceptions parameter since 3.2.0
@@ -19323,13 +19324,12 @@ class basic_json
     @throw parse_error.114 if an unsupported BSON record type is encountered
 
     @sa http://bsonspec.org/spec.html
-    @sa @ref to_bson(const basic_json&, const bool, const bool) for the
-             analogous serialization
-    @sa @ref from_cbor(detail::input_adapter, const bool, const bool) for the
+    @sa @ref to_bson(const basic_json&) for the analogous serialization
+    @sa @ref from_cbor(detail::input_adapter&&, const bool, const bool) for the
         related CBOR format
-    @sa @ref from_msgpack(detail::input_adapter, const bool, const bool) for
+    @sa @ref from_msgpack(detail::input_adapter&&, const bool, const bool) for
         the related MessagePack format
-    @sa @ref from_ubjson(detail::input_adapter, const bool, const bool) for the
+    @sa @ref from_ubjson(detail::input_adapter&&, const bool, const bool) for the
         related UBJSON format
     */
     static basic_json from_bson(detail::input_adapter&& i,
