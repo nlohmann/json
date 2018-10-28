@@ -6672,6 +6672,9 @@ class basic_json
 
     @complexity Linear in the size of the JSON value @a j.
 
+    @liveexample{The example shows the serialization of a JSON value to a byte
+    vector in BSON format.,to_bson}
+
     @sa http://bsonspec.org/spec.html
     @sa @ref from_bson(detail::input_adapter&&, const bool strict) for the
         analogous deserialization
@@ -7020,9 +7023,6 @@ class basic_json
         return res ? result : basic_json(value_t::discarded);
     }
 
-
-
-
     /*!
     @brief Create a JSON value from an input in BSON format
 
@@ -7054,7 +7054,6 @@ class basic_json
     Max Key         | 0x7F             | still unsupported
     Min Key         | 0xFF             | still unsupported
 
-
     @warning The mapping is **incomplete**. The unsupported mappings
              are indicated in the table above.
 
@@ -7067,6 +7066,11 @@ class basic_json
     @return deserialized JSON value
 
     @throw parse_error.114 if an unsupported BSON record type is encountered
+
+    @complexity Linear in the size of the input @a i.
+
+    @liveexample{The example shows the deserialization of a byte vector in
+    BSON format to a JSON value.,from_bson}
 
     @sa http://bsonspec.org/spec.html
     @sa @ref to_bson(const basic_json&) for the analogous serialization
