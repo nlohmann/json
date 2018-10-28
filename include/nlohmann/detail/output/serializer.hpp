@@ -17,6 +17,7 @@
 #include <nlohmann/detail/conversions/to_chars.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/cpp_future.hpp>
+#include <nlohmann/detail/output/binary_writer.hpp>
 #include <nlohmann/detail/output/output_adapters.hpp>
 #include <nlohmann/detail/value_t.hpp>
 
@@ -449,9 +450,9 @@ class serializer
                                 }
                                 else
                                 {
-                                    string_buffer[bytes++] = '\xEF';
-                                    string_buffer[bytes++] = '\xBF';
-                                    string_buffer[bytes++] = '\xBD';
+                                    string_buffer[bytes++] = detail::binary_writer<BasicJsonType, char>::to_char_type('\xEF');
+                                    string_buffer[bytes++] = detail::binary_writer<BasicJsonType, char>::to_char_type('\xBF');
+                                    string_buffer[bytes++] = detail::binary_writer<BasicJsonType, char>::to_char_type('\xBD');
                                 }
                                 bytes_after_last_accept = bytes;
                             }

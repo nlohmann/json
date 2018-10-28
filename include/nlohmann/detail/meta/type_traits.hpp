@@ -221,28 +221,28 @@ struct is_compatible_string_type_impl <
         std::is_constructible<typename BasicJsonType::string_t, CompatibleStringType>::value;
 };
 
-template <typename BasicJsonType, typename ConstrutibleStringType>
+template <typename BasicJsonType, typename ConstructibleStringType>
 struct is_compatible_string_type
-    : is_compatible_string_type_impl<BasicJsonType, ConstrutibleStringType> {};
+    : is_compatible_string_type_impl<BasicJsonType, ConstructibleStringType> {};
 
-template <typename BasicJsonType, typename ConstrutibleStringType,
+template <typename BasicJsonType, typename ConstructibleStringType,
           typename = void>
 struct is_constructible_string_type_impl : std::false_type {};
 
-template <typename BasicJsonType, typename ConstrutibleStringType>
+template <typename BasicJsonType, typename ConstructibleStringType>
 struct is_constructible_string_type_impl <
-    BasicJsonType, ConstrutibleStringType,
+    BasicJsonType, ConstructibleStringType,
     enable_if_t<is_detected_exact<typename BasicJsonType::string_t::value_type,
-    value_type_t, ConstrutibleStringType>::value >>
+    value_type_t, ConstructibleStringType>::value >>
 {
     static constexpr auto value =
-        std::is_constructible<ConstrutibleStringType,
+        std::is_constructible<ConstructibleStringType,
         typename BasicJsonType::string_t>::value;
 };
 
-template <typename BasicJsonType, typename ConstrutibleStringType>
+template <typename BasicJsonType, typename ConstructibleStringType>
 struct is_constructible_string_type
-    : is_constructible_string_type_impl<BasicJsonType, ConstrutibleStringType> {};
+    : is_constructible_string_type_impl<BasicJsonType, ConstructibleStringType> {};
 
 template <typename BasicJsonType, typename CompatibleArrayType, typename = void>
 struct is_compatible_array_type_impl : std::false_type {};

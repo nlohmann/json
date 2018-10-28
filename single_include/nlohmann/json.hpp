@@ -612,28 +612,28 @@ struct is_compatible_string_type_impl <
         std::is_constructible<typename BasicJsonType::string_t, CompatibleStringType>::value;
 };
 
-template <typename BasicJsonType, typename ConstrutibleStringType>
+template <typename BasicJsonType, typename ConstructibleStringType>
 struct is_compatible_string_type
-    : is_compatible_string_type_impl<BasicJsonType, ConstrutibleStringType> {};
+    : is_compatible_string_type_impl<BasicJsonType, ConstructibleStringType> {};
 
-template <typename BasicJsonType, typename ConstrutibleStringType,
+template <typename BasicJsonType, typename ConstructibleStringType,
           typename = void>
 struct is_constructible_string_type_impl : std::false_type {};
 
-template <typename BasicJsonType, typename ConstrutibleStringType>
+template <typename BasicJsonType, typename ConstructibleStringType>
 struct is_constructible_string_type_impl <
-    BasicJsonType, ConstrutibleStringType,
+    BasicJsonType, ConstructibleStringType,
     enable_if_t<is_detected_exact<typename BasicJsonType::string_t::value_type,
-    value_type_t, ConstrutibleStringType>::value >>
+    value_type_t, ConstructibleStringType>::value >>
 {
     static constexpr auto value =
-        std::is_constructible<ConstrutibleStringType,
+        std::is_constructible<ConstructibleStringType,
         typename BasicJsonType::string_t>::value;
 };
 
-template <typename BasicJsonType, typename ConstrutibleStringType>
+template <typename BasicJsonType, typename ConstructibleStringType>
 struct is_constructible_string_type
-    : is_constructible_string_type_impl<BasicJsonType, ConstrutibleStringType> {};
+    : is_constructible_string_type_impl<BasicJsonType, ConstructibleStringType> {};
 
 template <typename BasicJsonType, typename CompatibleArrayType, typename = void>
 struct is_compatible_array_type_impl : std::false_type {};
@@ -4979,7 +4979,7 @@ class parser
     template <typename SAX>
     bool sax_parse_internal(SAX* sax)
     {
-        // stack to remember the hieararchy of structured values we are parsing
+        // stack to remember the hierarchy of structured values we are parsing
         // true = array; false = object
         std::vector<bool> states;
         // value to avoid a goto (see comment where set to true)
@@ -5163,7 +5163,7 @@ class parser
             // we reached this line after we successfully parsed a value
             if (states.empty())
             {
-                // empty stack: we reached the end of the hieararchy: done
+                // empty stack: we reached the end of the hierarchy: done
                 return true;
             }
             else
@@ -6526,7 +6526,7 @@ class binary_reader
     @param[in, out] result  A reference to the string variable where the read
                             string is to be stored.
     @tparam NumberType The type of the length @a len
-    @pre len > 0
+    @pre len >= 1
     @return `true` if the string was successfully parsed
     */
     template<typename NumberType>
@@ -9612,6 +9612,7 @@ class binary_writer
         oa->write_characters(vec.data(), sizeof(NumberType));
     }
 
+  public:
     // The following to_char_type functions are implement the conversion
     // between uint8_t and CharType. In case CharType is not unsigned,
     // such a conversion is required to allow values greater than 128.
@@ -10780,6 +10781,8 @@ char* to_chars(char* first, const char* last, FloatType value)
 
 // #include <nlohmann/detail/meta/cpp_future.hpp>
 
+// #include <nlohmann/detail/output/binary_writer.hpp>
+
 // #include <nlohmann/detail/output/output_adapters.hpp>
 
 // #include <nlohmann/detail/value_t.hpp>
@@ -11214,9 +11217,9 @@ class serializer
                                 }
                                 else
                                 {
-                                    string_buffer[bytes++] = '\xEF';
-                                    string_buffer[bytes++] = '\xBF';
-                                    string_buffer[bytes++] = '\xBD';
+                                    string_buffer[bytes++] = detail::binary_writer<BasicJsonType, char>::to_char_type('\xEF');
+                                    string_buffer[bytes++] = detail::binary_writer<BasicJsonType, char>::to_char_type('\xBF');
+                                    string_buffer[bytes++] = detail::binary_writer<BasicJsonType, char>::to_char_type('\xBD');
                                 }
                                 bytes_after_last_accept = bytes;
                             }
@@ -19011,7 +19014,7 @@ class basic_json
     map                    | object          | 0xBF
     False                  | `false`         | 0xF4
     True                   | `true`          | 0xF5
-    Nill                   | `null`          | 0xF6
+    Null                   | `null`          | 0xF6
     Half-Precision Float   | number_float    | 0xF9
     Single-Precision Float | number_float    | 0xFA
     Double-Precision Float | number_float    | 0xFB

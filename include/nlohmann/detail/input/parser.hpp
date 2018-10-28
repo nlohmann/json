@@ -167,7 +167,7 @@ class parser
     template <typename SAX>
     bool sax_parse_internal(SAX* sax)
     {
-        // stack to remember the hieararchy of structured values we are parsing
+        // stack to remember the hierarchy of structured values we are parsing
         // true = array; false = object
         std::vector<bool> states;
         // value to avoid a goto (see comment where set to true)
@@ -351,7 +351,7 @@ class parser
             // we reached this line after we successfully parsed a value
             if (states.empty())
             {
-                // empty stack: we reached the end of the hieararchy: done
+                // empty stack: we reached the end of the hierarchy: done
                 return true;
             }
             else

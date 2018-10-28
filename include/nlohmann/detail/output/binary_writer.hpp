@@ -1287,6 +1287,7 @@ class binary_writer
         oa->write_characters(vec.data(), sizeof(NumberType));
     }
 
+  public:
     // The following to_char_type functions are implement the conversion
     // between uint8_t and CharType. In case CharType is not unsigned,
     // such a conversion is required to allow values greater than 128.
