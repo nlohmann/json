@@ -1378,7 +1378,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(cards,
     {cards::pik, "puk"},  // second entry for cards::puk; will not be used
     {cards::herz, "herz"},
     {cards::karo, "karo"}
-});
+})
 
 enum TaskState
 {
@@ -1394,7 +1394,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(TaskState,
     {TS_STOPPED, "stopped"},
     {TS_RUNNING, "running"},
     {TS_COMPLETED, "completed"},
-});
+})
 
 TEST_CASE("JSON to enum mapping")
 {
