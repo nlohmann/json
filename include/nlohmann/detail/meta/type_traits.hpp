@@ -191,15 +191,10 @@ struct is_constructible_object_type_impl <
     using object_t = typename BasicJsonType::object_t;
 
     static constexpr bool value =
-        std::is_constructible<typename ConstructibleObjectType::key_type,
-        typename object_t::key_type>::value and
-        (std::is_same<typename object_t::mapped_type,
-         typename ConstructibleObjectType::mapped_type>::value or
-         (has_from_json<BasicJsonType,
-          typename ConstructibleObjectType::mapped_type>::value or
-          has_non_default_from_json <
-          BasicJsonType,
-          typename ConstructibleObjectType::mapped_type >::value));
+        (std::is_constructible<typename ConstructibleObjectType::key_type, typename object_t::key_type>::value and
+         std::is_same<typename object_t::mapped_type, typename ConstructibleObjectType::mapped_type>::value) or
+        (has_from_json<BasicJsonType, typename ConstructibleObjectType::mapped_type>::value or
+         has_non_default_from_json<BasicJsonType, typename ConstructibleObjectType::mapped_type >::value);
 };
 
 template <typename BasicJsonType, typename ConstructibleObjectType>
