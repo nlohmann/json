@@ -10,6 +10,7 @@ SOURCES = src/unit.cpp \
           src/unit-algorithms.cpp \
           src/unit-allocator.cpp \
           src/unit-alt-string.cpp \
+          src/unit-bson.cpp \
           src/unit-capacity.cpp \
           src/unit-cbor.cpp \
           src/unit-class_const_iterator.cpp \
@@ -90,11 +91,14 @@ check: $(OBJECTS) $(TESTCASES)
 ##############################################################################
 
 FUZZER_ENGINE = src/fuzzer-driver_afl.cpp
-FUZZERS = parse_afl_fuzzer parse_cbor_fuzzer parse_msgpack_fuzzer parse_ubjson_fuzzer
+FUZZERS = parse_afl_fuzzer parse_bson_fuzzer parse_cbor_fuzzer parse_msgpack_fuzzer parse_ubjson_fuzzer
 fuzzers: $(FUZZERS)
 
 parse_afl_fuzzer:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(FUZZER_ENGINE) src/fuzzer-parse_json.cpp -o $@
+
+parse_bson_fuzzer:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(FUZZER_ENGINE) src/fuzzer-parse_bson.cpp -o $@
 
 parse_cbor_fuzzer:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(FUZZER_ENGINE) src/fuzzer-parse_cbor.cpp -o $@

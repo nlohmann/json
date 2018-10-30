@@ -84,13 +84,13 @@ void from_json(const BasicJsonType& j, typename BasicJsonType::string_t& s)
 }
 
 template <
-    typename BasicJsonType, typename CompatibleStringType,
+    typename BasicJsonType, typename ConstructibleStringType,
     enable_if_t <
-        is_compatible_string_type<BasicJsonType, CompatibleStringType>::value and
+        is_constructible_string_type<BasicJsonType, ConstructibleStringType>::value and
         not std::is_same<typename BasicJsonType::string_t,
-                         CompatibleStringType>::value,
+                         ConstructibleStringType>::value,
         int > = 0 >
-void from_json(const BasicJsonType& j, CompatibleStringType& s)
+void from_json(const BasicJsonType& j, ConstructibleStringType& s)
 {
     if (JSON_UNLIKELY(not j.is_string()))
     {
@@ -173,11 +173,11 @@ auto from_json_array_impl(const BasicJsonType& j, std::array<T, N>& arr,
     }
 }
 
-template<typename BasicJsonType, typename CompatibleArrayType>
-auto from_json_array_impl(const BasicJsonType& j, CompatibleArrayType& arr, priority_tag<1> /*unused*/)
+template<typename BasicJsonType, typename ConstructibleArrayType>
+auto from_json_array_impl(const BasicJsonType& j, ConstructibleArrayType& arr, priority_tag<1> /*unused*/)
 -> decltype(
-    arr.reserve(std::declval<typename CompatibleArrayType::size_type>()),
-    j.template get<typename CompatibleArrayType::value_type>(),
+    arr.reserve(std::declval<typename ConstructibleArrayType::size_type>()),
+    j.template get<typename ConstructibleArrayType::value_type>(),
     void())
 {
     using std::end;
@@ -188,12 +188,12 @@ auto from_json_array_impl(const BasicJsonType& j, CompatibleArrayType& arr, prio
     {
         // get<BasicJsonType>() returns *this, this won't call a from_json
         // method when value_type is BasicJsonType
-        return i.template get<typename CompatibleArrayType::value_type>();
+        return i.template get<typename ConstructibleArrayType::value_type>();
     });
 }
 
-template <typename BasicJsonType, typename CompatibleArrayType>
-void from_json_array_impl(const BasicJsonType& j, CompatibleArrayType& arr,
+template <typename BasicJsonType, typename ConstructibleArrayType>
+void from_json_array_impl(const BasicJsonType& j, ConstructibleArrayType& arr,
                           priority_tag<0> /*unused*/)
 {
     using std::end;
@@ -204,21 +204,21 @@ void from_json_array_impl(const BasicJsonType& j, CompatibleArrayType& arr,
     {
         // get<BasicJsonType>() returns *this, this won't call a from_json
         // method when value_type is BasicJsonType
-        return i.template get<typename CompatibleArrayType::value_type>();
+        return i.template get<typename ConstructibleArrayType::value_type>();
     });
 }
 
-template <typename BasicJsonType, typename CompatibleArrayType,
+template <typename BasicJsonType, typename ConstructibleArrayType,
           enable_if_t <
-              is_compatible_array_type<BasicJsonType, CompatibleArrayType>::value and
-              not is_compatible_object_type<BasicJsonType, CompatibleArrayType>::value and
-              not is_compatible_string_type<BasicJsonType, CompatibleArrayType>::value and
-              not is_basic_json<CompatibleArrayType>::value,
+              is_constructible_array_type<BasicJsonType, ConstructibleArrayType>::value and
+              not is_constructible_object_type<BasicJsonType, ConstructibleArrayType>::value and
+              not is_constructible_string_type<BasicJsonType, ConstructibleArrayType>::value and
+              not is_basic_json<ConstructibleArrayType>::value,
               int > = 0 >
 
-auto from_json(const BasicJsonType& j, CompatibleArrayType& arr)
+auto from_json(const BasicJsonType& j, ConstructibleArrayType& arr)
 -> decltype(from_json_array_impl(j, arr, priority_tag<3> {}),
-j.template get<typename CompatibleArrayType::value_type>(),
+j.template get<typename ConstructibleArrayType::value_type>(),
 void())
 {
     if (JSON_UNLIKELY(not j.is_array()))
@@ -230,9 +230,9 @@ void())
     from_json_array_impl(j, arr, priority_tag<3> {});
 }
 
-template<typename BasicJsonType, typename CompatibleObjectType,
-         enable_if_t<is_compatible_object_type<BasicJsonType, CompatibleObjectType>::value, int> = 0>
-void from_json(const BasicJsonType& j, CompatibleObjectType& obj)
+template<typename BasicJsonType, typename ConstructibleObjectType,
+         enable_if_t<is_constructible_object_type<BasicJsonType, ConstructibleObjectType>::value, int> = 0>
+void from_json(const BasicJsonType& j, ConstructibleObjectType& obj)
 {
     if (JSON_UNLIKELY(not j.is_object()))
     {
@@ -240,13 +240,13 @@ void from_json(const BasicJsonType& j, CompatibleObjectType& obj)
     }
 
     auto inner_object = j.template get_ptr<const typename BasicJsonType::object_t*>();
-    using value_type = typename CompatibleObjectType::value_type;
+    using value_type = typename ConstructibleObjectType::value_type;
     std::transform(
         inner_object->begin(), inner_object->end(),
         std::inserter(obj, obj.begin()),
         [](typename BasicJsonType::object_t::value_type const & p)
     {
-        return value_type(p.first, p.second.template get<typename CompatibleObjectType::mapped_type>());
+        return value_type(p.first, p.second.template get<typename ConstructibleObjectType::mapped_type>());
     });
 }
 
@@ -299,7 +299,7 @@ void from_json(const BasicJsonType& j, std::pair<A1, A2>& p)
 }
 
 template<typename BasicJsonType, typename Tuple, std::size_t... Idx>
-void from_json_tuple_impl(const BasicJsonType& j, Tuple& t, index_sequence<Idx...>)
+void from_json_tuple_impl(const BasicJsonType& j, Tuple& t, index_sequence<Idx...> /*unused*/)
 {
     t = std::make_tuple(j.at(Idx).template get<typename std::tuple_element<Idx, Tuple>::type>()...);
 }
@@ -358,7 +358,7 @@ struct from_json_fn
         return from_json(j, val);
     }
 };
-}
+}  // namespace detail
 
 /// namespace to hold default `from_json` function
 /// to see why this is required:
@@ -366,5 +366,5 @@ struct from_json_fn
 namespace
 {
 constexpr const auto& from_json = detail::static_const<detail::from_json_fn>::value;
-}
-}
+} // namespace
+}  // namespace nlohmann

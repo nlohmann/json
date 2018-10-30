@@ -116,5 +116,5 @@ class primitive_iterator_t
         return *this;
     }
 };
-}
-}
+}  // namespace detail
+}  // namespace nlohmann

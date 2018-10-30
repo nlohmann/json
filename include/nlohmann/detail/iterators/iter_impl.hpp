@@ -610,5 +610,5 @@ class iter_impl
     /// the actual iterator of the associated instance
     internal_iterator<typename std::remove_const<BasicJsonType>::type> m_it;
 };
-}
-}
+}  // namespace detail
+}  // namespace nlohmann

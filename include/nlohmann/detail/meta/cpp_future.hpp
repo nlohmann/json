@@ -59,5 +59,5 @@ struct static_const
 
 template<typename T>
 constexpr T static_const<T>::value;
-}
-}
+}  // namespace detail
+}  // namespace nlohmann

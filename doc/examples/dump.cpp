@@ -30,7 +30,7 @@ int main()
               << j_string.dump(-1, ' ', true) << '\n';
 
     // create JSON value with invalid UTF-8 byte sequence
-    json j_invalid = "\xF0\xA4\xAD\xC0";
+    json j_invalid = "ä\xA9ü";
     try
     {
         std::cout << j_invalid.dump() << std::endl;
@@ -39,4 +39,10 @@ int main()
     {
         std::cout << e.what() << std::endl;
     }
+
+    std::cout << "string with replaced invalid characters: "
+              << j_invalid.dump(-1, ' ', false, json::error_handler_t::replace)
+              << "\nstring with ignored invalid characters: "
+              << j_invalid.dump(-1, ' ', false, json::error_handler_t::ignore)
+              << '\n';
 }

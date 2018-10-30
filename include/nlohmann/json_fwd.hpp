@@ -59,6 +59,6 @@ uses the standard template types.
 @since version 1.0.0
 */
 using json = basic_json<>;
-}
+}  // namespace nlohmann
 
 #endif

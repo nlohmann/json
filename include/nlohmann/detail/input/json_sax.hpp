@@ -113,7 +113,7 @@ struct json_sax
     @brief a parse error occurred
     @param[in] position    the position in the input where the error occurs
     @param[in] last_token  the last read token
-    @param[in] error_msg   a detailed error message
+    @param[in] ex          an exception object describing the error
     @return whether parsing should proceed (must return false)
     */
     virtual bool parse_error(std::size_t position,
@@ -181,7 +181,7 @@ class json_sax_dom_parser
         return true;
     }
 
-    bool number_float(number_float_t val, const string_t&)
+    bool number_float(number_float_t val, const string_t& /*unused*/)
     {
         handle_value(val);
         return true;
@@ -238,7 +238,7 @@ class json_sax_dom_parser
         return true;
     }
 
-    bool parse_error(std::size_t, const std::string&,
+    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/,
                      const detail::exception& ex)
     {
         errored = true;
@@ -286,20 +286,19 @@ class json_sax_dom_parser
             root = BasicJsonType(std::forward<Value>(v));
             return &root;
         }
+
+        assert(ref_stack.back()->is_array() or ref_stack.back()->is_object());
+
+        if (ref_stack.back()->is_array())
+        {
+            ref_stack.back()->m_value.array->emplace_back(std::forward<Value>(v));
+            return &(ref_stack.back()->m_value.array->back());
+        }
         else
         {
-            assert(ref_stack.back()->is_array() or ref_stack.back()->is_object());
-            if (ref_stack.back()->is_array())
-            {
-                ref_stack.back()->m_value.array->emplace_back(std::forward<Value>(v));
-                return &(ref_stack.back()->m_value.array->back());
-            }
-            else
-            {
-                assert(object_element);
-                *object_element = BasicJsonType(std::forward<Value>(v));
-                return object_element;
-            }
+            assert(object_element);
+            *object_element = BasicJsonType(std::forward<Value>(v));
+            return object_element;
         }
     }
 
@@ -358,7 +357,7 @@ class json_sax_dom_callback_parser
         return true;
     }
 
-    bool number_float(number_float_t val, const string_t&)
+    bool number_float(number_float_t val, const string_t& /*unused*/)
     {
         handle_value(val);
         return true;
@@ -496,7 +495,7 @@ class json_sax_dom_callback_parser
         return true;
     }
 
-    bool parse_error(std::size_t, const std::string&,
+    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/,
                      const detail::exception& ex)
     {
         errored = true;
@@ -574,37 +573,37 @@ class json_sax_dom_callback_parser
             root = std::move(value);
             return {true, &root};
         }
+
+        // skip this value if we already decided to skip the parent
+        // (https://github.com/nlohmann/json/issues/971#issuecomment-413678360)
+        if (not ref_stack.back())
+        {
+            return {false, nullptr};
+        }
+
+        // we now only expect arrays and objects
+        assert(ref_stack.back()->is_array() or ref_stack.back()->is_object());
+
+        if (ref_stack.back()->is_array())
+        {
+            ref_stack.back()->m_value.array->push_back(std::move(value));
+            return {true, &(ref_stack.back()->m_value.array->back())};
+        }
         else
         {
-            // skip this value if we already decided to skip the parent
-            // (https://github.com/nlohmann/json/issues/971#issuecomment-413678360)
-            if (not ref_stack.back())
+            // check if we should store an element for the current key
+            assert(not key_keep_stack.empty());
+            const bool store_element = key_keep_stack.back();
+            key_keep_stack.pop_back();
+
+            if (not store_element)
             {
                 return {false, nullptr};
             }
 
-            assert(ref_stack.back()->is_array() or ref_stack.back()->is_object());
-            if (ref_stack.back()->is_array())
-            {
-                ref_stack.back()->m_value.array->push_back(std::move(value));
-                return {true, &(ref_stack.back()->m_value.array->back())};
-            }
-            else
-            {
-                // check if we should store an element for the current key
-                assert(not key_keep_stack.empty());
-                const bool store_element = key_keep_stack.back();
-                key_keep_stack.pop_back();
-
-                if (not store_element)
-                {
-                    return {false, nullptr};
-                }
-
-                assert(object_element);
-                *object_element = std::move(value);
-                return {true, object_element};
-            }
+            assert(object_element);
+            *object_element = std::move(value);
+            return {true, object_element};
         }
     }
 
@@ -642,37 +641,37 @@ class json_sax_acceptor
         return true;
     }
 
-    bool boolean(bool)
+    bool boolean(bool /*unused*/)
     {
         return true;
     }
 
-    bool number_integer(number_integer_t)
+    bool number_integer(number_integer_t /*unused*/)
     {
         return true;
     }
 
-    bool number_unsigned(number_unsigned_t)
+    bool number_unsigned(number_unsigned_t /*unused*/)
     {
         return true;
     }
 
-    bool number_float(number_float_t, const string_t&)
+    bool number_float(number_float_t /*unused*/, const string_t& /*unused*/)
     {
         return true;
     }
 
-    bool string(string_t&)
+    bool string(string_t& /*unused*/)
     {
         return true;
     }
 
-    bool start_object(std::size_t = std::size_t(-1))
+    bool start_object(std::size_t  /*unused*/ = std::size_t(-1))
     {
         return true;
     }
 
-    bool key(string_t&)
+    bool key(string_t& /*unused*/)
     {
         return true;
     }
@@ -682,7 +681,7 @@ class json_sax_acceptor
         return true;
     }
 
-    bool start_array(std::size_t = std::size_t(-1))
+    bool start_array(std::size_t  /*unused*/ = std::size_t(-1))
     {
         return true;
     }
@@ -692,11 +691,11 @@ class json_sax_acceptor
         return true;
     }
 
-    bool parse_error(std::size_t, const std::string&, const detail::exception&)
+    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const detail::exception& /*unused*/)
     {
         return false;
     }
 };
-}
+}  // namespace detail
 
-}
+}  // namespace nlohmann

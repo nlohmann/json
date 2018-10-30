@@ -59,7 +59,7 @@ class json_pointer
 
     @since version 2.0.0
     */
-    std::string to_string() const noexcept
+    std::string to_string() const
     {
         return std::accumulate(reference_tokens.begin(), reference_tokens.end(),
                                std::string{},
@@ -114,7 +114,7 @@ class json_pointer
     }
 
     /// return whether pointer points to the root document
-    bool is_root() const
+    bool is_root() const noexcept
     {
         return reference_tokens.empty();
     }
@@ -506,11 +506,11 @@ class json_pointer
             std::size_t slash = reference_string.find_first_of('/', 1),
             // set the beginning of the first reference token
             start = 1;
-            // we can stop if start == string::npos+1 = 0
+            // we can stop if start == 0 (if slash == std::string::npos)
             start != 0;
             // set the beginning of the next reference token
             // (will eventually be 0 if slash == std::string::npos)
-            start = slash + 1,
+            start = (slash == std::string::npos) ? 0 : slash + 1,
             // find next slash
             slash = reference_string.find_first_of('/', start))
         {
@@ -566,7 +566,7 @@ class json_pointer
         {}
     }
 
-    /// escape "~"" to "~0" and "/" to "~1"
+    /// escape "~" to "~0" and "/" to "~1"
     static std::string escape(std::string s)
     {
         replace_substring(s, "~", "~0");
@@ -693,4 +693,4 @@ class json_pointer
     /// the reference tokens
     std::vector<std::string> reference_tokens;
 };
-}
+}  // namespace nlohmann

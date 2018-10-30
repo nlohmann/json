@@ -27,7 +27,8 @@
   - [JSON Merge Patch](#json-merge-patch)
   - [Implicit conversions](#implicit-conversions)
   - [Conversions to/from arbitrary types](#arbitrary-types-conversions)
-  - [Binary formats (CBOR, MessagePack, and UBJSON)](#binary-formats-cbor-messagepack-and-ubjson)
+  - [Specializing enum conversion](#specializing-enum-conversion)
+  - [Binary formats (BSON, CBOR, MessagePack, and UBJSON)](#binary-formats-bson-cbor-messagepack-and-ubjson)
 - [Supported compilers](#supported-compilers)
 - [License](#license)
 - [Contact](#contact)
@@ -140,7 +141,7 @@ endif()
 
 :beer: If you are using OS X and [Homebrew](http://brew.sh), just type `brew tap nlohmann/json` and `brew install nlohmann_json` and you're set. If you want the bleeding edge rather than the latest release, use `brew install nlohmann_json --HEAD`.
 
-If you are using the [Meson Build System](http://mesonbuild.com), then you can wrap this repository as a subproject.
+If you are using the [Meson Build System](http://mesonbuild.com), then you can get a wrap file by downloading it from [Meson WrapDB](https://wrapdb.mesonbuild.com/nlohmann_json), or simply use `meson wrap install nlohmann_json`.
 
 If you are using [Conan](https://www.conan.io/) to manage your dependencies, merely add `jsonformoderncpp/x.y.z@vthiery/stable` to your `conanfile.py`'s requires, where `x.y.z` is the release version you want to use. Please file issues [here](https://github.com/vthiery/conan-jsonformoderncpp/issues) if you experience problems with the packages.
 
@@ -307,9 +308,9 @@ std::cout << cpp_string << " == " << cpp_string2 << " == " << cpp_string3 << " =
 std::cout << j_string << " == " << serialized_string << std::endl;
 ```
 
-[`.dump()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a5adea76fedba9898d404fef8598aa663.html#a5adea76fedba9898d404fef8598aa663) always returns the serialized value, and [`.get<std::string>()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a16f9445f7629f634221a42b967cdcd43.html#a16f9445f7629f634221a42b967cdcd43) returns the originally stored string value.
+[`.dump()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a50ec80b02d0f3f51130d4abb5d1cfdc5.html#a50ec80b02d0f3f51130d4abb5d1cfdc5) always returns the serialized value, and [`.get<std::string>()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a16f9445f7629f634221a42b967cdcd43.html#a16f9445f7629f634221a42b967cdcd43) returns the originally stored string value.
 
-Note the library only supports UTF-8. When you store strings with different encodings in the library, calling [`dump()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a5adea76fedba9898d404fef8598aa663.html#a5adea76fedba9898d404fef8598aa663) may throw an exception.
+Note the library only supports UTF-8. When you store strings with different encodings in the library, calling [`dump()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a50ec80b02d0f3f51130d4abb5d1cfdc5.html#a50ec80b02d0f3f51130d4abb5d1cfdc5) may throw an exception unless `json::error_handler_t::replace` or `json::error_handler_t::ignore` are used as error handlers.
 
 #### To/from streams (e.g. files, string streams)
 
@@ -874,13 +875,71 @@ struct bad_serializer
 };
 ```
 
-### Binary formats (CBOR, MessagePack, and UBJSON)
+### Specializing enum conversion
 
-Though JSON is a ubiquitous data format, it is not a very compact format suitable for data exchange, for instance over a network. Hence, the library supports [CBOR](http://cbor.io) (Concise Binary Object Representation), [MessagePack](http://msgpack.org), and [UBJSON](http://ubjson.org) (Universal Binary JSON Specification) to efficiently encode JSON values to byte vectors and to decode such vectors.
+By default, enum values are serialized to JSON as integers. In some cases this could result in undesired behavior. If an enum is modified or re-ordered after data has been serialized to JSON, the later de-serialized JSON data may be undefined or a different enum value than was originally intended.
+
+It is possible to more precisely specify how a given enum is mapped to and from JSON as shown below:
+
+```cpp
+// example enum type declaration
+enum TaskState {
+    TS_STOPPED,
+    TS_RUNNING,
+    TS_COMPLETED,
+    TS_INVALID=-1,
+};
+
+// map TaskState values to JSON as strings
+NLOHMANN_JSON_SERIALIZE_ENUM( TaskState, {
+    {TS_INVALID, nullptr},
+    {TS_STOPPED, "stopped"},
+    {TS_RUNNING, "running"},
+    {TS_COMPLETED, "completed"},
+});
+```
+
+The `NLOHMANN_JSON_SERIALIZE_ENUM()` macro declares a set of `to_json()` / `from_json()` functions for type `TaskState` while avoiding repetition and boilerplate serilization code.
+
+**Usage:**
+
+```cpp
+// enum to JSON as string
+json j = TS_STOPPED;
+assert(j == "stopped");
+
+// json string to enum
+json j3 = "running";
+assert(j3.get<TaskState>() == TS_RUNNING);
+
+// undefined json value to enum (where the first map entry above is the default)
+json jPi = 3.14;
+assert(jPi.get<TaskState>() == TS_INVALID );
+```
+
+Just as in [Arbitrary Type Conversions](#arbitrary-types-conversions) above,
+- `NLOHMANN_JSON_SERIALIZE_ENUM()` MUST be declared in your enum type's namespace (which can be the global namespace), or the library will not be able to locate it and it will default to integer serialization.
+- It MUST be available (e.g., proper headers must be included) everywhere you use the conversions.
+
+Other Important points:
+- When using `get<ENUM_TYPE>()`, undefined JSON values will default to the first pair specified in your map. Select this default pair carefully.
+- If an enum or JSON value is specified more than once in your map, the first matching occurrence from the top of the map will be returned when converting to or from JSON.
+
+### Binary formats (BSON, CBOR, MessagePack, and UBJSON
+
+Though JSON is a ubiquitous data format, it is not a very compact format suitable for data exchange, for instance over a network. Hence, the library supports [BSON](http://bsonspec.org) (Binary JSON), [CBOR](http://cbor.io) (Concise Binary Object Representation), [MessagePack](http://msgpack.org), and [UBJSON](http://ubjson.org) (Universal Binary JSON Specification) to efficiently encode JSON values to byte vectors and to decode such vectors.
 
 ```cpp
 // create a JSON value
 json j = R"({"compact": true, "schema": 0})"_json;
+
+// serialize to BSON
+std::vector<std::uint8_t> v_bson = json::to_bson(j);
+
+// 0x1B, 0x00, 0x00, 0x00, 0x08, 0x63, 0x6F, 0x6D, 0x70, 0x61, 0x63, 0x74, 0x00, 0x01, 0x10, 0x73, 0x63, 0x68, 0x65, 0x6D, 0x61, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+
+// roundtrip
+json j_from_bson = json::from_bson(v_bson);
 
 // serialize to CBOR
 std::vector<std::uint8_t> v_cbor = json::to_cbor(j);
@@ -1138,6 +1197,9 @@ I deeply appreciate the help of the following people.
 - [Henry Schreiner](https://github.com/henryiii) added support for GCC 4.8.
 - [knilch](https://github.com/knilch0r) made sure the test suite does not stall when run in the wrong directory.
 - [Antonio Borondo](https://github.com/antonioborondo) fixed an MSVC 2017 warning.
+- [Dan Gendreau](https://github.com/dgendreau) implemented the `NLOHMANN_JSON_SERIALIZE_ENUM` macro to quickly define a enum/JSON mapping.
+- [efp](https://github.com/efp) added line and column information to parse errors.
+- [julian-becker](https://github.com/julian-becker) added BSON support.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
