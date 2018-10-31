@@ -6635,7 +6635,10 @@ class binary_reader
 
             if (not is_array)
             {
-                sax->key(key);
+                if (not sax->key(key))
+                {
+                    return false;
+                }
             }
 
             if (JSON_UNLIKELY(not parse_bson_element_internal(element_type, element_type_parse_position)))
