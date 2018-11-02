@@ -1214,7 +1214,7 @@ The library itself consists of a single header file licensed under the MIT licen
 - [**Artistic Style**](http://astyle.sourceforge.net) for automatic source code identation
 - [**Catch**](https://github.com/philsquared/Catch) for the unit tests
 - [**Clang**](http://clang.llvm.org) for compilation with code sanitizers
-- [**Cmake**](https://cmake.org) for build automation
+- [**CMake**](https://cmake.org) for build automation
 - [**Codacity**](https://www.codacy.com) for further [code analysis](https://www.codacy.com/app/nlohmann/json)
 - [**Coveralls**](https://coveralls.io) to measure [code coverage](https://coveralls.io/github/nlohmann/json)
 - [**Coverity Scan**](https://scan.coverity.com) for [static analysis](https://scan.coverity.com/projects/nlohmann-json)
