@@ -19,8 +19,8 @@
             </ExpandedItem>
         </Expand>
     </Type>
-    
-    <!--    skip the pair first/second members in the treeview while traversing a map. 
+
+    <!--    skip the pair first/second members in the treeview while traversing a map.
             Only works in VS 2015 Update 2 and beyond using the new visualization -->
     <Type Name="std::pair&lt;*, nlohmann::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
         <DisplayString>{second}</DisplayString>
@@ -28,5 +28,5 @@
             <ExpandedItem>second</ExpandedItem>
         </Expand>
     </Type>
-    
+
 </AutoVisualizer>
