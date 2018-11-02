@@ -97,6 +97,10 @@ To embed the library directly into an existing CMake project, place the entire s
 # run from your own project's code.
 set(JSON_BuildTests OFF CACHE INTERNAL "")
 
+# If you only include this third party in PRIVATE source files, you do not
+# need to install it when your main project gets installed.
+# set(JSON_Install OFF CACHE INTERNAL "")
+
 # Don't use include(nlohmann_json/CMakeLists.txt) since that carries with it
 # inintended consequences that will break the build.  It's generally
 # discouraged (although not necessarily well documented as such) to use
