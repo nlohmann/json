@@ -2109,8 +2109,8 @@ class input_stream_adapter : public input_adapter_protocol
     ~input_stream_adapter() override
     {
         // clear stream flags; we use underlying streambuf I/O, do not
-        // maintain ifstream flags
-        is.clear();
+        // maintain ifstream flags, except eof
+        is.clear(is.rdstate() & std::ios::eofbit);
     }
 
     explicit input_stream_adapter(std::istream& i)
@@ -2128,7 +2128,11 @@ class input_stream_adapter : public input_adapter_protocol
     // end up as the same value, eg. 0xFFFFFFFF.
     std::char_traits<char>::int_type get_character() override
     {
-        return sb.sbumpc();
+        auto res = sb.sbumpc();
+        // set eof manually, as we don't use the istream interface.
+        if (res == EOF)
+            is.clear(is.rdstate() | std::ios::eofbit);
+        return res;
     }
 
   private:
