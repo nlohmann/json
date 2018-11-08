@@ -7851,7 +7851,7 @@ class basic_json
     Thereby, `Target` is the current object; that is, the patch is applied to
     the current value.
 
-    @param[in] patch  the patch to apply
+    @param[in] apply_patch  the patch to apply
 
     @complexity Linear in the lengths of @a patch.
 
@@ -7863,15 +7863,15 @@ class basic_json
 
     @since version 3.0.0
     */
-    void merge_patch(const basic_json& patch)
+    void merge_patch(const basic_json& apply_patch)
     {
-        if (patch.is_object())
+        if (apply_patch.is_object())
         {
             if (not is_object())
             {
                 *this = object();
             }
-            for (auto it = patch.begin(); it != patch.end(); ++it)
+            for (auto it = apply_patch.begin(); it != apply_patch.end(); ++it)
             {
                 if (it.value().is_null())
                 {
@@ -7885,7 +7885,7 @@ class basic_json
         }
         else
         {
-            *this = patch;
+            *this = apply_patch;
         }
     }
 
