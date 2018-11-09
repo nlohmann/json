@@ -264,7 +264,7 @@ class binary_reader
             default: // anything else not supported (yet)
             {
                 char cr[3];
-                snprintf(cr, sizeof(cr), "%.2hhX", static_cast<unsigned char>(element_type));
+                (std::snprintf)(cr, sizeof(cr), "%.2hhX", static_cast<unsigned char>(element_type));
                 return sax->parse_error(element_type_parse_position, std::string(cr), parse_error::create(114, element_type_parse_position, "Unsupported BSON record type 0x" + std::string(cr)));
             }
         }
@@ -1921,7 +1921,7 @@ class binary_reader
     std::string get_token_string() const
     {
         char cr[3];
-        snprintf(cr, 3, "%.2hhX", static_cast<unsigned char>(current));
+        (std::snprintf)(cr, 3, "%.2hhX", static_cast<unsigned char>(current));
         return std::string{cr};
     }
 
