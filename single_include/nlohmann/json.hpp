@@ -2131,7 +2131,9 @@ class input_stream_adapter : public input_adapter_protocol
         auto res = sb.sbumpc();
         // set eof manually, as we don't use the istream interface.
         if (res == EOF)
+        {
             is.clear(is.rdstate() | std::ios::eofbit);
+        }
         return res;
     }
 
