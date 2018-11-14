@@ -340,8 +340,12 @@ release:
 	zip -9 -r include.zip include/*
 	gpg --armor --detach-sig include.zip
 	mv include.zip include.zip.asc release_files
+	zip -9 -r buildable_meson.zip meson.build single_include/* include/*
+	gpg --armor --detach-sig buildable_meson.zip
+	mv buildable_meson.zip buildable_meson.zip.asc release_files
 	gpg --armor --detach-sig single_include/nlohmann/json.hpp
 	cp single_include/nlohmann/json.hpp release_files
 	mv single_include/nlohmann/json.hpp.asc release_files
 	cd release_files ; shasum -a 256 json.hpp > hashes.txt
 	cd release_files ; shasum -a 256 include.zip >> hashes.txt
+	cd release_files ; shasum -a 256 buildable_meson.zip >> hashes.txt
