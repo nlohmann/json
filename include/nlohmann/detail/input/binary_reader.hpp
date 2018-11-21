@@ -241,7 +241,7 @@ class binary_reader
 
             case 0x08: // boolean
             {
-                return sax->boolean(static_cast<bool>(get()));
+                return sax->boolean(get() != 0);
             }
 
             case 0x0A: // null
