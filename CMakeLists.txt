@@ -40,6 +40,10 @@ else()
     message(STATUS "Using the single-header code from ${NLOHMANN_JSON_INCLUDE_BUILD_DIR}")
 endif()
 
+if(NOT "${PROJECT_NAME}" STREQUAL "${CMAKE_PROJECT_NAME}")
+	set(SUBPROJECT ON)
+endif()
+
 ##
 ## TARGET
 ## create target and add include path
@@ -73,7 +77,7 @@ endif()
 ##
 include(CTest) #adds option BUILD_TESTING (default ON)
 
-if(BUILD_TESTING AND JSON_BuildTests)
+if(BUILD_TESTING AND JSON_BuildTests AND NOT SUBPROJECT)
     enable_testing()
     add_subdirectory(test)
 endif()
