@@ -78,6 +78,11 @@ class iter_impl
     /// default constructor
     iter_impl() = default;
 
+    // test uninitialized iterator
+    bool is_null() {
+        return m_object == nullptr;
+    }
+
     /*!
     @brief constructor for a given JSON instance
     @param[in] object  pointer to a JSON object for this iterator
