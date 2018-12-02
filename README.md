@@ -291,19 +291,17 @@ Note the difference between serialization and assignment:
 // store a string in a JSON value
 json j_string = "this is a string";
 
-// retrieve the string value (implicit JSON to std::string conversion)
-std::string cpp_string = j_string;
-// retrieve the string value (explicit JSON to std::string conversion)
-auto cpp_string2 = j_string.get<std::string>();
-// retrieve the string value (alternative explicit JSON to std::string conversion)
-std::string cpp_string3;
-j_string.get_to(cpp_string3);
+// retrieve the string value
+auto cpp_string = j_string.get<std::string>();
+// retrieve the string value (alternative when an variable already exists)
+std::string cpp_string2;
+j_string.get_to(cpp_string2);
 
 // retrieve the serialized value (explicit JSON serialization)
 std::string serialized_string = j_string.dump();
 
 // output of original string
-std::cout << cpp_string << " == " << cpp_string2 << " == " << cpp_string3 << " == " << j_string.get<std::string>() << '\n';
+std::cout << cpp_string << " == " << cpp_string2 << " == " << j_string.get<std::string>() << '\n';
 // output of serialized value
 std::cout << j_string << " == " << serialized_string << std::endl;
 ```
@@ -428,7 +426,7 @@ for (auto& element : j) {
 }
 
 // getter/setter
-const std::string tmp = j[0];
+const auto tmp = j[0].get<std::string>();
 j[1] = 42;
 bool foo = j.at(2);
 
@@ -611,33 +609,38 @@ j_original.merge_patch(j_patch);
 
 ### Implicit conversions
 
-The type of the JSON object is determined automatically by the expression to store. Likewise, the stored value is implicitly converted.
+Supported types can be implicitly converted to JSON values.
+
+It is recommended to **NOT USE** implicit conversions **FROM** a JSON value.
+You can find more details about this recommendation [here](https://www.github.com/nlohmann/issues/958). 
 
 ```cpp
 // strings
 std::string s1 = "Hello, world!";
 json js = s1;
-std::string s2 = js;
+auto s2 = js.get<std::string>();
+// NOT RECOMMENDED
+std::string s3 = js;
+std::string s4;
+s4 = js;
 
 // Booleans
 bool b1 = true;
 json jb = b1;
-bool b2 = jb;
+auto b2 = jb.get<bool>();
+// NOT RECOMMENDED
+bool b3 = jb;
+bool b4;
+b4 = jb;
 
 // numbers
 int i = 42;
 json jn = i;
-double f = jn;
-
-// etc.
-```
-
-You can also explicitly ask for the value:
-
-```cpp
-std::string vs = js.get<std::string>();
-bool vb = jb.get<bool>();
-int vi = jn.get<int>();
+auto f = jn.get<double>();
+// NOT RECOMMENDED
+double f2 = jb;
+double f3;
+f3 = jb;
 
 // etc.
 ```
@@ -695,7 +698,7 @@ std::cout << j << std::endl;
 // {"address":"744 Evergreen Terrace","age":60,"name":"Ned Flanders"}
 
 // conversion: json -> person
-ns::person p2 = j;
+auto p2 = j.get<ns::person>();
 
 // that's it
 assert(p == p2);
@@ -727,10 +730,9 @@ Likewise, when calling `get<your_type>()` or `get_to(your_type&)`, the `from_jso
 Some important things:
 
 * Those methods **MUST** be in your type's namespace (which can be the global namespace), or the library will not be able to locate them (in this example, they are in namespace `ns`, where `person` is defined).
-* Those methods **MUST** be available (e.g., properly headers must be included) everywhere you use the implicit conversions. Look at [issue 1108](https://github.com/nlohmann/json/issues/1108) for errors that may occur otherwise.
+* Those methods **MUST** be available (e.g., properly headers must be included) everywhere you use these conversions. Look at [issue 1108](https://github.com/nlohmann/json/issues/1108) for errors that may occur otherwise.
 * When using `get<your_type>()`, `your_type` **MUST** be [DefaultConstructible](https://en.cppreference.com/w/cpp/named_req/DefaultConstructible). (There is a way to bypass this requirement described later.)
 * In function `from_json`, use function [`at()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a93403e803947b86f4da2d1fb3345cf2c.html#a93403e803947b86f4da2d1fb3345cf2c) to access the object values rather than `operator[]`. In case a key does not exist, `at` throws an exception that you can handle, whereas `operator[]` exhibits undefined behavior.
-* In case your type contains several `operator=` definitions, code like `your_variable = your_json;` [may not compile](https://github.com/nlohmann/json/issues/667). You need to write `your_variable = your_json.get<decltype(your_variable)>();` or `your_json.get_to(your_variable);` instead.
 * You do not need to add serializers or deserializers for STL types like `std::vector`: the library already implements these.
 
 
