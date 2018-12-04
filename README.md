@@ -612,7 +612,7 @@ j_original.merge_patch(j_patch);
 Supported types can be implicitly converted to JSON values.
 
 It is recommended to **NOT USE** implicit conversions **FROM** a JSON value.
-You can find more details about this recommendation [here](https://www.github.com/nlohmann/issues/958). 
+You can find more details about this recommendation [here](https://www.github.com/nlohmann/json/issues/958). 
 
 ```cpp
 // strings
