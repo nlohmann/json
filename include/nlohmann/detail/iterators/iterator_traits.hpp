@@ -3,16 +3,17 @@
 #include <iterator> // random_access_iterator_tag
 
 #include <nlohmann/detail/meta/void_t.hpp>
+#include <nlohmann/detail/meta/cpp_future.hpp>
 
 namespace nlohmann
 {
 namespace detail
 {
-template <class It, class = void>
-struct _iterator_types {};
+template <typename It, typename = void>
+struct iterator_types {};
 
-template <class It>
-struct _iterator_types<
+template <typename It>
+struct iterator_types<
     It,
     void_t<typename It::difference_type, typename It::value_type, typename It::pointer,
            typename It::reference, typename It::iterator_category>> {
@@ -23,25 +24,26 @@ struct _iterator_types<
   using iterator_category = typename It::iterator_category;
 };
 
-template <class Iter>
-struct iterator_traits : _iterator_types<Iter> {};
+// This is required as some compilers implement std::iterator_traits in a way that
+// doesn't work with SFINAE. See https://github.com/nlohmann/json/issues/1341.
+template <typename T, typename = void>
+struct iterator_traits
+{
+};
 
-template <class T>
-struct iterator_traits<T*> {
+template <typename T>
+struct iterator_traits<T, enable_if_t<!std::is_pointer<T>::value>>
+  : iterator_types<T>
+{
+};
+
+template <typename T>
+struct iterator_traits<T*, enable_if_t<std::is_object<T>::value>> {
   typedef std::random_access_iterator_tag iterator_category;
   typedef T value_type;
   typedef ptrdiff_t difference_type;
   typedef T* pointer;
   typedef T& reference;
-};
-
-template <class T>
-struct iterator_traits<const T*> {
-  typedef std::random_access_iterator_tag iterator_category;
-  typedef T value_type;
-  typedef ptrdiff_t difference_type;
-  typedef const T* pointer;
-  typedef const T& reference;
 };
 }
 }
