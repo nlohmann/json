@@ -1181,9 +1181,9 @@ Returns an ordering that is similar to Python:
 */
 inline bool operator<(const value_t lhs, const value_t rhs) noexcept
 {
-    static constexpr std::array<std::uint8_t, 8> order = {{
-            0 /* null */, 3 /* object */, 4 /* array */, 5 /* string */,
-            1 /* boolean */, 2 /* integer */, 2 /* unsigned */, 2 /* float */
+    static constexpr std::array<std::uint8_t, 8> order = { {
+            0 /* null */, 1 /* object */, 2 /* array */, 3 /* string */,
+            4 /* boolean */, 5 /* integer */, 6 /* unsigned */, 7 /* float */
         }
     };
 
