@@ -10,6 +10,7 @@
 #include <string> // string, char_traits
 #include <type_traits> // enable_if, is_base_of, is_pointer, is_integral, remove_pointer
 #include <utility> // pair, declval
+#include <cstdio> //FILE *
 
 #include <nlohmann/detail/macro_scope.hpp>
 
@@ -44,6 +45,27 @@ struct input_adapter_protocol
 
 /// a type to simplify interfaces
 using input_adapter_t = std::shared_ptr<input_adapter_protocol>;
+
+class file_input_adapter : public input_adapter_protocol
+{
+public:
+    explicit file_input_adapter(const FILE *file)  noexcept
+            : file(file)
+    {}
+
+    std::char_traits<char>::int_type get_character() noexcept override
+    {
+        auto res = fgetc(const_cast<FILE *>(file));
+        if(res == EOF)
+            return std::char_traits<char>::eof();
+        else
+            return static_cast<std::char_traits<char>::int_type>(res);
+    }
+private:
+    /// the file pointer to read from
+    const FILE * file;
+};
+
 
 /*!
 Input adapter for a (caching) istream. Ignores a UFT Byte Order Mark at
@@ -287,7 +309,8 @@ class input_adapter
 {
   public:
     // native support
-
+    input_adapter(FILE * file)
+            : ia(std::make_shared<file_input_adapter>(file)) {}
     /// input adapter for input stream
     input_adapter(std::istream& i)
         : ia(std::make_shared<input_stream_adapter>(i)) {}
