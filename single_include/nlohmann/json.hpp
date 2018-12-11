@@ -55,6 +55,7 @@ SOFTWARE.
 #include <memory> // allocator
 #include <string> // string
 #include <vector> // vector
+#include <cstdio>
 
 /*!
 @brief namespace for Niels Lohmann
@@ -2285,6 +2286,25 @@ struct wide_string_input_helper<WideStringType, 2>
     }
 };
 
+class file_input_adapter : public input_adapter_protocol
+{
+public:
+    explicit file_input_adapter(const FILE *file)  noexcept
+            : file(file)
+    {}
+
+    std::char_traits<char>::int_type get_character() noexcept override
+    {
+        auto res = fgetc(const_cast<FILE *>(file));
+        if(res == EOF)
+            return std::char_traits<char>::eof();
+        else
+            return static_cast<std::char_traits<char>::int_type>(res);
+    }
+private:
+    /// the file pointer to read from
+    const FILE * file;
+};
 template<typename WideStringType>
 class wide_string_input_adapter : public input_adapter_protocol
 {
@@ -2353,6 +2373,9 @@ class input_adapter
 
     input_adapter(const std::u32string& ws)
         : ia(std::make_shared<wide_string_input_adapter<std::u32string>>(ws)) {}
+
+    input_adapter(const FILE *file)
+        : ia(std::make_shared<file_input_adapter>(file)) {}
 
     /// input adapter for buffer
     template<typename CharT,
