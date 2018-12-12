@@ -386,35 +386,35 @@ TEST_CASE("json.org examples")
     }
     SECTION("FILE 1.json")
     {
-        std::unique_ptr<FILE, decltype(&fclose)> f(fopen("test/data/json.org/1.json", "r"), &fclose);
+        std::unique_ptr<std::FILE, decltype(&std::fclose)> f(std::fopen("test/data/json.org/1.json", "r"), &std::fclose);
         json j;
         CHECK_NOTHROW(j.parse(f.get()));
     }
 
     SECTION("FILE 2.json")
     {
-        std::unique_ptr<FILE, decltype(&fclose)> f(fopen("test/data/json.org/2.json", "r"), &fclose);
+        std::unique_ptr<std::FILE, decltype(&std::fclose)> f(std::fopen("test/data/json.org/2.json", "r"), &std::fclose);
         json j;
         CHECK_NOTHROW(j.parse(f.get()));
     }
 
     SECTION("FILE 3.json")
     {
-        std::unique_ptr<FILE, decltype(&fclose)> f(fopen("test/data/json.org/3.json", "r"), &fclose);
+        std::unique_ptr<std::FILE, decltype(&std::fclose)> f(std::fopen("test/data/json.org/3.json", "r"), &std::fclose);
         json j;
         CHECK_NOTHROW(j.parse(f.get()));
     }
 
     SECTION("FILE 4.json")
     {
-        std::unique_ptr<FILE, decltype(&fclose)> f(fopen("test/data/json.org/4.json", "r"), &fclose);
+        std::unique_ptr<std::FILE, decltype(&std::fclose)> f(std::fopen("test/data/json.org/4.json", "r"), &std::fclose);
         json j;
         CHECK_NOTHROW(j.parse(f.get()));
     }
 
     SECTION("FILE 5.json")
     {
-        std::unique_ptr<FILE, decltype(&fclose)> f(fopen("test/data/json.org/5.json", "r"), &fclose);
+        std::unique_ptr<std::FILE, decltype(&std::fclose)> f(std::fopen("test/data/json.org/5.json", "r"), &std::fclose);
         json j;
         CHECK_NOTHROW(j.parse(f.get()));
     }

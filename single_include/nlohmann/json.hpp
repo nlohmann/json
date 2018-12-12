@@ -2102,17 +2102,17 @@ Input adapter for stdio file access. This adapter read only 1 byte and do not us
 class file_input_adapter : public input_adapter_protocol
 {
   public:
-    explicit file_input_adapter(FILE* file)  noexcept
-        : file(file)
+    explicit file_input_adapter(std::FILE* f)  noexcept
+        : m_file(f)
     {}
 
     std::char_traits<char>::int_type get_character() noexcept override
     {
-        return fgetc(file);
+        return std::fgetc(m_file);
     }
   private:
     /// the file pointer to read from
-    FILE* file;
+    std::FILE* m_file;
 };
 
 
