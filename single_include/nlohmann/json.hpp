@@ -2295,16 +2295,13 @@ public:
 
     std::char_traits<char>::int_type get_character() noexcept override
     {
-        auto res = fgetc(const_cast<FILE *>(file));
-        if(res == EOF)
-            return std::char_traits<char>::eof();
-        else
-            return static_cast<std::char_traits<char>::int_type>(res);
+        return fgetc(const_cast<FILE *>(file));
     }
 private:
     /// the file pointer to read from
     const FILE * file;
 };
+
 template<typename WideStringType>
 class wide_string_input_adapter : public input_adapter_protocol
 {
