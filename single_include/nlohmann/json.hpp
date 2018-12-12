@@ -2097,22 +2097,22 @@ using input_adapter_t = std::shared_ptr<input_adapter_protocol>;
 
 /*!
 Input adapter for stdio file access. This adapter read only 1 byte and do not use any
- buffer. This adapter is a very low level adapter. This adapter
+ buffer. This adapter is a very low level adapter.
 */
 class file_input_adapter : public input_adapter_protocol
 {
   public:
-    explicit file_input_adapter(const FILE* file)  noexcept
+    explicit file_input_adapter(FILE* file)  noexcept
         : file(file)
     {}
 
     std::char_traits<char>::int_type get_character() noexcept override
     {
-        return fgetc(const_cast<FILE*>(file));
+        return fgetc(file);
     }
   private:
     /// the file pointer to read from
-    const FILE* file;
+    FILE* file;
 };
 
 
