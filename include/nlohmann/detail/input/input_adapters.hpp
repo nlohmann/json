@@ -48,7 +48,7 @@ using input_adapter_t = std::shared_ptr<input_adapter_protocol>;
 
 /*!
 Input adapter for stdio file access. This adapter read only 1 byte and do not use any
- buffer. This adapter is a very low level adapter. This adapter
+ buffer. This adapter is a very low level adapter.
 */
 class file_input_adapter : public input_adapter_protocol
 {
