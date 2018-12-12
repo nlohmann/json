@@ -46,6 +46,10 @@ struct input_adapter_protocol
 /// a type to simplify interfaces
 using input_adapter_t = std::shared_ptr<input_adapter_protocol>;
 
+/*!
+Input adapter for stdio file access. This adapter read only 1 byte and do not use any
+ buffer. This adapter is a very low level adapter. This adapter
+*/
 class file_input_adapter : public input_adapter_protocol
 {
 public:
@@ -55,11 +59,7 @@ public:
 
     std::char_traits<char>::int_type get_character() noexcept override
     {
-        auto res = fgetc(const_cast<FILE *>(file));
-        if(res == EOF)
-            return std::char_traits<char>::eof();
-        else
-            return static_cast<std::char_traits<char>::int_type>(res);
+        return fgetc(const_cast<FILE *>(file));
     }
 private:
     /// the file pointer to read from
