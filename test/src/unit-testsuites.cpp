@@ -384,6 +384,46 @@ TEST_CASE("json.org examples")
         json j;
         CHECK_NOTHROW(f >> j);
     }
+    SECTION("FILE 1.json")
+    {
+        auto f = fopen("test/data/json.org/1.json", "r");
+        json j;
+        CHECK_NOTHROW(j.parse(f));
+        fclose(f);
+    }
+
+    SECTION("FILE 2.json")
+    {
+        auto f = fopen("test/data/json.org/2.json", "r");
+        json j;
+        CHECK_NOTHROW(j.parse(f));
+        fclose(f);
+    }
+
+    SECTION("FILE 3.json")
+    {
+        auto f = fopen("test/data/json.org/3.json", "r");
+        json j;
+        CHECK_NOTHROW(j.parse(f));
+        fclose(f);
+    }
+
+    SECTION("FILE 4.json")
+    {
+        auto f = fopen("test/data/json.org/4.json", "r");
+        json j;
+        CHECK_NOTHROW(j.parse(f));
+        fclose(f);
+    }
+
+    SECTION("FILE 5.json")
+    {
+        auto f = fopen("test/data/json.org/5.json", "r");
+        json j;
+        CHECK_NOTHROW(j.parse(f));
+        fclose(f);
+    }
+
 }
 
 TEST_CASE("RFC 7159 examples")

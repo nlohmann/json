@@ -52,18 +52,18 @@ Input adapter for stdio file access. This adapter read only 1 byte and do not us
 */
 class file_input_adapter : public input_adapter_protocol
 {
-public:
-    explicit file_input_adapter(const FILE *file)  noexcept
-            : file(file)
+  public:
+    explicit file_input_adapter(const FILE* file)  noexcept
+        : file(file)
     {}
 
     std::char_traits<char>::int_type get_character() noexcept override
     {
-        return fgetc(const_cast<FILE *>(file));
+        return fgetc(const_cast<FILE*>(file));
     }
-private:
+  private:
     /// the file pointer to read from
-    const FILE * file;
+    const FILE* file;
 };
 
 
@@ -309,8 +309,8 @@ class input_adapter
 {
   public:
     // native support
-    input_adapter(FILE * file)
-            : ia(std::make_shared<file_input_adapter>(file)) {}
+    input_adapter(FILE* file)
+        : ia(std::make_shared<file_input_adapter>(file)) {}
     /// input adapter for input stream
     input_adapter(std::istream& i)
         : ia(std::make_shared<input_stream_adapter>(i)) {}
