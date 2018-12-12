@@ -55,7 +55,6 @@ SOFTWARE.
 #include <memory> // allocator
 #include <string> // string
 #include <vector> // vector
-#include <cstdio>
 
 /*!
 @brief namespace for Niels Lohmann
@@ -2059,6 +2058,7 @@ constexpr const auto& to_json = detail::static_const<detail::to_json_fn>::value;
 #include <string> // string, char_traits
 #include <type_traits> // enable_if, is_base_of, is_pointer, is_integral, remove_pointer
 #include <utility> // pair, declval
+#include <cstdio> //FILE *
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
@@ -2094,6 +2094,27 @@ struct input_adapter_protocol
 
 /// a type to simplify interfaces
 using input_adapter_t = std::shared_ptr<input_adapter_protocol>;
+
+/*!
+Input adapter for stdio file access. This adapter read only 1 byte and do not use any
+ buffer. This adapter is a very low level adapter. This adapter
+*/
+class file_input_adapter : public input_adapter_protocol
+{
+  public:
+    explicit file_input_adapter(const FILE* file)  noexcept
+        : file(file)
+    {}
+
+    std::char_traits<char>::int_type get_character() noexcept override
+    {
+        return fgetc(const_cast<FILE*>(file));
+    }
+  private:
+    /// the file pointer to read from
+    const FILE* file;
+};
+
 
 /*!
 Input adapter for a (caching) istream. Ignores a UFT Byte Order Mark at
@@ -2286,22 +2307,6 @@ struct wide_string_input_helper<WideStringType, 2>
     }
 };
 
-class file_input_adapter : public input_adapter_protocol
-{
-public:
-    explicit file_input_adapter(const FILE *file)  noexcept
-            : file(file)
-    {}
-
-    std::char_traits<char>::int_type get_character() noexcept override
-    {
-        return fgetc(const_cast<FILE *>(file));
-    }
-private:
-    /// the file pointer to read from
-    const FILE * file;
-};
-
 template<typename WideStringType>
 class wide_string_input_adapter : public input_adapter_protocol
 {
@@ -2353,7 +2358,8 @@ class input_adapter
 {
   public:
     // native support
-
+    input_adapter(FILE* file)
+        : ia(std::make_shared<file_input_adapter>(file)) {}
     /// input adapter for input stream
     input_adapter(std::istream& i)
         : ia(std::make_shared<input_stream_adapter>(i)) {}
@@ -2370,9 +2376,6 @@ class input_adapter
 
     input_adapter(const std::u32string& ws)
         : ia(std::make_shared<wide_string_input_adapter<std::u32string>>(ws)) {}
-
-    input_adapter(const FILE *file)
-        : ia(std::make_shared<file_input_adapter>(file)) {}
 
     /// input adapter for buffer
     template<typename CharT,
