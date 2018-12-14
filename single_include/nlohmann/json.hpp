@@ -2358,7 +2358,7 @@ class input_adapter
 {
   public:
     // native support
-    input_adapter(FILE* file)
+    input_adapter(std::FILE* file)
         : ia(std::make_shared<file_input_adapter>(file)) {}
     /// input adapter for input stream
     input_adapter(std::istream& i)
