@@ -246,18 +246,6 @@ TEST_CASE("constructors")
             CHECK(j == j_reference);
         }
 
-        SECTION("std::pair")
-        {
-            std::pair<float, std::string> p{1.0f, "string"};
-            json j(p);
-
-            CHECK(j.type() == json::value_t::array);
-            CHECK(j.get<decltype(p)>() == p);
-            REQUIRE(j.size() == 2);
-            CHECK(j[0] == std::get<0>(p));
-            CHECK(j[1] == std::get<1>(p));
-        }
-
         SECTION("std::pair with discarded values")
         {
             json j{1, 2.0, "string"};
