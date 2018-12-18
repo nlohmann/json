@@ -2001,12 +2001,6 @@ void to_json(BasicJsonType& j, const T (&arr)[N])
     external_constructor<value_t::array>::construct(j, arr);
 }
 
-template<typename BasicJsonType, typename... Args>
-void to_json(BasicJsonType& j, const std::pair<Args...>& p)
-{
-    j = {p.first, p.second};
-}
-
 // for https://github.com/nlohmann/json/pull/1134
 template<typename BasicJsonType, typename T,
          enable_if_t<std::is_same<T, typename iteration_proxy<typename BasicJsonType::iterator>::iteration_proxy_internal>::value, int> = 0>
