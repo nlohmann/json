@@ -41,7 +41,7 @@ SOFTWARE.
 #include <functional> // hash, less
 #include <initializer_list> // initializer_list
 #include <iosfwd> // istream, ostream
-#include <iterator> // iterator_traits, random_access_iterator_tag
+#include <iterator> // random_access_iterator_tag
 #include <numeric> // accumulate
 #include <string> // string, stoi, to_string
 #include <utility> // declval, forward, move, pair, swap
@@ -324,12 +324,10 @@ constexpr T static_const<T>::value;
 
 // #include <nlohmann/json_fwd.hpp>
 
-// #include <nlohmann/detail/meta/cpp_future.hpp>
-
-// #include <nlohmann/detail/meta/detected.hpp>
+// #include <nlohmann/detail/iterators/iterator_traits.hpp>
 
 
-#include <type_traits>
+#include <iterator> // random_access_iterator_tag
 
 // #include <nlohmann/detail/meta/void_t.hpp>
 
@@ -345,6 +343,63 @@ template <typename ...Ts> struct make_void
 template <typename ...Ts> using void_t = typename make_void<Ts...>::type;
 } // namespace detail
 }  // namespace nlohmann
+
+// #include <nlohmann/detail/meta/cpp_future.hpp>
+
+
+namespace nlohmann
+{
+namespace detail
+{
+template <typename It, typename = void>
+struct iterator_types {};
+
+template <typename It>
+struct iterator_types <
+    It,
+    void_t<typename It::difference_type, typename It::value_type, typename It::pointer,
+    typename It::reference, typename It::iterator_category >>
+{
+    using difference_type = typename It::difference_type;
+    using value_type = typename It::value_type;
+    using pointer = typename It::pointer;
+    using reference = typename It::reference;
+    using iterator_category = typename It::iterator_category;
+};
+
+// This is required as some compilers implement std::iterator_traits in a way that
+// doesn't work with SFINAE. See https://github.com/nlohmann/json/issues/1341.
+template <typename T, typename = void>
+struct iterator_traits
+{
+};
+
+template <typename T>
+struct iterator_traits < T, enable_if_t < !std::is_pointer<T>::value >>
+            : iterator_types<T>
+{
+};
+
+template <typename T>
+struct iterator_traits<T*, enable_if_t<std::is_object<T>::value>>
+{
+    using iterator_category = std::random_access_iterator_tag;
+    using value_type = T;
+    using difference_type = ptrdiff_t;
+    using pointer = T*;
+    using reference = T&;
+};
+}
+}
+
+// #include <nlohmann/detail/meta/cpp_future.hpp>
+
+// #include <nlohmann/detail/meta/detected.hpp>
+
+
+#include <type_traits>
+
+// #include <nlohmann/detail/meta/void_t.hpp>
 
 
 // http://en.cppreference.com/w/cpp/experimental/is_detected
@@ -522,10 +577,10 @@ template <typename T, typename = void>
 struct is_iterator_traits : std::false_type {};
 
 template <typename T>
-struct is_iterator_traits<std::iterator_traits<T>>
+struct is_iterator_traits<iterator_traits<T>>
 {
   private:
-    using traits = std::iterator_traits<T>;
+    using traits = iterator_traits<T>;
 
   public:
     static constexpr auto value =
@@ -642,7 +697,7 @@ struct is_compatible_array_type_impl <
 // Therefore it is detected as a CompatibleArrayType.
 // The real fix would be to have an Iterable concept.
     not is_iterator_traits<
-    std::iterator_traits<CompatibleArrayType>>::value >>
+    iterator_traits<CompatibleArrayType>>::value >>
 {
     static constexpr bool value =
         std::is_constructible<BasicJsonType,
@@ -679,7 +734,7 @@ struct is_constructible_array_type_impl <
         // Therefore it is detected as a ConstructibleArrayType.
         // The real fix would be to have an Iterable concept.
         not is_iterator_traits <
-        std::iterator_traits<ConstructibleArrayType >>::value and
+        iterator_traits<ConstructibleArrayType >>::value and
 
         (std::is_same<typename ConstructibleArrayType::value_type, typename BasicJsonType::array_t::value_type>::value or
          has_from_json<BasicJsonType,
@@ -2409,7 +2464,7 @@ class input_adapter
     /// input adapter for iterator range with contiguous storage
     template<class IteratorType,
              typename std::enable_if<
-                 std::is_same<typename std::iterator_traits<IteratorType>::iterator_category, std::random_access_iterator_tag>::value,
+                 std::is_same<typename iterator_traits<IteratorType>::iterator_category, std::random_access_iterator_tag>::value,
                  int>::type = 0>
     input_adapter(IteratorType first, IteratorType last)
     {
@@ -2428,7 +2483,7 @@ class input_adapter
 
         // assertion to check that each element is 1 byte long
         static_assert(
-            sizeof(typename std::iterator_traits<IteratorType>::value_type) == 1,
+            sizeof(typename iterator_traits<IteratorType>::value_type) == 1,
             "each element in the iterator range must have the size of 1 byte");
 
         const auto len = static_cast<size_t>(std::distance(first, last));
@@ -2452,7 +2507,7 @@ class input_adapter
     /// input adapter for contiguous container
     template<class ContiguousContainer, typename
              std::enable_if<not std::is_pointer<ContiguousContainer>::value and
-                            std::is_base_of<std::random_access_iterator_tag, typename std::iterator_traits<decltype(std::begin(std::declval<ContiguousContainer const>()))>::iterator_category>::value,
+                            std::is_base_of<std::random_access_iterator_tag, typename iterator_traits<decltype(std::begin(std::declval<ContiguousContainer const>()))>::iterator_category>::value,
                             int>::type = 0>
     input_adapter(const ContiguousContainer& c)
         : input_adapter(std::begin(c), std::end(c)) {}
