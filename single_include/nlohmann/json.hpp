@@ -1649,105 +1649,107 @@ constexpr const auto& from_json = detail::static_const<detail::from_json_fn>::va
 #include <cstddef> // size_t
 #include <string> // string, to_string
 #include <iterator> // input_iterator_tag
+#include <tuple> // tuple_size, get, tuple_element
 
 // #include <nlohmann/detail/value_t.hpp>
+
+// #include <nlohmann/detail/meta/type_traits.hpp>
 
 
 namespace nlohmann
 {
 namespace detail
 {
+template <typename IteratorType> class iteration_proxy_value
+{
+  public:
+    using difference_type = std::ptrdiff_t;
+    using value_type = iteration_proxy_value;
+    using pointer = value_type * ;
+    using reference = value_type & ;
+    using iterator_category = std::input_iterator_tag;
+
+  private:
+    /// the iterator
+    IteratorType anchor;
+    /// an index for arrays (used to create key names)
+    std::size_t array_index = 0;
+    /// last stringified array index
+    mutable std::size_t array_index_last = 0;
+    /// a string representation of the array index
+    mutable std::string array_index_str = "0";
+    /// an empty string (to return a reference for primitive values)
+    const std::string empty_str = "";
+
+  public:
+    explicit iteration_proxy_value(IteratorType it) noexcept : anchor(it) {}
+
+    /// dereference operator (needed for range-based for)
+    iteration_proxy_value& operator*()
+    {
+        return *this;
+    }
+
+    /// increment operator (needed for range-based for)
+    iteration_proxy_value& operator++()
+    {
+        ++anchor;
+        ++array_index;
+
+        return *this;
+    }
+
+    /// equality operator (needed for InputIterator)
+    bool operator==(const iteration_proxy_value& o) const noexcept
+    {
+        return anchor == o.anchor;
+    }
+
+    /// inequality operator (needed for range-based for)
+    bool operator!=(const iteration_proxy_value& o) const noexcept
+    {
+        return anchor != o.anchor;
+    }
+
+    /// return key of the iterator
+    const std::string& key() const
+    {
+        assert(anchor.m_object != nullptr);
+
+        switch (anchor.m_object->type())
+        {
+            // use integer array index as key
+            case value_t::array:
+            {
+                if (array_index != array_index_last)
+                {
+                    array_index_str = std::to_string(array_index);
+                    array_index_last = array_index;
+                }
+                return array_index_str;
+            }
+
+            // use key from the object
+            case value_t::object:
+                return anchor.key();
+
+            // use an empty key for all primitive types
+            default:
+                return empty_str;
+        }
+    }
+
+    /// return value of the iterator
+    typename IteratorType::reference value() const
+    {
+        return anchor.value();
+    }
+};
+
 /// proxy class for the items() function
 template<typename IteratorType> class iteration_proxy
 {
   private:
-    /// helper class for iteration
-    class iteration_proxy_internal
-    {
-      public:
-        using difference_type = std::ptrdiff_t;
-        using value_type = iteration_proxy_internal;
-        using pointer = iteration_proxy_internal*;
-        using reference = iteration_proxy_internal&;
-        using iterator_category = std::input_iterator_tag;
-
-      private:
-        /// the iterator
-        IteratorType anchor;
-        /// an index for arrays (used to create key names)
-        std::size_t array_index = 0;
-        /// last stringified array index
-        mutable std::size_t array_index_last = 0;
-        /// a string representation of the array index
-        mutable std::string array_index_str = "0";
-        /// an empty string (to return a reference for primitive values)
-        const std::string empty_str = "";
-
-      public:
-        explicit iteration_proxy_internal(IteratorType it) noexcept : anchor(it) {}
-
-        /// dereference operator (needed for range-based for)
-        iteration_proxy_internal& operator*()
-        {
-            return *this;
-        }
-
-        /// increment operator (needed for range-based for)
-        iteration_proxy_internal& operator++()
-        {
-            ++anchor;
-            ++array_index;
-
-            return *this;
-        }
-
-        /// equality operator (needed for InputIterator)
-        bool operator==(const iteration_proxy_internal& o) const noexcept
-        {
-            return anchor == o.anchor;
-        }
-
-        /// inequality operator (needed for range-based for)
-        bool operator!=(const iteration_proxy_internal& o) const noexcept
-        {
-            return anchor != o.anchor;
-        }
-
-        /// return key of the iterator
-        const std::string& key() const
-        {
-            assert(anchor.m_object != nullptr);
-
-            switch (anchor.m_object->type())
-            {
-                // use integer array index as key
-                case value_t::array:
-                {
-                    if (array_index != array_index_last)
-                    {
-                        array_index_str = std::to_string(array_index);
-                        array_index_last = array_index;
-                    }
-                    return array_index_str;
-                }
-
-                // use key from the object
-                case value_t::object:
-                    return anchor.key();
-
-                // use an empty key for all primitive types
-                default:
-                    return empty_str;
-            }
-        }
-
-        /// return value of the iterator
-        typename IteratorType::reference value() const
-        {
-            return anchor.value();
-        }
-    };
-
     /// the container to iterate
     typename IteratorType::reference container;
 
@@ -1757,20 +1759,55 @@ template<typename IteratorType> class iteration_proxy
         : container(cont) {}
 
     /// return iterator begin (needed for range-based for)
-    iteration_proxy_internal begin() noexcept
+    iteration_proxy_value<IteratorType> begin() noexcept
     {
-        return iteration_proxy_internal(container.begin());
+        return iteration_proxy_value<IteratorType>(container.begin());
     }
 
     /// return iterator end (needed for range-based for)
-    iteration_proxy_internal end() noexcept
+    iteration_proxy_value<IteratorType> end() noexcept
     {
-        return iteration_proxy_internal(container.end());
+        return iteration_proxy_value<IteratorType>(container.end());
     }
 };
+// Structured Bindings Support
+// For further reference see https://blog.tartanllama.xyz/structured-bindings/
+// And see https://github.com/nlohmann/json/pull/1391
+template <std::size_t N, typename IteratorType, enable_if_t<N == 0, int> = 0>
+auto get(const nlohmann::detail::iteration_proxy_value<IteratorType>& i) -> decltype(i.key())
+{
+    return i.key();
+}
+// Structured Bindings Support
+// For further reference see https://blog.tartanllama.xyz/structured-bindings/
+// And see https://github.com/nlohmann/json/pull/1391
+template <std::size_t N, typename IteratorType, enable_if_t<N == 1, int> = 0>
+auto get(const nlohmann::detail::iteration_proxy_value<IteratorType>& i) -> decltype(i.value())
+{
+    return i.value();
+}
 }  // namespace detail
 }  // namespace nlohmann
 
+// The Addition to the STD Namespace is required to add
+// Structured Bindings Support to the iteration_proxy_value class
+// For further reference see https://blog.tartanllama.xyz/structured-bindings/
+// And see https://github.com/nlohmann/json/pull/1391
+namespace std
+{
+template <typename IteratorType>
+struct tuple_size<::nlohmann::detail::iteration_proxy_value<IteratorType>>
+            : std::integral_constant<std::size_t, 2> {};
+
+template <std::size_t N, typename IteratorType>
+struct tuple_element <
+    N, ::nlohmann::detail::iteration_proxy_value<IteratorType >>
+{
+    using type = decltype(
+                     get<N>(std::declval <
+                            ::nlohmann::detail::iteration_proxy_value<IteratorType >> ()));
+};
+}
 
 namespace nlohmann
 {
@@ -2049,9 +2086,9 @@ void to_json(BasicJsonType& j, typename BasicJsonType::object_t&& obj)
 template <
     typename BasicJsonType, typename T, std::size_t N,
     enable_if_t<not std::is_constructible<typename BasicJsonType::string_t,
-                const T (&)[N]>::value,
+                const T(&)[N]>::value,
                 int> = 0 >
-void to_json(BasicJsonType& j, const T (&arr)[N])
+void to_json(BasicJsonType& j, const T(&arr)[N])
 {
     external_constructor<value_t::array>::construct(j, arr);
 }
@@ -2059,21 +2096,21 @@ void to_json(BasicJsonType& j, const T (&arr)[N])
 template<typename BasicJsonType, typename... Args>
 void to_json(BasicJsonType& j, const std::pair<Args...>& p)
 {
-    j = {p.first, p.second};
+    j = { p.first, p.second };
 }
 
 // for https://github.com/nlohmann/json/pull/1134
-template<typename BasicJsonType, typename T,
-         enable_if_t<std::is_same<T, typename iteration_proxy<typename BasicJsonType::iterator>::iteration_proxy_internal>::value, int> = 0>
+template < typename BasicJsonType, typename T,
+           enable_if_t<std::is_same<T, iteration_proxy_value<typename BasicJsonType::iterator>>::value, int> = 0>
 void to_json(BasicJsonType& j, const T& b)
 {
-    j = {{b.key(), b.value()}};
+    j = { {b.key(), b.value()} };
 }
 
 template<typename BasicJsonType, typename Tuple, std::size_t... Idx>
 void to_json_tuple_impl(BasicJsonType& j, const Tuple& t, index_sequence<Idx...> /*unused*/)
 {
-    j = {std::get<Idx>(t)...};
+    j = { std::get<Idx>(t)... };
 }
 
 template<typename BasicJsonType, typename... Args>
@@ -5570,24 +5607,21 @@ namespace detail
 {
 // forward declare, to be able to friend it later on
 template<typename IteratorType> class iteration_proxy;
+template<typename IteratorType> class iteration_proxy_value;
 
 /*!
 @brief a template for a bidirectional iterator for the @ref basic_json class
-
 This class implements a both iterators (iterator and const_iterator) for the
 @ref basic_json class.
-
 @note An iterator is called *initialized* when a pointer to a JSON value has
       been set (e.g., by a constructor or a copy assignment). If the iterator is
       default-constructed, it is *uninitialized* and most methods are undefined.
       **The library uses assertions to detect calls on uninitialized iterators.**
-
 @requirement The class satisfies the following concept requirements:
 -
 [BidirectionalIterator](https://en.cppreference.com/w/cpp/named_req/BidirectionalIterator):
   The iterator that can be moved can be moved in both directions (i.e.
   incremented and decremented).
-
 @since version 1.0.0, simplified in version 2.0.9, change to bidirectional
        iterators in version 3.0.0 (see https://github.com/nlohmann/json/issues/593)
 */
@@ -5598,6 +5632,7 @@ class iter_impl
     friend iter_impl<typename std::conditional<std::is_const<BasicJsonType>::value, typename std::remove_const<BasicJsonType>::type, const BasicJsonType>::type>;
     friend BasicJsonType;
     friend iteration_proxy<iter_impl>;
+    friend iteration_proxy_value<iter_impl>;
 
     using object_t = typename BasicJsonType::object_t;
     using array_t = typename BasicJsonType::array_t;
@@ -6164,8 +6199,7 @@ class iter_impl
     internal_iterator<typename std::remove_const<BasicJsonType>::type> m_it;
 };
 }  // namespace detail
-}  // namespace nlohmann
-
+} // namespace nlohmann
 // #include <nlohmann/detail/iterators/iteration_proxy.hpp>
 
 // #include <nlohmann/detail/iterators/json_reverse_iterator.hpp>
