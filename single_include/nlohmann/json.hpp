@@ -1796,13 +1796,13 @@ auto get(const nlohmann::detail::iteration_proxy_value<IteratorType>& i) -> decl
 namespace std
 {
 template <typename IteratorType>
-struct tuple_size<::nlohmann::detail::iteration_proxy_value<IteratorType>>
-            : std::integral_constant<std::size_t, 2> {};
+class tuple_size<::nlohmann::detail::iteration_proxy_value<IteratorType>>
+            : public std::integral_constant<std::size_t, 2> {};
 
 template <std::size_t N, typename IteratorType>
-struct tuple_element <
-    N, ::nlohmann::detail::iteration_proxy_value<IteratorType >>
+class tuple_element<N, ::nlohmann::detail::iteration_proxy_value<IteratorType >>
 {
+  public:
     using type = decltype(
                      get<N>(std::declval <
                             ::nlohmann::detail::iteration_proxy_value<IteratorType >> ()));
