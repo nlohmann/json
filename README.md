@@ -1202,6 +1202,15 @@ I deeply appreciate the help of the following people.
 - [Dan Gendreau](https://github.com/dgendreau) implemented the `NLOHMANN_JSON_SERIALIZE_ENUM` macro to quickly define a enum/JSON mapping.
 - [efp](https://github.com/efp) added line and column information to parse errors.
 - [julian-becker](https://github.com/julian-becker) added BSON support.
+- [Pratik Chowdhury](https://github.com/pratikpc) added support for structured bindings.
+- [David Avedissian](https://github.com/davedissian) added support for Clang 5.0.1 (PS4 version).
+- [Jonathan Dumaresq](https://github.com/dumarjo) implemented an input adapter to read from `FILE*`.
+- [kjpus](https://github.com/kjpus) fixed a link in the documentation.
+- [Manvendra Singh](https://github.com/manu-chroma) fixed a typo in the documentation.
+- [ziggurat29](https://github.com/ziggurat29) fixed an MSVC warning.
+- [Sylvain Corlay](https://github.com/SylvainCorlay) added code to avoid an issue with MSVC.
+- [mefyl](https://github.com/mefyl) fixed a bug when JSON was parsed from an input stream.
+- [Millian Poquet](https://github.com/mpoquet) allowed to install the library via Meson.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
