@@ -16720,9 +16720,20 @@ class basic_json
     Range-based for loop with `items()` function:
 
     @code{cpp}
-    for (auto it : j_object.items())
+    for (auto& el : j_object.items())
     {
-        std::cout << "key: " << it.key() << ", value:" << it.value() << '\n';
+        std::cout << "key: " << el.key() << ", value:" << el.value() << '\n';
+    }
+    @endcode
+
+    The `items()` function also allows to use
+    [structured bindings](https://en.cppreference.com/w/cpp/language/structured_binding)
+    (C++17):
+
+    @code{cpp}
+    for (auto& [key, val] : j_object.items())
+    {
+        std::cout << "key: " << key << ", value:" << val << '\n';
     }
     @endcode
 
@@ -16740,7 +16751,7 @@ class basic_json
 
     @complexity Constant.
 
-    @since version 3.1.0.
+    @since version 3.1.0, structured bindings support since 3.5.0.
     */
     iteration_proxy<iterator> items() noexcept
     {
