@@ -1080,7 +1080,7 @@ Only if your request would contain confidential information, please [send me an 
 
 I deeply appreciate the help of the following people.
 
-![Contributors](https://raw.githubusercontent.com/nlohmann/json/develop/doc/avatars.png)
+<img src="https://raw.githubusercontent.com/nlohmann/json/develop/doc/avatars.png" align="right">
 
 - [Teemperor](https://github.com/Teemperor) implemented CMake support and lcov integration, realized escape and Unicode handling in the string parser, and fixed the JSON serialization.
 - [elliotgoodrich](https://github.com/elliotgoodrich) fixed an issue with double deletion in the iterator classes.
