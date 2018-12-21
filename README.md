@@ -79,6 +79,7 @@ You can also use the `nlohmann_json::nlohmann_json` interface target in CMake.  
 #### External
 
 To use this library from a CMake project, you can locate it directly with `find_package()` and use the namespaced imported target from the generated package configuration:
+
 ```cmake
 # CMakeLists.txt
 find_package(nlohmann_json 3.2.0 REQUIRED)
@@ -87,11 +88,13 @@ add_library(foo ...)
 ...
 target_link_libraries(foo PRIVATE nlohmann_json::nlohmann_json)
 ```
+
 The package configuration file, `nlohmann_jsonConfig.cmake`, can be used either from an install tree or directly out of the build tree.
 
 #### Embedded
 
 To embed the library directly into an existing CMake project, place the entire source tree in a subdirectory and call `add_subdirectory()` in your `CMakeLists.txt` file:
+
 ```cmake
 # Typically you don't care so much for a third party library's tests to be
 # run from your own project's code.
@@ -109,7 +112,9 @@ target_link_libraries(foo PRIVATE nlohmann_json::nlohmann_json)
 ```
 
 #### Supporting Both
+
 To allow your project to support either an externally supplied or an embedded JSON library, you can use a pattern akin to the following:
+
 ``` cmake
 # Top level CMakeLists.txt
 project(FOO)
@@ -135,6 +140,7 @@ else()
 endif()
 ...
 ```
+
 `thirdparty/nlohmann_json` is then a complete copy of this source tree.
 
 ### Package Managers
@@ -400,7 +406,6 @@ To implement your own SAX handler, proceed as follows:
 
 Note the `sax_parse` function only returns a `bool` indicating the result of the last executed SAX event. It does not return a  `json` value - it is up to you to decide what to do with the SAX events. Furthermore, no exceptions are thrown in case of a parse error - it is up to you what to do with the exception object passed to your `parse_error` implementation. Internally, the SAX interface is used for the DOM parser (class `json_sax_dom_parser`) as well as the acceptor (`json_sax_acceptor`), see file [`json_sax.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/input/json_sax.hpp).
 
-
 ### STL-like access
 
 We designed the JSON class to behave just like an STL container. In fact, it satisfies the [**ReversibleContainer**](https://en.cppreference.com/w/cpp/named_req/ReversibleContainer) requirement.
@@ -459,6 +464,16 @@ o.emplace("weather", "sunny");
 // special iterator member functions for objects
 for (json::iterator it = o.begin(); it != o.end(); ++it) {
   std::cout << it.key() << " : " << it.value() << "\n";
+}
+
+// the same code as range for
+for (auto& el : o.items()) {
+  std::cout << el.key() << " : " << el.value() << "\n";
+}
+
+// even easier with structured bindings (C++17)
+for (auto& [key, value] : o.items()) {
+  std::cout << key << " : " << value << "\n";
 }
 
 // find an entry
@@ -927,7 +942,7 @@ Other Important points:
 - When using `get<ENUM_TYPE>()`, undefined JSON values will default to the first pair specified in your map. Select this default pair carefully.
 - If an enum or JSON value is specified more than once in your map, the first matching occurrence from the top of the map will be returned when converting to or from JSON.
 
-### Binary formats (BSON, CBOR, MessagePack, and UBJSON
+### Binary formats (BSON, CBOR, MessagePack, and UBJSON)
 
 Though JSON is a ubiquitous data format, it is not a very compact format suitable for data exchange, for instance over a network. Hence, the library supports [BSON](http://bsonspec.org) (Binary JSON), [CBOR](http://cbor.io) (Concise Binary Object Representation), [MessagePack](http://msgpack.org), and [UBJSON](http://ubjson.org) (Universal Binary JSON Specification) to efficiently encode JSON values to byte vectors and to decode such vectors.
 
@@ -973,8 +988,8 @@ json j_from_ubjson = json::from_ubjson(v_ubjson);
 
 Though it's 2018 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
 
-- GCC 4.8 - 8.2 (and possibly later)
-- Clang 3.4 - 6.1 (and possibly later)
+- GCC 4.8 - 9.0 (and possibly later)
+- Clang 3.4 - 8.0 (and possibly later)
 - Intel C++ Compiler 17.0.2 (and possibly later)
 - Microsoft Visual C++ 2015 / Build Tools 14.0.25123.0 (and possibly later)
 - Microsoft Visual C++ 2017 / Build Tools 15.5.180.51428 (and possibly later)
