@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.4.0
+|  |  |__   |  |  | | | |  version 3.5.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -751,6 +751,28 @@ TEST_CASE("Incomplete BSON Input")
 
         SaxCountdown scp(0);
         CHECK(not json::sax_parse(incomplete_bson, &scp, json::input_format_t::bson));
+    }
+
+    SECTION("Improve coverage")
+    {
+        SECTION("key")
+        {
+            json j = {{"key", "value"}};
+            auto bson_vec = json::to_bson(j);
+            SaxCountdown scp(2);
+            CHECK(not json::sax_parse(bson_vec, &scp, json::input_format_t::bson));
+        }
+
+        SECTION("array")
+        {
+            json j =
+            {
+                { "entry", json::array() }
+            };
+            auto bson_vec = json::to_bson(j);
+            SaxCountdown scp(2);
+            CHECK(not json::sax_parse(bson_vec, &scp, json::input_format_t::bson));
+        }
     }
 }
 

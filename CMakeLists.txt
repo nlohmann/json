@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.8)
 ## PROJECT
 ## name and version
 ##
-project(nlohmann_json VERSION 3.4.0 LANGUAGES CXX)
+project(nlohmann_json VERSION 3.5.0 LANGUAGES CXX)
 
 ##
 ## INCLUDE
@@ -60,10 +60,10 @@ if (MSVC)
     set(NLOHMANN_ADD_NATVIS TRUE)
     set(NLOHMANN_NATVIS_FILE "nlohmann_json.natvis")
     target_sources(
-        ${NLOHMANN_JSON_TARGET_NAME} 
-        INTERFACE 
+        ${NLOHMANN_JSON_TARGET_NAME}
+        INTERFACE
             $<INSTALL_INTERFACE:${NLOHMANN_NATVIS_FILE}>
-            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/${NLOHMANN_NATVIS_FILE}>  
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/${NLOHMANN_NATVIS_FILE}>
     )
 endif()
 

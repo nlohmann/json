@@ -46,7 +46,7 @@ There are myriads of [JSON](http://json.org) libraries out there, and each may e
 
 - **Trivial integration**. Our whole code consists of a single header file [`json.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json.hpp). That's it. No library, no subproject, no dependencies, no complex build system. The class is written in vanilla C++11. All in all, everything should require no adjustment of your compiler flags or project settings.
 
-- **Serious testing**. Our class is heavily [unit-tested](https://github.com/nlohmann/json/tree/develop/test/src) and covers [100%](https://coveralls.io/r/nlohmann/json) of the code, including all exceptional behavior. Furthermore, we checked with [Valgrind](http://valgrind.org) and the [Clang Sanitizers](https://clang.llvm.org/docs/index.html) that there are no memory leaks. [Google OSS-Fuzz](https://github.com/google/oss-fuzz/tree/master/projects/json) additionally runs fuzz tests agains all parsers 24/7, effectively executing billions of tests so far. To maintain high quality, the project is following the [Core Infrastructure Initiative (CII) best practices](https://bestpractices.coreinfrastructure.org/projects/289).
+- **Serious testing**. Our class is heavily [unit-tested](https://github.com/nlohmann/json/tree/develop/test/src) and covers [100%](https://coveralls.io/r/nlohmann/json) of the code, including all exceptional behavior. Furthermore, we checked with [Valgrind](http://valgrind.org) and the [Clang Sanitizers](https://clang.llvm.org/docs/index.html) that there are no memory leaks. [Google OSS-Fuzz](https://github.com/google/oss-fuzz/tree/master/projects/json) additionally runs fuzz tests against all parsers 24/7, effectively executing billions of tests so far. To maintain high quality, the project is following the [Core Infrastructure Initiative (CII) best practices](https://bestpractices.coreinfrastructure.org/projects/289).
 
 Other aspects were not so important to us:
 
@@ -79,6 +79,7 @@ You can also use the `nlohmann_json::nlohmann_json` interface target in CMake.  
 #### External
 
 To use this library from a CMake project, you can locate it directly with `find_package()` and use the namespaced imported target from the generated package configuration:
+
 ```cmake
 # CMakeLists.txt
 find_package(nlohmann_json 3.2.0 REQUIRED)
@@ -87,11 +88,13 @@ add_library(foo ...)
 ...
 target_link_libraries(foo PRIVATE nlohmann_json::nlohmann_json)
 ```
+
 The package configuration file, `nlohmann_jsonConfig.cmake`, can be used either from an install tree or directly out of the build tree.
 
 #### Embedded
 
 To embed the library directly into an existing CMake project, place the entire source tree in a subdirectory and call `add_subdirectory()` in your `CMakeLists.txt` file:
+
 ```cmake
 # Typically you don't care so much for a third party library's tests to be
 # run from your own project's code.
@@ -109,7 +112,9 @@ target_link_libraries(foo PRIVATE nlohmann_json::nlohmann_json)
 ```
 
 #### Supporting Both
+
 To allow your project to support either an externally supplied or an embedded JSON library, you can use a pattern akin to the following:
+
 ``` cmake
 # Top level CMakeLists.txt
 project(FOO)
@@ -135,6 +140,7 @@ else()
 endif()
 ...
 ```
+
 `thirdparty/nlohmann_json` is then a complete copy of this source tree.
 
 ### Package Managers
@@ -291,19 +297,17 @@ Note the difference between serialization and assignment:
 // store a string in a JSON value
 json j_string = "this is a string";
 
-// retrieve the string value (implicit JSON to std::string conversion)
-std::string cpp_string = j_string;
-// retrieve the string value (explicit JSON to std::string conversion)
-auto cpp_string2 = j_string.get<std::string>();
-// retrieve the string value (alternative explicit JSON to std::string conversion)
-std::string cpp_string3;
-j_string.get_to(cpp_string3);
+// retrieve the string value
+auto cpp_string = j_string.get<std::string>();
+// retrieve the string value (alternative when an variable already exists)
+std::string cpp_string2;
+j_string.get_to(cpp_string2);
 
 // retrieve the serialized value (explicit JSON serialization)
 std::string serialized_string = j_string.dump();
 
 // output of original string
-std::cout << cpp_string << " == " << cpp_string2 << " == " << cpp_string3 << " == " << j_string.get<std::string>() << '\n';
+std::cout << cpp_string << " == " << cpp_string2 << " == " << j_string.get<std::string>() << '\n';
 // output of serialized value
 std::cout << j_string << " == " << serialized_string << std::endl;
 ```
@@ -402,7 +406,6 @@ To implement your own SAX handler, proceed as follows:
 
 Note the `sax_parse` function only returns a `bool` indicating the result of the last executed SAX event. It does not return a  `json` value - it is up to you to decide what to do with the SAX events. Furthermore, no exceptions are thrown in case of a parse error - it is up to you what to do with the exception object passed to your `parse_error` implementation. Internally, the SAX interface is used for the DOM parser (class `json_sax_dom_parser`) as well as the acceptor (`json_sax_acceptor`), see file [`json_sax.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/input/json_sax.hpp).
 
-
 ### STL-like access
 
 We designed the JSON class to behave just like an STL container. In fact, it satisfies the [**ReversibleContainer**](https://en.cppreference.com/w/cpp/named_req/ReversibleContainer) requirement.
@@ -428,7 +431,7 @@ for (auto& element : j) {
 }
 
 // getter/setter
-const std::string tmp = j[0];
+const auto tmp = j[0].get<std::string>();
 j[1] = 42;
 bool foo = j.at(2);
 
@@ -461,6 +464,16 @@ o.emplace("weather", "sunny");
 // special iterator member functions for objects
 for (json::iterator it = o.begin(); it != o.end(); ++it) {
   std::cout << it.key() << " : " << it.value() << "\n";
+}
+
+// the same code as range for
+for (auto& el : o.items()) {
+  std::cout << el.key() << " : " << el.value() << "\n";
+}
+
+// even easier with structured bindings (C++17)
+for (auto& [key, value] : o.items()) {
+  std::cout << key << " : " << value << "\n";
 }
 
 // find an entry
@@ -611,33 +624,38 @@ j_original.merge_patch(j_patch);
 
 ### Implicit conversions
 
-The type of the JSON object is determined automatically by the expression to store. Likewise, the stored value is implicitly converted.
+Supported types can be implicitly converted to JSON values.
+
+It is recommended to **NOT USE** implicit conversions **FROM** a JSON value.
+You can find more details about this recommendation [here](https://www.github.com/nlohmann/json/issues/958). 
 
 ```cpp
 // strings
 std::string s1 = "Hello, world!";
 json js = s1;
-std::string s2 = js;
+auto s2 = js.get<std::string>();
+// NOT RECOMMENDED
+std::string s3 = js;
+std::string s4;
+s4 = js;
 
 // Booleans
 bool b1 = true;
 json jb = b1;
-bool b2 = jb;
+auto b2 = jb.get<bool>();
+// NOT RECOMMENDED
+bool b3 = jb;
+bool b4;
+b4 = jb;
 
 // numbers
 int i = 42;
 json jn = i;
-double f = jn;
-
-// etc.
-```
-
-You can also explicitly ask for the value:
-
-```cpp
-std::string vs = js.get<std::string>();
-bool vb = jb.get<bool>();
-int vi = jn.get<int>();
+auto f = jn.get<double>();
+// NOT RECOMMENDED
+double f2 = jb;
+double f3;
+f3 = jb;
 
 // etc.
 ```
@@ -695,7 +713,7 @@ std::cout << j << std::endl;
 // {"address":"744 Evergreen Terrace","age":60,"name":"Ned Flanders"}
 
 // conversion: json -> person
-ns::person p2 = j;
+auto p2 = j.get<ns::person>();
 
 // that's it
 assert(p == p2);
@@ -727,10 +745,9 @@ Likewise, when calling `get<your_type>()` or `get_to(your_type&)`, the `from_jso
 Some important things:
 
 * Those methods **MUST** be in your type's namespace (which can be the global namespace), or the library will not be able to locate them (in this example, they are in namespace `ns`, where `person` is defined).
-* Those methods **MUST** be available (e.g., properly headers must be included) everywhere you use the implicit conversions. Look at [issue 1108](https://github.com/nlohmann/json/issues/1108) for errors that may occur otherwise.
+* Those methods **MUST** be available (e.g., properly headers must be included) everywhere you use these conversions. Look at [issue 1108](https://github.com/nlohmann/json/issues/1108) for errors that may occur otherwise.
 * When using `get<your_type>()`, `your_type` **MUST** be [DefaultConstructible](https://en.cppreference.com/w/cpp/named_req/DefaultConstructible). (There is a way to bypass this requirement described later.)
 * In function `from_json`, use function [`at()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a93403e803947b86f4da2d1fb3345cf2c.html#a93403e803947b86f4da2d1fb3345cf2c) to access the object values rather than `operator[]`. In case a key does not exist, `at` throws an exception that you can handle, whereas `operator[]` exhibits undefined behavior.
-* In case your type contains several `operator=` definitions, code like `your_variable = your_json;` [may not compile](https://github.com/nlohmann/json/issues/667). You need to write `your_variable = your_json.get<decltype(your_variable)>();` or `your_json.get_to(your_variable);` instead.
 * You do not need to add serializers or deserializers for STL types like `std::vector`: the library already implements these.
 
 
@@ -925,7 +942,7 @@ Other Important points:
 - When using `get<ENUM_TYPE>()`, undefined JSON values will default to the first pair specified in your map. Select this default pair carefully.
 - If an enum or JSON value is specified more than once in your map, the first matching occurrence from the top of the map will be returned when converting to or from JSON.
 
-### Binary formats (BSON, CBOR, MessagePack, and UBJSON
+### Binary formats (BSON, CBOR, MessagePack, and UBJSON)
 
 Though JSON is a ubiquitous data format, it is not a very compact format suitable for data exchange, for instance over a network. Hence, the library supports [BSON](http://bsonspec.org) (Binary JSON), [CBOR](http://cbor.io) (Concise Binary Object Representation), [MessagePack](http://msgpack.org), and [UBJSON](http://ubjson.org) (Universal Binary JSON Specification) to efficiently encode JSON values to byte vectors and to decode such vectors.
 
@@ -971,8 +988,8 @@ json j_from_ubjson = json::from_ubjson(v_ubjson);
 
 Though it's 2018 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
 
-- GCC 4.8 - 8.2 (and possibly later)
-- Clang 3.4 - 6.1 (and possibly later)
+- GCC 4.8 - 9.0 (and possibly later)
+- Clang 3.4 - 8.0 (and possibly later)
 - Intel C++ Compiler 17.0.2 (and possibly later)
 - Microsoft Visual C++ 2015 / Build Tools 14.0.25123.0 (and possibly later)
 - Microsoft Visual C++ 2017 / Build Tools 15.5.180.51428 (and possibly later)
@@ -1063,7 +1080,7 @@ Only if your request would contain confidential information, please [send me an 
 
 I deeply appreciate the help of the following people.
 
-![Contributors](https://raw.githubusercontent.com/nlohmann/json/develop/doc/avatars.png)
+<img src="https://raw.githubusercontent.com/nlohmann/json/develop/doc/avatars.png" align="right">
 
 - [Teemperor](https://github.com/Teemperor) implemented CMake support and lcov integration, realized escape and Unicode handling in the string parser, and fixed the JSON serialization.
 - [elliotgoodrich](https://github.com/elliotgoodrich) fixed an issue with double deletion in the iterator classes.
@@ -1200,6 +1217,15 @@ I deeply appreciate the help of the following people.
 - [Dan Gendreau](https://github.com/dgendreau) implemented the `NLOHMANN_JSON_SERIALIZE_ENUM` macro to quickly define a enum/JSON mapping.
 - [efp](https://github.com/efp) added line and column information to parse errors.
 - [julian-becker](https://github.com/julian-becker) added BSON support.
+- [Pratik Chowdhury](https://github.com/pratikpc) added support for structured bindings.
+- [David Avedissian](https://github.com/davedissian) added support for Clang 5.0.1 (PS4 version).
+- [Jonathan Dumaresq](https://github.com/dumarjo) implemented an input adapter to read from `FILE*`.
+- [kjpus](https://github.com/kjpus) fixed a link in the documentation.
+- [Manvendra Singh](https://github.com/manu-chroma) fixed a typo in the documentation.
+- [ziggurat29](https://github.com/ziggurat29) fixed an MSVC warning.
+- [Sylvain Corlay](https://github.com/SylvainCorlay) added code to avoid an issue with MSVC.
+- [mefyl](https://github.com/mefyl) fixed a bug when JSON was parsed from an input stream.
+- [Millian Poquet](https://github.com/mpoquet) allowed to install the library via Meson.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
@@ -1214,7 +1240,7 @@ The library itself consists of a single header file licensed under the MIT licen
 - [**Artistic Style**](http://astyle.sourceforge.net) for automatic source code identation
 - [**Catch**](https://github.com/philsquared/Catch) for the unit tests
 - [**Clang**](http://clang.llvm.org) for compilation with code sanitizers
-- [**Cmake**](https://cmake.org) for build automation
+- [**CMake**](https://cmake.org) for build automation
 - [**Codacity**](https://www.codacy.com) for further [code analysis](https://www.codacy.com/app/nlohmann/json)
 - [**Coveralls**](https://coveralls.io) to measure [code coverage](https://coveralls.io/github/nlohmann/json)
 - [**Coverity Scan**](https://scan.coverity.com) for [static analysis](https://scan.coverity.com/projects/nlohmann-json)

@@ -1360,7 +1360,7 @@ scan_number_done:
             {
                 // escape control characters
                 char cs[9];
-                snprintf(cs, 9, "<U+%.4X>", static_cast<unsigned char>(c));
+                (std::snprintf)(cs, 9, "<U+%.4X>", static_cast<unsigned char>(c));
                 result += cs;
             }
             else

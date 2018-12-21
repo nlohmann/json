@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.4.0
+|  |  |__   |  |  | | | |  version 3.5.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -32,13 +32,20 @@ SOFTWARE.
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+#if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_HAS_CXX17) && _HAS_CXX17 == 1) // fix for issue #464
+    #define JSON_HAS_CPP_17
+    #define JSON_HAS_CPP_14
+#elif (defined(__cplusplus) && __cplusplus >= 201402L) || (defined(_HAS_CXX14) && _HAS_CXX14 == 1)
+    #define JSON_HAS_CPP_14
+#endif
+
 TEST_CASE("iterator_wrapper")
 {
     SECTION("object")
     {
         SECTION("value")
         {
-            json j = {{"A", 1}, {"B", 2}};
+            json j = { {"A", 1}, {"B", 2} };
             int counter = 1;
 
             for (auto i : json::iterator_wrapper(j))
@@ -71,7 +78,7 @@ TEST_CASE("iterator_wrapper")
 
         SECTION("reference")
         {
-            json j = {{"A", 1}, {"B", 2}};
+            json j = { {"A", 1}, {"B", 2} };
             int counter = 1;
 
             for (auto& i : json::iterator_wrapper(j))
@@ -110,12 +117,12 @@ TEST_CASE("iterator_wrapper")
             CHECK(counter == 3);
 
             // check if values where changed
-            CHECK(j == json({{"A", 11}, {"B", 22}}));
+            CHECK(j == json({ {"A", 11}, {"B", 22} }));
         }
 
         SECTION("const value")
         {
-            json j = {{"A", 1}, {"B", 2}};
+            json j = { {"A", 1}, {"B", 2} };
             int counter = 1;
 
             for (const auto i : json::iterator_wrapper(j))
@@ -148,7 +155,7 @@ TEST_CASE("iterator_wrapper")
 
         SECTION("const reference")
         {
-            json j = {{"A", 1}, {"B", 2}};
+            json j = { {"A", 1}, {"B", 2} };
             int counter = 1;
 
             for (const auto& i : json::iterator_wrapper(j))
@@ -184,7 +191,7 @@ TEST_CASE("iterator_wrapper")
     {
         SECTION("value")
         {
-            const json j = {{"A", 1}, {"B", 2}};
+            const json j = { {"A", 1}, {"B", 2} };
             int counter = 1;
 
             for (auto i : json::iterator_wrapper(j))
@@ -217,7 +224,7 @@ TEST_CASE("iterator_wrapper")
 
         SECTION("reference")
         {
-            const json j = {{"A", 1}, {"B", 2}};
+            const json j = { {"A", 1}, {"B", 2} };
             int counter = 1;
 
             for (auto& i : json::iterator_wrapper(j))
@@ -250,7 +257,7 @@ TEST_CASE("iterator_wrapper")
 
         SECTION("const value")
         {
-            const json j = {{"A", 1}, {"B", 2}};
+            const json j = { {"A", 1}, {"B", 2} };
             int counter = 1;
 
             for (const auto i : json::iterator_wrapper(j))
@@ -283,7 +290,7 @@ TEST_CASE("iterator_wrapper")
 
         SECTION("const reference")
         {
-            const json j = {{"A", 1}, {"B", 2}};
+            const json j = { {"A", 1}, {"B", 2} };
             int counter = 1;
 
             for (const auto& i : json::iterator_wrapper(j))
@@ -319,7 +326,7 @@ TEST_CASE("iterator_wrapper")
     {
         SECTION("value")
         {
-            json j = {"A", "B"};
+            json j = { "A", "B" };
             int counter = 1;
 
             for (auto i : json::iterator_wrapper(j))
@@ -352,7 +359,7 @@ TEST_CASE("iterator_wrapper")
 
         SECTION("reference")
         {
-            json j = {"A", "B"};
+            json j = { "A", "B" };
             int counter = 1;
 
             for (auto& i : json::iterator_wrapper(j))
@@ -391,12 +398,12 @@ TEST_CASE("iterator_wrapper")
             CHECK(counter == 3);
 
             // check if values where changed
-            CHECK(j == json({"AA", "BB"}));
+            CHECK(j == json({ "AA", "BB" }));
         }
 
         SECTION("const value")
         {
-            json j = {"A", "B"};
+            json j = { "A", "B" };
             int counter = 1;
 
             for (const auto i : json::iterator_wrapper(j))
@@ -429,7 +436,7 @@ TEST_CASE("iterator_wrapper")
 
         SECTION("const reference")
         {
-            json j = {"A", "B"};
+            json j = { "A", "B" };
             int counter = 1;
 
             for (const auto& i : json::iterator_wrapper(j))
@@ -465,7 +472,7 @@ TEST_CASE("iterator_wrapper")
     {
         SECTION("value")
         {
-            const json j = {"A", "B"};
+            const json j = { "A", "B" };
             int counter = 1;
 
             for (auto i : json::iterator_wrapper(j))
@@ -498,7 +505,7 @@ TEST_CASE("iterator_wrapper")
 
         SECTION("reference")
         {
-            const json j = {"A", "B"};
+            const json j = { "A", "B" };
             int counter = 1;
 
             for (auto& i : json::iterator_wrapper(j))
@@ -531,7 +538,7 @@ TEST_CASE("iterator_wrapper")
 
         SECTION("const value")
         {
-            const json j = {"A", "B"};
+            const json j = { "A", "B" };
             int counter = 1;
 
             for (const auto i : json::iterator_wrapper(j))
@@ -564,7 +571,7 @@ TEST_CASE("iterator_wrapper")
 
         SECTION("const reference")
         {
-            const json j = {"A", "B"};
+            const json j = { "A", "B" };
             int counter = 1;
 
             for (const auto& i : json::iterator_wrapper(j))
@@ -735,7 +742,7 @@ TEST_CASE("items()")
     {
         SECTION("value")
         {
-            json j = {{"A", 1}, {"B", 2}};
+            json j = { {"A", 1}, {"B", 2} };
             int counter = 1;
 
             for (auto i : j.items())
@@ -768,7 +775,7 @@ TEST_CASE("items()")
 
         SECTION("reference")
         {
-            json j = {{"A", 1}, {"B", 2}};
+            json j = { {"A", 1}, {"B", 2} };
             int counter = 1;
 
             for (auto& i : j.items())
@@ -807,12 +814,12 @@ TEST_CASE("items()")
             CHECK(counter == 3);
 
             // check if values where changed
-            CHECK(j == json({{"A", 11}, {"B", 22}}));
+            CHECK(j == json({ {"A", 11}, {"B", 22} }));
         }
 
         SECTION("const value")
         {
-            json j = {{"A", 1}, {"B", 2}};
+            json j = { {"A", 1}, {"B", 2} };
             int counter = 1;
 
             for (const auto i : j.items())
@@ -845,7 +852,7 @@ TEST_CASE("items()")
 
         SECTION("const reference")
         {
-            json j = {{"A", 1}, {"B", 2}};
+            json j = { {"A", 1}, {"B", 2} };
             int counter = 1;
 
             for (const auto& i : j.items())
@@ -875,13 +882,29 @@ TEST_CASE("items()")
 
             CHECK(counter == 3);
         }
+
+#ifdef JSON_HAS_CPP_17
+        SECTION("structured bindings")
+        {
+            json j = { {"A", 1}, {"B", 2} };
+
+            std::map<std::string, int> m;
+
+            for (auto const&[key, value] : j.items())
+            {
+                m.emplace(key, value);
+            }
+
+            CHECK(j.get<decltype(m)>() == m);
+        }
+#endif
     }
 
     SECTION("const object")
     {
         SECTION("value")
         {
-            const json j = {{"A", 1}, {"B", 2}};
+            const json j = { {"A", 1}, {"B", 2} };
             int counter = 1;
 
             for (auto i : j.items())
@@ -914,7 +937,7 @@ TEST_CASE("items()")
 
         SECTION("reference")
         {
-            const json j = {{"A", 1}, {"B", 2}};
+            const json j = { {"A", 1}, {"B", 2} };
             int counter = 1;
 
             for (auto& i : j.items())
@@ -947,7 +970,7 @@ TEST_CASE("items()")
 
         SECTION("const value")
         {
-            const json j = {{"A", 1}, {"B", 2}};
+            const json j = { {"A", 1}, {"B", 2} };
             int counter = 1;
 
             for (const auto i : j.items())
@@ -980,7 +1003,7 @@ TEST_CASE("items()")
 
         SECTION("const reference")
         {
-            const json j = {{"A", 1}, {"B", 2}};
+            const json j = { {"A", 1}, {"B", 2} };
             int counter = 1;
 
             for (const auto& i : j.items())
@@ -1016,7 +1039,7 @@ TEST_CASE("items()")
     {
         SECTION("value")
         {
-            json j = {"A", "B"};
+            json j = { "A", "B" };
             int counter = 1;
 
             for (auto i : j.items())
@@ -1049,7 +1072,7 @@ TEST_CASE("items()")
 
         SECTION("reference")
         {
-            json j = {"A", "B"};
+            json j = { "A", "B" };
             int counter = 1;
 
             for (auto& i : j.items())
@@ -1088,12 +1111,12 @@ TEST_CASE("items()")
             CHECK(counter == 3);
 
             // check if values where changed
-            CHECK(j == json({"AA", "BB"}));
+            CHECK(j == json({ "AA", "BB" }));
         }
 
         SECTION("const value")
         {
-            json j = {"A", "B"};
+            json j = { "A", "B" };
             int counter = 1;
 
             for (const auto i : j.items())
@@ -1126,7 +1149,7 @@ TEST_CASE("items()")
 
         SECTION("const reference")
         {
-            json j = {"A", "B"};
+            json j = { "A", "B" };
             int counter = 1;
 
             for (const auto& i : j.items())
@@ -1162,7 +1185,7 @@ TEST_CASE("items()")
     {
         SECTION("value")
         {
-            const json j = {"A", "B"};
+            const json j = { "A", "B" };
             int counter = 1;
 
             for (auto i : j.items())
@@ -1195,7 +1218,7 @@ TEST_CASE("items()")
 
         SECTION("reference")
         {
-            const json j = {"A", "B"};
+            const json j = { "A", "B" };
             int counter = 1;
 
             for (auto& i : j.items())
@@ -1228,7 +1251,7 @@ TEST_CASE("items()")
 
         SECTION("const value")
         {
-            const json j = {"A", "B"};
+            const json j = { "A", "B" };
             int counter = 1;
 
             for (const auto i : j.items())
@@ -1261,7 +1284,7 @@ TEST_CASE("items()")
 
         SECTION("const reference")
         {
-            const json j = {"A", "B"};
+            const json j = { "A", "B" };
             int counter = 1;
 
             for (const auto& i : j.items())

@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.4.0
+|  |  |__   |  |  | | | |  version 3.5.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -1706,5 +1706,18 @@ TEST_CASE("regression tests")
         };
         const auto data = j.get<decltype(expected)>();
         CHECK(expected == data);
+    }
+}
+
+TEST_CASE("regression tests, exceptions dependent", "[!throws]")
+{
+    SECTION("issue #1340 - eof not set on exhausted input stream")
+    {
+        std::stringstream s("{}{}");
+        json j;
+        s >> j;
+        s >> j;
+        CHECK_THROWS_AS(s >> j, json::parse_error const&);
+        CHECK(s.eof());
     }
 }
