@@ -656,7 +656,7 @@ TEST_CASE("regression tests")
                     "test/data/regression/working_file.json"
                 })
         {
-            CAPTURE(filename);
+            CAPTURE(filename)
             json j;
             std::ifstream f(filename);
             CHECK_NOTHROW(f >> j);
@@ -672,7 +672,7 @@ TEST_CASE("regression tests")
                     "test/data/regression/unsigned_ints.json"
                 })
         {
-            CAPTURE(filename);
+            CAPTURE(filename)
             json j;
             std::ifstream f(filename);
             CHECK_NOTHROW(f >> j);
@@ -697,7 +697,7 @@ TEST_CASE("regression tests")
     {
         auto check_roundtrip = [](double number)
         {
-            CAPTURE(number);
+            CAPTURE(number)
 
             json j = number;
             CHECK(j.is_number_float());
@@ -900,7 +900,7 @@ TEST_CASE("regression tests")
             size_t i = 0;
             while (stream.peek() != EOF)
             {
-                CAPTURE(i);
+                CAPTURE(i)
                 CHECK_NOTHROW(stream >> val);
 
                 CHECK(i < 2);
@@ -1109,12 +1109,12 @@ TEST_CASE("regression tests")
     CHECK_FALSE((json(v) != v));\
     CHECK_FALSE((v != json(v)));
 
-        CHECK_TYPE(nullptr);
-        CHECK_TYPE(0);
-        CHECK_TYPE(0u);
-        CHECK_TYPE(0L);
-        CHECK_TYPE(0.0);
-        CHECK_TYPE("");
+        CHECK_TYPE(nullptr)
+        CHECK_TYPE(0)
+        CHECK_TYPE(0u)
+        CHECK_TYPE(0L)
+        CHECK_TYPE(0.0)
+        CHECK_TYPE("")
 
 #undef CHECK_TYPE
     }

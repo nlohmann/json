@@ -1262,7 +1262,7 @@ TEST_CASE("JSON patch")
                  "test/data/json-patch-tests/tests.json"
                 })
         {
-            CAPTURE(filename);
+            CAPTURE(filename)
             std::ifstream f(filename);
             json suite = json::parse(f);
 

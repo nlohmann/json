@@ -146,9 +146,9 @@ TEST_CASE("digit gen")
     {
         auto check_float = [](float number, const std::string & digits, int expected_exponent)
         {
-            CAPTURE(number);
-            CAPTURE(digits);
-            CAPTURE(expected_exponent);
+            CAPTURE(number)
+            CAPTURE(digits)
+            CAPTURE(expected_exponent)
 
             char buf[32];
             int len = 0;
@@ -210,9 +210,9 @@ TEST_CASE("digit gen")
     {
         auto check_double = [](double number, const std::string & digits, int expected_exponent)
         {
-            CAPTURE(number);
-            CAPTURE(digits);
-            CAPTURE(expected_exponent);
+            CAPTURE(number)
+            CAPTURE(digits)
+            CAPTURE(expected_exponent)
 
             char buf[32];
             int len = 0;

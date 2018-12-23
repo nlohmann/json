@@ -895,9 +895,9 @@ TEST_CASE("deserialization")
                     for (int i2 = -1; i2 < 2; ++i2)
                     {
                         // debug output for the variations
-                        CAPTURE(i0);
-                        CAPTURE(i1);
-                        CAPTURE(i2);
+                        CAPTURE(i0)
+                        CAPTURE(i1)
+                        CAPTURE(i2)
 
                         std::string s = "";
                         s.push_back(static_cast<char>(bom[0] + i0));

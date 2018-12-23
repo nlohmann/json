@@ -117,6 +117,7 @@ doctest:
 # -Wno-range-loop-analysis: items tests "for(const auto i...)"
 # -Wno-float-equal: not all comparisons in the tests can be replaced by Approx
 # -Wno-switch-enum -Wno-covered-switch-default: pedantic/contradicting warnings about switches
+# -Wno-c++2a-compat: u8 literals will behave differently in C++20...
 # -Wno-padded: padding is nothing to warn about
 pedantic_clang:
 	$(MAKE) json_unit CXXFLAGS="\
@@ -131,6 +132,7 @@ pedantic_clang:
 		-Wno-range-loop-analysis \
 		-Wno-float-equal \
 		-Wno-switch-enum -Wno-covered-switch-default \
+		-Wno-c++2a-compat \
 		-Wno-padded"
 
 # calling GCC with most warnings

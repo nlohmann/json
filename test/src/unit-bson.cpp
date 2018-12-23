@@ -821,7 +821,7 @@ TEST_CASE("BSON numerical data")
                 for (auto i : numbers)
                 {
 
-                    CAPTURE(i);
+                    CAPTURE(i)
 
                     json j =
                     {
@@ -893,7 +893,7 @@ TEST_CASE("BSON numerical data")
                 for (auto i : numbers)
                 {
 
-                    CAPTURE(i);
+                    CAPTURE(i)
 
                     json j =
                     {
@@ -946,7 +946,7 @@ TEST_CASE("BSON numerical data")
                 for (auto i : numbers)
                 {
 
-                    CAPTURE(i);
+                    CAPTURE(i)
 
                     json j =
                     {
@@ -1008,7 +1008,7 @@ TEST_CASE("BSON numerical data")
                 for (auto i : numbers)
                 {
 
-                    CAPTURE(i);
+                    CAPTURE(i)
 
                     json j =
                     {
@@ -1063,7 +1063,7 @@ TEST_CASE("BSON numerical data")
                 for (auto i : numbers)
                 {
 
-                    CAPTURE(i);
+                    CAPTURE(i)
 
                     json j =
                     {
@@ -1113,7 +1113,7 @@ TEST_CASE("BSON numerical data")
                 for (auto i : numbers)
                 {
 
-                    CAPTURE(i);
+                    CAPTURE(i)
 
                     json j =
                     {
@@ -1159,7 +1159,7 @@ TEST_CASE("BSON roundtrips", "[hide]")
                     "test/data/json.org/5.json"
                 })
         {
-            CAPTURE(filename);
+            CAPTURE(filename)
 
             SECTION(filename + ": std::vector<uint8_t>")
             {

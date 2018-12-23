@@ -933,7 +933,7 @@ class binary_writer
                 assert(false);
                 return 0ul;
                 // LCOV_EXCL_STOP
-        };
+        }
     }
 
     /*!
@@ -977,7 +977,7 @@ class binary_writer
                 assert(false);
                 return;
                 // LCOV_EXCL_STOP
-        };
+        }
     }
 
     /*!
