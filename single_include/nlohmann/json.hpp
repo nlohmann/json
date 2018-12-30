@@ -3829,7 +3829,7 @@ scan_number_done:
         if (current == '\n')
         {
             ++position.lines_read;
-            ++position.chars_read_current_line = 0;
+            position.chars_read_current_line = 0;
         }
 
         return current;
