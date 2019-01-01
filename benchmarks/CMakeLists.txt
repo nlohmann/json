@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.1)
 project(JSON_Benchmarks LANGUAGES CXX)
 
 # set compiler flags
