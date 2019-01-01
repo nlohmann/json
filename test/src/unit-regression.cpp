@@ -669,7 +669,8 @@ TEST_CASE("regression tests")
                 {
                     "test/data/regression/floats.json",
                     "test/data/regression/signed_ints.json",
-                    "test/data/regression/unsigned_ints.json"
+                    "test/data/regression/unsigned_ints.json",
+                    "test/data/regression/small_signed_ints.json"
                 })
         {
             CAPTURE(filename)

@@ -28,14 +28,14 @@ static void ParseFile(benchmark::State& state, const char* filename)
     std::ifstream file(filename, std::ios::binary | std::ios::ate);
     state.SetBytesProcessed(state.iterations() * file.tellg());
 }
-BENCHMARK_CAPTURE(ParseFile, jeopardy,      "data/jeopardy/jeopardy.json");
-BENCHMARK_CAPTURE(ParseFile, canada,        "data/nativejson-benchmark/canada.json");
-BENCHMARK_CAPTURE(ParseFile, citm_catalog,  "data/nativejson-benchmark/citm_catalog.json");
-BENCHMARK_CAPTURE(ParseFile, twitter,       "data/nativejson-benchmark/twitter.json");
-BENCHMARK_CAPTURE(ParseFile, floats,        "data/numbers/floats.json");
-BENCHMARK_CAPTURE(ParseFile, signed_ints,   "data/numbers/signed_ints.json");
-BENCHMARK_CAPTURE(ParseFile, unsigned_ints, "data/numbers/unsigned_ints.json");
-
+BENCHMARK_CAPTURE(ParseFile, jeopardy,              "data/jeopardy/jeopardy.json");
+BENCHMARK_CAPTURE(ParseFile, canada,                "data/nativejson-benchmark/canada.json");
+BENCHMARK_CAPTURE(ParseFile, citm_catalog,          "data/nativejson-benchmark/citm_catalog.json");
+BENCHMARK_CAPTURE(ParseFile, twitter,               "data/nativejson-benchmark/twitter.json");
+BENCHMARK_CAPTURE(ParseFile, floats,                "data/numbers/floats.json");
+BENCHMARK_CAPTURE(ParseFile, signed_ints,           "data/numbers/signed_ints.json");
+BENCHMARK_CAPTURE(ParseFile, unsigned_ints,         "data/numbers/unsigned_ints.json");
+BENCHMARK_CAPTURE(ParseFile, small_signed_ints,     "data/numbers/small_signed_ints.json");
 
 //////////////////////////////////////////////////////////////////////////////
 // parse JSON from string
@@ -61,13 +61,14 @@ static void ParseString(benchmark::State& state, const char* filename)
 
     state.SetBytesProcessed(state.iterations() * str.size());
 }
-BENCHMARK_CAPTURE(ParseString, jeopardy,      "data/jeopardy/jeopardy.json");
-BENCHMARK_CAPTURE(ParseString, canada,        "data/nativejson-benchmark/canada.json");
-BENCHMARK_CAPTURE(ParseString, citm_catalog,  "data/nativejson-benchmark/citm_catalog.json");
-BENCHMARK_CAPTURE(ParseString, twitter,       "data/nativejson-benchmark/twitter.json");
-BENCHMARK_CAPTURE(ParseString, floats,        "data/numbers/floats.json");
-BENCHMARK_CAPTURE(ParseString, signed_ints,   "data/numbers/signed_ints.json");
-BENCHMARK_CAPTURE(ParseString, unsigned_ints, "data/numbers/unsigned_ints.json");
+BENCHMARK_CAPTURE(ParseString, jeopardy,            "data/jeopardy/jeopardy.json");
+BENCHMARK_CAPTURE(ParseString, canada,              "data/nativejson-benchmark/canada.json");
+BENCHMARK_CAPTURE(ParseString, citm_catalog,        "data/nativejson-benchmark/citm_catalog.json");
+BENCHMARK_CAPTURE(ParseString, twitter,             "data/nativejson-benchmark/twitter.json");
+BENCHMARK_CAPTURE(ParseString, floats,              "data/numbers/floats.json");
+BENCHMARK_CAPTURE(ParseString, signed_ints,         "data/numbers/signed_ints.json");
+BENCHMARK_CAPTURE(ParseString, unsigned_ints,       "data/numbers/unsigned_ints.json");
+BENCHMARK_CAPTURE(ParseString, small_signed_ints,   "data/numbers/small_signed_ints.json");
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -101,6 +102,8 @@ BENCHMARK_CAPTURE(Dump, signed_ints / -,   "data/numbers/signed_ints.json",     
 BENCHMARK_CAPTURE(Dump, signed_ints / 4,   "data/numbers/signed_ints.json",               4);
 BENCHMARK_CAPTURE(Dump, unsigned_ints / -, "data/numbers/unsigned_ints.json",             -1);
 BENCHMARK_CAPTURE(Dump, unsigned_ints / 4, "data/numbers/unsigned_ints.json",             4);
+BENCHMARK_CAPTURE(Dump, small_signed_ints / -,   "data/numbers/small_signed_ints.json",   -1);
+BENCHMARK_CAPTURE(Dump, small_signed_ints / 4,   "data/numbers/small_signed_ints.json",   4);
 
 
 BENCHMARK_MAIN();
