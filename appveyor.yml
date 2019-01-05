@@ -26,17 +26,17 @@ environment:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
       platform: x64
       FLAGS: ""
-      GENERATOR: Visual Studio 14 2015
+      GENERATOR: Visual Studio 14 2015 Win64
 
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
       platform: x64
       FLAGS: ""
-      GENERATOR: Visual Studio 15 2017
+      GENERATOR: Visual Studio 15 2017 Win64
 
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
       platform: x64
       FLAGS: "/permissive- /std:c++latest /utf-8"
-      GENERATOR: Visual Studio 15 2017
+      GENERATOR: Visual Studio 15 2017 Win64
 
 init:
   - cmake --version
