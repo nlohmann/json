@@ -101,7 +101,7 @@ To embed the library directly into an existing CMake project, place the entire s
 set(JSON_BuildTests OFF CACHE INTERNAL "")
 
 # Don't use include(nlohmann_json/CMakeLists.txt) since that carries with it
-# inintended consequences that will break the build.  It's generally
+# unintended consequences that will break the build.  It's generally
 # discouraged (although not necessarily well documented as such) to use
 # include(...) for pulling in other CMake projects anyways.
 add_subdirectory(nlohmann_json)
