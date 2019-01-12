@@ -988,7 +988,7 @@ json j_from_ubjson = json::from_ubjson(v_ubjson);
 
 ## Supported compilers
 
-Though it's 2018 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
+Though it's 2019 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
 
 - GCC 4.8 - 9.0 (and possibly later)
 - Clang 3.4 - 8.0 (and possibly later)
