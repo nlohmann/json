@@ -39,6 +39,7 @@
 #elif defined(_WIN32)
   #define BENCHMARK_OS_WINDOWS 1
 #elif defined(__APPLE__)
+  #define BENCHMARK_OS_APPLE 1
   #include "TargetConditionals.h"
   #if defined(TARGET_OS_MAC)
     #define BENCHMARK_OS_MACOSX 1
@@ -50,14 +51,20 @@
   #define BENCHMARK_OS_FREEBSD 1
 #elif defined(__NetBSD__)
   #define BENCHMARK_OS_NETBSD 1
+#elif defined(__OpenBSD__)
+  #define BENCHMARK_OS_OPENBSD 1
 #elif defined(__linux__)
   #define BENCHMARK_OS_LINUX 1
 #elif defined(__native_client__)
   #define BENCHMARK_OS_NACL 1
-#elif defined(EMSCRIPTEN)
+#elif defined(__EMSCRIPTEN__)
   #define BENCHMARK_OS_EMSCRIPTEN 1
 #elif defined(__rtems__)
   #define BENCHMARK_OS_RTEMS 1
+#elif defined(__Fuchsia__)
+#define BENCHMARK_OS_FUCHSIA 1
+#elif defined (__SVR4) && defined (__sun)
+#define BENCHMARK_OS_SOLARIS 1
 #endif
 
 #if !__has_feature(cxx_exceptions) && !defined(__cpp_exceptions) \

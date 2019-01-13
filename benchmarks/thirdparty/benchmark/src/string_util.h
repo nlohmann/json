@@ -12,23 +12,23 @@ void AppendHumanReadable(int n, std::string* str);
 
 std::string HumanReadableNumber(double n, double one_k = 1024.0);
 
-std::string StringPrintF(const char* format, ...);
+std::string StrFormat(const char* format, ...);
 
-inline std::ostream& StringCatImp(std::ostream& out) BENCHMARK_NOEXCEPT {
+inline std::ostream& StrCatImp(std::ostream& out) BENCHMARK_NOEXCEPT {
   return out;
 }
 
 template <class First, class... Rest>
-inline std::ostream& StringCatImp(std::ostream& out, First&& f,
+inline std::ostream& StrCatImp(std::ostream& out, First&& f,
                                   Rest&&... rest) {
   out << std::forward<First>(f);
-  return StringCatImp(out, std::forward<Rest>(rest)...);
+  return StrCatImp(out, std::forward<Rest>(rest)...);
 }
 
 template <class... Args>
 inline std::string StrCat(Args&&... args) {
   std::ostringstream ss;
-  StringCatImp(ss, std::forward<Args>(args)...);
+  StrCatImp(ss, std::forward<Args>(args)...);
   return ss.str();
 }
 

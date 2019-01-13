@@ -17,11 +17,14 @@
 
 #ifdef BENCHMARK_OS_WINDOWS
 #include <Shlwapi.h>
+#undef StrCat  // Don't let StrCat in string_util.h be renamed to lstrcatA
 #include <VersionHelpers.h>
 #include <Windows.h>
 #else
 #include <fcntl.h>
+#ifndef BENCHMARK_OS_FUCHSIA
 #include <sys/resource.h>
+#endif
 #include <sys/time.h>
 #include <sys/types.h>  // this header must be included before 'sys/sysctl.h' to avoid compilation error on FreeBSD
 #include <unistd.h>
@@ -74,7 +77,7 @@ double MakeTime(FILETIME const& kernel_time, FILETIME const& user_time) {
           static_cast<double>(user.QuadPart)) *
          1e-7;
 }
-#else
+#elif !defined(BENCHMARK_OS_FUCHSIA)
 double MakeTime(struct rusage const& ru) {
   return (static_cast<double>(ru.ru_utime.tv_sec) +
           static_cast<double>(ru.ru_utime.tv_usec) * 1e-6 +
@@ -162,6 +165,10 @@ double ThreadCPUUsage() {
   // RTEMS doesn't support CLOCK_THREAD_CPUTIME_ID. See
   // https://github.com/RTEMS/rtems/blob/master/cpukit/posix/src/clockgettime.c
   return ProcessCPUUsage();
+#elif defined(BENCHMARK_OS_SOLARIS)
+  struct rusage ru;
+  if (getrusage(RUSAGE_LWP, &ru) == 0) return MakeTime(ru);
+  DiagnoseAndExit("getrusage(RUSAGE_LWP, ...) failed");
 #elif defined(CLOCK_THREAD_CPUTIME_ID)
   struct timespec ts;
   if (clock_gettime(CLOCK_THREAD_CPUTIME_ID, &ts) == 0) return MakeTime(ts);
@@ -186,7 +193,6 @@ std::string DateTimeString(bool local) {
         std::strftime(storage, sizeof(storage), "%x %X", ::localtime(&now));
 #else
     std::tm timeinfo;
-    std::memset(&timeinfo, 0, sizeof(std::tm));
     ::localtime_r(&now, &timeinfo);
     written = std::strftime(storage, sizeof(storage), "%F %T", &timeinfo);
 #endif
@@ -195,7 +201,6 @@ std::string DateTimeString(bool local) {
     written = std::strftime(storage, sizeof(storage), "%x %X", ::gmtime(&now));
 #else
     std::tm timeinfo;
-    std::memset(&timeinfo, 0, sizeof(std::tm));
     ::gmtime_r(&now, &timeinfo);
     written = std::strftime(storage, sizeof(storage), "%F %T", &timeinfo);
 #endif

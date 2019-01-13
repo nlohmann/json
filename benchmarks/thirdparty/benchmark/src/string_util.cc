@@ -122,7 +122,7 @@ std::string HumanReadableNumber(double n, double one_k) {
   return ToBinaryStringFullySpecified(n, 1.1, 1, one_k);
 }
 
-std::string StringPrintFImp(const char* msg, va_list args) {
+std::string StrFormatImp(const char* msg, va_list args) {
   // we might need a second shot at this, so pre-emptivly make a copy
   va_list args_cp;
   va_copy(args_cp, args);
@@ -152,10 +152,10 @@ std::string StringPrintFImp(const char* msg, va_list args) {
   return std::string(buff_ptr.get());
 }
 
-std::string StringPrintF(const char* format, ...) {
+std::string StrFormat(const char* format, ...) {
   va_list args;
   va_start(args, format);
-  std::string tmp = StringPrintFImp(format, args);
+  std::string tmp = StrFormatImp(format, args);
   va_end(args);
   return tmp;
 }

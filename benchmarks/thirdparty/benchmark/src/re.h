@@ -17,19 +17,31 @@
 
 #include "internal_macros.h"
 
+#if !defined(HAVE_STD_REGEX) && \
+    !defined(HAVE_GNU_POSIX_REGEX) && \
+    !defined(HAVE_POSIX_REGEX)
+  // No explicit regex selection; detect based on builtin hints.
+  #if defined(BENCHMARK_OS_LINUX) || defined(BENCHMARK_OS_APPLE)
+    #define HAVE_POSIX_REGEX 1
+  #elif __cplusplus >= 199711L
+    #define HAVE_STD_REGEX 1
+  #endif
+#endif
+
 // Prefer C regex libraries when compiling w/o exceptions so that we can
 // correctly report errors.
-#if defined(BENCHMARK_HAS_NO_EXCEPTIONS) && defined(HAVE_STD_REGEX) && \
+#if defined(BENCHMARK_HAS_NO_EXCEPTIONS) && \
+    defined(BENCHMARK_HAVE_STD_REGEX) && \
     (defined(HAVE_GNU_POSIX_REGEX) || defined(HAVE_POSIX_REGEX))
-#undef HAVE_STD_REGEX
+  #undef HAVE_STD_REGEX
 #endif
 
 #if defined(HAVE_STD_REGEX)
-#include <regex>
+  #include <regex>
 #elif defined(HAVE_GNU_POSIX_REGEX)
-#include <gnuregex.h>
+  #include <gnuregex.h>
 #elif defined(HAVE_POSIX_REGEX)
-#include <regex.h>
+  #include <regex.h>
 #else
 #error No regular expression backend was found!
 #endif
@@ -64,7 +76,7 @@ class Regex {
 #elif defined(HAVE_POSIX_REGEX) || defined(HAVE_GNU_POSIX_REGEX)
   regex_t re_;
 #else
-#error No regular expression backend implementation available
+  #error No regular expression backend implementation available
 #endif
 };
 
