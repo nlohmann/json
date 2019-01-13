@@ -27,11 +27,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "catch.hpp"
+#include "doctest_compatibility.h"
 
-#include <fstream>
 #include <nlohmann/json.hpp>
 using nlohmann::json;
+
+#include <fstream>
+#include <sstream>
 
 TEST_CASE("object inspection")
 {

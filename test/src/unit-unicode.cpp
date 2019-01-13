@@ -27,14 +27,20 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "catch.hpp"
+#include "doctest_compatibility.h"
+
+// for some reason including this after the json header leads to linker errors with VS 2017...
+#include <locale>
 
 #define private public
 #include <nlohmann/json.hpp>
 using nlohmann::json;
+#undef private
 
 #include <fstream>
+#include <sstream>
 #include <iostream>
+#include <iomanip>
 
 extern size_t calls;
 size_t calls = 0;
@@ -160,7 +166,7 @@ void check_utf8string(bool success_expected, int byte1, int byte2 = -1, int byte
     }
 }
 
-TEST_CASE("Unicode", "[hide]")
+TEST_CASE("Unicode" * doctest::skip())
 {
     SECTION("RFC 3629")
     {

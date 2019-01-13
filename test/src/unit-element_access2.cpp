@@ -27,7 +27,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "catch.hpp"
+#include "doctest_compatibility.h"
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;
@@ -985,7 +985,8 @@ TEST_CASE("element access 2")
     }
 }
 
-TEST_CASE("element access 2 (throwing tests)", "[!throws]")
+#if not defined(JSON_NOEXCEPTION)
+TEST_CASE("element access 2 (throwing tests)")
 {
     SECTION("object")
     {
@@ -1018,3 +1019,4 @@ TEST_CASE("element access 2 (throwing tests)", "[!throws]")
         }
     }
 }
+#endif

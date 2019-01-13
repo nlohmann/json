@@ -113,7 +113,6 @@ doctest:
 
 # calling Clang with all warnings, except:
 # -Wno-documentation-unknown-command: code uses user-defined commands like @complexity
-# -Wno-exit-time-destructors: warning in Catch code
 # -Wno-keyword-macro: unit-tests use "#define private public"
 # -Wno-deprecated-declarations: the library deprecated some functions
 # -Wno-weak-vtables: exception class is defined inline, but has virtual method
@@ -128,7 +127,6 @@ pedantic_clang:
 		-Werror \
 		-Weverything \
 		-Wno-documentation-unknown-command \
-		-Wno-exit-time-destructors \
 		-Wno-keyword-macro \
 		-Wno-deprecated-declarations \
 		-Wno-weak-vtables \

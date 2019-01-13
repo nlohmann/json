@@ -27,7 +27,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "catch.hpp"
+#include "doctest_compatibility.h"
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;
@@ -457,7 +457,7 @@ TEST_CASE("RFC 7159 examples")
                }
             )";
 
-            CHECK_NOTHROW(json(json_contents));
+            CHECK_NOTHROW(auto tmp = json(json_contents));
         }
 
         {
@@ -484,7 +484,7 @@ TEST_CASE("RFC 7159 examples")
                        "Country":   "US"
                     }
             ])";
-            CHECK_NOTHROW(json(json_contents));
+            CHECK_NOTHROW(auto tmp = json(json_contents));
         }
 
         CHECK(json::parse("\"Hello world!\"") == json("Hello world!"));
