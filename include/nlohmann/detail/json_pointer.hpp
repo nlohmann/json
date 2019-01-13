@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm> // all_of
 #include <cassert> // assert
 #include <numeric> // accumulate
 #include <string> // string

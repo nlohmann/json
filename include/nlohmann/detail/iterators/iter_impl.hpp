@@ -9,6 +9,7 @@
 #include <nlohmann/detail/iterators/primitive_iterator.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/cpp_future.hpp>
+#include <nlohmann/detail/meta/type_traits.hpp>
 #include <nlohmann/detail/value_t.hpp>
 
 namespace nlohmann

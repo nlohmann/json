@@ -2152,6 +2152,8 @@ constexpr const auto& to_json = detail::static_const<detail::to_json_fn>::value;
 #include <utility> // pair, declval
 #include <cstdio> //FILE *
 
+// #include <nlohmann/detail/iterators/iterator_traits.hpp>
+
 // #include <nlohmann/detail/macro_scope.hpp>
 
 
@@ -4236,13 +4238,14 @@ struct is_sax_static_asserts
 // #include <nlohmann/detail/input/json_sax.hpp>
 
 
+#include <cassert>
 #include <cstddef>
 #include <string>
 #include <vector>
 
-// #include <nlohmann/detail/input/parser.hpp>
-
 // #include <nlohmann/detail/exceptions.hpp>
+
+// #include <nlohmann/detail/macro_scope.hpp>
 
 
 namespace nlohmann
@@ -5597,6 +5600,8 @@ template<typename BasicJsonType> struct internal_iterator
 // #include <nlohmann/detail/macro_scope.hpp>
 
 // #include <nlohmann/detail/meta/cpp_future.hpp>
+
+// #include <nlohmann/detail/meta/type_traits.hpp>
 
 // #include <nlohmann/detail/value_t.hpp>
 
@@ -9805,6 +9810,8 @@ class binary_writer
 #include <cmath>   // signbit, isfinite
 #include <cstdint> // intN_t, uintN_t
 #include <cstring> // memcpy, memmove
+#include <limits> // numeric_limits
+#include <type_traits> // conditional
 
 namespace nlohmann
 {
@@ -11778,6 +11785,7 @@ class json_ref
 // #include <nlohmann/detail/json_pointer.hpp>
 
 
+#include <algorithm> // all_of
 #include <cassert> // assert
 #include <numeric> // accumulate
 #include <string> // string

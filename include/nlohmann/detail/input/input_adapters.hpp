@@ -12,6 +12,7 @@
 #include <utility> // pair, declval
 #include <cstdio> //FILE *
 
+#include <nlohmann/detail/iterators/iterator_traits.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 
 namespace nlohmann

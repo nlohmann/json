@@ -1,11 +1,12 @@
 #pragma once
 
+#include <cassert>
 #include <cstddef>
 #include <string>
 #include <vector>
 
-#include <nlohmann/detail/input/parser.hpp>
 #include <nlohmann/detail/exceptions.hpp>
+#include <nlohmann/detail/macro_scope.hpp>
 
 namespace nlohmann
 {
