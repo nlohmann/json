@@ -46,7 +46,7 @@ endif()
 ##
 add_library(${NLOHMANN_JSON_TARGET_NAME} INTERFACE)
 add_library(${PROJECT_NAME}::${NLOHMANN_JSON_TARGET_NAME} ALIAS ${NLOHMANN_JSON_TARGET_NAME})
-target_compile_features(${NLOHMANN_JSON_TARGET_NAME} INTERFACE cxx_std_11)
+target_compile_features(${NLOHMANN_JSON_TARGET_NAME} INTERFACE cxx_range_for)
 
 target_include_directories(
     ${NLOHMANN_JSON_TARGET_NAME}

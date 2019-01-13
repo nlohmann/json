@@ -23,5 +23,5 @@ file(COPY ${CMAKE_SOURCE_DIR}/../test/data/regression/floats.json
 
 # benchmark binary
 add_executable(json_benchmarks src/benchmarks.cpp)
-target_compile_features(json_benchmarks PRIVATE cxx_std_11)
+target_compile_features(json_benchmarks PRIVATE cxx_range_for)
 target_link_libraries(json_benchmarks benchmark ${CMAKE_THREAD_LIBS_INIT})
