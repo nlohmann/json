@@ -7273,7 +7273,7 @@ class binary_reader
     */
     bool get_cbor_object(const std::size_t len)
     {
-        if (not JSON_UNLIKELY(sax->start_object(len)))
+        if (JSON_UNLIKELY(not sax->start_object(len)))
         {
             return false;
         }
