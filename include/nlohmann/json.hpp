@@ -6022,7 +6022,9 @@ class basic_json
     @param[in] allow_exceptions  whether to throw exceptions in case of a
     parse error (optional, true by default)
 
-    @return result of the deserialization
+    @return deserialized JSON value; in case of a parse error and
+            @a allow_exceptions set to `false`, the return value will be
+            value_t::discarded.
 
     @throw parse_error.101 if a parse error occurs; example: `""unexpected end
     of input; expected string literal""`
@@ -6164,7 +6166,9 @@ class basic_json
     @param[in] allow_exceptions  whether to throw exceptions in case of a
     parse error (optional, true by default)
 
-    @return result of the deserialization
+    @return deserialized JSON value; in case of a parse error and
+            @a allow_exceptions set to `false`, the return value will be
+            value_t::discarded.
 
     @throw parse_error.101 in case of an unexpected token
     @throw parse_error.102 if to_unicode fails or surrogate error
@@ -6795,7 +6799,9 @@ class basic_json
     @param[in] allow_exceptions  whether to throw exceptions in case of a
     parse error (optional, true by default)
 
-    @return deserialized JSON value
+    @return deserialized JSON value; in case of a parse error and
+            @a allow_exceptions set to `false`, the return value will be
+            value_t::discarded.
 
     @throw parse_error.110 if the given input ends prematurely or the end of
     file was not reached when @a strict was set to true
@@ -6898,7 +6904,9 @@ class basic_json
     @param[in] allow_exceptions  whether to throw exceptions in case of a
     parse error (optional, true by default)
 
-    @return deserialized JSON value
+    @return deserialized JSON value; in case of a parse error and
+            @a allow_exceptions set to `false`, the return value will be
+            value_t::discarded.
 
     @throw parse_error.110 if the given input ends prematurely or the end of
     file was not reached when @a strict was set to true
@@ -6985,7 +6993,9 @@ class basic_json
     @param[in] allow_exceptions  whether to throw exceptions in case of a
     parse error (optional, true by default)
 
-    @return deserialized JSON value
+    @return deserialized JSON value; in case of a parse error and
+            @a allow_exceptions set to `false`, the return value will be
+            value_t::discarded.
 
     @throw parse_error.110 if the given input ends prematurely or the end of
     file was not reached when @a strict was set to true
@@ -7074,7 +7084,9 @@ class basic_json
     @param[in] allow_exceptions  whether to throw exceptions in case of a
     parse error (optional, true by default)
 
-    @return deserialized JSON value
+    @return deserialized JSON value; in case of a parse error and
+            @a allow_exceptions set to `false`, the return value will be
+            value_t::discarded.
 
     @throw parse_error.114 if an unsupported BSON record type is encountered
 
