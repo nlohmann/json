@@ -1700,13 +1700,13 @@ template <typename IteratorType> class iteration_proxy_value
     }
 
     /// equality operator (needed for InputIterator)
-    bool operator==(const iteration_proxy_value& o) const noexcept
+    bool operator==(const iteration_proxy_value& o) const
     {
         return anchor == o.anchor;
     }
 
     /// inequality operator (needed for range-based for)
-    bool operator!=(const iteration_proxy_value& o) const noexcept
+    bool operator!=(const iteration_proxy_value& o) const
     {
         return anchor != o.anchor;
     }
