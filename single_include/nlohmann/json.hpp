@@ -13465,18 +13465,73 @@ class basic_json
             switch (t)
             {
                 case value_t::object:
-                {
-                    AllocatorType<object_t> alloc;
-                    std::allocator_traits<decltype(alloc)>::destroy(alloc, object);
-                    std::allocator_traits<decltype(alloc)>::deallocate(alloc, object, 1);
-                    break;
-                }
-
                 case value_t::array:
                 {
-                    AllocatorType<array_t> alloc;
-                    std::allocator_traits<decltype(alloc)>::destroy(alloc, array);
-                    std::allocator_traits<decltype(alloc)>::deallocate(alloc, array, 1);
+                    if ((t == value_t::object && !this->object->empty()) || (t == value_t::array && !this->array->empty()))
+                    {
+                        std::vector<std::pair<json_value*, value_t>> stack;
+                        stack.push_back(std::make_pair(this, t));
+                        while (!stack.empty())
+                        {
+                            json_value* value;
+                            value_t type;
+                            std::tie(value, type) = stack.back();
+                            if (type == value_t::object)
+                            {
+                                while (!value->object->empty())
+                                {
+                                    basic_json& inner_value = value->object->begin()->second;
+                                    value_t inner_type = inner_value.type();
+                                    if ((inner_type == value_t::object || inner_type == value_t::array) && !inner_value.empty())
+                                    {
+                                        stack.push_back(std::make_pair(&inner_value.m_value, inner_type));
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        value->object->erase(value->object->begin());
+                                    }
+                                }
+                                if (value->object->empty())
+                                {
+                                    stack.pop_back();
+                                }
+                            }
+                            else
+                            {
+                                while (!value->array->empty())
+                                {
+                                    basic_json& inner_value = value->array->back();
+                                    value_t inner_type = inner_value.type();
+                                    if ((inner_type == value_t::object || inner_type == value_t::array) && !inner_value.empty())
+                                    {
+                                        stack.push_back(std::make_pair(&inner_value.m_value, inner_type));
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        value->array->pop_back();
+                                    }
+                                }
+                                if (value->array->empty())
+                                {
+                                    stack.pop_back();
+                                }
+                            }
+                        }
+                    }
+                    if (t == value_t::object)
+                    {
+                        AllocatorType<object_t> alloc;
+                        std::allocator_traits<decltype(alloc)>::destroy(alloc, object);
+                        std::allocator_traits<decltype(alloc)>::deallocate(alloc, object, 1);
+                    }
+                    else
+                    {
+                        AllocatorType<array_t> alloc;
+                        std::allocator_traits<decltype(alloc)>::destroy(alloc, array);
+                        std::allocator_traits<decltype(alloc)>::deallocate(alloc, array, 1);
+                    }
                     break;
                 }
 
