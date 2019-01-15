@@ -1,6 +1,7 @@
 #ifndef DOCTEST_COMPATIBILITY
 #define DOCTEST_COMPATIBILITY
 
+#define DOCTEST_THREAD_LOCAL // enable single-threaded builds on XCode 6/7 - https://github.com/onqtam/doctest/issues/172
 #include "doctest.h"
 
 // Catch doesn't require a semicolon after CAPTURE but doctest does
