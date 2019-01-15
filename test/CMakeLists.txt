@@ -61,8 +61,12 @@ add_library(doctest_main OBJECT
     "src/unit.cpp"
 )
 set_target_properties(doctest_main PROPERTIES
-    COMPILE_DEFINITIONS "$<$<CXX_COMPILER_ID:MSVC>:_SCL_SECURE_NO_WARNINGS>"
     COMPILE_OPTIONS "$<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>"
+)
+target_compile_definitions(doctest_main PUBLIC
+    "$<$<CXX_COMPILER_ID:MSVC>:_SCL_SECURE_NO_WARNINGS>"
+    "DOCTEST_THREAD_LOCAL"
+    "DOCTEST_CONFIG_SUPER_FAST_ASSERTS"
 )
 target_compile_features(doctest_main PUBLIC cxx_std_11)
 target_include_directories(doctest_main PRIVATE "thirdparty/doctest")
@@ -96,10 +100,6 @@ foreach(file ${files})
     string(REGEX REPLACE "unit-([^$]+)" "test-\\1" testcase ${file_basename})
 
     add_executable(${testcase} $<TARGET_OBJECTS:doctest_main> ${file})
-    target_compile_definitions(${testcase} PRIVATE
-      DOCTEST_CONFIG_SUPER_FAST_ASSERTS
-      DOCTEST_THREAD_LOCAL
-    )
     target_compile_options(${testcase} PRIVATE
         $<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>
         $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wno-deprecated;-Wno-float-equal>
