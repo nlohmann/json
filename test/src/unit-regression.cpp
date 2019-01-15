@@ -1708,6 +1708,16 @@ TEST_CASE("regression tests")
         const auto data = j.get<decltype(expected)>();
         CHECK(expected == data);
     }
+
+    SECTION("issue #1419 - Segmentation fault (stack overflow) due to unbounded recursion")
+    {
+        const int depth = 8000000;
+
+        std::string s(depth, '[');
+        s += std::string(depth, ']');
+
+        CHECK_NOTHROW(nlohmann::json::parse(s));
+    }
 }
 
 TEST_CASE("regression tests, exceptions dependent", "[!throws]")
