@@ -1002,7 +1002,7 @@ class basic_json
                     if ((t == value_t::object && !this->object->empty()) || (t == value_t::array && !this->array->empty()))
                     {
                         std::vector<std::pair<json_value*, value_t>> stack;
-                        stack.push_back(std::make_pair(this, t));
+                        stack.emplace_back(this, t);
                         while (!stack.empty())
                         {
                             json_value* value;
@@ -1016,7 +1016,7 @@ class basic_json
                                     value_t inner_type = inner_value.type();
                                     if ((inner_type == value_t::object || inner_type == value_t::array) && !inner_value.empty())
                                     {
-                                        stack.push_back(std::make_pair(&inner_value.m_value, inner_type));
+                                        stack.emplace_back(&inner_value.m_value, inner_type);
                                         break;
                                     }
                                     else
@@ -1037,7 +1037,7 @@ class basic_json
                                     value_t inner_type = inner_value.type();
                                     if ((inner_type == value_t::object || inner_type == value_t::array) && !inner_value.empty())
                                     {
-                                        stack.push_back(std::make_pair(&inner_value.m_value, inner_type));
+                                        stack.emplace_back(&inner_value.m_value, inner_type);
                                         break;
                                     }
                                     else
