@@ -12946,6 +12946,9 @@ class basic_json
           AllocatorType<std::pair<const StringType,
           basic_json>>>;
 
+    using key_type = typename object_t::key_type;
+    using mapped_type = typename object_t::mapped_type;
+
     /*!
     @brief a type for an array
 
@@ -15460,7 +15463,7 @@ class basic_json
 
     @complexity Logarithmic in the size of the container.
 
-    @sa @ref operator[](const typename object_t::key_type&) for unchecked
+    @sa @ref operator[](const key_type&) for unchecked
     access by reference
     @sa @ref value() for access by value with a default value
 
@@ -15470,7 +15473,7 @@ class basic_json
     written using `at()`. It also demonstrates the different exceptions that
     can be thrown.,at__object_t_key_type}
     */
-    reference at(const typename object_t::key_type& key)
+    reference at(const key_type& key)
     {
         // at only works for objects
         if (JSON_LIKELY(is_object()))
@@ -15511,7 +15514,7 @@ class basic_json
 
     @complexity Logarithmic in the size of the container.
 
-    @sa @ref operator[](const typename object_t::key_type&) for unchecked
+    @sa @ref operator[](const key_type&) for unchecked
     access by reference
     @sa @ref value() for access by value with a default value
 
@@ -15521,7 +15524,7 @@ class basic_json
     `at()`. It also demonstrates the different exceptions that can be thrown.,
     at__object_t_key_type_const}
     */
-    const_reference at(const typename object_t::key_type& key) const
+    const_reference at(const key_type& key) const
     {
         // at only works for objects
         if (JSON_LIKELY(is_object()))
@@ -15645,13 +15648,13 @@ class basic_json
     @liveexample{The example below shows how object elements can be read and
     written using the `[]` operator.,operatorarray__key_type}
 
-    @sa @ref at(const typename object_t::key_type&) for access by reference
+    @sa @ref at(const key_type&) for access by reference
     with range checking
     @sa @ref value() for access by value with a default value
 
     @since version 1.0.0
     */
-    reference operator[](const typename object_t::key_type& key)
+    reference operator[](const key_type& key)
     {
         // implicitly convert null value to an empty object
         if (is_null())
@@ -15694,13 +15697,13 @@ class basic_json
     @liveexample{The example below shows how object elements can be read using
     the `[]` operator.,operatorarray__key_type_const}
 
-    @sa @ref at(const typename object_t::key_type&) for access by reference
+    @sa @ref at(const key_type&) for access by reference
     with range checking
     @sa @ref value() for access by value with a default value
 
     @since version 1.0.0
     */
-    const_reference operator[](const typename object_t::key_type& key) const
+    const_reference operator[](const key_type& key) const
     {
         // const operator[] only works for objects
         if (JSON_LIKELY(is_object()))
@@ -15733,7 +15736,7 @@ class basic_json
     @liveexample{The example below shows how object elements can be read and
     written using the `[]` operator.,operatorarray__key_type}
 
-    @sa @ref at(const typename object_t::key_type&) for access by reference
+    @sa @ref at(const key_type&) for access by reference
     with range checking
     @sa @ref value() for access by value with a default value
 
@@ -15783,7 +15786,7 @@ class basic_json
     @liveexample{The example below shows how object elements can be read using
     the `[]` operator.,operatorarray__key_type_const}
 
-    @sa @ref at(const typename object_t::key_type&) for access by reference
+    @sa @ref at(const key_type&) for access by reference
     with range checking
     @sa @ref value() for access by value with a default value
 
@@ -15817,10 +15820,10 @@ class basic_json
     }
     @endcode
 
-    @note Unlike @ref at(const typename object_t::key_type&), this function
+    @note Unlike @ref at(const key_type&), this function
     does not throw if the given key @a key was not found.
 
-    @note Unlike @ref operator[](const typename object_t::key_type& key), this
+    @note Unlike @ref operator[](const key_type& key), this
     function does not implicitly add an element to the position defined by @a
     key. This function is furthermore also applicable to const objects.
 
@@ -15843,16 +15846,16 @@ class basic_json
     @liveexample{The example below shows how object elements can be queried
     with a default value.,basic_json__value}
 
-    @sa @ref at(const typename object_t::key_type&) for access by reference
+    @sa @ref at(const key_type&) for access by reference
     with range checking
-    @sa @ref operator[](const typename object_t::key_type&) for unchecked
+    @sa @ref operator[](const key_type&) for unchecked
     access by reference
 
     @since version 1.0.0
     */
     template<class ValueType, typename std::enable_if<
                  std::is_convertible<basic_json_t, ValueType>::value, int>::type = 0>
-    ValueType value(const typename object_t::key_type& key, const ValueType& default_value) const
+    ValueType value(const key_type& key, const ValueType& default_value) const
     {
         // at only works for objects
         if (JSON_LIKELY(is_object()))
@@ -15872,9 +15875,9 @@ class basic_json
 
     /*!
     @brief overload for a default value of type const char*
-    @copydoc basic_json::value(const typename object_t::key_type&, const ValueType&) const
+    @copydoc basic_json::value(const key_type&, const ValueType&) const
     */
-    string_t value(const typename object_t::key_type& key, const char* default_value) const
+    string_t value(const key_type& key, const char* default_value) const
     {
         return value(key, string_t(default_value));
     }
@@ -16075,7 +16078,7 @@ class basic_json
 
     @sa @ref erase(IteratorType, IteratorType) -- removes the elements in
     the given range
-    @sa @ref erase(const typename object_t::key_type&) -- removes the element
+    @sa @ref erase(const key_type&) -- removes the element
     from an object at the given key
     @sa @ref erase(const size_type) -- removes the element from an array at
     the given index
@@ -16180,7 +16183,7 @@ class basic_json
     types.,erase__IteratorType_IteratorType}
 
     @sa @ref erase(IteratorType) -- removes the element at a given position
-    @sa @ref erase(const typename object_t::key_type&) -- removes the element
+    @sa @ref erase(const key_type&) -- removes the element
     from an object at the given key
     @sa @ref erase(const size_type) -- removes the element from an array at
     the given index
@@ -16278,7 +16281,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    size_type erase(const typename object_t::key_type& key)
+    size_type erase(const key_type& key)
     {
         // this erase only works for objects
         if (JSON_LIKELY(is_object()))
@@ -16308,7 +16311,7 @@ class basic_json
     @sa @ref erase(IteratorType) -- removes the element at a given position
     @sa @ref erase(IteratorType, IteratorType) -- removes the elements in
     the given range
-    @sa @ref erase(const typename object_t::key_type&) -- removes the element
+    @sa @ref erase(const key_type&) -- removes the element
     from an object at the given key
 
     @since version 1.0.0
@@ -19612,7 +19615,7 @@ class basic_json
 
     Uses a JSON pointer to retrieve a reference to the respective JSON value.
     No bound checking is performed. Similar to @ref operator[](const typename
-    object_t::key_type&), `null` values are created in arrays and objects if
+    key_type&), `null` values are created in arrays and objects if
     necessary.
 
     In particular:
