@@ -11344,6 +11344,16 @@ class serializer
                                     string_buffer[bytes++] = detail::binary_writer<BasicJsonType, char>::to_char_type('\xBF');
                                     string_buffer[bytes++] = detail::binary_writer<BasicJsonType, char>::to_char_type('\xBD');
                                 }
+
+                                // write buffer and reset index; there must be 13 bytes
+                                // left, as this is the maximal number of bytes to be
+                                // written ("\uxxxx\uxxxx\0") for one code point
+                                if (string_buffer.size() - bytes < 13)
+                                {
+                                    o->write_characters(string_buffer.data(), bytes);
+                                    bytes = 0;
+                                }
+
                                 bytes_after_last_accept = bytes;
                             }
 

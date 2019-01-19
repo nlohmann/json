@@ -1,0 +1,68 @@
+/*
+    __ _____ _____ _____
+ __|  |   __|     |   | |  JSON for Modern C++ (test suite)
+|  |  |__   |  |  | | | |  version 3.5.0
+|_____|_____|_____|_|___|  https://github.com/nlohmann/json
+
+Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+SPDX-License-Identifier: MIT
+Copyright (c) 2013-2018 Niels Lohmann <http://nlohmann.me>.
+
+Permission is hereby  granted, free of charge, to any  person obtaining a copy
+of this software and associated  documentation files (the "Software"), to deal
+in the Software  without restriction, including without  limitation the rights
+to  use, copy,  modify, merge,  publish, distribute,  sublicense, and/or  sell
+copies  of  the Software,  and  to  permit persons  to  whom  the Software  is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE  IS PROVIDED "AS  IS", WITHOUT WARRANTY  OF ANY KIND,  EXPRESS OR
+IMPLIED,  INCLUDING BUT  NOT  LIMITED TO  THE  WARRANTIES OF  MERCHANTABILITY,
+FITNESS FOR  A PARTICULAR PURPOSE AND  NONINFRINGEMENT. IN NO EVENT  SHALL THE
+AUTHORS  OR COPYRIGHT  HOLDERS  BE  LIABLE FOR  ANY  CLAIM,  DAMAGES OR  OTHER
+LIABILITY, WHETHER IN AN ACTION OF  CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
+#include "catch.hpp"
+#include <nlohmann/json.hpp>
+using nlohmann::json;
+
+#include <fstream>
+#include <sstream>
+
+TEST_CASE("INVALID-UTF8")
+{
+    SECTION("a bunch of -1, ensure_ascii=true")
+    {
+        json dump_test;
+        std::vector<char> data(300, -1);
+        std::vector<std::string> vec_string(300, "\\ufffd");
+        std::string s{data.data(), data.size()};
+        dump_test["1"] = s;
+        std::ostringstream os;
+        os << "{\"1\":\"";
+        std::copy( vec_string.begin(), vec_string.end(), std::ostream_iterator<std::string>(os));
+        os << "\"}";
+        s = dump_test.dump(-1, ' ', true, nlohmann::json::error_handler_t::replace);
+        CHECK(s == os.str());
+    }
+    SECTION("a bunch of -2, ensure_ascii=false")
+    {
+        json dump_test;
+        std::vector<char> data(500, -2);
+        std::vector<std::string> vec_string(500, "\xEF\xBF\xBD");
+        std::string s{data.data(), data.size()};
+        dump_test["1"] = s;
+        std::ostringstream os;
+        os << "{\"1\":\"";
+        std::copy( vec_string.begin(), vec_string.end(), std::ostream_iterator<std::string>(os));
+        os << "\"}";
+        s = dump_test.dump(-1, ' ', false, nlohmann::json::error_handler_t::replace);
+        CHECK(s == os.str());
+    }
+
+}
