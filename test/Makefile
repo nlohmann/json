@@ -30,7 +30,7 @@ SOURCES = src/unit.cpp \
           src/unit-items.cpp \
           src/unit-iterators1.cpp \
           src/unit-iterators2.cpp \
-          src/unit-invalid-utf8.cpp \
+          src/unit-invalid_utf8.cpp \
           src/unit-merge_patch.cpp \
           src/unit-json_patch.cpp \
           src/unit-json_pointer.cpp \
