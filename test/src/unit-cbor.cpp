@@ -1962,7 +1962,7 @@ TEST_CASE("all CBOR first bytes", "[!throws]")
 
         try
         {
-            json::from_cbor(std::vector<uint8_t>(1, byte));
+            auto res = json::from_cbor(std::vector<uint8_t>(1, byte));
         }
         catch (const json::parse_error& e)
         {
