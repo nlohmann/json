@@ -153,10 +153,14 @@ using json = basic_json<>;
 #endif
 
 // allow for portable nodiscard warnings
-#if defined(__has_cpp_attribute) && __has_cpp_attribute(nodiscard)
-    #define JSON_NODISCARD [[nodiscard]]
-#elif defined(__has_cpp_attribute) && __has_cpp_attribute(gnu::warn_unused_result)
-    #define JSON_NODISCARD [[gnu::warn_unused_result]]
+#if defined(__has_cpp_attribute)
+    #if __has_cpp_attribute(nodiscard)
+        #define JSON_NODISCARD [[nodiscard]]
+    #elif __has_cpp_attribute(gnu::warn_unused_result)
+        #define JSON_NODISCARD [[gnu::warn_unused_result]]
+    #else
+        #define JSON_NODISCARD
+    #endif
 #else
     #define JSON_NODISCARD
 #endif
