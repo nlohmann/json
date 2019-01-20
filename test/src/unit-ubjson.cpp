@@ -2128,7 +2128,7 @@ TEST_CASE("all UBJSON first bytes", "[!throws]")
 
         try
         {
-            json::from_ubjson(std::vector<uint8_t>(1, byte));
+            auto res = json::from_ubjson(std::vector<uint8_t>(1, byte));
         }
         catch (const json::parse_error& e)
         {
