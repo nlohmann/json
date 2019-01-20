@@ -11510,7 +11510,7 @@ class serializer
         if (is_negative)
         {
             *buffer_ptr = '-';
-            abs_value = static_cast<number_unsigned_t>(0 - x);
+            abs_value = static_cast<number_unsigned_t>(-1 - x) + 1;
 
             // account one more byte for the minus sign
             n_chars = 1 + count_digits(abs_value);

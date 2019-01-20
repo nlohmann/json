@@ -1742,7 +1742,8 @@ TEST_CASE("regression tests")
         SECTION("test case in issue #1445")
         {
             nlohmann::json dump_test;
-            const int data[] = {
+            const int data[] =
+            {
                 109,  108,  103,  125,  -122, -53,  115,
                 18,   3,    0,    102,  19,   1,    15,
                 -110, 13,   -3,   -1,   -81,  32,   2,
@@ -1761,13 +1762,19 @@ TEST_CASE("regression tests")
                 -54,  -28,  -26
             };
             std::string s;
-            for (int i=0; i<sizeof(data)/sizeof(int); i++)
+            for (int i = 0; i < sizeof(data) / sizeof(int); i++)
             {
                 s += static_cast<char>(data[i]);
             }
             dump_test["1"] = s;
             dump_test.dump(-1, ' ', true, nlohmann::json::error_handler_t::replace);
         }
+    }
+
+    SECTION("issue #1447 - Integer Overflow (OSS-Fuzz 12506)")
+    {
+        json j = json::parse("[-9223372036854775808]");
+        CHECK(j.dump() == "[-9223372036854775808]");
     }
 }
 
