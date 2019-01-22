@@ -2502,7 +2502,7 @@ class input_adapter
 
     // derived support
 
-    /// input adapter for string literal
+    /// input adapter for null-terminated strings
     template<typename CharT,
              typename std::enable_if<
                  std::is_pointer<CharT>::value and
