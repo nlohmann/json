@@ -2554,7 +2554,7 @@ class input_adapter
     /// input adapter for array
     template<class T, std::size_t N>
     input_adapter(T (&array)[N])
-        : input_adapter(std::begin(array), (N > 0 && array[N - 1]) == 0 ? std::prev(std::end(array)) : std::end(array)) {}
+        : input_adapter(std::begin(array), (N > 0 && array[N - 1] == 0) ? std::prev(std::end(array)) : std::end(array)) {}
 
     /// input adapter for contiguous container
     template<class ContiguousContainer, typename
