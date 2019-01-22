@@ -1461,7 +1461,6 @@ scan_number_done:
 
             // end of input (the null byte is needed when parsing from
             // string literals)
-            case '\0':
             case std::char_traits<char>::eof():
                 return token_type::end_of_input;
 

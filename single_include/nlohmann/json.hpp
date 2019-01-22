@@ -2554,7 +2554,7 @@ class input_adapter
     /// input adapter for array
     template<class T, std::size_t N>
     input_adapter(T (&array)[N])
-        : input_adapter(std::begin(array), std::end(array)) {}
+        : input_adapter(std::begin(array), array[N - 1] == 0 ? std::prev(std::end(array)) : std::end(array)) {}
 
     /// input adapter for contiguous container
     template<class ContiguousContainer, typename
@@ -4043,7 +4043,6 @@ scan_number_done:
 
             // end of input (the null byte is needed when parsing from
             // string literals)
-            case '\0':
             case std::char_traits<char>::eof():
                 return token_type::end_of_input;
 
