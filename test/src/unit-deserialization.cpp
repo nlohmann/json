@@ -368,6 +368,19 @@ TEST_CASE("deserialization")
                 CHECK(l.events == std::vector<std::string>({"boolean(true)"}));
             }
 
+            SECTION("from padded std::array")
+            {
+                std::array<uint8_t, 5> v { {'t', 'r', 'u', 'e'} };
+
+                SaxEventLogger l;
+                CHECK(json::sax_parse(v, &l, json::input_format_t::json, false));
+                CHECK(l.events.size() == 1);
+                CHECK(l.events == std::vector<std::string>({"boolean(true)"}));
+
+                CHECK(not json::accept(v));
+                CHECK(not json::sax_parse(v, &l));
+            }
+
             SECTION("from array")
             {
                 uint8_t v[] = {'t', 'r', 'u', 'e'};
@@ -378,6 +391,18 @@ TEST_CASE("deserialization")
                 CHECK(json::sax_parse(v, &l));
                 CHECK(l.events.size() == 1);
                 CHECK(l.events == std::vector<std::string>({"boolean(true)"}));
+            }
+
+            SECTION("from zero-length array")
+            {
+                uint8_t v[] = {};
+                CHECK_THROWS_AS(json::parse(v), json::parse_error&);
+                CHECK(not json::accept(v));
+
+                SaxEventLogger l;
+                CHECK(not json::sax_parse(v, &l));
+                CHECK(l.events.size() == 1);
+                CHECK(l.events == std::vector<std::string>({"parse_error(1)"}));
             }
 
             SECTION("from chars")

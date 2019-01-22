@@ -1626,6 +1626,17 @@ TEST_CASE("parser class")
             CHECK(j == json(true));
         }
 
+        SECTION("from padded std::array")
+        {
+            std::array<uint8_t, 5> v { {'t', 'r', 'u', 'e'} };
+            json j;
+            json::parser(nlohmann::detail::input_adapter(std::begin(v), std::end(v))).parse(false, j);
+            CHECK(j == json(true));
+
+            CHECK_THROWS_WITH(json::parser(nlohmann::detail::input_adapter(std::begin(v), std::end(v))).parse(true, j),
+            "[json.exception.parse_error.101] parse error at line 1, column 5: syntax error while parsing value - invalid literal; last read: 'true<U+0000>'; expected end of input");
+        }
+
         SECTION("from array")
         {
             uint8_t v[] = {'t', 'r', 'u', 'e'};
@@ -1633,6 +1644,15 @@ TEST_CASE("parser class")
             json::parser(nlohmann::detail::input_adapter(std::begin(v), std::end(v))).parse(true, j);
             CHECK(j == json(true));
         }
+
+        SECTION("from zero-length array")
+        {
+            uint8_t v[] = {};
+            json j;
+            CHECK_THROWS_WITH(json::parser(nlohmann::detail::input_adapter(v)).parse(true, j),
+            "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal");
+        }
+
 
         SECTION("from char literal")
         {
