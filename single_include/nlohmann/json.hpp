@@ -4041,8 +4041,7 @@ scan_number_done:
             case '9':
                 return scan_number();
 
-            // end of input (the null byte is needed when parsing from
-            // string literals)
+            // end of input
             case std::char_traits<char>::eof():
                 return token_type::end_of_input;
 
