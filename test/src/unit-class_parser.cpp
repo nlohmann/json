@@ -1620,7 +1620,7 @@ TEST_CASE("parser class")
 
         SECTION("from std::array")
         {
-            std::array<uint8_t, 5> v { {'t', 'r', 'u', 'e'} };
+            std::array<uint8_t, 4> v { {'t', 'r', 'u', 'e'} };
             json j;
             json::parser(nlohmann::detail::input_adapter(std::begin(v), std::end(v))).parse(true, j);
             CHECK(j == json(true));

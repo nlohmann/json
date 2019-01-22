@@ -358,7 +358,7 @@ TEST_CASE("deserialization")
 
             SECTION("from std::array")
             {
-                std::array<uint8_t, 5> v { {'t', 'r', 'u', 'e'} };
+                std::array<uint8_t, 4> v { {'t', 'r', 'u', 'e'} };
                 CHECK(json::parse(v) == json(true));
                 CHECK(json::accept(v));
 
@@ -453,7 +453,7 @@ TEST_CASE("deserialization")
 
             SECTION("from std::array")
             {
-                std::array<uint8_t, 5> v { {'t', 'r', 'u', 'e'} };
+                std::array<uint8_t, 4> v { {'t', 'r', 'u', 'e'} };
                 CHECK(json::parse(std::begin(v), std::end(v)) == json(true));
                 CHECK(json::accept(std::begin(v), std::end(v)));
 
