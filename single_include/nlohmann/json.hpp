@@ -11924,12 +11924,31 @@ class json_pointer
     }
 
     /*!
-    @brief remove and return last reference pointer
-    @throw out_of_range.405 if JSON pointer has no parent
+    @brief append a token at the end of the reference pointer
     */
     void push_back(const std::string& tok)
     {
         reference_tokens.push_back(tok);
+    }
+
+    /*!
+    @brief append a key-token at the end of the reference pointer and return a new json-pointer.
+    */
+    json_pointer operator+(const std::string& tok) const
+    {
+        auto ptr = *this;
+        ptr.push_back(tok);
+        return ptr;
+    }
+
+    /*!
+    @brief append a array-index-token at the end of the reference pointer and return a new json-pointer.
+    */
+    json_pointer operator+(const size_t& index) const
+    {
+        auto ptr = *this;
+        ptr.push_back(std::to_string(index));
+        return ptr;
     }
 
   private:

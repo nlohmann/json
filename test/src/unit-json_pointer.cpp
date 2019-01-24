@@ -513,4 +513,58 @@ TEST_CASE("JSON pointers")
         CHECK(j[ptr] == j["object"]["/"]);
         CHECK(ptr.to_string() == "/object/~1");
     }
+
+    SECTION("operators")
+    {
+        const json j =
+        {
+            {"", "Hello"},
+            {"pi", 3.141},
+            {"happy", true},
+            {"name", "Niels"},
+            {"nothing", nullptr},
+            {
+                "answer", {
+                    {"everything", 42}
+                }
+            },
+            {"list", {1, 0, 2}},
+            {
+                "object", {
+                    {"currency", "USD"},
+                    {"value", 42.99},
+                    {"", "empty string"},
+                    {"/", "slash"},
+                    {"~", "tilde"},
+                    {"~1", "tilde1"}
+                }
+            }
+        };
+
+        // empty json_pointer returns the root JSON-object
+        auto ptr = ""_json_pointer;
+        CHECK(j[ptr] == j);
+
+        // simple field access
+        ptr = ptr + "pi";
+        CHECK(j[ptr] == j["pi"]);
+
+        ptr.pop_back();
+        CHECK(j[ptr] == j);
+
+        // object and children access
+        ptr = ptr + "answer";
+        ptr = ptr + "everything";
+        CHECK(j[ptr] == j["answer"]["everything"]);
+
+        ptr.pop_back();
+        ptr.pop_back();
+        CHECK(j[ptr] == j);
+
+        // push key which has to be encoded
+        ptr = ptr + "object";
+        ptr = ptr + "/";
+        CHECK(j[ptr] == j["object"]["/"]);
+        CHECK(ptr.to_string() == "/object/~1");
+    }
 }
