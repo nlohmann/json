@@ -1649,8 +1649,7 @@ TEST_CASE("parser class")
         {
             uint8_t v[] = {};
             json j;
-            CHECK_THROWS_WITH(json::parser(nlohmann::detail::input_adapter(v)).parse(true, j),
-                              "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal");
+            CHECK_THROWS_AS(json::parser(nlohmann::detail::input_adapter(v)).parse(true, j), json::parse_error&);
         }
 
 
