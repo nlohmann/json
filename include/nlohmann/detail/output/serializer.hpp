@@ -454,6 +454,16 @@ class serializer
                                     string_buffer[bytes++] = detail::binary_writer<BasicJsonType, char>::to_char_type('\xBF');
                                     string_buffer[bytes++] = detail::binary_writer<BasicJsonType, char>::to_char_type('\xBD');
                                 }
+
+                                // write buffer and reset index; there must be 13 bytes
+                                // left, as this is the maximal number of bytes to be
+                                // written ("\uxxxx\uxxxx\0") for one code point
+                                if (string_buffer.size() - bytes < 13)
+                                {
+                                    o->write_characters(string_buffer.data(), bytes);
+                                    bytes = 0;
+                                }
+
                                 bytes_after_last_accept = bytes;
                             }
 
@@ -610,7 +620,7 @@ class serializer
         if (is_negative)
         {
             *buffer_ptr = '-';
-            abs_value = static_cast<number_unsigned_t>(0 - x);
+            abs_value = static_cast<number_unsigned_t>(-1 - x) + 1;
 
             // account one more byte for the minus sign
             n_chars = 1 + count_digits(abs_value);
@@ -630,7 +640,6 @@ class serializer
 
         // Fast int2ascii implementation inspired by "Fastware" talk by Andrei Alexandrescu
         // See: https://www.youtube.com/watch?v=o4-CwDo2zpg
-        const auto buffer_end = buffer_ptr;
         while (abs_value >= 100)
         {
             const auto digits_index = static_cast<unsigned>((abs_value % 100));

@@ -152,6 +152,19 @@ using json = basic_json<>;
     #define JSON_DEPRECATED
 #endif
 
+// allow for portable nodiscard warnings
+#if defined(__has_cpp_attribute)
+    #if __has_cpp_attribute(nodiscard)
+        #define JSON_NODISCARD [[nodiscard]]
+    #elif __has_cpp_attribute(gnu::warn_unused_result)
+        #define JSON_NODISCARD [[gnu::warn_unused_result]]
+    #else
+        #define JSON_NODISCARD
+    #endif
+#else
+    #define JSON_NODISCARD
+#endif
+
 // allow to disable exceptions
 #if (defined(__cpp_exceptions) || defined(__EXCEPTIONS) || defined(_CPPUNWIND)) && !defined(JSON_NOEXCEPTION)
     #define JSON_THROW(exception) throw exception
@@ -11344,6 +11357,16 @@ class serializer
                                     string_buffer[bytes++] = detail::binary_writer<BasicJsonType, char>::to_char_type('\xBF');
                                     string_buffer[bytes++] = detail::binary_writer<BasicJsonType, char>::to_char_type('\xBD');
                                 }
+
+                                // write buffer and reset index; there must be 13 bytes
+                                // left, as this is the maximal number of bytes to be
+                                // written ("\uxxxx\uxxxx\0") for one code point
+                                if (string_buffer.size() - bytes < 13)
+                                {
+                                    o->write_characters(string_buffer.data(), bytes);
+                                    bytes = 0;
+                                }
+
                                 bytes_after_last_accept = bytes;
                             }
 
@@ -11500,7 +11523,7 @@ class serializer
         if (is_negative)
         {
             *buffer_ptr = '-';
-            abs_value = static_cast<number_unsigned_t>(0 - x);
+            abs_value = static_cast<number_unsigned_t>(-1 - x) + 1;
 
             // account one more byte for the minus sign
             n_chars = 1 + count_digits(abs_value);
@@ -11520,7 +11543,6 @@ class serializer
 
         // Fast int2ascii implementation inspired by "Fastware" talk by Andrei Alexandrescu
         // See: https://www.youtube.com/watch?v=o4-CwDo2zpg
-        const auto buffer_end = buffer_ptr;
         while (abs_value >= 100)
         {
             const auto digits_index = static_cast<unsigned>((abs_value % 100));
@@ -11885,7 +11907,6 @@ class json_pointer
         return res;
     }
 
-  private:
     /*!
     @brief remove and return last reference pointer
     @throw out_of_range.405 if JSON pointer has no parent
@@ -11902,6 +11923,16 @@ class json_pointer
         return last;
     }
 
+    /*!
+    @brief remove and return last reference pointer
+    @throw out_of_range.405 if JSON pointer has no parent
+    */
+    void push_back(const std::string& tok)
+    {
+        reference_tokens.push_back(tok);
+    }
+
+  private:
     /// return whether pointer points to the root document
     bool is_root() const noexcept
     {
@@ -12785,6 +12816,7 @@ class basic_json
 
     @since 2.1.0
     */
+    JSON_NODISCARD
     static basic_json meta()
     {
         basic_json result;
@@ -14006,6 +14038,7 @@ class basic_json
 
     @since version 1.0.0
     */
+    JSON_NODISCARD
     static basic_json array(initializer_list_t init = {})
     {
         return basic_json(init, false, value_t::array);
@@ -14049,6 +14082,7 @@ class basic_json
 
     @since version 1.0.0
     */
+    JSON_NODISCARD
     static basic_json object(initializer_list_t init = {})
     {
         return basic_json(init, false, value_t::object);
@@ -18568,6 +18602,7 @@ class basic_json
 
     @since version 2.0.3 (contiguous containers)
     */
+    JSON_NODISCARD
     static basic_json parse(detail::input_adapter&& i,
                             const parser_callback_t cb = nullptr,
                             const bool allow_exceptions = true)
@@ -19343,6 +19378,7 @@ class basic_json
            @a strict parameter since 3.0.0; added @a allow_exceptions parameter
            since 3.2.0
     */
+    JSON_NODISCARD
     static basic_json from_cbor(detail::input_adapter&& i,
                                 const bool strict = true,
                                 const bool allow_exceptions = true)
@@ -19358,6 +19394,7 @@ class basic_json
     */
     template<typename A1, typename A2,
              detail::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
+    JSON_NODISCARD
     static basic_json from_cbor(A1 && a1, A2 && a2,
                                 const bool strict = true,
                                 const bool allow_exceptions = true)
@@ -19450,6 +19487,7 @@ class basic_json
            @a strict parameter since 3.0.0; added @a allow_exceptions parameter
            since 3.2.0
     */
+    JSON_NODISCARD
     static basic_json from_msgpack(detail::input_adapter&& i,
                                    const bool strict = true,
                                    const bool allow_exceptions = true)
@@ -19465,6 +19503,7 @@ class basic_json
     */
     template<typename A1, typename A2,
              detail::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
+    JSON_NODISCARD
     static basic_json from_msgpack(A1 && a1, A2 && a2,
                                    const bool strict = true,
                                    const bool allow_exceptions = true)
@@ -19536,6 +19575,7 @@ class basic_json
 
     @since version 3.1.0; added @a allow_exceptions parameter since 3.2.0
     */
+    JSON_NODISCARD
     static basic_json from_ubjson(detail::input_adapter&& i,
                                   const bool strict = true,
                                   const bool allow_exceptions = true)
@@ -19551,6 +19591,7 @@ class basic_json
     */
     template<typename A1, typename A2,
              detail::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
+    JSON_NODISCARD
     static basic_json from_ubjson(A1 && a1, A2 && a2,
                                   const bool strict = true,
                                   const bool allow_exceptions = true)
@@ -19621,6 +19662,7 @@ class basic_json
     @sa @ref from_ubjson(detail::input_adapter&&, const bool, const bool) for the
         related UBJSON format
     */
+    JSON_NODISCARD
     static basic_json from_bson(detail::input_adapter&& i,
                                 const bool strict = true,
                                 const bool allow_exceptions = true)
@@ -19636,6 +19678,7 @@ class basic_json
     */
     template<typename A1, typename A2,
              detail::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
+    JSON_NODISCARD
     static basic_json from_bson(A1 && a1, A2 && a2,
                                 const bool strict = true,
                                 const bool allow_exceptions = true)
@@ -20227,6 +20270,7 @@ class basic_json
 
     @since version 2.0.0
     */
+    JSON_NODISCARD
     static basic_json diff(const basic_json& source, const basic_json& target,
                            const std::string& path = "")
     {
@@ -20546,6 +20590,7 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 #undef JSON_LIKELY
 #undef JSON_UNLIKELY
 #undef JSON_DEPRECATED
+#undef JSON_NODISCARD
 #undef JSON_HAS_CPP_14
 #undef JSON_HAS_CPP_17
 #undef NLOHMANN_BASIC_JSON_TPL_DECLARATION

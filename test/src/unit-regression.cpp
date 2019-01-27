@@ -1718,6 +1718,74 @@ TEST_CASE("regression tests")
 
         CHECK_NOTHROW(nlohmann::json::parse(s));
     }
+
+    SECTION("issue #1445 - buffer overflow in dumping invalid utf-8 strings")
+    {
+        SECTION("a bunch of -1, ensure_ascii=true")
+        {
+            json dump_test;
+            std::vector<char> data(300, -1);
+            std::vector<std::string> vec_string(300, "\\ufffd");
+            std::string s{data.data(), data.size()};
+            dump_test["1"] = s;
+            std::ostringstream os;
+            os << "{\"1\":\"";
+            std::copy( vec_string.begin(), vec_string.end(), std::ostream_iterator<std::string>(os));
+            os << "\"}";
+            s = dump_test.dump(-1, ' ', true, nlohmann::json::error_handler_t::replace);
+            CHECK(s == os.str());
+        }
+        SECTION("a bunch of -2, ensure_ascii=false")
+        {
+            json dump_test;
+            std::vector<char> data(500, -2);
+            std::vector<std::string> vec_string(500, "\xEF\xBF\xBD");
+            std::string s{data.data(), data.size()};
+            dump_test["1"] = s;
+            std::ostringstream os;
+            os << "{\"1\":\"";
+            std::copy( vec_string.begin(), vec_string.end(), std::ostream_iterator<std::string>(os));
+            os << "\"}";
+            s = dump_test.dump(-1, ' ', false, nlohmann::json::error_handler_t::replace);
+            CHECK(s == os.str());
+        }
+        SECTION("test case in issue #1445")
+        {
+            nlohmann::json dump_test;
+            const int data[] =
+            {
+                109,  108,  103,  125,  -122, -53,  115,
+                18,   3,    0,    102,  19,   1,    15,
+                -110, 13,   -3,   -1,   -81,  32,   2,
+                0,    0,    0,    0,    0,    0,    0,
+                8,    0,    0,    0,    0,    0,    0,
+                0,    0,    0,    0,    0,    -80,  2,
+                0,    0,    96,   -118, 46,   -116, 46,
+                109,  -84,  -87,  108,  14,   109,  -24,
+                -83,  13,   -18,  -51,  -83,  -52,  -115,
+                14,   6,    32,   0,    0,    0,    0,
+                0,    0,    0,    0,    0,    0,    0,
+                64,   3,    0,    0,    0,    35,   -74,
+                -73,  55,   57,   -128, 0,    0,    0,
+                0,    0,    0,    0,    0,    0,    0,
+                0,    0,    33,   0,    0,    0,    -96,
+                -54,  -28,  -26
+            };
+            std::string s;
+            for (int i = 0; i < sizeof(data) / sizeof(int); i++)
+            {
+                s += static_cast<char>(data[i]);
+            }
+            dump_test["1"] = s;
+            dump_test.dump(-1, ' ', true, nlohmann::json::error_handler_t::replace);
+        }
+    }
+
+    SECTION("issue #1447 - Integer Overflow (OSS-Fuzz 12506)")
+    {
+        json j = json::parse("[-9223372036854775808]");
+        CHECK(j.dump() == "[-9223372036854775808]");
+    }
 }
 
 TEST_CASE("regression tests, exceptions dependent", "[!throws]")
