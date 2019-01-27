@@ -393,6 +393,8 @@ TEST_CASE("deserialization")
                 CHECK(l.events == std::vector<std::string>({"boolean(true)"}));
             }
 
+// MSVC does not support zero-sized arrays at all
+#if !defined(_MSC_VER)
             SECTION("from zero-length array")
             {
                 uint8_t v[] = {};
@@ -404,6 +406,7 @@ TEST_CASE("deserialization")
                 CHECK(l.events.size() == 1);
                 CHECK(l.events == std::vector<std::string>({"parse_error(1)"}));
             }
+#endif
 
             SECTION("from chars")
             {

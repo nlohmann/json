@@ -1645,13 +1645,15 @@ TEST_CASE("parser class")
             CHECK(j == json(true));
         }
 
+// MSVC does not support zero-sized arrays at all
+#if !defined(_MSC_VER)
         SECTION("from zero-length array")
         {
             uint8_t v[] = {};
             json j;
             CHECK_THROWS_AS(json::parser(nlohmann::detail::input_adapter(v)).parse(true, j), json::parse_error&);
         }
-
+#endif
 
         SECTION("from char literal")
         {
