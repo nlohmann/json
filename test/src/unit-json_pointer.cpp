@@ -499,7 +499,8 @@ TEST_CASE("JSON pointers")
         CHECK(j[ptr] == j);
 
         // object and children access
-        ptr.push_back("answer");
+        const std::string answer("answer");
+        ptr.push_back(answer);
         ptr.push_back("everything");
         CHECK(j[ptr] == j["answer"]["everything"]);
 
@@ -546,24 +547,31 @@ TEST_CASE("JSON pointers")
         CHECK(j[ptr] == j);
 
         // simple field access
-        ptr = ptr + "pi";
+        ptr = ptr / "pi";
         CHECK(j[ptr] == j["pi"]);
 
         ptr.pop_back();
         CHECK(j[ptr] == j);
 
         // object and children access
-        ptr = ptr + "answer";
-        ptr = ptr + "everything";
+        const std::string answer("answer");
+        ptr /= answer;
+        ptr = ptr / "everything";
         CHECK(j[ptr] == j["answer"]["everything"]);
 
         ptr.pop_back();
         ptr.pop_back();
         CHECK(j[ptr] == j);
 
+        CHECK(ptr / ""_json_pointer == ptr);
+        CHECK(j["/answer"_json_pointer / "/everything"_json_pointer] == j["answer"]["everything"]);
+
+        // list children access
+        CHECK(j["/list"_json_pointer / 1] == j["list"][1]);
+
         // push key which has to be encoded
-        ptr = ptr + "object";
-        ptr = ptr + "/";
+        ptr /= "object";
+        ptr = ptr / "/";
         CHECK(j[ptr] == j["object"]["/"]);
         CHECK(ptr.to_string() == "/object/~1");
     }
