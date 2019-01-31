@@ -438,6 +438,7 @@ TEST_CASE("JSON pointers")
                 })
         {
             CHECK(json::json_pointer(ptr).to_string() == ptr);
+            CHECK(std::string(json::json_pointer(ptr)) == ptr);
         }
     }
 
