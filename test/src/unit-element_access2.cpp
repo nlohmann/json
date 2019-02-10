@@ -982,6 +982,93 @@ TEST_CASE("element access 2")
                 }
             }
         }
+
+        SECTION("check existence of key in an object")
+        {
+            SECTION("existing element")
+            {
+                for (auto key :
+                        {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"
+                        })
+                {
+                    CHECK(j.contains(key) == true);
+                    CHECK(j_const.contains(key) == true);
+                }
+            }
+
+            SECTION("nonexisting element")
+            {
+                CHECK(j.contains("foo") == false);
+                CHECK(j_const.contains("foo") == false);
+            }
+
+            SECTION("all types")
+            {
+                SECTION("null")
+                {
+                    json j_nonobject(json::value_t::null);
+                    const json j_nonobject_const(j_nonobject);
+                    CHECK(j_nonobject.contains("foo") == false);
+                    CHECK(j_nonobject_const.contains("foo") == false);
+                }
+
+                SECTION("string")
+                {
+                    json j_nonobject(json::value_t::string);
+                    const json j_nonobject_const(j_nonobject);
+                    CHECK(j_nonobject.contains("foo") == false);
+                    CHECK(j_nonobject_const.contains("foo") == false);
+                }
+
+                SECTION("object")
+                {
+                    json j_nonobject(json::value_t::object);
+                    const json j_nonobject_const(j_nonobject);
+                    CHECK(j_nonobject.contains("foo") == false);
+                    CHECK(j_nonobject_const.contains("foo") == false);
+                }
+
+                SECTION("array")
+                {
+                    json j_nonobject(json::value_t::array);
+                    const json j_nonobject_const(j_nonobject);
+                    CHECK(j_nonobject.contains("foo") == false);
+                    CHECK(j_nonobject_const.contains("foo") == false);
+                }
+
+                SECTION("boolean")
+                {
+                    json j_nonobject(json::value_t::boolean);
+                    const json j_nonobject_const(j_nonobject);
+                    CHECK(j_nonobject.contains("foo") == false);
+                    CHECK(j_nonobject_const.contains("foo") == false);
+                }
+
+                SECTION("number (integer)")
+                {
+                    json j_nonobject(json::value_t::number_integer);
+                    const json j_nonobject_const(j_nonobject);
+                    CHECK(j_nonobject.contains("foo") == false);
+                    CHECK(j_nonobject_const.contains("foo") == false);
+                }
+
+                SECTION("number (unsigned)")
+                {
+                    json j_nonobject(json::value_t::number_unsigned);
+                    const json j_nonobject_const(j_nonobject);
+                    CHECK(j_nonobject.contains("foo") == false);
+                    CHECK(j_nonobject_const.contains("foo") == false);
+                }
+
+                SECTION("number (floating-point)")
+                {
+                    json j_nonobject(json::value_t::number_float);
+                    const json j_nonobject_const(j_nonobject);
+                    CHECK(j_nonobject.contains("foo") == false);
+                    CHECK(j_nonobject_const.contains("foo") == false);
+                }
+            }
+        }
     }
 }
 
