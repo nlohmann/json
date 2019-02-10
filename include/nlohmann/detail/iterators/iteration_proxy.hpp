@@ -147,6 +147,11 @@ auto get(const nlohmann::detail::iteration_proxy_value<IteratorType>& i) -> decl
 // And see https://github.com/nlohmann/json/pull/1391
 namespace std
 {
+#if defined(__clang__)
+    // Fix: https://github.com/nlohmann/json/issues/1401
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wmismatched-tags"
+#endif
 template <typename IteratorType>
 class tuple_size<::nlohmann::detail::iteration_proxy_value<IteratorType>>
             : public std::integral_constant<std::size_t, 2> {};
@@ -159,4 +164,7 @@ class tuple_element<N, ::nlohmann::detail::iteration_proxy_value<IteratorType >>
                      get<N>(std::declval <
                             ::nlohmann::detail::iteration_proxy_value<IteratorType >> ()));
 };
+#if defined(__clang__)
+    #pragma clang diagnostic pop
+#endif
 }
