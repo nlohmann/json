@@ -18508,9 +18508,6 @@ class basic_json
     @pre The container storage is contiguous. Violating this precondition
     yields undefined behavior. **This precondition is enforced with an
     assertion.**
-    @pre Each element of the container has a size of 1 byte. Violating this
-    precondition yields undefined behavior. **This precondition is enforced
-    with a static assertion.**
 
     @warning There is no way to enforce all preconditions at compile-time. If
              the function is called with a noncompliant container and with
@@ -18591,9 +18588,6 @@ class basic_json
     @pre The container storage is contiguous. Violating this precondition
     yields undefined behavior. **This precondition is enforced with an
     assertion.**
-    @pre Each element of the container has a size of 1 byte. Violating this
-    precondition yields undefined behavior. **This precondition is enforced
-    with a static assertion.**
 
     @warning There is no way to enforce all preconditions at compile-time. If
              the function is called with a noncompliant container and with
