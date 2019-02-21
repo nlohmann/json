@@ -599,9 +599,8 @@ struct pod_serializer
     static void to_json(BasicJsonType& j, const  T& t) noexcept
     {
         auto bytes = static_cast< const unsigned char*>(static_cast<const void*>(&t));
-        std::uint64_t value = bytes[0];
-        for (auto i = 1; i < 8; ++i)
-            value |= std::uint64_t{bytes[i]} << 8 * i;
+        std::uint64_t value;
+        std::memcpy(&value, bytes, sizeof(value));
         nlohmann::to_json(j, value);
     }
 };
