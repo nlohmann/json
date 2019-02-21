@@ -13465,73 +13465,28 @@ class basic_json
             switch (t)
             {
                 case value_t::object:
+                {
+                    if (!this->object->empty())
+                    {
+                        destroy_subelements_iterative(t);
+                    }
+
+                    AllocatorType<object_t> alloc;
+                    std::allocator_traits<decltype(alloc)>::destroy(alloc, object);
+                    std::allocator_traits<decltype(alloc)>::deallocate(alloc, object, 1);
+                    break;
+                }
+
                 case value_t::array:
                 {
-                    if ((t == value_t::object && !this->object->empty()) || (t == value_t::array && !this->array->empty()))
+                    if (!this->array->empty())
                     {
-                        std::vector<std::pair<json_value*, value_t>> stack;
-                        stack.emplace_back(this, t);
-                        while (!stack.empty())
-                        {
-                            json_value* value;
-                            value_t type;
-                            std::tie(value, type) = stack.back();
-                            if (type == value_t::object)
-                            {
-                                while (!value->object->empty())
-                                {
-                                    basic_json& inner_value = value->object->begin()->second;
-                                    value_t inner_type = inner_value.type();
-                                    if ((inner_type == value_t::object || inner_type == value_t::array) && !inner_value.empty())
-                                    {
-                                        stack.emplace_back(&inner_value.m_value, inner_type);
-                                        break;
-                                    }
-                                    else
-                                    {
-                                        value->object->erase(value->object->begin());
-                                    }
-                                }
-                                if (value->object->empty())
-                                {
-                                    stack.pop_back();
-                                }
-                            }
-                            else
-                            {
-                                while (!value->array->empty())
-                                {
-                                    basic_json& inner_value = value->array->back();
-                                    value_t inner_type = inner_value.type();
-                                    if ((inner_type == value_t::object || inner_type == value_t::array) && !inner_value.empty())
-                                    {
-                                        stack.emplace_back(&inner_value.m_value, inner_type);
-                                        break;
-                                    }
-                                    else
-                                    {
-                                        value->array->pop_back();
-                                    }
-                                }
-                                if (value->array->empty())
-                                {
-                                    stack.pop_back();
-                                }
-                            }
-                        }
+                        destroy_subelements_iterative(t);
                     }
-                    if (t == value_t::object)
-                    {
-                        AllocatorType<object_t> alloc;
-                        std::allocator_traits<decltype(alloc)>::destroy(alloc, object);
-                        std::allocator_traits<decltype(alloc)>::deallocate(alloc, object, 1);
-                    }
-                    else
-                    {
-                        AllocatorType<array_t> alloc;
-                        std::allocator_traits<decltype(alloc)>::destroy(alloc, array);
-                        std::allocator_traits<decltype(alloc)>::deallocate(alloc, array, 1);
-                    }
+
+                    AllocatorType<array_t> alloc;
+                    std::allocator_traits<decltype(alloc)>::destroy(alloc, array);
+                    std::allocator_traits<decltype(alloc)>::deallocate(alloc, array, 1);
                     break;
                 }
 
@@ -13549,6 +13504,78 @@ class basic_json
                 }
             }
         }
+
+private:
+
+        /// destroys all children in an iterative depth-first traversal using an explicit stack
+        /// to avoid stack overflows in a recursive destruction of deeply nested hierarchies
+        void destroy_subelements_iterative(value_t t) noexcept
+        {
+            std::vector<std::pair<json_value*, value_t>> stack;
+            stack.emplace_back(this, t);
+            while (!stack.empty())
+            {
+                json_value* value;
+                value_t type;
+                std::tie(value, type) = stack.back();
+                switch (type)
+                {
+                    case value_t::object:
+                        destroy_object_subelements(stack, value);
+                        break;
+                    case value_t::array:
+                        destroy_array_subelements(stack, value);
+                        break;
+                    default:
+                        // this should never happen
+                        break;
+                }
+            }
+        }
+
+        void destroy_object_subelements(std::vector<std::pair<json_value*, value_t>>& stack, json_value* value) noexcept
+        {
+            while (!value->object->empty())
+            {
+                basic_json& inner_value = value->object->begin()->second;
+                value_t inner_type = inner_value.type();
+                if ((inner_type == value_t::object || inner_type == value_t::array) && !inner_value.empty())
+                {
+                    // the current inner value has children, push it onto the stack and return to continue the depth-first
+                    // traversal with the children, this limits the maximal stack size exactly to the maximal hierarchy depth
+                    stack.emplace_back(&inner_value.m_value, inner_type);
+                    return;
+                }
+                // the current inner value does not have any children (anymore), remove it from this object
+                value->object->erase(value->object->begin());
+            }
+            // the object does not have any children anymore, remove it from the stack
+            // the object itself will be destroyed later
+            stack.pop_back();
+        }
+
+        void destroy_array_subelements(std::vector<std::pair<json_value*, value_t>>& stack, json_value* value) noexcept
+        {
+            while (!value->array->empty())
+            {
+                // start removing children from the back of the array, to guarantee O(1) removal complexity
+                basic_json& inner_value = value->array->back();
+                value_t inner_type = inner_value.type();
+                if ((inner_type == value_t::object || inner_type == value_t::array) && !inner_value.empty())
+                {
+                    // the current inner value has children, push it onto the stack and return to continue the depth-first
+                    // traversal with the children, this limits the maximal stack size exactly to the maximal hierarchy depth
+                    stack.emplace_back(&inner_value.m_value, inner_type);
+                    return;
+                }
+                // the current inner value does not have any children (anymore), remove it from this array
+                value->array->pop_back();
+            }
+            // the array does not have any children anymore, remove it from the stack
+            // the array itself will be destroyed later
+            stack.pop_back();
+        }
+
     };
 
     /*!
