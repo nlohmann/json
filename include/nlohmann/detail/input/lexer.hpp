@@ -1483,7 +1483,7 @@ scan_number_done:
     bool next_unget = false;
 
     /// the start position of the current token
-    position_t position;
+    position_t position {};
 
     /// raw input token string (for error messages)
     std::vector<char> token_string {};

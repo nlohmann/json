@@ -2222,6 +2222,14 @@ class file_input_adapter : public input_adapter_protocol
         : m_file(f)
     {}
 
+    // this class is only a wrapper around the file pointer and does
+    // not own it, so the defaults are safe
+    ~file_input_adapter() = default;
+    file_input_adapter(const file_input_adapter&) = default;
+    file_input_adapter& operator=(const file_input_adapter&) = default;
+    file_input_adapter(file_input_adapter&&) = default;
+    file_input_adapter& operator=(file_input_adapter&&) = default;
+
     std::char_traits<char>::int_type get_character() noexcept override
     {
         return std::fgetc(m_file);
@@ -4074,7 +4082,7 @@ scan_number_done:
     bool next_unget = false;
 
     /// the start position of the current token
-    position_t position;
+    position_t position {};
 
     /// raw input token string (for error messages)
     std::vector<char> token_string {};
@@ -4420,6 +4428,16 @@ class json_sax_dom_parser
         : root(r), allow_exceptions(allow_exceptions_)
     {}
 
+    ~json_sax_dom_parser() = default;
+
+    // delete copy constructor and assignment operator since
+    // exclusive access to the JSON value to be manipulated is assumed
+    json_sax_dom_parser(const json_sax_dom_parser&) = delete;
+    json_sax_dom_parser& operator=(const json_sax_dom_parser&) = delete;
+
+    json_sax_dom_parser(json_sax_dom_parser&&) = default;
+    json_sax_dom_parser& operator=(json_sax_dom_parser&&) = default;
+
     bool null()
     {
         handle_value(nullptr);
@@ -4568,7 +4586,7 @@ class json_sax_dom_parser
     /// the parsed JSON value
     BasicJsonType& root;
     /// stack to model hierarchy of values
-    std::vector<BasicJsonType*> ref_stack;
+    std::vector<BasicJsonType*> ref_stack {};
     /// helper to hold the reference for the next object element
     BasicJsonType* object_element = nullptr;
     /// whether a syntax error occurred
@@ -4595,6 +4613,16 @@ class json_sax_dom_callback_parser
     {
         keep_stack.push_back(true);
     }
+
+    ~json_sax_dom_callback_parser() = default;
+
+    // delete copy constructor and assignment operator since
+    // exclusive access to the JSON value to be manipulated is assumed
+    json_sax_dom_callback_parser(const json_sax_dom_callback_parser&) = delete;
+    json_sax_dom_callback_parser& operator=(const json_sax_dom_callback_parser&) = delete;
+
+    json_sax_dom_callback_parser(json_sax_dom_callback_parser&&) = default;
+    json_sax_dom_callback_parser& operator=(json_sax_dom_callback_parser&&) = default;
 
     bool null()
     {
@@ -4873,11 +4901,11 @@ class json_sax_dom_callback_parser
     /// the parsed JSON value
     BasicJsonType& root;
     /// stack to model hierarchy of values
-    std::vector<BasicJsonType*> ref_stack;
+    std::vector<BasicJsonType*> ref_stack {};
     /// stack to manage which values to keep
-    std::vector<bool> keep_stack;
+    std::vector<bool> keep_stack {};
     /// stack to manage which object keys to keep
-    std::vector<bool> key_keep_stack;
+    std::vector<bool> key_keep_stack {};
     /// helper to hold the reference for the next object element
     BasicJsonType* object_element = nullptr;
     /// whether a syntax error occurred
@@ -6223,10 +6251,11 @@ class iter_impl
     /// associated JSON instance
     pointer m_object = nullptr;
     /// the actual iterator of the associated instance
-    internal_iterator<typename std::remove_const<BasicJsonType>::type> m_it;
+    internal_iterator<typename std::remove_const<BasicJsonType>::type> m_it {};
 };
 }  // namespace detail
 } // namespace nlohmann
+
 // #include <nlohmann/detail/iterators/iteration_proxy.hpp>
 
 // #include <nlohmann/detail/iterators/json_reverse_iterator.hpp>
@@ -6531,6 +6560,16 @@ class binary_reader
         (void)detail::is_sax_static_asserts<SAX, BasicJsonType> {};
         assert(ia);
     }
+
+    ~binary_reader() = default;
+
+    // delete copy constructor and assignment operator since
+    // exclusive access to the input adapter is assumed
+    binary_reader(const binary_reader&) = delete;
+    binary_reader& operator=(const binary_reader&) = delete;
+
+    binary_reader(binary_reader&&) = default;
+    binary_reader& operator=(binary_reader&&) = default;
 
     /*!
     @param[in] format  the binary format to parse

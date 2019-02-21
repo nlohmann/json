@@ -52,6 +52,16 @@ class binary_reader
         assert(ia);
     }
 
+    ~binary_reader() = default;
+
+    // delete copy constructor and assignment operator since
+    // exclusive access to the input adapter is assumed
+    binary_reader(const binary_reader&) = delete;
+    binary_reader& operator=(const binary_reader&) = delete;
+
+    binary_reader(binary_reader&&) = default;
+    binary_reader& operator=(binary_reader&&) = default;
+
     /*!
     @param[in] format  the binary format to parse
     @param[in] sax_    a SAX event processor

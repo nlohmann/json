@@ -124,8 +124,13 @@ struct nocopy
 
 struct Data
 {
-    std::string a;
-    std::string b;
+    Data() {}
+
+    Data(std::string a, std::string b)
+        : a(std::move(a)), b(std::move(b)) {}
+
+    std::string a {};
+    std::string b {};
 };
 
 void from_json(const json& j, Data& data)

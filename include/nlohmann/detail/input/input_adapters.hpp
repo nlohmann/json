@@ -58,6 +58,14 @@ class file_input_adapter : public input_adapter_protocol
         : m_file(f)
     {}
 
+    // this class is only a wrapper around the file pointer and does
+    // not own it, so the defaults are safe
+    ~file_input_adapter() = default;
+    file_input_adapter(const file_input_adapter&) = default;
+    file_input_adapter& operator=(const file_input_adapter&) = default;
+    file_input_adapter(file_input_adapter&&) = default;
+    file_input_adapter& operator=(file_input_adapter&&) = default;
+
     std::char_traits<char>::int_type get_character() noexcept override
     {
         return std::fgetc(m_file);

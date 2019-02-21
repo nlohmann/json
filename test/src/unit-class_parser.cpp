@@ -125,7 +125,7 @@ class SaxEventLogger
         return false;
     }
 
-    std::vector<std::string> events;
+    std::vector<std::string> events {};
     bool errored = false;
 };
 

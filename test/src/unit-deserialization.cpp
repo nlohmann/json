@@ -123,7 +123,7 @@ struct SaxEventLogger : public nlohmann::json_sax<json>
         return false;
     }
 
-    std::vector<std::string> events;
+    std::vector<std::string> events {};
 };
 
 struct SaxEventLoggerExitAfterStartObject : public SaxEventLogger
