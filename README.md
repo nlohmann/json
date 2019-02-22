@@ -617,7 +617,7 @@ json j_patch = R"({
 })"_json;
 
 // apply the patch
-j_original.merge_patch(j_patch);
+j_document.merge_patch(j_patch);
 // {
 //  "a": "z",
 //  "c": {
