@@ -123,6 +123,21 @@ class json_pointer
     }
 
     /*!
+    @brief create a new JSON pointer that is the parent of this JSON pointer
+    */
+    json_pointer parent_pointer() const
+    {
+        if (empty())
+        {
+            return *this;
+        }
+
+        json_pointer res = *this;
+        res.pop_back();
+        return res;
+    }
+
+    /*!
     @param[in] s  reference token to be converted into an array index
 
     @return integer representation of @a s
