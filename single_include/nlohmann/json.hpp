@@ -11959,7 +11959,7 @@ class json_pointer
     */
     std::string pop_back()
     {
-        if (JSON_UNLIKELY(is_root()))
+        if (JSON_UNLIKELY(empty()))
         {
             JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent"));
         }
@@ -11983,16 +11983,16 @@ class json_pointer
         reference_tokens.push_back(std::move(token));
     }
 
-  private:
     /// return whether pointer points to the root document
-    bool is_root() const noexcept
+    bool empty() const noexcept
     {
         return reference_tokens.empty();
     }
 
+  private:
     json_pointer top() const
     {
-        if (JSON_UNLIKELY(is_root()))
+        if (JSON_UNLIKELY(empty()))
         {
             JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent"));
         }
@@ -20016,7 +20016,7 @@ class basic_json
         const auto operation_add = [&result](json_pointer & ptr, basic_json val)
         {
             // adding to the root of the target document means replacing it
-            if (ptr.is_root())
+            if (ptr.empty())
             {
                 result = val;
             }
