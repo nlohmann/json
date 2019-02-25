@@ -461,7 +461,7 @@ TEST_CASE("JSON pointers")
         }
     }
 
-    SECTION("push and pop")
+    SECTION("empty, push, pop and parent")
     {
         const json j =
         {
@@ -490,23 +490,28 @@ TEST_CASE("JSON pointers")
 
         // empty json_pointer returns the root JSON-object
         auto ptr = ""_json_pointer;
+        CHECK(ptr.empty());
         CHECK(j[ptr] == j);
 
         // simple field access
         ptr.push_back("pi");
+        CHECK(!ptr.empty());
         CHECK(j[ptr] == j["pi"]);
 
         ptr.pop_back();
+        CHECK(ptr.empty());
         CHECK(j[ptr] == j);
 
         // object and children access
         const std::string answer("answer");
         ptr.push_back(answer);
         ptr.push_back("everything");
+        CHECK(!ptr.empty());
         CHECK(j[ptr] == j["answer"]["everything"]);
 
         ptr.pop_back();
         ptr.pop_back();
+        CHECK(ptr.empty());
         CHECK(j[ptr] == j);
 
         // push key which has to be encoded
@@ -514,6 +519,18 @@ TEST_CASE("JSON pointers")
         ptr.push_back("/");
         CHECK(j[ptr] == j["object"]["/"]);
         CHECK(ptr.to_string() == "/object/~1");
+
+        CHECK(j[ptr.parent_pointer()] == j["object"]);
+        ptr = ptr.parent_pointer().parent_pointer();
+        CHECK(ptr.empty());
+        CHECK(j[ptr] == j);
+        // parent-pointer of the empty json_pointer is empty
+        ptr = ptr.parent_pointer();
+        CHECK(ptr.empty());
+        CHECK(j[ptr] == j);
+
+        CHECK_THROWS_WITH(ptr.pop_back(),
+                          "[json.exception.out_of_range.405] JSON pointer has no parent");
     }
 
     SECTION("operators")
