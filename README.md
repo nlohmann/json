@@ -155,7 +155,7 @@ If you are using [Spack](https://www.spack.io/) to manage your dependencies, you
 
 If you are using [hunter](https://github.com/ruslo/hunter/) on your project for external dependencies, then you can use the [nlohmann_json package](https://docs.hunter.sh/en/latest/packages/pkg/nlohmann_json.html). Please see the hunter project for any issues regarding the packaging.
 
-If you are using [Buckaroo](https://buckaroo.pm), you can install this library's module with `buckaroo install nlohmann/json`. Please file issues [here](https://github.com/LoopPerfect/buckaroo-recipes/issues/new?title=nlohmann/nlohmann/json).
+If you are using [Buckaroo](https://buckaroo.pm), you can install this library's module with `buckaroo add github.com/buckaroo-pm/nlohmann-json`. Please file issues [here](https://github.com/buckaroo-pm/nlohmann-json). There is a demo repo [here](https://github.com/njlr/buckaroo-nholmann-json-example).
 
 If you are using [vcpkg](https://github.com/Microsoft/vcpkg/) on your project for external dependencies, then you can use the [nlohmann-json package](https://github.com/Microsoft/vcpkg/tree/master/ports/nlohmann-json). Please see the vcpkg project for any issues regarding the packaging.
 
