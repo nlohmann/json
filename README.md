@@ -1036,7 +1036,6 @@ The following compilers are currently used in continuous integration at [Travis]
 | Clang 4.0.1     | Ubuntu 14.04.1 LTS           | clang version 4.0.1-svn305264-1~exp1 (branches/release_40) |
 | Clang 5.0.2     | Ubuntu 14.04.1 LTS           | clang version 5.0.2-svn328729-1~exp1~20180509123505.100 (branches/release_50) |
 | Clang 6.0.1     | Ubuntu 14.04.1 LTS           | clang version 6.0.1-svn334776-1~exp1~20180726133705.85 (branches/release_60) |
-| Clang Xcode 6.4 | OSX 10.10.5 | Apple LLVM version 6.1.0 (clang-602.0.53) (based on LLVM 3.6.0svn) |
 | Clang Xcode 7.3 | OSX 10.11.6 | Apple LLVM version 7.3.0 (clang-703.0.31) |
 | Clang Xcode 8.0 | OSX 10.11.6 | Apple LLVM version 8.0.0 (clang-800.0.38) |
 | Clang Xcode 8.1 | OSX 10.12.6 | Apple LLVM version 8.0.0 (clang-800.0.42.1) |
@@ -1047,6 +1046,7 @@ The following compilers are currently used in continuous integration at [Travis]
 | Clang Xcode 9.2 | OSX 10.13.3 | Apple LLVM version 9.1.0 (clang-902.0.39.1) |
 | Clang Xcode 9.3 | OSX 10.13.3 | Apple LLVM version 9.1.0 (clang-902.0.39.2) |
 | Clang Xcode 10.0 | OSX 10.13.3 | Apple LLVM version 10.0.0 (clang-1000.11.45.2) |
+| Clang Xcode 10.1 | OSX 10.13.3 |  |
 | Visual Studio 14 2015 | Windows Server 2012 R2 (x64) | Microsoft (R) Build Engine version 14.0.25420.1, MSVC 19.0.24215.1 |
 | Visual Studio 2017 | Windows Server 2016 | Microsoft (R) Build Engine version 15.7.180.61344, MSVC 19.14.26433.0 |
 

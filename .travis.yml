@@ -129,9 +129,6 @@ matrix:
   # OSX / Clang
 
   - os: osx
-    osx_image: xcode6.4
-
-  - os: osx
     osx_image: xcode7.3
 
   - os: osx
@@ -163,6 +160,9 @@ matrix:
 
   - os: osx
     osx_image: xcode10
+
+  - os: osx
+    osx_image: xcode10.1
 
   # Linux / GCC
 
@@ -289,6 +289,14 @@ matrix:
       apt:
         sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-6.0']
         packages: ['g++-6', 'clang-6.0', 'ninja-build']
+
+  - os: linux
+    compiler: clang
+    env: COMPILER=clang++-7.0
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-7']
+        packages: ['g++-6', 'clang-7.0', 'ninja-build']
 
   - os: linux
     compiler: clang
