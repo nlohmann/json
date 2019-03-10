@@ -64,7 +64,11 @@ set_target_properties(catch_main PROPERTIES
     COMPILE_DEFINITIONS "$<$<CXX_COMPILER_ID:MSVC>:_SCL_SECURE_NO_WARNINGS>"
     COMPILE_OPTIONS "$<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>"
 )
-target_compile_features(catch_main PUBLIC cxx_std_11)
+if (${CMAKE_VERSION} VERSION_LESS "3.8.0") 
+    target_compile_features(catch_main PUBLIC cxx_range_for)
+else()
+    target_compile_features(catch_main PUBLIC cxx_std_11)
+endif()
 target_include_directories(catch_main PRIVATE "thirdparty/catch")
 
 # https://stackoverflow.com/questions/2368811/how-to-set-warning-level-in-cmake
