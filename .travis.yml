@@ -292,11 +292,11 @@ matrix:
 
   - os: linux
     compiler: clang
-    env: COMPILER=clang++-7.0
+    env: COMPILER=clang++-7
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-7']
-        packages: ['g++-6', 'clang-7.0', 'ninja-build']
+        packages: ['g++-6', 'clang-7', 'ninja-build']
 
   - os: linux
     compiler: clang

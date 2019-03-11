@@ -1046,7 +1046,7 @@ The following compilers are currently used in continuous integration at [Travis]
 | Clang Xcode 9.2 | OSX 10.13.3 | Apple LLVM version 9.1.0 (clang-902.0.39.1) |
 | Clang Xcode 9.3 | OSX 10.13.3 | Apple LLVM version 9.1.0 (clang-902.0.39.2) |
 | Clang Xcode 10.0 | OSX 10.13.3 | Apple LLVM version 10.0.0 (clang-1000.11.45.2) |
-| Clang Xcode 10.1 | OSX 10.13.3 |  |
+| Clang Xcode 10.1 | OSX 10.13.3 | Apple LLVM version 10.0.0 (clang-1000.11.45.5) |
 | Visual Studio 14 2015 | Windows Server 2012 R2 (x64) | Microsoft (R) Build Engine version 14.0.25420.1, MSVC 19.0.24215.1 |
 | Visual Studio 2017 | Windows Server 2016 | Microsoft (R) Build Engine version 15.7.180.61344, MSVC 19.14.26433.0 |
 
