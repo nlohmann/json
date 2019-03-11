@@ -7493,7 +7493,7 @@ class basic_json
         const auto operation_add = [&result](json_pointer & ptr, basic_json val)
         {
             // adding to the root of the target document means replacing it
-            if (ptr.is_root())
+            if (ptr.empty())
             {
                 result = val;
             }
