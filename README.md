@@ -1039,8 +1039,6 @@ The following compilers are currently used in continuous integration at [Travis]
 | Clang 7.0.1     | Ubuntu 14.04.1 LTS           | clang version 7.0.1-svn348686-1~exp1~20181213084532.54 (branches/release_70) |
 | Clang Xcode 7.3 | OSX 10.11.6 | Apple LLVM version 7.3.0 (clang-703.0.31) |
 | Clang Xcode 8.0 | OSX 10.11.6 | Apple LLVM version 8.0.0 (clang-800.0.38) |
-| Clang Xcode 8.1 | OSX 10.12.6 | Apple LLVM version 8.0.0 (clang-800.0.42.1) |
-| Clang Xcode 8.2 | OSX 10.12.6 | Apple LLVM version 8.0.0 (clang-800.0.42.1) |
 | Clang Xcode 8.3 | OSX 10.11.6 | Apple LLVM version 8.1.0 (clang-802.0.38) |
 | Clang Xcode 9.0 | OSX 10.12.6 | Apple LLVM version 9.0.0 (clang-900.0.37) |
 | Clang Xcode 9.1 | OSX 10.12.6 | Apple LLVM version 9.0.0 (clang-900.0.38) |
