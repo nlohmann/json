@@ -112,7 +112,8 @@ struct my_allocator : std::allocator<T>
     }
 
     template <class U>
-    struct rebind {
+    struct rebind
+    {
         using other = my_allocator<U>;
     };
 };
