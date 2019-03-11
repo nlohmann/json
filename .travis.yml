@@ -301,12 +301,12 @@ matrix:
   - os: linux
     compiler: clang
     env:
-      - COMPILER=clang++-6.0
+      - COMPILER=clang++-7
       - CXXFLAGS=-std=c++1z
     addons:
       apt:
-        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-6.0']
-        packages: ['g++-6', 'clang-6.0', 'ninja-build']
+        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-7']
+        packages: ['g++-6', 'clang-7', 'ninja-build']
 
 ################
 # build script #
