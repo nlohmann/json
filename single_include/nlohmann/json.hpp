@@ -12891,10 +12891,10 @@ and `from_json()` (@ref adl_serializer by default)
 - Library-wide
  - [EqualityComparable](https://en.cppreference.com/w/cpp/named_req/EqualityComparable):
    JSON values can be compared with `==`, see @ref
-   operator==(const_reference,const_reference).
+   operator==(const basic_json&,const basic_json&).
  - [LessThanComparable](https://en.cppreference.com/w/cpp/named_req/LessThanComparable):
    JSON values can be compared with `<`, see @ref
-   operator<(const_reference,const_reference).
+   operator<(const basic_json&,const basic_json&).
  - [Swappable](https://en.cppreference.com/w/cpp/named_req/Swappable):
    Any JSON lvalue or rvalue of can be swapped with any lvalue or rvalue of
    other compatible types, using unqualified function call @ref swap().
@@ -15677,7 +15677,7 @@ class basic_json
     written using `at()`. It also demonstrates the different exceptions that
     can be thrown.,at__size_type}
     */
-    reference at(size_type idx)
+    basic_json& at(size_type idx)
     {
         // at only works for arrays
         if (JSON_LIKELY(is_array()))
@@ -15724,7 +15724,7 @@ class basic_json
     `at()`. It also demonstrates the different exceptions that can be thrown.,
     at__size_type_const}
     */
-    const_reference at(size_type idx) const
+    const basic_json& at(size_type idx) const
     {
         // at only works for arrays
         if (JSON_LIKELY(is_array()))
@@ -15775,7 +15775,7 @@ class basic_json
     written using `at()`. It also demonstrates the different exceptions that
     can be thrown.,at__object_t_key_type}
     */
-    reference at(const typename object_t::key_type& key)
+    basic_json& at(const typename object_t::key_type& key)
     {
         // at only works for objects
         if (JSON_LIKELY(is_object()))
@@ -15826,7 +15826,7 @@ class basic_json
     `at()`. It also demonstrates the different exceptions that can be thrown.,
     at__object_t_key_type_const}
     */
-    const_reference at(const typename object_t::key_type& key) const
+    const basic_json& at(const typename object_t::key_type& key) const
     {
         // at only works for objects
         if (JSON_LIKELY(is_object()))
@@ -15872,7 +15872,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    reference operator[](size_type idx)
+    basic_json& operator[](size_type idx)
     {
         // implicitly convert null value to an empty array
         if (is_null())
@@ -15918,7 +15918,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    const_reference operator[](size_type idx) const
+    const basic_json& operator[](size_type idx) const
     {
         // const operator[] only works for arrays
         if (JSON_LIKELY(is_array()))
@@ -15956,7 +15956,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    reference operator[](const typename object_t::key_type& key)
+    basic_json& operator[](const typename object_t::key_type& key)
     {
         // implicitly convert null value to an empty object
         if (is_null())
@@ -16005,7 +16005,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    const_reference operator[](const typename object_t::key_type& key) const
+    const basic_json& operator[](const typename object_t::key_type& key) const
     {
         // const operator[] only works for objects
         if (JSON_LIKELY(is_object()))
@@ -16045,7 +16045,7 @@ class basic_json
     @since version 1.1.0
     */
     template<typename T>
-    reference operator[](T* key)
+    basic_json& operator[](T* key)
     {
         // implicitly convert null to object
         if (is_null())
@@ -16095,7 +16095,7 @@ class basic_json
     @since version 1.1.0
     */
     template<typename T>
-    const_reference operator[](T* key) const
+    const basic_json& operator[](T* key) const
     {
         // at only works for objects
         if (JSON_LIKELY(is_object()))
@@ -16280,7 +16280,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    reference front()
+    basic_json& front()
     {
         return *begin();
     }
@@ -16288,7 +16288,7 @@ class basic_json
     /*!
     @copydoc basic_json::front()
     */
-    const_reference front() const
+    const basic_json& front() const
     {
         return *cbegin();
     }
@@ -16324,7 +16324,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    reference back()
+    basic_json& back()
     {
         auto tmp = end();
         --tmp;
@@ -16334,7 +16334,7 @@ class basic_json
     /*!
     @copydoc basic_json::back()
     */
-    const_reference back() const
+    const basic_json& back() const
     {
         auto tmp = cend();
         --tmp;
@@ -17100,16 +17100,16 @@ class basic_json
                 that is, replace `json::iterator_wrapper(j)` with `j.items()`.
     */
     JSON_DEPRECATED
-    static iteration_proxy<iterator> iterator_wrapper(reference ref) noexcept
+    static iteration_proxy<iterator> iterator_wrapper(basic_json& ref) noexcept
     {
         return ref.items();
     }
 
     /*!
-    @copydoc iterator_wrapper(reference)
+    @copydoc iterator_wrapper(basic_json&)
     */
     JSON_DEPRECATED
-    static iteration_proxy<const_iterator> iterator_wrapper(const_reference ref) noexcept
+    static iteration_proxy<const_iterator> iterator_wrapper(const basic_json& ref) noexcept
     {
         return ref.items();
     }
@@ -17551,7 +17551,7 @@ class basic_json
     @brief add an object to an array
     @copydoc push_back(basic_json&&)
     */
-    reference operator+=(basic_json&& val)
+    basic_json& operator+=(basic_json&& val)
     {
         push_back(std::move(val));
         return *this;
@@ -17585,7 +17585,7 @@ class basic_json
     @brief add an object to an array
     @copydoc push_back(basic_json&&)
     */
-    reference operator+=(const basic_json& val)
+    basic_json& operator+=(const basic_json& val)
     {
         push_back(val);
         return *this;
@@ -17635,7 +17635,7 @@ class basic_json
     @brief add an object to an object
     @copydoc push_back(const typename object_t::value_type&)
     */
-    reference operator+=(const typename object_t::value_type& val)
+    basic_json& operator+=(const typename object_t::value_type& val)
     {
         push_back(val);
         return *this;
@@ -17684,7 +17684,7 @@ class basic_json
     @brief add an object to an object
     @copydoc push_back(initializer_list_t)
     */
-    reference operator+=(initializer_list_t init)
+    basic_json& operator+=(initializer_list_t init)
     {
         push_back(init);
         return *this;
@@ -18063,7 +18063,7 @@ class basic_json
 
     @since version 3.0.0
     */
-    void update(const_reference j)
+    void update(const basic_json& j)
     {
         // implicitly convert null value to an empty object
         if (is_null())
@@ -18165,7 +18165,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    void swap(reference other) noexcept (
+    void swap(basic_json& other) noexcept (
         std::is_nothrow_move_constructible<value_t>::value and
         std::is_nothrow_move_assignable<value_t>::value and
         std::is_nothrow_move_constructible<json_value>::value and
@@ -18325,7 +18325,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    friend bool operator==(const_reference lhs, const_reference rhs) noexcept
+    friend bool operator==(const basic_json& lhs, const basic_json& rhs) noexcept
     {
         const auto lhs_type = lhs.type();
         const auto rhs_type = rhs.type();
@@ -18392,22 +18392,22 @@ class basic_json
 
     /*!
     @brief comparison: equal
-    @copydoc operator==(const_reference, const_reference)
+    @copydoc operator==(const basic_json&, const basic_json&)
     */
     template<typename ScalarType, typename std::enable_if<
                  std::is_scalar<ScalarType>::value, int>::type = 0>
-    friend bool operator==(const_reference lhs, const ScalarType rhs) noexcept
+    friend bool operator==(const basic_json& lhs, const ScalarType rhs) noexcept
     {
         return lhs == basic_json(rhs);
     }
 
     /*!
     @brief comparison: equal
-    @copydoc operator==(const_reference, const_reference)
+    @copydoc operator==(const basic_json&, const basic_json&)
     */
     template<typename ScalarType, typename std::enable_if<
                  std::is_scalar<ScalarType>::value, int>::type = 0>
-    friend bool operator==(const ScalarType lhs, const_reference rhs) noexcept
+    friend bool operator==(const ScalarType lhs, const basic_json& rhs) noexcept
     {
         return basic_json(lhs) == rhs;
     }
@@ -18430,29 +18430,29 @@ class basic_json
 
     @since version 1.0.0
     */
-    friend bool operator!=(const_reference lhs, const_reference rhs) noexcept
+    friend bool operator!=(const basic_json& lhs, const basic_json& rhs) noexcept
     {
         return not (lhs == rhs);
     }
 
     /*!
     @brief comparison: not equal
-    @copydoc operator!=(const_reference, const_reference)
+    @copydoc operator!=(const basic_json&, const basic_json&)
     */
     template<typename ScalarType, typename std::enable_if<
                  std::is_scalar<ScalarType>::value, int>::type = 0>
-    friend bool operator!=(const_reference lhs, const ScalarType rhs) noexcept
+    friend bool operator!=(const basic_json& lhs, const ScalarType rhs) noexcept
     {
         return lhs != basic_json(rhs);
     }
 
     /*!
     @brief comparison: not equal
-    @copydoc operator!=(const_reference, const_reference)
+    @copydoc operator!=(const basic_json&, const basic_json&)
     */
     template<typename ScalarType, typename std::enable_if<
                  std::is_scalar<ScalarType>::value, int>::type = 0>
-    friend bool operator!=(const ScalarType lhs, const_reference rhs) noexcept
+    friend bool operator!=(const ScalarType lhs, const basic_json& rhs) noexcept
     {
         return basic_json(lhs) != rhs;
     }
@@ -18483,7 +18483,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    friend bool operator<(const_reference lhs, const_reference rhs) noexcept
+    friend bool operator<(const basic_json& lhs, const basic_json& rhs) noexcept
     {
         const auto lhs_type = lhs.type();
         const auto rhs_type = rhs.type();
@@ -18553,22 +18553,22 @@ class basic_json
 
     /*!
     @brief comparison: less than
-    @copydoc operator<(const_reference, const_reference)
+    @copydoc operator<(const basic_json&, const basic_json&)
     */
     template<typename ScalarType, typename std::enable_if<
                  std::is_scalar<ScalarType>::value, int>::type = 0>
-    friend bool operator<(const_reference lhs, const ScalarType rhs) noexcept
+    friend bool operator<(const basic_json& lhs, const ScalarType rhs) noexcept
     {
         return lhs < basic_json(rhs);
     }
 
     /*!
     @brief comparison: less than
-    @copydoc operator<(const_reference, const_reference)
+    @copydoc operator<(const basic_json&, const basic_json&)
     */
     template<typename ScalarType, typename std::enable_if<
                  std::is_scalar<ScalarType>::value, int>::type = 0>
-    friend bool operator<(const ScalarType lhs, const_reference rhs) noexcept
+    friend bool operator<(const ScalarType lhs, const basic_json& rhs) noexcept
     {
         return basic_json(lhs) < rhs;
     }
@@ -18592,29 +18592,29 @@ class basic_json
 
     @since version 1.0.0
     */
-    friend bool operator<=(const_reference lhs, const_reference rhs) noexcept
+    friend bool operator<=(const basic_json& lhs, const basic_json& rhs) noexcept
     {
         return not (rhs < lhs);
     }
 
     /*!
     @brief comparison: less than or equal
-    @copydoc operator<=(const_reference, const_reference)
+    @copydoc operator<=(const basic_json&, const basic_json&)
     */
     template<typename ScalarType, typename std::enable_if<
                  std::is_scalar<ScalarType>::value, int>::type = 0>
-    friend bool operator<=(const_reference lhs, const ScalarType rhs) noexcept
+    friend bool operator<=(const basic_json& lhs, const ScalarType rhs) noexcept
     {
         return lhs <= basic_json(rhs);
     }
 
     /*!
     @brief comparison: less than or equal
-    @copydoc operator<=(const_reference, const_reference)
+    @copydoc operator<=(const basic_json&, const basic_json&)
     */
     template<typename ScalarType, typename std::enable_if<
                  std::is_scalar<ScalarType>::value, int>::type = 0>
-    friend bool operator<=(const ScalarType lhs, const_reference rhs) noexcept
+    friend bool operator<=(const ScalarType lhs, const basic_json& rhs) noexcept
     {
         return basic_json(lhs) <= rhs;
     }
@@ -18638,29 +18638,29 @@ class basic_json
 
     @since version 1.0.0
     */
-    friend bool operator>(const_reference lhs, const_reference rhs) noexcept
+    friend bool operator>(const basic_json& lhs, const basic_json& rhs) noexcept
     {
         return not (lhs <= rhs);
     }
 
     /*!
     @brief comparison: greater than
-    @copydoc operator>(const_reference, const_reference)
+    @copydoc operator>(const basic_json&, const basic_json&)
     */
     template<typename ScalarType, typename std::enable_if<
                  std::is_scalar<ScalarType>::value, int>::type = 0>
-    friend bool operator>(const_reference lhs, const ScalarType rhs) noexcept
+    friend bool operator>(const basic_json& lhs, const ScalarType rhs) noexcept
     {
         return lhs > basic_json(rhs);
     }
 
     /*!
     @brief comparison: greater than
-    @copydoc operator>(const_reference, const_reference)
+    @copydoc operator>(const basic_json&, const basic_json&)
     */
     template<typename ScalarType, typename std::enable_if<
                  std::is_scalar<ScalarType>::value, int>::type = 0>
-    friend bool operator>(const ScalarType lhs, const_reference rhs) noexcept
+    friend bool operator>(const ScalarType lhs, const basic_json& rhs) noexcept
     {
         return basic_json(lhs) > rhs;
     }
@@ -18684,29 +18684,29 @@ class basic_json
 
     @since version 1.0.0
     */
-    friend bool operator>=(const_reference lhs, const_reference rhs) noexcept
+    friend bool operator>=(const basic_json& lhs, const basic_json& rhs) noexcept
     {
         return not (lhs < rhs);
     }
 
     /*!
     @brief comparison: greater than or equal
-    @copydoc operator>=(const_reference, const_reference)
+    @copydoc operator>=(const basic_json&, const basic_json&)
     */
     template<typename ScalarType, typename std::enable_if<
                  std::is_scalar<ScalarType>::value, int>::type = 0>
-    friend bool operator>=(const_reference lhs, const ScalarType rhs) noexcept
+    friend bool operator>=(const basic_json& lhs, const ScalarType rhs) noexcept
     {
         return lhs >= basic_json(rhs);
     }
 
     /*!
     @brief comparison: greater than or equal
-    @copydoc operator>=(const_reference, const_reference)
+    @copydoc operator>=(const basic_json&, const basic_json&)
     */
     template<typename ScalarType, typename std::enable_if<
                  std::is_scalar<ScalarType>::value, int>::type = 0>
-    friend bool operator>=(const ScalarType lhs, const_reference rhs) noexcept
+    friend bool operator>=(const ScalarType lhs, const basic_json& rhs) noexcept
     {
         return basic_json(lhs) >= rhs;
     }
@@ -19977,7 +19977,7 @@ class basic_json
 
     @since version 2.0.0
     */
-    reference operator[](const json_pointer& ptr)
+    basic_json& operator[](const json_pointer& ptr)
     {
         return ptr.get_unchecked(this);
     }
@@ -20005,7 +20005,7 @@ class basic_json
 
     @since version 2.0.0
     */
-    const_reference operator[](const json_pointer& ptr) const
+    const basic_json& operator[](const json_pointer& ptr) const
     {
         return ptr.get_unchecked(this);
     }
@@ -20048,7 +20048,7 @@ class basic_json
 
     @liveexample{The behavior is shown in the example.,at_json_pointer}
     */
-    reference at(const json_pointer& ptr)
+    basic_json& at(const json_pointer& ptr)
     {
         return ptr.get_checked(this);
     }
@@ -20091,7 +20091,7 @@ class basic_json
 
     @liveexample{The behavior is shown in the example.,at_json_pointer_const}
     */
-    const_reference at(const json_pointer& ptr) const
+    const basic_json& at(const json_pointer& ptr) const
     {
         return ptr.get_checked(this);
     }
