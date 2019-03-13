@@ -1762,7 +1762,7 @@ TEST_CASE("regression tests")
                 -54,  -28,  -26
             };
             std::string s;
-            for (int i = 0; i < sizeof(data) / sizeof(int); i++)
+            for (unsigned i = 0; i < sizeof(data) / sizeof(int); i++)
             {
                 s += static_cast<char>(data[i]);
             }

@@ -136,6 +136,7 @@ pedantic_clang:
 		-Wno-float-equal \
 		-Wno-switch-enum -Wno-covered-switch-default \
 		-Wno-c++2a-compat \
+		-Wno-c++17-extensions \
 		-Wno-padded"
 
 # calling GCC with most warnings
