@@ -206,7 +206,7 @@ matrix:
     compiler: gcc
     env:
       - COMPILER=g++-8
-      - CXXFLAGS=-std=c++17
+      - CMAKE_OPTIONS=-DJSON_ForceCpp17=ON
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test']
@@ -290,7 +290,7 @@ matrix:
     compiler: clang
     env:
       - COMPILER=clang++-7
-      - CXXFLAGS=-std=c++1z
+      - CMAKE_OPTIONS=-DJSON_ForceCpp17=ON
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-7']

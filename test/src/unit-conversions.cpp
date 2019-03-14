@@ -51,6 +51,20 @@ using nlohmann::json;
     #include <string_view>
 #endif
 
+template<typename From, typename To>
+struct is_implicitly_convertible
+{
+  private:
+    template <typename C>
+    static std::true_type test(decltype(&C::operator To));
+
+    template <typename C>
+    static std::false_type test(...);
+
+  public:
+    static constexpr bool value = std::is_same<std::true_type, decltype(test<From>(nullptr))>::value;
+};
+
 TEST_CASE("value conversion")
 {
     SECTION("get an object (explicit)")
@@ -480,8 +494,7 @@ TEST_CASE("value conversion")
 #if defined(JSON_HAS_CPP_17)
         SECTION("std::string_view")
         {
-            std::string_view s = j;
-            CHECK(json(s) == j);
+            static_assert(!is_implicitly_convertible<decltype(j), std::string_view>::value);
         }
 #endif
 

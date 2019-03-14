@@ -2,6 +2,7 @@ option(JSON_Sanitizer "Build test suite with Clang sanitizer" OFF)
 option(JSON_Valgrind "Execute test suite with Valgrind" OFF)
 option(JSON_NoExceptions "Build test suite without exceptions" OFF)
 option(JSON_Coverage "Build test suite with coverage information" OFF)
+option(JSON_ForceCpp17 "Use C++17 standard" OFF)
 
 if(JSON_Sanitizer)
     message(STATUS "Building test suite with Clang sanitizer")
@@ -85,7 +86,7 @@ if(MSVC)
 	# Disable warning C4566: character represented by universal-character-name '\uFF01' cannot be represented in the current code page (1252)
 	# Disable warning C4996: 'nlohmann::basic_json<std::map,std::vector,std::string,bool,int64_t,uint64_t,double,std::allocator,nlohmann::adl_serializer>::operator <<': was declared deprecated
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4389 /wd4309 /wd4566 /wd4996")
-	
+
 	# https://github.com/nlohmann/json/issues/1114
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /bigobj")
 endif()
@@ -104,6 +105,15 @@ foreach(file ${files})
       CATCH_CONFIG_FAST_COMPILE
       $<$<CXX_COMPILER_ID:MSVC>:_SCL_SECURE_NO_WARNINGS>
     )
+    if (${CMAKE_VERSION} VERSION_LESS "3.8.0")
+        if (JSON_ForceCpp17)
+            message(FATAL_ERROR "Cannot force C++17 with this CMake version, you need at least version 3.8")
+        endif()
+    else()
+        if (JSON_ForceCpp17)
+            target_compile_features(${testcase} PRIVATE cxx_std_17)
+        endif()
+    endif()
     target_compile_options(${testcase} PRIVATE
         $<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>
         $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wno-deprecated;-Wno-float-equal>
