@@ -10592,7 +10592,7 @@ inline void grisu2_digit_gen(char* buffer, int& length, int& decimal_exponent,
         //         = buffer * 10^-m + 10^-m * (1/10 * (10 * p2)                   ) * 2^e
         //         = buffer * 10^-m + 10^-m * (1/10 * ((10*p2 div 2^-e) * 2^-e + (10*p2 mod 2^-e)) * 2^e
         //
-        assert(p2 <= UINT64_MAX / 10);
+        assert(p2 <= std::numeric_limits<std::uint64_t>::max() / 10);
         p2 *= 10;
         const uint64_t d = p2 >> -one.e;     // d = (10 * p2) div 2^-e
         const uint64_t r = p2 & (one.f - 1); // r = (10 * p2) mod 2^-e
