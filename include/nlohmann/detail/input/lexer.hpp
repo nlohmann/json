@@ -6,6 +6,7 @@
 #include <cstdio> // snprintf
 #include <initializer_list> // initializer_list
 #include <string> // char_traits, string
+#include <utility> // move
 #include <vector> // vector
 
 #include <nlohmann/detail/macro_scope.hpp>

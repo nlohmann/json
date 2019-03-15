@@ -5,6 +5,7 @@
 #include <cstdint> // uint8_t, uint16_t, uint32_t, uint64_t
 #include <cstring> // memcpy
 #include <limits> // numeric_limits
+#include <string> // string
 
 #include <nlohmann/detail/input/binary_reader.hpp>
 #include <nlohmann/detail/output/output_adapters.hpp>

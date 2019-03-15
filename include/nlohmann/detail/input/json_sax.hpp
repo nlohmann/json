@@ -1,9 +1,10 @@
 #pragma once
 
-#include <cassert>
+#include <cassert> // assert
 #include <cstddef>
-#include <string>
-#include <vector>
+#include <string> // string
+#include <utility> // move
+#include <vector> // vector
 
 #include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/macro_scope.hpp>

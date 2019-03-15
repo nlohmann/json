@@ -27,8 +27,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#ifndef NLOHMANN_JSON_HPP
-#define NLOHMANN_JSON_HPP
+#ifndef INCLUDE_NLOHMANN_JSON_HPP_
+#define INCLUDE_NLOHMANN_JSON_HPP_
 
 #define NLOHMANN_JSON_VERSION_MAJOR 3
 #define NLOHMANN_JSON_VERSION_MINOR 5
@@ -42,9 +42,11 @@ SOFTWARE.
 #include <initializer_list> // initializer_list
 #include <iosfwd> // istream, ostream
 #include <iterator> // random_access_iterator_tag
+#include <memory> // unique_ptr
 #include <numeric> // accumulate
 #include <string> // string, stoi, to_string
 #include <utility> // declval, forward, move, pair, swap
+#include <vector> // vector
 
 #include <nlohmann/json_fwd.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
@@ -3980,14 +3982,7 @@ class basic_json
     template<typename KeyT>
     bool contains(KeyT&& key) const
     {
-        if (is_object())
-        {
-            return (m_value.object->find(std::forward<KeyT>(key)) != m_value.object->end());
-        }
-        else
-        {
-            return false;
-        }
+        return (is_object() and  m_value.object->find(std::forward<KeyT>(key)) != m_value.object->end());
     }
 
     /// @}
@@ -8052,4 +8047,4 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 
 #include <nlohmann/detail/macro_unscope.hpp>
 
-#endif
+#endif  // INCLUDE_NLOHMANN_JSON_HPP_

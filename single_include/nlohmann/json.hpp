@@ -27,8 +27,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#ifndef NLOHMANN_JSON_HPP
-#define NLOHMANN_JSON_HPP
+#ifndef INCLUDE_NLOHMANN_JSON_HPP_
+#define INCLUDE_NLOHMANN_JSON_HPP_
 
 #define NLOHMANN_JSON_VERSION_MAJOR 3
 #define NLOHMANN_JSON_VERSION_MINOR 5
@@ -42,13 +42,15 @@ SOFTWARE.
 #include <initializer_list> // initializer_list
 #include <iosfwd> // istream, ostream
 #include <iterator> // random_access_iterator_tag
+#include <memory> // unique_ptr
 #include <numeric> // accumulate
 #include <string> // string, stoi, to_string
 #include <utility> // declval, forward, move, pair, swap
+#include <vector> // vector
 
 // #include <nlohmann/json_fwd.hpp>
-#ifndef NLOHMANN_JSON_FWD_HPP
-#define NLOHMANN_JSON_FWD_HPP
+#ifndef INCLUDE_NLOHMANN_JSON_FWD_HPP_
+#define INCLUDE_NLOHMANN_JSON_FWD_HPP_
 
 #include <cstdint> // int64_t, uint64_t
 #include <map> // map
@@ -110,10 +112,12 @@ uses the standard template types.
 using json = basic_json<>;
 }  // namespace nlohmann
 
-#endif
+#endif  // INCLUDE_NLOHMANN_JSON_FWD_HPP_
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
+
+#include <utility> // pair
 
 // This file contains all internal macro definitions
 // You MUST include macro_unscope.hpp at the end of json.hpp to undef all of them
@@ -403,8 +407,8 @@ struct iterator_traits<T*, enable_if_t<std::is_object<T>::value>>
     using pointer = T*;
     using reference = T&;
 };
-}
-}
+} // namespace detail
+} // namespace nlohmann
 
 // #include <nlohmann/detail/meta/cpp_future.hpp>
 
@@ -839,8 +843,8 @@ struct position_t
     }
 };
 
-}
-}
+} // namespace detail
+} // namespace nlohmann
 
 
 namespace nlohmann
@@ -1192,6 +1196,7 @@ class other_error : public exception
 #include <ciso646> // and
 #include <cstddef> // size_t
 #include <cstdint> // uint8_t
+#include <string> // string
 
 namespace nlohmann
 {
@@ -1643,8 +1648,10 @@ constexpr const auto& from_json = detail::static_const<detail::from_json_fn>::va
 // #include <nlohmann/detail/conversions/to_json.hpp>
 
 
+#include <algorithm> // copy
 #include <ciso646> // or, and, not
 #include <iterator> // begin, end
+#include <string> // string
 #include <tuple> // tuple, get
 #include <type_traits> // is_same, is_constructible, is_floating_point, is_enum, underlying_type
 #include <utility> // move, forward, declval, pair
@@ -1829,7 +1836,7 @@ class tuple_element<N, ::nlohmann::detail::iteration_proxy_value<IteratorType >>
 #if defined(__clang__)
     #pragma clang diagnostic pop
 #endif
-}
+} // namespace std
 
 
 namespace nlohmann
@@ -2595,6 +2602,7 @@ class input_adapter
 #include <cstdio> // snprintf
 #include <initializer_list> // initializer_list
 #include <string> // char_traits, string
+#include <utility> // move
 #include <vector> // vector
 
 // #include <nlohmann/detail/macro_scope.hpp>
@@ -4106,6 +4114,7 @@ scan_number_done:
 #include <functional> // function
 #include <string> // string
 #include <utility> // move
+#include <vector> // vector
 
 // #include <nlohmann/detail/exceptions.hpp>
 
@@ -4116,6 +4125,7 @@ scan_number_done:
 
 #include <cstdint> // size_t
 #include <utility> // declval
+#include <string> // string
 
 // #include <nlohmann/detail/meta/detected.hpp>
 
@@ -4261,10 +4271,11 @@ struct is_sax_static_asserts
 // #include <nlohmann/detail/input/json_sax.hpp>
 
 
-#include <cassert>
+#include <cassert> // assert
 #include <cstddef>
-#include <string>
-#include <vector>
+#include <string> // string
+#include <utility> // move
+#include <vector> // vector
 
 // #include <nlohmann/detail/exceptions.hpp>
 
@@ -8472,6 +8483,7 @@ class binary_reader
 #include <cstdint> // uint8_t, uint16_t, uint32_t, uint64_t
 #include <cstring> // memcpy
 #include <limits> // numeric_limits
+#include <string> // string
 
 // #include <nlohmann/detail/input/binary_reader.hpp>
 
@@ -9822,6 +9834,7 @@ class binary_writer
 #include <limits> // numeric_limits
 #include <string> // string
 #include <type_traits> // is_same
+#include <utility> // move
 
 // #include <nlohmann/detail/exceptions.hpp>
 
@@ -11821,6 +11834,7 @@ class json_ref
 #include <cassert> // assert
 #include <numeric> // accumulate
 #include <string> // string
+#include <utility> // move
 #include <vector> // vector
 
 // #include <nlohmann/detail/macro_scope.hpp>
@@ -16555,14 +16569,7 @@ class basic_json
     template<typename KeyT>
     bool contains(KeyT&& key) const
     {
-        if (is_object())
-        {
-            return (m_value.object->find(std::forward<KeyT>(key)) != m_value.object->end());
-        }
-        else
-        {
-            return false;
-        }
+        return (is_object() and  m_value.object->find(std::forward<KeyT>(key)) != m_value.object->end());
     }
 
     /// @}
@@ -20651,4 +20658,4 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 #undef NLOHMANN_BASIC_JSON_TPL
 
 
-#endif
+#endif  // INCLUDE_NLOHMANN_JSON_HPP_

@@ -12,6 +12,7 @@
 #include <limits> // numeric_limits
 #include <string> // string
 #include <type_traits> // is_same
+#include <utility> // move
 
 #include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/conversions/to_chars.hpp>

@@ -4,6 +4,7 @@
 #include <cassert> // assert
 #include <numeric> // accumulate
 #include <string> // string
+#include <utility> // move
 #include <vector> // vector
 
 #include <nlohmann/detail/macro_scope.hpp>

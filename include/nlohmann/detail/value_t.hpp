@@ -4,6 +4,7 @@
 #include <ciso646> // and
 #include <cstddef> // size_t
 #include <cstdint> // uint8_t
+#include <string> // string
 
 namespace nlohmann
 {
