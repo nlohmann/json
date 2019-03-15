@@ -2337,7 +2337,7 @@ struct wide_string_input_helper
         else
         {
             // get the current character
-            const auto wc = static_cast<int>(str[current_wchar++]);
+            const auto wc = static_cast<unsigned int>(str[current_wchar++]);
 
             // UTF-32 to UTF-8 encoding
             if (wc < 0x80)
@@ -2347,23 +2347,23 @@ struct wide_string_input_helper
             }
             else if (wc <= 0x7FF)
             {
-                utf8_bytes[0] = 0xC0 | ((wc >> 6) & 0x1F);
-                utf8_bytes[1] = 0x80 | (wc & 0x3F);
+                utf8_bytes[0] = 0xC0u | ((wc >> 6u) & 0x1Fu);
+                utf8_bytes[1] = 0x80u | (wc & 0x3Fu);
                 utf8_bytes_filled = 2;
             }
             else if (wc <= 0xFFFF)
             {
-                utf8_bytes[0] = 0xE0 | ((wc >> 12) & 0x0F);
-                utf8_bytes[1] = 0x80 | ((wc >> 6) & 0x3F);
-                utf8_bytes[2] = 0x80 | (wc & 0x3F);
+                utf8_bytes[0] = 0xE0u | ((wc >> 12u) & 0x0Fu);
+                utf8_bytes[1] = 0x80u | ((wc >> 6u) & 0x3Fu);
+                utf8_bytes[2] = 0x80u | (wc & 0x3Fu);
                 utf8_bytes_filled = 3;
             }
             else if (wc <= 0x10FFFF)
             {
-                utf8_bytes[0] = 0xF0 | ((wc >> 18) & 0x07);
-                utf8_bytes[1] = 0x80 | ((wc >> 12) & 0x3F);
-                utf8_bytes[2] = 0x80 | ((wc >> 6) & 0x3F);
-                utf8_bytes[3] = 0x80 | (wc & 0x3F);
+                utf8_bytes[0] = 0xF0u | ((wc >> 18u) & 0x07u);
+                utf8_bytes[1] = 0x80u | ((wc >> 12u) & 0x3Fu);
+                utf8_bytes[2] = 0x80u | ((wc >> 6u) & 0x3Fu);
+                utf8_bytes[3] = 0x80u | (wc & 0x3Fu);
                 utf8_bytes_filled = 4;
             }
             else
@@ -2392,7 +2392,7 @@ struct wide_string_input_helper<WideStringType, 2>
         else
         {
             // get the current character
-            const auto wc = static_cast<int>(str[current_wchar++]);
+            const auto wc = static_cast<unsigned int>(str[current_wchar++]);
 
             // UTF-16 to UTF-8 encoding
             if (wc < 0x80)
@@ -2402,27 +2402,27 @@ struct wide_string_input_helper<WideStringType, 2>
             }
             else if (wc <= 0x7FF)
             {
-                utf8_bytes[0] = 0xC0 | ((wc >> 6));
-                utf8_bytes[1] = 0x80 | (wc & 0x3F);
+                utf8_bytes[0] = 0xC0u | ((wc >> 6u));
+                utf8_bytes[1] = 0x80u | (wc & 0x3Fu);
                 utf8_bytes_filled = 2;
             }
             else if (0xD800 > wc or wc >= 0xE000)
             {
-                utf8_bytes[0] = 0xE0 | ((wc >> 12));
-                utf8_bytes[1] = 0x80 | ((wc >> 6) & 0x3F);
-                utf8_bytes[2] = 0x80 | (wc & 0x3F);
+                utf8_bytes[0] = 0xE0u | ((wc >> 12u));
+                utf8_bytes[1] = 0x80u | ((wc >> 6u) & 0x3Fu);
+                utf8_bytes[2] = 0x80u | (wc & 0x3Fu);
                 utf8_bytes_filled = 3;
             }
             else
             {
                 if (current_wchar < str.size())
                 {
-                    const auto wc2 = static_cast<int>(str[current_wchar++]);
-                    const int charcode = 0x10000 + (((wc & 0x3FF) << 10) | (wc2 & 0x3FF));
-                    utf8_bytes[0] = 0xf0 | (charcode >> 18);
-                    utf8_bytes[1] = 0x80 | ((charcode >> 12) & 0x3F);
-                    utf8_bytes[2] = 0x80 | ((charcode >> 6) & 0x3F);
-                    utf8_bytes[3] = 0x80 | (charcode & 0x3F);
+                    const auto wc2 = static_cast<unsigned int>(str[current_wchar++]);
+                    const auto charcode = 0x10000u + (((wc & 0x3FFu) << 10u) | (wc2 & 0x3FFu));
+                    utf8_bytes[0] = 0xF0u | (charcode >> 18u);
+                    utf8_bytes[1] = 0x80u | ((charcode >> 12u) & 0x3Fu);
+                    utf8_bytes[2] = 0x80u | ((charcode >> 6u) & 0x3Fu);
+                    utf8_bytes[3] = 0x80u | (charcode & 0x3Fu);
                     utf8_bytes_filled = 4;
                 }
                 else
@@ -2748,22 +2748,22 @@ class lexer
         assert(current == 'u');
         int codepoint = 0;
 
-        const auto factors = { 12, 8, 4, 0 };
+        const auto factors = { 12u, 8u, 4u, 0u };
         for (const auto factor : factors)
         {
             get();
 
             if (current >= '0' and current <= '9')
             {
-                codepoint += ((current - 0x30) << factor);
+                codepoint += ((static_cast<unsigned int>(current) - 0x30u) << factor);
             }
             else if (current >= 'A' and current <= 'F')
             {
-                codepoint += ((current - 0x37) << factor);
+                codepoint += ((static_cast<unsigned int>(current) - 0x37u) << factor);
             }
             else if (current >= 'a' and current <= 'f')
             {
-                codepoint += ((current - 0x57) << factor);
+                codepoint += ((static_cast<unsigned int>(current) - 0x57u) << factor);
             }
             else
             {
@@ -2923,13 +2923,13 @@ class lexer
                                         // overwrite codepoint
                                         codepoint =
                                             // high surrogate occupies the most significant 22 bits
-                                            (codepoint1 << 10)
+                                            (static_cast<unsigned int>(codepoint1) << 10u)
                                             // low surrogate occupies the least significant 15 bits
-                                            + codepoint2
+                                            + static_cast<unsigned int>(codepoint2)
                                             // there is still the 0xD800, 0xDC00 and 0x10000 noise
                                             // in the result so we have to subtract with:
                                             // (0xD800 << 10) + DC00 - 0x10000 = 0x35FDC00
-                                            - 0x35FDC00;
+                                            - 0x35FDC00u;
                                     }
                                     else
                                     {
@@ -2964,23 +2964,23 @@ class lexer
                             else if (codepoint <= 0x7FF)
                             {
                                 // 2-byte characters: 110xxxxx 10xxxxxx
-                                add(0xC0 | (codepoint >> 6));
-                                add(0x80 | (codepoint & 0x3F));
+                                add(0xC0u | (static_cast<unsigned int>(codepoint) >> 6u));
+                                add(0x80u | (static_cast<unsigned int>(codepoint) & 0x3Fu));
                             }
                             else if (codepoint <= 0xFFFF)
                             {
                                 // 3-byte characters: 1110xxxx 10xxxxxx 10xxxxxx
-                                add(0xE0 | (codepoint >> 12));
-                                add(0x80 | ((codepoint >> 6) & 0x3F));
-                                add(0x80 | (codepoint & 0x3F));
+                                add(0xE0u | (static_cast<unsigned int>(codepoint) >> 12u));
+                                add(0x80u | ((static_cast<unsigned int>(codepoint) >> 6u) & 0x3Fu));
+                                add(0x80u | (static_cast<unsigned int>(codepoint) & 0x3Fu));
                             }
                             else
                             {
                                 // 4-byte characters: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-                                add(0xF0 | (codepoint >> 18));
-                                add(0x80 | ((codepoint >> 12) & 0x3F));
-                                add(0x80 | ((codepoint >> 6) & 0x3F));
-                                add(0x80 | (codepoint & 0x3F));
+                                add(0xF0u | (static_cast<unsigned int>(codepoint) >> 18u));
+                                add(0x80u | ((static_cast<unsigned int>(codepoint) >> 12u) & 0x3Fu));
+                                add(0x80u | ((static_cast<unsigned int>(codepoint) >> 6u) & 0x3Fu));
+                                add(0x80u | (static_cast<unsigned int>(codepoint) & 0x3Fu));
                             }
 
                             break;
@@ -3897,7 +3897,7 @@ scan_number_done:
 
         if (JSON_LIKELY(current != std::char_traits<char>::eof()))
         {
-            assert(token_string.size() != 0);
+            assert(not token_string.empty());
             token_string.pop_back();
         }
     }
@@ -7014,7 +7014,7 @@ class binary_reader
             case 0x95:
             case 0x96:
             case 0x97:
-                return get_cbor_array(static_cast<std::size_t>(current & 0x1F));
+                return get_cbor_array(static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x1Fu));
 
             case 0x98: // array (one-byte uint8_t for n follows)
             {
@@ -7068,7 +7068,7 @@ class binary_reader
             case 0xB5:
             case 0xB6:
             case 0xB7:
-                return get_cbor_object(static_cast<std::size_t>(current & 0x1F));
+                return get_cbor_object(static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x1Fu));
 
             case 0xB8: // map (one-byte uint8_t for n follows)
             {
@@ -7130,11 +7130,11 @@ class binary_reader
                 // without such support. An example of a small decoder for
                 // half-precision floating-point numbers in the C language
                 // is shown in Fig. 3.
-                const int half = (byte1 << 8) + byte2;
+                const unsigned int half = (byte1 << 8u) + byte2;
                 const double val = [&half]
                 {
-                    const int exp = (half >> 10) & 0x1F;
-                    const int mant = half & 0x3FF;
+                    const unsigned int exp = (half >> 10u) & 0x1Fu;
+                    const unsigned int mant = half & 0x3FFu;
                     assert(0 <= exp and exp <= 32);
                     assert(0 <= mant and mant <= 1024);
                     switch (exp)
@@ -7149,7 +7149,7 @@ class binary_reader
                             return std::ldexp(mant + 1024, exp - 25);
                     }
                 }();
-                return sax->number_float((half & 0x8000) != 0
+                return sax->number_float((half & 0x8000u) != 0
                                          ? static_cast<number_float_t>(-val)
                                          : static_cast<number_float_t>(val), "");
             }
@@ -7220,7 +7220,7 @@ class binary_reader
             case 0x76:
             case 0x77:
             {
-                return get_string(input_format_t::cbor, current & 0x1F, result);
+                return get_string(input_format_t::cbor, static_cast<unsigned int>(current) & 0x1Fu, result);
             }
 
             case 0x78: // UTF-8 string (one-byte uint8_t for n follows)
@@ -7518,7 +7518,7 @@ class binary_reader
             case 0x8D:
             case 0x8E:
             case 0x8F:
-                return get_msgpack_object(static_cast<std::size_t>(current & 0x0F));
+                return get_msgpack_object(static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x0Fu));
 
             // fixarray
             case 0x90:
@@ -7537,7 +7537,7 @@ class binary_reader
             case 0x9D:
             case 0x9E:
             case 0x9F:
-                return get_msgpack_array(static_cast<std::size_t>(current & 0x0F));
+                return get_msgpack_array(static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x0Fu));
 
             // fixstr
             case 0xA0:
@@ -7774,7 +7774,7 @@ class binary_reader
             case 0xBE:
             case 0xBF:
             {
-                return get_string(input_format_t::msgpack, current & 0x1F, result);
+                return get_string(input_format_t::msgpack, static_cast<unsigned int>(current) & 0x1Fu, result);
             }
 
             case 0xD9: // str 8
@@ -11794,7 +11794,7 @@ class json_ref
           is_rvalue(true) {}
 
     // class should be movable only
-    json_ref(json_ref&&) = default;
+    json_ref(json_ref&&) noexcept = default;
     json_ref(const json_ref&) = delete;
     json_ref& operator=(const json_ref&) = delete;
     json_ref& operator=(json_ref&&) = delete;

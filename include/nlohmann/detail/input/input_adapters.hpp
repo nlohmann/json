@@ -165,7 +165,7 @@ struct wide_string_input_helper
         else
         {
             // get the current character
-            const auto wc = static_cast<int>(str[current_wchar++]);
+            const auto wc = static_cast<unsigned int>(str[current_wchar++]);
 
             // UTF-32 to UTF-8 encoding
             if (wc < 0x80)
@@ -175,23 +175,23 @@ struct wide_string_input_helper
             }
             else if (wc <= 0x7FF)
             {
-                utf8_bytes[0] = 0xC0 | ((wc >> 6) & 0x1F);
-                utf8_bytes[1] = 0x80 | (wc & 0x3F);
+                utf8_bytes[0] = 0xC0u | ((wc >> 6u) & 0x1Fu);
+                utf8_bytes[1] = 0x80u | (wc & 0x3Fu);
                 utf8_bytes_filled = 2;
             }
             else if (wc <= 0xFFFF)
             {
-                utf8_bytes[0] = 0xE0 | ((wc >> 12) & 0x0F);
-                utf8_bytes[1] = 0x80 | ((wc >> 6) & 0x3F);
-                utf8_bytes[2] = 0x80 | (wc & 0x3F);
+                utf8_bytes[0] = 0xE0u | ((wc >> 12u) & 0x0Fu);
+                utf8_bytes[1] = 0x80u | ((wc >> 6u) & 0x3Fu);
+                utf8_bytes[2] = 0x80u | (wc & 0x3Fu);
                 utf8_bytes_filled = 3;
             }
             else if (wc <= 0x10FFFF)
             {
-                utf8_bytes[0] = 0xF0 | ((wc >> 18) & 0x07);
-                utf8_bytes[1] = 0x80 | ((wc >> 12) & 0x3F);
-                utf8_bytes[2] = 0x80 | ((wc >> 6) & 0x3F);
-                utf8_bytes[3] = 0x80 | (wc & 0x3F);
+                utf8_bytes[0] = 0xF0u | ((wc >> 18u) & 0x07u);
+                utf8_bytes[1] = 0x80u | ((wc >> 12u) & 0x3Fu);
+                utf8_bytes[2] = 0x80u | ((wc >> 6u) & 0x3Fu);
+                utf8_bytes[3] = 0x80u | (wc & 0x3Fu);
                 utf8_bytes_filled = 4;
             }
             else
@@ -220,7 +220,7 @@ struct wide_string_input_helper<WideStringType, 2>
         else
         {
             // get the current character
-            const auto wc = static_cast<int>(str[current_wchar++]);
+            const auto wc = static_cast<unsigned int>(str[current_wchar++]);
 
             // UTF-16 to UTF-8 encoding
             if (wc < 0x80)
@@ -230,27 +230,27 @@ struct wide_string_input_helper<WideStringType, 2>
             }
             else if (wc <= 0x7FF)
             {
-                utf8_bytes[0] = 0xC0 | ((wc >> 6));
-                utf8_bytes[1] = 0x80 | (wc & 0x3F);
+                utf8_bytes[0] = 0xC0u | ((wc >> 6u));
+                utf8_bytes[1] = 0x80u | (wc & 0x3Fu);
                 utf8_bytes_filled = 2;
             }
             else if (0xD800 > wc or wc >= 0xE000)
             {
-                utf8_bytes[0] = 0xE0 | ((wc >> 12));
-                utf8_bytes[1] = 0x80 | ((wc >> 6) & 0x3F);
-                utf8_bytes[2] = 0x80 | (wc & 0x3F);
+                utf8_bytes[0] = 0xE0u | ((wc >> 12u));
+                utf8_bytes[1] = 0x80u | ((wc >> 6u) & 0x3Fu);
+                utf8_bytes[2] = 0x80u | (wc & 0x3Fu);
                 utf8_bytes_filled = 3;
             }
             else
             {
                 if (current_wchar < str.size())
                 {
-                    const auto wc2 = static_cast<int>(str[current_wchar++]);
-                    const int charcode = 0x10000 + (((wc & 0x3FF) << 10) | (wc2 & 0x3FF));
-                    utf8_bytes[0] = 0xf0 | (charcode >> 18);
-                    utf8_bytes[1] = 0x80 | ((charcode >> 12) & 0x3F);
-                    utf8_bytes[2] = 0x80 | ((charcode >> 6) & 0x3F);
-                    utf8_bytes[3] = 0x80 | (charcode & 0x3F);
+                    const auto wc2 = static_cast<unsigned int>(str[current_wchar++]);
+                    const auto charcode = 0x10000u + (((wc & 0x3FFu) << 10u) | (wc2 & 0x3FFu));
+                    utf8_bytes[0] = 0xF0u | (charcode >> 18u);
+                    utf8_bytes[1] = 0x80u | ((charcode >> 12u) & 0x3Fu);
+                    utf8_bytes[2] = 0x80u | ((charcode >> 6u) & 0x3Fu);
+                    utf8_bytes[3] = 0x80u | (charcode & 0x3Fu);
                     utf8_bytes_filled = 4;
                 }
                 else

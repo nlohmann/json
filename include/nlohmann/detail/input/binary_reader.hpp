@@ -522,7 +522,7 @@ class binary_reader
             case 0x95:
             case 0x96:
             case 0x97:
-                return get_cbor_array(static_cast<std::size_t>(current & 0x1F));
+                return get_cbor_array(static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x1Fu));
 
             case 0x98: // array (one-byte uint8_t for n follows)
             {
@@ -576,7 +576,7 @@ class binary_reader
             case 0xB5:
             case 0xB6:
             case 0xB7:
-                return get_cbor_object(static_cast<std::size_t>(current & 0x1F));
+                return get_cbor_object(static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x1Fu));
 
             case 0xB8: // map (one-byte uint8_t for n follows)
             {
@@ -638,11 +638,11 @@ class binary_reader
                 // without such support. An example of a small decoder for
                 // half-precision floating-point numbers in the C language
                 // is shown in Fig. 3.
-                const int half = (byte1 << 8) + byte2;
+                const unsigned int half = (byte1 << 8u) + byte2;
                 const double val = [&half]
                 {
-                    const int exp = (half >> 10) & 0x1F;
-                    const int mant = half & 0x3FF;
+                    const unsigned int exp = (half >> 10u) & 0x1Fu;
+                    const unsigned int mant = half & 0x3FFu;
                     assert(0 <= exp and exp <= 32);
                     assert(0 <= mant and mant <= 1024);
                     switch (exp)
@@ -657,7 +657,7 @@ class binary_reader
                             return std::ldexp(mant + 1024, exp - 25);
                     }
                 }();
-                return sax->number_float((half & 0x8000) != 0
+                return sax->number_float((half & 0x8000u) != 0
                                          ? static_cast<number_float_t>(-val)
                                          : static_cast<number_float_t>(val), "");
             }
@@ -728,7 +728,7 @@ class binary_reader
             case 0x76:
             case 0x77:
             {
-                return get_string(input_format_t::cbor, current & 0x1F, result);
+                return get_string(input_format_t::cbor, static_cast<unsigned int>(current) & 0x1Fu, result);
             }
 
             case 0x78: // UTF-8 string (one-byte uint8_t for n follows)
@@ -1026,7 +1026,7 @@ class binary_reader
             case 0x8D:
             case 0x8E:
             case 0x8F:
-                return get_msgpack_object(static_cast<std::size_t>(current & 0x0F));
+                return get_msgpack_object(static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x0Fu));
 
             // fixarray
             case 0x90:
@@ -1045,7 +1045,7 @@ class binary_reader
             case 0x9D:
             case 0x9E:
             case 0x9F:
-                return get_msgpack_array(static_cast<std::size_t>(current & 0x0F));
+                return get_msgpack_array(static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x0Fu));
 
             // fixstr
             case 0xA0:
@@ -1282,7 +1282,7 @@ class binary_reader
             case 0xBE:
             case 0xBF:
             {
-                return get_string(input_format_t::msgpack, current & 0x1F, result);
+                return get_string(input_format_t::msgpack, static_cast<unsigned int>(current) & 0x1Fu, result);
             }
 
             case 0xD9: // str 8
