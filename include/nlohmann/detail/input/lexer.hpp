@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array> // array
 #include <clocale> // localeconv
 #include <cstddef> // size_t
 #include <cstdlib> // strtof, strtod, strtold, strtoll, strtoull
@@ -156,15 +157,15 @@ class lexer
 
             if (current >= '0' and current <= '9')
             {
-                codepoint += ((static_cast<unsigned int>(current) - 0x30u) << factor);
+                codepoint += static_cast<int>((static_cast<unsigned int>(current) - 0x30u) << factor);
             }
             else if (current >= 'A' and current <= 'F')
             {
-                codepoint += ((static_cast<unsigned int>(current) - 0x37u) << factor);
+                codepoint += static_cast<int>((static_cast<unsigned int>(current) - 0x37u) << factor);
             }
             else if (current >= 'a' and current <= 'f')
             {
-                codepoint += ((static_cast<unsigned int>(current) - 0x57u) << factor);
+                codepoint += static_cast<int>((static_cast<unsigned int>(current) - 0x57u) << factor);
             }
             else
             {
@@ -322,15 +323,15 @@ class lexer
                                     if (JSON_LIKELY(0xDC00 <= codepoint2 and codepoint2 <= 0xDFFF))
                                     {
                                         // overwrite codepoint
-                                        codepoint =
-                                            // high surrogate occupies the most significant 22 bits
-                                            (static_cast<unsigned int>(codepoint1) << 10u)
-                                            // low surrogate occupies the least significant 15 bits
-                                            + static_cast<unsigned int>(codepoint2)
-                                            // there is still the 0xD800, 0xDC00 and 0x10000 noise
-                                            // in the result so we have to subtract with:
-                                            // (0xD800 << 10) + DC00 - 0x10000 = 0x35FDC00
-                                            - 0x35FDC00u;
+                                        codepoint = static_cast<int>(
+                                                        // high surrogate occupies the most significant 22 bits
+                                                        (static_cast<unsigned int>(codepoint1) << 10u)
+                                                        // low surrogate occupies the least significant 15 bits
+                                                        + static_cast<unsigned int>(codepoint2)
+                                                        // there is still the 0xD800, 0xDC00 and 0x10000 noise
+                                                        // in the result so we have to subtract with:
+                                                        // (0xD800 << 10) + DC00 - 0x10000 = 0x35FDC00
+                                                        - 0x35FDC00u);
                                     }
                                     else
                                     {
@@ -365,23 +366,23 @@ class lexer
                             else if (codepoint <= 0x7FF)
                             {
                                 // 2-byte characters: 110xxxxx 10xxxxxx
-                                add(0xC0u | (static_cast<unsigned int>(codepoint) >> 6u));
-                                add(0x80u | (static_cast<unsigned int>(codepoint) & 0x3Fu));
+                                add(static_cast<int>(0xC0u | (static_cast<unsigned int>(codepoint) >> 6u)));
+                                add(static_cast<int>(0x80u | (static_cast<unsigned int>(codepoint) & 0x3Fu)));
                             }
                             else if (codepoint <= 0xFFFF)
                             {
                                 // 3-byte characters: 1110xxxx 10xxxxxx 10xxxxxx
-                                add(0xE0u | (static_cast<unsigned int>(codepoint) >> 12u));
-                                add(0x80u | ((static_cast<unsigned int>(codepoint) >> 6u) & 0x3Fu));
-                                add(0x80u | (static_cast<unsigned int>(codepoint) & 0x3Fu));
+                                add(static_cast<int>(0xE0u | (static_cast<unsigned int>(codepoint) >> 12u)));
+                                add(static_cast<int>(0x80u | ((static_cast<unsigned int>(codepoint) >> 6u) & 0x3Fu)));
+                                add(static_cast<int>(0x80u | (static_cast<unsigned int>(codepoint) & 0x3Fu)));
                             }
                             else
                             {
                                 // 4-byte characters: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-                                add(0xF0u | (static_cast<unsigned int>(codepoint) >> 18u));
-                                add(0x80u | ((static_cast<unsigned int>(codepoint) >> 12u) & 0x3Fu));
-                                add(0x80u | ((static_cast<unsigned int>(codepoint) >> 6u) & 0x3Fu));
-                                add(0x80u | (static_cast<unsigned int>(codepoint) & 0x3Fu));
+                                add(static_cast<int>(0xF0u | (static_cast<unsigned int>(codepoint) >> 18u)));
+                                add(static_cast<int>(0x80u | ((static_cast<unsigned int>(codepoint) >> 12u) & 0x3Fu)));
+                                add(static_cast<int>(0x80u | ((static_cast<unsigned int>(codepoint) >> 6u) & 0x3Fu)));
+                                add(static_cast<int>(0x80u | (static_cast<unsigned int>(codepoint) & 0x3Fu)));
                             }
 
                             break;
@@ -1360,9 +1361,9 @@ scan_number_done:
             if ('\x00' <= c and c <= '\x1F')
             {
                 // escape control characters
-                char cs[9];
-                (std::snprintf)(cs, 9, "<U+%.4X>", static_cast<unsigned char>(c));
-                result += cs;
+                std::array<char, 9> cs{};
+                (std::snprintf)(cs.data(), cs.size(), "<U+%.4X>", static_cast<unsigned char>(c));
+                result += cs.data();
             }
             else
             {

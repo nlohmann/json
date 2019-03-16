@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array> // array
 #include <cassert> // assert
 #include <cstddef> // size_t
 #include <cstring> // strlen
@@ -153,7 +154,11 @@ template<typename WideStringType, size_t T>
 struct wide_string_input_helper
 {
     // UTF-32
-    static void fill_buffer(const WideStringType& str, size_t& current_wchar, std::array<std::char_traits<char>::int_type, 4>& utf8_bytes, size_t& utf8_bytes_index, size_t& utf8_bytes_filled)
+    static void fill_buffer(const WideStringType& str,
+                            size_t& current_wchar,
+                            std::array<std::char_traits<char>::int_type, 4>& utf8_bytes,
+                            size_t& utf8_bytes_index,
+                            size_t& utf8_bytes_filled)
     {
         utf8_bytes_index = 0;
 
@@ -170,34 +175,34 @@ struct wide_string_input_helper
             // UTF-32 to UTF-8 encoding
             if (wc < 0x80)
             {
-                utf8_bytes[0] = wc;
+                utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(wc);
                 utf8_bytes_filled = 1;
             }
             else if (wc <= 0x7FF)
             {
-                utf8_bytes[0] = 0xC0u | ((wc >> 6u) & 0x1Fu);
-                utf8_bytes[1] = 0x80u | (wc & 0x3Fu);
+                utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(0xC0u | ((wc >> 6u) & 0x1Fu));
+                utf8_bytes[1] = static_cast<std::char_traits<char>::int_type>(0x80u | (wc & 0x3Fu));
                 utf8_bytes_filled = 2;
             }
             else if (wc <= 0xFFFF)
             {
-                utf8_bytes[0] = 0xE0u | ((wc >> 12u) & 0x0Fu);
-                utf8_bytes[1] = 0x80u | ((wc >> 6u) & 0x3Fu);
-                utf8_bytes[2] = 0x80u | (wc & 0x3Fu);
+                utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(0xE0u | ((wc >> 12u) & 0x0Fu));
+                utf8_bytes[1] = static_cast<std::char_traits<char>::int_type>(0x80u | ((wc >> 6u) & 0x3Fu));
+                utf8_bytes[2] = static_cast<std::char_traits<char>::int_type>(0x80u | (wc & 0x3Fu));
                 utf8_bytes_filled = 3;
             }
             else if (wc <= 0x10FFFF)
             {
-                utf8_bytes[0] = 0xF0u | ((wc >> 18u) & 0x07u);
-                utf8_bytes[1] = 0x80u | ((wc >> 12u) & 0x3Fu);
-                utf8_bytes[2] = 0x80u | ((wc >> 6u) & 0x3Fu);
-                utf8_bytes[3] = 0x80u | (wc & 0x3Fu);
+                utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(0xF0u | ((wc >> 18u) & 0x07u));
+                utf8_bytes[1] = static_cast<std::char_traits<char>::int_type>(0x80u | ((wc >> 12u) & 0x3Fu));
+                utf8_bytes[2] = static_cast<std::char_traits<char>::int_type>(0x80u | ((wc >> 6u) & 0x3Fu));
+                utf8_bytes[3] = static_cast<std::char_traits<char>::int_type>(0x80u | (wc & 0x3Fu));
                 utf8_bytes_filled = 4;
             }
             else
             {
                 // unknown character
-                utf8_bytes[0] = wc;
+                utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(wc);
                 utf8_bytes_filled = 1;
             }
         }
@@ -208,7 +213,11 @@ template<typename WideStringType>
 struct wide_string_input_helper<WideStringType, 2>
 {
     // UTF-16
-    static void fill_buffer(const WideStringType& str, size_t& current_wchar, std::array<std::char_traits<char>::int_type, 4>& utf8_bytes, size_t& utf8_bytes_index, size_t& utf8_bytes_filled)
+    static void fill_buffer(const WideStringType& str,
+                            size_t& current_wchar,
+                            std::array<std::char_traits<char>::int_type, 4>& utf8_bytes,
+                            size_t& utf8_bytes_index,
+                            size_t& utf8_bytes_filled)
     {
         utf8_bytes_index = 0;
 
@@ -225,20 +234,20 @@ struct wide_string_input_helper<WideStringType, 2>
             // UTF-16 to UTF-8 encoding
             if (wc < 0x80)
             {
-                utf8_bytes[0] = wc;
+                utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(wc);
                 utf8_bytes_filled = 1;
             }
             else if (wc <= 0x7FF)
             {
-                utf8_bytes[0] = 0xC0u | ((wc >> 6u));
-                utf8_bytes[1] = 0x80u | (wc & 0x3Fu);
+                utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(0xC0u | ((wc >> 6u)));
+                utf8_bytes[1] = static_cast<std::char_traits<char>::int_type>(0x80u | (wc & 0x3Fu));
                 utf8_bytes_filled = 2;
             }
             else if (0xD800 > wc or wc >= 0xE000)
             {
-                utf8_bytes[0] = 0xE0u | ((wc >> 12u));
-                utf8_bytes[1] = 0x80u | ((wc >> 6u) & 0x3Fu);
-                utf8_bytes[2] = 0x80u | (wc & 0x3Fu);
+                utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(0xE0u | ((wc >> 12u)));
+                utf8_bytes[1] = static_cast<std::char_traits<char>::int_type>(0x80u | ((wc >> 6u) & 0x3Fu));
+                utf8_bytes[2] = static_cast<std::char_traits<char>::int_type>(0x80u | (wc & 0x3Fu));
                 utf8_bytes_filled = 3;
             }
             else
@@ -247,17 +256,17 @@ struct wide_string_input_helper<WideStringType, 2>
                 {
                     const auto wc2 = static_cast<unsigned int>(str[current_wchar++]);
                     const auto charcode = 0x10000u + (((wc & 0x3FFu) << 10u) | (wc2 & 0x3FFu));
-                    utf8_bytes[0] = 0xF0u | (charcode >> 18u);
-                    utf8_bytes[1] = 0x80u | ((charcode >> 12u) & 0x3Fu);
-                    utf8_bytes[2] = 0x80u | ((charcode >> 6u) & 0x3Fu);
-                    utf8_bytes[3] = 0x80u | (charcode & 0x3Fu);
+                    utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(0xF0u | (charcode >> 18u));
+                    utf8_bytes[1] = static_cast<std::char_traits<char>::int_type>(0x80u | ((charcode >> 12u) & 0x3Fu));
+                    utf8_bytes[2] = static_cast<std::char_traits<char>::int_type>(0x80u | ((charcode >> 6u) & 0x3Fu));
+                    utf8_bytes[3] = static_cast<std::char_traits<char>::int_type>(0x80u | (charcode & 0x3Fu));
                     utf8_bytes_filled = 4;
                 }
                 else
                 {
                     // unknown character
                     ++current_wchar;
-                    utf8_bytes[0] = wc;
+                    utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(wc);
                     utf8_bytes_filled = 1;
                 }
             }

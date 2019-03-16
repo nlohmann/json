@@ -6153,13 +6153,9 @@ class basic_json
                           const bool strict = true)
     {
         assert(sax);
-        switch (format)
-        {
-            case input_format_t::json:
-                return parser(std::move(i)).sax_parse(sax, strict);
-            default:
-                return detail::binary_reader<basic_json, SAX>(std::move(i)).sax_parse(format, sax, strict);
-        }
+        return format == input_format_t::json
+               ? parser(std::move(i)).sax_parse(sax, strict)
+               : detail::binary_reader<basic_json, SAX>(std::move(i)).sax_parse(format, sax, strict);
     }
 
     /*!
