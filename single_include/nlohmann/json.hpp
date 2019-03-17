@@ -2839,9 +2839,9 @@ class json_sax_dom_parser
 
     // make class move-only
     json_sax_dom_parser(const json_sax_dom_parser&) = delete;
-    json_sax_dom_parser(json_sax_dom_parser&&) noexcept = default;
+    json_sax_dom_parser(json_sax_dom_parser&&) = default;
     json_sax_dom_parser& operator=(const json_sax_dom_parser&) = delete;
-    json_sax_dom_parser& operator=(json_sax_dom_parser&&) noexcept = default;
+    json_sax_dom_parser& operator=(json_sax_dom_parser&&) = default;
     ~json_sax_dom_parser() = default;
 
     bool null()
@@ -3579,9 +3579,9 @@ class binary_reader
 
     // make class move-only
     binary_reader(const binary_reader&) = delete;
-    binary_reader(binary_reader&&) noexcept = default;
+    binary_reader(binary_reader&&) = default;
     binary_reader& operator=(const binary_reader&) = delete;
-    binary_reader& operator=(binary_reader&&) noexcept = default;
+    binary_reader& operator=(binary_reader&&) = default;
     ~binary_reader() = default;
 
     /*!
@@ -9258,7 +9258,7 @@ class json_ref
           is_rvalue(true) {}
 
     // class should be movable only
-    json_ref(json_ref&&) noexcept = default;
+    json_ref(json_ref&&) = default;
     json_ref(const json_ref&) = delete;
     json_ref& operator=(const json_ref&) = delete;
     json_ref& operator=(json_ref&&) = delete;
@@ -12490,7 +12490,7 @@ class serializer
         }
 
         // use a pointer to fill the buffer
-        auto buffer_ptr = begin(number_buffer);
+        auto buffer_ptr = number_buffer.begin();
 
         const bool is_negative = std::is_same<NumberType, number_integer_t>::value and not(x >= 0); // see issue #755
         number_unsigned_t abs_value;

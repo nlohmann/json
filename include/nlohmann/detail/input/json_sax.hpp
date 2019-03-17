@@ -161,9 +161,9 @@ class json_sax_dom_parser
 
     // make class move-only
     json_sax_dom_parser(const json_sax_dom_parser&) = delete;
-    json_sax_dom_parser(json_sax_dom_parser&&) noexcept = default;
+    json_sax_dom_parser(json_sax_dom_parser&&) = default;
     json_sax_dom_parser& operator=(const json_sax_dom_parser&) = delete;
-    json_sax_dom_parser& operator=(json_sax_dom_parser&&) noexcept = default;
+    json_sax_dom_parser& operator=(json_sax_dom_parser&&) = default;
     ~json_sax_dom_parser() = default;
 
     bool null()

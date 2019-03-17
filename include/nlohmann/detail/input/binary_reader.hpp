@@ -54,9 +54,9 @@ class binary_reader
 
     // make class move-only
     binary_reader(const binary_reader&) = delete;
-    binary_reader(binary_reader&&) noexcept = default;
+    binary_reader(binary_reader&&) = default;
     binary_reader& operator=(const binary_reader&) = delete;
-    binary_reader& operator=(binary_reader&&) noexcept = default;
+    binary_reader& operator=(binary_reader&&) = default;
     ~binary_reader() = default;
 
     /*!

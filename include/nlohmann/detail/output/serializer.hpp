@@ -626,7 +626,7 @@ class serializer
         }
 
         // use a pointer to fill the buffer
-        auto buffer_ptr = begin(number_buffer);
+        auto buffer_ptr = number_buffer.begin();
 
         const bool is_negative = std::is_same<NumberType, number_integer_t>::value and not(x >= 0); // see issue #755
         number_unsigned_t abs_value;
