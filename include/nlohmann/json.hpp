@@ -3901,6 +3901,8 @@ class basic_json
 
     @liveexample{The example shows how `find()` is used.,find__key_type}
 
+    @sa @ref contains(KeyT&&) const -- checks whether a key exists
+
     @since version 1.0.0
     */
     template<typename KeyT>
@@ -3978,6 +3980,10 @@ class basic_json
     false is returned.
 
     @complexity Logarithmic in the size of the JSON object.
+
+    @liveexample{The following code shows an example for `contains()`.,contains}
+
+    @sa @ref find(KeyT&&) -- returns an iterator to an object element
 
     @since version 3.6.0
     */

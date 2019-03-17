@@ -57,6 +57,7 @@ These pages contain the API documentation of JSON for Modern C++, a C++11 header
     - @link nlohmann::basic_json::number_integer_t signed integers @endlink
     - @link nlohmann::basic_json::number_unsigned_t unsigned integers @endlink
     - @link nlohmann::basic_json::number_float_t floating-point @endlink
+- @link nlohmann::json_pointer JSON Pointer @endlink
 
 # Container function overview
 

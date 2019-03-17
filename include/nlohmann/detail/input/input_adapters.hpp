@@ -61,9 +61,9 @@ class file_input_adapter : public input_adapter_protocol
 
     // make class move-only
     file_input_adapter(const file_input_adapter&) = delete;
-    file_input_adapter(file_input_adapter&&) noexcept = default;
+    file_input_adapter(file_input_adapter&&) = default;
     file_input_adapter& operator=(const file_input_adapter&) = delete;
-    file_input_adapter& operator=(file_input_adapter&&) noexcept = default;
+    file_input_adapter& operator=(file_input_adapter&&) = default;
     ~file_input_adapter() override = default;
 
     std::char_traits<char>::int_type get_character() noexcept override
