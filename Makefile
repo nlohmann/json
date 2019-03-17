@@ -192,9 +192,11 @@ pedantic_gcc:
 		-Wdouble-promotion \
 		-Wduplicated-branches \
 		-Wduplicated-cond \
+		-Weffc++ \
 		-Wempty-body \
 		-Wendif-labels \
 		-Wenum-compare \
+		-Wexpansion-to-defined \
 		-Werror \
 		-Wextra \
 		-Wextra-semi \
@@ -249,13 +251,9 @@ pedantic_gcc:
 		-Wmultistatement-macros \
 		-Wnarrowing \
 		-Wno-deprecated-declarations \
-		-Wno-effc++ \
-		-Wno-expansion-to-defined \
-		-Wno-ignored-qualifiers \
 		-Wno-long-long \
 		-Wno-namespaces \
 		-Wno-padded \
-		-Wno-switch-default \
 		-Wno-switch-enum \
 		-Wno-system-headers \
 		-Wno-templates \
@@ -332,6 +330,7 @@ pedantic_gcc:
 		-Wsuggest-override \
 		-Wswitch \
 		-Wswitch-bool \
+		-Wswitch-default \
 		-Wswitch-unreachable \
 		-Wsync-nand \
 		-Wsynth \
@@ -457,7 +456,7 @@ cpplint:
 	third_party/cpplint/cpplint.py --filter=-whitespace,-legal,-readability/alt_tokens,-runtime/references,-runtime/explicit --quiet --recursive include
 
 clang_tidy:
-	$(COMPILER_DIR)/clang-tidy -checks='-*, readability-*, -readability-magic-numbers, -readability-uppercase-literal-suffix, modernize-*, bugprone-*, performance-*, clang-analyzer-*, portability-*, cert-*, hicpp-*, -hicpp-no-array-decay, -hicpp-uppercase-literal-suffix, google-*, -google-runtime-references' $(SRCS) -- -Iinclude -std=c++11
+	$(COMPILER_DIR)/clang-tidy $(SRCS) -- -Iinclude -std=c++11
 
 pvs_studio:
 	rm -fr pvs_studio_build
