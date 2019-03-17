@@ -469,12 +469,25 @@ class other_error : public exception
     #endif
 #endif
 
+#if defined(__has_include) && !defined(__INTELLISENSE__) && \
+    !(defined(__INTEL_COMPILER) && __INTEL_COMPILER < 1600)
+    #define JSON_HAS_INCLUDE(x) __has_include(x)
+#else
+    #define JSON_HAS_INCLUDE(x) 0
+#endif
+
 // C++ language standard detection
 #if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_HAS_CXX17) && _HAS_CXX17 == 1) // fix for issue #464
     #define JSON_HAS_CPP_17
     #define JSON_HAS_CPP_14
 #elif (defined(__cplusplus) && __cplusplus >= 201402L) || (defined(_HAS_CXX14) && _HAS_CXX14 == 1)
     #define JSON_HAS_CPP_14
+#endif
+
+#if (JSON_HAS_INCLUDE(<string_view>) &&                       \
+     (__cplusplus > 201402L || defined(_LIBCPP_VERSION))) || \
+    (defined(_MSVC_LANG) && _MSVC_LANG > 201402L && _MSC_VER >= 1910)
+#  define JSON_HAS_STRING_VIEW
 #endif
 
 // disable float-equal warnings on GCC/clang
@@ -12841,7 +12854,7 @@ class serializer
 // #include <nlohmann/json_fwd.hpp>
 
 
-#if defined(JSON_HAS_CPP_17)
+#if defined(JSON_HAS_STRING_VIEW)
     #include <string_view>
 #endif
 
@@ -15637,7 +15650,7 @@ class basic_json
 #ifndef _MSC_VER  // fix for issue #167 operator<< ambiguity under VS2015
                    and not std::is_same<ValueType, std::initializer_list<typename string_t::value_type>>::value
 #endif
-#if defined(JSON_HAS_CPP_17)
+#if defined(JSON_HAS_STRING_VIEW)
                    and not std::is_same<ValueType, typename std::string_view>::value
 #endif
                    and detail::is_detected<detail::get_template_function, const basic_json_t&, ValueType>::value
@@ -20841,8 +20854,10 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 #undef JSON_UNLIKELY
 #undef JSON_DEPRECATED
 #undef JSON_NODISCARD
+#undef JSON_HAS_INCLUDE
 #undef JSON_HAS_CPP_14
 #undef JSON_HAS_CPP_17
+#undef JSON_HAS_STRING_VIEW
 #undef NLOHMANN_BASIC_JSON_TPL_DECLARATION
 #undef NLOHMANN_BASIC_JSON_TPL
 

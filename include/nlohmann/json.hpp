@@ -72,7 +72,7 @@ SOFTWARE.
 #include <nlohmann/detail/value_t.hpp>
 #include <nlohmann/json_fwd.hpp>
 
-#if defined(JSON_HAS_CPP_17)
+#if defined(JSON_HAS_STRING_VIEW)
     #include <string_view>
 #endif
 
@@ -2868,7 +2868,7 @@ class basic_json
 #ifndef _MSC_VER  // fix for issue #167 operator<< ambiguity under VS2015
                    and not std::is_same<ValueType, std::initializer_list<typename string_t::value_type>>::value
 #endif
-#if defined(JSON_HAS_CPP_17)
+#if defined(JSON_HAS_STRING_VIEW)
                    and not std::is_same<ValueType, typename std::string_view>::value
 #endif
                    and detail::is_detected<detail::get_template_function, const basic_json_t&, ValueType>::value

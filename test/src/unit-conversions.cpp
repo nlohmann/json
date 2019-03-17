@@ -47,7 +47,7 @@ using nlohmann::json;
     #define JSON_HAS_CPP_14
 #endif
 
-#if defined(JSON_HAS_CPP_17)
+#if defined(JSON_HAS_STRING_VIEW)
     #include <string_view>
 #endif
 
@@ -369,7 +369,7 @@ TEST_CASE("value conversion")
             std::string s = j.get<std::string>();
             CHECK(json(s) == j);
         }
-#if defined(JSON_HAS_CPP_17)
+#if defined(JSON_HAS_STRING_VIEW)
         SECTION("std::string_view")
         {
             std::string_view s = j.get<std::string_view>();
@@ -418,7 +418,7 @@ TEST_CASE("value conversion")
                 "[json.exception.type_error.302] type must be string, but is number");
         }
 
-#if defined(JSON_HAS_CPP_17)
+#if defined(JSON_HAS_STRING_VIEW)
         SECTION("exception in case of a non-string type using string_view")
         {
             CHECK_THROWS_AS(json(json::value_t::null).get<std::string_view>(), json::type_error&);
@@ -491,7 +491,7 @@ TEST_CASE("value conversion")
             CHECK(json(s) == j);
         }
 
-#if defined(JSON_HAS_CPP_17)
+#if defined(JSON_HAS_STRING_VIEW)
         SECTION("std::string_view")
         {
             static_assert(!is_implicitly_convertible<decltype(j), std::string_view>::value);
