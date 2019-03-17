@@ -466,6 +466,15 @@ pvs_studio:
 	cd pvs_studio_build ; plog-converter -a'GA:1,2;64:1;CS' -t fullhtml PVS-Studio.log -o pvs
 	open pvs_studio_build/pvs/index.html
 
+infer:
+	rm -fr infer_build
+	mkdir infer_build
+	cd infer_build ; infer compile -- cmake .. ; infer run -- make -j 4
+
+oclint:
+	oclint $(SRCS) -report-type html -enable-global-analysis -o oclint_report.html -max-priority-1=10000 -max-priority-2=10000 -max-priority-3=10000 -- -std=c++11 -Iinclude
+	open oclint_report.html
+
 ##########################################################################
 # maintainer targets
 ##########################################################################
