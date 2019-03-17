@@ -48,71 +48,405 @@ SOFTWARE.
 #include <utility> // declval, forward, move, pair, swap
 #include <vector> // vector
 
-// #include <nlohmann/json_fwd.hpp>
-#ifndef INCLUDE_NLOHMANN_JSON_FWD_HPP_
-#define INCLUDE_NLOHMANN_JSON_FWD_HPP_
+// #include <nlohmann/adl_serializer.hpp>
 
-#include <cstdint> // int64_t, uint64_t
+
+#include <utility>
+
+// #include <nlohmann/detail/conversions/from_json.hpp>
+
+
+#include <algorithm> // transform
+#include <array> // array
+#include <ciso646> // and, not
+#include <forward_list> // forward_list
+#include <iterator> // inserter, front_inserter, end
 #include <map> // map
-#include <memory> // allocator
 #include <string> // string
-#include <vector> // vector
+#include <tuple> // tuple, make_tuple
+#include <type_traits> // is_arithmetic, is_same, is_enum, underlying_type, is_convertible
+#include <unordered_map> // unordered_map
+#include <utility> // pair, declval
+#include <valarray> // valarray
 
-/*!
-@brief namespace for Niels Lohmann
-@see https://github.com/nlohmann
-@since version 1.0.0
-*/
+// #include <nlohmann/detail/exceptions.hpp>
+
+
+#include <exception> // exception
+#include <stdexcept> // runtime_error
+#include <string> // to_string
+
+// #include <nlohmann/detail/input/position_t.hpp>
+
+
+#include <cstddef> // size_t
+
 namespace nlohmann
 {
-/*!
-@brief default JSONSerializer template argument
+namespace detail
+{
+/// struct to capture the start position of the current token
+struct position_t
+{
+    /// the total number of characters read
+    std::size_t chars_read_total = 0;
+    /// the number of characters read in the current line
+    std::size_t chars_read_current_line = 0;
+    /// the number of lines read
+    std::size_t lines_read = 0;
 
-This serializer ignores the template arguments and uses ADL
-([argument-dependent lookup](https://en.cppreference.com/w/cpp/language/adl))
-for serialization.
-*/
-template<typename T = void, typename SFINAE = void>
-struct adl_serializer;
+    /// conversion to size_t to preserve SAX interface
+    constexpr operator size_t() const
+    {
+        return chars_read_total;
+    }
+};
 
-template<template<typename U, typename V, typename... Args> class ObjectType =
-         std::map,
-         template<typename U, typename... Args> class ArrayType = std::vector,
-         class StringType = std::string, class BooleanType = bool,
-         class NumberIntegerType = std::int64_t,
-         class NumberUnsignedType = std::uint64_t,
-         class NumberFloatType = double,
-         template<typename U> class AllocatorType = std::allocator,
-         template<typename T, typename SFINAE = void> class JSONSerializer =
-         adl_serializer>
-class basic_json;
+} // namespace detail
+} // namespace nlohmann
 
-/*!
-@brief JSON Pointer
 
-A JSON pointer defines a string syntax for identifying a specific value
-within a JSON document. It can be used with functions `at` and
-`operator[]`. Furthermore, JSON pointers are the base for JSON patches.
-
-@sa [RFC 6901](https://tools.ietf.org/html/rfc6901)
-
-@since version 2.0.0
-*/
-template<typename BasicJsonType>
-class json_pointer;
+namespace nlohmann
+{
+namespace detail
+{
+////////////////
+// exceptions //
+////////////////
 
 /*!
-@brief default JSON class
+@brief general exception of the @ref basic_json class
 
-This type is the default specialization of the @ref basic_json class which
-uses the standard template types.
+This class is an extension of `std::exception` objects with a member @a id for
+exception ids. It is used as the base class for all exceptions thrown by the
+@ref basic_json class. This class can hence be used as "wildcard" to catch
+exceptions.
 
-@since version 1.0.0
+Subclasses:
+- @ref parse_error for exceptions indicating a parse error
+- @ref invalid_iterator for exceptions indicating errors with iterators
+- @ref type_error for exceptions indicating executing a member function with
+                  a wrong type
+- @ref out_of_range for exceptions indicating access out of the defined range
+- @ref other_error for exceptions indicating other library errors
+
+@internal
+@note To have nothrow-copy-constructible exceptions, we internally use
+      `std::runtime_error` which can cope with arbitrary-length error messages.
+      Intermediate strings are built with static functions and then passed to
+      the actual constructor.
+@endinternal
+
+@liveexample{The following code shows how arbitrary library exceptions can be
+caught.,exception}
+
+@since version 3.0.0
 */
-using json = basic_json<>;
+class exception : public std::exception
+{
+  public:
+    /// returns the explanatory string
+    const char* what() const noexcept override
+    {
+        return m.what();
+    }
+
+    /// the id of the exception
+    const int id;
+
+  protected:
+    exception(int id_, const char* what_arg) : id(id_), m(what_arg) {}
+
+    static std::string name(const std::string& ename, int id_)
+    {
+        return "[json.exception." + ename + "." + std::to_string(id_) + "] ";
+    }
+
+  private:
+    /// an exception object as storage for error messages
+    std::runtime_error m;
+};
+
+/*!
+@brief exception indicating a parse error
+
+This exception is thrown by the library when a parse error occurs. Parse errors
+can occur during the deserialization of JSON text, CBOR, MessagePack, as well
+as when using JSON Patch.
+
+Member @a byte holds the byte index of the last read character in the input
+file.
+
+Exceptions have ids 1xx.
+
+name / id                      | example message | description
+------------------------------ | --------------- | -------------------------
+json.exception.parse_error.101 | parse error at 2: unexpected end of input; expected string literal | This error indicates a syntax error while deserializing a JSON text. The error message describes that an unexpected token (character) was encountered, and the member @a byte indicates the error position.
+json.exception.parse_error.102 | parse error at 14: missing or wrong low surrogate | JSON uses the `\uxxxx` format to describe Unicode characters. Code points above above 0xFFFF are split into two `\uxxxx` entries ("surrogate pairs"). This error indicates that the surrogate pair is incomplete or contains an invalid code point.
+json.exception.parse_error.103 | parse error: code points above 0x10FFFF are invalid | Unicode supports code points up to 0x10FFFF. Code points above 0x10FFFF are invalid.
+json.exception.parse_error.104 | parse error: JSON patch must be an array of objects | [RFC 6902](https://tools.ietf.org/html/rfc6902) requires a JSON Patch document to be a JSON document that represents an array of objects.
+json.exception.parse_error.105 | parse error: operation must have string member 'op' | An operation of a JSON Patch document must contain exactly one "op" member, whose value indicates the operation to perform. Its value must be one of "add", "remove", "replace", "move", "copy", or "test"; other values are errors.
+json.exception.parse_error.106 | parse error: array index '01' must not begin with '0' | An array index in a JSON Pointer ([RFC 6901](https://tools.ietf.org/html/rfc6901)) may be `0` or any number without a leading `0`.
+json.exception.parse_error.107 | parse error: JSON pointer must be empty or begin with '/' - was: 'foo' | A JSON Pointer must be a Unicode string containing a sequence of zero or more reference tokens, each prefixed by a `/` character.
+json.exception.parse_error.108 | parse error: escape character '~' must be followed with '0' or '1' | In a JSON Pointer, only `~0` and `~1` are valid escape sequences.
+json.exception.parse_error.109 | parse error: array index 'one' is not a number | A JSON Pointer array index must be a number.
+json.exception.parse_error.110 | parse error at 1: cannot read 2 bytes from vector | When parsing CBOR or MessagePack, the byte vector ends before the complete value has been read.
+json.exception.parse_error.112 | parse error at 1: error reading CBOR; last byte: 0xF8 | Not all types of CBOR or MessagePack are supported. This exception occurs if an unsupported byte was read.
+json.exception.parse_error.113 | parse error at 2: expected a CBOR string; last byte: 0x98 | While parsing a map key, a value that is not a string has been read.
+json.exception.parse_error.114 | parse error: Unsupported BSON record type 0x0F | The parsing of the corresponding BSON record type is not implemented (yet).
+
+@note For an input with n bytes, 1 is the index of the first character and n+1
+      is the index of the terminating null byte or the end of file. This also
+      holds true when reading a byte vector (CBOR or MessagePack).
+
+@liveexample{The following code shows how a `parse_error` exception can be
+caught.,parse_error}
+
+@sa - @ref exception for the base class of the library exceptions
+@sa - @ref invalid_iterator for exceptions indicating errors with iterators
+@sa - @ref type_error for exceptions indicating executing a member function with
+                    a wrong type
+@sa - @ref out_of_range for exceptions indicating access out of the defined range
+@sa - @ref other_error for exceptions indicating other library errors
+
+@since version 3.0.0
+*/
+class parse_error : public exception
+{
+  public:
+    /*!
+    @brief create a parse error exception
+    @param[in] id_       the id of the exception
+    @param[in] pos       the position where the error occurred (or with
+                         chars_read_total=0 if the position cannot be
+                         determined)
+    @param[in] what_arg  the explanatory string
+    @return parse_error object
+    */
+    static parse_error create(int id_, const position_t& pos, const std::string& what_arg)
+    {
+        std::string w = exception::name("parse_error", id_) + "parse error" +
+                        position_string(pos) + ": " + what_arg;
+        return parse_error(id_, pos.chars_read_total, w.c_str());
+    }
+
+    static parse_error create(int id_, std::size_t byte_, const std::string& what_arg)
+    {
+        std::string w = exception::name("parse_error", id_) + "parse error" +
+                        (byte_ != 0 ? (" at byte " + std::to_string(byte_)) : "") +
+                        ": " + what_arg;
+        return parse_error(id_, byte_, w.c_str());
+    }
+
+    /*!
+    @brief byte index of the parse error
+
+    The byte index of the last read character in the input file.
+
+    @note For an input with n bytes, 1 is the index of the first character and
+          n+1 is the index of the terminating null byte or the end of file.
+          This also holds true when reading a byte vector (CBOR or MessagePack).
+    */
+    const std::size_t byte;
+
+  private:
+    parse_error(int id_, std::size_t byte_, const char* what_arg)
+        : exception(id_, what_arg), byte(byte_) {}
+
+    static std::string position_string(const position_t& pos)
+    {
+        return " at line " + std::to_string(pos.lines_read + 1) +
+               ", column " + std::to_string(pos.chars_read_current_line);
+    }
+};
+
+/*!
+@brief exception indicating errors with iterators
+
+This exception is thrown if iterators passed to a library function do not match
+the expected semantics.
+
+Exceptions have ids 2xx.
+
+name / id                           | example message | description
+----------------------------------- | --------------- | -------------------------
+json.exception.invalid_iterator.201 | iterators are not compatible | The iterators passed to constructor @ref basic_json(InputIT first, InputIT last) are not compatible, meaning they do not belong to the same container. Therefore, the range (@a first, @a last) is invalid.
+json.exception.invalid_iterator.202 | iterator does not fit current value | In an erase or insert function, the passed iterator @a pos does not belong to the JSON value for which the function was called. It hence does not define a valid position for the deletion/insertion.
+json.exception.invalid_iterator.203 | iterators do not fit current value | Either iterator passed to function @ref erase(IteratorType first, IteratorType last) does not belong to the JSON value from which values shall be erased. It hence does not define a valid range to delete values from.
+json.exception.invalid_iterator.204 | iterators out of range | When an iterator range for a primitive type (number, boolean, or string) is passed to a constructor or an erase function, this range has to be exactly (@ref begin(), @ref end()), because this is the only way the single stored value is expressed. All other ranges are invalid.
+json.exception.invalid_iterator.205 | iterator out of range | When an iterator for a primitive type (number, boolean, or string) is passed to an erase function, the iterator has to be the @ref begin() iterator, because it is the only way to address the stored value. All other iterators are invalid.
+json.exception.invalid_iterator.206 | cannot construct with iterators from null | The iterators passed to constructor @ref basic_json(InputIT first, InputIT last) belong to a JSON null value and hence to not define a valid range.
+json.exception.invalid_iterator.207 | cannot use key() for non-object iterators | The key() member function can only be used on iterators belonging to a JSON object, because other types do not have a concept of a key.
+json.exception.invalid_iterator.208 | cannot use operator[] for object iterators | The operator[] to specify a concrete offset cannot be used on iterators belonging to a JSON object, because JSON objects are unordered.
+json.exception.invalid_iterator.209 | cannot use offsets with object iterators | The offset operators (+, -, +=, -=) cannot be used on iterators belonging to a JSON object, because JSON objects are unordered.
+json.exception.invalid_iterator.210 | iterators do not fit | The iterator range passed to the insert function are not compatible, meaning they do not belong to the same container. Therefore, the range (@a first, @a last) is invalid.
+json.exception.invalid_iterator.211 | passed iterators may not belong to container | The iterator range passed to the insert function must not be a subrange of the container to insert to.
+json.exception.invalid_iterator.212 | cannot compare iterators of different containers | When two iterators are compared, they must belong to the same container.
+json.exception.invalid_iterator.213 | cannot compare order of object iterators | The order of object iterators cannot be compared, because JSON objects are unordered.
+json.exception.invalid_iterator.214 | cannot get value | Cannot get value for iterator: Either the iterator belongs to a null value or it is an iterator to a primitive type (number, boolean, or string), but the iterator is different to @ref begin().
+
+@liveexample{The following code shows how an `invalid_iterator` exception can be
+caught.,invalid_iterator}
+
+@sa - @ref exception for the base class of the library exceptions
+@sa - @ref parse_error for exceptions indicating a parse error
+@sa - @ref type_error for exceptions indicating executing a member function with
+                    a wrong type
+@sa - @ref out_of_range for exceptions indicating access out of the defined range
+@sa - @ref other_error for exceptions indicating other library errors
+
+@since version 3.0.0
+*/
+class invalid_iterator : public exception
+{
+  public:
+    static invalid_iterator create(int id_, const std::string& what_arg)
+    {
+        std::string w = exception::name("invalid_iterator", id_) + what_arg;
+        return invalid_iterator(id_, w.c_str());
+    }
+
+  private:
+    invalid_iterator(int id_, const char* what_arg)
+        : exception(id_, what_arg) {}
+};
+
+/*!
+@brief exception indicating executing a member function with a wrong type
+
+This exception is thrown in case of a type error; that is, a library function is
+executed on a JSON value whose type does not match the expected semantics.
+
+Exceptions have ids 3xx.
+
+name / id                     | example message | description
+----------------------------- | --------------- | -------------------------
+json.exception.type_error.301 | cannot create object from initializer list | To create an object from an initializer list, the initializer list must consist only of a list of pairs whose first element is a string. When this constraint is violated, an array is created instead.
+json.exception.type_error.302 | type must be object, but is array | During implicit or explicit value conversion, the JSON type must be compatible to the target type. For instance, a JSON string can only be converted into string types, but not into numbers or boolean types.
+json.exception.type_error.303 | incompatible ReferenceType for get_ref, actual type is object | To retrieve a reference to a value stored in a @ref basic_json object with @ref get_ref, the type of the reference must match the value type. For instance, for a JSON array, the @a ReferenceType must be @ref array_t&.
+json.exception.type_error.304 | cannot use at() with string | The @ref at() member functions can only be executed for certain JSON types.
+json.exception.type_error.305 | cannot use operator[] with string | The @ref operator[] member functions can only be executed for certain JSON types.
+json.exception.type_error.306 | cannot use value() with string | The @ref value() member functions can only be executed for certain JSON types.
+json.exception.type_error.307 | cannot use erase() with string | The @ref erase() member functions can only be executed for certain JSON types.
+json.exception.type_error.308 | cannot use push_back() with string | The @ref push_back() and @ref operator+= member functions can only be executed for certain JSON types.
+json.exception.type_error.309 | cannot use insert() with | The @ref insert() member functions can only be executed for certain JSON types.
+json.exception.type_error.310 | cannot use swap() with number | The @ref swap() member functions can only be executed for certain JSON types.
+json.exception.type_error.311 | cannot use emplace_back() with string | The @ref emplace_back() member function can only be executed for certain JSON types.
+json.exception.type_error.312 | cannot use update() with string | The @ref update() member functions can only be executed for certain JSON types.
+json.exception.type_error.313 | invalid value to unflatten | The @ref unflatten function converts an object whose keys are JSON Pointers back into an arbitrary nested JSON value. The JSON Pointers must not overlap, because then the resulting value would not be well defined.
+json.exception.type_error.314 | only objects can be unflattened | The @ref unflatten function only works for an object whose keys are JSON Pointers.
+json.exception.type_error.315 | values in object must be primitive | The @ref unflatten function only works for an object whose keys are JSON Pointers and whose values are primitive.
+json.exception.type_error.316 | invalid UTF-8 byte at index 10: 0x7E | The @ref dump function only works with UTF-8 encoded strings; that is, if you assign a `std::string` to a JSON value, make sure it is UTF-8 encoded. |
+json.exception.type_error.317 | JSON value cannot be serialized to requested format | The dynamic type of the object cannot be represented in the requested serialization format (e.g. a raw `true` or `null` JSON object cannot be serialized to BSON) |
+
+@liveexample{The following code shows how a `type_error` exception can be
+caught.,type_error}
+
+@sa - @ref exception for the base class of the library exceptions
+@sa - @ref parse_error for exceptions indicating a parse error
+@sa - @ref invalid_iterator for exceptions indicating errors with iterators
+@sa - @ref out_of_range for exceptions indicating access out of the defined range
+@sa - @ref other_error for exceptions indicating other library errors
+
+@since version 3.0.0
+*/
+class type_error : public exception
+{
+  public:
+    static type_error create(int id_, const std::string& what_arg)
+    {
+        std::string w = exception::name("type_error", id_) + what_arg;
+        return type_error(id_, w.c_str());
+    }
+
+  private:
+    type_error(int id_, const char* what_arg) : exception(id_, what_arg) {}
+};
+
+/*!
+@brief exception indicating access out of the defined range
+
+This exception is thrown in case a library function is called on an input
+parameter that exceeds the expected range, for instance in case of array
+indices or nonexisting object keys.
+
+Exceptions have ids 4xx.
+
+name / id                       | example message | description
+------------------------------- | --------------- | -------------------------
+json.exception.out_of_range.401 | array index 3 is out of range | The provided array index @a i is larger than @a size-1.
+json.exception.out_of_range.402 | array index '-' (3) is out of range | The special array index `-` in a JSON Pointer never describes a valid element of the array, but the index past the end. That is, it can only be used to add elements at this position, but not to read it.
+json.exception.out_of_range.403 | key 'foo' not found | The provided key was not found in the JSON object.
+json.exception.out_of_range.404 | unresolved reference token 'foo' | A reference token in a JSON Pointer could not be resolved.
+json.exception.out_of_range.405 | JSON pointer has no parent | The JSON Patch operations 'remove' and 'add' can not be applied to the root element of the JSON value.
+json.exception.out_of_range.406 | number overflow parsing '10E1000' | A parsed number could not be stored as without changing it to NaN or INF.
+json.exception.out_of_range.407 | number overflow serializing '9223372036854775808' | UBJSON and BSON only support integer numbers up to 9223372036854775807. |
+json.exception.out_of_range.408 | excessive array size: 8658170730974374167 | The size (following `#`) of an UBJSON array or object exceeds the maximal capacity. |
+json.exception.out_of_range.409 | BSON key cannot contain code point U+0000 (at byte 2) | Key identifiers to be serialized to BSON cannot contain code point U+0000, since the key is stored as zero-terminated c-string |
+
+@liveexample{The following code shows how an `out_of_range` exception can be
+caught.,out_of_range}
+
+@sa - @ref exception for the base class of the library exceptions
+@sa - @ref parse_error for exceptions indicating a parse error
+@sa - @ref invalid_iterator for exceptions indicating errors with iterators
+@sa - @ref type_error for exceptions indicating executing a member function with
+                    a wrong type
+@sa - @ref other_error for exceptions indicating other library errors
+
+@since version 3.0.0
+*/
+class out_of_range : public exception
+{
+  public:
+    static out_of_range create(int id_, const std::string& what_arg)
+    {
+        std::string w = exception::name("out_of_range", id_) + what_arg;
+        return out_of_range(id_, w.c_str());
+    }
+
+  private:
+    out_of_range(int id_, const char* what_arg) : exception(id_, what_arg) {}
+};
+
+/*!
+@brief exception indicating other library errors
+
+This exception is thrown in case of errors that cannot be classified with the
+other exception types.
+
+Exceptions have ids 5xx.
+
+name / id                      | example message | description
+------------------------------ | --------------- | -------------------------
+json.exception.other_error.501 | unsuccessful: {"op":"test","path":"/baz", "value":"bar"} | A JSON Patch operation 'test' failed. The unsuccessful operation is also printed.
+
+@sa - @ref exception for the base class of the library exceptions
+@sa - @ref parse_error for exceptions indicating a parse error
+@sa - @ref invalid_iterator for exceptions indicating errors with iterators
+@sa - @ref type_error for exceptions indicating executing a member function with
+                    a wrong type
+@sa - @ref out_of_range for exceptions indicating access out of the defined range
+
+@liveexample{The following code shows how an `other_error` exception can be
+caught.,other_error}
+
+@since version 3.0.0
+*/
+class other_error : public exception
+{
+  public:
+    static other_error create(int id_, const std::string& what_arg)
+    {
+        std::string w = exception::name("other_error", id_) + what_arg;
+        return other_error(id_, w.c_str());
+    }
+
+  private:
+    other_error(int id_, const char* what_arg) : exception(id_, what_arg) {}
+};
+}  // namespace detail
 }  // namespace nlohmann
-
-#endif  // INCLUDE_NLOHMANN_JSON_FWD_HPP_
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
@@ -340,8 +674,6 @@ constexpr T static_const<T>::value;
 #include <type_traits> // false_type, is_constructible, is_integral, is_same, true_type
 #include <utility> // declval
 
-// #include <nlohmann/json_fwd.hpp>
-
 // #include <nlohmann/detail/iterators/iterator_traits.hpp>
 
 
@@ -410,6 +742,8 @@ struct iterator_traits<T*, enable_if_t<std::is_object<T>::value>>
 } // namespace detail
 } // namespace nlohmann
 
+// #include <nlohmann/detail/macro_scope.hpp>
+
 // #include <nlohmann/detail/meta/cpp_future.hpp>
 
 // #include <nlohmann/detail/meta/detected.hpp>
@@ -430,7 +764,9 @@ struct nonesuch
     nonesuch() = delete;
     ~nonesuch() = delete;
     nonesuch(nonesuch const&) = delete;
+    nonesuch(nonesuch const&&) = delete;
     void operator=(nonesuch const&) = delete;
+    void operator=(nonesuch&&) = delete;
 };
 
 template <class Default,
@@ -471,7 +807,71 @@ using is_detected_convertible =
 }  // namespace detail
 }  // namespace nlohmann
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <nlohmann/json_fwd.hpp>
+#ifndef INCLUDE_NLOHMANN_JSON_FWD_HPP_
+#define INCLUDE_NLOHMANN_JSON_FWD_HPP_
+
+#include <cstdint> // int64_t, uint64_t
+#include <map> // map
+#include <memory> // allocator
+#include <string> // string
+#include <vector> // vector
+
+/*!
+@brief namespace for Niels Lohmann
+@see https://github.com/nlohmann
+@since version 1.0.0
+*/
+namespace nlohmann
+{
+/*!
+@brief default JSONSerializer template argument
+
+This serializer ignores the template arguments and uses ADL
+([argument-dependent lookup](https://en.cppreference.com/w/cpp/language/adl))
+for serialization.
+*/
+template<typename T = void, typename SFINAE = void>
+struct adl_serializer;
+
+template<template<typename U, typename V, typename... Args> class ObjectType =
+         std::map,
+         template<typename U, typename... Args> class ArrayType = std::vector,
+         class StringType = std::string, class BooleanType = bool,
+         class NumberIntegerType = std::int64_t,
+         class NumberUnsignedType = std::uint64_t,
+         class NumberFloatType = double,
+         template<typename U> class AllocatorType = std::allocator,
+         template<typename T, typename SFINAE = void> class JSONSerializer =
+         adl_serializer>
+class basic_json;
+
+/*!
+@brief JSON Pointer
+
+A JSON pointer defines a string syntax for identifying a specific value
+within a JSON document. It can be used with functions `at` and
+`operator[]`. Furthermore, JSON pointers are the base for JSON patches.
+
+@sa [RFC 6901](https://tools.ietf.org/html/rfc6901)
+
+@since version 2.0.0
+*/
+template<typename BasicJsonType>
+class json_pointer;
+
+/*!
+@brief default JSON class
+
+This type is the default specialization of the @ref basic_json class which
+uses the standard template types.
+
+@since version 1.0.0
+*/
+using json = basic_json<>;
+}  // namespace nlohmann
+
+#endif  // INCLUDE_NLOHMANN_JSON_FWD_HPP_
 
 
 namespace nlohmann
@@ -810,385 +1210,6 @@ struct is_compatible_type
 }  // namespace detail
 }  // namespace nlohmann
 
-// #include <nlohmann/detail/exceptions.hpp>
-
-
-#include <exception> // exception
-#include <stdexcept> // runtime_error
-#include <string> // to_string
-
-// #include <nlohmann/detail/input/position_t.hpp>
-
-
-#include <cstddef> // size_t
-
-namespace nlohmann
-{
-namespace detail
-{
-/// struct to capture the start position of the current token
-struct position_t
-{
-    /// the total number of characters read
-    std::size_t chars_read_total = 0;
-    /// the number of characters read in the current line
-    std::size_t chars_read_current_line = 0;
-    /// the number of lines read
-    std::size_t lines_read = 0;
-
-    /// conversion to size_t to preserve SAX interface
-    constexpr operator size_t() const
-    {
-        return chars_read_total;
-    }
-};
-
-} // namespace detail
-} // namespace nlohmann
-
-
-namespace nlohmann
-{
-namespace detail
-{
-////////////////
-// exceptions //
-////////////////
-
-/*!
-@brief general exception of the @ref basic_json class
-
-This class is an extension of `std::exception` objects with a member @a id for
-exception ids. It is used as the base class for all exceptions thrown by the
-@ref basic_json class. This class can hence be used as "wildcard" to catch
-exceptions.
-
-Subclasses:
-- @ref parse_error for exceptions indicating a parse error
-- @ref invalid_iterator for exceptions indicating errors with iterators
-- @ref type_error for exceptions indicating executing a member function with
-                  a wrong type
-- @ref out_of_range for exceptions indicating access out of the defined range
-- @ref other_error for exceptions indicating other library errors
-
-@internal
-@note To have nothrow-copy-constructible exceptions, we internally use
-      `std::runtime_error` which can cope with arbitrary-length error messages.
-      Intermediate strings are built with static functions and then passed to
-      the actual constructor.
-@endinternal
-
-@liveexample{The following code shows how arbitrary library exceptions can be
-caught.,exception}
-
-@since version 3.0.0
-*/
-class exception : public std::exception
-{
-  public:
-    /// returns the explanatory string
-    const char* what() const noexcept override
-    {
-        return m.what();
-    }
-
-    /// the id of the exception
-    const int id;
-
-  protected:
-    exception(int id_, const char* what_arg) : id(id_), m(what_arg) {}
-
-    static std::string name(const std::string& ename, int id_)
-    {
-        return "[json.exception." + ename + "." + std::to_string(id_) + "] ";
-    }
-
-  private:
-    /// an exception object as storage for error messages
-    std::runtime_error m;
-};
-
-/*!
-@brief exception indicating a parse error
-
-This exception is thrown by the library when a parse error occurs. Parse errors
-can occur during the deserialization of JSON text, CBOR, MessagePack, as well
-as when using JSON Patch.
-
-Member @a byte holds the byte index of the last read character in the input
-file.
-
-Exceptions have ids 1xx.
-
-name / id                      | example message | description
------------------------------- | --------------- | -------------------------
-json.exception.parse_error.101 | parse error at 2: unexpected end of input; expected string literal | This error indicates a syntax error while deserializing a JSON text. The error message describes that an unexpected token (character) was encountered, and the member @a byte indicates the error position.
-json.exception.parse_error.102 | parse error at 14: missing or wrong low surrogate | JSON uses the `\uxxxx` format to describe Unicode characters. Code points above above 0xFFFF are split into two `\uxxxx` entries ("surrogate pairs"). This error indicates that the surrogate pair is incomplete or contains an invalid code point.
-json.exception.parse_error.103 | parse error: code points above 0x10FFFF are invalid | Unicode supports code points up to 0x10FFFF. Code points above 0x10FFFF are invalid.
-json.exception.parse_error.104 | parse error: JSON patch must be an array of objects | [RFC 6902](https://tools.ietf.org/html/rfc6902) requires a JSON Patch document to be a JSON document that represents an array of objects.
-json.exception.parse_error.105 | parse error: operation must have string member 'op' | An operation of a JSON Patch document must contain exactly one "op" member, whose value indicates the operation to perform. Its value must be one of "add", "remove", "replace", "move", "copy", or "test"; other values are errors.
-json.exception.parse_error.106 | parse error: array index '01' must not begin with '0' | An array index in a JSON Pointer ([RFC 6901](https://tools.ietf.org/html/rfc6901)) may be `0` or any number without a leading `0`.
-json.exception.parse_error.107 | parse error: JSON pointer must be empty or begin with '/' - was: 'foo' | A JSON Pointer must be a Unicode string containing a sequence of zero or more reference tokens, each prefixed by a `/` character.
-json.exception.parse_error.108 | parse error: escape character '~' must be followed with '0' or '1' | In a JSON Pointer, only `~0` and `~1` are valid escape sequences.
-json.exception.parse_error.109 | parse error: array index 'one' is not a number | A JSON Pointer array index must be a number.
-json.exception.parse_error.110 | parse error at 1: cannot read 2 bytes from vector | When parsing CBOR or MessagePack, the byte vector ends before the complete value has been read.
-json.exception.parse_error.112 | parse error at 1: error reading CBOR; last byte: 0xF8 | Not all types of CBOR or MessagePack are supported. This exception occurs if an unsupported byte was read.
-json.exception.parse_error.113 | parse error at 2: expected a CBOR string; last byte: 0x98 | While parsing a map key, a value that is not a string has been read.
-json.exception.parse_error.114 | parse error: Unsupported BSON record type 0x0F | The parsing of the corresponding BSON record type is not implemented (yet).
-
-@note For an input with n bytes, 1 is the index of the first character and n+1
-      is the index of the terminating null byte or the end of file. This also
-      holds true when reading a byte vector (CBOR or MessagePack).
-
-@liveexample{The following code shows how a `parse_error` exception can be
-caught.,parse_error}
-
-@sa @ref exception for the base class of the library exceptions
-@sa @ref invalid_iterator for exceptions indicating errors with iterators
-@sa @ref type_error for exceptions indicating executing a member function with
-                    a wrong type
-@sa @ref out_of_range for exceptions indicating access out of the defined range
-@sa @ref other_error for exceptions indicating other library errors
-
-@since version 3.0.0
-*/
-class parse_error : public exception
-{
-  public:
-    /*!
-    @brief create a parse error exception
-    @param[in] id_       the id of the exception
-    @param[in] position  the position where the error occurred (or with
-                         chars_read_total=0 if the position cannot be
-                         determined)
-    @param[in] what_arg  the explanatory string
-    @return parse_error object
-    */
-    static parse_error create(int id_, const position_t& pos, const std::string& what_arg)
-    {
-        std::string w = exception::name("parse_error", id_) + "parse error" +
-                        position_string(pos) + ": " + what_arg;
-        return parse_error(id_, pos.chars_read_total, w.c_str());
-    }
-
-    static parse_error create(int id_, std::size_t byte_, const std::string& what_arg)
-    {
-        std::string w = exception::name("parse_error", id_) + "parse error" +
-                        (byte_ != 0 ? (" at byte " + std::to_string(byte_)) : "") +
-                        ": " + what_arg;
-        return parse_error(id_, byte_, w.c_str());
-    }
-
-    /*!
-    @brief byte index of the parse error
-
-    The byte index of the last read character in the input file.
-
-    @note For an input with n bytes, 1 is the index of the first character and
-          n+1 is the index of the terminating null byte or the end of file.
-          This also holds true when reading a byte vector (CBOR or MessagePack).
-    */
-    const std::size_t byte;
-
-  private:
-    parse_error(int id_, std::size_t byte_, const char* what_arg)
-        : exception(id_, what_arg), byte(byte_) {}
-
-    static std::string position_string(const position_t& pos)
-    {
-        return " at line " + std::to_string(pos.lines_read + 1) +
-               ", column " + std::to_string(pos.chars_read_current_line);
-    }
-};
-
-/*!
-@brief exception indicating errors with iterators
-
-This exception is thrown if iterators passed to a library function do not match
-the expected semantics.
-
-Exceptions have ids 2xx.
-
-name / id                           | example message | description
------------------------------------ | --------------- | -------------------------
-json.exception.invalid_iterator.201 | iterators are not compatible | The iterators passed to constructor @ref basic_json(InputIT first, InputIT last) are not compatible, meaning they do not belong to the same container. Therefore, the range (@a first, @a last) is invalid.
-json.exception.invalid_iterator.202 | iterator does not fit current value | In an erase or insert function, the passed iterator @a pos does not belong to the JSON value for which the function was called. It hence does not define a valid position for the deletion/insertion.
-json.exception.invalid_iterator.203 | iterators do not fit current value | Either iterator passed to function @ref erase(IteratorType first, IteratorType last) does not belong to the JSON value from which values shall be erased. It hence does not define a valid range to delete values from.
-json.exception.invalid_iterator.204 | iterators out of range | When an iterator range for a primitive type (number, boolean, or string) is passed to a constructor or an erase function, this range has to be exactly (@ref begin(), @ref end()), because this is the only way the single stored value is expressed. All other ranges are invalid.
-json.exception.invalid_iterator.205 | iterator out of range | When an iterator for a primitive type (number, boolean, or string) is passed to an erase function, the iterator has to be the @ref begin() iterator, because it is the only way to address the stored value. All other iterators are invalid.
-json.exception.invalid_iterator.206 | cannot construct with iterators from null | The iterators passed to constructor @ref basic_json(InputIT first, InputIT last) belong to a JSON null value and hence to not define a valid range.
-json.exception.invalid_iterator.207 | cannot use key() for non-object iterators | The key() member function can only be used on iterators belonging to a JSON object, because other types do not have a concept of a key.
-json.exception.invalid_iterator.208 | cannot use operator[] for object iterators | The operator[] to specify a concrete offset cannot be used on iterators belonging to a JSON object, because JSON objects are unordered.
-json.exception.invalid_iterator.209 | cannot use offsets with object iterators | The offset operators (+, -, +=, -=) cannot be used on iterators belonging to a JSON object, because JSON objects are unordered.
-json.exception.invalid_iterator.210 | iterators do not fit | The iterator range passed to the insert function are not compatible, meaning they do not belong to the same container. Therefore, the range (@a first, @a last) is invalid.
-json.exception.invalid_iterator.211 | passed iterators may not belong to container | The iterator range passed to the insert function must not be a subrange of the container to insert to.
-json.exception.invalid_iterator.212 | cannot compare iterators of different containers | When two iterators are compared, they must belong to the same container.
-json.exception.invalid_iterator.213 | cannot compare order of object iterators | The order of object iterators cannot be compared, because JSON objects are unordered.
-json.exception.invalid_iterator.214 | cannot get value | Cannot get value for iterator: Either the iterator belongs to a null value or it is an iterator to a primitive type (number, boolean, or string), but the iterator is different to @ref begin().
-
-@liveexample{The following code shows how an `invalid_iterator` exception can be
-caught.,invalid_iterator}
-
-@sa @ref exception for the base class of the library exceptions
-@sa @ref parse_error for exceptions indicating a parse error
-@sa @ref type_error for exceptions indicating executing a member function with
-                    a wrong type
-@sa @ref out_of_range for exceptions indicating access out of the defined range
-@sa @ref other_error for exceptions indicating other library errors
-
-@since version 3.0.0
-*/
-class invalid_iterator : public exception
-{
-  public:
-    static invalid_iterator create(int id_, const std::string& what_arg)
-    {
-        std::string w = exception::name("invalid_iterator", id_) + what_arg;
-        return invalid_iterator(id_, w.c_str());
-    }
-
-  private:
-    invalid_iterator(int id_, const char* what_arg)
-        : exception(id_, what_arg) {}
-};
-
-/*!
-@brief exception indicating executing a member function with a wrong type
-
-This exception is thrown in case of a type error; that is, a library function is
-executed on a JSON value whose type does not match the expected semantics.
-
-Exceptions have ids 3xx.
-
-name / id                     | example message | description
------------------------------ | --------------- | -------------------------
-json.exception.type_error.301 | cannot create object from initializer list | To create an object from an initializer list, the initializer list must consist only of a list of pairs whose first element is a string. When this constraint is violated, an array is created instead.
-json.exception.type_error.302 | type must be object, but is array | During implicit or explicit value conversion, the JSON type must be compatible to the target type. For instance, a JSON string can only be converted into string types, but not into numbers or boolean types.
-json.exception.type_error.303 | incompatible ReferenceType for get_ref, actual type is object | To retrieve a reference to a value stored in a @ref basic_json object with @ref get_ref, the type of the reference must match the value type. For instance, for a JSON array, the @a ReferenceType must be @ref array_t&.
-json.exception.type_error.304 | cannot use at() with string | The @ref at() member functions can only be executed for certain JSON types.
-json.exception.type_error.305 | cannot use operator[] with string | The @ref operator[] member functions can only be executed for certain JSON types.
-json.exception.type_error.306 | cannot use value() with string | The @ref value() member functions can only be executed for certain JSON types.
-json.exception.type_error.307 | cannot use erase() with string | The @ref erase() member functions can only be executed for certain JSON types.
-json.exception.type_error.308 | cannot use push_back() with string | The @ref push_back() and @ref operator+= member functions can only be executed for certain JSON types.
-json.exception.type_error.309 | cannot use insert() with | The @ref insert() member functions can only be executed for certain JSON types.
-json.exception.type_error.310 | cannot use swap() with number | The @ref swap() member functions can only be executed for certain JSON types.
-json.exception.type_error.311 | cannot use emplace_back() with string | The @ref emplace_back() member function can only be executed for certain JSON types.
-json.exception.type_error.312 | cannot use update() with string | The @ref update() member functions can only be executed for certain JSON types.
-json.exception.type_error.313 | invalid value to unflatten | The @ref unflatten function converts an object whose keys are JSON Pointers back into an arbitrary nested JSON value. The JSON Pointers must not overlap, because then the resulting value would not be well defined.
-json.exception.type_error.314 | only objects can be unflattened | The @ref unflatten function only works for an object whose keys are JSON Pointers.
-json.exception.type_error.315 | values in object must be primitive | The @ref unflatten function only works for an object whose keys are JSON Pointers and whose values are primitive.
-json.exception.type_error.316 | invalid UTF-8 byte at index 10: 0x7E | The @ref dump function only works with UTF-8 encoded strings; that is, if you assign a `std::string` to a JSON value, make sure it is UTF-8 encoded. |
-json.exception.type_error.317 | JSON value cannot be serialized to requested format | The dynamic type of the object cannot be represented in the requested serialization format (e.g. a raw `true` or `null` JSON object cannot be serialized to BSON) |
-
-@liveexample{The following code shows how a `type_error` exception can be
-caught.,type_error}
-
-@sa @ref exception for the base class of the library exceptions
-@sa @ref parse_error for exceptions indicating a parse error
-@sa @ref invalid_iterator for exceptions indicating errors with iterators
-@sa @ref out_of_range for exceptions indicating access out of the defined range
-@sa @ref other_error for exceptions indicating other library errors
-
-@since version 3.0.0
-*/
-class type_error : public exception
-{
-  public:
-    static type_error create(int id_, const std::string& what_arg)
-    {
-        std::string w = exception::name("type_error", id_) + what_arg;
-        return type_error(id_, w.c_str());
-    }
-
-  private:
-    type_error(int id_, const char* what_arg) : exception(id_, what_arg) {}
-};
-
-/*!
-@brief exception indicating access out of the defined range
-
-This exception is thrown in case a library function is called on an input
-parameter that exceeds the expected range, for instance in case of array
-indices or nonexisting object keys.
-
-Exceptions have ids 4xx.
-
-name / id                       | example message | description
-------------------------------- | --------------- | -------------------------
-json.exception.out_of_range.401 | array index 3 is out of range | The provided array index @a i is larger than @a size-1.
-json.exception.out_of_range.402 | array index '-' (3) is out of range | The special array index `-` in a JSON Pointer never describes a valid element of the array, but the index past the end. That is, it can only be used to add elements at this position, but not to read it.
-json.exception.out_of_range.403 | key 'foo' not found | The provided key was not found in the JSON object.
-json.exception.out_of_range.404 | unresolved reference token 'foo' | A reference token in a JSON Pointer could not be resolved.
-json.exception.out_of_range.405 | JSON pointer has no parent | The JSON Patch operations 'remove' and 'add' can not be applied to the root element of the JSON value.
-json.exception.out_of_range.406 | number overflow parsing '10E1000' | A parsed number could not be stored as without changing it to NaN or INF.
-json.exception.out_of_range.407 | number overflow serializing '9223372036854775808' | UBJSON and BSON only support integer numbers up to 9223372036854775807. |
-json.exception.out_of_range.408 | excessive array size: 8658170730974374167 | The size (following `#`) of an UBJSON array or object exceeds the maximal capacity. |
-json.exception.out_of_range.409 | BSON key cannot contain code point U+0000 (at byte 2) | Key identifiers to be serialized to BSON cannot contain code point U+0000, since the key is stored as zero-terminated c-string |
-
-@liveexample{The following code shows how an `out_of_range` exception can be
-caught.,out_of_range}
-
-@sa @ref exception for the base class of the library exceptions
-@sa @ref parse_error for exceptions indicating a parse error
-@sa @ref invalid_iterator for exceptions indicating errors with iterators
-@sa @ref type_error for exceptions indicating executing a member function with
-                    a wrong type
-@sa @ref other_error for exceptions indicating other library errors
-
-@since version 3.0.0
-*/
-class out_of_range : public exception
-{
-  public:
-    static out_of_range create(int id_, const std::string& what_arg)
-    {
-        std::string w = exception::name("out_of_range", id_) + what_arg;
-        return out_of_range(id_, w.c_str());
-    }
-
-  private:
-    out_of_range(int id_, const char* what_arg) : exception(id_, what_arg) {}
-};
-
-/*!
-@brief exception indicating other library errors
-
-This exception is thrown in case of errors that cannot be classified with the
-other exception types.
-
-Exceptions have ids 5xx.
-
-name / id                      | example message | description
------------------------------- | --------------- | -------------------------
-json.exception.other_error.501 | unsuccessful: {"op":"test","path":"/baz", "value":"bar"} | A JSON Patch operation 'test' failed. The unsuccessful operation is also printed.
-
-@sa @ref exception for the base class of the library exceptions
-@sa @ref parse_error for exceptions indicating a parse error
-@sa @ref invalid_iterator for exceptions indicating errors with iterators
-@sa @ref type_error for exceptions indicating executing a member function with
-                    a wrong type
-@sa @ref out_of_range for exceptions indicating access out of the defined range
-
-@liveexample{The following code shows how an `other_error` exception can be
-caught.,other_error}
-
-@since version 3.0.0
-*/
-class other_error : public exception
-{
-  public:
-    static other_error create(int id_, const std::string& what_arg)
-    {
-        std::string w = exception::name("other_error", id_) + what_arg;
-        return other_error(id_, w.c_str());
-    }
-
-  private:
-    other_error(int id_, const char* what_arg) : exception(id_, what_arg) {}
-};
-}  // namespace detail
-}  // namespace nlohmann
-
 // #include <nlohmann/detail/value_t.hpp>
 
 
@@ -1267,32 +1288,6 @@ inline bool operator<(const value_t lhs, const value_t rhs) noexcept
 }
 }  // namespace detail
 }  // namespace nlohmann
-
-// #include <nlohmann/detail/conversions/from_json.hpp>
-
-
-#include <algorithm> // transform
-#include <array> // array
-#include <ciso646> // and, not
-#include <forward_list> // forward_list
-#include <iterator> // inserter, front_inserter, end
-#include <map> // map
-#include <string> // string
-#include <tuple> // tuple, make_tuple
-#include <type_traits> // is_arithmetic, is_same, is_enum, underlying_type, is_convertible
-#include <unordered_map> // unordered_map
-#include <utility> // pair, declval
-#include <valarray> // valarray
-
-// #include <nlohmann/detail/exceptions.hpp>
-
-// #include <nlohmann/detail/macro_scope.hpp>
-
-// #include <nlohmann/detail/meta/cpp_future.hpp>
-
-// #include <nlohmann/detail/meta/type_traits.hpp>
-
-// #include <nlohmann/detail/value_t.hpp>
 
 
 namespace nlohmann
@@ -1658,23 +1653,17 @@ constexpr const auto& from_json = detail::static_const<detail::from_json_fn>::va
 #include <valarray> // valarray
 #include <vector> // vector
 
-// #include <nlohmann/detail/meta/cpp_future.hpp>
-
-// #include <nlohmann/detail/meta/type_traits.hpp>
-
-// #include <nlohmann/detail/value_t.hpp>
-
 // #include <nlohmann/detail/iterators/iteration_proxy.hpp>
 
 
 #include <cstddef> // size_t
-#include <string> // string, to_string
 #include <iterator> // input_iterator_tag
+#include <string> // string, to_string
 #include <tuple> // tuple_size, get, tuple_element
 
-// #include <nlohmann/detail/value_t.hpp>
-
 // #include <nlohmann/detail/meta/type_traits.hpp>
+
+// #include <nlohmann/detail/value_t.hpp>
 
 
 namespace nlohmann
@@ -1837,6 +1826,12 @@ class tuple_element<N, ::nlohmann::detail::iteration_proxy_value<IteratorType >>
     #pragma clang diagnostic pop
 #endif
 } // namespace std
+
+// #include <nlohmann/detail/meta/cpp_future.hpp>
+
+// #include <nlohmann/detail/meta/type_traits.hpp>
+
+// #include <nlohmann/detail/value_t.hpp>
 
 
 namespace nlohmann
@@ -2167,12 +2162,81 @@ constexpr const auto& to_json = detail::static_const<detail::to_json_fn>::value;
 } // namespace
 }  // namespace nlohmann
 
+
+namespace nlohmann
+{
+
+template<typename, typename>
+struct adl_serializer
+{
+    /*!
+    @brief convert a JSON value to any value type
+
+    This function is usually called by the `get()` function of the
+    @ref basic_json class (either explicit or via conversion operators).
+
+    @param[in] j        JSON value to read from
+    @param[in,out] val  value to write to
+    */
+    template<typename BasicJsonType, typename ValueType>
+    static auto from_json(BasicJsonType&& j, ValueType& val) noexcept(
+        noexcept(::nlohmann::from_json(std::forward<BasicJsonType>(j), val)))
+    -> decltype(::nlohmann::from_json(std::forward<BasicJsonType>(j), val), void())
+    {
+        ::nlohmann::from_json(std::forward<BasicJsonType>(j), val);
+    }
+
+    /*!
+    @brief convert any value type to a JSON value
+
+    This function is usually called by the constructors of the @ref basic_json
+    class.
+
+    @param[in,out] j  JSON value to write to
+    @param[in] val    value to read from
+    */
+    template <typename BasicJsonType, typename ValueType>
+    static auto to_json(BasicJsonType& j, ValueType&& val) noexcept(
+        noexcept(::nlohmann::to_json(j, std::forward<ValueType>(val))))
+    -> decltype(::nlohmann::to_json(j, std::forward<ValueType>(val)), void())
+    {
+        ::nlohmann::to_json(j, std::forward<ValueType>(val));
+    }
+};
+
+}  // namespace nlohmann
+
+// #include <nlohmann/detail/conversions/from_json.hpp>
+
+// #include <nlohmann/detail/conversions/to_json.hpp>
+
+// #include <nlohmann/detail/exceptions.hpp>
+
+// #include <nlohmann/detail/input/binary_reader.hpp>
+
+
+#include <algorithm> // generate_n
+#include <array> // array
+#include <cassert> // assert
+#include <cmath> // ldexp
+#include <cstddef> // size_t
+#include <cstdint> // uint8_t, uint16_t, uint32_t, uint64_t
+#include <cstdio> // snprintf
+#include <cstring> // memcpy
+#include <iterator> // back_inserter
+#include <limits> // numeric_limits
+#include <string> // char_traits, string
+#include <utility> // make_pair, move
+
+// #include <nlohmann/detail/exceptions.hpp>
+
 // #include <nlohmann/detail/input/input_adapters.hpp>
 
 
 #include <array> // array
 #include <cassert> // assert
 #include <cstddef> // size_t
+#include <cstdio> //FILE *
 #include <cstring> // strlen
 #include <istream> // istream
 #include <iterator> // begin, end, iterator_traits, random_access_iterator_tag, distance, next
@@ -2181,7 +2245,6 @@ constexpr const auto& to_json = detail::static_const<detail::to_json_fn>::value;
 #include <string> // string, char_traits
 #include <type_traits> // enable_if, is_base_of, is_pointer, is_integral, remove_pointer
 #include <utility> // pair, declval
-#include <cstdio> //FILE *
 
 // #include <nlohmann/detail/iterators/iterator_traits.hpp>
 
@@ -2231,10 +2294,18 @@ class file_input_adapter : public input_adapter_protocol
         : m_file(f)
     {}
 
+    // make class move-only
+    file_input_adapter(const file_input_adapter&) = delete;
+    file_input_adapter(file_input_adapter&&) noexcept = default;
+    file_input_adapter& operator=(const file_input_adapter&) = delete;
+    file_input_adapter& operator=(file_input_adapter&&) noexcept = default;
+    ~file_input_adapter() override = default;
+
     std::char_traits<char>::int_type get_character() noexcept override
     {
         return std::fgetc(m_file);
     }
+
   private:
     /// the file pointer to read from
     std::FILE* m_file;
@@ -2602,1682 +2673,6 @@ class input_adapter
 }  // namespace detail
 }  // namespace nlohmann
 
-// #include <nlohmann/detail/input/lexer.hpp>
-
-
-#include <array> // array
-#include <clocale> // localeconv
-#include <cstddef> // size_t
-#include <cstdlib> // strtof, strtod, strtold, strtoll, strtoull
-#include <cstdio> // snprintf
-#include <initializer_list> // initializer_list
-#include <string> // char_traits, string
-#include <utility> // move
-#include <vector> // vector
-
-// #include <nlohmann/detail/macro_scope.hpp>
-
-// #include <nlohmann/detail/input/input_adapters.hpp>
-
-// #include <nlohmann/detail/input/position_t.hpp>
-
-
-namespace nlohmann
-{
-namespace detail
-{
-///////////
-// lexer //
-///////////
-
-/*!
-@brief lexical analysis
-
-This class organizes the lexical analysis during JSON deserialization.
-*/
-template<typename BasicJsonType>
-class lexer
-{
-    using number_integer_t = typename BasicJsonType::number_integer_t;
-    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
-    using number_float_t = typename BasicJsonType::number_float_t;
-    using string_t = typename BasicJsonType::string_t;
-
-  public:
-    /// token types for the parser
-    enum class token_type
-    {
-        uninitialized,    ///< indicating the scanner is uninitialized
-        literal_true,     ///< the `true` literal
-        literal_false,    ///< the `false` literal
-        literal_null,     ///< the `null` literal
-        value_string,     ///< a string -- use get_string() for actual value
-        value_unsigned,   ///< an unsigned integer -- use get_number_unsigned() for actual value
-        value_integer,    ///< a signed integer -- use get_number_integer() for actual value
-        value_float,      ///< an floating point number -- use get_number_float() for actual value
-        begin_array,      ///< the character for array begin `[`
-        begin_object,     ///< the character for object begin `{`
-        end_array,        ///< the character for array end `]`
-        end_object,       ///< the character for object end `}`
-        name_separator,   ///< the name separator `:`
-        value_separator,  ///< the value separator `,`
-        parse_error,      ///< indicating a parse error
-        end_of_input,     ///< indicating the end of the input buffer
-        literal_or_value  ///< a literal or the begin of a value (only for diagnostics)
-    };
-
-    /// return name of values of type token_type (only used for errors)
-    static const char* token_type_name(const token_type t) noexcept
-    {
-        switch (t)
-        {
-            case token_type::uninitialized:
-                return "<uninitialized>";
-            case token_type::literal_true:
-                return "true literal";
-            case token_type::literal_false:
-                return "false literal";
-            case token_type::literal_null:
-                return "null literal";
-            case token_type::value_string:
-                return "string literal";
-            case lexer::token_type::value_unsigned:
-            case lexer::token_type::value_integer:
-            case lexer::token_type::value_float:
-                return "number literal";
-            case token_type::begin_array:
-                return "'['";
-            case token_type::begin_object:
-                return "'{'";
-            case token_type::end_array:
-                return "']'";
-            case token_type::end_object:
-                return "'}'";
-            case token_type::name_separator:
-                return "':'";
-            case token_type::value_separator:
-                return "','";
-            case token_type::parse_error:
-                return "<parse error>";
-            case token_type::end_of_input:
-                return "end of input";
-            case token_type::literal_or_value:
-                return "'[', '{', or a literal";
-            // LCOV_EXCL_START
-            default: // catch non-enum values
-                return "unknown token";
-                // LCOV_EXCL_STOP
-        }
-    }
-
-    explicit lexer(detail::input_adapter_t&& adapter)
-        : ia(std::move(adapter)), decimal_point_char(get_decimal_point()) {}
-
-    // delete because of pointer members
-    lexer(const lexer&) = delete;
-    lexer(lexer&&) = delete;
-    lexer& operator=(lexer&) = delete;
-    lexer& operator=(lexer&&) = delete;
-    ~lexer() = default;
-
-  private:
-    /////////////////////
-    // locales
-    /////////////////////
-
-    /// return the locale-dependent decimal point
-    static char get_decimal_point() noexcept
-    {
-        const auto loc = localeconv();
-        assert(loc != nullptr);
-        return (loc->decimal_point == nullptr) ? '.' : *(loc->decimal_point);
-    }
-
-    /////////////////////
-    // scan functions
-    /////////////////////
-
-    /*!
-    @brief get codepoint from 4 hex characters following `\u`
-
-    For input "\u c1 c2 c3 c4" the codepoint is:
-      (c1 * 0x1000) + (c2 * 0x0100) + (c3 * 0x0010) + c4
-    = (c1 << 12) + (c2 << 8) + (c3 << 4) + (c4 << 0)
-
-    Furthermore, the possible characters '0'..'9', 'A'..'F', and 'a'..'f'
-    must be converted to the integers 0x0..0x9, 0xA..0xF, 0xA..0xF, resp. The
-    conversion is done by subtracting the offset (0x30, 0x37, and 0x57)
-    between the ASCII value of the character and the desired integer value.
-
-    @return codepoint (0x0000..0xFFFF) or -1 in case of an error (e.g. EOF or
-            non-hex character)
-    */
-    int get_codepoint()
-    {
-        // this function only makes sense after reading `\u`
-        assert(current == 'u');
-        int codepoint = 0;
-
-        const auto factors = { 12u, 8u, 4u, 0u };
-        for (const auto factor : factors)
-        {
-            get();
-
-            if (current >= '0' and current <= '9')
-            {
-                codepoint += static_cast<int>((static_cast<unsigned int>(current) - 0x30u) << factor);
-            }
-            else if (current >= 'A' and current <= 'F')
-            {
-                codepoint += static_cast<int>((static_cast<unsigned int>(current) - 0x37u) << factor);
-            }
-            else if (current >= 'a' and current <= 'f')
-            {
-                codepoint += static_cast<int>((static_cast<unsigned int>(current) - 0x57u) << factor);
-            }
-            else
-            {
-                return -1;
-            }
-        }
-
-        assert(0x0000 <= codepoint and codepoint <= 0xFFFF);
-        return codepoint;
-    }
-
-    /*!
-    @brief check if the next byte(s) are inside a given range
-
-    Adds the current byte and, for each passed range, reads a new byte and
-    checks if it is inside the range. If a violation was detected, set up an
-    error message and return false. Otherwise, return true.
-
-    @param[in] ranges  list of integers; interpreted as list of pairs of
-                       inclusive lower and upper bound, respectively
-
-    @pre The passed list @a ranges must have 2, 4, or 6 elements; that is,
-         1, 2, or 3 pairs. This precondition is enforced by an assertion.
-
-    @return true if and only if no range violation was detected
-    */
-    bool next_byte_in_range(std::initializer_list<int> ranges)
-    {
-        assert(ranges.size() == 2 or ranges.size() == 4 or ranges.size() == 6);
-        add(current);
-
-        for (auto range = ranges.begin(); range != ranges.end(); ++range)
-        {
-            get();
-            if (JSON_LIKELY(*range <= current and current <= *(++range)))
-            {
-                add(current);
-            }
-            else
-            {
-                error_message = "invalid string: ill-formed UTF-8 byte";
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /*!
-    @brief scan a string literal
-
-    This function scans a string according to Sect. 7 of RFC 7159. While
-    scanning, bytes are escaped and copied into buffer token_buffer. Then the
-    function returns successfully, token_buffer is *not* null-terminated (as it
-    may contain \0 bytes), and token_buffer.size() is the number of bytes in the
-    string.
-
-    @return token_type::value_string if string could be successfully scanned,
-            token_type::parse_error otherwise
-
-    @note In case of errors, variable error_message contains a textual
-          description.
-    */
-    token_type scan_string()
-    {
-        // reset token_buffer (ignore opening quote)
-        reset();
-
-        // we entered the function by reading an open quote
-        assert(current == '\"');
-
-        while (true)
-        {
-            // get next character
-            switch (get())
-            {
-                // end of file while parsing string
-                case std::char_traits<char>::eof():
-                {
-                    error_message = "invalid string: missing closing quote";
-                    return token_type::parse_error;
-                }
-
-                // closing quote
-                case '\"':
-                {
-                    return token_type::value_string;
-                }
-
-                // escapes
-                case '\\':
-                {
-                    switch (get())
-                    {
-                        // quotation mark
-                        case '\"':
-                            add('\"');
-                            break;
-                        // reverse solidus
-                        case '\\':
-                            add('\\');
-                            break;
-                        // solidus
-                        case '/':
-                            add('/');
-                            break;
-                        // backspace
-                        case 'b':
-                            add('\b');
-                            break;
-                        // form feed
-                        case 'f':
-                            add('\f');
-                            break;
-                        // line feed
-                        case 'n':
-                            add('\n');
-                            break;
-                        // carriage return
-                        case 'r':
-                            add('\r');
-                            break;
-                        // tab
-                        case 't':
-                            add('\t');
-                            break;
-
-                        // unicode escapes
-                        case 'u':
-                        {
-                            const int codepoint1 = get_codepoint();
-                            int codepoint = codepoint1; // start with codepoint1
-
-                            if (JSON_UNLIKELY(codepoint1 == -1))
-                            {
-                                error_message = "invalid string: '\\u' must be followed by 4 hex digits";
-                                return token_type::parse_error;
-                            }
-
-                            // check if code point is a high surrogate
-                            if (0xD800 <= codepoint1 and codepoint1 <= 0xDBFF)
-                            {
-                                // expect next \uxxxx entry
-                                if (JSON_LIKELY(get() == '\\' and get() == 'u'))
-                                {
-                                    const int codepoint2 = get_codepoint();
-
-                                    if (JSON_UNLIKELY(codepoint2 == -1))
-                                    {
-                                        error_message = "invalid string: '\\u' must be followed by 4 hex digits";
-                                        return token_type::parse_error;
-                                    }
-
-                                    // check if codepoint2 is a low surrogate
-                                    if (JSON_LIKELY(0xDC00 <= codepoint2 and codepoint2 <= 0xDFFF))
-                                    {
-                                        // overwrite codepoint
-                                        codepoint = static_cast<int>(
-                                                        // high surrogate occupies the most significant 22 bits
-                                                        (static_cast<unsigned int>(codepoint1) << 10u)
-                                                        // low surrogate occupies the least significant 15 bits
-                                                        + static_cast<unsigned int>(codepoint2)
-                                                        // there is still the 0xD800, 0xDC00 and 0x10000 noise
-                                                        // in the result so we have to subtract with:
-                                                        // (0xD800 << 10) + DC00 - 0x10000 = 0x35FDC00
-                                                        - 0x35FDC00u);
-                                    }
-                                    else
-                                    {
-                                        error_message = "invalid string: surrogate U+DC00..U+DFFF must be followed by U+DC00..U+DFFF";
-                                        return token_type::parse_error;
-                                    }
-                                }
-                                else
-                                {
-                                    error_message = "invalid string: surrogate U+DC00..U+DFFF must be followed by U+DC00..U+DFFF";
-                                    return token_type::parse_error;
-                                }
-                            }
-                            else
-                            {
-                                if (JSON_UNLIKELY(0xDC00 <= codepoint1 and codepoint1 <= 0xDFFF))
-                                {
-                                    error_message = "invalid string: surrogate U+DC00..U+DFFF must follow U+D800..U+DBFF";
-                                    return token_type::parse_error;
-                                }
-                            }
-
-                            // result of the above calculation yields a proper codepoint
-                            assert(0x00 <= codepoint and codepoint <= 0x10FFFF);
-
-                            // translate codepoint into bytes
-                            if (codepoint < 0x80)
-                            {
-                                // 1-byte characters: 0xxxxxxx (ASCII)
-                                add(codepoint);
-                            }
-                            else if (codepoint <= 0x7FF)
-                            {
-                                // 2-byte characters: 110xxxxx 10xxxxxx
-                                add(static_cast<int>(0xC0u | (static_cast<unsigned int>(codepoint) >> 6u)));
-                                add(static_cast<int>(0x80u | (static_cast<unsigned int>(codepoint) & 0x3Fu)));
-                            }
-                            else if (codepoint <= 0xFFFF)
-                            {
-                                // 3-byte characters: 1110xxxx 10xxxxxx 10xxxxxx
-                                add(static_cast<int>(0xE0u | (static_cast<unsigned int>(codepoint) >> 12u)));
-                                add(static_cast<int>(0x80u | ((static_cast<unsigned int>(codepoint) >> 6u) & 0x3Fu)));
-                                add(static_cast<int>(0x80u | (static_cast<unsigned int>(codepoint) & 0x3Fu)));
-                            }
-                            else
-                            {
-                                // 4-byte characters: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-                                add(static_cast<int>(0xF0u | (static_cast<unsigned int>(codepoint) >> 18u)));
-                                add(static_cast<int>(0x80u | ((static_cast<unsigned int>(codepoint) >> 12u) & 0x3Fu)));
-                                add(static_cast<int>(0x80u | ((static_cast<unsigned int>(codepoint) >> 6u) & 0x3Fu)));
-                                add(static_cast<int>(0x80u | (static_cast<unsigned int>(codepoint) & 0x3Fu)));
-                            }
-
-                            break;
-                        }
-
-                        // other characters after escape
-                        default:
-                            error_message = "invalid string: forbidden character after backslash";
-                            return token_type::parse_error;
-                    }
-
-                    break;
-                }
-
-                // invalid control characters
-                case 0x00:
-                {
-                    error_message = "invalid string: control character U+0000 (NUL) must be escaped to \\u0000";
-                    return token_type::parse_error;
-                }
-
-                case 0x01:
-                {
-                    error_message = "invalid string: control character U+0001 (SOH) must be escaped to \\u0001";
-                    return token_type::parse_error;
-                }
-
-                case 0x02:
-                {
-                    error_message = "invalid string: control character U+0002 (STX) must be escaped to \\u0002";
-                    return token_type::parse_error;
-                }
-
-                case 0x03:
-                {
-                    error_message = "invalid string: control character U+0003 (ETX) must be escaped to \\u0003";
-                    return token_type::parse_error;
-                }
-
-                case 0x04:
-                {
-                    error_message = "invalid string: control character U+0004 (EOT) must be escaped to \\u0004";
-                    return token_type::parse_error;
-                }
-
-                case 0x05:
-                {
-                    error_message = "invalid string: control character U+0005 (ENQ) must be escaped to \\u0005";
-                    return token_type::parse_error;
-                }
-
-                case 0x06:
-                {
-                    error_message = "invalid string: control character U+0006 (ACK) must be escaped to \\u0006";
-                    return token_type::parse_error;
-                }
-
-                case 0x07:
-                {
-                    error_message = "invalid string: control character U+0007 (BEL) must be escaped to \\u0007";
-                    return token_type::parse_error;
-                }
-
-                case 0x08:
-                {
-                    error_message = "invalid string: control character U+0008 (BS) must be escaped to \\u0008 or \\b";
-                    return token_type::parse_error;
-                }
-
-                case 0x09:
-                {
-                    error_message = "invalid string: control character U+0009 (HT) must be escaped to \\u0009 or \\t";
-                    return token_type::parse_error;
-                }
-
-                case 0x0A:
-                {
-                    error_message = "invalid string: control character U+000A (LF) must be escaped to \\u000A or \\n";
-                    return token_type::parse_error;
-                }
-
-                case 0x0B:
-                {
-                    error_message = "invalid string: control character U+000B (VT) must be escaped to \\u000B";
-                    return token_type::parse_error;
-                }
-
-                case 0x0C:
-                {
-                    error_message = "invalid string: control character U+000C (FF) must be escaped to \\u000C or \\f";
-                    return token_type::parse_error;
-                }
-
-                case 0x0D:
-                {
-                    error_message = "invalid string: control character U+000D (CR) must be escaped to \\u000D or \\r";
-                    return token_type::parse_error;
-                }
-
-                case 0x0E:
-                {
-                    error_message = "invalid string: control character U+000E (SO) must be escaped to \\u000E";
-                    return token_type::parse_error;
-                }
-
-                case 0x0F:
-                {
-                    error_message = "invalid string: control character U+000F (SI) must be escaped to \\u000F";
-                    return token_type::parse_error;
-                }
-
-                case 0x10:
-                {
-                    error_message = "invalid string: control character U+0010 (DLE) must be escaped to \\u0010";
-                    return token_type::parse_error;
-                }
-
-                case 0x11:
-                {
-                    error_message = "invalid string: control character U+0011 (DC1) must be escaped to \\u0011";
-                    return token_type::parse_error;
-                }
-
-                case 0x12:
-                {
-                    error_message = "invalid string: control character U+0012 (DC2) must be escaped to \\u0012";
-                    return token_type::parse_error;
-                }
-
-                case 0x13:
-                {
-                    error_message = "invalid string: control character U+0013 (DC3) must be escaped to \\u0013";
-                    return token_type::parse_error;
-                }
-
-                case 0x14:
-                {
-                    error_message = "invalid string: control character U+0014 (DC4) must be escaped to \\u0014";
-                    return token_type::parse_error;
-                }
-
-                case 0x15:
-                {
-                    error_message = "invalid string: control character U+0015 (NAK) must be escaped to \\u0015";
-                    return token_type::parse_error;
-                }
-
-                case 0x16:
-                {
-                    error_message = "invalid string: control character U+0016 (SYN) must be escaped to \\u0016";
-                    return token_type::parse_error;
-                }
-
-                case 0x17:
-                {
-                    error_message = "invalid string: control character U+0017 (ETB) must be escaped to \\u0017";
-                    return token_type::parse_error;
-                }
-
-                case 0x18:
-                {
-                    error_message = "invalid string: control character U+0018 (CAN) must be escaped to \\u0018";
-                    return token_type::parse_error;
-                }
-
-                case 0x19:
-                {
-                    error_message = "invalid string: control character U+0019 (EM) must be escaped to \\u0019";
-                    return token_type::parse_error;
-                }
-
-                case 0x1A:
-                {
-                    error_message = "invalid string: control character U+001A (SUB) must be escaped to \\u001A";
-                    return token_type::parse_error;
-                }
-
-                case 0x1B:
-                {
-                    error_message = "invalid string: control character U+001B (ESC) must be escaped to \\u001B";
-                    return token_type::parse_error;
-                }
-
-                case 0x1C:
-                {
-                    error_message = "invalid string: control character U+001C (FS) must be escaped to \\u001C";
-                    return token_type::parse_error;
-                }
-
-                case 0x1D:
-                {
-                    error_message = "invalid string: control character U+001D (GS) must be escaped to \\u001D";
-                    return token_type::parse_error;
-                }
-
-                case 0x1E:
-                {
-                    error_message = "invalid string: control character U+001E (RS) must be escaped to \\u001E";
-                    return token_type::parse_error;
-                }
-
-                case 0x1F:
-                {
-                    error_message = "invalid string: control character U+001F (US) must be escaped to \\u001F";
-                    return token_type::parse_error;
-                }
-
-                // U+0020..U+007F (except U+0022 (quote) and U+005C (backspace))
-                case 0x20:
-                case 0x21:
-                case 0x23:
-                case 0x24:
-                case 0x25:
-                case 0x26:
-                case 0x27:
-                case 0x28:
-                case 0x29:
-                case 0x2A:
-                case 0x2B:
-                case 0x2C:
-                case 0x2D:
-                case 0x2E:
-                case 0x2F:
-                case 0x30:
-                case 0x31:
-                case 0x32:
-                case 0x33:
-                case 0x34:
-                case 0x35:
-                case 0x36:
-                case 0x37:
-                case 0x38:
-                case 0x39:
-                case 0x3A:
-                case 0x3B:
-                case 0x3C:
-                case 0x3D:
-                case 0x3E:
-                case 0x3F:
-                case 0x40:
-                case 0x41:
-                case 0x42:
-                case 0x43:
-                case 0x44:
-                case 0x45:
-                case 0x46:
-                case 0x47:
-                case 0x48:
-                case 0x49:
-                case 0x4A:
-                case 0x4B:
-                case 0x4C:
-                case 0x4D:
-                case 0x4E:
-                case 0x4F:
-                case 0x50:
-                case 0x51:
-                case 0x52:
-                case 0x53:
-                case 0x54:
-                case 0x55:
-                case 0x56:
-                case 0x57:
-                case 0x58:
-                case 0x59:
-                case 0x5A:
-                case 0x5B:
-                case 0x5D:
-                case 0x5E:
-                case 0x5F:
-                case 0x60:
-                case 0x61:
-                case 0x62:
-                case 0x63:
-                case 0x64:
-                case 0x65:
-                case 0x66:
-                case 0x67:
-                case 0x68:
-                case 0x69:
-                case 0x6A:
-                case 0x6B:
-                case 0x6C:
-                case 0x6D:
-                case 0x6E:
-                case 0x6F:
-                case 0x70:
-                case 0x71:
-                case 0x72:
-                case 0x73:
-                case 0x74:
-                case 0x75:
-                case 0x76:
-                case 0x77:
-                case 0x78:
-                case 0x79:
-                case 0x7A:
-                case 0x7B:
-                case 0x7C:
-                case 0x7D:
-                case 0x7E:
-                case 0x7F:
-                {
-                    add(current);
-                    break;
-                }
-
-                // U+0080..U+07FF: bytes C2..DF 80..BF
-                case 0xC2:
-                case 0xC3:
-                case 0xC4:
-                case 0xC5:
-                case 0xC6:
-                case 0xC7:
-                case 0xC8:
-                case 0xC9:
-                case 0xCA:
-                case 0xCB:
-                case 0xCC:
-                case 0xCD:
-                case 0xCE:
-                case 0xCF:
-                case 0xD0:
-                case 0xD1:
-                case 0xD2:
-                case 0xD3:
-                case 0xD4:
-                case 0xD5:
-                case 0xD6:
-                case 0xD7:
-                case 0xD8:
-                case 0xD9:
-                case 0xDA:
-                case 0xDB:
-                case 0xDC:
-                case 0xDD:
-                case 0xDE:
-                case 0xDF:
-                {
-                    if (JSON_UNLIKELY(not next_byte_in_range({0x80, 0xBF})))
-                    {
-                        return token_type::parse_error;
-                    }
-                    break;
-                }
-
-                // U+0800..U+0FFF: bytes E0 A0..BF 80..BF
-                case 0xE0:
-                {
-                    if (JSON_UNLIKELY(not (next_byte_in_range({0xA0, 0xBF, 0x80, 0xBF}))))
-                    {
-                        return token_type::parse_error;
-                    }
-                    break;
-                }
-
-                // U+1000..U+CFFF: bytes E1..EC 80..BF 80..BF
-                // U+E000..U+FFFF: bytes EE..EF 80..BF 80..BF
-                case 0xE1:
-                case 0xE2:
-                case 0xE3:
-                case 0xE4:
-                case 0xE5:
-                case 0xE6:
-                case 0xE7:
-                case 0xE8:
-                case 0xE9:
-                case 0xEA:
-                case 0xEB:
-                case 0xEC:
-                case 0xEE:
-                case 0xEF:
-                {
-                    if (JSON_UNLIKELY(not (next_byte_in_range({0x80, 0xBF, 0x80, 0xBF}))))
-                    {
-                        return token_type::parse_error;
-                    }
-                    break;
-                }
-
-                // U+D000..U+D7FF: bytes ED 80..9F 80..BF
-                case 0xED:
-                {
-                    if (JSON_UNLIKELY(not (next_byte_in_range({0x80, 0x9F, 0x80, 0xBF}))))
-                    {
-                        return token_type::parse_error;
-                    }
-                    break;
-                }
-
-                // U+10000..U+3FFFF F0 90..BF 80..BF 80..BF
-                case 0xF0:
-                {
-                    if (JSON_UNLIKELY(not (next_byte_in_range({0x90, 0xBF, 0x80, 0xBF, 0x80, 0xBF}))))
-                    {
-                        return token_type::parse_error;
-                    }
-                    break;
-                }
-
-                // U+40000..U+FFFFF F1..F3 80..BF 80..BF 80..BF
-                case 0xF1:
-                case 0xF2:
-                case 0xF3:
-                {
-                    if (JSON_UNLIKELY(not (next_byte_in_range({0x80, 0xBF, 0x80, 0xBF, 0x80, 0xBF}))))
-                    {
-                        return token_type::parse_error;
-                    }
-                    break;
-                }
-
-                // U+100000..U+10FFFF F4 80..8F 80..BF 80..BF
-                case 0xF4:
-                {
-                    if (JSON_UNLIKELY(not (next_byte_in_range({0x80, 0x8F, 0x80, 0xBF, 0x80, 0xBF}))))
-                    {
-                        return token_type::parse_error;
-                    }
-                    break;
-                }
-
-                // remaining bytes (80..C1 and F5..FF) are ill-formed
-                default:
-                {
-                    error_message = "invalid string: ill-formed UTF-8 byte";
-                    return token_type::parse_error;
-                }
-            }
-        }
-    }
-
-    static void strtof(float& f, const char* str, char** endptr) noexcept
-    {
-        f = std::strtof(str, endptr);
-    }
-
-    static void strtof(double& f, const char* str, char** endptr) noexcept
-    {
-        f = std::strtod(str, endptr);
-    }
-
-    static void strtof(long double& f, const char* str, char** endptr) noexcept
-    {
-        f = std::strtold(str, endptr);
-    }
-
-    /*!
-    @brief scan a number literal
-
-    This function scans a string according to Sect. 6 of RFC 7159.
-
-    The function is realized with a deterministic finite state machine derived
-    from the grammar described in RFC 7159. Starting in state "init", the
-    input is read and used to determined the next state. Only state "done"
-    accepts the number. State "error" is a trap state to model errors. In the
-    table below, "anything" means any character but the ones listed before.
-
-    state    | 0        | 1-9      | e E      | +       | -       | .        | anything
-    ---------|----------|----------|----------|---------|---------|----------|-----------
-    init     | zero     | any1     | [error]  | [error] | minus   | [error]  | [error]
-    minus    | zero     | any1     | [error]  | [error] | [error] | [error]  | [error]
-    zero     | done     | done     | exponent | done    | done    | decimal1 | done
-    any1     | any1     | any1     | exponent | done    | done    | decimal1 | done
-    decimal1 | decimal2 | [error]  | [error]  | [error] | [error] | [error]  | [error]
-    decimal2 | decimal2 | decimal2 | exponent | done    | done    | done     | done
-    exponent | any2     | any2     | [error]  | sign    | sign    | [error]  | [error]
-    sign     | any2     | any2     | [error]  | [error] | [error] | [error]  | [error]
-    any2     | any2     | any2     | done     | done    | done    | done     | done
-
-    The state machine is realized with one label per state (prefixed with
-    "scan_number_") and `goto` statements between them. The state machine
-    contains cycles, but any cycle can be left when EOF is read. Therefore,
-    the function is guaranteed to terminate.
-
-    During scanning, the read bytes are stored in token_buffer. This string is
-    then converted to a signed integer, an unsigned integer, or a
-    floating-point number.
-
-    @return token_type::value_unsigned, token_type::value_integer, or
-            token_type::value_float if number could be successfully scanned,
-            token_type::parse_error otherwise
-
-    @note The scanner is independent of the current locale. Internally, the
-          locale's decimal point is used instead of `.` to work with the
-          locale-dependent converters.
-    */
-    token_type scan_number()  // lgtm [cpp/use-of-goto]
-    {
-        // reset token_buffer to store the number's bytes
-        reset();
-
-        // the type of the parsed number; initially set to unsigned; will be
-        // changed if minus sign, decimal point or exponent is read
-        token_type number_type = token_type::value_unsigned;
-
-        // state (init): we just found out we need to scan a number
-        switch (current)
-        {
-            case '-':
-            {
-                add(current);
-                goto scan_number_minus;
-            }
-
-            case '0':
-            {
-                add(current);
-                goto scan_number_zero;
-            }
-
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-            case '9':
-            {
-                add(current);
-                goto scan_number_any1;
-            }
-
-            // LCOV_EXCL_START
-            default:
-            {
-                // all other characters are rejected outside scan_number()
-                assert(false);
-            }
-                // LCOV_EXCL_STOP
-        }
-
-scan_number_minus:
-        // state: we just parsed a leading minus sign
-        number_type = token_type::value_integer;
-        switch (get())
-        {
-            case '0':
-            {
-                add(current);
-                goto scan_number_zero;
-            }
-
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-            case '9':
-            {
-                add(current);
-                goto scan_number_any1;
-            }
-
-            default:
-            {
-                error_message = "invalid number; expected digit after '-'";
-                return token_type::parse_error;
-            }
-        }
-
-scan_number_zero:
-        // state: we just parse a zero (maybe with a leading minus sign)
-        switch (get())
-        {
-            case '.':
-            {
-                add(decimal_point_char);
-                goto scan_number_decimal1;
-            }
-
-            case 'e':
-            case 'E':
-            {
-                add(current);
-                goto scan_number_exponent;
-            }
-
-            default:
-                goto scan_number_done;
-        }
-
-scan_number_any1:
-        // state: we just parsed a number 0-9 (maybe with a leading minus sign)
-        switch (get())
-        {
-            case '0':
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-            case '9':
-            {
-                add(current);
-                goto scan_number_any1;
-            }
-
-            case '.':
-            {
-                add(decimal_point_char);
-                goto scan_number_decimal1;
-            }
-
-            case 'e':
-            case 'E':
-            {
-                add(current);
-                goto scan_number_exponent;
-            }
-
-            default:
-                goto scan_number_done;
-        }
-
-scan_number_decimal1:
-        // state: we just parsed a decimal point
-        number_type = token_type::value_float;
-        switch (get())
-        {
-            case '0':
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-            case '9':
-            {
-                add(current);
-                goto scan_number_decimal2;
-            }
-
-            default:
-            {
-                error_message = "invalid number; expected digit after '.'";
-                return token_type::parse_error;
-            }
-        }
-
-scan_number_decimal2:
-        // we just parsed at least one number after a decimal point
-        switch (get())
-        {
-            case '0':
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-            case '9':
-            {
-                add(current);
-                goto scan_number_decimal2;
-            }
-
-            case 'e':
-            case 'E':
-            {
-                add(current);
-                goto scan_number_exponent;
-            }
-
-            default:
-                goto scan_number_done;
-        }
-
-scan_number_exponent:
-        // we just parsed an exponent
-        number_type = token_type::value_float;
-        switch (get())
-        {
-            case '+':
-            case '-':
-            {
-                add(current);
-                goto scan_number_sign;
-            }
-
-            case '0':
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-            case '9':
-            {
-                add(current);
-                goto scan_number_any2;
-            }
-
-            default:
-            {
-                error_message =
-                    "invalid number; expected '+', '-', or digit after exponent";
-                return token_type::parse_error;
-            }
-        }
-
-scan_number_sign:
-        // we just parsed an exponent sign
-        switch (get())
-        {
-            case '0':
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-            case '9':
-            {
-                add(current);
-                goto scan_number_any2;
-            }
-
-            default:
-            {
-                error_message = "invalid number; expected digit after exponent sign";
-                return token_type::parse_error;
-            }
-        }
-
-scan_number_any2:
-        // we just parsed a number after the exponent or exponent sign
-        switch (get())
-        {
-            case '0':
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-            case '9':
-            {
-                add(current);
-                goto scan_number_any2;
-            }
-
-            default:
-                goto scan_number_done;
-        }
-
-scan_number_done:
-        // unget the character after the number (we only read it to know that
-        // we are done scanning a number)
-        unget();
-
-        char* endptr = nullptr;
-        errno = 0;
-
-        // try to parse integers first and fall back to floats
-        if (number_type == token_type::value_unsigned)
-        {
-            const auto x = std::strtoull(token_buffer.data(), &endptr, 10);
-
-            // we checked the number format before
-            assert(endptr == token_buffer.data() + token_buffer.size());
-
-            if (errno == 0)
-            {
-                value_unsigned = static_cast<number_unsigned_t>(x);
-                if (value_unsigned == x)
-                {
-                    return token_type::value_unsigned;
-                }
-            }
-        }
-        else if (number_type == token_type::value_integer)
-        {
-            const auto x = std::strtoll(token_buffer.data(), &endptr, 10);
-
-            // we checked the number format before
-            assert(endptr == token_buffer.data() + token_buffer.size());
-
-            if (errno == 0)
-            {
-                value_integer = static_cast<number_integer_t>(x);
-                if (value_integer == x)
-                {
-                    return token_type::value_integer;
-                }
-            }
-        }
-
-        // this code is reached if we parse a floating-point number or if an
-        // integer conversion above failed
-        strtof(value_float, token_buffer.data(), &endptr);
-
-        // we checked the number format before
-        assert(endptr == token_buffer.data() + token_buffer.size());
-
-        return token_type::value_float;
-    }
-
-    /*!
-    @param[in] literal_text  the literal text to expect
-    @param[in] length        the length of the passed literal text
-    @param[in] return_type   the token type to return on success
-    */
-    token_type scan_literal(const char* literal_text, const std::size_t length,
-                            token_type return_type)
-    {
-        assert(current == literal_text[0]);
-        for (std::size_t i = 1; i < length; ++i)
-        {
-            if (JSON_UNLIKELY(get() != literal_text[i]))
-            {
-                error_message = "invalid literal";
-                return token_type::parse_error;
-            }
-        }
-        return return_type;
-    }
-
-    /////////////////////
-    // input management
-    /////////////////////
-
-    /// reset token_buffer; current character is beginning of token
-    void reset() noexcept
-    {
-        token_buffer.clear();
-        token_string.clear();
-        token_string.push_back(std::char_traits<char>::to_char_type(current));
-    }
-
-    /*
-    @brief get next character from the input
-
-    This function provides the interface to the used input adapter. It does
-    not throw in case the input reached EOF, but returns a
-    `std::char_traits<char>::eof()` in that case.  Stores the scanned characters
-    for use in error messages.
-
-    @return character read from the input
-    */
-    std::char_traits<char>::int_type get()
-    {
-        ++position.chars_read_total;
-        ++position.chars_read_current_line;
-
-        if (next_unget)
-        {
-            // just reset the next_unget variable and work with current
-            next_unget = false;
-        }
-        else
-        {
-            current = ia->get_character();
-        }
-
-        if (JSON_LIKELY(current != std::char_traits<char>::eof()))
-        {
-            token_string.push_back(std::char_traits<char>::to_char_type(current));
-        }
-
-        if (current == '\n')
-        {
-            ++position.lines_read;
-            position.chars_read_current_line = 0;
-        }
-
-        return current;
-    }
-
-    /*!
-    @brief unget current character (read it again on next get)
-
-    We implement unget by setting variable next_unget to true. The input is not
-    changed - we just simulate ungetting by modifying chars_read_total,
-    chars_read_current_line, and token_string. The next call to get() will
-    behave as if the unget character is read again.
-    */
-    void unget()
-    {
-        next_unget = true;
-
-        --position.chars_read_total;
-
-        // in case we "unget" a newline, we have to also decrement the lines_read
-        if (position.chars_read_current_line == 0)
-        {
-            if (position.lines_read > 0)
-            {
-                --position.lines_read;
-            }
-        }
-        else
-        {
-            --position.chars_read_current_line;
-        }
-
-        if (JSON_LIKELY(current != std::char_traits<char>::eof()))
-        {
-            assert(not token_string.empty());
-            token_string.pop_back();
-        }
-    }
-
-    /// add a character to token_buffer
-    void add(int c)
-    {
-        token_buffer.push_back(std::char_traits<char>::to_char_type(c));
-    }
-
-  public:
-    /////////////////////
-    // value getters
-    /////////////////////
-
-    /// return integer value
-    constexpr number_integer_t get_number_integer() const noexcept
-    {
-        return value_integer;
-    }
-
-    /// return unsigned integer value
-    constexpr number_unsigned_t get_number_unsigned() const noexcept
-    {
-        return value_unsigned;
-    }
-
-    /// return floating-point value
-    constexpr number_float_t get_number_float() const noexcept
-    {
-        return value_float;
-    }
-
-    /// return current string value (implicitly resets the token; useful only once)
-    string_t& get_string()
-    {
-        return token_buffer;
-    }
-
-    /////////////////////
-    // diagnostics
-    /////////////////////
-
-    /// return position of last read token
-    constexpr position_t get_position() const noexcept
-    {
-        return position;
-    }
-
-    /// return the last read token (for errors only).  Will never contain EOF
-    /// (an arbitrary value that is not a valid char value, often -1), because
-    /// 255 may legitimately occur.  May contain NUL, which should be escaped.
-    std::string get_token_string() const
-    {
-        // escape control characters
-        std::string result;
-        for (const auto c : token_string)
-        {
-            if ('\x00' <= c and c <= '\x1F')
-            {
-                // escape control characters
-                std::array<char, 9> cs{};
-                (std::snprintf)(cs.data(), cs.size(), "<U+%.4X>", static_cast<unsigned char>(c));
-                result += cs.data();
-            }
-            else
-            {
-                // add character as is
-                result.push_back(c);
-            }
-        }
-
-        return result;
-    }
-
-    /// return syntax error message
-    constexpr const char* get_error_message() const noexcept
-    {
-        return error_message;
-    }
-
-    /////////////////////
-    // actual scanner
-    /////////////////////
-
-    /*!
-    @brief skip the UTF-8 byte order mark
-    @return true iff there is no BOM or the correct BOM has been skipped
-    */
-    bool skip_bom()
-    {
-        if (get() == 0xEF)
-        {
-            // check if we completely parse the BOM
-            return get() == 0xBB and get() == 0xBF;
-        }
-
-        // the first character is not the beginning of the BOM; unget it to
-        // process is later
-        unget();
-        return true;
-    }
-
-    token_type scan()
-    {
-        // initially, skip the BOM
-        if (position.chars_read_total == 0 and not skip_bom())
-        {
-            error_message = "invalid BOM; must be 0xEF 0xBB 0xBF if given";
-            return token_type::parse_error;
-        }
-
-        // read next character and ignore whitespace
-        do
-        {
-            get();
-        }
-        while (current == ' ' or current == '\t' or current == '\n' or current == '\r');
-
-        switch (current)
-        {
-            // structural characters
-            case '[':
-                return token_type::begin_array;
-            case ']':
-                return token_type::end_array;
-            case '{':
-                return token_type::begin_object;
-            case '}':
-                return token_type::end_object;
-            case ':':
-                return token_type::name_separator;
-            case ',':
-                return token_type::value_separator;
-
-            // literals
-            case 't':
-                return scan_literal("true", 4, token_type::literal_true);
-            case 'f':
-                return scan_literal("false", 5, token_type::literal_false);
-            case 'n':
-                return scan_literal("null", 4, token_type::literal_null);
-
-            // string
-            case '\"':
-                return scan_string();
-
-            // number
-            case '-':
-            case '0':
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-            case '9':
-                return scan_number();
-
-            // end of input (the null byte is needed when parsing from
-            // string literals)
-            case '\0':
-            case std::char_traits<char>::eof():
-                return token_type::end_of_input;
-
-            // error
-            default:
-                error_message = "invalid literal";
-                return token_type::parse_error;
-        }
-    }
-
-  private:
-    /// input adapter
-    detail::input_adapter_t ia = nullptr;
-
-    /// the current character
-    std::char_traits<char>::int_type current = std::char_traits<char>::eof();
-
-    /// whether the next get() call should just return current
-    bool next_unget = false;
-
-    /// the start position of the current token
-    position_t position;
-
-    /// raw input token string (for error messages)
-    std::vector<char> token_string {};
-
-    /// buffer for variable-length tokens (numbers, strings)
-    string_t token_buffer {};
-
-    /// a description of occurred lexer errors
-    const char* error_message = "";
-
-    // number values
-    number_integer_t value_integer = 0;
-    number_unsigned_t value_unsigned = 0;
-    number_float_t value_float = 0;
-
-    /// the decimal point
-    const char decimal_point_char = '.';
-};
-}  // namespace detail
-}  // namespace nlohmann
-
-// #include <nlohmann/detail/input/parser.hpp>
-
-
-#include <cassert> // assert
-#include <cmath> // isfinite
-#include <cstdint> // uint8_t
-#include <functional> // function
-#include <string> // string
-#include <utility> // move
-#include <vector> // vector
-
-// #include <nlohmann/detail/exceptions.hpp>
-
-// #include <nlohmann/detail/macro_scope.hpp>
-
-// #include <nlohmann/detail/meta/is_sax.hpp>
-
-
-#include <cstdint> // size_t
-#include <utility> // declval
-#include <string> // string
-
-// #include <nlohmann/detail/meta/detected.hpp>
-
-// #include <nlohmann/detail/meta/type_traits.hpp>
-
-
-namespace nlohmann
-{
-namespace detail
-{
-template <typename T>
-using null_function_t = decltype(std::declval<T&>().null());
-
-template <typename T>
-using boolean_function_t =
-    decltype(std::declval<T&>().boolean(std::declval<bool>()));
-
-template <typename T, typename Integer>
-using number_integer_function_t =
-    decltype(std::declval<T&>().number_integer(std::declval<Integer>()));
-
-template <typename T, typename Unsigned>
-using number_unsigned_function_t =
-    decltype(std::declval<T&>().number_unsigned(std::declval<Unsigned>()));
-
-template <typename T, typename Float, typename String>
-using number_float_function_t = decltype(std::declval<T&>().number_float(
-                                    std::declval<Float>(), std::declval<const String&>()));
-
-template <typename T, typename String>
-using string_function_t =
-    decltype(std::declval<T&>().string(std::declval<String&>()));
-
-template <typename T>
-using start_object_function_t =
-    decltype(std::declval<T&>().start_object(std::declval<std::size_t>()));
-
-template <typename T, typename String>
-using key_function_t =
-    decltype(std::declval<T&>().key(std::declval<String&>()));
-
-template <typename T>
-using end_object_function_t = decltype(std::declval<T&>().end_object());
-
-template <typename T>
-using start_array_function_t =
-    decltype(std::declval<T&>().start_array(std::declval<std::size_t>()));
-
-template <typename T>
-using end_array_function_t = decltype(std::declval<T&>().end_array());
-
-template <typename T, typename Exception>
-using parse_error_function_t = decltype(std::declval<T&>().parse_error(
-        std::declval<std::size_t>(), std::declval<const std::string&>(),
-        std::declval<const Exception&>()));
-
-template <typename SAX, typename BasicJsonType>
-struct is_sax
-{
-  private:
-    static_assert(is_basic_json<BasicJsonType>::value,
-                  "BasicJsonType must be of type basic_json<...>");
-
-    using number_integer_t = typename BasicJsonType::number_integer_t;
-    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
-    using number_float_t = typename BasicJsonType::number_float_t;
-    using string_t = typename BasicJsonType::string_t;
-    using exception_t = typename BasicJsonType::exception;
-
-  public:
-    static constexpr bool value =
-        is_detected_exact<bool, null_function_t, SAX>::value &&
-        is_detected_exact<bool, boolean_function_t, SAX>::value &&
-        is_detected_exact<bool, number_integer_function_t, SAX,
-        number_integer_t>::value &&
-        is_detected_exact<bool, number_unsigned_function_t, SAX,
-        number_unsigned_t>::value &&
-        is_detected_exact<bool, number_float_function_t, SAX, number_float_t,
-        string_t>::value &&
-        is_detected_exact<bool, string_function_t, SAX, string_t>::value &&
-        is_detected_exact<bool, start_object_function_t, SAX>::value &&
-        is_detected_exact<bool, key_function_t, SAX, string_t>::value &&
-        is_detected_exact<bool, end_object_function_t, SAX>::value &&
-        is_detected_exact<bool, start_array_function_t, SAX>::value &&
-        is_detected_exact<bool, end_array_function_t, SAX>::value &&
-        is_detected_exact<bool, parse_error_function_t, SAX, exception_t>::value;
-};
-
-template <typename SAX, typename BasicJsonType>
-struct is_sax_static_asserts
-{
-  private:
-    static_assert(is_basic_json<BasicJsonType>::value,
-                  "BasicJsonType must be of type basic_json<...>");
-
-    using number_integer_t = typename BasicJsonType::number_integer_t;
-    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
-    using number_float_t = typename BasicJsonType::number_float_t;
-    using string_t = typename BasicJsonType::string_t;
-    using exception_t = typename BasicJsonType::exception;
-
-  public:
-    static_assert(is_detected_exact<bool, null_function_t, SAX>::value,
-                  "Missing/invalid function: bool null()");
-    static_assert(is_detected_exact<bool, boolean_function_t, SAX>::value,
-                  "Missing/invalid function: bool boolean(bool)");
-    static_assert(is_detected_exact<bool, boolean_function_t, SAX>::value,
-                  "Missing/invalid function: bool boolean(bool)");
-    static_assert(
-        is_detected_exact<bool, number_integer_function_t, SAX,
-        number_integer_t>::value,
-        "Missing/invalid function: bool number_integer(number_integer_t)");
-    static_assert(
-        is_detected_exact<bool, number_unsigned_function_t, SAX,
-        number_unsigned_t>::value,
-        "Missing/invalid function: bool number_unsigned(number_unsigned_t)");
-    static_assert(is_detected_exact<bool, number_float_function_t, SAX,
-                  number_float_t, string_t>::value,
-                  "Missing/invalid function: bool number_float(number_float_t, const string_t&)");
-    static_assert(
-        is_detected_exact<bool, string_function_t, SAX, string_t>::value,
-        "Missing/invalid function: bool string(string_t&)");
-    static_assert(is_detected_exact<bool, start_object_function_t, SAX>::value,
-                  "Missing/invalid function: bool start_object(std::size_t)");
-    static_assert(is_detected_exact<bool, key_function_t, SAX, string_t>::value,
-                  "Missing/invalid function: bool key(string_t&)");
-    static_assert(is_detected_exact<bool, end_object_function_t, SAX>::value,
-                  "Missing/invalid function: bool end_object()");
-    static_assert(is_detected_exact<bool, start_array_function_t, SAX>::value,
-                  "Missing/invalid function: bool start_array(std::size_t)");
-    static_assert(is_detected_exact<bool, end_array_function_t, SAX>::value,
-                  "Missing/invalid function: bool end_array()");
-    static_assert(
-        is_detected_exact<bool, parse_error_function_t, SAX, exception_t>::value,
-        "Missing/invalid function: bool parse_error(std::size_t, const "
-        "std::string&, const exception&)");
-};
-}  // namespace detail
-}  // namespace nlohmann
-
-// #include <nlohmann/detail/input/input_adapters.hpp>
-
 // #include <nlohmann/detail/input/json_sax.hpp>
 
 
@@ -4442,6 +2837,13 @@ class json_sax_dom_parser
         : root(r), allow_exceptions(allow_exceptions_)
     {}
 
+    // make class move-only
+    json_sax_dom_parser(const json_sax_dom_parser&) = delete;
+    json_sax_dom_parser(json_sax_dom_parser&&) noexcept = default;
+    json_sax_dom_parser& operator=(const json_sax_dom_parser&) = delete;
+    json_sax_dom_parser& operator=(json_sax_dom_parser&&) noexcept = default;
+    ~json_sax_dom_parser() = default;
+
     bool null()
     {
         handle_value(nullptr);
@@ -4590,7 +2992,7 @@ class json_sax_dom_parser
     /// the parsed JSON value
     BasicJsonType& root;
     /// stack to model hierarchy of values
-    std::vector<BasicJsonType*> ref_stack;
+    std::vector<BasicJsonType*> ref_stack {};
     /// helper to hold the reference for the next object element
     BasicJsonType* object_element = nullptr;
     /// whether a syntax error occurred
@@ -4617,6 +3019,13 @@ class json_sax_dom_callback_parser
     {
         keep_stack.push_back(true);
     }
+
+    // make class move-only
+    json_sax_dom_callback_parser(const json_sax_dom_callback_parser&) = delete;
+    json_sax_dom_callback_parser(json_sax_dom_callback_parser&&) = default;
+    json_sax_dom_callback_parser& operator=(const json_sax_dom_callback_parser&) = delete;
+    json_sax_dom_callback_parser& operator=(json_sax_dom_callback_parser&&) = default;
+    ~json_sax_dom_callback_parser() = default;
 
     bool null()
     {
@@ -4895,11 +3304,11 @@ class json_sax_dom_callback_parser
     /// the parsed JSON value
     BasicJsonType& root;
     /// stack to model hierarchy of values
-    std::vector<BasicJsonType*> ref_stack;
+    std::vector<BasicJsonType*> ref_stack {};
     /// stack to manage which values to keep
-    std::vector<bool> keep_stack;
+    std::vector<bool> keep_stack {};
     /// stack to manage which object keys to keep
-    std::vector<bool> key_keep_stack;
+    std::vector<bool> key_keep_stack {};
     /// helper to hold the reference for the next object element
     BasicJsonType* object_element = nullptr;
     /// whether a syntax error occurred
@@ -4985,1539 +3394,153 @@ class json_sax_acceptor
 
 }  // namespace nlohmann
 
-// #include <nlohmann/detail/input/lexer.hpp>
+// #include <nlohmann/detail/macro_scope.hpp>
 
-// #include <nlohmann/detail/value_t.hpp>
+// #include <nlohmann/detail/meta/is_sax.hpp>
+
+
+#include <cstdint> // size_t
+#include <utility> // declval
+#include <string> // string
+
+// #include <nlohmann/detail/meta/detected.hpp>
+
+// #include <nlohmann/detail/meta/type_traits.hpp>
 
 
 namespace nlohmann
 {
 namespace detail
 {
-////////////
-// parser //
-////////////
+template <typename T>
+using null_function_t = decltype(std::declval<T&>().null());
 
-/*!
-@brief syntax analysis
+template <typename T>
+using boolean_function_t =
+    decltype(std::declval<T&>().boolean(std::declval<bool>()));
 
-This class implements a recursive decent parser.
-*/
-template<typename BasicJsonType>
-class parser
+template <typename T, typename Integer>
+using number_integer_function_t =
+    decltype(std::declval<T&>().number_integer(std::declval<Integer>()));
+
+template <typename T, typename Unsigned>
+using number_unsigned_function_t =
+    decltype(std::declval<T&>().number_unsigned(std::declval<Unsigned>()));
+
+template <typename T, typename Float, typename String>
+using number_float_function_t = decltype(std::declval<T&>().number_float(
+                                    std::declval<Float>(), std::declval<const String&>()));
+
+template <typename T, typename String>
+using string_function_t =
+    decltype(std::declval<T&>().string(std::declval<String&>()));
+
+template <typename T>
+using start_object_function_t =
+    decltype(std::declval<T&>().start_object(std::declval<std::size_t>()));
+
+template <typename T, typename String>
+using key_function_t =
+    decltype(std::declval<T&>().key(std::declval<String&>()));
+
+template <typename T>
+using end_object_function_t = decltype(std::declval<T&>().end_object());
+
+template <typename T>
+using start_array_function_t =
+    decltype(std::declval<T&>().start_array(std::declval<std::size_t>()));
+
+template <typename T>
+using end_array_function_t = decltype(std::declval<T&>().end_array());
+
+template <typename T, typename Exception>
+using parse_error_function_t = decltype(std::declval<T&>().parse_error(
+        std::declval<std::size_t>(), std::declval<const std::string&>(),
+        std::declval<const Exception&>()));
+
+template <typename SAX, typename BasicJsonType>
+struct is_sax
 {
+  private:
+    static_assert(is_basic_json<BasicJsonType>::value,
+                  "BasicJsonType must be of type basic_json<...>");
+
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
     using string_t = typename BasicJsonType::string_t;
-    using lexer_t = lexer<BasicJsonType>;
-    using token_type = typename lexer_t::token_type;
+    using exception_t = typename BasicJsonType::exception;
 
   public:
-    enum class parse_event_t : uint8_t
-    {
-        /// the parser read `{` and started to process a JSON object
-        object_start,
-        /// the parser read `}` and finished processing a JSON object
-        object_end,
-        /// the parser read `[` and started to process a JSON array
-        array_start,
-        /// the parser read `]` and finished processing a JSON array
-        array_end,
-        /// the parser read a key of a value in an object
-        key,
-        /// the parser finished reading a JSON value
-        value
-    };
+    static constexpr bool value =
+        is_detected_exact<bool, null_function_t, SAX>::value &&
+        is_detected_exact<bool, boolean_function_t, SAX>::value &&
+        is_detected_exact<bool, number_integer_function_t, SAX,
+        number_integer_t>::value &&
+        is_detected_exact<bool, number_unsigned_function_t, SAX,
+        number_unsigned_t>::value &&
+        is_detected_exact<bool, number_float_function_t, SAX, number_float_t,
+        string_t>::value &&
+        is_detected_exact<bool, string_function_t, SAX, string_t>::value &&
+        is_detected_exact<bool, start_object_function_t, SAX>::value &&
+        is_detected_exact<bool, key_function_t, SAX, string_t>::value &&
+        is_detected_exact<bool, end_object_function_t, SAX>::value &&
+        is_detected_exact<bool, start_array_function_t, SAX>::value &&
+        is_detected_exact<bool, end_array_function_t, SAX>::value &&
+        is_detected_exact<bool, parse_error_function_t, SAX, exception_t>::value;
+};
 
-    using parser_callback_t =
-        std::function<bool(int depth, parse_event_t event, BasicJsonType& parsed)>;
-
-    /// a parser reading from an input adapter
-    explicit parser(detail::input_adapter_t&& adapter,
-                    const parser_callback_t cb = nullptr,
-                    const bool allow_exceptions_ = true)
-        : callback(cb), m_lexer(std::move(adapter)), allow_exceptions(allow_exceptions_)
-    {
-        // read first token
-        get_token();
-    }
-
-    /*!
-    @brief public parser interface
-
-    @param[in] strict      whether to expect the last token to be EOF
-    @param[in,out] result  parsed JSON value
-
-    @throw parse_error.101 in case of an unexpected token
-    @throw parse_error.102 if to_unicode fails or surrogate error
-    @throw parse_error.103 if to_unicode fails
-    */
-    void parse(const bool strict, BasicJsonType& result)
-    {
-        if (callback)
-        {
-            json_sax_dom_callback_parser<BasicJsonType> sdp(result, callback, allow_exceptions);
-            sax_parse_internal(&sdp);
-            result.assert_invariant();
-
-            // in strict mode, input must be completely read
-            if (strict and (get_token() != token_type::end_of_input))
-            {
-                sdp.parse_error(m_lexer.get_position(),
-                                m_lexer.get_token_string(),
-                                parse_error::create(101, m_lexer.get_position(),
-                                                    exception_message(token_type::end_of_input, "value")));
-            }
-
-            // in case of an error, return discarded value
-            if (sdp.is_errored())
-            {
-                result = value_t::discarded;
-                return;
-            }
-
-            // set top-level value to null if it was discarded by the callback
-            // function
-            if (result.is_discarded())
-            {
-                result = nullptr;
-            }
-        }
-        else
-        {
-            json_sax_dom_parser<BasicJsonType> sdp(result, allow_exceptions);
-            sax_parse_internal(&sdp);
-            result.assert_invariant();
-
-            // in strict mode, input must be completely read
-            if (strict and (get_token() != token_type::end_of_input))
-            {
-                sdp.parse_error(m_lexer.get_position(),
-                                m_lexer.get_token_string(),
-                                parse_error::create(101, m_lexer.get_position(),
-                                                    exception_message(token_type::end_of_input, "value")));
-            }
-
-            // in case of an error, return discarded value
-            if (sdp.is_errored())
-            {
-                result = value_t::discarded;
-                return;
-            }
-        }
-    }
-
-    /*!
-    @brief public accept interface
-
-    @param[in] strict  whether to expect the last token to be EOF
-    @return whether the input is a proper JSON text
-    */
-    bool accept(const bool strict = true)
-    {
-        json_sax_acceptor<BasicJsonType> sax_acceptor;
-        return sax_parse(&sax_acceptor, strict);
-    }
-
-    template <typename SAX>
-    bool sax_parse(SAX* sax, const bool strict = true)
-    {
-        (void)detail::is_sax_static_asserts<SAX, BasicJsonType> {};
-        const bool result = sax_parse_internal(sax);
-
-        // strict mode: next byte must be EOF
-        if (result and strict and (get_token() != token_type::end_of_input))
-        {
-            return sax->parse_error(m_lexer.get_position(),
-                                    m_lexer.get_token_string(),
-                                    parse_error::create(101, m_lexer.get_position(),
-                                            exception_message(token_type::end_of_input, "value")));
-        }
-
-        return result;
-    }
-
+template <typename SAX, typename BasicJsonType>
+struct is_sax_static_asserts
+{
   private:
-    template <typename SAX>
-    bool sax_parse_internal(SAX* sax)
-    {
-        // stack to remember the hierarchy of structured values we are parsing
-        // true = array; false = object
-        std::vector<bool> states;
-        // value to avoid a goto (see comment where set to true)
-        bool skip_to_state_evaluation = false;
+    static_assert(is_basic_json<BasicJsonType>::value,
+                  "BasicJsonType must be of type basic_json<...>");
 
-        while (true)
-        {
-            if (not skip_to_state_evaluation)
-            {
-                // invariant: get_token() was called before each iteration
-                switch (last_token)
-                {
-                    case token_type::begin_object:
-                    {
-                        if (JSON_UNLIKELY(not sax->start_object(std::size_t(-1))))
-                        {
-                            return false;
-                        }
+    using number_integer_t = typename BasicJsonType::number_integer_t;
+    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+    using number_float_t = typename BasicJsonType::number_float_t;
+    using string_t = typename BasicJsonType::string_t;
+    using exception_t = typename BasicJsonType::exception;
 
-                        // closing } -> we are done
-                        if (get_token() == token_type::end_object)
-                        {
-                            if (JSON_UNLIKELY(not sax->end_object()))
-                            {
-                                return false;
-                            }
-                            break;
-                        }
-
-                        // parse key
-                        if (JSON_UNLIKELY(last_token != token_type::value_string))
-                        {
-                            return sax->parse_error(m_lexer.get_position(),
-                                                    m_lexer.get_token_string(),
-                                                    parse_error::create(101, m_lexer.get_position(),
-                                                            exception_message(token_type::value_string, "object key")));
-                        }
-                        if (JSON_UNLIKELY(not sax->key(m_lexer.get_string())))
-                        {
-                            return false;
-                        }
-
-                        // parse separator (:)
-                        if (JSON_UNLIKELY(get_token() != token_type::name_separator))
-                        {
-                            return sax->parse_error(m_lexer.get_position(),
-                                                    m_lexer.get_token_string(),
-                                                    parse_error::create(101, m_lexer.get_position(),
-                                                            exception_message(token_type::name_separator, "object separator")));
-                        }
-
-                        // remember we are now inside an object
-                        states.push_back(false);
-
-                        // parse values
-                        get_token();
-                        continue;
-                    }
-
-                    case token_type::begin_array:
-                    {
-                        if (JSON_UNLIKELY(not sax->start_array(std::size_t(-1))))
-                        {
-                            return false;
-                        }
-
-                        // closing ] -> we are done
-                        if (get_token() == token_type::end_array)
-                        {
-                            if (JSON_UNLIKELY(not sax->end_array()))
-                            {
-                                return false;
-                            }
-                            break;
-                        }
-
-                        // remember we are now inside an array
-                        states.push_back(true);
-
-                        // parse values (no need to call get_token)
-                        continue;
-                    }
-
-                    case token_type::value_float:
-                    {
-                        const auto res = m_lexer.get_number_float();
-
-                        if (JSON_UNLIKELY(not std::isfinite(res)))
-                        {
-                            return sax->parse_error(m_lexer.get_position(),
-                                                    m_lexer.get_token_string(),
-                                                    out_of_range::create(406, "number overflow parsing '" + m_lexer.get_token_string() + "'"));
-                        }
-                        else
-                        {
-                            if (JSON_UNLIKELY(not sax->number_float(res, m_lexer.get_string())))
-                            {
-                                return false;
-                            }
-                            break;
-                        }
-                    }
-
-                    case token_type::literal_false:
-                    {
-                        if (JSON_UNLIKELY(not sax->boolean(false)))
-                        {
-                            return false;
-                        }
-                        break;
-                    }
-
-                    case token_type::literal_null:
-                    {
-                        if (JSON_UNLIKELY(not sax->null()))
-                        {
-                            return false;
-                        }
-                        break;
-                    }
-
-                    case token_type::literal_true:
-                    {
-                        if (JSON_UNLIKELY(not sax->boolean(true)))
-                        {
-                            return false;
-                        }
-                        break;
-                    }
-
-                    case token_type::value_integer:
-                    {
-                        if (JSON_UNLIKELY(not sax->number_integer(m_lexer.get_number_integer())))
-                        {
-                            return false;
-                        }
-                        break;
-                    }
-
-                    case token_type::value_string:
-                    {
-                        if (JSON_UNLIKELY(not sax->string(m_lexer.get_string())))
-                        {
-                            return false;
-                        }
-                        break;
-                    }
-
-                    case token_type::value_unsigned:
-                    {
-                        if (JSON_UNLIKELY(not sax->number_unsigned(m_lexer.get_number_unsigned())))
-                        {
-                            return false;
-                        }
-                        break;
-                    }
-
-                    case token_type::parse_error:
-                    {
-                        // using "uninitialized" to avoid "expected" message
-                        return sax->parse_error(m_lexer.get_position(),
-                                                m_lexer.get_token_string(),
-                                                parse_error::create(101, m_lexer.get_position(),
-                                                        exception_message(token_type::uninitialized, "value")));
-                    }
-
-                    default: // the last token was unexpected
-                    {
-                        return sax->parse_error(m_lexer.get_position(),
-                                                m_lexer.get_token_string(),
-                                                parse_error::create(101, m_lexer.get_position(),
-                                                        exception_message(token_type::literal_or_value, "value")));
-                    }
-                }
-            }
-            else
-            {
-                skip_to_state_evaluation = false;
-            }
-
-            // we reached this line after we successfully parsed a value
-            if (states.empty())
-            {
-                // empty stack: we reached the end of the hierarchy: done
-                return true;
-            }
-            else
-            {
-                if (states.back())  // array
-                {
-                    // comma -> next value
-                    if (get_token() == token_type::value_separator)
-                    {
-                        // parse a new value
-                        get_token();
-                        continue;
-                    }
-
-                    // closing ]
-                    if (JSON_LIKELY(last_token == token_type::end_array))
-                    {
-                        if (JSON_UNLIKELY(not sax->end_array()))
-                        {
-                            return false;
-                        }
-
-                        // We are done with this array. Before we can parse a
-                        // new value, we need to evaluate the new state first.
-                        // By setting skip_to_state_evaluation to false, we
-                        // are effectively jumping to the beginning of this if.
-                        assert(not states.empty());
-                        states.pop_back();
-                        skip_to_state_evaluation = true;
-                        continue;
-                    }
-                    else
-                    {
-                        return sax->parse_error(m_lexer.get_position(),
-                                                m_lexer.get_token_string(),
-                                                parse_error::create(101, m_lexer.get_position(),
-                                                        exception_message(token_type::end_array, "array")));
-                    }
-                }
-                else  // object
-                {
-                    // comma -> next value
-                    if (get_token() == token_type::value_separator)
-                    {
-                        // parse key
-                        if (JSON_UNLIKELY(get_token() != token_type::value_string))
-                        {
-                            return sax->parse_error(m_lexer.get_position(),
-                                                    m_lexer.get_token_string(),
-                                                    parse_error::create(101, m_lexer.get_position(),
-                                                            exception_message(token_type::value_string, "object key")));
-                        }
-                        else
-                        {
-                            if (JSON_UNLIKELY(not sax->key(m_lexer.get_string())))
-                            {
-                                return false;
-                            }
-                        }
-
-                        // parse separator (:)
-                        if (JSON_UNLIKELY(get_token() != token_type::name_separator))
-                        {
-                            return sax->parse_error(m_lexer.get_position(),
-                                                    m_lexer.get_token_string(),
-                                                    parse_error::create(101, m_lexer.get_position(),
-                                                            exception_message(token_type::name_separator, "object separator")));
-                        }
-
-                        // parse values
-                        get_token();
-                        continue;
-                    }
-
-                    // closing }
-                    if (JSON_LIKELY(last_token == token_type::end_object))
-                    {
-                        if (JSON_UNLIKELY(not sax->end_object()))
-                        {
-                            return false;
-                        }
-
-                        // We are done with this object. Before we can parse a
-                        // new value, we need to evaluate the new state first.
-                        // By setting skip_to_state_evaluation to false, we
-                        // are effectively jumping to the beginning of this if.
-                        assert(not states.empty());
-                        states.pop_back();
-                        skip_to_state_evaluation = true;
-                        continue;
-                    }
-                    else
-                    {
-                        return sax->parse_error(m_lexer.get_position(),
-                                                m_lexer.get_token_string(),
-                                                parse_error::create(101, m_lexer.get_position(),
-                                                        exception_message(token_type::end_object, "object")));
-                    }
-                }
-            }
-        }
-    }
-
-    /// get next token from lexer
-    token_type get_token()
-    {
-        return (last_token = m_lexer.scan());
-    }
-
-    std::string exception_message(const token_type expected, const std::string& context)
-    {
-        std::string error_msg = "syntax error ";
-
-        if (not context.empty())
-        {
-            error_msg += "while parsing " + context + " ";
-        }
-
-        error_msg += "- ";
-
-        if (last_token == token_type::parse_error)
-        {
-            error_msg += std::string(m_lexer.get_error_message()) + "; last read: '" +
-                         m_lexer.get_token_string() + "'";
-        }
-        else
-        {
-            error_msg += "unexpected " + std::string(lexer_t::token_type_name(last_token));
-        }
-
-        if (expected != token_type::uninitialized)
-        {
-            error_msg += "; expected " + std::string(lexer_t::token_type_name(expected));
-        }
-
-        return error_msg;
-    }
-
-  private:
-    /// callback function
-    const parser_callback_t callback = nullptr;
-    /// the type of the last read token
-    token_type last_token = token_type::uninitialized;
-    /// the lexer
-    lexer_t m_lexer;
-    /// whether to throw exceptions in case of errors
-    const bool allow_exceptions = true;
+  public:
+    static_assert(is_detected_exact<bool, null_function_t, SAX>::value,
+                  "Missing/invalid function: bool null()");
+    static_assert(is_detected_exact<bool, boolean_function_t, SAX>::value,
+                  "Missing/invalid function: bool boolean(bool)");
+    static_assert(is_detected_exact<bool, boolean_function_t, SAX>::value,
+                  "Missing/invalid function: bool boolean(bool)");
+    static_assert(
+        is_detected_exact<bool, number_integer_function_t, SAX,
+        number_integer_t>::value,
+        "Missing/invalid function: bool number_integer(number_integer_t)");
+    static_assert(
+        is_detected_exact<bool, number_unsigned_function_t, SAX,
+        number_unsigned_t>::value,
+        "Missing/invalid function: bool number_unsigned(number_unsigned_t)");
+    static_assert(is_detected_exact<bool, number_float_function_t, SAX,
+                  number_float_t, string_t>::value,
+                  "Missing/invalid function: bool number_float(number_float_t, const string_t&)");
+    static_assert(
+        is_detected_exact<bool, string_function_t, SAX, string_t>::value,
+        "Missing/invalid function: bool string(string_t&)");
+    static_assert(is_detected_exact<bool, start_object_function_t, SAX>::value,
+                  "Missing/invalid function: bool start_object(std::size_t)");
+    static_assert(is_detected_exact<bool, key_function_t, SAX, string_t>::value,
+                  "Missing/invalid function: bool key(string_t&)");
+    static_assert(is_detected_exact<bool, end_object_function_t, SAX>::value,
+                  "Missing/invalid function: bool end_object()");
+    static_assert(is_detected_exact<bool, start_array_function_t, SAX>::value,
+                  "Missing/invalid function: bool start_array(std::size_t)");
+    static_assert(is_detected_exact<bool, end_array_function_t, SAX>::value,
+                  "Missing/invalid function: bool end_array()");
+    static_assert(
+        is_detected_exact<bool, parse_error_function_t, SAX, exception_t>::value,
+        "Missing/invalid function: bool parse_error(std::size_t, const "
+        "std::string&, const exception&)");
 };
 }  // namespace detail
 }  // namespace nlohmann
-
-// #include <nlohmann/detail/iterators/primitive_iterator.hpp>
-
-
-#include <cstddef> // ptrdiff_t
-#include <limits>  // numeric_limits
-
-namespace nlohmann
-{
-namespace detail
-{
-/*
-@brief an iterator for primitive JSON types
-
-This class models an iterator for primitive JSON types (boolean, number,
-string). It's only purpose is to allow the iterator/const_iterator classes
-to "iterate" over primitive values. Internally, the iterator is modeled by
-a `difference_type` variable. Value begin_value (`0`) models the begin,
-end_value (`1`) models past the end.
-*/
-class primitive_iterator_t
-{
-  private:
-    using difference_type = std::ptrdiff_t;
-    static constexpr difference_type begin_value = 0;
-    static constexpr difference_type end_value = begin_value + 1;
-
-    /// iterator as signed integer type
-    difference_type m_it = (std::numeric_limits<std::ptrdiff_t>::min)();
-
-  public:
-    constexpr difference_type get_value() const noexcept
-    {
-        return m_it;
-    }
-
-    /// set iterator to a defined beginning
-    void set_begin() noexcept
-    {
-        m_it = begin_value;
-    }
-
-    /// set iterator to a defined past the end
-    void set_end() noexcept
-    {
-        m_it = end_value;
-    }
-
-    /// return whether the iterator can be dereferenced
-    constexpr bool is_begin() const noexcept
-    {
-        return m_it == begin_value;
-    }
-
-    /// return whether the iterator is at end
-    constexpr bool is_end() const noexcept
-    {
-        return m_it == end_value;
-    }
-
-    friend constexpr bool operator==(primitive_iterator_t lhs, primitive_iterator_t rhs) noexcept
-    {
-        return lhs.m_it == rhs.m_it;
-    }
-
-    friend constexpr bool operator<(primitive_iterator_t lhs, primitive_iterator_t rhs) noexcept
-    {
-        return lhs.m_it < rhs.m_it;
-    }
-
-    primitive_iterator_t operator+(difference_type n) noexcept
-    {
-        auto result = *this;
-        result += n;
-        return result;
-    }
-
-    friend constexpr difference_type operator-(primitive_iterator_t lhs, primitive_iterator_t rhs) noexcept
-    {
-        return lhs.m_it - rhs.m_it;
-    }
-
-    primitive_iterator_t& operator++() noexcept
-    {
-        ++m_it;
-        return *this;
-    }
-
-    primitive_iterator_t const operator++(int) noexcept
-    {
-        auto result = *this;
-        ++m_it;
-        return result;
-    }
-
-    primitive_iterator_t& operator--() noexcept
-    {
-        --m_it;
-        return *this;
-    }
-
-    primitive_iterator_t const operator--(int) noexcept
-    {
-        auto result = *this;
-        --m_it;
-        return result;
-    }
-
-    primitive_iterator_t& operator+=(difference_type n) noexcept
-    {
-        m_it += n;
-        return *this;
-    }
-
-    primitive_iterator_t& operator-=(difference_type n) noexcept
-    {
-        m_it -= n;
-        return *this;
-    }
-};
-}  // namespace detail
-}  // namespace nlohmann
-
-// #include <nlohmann/detail/iterators/internal_iterator.hpp>
-
-
-// #include <nlohmann/detail/iterators/primitive_iterator.hpp>
-
-
-namespace nlohmann
-{
-namespace detail
-{
-/*!
-@brief an iterator value
-
-@note This structure could easily be a union, but MSVC currently does not allow
-unions members with complex constructors, see https://github.com/nlohmann/json/pull/105.
-*/
-template<typename BasicJsonType> struct internal_iterator
-{
-    /// iterator for JSON objects
-    typename BasicJsonType::object_t::iterator object_iterator {};
-    /// iterator for JSON arrays
-    typename BasicJsonType::array_t::iterator array_iterator {};
-    /// generic iterator for all other types
-    primitive_iterator_t primitive_iterator {};
-};
-}  // namespace detail
-}  // namespace nlohmann
-
-// #include <nlohmann/detail/iterators/iter_impl.hpp>
-
-
-#include <ciso646> // not
-#include <iterator> // iterator, random_access_iterator_tag, bidirectional_iterator_tag, advance, next
-#include <type_traits> // conditional, is_const, remove_const
-
-// #include <nlohmann/detail/exceptions.hpp>
-
-// #include <nlohmann/detail/iterators/internal_iterator.hpp>
-
-// #include <nlohmann/detail/iterators/primitive_iterator.hpp>
-
-// #include <nlohmann/detail/macro_scope.hpp>
-
-// #include <nlohmann/detail/meta/cpp_future.hpp>
-
-// #include <nlohmann/detail/meta/type_traits.hpp>
-
-// #include <nlohmann/detail/value_t.hpp>
-
-
-namespace nlohmann
-{
-namespace detail
-{
-// forward declare, to be able to friend it later on
-template<typename IteratorType> class iteration_proxy;
-template<typename IteratorType> class iteration_proxy_value;
-
-/*!
-@brief a template for a bidirectional iterator for the @ref basic_json class
-This class implements a both iterators (iterator and const_iterator) for the
-@ref basic_json class.
-@note An iterator is called *initialized* when a pointer to a JSON value has
-      been set (e.g., by a constructor or a copy assignment). If the iterator is
-      default-constructed, it is *uninitialized* and most methods are undefined.
-      **The library uses assertions to detect calls on uninitialized iterators.**
-@requirement The class satisfies the following concept requirements:
--
-[BidirectionalIterator](https://en.cppreference.com/w/cpp/named_req/BidirectionalIterator):
-  The iterator that can be moved can be moved in both directions (i.e.
-  incremented and decremented).
-@since version 1.0.0, simplified in version 2.0.9, change to bidirectional
-       iterators in version 3.0.0 (see https://github.com/nlohmann/json/issues/593)
-*/
-template<typename BasicJsonType>
-class iter_impl
-{
-    /// allow basic_json to access private members
-    friend iter_impl<typename std::conditional<std::is_const<BasicJsonType>::value, typename std::remove_const<BasicJsonType>::type, const BasicJsonType>::type>;
-    friend BasicJsonType;
-    friend iteration_proxy<iter_impl>;
-    friend iteration_proxy_value<iter_impl>;
-
-    using object_t = typename BasicJsonType::object_t;
-    using array_t = typename BasicJsonType::array_t;
-    // make sure BasicJsonType is basic_json or const basic_json
-    static_assert(is_basic_json<typename std::remove_const<BasicJsonType>::type>::value,
-                  "iter_impl only accepts (const) basic_json");
-
-  public:
-
-    /// The std::iterator class template (used as a base class to provide typedefs) is deprecated in C++17.
-    /// The C++ Standard has never required user-defined iterators to derive from std::iterator.
-    /// A user-defined iterator should provide publicly accessible typedefs named
-    /// iterator_category, value_type, difference_type, pointer, and reference.
-    /// Note that value_type is required to be non-const, even for constant iterators.
-    using iterator_category = std::bidirectional_iterator_tag;
-
-    /// the type of the values when the iterator is dereferenced
-    using value_type = typename BasicJsonType::value_type;
-    /// a type to represent differences between iterators
-    using difference_type = typename BasicJsonType::difference_type;
-    /// defines a pointer to the type iterated over (value_type)
-    using pointer = typename std::conditional<std::is_const<BasicJsonType>::value,
-          typename BasicJsonType::const_pointer,
-          typename BasicJsonType::pointer>::type;
-    /// defines a reference to the type iterated over (value_type)
-    using reference =
-        typename std::conditional<std::is_const<BasicJsonType>::value,
-        typename BasicJsonType::const_reference,
-        typename BasicJsonType::reference>::type;
-
-    /// default constructor
-    iter_impl() = default;
-
-    /*!
-    @brief constructor for a given JSON instance
-    @param[in] object  pointer to a JSON object for this iterator
-    @pre object != nullptr
-    @post The iterator is initialized; i.e. `m_object != nullptr`.
-    */
-    explicit iter_impl(pointer object) noexcept : m_object(object)
-    {
-        assert(m_object != nullptr);
-
-        switch (m_object->m_type)
-        {
-            case value_t::object:
-            {
-                m_it.object_iterator = typename object_t::iterator();
-                break;
-            }
-
-            case value_t::array:
-            {
-                m_it.array_iterator = typename array_t::iterator();
-                break;
-            }
-
-            default:
-            {
-                m_it.primitive_iterator = primitive_iterator_t();
-                break;
-            }
-        }
-    }
-
-    /*!
-    @note The conventional copy constructor and copy assignment are implicitly
-          defined. Combined with the following converting constructor and
-          assignment, they support: (1) copy from iterator to iterator, (2)
-          copy from const iterator to const iterator, and (3) conversion from
-          iterator to const iterator. However conversion from const iterator
-          to iterator is not defined.
-    */
-
-    /*!
-    @brief converting constructor
-    @param[in] other  non-const iterator to copy from
-    @note It is not checked whether @a other is initialized.
-    */
-    iter_impl(const iter_impl<typename std::remove_const<BasicJsonType>::type>& other) noexcept
-        : m_object(other.m_object), m_it(other.m_it) {}
-
-    /*!
-    @brief converting assignment
-    @param[in,out] other  non-const iterator to copy from
-    @return const/non-const iterator
-    @note It is not checked whether @a other is initialized.
-    */
-    iter_impl& operator=(const iter_impl<typename std::remove_const<BasicJsonType>::type>& other) noexcept
-    {
-        m_object = other.m_object;
-        m_it = other.m_it;
-        return *this;
-    }
-
-  private:
-    /*!
-    @brief set the iterator to the first value
-    @pre The iterator is initialized; i.e. `m_object != nullptr`.
-    */
-    void set_begin() noexcept
-    {
-        assert(m_object != nullptr);
-
-        switch (m_object->m_type)
-        {
-            case value_t::object:
-            {
-                m_it.object_iterator = m_object->m_value.object->begin();
-                break;
-            }
-
-            case value_t::array:
-            {
-                m_it.array_iterator = m_object->m_value.array->begin();
-                break;
-            }
-
-            case value_t::null:
-            {
-                // set to end so begin()==end() is true: null is empty
-                m_it.primitive_iterator.set_end();
-                break;
-            }
-
-            default:
-            {
-                m_it.primitive_iterator.set_begin();
-                break;
-            }
-        }
-    }
-
-    /*!
-    @brief set the iterator past the last value
-    @pre The iterator is initialized; i.e. `m_object != nullptr`.
-    */
-    void set_end() noexcept
-    {
-        assert(m_object != nullptr);
-
-        switch (m_object->m_type)
-        {
-            case value_t::object:
-            {
-                m_it.object_iterator = m_object->m_value.object->end();
-                break;
-            }
-
-            case value_t::array:
-            {
-                m_it.array_iterator = m_object->m_value.array->end();
-                break;
-            }
-
-            default:
-            {
-                m_it.primitive_iterator.set_end();
-                break;
-            }
-        }
-    }
-
-  public:
-    /*!
-    @brief return a reference to the value pointed to by the iterator
-    @pre The iterator is initialized; i.e. `m_object != nullptr`.
-    */
-    reference operator*() const
-    {
-        assert(m_object != nullptr);
-
-        switch (m_object->m_type)
-        {
-            case value_t::object:
-            {
-                assert(m_it.object_iterator != m_object->m_value.object->end());
-                return m_it.object_iterator->second;
-            }
-
-            case value_t::array:
-            {
-                assert(m_it.array_iterator != m_object->m_value.array->end());
-                return *m_it.array_iterator;
-            }
-
-            case value_t::null:
-                JSON_THROW(invalid_iterator::create(214, "cannot get value"));
-
-            default:
-            {
-                if (JSON_LIKELY(m_it.primitive_iterator.is_begin()))
-                {
-                    return *m_object;
-                }
-
-                JSON_THROW(invalid_iterator::create(214, "cannot get value"));
-            }
-        }
-    }
-
-    /*!
-    @brief dereference the iterator
-    @pre The iterator is initialized; i.e. `m_object != nullptr`.
-    */
-    pointer operator->() const
-    {
-        assert(m_object != nullptr);
-
-        switch (m_object->m_type)
-        {
-            case value_t::object:
-            {
-                assert(m_it.object_iterator != m_object->m_value.object->end());
-                return &(m_it.object_iterator->second);
-            }
-
-            case value_t::array:
-            {
-                assert(m_it.array_iterator != m_object->m_value.array->end());
-                return &*m_it.array_iterator;
-            }
-
-            default:
-            {
-                if (JSON_LIKELY(m_it.primitive_iterator.is_begin()))
-                {
-                    return m_object;
-                }
-
-                JSON_THROW(invalid_iterator::create(214, "cannot get value"));
-            }
-        }
-    }
-
-    /*!
-    @brief post-increment (it++)
-    @pre The iterator is initialized; i.e. `m_object != nullptr`.
-    */
-    iter_impl const operator++(int)
-    {
-        auto result = *this;
-        ++(*this);
-        return result;
-    }
-
-    /*!
-    @brief pre-increment (++it)
-    @pre The iterator is initialized; i.e. `m_object != nullptr`.
-    */
-    iter_impl& operator++()
-    {
-        assert(m_object != nullptr);
-
-        switch (m_object->m_type)
-        {
-            case value_t::object:
-            {
-                std::advance(m_it.object_iterator, 1);
-                break;
-            }
-
-            case value_t::array:
-            {
-                std::advance(m_it.array_iterator, 1);
-                break;
-            }
-
-            default:
-            {
-                ++m_it.primitive_iterator;
-                break;
-            }
-        }
-
-        return *this;
-    }
-
-    /*!
-    @brief post-decrement (it--)
-    @pre The iterator is initialized; i.e. `m_object != nullptr`.
-    */
-    iter_impl const operator--(int)
-    {
-        auto result = *this;
-        --(*this);
-        return result;
-    }
-
-    /*!
-    @brief pre-decrement (--it)
-    @pre The iterator is initialized; i.e. `m_object != nullptr`.
-    */
-    iter_impl& operator--()
-    {
-        assert(m_object != nullptr);
-
-        switch (m_object->m_type)
-        {
-            case value_t::object:
-            {
-                std::advance(m_it.object_iterator, -1);
-                break;
-            }
-
-            case value_t::array:
-            {
-                std::advance(m_it.array_iterator, -1);
-                break;
-            }
-
-            default:
-            {
-                --m_it.primitive_iterator;
-                break;
-            }
-        }
-
-        return *this;
-    }
-
-    /*!
-    @brief  comparison: equal
-    @pre The iterator is initialized; i.e. `m_object != nullptr`.
-    */
-    bool operator==(const iter_impl& other) const
-    {
-        // if objects are not the same, the comparison is undefined
-        if (JSON_UNLIKELY(m_object != other.m_object))
-        {
-            JSON_THROW(invalid_iterator::create(212, "cannot compare iterators of different containers"));
-        }
-
-        assert(m_object != nullptr);
-
-        switch (m_object->m_type)
-        {
-            case value_t::object:
-                return (m_it.object_iterator == other.m_it.object_iterator);
-
-            case value_t::array:
-                return (m_it.array_iterator == other.m_it.array_iterator);
-
-            default:
-                return (m_it.primitive_iterator == other.m_it.primitive_iterator);
-        }
-    }
-
-    /*!
-    @brief  comparison: not equal
-    @pre The iterator is initialized; i.e. `m_object != nullptr`.
-    */
-    bool operator!=(const iter_impl& other) const
-    {
-        return not operator==(other);
-    }
-
-    /*!
-    @brief  comparison: smaller
-    @pre The iterator is initialized; i.e. `m_object != nullptr`.
-    */
-    bool operator<(const iter_impl& other) const
-    {
-        // if objects are not the same, the comparison is undefined
-        if (JSON_UNLIKELY(m_object != other.m_object))
-        {
-            JSON_THROW(invalid_iterator::create(212, "cannot compare iterators of different containers"));
-        }
-
-        assert(m_object != nullptr);
-
-        switch (m_object->m_type)
-        {
-            case value_t::object:
-                JSON_THROW(invalid_iterator::create(213, "cannot compare order of object iterators"));
-
-            case value_t::array:
-                return (m_it.array_iterator < other.m_it.array_iterator);
-
-            default:
-                return (m_it.primitive_iterator < other.m_it.primitive_iterator);
-        }
-    }
-
-    /*!
-    @brief  comparison: less than or equal
-    @pre The iterator is initialized; i.e. `m_object != nullptr`.
-    */
-    bool operator<=(const iter_impl& other) const
-    {
-        return not other.operator < (*this);
-    }
-
-    /*!
-    @brief  comparison: greater than
-    @pre The iterator is initialized; i.e. `m_object != nullptr`.
-    */
-    bool operator>(const iter_impl& other) const
-    {
-        return not operator<=(other);
-    }
-
-    /*!
-    @brief  comparison: greater than or equal
-    @pre The iterator is initialized; i.e. `m_object != nullptr`.
-    */
-    bool operator>=(const iter_impl& other) const
-    {
-        return not operator<(other);
-    }
-
-    /*!
-    @brief  add to iterator
-    @pre The iterator is initialized; i.e. `m_object != nullptr`.
-    */
-    iter_impl& operator+=(difference_type i)
-    {
-        assert(m_object != nullptr);
-
-        switch (m_object->m_type)
-        {
-            case value_t::object:
-                JSON_THROW(invalid_iterator::create(209, "cannot use offsets with object iterators"));
-
-            case value_t::array:
-            {
-                std::advance(m_it.array_iterator, i);
-                break;
-            }
-
-            default:
-            {
-                m_it.primitive_iterator += i;
-                break;
-            }
-        }
-
-        return *this;
-    }
-
-    /*!
-    @brief  subtract from iterator
-    @pre The iterator is initialized; i.e. `m_object != nullptr`.
-    */
-    iter_impl& operator-=(difference_type i)
-    {
-        return operator+=(-i);
-    }
-
-    /*!
-    @brief  add to iterator
-    @pre The iterator is initialized; i.e. `m_object != nullptr`.
-    */
-    iter_impl operator+(difference_type i) const
-    {
-        auto result = *this;
-        result += i;
-        return result;
-    }
-
-    /*!
-    @brief  addition of distance and iterator
-    @pre The iterator is initialized; i.e. `m_object != nullptr`.
-    */
-    friend iter_impl operator+(difference_type i, const iter_impl& it)
-    {
-        auto result = it;
-        result += i;
-        return result;
-    }
-
-    /*!
-    @brief  subtract from iterator
-    @pre The iterator is initialized; i.e. `m_object != nullptr`.
-    */
-    iter_impl operator-(difference_type i) const
-    {
-        auto result = *this;
-        result -= i;
-        return result;
-    }
-
-    /*!
-    @brief  return difference
-    @pre The iterator is initialized; i.e. `m_object != nullptr`.
-    */
-    difference_type operator-(const iter_impl& other) const
-    {
-        assert(m_object != nullptr);
-
-        switch (m_object->m_type)
-        {
-            case value_t::object:
-                JSON_THROW(invalid_iterator::create(209, "cannot use offsets with object iterators"));
-
-            case value_t::array:
-                return m_it.array_iterator - other.m_it.array_iterator;
-
-            default:
-                return m_it.primitive_iterator - other.m_it.primitive_iterator;
-        }
-    }
-
-    /*!
-    @brief  access to successor
-    @pre The iterator is initialized; i.e. `m_object != nullptr`.
-    */
-    reference operator[](difference_type n) const
-    {
-        assert(m_object != nullptr);
-
-        switch (m_object->m_type)
-        {
-            case value_t::object:
-                JSON_THROW(invalid_iterator::create(208, "cannot use operator[] for object iterators"));
-
-            case value_t::array:
-                return *std::next(m_it.array_iterator, n);
-
-            case value_t::null:
-                JSON_THROW(invalid_iterator::create(214, "cannot get value"));
-
-            default:
-            {
-                if (JSON_LIKELY(m_it.primitive_iterator.get_value() == -n))
-                {
-                    return *m_object;
-                }
-
-                JSON_THROW(invalid_iterator::create(214, "cannot get value"));
-            }
-        }
-    }
-
-    /*!
-    @brief  return the key of an object iterator
-    @pre The iterator is initialized; i.e. `m_object != nullptr`.
-    */
-    const typename object_t::key_type& key() const
-    {
-        assert(m_object != nullptr);
-
-        if (JSON_LIKELY(m_object->is_object()))
-        {
-            return m_it.object_iterator->first;
-        }
-
-        JSON_THROW(invalid_iterator::create(207, "cannot use key() for non-object iterators"));
-    }
-
-    /*!
-    @brief  return the value of an iterator
-    @pre The iterator is initialized; i.e. `m_object != nullptr`.
-    */
-    reference value() const
-    {
-        return operator*();
-    }
-
-  private:
-    /// associated JSON instance
-    pointer m_object = nullptr;
-    /// the actual iterator of the associated instance
-    internal_iterator<typename std::remove_const<BasicJsonType>::type> m_it;
-};
-}  // namespace detail
-} // namespace nlohmann
-// #include <nlohmann/detail/iterators/iteration_proxy.hpp>
-
-// #include <nlohmann/detail/iterators/json_reverse_iterator.hpp>
-
-
-#include <cstddef> // ptrdiff_t
-#include <iterator> // reverse_iterator
-#include <utility> // declval
-
-namespace nlohmann
-{
-namespace detail
-{
-//////////////////////
-// reverse_iterator //
-//////////////////////
-
-/*!
-@brief a template for a reverse iterator class
-
-@tparam Base the base iterator type to reverse. Valid types are @ref
-iterator (to create @ref reverse_iterator) and @ref const_iterator (to
-create @ref const_reverse_iterator).
-
-@requirement The class satisfies the following concept requirements:
--
-[BidirectionalIterator](https://en.cppreference.com/w/cpp/named_req/BidirectionalIterator):
-  The iterator that can be moved can be moved in both directions (i.e.
-  incremented and decremented).
-- [OutputIterator](https://en.cppreference.com/w/cpp/named_req/OutputIterator):
-  It is possible to write to the pointed-to element (only if @a Base is
-  @ref iterator).
-
-@since version 1.0.0
-*/
-template<typename Base>
-class json_reverse_iterator : public std::reverse_iterator<Base>
-{
-  public:
-    using difference_type = std::ptrdiff_t;
-    /// shortcut to the reverse iterator adapter
-    using base_iterator = std::reverse_iterator<Base>;
-    /// the reference type for the pointed-to element
-    using reference = typename Base::reference;
-
-    /// create reverse iterator from iterator
-    explicit json_reverse_iterator(const typename base_iterator::iterator_type& it) noexcept
-        : base_iterator(it) {}
-
-    /// create reverse iterator from base class
-    explicit json_reverse_iterator(const base_iterator& it) noexcept : base_iterator(it) {}
-
-    /// post-increment (it++)
-    json_reverse_iterator const operator++(int)
-    {
-        return static_cast<json_reverse_iterator>(base_iterator::operator++(1));
-    }
-
-    /// pre-increment (++it)
-    json_reverse_iterator& operator++()
-    {
-        return static_cast<json_reverse_iterator&>(base_iterator::operator++());
-    }
-
-    /// post-decrement (it--)
-    json_reverse_iterator const operator--(int)
-    {
-        return static_cast<json_reverse_iterator>(base_iterator::operator--(1));
-    }
-
-    /// pre-decrement (--it)
-    json_reverse_iterator& operator--()
-    {
-        return static_cast<json_reverse_iterator&>(base_iterator::operator--());
-    }
-
-    /// add to iterator
-    json_reverse_iterator& operator+=(difference_type i)
-    {
-        return static_cast<json_reverse_iterator&>(base_iterator::operator+=(i));
-    }
-
-    /// add to iterator
-    json_reverse_iterator operator+(difference_type i) const
-    {
-        return static_cast<json_reverse_iterator>(base_iterator::operator+(i));
-    }
-
-    /// subtract from iterator
-    json_reverse_iterator operator-(difference_type i) const
-    {
-        return static_cast<json_reverse_iterator>(base_iterator::operator-(i));
-    }
-
-    /// return difference
-    difference_type operator-(const json_reverse_iterator& other) const
-    {
-        return base_iterator(*this) - base_iterator(other);
-    }
-
-    /// access to successor
-    reference operator[](difference_type n) const
-    {
-        return *(this->operator+(n));
-    }
-
-    /// return the key of an object iterator
-    auto key() const -> decltype(std::declval<Base>().key())
-    {
-        auto it = --this->base();
-        return it.key();
-    }
-
-    /// return the value of an iterator
-    reference value() const
-    {
-        auto it = --this->base();
-        return it.operator * ();
-    }
-};
-}  // namespace detail
-}  // namespace nlohmann
-
-// #include <nlohmann/detail/output/output_adapters.hpp>
-
-
-#include <algorithm> // copy
-#include <cstddef> // size_t
-#include <ios> // streamsize
-#include <iterator> // back_inserter
-#include <memory> // shared_ptr, make_shared
-#include <ostream> // basic_ostream
-#include <string> // basic_string
-#include <vector> // vector
-
-namespace nlohmann
-{
-namespace detail
-{
-/// abstract output adapter interface
-template<typename CharType> struct output_adapter_protocol
-{
-    virtual void write_character(CharType c) = 0;
-    virtual void write_characters(const CharType* s, std::size_t length) = 0;
-    virtual ~output_adapter_protocol() = default;
-};
-
-/// a type to simplify interfaces
-template<typename CharType>
-using output_adapter_t = std::shared_ptr<output_adapter_protocol<CharType>>;
-
-/// output adapter for byte vectors
-template<typename CharType>
-class output_vector_adapter : public output_adapter_protocol<CharType>
-{
-  public:
-    explicit output_vector_adapter(std::vector<CharType>& vec) noexcept
-        : v(vec)
-    {}
-
-    void write_character(CharType c) override
-    {
-        v.push_back(c);
-    }
-
-    void write_characters(const CharType* s, std::size_t length) override
-    {
-        std::copy(s, s + length, std::back_inserter(v));
-    }
-
-  private:
-    std::vector<CharType>& v;
-};
-
-/// output adapter for output streams
-template<typename CharType>
-class output_stream_adapter : public output_adapter_protocol<CharType>
-{
-  public:
-    explicit output_stream_adapter(std::basic_ostream<CharType>& s) noexcept
-        : stream(s)
-    {}
-
-    void write_character(CharType c) override
-    {
-        stream.put(c);
-    }
-
-    void write_characters(const CharType* s, std::size_t length) override
-    {
-        stream.write(s, static_cast<std::streamsize>(length));
-    }
-
-  private:
-    std::basic_ostream<CharType>& stream;
-};
-
-/// output adapter for basic_string
-template<typename CharType, typename StringType = std::basic_string<CharType>>
-class output_string_adapter : public output_adapter_protocol<CharType>
-{
-  public:
-    explicit output_string_adapter(StringType& s) noexcept
-        : str(s)
-    {}
-
-    void write_character(CharType c) override
-    {
-        str.push_back(c);
-    }
-
-    void write_characters(const CharType* s, std::size_t length) override
-    {
-        str.append(s, length);
-    }
-
-  private:
-    StringType& str;
-};
-
-template<typename CharType, typename StringType = std::basic_string<CharType>>
-class output_adapter
-{
-  public:
-    output_adapter(std::vector<CharType>& vec)
-        : oa(std::make_shared<output_vector_adapter<CharType>>(vec)) {}
-
-    output_adapter(std::basic_ostream<CharType>& s)
-        : oa(std::make_shared<output_stream_adapter<CharType>>(s)) {}
-
-    output_adapter(StringType& s)
-        : oa(std::make_shared<output_string_adapter<CharType, StringType>>(s)) {}
-
-    operator output_adapter_t<CharType>()
-    {
-        return oa;
-    }
-
-  private:
-    output_adapter_t<CharType> oa = nullptr;
-};
-}  // namespace detail
-}  // namespace nlohmann
-
-// #include <nlohmann/detail/input/binary_reader.hpp>
-
-
-#include <algorithm> // generate_n
-#include <array> // array
-#include <cassert> // assert
-#include <cmath> // ldexp
-#include <cstddef> // size_t
-#include <cstdint> // uint8_t, uint16_t, uint32_t, uint64_t
-#include <cstdio> // snprintf
-#include <cstring> // memcpy
-#include <iterator> // back_inserter
-#include <limits> // numeric_limits
-#include <string> // char_traits, string
-#include <utility> // make_pair, move
-
-// #include <nlohmann/detail/input/input_adapters.hpp>
-
-// #include <nlohmann/detail/input/json_sax.hpp>
-
-// #include <nlohmann/detail/exceptions.hpp>
-
-// #include <nlohmann/detail/macro_scope.hpp>
-
-// #include <nlohmann/detail/meta/is_sax.hpp>
 
 // #include <nlohmann/detail/value_t.hpp>
 
@@ -6553,6 +3576,13 @@ class binary_reader
         (void)detail::is_sax_static_asserts<SAX, BasicJsonType> {};
         assert(ia);
     }
+
+    // make class move-only
+    binary_reader(const binary_reader&) = delete;
+    binary_reader(binary_reader&&) noexcept = default;
+    binary_reader& operator=(const binary_reader&) = delete;
+    binary_reader& operator=(binary_reader&&) noexcept = default;
+    ~binary_reader() = default;
 
     /*!
     @param[in] format  the binary format to parse
@@ -8487,6 +5517,3786 @@ class binary_reader
 }  // namespace detail
 }  // namespace nlohmann
 
+// #include <nlohmann/detail/input/input_adapters.hpp>
+
+// #include <nlohmann/detail/input/lexer.hpp>
+
+
+#include <array> // array
+#include <clocale> // localeconv
+#include <cstddef> // size_t
+#include <cstdio> // snprintf
+#include <cstdlib> // strtof, strtod, strtold, strtoll, strtoull
+#include <initializer_list> // initializer_list
+#include <string> // char_traits, string
+#include <utility> // move
+#include <vector> // vector
+
+// #include <nlohmann/detail/input/input_adapters.hpp>
+
+// #include <nlohmann/detail/input/position_t.hpp>
+
+// #include <nlohmann/detail/macro_scope.hpp>
+
+
+namespace nlohmann
+{
+namespace detail
+{
+///////////
+// lexer //
+///////////
+
+/*!
+@brief lexical analysis
+
+This class organizes the lexical analysis during JSON deserialization.
+*/
+template<typename BasicJsonType>
+class lexer
+{
+    using number_integer_t = typename BasicJsonType::number_integer_t;
+    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+    using number_float_t = typename BasicJsonType::number_float_t;
+    using string_t = typename BasicJsonType::string_t;
+
+  public:
+    /// token types for the parser
+    enum class token_type
+    {
+        uninitialized,    ///< indicating the scanner is uninitialized
+        literal_true,     ///< the `true` literal
+        literal_false,    ///< the `false` literal
+        literal_null,     ///< the `null` literal
+        value_string,     ///< a string -- use get_string() for actual value
+        value_unsigned,   ///< an unsigned integer -- use get_number_unsigned() for actual value
+        value_integer,    ///< a signed integer -- use get_number_integer() for actual value
+        value_float,      ///< an floating point number -- use get_number_float() for actual value
+        begin_array,      ///< the character for array begin `[`
+        begin_object,     ///< the character for object begin `{`
+        end_array,        ///< the character for array end `]`
+        end_object,       ///< the character for object end `}`
+        name_separator,   ///< the name separator `:`
+        value_separator,  ///< the value separator `,`
+        parse_error,      ///< indicating a parse error
+        end_of_input,     ///< indicating the end of the input buffer
+        literal_or_value  ///< a literal or the begin of a value (only for diagnostics)
+    };
+
+    /// return name of values of type token_type (only used for errors)
+    static const char* token_type_name(const token_type t) noexcept
+    {
+        switch (t)
+        {
+            case token_type::uninitialized:
+                return "<uninitialized>";
+            case token_type::literal_true:
+                return "true literal";
+            case token_type::literal_false:
+                return "false literal";
+            case token_type::literal_null:
+                return "null literal";
+            case token_type::value_string:
+                return "string literal";
+            case lexer::token_type::value_unsigned:
+            case lexer::token_type::value_integer:
+            case lexer::token_type::value_float:
+                return "number literal";
+            case token_type::begin_array:
+                return "'['";
+            case token_type::begin_object:
+                return "'{'";
+            case token_type::end_array:
+                return "']'";
+            case token_type::end_object:
+                return "'}'";
+            case token_type::name_separator:
+                return "':'";
+            case token_type::value_separator:
+                return "','";
+            case token_type::parse_error:
+                return "<parse error>";
+            case token_type::end_of_input:
+                return "end of input";
+            case token_type::literal_or_value:
+                return "'[', '{', or a literal";
+            // LCOV_EXCL_START
+            default: // catch non-enum values
+                return "unknown token";
+                // LCOV_EXCL_STOP
+        }
+    }
+
+    explicit lexer(detail::input_adapter_t&& adapter)
+        : ia(std::move(adapter)), decimal_point_char(get_decimal_point()) {}
+
+    // delete because of pointer members
+    lexer(const lexer&) = delete;
+    lexer(lexer&&) = delete;
+    lexer& operator=(lexer&) = delete;
+    lexer& operator=(lexer&&) = delete;
+    ~lexer() = default;
+
+  private:
+    /////////////////////
+    // locales
+    /////////////////////
+
+    /// return the locale-dependent decimal point
+    static char get_decimal_point() noexcept
+    {
+        const auto loc = localeconv();
+        assert(loc != nullptr);
+        return (loc->decimal_point == nullptr) ? '.' : *(loc->decimal_point);
+    }
+
+    /////////////////////
+    // scan functions
+    /////////////////////
+
+    /*!
+    @brief get codepoint from 4 hex characters following `\u`
+
+    For input "\u c1 c2 c3 c4" the codepoint is:
+      (c1 * 0x1000) + (c2 * 0x0100) + (c3 * 0x0010) + c4
+    = (c1 << 12) + (c2 << 8) + (c3 << 4) + (c4 << 0)
+
+    Furthermore, the possible characters '0'..'9', 'A'..'F', and 'a'..'f'
+    must be converted to the integers 0x0..0x9, 0xA..0xF, 0xA..0xF, resp. The
+    conversion is done by subtracting the offset (0x30, 0x37, and 0x57)
+    between the ASCII value of the character and the desired integer value.
+
+    @return codepoint (0x0000..0xFFFF) or -1 in case of an error (e.g. EOF or
+            non-hex character)
+    */
+    int get_codepoint()
+    {
+        // this function only makes sense after reading `\u`
+        assert(current == 'u');
+        int codepoint = 0;
+
+        const auto factors = { 12u, 8u, 4u, 0u };
+        for (const auto factor : factors)
+        {
+            get();
+
+            if (current >= '0' and current <= '9')
+            {
+                codepoint += static_cast<int>((static_cast<unsigned int>(current) - 0x30u) << factor);
+            }
+            else if (current >= 'A' and current <= 'F')
+            {
+                codepoint += static_cast<int>((static_cast<unsigned int>(current) - 0x37u) << factor);
+            }
+            else if (current >= 'a' and current <= 'f')
+            {
+                codepoint += static_cast<int>((static_cast<unsigned int>(current) - 0x57u) << factor);
+            }
+            else
+            {
+                return -1;
+            }
+        }
+
+        assert(0x0000 <= codepoint and codepoint <= 0xFFFF);
+        return codepoint;
+    }
+
+    /*!
+    @brief check if the next byte(s) are inside a given range
+
+    Adds the current byte and, for each passed range, reads a new byte and
+    checks if it is inside the range. If a violation was detected, set up an
+    error message and return false. Otherwise, return true.
+
+    @param[in] ranges  list of integers; interpreted as list of pairs of
+                       inclusive lower and upper bound, respectively
+
+    @pre The passed list @a ranges must have 2, 4, or 6 elements; that is,
+         1, 2, or 3 pairs. This precondition is enforced by an assertion.
+
+    @return true if and only if no range violation was detected
+    */
+    bool next_byte_in_range(std::initializer_list<int> ranges)
+    {
+        assert(ranges.size() == 2 or ranges.size() == 4 or ranges.size() == 6);
+        add(current);
+
+        for (auto range = ranges.begin(); range != ranges.end(); ++range)
+        {
+            get();
+            if (JSON_LIKELY(*range <= current and current <= *(++range)))
+            {
+                add(current);
+            }
+            else
+            {
+                error_message = "invalid string: ill-formed UTF-8 byte";
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /*!
+    @brief scan a string literal
+
+    This function scans a string according to Sect. 7 of RFC 7159. While
+    scanning, bytes are escaped and copied into buffer token_buffer. Then the
+    function returns successfully, token_buffer is *not* null-terminated (as it
+    may contain \0 bytes), and token_buffer.size() is the number of bytes in the
+    string.
+
+    @return token_type::value_string if string could be successfully scanned,
+            token_type::parse_error otherwise
+
+    @note In case of errors, variable error_message contains a textual
+          description.
+    */
+    token_type scan_string()
+    {
+        // reset token_buffer (ignore opening quote)
+        reset();
+
+        // we entered the function by reading an open quote
+        assert(current == '\"');
+
+        while (true)
+        {
+            // get next character
+            switch (get())
+            {
+                // end of file while parsing string
+                case std::char_traits<char>::eof():
+                {
+                    error_message = "invalid string: missing closing quote";
+                    return token_type::parse_error;
+                }
+
+                // closing quote
+                case '\"':
+                {
+                    return token_type::value_string;
+                }
+
+                // escapes
+                case '\\':
+                {
+                    switch (get())
+                    {
+                        // quotation mark
+                        case '\"':
+                            add('\"');
+                            break;
+                        // reverse solidus
+                        case '\\':
+                            add('\\');
+                            break;
+                        // solidus
+                        case '/':
+                            add('/');
+                            break;
+                        // backspace
+                        case 'b':
+                            add('\b');
+                            break;
+                        // form feed
+                        case 'f':
+                            add('\f');
+                            break;
+                        // line feed
+                        case 'n':
+                            add('\n');
+                            break;
+                        // carriage return
+                        case 'r':
+                            add('\r');
+                            break;
+                        // tab
+                        case 't':
+                            add('\t');
+                            break;
+
+                        // unicode escapes
+                        case 'u':
+                        {
+                            const int codepoint1 = get_codepoint();
+                            int codepoint = codepoint1; // start with codepoint1
+
+                            if (JSON_UNLIKELY(codepoint1 == -1))
+                            {
+                                error_message = "invalid string: '\\u' must be followed by 4 hex digits";
+                                return token_type::parse_error;
+                            }
+
+                            // check if code point is a high surrogate
+                            if (0xD800 <= codepoint1 and codepoint1 <= 0xDBFF)
+                            {
+                                // expect next \uxxxx entry
+                                if (JSON_LIKELY(get() == '\\' and get() == 'u'))
+                                {
+                                    const int codepoint2 = get_codepoint();
+
+                                    if (JSON_UNLIKELY(codepoint2 == -1))
+                                    {
+                                        error_message = "invalid string: '\\u' must be followed by 4 hex digits";
+                                        return token_type::parse_error;
+                                    }
+
+                                    // check if codepoint2 is a low surrogate
+                                    if (JSON_LIKELY(0xDC00 <= codepoint2 and codepoint2 <= 0xDFFF))
+                                    {
+                                        // overwrite codepoint
+                                        codepoint = static_cast<int>(
+                                                        // high surrogate occupies the most significant 22 bits
+                                                        (static_cast<unsigned int>(codepoint1) << 10u)
+                                                        // low surrogate occupies the least significant 15 bits
+                                                        + static_cast<unsigned int>(codepoint2)
+                                                        // there is still the 0xD800, 0xDC00 and 0x10000 noise
+                                                        // in the result so we have to subtract with:
+                                                        // (0xD800 << 10) + DC00 - 0x10000 = 0x35FDC00
+                                                        - 0x35FDC00u);
+                                    }
+                                    else
+                                    {
+                                        error_message = "invalid string: surrogate U+DC00..U+DFFF must be followed by U+DC00..U+DFFF";
+                                        return token_type::parse_error;
+                                    }
+                                }
+                                else
+                                {
+                                    error_message = "invalid string: surrogate U+DC00..U+DFFF must be followed by U+DC00..U+DFFF";
+                                    return token_type::parse_error;
+                                }
+                            }
+                            else
+                            {
+                                if (JSON_UNLIKELY(0xDC00 <= codepoint1 and codepoint1 <= 0xDFFF))
+                                {
+                                    error_message = "invalid string: surrogate U+DC00..U+DFFF must follow U+D800..U+DBFF";
+                                    return token_type::parse_error;
+                                }
+                            }
+
+                            // result of the above calculation yields a proper codepoint
+                            assert(0x00 <= codepoint and codepoint <= 0x10FFFF);
+
+                            // translate codepoint into bytes
+                            if (codepoint < 0x80)
+                            {
+                                // 1-byte characters: 0xxxxxxx (ASCII)
+                                add(codepoint);
+                            }
+                            else if (codepoint <= 0x7FF)
+                            {
+                                // 2-byte characters: 110xxxxx 10xxxxxx
+                                add(static_cast<int>(0xC0u | (static_cast<unsigned int>(codepoint) >> 6u)));
+                                add(static_cast<int>(0x80u | (static_cast<unsigned int>(codepoint) & 0x3Fu)));
+                            }
+                            else if (codepoint <= 0xFFFF)
+                            {
+                                // 3-byte characters: 1110xxxx 10xxxxxx 10xxxxxx
+                                add(static_cast<int>(0xE0u | (static_cast<unsigned int>(codepoint) >> 12u)));
+                                add(static_cast<int>(0x80u | ((static_cast<unsigned int>(codepoint) >> 6u) & 0x3Fu)));
+                                add(static_cast<int>(0x80u | (static_cast<unsigned int>(codepoint) & 0x3Fu)));
+                            }
+                            else
+                            {
+                                // 4-byte characters: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+                                add(static_cast<int>(0xF0u | (static_cast<unsigned int>(codepoint) >> 18u)));
+                                add(static_cast<int>(0x80u | ((static_cast<unsigned int>(codepoint) >> 12u) & 0x3Fu)));
+                                add(static_cast<int>(0x80u | ((static_cast<unsigned int>(codepoint) >> 6u) & 0x3Fu)));
+                                add(static_cast<int>(0x80u | (static_cast<unsigned int>(codepoint) & 0x3Fu)));
+                            }
+
+                            break;
+                        }
+
+                        // other characters after escape
+                        default:
+                            error_message = "invalid string: forbidden character after backslash";
+                            return token_type::parse_error;
+                    }
+
+                    break;
+                }
+
+                // invalid control characters
+                case 0x00:
+                {
+                    error_message = "invalid string: control character U+0000 (NUL) must be escaped to \\u0000";
+                    return token_type::parse_error;
+                }
+
+                case 0x01:
+                {
+                    error_message = "invalid string: control character U+0001 (SOH) must be escaped to \\u0001";
+                    return token_type::parse_error;
+                }
+
+                case 0x02:
+                {
+                    error_message = "invalid string: control character U+0002 (STX) must be escaped to \\u0002";
+                    return token_type::parse_error;
+                }
+
+                case 0x03:
+                {
+                    error_message = "invalid string: control character U+0003 (ETX) must be escaped to \\u0003";
+                    return token_type::parse_error;
+                }
+
+                case 0x04:
+                {
+                    error_message = "invalid string: control character U+0004 (EOT) must be escaped to \\u0004";
+                    return token_type::parse_error;
+                }
+
+                case 0x05:
+                {
+                    error_message = "invalid string: control character U+0005 (ENQ) must be escaped to \\u0005";
+                    return token_type::parse_error;
+                }
+
+                case 0x06:
+                {
+                    error_message = "invalid string: control character U+0006 (ACK) must be escaped to \\u0006";
+                    return token_type::parse_error;
+                }
+
+                case 0x07:
+                {
+                    error_message = "invalid string: control character U+0007 (BEL) must be escaped to \\u0007";
+                    return token_type::parse_error;
+                }
+
+                case 0x08:
+                {
+                    error_message = "invalid string: control character U+0008 (BS) must be escaped to \\u0008 or \\b";
+                    return token_type::parse_error;
+                }
+
+                case 0x09:
+                {
+                    error_message = "invalid string: control character U+0009 (HT) must be escaped to \\u0009 or \\t";
+                    return token_type::parse_error;
+                }
+
+                case 0x0A:
+                {
+                    error_message = "invalid string: control character U+000A (LF) must be escaped to \\u000A or \\n";
+                    return token_type::parse_error;
+                }
+
+                case 0x0B:
+                {
+                    error_message = "invalid string: control character U+000B (VT) must be escaped to \\u000B";
+                    return token_type::parse_error;
+                }
+
+                case 0x0C:
+                {
+                    error_message = "invalid string: control character U+000C (FF) must be escaped to \\u000C or \\f";
+                    return token_type::parse_error;
+                }
+
+                case 0x0D:
+                {
+                    error_message = "invalid string: control character U+000D (CR) must be escaped to \\u000D or \\r";
+                    return token_type::parse_error;
+                }
+
+                case 0x0E:
+                {
+                    error_message = "invalid string: control character U+000E (SO) must be escaped to \\u000E";
+                    return token_type::parse_error;
+                }
+
+                case 0x0F:
+                {
+                    error_message = "invalid string: control character U+000F (SI) must be escaped to \\u000F";
+                    return token_type::parse_error;
+                }
+
+                case 0x10:
+                {
+                    error_message = "invalid string: control character U+0010 (DLE) must be escaped to \\u0010";
+                    return token_type::parse_error;
+                }
+
+                case 0x11:
+                {
+                    error_message = "invalid string: control character U+0011 (DC1) must be escaped to \\u0011";
+                    return token_type::parse_error;
+                }
+
+                case 0x12:
+                {
+                    error_message = "invalid string: control character U+0012 (DC2) must be escaped to \\u0012";
+                    return token_type::parse_error;
+                }
+
+                case 0x13:
+                {
+                    error_message = "invalid string: control character U+0013 (DC3) must be escaped to \\u0013";
+                    return token_type::parse_error;
+                }
+
+                case 0x14:
+                {
+                    error_message = "invalid string: control character U+0014 (DC4) must be escaped to \\u0014";
+                    return token_type::parse_error;
+                }
+
+                case 0x15:
+                {
+                    error_message = "invalid string: control character U+0015 (NAK) must be escaped to \\u0015";
+                    return token_type::parse_error;
+                }
+
+                case 0x16:
+                {
+                    error_message = "invalid string: control character U+0016 (SYN) must be escaped to \\u0016";
+                    return token_type::parse_error;
+                }
+
+                case 0x17:
+                {
+                    error_message = "invalid string: control character U+0017 (ETB) must be escaped to \\u0017";
+                    return token_type::parse_error;
+                }
+
+                case 0x18:
+                {
+                    error_message = "invalid string: control character U+0018 (CAN) must be escaped to \\u0018";
+                    return token_type::parse_error;
+                }
+
+                case 0x19:
+                {
+                    error_message = "invalid string: control character U+0019 (EM) must be escaped to \\u0019";
+                    return token_type::parse_error;
+                }
+
+                case 0x1A:
+                {
+                    error_message = "invalid string: control character U+001A (SUB) must be escaped to \\u001A";
+                    return token_type::parse_error;
+                }
+
+                case 0x1B:
+                {
+                    error_message = "invalid string: control character U+001B (ESC) must be escaped to \\u001B";
+                    return token_type::parse_error;
+                }
+
+                case 0x1C:
+                {
+                    error_message = "invalid string: control character U+001C (FS) must be escaped to \\u001C";
+                    return token_type::parse_error;
+                }
+
+                case 0x1D:
+                {
+                    error_message = "invalid string: control character U+001D (GS) must be escaped to \\u001D";
+                    return token_type::parse_error;
+                }
+
+                case 0x1E:
+                {
+                    error_message = "invalid string: control character U+001E (RS) must be escaped to \\u001E";
+                    return token_type::parse_error;
+                }
+
+                case 0x1F:
+                {
+                    error_message = "invalid string: control character U+001F (US) must be escaped to \\u001F";
+                    return token_type::parse_error;
+                }
+
+                // U+0020..U+007F (except U+0022 (quote) and U+005C (backspace))
+                case 0x20:
+                case 0x21:
+                case 0x23:
+                case 0x24:
+                case 0x25:
+                case 0x26:
+                case 0x27:
+                case 0x28:
+                case 0x29:
+                case 0x2A:
+                case 0x2B:
+                case 0x2C:
+                case 0x2D:
+                case 0x2E:
+                case 0x2F:
+                case 0x30:
+                case 0x31:
+                case 0x32:
+                case 0x33:
+                case 0x34:
+                case 0x35:
+                case 0x36:
+                case 0x37:
+                case 0x38:
+                case 0x39:
+                case 0x3A:
+                case 0x3B:
+                case 0x3C:
+                case 0x3D:
+                case 0x3E:
+                case 0x3F:
+                case 0x40:
+                case 0x41:
+                case 0x42:
+                case 0x43:
+                case 0x44:
+                case 0x45:
+                case 0x46:
+                case 0x47:
+                case 0x48:
+                case 0x49:
+                case 0x4A:
+                case 0x4B:
+                case 0x4C:
+                case 0x4D:
+                case 0x4E:
+                case 0x4F:
+                case 0x50:
+                case 0x51:
+                case 0x52:
+                case 0x53:
+                case 0x54:
+                case 0x55:
+                case 0x56:
+                case 0x57:
+                case 0x58:
+                case 0x59:
+                case 0x5A:
+                case 0x5B:
+                case 0x5D:
+                case 0x5E:
+                case 0x5F:
+                case 0x60:
+                case 0x61:
+                case 0x62:
+                case 0x63:
+                case 0x64:
+                case 0x65:
+                case 0x66:
+                case 0x67:
+                case 0x68:
+                case 0x69:
+                case 0x6A:
+                case 0x6B:
+                case 0x6C:
+                case 0x6D:
+                case 0x6E:
+                case 0x6F:
+                case 0x70:
+                case 0x71:
+                case 0x72:
+                case 0x73:
+                case 0x74:
+                case 0x75:
+                case 0x76:
+                case 0x77:
+                case 0x78:
+                case 0x79:
+                case 0x7A:
+                case 0x7B:
+                case 0x7C:
+                case 0x7D:
+                case 0x7E:
+                case 0x7F:
+                {
+                    add(current);
+                    break;
+                }
+
+                // U+0080..U+07FF: bytes C2..DF 80..BF
+                case 0xC2:
+                case 0xC3:
+                case 0xC4:
+                case 0xC5:
+                case 0xC6:
+                case 0xC7:
+                case 0xC8:
+                case 0xC9:
+                case 0xCA:
+                case 0xCB:
+                case 0xCC:
+                case 0xCD:
+                case 0xCE:
+                case 0xCF:
+                case 0xD0:
+                case 0xD1:
+                case 0xD2:
+                case 0xD3:
+                case 0xD4:
+                case 0xD5:
+                case 0xD6:
+                case 0xD7:
+                case 0xD8:
+                case 0xD9:
+                case 0xDA:
+                case 0xDB:
+                case 0xDC:
+                case 0xDD:
+                case 0xDE:
+                case 0xDF:
+                {
+                    if (JSON_UNLIKELY(not next_byte_in_range({0x80, 0xBF})))
+                    {
+                        return token_type::parse_error;
+                    }
+                    break;
+                }
+
+                // U+0800..U+0FFF: bytes E0 A0..BF 80..BF
+                case 0xE0:
+                {
+                    if (JSON_UNLIKELY(not (next_byte_in_range({0xA0, 0xBF, 0x80, 0xBF}))))
+                    {
+                        return token_type::parse_error;
+                    }
+                    break;
+                }
+
+                // U+1000..U+CFFF: bytes E1..EC 80..BF 80..BF
+                // U+E000..U+FFFF: bytes EE..EF 80..BF 80..BF
+                case 0xE1:
+                case 0xE2:
+                case 0xE3:
+                case 0xE4:
+                case 0xE5:
+                case 0xE6:
+                case 0xE7:
+                case 0xE8:
+                case 0xE9:
+                case 0xEA:
+                case 0xEB:
+                case 0xEC:
+                case 0xEE:
+                case 0xEF:
+                {
+                    if (JSON_UNLIKELY(not (next_byte_in_range({0x80, 0xBF, 0x80, 0xBF}))))
+                    {
+                        return token_type::parse_error;
+                    }
+                    break;
+                }
+
+                // U+D000..U+D7FF: bytes ED 80..9F 80..BF
+                case 0xED:
+                {
+                    if (JSON_UNLIKELY(not (next_byte_in_range({0x80, 0x9F, 0x80, 0xBF}))))
+                    {
+                        return token_type::parse_error;
+                    }
+                    break;
+                }
+
+                // U+10000..U+3FFFF F0 90..BF 80..BF 80..BF
+                case 0xF0:
+                {
+                    if (JSON_UNLIKELY(not (next_byte_in_range({0x90, 0xBF, 0x80, 0xBF, 0x80, 0xBF}))))
+                    {
+                        return token_type::parse_error;
+                    }
+                    break;
+                }
+
+                // U+40000..U+FFFFF F1..F3 80..BF 80..BF 80..BF
+                case 0xF1:
+                case 0xF2:
+                case 0xF3:
+                {
+                    if (JSON_UNLIKELY(not (next_byte_in_range({0x80, 0xBF, 0x80, 0xBF, 0x80, 0xBF}))))
+                    {
+                        return token_type::parse_error;
+                    }
+                    break;
+                }
+
+                // U+100000..U+10FFFF F4 80..8F 80..BF 80..BF
+                case 0xF4:
+                {
+                    if (JSON_UNLIKELY(not (next_byte_in_range({0x80, 0x8F, 0x80, 0xBF, 0x80, 0xBF}))))
+                    {
+                        return token_type::parse_error;
+                    }
+                    break;
+                }
+
+                // remaining bytes (80..C1 and F5..FF) are ill-formed
+                default:
+                {
+                    error_message = "invalid string: ill-formed UTF-8 byte";
+                    return token_type::parse_error;
+                }
+            }
+        }
+    }
+
+    static void strtof(float& f, const char* str, char** endptr) noexcept
+    {
+        f = std::strtof(str, endptr);
+    }
+
+    static void strtof(double& f, const char* str, char** endptr) noexcept
+    {
+        f = std::strtod(str, endptr);
+    }
+
+    static void strtof(long double& f, const char* str, char** endptr) noexcept
+    {
+        f = std::strtold(str, endptr);
+    }
+
+    /*!
+    @brief scan a number literal
+
+    This function scans a string according to Sect. 6 of RFC 7159.
+
+    The function is realized with a deterministic finite state machine derived
+    from the grammar described in RFC 7159. Starting in state "init", the
+    input is read and used to determined the next state. Only state "done"
+    accepts the number. State "error" is a trap state to model errors. In the
+    table below, "anything" means any character but the ones listed before.
+
+    state    | 0        | 1-9      | e E      | +       | -       | .        | anything
+    ---------|----------|----------|----------|---------|---------|----------|-----------
+    init     | zero     | any1     | [error]  | [error] | minus   | [error]  | [error]
+    minus    | zero     | any1     | [error]  | [error] | [error] | [error]  | [error]
+    zero     | done     | done     | exponent | done    | done    | decimal1 | done
+    any1     | any1     | any1     | exponent | done    | done    | decimal1 | done
+    decimal1 | decimal2 | [error]  | [error]  | [error] | [error] | [error]  | [error]
+    decimal2 | decimal2 | decimal2 | exponent | done    | done    | done     | done
+    exponent | any2     | any2     | [error]  | sign    | sign    | [error]  | [error]
+    sign     | any2     | any2     | [error]  | [error] | [error] | [error]  | [error]
+    any2     | any2     | any2     | done     | done    | done    | done     | done
+
+    The state machine is realized with one label per state (prefixed with
+    "scan_number_") and `goto` statements between them. The state machine
+    contains cycles, but any cycle can be left when EOF is read. Therefore,
+    the function is guaranteed to terminate.
+
+    During scanning, the read bytes are stored in token_buffer. This string is
+    then converted to a signed integer, an unsigned integer, or a
+    floating-point number.
+
+    @return token_type::value_unsigned, token_type::value_integer, or
+            token_type::value_float if number could be successfully scanned,
+            token_type::parse_error otherwise
+
+    @note The scanner is independent of the current locale. Internally, the
+          locale's decimal point is used instead of `.` to work with the
+          locale-dependent converters.
+    */
+    token_type scan_number()  // lgtm [cpp/use-of-goto]
+    {
+        // reset token_buffer to store the number's bytes
+        reset();
+
+        // the type of the parsed number; initially set to unsigned; will be
+        // changed if minus sign, decimal point or exponent is read
+        token_type number_type = token_type::value_unsigned;
+
+        // state (init): we just found out we need to scan a number
+        switch (current)
+        {
+            case '-':
+            {
+                add(current);
+                goto scan_number_minus;
+            }
+
+            case '0':
+            {
+                add(current);
+                goto scan_number_zero;
+            }
+
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+            {
+                add(current);
+                goto scan_number_any1;
+            }
+
+            // LCOV_EXCL_START
+            default:
+            {
+                // all other characters are rejected outside scan_number()
+                assert(false);
+            }
+                // LCOV_EXCL_STOP
+        }
+
+scan_number_minus:
+        // state: we just parsed a leading minus sign
+        number_type = token_type::value_integer;
+        switch (get())
+        {
+            case '0':
+            {
+                add(current);
+                goto scan_number_zero;
+            }
+
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+            {
+                add(current);
+                goto scan_number_any1;
+            }
+
+            default:
+            {
+                error_message = "invalid number; expected digit after '-'";
+                return token_type::parse_error;
+            }
+        }
+
+scan_number_zero:
+        // state: we just parse a zero (maybe with a leading minus sign)
+        switch (get())
+        {
+            case '.':
+            {
+                add(decimal_point_char);
+                goto scan_number_decimal1;
+            }
+
+            case 'e':
+            case 'E':
+            {
+                add(current);
+                goto scan_number_exponent;
+            }
+
+            default:
+                goto scan_number_done;
+        }
+
+scan_number_any1:
+        // state: we just parsed a number 0-9 (maybe with a leading minus sign)
+        switch (get())
+        {
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+            {
+                add(current);
+                goto scan_number_any1;
+            }
+
+            case '.':
+            {
+                add(decimal_point_char);
+                goto scan_number_decimal1;
+            }
+
+            case 'e':
+            case 'E':
+            {
+                add(current);
+                goto scan_number_exponent;
+            }
+
+            default:
+                goto scan_number_done;
+        }
+
+scan_number_decimal1:
+        // state: we just parsed a decimal point
+        number_type = token_type::value_float;
+        switch (get())
+        {
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+            {
+                add(current);
+                goto scan_number_decimal2;
+            }
+
+            default:
+            {
+                error_message = "invalid number; expected digit after '.'";
+                return token_type::parse_error;
+            }
+        }
+
+scan_number_decimal2:
+        // we just parsed at least one number after a decimal point
+        switch (get())
+        {
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+            {
+                add(current);
+                goto scan_number_decimal2;
+            }
+
+            case 'e':
+            case 'E':
+            {
+                add(current);
+                goto scan_number_exponent;
+            }
+
+            default:
+                goto scan_number_done;
+        }
+
+scan_number_exponent:
+        // we just parsed an exponent
+        number_type = token_type::value_float;
+        switch (get())
+        {
+            case '+':
+            case '-':
+            {
+                add(current);
+                goto scan_number_sign;
+            }
+
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+            {
+                add(current);
+                goto scan_number_any2;
+            }
+
+            default:
+            {
+                error_message =
+                    "invalid number; expected '+', '-', or digit after exponent";
+                return token_type::parse_error;
+            }
+        }
+
+scan_number_sign:
+        // we just parsed an exponent sign
+        switch (get())
+        {
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+            {
+                add(current);
+                goto scan_number_any2;
+            }
+
+            default:
+            {
+                error_message = "invalid number; expected digit after exponent sign";
+                return token_type::parse_error;
+            }
+        }
+
+scan_number_any2:
+        // we just parsed a number after the exponent or exponent sign
+        switch (get())
+        {
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+            {
+                add(current);
+                goto scan_number_any2;
+            }
+
+            default:
+                goto scan_number_done;
+        }
+
+scan_number_done:
+        // unget the character after the number (we only read it to know that
+        // we are done scanning a number)
+        unget();
+
+        char* endptr = nullptr;
+        errno = 0;
+
+        // try to parse integers first and fall back to floats
+        if (number_type == token_type::value_unsigned)
+        {
+            const auto x = std::strtoull(token_buffer.data(), &endptr, 10);
+
+            // we checked the number format before
+            assert(endptr == token_buffer.data() + token_buffer.size());
+
+            if (errno == 0)
+            {
+                value_unsigned = static_cast<number_unsigned_t>(x);
+                if (value_unsigned == x)
+                {
+                    return token_type::value_unsigned;
+                }
+            }
+        }
+        else if (number_type == token_type::value_integer)
+        {
+            const auto x = std::strtoll(token_buffer.data(), &endptr, 10);
+
+            // we checked the number format before
+            assert(endptr == token_buffer.data() + token_buffer.size());
+
+            if (errno == 0)
+            {
+                value_integer = static_cast<number_integer_t>(x);
+                if (value_integer == x)
+                {
+                    return token_type::value_integer;
+                }
+            }
+        }
+
+        // this code is reached if we parse a floating-point number or if an
+        // integer conversion above failed
+        strtof(value_float, token_buffer.data(), &endptr);
+
+        // we checked the number format before
+        assert(endptr == token_buffer.data() + token_buffer.size());
+
+        return token_type::value_float;
+    }
+
+    /*!
+    @param[in] literal_text  the literal text to expect
+    @param[in] length        the length of the passed literal text
+    @param[in] return_type   the token type to return on success
+    */
+    token_type scan_literal(const char* literal_text, const std::size_t length,
+                            token_type return_type)
+    {
+        assert(current == literal_text[0]);
+        for (std::size_t i = 1; i < length; ++i)
+        {
+            if (JSON_UNLIKELY(get() != literal_text[i]))
+            {
+                error_message = "invalid literal";
+                return token_type::parse_error;
+            }
+        }
+        return return_type;
+    }
+
+    /////////////////////
+    // input management
+    /////////////////////
+
+    /// reset token_buffer; current character is beginning of token
+    void reset() noexcept
+    {
+        token_buffer.clear();
+        token_string.clear();
+        token_string.push_back(std::char_traits<char>::to_char_type(current));
+    }
+
+    /*
+    @brief get next character from the input
+
+    This function provides the interface to the used input adapter. It does
+    not throw in case the input reached EOF, but returns a
+    `std::char_traits<char>::eof()` in that case.  Stores the scanned characters
+    for use in error messages.
+
+    @return character read from the input
+    */
+    std::char_traits<char>::int_type get()
+    {
+        ++position.chars_read_total;
+        ++position.chars_read_current_line;
+
+        if (next_unget)
+        {
+            // just reset the next_unget variable and work with current
+            next_unget = false;
+        }
+        else
+        {
+            current = ia->get_character();
+        }
+
+        if (JSON_LIKELY(current != std::char_traits<char>::eof()))
+        {
+            token_string.push_back(std::char_traits<char>::to_char_type(current));
+        }
+
+        if (current == '\n')
+        {
+            ++position.lines_read;
+            position.chars_read_current_line = 0;
+        }
+
+        return current;
+    }
+
+    /*!
+    @brief unget current character (read it again on next get)
+
+    We implement unget by setting variable next_unget to true. The input is not
+    changed - we just simulate ungetting by modifying chars_read_total,
+    chars_read_current_line, and token_string. The next call to get() will
+    behave as if the unget character is read again.
+    */
+    void unget()
+    {
+        next_unget = true;
+
+        --position.chars_read_total;
+
+        // in case we "unget" a newline, we have to also decrement the lines_read
+        if (position.chars_read_current_line == 0)
+        {
+            if (position.lines_read > 0)
+            {
+                --position.lines_read;
+            }
+        }
+        else
+        {
+            --position.chars_read_current_line;
+        }
+
+        if (JSON_LIKELY(current != std::char_traits<char>::eof()))
+        {
+            assert(not token_string.empty());
+            token_string.pop_back();
+        }
+    }
+
+    /// add a character to token_buffer
+    void add(int c)
+    {
+        token_buffer.push_back(std::char_traits<char>::to_char_type(c));
+    }
+
+  public:
+    /////////////////////
+    // value getters
+    /////////////////////
+
+    /// return integer value
+    constexpr number_integer_t get_number_integer() const noexcept
+    {
+        return value_integer;
+    }
+
+    /// return unsigned integer value
+    constexpr number_unsigned_t get_number_unsigned() const noexcept
+    {
+        return value_unsigned;
+    }
+
+    /// return floating-point value
+    constexpr number_float_t get_number_float() const noexcept
+    {
+        return value_float;
+    }
+
+    /// return current string value (implicitly resets the token; useful only once)
+    string_t& get_string()
+    {
+        return token_buffer;
+    }
+
+    /////////////////////
+    // diagnostics
+    /////////////////////
+
+    /// return position of last read token
+    constexpr position_t get_position() const noexcept
+    {
+        return position;
+    }
+
+    /// return the last read token (for errors only).  Will never contain EOF
+    /// (an arbitrary value that is not a valid char value, often -1), because
+    /// 255 may legitimately occur.  May contain NUL, which should be escaped.
+    std::string get_token_string() const
+    {
+        // escape control characters
+        std::string result;
+        for (const auto c : token_string)
+        {
+            if ('\x00' <= c and c <= '\x1F')
+            {
+                // escape control characters
+                std::array<char, 9> cs{};
+                (std::snprintf)(cs.data(), cs.size(), "<U+%.4X>", static_cast<unsigned char>(c));
+                result += cs.data();
+            }
+            else
+            {
+                // add character as is
+                result.push_back(c);
+            }
+        }
+
+        return result;
+    }
+
+    /// return syntax error message
+    constexpr const char* get_error_message() const noexcept
+    {
+        return error_message;
+    }
+
+    /////////////////////
+    // actual scanner
+    /////////////////////
+
+    /*!
+    @brief skip the UTF-8 byte order mark
+    @return true iff there is no BOM or the correct BOM has been skipped
+    */
+    bool skip_bom()
+    {
+        if (get() == 0xEF)
+        {
+            // check if we completely parse the BOM
+            return get() == 0xBB and get() == 0xBF;
+        }
+
+        // the first character is not the beginning of the BOM; unget it to
+        // process is later
+        unget();
+        return true;
+    }
+
+    token_type scan()
+    {
+        // initially, skip the BOM
+        if (position.chars_read_total == 0 and not skip_bom())
+        {
+            error_message = "invalid BOM; must be 0xEF 0xBB 0xBF if given";
+            return token_type::parse_error;
+        }
+
+        // read next character and ignore whitespace
+        do
+        {
+            get();
+        }
+        while (current == ' ' or current == '\t' or current == '\n' or current == '\r');
+
+        switch (current)
+        {
+            // structural characters
+            case '[':
+                return token_type::begin_array;
+            case ']':
+                return token_type::end_array;
+            case '{':
+                return token_type::begin_object;
+            case '}':
+                return token_type::end_object;
+            case ':':
+                return token_type::name_separator;
+            case ',':
+                return token_type::value_separator;
+
+            // literals
+            case 't':
+                return scan_literal("true", 4, token_type::literal_true);
+            case 'f':
+                return scan_literal("false", 5, token_type::literal_false);
+            case 'n':
+                return scan_literal("null", 4, token_type::literal_null);
+
+            // string
+            case '\"':
+                return scan_string();
+
+            // number
+            case '-':
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+                return scan_number();
+
+            // end of input (the null byte is needed when parsing from
+            // string literals)
+            case '\0':
+            case std::char_traits<char>::eof():
+                return token_type::end_of_input;
+
+            // error
+            default:
+                error_message = "invalid literal";
+                return token_type::parse_error;
+        }
+    }
+
+  private:
+    /// input adapter
+    detail::input_adapter_t ia = nullptr;
+
+    /// the current character
+    std::char_traits<char>::int_type current = std::char_traits<char>::eof();
+
+    /// whether the next get() call should just return current
+    bool next_unget = false;
+
+    /// the start position of the current token
+    position_t position {};
+
+    /// raw input token string (for error messages)
+    std::vector<char> token_string {};
+
+    /// buffer for variable-length tokens (numbers, strings)
+    string_t token_buffer {};
+
+    /// a description of occurred lexer errors
+    const char* error_message = "";
+
+    // number values
+    number_integer_t value_integer = 0;
+    number_unsigned_t value_unsigned = 0;
+    number_float_t value_float = 0;
+
+    /// the decimal point
+    const char decimal_point_char = '.';
+};
+}  // namespace detail
+}  // namespace nlohmann
+
+// #include <nlohmann/detail/input/parser.hpp>
+
+
+#include <cassert> // assert
+#include <cmath> // isfinite
+#include <cstdint> // uint8_t
+#include <functional> // function
+#include <string> // string
+#include <utility> // move
+#include <vector> // vector
+
+// #include <nlohmann/detail/exceptions.hpp>
+
+// #include <nlohmann/detail/input/input_adapters.hpp>
+
+// #include <nlohmann/detail/input/json_sax.hpp>
+
+// #include <nlohmann/detail/input/lexer.hpp>
+
+// #include <nlohmann/detail/macro_scope.hpp>
+
+// #include <nlohmann/detail/meta/is_sax.hpp>
+
+// #include <nlohmann/detail/value_t.hpp>
+
+
+namespace nlohmann
+{
+namespace detail
+{
+////////////
+// parser //
+////////////
+
+/*!
+@brief syntax analysis
+
+This class implements a recursive decent parser.
+*/
+template<typename BasicJsonType>
+class parser
+{
+    using number_integer_t = typename BasicJsonType::number_integer_t;
+    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+    using number_float_t = typename BasicJsonType::number_float_t;
+    using string_t = typename BasicJsonType::string_t;
+    using lexer_t = lexer<BasicJsonType>;
+    using token_type = typename lexer_t::token_type;
+
+  public:
+    enum class parse_event_t : uint8_t
+    {
+        /// the parser read `{` and started to process a JSON object
+        object_start,
+        /// the parser read `}` and finished processing a JSON object
+        object_end,
+        /// the parser read `[` and started to process a JSON array
+        array_start,
+        /// the parser read `]` and finished processing a JSON array
+        array_end,
+        /// the parser read a key of a value in an object
+        key,
+        /// the parser finished reading a JSON value
+        value
+    };
+
+    using parser_callback_t =
+        std::function<bool(int depth, parse_event_t event, BasicJsonType& parsed)>;
+
+    /// a parser reading from an input adapter
+    explicit parser(detail::input_adapter_t&& adapter,
+                    const parser_callback_t cb = nullptr,
+                    const bool allow_exceptions_ = true)
+        : callback(cb), m_lexer(std::move(adapter)), allow_exceptions(allow_exceptions_)
+    {
+        // read first token
+        get_token();
+    }
+
+    /*!
+    @brief public parser interface
+
+    @param[in] strict      whether to expect the last token to be EOF
+    @param[in,out] result  parsed JSON value
+
+    @throw parse_error.101 in case of an unexpected token
+    @throw parse_error.102 if to_unicode fails or surrogate error
+    @throw parse_error.103 if to_unicode fails
+    */
+    void parse(const bool strict, BasicJsonType& result)
+    {
+        if (callback)
+        {
+            json_sax_dom_callback_parser<BasicJsonType> sdp(result, callback, allow_exceptions);
+            sax_parse_internal(&sdp);
+            result.assert_invariant();
+
+            // in strict mode, input must be completely read
+            if (strict and (get_token() != token_type::end_of_input))
+            {
+                sdp.parse_error(m_lexer.get_position(),
+                                m_lexer.get_token_string(),
+                                parse_error::create(101, m_lexer.get_position(),
+                                                    exception_message(token_type::end_of_input, "value")));
+            }
+
+            // in case of an error, return discarded value
+            if (sdp.is_errored())
+            {
+                result = value_t::discarded;
+                return;
+            }
+
+            // set top-level value to null if it was discarded by the callback
+            // function
+            if (result.is_discarded())
+            {
+                result = nullptr;
+            }
+        }
+        else
+        {
+            json_sax_dom_parser<BasicJsonType> sdp(result, allow_exceptions);
+            sax_parse_internal(&sdp);
+            result.assert_invariant();
+
+            // in strict mode, input must be completely read
+            if (strict and (get_token() != token_type::end_of_input))
+            {
+                sdp.parse_error(m_lexer.get_position(),
+                                m_lexer.get_token_string(),
+                                parse_error::create(101, m_lexer.get_position(),
+                                                    exception_message(token_type::end_of_input, "value")));
+            }
+
+            // in case of an error, return discarded value
+            if (sdp.is_errored())
+            {
+                result = value_t::discarded;
+                return;
+            }
+        }
+    }
+
+    /*!
+    @brief public accept interface
+
+    @param[in] strict  whether to expect the last token to be EOF
+    @return whether the input is a proper JSON text
+    */
+    bool accept(const bool strict = true)
+    {
+        json_sax_acceptor<BasicJsonType> sax_acceptor;
+        return sax_parse(&sax_acceptor, strict);
+    }
+
+    template <typename SAX>
+    bool sax_parse(SAX* sax, const bool strict = true)
+    {
+        (void)detail::is_sax_static_asserts<SAX, BasicJsonType> {};
+        const bool result = sax_parse_internal(sax);
+
+        // strict mode: next byte must be EOF
+        if (result and strict and (get_token() != token_type::end_of_input))
+        {
+            return sax->parse_error(m_lexer.get_position(),
+                                    m_lexer.get_token_string(),
+                                    parse_error::create(101, m_lexer.get_position(),
+                                            exception_message(token_type::end_of_input, "value")));
+        }
+
+        return result;
+    }
+
+  private:
+    template <typename SAX>
+    bool sax_parse_internal(SAX* sax)
+    {
+        // stack to remember the hierarchy of structured values we are parsing
+        // true = array; false = object
+        std::vector<bool> states;
+        // value to avoid a goto (see comment where set to true)
+        bool skip_to_state_evaluation = false;
+
+        while (true)
+        {
+            if (not skip_to_state_evaluation)
+            {
+                // invariant: get_token() was called before each iteration
+                switch (last_token)
+                {
+                    case token_type::begin_object:
+                    {
+                        if (JSON_UNLIKELY(not sax->start_object(std::size_t(-1))))
+                        {
+                            return false;
+                        }
+
+                        // closing } -> we are done
+                        if (get_token() == token_type::end_object)
+                        {
+                            if (JSON_UNLIKELY(not sax->end_object()))
+                            {
+                                return false;
+                            }
+                            break;
+                        }
+
+                        // parse key
+                        if (JSON_UNLIKELY(last_token != token_type::value_string))
+                        {
+                            return sax->parse_error(m_lexer.get_position(),
+                                                    m_lexer.get_token_string(),
+                                                    parse_error::create(101, m_lexer.get_position(),
+                                                            exception_message(token_type::value_string, "object key")));
+                        }
+                        if (JSON_UNLIKELY(not sax->key(m_lexer.get_string())))
+                        {
+                            return false;
+                        }
+
+                        // parse separator (:)
+                        if (JSON_UNLIKELY(get_token() != token_type::name_separator))
+                        {
+                            return sax->parse_error(m_lexer.get_position(),
+                                                    m_lexer.get_token_string(),
+                                                    parse_error::create(101, m_lexer.get_position(),
+                                                            exception_message(token_type::name_separator, "object separator")));
+                        }
+
+                        // remember we are now inside an object
+                        states.push_back(false);
+
+                        // parse values
+                        get_token();
+                        continue;
+                    }
+
+                    case token_type::begin_array:
+                    {
+                        if (JSON_UNLIKELY(not sax->start_array(std::size_t(-1))))
+                        {
+                            return false;
+                        }
+
+                        // closing ] -> we are done
+                        if (get_token() == token_type::end_array)
+                        {
+                            if (JSON_UNLIKELY(not sax->end_array()))
+                            {
+                                return false;
+                            }
+                            break;
+                        }
+
+                        // remember we are now inside an array
+                        states.push_back(true);
+
+                        // parse values (no need to call get_token)
+                        continue;
+                    }
+
+                    case token_type::value_float:
+                    {
+                        const auto res = m_lexer.get_number_float();
+
+                        if (JSON_UNLIKELY(not std::isfinite(res)))
+                        {
+                            return sax->parse_error(m_lexer.get_position(),
+                                                    m_lexer.get_token_string(),
+                                                    out_of_range::create(406, "number overflow parsing '" + m_lexer.get_token_string() + "'"));
+                        }
+                        else
+                        {
+                            if (JSON_UNLIKELY(not sax->number_float(res, m_lexer.get_string())))
+                            {
+                                return false;
+                            }
+                            break;
+                        }
+                    }
+
+                    case token_type::literal_false:
+                    {
+                        if (JSON_UNLIKELY(not sax->boolean(false)))
+                        {
+                            return false;
+                        }
+                        break;
+                    }
+
+                    case token_type::literal_null:
+                    {
+                        if (JSON_UNLIKELY(not sax->null()))
+                        {
+                            return false;
+                        }
+                        break;
+                    }
+
+                    case token_type::literal_true:
+                    {
+                        if (JSON_UNLIKELY(not sax->boolean(true)))
+                        {
+                            return false;
+                        }
+                        break;
+                    }
+
+                    case token_type::value_integer:
+                    {
+                        if (JSON_UNLIKELY(not sax->number_integer(m_lexer.get_number_integer())))
+                        {
+                            return false;
+                        }
+                        break;
+                    }
+
+                    case token_type::value_string:
+                    {
+                        if (JSON_UNLIKELY(not sax->string(m_lexer.get_string())))
+                        {
+                            return false;
+                        }
+                        break;
+                    }
+
+                    case token_type::value_unsigned:
+                    {
+                        if (JSON_UNLIKELY(not sax->number_unsigned(m_lexer.get_number_unsigned())))
+                        {
+                            return false;
+                        }
+                        break;
+                    }
+
+                    case token_type::parse_error:
+                    {
+                        // using "uninitialized" to avoid "expected" message
+                        return sax->parse_error(m_lexer.get_position(),
+                                                m_lexer.get_token_string(),
+                                                parse_error::create(101, m_lexer.get_position(),
+                                                        exception_message(token_type::uninitialized, "value")));
+                    }
+
+                    default: // the last token was unexpected
+                    {
+                        return sax->parse_error(m_lexer.get_position(),
+                                                m_lexer.get_token_string(),
+                                                parse_error::create(101, m_lexer.get_position(),
+                                                        exception_message(token_type::literal_or_value, "value")));
+                    }
+                }
+            }
+            else
+            {
+                skip_to_state_evaluation = false;
+            }
+
+            // we reached this line after we successfully parsed a value
+            if (states.empty())
+            {
+                // empty stack: we reached the end of the hierarchy: done
+                return true;
+            }
+            else
+            {
+                if (states.back())  // array
+                {
+                    // comma -> next value
+                    if (get_token() == token_type::value_separator)
+                    {
+                        // parse a new value
+                        get_token();
+                        continue;
+                    }
+
+                    // closing ]
+                    if (JSON_LIKELY(last_token == token_type::end_array))
+                    {
+                        if (JSON_UNLIKELY(not sax->end_array()))
+                        {
+                            return false;
+                        }
+
+                        // We are done with this array. Before we can parse a
+                        // new value, we need to evaluate the new state first.
+                        // By setting skip_to_state_evaluation to false, we
+                        // are effectively jumping to the beginning of this if.
+                        assert(not states.empty());
+                        states.pop_back();
+                        skip_to_state_evaluation = true;
+                        continue;
+                    }
+                    else
+                    {
+                        return sax->parse_error(m_lexer.get_position(),
+                                                m_lexer.get_token_string(),
+                                                parse_error::create(101, m_lexer.get_position(),
+                                                        exception_message(token_type::end_array, "array")));
+                    }
+                }
+                else  // object
+                {
+                    // comma -> next value
+                    if (get_token() == token_type::value_separator)
+                    {
+                        // parse key
+                        if (JSON_UNLIKELY(get_token() != token_type::value_string))
+                        {
+                            return sax->parse_error(m_lexer.get_position(),
+                                                    m_lexer.get_token_string(),
+                                                    parse_error::create(101, m_lexer.get_position(),
+                                                            exception_message(token_type::value_string, "object key")));
+                        }
+                        else
+                        {
+                            if (JSON_UNLIKELY(not sax->key(m_lexer.get_string())))
+                            {
+                                return false;
+                            }
+                        }
+
+                        // parse separator (:)
+                        if (JSON_UNLIKELY(get_token() != token_type::name_separator))
+                        {
+                            return sax->parse_error(m_lexer.get_position(),
+                                                    m_lexer.get_token_string(),
+                                                    parse_error::create(101, m_lexer.get_position(),
+                                                            exception_message(token_type::name_separator, "object separator")));
+                        }
+
+                        // parse values
+                        get_token();
+                        continue;
+                    }
+
+                    // closing }
+                    if (JSON_LIKELY(last_token == token_type::end_object))
+                    {
+                        if (JSON_UNLIKELY(not sax->end_object()))
+                        {
+                            return false;
+                        }
+
+                        // We are done with this object. Before we can parse a
+                        // new value, we need to evaluate the new state first.
+                        // By setting skip_to_state_evaluation to false, we
+                        // are effectively jumping to the beginning of this if.
+                        assert(not states.empty());
+                        states.pop_back();
+                        skip_to_state_evaluation = true;
+                        continue;
+                    }
+                    else
+                    {
+                        return sax->parse_error(m_lexer.get_position(),
+                                                m_lexer.get_token_string(),
+                                                parse_error::create(101, m_lexer.get_position(),
+                                                        exception_message(token_type::end_object, "object")));
+                    }
+                }
+            }
+        }
+    }
+
+    /// get next token from lexer
+    token_type get_token()
+    {
+        return (last_token = m_lexer.scan());
+    }
+
+    std::string exception_message(const token_type expected, const std::string& context)
+    {
+        std::string error_msg = "syntax error ";
+
+        if (not context.empty())
+        {
+            error_msg += "while parsing " + context + " ";
+        }
+
+        error_msg += "- ";
+
+        if (last_token == token_type::parse_error)
+        {
+            error_msg += std::string(m_lexer.get_error_message()) + "; last read: '" +
+                         m_lexer.get_token_string() + "'";
+        }
+        else
+        {
+            error_msg += "unexpected " + std::string(lexer_t::token_type_name(last_token));
+        }
+
+        if (expected != token_type::uninitialized)
+        {
+            error_msg += "; expected " + std::string(lexer_t::token_type_name(expected));
+        }
+
+        return error_msg;
+    }
+
+  private:
+    /// callback function
+    const parser_callback_t callback = nullptr;
+    /// the type of the last read token
+    token_type last_token = token_type::uninitialized;
+    /// the lexer
+    lexer_t m_lexer;
+    /// whether to throw exceptions in case of errors
+    const bool allow_exceptions = true;
+};
+}  // namespace detail
+}  // namespace nlohmann
+
+// #include <nlohmann/detail/iterators/internal_iterator.hpp>
+
+
+// #include <nlohmann/detail/iterators/primitive_iterator.hpp>
+
+
+#include <cstddef> // ptrdiff_t
+#include <limits>  // numeric_limits
+
+namespace nlohmann
+{
+namespace detail
+{
+/*
+@brief an iterator for primitive JSON types
+
+This class models an iterator for primitive JSON types (boolean, number,
+string). It's only purpose is to allow the iterator/const_iterator classes
+to "iterate" over primitive values. Internally, the iterator is modeled by
+a `difference_type` variable. Value begin_value (`0`) models the begin,
+end_value (`1`) models past the end.
+*/
+class primitive_iterator_t
+{
+  private:
+    using difference_type = std::ptrdiff_t;
+    static constexpr difference_type begin_value = 0;
+    static constexpr difference_type end_value = begin_value + 1;
+
+    /// iterator as signed integer type
+    difference_type m_it = (std::numeric_limits<std::ptrdiff_t>::min)();
+
+  public:
+    constexpr difference_type get_value() const noexcept
+    {
+        return m_it;
+    }
+
+    /// set iterator to a defined beginning
+    void set_begin() noexcept
+    {
+        m_it = begin_value;
+    }
+
+    /// set iterator to a defined past the end
+    void set_end() noexcept
+    {
+        m_it = end_value;
+    }
+
+    /// return whether the iterator can be dereferenced
+    constexpr bool is_begin() const noexcept
+    {
+        return m_it == begin_value;
+    }
+
+    /// return whether the iterator is at end
+    constexpr bool is_end() const noexcept
+    {
+        return m_it == end_value;
+    }
+
+    friend constexpr bool operator==(primitive_iterator_t lhs, primitive_iterator_t rhs) noexcept
+    {
+        return lhs.m_it == rhs.m_it;
+    }
+
+    friend constexpr bool operator<(primitive_iterator_t lhs, primitive_iterator_t rhs) noexcept
+    {
+        return lhs.m_it < rhs.m_it;
+    }
+
+    primitive_iterator_t operator+(difference_type n) noexcept
+    {
+        auto result = *this;
+        result += n;
+        return result;
+    }
+
+    friend constexpr difference_type operator-(primitive_iterator_t lhs, primitive_iterator_t rhs) noexcept
+    {
+        return lhs.m_it - rhs.m_it;
+    }
+
+    primitive_iterator_t& operator++() noexcept
+    {
+        ++m_it;
+        return *this;
+    }
+
+    primitive_iterator_t const operator++(int) noexcept
+    {
+        auto result = *this;
+        ++m_it;
+        return result;
+    }
+
+    primitive_iterator_t& operator--() noexcept
+    {
+        --m_it;
+        return *this;
+    }
+
+    primitive_iterator_t const operator--(int) noexcept
+    {
+        auto result = *this;
+        --m_it;
+        return result;
+    }
+
+    primitive_iterator_t& operator+=(difference_type n) noexcept
+    {
+        m_it += n;
+        return *this;
+    }
+
+    primitive_iterator_t& operator-=(difference_type n) noexcept
+    {
+        m_it -= n;
+        return *this;
+    }
+};
+}  // namespace detail
+}  // namespace nlohmann
+
+
+namespace nlohmann
+{
+namespace detail
+{
+/*!
+@brief an iterator value
+
+@note This structure could easily be a union, but MSVC currently does not allow
+unions members with complex constructors, see https://github.com/nlohmann/json/pull/105.
+*/
+template<typename BasicJsonType> struct internal_iterator
+{
+    /// iterator for JSON objects
+    typename BasicJsonType::object_t::iterator object_iterator {};
+    /// iterator for JSON arrays
+    typename BasicJsonType::array_t::iterator array_iterator {};
+    /// generic iterator for all other types
+    primitive_iterator_t primitive_iterator {};
+};
+}  // namespace detail
+}  // namespace nlohmann
+
+// #include <nlohmann/detail/iterators/iter_impl.hpp>
+
+
+#include <ciso646> // not
+#include <iterator> // iterator, random_access_iterator_tag, bidirectional_iterator_tag, advance, next
+#include <type_traits> // conditional, is_const, remove_const
+
+// #include <nlohmann/detail/exceptions.hpp>
+
+// #include <nlohmann/detail/iterators/internal_iterator.hpp>
+
+// #include <nlohmann/detail/iterators/primitive_iterator.hpp>
+
+// #include <nlohmann/detail/macro_scope.hpp>
+
+// #include <nlohmann/detail/meta/cpp_future.hpp>
+
+// #include <nlohmann/detail/meta/type_traits.hpp>
+
+// #include <nlohmann/detail/value_t.hpp>
+
+
+namespace nlohmann
+{
+namespace detail
+{
+// forward declare, to be able to friend it later on
+template<typename IteratorType> class iteration_proxy;
+template<typename IteratorType> class iteration_proxy_value;
+
+/*!
+@brief a template for a bidirectional iterator for the @ref basic_json class
+This class implements a both iterators (iterator and const_iterator) for the
+@ref basic_json class.
+@note An iterator is called *initialized* when a pointer to a JSON value has
+      been set (e.g., by a constructor or a copy assignment). If the iterator is
+      default-constructed, it is *uninitialized* and most methods are undefined.
+      **The library uses assertions to detect calls on uninitialized iterators.**
+@requirement The class satisfies the following concept requirements:
+-
+[BidirectionalIterator](https://en.cppreference.com/w/cpp/named_req/BidirectionalIterator):
+  The iterator that can be moved can be moved in both directions (i.e.
+  incremented and decremented).
+@since version 1.0.0, simplified in version 2.0.9, change to bidirectional
+       iterators in version 3.0.0 (see https://github.com/nlohmann/json/issues/593)
+*/
+template<typename BasicJsonType>
+class iter_impl
+{
+    /// allow basic_json to access private members
+    friend iter_impl<typename std::conditional<std::is_const<BasicJsonType>::value, typename std::remove_const<BasicJsonType>::type, const BasicJsonType>::type>;
+    friend BasicJsonType;
+    friend iteration_proxy<iter_impl>;
+    friend iteration_proxy_value<iter_impl>;
+
+    using object_t = typename BasicJsonType::object_t;
+    using array_t = typename BasicJsonType::array_t;
+    // make sure BasicJsonType is basic_json or const basic_json
+    static_assert(is_basic_json<typename std::remove_const<BasicJsonType>::type>::value,
+                  "iter_impl only accepts (const) basic_json");
+
+  public:
+
+    /// The std::iterator class template (used as a base class to provide typedefs) is deprecated in C++17.
+    /// The C++ Standard has never required user-defined iterators to derive from std::iterator.
+    /// A user-defined iterator should provide publicly accessible typedefs named
+    /// iterator_category, value_type, difference_type, pointer, and reference.
+    /// Note that value_type is required to be non-const, even for constant iterators.
+    using iterator_category = std::bidirectional_iterator_tag;
+
+    /// the type of the values when the iterator is dereferenced
+    using value_type = typename BasicJsonType::value_type;
+    /// a type to represent differences between iterators
+    using difference_type = typename BasicJsonType::difference_type;
+    /// defines a pointer to the type iterated over (value_type)
+    using pointer = typename std::conditional<std::is_const<BasicJsonType>::value,
+          typename BasicJsonType::const_pointer,
+          typename BasicJsonType::pointer>::type;
+    /// defines a reference to the type iterated over (value_type)
+    using reference =
+        typename std::conditional<std::is_const<BasicJsonType>::value,
+        typename BasicJsonType::const_reference,
+        typename BasicJsonType::reference>::type;
+
+    /// default constructor
+    iter_impl() = default;
+
+    /*!
+    @brief constructor for a given JSON instance
+    @param[in] object  pointer to a JSON object for this iterator
+    @pre object != nullptr
+    @post The iterator is initialized; i.e. `m_object != nullptr`.
+    */
+    explicit iter_impl(pointer object) noexcept : m_object(object)
+    {
+        assert(m_object != nullptr);
+
+        switch (m_object->m_type)
+        {
+            case value_t::object:
+            {
+                m_it.object_iterator = typename object_t::iterator();
+                break;
+            }
+
+            case value_t::array:
+            {
+                m_it.array_iterator = typename array_t::iterator();
+                break;
+            }
+
+            default:
+            {
+                m_it.primitive_iterator = primitive_iterator_t();
+                break;
+            }
+        }
+    }
+
+    /*!
+    @note The conventional copy constructor and copy assignment are implicitly
+          defined. Combined with the following converting constructor and
+          assignment, they support: (1) copy from iterator to iterator, (2)
+          copy from const iterator to const iterator, and (3) conversion from
+          iterator to const iterator. However conversion from const iterator
+          to iterator is not defined.
+    */
+
+    /*!
+    @brief converting constructor
+    @param[in] other  non-const iterator to copy from
+    @note It is not checked whether @a other is initialized.
+    */
+    iter_impl(const iter_impl<typename std::remove_const<BasicJsonType>::type>& other) noexcept
+        : m_object(other.m_object), m_it(other.m_it) {}
+
+    /*!
+    @brief converting assignment
+    @param[in,out] other  non-const iterator to copy from
+    @return const/non-const iterator
+    @note It is not checked whether @a other is initialized.
+    */
+    iter_impl& operator=(const iter_impl<typename std::remove_const<BasicJsonType>::type>& other) noexcept
+    {
+        m_object = other.m_object;
+        m_it = other.m_it;
+        return *this;
+    }
+
+  private:
+    /*!
+    @brief set the iterator to the first value
+    @pre The iterator is initialized; i.e. `m_object != nullptr`.
+    */
+    void set_begin() noexcept
+    {
+        assert(m_object != nullptr);
+
+        switch (m_object->m_type)
+        {
+            case value_t::object:
+            {
+                m_it.object_iterator = m_object->m_value.object->begin();
+                break;
+            }
+
+            case value_t::array:
+            {
+                m_it.array_iterator = m_object->m_value.array->begin();
+                break;
+            }
+
+            case value_t::null:
+            {
+                // set to end so begin()==end() is true: null is empty
+                m_it.primitive_iterator.set_end();
+                break;
+            }
+
+            default:
+            {
+                m_it.primitive_iterator.set_begin();
+                break;
+            }
+        }
+    }
+
+    /*!
+    @brief set the iterator past the last value
+    @pre The iterator is initialized; i.e. `m_object != nullptr`.
+    */
+    void set_end() noexcept
+    {
+        assert(m_object != nullptr);
+
+        switch (m_object->m_type)
+        {
+            case value_t::object:
+            {
+                m_it.object_iterator = m_object->m_value.object->end();
+                break;
+            }
+
+            case value_t::array:
+            {
+                m_it.array_iterator = m_object->m_value.array->end();
+                break;
+            }
+
+            default:
+            {
+                m_it.primitive_iterator.set_end();
+                break;
+            }
+        }
+    }
+
+  public:
+    /*!
+    @brief return a reference to the value pointed to by the iterator
+    @pre The iterator is initialized; i.e. `m_object != nullptr`.
+    */
+    reference operator*() const
+    {
+        assert(m_object != nullptr);
+
+        switch (m_object->m_type)
+        {
+            case value_t::object:
+            {
+                assert(m_it.object_iterator != m_object->m_value.object->end());
+                return m_it.object_iterator->second;
+            }
+
+            case value_t::array:
+            {
+                assert(m_it.array_iterator != m_object->m_value.array->end());
+                return *m_it.array_iterator;
+            }
+
+            case value_t::null:
+                JSON_THROW(invalid_iterator::create(214, "cannot get value"));
+
+            default:
+            {
+                if (JSON_LIKELY(m_it.primitive_iterator.is_begin()))
+                {
+                    return *m_object;
+                }
+
+                JSON_THROW(invalid_iterator::create(214, "cannot get value"));
+            }
+        }
+    }
+
+    /*!
+    @brief dereference the iterator
+    @pre The iterator is initialized; i.e. `m_object != nullptr`.
+    */
+    pointer operator->() const
+    {
+        assert(m_object != nullptr);
+
+        switch (m_object->m_type)
+        {
+            case value_t::object:
+            {
+                assert(m_it.object_iterator != m_object->m_value.object->end());
+                return &(m_it.object_iterator->second);
+            }
+
+            case value_t::array:
+            {
+                assert(m_it.array_iterator != m_object->m_value.array->end());
+                return &*m_it.array_iterator;
+            }
+
+            default:
+            {
+                if (JSON_LIKELY(m_it.primitive_iterator.is_begin()))
+                {
+                    return m_object;
+                }
+
+                JSON_THROW(invalid_iterator::create(214, "cannot get value"));
+            }
+        }
+    }
+
+    /*!
+    @brief post-increment (it++)
+    @pre The iterator is initialized; i.e. `m_object != nullptr`.
+    */
+    iter_impl const operator++(int)
+    {
+        auto result = *this;
+        ++(*this);
+        return result;
+    }
+
+    /*!
+    @brief pre-increment (++it)
+    @pre The iterator is initialized; i.e. `m_object != nullptr`.
+    */
+    iter_impl& operator++()
+    {
+        assert(m_object != nullptr);
+
+        switch (m_object->m_type)
+        {
+            case value_t::object:
+            {
+                std::advance(m_it.object_iterator, 1);
+                break;
+            }
+
+            case value_t::array:
+            {
+                std::advance(m_it.array_iterator, 1);
+                break;
+            }
+
+            default:
+            {
+                ++m_it.primitive_iterator;
+                break;
+            }
+        }
+
+        return *this;
+    }
+
+    /*!
+    @brief post-decrement (it--)
+    @pre The iterator is initialized; i.e. `m_object != nullptr`.
+    */
+    iter_impl const operator--(int)
+    {
+        auto result = *this;
+        --(*this);
+        return result;
+    }
+
+    /*!
+    @brief pre-decrement (--it)
+    @pre The iterator is initialized; i.e. `m_object != nullptr`.
+    */
+    iter_impl& operator--()
+    {
+        assert(m_object != nullptr);
+
+        switch (m_object->m_type)
+        {
+            case value_t::object:
+            {
+                std::advance(m_it.object_iterator, -1);
+                break;
+            }
+
+            case value_t::array:
+            {
+                std::advance(m_it.array_iterator, -1);
+                break;
+            }
+
+            default:
+            {
+                --m_it.primitive_iterator;
+                break;
+            }
+        }
+
+        return *this;
+    }
+
+    /*!
+    @brief  comparison: equal
+    @pre The iterator is initialized; i.e. `m_object != nullptr`.
+    */
+    bool operator==(const iter_impl& other) const
+    {
+        // if objects are not the same, the comparison is undefined
+        if (JSON_UNLIKELY(m_object != other.m_object))
+        {
+            JSON_THROW(invalid_iterator::create(212, "cannot compare iterators of different containers"));
+        }
+
+        assert(m_object != nullptr);
+
+        switch (m_object->m_type)
+        {
+            case value_t::object:
+                return (m_it.object_iterator == other.m_it.object_iterator);
+
+            case value_t::array:
+                return (m_it.array_iterator == other.m_it.array_iterator);
+
+            default:
+                return (m_it.primitive_iterator == other.m_it.primitive_iterator);
+        }
+    }
+
+    /*!
+    @brief  comparison: not equal
+    @pre The iterator is initialized; i.e. `m_object != nullptr`.
+    */
+    bool operator!=(const iter_impl& other) const
+    {
+        return not operator==(other);
+    }
+
+    /*!
+    @brief  comparison: smaller
+    @pre The iterator is initialized; i.e. `m_object != nullptr`.
+    */
+    bool operator<(const iter_impl& other) const
+    {
+        // if objects are not the same, the comparison is undefined
+        if (JSON_UNLIKELY(m_object != other.m_object))
+        {
+            JSON_THROW(invalid_iterator::create(212, "cannot compare iterators of different containers"));
+        }
+
+        assert(m_object != nullptr);
+
+        switch (m_object->m_type)
+        {
+            case value_t::object:
+                JSON_THROW(invalid_iterator::create(213, "cannot compare order of object iterators"));
+
+            case value_t::array:
+                return (m_it.array_iterator < other.m_it.array_iterator);
+
+            default:
+                return (m_it.primitive_iterator < other.m_it.primitive_iterator);
+        }
+    }
+
+    /*!
+    @brief  comparison: less than or equal
+    @pre The iterator is initialized; i.e. `m_object != nullptr`.
+    */
+    bool operator<=(const iter_impl& other) const
+    {
+        return not other.operator < (*this);
+    }
+
+    /*!
+    @brief  comparison: greater than
+    @pre The iterator is initialized; i.e. `m_object != nullptr`.
+    */
+    bool operator>(const iter_impl& other) const
+    {
+        return not operator<=(other);
+    }
+
+    /*!
+    @brief  comparison: greater than or equal
+    @pre The iterator is initialized; i.e. `m_object != nullptr`.
+    */
+    bool operator>=(const iter_impl& other) const
+    {
+        return not operator<(other);
+    }
+
+    /*!
+    @brief  add to iterator
+    @pre The iterator is initialized; i.e. `m_object != nullptr`.
+    */
+    iter_impl& operator+=(difference_type i)
+    {
+        assert(m_object != nullptr);
+
+        switch (m_object->m_type)
+        {
+            case value_t::object:
+                JSON_THROW(invalid_iterator::create(209, "cannot use offsets with object iterators"));
+
+            case value_t::array:
+            {
+                std::advance(m_it.array_iterator, i);
+                break;
+            }
+
+            default:
+            {
+                m_it.primitive_iterator += i;
+                break;
+            }
+        }
+
+        return *this;
+    }
+
+    /*!
+    @brief  subtract from iterator
+    @pre The iterator is initialized; i.e. `m_object != nullptr`.
+    */
+    iter_impl& operator-=(difference_type i)
+    {
+        return operator+=(-i);
+    }
+
+    /*!
+    @brief  add to iterator
+    @pre The iterator is initialized; i.e. `m_object != nullptr`.
+    */
+    iter_impl operator+(difference_type i) const
+    {
+        auto result = *this;
+        result += i;
+        return result;
+    }
+
+    /*!
+    @brief  addition of distance and iterator
+    @pre The iterator is initialized; i.e. `m_object != nullptr`.
+    */
+    friend iter_impl operator+(difference_type i, const iter_impl& it)
+    {
+        auto result = it;
+        result += i;
+        return result;
+    }
+
+    /*!
+    @brief  subtract from iterator
+    @pre The iterator is initialized; i.e. `m_object != nullptr`.
+    */
+    iter_impl operator-(difference_type i) const
+    {
+        auto result = *this;
+        result -= i;
+        return result;
+    }
+
+    /*!
+    @brief  return difference
+    @pre The iterator is initialized; i.e. `m_object != nullptr`.
+    */
+    difference_type operator-(const iter_impl& other) const
+    {
+        assert(m_object != nullptr);
+
+        switch (m_object->m_type)
+        {
+            case value_t::object:
+                JSON_THROW(invalid_iterator::create(209, "cannot use offsets with object iterators"));
+
+            case value_t::array:
+                return m_it.array_iterator - other.m_it.array_iterator;
+
+            default:
+                return m_it.primitive_iterator - other.m_it.primitive_iterator;
+        }
+    }
+
+    /*!
+    @brief  access to successor
+    @pre The iterator is initialized; i.e. `m_object != nullptr`.
+    */
+    reference operator[](difference_type n) const
+    {
+        assert(m_object != nullptr);
+
+        switch (m_object->m_type)
+        {
+            case value_t::object:
+                JSON_THROW(invalid_iterator::create(208, "cannot use operator[] for object iterators"));
+
+            case value_t::array:
+                return *std::next(m_it.array_iterator, n);
+
+            case value_t::null:
+                JSON_THROW(invalid_iterator::create(214, "cannot get value"));
+
+            default:
+            {
+                if (JSON_LIKELY(m_it.primitive_iterator.get_value() == -n))
+                {
+                    return *m_object;
+                }
+
+                JSON_THROW(invalid_iterator::create(214, "cannot get value"));
+            }
+        }
+    }
+
+    /*!
+    @brief  return the key of an object iterator
+    @pre The iterator is initialized; i.e. `m_object != nullptr`.
+    */
+    const typename object_t::key_type& key() const
+    {
+        assert(m_object != nullptr);
+
+        if (JSON_LIKELY(m_object->is_object()))
+        {
+            return m_it.object_iterator->first;
+        }
+
+        JSON_THROW(invalid_iterator::create(207, "cannot use key() for non-object iterators"));
+    }
+
+    /*!
+    @brief  return the value of an iterator
+    @pre The iterator is initialized; i.e. `m_object != nullptr`.
+    */
+    reference value() const
+    {
+        return operator*();
+    }
+
+  private:
+    /// associated JSON instance
+    pointer m_object = nullptr;
+    /// the actual iterator of the associated instance
+    internal_iterator<typename std::remove_const<BasicJsonType>::type> m_it {};
+};
+}  // namespace detail
+} // namespace nlohmann
+
+// #include <nlohmann/detail/iterators/iteration_proxy.hpp>
+
+// #include <nlohmann/detail/iterators/json_reverse_iterator.hpp>
+
+
+#include <cstddef> // ptrdiff_t
+#include <iterator> // reverse_iterator
+#include <utility> // declval
+
+namespace nlohmann
+{
+namespace detail
+{
+//////////////////////
+// reverse_iterator //
+//////////////////////
+
+/*!
+@brief a template for a reverse iterator class
+
+@tparam Base the base iterator type to reverse. Valid types are @ref
+iterator (to create @ref reverse_iterator) and @ref const_iterator (to
+create @ref const_reverse_iterator).
+
+@requirement The class satisfies the following concept requirements:
+-
+[BidirectionalIterator](https://en.cppreference.com/w/cpp/named_req/BidirectionalIterator):
+  The iterator that can be moved can be moved in both directions (i.e.
+  incremented and decremented).
+- [OutputIterator](https://en.cppreference.com/w/cpp/named_req/OutputIterator):
+  It is possible to write to the pointed-to element (only if @a Base is
+  @ref iterator).
+
+@since version 1.0.0
+*/
+template<typename Base>
+class json_reverse_iterator : public std::reverse_iterator<Base>
+{
+  public:
+    using difference_type = std::ptrdiff_t;
+    /// shortcut to the reverse iterator adapter
+    using base_iterator = std::reverse_iterator<Base>;
+    /// the reference type for the pointed-to element
+    using reference = typename Base::reference;
+
+    /// create reverse iterator from iterator
+    explicit json_reverse_iterator(const typename base_iterator::iterator_type& it) noexcept
+        : base_iterator(it) {}
+
+    /// create reverse iterator from base class
+    explicit json_reverse_iterator(const base_iterator& it) noexcept : base_iterator(it) {}
+
+    /// post-increment (it++)
+    json_reverse_iterator const operator++(int)
+    {
+        return static_cast<json_reverse_iterator>(base_iterator::operator++(1));
+    }
+
+    /// pre-increment (++it)
+    json_reverse_iterator& operator++()
+    {
+        return static_cast<json_reverse_iterator&>(base_iterator::operator++());
+    }
+
+    /// post-decrement (it--)
+    json_reverse_iterator const operator--(int)
+    {
+        return static_cast<json_reverse_iterator>(base_iterator::operator--(1));
+    }
+
+    /// pre-decrement (--it)
+    json_reverse_iterator& operator--()
+    {
+        return static_cast<json_reverse_iterator&>(base_iterator::operator--());
+    }
+
+    /// add to iterator
+    json_reverse_iterator& operator+=(difference_type i)
+    {
+        return static_cast<json_reverse_iterator&>(base_iterator::operator+=(i));
+    }
+
+    /// add to iterator
+    json_reverse_iterator operator+(difference_type i) const
+    {
+        return static_cast<json_reverse_iterator>(base_iterator::operator+(i));
+    }
+
+    /// subtract from iterator
+    json_reverse_iterator operator-(difference_type i) const
+    {
+        return static_cast<json_reverse_iterator>(base_iterator::operator-(i));
+    }
+
+    /// return difference
+    difference_type operator-(const json_reverse_iterator& other) const
+    {
+        return base_iterator(*this) - base_iterator(other);
+    }
+
+    /// access to successor
+    reference operator[](difference_type n) const
+    {
+        return *(this->operator+(n));
+    }
+
+    /// return the key of an object iterator
+    auto key() const -> decltype(std::declval<Base>().key())
+    {
+        auto it = --this->base();
+        return it.key();
+    }
+
+    /// return the value of an iterator
+    reference value() const
+    {
+        auto it = --this->base();
+        return it.operator * ();
+    }
+};
+}  // namespace detail
+}  // namespace nlohmann
+
+// #include <nlohmann/detail/iterators/primitive_iterator.hpp>
+
+// #include <nlohmann/detail/json_pointer.hpp>
+
+
+#include <algorithm> // all_of
+#include <cassert> // assert
+#include <numeric> // accumulate
+#include <string> // string
+#include <utility> // move
+#include <vector> // vector
+
+// #include <nlohmann/detail/exceptions.hpp>
+
+// #include <nlohmann/detail/macro_scope.hpp>
+
+// #include <nlohmann/detail/value_t.hpp>
+
+
+namespace nlohmann
+{
+template<typename BasicJsonType>
+class json_pointer
+{
+    // allow basic_json to access private members
+    NLOHMANN_BASIC_JSON_TPL_DECLARATION
+    friend class basic_json;
+
+  public:
+    /*!
+    @brief create JSON pointer
+
+    Create a JSON pointer according to the syntax described in
+    [Section 3 of RFC6901](https://tools.ietf.org/html/rfc6901#section-3).
+
+    @param[in] s  string representing the JSON pointer; if omitted, the empty
+                  string is assumed which references the whole JSON value
+
+    @throw parse_error.107 if the given JSON pointer @a s is nonempty and does
+                           not begin with a slash (`/`); see example below
+
+    @throw parse_error.108 if a tilde (`~`) in the given JSON pointer @a s is
+    not followed by `0` (representing `~`) or `1` (representing `/`); see
+    example below
+
+    @liveexample{The example shows the construction several valid JSON pointers
+    as well as the exceptional behavior.,json_pointer}
+
+    @since version 2.0.0
+    */
+    explicit json_pointer(const std::string& s = "")
+        : reference_tokens(split(s))
+    {}
+
+    /*!
+    @brief return a string representation of the JSON pointer
+
+    @invariant For each JSON pointer `ptr`, it holds:
+    @code {.cpp}
+    ptr == json_pointer(ptr.to_string());
+    @endcode
+
+    @return a string representation of the JSON pointer
+
+    @liveexample{The example shows the result of `to_string`.,
+    json_pointer__to_string}
+
+    @since version 2.0.0
+    */
+    std::string to_string() const
+    {
+        return std::accumulate(reference_tokens.begin(), reference_tokens.end(),
+                               std::string{},
+                               [](const std::string & a, const std::string & b)
+        {
+            return a + "/" + escape(b);
+        });
+    }
+
+    /// @copydoc to_string()
+    operator std::string() const
+    {
+        return to_string();
+    }
+
+    /*!
+    @brief append another JSON pointer at the end of this JSON pointer
+    */
+    json_pointer& operator/=(const json_pointer& ptr)
+    {
+        reference_tokens.insert(reference_tokens.end(), ptr.reference_tokens.begin(), ptr.reference_tokens.end());
+        return *this;
+    }
+
+    /// @copydoc push_back(std::string&&)
+    json_pointer& operator/=(std::string token)
+    {
+        push_back(std::move(token));
+        return *this;
+    }
+
+    /// @copydoc operator/=(std::string)
+    json_pointer& operator/=(std::size_t array_index)
+    {
+        return *this /= std::to_string(array_index);
+    }
+
+    /*!
+    @brief create a new JSON pointer by appending the right JSON pointer at the end of the left JSON pointer
+    */
+    friend json_pointer operator/(const json_pointer& left_ptr, const json_pointer& right_ptr)
+    {
+        return json_pointer(left_ptr) /= right_ptr;
+    }
+
+    /*!
+    @brief create a new JSON pointer by appending the unescaped token at the end of the JSON pointer
+    */
+    friend json_pointer operator/(const json_pointer& ptr, std::string token)
+    {
+        return json_pointer(ptr) /= std::move(token);
+    }
+
+    /*!
+    @brief create a new JSON pointer by appending the array-index-token at the end of the JSON pointer
+    */
+    friend json_pointer operator/(const json_pointer& lhs, std::size_t array_index)
+    {
+        return json_pointer(lhs) /= array_index;
+    }
+
+    /*!
+    @brief create a new JSON pointer that is the parent of this JSON pointer
+    */
+    json_pointer parent_pointer() const
+    {
+        if (empty())
+        {
+            return *this;
+        }
+
+        json_pointer res = *this;
+        res.pop_back();
+        return res;
+    }
+
+    /*!
+    @param[in] s  reference token to be converted into an array index
+
+    @return integer representation of @a s
+
+    @throw out_of_range.404 if string @a s could not be converted to an integer
+    */
+    static int array_index(const std::string& s)
+    {
+        std::size_t processed_chars = 0;
+        const int res = std::stoi(s, &processed_chars);
+
+        // check if the string was completely read
+        if (JSON_UNLIKELY(processed_chars != s.size()))
+        {
+            JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + s + "'"));
+        }
+
+        return res;
+    }
+
+    /*!
+    @brief remove and return last reference token
+    @throw out_of_range.405 if JSON pointer has no parent
+    */
+    std::string pop_back()
+    {
+        if (JSON_UNLIKELY(empty()))
+        {
+            JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent"));
+        }
+
+        auto last = reference_tokens.back();
+        reference_tokens.pop_back();
+        return last;
+    }
+
+    /*!
+    @brief append an unescaped token at the end of the reference pointer
+    */
+    void push_back(const std::string& token)
+    {
+        reference_tokens.push_back(token);
+    }
+
+    /// @copydoc push_back(const std::string&)
+    void push_back(std::string&& token)
+    {
+        reference_tokens.push_back(std::move(token));
+    }
+
+    /// return whether pointer points to the root document
+    bool empty() const noexcept
+    {
+        return reference_tokens.empty();
+    }
+
+  private:
+    json_pointer top() const
+    {
+        if (JSON_UNLIKELY(empty()))
+        {
+            JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent"));
+        }
+
+        json_pointer result = *this;
+        result.reference_tokens = {reference_tokens[0]};
+        return result;
+    }
+
+    /*!
+    @brief create and return a reference to the pointed to value
+
+    @complexity Linear in the number of reference tokens.
+
+    @throw parse_error.109 if array index is not a number
+    @throw type_error.313 if value cannot be unflattened
+    */
+    BasicJsonType& get_and_create(BasicJsonType& j) const
+    {
+        using size_type = typename BasicJsonType::size_type;
+        auto result = &j;
+
+        // in case no reference tokens exist, return a reference to the JSON value
+        // j which will be overwritten by a primitive value
+        for (const auto& reference_token : reference_tokens)
+        {
+            switch (result->m_type)
+            {
+                case detail::value_t::null:
+                {
+                    if (reference_token == "0")
+                    {
+                        // start a new array if reference token is 0
+                        result = &result->operator[](0);
+                    }
+                    else
+                    {
+                        // start a new object otherwise
+                        result = &result->operator[](reference_token);
+                    }
+                    break;
+                }
+
+                case detail::value_t::object:
+                {
+                    // create an entry in the object
+                    result = &result->operator[](reference_token);
+                    break;
+                }
+
+                case detail::value_t::array:
+                {
+                    // create an entry in the array
+                    JSON_TRY
+                    {
+                        result = &result->operator[](static_cast<size_type>(array_index(reference_token)));
+                    }
+                    JSON_CATCH(std::invalid_argument&)
+                    {
+                        JSON_THROW(detail::parse_error::create(109, 0, "array index '" + reference_token + "' is not a number"));
+                    }
+                    break;
+                }
+
+                /*
+                The following code is only reached if there exists a reference
+                token _and_ the current value is primitive. In this case, we have
+                an error situation, because primitive values may only occur as
+                single value; that is, with an empty list of reference tokens.
+                */
+                default:
+                    JSON_THROW(detail::type_error::create(313, "invalid value to unflatten"));
+            }
+        }
+
+        return *result;
+    }
+
+    /*!
+    @brief return a reference to the pointed to value
+
+    @note This version does not throw if a value is not present, but tries to
+          create nested values instead. For instance, calling this function
+          with pointer `"/this/that"` on a null value is equivalent to calling
+          `operator[]("this").operator[]("that")` on that value, effectively
+          changing the null value to an object.
+
+    @param[in] ptr  a JSON value
+
+    @return reference to the JSON value pointed to by the JSON pointer
+
+    @complexity Linear in the length of the JSON pointer.
+
+    @throw parse_error.106   if an array index begins with '0'
+    @throw parse_error.109   if an array index was not a number
+    @throw out_of_range.404  if the JSON pointer can not be resolved
+    */
+    BasicJsonType& get_unchecked(BasicJsonType* ptr) const
+    {
+        using size_type = typename BasicJsonType::size_type;
+        for (const auto& reference_token : reference_tokens)
+        {
+            // convert null values to arrays or objects before continuing
+            if (ptr->m_type == detail::value_t::null)
+            {
+                // check if reference token is a number
+                const bool nums =
+                    std::all_of(reference_token.begin(), reference_token.end(),
+                                [](const char x)
+                {
+                    return (x >= '0' and x <= '9');
+                });
+
+                // change value to array for numbers or "-" or to object otherwise
+                *ptr = (nums or reference_token == "-")
+                       ? detail::value_t::array
+                       : detail::value_t::object;
+            }
+
+            switch (ptr->m_type)
+            {
+                case detail::value_t::object:
+                {
+                    // use unchecked object access
+                    ptr = &ptr->operator[](reference_token);
+                    break;
+                }
+
+                case detail::value_t::array:
+                {
+                    // error condition (cf. RFC 6901, Sect. 4)
+                    if (JSON_UNLIKELY(reference_token.size() > 1 and reference_token[0] == '0'))
+                    {
+                        JSON_THROW(detail::parse_error::create(106, 0,
+                                                               "array index '" + reference_token +
+                                                               "' must not begin with '0'"));
+                    }
+
+                    if (reference_token == "-")
+                    {
+                        // explicitly treat "-" as index beyond the end
+                        ptr = &ptr->operator[](ptr->m_value.array->size());
+                    }
+                    else
+                    {
+                        // convert array index to number; unchecked access
+                        JSON_TRY
+                        {
+                            ptr = &ptr->operator[](
+                                static_cast<size_type>(array_index(reference_token)));
+                        }
+                        JSON_CATCH(std::invalid_argument&)
+                        {
+                            JSON_THROW(detail::parse_error::create(109, 0, "array index '" + reference_token + "' is not a number"));
+                        }
+                    }
+                    break;
+                }
+
+                default:
+                    JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + reference_token + "'"));
+            }
+        }
+
+        return *ptr;
+    }
+
+    /*!
+    @throw parse_error.106   if an array index begins with '0'
+    @throw parse_error.109   if an array index was not a number
+    @throw out_of_range.402  if the array index '-' is used
+    @throw out_of_range.404  if the JSON pointer can not be resolved
+    */
+    BasicJsonType& get_checked(BasicJsonType* ptr) const
+    {
+        using size_type = typename BasicJsonType::size_type;
+        for (const auto& reference_token : reference_tokens)
+        {
+            switch (ptr->m_type)
+            {
+                case detail::value_t::object:
+                {
+                    // note: at performs range check
+                    ptr = &ptr->at(reference_token);
+                    break;
+                }
+
+                case detail::value_t::array:
+                {
+                    if (JSON_UNLIKELY(reference_token == "-"))
+                    {
+                        // "-" always fails the range check
+                        JSON_THROW(detail::out_of_range::create(402,
+                                                                "array index '-' (" + std::to_string(ptr->m_value.array->size()) +
+                                                                ") is out of range"));
+                    }
+
+                    // error condition (cf. RFC 6901, Sect. 4)
+                    if (JSON_UNLIKELY(reference_token.size() > 1 and reference_token[0] == '0'))
+                    {
+                        JSON_THROW(detail::parse_error::create(106, 0,
+                                                               "array index '" + reference_token +
+                                                               "' must not begin with '0'"));
+                    }
+
+                    // note: at performs range check
+                    JSON_TRY
+                    {
+                        ptr = &ptr->at(static_cast<size_type>(array_index(reference_token)));
+                    }
+                    JSON_CATCH(std::invalid_argument&)
+                    {
+                        JSON_THROW(detail::parse_error::create(109, 0, "array index '" + reference_token + "' is not a number"));
+                    }
+                    break;
+                }
+
+                default:
+                    JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + reference_token + "'"));
+            }
+        }
+
+        return *ptr;
+    }
+
+    /*!
+    @brief return a const reference to the pointed to value
+
+    @param[in] ptr  a JSON value
+
+    @return const reference to the JSON value pointed to by the JSON
+    pointer
+
+    @throw parse_error.106   if an array index begins with '0'
+    @throw parse_error.109   if an array index was not a number
+    @throw out_of_range.402  if the array index '-' is used
+    @throw out_of_range.404  if the JSON pointer can not be resolved
+    */
+    const BasicJsonType& get_unchecked(const BasicJsonType* ptr) const
+    {
+        using size_type = typename BasicJsonType::size_type;
+        for (const auto& reference_token : reference_tokens)
+        {
+            switch (ptr->m_type)
+            {
+                case detail::value_t::object:
+                {
+                    // use unchecked object access
+                    ptr = &ptr->operator[](reference_token);
+                    break;
+                }
+
+                case detail::value_t::array:
+                {
+                    if (JSON_UNLIKELY(reference_token == "-"))
+                    {
+                        // "-" cannot be used for const access
+                        JSON_THROW(detail::out_of_range::create(402,
+                                                                "array index '-' (" + std::to_string(ptr->m_value.array->size()) +
+                                                                ") is out of range"));
+                    }
+
+                    // error condition (cf. RFC 6901, Sect. 4)
+                    if (JSON_UNLIKELY(reference_token.size() > 1 and reference_token[0] == '0'))
+                    {
+                        JSON_THROW(detail::parse_error::create(106, 0,
+                                                               "array index '" + reference_token +
+                                                               "' must not begin with '0'"));
+                    }
+
+                    // use unchecked array access
+                    JSON_TRY
+                    {
+                        ptr = &ptr->operator[](
+                            static_cast<size_type>(array_index(reference_token)));
+                    }
+                    JSON_CATCH(std::invalid_argument&)
+                    {
+                        JSON_THROW(detail::parse_error::create(109, 0, "array index '" + reference_token + "' is not a number"));
+                    }
+                    break;
+                }
+
+                default:
+                    JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + reference_token + "'"));
+            }
+        }
+
+        return *ptr;
+    }
+
+    /*!
+    @throw parse_error.106   if an array index begins with '0'
+    @throw parse_error.109   if an array index was not a number
+    @throw out_of_range.402  if the array index '-' is used
+    @throw out_of_range.404  if the JSON pointer can not be resolved
+    */
+    const BasicJsonType& get_checked(const BasicJsonType* ptr) const
+    {
+        using size_type = typename BasicJsonType::size_type;
+        for (const auto& reference_token : reference_tokens)
+        {
+            switch (ptr->m_type)
+            {
+                case detail::value_t::object:
+                {
+                    // note: at performs range check
+                    ptr = &ptr->at(reference_token);
+                    break;
+                }
+
+                case detail::value_t::array:
+                {
+                    if (JSON_UNLIKELY(reference_token == "-"))
+                    {
+                        // "-" always fails the range check
+                        JSON_THROW(detail::out_of_range::create(402,
+                                                                "array index '-' (" + std::to_string(ptr->m_value.array->size()) +
+                                                                ") is out of range"));
+                    }
+
+                    // error condition (cf. RFC 6901, Sect. 4)
+                    if (JSON_UNLIKELY(reference_token.size() > 1 and reference_token[0] == '0'))
+                    {
+                        JSON_THROW(detail::parse_error::create(106, 0,
+                                                               "array index '" + reference_token +
+                                                               "' must not begin with '0'"));
+                    }
+
+                    // note: at performs range check
+                    JSON_TRY
+                    {
+                        ptr = &ptr->at(static_cast<size_type>(array_index(reference_token)));
+                    }
+                    JSON_CATCH(std::invalid_argument&)
+                    {
+                        JSON_THROW(detail::parse_error::create(109, 0, "array index '" + reference_token + "' is not a number"));
+                    }
+                    break;
+                }
+
+                default:
+                    JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + reference_token + "'"));
+            }
+        }
+
+        return *ptr;
+    }
+
+    /*!
+    @brief split the string input to reference tokens
+
+    @note This function is only called by the json_pointer constructor.
+          All exceptions below are documented there.
+
+    @throw parse_error.107  if the pointer is not empty or begins with '/'
+    @throw parse_error.108  if character '~' is not followed by '0' or '1'
+    */
+    static std::vector<std::string> split(const std::string& reference_string)
+    {
+        std::vector<std::string> result;
+
+        // special case: empty reference string -> no reference tokens
+        if (reference_string.empty())
+        {
+            return result;
+        }
+
+        // check if nonempty reference string begins with slash
+        if (JSON_UNLIKELY(reference_string[0] != '/'))
+        {
+            JSON_THROW(detail::parse_error::create(107, 1,
+                                                   "JSON pointer must be empty or begin with '/' - was: '" +
+                                                   reference_string + "'"));
+        }
+
+        // extract the reference tokens:
+        // - slash: position of the last read slash (or end of string)
+        // - start: position after the previous slash
+        for (
+            // search for the first slash after the first character
+            std::size_t slash = reference_string.find_first_of('/', 1),
+            // set the beginning of the first reference token
+            start = 1;
+            // we can stop if start == 0 (if slash == std::string::npos)
+            start != 0;
+            // set the beginning of the next reference token
+            // (will eventually be 0 if slash == std::string::npos)
+            start = (slash == std::string::npos) ? 0 : slash + 1,
+            // find next slash
+            slash = reference_string.find_first_of('/', start))
+        {
+            // use the text between the beginning of the reference token
+            // (start) and the last slash (slash).
+            auto reference_token = reference_string.substr(start, slash - start);
+
+            // check reference tokens are properly escaped
+            for (std::size_t pos = reference_token.find_first_of('~');
+                    pos != std::string::npos;
+                    pos = reference_token.find_first_of('~', pos + 1))
+            {
+                assert(reference_token[pos] == '~');
+
+                // ~ must be followed by 0 or 1
+                if (JSON_UNLIKELY(pos == reference_token.size() - 1 or
+                                  (reference_token[pos + 1] != '0' and
+                                   reference_token[pos + 1] != '1')))
+                {
+                    JSON_THROW(detail::parse_error::create(108, 0, "escape character '~' must be followed with '0' or '1'"));
+                }
+            }
+
+            // finally, store the reference token
+            unescape(reference_token);
+            result.push_back(reference_token);
+        }
+
+        return result;
+    }
+
+    /*!
+    @brief replace all occurrences of a substring by another string
+
+    @param[in,out] s  the string to manipulate; changed so that all
+                   occurrences of @a f are replaced with @a t
+    @param[in]     f  the substring to replace with @a t
+    @param[in]     t  the string to replace @a f
+
+    @pre The search string @a f must not be empty. **This precondition is
+    enforced with an assertion.**
+
+    @since version 2.0.0
+    */
+    static void replace_substring(std::string& s, const std::string& f,
+                                  const std::string& t)
+    {
+        assert(not f.empty());
+        for (auto pos = s.find(f);                // find first occurrence of f
+                pos != std::string::npos;         // make sure f was found
+                s.replace(pos, f.size(), t),      // replace with t, and
+                pos = s.find(f, pos + t.size()))  // find next occurrence of f
+        {}
+    }
+
+    /// escape "~" to "~0" and "/" to "~1"
+    static std::string escape(std::string s)
+    {
+        replace_substring(s, "~", "~0");
+        replace_substring(s, "/", "~1");
+        return s;
+    }
+
+    /// unescape "~1" to tilde and "~0" to slash (order is important!)
+    static void unescape(std::string& s)
+    {
+        replace_substring(s, "~1", "/");
+        replace_substring(s, "~0", "~");
+    }
+
+    /*!
+    @param[in] reference_string  the reference string to the current value
+    @param[in] value             the value to consider
+    @param[in,out] result        the result object to insert values to
+
+    @note Empty objects or arrays are flattened to `null`.
+    */
+    static void flatten(const std::string& reference_string,
+                        const BasicJsonType& value,
+                        BasicJsonType& result)
+    {
+        switch (value.m_type)
+        {
+            case detail::value_t::array:
+            {
+                if (value.m_value.array->empty())
+                {
+                    // flatten empty array as null
+                    result[reference_string] = nullptr;
+                }
+                else
+                {
+                    // iterate array and use index as reference string
+                    for (std::size_t i = 0; i < value.m_value.array->size(); ++i)
+                    {
+                        flatten(reference_string + "/" + std::to_string(i),
+                                value.m_value.array->operator[](i), result);
+                    }
+                }
+                break;
+            }
+
+            case detail::value_t::object:
+            {
+                if (value.m_value.object->empty())
+                {
+                    // flatten empty object as null
+                    result[reference_string] = nullptr;
+                }
+                else
+                {
+                    // iterate object and use keys as reference string
+                    for (const auto& element : *value.m_value.object)
+                    {
+                        flatten(reference_string + "/" + escape(element.first), element.second, result);
+                    }
+                }
+                break;
+            }
+
+            default:
+            {
+                // add primitive value with its reference string
+                result[reference_string] = value;
+                break;
+            }
+        }
+    }
+
+    /*!
+    @param[in] value  flattened JSON
+
+    @return unflattened JSON
+
+    @throw parse_error.109 if array index is not a number
+    @throw type_error.314  if value is not an object
+    @throw type_error.315  if object values are not primitive
+    @throw type_error.313  if value cannot be unflattened
+    */
+    static BasicJsonType
+    unflatten(const BasicJsonType& value)
+    {
+        if (JSON_UNLIKELY(not value.is_object()))
+        {
+            JSON_THROW(detail::type_error::create(314, "only objects can be unflattened"));
+        }
+
+        BasicJsonType result;
+
+        // iterate the JSON object values
+        for (const auto& element : *value.m_value.object)
+        {
+            if (JSON_UNLIKELY(not element.second.is_primitive()))
+            {
+                JSON_THROW(detail::type_error::create(315, "values in object must be primitive"));
+            }
+
+            // assign value to reference pointed to by JSON pointer; Note that if
+            // the JSON pointer is "" (i.e., points to the whole value), function
+            // get_and_create returns a reference to result itself. An assignment
+            // will then create a primitive value.
+            json_pointer(element.first).get_and_create(result) = element.second;
+        }
+
+        return result;
+    }
+
+    friend bool operator==(json_pointer const& lhs,
+                           json_pointer const& rhs) noexcept
+    {
+        return (lhs.reference_tokens == rhs.reference_tokens);
+    }
+
+    friend bool operator!=(json_pointer const& lhs,
+                           json_pointer const& rhs) noexcept
+    {
+        return not (lhs == rhs);
+    }
+
+    /// the reference tokens
+    std::vector<std::string> reference_tokens;
+};
+}  // namespace nlohmann
+
+// #include <nlohmann/detail/json_ref.hpp>
+
+
+#include <initializer_list>
+#include <utility>
+
+// #include <nlohmann/detail/meta/type_traits.hpp>
+
+
+namespace nlohmann
+{
+namespace detail
+{
+template<typename BasicJsonType>
+class json_ref
+{
+  public:
+    using value_type = BasicJsonType;
+
+    json_ref(value_type&& value)
+        : owned_value(std::move(value)), value_ref(&owned_value), is_rvalue(true)
+    {}
+
+    json_ref(const value_type& value)
+        : value_ref(const_cast<value_type*>(&value)), is_rvalue(false)
+    {}
+
+    json_ref(std::initializer_list<json_ref> init)
+        : owned_value(init), value_ref(&owned_value), is_rvalue(true)
+    {}
+
+    template <
+        class... Args,
+        enable_if_t<std::is_constructible<value_type, Args...>::value, int> = 0 >
+    json_ref(Args && ... args)
+        : owned_value(std::forward<Args>(args)...), value_ref(&owned_value),
+          is_rvalue(true) {}
+
+    // class should be movable only
+    json_ref(json_ref&&) noexcept = default;
+    json_ref(const json_ref&) = delete;
+    json_ref& operator=(const json_ref&) = delete;
+    json_ref& operator=(json_ref&&) = delete;
+    ~json_ref() = default;
+
+    value_type moved_or_copied() const
+    {
+        if (is_rvalue)
+        {
+            return std::move(*value_ref);
+        }
+        return *value_ref;
+    }
+
+    value_type const& operator*() const
+    {
+        return *static_cast<value_type const*>(value_ref);
+    }
+
+    value_type const* operator->() const
+    {
+        return static_cast<value_type const*>(value_ref);
+    }
+
+  private:
+    mutable value_type owned_value = nullptr;
+    value_type* value_ref = nullptr;
+    const bool is_rvalue;
+};
+}  // namespace detail
+}  // namespace nlohmann
+
+// #include <nlohmann/detail/macro_scope.hpp>
+
+// #include <nlohmann/detail/meta/cpp_future.hpp>
+
+// #include <nlohmann/detail/meta/type_traits.hpp>
+
 // #include <nlohmann/detail/output/binary_writer.hpp>
 
 
@@ -8500,6 +9310,125 @@ class binary_reader
 // #include <nlohmann/detail/input/binary_reader.hpp>
 
 // #include <nlohmann/detail/output/output_adapters.hpp>
+
+
+#include <algorithm> // copy
+#include <cstddef> // size_t
+#include <ios> // streamsize
+#include <iterator> // back_inserter
+#include <memory> // shared_ptr, make_shared
+#include <ostream> // basic_ostream
+#include <string> // basic_string
+#include <vector> // vector
+
+namespace nlohmann
+{
+namespace detail
+{
+/// abstract output adapter interface
+template<typename CharType> struct output_adapter_protocol
+{
+    virtual void write_character(CharType c) = 0;
+    virtual void write_characters(const CharType* s, std::size_t length) = 0;
+    virtual ~output_adapter_protocol() = default;
+};
+
+/// a type to simplify interfaces
+template<typename CharType>
+using output_adapter_t = std::shared_ptr<output_adapter_protocol<CharType>>;
+
+/// output adapter for byte vectors
+template<typename CharType>
+class output_vector_adapter : public output_adapter_protocol<CharType>
+{
+  public:
+    explicit output_vector_adapter(std::vector<CharType>& vec) noexcept
+        : v(vec)
+    {}
+
+    void write_character(CharType c) override
+    {
+        v.push_back(c);
+    }
+
+    void write_characters(const CharType* s, std::size_t length) override
+    {
+        std::copy(s, s + length, std::back_inserter(v));
+    }
+
+  private:
+    std::vector<CharType>& v;
+};
+
+/// output adapter for output streams
+template<typename CharType>
+class output_stream_adapter : public output_adapter_protocol<CharType>
+{
+  public:
+    explicit output_stream_adapter(std::basic_ostream<CharType>& s) noexcept
+        : stream(s)
+    {}
+
+    void write_character(CharType c) override
+    {
+        stream.put(c);
+    }
+
+    void write_characters(const CharType* s, std::size_t length) override
+    {
+        stream.write(s, static_cast<std::streamsize>(length));
+    }
+
+  private:
+    std::basic_ostream<CharType>& stream;
+};
+
+/// output adapter for basic_string
+template<typename CharType, typename StringType = std::basic_string<CharType>>
+class output_string_adapter : public output_adapter_protocol<CharType>
+{
+  public:
+    explicit output_string_adapter(StringType& s) noexcept
+        : str(s)
+    {}
+
+    void write_character(CharType c) override
+    {
+        str.push_back(c);
+    }
+
+    void write_characters(const CharType* s, std::size_t length) override
+    {
+        str.append(s, length);
+    }
+
+  private:
+    StringType& str;
+};
+
+template<typename CharType, typename StringType = std::basic_string<CharType>>
+class output_adapter
+{
+  public:
+    output_adapter(std::vector<CharType>& vec)
+        : oa(std::make_shared<output_vector_adapter<CharType>>(vec)) {}
+
+    output_adapter(std::basic_ostream<CharType>& s)
+        : oa(std::make_shared<output_stream_adapter<CharType>>(s)) {}
+
+    output_adapter(StringType& s)
+        : oa(std::make_shared<output_string_adapter<CharType, StringType>>(s)) {}
+
+    operator output_adapter_t<CharType>()
+    {
+        return oa;
+    }
+
+  private:
+    output_adapter_t<CharType> oa = nullptr;
+};
+}  // namespace detail
+}  // namespace nlohmann
 
 
 namespace nlohmann
@@ -9826,6 +10755,8 @@ class binary_writer
 }  // namespace detail
 }  // namespace nlohmann
 
+// #include <nlohmann/detail/output/output_adapters.hpp>
+
 // #include <nlohmann/detail/output/serializer.hpp>
 
 
@@ -9842,8 +10773,6 @@ class binary_writer
 #include <string> // string
 #include <type_traits> // is_same
 #include <utility> // move
-
-// #include <nlohmann/detail/exceptions.hpp>
 
 // #include <nlohmann/detail/conversions/to_chars.hpp>
 
@@ -10944,6 +11873,8 @@ char* to_chars(char* first, const char* last, FloatType value)
 } // namespace detail
 } // namespace nlohmann
 
+// #include <nlohmann/detail/exceptions.hpp>
+
 // #include <nlohmann/detail/macro_scope.hpp>
 
 // #include <nlohmann/detail/meta/cpp_future.hpp>
@@ -11211,6 +12142,11 @@ class serializer
                 o->write_characters("null", 4);
                 return;
             }
+
+            default:
+            {
+                assert(false);  // LCOV_EXCL_LINE
+            }
         }
     }
 
@@ -11407,6 +12343,11 @@ class serializer
                             state = UTF8_ACCEPT;
                             break;
                         }
+
+                        default:
+                        {
+                            assert(false);  // LCOV_EXCL_LINE
+                        }
                     }
                     break;
                 }
@@ -11466,6 +12407,11 @@ class serializer
                         o->write_characters("\xEF\xBF\xBD", 3);
                     }
                     break;
+                }
+
+                default:
+                {
+                    assert(false);  // LCOV_EXCL_LINE
                 }
             }
         }
@@ -11763,908 +12709,9 @@ class serializer
 }  // namespace detail
 }  // namespace nlohmann
 
-// #include <nlohmann/detail/json_ref.hpp>
-
-
-#include <initializer_list>
-#include <utility>
-
-// #include <nlohmann/detail/meta/type_traits.hpp>
-
-
-namespace nlohmann
-{
-namespace detail
-{
-template<typename BasicJsonType>
-class json_ref
-{
-  public:
-    using value_type = BasicJsonType;
-
-    json_ref(value_type&& value)
-        : owned_value(std::move(value)), value_ref(&owned_value), is_rvalue(true)
-    {}
-
-    json_ref(const value_type& value)
-        : value_ref(const_cast<value_type*>(&value)), is_rvalue(false)
-    {}
-
-    json_ref(std::initializer_list<json_ref> init)
-        : owned_value(init), value_ref(&owned_value), is_rvalue(true)
-    {}
-
-    template <
-        class... Args,
-        enable_if_t<std::is_constructible<value_type, Args...>::value, int> = 0 >
-    json_ref(Args && ... args)
-        : owned_value(std::forward<Args>(args)...), value_ref(&owned_value),
-          is_rvalue(true) {}
-
-    // class should be movable only
-    json_ref(json_ref&&) noexcept = default;
-    json_ref(const json_ref&) = delete;
-    json_ref& operator=(const json_ref&) = delete;
-    json_ref& operator=(json_ref&&) = delete;
-    ~json_ref() = default;
-
-    value_type moved_or_copied() const
-    {
-        if (is_rvalue)
-        {
-            return std::move(*value_ref);
-        }
-        return *value_ref;
-    }
-
-    value_type const& operator*() const
-    {
-        return *static_cast<value_type const*>(value_ref);
-    }
-
-    value_type const* operator->() const
-    {
-        return static_cast<value_type const*>(value_ref);
-    }
-
-  private:
-    mutable value_type owned_value = nullptr;
-    value_type* value_ref = nullptr;
-    const bool is_rvalue;
-};
-}  // namespace detail
-}  // namespace nlohmann
-
-// #include <nlohmann/detail/json_pointer.hpp>
-
-
-#include <algorithm> // all_of
-#include <cassert> // assert
-#include <numeric> // accumulate
-#include <string> // string
-#include <utility> // move
-#include <vector> // vector
-
-// #include <nlohmann/detail/macro_scope.hpp>
-
-// #include <nlohmann/detail/exceptions.hpp>
-
 // #include <nlohmann/detail/value_t.hpp>
 
-
-namespace nlohmann
-{
-template<typename BasicJsonType>
-class json_pointer
-{
-    // allow basic_json to access private members
-    NLOHMANN_BASIC_JSON_TPL_DECLARATION
-    friend class basic_json;
-
-  public:
-    /*!
-    @brief create JSON pointer
-
-    Create a JSON pointer according to the syntax described in
-    [Section 3 of RFC6901](https://tools.ietf.org/html/rfc6901#section-3).
-
-    @param[in] s  string representing the JSON pointer; if omitted, the empty
-                  string is assumed which references the whole JSON value
-
-    @throw parse_error.107 if the given JSON pointer @a s is nonempty and does
-                           not begin with a slash (`/`); see example below
-
-    @throw parse_error.108 if a tilde (`~`) in the given JSON pointer @a s is
-    not followed by `0` (representing `~`) or `1` (representing `/`); see
-    example below
-
-    @liveexample{The example shows the construction several valid JSON pointers
-    as well as the exceptional behavior.,json_pointer}
-
-    @since version 2.0.0
-    */
-    explicit json_pointer(const std::string& s = "")
-        : reference_tokens(split(s))
-    {}
-
-    /*!
-    @brief return a string representation of the JSON pointer
-
-    @invariant For each JSON pointer `ptr`, it holds:
-    @code {.cpp}
-    ptr == json_pointer(ptr.to_string());
-    @endcode
-
-    @return a string representation of the JSON pointer
-
-    @liveexample{The example shows the result of `to_string`.,
-    json_pointer__to_string}
-
-    @since version 2.0.0
-    */
-    std::string to_string() const
-    {
-        return std::accumulate(reference_tokens.begin(), reference_tokens.end(),
-                               std::string{},
-                               [](const std::string & a, const std::string & b)
-        {
-            return a + "/" + escape(b);
-        });
-    }
-
-    /// @copydoc to_string()
-    operator std::string() const
-    {
-        return to_string();
-    }
-
-    /*!
-    @brief append another JSON pointer at the end of this JSON pointer
-    */
-    json_pointer& operator/=(const json_pointer& ptr)
-    {
-        reference_tokens.insert(reference_tokens.end(), ptr.reference_tokens.begin(), ptr.reference_tokens.end());
-        return *this;
-    }
-
-    /// @copydoc push_back(std::string&&)
-    json_pointer& operator/=(std::string token)
-    {
-        push_back(std::move(token));
-        return *this;
-    }
-
-    /// @copydoc operator/=(std::string)
-    json_pointer& operator/=(std::size_t array_index)
-    {
-        return *this /= std::to_string(array_index);
-    }
-
-    /*!
-    @brief create a new JSON pointer by appending the right JSON pointer at the end of the left JSON pointer
-    */
-    friend json_pointer operator/(const json_pointer& left_ptr, const json_pointer& right_ptr)
-    {
-        return json_pointer(left_ptr) /= right_ptr;
-    }
-
-    /*!
-    @brief create a new JSON pointer by appending the unescaped token at the end of the JSON pointer
-    */
-    friend json_pointer operator/(const json_pointer& ptr, std::string token)
-    {
-        return json_pointer(ptr) /= std::move(token);
-    }
-
-    /*!
-    @brief create a new JSON pointer by appending the array-index-token at the end of the JSON pointer
-    */
-    friend json_pointer operator/(const json_pointer& lhs, std::size_t array_index)
-    {
-        return json_pointer(lhs) /= array_index;
-    }
-
-    /*!
-    @brief create a new JSON pointer that is the parent of this JSON pointer
-    */
-    json_pointer parent_pointer() const
-    {
-        if (empty())
-        {
-            return *this;
-        }
-
-        json_pointer res = *this;
-        res.pop_back();
-        return res;
-    }
-
-    /*!
-    @param[in] s  reference token to be converted into an array index
-
-    @return integer representation of @a s
-
-    @throw out_of_range.404 if string @a s could not be converted to an integer
-    */
-    static int array_index(const std::string& s)
-    {
-        std::size_t processed_chars = 0;
-        const int res = std::stoi(s, &processed_chars);
-
-        // check if the string was completely read
-        if (JSON_UNLIKELY(processed_chars != s.size()))
-        {
-            JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + s + "'"));
-        }
-
-        return res;
-    }
-
-    /*!
-    @brief remove and return last reference token
-    @throw out_of_range.405 if JSON pointer has no parent
-    */
-    std::string pop_back()
-    {
-        if (JSON_UNLIKELY(empty()))
-        {
-            JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent"));
-        }
-
-        auto last = reference_tokens.back();
-        reference_tokens.pop_back();
-        return last;
-    }
-
-    /*!
-    @brief append an unescaped token at the end of the reference pointer
-    */
-    void push_back(const std::string& token)
-    {
-        reference_tokens.push_back(token);
-    }
-
-    /// @copydoc push_back(const std::string&)
-    void push_back(std::string&& token)
-    {
-        reference_tokens.push_back(std::move(token));
-    }
-
-    /// return whether pointer points to the root document
-    bool empty() const noexcept
-    {
-        return reference_tokens.empty();
-    }
-
-  private:
-    json_pointer top() const
-    {
-        if (JSON_UNLIKELY(empty()))
-        {
-            JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent"));
-        }
-
-        json_pointer result = *this;
-        result.reference_tokens = {reference_tokens[0]};
-        return result;
-    }
-
-    /*!
-    @brief create and return a reference to the pointed to value
-
-    @complexity Linear in the number of reference tokens.
-
-    @throw parse_error.109 if array index is not a number
-    @throw type_error.313 if value cannot be unflattened
-    */
-    BasicJsonType& get_and_create(BasicJsonType& j) const
-    {
-        using size_type = typename BasicJsonType::size_type;
-        auto result = &j;
-
-        // in case no reference tokens exist, return a reference to the JSON value
-        // j which will be overwritten by a primitive value
-        for (const auto& reference_token : reference_tokens)
-        {
-            switch (result->m_type)
-            {
-                case detail::value_t::null:
-                {
-                    if (reference_token == "0")
-                    {
-                        // start a new array if reference token is 0
-                        result = &result->operator[](0);
-                    }
-                    else
-                    {
-                        // start a new object otherwise
-                        result = &result->operator[](reference_token);
-                    }
-                    break;
-                }
-
-                case detail::value_t::object:
-                {
-                    // create an entry in the object
-                    result = &result->operator[](reference_token);
-                    break;
-                }
-
-                case detail::value_t::array:
-                {
-                    // create an entry in the array
-                    JSON_TRY
-                    {
-                        result = &result->operator[](static_cast<size_type>(array_index(reference_token)));
-                    }
-                    JSON_CATCH(std::invalid_argument&)
-                    {
-                        JSON_THROW(detail::parse_error::create(109, 0, "array index '" + reference_token + "' is not a number"));
-                    }
-                    break;
-                }
-
-                /*
-                The following code is only reached if there exists a reference
-                token _and_ the current value is primitive. In this case, we have
-                an error situation, because primitive values may only occur as
-                single value; that is, with an empty list of reference tokens.
-                */
-                default:
-                    JSON_THROW(detail::type_error::create(313, "invalid value to unflatten"));
-            }
-        }
-
-        return *result;
-    }
-
-    /*!
-    @brief return a reference to the pointed to value
-
-    @note This version does not throw if a value is not present, but tries to
-          create nested values instead. For instance, calling this function
-          with pointer `"/this/that"` on a null value is equivalent to calling
-          `operator[]("this").operator[]("that")` on that value, effectively
-          changing the null value to an object.
-
-    @param[in] ptr  a JSON value
-
-    @return reference to the JSON value pointed to by the JSON pointer
-
-    @complexity Linear in the length of the JSON pointer.
-
-    @throw parse_error.106   if an array index begins with '0'
-    @throw parse_error.109   if an array index was not a number
-    @throw out_of_range.404  if the JSON pointer can not be resolved
-    */
-    BasicJsonType& get_unchecked(BasicJsonType* ptr) const
-    {
-        using size_type = typename BasicJsonType::size_type;
-        for (const auto& reference_token : reference_tokens)
-        {
-            // convert null values to arrays or objects before continuing
-            if (ptr->m_type == detail::value_t::null)
-            {
-                // check if reference token is a number
-                const bool nums =
-                    std::all_of(reference_token.begin(), reference_token.end(),
-                                [](const char x)
-                {
-                    return (x >= '0' and x <= '9');
-                });
-
-                // change value to array for numbers or "-" or to object otherwise
-                *ptr = (nums or reference_token == "-")
-                       ? detail::value_t::array
-                       : detail::value_t::object;
-            }
-
-            switch (ptr->m_type)
-            {
-                case detail::value_t::object:
-                {
-                    // use unchecked object access
-                    ptr = &ptr->operator[](reference_token);
-                    break;
-                }
-
-                case detail::value_t::array:
-                {
-                    // error condition (cf. RFC 6901, Sect. 4)
-                    if (JSON_UNLIKELY(reference_token.size() > 1 and reference_token[0] == '0'))
-                    {
-                        JSON_THROW(detail::parse_error::create(106, 0,
-                                                               "array index '" + reference_token +
-                                                               "' must not begin with '0'"));
-                    }
-
-                    if (reference_token == "-")
-                    {
-                        // explicitly treat "-" as index beyond the end
-                        ptr = &ptr->operator[](ptr->m_value.array->size());
-                    }
-                    else
-                    {
-                        // convert array index to number; unchecked access
-                        JSON_TRY
-                        {
-                            ptr = &ptr->operator[](
-                                static_cast<size_type>(array_index(reference_token)));
-                        }
-                        JSON_CATCH(std::invalid_argument&)
-                        {
-                            JSON_THROW(detail::parse_error::create(109, 0, "array index '" + reference_token + "' is not a number"));
-                        }
-                    }
-                    break;
-                }
-
-                default:
-                    JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + reference_token + "'"));
-            }
-        }
-
-        return *ptr;
-    }
-
-    /*!
-    @throw parse_error.106   if an array index begins with '0'
-    @throw parse_error.109   if an array index was not a number
-    @throw out_of_range.402  if the array index '-' is used
-    @throw out_of_range.404  if the JSON pointer can not be resolved
-    */
-    BasicJsonType& get_checked(BasicJsonType* ptr) const
-    {
-        using size_type = typename BasicJsonType::size_type;
-        for (const auto& reference_token : reference_tokens)
-        {
-            switch (ptr->m_type)
-            {
-                case detail::value_t::object:
-                {
-                    // note: at performs range check
-                    ptr = &ptr->at(reference_token);
-                    break;
-                }
-
-                case detail::value_t::array:
-                {
-                    if (JSON_UNLIKELY(reference_token == "-"))
-                    {
-                        // "-" always fails the range check
-                        JSON_THROW(detail::out_of_range::create(402,
-                                                                "array index '-' (" + std::to_string(ptr->m_value.array->size()) +
-                                                                ") is out of range"));
-                    }
-
-                    // error condition (cf. RFC 6901, Sect. 4)
-                    if (JSON_UNLIKELY(reference_token.size() > 1 and reference_token[0] == '0'))
-                    {
-                        JSON_THROW(detail::parse_error::create(106, 0,
-                                                               "array index '" + reference_token +
-                                                               "' must not begin with '0'"));
-                    }
-
-                    // note: at performs range check
-                    JSON_TRY
-                    {
-                        ptr = &ptr->at(static_cast<size_type>(array_index(reference_token)));
-                    }
-                    JSON_CATCH(std::invalid_argument&)
-                    {
-                        JSON_THROW(detail::parse_error::create(109, 0, "array index '" + reference_token + "' is not a number"));
-                    }
-                    break;
-                }
-
-                default:
-                    JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + reference_token + "'"));
-            }
-        }
-
-        return *ptr;
-    }
-
-    /*!
-    @brief return a const reference to the pointed to value
-
-    @param[in] ptr  a JSON value
-
-    @return const reference to the JSON value pointed to by the JSON
-    pointer
-
-    @throw parse_error.106   if an array index begins with '0'
-    @throw parse_error.109   if an array index was not a number
-    @throw out_of_range.402  if the array index '-' is used
-    @throw out_of_range.404  if the JSON pointer can not be resolved
-    */
-    const BasicJsonType& get_unchecked(const BasicJsonType* ptr) const
-    {
-        using size_type = typename BasicJsonType::size_type;
-        for (const auto& reference_token : reference_tokens)
-        {
-            switch (ptr->m_type)
-            {
-                case detail::value_t::object:
-                {
-                    // use unchecked object access
-                    ptr = &ptr->operator[](reference_token);
-                    break;
-                }
-
-                case detail::value_t::array:
-                {
-                    if (JSON_UNLIKELY(reference_token == "-"))
-                    {
-                        // "-" cannot be used for const access
-                        JSON_THROW(detail::out_of_range::create(402,
-                                                                "array index '-' (" + std::to_string(ptr->m_value.array->size()) +
-                                                                ") is out of range"));
-                    }
-
-                    // error condition (cf. RFC 6901, Sect. 4)
-                    if (JSON_UNLIKELY(reference_token.size() > 1 and reference_token[0] == '0'))
-                    {
-                        JSON_THROW(detail::parse_error::create(106, 0,
-                                                               "array index '" + reference_token +
-                                                               "' must not begin with '0'"));
-                    }
-
-                    // use unchecked array access
-                    JSON_TRY
-                    {
-                        ptr = &ptr->operator[](
-                            static_cast<size_type>(array_index(reference_token)));
-                    }
-                    JSON_CATCH(std::invalid_argument&)
-                    {
-                        JSON_THROW(detail::parse_error::create(109, 0, "array index '" + reference_token + "' is not a number"));
-                    }
-                    break;
-                }
-
-                default:
-                    JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + reference_token + "'"));
-            }
-        }
-
-        return *ptr;
-    }
-
-    /*!
-    @throw parse_error.106   if an array index begins with '0'
-    @throw parse_error.109   if an array index was not a number
-    @throw out_of_range.402  if the array index '-' is used
-    @throw out_of_range.404  if the JSON pointer can not be resolved
-    */
-    const BasicJsonType& get_checked(const BasicJsonType* ptr) const
-    {
-        using size_type = typename BasicJsonType::size_type;
-        for (const auto& reference_token : reference_tokens)
-        {
-            switch (ptr->m_type)
-            {
-                case detail::value_t::object:
-                {
-                    // note: at performs range check
-                    ptr = &ptr->at(reference_token);
-                    break;
-                }
-
-                case detail::value_t::array:
-                {
-                    if (JSON_UNLIKELY(reference_token == "-"))
-                    {
-                        // "-" always fails the range check
-                        JSON_THROW(detail::out_of_range::create(402,
-                                                                "array index '-' (" + std::to_string(ptr->m_value.array->size()) +
-                                                                ") is out of range"));
-                    }
-
-                    // error condition (cf. RFC 6901, Sect. 4)
-                    if (JSON_UNLIKELY(reference_token.size() > 1 and reference_token[0] == '0'))
-                    {
-                        JSON_THROW(detail::parse_error::create(106, 0,
-                                                               "array index '" + reference_token +
-                                                               "' must not begin with '0'"));
-                    }
-
-                    // note: at performs range check
-                    JSON_TRY
-                    {
-                        ptr = &ptr->at(static_cast<size_type>(array_index(reference_token)));
-                    }
-                    JSON_CATCH(std::invalid_argument&)
-                    {
-                        JSON_THROW(detail::parse_error::create(109, 0, "array index '" + reference_token + "' is not a number"));
-                    }
-                    break;
-                }
-
-                default:
-                    JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + reference_token + "'"));
-            }
-        }
-
-        return *ptr;
-    }
-
-    /*!
-    @brief split the string input to reference tokens
-
-    @note This function is only called by the json_pointer constructor.
-          All exceptions below are documented there.
-
-    @throw parse_error.107  if the pointer is not empty or begins with '/'
-    @throw parse_error.108  if character '~' is not followed by '0' or '1'
-    */
-    static std::vector<std::string> split(const std::string& reference_string)
-    {
-        std::vector<std::string> result;
-
-        // special case: empty reference string -> no reference tokens
-        if (reference_string.empty())
-        {
-            return result;
-        }
-
-        // check if nonempty reference string begins with slash
-        if (JSON_UNLIKELY(reference_string[0] != '/'))
-        {
-            JSON_THROW(detail::parse_error::create(107, 1,
-                                                   "JSON pointer must be empty or begin with '/' - was: '" +
-                                                   reference_string + "'"));
-        }
-
-        // extract the reference tokens:
-        // - slash: position of the last read slash (or end of string)
-        // - start: position after the previous slash
-        for (
-            // search for the first slash after the first character
-            std::size_t slash = reference_string.find_first_of('/', 1),
-            // set the beginning of the first reference token
-            start = 1;
-            // we can stop if start == 0 (if slash == std::string::npos)
-            start != 0;
-            // set the beginning of the next reference token
-            // (will eventually be 0 if slash == std::string::npos)
-            start = (slash == std::string::npos) ? 0 : slash + 1,
-            // find next slash
-            slash = reference_string.find_first_of('/', start))
-        {
-            // use the text between the beginning of the reference token
-            // (start) and the last slash (slash).
-            auto reference_token = reference_string.substr(start, slash - start);
-
-            // check reference tokens are properly escaped
-            for (std::size_t pos = reference_token.find_first_of('~');
-                    pos != std::string::npos;
-                    pos = reference_token.find_first_of('~', pos + 1))
-            {
-                assert(reference_token[pos] == '~');
-
-                // ~ must be followed by 0 or 1
-                if (JSON_UNLIKELY(pos == reference_token.size() - 1 or
-                                  (reference_token[pos + 1] != '0' and
-                                   reference_token[pos + 1] != '1')))
-                {
-                    JSON_THROW(detail::parse_error::create(108, 0, "escape character '~' must be followed with '0' or '1'"));
-                }
-            }
-
-            // finally, store the reference token
-            unescape(reference_token);
-            result.push_back(reference_token);
-        }
-
-        return result;
-    }
-
-    /*!
-    @brief replace all occurrences of a substring by another string
-
-    @param[in,out] s  the string to manipulate; changed so that all
-                   occurrences of @a f are replaced with @a t
-    @param[in]     f  the substring to replace with @a t
-    @param[in]     t  the string to replace @a f
-
-    @pre The search string @a f must not be empty. **This precondition is
-    enforced with an assertion.**
-
-    @since version 2.0.0
-    */
-    static void replace_substring(std::string& s, const std::string& f,
-                                  const std::string& t)
-    {
-        assert(not f.empty());
-        for (auto pos = s.find(f);                // find first occurrence of f
-                pos != std::string::npos;         // make sure f was found
-                s.replace(pos, f.size(), t),      // replace with t, and
-                pos = s.find(f, pos + t.size()))  // find next occurrence of f
-        {}
-    }
-
-    /// escape "~" to "~0" and "/" to "~1"
-    static std::string escape(std::string s)
-    {
-        replace_substring(s, "~", "~0");
-        replace_substring(s, "/", "~1");
-        return s;
-    }
-
-    /// unescape "~1" to tilde and "~0" to slash (order is important!)
-    static void unescape(std::string& s)
-    {
-        replace_substring(s, "~1", "/");
-        replace_substring(s, "~0", "~");
-    }
-
-    /*!
-    @param[in] reference_string  the reference string to the current value
-    @param[in] value             the value to consider
-    @param[in,out] result        the result object to insert values to
-
-    @note Empty objects or arrays are flattened to `null`.
-    */
-    static void flatten(const std::string& reference_string,
-                        const BasicJsonType& value,
-                        BasicJsonType& result)
-    {
-        switch (value.m_type)
-        {
-            case detail::value_t::array:
-            {
-                if (value.m_value.array->empty())
-                {
-                    // flatten empty array as null
-                    result[reference_string] = nullptr;
-                }
-                else
-                {
-                    // iterate array and use index as reference string
-                    for (std::size_t i = 0; i < value.m_value.array->size(); ++i)
-                    {
-                        flatten(reference_string + "/" + std::to_string(i),
-                                value.m_value.array->operator[](i), result);
-                    }
-                }
-                break;
-            }
-
-            case detail::value_t::object:
-            {
-                if (value.m_value.object->empty())
-                {
-                    // flatten empty object as null
-                    result[reference_string] = nullptr;
-                }
-                else
-                {
-                    // iterate object and use keys as reference string
-                    for (const auto& element : *value.m_value.object)
-                    {
-                        flatten(reference_string + "/" + escape(element.first), element.second, result);
-                    }
-                }
-                break;
-            }
-
-            default:
-            {
-                // add primitive value with its reference string
-                result[reference_string] = value;
-                break;
-            }
-        }
-    }
-
-    /*!
-    @param[in] value  flattened JSON
-
-    @return unflattened JSON
-
-    @throw parse_error.109 if array index is not a number
-    @throw type_error.314  if value is not an object
-    @throw type_error.315  if object values are not primitive
-    @throw type_error.313  if value cannot be unflattened
-    */
-    static BasicJsonType
-    unflatten(const BasicJsonType& value)
-    {
-        if (JSON_UNLIKELY(not value.is_object()))
-        {
-            JSON_THROW(detail::type_error::create(314, "only objects can be unflattened"));
-        }
-
-        BasicJsonType result;
-
-        // iterate the JSON object values
-        for (const auto& element : *value.m_value.object)
-        {
-            if (JSON_UNLIKELY(not element.second.is_primitive()))
-            {
-                JSON_THROW(detail::type_error::create(315, "values in object must be primitive"));
-            }
-
-            // assign value to reference pointed to by JSON pointer; Note that if
-            // the JSON pointer is "" (i.e., points to the whole value), function
-            // get_and_create returns a reference to result itself. An assignment
-            // will then create a primitive value.
-            json_pointer(element.first).get_and_create(result) = element.second;
-        }
-
-        return result;
-    }
-
-    friend bool operator==(json_pointer const& lhs,
-                           json_pointer const& rhs) noexcept
-    {
-        return (lhs.reference_tokens == rhs.reference_tokens);
-    }
-
-    friend bool operator!=(json_pointer const& lhs,
-                           json_pointer const& rhs) noexcept
-    {
-        return not (lhs == rhs);
-    }
-
-    /// the reference tokens
-    std::vector<std::string> reference_tokens;
-};
-}  // namespace nlohmann
-
-// #include <nlohmann/adl_serializer.hpp>
-
-
-#include <utility>
-
-// #include <nlohmann/detail/conversions/from_json.hpp>
-
-// #include <nlohmann/detail/conversions/to_json.hpp>
-
-
-namespace nlohmann
-{
-
-template<typename, typename>
-struct adl_serializer
-{
-    /*!
-    @brief convert a JSON value to any value type
-
-    This function is usually called by the `get()` function of the
-    @ref basic_json class (either explicit or via conversion operators).
-
-    @param[in] j        JSON value to read from
-    @param[in,out] val  value to write to
-    */
-    template<typename BasicJsonType, typename ValueType>
-    static auto from_json(BasicJsonType&& j, ValueType& val) noexcept(
-        noexcept(::nlohmann::from_json(std::forward<BasicJsonType>(j), val)))
-    -> decltype(::nlohmann::from_json(std::forward<BasicJsonType>(j), val), void())
-    {
-        ::nlohmann::from_json(std::forward<BasicJsonType>(j), val);
-    }
-
-    /*!
-    @brief convert any value type to a JSON value
-
-    This function is usually called by the constructors of the @ref basic_json
-    class.
-
-    @param[in,out] j  JSON value to write to
-    @param[in] val    value to read from
-    */
-    template <typename BasicJsonType, typename ValueType>
-    static auto to_json(BasicJsonType& j, ValueType&& val) noexcept(
-        noexcept(::nlohmann::to_json(j, std::forward<ValueType>(val))))
-    -> decltype(::nlohmann::to_json(j, std::forward<ValueType>(val)), void())
-    {
-        ::nlohmann::to_json(j, std::forward<ValueType>(val));
-    }
-};
-
-}  // namespace nlohmann
+// #include <nlohmann/json_fwd.hpp>
 
 
 /*!
@@ -13920,6 +13967,8 @@ class basic_json
             case value_t::discarded:
                 m_type = value_t::discarded;
                 break;
+            default:
+                assert(false);  // LCOV_EXCL_LINE
         }
         assert_invariant();
     }
@@ -20290,7 +20339,7 @@ class basic_json
                     break;
                 }
 
-                case patch_operations::invalid:
+                default:
                 {
                     // op must be "add", "remove", "replace", "move", "copy", or
                     // "test"

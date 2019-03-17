@@ -159,6 +159,13 @@ class json_sax_dom_parser
         : root(r), allow_exceptions(allow_exceptions_)
     {}
 
+    // make class move-only
+    json_sax_dom_parser(const json_sax_dom_parser&) = delete;
+    json_sax_dom_parser(json_sax_dom_parser&&) noexcept = default;
+    json_sax_dom_parser& operator=(const json_sax_dom_parser&) = delete;
+    json_sax_dom_parser& operator=(json_sax_dom_parser&&) noexcept = default;
+    ~json_sax_dom_parser() = default;
+
     bool null()
     {
         handle_value(nullptr);
@@ -307,7 +314,7 @@ class json_sax_dom_parser
     /// the parsed JSON value
     BasicJsonType& root;
     /// stack to model hierarchy of values
-    std::vector<BasicJsonType*> ref_stack;
+    std::vector<BasicJsonType*> ref_stack {};
     /// helper to hold the reference for the next object element
     BasicJsonType* object_element = nullptr;
     /// whether a syntax error occurred
@@ -334,6 +341,13 @@ class json_sax_dom_callback_parser
     {
         keep_stack.push_back(true);
     }
+
+    // make class move-only
+    json_sax_dom_callback_parser(const json_sax_dom_callback_parser&) = delete;
+    json_sax_dom_callback_parser(json_sax_dom_callback_parser&&) = default;
+    json_sax_dom_callback_parser& operator=(const json_sax_dom_callback_parser&) = delete;
+    json_sax_dom_callback_parser& operator=(json_sax_dom_callback_parser&&) = default;
+    ~json_sax_dom_callback_parser() = default;
 
     bool null()
     {
@@ -612,11 +626,11 @@ class json_sax_dom_callback_parser
     /// the parsed JSON value
     BasicJsonType& root;
     /// stack to model hierarchy of values
-    std::vector<BasicJsonType*> ref_stack;
+    std::vector<BasicJsonType*> ref_stack {};
     /// stack to manage which values to keep
-    std::vector<bool> keep_stack;
+    std::vector<bool> keep_stack {};
     /// stack to manage which object keys to keep
-    std::vector<bool> key_keep_stack;
+    std::vector<bool> key_keep_stack {};
     /// helper to hold the reference for the next object element
     BasicJsonType* object_element = nullptr;
     /// whether a syntax error occurred

@@ -1,12 +1,12 @@
 #pragma once
 
 #include <cstddef> // size_t
-#include <string> // string, to_string
 #include <iterator> // input_iterator_tag
+#include <string> // string, to_string
 #include <tuple> // tuple_size, get, tuple_element
 
-#include <nlohmann/detail/value_t.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
+#include <nlohmann/detail/value_t.hpp>
 
 namespace nlohmann
 {

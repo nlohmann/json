@@ -3,6 +3,7 @@
 #include <array> // array
 #include <cassert> // assert
 #include <cstddef> // size_t
+#include <cstdio> //FILE *
 #include <cstring> // strlen
 #include <istream> // istream
 #include <iterator> // begin, end, iterator_traits, random_access_iterator_tag, distance, next
@@ -11,7 +12,6 @@
 #include <string> // string, char_traits
 #include <type_traits> // enable_if, is_base_of, is_pointer, is_integral, remove_pointer
 #include <utility> // pair, declval
-#include <cstdio> //FILE *
 
 #include <nlohmann/detail/iterators/iterator_traits.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
@@ -59,10 +59,18 @@ class file_input_adapter : public input_adapter_protocol
         : m_file(f)
     {}
 
+    // make class move-only
+    file_input_adapter(const file_input_adapter&) = delete;
+    file_input_adapter(file_input_adapter&&) noexcept = default;
+    file_input_adapter& operator=(const file_input_adapter&) = delete;
+    file_input_adapter& operator=(file_input_adapter&&) noexcept = default;
+    ~file_input_adapter() override = default;
+
     std::char_traits<char>::int_type get_character() noexcept override
     {
         return std::fgetc(m_file);
     }
+
   private:
     /// the file pointer to read from
     std::FILE* m_file;

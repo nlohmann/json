@@ -13,9 +13,9 @@
 #include <string> // char_traits, string
 #include <utility> // make_pair, move
 
+#include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/input/input_adapters.hpp>
 #include <nlohmann/detail/input/json_sax.hpp>
-#include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/is_sax.hpp>
 #include <nlohmann/detail/value_t.hpp>
@@ -51,6 +51,13 @@ class binary_reader
         (void)detail::is_sax_static_asserts<SAX, BasicJsonType> {};
         assert(ia);
     }
+
+    // make class move-only
+    binary_reader(const binary_reader&) = delete;
+    binary_reader(binary_reader&&) noexcept = default;
+    binary_reader& operator=(const binary_reader&) = delete;
+    binary_reader& operator=(binary_reader&&) noexcept = default;
+    ~binary_reader() = default;
 
     /*!
     @param[in] format  the binary format to parse

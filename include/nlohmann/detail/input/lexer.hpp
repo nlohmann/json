@@ -3,16 +3,16 @@
 #include <array> // array
 #include <clocale> // localeconv
 #include <cstddef> // size_t
-#include <cstdlib> // strtof, strtod, strtold, strtoll, strtoull
 #include <cstdio> // snprintf
+#include <cstdlib> // strtof, strtod, strtold, strtoll, strtoull
 #include <initializer_list> // initializer_list
 #include <string> // char_traits, string
 #include <utility> // move
 #include <vector> // vector
 
-#include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/input/input_adapters.hpp>
 #include <nlohmann/detail/input/position_t.hpp>
+#include <nlohmann/detail/macro_scope.hpp>
 
 namespace nlohmann
 {
@@ -1485,7 +1485,7 @@ scan_number_done:
     bool next_unget = false;
 
     /// the start position of the current token
-    position_t position;
+    position_t position {};
 
     /// raw input token string (for error messages)
     std::vector<char> token_string {};

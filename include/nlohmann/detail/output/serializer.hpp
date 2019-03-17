@@ -14,8 +14,8 @@
 #include <type_traits> // is_same
 #include <utility> // move
 
-#include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/conversions/to_chars.hpp>
+#include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/cpp_future.hpp>
 #include <nlohmann/detail/output/binary_writer.hpp>
@@ -278,6 +278,11 @@ class serializer
                 o->write_characters("null", 4);
                 return;
             }
+
+            default:
+            {
+                assert(false);  // LCOV_EXCL_LINE
+            }
         }
     }
 
@@ -474,6 +479,11 @@ class serializer
                             state = UTF8_ACCEPT;
                             break;
                         }
+
+                        default:
+                        {
+                            assert(false);  // LCOV_EXCL_LINE
+                        }
                     }
                     break;
                 }
@@ -533,6 +543,11 @@ class serializer
                         o->write_characters("\xEF\xBF\xBD", 3);
                     }
                     break;
+                }
+
+                default:
+                {
+                    assert(false);  // LCOV_EXCL_LINE
                 }
             }
         }

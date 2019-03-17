@@ -124,8 +124,10 @@ struct nocopy
 
 struct Data
 {
-    std::string a;
-    std::string b;
+    Data() = default;
+    Data(const std::string& a_, const std::string b_) : a(a_), b(b_) {}
+    std::string a {};
+    std::string b {};
 };
 
 void from_json(const json& j, Data& data)
@@ -1701,7 +1703,7 @@ TEST_CASE("regression tests")
 
         std::map<std::string, Data> expected
         {
-            {"1", {"testa_1", "testb_1" }},
+            {"1", {"testa_1", "testb_1"}},
             {"2", {"testa_2", "testb_2"}},
             {"3", {"testa_3", "testb_3"}},
         };
