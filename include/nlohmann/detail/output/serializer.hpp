@@ -12,9 +12,10 @@
 #include <limits> // numeric_limits
 #include <string> // string
 #include <type_traits> // is_same
+#include <utility> // move
 
-#include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/conversions/to_chars.hpp>
+#include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/cpp_future.hpp>
 #include <nlohmann/detail/output/binary_writer.hpp>
@@ -44,8 +45,8 @@ class serializer
     using number_float_t = typename BasicJsonType::number_float_t;
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
-    static constexpr uint8_t UTF8_ACCEPT = 0;
-    static constexpr uint8_t UTF8_REJECT = 1;
+    static constexpr std::uint8_t UTF8_ACCEPT = 0;
+    static constexpr std::uint8_t UTF8_REJECT = 1;
 
   public:
     /*!
@@ -277,6 +278,9 @@ class serializer
                 o->write_characters("null", 4);
                 return;
             }
+
+            default:            // LCOV_EXCL_LINE
+                assert(false);  // LCOV_EXCL_LINE
         }
     }
 
@@ -297,8 +301,8 @@ class serializer
     */
     void dump_escaped(const string_t& s, const bool ensure_ascii)
     {
-        uint32_t codepoint;
-        uint8_t state = UTF8_ACCEPT;
+        std::uint32_t codepoint;
+        std::uint8_t state = UTF8_ACCEPT;
         std::size_t bytes = 0;  // number of bytes written to string_buffer
 
         // number of bytes written at the point of the last valid byte
@@ -373,14 +377,14 @@ class serializer
                                 if (codepoint <= 0xFFFF)
                                 {
                                     (std::snprintf)(string_buffer.data() + bytes, 7, "\\u%04x",
-                                                    static_cast<uint16_t>(codepoint));
+                                                    static_cast<std::uint16_t>(codepoint));
                                     bytes += 6;
                                 }
                                 else
                                 {
                                     (std::snprintf)(string_buffer.data() + bytes, 13, "\\u%04x\\u%04x",
-                                                    static_cast<uint16_t>(0xD7C0 + (codepoint >> 10)),
-                                                    static_cast<uint16_t>(0xDC00 + (codepoint & 0x3FF)));
+                                                    static_cast<std::uint16_t>(0xD7C0u + (codepoint >> 10u)),
+                                                    static_cast<std::uint16_t>(0xDC00u + (codepoint & 0x3FFu)));
                                     bytes += 12;
                                 }
                             }
@@ -454,6 +458,16 @@ class serializer
                                     string_buffer[bytes++] = detail::binary_writer<BasicJsonType, char>::to_char_type('\xBF');
                                     string_buffer[bytes++] = detail::binary_writer<BasicJsonType, char>::to_char_type('\xBD');
                                 }
+
+                                // write buffer and reset index; there must be 13 bytes
+                                // left, as this is the maximal number of bytes to be
+                                // written ("\uxxxx\uxxxx\0") for one code point
+                                if (string_buffer.size() - bytes < 13)
+                                {
+                                    o->write_characters(string_buffer.data(), bytes);
+                                    bytes = 0;
+                                }
+
                                 bytes_after_last_accept = bytes;
                             }
 
@@ -463,6 +477,9 @@ class serializer
                             state = UTF8_ACCEPT;
                             break;
                         }
+
+                        default:            // LCOV_EXCL_LINE
+                            assert(false);  // LCOV_EXCL_LINE
                     }
                     break;
                 }
@@ -497,7 +514,7 @@ class serializer
                 case error_handler_t::strict:
                 {
                     std::string sn(3, '\0');
-                    (std::snprintf)(&sn[0], sn.size(), "%.2X", static_cast<uint8_t>(s.back()));
+                    (std::snprintf)(&sn[0], sn.size(), "%.2X", static_cast<std::uint8_t>(s.back()));
                     JSON_THROW(type_error::create(316, "incomplete UTF-8 string; last byte: 0x" + sn));
                 }
 
@@ -523,6 +540,9 @@ class serializer
                     }
                     break;
                 }
+
+                default:            // LCOV_EXCL_LINE
+                    assert(false);  // LCOV_EXCL_LINE
             }
         }
     }
@@ -579,16 +599,16 @@ class serializer
         static constexpr std::array<std::array<char, 2>, 100> digits_to_99
         {
             {
-                {'0', '0'}, {'0', '1'}, {'0', '2'}, {'0', '3'}, {'0', '4'}, {'0', '5'}, {'0', '6'}, {'0', '7'}, {'0', '8'}, {'0', '9'},
-                {'1', '0'}, {'1', '1'}, {'1', '2'}, {'1', '3'}, {'1', '4'}, {'1', '5'}, {'1', '6'}, {'1', '7'}, {'1', '8'}, {'1', '9'},
-                {'2', '0'}, {'2', '1'}, {'2', '2'}, {'2', '3'}, {'2', '4'}, {'2', '5'}, {'2', '6'}, {'2', '7'}, {'2', '8'}, {'2', '9'},
-                {'3', '0'}, {'3', '1'}, {'3', '2'}, {'3', '3'}, {'3', '4'}, {'3', '5'}, {'3', '6'}, {'3', '7'}, {'3', '8'}, {'3', '9'},
-                {'4', '0'}, {'4', '1'}, {'4', '2'}, {'4', '3'}, {'4', '4'}, {'4', '5'}, {'4', '6'}, {'4', '7'}, {'4', '8'}, {'4', '9'},
-                {'5', '0'}, {'5', '1'}, {'5', '2'}, {'5', '3'}, {'5', '4'}, {'5', '5'}, {'5', '6'}, {'5', '7'}, {'5', '8'}, {'5', '9'},
-                {'6', '0'}, {'6', '1'}, {'6', '2'}, {'6', '3'}, {'6', '4'}, {'6', '5'}, {'6', '6'}, {'6', '7'}, {'6', '8'}, {'6', '9'},
-                {'7', '0'}, {'7', '1'}, {'7', '2'}, {'7', '3'}, {'7', '4'}, {'7', '5'}, {'7', '6'}, {'7', '7'}, {'7', '8'}, {'7', '9'},
-                {'8', '0'}, {'8', '1'}, {'8', '2'}, {'8', '3'}, {'8', '4'}, {'8', '5'}, {'8', '6'}, {'8', '7'}, {'8', '8'}, {'8', '9'},
-                {'9', '0'}, {'9', '1'}, {'9', '2'}, {'9', '3'}, {'9', '4'}, {'9', '5'}, {'9', '6'}, {'9', '7'}, {'9', '8'}, {'9', '9'},
+                {{'0', '0'}}, {{'0', '1'}}, {{'0', '2'}}, {{'0', '3'}}, {{'0', '4'}}, {{'0', '5'}}, {{'0', '6'}}, {{'0', '7'}}, {{'0', '8'}}, {{'0', '9'}},
+                {{'1', '0'}}, {{'1', '1'}}, {{'1', '2'}}, {{'1', '3'}}, {{'1', '4'}}, {{'1', '5'}}, {{'1', '6'}}, {{'1', '7'}}, {{'1', '8'}}, {{'1', '9'}},
+                {{'2', '0'}}, {{'2', '1'}}, {{'2', '2'}}, {{'2', '3'}}, {{'2', '4'}}, {{'2', '5'}}, {{'2', '6'}}, {{'2', '7'}}, {{'2', '8'}}, {{'2', '9'}},
+                {{'3', '0'}}, {{'3', '1'}}, {{'3', '2'}}, {{'3', '3'}}, {{'3', '4'}}, {{'3', '5'}}, {{'3', '6'}}, {{'3', '7'}}, {{'3', '8'}}, {{'3', '9'}},
+                {{'4', '0'}}, {{'4', '1'}}, {{'4', '2'}}, {{'4', '3'}}, {{'4', '4'}}, {{'4', '5'}}, {{'4', '6'}}, {{'4', '7'}}, {{'4', '8'}}, {{'4', '9'}},
+                {{'5', '0'}}, {{'5', '1'}}, {{'5', '2'}}, {{'5', '3'}}, {{'5', '4'}}, {{'5', '5'}}, {{'5', '6'}}, {{'5', '7'}}, {{'5', '8'}}, {{'5', '9'}},
+                {{'6', '0'}}, {{'6', '1'}}, {{'6', '2'}}, {{'6', '3'}}, {{'6', '4'}}, {{'6', '5'}}, {{'6', '6'}}, {{'6', '7'}}, {{'6', '8'}}, {{'6', '9'}},
+                {{'7', '0'}}, {{'7', '1'}}, {{'7', '2'}}, {{'7', '3'}}, {{'7', '4'}}, {{'7', '5'}}, {{'7', '6'}}, {{'7', '7'}}, {{'7', '8'}}, {{'7', '9'}},
+                {{'8', '0'}}, {{'8', '1'}}, {{'8', '2'}}, {{'8', '3'}}, {{'8', '4'}}, {{'8', '5'}}, {{'8', '6'}}, {{'8', '7'}}, {{'8', '8'}}, {{'8', '9'}},
+                {{'9', '0'}}, {{'9', '1'}}, {{'9', '2'}}, {{'9', '3'}}, {{'9', '4'}}, {{'9', '5'}}, {{'9', '6'}}, {{'9', '7'}}, {{'9', '8'}}, {{'9', '9'}},
             }
         };
 
@@ -600,7 +620,7 @@ class serializer
         }
 
         // use a pointer to fill the buffer
-        auto buffer_ptr = begin(number_buffer);
+        auto buffer_ptr = number_buffer.begin();
 
         const bool is_negative = std::is_same<NumberType, number_integer_t>::value and not(x >= 0); // see issue #755
         number_unsigned_t abs_value;
@@ -610,7 +630,7 @@ class serializer
         if (is_negative)
         {
             *buffer_ptr = '-';
-            abs_value = static_cast<number_unsigned_t>(0 - x);
+            abs_value = static_cast<number_unsigned_t>(std::abs(static_cast<std::intmax_t>(x)));
 
             // account one more byte for the minus sign
             n_chars = 1 + count_digits(abs_value);
@@ -630,7 +650,6 @@ class serializer
 
         // Fast int2ascii implementation inspired by "Fastware" talk by Andrei Alexandrescu
         // See: https://www.youtube.com/watch?v=o4-CwDo2zpg
-        const auto buffer_end = buffer_ptr;
         while (abs_value >= 100)
         {
             const auto digits_index = static_cast<unsigned>((abs_value % 100));
@@ -730,7 +749,7 @@ class serializer
             std::none_of(number_buffer.begin(), number_buffer.begin() + len + 1,
                          [](char c)
         {
-            return (c == '.' or c == 'e');
+            return c == '.' or c == 'e';
         });
 
         if (value_is_int_like)
@@ -760,9 +779,9 @@ class serializer
     @copyright Copyright (c) 2008-2009 Bjoern Hoehrmann <bjoern@hoehrmann.de>
     @sa http://bjoern.hoehrmann.de/utf-8/decoder/dfa/
     */
-    static uint8_t decode(uint8_t& state, uint32_t& codep, const uint8_t byte) noexcept
+    static std::uint8_t decode(std::uint8_t& state, std::uint32_t& codep, const std::uint8_t byte) noexcept
     {
-        static const std::array<uint8_t, 400> utf8d =
+        static const std::array<std::uint8_t, 400> utf8d =
         {
             {
                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 00..1F
@@ -782,11 +801,11 @@ class serializer
             }
         };
 
-        const uint8_t type = utf8d[byte];
+        const std::uint8_t type = utf8d[byte];
 
         codep = (state != UTF8_ACCEPT)
-                ? (byte & 0x3fu) | (codep << 6)
-                : static_cast<uint32_t>(0xff >> type) & (byte);
+                ? (byte & 0x3fu) | (codep << 6u)
+                : (0xFFu >> type) & (byte);
 
         state = utf8d[256u + state * 16u + type];
         return state;

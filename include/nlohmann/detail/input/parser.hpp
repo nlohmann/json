@@ -6,13 +6,14 @@
 #include <functional> // function
 #include <string> // string
 #include <utility> // move
+#include <vector> // vector
 
 #include <nlohmann/detail/exceptions.hpp>
-#include <nlohmann/detail/macro_scope.hpp>
-#include <nlohmann/detail/meta/is_sax.hpp>
 #include <nlohmann/detail/input/input_adapters.hpp>
 #include <nlohmann/detail/input/json_sax.hpp>
 #include <nlohmann/detail/input/lexer.hpp>
+#include <nlohmann/detail/macro_scope.hpp>
+#include <nlohmann/detail/meta/is_sax.hpp>
 #include <nlohmann/detail/value_t.hpp>
 
 namespace nlohmann
@@ -458,7 +459,7 @@ class parser
     /// get next token from lexer
     token_type get_token()
     {
-        return (last_token = m_lexer.scan());
+        return last_token = m_lexer.scan();
     }
 
     std::string exception_message(const token_type expected, const std::string& context)

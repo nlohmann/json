@@ -111,6 +111,12 @@ struct my_allocator : std::allocator<T>
             p->~T();
         }
     }
+
+    template <class U>
+    struct rebind
+    {
+        using other = my_allocator<U>;
+    };
 };
 
 // allows deletion of raw pointer, usually hold by json_value

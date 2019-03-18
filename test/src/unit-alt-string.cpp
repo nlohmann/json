@@ -150,7 +150,7 @@ class alt_string
     }
 
   private:
-    std::string str_impl;
+    std::string str_impl {};
 
     friend bool ::operator<(const char*, const alt_string&);
 };

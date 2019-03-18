@@ -100,6 +100,10 @@ To embed the library directly into an existing CMake project, place the entire s
 # run from your own project's code.
 set(JSON_BuildTests OFF CACHE INTERNAL "")
 
+# If you only include this third party in PRIVATE source files, you do not
+# need to install it when your main project gets installed.
+# set(JSON_Install OFF CACHE INTERNAL "")
+
 # Don't use include(nlohmann_json/CMakeLists.txt) since that carries with it
 # unintended consequences that will break the build.  It's generally
 # discouraged (although not necessarily well documented as such) to use
@@ -155,7 +159,7 @@ If you are using [Spack](https://www.spack.io/) to manage your dependencies, you
 
 If you are using [hunter](https://github.com/ruslo/hunter/) on your project for external dependencies, then you can use the [nlohmann_json package](https://docs.hunter.sh/en/latest/packages/pkg/nlohmann_json.html). Please see the hunter project for any issues regarding the packaging.
 
-If you are using [Buckaroo](https://buckaroo.pm), you can install this library's module with `buckaroo install nlohmann/json`. Please file issues [here](https://github.com/LoopPerfect/buckaroo-recipes/issues/new?title=nlohmann/nlohmann/json).
+If you are using [Buckaroo](https://buckaroo.pm), you can install this library's module with `buckaroo add github.com/buckaroo-pm/nlohmann-json`. Please file issues [here](https://github.com/buckaroo-pm/nlohmann-json). There is a demo repo [here](https://github.com/njlr/buckaroo-nholmann-json-example).
 
 If you are using [vcpkg](https://github.com/Microsoft/vcpkg/) on your project for external dependencies, then you can use the [nlohmann-json package](https://github.com/Microsoft/vcpkg/tree/master/ports/nlohmann-json). Please see the vcpkg project for any issues regarding the packaging.
 
@@ -164,6 +168,8 @@ If you are using [cget](http://cget.readthedocs.io/en/latest/), you can install 
 If you are using [CocoaPods](https://cocoapods.org), you can use the library by adding pod `"nlohmann_json", '~>3.1.2'` to your podfile (see [an example](https://bitbucket.org/benman/nlohmann_json-cocoapod/src/master/)). Please file issues [here](https://bitbucket.org/benman/nlohmann_json-cocoapod/issues?status=new&status=open).
 
 If you are using [NuGet](https://www.nuget.org), you can use the package [nlohmann.json](https://www.nuget.org/packages/nlohmann.json/). Please check [this extensive description](https://github.com/nlohmann/json/issues/1132#issuecomment-452250255) on how to use the package. Please files issues [here](https://github.com/hnkb/nlohmann-json-nuget/issues).
+
+If you are using [conda](https://conda.io/), you can use the package [nlohmann_json](https://github.com/conda-forge/nlohmann_json-feedstock) from [conda-forge](https://conda-forge.org) executing `conda install -c conda-forge nlohmann_json`. Please file issues [here](https://github.com/conda-forge/nlohmann_json-feedstock/issues).
 
 ## Examples
 
@@ -615,7 +621,7 @@ json j_patch = R"({
 })"_json;
 
 // apply the patch
-j_original.merge_patch(j_patch);
+j_document.merge_patch(j_patch);
 // {
 //  "a": "z",
 //  "c": {
@@ -747,7 +753,7 @@ Likewise, when calling `get<your_type>()` or `get_to(your_type&)`, the `from_jso
 Some important things:
 
 * Those methods **MUST** be in your type's namespace (which can be the global namespace), or the library will not be able to locate them (in this example, they are in namespace `ns`, where `person` is defined).
-* Those methods **MUST** be available (e.g., properly headers must be included) everywhere you use these conversions. Look at [issue 1108](https://github.com/nlohmann/json/issues/1108) for errors that may occur otherwise.
+* Those methods **MUST** be available (e.g., proper headers must be included) everywhere you use these conversions. Look at [issue 1108](https://github.com/nlohmann/json/issues/1108) for errors that may occur otherwise.
 * When using `get<your_type>()`, `your_type` **MUST** be [DefaultConstructible](https://en.cppreference.com/w/cpp/named_req/DefaultConstructible). (There is a way to bypass this requirement described later.)
 * In function `from_json`, use function [`at()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a93403e803947b86f4da2d1fb3345cf2c.html#a93403e803947b86f4da2d1fb3345cf2c) to access the object values rather than `operator[]`. In case a key does not exist, `at` throws an exception that you can handle, whereas `operator[]` exhibits undefined behavior.
 * You do not need to add serializers or deserializers for STL types like `std::vector`: the library already implements these.
@@ -915,7 +921,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM( TaskState, {
     {TS_STOPPED, "stopped"},
     {TS_RUNNING, "running"},
     {TS_COMPLETED, "completed"},
-});
+})
 ```
 
 The `NLOHMANN_JSON_SERIALIZE_ENUM()` macro declares a set of `to_json()` / `from_json()` functions for type `TaskState` while avoiding repetition and boilerplate serilization code.
@@ -1034,17 +1040,14 @@ The following compilers are currently used in continuous integration at [Travis]
 | Clang 4.0.1     | Ubuntu 14.04.1 LTS           | clang version 4.0.1-svn305264-1~exp1 (branches/release_40) |
 | Clang 5.0.2     | Ubuntu 14.04.1 LTS           | clang version 5.0.2-svn328729-1~exp1~20180509123505.100 (branches/release_50) |
 | Clang 6.0.1     | Ubuntu 14.04.1 LTS           | clang version 6.0.1-svn334776-1~exp1~20180726133705.85 (branches/release_60) |
-| Clang Xcode 6.4 | OSX 10.10.5 | Apple LLVM version 6.1.0 (clang-602.0.53) (based on LLVM 3.6.0svn) |
-| Clang Xcode 7.3 | OSX 10.11.6 | Apple LLVM version 7.3.0 (clang-703.0.31) |
-| Clang Xcode 8.0 | OSX 10.11.6 | Apple LLVM version 8.0.0 (clang-800.0.38) |
-| Clang Xcode 8.1 | OSX 10.12.6 | Apple LLVM version 8.0.0 (clang-800.0.42.1) |
-| Clang Xcode 8.2 | OSX 10.12.6 | Apple LLVM version 8.0.0 (clang-800.0.42.1) |
+| Clang 7.0.1     | Ubuntu 14.04.1 LTS           | clang version 7.0.1-svn348686-1~exp1~20181213084532.54 (branches/release_70) |
 | Clang Xcode 8.3 | OSX 10.11.6 | Apple LLVM version 8.1.0 (clang-802.0.38) |
 | Clang Xcode 9.0 | OSX 10.12.6 | Apple LLVM version 9.0.0 (clang-900.0.37) |
 | Clang Xcode 9.1 | OSX 10.12.6 | Apple LLVM version 9.0.0 (clang-900.0.38) |
 | Clang Xcode 9.2 | OSX 10.13.3 | Apple LLVM version 9.1.0 (clang-902.0.39.1) |
 | Clang Xcode 9.3 | OSX 10.13.3 | Apple LLVM version 9.1.0 (clang-902.0.39.2) |
 | Clang Xcode 10.0 | OSX 10.13.3 | Apple LLVM version 10.0.0 (clang-1000.11.45.2) |
+| Clang Xcode 10.1 | OSX 10.13.3 | Apple LLVM version 10.0.0 (clang-1000.11.45.5) |
 | Visual Studio 14 2015 | Windows Server 2012 R2 (x64) | Microsoft (R) Build Engine version 14.0.25420.1, MSVC 19.0.24215.1 |
 | Visual Studio 2017 | Windows Server 2016 | Microsoft (R) Build Engine version 15.7.180.61344, MSVC 19.14.26433.0 |
 

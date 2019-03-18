@@ -1,0 +1,3 @@
+parent of "" is ""
+parent of "/foo" is ""
+parent of "/foo/0" is "/foo"

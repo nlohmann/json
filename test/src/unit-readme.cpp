@@ -308,7 +308,7 @@ TEST_CASE("README" * doctest::skip())
             // }
 
             // calculate a JSON patch from two JSON values
-            json::diff(j_result, j_original);
+            auto res = json::diff(j_result, j_original);
             // [
             //   { "op":" replace", "path": "/baz", "value": ["one", "two", "three"] },
             //   { "op":"remove","path":"/hello" },

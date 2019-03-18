@@ -45,5 +45,5 @@ struct iterator_traits<T*, enable_if_t<std::is_object<T>::value>> {
   using pointer = T*;
   using reference = T&;
 };
-}
-}
+} // namespace detail
+} // namespace nlohmann

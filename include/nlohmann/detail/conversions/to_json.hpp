@@ -1,17 +1,19 @@
 #pragma once
 
+#include <algorithm> // copy
 #include <ciso646> // or, and, not
 #include <iterator> // begin, end
+#include <string> // string
 #include <tuple> // tuple, get
 #include <type_traits> // is_same, is_constructible, is_floating_point, is_enum, underlying_type
 #include <utility> // move, forward, declval, pair
 #include <valarray> // valarray
 #include <vector> // vector
 
+#include <nlohmann/detail/iterators/iteration_proxy.hpp>
 #include <nlohmann/detail/meta/cpp_future.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
 #include <nlohmann/detail/value_t.hpp>
-#include <nlohmann/detail/iterators/iteration_proxy.hpp>
 
 namespace nlohmann
 {
