@@ -91,10 +91,8 @@ class binary_reader
                 result = parse_ubjson_internal();
                 break;
 
-            // LCOV_EXCL_START
-            default:
-                assert(false);
-                // LCOV_EXCL_STOP
+            default:            // LCOV_EXCL_LINE
+                assert(false);  // LCOV_EXCL_LINE
         }
 
         // strict mode: next byte must be EOF
@@ -128,7 +126,7 @@ class binary_reader
     */
     static constexpr bool little_endianess(int num = 1) noexcept
     {
-        return (*reinterpret_cast<char*>(&num) == 1);
+        return *reinterpret_cast<char*>(&num) == 1;
     }
 
   private:
@@ -305,12 +303,9 @@ class binary_reader
                 return false;
             }
 
-            if (not is_array)
+            if (not is_array and not sax->key(key))
             {
-                if (not sax->key(key))
-                {
-                    return false;
-                }
+                return false;
             }
 
             if (JSON_UNLIKELY(not parse_bson_element_internal(element_type, element_type_parse_position)))
@@ -1818,7 +1813,7 @@ class binary_reader
     int get()
     {
         ++chars_read;
-        return (current = ia->get_character());
+        return current = ia->get_character();
     }
 
     /*!
@@ -1964,10 +1959,8 @@ class binary_reader
                 error_msg += "BSON";
                 break;
 
-            // LCOV_EXCL_START
-            default:
-                assert(false);
-                // LCOV_EXCL_STOP
+            default:            // LCOV_EXCL_LINE
+                assert(false);  // LCOV_EXCL_LINE
         }
 
         return error_msg + " " + context + ": " + detail;

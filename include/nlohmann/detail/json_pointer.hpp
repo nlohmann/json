@@ -344,7 +344,7 @@ class json_pointer
                     std::all_of(reference_token.begin(), reference_token.end(),
                                 [](const char x)
                 {
-                    return (x >= '0' and x <= '9');
+                    return x >= '0' and x <= '9';
                 });
 
                 // change value to array for numbers or "-" or to object otherwise
@@ -793,7 +793,7 @@ class json_pointer
     friend bool operator==(json_pointer const& lhs,
                            json_pointer const& rhs) noexcept
     {
-        return (lhs.reference_tokens == rhs.reference_tokens);
+        return lhs.reference_tokens == rhs.reference_tokens;
     }
 
     friend bool operator!=(json_pointer const& lhs,

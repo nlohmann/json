@@ -459,7 +459,7 @@ class parser
     /// get next token from lexer
     token_type get_token()
     {
-        return (last_token = m_lexer.scan());
+        return last_token = m_lexer.scan();
     }
 
     std::string exception_message(const token_type expected, const std::string& context)

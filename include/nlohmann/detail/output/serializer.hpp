@@ -279,10 +279,8 @@ class serializer
                 return;
             }
 
-            default:
-            {
+            default:            // LCOV_EXCL_LINE
                 assert(false);  // LCOV_EXCL_LINE
-            }
         }
     }
 
@@ -480,10 +478,8 @@ class serializer
                             break;
                         }
 
-                        default:
-                        {
+                        default:            // LCOV_EXCL_LINE
                             assert(false);  // LCOV_EXCL_LINE
-                        }
                     }
                     break;
                 }
@@ -545,10 +541,8 @@ class serializer
                     break;
                 }
 
-                default:
-                {
+                default:            // LCOV_EXCL_LINE
                     assert(false);  // LCOV_EXCL_LINE
-                }
             }
         }
     }
@@ -755,7 +749,7 @@ class serializer
             std::none_of(number_buffer.begin(), number_buffer.begin() + len + 1,
                          [](char c)
         {
-            return (c == '.' or c == 'e');
+            return c == '.' or c == 'e';
         });
 
         if (value_is_int_like)

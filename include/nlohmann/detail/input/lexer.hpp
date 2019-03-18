@@ -908,13 +908,9 @@ class lexer
                 goto scan_number_any1;
             }
 
-            // LCOV_EXCL_START
-            default:
-            {
-                // all other characters are rejected outside scan_number()
-                assert(false);
-            }
-                // LCOV_EXCL_STOP
+            // all other characters are rejected outside scan_number()
+            default:            // LCOV_EXCL_LINE
+                assert(false);  // LCOV_EXCL_LINE
         }
 
 scan_number_minus:

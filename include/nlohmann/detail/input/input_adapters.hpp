@@ -286,7 +286,7 @@ template<typename WideStringType>
 class wide_string_input_adapter : public input_adapter_protocol
 {
   public:
-    explicit wide_string_input_adapter(const WideStringType& w)  noexcept
+    explicit wide_string_input_adapter(const WideStringType& w) noexcept
         : str(w)
     {}
 

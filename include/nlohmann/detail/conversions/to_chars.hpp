@@ -204,7 +204,7 @@ boundaries compute_boundaries(FloatType value)
     const std::uint64_t E = bits >> (kPrecision - 1);
     const std::uint64_t F = bits & (kHiddenBit - 1);
 
-    const bool is_denormal = (E == 0);
+    const bool is_denormal = E == 0;
     const diyfp v = is_denormal
                     ? diyfp(F, kMinExp)
                     : diyfp(F + kHiddenBit, static_cast<int>(E) - kBias);
@@ -230,7 +230,7 @@ boundaries compute_boundaries(FloatType value)
     //      -----------------+------+------+-------------+-------------+---  (B)
     //                       v-     m-     v             m+            v+
 
-    const bool lower_boundary_is_closer = (F == 0 and E > 1);
+    const bool lower_boundary_is_closer = F == 0 and E > 1;
     const diyfp m_plus = diyfp(2 * v.f + 1, v.e - 1);
     const diyfp m_minus = lower_boundary_is_closer
                           ? diyfp(4 * v.f - 1, v.e - 2)  // (B)
