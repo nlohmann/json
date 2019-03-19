@@ -1231,6 +1231,29 @@ I deeply appreciate the help of the following people.
 - [Sylvain Corlay](https://github.com/SylvainCorlay) added code to avoid an issue with MSVC.
 - [mefyl](https://github.com/mefyl) fixed a bug when JSON was parsed from an input stream.
 - [Millian Poquet](https://github.com/mpoquet) allowed to install the library via Meson.
+- [Michael Behrns-Miller](https://github.com/moodboom) found an issue with a missing namespace.
+- [Nasztanovics Ferenc](https://github.com/naszta) fixed a compilation issue with libc 2.12.
+- [Andreas Schwab](https://github.com/andreas-schwab) fixed the endian conversion.
+- [Mark-Dunning](https://github.com/Mark-Dunning) fixed a warning in MSVC.
+- [Gareth Sylvester-Bradley](https://github.com/garethsb-sony) added `operator/` for JSON Pointers.
+- [John-Mark](https://github.com/johnmarkwayve) noted a missing header.
+- [Vitaly Zaitsev](https://github.com/xvitaly) fixed compilation with GCC 9.0.
+- [Laurent Stacul](https://github.com/stac47) fixed compilation with GCC 9.0.
+- [Ivor Wanders](https://github.com/iwanders) helped reducing the CMake requirement to version 3.1.
+- [njlr](https://github.com/njlr) updated the Buckaroo instructions.
+- [Lion](https://github.com/lieff) fixed a compilation issue with GCC 7 on CentOS.
+- [Isaac Nickaein](https://github.com/nickaein) improved the integer serilization performance and  implemented the `contains()` function.
+- [past-due](https://github.com/past-due) suppressed an unfixable warning.
+- [Elvis Oric](https://github.com/elvisoric) improved Meson support.
+- [Matěj Plch](https://github.com/Afforix) fixed an example in the README.
+- [Mark Beckwith](https://github.com/wythe) fixed a typo.
+- [scinart](https://github.com/scinart) fixed bug in the serializer.
+- [Patrick Boettcher](https://github.com/pboettch) implemented `push_back()` and `pop_back()` for JSON Pointers.
+- [Bruno Oliveira](https://github.com/nicoddemus) added support for Conda.
+- [Michele Caini](https://github.com/skypjack) fixed links in the README.
+- [Hani](https://github.com/hnkb) documented how to install the library with NuGet.
+- [Mark Beckwith](https://github.com/wythe) fixed a typo.
+- [yann-morin-1998](https://github.com/yann-morin-1998) helped reducing the CMake requirement to version 3.1.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
