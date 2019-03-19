@@ -210,7 +210,7 @@ class json_pointer
     @return parent of this JSON pointer; in case this JSON pointer is the root,
             the root itself is returned
 
-    @complexity Constant.
+    @complexity Linear in the length of the JSON pointer.
 
     @liveexample{The example shows the result of `parent_pointer` for different
     JSON Pointers.,json_pointer__parent_pointer}
@@ -230,19 +230,50 @@ class json_pointer
     }
 
     /*!
-    @brief remove and return last reference token
+    @brief remove last reference token
+
+    @pre not `empty()`
+
+    @liveexample{The example shows the usage of `pop_back`.,json_pointer__pop_back}
+
+    @complexity Constant.
+
     @throw out_of_range.405 if JSON pointer has no parent
+
+    @since version 3.6.0
     */
-    std::string pop_back()
+    void pop_back()
     {
         if (JSON_UNLIKELY(empty()))
         {
             JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent"));
         }
 
-        auto last = reference_tokens.back();
         reference_tokens.pop_back();
-        return last;
+    }
+
+    /*!
+    @brief return last reference token
+
+    @pre not `empty()`
+    @return last reference token
+
+    @liveexample{The example shows the usage of `back`.,json_pointer__back}
+
+    @complexity Constant.
+
+    @throw out_of_range.405 if JSON pointer has no parent
+
+    @since version 3.6.0
+    */
+    const std::string& back()
+    {
+        if (JSON_UNLIKELY(empty()))
+        {
+            JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent"));
+        }
+
+        return reference_tokens.back();
     }
 
     /*!
@@ -255,7 +286,7 @@ class json_pointer
     @liveexample{The example shows the result of `push_back` for different
     JSON Pointers.,json_pointer__push_back}
 
-    @since version 0.6.0
+    @since version 3.6.0
     */
     void push_back(const std::string& token)
     {

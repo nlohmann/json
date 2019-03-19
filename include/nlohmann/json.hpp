@@ -7507,7 +7507,8 @@ class basic_json
             }
 
             // get reference to parent of JSON pointer ptr
-            const auto last_path = ptr.pop_back();
+            const auto last_path = ptr.back();
+            ptr.pop_back();
             basic_json& parent = result[ptr];
 
             switch (parent.m_type)
@@ -7552,7 +7553,8 @@ class basic_json
         const auto operation_remove = [&result](json_pointer & ptr)
         {
             // get reference to parent of JSON pointer ptr
-            const auto last_path = ptr.pop_back();
+            const auto last_path = ptr.back();
+            ptr.pop_back();
             basic_json& parent = result.at(ptr);
 
             // remove child
