@@ -3990,7 +3990,7 @@ class basic_json
     template<typename KeyT>
     bool contains(KeyT&& key) const
     {
-        return is_object() and  m_value.object->find(std::forward<KeyT>(key)) != m_value.object->end();
+        return is_object() and m_value.object->find(std::forward<KeyT>(key)) != m_value.object->end();
     }
 
     /// @}
