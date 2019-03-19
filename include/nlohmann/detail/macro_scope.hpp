@@ -88,8 +88,8 @@
 
 // manual branch prediction
 #if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
-    #define JSON_LIKELY(x)      __builtin_expect(static_cast<bool>(x), 1)
-    #define JSON_UNLIKELY(x)    __builtin_expect(static_cast<bool>(x), 0)
+    #define JSON_LIKELY(x)      __builtin_expect(x, 1)
+    #define JSON_UNLIKELY(x)    __builtin_expect(x, 0)
 #else
     #define JSON_LIKELY(x)      x
     #define JSON_UNLIKELY(x)    x
