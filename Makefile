@@ -442,7 +442,7 @@ fuzzing-stop:
 
 # call cppcheck on the main header file
 cppcheck:
-	cppcheck --enable=warning --inconclusive --force --std=c++11 $(SRCS) --error-exitcode=1
+	cppcheck --enable=warning --inline-suppr --inconclusive --force --std=c++11 $(SRCS) --error-exitcode=1
 
 # compile and check with Clang Static Analyzer
 clang_analyze:
