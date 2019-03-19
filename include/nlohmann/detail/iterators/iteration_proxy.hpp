@@ -1,12 +1,12 @@
 #pragma once
 
 #include <cstddef> // size_t
-#include <string> // string, to_string
 #include <iterator> // input_iterator_tag
+#include <string> // string, to_string
 #include <tuple> // tuple_size, get, tuple_element
 
-#include <nlohmann/detail/value_t.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
+#include <nlohmann/detail/value_t.hpp>
 
 namespace nlohmann
 {
@@ -52,13 +52,13 @@ template <typename IteratorType> class iteration_proxy_value
     }
 
     /// equality operator (needed for InputIterator)
-    bool operator==(const iteration_proxy_value& o) const noexcept
+    bool operator==(const iteration_proxy_value& o) const
     {
         return anchor == o.anchor;
     }
 
     /// inequality operator (needed for range-based for)
-    bool operator!=(const iteration_proxy_value& o) const noexcept
+    bool operator!=(const iteration_proxy_value& o) const
     {
         return anchor != o.anchor;
     }
@@ -147,6 +147,11 @@ auto get(const nlohmann::detail::iteration_proxy_value<IteratorType>& i) -> decl
 // And see https://github.com/nlohmann/json/pull/1391
 namespace std
 {
+#if defined(__clang__)
+    // Fix: https://github.com/nlohmann/json/issues/1401
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wmismatched-tags"
+#endif
 template <typename IteratorType>
 class tuple_size<::nlohmann::detail::iteration_proxy_value<IteratorType>>
             : public std::integral_constant<std::size_t, 2> {};
@@ -159,4 +164,7 @@ class tuple_element<N, ::nlohmann::detail::iteration_proxy_value<IteratorType >>
                      get<N>(std::declval <
                             ::nlohmann::detail::iteration_proxy_value<IteratorType >> ()));
 };
-}
+#if defined(__clang__)
+    #pragma clang diagnostic pop
+#endif
+} // namespace std

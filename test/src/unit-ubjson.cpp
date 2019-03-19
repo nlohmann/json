@@ -1,12 +1,12 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.5.0
+|  |  |__   |  |  | | | |  version 3.6.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 SPDX-License-Identifier: MIT
-Copyright (c) 2013-2018 Niels Lohmann <http://nlohmann.me>.
+Copyright (c) 2013-2019 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
 of this software and associated  documentation files (the "Software"), to deal
@@ -175,7 +175,7 @@ TEST_CASE("UBJSON")
                     numbers.push_back(-2147483649ll);
                     for (auto i : numbers)
                     {
-                        CAPTURE(i);
+                        CAPTURE(i)
 
                         // create JSON value with integer number
                         json j = i;
@@ -230,7 +230,7 @@ TEST_CASE("UBJSON")
                     numbers.push_back(-2147483647 - 1); // https://stackoverflow.com/a/29356002/266378
                     for (auto i : numbers)
                     {
-                        CAPTURE(i);
+                        CAPTURE(i)
 
                         // create JSON value with integer number
                         json j = i;
@@ -269,7 +269,7 @@ TEST_CASE("UBJSON")
                 {
                     for (int32_t i = -32768; i <= -129; ++i)
                     {
-                        CAPTURE(i);
+                        CAPTURE(i)
 
                         // create JSON value with integer number
                         json j = i;
@@ -323,7 +323,7 @@ TEST_CASE("UBJSON")
                 {
                     for (auto i = -128; i <= -1; ++i)
                     {
-                        CAPTURE(i);
+                        CAPTURE(i)
 
                         // create JSON value with integer number
                         json j = i;
@@ -355,7 +355,7 @@ TEST_CASE("UBJSON")
                 {
                     for (size_t i = 0; i <= 127; ++i)
                     {
-                        CAPTURE(i);
+                        CAPTURE(i)
 
                         // create JSON value with integer number
                         json j = -1;
@@ -388,7 +388,7 @@ TEST_CASE("UBJSON")
                 {
                     for (size_t i = 128; i <= 255; ++i)
                     {
-                        CAPTURE(i);
+                        CAPTURE(i)
 
                         // create JSON value with integer number
                         json j = -1;
@@ -421,7 +421,7 @@ TEST_CASE("UBJSON")
                 {
                     for (size_t i = 256; i <= 32767; ++i)
                     {
-                        CAPTURE(i);
+                        CAPTURE(i)
 
                         // create JSON value with integer number
                         json j = -1;
@@ -459,7 +459,7 @@ TEST_CASE("UBJSON")
                                 65536u, 77777u, 1048576u
                             })
                     {
-                        CAPTURE(i);
+                        CAPTURE(i)
 
                         // create JSON value with integer number
                         json j = -1;
@@ -500,7 +500,7 @@ TEST_CASE("UBJSON")
                     std::vector<uint64_t> v = {2147483648ul, 9223372036854775807ul};
                     for (uint64_t i : v)
                     {
-                        CAPTURE(i);
+                        CAPTURE(i)
 
                         // create JSON value with integer number
                         json j = -1;
@@ -551,7 +551,7 @@ TEST_CASE("UBJSON")
                 {
                     for (size_t i = 0; i <= 127; ++i)
                     {
-                        CAPTURE(i);
+                        CAPTURE(i)
 
                         // create JSON value with unsigned integer number
                         json j = i;
@@ -584,7 +584,7 @@ TEST_CASE("UBJSON")
                 {
                     for (size_t i = 128; i <= 255; ++i)
                     {
-                        CAPTURE(i);
+                        CAPTURE(i)
 
                         // create JSON value with unsigned integer number
                         json j = i;
@@ -617,7 +617,7 @@ TEST_CASE("UBJSON")
                 {
                     for (size_t i = 256; i <= 32767; ++i)
                     {
-                        CAPTURE(i);
+                        CAPTURE(i)
 
                         // create JSON value with unsigned integer number
                         json j = i;
@@ -654,7 +654,7 @@ TEST_CASE("UBJSON")
                                 65536u, 77777u, 1048576u
                             })
                     {
-                        CAPTURE(i);
+                        CAPTURE(i)
 
                         // create JSON value with unsigned integer number
                         json j = i;
@@ -694,7 +694,7 @@ TEST_CASE("UBJSON")
                     std::vector<uint64_t> v = {2147483648ul, 9223372036854775807ul};
                     for (uint64_t i : v)
                     {
-                        CAPTURE(i);
+                        CAPTURE(i)
 
                         // create JSON value with integer number
                         json j = i;
@@ -765,7 +765,7 @@ TEST_CASE("UBJSON")
             {
                 for (size_t N = 0; N <= 127; ++N)
                 {
-                    CAPTURE(N);
+                    CAPTURE(N)
 
                     // create JSON value with string containing of N * 'x'
                     const auto s = std::string(N, 'x');
@@ -801,7 +801,7 @@ TEST_CASE("UBJSON")
             {
                 for (size_t N = 128; N <= 255; ++N)
                 {
-                    CAPTURE(N);
+                    CAPTURE(N)
 
                     // create JSON value with string containing of N * 'x'
                     const auto s = std::string(N, 'x');
@@ -837,7 +837,7 @@ TEST_CASE("UBJSON")
                             256u, 999u, 1025u, 3333u, 2048u, 32767u
                         })
                 {
-                    CAPTURE(N);
+                    CAPTURE(N)
 
                     // create JSON value with string containing of N * 'x'
                     const auto s = std::string(N, 'x');
@@ -871,7 +871,7 @@ TEST_CASE("UBJSON")
                             65536u, 77777u, 1048576u
                         })
                 {
-                    CAPTURE(N);
+                    CAPTURE(N)
 
                     // create JSON value with string containing of N * 'x'
                     const auto s = std::string(N, 'x');
@@ -2124,17 +2124,17 @@ TEST_CASE("all UBJSON first bytes", "[!throws]")
     for (auto i = 0; i < 256; ++i)
     {
         const auto byte = static_cast<uint8_t>(i);
-        CAPTURE(byte);
+        CAPTURE(byte)
 
         try
         {
-            json::from_ubjson(std::vector<uint8_t>(1, byte));
+            auto res = json::from_ubjson(std::vector<uint8_t>(1, byte));
         }
         catch (const json::parse_error& e)
         {
             // check that parse_error.112 is only thrown if the
             // first byte is not in the supported set
-            CAPTURE(e.what());
+            CAPTURE(e.what())
             if (std::find(supported.begin(), supported.end(), byte) == supported.end())
             {
                 CHECK(e.id == 112);
@@ -2197,7 +2197,7 @@ TEST_CASE("UBJSON roundtrips", "[hide]")
                     "test/data/json_tests/pass3.json"
                 })
         {
-            CAPTURE(filename);
+            CAPTURE(filename)
 
             SECTION(filename + ": std::vector<uint8_t>")
             {

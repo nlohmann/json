@@ -62,3 +62,13 @@ function(add_required_cxx_compiler_flag FLAG)
     message(FATAL_ERROR "Required flag '${FLAG}' is not supported by the compiler")
   endif()
 endfunction()
+
+function(check_cxx_warning_flag FLAG)
+  mangle_compiler_flag("${FLAG}" MANGLED_FLAG)
+  set(OLD_CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS}")
+  # Add -Werror to ensure the compiler generates an error if the warning flag
+  # doesn't exist.
+  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -Werror ${FLAG}")
+  check_cxx_compiler_flag("${FLAG}" ${MANGLED_FLAG})
+  set(CMAKE_REQUIRED_FLAGS "${OLD_CMAKE_REQUIRED_FLAGS}")
+endfunction()

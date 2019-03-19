@@ -1,16 +1,18 @@
 #pragma once
 
+#include <array> // array
 #include <clocale> // localeconv
 #include <cstddef> // size_t
-#include <cstdlib> // strtof, strtod, strtold, strtoll, strtoull
 #include <cstdio> // snprintf
+#include <cstdlib> // strtof, strtod, strtold, strtoll, strtoull
 #include <initializer_list> // initializer_list
 #include <string> // char_traits, string
+#include <utility> // move
 #include <vector> // vector
 
-#include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/input/input_adapters.hpp>
 #include <nlohmann/detail/input/position_t.hpp>
+#include <nlohmann/detail/macro_scope.hpp>
 
 namespace nlohmann
 {
@@ -148,22 +150,22 @@ class lexer
         assert(current == 'u');
         int codepoint = 0;
 
-        const auto factors = { 12, 8, 4, 0 };
+        const auto factors = { 12u, 8u, 4u, 0u };
         for (const auto factor : factors)
         {
             get();
 
             if (current >= '0' and current <= '9')
             {
-                codepoint += ((current - 0x30) << factor);
+                codepoint += static_cast<int>((static_cast<unsigned int>(current) - 0x30u) << factor);
             }
             else if (current >= 'A' and current <= 'F')
             {
-                codepoint += ((current - 0x37) << factor);
+                codepoint += static_cast<int>((static_cast<unsigned int>(current) - 0x37u) << factor);
             }
             else if (current >= 'a' and current <= 'f')
             {
-                codepoint += ((current - 0x57) << factor);
+                codepoint += static_cast<int>((static_cast<unsigned int>(current) - 0x57u) << factor);
             }
             else
             {
@@ -321,15 +323,15 @@ class lexer
                                     if (JSON_LIKELY(0xDC00 <= codepoint2 and codepoint2 <= 0xDFFF))
                                     {
                                         // overwrite codepoint
-                                        codepoint =
-                                            // high surrogate occupies the most significant 22 bits
-                                            (codepoint1 << 10)
-                                            // low surrogate occupies the least significant 15 bits
-                                            + codepoint2
-                                            // there is still the 0xD800, 0xDC00 and 0x10000 noise
-                                            // in the result so we have to subtract with:
-                                            // (0xD800 << 10) + DC00 - 0x10000 = 0x35FDC00
-                                            - 0x35FDC00;
+                                        codepoint = static_cast<int>(
+                                                        // high surrogate occupies the most significant 22 bits
+                                                        (static_cast<unsigned int>(codepoint1) << 10u)
+                                                        // low surrogate occupies the least significant 15 bits
+                                                        + static_cast<unsigned int>(codepoint2)
+                                                        // there is still the 0xD800, 0xDC00 and 0x10000 noise
+                                                        // in the result so we have to subtract with:
+                                                        // (0xD800 << 10) + DC00 - 0x10000 = 0x35FDC00
+                                                        - 0x35FDC00u);
                                     }
                                     else
                                     {
@@ -364,23 +366,23 @@ class lexer
                             else if (codepoint <= 0x7FF)
                             {
                                 // 2-byte characters: 110xxxxx 10xxxxxx
-                                add(0xC0 | (codepoint >> 6));
-                                add(0x80 | (codepoint & 0x3F));
+                                add(static_cast<int>(0xC0u | (static_cast<unsigned int>(codepoint) >> 6u)));
+                                add(static_cast<int>(0x80u | (static_cast<unsigned int>(codepoint) & 0x3Fu)));
                             }
                             else if (codepoint <= 0xFFFF)
                             {
                                 // 3-byte characters: 1110xxxx 10xxxxxx 10xxxxxx
-                                add(0xE0 | (codepoint >> 12));
-                                add(0x80 | ((codepoint >> 6) & 0x3F));
-                                add(0x80 | (codepoint & 0x3F));
+                                add(static_cast<int>(0xE0u | (static_cast<unsigned int>(codepoint) >> 12u)));
+                                add(static_cast<int>(0x80u | ((static_cast<unsigned int>(codepoint) >> 6u) & 0x3Fu)));
+                                add(static_cast<int>(0x80u | (static_cast<unsigned int>(codepoint) & 0x3Fu)));
                             }
                             else
                             {
                                 // 4-byte characters: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-                                add(0xF0 | (codepoint >> 18));
-                                add(0x80 | ((codepoint >> 12) & 0x3F));
-                                add(0x80 | ((codepoint >> 6) & 0x3F));
-                                add(0x80 | (codepoint & 0x3F));
+                                add(static_cast<int>(0xF0u | (static_cast<unsigned int>(codepoint) >> 18u)));
+                                add(static_cast<int>(0x80u | ((static_cast<unsigned int>(codepoint) >> 12u) & 0x3Fu)));
+                                add(static_cast<int>(0x80u | ((static_cast<unsigned int>(codepoint) >> 6u) & 0x3Fu)));
+                                add(static_cast<int>(0x80u | (static_cast<unsigned int>(codepoint) & 0x3Fu)));
                             }
 
                             break;
@@ -906,13 +908,9 @@ class lexer
                 goto scan_number_any1;
             }
 
-            // LCOV_EXCL_START
-            default:
-            {
-                // all other characters are rejected outside scan_number()
-                assert(false);
-            }
-                // LCOV_EXCL_STOP
+            // all other characters are rejected outside scan_number()
+            default:            // LCOV_EXCL_LINE
+                assert(false);  // LCOV_EXCL_LINE
         }
 
 scan_number_minus:
@@ -1262,7 +1260,7 @@ scan_number_done:
         if (current == '\n')
         {
             ++position.lines_read;
-            ++position.chars_read_current_line = 0;
+            position.chars_read_current_line = 0;
         }
 
         return current;
@@ -1297,7 +1295,7 @@ scan_number_done:
 
         if (JSON_LIKELY(current != std::char_traits<char>::eof()))
         {
-            assert(token_string.size() != 0);
+            assert(not token_string.empty());
             token_string.pop_back();
         }
     }
@@ -1359,9 +1357,9 @@ scan_number_done:
             if ('\x00' <= c and c <= '\x1F')
             {
                 // escape control characters
-                char cs[9];
-                (std::snprintf)(cs, 9, "<U+%.4X>", static_cast<unsigned char>(c));
-                result += cs;
+                std::array<char, 9> cs{};
+                (std::snprintf)(cs.data(), cs.size(), "<U+%.4X>", static_cast<unsigned char>(c));
+                result += cs.data();
             }
             else
             {
@@ -1483,7 +1481,7 @@ scan_number_done:
     bool next_unget = false;
 
     /// the start position of the current token
-    position_t position;
+    position_t position {};
 
     /// raw input token string (for error messages)
     std::vector<char> token_string {};

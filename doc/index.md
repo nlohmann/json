@@ -35,6 +35,12 @@ These pages contain the API documentation of JSON for Modern C++, a C++11 header
     - @link nlohmann::basic_json::out_of_range out_of_range @endlink for exceptions indicating access out of the defined range
     - @link nlohmann::basic_json::other_error other_error @endlink for exceptions indicating other library errors
   - lexicographical comparison operators
+    - @link nlohmann::basic_json::operator== operator== @endlink
+    - @link nlohmann::basic_json::operator!= operator!= @endlink
+    - @link nlohmann::basic_json::operator< operator<= @endlink
+    - @link nlohmann::basic_json::operator<= operator< @endlink
+    - @link nlohmann::basic_json::operator> operator> @endlink
+    - @link nlohmann::basic_json::operator>= operator>= @endlink
   - serialization
     - @link nlohmann::basic_json::dump dump @endlink serialize to string
     - @link nlohmann::basic_json::operator<<(std::ostream&, const basic_json &) operator<< @endlink serialize to stream
@@ -44,10 +50,12 @@ These pages contain the API documentation of JSON for Modern C++, a C++11 header
     - @link nlohmann::basic_json::operator>>(std::istream&, basic_json&) operator>> @endlink parse from stream
     - @link nlohmann::basic_json::accept accept @endlink check for syntax errors without parsing
     - @link nlohmann::json_sax SAX interface @endlink define a user-defined SAX event consumer
+    - @link nlohmann::basic_json::parser_callback_t callback interface @endlink register a callback to the parse function
   - [binary formats](binary_formats.md):
     - CBOR: @link nlohmann::basic_json::from_cbor from_cbor @endlink / @link nlohmann::basic_json::to_cbor to_cbor @endlink
     - MessagePack: @link nlohmann::basic_json::from_msgpack from_msgpack @endlink / @link nlohmann::basic_json::to_msgpack to_msgpack @endlink
     - UBJSON: @link nlohmann::basic_json::from_ubjson from_ubjson @endlink / @link nlohmann::basic_json::to_ubjson to_ubjson @endlink
+    - BSON: @link nlohmann::basic_json::from_bson from_bson @endlink / @link nlohmann::basic_json::to_bson to_bson @endlink
 - Types
   - @link nlohmann::basic_json::array_t arrays @endlink
   - @link nlohmann::basic_json::object_t objects @endlink
@@ -57,6 +65,10 @@ These pages contain the API documentation of JSON for Modern C++, a C++11 header
     - @link nlohmann::basic_json::number_integer_t signed integers @endlink
     - @link nlohmann::basic_json::number_unsigned_t unsigned integers @endlink
     - @link nlohmann::basic_json::number_float_t floating-point @endlink
+- further JSON standards
+  - @link nlohmann::json_pointer JSON Pointer @endlink (REF 6901)
+  - @link nlohmann::basic_json::patch JSON Patch @endlink (RFC 6902)
+  - @link nlohmann::basic_json::merge_patch JSON Merge Patch @endlink (RFC 7396)
 
 # Container function overview
 
@@ -281,7 +293,7 @@ Note that this table only lists those exceptions thrown due to the type. For ins
     <td class="ok_green">@link nlohmann::basic_json::swap `swap` @endlink</td>
   </tr>
   <tr>
-    <td rowspan="2">lookup</td>
+    <td rowspan="3">lookup</td>
     <td>`find`</td>
     <td class="ok_green">@link nlohmann::basic_json::find `find` @endlink</td>
     <td class="ok_green">@link nlohmann::basic_json::find `find` @endlink (returns `end()`)</td>
@@ -299,11 +311,20 @@ Note that this table only lists those exceptions thrown due to the type. For ins
     <td class="ok_green">@link nlohmann::basic_json::count `count` @endlink (returns `0`)</td>
     <td class="ok_green">@link nlohmann::basic_json::count `count` @endlink (returns `0`)</td>
   </tr>
+  <tr>
+    <td>`contains`</td>
+    <td class="ok_green">@link nlohmann::basic_json::contains `contains` @endlink</td>
+    <td class="ok_green">@link nlohmann::basic_json::contains `contains` @endlink (returns `false`)</td>
+    <td class="ok_green">@link nlohmann::basic_json::contains `contains` @endlink (returns `false`)</td>
+    <td class="ok_green">@link nlohmann::basic_json::contains `contains` @endlink (returns `false`)</td>
+    <td class="ok_green">@link nlohmann::basic_json::contains `contains` @endlink (returns `false`)</td>
+    <td class="ok_green">@link nlohmann::basic_json::contains `contains` @endlink (returns `false`)</td>
+  </tr>
 </table>
 
-@copyright Copyright &copy; 2013-2018 Niels Lohmann. The code is licensed under the [MIT License](http://opensource.org/licenses/MIT).
+@copyright Copyright &copy; 2013-2019 Niels Lohmann. The code is licensed under the [MIT License](http://opensource.org/licenses/MIT).
 
 @author [Niels Lohmann](http://nlohmann.me)
 @see https://github.com/nlohmann/json to download the source code
 
-@version 3.5.0
+@version 3.6.0

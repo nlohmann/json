@@ -1,12 +1,12 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.5.0
+|  |  |__   |  |  | | | |  version 3.6.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 SPDX-License-Identifier: MIT
-Copyright (c) 2013-2018 Niels Lohmann <http://nlohmann.me>.
+Copyright (c) 2013-2019 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
 of this software and associated  documentation files (the "Software"), to deal
@@ -146,9 +146,9 @@ TEST_CASE("digit gen")
     {
         auto check_float = [](float number, const std::string & digits, int expected_exponent)
         {
-            CAPTURE(number);
-            CAPTURE(digits);
-            CAPTURE(expected_exponent);
+            CAPTURE(number)
+            CAPTURE(digits)
+            CAPTURE(expected_exponent)
 
             char buf[32];
             int len = 0;
@@ -210,9 +210,9 @@ TEST_CASE("digit gen")
     {
         auto check_double = [](double number, const std::string & digits, int expected_exponent)
         {
-            CAPTURE(number);
-            CAPTURE(digits);
-            CAPTURE(expected_exponent);
+            CAPTURE(number)
+            CAPTURE(digits)
+            CAPTURE(expected_exponent)
 
             char buf[32];
             int len = 0;
@@ -470,5 +470,65 @@ TEST_CASE("formatting")
         check_double(  1.2345e+20,   "1.2345e+20"             ); //  1.2345e+20                1.2345e+20                1.2345e20
         check_double(  1.2345e+21,   "1.2344999999999999e+21" ); //  1.2345e+21                1.2344999999999999e+21    1.2345e21
         check_double(  1.2345e+22,   "1.2345e+22"             ); //  1.2345e+22                1.2345e+22                1.2345e22
+    }
+
+    SECTION("integer")
+    {
+        auto check_integer = [](std::int64_t number, const std::string & expected)
+        {
+            nlohmann::json j = number;
+            CHECK(j.dump() == expected);
+        };
+
+        // edge cases
+        check_integer(INT64_MIN, "-9223372036854775808");
+        check_integer(INT64_MAX, "9223372036854775807");
+
+        // few random big integers
+        check_integer(-3456789012345678901LL, "-3456789012345678901");
+        check_integer(3456789012345678901LL, "3456789012345678901");
+        check_integer(-5678901234567890123LL, "-5678901234567890123");
+        check_integer(5678901234567890123LL, "5678901234567890123");
+
+        // integers with various digit counts
+        check_integer(-1000000000000000000LL, "-1000000000000000000");
+        check_integer(-100000000000000000LL, "-100000000000000000");
+        check_integer(-10000000000000000LL, "-10000000000000000");
+        check_integer(-1000000000000000LL, "-1000000000000000");
+        check_integer(-100000000000000LL, "-100000000000000");
+        check_integer(-10000000000000LL, "-10000000000000");
+        check_integer(-1000000000000LL, "-1000000000000");
+        check_integer(-100000000000LL, "-100000000000");
+        check_integer(-10000000000LL, "-10000000000");
+        check_integer(-1000000000LL, "-1000000000");
+        check_integer(-100000000LL, "-100000000");
+        check_integer(-10000000LL, "-10000000");
+        check_integer(-1000000LL, "-1000000");
+        check_integer(-100000LL, "-100000");
+        check_integer(-10000LL, "-10000");
+        check_integer(-1000LL, "-1000");
+        check_integer(-100LL, "-100");
+        check_integer(-10LL, "-10");
+        check_integer(-1LL, "-1");
+        check_integer(0, "0");
+        check_integer(1LL, "1");
+        check_integer(10LL, "10");
+        check_integer(100LL, "100");
+        check_integer(1000LL, "1000");
+        check_integer(10000LL, "10000");
+        check_integer(100000LL, "100000");
+        check_integer(1000000LL, "1000000");
+        check_integer(10000000LL, "10000000");
+        check_integer(100000000LL, "100000000");
+        check_integer(1000000000LL, "1000000000");
+        check_integer(10000000000LL, "10000000000");
+        check_integer(100000000000LL, "100000000000");
+        check_integer(1000000000000LL, "1000000000000");
+        check_integer(10000000000000LL, "10000000000000");
+        check_integer(100000000000000LL, "100000000000000");
+        check_integer(1000000000000000LL, "1000000000000000");
+        check_integer(10000000000000000LL, "10000000000000000");
+        check_integer(100000000000000000LL, "100000000000000000");
+        check_integer(1000000000000000000LL, "1000000000000000000");
     }
 }

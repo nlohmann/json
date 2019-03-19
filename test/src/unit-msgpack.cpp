@@ -1,12 +1,12 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.5.0
+|  |  |__   |  |  | | | |  version 3.6.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 SPDX-License-Identifier: MIT
-Copyright (c) 2013-2018 Niels Lohmann <http://nlohmann.me>.
+Copyright (c) 2013-2019 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
 of this software and associated  documentation files (the "Software"), to deal
@@ -163,7 +163,7 @@ TEST_CASE("MessagePack")
                 {
                     for (auto i = -32; i <= -1; ++i)
                     {
-                        CAPTURE(i);
+                        CAPTURE(i)
 
                         // create JSON value with integer number
                         json j = i;
@@ -193,7 +193,7 @@ TEST_CASE("MessagePack")
                 {
                     for (size_t i = 0; i <= 127; ++i)
                     {
-                        CAPTURE(i);
+                        CAPTURE(i)
 
                         // create JSON value with integer number
                         json j = -1;
@@ -224,7 +224,7 @@ TEST_CASE("MessagePack")
                 {
                     for (size_t i = 128; i <= 255; ++i)
                     {
-                        CAPTURE(i);
+                        CAPTURE(i)
 
                         // create JSON value with integer number
                         json j = -1;
@@ -258,7 +258,7 @@ TEST_CASE("MessagePack")
                 {
                     for (size_t i = 256; i <= 65535; ++i)
                     {
-                        CAPTURE(i);
+                        CAPTURE(i)
 
                         // create JSON value with integer number
                         json j = -1;
@@ -296,7 +296,7 @@ TEST_CASE("MessagePack")
                                 65536u, 77777u, 1048576u, 4294967295u
                             })
                     {
-                        CAPTURE(i);
+                        CAPTURE(i)
 
                         // create JSON value with integer number
                         json j = -1;
@@ -339,7 +339,7 @@ TEST_CASE("MessagePack")
                                 4294967296lu, 9223372036854775807lu
                             })
                     {
-                        CAPTURE(i);
+                        CAPTURE(i)
 
                         // create JSON value with integer number
                         json j = -1;
@@ -387,7 +387,7 @@ TEST_CASE("MessagePack")
                 {
                     for (auto i = -128; i <= -33; ++i)
                     {
-                        CAPTURE(i);
+                        CAPTURE(i)
 
                         // create JSON value with integer number
                         json j = i;
@@ -435,7 +435,7 @@ TEST_CASE("MessagePack")
                 {
                     for (int16_t i = -32768; i <= -129; ++i)
                     {
-                        CAPTURE(i);
+                        CAPTURE(i)
 
                         // create JSON value with integer number
                         json j = i;
@@ -475,7 +475,7 @@ TEST_CASE("MessagePack")
                     numbers.push_back(-2147483648ll);
                     for (auto i : numbers)
                     {
-                        CAPTURE(i);
+                        CAPTURE(i)
 
                         // create JSON value with integer number
                         json j = i;
@@ -517,7 +517,7 @@ TEST_CASE("MessagePack")
                     numbers.push_back(-2147483649ll);
                     for (auto i : numbers)
                     {
-                        CAPTURE(i);
+                        CAPTURE(i)
 
                         // create JSON value with unsigned integer number
                         json j = i;
@@ -567,7 +567,7 @@ TEST_CASE("MessagePack")
                 {
                     for (size_t i = 0; i <= 127; ++i)
                     {
-                        CAPTURE(i);
+                        CAPTURE(i)
 
                         // create JSON value with unsigned integer number
                         json j = i;
@@ -597,7 +597,7 @@ TEST_CASE("MessagePack")
                 {
                     for (size_t i = 128; i <= 255; ++i)
                     {
-                        CAPTURE(i);
+                        CAPTURE(i)
 
                         // create JSON value with unsigned integer number
                         json j = i;
@@ -630,7 +630,7 @@ TEST_CASE("MessagePack")
                 {
                     for (size_t i = 256; i <= 65535; ++i)
                     {
-                        CAPTURE(i);
+                        CAPTURE(i)
 
                         // create JSON value with unsigned integer number
                         json j = i;
@@ -667,7 +667,7 @@ TEST_CASE("MessagePack")
                                 65536u, 77777u, 1048576u, 4294967295u
                             })
                     {
-                        CAPTURE(i);
+                        CAPTURE(i)
 
                         // create JSON value with unsigned integer number
                         json j = i;
@@ -709,7 +709,7 @@ TEST_CASE("MessagePack")
                                 4294967296lu, 18446744073709551615lu
                             })
                     {
-                        CAPTURE(i);
+                        CAPTURE(i)
 
                         // create JSON value with unsigned integer number
                         json j = i;
@@ -789,7 +789,7 @@ TEST_CASE("MessagePack")
 
                 for (size_t N = 0; N < first_bytes.size(); ++N)
                 {
-                    CAPTURE(N);
+                    CAPTURE(N)
 
                     // create JSON value with string containing of N * 'x'
                     const auto s = std::string(N, 'x');
@@ -826,7 +826,7 @@ TEST_CASE("MessagePack")
             {
                 for (size_t N = 32; N <= 255; ++N)
                 {
-                    CAPTURE(N);
+                    CAPTURE(N)
 
                     // create JSON value with string containing of N * 'x'
                     const auto s = std::string(N, 'x');
@@ -861,7 +861,7 @@ TEST_CASE("MessagePack")
                             256u, 999u, 1025u, 3333u, 2048u, 65535u
                         })
                 {
-                    CAPTURE(N);
+                    CAPTURE(N)
 
                     // create JSON value with string containing of N * 'x'
                     const auto s = std::string(N, 'x');
@@ -894,7 +894,7 @@ TEST_CASE("MessagePack")
                             65536u, 77777u, 1048576u
                         })
                 {
-                    CAPTURE(N);
+                    CAPTURE(N)
 
                     // create JSON value with string containing of N * 'x'
                     const auto s = std::string(N, 'x');
@@ -1003,7 +1003,7 @@ TEST_CASE("MessagePack")
                 CHECK(result.size() == expected.size());
                 for (size_t i = 0; i < expected.size(); ++i)
                 {
-                    CAPTURE(i);
+                    CAPTURE(i)
                     CHECK(result[i] == expected[i]);
                 }
 
@@ -1517,7 +1517,7 @@ TEST_CASE("MessagePack roundtrips", "[hide]")
                     "test/data/nst_json_testsuite/test_parsing/y_structure_whitespace_array.json"
                 })
         {
-            CAPTURE(filename);
+            CAPTURE(filename)
 
             SECTION(filename + ": std::vector<uint8_t>")
             {

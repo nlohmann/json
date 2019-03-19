@@ -19,6 +19,7 @@ file(COPY ${CMAKE_SOURCE_DIR}/data DESTINATION .)
 file(COPY ${CMAKE_SOURCE_DIR}/../test/data/regression/floats.json
           ${CMAKE_SOURCE_DIR}/../test/data/regression/unsigned_ints.json
           ${CMAKE_SOURCE_DIR}/../test/data/regression/signed_ints.json
+          ${CMAKE_SOURCE_DIR}/../test/data/regression/small_signed_ints.json
     DESTINATION data/numbers)
 
 # benchmark binary

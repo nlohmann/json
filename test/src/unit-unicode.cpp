@@ -1,12 +1,12 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.5.0
+|  |  |__   |  |  | | | |  version 3.6.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 SPDX-License-Identifier: MIT
-Copyright (c) 2013-2018 Niels Lohmann <http://nlohmann.me>.
+Copyright (c) 2013-2019 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
 of this software and associated  documentation files (the "Software"), to deal
@@ -45,10 +45,10 @@ void check_utf8dump(bool success_expected, int byte1, int byte2 = -1, int byte3 
 {
     std::string json_string;
 
-    CAPTURE(byte1);
-    CAPTURE(byte2);
-    CAPTURE(byte3);
-    CAPTURE(byte4);
+    CAPTURE(byte1)
+    CAPTURE(byte2)
+    CAPTURE(byte3)
+    CAPTURE(byte4)
 
     json_string += std::string(1, static_cast<char>(byte1));
 
@@ -67,7 +67,7 @@ void check_utf8dump(bool success_expected, int byte1, int byte2 = -1, int byte3 
         json_string += std::string(1, static_cast<char>(byte4));
     }
 
-    CAPTURE(json_string);
+    CAPTURE(json_string)
 
     // store the string in a JSON value
     json j = json_string;
@@ -125,30 +125,30 @@ void check_utf8string(bool success_expected, int byte1, int byte2 = -1, int byte
 
     std::string json_string = "\"";
 
-    CAPTURE(byte1);
+    CAPTURE(byte1)
     json_string += std::string(1, static_cast<char>(byte1));
 
     if (byte2 != -1)
     {
-        CAPTURE(byte2);
+        CAPTURE(byte2)
         json_string += std::string(1, static_cast<char>(byte2));
     }
 
     if (byte3 != -1)
     {
-        CAPTURE(byte3);
+        CAPTURE(byte3)
         json_string += std::string(1, static_cast<char>(byte3));
     }
 
     if (byte4 != -1)
     {
-        CAPTURE(byte4);
+        CAPTURE(byte4)
         json_string += std::string(1, static_cast<char>(byte4));
     }
 
     json_string += "\"";
 
-    CAPTURE(json_string);
+    CAPTURE(json_string)
 
     if (success_expected)
     {
@@ -1041,7 +1041,7 @@ TEST_CASE("Unicode", "[hide]")
                 }
 
                 json_text += "\"";
-                CAPTURE(json_text);
+                CAPTURE(json_text)
                 CHECK_NOTHROW(json::parse(json_text));
             }
         }
@@ -1090,7 +1090,7 @@ TEST_CASE("Unicode", "[hide]")
                 for (std::size_t cp = 0xD800u; cp <= 0xDBFFu; ++cp)
                 {
                     std::string json_text = "\"" + codepoint_to_unicode(cp) + "\"";
-                    CAPTURE(json_text);
+                    CAPTURE(json_text)
                     CHECK_THROWS_AS(json::parse(json_text), json::parse_error&);
                 }
             }
@@ -1109,7 +1109,7 @@ TEST_CASE("Unicode", "[hide]")
                         }
 
                         std::string json_text = "\"" + codepoint_to_unicode(cp1) + codepoint_to_unicode(cp2) + "\"";
-                        CAPTURE(json_text);
+                        CAPTURE(json_text)
                         CHECK_THROWS_AS(json::parse(json_text), json::parse_error&);
                     }
                 }
@@ -1122,7 +1122,7 @@ TEST_CASE("Unicode", "[hide]")
                 for (std::size_t cp = 0xDC00u; cp <= 0xDFFFu; ++cp)
                 {
                     std::string json_text = "\"" + codepoint_to_unicode(cp) + "\"";
-                    CAPTURE(json_text);
+                    CAPTURE(json_text)
                     CHECK_THROWS_AS(json::parse(json_text), json::parse_error&);
                 }
             }
@@ -1203,7 +1203,7 @@ void roundtrip(bool success_expected, const std::string& s);
 
 void roundtrip(bool success_expected, const std::string& s)
 {
-    CAPTURE(s);
+    CAPTURE(s)
 
     // create JSON string value
     json j = s;

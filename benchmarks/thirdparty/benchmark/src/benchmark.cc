@@ -17,7 +17,9 @@
 #include "internal_macros.h"
 
 #ifndef BENCHMARK_OS_WINDOWS
+#ifndef BENCHMARK_OS_FUCHSIA
 #include <sys/resource.h>
+#endif
 #include <sys/time.h>
 #include <unistd.h>
 #endif
@@ -27,10 +29,10 @@
 #include <condition_variable>
 #include <cstdio>
 #include <cstdlib>
-#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <string>
 #include <thread>
 
 #include "check.h"
@@ -44,7 +46,8 @@
 #include "re.h"
 #include "statistics.h"
 #include "string_util.h"
-#include "timers.h"
+#include "thread_manager.h"
+#include "thread_timer.h"
 
 DEFINE_bool(benchmark_list_tests, false,
             "Print a list of benchmarks. This option overrides all other "
@@ -82,7 +85,7 @@ DEFINE_string(benchmark_out_format, "json",
               "The format to use for file output. Valid values are "
               "'console', 'json', or 'csv'.");
 
-DEFINE_string(benchmark_out, "", "The file to write additonal output to");
+DEFINE_string(benchmark_out, "", "The file to write additional output to");
 
 DEFINE_string(benchmark_color, "auto",
               "Whether to use colors in the output.  Valid values: "
@@ -108,118 +111,11 @@ namespace internal {
 
 void UseCharPointer(char const volatile*) {}
 
-class ThreadManager {
- public:
-  ThreadManager(int num_threads)
-      : alive_threads_(num_threads), start_stop_barrier_(num_threads) {}
-
-  Mutex& GetBenchmarkMutex() const RETURN_CAPABILITY(benchmark_mutex_) {
-    return benchmark_mutex_;
-  }
-
-  bool StartStopBarrier() EXCLUDES(end_cond_mutex_) {
-    return start_stop_barrier_.wait();
-  }
-
-  void NotifyThreadComplete() EXCLUDES(end_cond_mutex_) {
-    start_stop_barrier_.removeThread();
-    if (--alive_threads_ == 0) {
-      MutexLock lock(end_cond_mutex_);
-      end_condition_.notify_all();
-    }
-  }
-
-  void WaitForAllThreads() EXCLUDES(end_cond_mutex_) {
-    MutexLock lock(end_cond_mutex_);
-    end_condition_.wait(lock.native_handle(),
-                        [this]() { return alive_threads_ == 0; });
-  }
-
- public:
-  struct Result {
-    double real_time_used = 0;
-    double cpu_time_used = 0;
-    double manual_time_used = 0;
-    int64_t bytes_processed = 0;
-    int64_t items_processed = 0;
-    int complexity_n = 0;
-    std::string report_label_;
-    std::string error_message_;
-    bool has_error_ = false;
-    UserCounters counters;
-  };
-  GUARDED_BY(GetBenchmarkMutex()) Result results;
-
- private:
-  mutable Mutex benchmark_mutex_;
-  std::atomic<int> alive_threads_;
-  Barrier start_stop_barrier_;
-  Mutex end_cond_mutex_;
-  Condition end_condition_;
-};
-
-// Timer management class
-class ThreadTimer {
- public:
-  ThreadTimer() = default;
-
-  // Called by each thread
-  void StartTimer() {
-    running_ = true;
-    start_real_time_ = ChronoClockNow();
-    start_cpu_time_ = ThreadCPUUsage();
-  }
-
-  // Called by each thread
-  void StopTimer() {
-    CHECK(running_);
-    running_ = false;
-    real_time_used_ += ChronoClockNow() - start_real_time_;
-    // Floating point error can result in the subtraction producing a negative
-    // time. Guard against that.
-    cpu_time_used_ += std::max<double>(ThreadCPUUsage() - start_cpu_time_, 0);
-  }
-
-  // Called by each thread
-  void SetIterationTime(double seconds) { manual_time_used_ += seconds; }
-
-  bool running() const { return running_; }
-
-  // REQUIRES: timer is not running
-  double real_time_used() {
-    CHECK(!running_);
-    return real_time_used_;
-  }
-
-  // REQUIRES: timer is not running
-  double cpu_time_used() {
-    CHECK(!running_);
-    return cpu_time_used_;
-  }
-
-  // REQUIRES: timer is not running
-  double manual_time_used() {
-    CHECK(!running_);
-    return manual_time_used_;
-  }
-
- private:
-  bool running_ = false;        // Is the timer running
-  double start_real_time_ = 0;  // If running_
-  double start_cpu_time_ = 0;   // If running_
-
-  // Accumulated time so far (does not contain current slice if running_)
-  double real_time_used_ = 0;
-  double cpu_time_used_ = 0;
-  // Manually set iteration time. User sets this with SetIterationTime(seconds).
-  double manual_time_used_ = 0;
-};
-
 namespace {
 
 BenchmarkReporter::Run CreateRunReport(
     const benchmark::internal::Benchmark::Instance& b,
-    const internal::ThreadManager::Result& results, size_t iters,
+    const internal::ThreadManager::Result& results,
     double seconds) {
   // Create report about this benchmark run.
   BenchmarkReporter::Run report;
@@ -228,8 +124,8 @@ BenchmarkReporter::Run CreateRunReport(
   report.error_occurred = results.has_error_;
   report.error_message = results.error_message_;
   report.report_label = results.report_label_;
-  // Report the total iterations across all threads.
-  report.iterations = static_cast<int64_t>(iters) * b.threads;
+  // This is the total iterations across all threads.
+  report.iterations = results.iterations;
   report.time_unit = b.time_unit;
 
   if (!report.error_occurred) {
@@ -268,11 +164,12 @@ void RunInThread(const benchmark::internal::Benchmark::Instance* b,
   internal::ThreadTimer timer;
   State st(iters, b->arg, thread_id, b->threads, &timer, manager);
   b->benchmark->Run(st);
-  CHECK(st.iterations() == st.max_iterations)
+  CHECK(st.iterations() >= st.max_iterations)
       << "Benchmark returned before State::KeepRunning() returned false!";
   {
     MutexLock l(manager->GetBenchmarkMutex());
     internal::ThreadManager::Result& results = manager->results;
+    results.iterations += st.iterations();
     results.cpu_time_used += timer.cpu_time_used();
     results.real_time_used += timer.real_time_used();
     results.manual_time_used += timer.manual_time_used();
@@ -340,18 +237,17 @@ std::vector<BenchmarkReporter::Run> RunBenchmark(
       // Determine if this run should be reported; Either it has
       // run for a sufficient amount of time or because an error was reported.
       const bool should_report =  repetition_num > 0
-        || has_explicit_iteration_count // An exact iteration count was requested
+        || has_explicit_iteration_count  // An exact iteration count was requested
         || results.has_error_
-        || iters >= kMaxIterations
-        || seconds >= min_time // the elapsed time is large enough
+        || iters >= kMaxIterations  // No chance to try again, we hit the limit.
+        || seconds >= min_time  // the elapsed time is large enough
         // CPU time is specified but the elapsed real time greatly exceeds the
         // minimum time. Note that user provided timers are except from this
         // sanity check.
         || ((results.real_time_used >= 5 * min_time) && !b.use_manual_time);
 
       if (should_report) {
-        BenchmarkReporter::Run report =
-            CreateRunReport(b, results, iters, seconds);
+        BenchmarkReporter::Run report = CreateRunReport(b, results, seconds);
         if (!report.error_occurred && b.complexity != oNone)
           complexity_reports->push_back(report);
         reports.push_back(report);
@@ -394,26 +290,44 @@ std::vector<BenchmarkReporter::Run> RunBenchmark(
 }  // namespace
 }  // namespace internal
 
-State::State(size_t max_iters, const std::vector<int>& ranges, int thread_i,
+State::State(size_t max_iters, const std::vector<int64_t>& ranges, int thread_i,
              int n_threads, internal::ThreadTimer* timer,
              internal::ThreadManager* manager)
-    : started_(false),
+    : total_iterations_(0),
+      batch_leftover_(0),
+      max_iterations(max_iters),
+      started_(false),
       finished_(false),
-      total_iterations_(max_iters + 1),
+      error_occurred_(false),
       range_(ranges),
       bytes_processed_(0),
       items_processed_(0),
       complexity_n_(0),
-      error_occurred_(false),
       counters(),
       thread_index(thread_i),
       threads(n_threads),
-      max_iterations(max_iters),
       timer_(timer),
       manager_(manager) {
   CHECK(max_iterations != 0) << "At least one iteration must be run";
-  CHECK(total_iterations_ != 0) << "max iterations wrapped around";
   CHECK_LT(thread_index, threads) << "thread_index must be less than threads";
+
+  // Note: The use of offsetof below is technically undefined until C++17
+  // because State is not a standard layout type. However, all compilers
+  // currently provide well-defined behavior as an extension (which is
+  // demonstrated since constexpr evaluation must diagnose all undefined
+  // behavior). However, GCC and Clang also warn about this use of offsetof,
+  // which must be suppressed.
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Winvalid-offsetof"
+#endif
+  // Offset tests to ensure commonly accessed data is on the first cache line.
+  const int cache_line_size = 64;
+  static_assert(offsetof(State, error_occurred_) <=
+                (cache_line_size - sizeof(error_occurred_)), "");
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
 }
 
 void State::PauseTiming() {
@@ -437,7 +351,7 @@ void State::SkipWithError(const char* msg) {
       manager_->results.has_error_ = true;
     }
   }
-  total_iterations_ = 1;
+  total_iterations_ = 0;
   if (timer_->running()) timer_->StopTimer();
 }
 
@@ -453,6 +367,7 @@ void State::SetLabel(const char* label) {
 void State::StartKeepRunning() {
   CHECK(!started_ && !finished_);
   started_ = true;
+  total_iterations_ = error_occurred_ ? 0 : max_iterations;
   manager_->StartStopBarrier();
   if (!error_occurred_) ResumeTiming();
 }
@@ -462,8 +377,8 @@ void State::FinishKeepRunning() {
   if (!error_occurred_) {
     PauseTiming();
   }
-  // Total iterations has now wrapped around zero. Fix this.
-  total_iterations_ = 1;
+  // Total iterations has now wrapped around past 0. Fix this.
+  total_iterations_ = 0;
   finished_ = true;
   manager_->StartStopBarrier();
 }
@@ -495,7 +410,7 @@ void RunBenchmarks(const std::vector<Benchmark::Instance>& benchmarks,
   BenchmarkReporter::Context context;
   context.name_field_width = name_field_width;
 
-  // Keep track of runing times of all instances of current benchmark
+  // Keep track of running times of all instances of current benchmark
   std::vector<BenchmarkReporter::Run> complexity_reports;
 
   // We flush streams after invoking reporter methods that write to them. This
@@ -653,6 +568,7 @@ void PrintUsageAndExit() {
 
 void ParseCommandLineFlags(int* argc, char** argv) {
   using namespace benchmark;
+  BenchmarkReporter::Context::executable_name = argv[0];
   for (int i = 1; i < *argc; ++i) {
     if (ParseBoolFlag(argv[i], "benchmark_list_tests",
                       &FLAGS_benchmark_list_tests) ||

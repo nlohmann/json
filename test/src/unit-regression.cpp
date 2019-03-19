@@ -1,12 +1,12 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.5.0
+|  |  |__   |  |  | | | |  version 3.6.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 SPDX-License-Identifier: MIT
-Copyright (c) 2013-2018 Niels Lohmann <http://nlohmann.me>.
+Copyright (c) 2013-2019 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
 of this software and associated  documentation files (the "Software"), to deal
@@ -124,8 +124,10 @@ struct nocopy
 
 struct Data
 {
-    std::string a;
-    std::string b;
+    Data() = default;
+    Data(const std::string& a_, const std::string b_) : a(a_), b(b_) {}
+    std::string a {};
+    std::string b {};
 };
 
 void from_json(const json& j, Data& data)
@@ -656,7 +658,7 @@ TEST_CASE("regression tests")
                     "test/data/regression/working_file.json"
                 })
         {
-            CAPTURE(filename);
+            CAPTURE(filename)
             json j;
             std::ifstream f(filename);
             CHECK_NOTHROW(f >> j);
@@ -669,10 +671,11 @@ TEST_CASE("regression tests")
                 {
                     "test/data/regression/floats.json",
                     "test/data/regression/signed_ints.json",
-                    "test/data/regression/unsigned_ints.json"
+                    "test/data/regression/unsigned_ints.json",
+                    "test/data/regression/small_signed_ints.json"
                 })
         {
-            CAPTURE(filename);
+            CAPTURE(filename)
             json j;
             std::ifstream f(filename);
             CHECK_NOTHROW(f >> j);
@@ -697,7 +700,7 @@ TEST_CASE("regression tests")
     {
         auto check_roundtrip = [](double number)
         {
-            CAPTURE(number);
+            CAPTURE(number)
 
             json j = number;
             CHECK(j.is_number_float());
@@ -900,7 +903,7 @@ TEST_CASE("regression tests")
             size_t i = 0;
             while (stream.peek() != EOF)
             {
-                CAPTURE(i);
+                CAPTURE(i)
                 CHECK_NOTHROW(stream >> val);
 
                 CHECK(i < 2);
@@ -1109,12 +1112,12 @@ TEST_CASE("regression tests")
     CHECK_FALSE((json(v) != v));\
     CHECK_FALSE((v != json(v)));
 
-        CHECK_TYPE(nullptr);
-        CHECK_TYPE(0);
-        CHECK_TYPE(0u);
-        CHECK_TYPE(0L);
-        CHECK_TYPE(0.0);
-        CHECK_TYPE("");
+        CHECK_TYPE(nullptr)
+        CHECK_TYPE(0)
+        CHECK_TYPE(0u)
+        CHECK_TYPE(0L)
+        CHECK_TYPE(0.0)
+        CHECK_TYPE("")
 
 #undef CHECK_TYPE
     }
@@ -1700,12 +1703,80 @@ TEST_CASE("regression tests")
 
         std::map<std::string, Data> expected
         {
-            {"1", {"testa_1", "testb_1" }},
+            {"1", {"testa_1", "testb_1"}},
             {"2", {"testa_2", "testb_2"}},
             {"3", {"testa_3", "testb_3"}},
         };
         const auto data = j.get<decltype(expected)>();
         CHECK(expected == data);
+    }
+
+    SECTION("issue #1445 - buffer overflow in dumping invalid utf-8 strings")
+    {
+        SECTION("a bunch of -1, ensure_ascii=true")
+        {
+            json dump_test;
+            std::vector<char> data(300, -1);
+            std::vector<std::string> vec_string(300, "\\ufffd");
+            std::string s{data.data(), data.size()};
+            dump_test["1"] = s;
+            std::ostringstream os;
+            os << "{\"1\":\"";
+            std::copy( vec_string.begin(), vec_string.end(), std::ostream_iterator<std::string>(os));
+            os << "\"}";
+            s = dump_test.dump(-1, ' ', true, nlohmann::json::error_handler_t::replace);
+            CHECK(s == os.str());
+        }
+        SECTION("a bunch of -2, ensure_ascii=false")
+        {
+            json dump_test;
+            std::vector<char> data(500, -2);
+            std::vector<std::string> vec_string(500, "\xEF\xBF\xBD");
+            std::string s{data.data(), data.size()};
+            dump_test["1"] = s;
+            std::ostringstream os;
+            os << "{\"1\":\"";
+            std::copy( vec_string.begin(), vec_string.end(), std::ostream_iterator<std::string>(os));
+            os << "\"}";
+            s = dump_test.dump(-1, ' ', false, nlohmann::json::error_handler_t::replace);
+            CHECK(s == os.str());
+        }
+        SECTION("test case in issue #1445")
+        {
+            nlohmann::json dump_test;
+            const int data[] =
+            {
+                109,  108,  103,  125,  -122, -53,  115,
+                18,   3,    0,    102,  19,   1,    15,
+                -110, 13,   -3,   -1,   -81,  32,   2,
+                0,    0,    0,    0,    0,    0,    0,
+                8,    0,    0,    0,    0,    0,    0,
+                0,    0,    0,    0,    0,    -80,  2,
+                0,    0,    96,   -118, 46,   -116, 46,
+                109,  -84,  -87,  108,  14,   109,  -24,
+                -83,  13,   -18,  -51,  -83,  -52,  -115,
+                14,   6,    32,   0,    0,    0,    0,
+                0,    0,    0,    0,    0,    0,    0,
+                64,   3,    0,    0,    0,    35,   -74,
+                -73,  55,   57,   -128, 0,    0,    0,
+                0,    0,    0,    0,    0,    0,    0,
+                0,    0,    33,   0,    0,    0,    -96,
+                -54,  -28,  -26
+            };
+            std::string s;
+            for (unsigned i = 0; i < sizeof(data) / sizeof(int); i++)
+            {
+                s += static_cast<char>(data[i]);
+            }
+            dump_test["1"] = s;
+            dump_test.dump(-1, ' ', true, nlohmann::json::error_handler_t::replace);
+        }
+    }
+
+    SECTION("issue #1447 - Integer Overflow (OSS-Fuzz 12506)")
+    {
+        json j = json::parse("[-9223372036854775808]");
+        CHECK(j.dump() == "[-9223372036854775808]");
     }
 }
 

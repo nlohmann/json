@@ -5,38 +5,45 @@ environment:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
       COMPILER: mingw
       platform: x86
-      FLAGS: ""
+      CXX_FLAGS: ""
+      LINKER_FLAGS: ""
       GENERATOR: Ninja
 
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
       platform: x86
-      FLAGS: ""
+      CXX_FLAGS: ""
+      LINKER_FLAGS: ""
       GENERATOR: Visual Studio 14 2015
 
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
       platform: x86
-      FLAGS: ""
+      CXX_FLAGS: ""
+      LINKER_FLAGS: ""
       GENERATOR: Visual Studio 15 2017
 
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
       platform: x86
-      FLAGS: "/permissive- /std:c++latest /utf-8"
+      CXX_FLAGS: "/permissive- /std:c++latest /utf-8"
+      LINKER_FLAGS: ""
       GENERATOR: Visual Studio 15 2017
 
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
       platform: x64
-      FLAGS: ""
-      GENERATOR: Visual Studio 14 2015
+      CXX_FLAGS: ""
+      LINKER_FLAGS: ""
+      GENERATOR: Visual Studio 14 2015 Win64
 
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
       platform: x64
-      FLAGS: ""
-      GENERATOR: Visual Studio 15 2017
+      CXX_FLAGS: ""
+      LINKER_FLAGS: ""
+      GENERATOR: Visual Studio 15 2017 Win64
 
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
       platform: x64
-      FLAGS: "/permissive- /std:c++latest /utf-8"
-      GENERATOR: Visual Studio 15 2017
+      CXX_FLAGS: "/permissive- /std:c++latest /utf-8 /F4000000"
+      LINKER_FLAGS: "/STACK:4000000"
+      GENERATOR: Visual Studio 15 2017 Win64
 
 init:
   - cmake --version
@@ -50,7 +57,7 @@ install:
   - if "%COMPILER%"=="mingw" g++ --version
 
 before_build:
-  - cmake . -G "%GENERATOR%" -DCMAKE_CXX_FLAGS="%FLAGS%" -DCMAKE_IGNORE_PATH="C:/Program Files/Git/usr/bin"
+  - cmake . -G "%GENERATOR%" -DCMAKE_CXX_FLAGS="%CXX_FLAGS%" -DCMAKE_EXE_LINKER_FLAGS="%LINKER_FLAGS%" -DCMAKE_IGNORE_PATH="C:/Program Files/Git/usr/bin"
 
 build_script:
   - cmake --build . --config Release

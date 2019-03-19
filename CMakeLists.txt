@@ -1,10 +1,10 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.1)
 
 ##
 ## PROJECT
 ## name and version
 ##
-project(nlohmann_json VERSION 3.5.0 LANGUAGES CXX)
+project(nlohmann_json VERSION 3.6.0 LANGUAGES CXX)
 
 ##
 ## INCLUDE
@@ -16,6 +16,7 @@ include(ExternalProject)
 ## OPTIONS
 ##
 option(JSON_BuildTests "Build the unit tests when BUILD_TESTING is enabled." ON)
+option(JSON_Install "Install CMake targets during install step." ON)
 option(JSON_MultipleHeaders "Use non-amalgamated version of the library." OFF)
 
 ##
@@ -46,7 +47,11 @@ endif()
 ##
 add_library(${NLOHMANN_JSON_TARGET_NAME} INTERFACE)
 add_library(${PROJECT_NAME}::${NLOHMANN_JSON_TARGET_NAME} ALIAS ${NLOHMANN_JSON_TARGET_NAME})
-target_compile_features(${NLOHMANN_JSON_TARGET_NAME} INTERFACE cxx_std_11)
+if (${CMAKE_VERSION} VERSION_LESS "3.8.0") 
+    target_compile_features(${NLOHMANN_JSON_TARGET_NAME} INTERFACE cxx_range_for)
+else()
+    target_compile_features(${NLOHMANN_JSON_TARGET_NAME} INTERFACE cxx_std_11)
+endif()
 
 target_include_directories(
     ${NLOHMANN_JSON_TARGET_NAME}
@@ -92,32 +97,34 @@ configure_file(
     @ONLY
 )
 
-install(
-    DIRECTORY ${NLOHMANN_JSON_INCLUDE_BUILD_DIR}
-    DESTINATION ${NLOHMANN_JSON_INCLUDE_INSTALL_DIR}
-)
-install(
-    FILES ${NLOHMANN_JSON_CMAKE_PROJECT_CONFIG_FILE} ${NLOHMANN_JSON_CMAKE_VERSION_CONFIG_FILE}
-    DESTINATION ${NLOHMANN_JSON_CONFIG_INSTALL_DIR}
-)
-if (NLOHMANN_ADD_NATVIS)
+if(JSON_Install)
     install(
-        FILES ${NLOHMANN_NATVIS_FILE}
-        DESTINATION .
-)
+        DIRECTORY ${NLOHMANN_JSON_INCLUDE_BUILD_DIR}
+        DESTINATION ${NLOHMANN_JSON_INCLUDE_INSTALL_DIR}
+    )
+    install(
+        FILES ${NLOHMANN_JSON_CMAKE_PROJECT_CONFIG_FILE} ${NLOHMANN_JSON_CMAKE_VERSION_CONFIG_FILE}
+        DESTINATION ${NLOHMANN_JSON_CONFIG_INSTALL_DIR}
+    )
+    if (NLOHMANN_ADD_NATVIS)
+        install(
+            FILES ${NLOHMANN_NATVIS_FILE}
+            DESTINATION .
+    )
+    endif()
+    export(
+        TARGETS ${NLOHMANN_JSON_TARGET_NAME}
+        NAMESPACE ${PROJECT_NAME}::
+        FILE ${NLOHMANN_JSON_CMAKE_PROJECT_TARGETS_FILE}
+    )
+    install(
+        TARGETS ${NLOHMANN_JSON_TARGET_NAME}
+        EXPORT ${NLOHMANN_JSON_TARGETS_EXPORT_NAME}
+        INCLUDES DESTINATION ${NLOHMANN_JSON_INCLUDE_INSTALL_DIR}
+    )
+    install(
+        EXPORT ${NLOHMANN_JSON_TARGETS_EXPORT_NAME}
+        NAMESPACE ${PROJECT_NAME}::
+        DESTINATION ${NLOHMANN_JSON_CONFIG_INSTALL_DIR}
+    )
 endif()
-export(
-    TARGETS ${NLOHMANN_JSON_TARGET_NAME}
-    NAMESPACE ${PROJECT_NAME}::
-    FILE ${NLOHMANN_JSON_CMAKE_PROJECT_TARGETS_FILE}
-)
-install(
-    TARGETS ${NLOHMANN_JSON_TARGET_NAME}
-    EXPORT ${NLOHMANN_JSON_TARGETS_EXPORT_NAME}
-    INCLUDES DESTINATION ${NLOHMANN_JSON_INCLUDE_INSTALL_DIR}
-)
-install(
-    EXPORT ${NLOHMANN_JSON_TARGETS_EXPORT_NAME}
-    NAMESPACE ${PROJECT_NAME}::
-    DESTINATION ${NLOHMANN_JSON_CONFIG_INSTALL_DIR}
-)

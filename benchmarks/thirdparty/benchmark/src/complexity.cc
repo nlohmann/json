@@ -28,18 +28,18 @@ namespace benchmark {
 BigOFunc* FittingCurve(BigO complexity) {
   switch (complexity) {
     case oN:
-      return [](int n) -> double { return n; };
+      return [](int64_t n) -> double { return static_cast<double>(n); };
     case oNSquared:
-      return [](int n) -> double { return std::pow(n, 2); };
+      return [](int64_t n) -> double { return std::pow(n, 2); };
     case oNCubed:
-      return [](int n) -> double { return std::pow(n, 3); };
+      return [](int64_t n) -> double { return std::pow(n, 3); };
     case oLogN:
-      return [](int n) { return log2(n); };
+      return [](int64_t n) { return log2(n); };
     case oNLogN:
-      return [](int n) { return n * log2(n); };
+      return [](int64_t n) { return n * log2(n); };
     case o1:
     default:
-      return [](int) { return 1.0; };
+      return [](int64_t) { return 1.0; };
   }
 }
 
@@ -65,15 +65,15 @@ std::string GetBigOString(BigO complexity) {
 
 // Find the coefficient for the high-order term in the running time, by
 // minimizing the sum of squares of relative error, for the fitting curve
-// given by the lambda expresion.
+// given by the lambda expression.
 //   - n             : Vector containing the size of the benchmark tests.
 //   - time          : Vector containing the times for the benchmark tests.
-//   - fitting_curve : lambda expresion (e.g. [](int n) {return n; };).
+//   - fitting_curve : lambda expression (e.g. [](int64_t n) {return n; };).
 
 // For a deeper explanation on the algorithm logic, look the README file at
 // http://github.com/ismaelJimenez/Minimal-Cpp-Least-Squared-Fit
 
-LeastSq MinimalLeastSq(const std::vector<int>& n,
+LeastSq MinimalLeastSq(const std::vector<int64_t>& n,
                        const std::vector<double>& time,
                        BigOFunc* fitting_curve) {
   double sigma_gn = 0.0;
@@ -117,7 +117,7 @@ LeastSq MinimalLeastSq(const std::vector<int>& n,
 //   - complexity : If different than oAuto, the fitting curve will stick to
 //                  this one. If it is oAuto, it will be calculated the best
 //                  fitting curve.
-LeastSq MinimalLeastSq(const std::vector<int>& n,
+LeastSq MinimalLeastSq(const std::vector<int64_t>& n,
                        const std::vector<double>& time, const BigO complexity) {
   CHECK_EQ(n.size(), time.size());
   CHECK_GE(n.size(), 2);  // Do not compute fitting curve is less than two
@@ -157,7 +157,7 @@ std::vector<BenchmarkReporter::Run> ComputeBigO(
   if (reports.size() < 2) return results;
 
   // Accumulators.
-  std::vector<int> n;
+  std::vector<int64_t> n;
   std::vector<double> real_time;
   std::vector<double> cpu_time;
 

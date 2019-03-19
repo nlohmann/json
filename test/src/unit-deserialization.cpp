@@ -1,12 +1,12 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.5.0
+|  |  |__   |  |  | | | |  version 3.6.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 SPDX-License-Identifier: MIT
-Copyright (c) 2013-2018 Niels Lohmann <http://nlohmann.me>.
+Copyright (c) 2013-2019 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
 of this software and associated  documentation files (the "Software"), to deal
@@ -123,7 +123,7 @@ struct SaxEventLogger : public nlohmann::json_sax<json>
         return false;
     }
 
-    std::vector<std::string> events;
+    std::vector<std::string> events {};
 };
 
 struct SaxEventLoggerExitAfterStartObject : public SaxEventLogger
@@ -895,9 +895,9 @@ TEST_CASE("deserialization")
                     for (int i2 = -1; i2 < 2; ++i2)
                     {
                         // debug output for the variations
-                        CAPTURE(i0);
-                        CAPTURE(i1);
-                        CAPTURE(i2);
+                        CAPTURE(i0)
+                        CAPTURE(i1)
+                        CAPTURE(i2)
 
                         std::string s = "";
                         s.push_back(static_cast<char>(bom[0] + i0));

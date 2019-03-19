@@ -2,6 +2,7 @@
 
 #include <cstdint> // size_t
 #include <utility> // declval
+#include <string> // string
 
 #include <nlohmann/detail/meta/detected.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>

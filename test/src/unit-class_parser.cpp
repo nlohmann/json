@@ -1,12 +1,12 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.5.0
+|  |  |__   |  |  | | | |  version 3.6.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 SPDX-License-Identifier: MIT
-Copyright (c) 2013-2018 Niels Lohmann <http://nlohmann.me>.
+Copyright (c) 2013-2019 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
 of this software and associated  documentation files (the "Software"), to deal
@@ -125,7 +125,7 @@ class SaxEventLogger
         return false;
     }
 
-    std::vector<std::string> events;
+    std::vector<std::string> events {};
     bool errored = false;
 };
 
@@ -223,7 +223,7 @@ json parser_helper(const std::string& s)
 
 bool accept_helper(const std::string& s)
 {
-    CAPTURE(s);
+    CAPTURE(s)
 
     // 1. parse s without exceptions
     json j;
@@ -1165,18 +1165,18 @@ TEST_CASE("parser class")
 
                 if (valid(c))
                 {
-                    CAPTURE(s1);
+                    CAPTURE(s1)
                     CHECK_NOTHROW(parser_helper(s1.c_str()));
-                    CAPTURE(s2);
+                    CAPTURE(s2)
                     CHECK_NOTHROW(parser_helper(s2.c_str()));
-                    CAPTURE(s3);
+                    CAPTURE(s3)
                     CHECK_NOTHROW(parser_helper(s3.c_str()));
-                    CAPTURE(s4);
+                    CAPTURE(s4)
                     CHECK_NOTHROW(parser_helper(s4.c_str()));
                 }
                 else
                 {
-                    CAPTURE(s1);
+                    CAPTURE(s1)
                     CHECK_THROWS_AS(parser_helper(s1.c_str()), json::parse_error&);
                     // only check error message if c is not a control character
                     if (c > 0x1f)
@@ -1185,7 +1185,7 @@ TEST_CASE("parser class")
                                           "[json.exception.parse_error.101] parse error at line 1, column 7: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '" + s1.substr(0, 7) + "'");
                     }
 
-                    CAPTURE(s2);
+                    CAPTURE(s2)
                     CHECK_THROWS_AS(parser_helper(s2.c_str()), json::parse_error&);
                     // only check error message if c is not a control character
                     if (c > 0x1f)
@@ -1194,7 +1194,7 @@ TEST_CASE("parser class")
                                           "[json.exception.parse_error.101] parse error at line 1, column 6: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '" + s2.substr(0, 6) + "'");
                     }
 
-                    CAPTURE(s3);
+                    CAPTURE(s3)
                     CHECK_THROWS_AS(parser_helper(s3.c_str()), json::parse_error&);
                     // only check error message if c is not a control character
                     if (c > 0x1f)
@@ -1203,7 +1203,7 @@ TEST_CASE("parser class")
                                           "[json.exception.parse_error.101] parse error at line 1, column 5: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '" + s3.substr(0, 5) + "'");
                     }
 
-                    CAPTURE(s4);
+                    CAPTURE(s4)
                     CHECK_THROWS_AS(parser_helper(s4.c_str()), json::parse_error&);
                     // only check error message if c is not a control character
                     if (c > 0x1f)
@@ -1383,27 +1383,27 @@ TEST_CASE("parser class")
 
                 if (valid(c))
                 {
-                    CAPTURE(s1);
+                    CAPTURE(s1)
                     CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s1.c_str()))).accept());
-                    CAPTURE(s2);
+                    CAPTURE(s2)
                     CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s2.c_str()))).accept());
-                    CAPTURE(s3);
+                    CAPTURE(s3)
                     CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s3.c_str()))).accept());
-                    CAPTURE(s4);
+                    CAPTURE(s4)
                     CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s4.c_str()))).accept());
                 }
                 else
                 {
-                    CAPTURE(s1);
+                    CAPTURE(s1)
                     CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s1.c_str()))).accept() == false);
 
-                    CAPTURE(s2);
+                    CAPTURE(s2)
                     CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s2.c_str()))).accept() == false);
 
-                    CAPTURE(s3);
+                    CAPTURE(s3)
                     CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s3.c_str()))).accept() == false);
 
-                    CAPTURE(s4);
+                    CAPTURE(s4)
                     CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s4.c_str()))).accept() == false);
                 }
             }

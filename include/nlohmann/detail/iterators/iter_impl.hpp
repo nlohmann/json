@@ -9,6 +9,7 @@
 #include <nlohmann/detail/iterators/primitive_iterator.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/cpp_future.hpp>
+#include <nlohmann/detail/meta/type_traits.hpp>
 #include <nlohmann/detail/value_t.hpp>
 
 namespace nlohmann
@@ -606,7 +607,7 @@ class iter_impl
     /// associated JSON instance
     pointer m_object = nullptr;
     /// the actual iterator of the associated instance
-    internal_iterator<typename std::remove_const<BasicJsonType>::type> m_it;
+    internal_iterator<typename std::remove_const<BasicJsonType>::type> m_it {};
 };
 }  // namespace detail
 } // namespace nlohmann

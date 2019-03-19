@@ -1,0 +1,23 @@
+Checks: '-*,
+         bugprone-*,
+         cert-*,
+         clang-analyzer-*,
+         google-*,
+         -google-runtime-references,
+         hicpp-*,
+         -hicpp-no-array-decay,
+         -hicpp-uppercase-literal-suffix,
+         misc-*,
+         -misc-non-private-member-variables-in-classes,
+         llvm-*,
+         -llvm-header-guard,
+         modernize-*,
+         performance-*,
+         portability-*,
+         readability-*,
+         -readability-magic-numbers,
+         -readability-uppercase-literal-suffix'
+
+CheckOptions:
+  - key: hicpp-special-member-functions.AllowSoleDefaultDtor
+    value: 1

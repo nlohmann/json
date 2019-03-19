@@ -1,12 +1,12 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.5.0
+|  |  |__   |  |  | | | |  version 3.6.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 SPDX-License-Identifier: MIT
-Copyright (c) 2013-2018 Niels Lohmann <http://nlohmann.me>.
+Copyright (c) 2013-2019 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
 of this software and associated  documentation files (the "Software"), to deal
@@ -599,9 +599,8 @@ struct pod_serializer
     static void to_json(BasicJsonType& j, const  T& t) noexcept
     {
         auto bytes = static_cast< const unsigned char*>(static_cast<const void*>(&t));
-        std::uint64_t value = bytes[0];
-        for (auto i = 1; i < 8; ++i)
-            value |= std::uint64_t{bytes[i]} << 8 * i;
+        std::uint64_t value;
+        std::memcpy(&value, bytes, sizeof(value));
         nlohmann::to_json(j, value);
     }
 };
