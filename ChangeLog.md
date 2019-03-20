@@ -1,7 +1,15 @@
 # Change Log
 All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [v3.6.0](https://github.com/nlohmann/json/releases/tag/v3.6.0) (2019-03-20)
+## [v3.6.1](https://github.com/nlohmann/json/releases/tag/v3.6.1) (2019-03-20)
+[Full Changelog](https://github.com/nlohmann/json/compare/v3.6.0...v3.6.1)
+
+- Failed to build with \<Windows.h\> [\#1531](https://github.com/nlohmann/json/issues/1531)
+- Compiling 3.6.0 with GCC \> 7, array vs std::array \#590 is back [\#1530](https://github.com/nlohmann/json/issues/1530)
+- 3.6.0: warning: missing initializer for member 'std::array\<char, 9ul\>::\_M\_elems' \[-Wmissing-field-initializers\] [\#1527](https://github.com/nlohmann/json/issues/1527)
+- unable to parse json  [\#1525](https://github.com/nlohmann/json/issues/1525)
+
+## [v3.6.0](https://github.com/nlohmann/json/releases/tag/v3.6.0) (2019-03-19)
 [Full Changelog](https://github.com/nlohmann/json/compare/v3.5.0...v3.6.0)
 
 - How can I turn a string of a json array into a json array? [\#1526](https://github.com/nlohmann/json/issues/1526)
