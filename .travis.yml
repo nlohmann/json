@@ -284,7 +284,7 @@ matrix:
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-7']
-        packages: ['g++-6', 'clang-7', 'ninja-build']
+        packages: ['g++-7', 'clang-7', 'ninja-build']
 
   - os: linux
     compiler: clang
@@ -294,7 +294,7 @@ matrix:
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-7']
-        packages: ['g++-6', 'clang-7', 'ninja-build']
+        packages: ['g++-7', 'clang-7', 'ninja-build']
 
 ################
 # build script #
@@ -325,10 +325,10 @@ script:
   - ctest -C Release -V -j
   - cd ..
 
-  # check if homebrew works (only checks develop branch)   
-  - if [ `which brew` ]; then   
-    brew update ;   
-    brew tap nlohmann/json ;    
-    brew install nlohmann_json --HEAD ;    
-    brew test nlohmann_json ;    
+  # check if homebrew works (only checks develop branch)
+  - if [ `which brew` ]; then
+    brew update ;
+    brew tap nlohmann/json ;
+    brew install nlohmann_json --HEAD ;
+    brew test nlohmann_json ;
     fi
