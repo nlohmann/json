@@ -71,6 +71,8 @@ static bool next_deallocate_fails = false;
 template<class T>
 struct my_allocator : std::allocator<T>
 {
+    using std::allocator<T>::allocator;
+
     template<class... Args>
     void construct(T* p, Args&& ... args)
     {
