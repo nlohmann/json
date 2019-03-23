@@ -2,7 +2,7 @@
   "targets": {
     "xenial-amd64": {
       "buildenv": "xenial-amd64",
-      "builddeps": ["build-essential"],
+      "builddeps": ["build-essential", "cmake"],
       "buildcmd": [
       	"mkdir build",
       	"cd build",
