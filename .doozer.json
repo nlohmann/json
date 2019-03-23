@@ -1,13 +1,14 @@
 {
   "targets": {
-    "xenial-amd64": {
+    "raspbian-jessie": {
       "buildenv": "xenial-amd64",
       "builddeps": ["build-essential", "cmake"],
       "buildcmd": [
       	"mkdir build",
       	"cd build",
       	"cmake ..",
-      	"make"
+      	"make",
+      	"ctest"
       ]
     }
   }
