@@ -13,7 +13,7 @@
       ]
     },
     "fedora24-x86_64": {
-      "buildenv": "edora24-x86_64",
+      "buildenv": "fedora24-x86_64",
       "builddeps": ["build-essential", "cmake"],
       "buildcmd": [
       	"uname -a",
