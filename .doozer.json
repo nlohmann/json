@@ -7,8 +7,30 @@
       	"mkdir build",
       	"cd build",
       	"cmake ..",
-      	"make",
-      	"ctest"
+      	"make -j8",
+      	"ctest -j8"
+      ]
+    },
+    "fedora24-x86_64": {
+      "buildenv": "xenial-amd64",
+      "builddeps": ["build-essential", "cmake"],
+      "buildcmd": [
+      	"mkdir build",
+      	"cd build",
+      	"cmake ..",
+      	"make -j8",
+      	"ctest -j8"
+      ]
+    },
+    "centos7-x86_64": {
+      "buildenv": "xenial-amd64",
+      "builddeps": ["build-essential", "cmake"],
+      "buildcmd": [
+      	"mkdir build",
+      	"cd build",
+      	"cmake ..",
+      	"make -j8",
+      	"ctest -j8"
       ]
     }
   }
