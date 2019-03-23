@@ -20,7 +20,7 @@
     },
     "fedora24-x86_64": {
       "buildenv": "fedora24-x86_64",
-      "builddeps": ["cmake", "make", "gcc"],
+      "builddeps": ["cmake", "make", "g++"],
       "buildcmd": [
       	"uname -a",
       	"mkdir build",
