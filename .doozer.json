@@ -1,7 +1,7 @@
 {
   "targets": {
     "raspbian-jessie": {
-      "buildenv": "xenial-amd64",
+      "buildenv": "raspbian-jessie",
       "builddeps": ["build-essential", "cmake"],
       "buildcmd": [
       	"uname -a",
@@ -13,7 +13,7 @@
       ]
     },
     "fedora24-x86_64": {
-      "buildenv": "xenial-amd64",
+      "buildenv": "edora24-x86_64",
       "builddeps": ["build-essential", "cmake"],
       "buildcmd": [
       	"uname -a",
@@ -25,7 +25,7 @@
       ]
     },
     "centos7-x86_64": {
-      "buildenv": "xenial-amd64",
+      "buildenv": "centos7-x86_64",
       "builddeps": ["build-essential", "cmake"],
       "buildcmd": [
       	"uname -a",
