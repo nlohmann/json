@@ -7,10 +7,10 @@
       	"uname -a",
       	"wget https://github.com/Kitware/CMake/releases/download/v3.14.0/cmake-3.14.0.tar.gz",
       	"tar xfz cmake-3.14.0.tar.gz",
-      	"cd cmake-3.14.0"
+      	"cd cmake-3.14.0",
       	"cmake . -DBUILD_TESTING=OFF",
       	"make -j8",
-      	"cd .."
+      	"cd ..",
       	"mkdir build",
       	"cd build",
       	"../../cmake-3.14.0/bin/cmake ..",
