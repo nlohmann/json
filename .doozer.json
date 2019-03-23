@@ -4,33 +4,36 @@
       "buildenv": "xenial-amd64",
       "builddeps": ["build-essential", "cmake"],
       "buildcmd": [
+      	"uname -a",
       	"mkdir build",
       	"cd build",
       	"cmake ..",
       	"make -j8",
-      	"ctest -j8"
+      	"ctest -VV -j8"
       ]
     },
     "fedora24-x86_64": {
       "buildenv": "xenial-amd64",
       "builddeps": ["build-essential", "cmake"],
       "buildcmd": [
+      	"uname -a",
       	"mkdir build",
       	"cd build",
       	"cmake ..",
       	"make -j8",
-      	"ctest -j8"
+      	"ctest -VV -j8"
       ]
     },
     "centos7-x86_64": {
       "buildenv": "xenial-amd64",
       "builddeps": ["build-essential", "cmake"],
       "buildcmd": [
+      	"uname -a",
       	"mkdir build",
       	"cd build",
       	"cmake ..",
       	"make -j8",
-      	"ctest -j8"
+      	"ctest -VV -j8"
       ]
     }
   }
