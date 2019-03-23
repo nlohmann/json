@@ -26,7 +26,7 @@
     },
     "centos7-x86_64": {
       "buildenv": "centos7-x86_64",
-      "builddeps": ["build-essential", "cmake"],
+      "builddeps": ["build-essential", "cmake3"],
       "buildcmd": [
       	"uname -a",
       	"mkdir build",
