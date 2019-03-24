@@ -5,15 +5,16 @@
       "builddeps": ["build-essential", "cmake", "wget"],
       "buildcmd": [
       	"uname -a",
+      	"cd",
       	"wget https://github.com/Kitware/CMake/releases/download/v3.14.0/cmake-3.14.0.tar.gz",
       	"tar xfz cmake-3.14.0.tar.gz",
       	"cd cmake-3.14.0",
       	"./bootstrap",
       	"make -j8",
-      	"cd ..",
+      	"cd",
       	"mkdir build",
       	"cd build",
-      	"../cmake-3.14.0/bin/cmake ..",
+      	"../cmake-3.14.0/bin/cmake /project/repo/checkout",
       	"make -j8",
       	"ctest -VV -j8"
       ]
@@ -23,9 +24,10 @@
       "builddeps": ["cmake", "make", "gcc gcc-c++"],
       "buildcmd": [
       	"uname -a",
+      	"cd"
       	"mkdir build",
       	"cd build",
-      	"cmake ..",
+      	"cmake /project/repo/checkout",
       	"make -j8",
       	"ctest -VV -j8"
       ]
