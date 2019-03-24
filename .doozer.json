@@ -13,14 +13,14 @@
       	"cd ..",
       	"mkdir build",
       	"cd build",
-      	"../../cmake-3.14.0/bin/cmake ..",
+      	"../cmake-3.14.0/bin/cmake ..",
       	"make -j8",
       	"ctest -VV -j8"
       ]
     },
     "fedora24-x86_64": {
       "buildenv": "fedora24-x86_64",
-      "builddeps": ["cmake", "make", "g++"],
+      "builddeps": ["cmake", "make", "gcc gcc-c++"],
       "buildcmd": [
       	"uname -a",
       	"mkdir build",
@@ -32,12 +32,18 @@
     },
     "centos7-x86_64": {
       "buildenv": "centos7-x86_64",
-      "builddeps": ["build-essential", "cmake"],
+      "builddeps": ["build-essential", "cmake", "wget"],
       "buildcmd": [
       	"uname -a",
+      	"wget https://github.com/Kitware/CMake/releases/download/v3.14.0/cmake-3.14.0.tar.gz",
+      	"tar xfz cmake-3.14.0.tar.gz",
+      	"cd cmake-3.14.0",
+      	"./bootstrap",
+      	"make -j8",
+      	"cd ..",
       	"mkdir build",
       	"cd build",
-      	"cmake ..",
+      	"../cmake-3.14.0/bin/cmake ..",
       	"make -j8",
       	"ctest -VV -j8"
       ]
