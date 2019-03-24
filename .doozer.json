@@ -32,7 +32,7 @@
     },
     "centos7-x86_64": {
       "buildenv": "centos7-x86_64",
-      "builddeps": ["cmake", "make", "wget", "gcc-g++"],
+      "builddeps": ["cmake", "make", "wget", "gcc-c++"],
       "buildcmd": [
       	"uname -a",
       	"wget https://github.com/Kitware/CMake/releases/download/v3.14.0/cmake-3.14.0.tar.gz",
