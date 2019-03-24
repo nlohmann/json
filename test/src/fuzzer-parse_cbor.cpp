@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (fuzz test support)
-|  |  |__   |  |  | | | |  version 3.5.0
+|  |  |__   |  |  | | | |  version 3.6.1
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 This file implements a parser test suitable for fuzz testing. Given a byte

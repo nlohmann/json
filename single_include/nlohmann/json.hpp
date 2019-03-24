@@ -1,12 +1,12 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++
-|  |  |__   |  |  | | | |  version 3.5.0
+|  |  |__   |  |  | | | |  version 3.6.1
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 SPDX-License-Identifier: MIT
-Copyright (c) 2013-2018 Niels Lohmann <http://nlohmann.me>.
+Copyright (c) 2013-2019 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
 of this software and associated  documentation files (the "Software"), to deal
@@ -31,8 +31,8 @@ SOFTWARE.
 #define INCLUDE_NLOHMANN_JSON_HPP_
 
 #define NLOHMANN_JSON_VERSION_MAJOR 3
-#define NLOHMANN_JSON_VERSION_MINOR 5
-#define NLOHMANN_JSON_VERSION_PATCH 0
+#define NLOHMANN_JSON_VERSION_MINOR 6
+#define NLOHMANN_JSON_VERSION_PATCH 1
 
 #include <algorithm> // all_of, find, for_each
 #include <cassert> // assert
@@ -539,8 +539,8 @@ class other_error : public exception
 
 // manual branch prediction
 #if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
-    #define JSON_LIKELY(x)      __builtin_expect(static_cast<bool>(x), 1)
-    #define JSON_UNLIKELY(x)    __builtin_expect(static_cast<bool>(x), 0)
+    #define JSON_LIKELY(x)      __builtin_expect(x, 1)
+    #define JSON_UNLIKELY(x)    __builtin_expect(x, 0)
 #else
     #define JSON_LIKELY(x)      x
     #define JSON_UNLIKELY(x)    x
@@ -2982,7 +2982,7 @@ class json_sax_dom_parser
             return &(ref_stack.back()->m_value.array->back());
         }
 
-        assert(ref_stack.back()->is_object())
+        assert(ref_stack.back()->is_object());
         assert(object_element);
         *object_element = BasicJsonType(std::forward<Value>(v));
         return object_element;
@@ -3268,7 +3268,7 @@ class json_sax_dom_callback_parser
         }
 
         // object
-        assert(ref_stack.back()->is_object())
+        assert(ref_stack.back()->is_object());
         // check if we should store an element for the current key
         assert(not key_keep_stack.empty());
         const bool store_element = key_keep_stack.back();
@@ -3776,7 +3776,7 @@ class binary_reader
 
             default: // anything else not supported (yet)
             {
-                std::array<char, 3> cr{};
+                std::array<char, 3> cr{{}};
                 (std::snprintf)(cr.data(), cr.size(), "%.2hhX", static_cast<unsigned char>(element_type));
                 return sax->parse_error(element_type_parse_position, std::string(cr.data()), parse_error::create(114, element_type_parse_position, "Unsupported BSON record type 0x" + std::string(cr.data())));
             }
@@ -5432,7 +5432,7 @@ class binary_reader
     */
     std::string get_token_string() const
     {
-        std::array<char, 3> cr{};
+        std::array<char, 3> cr{{}};
         (std::snprintf)(cr.data(), cr.size(), "%.2hhX", static_cast<unsigned char>(current));
         return std::string{cr.data()};
     }
@@ -6858,7 +6858,7 @@ scan_number_done:
             if ('\x00' <= c and c <= '\x1F')
             {
                 // escape control characters
-                std::array<char, 9> cs{};
+                std::array<char, 9> cs{{}};
                 (std::snprintf)(cs.data(), cs.size(), "<U+%.4X>", static_cast<unsigned char>(c));
                 result += cs.data();
             }
@@ -7276,14 +7276,13 @@ class parser
                                                     m_lexer.get_token_string(),
                                                     out_of_range::create(406, "number overflow parsing '" + m_lexer.get_token_string() + "'"));
                         }
-                        else
+
+                        if (JSON_UNLIKELY(not sax->number_float(res, m_lexer.get_string())))
                         {
-                            if (JSON_UNLIKELY(not sax->number_float(res, m_lexer.get_string())))
-                            {
-                                return false;
-                            }
-                            break;
+                            return false;
                         }
+
+                        break;
                     }
 
                     case token_type::literal_false:
@@ -7369,103 +7368,95 @@ class parser
                 // empty stack: we reached the end of the hierarchy: done
                 return true;
             }
-            else
+
+            if (states.back())  // array
             {
-                if (states.back())  // array
+                // comma -> next value
+                if (get_token() == token_type::value_separator)
                 {
-                    // comma -> next value
-                    if (get_token() == token_type::value_separator)
+                    // parse a new value
+                    get_token();
+                    continue;
+                }
+
+                // closing ]
+                if (JSON_LIKELY(last_token == token_type::end_array))
+                {
+                    if (JSON_UNLIKELY(not sax->end_array()))
                     {
-                        // parse a new value
-                        get_token();
-                        continue;
+                        return false;
                     }
 
-                    // closing ]
-                    if (JSON_LIKELY(last_token == token_type::end_array))
-                    {
-                        if (JSON_UNLIKELY(not sax->end_array()))
-                        {
-                            return false;
-                        }
+                    // We are done with this array. Before we can parse a
+                    // new value, we need to evaluate the new state first.
+                    // By setting skip_to_state_evaluation to false, we
+                    // are effectively jumping to the beginning of this if.
+                    assert(not states.empty());
+                    states.pop_back();
+                    skip_to_state_evaluation = true;
+                    continue;
+                }
 
-                        // We are done with this array. Before we can parse a
-                        // new value, we need to evaluate the new state first.
-                        // By setting skip_to_state_evaluation to false, we
-                        // are effectively jumping to the beginning of this if.
-                        assert(not states.empty());
-                        states.pop_back();
-                        skip_to_state_evaluation = true;
-                        continue;
-                    }
-                    else
+                return sax->parse_error(m_lexer.get_position(),
+                                        m_lexer.get_token_string(),
+                                        parse_error::create(101, m_lexer.get_position(),
+                                                exception_message(token_type::end_array, "array")));
+            }
+            else  // object
+            {
+                // comma -> next value
+                if (get_token() == token_type::value_separator)
+                {
+                    // parse key
+                    if (JSON_UNLIKELY(get_token() != token_type::value_string))
                     {
                         return sax->parse_error(m_lexer.get_position(),
                                                 m_lexer.get_token_string(),
                                                 parse_error::create(101, m_lexer.get_position(),
-                                                        exception_message(token_type::end_array, "array")));
+                                                        exception_message(token_type::value_string, "object key")));
                     }
-                }
-                else  // object
-                {
-                    // comma -> next value
-                    if (get_token() == token_type::value_separator)
+
+                    if (JSON_UNLIKELY(not sax->key(m_lexer.get_string())))
                     {
-                        // parse key
-                        if (JSON_UNLIKELY(get_token() != token_type::value_string))
-                        {
-                            return sax->parse_error(m_lexer.get_position(),
-                                                    m_lexer.get_token_string(),
-                                                    parse_error::create(101, m_lexer.get_position(),
-                                                            exception_message(token_type::value_string, "object key")));
-                        }
-                        else
-                        {
-                            if (JSON_UNLIKELY(not sax->key(m_lexer.get_string())))
-                            {
-                                return false;
-                            }
-                        }
-
-                        // parse separator (:)
-                        if (JSON_UNLIKELY(get_token() != token_type::name_separator))
-                        {
-                            return sax->parse_error(m_lexer.get_position(),
-                                                    m_lexer.get_token_string(),
-                                                    parse_error::create(101, m_lexer.get_position(),
-                                                            exception_message(token_type::name_separator, "object separator")));
-                        }
-
-                        // parse values
-                        get_token();
-                        continue;
+                        return false;
                     }
 
-                    // closing }
-                    if (JSON_LIKELY(last_token == token_type::end_object))
-                    {
-                        if (JSON_UNLIKELY(not sax->end_object()))
-                        {
-                            return false;
-                        }
-
-                        // We are done with this object. Before we can parse a
-                        // new value, we need to evaluate the new state first.
-                        // By setting skip_to_state_evaluation to false, we
-                        // are effectively jumping to the beginning of this if.
-                        assert(not states.empty());
-                        states.pop_back();
-                        skip_to_state_evaluation = true;
-                        continue;
-                    }
-                    else
+                    // parse separator (:)
+                    if (JSON_UNLIKELY(get_token() != token_type::name_separator))
                     {
                         return sax->parse_error(m_lexer.get_position(),
                                                 m_lexer.get_token_string(),
                                                 parse_error::create(101, m_lexer.get_position(),
-                                                        exception_message(token_type::end_object, "object")));
+                                                        exception_message(token_type::name_separator, "object separator")));
                     }
+
+                    // parse values
+                    get_token();
+                    continue;
                 }
+
+                // closing }
+                if (JSON_LIKELY(last_token == token_type::end_object))
+                {
+                    if (JSON_UNLIKELY(not sax->end_object()))
+                    {
+                        return false;
+                    }
+
+                    // We are done with this object. Before we can parse a
+                    // new value, we need to evaluate the new state first.
+                    // By setting skip_to_state_evaluation to false, we
+                    // are effectively jumping to the beginning of this if.
+                    assert(not states.empty());
+                    states.pop_back();
+                    skip_to_state_evaluation = true;
+                    continue;
+                }
+
+                return sax->parse_error(m_lexer.get_position(),
+                                        m_lexer.get_token_string(),
+                                        parse_error::create(101, m_lexer.get_position(),
+                                                exception_message(token_type::end_object, "object")));
             }
         }
     }
@@ -8475,8 +8466,7 @@ class json_pointer
 
     @return a string representation of the JSON pointer
 
-    @liveexample{The example shows the result of `to_string`.,
-    json_pointer__to_string}
+    @liveexample{The example shows the result of `to_string`.,json_pointer__to_string}
 
     @since version 2.0.0
     */
@@ -8498,6 +8488,19 @@ class json_pointer
 
     /*!
     @brief append another JSON pointer at the end of this JSON pointer
+
+    @param[in] ptr  JSON pointer to append
+    @return JSON pointer with @a ptr appended
+
+    @liveexample{The example shows the usage of `operator/=`.,json_pointer__operator_add}
+
+    @complexity Linear in the length of @a ptr.
+
+    @sa @ref operator/=(std::string) to append a reference token
+    @sa @ref operator/=(std::size_t) to append an array index
+    @sa @ref operator/(const json_pointer&, const json_pointer&) for a binary operator
+
+    @since version 3.6.0
     */
     json_pointer& operator/=(const json_pointer& ptr)
     {
@@ -8507,14 +8510,44 @@ class json_pointer
         return *this;
     }
 
-    /// @copydoc push_back(std::string&&)
+    /*!
+    @brief append an unescaped reference token at the end of this JSON pointer
+
+    @param[in] token  reference token to append
+    @return JSON pointer with @a token appended without escaping @a token
+
+    @liveexample{The example shows the usage of `operator/=`.,json_pointer__operator_add}
+
+    @complexity Amortized constant.
+
+    @sa @ref operator/=(const json_pointer&) to append a JSON pointer
+    @sa @ref operator/=(std::size_t) to append an array index
+    @sa @ref operator/(const json_pointer&, std::size_t) for a binary operator
+
+    @since version 3.6.0
+    */
     json_pointer& operator/=(std::string token)
     {
         push_back(std::move(token));
         return *this;
     }
 
-    /// @copydoc operator/=(std::string)
+    /*!
+    @brief append an array index at the end of this JSON pointer
+
+    @param[in] array_index  array index ot append
+    @return JSON pointer with @a array_index appended
+
+    @liveexample{The example shows the usage of `operator/=`.,json_pointer__operator_add}
+
+    @complexity Amortized constant.
+
+    @sa @ref operator/=(const json_pointer&) to append a JSON pointer
+    @sa @ref operator/=(std::string) to append a reference token
+    @sa @ref operator/(const json_pointer&, std::string) for a binary operator
+
+    @since version 3.6.0
+    */
     json_pointer& operator/=(std::size_t array_index)
     {
         return *this /= std::to_string(array_index);
@@ -8522,15 +8555,39 @@ class json_pointer
 
     /*!
     @brief create a new JSON pointer by appending the right JSON pointer at the end of the left JSON pointer
+
+    @param[in] lhs  JSON pointer
+    @param[in] rhs  JSON pointer
+    @return a new JSON pointer with @a rhs appended to @a lhs
+
+    @liveexample{The example shows the usage of `operator/`.,json_pointer__operator_add_binary}
+
+    @complexity Linear in the length of @a lhs and @a rhs.
+
+    @sa @ref operator/=(const json_pointer&) to append a JSON pointer
+
+    @since version 3.6.0
     */
-    friend json_pointer operator/(const json_pointer& left_ptr,
-                                  const json_pointer& right_ptr)
+    friend json_pointer operator/(const json_pointer& lhs,
+                                  const json_pointer& rhs)
     {
-        return json_pointer(left_ptr) /= right_ptr;
+        return json_pointer(lhs) /= rhs;
     }
 
     /*!
     @brief create a new JSON pointer by appending the unescaped token at the end of the JSON pointer
+
+    @param[in] ptr  JSON pointer
+    @param[in] token  reference token
+    @return a new JSON pointer with unescaped @a token appended to @a ptr
+
+    @liveexample{The example shows the usage of `operator/`.,json_pointer__operator_add_binary}
+
+    @complexity Linear in the length of @a ptr.
+
+    @sa @ref operator/=(std::string) to append a reference token
+
+    @since version 3.6.0
     */
     friend json_pointer operator/(const json_pointer& ptr, std::string token)
     {
@@ -8539,10 +8596,22 @@ class json_pointer
 
     /*!
     @brief create a new JSON pointer by appending the array-index-token at the end of the JSON pointer
+
+    @param[in] ptr  JSON pointer
+    @param[in] array_index  array index
+    @return a new JSON pointer with @a array_index appended to @a ptr
+
+    @liveexample{The example shows the usage of `operator/`.,json_pointer__operator_add_binary}
+
+    @complexity Linear in the length of @a ptr.
+
+    @sa @ref operator/=(std::size_t) to append an array index
+
+    @since version 3.6.0
     */
-    friend json_pointer operator/(const json_pointer& lhs, std::size_t array_index)
+    friend json_pointer operator/(const json_pointer& ptr, std::size_t array_index)
     {
-        return json_pointer(lhs) /= array_index;
+        return json_pointer(ptr) /= array_index;
     }
 
     /*!
@@ -8551,7 +8620,7 @@ class json_pointer
     @return parent of this JSON pointer; in case this JSON pointer is the root,
             the root itself is returned
 
-    @complexity Constant.
+    @complexity Linear in the length of the JSON pointer.
 
     @liveexample{The example shows the result of `parent_pointer` for different
     JSON Pointers.,json_pointer__parent_pointer}
@@ -8571,19 +8640,50 @@ class json_pointer
     }
 
     /*!
-    @brief remove and return last reference token
+    @brief remove last reference token
+
+    @pre not `empty()`
+
+    @liveexample{The example shows the usage of `pop_back`.,json_pointer__pop_back}
+
+    @complexity Constant.
+
     @throw out_of_range.405 if JSON pointer has no parent
+
+    @since version 3.6.0
     */
-    std::string pop_back()
+    void pop_back()
     {
         if (JSON_UNLIKELY(empty()))
         {
             JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent"));
         }
 
-        auto last = reference_tokens.back();
         reference_tokens.pop_back();
-        return last;
+    }
+
+    /*!
+    @brief return last reference token
+
+    @pre not `empty()`
+    @return last reference token
+
+    @liveexample{The example shows the usage of `back`.,json_pointer__back}
+
+    @complexity Constant.
+
+    @throw out_of_range.405 if JSON pointer has no parent
+
+    @since version 3.6.0
+    */
+    const std::string& back()
+    {
+        if (JSON_UNLIKELY(empty()))
+        {
+            JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent"));
+        }
+
+        return reference_tokens.back();
     }
 
     /*!
@@ -8596,7 +8696,7 @@ class json_pointer
     @liveexample{The example shows the result of `push_back` for different
     JSON Pointers.,json_pointer__push_back}
 
-    @since version 0.6.0
+    @since version 3.6.0
     */
     void push_back(const std::string& token)
     {
@@ -9209,12 +9309,34 @@ class json_pointer
         return result;
     }
 
+    /*!
+    @brief compares two JSON pointers for equality
+
+    @param[in] lhs  JSON pointer to compare
+    @param[in] rhs  JSON pointer to compare
+    @return whether @a lhs is equal to @a rhs
+
+    @complexity Linear in the length of the JSON pointer
+
+    @exceptionsafety No-throw guarantee: this function never throws exceptions.
+    */
     friend bool operator==(json_pointer const& lhs,
                            json_pointer const& rhs) noexcept
     {
         return lhs.reference_tokens == rhs.reference_tokens;
     }
 
+    /*!
+    @brief compares two JSON pointers for inequality
+
+    @param[in] lhs  JSON pointer to compare
+    @param[in] rhs  JSON pointer to compare
+    @return whether @a lhs is not equal @a rhs
+
+    @complexity Linear in the length of the JSON pointer
+
+    @exceptionsafety No-throw guarantee: this function never throws exceptions.
+    */
     friend bool operator!=(json_pointer const& lhs,
                            json_pointer const& rhs) noexcept
     {
@@ -11536,7 +11658,7 @@ inline void grisu2_digit_gen(char* buffer, int& length, int& decimal_exponent,
         //         = buffer * 10^-m + 10^-m * (1/10 * (10 * p2)                   ) * 2^e
         //         = buffer * 10^-m + 10^-m * (1/10 * ((10*p2 div 2^-e) * 2^-e + (10*p2 mod 2^-e)) * 2^e
         //
-        assert(p2 <= std::numeric_limits<std::uint64_t>::max() / 10);
+        assert(p2 <= (std::numeric_limits<std::uint64_t>::max)() / 10);
         p2 *= 10;
         const std::uint64_t d = p2 >> -one.e;     // d = (10 * p2) div 2^-e
         const std::uint64_t r = p2 & (one.f - 1); // r = (10 * p2) mod 2^-e
@@ -13595,7 +13717,7 @@ class basic_json
                     object = nullptr;  // silence warning, see #821
                     if (JSON_UNLIKELY(t == value_t::null))
                     {
-                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.5.0")); // LCOV_EXCL_LINE
+                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.6.1")); // LCOV_EXCL_LINE
                     }
                     break;
                 }
@@ -16633,7 +16755,7 @@ class basic_json
     template<typename KeyT>
     bool contains(KeyT&& key) const
     {
-        return is_object() and  m_value.object->find(std::forward<KeyT>(key)) != m_value.object->end();
+        return is_object() and m_value.object->find(std::forward<KeyT>(key)) != m_value.object->end();
     }
 
     /// @}
@@ -17420,7 +17542,8 @@ class basic_json
 
         // add element to array (move semantics)
         m_value.array->push_back(std::move(val));
-        // invalidate object
+        // invalidate object: mark it null so we do not call the destructor
+        // cppcheck-suppress accessMoved
         val.m_type = value_t::null;
     }
 
@@ -18370,7 +18493,9 @@ class basic_json
             switch (lhs_type)
             {
                 case value_t::array:
-                    return *lhs.m_value.array < *rhs.m_value.array;
+                    // note parentheses are necessary, see
+                    // https://github.com/nlohmann/json/issues/1530
+                    return (*lhs.m_value.array) < (*rhs.m_value.array);
 
                 case value_t::object:
                     return *lhs.m_value.object < *rhs.m_value.object;
@@ -20149,7 +20274,8 @@ class basic_json
             }
 
             // get reference to parent of JSON pointer ptr
-            const auto last_path = ptr.pop_back();
+            const auto last_path = ptr.back();
+            ptr.pop_back();
             basic_json& parent = result[ptr];
 
             switch (parent.m_type)
@@ -20194,7 +20320,8 @@ class basic_json
         const auto operation_remove = [&result](json_pointer & ptr)
         {
             // get reference to parent of JSON pointer ptr
-            const auto last_path = ptr.pop_back();
+            const auto last_path = ptr.back();
+            ptr.pop_back();
             basic_json& parent = result.at(ptr);
 
             // remove child

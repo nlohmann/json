@@ -1,12 +1,12 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++
-|  |  |__   |  |  | | | |  version 3.5.0
+|  |  |__   |  |  | | | |  version 3.6.1
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 SPDX-License-Identifier: MIT
-Copyright (c) 2013-2018 Niels Lohmann <http://nlohmann.me>.
+Copyright (c) 2013-2019 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
 of this software and associated  documentation files (the "Software"), to deal
@@ -31,8 +31,8 @@ SOFTWARE.
 #define INCLUDE_NLOHMANN_JSON_HPP_
 
 #define NLOHMANN_JSON_VERSION_MAJOR 3
-#define NLOHMANN_JSON_VERSION_MINOR 5
-#define NLOHMANN_JSON_VERSION_PATCH 0
+#define NLOHMANN_JSON_VERSION_MINOR 6
+#define NLOHMANN_JSON_VERSION_PATCH 1
 
 #include <algorithm> // all_of, find, for_each
 #include <cassert> // assert
@@ -952,7 +952,7 @@ class basic_json
                     object = nullptr;  // silence warning, see #821
                     if (JSON_UNLIKELY(t == value_t::null))
                     {
-                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.5.0")); // LCOV_EXCL_LINE
+                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.6.1")); // LCOV_EXCL_LINE
                     }
                     break;
                 }
@@ -3990,7 +3990,7 @@ class basic_json
     template<typename KeyT>
     bool contains(KeyT&& key) const
     {
-        return is_object() and  m_value.object->find(std::forward<KeyT>(key)) != m_value.object->end();
+        return is_object() and m_value.object->find(std::forward<KeyT>(key)) != m_value.object->end();
     }
 
     /// @}
@@ -4777,7 +4777,8 @@ class basic_json
 
         // add element to array (move semantics)
         m_value.array->push_back(std::move(val));
-        // invalidate object
+        // invalidate object: mark it null so we do not call the destructor
+        // cppcheck-suppress accessMoved
         val.m_type = value_t::null;
     }
 
@@ -5727,7 +5728,9 @@ class basic_json
             switch (lhs_type)
             {
                 case value_t::array:
-                    return *lhs.m_value.array < *rhs.m_value.array;
+                    // note parentheses are necessary, see
+                    // https://github.com/nlohmann/json/issues/1530
+                    return (*lhs.m_value.array) < (*rhs.m_value.array);
 
                 case value_t::object:
                     return *lhs.m_value.object < *rhs.m_value.object;
@@ -7506,7 +7509,8 @@ class basic_json
             }
 
             // get reference to parent of JSON pointer ptr
-            const auto last_path = ptr.pop_back();
+            const auto last_path = ptr.back();
+            ptr.pop_back();
             basic_json& parent = result[ptr];
 
             switch (parent.m_type)
@@ -7551,7 +7555,8 @@ class basic_json
         const auto operation_remove = [&result](json_pointer & ptr)
         {
             // get reference to parent of JSON pointer ptr
-            const auto last_path = ptr.pop_back();
+            const auto last_path = ptr.back();
+            ptr.pop_back();
             basic_json& parent = result.at(ptr);
 
             // remove child

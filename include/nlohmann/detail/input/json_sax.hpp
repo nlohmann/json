@@ -304,7 +304,7 @@ class json_sax_dom_parser
             return &(ref_stack.back()->m_value.array->back());
         }
 
-        assert(ref_stack.back()->is_object())
+        assert(ref_stack.back()->is_object());
         assert(object_element);
         *object_element = BasicJsonType(std::forward<Value>(v));
         return object_element;
@@ -590,7 +590,7 @@ class json_sax_dom_callback_parser
         }
 
         // object
-        assert(ref_stack.back()->is_object())
+        assert(ref_stack.back()->is_object());
         // check if we should store an element for the current key
         assert(not key_keep_stack.empty());
         const bool store_element = key_keep_stack.back();
