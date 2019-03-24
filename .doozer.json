@@ -24,7 +24,7 @@
       "builddeps": ["cmake", "make", "gcc gcc-c++"],
       "buildcmd": [
       	"uname -a",
-      	"cd"
+      	"cd",
       	"mkdir build",
       	"cd build",
       	"cmake /project/repo/checkout",
