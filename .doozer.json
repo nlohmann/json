@@ -25,7 +25,7 @@
       "buildcmd": [
         "uname -a",
         "cd",
-        "wget https://github.com/Kitware/CMake/releases/download/v3.14.0/cmake-3.14.0.tar.gz",
+        "wget --no-check-certificate https://github.com/Kitware/CMake/releases/download/v3.14.0/cmake-3.14.0.tar.gz",
         "tar xfz cmake-3.14.0.tar.gz",
         "cd cmake-3.14.0",
         "./bootstrap",
