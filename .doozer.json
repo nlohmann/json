@@ -19,8 +19,8 @@
       	"../cmake-3.14.0/bin/ctest -VV -j4 --timeout 10000"
       ]
     },
-    "jessie-i386": {
-      "buildenv": "jessie-i386",
+    "xenial-armhf": {
+      "buildenv": "xenial-armhf",
       "builddeps": ["build-essential", "wget"],
       "buildcmd": [
         "uname -a",
