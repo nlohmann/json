@@ -2,7 +2,7 @@
   "targets": {
     "raspbian-jessie": {
       "buildenv": "raspbian-jessie",
-      "builddeps": ["build-essential", "cmake", "wget"],
+      "builddeps": ["build-essential", "wget"],
       "buildcmd": [
       	"uname -a",
       	"cd",
@@ -21,13 +21,19 @@
     },
     "jessie-i386": {
       "buildenv": "jessie-i386",
-      "builddeps": ["cmake", "build-essential"],
+      "builddeps": ["build-essential", "wget"],
       "buildcmd": [
         "uname -a",
         "cd",
+        "wget https://github.com/Kitware/CMake/releases/download/v3.14.0/cmake-3.14.0.tar.gz",
+        "tar xfz cmake-3.14.0.tar.gz",
+        "cd cmake-3.14.0",
+        "./bootstrap",
+        "make -j8",
+        "cd",
         "mkdir build",
         "cd build",
-        "cmake /project/repo/checkout",
+        "../cmake-3.14.0/bin/cmake /project/repo/checkout",
         "make -j8",
         "ctest -VV -j8"
       ]
@@ -47,7 +53,7 @@
     },
     "centos7-x86_64": {
       "buildenv": "centos7-x86_64",
-      "builddeps": ["cmake", "make", "wget", "gcc-c++"],
+      "builddeps": ["make", "wget", "gcc-c++"],
       "buildcmd": [
       	"uname -a",
       	"cd",
