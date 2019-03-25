@@ -16,7 +16,20 @@
       	"cd build",
       	"../cmake-3.14.0/bin/cmake /project/repo/checkout",
       	"make -j8",
-      	"ctest -VV -j4 --timeout 3000"
+      	"ctest -VV -j4 --timeout 10000"
+      ]
+    },
+    "jessie-i386": {
+      "buildenv": "jessie-i386",
+      "builddeps": ["cmake", "build-essential"],
+      "buildcmd": [
+        "uname -a",
+        "cd",
+        "mkdir build",
+        "cd build",
+        "cmake /project/repo/checkout",
+        "make -j8",
+        "ctest -VV -j8"
       ]
     },
     "fedora24-x86_64": {
