@@ -35,7 +35,7 @@
         "cd build",
         "../cmake-3.14.0/bin/cmake /project/repo/checkout",
         "make -j8",
-        "../cmake-3.14.0/bin/ctest -VV -j8"
+        "../cmake-3.14.0/bin/ctest -VV -j4 --timeout 10000"
       ]
     },
     "fedora24-x86_64": {
