@@ -28,6 +28,7 @@ SOFTWARE.
 */
 
 #include "doctest_compatibility.h"
+DOCTEST_GCC_SUPPRESS_WARNING_WITH_PUSH("-Wsign-promo")
 
 #define private public
 #include <nlohmann/json.hpp>

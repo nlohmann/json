@@ -269,7 +269,9 @@ TEST_CASE("README" * doctest::skip())
             int i = 42;
             json jn = i;
             double f = jn;
+            DOCTEST_GCC_SUPPRESS_WARNING_WITH_PUSH("-Wfloat-equal")
             CHECK(f == 42);
+            DOCTEST_GCC_SUPPRESS_WARNING_POP
 
             // etc.
 
