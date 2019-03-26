@@ -131,7 +131,7 @@ pedantic_clang:
 		-Werror \
 		-Weverything \
 		-Wno-documentation-unknown-command \
-        -Wno-exit-time-destructors \
+		-Wno-exit-time-destructors \
 		-Wno-keyword-macro \
 		-Wno-deprecated-declarations \
 		-Wno-weak-vtables \
