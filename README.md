@@ -1021,35 +1021,39 @@ Please note:
 
 - Unsupported versions of GCC and Clang are rejected by `#error` directives. This can be switched off by defining `JSON_SKIP_UNSUPPORTED_COMPILER_CHECK`. Note that you can expect no support in this case.
 
-The following compilers are currently used in continuous integration at [Travis](https://travis-ci.org/nlohmann/json) and [AppVeyor](https://ci.appveyor.com/project/nlohmann/json):
+The following compilers are currently used in continuous integration at [Travis](https://travis-ci.org/nlohmann/json), [AppVeyor](https://ci.appveyor.com/project/nlohmann/json), and [Doozer](https://doozer.io):
 
-| Compiler        | Operating System             | Version String |
-|-----------------|------------------------------|----------------|
-| GCC 4.8.5       | Ubuntu 14.04.5 LTS           | g++-4.8 (Ubuntu 4.8.5-2ubuntu1~14.04.2) 4.8.5 |
-| GCC 4.9.4       | Ubuntu 14.04.1 LTS           | g++-4.9 (Ubuntu 4.9.4-2ubuntu1~14.04.1) 4.9.4 |
-| GCC 5.5.0       | Ubuntu 14.04.1 LTS           | g++-5 (Ubuntu 5.5.0-12ubuntu1~14.04) 5.5.0 20171010 |
-| GCC 6.4.0       | Ubuntu 14.04.1 LTS           | g++-6 (Ubuntu 6.4.0-17ubuntu1~14.04) 6.4.0 20180424 |
-| GCC 7.3.0       | Ubuntu 14.04.1 LTS           | g++-7 (Ubuntu 7.3.0-21ubuntu1~14.04) 7.3.0 |
-| GCC 7.3.0       | Windows Server 2012 R2 (x64) | g++ (x86_64-posix-seh-rev0, Built by MinGW-W64 project) 7.3.0 |
-| GCC 8.1.0       | Ubuntu 14.04.1 LTS           | g++-8 (Ubuntu 8.1.0-5ubuntu1~14.04) 8.1.0 |
-| Clang 3.5.0     | Ubuntu 14.04.1 LTS           | clang version 3.5.0-4ubuntu2~trusty2 (tags/RELEASE_350/final) (based on LLVM 3.5.0) |
-| Clang 3.6.2     | Ubuntu 14.04.1 LTS           | clang version 3.6.2-svn240577-1~exp1 (branches/release_36) (based on LLVM 3.6.2) |
-| Clang 3.7.1     | Ubuntu 14.04.1 LTS           | clang version 3.7.1-svn253571-1~exp1 (branches/release_37) (based on LLVM 3.7.1) |
-| Clang 3.8.0     | Ubuntu 14.04.1 LTS           | clang version 3.8.0-2ubuntu3~trusty5 (tags/RELEASE_380/final) |
-| Clang 3.9.1     | Ubuntu 14.04.1 LTS           | clang version 3.9.1-4ubuntu3~14.04.3 (tags/RELEASE_391/rc2) |
-| Clang 4.0.1     | Ubuntu 14.04.1 LTS           | clang version 4.0.1-svn305264-1~exp1 (branches/release_40) |
-| Clang 5.0.2     | Ubuntu 14.04.1 LTS           | clang version 5.0.2-svn328729-1~exp1~20180509123505.100 (branches/release_50) |
-| Clang 6.0.1     | Ubuntu 14.04.1 LTS           | clang version 6.0.1-svn334776-1~exp1~20180726133705.85 (branches/release_60) |
-| Clang 7.0.1     | Ubuntu 14.04.1 LTS           | clang version 7.0.1-svn348686-1~exp1~20181213084532.54 (branches/release_70) |
-| Clang Xcode 8.3 | OSX 10.11.6 | Apple LLVM version 8.1.0 (clang-802.0.38) |
-| Clang Xcode 9.0 | OSX 10.12.6 | Apple LLVM version 9.0.0 (clang-900.0.37) |
-| Clang Xcode 9.1 | OSX 10.12.6 | Apple LLVM version 9.0.0 (clang-900.0.38) |
-| Clang Xcode 9.2 | OSX 10.13.3 | Apple LLVM version 9.1.0 (clang-902.0.39.1) |
-| Clang Xcode 9.3 | OSX 10.13.3 | Apple LLVM version 9.1.0 (clang-902.0.39.2) |
-| Clang Xcode 10.0 | OSX 10.13.3 | Apple LLVM version 10.0.0 (clang-1000.11.45.2) |
-| Clang Xcode 10.1 | OSX 10.13.3 | Apple LLVM version 10.0.0 (clang-1000.11.45.5) |
+| Compiler              | Operating System             | Version String |
+|-----------------------|------------------------------|----------------|
+| GCC 4.8.5             | Ubuntu 14.04.5 LTS           | g++-4.8 (Ubuntu 4.8.5-2ubuntu1~14.04.2) 4.8.5 |
+| GCC 4.8.5             | CentOS Release-7-6.1810.2.el7.centos.x86_64 | g++ (GCC) 4.8.5 20150623 (Red Hat 4.8.5-36) |
+| GCC 4.9.2 (armv7l)    | Raspbian GNU/Linux 8 (jessie) | g++ (Raspbian 4.9.2-10+deb8u2) 4.9.2 |
+| GCC 4.9.4             | Ubuntu 14.04.1 LTS           | g++-4.9 (Ubuntu 4.9.4-2ubuntu1~14.04.1) 4.9.4 |
+| GCC 5.3.1 (armv7l)    | Ubuntu 16.04 LTS             | g++ (Ubuntu/Linaro 5.3.1-14ubuntu2) 5.3.1 20160413 |
+| GCC 5.5.0             | Ubuntu 14.04.1 LTS           | g++-5 (Ubuntu 5.5.0-12ubuntu1~14.04) 5.5.0 20171010 |
+| GCC 6.3.1             | Fedora release 24 (Twenty Four) | g++ (GCC) 6.3.1 20161221 (Red Hat 6.3.1-1) |
+| GCC 6.4.0             | Ubuntu 14.04.1 LTS           | g++-6 (Ubuntu 6.4.0-17ubuntu1~14.04) 6.4.0 20180424 |
+| GCC 7.3.0             | Ubuntu 14.04.1 LTS           | g++-7 (Ubuntu 7.3.0-21ubuntu1~14.04) 7.3.0 |
+| GCC 7.3.0             | Windows Server 2012 R2 (x64) | g++ (x86_64-posix-seh-rev0, Built by MinGW-W64 project) 7.3.0 |
+| GCC 8.1.0             | Ubuntu 14.04.1 LTS           | g++-8 (Ubuntu 8.1.0-5ubuntu1~14.04) 8.1.0 |
+| Clang 3.5.0           | Ubuntu 14.04.1 LTS           | clang version 3.5.0-4ubuntu2~trusty2 (tags/RELEASE_350/final) (based on LLVM 3.5.0) |
+| Clang 3.6.2           | Ubuntu 14.04.1 LTS           | clang version 3.6.2-svn240577-1~exp1 (branches/release_36) (based on LLVM 3.6.2) |
+| Clang 3.7.1           | Ubuntu 14.04.1 LTS           | clang version 3.7.1-svn253571-1~exp1 (branches/release_37) (based on LLVM 3.7.1) |
+| Clang 3.8.0           | Ubuntu 14.04.1 LTS           | clang version 3.8.0-2ubuntu3~trusty5 (tags/RELEASE_380/final) |
+| Clang 3.9.1           | Ubuntu 14.04.1 LTS           | clang version 3.9.1-4ubuntu3~14.04.3 (tags/RELEASE_391/rc2) |
+| Clang 4.0.1           | Ubuntu 14.04.1 LTS           | clang version 4.0.1-svn305264-1~exp1 (branches/release_40) |
+| Clang 5.0.2           | Ubuntu 14.04.1 LTS           | clang version 5.0.2-svn328729-1~exp1~20180509123505.100 (branches/release_50) |
+| Clang 6.0.1           | Ubuntu 14.04.1 LTS           | clang version 6.0.1-svn334776-1~exp1~20180726133705.85 (branches/release_60) |
+| Clang 7.0.1           | Ubuntu 14.04.1 LTS           | clang version 7.0.1-svn348686-1~exp1~20181213084532.54 (branches/release_70) |
+| Clang Xcode 8.3       | OSX 10.11.6                  | Apple LLVM version 8.1.0 (clang-802.0.38) |
+| Clang Xcode 9.0       | OSX 10.12.6                  | Apple LLVM version 9.0.0 (clang-900.0.37) |
+| Clang Xcode 9.1       | OSX 10.12.6                  | Apple LLVM version 9.0.0 (clang-900.0.38) |
+| Clang Xcode 9.2       | OSX 10.13.3                  | Apple LLVM version 9.1.0 (clang-902.0.39.1) |
+| Clang Xcode 9.3       | OSX 10.13.3                  | Apple LLVM version 9.1.0 (clang-902.0.39.2) |
+| Clang Xcode 10.0      | OSX 10.13.3                  | Apple LLVM version 10.0.0 (clang-1000.11.45.2) |
+| Clang Xcode 10.1      | OSX 10.13.3                  | Apple LLVM version 10.0.0 (clang-1000.11.45.5) |
 | Visual Studio 14 2015 | Windows Server 2012 R2 (x64) | Microsoft (R) Build Engine version 14.0.25420.1, MSVC 19.0.24215.1 |
-| Visual Studio 2017 | Windows Server 2016 | Microsoft (R) Build Engine version 15.7.180.61344, MSVC 19.14.26433.0 |
+| Visual Studio 2017    | Windows Server 2016 | Microsoft (R) Build Engine version 15.7.180.61344, MSVC 19.14.26433.0 |
 
 ## License
 
@@ -1273,6 +1277,7 @@ The library itself consists of a single header file licensed under the MIT licen
 - [**Coverity Scan**](https://scan.coverity.com) for [static analysis](https://scan.coverity.com/projects/nlohmann-json)
 - [**cppcheck**](http://cppcheck.sourceforge.net) for static analysis
 - [**doctest**](https://github.com/onqtam/doctest) for the unit tests
+- [**Doozer**](https://doozer.io) for [continuous integration](https://doozer.io/nlohmann/json) on Linux (CentOS, Raspbian, Fedora)
 - [**Doxygen**](http://www.stack.nl/~dimitri/doxygen/) to generate [documentation](https://nlohmann.github.io/json/)
 - [**git-update-ghpages**](https://github.com/rstacruz/git-update-ghpages) to upload the documentation to gh-pages
 - [**GitHub Changelog Generator**](https://github.com/skywinder/github-changelog-generator) to generate the [ChangeLog](https://github.com/nlohmann/json/blob/develop/ChangeLog.md)
