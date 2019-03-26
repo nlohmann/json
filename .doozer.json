@@ -5,6 +5,8 @@
       "builddeps": ["build-essential", "wget"],
       "buildcmd": [
       	"uname -a",
+        "cat /etc/os-release",
+        "g++ --version",
       	"cd",
       	"wget https://github.com/Kitware/CMake/releases/download/v3.14.0/cmake-3.14.0.tar.gz",
       	"tar xfz cmake-3.14.0.tar.gz",
@@ -24,6 +26,8 @@
       "builddeps": ["build-essential", "wget"],
       "buildcmd": [
         "uname -a",
+        "lsb_release -a",
+        "g++ --version",
         "cd",
         "wget --no-check-certificate https://github.com/Kitware/CMake/releases/download/v3.14.0/cmake-3.14.0.tar.gz",
         "tar xfz cmake-3.14.0.tar.gz",
@@ -43,6 +47,8 @@
       "builddeps": ["cmake", "make", "gcc gcc-c++"],
       "buildcmd": [
       	"uname -a",
+        "cat /etc/fedora-release",
+        "g++ --version",
       	"cd",
       	"mkdir build",
       	"cd build",
@@ -56,6 +62,8 @@
       "builddeps": ["make", "wget", "gcc-c++"],
       "buildcmd": [
       	"uname -a",
+        "rpm -q centos-release",
+        "g++ --version",
       	"cd",
       	"wget https://github.com/Kitware/CMake/releases/download/v3.14.0/cmake-3.14.0.tar.gz",
       	"tar xfz cmake-3.14.0.tar.gz",
