@@ -292,7 +292,7 @@ TEST_CASE("regression tests")
         int number = j["Number"];
         CHECK(number == 100);
         float foo = j["Foo"];
-        CHECK(foo == Approx(42.42));
+        CHECK(static_cast<double>(foo) == Approx(42.42));
     }
 
     SECTION("issue #89 - nonstandard integer type")

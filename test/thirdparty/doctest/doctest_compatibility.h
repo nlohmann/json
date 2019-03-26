@@ -25,6 +25,29 @@
 #define CHECK_THROWS_WITH_STD_STR(expr, str)                                   \
     CHECK_THROWS_WITH_STD_STR_IMPL(expr, str, DOCTEST_ANONYMOUS(DOCTEST_STD_STRING_))
 
+#undef CHECK_THROWS
+#undef CHECK_THROWS_AS
+#undef CHECK_THROWS_WITH
+#undef CHECK_NOTHROW
+
+#undef REQUIRE_THROWS
+#undef REQUIRE_THROWS_AS
+#undef REQUIRE_THROWS_WITH
+#undef REQUIRE_NOTHROW
+
+// doctest allows multiple statements in these macros (even blocks of code) but json
+// tests rely on passing single function/constructor calls which have a [[nodiscard]]
+// attribute so here we static_cast to void - just like Catch does
+#define CHECK_THROWS(expr) DOCTEST_CHECK_THROWS(static_cast<void>(expr))
+#define CHECK_THROWS_AS(expr, e) DOCTEST_CHECK_THROWS_AS(static_cast<void>(expr), e)
+#define CHECK_THROWS_WITH(expr, e) DOCTEST_CHECK_THROWS_WITH(static_cast<void>(expr), e)
+#define CHECK_NOTHROW(expr) DOCTEST_CHECK_NOTHROW(static_cast<void>(expr))
+
+#define REQUIRE_THROWS(expr) DOCTEST_REQUIRE_THROWS(static_cast<void>(expr))
+#define REQUIRE_THROWS_AS(expr, e) DOCTEST_REQUIRE_THROWS_AS(static_cast<void>(expr), e)
+#define REQUIRE_THROWS_WITH(expr, e) DOCTEST_REQUIRE_THROWS_WITH(static_cast<void>(expr), e)
+#define REQUIRE_NOTHROW(expr) DOCTEST_REQUIRE_NOTHROW(static_cast<void>(expr))
+
 // included here because for some tests in the json repository private is defined as
 // public and if no STL header is included before that then in the json include when STL
 // stuff is included the MSVC STL complains (errors) that C++ keywords are being redefined
