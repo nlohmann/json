@@ -23,8 +23,7 @@ option(JSON_MultipleHeaders "Use non-amalgamated version of the library." OFF)
 ## CONFIGURATION
 ##
 set(NLOHMANN_JSON_TARGET_NAME               ${PROJECT_NAME})
-set(NLOHMANN_JSON_CONFIG_INSTALL_DIR        "lib/cmake/${PROJECT_NAME}"
-  CACHE INTERNAL "")
+set(NLOHMANN_JSON_CONFIG_INSTALL_DIR        "lib/cmake/${PROJECT_NAME}" CACHE INTERNAL "")
 set(NLOHMANN_JSON_INCLUDE_INSTALL_DIR       "include")
 set(NLOHMANN_JSON_TARGETS_EXPORT_NAME       "${PROJECT_NAME}Targets")
 set(NLOHMANN_JSON_CMAKE_CONFIG_TEMPLATE     "cmake/config.cmake.in")
@@ -47,7 +46,7 @@ endif()
 ##
 add_library(${NLOHMANN_JSON_TARGET_NAME} INTERFACE)
 add_library(${PROJECT_NAME}::${NLOHMANN_JSON_TARGET_NAME} ALIAS ${NLOHMANN_JSON_TARGET_NAME})
-if (${CMAKE_VERSION} VERSION_LESS "3.8.0") 
+if (${CMAKE_VERSION} VERSION_LESS "3.8.0")
     target_compile_features(${NLOHMANN_JSON_TARGET_NAME} INTERFACE cxx_range_for)
 else()
     target_compile_features(${NLOHMANN_JSON_TARGET_NAME} INTERFACE cxx_std_11)
