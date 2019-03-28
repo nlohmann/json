@@ -469,6 +469,14 @@ class other_error : public exception
     #endif
 #endif
 
+// C++ language standard detection
+#if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_HAS_CXX17) && _HAS_CXX17 == 1) // fix for issue #464
+    #define JSON_HAS_CPP_17
+    #define JSON_HAS_CPP_14
+#elif (defined(__cplusplus) && __cplusplus >= 201402L) || (defined(_HAS_CXX14) && _HAS_CXX14 == 1)
+    #define JSON_HAS_CPP_14
+#endif
+
 // disable float-equal warnings on GCC/clang
 #if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
     #pragma GCC diagnostic push
@@ -493,7 +501,11 @@ class other_error : public exception
 // allow for portable nodiscard warnings
 #if defined(__has_cpp_attribute)
     #if __has_cpp_attribute(nodiscard)
-        #define JSON_NODISCARD [[nodiscard]]
+        #if defined(__clang__) && !defined(JSON_HAS_CPP_17) // issue #1535
+            #define JSON_NODISCARD
+        #else
+            #define JSON_NODISCARD [[nodiscard]]
+        #endif
     #elif __has_cpp_attribute(gnu::warn_unused_result)
         #define JSON_NODISCARD [[gnu::warn_unused_result]]
     #else
@@ -544,14 +556,6 @@ class other_error : public exception
 #else
     #define JSON_LIKELY(x)      x
     #define JSON_UNLIKELY(x)    x
-#endif
-
-// C++ language standard detection
-#if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_HAS_CXX17) && _HAS_CXX17 == 1) // fix for issue #464
-    #define JSON_HAS_CPP_17
-    #define JSON_HAS_CPP_14
-#elif (defined(__cplusplus) && __cplusplus >= 201402L) || (defined(_HAS_CXX14) && _HAS_CXX14 == 1)
-    #define JSON_HAS_CPP_14
 #endif
 
 /*!
