@@ -6,7 +6,7 @@ option(JSON_Coverage "Build test suite with coverage information" OFF)
 if(JSON_Sanitizer)
     message(STATUS "Building test suite with Clang sanitizer")
     if(NOT MSVC)
-        set(CMAKE_CXX_FLAGS "-g -O2 -fsanitize=address -fsanitize=undefined -fsanitize=implicit-conversion -fsanitize=integer -fsanitize=nullability -fno-omit-frame-pointer")
+        set(CMAKE_CXX_FLAGS "-g -O2 -fsanitize=address -fsanitize=undefined -fsanitize=integer -fsanitize=nullability -fno-omit-frame-pointer")
     endif()
 endif()
 
