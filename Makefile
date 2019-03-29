@@ -97,36 +97,35 @@ doctest:
 ##########################################################################
 
 # calling Clang with all warnings, except:
+# -Wno-c++2a-compat: u8 literals will behave differently in C++20...
+# -Wno-deprecated-declarations: the library deprecated some functions
 # -Wno-documentation-unknown-command: code uses user-defined commands like @complexity
 # -Wno-exit-time-destructors: warning in Catch code
-# -Wno-keyword-macro: unit-tests use "#define private public"
-# -Wno-deprecated-declarations: the library deprecated some functions
-# -Wno-weak-vtables: exception class is defined inline, but has virtual method
-# -Wno-range-loop-analysis: items tests "for(const auto i...)"
 # -Wno-float-equal: not all comparisons in the tests can be replaced by Approx
-# -Wno-switch-enum -Wno-covered-switch-default: pedantic/contradicting warnings about switches
-# -Wno-c++2a-compat: u8 literals will behave differently in C++20...
+# -Wno-keyword-macro: unit-tests use "#define private public"
 # -Wno-padded: padding is nothing to warn about
+# -Wno-range-loop-analysis: items tests "for(const auto i...)"
+# -Wno-switch-enum -Wno-covered-switch-default: pedantic/contradicting warnings about switches
+# -Wno-weak-vtables: exception class is defined inline, but has virtual method
 pedantic_clang:
 	$(MAKE) json_unit CXX=$(COMPILER_DIR)/clang++ CXXFLAGS=" \
 		-std=c++11 -Wno-c++98-compat -Wno-c++98-compat-pedantic \
 		-Werror \
 		-Weverything \
+		-Wno-c++2a-compat \
+		-Wno-deprecated-declarations \
 		-Wno-documentation-unknown-command \
 		-Wno-exit-time-destructors \
-		-Wno-keyword-macro \
-		-Wno-deprecated-declarations \
-		-Wno-weak-vtables \
-		-Wno-range-loop-analysis \
 		-Wno-float-equal \
+		-Wno-keyword-macro \
+		-Wno-padded \
+		-Wno-range-loop-analysis \
 		-Wno-switch-enum -Wno-covered-switch-default \
-		-Wno-c++2a-compat \
-		-Wno-c++17-extensions \
-		-Wno-padded"
+		-Wno-weak-vtables"
 
 # calling GCC with most warnings
 pedantic_gcc:
-	$(MAKE) json_unit CXX=$(COMPILER_DIR)/g++ CXXFLAGS=" \
+	$(MAKE) json_unit CXX=$(COMPILER_DIR)/g++ CXXFLAGS="-D_Atomic=volatile \
 		-std=c++11 \
 		-Waddress \
 		-Waddress-of-packed-member \
