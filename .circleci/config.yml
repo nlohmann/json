@@ -14,14 +14,14 @@ jobs:
           name: Install GCC
           command: 'apt-get update && apt-get install -y gcc g++'
       - run:
-          name: Install CMake and Ninja
-          command: 'apt-get update && sudo apt-get install -y cmake ninja-build'
+          name: Install CMake
+          command: 'apt-get update && sudo apt-get install -y cmake'
       - run:
           name: Create build files
-          command: 'mkdir build ; cd build ; cmake .. -GNinja'
+          command: 'mkdir build ; cd build ; cmake ..'
       - run:
           name: Compile
           command: 'cmake --build build'
       - run:
           name: Execute test suite
-          command: 'cd build ; ctest -j 10'
+          command: 'cd build ; ctest -j 2'
