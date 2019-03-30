@@ -6,7 +6,7 @@ option(JSON_Coverage "Build test suite with coverage information" OFF)
 if(JSON_Sanitizer)
     message(STATUS "Building test suite with Clang sanitizer")
     if(NOT MSVC)
-        set(CMAKE_CXX_FLAGS "-g -O2 -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer")
+        set(CMAKE_CXX_FLAGS "-g -O2 -fsanitize=address -fsanitize=undefined -fsanitize=integer -fsanitize=nullability -fno-omit-frame-pointer")
     endif()
 endif()
 
@@ -64,7 +64,6 @@ set_target_properties(doctest_main PROPERTIES
     COMPILE_DEFINITIONS "$<$<CXX_COMPILER_ID:MSVC>:_SCL_SECURE_NO_WARNINGS>"
     COMPILE_OPTIONS "$<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>"
 )
-
 if (${CMAKE_VERSION} VERSION_LESS "3.8.0") 
     target_compile_features(doctest_main PUBLIC cxx_range_for)
 else()
