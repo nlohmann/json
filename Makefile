@@ -76,12 +76,20 @@ check-fast:
 coverage:
 	rm -fr build_coverage
 	mkdir build_coverage
-	cd build_coverage ; CXX=$(COMPILER_DIR)/g++ cmake .. -GNinja -DJSON_Coverage=ON -DJSON_MultipleHeaders=ON
+	cd build_coverage ; CXX=g++-7 cmake .. -GNinja -DJSON_Coverage=ON -DJSON_MultipleHeaders=ON
 	cd build_coverage ; ninja
 	cd build_coverage ; ctest -E '.*_default' -j10
 	cd build_coverage ; ninja lcov_html
 	open build_coverage/test/html/index.html
 
+fast-cov:
+	rm -fr build_coverage
+	mkdir build_coverage
+	cd build_coverage ; CXX=$(COMPILER_DIR)/g++ cmake .. -GNinja -DJSON_Coverage=ON -DJSON_MultipleHeaders=ON
+	cd build_coverage ; ninja
+	cd build_coverage ; ctest -E '.*_default' -j10
+	cd build_coverage ; ninja lcov_html2
+	open build_coverage/test/html/index.html
 
 ##########################################################################
 # documentation tests
