@@ -28,6 +28,7 @@ SOFTWARE.
 */
 
 #include "doctest_compatibility.h"
+DOCTEST_GCC_SUPPRESS_WARNING("-Wfloat-equal")
 
 #define private public
 #include <nlohmann/json.hpp>
@@ -351,9 +352,7 @@ TEST_CASE("constructors")
             CHECK(jva.size() == va.size());
             for (size_t i = 0; i < jva.size(); ++i)
             {
-                DOCTEST_GCC_SUPPRESS_WARNING_WITH_PUSH("-Wfloat-equal")
                 CHECK(va[i] == jva[i]);
-                DOCTEST_GCC_SUPPRESS_WARNING_POP
             }
         }
 

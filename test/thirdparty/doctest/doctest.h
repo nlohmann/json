@@ -161,6 +161,7 @@ DOCTEST_GCC_SUPPRESS_WARNING("-Winline")
 DOCTEST_GCC_SUPPRESS_WARNING("-Wunused-local-typedefs")
 DOCTEST_GCC_SUPPRESS_WARNING("-Wuseless-cast")
 DOCTEST_GCC_SUPPRESS_WARNING("-Wnoexcept")
+DOCTEST_GCC_SUPPRESS_WARNING("-Wsign-promo")
 
 DOCTEST_MSVC_SUPPRESS_WARNING_PUSH
 DOCTEST_MSVC_SUPPRESS_WARNING(4616) // invalid compiler warning
@@ -994,6 +995,10 @@ namespace detail {
     };
 
     DOCTEST_INTERFACE bool checkIfShouldThrow(assertType::Enum at);
+    
+#ifndef DOCTEST_CONFIG_NO_EXCEPTIONS
+    [[noreturn]]
+#endif // DOCTEST_CONFIG_NO_EXCEPTIONS
     DOCTEST_INTERFACE void throwException();
 
     struct DOCTEST_INTERFACE Subcase
@@ -1598,7 +1603,7 @@ namespace detail {
 
         DOCTEST_DELETE_COPIES(ContextScope);
 
-        ~ContextScope();
+        ~ContextScope() override;
 
         void stringify(std::ostream* s) const override;
     };
@@ -1838,6 +1843,15 @@ int registerReporter(const char* name, int priority) {
         x;                                                                                         \
     } catch(...) { _DOCTEST_RB.translateException(); }
 #endif // DOCTEST_CONFIG_NO_TRY_CATCH_IN_ASSERTS
+
+#ifdef DOCTEST_CONFIG_VOID_CAST_EXPRESSIONS
+#define DOCTEST_CAST_TO_VOID(x)                                                                    \
+    DOCTEST_GCC_SUPPRESS_WARNING_WITH_PUSH("-Wuseless-cast")                                       \
+    static_cast<void>(x);                                                                          \
+    DOCTEST_GCC_SUPPRESS_WARNING_POP
+#else // DOCTEST_CONFIG_VOID_CAST_EXPRESSIONS
+#define DOCTEST_CAST_TO_VOID(x) x;
+#endif // DOCTEST_CONFIG_VOID_CAST_EXPRESSIONS
 
 // registers the test by initializing a dummy var with a function
 #define DOCTEST_REGISTER_FUNCTION(global_prefix, f, decorators)                                    \
@@ -2108,15 +2122,13 @@ constexpr T to_lvalue = x;
 #define DOCTEST_REQUIRE_FALSE_MESSAGE(cond, msg) do { DOCTEST_INFO(msg); DOCTEST_ASSERT_IMPLEMENT_2(DT_REQUIRE_FALSE, cond); } while((void)0, 0)
 // clang-format on
 
-#define DOCTEST_ASSERT_THROWS(expr, assert_type) DOCTEST_ASSERT_THROWS_WITH(expr, assert_type, "")
-
 #define DOCTEST_ASSERT_THROWS_AS(expr, assert_type, ...)                                           \
     do {                                                                                           \
         if(!doctest::getContextOptions()->no_throw) {                                              \
             doctest::detail::ResultBuilder _DOCTEST_RB(doctest::assertType::assert_type, __FILE__, \
                                                        __LINE__, #expr, #__VA_ARGS__);             \
             try {                                                                                  \
-                expr;                                                                              \
+                DOCTEST_CAST_TO_VOID(expr)                                                         \
             } catch(const doctest::detail::remove_const<                                           \
                     doctest::detail::remove_reference<__VA_ARGS__>::type>::type&) {                \
                 _DOCTEST_RB.translateException();                                                  \
@@ -2132,7 +2144,7 @@ constexpr T to_lvalue = x;
             doctest::detail::ResultBuilder _DOCTEST_RB(doctest::assertType::assert_type, __FILE__, \
                                                        __LINE__, #expr, __VA_ARGS__);              \
             try {                                                                                  \
-                expr;                                                                              \
+                DOCTEST_CAST_TO_VOID(expr)                                                         \
             } catch(...) { _DOCTEST_RB.translateException(); }                                     \
             DOCTEST_ASSERT_LOG_AND_REACT(_DOCTEST_RB);                                             \
         }                                                                                          \
@@ -2143,15 +2155,15 @@ constexpr T to_lvalue = x;
         doctest::detail::ResultBuilder _DOCTEST_RB(doctest::assertType::assert_type, __FILE__,     \
                                                    __LINE__, #expr);                               \
         try {                                                                                      \
-            expr;                                                                                  \
+            DOCTEST_CAST_TO_VOID(expr)                                                             \
         } catch(...) { _DOCTEST_RB.translateException(); }                                         \
         DOCTEST_ASSERT_LOG_AND_REACT(_DOCTEST_RB);                                                 \
     } while((void)0, 0)
 
 // clang-format off
-#define DOCTEST_WARN_THROWS(expr) DOCTEST_ASSERT_THROWS(expr, DT_WARN_THROWS)
-#define DOCTEST_CHECK_THROWS(expr) DOCTEST_ASSERT_THROWS(expr, DT_CHECK_THROWS)
-#define DOCTEST_REQUIRE_THROWS(expr) DOCTEST_ASSERT_THROWS(expr, DT_REQUIRE_THROWS)
+#define DOCTEST_WARN_THROWS(expr) DOCTEST_ASSERT_THROWS_WITH(expr, DT_WARN_THROWS, "")
+#define DOCTEST_CHECK_THROWS(expr) DOCTEST_ASSERT_THROWS_WITH(expr, DT_CHECK_THROWS, "")
+#define DOCTEST_REQUIRE_THROWS(expr) DOCTEST_ASSERT_THROWS_WITH(expr, DT_REQUIRE_THROWS, "")
 
 #define DOCTEST_WARN_THROWS_AS(expr, ...) DOCTEST_ASSERT_THROWS_AS(expr, DT_WARN_THROWS_AS, __VA_ARGS__)
 #define DOCTEST_CHECK_THROWS_AS(expr, ...) DOCTEST_ASSERT_THROWS_AS(expr, DT_CHECK_THROWS_AS, __VA_ARGS__)
@@ -3504,11 +3516,11 @@ namespace detail {
         return false;
     }
 
-    void throwException() {
 #ifndef DOCTEST_CONFIG_NO_EXCEPTIONS
-        throw TestFailureException();
+    [[noreturn]] void throwException() { throw TestFailureException(); }
+#else // DOCTEST_CONFIG_NO_EXCEPTIONS
+    void throwException() {}
 #endif // DOCTEST_CONFIG_NO_EXCEPTIONS
-    }
 } // namespace detail
 
 namespace {
@@ -4868,12 +4880,16 @@ namespace {
         }
 
         void test_case_exception(const TestCaseException& e) override {
+            std::lock_guard<std::mutex> lock(mutex);
+
             xml.scopedElement("Exception")
                     .writeAttribute("crash", e.is_crash)
                     .writeText(e.error_string.c_str());
         }
 
         void subcase_start(const SubcaseSignature& in) override {
+            std::lock_guard<std::mutex> lock(mutex);
+
             xml.startElement("SubCase")
                     .writeAttribute("name", in.m_name)
                     .writeAttribute("filename", skipPathFromFilename(in.m_file))
@@ -5319,11 +5335,13 @@ namespace {
         }
 
         void subcase_start(const SubcaseSignature& subc) override {
+            std::lock_guard<std::mutex> lock(mutex);
             subcasesStack.push_back(subc);
             hasLoggedCurrentTestStart = false;
         }
 
         void subcase_end() override {
+            std::lock_guard<std::mutex> lock(mutex);
             subcasesStack.pop_back();
             hasLoggedCurrentTestStart = false;
         }

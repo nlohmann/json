@@ -28,7 +28,7 @@ SOFTWARE.
 */
 
 #include "doctest_compatibility.h"
-DOCTEST_GCC_SUPPRESS_WARNING_WITH_PUSH("-Wsign-promo")
+DOCTEST_GCC_SUPPRESS_WARNING("-Wfloat-equal")
 
 // for some reason including this after the json header leads to linker errors with VS 2017...
 #include <locale>
@@ -315,9 +315,7 @@ TEST_CASE("regression tests")
         // unsigned integer parsing - expected to overflow and be stored as a float
         j = custom_json::parse("4294967296"); // 2^32
         CHECK(static_cast<int>(j.type()) == static_cast<int>(custom_json::value_t::number_float));
-        DOCTEST_GCC_SUPPRESS_WARNING_WITH_PUSH("-Wfloat-equal")
         CHECK(j.get<float>() == 4294967296.0f);
-        DOCTEST_GCC_SUPPRESS_WARNING_POP
 
         // integer object creation - expected to wrap and still be stored as an integer
         j = -2147483649LL; // -2^31-1
@@ -482,9 +480,7 @@ TEST_CASE("regression tests")
         json j;
 
         j = json::parse("-0.0");
-        DOCTEST_GCC_SUPPRESS_WARNING_WITH_PUSH("-Wfloat-equal")
         CHECK(j.get<double>() == -0.0);
-        DOCTEST_GCC_SUPPRESS_WARNING_POP
 
         j = json::parse("2.22507385850720113605740979670913197593481954635164564e-308");
         CHECK(j.get<double>() == 2.2250738585072009e-308);
@@ -522,9 +518,7 @@ TEST_CASE("regression tests")
         // long double
         nlohmann::basic_json<std::map, std::vector, std::string, bool, int64_t, uint64_t, long double>
         j_long_double = 1.23e45L;
-        DOCTEST_GCC_SUPPRESS_WARNING_WITH_PUSH("-Wfloat-equal")
         CHECK(j_long_double.get<long double>() == 1.23e45L);
-        DOCTEST_GCC_SUPPRESS_WARNING_POP
     }
 
     SECTION("issue #228 - double values are serialized with commas as decimal points")

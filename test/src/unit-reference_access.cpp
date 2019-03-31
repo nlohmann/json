@@ -28,6 +28,7 @@ SOFTWARE.
 */
 
 #include "doctest_compatibility.h"
+DOCTEST_GCC_SUPPRESS_WARNING("-Wfloat-equal")
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;
@@ -287,9 +288,7 @@ TEST_CASE("reference access")
         // check if references are returned correctly
         test_type& p1 = value.get_ref<test_type&>();
         CHECK(&p1 == value.get_ptr<test_type*>());
-        DOCTEST_GCC_SUPPRESS_WARNING_WITH_PUSH("-Wfloat-equal")
         CHECK(p1 == value.get<test_type>());
-        DOCTEST_GCC_SUPPRESS_WARNING_POP
 
         const test_type& p2 = value.get_ref<const test_type&>();
         CHECK(&p2 == value.get_ptr<const test_type*>());

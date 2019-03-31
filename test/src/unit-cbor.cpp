@@ -28,6 +28,7 @@ SOFTWARE.
 */
 
 #include "doctest_compatibility.h"
+DOCTEST_GCC_SUPPRESS_WARNING("-Wfloat-equal")
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;
@@ -876,9 +877,7 @@ TEST_CASE("CBOR")
                     {
                         json j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x7c, 0x00}));
                         json::number_float_t d = j;
-                        DOCTEST_GCC_SUPPRESS_WARNING_WITH_PUSH("-Wfloat-equal")
                         CHECK(d == std::numeric_limits<json::number_float_t>::infinity());
-                        DOCTEST_GCC_SUPPRESS_WARNING_POP
                         CHECK(j.dump() == "null");
                     }
 
@@ -897,9 +896,7 @@ TEST_CASE("CBOR")
                     {
                         json j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x3c, 0x00}));
                         json::number_float_t d = j;
-                        DOCTEST_GCC_SUPPRESS_WARNING_WITH_PUSH("-Wfloat-equal")
                         CHECK(d == 1);
-                        DOCTEST_GCC_SUPPRESS_WARNING_POP
                     }
 
                     SECTION("-2 (1 10000 0000000000)")
