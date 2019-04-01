@@ -157,6 +157,16 @@ void from_json(const BasicJsonType& j, std::valarray<T>& l)
     std::copy(j.m_value.array->begin(), j.m_value.array->end(), std::begin(l));
 }
 
+template <typename BasicJsonType, typename T, std::size_t N>
+auto from_json(const BasicJsonType& j, T (&arr)[N])
+-> decltype(j.template get<T>(), void())
+{
+    for (std::size_t i = 0; i < N; ++i)
+    {
+        arr[i] = j.at(i).template get<T>();
+    }
+}
+
 template<typename BasicJsonType>
 void from_json_array_impl(const BasicJsonType& j, typename BasicJsonType::array_t& arr, priority_tag<3> /*unused*/)
 {
