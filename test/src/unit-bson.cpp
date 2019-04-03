@@ -27,11 +27,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "catch.hpp"
+#include "doctest_compatibility.h"
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;
+
 #include <fstream>
+#include <sstream>
 
 TEST_CASE("BSON")
 {
@@ -1138,7 +1140,7 @@ TEST_CASE("BSON numerical data")
                     };
 
                     CHECK_THROWS_AS(json::to_bson(j), json::out_of_range&);
-                    CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.out_of_range.407] integer number " + std::to_string(i) + " cannot be represented by BSON as it does not fit int64");
+                    CHECK_THROWS_WITH_STD_STR(json::to_bson(j), "[json.exception.out_of_range.407] integer number " + std::to_string(i) + " cannot be represented by BSON as it does not fit int64");
                 }
             }
 
@@ -1146,7 +1148,7 @@ TEST_CASE("BSON numerical data")
     }
 }
 
-TEST_CASE("BSON roundtrips", "[hide]")
+TEST_CASE("BSON roundtrips" * doctest::skip())
 {
     SECTION("reference files")
     {
@@ -1161,8 +1163,8 @@ TEST_CASE("BSON roundtrips", "[hide]")
         {
             CAPTURE(filename)
 
-            SECTION(filename + ": std::vector<uint8_t>")
             {
+                INFO_WITH_TEMP(filename + ": std::vector<uint8_t>");
                 // parse JSON file
                 std::ifstream f_json(filename);
                 json j1 = json::parse(f_json);
@@ -1179,8 +1181,8 @@ TEST_CASE("BSON roundtrips", "[hide]")
                 CHECK(j1 == j2);
             }
 
-            SECTION(filename + ": std::ifstream")
             {
+                INFO_WITH_TEMP(filename + ": std::ifstream");
                 // parse JSON file
                 std::ifstream f_json(filename);
                 json j1 = json::parse(f_json);
@@ -1194,8 +1196,8 @@ TEST_CASE("BSON roundtrips", "[hide]")
                 CHECK(j1 == j2);
             }
 
-            SECTION(filename + ": uint8_t* and size")
             {
+                INFO_WITH_TEMP(filename + ": uint8_t* and size");
                 // parse JSON file
                 std::ifstream f_json(filename);
                 json j1 = json::parse(f_json);
@@ -1212,8 +1214,8 @@ TEST_CASE("BSON roundtrips", "[hide]")
                 CHECK(j1 == j2);
             }
 
-            SECTION(filename + ": output to output adapters")
             {
+                INFO_WITH_TEMP(filename + ": output to output adapters");
                 // parse JSON file
                 std::ifstream f_json(filename);
                 json j1 = json::parse(f_json);
@@ -1224,8 +1226,8 @@ TEST_CASE("BSON roundtrips", "[hide]")
                     (std::istreambuf_iterator<char>(f_bson)),
                     std::istreambuf_iterator<char>());
 
-                SECTION(filename + ": output adapters: std::vector<uint8_t>")
                 {
+                    INFO_WITH_TEMP(filename + ": output adapters: std::vector<uint8_t>");
                     std::vector<uint8_t> vec;
                     json::to_bson(j1, vec);
 

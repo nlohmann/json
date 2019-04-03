@@ -27,12 +27,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "catch.hpp"
+#include "doctest_compatibility.h"
+DOCTEST_GCC_SUPPRESS_WARNING("-Wfloat-equal")
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
 #include <fstream>
+#include <sstream>
+#include <iomanip>
+#include <set>
 
 class SaxCountdown
 {
@@ -1586,7 +1590,8 @@ TEST_CASE("single CBOR roundtrip")
     }
 }
 
-TEST_CASE("CBOR regressions", "[!throws]")
+#if not defined(JSON_NOEXCEPTION)
+TEST_CASE("CBOR regressions")
 {
     SECTION("fuzz test results")
     {
@@ -1655,12 +1660,13 @@ TEST_CASE("CBOR regressions", "[!throws]")
         }
     }
 }
+#endif
 
-TEST_CASE("CBOR roundtrips", "[hide]")
+TEST_CASE("CBOR roundtrips" * doctest::skip())
 {
     SECTION("input from flynn")
     {
-        // most of these are exluded due to differences in key order (not a real problem)
+        // most of these are excluded due to differences in key order (not a real problem)
         auto exclude_packed = std::set<std::string>
         {
             "test/data/json.org/1.json",
@@ -1827,8 +1833,8 @@ TEST_CASE("CBOR roundtrips", "[hide]")
         {
             CAPTURE(filename)
 
-            SECTION(filename + ": std::vector<uint8_t>")
             {
+                INFO_WITH_TEMP(filename + ": std::vector<uint8_t>");
                 // parse JSON file
                 std::ifstream f_json(filename);
                 json j1 = json::parse(f_json);
@@ -1845,8 +1851,8 @@ TEST_CASE("CBOR roundtrips", "[hide]")
                 CHECK(j1 == j2);
             }
 
-            SECTION(filename + ": std::ifstream")
             {
+                INFO_WITH_TEMP(filename + ": std::ifstream");
                 // parse JSON file
                 std::ifstream f_json(filename);
                 json j1 = json::parse(f_json);
@@ -1860,8 +1866,8 @@ TEST_CASE("CBOR roundtrips", "[hide]")
                 CHECK(j1 == j2);
             }
 
-            SECTION(filename + ": uint8_t* and size")
             {
+                INFO_WITH_TEMP(filename + ": uint8_t* and size");
                 // parse JSON file
                 std::ifstream f_json(filename);
                 json j1 = json::parse(f_json);
@@ -1878,8 +1884,8 @@ TEST_CASE("CBOR roundtrips", "[hide]")
                 CHECK(j1 == j2);
             }
 
-            SECTION(filename + ": output to output adapters")
             {
+                INFO_WITH_TEMP(filename + ": output to output adapters");
                 // parse JSON file
                 std::ifstream f_json(filename);
                 json j1 = json::parse(f_json);
@@ -1892,8 +1898,8 @@ TEST_CASE("CBOR roundtrips", "[hide]")
 
                 if (!exclude_packed.count(filename))
                 {
-                    SECTION(filename + ": output adapters: std::vector<uint8_t>")
                     {
+                        INFO_WITH_TEMP(filename + ": output adapters: std::vector<uint8_t>");
                         std::vector<uint8_t> vec;
                         json::to_cbor(j1, vec);
                         CHECK(vec == packed);
@@ -1904,7 +1910,8 @@ TEST_CASE("CBOR roundtrips", "[hide]")
     }
 }
 
-TEST_CASE("all CBOR first bytes", "[!throws]")
+#if not defined(JSON_NOEXCEPTION)
+TEST_CASE("all CBOR first bytes")
 {
     // these bytes will fail immediately with exception parse_error.112
     std::set<uint8_t> unsupported =
@@ -1968,7 +1975,7 @@ TEST_CASE("all CBOR first bytes", "[!throws]")
         {
             // check that parse_error.112 is only thrown if the
             // first byte is in the unsupported set
-            CAPTURE(e.what())
+            INFO_WITH_TEMP(e.what());
             if (std::find(unsupported.begin(), unsupported.end(), byte) != unsupported.end())
             {
                 CHECK(e.id == 112);
@@ -1980,6 +1987,7 @@ TEST_CASE("all CBOR first bytes", "[!throws]")
         }
     }
 }
+#endif
 
 TEST_CASE("examples from RFC 7049 Appendix A")
 {

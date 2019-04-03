@@ -192,10 +192,19 @@ struct is_constructible_object_type_impl <
     using object_t = typename BasicJsonType::object_t;
 
     static constexpr bool value =
-        (std::is_constructible<typename ConstructibleObjectType::key_type, typename object_t::key_type>::value and
-         std::is_same<typename object_t::mapped_type, typename ConstructibleObjectType::mapped_type>::value) or
-        (has_from_json<BasicJsonType, typename ConstructibleObjectType::mapped_type>::value or
-         has_non_default_from_json<BasicJsonType, typename ConstructibleObjectType::mapped_type >::value);
+        (std::is_default_constructible<ConstructibleObjectType>::value and
+         (std::is_move_assignable<ConstructibleObjectType>::value or
+          std::is_copy_assignable<ConstructibleObjectType>::value) and
+         (std::is_constructible<typename ConstructibleObjectType::key_type,
+          typename object_t::key_type>::value and
+          std::is_same <
+          typename object_t::mapped_type,
+          typename ConstructibleObjectType::mapped_type >::value)) or
+        (has_from_json<BasicJsonType,
+         typename ConstructibleObjectType::mapped_type>::value or
+         has_non_default_from_json <
+         BasicJsonType,
+         typename ConstructibleObjectType::mapped_type >::value);
 };
 
 template <typename BasicJsonType, typename ConstructibleObjectType>
@@ -278,20 +287,24 @@ struct is_constructible_array_type_impl <
     BasicJsonType, ConstructibleArrayType,
     enable_if_t<not std::is_same<ConstructibleArrayType,
     typename BasicJsonType::value_type>::value and
-    is_detected<value_type_t, ConstructibleArrayType>::value and
-    is_detected<iterator_t, ConstructibleArrayType>::value and
-    is_complete_type<
-    detected_t<value_type_t, ConstructibleArrayType>>::value >>
+    std::is_default_constructible<ConstructibleArrayType>::value and
+(std::is_move_assignable<ConstructibleArrayType>::value or
+ std::is_copy_assignable<ConstructibleArrayType>::value) and
+is_detected<value_type_t, ConstructibleArrayType>::value and
+is_detected<iterator_t, ConstructibleArrayType>::value and
+is_complete_type<
+detected_t<value_type_t, ConstructibleArrayType>>::value >>
 {
     static constexpr bool value =
         // This is needed because json_reverse_iterator has a ::iterator type,
-        // furthermore, std::back_insert_iterator (and other iterators) have a base class `iterator`...
-        // Therefore it is detected as a ConstructibleArrayType.
-        // The real fix would be to have an Iterable concept.
-        not is_iterator_traits <
-        iterator_traits<ConstructibleArrayType >>::value and
+        // furthermore, std::back_insert_iterator (and other iterators) have a
+        // base class `iterator`... Therefore it is detected as a
+        // ConstructibleArrayType. The real fix would be to have an Iterable
+        // concept.
+        not is_iterator_traits<iterator_traits<ConstructibleArrayType>>::value and
 
-        (std::is_same<typename ConstructibleArrayType::value_type, typename BasicJsonType::array_t::value_type>::value or
+        (std::is_same<typename ConstructibleArrayType::value_type,
+         typename BasicJsonType::array_t::value_type>::value or
          has_from_json<BasicJsonType,
          typename ConstructibleArrayType::value_type>::value or
          has_non_default_from_json <

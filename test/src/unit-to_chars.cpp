@@ -31,7 +31,7 @@ SOFTWARE.
 // Only compile these tests if 'float' and 'double' are IEEE-754 single- and
 // double-precision numbers, resp.
 
-#include "catch.hpp"
+#include "doctest_compatibility.h"
 
 #include <nlohmann/json.hpp>
 using nlohmann::detail::dtoa_impl::reinterpret_bits;
