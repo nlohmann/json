@@ -182,7 +182,6 @@ pedantic_gcc:
 		-Wextra \
 		-Wextra-semi \
 		-Wfloat-conversion \
-		-Wfloat-equal \
 		-Wformat \
 		-Wformat-contains-nul \
 		-Wformat-extra-args \
@@ -232,6 +231,7 @@ pedantic_gcc:
 		-Wmultistatement-macros \
 		-Wnarrowing \
 		-Wno-deprecated-declarations \
+		-Wno-float-equal \
 		-Wno-long-long \
 		-Wno-namespaces \
 		-Wno-padded \
