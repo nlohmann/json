@@ -35,9 +35,9 @@ if(JSON_Coverage)
     set(CMAKE_CXX_FLAGS "--coverage -g -O0 -fprofile-arcs -ftest-coverage")
 
     # from https://github.com/RWTH-HPC/CMake-codecov/blob/master/cmake/FindGcov.cmake
-    #get_filename_component(COMPILER_PATH "${CMAKE_CXX_COMPILER}" PATH)
-    #string(REGEX MATCH "^[0-9]+" GCC_VERSION "${CMAKE_CXX_COMPILER_VERSION}")
-    #find_program(GCOV_BIN NAMES gcov-${GCC_VERSION} gcov HINTS ${COMPILER_PATH})
+    get_filename_component(COMPILER_PATH "${CMAKE_CXX_COMPILER}" PATH)
+    string(REGEX MATCH "^[0-9]+" GCC_VERSION "${CMAKE_CXX_COMPILER_VERSION}")
+    find_program(GCOV_BIN NAMES gcov-${GCC_VERSION} gcov HINTS ${COMPILER_PATH})
 
     # collect all source files from the chosen include dir
     file(GLOB_RECURSE SOURCE_FILES ${NLOHMANN_JSON_INCLUDE_BUILD_DIR}*.hpp)
@@ -55,7 +55,7 @@ if(JSON_Coverage)
     # add target to collect coverage information and generate HTML file
     # (filter script from https://stackoverflow.com/a/43726240/266378)
     add_custom_target(lcov_html2
-        COMMAND ${CMAKE_SOURCE_DIR}/test/thirdparty/fastcov/fastcov.py --lcov -o json.info --gcov ${GCOV_BIN} --exclude-gcov /usr 9.0.1/ test/
+        COMMAND ${CMAKE_SOURCE_DIR}/test/thirdparty/fastcov/fastcov.py --branch-coverage --lcov -o json.info --gcov ${GCOV_BIN}
         COMMAND gsed -i 's%build_coverage/%%g' json.info
         COMMAND ${CMAKE_SOURCE_DIR}/test/thirdparty/imapdl/filterbr.py json.info > json.info.filtered.noexcept
         COMMAND genhtml --title "JSON for Modern C++" --legend --demangle-cpp --output-directory html --show-details --branch-coverage json.info.filtered.noexcept
