@@ -27,13 +27,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "catch.hpp"
+#include "doctest_compatibility.h"
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
 #include <fstream>
+#include <set>
 
+namespace
+{
 class SaxCountdown
 {
   public:
@@ -103,6 +106,7 @@ class SaxCountdown
   private:
     int events_left = 0;
 };
+}
 
 TEST_CASE("UBJSON")
 {
@@ -2113,7 +2117,8 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
     }
 }
 
-TEST_CASE("all UBJSON first bytes", "[!throws]")
+#if not defined(JSON_NOEXCEPTION)
+TEST_CASE("all UBJSON first bytes")
 {
     // these bytes will fail immediately with exception parse_error.112
     std::set<uint8_t> supported =
@@ -2134,7 +2139,7 @@ TEST_CASE("all UBJSON first bytes", "[!throws]")
         {
             // check that parse_error.112 is only thrown if the
             // first byte is not in the supported set
-            CAPTURE(e.what())
+            INFO_WITH_TEMP(e.what());
             if (std::find(supported.begin(), supported.end(), byte) == supported.end())
             {
                 CHECK(e.id == 112);
@@ -2146,8 +2151,9 @@ TEST_CASE("all UBJSON first bytes", "[!throws]")
         }
     }
 }
+#endif
 
-TEST_CASE("UBJSON roundtrips", "[hide]")
+TEST_CASE("UBJSON roundtrips" * doctest::skip())
 {
     SECTION("input from self-generated UBJSON files")
     {
@@ -2199,8 +2205,8 @@ TEST_CASE("UBJSON roundtrips", "[hide]")
         {
             CAPTURE(filename)
 
-            SECTION(filename + ": std::vector<uint8_t>")
             {
+                INFO_WITH_TEMP(filename + ": std::vector<uint8_t>");
                 // parse JSON file
                 std::ifstream f_json(filename);
                 json j1 = json::parse(f_json);
@@ -2217,8 +2223,8 @@ TEST_CASE("UBJSON roundtrips", "[hide]")
                 CHECK(j1 == j2);
             }
 
-            SECTION(filename + ": std::ifstream")
             {
+                INFO_WITH_TEMP(filename + ": std::ifstream");
                 // parse JSON file
                 std::ifstream f_json(filename);
                 json j1 = json::parse(f_json);
@@ -2232,8 +2238,8 @@ TEST_CASE("UBJSON roundtrips", "[hide]")
                 CHECK(j1 == j2);
             }
 
-            SECTION(filename + ": uint8_t* and size")
             {
+                INFO_WITH_TEMP(filename + ": uint8_t* and size");
                 // parse JSON file
                 std::ifstream f_json(filename);
                 json j1 = json::parse(f_json);
@@ -2250,8 +2256,8 @@ TEST_CASE("UBJSON roundtrips", "[hide]")
                 CHECK(j1 == j2);
             }
 
-            SECTION(filename + ": output to output adapters")
             {
+                INFO_WITH_TEMP(filename + ": output to output adapters");
                 // parse JSON file
                 std::ifstream f_json(filename);
                 json j1 = json::parse(f_json);
@@ -2262,8 +2268,8 @@ TEST_CASE("UBJSON roundtrips", "[hide]")
                     (std::istreambuf_iterator<char>(f_ubjson)),
                     std::istreambuf_iterator<char>());
 
-                SECTION(filename + ": output adapters: std::vector<uint8_t>")
                 {
+                    INFO_WITH_TEMP(filename + ": output adapters: std::vector<uint8_t>");
                     std::vector<uint8_t> vec;
                     json::to_ubjson(j1, vec);
                     CHECK(vec == packed);

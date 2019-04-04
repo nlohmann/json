@@ -27,11 +27,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "catch.hpp"
+#include "doctest_compatibility.h"
+
 #include <nlohmann/json.hpp>
 
 using nlohmann::json;
 
+namespace
+{
 enum test
 {
 };
@@ -58,6 +61,7 @@ static_assert(noexcept(json(pod{})), "");
 static_assert(noexcept(j.get<pod>()), "");
 static_assert(not noexcept(j.get<pod_bis>()), "");
 static_assert(noexcept(json(pod{})), "");
+}
 
 TEST_CASE("runtime checks")
 {

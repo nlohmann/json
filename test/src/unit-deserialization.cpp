@@ -27,14 +27,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "catch.hpp"
+#include "doctest_compatibility.h"
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
 #include <iostream>
+#include <sstream>
 #include <valarray>
 
+namespace
+{
 struct SaxEventLogger : public nlohmann::json_sax<json>
 {
     bool null() override
@@ -166,6 +169,7 @@ struct SaxEventLoggerExitAfterStartArray : public SaxEventLogger
         return false;
     }
 };
+}
 
 TEST_CASE("deserialization")
 {

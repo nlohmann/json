@@ -27,13 +27,18 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "catch.hpp"
+#include "doctest_compatibility.h"
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
 #include <fstream>
+#include <sstream>
+#include <iomanip>
+#include <set>
 
+namespace
+{
 class SaxCountdown
 {
   public:
@@ -103,6 +108,7 @@ class SaxCountdown
   private:
     int events_left = 0;
 };
+}
 
 TEST_CASE("MessagePack")
 {
@@ -1297,7 +1303,6 @@ TEST_CASE("MessagePack")
     }
 }
 
-
 // use this testcase outside [hide] to run it with Valgrind
 TEST_CASE("single MessagePack roundtrip")
 {
@@ -1344,8 +1349,7 @@ TEST_CASE("single MessagePack roundtrip")
     }
 }
 
-
-TEST_CASE("MessagePack roundtrips", "[hide]")
+TEST_CASE("MessagePack roundtrips" * doctest::skip())
 {
     SECTION("input from msgpack-python")
     {
@@ -1519,8 +1523,8 @@ TEST_CASE("MessagePack roundtrips", "[hide]")
         {
             CAPTURE(filename)
 
-            SECTION(filename + ": std::vector<uint8_t>")
             {
+                INFO_WITH_TEMP(filename + ": std::vector<uint8_t>");
                 // parse JSON file
                 std::ifstream f_json(filename);
                 json j1 = json::parse(f_json);
@@ -1537,8 +1541,8 @@ TEST_CASE("MessagePack roundtrips", "[hide]")
                 CHECK(j1 == j2);
             }
 
-            SECTION(filename + ": std::ifstream")
             {
+                INFO_WITH_TEMP(filename + ": std::ifstream");
                 // parse JSON file
                 std::ifstream f_json(filename);
                 json j1 = json::parse(f_json);
@@ -1552,8 +1556,8 @@ TEST_CASE("MessagePack roundtrips", "[hide]")
                 CHECK(j1 == j2);
             }
 
-            SECTION(filename + ": uint8_t* and size")
             {
+                INFO_WITH_TEMP(filename + ": uint8_t* and size");
                 // parse JSON file
                 std::ifstream f_json(filename);
                 json j1 = json::parse(f_json);
@@ -1570,8 +1574,8 @@ TEST_CASE("MessagePack roundtrips", "[hide]")
                 CHECK(j1 == j2);
             }
 
-            SECTION(filename + ": output to output adapters")
             {
+                INFO_WITH_TEMP(filename + ": output to output adapters");
                 // parse JSON file
                 std::ifstream f_json(filename);
                 json j1 = json::parse(f_json);
@@ -1584,8 +1588,8 @@ TEST_CASE("MessagePack roundtrips", "[hide]")
 
                 if (!exclude_packed.count(filename))
                 {
-                    SECTION(filename + ": output adapters: std::vector<uint8_t>")
                     {
+                        INFO_WITH_TEMP(filename + ": output adapters: std::vector<uint8_t>");
                         std::vector<uint8_t> vec;
                         json::to_msgpack(j1, vec);
                         CHECK(vec == packed);

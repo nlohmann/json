@@ -27,16 +27,19 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "catch.hpp"
+#include "doctest_compatibility.h"
+DOCTEST_GCC_SUPPRESS_WARNING("-Wfloat-equal")
 
 #define private public
 #include <nlohmann/json.hpp>
 using nlohmann::json;
+#undef private
 
 #include <deque>
 #include <forward_list>
 #include <fstream>
 #include <list>
+#include <set>
 #include <unordered_map>
 #include <unordered_set>
 #include <valarray>

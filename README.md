@@ -1270,13 +1270,13 @@ The library itself consists of a single header file licensed under the MIT licen
 - [**American fuzzy lop**](http://lcamtuf.coredump.cx/afl/) for fuzz testing
 - [**AppVeyor**](https://www.appveyor.com) for [continuous integration](https://ci.appveyor.com/project/nlohmann/json) on Windows
 - [**Artistic Style**](http://astyle.sourceforge.net) for automatic source code identation
-- [**Catch**](https://github.com/philsquared/Catch) for the unit tests
 - [**Clang**](http://clang.llvm.org) for compilation with code sanitizers
 - [**CMake**](https://cmake.org) for build automation
 - [**Codacity**](https://www.codacy.com) for further [code analysis](https://www.codacy.com/app/nlohmann/json)
 - [**Coveralls**](https://coveralls.io) to measure [code coverage](https://coveralls.io/github/nlohmann/json)
 - [**Coverity Scan**](https://scan.coverity.com) for [static analysis](https://scan.coverity.com/projects/nlohmann-json)
 - [**cppcheck**](http://cppcheck.sourceforge.net) for static analysis
+- [**doctest**](https://github.com/onqtam/doctest) for the unit tests
 - [**Doozer**](https://doozer.io) for [continuous integration](https://doozer.io/nlohmann/json) on Linux (CentOS, Raspbian, Fedora)
 - [**Doxygen**](http://www.stack.nl/~dimitri/doxygen/) to generate [documentation](https://nlohmann.github.io/json/)
 - [**git-update-ghpages**](https://github.com/rstacruz/git-update-ghpages) to upload the documentation to gh-pages

@@ -27,14 +27,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "catch.hpp"
+#include "doctest_compatibility.h"
 
 #define private public
 #include <nlohmann/json.hpp>
 using nlohmann::json;
+#undef private
 
+namespace
+{
 // special test case to check if memory is leaked if constructor throws
-
 template<class T>
 struct bad_allocator : std::allocator<T>
 {
@@ -44,6 +46,7 @@ struct bad_allocator : std::allocator<T>
         throw std::bad_alloc();
     }
 };
+}
 
 TEST_CASE("bad_alloc")
 {
@@ -64,6 +67,8 @@ TEST_CASE("bad_alloc")
     }
 }
 
+namespace
+{
 static bool next_construct_fails = false;
 static bool next_destroy_fails = false;
 static bool next_deallocate_fails = false;
@@ -128,6 +133,7 @@ void my_allocator_clean_up(T* p)
     my_allocator<T> alloc;
     alloc.destroy(p);
     alloc.deallocate(p, 1);
+}
 }
 
 TEST_CASE("controlled bad_alloc")

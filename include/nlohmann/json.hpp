@@ -2684,6 +2684,19 @@ class basic_json
         return v;
     }
 
+    template <
+        typename T, std::size_t N,
+        typename Array = T (&)[N],
+        detail::enable_if_t <
+            detail::has_from_json<basic_json_t, Array>::value, int > = 0 >
+    Array get_to(T (&v)[N]) const
+    noexcept(noexcept(JSONSerializer<Array>::from_json(
+                          std::declval<const basic_json_t&>(), v)))
+    {
+        JSONSerializer<Array>::from_json(*this, v);
+        return v;
+    }
+
 
     /*!
     @brief get a pointer value (implicit)

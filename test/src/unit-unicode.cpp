@@ -27,15 +27,23 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "catch.hpp"
+#include "doctest_compatibility.h"
+
+// for some reason including this after the json header leads to linker errors with VS 2017...
+#include <locale>
 
 #define private public
 #include <nlohmann/json.hpp>
 using nlohmann::json;
+#undef private
 
 #include <fstream>
+#include <sstream>
 #include <iostream>
+#include <iomanip>
 
+namespace
+{
 extern size_t calls;
 size_t calls = 0;
 
@@ -159,8 +167,9 @@ void check_utf8string(bool success_expected, int byte1, int byte2 = -1, int byte
         CHECK_THROWS_AS(json::parse(json_string), json::parse_error&);
     }
 }
+}
 
-TEST_CASE("Unicode", "[hide]")
+TEST_CASE("Unicode" * doctest::skip())
 {
     SECTION("RFC 3629")
     {
@@ -1199,6 +1208,8 @@ TEST_CASE("Unicode", "[hide]")
     }
 }
 
+namespace
+{
 void roundtrip(bool success_expected, const std::string& s);
 
 void roundtrip(bool success_expected, const std::string& s)
@@ -1237,6 +1248,7 @@ void roundtrip(bool success_expected, const std::string& s)
         // parsing JSON text fails
         CHECK_THROWS_AS(json::parse(ps), json::parse_error&);
     }
+}
 }
 
 TEST_CASE("Markus Kuhn's UTF-8 decoder capability and stress test")

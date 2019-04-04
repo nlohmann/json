@@ -27,11 +27,21 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "catch.hpp"
+#include "doctest_compatibility.h"
+DOCTEST_GCC_SUPPRESS_WARNING("-Wfloat-equal")
+
+// for some reason including this after the json header leads to linker errors with VS 2017...
+#include <locale>
 
 #define private public
 #include <nlohmann/json.hpp>
 using nlohmann::json;
+#undef private
+
+#include <fstream>
+#include <sstream>
+#include <list>
+#include <cstdio>
 
 #if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_HAS_CXX17) && _HAS_CXX17 == 1) // fix for issue #464
     #define JSON_HAS_CPP_17
@@ -42,10 +52,6 @@ using nlohmann::json;
 #endif
 
 #include "fifo_map.hpp"
-
-#include <fstream>
-#include <list>
-#include <cstdio>
 
 /////////////////////////////////////////////////////////////////////
 // for #972
@@ -287,7 +293,7 @@ TEST_CASE("regression tests")
         int number = j["Number"];
         CHECK(number == 100);
         float foo = j["Foo"];
-        CHECK(foo == Approx(42.42));
+        CHECK(static_cast<double>(foo) == Approx(42.42));
     }
 
     SECTION("issue #89 - nonstandard integer type")
@@ -297,8 +303,7 @@ TEST_CASE("regression tests")
             nlohmann::basic_json<std::map, std::vector, std::string, bool, int32_t, uint32_t, float>;
         custom_json j;
         j["int_1"] = 1;
-        // we need to cast to int to compile with Catch - the value is int32_t
-        CHECK(static_cast<int>(j["int_1"]) == 1);
+        CHECK(j["int_1"] == 1);
 
         // tests for correct handling of non-standard integers that overflow the type selected by the user
 
@@ -1780,7 +1785,8 @@ TEST_CASE("regression tests")
     }
 }
 
-TEST_CASE("regression tests, exceptions dependent", "[!throws]")
+#if not defined(JSON_NOEXCEPTION)
+TEST_CASE("regression tests, exceptions dependent")
 {
     SECTION("issue #1340 - eof not set on exhausted input stream")
     {
@@ -1792,3 +1798,4 @@ TEST_CASE("regression tests, exceptions dependent", "[!throws]")
         CHECK(s.eof());
     }
 }
+#endif

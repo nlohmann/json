@@ -76,7 +76,7 @@ check-fast:
 coverage:
 	rm -fr build_coverage
 	mkdir build_coverage
-	cd build_coverage ; CXX=g++-7 cmake .. -GNinja -DJSON_Coverage=ON -DJSON_MultipleHeaders=ON
+	cd build_coverage ; CXX=g++-8 cmake .. -GNinja -DJSON_Coverage=ON -DJSON_MultipleHeaders=ON
 	cd build_coverage ; ninja
 	cd build_coverage ; ctest -E '.*_default' -j10
 	cd build_coverage ; ninja lcov_html
@@ -108,7 +108,7 @@ doctest:
 # -Wno-c++2a-compat: u8 literals will behave differently in C++20...
 # -Wno-deprecated-declarations: the library deprecated some functions
 # -Wno-documentation-unknown-command: code uses user-defined commands like @complexity
-# -Wno-exit-time-destructors: warning in Catch code
+# -Wno-exit-time-destructors: warning in json code triggered by NLOHMANN_JSON_SERIALIZE_ENUM
 # -Wno-float-equal: not all comparisons in the tests can be replaced by Approx
 # -Wno-keyword-macro: unit-tests use "#define private public"
 # -Wno-padded: padding is nothing to warn about
@@ -190,7 +190,6 @@ pedantic_gcc:
 		-Wextra \
 		-Wextra-semi \
 		-Wfloat-conversion \
-		-Wfloat-equal \
 		-Wformat \
 		-Wformat-contains-nul \
 		-Wformat-extra-args \
@@ -240,6 +239,7 @@ pedantic_gcc:
 		-Wmultistatement-macros \
 		-Wnarrowing \
 		-Wno-deprecated-declarations \
+		-Wno-float-equal \
 		-Wno-long-long \
 		-Wno-namespaces \
 		-Wno-padded \
