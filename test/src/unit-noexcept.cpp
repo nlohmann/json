@@ -33,6 +33,8 @@ SOFTWARE.
 
 using nlohmann::json;
 
+namespace
+{
 enum test
 {
 };
@@ -59,6 +61,7 @@ static_assert(noexcept(json(pod{})), "");
 static_assert(noexcept(j.get<pod>()), "");
 static_assert(not noexcept(j.get<pod_bis>()), "");
 static_assert(noexcept(json(pod{})), "");
+}
 
 TEST_CASE("runtime checks")
 {

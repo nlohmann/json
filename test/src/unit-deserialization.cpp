@@ -36,6 +36,8 @@ using nlohmann::json;
 #include <sstream>
 #include <valarray>
 
+namespace
+{
 struct SaxEventLogger : public nlohmann::json_sax<json>
 {
     bool null() override
@@ -167,6 +169,7 @@ struct SaxEventLoggerExitAfterStartArray : public SaxEventLogger
         return false;
     }
 };
+}
 
 TEST_CASE("deserialization")
 {

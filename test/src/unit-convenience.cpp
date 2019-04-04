@@ -36,6 +36,8 @@ using nlohmann::json;
 
 #include <sstream>
 
+namespace
+{
 void check_escaped(const char* original, const char* escaped = "", const bool ensure_ascii = false);
 void check_escaped(const char* original, const char* escaped, const bool ensure_ascii)
 {
@@ -43,6 +45,7 @@ void check_escaped(const char* original, const char* escaped, const bool ensure_
     json::serializer s(nlohmann::detail::output_adapter<char>(ss), ' ');
     s.dump_escaped(original, ensure_ascii);
     CHECK(ss.str() == escaped);
+}
 }
 
 TEST_CASE("convenience functions")

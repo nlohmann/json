@@ -38,6 +38,8 @@ using nlohmann::json;
 #include <iomanip>
 #include <set>
 
+namespace
+{
 class SaxCountdown
 {
   public:
@@ -107,6 +109,7 @@ class SaxCountdown
   private:
     int events_left = 0;
 };
+}
 
 TEST_CASE("CBOR")
 {

@@ -32,12 +32,15 @@ SOFTWARE.
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+namespace
+{
 // helper function to check std::less<json::value_t>
 // see https://en.cppreference.com/w/cpp/utility/functional/less
 template <typename A, typename B, typename U = std::less<json::value_t>>
 bool f(A a, B b, U u = U())
 {
     return u(a, b);
+}
 }
 
 TEST_CASE("lexicographical comparison operators")

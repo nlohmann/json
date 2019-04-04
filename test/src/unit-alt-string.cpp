@@ -39,7 +39,6 @@ SOFTWARE.
 class alt_string;
 bool operator<(const char* op1, const alt_string& op2);
 
-
 /*
  * This is virtually a string class.
  * It covers std::string under the hood.
@@ -155,7 +154,6 @@ class alt_string
     friend bool ::operator<(const char*, const alt_string&);
 };
 
-
 using alt_json = nlohmann::basic_json <
                  std::map,
                  std::vector,
@@ -172,8 +170,6 @@ bool operator<(const char* op1, const alt_string& op2)
 {
     return op1 < op2.str_impl;
 }
-
-
 
 TEST_CASE("alternative string type")
 {

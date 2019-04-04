@@ -35,6 +35,8 @@ using nlohmann::json;
 #include <fstream>
 #include <set>
 
+namespace
+{
 class SaxCountdown
 {
   public:
@@ -104,6 +106,7 @@ class SaxCountdown
   private:
     int events_left = 0;
 };
+}
 
 TEST_CASE("UBJSON")
 {

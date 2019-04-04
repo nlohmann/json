@@ -608,6 +608,8 @@ TEST_CASE("BSON input/output_adapters")
     }
 }
 
+namespace
+{
 class SaxCountdown
 {
   public:
@@ -677,6 +679,7 @@ class SaxCountdown
   private:
     int events_left = 0;
 };
+}
 
 TEST_CASE("Incomplete BSON Input")
 {

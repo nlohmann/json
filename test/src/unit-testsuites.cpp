@@ -418,7 +418,6 @@ TEST_CASE("json.org examples")
         json j;
         CHECK_NOTHROW(j.parse(f.get()));
     }
-
 }
 
 TEST_CASE("RFC 7159 examples")
@@ -1352,6 +1351,8 @@ TEST_CASE("nst's JSONTestSuite (2)")
     }
 }
 
+namespace
+{
 std::string trim(const std::string& str);
 
 // from http://stackoverflow.com/a/25829178/266378
@@ -1364,6 +1365,7 @@ std::string trim(const std::string& str)
     }
     size_t last = str.find_last_not_of(' ');
     return str.substr(first, (last - first + 1));
+}
 }
 
 TEST_CASE("Big List of Naughty Strings")

@@ -36,6 +36,8 @@ using nlohmann::json;
 
 #include <valarray>
 
+namespace
+{
 class SaxEventLogger
 {
   public:
@@ -255,6 +257,7 @@ bool accept_helper(const std::string& s)
 
     // 7. return result
     return ok_accept;
+}
 }
 
 TEST_CASE("parser class")

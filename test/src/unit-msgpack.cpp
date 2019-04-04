@@ -37,6 +37,8 @@ using nlohmann::json;
 #include <iomanip>
 #include <set>
 
+namespace
+{
 class SaxCountdown
 {
   public:
@@ -106,6 +108,7 @@ class SaxCountdown
   private:
     int events_left = 0;
 };
+}
 
 TEST_CASE("MessagePack")
 {
@@ -1300,7 +1303,6 @@ TEST_CASE("MessagePack")
     }
 }
 
-
 // use this testcase outside [hide] to run it with Valgrind
 TEST_CASE("single MessagePack roundtrip")
 {
@@ -1346,7 +1348,6 @@ TEST_CASE("single MessagePack roundtrip")
         CHECK(j1 == json::from_msgpack(packed.begin() + 5, packed.end()));
     }
 }
-
 
 TEST_CASE("MessagePack roundtrips" * doctest::skip())
 {

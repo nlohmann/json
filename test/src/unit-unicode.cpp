@@ -42,6 +42,8 @@ using nlohmann::json;
 #include <iostream>
 #include <iomanip>
 
+namespace
+{
 extern size_t calls;
 size_t calls = 0;
 
@@ -164,6 +166,7 @@ void check_utf8string(bool success_expected, int byte1, int byte2 = -1, int byte
     {
         CHECK_THROWS_AS(json::parse(json_string), json::parse_error&);
     }
+}
 }
 
 TEST_CASE("Unicode" * doctest::skip())
@@ -1205,6 +1208,8 @@ TEST_CASE("Unicode" * doctest::skip())
     }
 }
 
+namespace
+{
 void roundtrip(bool success_expected, const std::string& s);
 
 void roundtrip(bool success_expected, const std::string& s)
@@ -1243,6 +1248,7 @@ void roundtrip(bool success_expected, const std::string& s)
         // parsing JSON text fails
         CHECK_THROWS_AS(json::parse(ps), json::parse_error&);
     }
+}
 }
 
 TEST_CASE("Markus Kuhn's UTF-8 decoder capability and stress test")

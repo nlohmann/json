@@ -32,6 +32,8 @@ SOFTWARE.
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+namespace
+{
 bool wstring_is_utf16();
 bool wstring_is_utf16()
 {
@@ -48,6 +50,7 @@ bool u32string_is_utf32();
 bool u32string_is_utf32()
 {
     return (std::u32string(U"💩") == std::u32string(U"\U0001F4A9"));
+}
 }
 
 TEST_CASE("wide strings")
