@@ -55,7 +55,7 @@ if(JSON_Coverage)
     # add target to collect coverage information and generate HTML file
     # (filter script from https://stackoverflow.com/a/43726240/266378)
     add_custom_target(lcov_html2
-        COMMAND ${CMAKE_SOURCE_DIR}/test/thirdparty/fastcov/fastcov.py --branch-coverage --lcov -o json.info --gcov ${GCOV_BIN} --compiler-directory ${CMAKE_BINARY_DIR} #--source-files ${SOURCE_FILES}
+        COMMAND ${CMAKE_SOURCE_DIR}/test/thirdparty/fastcov/fastcov.py --branch-coverage --lcov -o json.info --gcov ${GCOV_BIN} --compiler-directory ${CMAKE_BINARY_DIR} --source-files ${SOURCE_FILES}
         COMMAND ${CMAKE_SOURCE_DIR}/test/thirdparty/imapdl/filterbr.py json.info > json.info.filtered.noexcept
         COMMAND genhtml --title "JSON for Modern C++" --legend --demangle-cpp --output-directory html --show-details --branch-coverage json.info.filtered.noexcept
         COMMENT "Generating HTML report test/html/index.html"
