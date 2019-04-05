@@ -125,7 +125,7 @@ pedantic_clang:
 
 # calling GCC with most warnings
 pedantic_gcc:
-	$(MAKE) json_unit CXX=$(COMPILER_DIR)/g++ CXXFLAGS="-D_Atomic=volatile \
+	$(MAKE) json_unit CXX=$(COMPILER_DIR)/g++ CXXFLAGS=" \
 		-std=c++11 \
 		-Waddress \
 		-Waddress-of-packed-member \
