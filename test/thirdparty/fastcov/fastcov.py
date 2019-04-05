@@ -61,7 +61,7 @@ def getFilteredGcdaFiles(gcda_files, exclude):
 
 def getGcdaFiles(cwd, gcda_files):
     if not gcda_files:
-        gcda_files = glob.glob(os.path.join(cwd, "**/*.gcda"), recursive=True)
+        gcda_files = glob.glob(os.path.join(os.path.abspath(cwd), "**/*.gcda"), recursive=True)
     return gcda_files
 
 def gcovWorker(cwd, gcov, files, chunk, gcov_filter_options, branch_coverage):
