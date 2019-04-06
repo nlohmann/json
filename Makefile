@@ -35,6 +35,7 @@ all:
 	@echo "check-fast - compile and execute test suite (skip long-running tests)"
 	@echo "clean - remove built files"
 	@echo "coverage - create coverage information with lcov"
+	@echo "coverage-fast - create coverage information with fastcov"
 	@echo "cppcheck - analyze code with cppcheck"
 	@echo "cpplint - analyze code with cpplint"
 	@echo "clang_tidy - analyze code with Clang-Tidy"
@@ -82,13 +83,13 @@ coverage:
 	cd build_coverage ; ninja lcov_html
 	open build_coverage/test/html/index.html
 
-fast-cov:
+coverage-fast:
 	rm -fr build_coverage
 	mkdir build_coverage
 	cd build_coverage ; CXX=$(COMPILER_DIR)/g++ cmake .. -GNinja -DJSON_Coverage=ON -DJSON_MultipleHeaders=ON
 	cd build_coverage ; ninja
 	cd build_coverage ; ctest -E '.*_default' -j10
-	cd build_coverage ; ninja lcov_html2
+	cd build_coverage ; ninja fastcov_html
 	open build_coverage/test/html/index.html
 
 ##########################################################################

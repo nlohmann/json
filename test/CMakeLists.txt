@@ -27,9 +27,9 @@ endif()
 
 if(JSON_Coverage)
     message(STATUS "Building test suite with coverage information")
-    #if(NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    #    message(FATAL_ERROR "JSON_Coverage requires GCC.")
-    #endif()
+    if(NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+        message(FATAL_ERROR "JSON_Coverage requires GCC.")
+    endif()
 
     # enable profiling
     set(CMAKE_CXX_FLAGS "--coverage -g -O0 -fprofile-arcs -ftest-coverage")
@@ -46,18 +46,16 @@ if(JSON_Coverage)
     # (filter script from https://stackoverflow.com/a/43726240/266378)
     add_custom_target(lcov_html
         COMMAND lcov --directory . --capture --output-file json.info --rc lcov_branch_coverage=1
-        COMMAND lcov -e json.info ${SOURCE_FILES} --output-file json.info.filtered --rc lcov_branch_coverage=1
+        COMMAND lcov -e json.info ${SOURCE_FILES} --output-file json.info.filtered --gcov-tool ${GCOV_BIN} --rc lcov_branch_coverage=1
         COMMAND ${CMAKE_SOURCE_DIR}/test/thirdparty/imapdl/filterbr.py json.info.filtered > json.info.filtered.noexcept
         COMMAND genhtml --title "JSON for Modern C++" --legend --demangle-cpp --output-directory html --show-details --branch-coverage json.info.filtered.noexcept
         COMMENT "Generating HTML report test/html/index.html"
     )
 
-    # add target to collect coverage information and generate HTML file
-    # (filter script from https://stackoverflow.com/a/43726240/266378)
-    add_custom_target(lcov_html2
+    add_custom_target(fastcov_html
         COMMAND ${CMAKE_SOURCE_DIR}/test/thirdparty/fastcov/fastcov.py --branch-coverage --lcov -o json.info --gcov ${GCOV_BIN} --compiler-directory ${CMAKE_BINARY_DIR} --source-files ${SOURCE_FILES}
-        COMMAND ${CMAKE_SOURCE_DIR}/test/thirdparty/imapdl/filterbr.py json.info > json.info.filtered.noexcept
-        COMMAND genhtml --title "JSON for Modern C++" --legend --demangle-cpp --output-directory html --show-details --branch-coverage json.info.filtered.noexcept
+        COMMAND ${CMAKE_SOURCE_DIR}/test/thirdparty/imapdl/filterbr.py json.info > json.info.noexcept
+        COMMAND genhtml --title "JSON for Modern C++" --legend --demangle-cpp --output-directory html --show-details --branch-coverage json.info.noexcept
         COMMENT "Generating HTML report test/html/index.html"
     )
 endif()
