@@ -3,6 +3,28 @@ version: '{build}'
 environment:
   matrix:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+      configuration: Debug
+      platform: x86
+      CXX_FLAGS: ""
+      LINKER_FLAGS: ""
+      GENERATOR: Visual Studio 14 2015
+
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      configuration: Debug
+      platform: x86
+      CXX_FLAGS: ""
+      LINKER_FLAGS: ""
+      GENERATOR: Visual Studio 15 2017
+
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+      configuration: Debug
+      COMPILER: mingw
+      platform: x86
+      CXX_FLAGS: ""
+      LINKER_FLAGS: ""
+      GENERATOR: Ninja
+
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
       COMPILER: mingw
       platform: x86
       CXX_FLAGS: ""
@@ -48,6 +70,8 @@ environment:
 init:
   - cmake --version
   - msbuild /version
+  # set the default build configuration to Release
+  - if "%configuration%"=="" (set configuration="Release")
 
 install:
   - if "%COMPILER%"=="mingw" appveyor DownloadFile https://github.com/ninja-build/ninja/releases/download/v1.6.0/ninja-win.zip -FileName ninja.zip
@@ -57,10 +81,10 @@ install:
   - if "%COMPILER%"=="mingw" g++ --version
 
 before_build:
-  - cmake . -G "%GENERATOR%" -DCMAKE_CXX_FLAGS="%CXX_FLAGS%" -DCMAKE_EXE_LINKER_FLAGS="%LINKER_FLAGS%" -DCMAKE_IGNORE_PATH="C:/Program Files/Git/usr/bin"
+  - cmake . -G "%GENERATOR%" -DCMAKE_BUILD_TYPE="%configuration%" -DCMAKE_CXX_FLAGS="%CXX_FLAGS%" -DCMAKE_EXE_LINKER_FLAGS="%LINKER_FLAGS%" -DCMAKE_IGNORE_PATH="C:/Program Files/Git/usr/bin"
 
 build_script:
-  - cmake --build . --config Release
+  - cmake --build . --config "%configuration%"
 
 test_script:
-  - ctest -C Release -V -j
+  - ctest -C "%configuration%" -V -j
