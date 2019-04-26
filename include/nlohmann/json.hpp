@@ -7965,6 +7965,20 @@ class basic_json
 
     /// @}
 };
+
+/*!
+@brief user-defined to_string function for JSON values
+
+This function implements a user-defined to_string  for JSON objects.
+
+@param[in] j  a JSON object
+@return a std::string object
+*/
+
+template <class T>
+std::string to_string(const T& j){
+    return j.dump();
+}
 } // namespace nlohmann
 
 ///////////////////////
