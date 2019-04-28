@@ -50,6 +50,19 @@ OBJECTS = $(SOURCES:.cpp=.o)
 
 TESTCASES = $(patsubst src/unit-%.cpp,test-%,$(wildcard src/unit-*.cpp))
 
+
+##############################################################################
+# external test data
+##############################################################################
+
+EXTERNAL_DATA_URL = https://github.com/nickaein/nlohmann-json-testdata.git
+EXTERNAL_DATA_TAG = 310048a5c34195b935f8062c53f30f3253fc5f50
+EXTERNAL_DATA_DIR = data
+
+external_data:
+	@test -d $(EXTERNAL_DATA_DIR) || (echo "Downloading test data..." && git clone $(EXTERNAL_DATA_URL) $(EXTERNAL_DATA_DIR) && cd $@ && git checkout $(EXTERNAL_DATA_TAG) && cd ..) || exit 1;
+
+
 ##############################################################################
 # main rules
 ##############################################################################
@@ -82,7 +95,7 @@ test-%: src/unit-%.o src/unit.o ../single_include/nlohmann/json.hpp thirdparty/d
 
 TEST_PATTERN ?= "*"
 TEST_PREFIX = ""
-check: $(OBJECTS) $(TESTCASES)
+check: external_data $(OBJECTS) $(TESTCASES)
 	@cd .. ; for testcase in $(TESTCASES); do echo "Executing $$testcase..."; $(TEST_PREFIX)test/$$testcase $(TEST_PATTERN) || exit 1; done
 
 
