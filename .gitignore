@@ -22,4 +22,5 @@ benchmarks/files/numbers/*.json
 cmake-build-debug
 
 test/test-*
+test/data
 /.vs
