@@ -99,15 +99,17 @@ if(MSVC)
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /bigobj")
 endif()
 
-ExternalProject_Add(ExternalTestData
-  GIT_REPOSITORY    https://github.com/nickaein/nlohmann-json-testdata.git
-  GIT_TAG           310048a5c34195b935f8062c53f30f3253fc5f50
-  SOURCE_DIR        ${CMAKE_CURRENT_SOURCE_DIR}/data
-  CONFIGURE_COMMAND ""
-  BUILD_COMMAND     ""
-  INSTALL_COMMAND   ""
-  TEST_COMMAND      ""
-)
+if(NOT DEFINED ENV{LGTM_WORKSPACE})
+    ExternalProject_Add(ExternalTestData
+      GIT_REPOSITORY    https://github.com/nickaein/nlohmann-json-testdata.git
+      GIT_TAG           310048a5c34195b935f8062c53f30f3253fc5f50
+      SOURCE_DIR        ${CMAKE_CURRENT_SOURCE_DIR}/data
+      CONFIGURE_COMMAND ""
+      BUILD_COMMAND     ""
+      INSTALL_COMMAND   ""
+      TEST_COMMAND      ""
+    )
+endif()
 
 #############################################################################
 # one executable for each unit test file
@@ -119,7 +121,10 @@ foreach(file ${files})
     string(REGEX REPLACE "unit-([^$]+)" "test-\\1" testcase ${file_basename})
 
     add_executable(${testcase} $<TARGET_OBJECTS:doctest_main> ${file})
-    add_dependencies(${testcase} ExternalTestData)
+
+    if(NOT DEFINED ENV{LGTM_WORKSPACE})
+        add_dependencies(${testcase} ExternalTestData)
+    endif()
 
     target_compile_definitions(${testcase} PRIVATE
       DOCTEST_CONFIG_SUPER_FAST_ASSERTS
