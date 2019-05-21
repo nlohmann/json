@@ -37,6 +37,13 @@ environment:
       LINKER_FLAGS: ""
       GENERATOR: Visual Studio 14 2015
 
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+      platform: x86
+      name: with_win_header
+      CXX_FLAGS: ""
+      LINKER_FLAGS: ""
+      GENERATOR: Visual Studio 14 2015
+
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
       platform: x86
       CXX_FLAGS: ""
@@ -81,6 +88,9 @@ install:
   - if "%COMPILER%"=="mingw" g++ --version
 
 before_build:
+  # for with_win_header build, inject the inclusion of Windows.h to the single-header library
+  - ps: if ($env:name -Eq "with_win_header") { $header_path = "single_include\nlohmann\json.hpp" }
+  - ps: if ($env:name -Eq "with_win_header") { "#include <Windows.h>`n" + (Get-Content $header_path | Out-String) | Set-Content $header_path }
   - cmake . -G "%GENERATOR%" -DCMAKE_BUILD_TYPE="%configuration%" -DCMAKE_CXX_FLAGS="%CXX_FLAGS%" -DCMAKE_EXE_LINKER_FLAGS="%LINKER_FLAGS%" -DCMAKE_IGNORE_PATH="C:/Program Files/Git/usr/bin"
 
 build_script:
