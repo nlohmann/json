@@ -173,4 +173,19 @@ TEST_CASE("serialization")
             test("\xE1\x80\xE2\xF0\x91\x92\xF1\xBF\x41", "\\ufffd" "\\ufffd" "\\ufffd" "\\ufffd" "\x41");
         }
     }
+
+    SECTION("to_string")
+    {
+        auto test = [&](std::string const & input, std::string const & expected)
+        {
+            using std::to_string;
+            json j = input;
+            CHECK(to_string(j) == "\"" + expected + "\"");
+        };
+
+        test("{\"x\":5,\"y\":6}", "{\\\"x\\\":5,\\\"y\\\":6}");
+        test("{\"x\":[10,null,null,null]}", "{\\\"x\\\":[10,null,null,null]}");
+        test("test", "test");
+        test("[3,\"false\",false]", "[3,\\\"false\\\",false]");
+    }
 }
