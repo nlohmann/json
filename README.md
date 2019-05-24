@@ -243,7 +243,7 @@ json j2 = {
 };
 ```
 
-Note that in all these cases, you never need to "tell" the compiler which JSON value type you want to use. If you want to be explicit or express some edge cases, the functions [`json::array`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_aa80485befaffcadaa39965494e0b4d2e.html#aa80485befaffcadaa39965494e0b4d2e) and [`json::object`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_aa13f7c0615867542ce80337cbcf13ada.html#aa13f7c0615867542ce80337cbcf13ada) will help:
+Note that in all these cases, you never need to "tell" the compiler which JSON value type you want to use. If you want to be explicit or express some edge cases, the functions [`json::array()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a9ad7ec0bc1082ed09d10900fbb20a21f.html#a9ad7ec0bc1082ed09d10900fbb20a21f) and [`json::object()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_aaf509a7c029100d292187068f61c99b8.html#aaf509a7c029100d292187068f61c99b8) will help:
 
 ```cpp
 // a way to express the empty array []
@@ -278,7 +278,7 @@ auto j2 = R"(
 
 Note that without appending the `_json` suffix, the passed string literal is not parsed, but just used as JSON string value. That is, `json j = "{ \"happy\": true, \"pi\": 3.141 }"` would just store the string `"{ "happy": true, "pi": 3.141 }"` rather than parsing the actual object.
 
-The above example can also be expressed explicitly using [`json::parse()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a5a0339361f3282cb8fd2f9ede6e17d72.html#a5a0339361f3282cb8fd2f9ede6e17d72):
+The above example can also be expressed explicitly using [`json::parse()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_afd4ef1ac8ad50a5894a9afebca69140a.html#afd4ef1ac8ad50a5894a9afebca69140a):
 
 ```cpp
 // parse explicitly
@@ -321,7 +321,7 @@ std::cout << cpp_string << " == " << cpp_string2 << " == " << j_string.get<std::
 std::cout << j_string << " == " << serialized_string << std::endl;
 ```
 
-[`.dump()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a50ec80b02d0f3f51130d4abb5d1cfdc5.html#a50ec80b02d0f3f51130d4abb5d1cfdc5) always returns the serialized value, and [`.get<std::string>()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a16f9445f7629f634221a42b967cdcd43.html#a16f9445f7629f634221a42b967cdcd43) returns the originally stored string value.
+[`.dump()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a50ec80b02d0f3f51130d4abb5d1cfdc5.html#a50ec80b02d0f3f51130d4abb5d1cfdc5) always returns the serialized value, and [`.get<std::string>()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_aa6602bb24022183ab989439e19345d08.html#aa6602bb24022183ab989439e19345d08) returns the originally stored string value.
 
 Note the library only supports UTF-8. When you store strings with different encodings in the library, calling [`dump()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a50ec80b02d0f3f51130d4abb5d1cfdc5.html#a50ec80b02d0f3f51130d4abb5d1cfdc5) may throw an exception unless `json::error_handler_t::replace` or `json::error_handler_t::ignore` are used as error handlers.
 
