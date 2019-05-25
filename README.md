@@ -147,6 +147,84 @@ endif()
 
 `thirdparty/nlohmann_json` is then a complete copy of this source tree.
 
+### Bazel 
+
+You can also use the `nlohmann/json` in Bazel. 
+
+#### Add External Dependency in WORKSPACE
+
+You can write external dependency `github_nlohmann_json` at your WORKSPACE file.
+
+```python
+workspace(name = "nlohmann_json_demo")
+
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+http_archive(
+    name = "github_nlohmann_json",
+    sha256 = "69cc88207ce91347ea530b227ff0776db82dcb8de6704e1a3d74f4841bc651cf",
+    urls = [
+        "https://github.com/nlohmann/json/releases/download/v3.6.1/include.zip",
+    ],
+    build_file = "//third_party:nlohmann_json.BUILD",
+)
+```
+
+`nlohmann_json.BUILD` define the bazel rule for the `nlohmann/json` library.
+
+```python
+licenses(["notice"])
+
+exports_files(["LICENSE.MIT"])
+
+cc_library(
+    name = "json",
+    hdrs = glob([
+        "include/**/*.hpp",
+    ]),
+    includes = ["include"],
+    visibility = ["//visibility:public"],
+    alwayslink = 1,
+)
+```
+
+NOTE: sha256 is public by the release, and you can also get `sha256` as follow command:
+
+```
+curl -L https://github.com/nlohmann/json/releases/download/v3.6.1/include.zip | sha256sum
+```
+
+#### Usage
+
+You can write one simple c++ binary rule and depend `@github_nlohmann_json//:json` target. 
+
+```
+cc_binary(
+    name = "json_test",
+    srcs = ["json_test.cc"],
+    deps = [
+        "@github_nlohmann_json//:json",
+    ],
+)
+```
+
+After it, you can include `nlohmann/json.hpp` file. 
+
+```cpp
+#include "nlohmann/json.hpp"
+#include <iostream>
+
+int main(int argc, char** argv) {
+  nlohmann::json obj = {
+    {"bazel", "https://bazel.build"},
+    {"cmake", "https://cmake.org/"},    
+  };
+  std::cout << obj.dump(4) << std::endl;
+}
+```
+
+NOTE: you should use double quotation marks instead of angle brackets. You can see details at [horance-liu/nlohmann_json_demo](https://github.com/horance-liu/nlohmann_json_demo) project.
+
 ### Package Managers
 
 :beer: If you are using OS X and [Homebrew](http://brew.sh), just type `brew tap nlohmann/json` and `brew install nlohmann_json` and you're set. If you want the bleeding edge rather than the latest release, use `brew install nlohmann_json --HEAD`.
