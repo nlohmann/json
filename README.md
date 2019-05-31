@@ -21,6 +21,7 @@
   - [Package Managers](#package-managers)
 - [Examples](#examples)
   - [JSON as first-class data type](#json-as-first-class-data-type)
+  - [Validation](#validation)
   - [Serialization / Deserialization](#serialization--deserialization)
   - [STL-like access](#stl-like-access)
   - [Conversion from STL containers](#conversion-from-stl-containers)
@@ -256,6 +257,17 @@ json empty_object_explicit = json::object();
 // a way to express an _array_ of key/value pairs [["currency", "USD"], ["value", 42.99]]
 json array_not_object = json::array({ {"currency", "USD"}, {"value", 42.99} });
 ```
+
+### Validation
+
+You can validate a json string using the accept() method:
+
+```cpp
+bool success = json::accept("Invalid json string");
+// success is false
+```
+
+It is highly recommended to call accept() before parse() when receiving json strings from an untrusted source (a web server for example) as parse() can cause fatal errors when passed malformed json.
 
 ### Serialization / Deserialization
 
