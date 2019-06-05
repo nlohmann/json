@@ -150,7 +150,7 @@ endif()
 
 ### Package Managers
 
-:beer: If you are using OS X and [Homebrew](http://brew.sh), just type `brew tap nlohmann/json` and `brew install nlohmann_json` and you're set. If you want the bleeding edge rather than the latest release, use `brew install nlohmann_json --HEAD`.
+:beer: If you are using OS X and [Homebrew](http://brew.sh), just type `brew tap nlohmann/json` and `brew install nlohmann-json` and you're set. If you want the bleeding edge rather than the latest release, use `brew install nlohmann-json --HEAD`.
 
 If you are using the [Meson Build System](http://mesonbuild.com), then you can get a wrap file by downloading it from [Meson WrapDB](https://wrapdb.mesonbuild.com/nlohmann_json), or simply use `meson wrap install nlohmann_json`.
 
@@ -1078,7 +1078,7 @@ The class contains a slightly modified version of the Grisu2 algorithm from Flor
 
 ## Contact
 
-If you have questions regarding the library, I would like to invite you to [open an issue at GitHub](https://github.com/nlohmann/json/issues/new). Please describe your request, problem, or question as detailed as possible, and also mention the version of the library you are using as well as the version of your compiler and operating system. Opening an issue at GitHub allows other users and contributors to this library to collaborate. For instance, I have little experience with MSVC, and most issues in this regard have been solved by a growing community. If you have a look at the [closed issues](https://github.com/nlohmann/json/issues?q=is%3Aissue+is%3Aclosed), you will see that we react quite timely in most cases.
+If you have questions regarding the library, I would like to invite you to [open an issue at GitHub](https://github.com/nlohmann/json/issues/new/choose). Please describe your request, problem, or question as detailed as possible, and also mention the version of the library you are using as well as the version of your compiler and operating system. Opening an issue at GitHub allows other users and contributors to this library to collaborate. For instance, I have little experience with MSVC, and most issues in this regard have been solved by a growing community. If you have a look at the [closed issues](https://github.com/nlohmann/json/issues?q=is%3Aissue+is%3Aclosed), you will see that we react quite timely in most cases.
 
 Only if your request would contain confidential information, please [send me an email](mailto:mail@nlohmann.me). For encrypted messages, please use [this key](https://keybase.io/nlohmann/pgp_keys.asc).
 
@@ -1325,7 +1325,7 @@ This library does not support comments. It does so for three reasons:
 
 	> Suppose you are using JSON to keep configuration files, which you would like to annotate. Go ahead and insert all the comments you like. Then pipe it through JSMin before handing it to your JSON parser.
 
-3. It dangerous for interoperability if some libraries would add comment support while others don't. Please check [The Harmful Consequences of the Robustness Principle](https://tools.ietf.org/html/draft-iab-protocol-maintenance-01) on this.
+3. It is dangerous for interoperability if some libraries would add comment support while others don't. Please check [The Harmful Consequences of the Robustness Principle](https://tools.ietf.org/html/draft-iab-protocol-maintenance-01) on this.
 
 This library will not support comments in the future. If you wish to use comments, I see three options:
 
