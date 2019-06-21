@@ -719,7 +719,7 @@ TEST_CASE("regression tests")
         };
 
         check_roundtrip(100000000000.1236);
-        check_roundtrip(std::numeric_limits<json::number_float_t>::max());
+        check_roundtrip((std::numeric_limits<json::number_float_t>::max)());
 
         // Some more numbers which fail to roundtrip when serialized with digits10 significand digits (instead of max_digits10)
         check_roundtrip(1.541888611948064e-17);
