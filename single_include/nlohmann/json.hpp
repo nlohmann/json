@@ -7821,6 +7821,13 @@ class iter_impl
           to iterator is not defined.
     */
 
+    /* We had to explicitly define the copy constructor for the const
+       case to circumvent a bug on msvc 2015 debug build.
+       More info: https://github.com/nlohmann/json/issues/1608
+     */
+    iter_impl(const iter_impl<const BasicJsonType>& other) noexcept
+        : m_object(other.m_object), m_it(other.m_it) {}
+
     /*!
     @brief converting constructor
     @param[in] other  non-const iterator to copy from
