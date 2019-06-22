@@ -16189,6 +16189,8 @@ class basic_json
     @return copy of the element at key @a key or @a default_value if @a key
     is not found
 
+    @throw type_error.302 if @a default_value does not match the type of the
+    value at @a key
     @throw type_error.306 if the JSON value is not an object; in that case,
     using `value()` with a key makes no sense.
 
@@ -16262,6 +16264,8 @@ class basic_json
     @return copy of the element at key @a key or @a default_value if @a key
     is not found
 
+    @throw type_error.302 if @a default_value does not match the type of the
+    value at @a ptr
     @throw type_error.306 if the JSON value is not an object; in that case,
     using `value()` with a key makes no sense.
 
