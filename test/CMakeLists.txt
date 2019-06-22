@@ -133,12 +133,6 @@ foreach(file ${files})
     )
     set_tests_properties("${testcase}_all" PROPERTIES LABELS "all")
 
-    # Increase timeout for test-unicode_all on Debug build
-    string(TOUPPER "${CMAKE_BUILD_TYPE}" uppercase_CMAKE_BUILD_TYPE)
-	if (("${testcase}" STREQUAL "test-unicode") AND (uppercase_CMAKE_BUILD_TYPE  STREQUAL DEBUG))
-		set_tests_properties("${testcase}_all" PROPERTIES TIMEOUT 3600)
-	endif()
-
     if(JSON_Valgrind)
         add_test(NAME "${testcase}_valgrind"
           COMMAND ${memcheck_command} ${CMAKE_CURRENT_BINARY_DIR}/${testcase} ${DOCTEST_TEST_FILTER}

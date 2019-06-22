@@ -103,4 +103,6 @@ build_script:
   - cmake --build . --config "%configuration%"
 
 test_script:
-  - ctest -C "%configuration%" -V -j
+  # Set 1 hour timeout to avoid the occasional
+  # timeouts on test-unicode_all
+  - ctest --timeout 3600 -C "%configuration%" -V -j
