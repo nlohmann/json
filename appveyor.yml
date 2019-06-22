@@ -25,6 +25,7 @@ environment:
       GENERATOR: Ninja
 
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+      configuration: Release
       COMPILER: mingw
       platform: x86
       CXX_FLAGS: ""
@@ -32,12 +33,14 @@ environment:
       GENERATOR: Ninja
 
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+      configuration: Release
       platform: x86
       CXX_FLAGS: ""
       LINKER_FLAGS: ""
       GENERATOR: Visual Studio 14 2015
 
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+      configuration: Release
       platform: x86
       name: with_win_header
       CXX_FLAGS: ""
@@ -45,30 +48,35 @@ environment:
       GENERATOR: Visual Studio 14 2015
 
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      configuration: Release
       platform: x86
       CXX_FLAGS: ""
       LINKER_FLAGS: ""
       GENERATOR: Visual Studio 15 2017
 
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      configuration: Release
       platform: x86
       CXX_FLAGS: "/permissive- /std:c++latest /utf-8"
       LINKER_FLAGS: ""
       GENERATOR: Visual Studio 15 2017
 
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+      configuration: Release
       platform: x64
       CXX_FLAGS: ""
       LINKER_FLAGS: ""
       GENERATOR: Visual Studio 14 2015 Win64
 
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      configuration: Release
       platform: x64
       CXX_FLAGS: ""
       LINKER_FLAGS: ""
       GENERATOR: Visual Studio 15 2017 Win64
 
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      configuration: Release
       platform: x64
       CXX_FLAGS: "/permissive- /std:c++latest /utf-8 /F4000000"
       LINKER_FLAGS: "/STACK:4000000"
@@ -77,8 +85,6 @@ environment:
 init:
   - cmake --version
   - msbuild /version
-  # set the default build configuration to Release
-  - if "%configuration%"=="" (set configuration="Release")
 
 install:
   - if "%COMPILER%"=="mingw" appveyor DownloadFile https://github.com/ninja-build/ninja/releases/download/v1.6.0/ninja-win.zip -FileName ninja.zip
