@@ -103,6 +103,9 @@ build_script:
   - cmake --build . --config "%configuration%"
 
 test_script:
-  # Set 1 hour timeout to avoid the occasional
-  # timeouts on test-unicode_all
-  - ctest --timeout 3600 -C "%configuration%" -V -j
+  - if "%configuration%"=="Release" ctest -C "%configuration%" -V -j
+  # On Debug builds, skip test-unicode_all
+  # as it is extremely slow to run and cause
+  # occasional timeouts on AppVeyor.
+  # More info: https://github.com/nlohmann/json/pull/1570
+  - if "%configuration%"=="Debug" ctest --exclude-regex "test-unicode_all" -C "%configuration%" -V -j
