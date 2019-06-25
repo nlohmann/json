@@ -73,8 +73,8 @@ TEST_CASE("concepts")
         // X::size_type must return an unsigned integer
         CHECK((std::is_unsigned<json::size_type>::value));
         // X::size_type can represent any non-negative value of X::difference_type
-        CHECK(static_cast<json::size_type>(std::numeric_limits<json::difference_type>::max()) <=
-              std::numeric_limits<json::size_type>::max());
+        CHECK(static_cast<json::size_type>((std::numeric_limits<json::difference_type>::max)()) <=
+              (std::numeric_limits<json::size_type>::max)());
 
         // the expression "X u" has the post-condition "u.empty()"
         {

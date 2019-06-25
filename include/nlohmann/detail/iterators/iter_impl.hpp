@@ -119,6 +119,16 @@ class iter_impl
     */
 
     /*!
+    @brief const copy constructor
+    @param[in] other const iterator to copy from
+    @note This copy constuctor had to be defined explicitely to circumvent a bug
+          occuring on msvc v19.0 compiler (VS 2015) debug build. For more
+          information refer to: https://github.com/nlohmann/json/issues/1608
+    */
+    iter_impl(const iter_impl<const BasicJsonType>& other) noexcept
+        : m_object(other.m_object), m_it(other.m_it) {}
+
+    /*!
     @brief converting constructor
     @param[in] other  non-const iterator to copy from
     @note It is not checked whether @a other is initialized.
