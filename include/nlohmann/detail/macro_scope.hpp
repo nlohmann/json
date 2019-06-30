@@ -1,6 +1,7 @@
 #pragma once
 
 #include <utility> // pair
+#include <nlohmann/thirdparty/hedley/hedley.hpp>
 
 // This file contains all internal macro definitions
 // You MUST include macro_unscope.hpp at the end of json.hpp to undef all of them
@@ -38,32 +39,6 @@
     #pragma GCC diagnostic ignored "-Wdocumentation"
 #endif
 
-// allow for portable deprecation warnings
-#if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
-    #define JSON_DEPRECATED __attribute__((deprecated))
-#elif defined(_MSC_VER)
-    #define JSON_DEPRECATED __declspec(deprecated)
-#else
-    #define JSON_DEPRECATED
-#endif
-
-// allow for portable nodiscard warnings
-#if defined(__has_cpp_attribute)
-    #if __has_cpp_attribute(nodiscard)
-        #if defined(__clang__) && !defined(JSON_HAS_CPP_17) // issue #1535
-            #define JSON_NODISCARD
-        #else
-            #define JSON_NODISCARD [[nodiscard]]
-        #endif
-    #elif __has_cpp_attribute(gnu::warn_unused_result)
-        #define JSON_NODISCARD [[gnu::warn_unused_result]]
-    #else
-        #define JSON_NODISCARD
-    #endif
-#else
-    #define JSON_NODISCARD
-#endif
-
 // allow to disable exceptions
 #if (defined(__cpp_exceptions) || defined(__EXCEPTIONS) || defined(_CPPUNWIND)) && !defined(JSON_NOEXCEPTION)
     #define JSON_THROW(exception) throw exception
@@ -96,15 +71,6 @@
 #if defined(JSON_INTERNAL_CATCH_USER)
     #undef JSON_INTERNAL_CATCH
     #define JSON_INTERNAL_CATCH JSON_INTERNAL_CATCH_USER
-#endif
-
-// manual branch prediction
-#if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
-    #define JSON_LIKELY(x)      __builtin_expect(x, 1)
-    #define JSON_UNLIKELY(x)    __builtin_expect(x, 0)
-#else
-    #define JSON_LIKELY(x)      x
-    #define JSON_UNLIKELY(x)    x
 #endif
 
 /*!

@@ -126,7 +126,8 @@ class iter_impl
           information refer to: https://github.com/nlohmann/json/issues/1608
     */
     iter_impl(const iter_impl<const BasicJsonType>& other) noexcept
-        : m_object(other.m_object), m_it(other.m_it) {}
+        : m_object(other.m_object), m_it(other.m_it)
+    {}
 
     /*!
     @brief converting constructor
@@ -134,7 +135,8 @@ class iter_impl
     @note It is not checked whether @a other is initialized.
     */
     iter_impl(const iter_impl<typename std::remove_const<BasicJsonType>::type>& other) noexcept
-        : m_object(other.m_object), m_it(other.m_it) {}
+        : m_object(other.m_object), m_it(other.m_it)
+    {}
 
     /*!
     @brief converting assignment
@@ -143,6 +145,14 @@ class iter_impl
     @note It is not checked whether @a other is initialized.
     */
     iter_impl& operator=(const iter_impl<typename std::remove_const<BasicJsonType>::type>& other) noexcept
+    {
+        m_object = other.m_object;
+        m_it = other.m_it;
+        return *this;
+    }
+
+    /// @copydoc operator=(const iter_impl<typename std::remove_const<BasicJsonType>::type>&)
+    iter_impl& operator=(const iter_impl<const BasicJsonType>& other) noexcept
     {
         m_object = other.m_object;
         m_it = other.m_it;
@@ -245,7 +255,7 @@ class iter_impl
 
             default:
             {
-                if (JSON_LIKELY(m_it.primitive_iterator.is_begin()))
+                if (HEDLEY_LIKELY(m_it.primitive_iterator.is_begin()))
                 {
                     return *m_object;
                 }
@@ -279,7 +289,7 @@ class iter_impl
 
             default:
             {
-                if (JSON_LIKELY(m_it.primitive_iterator.is_begin()))
+                if (HEDLEY_LIKELY(m_it.primitive_iterator.is_begin()))
                 {
                     return m_object;
                 }
@@ -382,7 +392,7 @@ class iter_impl
     bool operator==(const iter_impl& other) const
     {
         // if objects are not the same, the comparison is undefined
-        if (JSON_UNLIKELY(m_object != other.m_object))
+        if (HEDLEY_UNLIKELY(m_object != other.m_object))
         {
             JSON_THROW(invalid_iterator::create(212, "cannot compare iterators of different containers"));
         }
@@ -418,7 +428,7 @@ class iter_impl
     bool operator<(const iter_impl& other) const
     {
         // if objects are not the same, the comparison is undefined
-        if (JSON_UNLIKELY(m_object != other.m_object))
+        if (HEDLEY_UNLIKELY(m_object != other.m_object))
         {
             JSON_THROW(invalid_iterator::create(212, "cannot compare iterators of different containers"));
         }
@@ -578,7 +588,7 @@ class iter_impl
 
             default:
             {
-                if (JSON_LIKELY(m_it.primitive_iterator.get_value() == -n))
+                if (HEDLEY_LIKELY(m_it.primitive_iterator.get_value() == -n))
                 {
                     return *m_object;
                 }
@@ -596,7 +606,7 @@ class iter_impl
     {
         assert(m_object != nullptr);
 
-        if (JSON_LIKELY(m_object->is_object()))
+        if (HEDLEY_LIKELY(m_object->is_object()))
         {
             return m_it.object_iterator->first;
         }
@@ -619,5 +629,5 @@ class iter_impl
     /// the actual iterator of the associated instance
     internal_iterator<typename std::remove_const<BasicJsonType>::type> m_it {};
 };
-}  // namespace detail
+} // namespace detail
 } // namespace nlohmann
