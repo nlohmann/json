@@ -290,8 +290,10 @@ TEST_CASE("modifiers")
             SECTION("null")
             {
                 json j;
-                j.emplace_back(1);
-                j.emplace_back(2);
+                auto& x1 = j.emplace_back(1);
+                CHECK(x1 == 1);
+                auto& x2 = j.emplace_back(2);
+                CHECK(x2 == 2);
                 CHECK(j.type() == json::value_t::array);
                 CHECK(j == json({1, 2}));
             }
@@ -299,7 +301,8 @@ TEST_CASE("modifiers")
             SECTION("array")
             {
                 json j = {1, 2, 3};
-                j.emplace_back("Hello");
+                auto& x = j.emplace_back("Hello");
+                CHECK(x == "Hello");
                 CHECK(j.type() == json::value_t::array);
                 CHECK(j == json({1, 2, 3, "Hello"}));
             }
@@ -307,7 +310,8 @@ TEST_CASE("modifiers")
             SECTION("multiple values")
             {
                 json j;
-                j.emplace_back(3, "foo");
+                auto& x = j.emplace_back(3, "foo");
+                CHECK(x == json({"foo", "foo", "foo"}));
                 CHECK(j.type() == json::value_t::array);
                 CHECK(j == json({{"foo", "foo", "foo"}}));
             }
