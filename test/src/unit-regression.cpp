@@ -1806,7 +1806,6 @@ TEST_CASE("regression tests, exceptions dependent")
 template <typename T> class array {};
 template <typename T> class object {};
 template <typename T> class string {};
-template <typename T> class boolean {};
 template <typename T> class number_integer {};
 template <typename T> class number_unsigned {};
 template <typename T> class number_float {};
