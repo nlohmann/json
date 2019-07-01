@@ -715,7 +715,7 @@ class binary_writer
     static std::size_t calc_bson_entry_header_size(const string_t& name)
     {
         const auto it = name.find(static_cast<typename string_t::value_type>(0));
-        if (HEDLEY_UNLIKELY(it != BasicJsonType::string_t::npos))
+        if (NLOHMANN_JSON_HEDLEY_UNLIKELY(it != BasicJsonType::string_t::npos))
         {
             JSON_THROW(out_of_range::create(409,
                                             "BSON key cannot contain code point U+0000 (at byte " + std::to_string(it) + ")"));

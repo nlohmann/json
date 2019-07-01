@@ -55,7 +55,7 @@ Input adapter for stdio file access. This adapter read only 1 byte and do not us
 class file_input_adapter : public input_adapter_protocol
 {
   public:
-    HEDLEY_NON_NULL(2)
+    NLOHMANN_JSON_HEDLEY_NON_NULL(2)
     explicit file_input_adapter(std::FILE* f)  noexcept
         : m_file(f)
     {}
@@ -131,7 +131,7 @@ class input_stream_adapter : public input_adapter_protocol
 class input_buffer_adapter : public input_adapter_protocol
 {
   public:
-    HEDLEY_NON_NULL(2)
+    NLOHMANN_JSON_HEDLEY_NON_NULL(2)
     input_buffer_adapter(const char* b, const std::size_t l) noexcept
         : cursor(b), limit(b + l)
     {}
@@ -145,7 +145,7 @@ class input_buffer_adapter : public input_adapter_protocol
 
     std::char_traits<char>::int_type get_character() noexcept override
     {
-        if (HEDLEY_LIKELY(cursor < limit))
+        if (NLOHMANN_JSON_HEDLEY_LIKELY(cursor < limit))
         {
             return std::char_traits<char>::to_int_type(*(cursor++));
         }
@@ -335,7 +335,7 @@ class input_adapter
 {
   public:
     // native support
-    HEDLEY_NON_NULL(2)
+    NLOHMANN_JSON_HEDLEY_NON_NULL(2)
     input_adapter(std::FILE* file)
         : ia(std::make_shared<file_input_adapter>(file)) {}
     /// input adapter for input stream
@@ -404,7 +404,7 @@ class input_adapter
             "each element in the iterator range must have the size of 1 byte");
 
         const auto len = static_cast<size_t>(std::distance(first, last));
-        if (HEDLEY_LIKELY(len > 0))
+        if (NLOHMANN_JSON_HEDLEY_LIKELY(len > 0))
         {
             // there is at least one element: use the address of first
             ia = std::make_shared<input_buffer_adapter>(reinterpret_cast<const char*>(&(*first)), len);
