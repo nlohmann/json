@@ -5750,25 +5750,25 @@ class basic_json
                     return (*lhs.m_value.array) < (*rhs.m_value.array);
 
                 case value_t::object:
-                    return *lhs.m_value.object < *rhs.m_value.object;
+                    return (*lhs.m_value.object) < (*rhs.m_value.object);
 
                 case value_t::null:
                     return false;
 
                 case value_t::string:
-                    return *lhs.m_value.string < *rhs.m_value.string;
+                    return (*lhs.m_value.string) < (*rhs.m_value.string);
 
                 case value_t::boolean:
-                    return lhs.m_value.boolean < rhs.m_value.boolean;
+                    return (lhs.m_value.boolean) < (rhs.m_value.boolean);
 
                 case value_t::number_integer:
-                    return lhs.m_value.number_integer < rhs.m_value.number_integer;
+                    return (lhs.m_value.number_integer) < (rhs.m_value.number_integer);
 
                 case value_t::number_unsigned:
-                    return lhs.m_value.number_unsigned < rhs.m_value.number_unsigned;
+                    return (lhs.m_value.number_unsigned) < (rhs.m_value.number_unsigned);
 
                 case value_t::number_float:
-                    return lhs.m_value.number_float < rhs.m_value.number_float;
+                    return (lhs.m_value.number_float) < (rhs.m_value.number_float);
 
                 default:
                     return false;

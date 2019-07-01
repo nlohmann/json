@@ -1799,3 +1799,13 @@ TEST_CASE("regression tests, exceptions dependent")
     }
 }
 #endif
+
+/////////////////////////////////////////////////////////////////////
+// for #1642
+/////////////////////////////////////////////////////////////////////
+template <typename T> class array {};
+template <typename T> class object {};
+template <typename T> class string {};
+template <typename T> class number_integer {};
+template <typename T> class number_unsigned {};
+template <typename T> class number_float {};
