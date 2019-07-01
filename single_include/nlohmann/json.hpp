@@ -22564,7 +22564,6 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 #undef NLOHMANN_JSON_HEDLEY_VERSION_ENCODE
 #undef NLOHMANN_JSON_HEDLEY_WARNING
 #undef NLOHMANN_JSON_HEDLEY_WARN_UNUSED_RESULT
-#undef NLOHMANN_JSON_HEDLEY__IS_CONSTEXPR
 
 
 
