@@ -33,6 +33,17 @@ DOCTEST_GCC_SUPPRESS_WARNING("-Wfloat-equal")
 // for some reason including this after the json header leads to linker errors with VS 2017...
 #include <locale>
 
+/////////////////////////////////////////////////////////////////////
+// for #1642
+// Must occur BEFORE header include!
+/////////////////////////////////////////////////////////////////////
+template <typename T> class array {};
+template <typename T> class object {};
+template <typename T> class string {};
+template <typename T> class number_integer {};
+template <typename T> class number_unsigned {};
+template <typename T> class number_float {};
+
 #define private public
 #include <nlohmann/json.hpp>
 using nlohmann::json;
@@ -1799,13 +1810,3 @@ TEST_CASE("regression tests, exceptions dependent")
     }
 }
 #endif
-
-/////////////////////////////////////////////////////////////////////
-// for #1642
-/////////////////////////////////////////////////////////////////////
-template <typename T> class array {};
-template <typename T> class object {};
-template <typename T> class string {};
-template <typename T> class number_integer {};
-template <typename T> class number_unsigned {};
-template <typename T> class number_float {};
