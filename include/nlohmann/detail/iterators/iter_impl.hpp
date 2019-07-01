@@ -255,7 +255,7 @@ class iter_impl
 
             default:
             {
-                if (NLOHMANN_JSON_HEDLEY_LIKELY(m_it.primitive_iterator.is_begin()))
+                if (JSON_HEDLEY_LIKELY(m_it.primitive_iterator.is_begin()))
                 {
                     return *m_object;
                 }
@@ -289,7 +289,7 @@ class iter_impl
 
             default:
             {
-                if (NLOHMANN_JSON_HEDLEY_LIKELY(m_it.primitive_iterator.is_begin()))
+                if (JSON_HEDLEY_LIKELY(m_it.primitive_iterator.is_begin()))
                 {
                     return m_object;
                 }
@@ -392,7 +392,7 @@ class iter_impl
     bool operator==(const iter_impl& other) const
     {
         // if objects are not the same, the comparison is undefined
-        if (NLOHMANN_JSON_HEDLEY_UNLIKELY(m_object != other.m_object))
+        if (JSON_HEDLEY_UNLIKELY(m_object != other.m_object))
         {
             JSON_THROW(invalid_iterator::create(212, "cannot compare iterators of different containers"));
         }
@@ -428,7 +428,7 @@ class iter_impl
     bool operator<(const iter_impl& other) const
     {
         // if objects are not the same, the comparison is undefined
-        if (NLOHMANN_JSON_HEDLEY_UNLIKELY(m_object != other.m_object))
+        if (JSON_HEDLEY_UNLIKELY(m_object != other.m_object))
         {
             JSON_THROW(invalid_iterator::create(212, "cannot compare iterators of different containers"));
         }
@@ -588,7 +588,7 @@ class iter_impl
 
             default:
             {
-                if (NLOHMANN_JSON_HEDLEY_LIKELY(m_it.primitive_iterator.get_value() == -n))
+                if (JSON_HEDLEY_LIKELY(m_it.primitive_iterator.get_value() == -n))
                 {
                     return *m_object;
                 }
@@ -606,7 +606,7 @@ class iter_impl
     {
         assert(m_object != nullptr);
 
-        if (NLOHMANN_JSON_HEDLEY_LIKELY(m_object->is_object()))
+        if (JSON_HEDLEY_LIKELY(m_object->is_object()))
         {
             return m_it.object_iterator->first;
         }

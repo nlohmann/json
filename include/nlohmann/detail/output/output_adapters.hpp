@@ -40,7 +40,7 @@ class output_vector_adapter : public output_adapter_protocol<CharType>
         v.push_back(c);
     }
 
-    NLOHMANN_JSON_HEDLEY_NON_NULL(2)
+    JSON_HEDLEY_NON_NULL(2)
     void write_characters(const CharType* s, std::size_t length) override
     {
         std::copy(s, s + length, std::back_inserter(v));
@@ -64,7 +64,7 @@ class output_stream_adapter : public output_adapter_protocol<CharType>
         stream.put(c);
     }
 
-    NLOHMANN_JSON_HEDLEY_NON_NULL(2)
+    JSON_HEDLEY_NON_NULL(2)
     void write_characters(const CharType* s, std::size_t length) override
     {
         stream.write(s, static_cast<std::streamsize>(length));
@@ -88,7 +88,7 @@ class output_string_adapter : public output_adapter_protocol<CharType>
         str.push_back(c);
     }
 
-    NLOHMANN_JSON_HEDLEY_NON_NULL(2)
+    JSON_HEDLEY_NON_NULL(2)
     void write_characters(const CharType* s, std::size_t length) override
     {
         str.append(s, length);

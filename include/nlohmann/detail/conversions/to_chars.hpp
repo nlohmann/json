@@ -819,7 +819,7 @@ v = buf * 10^decimal_exponent
 len is the length of the buffer (number of decimal digits)
 The buffer must be large enough, i.e. >= max_digits10.
 */
-NLOHMANN_JSON_HEDLEY_NON_NULL(1)
+JSON_HEDLEY_NON_NULL(1)
 inline void grisu2(char* buf, int& len, int& decimal_exponent,
                    diyfp m_minus, diyfp v, diyfp m_plus)
 {
@@ -879,7 +879,7 @@ len is the length of the buffer (number of decimal digits)
 The buffer must be large enough, i.e. >= max_digits10.
 */
 template <typename FloatType>
-NLOHMANN_JSON_HEDLEY_NON_NULL(1)
+JSON_HEDLEY_NON_NULL(1)
 void grisu2(char* buf, int& len, int& decimal_exponent, FloatType value)
 {
     static_assert(diyfp::kPrecision >= std::numeric_limits<FloatType>::digits + 3,
@@ -918,8 +918,8 @@ void grisu2(char* buf, int& len, int& decimal_exponent, FloatType value)
 @return a pointer to the element following the exponent.
 @pre -1000 < e < 1000
 */
-NLOHMANN_JSON_HEDLEY_NON_NULL(1)
-NLOHMANN_JSON_HEDLEY_RETURNS_NON_NULL
+JSON_HEDLEY_NON_NULL(1)
+JSON_HEDLEY_RETURNS_NON_NULL
 inline char* append_exponent(char* buf, int e)
 {
     assert(e > -1000);
@@ -970,8 +970,8 @@ notation. Otherwise it will be printed in exponential notation.
 @pre min_exp < 0
 @pre max_exp > 0
 */
-NLOHMANN_JSON_HEDLEY_NON_NULL(1)
-NLOHMANN_JSON_HEDLEY_RETURNS_NON_NULL
+JSON_HEDLEY_NON_NULL(1)
+JSON_HEDLEY_RETURNS_NON_NULL
 inline char* format_buffer(char* buf, int len, int decimal_exponent,
                            int min_exp, int max_exp)
 {
@@ -1055,8 +1055,8 @@ format. Returns an iterator pointing past-the-end of the decimal representation.
 @note The result is NOT null-terminated.
 */
 template <typename FloatType>
-NLOHMANN_JSON_HEDLEY_NON_NULL(1, 2)
-NLOHMANN_JSON_HEDLEY_RETURNS_NON_NULL
+JSON_HEDLEY_NON_NULL(1, 2)
+JSON_HEDLEY_RETURNS_NON_NULL
 char* to_chars(char* first, const char* last, FloatType value)
 {
     static_cast<void>(last); // maybe unused - fix warning
