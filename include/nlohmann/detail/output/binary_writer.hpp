@@ -1205,7 +1205,7 @@ class binary_writer
 
             case value_t::number_unsigned:
             {
-                if (j.m_value.number_unsigned <= (std::numeric_limits<std::int8_t>::max)())
+                if (j.m_value.number_unsigned <= static_cast<std::uint64_t>((std::numeric_limits<std::int8_t>::max)()))
                 {
                     return 'i';
                 }
@@ -1213,11 +1213,11 @@ class binary_writer
                 {
                     return 'U';
                 }
-                if (j.m_value.number_unsigned <= (std::numeric_limits<std::int16_t>::max)())
+                if (j.m_value.number_unsigned <= static_cast<std::uint64_t>((std::numeric_limits<std::int16_t>::max)()))
                 {
                     return 'I';
                 }
-                if (j.m_value.number_unsigned <= (std::numeric_limits<std::int32_t>::max)())
+                if (j.m_value.number_unsigned <= static_cast<std::uint64_t>((std::numeric_limits<std::int32_t>::max)()))
                 {
                     return 'l';
                 }

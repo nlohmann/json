@@ -819,21 +819,18 @@ class lexer
     }
 
     JSON_HEDLEY_NON_NULL(2)
-    JSON_HEDLEY_CONST
     static void strtof(float& f, const char* str, char** endptr) noexcept
     {
         f = std::strtof(str, endptr);
     }
 
     JSON_HEDLEY_NON_NULL(2)
-    JSON_HEDLEY_CONST
     static void strtof(double& f, const char* str, char** endptr) noexcept
     {
         f = std::strtod(str, endptr);
     }
 
     JSON_HEDLEY_NON_NULL(2)
-    JSON_HEDLEY_CONST
     static void strtof(long double& f, const char* str, char** endptr) noexcept
     {
         f = std::strtold(str, endptr);
