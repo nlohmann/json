@@ -60,6 +60,7 @@ class lexer
 
     /// return name of values of type token_type (only used for errors)
     JSON_HEDLEY_RETURNS_NON_NULL
+    JSON_HEDLEY_CONST
     static const char* token_type_name(const token_type t) noexcept
     {
         switch (t)
@@ -119,6 +120,7 @@ class lexer
     /////////////////////
 
     /// return the locale-dependent decimal point
+    JSON_HEDLEY_PURE
     static char get_decimal_point() noexcept
     {
         const auto loc = localeconv();
@@ -817,18 +819,21 @@ class lexer
     }
 
     JSON_HEDLEY_NON_NULL(2)
+    JSON_HEDLEY_CONST
     static void strtof(float& f, const char* str, char** endptr) noexcept
     {
         f = std::strtof(str, endptr);
     }
 
     JSON_HEDLEY_NON_NULL(2)
+    JSON_HEDLEY_CONST
     static void strtof(double& f, const char* str, char** endptr) noexcept
     {
         f = std::strtod(str, endptr);
     }
 
     JSON_HEDLEY_NON_NULL(2)
+    JSON_HEDLEY_CONST
     static void strtof(long double& f, const char* str, char** endptr) noexcept
     {
         f = std::strtold(str, endptr);
