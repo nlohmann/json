@@ -31,6 +31,7 @@ struct json_sax
     using number_float_t = typename BasicJsonType::number_float_t;
     /// type for strings
     using string_t = typename BasicJsonType::string_t;
+    using binary_t = typename BasicJsonType::binary_t;
 
     /*!
     @brief a null value was read
@@ -74,6 +75,14 @@ struct json_sax
     @note It is safe to move the passed string.
     */
     virtual bool string(string_t& val) = 0;
+
+    /*!
+    @brief a binary string was read
+    @param[in] val  binary value
+    @return whether parsing should proceed
+    @note It is safe to move the passed binary.
+    */
+    virtual bool binary(binary_t& val) = 0;
 
     /*!
     @brief the beginning of an object was read
@@ -149,6 +158,7 @@ class json_sax_dom_parser
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
     using string_t = typename BasicJsonType::string_t;
+    using binary_t = typename BasicJsonType::binary_t;
 
     /*!
     @param[in, out] r  reference to a JSON value that is manipulated while
@@ -199,6 +209,12 @@ class json_sax_dom_parser
     bool string(string_t& val)
     {
         handle_value(val);
+        return true;
+    }
+
+    bool binary(binary_t& val)
+    {
+        handle_binary(val);
         return true;
     }
 
@@ -311,6 +327,36 @@ class json_sax_dom_parser
         return object_element;
     }
 
+    /*!
+    @invariant If the ref stack is empty, then the passed value will be the new
+               root.
+    @invariant If the ref stack contains a value, then it is an array or an
+               object to which we can add elements
+    */
+    template<typename BinaryValue>
+    JSON_HEDLEY_RETURNS_NON_NULL
+    BasicJsonType* handle_binary(BinaryValue&& v)
+    {
+        if (ref_stack.empty())
+        {
+            root = BasicJsonType::binary_array(std::forward<BinaryValue>(v));
+            return &root;
+        }
+
+        assert(ref_stack.back()->is_array() or ref_stack.back()->is_object());
+
+        if (ref_stack.back()->is_array())
+        {
+            ref_stack.back()->m_value.array->emplace_back(BasicJsonType::binary_array(std::forward<BinaryValue>(v)));
+            return &(ref_stack.back()->m_value.array->back());
+        }
+
+        assert(ref_stack.back()->is_object());
+        assert(object_element);
+        *object_element = BasicJsonType::binary_array(std::forward<BinaryValue>(v));
+        return object_element;
+    }
+
     /// the parsed JSON value
     BasicJsonType& root;
     /// stack to model hierarchy of values
@@ -331,6 +377,7 @@ class json_sax_dom_callback_parser
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
     using string_t = typename BasicJsonType::string_t;
+    using binary_t = typename BasicJsonType::binary_t;
     using parser_callback_t = typename BasicJsonType::parser_callback_t;
     using parse_event_t = typename BasicJsonType::parse_event_t;
 
@@ -380,6 +427,12 @@ class json_sax_dom_callback_parser
     }
 
     bool string(string_t& val)
+    {
+        handle_value(val);
+        return true;
+    }
+
+    bool binary(binary_t& val)
     {
         handle_value(val);
         return true;
@@ -635,6 +688,7 @@ class json_sax_acceptor
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
     using string_t = typename BasicJsonType::string_t;
+    using binary_t = typename BasicJsonType::binary_t;
 
     bool null()
     {
@@ -666,7 +720,12 @@ class json_sax_acceptor
         return true;
     }
 
-    bool start_object(std::size_t  /*unused*/ = std::size_t(-1))
+    bool binary(binary_t& /*unused*/)
+    {
+        return true;
+    }
+
+    bool start_object(std::size_t /*unused*/ = std::size_t(-1))
     {
         return true;
     }
@@ -681,7 +740,7 @@ class json_sax_acceptor
         return true;
     }
 
-    bool start_array(std::size_t  /*unused*/ = std::size_t(-1))
+    bool start_array(std::size_t /*unused*/ = std::size_t(-1))
     {
         return true;
     }

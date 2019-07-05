@@ -48,6 +48,7 @@ enum class value_t : std::uint8_t
     number_integer,   ///< number value (signed integer)
     number_unsigned,  ///< number value (unsigned integer)
     number_float,     ///< number value (floating-point)
+    binary,           ///< binary array (ordered collection of bytes)
     discarded         ///< discarded by the parser callback function
 };
 
@@ -55,17 +56,21 @@ enum class value_t : std::uint8_t
 @brief comparison operator for JSON types
 
 Returns an ordering that is similar to Python:
-- order: null < boolean < number < object < array < string
+- order: null < boolean < number < object < array < string < binary
 - furthermore, each type is not smaller than itself
 - discarded values are not comparable
+- binary is represented as a b"" string in python and directly comparable to a
+  string; however, making a binary array directly comparable with a string would
+  be surprising behavior in a JSON file.
 
 @since version 1.0.0
 */
 inline bool operator<(const value_t lhs, const value_t rhs) noexcept
 {
-    static constexpr std::array<std::uint8_t, 8> order = {{
+    static constexpr std::array<std::uint8_t, 9> order = {{
             0 /* null */, 3 /* object */, 4 /* array */, 5 /* string */,
-            1 /* boolean */, 2 /* integer */, 2 /* unsigned */, 2 /* float */
+            1 /* boolean */, 2 /* integer */, 2 /* unsigned */, 2 /* float */,
+            6 /* binary */
         }
     };
 

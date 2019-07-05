@@ -68,6 +68,28 @@ struct external_constructor<value_t::string>
 };
 
 template<>
+struct external_constructor<value_t::binary>
+{
+    template<typename BasicJsonType>
+    static void construct(BasicJsonType& j, const typename BasicJsonType::binary_t& b)
+    {
+        j.m_type = value_t::binary;
+        typename BasicJsonType::internal_binary_t value{b};
+        j.m_value = value;
+        j.assert_invariant();
+    }
+
+    template<typename BasicJsonType>
+    static void construct(BasicJsonType& j, typename BasicJsonType::binary_t&& b)
+    {
+        j.m_type = value_t::binary;
+        typename BasicJsonType::internal_binary_t value{std::move(b)};
+        j.m_value = value;
+        j.assert_invariant();
+    }
+};
+
+template<>
 struct external_constructor<value_t::number_float>
 {
     template<typename BasicJsonType>

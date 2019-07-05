@@ -36,6 +36,7 @@ using nlohmann::json;
 #include <fstream>
 #include <sstream>
 #include <iomanip>
+#include <iostream>
 #include <set>
 
 namespace
@@ -72,6 +73,11 @@ class SaxCountdown
     }
 
     bool string(std::string&)
+    {
+        return events_left-- > 0;
+    }
+
+    bool binary(std::vector<std::uint8_t>&)
     {
         return events_left-- > 0;
     }
@@ -1285,10 +1291,156 @@ TEST_CASE("CBOR")
                 CHECK(json::from_cbor(result, true, false) == j);
             }
         }
+
+        SECTION("binary")
+        {
+            SECTION("N = 0..23")
+            {
+                for (size_t N = 0; N <= 0x17; ++N)
+                {
+                    CAPTURE(N)
+
+                    // create JSON value with byte array containing of N * 'x'
+                    const auto s = std::vector<uint8_t>(N, 'x');
+                    json j = json::binary_array(s);
+
+                    // create expected byte vector
+                    std::vector<uint8_t> expected;
+                    expected.push_back(static_cast<uint8_t>(0x40 + N));
+                    for (size_t i = 0; i < N; ++i)
+                    {
+                        expected.push_back(0x78);
+                    }
+
+                    // compare result + size
+                    const auto result = json::to_cbor(j);
+                    CHECK(result == expected);
+                    CHECK(result.size() == N + 1);
+                    // check that no null byte is appended
+                    if (N > 0)
+                    {
+                        CHECK(result.back() != '\x00');
+                    }
+
+                    // roundtrip
+                    CHECK(json::from_cbor(result) == j);
+                    CHECK(json::from_cbor(result, true, false) == j);
+                }
+            }
+
+            SECTION("N = 24..255")
+            {
+                for (size_t N = 24; N <= 255; ++N)
+                {
+                    CAPTURE(N)
+
+                    // create JSON value with string containing of N * 'x'
+                    const auto s = std::vector<uint8_t>(N, 'x');
+                    json j = json::binary_array(s);
+
+                    // create expected byte vector
+                    std::vector<uint8_t> expected;
+                    expected.push_back(0x58);
+                    expected.push_back(static_cast<uint8_t>(N));
+                    for (size_t i = 0; i < N; ++i)
+                    {
+                        expected.push_back('x');
+                    }
+
+                    // compare result + size
+                    const auto result = json::to_cbor(j);
+                    CHECK(result == expected);
+                    CHECK(result.size() == N + 2);
+                    // check that no null byte is appended
+                    CHECK(result.back() != '\x00');
+
+                    // roundtrip
+                    CHECK(json::from_cbor(result) == j);
+                    CHECK(json::from_cbor(result, true, false) == j);
+                }
+            }
+
+            SECTION("N = 256..65535")
+            {
+                for (size_t N :
+                        {
+                            256u, 999u, 1025u, 3333u, 2048u, 65535u
+                        })
+                {
+                    CAPTURE(N)
+
+                    // create JSON value with string containing of N * 'x'
+                    const auto s = std::vector<uint8_t>(N, 'x');
+                    json j = json::binary_array(s);
+
+                    // create expected byte vector (hack: create string first)
+                    std::vector<uint8_t> expected(N, 'x');
+                    // reverse order of commands, because we insert at begin()
+                    expected.insert(expected.begin(), static_cast<uint8_t>(N & 0xff));
+                    expected.insert(expected.begin(), static_cast<uint8_t>((N >> 8) & 0xff));
+                    expected.insert(expected.begin(), 0x59);
+
+                    // compare result + size
+                    const auto result = json::to_cbor(j);
+                    CHECK(result == expected);
+                    CHECK(result.size() == N + 3);
+                    // check that no null byte is appended
+                    CHECK(result.back() != '\x00');
+
+                    // roundtrip
+                    CHECK(json::from_cbor(result) == j);
+                    CHECK(json::from_cbor(result, true, false) == j);
+                }
+            }
+
+            SECTION("N = 65536..4294967295")
+            {
+                for (size_t N :
+                        {
+                            65536u, 77777u, 1048576u
+                        })
+                {
+                    CAPTURE(N)
+
+                    // create JSON value with string containing of N * 'x'
+                    const auto s = std::vector<uint8_t>(N, 'x');
+                    json j = json::binary_array(s);
+
+                    // create expected byte vector (hack: create string first)
+                    std::vector<uint8_t> expected(N, 'x');
+                    // reverse order of commands, because we insert at begin()
+                    expected.insert(expected.begin(), static_cast<uint8_t>(N & 0xff));
+                    expected.insert(expected.begin(), static_cast<uint8_t>((N >> 8) & 0xff));
+                    expected.insert(expected.begin(), static_cast<uint8_t>((N >> 16) & 0xff));
+                    expected.insert(expected.begin(), static_cast<uint8_t>((N >> 24) & 0xff));
+                    expected.insert(expected.begin(), 0x5a);
+
+                    // compare result + size
+                    const auto result = json::to_cbor(j);
+                    CHECK(result == expected);
+                    CHECK(result.size() == N + 5);
+                    // check that no null byte is appended
+                    CHECK(result.back() != '\x00');
+
+                    // roundtrip
+                    CHECK(json::from_cbor(result) == j);
+                    CHECK(json::from_cbor(result, true, false) == j);
+                }
+            }
+        }
     }
 
     SECTION("additional deserialization")
     {
+        SECTION("0x5b (byte array)")
+        {
+            std::vector<uint8_t> given = {0x5b, 0x00, 0x00, 0x00, 0x00,
+                                          0x00, 0x00, 0x00, 0x01, 0x61
+                                         };
+            json j = json::from_cbor(given);
+            CHECK(j == json::binary_array(std::vector<uint8_t> {'a'}));
+        }
+
         SECTION("0x7b (string)")
         {
             std::vector<uint8_t> given = {0x7b, 0x00, 0x00, 0x00, 0x00,
@@ -1455,14 +1607,8 @@ TEST_CASE("CBOR")
                             0x1c, 0x1d, 0x1e, 0x1f,
                             // ?
                             0x3c, 0x3d, 0x3e, 0x3f,
-                            // byte strings
-                            0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57,
-                            // byte strings
-                            0x58, 0x59, 0x5a, 0x5b,
                             // ?
                             0x5c, 0x5d, 0x5e,
-                            // byte string
-                            0x5f,
                             // ?
                             0x7c, 0x7d, 0x7e,
                             // ?
@@ -1929,12 +2075,6 @@ TEST_CASE("all CBOR first bytes")
     {
         //// types not supported by this library
 
-        // byte strings
-        0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47,
-        0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f,
-        0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57,
-        // byte strings
-        0x58, 0x59, 0x5a, 0x5b, 0x5f,
         // date/time
         0xc0, 0xc1,
         // bignum
@@ -2142,6 +2282,20 @@ TEST_CASE("examples from RFC 7049 Appendix A")
 
         // indefinite length strings
         CHECK(json::parse("\"streaming\"") == json::from_cbor(std::vector<uint8_t>({0x7f, 0x65, 0x73, 0x74, 0x72, 0x65, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x67, 0xff})));
+    }
+
+    SECTION("byte arrays")
+    {
+        std::ifstream f_cbor("test/data/binary_data/cbor_binary.cbor", std::ios::binary);
+        std::vector<uint8_t> packed((std::istreambuf_iterator<char>(f_cbor)),
+                                    std::istreambuf_iterator<char>());
+        json j;
+        CHECK_NOTHROW(j = json::from_cbor(packed));
+
+        std::ifstream f_bin("test/data/binary_data/cbor_binary.out", std::ios::binary);
+        std::vector<uint8_t> expected((std::istreambuf_iterator<char>(f_bin)),
+                                      std::istreambuf_iterator<char>());
+        CHECK(j == json::binary_array(expected));
     }
 
     SECTION("arrays")

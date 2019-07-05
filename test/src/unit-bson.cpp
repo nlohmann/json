@@ -492,6 +492,36 @@ TEST_CASE("BSON")
             CHECK(json::from_bson(result, true, false) == j);
         }
 
+        SECTION("non-empty object with binary member")
+        {
+            const size_t N = 10;
+            const auto s = std::vector<uint8_t>(N, 'x');
+            json j =
+            {
+                { "entry", json::binary_array(s) }
+            };
+
+            std::vector<uint8_t> expected =
+            {
+                0x1B, 0x00, 0x00, 0x00, // size (little endian)
+                0x05, // entry: binary
+                'e', 'n', 't', 'r', 'y', '\x00',
+
+                0x0A, 0x00, 0x00, 0x00, // size of binary (little endian)
+                0x00, // Generic binary subtype
+                0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78,
+
+                0x00 // end marker
+            };
+
+            const auto result = json::to_bson(j);
+            CHECK(result == expected);
+
+            // roundtrip
+            CHECK(json::from_bson(result) == j);
+            CHECK(json::from_bson(result, true, false) == j);
+        }
+
         SECTION("Some more complex document")
         {
             // directly encoding uint64 is not supported in bson (only for timestamp values)
@@ -642,6 +672,11 @@ class SaxCountdown
     }
 
     bool string(std::string&)
+    {
+        return events_left-- > 0;
+    }
+
+    bool binary(std::vector<uint8_t>&)
     {
         return events_left-- > 0;
     }

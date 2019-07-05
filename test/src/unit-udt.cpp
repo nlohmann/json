@@ -653,8 +653,7 @@ TEST_CASE("custom serializer for pods" * doctest::test_suite("udt"))
 {
     using custom_json =
         nlohmann::basic_json<std::map, std::vector, std::string, bool,
-        std::int64_t, std::uint64_t, double, std::allocator,
-        pod_serializer>;
+        std::int64_t, std::uint64_t, double, std::allocator, pod_serializer>;
 
     auto p = udt::small_pod{42, '/', 42};
     custom_json j = p;

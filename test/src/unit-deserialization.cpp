@@ -76,6 +76,21 @@ struct SaxEventLogger : public nlohmann::json_sax<json>
         return true;
     }
 
+    bool binary(std::vector<std::uint8_t>& val)
+    {
+        std::string binary_contents = "binary(";
+        std::string comma_space = "";
+        for (auto b : val)
+        {
+            binary_contents.append(comma_space);
+            binary_contents.append(std::to_string(static_cast<int>(b)));
+            comma_space = ", ";
+        }
+        binary_contents.append(")");
+        events.push_back(binary_contents);
+        return true;
+    }
+
     bool start_object(std::size_t elements) override
     {
         if (elements == std::size_t(-1))

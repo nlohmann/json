@@ -45,6 +45,7 @@ class serializer
     using number_float_t = typename BasicJsonType::number_float_t;
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+    using binary_t = typename BasicJsonType::binary_t;
     static constexpr std::uint8_t UTF8_ACCEPT = 0;
     static constexpr std::uint8_t UTF8_REJECT = 1;
 
@@ -83,16 +84,19 @@ class serializer
     - strings and object keys are escaped using `escape_string()`
     - integer numbers are converted implicitly via `operator<<`
     - floating-point numbers are converted to a string using `"%g"` format
+    - if specified to, binary values are output using the syntax `b[]`, otherwise an exception is thrown
 
-    @param[in] val             value to serialize
-    @param[in] pretty_print    whether the output shall be pretty-printed
-    @param[in] indent_step     the indent level
-    @param[in] current_indent  the current indent level (only used internally)
+    @param[in] val               value to serialize
+    @param[in] pretty_print      whether the output shall be pretty-printed
+    @param[in] indent_step       the indent level
+    @param[in] current_indent    the current indent level (only used internally)
+    @param[in] serialize_binary  whether the output shall include non-standard binary output
     */
     void dump(const BasicJsonType& val, const bool pretty_print,
               const bool ensure_ascii,
               const unsigned int indent_step,
-              const unsigned int current_indent = 0)
+              const unsigned int current_indent = 0,
+              const bool serialize_binary = false)
     {
         switch (val.m_type)
         {
@@ -233,6 +237,55 @@ class serializer
                 o->write_character('\"');
                 dump_escaped(*val.m_value.string, ensure_ascii);
                 o->write_character('\"');
+                return;
+            }
+
+            case value_t::binary:
+            {
+                if (not serialize_binary)
+                {
+                    JSON_THROW(type_error::create(317, "cannot serialize binary data to text JSON"));
+                }
+
+                if (val.m_value.binary->empty())
+                {
+                    o->write_characters("b[]", 3);
+                }
+                else if (pretty_print)
+                {
+                    o->write_characters("b[", 2);
+                    for (auto i = val.m_value.binary->cbegin();
+                            i != val.m_value.binary->cend() - 1; ++i)
+                    {
+                        dump_integer(*i);
+                        o->write_character(',');
+                        int index = i - val.m_value.binary->cbegin();
+                        if (index % 16 == 0)
+                        {
+                            o->write_character('\n');
+                        }
+                        else
+                        {
+                            o->write_character(' ');
+                        }
+                    }
+
+                    dump_integer(val.m_value.binary->back());
+                    o->write_character(']');
+                }
+                else
+                {
+                    o->write_characters("b[", 2);
+                    for (auto i = val.m_value.binary->cbegin();
+                            i != val.m_value.binary->cend() - 1; ++i)
+                    {
+                        dump_integer(*i);
+                        o->write_character(',');
+                    }
+
+                    dump_integer(val.m_value.binary->back());
+                    o->write_character(']');
+                }
                 return;
             }
 
@@ -592,7 +645,8 @@ class serializer
     */
     template<typename NumberType, detail::enable_if_t<
                  std::is_same<NumberType, number_unsigned_t>::value or
-                 std::is_same<NumberType, number_integer_t>::value,
+                 std::is_same<NumberType, number_integer_t>::value or
+                 std::is_same<NumberType, typename binary_t::value_type>::value,
                  int> = 0>
     void dump_integer(NumberType x)
     {
@@ -630,7 +684,7 @@ class serializer
         if (is_negative)
         {
             *buffer_ptr = '-';
-            abs_value = remove_sign(x);
+            abs_value = remove_sign(static_cast<number_integer_t>(x));
 
             // account one more byte for the minus sign
             n_chars = 1 + count_digits(abs_value);
