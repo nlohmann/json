@@ -1,0 +1,10 @@
+true
+true
+true
+true
+true
+false
+false
+false
+[json.exception.parse_error.106] parse error: array index '01' must not begin with '0'
+[json.exception.parse_error.109] parse error: array index 'one' is not a number

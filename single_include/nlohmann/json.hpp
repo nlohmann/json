@@ -8455,6 +8455,7 @@ class json_reverse_iterator : public std::reverse_iterator<Base>
 
 #include <algorithm> // all_of
 #include <cassert> // assert
+#include <cctype> // isdigit
 #include <numeric> // accumulate
 #include <string> // string
 #include <utility> // move
@@ -8825,7 +8826,7 @@ class json_pointer
         // j which will be overwritten by a primitive value
         for (const auto& reference_token : reference_tokens)
         {
-            switch (result->m_type)
+            switch (result->type())
             {
                 case detail::value_t::null:
                 {
@@ -8902,14 +8903,14 @@ class json_pointer
         for (const auto& reference_token : reference_tokens)
         {
             // convert null values to arrays or objects before continuing
-            if (ptr->m_type == detail::value_t::null)
+            if (ptr->is_null())
             {
                 // check if reference token is a number
                 const bool nums =
                     std::all_of(reference_token.begin(), reference_token.end(),
-                                [](const char x)
+                                [](const unsigned char x)
                 {
-                    return x >= '0' and x <= '9';
+                    return std::isdigit(x);
                 });
 
                 // change value to array for numbers or "-" or to object otherwise
@@ -8918,7 +8919,7 @@ class json_pointer
                        : detail::value_t::object;
             }
 
-            switch (ptr->m_type)
+            switch (ptr->type())
             {
                 case detail::value_t::object:
                 {
@@ -8977,7 +8978,7 @@ class json_pointer
         using size_type = typename BasicJsonType::size_type;
         for (const auto& reference_token : reference_tokens)
         {
-            switch (ptr->m_type)
+            switch (ptr->type())
             {
                 case detail::value_t::object:
                 {
@@ -9042,7 +9043,7 @@ class json_pointer
         using size_type = typename BasicJsonType::size_type;
         for (const auto& reference_token : reference_tokens)
         {
-            switch (ptr->m_type)
+            switch (ptr->type())
             {
                 case detail::value_t::object:
                 {
@@ -9101,7 +9102,7 @@ class json_pointer
         using size_type = typename BasicJsonType::size_type;
         for (const auto& reference_token : reference_tokens)
         {
-            switch (ptr->m_type)
+            switch (ptr->type())
             {
                 case detail::value_t::object:
                 {
@@ -9146,6 +9147,77 @@ class json_pointer
         }
 
         return *ptr;
+    }
+
+    /*!
+    @throw parse_error.106   if an array index begins with '0'
+    @throw parse_error.109   if an array index was not a number
+    */
+    bool contains(const BasicJsonType* ptr) const
+    {
+        using size_type = typename BasicJsonType::size_type;
+        for (const auto& reference_token : reference_tokens)
+        {
+            switch (ptr->type())
+            {
+                case detail::value_t::object:
+                {
+                    if (not ptr->contains(reference_token))
+                    {
+                        // we did not find the key in the object
+                        return false;
+                    }
+
+                    ptr = &ptr->operator[](reference_token);
+                    break;
+                }
+
+                case detail::value_t::array:
+                {
+                    if (JSON_UNLIKELY(reference_token == "-"))
+                    {
+                        // "-" always fails the range check
+                        return false;
+                    }
+
+                    // error condition (cf. RFC 6901, Sect. 4)
+                    if (JSON_UNLIKELY(reference_token.size() > 1 and reference_token[0] == '0'))
+                    {
+                        JSON_THROW(detail::parse_error::create(106, 0,
+                                                               "array index '" + reference_token +
+                                                               "' must not begin with '0'"));
+                    }
+
+                    JSON_TRY
+                    {
+                        const auto idx = static_cast<size_type>(array_index(reference_token));
+                        if (idx >= ptr->size())
+                        {
+                            // index out of range
+                            return false;
+                        }
+
+                        ptr = &ptr->operator[](idx);
+                        break;
+                    }
+                    JSON_CATCH(std::invalid_argument&)
+                    {
+                        JSON_THROW(detail::parse_error::create(109, 0, "array index '" + reference_token + "' is not a number"));
+                    }
+                    break;
+                }
+
+                default:
+                {
+                    // we do not expect primitive values if there is still a
+                    // reference token to process
+                    return false;
+                }
+            }
+        }
+
+        // no reference token left means we found a primitive value
+        return true;
     }
 
     /*!
@@ -9269,7 +9341,7 @@ class json_pointer
                         const BasicJsonType& value,
                         BasicJsonType& result)
     {
-        switch (value.m_type)
+        switch (value.type())
         {
             case detail::value_t::array:
             {
@@ -16812,13 +16884,46 @@ class basic_json
     @liveexample{The following code shows an example for `contains()`.,contains}
 
     @sa @ref find(KeyT&&) -- returns an iterator to an object element
+    @sa @ref contains(const json_pointer&) const -- checks the existence for a JSON pointer
 
     @since version 3.6.0
     */
-    template<typename KeyT>
-    bool contains(KeyT&& key) const
+    template<typename KeyT, typename std::enable_if<
+                 not std::is_same<KeyT, json_pointer>::value, int>::type = 0>
+    bool contains(KeyT && key) const
     {
         return is_object() and m_value.object->find(std::forward<KeyT>(key)) != m_value.object->end();
+    }
+
+    /*!
+    @brief check the existence of an element in a JSON object given a JSON pointer
+
+    Check wehther the given JSON pointer @a ptr can be resolved in the current
+    JSON value.
+
+    @note This method can be executed on any JSON value type.
+
+    @param[in] ptr JSON pointer to check its existence.
+
+    @return true if the JSON pointer can be resolved to a stored value, false
+    otherwise.
+
+    @post If `j.contains(ptr)` returns true, it is safe to call `j[ptr]`.
+
+    @throw parse_error.106   if an array index begins with '0'
+    @throw parse_error.109   if an array index was not a number
+
+    @complexity Logarithmic in the size of the JSON object.
+
+    @liveexample{The following code shows an example for `contains()`.,contains_json_pointer}
+
+    @sa @ref contains(KeyT &&) const -- checks the existence of a key
+
+    @since version 3.7.0
+    */
+    bool contains(const json_pointer& ptr) const
+    {
+        return ptr.contains(this);
     }
 
     /// @}

@@ -4001,13 +4001,46 @@ class basic_json
     @liveexample{The following code shows an example for `contains()`.,contains}
 
     @sa @ref find(KeyT&&) -- returns an iterator to an object element
+    @sa @ref contains(const json_pointer&) const -- checks the existence for a JSON pointer
 
     @since version 3.6.0
     */
-    template<typename KeyT>
-    bool contains(KeyT&& key) const
+    template<typename KeyT, typename std::enable_if<
+                 not std::is_same<KeyT, json_pointer>::value, int>::type = 0>
+    bool contains(KeyT && key) const
     {
         return is_object() and m_value.object->find(std::forward<KeyT>(key)) != m_value.object->end();
+    }
+
+    /*!
+    @brief check the existence of an element in a JSON object given a JSON pointer
+
+    Check wehther the given JSON pointer @a ptr can be resolved in the current
+    JSON value.
+
+    @note This method can be executed on any JSON value type.
+
+    @param[in] ptr JSON pointer to check its existence.
+
+    @return true if the JSON pointer can be resolved to a stored value, false
+    otherwise.
+
+    @post If `j.contains(ptr)` returns true, it is safe to call `j[ptr]`.
+
+    @throw parse_error.106   if an array index begins with '0'
+    @throw parse_error.109   if an array index was not a number
+
+    @complexity Logarithmic in the size of the JSON object.
+
+    @liveexample{The following code shows an example for `contains()`.,contains_json_pointer}
+
+    @sa @ref contains(KeyT &&) const -- checks the existence of a key
+
+    @since version 3.7.0
+    */
+    bool contains(const json_pointer& ptr) const
+    {
+        return ptr.contains(this);
     }
 
     /// @}
