@@ -4952,6 +4952,8 @@ class basic_json
     @param[in] args arguments to forward to a constructor of @ref basic_json
     @tparam Args compatible types to create a @ref basic_json object
 
+    @return reference to the inserted element
+
     @throw type_error.311 when called on a type other than JSON array or
     null; example: `"cannot use emplace_back() with number"`
 
@@ -4961,10 +4963,10 @@ class basic_json
     elements to a JSON array. Note how the `null` value was silently converted
     to a JSON array.,emplace_back}
 
-    @since version 2.0.8
+    @since version 2.0.8, returns reference since 3.7.0
     */
     template<class... Args>
-    void emplace_back(Args&& ... args)
+    reference emplace_back(Args&& ... args)
     {
         // emplace_back only works for null objects or arrays
         if (JSON_UNLIKELY(not(is_null() or is_array())))
@@ -4981,7 +4983,12 @@ class basic_json
         }
 
         // add element to array (perfect forwarding)
+#ifdef JSON_HAS_CPP_17
+        return m_value.array->emplace_back(std::forward<Args>(args)...);
+#else
         m_value.array->emplace_back(std::forward<Args>(args)...);
+        return m_value.array->back();
+#endif
     }
 
     /*!
