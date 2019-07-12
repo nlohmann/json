@@ -129,6 +129,19 @@ class iter_impl
         : m_object(other.m_object), m_it(other.m_it) {}
 
     /*!
+    @brief converting assignment
+    @param[in] other const iterator to copy from
+    @return const/non-const iterator
+    @note It is not checked whether @a other is initialized.
+    */
+    iter_impl& operator=(const iter_impl<const BasicJsonType>& other) noexcept
+    {
+        m_object = other.m_object;
+        m_it = other.m_it;
+        return *this;
+    }
+
+    /*!
     @brief converting constructor
     @param[in] other  non-const iterator to copy from
     @note It is not checked whether @a other is initialized.
@@ -138,7 +151,7 @@ class iter_impl
 
     /*!
     @brief converting assignment
-    @param[in,out] other  non-const iterator to copy from
+    @param[in] other  non-const iterator to copy from
     @return const/non-const iterator
     @note It is not checked whether @a other is initialized.
     */
