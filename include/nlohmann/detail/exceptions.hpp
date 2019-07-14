@@ -5,6 +5,7 @@
 #include <string> // to_string
 
 #include <nlohmann/detail/input/position_t.hpp>
+#include <nlohmann/detail/macro_scope.hpp>
 
 namespace nlohmann
 {
@@ -46,6 +47,7 @@ class exception : public std::exception
 {
   public:
     /// returns the explanatory string
+    JSON_HEDLEY_RETURNS_NON_NULL
     const char* what() const noexcept override
     {
         return m.what();
@@ -55,6 +57,7 @@ class exception : public std::exception
     const int id;
 
   protected:
+    JSON_HEDLEY_NON_NULL(3)
     exception(int id_, const char* what_arg) : id(id_), m(what_arg) {}
 
     static std::string name(const std::string& ename, int id_)
@@ -207,6 +210,7 @@ class invalid_iterator : public exception
     }
 
   private:
+    JSON_HEDLEY_NON_NULL(3)
     invalid_iterator(int id_, const char* what_arg)
         : exception(id_, what_arg) {}
 };
@@ -260,6 +264,7 @@ class type_error : public exception
     }
 
   private:
+    JSON_HEDLEY_NON_NULL(3)
     type_error(int id_, const char* what_arg) : exception(id_, what_arg) {}
 };
 
@@ -306,6 +311,7 @@ class out_of_range : public exception
     }
 
   private:
+    JSON_HEDLEY_NON_NULL(3)
     out_of_range(int id_, const char* what_arg) : exception(id_, what_arg) {}
 };
 
@@ -343,6 +349,7 @@ class other_error : public exception
     }
 
   private:
+    JSON_HEDLEY_NON_NULL(3)
     other_error(int id_, const char* what_arg) : exception(id_, what_arg) {}
 };
 }  // namespace detail

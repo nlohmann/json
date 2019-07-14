@@ -112,8 +112,9 @@ TEST_CASE("BSON")
             0x00,
             0x00, 0x00, 0x00, 0x80
         };
-        CHECK_THROWS_AS(json::from_bson(v), json::parse_error&);
-        CHECK_THROWS_WITH(json::from_bson(v), "[json.exception.parse_error.112] parse error at byte 10: syntax error while parsing BSON string: string length must be at least 1, is -2147483648");
+        json _;
+        CHECK_THROWS_AS(_ = json::from_bson(v), json::parse_error&);
+        CHECK_THROWS_WITH(_ = json::from_bson(v), "[json.exception.parse_error.112] parse error at byte 10: syntax error while parsing BSON string: string length must be at least 1, is -2147483648");
     }
 
     SECTION("objects")
@@ -692,8 +693,9 @@ TEST_CASE("Incomplete BSON Input")
             'e', 'n', 't'           // unexpected EOF
         };
 
-        CHECK_THROWS_AS(json::from_bson(incomplete_bson), json::parse_error&);
-        CHECK_THROWS_WITH(json::from_bson(incomplete_bson),
+        json _;
+        CHECK_THROWS_AS(_ = json::from_bson(incomplete_bson), json::parse_error&);
+        CHECK_THROWS_WITH(_ = json::from_bson(incomplete_bson),
                           "[json.exception.parse_error.110] parse error at byte 9: syntax error while parsing BSON cstring: unexpected end of input");
 
         CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
@@ -710,8 +712,9 @@ TEST_CASE("Incomplete BSON Input")
             0x08,                   // entry: boolean, unexpected EOF
         };
 
-        CHECK_THROWS_AS(json::from_bson(incomplete_bson), json::parse_error&);
-        CHECK_THROWS_WITH(json::from_bson(incomplete_bson),
+        json _;
+        CHECK_THROWS_AS(_ = json::from_bson(incomplete_bson), json::parse_error&);
+        CHECK_THROWS_WITH(_ = json::from_bson(incomplete_bson),
                           "[json.exception.parse_error.110] parse error at byte 6: syntax error while parsing BSON cstring: unexpected end of input");
         CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
 
@@ -733,8 +736,9 @@ TEST_CASE("Incomplete BSON Input")
             // missing input data...
         };
 
-        CHECK_THROWS_AS(json::from_bson(incomplete_bson), json::parse_error&);
-        CHECK_THROWS_WITH(json::from_bson(incomplete_bson),
+        json _;
+        CHECK_THROWS_AS(_ = json::from_bson(incomplete_bson), json::parse_error&);
+        CHECK_THROWS_WITH(_ = json::from_bson(incomplete_bson),
                           "[json.exception.parse_error.110] parse error at byte 28: syntax error while parsing BSON element list: unexpected end of input");
         CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
 
@@ -749,8 +753,9 @@ TEST_CASE("Incomplete BSON Input")
             0x0D, 0x00, // size (incomplete), unexpected EOF
         };
 
-        CHECK_THROWS_AS(json::from_bson(incomplete_bson), json::parse_error&);
-        CHECK_THROWS_WITH(json::from_bson(incomplete_bson),
+        json _;
+        CHECK_THROWS_AS(_ = json::from_bson(incomplete_bson), json::parse_error&);
+        CHECK_THROWS_WITH(_ = json::from_bson(incomplete_bson),
                           "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing BSON number: unexpected end of input");
         CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
 
@@ -791,8 +796,9 @@ TEST_CASE("Unsupported BSON input")
         0x00 // end marker
     };
 
-    CHECK_THROWS_AS(json::from_bson(bson), json::parse_error&);
-    CHECK_THROWS_WITH(json::from_bson(bson),
+    json _;
+    CHECK_THROWS_AS(_ = json::from_bson(bson), json::parse_error&);
+    CHECK_THROWS_WITH(_ = json::from_bson(bson),
                       "[json.exception.parse_error.114] parse error at byte 5: Unsupported BSON record type 0xFF");
     CHECK(json::from_bson(bson, true, false).is_discarded());
 

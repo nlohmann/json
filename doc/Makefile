@@ -61,6 +61,8 @@ doxygen: create_output create_links
 	$(SED) -i 's@template&lt;template&lt; typename U, typename V, typename... Args &gt; class ObjectType = std::map, template&lt; typename U, typename... Args &gt; class ArrayType = std::vector, class StringType = std::string, class BooleanType = bool, class NumberIntegerType = std::int64_t, class NumberUnsignedType = std::uint64_t, class NumberFloatType = double, template&lt; typename U &gt; class AllocatorType = std::allocator, template&lt; typename T, typename SFINAE=void &gt; class JSONSerializer = adl_serializer&gt;@@g' html/*.html
 	$(SED) -i 's@&lt; ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer &gt;@@g' html/*.html
 	$(SED) -i 's@&lt;&#160;ObjectType,&#160;ArrayType,&#160;StringType,&#160;BooleanType,&#160;NumberIntegerType,&#160;NumberUnsignedType,&#160;NumberFloatType,&#160;AllocatorType,&#160;JSONSerializer&#160;&gt;@@g' html/*.html
+	$(SED) -i 's@JSON_HEDLEY_RETURNS_NON_NULL@@g' html/*.html
+	$(SED) -i 's@JSON_HEDLEY_WARN_UNUSED_RESULT@@g' html/*.html
 
 upload: clean doxygen check_output
 	scripts/git-update-ghpages nlohmann/json html
