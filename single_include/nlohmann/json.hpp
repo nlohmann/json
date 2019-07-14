@@ -9363,14 +9363,6 @@ class iter_impl
         return *this;
     }
 
-    /// @copydoc operator=(const iter_impl<typename std::remove_const<BasicJsonType>::type>&)
-    iter_impl& operator=(const iter_impl<const BasicJsonType>& other) noexcept
-    {
-        m_object = other.m_object;
-        m_it = other.m_it;
-        return *this;
-    }
-
   private:
     /*!
     @brief set the iterator to the first value
@@ -10693,14 +10685,14 @@ class json_pointer
 
                 case detail::value_t::array:
                 {
-                    if (JSON_UNLIKELY(reference_token == "-"))
+                    if (JSON_HEDLEY_UNLIKELY(reference_token == "-"))
                     {
                         // "-" always fails the range check
                         return false;
                     }
 
                     // error condition (cf. RFC 6901, Sect. 4)
-                    if (JSON_UNLIKELY(reference_token.size() > 1 and reference_token[0] == '0'))
+                    if (JSON_HEDLEY_UNLIKELY(reference_token.size() > 1 and reference_token[0] == '0'))
                     {
                         JSON_THROW(detail::parse_error::create(106, 0,
                                                                "array index '" + reference_token +

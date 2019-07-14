@@ -164,14 +164,6 @@ class iter_impl
         return *this;
     }
 
-    /// @copydoc operator=(const iter_impl<typename std::remove_const<BasicJsonType>::type>&)
-    iter_impl& operator=(const iter_impl<const BasicJsonType>& other) noexcept
-    {
-        m_object = other.m_object;
-        m_it = other.m_it;
-        return *this;
-    }
-
   private:
     /*!
     @brief set the iterator to the first value
