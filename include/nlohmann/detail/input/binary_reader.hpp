@@ -1083,6 +1083,9 @@ class binary_reader
             case 0xBD:
             case 0xBE:
             case 0xBF:
+            case 0xD9: // str 8
+            case 0xDA: // str 16
+            case 0xDB: // str 32
             {
                 string_t s;
                 return get_msgpack_string(s) and sax->string(s);
@@ -1155,14 +1158,6 @@ class binary_reader
             {
                 std::int64_t number;
                 return get_number(input_format_t::msgpack, number) and sax->number_integer(number);
-            }
-
-            case 0xD9: // str 8
-            case 0xDA: // str 16
-            case 0xDB: // str 32
-            {
-                string_t s;
-                return get_msgpack_string(s) and sax->string(s);
             }
 
             case 0xDC: // array 16
