@@ -13,43 +13,42 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Tommy Nguyen 07-26-2019 Remove functions we don't need.
+# Tommy Nguyen 07-26-2019 Remove functions we don't need. Have the function
+# take a list of sources rather than a target.
 # ~~~
 
 # Generate a Bazel configuration file with the headers and sources for a given
-# target. The generated file can be loaded from a BUILD file to create the
+# list. The generated file can be loaded from a BUILD file to create the
 # corresponding targets in Bazel.
-function (create_bazel_config TARGET)
-    if (NOT TARGET ${TARGET})
-        message(
-            FATAL_ERROR "create_bazel_config requires a target name: ${TARGET}")
-    endif ()
-    set(filename "${TARGET}.bzl")
+function (create_bazel_config LIST)
+    # No need to check for an empty list. CMake will complain for us.
+    set(_LIST ${LIST} ${ARGN})
+    set(filename "nlohmann_json.bzl")
+    # Create a new file each time.
+    file(WRITE "${filename}")
     set(H)
     set(CC)
-    get_target_property(target_type ${TARGET} TYPE)
-    get_target_property(sources ${TARGET} INTERFACE_SOURCES)
-    foreach (src ${sources})
+    foreach (src ${_LIST})
         if("${src}" MATCHES "\\.hpp$")
             list(APPEND H ${src})
-        elseif("${src}" MATCHES "\\.cc$")
+        elseif("${src}" MATCHES "\\.cpp$")
             list(APPEND CC ${src})
         endif ()
     endforeach ()
     file(APPEND "${filename}" [=[
 """Automatically generated source lists for ]=]
             )
-    file(APPEND "${filename}" ${TARGET})
+    file(APPEND "${filename}" "nlohmann_json")
     file(APPEND "${filename}" [=[ - DO NOT EDIT."""
 
 ]=]
         )
-    file(APPEND "${filename}" "${TARGET}_hdrs = [\n")
+    file(APPEND "${filename}" "nlohmann_json_hdrs = [\n")
     foreach (src ${H})
         file(APPEND "${filename}" "    \"${src}\",\n")
     endforeach ()
     file(APPEND "${filename}" "]\n\n")
-    file(APPEND "${filename}" "${TARGET}_srcs = [\n")
+    file(APPEND "${filename}" "nlohmann_json_srcs = [\n")
     foreach (src ${CC})
         file(APPEND "${filename}" "    \"${src}\",\n")
     endforeach ()
