@@ -1,6 +1,5 @@
-This product contains modified files from google-cloud-cpp v0.11.0, which is
-available under a "Apache 2.0" License. For details, see
-cmake/CreateBazelConfig.cmake.
+This product contains files and code excerpts from google-cloud-cpp, which is
+available under a "Apache 2.0" License.
 
                                  Apache License
                            Version 2.0, January 2004
