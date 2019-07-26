@@ -1,0 +1,18 @@
+workspace(name = "com_github_nlohmann_json_bazel_dependency")
+
+# Developers should use something like:
+
+# http_file(
+#     name = "com_github_nlohmann_json_single_header",
+#     urls = [
+#         "https://github.com/nlohmann/json/releases/download/v3.4.0/json.hpp",
+#     ],
+#     sha256 = "63da6d1f22b2a7bb9e4ff7d6b255cf691a161ff49532dcc45d398a53e295835f",
+# )
+#
+# But this tests the trunk of nlohmann_json.
+
+local_repository(
+    name = "com_github_nlohmann_json",
+    path = "../..",
+)
