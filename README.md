@@ -148,6 +148,34 @@ endif()
 
 `thirdparty/nlohmann_json` is then a complete copy of this source tree.
 
+### Bazel
+
+In order to use this project in Bazel, the simplest approach is to download the
+single header release in your `bzl` or `BUILD` file:
+
+```
+http_file(
+    name = "com_github_nlohmann_json_single_header",
+    urls = [
+        "https://github.com/nlohmann/json/releases/download/v3.4.0/json.hpp",
+    ],
+    sha256 = "63da6d1f22b2a7bb9e4ff7d6b255cf691a161ff49532dcc45d398a53e295835f",
+)
+```
+
+Then include it as a dependency:
+
+```
+cc_library(
+    name = "foo",
+    srcs = foo_srcs,
+    hdrs = foo_hdrs,
+    deps = [
+        "@com_github_nlohmann_json_single_header//file"
+    ],
+)
+```
+
 ### Package Managers
 
 :beer: If you are using OS X and [Homebrew](http://brew.sh), just type `brew tap nlohmann/json` and `brew install nlohmann-json` and you're set. If you want the bleeding edge rather than the latest release, use `brew install nlohmann-json --HEAD`.
