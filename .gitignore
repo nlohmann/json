@@ -23,3 +23,5 @@ cmake-build-debug
 
 test/test-*
 /.vs
+
+bazel-*
