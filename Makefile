@@ -117,7 +117,7 @@ doctest:
 # -Wno-switch-enum -Wno-covered-switch-default: pedantic/contradicting warnings about switches
 # -Wno-weak-vtables: exception class is defined inline, but has virtual method
 pedantic_clang:
-	$(MAKE) json_unit CXX=$(COMPILER_DIR)/clang++ CXXFLAGS=" \
+	$(MAKE) json_unit CXX=c++ CXXFLAGS=" \
 		-std=c++11 -Wno-c++98-compat -Wno-c++98-compat-pedantic \
 		-Werror \
 		-Weverything \
@@ -134,7 +134,7 @@ pedantic_clang:
 
 # calling GCC with most warnings
 pedantic_gcc:
-	$(MAKE) json_unit CXX=$(COMPILER_DIR)/g++ CXXFLAGS=" \
+	$(MAKE) json_unit CXX=/usr/local/bin/g++-9 CXXFLAGS=" \
 		-std=c++11 \
 		-Waddress \
 		-Waddress-of-packed-member \
