@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.6.1
+|  |  |__   |  |  | | | |  version 3.7.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -27,12 +27,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "catch.hpp"
+#include "doctest_compatibility.h"
 
 #define private public
 #include <nlohmann/json.hpp>
 using nlohmann::json;
+#undef private
 
+#include <sstream>
+
+namespace
+{
 void check_escaped(const char* original, const char* escaped = "", const bool ensure_ascii = false);
 void check_escaped(const char* original, const char* escaped, const bool ensure_ascii)
 {
@@ -40,6 +45,7 @@ void check_escaped(const char* original, const char* escaped, const bool ensure_
     json::serializer s(nlohmann::detail::output_adapter<char>(ss), ' ');
     s.dump_escaped(original, ensure_ascii);
     CHECK(ss.str() == escaped);
+}
 }
 
 TEST_CASE("convenience functions")

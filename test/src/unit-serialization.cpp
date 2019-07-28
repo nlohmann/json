@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.6.1
+|  |  |__   |  |  | | | |  version 3.7.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -27,10 +27,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "catch.hpp"
+#include "doctest_compatibility.h"
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;
+
+#include <sstream>
+#include <iomanip>
 
 TEST_CASE("serialization")
 {
@@ -169,5 +172,20 @@ TEST_CASE("serialization")
             test("\xF4\x91\x92\x93\xFF\x41\x80\xBF\x42", "\\ufffd" "\\ufffd" "\\ufffd" "\\ufffd" "\\ufffd" "\x41" "\\ufffd""\\ufffd" "\x42");
             test("\xE1\x80\xE2\xF0\x91\x92\xF1\xBF\x41", "\\ufffd" "\\ufffd" "\\ufffd" "\\ufffd" "\x41");
         }
+    }
+
+    SECTION("to_string")
+    {
+        auto test = [&](std::string const & input, std::string const & expected)
+        {
+            using std::to_string;
+            json j = input;
+            CHECK(to_string(j) == "\"" + expected + "\"");
+        };
+
+        test("{\"x\":5,\"y\":6}", "{\\\"x\\\":5,\\\"y\\\":6}");
+        test("{\"x\":[10,null,null,null]}", "{\\\"x\\\":[10,null,null,null]}");
+        test("test", "test");
+        test("[3,\"false\",false]", "[3,\\\"false\\\",false]");
     }
 }

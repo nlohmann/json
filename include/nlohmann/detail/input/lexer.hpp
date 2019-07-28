@@ -59,6 +59,8 @@ class lexer
     };
 
     /// return name of values of type token_type (only used for errors)
+    JSON_HEDLEY_RETURNS_NON_NULL
+    JSON_HEDLEY_CONST
     static const char* token_type_name(const token_type t) noexcept
     {
         switch (t)
@@ -118,6 +120,7 @@ class lexer
     /////////////////////
 
     /// return the locale-dependent decimal point
+    JSON_HEDLEY_PURE
     static char get_decimal_point() noexcept
     {
         const auto loc = localeconv();
@@ -200,7 +203,7 @@ class lexer
         for (auto range = ranges.begin(); range != ranges.end(); ++range)
         {
             get();
-            if (JSON_LIKELY(*range <= current and current <= *(++range)))
+            if (JSON_HEDLEY_LIKELY(*range <= current and current <= *(++range)))
             {
                 add(current);
             }
@@ -299,7 +302,7 @@ class lexer
                             const int codepoint1 = get_codepoint();
                             int codepoint = codepoint1; // start with codepoint1
 
-                            if (JSON_UNLIKELY(codepoint1 == -1))
+                            if (JSON_HEDLEY_UNLIKELY(codepoint1 == -1))
                             {
                                 error_message = "invalid string: '\\u' must be followed by 4 hex digits";
                                 return token_type::parse_error;
@@ -309,18 +312,18 @@ class lexer
                             if (0xD800 <= codepoint1 and codepoint1 <= 0xDBFF)
                             {
                                 // expect next \uxxxx entry
-                                if (JSON_LIKELY(get() == '\\' and get() == 'u'))
+                                if (JSON_HEDLEY_LIKELY(get() == '\\' and get() == 'u'))
                                 {
                                     const int codepoint2 = get_codepoint();
 
-                                    if (JSON_UNLIKELY(codepoint2 == -1))
+                                    if (JSON_HEDLEY_UNLIKELY(codepoint2 == -1))
                                     {
                                         error_message = "invalid string: '\\u' must be followed by 4 hex digits";
                                         return token_type::parse_error;
                                     }
 
                                     // check if codepoint2 is a low surrogate
-                                    if (JSON_LIKELY(0xDC00 <= codepoint2 and codepoint2 <= 0xDFFF))
+                                    if (JSON_HEDLEY_LIKELY(0xDC00 <= codepoint2 and codepoint2 <= 0xDFFF))
                                     {
                                         // overwrite codepoint
                                         codepoint = static_cast<int>(
@@ -347,7 +350,7 @@ class lexer
                             }
                             else
                             {
-                                if (JSON_UNLIKELY(0xDC00 <= codepoint1 and codepoint1 <= 0xDFFF))
+                                if (JSON_HEDLEY_UNLIKELY(0xDC00 <= codepoint1 and codepoint1 <= 0xDFFF))
                                 {
                                     error_message = "invalid string: surrogate U+DC00..U+DFFF must follow U+D800..U+DBFF";
                                     return token_type::parse_error;
@@ -722,7 +725,7 @@ class lexer
                 case 0xDE:
                 case 0xDF:
                 {
-                    if (JSON_UNLIKELY(not next_byte_in_range({0x80, 0xBF})))
+                    if (JSON_HEDLEY_UNLIKELY(not next_byte_in_range({0x80, 0xBF})))
                     {
                         return token_type::parse_error;
                     }
@@ -732,7 +735,7 @@ class lexer
                 // U+0800..U+0FFF: bytes E0 A0..BF 80..BF
                 case 0xE0:
                 {
-                    if (JSON_UNLIKELY(not (next_byte_in_range({0xA0, 0xBF, 0x80, 0xBF}))))
+                    if (JSON_HEDLEY_UNLIKELY(not (next_byte_in_range({0xA0, 0xBF, 0x80, 0xBF}))))
                     {
                         return token_type::parse_error;
                     }
@@ -756,7 +759,7 @@ class lexer
                 case 0xEE:
                 case 0xEF:
                 {
-                    if (JSON_UNLIKELY(not (next_byte_in_range({0x80, 0xBF, 0x80, 0xBF}))))
+                    if (JSON_HEDLEY_UNLIKELY(not (next_byte_in_range({0x80, 0xBF, 0x80, 0xBF}))))
                     {
                         return token_type::parse_error;
                     }
@@ -766,7 +769,7 @@ class lexer
                 // U+D000..U+D7FF: bytes ED 80..9F 80..BF
                 case 0xED:
                 {
-                    if (JSON_UNLIKELY(not (next_byte_in_range({0x80, 0x9F, 0x80, 0xBF}))))
+                    if (JSON_HEDLEY_UNLIKELY(not (next_byte_in_range({0x80, 0x9F, 0x80, 0xBF}))))
                     {
                         return token_type::parse_error;
                     }
@@ -776,7 +779,7 @@ class lexer
                 // U+10000..U+3FFFF F0 90..BF 80..BF 80..BF
                 case 0xF0:
                 {
-                    if (JSON_UNLIKELY(not (next_byte_in_range({0x90, 0xBF, 0x80, 0xBF, 0x80, 0xBF}))))
+                    if (JSON_HEDLEY_UNLIKELY(not (next_byte_in_range({0x90, 0xBF, 0x80, 0xBF, 0x80, 0xBF}))))
                     {
                         return token_type::parse_error;
                     }
@@ -788,7 +791,7 @@ class lexer
                 case 0xF2:
                 case 0xF3:
                 {
-                    if (JSON_UNLIKELY(not (next_byte_in_range({0x80, 0xBF, 0x80, 0xBF, 0x80, 0xBF}))))
+                    if (JSON_HEDLEY_UNLIKELY(not (next_byte_in_range({0x80, 0xBF, 0x80, 0xBF, 0x80, 0xBF}))))
                     {
                         return token_type::parse_error;
                     }
@@ -798,7 +801,7 @@ class lexer
                 // U+100000..U+10FFFF F4 80..8F 80..BF 80..BF
                 case 0xF4:
                 {
-                    if (JSON_UNLIKELY(not (next_byte_in_range({0x80, 0x8F, 0x80, 0xBF, 0x80, 0xBF}))))
+                    if (JSON_HEDLEY_UNLIKELY(not (next_byte_in_range({0x80, 0x8F, 0x80, 0xBF, 0x80, 0xBF}))))
                     {
                         return token_type::parse_error;
                     }
@@ -815,16 +818,19 @@ class lexer
         }
     }
 
+    JSON_HEDLEY_NON_NULL(2)
     static void strtof(float& f, const char* str, char** endptr) noexcept
     {
         f = std::strtof(str, endptr);
     }
 
+    JSON_HEDLEY_NON_NULL(2)
     static void strtof(double& f, const char* str, char** endptr) noexcept
     {
         f = std::strtod(str, endptr);
     }
 
+    JSON_HEDLEY_NON_NULL(2)
     static void strtof(long double& f, const char* str, char** endptr) noexcept
     {
         f = std::strtold(str, endptr);
@@ -1200,13 +1206,14 @@ scan_number_done:
     @param[in] length        the length of the passed literal text
     @param[in] return_type   the token type to return on success
     */
+    JSON_HEDLEY_NON_NULL(2)
     token_type scan_literal(const char* literal_text, const std::size_t length,
                             token_type return_type)
     {
         assert(current == literal_text[0]);
         for (std::size_t i = 1; i < length; ++i)
         {
-            if (JSON_UNLIKELY(get() != literal_text[i]))
+            if (JSON_HEDLEY_UNLIKELY(get() != literal_text[i]))
             {
                 error_message = "invalid literal";
                 return token_type::parse_error;
@@ -1252,7 +1259,7 @@ scan_number_done:
             current = ia->get_character();
         }
 
-        if (JSON_LIKELY(current != std::char_traits<char>::eof()))
+        if (JSON_HEDLEY_LIKELY(current != std::char_traits<char>::eof()))
         {
             token_string.push_back(std::char_traits<char>::to_char_type(current));
         }
@@ -1293,7 +1300,7 @@ scan_number_done:
             --position.chars_read_current_line;
         }
 
-        if (JSON_LIKELY(current != std::char_traits<char>::eof()))
+        if (JSON_HEDLEY_LIKELY(current != std::char_traits<char>::eof()))
         {
             assert(not token_string.empty());
             token_string.pop_back();
@@ -1372,6 +1379,7 @@ scan_number_done:
     }
 
     /// return syntax error message
+    JSON_HEDLEY_RETURNS_NON_NULL
     constexpr const char* get_error_message() const noexcept
     {
         return error_message;

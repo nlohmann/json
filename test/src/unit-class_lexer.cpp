@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.6.1
+|  |  |__   |  |  | | | |  version 3.7.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -27,17 +27,21 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "catch.hpp"
+#include "doctest_compatibility.h"
 
 #define private public
 #include <nlohmann/json.hpp>
 using nlohmann::json;
+#undef private
 
+namespace
+{
 // shortcut to scan a string literal
 json::lexer::token_type scan_string(const char* s);
 json::lexer::token_type scan_string(const char* s)
 {
     return json::lexer(nlohmann::detail::input_adapter(s)).scan();
+}
 }
 
 TEST_CASE("lexer class")

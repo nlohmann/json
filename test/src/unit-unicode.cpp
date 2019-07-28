@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.6.1
+|  |  |__   |  |  | | | |  version 3.7.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -27,15 +27,23 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "catch.hpp"
+#include "doctest_compatibility.h"
+
+// for some reason including this after the json header leads to linker errors with VS 2017...
+#include <locale>
 
 #define private public
 #include <nlohmann/json.hpp>
 using nlohmann::json;
+#undef private
 
 #include <fstream>
+#include <sstream>
 #include <iostream>
+#include <iomanip>
 
+namespace
+{
 extern size_t calls;
 size_t calls = 0;
 
@@ -150,17 +158,19 @@ void check_utf8string(bool success_expected, int byte1, int byte2 = -1, int byte
 
     CAPTURE(json_string)
 
+    json _;
     if (success_expected)
     {
-        CHECK_NOTHROW(json::parse(json_string));
+        CHECK_NOTHROW(_ = json::parse(json_string));
     }
     else
     {
-        CHECK_THROWS_AS(json::parse(json_string), json::parse_error&);
+        CHECK_THROWS_AS(_ = json::parse(json_string), json::parse_error&);
     }
 }
+}
 
-TEST_CASE("Unicode", "[hide]")
+TEST_CASE("Unicode" * doctest::skip())
 {
     SECTION("RFC 3629")
     {
@@ -1042,7 +1052,8 @@ TEST_CASE("Unicode", "[hide]")
 
                 json_text += "\"";
                 CAPTURE(json_text)
-                CHECK_NOTHROW(json::parse(json_text));
+                json _;
+                CHECK_NOTHROW(_ = json::parse(json_text));
             }
         }
 
@@ -1050,32 +1061,34 @@ TEST_CASE("Unicode", "[hide]")
         {
             SECTION("incorrect surrogate values")
             {
-                CHECK_THROWS_AS(json::parse("\"\\uDC00\\uDC00\""), json::parse_error&);
-                CHECK_THROWS_WITH(json::parse("\"\\uDC00\\uDC00\""),
+                json _;
+
+                CHECK_THROWS_AS(_ = json::parse("\"\\uDC00\\uDC00\""), json::parse_error&);
+                CHECK_THROWS_WITH(_ = json::parse("\"\\uDC00\\uDC00\""),
                                   "[json.exception.parse_error.101] parse error at line 1, column 7: syntax error while parsing value - invalid string: surrogate U+DC00..U+DFFF must follow U+D800..U+DBFF; last read: '\"\\uDC00'");
 
-                CHECK_THROWS_AS(json::parse("\"\\uD7FF\\uDC00\""), json::parse_error&);
-                CHECK_THROWS_WITH(json::parse("\"\\uD7FF\\uDC00\""),
+                CHECK_THROWS_AS(_ = json::parse("\"\\uD7FF\\uDC00\""), json::parse_error&);
+                CHECK_THROWS_WITH(_ = json::parse("\"\\uD7FF\\uDC00\""),
                                   "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing value - invalid string: surrogate U+DC00..U+DFFF must follow U+D800..U+DBFF; last read: '\"\\uD7FF\\uDC00'");
 
-                CHECK_THROWS_AS(json::parse("\"\\uD800]\""), json::parse_error&);
-                CHECK_THROWS_WITH(json::parse("\"\\uD800]\""),
+                CHECK_THROWS_AS(_ = json::parse("\"\\uD800]\""), json::parse_error&);
+                CHECK_THROWS_WITH(_ = json::parse("\"\\uD800]\""),
                                   "[json.exception.parse_error.101] parse error at line 1, column 8: syntax error while parsing value - invalid string: surrogate U+DC00..U+DFFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD800]'");
 
-                CHECK_THROWS_AS(json::parse("\"\\uD800\\v\""), json::parse_error&);
-                CHECK_THROWS_WITH(json::parse("\"\\uD800\\v\""),
+                CHECK_THROWS_AS(_ = json::parse("\"\\uD800\\v\""), json::parse_error&);
+                CHECK_THROWS_WITH(_ = json::parse("\"\\uD800\\v\""),
                                   "[json.exception.parse_error.101] parse error at line 1, column 9: syntax error while parsing value - invalid string: surrogate U+DC00..U+DFFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD800\\v'");
 
-                CHECK_THROWS_AS(json::parse("\"\\uD800\\u123\""), json::parse_error&);
-                CHECK_THROWS_WITH(json::parse("\"\\uD800\\u123\""),
+                CHECK_THROWS_AS(_ = json::parse("\"\\uD800\\u123\""), json::parse_error&);
+                CHECK_THROWS_WITH(_ = json::parse("\"\\uD800\\u123\""),
                                   "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '\"\\uD800\\u123\"'");
 
-                CHECK_THROWS_AS(json::parse("\"\\uD800\\uDBFF\""), json::parse_error&);
-                CHECK_THROWS_WITH(json::parse("\"\\uD800\\uDBFF\""),
+                CHECK_THROWS_AS(_ = json::parse("\"\\uD800\\uDBFF\""), json::parse_error&);
+                CHECK_THROWS_WITH(_ = json::parse("\"\\uD800\\uDBFF\""),
                                   "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing value - invalid string: surrogate U+DC00..U+DFFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD800\\uDBFF'");
 
-                CHECK_THROWS_AS(json::parse("\"\\uD800\\uE000\""), json::parse_error&);
-                CHECK_THROWS_WITH(json::parse("\"\\uD800\\uE000\""),
+                CHECK_THROWS_AS(_ = json::parse("\"\\uD800\\uE000\""), json::parse_error&);
+                CHECK_THROWS_WITH(_ = json::parse("\"\\uD800\\uE000\""),
                                   "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing value - invalid string: surrogate U+DC00..U+DFFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD800\\uE000'");
             }
         }
@@ -1194,16 +1207,20 @@ TEST_CASE("Unicode", "[hide]")
 
     SECTION("error for incomplete/wrong BOM")
     {
-        CHECK_THROWS_AS(json::parse("\xef\xbb"), json::parse_error&);
-        CHECK_THROWS_AS(json::parse("\xef\xbb\xbb"), json::parse_error&);
+        json _;
+        CHECK_THROWS_AS(_ = json::parse("\xef\xbb"), json::parse_error&);
+        CHECK_THROWS_AS(_ = json::parse("\xef\xbb\xbb"), json::parse_error&);
     }
 }
 
+namespace
+{
 void roundtrip(bool success_expected, const std::string& s);
 
 void roundtrip(bool success_expected, const std::string& s)
 {
     CAPTURE(s)
+    json _;
 
     // create JSON string value
     json j = s;
@@ -1219,11 +1236,11 @@ void roundtrip(bool success_expected, const std::string& s)
         if (s[0] != '\0')
         {
             // parsing JSON text succeeds
-            CHECK_NOTHROW(json::parse(ps));
+            CHECK_NOTHROW(_ = json::parse(ps));
         }
 
         // roundtrip succeeds
-        CHECK_NOTHROW(json::parse(j.dump()));
+        CHECK_NOTHROW(_ = json::parse(j.dump()));
 
         // after roundtrip, the same string is stored
         json jr = json::parse(j.dump());
@@ -1235,8 +1252,9 @@ void roundtrip(bool success_expected, const std::string& s)
         CHECK_THROWS_AS(j.dump(), json::type_error&);
 
         // parsing JSON text fails
-        CHECK_THROWS_AS(json::parse(ps), json::parse_error&);
+        CHECK_THROWS_AS(_ = json::parse(ps), json::parse_error&);
     }
+}
 }
 
 TEST_CASE("Markus Kuhn's UTF-8 decoder capability and stress test")

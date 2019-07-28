@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.6.1
+|  |  |__   |  |  | | | |  version 3.7.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -27,15 +27,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "catch.hpp"
+#include "doctest_compatibility.h"
 
 #define private public
 #include <nlohmann/json.hpp>
 using nlohmann::json;
+#undef private
 
 #include <deque>
 #include <forward_list>
 #include <list>
+#include <set>
 #include <unordered_map>
 #include <unordered_set>
 #include <valarray>
@@ -140,6 +142,54 @@ TEST_CASE("value conversion")
         }
     }
 
+    SECTION("get an object (explicit, get_to)")
+    {
+        json::object_t o_reference = {{"object", json::object()},
+            {"array", {1, 2, 3, 4}},
+            {"number", 42},
+            {"boolean", false},
+            {"null", nullptr},
+            {"string", "Hello world"}
+        };
+        json j(o_reference);
+
+        SECTION("json::object_t")
+        {
+            json::object_t o = {{"previous", "value"}};
+            j.get_to(o);
+            CHECK(json(o) == j);
+        }
+
+        SECTION("std::map<json::string_t, json>")
+        {
+            std::map<json::string_t, json> o{{"previous", "value"}};
+            j.get_to(o);
+            CHECK(json(o) == j);
+        }
+
+        SECTION("std::multimap<json::string_t, json>")
+        {
+            std::multimap<json::string_t, json> o{{"previous", "value"}};
+            j.get_to(o);
+            CHECK(json(o) == j);
+        }
+
+        SECTION("std::unordered_map<json::string_t, json>")
+        {
+            std::unordered_map<json::string_t, json> o{{"previous", "value"}};
+            j.get_to(o);
+            CHECK(json(o) == j);
+        }
+
+        SECTION("std::unordered_multimap<json::string_t, json>")
+        {
+            std::unordered_multimap<json::string_t, json> o{{"previous", "value"}};
+            j.get_to(o);
+            CHECK(json(o) == j);
+        }
+    }
+
+
     SECTION("get an object (implicit)")
     {
         json::object_t o_reference = {{"object", json::object()},
@@ -226,11 +276,6 @@ TEST_CASE("value conversion")
 #if not defined(JSON_NOEXCEPTION)
             SECTION("reserve is called on containers that supports it")
             {
-                // making the call to from_json throw in order to check capacity
-                std::vector<float> v;
-                CHECK_THROWS_AS(nlohmann::from_json(j, v), json::type_error&);
-                CHECK(v.capacity() == j.size());
-
                 // make sure all values are properly copied
                 std::vector<int> v2 = json({1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
                 CHECK(v2.size() == 10);
@@ -299,6 +344,65 @@ TEST_CASE("value conversion")
             CHECK_THROWS_WITH(
                 json(json::value_t::number_float).get<json::array_t>(),
                 "[json.exception.type_error.302] type must be array, but is number");
+        }
+    }
+
+    SECTION("get an array (explicit, get_to)")
+    {
+        json::array_t a_reference{json(1),     json(1u),       json(2.2),
+                                  json(false), json("string"), json()};
+        json j(a_reference);
+
+        SECTION("json::array_t")
+        {
+            json::array_t a{"previous", "value"};
+            j.get_to(a);
+            CHECK(json(a) == j);
+        }
+
+        SECTION("std::valarray<json>")
+        {
+            std::valarray<json> a{"previous", "value"};
+            j.get_to(a);
+            CHECK(json(a) == j);
+        }
+
+        SECTION("std::list<json>")
+        {
+            std::list<json> a{"previous", "value"};
+            j.get_to(a);
+            CHECK(json(a) == j);
+        }
+
+        SECTION("std::forward_list<json>")
+        {
+            std::forward_list<json> a{"previous", "value"};
+            j.get_to(a);
+            CHECK(json(a) == j);
+        }
+
+        SECTION("std::vector<json>")
+        {
+            std::vector<json> a{"previous", "value"};
+            j.get_to(a);
+            CHECK(json(a) == j);
+        }
+
+        SECTION("built-in arrays")
+        {
+            const int nbs[] = {0, 1, 2};
+            int nbs2[] = {0, 0, 0};
+
+            json j2 = nbs;
+            j2.get_to(nbs2);
+            CHECK(std::equal(std::begin(nbs), std::end(nbs), std::begin(nbs2)));
+        }
+
+        SECTION("std::deque<json>")
+        {
+            std::deque<json> a{"previous", "value"};
+            j.get_to(a);
+            CHECK(json(a) == j);
         }
     }
 
@@ -433,6 +537,35 @@ TEST_CASE("value conversion")
 #endif
     }
 
+    SECTION("get a string (explicit, get_to)")
+    {
+        json::string_t s_reference{"Hello world"};
+        json j(s_reference);
+
+        SECTION("string_t")
+        {
+            json::string_t s = "previous value";
+            j.get_to(s);
+            CHECK(json(s) == j);
+        }
+
+        SECTION("std::string")
+        {
+            std::string s = "previous value";
+            j.get_to(s);
+            CHECK(json(s) == j);
+        }
+#if defined(JSON_HAS_CPP_17)
+        SECTION("std::string_view")
+        {
+            std::string s = "previous value";
+            std::string_view sv = s;
+            j.get_to(sv);
+            CHECK(json(sv) == j);
+        }
+#endif
+    }
+
     SECTION("get null (explicit)")
     {
         std::nullptr_t n = nullptr;
@@ -480,7 +613,7 @@ TEST_CASE("value conversion")
 #if defined(JSON_HAS_CPP_17)
         SECTION("std::string_view")
         {
-            std::string_view s = j;
+            std::string_view s = j.get<std::string_view>();
             CHECK(json(s) == j);
         }
 #endif
@@ -503,13 +636,19 @@ TEST_CASE("value conversion")
             CHECK(json(b) == j);
         }
 
+        SECTION("uint8_t")
+        {
+            auto n = j.get<uint8_t>();
+            CHECK(n == 1);
+        }
+
         SECTION("bool")
         {
             bool b = j.get<bool>();
             CHECK(json(b) == j);
         }
 
-        SECTION("exception in case of a non-string type")
+        SECTION("exception in case of a non-number type")
         {
             CHECK_THROWS_AS(json(json::value_t::null).get<json::boolean_t>(),
                             json::type_error&);
@@ -518,6 +657,8 @@ TEST_CASE("value conversion")
             CHECK_THROWS_AS(json(json::value_t::array).get<json::boolean_t>(),
                             json::type_error&);
             CHECK_THROWS_AS(json(json::value_t::string).get<json::boolean_t>(),
+                            json::type_error&);
+            CHECK_THROWS_AS(json(json::value_t::string).get<uint8_t>(),
                             json::type_error&);
             CHECK_THROWS_AS(
                 json(json::value_t::number_integer).get<json::boolean_t>(),

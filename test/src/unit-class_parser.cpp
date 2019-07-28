@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.6.1
+|  |  |__   |  |  | | | |  version 3.7.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -27,14 +27,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "catch.hpp"
+#include "doctest_compatibility.h"
 
 #define private public
 #include <nlohmann/json.hpp>
 using nlohmann::json;
+#undef private
 
 #include <valarray>
 
+namespace
+{
 class SaxEventLogger
 {
   public:
@@ -255,6 +258,7 @@ bool accept_helper(const std::string& s)
     // 7. return result
     return ok_accept;
 }
+}
 
 TEST_CASE("parser class")
 {
@@ -402,8 +406,9 @@ TEST_CASE("parser class")
                     // uses an iterator range.
                     std::string s = "\"1\"";
                     s[1] = '\0';
-                    CHECK_THROWS_AS(json::parse(s.begin(), s.end()), json::parse_error&);
-                    CHECK_THROWS_WITH(json::parse(s.begin(), s.end()), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0000 (NUL) must be escaped to \\u0000; last read: '\"<U+0000>'");
+                    json _;
+                    CHECK_THROWS_AS(_ = json::parse(s.begin(), s.end()), json::parse_error&);
+                    CHECK_THROWS_WITH(_ = json::parse(s.begin(), s.end()), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0000 (NUL) must be escaped to \\u0000; last read: '\"<U+0000>'");
                 }
             }
 
@@ -1105,8 +1110,8 @@ TEST_CASE("parser class")
                     // only check error message if c is not a control character
                     if (c > 0x1f)
                     {
-                        CHECK_THROWS_WITH(parser_helper(s.c_str()),
-                                          "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid string: forbidden character after backslash; last read: '\"\\" + std::string(1, static_cast<char>(c)) + "'");
+                        CHECK_THROWS_WITH_STD_STR(parser_helper(s.c_str()),
+                                                  "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid string: forbidden character after backslash; last read: '\"\\" + std::string(1, static_cast<char>(c)) + "'");
                     }
                     break;
                 }
@@ -1181,8 +1186,8 @@ TEST_CASE("parser class")
                     // only check error message if c is not a control character
                     if (c > 0x1f)
                     {
-                        CHECK_THROWS_WITH(parser_helper(s1.c_str()),
-                                          "[json.exception.parse_error.101] parse error at line 1, column 7: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '" + s1.substr(0, 7) + "'");
+                        CHECK_THROWS_WITH_STD_STR(parser_helper(s1.c_str()),
+                                                  "[json.exception.parse_error.101] parse error at line 1, column 7: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '" + s1.substr(0, 7) + "'");
                     }
 
                     CAPTURE(s2)
@@ -1190,8 +1195,8 @@ TEST_CASE("parser class")
                     // only check error message if c is not a control character
                     if (c > 0x1f)
                     {
-                        CHECK_THROWS_WITH(parser_helper(s2.c_str()),
-                                          "[json.exception.parse_error.101] parse error at line 1, column 6: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '" + s2.substr(0, 6) + "'");
+                        CHECK_THROWS_WITH_STD_STR(parser_helper(s2.c_str()),
+                                                  "[json.exception.parse_error.101] parse error at line 1, column 6: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '" + s2.substr(0, 6) + "'");
                     }
 
                     CAPTURE(s3)
@@ -1199,8 +1204,8 @@ TEST_CASE("parser class")
                     // only check error message if c is not a control character
                     if (c > 0x1f)
                     {
-                        CHECK_THROWS_WITH(parser_helper(s3.c_str()),
-                                          "[json.exception.parse_error.101] parse error at line 1, column 5: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '" + s3.substr(0, 5) + "'");
+                        CHECK_THROWS_WITH_STD_STR(parser_helper(s3.c_str()),
+                                                  "[json.exception.parse_error.101] parse error at line 1, column 5: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '" + s3.substr(0, 5) + "'");
                     }
 
                     CAPTURE(s4)
@@ -1208,26 +1213,28 @@ TEST_CASE("parser class")
                     // only check error message if c is not a control character
                     if (c > 0x1f)
                     {
-                        CHECK_THROWS_WITH(parser_helper(s4.c_str()),
-                                          "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '" + s4.substr(0, 4) + "'");
+                        CHECK_THROWS_WITH_STD_STR(parser_helper(s4.c_str()),
+                                                  "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '" + s4.substr(0, 4) + "'");
                     }
                 }
             }
         }
 
+        json _;
+
         // missing part of a surrogate pair
-        CHECK_THROWS_AS(json::parse("\"\\uD80C\""), json::parse_error&);
-        CHECK_THROWS_WITH(json::parse("\"\\uD80C\""),
+        CHECK_THROWS_AS(_ = json::parse("\"\\uD80C\""), json::parse_error&);
+        CHECK_THROWS_WITH(_ = json::parse("\"\\uD80C\""),
                           "[json.exception.parse_error.101] parse error at line 1, column 8: syntax error while parsing value - invalid string: surrogate U+DC00..U+DFFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD80C\"'");
         // invalid surrogate pair
-        CHECK_THROWS_AS(json::parse("\"\\uD80C\\uD80C\""), json::parse_error&);
-        CHECK_THROWS_AS(json::parse("\"\\uD80C\\u0000\""), json::parse_error&);
-        CHECK_THROWS_AS(json::parse("\"\\uD80C\\uFFFF\""), json::parse_error&);
-        CHECK_THROWS_WITH(json::parse("\"\\uD80C\\uD80C\""),
+        CHECK_THROWS_AS(_ = json::parse("\"\\uD80C\\uD80C\""), json::parse_error&);
+        CHECK_THROWS_AS(_ = json::parse("\"\\uD80C\\u0000\""), json::parse_error&);
+        CHECK_THROWS_AS(_ = json::parse("\"\\uD80C\\uFFFF\""), json::parse_error&);
+        CHECK_THROWS_WITH(_ = json::parse("\"\\uD80C\\uD80C\""),
                           "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing value - invalid string: surrogate U+DC00..U+DFFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD80C\\uD80C'");
-        CHECK_THROWS_WITH(json::parse("\"\\uD80C\\u0000\""),
+        CHECK_THROWS_WITH(_ = json::parse("\"\\uD80C\\u0000\""),
                           "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing value - invalid string: surrogate U+DC00..U+DFFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD80C\\u0000'");
-        CHECK_THROWS_WITH(json::parse("\"\\uD80C\\uFFFF\""),
+        CHECK_THROWS_WITH(_ = json::parse("\"\\uD80C\\uFFFF\""),
                           "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing value - invalid string: surrogate U+DC00..U+DFFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD80C\\uFFFF'");
     }
 
@@ -1675,12 +1682,13 @@ TEST_CASE("parser class")
 
             CHECK(json::parse("{\"foo\": true:", cb, false).is_discarded());
 
-            CHECK_THROWS_AS(json::parse("{\"foo\": true:", cb), json::parse_error&);
-            CHECK_THROWS_WITH(json::parse("{\"foo\": true:", cb),
+            json _;
+            CHECK_THROWS_AS(_ = json::parse("{\"foo\": true:", cb), json::parse_error&);
+            CHECK_THROWS_WITH(_ = json::parse("{\"foo\": true:", cb),
                               "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing object - unexpected ':'; expected '}'");
 
-            CHECK_THROWS_AS(json::parse("1.18973e+4932", cb), json::out_of_range&);
-            CHECK_THROWS_WITH(json::parse("1.18973e+4932", cb),
+            CHECK_THROWS_AS(_ = json::parse("1.18973e+4932", cb), json::out_of_range&);
+            CHECK_THROWS_WITH(_ = json::parse("1.18973e+4932", cb),
                               "[json.exception.out_of_range.406] number overflow parsing '1.18973e+4932'");
         }
 

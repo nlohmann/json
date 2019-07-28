@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.6.1
+|  |  |__   |  |  | | | |  version 3.7.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -31,11 +31,13 @@ SOFTWARE.
 // Only compile these tests if 'float' and 'double' are IEEE-754 single- and
 // double-precision numbers, resp.
 
-#include "catch.hpp"
+#include "doctest_compatibility.h"
 
 #include <nlohmann/json.hpp>
 using nlohmann::detail::dtoa_impl::reinterpret_bits;
 
+namespace
+{
 static float make_float(uint32_t sign_bit, uint32_t biased_exponent, uint32_t significand)
 {
     assert(sign_bit == 0 || sign_bit == 1);
@@ -138,6 +140,7 @@ static double make_double(uint64_t f, int e)
 
     uint64_t bits = (f & kSignificandMask) | (biased_exponent << kPhysicalSignificandSize);
     return reinterpret_bits<double>(bits);
+}
 }
 
 TEST_CASE("digit gen")

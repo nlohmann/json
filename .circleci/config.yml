@@ -1,0 +1,27 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: debian:stretch
+
+    steps:
+      - checkout
+
+      - run:
+          name: Install sudo
+          command: 'apt-get update && apt-get install -y sudo && rm -rf /var/lib/apt/lists/*'
+      - run:
+          name: Install GCC
+          command: 'apt-get update && apt-get install -y gcc g++'
+      - run:
+          name: Install CMake
+          command: 'apt-get update && sudo apt-get install -y cmake'
+      - run:
+          name: Create build files
+          command: 'mkdir build ; cd build ; cmake ..'
+      - run:
+          name: Compile
+          command: 'cmake --build build'
+      - run:
+          name: Execute test suite
+          command: 'cd build ; ctest -j 2'

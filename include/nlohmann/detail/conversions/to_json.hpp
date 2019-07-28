@@ -341,4 +341,4 @@ namespace
 {
 constexpr const auto& to_json = detail::static_const<detail::to_json_fn>::value;
 } // namespace
-}  // namespace nlohmann
+} // namespace nlohmann

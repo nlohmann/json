@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.6.1
+|  |  |__   |  |  | | | |  version 3.7.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -27,12 +27,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "catch.hpp"
+#include "doctest_compatibility.h"
 
 #include <nlohmann/json.hpp>
-
 using nlohmann::json;
 
+namespace
+{
 bool wstring_is_utf16();
 bool wstring_is_utf16()
 {
@@ -49,6 +50,7 @@ bool u32string_is_utf32();
 bool u32string_is_utf32()
 {
     return (std::u32string(U"💩") == std::u32string(U"\U0001F4A9"));
+}
 }
 
 TEST_CASE("wide strings")
@@ -68,7 +70,8 @@ TEST_CASE("wide strings")
         if (wstring_is_utf16())
         {
             std::wstring w = L"\"\xDBFF";
-            CHECK_THROWS_AS(json::parse(w), json::parse_error&);
+            json _;
+            CHECK_THROWS_AS(_ = json::parse(w), json::parse_error&);
         }
     }
 
@@ -87,7 +90,8 @@ TEST_CASE("wide strings")
         if (wstring_is_utf16())
         {
             std::u16string w = u"\"\xDBFF";
-            CHECK_THROWS_AS(json::parse(w), json::parse_error&);
+            json _;
+            CHECK_THROWS_AS(_ = json::parse(w), json::parse_error&);
         }
     }
 
@@ -106,7 +110,8 @@ TEST_CASE("wide strings")
         if (u32string_is_utf32())
         {
             std::u32string w = U"\"\x110000";
-            CHECK_THROWS_AS(json::parse(w), json::parse_error&);
+            json _;
+            CHECK_THROWS_AS(_ = json::parse(w), json::parse_error&);
         }
     }
 }

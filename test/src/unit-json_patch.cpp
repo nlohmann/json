@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.6.1
+|  |  |__   |  |  | | | |  version 3.7.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -27,7 +27,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "catch.hpp"
+#include "doctest_compatibility.h"
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;
@@ -342,7 +342,7 @@ TEST_CASE("JSON patch")
 
             // check that evaluation throws
             CHECK_THROWS_AS(doc.patch(patch), json::other_error&);
-            CHECK_THROWS_WITH(doc.patch(patch), "[json.exception.other_error.501] unsuccessful: " + patch[0].dump());
+            CHECK_THROWS_WITH_STD_STR(doc.patch(patch), "[json.exception.other_error.501] unsuccessful: " + patch[0].dump());
         }
 
         SECTION("A.10. Adding a Nested Member Object")
@@ -483,7 +483,7 @@ TEST_CASE("JSON patch")
 
             // check that evaluation throws
             CHECK_THROWS_AS(doc.patch(patch), json::other_error&);
-            CHECK_THROWS_WITH(doc.patch(patch), "[json.exception.other_error.501] unsuccessful: " + patch[0].dump());
+            CHECK_THROWS_WITH_STD_STR(doc.patch(patch), "[json.exception.other_error.501] unsuccessful: " + patch[0].dump());
         }
 
         SECTION("A.16. Adding an Array Value")
@@ -1182,7 +1182,7 @@ TEST_CASE("JSON patch")
 
                 // the test will fail
                 CHECK_THROWS_AS(doc.patch(patch), json::other_error&);
-                CHECK_THROWS_WITH(doc.patch(patch), "[json.exception.other_error.501] unsuccessful: " + patch[0].dump());
+                CHECK_THROWS_WITH_STD_STR(doc.patch(patch), "[json.exception.other_error.501] unsuccessful: " + patch[0].dump());
             }
         }
     }
@@ -1268,7 +1268,7 @@ TEST_CASE("JSON patch")
 
             for (const auto& test : suite)
             {
-                CAPTURE(test.value("comment", ""))
+                INFO_WITH_TEMP(test.value("comment", ""));
 
                 // skip tests marked as disabled
                 if (test.value("disabled", false))

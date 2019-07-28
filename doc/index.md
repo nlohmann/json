@@ -4,7 +4,9 @@ These pages contain the API documentation of JSON for Modern C++, a C++11 header
 
 # Contents
 
-- @link nlohmann::basic_json `basic_json` class @endlink
+- Classes
+  - @link nlohmann::basic_json `basic_json`@endlink -- class template for JSON values
+  - @link nlohmann::json `json`@endlink -- the default specialization of `basic_json`, defined as `basic_json<>`
 - [Functions](functions_func.html)
   - object inspection
     - @link nlohmann::basic_json::dump dump @endlink -- value serialization
@@ -327,4 +329,4 @@ Note that this table only lists those exceptions thrown due to the type. For ins
 @author [Niels Lohmann](http://nlohmann.me)
 @see https://github.com/nlohmann/json to download the source code
 
-@version 3.6.1
+@version 3.7.0

@@ -8,6 +8,7 @@
 #include <ostream> // basic_ostream
 #include <string> // basic_string
 #include <vector> // vector
+#include <nlohmann/detail/macro_scope.hpp>
 
 namespace nlohmann
 {
@@ -39,6 +40,7 @@ class output_vector_adapter : public output_adapter_protocol<CharType>
         v.push_back(c);
     }
 
+    JSON_HEDLEY_NON_NULL(2)
     void write_characters(const CharType* s, std::size_t length) override
     {
         std::copy(s, s + length, std::back_inserter(v));
@@ -62,6 +64,7 @@ class output_stream_adapter : public output_adapter_protocol<CharType>
         stream.put(c);
     }
 
+    JSON_HEDLEY_NON_NULL(2)
     void write_characters(const CharType* s, std::size_t length) override
     {
         stream.write(s, static_cast<std::streamsize>(length));
@@ -85,6 +88,7 @@ class output_string_adapter : public output_adapter_protocol<CharType>
         str.push_back(c);
     }
 
+    JSON_HEDLEY_NON_NULL(2)
     void write_characters(const CharType* s, std::size_t length) override
     {
         str.append(s, length);

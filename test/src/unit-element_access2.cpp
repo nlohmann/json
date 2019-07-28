@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.6.1
+|  |  |__   |  |  | | | |  version 3.7.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -27,7 +27,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "catch.hpp"
+#include "doctest_compatibility.h"
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;
@@ -1072,7 +1072,8 @@ TEST_CASE("element access 2")
     }
 }
 
-TEST_CASE("element access 2 (throwing tests)", "[!throws]")
+#if not defined(JSON_NOEXCEPTION)
+TEST_CASE("element access 2 (throwing tests)")
 {
     SECTION("object")
     {
@@ -1105,3 +1106,4 @@ TEST_CASE("element access 2 (throwing tests)", "[!throws]")
         }
     }
 }
+#endif

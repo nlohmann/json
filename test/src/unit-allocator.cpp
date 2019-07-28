@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.6.1
+|  |  |__   |  |  | | | |  version 3.7.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -27,14 +27,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "catch.hpp"
+#include "doctest_compatibility.h"
 
 #define private public
 #include <nlohmann/json.hpp>
 using nlohmann::json;
+#undef private
 
+namespace
+{
 // special test case to check if memory is leaked if constructor throws
-
 template<class T>
 struct bad_allocator : std::allocator<T>
 {
@@ -44,6 +46,7 @@ struct bad_allocator : std::allocator<T>
         throw std::bad_alloc();
     }
 };
+}
 
 TEST_CASE("bad_alloc")
 {
@@ -64,13 +67,17 @@ TEST_CASE("bad_alloc")
     }
 }
 
-static bool next_construct_fails = false;
-static bool next_destroy_fails = false;
-static bool next_deallocate_fails = false;
+namespace
+{
+bool next_construct_fails = false;
+bool next_destroy_fails = false;
+bool next_deallocate_fails = false;
 
 template<class T>
 struct my_allocator : std::allocator<T>
 {
+    using std::allocator<T>::allocator;
+
     template<class... Args>
     void construct(T* p, Args&& ... args)
     {
@@ -126,6 +133,7 @@ void my_allocator_clean_up(T* p)
     my_allocator<T> alloc;
     alloc.destroy(p);
     alloc.deallocate(p, 1);
+}
 }
 
 TEST_CASE("controlled bad_alloc")

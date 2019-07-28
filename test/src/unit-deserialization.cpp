@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.6.1
+|  |  |__   |  |  | | | |  version 3.7.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -27,14 +27,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "catch.hpp"
+#include "doctest_compatibility.h"
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
 #include <iostream>
+#include <sstream>
 #include <valarray>
 
+namespace
+{
 struct SaxEventLogger : public nlohmann::json_sax<json>
 {
     bool null() override
@@ -166,6 +169,7 @@ struct SaxEventLoggerExitAfterStartArray : public SaxEventLogger
         return false;
     }
 };
+}
 
 TEST_CASE("deserialization")
 {
@@ -265,8 +269,10 @@ TEST_CASE("deserialization")
             ss3 << "[\"foo\",1,2,3,false,{\"one\":1}";
             ss4 << "[\"foo\",1,2,3,false,{\"one\":1}";
             ss5 << "[\"foo\",1,2,3,false,{\"one\":1}";
-            CHECK_THROWS_AS(json::parse(ss1), json::parse_error&);
-            CHECK_THROWS_WITH(json::parse(ss2),
+
+            json _;
+            CHECK_THROWS_AS(_ = json::parse(ss1), json::parse_error&);
+            CHECK_THROWS_WITH(_ = json::parse(ss2),
                               "[json.exception.parse_error.101] parse error at line 1, column 29: syntax error while parsing array - unexpected end of input; expected ']'");
             CHECK(not json::accept(ss3));
 
@@ -289,8 +295,9 @@ TEST_CASE("deserialization")
         SECTION("string")
         {
             json::string_t s = "[\"foo\",1,2,3,false,{\"one\":1}";
-            CHECK_THROWS_AS(json::parse(s), json::parse_error&);
-            CHECK_THROWS_WITH(json::parse(s),
+            json _;
+            CHECK_THROWS_AS(_ = json::parse(s), json::parse_error&);
+            CHECK_THROWS_WITH(_ = json::parse(s),
                               "[json.exception.parse_error.101] parse error at line 1, column 29: syntax error while parsing array - unexpected end of input; expected ']'");
             CHECK(not json::accept(s));
 
@@ -426,7 +433,8 @@ TEST_CASE("deserialization")
             SECTION("empty container")
             {
                 std::vector<uint8_t> v;
-                CHECK_THROWS_AS(json::parse(v), json::parse_error&);
+                json _;
+                CHECK_THROWS_AS(_ = json::parse(v), json::parse_error&);
                 CHECK(not json::accept(v));
 
                 SaxEventLogger l;
@@ -610,8 +618,9 @@ TEST_CASE("deserialization")
             SECTION("case 6")
             {
                 uint8_t v[] = {'\"', 0x7F, 0xDF, 0x7F};
-                CHECK_THROWS_AS(json::parse(std::begin(v), std::end(v)), json::parse_error&);
-                CHECK_THROWS_WITH(json::parse(std::begin(v), std::end(v)),
+                json _;
+                CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error&);
+                CHECK_THROWS_WITH(_ = json::parse(std::begin(v), std::end(v)),
                                   "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid string: ill-formed UTF-8 byte; last read: '\"\x7f\xdf\x7f'");
                 CHECK(not json::accept(std::begin(v), std::end(v)));
 
@@ -797,12 +806,13 @@ TEST_CASE("deserialization")
 
         SECTION("BOM only")
         {
-            CHECK_THROWS_AS(json::parse(bom), json::parse_error&);
-            CHECK_THROWS_WITH(json::parse(bom),
+            json _;
+            CHECK_THROWS_AS(_ = json::parse(bom), json::parse_error&);
+            CHECK_THROWS_WITH(_ = json::parse(bom),
                               "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal");
 
-            CHECK_THROWS_AS(json::parse(std::istringstream(bom)), json::parse_error&);
-            CHECK_THROWS_WITH(json::parse(std::istringstream(bom)),
+            CHECK_THROWS_AS(_ = json::parse(std::istringstream(bom)), json::parse_error&);
+            CHECK_THROWS_WITH(_ = json::parse(std::istringstream(bom)),
                               "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal");
 
             SaxEventLogger l;
@@ -836,12 +846,13 @@ TEST_CASE("deserialization")
 
         SECTION("2 byte of BOM")
         {
-            CHECK_THROWS_AS(json::parse(bom.substr(0, 2)), json::parse_error&);
-            CHECK_THROWS_WITH(json::parse(bom.substr(0, 2)),
+            json _;
+            CHECK_THROWS_AS(_ = json::parse(bom.substr(0, 2)), json::parse_error&);
+            CHECK_THROWS_WITH(_ = json::parse(bom.substr(0, 2)),
                               "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid BOM; must be 0xEF 0xBB 0xBF if given; last read: '\xEF\xBB'");
 
-            CHECK_THROWS_AS(json::parse(std::istringstream(bom.substr(0, 2))), json::parse_error&);
-            CHECK_THROWS_WITH(json::parse(std::istringstream(bom.substr(0, 2))),
+            CHECK_THROWS_AS(_ = json::parse(std::istringstream(bom.substr(0, 2))), json::parse_error&);
+            CHECK_THROWS_WITH(_ = json::parse(std::istringstream(bom.substr(0, 2))),
                               "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid BOM; must be 0xEF 0xBB 0xBF if given; last read: '\xEF\xBB'");
 
             SaxEventLogger l1, l2;
@@ -861,12 +872,13 @@ TEST_CASE("deserialization")
 
         SECTION("1 byte of BOM")
         {
-            CHECK_THROWS_AS(json::parse(bom.substr(0, 1)), json::parse_error&);
-            CHECK_THROWS_WITH(json::parse(bom.substr(0, 1)),
+            json _;
+            CHECK_THROWS_AS(_ = json::parse(bom.substr(0, 1)), json::parse_error&);
+            CHECK_THROWS_WITH(_ = json::parse(bom.substr(0, 1)),
                               "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid BOM; must be 0xEF 0xBB 0xBF if given; last read: '\xEF'");
 
-            CHECK_THROWS_AS(json::parse(std::istringstream(bom.substr(0, 1))), json::parse_error&);
-            CHECK_THROWS_WITH(json::parse(std::istringstream(bom.substr(0, 1))),
+            CHECK_THROWS_AS(_ = json::parse(std::istringstream(bom.substr(0, 1))), json::parse_error&);
+            CHECK_THROWS_WITH(_ = json::parse(std::istringstream(bom.substr(0, 1))),
                               "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid BOM; must be 0xEF 0xBB 0xBF if given; last read: '\xEF'");
 
             SaxEventLogger l1, l2;
@@ -921,8 +933,9 @@ TEST_CASE("deserialization")
                         else
                         {
                             // any variation is an error
-                            CHECK_THROWS_AS(json::parse(s + "null"), json::parse_error&);
-                            CHECK_THROWS_AS(json::parse(std::istringstream(s + "null")), json::parse_error&);
+                            json _;
+                            CHECK_THROWS_AS(_ = json::parse(s + "null"), json::parse_error&);
+                            CHECK_THROWS_AS(_ = json::parse(std::istringstream(s + "null")), json::parse_error&);
 
                             SaxEventLogger l;
                             CHECK(not json::sax_parse(s + "null", &l));
