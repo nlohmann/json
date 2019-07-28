@@ -1264,6 +1264,11 @@ I deeply appreciate the help of the following people.
 - [Mark Beckwith](https://github.com/wythe) fixed a typo.
 - [yann-morin-1998](https://github.com/yann-morin-1998) helped reducing the CMake requirement to version 3.1.
 - [Konstantin Podsvirov](https://github.com/podsvirov) maintains a package for the MSYS2 software distro.
+- [remyabel](https://github.com/remyabel) added GNUInstallDirs to the CMake files.
+- [Taylor Howard](https://github.com/taylorhoward92) fixed a unit test.
+- [Gabe Ron](https://github.com/Macr0Nerd) implemented the `to_string` method.
+- [Watal M. Iwasaki](https://github.com/heavywatal) fixed a Clang warning.
+- [Viktor Kirilov](https://github.com/onqtam) switched the unit tests from [Catch](https://github.com/philsquared/Catch) to [doctest](https://github.com/onqtam/doctest)
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
