@@ -588,13 +588,13 @@ ChangeLog.md:
 # Release files
 ##########################################################################
 
-# Create the files for a release and add signatures and hashes. We use `--no-extra` to make the resulting ZIP file
+# Create the files for a release and add signatures and hashes. We use `-X` to make the resulting ZIP file
 # reproducible, see <https://content.pivotal.io/blog/barriers-to-deterministic-reproducible-zip-files>.
 
 release:
 	rm -fr release_files
 	mkdir release_files
-	zip -9 --recurse-paths --no-extra include.zip $(SRCS)
+	zip -9 --recurse-paths -X include.zip $(SRCS)
 	gpg --armor --detach-sig include.zip
 	mv include.zip include.zip.asc release_files
 	gpg --armor --detach-sig $(AMALGAMATED_FILE)
