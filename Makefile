@@ -435,7 +435,7 @@ fuzzing-stop:
 # call cppcheck <http://cppcheck.sourceforge.net>
 # Note: this target is called by Travis
 cppcheck:
-	cppcheck --enable=warning --inline-suppr --inconclusive --force --std=c++11 $(SRCS) --error-exitcode=1
+	cppcheck --enable=warning --inline-suppr --inconclusive --force --std=c++11 $(AMALGAMATED_FILE) --error-exitcode=1
 
 # call Clang Static Analyzer <https://clang-analyzer.llvm.org>
 clang_analyze:
@@ -457,7 +457,7 @@ cpplint:
 
 # call Clang-Tidy <https://clang.llvm.org/extra/clang-tidy/>
 clang_tidy:
-	$(COMPILER_DIR)/clang-tidy $(SRCS) -- -Iinclude -std=c++11
+	$(COMPILER_DIR)/clang-tidy $(AMALGAMATED_FILE) -- -Iinclude -std=c++11
 
 # call PVS-Studio Analyzer <https://www.viva64.com/en/pvs-studio/>
 pvs_studio:
