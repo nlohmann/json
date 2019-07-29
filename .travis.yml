@@ -333,7 +333,7 @@ script:
   - $CXX --version
 
   # compile and execute unit tests
-  - mkdir -p build && cd build
+  - mkdir -p unit-test-build && cd unit-test-build
   - cmake .. ${CMAKE_OPTIONS} -DJSON_MultipleHeaders=${MULTIPLE_HEADERS} -GNinja && cmake --build . --config Release
   - ctest -C Release -V -j
   - cd ..
