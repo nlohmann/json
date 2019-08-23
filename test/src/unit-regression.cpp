@@ -1802,6 +1802,13 @@ TEST_CASE("regression tests")
         json j = json::parse("[-9223372036854775808]");
         CHECK(j.dump() == "[-9223372036854775808]");
     }
+
+    SECTION("issue #1708 - minimum value of int64_t can be outputted")
+    {
+        constexpr auto smallest = (std::numeric_limits<int64_t>::min)();
+        json j = smallest;
+        CHECK(j.dump() == std::to_string(smallest));
+    }
 }
 
 #if not defined(JSON_NOEXCEPTION)
