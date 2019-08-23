@@ -630,7 +630,7 @@ class serializer
         if (is_negative)
         {
             *buffer_ptr = '-';
-            abs_value = static_cast<number_unsigned_t>(std::abs(static_cast<std::intmax_t>(x)));
+            abs_value = remove_sign(x);
 
             // account one more byte for the minus sign
             n_chars = 1 + count_digits(abs_value);
@@ -809,6 +809,32 @@ class serializer
 
         state = utf8d[256u + state * 16u + type];
         return state;
+    }
+
+    /*
+     * Overload to make the compiler happy while it is instantiating
+     * dump_integer for number_unsigned_t.
+     * Must never be called.
+     */
+    number_unsigned_t remove_sign(number_unsigned_t x)
+    {
+        assert(false); // LCOV_EXCL_LINE
+        return x; // LCOV_EXCL_LINE
+    }
+
+    /*
+     * Helper function for dump_integer
+     *
+     * This function takes a negative signed integer and returns its absolute
+     * value as unsigned integer. The plus/minus shuffling is necessary as we can
+     * not directly remove the sign of an arbitrary signed integer as the
+     * absolute values of INT_MIN and INT_MAX are usually not the same. See
+     * #1708 for details.
+     */
+    inline number_unsigned_t remove_sign(number_integer_t x) noexcept
+    {
+        assert(x < 0 and x < (std::numeric_limits<number_integer_t>::max)());
+        return static_cast<number_unsigned_t>(-(x + 1)) + 1;
     }
 
   private:
