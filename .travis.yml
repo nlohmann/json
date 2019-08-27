@@ -204,13 +204,21 @@ matrix:
 
   - os: linux
     compiler: gcc
-    env:
-      - COMPILER=g++-8
-      - CXXFLAGS=-std=c++17
+    env: COMPILER=g++-9
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test']
-        packages: ['g++-8', 'ninja-build']
+        packages: ['g++-9', 'ninja-build']
+
+  - os: linux
+    compiler: gcc
+    env:
+      - COMPILER=g++-9
+      - CXXFLAGS=-std=c++2a
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test']
+        packages: ['g++-9', 'ninja-build']
 
   # Linux / Clang
 
