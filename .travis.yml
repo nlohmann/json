@@ -43,12 +43,15 @@ matrix:
   - os: linux
     compiler: clang
     env:
-      - COMPILER=clang++-5.0
+      - COMPILER=clang++-7
       - CMAKE_OPTIONS=-DJSON_Sanitizer=ON
+      - UBSAN_OPTIONS=print_stacktrace=1,suppressions=$(pwd)/test/src/UBSAN.supp
     addons:
       apt:
-        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-5.0']
-        packages: ['g++-6', 'clang-5.0', 'ninja-build']
+        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-7']
+        packages: ['g++-6', 'clang-7', 'ninja-build']
+    before_script:
+      - export PATH=$PATH:/usr/lib/llvm-7/bin
 
   # cppcheck
   - os: linux
