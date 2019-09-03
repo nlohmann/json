@@ -333,7 +333,7 @@ script:
   # compile and execute unit tests
   - mkdir -p build && cd build
   - cmake .. ${CMAKE_OPTIONS} -DJSON_MultipleHeaders=${MULTIPLE_HEADERS} -GNinja && cmake --build . --config Release
-  - ctest -C Release -V -j
+  - ctest -C Release --timeout 2700 -V -j
   - cd ..
 
   # check if homebrew works (only checks develop branch)   
