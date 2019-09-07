@@ -4010,7 +4010,7 @@ class basic_json
     @since version 3.6.0
     */
     template<typename KeyT, typename std::enable_if<
-                 not std::is_same<KeyT, json_pointer>::value, int>::type = 0>
+                 not std::is_same<typename std::decay<KeyT>::type, json_pointer>::value, int>::type = 0>
     bool contains(KeyT && key) const
     {
         return is_object() and m_value.object->find(std::forward<KeyT>(key)) != m_value.object->end();
