@@ -3489,7 +3489,10 @@ struct external_constructor<value_t::array>
         j.m_type = value_t::array;
         j.m_value = value_t::array;
         j.m_value.array->resize(arr.size());
-        std::copy(std::begin(arr), std::end(arr), j.m_value.array->begin());
+        if (arr.size() > 0)
+        {
+            std::copy(std::begin(arr), std::end(arr), j.m_value.array->begin());
+        }
         j.assert_invariant();
     }
 };
@@ -3882,9 +3885,8 @@ class input_stream_adapter : public input_adapter_protocol
 class input_buffer_adapter : public input_adapter_protocol
 {
   public:
-    JSON_HEDLEY_NON_NULL(2)
     input_buffer_adapter(const char* b, const std::size_t l) noexcept
-        : cursor(b), limit(b + l)
+        : cursor(b), limit(b == nullptr ? nullptr : (b + l))
     {}
 
     // delete because of pointer members
@@ -3898,6 +3900,7 @@ class input_buffer_adapter : public input_adapter_protocol
     {
         if (JSON_HEDLEY_LIKELY(cursor < limit))
         {
+            assert(cursor != nullptr and limit != nullptr);
             return std::char_traits<char>::to_int_type(*(cursor++));
         }
 
