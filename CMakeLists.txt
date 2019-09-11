@@ -89,8 +89,10 @@ endif()
 ## install header files, generate and install cmake config files for find_package()
 ##
 include(CMakePackageConfigHelpers)
-write_basic_package_version_file(
-    ${NLOHMANN_JSON_CMAKE_VERSION_CONFIG_FILE} COMPATIBILITY SameMajorVersion
+configure_file(
+    "cmake/nlohmann_jsonConfigVersion.cmake.in"
+    ${NLOHMANN_JSON_CMAKE_VERSION_CONFIG_FILE}
+    @ONLY
 )
 configure_file(
     ${NLOHMANN_JSON_CMAKE_CONFIG_TEMPLATE}
