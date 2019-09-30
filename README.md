@@ -928,7 +928,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM( TaskState, {
 })
 ```
 
-The `NLOHMANN_JSON_SERIALIZE_ENUM()` macro declares a set of `to_json()` / `from_json()` functions for type `TaskState` while avoiding repetition and boilerplate serilization code.
+The `NLOHMANN_JSON_SERIALIZE_ENUM()` macro declares a set of `to_json()` / `from_json()` functions for type `TaskState` while avoiding repetition and boilerplate serialization code.
 
 **Usage:**
 
@@ -1252,7 +1252,7 @@ I deeply appreciate the help of the following people.
 - [Ivor Wanders](https://github.com/iwanders) helped reducing the CMake requirement to version 3.1.
 - [njlr](https://github.com/njlr) updated the Buckaroo instructions.
 - [Lion](https://github.com/lieff) fixed a compilation issue with GCC 7 on CentOS.
-- [Isaac Nickaein](https://github.com/nickaein) improved the integer serilization performance and  implemented the `contains()` function.
+- [Isaac Nickaein](https://github.com/nickaein) improved the integer serialization performance and  implemented the `contains()` function.
 - [past-due](https://github.com/past-due) suppressed an unfixable warning.
 - [Elvis Oric](https://github.com/elvisoric) improved Meson support.
 - [Matěj Plch](https://github.com/Afforix) fixed an example in the README.
