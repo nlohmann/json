@@ -3186,7 +3186,8 @@ namespace nlohmann
 {
 namespace detail
 {
-void int_to_string( std::string& target, int value )
+template<typename string_type>
+void int_to_string( string_type& target, int value )
 {
     target = std::to_string(value);
 }
