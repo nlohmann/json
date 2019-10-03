@@ -267,7 +267,7 @@ class json_pointer
 
     @since version 3.6.0
     */
-    const std::string& back()
+    const std::string& back() const
     {
         if (JSON_HEDLEY_UNLIKELY(empty()))
         {
