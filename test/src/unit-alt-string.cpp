@@ -154,6 +154,11 @@ class alt_string
     friend bool ::operator<(const char*, const alt_string&);
 };
 
+void int_to_string( alt_string& target, int value )
+{
+    target = std::to_string(value).c_str();
+}
+
 using alt_json = nlohmann::basic_json <
                  std::map,
                  std::vector,
@@ -230,6 +235,35 @@ TEST_CASE("alternative string type")
         auto doc = alt_json::parse("{\"foo\": \"bar\"}");
         alt_string dump = doc.dump();
         CHECK(dump == R"({"foo":"bar"})");
+    }
+
+    SECTION("items")
+    {
+        auto doc = alt_json::parse("{\"foo\": \"bar\"}");
+
+        for ( auto item : doc.items() )
+        {
+            CHECK( item.key() == "foo" );
+            CHECK( item.value() == "bar" );
+        }
+
+        auto doc_array = alt_json::parse("[\"foo\", \"bar\"]");
+
+        for ( auto item : doc_array.items() )
+        {
+            if (item.key() == "0" )
+            {
+                CHECK( item.value() == "foo" );
+            }
+            else if (item.key() == "1" )
+            {
+                CHECK( item.value() == "bar" );
+            }
+            else
+            {
+                CHECK( false );
+            }
+        }
     }
 
     SECTION("equality")
