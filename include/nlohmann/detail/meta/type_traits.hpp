@@ -1,6 +1,5 @@
 #pragma once
 
-#include <ciso646> // not
 #include <limits> // numeric_limits
 #include <type_traits> // false_type, is_constructible, is_integral, is_same, true_type
 #include <utility> // declval

@@ -2,7 +2,6 @@
 
 #include <algorithm> // transform
 #include <array> // array
-#include <ciso646> // and, not
 #include <forward_list> // forward_list
 #include <iterator> // inserter, front_inserter, end
 #include <map> // map

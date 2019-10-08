@@ -1,7 +1,6 @@
 #pragma once
 
 #include <algorithm> // copy
-#include <ciso646> // or, and, not
 #include <iterator> // begin, end
 #include <string> // string
 #include <tuple> // tuple, get

@@ -2,7 +2,6 @@
 
 #include <array> // array
 #include <cassert> // assert
-#include <ciso646> // or, and, not
 #include <cmath>   // signbit, isfinite
 #include <cstdint> // intN_t, uintN_t
 #include <cstring> // memcpy, memmove

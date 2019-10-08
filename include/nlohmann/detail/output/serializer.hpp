@@ -3,7 +3,6 @@
 #include <algorithm> // reverse, remove, fill, find, none_of
 #include <array> // array
 #include <cassert> // assert
-#include <ciso646> // and, or
 #include <clocale> // localeconv, lconv
 #include <cmath> // labs, isfinite, isnan, signbit
 #include <cstddef> // size_t, ptrdiff_t
