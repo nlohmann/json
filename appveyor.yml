@@ -23,6 +23,13 @@ environment:
       LINKER_FLAGS: ""
       GENERATOR: Visual Studio 16 2019
 
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+      configuration: Debug
+      platform: x64
+      CXX_FLAGS: ""
+      LINKER_FLAGS: ""
+      GENERATOR: Visual Studio 16 2019
+
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
       configuration: Debug
       COMPILER: mingw
