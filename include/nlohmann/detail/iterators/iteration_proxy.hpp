@@ -13,7 +13,7 @@ namespace nlohmann
 namespace detail
 {
 template<typename string_type>
-void int_to_string( string_type& target, int value )
+void int_to_string( string_type& target, std::size_t value )
 {
     target = std::to_string(value);
 }
