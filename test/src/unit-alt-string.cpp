@@ -154,7 +154,7 @@ class alt_string
     friend bool ::operator<(const char*, const alt_string&);
 };
 
-void int_to_string( alt_string& target, int value )
+void int_to_string( alt_string& target, std::size_t value )
 {
     target = std::to_string(value).c_str();
 }
