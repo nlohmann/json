@@ -1929,7 +1929,7 @@ class binary_reader
     /*!
     @param[in] format   the current format
     @param[in] detail   a detailed error message
-    @param[in] context  further contect information
+    @param[in] context  further context information
     @return a message string to use in the parse_error exceptions
     */
     std::string exception_message(const input_format_t format,

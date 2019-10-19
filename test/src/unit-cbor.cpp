@@ -1287,7 +1287,7 @@ TEST_CASE("CBOR")
         }
     }
 
-    SECTION("additonal deserialization")
+    SECTION("additional deserialization")
     {
         SECTION("0x7b (string)")
         {

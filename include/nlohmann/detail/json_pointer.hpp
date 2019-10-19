@@ -126,7 +126,7 @@ class json_pointer
     /*!
     @brief append an array index at the end of this JSON pointer
 
-    @param[in] array_index  array index ot append
+    @param[in] array_index  array index to append
     @return JSON pointer with @a array_index appended
 
     @liveexample{The example shows the usage of `operator/=`.,json_pointer__operator_add}

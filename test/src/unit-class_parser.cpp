@@ -210,7 +210,7 @@ json parser_helper(const std::string& s)
     json j;
     json::parser(nlohmann::detail::input_adapter(s)).parse(true, j);
 
-    // if this line was reached, no exception ocurred
+    // if this line was reached, no exception occurred
     // -> check if result is the same without exceptions
     json j_nothrow;
     CHECK_NOTHROW(json::parser(nlohmann::detail::input_adapter(s), nullptr, false).parse(true, j_nothrow));

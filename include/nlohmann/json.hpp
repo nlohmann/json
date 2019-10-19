@@ -4019,7 +4019,7 @@ class basic_json
     /*!
     @brief check the existence of an element in a JSON object given a JSON pointer
 
-    Check wehther the given JSON pointer @a ptr can be resolved in the current
+    Check whether the given JSON pointer @a ptr can be resolved in the current
     JSON value.
 
     @note This method can be executed on any JSON value type.
