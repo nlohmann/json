@@ -79,13 +79,16 @@ endif()
 target_include_directories(doctest_main PRIVATE "thirdparty/doctest")
 
 # https://stackoverflow.com/questions/2368811/how-to-set-warning-level-in-cmake
-if(MSVC)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     # Force to always compile with W4
     if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
         string(REGEX REPLACE "/W[0-4]" "/W4" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
     else()
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
     endif()
+
+    # Force to always compile with WX
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /WX")
 
     # Disable warning C4389: '==': signed/unsigned mismatch
 	# Disable warning C4309: 'static_cast': truncation of constant value
@@ -94,7 +97,13 @@ if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4389 /wd4309 /wd4566 /wd4996")
 
 	# https://github.com/nlohmann/json/issues/1114
-	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /bigobj")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /bigobj")
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    # Force to always compile with Wall and Werror
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
+
+	# https://github.com/nlohmann/json/issues/1114
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -bigobj")
 endif()
 
 #############################################################################
