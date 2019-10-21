@@ -238,7 +238,7 @@ void from_json(const nlohmann::json& j, contact_book& cb)
 TEST_CASE("basic usage" * doctest::test_suite("udt"))
 {
 
-    // a bit narcissic maybe :) ?
+    // a bit narcissistic maybe :) ?
     const udt::age a
     {
         23

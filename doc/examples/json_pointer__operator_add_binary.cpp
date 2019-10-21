@@ -8,7 +8,7 @@ int main()
     // create a JSON pointer
     json::json_pointer ptr("/foo");
 
-    // apppend a JSON Pointer
+    // append a JSON Pointer
     std::cout << ptr / json::json_pointer("/bar/baz") << '\n';
 
     // append a string

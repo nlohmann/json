@@ -164,7 +164,7 @@ TEST_CASE("regression tests")
 {
     SECTION("issue #60 - Double quotation mark is not parsed correctly")
     {
-        SECTION("escape_dobulequote")
+        SECTION("escape_doublequote")
         {
             auto s = "[\"\\\"foo\\\"\"]";
             json j = json::parse(s);

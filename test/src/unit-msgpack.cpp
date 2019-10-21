@@ -1359,7 +1359,7 @@ TEST_CASE("MessagePack roundtrips" * doctest::skip())
 {
     SECTION("input from msgpack-python")
     {
-        // most of these are exluded due to differences in key order (not a real problem)
+        // most of these are excluded due to differences in key order (not a real problem)
         auto exclude_packed = std::set<std::string>
         {
             "test/data/json.org/1.json",

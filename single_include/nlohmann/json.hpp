@@ -7056,7 +7056,7 @@ class binary_reader
     /*!
     @param[in] format   the current format
     @param[in] detail   a detailed error message
-    @param[in] context  further contect information
+    @param[in] context  further context information
     @return a message string to use in the parse_error exceptions
     */
     std::string exception_message(const input_format_t format,
@@ -9414,8 +9414,8 @@ class iter_impl
     /*!
     @brief const copy constructor
     @param[in] other const iterator to copy from
-    @note This copy constuctor had to be defined explicitely to circumvent a bug
-          occuring on msvc v19.0 compiler (VS 2015) debug build. For more
+    @note This copy constructor had to be defined explicitly to circumvent a bug
+          occurring on msvc v19.0 compiler (VS 2015) debug build. For more
           information refer to: https://github.com/nlohmann/json/issues/1608
     */
     iter_impl(const iter_impl<const BasicJsonType>& other) noexcept
@@ -10187,7 +10187,7 @@ class json_pointer
     /*!
     @brief append an array index at the end of this JSON pointer
 
-    @param[in] array_index  array index ot append
+    @param[in] array_index  array index to append
     @return JSON pointer with @a array_index appended
 
     @liveexample{The example shows the usage of `operator/=`.,json_pointer__operator_add}
@@ -12966,7 +12966,7 @@ inline cached_power get_cached_power_for_binary_exponent(int e)
     //      ==> 2^(q - 1 + alpha) <= c * 2^(e + q)
     //      ==> 2^(alpha - e - 1) <= c
     //
-    // If c were an exakt power of ten, i.e. c = 10^k, one may determine k as
+    // If c were an exact power of ten, i.e. c = 10^k, one may determine k as
     //
     //      k = ceil( log_10( 2^(alpha - e - 1) ) )
     //        = ceil( (alpha - e - 1) * log_10(2) )
@@ -18549,7 +18549,7 @@ class basic_json
     /*!
     @brief check the existence of an element in a JSON object given a JSON pointer
 
-    Check wehther the given JSON pointer @a ptr can be resolved in the current
+    Check whether the given JSON pointer @a ptr can be resolved in the current
     JSON value.
 
     @note This method can be executed on any JSON value type.
