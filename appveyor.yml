@@ -85,7 +85,7 @@ environment:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
       configuration: Release
       platform: x64
-      CXX_FLAGS: "/permissive- /std:c++latest /utf-8 /F4000000"
+      CXX_FLAGS: "/permissive- /std:c++latest /Zc:__cplusplus /utf-8 /F4000000"
       LINKER_FLAGS: "/STACK:4000000"
       GENERATOR: Visual Studio 15 2017
 
