@@ -38,6 +38,7 @@ SOFTWARE.
 /* forward declarations */
 class alt_string;
 bool operator<(const char* op1, const alt_string& op2);
+void int_to_string(alt_string& target, std::size_t value);
 
 /*
  * This is virtually a string class.
@@ -154,7 +155,7 @@ class alt_string
     friend bool ::operator<(const char*, const alt_string&);
 };
 
-void int_to_string( alt_string& target, std::size_t value )
+void int_to_string(alt_string& target, std::size_t value)
 {
     target = std::to_string(value).c_str();
 }
