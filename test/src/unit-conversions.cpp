@@ -1537,6 +1537,31 @@ NLOHMANN_JSON_SERIALIZE_ENUM(TaskState,
     {TS_COMPLETED, "completed"},
 })
 
+namespace
+{
+// Helper struct to test whether compile error does not trigger upon
+// conversion of an enum in the presence of non-member operator== for
+// user-defined type with "non default" from_json function (#1647).
+struct NonDefaultFromJsonStruct { };
+
+inline bool operator== (NonDefaultFromJsonStruct const& lhs, NonDefaultFromJsonStruct const& rhs)
+{
+    return true;
+}
+}
+
+namespace nlohmann
+{
+template <>
+struct adl_serializer<NonDefaultFromJsonStruct>
+{
+    static NonDefaultFromJsonStruct from_json (json const& j)
+    {
+        return {};
+    }
+};
+}
+
 TEST_CASE("JSON to enum mapping")
 {
     SECTION("enum class")
