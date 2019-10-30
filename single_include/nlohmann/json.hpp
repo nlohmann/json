@@ -17163,11 +17163,11 @@ class basic_json
                                  detail::has_non_default_from_json<basic_json_t, ValueType>::value,
                                  int> = 0>
     ValueType get() const noexcept(noexcept(
-                                       JSONSerializer<ValueTypeCV>::from_json(std::declval<const basic_json_t&>())))
+                                       JSONSerializer<ValueType>::from_json(std::declval<const basic_json_t&>())))
     {
         static_assert(not std::is_reference<ValueTypeCV>::value,
                       "get() cannot be used with reference types, you might want to use get_ref()");
-        return JSONSerializer<ValueTypeCV>::from_json(*this);
+        return JSONSerializer<ValueType>::from_json(*this);
     }
 
     /*!
