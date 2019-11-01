@@ -159,6 +159,16 @@ bool operator==(Data const& lhs, Data const& rhs)
 
 using float_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, float>;
 
+/////////////////////////////////////////////////////////////////////
+// for #1805
+/////////////////////////////////////////////////////////////////////
+
+struct NotSerializableData
+{
+    int mydata;
+    float myfloat;
+};
+
 
 TEST_CASE("regression tests")
 {
@@ -1819,6 +1829,12 @@ TEST_CASE("regression tests")
 
         CHECK(j.contains(jptr1));
         CHECK(j.contains(jptr2));
+    }
+    SECTION("issue #1805 - A pair<T1, T2> is json constructible only if T1 and T2 are json constructible")
+    {
+        static_assert(!std::is_constructible<json, std::pair<std::string, NotSerializableData>>::value, "");
+        static_assert(!std::is_constructible<json, std::pair<NotSerializableData, std::string>>::value, "");
+        static_assert(std::is_constructible<json, std::pair<int, std::string>>::value, "");
     }
 }
 
