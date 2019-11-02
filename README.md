@@ -1272,6 +1272,15 @@ I deeply appreciate the help of the following people.
 - [Gabe Ron](https://github.com/Macr0Nerd) implemented the `to_string` method.
 - [Watal M. Iwasaki](https://github.com/heavywatal) fixed a Clang warning.
 - [Viktor Kirilov](https://github.com/onqtam) switched the unit tests from [Catch](https://github.com/philsquared/Catch) to [doctest](https://github.com/onqtam/doctest)
+- [Juncheng E](https://github.com/ejcjason) fixed a typo.
+- [tete17](https://github.com/tete17) fixed a bug in the `contains` function.
+- [Xav83](https://github.com/Xav83) fixed some cppcheck warnings.
+- [0xflotus](https://github.com/0xflotus) fixed some typos.
+- [Christian Deneke](https://github.com/chris0x44) added a const version of `json_pointer::back`.
+- [Julien Hamaide](https://github.com/crazyjul) made the `items()` function work with custom string types.
+- [Evan Nemerson](https://github.com/nemequ) updated fixed a bug in Hedley and updated this library accordingly.
+- [Florian Pigorsch](https://github.com/flopp) fixed a lot of typos.
+- [Camille Bégué](https://github.com/cbegue) fixed an issue in the conversion from  `std::pair` to `json`.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
