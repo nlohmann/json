@@ -1749,31 +1749,37 @@ TEST_CASE("regression tests")
     {
         SECTION("a bunch of -1, ensure_ascii=true")
         {
+            const auto length = 300;
+
             json dump_test;
-            std::vector<char> data(300, -1);
-            std::vector<std::string> vec_string(300, "\\ufffd");
-            std::string s{data.data(), data.size()};
-            dump_test["1"] = s;
-            std::ostringstream os;
-            os << "{\"1\":\"";
-            std::copy( vec_string.begin(), vec_string.end(), std::ostream_iterator<std::string>(os));
-            os << "\"}";
-            s = dump_test.dump(-1, ' ', true, nlohmann::json::error_handler_t::replace);
-            CHECK(s == os.str());
+            dump_test["1"] = std::string(length, -1);
+
+            std::string expected = "{\"1\":\"";
+            for (int i = 0; i < length; ++i)
+            {
+                expected += "\\ufffd";
+            }
+            expected += "\"}";
+
+            auto s = dump_test.dump(-1, ' ', true, nlohmann::json::error_handler_t::replace);
+            CHECK(s == expected);
         }
         SECTION("a bunch of -2, ensure_ascii=false")
         {
+            const auto length = 500;
+
             json dump_test;
-            std::vector<char> data(500, -2);
-            std::vector<std::string> vec_string(500, "\xEF\xBF\xBD");
-            std::string s{data.data(), data.size()};
-            dump_test["1"] = s;
-            std::ostringstream os;
-            os << "{\"1\":\"";
-            std::copy( vec_string.begin(), vec_string.end(), std::ostream_iterator<std::string>(os));
-            os << "\"}";
-            s = dump_test.dump(-1, ' ', false, nlohmann::json::error_handler_t::replace);
-            CHECK(s == os.str());
+            dump_test["1"] = std::string(length, -2);
+
+            std::string expected = "{\"1\":\"";
+            for (int i = 0; i < length; ++i)
+            {
+                expected += "\xEF\xBF\xBD";
+            }
+            expected += "\"}";
+
+            auto s = dump_test.dump(-1, ' ', false, nlohmann::json::error_handler_t::replace);
+            CHECK(s == expected);
         }
         SECTION("test case in issue #1445")
         {
