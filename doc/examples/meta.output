@@ -2,7 +2,7 @@
     "compiler": {
         "c++": "201103",
         "family": "clang",
-        "version": "10.0.1 (clang-1001.0.46.4)"
+        "version": "11.0.0 (clang-1100.0.33.8)"
     },
     "copyright": "(C) 2013-2017 Niels Lohmann",
     "name": "JSON for Modern C++",
