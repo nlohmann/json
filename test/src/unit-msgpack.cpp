@@ -1334,7 +1334,7 @@ TEST_CASE("single MessagePack roundtrip")
         {
             SECTION("std::ostringstream")
             {
-                std::ostringstream ss;
+                std::basic_ostringstream<std::uint8_t> ss;
                 json::to_msgpack(j1, ss);
                 json j3 = json::from_msgpack(ss.str());
                 CHECK(j1 == j3);

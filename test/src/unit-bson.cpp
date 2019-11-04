@@ -584,10 +584,9 @@ TEST_CASE("BSON input/output_adapters")
     {
         SECTION("std::ostringstream")
         {
-            std::ostringstream ss;
+            std::basic_ostringstream<std::uint8_t> ss;
             json::to_bson(json_representation, ss);
-            std::istringstream iss(ss.str());
-            json j3 = json::from_bson(iss);
+            json j3 = json::from_bson(ss.str());
             CHECK(json_representation == j3);
         }
 

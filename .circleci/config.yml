@@ -20,6 +20,9 @@ jobs:
           name: Create build files
           command: 'mkdir build ; cd build ; cmake ..'
       - run:
+          name: Versions
+          command: 'g++ --version ; uname -a'
+      - run:
           name: Compile
           command: 'cmake --build build'
       - run:

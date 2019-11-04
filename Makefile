@@ -134,7 +134,7 @@ pedantic_clang:
 
 # calling GCC with most warnings
 pedantic_gcc:
-	$(MAKE) json_unit CXX=/usr/local/bin/g++-9 CXXFLAGS=" \
+	$(MAKE) json_unit CXX=g++-9 CXXFLAGS=" \
 		-std=c++11 \
 		-Waddress \
 		-Waddress-of-packed-member \
@@ -594,7 +594,7 @@ ChangeLog.md:
 release:
 	rm -fr release_files
 	mkdir release_files
-	zip -9 --recurse-paths -X include.zip $(SRCS)
+	zip -9 --recurse-paths -X include.zip $(SRCS) $(AMALGAMATED_FILE) meson.build
 	gpg --armor --detach-sig include.zip
 	mv include.zip include.zip.asc release_files
 	gpg --armor --detach-sig $(AMALGAMATED_FILE)

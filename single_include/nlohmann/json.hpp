@@ -3733,8 +3733,8 @@ void to_json(BasicJsonType& j, const T(&arr)[N])
     external_constructor<value_t::array>::construct(j, arr);
 }
 
-template<typename BasicJsonType, typename... Args>
-void to_json(BasicJsonType& j, const std::pair<Args...>& p)
+template < typename BasicJsonType, typename T1, typename T2, enable_if_t < std::is_constructible<BasicJsonType, T1>::value&& std::is_constructible<BasicJsonType, T2>::value, int > = 0 >
+void to_json(BasicJsonType& j, const std::pair<T1, T2>& p)
 {
     j = { p.first, p.second };
 }
