@@ -160,6 +160,39 @@ bool operator==(Data const& lhs, Data const& rhs)
 using float_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, float>;
 
 /////////////////////////////////////////////////////////////////////
+// for #1647
+/////////////////////////////////////////////////////////////////////
+namespace
+{
+struct NonDefaultFromJsonStruct { };
+
+inline bool operator== (NonDefaultFromJsonStruct const& lhs, NonDefaultFromJsonStruct const& rhs)
+{
+    return true;
+}
+
+enum class for_1647 { one, two };
+
+NLOHMANN_JSON_SERIALIZE_ENUM(for_1647,
+{
+    {for_1647::one, "one"},
+    {for_1647::two, "two"},
+})
+}
+
+namespace nlohmann
+{
+template <>
+struct adl_serializer<NonDefaultFromJsonStruct>
+{
+    static NonDefaultFromJsonStruct from_json (json const& j)
+    {
+        return {};
+    }
+};
+}
+
+/////////////////////////////////////////////////////////////////////
 // for #1805
 /////////////////////////////////////////////////////////////////////
 
@@ -1836,6 +1869,13 @@ TEST_CASE("regression tests")
         CHECK(j.contains(jptr1));
         CHECK(j.contains(jptr2));
     }
+
+    SECTION("issue #1647 - compile error when deserializing enum if both non-default from_json and non-member operator== exists for other type")
+    {
+        auto val = nlohmann::json("one").get<for_1647>();
+        CHECK(val == for_1647::one);
+    }
+
     SECTION("issue #1805 - A pair<T1, T2> is json constructible only if T1 and T2 are json constructible")
     {
         static_assert(!std::is_constructible<json, std::pair<std::string, NotSerializableData>>::value, "");
