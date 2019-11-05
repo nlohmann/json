@@ -185,7 +185,7 @@ namespace nlohmann
 template <>
 struct adl_serializer<NonDefaultFromJsonStruct>
 {
-    static NonDefaultFromJsonStruct from_json (json const&)
+    static NonDefaultFromJsonStruct from_json (json const&) noexcept
     {
         return {};
     }
