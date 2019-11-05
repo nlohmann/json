@@ -4,8 +4,8 @@
 #include <stdexcept> // runtime_error
 #include <string> // to_string
 
-#include <nlohmann/detail/input/position_t.hpp>
-#include <nlohmann/detail/macro_scope.hpp>
+#include "input/position_t.hpp"
+#include "macro_scope.hpp"
 
 namespace nlohmann
 {

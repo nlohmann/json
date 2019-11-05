@@ -8,7 +8,8 @@
 #include <cstring> // memcpy, memmove
 #include <limits> // numeric_limits
 #include <type_traits> // conditional
-#include <nlohmann/detail/macro_scope.hpp>
+
+#include "../macro_scope.hpp"
 
 namespace nlohmann
 {

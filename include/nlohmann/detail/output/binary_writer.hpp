@@ -7,9 +7,9 @@
 #include <limits> // numeric_limits
 #include <string> // string
 
-#include <nlohmann/detail/input/binary_reader.hpp>
-#include <nlohmann/detail/macro_scope.hpp>
-#include <nlohmann/detail/output/output_adapters.hpp>
+#include "../input/binary_reader.hpp"
+#include "../macro_scope.hpp"
+#include "output_adapters.hpp"
 
 namespace nlohmann
 {

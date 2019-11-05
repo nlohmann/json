@@ -2,7 +2,7 @@
 
 #include <type_traits>
 
-#include <nlohmann/detail/meta/void_t.hpp>
+#include "void_t.hpp"
 
 // http://en.cppreference.com/w/cpp/experimental/is_detected
 namespace nlohmann

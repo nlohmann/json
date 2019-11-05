@@ -10,9 +10,9 @@
 #include <utility> // move
 #include <vector> // vector
 
-#include <nlohmann/detail/input/input_adapters.hpp>
-#include <nlohmann/detail/input/position_t.hpp>
-#include <nlohmann/detail/macro_scope.hpp>
+#include "input_adapters.hpp"
+#include "position_t.hpp"
+#include "../macro_scope.hpp"
 
 namespace nlohmann
 {

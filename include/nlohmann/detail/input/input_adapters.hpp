@@ -13,8 +13,8 @@
 #include <type_traits> // enable_if, is_base_of, is_pointer, is_integral, remove_pointer
 #include <utility> // pair, declval
 
-#include <nlohmann/detail/iterators/iterator_traits.hpp>
-#include <nlohmann/detail/macro_scope.hpp>
+#include "../iterators/iterator_traits.hpp"
+#include "../macro_scope.hpp"
 
 namespace nlohmann
 {

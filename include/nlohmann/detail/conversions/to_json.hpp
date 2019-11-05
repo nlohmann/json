@@ -10,10 +10,10 @@
 #include <valarray> // valarray
 #include <vector> // vector
 
-#include <nlohmann/detail/iterators/iteration_proxy.hpp>
-#include <nlohmann/detail/meta/cpp_future.hpp>
-#include <nlohmann/detail/meta/type_traits.hpp>
-#include <nlohmann/detail/value_t.hpp>
+#include "../iterators/iteration_proxy.hpp"
+#include "../meta/cpp_future.hpp"
+#include "../meta/type_traits.hpp"
+#include "../value_t.hpp"
 
 namespace nlohmann
 {
