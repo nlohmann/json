@@ -166,7 +166,7 @@ namespace
 {
 struct NonDefaultFromJsonStruct { };
 
-inline bool operator== (NonDefaultFromJsonStruct const& lhs, NonDefaultFromJsonStruct const& rhs)
+inline bool operator== (NonDefaultFromJsonStruct const&, NonDefaultFromJsonStruct const&)
 {
     return true;
 }
@@ -185,7 +185,7 @@ namespace nlohmann
 template <>
 struct adl_serializer<NonDefaultFromJsonStruct>
 {
-    static NonDefaultFromJsonStruct from_json (json const& j)
+    static NonDefaultFromJsonStruct from_json (json const&)
     {
         return {};
     }
@@ -1872,8 +1872,16 @@ TEST_CASE("regression tests")
 
     SECTION("issue #1647 - compile error when deserializing enum if both non-default from_json and non-member operator== exists for other type")
     {
+        {
+            json j;
+            NonDefaultFromJsonStruct x = j;
+            NonDefaultFromJsonStruct y;
+            CHECK(x == y);
+        }
+
         auto val = nlohmann::json("one").get<for_1647>();
         CHECK(val == for_1647::one);
+        json j = val;
     }
 
     SECTION("issue #1805 - A pair<T1, T2> is json constructible only if T1 and T2 are json constructible")
