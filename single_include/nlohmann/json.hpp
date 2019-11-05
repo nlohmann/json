@@ -3025,7 +3025,7 @@ void from_json(const BasicJsonType& j, std::valarray<T>& l)
         JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(j.type_name())));
     }
     l.resize(j.size());
-    std::copy(j.m_value.array->begin(), j.m_value.array->end(), std::begin(l));
+    std::copy(j.begin(), j.end(), std::begin(l));
 }
 
 template <typename BasicJsonType, typename T, std::size_t N>
@@ -22605,7 +22605,7 @@ struct hash<nlohmann::json>
 /// @note: do not remove the space after '<',
 ///        see https://github.com/nlohmann/json/pull/679
 template<>
-struct less< ::nlohmann::detail::value_t>
+struct less<::nlohmann::detail::value_t>
 {
     /*!
     @brief compare two value_t enum values
