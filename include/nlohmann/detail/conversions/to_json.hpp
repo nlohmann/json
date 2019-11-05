@@ -322,10 +322,10 @@ void to_json_tuple_impl(BasicJsonType& j, const Tuple& t, index_sequence<Idx...>
     j = { std::get<Idx>(t)... };
 }
 
-template<typename BasicJsonType, typename... Args>
-void to_json(BasicJsonType& j, const std::tuple<Args...>& t)
+template<typename BasicJsonType, typename T, enable_if_t<is_constructible_tuple<BasicJsonType, T>::value, int > = 0>
+void to_json(BasicJsonType& j, const T& t)
 {
-    to_json_tuple_impl(j, t, index_sequence_for<Args...> {});
+    to_json_tuple_impl(j, t, make_index_sequence<std::tuple_size<T>::value> {});
 }
 
 struct to_json_fn

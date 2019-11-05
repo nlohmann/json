@@ -357,5 +357,18 @@ struct is_compatible_type_impl <
 template <typename BasicJsonType, typename CompatibleType>
 struct is_compatible_type
     : is_compatible_type_impl<BasicJsonType, CompatibleType> {};
+
+// https://en.cppreference.com/w/cpp/types/conjunction
+template<class...> struct conjunction : std::true_type { };
+template<class B1> struct conjunction<B1> : B1 { };
+template<class B1, class... Bn>
+struct conjunction<B1, Bn...>
+: std::conditional<bool(B1::value), conjunction<Bn...>, B1>::type {};
+
+template <typename T1, typename T2>
+struct is_constructible_tuple : std::false_type {};
+
+template <typename T1, typename... Args>
+struct is_constructible_tuple<T1, std::tuple<Args...>> : conjunction<std::is_constructible<T1, Args>...> {};
 }  // namespace detail
 }  // namespace nlohmann

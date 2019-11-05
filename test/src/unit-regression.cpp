@@ -1842,6 +1842,12 @@ TEST_CASE("regression tests")
         static_assert(!std::is_constructible<json, std::pair<NotSerializableData, std::string>>::value, "");
         static_assert(std::is_constructible<json, std::pair<int, std::string>>::value, "");
     }
+    SECTION("issue #1825 - A tuple<Args..> is json constructible only if all T in Args are json constructible")
+    {
+        static_assert(!std::is_constructible<json, std::tuple<std::string, NotSerializableData>>::value, "");
+        static_assert(!std::is_constructible<json, std::tuple<NotSerializableData, std::string>>::value, "");
+        static_assert(std::is_constructible<json, std::tuple<int, std::string>>::value, "");
+    }
 }
 
 #if not defined(JSON_NOEXCEPTION)
