@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.7.0
+|  |  |__   |  |  | | | |  version 3.7.1
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -1334,7 +1334,7 @@ TEST_CASE("single MessagePack roundtrip")
         {
             SECTION("std::ostringstream")
             {
-                std::ostringstream ss;
+                std::basic_ostringstream<std::uint8_t> ss;
                 json::to_msgpack(j1, ss);
                 json j3 = json::from_msgpack(ss.str());
                 CHECK(j1 == j3);
@@ -1359,7 +1359,7 @@ TEST_CASE("MessagePack roundtrips" * doctest::skip())
 {
     SECTION("input from msgpack-python")
     {
-        // most of these are exluded due to differences in key order (not a real problem)
+        // most of these are excluded due to differences in key order (not a real problem)
         auto exclude_packed = std::set<std::string>
         {
             "test/data/json.org/1.json",

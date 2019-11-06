@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.7.0
+|  |  |__   |  |  | | | |  version 3.7.1
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -1287,7 +1287,7 @@ TEST_CASE("CBOR")
         }
     }
 
-    SECTION("additonal deserialization")
+    SECTION("additional deserialization")
     {
         SECTION("0x7b (string)")
         {
@@ -1580,7 +1580,7 @@ TEST_CASE("single CBOR roundtrip")
         {
             SECTION("std::ostringstream")
             {
-                std::ostringstream ss;
+                std::basic_ostringstream<std::uint8_t> ss;
                 json::to_cbor(j1, ss);
                 json j3 = json::from_cbor(ss.str());
                 CHECK(j1 == j3);

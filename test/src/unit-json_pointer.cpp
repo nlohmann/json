@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.7.0
+|  |  |__   |  |  | | | |  version 3.7.1
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -558,6 +558,10 @@ TEST_CASE("JSON pointers")
         ptr.push_back("everything");
         CHECK(!ptr.empty());
         CHECK(j[ptr] == j["answer"]["everything"]);
+
+        // check access via const pointer
+        const auto cptr = ptr;
+        CHECK(cptr.back() == "everything");
 
         ptr.pop_back();
         ptr.pop_back();

@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.7.0
+|  |  |__   |  |  | | | |  version 3.7.1
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -238,7 +238,7 @@ void from_json(const nlohmann::json& j, contact_book& cb)
 TEST_CASE("basic usage" * doctest::test_suite("udt"))
 {
 
-    // a bit narcissic maybe :) ?
+    // a bit narcissistic maybe :) ?
     const udt::age a
     {
         23

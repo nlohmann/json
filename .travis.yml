@@ -43,12 +43,15 @@ matrix:
   - os: linux
     compiler: clang
     env:
-      - COMPILER=clang++-5.0
+      - COMPILER=clang++-7
       - CMAKE_OPTIONS=-DJSON_Sanitizer=ON
+      - UBSAN_OPTIONS=print_stacktrace=1,suppressions=$(pwd)/test/src/UBSAN.supp
     addons:
       apt:
-        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-5.0']
-        packages: ['g++-6', 'clang-5.0', 'ninja-build']
+        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-7']
+        packages: ['g++-6', 'clang-7', 'ninja-build']
+    before_script:
+      - export PATH=$PATH:/usr/lib/llvm-7/bin
 
   # cppcheck
   - os: linux
@@ -152,11 +155,14 @@ matrix:
   - os: osx
     osx_image: xcode10.1
 
+  - os: osx
+    osx_image: xcode10.2
+
   # Linux / GCC
 
   - os: linux
     compiler: gcc
-    env: compiler=g++-4.8
+    env: COMPILER=g++-4.8
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test']
@@ -164,7 +170,7 @@ matrix:
 
   - os: linux
     compiler: gcc
-    env: compiler=g++-4.9
+    env: COMPILER=g++-4.9
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test']
@@ -204,13 +210,21 @@ matrix:
 
   - os: linux
     compiler: gcc
-    env:
-      - COMPILER=g++-8
-      - CXXFLAGS=-std=c++17
+    env: COMPILER=g++-9
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test']
-        packages: ['g++-8', 'ninja-build']
+        packages: ['g++-9', 'ninja-build']
+
+  - os: linux
+    compiler: gcc
+    env:
+      - COMPILER=g++-9
+      - CXXFLAGS=-std=c++2a
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test']
+        packages: ['g++-9', 'ninja-build']
 
   # Linux / Clang
 
@@ -322,7 +336,7 @@ script:
   # compile and execute unit tests
   - mkdir -p build && cd build
   - cmake .. ${CMAKE_OPTIONS} -DJSON_MultipleHeaders=${MULTIPLE_HEADERS} -GNinja && cmake --build . --config Release
-  - ctest -C Release -V -j
+  - ctest -C Release --timeout 2700 -V -j
   - cd ..
 
   # check if homebrew works (only checks develop branch)   

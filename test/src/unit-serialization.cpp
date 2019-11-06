@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.7.0
+|  |  |__   |  |  | | | |  version 3.7.1
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -187,5 +187,22 @@ TEST_CASE("serialization")
         test("{\"x\":[10,null,null,null]}", "{\\\"x\\\":[10,null,null,null]}");
         test("test", "test");
         test("[3,\"false\",false]", "[3,\\\"false\\\",false]");
+    }
+}
+
+TEST_CASE_TEMPLATE("serialization for extreme integer values", T, int32_t, uint32_t, int64_t, uint64_t)
+{
+    SECTION("minimum")
+    {
+        constexpr auto minimum = (std::numeric_limits<T>::min)();
+        json j = minimum;
+        CHECK(j.dump() == std::to_string(minimum));
+    }
+
+    SECTION("maximum")
+    {
+        constexpr auto maximum = (std::numeric_limits<T>::max)();
+        json j = maximum;
+        CHECK(j.dump() == std::to_string(maximum));
     }
 }

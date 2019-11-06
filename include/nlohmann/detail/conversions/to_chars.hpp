@@ -330,7 +330,7 @@ inline cached_power get_cached_power_for_binary_exponent(int e)
     //      ==> 2^(q - 1 + alpha) <= c * 2^(e + q)
     //      ==> 2^(alpha - e - 1) <= c
     //
-    // If c were an exakt power of ten, i.e. c = 10^k, one may determine k as
+    // If c were an exact power of ten, i.e. c = 10^k, one may determine k as
     //
     //      k = ceil( log_10( 2^(alpha - e - 1) ) )
     //        = ceil( (alpha - e - 1) * log_10(2) )

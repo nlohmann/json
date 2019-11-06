@@ -134,7 +134,7 @@ pedantic_clang:
 
 # calling GCC with most warnings
 pedantic_gcc:
-	$(MAKE) json_unit CXX=/usr/local/bin/g++-9 CXXFLAGS=" \
+	$(MAKE) json_unit CXX=g++-9 CXXFLAGS=" \
 		-std=c++11 \
 		-Waddress \
 		-Waddress-of-packed-member \
@@ -435,7 +435,7 @@ fuzzing-stop:
 # call cppcheck <http://cppcheck.sourceforge.net>
 # Note: this target is called by Travis
 cppcheck:
-	cppcheck --enable=warning --inline-suppr --inconclusive --force --std=c++11 $(SRCS) --error-exitcode=1
+	cppcheck --enable=warning --inline-suppr --inconclusive --force --std=c++11 $(AMALGAMATED_FILE) --error-exitcode=1
 
 # call Clang Static Analyzer <https://clang-analyzer.llvm.org>
 clang_analyze:
@@ -457,7 +457,7 @@ cpplint:
 
 # call Clang-Tidy <https://clang.llvm.org/extra/clang-tidy/>
 clang_tidy:
-	$(COMPILER_DIR)/clang-tidy $(SRCS) -- -Iinclude -std=c++11
+	$(COMPILER_DIR)/clang-tidy $(AMALGAMATED_FILE) -- -Iinclude -std=c++11
 
 # call PVS-Studio Analyzer <https://www.viva64.com/en/pvs-studio/>
 pvs_studio:
@@ -594,7 +594,7 @@ ChangeLog.md:
 release:
 	rm -fr release_files
 	mkdir release_files
-	zip -9 --recurse-paths -X include.zip $(SRCS)
+	zip -9 --recurse-paths -X include.zip $(SRCS) $(AMALGAMATED_FILE) meson.build
 	gpg --armor --detach-sig include.zip
 	mv include.zip include.zip.asc release_files
 	gpg --armor --detach-sig $(AMALGAMATED_FILE)

@@ -9,7 +9,7 @@ int main()
     json::json_pointer ptr("/foo");
     std::cout << ptr << '\n';
 
-    // apppend a JSON Pointer
+    // append a JSON Pointer
     ptr /= json::json_pointer("/bar/baz");
     std::cout << ptr << '\n';
 
