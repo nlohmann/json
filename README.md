@@ -1285,7 +1285,8 @@ I deeply appreciate the help of the following people.
 - [Julien Hamaide](https://github.com/crazyjul) made the `items()` function work with custom string types.
 - [Evan Nemerson](https://github.com/nemequ) updated fixed a bug in Hedley and updated this library accordingly.
 - [Florian Pigorsch](https://github.com/flopp) fixed a lot of typos.
-- [Camille Bégué](https://github.com/cbegue) fixed an issue in the conversion from  `std::pair` to `json`.
+- [Camille Bégué](https://github.com/cbegue) fixed an issue in the conversion from  `std::pair` and `std::tuple` to `json`.
+- [Anthony VH](https://github.com/AnthonyVH) fixed a compile error in an enum deserialization.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
