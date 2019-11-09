@@ -1780,10 +1780,10 @@ TEST_CASE("regression tests")
 
     SECTION("issue #1419 - Segmentation fault (stack overflow) due to unbounded recursion")
     {
-        const int depth = 8000000;
+        const auto depth = 5000000;
 
-        std::string s(depth, '[');
-        s += std::string(depth, ']');
+        std::string s(2 * depth, '[');
+        std::fill(s.begin() + depth, s.end(), ']');
 
         CHECK_NOTHROW(nlohmann::json::parse(s));
     }
