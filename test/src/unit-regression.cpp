@@ -1778,16 +1778,6 @@ TEST_CASE("regression tests")
         CHECK(expected == data);
     }
 
-    SECTION("issue #1419 - Segmentation fault (stack overflow) due to unbounded recursion")
-    {
-        const auto depth = 5000000;
-
-        std::string s(2 * depth, '[');
-        std::fill(s.begin() + depth, s.end(), ']');
-
-        CHECK_NOTHROW(nlohmann::json::parse(s));
-    }
-
     SECTION("issue #1445 - buffer overflow in dumping invalid utf-8 strings")
     {
         SECTION("a bunch of -1, ensure_ascii=true")
