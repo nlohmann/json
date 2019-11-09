@@ -5,6 +5,7 @@
 #include <string> // to_string
 
 #include <nlohmann/detail/input/position_t.hpp>
+#include <nlohmann/detail/macro_scope.hpp>
 
 namespace nlohmann
 {
@@ -46,6 +47,7 @@ class exception : public std::exception
 {
   public:
     /// returns the explanatory string
+    JSON_HEDLEY_RETURNS_NON_NULL
     const char* what() const noexcept override
     {
         return m.what();
@@ -55,6 +57,7 @@ class exception : public std::exception
     const int id;
 
   protected:
+    JSON_HEDLEY_NON_NULL(3)
     exception(int id_, const char* what_arg) : id(id_), m(what_arg) {}
 
     static std::string name(const std::string& ename, int id_)
@@ -102,12 +105,12 @@ json.exception.parse_error.114 | parse error: Unsupported BSON record type 0x0F 
 @liveexample{The following code shows how a `parse_error` exception can be
 caught.,parse_error}
 
-@sa @ref exception for the base class of the library exceptions
-@sa @ref invalid_iterator for exceptions indicating errors with iterators
-@sa @ref type_error for exceptions indicating executing a member function with
+@sa - @ref exception for the base class of the library exceptions
+@sa - @ref invalid_iterator for exceptions indicating errors with iterators
+@sa - @ref type_error for exceptions indicating executing a member function with
                     a wrong type
-@sa @ref out_of_range for exceptions indicating access out of the defined range
-@sa @ref other_error for exceptions indicating other library errors
+@sa - @ref out_of_range for exceptions indicating access out of the defined range
+@sa - @ref other_error for exceptions indicating other library errors
 
 @since version 3.0.0
 */
@@ -117,7 +120,7 @@ class parse_error : public exception
     /*!
     @brief create a parse error exception
     @param[in] id_       the id of the exception
-    @param[in] position  the position where the error occurred (or with
+    @param[in] pos       the position where the error occurred (or with
                          chars_read_total=0 if the position cannot be
                          determined)
     @param[in] what_arg  the explanatory string
@@ -188,12 +191,12 @@ json.exception.invalid_iterator.214 | cannot get value | Cannot get value for it
 @liveexample{The following code shows how an `invalid_iterator` exception can be
 caught.,invalid_iterator}
 
-@sa @ref exception for the base class of the library exceptions
-@sa @ref parse_error for exceptions indicating a parse error
-@sa @ref type_error for exceptions indicating executing a member function with
+@sa - @ref exception for the base class of the library exceptions
+@sa - @ref parse_error for exceptions indicating a parse error
+@sa - @ref type_error for exceptions indicating executing a member function with
                     a wrong type
-@sa @ref out_of_range for exceptions indicating access out of the defined range
-@sa @ref other_error for exceptions indicating other library errors
+@sa - @ref out_of_range for exceptions indicating access out of the defined range
+@sa - @ref other_error for exceptions indicating other library errors
 
 @since version 3.0.0
 */
@@ -207,6 +210,7 @@ class invalid_iterator : public exception
     }
 
   private:
+    JSON_HEDLEY_NON_NULL(3)
     invalid_iterator(int id_, const char* what_arg)
         : exception(id_, what_arg) {}
 };
@@ -223,7 +227,7 @@ name / id                     | example message | description
 ----------------------------- | --------------- | -------------------------
 json.exception.type_error.301 | cannot create object from initializer list | To create an object from an initializer list, the initializer list must consist only of a list of pairs whose first element is a string. When this constraint is violated, an array is created instead.
 json.exception.type_error.302 | type must be object, but is array | During implicit or explicit value conversion, the JSON type must be compatible to the target type. For instance, a JSON string can only be converted into string types, but not into numbers or boolean types.
-json.exception.type_error.303 | incompatible ReferenceType for get_ref, actual type is object | To retrieve a reference to a value stored in a @ref basic_json object with @ref get_ref, the type of the reference must match the value type. For instance, for a JSON array, the @a ReferenceType must be @ref array_t&.
+json.exception.type_error.303 | incompatible ReferenceType for get_ref, actual type is object | To retrieve a reference to a value stored in a @ref basic_json object with @ref get_ref, the type of the reference must match the value type. For instance, for a JSON array, the @a ReferenceType must be @ref array_t &.
 json.exception.type_error.304 | cannot use at() with string | The @ref at() member functions can only be executed for certain JSON types.
 json.exception.type_error.305 | cannot use operator[] with string | The @ref operator[] member functions can only be executed for certain JSON types.
 json.exception.type_error.306 | cannot use value() with string | The @ref value() member functions can only be executed for certain JSON types.
@@ -242,11 +246,11 @@ json.exception.type_error.317 | JSON value cannot be serialized to requested for
 @liveexample{The following code shows how a `type_error` exception can be
 caught.,type_error}
 
-@sa @ref exception for the base class of the library exceptions
-@sa @ref parse_error for exceptions indicating a parse error
-@sa @ref invalid_iterator for exceptions indicating errors with iterators
-@sa @ref out_of_range for exceptions indicating access out of the defined range
-@sa @ref other_error for exceptions indicating other library errors
+@sa - @ref exception for the base class of the library exceptions
+@sa - @ref parse_error for exceptions indicating a parse error
+@sa - @ref invalid_iterator for exceptions indicating errors with iterators
+@sa - @ref out_of_range for exceptions indicating access out of the defined range
+@sa - @ref other_error for exceptions indicating other library errors
 
 @since version 3.0.0
 */
@@ -260,6 +264,7 @@ class type_error : public exception
     }
 
   private:
+    JSON_HEDLEY_NON_NULL(3)
     type_error(int id_, const char* what_arg) : exception(id_, what_arg) {}
 };
 
@@ -287,12 +292,12 @@ json.exception.out_of_range.409 | BSON key cannot contain code point U+0000 (at 
 @liveexample{The following code shows how an `out_of_range` exception can be
 caught.,out_of_range}
 
-@sa @ref exception for the base class of the library exceptions
-@sa @ref parse_error for exceptions indicating a parse error
-@sa @ref invalid_iterator for exceptions indicating errors with iterators
-@sa @ref type_error for exceptions indicating executing a member function with
+@sa - @ref exception for the base class of the library exceptions
+@sa - @ref parse_error for exceptions indicating a parse error
+@sa - @ref invalid_iterator for exceptions indicating errors with iterators
+@sa - @ref type_error for exceptions indicating executing a member function with
                     a wrong type
-@sa @ref other_error for exceptions indicating other library errors
+@sa - @ref other_error for exceptions indicating other library errors
 
 @since version 3.0.0
 */
@@ -306,6 +311,7 @@ class out_of_range : public exception
     }
 
   private:
+    JSON_HEDLEY_NON_NULL(3)
     out_of_range(int id_, const char* what_arg) : exception(id_, what_arg) {}
 };
 
@@ -321,12 +327,12 @@ name / id                      | example message | description
 ------------------------------ | --------------- | -------------------------
 json.exception.other_error.501 | unsuccessful: {"op":"test","path":"/baz", "value":"bar"} | A JSON Patch operation 'test' failed. The unsuccessful operation is also printed.
 
-@sa @ref exception for the base class of the library exceptions
-@sa @ref parse_error for exceptions indicating a parse error
-@sa @ref invalid_iterator for exceptions indicating errors with iterators
-@sa @ref type_error for exceptions indicating executing a member function with
+@sa - @ref exception for the base class of the library exceptions
+@sa - @ref parse_error for exceptions indicating a parse error
+@sa - @ref invalid_iterator for exceptions indicating errors with iterators
+@sa - @ref type_error for exceptions indicating executing a member function with
                     a wrong type
-@sa @ref out_of_range for exceptions indicating access out of the defined range
+@sa - @ref out_of_range for exceptions indicating access out of the defined range
 
 @liveexample{The following code shows how an `other_error` exception can be
 caught.,other_error}
@@ -343,6 +349,7 @@ class other_error : public exception
     }
 
   private:
+    JSON_HEDLEY_NON_NULL(3)
     other_error(int id_, const char* what_arg) : exception(id_, what_arg) {}
 };
 }  // namespace detail

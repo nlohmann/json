@@ -1,12 +1,12 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.5.0
+|  |  |__   |  |  | | | |  version 3.7.1
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 SPDX-License-Identifier: MIT
-Copyright (c) 2013-2018 Niels Lohmann <http://nlohmann.me>.
+Copyright (c) 2013-2019 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
 of this software and associated  documentation files (the "Software"), to deal
@@ -27,7 +27,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "catch.hpp"
+#include "doctest_compatibility.h"
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;
@@ -290,8 +290,10 @@ TEST_CASE("modifiers")
             SECTION("null")
             {
                 json j;
-                j.emplace_back(1);
-                j.emplace_back(2);
+                auto& x1 = j.emplace_back(1);
+                CHECK(x1 == 1);
+                auto& x2 = j.emplace_back(2);
+                CHECK(x2 == 2);
                 CHECK(j.type() == json::value_t::array);
                 CHECK(j == json({1, 2}));
             }
@@ -299,7 +301,8 @@ TEST_CASE("modifiers")
             SECTION("array")
             {
                 json j = {1, 2, 3};
-                j.emplace_back("Hello");
+                auto& x = j.emplace_back("Hello");
+                CHECK(x == "Hello");
                 CHECK(j.type() == json::value_t::array);
                 CHECK(j == json({1, 2, 3, "Hello"}));
             }
@@ -307,7 +310,8 @@ TEST_CASE("modifiers")
             SECTION("multiple values")
             {
                 json j;
-                j.emplace_back(3, "foo");
+                auto& x = j.emplace_back(3, "foo");
+                CHECK(x == json({"foo", "foo", "foo"}));
                 CHECK(j.type() == json::value_t::array);
                 CHECK(j == json({{"foo", "foo", "foo"}}));
             }

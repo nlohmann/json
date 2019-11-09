@@ -1,12 +1,12 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.5.0
+|  |  |__   |  |  | | | |  version 3.7.1
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 SPDX-License-Identifier: MIT
-Copyright (c) 2013-2018 Niels Lohmann <http://nlohmann.me>.
+Copyright (c) 2013-2019 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
 of this software and associated  documentation files (the "Software"), to deal
@@ -27,7 +27,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "catch.hpp"
+#include "doctest_compatibility.h"
+DOCTEST_GCC_SUPPRESS_WARNING("-Wfloat-equal")
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;
@@ -35,16 +36,19 @@ using nlohmann::json;
 #include <deque>
 #include <forward_list>
 #include <list>
+#include <set>
 #include <unordered_map>
 #include <unordered_set>
 #include <iostream>
+#include <sstream>
+#include <iomanip>
 
 #if defined(_MSC_VER)
     #pragma warning (push)
     #pragma warning (disable : 4189) // local variable is initialized but not referenced
 #endif
 
-TEST_CASE("README", "[hide]")
+TEST_CASE("README" * doctest::skip())
 {
     {
         // redirect std::cout for the README file

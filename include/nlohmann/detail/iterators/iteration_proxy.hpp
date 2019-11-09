@@ -1,17 +1,22 @@
 #pragma once
 
 #include <cstddef> // size_t
-#include <string> // string, to_string
 #include <iterator> // input_iterator_tag
+#include <string> // string, to_string
 #include <tuple> // tuple_size, get, tuple_element
 
-#include <nlohmann/detail/value_t.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
+#include <nlohmann/detail/value_t.hpp>
 
 namespace nlohmann
 {
 namespace detail
 {
+template<typename string_type>
+void int_to_string( string_type& target, std::size_t value )
+{
+    target = std::to_string(value);
+}
 template <typename IteratorType> class iteration_proxy_value
 {
   public:
@@ -20,6 +25,7 @@ template <typename IteratorType> class iteration_proxy_value
     using pointer = value_type * ;
     using reference = value_type & ;
     using iterator_category = std::input_iterator_tag;
+    using string_type = typename std::remove_cv< typename std::remove_reference<decltype( std::declval<IteratorType>().key() ) >::type >::type;
 
   private:
     /// the iterator
@@ -29,9 +35,9 @@ template <typename IteratorType> class iteration_proxy_value
     /// last stringified array index
     mutable std::size_t array_index_last = 0;
     /// a string representation of the array index
-    mutable std::string array_index_str = "0";
+    mutable string_type array_index_str = "0";
     /// an empty string (to return a reference for primitive values)
-    const std::string empty_str = "";
+    const string_type empty_str = "";
 
   public:
     explicit iteration_proxy_value(IteratorType it) noexcept : anchor(it) {}
@@ -64,7 +70,7 @@ template <typename IteratorType> class iteration_proxy_value
     }
 
     /// return key of the iterator
-    const std::string& key() const
+    const string_type& key() const
     {
         assert(anchor.m_object != nullptr);
 
@@ -75,7 +81,7 @@ template <typename IteratorType> class iteration_proxy_value
             {
                 if (array_index != array_index_last)
                 {
-                    array_index_str = std::to_string(array_index);
+                    int_to_string( array_index_str, array_index );
                     array_index_last = array_index;
                 }
                 return array_index_str;
@@ -147,6 +153,11 @@ auto get(const nlohmann::detail::iteration_proxy_value<IteratorType>& i) -> decl
 // And see https://github.com/nlohmann/json/pull/1391
 namespace std
 {
+#if defined(__clang__)
+    // Fix: https://github.com/nlohmann/json/issues/1401
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wmismatched-tags"
+#endif
 template <typename IteratorType>
 class tuple_size<::nlohmann::detail::iteration_proxy_value<IteratorType>>
             : public std::integral_constant<std::size_t, 2> {};
@@ -159,4 +170,7 @@ class tuple_element<N, ::nlohmann::detail::iteration_proxy_value<IteratorType >>
                      get<N>(std::declval <
                             ::nlohmann::detail::iteration_proxy_value<IteratorType >> ()));
 };
-}
+#if defined(__clang__)
+    #pragma clang diagnostic pop
+#endif
+} // namespace std

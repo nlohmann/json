@@ -1,12 +1,12 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.5.0
+|  |  |__   |  |  | | | |  version 3.7.1
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 SPDX-License-Identifier: MIT
-Copyright (c) 2013-2018 Niels Lohmann <http://nlohmann.me>.
+Copyright (c) 2013-2019 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
 of this software and associated  documentation files (the "Software"), to deal
@@ -31,11 +31,13 @@ SOFTWARE.
 // Only compile these tests if 'float' and 'double' are IEEE-754 single- and
 // double-precision numbers, resp.
 
-#include "catch.hpp"
+#include "doctest_compatibility.h"
 
 #include <nlohmann/json.hpp>
 using nlohmann::detail::dtoa_impl::reinterpret_bits;
 
+namespace
+{
 static float make_float(uint32_t sign_bit, uint32_t biased_exponent, uint32_t significand)
 {
     assert(sign_bit == 0 || sign_bit == 1);
@@ -138,6 +140,7 @@ static double make_double(uint64_t f, int e)
 
     uint64_t bits = (f & kSignificandMask) | (biased_exponent << kPhysicalSignificandSize);
     return reinterpret_bits<double>(bits);
+}
 }
 
 TEST_CASE("digit gen")
@@ -356,7 +359,7 @@ TEST_CASE("formatting")
     {
         auto check_float = [](float number, const std::string & expected)
         {
-            char buf[32];
+            char buf[33];
             char* end = nlohmann::detail::to_chars(buf, buf + 32, number);
             std::string actual(buf, end);
 
@@ -416,7 +419,7 @@ TEST_CASE("formatting")
     {
         auto check_double = [](double number, const std::string & expected)
         {
-            char buf[32];
+            char buf[33];
             char* end = nlohmann::detail::to_chars(buf, buf + 32, number);
             std::string actual(buf, end);
 

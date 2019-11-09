@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.5.0
+|  |  |__   |  |  | | | |  version 3.7.1
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -27,9 +27,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "catch.hpp"
+#include "doctest_compatibility.h"
 
 #include <nlohmann/json.hpp>
+
 #include <string>
 #include <utility>
 
@@ -37,7 +38,7 @@ SOFTWARE.
 /* forward declarations */
 class alt_string;
 bool operator<(const char* op1, const alt_string& op2);
-
+void int_to_string(alt_string& target, std::size_t value);
 
 /*
  * This is virtually a string class.
@@ -149,11 +150,15 @@ class alt_string
     }
 
   private:
-    std::string str_impl;
+    std::string str_impl {};
 
     friend bool ::operator<(const char*, const alt_string&);
 };
 
+void int_to_string(alt_string& target, std::size_t value)
+{
+    target = std::to_string(value).c_str();
+}
 
 using alt_json = nlohmann::basic_json <
                  std::map,
@@ -171,8 +176,6 @@ bool operator<(const char* op1, const alt_string& op2)
 {
     return op1 < op2.str_impl;
 }
-
-
 
 TEST_CASE("alternative string type")
 {
@@ -233,6 +236,35 @@ TEST_CASE("alternative string type")
         auto doc = alt_json::parse("{\"foo\": \"bar\"}");
         alt_string dump = doc.dump();
         CHECK(dump == R"({"foo":"bar"})");
+    }
+
+    SECTION("items")
+    {
+        auto doc = alt_json::parse("{\"foo\": \"bar\"}");
+
+        for ( auto item : doc.items() )
+        {
+            CHECK( item.key() == "foo" );
+            CHECK( item.value() == "bar" );
+        }
+
+        auto doc_array = alt_json::parse("[\"foo\", \"bar\"]");
+
+        for ( auto item : doc_array.items() )
+        {
+            if (item.key() == "0" )
+            {
+                CHECK( item.value() == "foo" );
+            }
+            else if (item.key() == "1" )
+            {
+                CHECK( item.value() == "bar" );
+            }
+            else
+            {
+                CHECK( false );
+            }
+        }
     }
 
     SECTION("equality")

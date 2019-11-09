@@ -1,12 +1,12 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.5.0
+|  |  |__   |  |  | | | |  version 3.7.1
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 SPDX-License-Identifier: MIT
-Copyright (c) 2013-2018 Niels Lohmann <http://nlohmann.me>.
+Copyright (c) 2013-2019 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
 of this software and associated  documentation files (the "Software"), to deal
@@ -27,7 +27,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "catch.hpp"
+#include "doctest_compatibility.h"
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;
@@ -982,10 +982,98 @@ TEST_CASE("element access 2")
                 }
             }
         }
+
+        SECTION("check existence of key in an object")
+        {
+            SECTION("existing element")
+            {
+                for (auto key :
+                        {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"
+                        })
+                {
+                    CHECK(j.contains(key) == true);
+                    CHECK(j_const.contains(key) == true);
+                }
+            }
+
+            SECTION("nonexisting element")
+            {
+                CHECK(j.contains("foo") == false);
+                CHECK(j_const.contains("foo") == false);
+            }
+
+            SECTION("all types")
+            {
+                SECTION("null")
+                {
+                    json j_nonobject(json::value_t::null);
+                    const json j_nonobject_const(j_nonobject);
+                    CHECK(j_nonobject.contains("foo") == false);
+                    CHECK(j_nonobject_const.contains("foo") == false);
+                }
+
+                SECTION("string")
+                {
+                    json j_nonobject(json::value_t::string);
+                    const json j_nonobject_const(j_nonobject);
+                    CHECK(j_nonobject.contains("foo") == false);
+                    CHECK(j_nonobject_const.contains("foo") == false);
+                }
+
+                SECTION("object")
+                {
+                    json j_nonobject(json::value_t::object);
+                    const json j_nonobject_const(j_nonobject);
+                    CHECK(j_nonobject.contains("foo") == false);
+                    CHECK(j_nonobject_const.contains("foo") == false);
+                }
+
+                SECTION("array")
+                {
+                    json j_nonobject(json::value_t::array);
+                    const json j_nonobject_const(j_nonobject);
+                    CHECK(j_nonobject.contains("foo") == false);
+                    CHECK(j_nonobject_const.contains("foo") == false);
+                }
+
+                SECTION("boolean")
+                {
+                    json j_nonobject(json::value_t::boolean);
+                    const json j_nonobject_const(j_nonobject);
+                    CHECK(j_nonobject.contains("foo") == false);
+                    CHECK(j_nonobject_const.contains("foo") == false);
+                }
+
+                SECTION("number (integer)")
+                {
+                    json j_nonobject(json::value_t::number_integer);
+                    const json j_nonobject_const(j_nonobject);
+                    CHECK(j_nonobject.contains("foo") == false);
+                    CHECK(j_nonobject_const.contains("foo") == false);
+                }
+
+                SECTION("number (unsigned)")
+                {
+                    json j_nonobject(json::value_t::number_unsigned);
+                    const json j_nonobject_const(j_nonobject);
+                    CHECK(j_nonobject.contains("foo") == false);
+                    CHECK(j_nonobject_const.contains("foo") == false);
+                }
+
+                SECTION("number (floating-point)")
+                {
+                    json j_nonobject(json::value_t::number_float);
+                    const json j_nonobject_const(j_nonobject);
+                    CHECK(j_nonobject.contains("foo") == false);
+                    CHECK(j_nonobject_const.contains("foo") == false);
+                }
+            }
+        }
     }
 }
 
-TEST_CASE("element access 2 (throwing tests)", "[!throws]")
+#if not defined(JSON_NOEXCEPTION)
+TEST_CASE("element access 2 (throwing tests)")
 {
     SECTION("object")
     {
@@ -1018,3 +1106,4 @@ TEST_CASE("element access 2 (throwing tests)", "[!throws]")
         }
     }
 }
+#endif

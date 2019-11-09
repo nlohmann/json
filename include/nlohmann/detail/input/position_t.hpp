@@ -23,5 +23,5 @@ struct position_t
     }
 };
 
-}
-}
+} // namespace detail
+} // namespace nlohmann
