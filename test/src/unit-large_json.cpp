@@ -32,26 +32,18 @@ SOFTWARE.
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
-TEST_CASE("version information")
+#include <algorithm>
+
+TEST_CASE("tests on very large JSONs")
 {
-    SECTION("meta()")
+    SECTION("issue #1419 - Segmentation fault (stack overflow) due to unbounded recursion")
     {
-        json j = json::meta();
+        const auto depth = 5000000;
 
-        CHECK(j["name"] == "JSON for Modern C++");
-        CHECK(j["copyright"] == "(C) 2013-2017 Niels Lohmann");
-        CHECK(j["url"] == "https://github.com/nlohmann/json");
-        CHECK(j["version"] == json(
-        {
-            {"string", "3.7.2"},
-            {"major", 3},
-            {"minor", 7},
-            {"patch", 2}
-        }));
+        std::string s(2 * depth, '[');
+        std::fill(s.begin() + depth, s.end(), ']');
 
-        CHECK(j.find("platform") != j.end());
-        CHECK(j.at("compiler").find("family") != j.at("compiler").end());
-        CHECK(j.at("compiler").find("version") != j.at("compiler").end());
-        CHECK(j.at("compiler").find("c++") != j.at("compiler").end());
+        CHECK_NOTHROW(nlohmann::json::parse(s));
     }
 }
+

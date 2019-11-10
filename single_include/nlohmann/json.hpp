@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++
-|  |  |__   |  |  | | | |  version 3.7.1
+|  |  |__   |  |  | | | |  version 3.7.2
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -32,7 +32,7 @@ SOFTWARE.
 
 #define NLOHMANN_JSON_VERSION_MAJOR 3
 #define NLOHMANN_JSON_VERSION_MINOR 7
-#define NLOHMANN_JSON_VERSION_PATCH 1
+#define NLOHMANN_JSON_VERSION_PATCH 2
 
 #include <algorithm> // all_of, find, for_each
 #include <cassert> // assert
@@ -15496,7 +15496,7 @@ class basic_json
                     object = nullptr;  // silence warning, see #821
                     if (JSON_HEDLEY_UNLIKELY(t == value_t::null))
                     {
-                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.7.1")); // LCOV_EXCL_LINE
+                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.7.2")); // LCOV_EXCL_LINE
                     }
                     break;
                 }
@@ -15541,6 +15541,55 @@ class basic_json
 
         void destroy(value_t t) noexcept
         {
+            // flatten the current json_value to a heap-allocated stack
+            std::vector<basic_json> stack;
+
+            // move the top-level items to stack
+            if (t == value_t::array)
+            {
+                stack.reserve(array->size());
+                std::move(array->begin(), array->end(), std::back_inserter(stack));
+            }
+            else if (t == value_t::object)
+            {
+                stack.reserve(object->size());
+
+                for (auto&& it : *object)
+                {
+                    stack.push_back(std::move(it.second));
+                }
+            }
+
+            while (!stack.empty())
+            {
+                // move the last item to local variable to be processed
+                basic_json current_item(std::move(stack.back()));
+                stack.pop_back();
+
+                // if current_item is array/object, move
+                // its children to the stack to be processed later
+                if (current_item.is_array())
+                {
+                    stack.reserve(stack.size() + current_item.m_value.array->size());
+
+                    std::move(current_item.m_value.array->begin(), current_item.m_value.array->end(),
+                              std::back_inserter(stack));
+
+                    current_item.m_value.array->clear();
+                }
+                else if (current_item.is_object())
+                {
+                    stack.reserve(stack.size() + current_item.m_value.object->size());
+
+                    for (auto&& it : *current_item.m_value.object)
+                    {
+                        stack.push_back(std::move(it.second));
+                    }
+                }
+
+                // current_item is destroyed here
+            }
+
             switch (t)
             {
                 case value_t::object:
