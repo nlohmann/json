@@ -998,6 +998,55 @@ class basic_json
 
         void destroy(value_t t) noexcept
         {
+            // flatten the current json_value to a heap-allocated stack
+            std::vector<basic_json> stack;
+
+            // move the top-level items to stack
+            if (t == value_t::array)
+            {
+                stack.reserve(array->size());
+                std::move(array->begin(), array->end(), std::back_inserter(stack));
+            }
+            else if (t == value_t::object)
+            {
+                stack.reserve(object->size());
+
+                for (auto&& it : *object)
+                {
+                    stack.push_back(std::move(it.second));
+                }
+            }
+
+            while (!stack.empty())
+            {
+                // move the last item to local variable to be processed
+                basic_json current_item(std::move(stack.back()));
+                stack.pop_back();
+
+                // if current_item is array/object, move
+                // its children to the stack to be processed later
+                if (current_item.is_array())
+                {
+                    stack.reserve(stack.size() + current_item.m_value.array->size());
+
+                    std::move(current_item.m_value.array->begin(), current_item.m_value.array->end(),
+                              std::back_inserter(stack));
+
+                    current_item.m_value.array->clear();
+                }
+                else if (current_item.is_object())
+                {
+                    stack.reserve(stack.size() + current_item.m_value.object->size());
+
+                    for (auto&& it : *current_item.m_value.object)
+                    {
+                        stack.push_back(std::move(it.second));
+                    }
+                }
+
+                // current_item is destroyed here
+            }
+
             switch (t)
             {
                 case value_t::object:

@@ -127,6 +127,7 @@ set(files
     src/unit-iterators2.cpp
     src/unit-json_patch.cpp
     src/unit-json_pointer.cpp
+    src/unit-large_json.cpp
     src/unit-merge_patch.cpp
     src/unit-meta.cpp
     src/unit-modifiers.cpp
