@@ -1,6 +1,22 @@
 # Change Log
 All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [v3.7.2](https://github.com/nlohmann/json/releases/tag/v3.7.2) (2019-11-10)
+[Full Changelog](https://github.com/nlohmann/json/compare/v3.7.1...v3.7.2)
+
+- Segmentation fault in destructor in case of large inputs [\#1835](https://github.com/nlohmann/json/issues/1835)
+- type\_name\(\) is not consistent with type\(\) [\#1833](https://github.com/nlohmann/json/issues/1833)
+- json::parse is not a member [\#1832](https://github.com/nlohmann/json/issues/1832)
+- How do you deal with json\* ? [\#1829](https://github.com/nlohmann/json/issues/1829)
+- Combined find\_package/add\_subdirectory not linking libraries [\#1771](https://github.com/nlohmann/json/issues/1771)
+- example code for ifstream reading a json file results in no operator error [\#1766](https://github.com/nlohmann/json/issues/1766)
+- Warning: unsequenced modification and access to 'range' [\#1674](https://github.com/nlohmann/json/issues/1674)
+- Segmentation fault \(stack overflow\) due to unbounded recursion [\#1419](https://github.com/nlohmann/json/issues/1419)
+- Stack-overflow \(OSS-Fuzz 4234\) [\#832](https://github.com/nlohmann/json/issues/832)
+
+- Configure WhiteSource Bolt for GitHub [\#1830](https://github.com/nlohmann/json/pull/1830) ([whitesource-bolt-for-github[bot]](https://github.com/apps/whitesource-bolt-for-github))
+- Prevent stackoverflow caused by recursive deconstruction [\#1436](https://github.com/nlohmann/json/pull/1436) ([nickaein](https://github.com/nickaein))
+
 ## [v3.7.1](https://github.com/nlohmann/json/releases/tag/v3.7.1) (2019-11-06)
 [Full Changelog](https://github.com/nlohmann/json/compare/v3.7.0...v3.7.1)
 
@@ -350,7 +366,6 @@ All notable changes to this project will be documented in this file. This projec
 - Which version can be used with GCC 4.8.2 ? [\#1424](https://github.com/nlohmann/json/issues/1424)
 - Ignore nullptr values on constructing json object from a container [\#1422](https://github.com/nlohmann/json/issues/1422)
 - Support for custom float precision via unquoted strings [\#1421](https://github.com/nlohmann/json/issues/1421)
-- Segmentation fault \(stack overflow\) due to unbounded recursion [\#1419](https://github.com/nlohmann/json/issues/1419)
 - It is possible to call `json::find` with a json\_pointer as argument. This causes runtime UB/crash. [\#1418](https://github.com/nlohmann/json/issues/1418)
 - Dump throwing exception [\#1416](https://github.com/nlohmann/json/issues/1416)
 - Build error  [\#1415](https://github.com/nlohmann/json/issues/1415)
@@ -752,7 +767,6 @@ All notable changes to this project will be documented in this file. This projec
 - How to solve large json file? [\#927](https://github.com/nlohmann/json/issues/927)
 - json\_pointer public push\_back, pop\_back [\#837](https://github.com/nlohmann/json/issues/837)
 - Using input\_adapter in a slightly unexpected way [\#834](https://github.com/nlohmann/json/issues/834)
-- Stack-overflow \(OSS-Fuzz 4234\) [\#832](https://github.com/nlohmann/json/issues/832)
 
 - Fix -Wno-sometimes-uninitialized by initializing "result" in parse\_sax [\#1200](https://github.com/nlohmann/json/pull/1200) ([thyu](https://github.com/thyu))
 - \[RFC\] Introduce a new macro function: JSON\_INTERNAL\_CATCH [\#1187](https://github.com/nlohmann/json/pull/1187) ([simnalamburt](https://github.com/simnalamburt))
