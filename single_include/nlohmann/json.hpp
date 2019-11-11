@@ -15560,7 +15560,7 @@ class basic_json
                 }
             }
 
-            while (!stack.empty())
+            while (not stack.empty())
             {
                 // move the last item to local variable to be processed
                 basic_json current_item(std::move(stack.back()));
