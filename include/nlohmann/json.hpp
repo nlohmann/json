@@ -1035,9 +1035,12 @@ class basic_json
                     {
                         stack.push_back(std::move(it.second));
                     }
+
+                    current_item.m_value.object->clear();
                 }
 
-                // current_item is destroyed here
+                // it's now safe that current_item get destructed
+                // since it doesn't have any children
             }
 
             switch (t)
