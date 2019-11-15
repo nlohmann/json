@@ -15553,7 +15553,6 @@ class basic_json
             else if (t == value_t::object)
             {
                 stack.reserve(object->size());
-
                 for (auto&& it : *object)
                 {
                     stack.push_back(std::move(it.second));
@@ -15570,8 +15569,6 @@ class basic_json
                 // its children to the stack to be processed later
                 if (current_item.is_array())
                 {
-                    stack.reserve(stack.size() + current_item.m_value.array->size());
-
                     std::move(current_item.m_value.array->begin(), current_item.m_value.array->end(),
                               std::back_inserter(stack));
 
@@ -15579,15 +15576,16 @@ class basic_json
                 }
                 else if (current_item.is_object())
                 {
-                    stack.reserve(stack.size() + current_item.m_value.object->size());
-
                     for (auto&& it : *current_item.m_value.object)
                     {
                         stack.push_back(std::move(it.second));
                     }
+
+                    current_item.m_value.object->clear();
                 }
 
-                // current_item is destroyed here
+                // it's now safe that current_item get destructed
+                // since it doesn't have any children
             }
 
             switch (t)
