@@ -1,6 +1,17 @@
 # Change Log
 All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [v3.7.3](https://github.com/nlohmann/json/releases/tag/v3.7.3) (2019-11-17)
+[Full Changelog](https://github.com/nlohmann/json/compare/v3.7.2...v3.7.3)
+
+- Project branches [\#1839](https://github.com/nlohmann/json/issues/1839)
+- Quadratic destruction complexity introduced in \#1436 [\#1837](https://github.com/nlohmann/json/issues/1837)
+- Trying to open a file [\#1814](https://github.com/nlohmann/json/issues/1814)
+- Comparing data type with value\_t::number\_integer fails [\#1783](https://github.com/nlohmann/json/issues/1783)
+- CMake version config file is architecture-dependent [\#1697](https://github.com/nlohmann/json/issues/1697)
+
+- Fix quadratic destruction complexity [\#1838](https://github.com/nlohmann/json/pull/1838) ([nickaein](https://github.com/nickaein))
+
 ## [v3.7.2](https://github.com/nlohmann/json/releases/tag/v3.7.2) (2019-11-10)
 [Full Changelog](https://github.com/nlohmann/json/compare/v3.7.1...v3.7.2)
 
