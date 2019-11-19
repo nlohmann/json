@@ -863,7 +863,7 @@ class binary_writer
     {
         std::size_t array_index = 0ul;
 
-        const std::size_t embedded_document_size = std::accumulate(std::begin(value), std::end(value), 0ul, [&array_index](std::size_t result, const typename BasicJsonType::array_t::value_type & el)
+        const std::size_t embedded_document_size = std::accumulate(std::begin(value), std::end(value), std::size_t(0), [&array_index](std::size_t result, const typename BasicJsonType::array_t::value_type & el)
         {
             return result + calc_bson_element_size(std::to_string(array_index++), el);
         });
@@ -984,7 +984,7 @@ class binary_writer
     */
     static std::size_t calc_bson_object_size(const typename BasicJsonType::object_t& value)
     {
-        std::size_t document_size = std::accumulate(value.begin(), value.end(), 0ul,
+        std::size_t document_size = std::accumulate(value.begin(), value.end(), std::size_t(0),
                                     [](size_t result, const typename BasicJsonType::object_t::value_type & el)
         {
             return result += calc_bson_element_size(el.first, el.second);
