@@ -2,6 +2,7 @@ add_test(NAME cmake_import_minver_configure
   COMMAND ${CMAKE_COMMAND}
     -G "${CMAKE_GENERATOR}"
     -A "${CMAKE_GENERATOR_PLATFORM}"
+    -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
     -Dnlohmann_json_DIR=${PROJECT_BINARY_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/project
 )
