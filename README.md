@@ -12,9 +12,11 @@
 [![Documentation](https://img.shields.io/badge/docs-doxygen-blue.svg)](http://nlohmann.github.io/json)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/nlohmann/json/master/LICENSE.MIT)
 [![GitHub Releases](https://img.shields.io/github/release/nlohmann/json.svg)](https://github.com/nlohmann/json/releases)
+[![GitHub Downloads](https://img.shields.io/github/downloads/nlohmann/json/total)](https://github.com/nlohmann/json/releases)
 [![GitHub Issues](https://img.shields.io/github/issues/nlohmann/json.svg)](http://github.com/nlohmann/json/issues)
 [![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/nlohmann/json.svg)](http://isitmaintained.com/project/nlohmann/json "Average time to resolve an issue")
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/289/badge)](https://bestpractices.coreinfrastructure.org/projects/289)
+[![GitHub Sponsors](https://img.shields.io/badge/GitHub-Sponsors-ff69b4)](https://github.com/sponsors/nlohmann)
 
 - [Design goals](#design-goals)
 - [Integration](#integration)
