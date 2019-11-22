@@ -32,6 +32,14 @@ using nlohmann::json;
 DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
 DOCTEST_CLANG_SUPPRESS_WARNING("-Wexit-time-destructors")
 
+#ifdef JSON_HAS_CPP_17
+    #if __has_include(<optional>)
+        #include <optional>
+    #elif __has_include(<experimental/optional>)
+        #include <experimental/optional>
+    #endif
+#endif
+
 TEST_CASE("value conversion")
 {
     SECTION("get an object (explicit)")
@@ -1568,5 +1576,64 @@ TEST_CASE("JSON to enum mapping")
         CHECK(TS_INVALID == json("what?").get<TaskState>());
     }
 }
+
+#ifdef JSON_HAS_CPP_17
+TEST_CASE("std::optional")
+{
+    SECTION("null")
+    {
+        json j_null;
+        std::optional<std::string> opt_null;
+
+        CHECK(json(opt_null) == j_null);
+        CHECK(std::optional<std::string>(j_null) == std::nullopt);
+    }
+
+    SECTION("string")
+    {
+        json j_string = "string";
+        std::optional<std::string> opt_string = "string";
+
+        CHECK(json(opt_string) == j_string);
+        CHECK(std::optional<std::string>(j_string) == opt_string);
+    }
+
+    SECTION("bool")
+    {
+        json j_bool = true;
+        std::optional<bool> opt_bool = true;
+
+        CHECK(json(opt_bool) == j_bool);
+        CHECK(std::optional<bool>(j_bool) == opt_bool);
+    }
+
+    SECTION("number")
+    {
+        json j_number = 1;
+        std::optional<int> opt_int = 1;
+
+        CHECK(json(opt_int) == j_number);
+        CHECK(std::optional<int>(j_number) == opt_int);
+    }
+
+    SECTION("array")
+    {
+        json j_array = {1, 2, nullptr};
+        std::vector<std::optional<int>> opt_array = {{1, 2, std::nullopt}};
+
+        CHECK(json(opt_array) == j_array);
+        CHECK(std::vector<std::optional<int>>(j_array) == opt_array);
+    }
+
+    SECTION("object")
+    {
+        json j_object = {{"one", 1}, {"two", 2}, {"zero", nullptr}};
+        std::map<std::string, std::optional<int>> opt_object {{"one", 1}, {"two", 2}, {"zero", std::nullopt}};
+
+        CHECK(json(opt_object) == j_object);
+        CHECK(std::map<std::string, std::optional<int>>(j_object) == opt_object);
+    }
+}
+#endif
 
 DOCTEST_CLANG_SUPPRESS_WARNING_POP

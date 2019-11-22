@@ -24,6 +24,14 @@
 #include <nlohmann/detail/meta/type_traits.hpp>
 #include <nlohmann/detail/value_t.hpp>
 
+#ifdef JSON_HAS_CPP_17
+    #if __has_include(<optional>)
+        #include <optional>
+    #elif __has_include(<experimental/optional>)
+        #include <experimental/optional>
+    #endif
+#endif
+
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
@@ -259,6 +267,22 @@ struct external_constructor<value_t::object>
 /////////////
 // to_json //
 /////////////
+
+#ifdef JSON_HAS_CPP_17
+template<typename BasicJsonType, typename T,
+         enable_if_t<std::is_constructible<BasicJsonType, T>::value, int> = 0>
+void to_json(BasicJsonType& j, const std::optional<T>& opt)
+{
+    if (opt.has_value())
+    {
+        j = *opt;
+    }
+    else
+    {
+        j = nullptr;
+    }
+}
+#endif
 
 template<typename BasicJsonType, typename T,
          enable_if_t<std::is_same<T, typename BasicJsonType::boolean_t>::value, int> = 0>

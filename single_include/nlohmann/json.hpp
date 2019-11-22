@@ -169,6 +169,14 @@
 #include <utility> // pair, declval
 #include <valarray> // valarray
 
+#ifdef JSON_HAS_CPP_17
+    #if __has_include(<optional>)
+        #include <optional>
+    #elif __has_include(<experimental/optional>)
+        #include <experimental/optional>
+    #endif
+#endif
+
 // #include <nlohmann/detail/exceptions.hpp>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
@@ -4603,6 +4611,21 @@ inline void from_json(const BasicJsonType& j, typename std::nullptr_t& n)
     n = nullptr;
 }
 
+#ifdef JSON_HAS_CPP_17
+template<typename BasicJsonType, typename T>
+void from_json(const BasicJsonType& j, std::optional<T>& opt)
+{
+    if (j.is_null())
+    {
+        opt = std::nullopt;
+    }
+    else
+    {
+        opt = j.template get<T>();
+    }
+}
+#endif
+
 // overloads for basic_json template parameters
 template < typename BasicJsonType, typename ArithmeticType,
            enable_if_t < std::is_arithmetic<ArithmeticType>::value&&
@@ -5334,6 +5357,14 @@ class tuple_element<N, ::nlohmann::detail::iteration_proxy_value<IteratorType >>
 // #include <nlohmann/detail/value_t.hpp>
 
 
+#ifdef JSON_HAS_CPP_17
+    #if __has_include(<optional>)
+        #include <optional>
+    #elif __has_include(<experimental/optional>)
+        #include <experimental/optional>
+    #endif
+#endif
+
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
@@ -5569,6 +5600,22 @@ struct external_constructor<value_t::object>
 /////////////
 // to_json //
 /////////////
+
+#ifdef JSON_HAS_CPP_17
+template<typename BasicJsonType, typename T,
+         enable_if_t<std::is_constructible<BasicJsonType, T>::value, int> = 0>
+void to_json(BasicJsonType& j, const std::optional<T>& opt)
+{
+    if (opt.has_value())
+    {
+        j = *opt;
+    }
+    else
+    {
+        j = nullptr;
+    }
+}
+#endif
 
 template<typename BasicJsonType, typename T,
          enable_if_t<std::is_same<T, typename BasicJsonType::boolean_t>::value, int> = 0>
