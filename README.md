@@ -177,7 +177,7 @@ If you are using [NuGet](https://www.nuget.org), you can use the package [nlohma
 
 If you are using [conda](https://conda.io/), you can use the package [nlohmann_json](https://github.com/conda-forge/nlohmann_json-feedstock) from [conda-forge](https://conda-forge.org) executing `conda install -c conda-forge nlohmann_json`. Please file issues [here](https://github.com/conda-forge/nlohmann_json-feedstock/issues).
 
-If you are using [MSYS2](http://www.msys2.org/), your can use the [mingw-w64-nlohmann_json](https://packages.msys2.org/base/mingw-w64-nlohmann_json) package, just type `pacman -S mingw-w64-i686-nlohmann_json` or `pacman -S mingw-w64-x86_64-nlohmann_json` for installation. Please file issues [here](https://github.com/msys2/MINGW-packages/issues/new?title=%5Bnlohmann_json%5D) if you experience problems with the packages.
+If you are using [MSYS2](http://www.msys2.org/), your can use the [mingw-w64-nlohmann-json](https://packages.msys2.org/base/mingw-w64-nlohmann-json) package, just type `pacman -S mingw-w64-i686-nlohmann-json` or `pacman -S mingw-w64-x86_64-nlohmann-json` for installation. Please file issues [here](https://github.com/msys2/MINGW-packages/issues/new?title=%5Bnlohmann-json%5D) if you experience problems with the packages.
 
 ## Examples
 
