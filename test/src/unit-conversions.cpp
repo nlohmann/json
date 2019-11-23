@@ -1617,21 +1617,20 @@ TEST_CASE("std::optional")
 
     SECTION("array")
     {
-        json j_array = {1, 2, 3};
-        std::optional<std::vector<int>> opt_array = {{1, 2, 3}};
+        json j_array = {1, 2, nullptr};
+        std::vector<std::optional<int>> opt_array = {{1, 2, std::nullopt}};
 
         CHECK(json(opt_array) == j_array);
-        CHECK(std::optional<std::vector<int>>(j_array) == opt_array);
+        CHECK(std::vector<std::optional<int>>(j_array) == opt_array);
     }
 
     SECTION("object")
     {
-        json j_object = {{"one", 1}, {"two", 2}};
-        std::map<std::string, int> m {{"one", 1}, {"two", 2}};
-        std::optional<std::map<std::string, int>> opt_object = m;
+        json j_object = {{"one", 1}, {"two", 2}, {"zero", nullptr}};
+        std::map<std::string, std::optional<int>> opt_object {{"one", 1}, {"two", 2}, {"zero", std::nullopt}};
 
         CHECK(json(opt_object) == j_object);
-        CHECK(std::optional<std::map<std::string, int>>(j_object) == opt_object);
+        CHECK(std::map<std::string, std::optional<int>>(j_object) == opt_object);
     }
 }
 #endif
