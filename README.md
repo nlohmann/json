@@ -17,7 +17,8 @@
 [![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/nlohmann/json.svg)](http://isitmaintained.com/project/nlohmann/json "Average time to resolve an issue")
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/289/badge)](https://bestpractices.coreinfrastructure.org/projects/289)
 [![GitHub Sponsors](https://img.shields.io/badge/GitHub-Sponsors-ff69b4)](https://github.com/sponsors/nlohmann)
-
+[![Conan](https://api.bintray.com/packages/conan/conan-center/nlohmann_json%3A_/images/download.svg) ](https://bintray.com/conan/conan-center/nlohmann_json%3A_/_latestVersion)
+ 
 - [Design goals](#design-goals)
 - [Integration](#integration)
   - [CMake](#cmake)
@@ -159,7 +160,7 @@ If you are using the [Meson Build System](http://mesonbuild.com), add this sourc
 
 The provided meson.build can also be used as an alternative to cmake for installing `nlohmann_json` system-wide in which case a pkg-config file is installed. To use it, simply have your build system require the `nlohmann_json` pkg-config dependency. In Meson, it is preferred to use the [`dependency()`](https://mesonbuild.com/Reference-manual.html#dependency) object with a subproject fallback, rather than using the subproject directly.
 
-If you are using [Conan](https://www.conan.io/) to manage your dependencies, merely add `jsonformoderncpp/x.y.z@vthiery/stable` to your `conanfile.py`'s requires, where `x.y.z` is the release version you want to use. Please file issues [here](https://github.com/vthiery/conan-jsonformoderncpp/issues) if you experience problems with the packages.
+If you are using [Conan](https://www.conan.io/) to manage your dependencies, merely add `nlohmann_json/x.y.z` to your `conanfile`'s requires, where `x.y.z` is the release version you want to use. Please file issues [here](https://github.com/conan-io/conan-center-index/issues) if you experience problems with the packages.
 
 If you are using [Spack](https://www.spack.io/) to manage your dependencies, you can use the [`nlohmann-json` package](https://spack.readthedocs.io/en/latest/package_list.html#nlohmann-json). Please see the [spack project](https://github.com/spack/spack) for any issues regarding the packaging.
 
