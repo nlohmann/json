@@ -17,7 +17,6 @@
 [![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/nlohmann/json.svg)](http://isitmaintained.com/project/nlohmann/json "Average time to resolve an issue")
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/289/badge)](https://bestpractices.coreinfrastructure.org/projects/289)
 [![GitHub Sponsors](https://img.shields.io/badge/GitHub-Sponsors-ff69b4)](https://github.com/sponsors/nlohmann)
-[![Conan](https://api.bintray.com/packages/conan/conan-center/nlohmann_json%3A_/images/download.svg) ](https://bintray.com/conan/conan-center/nlohmann_json%3A_/_latestVersion)
  
 - [Design goals](#design-goals)
 - [Integration](#integration)
