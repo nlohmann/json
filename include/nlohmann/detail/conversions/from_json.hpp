@@ -13,14 +13,6 @@
 #include <utility> // pair, declval
 #include <valarray> // valarray
 
-#ifdef JSON_HAS_CPP_17
-    #if __has_include(<optional>)
-        #include <optional>
-    #elif __has_include(<experimental/optional>)
-        #include <experimental/optional>
-    #endif
-#endif
-
 #include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/cpp_future.hpp>
