@@ -329,6 +329,7 @@ script:
 
   # make sure CXX is correctly set
   - if [[ "${COMPILER}" != "" ]]; then export CXX=${COMPILER}; fi
+  - if [[ "${CXXFLAGS}" != "" ]]; then export CXXFLAGS=${CXXFLAGS}; fi
   # by default, use the single-header version
   - if [[ "${MULTIPLE_HEADERS}" == "" ]]; then export MULTIPLE_HEADERS=OFF; fi
 
