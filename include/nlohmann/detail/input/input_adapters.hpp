@@ -336,22 +336,28 @@ class input_adapter
   public:
     // native support
     JSON_HEDLEY_NON_NULL(2)
+    // cppcheck-suppress noExplicitConstructor
     input_adapter(std::FILE* file)
         : ia(std::make_shared<file_input_adapter>(file)) {}
     /// input adapter for input stream
+    // cppcheck-suppress noExplicitConstructor
     input_adapter(std::istream& i)
         : ia(std::make_shared<input_stream_adapter>(i)) {}
 
     /// input adapter for input stream
+    // cppcheck-suppress noExplicitConstructor
     input_adapter(std::istream&& i)
         : ia(std::make_shared<input_stream_adapter>(i)) {}
 
+    // cppcheck-suppress noExplicitConstructor
     input_adapter(const std::wstring& ws)
         : ia(std::make_shared<wide_string_input_adapter<std::wstring>>(ws)) {}
 
+    // cppcheck-suppress noExplicitConstructor
     input_adapter(const std::u16string& ws)
         : ia(std::make_shared<wide_string_input_adapter<std::u16string>>(ws)) {}
 
+    // cppcheck-suppress noExplicitConstructor
     input_adapter(const std::u32string& ws)
         : ia(std::make_shared<wide_string_input_adapter<std::u32string>>(ws)) {}
 
@@ -374,6 +380,7 @@ class input_adapter
                  std::is_integral<typename std::remove_pointer<CharT>::type>::value and
                  sizeof(typename std::remove_pointer<CharT>::type) == 1,
                  int>::type = 0>
+    // cppcheck-suppress noExplicitConstructor
     input_adapter(CharT b)
         : input_adapter(reinterpret_cast<const char*>(b),
                         std::strlen(reinterpret_cast<const char*>(b))) {}
@@ -418,6 +425,7 @@ class input_adapter
 
     /// input adapter for array
     template<class T, std::size_t N>
+    // cppcheck-suppress noExplicitConstructor
     input_adapter(T (&array)[N])
         : input_adapter(std::begin(array), std::end(array)) {}
 
@@ -426,6 +434,7 @@ class input_adapter
              std::enable_if<not std::is_pointer<ContiguousContainer>::value and
                             std::is_base_of<std::random_access_iterator_tag, typename iterator_traits<decltype(std::begin(std::declval<ContiguousContainer const>()))>::iterator_category>::value,
                             int>::type = 0>
+    // cppcheck-suppress noExplicitConstructor
     input_adapter(const ContiguousContainer& c)
         : input_adapter(std::begin(c), std::end(c)) {}
 
