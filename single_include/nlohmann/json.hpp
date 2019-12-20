@@ -15749,6 +15749,7 @@ class basic_json
 
     @since version 1.0.0
     */
+    // cppcheck-suppress noExplicitConstructor
     basic_json(const value_t v)
         : m_type(v), m_value(v)
     {
@@ -15773,6 +15774,7 @@ class basic_json
 
     @since version 1.0.0
     */
+    // cppcheck-suppress noExplicitConstructor
     basic_json(std::nullptr_t = nullptr) noexcept
         : basic_json(value_t::null)
     {
@@ -15840,6 +15842,7 @@ class basic_json
               typename U = detail::uncvref_t<CompatibleType>,
               detail::enable_if_t<
                   not detail::is_basic_json<U>::value and detail::is_compatible_type<basic_json_t, U>::value, int> = 0>
+    // cppcheck-suppress noExplicitConstructor
     basic_json(CompatibleType && val) noexcept(noexcept(
                 JSONSerializer<U>::to_json(std::declval<basic_json_t&>(),
                                            std::forward<CompatibleType>(val))))
@@ -15877,6 +15880,7 @@ class basic_json
     template <typename BasicJsonType,
               detail::enable_if_t<
                   detail::is_basic_json<BasicJsonType>::value and not std::is_same<basic_json, BasicJsonType>::value, int> = 0>
+    // cppcheck-suppress noExplicitConstructor
     basic_json(const BasicJsonType& val)
     {
         using other_boolean_t = typename BasicJsonType::boolean_t;
@@ -16317,6 +16321,7 @@ class basic_json
     ///////////////////////////////////////
 
     /// @private
+    // cppcheck-suppress noExplicitConstructor
     basic_json(const detail::json_ref<basic_json>& ref)
         : basic_json(ref.moved_or_copied())
     {}
