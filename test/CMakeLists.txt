@@ -140,8 +140,8 @@ set(files
     src/unit-to_chars.cpp
     src/unit-ubjson.cpp
     src/unit-udt.cpp
-    src/unit-unicode-part1.cpp
-    src/unit-unicode-part2.cpp
+    src/unit-unicode_part1.cpp
+    src/unit-unicode_part2.cpp
     src/unit-wstring.cpp)
 
 foreach(file ${files})
