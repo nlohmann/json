@@ -44,7 +44,6 @@ using nlohmann::json;
 
 namespace
 {
-extern size_t calls;
 size_t calls = 0;
 
 void check_utf8dump(bool success_expected, int byte1, int byte2, int byte3, int byte4);
@@ -128,7 +127,7 @@ void check_utf8string(bool success_expected, int byte1, int byte2 = -1, int byte
 {
     if (++calls % 100000 == 0)
     {
-        std::cout << calls << " of 8860608 UTF-8 strings checked" << std::endl;
+        std::cout << calls << " of 3300000 UTF-8 strings checked (part 1)" << std::endl;
     }
 
     std::string json_string = "\"";
@@ -724,135 +723,6 @@ TEST_CASE("Unicode" * doctest::skip())
                             for (int byte4 = 0x00; byte4 <= 0xFF; ++byte4)
                             {
                                 // skip fourth second byte
-                                if (0x80 <= byte3 and byte3 <= 0xBF)
-                                {
-                                    continue;
-                                }
-
-                                check_utf8string(false, byte1, byte2, byte3, byte4);
-                                check_utf8dump(false, byte1, byte2, byte3, byte4);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        SECTION("UTF8-4 (xF1-F3 UTF8-tail UTF8-tail UTF8-tail)")
-        {
-            SECTION("well-formed")
-            {
-                for (int byte1 = 0xF1; byte1 <= 0xF3; ++byte1)
-                {
-                    for (int byte2 = 0x80; byte2 <= 0xBF; ++byte2)
-                    {
-                        for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
-                        {
-                            for (int byte4 = 0x80; byte4 <= 0xBF; ++byte4)
-                            {
-                                check_utf8string(true, byte1, byte2, byte3, byte4);
-                                check_utf8dump(true, byte1, byte2, byte3, byte4);
-                            }
-                        }
-                    }
-                }
-            }
-
-            SECTION("ill-formed: missing second byte")
-            {
-                for (int byte1 = 0xF1; byte1 <= 0xF3; ++byte1)
-                {
-                    check_utf8string(false, byte1);
-                    check_utf8dump(false, byte1);
-                }
-            }
-
-            SECTION("ill-formed: missing third byte")
-            {
-                for (int byte1 = 0xF1; byte1 <= 0xF3; ++byte1)
-                {
-                    for (int byte2 = 0x80; byte2 <= 0xBF; ++byte2)
-                    {
-                        check_utf8string(false, byte1, byte2);
-                        check_utf8dump(false, byte1, byte2);
-                    }
-                }
-            }
-
-            SECTION("ill-formed: missing fourth byte")
-            {
-                for (int byte1 = 0xF1; byte1 <= 0xF3; ++byte1)
-                {
-                    for (int byte2 = 0x80; byte2 <= 0xBF; ++byte2)
-                    {
-                        for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
-                        {
-                            check_utf8string(false, byte1, byte2, byte3);
-                            check_utf8dump(false, byte1, byte2, byte3);
-                        }
-                    }
-                }
-            }
-
-            SECTION("ill-formed: wrong second byte")
-            {
-                for (int byte1 = 0xF1; byte1 <= 0xF3; ++byte1)
-                {
-                    for (int byte2 = 0x00; byte2 <= 0xFF; ++byte2)
-                    {
-                        // skip correct second byte
-                        if (0x80 <= byte2 and byte2 <= 0xBF)
-                        {
-                            continue;
-                        }
-
-                        for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
-                        {
-                            for (int byte4 = 0x80; byte4 <= 0xBF; ++byte4)
-                            {
-                                check_utf8string(false, byte1, byte2, byte3, byte4);
-                                check_utf8dump(false, byte1, byte2, byte3, byte4);
-                            }
-                        }
-                    }
-                }
-            }
-
-            SECTION("ill-formed: wrong third byte")
-            {
-                for (int byte1 = 0xF1; byte1 <= 0xF3; ++byte1)
-                {
-                    for (int byte2 = 0x80; byte2 <= 0xBF; ++byte2)
-                    {
-                        for (int byte3 = 0x00; byte3 <= 0xFF; ++byte3)
-                        {
-                            // skip correct third byte
-                            if (0x80 <= byte3 and byte3 <= 0xBF)
-                            {
-                                continue;
-                            }
-
-                            for (int byte4 = 0x80; byte4 <= 0xBF; ++byte4)
-                            {
-                                check_utf8string(false, byte1, byte2, byte3, byte4);
-                                check_utf8dump(false, byte1, byte2, byte3, byte4);
-                            }
-                        }
-                    }
-                }
-            }
-
-            SECTION("ill-formed: wrong fourth byte")
-            {
-                for (int byte1 = 0xF1; byte1 <= 0xF3; ++byte1)
-                {
-                    for (int byte2 = 0x80; byte2 <= 0xBF; ++byte2)
-                    {
-                        for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
-                        {
-                            for (int byte4 = 0x00; byte4 <= 0xFF; ++byte4)
-                            {
-                                // skip correct fourth byte
                                 if (0x80 <= byte3 and byte3 <= 0xBF)
                                 {
                                     continue;
