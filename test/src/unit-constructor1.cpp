@@ -30,10 +30,15 @@ SOFTWARE.
 #include "doctest_compatibility.h"
 DOCTEST_GCC_SUPPRESS_WARNING("-Wfloat-equal")
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wkeyword-macro"
+
 #define private public
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 #undef private
+
+#pragma clang diagnostic pop
 
 #include <deque>
 #include <forward_list>

@@ -33,10 +33,15 @@ DOCTEST_GCC_SUPPRESS_WARNING("-Wfloat-equal")
 // for some reason including this after the json header leads to linker errors with VS 2017...
 #include <locale>
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wkeyword-macro"
+
 #define private public
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 #undef private
+
+#pragma clang diagnostic pop
 
 #include <fstream>
 #include <sstream>
