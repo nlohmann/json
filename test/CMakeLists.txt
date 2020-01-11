@@ -78,15 +78,7 @@ else()
 endif()
 target_include_directories(doctest_main PRIVATE "thirdparty/doctest")
 
-# https://stackoverflow.com/questions/2368811/how-to-set-warning-level-in-cmake
 if(MSVC)
-    # Force to always compile with W4
-    if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
-        string(REGEX REPLACE "/W[0-4]" "/W4" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-    else()
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
-    endif()
-
 	# Disable warning C4566: character represented by universal-character-name '\uFF01' cannot be represented in the current code page (1252)
 	# Disable warning C4996: 'nlohmann::basic_json<std::map,std::vector,std::string,bool,int64_t,uint64_t,double,std::allocator,nlohmann::adl_serializer>::operator <<': was declared deprecated
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4566 /wd4996")
@@ -156,6 +148,12 @@ foreach(file ${files})
         $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wno-deprecated;-Wno-float-equal>
         $<$<CXX_COMPILER_ID:GNU>:-Wno-deprecated-declarations>
     )
+    # Force to compile with highest warning level and treat warnings as errors
+    if(MSVC)
+      target_compile_options(${testcase} PRIVATE /W4 /WX)
+    else()
+      target_compile_options(${testcase} PRIVATE -Wall -Wextra -pedantic -Werror)
+    endif()
     target_include_directories(${testcase} PRIVATE
         thirdparty/doctest
         thirdparty/fifo_map
