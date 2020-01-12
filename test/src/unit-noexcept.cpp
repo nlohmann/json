@@ -31,6 +31,8 @@ SOFTWARE.
 
 #include <nlohmann/json.hpp>
 
+DOCTEST_CLANG_SUPPRESS_WARNING("-Wunneeded-internal-declaration")
+
 using nlohmann::json;
 
 namespace
@@ -42,16 +44,11 @@ enum test
 struct pod {};
 struct pod_bis {};
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunneeded-internal-declaration"
-
 void to_json(json&, pod) noexcept{}
 void to_json(json&, pod_bis){}
 void from_json(const json&, pod) noexcept{}
 void from_json(const json&, pod_bis){}
 static json j;
-
-#pragma clang diagnostic pop
 
 static_assert(noexcept(json{}), "");
 static_assert(noexcept(nlohmann::to_json(j, 2)), "");

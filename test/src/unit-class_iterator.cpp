@@ -29,15 +29,12 @@ SOFTWARE.
 
 #include "doctest_compatibility.h"
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wkeyword-macro"
+DOCTEST_CLANG_SUPPRESS_WARNING("-Wkeyword-macro")
 
 #define private public
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 #undef private
-
-#pragma clang diagnostic pop
 
 TEST_CASE("iterator class")
 {
