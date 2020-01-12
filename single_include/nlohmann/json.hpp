@@ -7983,7 +7983,7 @@ class lexer
     minus    | zero     | any1     | [error]  | [error] | [error] | [error]  | [error]
     zero     | done     | done     | exponent | done    | done    | decimal1 | done
     any1     | any1     | any1     | exponent | done    | done    | decimal1 | done
-    decimal1 | decimal2 | [error]  | [error]  | [error] | [error] | [error]  | [error]
+    decimal1 | decimal2 | decimal2 | [error]  | [error] | [error] | [error]  | [error]
     decimal2 | decimal2 | decimal2 | exponent | done    | done    | done     | done
     exponent | any2     | any2     | [error]  | sign    | sign    | [error]  | [error]
     sign     | any2     | any2     | [error]  | [error] | [error] | [error]  | [error]
