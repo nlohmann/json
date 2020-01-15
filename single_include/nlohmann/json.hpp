@@ -8678,7 +8678,7 @@ namespace detail
 /*!
 @brief syntax analysis
 
-This class implements a recursive decent parser.
+This class implements a recursive descent parser.
 */
 template<typename BasicJsonType>
 class parser
