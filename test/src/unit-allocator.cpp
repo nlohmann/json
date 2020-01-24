@@ -98,6 +98,8 @@ struct my_allocator : std::allocator<T>
     {
         if (next_deallocate_fails)
         {
+			(void)p; // Ignored unused
+			(void)n; // ignored unused
             next_deallocate_fails = false;
             throw std::bad_alloc();
         }

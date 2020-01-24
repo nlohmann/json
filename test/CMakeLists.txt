@@ -148,12 +148,10 @@ foreach(file ${files})
         $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wno-deprecated;-Wno-float-equal>
         $<$<CXX_COMPILER_ID:GNU>:-Wno-deprecated-declarations>
     )
-    # Force to compile with highest warning level and treat warnings as errors
-    if(MSVC)
-      target_compile_options(${testcase} PRIVATE /W4 /WX)
-    else()
-      target_compile_options(${testcase} PRIVATE -Wall -Wextra -pedantic -Werror)
-    endif()
+    target_compile_options(${testcase} PRIVATE
+        $<$<CXX_COMPILER_ID:MSVC>:/W4;/WX>>
+        $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall;-Wextra;-pedantic;-Werror>>
+    )    
     target_include_directories(${testcase} PRIVATE
         thirdparty/doctest
         thirdparty/fifo_map
