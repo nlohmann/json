@@ -144,13 +144,9 @@ foreach(file ${files})
       DOCTEST_CONFIG_SUPER_FAST_ASSERTS
     )
     target_compile_options(${testcase} PRIVATE
-        $<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>
-        $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wno-deprecated;-Wno-float-equal>
+        $<$<CXX_COMPILER_ID:MSVC>:/EHsc;/W4;/WX;$<$<CONFIG:Release>:/Od>>
+        $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wno-deprecated;-Wno-float-equal;-Wall;-Wextra;-pedantic;-Werror>
         $<$<CXX_COMPILER_ID:GNU>:-Wno-deprecated-declarations>
-    )
-    target_compile_options(${testcase} PRIVATE
-        $<$<CXX_COMPILER_ID:MSVC>:/W4;/WX>>
-        $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall;-Wextra;-pedantic;-Werror>>
     )    
     target_include_directories(${testcase} PRIVATE
         thirdparty/doctest
