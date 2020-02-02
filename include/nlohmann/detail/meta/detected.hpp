@@ -4,7 +4,7 @@
 
 #include <nlohmann/detail/meta/void_t.hpp>
 
-// http://en.cppreference.com/w/cpp/experimental/is_detected
+// https://en.cppreference.com/w/cpp/experimental/is_detected
 namespace nlohmann
 {
 namespace detail

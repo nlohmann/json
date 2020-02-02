@@ -387,7 +387,7 @@ class input_adapter
     {
 #ifndef NDEBUG
         // assertion to check that the iterator range is indeed contiguous,
-        // see http://stackoverflow.com/a/35008842/266378 for more discussion
+        // see https://stackoverflow.com/a/35008842/266378 for more discussion
         const auto is_contiguous = std::accumulate(
                                        first, last, std::pair<bool, int>(true, 0),
                                        [&first](std::pair<bool, int> res, decltype(*first) val)

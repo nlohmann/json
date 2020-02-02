@@ -24,7 +24,7 @@ import urllib2
 
 # Strips C and C++ comments from the given string.
 #
-# Copied from http://stackoverflow.com/a/241506/627587.
+# Copied from https://stackoverflow.com/a/241506/627587.
 def strip_comments(text):
     def replacer(match):
         s = match.group(0)

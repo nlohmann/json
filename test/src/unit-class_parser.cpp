@@ -1426,7 +1426,7 @@ TEST_CASE("parser class")
 
     SECTION("tests found by mutate++")
     {
-        // test case to make sure no comma preceeds the first key
+        // test case to make sure no comma precedes the first key
         CHECK_THROWS_AS(parser_helper("{,\"key\": false}"), json::parse_error&);
         CHECK_THROWS_WITH(parser_helper("{,\"key\": false}"),
                           "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing object key - unexpected ','; expected string literal");
