@@ -151,7 +151,7 @@ relationship:
 The invariants are checked by member function assert_invariant().
 
 @internal
-@note ObjectType trick from http://stackoverflow.com/a/9860911
+@note ObjectType trick from https://stackoverflow.com/a/9860911
 @endinternal
 
 @see [RFC 7159: The JavaScript Object Notation (JSON) Data Interchange
@@ -7335,7 +7335,7 @@ class basic_json
 
     Uses a JSON pointer to retrieve a reference to the respective JSON value.
     No bound checking is performed. The function does not change the JSON
-    value; no `null` values are created. In particular, the the special value
+    value; no `null` values are created. In particular, the special value
     `-` yields an exception.
 
     @param[in] ptr  JSON pointer to the desired element

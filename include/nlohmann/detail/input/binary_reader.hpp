@@ -123,7 +123,7 @@ class binary_reader
 
     @return true if and only if system's byte order is little endian
 
-    @note from http://stackoverflow.com/a/1001328/266378
+    @note from https://stackoverflow.com/a/1001328/266378
     */
     static constexpr bool little_endianess(int num = 1) noexcept
     {

@@ -36,7 +36,7 @@ using nlohmann::json;
 
 TEST_CASE("compliance tests from json.org")
 {
-    // test cases are from http://json.org/JSON_checker/
+    // test cases are from https://json.org/JSON_checker/
 
     SECTION("expected failures")
     {
@@ -349,7 +349,7 @@ TEST_CASE("test suite from json-test-suite")
 
 TEST_CASE("json.org examples")
 {
-    // here, we list all JSON values from http://json.org/example
+    // here, we list all JSON values from https://json.org/example
 
     SECTION("1.json")
     {
@@ -1361,7 +1361,7 @@ namespace
 {
 std::string trim(const std::string& str);
 
-// from http://stackoverflow.com/a/25829178/266378
+// from https://stackoverflow.com/a/25829178/266378
 std::string trim(const std::string& str)
 {
     size_t first = str.find_first_not_of(' ');
