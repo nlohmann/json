@@ -8622,7 +8622,7 @@ scan_number_done:
     position_t position {};
 
     /// raw input token string (for error messages)
-    std::vector<char> token_string {};
+    std::vector<signed char> token_string {};
 
     /// buffer for variable-length tokens (numbers, strings)
     string_t token_buffer {};
