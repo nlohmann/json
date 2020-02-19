@@ -103,6 +103,7 @@ class input_stream_adapter
         sb = rhs.sb;
         rhs.is = nullptr;
         rhs.sb = nullptr;
+        return *this;
     }
 
     // std::istream/std::streambuf use std::char_traits<char>::to_int_type, to
