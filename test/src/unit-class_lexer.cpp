@@ -37,10 +37,11 @@ using nlohmann::json;
 namespace
 {
 // shortcut to scan a string literal
-json::lexer::token_type scan_string(const char* s);
 json::lexer::token_type scan_string(const char* s)
 {
-    return json::lexer(nlohmann::detail::input_adapter(s)).scan();
+    auto input_adapter = nlohmann::detail::input_adapter(s);
+    using input_adapter_type = typename decltype(input_adapter)::element_type;
+    return nlohmann::detail::lexer<json, input_adapter_type>(std::move(input_adapter)).scan();
 }
 }
 

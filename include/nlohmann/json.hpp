@@ -167,7 +167,9 @@ class basic_json
   private:
     template<detail::value_t> friend struct detail::external_constructor;
     friend ::nlohmann::json_pointer<basic_json>;
-    friend ::nlohmann::detail::parser<basic_json>;
+
+    template<typename BasicJsonType, typename InputType>
+    friend class ::nlohmann::detail::parser;
     friend ::nlohmann::detail::serializer<basic_json>;
     template<typename BasicJsonType>
     friend class ::nlohmann::detail::iter_impl;
@@ -184,8 +186,17 @@ class basic_json
     using basic_json_t = NLOHMANN_BASIC_JSON_TPL;
 
     // convenience aliases for types residing in namespace detail;
-    using lexer = ::nlohmann::detail::lexer<basic_json>;
-    using parser = ::nlohmann::detail::parser<basic_json>;
+    using lexer = ::nlohmann::detail::lexer_base<basic_json>;
+
+    template<typename InputAdapterType>
+    static ::nlohmann::detail::parser<basic_json, InputAdapterType> parser(
+        std::shared_ptr<InputAdapterType> adapter,
+        detail::parser_callback_t<basic_json>cb = nullptr,
+        bool allow_exceptions = true
+    )
+    {
+        return ::nlohmann::detail::parser<basic_json, InputAdapterType>(std::move(adapter), std::move(cb), allow_exceptions);
+    }
 
     using primitive_iterator_t = ::nlohmann::detail::primitive_iterator_t;
     template<typename BasicJsonType>
@@ -1115,7 +1126,7 @@ class basic_json
 
     @sa @ref parser_callback_t for more information and examples
     */
-    using parse_event_t = typename parser::parse_event_t;
+    using parse_event_t = detail::parse_event_t;
 
     /*!
     @brief per-element parser callback type
@@ -1166,7 +1177,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    using parser_callback_t = typename parser::parser_callback_t;
+    using parser_callback_t = detail::parser_callback_t<basic_json>;
 
     //////////////////
     // constructors //
@@ -6198,21 +6209,39 @@ class basic_json
 
     @since version 2.0.3 (contiguous containers)
     */
+    template<typename InputType>
     JSON_HEDLEY_WARN_UNUSED_RESULT
-    static basic_json parse(detail::input_adapter&& i,
+    static basic_json parse(InputType&& i,
                             const parser_callback_t cb = nullptr,
                             const bool allow_exceptions = true)
     {
         basic_json result;
-        parser(i, cb, allow_exceptions).parse(true, result);
+        parser(detail::input_adapter(std::forward<InputType>(i)), cb, allow_exceptions).parse(true, result);
         return result;
     }
 
-    static bool accept(detail::input_adapter&& i)
+
+
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    static basic_json parse(detail::span_input_adapter&& i,
+                            const parser_callback_t cb = nullptr,
+                            const bool allow_exceptions = true)
     {
-        return parser(i).accept(true);
+        basic_json result;
+        parser(i.get(), cb, allow_exceptions).parse(true, result);
+        return result;
     }
 
+    template<typename InputType>
+    static bool accept(InputType&& i)
+    {
+        return parser(detail::input_adapter(std::forward<InputType>(i))).accept(true);
+    }
+
+    static bool accept(detail::span_input_adapter&& i)
+    {
+        return parser(i.get()).accept(true);
+    }
     /*!
     @brief generate SAX events
 
@@ -6266,17 +6295,36 @@ class basic_json
 
     @since version 3.2.0
     */
-    template <typename SAX>
+    template <typename SAX, typename InputType>
     JSON_HEDLEY_NON_NULL(2)
-    static bool sax_parse(detail::input_adapter&& i, SAX* sax,
+    static bool sax_parse(InputType&& i, SAX* sax,
                           input_format_t format = input_format_t::json,
                           const bool strict = true)
     {
         assert(sax);
+
+        auto input_adapter = detail::input_adapter(std::forward<InputType>(i));
+        using adapter_type = typename decltype(input_adapter)::element_type;
         return format == input_format_t::json
-               ? parser(std::move(i)).sax_parse(sax, strict)
-               : detail::binary_reader<basic_json, SAX>(std::move(i)).sax_parse(format, sax, strict);
+               ? parser(std::move(input_adapter)).sax_parse(sax, strict)
+               : detail::binary_reader<basic_json, SAX, adapter_type>(std::move(input_adapter)).sax_parse(format, sax, strict);
     }
+
+    template <typename SAX>
+    JSON_HEDLEY_NON_NULL(2)
+    static bool sax_parse(detail::span_input_adapter&& i, SAX* sax,
+                          input_format_t format = input_format_t::json,
+                          const bool strict = true)
+    {
+        assert(sax);
+
+        auto input_adapter = i.get();
+        using adapter_type = typename decltype(input_adapter)::element_type;
+        return format == input_format_t::json
+               ? parser(std::move(input_adapter)).sax_parse(sax, strict)
+               : detail::binary_reader<basic_json, SAX, adapter_type>(std::move(input_adapter)).sax_parse(format, sax, strict);
+    }
+
 
     /*!
     @brief deserialize from an iterator range with contiguous storage
@@ -6970,14 +7018,15 @@ class basic_json
            @a strict parameter since 3.0.0; added @a allow_exceptions parameter
            since 3.2.0
     */
+    template<typename InputType>
     JSON_HEDLEY_WARN_UNUSED_RESULT
-    static basic_json from_cbor(detail::input_adapter&& i,
+    static basic_json from_cbor(InputType&& i,
                                 const bool strict = true,
                                 const bool allow_exceptions = true)
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        const bool res = binary_reader(detail::input_adapter(i)).sax_parse(input_format_t::cbor, &sdp, strict);
+        const bool res = binary_reader(detail::input_adapter(std::forward<InputType>(i))).sax_parse(input_format_t::cbor, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -6985,7 +7034,7 @@ class basic_json
     @copydoc from_cbor(detail::input_adapter&&, const bool, const bool)
     */
     template<typename A1, typename A2,
-             detail::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
+             detail::enable_if_t<std::is_constructible<detail::span_input_adapter, A1, A2>::value, int> = 0>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_cbor(A1 && a1, A2 && a2,
                                 const bool strict = true,
@@ -6993,7 +7042,18 @@ class basic_json
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        const bool res = binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).sax_parse(input_format_t::cbor, &sdp, strict);
+        const bool res = binary_reader(detail::span_input_adapter(std::forward<A1>(a1), std::forward<A2>(a2)).get()).sax_parse(input_format_t::cbor, &sdp, strict);
+        return res ? result : basic_json(value_t::discarded);
+    }
+
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    static basic_json from_cbor(detail::span_input_adapter&& i,
+                                const bool strict = true,
+                                const bool allow_exceptions = true)
+    {
+        basic_json result;
+        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        const bool res = binary_reader(i.get()).sax_parse(input_format_t::cbor, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -7079,14 +7139,15 @@ class basic_json
            @a strict parameter since 3.0.0; added @a allow_exceptions parameter
            since 3.2.0
     */
+    template<typename InputType>
     JSON_HEDLEY_WARN_UNUSED_RESULT
-    static basic_json from_msgpack(detail::input_adapter&& i,
+    static basic_json from_msgpack(InputType&& i,
                                    const bool strict = true,
                                    const bool allow_exceptions = true)
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        const bool res = binary_reader(detail::input_adapter(i)).sax_parse(input_format_t::msgpack, &sdp, strict);
+        const bool res = binary_reader(detail::input_adapter(std::forward<InputType>(i))).sax_parse(input_format_t::msgpack, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -7094,7 +7155,7 @@ class basic_json
     @copydoc from_msgpack(detail::input_adapter&&, const bool, const bool)
     */
     template<typename A1, typename A2,
-             detail::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
+             detail::enable_if_t<std::is_constructible<detail::span_input_adapter, A1, A2>::value, int> = 0>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_msgpack(A1 && a1, A2 && a2,
                                    const bool strict = true,
@@ -7102,9 +7163,22 @@ class basic_json
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        const bool res = binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).sax_parse(input_format_t::msgpack, &sdp, strict);
+        const bool res = binary_reader(detail::span_input_adapter(std::forward<A1>(a1), std::forward<A2>(a2)).get()).sax_parse(input_format_t::msgpack, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
+
+
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    static basic_json from_msgpack(detail::span_input_adapter&& i,
+                                   const bool strict = true,
+                                   const bool allow_exceptions = true)
+    {
+        basic_json result;
+        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        const bool res = binary_reader(i.get()).sax_parse(input_format_t::msgpack, &sdp, strict);
+        return res ? result : basic_json(value_t::discarded);
+    }
+
 
     /*!
     @brief create a JSON value from an input in UBJSON format
@@ -7167,14 +7241,15 @@ class basic_json
 
     @since version 3.1.0; added @a allow_exceptions parameter since 3.2.0
     */
+    template<typename InputType>
     JSON_HEDLEY_WARN_UNUSED_RESULT
-    static basic_json from_ubjson(detail::input_adapter&& i,
+    static basic_json from_ubjson(InputType&& i,
                                   const bool strict = true,
                                   const bool allow_exceptions = true)
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        const bool res = binary_reader(detail::input_adapter(i)).sax_parse(input_format_t::ubjson, &sdp, strict);
+        const bool res = binary_reader(detail::input_adapter(std::forward<InputType>(i))).sax_parse(input_format_t::ubjson, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -7182,7 +7257,7 @@ class basic_json
     @copydoc from_ubjson(detail::input_adapter&&, const bool, const bool)
     */
     template<typename A1, typename A2,
-             detail::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
+             detail::enable_if_t<std::is_constructible<detail::span_input_adapter, A1, A2>::value, int> = 0>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_ubjson(A1 && a1, A2 && a2,
                                   const bool strict = true,
@@ -7190,9 +7265,21 @@ class basic_json
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        const bool res = binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).sax_parse(input_format_t::ubjson, &sdp, strict);
+        const bool res = binary_reader(detail::span_input_adapter(std::forward<A1>(a1), std::forward<A2>(a2)).get()).sax_parse(input_format_t::ubjson, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
+
+
+    static basic_json from_ubjson(detail::span_input_adapter&& i,
+                                  const bool strict = true,
+                                  const bool allow_exceptions = true)
+    {
+        basic_json result;
+        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        const bool res = binary_reader(i.get()).sax_parse(input_format_t::ubjson, &sdp, strict);
+        return res ? result : basic_json(value_t::discarded);
+    }
+
 
     /*!
     @brief Create a JSON value from an input in BSON format
@@ -7254,14 +7341,15 @@ class basic_json
     @sa @ref from_ubjson(detail::input_adapter&&, const bool, const bool) for the
         related UBJSON format
     */
+    template<typename InputType>
     JSON_HEDLEY_WARN_UNUSED_RESULT
-    static basic_json from_bson(detail::input_adapter&& i,
+    static basic_json from_bson(InputType&& i,
                                 const bool strict = true,
                                 const bool allow_exceptions = true)
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        const bool res = binary_reader(detail::input_adapter(i)).sax_parse(input_format_t::bson, &sdp, strict);
+        const bool res = binary_reader(detail::input_adapter(std::forward<InputType>(i))).sax_parse(input_format_t::bson, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -7269,7 +7357,7 @@ class basic_json
     @copydoc from_bson(detail::input_adapter&&, const bool, const bool)
     */
     template<typename A1, typename A2,
-             detail::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
+             detail::enable_if_t<std::is_constructible<detail::span_input_adapter, A1, A2>::value, int> = 0>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_bson(A1 && a1, A2 && a2,
                                 const bool strict = true,
@@ -7277,12 +7365,20 @@ class basic_json
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        const bool res = binary_reader(detail::input_adapter(std::forward<A1>(a1), std::forward<A2>(a2))).sax_parse(input_format_t::bson, &sdp, strict);
+        const bool res = binary_reader(detail::span_input_adapter(std::forward<A1>(a1), std::forward<A2>(a2)).get()).sax_parse(input_format_t::bson, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
-
-
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    static basic_json from_bson(detail::span_input_adapter&& i,
+                                const bool strict = true,
+                                const bool allow_exceptions = true)
+    {
+        basic_json result;
+        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        const bool res = binary_reader(i.get()).sax_parse(input_format_t::bson, &sdp, strict);
+        return res ? result : basic_json(value_t::discarded);
+    }
     /// @}
 
     //////////////////////////
