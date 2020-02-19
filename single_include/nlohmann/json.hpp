@@ -12674,7 +12674,7 @@ class binary_writer
 
   private:
     /// whether we can assume little endianess
-    const bool is_little_endian = binary_reader<BasicJsonType, detail::input_buffer_adapter>::little_endianess();
+    const bool is_little_endian = binary_reader<BasicJsonType, input_buffer_adapter>::little_endianess();
 
     /// the output
     output_adapter_t<CharType> oa = nullptr;
