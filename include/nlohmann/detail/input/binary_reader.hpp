@@ -31,10 +31,9 @@ namespace detail
 /*!
 @brief deserialization of CBOR, MessagePack, and UBJSON values
 */
-template<typename BasicJsonType, typename SAX = json_sax_dom_parser<BasicJsonType>, typename InputAdapterType = input_adapter_protocol>
+template<typename BasicJsonType, typename InputAdapterType, typename SAX = json_sax_dom_parser<BasicJsonType>>
 class binary_reader
 {
-    using input_adapter_ptr_t = std::shared_ptr<InputAdapterType>;
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
@@ -47,10 +46,9 @@ class binary_reader
 
     @param[in] adapter  input adapter to read from
     */
-    explicit binary_reader(input_adapter_ptr_t adapter) : ia(std::move(adapter))
+    explicit binary_reader(InputAdapterType&& adapter) : ia(std::move(adapter))
     {
         (void)detail::is_sax_static_asserts<SAX, BasicJsonType> {};
-        assert(ia);
     }
 
     // make class move-only
@@ -1810,7 +1808,7 @@ class binary_reader
     int get()
     {
         ++chars_read;
-        return current = ia->get_character();
+        return current = ia.get_character();
     }
 
     /*!
@@ -1966,7 +1964,7 @@ class binary_reader
 
   private:
     /// input adapter
-    input_adapter_ptr_t ia = nullptr;
+    InputAdapterType ia;
 
     /// the current character
     int current = std::char_traits<char>::eof();

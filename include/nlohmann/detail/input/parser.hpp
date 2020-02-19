@@ -49,10 +49,9 @@ using parser_callback_t =
 
 This class implements a recursive descent parser.
 */
-template<typename BasicJsonType, typename InputAdapterType = input_adapter_protocol>
+template<typename BasicJsonType, typename InputAdapterType>
 class parser
 {
-    using input_adapter_ptr_t = std::shared_ptr<InputAdapterType>;
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
@@ -62,7 +61,7 @@ class parser
 
   public:
     /// a parser reading from an input adapter
-    explicit parser(input_adapter_ptr_t&& adapter,
+    explicit parser(InputAdapterType&& adapter,
                     const parser_callback_t<BasicJsonType> cb = nullptr,
                     const bool allow_exceptions_ = true)
         : callback(cb), m_lexer(std::move(adapter)), allow_exceptions(allow_exceptions_)

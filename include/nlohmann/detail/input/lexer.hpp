@@ -99,11 +99,9 @@ class lexer_base
 
 This class organizes the lexical analysis during JSON deserialization.
 */
-template<typename BasicJsonType, typename InputAdapterType = input_adapter_protocol>
+template<typename BasicJsonType, typename InputAdapterType>
 class lexer : public lexer_base<BasicJsonType>
 {
-    using input_adapter_ptr_t = std::shared_ptr<InputAdapterType>;
-
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
@@ -112,7 +110,7 @@ class lexer : public lexer_base<BasicJsonType>
   public:
     using token_type = typename lexer_base<BasicJsonType>::token_type;
 
-    explicit lexer(input_adapter_ptr_t&& adapter)
+    explicit lexer(InputAdapterType&& adapter)
         : ia(std::move(adapter)), decimal_point_char(get_decimal_point()) {}
 
     // delete because of pointer members
@@ -1264,7 +1262,7 @@ scan_number_done:
         }
         else
         {
-            current = ia->get_character();
+            current = ia.get_character();
         }
 
         if (JSON_HEDLEY_LIKELY(current != std::char_traits<char>::eof()))
@@ -1488,7 +1486,7 @@ scan_number_done:
 
   private:
     /// input adapter
-    input_adapter_ptr_t ia = nullptr;
+    InputAdapterType ia;
 
     /// the current character
     std::char_traits<char>::int_type current = std::char_traits<char>::eof();

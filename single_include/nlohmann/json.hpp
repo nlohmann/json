@@ -3891,28 +3891,10 @@ enum class input_format_t { json, cbor, msgpack, ubjson, bson };
 ////////////////////
 
 /*!
-@brief abstract input adapter interface
-
-Produces a stream of std::char_traits<char>::int_type characters from a
-std::istream, a buffer, or some other input type. Accepts the return of
-exactly one non-EOF character for future input. The int_type characters
-returned consist of all valid char values as positive values (typically
-unsigned char), plus an EOF value outside that range, specified by the value
-of the function std::char_traits<char>::eof(). This value is typically -1, but
-could be any arbitrary value which is not a valid char value.
-*/
-struct input_adapter_protocol
-{
-    /// get a character [0,255] or std::char_traits<char>::eof().
-    virtual std::char_traits<char>::int_type get_character() = 0;
-    virtual ~input_adapter_protocol() = default;
-};
-
-/*!
 Input adapter for stdio file access. This adapter read only 1 byte and do not use any
  buffer. This adapter is a very low level adapter.
 */
-class file_input_adapter final : public input_adapter_protocol
+class file_input_adapter
 {
   public:
     JSON_HEDLEY_NON_NULL(2)
@@ -3925,9 +3907,8 @@ class file_input_adapter final : public input_adapter_protocol
     file_input_adapter(file_input_adapter&&) = default;
     file_input_adapter& operator=(const file_input_adapter&) = delete;
     file_input_adapter& operator=(file_input_adapter&&) = default;
-    ~file_input_adapter() override = default;
 
-    std::char_traits<char>::int_type get_character() noexcept override
+    std::char_traits<char>::int_type get_character() noexcept
     {
         return std::fgetc(m_file);
     }
@@ -3947,48 +3928,68 @@ characters following those used in parsing the JSON input.  Clears the
 std::istream flags; any input errors (e.g., EOF) will be detected by the first
 subsequent call for input from the std::istream.
 */
-class input_stream_adapter final : public input_adapter_protocol
+class input_stream_adapter
 {
   public:
-    ~input_stream_adapter() override
+    ~input_stream_adapter()
     {
         // clear stream flags; we use underlying streambuf I/O, do not
         // maintain ifstream flags, except eof
-        is.clear(is.rdstate() & std::ios::eofbit);
+        if (is)
+        {
+            is->clear(is->rdstate() & std::ios::eofbit);
+        }
     }
 
     explicit input_stream_adapter(std::istream& i)
-        : is(i), sb(*i.rdbuf())
+        : is(&i), sb(i.rdbuf())
     {}
 
     // delete because of pointer members
     input_stream_adapter(const input_stream_adapter&) = delete;
     input_stream_adapter& operator=(input_stream_adapter&) = delete;
-    input_stream_adapter(input_stream_adapter&&) = delete;
-    input_stream_adapter& operator=(input_stream_adapter&&) = delete;
+
+    input_stream_adapter(input_stream_adapter&& rhs) : is(rhs.is), sb(rhs.sb)
+    {
+        rhs.is = nullptr;
+        rhs.sb = nullptr;
+    }
+
+    input_stream_adapter& operator=(input_stream_adapter&& rhs)
+    {
+        if (is)
+        {
+            is->clear(is->rdstate() & std::ios::eofbit);
+        }
+
+        is = rhs.is;
+        sb = rhs.sb;
+        rhs.is = nullptr;
+        rhs.sb = nullptr;
+    }
 
     // std::istream/std::streambuf use std::char_traits<char>::to_int_type, to
     // ensure that std::char_traits<char>::eof() and the character 0xFF do not
     // end up as the same value, eg. 0xFFFFFFFF.
-    std::char_traits<char>::int_type get_character() override
+    std::char_traits<char>::int_type get_character()
     {
-        auto res = sb.sbumpc();
+        auto res = sb->sbumpc();
         // set eof manually, as we don't use the istream interface.
         if (res == EOF)
         {
-            is.clear(is.rdstate() | std::ios::eofbit);
+            is->clear(is->rdstate() | std::ios::eofbit);
         }
         return res;
     }
 
   private:
     /// the associated input stream
-    std::istream& is;
-    std::streambuf& sb;
+    std::istream* is = nullptr;
+    std::streambuf* sb = nullptr;
 };
 
 /// input adapter for buffer input
-class input_buffer_adapter final : public input_adapter_protocol
+class input_buffer_adapter
 {
   public:
     input_buffer_adapter(const char* b, const std::size_t l) noexcept
@@ -3998,11 +3999,10 @@ class input_buffer_adapter final : public input_adapter_protocol
     // delete because of pointer members
     input_buffer_adapter(const input_buffer_adapter&) = delete;
     input_buffer_adapter& operator=(input_buffer_adapter&) = delete;
-    input_buffer_adapter(input_buffer_adapter&&) = delete;
-    input_buffer_adapter& operator=(input_buffer_adapter&&) = delete;
-    ~input_buffer_adapter() override = default;
+    input_buffer_adapter(input_buffer_adapter&&) = default;
+    input_buffer_adapter& operator=(input_buffer_adapter&&) = default;
 
-    std::char_traits<char>::int_type get_character() noexcept override
+    std::char_traits<char>::int_type get_character() noexcept
     {
         if (JSON_HEDLEY_LIKELY(cursor < limit))
         {
@@ -4145,14 +4145,14 @@ struct wide_string_input_helper<WideStringType, 2>
 };
 
 template<typename WideStringType>
-class wide_string_input_adapter final : public input_adapter_protocol
+class wide_string_input_adapter
 {
   public:
     explicit wide_string_input_adapter(const WideStringType& w) noexcept
         : str(w)
     {}
 
-    std::char_traits<char>::int_type get_character() noexcept override
+    std::char_traits<char>::int_type get_character() noexcept
     {
         // check if buffer needs to be filled
         if (utf8_bytes_index == utf8_bytes_filled)
@@ -4191,30 +4191,19 @@ class wide_string_input_adapter final : public input_adapter_protocol
     std::size_t utf8_bytes_filled = 0;
 };
 
-inline std::shared_ptr<file_input_adapter> input_adapter(std::FILE* file)
+inline file_input_adapter input_adapter(std::FILE* file)
 {
-    return std::make_shared<file_input_adapter>(file);
+    return file_input_adapter(file);
 }
 
-inline std::shared_ptr<input_stream_adapter> input_adapter(std::istream& stream)
+inline input_stream_adapter input_adapter(std::istream& stream)
 {
-    return std::make_shared<input_stream_adapter>(stream);
+    return input_stream_adapter(stream);
 }
 
-inline std::shared_ptr<input_stream_adapter> input_adapter(std::istream&& stream)
+inline input_stream_adapter input_adapter(std::istream&& stream)
 {
-    return std::make_shared<input_stream_adapter>(stream);
-}
-
-template<typename CharT,
-         typename std::enable_if<
-             std::is_pointer<CharT>::value and
-             std::is_integral<typename std::remove_pointer<CharT>::type>::value and
-             sizeof(typename std::remove_pointer<CharT>::type) == 1,
-             int>::type = 0>
-std::shared_ptr<input_buffer_adapter> input_adapter(CharT b, std::size_t l)
-{
-    return std::make_shared<input_buffer_adapter>(reinterpret_cast<const char*>(b), l);
+    return input_stream_adapter(stream);
 }
 
 template<typename CharT,
@@ -4223,7 +4212,18 @@ template<typename CharT,
              std::is_integral<typename std::remove_pointer<CharT>::type>::value and
              sizeof(typename std::remove_pointer<CharT>::type) == 1,
              int>::type = 0>
-std::shared_ptr<input_buffer_adapter> input_adapter(CharT b)
+input_buffer_adapter input_adapter(CharT b, std::size_t l)
+{
+    return input_buffer_adapter(reinterpret_cast<const char*>(b), l);
+}
+
+template<typename CharT,
+         typename std::enable_if<
+             std::is_pointer<CharT>::value and
+             std::is_integral<typename std::remove_pointer<CharT>::type>::value and
+             sizeof(typename std::remove_pointer<CharT>::type) == 1,
+             int>::type = 0>
+input_buffer_adapter input_adapter(CharT b)
 {
     return input_adapter(reinterpret_cast<const char*>(b),
                          std::strlen(reinterpret_cast<const char*>(b)));
@@ -4233,7 +4233,7 @@ template<class IteratorType,
          typename std::enable_if<
              std::is_same<typename iterator_traits<IteratorType>::iterator_category, std::random_access_iterator_tag>::value,
              int>::type = 0>
-std::shared_ptr<input_buffer_adapter> input_adapter(IteratorType first, IteratorType last)
+input_buffer_adapter input_adapter(IteratorType first, IteratorType last)
 {
 #ifndef NDEBUG
     // assertion to check that the iterator range is indeed contiguous,
@@ -4257,43 +4257,43 @@ std::shared_ptr<input_buffer_adapter> input_adapter(IteratorType first, Iterator
     if (JSON_HEDLEY_LIKELY(len > 0))
     {
         // there is at least one element: use the address of first
-        return std::make_shared<input_buffer_adapter>(reinterpret_cast<const char*>(&(*first)), len);
+        return input_buffer_adapter(reinterpret_cast<const char*>(&(*first)), len);
     }
     else
     {
         // the address of first cannot be used: use nullptr
-        return std::make_shared<input_buffer_adapter>(nullptr, len);
+        return input_buffer_adapter(nullptr, len);
     }
 }
 
-inline std::shared_ptr<wide_string_input_adapter<std::wstring>> input_adapter(const std::wstring& ws)
+inline wide_string_input_adapter<std::wstring> input_adapter(const std::wstring& ws)
 {
-    return std::make_shared<wide_string_input_adapter<std::wstring>>(ws);
+    return wide_string_input_adapter<std::wstring>(ws);
 }
 
 
-inline std::shared_ptr<wide_string_input_adapter<std::u16string>> input_adapter(const std::u16string& ws)
+inline wide_string_input_adapter<std::u16string> input_adapter(const std::u16string& ws)
 {
-    return std::make_shared<wide_string_input_adapter<std::u16string>>(ws);
+    return wide_string_input_adapter<std::u16string>(ws);
 }
 
-inline std::shared_ptr<wide_string_input_adapter<std::u32string>> input_adapter(const std::u32string& ws)
+inline wide_string_input_adapter<std::u32string> input_adapter(const std::u32string& ws)
 {
-    return std::make_shared<wide_string_input_adapter<std::u32string>>(ws);
+    return wide_string_input_adapter<std::u32string>(ws);
 }
 
 template<class ContiguousContainer, typename
          std::enable_if<not std::is_pointer<ContiguousContainer>::value and
                         std::is_base_of<std::random_access_iterator_tag, typename iterator_traits<decltype(std::begin(std::declval<ContiguousContainer const>()))>::iterator_category>::value,
                         int>::type = 0>
-std::shared_ptr<input_buffer_adapter> input_adapter(const ContiguousContainer& c)
+input_buffer_adapter input_adapter(const ContiguousContainer& c)
 {
     return input_adapter(std::begin(c), std::end(c));
 }
 
 
 template<class T, std::size_t N>
-std::shared_ptr<input_buffer_adapter> input_adapter(T (&array)[N])
+input_buffer_adapter input_adapter(T (&array)[N])
 {
     return input_adapter(std::begin(array), std::end(array));
 }
@@ -4311,7 +4311,7 @@ class span_input_adapter
                  sizeof(typename std::remove_pointer<CharT>::type) == 1,
                  int>::type = 0>
     span_input_adapter(CharT b, std::size_t l)
-        : ia(std::make_shared<input_buffer_adapter>(reinterpret_cast<const char*>(b), l)) {}
+        : ia(reinterpret_cast<const char*>(b), l) {}
 
     template<typename CharT,
              typename std::enable_if<
@@ -4342,13 +4342,13 @@ class span_input_adapter
     span_input_adapter(const ContiguousContainer& c)
         : span_input_adapter(std::begin(c), std::end(c)) {}
 
-    std::shared_ptr<input_buffer_adapter> get()
+    input_buffer_adapter&& get()
     {
-        return ia;
+        return std::move(ia);
     }
 
   private:
-    std::shared_ptr<input_buffer_adapter> ia = nullptr;
+    input_buffer_adapter ia;
 };
 }  // namespace detail
 }  // namespace nlohmann
@@ -5220,10 +5220,9 @@ namespace detail
 /*!
 @brief deserialization of CBOR, MessagePack, and UBJSON values
 */
-template<typename BasicJsonType, typename SAX = json_sax_dom_parser<BasicJsonType>, typename InputAdapterType = input_adapter_protocol>
+template<typename BasicJsonType, typename InputAdapterType, typename SAX = json_sax_dom_parser<BasicJsonType>>
 class binary_reader
 {
-    using input_adapter_ptr_t = std::shared_ptr<InputAdapterType>;
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
@@ -5236,10 +5235,9 @@ class binary_reader
 
     @param[in] adapter  input adapter to read from
     */
-    explicit binary_reader(input_adapter_ptr_t adapter) : ia(std::move(adapter))
+    explicit binary_reader(InputAdapterType&& adapter) : ia(std::move(adapter))
     {
         (void)detail::is_sax_static_asserts<SAX, BasicJsonType> {};
-        assert(ia);
     }
 
     // make class move-only
@@ -6999,7 +6997,7 @@ class binary_reader
     int get()
     {
         ++chars_read;
-        return current = ia->get_character();
+        return current = ia.get_character();
     }
 
     /*!
@@ -7155,7 +7153,7 @@ class binary_reader
 
   private:
     /// input adapter
-    input_adapter_ptr_t ia = nullptr;
+    InputAdapterType ia;
 
     /// the current character
     int current = std::char_traits<char>::eof();
@@ -7279,11 +7277,9 @@ class lexer_base
 
 This class organizes the lexical analysis during JSON deserialization.
 */
-template<typename BasicJsonType, typename InputAdapterType = input_adapter_protocol>
+template<typename BasicJsonType, typename InputAdapterType>
 class lexer : public lexer_base<BasicJsonType>
 {
-    using input_adapter_ptr_t = std::shared_ptr<InputAdapterType>;
-
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
@@ -7292,7 +7288,7 @@ class lexer : public lexer_base<BasicJsonType>
   public:
     using token_type = typename lexer_base<BasicJsonType>::token_type;
 
-    explicit lexer(input_adapter_ptr_t&& adapter)
+    explicit lexer(InputAdapterType&& adapter)
         : ia(std::move(adapter)), decimal_point_char(get_decimal_point()) {}
 
     // delete because of pointer members
@@ -8444,7 +8440,7 @@ scan_number_done:
         }
         else
         {
-            current = ia->get_character();
+            current = ia.get_character();
         }
 
         if (JSON_HEDLEY_LIKELY(current != std::char_traits<char>::eof()))
@@ -8668,7 +8664,7 @@ scan_number_done:
 
   private:
     /// input adapter
-    input_adapter_ptr_t ia = nullptr;
+    InputAdapterType ia;
 
     /// the current character
     std::char_traits<char>::int_type current = std::char_traits<char>::eof();
@@ -8758,10 +8754,9 @@ using parser_callback_t =
 
 This class implements a recursive descent parser.
 */
-template<typename BasicJsonType, typename InputAdapterType = input_adapter_protocol>
+template<typename BasicJsonType, typename InputAdapterType>
 class parser
 {
-    using input_adapter_ptr_t = std::shared_ptr<InputAdapterType>;
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
@@ -8771,7 +8766,7 @@ class parser
 
   public:
     /// a parser reading from an input adapter
-    explicit parser(input_adapter_ptr_t&& adapter,
+    explicit parser(InputAdapterType&& adapter,
                     const parser_callback_t<BasicJsonType> cb = nullptr,
                     const bool allow_exceptions_ = true)
         : callback(cb), m_lexer(std::move(adapter)), allow_exceptions(allow_exceptions_)
@@ -12678,7 +12673,7 @@ class binary_writer
 
   private:
     /// whether we can assume little endianess
-    const bool is_little_endian = binary_reader<BasicJsonType>::little_endianess();
+    const bool is_little_endian = binary_reader<BasicJsonType, detail::input_buffer_adapter>::little_endianess();
 
     /// the output
     output_adapter_t<CharType> oa = nullptr;
@@ -14778,7 +14773,7 @@ class basic_json
     friend class ::nlohmann::detail::iter_impl;
     template<typename BasicJsonType, typename CharType>
     friend class ::nlohmann::detail::binary_writer;
-    template<typename BasicJsonType, typename SAX, typename InputType>
+    template<typename BasicJsonType, typename InputType, typename SAX>
     friend class ::nlohmann::detail::binary_reader;
     template<typename BasicJsonType>
     friend class ::nlohmann::detail::json_sax_dom_parser;
@@ -14793,7 +14788,7 @@ class basic_json
 
     template<typename InputAdapterType>
     static ::nlohmann::detail::parser<basic_json, InputAdapterType> parser(
-        std::shared_ptr<InputAdapterType> adapter,
+        InputAdapterType adapter,
         detail::parser_callback_t<basic_json>cb = nullptr,
         bool allow_exceptions = true
     )
@@ -14813,7 +14808,8 @@ class basic_json
     template<typename CharType>
     using output_adapter_t = ::nlohmann::detail::output_adapter_t<CharType>;
 
-    using binary_reader = ::nlohmann::detail::binary_reader<basic_json>;
+    template<typename InputType>
+    using binary_reader = ::nlohmann::detail::binary_reader<basic_json, InputType>;
     template<typename CharType> using binary_writer = ::nlohmann::detail::binary_writer<basic_json, CharType>;
 
     using serializer = ::nlohmann::detail::serializer<basic_json>;
@@ -20906,11 +20902,10 @@ class basic_json
     {
         assert(sax);
 
-        auto input_adapter = detail::input_adapter(std::forward<InputType>(i));
-        using adapter_type = typename decltype(input_adapter)::element_type;
+        auto ia = detail::input_adapter(std::forward<InputType>(i));
         return format == input_format_t::json
-               ? parser(std::move(input_adapter)).sax_parse(sax, strict)
-               : detail::binary_reader<basic_json, SAX, adapter_type>(std::move(input_adapter)).sax_parse(format, sax, strict);
+               ? parser(std::move(ia)).sax_parse(sax, strict)
+               : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia)).sax_parse(format, sax, strict);
     }
 
     template <typename SAX>
@@ -20921,11 +20916,10 @@ class basic_json
     {
         assert(sax);
 
-        auto input_adapter = i.get();
-        using adapter_type = typename decltype(input_adapter)::element_type;
+        auto ia = i.get();
         return format == input_format_t::json
-               ? parser(std::move(input_adapter)).sax_parse(sax, strict)
-               : detail::binary_reader<basic_json, SAX, adapter_type>(std::move(input_adapter)).sax_parse(format, sax, strict);
+               ? parser(std::move(ia)).sax_parse(sax, strict)
+               : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia)).sax_parse(format, sax, strict);
     }
 
 
@@ -21629,7 +21623,8 @@ class basic_json
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        const bool res = binary_reader(detail::input_adapter(std::forward<InputType>(i))).sax_parse(input_format_t::cbor, &sdp, strict);
+        auto ia = detail::input_adapter(std::forward<InputType>(i));
+        const bool res = binary_reader<decltype(ia)>(std::move(ia)).sax_parse(input_format_t::cbor, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -21645,7 +21640,7 @@ class basic_json
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        const bool res = binary_reader(detail::span_input_adapter(std::forward<A1>(a1), std::forward<A2>(a2)).get()).sax_parse(input_format_t::cbor, &sdp, strict);
+        const bool res = binary_reader<detail::input_buffer_adapter>(detail::span_input_adapter(std::forward<A1>(a1), std::forward<A2>(a2)).get()).sax_parse(input_format_t::cbor, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -21656,7 +21651,7 @@ class basic_json
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        const bool res = binary_reader(i.get()).sax_parse(input_format_t::cbor, &sdp, strict);
+        const bool res = binary_reader<detail::input_buffer_adapter>(i.get()).sax_parse(input_format_t::cbor, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -21750,7 +21745,8 @@ class basic_json
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        const bool res = binary_reader(detail::input_adapter(std::forward<InputType>(i))).sax_parse(input_format_t::msgpack, &sdp, strict);
+        auto ia = detail::input_adapter(std::forward<InputType>(i));
+        const bool res = binary_reader<decltype(ia)>(std::move(ia)).sax_parse(input_format_t::msgpack, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -21766,7 +21762,7 @@ class basic_json
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        const bool res = binary_reader(detail::span_input_adapter(std::forward<A1>(a1), std::forward<A2>(a2)).get()).sax_parse(input_format_t::msgpack, &sdp, strict);
+        const bool res = binary_reader<detail::input_buffer_adapter>(detail::span_input_adapter(std::forward<A1>(a1), std::forward<A2>(a2)).get()).sax_parse(input_format_t::msgpack, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -21778,7 +21774,7 @@ class basic_json
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        const bool res = binary_reader(i.get()).sax_parse(input_format_t::msgpack, &sdp, strict);
+        const bool res = binary_reader<detail::input_buffer_adapter>(i.get()).sax_parse(input_format_t::msgpack, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -21852,7 +21848,8 @@ class basic_json
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        const bool res = binary_reader(detail::input_adapter(std::forward<InputType>(i))).sax_parse(input_format_t::ubjson, &sdp, strict);
+        auto ia = detail::input_adapter(std::forward<InputType>(i));
+        const bool res = binary_reader<decltype(ia)>(std::move(ia)).sax_parse(input_format_t::ubjson, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -21868,7 +21865,7 @@ class basic_json
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        const bool res = binary_reader(detail::span_input_adapter(std::forward<A1>(a1), std::forward<A2>(a2)).get()).sax_parse(input_format_t::ubjson, &sdp, strict);
+        const bool res = binary_reader<detail::input_buffer_adapter>(detail::span_input_adapter(std::forward<A1>(a1), std::forward<A2>(a2)).get()).sax_parse(input_format_t::ubjson, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -21879,7 +21876,7 @@ class basic_json
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        const bool res = binary_reader(i.get()).sax_parse(input_format_t::ubjson, &sdp, strict);
+        const bool res = binary_reader<detail::input_buffer_adapter>(i.get()).sax_parse(input_format_t::ubjson, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -21952,7 +21949,8 @@ class basic_json
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        const bool res = binary_reader(detail::input_adapter(std::forward<InputType>(i))).sax_parse(input_format_t::bson, &sdp, strict);
+        auto ia = detail::input_adapter(std::forward<InputType>(i));
+        const bool res = binary_reader<decltype(ia)>(std::move(ia)).sax_parse(input_format_t::bson, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -21968,7 +21966,7 @@ class basic_json
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        const bool res = binary_reader(detail::span_input_adapter(std::forward<A1>(a1), std::forward<A2>(a2)).get()).sax_parse(input_format_t::bson, &sdp, strict);
+        const bool res = binary_reader<detail::input_buffer_adapter>(detail::span_input_adapter(std::forward<A1>(a1), std::forward<A2>(a2)).get()).sax_parse(input_format_t::bson, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -21979,7 +21977,7 @@ class basic_json
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        const bool res = binary_reader(i.get()).sax_parse(input_format_t::bson, &sdp, strict);
+        const bool res = binary_reader<detail::input_buffer_adapter>(i.get()).sax_parse(input_format_t::bson, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
     /// @}

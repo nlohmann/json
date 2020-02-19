@@ -39,9 +39,8 @@ namespace
 // shortcut to scan a string literal
 json::lexer::token_type scan_string(const char* s)
 {
-    auto input_adapter = nlohmann::detail::input_adapter(s);
-    using input_adapter_type = typename decltype(input_adapter)::element_type;
-    return nlohmann::detail::lexer<json, input_adapter_type>(std::move(input_adapter)).scan();
+    auto ia = nlohmann::detail::input_adapter(s);
+    return nlohmann::detail::lexer<json, decltype(ia)>(std::move(ia)).scan();
 }
 }
 
