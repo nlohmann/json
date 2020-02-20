@@ -5214,6 +5214,20 @@ namespace nlohmann
 {
 namespace detail
 {
+
+/*!
+@brief determine system byte order
+
+@return true if and only if system's byte order is little endian
+
+@note from https://stackoverflow.com/a/1001328/266378
+*/
+static bool little_endianess(int num = 1) noexcept
+{
+    return *reinterpret_cast<char*>(&num) == 1;
+}
+
+
 ///////////////////
 // binary reader //
 ///////////////////
@@ -5305,18 +5319,6 @@ class binary_reader
         }
 
         return result;
-    }
-
-    /*!
-    @brief determine system byte order
-
-    @return true if and only if system's byte order is little endian
-
-    @note from https://stackoverflow.com/a/1001328/266378
-    */
-    static constexpr bool little_endianess(int num = 1) noexcept
-    {
-        return *reinterpret_cast<char*>(&num) == 1;
     }
 
   private:
@@ -12674,7 +12676,7 @@ class binary_writer
 
   private:
     /// whether we can assume little endianess
-    const bool is_little_endian = binary_reader<BasicJsonType, input_buffer_adapter>::little_endianess();
+    const bool is_little_endian = little_endianess();
 
     /// the output
     output_adapter_t<CharType> oa = nullptr;
