@@ -37,6 +37,7 @@ using nlohmann::json;
 namespace
 {
 // shortcut to scan a string literal
+json::lexer::token_type scan_string(const char* s);
 json::lexer::token_type scan_string(const char* s)
 {
     auto ia = nlohmann::detail::input_adapter(s);
