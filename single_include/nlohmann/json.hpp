@@ -3906,7 +3906,7 @@ class file_input_adapter
     file_input_adapter(const file_input_adapter&) = delete;
     file_input_adapter(file_input_adapter&&) = default;
     file_input_adapter& operator=(const file_input_adapter&) = delete;
-    file_input_adapter& operator=(file_input_adapter&&) = default;
+    file_input_adapter& operator=(file_input_adapter&&) = delete;
 
     std::char_traits<char>::int_type get_character() noexcept
     {
@@ -3948,25 +3948,12 @@ class input_stream_adapter
     // delete because of pointer members
     input_stream_adapter(const input_stream_adapter&) = delete;
     input_stream_adapter& operator=(input_stream_adapter&) = delete;
+    input_stream_adapter& operator=(input_stream_adapter&& rhs) = delete;
 
     input_stream_adapter(input_stream_adapter&& rhs) : is(rhs.is), sb(rhs.sb)
     {
         rhs.is = nullptr;
         rhs.sb = nullptr;
-    }
-
-    input_stream_adapter& operator=(input_stream_adapter&& rhs)
-    {
-        if (is)
-        {
-            is->clear(is->rdstate() & std::ios::eofbit);
-        }
-
-        is = rhs.is;
-        sb = rhs.sb;
-        rhs.is = nullptr;
-        rhs.sb = nullptr;
-        return *this;
     }
 
     // std::istream/std::streambuf use std::char_traits<char>::to_int_type, to
@@ -4001,7 +3988,7 @@ class input_buffer_adapter
     input_buffer_adapter(const input_buffer_adapter&) = delete;
     input_buffer_adapter& operator=(input_buffer_adapter&) = delete;
     input_buffer_adapter(input_buffer_adapter&&) = default;
-    input_buffer_adapter& operator=(input_buffer_adapter&&) = default;
+    input_buffer_adapter& operator=(input_buffer_adapter&&) = delete;
 
     std::char_traits<char>::int_type get_character() noexcept
     {
