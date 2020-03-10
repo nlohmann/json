@@ -311,7 +311,7 @@ You can also get a string representation of a JSON value (serialize):
 
 ```cpp
 // explicit conversion to string
-std::string s = j.dump();    // {\"happy\":true,\"pi\":3.141}
+std::string s = j.dump();    // {"happy":true,"pi":3.141}
 
 // serialization with pretty printing
 // pass in the amount of spaces to indent
