@@ -14,7 +14,6 @@ int main()
     std::cout << std::boolalpha
               << j.contains("/number"_json_pointer) << '\n'
               << j.contains("/string"_json_pointer) << '\n'
-              << j.contains("/string"_json_pointer) << '\n'
               << j.contains("/array"_json_pointer) << '\n'
               << j.contains("/array/1"_json_pointer) << '\n'
               << j.contains("/array/-"_json_pointer) << '\n'

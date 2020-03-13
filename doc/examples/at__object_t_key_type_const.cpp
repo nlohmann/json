@@ -6,7 +6,7 @@ using json = nlohmann::json;
 int main()
 {
     // create JSON object
-    json object =
+    const json object =
     {
         {"the good", "il buono"},
         {"the bad", "il cattivo"},

@@ -8,7 +8,7 @@ int main()
     // create a JSON object
     json j_object = {{"one", 1}, {"two", 2}};
 
-    // call find
+    // call count()
     auto count_two = j_object.count("two");
     auto count_three = j_object.count("three");
 
