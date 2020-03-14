@@ -1385,7 +1385,7 @@ By default, the library does not preserve the **insertion order of object elemen
 
 We checked with Valgrind and the Address Sanitizer (ASAN) that there are no memory leaks. 
 
-If you find that a prasering program with this library does not release memory, please consider the following case and it maybe unrelated to this library. 
+If you find that a parsing program with this library does not release memory, please consider the following case and it maybe unrelated to this library. 
 
 **Your program is compiled with glibc.** There is a tunable threshold that glibc uses to decide whether to actually return memory to the system or whether to cache it for later reuse. If in your program you make lots of small allocations and those small allocations are not a contiguous block and are presumably below the threshold, then they will not get returned to the OS.
 Here is a related issue [#1924](https://github.com/nlohmann/json/issues/1924).
