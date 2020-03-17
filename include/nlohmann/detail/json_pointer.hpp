@@ -329,6 +329,20 @@ class json_pointer
     */
     static int array_index(const std::string& s)
     {
+        // error condition (cf. RFC 6901, Sect. 4)
+        if (JSON_HEDLEY_UNLIKELY(s.size() > 1 and s[0] == '0'))
+        {
+            JSON_THROW(detail::parse_error::create(106, 0,
+                                                   "array index '" + s +
+                                                   "' must not begin with '0'"));
+        }
+
+        // error condition (cf. RFC 6901, Sect. 4 & Sect. 7)
+        if (JSON_HEDLEY_UNLIKELY(s.size() > 1 and not (s[0] >= '1' and s[0] <= '9')))
+        {
+            JSON_THROW(detail::parse_error::create(109, 0, "array index '" + s + "' is not a number"));
+        }
+
         std::size_t processed_chars = 0;
         const int res = std::stoi(s, &processed_chars);
 
@@ -474,14 +488,6 @@ class json_pointer
 
                 case detail::value_t::array:
                 {
-                    // error condition (cf. RFC 6901, Sect. 4)
-                    if (JSON_HEDLEY_UNLIKELY(reference_token.size() > 1 and reference_token[0] == '0'))
-                    {
-                        JSON_THROW(detail::parse_error::create(106, 0,
-                                                               "array index '" + reference_token +
-                                                               "' must not begin with '0'"));
-                    }
-
                     if (reference_token == "-")
                     {
                         // explicitly treat "-" as index beyond the end
@@ -541,14 +547,6 @@ class json_pointer
                                                                 ") is out of range"));
                     }
 
-                    // error condition (cf. RFC 6901, Sect. 4)
-                    if (JSON_HEDLEY_UNLIKELY(reference_token.size() > 1 and reference_token[0] == '0'))
-                    {
-                        JSON_THROW(detail::parse_error::create(106, 0,
-                                                               "array index '" + reference_token +
-                                                               "' must not begin with '0'"));
-                    }
-
                     // note: at performs range check
                     JSON_TRY
                     {
@@ -606,14 +604,6 @@ class json_pointer
                                                                 ") is out of range"));
                     }
 
-                    // error condition (cf. RFC 6901, Sect. 4)
-                    if (JSON_HEDLEY_UNLIKELY(reference_token.size() > 1 and reference_token[0] == '0'))
-                    {
-                        JSON_THROW(detail::parse_error::create(106, 0,
-                                                               "array index '" + reference_token +
-                                                               "' must not begin with '0'"));
-                    }
-
                     // use unchecked array access
                     JSON_TRY
                     {
@@ -665,14 +655,6 @@ class json_pointer
                                                                 ") is out of range"));
                     }
 
-                    // error condition (cf. RFC 6901, Sect. 4)
-                    if (JSON_HEDLEY_UNLIKELY(reference_token.size() > 1 and reference_token[0] == '0'))
-                    {
-                        JSON_THROW(detail::parse_error::create(106, 0,
-                                                               "array index '" + reference_token +
-                                                               "' must not begin with '0'"));
-                    }
-
                     // note: at performs range check
                     JSON_TRY
                     {
@@ -722,14 +704,6 @@ class json_pointer
                     {
                         // "-" always fails the range check
                         return false;
-                    }
-
-                    // error condition (cf. RFC 6901, Sect. 4)
-                    if (JSON_HEDLEY_UNLIKELY(reference_token.size() > 1 and reference_token[0] == '0'))
-                    {
-                        JSON_THROW(detail::parse_error::create(106, 0,
-                                                               "array index '" + reference_token +
-                                                               "' must not begin with '0'"));
                     }
 
                     JSON_TRY
