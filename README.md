@@ -69,6 +69,7 @@ You can sponsor this library at [GitHub Sponsors](https://github.com/sponsors/nl
 ### :label: Named Sponsors
 
 - [Michael Hartmann](https://github.com/reFX-Mike)
+- [Stefan Hagen](https://github.com/sthagen)
 
 Thanks everyone!
 
