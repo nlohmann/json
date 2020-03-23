@@ -10418,7 +10418,15 @@ class json_pointer
         }
 
         std::size_t processed_chars = 0;
-        const int res = std::stoi(s, &processed_chars);
+        int res = 0;
+        JSON_TRY
+        {
+            res = std::stoi(s, &processed_chars);
+        }
+        JSON_CATCH(std::invalid_argument&)
+        {
+            JSON_THROW(detail::parse_error::create(109, 0, "array index '" + s + "' is not a number"));
+        }
 
         // check if the string was completely read
         if (JSON_HEDLEY_UNLIKELY(processed_chars != s.size()))
@@ -10485,14 +10493,7 @@ class json_pointer
                 case detail::value_t::array:
                 {
                     // create an entry in the array
-                    JSON_TRY
-                    {
-                        result = &result->operator[](static_cast<size_type>(array_index(reference_token)));
-                    }
-                    JSON_CATCH(std::invalid_argument&)
-                    {
-                        JSON_THROW(detail::parse_error::create(109, 0, "array index '" + reference_token + "' is not a number"));
-                    }
+                    result = &result->operator[](static_cast<size_type>(array_index(reference_token)));
                     break;
                 }
 
@@ -10570,15 +10571,8 @@ class json_pointer
                     else
                     {
                         // convert array index to number; unchecked access
-                        JSON_TRY
-                        {
-                            ptr = &ptr->operator[](
-                                static_cast<size_type>(array_index(reference_token)));
-                        }
-                        JSON_CATCH(std::invalid_argument&)
-                        {
-                            JSON_THROW(detail::parse_error::create(109, 0, "array index '" + reference_token + "' is not a number"));
-                        }
+                        ptr = &ptr->operator[](
+                                  static_cast<size_type>(array_index(reference_token)));
                     }
                     break;
                 }
@@ -10622,14 +10616,7 @@ class json_pointer
                     }
 
                     // note: at performs range check
-                    JSON_TRY
-                    {
-                        ptr = &ptr->at(static_cast<size_type>(array_index(reference_token)));
-                    }
-                    JSON_CATCH(std::invalid_argument&)
-                    {
-                        JSON_THROW(detail::parse_error::create(109, 0, "array index '" + reference_token + "' is not a number"));
-                    }
+                    ptr = &ptr->at(static_cast<size_type>(array_index(reference_token)));
                     break;
                 }
 
@@ -10679,15 +10666,8 @@ class json_pointer
                     }
 
                     // use unchecked array access
-                    JSON_TRY
-                    {
-                        ptr = &ptr->operator[](
-                            static_cast<size_type>(array_index(reference_token)));
-                    }
-                    JSON_CATCH(std::invalid_argument&)
-                    {
-                        JSON_THROW(detail::parse_error::create(109, 0, "array index '" + reference_token + "' is not a number"));
-                    }
+                    ptr = &ptr->operator[](
+                              static_cast<size_type>(array_index(reference_token)));
                     break;
                 }
 
@@ -10730,14 +10710,7 @@ class json_pointer
                     }
 
                     // note: at performs range check
-                    JSON_TRY
-                    {
-                        ptr = &ptr->at(static_cast<size_type>(array_index(reference_token)));
-                    }
-                    JSON_CATCH(std::invalid_argument&)
-                    {
-                        JSON_THROW(detail::parse_error::create(109, 0, "array index '" + reference_token + "' is not a number"));
-                    }
+                    ptr = &ptr->at(static_cast<size_type>(array_index(reference_token)));
                     break;
                 }
 
@@ -10780,22 +10753,14 @@ class json_pointer
                         return false;
                     }
 
-                    JSON_TRY
+                    const auto idx = static_cast<size_type>(array_index(reference_token));
+                    if (idx >= ptr->size())
                     {
-                        const auto idx = static_cast<size_type>(array_index(reference_token));
-                        if (idx >= ptr->size())
-                        {
-                            // index out of range
-                            return false;
-                        }
+                        // index out of range
+                        return false;
+                    }
 
-                        ptr = &ptr->operator[](idx);
-                        break;
-                    }
-                    JSON_CATCH(std::invalid_argument&)
-                    {
-                        JSON_THROW(detail::parse_error::create(109, 0, "array index '" + reference_token + "' is not a number"));
-                    }
+                    ptr = &ptr->operator[](idx);
                     break;
                 }
 
