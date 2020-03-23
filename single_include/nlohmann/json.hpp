@@ -14552,7 +14552,9 @@ class serializer
                 ? (byte & 0x3fu) | (codep << 6u)
                 : (0xFFu >> type) & (byte);
 
-        state = utf8d[256u + state * 16u + type];
+        std::size_t index = 256u + static_cast<size_t>(state) * 16u + static_cast<size_t>(type);
+        assert(0 <= index and index < 400);
+        state = utf8d[index];
         return state;
     }
 
