@@ -17464,12 +17464,9 @@ class basic_json
                    not std::is_same<ValueType, detail::json_ref<basic_json>>::value and
                    not std::is_same<ValueType, typename string_t::value_type>::value and
                    not detail::is_basic_json<ValueType>::value
-
-#ifndef _MSC_VER  // fix for issue #167 operator<< ambiguity under VS2015
                    and not std::is_same<ValueType, std::initializer_list<typename string_t::value_type>>::value
 #if defined(JSON_HAS_CPP_17) && (defined(__GNUC__) || (defined(_MSC_VER) and _MSC_VER <= 1914))
                    and not std::is_same<ValueType, typename std::string_view>::value
-#endif
 #endif
                    and detail::is_detected<detail::get_template_function, const basic_json_t&, ValueType>::value
                    , int >::type = 0 >
