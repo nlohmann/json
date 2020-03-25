@@ -349,9 +349,9 @@ class json_pointer
         {
             res = std::stoi(s, &processed_chars);
         }
-        JSON_CATCH(std::invalid_argument&)
+        JSON_CATCH(std::out_of_range&)
         {
-            JSON_THROW(detail::parse_error::create(109, 0, "array index '" + s + "' is not a number"));
+            JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + s + "'"));
         }
 
         // check if the string was completely read
