@@ -240,7 +240,7 @@ namespace
 template<class T>
 struct allocator_no_forward
 {
-    typedef std::remove_const_t<T> value_type;
+    typedef T value_type;
     template <typename U>
     struct rebind
     {
