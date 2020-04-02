@@ -234,3 +234,51 @@ TEST_CASE("controlled bad_alloc")
         }
     }
 }
+
+namespace
+{
+template<class T>
+struct allocator_no_forward
+{
+    typedef std::remove_const_t<T> value_type;
+    template <typename U>
+    struct rebind
+    {
+        typedef allocator_no_forward<U> other;
+    };
+
+    T* allocate(size_t sz)
+    {
+        return static_cast<T*>(malloc(sz * sizeof(T)));
+    }
+
+    void deallocate(T* p, size_t)
+    {
+        free(p);
+    }
+
+    void construct(T* p, const T& arg)
+    {
+        ::new (static_cast<void*>(p)) T(arg);
+    }
+};
+}
+
+TEST_CASE("bad my_allocator::construct")
+{
+    SECTION("my_allocator::construct doesn't forward")
+    {
+        using bad_alloc_json = nlohmann::basic_json<std::map,
+              std::vector,
+              std::string,
+              bool,
+              std::int64_t,
+              std::uint64_t,
+              double,
+              allocator_no_forward>;
+
+        bad_alloc_json json;
+        json["test"] = bad_alloc_json::array_t();
+        json["test"].push_back("should not leak");
+    }
+}
