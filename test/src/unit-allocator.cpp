@@ -238,28 +238,17 @@ TEST_CASE("controlled bad_alloc")
 namespace
 {
 template<class T>
-struct allocator_no_forward
+struct allocator_no_forward : std::allocator<T>
 {
-    typedef T value_type;
     template <typename U>
-    struct rebind
-    {
+    struct rebind {
         typedef allocator_no_forward<U> other;
     };
 
-    T* allocate(size_t sz)
+    template <class... Args>
+    void construct(T* p, const Args&... args)
     {
-        return static_cast<T*>(malloc(sz * sizeof(T)));
-    }
-
-    void deallocate(T* p, size_t)
-    {
-        free(p);
-    }
-
-    void construct(T* p, const T& arg)
-    {
-        ::new (static_cast<void*>(p)) T(arg);
+        ::new (static_cast<void*>(p)) T(args...);
     }
 };
 }
@@ -269,16 +258,16 @@ TEST_CASE("bad my_allocator::construct")
     SECTION("my_allocator::construct doesn't forward")
     {
         using bad_alloc_json = nlohmann::basic_json<std::map,
-              std::vector,
-              std::string,
-              bool,
-              std::int64_t,
-              std::uint64_t,
-              double,
-              allocator_no_forward>;
+                                                    std::vector,
+                                                    std::string,
+                                                    bool,
+                                                    std::int64_t,
+                                                    std::uint64_t,
+                                                    double,
+                                                    allocator_no_forward>;
 
-        bad_alloc_json json;
-        json["test"] = bad_alloc_json::array_t();
-        json["test"].push_back("should not leak");
+      bad_alloc_json json;
+      json["test"] = bad_alloc_json::array_t();
+      json["test"].push_back("should not leak");
     }
 }
