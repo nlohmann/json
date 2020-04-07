@@ -337,7 +337,7 @@ class json_pointer
                                                    "' must not begin with '0'"));
         }
 
-        // error condition (cf. RFC 6901, Sect. 4 & Sect. 7)
+        // error condition (cf. RFC 6901, Sect. 4)
         if (JSON_HEDLEY_UNLIKELY(s.size() > 1 and not (s[0] >= '1' and s[0] <= '9')))
         {
             JSON_THROW(detail::parse_error::create(109, 0, "array index '" + s + "' is not a number"));
