@@ -240,9 +240,14 @@ namespace
 template<class T>
 struct allocator_no_forward : std::allocator<T>
 {
-    template <typename U>
+    using std::allocator<T>::allocator;
+
+    template <class U>
+    allocator_no_forward(allocator_no_forward<U>) {}
+
+    template <class U>
     struct rebind {
-        typedef allocator_no_forward<U> other;
+        using other =  allocator_no_forward<U>;
     };
 
     template <class... Args>
