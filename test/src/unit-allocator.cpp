@@ -240,8 +240,7 @@ namespace
 template<class T>
 struct allocator_no_forward : std::allocator<T>
 {
-    using std::allocator<T>::allocator;
-
+    allocator_no_forward() {}
     template <class U>
     allocator_no_forward(allocator_no_forward<U>) {}
 
@@ -253,6 +252,7 @@ struct allocator_no_forward : std::allocator<T>
     template <class... Args>
     void construct(T* p, const Args&... args)
     {
+        // force copy even if move is available
         ::new (static_cast<void*>(p)) T(args...);
     }
 };
