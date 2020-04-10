@@ -10516,8 +10516,8 @@ class json_pointer
     /*!
     @brief append an array index at the end of this JSON pointer
 
-    @param[in] array_index  array index to append
-    @return JSON pointer with @a array_index appended
+    @param[in] array_idx  array index to append
+    @return JSON pointer with @a array_idx appended
 
     @liveexample{The example shows the usage of `operator/=`.,json_pointer__operator_add}
 
@@ -10529,9 +10529,9 @@ class json_pointer
 
     @since version 3.6.0
     */
-    json_pointer& operator/=(std::size_t array_index)
+    json_pointer& operator/=(std::size_t array_idx)
     {
-        return *this /= std::to_string(array_index);
+        return *this /= std::to_string(array_idx);
     }
 
     /*!
@@ -10579,8 +10579,8 @@ class json_pointer
     @brief create a new JSON pointer by appending the array-index-token at the end of the JSON pointer
 
     @param[in] ptr  JSON pointer
-    @param[in] array_index  array index
-    @return a new JSON pointer with @a array_index appended to @a ptr
+    @param[in] array_idx  array index
+    @return a new JSON pointer with @a array_idx appended to @a ptr
 
     @liveexample{The example shows the usage of `operator/`.,json_pointer__operator_add_binary}
 
@@ -10590,9 +10590,9 @@ class json_pointer
 
     @since version 3.6.0
     */
-    friend json_pointer operator/(const json_pointer& ptr, std::size_t array_index)
+    friend json_pointer operator/(const json_pointer& ptr, std::size_t array_idx)
     {
-        return json_pointer(ptr) /= array_index;
+        return json_pointer(ptr) /= array_idx;
     }
 
     /*!
