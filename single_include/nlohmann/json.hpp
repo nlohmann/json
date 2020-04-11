@@ -20491,13 +20491,13 @@ class basic_json
       their stored values are the same according to their respective
       `operator==`.
     - Integer and floating-point numbers are automatically converted before
-      comparison. Note than two NaN values are always treated as unequal.
+      comparison. Note that two NaN values are always treated as unequal.
     - Two JSON null values are equal.
 
     @note Floating-point inside JSON values numbers are compared with
     `json::number_float_t::operator==` which is `double::operator==` by
     default. To compare floating-point while respecting an epsilon, an alternative
-    [comparison function](https://github.com/mariokonrad/marnav/blob/master/src/marnav/math/floatingpoint.hpp#L34-#L39)
+    [comparison function](https://github.com/mariokonrad/marnav/blob/master/include/marnav/math/floatingpoint.hpp#L34-#L39)
     could be used, for instance
     @code {.cpp}
     template<typename T, typename = typename std::enable_if<std::is_floating_point<T>::value, T>::type>
@@ -20506,7 +20506,22 @@ class basic_json
         return std::abs(a - b) <= epsilon;
     }
     @endcode
-
+    Or you can self-defined operator equal function like this:
+    @code {.cpp}
+    bool my_equal(const_reference lhs, const_reference rhs) {
+	const auto lhs_type lhs.type();
+	const auto rhs_type rhs.type();
+	if (lhs_type == rhs_type) {
+		switch(lhs_type)
+			// self_defined case
+			case value_t::number_float:
+				return std::abs(lhs - rhs) <= std::numeric_limits<float>::epsilon();
+			// other cases remain the same with the original
+			...
+	}
+	...
+    }
+    @endcode
     @note NaN values never compare equal to themselves or to other NaN values.
 
     @param[in] lhs  first JSON value to consider
