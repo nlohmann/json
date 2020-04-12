@@ -2795,7 +2795,7 @@ NLOHMANN_BASIC_JSON_TPL_DECLARATION
 struct is_basic_json<NLOHMANN_BASIC_JSON_TPL> : std::true_type {};
 
 //////////////////////
-// jspn_ref helpers //
+// json_ref helpers //
 //////////////////////
 
 template <typename>
