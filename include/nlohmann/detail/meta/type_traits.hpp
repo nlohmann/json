@@ -41,6 +41,19 @@ template<typename> struct is_basic_json : std::false_type {};
 NLOHMANN_BASIC_JSON_TPL_DECLARATION
 struct is_basic_json<NLOHMANN_BASIC_JSON_TPL> : std::true_type {};
 
+//////////////////////
+// jspn_ref helpers //
+//////////////////////
+
+template <typename>
+class json_ref;
+
+template<typename>
+struct is_json_ref : std::false_type {};
+
+template <typename T>
+struct is_json_ref<json_ref<T>> : std::true_type {};
+
 //////////////////////////
 // aliases for detected //
 //////////////////////////
