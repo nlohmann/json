@@ -22741,7 +22741,7 @@ class basic_json
                     result.push_back(
                     {
                         {"op", "add"},
-                        {"path", path + "/" + std::to_string(i)},
+                        {"path", path + "/-"},
                         {"value", target[i]}
                     });
                     ++i;
