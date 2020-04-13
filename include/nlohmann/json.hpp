@@ -1773,10 +1773,10 @@ class basic_json
     // other constructors and destructor //
     ///////////////////////////////////////
 
-    /// @private
-    basic_json(const detail::json_ref<basic_json>& ref)
-        : basic_json(ref.moved_or_copied())
-    {}
+    template <typename JsonRef,
+              detail::enable_if_t<detail::conjunction<detail::is_json_ref<JsonRef>,
+                                  std::is_same<typename JsonRef::value_type, basic_json>>::value, int> = 0 >
+    basic_json(const JsonRef& ref) : basic_json(ref.moved_or_copied()) {}
 
     /*!
     @brief copy constructor

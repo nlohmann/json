@@ -2794,6 +2794,19 @@ template<typename> struct is_basic_json : std::false_type {};
 NLOHMANN_BASIC_JSON_TPL_DECLARATION
 struct is_basic_json<NLOHMANN_BASIC_JSON_TPL> : std::true_type {};
 
+//////////////////////
+// json_ref helpers //
+//////////////////////
+
+template <typename>
+class json_ref;
+
+template<typename>
+struct is_json_ref : std::false_type {};
+
+template <typename T>
+struct is_json_ref<json_ref<T>> : std::true_type {};
+
 //////////////////////////
 // aliases for detected //
 //////////////////////////
@@ -16632,10 +16645,10 @@ class basic_json
     // other constructors and destructor //
     ///////////////////////////////////////
 
-    /// @private
-    basic_json(const detail::json_ref<basic_json>& ref)
-        : basic_json(ref.moved_or_copied())
-    {}
+    template <typename JsonRef,
+              detail::enable_if_t<detail::conjunction<detail::is_json_ref<JsonRef>,
+                                  std::is_same<typename JsonRef::value_type, basic_json>>::value, int> = 0 >
+    basic_json(const JsonRef& ref) : basic_json(ref.moved_or_copied()) {}
 
     /*!
     @brief copy constructor
