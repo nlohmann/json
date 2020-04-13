@@ -13955,7 +13955,7 @@ inline char* format_buffer(char* buf, int len, int decimal_exponent,
         // digits[000]
         // len <= max_exp + 2
 
-        std::memset(buf + k, '0', static_cast<size_t>(n - k));
+        std::memset(buf + k, '0', static_cast<size_t>(n) - static_cast<size_t>(k));
         // Make it look like a floating-point number (#362, #378)
         buf[n + 0] = '.';
         buf[n + 1] = '0';
@@ -13969,7 +13969,7 @@ inline char* format_buffer(char* buf, int len, int decimal_exponent,
 
         assert(k > n);
 
-        std::memmove(buf + (n + 1), buf + n, static_cast<size_t>(k - n));
+        std::memmove(buf + (n + 1), buf + n, static_cast<size_t>(k) - static_cast<size_t>(n));
         buf[n] = '.';
         return buf + (k + 1);
     }
