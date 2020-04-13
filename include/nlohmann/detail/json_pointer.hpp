@@ -678,6 +678,27 @@ class json_pointer
                         // "-" always fails the range check
                         return false;
                     }
+                    if (JSON_HEDLEY_UNLIKELY(reference_token.size() == 1 and not (reference_token >= "0" and reference_token <= "9")))
+                    {
+                        // invalid char
+                        return false;
+                    }
+                    if (JSON_HEDLEY_UNLIKELY(reference_token.size() > 1))
+                    {
+                        if (JSON_HEDLEY_UNLIKELY(not (reference_token[0] > '0' and reference_token[0] <= '9')))
+                        {
+                            // first char should be between '1' and '9'
+                            return false;
+                        }
+                        for (std::size_t i = 1; i < reference_token.size(); i++)
+                        {
+                            if (JSON_HEDLEY_UNLIKELY(not (reference_token[i] >= '0' and reference_token[i] <= '9')))
+                            {
+                                // other char should be between '0' and '9'
+                                return false;
+                            }
+                        }
+                    }
 
                     const auto idx = static_cast<size_type>(array_index(reference_token));
                     if (idx >= ptr->size())
