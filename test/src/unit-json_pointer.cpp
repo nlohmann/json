@@ -332,6 +332,34 @@ TEST_CASE("JSON pointers")
             CHECK_THROWS_WITH(j_const.at("/one"_json_pointer) == 1,
                               "[json.exception.parse_error.109] parse error: array index 'one' is not a number");
 
+            CHECK_THROWS_AS(j["/+1"_json_pointer] = 1, json::parse_error&);
+            CHECK_THROWS_WITH(j["/+1"_json_pointer] = 1,
+                              "[json.exception.parse_error.109] parse error: array index '+1' is not a number");
+            CHECK_THROWS_AS(j_const["/+1"_json_pointer] == 1, json::parse_error&);
+            CHECK_THROWS_WITH(j_const["/+1"_json_pointer] == 1,
+                              "[json.exception.parse_error.109] parse error: array index '+1' is not a number");
+
+            CHECK_THROWS_AS(j["/1+1"_json_pointer] = 1, json::out_of_range&);
+            CHECK_THROWS_WITH(j["/1+1"_json_pointer] = 1,
+                              "[json.exception.out_of_range.404] unresolved reference token '1+1'");
+            CHECK_THROWS_AS(j_const["/1+1"_json_pointer] == 1, json::out_of_range&);
+            CHECK_THROWS_WITH(j_const["/1+1"_json_pointer] == 1,
+                              "[json.exception.out_of_range.404] unresolved reference token '1+1'");
+
+            CHECK_THROWS_AS(j["/111111111111111111111111"_json_pointer] = 1, json::out_of_range&);
+            CHECK_THROWS_WITH(j["/111111111111111111111111"_json_pointer] = 1,
+                              "[json.exception.out_of_range.404] unresolved reference token '111111111111111111111111'");
+            CHECK_THROWS_AS(j_const["/111111111111111111111111"_json_pointer] == 1, json::out_of_range&);
+            CHECK_THROWS_WITH(j_const["/111111111111111111111111"_json_pointer] == 1,
+                              "[json.exception.out_of_range.404] unresolved reference token '111111111111111111111111'");
+
+            CHECK_THROWS_AS(j.at("/one"_json_pointer) = 1, json::parse_error&);
+            CHECK_THROWS_WITH(j.at("/one"_json_pointer) = 1,
+                              "[json.exception.parse_error.109] parse error: array index 'one' is not a number");
+            CHECK_THROWS_AS(j_const.at("/one"_json_pointer) == 1, json::parse_error&);
+            CHECK_THROWS_WITH(j_const.at("/one"_json_pointer) == 1,
+                              "[json.exception.parse_error.109] parse error: array index 'one' is not a number");
+
             CHECK_THROWS_AS(j.contains("/one"_json_pointer), json::parse_error&);
             CHECK_THROWS_WITH(j.contains("/one"_json_pointer),
                               "[json.exception.parse_error.109] parse error: array index 'one' is not a number");
