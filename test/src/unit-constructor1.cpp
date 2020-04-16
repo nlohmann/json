@@ -813,6 +813,21 @@ TEST_CASE("constructors")
             CHECK(j.type() == json::value_t::number_float);
         }
 
+        SECTION("NaN")
+        {
+            // NaN is stored properly, but serialized to null
+            json::number_float_t n(std::numeric_limits<json::number_float_t>::quiet_NaN());
+            json j(n);
+            CHECK(j.type() == json::value_t::number_float);
+
+            // check round trip of NaN
+            json::number_float_t d = j;
+            CHECK((std::isnan(d) and std::isnan(n)) == true);
+
+            // check that NaN is serialized to null
+            CHECK(j.dump() == "null");
+	}
+
         SECTION("infinity")
         {
             // infinity is stored properly, but serialized to null
