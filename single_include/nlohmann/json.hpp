@@ -2133,12 +2133,13 @@ JSON_HEDLEY_DIAGNOSTIC_POP
              class StringType, class BooleanType, class NumberIntegerType, \
              class NumberUnsignedType, class NumberFloatType,              \
              template<typename> class AllocatorType,                       \
-             template<typename, typename = void> class JSONSerializer>
+             template<typename, typename = void> class JSONSerializer,     \
+             class BinaryType>
 
 #define NLOHMANN_BASIC_JSON_TPL                                            \
     basic_json<ObjectType, ArrayType, StringType, BooleanType,             \
     NumberIntegerType, NumberUnsignedType, NumberFloatType,                \
-    AllocatorType, JSONSerializer>
+    AllocatorType, JSONSerializer, BinaryType>
 
 
 namespace nlohmann
@@ -2733,7 +2734,8 @@ template<template<typename U, typename V, typename... Args> class ObjectType =
          class NumberFloatType = double,
          template<typename U> class AllocatorType = std::allocator,
          template<typename T, typename SFINAE = void> class JSONSerializer =
-         adl_serializer>
+         adl_serializer,
+         class BinaryType = std::vector<std::uint8_t>>
 class basic_json;
 
 /*!
@@ -3190,6 +3192,7 @@ enum class value_t : std::uint8_t
     number_integer,   ///< number value (signed integer)
     number_unsigned,  ///< number value (unsigned integer)
     number_float,     ///< number value (floating-point)
+    binary,           ///< binary array (ordered collection of bytes)
     discarded         ///< discarded by the parser callback function
 };
 
@@ -3197,17 +3200,21 @@ enum class value_t : std::uint8_t
 @brief comparison operator for JSON types
 
 Returns an ordering that is similar to Python:
-- order: null < boolean < number < object < array < string
+- order: null < boolean < number < object < array < string < binary
 - furthermore, each type is not smaller than itself
 - discarded values are not comparable
+- binary is represented as a b"" string in python and directly comparable to a
+  string; however, making a binary array directly comparable with a string would
+  be surprising behavior in a JSON file.
 
 @since version 1.0.0
 */
 inline bool operator<(const value_t lhs, const value_t rhs) noexcept
 {
-    static constexpr std::array<std::uint8_t, 8> order = {{
+    static constexpr std::array<std::uint8_t, 9> order = {{
             0 /* null */, 3 /* object */, 4 /* array */, 5 /* string */,
-            1 /* boolean */, 2 /* integer */, 2 /* unsigned */, 2 /* float */
+            1 /* boolean */, 2 /* integer */, 2 /* unsigned */, 2 /* float */,
+            6 /* binary */
         }
     };
 
@@ -3836,6 +3843,28 @@ struct external_constructor<value_t::string>
     {
         j.m_type = value_t::string;
         j.m_value.string = j.template create<typename BasicJsonType::string_t>(str);
+        j.assert_invariant();
+    }
+};
+
+template<>
+struct external_constructor<value_t::binary>
+{
+    template<typename BasicJsonType>
+    static void construct(BasicJsonType& j, const typename BasicJsonType::binary_t& b)
+    {
+        j.m_type = value_t::binary;
+        typename BasicJsonType::internal_binary_t value{b};
+        j.m_value = value;
+        j.assert_invariant();
+    }
+
+    template<typename BasicJsonType>
+    static void construct(BasicJsonType& j, typename BasicJsonType::binary_t&& b)
+    {
+        j.m_type = value_t::binary;
+        typename BasicJsonType::internal_binary_t value{std::move(b)};
+        j.m_value = value;
         j.assert_invariant();
     }
 };
@@ -4669,6 +4698,7 @@ struct json_sax
     using number_float_t = typename BasicJsonType::number_float_t;
     /// type for strings
     using string_t = typename BasicJsonType::string_t;
+    using binary_t = typename BasicJsonType::binary_t;
 
     /*!
     @brief a null value was read
@@ -4712,6 +4742,14 @@ struct json_sax
     @note It is safe to move the passed string.
     */
     virtual bool string(string_t& val) = 0;
+
+    /*!
+    @brief a binary string was read
+    @param[in] val  binary value
+    @return whether parsing should proceed
+    @note It is safe to move the passed binary.
+    */
+    virtual bool binary(binary_t& val) = 0;
 
     /*!
     @brief the beginning of an object was read
@@ -4787,6 +4825,7 @@ class json_sax_dom_parser
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
     using string_t = typename BasicJsonType::string_t;
+    using binary_t = typename BasicJsonType::binary_t;
 
     /*!
     @param[in, out] r  reference to a JSON value that is manipulated while
@@ -4837,6 +4876,12 @@ class json_sax_dom_parser
     bool string(string_t& val)
     {
         handle_value(val);
+        return true;
+    }
+
+    bool binary(binary_t& val)
+    {
+        handle_binary(val);
         return true;
     }
 
@@ -4949,6 +4994,36 @@ class json_sax_dom_parser
         return object_element;
     }
 
+    /*!
+    @invariant If the ref stack is empty, then the passed value will be the new
+               root.
+    @invariant If the ref stack contains a value, then it is an array or an
+               object to which we can add elements
+    */
+    template<typename BinaryValue>
+    JSON_HEDLEY_RETURNS_NON_NULL
+    BasicJsonType* handle_binary(BinaryValue&& v)
+    {
+        if (ref_stack.empty())
+        {
+            root = BasicJsonType::binary_array(std::forward<BinaryValue>(v));
+            return &root;
+        }
+
+        assert(ref_stack.back()->is_array() or ref_stack.back()->is_object());
+
+        if (ref_stack.back()->is_array())
+        {
+            ref_stack.back()->m_value.array->emplace_back(BasicJsonType::binary_array(std::forward<BinaryValue>(v)));
+            return &(ref_stack.back()->m_value.array->back());
+        }
+
+        assert(ref_stack.back()->is_object());
+        assert(object_element);
+        *object_element = BasicJsonType::binary_array(std::forward<BinaryValue>(v));
+        return object_element;
+    }
+
     /// the parsed JSON value
     BasicJsonType& root;
     /// stack to model hierarchy of values
@@ -4969,6 +5044,7 @@ class json_sax_dom_callback_parser
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
     using string_t = typename BasicJsonType::string_t;
+    using binary_t = typename BasicJsonType::binary_t;
     using parser_callback_t = typename BasicJsonType::parser_callback_t;
     using parse_event_t = typename BasicJsonType::parse_event_t;
 
@@ -5018,6 +5094,12 @@ class json_sax_dom_callback_parser
     }
 
     bool string(string_t& val)
+    {
+        handle_value(val);
+        return true;
+    }
+
+    bool binary(binary_t& val)
     {
         handle_value(val);
         return true;
@@ -5273,6 +5355,7 @@ class json_sax_acceptor
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
     using string_t = typename BasicJsonType::string_t;
+    using binary_t = typename BasicJsonType::binary_t;
 
     bool null()
     {
@@ -5304,7 +5387,12 @@ class json_sax_acceptor
         return true;
     }
 
-    bool start_object(std::size_t  /*unused*/ = std::size_t(-1))
+    bool binary(binary_t& /*unused*/)
+    {
+        return true;
+    }
+
+    bool start_object(std::size_t /*unused*/ = std::size_t(-1))
     {
         return true;
     }
@@ -5319,7 +5407,7 @@ class json_sax_acceptor
         return true;
     }
 
-    bool start_array(std::size_t  /*unused*/ = std::size_t(-1))
+    bool start_array(std::size_t /*unused*/ = std::size_t(-1))
     {
         return true;
     }
@@ -5507,6 +5595,7 @@ class binary_reader
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
     using string_t = typename BasicJsonType::string_t;
+    using internal_binary_t = typename BasicJsonType::internal_binary_t;
     using json_sax_t = SAX;
 
   public:
@@ -5677,6 +5766,30 @@ class binary_reader
     }
 
     /*!
+    @brief Parses a byte array input of length @a len from the BSON input.
+    @param[in] len  The length of the byte array to be read.
+    @param[in, out] result  A reference to the binary variable where the read
+                            array is to be stored.
+    @tparam NumberType The type of the length @a len
+    @pre len >= 0
+    @return `true` if the byte array was successfully parsed
+    */
+    template<typename NumberType>
+    bool get_bson_binary(const NumberType len, internal_binary_t& result)
+    {
+        if (JSON_HEDLEY_UNLIKELY(len < 0))
+        {
+            auto last_token = get_token_string();
+            return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message(input_format_t::bson, "byte array length cannot be negative, is " + std::to_string(len), "binary")));
+        }
+
+        result.has_subtype = true; // All BSON binary values have a subtype
+        get_number<std::uint8_t>(input_format_t::bson, result.subtype);
+
+        return get_binary(input_format_t::bson, len, result);
+    }
+
+    /*!
     @brief Read a BSON document element of the given @a element_type.
     @param[in] element_type The BSON element type, c.f. http://bsonspec.org/spec.html
     @param[in] element_type_parse_position The position in the input stream,
@@ -5712,6 +5825,13 @@ class binary_reader
             case 0x04: // array
             {
                 return parse_bson_array();
+            }
+
+            case 0x05: // binary
+            {
+                std::int32_t len;
+                internal_binary_t value;
+                return get_number<std::int32_t, true>(input_format_t::bson, len) and get_bson_binary(len, value) and sax->binary(value);
             }
 
             case 0x08: // boolean
@@ -5760,6 +5880,7 @@ class binary_reader
     bool parse_bson_element_list(const bool is_array)
     {
         string_t key;
+
         while (int element_type = get())
         {
             if (JSON_HEDLEY_UNLIKELY(not unexpect_eof(input_format_t::bson, "element list")))
@@ -5932,6 +6053,41 @@ class binary_reader
                 std::uint64_t number;
                 return get_number(input_format_t::cbor, number) and sax->number_integer(static_cast<number_integer_t>(-1)
                         - static_cast<number_integer_t>(number));
+            }
+
+            // Binary data (0x00..0x17 bytes follow)
+            case 0x40:
+            case 0x41:
+            case 0x42:
+            case 0x43:
+            case 0x44:
+            case 0x45:
+            case 0x46:
+            case 0x47:
+            case 0x48:
+            case 0x49:
+            case 0x4A:
+            case 0x4B:
+            case 0x4C:
+            case 0x4D:
+            case 0x4E:
+            case 0x4F:
+            case 0x50:
+            case 0x51:
+            case 0x52:
+            case 0x53:
+            case 0x54:
+            case 0x55:
+            case 0x56:
+            case 0x57:
+            case 0x58: // Binary data (one-byte uint8_t for n follows)
+            case 0x59: // Binary data (two-byte uint16_t for n follow)
+            case 0x5A: // Binary data (four-byte uint32_t for n follow)
+            case 0x5B: // Binary data (eight-byte uint64_t for n follow)
+            case 0x5F: // Binary data (indefinite length)
+            {
+                internal_binary_t b;
+                return get_cbor_binary(b) and sax->binary(b);
             }
 
             // UTF-8 string (0x00..0x17 bytes follow)
@@ -6245,6 +6401,101 @@ class binary_reader
             {
                 auto last_token = get_token_string();
                 return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format_t::cbor, "expected length specification (0x60-0x7B) or indefinite string type (0x7F); last byte: 0x" + last_token, "string")));
+            }
+        }
+    }
+
+    /*!
+    @brief reads a CBOR byte array
+
+    This function first reads starting bytes to determine the expected
+    byte array length and then copies this number of bytes into the byte array.
+    Additionally, CBOR's byte arrays with indefinite lengths are supported.
+
+    @param[out] result  created byte array
+
+    @return whether byte array creation completed
+    */
+    bool get_cbor_binary(internal_binary_t& result)
+    {
+        if (JSON_HEDLEY_UNLIKELY(not unexpect_eof(input_format_t::cbor, "binary")))
+        {
+            return false;
+        }
+
+        switch (current)
+        {
+            // Binary data (0x00..0x17 bytes follow)
+            case 0x40:
+            case 0x41:
+            case 0x42:
+            case 0x43:
+            case 0x44:
+            case 0x45:
+            case 0x46:
+            case 0x47:
+            case 0x48:
+            case 0x49:
+            case 0x4A:
+            case 0x4B:
+            case 0x4C:
+            case 0x4D:
+            case 0x4E:
+            case 0x4F:
+            case 0x50:
+            case 0x51:
+            case 0x52:
+            case 0x53:
+            case 0x54:
+            case 0x55:
+            case 0x56:
+            case 0x57:
+            {
+                return get_binary(input_format_t::cbor, static_cast<unsigned int>(current) & 0x1Fu, result);
+            }
+
+            case 0x58: // Binary data (one-byte uint8_t for n follows)
+            {
+                std::uint8_t len;
+                return get_number(input_format_t::cbor, len) and get_binary(input_format_t::cbor, len, result);
+            }
+
+            case 0x59: // Binary data (two-byte uint16_t for n follow)
+            {
+                std::uint16_t len;
+                return get_number(input_format_t::cbor, len) and get_binary(input_format_t::cbor, len, result);
+            }
+
+            case 0x5A: // Binary data (four-byte uint32_t for n follow)
+            {
+                std::uint32_t len;
+                return get_number(input_format_t::cbor, len) and get_binary(input_format_t::cbor, len, result);
+            }
+
+            case 0x5B: // Binary data (eight-byte uint64_t for n follow)
+            {
+                std::uint64_t len;
+                return get_number(input_format_t::cbor, len) and get_binary(input_format_t::cbor, len, result);
+            }
+
+            case 0x5F: // Binary data (indefinite length)
+            {
+                while (get() != 0xFF)
+                {
+                    internal_binary_t chunk;
+                    if (not get_cbor_binary(chunk))
+                    {
+                        return false;
+                    }
+                    result.insert(result.end(), chunk.begin(), chunk.end());
+                }
+                return true;
+            }
+
+            default:
+            {
+                auto last_token = get_token_string();
+                return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format_t::cbor, "expected length specification (0x40-0x5B) or indefinite binary array type (0x5F); last byte: 0x" + last_token, "binary")));
             }
         }
     }
@@ -6569,6 +6820,22 @@ class binary_reader
             case 0xC3: // true
                 return sax->boolean(true);
 
+            case 0xC4: // bin 8
+            case 0xC5: // bin 16
+            case 0xC6: // bin 32
+            case 0xC7: // ext 8
+            case 0xC8: // ext 16
+            case 0xC9: // ext 32
+            case 0xD4: // fixext 1
+            case 0xD5: // fixext 2
+            case 0xD6: // fixext 4
+            case 0xD7: // fixext 8
+            case 0xD8: // fixext 16
+            {
+                internal_binary_t b;
+                return get_msgpack_binary(b) and sax->binary(b);
+            }
+
             case 0xCA: // float 32
             {
                 float number;
@@ -6774,6 +7041,108 @@ class binary_reader
             {
                 auto last_token = get_token_string();
                 return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format_t::msgpack, "expected length specification (0xA0-0xBF, 0xD9-0xDB); last byte: 0x" + last_token, "string")));
+            }
+        }
+    }
+
+    /*!
+    @brief reads a MessagePack byte array
+
+    This function first reads starting bytes to determine the expected
+    byte array length and then copies this number of bytes into a byte array.
+
+    @param[out] result  created byte array
+
+    @return whether byte array creation completed
+    */
+    bool get_msgpack_binary(internal_binary_t& result)
+    {
+        if (JSON_HEDLEY_UNLIKELY(not unexpect_eof(input_format_t::msgpack, "binary")))
+        {
+            return false;
+        }
+
+        switch (current)
+        {
+            case 0xC4: // bin 8
+            {
+                std::uint8_t len;
+                return get_number(input_format_t::msgpack, len) and get_binary(input_format_t::msgpack, len, result);
+            }
+
+            case 0xC5: // bin 16
+            {
+                std::uint16_t len;
+                return get_number(input_format_t::msgpack, len) and get_binary(input_format_t::msgpack, len, result);
+            }
+
+            case 0xC6: // bin 32
+            {
+                std::uint32_t len;
+                return get_number(input_format_t::msgpack, len) and get_binary(input_format_t::msgpack, len, result);
+            }
+
+            case 0xC7: // ext 8
+            {
+                std::uint8_t len;
+                result.has_subtype = true;
+                return get_number(input_format_t::msgpack, len) and
+                       get_number(input_format_t::msgpack, result.subtype) and
+                       get_binary(input_format_t::msgpack, len, result);
+            }
+
+            case 0xC8: // ext 16
+            {
+                std::uint16_t len;
+                result.has_subtype = true;
+                return get_number(input_format_t::msgpack, len) and
+                       get_number(input_format_t::msgpack, result.subtype) and
+                       get_binary(input_format_t::msgpack, len, result);
+            }
+
+            case 0xC9: // ext 32
+            {
+                std::uint32_t len;
+                result.has_subtype = true;
+                return get_number(input_format_t::msgpack, len) and
+                       get_number(input_format_t::msgpack, result.subtype) and
+                       get_binary(input_format_t::msgpack, len, result);
+            }
+
+            case 0xD4: // fixext 1
+            {
+                result.has_subtype = true;
+                return get_number(input_format_t::msgpack, result.subtype) and get_binary(input_format_t::msgpack, 1, result);
+            }
+
+            case 0xD5: // fixext 2
+            {
+                result.has_subtype = true;
+                return get_number(input_format_t::msgpack, result.subtype) and get_binary(input_format_t::msgpack, 2, result);
+            }
+
+            case 0xD6: // fixext 4
+            {
+                result.has_subtype = true;
+                return get_number(input_format_t::msgpack, result.subtype) and get_binary(input_format_t::msgpack, 4, result);
+            }
+
+            case 0xD7: // fixext 8
+            {
+                result.has_subtype = true;
+                return get_number(input_format_t::msgpack, result.subtype) and get_binary(input_format_t::msgpack, 8, result);
+            }
+
+            case 0xD8: // fixext 16
+            {
+                result.has_subtype = true;
+                return get_number(input_format_t::msgpack, result.subtype) and get_binary(input_format_t::msgpack, 16, result);
+            }
+
+            default:
+            {
+                auto last_token = get_token_string();
+                return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format_t::msgpack, "expected binary type specification (0xC4-0xC9, 0xD4-0xD8); last byte: 0x" + last_token, "binary")));
             }
         }
     }
@@ -7262,6 +7631,9 @@ class binary_reader
         return sax->end_object();
     }
 
+    // Note, no reader for UBJSON binary types is implemented because they do
+    // not exist
+
     ///////////////////////
     // Utility functions //
     ///////////////////////
@@ -7365,6 +7737,38 @@ class binary_reader
                 success = false;
             }
             return static_cast<char>(current);
+        });
+        return success;
+    }
+
+    /*!
+    @brief create a byte array by reading bytes from the input
+
+    @tparam NumberType the type of the number
+    @param[in] format the current format (for diagnostics)
+    @param[in] len number of bytes to read
+    @param[out] result byte array created by reading @a len bytes
+
+    @return whether byte array creation completed
+
+    @note We can not reserve @a len bytes for the result, because @a len
+          may be too large. Usually, @ref unexpect_eof() detects the end of
+          the input before we run out of memory.
+    */
+    template<typename NumberType>
+    bool get_binary(const input_format_t format,
+                    const NumberType len,
+                    internal_binary_t& result)
+    {
+        bool success = true;
+        std::generate_n(std::back_inserter(result), len, [this, &success, &format]()
+        {
+            get();
+            if (JSON_HEDLEY_UNLIKELY(not unexpect_eof(format, "binary")))
+            {
+                success = false;
+            }
+            return static_cast<uint8_t>(current);
         });
         return success;
     }
@@ -9619,6 +10023,8 @@ template<typename BasicJsonType> struct internal_iterator
     typename BasicJsonType::object_t::iterator object_iterator {};
     /// iterator for JSON arrays
     typename BasicJsonType::array_t::iterator array_iterator {};
+    /// iterator for JSON binary arrays
+    typename BasicJsonType::binary_t::iterator binary_iterator {};
     /// generic iterator for all other types
     primitive_iterator_t primitive_iterator {};
 };
@@ -11586,6 +11992,7 @@ template<typename BasicJsonType, typename CharType>
 class binary_writer
 {
     using string_t = typename BasicJsonType::string_t;
+    using internal_binary_t = typename BasicJsonType::internal_binary_t;
 
   public:
     /*!
@@ -11815,6 +12222,45 @@ class binary_writer
                 {
                     write_cbor(el);
                 }
+                break;
+            }
+
+            case value_t::binary:
+            {
+                // step 1: write control byte and the binary array size
+                const auto N = j.m_value.binary->size();
+                if (N <= 0x17)
+                {
+                    write_number(static_cast<std::uint8_t>(0x40 + N));
+                }
+                else if (N <= (std::numeric_limits<std::uint8_t>::max)())
+                {
+                    oa->write_character(to_char_type(0x58));
+                    write_number(static_cast<std::uint8_t>(N));
+                }
+                else if (N <= (std::numeric_limits<std::uint16_t>::max)())
+                {
+                    oa->write_character(to_char_type(0x59));
+                    write_number(static_cast<std::uint16_t>(N));
+                }
+                else if (N <= (std::numeric_limits<std::uint32_t>::max)())
+                {
+                    oa->write_character(to_char_type(0x5A));
+                    write_number(static_cast<std::uint32_t>(N));
+                }
+                // LCOV_EXCL_START
+                else if (N <= (std::numeric_limits<std::uint64_t>::max)())
+                {
+                    oa->write_character(to_char_type(0x5B));
+                    write_number(static_cast<std::uint64_t>(N));
+                }
+                // LCOV_EXCL_STOP
+
+                // step 2: write each element
+                oa->write_characters(
+                    reinterpret_cast<const CharType*>(j.m_value.binary->data()),
+                    N);
+
                 break;
             }
 
@@ -12066,6 +12512,101 @@ class binary_writer
                 break;
             }
 
+            case value_t::binary:
+            {
+                // step 0: determine if the binary type has a set subtype to
+                // determine whether or not to use the ext or fixext types
+                const bool use_ext = j.m_value.binary->has_subtype;
+
+                // step 1: write control byte and the byte string length
+                const auto N = j.m_value.binary->size();
+                if (N <= (std::numeric_limits<std::uint8_t>::max)())
+                {
+                    std::uint8_t output_type;
+                    bool fixed = true;
+                    if (use_ext)
+                    {
+                        switch (N)
+                        {
+                            case 1:
+                                output_type = 0xD4; // fixext 1
+                                break;
+                            case 2:
+                                output_type = 0xD5; // fixext 2
+                                break;
+                            case 4:
+                                output_type = 0xD6; // fixext 4
+                                break;
+                            case 8:
+                                output_type = 0xD7; // fixext 8
+                                break;
+                            case 16:
+                                output_type = 0xD8; // fixext 16
+                                break;
+                            default:
+                                output_type = 0xC7; // ext 8
+                                fixed = false;
+                                break;
+                        }
+
+                    }
+                    else
+                    {
+                        output_type = 0xC4; // bin 8
+                        fixed = false;
+                    }
+
+                    oa->write_character(to_char_type(output_type));
+                    if (not fixed)
+                    {
+                        write_number(static_cast<std::uint8_t>(N));
+                    }
+                }
+                else if (N <= (std::numeric_limits<std::uint16_t>::max)())
+                {
+                    std::uint8_t output_type;
+                    if (use_ext)
+                    {
+                        output_type = 0xC8; // ext 16
+                    }
+                    else
+                    {
+                        output_type = 0xC5; // bin 16
+                    }
+
+                    oa->write_character(to_char_type(output_type));
+                    write_number(static_cast<std::uint16_t>(N));
+                }
+                else if (N <= (std::numeric_limits<std::uint32_t>::max)())
+                {
+                    std::uint8_t output_type;
+                    if (use_ext)
+                    {
+                        output_type = 0xC9; // ext 32
+                    }
+                    else
+                    {
+                        output_type = 0xC6; // bin 32
+                    }
+
+                    oa->write_character(to_char_type(output_type));
+                    write_number(static_cast<std::uint32_t>(N));
+                }
+
+                // step 1.5: if this is an ext type, write the subtype
+                if (use_ext)
+                {
+                    write_number(j.m_value.binary->subtype);
+                }
+
+                // step 2: write the byte string
+                oa->write_characters(
+                    reinterpret_cast<const CharType*>(j.m_value.binary->data()),
+                    N);
+
+                break;
+            }
+
             case value_t::object:
             {
                 // step 1: write control byte and the object size
@@ -12199,6 +12740,49 @@ class binary_writer
                 for (const auto& el : *j.m_value.array)
                 {
                     write_ubjson(el, use_count, use_type, prefix_required);
+                }
+
+                if (not use_count)
+                {
+                    oa->write_character(to_char_type(']'));
+                }
+
+                break;
+            }
+
+            case value_t::binary:
+            {
+                if (add_prefix)
+                {
+                    oa->write_character(to_char_type('['));
+                }
+
+                if (use_type and not j.m_value.binary->empty())
+                {
+                    assert(use_count);
+                    oa->write_character(to_char_type('$'));
+                    oa->write_character('U');
+                }
+
+                if (use_count)
+                {
+                    oa->write_character(to_char_type('#'));
+                    write_number_with_ubjson_prefix(j.m_value.binary->size(), true);
+                }
+
+                if (use_type)
+                {
+                    oa->write_characters(
+                        reinterpret_cast<const CharType*>(j.m_value.binary->data()),
+                        j.m_value.binary->size());
+                }
+                else
+                {
+                    for (size_t i = 0; i < j.m_value.binary->size(); ++i)
+                    {
+                        oa->write_character(to_char_type('U'));
+                        oa->write_character(j.m_value.binary->data()[i]);
+                    }
                 }
 
                 if (not use_count)
@@ -12432,6 +13016,14 @@ class binary_writer
     }
 
     /*!
+    @return The size of the BSON-encoded binary array @a value
+    */
+    static std::size_t calc_bson_binary_size(const typename BasicJsonType::internal_binary_t& value)
+    {
+        return sizeof(std::int32_t) + value.size() + 1ul;
+    }
+
+    /*!
     @brief Writes a BSON element with key @a name and array @a value
     */
     void write_bson_array(const string_t& name,
@@ -12451,6 +13043,27 @@ class binary_writer
     }
 
     /*!
+    @brief Writes a BSON element with key @a name and binary value @a value
+    */
+    void write_bson_binary(const string_t& name,
+                           const internal_binary_t& value)
+    {
+        write_bson_entry_header(name, 0x05);
+
+        write_number<std::int32_t, true>(static_cast<std::int32_t>(value.size()));
+        std::uint8_t subtype = 0x00; // Generic Binary Subtype
+        if (value.has_subtype)
+        {
+            subtype = value.subtype;
+        }
+        write_number(subtype);
+
+        oa->write_characters(
+            reinterpret_cast<const CharType*>(value.data()),
+            value.size());
+    }
+
+    /*!
     @brief Calculates the size necessary to serialize the JSON value @a j with its @a name
     @return The calculated size for the BSON document entry for @a j with the given @a name.
     */
@@ -12465,6 +13078,9 @@ class binary_writer
 
             case value_t::array:
                 return header_size + calc_bson_array_size(*j.m_value.array);
+
+            case value_t::binary:
+                return header_size + calc_bson_binary_size(*j.m_value.binary);
 
             case value_t::boolean:
                 return header_size + 1ul;
@@ -12509,6 +13125,9 @@ class binary_writer
 
             case value_t::array:
                 return write_bson_array(name, *j.m_value.array);
+
+            case value_t::binary:
+                return write_bson_binary(name, *j.m_value.binary);
 
             case value_t::boolean:
                 return write_bson_boolean(name, j.m_value.boolean);
@@ -12790,7 +13409,8 @@ class binary_writer
             case value_t::string:
                 return 'S';
 
-            case value_t::array:
+            case value_t::array: // fallthrough
+            case value_t::binary:
                 return '[';
 
             case value_t::object:
@@ -14058,6 +14678,7 @@ class serializer
     using number_float_t = typename BasicJsonType::number_float_t;
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+    using binary_t = typename BasicJsonType::binary_t;
     static constexpr std::uint8_t UTF8_ACCEPT = 0;
     static constexpr std::uint8_t UTF8_REJECT = 1;
 
@@ -14096,16 +14717,19 @@ class serializer
     - strings and object keys are escaped using `escape_string()`
     - integer numbers are converted implicitly via `operator<<`
     - floating-point numbers are converted to a string using `"%g"` format
+    - if specified to, binary values are output using the syntax `b[]`, otherwise an exception is thrown
 
-    @param[in] val             value to serialize
-    @param[in] pretty_print    whether the output shall be pretty-printed
-    @param[in] indent_step     the indent level
-    @param[in] current_indent  the current indent level (only used internally)
+    @param[in] val               value to serialize
+    @param[in] pretty_print      whether the output shall be pretty-printed
+    @param[in] indent_step       the indent level
+    @param[in] current_indent    the current indent level (only used internally)
+    @param[in] serialize_binary  whether the output shall include non-standard binary output
     */
     void dump(const BasicJsonType& val, const bool pretty_print,
               const bool ensure_ascii,
               const unsigned int indent_step,
-              const unsigned int current_indent = 0)
+              const unsigned int current_indent = 0,
+              const bool serialize_binary = false)
     {
         switch (val.m_type)
         {
@@ -14246,6 +14870,55 @@ class serializer
                 o->write_character('\"');
                 dump_escaped(*val.m_value.string, ensure_ascii);
                 o->write_character('\"');
+                return;
+            }
+
+            case value_t::binary:
+            {
+                if (not serialize_binary)
+                {
+                    JSON_THROW(type_error::create(317, "cannot serialize binary data to text JSON"));
+                }
+
+                if (val.m_value.binary->empty())
+                {
+                    o->write_characters("b[]", 3);
+                }
+                else if (pretty_print)
+                {
+                    o->write_characters("b[", 2);
+                    for (auto i = val.m_value.binary->cbegin();
+                            i != val.m_value.binary->cend() - 1; ++i)
+                    {
+                        dump_integer(*i);
+                        o->write_character(',');
+                        int index = i - val.m_value.binary->cbegin();
+                        if (index % 16 == 0)
+                        {
+                            o->write_character('\n');
+                        }
+                        else
+                        {
+                            o->write_character(' ');
+                        }
+                    }
+
+                    dump_integer(val.m_value.binary->back());
+                    o->write_character(']');
+                }
+                else
+                {
+                    o->write_characters("b[", 2);
+                    for (auto i = val.m_value.binary->cbegin();
+                            i != val.m_value.binary->cend() - 1; ++i)
+                    {
+                        dump_integer(*i);
+                        o->write_character(',');
+                    }
+
+                    dump_integer(val.m_value.binary->back());
+                    o->write_character(']');
+                }
                 return;
             }
 
@@ -14605,7 +15278,8 @@ class serializer
     */
     template<typename NumberType, detail::enable_if_t<
                  std::is_same<NumberType, number_unsigned_t>::value or
-                 std::is_same<NumberType, number_integer_t>::value,
+                 std::is_same<NumberType, number_integer_t>::value or
+                 std::is_same<NumberType, typename binary_t::value_type>::value,
                  int> = 0>
     void dump_integer(NumberType x)
     {
@@ -14643,7 +15317,7 @@ class serializer
         if (is_negative)
         {
             *buffer_ptr = '-';
-            abs_value = remove_sign(x);
+            abs_value = remove_sign(static_cast<number_integer_t>(x));
 
             // account one more byte for the minus sign
             n_chars = 1 + count_digits(abs_value);
@@ -14908,6 +15582,9 @@ default; will be used in @ref number_integer_t)
 `uint64_t` by default; will be used in @ref number_unsigned_t)
 @tparam NumberFloatType type for JSON floating-point numbers (`double` by
 default; will be used in @ref number_float_t)
+@tparam BinaryType type for packed binary data for compatibility with binary
+serialization formats (`std::vector<std::uint8_t>` by default; will be used in
+@ref binary_t)
 @tparam AllocatorType type of the allocator to use (`std::allocator` by
 default)
 @tparam JSONSerializer the serializer to resolve internal calls to `to_json()`
@@ -15629,6 +16306,85 @@ class basic_json
     */
     using number_float_t = NumberFloatType;
 
+    /*!
+    @brief a type for a packed binary type
+
+    This type is a type designed to carry binary data that appears in various
+    serialized formats, such as CBOR's Major Type 2, MessagePack's bin, and
+    BSON's generic binary subtype.  This type is NOT a part of standard JSON and
+    exists solely for compatibility with these binary types.  As such, it is
+    simply defined as an ordered sequence of zero or more byte values.
+
+    Additionally, as an implementation detail, the subtype of the binary data is
+    carried around as a `unint8_t`, which is compatible with both of the binary
+    data formats that use binary subtyping, (though the specific numbering is
+    incompatible with each other, and it is up to the user to translate between
+    them).
+
+    [CBOR's RFC 7049](https://tools.ietf.org/html/rfc7049) describes this type
+    as:
+    > Major type 2:  a byte string.  The string's length in bytes is
+    > represented following the rules for positive integers (major type
+    > 0).
+
+    [MessagePack's documentation on the bin type
+    family](https://github.com/msgpack/msgpack/blob/master/spec.md#bin-format-family)
+    describes this type as:
+    > Bin format family stores an byte array in 2, 3, or 5 bytes of extra bytes
+    > in addition to the size of the byte array.
+
+    [BSON's specifications](http://bsonspec.org/spec.html) describe several
+    binary types; however, this type is intended to represent the generic binary
+    type which has the description:
+    > Generic binary subtype - This is the most commonly used binary subtype and
+    > should be the 'default' for drivers and tools.
+
+    None of these impose any limitations on the internal representation other
+    than the basic unit of storage be some type of array whose parts are
+    decomposible into bytes.
+
+    The default representation of this binary format is a
+    `std::vector<std::uint8_t>`, which is a very common way to represent a byte
+    array in modern C++.
+
+    #### Default type
+
+    The default values for @a BinaryType is `std::vector<std::uint8_t>`
+
+    #### Storage
+
+    Binary Arrays are stored as pointers in a @ref basic_json type.  That is,
+    for any access to array values, a pointer of the type `binary_t*` must be
+    dereferenced.
+
+    @sa @ref array_t -- type for an array value
+
+    @since version 3.8.0
+    */
+
+    using binary_t = BinaryType;
+
+    /*!
+    @brief an internal type for a backed binary type
+
+    This type is designed to be `binary_t` but with the subtype implementation
+    detail.  This type exists so that the user does not have to specify a struct
+    his- or herself with a specific naming scheme in order to override the
+    binary type.  I.e. it's for ease of use.
+    */
+    struct internal_binary_t : public BinaryType
+    {
+        using BinaryType::BinaryType;
+        internal_binary_t() : BinaryType() {}
+        internal_binary_t(BinaryType const& bint) : BinaryType(bint) {}
+        internal_binary_t(BinaryType&& bint) : BinaryType(std::move(bint)) {}
+
+        // TOOD: If minimum C++ version is ever bumped to C++17, this field
+        // deserves to be a std::optional
+        std::uint8_t subtype = 0;
+        bool has_subtype = false;
+    };
+
     /// @}
 
   private:
@@ -15671,6 +16427,7 @@ class basic_json
     number    | number_integer  | @ref number_integer_t
     number    | number_unsigned | @ref number_unsigned_t
     number    | number_float    | @ref number_float_t
+    binary    | binary          | pointer to @ref internal_binary_t
     null      | null            | *no value is stored*
 
     @note Variable-length types (objects, arrays, and strings) are stored as
@@ -15687,6 +16444,8 @@ class basic_json
         array_t* array;
         /// string (stored with pointer to save storage)
         string_t* string;
+        /// binary (stored with pointer to save storage)
+        internal_binary_t* binary;
         /// boolean
         boolean_t boolean;
         /// number (integer)
@@ -15726,6 +16485,12 @@ class basic_json
                 case value_t::string:
                 {
                     string = create<string_t>("");
+                    break;
+                }
+
+                case value_t::binary:
+                {
+                    binary = create<internal_binary_t>();
                     break;
                 }
 
@@ -15807,6 +16572,18 @@ class basic_json
             array = create<array_t>(std::move(value));
         }
 
+        /// constructor for binary arrays
+        json_value(const binary_t& value)
+        {
+            binary = create<internal_binary_t>(value);
+        }
+
+        /// constructor for rvalue binary arrays
+        json_value(binary_t&& value)
+        {
+            binary = create<internal_binary_t>(std::move(value));
+        }
+
         void destroy(value_t t) noexcept
         {
             // flatten the current json_value to a heap-allocated stack
@@ -15879,6 +16656,14 @@ class basic_json
                     AllocatorType<string_t> alloc;
                     std::allocator_traits<decltype(alloc)>::destroy(alloc, string);
                     std::allocator_traits<decltype(alloc)>::deallocate(alloc, string, 1);
+                    break;
+                }
+
+                case value_t::binary:
+                {
+                    AllocatorType<internal_binary_t> alloc;
+                    std::allocator_traits<decltype(alloc)>::destroy(alloc, binary);
+                    std::allocator_traits<decltype(alloc)>::deallocate(alloc, binary, 1);
                     break;
                 }
 
@@ -16002,6 +16787,7 @@ class basic_json
     number      | `0`
     object      | `{}`
     array       | `[]`
+    binary      | empty array
 
     @param[in] v  the type of the value to create
 
@@ -16073,6 +16859,12 @@ class basic_json
       @ref number_float_t, and all convertible number types such as `int`,
       `size_t`, `int64_t`, `float` or `double` can be used.
     - **boolean**: @ref boolean_t / `bool` can be used.
+    - **binary**: @ref binary_t / `std::vector<uint8_t>` may be used,
+      unfortunately because string literals cannot be distinguished from binary
+      character arrays by the C++ type system, all types compatible with `const
+      char*` will be directed to the string constructor instead.  This is both
+      for backwards compatibility, and due to the fact that a binary type is not
+      a standard JSON type.
 
     See the examples below.
 
@@ -16154,6 +16946,7 @@ class basic_json
         using other_string_t = typename BasicJsonType::string_t;
         using other_object_t = typename BasicJsonType::object_t;
         using other_array_t = typename BasicJsonType::array_t;
+        using other_binary_t = typename BasicJsonType::internal_binary_t;
 
         switch (val.type())
         {
@@ -16177,6 +16970,9 @@ class basic_json
                 break;
             case value_t::array:
                 JSONSerializer<other_array_t>::to_json(*this, val.template get_ref<const other_array_t&>());
+                break;
+            case value_t::binary:
+                JSONSerializer<other_binary_t>::to_json(*this, val.template get_ref<const other_binary_t&>());
                 break;
             case value_t::null:
                 *this = nullptr;
@@ -16314,6 +17110,78 @@ class basic_json
         }
 
         assert_invariant();
+    }
+
+    /*!
+    @brief explicitly create a binary array from an already constructed copy of
+    its base type
+
+    Creates a JSON binary array value from a given `binary_t`. Binary values are
+    part of various binary formats, such as CBOR, MsgPack, and BSON.  And this
+    constructor is used to create a value for serialization to those formats.
+
+    @note Note, this function exists because of the difficulty in correctly
+    specifying the correct template overload in the standard value ctor, as both
+    JSON arrays and JSON binary arrays are backed with some form of a
+    `std::vector`.  Because JSON binary arrays are a non-standard extension it
+    was decided that it would be best to prevent automatic initialization of a
+    binary array type, for backwards compatibility and so it does not happen on
+    accident.
+
+    @param[in] init  `binary_t` with JSON values to create a binary array from
+
+    @return JSON binary array value
+
+    @complexity Linear in the size of @a init.
+
+    @exceptionsafety Strong guarantee: if an exception is thrown, there are no
+    changes to any JSON value.
+
+    @since version 3.8.0
+    */
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    static basic_json binary_array(binary_t const& init)
+    {
+        auto res = basic_json();
+        res.m_type = value_t::binary;
+        res.m_value = init;
+        return res;
+    }
+
+    /*!
+    @brief explicitly create a binary array from an already constructed rvalue
+    copy of its base type
+
+    Creates a JSON binary array value from a given `binary_t`. Binary values are
+    part of various binary formats, such as CBOR, MsgPack, and BSON.  And this
+    constructor is used to create a value for serialization to those formats.
+
+    @note Note, this function exists because of the difficulty in correctly
+    specifying the correct template overload in the standard value ctor, as both
+    JSON arrays and JSON binary arrays are backed with some form of a
+    `std::vector`.  Because JSON binary arrays are a non-standard extension it
+    was decided that it would be best to prevent automatic initialization of a
+    binary array type, for backwards compatibility and so it doesn't happen on
+    accident.
+
+    @param[in] init  `binary_t` with JSON values to create a binary array from
+
+    @return JSON binary array value
+
+    @complexity Linear in the size of @a init.
+
+    @exceptionsafety Strong guarantee: if an exception is thrown, there are no
+    changes to any JSON value.
+
+    @since version 3.8.0
+    */
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    static basic_json binary_array(binary_t&& init)
+    {
+        auto res = basic_json();
+        res.m_type = value_t::binary;
+        res.m_value = std::move(init);
+        return res;
     }
 
     /*!
@@ -16571,6 +17439,13 @@ class basic_json
                 break;
             }
 
+            case value_t::binary:
+            {
+                m_value.binary = create<internal_binary_t>(first.m_it.binary_iterator,
+                                 last.m_it.binary_iterator);
+                break;
+            }
+
             default:
                 JSON_THROW(invalid_iterator::create(206, "cannot construct with iterators from " +
                                                     std::string(first.m_object->type_name())));
@@ -16661,6 +17536,12 @@ class basic_json
             case value_t::number_float:
             {
                 m_value = other.m_value.number_float;
+                break;
+            }
+
+            case value_t::binary:
+            {
+                m_value = *other.m_value.binary;
                 break;
             }
 
@@ -16804,6 +17685,11 @@ class basic_json
     possible values: `strict` (throws and exception in case a decoding error
     occurs; default), `replace` (replace invalid UTF-8 sequences with U+FFFD),
     and `ignore` (ignore invalid UTF-8 sequences during serialization).
+    @param[in] serialize_binary Whether or not to allow serialization of binary
+    types to JSON.  Because binary types are non-standard, this will produce
+    non-conformant JSON, and is disabled by default.  This flag is primarily
+    useful for debugging.  Will output the binary value as a list of 8-bit
+    numbers prefixed by "b" (e.g. "bindata" = b[3, 0, 42, 255]).
 
     @return string containing the serialization of the JSON value
 
@@ -16828,18 +17714,19 @@ class basic_json
     string_t dump(const int indent = -1,
                   const char indent_char = ' ',
                   const bool ensure_ascii = false,
-                  const error_handler_t error_handler = error_handler_t::strict) const
+                  const error_handler_t error_handler = error_handler_t::strict,
+                  const bool serialize_binary = false) const
     {
         string_t result;
         serializer s(detail::output_adapter<char, string_t>(result), indent_char, error_handler);
 
         if (indent >= 0)
         {
-            s.dump(*this, true, ensure_ascii, static_cast<unsigned int>(indent));
+            s.dump(*this, true, ensure_ascii, static_cast<unsigned int>(indent), serialize_binary);
         }
         else
         {
-            s.dump(*this, false, ensure_ascii, 0);
+            s.dump(*this, false, ensure_ascii, 0, serialize_binary);
         }
 
         return result;
@@ -16862,6 +17749,7 @@ class basic_json
             number (floating-point)   | value_t::number_float
             object                    | value_t::object
             array                     | value_t::array
+            binary                    | value_t::binary
             discarded                 | value_t::discarded
 
     @complexity Constant.
@@ -16904,12 +17792,13 @@ class basic_json
     @sa @ref is_string() -- returns whether JSON value is a string
     @sa @ref is_boolean() -- returns whether JSON value is a boolean
     @sa @ref is_number() -- returns whether JSON value is a number
+    @sa @ref is_binary() -- returns whether JSON value is a binary array
 
     @since version 1.0.0
     */
     constexpr bool is_primitive() const noexcept
     {
-        return is_null() or is_string() or is_boolean() or is_number();
+        return is_null() or is_string() or is_boolean() or is_number() or is_binary();
     }
 
     /*!
@@ -17165,6 +18054,28 @@ class basic_json
     }
 
     /*!
+    @brief return whether value is a binary array
+
+    This function returns true if and only if the JSON value is a binary array.
+
+    @return `true` if type is binary array, `false` otherwise.
+
+    @complexity Constant.
+
+    @exceptionsafety No-throw guarantee: this member function never throws
+    exceptions.
+
+    @liveexample{The following code exemplifies `is_binary()` for all JSON
+    types.,is_binary}
+
+    @since version 3.8.0
+    */
+    constexpr bool is_binary() const noexcept
+    {
+        return m_type == value_t::binary;
+    }
+
+    /*!
     @brief return whether value is discarded
 
     This function returns true if and only if the JSON value was discarded
@@ -17317,6 +18228,18 @@ class basic_json
     constexpr const number_float_t* get_impl_ptr(const number_float_t* /*unused*/) const noexcept
     {
         return is_number_float() ? &m_value.number_float : nullptr;
+    }
+
+    /// get a pointer to the value (binary)
+    binary_t* get_impl_ptr(binary_t* /*unused*/) noexcept
+    {
+        return is_binary() ? m_value.binary : nullptr;
+    }
+
+    /// get a pointer to the value (binary)
+    constexpr const binary_t* get_impl_ptr(const binary_t* /*unused*/) const noexcept
+    {
+        return is_binary() ? m_value.binary : nullptr;
     }
 
     /*!
@@ -18367,14 +19290,128 @@ class basic_json
     }
 
     /*!
+    @brief return the binary subtype
+
+    Returns the numerical subtype of the JSON value, if the JSON value is of
+    type "binary", and it has a subtype.  If it does not have a subtype (or the
+    object is not of type binary) this function will return size_t(-1) as a
+    sentinel value.
+
+    @return the numerical subtype of the binary JSON value
+
+    @complexity Constant.
+
+    @exceptionsafety No-throw guarantee: this member function never throws
+    exceptions.
+
+    @sa @ref set_subtype() -- sets the binary subtype
+    @sa @ref clear_subtype() -- clears the binary subtype
+    @sa @ref has_subtype() -- returns whether or not the binary value has a
+    subtype
+
+    @since version 3.8.0
+    */
+    std::size_t get_subtype() const noexcept
+    {
+        if (is_binary() and m_value.binary->has_subtype)
+        {
+            return m_value.binary->subtype;
+        }
+
+        return std::size_t(-1);
+    }
+
+    /*!
+    @brief sets the binary subtype
+
+    Sets the binary subtype of the JSON value, also flags a binary JSON value as
+    having a subtype, which has implications for serialization to msgpack (will
+    prefer ext file formats over bin).  If the JSON value is not a binary value,
+    this function does nothing.
+
+    @complexity Constant.
+
+    @exceptionsafety No-throw guarantee: this member function never throws
+    exceptions.
+
+    @sa @ref get_subtype() -- return the binary subtype
+    @sa @ref clear_subtype() -- clears the binary subtype
+    @sa @ref has_subtype() -- returns whether or not the binary value has a
+    subtype
+
+    @since version 3.8.0
+    */
+
+    void set_subtype(std::uint8_t subtype) noexcept
+    {
+        if (is_binary())
+        {
+            m_value.binary->has_subtype = true;
+            m_value.binary->subtype = subtype;
+        }
+    }
+
+    /*!
+    @brief clears the binary subtype
+
+    Clears the binary subtype of the JSON value, also flags a binary JSON value
+    as not having a subtype, which has implications for serialization to msgpack
+    (will prefer bin file formats over ext).  If the JSON value is not a binary
+    value, this function does nothing.
+
+    @complexity Constant.
+
+    @exceptionsafety No-throw guarantee: this member function never throws
+    exceptions.
+
+    @sa @ref get_subtype() -- return the binary subtype
+    @sa @ref set_subtype() -- sets the binary subtype
+    @sa @ref has_subtype() -- returns whether or not the binary value has a
+    subtype
+
+    @since version 3.8.0
+    */
+    void clear_subtype() noexcept
+    {
+        if (is_binary())
+        {
+            m_value.binary->has_subtype = false;
+            m_value.binary->subtype = 0;
+        }
+    }
+
+    /*!
+    @brief return whether or not the binary subtype has a value
+
+    Returns whether or not the binary subtype has a value.
+
+    @return whether or not the binary subtype has a value.
+
+    @complexity Constant.
+
+    @exceptionsafety No-throw guarantee: this member function never throws
+    exceptions.
+
+    @sa @ref get_subtype() -- return the binary subtype
+    @sa @ref set_subtype() -- sets the binary subtype
+    @sa @ref clear_subtype() -- clears the binary subtype
+
+    @since version 3.8.0
+    */
+    bool has_subtype() const noexcept
+    {
+        return is_binary() and m_value.binary->has_subtype;
+    }
+
+    /*!
     @brief access the first element
 
     Returns a reference to the first element in the container. For a JSON
     container `c`, the expression `c.front()` is equivalent to `*c.begin()`.
 
     @return In case of a structured type (array or object), a reference to the
-    first element is returned. In case of number, string, or boolean values, a
-    reference to the value is returned.
+    first element is returned. In case of number, string, boolean, or binary
+    values, a reference to the value is returned.
 
     @complexity Constant.
 
@@ -18416,8 +19453,8 @@ class basic_json
     @endcode
 
     @return In case of a structured type (array or object), a reference to the
-    last element is returned. In case of number, string, or boolean values, a
-    reference to the value is returned.
+    last element is returned. In case of number, string, boolean, or binary
+    values, a reference to the value is returned.
 
     @complexity Constant.
 
@@ -18483,7 +19520,7 @@ class basic_json
     @complexity The complexity depends on the type:
     - objects: amortized constant
     - arrays: linear in distance between @a pos and the end of the container
-    - strings: linear in the length of the string
+    - strings and binary: linear in the length of the member
     - other types: constant
 
     @liveexample{The example shows the result of `erase()` for different JSON
@@ -18519,6 +19556,7 @@ class basic_json
             case value_t::number_integer:
             case value_t::number_unsigned:
             case value_t::string:
+            case value_t::binary:
             {
                 if (JSON_HEDLEY_UNLIKELY(not pos.m_it.primitive_iterator.is_begin()))
                 {
@@ -18531,6 +19569,13 @@ class basic_json
                     std::allocator_traits<decltype(alloc)>::destroy(alloc, m_value.string);
                     std::allocator_traits<decltype(alloc)>::deallocate(alloc, m_value.string, 1);
                     m_value.string = nullptr;
+                }
+                else if (is_binary())
+                {
+                    AllocatorType<internal_binary_t> alloc;
+                    std::allocator_traits<decltype(alloc)>::destroy(alloc, m_value.binary);
+                    std::allocator_traits<decltype(alloc)>::deallocate(alloc, m_value.binary, 1);
+                    m_value.binary = nullptr;
                 }
 
                 m_type = value_t::null;
@@ -18589,7 +19634,7 @@ class basic_json
     - objects: `log(size()) + std::distance(first, last)`
     - arrays: linear in the distance between @a first and @a last, plus linear
       in the distance between @a last and end of the container
-    - strings: linear in the length of the string
+    - strings and binary: linear in the length of the member
     - other types: constant
 
     @liveexample{The example shows the result of `erase()` for different JSON
@@ -18624,6 +19669,7 @@ class basic_json
             case value_t::number_integer:
             case value_t::number_unsigned:
             case value_t::string:
+            case value_t::binary:
             {
                 if (JSON_HEDLEY_LIKELY(not first.m_it.primitive_iterator.is_begin()
                                        or not last.m_it.primitive_iterator.is_end()))
@@ -18637,6 +19683,13 @@ class basic_json
                     std::allocator_traits<decltype(alloc)>::destroy(alloc, m_value.string);
                     std::allocator_traits<decltype(alloc)>::deallocate(alloc, m_value.string, 1);
                     m_value.string = nullptr;
+                }
+                else if (is_binary())
+                {
+                    AllocatorType<internal_binary_t> alloc;
+                    std::allocator_traits<decltype(alloc)>::destroy(alloc, m_value.binary);
+                    std::allocator_traits<decltype(alloc)>::deallocate(alloc, m_value.binary, 1);
+                    m_value.binary = nullptr;
                 }
 
                 m_type = value_t::null;
@@ -19357,6 +20410,7 @@ class basic_json
             boolean     | `false`
             string      | `false`
             number      | `false`
+            binary      | `false`
             object      | result of function `object_t::empty()`
             array       | result of function `array_t::empty()`
 
@@ -19428,6 +20482,7 @@ class basic_json
             boolean     | `1`
             string      | `1`
             number      | `1`
+            binary      | `1`
             object      | result of function object_t::size()
             array       | result of function array_t::size()
 
@@ -19502,6 +20557,7 @@ class basic_json
             boolean     | `1` (same as `size()`)
             string      | `1` (same as `size()`)
             number      | `1` (same as `size()`)
+            binary      | `1` (same as `size()`)
             object      | result of function `object_t::max_size()`
             array       | result of function `array_t::max_size()`
 
@@ -19574,6 +20630,7 @@ class basic_json
     boolean     | `false`
     string      | `""`
     number      | `0`
+    binary      | An empty byte vector
     object      | `{}`
     array       | `[]`
 
@@ -19628,6 +20685,12 @@ class basic_json
             case value_t::string:
             {
                 m_value.string->clear();
+                break;
+            }
+
+            case value_t::binary:
+            {
+                m_value.binary->clear();
                 break;
             }
 
@@ -20523,6 +21586,9 @@ class basic_json
                 case value_t::number_float:
                     return lhs.m_value.number_float == rhs.m_value.number_float;
 
+                case value_t::binary:
+                    return *lhs.m_value.binary == *rhs.m_value.binary;
+
                 default:
                     return false;
             }
@@ -20682,6 +21748,9 @@ class basic_json
 
                 case value_t::number_float:
                     return (lhs.m_value.number_float) < (rhs.m_value.number_float);
+
+                case value_t::binary:
+                    return (lhs.m_value.binary) < (rhs.m_value.binary);
 
                 default:
                     return false;
@@ -21247,6 +22316,7 @@ class basic_json
             number      | `"number"` (for all number types)
             object      | `"object"`
             array       | `"array"`
+            binary      | `"binary"`
             discarded   | `"discarded"`
 
     @exceptionsafety No-throw guarantee: this function never throws exceptions.
@@ -21278,6 +22348,8 @@ class basic_json
                     return "string";
                 case value_t::boolean:
                     return "boolean";
+                case value_t::binary:
+                    return "binary";
                 case value_t::discarded:
                     return "discarded";
                 default:
@@ -21353,6 +22425,11 @@ class basic_json
     object          | *size*: 256..65535                         | map (2 bytes follow)               | 0xB9
     object          | *size*: 65536..4294967295                  | map (4 bytes follow)               | 0xBA
     object          | *size*: 4294967296..18446744073709551615   | map (8 bytes follow)               | 0xBB
+    binary          | *size*: 0..23                              | byte string                        | 0x40..0x57
+    binary          | *size*: 23..255                            | byte string (1 byte follow)        | 0x58
+    binary          | *size*: 256..65535                         | byte string (2 bytes follow)       | 0x59
+    binary          | *size*: 65536..4294967295                  | byte string (4 bytes follow)       | 0x5A
+    binary          | *size*: 4294967296..18446744073709551615   | byte string (8 bytes follow)       | 0x5B
 
     @note The mapping is **complete** in the sense that any JSON value type
           can be converted to a CBOR value.
@@ -21362,10 +22439,10 @@ class basic_json
           function which serializes NaN or Infinity to `null`.
 
     @note The following CBOR types are not used in the conversion:
-          - byte strings (0x40..0x5F)
           - UTF-8 strings terminated by "break" (0x7F)
           - arrays terminated by "break" (0x9F)
           - maps terminated by "break" (0xBF)
+          - byte strings terminated by "break" (0x5F)
           - date/time (0xC0..0xC1)
           - bignum (0xC2..0xC3)
           - decimal fraction (0xC4)
@@ -21452,20 +22529,21 @@ class basic_json
     object          | *size*: 0..15                     | fix map          | 0x80..0x8F
     object          | *size*: 16..65535                 | map 16           | 0xDE
     object          | *size*: 65536..4294967295         | map 32           | 0xDF
+    binary          | *size*: 0..255                    | bin 8            | 0xC4
+    binary          | *size*: 256..65535                | bin 16           | 0xC5
+    binary          | *size*: 65536..4294967295         | bin 32           | 0xC6
 
     @note The mapping is **complete** in the sense that any JSON value type
           can be converted to a MessagePack value.
 
     @note The following values can **not** be converted to a MessagePack value:
           - strings with more than 4294967295 bytes
+          - byte strings with more than 4294967295 bytes
           - arrays with more than 4294967295 elements
           - objects with more than 4294967295 elements
 
     @note The following MessagePack types are not used in the conversion:
-          - bin 8 - bin 32 (0xC4..0xC6)
-          - ext 8 - ext 32 (0xC7..0xC9)
           - float 32 (0xCA)
-          - fixext 1 - fixext 16 (0xD4..0xD8)
 
     @note Any MessagePack output created @ref to_msgpack can be successfully
           parsed by @ref from_msgpack.
@@ -21568,6 +22646,12 @@ class basic_json
           the benefit of this parameter is that the receiving side is
           immediately informed on the number of elements of the container.
 
+    @note If the JSON data contains the binary type, the value stored is a list
+          of integers, as suggested by the UBJSON documentation.  In particular,
+          this means that serialization and the deserialization of a JSON
+          containing binary values into UBJSON and back will result in a
+          different JSON object.
+
     @param[in] j  JSON value to serialize
     @param[in] use_size  whether to add size annotations to container types
     @param[in] use_type  whether to add type annotations to container types
@@ -21632,6 +22716,7 @@ class basic_json
     string          | *any value*                       | string      | 0x02
     array           | *any value*                       | document    | 0x04
     object          | *any value*                       | document    | 0x03
+    binary          | *any value*                       | binary      | 0x05
 
     @warning The mapping is **incomplete**, since only JSON-objects (and things
     contained therein) can be serialized to BSON.
@@ -21713,7 +22798,11 @@ class basic_json
     Negative integer       | number_integer  | 0x39
     Negative integer       | number_integer  | 0x3A
     Negative integer       | number_integer  | 0x3B
-    Negative integer       | number_integer  | 0x40..0x57
+    Byte string            | binary          | 0x40..0x57
+    Byte string            | binary          | 0x58
+    Byte string            | binary          | 0x59
+    Byte string            | binary          | 0x5A
+    Byte string            | binary          | 0x5B
     UTF-8 string           | string          | 0x60..0x77
     UTF-8 string           | string          | 0x78
     UTF-8 string           | string          | 0x79
@@ -21742,7 +22831,6 @@ class basic_json
     @warning The mapping is **incomplete** in the sense that not all CBOR
              types can be converted to a JSON value. The following CBOR types
              are not supported and will yield parse errors (parse_error.112):
-             - byte strings (0x40..0x5F)
              - date/time (0xC0..0xC1)
              - bignum (0xC2..0xC3)
              - decimal fraction (0xC4)
@@ -21853,14 +22941,18 @@ class basic_json
     array 32         | array           | 0xDD
     map 16           | object          | 0xDE
     map 32           | object          | 0xDF
+    bin 8            | binary          | 0xC4
+    bin 16           | binary          | 0xC5
+    bin 32           | binary          | 0xC6
+    ext 8            | binary          | 0xC7
+    ext 16           | binary          | 0xC8
+    ext 32           | binary          | 0xC9
+    fixext 1         | binary          | 0xD4
+    fixext 2         | binary          | 0xD5
+    fixext 4         | binary          | 0xD6
+    fixext 8         | binary          | 0xD7
+    fixext 16        | binary          | 0xD8
     negative fixint  | number_integer  | 0xE0-0xFF
-
-    @warning The mapping is **incomplete** in the sense that not all
-             MessagePack types can be converted to a JSON value. The following
-             MessagePack types are not supported and will yield parse errors:
-              - bin 8 - bin 32 (0xC4..0xC6)
-              - ext 8 - ext 32 (0xC7..0xC9)
-              - fixext 1 - fixext 16 (0xD4..0xD8)
 
     @note Any MessagePack output created @ref to_msgpack can be successfully
           parsed by @ref from_msgpack.

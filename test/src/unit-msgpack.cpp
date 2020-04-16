@@ -75,6 +75,11 @@ class SaxCountdown
         return events_left-- > 0;
     }
 
+    bool binary(std::vector<std::uint8_t>&)
+    {
+        return events_left-- > 0;
+    }
+
     bool start_object(std::size_t)
     {
         return events_left-- > 0;
@@ -1115,6 +1120,261 @@ TEST_CASE("MessagePack")
                 CHECK(json::from_msgpack(result, true, false) == j);
             }
         }
+
+        SECTION("extension")
+        {
+            SECTION("N = 0..255")
+            {
+                for (size_t N = 0; N <= 0xFF; ++N)
+                {
+                    CAPTURE(N)
+
+                    // create JSON value with byte array containing of N * 'x'
+                    const auto s = std::vector<uint8_t>(N, 'x');
+                    json j = json::binary_array(s);
+                    std::uint8_t subtype = 42;
+                    j.set_subtype(subtype);
+
+                    // create expected byte vector
+                    std::vector<uint8_t> expected;
+                    switch (N)
+                    {
+                        case 1:
+                            expected.push_back(static_cast<std::uint8_t>(0xD4));
+                            break;
+                        case 2:
+                            expected.push_back(static_cast<std::uint8_t>(0xD5));
+                            break;
+                        case 4:
+                            expected.push_back(static_cast<std::uint8_t>(0xD6));
+                            break;
+                        case 8:
+                            expected.push_back(static_cast<std::uint8_t>(0xD7));
+                            break;
+                        case 16:
+                            expected.push_back(static_cast<std::uint8_t>(0xD8));
+                            break;
+                        default:
+                            expected.push_back(static_cast<std::uint8_t>(0xC7));
+                            expected.push_back(static_cast<std::uint8_t>(N));
+                            break;
+                    }
+                    expected.push_back(subtype);
+
+                    for (size_t i = 0; i < N; ++i)
+                    {
+                        expected.push_back(0x78);
+                    }
+
+                    // compare result + size
+                    const auto result = json::to_msgpack(j);
+                    CHECK(result == expected);
+                    switch (N)
+                    {
+                        case 1:
+                        case 2:
+                        case 4:
+                        case 8:
+                        case 16:
+                            CHECK(result.size() == N + 2);
+                            break;
+                        default:
+                            CHECK(result.size() == N + 3);
+                            break;
+                    }
+
+                    // check that no null byte is appended
+                    if (N > 0)
+                    {
+                        CHECK(result.back() != '\x00');
+                    }
+
+                    // roundtrip
+                    CHECK(json::from_msgpack(result) == j);
+                    CHECK(json::from_msgpack(result, true, false) == j);
+                }
+            }
+
+            SECTION("N = 256..65535")
+            {
+                for (std::size_t N :
+                        {
+                            256u, 999u, 1025u, 3333u, 2048u, 65535u
+                        })
+                {
+                    CAPTURE(N)
+
+                    // create JSON value with string containing of N * 'x'
+                    const auto s = std::vector<uint8_t>(N, 'x');
+                    json j = json::binary_array(s);
+                    std::uint8_t subtype = 42;
+                    j.set_subtype(subtype);
+
+                    // create expected byte vector (hack: create string first)
+                    std::vector<uint8_t> expected(N, 'x');
+                    // reverse order of commands, because we insert at begin()
+                    expected.insert(expected.begin(), subtype);
+                    expected.insert(expected.begin(), static_cast<uint8_t>(N & 0xff));
+                    expected.insert(expected.begin(), static_cast<uint8_t>((N >> 8) & 0xff));
+                    expected.insert(expected.begin(), 0xC8);
+
+                    // compare result + size
+                    const auto result = json::to_msgpack(j);
+                    CHECK(result == expected);
+                    CHECK(result.size() == N + 4);
+                    // check that no null byte is appended
+                    CHECK(result.back() != '\x00');
+
+                    // roundtrip
+                    CHECK(json::from_msgpack(result) == j);
+                    CHECK(json::from_msgpack(result, true, false) == j);
+                }
+            }
+
+            SECTION("N = 65536..4294967295")
+            {
+                for (std::size_t N :
+                        {
+                            65536u, 77777u, 1048576u
+                        })
+                {
+                    CAPTURE(N)
+
+                    // create JSON value with string containing of N * 'x'
+                    const auto s = std::vector<uint8_t>(N, 'x');
+                    json j = json::binary_array(s);
+                    std::uint8_t subtype = 42;
+                    j.set_subtype(subtype);
+
+                    // create expected byte vector (hack: create string first)
+                    std::vector<uint8_t> expected(N, 'x');
+                    // reverse order of commands, because we insert at begin()
+                    expected.insert(expected.begin(), subtype);
+                    expected.insert(expected.begin(), static_cast<uint8_t>(N & 0xff));
+                    expected.insert(expected.begin(), static_cast<uint8_t>((N >> 8) & 0xff));
+                    expected.insert(expected.begin(), static_cast<uint8_t>((N >> 16) & 0xff));
+                    expected.insert(expected.begin(), static_cast<uint8_t>((N >> 24) & 0xff));
+                    expected.insert(expected.begin(), 0xC9);
+
+                    // compare result + size
+                    const auto result = json::to_msgpack(j);
+                    CHECK(result == expected);
+                    CHECK(result.size() == N + 6);
+                    // check that no null byte is appended
+                    CHECK(result.back() != '\x00');
+
+                    // roundtrip
+                    CHECK(json::from_msgpack(result) == j);
+                    CHECK(json::from_msgpack(result, true, false) == j);
+                }
+            }
+        }
+
+        SECTION("binary")
+        {
+            SECTION("N = 0..255")
+            {
+                for (std::size_t N = 0; N <= 0xFF; ++N)
+                {
+                    CAPTURE(N)
+
+                    // create JSON value with byte array containing of N * 'x'
+                    const auto s = std::vector<uint8_t>(N, 'x');
+                    json j = json::binary_array(s);
+
+                    // create expected byte vector
+                    std::vector<std::uint8_t> expected;
+                    expected.push_back(static_cast<std::uint8_t>(0xC4));
+                    expected.push_back(static_cast<std::uint8_t>(N));
+                    for (size_t i = 0; i < N; ++i)
+                    {
+                        expected.push_back(0x78);
+                    }
+
+                    // compare result + size
+                    const auto result = json::to_msgpack(j);
+                    CHECK(result == expected);
+                    CHECK(result.size() == N + 2);
+                    // check that no null byte is appended
+                    if (N > 0)
+                    {
+                        CHECK(result.back() != '\x00');
+                    }
+
+                    // roundtrip
+                    CHECK(json::from_msgpack(result) == j);
+                    CHECK(json::from_msgpack(result, true, false) == j);
+                }
+            }
+
+            SECTION("N = 256..65535")
+            {
+                for (std::size_t N :
+                        {
+                            256u, 999u, 1025u, 3333u, 2048u, 65535u
+                        })
+                {
+                    CAPTURE(N)
+
+                    // create JSON value with string containing of N * 'x'
+                    const auto s = std::vector<std::uint8_t>(N, 'x');
+                    json j = json::binary_array(s);
+
+                    // create expected byte vector (hack: create string first)
+                    std::vector<std::uint8_t> expected(N, 'x');
+                    // reverse order of commands, because we insert at begin()
+                    expected.insert(expected.begin(), static_cast<std::uint8_t>(N & 0xff));
+                    expected.insert(expected.begin(), static_cast<std::uint8_t>((N >> 8) & 0xff));
+                    expected.insert(expected.begin(), 0xC5);
+
+                    // compare result + size
+                    const auto result = json::to_msgpack(j);
+                    CHECK(result == expected);
+                    CHECK(result.size() == N + 3);
+                    // check that no null byte is appended
+                    CHECK(result.back() != '\x00');
+
+                    // roundtrip
+                    CHECK(json::from_msgpack(result) == j);
+                    CHECK(json::from_msgpack(result, true, false) == j);
+                }
+            }
+
+            SECTION("N = 65536..4294967295")
+            {
+                for (std::size_t N :
+                        {
+                            65536u, 77777u, 1048576u
+                        })
+                {
+                    CAPTURE(N)
+
+                    // create JSON value with string containing of N * 'x'
+                    const auto s = std::vector<std::uint8_t>(N, 'x');
+                    json j = json::binary_array(s);
+
+                    // create expected byte vector (hack: create string first)
+                    std::vector<uint8_t> expected(N, 'x');
+                    // reverse order of commands, because we insert at begin()
+                    expected.insert(expected.begin(), static_cast<std::uint8_t>(N & 0xff));
+                    expected.insert(expected.begin(), static_cast<std::uint8_t>((N >> 8) & 0xff));
+                    expected.insert(expected.begin(), static_cast<std::uint8_t>((N >> 16) & 0xff));
+                    expected.insert(expected.begin(), static_cast<std::uint8_t>((N >> 24) & 0xff));
+                    expected.insert(expected.begin(), 0xC6);
+
+                    // compare result + size
+                    const auto result = json::to_msgpack(j);
+                    CHECK(result == expected);
+                    CHECK(result.size() == N + 5);
+                    // check that no null byte is appended
+                    CHECK(result.back() != '\x00');
+
+                    // roundtrip
+                    CHECK(json::from_msgpack(result) == j);
+                    CHECK(json::from_msgpack(result, true, false) == j);
+                }
+            }
+        }
     }
 
     SECTION("from float32")
@@ -1226,12 +1486,6 @@ TEST_CASE("MessagePack")
                 CHECK_THROWS_AS(_ = json::from_msgpack(std::vector<uint8_t>({0xc1})), json::parse_error&);
                 CHECK_THROWS_WITH(_ = json::from_msgpack(std::vector<uint8_t>({0xc1})),
                                   "[json.exception.parse_error.112] parse error at byte 1: syntax error while parsing MessagePack value: invalid byte: 0xC1");
-                CHECK(json::from_msgpack(std::vector<uint8_t>({0xc6}), true, false).is_discarded());
-
-                CHECK_THROWS_AS(_ = json::from_msgpack(std::vector<uint8_t>({0xc6})), json::parse_error&);
-                CHECK_THROWS_WITH(_ = json::from_msgpack(std::vector<uint8_t>({0xc6})),
-                                  "[json.exception.parse_error.112] parse error at byte 1: syntax error while parsing MessagePack value: invalid byte: 0xC6");
-                CHECK(json::from_msgpack(std::vector<uint8_t>({0xc6}), true, false).is_discarded());
             }
 
             SECTION("all unsupported bytes")
@@ -1239,13 +1493,7 @@ TEST_CASE("MessagePack")
                 for (auto byte :
                         {
                             // never used
-                            0xc1,
-                            // bin
-                            0xc4, 0xc5, 0xc6,
-                            // ext
-                            0xc7, 0xc8, 0xc9,
-                            // fixext
-                            0xd4, 0xd5, 0xd6, 0xd7, 0xd8
+                            0xc1
                         })
                 {
                     json _;

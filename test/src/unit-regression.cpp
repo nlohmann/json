@@ -107,7 +107,7 @@ struct foo_serializer < T, typename std::enable_if < !std::is_same<foo, T>::valu
 }
 
 using foo_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t,
-      std::uint64_t, double, std::allocator, ns::foo_serializer>;
+      std::uint64_t, double, std::allocator, ns::foo_serializer, std::vector<std::uint8_t>>;
 
 /////////////////////////////////////////////////////////////////////
 // for #805

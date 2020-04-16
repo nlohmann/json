@@ -33,7 +33,8 @@ template<template<typename U, typename V, typename... Args> class ObjectType =
          class NumberFloatType = double,
          template<typename U> class AllocatorType = std::allocator,
          template<typename T, typename SFINAE = void> class JSONSerializer =
-         adl_serializer>
+         adl_serializer,
+         class BinaryType = std::vector<std::uint8_t>>
 class basic_json;
 
 /*!

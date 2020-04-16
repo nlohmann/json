@@ -77,6 +77,21 @@ class SaxEventLogger
         return true;
     }
 
+    bool binary(std::vector<std::uint8_t>& val)
+    {
+        std::string binary_contents = "binary(";
+        std::string comma_space = "";
+        for (auto b : val)
+        {
+            binary_contents.append(comma_space);
+            binary_contents.append(std::to_string(static_cast<int>(b)));
+            comma_space = ", ";
+        }
+        binary_contents.append(")");
+        events.push_back(binary_contents);
+        return true;
+    }
+
     bool start_object(std::size_t elements)
     {
         if (elements == std::size_t(-1))
@@ -164,6 +179,11 @@ class SaxCountdown : public nlohmann::json::json_sax_t
     }
 
     bool string(std::string&) override
+    {
+        return events_left-- > 0;
+    }
+
+    bool binary(std::vector<std::uint8_t>&) override
     {
         return events_left-- > 0;
     }
