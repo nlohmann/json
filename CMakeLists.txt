@@ -89,6 +89,9 @@ endif()
 ## install header files, generate and install cmake config files for find_package()
 ##
 include(CMakePackageConfigHelpers)
+# use a custom package version config file instead of
+# write_basic_package_version_file to ensure that it's architecture-independent
+# https://github.com/nlohmann/json/issues/1697
 configure_file(
     "cmake/nlohmann_jsonConfigVersion.cmake.in"
     ${NLOHMANN_JSON_CMAKE_VERSION_CONFIG_FILE}
