@@ -15495,7 +15495,7 @@ class serializer
                 : (0xFFu >> type) & (byte);
 
         std::size_t index = 256u + static_cast<size_t>(state) * 16u + static_cast<size_t>(type);
-        assert(0 <= index and index < 400);
+        assert(index < 400);
         state = utf8d[index];
         return state;
     }
@@ -16377,9 +16377,9 @@ class basic_json
     struct internal_binary_t : public BinaryType
     {
         using BinaryType::BinaryType;
-        internal_binary_t() : BinaryType() {}
-        internal_binary_t(BinaryType const& bint) : BinaryType(bint) {}
-        internal_binary_t(BinaryType&& bint) : BinaryType(std::move(bint)) {}
+        internal_binary_t() noexcept(noexcept(BinaryType())) : BinaryType() {}
+        internal_binary_t(BinaryType const& bint) noexcept(noexcept(BinaryType(bint))) : BinaryType(bint) {}
+        internal_binary_t(BinaryType&& bint)  noexcept(noexcept(BinaryType(std::move(bint)))) : BinaryType(std::move(bint)) {}
 
         // TOOD: If minimum C++ version is ever bumped to C++17, this field
         // deserves to be a std::optional
@@ -22165,7 +22165,6 @@ class basic_json
                           input_format_t format = input_format_t::json,
                           const bool strict = true)
     {
-        assert(sax);
         return format == input_format_t::json
                ? parser(std::move(i)).sax_parse(sax, strict)
                : detail::binary_reader<basic_json, SAX>(std::move(i)).sax_parse(format, sax, strict);
