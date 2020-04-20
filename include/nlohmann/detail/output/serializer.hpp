@@ -259,8 +259,7 @@ class serializer
                     {
                         dump_integer(*i);
                         o->write_character(',');
-                        int index = i - val.m_value.binary->cbegin();
-                        if (index % 16 == 0)
+                        if (std::distance(val.m_value.binary->cbegin(), i) % 16 == 0)
                         {
                             o->write_character('\n');
                         }

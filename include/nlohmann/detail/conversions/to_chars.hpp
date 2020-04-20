@@ -1006,7 +1006,7 @@ inline char* format_buffer(char* buf, int len, int decimal_exponent,
 
         std::memmove(buf + (static_cast<size_t>(n) + 1), buf + n, static_cast<size_t>(k) - static_cast<size_t>(n));
         buf[n] = '.';
-        return buf + (static_cast<size_t>(k) + 1);
+        return buf + (static_cast<size_t>(k) + 1U);
     }
 
     if (min_exp < n and n <= 0)
@@ -1018,7 +1018,7 @@ inline char* format_buffer(char* buf, int len, int decimal_exponent,
         buf[0] = '0';
         buf[1] = '.';
         std::memset(buf + 2, '0', static_cast<size_t>(-n));
-        return buf + (2 + static_cast<size_t>(-n) + k);
+        return buf + (2U + static_cast<size_t>(-n) + static_cast<size_t>(k));
     }
 
     if (k == 1)
