@@ -1896,6 +1896,14 @@ TEST_CASE("regression tests")
         static_assert(!std::is_constructible<json, std::tuple<NotSerializableData, std::string>>::value, "");
         static_assert(std::is_constructible<json, std::tuple<int, std::string>>::value, "");
     }
+
+    SECTION("issue #1983 - JSON patch diff for op=add formation is not as per standard (RFC 6902)")
+    {
+        const auto source = R"({ "foo": [ "1", "2" ] })"_json;
+        const auto target = R"({"foo": [ "1", "2", "3" ]})"_json;
+        const auto result = json::diff(source, target);
+        CHECK(result.dump() == R"([{"op":"add","path":"/foo/-","value":"3"}])");
+    }
 }
 
 #if not defined(JSON_NOEXCEPTION)
