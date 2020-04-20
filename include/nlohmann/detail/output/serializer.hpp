@@ -861,7 +861,7 @@ class serializer
                 : (0xFFu >> type) & (byte);
 
         std::size_t index = 256u + static_cast<size_t>(state) * 16u + static_cast<size_t>(type);
-        assert(0 <= index and index < 400);
+        assert(index < 400);
         state = utf8d[index];
         return state;
     }
