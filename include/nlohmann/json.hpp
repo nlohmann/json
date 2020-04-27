@@ -2757,6 +2757,18 @@ class basic_json
         return is_binary() ? m_value.binary : nullptr;
     }
 
+    /// get a pointer to the value (binary)
+    internal_binary_t* get_impl_ptr(internal_binary_t* /*unused*/) noexcept
+    {
+        return is_binary() ? m_value.binary : nullptr;
+    }
+
+    /// get a pointer to the value (binary)
+    constexpr const internal_binary_t* get_impl_ptr(const internal_binary_t* /*unused*/) const noexcept
+    {
+        return is_binary() ? m_value.binary : nullptr;
+    }
+
     /*!
     @brief helper function to implement get_ref()
 
