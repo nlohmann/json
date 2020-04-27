@@ -1904,6 +1904,20 @@ TEST_CASE("regression tests")
         const auto result = json::diff(source, target);
         CHECK(result.dump() == R"([{"op":"add","path":"/foo/-","value":"3"}])");
     }
+
+    SECTION("issue #2067 - cannot serialize binary data to text JSON")
+    {
+        const unsigned char data[] = {0x81, 0xA4, 0x64, 0x61, 0x74, 0x61, 0xC4, 0x0F, 0x33, 0x30, 0x30, 0x32, 0x33, 0x34, 0x30, 0x31, 0x30, 0x37, 0x30, 0x35, 0x30, 0x31, 0x30};
+        json j = json::from_msgpack(data, sizeof(data) / sizeof(data[0]));
+        CHECK_NOTHROW(
+            j.dump(4,                              // Indent
+                   ' ',                            // Indent char
+                   false,                          // Ensure ascii
+                   json::error_handler_t::strict,  // Error
+                   true                            // Allow binary data
+                  )
+        );
+    }
 }
 
 #if not defined(JSON_NOEXCEPTION)

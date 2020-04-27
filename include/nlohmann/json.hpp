@@ -2237,11 +2237,11 @@ class basic_json
 
         if (indent >= 0)
         {
-            s.dump(*this, true, ensure_ascii, static_cast<unsigned int>(indent), serialize_binary);
+            s.dump(*this, true, ensure_ascii, static_cast<unsigned int>(indent), 0, serialize_binary);
         }
         else
         {
-            s.dump(*this, false, ensure_ascii, 0, serialize_binary);
+            s.dump(*this, false, ensure_ascii, 0, 0, serialize_binary);
         }
 
         return result;
