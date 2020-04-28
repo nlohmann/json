@@ -826,7 +826,7 @@ TEST_CASE("constructors")
 
             // check that NaN is serialized to null
             CHECK(j.dump() == "null");
-	}
+        }
 
         SECTION("infinity")
         {
