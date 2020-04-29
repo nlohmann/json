@@ -14760,7 +14760,7 @@ class serializer
                         o->write_character('\"');
                         dump_escaped(i->first, ensure_ascii);
                         o->write_characters("\": ", 3);
-                        dump(i->second, true, ensure_ascii, indent_step, new_indent);
+                        dump(i->second, true, ensure_ascii, indent_step, new_indent, serialize_binary);
                         o->write_characters(",\n", 2);
                     }
 
@@ -14771,7 +14771,7 @@ class serializer
                     o->write_character('\"');
                     dump_escaped(i->first, ensure_ascii);
                     o->write_characters("\": ", 3);
-                    dump(i->second, true, ensure_ascii, indent_step, new_indent);
+                    dump(i->second, true, ensure_ascii, indent_step, new_indent, serialize_binary);
 
                     o->write_character('\n');
                     o->write_characters(indent_string.c_str(), current_indent);
@@ -14788,7 +14788,7 @@ class serializer
                         o->write_character('\"');
                         dump_escaped(i->first, ensure_ascii);
                         o->write_characters("\":", 2);
-                        dump(i->second, false, ensure_ascii, indent_step, current_indent);
+                        dump(i->second, false, ensure_ascii, indent_step, current_indent, serialize_binary);
                         o->write_character(',');
                     }
 
@@ -14798,7 +14798,7 @@ class serializer
                     o->write_character('\"');
                     dump_escaped(i->first, ensure_ascii);
                     o->write_characters("\":", 2);
-                    dump(i->second, false, ensure_ascii, indent_step, current_indent);
+                    dump(i->second, false, ensure_ascii, indent_step, current_indent, serialize_binary);
 
                     o->write_character('}');
                 }
@@ -14830,14 +14830,14 @@ class serializer
                             i != val.m_value.array->cend() - 1; ++i)
                     {
                         o->write_characters(indent_string.c_str(), new_indent);
-                        dump(*i, true, ensure_ascii, indent_step, new_indent);
+                        dump(*i, true, ensure_ascii, indent_step, new_indent, serialize_binary);
                         o->write_characters(",\n", 2);
                     }
 
                     // last element
                     assert(not val.m_value.array->empty());
                     o->write_characters(indent_string.c_str(), new_indent);
-                    dump(val.m_value.array->back(), true, ensure_ascii, indent_step, new_indent);
+                    dump(val.m_value.array->back(), true, ensure_ascii, indent_step, new_indent, serialize_binary);
 
                     o->write_character('\n');
                     o->write_characters(indent_string.c_str(), current_indent);
@@ -14851,13 +14851,13 @@ class serializer
                     for (auto i = val.m_value.array->cbegin();
                             i != val.m_value.array->cend() - 1; ++i)
                     {
-                        dump(*i, false, ensure_ascii, indent_step, current_indent);
+                        dump(*i, false, ensure_ascii, indent_step, current_indent, serialize_binary);
                         o->write_character(',');
                     }
 
                     // last element
                     assert(not val.m_value.array->empty());
-                    dump(val.m_value.array->back(), false, ensure_ascii, indent_step, current_indent);
+                    dump(val.m_value.array->back(), false, ensure_ascii, indent_step, current_indent, serialize_binary);
 
                     o->write_character(']');
                 }
@@ -17723,11 +17723,11 @@ class basic_json
 
         if (indent >= 0)
         {
-            s.dump(*this, true, ensure_ascii, static_cast<unsigned int>(indent), serialize_binary);
+            s.dump(*this, true, ensure_ascii, static_cast<unsigned int>(indent), 0, serialize_binary);
         }
         else
         {
-            s.dump(*this, false, ensure_ascii, 0, serialize_binary);
+            s.dump(*this, false, ensure_ascii, 0, 0, serialize_binary);
         }
 
         return result;
