@@ -12,16 +12,19 @@ jobs:
           command: 'apt-get update && apt-get install -y sudo && rm -rf /var/lib/apt/lists/*'
       - run:
           name: Install GCC
-          command: 'apt-get update && apt-get install -y gcc g++ git'
+          command: 'apt-get update && apt-get install -y gcc g++'
+      - run:
+          name: Install Git
+          command: 'apt-get update && apt-get install -y git'
       - run:
           name: Install CMake
-          command: 'apt-get update && sudo apt-get install -y cmake'
-      - run:
-          name: Create build files
-          command: 'mkdir build ; cd build ; cmake ..'
+          command: 'apt-get update && apt-get install -y cmake'
       - run:
           name: Versions
-          command: 'g++ --version ; uname -a'
+          command: 'g++ --version ; uname -a; cmake --version'
+      - run:
+          name: Run CMake
+          command: 'mkdir build ; cd build ; cmake ..'
       - run:
           name: Compile
           command: 'cmake --build build'
