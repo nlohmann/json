@@ -154,6 +154,7 @@ if(NOT json_POPULATED)
 endif()
 
 target_link_libraries(foo PRIVATE nlohmann_json::nlohmann_json)
+```
 
 **Note**: The repository https://github.com/nlohmann/json download size is huge.
 It contains all the dataset used for the benchmarks. You might want to depend on
