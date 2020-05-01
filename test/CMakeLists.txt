@@ -4,8 +4,9 @@ option(JSON_NoExceptions "Build test suite without exceptions" OFF)
 option(JSON_Coverage "Build test suite with coverage information" OFF)
 
 # target to download test data
+find_package(Git)
 add_custom_target(download_test_data
-    COMMAND test -d json_test_data || git clone https://github.com/nlohmann/json_test_data.git --quiet --depth 1
+    COMMAND test -d json_test_data || ${GIT_EXECUTABLE} clone https://github.com/nlohmann/json_test_data.git --quiet --depth 1
     COMMENT "Downloading test data from https://github.com/nlohmann/json_test_data"
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )
