@@ -1,1 +1,1 @@
-#define TEST_DATA_DIRECTORY "${nlohmann_json_test_data_SOURCE_DIR}"
+#define TEST_DATA_DIRECTORY "${CMAKE_BINARY_DIR}/json_test_data"

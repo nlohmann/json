@@ -3,22 +3,16 @@ option(JSON_Valgrind "Execute test suite with Valgrind" OFF)
 option(JSON_NoExceptions "Build test suite without exceptions" OFF)
 option(JSON_Coverage "Build test suite with coverage information" OFF)
 
-if (${CMAKE_VERSION} VERSION_LESS "3.11.0")
-    message(FATAL_ERROR "The test suite needs at least CMake 3.11. This is CMake ${CMAKE_VERSION}.")
-endif()
-
-include(FetchContent)
-FetchContent_Declare(nlohmann_json_test_data
-    GIT_REPOSITORY https://github.com/nlohmann/json_test_data.git
-    GIT_SHALLOW TRUE
+# target to download test data
+add_custom_target(download_test_data
+    COMMAND test -d json_test_data || git clone https://github.com/nlohmann/json_test_data.git --quiet --depth 1
+    COMMENT "Downloading test data from https://github.com/nlohmann/json_test_data"
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 )
 
-FetchContent_GetProperties(nlohmann_json_test_data)
-if(NOT nlohmann_json_test_data_POPULATED)
-    message(STATUS "Download test data")
-    FetchContent_Populate(nlohmann_json_test_data)
-    message(STATUS "Download test data - done")
-endif()
+# test fixture to download test data
+add_test(NAME "download_test_data"  COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target download_test_data)
+set_tests_properties(download_test_data PROPERTIES FIXTURES_SETUP TEST_DATA)
 
 configure_file(src/test_data.hpp.in include/test_data.hpp)
 
@@ -168,7 +162,7 @@ foreach(file ${files})
 
     add_executable(${testcase} $<TARGET_OBJECTS:doctest_main> ${file})
     target_compile_definitions(${testcase} PRIVATE
-      DOCTEST_CONFIG_SUPER_FAST_ASSERTS
+        DOCTEST_CONFIG_SUPER_FAST_ASSERTS
     )
     target_compile_options(${testcase} PRIVATE
         $<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>
@@ -183,21 +177,21 @@ foreach(file ${files})
     target_link_libraries(${testcase} ${NLOHMANN_JSON_TARGET_NAME})
 
     add_test(NAME "${testcase}_default"
-      COMMAND ${testcase} ${DOCTEST_TEST_FILTER}
-      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMAND ${testcase} ${DOCTEST_TEST_FILTER}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     )
-    set_tests_properties("${testcase}_default" PROPERTIES LABELS "default")
+    set_tests_properties("${testcase}_default" PROPERTIES LABELS "default" FIXTURES_REQUIRED TEST_DATA)
 
     add_test(NAME "${testcase}_all"
-      COMMAND ${testcase} ${DOCTEST_TEST_FILTER} --no-skip
-      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMAND ${testcase} ${DOCTEST_TEST_FILTER} --no-skip
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     )
-    set_tests_properties("${testcase}_all" PROPERTIES LABELS "all")
+    set_tests_properties("${testcase}_all" PROPERTIES LABELS "all" FIXTURES_REQUIRED TEST_DATA)
 
     if(JSON_Valgrind)
         add_test(NAME "${testcase}_valgrind"
-          COMMAND ${memcheck_command} ${CMAKE_CURRENT_BINARY_DIR}/${testcase} ${DOCTEST_TEST_FILTER}
-          WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            COMMAND ${memcheck_command} ${CMAKE_CURRENT_BINARY_DIR}/${testcase} ${DOCTEST_TEST_FILTER}
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         )
         set_tests_properties("${testcase}_valgrind" PROPERTIES LABELS "valgrind")
     endif()
