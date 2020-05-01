@@ -3,19 +3,12 @@ option(JSON_Valgrind "Execute test suite with Valgrind" OFF)
 option(JSON_NoExceptions "Build test suite without exceptions" OFF)
 option(JSON_Coverage "Build test suite with coverage information" OFF)
 
-# target to download test data
-find_package(Git)
-add_custom_target(download_test_data
-    COMMAND test -d json_test_data || ${GIT_EXECUTABLE} clone https://github.com/nlohmann/json_test_data.git --quiet --depth 1
-    COMMENT "Downloading test data from https://github.com/nlohmann/json_test_data"
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-)
+# download test data
+include(${CMAKE_SOURCE_DIR}/cmake/download_test_data.cmake)
 
 # test fixture to download test data
-add_test(NAME "download_test_data"  COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target download_test_data)
+add_test(NAME "download_test_data" COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target download_test_data)
 set_tests_properties(download_test_data PROPERTIES FIXTURES_SETUP TEST_DATA)
-
-configure_file(src/test_data.hpp.in include/test_data.hpp)
 
 if(JSON_Sanitizer)
     message(STATUS "Building test suite with Clang sanitizer")

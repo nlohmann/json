@@ -1,1 +1,0 @@
-#define TEST_DATA_DIRECTORY "${CMAKE_BINARY_DIR}/json_test_data"
