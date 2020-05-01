@@ -3,6 +3,25 @@ option(JSON_Valgrind "Execute test suite with Valgrind" OFF)
 option(JSON_NoExceptions "Build test suite without exceptions" OFF)
 option(JSON_Coverage "Build test suite with coverage information" OFF)
 
+if (${CMAKE_VERSION} VERSION_LESS "3.11.0")
+    message(FATAL_ERROR "The test suite needs at least CMake 3.11. This is CMake ${CMAKE_VERSION}.")
+endif()
+
+include(FetchContent)
+FetchContent_Declare(nlohmann_json_test_data
+    GIT_REPOSITORY https://github.com/nlohmann/json_test_data.git
+    GIT_SHALLOW TRUE
+)
+
+FetchContent_GetProperties(nlohmann_json_test_data)
+if(NOT nlohmann_json_test_data_POPULATED)
+    message(STATUS "Download test data")
+    FetchContent_Populate(nlohmann_json_test_data)
+    message(STATUS "Download test data - done")
+endif()
+
+configure_file(src/test_data.hpp.in include/test_data.hpp)
+
 if(JSON_Sanitizer)
     message(STATUS "Building test suite with Clang sanitizer")
     if(NOT MSVC)
@@ -157,6 +176,7 @@ foreach(file ${files})
         $<$<CXX_COMPILER_ID:GNU>:-Wno-deprecated-declarations>
     )
     target_include_directories(${testcase} PRIVATE
+        ${CMAKE_CURRENT_BINARY_DIR}/include
         thirdparty/doctest
         thirdparty/fifo_map
     )

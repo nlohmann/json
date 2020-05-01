@@ -34,6 +34,7 @@ using nlohmann::json;
 
 #include <fstream>
 #include <sstream>
+#include <test_data.hpp>
 
 TEST_CASE("object inspection")
 {
@@ -265,8 +266,8 @@ TEST_CASE("object inspection")
         {
             SECTION("parsing yields the same JSON value")
             {
-                std::ifstream f_escaped("test/data/json_nlohmann_tests/all_unicode_ascii.json");
-                std::ifstream f_unescaped("test/data/json_nlohmann_tests/all_unicode.json");
+                std::ifstream f_escaped(TEST_DATA_DIRECTORY "/json_nlohmann_tests/all_unicode_ascii.json");
+                std::ifstream f_unescaped(TEST_DATA_DIRECTORY "/json_nlohmann_tests/all_unicode.json");
 
                 json j1 = json::parse(f_escaped);
                 json j2 = json::parse(f_unescaped);
@@ -275,8 +276,8 @@ TEST_CASE("object inspection")
 
             SECTION("dumping yields the same JSON text")
             {
-                std::ifstream f_escaped("test/data/json_nlohmann_tests/all_unicode_ascii.json");
-                std::ifstream f_unescaped("test/data/json_nlohmann_tests/all_unicode.json");
+                std::ifstream f_escaped(TEST_DATA_DIRECTORY "/json_nlohmann_tests/all_unicode_ascii.json");
+                std::ifstream f_unescaped(TEST_DATA_DIRECTORY "/json_nlohmann_tests/all_unicode.json");
 
                 json value = json::parse(f_unescaped);
                 std::string text = value.dump(4, ' ', true);
