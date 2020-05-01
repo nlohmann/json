@@ -27,4 +27,4 @@ jobs:
           command: 'cmake --build build'
       - run:
           name: Execute test suite
-          command: 'cd build ; ctest -j 2'
+          command: 'cd build ; ctest --output-on-failure -j 2'
