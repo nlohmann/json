@@ -1245,17 +1245,17 @@ TEST_CASE("parser class")
         // missing part of a surrogate pair
         CHECK_THROWS_AS(_ = json::parse("\"\\uD80C\""), json::parse_error&);
         CHECK_THROWS_WITH(_ = json::parse("\"\\uD80C\""),
-                          "[json.exception.parse_error.101] parse error at line 1, column 8: syntax error while parsing value - invalid string: surrogate U+DC00..U+DFFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD80C\"'");
+                          "[json.exception.parse_error.101] parse error at line 1, column 8: syntax error while parsing value - invalid string: surrogate U+D800..U+DBFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD80C\"'");
         // invalid surrogate pair
         CHECK_THROWS_AS(_ = json::parse("\"\\uD80C\\uD80C\""), json::parse_error&);
         CHECK_THROWS_AS(_ = json::parse("\"\\uD80C\\u0000\""), json::parse_error&);
         CHECK_THROWS_AS(_ = json::parse("\"\\uD80C\\uFFFF\""), json::parse_error&);
         CHECK_THROWS_WITH(_ = json::parse("\"\\uD80C\\uD80C\""),
-                          "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing value - invalid string: surrogate U+DC00..U+DFFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD80C\\uD80C'");
+                          "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing value - invalid string: surrogate U+D800..U+DBFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD80C\\uD80C'");
         CHECK_THROWS_WITH(_ = json::parse("\"\\uD80C\\u0000\""),
-                          "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing value - invalid string: surrogate U+DC00..U+DFFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD80C\\u0000'");
+                          "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing value - invalid string: surrogate U+D800..U+DBFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD80C\\u0000'");
         CHECK_THROWS_WITH(_ = json::parse("\"\\uD80C\\uFFFF\""),
-                          "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing value - invalid string: surrogate U+DC00..U+DFFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD80C\\uFFFF'");
+                          "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing value - invalid string: surrogate U+D800..U+DBFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD80C\\uFFFF'");
     }
 
     SECTION("parse errors (accept)")
