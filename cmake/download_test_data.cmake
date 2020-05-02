@@ -8,4 +8,4 @@ add_custom_target(download_test_data
 )
 
 # create a header with the path to the downloaded test data
-file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/include/test_data.hpp "#define TEST_DATA_DIRECTORY \"${CMAKE_BINARY_DIR}/json_test_data\"")
+file(WRITE ${CMAKE_BINARY_DIR}/include/test_data.hpp "#define TEST_DATA_DIRECTORY \"${CMAKE_BINARY_DIR}/json_test_data\"")

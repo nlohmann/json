@@ -4,7 +4,7 @@ option(JSON_NoExceptions "Build test suite without exceptions" OFF)
 option(JSON_Coverage "Build test suite with coverage information" OFF)
 
 # download test data
-include(${CMAKE_SOURCE_DIR}/cmake/download_test_data.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/download_test_data.cmake)
 
 # test fixture to download test data
 add_test(NAME "download_test_data" COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target download_test_data)
@@ -164,7 +164,7 @@ foreach(file ${files})
         $<$<CXX_COMPILER_ID:GNU>:-Wno-deprecated-declarations>
     )
     target_include_directories(${testcase} PRIVATE
-        ${CMAKE_CURRENT_BINARY_DIR}/include
+        ${CMAKE_BINARY_DIR}/include
         thirdparty/doctest
         thirdparty/fifo_map
     )
