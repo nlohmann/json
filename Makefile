@@ -77,7 +77,7 @@ check-fast:
 coverage:
 	rm -fr build_coverage
 	mkdir build_coverage
-	cd build_coverage ; CXX=g++-8 cmake .. -GNinja -DJSON_Coverage=ON -DJSON_MultipleHeaders=ON
+	cd build_coverage ; cmake .. -GNinja -DCMAKE_BUILD_TYPE=Debug -DJSON_Coverage=ON -DJSON_MultipleHeaders=ON
 	cd build_coverage ; ninja
 	cd build_coverage ; ctest -j10
 	cd build_coverage ; ninja lcov_html

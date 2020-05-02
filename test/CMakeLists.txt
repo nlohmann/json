@@ -34,12 +34,6 @@ endif()
 
 if(JSON_Coverage)
     message(STATUS "Building test suite with coverage information")
-    if(NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-        message(FATAL_ERROR "JSON_Coverage requires GCC.")
-    endif()
-
-    # enable profiling
-    set(CMAKE_CXX_FLAGS "--coverage -g -O0 -fprofile-arcs -ftest-coverage")
 
     # from https://github.com/RWTH-HPC/CMake-codecov/blob/master/cmake/FindGcov.cmake
     get_filename_component(COMPILER_PATH "${CMAKE_CXX_COMPILER}" PATH)
@@ -71,9 +65,7 @@ endif()
 # doctest library with the main function to speed up build
 #############################################################################
 
-add_library(doctest_main OBJECT
-    "src/unit.cpp"
-)
+add_library(doctest_main OBJECT src/unit.cpp)
 set_target_properties(doctest_main PROPERTIES
     COMPILE_DEFINITIONS "$<$<CXX_COMPILER_ID:MSVC>:_SCL_SECURE_NO_WARNINGS>"
     COMPILE_OPTIONS "$<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>"
@@ -162,7 +154,12 @@ foreach(file ${files})
         $<$<CXX_COMPILER_ID:GNU>:-Wno-deprecated-declarations>
     )
     target_include_directories(${testcase} PRIVATE ${CMAKE_BINARY_DIR}/include thirdparty/doctest thirdparty/fifo_map)
-    target_link_libraries(${testcase} ${NLOHMANN_JSON_TARGET_NAME})
+    target_link_libraries(${testcase} PRIVATE ${NLOHMANN_JSON_TARGET_NAME})
+
+    if (JSON_Coverage)
+        target_compile_options(${testcase} PRIVATE --coverage)
+        target_link_libraries(${testcase} PRIVATE --coverage)
+    endif()
 
     add_test(NAME "${testcase}"
         COMMAND ${testcase} ${DOCTEST_TEST_FILTER} --no-skip
