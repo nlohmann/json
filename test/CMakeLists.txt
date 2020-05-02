@@ -155,32 +155,20 @@ foreach(file ${files})
     string(REGEX REPLACE "unit-([^$]+)" "test-\\1" testcase ${file_basename})
 
     add_executable(${testcase} $<TARGET_OBJECTS:doctest_main> ${file})
-    target_compile_definitions(${testcase} PRIVATE
-        DOCTEST_CONFIG_SUPER_FAST_ASSERTS
-    )
+    target_compile_definitions(${testcase} PRIVATE DOCTEST_CONFIG_SUPER_FAST_ASSERTS)
     target_compile_options(${testcase} PRIVATE
         $<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>
         $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wno-deprecated;-Wno-float-equal>
         $<$<CXX_COMPILER_ID:GNU>:-Wno-deprecated-declarations>
     )
-    target_include_directories(${testcase} PRIVATE
-        ${CMAKE_BINARY_DIR}/include
-        thirdparty/doctest
-        thirdparty/fifo_map
-    )
+    target_include_directories(${testcase} PRIVATE ${CMAKE_BINARY_DIR}/include thirdparty/doctest thirdparty/fifo_map)
     target_link_libraries(${testcase} ${NLOHMANN_JSON_TARGET_NAME})
 
-    add_test(NAME "${testcase}_default"
-        COMMAND ${testcase} ${DOCTEST_TEST_FILTER}
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    )
-    set_tests_properties("${testcase}_default" PROPERTIES LABELS "default" FIXTURES_REQUIRED TEST_DATA)
-
-    add_test(NAME "${testcase}_all"
+    add_test(NAME "${testcase}"
         COMMAND ${testcase} ${DOCTEST_TEST_FILTER} --no-skip
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     )
-    set_tests_properties("${testcase}_all" PROPERTIES LABELS "all" FIXTURES_REQUIRED TEST_DATA)
+    set_tests_properties("${testcase}" PROPERTIES LABELS "all" FIXTURES_REQUIRED TEST_DATA)
 
     if(JSON_Valgrind)
         add_test(NAME "${testcase}_valgrind"
@@ -190,6 +178,17 @@ foreach(file ${files})
         set_tests_properties("${testcase}_valgrind" PROPERTIES LABELS "valgrind")
     endif()
 endforeach()
+
+add_executable(json_unit EXCLUDE_FROM_ALL $<TARGET_OBJECTS:doctest_main> ${files})
+target_compile_definitions(json_unit PRIVATE DOCTEST_CONFIG_SUPER_FAST_ASSERTS)
+target_compile_options(json_unit PRIVATE
+    $<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>
+    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wno-deprecated;-Wno-float-equal>
+    $<$<CXX_COMPILER_ID:GNU>:-Wno-deprecated-declarations>
+)
+target_include_directories(json_unit PRIVATE ${CMAKE_BINARY_DIR}/include thirdparty/doctest thirdparty/fifo_map)
+target_link_libraries(json_unit ${NLOHMANN_JSON_TARGET_NAME})
+add_dependencies(json_unit download_test_data)
 
 #############################################################################
 # Test the generated build configs

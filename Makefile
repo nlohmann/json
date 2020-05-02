@@ -79,7 +79,7 @@ coverage:
 	mkdir build_coverage
 	cd build_coverage ; CXX=g++-8 cmake .. -GNinja -DJSON_Coverage=ON -DJSON_MultipleHeaders=ON
 	cd build_coverage ; ninja
-	cd build_coverage ; ctest -E '.*_default' -j10
+	cd build_coverage ; ctest -j10
 	cd build_coverage ; ninja lcov_html
 	open build_coverage/test/html/index.html
 
@@ -88,7 +88,7 @@ coverage-fast:
 	mkdir build_coverage
 	cd build_coverage ; CXX=g++-9 cmake .. -GNinja -DJSON_Coverage=ON -DJSON_MultipleHeaders=ON
 	cd build_coverage ; ninja
-	cd build_coverage ; ctest -E '.*_default' -j10
+	cd build_coverage ; ctest -j10
 	cd build_coverage ; ninja fastcov_html
 	open build_coverage/test/html/index.html
 
@@ -485,7 +485,7 @@ clang_sanitize:
 	mkdir clang_sanitize_build
 	cd clang_sanitize_build ; CXX=$(COMPILER_DIR)/clang++ cmake .. -DJSON_Sanitizer=On -DJSON_MultipleHeaders=ON -GNinja
 	cd clang_sanitize_build ; ninja
-	cd clang_sanitize_build ; ctest -E '.*_default' -j10
+	cd clang_sanitize_build ; ctest -j10
 
 
 ##########################################################################
