@@ -52,13 +52,6 @@ if(JSON_Coverage)
         COMMAND genhtml --title "JSON for Modern C++" --legend --demangle-cpp --output-directory html --show-details --branch-coverage json.info.filtered.noexcept
         COMMENT "Generating HTML report test/html/index.html"
     )
-
-    add_custom_target(fastcov_html
-        COMMAND ${CMAKE_SOURCE_DIR}/test/thirdparty/fastcov/fastcov.py --branch-coverage --lcov -o json.info --gcov ${GCOV_BIN} --compiler-directory ${CMAKE_BINARY_DIR} --source-files ${SOURCE_FILES}
-        COMMAND ${CMAKE_SOURCE_DIR}/test/thirdparty/imapdl/filterbr.py json.info > json.info.noexcept
-        COMMAND genhtml --title "JSON for Modern C++" --legend --demangle-cpp --output-directory html --show-details --branch-coverage json.info.noexcept
-        COMMENT "Generating HTML report test/html/index.html"
-    )
 endif()
 
 #############################################################################

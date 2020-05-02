@@ -32,10 +32,8 @@ all:
 	@echo "ChangeLog.md - generate ChangeLog file"
 	@echo "check - compile and execute test suite"
 	@echo "check-amalgamation - check whether sources have been amalgamated"
-	@echo "check-fast - compile and execute test suite (skip long-running tests)"
 	@echo "clean - remove built files"
 	@echo "coverage - create coverage information with lcov"
-	@echo "coverage-fast - create coverage information with fastcov"
 	@echo "cppcheck - analyze code with cppcheck"
 	@echo "cpplint - analyze code with cpplint"
 	@echo "clang_tidy - analyze code with Clang-Tidy"
@@ -65,10 +63,6 @@ json_unit:
 check:
 	$(MAKE) check -C test
 
-# run unit tests and skip expensive tests
-check-fast:
-	$(MAKE) check -C test TEST_PATTERN=""
-
 
 ##########################################################################
 # coverage
@@ -81,15 +75,6 @@ coverage:
 	cd build_coverage ; ninja
 	cd build_coverage ; ctest -j10
 	cd build_coverage ; ninja lcov_html
-	open build_coverage/test/html/index.html
-
-coverage-fast:
-	rm -fr build_coverage
-	mkdir build_coverage
-	cd build_coverage ; CXX=g++-9 cmake .. -GNinja -DJSON_Coverage=ON -DJSON_MultipleHeaders=ON
-	cd build_coverage ; ninja
-	cd build_coverage ; ctest -j10
-	cd build_coverage ; ninja fastcov_html
 	open build_coverage/test/html/index.html
 
 ##########################################################################
