@@ -1077,18 +1077,14 @@ Please note:
 
 - Unsupported versions of GCC and Clang are rejected by `#error` directives. This can be switched off by defining `JSON_SKIP_UNSUPPORTED_COMPILER_CHECK`. Note that you can expect no support in this case.
 
-The following compilers are currently used in continuous integration at [Travis](https://travis-ci.org/nlohmann/json), [AppVeyor](https://ci.appveyor.com/project/nlohmann/json), [CircleCI](https://circleci.com/gh/nlohmann/json), and [Doozer](https://doozer.io):
+The following compilers are currently used in continuous integration at [Travis](https://travis-ci.org/nlohmann/json), [AppVeyor](https://ci.appveyor.com/project/nlohmann/json), and [CircleCI](https://circleci.com/gh/nlohmann/json):
 
 | Compiler              | Operating System             | Version String |
 |-----------------------|------------------------------|----------------|
 | GCC 4.8.5             | Ubuntu 14.04.5 LTS           | g++-4.8 (Ubuntu 4.8.5-2ubuntu1~14.04.2) 4.8.5 |
-| GCC 4.8.5             | CentOS Release-7-6.1810.2.el7.centos.x86_64 | g++ (GCC) 4.8.5 20150623 (Red Hat 4.8.5-36) |
-| GCC 4.9.2 (armv7l)    | Raspbian GNU/Linux 8 (jessie) | g++ (Raspbian 4.9.2-10+deb8u2) 4.9.2 |
 | GCC 4.9.4             | Ubuntu 14.04.1 LTS           | g++-4.9 (Ubuntu 4.9.4-2ubuntu1~14.04.1) 4.9.4 |
-| GCC 5.3.1 (armv7l)    | Ubuntu 16.04 LTS             | g++ (Ubuntu/Linaro 5.3.1-14ubuntu2) 5.3.1 20160413 |
 | GCC 5.5.0             | Ubuntu 14.04.1 LTS           | g++-5 (Ubuntu 5.5.0-12ubuntu1~14.04) 5.5.0 20171010 |
 | GCC 6.3.0             | Debian 9 (stretch)           | g++ (Debian 6.3.0-18+deb9u1) 6.3.0 20170516 |
-| GCC 6.3.1             | Fedora release 24 (Twenty Four) | g++ (GCC) 6.3.1 20161221 (Red Hat 6.3.1-1) |
 | GCC 6.4.0             | Ubuntu 14.04.1 LTS           | g++-6 (Ubuntu 6.4.0-17ubuntu1~14.04) 6.4.0 20180424 |
 | GCC 7.3.0             | Ubuntu 14.04.1 LTS           | g++-7 (Ubuntu 7.3.0-21ubuntu1~14.04) 7.3.0 |
 | GCC 7.3.0             | Windows Server 2012 R2 (x64) | g++ (x86_64-posix-seh-rev0, Built by MinGW-W64 project) 7.3.0 |
@@ -1353,7 +1349,6 @@ The library itself consists of a single header file licensed under the MIT licen
 - [**Coverity Scan**](https://scan.coverity.com) for [static analysis](https://scan.coverity.com/projects/nlohmann-json)
 - [**cppcheck**](http://cppcheck.sourceforge.net) for static analysis
 - [**doctest**](https://github.com/onqtam/doctest) for the unit tests
-- [**Doozer**](https://doozer.io) for [continuous integration](https://doozer.io/nlohmann/json) on Linux (CentOS, Raspbian, Fedora)
 - [**Doxygen**](http://www.stack.nl/~dimitri/doxygen/) to generate [documentation](https://nlohmann.github.io/json/)
 - [**fastcov**](https://github.com/RPGillespie6/fastcov) to process coverage information
 - [**git-update-ghpages**](https://github.com/rstacruz/git-update-ghpages) to upload the documentation to gh-pages
