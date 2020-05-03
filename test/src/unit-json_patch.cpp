@@ -1259,8 +1259,9 @@ TEST_CASE("JSON patch")
     SECTION("Tests from github.com/json-patch/json-patch-tests")
     {
         for (auto filename :
-                {TEST_DATA_DIRECTORY "/json-patch-tests/spec_tests.json",
-                 TEST_DATA_DIRECTORY "/json-patch-tests/tests.json"
+                {
+                    TEST_DATA_DIRECTORY "/json-patch-tests/spec_tests.json",
+                    TEST_DATA_DIRECTORY "/json-patch-tests/tests.json"
                 })
         {
             CAPTURE(filename)

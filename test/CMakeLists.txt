@@ -162,7 +162,7 @@ foreach(file ${files})
 
     if(JSON_Valgrind)
         add_test(NAME "${testcase}_valgrind"
-            COMMAND ${memcheck_command} ${CMAKE_CURRENT_BINARY_DIR}/${testcase} ${DOCTEST_TEST_FILTER}
+            COMMAND ${memcheck_command} ${CMAKE_CURRENT_BINARY_DIR}/${testcase} ${DOCTEST_TEST_FILTER} --no-skip
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         )
         set_tests_properties("${testcase}_valgrind" PROPERTIES LABELS "valgrind")
