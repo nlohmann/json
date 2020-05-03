@@ -123,4 +123,4 @@ test_script:
   # as it is extremely slow to run and cause
   # occasional timeouts on AppVeyor.
   # More info: https://github.com/nlohmann/json/pull/1570
-  - if "%configuration%"=="Debug" ctest --exclude-regex "test-unicode_all" -C "%configuration%" -V -j
+  - if "%configuration%"=="Debug" ctest --exclude-regex "test-unicode" -C "%configuration%" -V -j
