@@ -876,7 +876,6 @@ class basic_json
 
     @since version 3.8.0
     */
-
     using binary_t = BinaryType;
 
     /*!
@@ -1204,6 +1203,7 @@ class basic_json
         assert(m_type != value_t::object or m_value.object != nullptr);
         assert(m_type != value_t::array or m_value.array != nullptr);
         assert(m_type != value_t::string or m_value.string != nullptr);
+        assert(m_type != value_t::binary or m_value.binary != nullptr);
     }
 
   public:
@@ -6008,6 +6008,39 @@ class basic_json
         if (JSON_HEDLEY_LIKELY(is_string()))
         {
             std::swap(*(m_value.string), other);
+        }
+        else
+        {
+            JSON_THROW(type_error::create(310, "cannot use swap() with " + std::string(type_name())));
+        }
+    }
+
+    /*!
+    @brief exchanges the values
+
+    Exchanges the contents of a JSON string with those of @a other. Does not
+    invoke any move, copy, or swap operations on individual elements. All
+    iterators and references remain valid. The past-the-end iterator is
+    invalidated.
+
+    @param[in,out] other binary to exchange the contents with
+
+    @throw type_error.310 when JSON value is not a string; example: `"cannot
+    use swap() with boolean"`
+
+    @complexity Constant.
+
+    @liveexample{The example below shows how strings can be swapped with
+    `swap()`.,swap__binary_t}
+
+    @since version 3.8.0
+    */
+    void swap(binary_t& other)
+    {
+        // swap only works for strings
+        if (JSON_HEDLEY_LIKELY(is_binary()))
+        {
+            std::swap(*(m_value.binary), other);
         }
         else
         {
