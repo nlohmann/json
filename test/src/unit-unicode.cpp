@@ -41,6 +41,7 @@ using nlohmann::json;
 #include <sstream>
 #include <iostream>
 #include <iomanip>
+#include <test_data.hpp>
 
 namespace
 {
@@ -1148,7 +1149,7 @@ TEST_CASE("Unicode" * doctest::skip())
     {
         // read a file with all unicode characters stored as single-character
         // strings in a JSON array
-        std::ifstream f("test/data/json_nlohmann_tests/all_unicode.json");
+        std::ifstream f(TEST_DATA_DIRECTORY "/json_nlohmann_tests/all_unicode.json");
         json j;
         CHECK_NOTHROW(f >> j);
 
@@ -1193,7 +1194,7 @@ TEST_CASE("Unicode" * doctest::skip())
         SECTION("in a stream")
         {
             // read a file with a UTF-8 BOM
-            std::ifstream f("test/data/json_nlohmann_tests/bom.json");
+            std::ifstream f(TEST_DATA_DIRECTORY "/json_nlohmann_tests/bom.json");
             json j;
             CHECK_NOTHROW(f >> j);
         }

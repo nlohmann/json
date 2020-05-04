@@ -42,6 +42,7 @@ using nlohmann::json;
 #include <sstream>
 #include <list>
 #include <cstdio>
+#include <test_data.hpp>
 
 #if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_HAS_CXX17) && _HAS_CXX17 == 1) // fix for issue #464
     #define JSON_HAS_CPP_17
@@ -702,8 +703,8 @@ TEST_CASE("regression tests")
     {
         for (auto filename :
                 {
-                    "test/data/regression/broken_file.json",
-                    "test/data/regression/working_file.json"
+                    TEST_DATA_DIRECTORY "/regression/broken_file.json",
+                    TEST_DATA_DIRECTORY "/regression/working_file.json"
                 })
         {
             CAPTURE(filename)
@@ -717,10 +718,10 @@ TEST_CASE("regression tests")
     {
         for (auto filename :
                 {
-                    "test/data/regression/floats.json",
-                    "test/data/regression/signed_ints.json",
-                    "test/data/regression/unsigned_ints.json",
-                    "test/data/regression/small_signed_ints.json"
+                    TEST_DATA_DIRECTORY "/regression/floats.json",
+                    TEST_DATA_DIRECTORY "/regression/signed_ints.json",
+                    TEST_DATA_DIRECTORY "/regression/unsigned_ints.json",
+                    TEST_DATA_DIRECTORY "/regression/small_signed_ints.json"
                 })
         {
             CAPTURE(filename)
@@ -1470,7 +1471,7 @@ TEST_CASE("regression tests")
                 | std::ios_base::badbit
             ); // handle different exceptions as 'file not found', 'permission denied'
 
-            is.open("test/data/regression/working_file.json");
+            is.open(TEST_DATA_DIRECTORY "/regression/working_file.json");
             json _;
             CHECK_NOTHROW(_ = nlohmann::json::parse(is));
         }
@@ -1483,7 +1484,7 @@ TEST_CASE("regression tests")
                 | std::ios_base::badbit
             ); // handle different exceptions as 'file not found', 'permission denied'
 
-            is.open("test/data/json_nlohmann_tests/all_unicode.json.cbor",
+            is.open(TEST_DATA_DIRECTORY "/json_nlohmann_tests/all_unicode.json.cbor",
                     std::ios_base::in | std::ios_base::binary);
             json _;
             CHECK_NOTHROW(_ = nlohmann::json::from_cbor(is));

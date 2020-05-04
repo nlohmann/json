@@ -1350,7 +1350,6 @@ The library itself consists of a single header file licensed under the MIT licen
 - [**cppcheck**](http://cppcheck.sourceforge.net) for static analysis
 - [**doctest**](https://github.com/onqtam/doctest) for the unit tests
 - [**Doxygen**](http://www.stack.nl/~dimitri/doxygen/) to generate [documentation](https://nlohmann.github.io/json/)
-- [**fastcov**](https://github.com/RPGillespie6/fastcov) to process coverage information
 - [**git-update-ghpages**](https://github.com/rstacruz/git-update-ghpages) to upload the documentation to gh-pages
 - [**GitHub Changelog Generator**](https://github.com/skywinder/github-changelog-generator) to generate the [ChangeLog](https://github.com/nlohmann/json/blob/develop/ChangeLog.md)
 - [**Google Benchmark**](https://github.com/google/benchmark) to implement the benchmarks

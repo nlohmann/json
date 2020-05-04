@@ -34,6 +34,7 @@ using nlohmann::json;
 
 #include <fstream>
 #include <sstream>
+#include <test_data.hpp>
 
 TEST_CASE("BSON")
 {
@@ -1197,11 +1198,11 @@ TEST_CASE("BSON roundtrips" * doctest::skip())
     {
         for (std::string filename :
                 {
-                    "test/data/json.org/1.json",
-                    "test/data/json.org/2.json",
-                    "test/data/json.org/3.json",
-                    "test/data/json.org/4.json",
-                    "test/data/json.org/5.json"
+                    TEST_DATA_DIRECTORY "/json.org/1.json",
+                    TEST_DATA_DIRECTORY "/json.org/2.json",
+                    TEST_DATA_DIRECTORY "/json.org/3.json",
+                    TEST_DATA_DIRECTORY "/json.org/4.json",
+                    TEST_DATA_DIRECTORY "/json.org/5.json"
                 })
         {
             CAPTURE(filename)
