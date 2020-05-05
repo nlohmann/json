@@ -1428,6 +1428,20 @@ TEST_CASE("CBOR")
                     CHECK(json::from_cbor(result, true, false) == j);
                 }
             }
+
+            SECTION("binary in array")
+            {
+                // array with three empty byte strings
+                std::vector<std::uint8_t> input = {0x83, 0x40, 0x40, 0x40};
+                CHECK_NOTHROW(json::from_cbor(input));
+            }
+
+            SECTION("binary in object")
+            {
+                // object mapping "foo" to empty byte string
+                std::vector<std::uint8_t> input = {0xA1, 0x63, 0x66, 0x6F, 0x6F, 0x40};
+                CHECK_NOTHROW(json::from_cbor(input));
+            }
         }
     }
 
