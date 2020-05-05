@@ -197,8 +197,8 @@ TEST_CASE("lexicographical comparison operators")
                 {false, false, false, false, false, false, false, false, true, true, false, false, false, false, false, false, true, true},
                 {false, false, false, false, false, false, false, false, true, true, false, false, true, true, false, false, true, true},
                 {false, false, false, false, false, false, false, false, true, true, false, false, true, true, true, false, true, true},
-                {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false},
-                {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true, false}
+                {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true},
+                {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false}
             };
 
             for (size_t i = 0; i < j_values.size(); ++i)
