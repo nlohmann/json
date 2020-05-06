@@ -889,9 +889,25 @@ class basic_json
     struct internal_binary_t : public BinaryType
     {
         using BinaryType::BinaryType;
-        internal_binary_t() noexcept(noexcept(BinaryType())) : BinaryType() {}
-        internal_binary_t(BinaryType const& bint) noexcept(noexcept(BinaryType(bint))) : BinaryType(bint) {}
-        internal_binary_t(BinaryType&& bint)  noexcept(noexcept(BinaryType(std::move(bint)))) : BinaryType(std::move(bint)) {}
+        internal_binary_t() noexcept(noexcept(BinaryType()))
+            : BinaryType()
+        {}
+        internal_binary_t(const BinaryType& bint) noexcept(noexcept(BinaryType(bint)))
+            : BinaryType(bint)
+        {}
+        internal_binary_t(BinaryType&& bint) noexcept(noexcept(BinaryType(std::move(bint))))
+            : BinaryType(std::move(bint))
+        {}
+        internal_binary_t(const BinaryType& bint, std::uint8_t st) noexcept(noexcept(BinaryType(bint)))
+            : BinaryType(bint)
+            , subtype(st)
+            , has_subtype(true)
+        {}
+        internal_binary_t(BinaryType&& bint, std::uint8_t st) noexcept(noexcept(BinaryType(std::move(bint))))
+            : BinaryType(std::move(bint))
+            , subtype(st)
+            , has_subtype(true)
+        {}
 
         // TOOD: If minimum C++ version is ever bumped to C++17, this field
         // deserves to be a std::optional
@@ -1094,6 +1110,18 @@ class basic_json
 
         /// constructor for rvalue binary arrays
         json_value(binary_t&& value)
+        {
+            binary = create<internal_binary_t>(std::move(value));
+        }
+
+        /// constructor for binary arrays (internal type)
+        json_value(const internal_binary_t& value)
+        {
+            binary = create<internal_binary_t>(value);
+        }
+
+        /// constructor for rvalue binary arrays (internal type)
+        json_value(internal_binary_t&& value)
         {
             binary = create<internal_binary_t>(std::move(value));
         }
@@ -1655,11 +1683,20 @@ class basic_json
     @since version 3.8.0
     */
     JSON_HEDLEY_WARN_UNUSED_RESULT
-    static basic_json binary_array(binary_t const& init)
+    static basic_json binary_array(const binary_t& init)
     {
         auto res = basic_json();
         res.m_type = value_t::binary;
         res.m_value = init;
+        return res;
+    }
+
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    static basic_json binary_array(const binary_t& init, std::uint8_t subtype)
+    {
+        auto res = basic_json();
+        res.m_type = value_t::binary;
+        res.m_value = internal_binary_t(init, subtype);
         return res;
     }
 
@@ -1696,6 +1733,15 @@ class basic_json
         auto res = basic_json();
         res.m_type = value_t::binary;
         res.m_value = std::move(init);
+        return res;
+    }
+
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    static basic_json binary_array(binary_t&& init, std::uint8_t subtype)
+    {
+        auto res = basic_json();
+        res.m_type = value_t::binary;
+        res.m_value = internal_binary_t(std::move(init), subtype);
         return res;
     }
 
