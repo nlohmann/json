@@ -70,6 +70,49 @@ SOFTWARE.
 // #include <nlohmann/detail/boolean_operators.hpp>
 
 
+// Header <ciso646> is removed in C++20.
+// See <https://github.com/nlohmann/json/issues/2089> for more information.
+
+#if __cplusplus <= 201703L
+    #include <ciso646> // and, not, or
+#endif
+
+// #include <nlohmann/detail/exceptions.hpp>
+
+
+#include <exception> // exception
+#include <stdexcept> // runtime_error
+#include <string> // to_string
+
+// #include <nlohmann/detail/input/position_t.hpp>
+
+
+#include <cstddef> // size_t
+
+namespace nlohmann
+{
+namespace detail
+{
+/// struct to capture the start position of the current token
+struct position_t
+{
+    /// the total number of characters read
+    std::size_t chars_read_total = 0;
+    /// the number of characters read in the current line
+    std::size_t chars_read_current_line = 0;
+    /// the number of lines read
+    std::size_t lines_read = 0;
+
+    /// conversion to size_t to preserve SAX interface
+    constexpr operator size_t() const
+    {
+        return chars_read_total;
+    }
+};
+
+} // namespace detail
+} // namespace nlohmann
+
 // #include <nlohmann/detail/macro_scope.hpp>
 
 
@@ -2105,49 +2148,6 @@ JSON_HEDLEY_DIAGNOSTIC_POP
     basic_json<ObjectType, ArrayType, StringType, BooleanType,             \
     NumberIntegerType, NumberUnsignedType, NumberFloatType,                \
     AllocatorType, JSONSerializer, BinaryType>
-
-
-#if !JSON_HEDLEY_MSVC_VERSION_CHECK(15,5,0)
-    #include <ciso646> // and, not, or
-#endif
-
-// #include <nlohmann/detail/exceptions.hpp>
-
-
-#include <exception> // exception
-#include <stdexcept> // runtime_error
-#include <string> // to_string
-
-// #include <nlohmann/detail/input/position_t.hpp>
-
-
-#include <cstddef> // size_t
-
-namespace nlohmann
-{
-namespace detail
-{
-/// struct to capture the start position of the current token
-struct position_t
-{
-    /// the total number of characters read
-    std::size_t chars_read_total = 0;
-    /// the number of characters read in the current line
-    std::size_t chars_read_current_line = 0;
-    /// the number of lines read
-    std::size_t lines_read = 0;
-
-    /// conversion to size_t to preserve SAX interface
-    constexpr operator size_t() const
-    {
-        return chars_read_total;
-    }
-};
-
-} // namespace detail
-} // namespace nlohmann
-
-// #include <nlohmann/detail/macro_scope.hpp>
 
 
 namespace nlohmann
