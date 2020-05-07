@@ -36,7 +36,6 @@ SOFTWARE.
 
 #include <algorithm> // all_of, find, for_each
 #include <cassert> // assert
-#include <ciso646> // and, not, or
 #include <cstddef> // nullptr_t, ptrdiff_t, size_t
 #include <functional> // hash, less
 #include <initializer_list> // initializer_list
@@ -58,7 +57,6 @@ SOFTWARE.
 
 #include <algorithm> // transform
 #include <array> // array
-#include <ciso646> // and, not
 #include <forward_list> // forward_list
 #include <iterator> // inserter, front_inserter, end
 #include <map> // map
@@ -69,41 +67,8 @@ SOFTWARE.
 #include <utility> // pair, declval
 #include <valarray> // valarray
 
-// #include <nlohmann/detail/exceptions.hpp>
+// #include <nlohmann/detail/boolean_operators.hpp>
 
-
-#include <exception> // exception
-#include <stdexcept> // runtime_error
-#include <string> // to_string
-
-// #include <nlohmann/detail/input/position_t.hpp>
-
-
-#include <cstddef> // size_t
-
-namespace nlohmann
-{
-namespace detail
-{
-/// struct to capture the start position of the current token
-struct position_t
-{
-    /// the total number of characters read
-    std::size_t chars_read_total = 0;
-    /// the number of characters read in the current line
-    std::size_t chars_read_current_line = 0;
-    /// the number of lines read
-    std::size_t lines_read = 0;
-
-    /// conversion to size_t to preserve SAX interface
-    constexpr operator size_t() const
-    {
-        return chars_read_total;
-    }
-};
-
-} // namespace detail
-} // namespace nlohmann
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
@@ -2142,6 +2107,49 @@ JSON_HEDLEY_DIAGNOSTIC_POP
     AllocatorType, JSONSerializer, BinaryType>
 
 
+#if !JSON_HEDLEY_MSVC_VERSION_CHECK(15,5,0)
+    #include <ciso646> // and, not, or
+#endif
+
+// #include <nlohmann/detail/exceptions.hpp>
+
+
+#include <exception> // exception
+#include <stdexcept> // runtime_error
+#include <string> // to_string
+
+// #include <nlohmann/detail/input/position_t.hpp>
+
+
+#include <cstddef> // size_t
+
+namespace nlohmann
+{
+namespace detail
+{
+/// struct to capture the start position of the current token
+struct position_t
+{
+    /// the total number of characters read
+    std::size_t chars_read_total = 0;
+    /// the number of characters read in the current line
+    std::size_t chars_read_current_line = 0;
+    /// the number of lines read
+    std::size_t lines_read = 0;
+
+    /// conversion to size_t to preserve SAX interface
+    constexpr operator size_t() const
+    {
+        return chars_read_total;
+    }
+};
+
+} // namespace detail
+} // namespace nlohmann
+
+// #include <nlohmann/detail/macro_scope.hpp>
+
+
 namespace nlohmann
 {
 namespace detail
@@ -2495,9 +2503,11 @@ class other_error : public exception
 // #include <nlohmann/detail/meta/cpp_future.hpp>
 
 
-#include <ciso646> // not
 #include <cstddef> // size_t
 #include <type_traits> // conditional, enable_if, false_type, integral_constant, is_constructible, is_integral, is_same, remove_cv, remove_reference, true_type
+
+// #include <nlohmann/detail/boolean_operators.hpp>
+
 
 namespace nlohmann
 {
@@ -2560,10 +2570,11 @@ constexpr T static_const<T>::value;
 // #include <nlohmann/detail/meta/type_traits.hpp>
 
 
-#include <ciso646> // not
 #include <limits> // numeric_limits
 #include <type_traits> // false_type, is_constructible, is_integral, is_same, true_type
 #include <utility> // declval
+
+// #include <nlohmann/detail/boolean_operators.hpp>
 
 // #include <nlohmann/detail/iterators/iterator_traits.hpp>
 
@@ -3145,10 +3156,12 @@ struct is_constructible_tuple<T1, std::tuple<Args...>> : conjunction<std::is_con
 
 
 #include <array> // array
-#include <ciso646> // and
 #include <cstddef> // size_t
 #include <cstdint> // uint8_t
 #include <string> // string
+
+// #include <nlohmann/detail/boolean_operators.hpp>
+
 
 namespace nlohmann
 {
@@ -3599,7 +3612,6 @@ constexpr const auto& from_json = detail::static_const<detail::from_json_fn>::va
 
 
 #include <algorithm> // copy
-#include <ciso646> // or, and, not
 #include <iterator> // begin, end
 #include <string> // string
 #include <tuple> // tuple, get
@@ -3607,6 +3619,8 @@ constexpr const auto& from_json = detail::static_const<detail::from_json_fn>::va
 #include <utility> // move, forward, declval, pair
 #include <valarray> // valarray
 #include <vector> // vector
+
+// #include <nlohmann/detail/boolean_operators.hpp>
 
 // #include <nlohmann/detail/iterators/iteration_proxy.hpp>
 
@@ -4191,6 +4205,8 @@ struct adl_serializer
 };
 
 }  // namespace nlohmann
+
+// #include <nlohmann/detail/boolean_operators.hpp>
 
 // #include <nlohmann/detail/conversions/from_json.hpp>
 
@@ -10034,9 +10050,10 @@ template<typename BasicJsonType> struct internal_iterator
 // #include <nlohmann/detail/iterators/iter_impl.hpp>
 
 
-#include <ciso646> // not
 #include <iterator> // iterator, random_access_iterator_tag, bidirectional_iterator_tag, advance, next
 #include <type_traits> // conditional, is_const, remove_const
+
+// #include <nlohmann/detail/boolean_operators.hpp>
 
 // #include <nlohmann/detail/exceptions.hpp>
 
@@ -13543,7 +13560,6 @@ class binary_writer
 #include <algorithm> // reverse, remove, fill, find, none_of
 #include <array> // array
 #include <cassert> // assert
-#include <ciso646> // and, or
 #include <clocale> // localeconv, lconv
 #include <cmath> // labs, isfinite, isnan, signbit
 #include <cstddef> // size_t, ptrdiff_t
@@ -13554,17 +13570,21 @@ class binary_writer
 #include <type_traits> // is_same
 #include <utility> // move
 
+// #include <nlohmann/detail/boolean_operators.hpp>
+
 // #include <nlohmann/detail/conversions/to_chars.hpp>
 
 
 #include <array> // array
 #include <cassert> // assert
-#include <ciso646> // or, and, not
 #include <cmath>   // signbit, isfinite
 #include <cstdint> // intN_t, uintN_t
 #include <cstring> // memcpy, memmove
 #include <limits> // numeric_limits
 #include <type_traits> // conditional
+
+// #include <nlohmann/detail/boolean_operators.hpp>
+
 // #include <nlohmann/detail/macro_scope.hpp>
 
 

@@ -1,9 +1,9 @@
 #pragma once
 
-#include <ciso646> // not
 #include <iterator> // iterator, random_access_iterator_tag, bidirectional_iterator_tag, advance, next
 #include <type_traits> // conditional, is_const, remove_const
 
+#include <nlohmann/detail/boolean_operators.hpp>
 #include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/iterators/internal_iterator.hpp>
 #include <nlohmann/detail/iterators/primitive_iterator.hpp>

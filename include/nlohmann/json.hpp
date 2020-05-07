@@ -36,7 +36,6 @@ SOFTWARE.
 
 #include <algorithm> // all_of, find, for_each
 #include <cassert> // assert
-#include <ciso646> // and, not, or
 #include <cstddef> // nullptr_t, ptrdiff_t, size_t
 #include <functional> // hash, less
 #include <initializer_list> // initializer_list
@@ -49,6 +48,7 @@ SOFTWARE.
 #include <vector> // vector
 
 #include <nlohmann/adl_serializer.hpp>
+#include <nlohmann/detail/boolean_operators.hpp>
 #include <nlohmann/detail/conversions/from_json.hpp>
 #include <nlohmann/detail/conversions/to_json.hpp>
 #include <nlohmann/detail/exceptions.hpp>
