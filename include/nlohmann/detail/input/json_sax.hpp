@@ -214,7 +214,7 @@ class json_sax_dom_parser
 
     bool binary(binary_t& val)
     {
-        handle_binary(val);
+        handle_value(BasicJsonType::binary_array(std::move(val)));
         return true;
     }
 
@@ -327,36 +327,6 @@ class json_sax_dom_parser
         return object_element;
     }
 
-    /*!
-    @invariant If the ref stack is empty, then the passed value will be the new
-               root.
-    @invariant If the ref stack contains a value, then it is an array or an
-               object to which we can add elements
-    */
-    template<typename BinaryValue>
-    JSON_HEDLEY_RETURNS_NON_NULL
-    BasicJsonType* handle_binary(BinaryValue&& v)
-    {
-        if (ref_stack.empty())
-        {
-            root = BasicJsonType::binary_array(std::forward<BinaryValue>(v));
-            return &root;
-        }
-
-        assert(ref_stack.back()->is_array() or ref_stack.back()->is_object());
-
-        if (ref_stack.back()->is_array())
-        {
-            ref_stack.back()->m_value.array->emplace_back(BasicJsonType::binary_array(std::forward<BinaryValue>(v)));
-            return &(ref_stack.back()->m_value.array->back());
-        }
-
-        assert(ref_stack.back()->is_object());
-        assert(object_element);
-        *object_element = BasicJsonType::binary_array(std::forward<BinaryValue>(v));
-        return object_element;
-    }
-
     /// the parsed JSON value
     BasicJsonType& root;
     /// stack to model hierarchy of values
@@ -434,7 +404,7 @@ class json_sax_dom_callback_parser
 
     bool binary(binary_t& val)
     {
-        handle_value(val);
+        handle_value(BasicJsonType::binary_array(val));
         return true;
     }
 

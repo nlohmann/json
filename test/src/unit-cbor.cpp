@@ -1442,6 +1442,29 @@ TEST_CASE("CBOR")
                 std::vector<std::uint8_t> input = {0xA1, 0x63, 0x66, 0x6F, 0x6F, 0x40};
                 CHECK_NOTHROW(json::from_cbor(input));
             }
+
+            SECTION("SAX callback with binary")
+            {
+                // object mapping "foo" to byte string
+                std::vector<std::uint8_t> input = {0xA1, 0x63, 0x66, 0x6F, 0x6F, 0x41, 0x00};
+
+                // callback to set binary_seen to true if a binary value was seen
+                bool binary_seen = false;
+                auto callback = [&binary_seen](int /*depth*/, json::parse_event_t /*event*/, json & parsed)
+                {
+                    if (parsed.is_binary())
+                    {
+                        binary_seen = true;
+                    }
+                    return true;
+                };
+
+                json j;
+                auto cbp = nlohmann::detail::json_sax_dom_callback_parser<json>(j, callback, true);
+                CHECK(json::sax_parse(input, &cbp, json::input_format_t::cbor));
+                CHECK(j.at("foo").is_binary());
+                CHECK(binary_seen);
+            }
         }
     }
 
