@@ -851,6 +851,25 @@ TEST_CASE("Incomplete BSON Input")
     }
 }
 
+TEST_CASE("Negative size of binary value")
+{
+    // invalid BSON: the size of the binary value is -1
+    std::vector<std::uint8_t> input =
+    {
+        0x21, 0x00, 0x00, 0x00, // size (little endian)
+        0x05, // entry: binary
+        'e', 'n', 't', 'r', 'y', '\x00',
+
+        0xFF, 0xFF, 0xFF, 0xFF, // size of binary (little endian)
+        0x05, // MD5 binary subtype
+        0xd7, 0x7e, 0x27, 0x54, 0xbe, 0x12, 0x37, 0xfe, 0xd6, 0x0c, 0x33, 0x98, 0x30, 0x3b, 0x8d, 0xc4,
+
+        0x00 // end marker
+    };
+    CHECK_THROWS_AS(json::from_bson(input), json::parse_error);
+    CHECK_THROWS_WITH(json::from_bson(input), "[json.exception.parse_error.112] parse error at byte 15: syntax error while parsing BSON binary: byte array length cannot be negative, is -1");
+}
+
 TEST_CASE("Unsupported BSON input")
 {
     std::vector<std::uint8_t> bson =

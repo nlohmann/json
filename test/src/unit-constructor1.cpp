@@ -1461,6 +1461,20 @@ TEST_CASE("constructors")
                         CHECK(j == j_new);
                     }
                 }
+
+                SECTION("binary")
+                {
+                    {
+                        json j = json::binary_array({1, 2, 3});
+                        json j_new(j.begin(), j.end());
+                        CHECK((j == j_new));
+                    }
+                    {
+                        json j = json::binary_array({1, 2, 3});
+                        json j_new(j.cbegin(), j.cend());
+                        CHECK((j == j_new));
+                    }
+                }
             }
 
             SECTION("construct with two invalid iterators")
