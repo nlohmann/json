@@ -7738,7 +7738,7 @@ class binary_reader
             {
                 success = false;
             }
-            return static_cast<uint8_t>(current);
+            return static_cast<std::uint8_t>(current);
         });
         return success;
     }
