@@ -2002,8 +2002,7 @@ class basic_json
 
             case value_t::binary:
             {
-                m_value.binary = create<internal_binary_t>(first.m_it.binary_iterator,
-                                 last.m_it.binary_iterator);
+                m_value = *first.m_object->m_value.binary;
                 break;
             }
 
