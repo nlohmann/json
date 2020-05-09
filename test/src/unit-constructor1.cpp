@@ -115,6 +115,14 @@ TEST_CASE("constructors")
             CHECK(j.type() == t);
             CHECK(j == 0.0);
         }
+
+        SECTION("binary")
+        {
+            auto t = json::value_t::binary;
+            json j(t);
+            CHECK(j.type() == t);
+            CHECK(j == json::binary_array({}));
+        }
     }
 
     SECTION("create a null object (implicitly)")

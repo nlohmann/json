@@ -694,6 +694,22 @@ TEST_CASE("element access 1")
                     CHECK(it == j.end());
                 }
             }
+
+            SECTION("binary")
+            {
+                {
+                    json j = json::binary_array({1, 2, 3});
+                    json::iterator it = j.erase(j.begin());
+                    CHECK(j.type() == json::value_t::null);
+                    CHECK(it == j.end());
+                }
+                {
+                    json j = json::binary_array({1, 2, 3});
+                    json::const_iterator it = j.erase(j.cbegin());
+                    CHECK(j.type() == json::value_t::null);
+                    CHECK(it == j.end());
+                }
+            }
         }
 
         SECTION("erase with one invalid iterator")
