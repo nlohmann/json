@@ -11,6 +11,7 @@
 [![Try online](https://img.shields.io/badge/try-online-blue.svg)](https://wandbox.org/permlink/3lCHrFUZANONKv7a)
 [![Documentation](https://img.shields.io/badge/docs-doxygen-blue.svg)](http://nlohmann.github.io/json)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/nlohmann/json/master/LICENSE.MIT)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fnlohmann%2Fjson.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fnlohmann%2Fjson?ref=badge_shield)
 [![GitHub Releases](https://img.shields.io/github/release/nlohmann/json.svg)](https://github.com/nlohmann/json/releases)
 [![GitHub Downloads](https://img.shields.io/github/downloads/nlohmann/json/total)](https://github.com/nlohmann/json/releases)
 [![GitHub Issues](https://img.shields.io/github/issues/nlohmann/json.svg)](http://github.com/nlohmann/json/issues)
