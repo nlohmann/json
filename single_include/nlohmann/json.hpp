@@ -7027,11 +7027,6 @@ class binary_reader
     */
     bool get_msgpack_binary(internal_binary_t& result)
     {
-        if (JSON_HEDLEY_UNLIKELY(not unexpect_eof(input_format_t::msgpack, "binary")))
-        {
-            return false;
-        }
-
         switch (current)
         {
             case 0xC4: // bin 8
@@ -7109,11 +7104,8 @@ class binary_reader
                 return get_number(input_format_t::msgpack, result.subtype) and get_binary(input_format_t::msgpack, 16, result);
             }
 
-            default:
-            {
-                auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format_t::msgpack, "expected binary type specification (0xC4-0xC9, 0xD4-0xD8); last byte: 0x" + last_token, "binary")));
-            }
+            default:            // LCOV_EXCL_LINE
+                assert(false);  // LCOV_EXCL_LINE
         }
     }
 
