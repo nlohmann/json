@@ -57,7 +57,10 @@ TESTCASES = $(patsubst src/unit-%.cpp,test-%,$(wildcard src/unit-*.cpp))
 all: $(TESTCASES)
 
 clean:
-	rm -fr json_unit $(OBJECTS) $(SOURCES:.cpp=.gcno) $(SOURCES:.cpp=.gcda) $(TESTCASES) $(FUZZERS)
+	rm -fr json_unit $(OBJECTS) $(SOURCES:.cpp=.gcno) $(SOURCES:.cpp=.gcda) $(TESTCASES) $(FUZZERS) test_data.hpp
+
+test_data.hpp:
+	@echo "#define TEST_DATA_DIRECTORY" > $@
 
 ##############################################################################
 # single test file
@@ -67,7 +70,7 @@ json_unit: $(OBJECTS) ../single_include/nlohmann/json.hpp thirdparty/doctest/doc
 	@echo "[CXXLD] $@"
 	@$(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJECTS) -o $@
 
-%.o: %.cpp ../single_include/nlohmann/json.hpp thirdparty/doctest/doctest.h
+%.o: %.cpp ../single_include/nlohmann/json.hpp thirdparty/doctest/doctest.h test_data.hpp
 	@echo "[CXX]   $@"
 	@$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
 
@@ -76,7 +79,7 @@ json_unit: $(OBJECTS) ../single_include/nlohmann/json.hpp thirdparty/doctest/doc
 # individual test cases
 ##############################################################################
 
-test-%: src/unit-%.o src/unit.o ../single_include/nlohmann/json.hpp thirdparty/doctest/doctest.h
+test-%: src/unit-%.o src/unit.o ../single_include/nlohmann/json.hpp thirdparty/doctest/doctest.h test_data.hpp
 	@echo "[CXXLD] $@"
 	@$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $< src/unit.o -o $@
 
