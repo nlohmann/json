@@ -100,6 +100,7 @@ matrix:
         sources: ['ubuntu-toolchain-r-test']
         packages: ['g++-4.9', 'ninja-build']
     before_script:
+      - pip install --upgrade pip
       - pip install --user urllib3[secure]
       - pip install --user cpp-coveralls
     after_success:
