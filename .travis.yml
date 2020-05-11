@@ -105,7 +105,7 @@ matrix:
     after_success:
       - coveralls --build-root test --include include/nlohmann --gcov 'gcov-7' --gcov-options '\-lp'
     env:
-      - COMPILER=g++-4.9
+      - COMPILER=g++-7
       - CMAKE_OPTIONS=-DJSON_Coverage=ON
       - MULTIPLE_HEADERS=ON
 
