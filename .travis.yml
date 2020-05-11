@@ -100,7 +100,8 @@ matrix:
         sources: ['ubuntu-toolchain-r-test']
         packages: ['g++-4.9', 'ninja-build']
     before_script:
-      - pip install --user httplib2 cpp-coveralls
+      - pip install --user urllib3[secure]
+      - pip install --user cpp-coveralls
     after_success:
       - coveralls --build-root test --include include/nlohmann --gcov 'gcov-4.9' --gcov-options '\-lp'
     env:
