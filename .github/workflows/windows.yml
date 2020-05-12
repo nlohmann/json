@@ -1,18 +1,18 @@
-name: macOS
+name: Windows
 
 on: [push]
 
 jobs:
   build:
 
-    runs-on: macos-latest
+    runs-on: windows-latest
 
     steps:
     - uses: actions/checkout@v1
     - name: prepare
       run: mkdir build
     - name: cmake
-      run: cd build ; cmake ..
+      run: cd build ; cmake .. -G "Visual Studio 16 2019"
     - name: build
       run: make -C build
     - name: test
