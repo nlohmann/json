@@ -20,7 +20,6 @@ int main()
               << j.contains("/array/4"_json_pointer) << '\n'
               << j.contains("/baz"_json_pointer) << std::endl;
 
-    // out_of_range.106
     try
     {
         // try to use an array index with leading '0'
@@ -31,7 +30,6 @@ int main()
         std::cout << e.what() << '\n';
     }
 
-    // out_of_range.109
     try
     {
         // try to use an array index that is not a number
