@@ -12,6 +12,6 @@ jobs:
     - name: cmake
       run: cmake -S . -B build
     - name: build
-      run: cmake --build build
+      run: cmake --build build --parallel 10
     - name: test
       run: cd build ; ctest -j 10

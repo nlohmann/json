@@ -12,6 +12,6 @@ jobs:
     - name: cmake
       run: cmake -S . -B build -G "Visual Studio 16 2019"
     - name: build
-      run: cmake --build build
+      run: cmake --build build --parallel 10
     - name: test
-      run: cd build ; ctest -j 10
+      run: cd build ; ctest -j 10 -C Release
