@@ -1081,36 +1081,35 @@ Please note:
 
 - Unsupported versions of GCC and Clang are rejected by `#error` directives. This can be switched off by defining `JSON_SKIP_UNSUPPORTED_COMPILER_CHECK`. Note that you can expect no support in this case.
 
-The following compilers are currently used in continuous integration at [Travis](https://travis-ci.org/nlohmann/json), [AppVeyor](https://ci.appveyor.com/project/nlohmann/json), and [CircleCI](https://circleci.com/gh/nlohmann/json):
+The following compilers are currently used in continuous integration at [Travis](https://travis-ci.org/nlohmann/json), [AppVeyor](https://ci.appveyor.com/project/nlohmann/json), [GitHub Actions](https://github.com/nlohmann/json/actions), and [CircleCI](https://circleci.com/gh/nlohmann/json):
 
-| Compiler              | Operating System             | Version String |
-|-----------------------|------------------------------|----------------|
-| GCC 4.8.5             | Ubuntu 14.04.5 LTS           | g++-4.8 (Ubuntu 4.8.5-2ubuntu1~14.04.2) 4.8.5 |
-| GCC 4.9.4             | Ubuntu 14.04.1 LTS           | g++-4.9 (Ubuntu 4.9.4-2ubuntu1~14.04.1) 4.9.4 |
-| GCC 5.5.0             | Ubuntu 14.04.1 LTS           | g++-5 (Ubuntu 5.5.0-12ubuntu1~14.04) 5.5.0 20171010 |
-| GCC 6.3.0             | Debian 9 (stretch)           | g++ (Debian 6.3.0-18+deb9u1) 6.3.0 20170516 |
-| GCC 6.4.0             | Ubuntu 14.04.1 LTS           | g++-6 (Ubuntu 6.4.0-17ubuntu1~14.04) 6.4.0 20180424 |
-| GCC 7.3.0             | Ubuntu 14.04.1 LTS           | g++-7 (Ubuntu 7.3.0-21ubuntu1~14.04) 7.3.0 |
-| GCC 7.3.0             | Windows Server 2012 R2 (x64) | g++ (x86_64-posix-seh-rev0, Built by MinGW-W64 project) 7.3.0 |
-| GCC 8.1.0             | Ubuntu 14.04.1 LTS           | g++-8 (Ubuntu 8.1.0-5ubuntu1~14.04) 8.1.0 |
-| GCC 9.2.1             | Ubuntu 14.05.1 LTS           | g++-9 (Ubuntu 9.2.1-16ubuntu1~14.04.1) 9.2.1 20191030 |
-| Clang 3.5.0           | Ubuntu 14.04.1 LTS           | clang version 3.5.0-4ubuntu2~trusty2 (tags/RELEASE_350/final) (based on LLVM 3.5.0) |
-| Clang 3.6.2           | Ubuntu 14.04.1 LTS           | clang version 3.6.2-svn240577-1~exp1 (branches/release_36) (based on LLVM 3.6.2) |
-| Clang 3.7.1           | Ubuntu 14.04.1 LTS           | clang version 3.7.1-svn253571-1~exp1 (branches/release_37) (based on LLVM 3.7.1) |
-| Clang 3.8.0           | Ubuntu 14.04.1 LTS           | clang version 3.8.0-2ubuntu3~trusty5 (tags/RELEASE_380/final) |
-| Clang 3.9.1           | Ubuntu 14.04.1 LTS           | clang version 3.9.1-4ubuntu3~14.04.3 (tags/RELEASE_391/rc2) |
-| Clang 4.0.1           | Ubuntu 14.04.1 LTS           | clang version 4.0.1-svn305264-1~exp1 (branches/release_40) |
-| Clang 5.0.2           | Ubuntu 14.04.1 LTS           | clang version 5.0.2-svn328729-1~exp1~20180509123505.100 (branches/release_50) |
-| Clang 6.0.1           | Ubuntu 14.04.1 LTS           | clang version 6.0.1-svn334776-1~exp1~20180726133705.85 (branches/release_60) |
-| Clang 7.0.1           | Ubuntu 14.04.1 LTS           | clang version 7.0.1-svn348686-1~exp1~20181213084532.54 (branches/release_70) |
-| Clang Xcode 9.3       | OSX 10.13.3                  | Apple LLVM version 9.1.0 (clang-902.0.39.2) |
-| Clang Xcode 10.0      | OSX 10.13.3                  | Apple LLVM version 10.0.0 (clang-1000.11.45.2) |
-| Clang Xcode 10.1      | OSX 10.13.3                  | Apple LLVM version 10.0.0 (clang-1000.11.45.5) |
-| Clang Xcode 10.2      | OSX 10.14.4                  | Apple LLVM version 10.0.1 (clang-1001.0.46.4) |
-| Clang Xcode 11.2.1    | OSX 10.14.4                  | Apple LLVM version 11.0.0 (clang-1100.0.33.12) |
-| Visual Studio 14 2015 | Windows Server 2012 R2 (x64) | Microsoft (R) Build Engine version 14.0.25420.1, MSVC 19.0.24215.1 |
-| Visual Studio 15 2017 | Windows Server 2012 R2 (x64) | Microsoft (R) Build Engine version 15.9.21+g9802d43bc3, MSVC 19.16.27032.1 |
-| Visual Studio 16 2019 | Windows Server 2012 R2 (x64) | Microsoft (R) Build Engine version 16.3.1+1def00d3d, MSVC 19.23.28106.4 |
+| Compiler                   | Operating System         | CI Provider    |
+|----------------------------|--------------------------|----------------|
+| AppleClang 10.0.0.10001145 | Darwin-17.7.0            | Travis         |
+| AppleClang 10.0.1.10010046 | Darwin-18.5.0            | Travis         |
+| AppleClang 11.0.0.11000033 | Darwin-18.7.0            | Travis         |
+| AppleClang 11.0.3.11030032 | Darwin-19.4.0            | GitHub Actions |
+| AppleClang 9.1.0.9020039   | Darwin-17.4.0            | Travis         |
+| AppleClang 9.1.0.9020039   | Darwin-17.7.0            | Travis         |
+| Clang 3.5.0                | Linux-4.4.0-104-generic  | Travis         |
+| Clang 3.6.2                | Linux-4.4.0-104-generic  | Travis         |
+| Clang 3.7.1                | Linux-4.4.0-104-generic  | Travis         |
+| Clang 3.8.0                | Linux-4.4.0-104-generic  | Travis         |
+| Clang 3.9.1                | Linux-4.4.0-104-generic  | Travis         |
+| Clang 4.0.1                | Linux-4.4.0-104-generic  | Travis         |
+| Clang 5.0.2                | Linux-4.4.0-104-generic  | Travis         |
+| Clang 6.0.1                | Linux-4.4.0-104-generic  | Travis         |
+| Clang 7.1.0                | Linux-4.4.0-104-generi   | Travis         |
+| GNU 4.8.5                  | Linux-4.4.0-104-generic  | Travis         |
+| GNU 4.9.4                  | Linux-4.4.0-104-generic  | Travis         |
+| GNU 5.5.0                  | Linux-4.4.0-104-generic  | Travis         |
+| GNU 6.3.0                  | Linux-5.3.0-1017-aws     | Circle CI      |
+| GNU 6.5.0                  | Linux-4.4.0-104-generic  | Travis         |
+| GNU 7.5.0                  | Linux-4.4.0-104-generic  | Travis         |
+| GNU 7.5.0                  | Linux-5.3.0-1020-azure   | GitHub Actions |
+| GNU 8.4.0                  | Linux-4.4.0-104-generic  | Travis         |
+| GNU 9.3.0                  | Linux-4.4.0-104-generic  | Travis         |
+| MSVC 19.25.28614.0         | Windows-10.0.17763       | GitHub Actions |
 
 ## License
 
