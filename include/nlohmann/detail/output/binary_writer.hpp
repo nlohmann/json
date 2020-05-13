@@ -1092,9 +1092,7 @@ class binary_writer
         }
         write_number(subtype);
 
-        oa->write_characters(
-            reinterpret_cast<const CharType*>(value.data()),
-            value.size());
+        oa->write_characters(reinterpret_cast<const CharType*>(value.data()), value.size());
     }
 
     /*!

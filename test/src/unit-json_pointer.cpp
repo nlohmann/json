@@ -101,6 +101,9 @@ TEST_CASE("JSON pointers")
             CHECK(j["/foo/1"_json_pointer] == j["foo"][1]);
             CHECK(j.contains(json::json_pointer("/foo/0")));
             CHECK(j.contains(json::json_pointer("/foo/1")));
+            CHECK(not j.contains(json::json_pointer("/foo/3")));
+            CHECK(not j.contains(json::json_pointer("/foo/+")));
+            CHECK(not j.contains(json::json_pointer("/foo/1+2")));
             CHECK(not j.contains(json::json_pointer("/foo/-")));
 
             // checked array access

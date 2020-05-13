@@ -7104,8 +7104,8 @@ class binary_reader
                 return get_number(input_format_t::msgpack, result.subtype) and get_binary(input_format_t::msgpack, 16, result);
             }
 
-            default:            // LCOV_EXCL_LINE
-                assert(false);  // LCOV_EXCL_LINE
+            default:           // LCOV_EXCL_LINE
+                return false;  // LCOV_EXCL_LINE
         }
     }
 
@@ -13041,9 +13041,7 @@ class binary_writer
         }
         write_number(subtype);
 
-        oa->write_characters(
-            reinterpret_cast<const CharType*>(value.data()),
-            value.size());
+        oa->write_characters(reinterpret_cast<const CharType*>(value.data()), value.size());
     }
 
     /*!
