@@ -91,6 +91,13 @@ TEST_CASE("other constructors and destructor")
             json k(j);
             CHECK(j == k);
         }
+
+        SECTION("binary")
+        {
+            json j = json::binary_array({1, 2, 3});
+            json k(j);
+            CHECK(j == k);
+        }
     }
 
     SECTION("move constructor")
@@ -163,6 +170,14 @@ TEST_CASE("other constructors and destructor")
         SECTION("number (floating-point)")
         {
             json j(42.23);
+            json k;
+            k = j;
+            CHECK(j == k);
+        }
+
+        SECTION("binary")
+        {
+            json j = json::binary_array({1, 2, 3});
             json k;
             k = j;
             CHECK(j == k);

@@ -115,6 +115,14 @@ TEST_CASE("constructors")
             CHECK(j.type() == t);
             CHECK(j == 0.0);
         }
+
+        SECTION("binary")
+        {
+            auto t = json::value_t::binary;
+            json j(t);
+            CHECK(j.type() == t);
+            CHECK(j == json::binary_array({}));
+        }
     }
 
     SECTION("create a null object (implicitly)")
@@ -1451,6 +1459,20 @@ TEST_CASE("constructors")
                         json j = 23.42;
                         json j_new(j.cbegin(), j.cend());
                         CHECK(j == j_new);
+                    }
+                }
+
+                SECTION("binary")
+                {
+                    {
+                        json j = json::binary_array({1, 2, 3});
+                        json j_new(j.begin(), j.end());
+                        CHECK((j == j_new));
+                    }
+                    {
+                        json j = json::binary_array({1, 2, 3});
+                        json j_new(j.cbegin(), j.cend());
+                        CHECK((j == j_new));
                     }
                 }
             }

@@ -4881,7 +4881,7 @@ class json_sax_dom_parser
 
     bool binary(binary_t& val)
     {
-        handle_binary(val);
+        handle_value(BasicJsonType::binary_array(std::move(val)));
         return true;
     }
 
@@ -4994,36 +4994,6 @@ class json_sax_dom_parser
         return object_element;
     }
 
-    /*!
-    @invariant If the ref stack is empty, then the passed value will be the new
-               root.
-    @invariant If the ref stack contains a value, then it is an array or an
-               object to which we can add elements
-    */
-    template<typename BinaryValue>
-    JSON_HEDLEY_RETURNS_NON_NULL
-    BasicJsonType* handle_binary(BinaryValue&& v)
-    {
-        if (ref_stack.empty())
-        {
-            root = BasicJsonType::binary_array(std::forward<BinaryValue>(v));
-            return &root;
-        }
-
-        assert(ref_stack.back()->is_array() or ref_stack.back()->is_object());
-
-        if (ref_stack.back()->is_array())
-        {
-            ref_stack.back()->m_value.array->emplace_back(BasicJsonType::binary_array(std::forward<BinaryValue>(v)));
-            return &(ref_stack.back()->m_value.array->back());
-        }
-
-        assert(ref_stack.back()->is_object());
-        assert(object_element);
-        *object_element = BasicJsonType::binary_array(std::forward<BinaryValue>(v));
-        return object_element;
-    }
-
     /// the parsed JSON value
     BasicJsonType& root;
     /// stack to model hierarchy of values
@@ -5101,7 +5071,7 @@ class json_sax_dom_callback_parser
 
     bool binary(binary_t& val)
     {
-        handle_value(val);
+        handle_value(BasicJsonType::binary_array(val));
         return true;
     }
 
@@ -7057,11 +7027,6 @@ class binary_reader
     */
     bool get_msgpack_binary(internal_binary_t& result)
     {
-        if (JSON_HEDLEY_UNLIKELY(not unexpect_eof(input_format_t::msgpack, "binary")))
-        {
-            return false;
-        }
-
         switch (current)
         {
             case 0xC4: // bin 8
@@ -7139,11 +7104,8 @@ class binary_reader
                 return get_number(input_format_t::msgpack, result.subtype) and get_binary(input_format_t::msgpack, 16, result);
             }
 
-            default:
-            {
-                auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format_t::msgpack, "expected binary type specification (0xC4-0xC9, 0xD4-0xD8); last byte: 0x" + last_token, "binary")));
-            }
+            default:            // LCOV_EXCL_LINE
+                assert(false);  // LCOV_EXCL_LINE
         }
     }
 
@@ -7768,7 +7730,7 @@ class binary_reader
             {
                 success = false;
             }
-            return static_cast<uint8_t>(current);
+            return static_cast<std::uint8_t>(current);
         });
         return success;
     }
@@ -14905,27 +14867,6 @@ class serializer
                 {
                     o->write_characters("b[]", 3);
                 }
-                else if (pretty_print)
-                {
-                    o->write_characters("b[", 2);
-                    for (auto i = val.m_value.binary->cbegin();
-                            i != val.m_value.binary->cend() - 1; ++i)
-                    {
-                        dump_integer(*i);
-                        o->write_character(',');
-                        if (std::distance(val.m_value.binary->cbegin(), i) % 16 == 0)
-                        {
-                            o->write_character('\n');
-                        }
-                        else
-                        {
-                            o->write_character(' ');
-                        }
-                    }
-
-                    dump_integer(val.m_value.binary->back());
-                    o->write_character(']');
-                }
                 else
                 {
                     o->write_characters("b[", 2);
@@ -16383,7 +16324,6 @@ class basic_json
 
     @since version 3.8.0
     */
-
     using binary_t = BinaryType;
 
     /*!
@@ -16397,9 +16337,25 @@ class basic_json
     struct internal_binary_t : public BinaryType
     {
         using BinaryType::BinaryType;
-        internal_binary_t() noexcept(noexcept(BinaryType())) : BinaryType() {}
-        internal_binary_t(BinaryType const& bint) noexcept(noexcept(BinaryType(bint))) : BinaryType(bint) {}
-        internal_binary_t(BinaryType&& bint)  noexcept(noexcept(BinaryType(std::move(bint)))) : BinaryType(std::move(bint)) {}
+        internal_binary_t() noexcept(noexcept(BinaryType()))
+            : BinaryType()
+        {}
+        internal_binary_t(const BinaryType& bint) noexcept(noexcept(BinaryType(bint)))
+            : BinaryType(bint)
+        {}
+        internal_binary_t(BinaryType&& bint) noexcept(noexcept(BinaryType(std::move(bint))))
+            : BinaryType(std::move(bint))
+        {}
+        internal_binary_t(const BinaryType& bint, std::uint8_t st) noexcept(noexcept(BinaryType(bint)))
+            : BinaryType(bint)
+            , subtype(st)
+            , has_subtype(true)
+        {}
+        internal_binary_t(BinaryType&& bint, std::uint8_t st) noexcept(noexcept(BinaryType(std::move(bint))))
+            : BinaryType(std::move(bint))
+            , subtype(st)
+            , has_subtype(true)
+        {}
 
         // TOOD: If minimum C++ version is ever bumped to C++17, this field
         // deserves to be a std::optional
@@ -16606,6 +16562,18 @@ class basic_json
             binary = create<internal_binary_t>(std::move(value));
         }
 
+        /// constructor for binary arrays (internal type)
+        json_value(const internal_binary_t& value)
+        {
+            binary = create<internal_binary_t>(value);
+        }
+
+        /// constructor for rvalue binary arrays (internal type)
+        json_value(internal_binary_t&& value)
+        {
+            binary = create<internal_binary_t>(std::move(value));
+        }
+
         void destroy(value_t t) noexcept
         {
             // flatten the current json_value to a heap-allocated stack
@@ -16711,6 +16679,7 @@ class basic_json
         assert(m_type != value_t::object or m_value.object != nullptr);
         assert(m_type != value_t::array or m_value.array != nullptr);
         assert(m_type != value_t::string or m_value.string != nullptr);
+        assert(m_type != value_t::binary or m_value.binary != nullptr);
     }
 
   public:
@@ -17162,11 +17131,20 @@ class basic_json
     @since version 3.8.0
     */
     JSON_HEDLEY_WARN_UNUSED_RESULT
-    static basic_json binary_array(binary_t const& init)
+    static basic_json binary_array(const binary_t& init)
     {
         auto res = basic_json();
         res.m_type = value_t::binary;
         res.m_value = init;
+        return res;
+    }
+
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    static basic_json binary_array(const binary_t& init, std::uint8_t subtype)
+    {
+        auto res = basic_json();
+        res.m_type = value_t::binary;
+        res.m_value = internal_binary_t(init, subtype);
         return res;
     }
 
@@ -17203,6 +17181,15 @@ class basic_json
         auto res = basic_json();
         res.m_type = value_t::binary;
         res.m_value = std::move(init);
+        return res;
+    }
+
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    static basic_json binary_array(binary_t&& init, std::uint8_t subtype)
+    {
+        auto res = basic_json();
+        res.m_type = value_t::binary;
+        res.m_value = internal_binary_t(std::move(init), subtype);
         return res;
     }
 
@@ -17463,8 +17450,7 @@ class basic_json
 
             case value_t::binary:
             {
-                m_value.binary = create<internal_binary_t>(first.m_it.binary_iterator,
-                                 last.m_it.binary_iterator);
+                m_value = *first.m_object->m_value.binary;
                 break;
             }
 
@@ -18255,7 +18241,7 @@ class basic_json
     /// get a pointer to the value (binary)
     binary_t* get_impl_ptr(binary_t* /*unused*/) noexcept
     {
-        return is_binary() ? m_value.binary : nullptr;
+        return is_binary() ? reinterpret_cast<binary_t*>(m_value.binary) : nullptr;
     }
 
     /// get a pointer to the value (binary)
@@ -21522,6 +21508,39 @@ class basic_json
         }
     }
 
+    /*!
+    @brief exchanges the values
+
+    Exchanges the contents of a JSON string with those of @a other. Does not
+    invoke any move, copy, or swap operations on individual elements. All
+    iterators and references remain valid. The past-the-end iterator is
+    invalidated.
+
+    @param[in,out] other binary to exchange the contents with
+
+    @throw type_error.310 when JSON value is not a string; example: `"cannot
+    use swap() with boolean"`
+
+    @complexity Constant.
+
+    @liveexample{The example below shows how strings can be swapped with
+    `swap()`.,swap__binary_t}
+
+    @since version 3.8.0
+    */
+    void swap(binary_t& other)
+    {
+        // swap only works for strings
+        if (JSON_HEDLEY_LIKELY(is_binary()))
+        {
+            std::swap(*(m_value.binary), other);
+        }
+        else
+        {
+            JSON_THROW(type_error::create(310, "cannot use swap() with " + std::string(type_name())));
+        }
+    }
+
     /// @}
 
   public:
@@ -21784,7 +21803,7 @@ class basic_json
                     return (lhs.m_value.number_float) < (rhs.m_value.number_float);
 
                 case value_t::binary:
-                    return (lhs.m_value.binary) < (rhs.m_value.binary);
+                    return (*lhs.m_value.binary) < (*rhs.m_value.binary);
 
                 default:
                     return false;
