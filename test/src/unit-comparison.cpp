@@ -56,21 +56,23 @@ TEST_CASE("lexicographical comparison operators")
             json::value_t::number_float,
             json::value_t::object,
             json::value_t::array,
-            json::value_t::string
+            json::value_t::string,
+            json::value_t::binary
         };
 
         SECTION("comparison: less")
         {
             std::vector<std::vector<bool>> expected =
             {
-                {false, true, true, true, true, true, true, true},
-                {false, false, true, true, true, true, true, true},
-                {false, false, false, false, false, true, true, true},
-                {false, false, false, false, false, true, true, true},
-                {false, false, false, false, false, true, true, true},
-                {false, false, false, false, false, false, true, true},
-                {false, false, false, false, false, false, false, true},
-                {false, false, false, false, false, false, false, false}
+                {false, true, true, true, true, true, true, true, true},
+                {false, false, true, true, true, true, true, true, true},
+                {false, false, false, false, false, true, true, true, true},
+                {false, false, false, false, false, true, true, true, true},
+                {false, false, false, false, false, true, true, true, true},
+                {false, false, false, false, false, false, true, true, true},
+                {false, false, false, false, false, false, false, true, true},
+                {false, false, false, false, false, false, false, false, true},
+                {false, false, false, false, false, false, false, false, false}
             };
 
             for (size_t i = 0; i < j_types.size(); ++i)
@@ -98,29 +100,32 @@ TEST_CASE("lexicographical comparison operators")
             "foo", "bar",
             true, false,
             {1, 2, 3}, {"one", "two", "three"},
-            {{"first", 1}, {"second", 2}}, {{"a", "A"}, {"b", {"B"}}}
+            {{"first", 1}, {"second", 2}}, {{"a", "A"}, {"b", {"B"}}},
+            json::binary_array({1, 2, 3}), json::binary_array({1, 2, 4})
         };
 
         SECTION("comparison: equal")
         {
             std::vector<std::vector<bool>> expected =
             {
-                {true, true, false, false, false, false, false, false, false, false, false, false, false, false, false, false},
-                {true, true, false, false, false, false, false, false, false, false, false, false, false, false, false, false},
-                {false, false, true, false, false, false, false, false, false, false, false, false, false, false, false, false},
-                {false, false, false, true, false, false, false, false, false, false, false, false, false, false, false, false},
-                {false, false, false, false, true, false, false, false, false, false, false, false, false, false, false, false},
-                {false, false, false, false, false, true, false, false, false, false, false, false, false, false, false, false},
-                {false, false, false, false, false, false, true, false, false, false, false, false, false, false, false, false},
-                {false, false, false, false, false, false, false, true, false, false, false, false, false, false, false, false},
-                {false, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false},
-                {false, false, false, false, false, false, false, false, false, true, false, false, false, false, false, false},
-                {false, false, false, false, false, false, false, false, false, false, true, false, false, false, false, false},
-                {false, false, false, false, false, false, false, false, false, false, false, true, false, false, false, false},
-                {false, false, false, false, false, false, false, false, false, false, false, false, true, false, false, false},
-                {false, false, false, false, false, false, false, false, false, false, false, false, false, true, false, false},
-                {false, false, false, false, false, false, false, false, false, false, false, false, false, false, true, false},
-                {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true}
+                {true, true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false},
+                {true, true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false},
+                {false, false, true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false},
+                {false, false, false, true, false, false, false, false, false, false, false, false, false, false, false, false, false, false},
+                {false, false, false, false, true, false, false, false, false, false, false, false, false, false, false, false, false, false},
+                {false, false, false, false, false, true, false, false, false, false, false, false, false, false, false, false, false, false},
+                {false, false, false, false, false, false, true, false, false, false, false, false, false, false, false, false, false, false},
+                {false, false, false, false, false, false, false, true, false, false, false, false, false, false, false, false, false, false},
+                {false, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false, false, false},
+                {false, false, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false, false},
+                {false, false, false, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false},
+                {false, false, false, false, false, false, false, false, false, false, false, true, false, false, false, false, false, false},
+                {false, false, false, false, false, false, false, false, false, false, false, false, true, false, false, false, false, false},
+                {false, false, false, false, false, false, false, false, false, false, false, false, false, true, false, false, false, false},
+                {false, false, false, false, false, false, false, false, false, false, false, false, false, false, true, false, false, false},
+                {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true, false, false},
+                {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true, false},
+                {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true}
             };
 
             for (size_t i = 0; i < j_values.size(); ++i)
@@ -176,22 +181,24 @@ TEST_CASE("lexicographical comparison operators")
         {
             std::vector<std::vector<bool>> expected =
             {
-                {false, false, true, true, true, true, true, true, true, true, true, true, true, true, true, true},
-                {false, false, true, true, true, true, true, true, true, true, true, true, true, true, true, true},
-                {false, false, false, true, true, true, true, true, true, true, false, false, true, true, true, true},
-                {false, false, false, false, false, false, false, false, true, true, false, false, true, true, true, true},
-                {false, false, false, true, false, true, false, true, true, true, false, false, true, true, true, true},
-                {false, false, false, true, false, false, false, true, true, true, false, false, true, true, true, true},
-                {false, false, false, true, true, true, false, true, true, true, false, false, true, true, true, true},
-                {false, false, false, true, false, false, false, false, true, true, false, false, true, true, true, true},
-                {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false},
-                {false, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false},
-                {false, false, true, true, true, true, true, true, true, true, false, false, true, true, true, true},
-                {false, false, true, true, true, true, true, true, true, true, true, false, true, true, true, true},
-                {false, false, false, false, false, false, false, false, true, true, false, false, false, true, false, false},
-                {false, false, false, false, false, false, false, false, true, true, false, false, false, false, false, false},
-                {false, false, false, false, false, false, false, false, true, true, false, false, true, true, false, false},
-                {false, false, false, false, false, false, false, false, true, true, false, false, true, true, true, false}
+                {false, false, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true},
+                {false, false, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true},
+                {false, false, false, true, true, true, true, true, true, true, false, false, true, true, true, true, true, true},
+                {false, false, false, false, false, false, false, false, true, true, false, false, true, true, true, true, true, true},
+                {false, false, false, true, false, true, false, true, true, true, false, false, true, true, true, true, true, true},
+                {false, false, false, true, false, false, false, true, true, true, false, false, true, true, true, true, true, true},
+                {false, false, false, true, true, true, false, true, true, true, false, false, true, true, true, true, true, true},
+                {false, false, false, true, false, false, false, false, true, true, false, false, true, true, true, true, true, true},
+                {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true, true},
+                {false, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false, true, true},
+                {false, false, true, true, true, true, true, true, true, true, false, false, true, true, true, true, true, true},
+                {false, false, true, true, true, true, true, true, true, true, true, false, true, true, true, true, true, true},
+                {false, false, false, false, false, false, false, false, true, true, false, false, false, true, false, false, true, true},
+                {false, false, false, false, false, false, false, false, true, true, false, false, false, false, false, false, true, true},
+                {false, false, false, false, false, false, false, false, true, true, false, false, true, true, false, false, true, true},
+                {false, false, false, false, false, false, false, false, true, true, false, false, true, true, true, false, true, true},
+                {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true},
+                {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false}
             };
 
             for (size_t i = 0; i < j_values.size(); ++i)
