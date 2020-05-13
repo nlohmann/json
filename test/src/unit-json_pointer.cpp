@@ -310,12 +310,11 @@ TEST_CASE("JSON pointers")
             CHECK_THROWS_AS(j_const.at("/01"_json_pointer), json::parse_error&);
             CHECK_THROWS_WITH(j_const.at("/01"_json_pointer),
                               "[json.exception.parse_error.106] parse error: array index '01' must not begin with '0'");
-            CHECK_THROWS_AS(j.contains("/01"_json_pointer), json::parse_error&);
-            CHECK_THROWS_WITH(j.contains("/01"_json_pointer),
-                              "[json.exception.parse_error.106] parse error: array index '01' must not begin with '0'");
-            CHECK_THROWS_AS(j_const.contains("/01"_json_pointer), json::parse_error&);
-            CHECK_THROWS_WITH(j_const.contains("/01"_json_pointer),
-                              "[json.exception.parse_error.106] parse error: array index '01' must not begin with '0'");
+
+            CHECK(not j.contains("/01"_json_pointer));
+            CHECK(not j.contains("/01"_json_pointer));
+            CHECK(not j_const.contains("/01"_json_pointer));
+            CHECK(not j_const.contains("/01"_json_pointer));
 
             // error with incorrect numbers
             CHECK_THROWS_AS(j["/one"_json_pointer] = 1, json::parse_error&);
@@ -332,12 +331,38 @@ TEST_CASE("JSON pointers")
             CHECK_THROWS_WITH(j_const.at("/one"_json_pointer) == 1,
                               "[json.exception.parse_error.109] parse error: array index 'one' is not a number");
 
-            CHECK_THROWS_AS(j.contains("/one"_json_pointer), json::parse_error&);
-            CHECK_THROWS_WITH(j.contains("/one"_json_pointer),
+            CHECK_THROWS_AS(j["/+1"_json_pointer] = 1, json::parse_error&);
+            CHECK_THROWS_WITH(j["/+1"_json_pointer] = 1,
+                              "[json.exception.parse_error.109] parse error: array index '+1' is not a number");
+            CHECK_THROWS_AS(j_const["/+1"_json_pointer] == 1, json::parse_error&);
+            CHECK_THROWS_WITH(j_const["/+1"_json_pointer] == 1,
+                              "[json.exception.parse_error.109] parse error: array index '+1' is not a number");
+
+            CHECK_THROWS_AS(j["/1+1"_json_pointer] = 1, json::out_of_range&);
+            CHECK_THROWS_WITH(j["/1+1"_json_pointer] = 1,
+                              "[json.exception.out_of_range.404] unresolved reference token '1+1'");
+            CHECK_THROWS_AS(j_const["/1+1"_json_pointer] == 1, json::out_of_range&);
+            CHECK_THROWS_WITH(j_const["/1+1"_json_pointer] == 1,
+                              "[json.exception.out_of_range.404] unresolved reference token '1+1'");
+
+            CHECK_THROWS_AS(j["/111111111111111111111111"_json_pointer] = 1, json::out_of_range&);
+            CHECK_THROWS_WITH(j["/111111111111111111111111"_json_pointer] = 1,
+                              "[json.exception.out_of_range.404] unresolved reference token '111111111111111111111111'");
+            CHECK_THROWS_AS(j_const["/111111111111111111111111"_json_pointer] == 1, json::out_of_range&);
+            CHECK_THROWS_WITH(j_const["/111111111111111111111111"_json_pointer] == 1,
+                              "[json.exception.out_of_range.404] unresolved reference token '111111111111111111111111'");
+
+            CHECK_THROWS_AS(j.at("/one"_json_pointer) = 1, json::parse_error&);
+            CHECK_THROWS_WITH(j.at("/one"_json_pointer) = 1,
                               "[json.exception.parse_error.109] parse error: array index 'one' is not a number");
-            CHECK_THROWS_AS(j_const.contains("/one"_json_pointer), json::parse_error&);
-            CHECK_THROWS_WITH(j_const.contains("/one"_json_pointer),
+            CHECK_THROWS_AS(j_const.at("/one"_json_pointer) == 1, json::parse_error&);
+            CHECK_THROWS_WITH(j_const.at("/one"_json_pointer) == 1,
                               "[json.exception.parse_error.109] parse error: array index 'one' is not a number");
+
+            CHECK(not j.contains("/one"_json_pointer));
+            CHECK(not j.contains("/one"_json_pointer));
+            CHECK(not j_const.contains("/one"_json_pointer));
+            CHECK(not j_const.contains("/one"_json_pointer));
 
             CHECK_THROWS_AS(json({{"/list/0", 1}, {"/list/1", 2}, {"/list/three", 3}}).unflatten(), json::parse_error&);
             CHECK_THROWS_WITH(json({{"/list/0", 1}, {"/list/1", 2}, {"/list/three", 3}}).unflatten(),

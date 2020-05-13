@@ -33,6 +33,7 @@ SOFTWARE.
 using nlohmann::json;
 
 #include <fstream>
+#include <test_data.hpp>
 
 TEST_CASE("JSON patch")
 {
@@ -1258,8 +1259,9 @@ TEST_CASE("JSON patch")
     SECTION("Tests from github.com/json-patch/json-patch-tests")
     {
         for (auto filename :
-                {"test/data/json-patch-tests/spec_tests.json",
-                 "test/data/json-patch-tests/tests.json"
+                {
+                    TEST_DATA_DIRECTORY "/json-patch-tests/spec_tests.json",
+                    TEST_DATA_DIRECTORY "/json-patch-tests/tests.json"
                 })
         {
             CAPTURE(filename)

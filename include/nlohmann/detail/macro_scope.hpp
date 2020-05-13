@@ -113,9 +113,10 @@
              class StringType, class BooleanType, class NumberIntegerType, \
              class NumberUnsignedType, class NumberFloatType,              \
              template<typename> class AllocatorType,                       \
-             template<typename, typename = void> class JSONSerializer>
+             template<typename, typename = void> class JSONSerializer,     \
+             class BinaryType>
 
 #define NLOHMANN_BASIC_JSON_TPL                                            \
     basic_json<ObjectType, ArrayType, StringType, BooleanType,             \
     NumberIntegerType, NumberUnsignedType, NumberFloatType,                \
-    AllocatorType, JSONSerializer>
+    AllocatorType, JSONSerializer, BinaryType>
