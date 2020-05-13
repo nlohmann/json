@@ -12,3 +12,15 @@ add_custom_target(download_test_data
 
 # create a header with the path to the downloaded test data
 file(WRITE ${CMAKE_BINARY_DIR}/include/test_data.hpp "#define TEST_DATA_DIRECTORY \"${CMAKE_BINARY_DIR}/json_test_data\"\n")
+
+# determine the operating system (for debug and support purposes)
+find_program(UNAME_COMMAND uname)
+find_program(VER_COMMAND ver)
+if (UNAME_COMMAND)
+    execute_process(COMMAND ${UNAME_COMMAND} -a OUTPUT_VARIABLE UNAME_COMMAND_RESULT OUTPUT_STRIP_TRAILING_WHITESPACE)
+endif()
+if (VER_COMMAND)
+    execute_process(COMMAND ${VER_COMMAND} OUTPUT_VARIABLE VER_COMMAND_RESULT OUTPUT_STRIP_TRAILING_WHITESPACE)
+endif()
+
+message(STATUS "Operating system: ${UNAME_COMMAND_RESULT} ${VER_COMMAND_RESULT} ${CMAKE_SYSTEM}")
