@@ -130,6 +130,24 @@ TEST_CASE("CBOR")
             CHECK(result.empty());
         }
 
+        SECTION("NaN")
+        {
+            // NaN value
+            json j = std::numeric_limits<json::number_float_t>::quiet_NaN();
+            std::vector<uint8_t> expected = {0xf9, 0x7e, 0x00};
+            const auto result = json::to_cbor(j);
+            CHECK(result == expected);
+        }
+
+        SECTION("Infinity")
+        {
+            // Infinity value
+            json j = std::numeric_limits<json::number_float_t>::infinity();
+            std::vector<uint8_t> expected = {0xf9, 0x7c, 0x00};
+            const auto result = json::to_cbor(j);
+            CHECK(result == expected);
+        }
+
         SECTION("null")
         {
             json j = nullptr;
@@ -835,6 +853,20 @@ TEST_CASE("CBOR")
 
                     CHECK(json::from_cbor(result, true, false) == j);
                 }
+                SECTION("0.5")
+                {
+                    double v = 0.5;
+                    json j = v;
+                    // its double-precision float binary value is
+                    // {0xfb, 0x3f, 0xe0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+                    // but to save memory, we can store it as single-precision float.
+                    std::vector<uint8_t> expected = {0xfa, 0x3f, 0x00, 0x00, 0x00};
+                    const auto result = json::to_cbor(j);
+                    CHECK(result == expected);
+                    // roundtrip
+                    CHECK(json::from_cbor(result) == j);
+                    CHECK(json::from_cbor(result) == v);
+                }
             }
 
             SECTION("half-precision float (edge cases)")
@@ -936,7 +968,7 @@ TEST_CASE("CBOR")
 
                 SECTION("NaN")
                 {
-                    json j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x7c, 0x01}));
+                    json j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x7e, 0x00}));
                     json::number_float_t d = j;
                     CHECK(std::isnan(d));
                     CHECK(j.dump() == "null");
