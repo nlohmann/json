@@ -1085,12 +1085,12 @@ The following compilers are currently used in continuous integration at [Travis]
 
 | Compiler                   | Operating System         | CI Provider    |
 |----------------------------|--------------------------|----------------|
+| AppleClang 9.1.0.9020039   | Darwin-17.4.0            | Travis         |
+| AppleClang 9.1.0.9020039   | Darwin-17.7.0            | Travis         |
 | AppleClang 10.0.0.10001145 | Darwin-17.7.0            | Travis         |
 | AppleClang 10.0.1.10010046 | Darwin-18.5.0            | Travis         |
 | AppleClang 11.0.0.11000033 | Darwin-18.7.0            | Travis         |
 | AppleClang 11.0.3.11030032 | Darwin-19.4.0            | GitHub Actions |
-| AppleClang 9.1.0.9020039   | Darwin-17.4.0            | Travis         |
-| AppleClang 9.1.0.9020039   | Darwin-17.7.0            | Travis         |
 | Clang 3.5.0                | Linux-4.4.0-104-generic  | Travis         |
 | Clang 3.6.2                | Linux-4.4.0-104-generic  | Travis         |
 | Clang 3.7.1                | Linux-4.4.0-104-generic  | Travis         |
@@ -1105,10 +1105,14 @@ The following compilers are currently used in continuous integration at [Travis]
 | GNU 5.5.0                  | Linux-4.4.0-104-generic  | Travis         |
 | GNU 6.3.0                  | Linux-5.3.0-1017-aws     | Circle CI      |
 | GNU 6.5.0                  | Linux-4.4.0-104-generic  | Travis         |
+| GNU 7.3.0 (MinGW)          | Windows-6.3.9600         | AppVeyor       |
 | GNU 7.5.0                  | Linux-4.4.0-104-generic  | Travis         |
 | GNU 7.5.0                  | Linux-5.3.0-1020-azure   | GitHub Actions |
 | GNU 8.4.0                  | Linux-4.4.0-104-generic  | Travis         |
 | GNU 9.3.0                  | Linux-4.4.0-104-generic  | Travis         |
+| MSVC 19.0.24241.7          | Windows-6.3.9600         | AppVeyor       |
+| MSVC 19.16.27035.0         | Windows-10.0.14393       | AppVeyor       |
+| MSVC 19.25.28614.0         | Windows-10.0.17763       | AppVeyor       |
 | MSVC 19.25.28614.0         | Windows-10.0.17763       | GitHub Actions |
 
 ## License
