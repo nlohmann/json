@@ -22,19 +22,9 @@ namespace detail
 // lexer //
 ///////////
 
-/*!
-@brief lexical analysis
-
-This class organizes the lexical analysis during JSON deserialization.
-*/
 template<typename BasicJsonType>
-class lexer
+class lexer_base
 {
-    using number_integer_t = typename BasicJsonType::number_integer_t;
-    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
-    using number_float_t = typename BasicJsonType::number_float_t;
-    using string_t = typename BasicJsonType::string_t;
-
   public:
     /// token types for the parser
     enum class token_type
@@ -75,9 +65,9 @@ class lexer
                 return "null literal";
             case token_type::value_string:
                 return "string literal";
-            case lexer::token_type::value_unsigned:
-            case lexer::token_type::value_integer:
-            case lexer::token_type::value_float:
+            case token_type::value_unsigned:
+            case token_type::value_integer:
+            case token_type::value_float:
                 return "number literal";
             case token_type::begin_array:
                 return "'['";
@@ -103,15 +93,31 @@ class lexer
                 // LCOV_EXCL_STOP
         }
     }
+};
+/*!
+@brief lexical analysis
 
-    explicit lexer(detail::input_adapter_t&& adapter)
+This class organizes the lexical analysis during JSON deserialization.
+*/
+template<typename BasicJsonType, typename InputAdapterType>
+class lexer : public lexer_base<BasicJsonType>
+{
+    using number_integer_t = typename BasicJsonType::number_integer_t;
+    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+    using number_float_t = typename BasicJsonType::number_float_t;
+    using string_t = typename BasicJsonType::string_t;
+
+  public:
+    using token_type = typename lexer_base<BasicJsonType>::token_type;
+
+    explicit lexer(InputAdapterType&& adapter)
         : ia(std::move(adapter)), decimal_point_char(get_decimal_point()) {}
 
     // delete because of pointer members
     lexer(const lexer&) = delete;
-    lexer(lexer&&) = delete;
+    lexer(lexer&&) = default;
     lexer& operator=(lexer&) = delete;
-    lexer& operator=(lexer&&) = delete;
+    lexer& operator=(lexer&&) = default;
     ~lexer() = default;
 
   private:
@@ -1256,7 +1262,7 @@ scan_number_done:
         }
         else
         {
-            current = ia->get_character();
+            current = ia.get_character();
         }
 
         if (JSON_HEDLEY_LIKELY(current != std::char_traits<char>::eof()))
@@ -1480,7 +1486,7 @@ scan_number_done:
 
   private:
     /// input adapter
-    detail::input_adapter_t ia = nullptr;
+    InputAdapterType ia;
 
     /// the current character
     std::char_traits<char>::int_type current = std::char_traits<char>::eof();
