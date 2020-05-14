@@ -40,7 +40,8 @@ namespace
 json::lexer::token_type scan_string(const char* s);
 json::lexer::token_type scan_string(const char* s)
 {
-    return json::lexer(nlohmann::detail::input_adapter(s)).scan();
+    auto ia = nlohmann::detail::input_adapter(s);
+    return nlohmann::detail::lexer<json, decltype(ia)>(std::move(ia)).scan();
 }
 }
 

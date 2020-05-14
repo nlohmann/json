@@ -24,6 +24,20 @@ namespace nlohmann
 {
 namespace detail
 {
+
+/*!
+@brief determine system byte order
+
+@return true if and only if system's byte order is little endian
+
+@note from https://stackoverflow.com/a/1001328/266378
+*/
+static bool little_endianess(int num = 1) noexcept
+{
+    return *reinterpret_cast<char*>(&num) == 1;
+}
+
+
 ///////////////////
 // binary reader //
 ///////////////////
@@ -31,7 +45,7 @@ namespace detail
 /*!
 @brief deserialization of CBOR, MessagePack, and UBJSON values
 */
-template<typename BasicJsonType, typename SAX = json_sax_dom_parser<BasicJsonType>>
+template<typename BasicJsonType, typename InputAdapterType, typename SAX = json_sax_dom_parser<BasicJsonType>>
 class binary_reader
 {
     using number_integer_t = typename BasicJsonType::number_integer_t;
@@ -47,10 +61,9 @@ class binary_reader
 
     @param[in] adapter  input adapter to read from
     */
-    explicit binary_reader(input_adapter_t adapter) : ia(std::move(adapter))
+    explicit binary_reader(InputAdapterType&& adapter) : ia(std::move(adapter))
     {
         (void)detail::is_sax_static_asserts<SAX, BasicJsonType> {};
-        assert(ia);
     }
 
     // make class move-only
@@ -117,18 +130,6 @@ class binary_reader
         }
 
         return result;
-    }
-
-    /*!
-    @brief determine system byte order
-
-    @return true if and only if system's byte order is little endian
-
-    @note from https://stackoverflow.com/a/1001328/266378
-    */
-    static constexpr bool little_endianess(int num = 1) noexcept
-    {
-        return *reinterpret_cast<char*>(&num) == 1;
     }
 
   private:
@@ -2085,7 +2086,7 @@ class binary_reader
     int get()
     {
         ++chars_read;
-        return current = ia->get_character();
+        return current = ia.get_character();
     }
 
     /*!
@@ -2273,7 +2274,7 @@ class binary_reader
 
   private:
     /// input adapter
-    input_adapter_t ia = nullptr;
+    InputAdapterType ia;
 
     /// the current character
     int current = std::char_traits<char>::eof();
