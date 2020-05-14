@@ -12143,7 +12143,8 @@ class binary_writer
                 }
                 else
                 {
-                    if (static_cast<double>(static_cast<float>(j.m_value.number_float)) == j.m_value.number_float)
+                    if (j.m_value.number_float < std::numeric_limits<float>::max() and
+                            static_cast<double>(static_cast<float>(j.m_value.number_float)) == j.m_value.number_float)
                     {
                         oa->write_character(get_cbor_float_prefix(static_cast<float>(j.m_value.number_float)));
                         write_number(static_cast<float>(j.m_value.number_float));
