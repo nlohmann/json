@@ -550,7 +550,7 @@ class binary_writer
             {
                 // step 0: determine if the binary type has a set subtype to
                 // determine whether or not to use the ext or fixext types
-                const bool use_ext = j.m_value.binary->has_subtype;
+                const bool use_ext = j.m_value.binary->has_subtype();
 
                 // step 1: write control byte and the byte string length
                 const auto N = j.m_value.binary->size();
@@ -630,7 +630,9 @@ class binary_writer
                 // step 1.5: if this is an ext type, write the subtype
                 if (use_ext)
                 {
-                    write_number(j.m_value.binary->subtype);
+                    std::uint8_t subtype;
+                    write_number(subtype);
+                    j.m_value.binary->set_subtype(subtype);
                 }
 
                 // step 2: write the byte string
@@ -1085,12 +1087,7 @@ class binary_writer
         write_bson_entry_header(name, 0x05);
 
         write_number<std::int32_t, true>(static_cast<std::int32_t>(value.size()));
-        std::uint8_t subtype = 0x00; // Generic Binary Subtype
-        if (value.has_subtype)
-        {
-            subtype = value.subtype;
-        }
-        write_number(subtype);
+        write_number(value.has_subtype() ? value.subtype() : 0x00);
 
         oa->write_characters(reinterpret_cast<const CharType*>(value.data()), value.size());
     }

@@ -5804,8 +5804,8 @@ class binary_reader
             return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message(input_format_t::bson, "byte array length cannot be negative, is " + std::to_string(len), "binary")));
         }
 
-        result.has_subtype = true; // All BSON binary values have a subtype
-        get_number<std::uint8_t>(input_format_t::bson, result.subtype);
+        result.m_has_subtype = true; // All BSON binary values have a subtype
+        get_number<std::uint8_t>(input_format_t::bson, result.m_subtype);
 
         return get_binary(input_format_t::bson, len, result);
     }
@@ -7101,58 +7101,58 @@ class binary_reader
             case 0xC7: // ext 8
             {
                 std::uint8_t len;
-                result.has_subtype = true;
+                result.m_has_subtype = true;
                 return get_number(input_format_t::msgpack, len) and
-                       get_number(input_format_t::msgpack, result.subtype) and
+                       get_number(input_format_t::msgpack, result.m_subtype) and
                        get_binary(input_format_t::msgpack, len, result);
             }
 
             case 0xC8: // ext 16
             {
                 std::uint16_t len;
-                result.has_subtype = true;
+                result.m_has_subtype = true;
                 return get_number(input_format_t::msgpack, len) and
-                       get_number(input_format_t::msgpack, result.subtype) and
+                       get_number(input_format_t::msgpack, result.m_subtype) and
                        get_binary(input_format_t::msgpack, len, result);
             }
 
             case 0xC9: // ext 32
             {
                 std::uint32_t len;
-                result.has_subtype = true;
+                result.m_has_subtype = true;
                 return get_number(input_format_t::msgpack, len) and
-                       get_number(input_format_t::msgpack, result.subtype) and
+                       get_number(input_format_t::msgpack, result.m_subtype) and
                        get_binary(input_format_t::msgpack, len, result);
             }
 
             case 0xD4: // fixext 1
             {
-                result.has_subtype = true;
-                return get_number(input_format_t::msgpack, result.subtype) and get_binary(input_format_t::msgpack, 1, result);
+                result.m_has_subtype = true;
+                return get_number(input_format_t::msgpack, result.m_subtype) and get_binary(input_format_t::msgpack, 1, result);
             }
 
             case 0xD5: // fixext 2
             {
-                result.has_subtype = true;
-                return get_number(input_format_t::msgpack, result.subtype) and get_binary(input_format_t::msgpack, 2, result);
+                result.m_has_subtype = true;
+                return get_number(input_format_t::msgpack, result.m_subtype) and get_binary(input_format_t::msgpack, 2, result);
             }
 
             case 0xD6: // fixext 4
             {
-                result.has_subtype = true;
-                return get_number(input_format_t::msgpack, result.subtype) and get_binary(input_format_t::msgpack, 4, result);
+                result.m_has_subtype = true;
+                return get_number(input_format_t::msgpack, result.m_subtype) and get_binary(input_format_t::msgpack, 4, result);
             }
 
             case 0xD7: // fixext 8
             {
-                result.has_subtype = true;
-                return get_number(input_format_t::msgpack, result.subtype) and get_binary(input_format_t::msgpack, 8, result);
+                result.m_has_subtype = true;
+                return get_number(input_format_t::msgpack, result.m_subtype) and get_binary(input_format_t::msgpack, 8, result);
             }
 
             case 0xD8: // fixext 16
             {
-                result.has_subtype = true;
-                return get_number(input_format_t::msgpack, result.subtype) and get_binary(input_format_t::msgpack, 16, result);
+                result.m_has_subtype = true;
+                return get_number(input_format_t::msgpack, result.m_subtype) and get_binary(input_format_t::msgpack, 16, result);
             }
 
             default:           // LCOV_EXCL_LINE
@@ -12557,7 +12557,7 @@ class binary_writer
             {
                 // step 0: determine if the binary type has a set subtype to
                 // determine whether or not to use the ext or fixext types
-                const bool use_ext = j.m_value.binary->has_subtype;
+                const bool use_ext = j.m_value.binary->has_subtype();
 
                 // step 1: write control byte and the byte string length
                 const auto N = j.m_value.binary->size();
@@ -12637,7 +12637,9 @@ class binary_writer
                 // step 1.5: if this is an ext type, write the subtype
                 if (use_ext)
                 {
-                    write_number(j.m_value.binary->subtype);
+                    std::uint8_t subtype;
+                    write_number(subtype);
+                    j.m_value.binary->set_subtype(subtype);
                 }
 
                 // step 2: write the byte string
@@ -13092,12 +13094,7 @@ class binary_writer
         write_bson_entry_header(name, 0x05);
 
         write_number<std::int32_t, true>(static_cast<std::int32_t>(value.size()));
-        std::uint8_t subtype = 0x00; // Generic Binary Subtype
-        if (value.has_subtype)
-        {
-            subtype = value.subtype;
-        }
-        write_number(subtype);
+        write_number(value.has_subtype() ? value.subtype() : 0x00);
 
         oa->write_characters(reinterpret_cast<const CharType*>(value.data()), value.size());
     }
@@ -15593,8 +15590,13 @@ his- or herself with a specific naming scheme in order to override the
 binary type.  I.e. it's for ease of use.
 */
 template<typename BinaryType>
-struct wrapped_binary_t : public BinaryType
+class wrapped_binary_t : public BinaryType
 {
+  public:
+    // to simplify code in binary_reader
+    template<typename BasicJsonType, typename InputAdapterType, typename SAX>
+    friend class binary_reader;
+
     using binary_t = BinaryType;
 
     wrapped_binary_t() noexcept(noexcept(binary_t()))
@@ -15612,18 +15614,56 @@ struct wrapped_binary_t : public BinaryType
     wrapped_binary_t(const binary_t& bint,
                      std::uint8_t st) noexcept(noexcept(binary_t(bint)))
         : binary_t(bint)
-        , subtype(st)
-        , has_subtype(true)
+        , m_subtype(st)
+        , m_has_subtype(true)
     {}
 
     wrapped_binary_t(binary_t&& bint, std::uint8_t st) noexcept(noexcept(binary_t(std::move(bint))))
         : binary_t(std::move(bint))
-        , subtype(st)
-        , has_subtype(true)
+        , m_subtype(st)
+        , m_has_subtype(true)
     {}
 
-    std::uint8_t subtype = 0;
-    bool has_subtype = false;
+    /*!
+    @brief set the subtype
+    @param subtype subtype to set (implementation specific)
+    */
+    void set_subtype(std::uint8_t subtype) noexcept
+    {
+        m_subtype = subtype;
+        m_has_subtype = true;
+    }
+
+    /*!
+    @brief get the subtype
+    @return subtype (implementation specific)
+    */
+    constexpr std::uint8_t subtype() const noexcept
+    {
+        return m_subtype;
+    }
+
+    /*!
+    @brief get whether a subtype was set
+    @return whether a subtype was set
+    */
+    constexpr bool has_subtype() const noexcept
+    {
+        return m_has_subtype;
+    }
+
+    /*!
+    @brief clear the subtype
+    */
+    void clear_subtype() noexcept
+    {
+        m_subtype = 0;
+        m_has_subtype = false;
+    }
+
+  private:
+    std::uint8_t m_subtype = 0;
+    bool m_has_subtype = false;
 };
 
 }  // namespace detail
@@ -16398,15 +16438,15 @@ class basic_json
 
     This type is a type designed to carry binary data that appears in various
     serialized formats, such as CBOR's Major Type 2, MessagePack's bin, and
-    BSON's generic binary subtype.  This type is NOT a part of standard JSON and
+    BSON's generic binary subtype. This type is NOT a part of standard JSON and
     exists solely for compatibility with these binary types. As such, it is
     simply defined as an ordered sequence of zero or more byte values.
 
     Additionally, as an implementation detail, the subtype of the binary data is
-    carried around as a `unint8_t`, which is compatible with both of the binary
-    data formats that use binary subtyping, (though the specific numbering is
-    incompatible with each other, and it is up to the user to translate between
-    them).
+    carried around as a `std::uint8_t`, which is compatible with both of the
+    binary data formats that use binary subtyping, (though the specific
+    numbering is incompatible with each other, and it is up to the user to
+    translate between them).
 
     [CBOR's RFC 7049](https://tools.ietf.org/html/rfc7049) describes this type
     as:
@@ -16449,6 +16489,18 @@ class basic_json
     */
     using binary_t = BinaryType;
 
+    /*!
+    @brief binary array with a binary type
+
+    This type is used to store binary types internally. It wrapps the template
+    type `BinaryType` (@ref binary_t) and adds a subtype to allow to distinguish
+    different binary types from different formats.
+
+    While @ref binary_t is used to define how binary values are stored, this
+    type is used to access binary values once they are parsed.
+
+    @sa @ref binary_array -- create a binary array
+    */
     using internal_binary_t = nlohmann::detail::wrapped_binary_t<BinaryType>;
     /// @}
 
@@ -19441,8 +19493,7 @@ class basic_json
     {
         if (is_binary())
         {
-            m_value.binary->has_subtype = true;
-            m_value.binary->subtype = subtype;
+            m_value.binary->set_subtype(subtype);
         }
     }
 
@@ -19470,8 +19521,7 @@ class basic_json
     {
         if (is_binary())
         {
-            m_value.binary->has_subtype = false;
-            m_value.binary->subtype = 0;
+            m_value.binary->clear_subtype();
         }
     }
 
@@ -19495,7 +19545,7 @@ class basic_json
     */
     bool has_subtype() const noexcept
     {
-        return is_binary() and m_value.binary->has_subtype;
+        return is_binary() and m_value.binary->has_subtype();
     }
 
     /*!

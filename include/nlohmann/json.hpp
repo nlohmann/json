@@ -839,15 +839,15 @@ class basic_json
 
     This type is a type designed to carry binary data that appears in various
     serialized formats, such as CBOR's Major Type 2, MessagePack's bin, and
-    BSON's generic binary subtype.  This type is NOT a part of standard JSON and
+    BSON's generic binary subtype. This type is NOT a part of standard JSON and
     exists solely for compatibility with these binary types. As such, it is
     simply defined as an ordered sequence of zero or more byte values.
 
     Additionally, as an implementation detail, the subtype of the binary data is
-    carried around as a `unint8_t`, which is compatible with both of the binary
-    data formats that use binary subtyping, (though the specific numbering is
-    incompatible with each other, and it is up to the user to translate between
-    them).
+    carried around as a `std::uint8_t`, which is compatible with both of the
+    binary data formats that use binary subtyping, (though the specific
+    numbering is incompatible with each other, and it is up to the user to
+    translate between them).
 
     [CBOR's RFC 7049](https://tools.ietf.org/html/rfc7049) describes this type
     as:
@@ -890,6 +890,18 @@ class basic_json
     */
     using binary_t = BinaryType;
 
+    /*!
+    @brief binary array with a binary type
+
+    This type is used to store binary types internally. It wrapps the template
+    type `BinaryType` (@ref binary_t) and adds a subtype to allow to distinguish
+    different binary types from different formats.
+
+    While @ref binary_t is used to define how binary values are stored, this
+    type is used to access binary values once they are parsed.
+
+    @sa @ref binary_array -- create a binary array
+    */
     using internal_binary_t = nlohmann::detail::wrapped_binary_t<BinaryType>;
     /// @}
 
@@ -3882,8 +3894,7 @@ class basic_json
     {
         if (is_binary())
         {
-            m_value.binary->has_subtype = true;
-            m_value.binary->subtype = subtype;
+            m_value.binary->set_subtype(subtype);
         }
     }
 
@@ -3911,8 +3922,7 @@ class basic_json
     {
         if (is_binary())
         {
-            m_value.binary->has_subtype = false;
-            m_value.binary->subtype = 0;
+            m_value.binary->clear_subtype();
         }
     }
 
@@ -3936,7 +3946,7 @@ class basic_json
     */
     bool has_subtype() const noexcept
     {
-        return is_binary() and m_value.binary->has_subtype;
+        return is_binary() and m_value.binary->has_subtype();
     }
 
     /*!

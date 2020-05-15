@@ -17,8 +17,13 @@ his- or herself with a specific naming scheme in order to override the
 binary type.  I.e. it's for ease of use.
 */
 template<typename BinaryType>
-struct wrapped_binary_t : public BinaryType
+class wrapped_binary_t : public BinaryType
 {
+  public:
+    // to simplify code in binary_reader
+    template<typename BasicJsonType, typename InputAdapterType, typename SAX>
+    friend class binary_reader;
+
     using binary_t = BinaryType;
 
     wrapped_binary_t() noexcept(noexcept(binary_t()))
@@ -36,18 +41,56 @@ struct wrapped_binary_t : public BinaryType
     wrapped_binary_t(const binary_t& bint,
                      std::uint8_t st) noexcept(noexcept(binary_t(bint)))
         : binary_t(bint)
-        , subtype(st)
-        , has_subtype(true)
+        , m_subtype(st)
+        , m_has_subtype(true)
     {}
 
     wrapped_binary_t(binary_t&& bint, std::uint8_t st) noexcept(noexcept(binary_t(std::move(bint))))
         : binary_t(std::move(bint))
-        , subtype(st)
-        , has_subtype(true)
+        , m_subtype(st)
+        , m_has_subtype(true)
     {}
 
-    std::uint8_t subtype = 0;
-    bool has_subtype = false;
+    /*!
+    @brief set the subtype
+    @param subtype subtype to set (implementation specific)
+    */
+    void set_subtype(std::uint8_t subtype) noexcept
+    {
+        m_subtype = subtype;
+        m_has_subtype = true;
+    }
+
+    /*!
+    @brief get the subtype
+    @return subtype (implementation specific)
+    */
+    constexpr std::uint8_t subtype() const noexcept
+    {
+        return m_subtype;
+    }
+
+    /*!
+    @brief get whether a subtype was set
+    @return whether a subtype was set
+    */
+    constexpr bool has_subtype() const noexcept
+    {
+        return m_has_subtype;
+    }
+
+    /*!
+    @brief clear the subtype
+    */
+    void clear_subtype() noexcept
+    {
+        m_subtype = 0;
+        m_has_subtype = false;
+    }
+
+  private:
+    std::uint8_t m_subtype = 0;
+    bool m_has_subtype = false;
 };
 
 }  // namespace detail
