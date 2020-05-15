@@ -21,7 +21,9 @@ struct wrapped_binary_t : public BinaryType
 {
     using binary_t = BinaryType;
 
-    wrapped_binary_t() noexcept(noexcept(binary_t())) = default;
+    wrapped_binary_t() noexcept(noexcept(binary_t()))
+        : binary_t()
+    {}
 
     wrapped_binary_t(const binary_t& bint) noexcept(noexcept(binary_t(bint)))
         : binary_t(bint)
