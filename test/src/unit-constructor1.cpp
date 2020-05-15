@@ -481,6 +481,23 @@ TEST_CASE("constructors")
         }
     }
 
+    SECTION("create a binary (explicit)")
+    {
+        SECTION("empty binary")
+        {
+            json::internal_binary_t b{};
+            json j(b);
+            CHECK(j.type() == json::value_t::binary);
+        }
+
+        SECTION("filled binary")
+        {
+            json::internal_binary_t b({1, 2, 3});
+            json j(b);
+            CHECK(j.type() == json::value_t::binary);
+        }
+    }
+
     SECTION("create an integer number (explicit)")
     {
         SECTION("uninitialized value")

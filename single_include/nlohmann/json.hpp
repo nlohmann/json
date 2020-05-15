@@ -3435,9 +3435,9 @@ template <typename BasicJsonType, typename ConstructibleArrayType,
               is_constructible_array_type<BasicJsonType, ConstructibleArrayType>::value and
               not is_constructible_object_type<BasicJsonType, ConstructibleArrayType>::value and
               not is_constructible_string_type<BasicJsonType, ConstructibleArrayType>::value and
+              not std::is_same<ConstructibleArrayType, typename BasicJsonType::internal_binary_t>::value and
               not is_basic_json<ConstructibleArrayType>::value,
               int > = 0 >
-
 auto from_json(const BasicJsonType& j, ConstructibleArrayType& arr)
 -> decltype(from_json_array_impl(j, arr, priority_tag<3> {}),
 j.template get<typename ConstructibleArrayType::value_type>(),
@@ -3450,6 +3450,17 @@ void())
     }
 
     from_json_array_impl(j, arr, priority_tag<3> {});
+}
+
+template <typename BasicJsonType>
+void from_json(const BasicJsonType& j, typename BasicJsonType::internal_binary_t& bin)
+{
+    if (JSON_HEDLEY_UNLIKELY(not j.is_binary()))
+    {
+        JSON_THROW(type_error::create(302, "type must be binary, but is " + std::string(j.type_name())));
+    }
+
+    bin = *j.template get_ptr<const typename BasicJsonType::internal_binary_t*>();
 }
 
 template<typename BasicJsonType, typename ConstructibleObjectType,
@@ -3851,7 +3862,7 @@ template<>
 struct external_constructor<value_t::binary>
 {
     template<typename BasicJsonType>
-    static void construct(BasicJsonType& j, const typename BasicJsonType::binary_t& b)
+    static void construct(BasicJsonType& j, const typename BasicJsonType::internal_binary_t& b)
     {
         j.m_type = value_t::binary;
         typename BasicJsonType::internal_binary_t value{b};
@@ -3860,7 +3871,7 @@ struct external_constructor<value_t::binary>
     }
 
     template<typename BasicJsonType>
-    static void construct(BasicJsonType& j, typename BasicJsonType::binary_t&& b)
+    static void construct(BasicJsonType& j, typename BasicJsonType::internal_binary_t&& b)
     {
         j.m_type = value_t::binary;
         typename BasicJsonType::internal_binary_t value{std::move(b)};
@@ -4058,14 +4069,20 @@ void to_json(BasicJsonType& j, const std::vector<bool>& e)
 template <typename BasicJsonType, typename CompatibleArrayType,
           enable_if_t<is_compatible_array_type<BasicJsonType,
                       CompatibleArrayType>::value and
-                      not is_compatible_object_type<
-                          BasicJsonType, CompatibleArrayType>::value and
+                      not is_compatible_object_type<BasicJsonType, CompatibleArrayType>::value and
                       not is_compatible_string_type<BasicJsonType, CompatibleArrayType>::value and
+                      not std::is_same<typename BasicJsonType::internal_binary_t, CompatibleArrayType>::value and
                       not is_basic_json<CompatibleArrayType>::value,
                       int> = 0>
 void to_json(BasicJsonType& j, const CompatibleArrayType& arr)
 {
     external_constructor<value_t::array>::construct(j, arr);
+}
+
+template <typename BasicJsonType>
+void to_json(BasicJsonType& j, const typename BasicJsonType::internal_binary_t& bin)
+{
+    external_constructor<value_t::binary>::construct(j, bin);
 }
 
 template<typename BasicJsonType, typename T,
@@ -4727,13 +4744,9 @@ input.
 template<typename BasicJsonType>
 struct json_sax
 {
-    /// type for (signed) integers
     using number_integer_t = typename BasicJsonType::number_integer_t;
-    /// type for unsigned integers
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
-    /// type for floating-point numbers
     using number_float_t = typename BasicJsonType::number_float_t;
-    /// type for strings
     using string_t = typename BasicJsonType::string_t;
     using binary_t = typename BasicJsonType::binary_t;
 
@@ -15560,6 +15573,60 @@ class serializer
 
 // #include <nlohmann/detail/value_t.hpp>
 
+// #include <nlohmann/detail/wrapped_binary_t.hpp>
+
+
+#include <cstdint> // uint8_t
+#include <utility> // move
+
+namespace nlohmann
+{
+namespace detail
+{
+
+/*!
+@brief an internal type for a backed binary type
+
+This type is designed to be `binary_t` but with the subtype implementation
+detail.  This type exists so that the user does not have to specify a struct
+his- or herself with a specific naming scheme in order to override the
+binary type.  I.e. it's for ease of use.
+*/
+template<typename BinaryType>
+struct wrapped_binary_t : public BinaryType
+{
+    using binary_t = BinaryType;
+
+    wrapped_binary_t() noexcept(noexcept(binary_t())) = default;
+
+    wrapped_binary_t(const binary_t& bint) noexcept(noexcept(binary_t(bint)))
+        : binary_t(bint)
+    {}
+
+    wrapped_binary_t(binary_t&& bint) noexcept(noexcept(binary_t(std::move(bint))))
+        : binary_t(std::move(bint))
+    {}
+
+    wrapped_binary_t(const binary_t& bint,
+                     std::uint8_t st) noexcept(noexcept(binary_t(bint)))
+        : binary_t(bint)
+        , subtype(st)
+        , has_subtype(true)
+    {}
+
+    wrapped_binary_t(binary_t&& bint, std::uint8_t st) noexcept(noexcept(binary_t(std::move(bint))))
+        : binary_t(std::move(bint))
+        , subtype(st)
+        , has_subtype(true)
+    {}
+
+    std::uint8_t subtype = 0;
+    bool has_subtype = false;
+};
+
+}  // namespace detail
+}  // namespace nlohmann
+
 // #include <nlohmann/json_fwd.hpp>
 
 
@@ -16330,7 +16397,7 @@ class basic_json
     This type is a type designed to carry binary data that appears in various
     serialized formats, such as CBOR's Major Type 2, MessagePack's bin, and
     BSON's generic binary subtype.  This type is NOT a part of standard JSON and
-    exists solely for compatibility with these binary types.  As such, it is
+    exists solely for compatibility with these binary types. As such, it is
     simply defined as an ordered sequence of zero or more byte values.
 
     Additionally, as an implementation detail, the subtype of the binary data is
@@ -16341,9 +16408,8 @@ class basic_json
 
     [CBOR's RFC 7049](https://tools.ietf.org/html/rfc7049) describes this type
     as:
-    > Major type 2:  a byte string.  The string's length in bytes is
-    > represented following the rules for positive integers (major type
-    > 0).
+    > Major type 2: a byte string. The string's length in bytes is represented
+    > following the rules for positive integers (major type 0).
 
     [MessagePack's documentation on the bin type
     family](https://github.com/msgpack/msgpack/blob/master/spec.md#bin-format-family)
@@ -16359,7 +16425,7 @@ class basic_json
 
     None of these impose any limitations on the internal representation other
     than the basic unit of storage be some type of array whose parts are
-    decomposible into bytes.
+    decomposable into bytes.
 
     The default representation of this binary format is a
     `std::vector<std::uint8_t>`, which is a very common way to represent a byte
@@ -16371,7 +16437,7 @@ class basic_json
 
     #### Storage
 
-    Binary Arrays are stored as pointers in a @ref basic_json type.  That is,
+    Binary Arrays are stored as pointers in a @ref basic_json type. That is,
     for any access to array values, a pointer of the type `binary_t*` must be
     dereferenced.
 
@@ -16381,43 +16447,7 @@ class basic_json
     */
     using binary_t = BinaryType;
 
-    /*!
-    @brief an internal type for a backed binary type
-
-    This type is designed to be `binary_t` but with the subtype implementation
-    detail.  This type exists so that the user does not have to specify a struct
-    his- or herself with a specific naming scheme in order to override the
-    binary type.  I.e. it's for ease of use.
-    */
-    struct internal_binary_t : public BinaryType
-    {
-        using BinaryType::BinaryType;
-        internal_binary_t() noexcept(noexcept(BinaryType()))
-            : BinaryType()
-        {}
-        internal_binary_t(const BinaryType& bint) noexcept(noexcept(BinaryType(bint)))
-            : BinaryType(bint)
-        {}
-        internal_binary_t(BinaryType&& bint) noexcept(noexcept(BinaryType(std::move(bint))))
-            : BinaryType(std::move(bint))
-        {}
-        internal_binary_t(const BinaryType& bint, std::uint8_t st) noexcept(noexcept(BinaryType(bint)))
-            : BinaryType(bint)
-            , subtype(st)
-            , has_subtype(true)
-        {}
-        internal_binary_t(BinaryType&& bint, std::uint8_t st) noexcept(noexcept(BinaryType(std::move(bint))))
-            : BinaryType(std::move(bint))
-            , subtype(st)
-            , has_subtype(true)
-        {}
-
-        // TOOD: If minimum C++ version is ever bumped to C++17, this field
-        // deserves to be a std::optional
-        std::uint8_t subtype = 0;
-        bool has_subtype = false;
-    };
-
+    using internal_binary_t = nlohmann::detail::wrapped_binary_t<BinaryType>;
     /// @}
 
   private:
@@ -18291,18 +18321,6 @@ class basic_json
     constexpr const number_float_t* get_impl_ptr(const number_float_t* /*unused*/) const noexcept
     {
         return is_number_float() ? &m_value.number_float : nullptr;
-    }
-
-    /// get a pointer to the value (binary)
-    binary_t* get_impl_ptr(binary_t* /*unused*/) noexcept
-    {
-        return is_binary() ? reinterpret_cast<binary_t*>(m_value.binary) : nullptr;
-    }
-
-    /// get a pointer to the value (binary)
-    constexpr const binary_t* get_impl_ptr(const binary_t* /*unused*/) const noexcept
-    {
-        return is_binary() ? m_value.binary : nullptr;
     }
 
     /// get a pointer to the value (binary)

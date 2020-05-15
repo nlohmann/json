@@ -70,6 +70,7 @@ SOFTWARE.
 #include <nlohmann/detail/output/output_adapters.hpp>
 #include <nlohmann/detail/output/serializer.hpp>
 #include <nlohmann/detail/value_t.hpp>
+#include <nlohmann/detail/wrapped_binary_t.hpp>
 #include <nlohmann/json_fwd.hpp>
 
 /*!
@@ -839,7 +840,7 @@ class basic_json
     This type is a type designed to carry binary data that appears in various
     serialized formats, such as CBOR's Major Type 2, MessagePack's bin, and
     BSON's generic binary subtype.  This type is NOT a part of standard JSON and
-    exists solely for compatibility with these binary types.  As such, it is
+    exists solely for compatibility with these binary types. As such, it is
     simply defined as an ordered sequence of zero or more byte values.
 
     Additionally, as an implementation detail, the subtype of the binary data is
@@ -850,9 +851,8 @@ class basic_json
 
     [CBOR's RFC 7049](https://tools.ietf.org/html/rfc7049) describes this type
     as:
-    > Major type 2:  a byte string.  The string's length in bytes is
-    > represented following the rules for positive integers (major type
-    > 0).
+    > Major type 2: a byte string. The string's length in bytes is represented
+    > following the rules for positive integers (major type 0).
 
     [MessagePack's documentation on the bin type
     family](https://github.com/msgpack/msgpack/blob/master/spec.md#bin-format-family)
@@ -868,7 +868,7 @@ class basic_json
 
     None of these impose any limitations on the internal representation other
     than the basic unit of storage be some type of array whose parts are
-    decomposible into bytes.
+    decomposable into bytes.
 
     The default representation of this binary format is a
     `std::vector<std::uint8_t>`, which is a very common way to represent a byte
@@ -880,7 +880,7 @@ class basic_json
 
     #### Storage
 
-    Binary Arrays are stored as pointers in a @ref basic_json type.  That is,
+    Binary Arrays are stored as pointers in a @ref basic_json type. That is,
     for any access to array values, a pointer of the type `binary_t*` must be
     dereferenced.
 
@@ -890,43 +890,7 @@ class basic_json
     */
     using binary_t = BinaryType;
 
-    /*!
-    @brief an internal type for a backed binary type
-
-    This type is designed to be `binary_t` but with the subtype implementation
-    detail.  This type exists so that the user does not have to specify a struct
-    his- or herself with a specific naming scheme in order to override the
-    binary type.  I.e. it's for ease of use.
-    */
-    struct internal_binary_t : public BinaryType
-    {
-        using BinaryType::BinaryType;
-        internal_binary_t() noexcept(noexcept(BinaryType()))
-            : BinaryType()
-        {}
-        internal_binary_t(const BinaryType& bint) noexcept(noexcept(BinaryType(bint)))
-            : BinaryType(bint)
-        {}
-        internal_binary_t(BinaryType&& bint) noexcept(noexcept(BinaryType(std::move(bint))))
-            : BinaryType(std::move(bint))
-        {}
-        internal_binary_t(const BinaryType& bint, std::uint8_t st) noexcept(noexcept(BinaryType(bint)))
-            : BinaryType(bint)
-            , subtype(st)
-            , has_subtype(true)
-        {}
-        internal_binary_t(BinaryType&& bint, std::uint8_t st) noexcept(noexcept(BinaryType(std::move(bint))))
-            : BinaryType(std::move(bint))
-            , subtype(st)
-            , has_subtype(true)
-        {}
-
-        // TOOD: If minimum C++ version is ever bumped to C++17, this field
-        // deserves to be a std::optional
-        std::uint8_t subtype = 0;
-        bool has_subtype = false;
-    };
-
+    using internal_binary_t = nlohmann::detail::wrapped_binary_t<BinaryType>;
     /// @}
 
   private:
@@ -2800,18 +2764,6 @@ class basic_json
     constexpr const number_float_t* get_impl_ptr(const number_float_t* /*unused*/) const noexcept
     {
         return is_number_float() ? &m_value.number_float : nullptr;
-    }
-
-    /// get a pointer to the value (binary)
-    binary_t* get_impl_ptr(binary_t* /*unused*/) noexcept
-    {
-        return is_binary() ? reinterpret_cast<binary_t*>(m_value.binary) : nullptr;
-    }
-
-    /// get a pointer to the value (binary)
-    constexpr const binary_t* get_impl_ptr(const binary_t* /*unused*/) const noexcept
-    {
-        return is_binary() ? m_value.binary : nullptr;
     }
 
     /// get a pointer to the value (binary)
