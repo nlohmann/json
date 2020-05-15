@@ -923,6 +923,65 @@ TEST_CASE("CBOR")
                     CHECK(json::from_cbor(result) == j);
                     CHECK(json::from_cbor(result) == v);
                 }
+                SECTION("3.40282e+38(max float)")
+                {
+                    float v = std::numeric_limits<float>::max();
+                    json j = v;
+                    std::vector<uint8_t> expected =
+                    {
+                        0xfa, 0x7f, 0x7f, 0xff, 0xff
+                    };
+                    const auto result = json::to_cbor(j);
+                    CHECK(result == expected);
+                    // roundtrip
+                    CHECK(json::from_cbor(result) == j);
+                    CHECK(json::from_cbor(result) == v);
+                }
+                SECTION("-3.40282e+38(lowest float)")
+                {
+                    double v = std::numeric_limits<float>::lowest();
+                    json j = v;
+                    std::vector<uint8_t> expected =
+                    {
+                        0xfa, 0xff, 0x7f, 0xff, 0xff
+                    };
+                    const auto result = json::to_cbor(j);
+                    CHECK(result == expected);
+                    // roundtrip
+                    CHECK(json::from_cbor(result) == j);
+                    CHECK(json::from_cbor(result) == v);
+                }
+                SECTION("1 + 3.40282e+38(more than max float)")
+                {
+                    double v = std::numeric_limits<float>::max() + 0.1e+34;
+                    json j = v;
+                    std::vector<uint8_t> expected =
+                    {
+                        0xfb, 0x47, 0xf0, 0x00, 0x03, 0x04, 0xdc, 0x64, 0x49
+                    };
+                    // double
+                    const auto result = json::to_cbor(j);
+                    CHECK(result == expected);
+                    // roundtrip
+                    CHECK(json::from_cbor(result) == j);
+                    CHECK(json::from_cbor(result) == v);
+                }
+                SECTION("-1 - 3.40282e+38(less than lowest float)")
+                {
+                    double v = std::numeric_limits<float>::lowest() - 1;
+                    json j = v;
+                    std::vector<uint8_t> expected =
+                    {
+                        0xfa, 0xff, 0x7f, 0xff, 0xff
+                    };
+                    // the same with lowest float
+                    const auto result = json::to_cbor(j);
+                    CHECK(result == expected);
+                    // roundtrip
+                    CHECK(json::from_cbor(result) == j);
+                    CHECK(json::from_cbor(result) == v);
+                }
+
             }
 
             SECTION("half-precision float (edge cases)")
