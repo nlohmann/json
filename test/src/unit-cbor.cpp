@@ -834,7 +834,7 @@ TEST_CASE("CBOR")
                 }
             }
 
-            SECTION("float")
+            SECTION("double-precision float")
             {
                 SECTION("3.1415925")
                 {
@@ -853,6 +853,10 @@ TEST_CASE("CBOR")
 
                     CHECK(json::from_cbor(result, true, false) == j);
                 }
+            }
+
+            SECTION("single-precision float")
+            {
                 SECTION("0.5")
                 {
                     double v = 0.5;
@@ -861,6 +865,58 @@ TEST_CASE("CBOR")
                     // {0xfb, 0x3f, 0xe0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
                     // but to save memory, we can store it as single-precision float.
                     std::vector<uint8_t> expected = {0xfa, 0x3f, 0x00, 0x00, 0x00};
+                    const auto result = json::to_cbor(j);
+                    CHECK(result == expected);
+                    // roundtrip
+                    CHECK(json::from_cbor(result) == j);
+                    CHECK(json::from_cbor(result) == v);
+                }
+                SECTION("0.0")
+                {
+                    double v = 0.0;
+                    json j = v;
+                    // its double-precision binary value is:
+                    // {0xfb, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+                    std::vector<uint8_t> expected = {0xfa, 0x00, 0x00, 0x00, 0x00};
+                    const auto result = json::to_cbor(j);
+                    CHECK(result == expected);
+                    // roundtrip
+                    CHECK(json::from_cbor(result) == j);
+                    CHECK(json::from_cbor(result) == v);
+                }
+                SECTION("-0.0")
+                {
+                    double v = -0.0;
+                    json j = v;
+                    // its double-precision binary value is:
+                    // {0xfb, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+                    std::vector<uint8_t> expected = {0xfa, 0x80, 0x00, 0x00, 0x00};
+                    const auto result = json::to_cbor(j);
+                    CHECK(result == expected);
+                    // roundtrip
+                    CHECK(json::from_cbor(result) == j);
+                    CHECK(json::from_cbor(result) == v);
+                }
+                SECTION("100.0")
+                {
+                    double v = 100.0;
+                    json j = v;
+                    // its double-precision binary value is:
+                    // {0xfb, 0x40, 0x59, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+                    std::vector<uint8_t> expected = {0xfa, 0x42, 0xc8, 0x00, 0x00};
+                    const auto result = json::to_cbor(j);
+                    CHECK(result == expected);
+                    // roundtrip
+                    CHECK(json::from_cbor(result) == j);
+                    CHECK(json::from_cbor(result) == v);
+                }
+                SECTION("200.0")
+                {
+                    double v = 200.0;
+                    json j = v;
+                    // its double-precision binary value is:
+                    // {0xfb, 0x40, 0x69, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+                    std::vector<uint8_t> expected = {0xfa, 0x43, 0x48, 0x00, 0x00};
                     const auto result = json::to_cbor(j);
                     CHECK(result == expected);
                     // roundtrip
