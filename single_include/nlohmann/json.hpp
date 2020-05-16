@@ -5596,7 +5596,7 @@ namespace detail
 
 @note from https://stackoverflow.com/a/1001328/266378
 */
-static bool little_endianess(int num = 1) noexcept
+static inline bool little_endianess(int num = 1) noexcept
 {
     return *reinterpret_cast<char*>(&num) == 1;
 }
@@ -12188,9 +12188,9 @@ class binary_writer
                 }
                 else
                 {
-                    if (j.m_value.number_float >= std::numeric_limits<float>::lowest() and
-                            j.m_value.number_float <= std::numeric_limits<float>::max() and
-                            static_cast<double>(static_cast<float>(j.m_value.number_float)) == j.m_value.number_float)
+                    if (static_cast<double>(j.m_value.number_float) >= static_cast<double>(std::numeric_limits<float>::lowest()) and
+                            static_cast<double>(j.m_value.number_float) <= static_cast<double>(std::numeric_limits<float>::max()) and
+                            static_cast<double>(static_cast<float>(j.m_value.number_float)) == static_cast<double>(j.m_value.number_float))
                     {
                         oa->write_character(get_cbor_float_prefix(static_cast<float>(j.m_value.number_float)));
                         write_number(static_cast<float>(j.m_value.number_float));

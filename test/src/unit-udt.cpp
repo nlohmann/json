@@ -120,6 +120,8 @@ static void to_json(BasicJsonType& j, country c)
         case country::russia:
             j = u8"Российская Федерация";
             return;
+        default:
+            break;
     }
 }
 
@@ -803,7 +805,9 @@ class Evil
   public:
     Evil() = default;
     template <typename T>
-    Evil(T) {}
+    Evil(T t) : m_i(sizeof(t)) {}
+
+    int m_i = 0;
 };
 
 void from_json(const json&, Evil&) {}
@@ -816,6 +820,10 @@ TEST_CASE("Issue #924")
 
     CHECK_NOTHROW(j.get<Evil>());
     CHECK_NOTHROW(j.get<std::vector<Evil>>());
+
+    // silence Wunused-template warnings
+    Evil e(1);
+    CHECK(e.m_i >= 0);
 }
 
 TEST_CASE("Issue #1237")

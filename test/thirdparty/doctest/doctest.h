@@ -2913,7 +2913,7 @@ typedef timer_large_integer::type ticks_t;
         //unsigned int getElapsedMilliseconds() const {
         //    return static_cast<unsigned int>(getElapsedMicroseconds() / 1000);
         //}
-        double getElapsedSeconds() const { return (getCurrentTicks() - m_ticks) / 1000000.0; }
+        double getElapsedSeconds() const { return static_cast<double>((getCurrentTicks() - m_ticks)) / 1000000.0; }
 
     private:
         ticks_t m_ticks = 0;
