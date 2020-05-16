@@ -1,7 +1,7 @@
 find_package(Git)
 
 set(JSON_TEST_DATA_URL     https://github.com/nlohmann/json_test_data)
-set(JSON_TEST_DATA_VERSION 1.0.0)
+set(JSON_TEST_DATA_VERSION 2.0.0)
 
 # target to download test data
 add_custom_target(download_test_data
