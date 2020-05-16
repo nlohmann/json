@@ -12637,9 +12637,7 @@ class binary_writer
                 // step 1.5: if this is an ext type, write the subtype
                 if (use_ext)
                 {
-                    std::uint8_t subtype;
-                    write_number(subtype);
-                    j.m_value.binary->set_subtype(subtype);
+                    write_number(j.m_value.binary->subtype());
                 }
 
                 // step 2: write the byte string
@@ -13094,7 +13092,7 @@ class binary_writer
         write_bson_entry_header(name, 0x05);
 
         write_number<std::int32_t, true>(static_cast<std::int32_t>(value.size()));
-        write_number(value.has_subtype() ? value.subtype() : 0x00);
+        write_number(value.has_subtype() ? value.subtype() : std::uint8_t(0x00));
 
         oa->write_characters(reinterpret_cast<const CharType*>(value.data()), value.size());
     }
