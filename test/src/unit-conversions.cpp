@@ -1585,7 +1585,7 @@ TEST_CASE("std::optional")
         std::optional<std::string> opt_null;
 
         CHECK(json(opt_null) == j_null);
-        //CHECK(std::optional<std::string>(j_null) == std::nullopt);
+        CHECK(std::optional<std::string>(j_null) == std::nullopt);
     }
 
     SECTION("string")
