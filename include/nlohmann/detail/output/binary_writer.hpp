@@ -6,6 +6,7 @@
 #include <cstring> // memcpy
 #include <limits> // numeric_limits
 #include <string> // string
+#include <cmath> // isnan, isinf
 
 #include <nlohmann/detail/input/binary_reader.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
@@ -177,8 +178,35 @@ class binary_writer
 
             case value_t::number_float:
             {
-                oa->write_character(get_cbor_float_prefix(j.m_value.number_float));
-                write_number(j.m_value.number_float);
+                if (std::isnan(j.m_value.number_float))
+                {
+                    // NaN is 0xf97e00 in CBOR
+                    oa->write_character(to_char_type(0xF9));
+                    oa->write_character(to_char_type(0x7E));
+                    oa->write_character(to_char_type(0x00));
+                }
+                else if (std::isinf(j.m_value.number_float))
+                {
+                    // Infinity is 0xf97c00, -Infinity is 0xf9fc00
+                    oa->write_character(to_char_type(0xf9));
+                    oa->write_character(j.m_value.number_float > 0 ? to_char_type(0x7C) : to_char_type(0xFC));
+                    oa->write_character(to_char_type(0x00));
+                }
+                else
+                {
+                    if (j.m_value.number_float >= std::numeric_limits<float>::lowest() and
+                            j.m_value.number_float <= std::numeric_limits<float>::max() and
+                            static_cast<double>(static_cast<float>(j.m_value.number_float)) == j.m_value.number_float)
+                    {
+                        oa->write_character(get_cbor_float_prefix(static_cast<float>(j.m_value.number_float)));
+                        write_number(static_cast<float>(j.m_value.number_float));
+                    }
+                    else
+                    {
+                        oa->write_character(get_cbor_float_prefix(j.m_value.number_float));
+                        write_number(j.m_value.number_float);
+                    }
+                }
                 break;
             }
 

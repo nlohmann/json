@@ -7111,7 +7111,7 @@ class basic_json
           - break (0xFF)
 
     @param[in] j  JSON value to serialize
-    @return MessagePack serialization as byte vector
+    @return CBOR serialization as byte vector
 
     @complexity Linear in the size of the JSON value @a j.
 
