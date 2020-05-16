@@ -43,7 +43,8 @@ TEST_CASE("tests on very large JSONs")
         std::string s(2 * depth, '[');
         std::fill(s.begin() + depth, s.end(), ']');
 
-        CHECK_NOTHROW(nlohmann::json::parse(s));
+        json _;
+        CHECK_NOTHROW(_ = nlohmann::json::parse(s));
     }
 }
 

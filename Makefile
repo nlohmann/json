@@ -32,10 +32,8 @@ all:
 	@echo "ChangeLog.md - generate ChangeLog file"
 	@echo "check - compile and execute test suite"
 	@echo "check-amalgamation - check whether sources have been amalgamated"
-	@echo "check-fast - compile and execute test suite (skip long-running tests)"
 	@echo "clean - remove built files"
 	@echo "coverage - create coverage information with lcov"
-	@echo "coverage-fast - create coverage information with fastcov"
 	@echo "cppcheck - analyze code with cppcheck"
 	@echo "cpplint - analyze code with cpplint"
 	@echo "clang_tidy - analyze code with Clang-Tidy"
@@ -65,10 +63,6 @@ json_unit:
 check:
 	$(MAKE) check -C test
 
-# run unit tests and skip expensive tests
-check-fast:
-	$(MAKE) check -C test TEST_PATTERN=""
-
 
 ##########################################################################
 # coverage
@@ -77,19 +71,10 @@ check-fast:
 coverage:
 	rm -fr build_coverage
 	mkdir build_coverage
-	cd build_coverage ; CXX=g++-8 cmake .. -GNinja -DJSON_Coverage=ON -DJSON_MultipleHeaders=ON
+	cd build_coverage ; cmake .. -GNinja -DCMAKE_BUILD_TYPE=Debug -DJSON_Coverage=ON -DJSON_MultipleHeaders=ON
 	cd build_coverage ; ninja
-	cd build_coverage ; ctest -E '.*_default' -j10
+	cd build_coverage ; ctest -j10
 	cd build_coverage ; ninja lcov_html
-	open build_coverage/test/html/index.html
-
-coverage-fast:
-	rm -fr build_coverage
-	mkdir build_coverage
-	cd build_coverage ; CXX=g++-9 cmake .. -GNinja -DJSON_Coverage=ON -DJSON_MultipleHeaders=ON
-	cd build_coverage ; ninja
-	cd build_coverage ; ctest -E '.*_default' -j10
-	cd build_coverage ; ninja fastcov_html
 	open build_coverage/test/html/index.html
 
 ##########################################################################
@@ -485,7 +470,7 @@ clang_sanitize:
 	mkdir clang_sanitize_build
 	cd clang_sanitize_build ; CXX=$(COMPILER_DIR)/clang++ cmake .. -DJSON_Sanitizer=On -DJSON_MultipleHeaders=ON -GNinja
 	cd clang_sanitize_build ; ninja
-	cd clang_sanitize_build ; ctest -E '.*_default' -j10
+	cd clang_sanitize_build ; ctest -j10
 
 
 ##########################################################################
@@ -579,7 +564,7 @@ check_cmake_flags:
 NEXT_VERSION ?= "unreleased"
 
 ChangeLog.md:
-	github_changelog_generator -o ChangeLog.md --simple-list --release-url https://github.com/nlohmann/json/releases/tag/%s --future-release $(NEXT_VERSION)
+	github_changelog_generator -o ChangeLog.md --user nlohmann --project json --simple-list --release-url https://github.com/nlohmann/json/releases/tag/%s --future-release $(NEXT_VERSION)
 	$(SED) -i 's|https://github.com/nlohmann/json/releases/tag/HEAD|https://github.com/nlohmann/json/tree/HEAD|' ChangeLog.md
 	$(SED) -i '2i All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org/).' ChangeLog.md
 

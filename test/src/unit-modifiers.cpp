@@ -106,6 +106,31 @@ TEST_CASE("modifiers")
             }
         }
 
+        SECTION("binary")
+        {
+            SECTION("empty binary")
+            {
+                json j = json::binary_array({});
+                json k = j;
+
+                j.clear();
+                CHECK(not j.empty());
+                CHECK(j == json(json::value_t::binary));
+                CHECK(j == json(k.type()));
+            }
+
+            SECTION("filled binary")
+            {
+                json j = json::binary_array({1, 2, 3, 4, 5});
+                json k = j;
+
+                j.clear();
+                CHECK(not j.empty());
+                CHECK(j == json(json::value_t::binary));
+                CHECK(j == json(k.type()));
+            }
+        }
+
         SECTION("number (integer)")
         {
             json j = 23;
@@ -932,6 +957,32 @@ TEST_CASE("modifiers")
             {
                 json j = 17;
                 json::string_t s = "Hallo Welt";
+
+                CHECK_THROWS_AS(j.swap(s), json::type_error&);
+                CHECK_THROWS_WITH(j.swap(s), "[json.exception.type_error.310] cannot use swap() with number");
+            }
+        }
+
+        SECTION("binary_t")
+        {
+            SECTION("binary_t type")
+            {
+                json j = json::binary_array({1, 2, 3, 4});
+                json::binary_t s = {1, 2, 3, 4};
+
+                j.swap(s);
+
+                CHECK(j == json::binary_array({1, 2, 3, 4}));
+
+                j.swap(s);
+
+                CHECK(j == json::binary_array({1, 2, 3, 4}));
+            }
+
+            SECTION("non-string_t type")
+            {
+                json j = 17;
+                json::binary_t s = {1, 2, 3, 4};
 
                 CHECK_THROWS_AS(j.swap(s), json::type_error&);
                 CHECK_THROWS_WITH(j.swap(s), "[json.exception.type_error.310] cannot use swap() with number");

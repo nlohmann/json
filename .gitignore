@@ -18,6 +18,9 @@ me.nlohmann.json.docset
 
 benchmarks/files/numbers/*.json
 
+.wsjcpp-logs/*
+.wsjcpp/*
+
 .idea
 cmake-build-debug
 

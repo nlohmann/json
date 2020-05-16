@@ -24,7 +24,7 @@ import urllib2
 
 # Strips C and C++ comments from the given string.
 #
-# Copied from http://stackoverflow.com/a/241506/627587.
+# Copied from https://stackoverflow.com/a/241506/627587.
 def strip_comments(text):
     def replacer(match):
         s = match.group(0)
@@ -42,7 +42,7 @@ def strip_comments(text):
 # Post the given JSON data to Wandbox's API, and return the result
 # as a JSON object.
 def upload(options):
-    request = urllib2.Request('http://melpon.org/wandbox/api/compile.json')
+    request = urllib2.Request('https://melpon.org/wandbox/api/compile.json')
     request.add_header('Content-Type', 'application/json')
     response = urllib2.urlopen(request, json.dumps(options))
     return json.loads(response.read())

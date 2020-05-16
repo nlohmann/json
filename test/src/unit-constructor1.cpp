@@ -115,6 +115,14 @@ TEST_CASE("constructors")
             CHECK(j.type() == t);
             CHECK(j == 0.0);
         }
+
+        SECTION("binary")
+        {
+            auto t = json::value_t::binary;
+            json j(t);
+            CHECK(j.type() == t);
+            CHECK(j == json::binary_array({}));
+        }
     }
 
     SECTION("create a null object (implicitly)")
@@ -813,6 +821,21 @@ TEST_CASE("constructors")
             CHECK(j.type() == json::value_t::number_float);
         }
 
+        SECTION("NaN")
+        {
+            // NaN is stored properly, but serialized to null
+            json::number_float_t n(std::numeric_limits<json::number_float_t>::quiet_NaN());
+            json j(n);
+            CHECK(j.type() == json::value_t::number_float);
+
+            // check round trip of NaN
+            json::number_float_t d = j;
+            CHECK((std::isnan(d) and std::isnan(n)) == true);
+
+            // check that NaN is serialized to null
+            CHECK(j.dump() == "null");
+        }
+
         SECTION("infinity")
         {
             // infinity is stored properly, but serialized to null
@@ -1436,6 +1459,20 @@ TEST_CASE("constructors")
                         json j = 23.42;
                         json j_new(j.cbegin(), j.cend());
                         CHECK(j == j_new);
+                    }
+                }
+
+                SECTION("binary")
+                {
+                    {
+                        json j = json::binary_array({1, 2, 3});
+                        json j_new(j.begin(), j.end());
+                        CHECK((j == j_new));
+                    }
+                    {
+                        json j = json::binary_array({1, 2, 3});
+                        json j_new(j.cbegin(), j.cend());
+                        CHECK((j == j_new));
                     }
                 }
             }

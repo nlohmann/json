@@ -95,16 +95,17 @@ matrix:
 
   - os: linux
     compiler: gcc
+    dist: bionic
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test']
-        packages: ['g++-4.9', 'ninja-build']
+        packages: ['g++-7', 'ninja-build']
     before_script:
       - pip install --user cpp-coveralls
     after_success:
-      - coveralls --build-root test --include include/nlohmann --gcov 'gcov-4.9' --gcov-options '\-lp'
+      - coveralls --build-root test --include include/nlohmann --gcov 'gcov-7' --gcov-options '\-lp'
     env:
-      - COMPILER=g++-4.9
+      - COMPILER=g++-7
       - CMAKE_OPTIONS=-DJSON_Coverage=ON
       - MULTIPLE_HEADERS=ON
 
@@ -130,18 +131,6 @@ matrix:
       - COMPILER=clang++-3.6
 
   # OSX / Clang
-
-  - os: osx
-    osx_image: xcode8.3
-
-  - os: osx
-    osx_image: xcode9
-
-  - os: osx
-    osx_image: xcode9.1
-
-  - os: osx
-    osx_image: xcode9.2
 
   - os: osx
     osx_image: xcode9.3

@@ -206,3 +206,55 @@ TEST_CASE_TEMPLATE("serialization for extreme integer values", T, int32_t, uint3
         CHECK(j.dump() == std::to_string(maximum));
     }
 }
+
+TEST_CASE("dump with binary values")
+{
+    SECTION("serialize_binary = false")
+    {
+        auto binary = json::binary_array({1, 2, 3, 4});
+        auto binary_empty = json::binary_array({});
+        json object = {{"key", binary}};
+        json array = {"value", 1, binary};
+
+        CHECK_THROWS_AS(binary.dump(), json::type_error);
+        CHECK_THROWS_AS(binary_empty.dump(), json::type_error);
+        CHECK_THROWS_AS(object.dump(), json::type_error);
+        CHECK_THROWS_AS(array.dump(), json::type_error);
+        CHECK_THROWS_WITH(binary.dump(), "[json.exception.type_error.317] cannot serialize binary data to text JSON");
+        CHECK_THROWS_WITH(binary_empty.dump(), "[json.exception.type_error.317] cannot serialize binary data to text JSON");
+        CHECK_THROWS_WITH(object.dump(), "[json.exception.type_error.317] cannot serialize binary data to text JSON");
+        CHECK_THROWS_WITH(array.dump(), "[json.exception.type_error.317] cannot serialize binary data to text JSON");
+    }
+
+    SECTION("serialize_binary = true")
+    {
+        auto binary = json::binary_array({1, 2, 3, 4});
+        auto binary_empty = json::binary_array({});
+        json object = {{"key", binary}};
+        json array = {"value", 1, binary};
+
+        CHECK(binary.dump(-1, ' ', false, json::error_handler_t::strict, true) == "b[1,2,3,4]");
+        CHECK(binary_empty.dump(-1, ' ', false, json::error_handler_t::strict, true) == "b[]");
+        CHECK(object.dump(-1, ' ', false, json::error_handler_t::strict, true) == "{\"key\":b[1,2,3,4]}");
+        CHECK(array.dump(-1, ' ', false, json::error_handler_t::strict, true) == "[\"value\",1,b[1,2,3,4]]");
+    }
+
+    SECTION("serialize_binary = true, pretty-printed")
+    {
+        auto binary = json::binary_array({1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20});
+        auto binary_empty = json::binary_array({});
+        json object = {{"key", binary}};
+        json array = {"value", 1, binary};
+
+        CHECK(binary.dump(4, ' ', false, json::error_handler_t::strict, true) == "b[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]");
+        CHECK(binary_empty.dump(4, ' ', false, json::error_handler_t::strict, true) == "b[]");
+        CHECK(object.dump(4, ' ', false, json::error_handler_t::strict, true) == "{\n"
+              "    \"key\": b[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]\n"
+              "}");
+        CHECK(array.dump(4, ' ', false, json::error_handler_t::strict, true) == "[\n"
+              "    \"value\",\n"
+              "    1,\n"
+              "    b[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]\n"
+              "]");
+    }
+}
