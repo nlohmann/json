@@ -11873,6 +11873,7 @@ class json_ref
 #include <cstring> // memcpy
 #include <limits> // numeric_limits
 #include <string> // string
+#include <cmath> // isnan, isinf
 
 // #include <nlohmann/detail/input/binary_reader.hpp>
 
@@ -12171,8 +12172,35 @@ class binary_writer
 
             case value_t::number_float:
             {
-                oa->write_character(get_cbor_float_prefix(j.m_value.number_float));
-                write_number(j.m_value.number_float);
+                if (std::isnan(j.m_value.number_float))
+                {
+                    // NaN is 0xf97e00 in CBOR
+                    oa->write_character(to_char_type(0xF9));
+                    oa->write_character(to_char_type(0x7E));
+                    oa->write_character(to_char_type(0x00));
+                }
+                else if (std::isinf(j.m_value.number_float))
+                {
+                    // Infinity is 0xf97c00, -Infinity is 0xf9fc00
+                    oa->write_character(to_char_type(0xf9));
+                    oa->write_character(j.m_value.number_float > 0 ? to_char_type(0x7C) : to_char_type(0xFC));
+                    oa->write_character(to_char_type(0x00));
+                }
+                else
+                {
+                    if (j.m_value.number_float >= std::numeric_limits<float>::lowest() and
+                            j.m_value.number_float <= std::numeric_limits<float>::max() and
+                            static_cast<double>(static_cast<float>(j.m_value.number_float)) == j.m_value.number_float)
+                    {
+                        oa->write_character(get_cbor_float_prefix(static_cast<float>(j.m_value.number_float)));
+                        write_number(static_cast<float>(j.m_value.number_float));
+                    }
+                    else
+                    {
+                        oa->write_character(get_cbor_float_prefix(j.m_value.number_float));
+                        write_number(j.m_value.number_float);
+                    }
+                }
                 break;
             }
 
@@ -20437,6 +20465,11 @@ class basic_json
           element as string (see example). For primitive types (e.g., numbers),
           `key()` returns an empty string.
 
+    @warning Using `items()` on temporary objects is dangerous. Make sure the
+             object's lifetime exeeds the iteration. See
+             <https://github.com/nlohmann/json/issues/2040> for more
+             information.
+
     @return iteration proxy object wrapping @a ref with an interface to use in
             range-based for loops
 
@@ -22597,7 +22630,7 @@ class basic_json
           - break (0xFF)
 
     @param[in] j  JSON value to serialize
-    @return MessagePack serialization as byte vector
+    @return CBOR serialization as byte vector
 
     @complexity Linear in the size of the JSON value @a j.
 

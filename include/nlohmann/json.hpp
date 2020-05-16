@@ -4946,6 +4946,11 @@ class basic_json
           element as string (see example). For primitive types (e.g., numbers),
           `key()` returns an empty string.
 
+    @warning Using `items()` on temporary objects is dangerous. Make sure the
+             object's lifetime exeeds the iteration. See
+             <https://github.com/nlohmann/json/issues/2040> for more
+             information.
+
     @return iteration proxy object wrapping @a ref with an interface to use in
             range-based for loops
 
@@ -7106,7 +7111,7 @@ class basic_json
           - break (0xFF)
 
     @param[in] j  JSON value to serialize
-    @return MessagePack serialization as byte vector
+    @return CBOR serialization as byte vector
 
     @complexity Linear in the size of the JSON value @a j.
 
