@@ -32,7 +32,7 @@ namespace detail
 
 @note from https://stackoverflow.com/a/1001328/266378
 */
-static bool little_endianess(int num = 1) noexcept
+static inline bool little_endianess(int num = 1) noexcept
 {
     return *reinterpret_cast<char*>(&num) == 1;
 }

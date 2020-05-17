@@ -1,10 +1,11 @@
 #pragma once
 
 #include <array> // array
-#include <ciso646> // and
 #include <cstddef> // size_t
 #include <cstdint> // uint8_t
 #include <string> // string
+
+#include <nlohmann/detail/boolean_operators.hpp>
 
 namespace nlohmann
 {
