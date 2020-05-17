@@ -884,23 +884,7 @@ class basic_json
     for any access to array values, a pointer of the type `binary_t*` must be
     dereferenced.
 
-    @sa @ref array_t -- type for an array value
-
-    @since version 3.8.0
-    */
-    using binary_t = BinaryType;
-
-    /*!
-    @brief binary array with a binary type
-
-    This type is used to store binary types internally. It wrapps the template
-    type `BinaryType` (@ref binary_t) and adds a subtype to allow to distinguish
-    different binary types from different formats.
-
-    While @ref binary_t is used to define how binary values are stored, this
-    type is used to access binary values once they are parsed.
-
-    Notes on subtypes:
+    #### Notes on subtypes
 
     - CBOR
        - Binary values are represented as byte strings. No subtypes are
@@ -911,13 +895,15 @@ class basic_json
          is used. For other sizes, the ext family (ext8, ext16, ext32) is used.
          The subtype is then added as singed 8-bit integer.
        - If no subtype is given, the bin family (bin8, bin16, bin32) is used.
-     - BSON
+    - BSON
        - If a subtype is given, it is used and added as unsigned 8-bit integer.
        - If no subtype is given, the generic binary subtype 0x00 is used.
 
     @sa @ref binary_array -- create a binary array
+
+    @since version 3.8.0
     */
-    using internal_binary_t = nlohmann::detail::wrapped_binary_t<BinaryType>;
+    using binary_t = nlohmann::detail::wrapped_binary_t<BinaryType>;
     /// @}
 
   private:
@@ -978,7 +964,7 @@ class basic_json
         /// string (stored with pointer to save storage)
         string_t* string;
         /// binary (stored with pointer to save storage)
-        internal_binary_t* binary;
+        binary_t* binary;
         /// boolean
         boolean_t boolean;
         /// number (integer)
@@ -1023,7 +1009,7 @@ class basic_json
 
                 case value_t::binary:
                 {
-                    binary = create<internal_binary_t>();
+                    binary = create<binary_t>();
                     break;
                 }
 
@@ -1106,27 +1092,27 @@ class basic_json
         }
 
         /// constructor for binary arrays
-        json_value(const binary_t& value)
+        json_value(const typename binary_t::container_type& value)
         {
-            binary = create<internal_binary_t>(value);
+            binary = create<binary_t>(value);
         }
 
         /// constructor for rvalue binary arrays
-        json_value(binary_t&& value)
+        json_value(typename binary_t::container_type&& value)
         {
-            binary = create<internal_binary_t>(std::move(value));
+            binary = create<binary_t>(std::move(value));
         }
 
         /// constructor for binary arrays (internal type)
-        json_value(const internal_binary_t& value)
+        json_value(const binary_t& value)
         {
-            binary = create<internal_binary_t>(value);
+            binary = create<binary_t>(value);
         }
 
         /// constructor for rvalue binary arrays (internal type)
-        json_value(internal_binary_t&& value)
+        json_value(binary_t&& value)
         {
-            binary = create<internal_binary_t>(std::move(value));
+            binary = create<binary_t>(std::move(value));
         }
 
         void destroy(value_t t) noexcept
@@ -1206,7 +1192,7 @@ class basic_json
 
                 case value_t::binary:
                 {
-                    AllocatorType<internal_binary_t> alloc;
+                    AllocatorType<binary_t> alloc;
                     std::allocator_traits<decltype(alloc)>::destroy(alloc, binary);
                     std::allocator_traits<decltype(alloc)>::deallocate(alloc, binary, 1);
                     break;
@@ -1492,7 +1478,7 @@ class basic_json
         using other_string_t = typename BasicJsonType::string_t;
         using other_object_t = typename BasicJsonType::object_t;
         using other_array_t = typename BasicJsonType::array_t;
-        using other_binary_t = typename BasicJsonType::internal_binary_t;
+        using other_binary_t = typename BasicJsonType::binary_t;
 
         switch (val.type())
         {
@@ -1686,7 +1672,7 @@ class basic_json
     @since version 3.8.0
     */
     JSON_HEDLEY_WARN_UNUSED_RESULT
-    static basic_json binary_array(const binary_t& init)
+    static basic_json binary_array(const typename binary_t::container_type& init)
     {
         auto res = basic_json();
         res.m_type = value_t::binary;
@@ -1695,11 +1681,11 @@ class basic_json
     }
 
     JSON_HEDLEY_WARN_UNUSED_RESULT
-    static basic_json binary_array(const binary_t& init, std::uint8_t subtype)
+    static basic_json binary_array(const typename binary_t::container_type& init, std::uint8_t subtype)
     {
         auto res = basic_json();
         res.m_type = value_t::binary;
-        res.m_value = internal_binary_t(init, subtype);
+        res.m_value = binary_t(init, subtype);
         return res;
     }
 
@@ -1731,7 +1717,7 @@ class basic_json
     @since version 3.8.0
     */
     JSON_HEDLEY_WARN_UNUSED_RESULT
-    static basic_json binary_array(binary_t&& init)
+    static basic_json binary_array(typename binary_t::container_type&& init)
     {
         auto res = basic_json();
         res.m_type = value_t::binary;
@@ -1740,11 +1726,11 @@ class basic_json
     }
 
     JSON_HEDLEY_WARN_UNUSED_RESULT
-    static basic_json binary_array(binary_t&& init, std::uint8_t subtype)
+    static basic_json binary_array(typename binary_t::container_type&& init, std::uint8_t subtype)
     {
         auto res = basic_json();
         res.m_type = value_t::binary;
-        res.m_value = internal_binary_t(std::move(init), subtype);
+        res.m_value = binary_t(std::move(init), subtype);
         return res;
     }
 
@@ -2794,13 +2780,13 @@ class basic_json
     }
 
     /// get a pointer to the value (binary)
-    internal_binary_t* get_impl_ptr(internal_binary_t* /*unused*/) noexcept
+    binary_t* get_impl_ptr(binary_t* /*unused*/) noexcept
     {
         return is_binary() ? m_value.binary : nullptr;
     }
 
     /// get a pointer to the value (binary)
-    constexpr const internal_binary_t* get_impl_ptr(const internal_binary_t* /*unused*/) const noexcept
+    constexpr const binary_t* get_impl_ptr(const binary_t* /*unused*/) const noexcept
     {
         return is_binary() ? m_value.binary : nullptr;
     }
@@ -3228,6 +3214,36 @@ class basic_json
     {
         // delegate the call to get<>() const
         return get<ValueType>();
+    }
+
+    /*!
+    @return reference to the binary value
+
+    @throw type_error.302 if the value is not binary
+
+    @sa @ref is_binary() to check if the value is binary
+
+    @since version 3.8.0
+    */
+    binary_t& get_binary()
+    {
+        if (not is_binary())
+        {
+            JSON_THROW(type_error::create(302, "type must be binary, but is " + std::string(type_name())));
+        }
+
+        return *get_ptr<binary_t*>();
+    }
+
+    /// @copydoc get_binary()
+    const binary_t& get_binary() const
+    {
+        if (not is_binary())
+        {
+            JSON_THROW(type_error::create(302, "type must be binary, but is " + std::string(type_name())));
+        }
+
+        return *get_ptr<const binary_t*>();
     }
 
     /// @}
@@ -3853,118 +3869,6 @@ class basic_json
     }
 
     /*!
-    @brief return the binary subtype
-
-    Returns the numerical subtype of the JSON value, if the JSON value is of
-    type "binary", and it has a subtype.  If it does not have a subtype (or the
-    object is not of type binary) this function will return size_t(-1) as a
-    sentinel value.
-
-    @return the numerical subtype of the binary JSON value
-
-    @complexity Constant.
-
-    @exceptionsafety No-throw guarantee: this member function never throws
-    exceptions.
-
-    @sa @ref set_subtype() -- sets the binary subtype
-    @sa @ref clear_subtype() -- clears the binary subtype
-    @sa @ref has_subtype() -- returns whether or not the binary value has a
-    subtype
-
-    @since version 3.8.0
-    */
-    std::size_t get_subtype() const noexcept
-    {
-        if (is_binary() and m_value.binary->has_subtype)
-        {
-            return m_value.binary->subtype;
-        }
-
-        return std::size_t(-1);
-    }
-
-    /*!
-    @brief sets the binary subtype
-
-    Sets the binary subtype of the JSON value, also flags a binary JSON value as
-    having a subtype, which has implications for serialization to msgpack (will
-    prefer ext file formats over bin).  If the JSON value is not a binary value,
-    this function does nothing.
-
-    @complexity Constant.
-
-    @exceptionsafety No-throw guarantee: this member function never throws
-    exceptions.
-
-    @sa @ref get_subtype() -- return the binary subtype
-    @sa @ref clear_subtype() -- clears the binary subtype
-    @sa @ref has_subtype() -- returns whether or not the binary value has a
-    subtype
-
-    @since version 3.8.0
-    */
-
-    void set_subtype(std::uint8_t subtype) noexcept
-    {
-        if (is_binary())
-        {
-            m_value.binary->set_subtype(subtype);
-        }
-    }
-
-    /*!
-    @brief clears the binary subtype
-
-    Clears the binary subtype of the JSON value, also flags a binary JSON value
-    as not having a subtype, which has implications for serialization to msgpack
-    (will prefer bin file formats over ext).  If the JSON value is not a binary
-    value, this function does nothing.
-
-    @complexity Constant.
-
-    @exceptionsafety No-throw guarantee: this member function never throws
-    exceptions.
-
-    @sa @ref get_subtype() -- return the binary subtype
-    @sa @ref set_subtype() -- sets the binary subtype
-    @sa @ref has_subtype() -- returns whether or not the binary value has a
-    subtype
-
-    @since version 3.8.0
-    */
-    void clear_subtype() noexcept
-    {
-        if (is_binary())
-        {
-            m_value.binary->clear_subtype();
-        }
-    }
-
-    /*!
-    @brief return whether or not the binary subtype has a value
-
-    Returns whether or not the binary subtype has a value.
-
-    @return whether or not the binary subtype has a value.
-
-    @complexity Constant.
-
-    @exceptionsafety No-throw guarantee: this member function never throws
-    exceptions.
-
-    @sa @ref get_subtype() -- return the binary subtype
-    @sa @ref set_subtype() -- sets the binary subtype
-    @sa @ref clear_subtype() -- clears the binary subtype
-
-    @since version 3.8.0
-    */
-    bool has_subtype() const noexcept
-    {
-        return is_binary() and m_value.binary->has_subtype();
-    }
-
-    /*!
     @brief access the first element
 
     Returns a reference to the first element in the container. For a JSON
@@ -4133,7 +4037,7 @@ class basic_json
                 }
                 else if (is_binary())
                 {
-                    AllocatorType<internal_binary_t> alloc;
+                    AllocatorType<binary_t> alloc;
                     std::allocator_traits<decltype(alloc)>::destroy(alloc, m_value.binary);
                     std::allocator_traits<decltype(alloc)>::deallocate(alloc, m_value.binary, 1);
                     m_value.binary = nullptr;
@@ -4247,7 +4151,7 @@ class basic_json
                 }
                 else if (is_binary())
                 {
-                    AllocatorType<internal_binary_t> alloc;
+                    AllocatorType<binary_t> alloc;
                     std::allocator_traits<decltype(alloc)>::destroy(alloc, m_value.binary);
                     std::allocator_traits<decltype(alloc)>::deallocate(alloc, m_value.binary, 1);
                     m_value.binary = nullptr;
@@ -6075,6 +5979,20 @@ class basic_json
     @since version 3.8.0
     */
     void swap(binary_t& other)
+    {
+        // swap only works for strings
+        if (JSON_HEDLEY_LIKELY(is_binary()))
+        {
+            std::swap(*(m_value.binary), other);
+        }
+        else
+        {
+            JSON_THROW(type_error::create(310, "cannot use swap() with " + std::string(type_name())));
+        }
+    }
+
+    /// @copydoc swap(binary_t)
+    void swap(typename binary_t::container_type& other)
     {
         // swap only works for strings
         if (JSON_HEDLEY_LIKELY(is_binary()))

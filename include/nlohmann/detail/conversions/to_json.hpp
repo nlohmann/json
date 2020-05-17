@@ -71,19 +71,19 @@ template<>
 struct external_constructor<value_t::binary>
 {
     template<typename BasicJsonType>
-    static void construct(BasicJsonType& j, const typename BasicJsonType::internal_binary_t& b)
+    static void construct(BasicJsonType& j, const typename BasicJsonType::binary_t& b)
     {
         j.m_type = value_t::binary;
-        typename BasicJsonType::internal_binary_t value{b};
+        typename BasicJsonType::binary_t value{b};
         j.m_value = value;
         j.assert_invariant();
     }
 
     template<typename BasicJsonType>
-    static void construct(BasicJsonType& j, typename BasicJsonType::internal_binary_t&& b)
+    static void construct(BasicJsonType& j, typename BasicJsonType::binary_t&& b)
     {
         j.m_type = value_t::binary;
-        typename BasicJsonType::internal_binary_t value{std::move(b)};
+        typename BasicJsonType::binary_t value{std::move(b)};
         j.m_value = value;
         j.assert_invariant();
     }
@@ -280,7 +280,7 @@ template <typename BasicJsonType, typename CompatibleArrayType,
                       CompatibleArrayType>::value and
                       not is_compatible_object_type<BasicJsonType, CompatibleArrayType>::value and
                       not is_compatible_string_type<BasicJsonType, CompatibleArrayType>::value and
-                      not std::is_same<typename BasicJsonType::internal_binary_t, CompatibleArrayType>::value and
+                      not std::is_same<typename BasicJsonType::binary_t, CompatibleArrayType>::value and
                       not is_basic_json<CompatibleArrayType>::value,
                       int> = 0>
 void to_json(BasicJsonType& j, const CompatibleArrayType& arr)
@@ -289,7 +289,7 @@ void to_json(BasicJsonType& j, const CompatibleArrayType& arr)
 }
 
 template <typename BasicJsonType>
-void to_json(BasicJsonType& j, const typename BasicJsonType::internal_binary_t& bin)
+void to_json(BasicJsonType& j, const typename BasicJsonType::binary_t& bin)
 {
     external_constructor<value_t::binary>::construct(j, bin);
 }

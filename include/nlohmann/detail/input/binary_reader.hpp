@@ -52,7 +52,7 @@ class binary_reader
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
     using string_t = typename BasicJsonType::string_t;
-    using internal_binary_t = typename BasicJsonType::internal_binary_t;
+    using binary_t = typename BasicJsonType::binary_t;
     using json_sax_t = SAX;
 
   public:
@@ -219,7 +219,7 @@ class binary_reader
     @return `true` if the byte array was successfully parsed
     */
     template<typename NumberType>
-    bool get_bson_binary(const NumberType len, internal_binary_t& result)
+    bool get_bson_binary(const NumberType len, binary_t& result)
     {
         if (JSON_HEDLEY_UNLIKELY(len < 0))
         {
@@ -276,7 +276,7 @@ class binary_reader
             case 0x05: // binary
             {
                 std::int32_t len;
-                internal_binary_t value;
+                binary_t value;
                 return get_number<std::int32_t, true>(input_format_t::bson, len) and get_bson_binary(len, value) and sax->binary(value);
             }
 
@@ -532,7 +532,7 @@ class binary_reader
             case 0x5B: // Binary data (eight-byte uint64_t for n follow)
             case 0x5F: // Binary data (indefinite length)
             {
-                internal_binary_t b;
+                binary_t b;
                 return get_cbor_binary(b) and sax->binary(b);
             }
 
@@ -862,7 +862,7 @@ class binary_reader
 
     @return whether byte array creation completed
     */
-    bool get_cbor_binary(internal_binary_t& result)
+    bool get_cbor_binary(binary_t& result)
     {
         if (JSON_HEDLEY_UNLIKELY(not unexpect_eof(input_format_t::cbor, "binary")))
         {
@@ -932,7 +932,7 @@ class binary_reader
             {
                 while (get() != 0xFF)
                 {
-                    internal_binary_t chunk;
+                    binary_t chunk;
                     if (not get_cbor_binary(chunk))
                     {
                         return false;
@@ -1282,7 +1282,7 @@ class binary_reader
             case 0xD7: // fixext 8
             case 0xD8: // fixext 16
             {
-                internal_binary_t b;
+                binary_t b;
                 return get_msgpack_binary(b) and sax->binary(b);
             }
 
@@ -1505,7 +1505,7 @@ class binary_reader
 
     @return whether byte array creation completed
     */
-    bool get_msgpack_binary(internal_binary_t& result)
+    bool get_msgpack_binary(binary_t& result)
     {
         // helper function to set the subtype
         auto assign_and_return_true = [&result](std::int8_t subtype)
@@ -2223,7 +2223,7 @@ class binary_reader
     template<typename NumberType>
     bool get_binary(const input_format_t format,
                     const NumberType len,
-                    internal_binary_t& result)
+                    binary_t& result)
     {
         bool success = true;
         std::generate_n(std::back_inserter(result), len, [this, &success, &format]()

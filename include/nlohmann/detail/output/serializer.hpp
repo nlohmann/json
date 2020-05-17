@@ -45,7 +45,7 @@ class serializer
     using number_float_t = typename BasicJsonType::number_float_t;
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
-    using binary_t = typename BasicJsonType::binary_t;
+    using binary_char_t = typename BasicJsonType::binary_t::value_type;
     static constexpr std::uint8_t UTF8_ACCEPT = 0;
     static constexpr std::uint8_t UTF8_REJECT = 1;
 
@@ -624,7 +624,7 @@ class serializer
     template<typename NumberType, detail::enable_if_t<
                  std::is_same<NumberType, number_unsigned_t>::value or
                  std::is_same<NumberType, number_integer_t>::value or
-                 std::is_same<NumberType, typename binary_t::value_type>::value,
+                 std::is_same<NumberType, binary_char_t>::value,
                  int> = 0>
     void dump_integer(NumberType x)
     {

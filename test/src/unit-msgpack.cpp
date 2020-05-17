@@ -1134,7 +1134,7 @@ TEST_CASE("MessagePack")
                     const auto s = std::vector<uint8_t>(N, 'x');
                     json j = json::binary_array(s);
                     std::uint8_t subtype = 42;
-                    j.set_subtype(subtype);
+                    j.get_binary().set_subtype(subtype);
 
                     // create expected byte vector
                     std::vector<uint8_t> expected;
@@ -1209,7 +1209,7 @@ TEST_CASE("MessagePack")
                     const auto s = std::vector<uint8_t>(N, 'x');
                     json j = json::binary_array(s);
                     std::uint8_t subtype = 42;
-                    j.set_subtype(subtype);
+                    j.get_binary().set_subtype(subtype);
 
                     // create expected byte vector (hack: create string first)
                     std::vector<uint8_t> expected(N, 'x');
@@ -1245,7 +1245,7 @@ TEST_CASE("MessagePack")
                     const auto s = std::vector<uint8_t>(N, 'x');
                     json j = json::binary_array(s);
                     std::uint8_t subtype = 42;
-                    j.set_subtype(subtype);
+                    j.get_binary().set_subtype(subtype);
 
                     // create expected byte vector (hack: create string first)
                     std::vector<uint8_t> expected(N, 'x');

@@ -27,7 +27,7 @@ struct json_sax
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
     using string_t = typename BasicJsonType::string_t;
-    using internal_binary_t = typename BasicJsonType::internal_binary_t;
+    using binary_t = typename BasicJsonType::binary_t;
 
     /*!
     @brief a null value was read
@@ -78,7 +78,7 @@ struct json_sax
     @return whether parsing should proceed
     @note It is safe to move the passed binary.
     */
-    virtual bool binary(internal_binary_t& val) = 0;
+    virtual bool binary(binary_t& val) = 0;
 
     /*!
     @brief the beginning of an object was read
@@ -154,7 +154,7 @@ class json_sax_dom_parser
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
     using string_t = typename BasicJsonType::string_t;
-    using internal_binary_t = typename BasicJsonType::internal_binary_t;
+    using binary_t = typename BasicJsonType::binary_t;
 
     /*!
     @param[in, out] r  reference to a JSON value that is manipulated while
@@ -208,7 +208,7 @@ class json_sax_dom_parser
         return true;
     }
 
-    bool binary(internal_binary_t& val)
+    bool binary(binary_t& val)
     {
         handle_value(std::move(val));
         return true;
@@ -343,7 +343,7 @@ class json_sax_dom_callback_parser
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
     using string_t = typename BasicJsonType::string_t;
-    using internal_binary_t = typename BasicJsonType::internal_binary_t;
+    using binary_t = typename BasicJsonType::binary_t;
     using parser_callback_t = typename BasicJsonType::parser_callback_t;
     using parse_event_t = typename BasicJsonType::parse_event_t;
 
@@ -398,7 +398,7 @@ class json_sax_dom_callback_parser
         return true;
     }
 
-    bool binary(internal_binary_t& val)
+    bool binary(binary_t& val)
     {
         handle_value(std::move(val));
         return true;
@@ -654,7 +654,7 @@ class json_sax_acceptor
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
     using string_t = typename BasicJsonType::string_t;
-    using internal_binary_t = typename BasicJsonType::internal_binary_t;
+    using binary_t = typename BasicJsonType::binary_t;
 
     bool null()
     {
@@ -686,7 +686,7 @@ class json_sax_acceptor
         return true;
     }
 
-    bool binary(internal_binary_t& /*unused*/)
+    bool binary(binary_t& /*unused*/)
     {
         return true;
     }
