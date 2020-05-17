@@ -900,6 +900,21 @@ class basic_json
     While @ref binary_t is used to define how binary values are stored, this
     type is used to access binary values once they are parsed.
 
+    Notes on subtypes:
+
+    - CBOR
+       - Binary values are represented as byte strings. No subtypes are
+         supported and will be ignored when CBOR is written.
+    - MessagePack
+       - If a subtype is given and the binary array contains exactly 1, 2, 4, 8,
+         or 16 elements, the fixext family (fixext1, fixext2, fixext4, fixext8)
+         is used. For other sizes, the ext family (ext8, ext16, ext32) is used.
+         The subtype is then added as singed 8-bit integer.
+       - If no subtype is given, the bin family (bin8, bin16, bin32) is used.
+     - BSON
+       - If a subtype is given, it is used and added as unsigned 8-bit integer.
+       - If no subtype is given, the generic binary subtype 0x00 is used.
+
     @sa @ref binary_array -- create a binary array
     */
     using internal_binary_t = nlohmann::detail::wrapped_binary_t<BinaryType>;

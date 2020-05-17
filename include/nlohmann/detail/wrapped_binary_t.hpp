@@ -12,42 +12,37 @@ namespace detail
 @brief an internal type for a backed binary type
 
 This type is designed to be `binary_t` but with the subtype implementation
-detail.  This type exists so that the user does not have to specify a struct
-his- or herself with a specific naming scheme in order to override the
-binary type.  I.e. it's for ease of use.
+detail. This type exists so that the user does not have to specify a type
+themselves with a specific naming scheme in order to override the binary type.
 */
 template<typename BinaryType>
 class wrapped_binary_t : public BinaryType
 {
   public:
-    // to simplify code in binary_reader
-    template<typename BasicJsonType, typename InputAdapterType, typename SAX>
-    friend class binary_reader;
-
     using binary_t = BinaryType;
 
     wrapped_binary_t() noexcept(noexcept(binary_t()))
         : binary_t()
     {}
 
-    wrapped_binary_t(const binary_t& bint) noexcept(noexcept(binary_t(bint)))
-        : binary_t(bint)
+    wrapped_binary_t(const binary_t& b) noexcept(noexcept(binary_t(b)))
+        : binary_t(b)
     {}
 
-    wrapped_binary_t(binary_t&& bint) noexcept(noexcept(binary_t(std::move(bint))))
-        : binary_t(std::move(bint))
+    wrapped_binary_t(binary_t&& b) noexcept(noexcept(binary_t(std::move(b))))
+        : binary_t(std::move(b))
     {}
 
-    wrapped_binary_t(const binary_t& bint,
-                     std::uint8_t st) noexcept(noexcept(binary_t(bint)))
-        : binary_t(bint)
-        , m_subtype(st)
+    wrapped_binary_t(const binary_t& b,
+                     std::uint8_t subtype) noexcept(noexcept(binary_t(b)))
+        : binary_t(b)
+        , m_subtype(subtype)
         , m_has_subtype(true)
     {}
 
-    wrapped_binary_t(binary_t&& bint, std::uint8_t st) noexcept(noexcept(binary_t(std::move(bint))))
-        : binary_t(std::move(bint))
-        , m_subtype(st)
+    wrapped_binary_t(binary_t&& b, std::uint8_t subtype) noexcept(noexcept(binary_t(std::move(b))))
+        : binary_t(std::move(b))
+        , m_subtype(subtype)
         , m_has_subtype(true)
     {}
 

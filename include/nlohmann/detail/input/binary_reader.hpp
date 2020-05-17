@@ -227,8 +227,10 @@ class binary_reader
             return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message(input_format_t::bson, "byte array length cannot be negative, is " + std::to_string(len), "binary")));
         }
 
-        result.m_has_subtype = true; // All BSON binary values have a subtype
-        get_number<std::uint8_t>(input_format_t::bson, result.m_subtype);
+        // All BSON binary values have a subtype
+        std::uint8_t subtype;
+        get_number<std::uint8_t>(input_format_t::bson, subtype);
+        result.set_subtype(subtype);
 
         return get_binary(input_format_t::bson, len, result);
     }
@@ -901,25 +903,29 @@ class binary_reader
             case 0x58: // Binary data (one-byte uint8_t for n follows)
             {
                 std::uint8_t len;
-                return get_number(input_format_t::cbor, len) and get_binary(input_format_t::cbor, len, result);
+                return get_number(input_format_t::cbor, len) and
+                       get_binary(input_format_t::cbor, len, result);
             }
 
             case 0x59: // Binary data (two-byte uint16_t for n follow)
             {
                 std::uint16_t len;
-                return get_number(input_format_t::cbor, len) and get_binary(input_format_t::cbor, len, result);
+                return get_number(input_format_t::cbor, len) and
+                       get_binary(input_format_t::cbor, len, result);
             }
 
             case 0x5A: // Binary data (four-byte uint32_t for n follow)
             {
                 std::uint32_t len;
-                return get_number(input_format_t::cbor, len) and get_binary(input_format_t::cbor, len, result);
+                return get_number(input_format_t::cbor, len) and
+                       get_binary(input_format_t::cbor, len, result);
             }
 
             case 0x5B: // Binary data (eight-byte uint64_t for n follow)
             {
                 std::uint64_t len;
-                return get_number(input_format_t::cbor, len) and get_binary(input_format_t::cbor, len, result);
+                return get_number(input_format_t::cbor, len) and
+                       get_binary(input_format_t::cbor, len, result);
             }
 
             case 0x5F: // Binary data (indefinite length)
@@ -1501,81 +1507,104 @@ class binary_reader
     */
     bool get_msgpack_binary(internal_binary_t& result)
     {
+        // helper function to set the subtype
+        auto assign_and_return_true = [&result](std::int8_t subtype)
+        {
+            result.set_subtype(static_cast<std::uint8_t>(subtype));
+            return true;
+        };
+
         switch (current)
         {
             case 0xC4: // bin 8
             {
                 std::uint8_t len;
-                return get_number(input_format_t::msgpack, len) and get_binary(input_format_t::msgpack, len, result);
+                return get_number(input_format_t::msgpack, len) and
+                       get_binary(input_format_t::msgpack, len, result);
             }
 
             case 0xC5: // bin 16
             {
                 std::uint16_t len;
-                return get_number(input_format_t::msgpack, len) and get_binary(input_format_t::msgpack, len, result);
+                return get_number(input_format_t::msgpack, len) and
+                       get_binary(input_format_t::msgpack, len, result);
             }
 
             case 0xC6: // bin 32
             {
                 std::uint32_t len;
-                return get_number(input_format_t::msgpack, len) and get_binary(input_format_t::msgpack, len, result);
+                return get_number(input_format_t::msgpack, len) and
+                       get_binary(input_format_t::msgpack, len, result);
             }
 
             case 0xC7: // ext 8
             {
                 std::uint8_t len;
-                result.m_has_subtype = true;
+                std::int8_t subtype;
                 return get_number(input_format_t::msgpack, len) and
-                       get_number(input_format_t::msgpack, result.m_subtype) and
-                       get_binary(input_format_t::msgpack, len, result);
+                       get_number(input_format_t::msgpack, subtype) and
+                       get_binary(input_format_t::msgpack, len, result) and
+                       assign_and_return_true(subtype);
             }
 
             case 0xC8: // ext 16
             {
                 std::uint16_t len;
-                result.m_has_subtype = true;
+                std::int8_t subtype;
                 return get_number(input_format_t::msgpack, len) and
-                       get_number(input_format_t::msgpack, result.m_subtype) and
-                       get_binary(input_format_t::msgpack, len, result);
+                       get_number(input_format_t::msgpack, subtype) and
+                       get_binary(input_format_t::msgpack, len, result) and
+                       assign_and_return_true(subtype);
             }
 
             case 0xC9: // ext 32
             {
                 std::uint32_t len;
-                result.m_has_subtype = true;
+                std::int8_t subtype;
                 return get_number(input_format_t::msgpack, len) and
-                       get_number(input_format_t::msgpack, result.m_subtype) and
-                       get_binary(input_format_t::msgpack, len, result);
+                       get_number(input_format_t::msgpack, subtype) and
+                       get_binary(input_format_t::msgpack, len, result) and
+                       assign_and_return_true(subtype);
             }
 
             case 0xD4: // fixext 1
             {
-                result.m_has_subtype = true;
-                return get_number(input_format_t::msgpack, result.m_subtype) and get_binary(input_format_t::msgpack, 1, result);
+                std::int8_t subtype;
+                return get_number(input_format_t::msgpack, subtype) and
+                       get_binary(input_format_t::msgpack, 1, result) and
+                       assign_and_return_true(subtype);
             }
 
             case 0xD5: // fixext 2
             {
-                result.m_has_subtype = true;
-                return get_number(input_format_t::msgpack, result.m_subtype) and get_binary(input_format_t::msgpack, 2, result);
+                std::int8_t subtype;
+                return get_number(input_format_t::msgpack, subtype) and
+                       get_binary(input_format_t::msgpack, 2, result) and
+                       assign_and_return_true(subtype);
             }
 
             case 0xD6: // fixext 4
             {
-                result.m_has_subtype = true;
-                return get_number(input_format_t::msgpack, result.m_subtype) and get_binary(input_format_t::msgpack, 4, result);
+                std::int8_t subtype;
+                return get_number(input_format_t::msgpack, subtype) and
+                       get_binary(input_format_t::msgpack, 4, result) and
+                       assign_and_return_true(subtype);
             }
 
             case 0xD7: // fixext 8
             {
-                result.m_has_subtype = true;
-                return get_number(input_format_t::msgpack, result.m_subtype) and get_binary(input_format_t::msgpack, 8, result);
+                std::int8_t subtype;
+                return get_number(input_format_t::msgpack, subtype) and
+                       get_binary(input_format_t::msgpack, 8, result) and
+                       assign_and_return_true(subtype);
             }
 
             case 0xD8: // fixext 16
             {
-                result.m_has_subtype = true;
-                return get_number(input_format_t::msgpack, result.m_subtype) and get_binary(input_format_t::msgpack, 16, result);
+                std::int8_t subtype;
+                return get_number(input_format_t::msgpack, subtype) and
+                       get_binary(input_format_t::msgpack, 16, result) and
+                       assign_and_return_true(subtype);
             }
 
             default:           // LCOV_EXCL_LINE

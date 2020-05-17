@@ -658,7 +658,7 @@ class binary_writer
                 // step 1.5: if this is an ext type, write the subtype
                 if (use_ext)
                 {
-                    write_number(j.m_value.binary->subtype());
+                    write_number(static_cast<std::int8_t>(j.m_value.binary->subtype()));
                 }
 
                 // step 2: write the byte string
