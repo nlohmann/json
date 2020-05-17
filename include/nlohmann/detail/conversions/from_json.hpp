@@ -2,7 +2,6 @@
 
 #include <algorithm> // transform
 #include <array> // array
-#include <ciso646> // and, not
 #include <forward_list> // forward_list
 #include <iterator> // inserter, front_inserter, end
 #include <map> // map
@@ -13,6 +12,7 @@
 #include <utility> // pair, declval
 #include <valarray> // valarray
 
+#include <nlohmann/detail/boolean_operators.hpp>
 #include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/cpp_future.hpp>

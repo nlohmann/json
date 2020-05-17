@@ -1,7 +1,6 @@
 #pragma once
 
 #include <algorithm> // copy
-#include <ciso646> // or, and, not
 #include <iterator> // begin, end
 #include <string> // string
 #include <tuple> // tuple, get
@@ -10,6 +9,7 @@
 #include <valarray> // valarray
 #include <vector> // vector
 
+#include <nlohmann/detail/boolean_operators.hpp>
 #include <nlohmann/detail/iterators/iteration_proxy.hpp>
 #include <nlohmann/detail/meta/cpp_future.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
