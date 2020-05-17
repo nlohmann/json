@@ -36,7 +36,6 @@ SOFTWARE.
 
 #include <algorithm> // all_of, find, for_each
 #include <cassert> // assert
-#include <ciso646> // and, not, or
 #include <cstddef> // nullptr_t, ptrdiff_t, size_t
 #include <functional> // hash, less
 #include <initializer_list> // initializer_list
@@ -58,7 +57,6 @@ SOFTWARE.
 
 #include <algorithm> // transform
 #include <array> // array
-#include <ciso646> // and, not
 #include <forward_list> // forward_list
 #include <iterator> // inserter, front_inserter, end
 #include <map> // map
@@ -68,6 +66,16 @@ SOFTWARE.
 #include <unordered_map> // unordered_map
 #include <utility> // pair, declval
 #include <valarray> // valarray
+
+// #include <nlohmann/detail/boolean_operators.hpp>
+
+
+// Header <ciso646> is removed in C++20.
+// See <https://github.com/nlohmann/json/issues/2089> for more information.
+
+#if __cplusplus <= 201703L
+    #include <ciso646> // and, not, or
+#endif
 
 // #include <nlohmann/detail/exceptions.hpp>
 
@@ -2495,9 +2503,11 @@ class other_error : public exception
 // #include <nlohmann/detail/meta/cpp_future.hpp>
 
 
-#include <ciso646> // not
 #include <cstddef> // size_t
 #include <type_traits> // conditional, enable_if, false_type, integral_constant, is_constructible, is_integral, is_same, remove_cv, remove_reference, true_type
+
+// #include <nlohmann/detail/boolean_operators.hpp>
+
 
 namespace nlohmann
 {
@@ -2560,10 +2570,11 @@ constexpr T static_const<T>::value;
 // #include <nlohmann/detail/meta/type_traits.hpp>
 
 
-#include <ciso646> // not
 #include <limits> // numeric_limits
 #include <type_traits> // false_type, is_constructible, is_integral, is_same, true_type
 #include <utility> // declval
+
+// #include <nlohmann/detail/boolean_operators.hpp>
 
 // #include <nlohmann/detail/iterators/iterator_traits.hpp>
 
@@ -3145,10 +3156,12 @@ struct is_constructible_tuple<T1, std::tuple<Args...>> : conjunction<std::is_con
 
 
 #include <array> // array
-#include <ciso646> // and
 #include <cstddef> // size_t
 #include <cstdint> // uint8_t
 #include <string> // string
+
+// #include <nlohmann/detail/boolean_operators.hpp>
+
 
 namespace nlohmann
 {
@@ -3599,7 +3612,6 @@ constexpr const auto& from_json = detail::static_const<detail::from_json_fn>::va
 
 
 #include <algorithm> // copy
-#include <ciso646> // or, and, not
 #include <iterator> // begin, end
 #include <string> // string
 #include <tuple> // tuple, get
@@ -3607,6 +3619,8 @@ constexpr const auto& from_json = detail::static_const<detail::from_json_fn>::va
 #include <utility> // move, forward, declval, pair
 #include <valarray> // valarray
 #include <vector> // vector
+
+// #include <nlohmann/detail/boolean_operators.hpp>
 
 // #include <nlohmann/detail/iterators/iteration_proxy.hpp>
 
@@ -4191,6 +4205,8 @@ struct adl_serializer
 };
 
 }  // namespace nlohmann
+
+// #include <nlohmann/detail/boolean_operators.hpp>
 
 // #include <nlohmann/detail/conversions/from_json.hpp>
 
@@ -5596,7 +5612,7 @@ namespace detail
 
 @note from https://stackoverflow.com/a/1001328/266378
 */
-static bool little_endianess(int num = 1) noexcept
+static inline bool little_endianess(int num = 1) noexcept
 {
     return *reinterpret_cast<char*>(&num) == 1;
 }
@@ -10041,9 +10057,10 @@ template<typename BasicJsonType> struct internal_iterator
 // #include <nlohmann/detail/iterators/iter_impl.hpp>
 
 
-#include <ciso646> // not
 #include <iterator> // iterator, random_access_iterator_tag, bidirectional_iterator_tag, advance, next
 #include <type_traits> // conditional, is_const, remove_const
+
+// #include <nlohmann/detail/boolean_operators.hpp>
 
 // #include <nlohmann/detail/exceptions.hpp>
 
@@ -12188,9 +12205,9 @@ class binary_writer
                 }
                 else
                 {
-                    if (j.m_value.number_float >= std::numeric_limits<float>::lowest() and
-                            j.m_value.number_float <= std::numeric_limits<float>::max() and
-                            static_cast<double>(static_cast<float>(j.m_value.number_float)) == j.m_value.number_float)
+                    if (static_cast<double>(j.m_value.number_float) >= static_cast<double>(std::numeric_limits<float>::lowest()) and
+                            static_cast<double>(j.m_value.number_float) <= static_cast<double>(std::numeric_limits<float>::max()) and
+                            static_cast<double>(static_cast<float>(j.m_value.number_float)) == static_cast<double>(j.m_value.number_float))
                     {
                         oa->write_character(get_cbor_float_prefix(static_cast<float>(j.m_value.number_float)));
                         write_number(static_cast<float>(j.m_value.number_float));
@@ -13576,7 +13593,6 @@ class binary_writer
 #include <algorithm> // reverse, remove, fill, find, none_of
 #include <array> // array
 #include <cassert> // assert
-#include <ciso646> // and, or
 #include <clocale> // localeconv, lconv
 #include <cmath> // labs, isfinite, isnan, signbit
 #include <cstddef> // size_t, ptrdiff_t
@@ -13587,17 +13603,21 @@ class binary_writer
 #include <type_traits> // is_same
 #include <utility> // move
 
+// #include <nlohmann/detail/boolean_operators.hpp>
+
 // #include <nlohmann/detail/conversions/to_chars.hpp>
 
 
 #include <array> // array
 #include <cassert> // assert
-#include <ciso646> // or, and, not
 #include <cmath>   // signbit, isfinite
 #include <cstdint> // intN_t, uintN_t
 #include <cstring> // memcpy, memmove
 #include <limits> // numeric_limits
 #include <type_traits> // conditional
+
+// #include <nlohmann/detail/boolean_operators.hpp>
+
 // #include <nlohmann/detail/macro_scope.hpp>
 
 

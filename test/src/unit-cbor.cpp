@@ -939,7 +939,7 @@ TEST_CASE("CBOR")
                 }
                 SECTION("-3.40282e+38(lowest float)")
                 {
-                    double v = std::numeric_limits<float>::lowest();
+                    double v = static_cast<double>(std::numeric_limits<float>::lowest());
                     json j = v;
                     std::vector<uint8_t> expected =
                     {
@@ -953,7 +953,7 @@ TEST_CASE("CBOR")
                 }
                 SECTION("1 + 3.40282e+38(more than max float)")
                 {
-                    double v = std::numeric_limits<float>::max() + 0.1e+34;
+                    double v = static_cast<double>(std::numeric_limits<float>::max()) + 0.1e+34;
                     json j = v;
                     std::vector<uint8_t> expected =
                     {
@@ -968,7 +968,7 @@ TEST_CASE("CBOR")
                 }
                 SECTION("-1 - 3.40282e+38(less than lowest float)")
                 {
-                    double v = std::numeric_limits<float>::lowest() - 1;
+                    double v = static_cast<double>(std::numeric_limits<float>::lowest()) - 1.0;
                     json j = v;
                     std::vector<uint8_t> expected =
                     {
@@ -1582,7 +1582,7 @@ TEST_CASE("CBOR")
                 auto j = json::from_cbor(input);
                 CHECK(j.is_binary());
                 auto k = json::binary_array({0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x99});
-                CAPTURE(j.dump(0, ' ', false, json::error_handler_t::strict, true));
+                CAPTURE(j.dump(0, ' ', false, json::error_handler_t::strict, true))
                 CHECK(j == k);
             }
 
