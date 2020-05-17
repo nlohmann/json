@@ -46,7 +46,12 @@ void to_json(json&, pod) noexcept;
 void to_json(json&, pod_bis);
 void from_json(const json&, pod) noexcept;
 void from_json(const json&, pod_bis);
-static json* j;
+void to_json(json&, pod) noexcept {}
+void to_json(json&, pod_bis) {}
+void from_json(const json&, pod) noexcept {}
+void from_json(const json&, pod_bis) {}
+
+static json* j = nullptr;
 
 static_assert(noexcept(json{}), "");
 static_assert(noexcept(nlohmann::to_json(*j, 2)), "");
@@ -78,5 +83,15 @@ TEST_CASE("runtime checks")
         CHECK(std::is_nothrow_copy_constructible<json::type_error>::value == std::is_nothrow_copy_constructible<std::runtime_error>::value);
         CHECK(std::is_nothrow_copy_constructible<json::out_of_range>::value == std::is_nothrow_copy_constructible<std::runtime_error>::value);
         CHECK(std::is_nothrow_copy_constructible<json::other_error>::value == std::is_nothrow_copy_constructible<std::runtime_error>::value);
+    }
+
+    SECTION("silence -Wunneeded-internal-declaration errors")
+    {
+        j = nullptr;
+        json j2;
+        to_json(j2, pod());
+        to_json(j2, pod_bis());
+        from_json(j2, pod());
+        from_json(j2, pod_bis());
     }
 }
