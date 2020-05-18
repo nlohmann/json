@@ -367,10 +367,6 @@ TEST_CASE("JSON pointers")
             CHECK(not j_const.contains("/one"_json_pointer));
             CHECK(not j_const.contains("/one"_json_pointer));
 
-            CHECK_THROWS_AS(json({{"/list/0", 1}, {"/list/1", 2}, {"/list/three", 3}}).unflatten(), json::parse_error&);
-            CHECK_THROWS_WITH(json({{"/list/0", 1}, {"/list/1", 2}, {"/list/three", 3}}).unflatten(),
-            "[json.exception.parse_error.109] parse error: array index 'three' is not a number");
-
             // assign to "-"
             j["/-"_json_pointer] = 99;
             CHECK(j == json({1, 13, 3, 33, nullptr, 55, 99}));
@@ -507,6 +503,73 @@ TEST_CASE("JSON pointers")
         CHECK(j_array.flatten().unflatten() == json());
         json j_object(json::value_t::object);
         CHECK(j_object.flatten().unflatten() == json());
+    }
+
+    SECTION("unflatten")
+    {
+        json j =
+        {
+            {
+                "object1", {
+                    {"0", 0},
+                    {"1", 1},
+                    {"2", 2},
+                }
+            },
+            {
+                "object2", {
+                    {"0", 0},
+                    {"1", 1},
+                    {"two", 2},
+                }
+            },
+            {
+                "object3", {
+                    {"0", 0},
+                    {"1", 1},
+                    {"3", 3},
+                }
+            }
+        };
+
+        json j_flatten =
+        {
+            {"/object1/0", 0},
+            {"/object1/1", 1},
+            {"/object1/2", 2},
+            {"/object2/0", 0},
+            {"/object2/1", 1},
+            {"/object2/two", 2},
+            {"/object3/0", 0},
+            {"/object3/1", 1},
+            {"/object3/3", 3},
+        };
+
+        json j_unflatten =
+        {
+            {"object1", {0, 1, 2}},
+            {
+                "object2", {
+                    {"0", 0},
+                    {"1", 1},
+                    {"two", 2},
+                }
+            },
+            {
+                "object3", {
+                    {"0", 0},
+                    {"1", 1},
+                    {"3", 3},
+                }
+            }
+        };
+
+        // check if flattened result is as expected
+        CHECK(j.flatten() == j_flatten);
+        CHECK(j_unflatten.flatten() == j_flatten);
+
+        // check if unflattened result is as expected
+        CHECK(j_flatten.unflatten() == j_unflatten);
     }
 
     SECTION("string representation")

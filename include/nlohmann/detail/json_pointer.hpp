@@ -395,31 +395,10 @@ class json_pointer
             switch (result->type())
             {
                 case detail::value_t::null:
-                {
-                    if (reference_token == "0")
-                    {
-                        // start a new array if reference token is 0
-                        result = &result->operator[](0);
-                    }
-                    else
-                    {
-                        // start a new object otherwise
-                        result = &result->operator[](reference_token);
-                    }
-                    break;
-                }
-
                 case detail::value_t::object:
                 {
                     // create an entry in the object
                     result = &result->operator[](reference_token);
-                    break;
-                }
-
-                case detail::value_t::array:
-                {
-                    // create an entry in the array
-                    result = &result->operator[](static_cast<size_type>(array_index(reference_token)));
                     break;
                 }
 
@@ -435,6 +414,57 @@ class json_pointer
         }
 
         return *result;
+    }
+
+    /*!
+    @brief unflatten from object-type JSON to array-type JSON when the keys are continuous numbers
+
+    @param[in] j  unflattened JSON with non-array
+
+    @return unflattened JSON
+
+    @throw parse_error.106   if an array index begins with '0'
+    @throw parse_error.109   if an array index was not a number
+    @throw out_of_range.404  if the JSON pointer can not be resolved
+    */
+    static BasicJsonType unflatten_to_array(BasicJsonType& j)
+    {
+        // check the keys of object-type value are continuous numbres or not
+        static auto is_continuous_numbers = [](const BasicJsonType & j) -> bool
+        {
+            std::size_t index = 0;
+            for (auto& item : j.items())
+            {
+                if (std::to_string(index) != item.key())
+                {
+                    return false;
+                }
+                index++;
+            }
+            return true;
+        };
+
+        if (j.type() != detail::value_t::object)
+        {
+            return j;
+        }
+
+        using size_type = typename BasicJsonType::size_type;
+        bool keys_are_continuous_numbers = is_continuous_numbers(j);
+        BasicJsonType result;
+        for (auto& item : j.items())
+        {
+            if (keys_are_continuous_numbers)
+            {
+                // convert array index to number; unchecked access
+                result.operator[](static_cast<size_type>(array_index(item.key()))) = unflatten_to_array(item.value());
+            }
+            else
+            {
+                result.operator[](item.key()) = unflatten_to_array(item.value());
+            }
+        }
+        return result;
     }
 
     /*!
@@ -928,7 +958,7 @@ class json_pointer
             json_pointer(element.first).get_and_create(result) = element.second;
         }
 
-        return result;
+        return unflatten_to_array(result);
     }
 
     /*!
