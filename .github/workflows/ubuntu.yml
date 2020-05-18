@@ -1,4 +1,4 @@
-name: C/C++ CI
+name: Ubuntu
 
 on: [push]
 
@@ -6,14 +6,12 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v1
-    - name: prepare
-      run: mkdir build
     - name: cmake
-      run: cd build ; cmake ..
+      run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug
     - name: build
-      run: make -C build
+      run: cmake --build build --parallel 10
     - name: test
       run: cd build ; ctest -j 10
