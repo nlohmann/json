@@ -996,10 +996,11 @@ TEST_CASE("modifiers")
             SECTION("non-binary_t type")
             {
                 json j = 17;
-                json::binary_t s = {{1, 2, 3, 4}};
+                json::binary_t s1 = {{1, 2, 3, 4}};
+                std::vector<std::uint8_t> s2 = {{5, 6, 7, 8}};
 
-                CHECK_THROWS_AS(j.swap(s), json::type_error&);
-                CHECK_THROWS_WITH(j.swap(s), "[json.exception.type_error.310] cannot use swap() with number");
+                CHECK_THROWS_WITH_AS(j.swap(s1), "[json.exception.type_error.310] cannot use swap() with number", json::type_error);
+                CHECK_THROWS_WITH_AS(j.swap(s2), "[json.exception.type_error.310] cannot use swap() with number", json::type_error);
             }
         }
     }

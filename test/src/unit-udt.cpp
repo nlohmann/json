@@ -763,6 +763,13 @@ TEST_CASE("different basic_json types conversions")
         CHECK(cj == "forty-two");
     }
 
+    SECTION("binary")
+    {
+        json j = json::binary_array({1, 2, 3});
+        custom_json cj = j;
+        CHECK(cj.get_binary() == j.get_binary());
+    }
+
     SECTION("object")
     {
         json j = {{"forty", "two"}};
