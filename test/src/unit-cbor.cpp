@@ -1582,7 +1582,7 @@ TEST_CASE("CBOR")
                 auto j = json::from_cbor(input);
                 CHECK(j.is_binary());
                 auto k = json::binary_array({0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x99});
-                CAPTURE(j.dump(0, ' ', false, json::error_handler_t::strict, true))
+                CAPTURE(j.dump(0, ' ', false, json::error_handler_t::strict))
                 CHECK(j == k);
             }
 

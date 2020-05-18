@@ -2234,16 +2234,15 @@ class basic_json
     possible values: `strict` (throws and exception in case a decoding error
     occurs; default), `replace` (replace invalid UTF-8 sequences with U+FFFD),
     and `ignore` (ignore invalid UTF-8 sequences during serialization).
-    @param[in] serialize_binary Whether or not to allow serialization of binary
-    types to JSON.  Because binary types are non-standard, this will produce
-    non-conformant JSON, and is disabled by default.  This flag is primarily
-    useful for debugging.  Will output the binary value as a list of 8-bit
-    numbers prefixed by "b" (e.g. "bindata" = b[3, 0, 42, 255]).
 
     @return string containing the serialization of the JSON value
 
     @throw type_error.316 if a string stored inside the JSON value is not
-                          UTF-8 encoded
+                          UTF-8 encoded and @a error_handler is set to strict
+
+    @note Binary values are serialized as object containing two keys:
+      - "bytes": an array of bytes as integers
+      - "subtype": the subtype as integer or "null" if the binary has no subtype
 
     @complexity Linear.
 
@@ -2258,24 +2257,24 @@ class basic_json
 
     @since version 1.0.0; indentation character @a indent_char, option
            @a ensure_ascii and exceptions added in version 3.0.0; error
-           handlers added in version 3.4.0.
+           handlers added in version 3.4.0; serialization of binary values added
+           in version 3.8.0.
     */
     string_t dump(const int indent = -1,
                   const char indent_char = ' ',
                   const bool ensure_ascii = false,
-                  const error_handler_t error_handler = error_handler_t::strict,
-                  const bool serialize_binary = false) const
+                  const error_handler_t error_handler = error_handler_t::strict) const
     {
         string_t result;
         serializer s(detail::output_adapter<char, string_t>(result), indent_char, error_handler);
 
         if (indent >= 0)
         {
-            s.dump(*this, true, ensure_ascii, static_cast<unsigned int>(indent), 0, serialize_binary);
+            s.dump(*this, true, ensure_ascii, static_cast<unsigned int>(indent));
         }
         else
         {
-            s.dump(*this, false, ensure_ascii, 0, 0, serialize_binary);
+            s.dump(*this, false, ensure_ascii, 0);
         }
 
         return result;

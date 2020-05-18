@@ -14828,19 +14828,22 @@ class serializer
     - strings and object keys are escaped using `escape_string()`
     - integer numbers are converted implicitly via `operator<<`
     - floating-point numbers are converted to a string using `"%g"` format
-    - if specified to, binary values are output using the syntax `b[]`, otherwise an exception is thrown
+    - binary values are serialized as objects containing the subtype and the
+      byte array
 
     @param[in] val               value to serialize
     @param[in] pretty_print      whether the output shall be pretty-printed
+    @param[in] ensure_ascii If @a ensure_ascii is true, all non-ASCII characters
+    in the output are escaped with `\uXXXX` sequences, and the result consists
+    of ASCII characters only.
     @param[in] indent_step       the indent level
     @param[in] current_indent    the current indent level (only used internally)
-    @param[in] serialize_binary  whether the output shall include non-standard binary output
     */
-    void dump(const BasicJsonType& val, const bool pretty_print,
+    void dump(const BasicJsonType& val,
+              const bool pretty_print,
               const bool ensure_ascii,
               const unsigned int indent_step,
-              const unsigned int current_indent = 0,
-              const bool serialize_binary = false)
+              const unsigned int current_indent = 0)
     {
         switch (val.m_type)
         {
@@ -14871,7 +14874,7 @@ class serializer
                         o->write_character('\"');
                         dump_escaped(i->first, ensure_ascii);
                         o->write_characters("\": ", 3);
-                        dump(i->second, true, ensure_ascii, indent_step, new_indent, serialize_binary);
+                        dump(i->second, true, ensure_ascii, indent_step, new_indent);
                         o->write_characters(",\n", 2);
                     }
 
@@ -14882,7 +14885,7 @@ class serializer
                     o->write_character('\"');
                     dump_escaped(i->first, ensure_ascii);
                     o->write_characters("\": ", 3);
-                    dump(i->second, true, ensure_ascii, indent_step, new_indent, serialize_binary);
+                    dump(i->second, true, ensure_ascii, indent_step, new_indent);
 
                     o->write_character('\n');
                     o->write_characters(indent_string.c_str(), current_indent);
@@ -14899,7 +14902,7 @@ class serializer
                         o->write_character('\"');
                         dump_escaped(i->first, ensure_ascii);
                         o->write_characters("\":", 2);
-                        dump(i->second, false, ensure_ascii, indent_step, current_indent, serialize_binary);
+                        dump(i->second, false, ensure_ascii, indent_step, current_indent);
                         o->write_character(',');
                     }
 
@@ -14909,7 +14912,7 @@ class serializer
                     o->write_character('\"');
                     dump_escaped(i->first, ensure_ascii);
                     o->write_characters("\":", 2);
-                    dump(i->second, false, ensure_ascii, indent_step, current_indent, serialize_binary);
+                    dump(i->second, false, ensure_ascii, indent_step, current_indent);
 
                     o->write_character('}');
                 }
@@ -14941,14 +14944,14 @@ class serializer
                             i != val.m_value.array->cend() - 1; ++i)
                     {
                         o->write_characters(indent_string.c_str(), new_indent);
-                        dump(*i, true, ensure_ascii, indent_step, new_indent, serialize_binary);
+                        dump(*i, true, ensure_ascii, indent_step, new_indent);
                         o->write_characters(",\n", 2);
                     }
 
                     // last element
                     assert(not val.m_value.array->empty());
                     o->write_characters(indent_string.c_str(), new_indent);
-                    dump(val.m_value.array->back(), true, ensure_ascii, indent_step, new_indent, serialize_binary);
+                    dump(val.m_value.array->back(), true, ensure_ascii, indent_step, new_indent);
 
                     o->write_character('\n');
                     o->write_characters(indent_string.c_str(), current_indent);
@@ -14962,13 +14965,13 @@ class serializer
                     for (auto i = val.m_value.array->cbegin();
                             i != val.m_value.array->cend() - 1; ++i)
                     {
-                        dump(*i, false, ensure_ascii, indent_step, current_indent, serialize_binary);
+                        dump(*i, false, ensure_ascii, indent_step, current_indent);
                         o->write_character(',');
                     }
 
                     // last element
                     assert(not val.m_value.array->empty());
-                    dump(val.m_value.array->back(), false, ensure_ascii, indent_step, current_indent, serialize_binary);
+                    dump(val.m_value.array->back(), false, ensure_ascii, indent_step, current_indent);
 
                     o->write_character(']');
                 }
@@ -14986,27 +14989,73 @@ class serializer
 
             case value_t::binary:
             {
-                if (not serialize_binary)
+                if (pretty_print)
                 {
-                    JSON_THROW(type_error::create(317, "cannot serialize binary data to text JSON"));
-                }
+                    o->write_characters("{\n", 2);
 
-                if (val.m_value.binary->empty())
-                {
-                    o->write_characters("b[]", 3);
+                    // variable to hold indentation for recursive calls
+                    const auto new_indent = current_indent + indent_step;
+                    if (JSON_HEDLEY_UNLIKELY(indent_string.size() < new_indent))
+                    {
+                        indent_string.resize(indent_string.size() * 2, ' ');
+                    }
+
+                    o->write_characters(indent_string.c_str(), new_indent);
+
+                    o->write_characters("\"bytes\": [", 10);
+
+                    if (not val.m_value.binary->empty())
+                    {
+                        for (auto i = val.m_value.binary->cbegin();
+                                i != val.m_value.binary->cend() - 1; ++i)
+                        {
+                            dump_integer(*i);
+                            o->write_characters(", ", 2);
+                        }
+                        dump_integer(val.m_value.binary->back());
+                    }
+
+                    o->write_characters("],\n", 3);
+                    o->write_characters(indent_string.c_str(), new_indent);
+
+                    o->write_characters("\"subtype\": ", 11);
+                    if (val.m_value.binary->has_subtype())
+                    {
+                        dump_integer(val.m_value.binary->subtype());
+                    }
+                    else
+                    {
+                        o->write_characters("null", 4);
+                    }
+                    o->write_character('\n');
+                    o->write_characters(indent_string.c_str(), current_indent);
+                    o->write_character('}');
                 }
                 else
                 {
-                    o->write_characters("b[", 2);
-                    for (auto i = val.m_value.binary->cbegin();
-                            i != val.m_value.binary->cend() - 1; ++i)
+                    o->write_characters("{\"bytes\":[", 10);
+
+                    if (not val.m_value.binary->empty())
                     {
-                        dump_integer(*i);
-                        o->write_character(',');
+                        for (auto i = val.m_value.binary->cbegin();
+                                i != val.m_value.binary->cend() - 1; ++i)
+                        {
+                            dump_integer(*i);
+                            o->write_character(',');
+                        }
+                        dump_integer(val.m_value.binary->back());
                     }
 
-                    dump_integer(val.m_value.binary->back());
-                    o->write_character(']');
+                    o->write_characters("],\"subtype\":", 12);
+                    if (val.m_value.binary->has_subtype())
+                    {
+                        dump_integer(val.m_value.binary->subtype());
+                        o->write_character('}');
+                    }
+                    else
+                    {
+                        o->write_characters("null}", 5);
+                    }
                 }
                 return;
             }
@@ -17963,16 +18012,15 @@ class basic_json
     possible values: `strict` (throws and exception in case a decoding error
     occurs; default), `replace` (replace invalid UTF-8 sequences with U+FFFD),
     and `ignore` (ignore invalid UTF-8 sequences during serialization).
-    @param[in] serialize_binary Whether or not to allow serialization of binary
-    types to JSON.  Because binary types are non-standard, this will produce
-    non-conformant JSON, and is disabled by default.  This flag is primarily
-    useful for debugging.  Will output the binary value as a list of 8-bit
-    numbers prefixed by "b" (e.g. "bindata" = b[3, 0, 42, 255]).
 
     @return string containing the serialization of the JSON value
 
     @throw type_error.316 if a string stored inside the JSON value is not
-                          UTF-8 encoded
+                          UTF-8 encoded and @a error_handler is set to strict
+
+    @note Binary values are serialized as object containing two keys:
+      - "bytes": an array of bytes as integers
+      - "subtype": the subtype as integer or "null" if the binary has no subtype
 
     @complexity Linear.
 
@@ -17987,24 +18035,24 @@ class basic_json
 
     @since version 1.0.0; indentation character @a indent_char, option
            @a ensure_ascii and exceptions added in version 3.0.0; error
-           handlers added in version 3.4.0.
+           handlers added in version 3.4.0; serialization of binary values added
+           in version 3.8.0.
     */
     string_t dump(const int indent = -1,
                   const char indent_char = ' ',
                   const bool ensure_ascii = false,
-                  const error_handler_t error_handler = error_handler_t::strict,
-                  const bool serialize_binary = false) const
+                  const error_handler_t error_handler = error_handler_t::strict) const
     {
         string_t result;
         serializer s(detail::output_adapter<char, string_t>(result), indent_char, error_handler);
 
         if (indent >= 0)
         {
-            s.dump(*this, true, ensure_ascii, static_cast<unsigned int>(indent), 0, serialize_binary);
+            s.dump(*this, true, ensure_ascii, static_cast<unsigned int>(indent));
         }
         else
         {
-            s.dump(*this, false, ensure_ascii, 0, 0, serialize_binary);
+            s.dump(*this, false, ensure_ascii, 0);
         }
 
         return result;
