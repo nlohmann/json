@@ -2,9 +2,9 @@
 
 [![Build Status](https://travis-ci.org/nlohmann/json.svg?branch=master)](https://travis-ci.org/nlohmann/json)
 [![Build Status](https://ci.appveyor.com/api/projects/status/1acb366xfyg3qybk/branch/develop?svg=true)](https://ci.appveyor.com/project/nlohmann/json)
-![Ubuntu](https://github.com/nlohmann/json/workflows/Ubuntu/badge.svg)
-![macOS](https://github.com/nlohmann/json/workflows/macOS/badge.svg)
-![Windows](https://github.com/nlohmann/json/workflows/Windows/badge.svg)
+[![Ubuntu](https://github.com/nlohmann/json/workflows/Ubuntu/badge.svg)](https://github.com/nlohmann/json/actions?query=workflow%3AUbuntu)
+[![macOS](https://github.com/nlohmann/json/workflows/macOS/badge.svg)](https://github.com/nlohmann/json/actions?query=workflow%3AmacOS)
+[![Windows](https://github.com/nlohmann/json/workflows/Windows/badge.svg)](https://github.com/nlohmann/json/actions?query=workflow%3AWindows)
 [![Build Status](https://circleci.com/gh/nlohmann/json.svg?style=svg)](https://circleci.com/gh/nlohmann/json)
 [![Coverage Status](https://coveralls.io/repos/github/nlohmann/json/badge.svg?branch=develop)](https://coveralls.io/github/nlohmann/json?branch=develop)
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/5550/badge.svg)](https://scan.coverity.com/projects/nlohmann-json)
