@@ -499,7 +499,7 @@ TEST_CASE("BSON")
             const auto s = std::vector<std::uint8_t>(N, 'x');
             json j =
             {
-                { "entry", json::binary(s) }
+                { "entry", json::binary(s, 0) }
             };
 
             std::vector<std::uint8_t> expected =
