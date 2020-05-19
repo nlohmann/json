@@ -48,6 +48,7 @@ SOFTWARE.
 #include <vector> // vector
 
 #include <nlohmann/adl_serializer.hpp>
+#include <nlohmann/byte_container_with_subtype.hpp>
 #include <nlohmann/detail/boolean_operators.hpp>
 #include <nlohmann/detail/conversions/from_json.hpp>
 #include <nlohmann/detail/conversions/to_json.hpp>
@@ -70,7 +71,6 @@ SOFTWARE.
 #include <nlohmann/detail/output/output_adapters.hpp>
 #include <nlohmann/detail/output/serializer.hpp>
 #include <nlohmann/detail/value_t.hpp>
-#include <nlohmann/detail/wrapped_binary_t.hpp>
 #include <nlohmann/json_fwd.hpp>
 
 /*!
@@ -903,7 +903,7 @@ class basic_json
 
     @since version 3.8.0
     */
-    using binary_t = nlohmann::detail::wrapped_binary_t<BinaryType>;
+    using binary_t = nlohmann::byte_container_with_subtype<BinaryType>;
     /// @}
 
   private:
@@ -946,7 +946,7 @@ class basic_json
     number    | number_integer  | @ref number_integer_t
     number    | number_unsigned | @ref number_unsigned_t
     number    | number_float    | @ref number_float_t
-    binary    | binary          | pointer to @ref internal_binary_t
+    binary    | binary          | pointer to @ref binary_t
     null      | null            | *no value is stored*
 
     @note Variable-length types (objects, arrays, and strings) are stored as
@@ -1645,22 +1645,22 @@ class basic_json
     }
 
     /*!
-    @brief explicitly create a binary array from an already constructed copy of
-    its base type
+    @brief explicitly create a binary array (without subtype)
 
-    Creates a JSON binary array value from a given `binary_t`. Binary values are
-    part of various binary formats, such as CBOR, MsgPack, and BSON.  And this
-    constructor is used to create a value for serialization to those formats.
+    Creates a JSON binary array value from a given binary container. Binary
+    values are part of various binary formats, such as CBOR, MessagePack, and
+    BSON. This constructor is used to create a value for serialization to those
+    formats.
 
     @note Note, this function exists because of the difficulty in correctly
     specifying the correct template overload in the standard value ctor, as both
     JSON arrays and JSON binary arrays are backed with some form of a
-    `std::vector`.  Because JSON binary arrays are a non-standard extension it
+    `std::vector`. Because JSON binary arrays are a non-standard extension it
     was decided that it would be best to prevent automatic initialization of a
     binary array type, for backwards compatibility and so it does not happen on
     accident.
 
-    @param[in] init  `binary_t` with JSON values to create a binary array from
+    @param[in] init container containing bytes to use as binary type
 
     @return JSON binary array value
 
@@ -1680,32 +1680,24 @@ class basic_json
         return res;
     }
 
-    JSON_HEDLEY_WARN_UNUSED_RESULT
-    static basic_json binary_array(const typename binary_t::container_type& init, std::uint8_t subtype)
-    {
-        auto res = basic_json();
-        res.m_type = value_t::binary;
-        res.m_value = binary_t(init, subtype);
-        return res;
-    }
-
     /*!
-    @brief explicitly create a binary array from an already constructed rvalue
-    copy of its base type
+    @brief explicitly create a binary array (with subtype)
 
-    Creates a JSON binary array value from a given `binary_t`. Binary values are
-    part of various binary formats, such as CBOR, MsgPack, and BSON.  And this
-    constructor is used to create a value for serialization to those formats.
+    Creates a JSON binary array value from a given binary container. Binary
+    values are part of various binary formats, such as CBOR, MessagePack, and
+    BSON. This constructor is used to create a value for serialization to those
+    formats.
 
     @note Note, this function exists because of the difficulty in correctly
     specifying the correct template overload in the standard value ctor, as both
     JSON arrays and JSON binary arrays are backed with some form of a
-    `std::vector`.  Because JSON binary arrays are a non-standard extension it
+    `std::vector`. Because JSON binary arrays are a non-standard extension it
     was decided that it would be best to prevent automatic initialization of a
-    binary array type, for backwards compatibility and so it doesn't happen on
+    binary array type, for backwards compatibility and so it does not happen on
     accident.
 
-    @param[in] init  `binary_t` with JSON values to create a binary array from
+    @param[in] init container containing bytes to use as binary type
+    @param[in] subtype subtype to use in MessagePack and BSON
 
     @return JSON binary array value
 
@@ -1717,6 +1709,16 @@ class basic_json
     @since version 3.8.0
     */
     JSON_HEDLEY_WARN_UNUSED_RESULT
+    static basic_json binary_array(const typename binary_t::container_type& init, std::uint8_t subtype)
+    {
+        auto res = basic_json();
+        res.m_type = value_t::binary;
+        res.m_value = binary_t(init, subtype);
+        return res;
+    }
+
+    /// @copydoc binary_array(const typename binary_t::container_type&)
+    JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json binary_array(typename binary_t::container_type&& init)
     {
         auto res = basic_json();
@@ -1725,6 +1727,7 @@ class basic_json
         return res;
     }
 
+    /// @copydoc binary_array(const typename binary_t::container_type&, std::uint8_t)
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json binary_array(typename binary_t::container_type&& init, std::uint8_t subtype)
     {
@@ -6959,7 +6962,8 @@ class basic_json
     number_unsigned | 256..65535                                 | Unsigned integer (2 bytes follow)  | 0x19
     number_unsigned | 65536..4294967295                          | Unsigned integer (4 bytes follow)  | 0x1A
     number_unsigned | 4294967296..18446744073709551615           | Unsigned integer (8 bytes follow)  | 0x1B
-    number_float    | *any value*                                | Double-Precision Float             | 0xFB
+    number_float    | *any value representable by a float*       | Single-Precision Float             | 0xFA
+    number_float    | *any value NOT representable by a float*   | Double-Precision Float             | 0xFB
     string          | *length*: 0..23                            | UTF-8 string                       | 0x60..0x77
     string          | *length*: 23..255                          | UTF-8 string (1 byte follow)       | 0x78
     string          | *length*: 256..65535                       | UTF-8 string (2 bytes follow)      | 0x79
@@ -7001,7 +7005,7 @@ class basic_json
           - expected conversions (0xD5..0xD7)
           - simple values (0xE0..0xF3, 0xF8)
           - undefined (0xF7)
-          - half and single-precision floats (0xF9-0xFA)
+          - half-precision floats (0xF9)
           - break (0xFF)
 
     @param[in] j  JSON value to serialize
@@ -7019,7 +7023,8 @@ class basic_json
     @sa @ref to_ubjson(const basic_json&, const bool, const bool) for the
              related UBJSON format
 
-    @since version 2.0.9
+    @since version 2.0.9; compact representation of floating-point numbers
+           since version 3.8.0
     */
     static std::vector<uint8_t> to_cbor(const basic_json& j)
     {

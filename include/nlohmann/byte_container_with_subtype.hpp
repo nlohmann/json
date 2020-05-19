@@ -5,43 +5,47 @@
 
 namespace nlohmann
 {
-namespace detail
-{
 
 /*!
 @brief an internal type for a backed binary type
 
-This type is designed to be `binary_t` but with the subtype implementation
-detail. This type exists so that the user does not have to specify a type
-themselves with a specific naming scheme in order to override the binary type.
+This type extends the template parameter @a BinaryType provided to `basic_json`
+with a subtype used by BSON and MessagePack. This type exists so that the user
+does not have to specify a type themselves with a specific naming scheme in
+order to override the binary type.
+
+@tparam BinaryType container to store bytes (`std::vector<std::uint8_t>` by
+                   default)
+
+@since version 3.8.0
 */
 template<typename BinaryType>
-class wrapped_binary_t : public BinaryType
+class byte_container_with_subtype : public BinaryType
 {
   public:
     /// the type of the underlying container
     using container_type = BinaryType;
 
-    wrapped_binary_t() noexcept(noexcept(container_type()))
+    byte_container_with_subtype() noexcept(noexcept(container_type()))
         : container_type()
     {}
 
-    wrapped_binary_t(const container_type& b) noexcept(noexcept(container_type(b)))
+    byte_container_with_subtype(const container_type& b) noexcept(noexcept(container_type(b)))
         : container_type(b)
     {}
 
-    wrapped_binary_t(container_type&& b) noexcept(noexcept(container_type(std::move(b))))
+    byte_container_with_subtype(container_type&& b) noexcept(noexcept(container_type(std::move(b))))
         : container_type(std::move(b))
     {}
 
-    wrapped_binary_t(const container_type& b,
-                     std::uint8_t subtype) noexcept(noexcept(container_type(b)))
+    byte_container_with_subtype(const container_type& b,
+                                std::uint8_t subtype) noexcept(noexcept(container_type(b)))
         : container_type(b)
         , m_subtype(subtype)
         , m_has_subtype(true)
     {}
 
-    wrapped_binary_t(container_type&& b, std::uint8_t subtype) noexcept(noexcept(container_type(std::move(b))))
+    byte_container_with_subtype(container_type&& b, std::uint8_t subtype) noexcept(noexcept(container_type(std::move(b))))
         : container_type(std::move(b))
         , m_subtype(subtype)
         , m_has_subtype(true)
@@ -148,5 +152,4 @@ class wrapped_binary_t : public BinaryType
     bool m_has_subtype = false;
 };
 
-}  // namespace detail
 }  // namespace nlohmann
