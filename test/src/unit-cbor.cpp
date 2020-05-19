@@ -925,7 +925,7 @@ TEST_CASE("CBOR")
                 }
                 SECTION("3.40282e+38(max float)")
                 {
-                    float v = std::numeric_limits<float>::max();
+                    float v = (std::numeric_limits<float>::max)();
                     json j = v;
                     std::vector<uint8_t> expected =
                     {
@@ -953,7 +953,7 @@ TEST_CASE("CBOR")
                 }
                 SECTION("1 + 3.40282e+38(more than max float)")
                 {
-                    double v = static_cast<double>(std::numeric_limits<float>::max()) + 0.1e+34;
+                    double v = static_cast<double>((std::numeric_limits<float>::max)()) + 0.1e+34;
                     json j = v;
                     std::vector<uint8_t> expected =
                     {
