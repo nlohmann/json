@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint> // uint8_t
+#include <tuple> // tie
 #include <utility> // move
 
 namespace nlohmann
@@ -50,6 +51,17 @@ class byte_container_with_subtype : public BinaryType
         , m_subtype(subtype)
         , m_has_subtype(true)
     {}
+
+    bool operator==(const byte_container_with_subtype& rhs) const
+    {
+        return std::tie(static_cast<const BinaryType&>(*this), m_subtype, m_has_subtype) ==
+               std::tie(static_cast<const BinaryType&>(rhs), rhs.m_subtype, rhs.m_has_subtype);
+    }
+
+    bool operator!=(const byte_container_with_subtype& rhs) const
+    {
+        return !(rhs == *this);
+    }
 
     /*!
     @brief sets the binary subtype

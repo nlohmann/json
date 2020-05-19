@@ -765,7 +765,7 @@ TEST_CASE("different basic_json types conversions")
 
     SECTION("binary")
     {
-        json j = json::binary_array({1, 2, 3});
+        json j = json::binary({1, 2, 3});
         custom_json cj = j;
         CHECK(cj.get_binary() == j.get_binary());
     }

@@ -94,7 +94,7 @@ TEST_CASE("other constructors and destructor")
 
         SECTION("binary")
         {
-            json j = json::binary_array({1, 2, 3});
+            json j = json::binary({1, 2, 3});
             json k(j);
             CHECK(j == k);
         }
@@ -177,7 +177,7 @@ TEST_CASE("other constructors and destructor")
 
         SECTION("binary")
         {
-            json j = json::binary_array({1, 2, 3});
+            json j = json::binary({1, 2, 3});
             json k;
             k = j;
             CHECK(j == k);

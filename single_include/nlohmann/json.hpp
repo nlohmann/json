@@ -4227,6 +4227,7 @@ struct adl_serializer
 
 
 #include <cstdint> // uint8_t
+#include <tuple> // tie
 #include <utility> // move
 
 namespace nlohmann
@@ -4276,6 +4277,17 @@ class byte_container_with_subtype : public BinaryType
         , m_subtype(subtype)
         , m_has_subtype(true)
     {}
+
+    bool operator==(const byte_container_with_subtype& rhs) const
+    {
+        return std::tie(static_cast<const BinaryType&>(*this), m_subtype, m_has_subtype) ==
+               std::tie(static_cast<const BinaryType&>(rhs), rhs.m_subtype, rhs.m_has_subtype);
+    }
+
+    bool operator!=(const byte_container_with_subtype& rhs) const
+    {
+        return !(rhs == *this);
+    }
 
     /*!
     @brief sets the binary subtype
@@ -16680,7 +16692,7 @@ class basic_json
        - If a subtype is given, it is used and added as unsigned 8-bit integer.
        - If no subtype is given, the generic binary subtype 0x00 is used.
 
-    @sa @ref binary_array -- create a binary array
+    @sa @ref binary -- create a binary array
 
     @since version 3.8.0
     */
@@ -17453,7 +17465,7 @@ class basic_json
     @since version 3.8.0
     */
     JSON_HEDLEY_WARN_UNUSED_RESULT
-    static basic_json binary_array(const typename binary_t::container_type& init)
+    static basic_json binary(const typename binary_t::container_type& init)
     {
         auto res = basic_json();
         res.m_type = value_t::binary;
@@ -17490,7 +17502,7 @@ class basic_json
     @since version 3.8.0
     */
     JSON_HEDLEY_WARN_UNUSED_RESULT
-    static basic_json binary_array(const typename binary_t::container_type& init, std::uint8_t subtype)
+    static basic_json binary(const typename binary_t::container_type& init, std::uint8_t subtype)
     {
         auto res = basic_json();
         res.m_type = value_t::binary;
@@ -17498,9 +17510,9 @@ class basic_json
         return res;
     }
 
-    /// @copydoc binary_array(const typename binary_t::container_type&)
+    /// @copydoc binary(const typename binary_t::container_type&)
     JSON_HEDLEY_WARN_UNUSED_RESULT
-    static basic_json binary_array(typename binary_t::container_type&& init)
+    static basic_json binary(typename binary_t::container_type&& init)
     {
         auto res = basic_json();
         res.m_type = value_t::binary;
@@ -17508,9 +17520,9 @@ class basic_json
         return res;
     }
 
-    /// @copydoc binary_array(const typename binary_t::container_type&, std::uint8_t)
+    /// @copydoc binary(const typename binary_t::container_type&, std::uint8_t)
     JSON_HEDLEY_WARN_UNUSED_RESULT
-    static basic_json binary_array(typename binary_t::container_type&& init, std::uint8_t subtype)
+    static basic_json binary(typename binary_t::container_type&& init, std::uint8_t subtype)
     {
         auto res = basic_json();
         res.m_type = value_t::binary;

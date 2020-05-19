@@ -443,7 +443,7 @@ TEST_CASE("pointer access")
     SECTION("pointer access to const binary_t")
     {
         using test_type = const json::binary_t;
-        const json value = json::binary_array({1, 2, 3});
+        const json value = json::binary({1, 2, 3});
 
         // check if pointers are returned correctly
         test_type* p1 = value.get_ptr<test_type*>();
@@ -472,7 +472,7 @@ TEST_CASE("pointer access")
     SECTION("pointer access to const binary_t")
     {
         using test_type = const json::binary_t;
-        const json value = json::binary_array({});
+        const json value = json::binary({});
 
         // check if pointers are returned correctly
         test_type* p1 = value.get_ptr<test_type*>();

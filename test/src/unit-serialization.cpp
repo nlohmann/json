@@ -209,10 +209,10 @@ TEST_CASE_TEMPLATE("serialization for extreme integer values", T, int32_t, uint3
 
 TEST_CASE("dump with binary values")
 {
-    auto binary = json::binary_array({1, 2, 3, 4});
-    auto binary_empty = json::binary_array({});
-    auto binary_with_subtype = json::binary_array({1, 2, 3, 4}, 128);
-    auto binary_empty_with_subtype = json::binary_array({}, 128);
+    auto binary = json::binary({1, 2, 3, 4});
+    auto binary_empty = json::binary({});
+    auto binary_with_subtype = json::binary({1, 2, 3, 4}, 128);
+    auto binary_empty_with_subtype = json::binary({}, 128);
 
     json object = {{"key", binary}};
     json object_empty = {{"key", binary_empty}};

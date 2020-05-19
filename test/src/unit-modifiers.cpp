@@ -110,7 +110,7 @@ TEST_CASE("modifiers")
         {
             SECTION("empty binary")
             {
-                json j = json::binary_array({});
+                json j = json::binary({});
                 json k = j;
 
                 j.clear();
@@ -121,7 +121,7 @@ TEST_CASE("modifiers")
 
             SECTION("filled binary")
             {
-                json j = json::binary_array({1, 2, 3, 4, 5});
+                json j = json::binary({1, 2, 3, 4, 5});
                 json k = j;
 
                 j.clear();
@@ -967,30 +967,30 @@ TEST_CASE("modifiers")
         {
             SECTION("binary_t type")
             {
-                json j = json::binary_array({1, 2, 3, 4});
+                json j = json::binary({1, 2, 3, 4});
                 json::binary_t s = {{5, 6, 7, 8}};
 
                 j.swap(s);
 
-                CHECK(j == json::binary_array({5, 6, 7, 8}));
+                CHECK(j == json::binary({5, 6, 7, 8}));
 
                 j.swap(s);
 
-                CHECK(j == json::binary_array({1, 2, 3, 4}));
+                CHECK(j == json::binary({1, 2, 3, 4}));
             }
 
             SECTION("binary_t::container_type type")
             {
-                json j = json::binary_array({1, 2, 3, 4});
+                json j = json::binary({1, 2, 3, 4});
                 std::vector<std::uint8_t> s = {{5, 6, 7, 8}};
 
                 j.swap(s);
 
-                CHECK(j == json::binary_array({5, 6, 7, 8}));
+                CHECK(j == json::binary({5, 6, 7, 8}));
 
                 j.swap(s);
 
-                CHECK(j == json::binary_array({1, 2, 3, 4}));
+                CHECK(j == json::binary({1, 2, 3, 4}));
             }
 
             SECTION("non-binary_t type")
