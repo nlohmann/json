@@ -101,7 +101,7 @@ TEST_CASE("lexicographical comparison operators")
             true, false,
             {1, 2, 3}, {"one", "two", "three"},
             {{"first", 1}, {"second", 2}}, {{"a", "A"}, {"b", {"B"}}},
-            json::binary_array({1, 2, 3}), json::binary_array({1, 2, 4})
+            json::binary({1, 2, 3}), json::binary({1, 2, 4})
         };
 
         SECTION("comparison: equal")

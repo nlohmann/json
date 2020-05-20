@@ -76,7 +76,7 @@ struct SaxEventLogger : public nlohmann::json_sax<json>
         return true;
     }
 
-    bool binary(std::vector<std::uint8_t>& val) override
+    bool binary(json::binary_t& val) override
     {
         std::string binary_contents = "binary(";
         std::string comma_space = "";

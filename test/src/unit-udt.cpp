@@ -763,6 +763,16 @@ TEST_CASE("different basic_json types conversions")
         CHECK(cj == "forty-two");
     }
 
+    SECTION("binary")
+    {
+        json j = json::binary({1, 2, 3}, 42);
+        custom_json cj = j;
+        CHECK(cj.get_binary().subtype() == 42);
+        std::vector<std::uint8_t> cv = cj.get_binary();
+        std::vector<std::uint8_t> v = j.get_binary();
+        CHECK(cv == v);
+    }
+
     SECTION("object")
     {
         json j = {{"forty", "two"}};

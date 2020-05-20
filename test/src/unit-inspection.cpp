@@ -261,6 +261,9 @@ TEST_CASE("object inspection")
             // important test, because it yields a resize of the indent_string
             // inside the dump() function
             CHECK(j.dump(1024).size() == 15472);
+
+            const auto binary = json::binary({1, 2, 3}, 128);
+            CHECK(binary.dump(1024).size() == 2086);
         }
 
         SECTION("dump and floating-point numbers")
@@ -469,7 +472,7 @@ TEST_CASE("object inspection")
 
         SECTION("binary")
         {
-            json j = json::binary_array({});
+            json j = json::binary({});
             json::value_t t = j;
             CHECK(t == j.type());
         }

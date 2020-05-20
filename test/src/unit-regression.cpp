@@ -1919,8 +1919,7 @@ TEST_CASE("regression tests")
             j.dump(4,                              // Indent
                    ' ',                            // Indent char
                    false,                          // Ensure ascii
-                   json::error_handler_t::strict,  // Error
-                   true                            // Allow binary data
+                   json::error_handler_t::strict  // Error
                   )
         );
     }

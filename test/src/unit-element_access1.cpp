@@ -698,13 +698,13 @@ TEST_CASE("element access 1")
             SECTION("binary")
             {
                 {
-                    json j = json::binary_array({1, 2, 3});
+                    json j = json::binary({1, 2, 3});
                     json::iterator it = j.erase(j.begin());
                     CHECK(j.type() == json::value_t::null);
                     CHECK(it == j.end());
                 }
                 {
-                    json j = json::binary_array({1, 2, 3});
+                    json j = json::binary({1, 2, 3});
                     json::const_iterator it = j.erase(j.cbegin());
                     CHECK(j.type() == json::value_t::null);
                     CHECK(it == j.end());
@@ -896,13 +896,13 @@ TEST_CASE("element access 1")
             SECTION("binary")
             {
                 {
-                    json j = json::binary_array({1, 2, 3});
+                    json j = json::binary({1, 2, 3});
                     json::iterator it = j.erase(j.begin(), j.end());
                     CHECK(j.type() == json::value_t::null);
                     CHECK(it == j.end());
                 }
                 {
-                    json j = json::binary_array({1, 2, 3});
+                    json j = json::binary({1, 2, 3});
                     json::const_iterator it = j.erase(j.cbegin(), j.cend());
                     CHECK(j.type() == json::value_t::null);
                     CHECK(it == j.end());

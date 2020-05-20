@@ -499,7 +499,7 @@ TEST_CASE("BSON")
             const auto s = std::vector<std::uint8_t>(N, 'x');
             json j =
             {
-                { "entry", json::binary_array(s) }
+                { "entry", json::binary(s, 0) }
             };
 
             std::vector<std::uint8_t> expected =
@@ -529,7 +529,7 @@ TEST_CASE("BSON")
             const std::vector<std::uint8_t> md5hash = {0xd7, 0x7e, 0x27, 0x54, 0xbe, 0x12, 0x37, 0xfe, 0xd6, 0x0c, 0x33, 0x98, 0x30, 0x3b, 0x8d, 0xc4};
             json j =
             {
-                { "entry", json::binary_array(md5hash, 5) }
+                { "entry", json::binary(md5hash, 5) }
             };
 
             std::vector<std::uint8_t> expected =

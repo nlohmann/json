@@ -228,9 +228,9 @@ template <typename BasicJsonType, typename ConstructibleArrayType,
               is_constructible_array_type<BasicJsonType, ConstructibleArrayType>::value and
               not is_constructible_object_type<BasicJsonType, ConstructibleArrayType>::value and
               not is_constructible_string_type<BasicJsonType, ConstructibleArrayType>::value and
+              not std::is_same<ConstructibleArrayType, typename BasicJsonType::binary_t>::value and
               not is_basic_json<ConstructibleArrayType>::value,
               int > = 0 >
-
 auto from_json(const BasicJsonType& j, ConstructibleArrayType& arr)
 -> decltype(from_json_array_impl(j, arr, priority_tag<3> {}),
 j.template get<typename ConstructibleArrayType::value_type>(),
@@ -243,6 +243,17 @@ void())
     }
 
     from_json_array_impl(j, arr, priority_tag<3> {});
+}
+
+template <typename BasicJsonType>
+void from_json(const BasicJsonType& j, typename BasicJsonType::binary_t& bin)
+{
+    if (JSON_HEDLEY_UNLIKELY(not j.is_binary()))
+    {
+        JSON_THROW(type_error::create(302, "type must be binary, but is " + std::string(j.type_name())));
+    }
+
+    bin = *j.template get_ptr<const typename BasicJsonType::binary_t*>();
 }
 
 template<typename BasicJsonType, typename ConstructibleObjectType,

@@ -1450,7 +1450,7 @@ TEST_CASE("CBOR")
 
                     // create JSON value with byte array containing of N * 'x'
                     const auto s = std::vector<uint8_t>(N, 'x');
-                    json j = json::binary_array(s);
+                    json j = json::binary(s);
 
                     // create expected byte vector
                     std::vector<uint8_t> expected;
@@ -1484,7 +1484,7 @@ TEST_CASE("CBOR")
 
                     // create JSON value with string containing of N * 'x'
                     const auto s = std::vector<uint8_t>(N, 'x');
-                    json j = json::binary_array(s);
+                    json j = json::binary(s);
 
                     // create expected byte vector
                     std::vector<uint8_t> expected;
@@ -1519,7 +1519,7 @@ TEST_CASE("CBOR")
 
                     // create JSON value with string containing of N * 'x'
                     const auto s = std::vector<uint8_t>(N, 'x');
-                    json j = json::binary_array(s);
+                    json j = json::binary(s);
 
                     // create expected byte vector (hack: create string first)
                     std::vector<uint8_t> expected(N, 'x');
@@ -1552,7 +1552,7 @@ TEST_CASE("CBOR")
 
                     // create JSON value with string containing of N * 'x'
                     const auto s = std::vector<uint8_t>(N, 'x');
-                    json j = json::binary_array(s);
+                    json j = json::binary(s);
 
                     // create expected byte vector (hack: create string first)
                     std::vector<uint8_t> expected(N, 'x');
@@ -1581,8 +1581,8 @@ TEST_CASE("CBOR")
                 std::vector<std::uint8_t> input = {0x5F, 0x44, 0xaa, 0xbb, 0xcc, 0xdd, 0x43, 0xee, 0xff, 0x99, 0xFF};
                 auto j = json::from_cbor(input);
                 CHECK(j.is_binary());
-                auto k = json::binary_array({0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x99});
-                CAPTURE(j.dump(0, ' ', false, json::error_handler_t::strict, true))
+                auto k = json::binary({0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x99});
+                CAPTURE(j.dump(0, ' ', false, json::error_handler_t::strict))
                 CHECK(j == k);
             }
 
@@ -1633,7 +1633,7 @@ TEST_CASE("CBOR")
                                           0x00, 0x00, 0x00, 0x01, 0x61
                                          };
             json j = json::from_cbor(given);
-            CHECK(j == json::binary_array(std::vector<uint8_t> {'a'}));
+            CHECK(j == json::binary(std::vector<uint8_t> {'a'}));
         }
 
         SECTION("0x7b (string)")
@@ -2502,7 +2502,7 @@ TEST_CASE("examples from RFC 7049 Appendix A")
         std::ifstream f_bin(TEST_DATA_DIRECTORY "/binary_data/cbor_binary.out", std::ios::binary);
         std::vector<uint8_t> expected((std::istreambuf_iterator<char>(f_bin)),
                                       std::istreambuf_iterator<char>());
-        CHECK(j == json::binary_array(expected));
+        CHECK(j == json::binary(expected));
     }
 
     SECTION("arrays")

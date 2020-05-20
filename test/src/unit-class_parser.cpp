@@ -77,7 +77,7 @@ class SaxEventLogger
         return true;
     }
 
-    bool binary(std::vector<std::uint8_t>& val)
+    bool binary(json::binary_t& val)
     {
         std::string binary_contents = "binary(";
         std::string comma_space = "";
@@ -183,7 +183,7 @@ class SaxCountdown : public nlohmann::json::json_sax_t
         return events_left-- > 0;
     }
 
-    bool binary(std::vector<std::uint8_t>&) override
+    bool binary(json::binary_t&) override
     {
         return events_left-- > 0;
     }

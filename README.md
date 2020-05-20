@@ -1050,6 +1050,36 @@ std::vector<std::uint8_t> v_ubjson = json::to_ubjson(j);
 json j_from_ubjson = json::from_ubjson(v_ubjson);
 ```
 
+The library also supports binary types from BSON, CBOR (byte strings), and MessagePack (bin, ext, fixext). They are stored by default as `std::vector<std::uint8_t>` to be processed outside of the library.
+
+```cpp
+// CBOR byte string with payload 0xCAFE
+std::vector<std::uint8_t> v = {0x42, 0xCA, 0xFE};
+
+// read value
+json j = json::from_cbor(v);
+
+// the JSON value has type binary
+j.is_binary(); // true
+
+// get reference to stored binary value
+auto& binary = j.get_binary();
+
+// the binary value has no subtype (CBOR has no binary subtypes)
+binary.has_subtype(); // false
+
+// access std::vector<std::uint8_t> member functions
+binary.size(); // 2
+binary[0]; // 0xCA
+binary[1]; // 0xFE
+
+// set subtype to 0x10
+binary.set_subtype(0x10);
+
+// serialize to MessagePack
+auto cbor = json::to_msgpack(j); // 0xD5 (fixext2), 0x10, 0xCA, 0xFE
+```
+
 
 ## Supported compilers
 
