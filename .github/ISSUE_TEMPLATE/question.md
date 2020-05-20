@@ -7,10 +7,28 @@ assignees: ''
 
 ---
 
-- Describe what you want to achieve.
+#### What do you want to achieve?
 
-- Describe what you tried.
+<!-- Please describe the feature as detailed as possible. -->
 
-- Describe which system (OS, compiler) you are using.
+#### What have you tried?
 
-- Describe which version of the library you are using (release version, develop branch).
+<!-- There are thousands of issues to search: https://github.com/nlohmann/json/issues?q=is%3Aissue+ -->
+<!-- There is a full documentation of the API: https://nlohmann.github.io/json/ -->
+<!-- There is a detailed README file: https://github.com/nlohmann/json/blob/develop/README.md -->
+
+#### Which compiler and operating system are you using?
+
+<!-- Include as many relevant details about the environment you experienced the bug in. -->
+<!-- Make sure you use a supported compiler, see https://github.com/nlohmann/json#supported-compilers. -->
+
+- Compiler: ___
+- Operating system: ___
+
+#### Which version of the library did you use?
+
+<!-- Please add an `x` to the respective line. -->
+
+- [ ] latest release version 3.7.3
+- [ ] other release - please state the version: ___
+- [ ] the `develop` branch
