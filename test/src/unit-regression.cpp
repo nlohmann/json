@@ -1890,6 +1890,28 @@ TEST_CASE("regression tests")
         json j = val;
     }
 
+    SECTION("issue #1715 - json::from_cbor does not respect allow_exceptions = false when input is string literal")
+    {
+        SECTION("string literal")
+        {
+            json cbor = json::from_cbor("B", true, false);
+            CHECK(cbor.is_discarded());
+        }
+
+        SECTION("string array")
+        {
+            const char input[] = { 'B', 0x00 };
+            json cbor = json::from_cbor(input, true, false);
+            CHECK(cbor.is_discarded());
+        }
+
+        SECTION("std::string")
+        {
+            json cbor = json::from_cbor(std::string("B"), true, false);
+            CHECK(cbor.is_discarded());
+        }
+    }
+
     SECTION("issue #1805 - A pair<T1, T2> is json constructible only if T1 and T2 are json constructible")
     {
         static_assert(!std::is_constructible<json, std::pair<std::string, NotSerializableData>>::value, "");
