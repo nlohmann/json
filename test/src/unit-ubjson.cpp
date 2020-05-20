@@ -921,7 +921,7 @@ TEST_CASE("UBJSON")
 
                     // create JSON value with byte array containing of N * 'x'
                     const auto s = std::vector<std::uint8_t>(N, 'x');
-                    json j = json::binary_array(s);
+                    json j = json::binary(s);
 
                     // create expected byte vector
                     std::vector<std::uint8_t> expected;
@@ -972,7 +972,7 @@ TEST_CASE("UBJSON")
 
                     // create JSON value with byte array containing of N * 'x'
                     const auto s = std::vector<std::uint8_t>(N, 'x');
-                    json j = json::binary_array(s);
+                    json j = json::binary(s);
 
                     // create expected byte vector
                     std::vector<uint8_t> expected;
@@ -1012,7 +1012,7 @@ TEST_CASE("UBJSON")
 
                     // create JSON value with byte array containing of N * 'x'
                     const auto s = std::vector<std::uint8_t>(N, 'x');
-                    json j = json::binary_array(s);
+                    json j = json::binary(s);
 
                     // create expected byte vector
                     std::vector<std::uint8_t> expected(N + 7, 'x');
@@ -1049,7 +1049,7 @@ TEST_CASE("UBJSON")
 
                     // create JSON value with byte array containing of N * 'x'
                     const auto s = std::vector<std::uint8_t>(N, 'x');
-                    json j = json::binary_array(s);
+                    json j = json::binary(s);
 
                     // create expected byte vector
                     std::vector<std::uint8_t> expected(N + 9, 'x');
@@ -1081,7 +1081,7 @@ TEST_CASE("UBJSON")
             {
                 const std::size_t N = 10;
                 const auto s = std::vector<std::uint8_t>(N, 'x');
-                json j = json::binary_array(s);
+                json j = json::binary(s);
 
                 SECTION("No Count No Type")
                 {

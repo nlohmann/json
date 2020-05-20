@@ -121,7 +121,7 @@ TEST_CASE("constructors")
             auto t = json::value_t::binary;
             json j(t);
             CHECK(j.type() == t);
-            CHECK(j == json::binary_array({}));
+            CHECK(j == json::binary({}));
         }
     }
 
@@ -478,6 +478,23 @@ TEST_CASE("constructors")
         {
             json j(false);
             CHECK(j.type() == json::value_t::boolean);
+        }
+    }
+
+    SECTION("create a binary (explicit)")
+    {
+        SECTION("empty binary")
+        {
+            json::binary_t b{};
+            json j(b);
+            CHECK(j.type() == json::value_t::binary);
+        }
+
+        SECTION("filled binary")
+        {
+            json::binary_t b({1, 2, 3});
+            json j(b);
+            CHECK(j.type() == json::value_t::binary);
         }
     }
 
@@ -1465,12 +1482,12 @@ TEST_CASE("constructors")
                 SECTION("binary")
                 {
                     {
-                        json j = json::binary_array({1, 2, 3});
+                        json j = json::binary({1, 2, 3});
                         json j_new(j.begin(), j.end());
                         CHECK((j == j_new));
                     }
                     {
-                        json j = json::binary_array({1, 2, 3});
+                        json j = json::binary({1, 2, 3});
                         json j_new(j.cbegin(), j.cend());
                         CHECK((j == j_new));
                     }

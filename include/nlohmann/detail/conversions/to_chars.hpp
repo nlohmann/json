@@ -2,12 +2,13 @@
 
 #include <array> // array
 #include <cassert> // assert
-#include <ciso646> // or, and, not
 #include <cmath>   // signbit, isfinite
 #include <cstdint> // intN_t, uintN_t
 #include <cstring> // memcpy, memmove
 #include <limits> // numeric_limits
 #include <type_traits> // conditional
+
+#include <nlohmann/detail/boolean_operators.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 
 namespace nlohmann

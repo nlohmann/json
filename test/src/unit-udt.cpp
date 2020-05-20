@@ -120,6 +120,8 @@ static void to_json(BasicJsonType& j, country c)
         case country::russia:
             j = u8"Российская Федерация";
             return;
+        default:
+            break;
     }
 }
 
@@ -761,6 +763,16 @@ TEST_CASE("different basic_json types conversions")
         CHECK(cj == "forty-two");
     }
 
+    SECTION("binary")
+    {
+        json j = json::binary({1, 2, 3}, 42);
+        custom_json cj = j;
+        CHECK(cj.get_binary().subtype() == 42);
+        std::vector<std::uint8_t> cv = cj.get_binary();
+        std::vector<std::uint8_t> v = j.get_binary();
+        CHECK(cv == v);
+    }
+
     SECTION("object")
     {
         json j = {{"forty", "two"}};
@@ -803,7 +815,9 @@ class Evil
   public:
     Evil() = default;
     template <typename T>
-    Evil(T) {}
+    Evil(T t) : m_i(sizeof(t)) {}
+
+    int m_i = 0;
 };
 
 void from_json(const json&, Evil&) {}
@@ -816,6 +830,10 @@ TEST_CASE("Issue #924")
 
     CHECK_NOTHROW(j.get<Evil>());
     CHECK_NOTHROW(j.get<std::vector<Evil>>());
+
+    // silence Wunused-template warnings
+    Evil e(1);
+    CHECK(e.m_i >= 0);
 }
 
 TEST_CASE("Issue #1237")
