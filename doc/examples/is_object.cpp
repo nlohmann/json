@@ -14,7 +14,7 @@ int main()
     json j_object = {{"one", 1}, {"two", 2}};
     json j_array = {1, 2, 4, 8, 16};
     json j_string = "Hello, world";
-    json j_binary = json::binary_array({1, 2, 3});
+    json j_binary = json::binary({1, 2, 3});
 
     // call is_object()
     std::cout << std::boolalpha;

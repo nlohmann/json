@@ -117,7 +117,7 @@ if(JSON_Install)
             FILES ${NLOHMANN_NATVIS_FILE}
             DESTINATION .
     )
-    endif()
+endif()
     export(
         TARGETS ${NLOHMANN_JSON_TARGET_NAME}
         NAMESPACE ${PROJECT_NAME}::
