@@ -6700,8 +6700,6 @@ class basic_json
                           input_format_t format = input_format_t::json,
                           const bool strict = true)
     {
-        assert(sax);
-
         auto ia = detail::input_adapter(std::forward<InputType>(i));
         return format == input_format_t::json
                ? parser(std::move(ia)).sax_parse(sax, strict)
@@ -6714,7 +6712,6 @@ class basic_json
                           input_format_t format = input_format_t::json,
                           const bool strict = true)
     {
-        assert(sax);
         auto ia = i.get();
         return format == input_format_t::json
                ? parser(std::move(ia)).sax_parse(sax, strict)
