@@ -9,7 +9,7 @@ prepare_files: clean
 	# create subfolders
 	mkdir docs/images docs/examples
 	# copy images
-	cp -vr ../json.gif docs/images
+	cp -vr ../json.gif ../images/range-begin-end.svg ../images/range-rbegin-rend.svg docs/images
 	# copy examples
 	cp -vr ../examples/*.cpp ../examples/*.output docs/examples
 

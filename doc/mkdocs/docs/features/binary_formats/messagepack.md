@@ -69,7 +69,7 @@ binary          | *size*: 65536..4294967295         | bin 32           | 0xC6
 
 	If NaN or Infinity are stored inside a JSON number, they are serialized properly. function which serializes NaN or Infinity to `null`.
 
-!!! example
+??? example
 
     ```cpp
     --8<-- "examples/to_msgpack.cpp"
@@ -129,7 +129,7 @@ negative fixint  | number_integer  | 0xE0-0xFF
 	Any MessagePack output created by `to_msgpack` can be successfully parsed by `from_msgpack`.
 
 
-!!! example
+??? example
 
     ```cpp
     --8<-- "examples/from_msgpack.cpp"

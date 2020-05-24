@@ -3,7 +3,7 @@
 The library uses a SAX-like interface with the following functions:
 
 ```plantuml
-class sax {
+interface json::sax_t {
     + {abstract} bool null()
 
     + {abstract} bool boolean(bool val)

@@ -17,6 +17,8 @@ By default, JSON values are stored as follows:
 
 Note there are three different types for numbers - when parsing JSON text, the best fitting type is chosen.
 
+## Storage
+
 ```plantuml
 enum value_t {
     null
@@ -44,8 +46,10 @@ class json_value << (U,orchid) >> {
 }
 
 class basic_json {
+    -- type and value --
     value_t m_type
     json_value m_value
+    -- derived types --
     + <u>typedef</u> object_t
     + <u>typedef</u> array_t
     + <u>typedef</u> binary_t

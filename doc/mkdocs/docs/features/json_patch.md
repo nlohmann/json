@@ -1,28 +1,45 @@
-# JSON Patch
+# JSON Patch and Diff
 
-On top of this, **JSON Patch** ([RFC 6902](https://tools.ietf.org/html/rfc6902)) allows to describe differences between two JSON values - effectively allowing patch and diff operations known from Unix.
+## Patches
 
-```cpp
+JSON Patch ([RFC 6902](https://tools.ietf.org/html/rfc6902)) defines a JSON document structure for expressing a sequence of operations to apply to a JSON) document. With the `patch` function, a JSON Patch is applied to the current JSON value by executing all operations from the patch.
 
-// a JSON patch (RFC 6902)
-json j_patch = R"([
-  { "op": "replace", "path": "/baz", "value": "boo" },
-  { "op": "add", "path": "/hello", "value": ["world"] },
-  { "op": "remove", "path": "/foo"}
-])"_json;
+??? example
 
-// apply the patch
-json j_result = j_original.patch(j_patch);
-// {
-//    "baz": "boo",
-//    "hello": ["world"]
-// }
+    The following code shows how a JSON patch is applied to a value.
 
-// calculate a JSON patch from two JSON values
-json::diff(j_result, j_original);
-// [
-//   { "op":" replace", "path": "/baz", "value": ["one", "two", "three"] },
-//   { "op": "remove","path": "/hello" },
-//   { "op": "add", "path": "/foo", "value": "bar" }
-// ]
-```
+    ```cpp
+    --8<-- "examples/patch.cpp"
+    ```
+    
+    Output:
+
+    ```json
+    --8<-- "examples/patch.output"
+    ```
+
+## Diff
+
+The library can also calculate a JSON patch (i.e., a **diff**) given two JSON values.
+
+!!! success "Invariant"
+
+    For two JSON values *source* and *target*, the following code yields always true:
+
+    ```cüü
+    source.patch(diff(source, target)) == target;
+    ```
+
+??? example
+
+    The following code shows how a JSON patch is created as a diff for two JSON values.
+
+    ```cpp
+    --8<-- "examples/diff.cpp"
+    ```
+    
+    Output:
+
+    ```json
+    --8<-- "examples/diff.output"
+    ```

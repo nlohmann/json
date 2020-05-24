@@ -84,7 +84,7 @@ binary          | *size*: 4294967296..18446744073709551615   | byte string (8 by
       - half-precision floats (0xF9)
       - break (0xFF)
 
-!!! example
+??? example
 
     ```cpp
     --8<-- "examples/to_cbor.cpp"
@@ -159,7 +159,7 @@ Double-Precision Float | number_float    | 0xFB
 
 	CBOR allows map keys of any type, whereas JSON only allows strings as keys in object values. Therefore, CBOR maps with keys other than UTF-8 strings are rejected.
 
-!!! example
+??? example
 
     ```cpp
     --8<-- "examples/from_cbor.cpp"

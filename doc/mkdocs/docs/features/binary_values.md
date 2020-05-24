@@ -88,29 +88,29 @@ Binary values are serialized differently according to the formats.
 
 JSON does not have a binary type, and this library does not introduce a new type as this would break conformance. Instead, binary values are serialized as an object with two keys: `bytes` holds an array of integers, and `subtype` is an integer or `null`.
 
-!!! example
+??? example
 
-        Code:
+    Code:
 
-        ```cpp
-        // create a binary value of subtype 42
-        json j;
-        j["binary"] = json::binary({0xCA, 0xFE, 0xBA, 0xBE}, 42);
-        
-        // serialize to standard output
-        std::cout << j.dump(2) << std::endl;
-        ```
-        
-        Output:
-        
-        ```json
-        {
-          "binary": {
-            "bytes": [202, 254, 186, 190],
-            "subtype": 42
-          }
-        }
-        ```
+    ```cpp
+    // create a binary value of subtype 42
+    json j;
+    j["binary"] = json::binary({0xCA, 0xFE, 0xBA, 0xBE}, 42);
+    
+    // serialize to standard output
+    std::cout << j.dump(2) << std::endl;
+    ```
+    
+    Output:
+    
+    ```json
+    {
+      "binary": {
+        "bytes": [202, 254, 186, 190],
+        "subtype": 42
+      }
+    }
+    ```
 
 !!! warning "No roundtrip for binary values"
 
@@ -120,79 +120,79 @@ JSON does not have a binary type, and this library does not introduce a new type
 
 [BSON](binary_formats/bson.md) supports binary values and subtypes. If a subtype is given, it is used and added as unsigned 8-bit integer. If no subtype is given, the generic binary subtype 0x00 is used.
 
-!!! example
+??? example
 
-        Code:
-        
-        ```cpp
-        // create a binary value of subtype 42
-        json j;
-        j["binary"] = json::binary({0xCA, 0xFE, 0xBA, 0xBE}, 42);
+    Code:
     
-        // convert to BSON
-        auto v = json::to_bson(j);      
-        ```
-                
-        `v` is a `std::vector<std::uint8t>` with the following 22 elements:
-        
-        ```c
-        0x16 0x00 0x00 0x00                         // number of bytes in the document
-            0x05                                    // binary value
-                0x62 0x69 0x6E 0x61 0x72 0x79 0x00  // key "binary" + null byte
-                0x04 0x00 0x00 0x00                 // number of bytes
-                0x2a                                // subtype
-                0xCA 0xFE 0xBA 0xBE                 // content
-        0x00                                        // end of the document
-        ```
+    ```cpp
+    // create a binary value of subtype 42
+    json j;
+    j["binary"] = json::binary({0xCA, 0xFE, 0xBA, 0xBE}, 42);
 
-        Note that the serialization preserves the subtype, and deserializing `v` would yield the following value:
+    // convert to BSON
+    auto v = json::to_bson(j);      
+    ```
+            
+    `v` is a `std::vector<std::uint8t>` with the following 22 elements:
+    
+    ```c
+    0x16 0x00 0x00 0x00                         // number of bytes in the document
+        0x05                                    // binary value
+            0x62 0x69 0x6E 0x61 0x72 0x79 0x00  // key "binary" + null byte
+            0x04 0x00 0x00 0x00                 // number of bytes
+            0x2a                                // subtype
+            0xCA 0xFE 0xBA 0xBE                 // content
+    0x00                                        // end of the document
+    ```
 
-        ```json
-        {
-          "binary": {
-            "bytes": [202, 254, 186, 190],
-            "subtype": 42
-          }
-        }
-        ```
+    Note that the serialization preserves the subtype, and deserializing `v` would yield the following value:
+
+    ```json
+    {
+      "binary": {
+        "bytes": [202, 254, 186, 190],
+        "subtype": 42
+      }
+    }
+    ```
 
 ### CBOR
 
 [CBOR](binary_formats/cbor.md) supports binary values, but no subtypes. Any binary value will be serialized as byte strings. The library will choose the smallest representation using the length of the byte array.
 
-!!! example
+??? example
 
-        Code:
-        
-        ```cpp
-        // create a binary value of subtype 42 (will be ignored by CBOR)
-        json j;
-        j["binary"] = json::binary({0xCA, 0xFE, 0xBA, 0xBE}, 42);
+    Code:
     
-        // convert to CBOR
-        auto v = json::to_cbor(j);      
-        ```
-                
-        `v` is a `std::vector<std::uint8t>` with the following 13 elements:
-        
-        ```c
-        0xA1                                   // map(1)
-            0x66                               // text(6)
-                0x62 0x69 0x6E 0x61 0x72 0x79  // "binary"
-            0x44                               // bytes(4)
-                0xCA 0xFE 0xBA 0xBE            // content
-        ```
+    ```cpp
+    // create a binary value of subtype 42 (will be ignored by CBOR)
+    json j;
+    j["binary"] = json::binary({0xCA, 0xFE, 0xBA, 0xBE}, 42);
 
-        Note the subtype (42) is **not** serialized, and deserializing `v` would yield the following value:
+    // convert to CBOR
+    auto v = json::to_cbor(j);      
+    ```
+            
+    `v` is a `std::vector<std::uint8t>` with the following 13 elements:
+    
+    ```c
+    0xA1                                   // map(1)
+        0x66                               // text(6)
+            0x62 0x69 0x6E 0x61 0x72 0x79  // "binary"
+        0x44                               // bytes(4)
+            0xCA 0xFE 0xBA 0xBE            // content
+    ```
 
-        ```json
-        {
-          "binary": {
-            "bytes": [202, 254, 186, 190],
-            "subtype": null
-          }
-        }
-        ```
+    Note the subtype (42) is **not** serialized, and deserializing `v` would yield the following value:
+
+    ```json
+    {
+      "binary": {
+        "bytes": [202, 254, 186, 190],
+        "subtype": null
+      }
+    }
+    ```
 
 ### MessagePack
 
@@ -200,95 +200,95 @@ JSON does not have a binary type, and this library does not introduce a new type
 
 If no subtype is given, the bin family (bin8, bin16, bin32) is used.
 
-!!! example
+??? example
 
-        Code:
-        
-        ```cpp
-        // create a binary value of subtype 42
-        json j;
-        j["binary"] = json::binary({0xCA, 0xFE, 0xBA, 0xBE}, 42);
+    Code:
     
-        // convert to MessagePack
-        auto v = json::to_msgpack(j);      
-        ```
-                
-        `v` is a `std::vector<std::uint8t>` with the following 14 elements:
-        
-        ```c
-        0x81                                   // fixmap1
-            0xA6                               // fixstr6
-                0x62 0x69 0x6E 0x61 0x72 0x79  // "binary"
-            0xD6                               // fixext4
-                0x2A                           // subtype
-                0xCA 0xFE 0xBA 0xBE            // content
-        ```
+    ```cpp
+    // create a binary value of subtype 42
+    json j;
+    j["binary"] = json::binary({0xCA, 0xFE, 0xBA, 0xBE}, 42);
 
-        Note that the serialization preserves the subtype, and deserializing `v` would yield the following value:
+    // convert to MessagePack
+    auto v = json::to_msgpack(j);      
+    ```
+            
+    `v` is a `std::vector<std::uint8t>` with the following 14 elements:
+    
+    ```c
+    0x81                                   // fixmap1
+        0xA6                               // fixstr6
+            0x62 0x69 0x6E 0x61 0x72 0x79  // "binary"
+        0xD6                               // fixext4
+            0x2A                           // subtype
+            0xCA 0xFE 0xBA 0xBE            // content
+    ```
 
-        ```json
-        {
-          "binary": {
-            "bytes": [202, 254, 186, 190],
-            "subtype": 42
-          }
-        }
-        ```
+    Note that the serialization preserves the subtype, and deserializing `v` would yield the following value:
+
+    ```json
+    {
+      "binary": {
+        "bytes": [202, 254, 186, 190],
+        "subtype": 42
+      }
+    }
+    ```
 
 ### UBJSON
 
 [UBJSON](binary_formats/ubjson.md) neither supports binary values nor subtypes, and proposes to serialize binary values as array of uint8 values. This translation is implemented by the library.
 
-!!! example
+??? example
 
-        Code:
-        
-        ```cpp
-        // create a binary value of subtype 42 (will be ignored in UBJSON)
-        json j;
-        j["binary"] = json::binary({0xCA, 0xFE, 0xBA, 0xBE}, 42);
+    Code:
     
-        // convert to UBJSON
-        auto v = json::to_msgpack(j);      
-        ```
-                
-        `v` is a `std::vector<std::uint8t>` with the following 20 elements:
-        
-        ```c
-        0x7B                                             // '{'
-            0x69 0x06                                    // i 6 (length of the key)
-            0x62 0x69 0x6E 0x61 0x72 0x79                // "binary"
-            0x5B                                         // '['
-                0x55 0xCA 0x55 0xFE 0x55 0xBA 0x55 0xBE  // content (each byte prefixed with 'U')
-            0x5D                                         // ']'
-        0x7D                                             // '}'
-        ```
+    ```cpp
+    // create a binary value of subtype 42 (will be ignored in UBJSON)
+    json j;
+    j["binary"] = json::binary({0xCA, 0xFE, 0xBA, 0xBE}, 42);
 
-        The following code uses the type and size optimization for UBJSON:
+    // convert to UBJSON
+    auto v = json::to_msgpack(j);      
+    ```
+            
+    `v` is a `std::vector<std::uint8t>` with the following 20 elements:
+    
+    ```c
+    0x7B                                             // '{'
+        0x69 0x06                                    // i 6 (length of the key)
+        0x62 0x69 0x6E 0x61 0x72 0x79                // "binary"
+        0x5B                                         // '['
+            0x55 0xCA 0x55 0xFE 0x55 0xBA 0x55 0xBE  // content (each byte prefixed with 'U')
+        0x5D                                         // ']'
+    0x7D                                             // '}'
+    ```
 
-        ```cpp
-        // convert to UBJSON using the size and type optimization
-        auto v = json::to_ubjson(j, true, true);
-        ```
+    The following code uses the type and size optimization for UBJSON:
 
-        The resulting vector has 23 elements; the optimization is not effective for examples with few values:
+    ```cpp
+    // convert to UBJSON using the size and type optimization
+    auto v = json::to_ubjson(j, true, true);
+    ```
 
-        ```c
-        0x7B                                // '{'
-            0x24                            // '$' type of the object elements
-            0x5B                            // '[' array
-            0x23 0x69 0x01                  // '#' i 1 number of object elements
-            0x69 0x06                       // i 6 (length of the key)
-            0x62 0x69 0x6E 0x61 0x72 0x79   // "binary"
-                0x24 0x55                   // '$' 'U' type of the array elements: unsinged integers
-                0x23 0x69 0x04              // '#' i 4 number of array elements
-                0xCA 0xFE 0xBA 0xBE         // content
-        ```
+    The resulting vector has 23 elements; the optimization is not effective for examples with few values:
 
-        Note that subtype (42) is **not** serialized and that UBJSON has **no binary type**, and deserializing `v` would yield the following value:
+    ```c
+    0x7B                                // '{'
+        0x24                            // '$' type of the object elements
+        0x5B                            // '[' array
+        0x23 0x69 0x01                  // '#' i 1 number of object elements
+        0x69 0x06                       // i 6 (length of the key)
+        0x62 0x69 0x6E 0x61 0x72 0x79   // "binary"
+            0x24 0x55                   // '$' 'U' type of the array elements: unsinged integers
+            0x23 0x69 0x04              // '#' i 4 number of array elements
+            0xCA 0xFE 0xBA 0xBE         // content
+    ```
 
-        ```json
-        {
-          "binary": [202, 254, 186, 190]
-        }
-        ```
+    Note that subtype (42) is **not** serialized and that UBJSON has **no binary type**, and deserializing `v` would yield the following value:
+
+    ```json
+    {
+      "binary": [202, 254, 186, 190]
+    }
+    ```

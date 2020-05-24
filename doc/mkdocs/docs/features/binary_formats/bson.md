@@ -36,7 +36,7 @@ binary          | *any value*                       | binary      | 0x05
     and the keys may not contain U+0000, since they are serialized a
     zero-terminated c-strings.
 
-!!! example
+??? example
 
     ```cpp
     --8<-- "examples/to_bson.cpp"
@@ -81,7 +81,7 @@ Min Key         | 0xFF             | *unsupported*
     The mapping is **incomplete**. The unsupported mappings are indicated in the table above.
 
 
-!!! example
+??? example
 
     ```cpp
     --8<-- "examples/from_bson.cpp"

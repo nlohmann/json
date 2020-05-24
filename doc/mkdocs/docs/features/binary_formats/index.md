@@ -5,7 +5,7 @@ Though JSON is a ubiquitous data format, it is not a very compact format suitabl
 - [BSON](bson.md) (Binary JSON),
 - [CBOR](cbor.md) (Concise Binary Object Representation),
 - [MessagePack](messagepack.md), and
-- [UBJSON](ubjson.md) (Universal Binary JSON Specification)
+- [UBJSON](ubjson.md) (Universal Binary JSON)
 
 to efficiently encode JSON values to byte vectors and to decode such vectors.
 
@@ -29,6 +29,8 @@ to efficiently encode JSON values to byte vectors and to decode such vectors.
 | MessagePack | supported     | supported       |
 | UBJSON      | not supported | not supported   |
 
+See [binary values](../binary_values.md) for more information.
+
 ### Sizes
 
 | Format             | canada.json | twitter.json | citm_catalog.json | jeopardy.json |
@@ -39,3 +41,5 @@ to efficiently encode JSON values to byte vectors and to decode such vectors.
 | UBJSON             | 53,2 %      | 91,3 %       | 78,2 %            | 96,6 %        |
 | UBJSON (size)      | 58,6 %      | 92,3 %       | 86,8 %            | 97,4 %        |
 | UBJSON (size+type) | 55,9 %      | 92,3 %       | 85,0 %            | 95,0 %        |
+
+Sizes compared to minified JSON value.

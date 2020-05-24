@@ -6,6 +6,26 @@
 
 All exceptions inherit from class `json::exception` (which in turn inherits from `std::exception`). It is used as the base class for all exceptions thrown by the `basic_json` class. This class can hence be used as "wildcard" to catch exceptions.
 
+```plantuml
+std::exception <|-- json::exception
+json::exception <|-- json::parse_error
+json::exception <|-- json::invalid_iterator
+json::exception <|-- json::type_error
+json::exception <|-- json::out_of_range
+json::exception <|-- json::other_error
+
+interface std::exception {}
+
+class json::exception {
+    + const int id
+    + const char* what() const
+}
+
+class json::parse_error {
+    + const std::size_t byte
+}
+```
+
 ### Switch off exceptions
 
 Exceptions are used widely within the library. They can, however, be switched off with either using the compiler flag `-fno-exceptions` or by defining the symbol `JSON_NOEXCEPTION`. In this case, exceptions are replaced by `abort()` calls. You can further control this behavior by defining `JSON_THROW_USER` (overriding `#!cpp throw`), `JSON_TRY_USER` (overriding `#!cpp try`), and `JSON_CATCH_USER` (overriding `#!cpp catch`).
@@ -29,12 +49,26 @@ Exceptions have ids 1xx.
     is the index of the terminating null byte or the end of file. This also
     holds true when reading a byte vector (CBOR or MessagePack).
 
+??? example
+
+    The following code shows how a `parse_error` exception can be caught.
+
+    ```cpp
+    --8<-- "examples/parse_error.cpp"
+    ```
+    
+    Output:
+
+    ```
+    --8<-- "examples/parse_error.output"
+    ```
+
 
 ### json.exception.parse_error.101
 
 This error indicates a syntax error while deserializing a JSON text. The error message describes that an unexpected token (character) was encountered, and the member `byte` indicates the error position.
 
-!!! example
+!!! failure "Example message"
 
     Input ended prematurely:
 
@@ -93,7 +127,7 @@ This error indicates a syntax error while deserializing a JSON text. The error m
 
 JSON uses the `\uxxxx` format to describe Unicode characters. Code points above above 0xFFFF are split into two `\uxxxx` entries ("surrogate pairs"). This error indicates that the surrogate pair is incomplete or contains an invalid code point.
 
-!!! example
+!!! failure "Example message"
 
     ```
     parse error at 14: missing or wrong low surrogate
@@ -103,7 +137,7 @@ JSON uses the `\uxxxx` format to describe Unicode characters. Code points above 
 
 Unicode supports code points up to 0x10FFFF. Code points above 0x10FFFF are invalid.
 
-!!! example
+!!! failure "Example message"
 
     ```
     parse error: code points above 0x10FFFF are invalid
@@ -113,7 +147,7 @@ Unicode supports code points up to 0x10FFFF. Code points above 0x10FFFF are inva
 
 [RFC 6902](https://tools.ietf.org/html/rfc6902) requires a JSON Patch document to be a JSON document that represents an array of objects.
 
-!!! example
+!!! failure "Example message"
 
     ```
     [json.exception.parse_error.104] parse error: JSON patch must be an array of objects
@@ -123,7 +157,7 @@ Unicode supports code points up to 0x10FFFF. Code points above 0x10FFFF are inva
 
 An operation of a JSON Patch document must contain exactly one "op" member, whose value indicates the operation to perform. Its value must be one of "add", "remove", "replace", "move", "copy", or "test"; other values are errors.
 
-!!! example
+!!! failure "Example message"
 
     ```
     [json.exception.parse_error.105] parse error: operation 'add' must have member 'value'
@@ -139,7 +173,7 @@ An operation of a JSON Patch document must contain exactly one "op" member, whos
 
 An array index in a JSON Pointer ([RFC 6901](https://tools.ietf.org/html/rfc6901)) may be `0` or any number without a leading `0`.
 
-!!! example
+!!! failure "Example message"
 
     ```
     [json.exception.parse_error.106] parse error: array index '01' must not begin with '0'
@@ -149,7 +183,7 @@ An array index in a JSON Pointer ([RFC 6901](https://tools.ietf.org/html/rfc6901
 
 A JSON Pointer must be a Unicode string containing a sequence of zero or more reference tokens, each prefixed by a `/` character.
 
-!!! example
+!!! failure "Example message"
 
     ```
     [json.exception.parse_error.107] parse error at byte 1: JSON pointer must be empty or begin with '/' - was: 'foo'
@@ -159,7 +193,7 @@ A JSON Pointer must be a Unicode string containing a sequence of zero or more re
 
 In a JSON Pointer, only `~0` and `~1` are valid escape sequences.
 
-!!! example
+!!! failure "Example message"
 
     ```
     [json.exception.parse_error.108] parse error: escape character '~' must be followed with '0' or '1'
@@ -169,7 +203,7 @@ In a JSON Pointer, only `~0` and `~1` are valid escape sequences.
 
 A JSON Pointer array index must be a number.
 
-!!! example
+!!! failure "Example message"
 
     ```
     [json.exception.parse_error.109] parse error: array index 'one' is not a number
@@ -182,7 +216,7 @@ A JSON Pointer array index must be a number.
 
 When parsing CBOR or MessagePack, the byte vector ends before the complete value has been read.
 
-!!! example
+!!! failure "Example message"
 
     ```
     [json.exception.parse_error.110] parse error at byte 5: syntax error while parsing CBOR string: unexpected end of input
@@ -195,7 +229,7 @@ When parsing CBOR or MessagePack, the byte vector ends before the complete value
 
 Not all types of CBOR or MessagePack are supported. This exception occurs if an unsupported byte was read.
 
-!!! example
+!!! failure "Example message"
 
     ```
     [json.exception.parse_error.112] parse error at byte 1: syntax error while parsing CBOR value: invalid byte: 0x1C
@@ -205,7 +239,7 @@ Not all types of CBOR or MessagePack are supported. This exception occurs if an 
 
 While parsing a map key, a value that is not a string has been read.
 
-!!! example
+!!! failure "Example message"
 
     ```
     [json.exception.parse_error.113] parse error at byte 2: syntax error while parsing CBOR string: expected length specification (0x60-0x7B) or indefinite string type (0x7F); last byte: 0xFF
@@ -221,7 +255,7 @@ While parsing a map key, a value that is not a string has been read.
 
 The parsing of the corresponding BSON record type is not implemented (yet).
 
-!!! example
+!!! failure "Example message"
 
     ```
     [json.exception.parse_error.114] parse error at byte 5: Unsupported BSON record type 0xFF
@@ -234,11 +268,25 @@ the expected semantics.
 
 Exceptions have ids 2xx.
 
+??? example
+
+    The following code shows how an `invalid_iterator` exception can be caught.
+
+    ```cpp
+    --8<-- "examples/invalid_iterator.cpp"
+    ```
+    
+    Output:
+
+    ```
+    --8<-- "examples/invalid_iterator.output"
+    ```
+
 ### json.exception.invalid_iterator.201
 
 The iterators passed to constructor `basic_json(InputIT first, InputIT last)` are not compatible, meaning they do not belong to the same container. Therefore, the range (`first`, `last`) is invalid.
 
-!!! example
+!!! failure "Example message"
 
     ```
     [json.exception.invalid_iterator.201] iterators are not compatible
@@ -248,7 +296,7 @@ The iterators passed to constructor `basic_json(InputIT first, InputIT last)` ar
 
 In an erase or insert function, the passed iterator @a pos does not belong to the JSON value for which the function was called. It hence does not define a valid position for the deletion/insertion.
 
-!!! example
+!!! failure "Example message"
 
     ```
     [json.exception.invalid_iterator.202] iterator does not fit current value
@@ -261,7 +309,7 @@ In an erase or insert function, the passed iterator @a pos does not belong to th
 
 Either iterator passed to function `erase(IteratorType` first, IteratorType last) does not belong to the JSON value from which values shall be erased. It hence does not define a valid range to delete values from.
 
-!!! example
+!!! failure "Example message"
 
     ```
     [json.exception.invalid_iterator.203] iterators do not fit current value
@@ -271,7 +319,7 @@ Either iterator passed to function `erase(IteratorType` first, IteratorType last
 
 When an iterator range for a primitive type (number, boolean, or string) is passed to a constructor or an erase function, this range has to be exactly (`begin(),` `end()),` because this is the only way the single stored value is expressed. All other ranges are invalid.
 
-!!! example
+!!! failure "Example message"
 
     ```
     [json.exception.invalid_iterator.204] iterators out of range
@@ -281,7 +329,7 @@ When an iterator range for a primitive type (number, boolean, or string) is pass
 
 When an iterator for a primitive type (number, boolean, or string) is passed to an erase function, the iterator has to be the `begin()` iterator, because it is the only way to address the stored value. All other iterators are invalid.
 
-!!! example
+!!! failure "Example message"
 
     ```
     [json.exception.invalid_iterator.205] iterator out of range
@@ -291,7 +339,7 @@ When an iterator for a primitive type (number, boolean, or string) is passed to 
 
 The iterators passed to constructor `basic_json(InputIT first, InputIT last)` belong to a JSON null value and hence to not define a valid range.
 
-!!! example
+!!! failure "Example message"
 
     ```
     [json.exception.invalid_iterator.206] cannot construct with iterators from null
@@ -301,7 +349,7 @@ The iterators passed to constructor `basic_json(InputIT first, InputIT last)` be
 
 The `key()` member function can only be used on iterators belonging to a JSON object, because other types do not have a concept of a key.
 
-!!! example
+!!! failure "Example message"
 
     ```
     [json.exception.invalid_iterator.207] cannot use key() for non-object iterators
@@ -312,7 +360,7 @@ The `key()` member function can only be used on iterators belonging to a JSON ob
 
 The `operator[]` to specify a concrete offset cannot be used on iterators belonging to a JSON object, because JSON objects are unordered.
 
-!!! example
+!!! failure "Example message"
 
     ```
     [json.exception.invalid_iterator.208] cannot use operator[] for object iterators
@@ -322,7 +370,7 @@ The `operator[]` to specify a concrete offset cannot be used on iterators belong
 
 The offset operators (`+`, `-`, `+=`, `-=`) cannot be used on iterators belonging to a JSON object, because JSON objects are unordered.
 
-!!! example
+!!! failure "Example message"
 
     ```
     [json.exception.invalid_iterator.209] cannot use offsets with object iterators
@@ -332,7 +380,7 @@ The offset operators (`+`, `-`, `+=`, `-=`) cannot be used on iterators belongin
 
 The iterator range passed to the insert function are not compatible, meaning they do not belong to the same container. Therefore, the range (`first`, `last`) is invalid.
 
-!!! example
+!!! failure "Example message"
 
     ```
     [json.exception.invalid_iterator.210] iterators do not fit
@@ -342,7 +390,7 @@ The iterator range passed to the insert function are not compatible, meaning the
 
 The iterator range passed to the insert function must not be a subrange of the container to insert to.
 
-!!! example
+!!! failure "Example message"
 
     ```
     [json.exception.invalid_iterator.211] passed iterators may not belong to container
@@ -352,7 +400,7 @@ The iterator range passed to the insert function must not be a subrange of the c
 
 When two iterators are compared, they must belong to the same container.
 
-!!! example
+!!! failure "Example message"
 
     ```
     [json.exception.invalid_iterator.212] cannot compare iterators of different containers
@@ -362,7 +410,7 @@ When two iterators are compared, they must belong to the same container.
 
 The order of object iterators cannot be compared, because JSON objects are unordered.
 
-!!! example
+!!! failure "Example message"
 
     ```
     [json.exception.invalid_iterator.213] cannot compare order of object iterators
@@ -372,7 +420,7 @@ The order of object iterators cannot be compared, because JSON objects are unord
 
 Cannot get value for iterator: Either the iterator belongs to a null value or it is an iterator to a primitive type (number, boolean, or string), but the iterator is different to `begin()`.
 
-!!! example
+!!! failure "Example message"
 
     ```
     [json.exception.invalid_iterator.214] cannot get value
@@ -385,12 +433,25 @@ This exception is thrown in case of a type error; that is, a library function is
 
 Exceptions have ids 3xx.
 
+??? example
+
+    The following code shows how a `type_error` exception can be caught.
+
+    ```cpp
+    --8<-- "examples/type_error.cpp"
+    ```
+    
+    Output:
+
+    ```
+    --8<-- "examples/type_error.output"
+    ```
 
 ### json.exception.type_error.301
 
 To create an object from an initializer list, the initializer list must consist only of a list of pairs whose first element is a string. When this constraint is violated, an array is created instead.
 
-!!! example
+!!! failure "Example message"
 
     ```
     [json.exception.type_error.301] cannot create object from initializer list
@@ -400,7 +461,7 @@ To create an object from an initializer list, the initializer list must consist 
 
 During implicit or explicit value conversion, the JSON type must be compatible to the target type. For instance, a JSON string can only be converted into string types, but not into numbers or boolean types.
 
-!!! example
+!!! failure "Example message"
 
     ```
     [json.exception.type_error.302] type must be object, but is null
@@ -413,7 +474,7 @@ During implicit or explicit value conversion, the JSON type must be compatible t
 
 To retrieve a reference to a value stored in a `basic_json` object with `get_ref`, the type of the reference must match the value type. For instance, for a JSON array, the `ReferenceType` must be `array_t &`.
 
-!!! example
+!!! failure "Example message"
 
     ```
     [json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is object
@@ -426,7 +487,7 @@ To retrieve a reference to a value stored in a `basic_json` object with `get_ref
 
 The `at()` member functions can only be executed for certain JSON types.
 
-!!! example
+!!! failure "Example message"
 
     ```
     [json.exception.type_error.304] cannot use at() with string
@@ -439,7 +500,7 @@ The `at()` member functions can only be executed for certain JSON types.
 
 The `operator[]` member functions can only be executed for certain JSON types.
 
-!!! example
+!!! failure "Example message"
 
     ```
     [json.exception.type_error.305] cannot use operator[] with a string argument with array
@@ -452,7 +513,7 @@ The `operator[]` member functions can only be executed for certain JSON types.
 
 The `value()` member functions can only be executed for certain JSON types.
 
-!!! example
+!!! failure "Example message"
 
     ```
     [json.exception.type_error.306] cannot use value() with number
@@ -462,7 +523,7 @@ The `value()` member functions can only be executed for certain JSON types.
 
 The `erase()` member functions can only be executed for certain JSON types.
 
-!!! example
+!!! failure "Example message"
 
     ```
     [json.exception.type_error.307] cannot use erase() with string
@@ -472,7 +533,7 @@ The `erase()` member functions can only be executed for certain JSON types.
 
 The `push_back()` and `operator+=` member functions can only be executed for certain JSON types.
 
-!!! example
+!!! failure "Example message"
 
     ```
     [json.exception.type_error.308] cannot use push_back() with string
@@ -482,7 +543,7 @@ The `push_back()` and `operator+=` member functions can only be executed for cer
 
 The `insert()` member functions can only be executed for certain JSON types.
 
-!!! example
+!!! failure "Example message"
 
     ```
     [json.exception.type_error.309] cannot use insert() with array
@@ -495,7 +556,7 @@ The `insert()` member functions can only be executed for certain JSON types.
 
 The `swap()` member functions can only be executed for certain JSON types.
 
-!!! example
+!!! failure "Example message"
 
     ```
     [json.exception.type_error.310] cannot use swap() with number
@@ -505,7 +566,7 @@ The `swap()` member functions can only be executed for certain JSON types.
 
 The `emplace()` and `emplace_back()` member functions can only be executed for certain JSON types.
 
-!!! example
+!!! failure "Example message"
 
     ```
     [json.exception.type_error.311] cannot use emplace() with number
@@ -518,7 +579,7 @@ The `emplace()` and `emplace_back()` member functions can only be executed for c
 
 The `update()` member functions can only be executed for certain JSON types.
 
-!!! example
+!!! failure "Example message"
 
     ```
     [json.exception.type_error.312] cannot use update() with array
@@ -528,7 +589,7 @@ The `update()` member functions can only be executed for certain JSON types.
 
 The `unflatten` function converts an object whose keys are JSON Pointers back into an arbitrary nested JSON value. The JSON Pointers must not overlap, because then the resulting value would not be well defined.
 
-!!! example
+!!! failure "Example message"
 
     ```
     [json.exception.type_error.313] invalid value to unflatten
@@ -538,7 +599,7 @@ The `unflatten` function converts an object whose keys are JSON Pointers back in
 
 The `unflatten` function only works for an object whose keys are JSON Pointers.
 
-!!! example
+!!! failure "Example message"
 
     Calling `unflatten()` on an array `#!json [1,2,3]`:
 
@@ -550,7 +611,7 @@ The `unflatten` function only works for an object whose keys are JSON Pointers.
 
 The `unflatten()` function only works for an object whose keys are JSON Pointers and whose values are primitive.
 
-!!! example
+!!! failure "Example message"
 
     Calling `unflatten()` on an object `#!json {"/1", [1,2,3]}`:
 
@@ -562,7 +623,7 @@ The `unflatten()` function only works for an object whose keys are JSON Pointers
 
 The `dump()` function only works with UTF-8 encoded strings; that is, if you assign a `std::string` to a JSON value, make sure it is UTF-8 encoded.
 
-!!! example
+!!! failure "Example message"
 
     Calling `dump()` on a JSON value containing an ISO 8859-1 encoded string:
     ```
@@ -580,7 +641,7 @@ The `dump()` function only works with UTF-8 encoded strings; that is, if you ass
 
 The dynamic type of the object cannot be represented in the requested serialization format (e.g. a raw `true` or `null` JSON object cannot be serialized to BSON)
 
-!!! example
+!!! failure "Example message"
 
     Serializing `#!json null` to BSON:
     ```
@@ -602,12 +663,25 @@ This exception is thrown in case a library function is called on an input parame
 
 Exceptions have ids 4xx.
 
+??? example
+
+    The following code shows how an `out_of_range` exception can be caught.
+
+    ```cpp
+    --8<-- "examples/out_of_range.cpp"
+    ```
+    
+    Output:
+
+    ```
+    --8<-- "examples/out_of_range.output"
+    ```
 
 ### json.exception.out_of_range.401
 
 The provided array index `i` is larger than `size-1`.
 
-!!! example
+!!! failure "Example message"
 
     ```
     array index 3 is out of range
@@ -617,7 +691,7 @@ The provided array index `i` is larger than `size-1`.
 
 The special array index `-` in a JSON Pointer never describes a valid element of the array, but the index past the end. That is, it can only be used to add elements at this position, but not to read it.
 
-!!! example
+!!! failure "Example message"
 
     ```
     array index '-' (3) is out of range
@@ -627,7 +701,7 @@ The special array index `-` in a JSON Pointer never describes a valid element of
 
 The provided key was not found in the JSON object.
 
-!!! example
+!!! failure "Example message"
 
     ```
     key 'foo' not found
@@ -637,7 +711,7 @@ The provided key was not found in the JSON object.
 
 A reference token in a JSON Pointer could not be resolved.
 
-!!! example
+!!! failure "Example message"
 
     ```
     unresolved reference token 'foo'
@@ -647,7 +721,7 @@ A reference token in a JSON Pointer could not be resolved.
 
 The JSON Patch operations 'remove' and 'add' can not be applied to the root element of the JSON value.
 
-!!! example
+!!! failure "Example message"
 
     ```
     JSON pointer has no parent
@@ -657,7 +731,7 @@ The JSON Patch operations 'remove' and 'add' can not be applied to the root elem
 
 A parsed number could not be stored as without changing it to NaN or INF.
 
-!!! example
+!!! failure "Example message"
 
     ```
     number overflow parsing '10E1000'
@@ -667,7 +741,7 @@ A parsed number could not be stored as without changing it to NaN or INF.
 
 UBJSON and BSON only support integer numbers up to 9223372036854775807.
 
-!!! example
+!!! failure "Example message"
 
     ```
     number overflow serializing '9223372036854775808'
@@ -677,7 +751,7 @@ UBJSON and BSON only support integer numbers up to 9223372036854775807.
 
 The size (following `#`) of an UBJSON array or object exceeds the maximal capacity.
 
-!!! example
+!!! failure "Example message"
 
     ```
     excessive array size: 8658170730974374167
@@ -687,7 +761,7 @@ The size (following `#`) of an UBJSON array or object exceeds the maximal capaci
 
 Key identifiers to be serialized to BSON cannot contain code point U+0000, since the key is stored as zero-terminated c-string.
 
-!!! example
+!!! failure "Example message"
 
     ```
     BSON key cannot contain code point U+0000 (at byte 2)
@@ -700,11 +774,25 @@ other exception types.
 
 Exceptions have ids 5xx.
 
+??? example
+
+    The following code shows how an `other_error` exception can be caught.
+
+    ```cpp
+    --8<-- "examples/other_error.cpp"
+    ```
+    
+    Output:
+
+    ```
+    --8<-- "examples/other_error.output"
+    ```
+
 ### json.exception.other_error.501
 
 A JSON Patch operation 'test' failed. The unsuccessful operation is also printed.
 
-!!! example
+!!! failure "Example message"
 
     Executing `#!json {"op":"test", "path":"/baz", "value":"bar"}` on `#!json {"baz": "qux"}`:
 

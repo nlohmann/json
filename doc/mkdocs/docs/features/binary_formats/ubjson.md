@@ -81,7 +81,7 @@ object          | *see notes on optimized format*   | map         | `{`
     different JSON object.
 
 
-!!! example
+??? example
 
     ```cpp
     --8<-- "examples/to_ubjson.cpp"
@@ -120,7 +120,7 @@ object      | object (optimized values are supported) | `{`
 	The mapping is **complete** in the sense that any UBJSON value can be converted to a JSON value.
 
 
-!!! example
+??? example
 
     ```cpp
     --8<-- "examples/from_ubjson.cpp"
