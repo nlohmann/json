@@ -49,6 +49,7 @@ nav:
     - features/merge_patch.md
     - features/enum_conversion.md
     - features/sax_interface.md
+    - features/types.md
   - Integration:
     - integration/index.md
     - integration/cmake.md
@@ -98,6 +99,8 @@ markdown_extensions:
   - pymdownx.snippets:
       base_path: docs
       check_paths: true
+  - plantuml_markdown:
+      format: svg
 
 plugins:
     - search:
@@ -105,3 +108,8 @@ plugins:
     - mkdocs-simple-hooks:
         hooks:
           on_post_build: "docs.hooks:copy_doxygen"
+    - minify:
+        minify_html: true
+
+extra_javascript:
+  - https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML

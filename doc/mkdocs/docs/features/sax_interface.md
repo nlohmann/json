@@ -2,6 +2,29 @@
 
 The library uses a SAX-like interface with the following functions:
 
+```plantuml
+class sax {
+    + {abstract} bool null()
+
+    + {abstract} bool boolean(bool val)
+
+    + {abstract} bool number_integer(number_integer_t val)
+    + {abstract} bool number_unsigned(number_unsigned_t val)
+
+    + {abstract} bool number_float(number_float_t val, const string_t& s)
+
+    + {abstract} bool string(string_t& val)
+
+    + {abstract} bool start_object(std::size_t elements)
+    + {abstract} bool end_object()
+    + {abstract} bool start_array(std::size_t elements)
+    + {abstract} bool end_array()
+    + {abstract} bool key(string_t& val)
+
+    + {abstract} bool parse_error(std::size_t position, const std::string& last_token, const detail::exception& ex)
+}
+```
+
 ```cpp
 // called when null is parsed
 bool null();

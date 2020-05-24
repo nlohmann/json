@@ -2,10 +2,10 @@
 
 Though JSON is a ubiquitous data format, it is not a very compact format suitable for data exchange, for instance over a network. Hence, the library supports
 
-- [BSON](bson) (Binary JSON),
-- [CBOR](cbor) (Concise Binary Object Representation),
-- [MessagePack](messagepack), and
-- [UBJSON](ubjson) (Universal Binary JSON Specification)
+- [BSON](bson.md) (Binary JSON),
+- [CBOR](cbor.md) (Concise Binary Object Representation),
+- [MessagePack](messagepack.md), and
+- [UBJSON](ubjson.md) (Universal Binary JSON Specification)
 
 to efficiently encode JSON values to byte vectors and to decode such vectors.
 
