@@ -30,3 +30,4 @@ test/test-*
 doc/mkdocs/venv/
 doc/mkdocs/docs/images
 doc/mkdocs/docs/examples
+doc/mkdocs/site

@@ -32,6 +32,7 @@ nav:
     - "Code of Conduct": home/code_of_conduct.md
     - "FAQ": home/faq.md
     - home/exceptions.md
+    - home/releases.md
     - home/design_goals.md
     - home/sponsors.md
   - Features:
