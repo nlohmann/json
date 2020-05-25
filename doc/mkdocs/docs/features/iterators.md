@@ -2,124 +2,150 @@
 
 ## Overview
 
-A JSON value is a container and allows access via iterators. 
+A `basic_json` value is a container and allows access via iterators. Depending on the value type, `basic_json` stores zero or more values.
 
-![](../images/range-begin-end.svg)
+As for other containers, `begin()` returns an iterator to the first value and `end()` returns an iterator to the value following the last value. The latter iterator is a placeholder and cannot be dereferenced. In case of null values, empty arrays, or empty objects, `begin()` will return `end()`.
 
-![](../images/range-rbegin-rend.svg)
+![Illustration from cppreference.com](../images/range-begin-end.svg)
 
-## Iterator getters
+### Iteration order for objects
 
-### `begin()`
+When iterating over objects, values are ordered with respect to the `object_comparator_t` type which defaults to `std::less`. See the [types documentation](types.md#key-order) for more information.
 
 ??? example
 
-    The following code shows an example for `begin()`.
-
     ```cpp
-    --8<-- "examples/begin.cpp"
+    // create JSON object {"one": 1, "two": 2, "three": 3}
+    json j;
+    j["one"] = 1;
+    j["two"] = 2;
+    j["three"] = 3;
+    
+    for (auto it = j.begin(); it != j.end(); ++it)
+    {
+        std::cout << *it << std::endl;
+    }
     ```
     
     Output:
-
+    
     ```json
-    --8<-- "examples/begin.output"
+    1
+    3
+    2
     ```
+    
+    The reason for the order is the lexicographic ordering of the object keys "one", "three", "two".
 
-### `cbegin()`
+### Access object key during iteration
+
+The JSON iterators have two member functions, `key()` and `value()` to access the object key and stored value, respectively. When calling `key()` on a non-object iterator, an [invalid_iterator.207](../home/exceptions.md#jsonexceptioninvalid_iterator207) exception is thrown.
 
 ??? example
 
-    The following code shows an example for `cbegin()`.
-
     ```cpp
-    --8<-- "examples/cbegin.cpp"
+    // create JSON object {"one": 1, "two": 2, "three": 3}
+    json j;
+    j["one"] = 1;
+    j["two"] = 2;
+    j["three"] = 3;
+    
+    for (auto it = j.begin(); it != j.end(); ++it)
+    {
+        std::cout << it.key() << " : " << it.value() << std::endl;
+    }
     ```
     
     Output:
-
+    
     ```json
-    --8<-- "examples/cbegin.output"
+    one : 1
+    three : 3
+    two : 2
     ```
 
-### `end()`
+### Range-based for loops
+
+C++11 allows to use range-based for loops to iterate over a container.
+
+```cpp
+for (auto it : j_object)
+{
+    // "it" is of type json::reference and has no key() member
+    std::cout << "value: " << it << '\n';
+}
+```
+
+For this reason, the `items()` function allows to access `iterator::key()` and `iterator::value()` during range-based for loops. In these loops, a reference to the JSON values is returned, so there is no access to the underlying iterator.
+
+```cpp
+for (auto& el : j_object.items())
+{
+    std::cout << "key: " << el.key() << ", value:" << el.value() << '\n';
+}
+```
+
+The items() function also allows to use structured bindings (C++17):
+
+```cpp
+for (auto& [key, val] : j_object.items())
+{
+    std::cout << "key: " << key << ", value:" << val << '\n';
+}
+```
+
+!!! note
+
+    When iterating over an array, `key()` will return the index of the element as string. For primitive types (e.g., numbers), `key()` returns an empty string.
+    
+!!! warning
+
+    Using `items()` on temporary objects is dangerous. Make sure the object's lifetime exeeds the iteration. See <https://github.com/nlohmann/json/issues/2040> for more information.
+
+### Reverse iteration order
+
+`rbegin()` and `rend()` return iterators in the reverse sequence.
+    
+![Illustration from cppreference.com](../images/range-rbegin-rend.svg)
 
 ??? example
 
-    The following code shows an example for `end()`.
-
     ```cpp
-    --8<-- "examples/end.cpp"
+    json j = {1, 2, 3, 4};
+
+    for (auto it = j.begin(); it != j.end(); ++it)
+    {
+        std::cout << *it << std::endl;
+    }
     ```
     
     Output:
-
+    
     ```json
-    --8<-- "examples/end.output"
+    4
+    3
+    2
+    1
     ```
 
-### `cend()`
+### Iterating strings and binary values
+
+Note that "value" means a JSON value in this setting, not values stored in the underlying containers. That is, `*begin()` returns the complete string or binary array and is also safe the underlying string or binary array is empty.
 
 ??? example
 
-    The following code shows an example for `cend()`.
-
     ```cpp
-    --8<-- "examples/cend.cpp"
+    json j = "Hello, world";
+    for (auto it = j.begin(); it != j.end(); ++it)
+    {
+        std::cout << *it << std::endl;
+    }
     ```
     
     Output:
-
+    
     ```json
-    --8<-- "examples/cend.output"
-    ```
-
-### `rbegin()`
-
-??? example
-
-    The following code shows an example for `rbegin()`.
-
-    ```cpp
-    --8<-- "examples/rbegin.cpp"
-    ```
-    
-    Output:
-
-    ```json
-    --8<-- "examples/rbegin.output"
-    ```
-
-### `rend()`
-
-??? example
-
-    The following code shows an example for `rend()`.
-
-    ```cpp
-    --8<-- "examples/rend.cpp"
-    ```
-    
-    Output:
-
-    ```json
-    --8<-- "examples/rend.output"
-    ```
-
-### `items()`
-
-??? example
-
-    The following code shows an example for `items()`.
-
-    ```cpp
-    --8<-- "examples/items.cpp"
-    ```
-    
-    Output:
-
-    ```
-    --8<-- "examples/items.output"
+    "Hello, world"
     ```
 
 ## Iterator invalidation

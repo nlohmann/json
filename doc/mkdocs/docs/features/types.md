@@ -31,7 +31,6 @@ enum value_t {
     number_float
     binary
     discarded
-
 }
 
 class json_value << (U,orchid) >> {
