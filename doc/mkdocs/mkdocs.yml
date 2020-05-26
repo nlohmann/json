@@ -49,6 +49,7 @@ nav:
     - features/json_patch.md
     - features/merge_patch.md
     - features/enum_conversion.md
+    - features/parser_callbacks.md
     - features/sax_interface.md
     - features/types.md
   - Integration:
