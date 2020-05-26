@@ -544,6 +544,11 @@ for (auto& [key, value] : o.items()) {
 }
 
 // find an entry
+if (o.contains("foo")) {
+  // there is an entry with key "foo"
+}
+
+// or via find and an iterator
 if (o.find("foo") != o.end()) {
   // there is an entry with key "foo"
 }
