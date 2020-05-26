@@ -3768,7 +3768,8 @@ class basic_json
     @since version 1.0.0
     */
     template<class ValueType, typename std::enable_if<
-                 std::is_convertible<basic_json_t, ValueType>::value, int>::type = 0>
+                 std::is_convertible<basic_json_t, ValueType>::value
+                 and not std::is_same<value_t, ValueType>::value, int>::type = 0>
     ValueType value(const typename object_t::key_type& key, const ValueType& default_value) const
     {
         // at only works for objects
