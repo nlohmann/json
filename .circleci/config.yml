@@ -22,3 +22,26 @@ jobs:
       - run:
           name: Execute test suite
           command: 'cd build ; ctest --output-on-failure -j 2'
+
+  build_bleeding_edge:
+    docker:
+      - image: archlinux
+
+    steps:
+      - checkout
+
+      - run:
+          name: Install required tools
+          command: 'pacman -S --noconfirm gcc git cmake'
+      - run:
+          name: Show versions
+          command: 'g++ --version ; uname -a; cmake --version'
+      - run:
+          name: Run CMake
+          command: 'mkdir build ; cd build ; cmake ..'
+      - run:
+          name: Compile
+          command: 'cmake --build build'
+      - run:
+          name: Execute test suite
+          command: 'cd build ; ctest --output-on-failure -j 2'
