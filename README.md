@@ -544,6 +544,11 @@ for (auto& [key, value] : o.items()) {
 }
 
 // find an entry
+if (o.contains("foo")) {
+  // there is an entry with key "foo"
+}
+
+// or via find and an iterator
 if (o.find("foo") != o.end()) {
   // there is an entry with key "foo"
 }
@@ -1085,7 +1090,7 @@ auto cbor = json::to_msgpack(j); // 0xD5 (fixext2), 0x10, 0xCA, 0xFE
 
 Though it's 2020 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
 
-- GCC 4.8 - 10.0 (and possibly later)
+- GCC 4.8 - 10.1 (and possibly later)
 - Clang 3.4 - 10.0 (and possibly later)
 - Intel C++ Compiler 17.0.2 (and possibly later)
 - Microsoft Visual C++ 2015 / Build Tools 14.0.25123.0 (and possibly later)
@@ -1142,6 +1147,7 @@ The following compilers are currently used in continuous integration at [Travis]
 | GCC 7.5.0 (Ubuntu 7.5.0-3ubuntu1~18.04)                         | Ubuntu 18.04.4 LTS | GitHub Actions |
 | GCC 8.4.0 (Ubuntu 8.4.0-1ubuntu1~14.04)                         | Ubuntu 14.04.5 LTS | Travis         |
 | GCC 9.3.0 (Ubuntu 9.3.0-11ubuntu0~14.04)                        | Ubuntu 14.04.5 LTS | Travis         |
+| GCC 10.1.0 (Arch Linux latest)                                  | Arch Linux         | Circle CI      |
 | MSVC 19.0.24241.7 (Build Engine version 14.0.25420.1)           | Windows-6.3.9600   | AppVeyor       |
 | MSVC 19.16.27035.0 (15.9.21+g9802d43bc3 for .NET Framework)     | Windows-10.0.14393 | AppVeyor       |
 | MSVC 19.25.28614.0 (Build Engine version 16.5.0+d4cbfca49 for .NET Framework) | Windows-10.0.17763  | AppVeyor       |

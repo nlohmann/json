@@ -1,6 +1,6 @@
 version: 2
 jobs:
-  build:
+  build_stable:
     docker:
       - image: debian:stretch
 
@@ -22,3 +22,33 @@ jobs:
       - run:
           name: Execute test suite
           command: 'cd build ; ctest --output-on-failure -j 2'
+
+  build_bleeding_edge:
+    docker:
+      - image: archlinux
+
+    steps:
+      - checkout
+
+      - run:
+          name: Install required tools
+          command: 'pacman -Sy --noconfirm base base-devel gcc git cmake'
+      - run:
+          name: Show versions
+          command: 'g++ --version ; uname -a; cmake --version'
+      - run:
+          name: Run CMake
+          command: 'mkdir build ; cd build ; cmake ..'
+      - run:
+          name: Compile
+          command: 'cmake --build build'
+      - run:
+          name: Execute test suite
+          command: 'cd build ; ctest --output-on-failure -j 2'
+
+workflows:
+  version: 2
+  build_and_test_all:
+    jobs:
+      - build_stable
+      - build_bleeding_edge
