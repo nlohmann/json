@@ -32,7 +32,7 @@ jobs:
 
       - run:
           name: Install required tools
-          command: 'pacman -Sy --noconfirm gcc git cmake'
+          command: 'pacman -Sy --noconfirm base base-devel gcc git cmake'
       - run:
           name: Show versions
           command: 'g++ --version ; uname -a; cmake --version'
