@@ -79,7 +79,8 @@ TEST_CASE("Custom iterator")
 {
     const char* raw_data = "[1,2,3,4]";
 
-    struct MyIterator {
+    struct MyIterator
+    {
         using difference_type = std::size_t;
         using value_type = char;
         using pointer = const char*;
@@ -87,13 +88,18 @@ TEST_CASE("Custom iterator")
         using iterator_category = std::input_iterator_tag;
 
 
-        MyIterator& operator++() { 
+        MyIterator& operator++()
+        {
             ++ptr;
             return *this;
         }
 
-        reference operator*() const {return *ptr;}
-        bool operator!=(const MyIterator& rhs) const {
+        reference operator*() const
+        {
+            return *ptr;
+        }
+        bool operator!=(const MyIterator& rhs) const
+        {
             return ptr != rhs.ptr;
         }
 

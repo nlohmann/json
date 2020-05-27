@@ -6750,7 +6750,7 @@ class basic_json
     }
 
 
-  
+
 
     /*!
     @brief deserialize from stream

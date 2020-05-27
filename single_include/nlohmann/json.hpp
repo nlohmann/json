@@ -4547,14 +4547,16 @@ class iterator_input_adapter
   public:
     using char_type = typename std::iterator_traits<IteratorType>::value_type;
 
-    iterator_input_adapter(IteratorType begin_ite, IteratorType end_ite)
-        : current(std::move(begin_ite)), end(std::move(end_ite)) {}
+    iterator_input_adapter(IteratorType first, IteratorType last)
+        : current(std::move(first)), end(std::move(last)) {}
 
     typename std::char_traits<char_type>::int_type get_character()
     {
         if (current != end)
         {
-            return *current++;
+            auto result = std::char_traits<char_type>::to_int_type(*current);
+            std::advance(current, 1);
+            return result;
         }
         else
         {
@@ -4562,14 +4564,18 @@ class iterator_input_adapter
         }
     }
 
+  private:
+    IteratorType current;
+    IteratorType end;
+
+    template<typename BaseInputAdapter, size_t T>
+    friend class wide_string_input_helper;
+
     bool empty() const
     {
         return current == end;
     }
 
-  private:
-    IteratorType current;
-    IteratorType end;
 };
 
 
@@ -4737,7 +4743,7 @@ class wide_string_input_adapter
     std::size_t utf8_bytes_index = 0;
     /// number of valid bytes in the utf8_codes array
     std::size_t utf8_bytes_filled = 0;
-}
+};
 
 
 template<typename IteratorType, typename Enable = void>
@@ -4747,15 +4753,15 @@ struct iterator_input_adapter_factory
     using char_type = typename std::iterator_traits<iterator_type>::value_type;
     using adapter_type = iterator_input_adapter<iterator_type>;
 
-    adapter_type create(IteratorType begin, IteratorType end)
+    static adapter_type create(IteratorType begin, IteratorType end)
     {
-        return adapter_type(std::move(begin), std::mve(end));
+        return adapter_type(std::move(begin), std::move(end));
     }
 };
 
 template<typename IteratorType>
 struct iterator_input_adapter_factory<IteratorType,
-       typename std::enable_if<(sizeof(typename std::iterator_traits<iterator_type>::value_type)>1)>::type >
+       typename std::enable_if<(sizeof(typename std::iterator_traits<IteratorType>::value_type)>1)>::type >
        {
 
            using iterator_type = IteratorType;
@@ -4763,9 +4769,9 @@ struct iterator_input_adapter_factory<IteratorType,
            using base_adapter_type = iterator_input_adapter<iterator_type>;
            using adapter_type = wide_string_input_adapter<base_adapter_type, char_type>;
 
-           adapter_type create(IteratorType begin, IteratorType end)
+           static adapter_type create(IteratorType begin, IteratorType end)
 {
-    return adapter_type(base_adapter_type(std::move(begin), std::mve(end)));
+    return adapter_type(base_adapter_type(std::move(begin), std::move(end)));
 }
        };
 
@@ -4773,12 +4779,13 @@ struct iterator_input_adapter_factory<IteratorType,
 template<typename IteratorType>
 typename iterator_input_adapter_factory<IteratorType>::adapter_type input_adapter(IteratorType begin, IteratorType end)
 {
-    return iterator_input_adapter_factory<IteratorType>::create(begin, end);
+    using factory_type = iterator_input_adapter_factory<IteratorType>;
+    return factory_type::create(begin, end);
 }
 
 // Convenience shorthand from container to iterator
 template<typename ContainerType>
-decltype(input_adapter(begin(container), end(container))) input_adapter(const T& container)
+auto input_adapter(const ContainerType& container) -> decltype(input_adapter(begin(container), end(container)))
 {
     return input_adapter(begin(container), end(container));
 }
@@ -4799,6 +4806,8 @@ inline input_stream_adapter input_adapter(std::istream&& stream)
     return input_stream_adapter(stream);
 }
 
+using contiguous_bytes_input_adapter = decltype(input_adapter(std::declval<const char*>(), std::declval<const char*>()));
+
 // Null-delimited strings, and the like.
 template<typename CharT,
          typename std::enable_if<
@@ -4806,7 +4815,7 @@ template<typename CharT,
              std::is_integral<typename std::remove_pointer<CharT>::type>::value and
              sizeof(typename std::remove_pointer<CharT>::type) == 1,
              int>::type = 0>
-input_buffer_adapter input_adapter(CharT b)
+contiguous_bytes_input_adapter input_adapter(CharT b)
 {
     auto length = std::strlen(reinterpret_cast<const char*>(b));
     auto ptr = reinterpret_cast<const char*>(b);
@@ -4827,7 +4836,7 @@ class span_input_adapter
                  sizeof(typename std::remove_pointer<CharT>::type) == 1,
                  int>::type = 0>
     span_input_adapter(CharT b, std::size_t l)
-        : ia(reinterpret_cast<const char*>(b), l) {}
+        : ia(reinterpret_cast<const char*>(b), reinterpret_cast<const char*>(b) + l) {}
 
     template<typename CharT,
              typename std::enable_if<
@@ -4836,8 +4845,7 @@ class span_input_adapter
                  sizeof(typename std::remove_pointer<CharT>::type) == 1,
                  int>::type = 0>
     span_input_adapter(CharT b)
-        : span_input_adapter(reinterpret_cast<const char*>(b),
-                             std::strlen(reinterpret_cast<const char*>(b))) {}
+        : span_input_adapter(b, std::strlen(reinterpret_cast<const char*>(b))) {}
 
     template<class IteratorType,
              typename std::enable_if<
@@ -4858,13 +4866,13 @@ class span_input_adapter
     span_input_adapter(const ContiguousContainer& c)
         : span_input_adapter(std::begin(c), std::end(c)) {}
 
-    input_buffer_adapter&& get()
+    contiguous_bytes_input_adapter&& get()
     {
         return std::move(ia);
     }
 
   private:
-    input_buffer_adapter ia;
+    contiguous_bytes_input_adapter ia;
 };
 }  // namespace detail
 }  // namespace nlohmann
@@ -22390,7 +22398,7 @@ class basic_json
                             const bool allow_exceptions = true)
     {
         basic_json result;
-        parser(detail::iterator_input_adapter(std::move(begin), std::move(end)), cb, allow_exceptions).parse(true, result);
+        parser(detail::input_adapter(std::move(begin), std::move(end)), cb, allow_exceptions).parse(true, result);
         return result;
     }
 
@@ -22413,7 +22421,7 @@ class basic_json
     template<typename IteratorType>
     static bool accept(IteratorType begin, IteratorType end)
     {
-        return parser(detail::iterator_input_adapter(std::move(begin), std::move(end))).accept(true);
+        return parser(detail::input_adapter(std::move(begin), std::move(end))).accept(true);
     }
 
     static bool accept(detail::span_input_adapter&& i)
@@ -22474,13 +22482,25 @@ class basic_json
 
     @since version 3.2.0
     */
-    template <typename SAX, typename InputType>
+    template <typename InputType, typename SAX>
     JSON_HEDLEY_NON_NULL(2)
     static bool sax_parse(InputType&& i, SAX* sax,
                           input_format_t format = input_format_t::json,
                           const bool strict = true)
     {
         auto ia = detail::input_adapter(std::forward<InputType>(i));
+        return format == input_format_t::json
+               ? parser(std::move(ia)).sax_parse(sax, strict)
+               : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia)).sax_parse(format, sax, strict);
+    }
+
+    template<class IteratorType, class SAX>
+    JSON_HEDLEY_NON_NULL(3)
+    static bool sax_parse(IteratorType first, IteratorType last, SAX* sax,
+                          input_format_t format = input_format_t::json,
+                          const bool strict = true)
+    {
+        auto ia = detail::input_adapter(std::move(first), std::move(last));
         return format == input_format_t::json
                ? parser(std::move(ia)).sax_parse(sax, strict)
                : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia)).sax_parse(format, sax, strict);
@@ -22499,86 +22519,7 @@ class basic_json
     }
 
 
-    /*!
-    @brief deserialize from an iterator range with contiguous storage
 
-    This function reads from an iterator range of a container with contiguous
-    storage of 1-byte values. Compatible container types include
-    `std::vector`, `std::string`, `std::array`, `std::valarray`, and
-    `std::initializer_list`. Furthermore, C-style arrays can be used with
-    `std::begin()`/`std::end()`. User-defined containers can be used as long
-    as they implement random-access iterators and a contiguous storage.
-
-    @pre The iterator range is contiguous. Violating this precondition yields
-    undefined behavior. **This precondition is enforced with an assertion.**
-    @pre Each element in the range has a size of 1 byte. Violating this
-    precondition yields undefined behavior. **This precondition is enforced
-    with a static assertion.**
-
-    @warning There is no way to enforce all preconditions at compile-time. If
-             the function is called with noncompliant iterators and with
-             assertions switched off, the behavior is undefined and will most
-             likely yield segmentation violation.
-
-    @tparam IteratorType iterator of container with contiguous storage
-    @param[in] first  begin of the range to parse (included)
-    @param[in] last  end of the range to parse (excluded)
-    @param[in] cb  a parser callback function of type @ref parser_callback_t
-    which is used to control the deserialization by filtering unwanted values
-    (optional)
-    @param[in] allow_exceptions  whether to throw exceptions in case of a
-    parse error (optional, true by default)
-
-    @return deserialized JSON value; in case of a parse error and
-            @a allow_exceptions set to `false`, the return value will be
-            value_t::discarded.
-
-    @throw parse_error.101 in case of an unexpected token
-    @throw parse_error.102 if to_unicode fails or surrogate error
-    @throw parse_error.103 if to_unicode fails
-
-    @complexity Linear in the length of the input. The parser is a predictive
-    LL(1) parser. The complexity can be higher if the parser callback function
-    @a cb has a super-linear complexity.
-
-    @note A UTF-8 byte order mark is silently ignored.
-
-    @liveexample{The example below demonstrates the `parse()` function reading
-    from an iterator range.,parse__iteratortype__parser_callback_t}
-
-    @since version 2.0.3
-    */
-    template<class IteratorType, typename std::enable_if<
-                 std::is_base_of<
-                     std::random_access_iterator_tag,
-                     typename std::iterator_traits<IteratorType>::iterator_category>::value, int>::type = 0>
-    static basic_json parse(IteratorType first, IteratorType last,
-                            const parser_callback_t cb = nullptr,
-                            const bool allow_exceptions = true)
-    {
-        basic_json result;
-        parser(detail::input_adapter(first, last), cb, allow_exceptions).parse(true, result);
-        return result;
-    }
-
-    template<class IteratorType, typename std::enable_if<
-                 std::is_base_of<
-                     std::random_access_iterator_tag,
-                     typename std::iterator_traits<IteratorType>::iterator_category>::value, int>::type = 0>
-    static bool accept(IteratorType first, IteratorType last)
-    {
-        return parser(detail::input_adapter(first, last)).accept(true);
-    }
-
-    template<class IteratorType, class SAX, typename std::enable_if<
-                 std::is_base_of<
-                     std::random_access_iterator_tag,
-                     typename std::iterator_traits<IteratorType>::iterator_category>::value, int>::type = 0>
-    JSON_HEDLEY_NON_NULL(3)
-    static bool sax_parse(IteratorType first, IteratorType last, SAX* sax)
-    {
-        return parser(detail::input_adapter(first, last)).sax_parse(sax);
-    }
 
     /*!
     @brief deserialize from stream
@@ -23228,16 +23169,16 @@ class basic_json
     /*!
     @copydoc from_cbor(detail::input_adapter&&, const bool, const bool)
     */
-    template<typename A1, typename A2,
-             detail::enable_if_t<std::is_constructible<detail::span_input_adapter, A1, A2>::value, int> = 0>
+    template<typename IteratorType>
     JSON_HEDLEY_WARN_UNUSED_RESULT
-    static basic_json from_cbor(A1 && a1, A2 && a2,
+    static basic_json from_cbor(IteratorType first, IteratorType last,
                                 const bool strict = true,
                                 const bool allow_exceptions = true)
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        const bool res = binary_reader<detail::input_buffer_adapter>(detail::span_input_adapter(std::forward<A1>(a1), std::forward<A2>(a2)).get()).sax_parse(input_format_t::cbor, &sdp, strict);
+        auto ia = detail::input_adapter(std::move(first), std::move(last));
+        const bool res = binary_reader<decltype(ia)>(std::move(ia)).sax_parse(input_format_t::cbor, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -23248,7 +23189,8 @@ class basic_json
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        const bool res = binary_reader<detail::input_buffer_adapter>(i.get()).sax_parse(input_format_t::cbor, &sdp, strict);
+        auto ia = i.get();
+        const bool res = binary_reader<decltype(ia)>(std::move(ia)).sax_parse(input_format_t::cbor, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -23354,16 +23296,16 @@ class basic_json
     /*!
     @copydoc from_msgpack(detail::input_adapter&&, const bool, const bool)
     */
-    template<typename A1, typename A2,
-             detail::enable_if_t<std::is_constructible<detail::span_input_adapter, A1, A2>::value, int> = 0>
+    template<typename IteratorType>
     JSON_HEDLEY_WARN_UNUSED_RESULT
-    static basic_json from_msgpack(A1 && a1, A2 && a2,
+    static basic_json from_msgpack(IteratorType first, IteratorType last,
                                    const bool strict = true,
                                    const bool allow_exceptions = true)
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        const bool res = binary_reader<detail::input_buffer_adapter>(detail::span_input_adapter(std::forward<A1>(a1), std::forward<A2>(a2)).get()).sax_parse(input_format_t::msgpack, &sdp, strict);
+        auto ia = detail::input_adapter(std::move(first), std::move(last));
+        const bool res = binary_reader<decltype(ia)>(std::move(ia)).sax_parse(input_format_t::msgpack, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -23375,7 +23317,8 @@ class basic_json
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        const bool res = binary_reader<detail::input_buffer_adapter>(i.get()).sax_parse(input_format_t::msgpack, &sdp, strict);
+        auto ia = i.get();
+        const bool res = binary_reader<decltype(ia)>(std::move(ia)).sax_parse(input_format_t::msgpack, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -23457,16 +23400,16 @@ class basic_json
     /*!
     @copydoc from_ubjson(detail::input_adapter&&, const bool, const bool)
     */
-    template<typename A1, typename A2,
-             detail::enable_if_t<std::is_constructible<detail::span_input_adapter, A1, A2>::value, int> = 0>
+    template<typename IteratorType>
     JSON_HEDLEY_WARN_UNUSED_RESULT
-    static basic_json from_ubjson(A1 && a1, A2 && a2,
+    static basic_json from_ubjson(IteratorType first, IteratorType last,
                                   const bool strict = true,
                                   const bool allow_exceptions = true)
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        const bool res = binary_reader<detail::input_buffer_adapter>(detail::span_input_adapter(std::forward<A1>(a1), std::forward<A2>(a2)).get()).sax_parse(input_format_t::ubjson, &sdp, strict);
+        auto ia = detail::input_adapter(std::move(first), std::move(last));
+        const bool res = binary_reader<decltype(ia)>(std::move(ia)).sax_parse(input_format_t::ubjson, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -23477,7 +23420,8 @@ class basic_json
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        const bool res = binary_reader<detail::input_buffer_adapter>(i.get()).sax_parse(input_format_t::ubjson, &sdp, strict);
+        auto ia = i.get();
+        const bool res = binary_reader<decltype(ia)>(std::move(ia)).sax_parse(input_format_t::ubjson, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -23558,16 +23502,16 @@ class basic_json
     /*!
     @copydoc from_bson(detail::input_adapter&&, const bool, const bool)
     */
-    template<typename A1, typename A2,
-             detail::enable_if_t<std::is_constructible<detail::span_input_adapter, A1, A2>::value, int> = 0>
+    template<typename IteratorType>
     JSON_HEDLEY_WARN_UNUSED_RESULT
-    static basic_json from_bson(A1 && a1, A2 && a2,
+    static basic_json from_bson(IteratorType first, IteratorType last,
                                 const bool strict = true,
                                 const bool allow_exceptions = true)
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        const bool res = binary_reader<detail::input_buffer_adapter>(detail::span_input_adapter(std::forward<A1>(a1), std::forward<A2>(a2)).get()).sax_parse(input_format_t::bson, &sdp, strict);
+        auto ia = detail::input_adapter(std::move(first), std::move(last));
+        const bool res = binary_reader<decltype(ia)>(std::move(ia)).sax_parse(input_format_t::bson, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -23578,7 +23522,8 @@ class basic_json
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        const bool res = binary_reader<detail::input_buffer_adapter>(i.get()).sax_parse(input_format_t::bson, &sdp, strict);
+        auto ia = i.get();
+        const bool res = binary_reader<decltype(ia)>(std::move(ia)).sax_parse(input_format_t::bson, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
     /// @}
