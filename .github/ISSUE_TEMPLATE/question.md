@@ -7,6 +7,8 @@ assignees: ''
 
 ---
 
+<!-- Provide a concise summary of the issue in the title above. -->
+
 #### What do you want to achieve?
 
 <!-- Please describe the feature as detailed as possible. -->
@@ -16,6 +18,10 @@ assignees: ''
 <!-- There are thousands of issues to search: https://github.com/nlohmann/json/issues?q=is%3Aissue+ -->
 <!-- There is a full documentation of the API: https://nlohmann.github.io/json/ -->
 <!-- There is a detailed README file: https://github.com/nlohmann/json/blob/develop/README.md -->
+
+#### Can you provide a small code example?
+
+<!-- Please understand that we cannot analyze and debug large code bases. -->
 
 #### Which compiler and operating system are you using?
 
