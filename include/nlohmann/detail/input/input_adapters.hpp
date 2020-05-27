@@ -391,12 +391,13 @@ inline input_stream_adapter input_adapter(std::istream&& stream)
 using contiguous_bytes_input_adapter = decltype(input_adapter(std::declval<const char*>(), std::declval<const char*>()));
 
 // Null-delimited strings, and the like.
-template<typename CharT,
-         typename std::enable_if<
-             std::is_pointer<CharT>::value and
-             std::is_integral<typename std::remove_pointer<CharT>::type>::value and
-             sizeof(typename std::remove_pointer<CharT>::type) == 1,
-             int>::type = 0>
+template < typename CharT,
+           typename std::enable_if <
+               std::is_pointer<CharT>::value and
+               !std::is_array<CharT>::value and
+               std::is_integral<typename std::remove_pointer<CharT>::type>::value and
+               sizeof(typename std::remove_pointer<CharT>::type) == 1,
+               int >::type = 0 >
 contiguous_bytes_input_adapter input_adapter(CharT b)
 {
     auto length = std::strlen(reinterpret_cast<const char*>(b));
@@ -404,6 +405,11 @@ contiguous_bytes_input_adapter input_adapter(CharT b)
     return input_adapter(ptr, ptr + length);
 }
 
+template<typename T, std::size_t N>
+auto input_adapter(T (&array)[N]) -> decltype(input_adapter(array, array + N))
+{
+    return input_adapter(array, array + N);
+}
 
 // This class only handles inputs of input_buffer_adapter type.
 // It's required so that expressions like {ptr, len} can be implicitely casted
