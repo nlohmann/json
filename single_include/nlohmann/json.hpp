@@ -4787,6 +4787,10 @@ typename iterator_input_adapter_factory<IteratorType>::adapter_type input_adapte
 template<typename ContainerType>
 auto input_adapter(const ContainerType& container) -> decltype(input_adapter(begin(container), end(container)))
 {
+    // Enable ADL
+    using std::begin;
+    using std::end;
+
     return input_adapter(begin(container), end(container));
 }
 
@@ -4838,33 +4842,12 @@ class span_input_adapter
     span_input_adapter(CharT b, std::size_t l)
         : ia(reinterpret_cast<const char*>(b), reinterpret_cast<const char*>(b) + l) {}
 
-    template<typename CharT,
-             typename std::enable_if<
-                 std::is_pointer<CharT>::value and
-                 std::is_integral<typename std::remove_pointer<CharT>::type>::value and
-                 sizeof(typename std::remove_pointer<CharT>::type) == 1,
-                 int>::type = 0>
-    span_input_adapter(CharT b)
-        : span_input_adapter(b, std::strlen(reinterpret_cast<const char*>(b))) {}
-
     template<class IteratorType,
              typename std::enable_if<
                  std::is_same<typename iterator_traits<IteratorType>::iterator_category, std::random_access_iterator_tag>::value,
                  int>::type = 0>
     span_input_adapter(IteratorType first, IteratorType last)
         : ia(input_adapter(first, last)) {}
-
-    template<class T, std::size_t N>
-    span_input_adapter(T (&array)[N])
-        : span_input_adapter(std::begin(array), std::end(array)) {}
-
-    /// input adapter for contiguous container
-    template<class ContiguousContainer, typename
-             std::enable_if<not std::is_pointer<ContiguousContainer>::value and
-                            std::is_base_of<std::random_access_iterator_tag, typename iterator_traits<decltype(std::begin(std::declval<ContiguousContainer const>()))>::iterator_category>::value,
-                            int>::type = 0>
-    span_input_adapter(const ContiguousContainer& c)
-        : span_input_adapter(std::begin(c), std::end(c)) {}
 
     contiguous_bytes_input_adapter&& get()
     {
