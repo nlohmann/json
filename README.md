@@ -1230,7 +1230,7 @@ I deeply appreciate the help of the following people.
 - [Mário Feroldi](https://github.com/thelostt) fixed a small typo.
 - [duncanwerner](https://github.com/duncanwerner) found a really embarrassing performance regression in the 2.0.0 release.
 - [Damien](https://github.com/dtoma) fixed one of the last conversion warnings.
-- [Thomas Braun](https://github.com/t-b) fixed a warning in a test case.
+- [Thomas Braun](https://github.com/t-b) fixed a warning in a test case and adjusted MSVC calls in the CI.
 - [Théo DELRIEU](https://github.com/theodelrieu) patiently and constructively oversaw the long way toward [iterator-range parsing](https://github.com/nlohmann/json/issues/290). He also implemented the magic behind the serialization/deserialization of user-defined types and split the single header file into smaller chunks.
 - [Stefan](https://github.com/5tefan) fixed a minor issue in the documentation.
 - [Vasil Dimov](https://github.com/vasild) fixed the documentation regarding conversions from `std::multiset`.
@@ -1374,6 +1374,33 @@ I deeply appreciate the help of the following people.
 - [Florian Pigorsch](https://github.com/flopp) fixed a lot of typos.
 - [Camille Bégué](https://github.com/cbegue) fixed an issue in the conversion from  `std::pair` and `std::tuple` to `json`.
 - [Anthony VH](https://github.com/AnthonyVH) fixed a compile error in an enum deserialization.
+- [Yuriy Vountesmery](https://github.com/ua-code-dragon) noted a subtle bug in a preprocessor check.
+- [Chen](https://github.com/dota17) fixed numerous issues in the library.
+- [Antony Kellermann](https://github.com/aokellermann) added a CI step for GCC 10.1.
+- [Alex](https://github.com/gistrec) fixed an MSVC warning.
+- [Rainer](https://github.com/rvjr) proposed an improvement in the floating-point serialization in CBOR.
+- [Francois Chabot](https://github.com/FrancoisChabot) made performance improvements in the input adapters.
+- [Arthur Sonzogni](https://github.com/ArthurSonzogni) documented how the library can be included via `FetchContent`.
+- [Rimas Misevičius](https://github.com/rmisev) fixed an error message.
+- [Alexander Myasnikov](https://github.com/alexandermyasnikov) fixed some examples and a link in the README.
+- [Hubert Chathi](https://github.com/uhoreg) made CMake's version config file architecture-independent.
+- [OmnipotentEntity](https://github.com/OmnipotentEntity) implemented the binary values for CBOR, MessagePack, BSON, and UBJSON.
+- [ArtemSarmini](https://github.com/ArtemSarmini) fixed a compilation issue with GCC 10 and fixed a leak.
+- [Evgenii Sopov](https://github.com/sea-kg) integrated the library to the wsjcpp package manager.
+- [Sergey Linev](https://github.com/linev) fixed a compiler warning.
+- [Miguel Magalhães](https://github.com/magamig) fixed the year in the copyright.
+- [Gareth Sylvester-Bradley](https://github.com/garethsb-sony) fixed a compilation issue with MSVC.
+- [Alexander “weej” Jones](https://github.com/alex-weej) fixed an example in the README.
+- [Antoine Cœur](https://github.com/Coeur) fixed some typos in the documentation.
+- [jothepro](https://github.com/jothepro) updated links to the Hunter package.
+- [Dave Lee](https://github.com/kastiglione) fixed link in the README.
+- [Joël Lamotte](https://github.com/Klaim) added instruction for using Build2's package manager.
+- [Paul Jurczak](https://github.com/pauljurczak) fixed an example in the README.
+- [Sonu Lohani](https://github.com/sonulohani) fixed a warning.
+- [Carlos Gomes Martinho](https://github.com/gocarlos) updated the Conan package source.
+- [Konstantin Podsvirov](https://github.com/podsvirov) fixed the MSYS2 package documentation.
+- [Tridacnid](https://github.com/Tridacnid) improved the CMake tests.
+- [Michael](https://github.com/MBalszun) fixed MSVC warnings.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
