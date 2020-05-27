@@ -183,6 +183,7 @@ add_dependencies(json_unit download_test_data)
 #############################################################################
 # Test the generated build configs
 #############################################################################
+
 add_subdirectory(cmake_import)
 add_subdirectory(cmake_import_minver)
 add_subdirectory(cmake_add_subdirectory)

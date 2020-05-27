@@ -1501,7 +1501,7 @@ To compile and run the tests, you need to execute
 ```sh
 $ mkdir build
 $ cd build
-$ cmake ..
+$ cmake .. -DJSON_BuildTests=On
 $ cmake --build .
 $ ctest --output-on-failure
 ```
