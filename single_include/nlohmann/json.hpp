@@ -4456,6 +4456,8 @@ Input adapter for stdio file access. This adapter read only 1 byte and do not us
 class file_input_adapter
 {
   public:
+    using char_type = char;
+
     JSON_HEDLEY_NON_NULL(2)
     explicit file_input_adapter(std::FILE* f)  noexcept
         : m_file(f)
@@ -4490,6 +4492,8 @@ subsequent call for input from the std::istream.
 class input_stream_adapter
 {
   public:
+    using char_type = char;
+
     ~input_stream_adapter()
     {
         // clear stream flags; we use underlying streambuf I/O, do not
@@ -4535,51 +4539,55 @@ class input_stream_adapter
     std::streambuf* sb = nullptr;
 };
 
-/// input adapter for buffer input
-class input_buffer_adapter
+// General-purpose iterator-based adapter. It might not be as fast as
+// theoretically possible for some containers, but it is extremely versatile.
+template<typename IteratorType>
+class iterator_input_adapter
 {
   public:
-    input_buffer_adapter(const char* b, const std::size_t l) noexcept
-        : cursor(b), limit(b == nullptr ? nullptr : (b + l))
-    {}
+    using char_type = typename std::iterator_traits<IteratorType>::value_type;
 
-    // delete because of pointer members
-    input_buffer_adapter(const input_buffer_adapter&) = delete;
-    input_buffer_adapter& operator=(input_buffer_adapter&) = delete;
-    input_buffer_adapter(input_buffer_adapter&&) = default;
-    input_buffer_adapter& operator=(input_buffer_adapter&&) = delete;
+    iterator_input_adapter(IteratorType begin_ite, IteratorType end_ite)
+        : current(std::move(begin_ite)), end(std::move(end_ite)) {}
 
-    std::char_traits<char>::int_type get_character() noexcept
+    typename std::char_traits<char_type>::int_type get_character()
     {
-        if (JSON_HEDLEY_LIKELY(cursor < limit))
+        if (current != end)
         {
-            assert(cursor != nullptr and limit != nullptr);
-            return std::char_traits<char>::to_int_type(*(cursor++));
+            return *current++;
         }
+        else
+        {
+            return std::char_traits<char_type>::eof();
+        }
+    }
 
-        return std::char_traits<char>::eof();
+    bool empty() const
+    {
+        return current == end;
     }
 
   private:
-    /// pointer to the current character
-    const char* cursor;
-    /// pointer past the last character
-    const char* const limit;
+    IteratorType current;
+    IteratorType end;
 };
 
-template<typename WideStringType, size_t T>
-struct wide_string_input_helper
+
+template<typename BaseInputAdapter, size_t T>
+struct wide_string_input_helper;
+
+template<typename BaseInputAdapter>
+struct wide_string_input_helper<BaseInputAdapter, 4>
 {
     // UTF-32
-    static void fill_buffer(const WideStringType& str,
-                            size_t& current_wchar,
+    static void fill_buffer(BaseInputAdapter& input,
                             std::array<std::char_traits<char>::int_type, 4>& utf8_bytes,
                             size_t& utf8_bytes_index,
                             size_t& utf8_bytes_filled)
     {
         utf8_bytes_index = 0;
 
-        if (current_wchar == str.size())
+        if (input.empty())
         {
             utf8_bytes[0] = std::char_traits<char>::eof();
             utf8_bytes_filled = 1;
@@ -4587,7 +4595,7 @@ struct wide_string_input_helper
         else
         {
             // get the current character
-            const auto wc = static_cast<unsigned int>(str[current_wchar++]);
+            const auto wc = input.get_character();
 
             // UTF-32 to UTF-8 encoding
             if (wc < 0x80)
@@ -4626,19 +4634,18 @@ struct wide_string_input_helper
     }
 };
 
-template<typename WideStringType>
-struct wide_string_input_helper<WideStringType, 2>
+template<typename BaseInputAdapter>
+struct wide_string_input_helper<BaseInputAdapter, 2>
 {
     // UTF-16
-    static void fill_buffer(const WideStringType& str,
-                            size_t& current_wchar,
+    static void fill_buffer(BaseInputAdapter& input,
                             std::array<std::char_traits<char>::int_type, 4>& utf8_bytes,
                             size_t& utf8_bytes_index,
                             size_t& utf8_bytes_filled)
     {
         utf8_bytes_index = 0;
 
-        if (current_wchar == str.size())
+        if (input.empty())
         {
             utf8_bytes[0] = std::char_traits<char>::eof();
             utf8_bytes_filled = 1;
@@ -4646,7 +4653,7 @@ struct wide_string_input_helper<WideStringType, 2>
         else
         {
             // get the current character
-            const auto wc = static_cast<unsigned int>(str[current_wchar++]);
+            const auto wc = input.get_character();
 
             // UTF-16 to UTF-8 encoding
             if (wc < 0x80)
@@ -4669,9 +4676,9 @@ struct wide_string_input_helper<WideStringType, 2>
             }
             else
             {
-                if (current_wchar < str.size())
+                if (!input.empty())
                 {
-                    const auto wc2 = static_cast<unsigned int>(str[current_wchar++]);
+                    const auto wc2 = static_cast<unsigned int>(input.get_character());
                     const auto charcode = 0x10000u + (((wc & 0x3FFu) << 10u) | (wc2 & 0x3FFu));
                     utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(0xF0u | (charcode >> 18u));
                     utf8_bytes[1] = static_cast<std::char_traits<char>::int_type>(0x80u | ((charcode >> 12u) & 0x3Fu));
@@ -4681,8 +4688,6 @@ struct wide_string_input_helper<WideStringType, 2>
                 }
                 else
                 {
-                    // unknown character
-                    ++current_wchar;
                     utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(wc);
                     utf8_bytes_filled = 1;
                 }
@@ -4691,20 +4696,20 @@ struct wide_string_input_helper<WideStringType, 2>
     }
 };
 
-template<typename WideStringType>
+// Wraps another input apdater to convert wide character types into individual bytes.
+template<typename BaseInputAdapter, typename WideCharType>
 class wide_string_input_adapter
 {
   public:
-    explicit wide_string_input_adapter(const WideStringType& w) noexcept
-        : str(w)
-    {}
+    wide_string_input_adapter(BaseInputAdapter base)
+        : base_adapter(base) {}
 
-    std::char_traits<char>::int_type get_character() noexcept
+    typename std::char_traits<char>::int_type get_character() noexcept
     {
         // check if buffer needs to be filled
         if (utf8_bytes_index == utf8_bytes_filled)
         {
-            fill_buffer<sizeof(typename WideStringType::value_type)>();
+            fill_buffer<sizeof(WideCharType)>();
 
             assert(utf8_bytes_filled > 0);
             assert(utf8_bytes_index == 0);
@@ -4717,17 +4722,13 @@ class wide_string_input_adapter
     }
 
   private:
+    BaseInputAdapter base_adapter;
+
     template<size_t T>
     void fill_buffer()
     {
-        wide_string_input_helper<WideStringType, T>::fill_buffer(str, current_wchar, utf8_bytes, utf8_bytes_index, utf8_bytes_filled);
+        wide_string_input_helper<BaseInputAdapter, T>::fill_buffer(base_adapter, utf8_bytes, utf8_bytes_index, utf8_bytes_filled);
     }
-
-    /// the wstring to process
-    const WideStringType& str;
-
-    /// index of the current wchar in str
-    std::size_t current_wchar = 0;
 
     /// a buffer for UTF-8 bytes
     std::array<std::char_traits<char>::int_type, 4> utf8_bytes = {{0, 0, 0, 0}};
@@ -4736,8 +4737,53 @@ class wide_string_input_adapter
     std::size_t utf8_bytes_index = 0;
     /// number of valid bytes in the utf8_codes array
     std::size_t utf8_bytes_filled = 0;
+}
+
+
+template<typename IteratorType, typename Enable = void>
+struct iterator_input_adapter_factory
+{
+    using iterator_type = IteratorType;
+    using char_type = typename std::iterator_traits<iterator_type>::value_type;
+    using adapter_type = iterator_input_adapter<iterator_type>;
+
+    adapter_type create(IteratorType begin, IteratorType end)
+    {
+        return adapter_type(std::move(begin), std::mve(end));
+    }
 };
 
+template<typename IteratorType>
+struct iterator_input_adapter_factory<IteratorType,
+       typename std::enable_if<(sizeof(typename std::iterator_traits<iterator_type>::value_type)>1)>::type >
+       {
+
+           using iterator_type = IteratorType;
+           using char_type = typename std::iterator_traits<iterator_type>::value_type;
+           using base_adapter_type = iterator_input_adapter<iterator_type>;
+           using adapter_type = wide_string_input_adapter<base_adapter_type, char_type>;
+
+           adapter_type create(IteratorType begin, IteratorType end)
+{
+    return adapter_type(base_adapter_type(std::move(begin), std::mve(end)));
+}
+       };
+
+// General purpose iterator-based input
+template<typename IteratorType>
+typename iterator_input_adapter_factory<IteratorType>::adapter_type input_adapter(IteratorType begin, IteratorType end)
+{
+    return iterator_input_adapter_factory<IteratorType>::create(begin, end);
+}
+
+// Convenience shorthand from container to iterator
+template<typename ContainerType>
+decltype(input_adapter(begin(container), end(container))) input_adapter(const T& container)
+{
+    return input_adapter(begin(container), end(container));
+}
+
+// Special cases with fast paths
 inline file_input_adapter input_adapter(std::FILE* file)
 {
     return file_input_adapter(file);
@@ -4753,17 +4799,7 @@ inline input_stream_adapter input_adapter(std::istream&& stream)
     return input_stream_adapter(stream);
 }
 
-template<typename CharT,
-         typename std::enable_if<
-             std::is_pointer<CharT>::value and
-             std::is_integral<typename std::remove_pointer<CharT>::type>::value and
-             sizeof(typename std::remove_pointer<CharT>::type) == 1,
-             int>::type = 0>
-input_buffer_adapter input_adapter(CharT b, std::size_t l)
-{
-    return input_buffer_adapter(reinterpret_cast<const char*>(b), l);
-}
-
+// Null-delimited strings, and the like.
 template<typename CharT,
          typename std::enable_if<
              std::is_pointer<CharT>::value and
@@ -4772,78 +4808,11 @@ template<typename CharT,
              int>::type = 0>
 input_buffer_adapter input_adapter(CharT b)
 {
-    return input_adapter(reinterpret_cast<const char*>(b),
-                         std::strlen(reinterpret_cast<const char*>(b)));
+    auto length = std::strlen(reinterpret_cast<const char*>(b));
+    auto ptr = reinterpret_cast<const char*>(b);
+    return input_adapter(ptr, ptr + length);
 }
 
-template<class IteratorType,
-         typename std::enable_if<
-             std::is_same<typename iterator_traits<IteratorType>::iterator_category, std::random_access_iterator_tag>::value,
-             int>::type = 0>
-input_buffer_adapter input_adapter(IteratorType first, IteratorType last)
-{
-#ifndef NDEBUG
-    // assertion to check that the iterator range is indeed contiguous,
-    // see https://stackoverflow.com/a/35008842/266378 for more discussion
-    const auto is_contiguous = std::accumulate(
-                                   first, last, std::pair<bool, int>(true, 0),
-                                   [&first](std::pair<bool, int> res, decltype(*first) val)
-    {
-        res.first &= (val == *(std::next(std::addressof(*first), res.second++)));
-        return res;
-    }).first;
-    assert(is_contiguous);
-#endif
-
-    // assertion to check that each element is 1 byte long
-    static_assert(
-        sizeof(typename iterator_traits<IteratorType>::value_type) == 1,
-        "each element in the iterator range must have the size of 1 byte");
-
-    const auto len = static_cast<size_t>(std::distance(first, last));
-    if (JSON_HEDLEY_LIKELY(len > 0))
-    {
-        // there is at least one element: use the address of first
-        return input_buffer_adapter(reinterpret_cast<const char*>(&(*first)), len);
-    }
-    else
-    {
-        // the address of first cannot be used: use nullptr
-        return input_buffer_adapter(nullptr, len);
-    }
-}
-
-inline wide_string_input_adapter<std::wstring> input_adapter(const std::wstring& ws)
-{
-    return wide_string_input_adapter<std::wstring>(ws);
-}
-
-
-inline wide_string_input_adapter<std::u16string> input_adapter(const std::u16string& ws)
-{
-    return wide_string_input_adapter<std::u16string>(ws);
-}
-
-inline wide_string_input_adapter<std::u32string> input_adapter(const std::u32string& ws)
-{
-    return wide_string_input_adapter<std::u32string>(ws);
-}
-
-template<class ContiguousContainer, typename
-         std::enable_if<not std::is_pointer<ContiguousContainer>::value and
-                        std::is_base_of<std::random_access_iterator_tag, typename iterator_traits<decltype(std::begin(std::declval<ContiguousContainer const>()))>::iterator_category>::value,
-                        int>::type = 0>
-input_buffer_adapter input_adapter(const ContiguousContainer& c)
-{
-    return input_adapter(std::begin(c), std::end(c));
-}
-
-
-template<class T, std::size_t N>
-input_buffer_adapter input_adapter(T (&array)[N])
-{
-    return input_adapter(std::begin(array), std::end(array));
-}
 
 // This class only handles inputs of input_buffer_adapter type.
 // It's required so that expressions like {ptr, len} can be implicitely casted
@@ -22413,6 +22382,17 @@ class basic_json
     }
 
 
+    template<typename IteratorType>
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    static basic_json parse(IteratorType begin,
+                            IteratorType end,
+                            const parser_callback_t cb = nullptr,
+                            const bool allow_exceptions = true)
+    {
+        basic_json result;
+        parser(detail::iterator_input_adapter(std::move(begin), std::move(end)), cb, allow_exceptions).parse(true, result);
+        return result;
+    }
 
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json parse(detail::span_input_adapter&& i,
@@ -22430,10 +22410,17 @@ class basic_json
         return parser(detail::input_adapter(std::forward<InputType>(i))).accept(true);
     }
 
+    template<typename IteratorType>
+    static bool accept(IteratorType begin, IteratorType end)
+    {
+        return parser(detail::iterator_input_adapter(std::move(begin), std::move(end))).accept(true);
+    }
+
     static bool accept(detail::span_input_adapter&& i)
     {
         return parser(i.get()).accept(true);
     }
+
     /*!
     @brief generate SAX events
 
