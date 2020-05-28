@@ -331,13 +331,14 @@ inline input_stream_adapter input_adapter(std::istream&& stream)
     return input_stream_adapter(stream);
 }
 
-template<typename CharT,
+template<typename CharT, typename SizeT,
          typename std::enable_if<
              std::is_pointer<CharT>::value and
              std::is_integral<typename std::remove_pointer<CharT>::type>::value and
+             not std::is_same<SizeT, bool>::value and
              sizeof(typename std::remove_pointer<CharT>::type) == 1,
              int>::type = 0>
-input_buffer_adapter input_adapter(CharT b, std::size_t l)
+input_buffer_adapter input_adapter(CharT b, SizeT l)
 {
     return input_buffer_adapter(reinterpret_cast<const char*>(b), l);
 }
