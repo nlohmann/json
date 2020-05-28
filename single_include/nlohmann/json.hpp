@@ -22402,6 +22402,7 @@ class basic_json
         return result;
     }
 
+    JSON_HEDLEY_DEPRECATED_FOR(3.8.0, parse(ptr, ptr + len))
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json parse(detail::span_input_adapter&& i,
                             const parser_callback_t cb = nullptr,
@@ -22424,6 +22425,8 @@ class basic_json
         return parser(detail::input_adapter(std::move(first), std::move(last))).accept(true);
     }
 
+    JSON_HEDLEY_DEPRECATED_FOR(3.8.0, accept(ptr, ptr + len))
+    JSON_HEDLEY_WARN_UNUSED_RESULT
     static bool accept(detail::span_input_adapter&& i)
     {
         return parser(i.get()).accept(true);
@@ -22491,6 +22494,7 @@ class basic_json
     }
 
     template <typename SAX>
+    JSON_HEDLEY_DEPRECATED_FOR(3.8.0, sax_parse(ptr, ptr + len, ...))
     JSON_HEDLEY_NON_NULL(2)
     static bool sax_parse(detail::span_input_adapter&& i, SAX* sax,
                           input_format_t format = input_format_t::json,
@@ -23166,6 +23170,18 @@ class basic_json
         return res ? result : basic_json(value_t::discarded);
     }
 
+    template<typename T>
+    JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_cbor(ptr, ptr + len))
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    static basic_json from_cbor(const T* ptr, std::size_t len,
+                                const bool strict = true,
+                                const bool allow_exceptions = true)
+    {
+        return from_cbor(ptr, ptr + len, strict, allow_exceptions);
+    }
+
+
+    JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_cbor(ptr, ptr + len))
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_cbor(detail::span_input_adapter&& i,
                                 const bool strict = true,
@@ -23294,6 +23310,17 @@ class basic_json
     }
 
 
+    template<typename T>
+    JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_msgpack(ptr, ptr + len))
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    static basic_json from_msgpack(const T* ptr, std::size_t len,
+                                   const bool strict = true,
+                                   const bool allow_exceptions = true)
+    {
+        return from_msgpack(ptr, ptr + len, strict, allow_exceptions);
+    }
+
+    JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_msgpack(ptr, ptr + len))
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_msgpack(detail::span_input_adapter&& i,
                                    const bool strict = true,
@@ -23397,7 +23424,18 @@ class basic_json
         return res ? result : basic_json(value_t::discarded);
     }
 
+    template<typename T>
+    JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_ubjson(ptr, ptr + len))
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    static basic_json from_ubjson(const T* ptr, std::size_t len,
+                                  const bool strict = true,
+                                  const bool allow_exceptions = true)
+    {
+        return from_ubjson(ptr, ptr + len, strict, allow_exceptions);
+    }
 
+    JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_ubjson(ptr, ptr + len))
+    JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_ubjson(detail::span_input_adapter&& i,
                                   const bool strict = true,
                                   const bool allow_exceptions = true)
@@ -23499,6 +23537,17 @@ class basic_json
         return res ? result : basic_json(value_t::discarded);
     }
 
+    template<typename T>
+    JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_bson(ptr, ptr + len))
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    static basic_json from_bson(const T* ptr, std::size_t len,
+                                const bool strict = true,
+                                const bool allow_exceptions = true)
+    {
+        return from_bson(ptr, ptr + len, strict, allow_exceptions);
+    }
+
+    JSON_HEDLEY_DEPRECATED(3.8.0, from_bson(ptr, ptr + len))
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_bson(detail::span_input_adapter&& i,
                                 const bool strict = true,
