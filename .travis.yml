@@ -323,7 +323,7 @@ script:
 
   # compile and execute unit tests
   - mkdir -p build && cd build
-  - cmake .. ${CMAKE_OPTIONS} -DJSON_MultipleHeaders=${MULTIPLE_HEADERS} -GNinja && cmake --build . --config Release -DJSON_BuildTests=On
+  - cmake .. ${CMAKE_OPTIONS} -DJSON_MultipleHeaders=${MULTIPLE_HEADERS} -DJSON_BuildTests=On -GNinja && cmake --build . --config Release
   - ctest -C Release --timeout 2700 -V -j
   - cd ..
 
