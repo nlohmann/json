@@ -23547,7 +23547,7 @@ class basic_json
         return from_bson(ptr, ptr + len, strict, allow_exceptions);
     }
 
-    JSON_HEDLEY_DEPRECATED(3.8.0, from_bson(ptr, ptr + len))
+    JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_bson(ptr, ptr + len))
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_bson(detail::span_input_adapter&& i,
                                 const bool strict = true,
