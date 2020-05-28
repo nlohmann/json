@@ -124,7 +124,11 @@ pedantic_gcc:
 	rm -fr build_pedantic
 	CXXFLAGS=" \
 		-std=c++11 \
+		-pedantic \
 		-Werror \
+		--all-warnings                                    \
+		--extra-warnings                                  \
+		-W                                                \
 		-Wno-abi-tag                                         \
 		-Waddress                                         \
 		-Waddress-of-packed-member                        \
@@ -160,10 +164,13 @@ pedantic_gcc:
 		-Wbool-operation                                  \
 		-Wbuiltin-declaration-mismatch                    \
 		-Wbuiltin-macro-redefined                         \
+		-Wc++0x-compat                                    \
 		-Wc++11-compat                                    \
 		-Wc++14-compat                                    \
 		-Wc++17-compat                                    \
+		-Wc++1z-compat                                    \
 		-Wc++20-compat                                    \
+		-Wc++2a-compat                                    \
 		-Wcannot-profile                                  \
 		-Wcast-align                                      \
 		-Wcast-align=strict                               \
@@ -176,6 +183,7 @@ pedantic_gcc:
 		-Wclobbered                                       \
 		-Wcomma-subscript                                 \
 		-Wcomment                                         \
+		-Wcomments                                        \
 		-Wconditionally-supported                         \
 		-Wconversion                                      \
 		-Wconversion-null                                 \
@@ -294,6 +302,7 @@ pedantic_gcc:
 		-Wscalar-storage-order                            \
 		-Wsequence-point                                  \
 		-Wshadow=compatible-local                         \
+		-Wshadow=global                                   \
 		-Wshadow=local                                    \
 		-Wshift-count-negative                            \
 		-Wshift-count-overflow                            \
