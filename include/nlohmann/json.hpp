@@ -6623,13 +6623,13 @@ class basic_json
 
     template<typename IteratorType>
     JSON_HEDLEY_WARN_UNUSED_RESULT
-    static basic_json parse(IteratorType begin,
-                            IteratorType end,
+    static basic_json parse(IteratorType first,
+                            IteratorType last,
                             const parser_callback_t cb = nullptr,
                             const bool allow_exceptions = true)
     {
         basic_json result;
-        parser(detail::input_adapter(std::move(begin), std::move(end)), cb, allow_exceptions).parse(true, result);
+        parser(detail::input_adapter(std::move(first), std::move(last)), cb, allow_exceptions).parse(true, result);
         return result;
     }
 
@@ -6650,9 +6650,9 @@ class basic_json
     }
 
     template<typename IteratorType>
-    static bool accept(IteratorType begin, IteratorType end)
+    static bool accept(IteratorType first, IteratorType last)
     {
-        return parser(detail::input_adapter(std::move(begin), std::move(end))).accept(true);
+        return parser(detail::input_adapter(std::move(first), std::move(last))).accept(true);
     }
 
     static bool accept(detail::span_input_adapter&& i)

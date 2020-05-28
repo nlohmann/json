@@ -104,7 +104,7 @@ class input_stream_adapter
     {
         auto res = sb->sbumpc();
         // set eof manually, as we don't use the istream interface.
-        if (res == EOF)
+        if (JSON_HEDLEY_UNLIKELY(res == EOF))
         {
             is->clear(is->rdstate() | std::ios::eofbit);
         }
@@ -130,7 +130,7 @@ class iterator_input_adapter
 
     typename std::char_traits<char_type>::int_type get_character()
     {
-        if (current != end)
+        if (JSON_HEDLEY_LIKELY(current != end))
         {
             auto result = std::char_traits<char_type>::to_int_type(*current);
             std::advance(current, 1);
@@ -171,7 +171,7 @@ struct wide_string_input_helper<BaseInputAdapter, 4>
     {
         utf8_bytes_index = 0;
 
-        if (input.empty())
+        if (JSON_HEDLEY_UNLIKELY(input.empty()))
         {
             utf8_bytes[0] = std::char_traits<char>::eof();
             utf8_bytes_filled = 1;
@@ -229,7 +229,7 @@ struct wide_string_input_helper<BaseInputAdapter, 2>
     {
         utf8_bytes_index = 0;
 
-        if (input.empty())
+        if (JSON_HEDLEY_UNLIKELY(input.empty()))
         {
             utf8_bytes[0] = std::char_traits<char>::eof();
             utf8_bytes_filled = 1;
@@ -331,34 +331,39 @@ struct iterator_input_adapter_factory
     using char_type = typename std::iterator_traits<iterator_type>::value_type;
     using adapter_type = iterator_input_adapter<iterator_type>;
 
-    static adapter_type create(IteratorType begin, IteratorType end)
+    static adapter_type create(IteratorType first, IteratorType last)
     {
-        return adapter_type(std::move(begin), std::move(end));
+        return adapter_type(std::move(first), std::move(last));
     }
 };
 
-template<typename IteratorType>
-struct iterator_input_adapter_factory<IteratorType,
-       typename std::enable_if<(sizeof(typename std::iterator_traits<IteratorType>::value_type)>1)>::type >
-       {
-
-           using iterator_type = IteratorType;
-           using char_type = typename std::iterator_traits<iterator_type>::value_type;
-           using base_adapter_type = iterator_input_adapter<iterator_type>;
-           using adapter_type = wide_string_input_adapter<base_adapter_type, char_type>;
-
-           static adapter_type create(IteratorType begin, IteratorType end)
+// This test breaks astyle formatting when inlined in a template specialization.
+template<typename T>
+inline constexpr bool is_iterator_of_multibyte()
 {
-    return adapter_type(base_adapter_type(std::move(begin), std::move(end)));
+    return sizeof(typename std::iterator_traits<T>::value_type) > 1;
 }
-       };
+
+template<typename IteratorType>
+struct iterator_input_adapter_factory<IteratorType, enable_if_t<is_iterator_of_multibyte<IteratorType>()>>
+{
+    using iterator_type = IteratorType;
+    using char_type = typename std::iterator_traits<iterator_type>::value_type;
+    using base_adapter_type = iterator_input_adapter<iterator_type>;
+    using adapter_type = wide_string_input_adapter<base_adapter_type, char_type>;
+
+    static adapter_type create(IteratorType first, IteratorType last)
+    {
+        return adapter_type(base_adapter_type(std::move(first), std::move(last)));
+    }
+};
 
 // General purpose iterator-based input
 template<typename IteratorType>
-typename iterator_input_adapter_factory<IteratorType>::adapter_type input_adapter(IteratorType begin, IteratorType end)
+typename iterator_input_adapter_factory<IteratorType>::adapter_type input_adapter(IteratorType first, IteratorType last)
 {
     using factory_type = iterator_input_adapter_factory<IteratorType>;
-    return factory_type::create(begin, end);
+    return factory_type::create(first, last);
 }
 
 // Convenience shorthand from container to iterator
