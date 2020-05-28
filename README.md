@@ -454,7 +454,7 @@ struct MyIterator {
     }
 
     bool operator!=(const MyIterator& rhs) const {
-        return rhs.pos != pos || rhs.target != target;
+        return rhs.target != target;
     }
 
     reference operator*() const {
@@ -462,15 +462,14 @@ struct MyIterator {
     }
 
     MyContainer* target = nullptr;
-    std::size_t pos = 0;
 };
 
 MyIterator begin(MyContainer& tgt) {
-    return MyIterator{&tgt, 0}
+    return MyIterator{&tgt};
 }
 
 MyIterator end(const MyContainer&) {
-    return MyIterator{nullptr, 0} 
+    return {}; 
 }
 
 void foo() {
