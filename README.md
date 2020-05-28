@@ -416,7 +416,7 @@ Please note that setting the exception bit for `failbit` is inappropriate for th
 
 #### Read from iterator range
 
-You can also parse JSON from an iterator range; that is, from any container accessible by iterators whose content is stored as contiguous byte sequence, for instance a `std::vector<std::uint8_t>`:
+You can also parse JSON from an iterator range; that is, from any container accessible by iterators whose `value_type` is an integral type of 1, 2 or 4 bytes, for instance a `std::vector<std::uint8_t>`, or a `std::list<std::uint16_t>`:
 
 ```cpp
 std::vector<std::uint8_t> v = {'t', 'r', 'u', 'e'};
@@ -428,6 +428,55 @@ You may leave the iterators for the range [begin, end):
 ```cpp
 std::vector<std::uint8_t> v = {'t', 'r', 'u', 'e'};
 json j = json::parse(v);
+```
+
+#### Custom data source
+
+Since the parse function accepts arbitrary iterator ranges, you can provide your own data sources by implementing the `LegacyInputIterator` concept.
+
+```cpp
+struct MyContainer;
+
+struct MyContainer {
+  void advance();
+  const char& get_current();
+};
+
+struct MyIterator {
+    using difference_type = std::ptrdiff_t;
+    using value_type = char;
+    using pointer = const char*;
+    using reference = const char&;
+    using iterator_category = std::input_iterator_tag;
+
+    MyIterator& operator++() {
+        MyContainer.advance();
+    }
+
+    bool operator!=(const MyIterator& rhs) const {
+        return rhs.pos != pos || rhs.target != target;
+    }
+
+    reference operator*() const {
+        return target.get_current();
+    }
+
+    MyContainer* target = nullptr;
+    std::size_t pos = 0;
+};
+
+MyIterator begin(MyContainer& tgt) {
+    return MyIterator{&tgt, 0}
+}
+
+MyIterator end(const MyContainer&) {
+    return MyIterator{nullptr, 0} 
+}
+
+void foo() {
+    MyContainer c;
+    json j = json::parse(c);
+}
 ```
 
 #### SAX interface
