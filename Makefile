@@ -44,7 +44,7 @@ all:
 	@echo "fuzz_testing_cbor - prepare fuzz testing of the CBOR parser"
 	@echo "fuzz_testing_msgpack - prepare fuzz testing of the MessagePack parser"
 	@echo "fuzz_testing_ubjson - prepare fuzz testing of the UBJSON parser"
-	@echo "fuzz_testing_bson2 - prepare fuzz testing of the BSON2 parser"
+	@echo "fuzz_testing_temp - prepare fuzz testing of the temp"
 	@echo "json_unit - create single-file test executable"
 	@echo "pedantic_clang - run Clang with maximal warning flags"
 	@echo "pedantic_gcc - run GCC with maximal warning flags"
@@ -403,11 +403,11 @@ fuzz_testing_ubjson:
 	find test/data -size -5k -name *.ubjson | xargs -I{} cp "{}" fuzz-testing/testcases
 	@echo "Execute: afl-fuzz -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer"
 
-fuzz_testing_bson2:
+fuzz_testing_temp:
 	rm -fr fuzz-testing
 	mkdir -p fuzz-testing fuzz-testing/testcases fuzz-testing/out
-	$(MAKE) parse_bson2_fuzzer -C test CXX=afl-clang++
-	mv test/parse_bson2_fuzzer fuzz-testing/fuzzer
+	$(MAKE) temp_fuzzer -C test CXX=afl-clang++
+	mv test/temp_fuzzer fuzz-testing/fuzzer
 	find test/data -size -5k -name *.bson | xargs -I{} cp "{}" fuzz-testing/testcases
 	@echo "Execute: afl-fuzz -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer"
 

@@ -94,7 +94,7 @@ check: $(OBJECTS) $(TESTCASES)
 ##############################################################################
 
 FUZZER_ENGINE = src/fuzzer-driver_afl.cpp
-FUZZERS = parse_afl_fuzzer parse_bson_fuzzer parse_cbor_fuzzer parse_msgpack_fuzzer parse_ubjson_fuzzer parse_bson2_fuzzer
+FUZZERS = parse_afl_fuzzer parse_bson_fuzzer parse_cbor_fuzzer parse_msgpack_fuzzer parse_ubjson_fuzzer temp_fuzzer
 fuzzers: $(FUZZERS)
 
 parse_afl_fuzzer:
@@ -112,5 +112,5 @@ parse_msgpack_fuzzer:
 parse_ubjson_fuzzer:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(FUZZER_ENGINE) src/fuzzer-parse_ubjson.cpp -o $@
 
-parse_bson2_fuzzer:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(FUZZER_ENGINE) src/fuzzer-parse_bson2.cpp -o $@
+temp_fuzzer:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(FUZZER_ENGINE) src/fuzzer-temp.cpp -o $@
