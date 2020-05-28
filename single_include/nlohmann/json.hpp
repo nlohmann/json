@@ -4569,7 +4569,7 @@ class iterator_input_adapter
     IteratorType end;
 
     template<typename BaseInputAdapter, size_t T>
-    friend class wide_string_input_helper;
+    friend struct wide_string_input_helper;
 
     bool empty() const
     {
