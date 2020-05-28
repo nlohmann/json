@@ -98,7 +98,7 @@ TEST_CASE("Custom iterator")
         {
             return *ptr;
         }
-        
+
         bool operator!=(const MyIterator& rhs) const
         {
             return ptr != rhs.ptr;
