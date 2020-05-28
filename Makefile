@@ -402,7 +402,7 @@ fuzz_testing_ubjson:
 	find test/data -size -5k -name *.ubjson | xargs -I{} cp "{}" fuzz-testing/testcases
 	@echo "Execute: afl-fuzz -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer"
 
-fuzz_testing_bson:
+fuzz_testing_temp:
 	rm -fr fuzz-testing
 	mkdir -p fuzz-testing fuzz-testing/testcases fuzz-testing/out
 	$(MAKE) temp_fuzzer -C test CXX=afl-clang++
