@@ -22313,28 +22313,12 @@ class basic_json
     @brief deserialize from a compatible input
 
     This function reads from a compatible input. Examples are:
-    - an array of 1-byte values
-    - strings with character/literal type with size of 1 byte
-    - input streams
-    - container with contiguous storage of 1-byte values. Compatible container
-      types include `std::vector`, `std::string`, `std::array`,
-      `std::valarray`, and `std::initializer_list`. Furthermore, C-style
-      arrays can be used with `std::begin()`/`std::end()`. User-defined
-      containers can be used as long as they implement random-access iterators
-      and a contiguous storage.
-
-    @pre Each element of the container has a size of 1 byte. Violating this
-    precondition yields undefined behavior. **This precondition is enforced
-    with a static assertion.**
-
-    @pre The container storage is contiguous. Violating this precondition
-    yields undefined behavior. **This precondition is enforced with an
-    assertion.**
-
-    @warning There is no way to enforce all preconditions at compile-time. If
-             the function is called with a noncompliant container and with
-             assertions switched off, the behavior is undefined and will most
-             likely yield segmentation violation.
+    - an std::istream object
+    - a FILE pointer
+    - a C-style array of characters
+    - a pointer to a null-terminated string of single byte characters
+    - an object obj for which begin(obj) and end(obj) produces a valid pair of
+      iterators.
 
     @param[in] i  input to read from
     @param[in] cb  a parser callback function of type @ref parser_callback_t
@@ -22354,7 +22338,7 @@ class basic_json
 
     @complexity Linear in the length of the input. The parser is a predictive
     LL(1) parser. The complexity can be higher if the parser callback function
-    @a cb has a super-linear complexity.
+    @a cb or reading from the input @a i has a super-linear complexity.
 
     @note A UTF-8 byte order mark is silently ignored.
 
@@ -22383,7 +22367,29 @@ class basic_json
         return result;
     }
 
+    /*!
+    @brief deserialize from a pair of character iterators
 
+    The value_type of the iterator must be a integral type with size of 1, 2 or
+    4 bytes, which will be interpreted respectively as UTF-8, UTF-16 and UTF-32.
+
+    @param[in] first iterator to start of character range
+    @param[in] last  iterator to end of character range
+    @param[in] cb  a parser callback function of type @ref parser_callback_t
+    which is used to control the deserialization by filtering unwanted values
+    (optional)
+    @param[in] allow_exceptions  whether to throw exceptions in case of a
+    parse error (optional, true by default)
+
+    @return deserialized JSON value; in case of a parse error and
+            @a allow_exceptions set to `false`, the return value will be
+            value_t::discarded.
+
+    @throw parse_error.101 if a parse error occurs; example: `""unexpected end
+    of input; expected string literal""`
+    @throw parse_error.102 if to_unicode fails or surrogate error
+    @throw parse_error.103 if to_unicode fails
+    */
     template<typename IteratorType>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json parse(IteratorType first,
@@ -22429,28 +22435,12 @@ class basic_json
     The SAX event lister must follow the interface of @ref json_sax.
 
     This function reads from a compatible input. Examples are:
-    - an array of 1-byte values
-    - strings with character/literal type with size of 1 byte
-    - input streams
-    - container with contiguous storage of 1-byte values. Compatible container
-      types include `std::vector`, `std::string`, `std::array`,
-      `std::valarray`, and `std::initializer_list`. Furthermore, C-style
-      arrays can be used with `std::begin()`/`std::end()`. User-defined
-      containers can be used as long as they implement random-access iterators
-      and a contiguous storage.
-
-    @pre Each element of the container has a size of 1 byte. Violating this
-    precondition yields undefined behavior. **This precondition is enforced
-    with a static assertion.**
-
-    @pre The container storage is contiguous. Violating this precondition
-    yields undefined behavior. **This precondition is enforced with an
-    assertion.**
-
-    @warning There is no way to enforce all preconditions at compile-time. If
-             the function is called with a noncompliant container and with
-             assertions switched off, the behavior is undefined and will most
-             likely yield segmentation violation.
+    - an std::istream object
+    - a FILE pointer
+    - a C-style array of characters
+    - a pointer to a null-terminated string of single byte characters
+    - an object obj for which begin(obj) and end(obj) produces a valid pair of
+      iterators.
 
     @param[in] i  input to read from
     @param[in,out] sax  SAX event listener
