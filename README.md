@@ -1401,6 +1401,8 @@ I deeply appreciate the help of the following people.
 - [Konstantin Podsvirov](https://github.com/podsvirov) fixed the MSYS2 package documentation.
 - [Tridacnid](https://github.com/Tridacnid) improved the CMake tests.
 - [Michael](https://github.com/MBalszun) fixed MSVC warnings.
+- [Quentin Barbarat](https://github.com/quentin-dev) fixed an example in the documentation.
+- [XyFreak](https://github.com/XyFreak) fixed a compiler warning.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
