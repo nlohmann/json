@@ -12,7 +12,7 @@ jobs:
       - name: install Clang
         run: mkdir clang ; curl -fsSL -o LLVM9.exe https://releases.llvm.org/9.0.0/LLVM-9.0.0-win64.exe ; 7z x LLVM9.exe -y -oclang
       - name: cmake
-        run: cmake -S . -B build -DCMAKE_CXX_COMPILER=C:\clang\bin\clang++.exe -G"MinGW Makefiles" -DCMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On
+        run: cmake -S . -B build -DCMAKE_CXX_COMPILER="C:\clang\bin\clang++.exe" -G"MinGW Makefiles" -DCMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On
       - name: build
         run: cmake --build build --parallel 10
       - name: test
