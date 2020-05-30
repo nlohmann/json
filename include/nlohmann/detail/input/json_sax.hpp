@@ -452,7 +452,7 @@ class json_sax_dom_callback_parser
         ref_stack.pop_back();
         keep_stack.pop_back();
 
-        if (not ref_stack.empty() and ref_stack.back() and ref_stack.back()->is_object())
+        if (not ref_stack.empty() and ref_stack.back() and ref_stack.back()->is_structured())
         {
             // remove discarded value
             for (auto it = ref_stack.back()->begin(); it != ref_stack.back()->end(); ++it)
