@@ -20,7 +20,10 @@ Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 */
 
 #include <iostream>
-#include <deque> 
+#include <deque>
+#include <list>
+#include <set>
+#include <unordered_set>
 #include <sstream>
 #include <nlohmann/json.hpp>
 
@@ -29,13 +32,27 @@ using json = nlohmann::json;
 // see http://llvm.org/docs/LibFuzzer.html
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
-    std::vector<uint8_t> vec1(data, data+size);
-    std::deque<uint8_t> deque1(data, data+size);
+    std::vector<uint8_t> vec(data, data+size);
+    std::deque<uint8_t> deq(data, data+size);
+    std::list<uint8_t> lst(data, data+size);
+    std::forward_list<uint8_t> flist(data, data+size);
+    std::set<uint8_t> st(data, data+size);
+    std::unordered_set<uint8_t> ust(data, data+size);
+    std::multiset<uint8_t> mst(data, data+size);
+    std::unordered_multiset<uint8_t> umst(data, data+size);
 
-    json j_vector(vec1);
-    json j_deque(deque1);
+    json j_vector(vec);
+    json j_deque(deq);
+    json j_list(lst);
+    json j_flist(flist);
+    json j_set(st);
+    json j_uset(ust);
+    json j_mset(mst);
+    json j_umset(umst);
 
     assert(j_vector == j_deque);
+    assert(j_vector == j_list);
+    assert(j_vector == j_flist);
 
     // try
     // {
