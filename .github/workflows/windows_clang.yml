@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - name: install Clang
-        run: choco install -y llvm
+        run: choco install -y clang
       - name: cmake
         run: cmake -S . -B build -DCMAKE_CXX_COMPILER=C:\Program Files\LLVM\bin\clang++ -G"MinGW Makefiles" -DCMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On
       - name: build
