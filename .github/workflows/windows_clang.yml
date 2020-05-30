@@ -10,15 +10,10 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - name: install Clang
-        run: mkdir clang ; curl -fsSL -o LLVM9.exe https://releases.llvm.org/9.0.0/LLVM-9.0.0-win64.exe ; 7z x LLVM9.exe -y -oclang
-      - name: find directory
-        run: cd ; cd clang ; cd
+        run: curl -fsSL -o LLVM9.exe https://releases.llvm.org/9.0.0/LLVM-9.0.0-win64.exe ; 7z x LLVM9.exe -y -o"C:/Program Files/LLVM"
       - name: cmake
-        run: cmake -S . -B build -DCMAKE_CXX_COMPILER="D:/a/json/json/clang/bin/clang++.exe" -G"MinGW Makefiles" -DCMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On
+        run: cmake -S . -B build -DCMAKE_CXX_COMPILER="C:/Program Files/LLVM/bin/clang++.exe" -G"MinGW Makefiles" -DCMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On
       - name: build
         run: cmake --build build --parallel 10
       - name: test
         run: cd build ; ctest -j 10 -C Debug --exclude-regex "test-unicode" --output-on-failure
-      - uses: actions/upload-artifact@v2
-        with:
-          path: C:\ProgramData\chocolatey\logs\chocolatey.log
