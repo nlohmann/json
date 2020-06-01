@@ -37,14 +37,14 @@ using json = nlohmann::json;
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     // putting data in several STL containers
-    std::vector<uint8_t> vec(data, data+size);
-    std::deque<uint8_t> deq(data, data+size);
-    std::list<uint8_t> lst(data, data+size);
-    std::forward_list<uint8_t> flist(data, data+size);
-    std::set<uint8_t> st(data, data+size);
-    std::unordered_set<uint8_t> ust(data, data+size);
-    std::multiset<uint8_t> mst(data, data+size);
-    std::unordered_multiset<uint8_t> umst(data, data+size);
+    std::vector<uint8_t> vec(data, data + size);
+    std::deque<uint8_t> deq(data, data + size);
+    std::list<uint8_t> lst(data, data + size);
+    std::forward_list<uint8_t> flist(data, data + size);
+    std::set<uint8_t> st(data, data + size);
+    std::unordered_set<uint8_t> ust(data, data + size);
+    std::multiset<uint8_t> mst(data, data + size);
+    std::unordered_multiset<uint8_t> umst(data, data + size);
 
     // parsing from STL containers
     json j_vector(vec);
@@ -67,7 +67,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     std::unordered_multimap<uint8_t, uint8_t> ummp;
 
     // converting each consecutive entry in the vector into a key-value pair
-    for(int i=1; i<vec.size(); i+=2)
+    for(int i=1; i<size; i+=2)
     {
         std::pair<uint8_t, uint8_t> insert_data = std::make_pair(vec[i-1], vec[i]);
         mp.insert(insert_data);
@@ -81,6 +81,27 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     json j_multimap(mmp);
     json j_umultimap(ummp);
 
+    try
+    {
+        // parse input directly
+        json j1 = json::parse(data, data + size);
+        // parse using vector
+        json j_vec = json::parse(vec);
+        // parse using deque
+        json j_deq = json::parse(deq);
+
+        // all three must be equal
+        assert(j1 == j_vec);
+        assert(j1 == j_deq);
+    }
+    catch (const json::parse_error&)
+    {
+        // parse errors are ok, because input may be random bytes
+    }
+    catch (const json::out_of_range&)
+    {
+        // out of range errors may happen if provided sizes are excessive
+    }
     // try
     // {
     //     // step 1: parse input
