@@ -79,8 +79,8 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
         // range-based iteration
     }
 
-    json j_vector2;
-    json j_vector3;
+    json j_vector2 = json::array();
+    json j_vector3 = json::array();
 
     for(int i = 0; i < (int)j_vector.size(); ++i)
     {
