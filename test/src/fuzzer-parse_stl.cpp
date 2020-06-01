@@ -61,13 +61,47 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     assert(j_vector == j_list);
     assert(j_vector == j_flist);
 
+    // iterating json array and testing get() method
+    for(json::iterator it = j_vector.begin(); it != j_vector.end(); ++it)
+    {
+        try
+        {
+            int temp = (*it).get<int>();
+        }
+        catch(const json::type_error)
+        {
+            // input might not be convertible to integer
+        }
+    }
+
+    for(auto& element : j_vector)
+    {
+        // range-based iteration
+    }
+
+    json j_vector2;
+    json j_vector3;
+
+    for(int i = 0; i < (int)j_vector.size(); ++i)
+    {
+        auto temp = j_vector.at(i);
+        // testing at() method
+        j_vector2.push_back(temp);
+        j_vector3.emplace_back(temp);
+        // testing push_back and emplace back methods
+    }
+
+    // these jsons must be the same
+    assert(j_vector == j_vector2);
+    assert(j_vector == j_vector3);
+
     std::map<uint8_t, uint8_t> mp;
     std::unordered_map<uint8_t, uint8_t> ump;
     std::multimap<uint8_t, uint8_t> mmp;
     std::unordered_multimap<uint8_t, uint8_t> ummp;
 
     // converting each consecutive entry in the vector into a key-value pair
-    for(int i=1; i<size; i+=2)
+    for(int i = 1; i < (int)vec.size(); i+=2)
     {
         std::pair<uint8_t, uint8_t> insert_data = std::make_pair(vec[i-1], vec[i]);
         mp.insert(insert_data);
@@ -80,6 +114,13 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     json j_umap(ump);
     json j_multimap(mmp);
     json j_umultimap(ummp);
+
+    // iterating json map
+    for(json::iterator it = j_map.begin(); it != j_map.end(); ++it)
+    {
+        auto temp1 = it.key();
+        auto temp2 = it.value();
+    }
 
     try
     {
@@ -102,42 +143,5 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     {
         // out of range errors may happen if provided sizes are excessive
     }
-    // try
-    // {
-    //     // step 1: parse input
-    //     json j1 = json::parse(data, data + size);
-
-    //     try
-    //     {
-    //         // step 2: round trip
-
-    //         // first serialization
-    //         std::string s1 = j1.dump();
-
-    //         // parse serialization
-    //         json j2 = json::parse(s1);
-
-    //         // second serialization
-    //         std::string s2 = j2.dump();
-
-    //         // serializations must match
-    //         assert(s1 == s2);
-    //     }
-    //     catch (const json::parse_error&)
-    //     {
-    //         // parsing a JSON serialization must not fail
-    //         assert(false);
-    //     }
-    // }
-    // catch (const json::parse_error&)
-    // {
-    //     // parse errors are ok, because input may be random bytes
-    // }
-    // catch (const json::out_of_range&)
-    // {
-    //     // out of range errors may happen if provided sizes are excessive
-    // }
-
-    // return 0 - non-zero return values are reserved for future use
     return 0;
 }
