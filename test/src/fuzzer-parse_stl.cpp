@@ -24,6 +24,10 @@ Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #include <list>
 #include <set>
 #include <unordered_set>
+#include <iterator> 
+#include <map>
+#include <unordered_map>
+#include <utility>
 #include <sstream>
 #include <nlohmann/json.hpp>
 
@@ -32,6 +36,7 @@ using json = nlohmann::json;
 // see http://llvm.org/docs/LibFuzzer.html
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
+    // putting data in several STL containers
     std::vector<uint8_t> vec(data, data+size);
     std::deque<uint8_t> deq(data, data+size);
     std::list<uint8_t> lst(data, data+size);
@@ -41,18 +46,40 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     std::multiset<uint8_t> mst(data, data+size);
     std::unordered_multiset<uint8_t> umst(data, data+size);
 
+    // parsing from STL containers
     json j_vector(vec);
     json j_deque(deq);
     json j_list(lst);
     json j_flist(flist);
     json j_set(st);
     json j_uset(ust);
-    json j_mset(mst);
-    json j_umset(umst);
+    json j_multiset(mst);
+    json j_umultiset(umst);
 
+    // json must be same for sequence containers
     assert(j_vector == j_deque);
     assert(j_vector == j_list);
     assert(j_vector == j_flist);
+
+    map<uint8_t, uint8_t> mp;
+    unordered_map<uint8_t, uint8_t> ump;
+    multimap<uint8_t, uint8_t> mmp;
+    unordered_multimap<uint8_t, uint8_t> ummp;
+
+    // converting each consecutive entry in the vector into a key-value pair
+    for(int i=1; i<vec.size(); i+=2)
+    {
+        pair<uint8_t, uint8_t> insert_data = make_pair(vec[i-1], vec[i]);
+        mp.insert(insert_data);
+        ump.insert(insert_data);
+        mmp.insert(insert_data);
+        ummp.insert(insert_data);
+    }
+
+    json j_map(mp);
+    json j_umap(ump);
+    json j_multimap(mmp);
+    json j_umultimap(ummp);
 
     // try
     // {
