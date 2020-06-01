@@ -95,15 +95,15 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     assert(j_vector == j_vector2);
     assert(j_vector == j_vector3);
 
-    std::map<uint8_t, uint8_t> mp;
-    std::unordered_map<uint8_t, uint8_t> ump;
-    std::multimap<uint8_t, uint8_t> mmp;
-    std::unordered_multimap<uint8_t, uint8_t> ummp;
+    std::map<std::string, uint8_t> mp;
+    std::unordered_map<std::string, uint8_t> ump;
+    std::multimap<std::string, uint8_t> mmp;
+    std::unordered_multimap<std::string, uint8_t> ummp;
 
     // converting each consecutive entry in the vector into a key-value pair
     for(int i = 1; i < (int)vec.size(); i+=2)
     {
-        std::pair<uint8_t, uint8_t> insert_data = std::make_pair(vec[i-1], vec[i]);
+        std::pair<std::string, uint8_t> insert_data = std::make_pair(std::to_string(vec[i-1]), vec[i]);
         mp.insert(insert_data);
         ump.insert(insert_data);
         mmp.insert(insert_data);
