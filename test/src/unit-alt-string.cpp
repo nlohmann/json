@@ -225,9 +225,9 @@ TEST_CASE("alternative string type")
 
         {
             alt_json doc;
-            doc["list"] = { 1, 0, 2 };
+            doc["object"] = { {"currency", "USD"}, {"value", 42.99} };
             alt_string dump = doc.dump();
-            CHECK(dump == R"({"list":[1,0,2]})");
+            CHECK(dump == R"({"object":{"currency":"USD","value":42.99}})");
         }
     }
 
