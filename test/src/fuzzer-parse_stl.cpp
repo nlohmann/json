@@ -42,9 +42,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     std::list<uint8_t> lst(data, data + size);
     std::forward_list<uint8_t> flist(data, data + size);
     std::set<uint8_t> st(data, data + size);
-    std::unordered_set<uint8_t> ust(data, data + size);
-    std::multiset<uint8_t> mst(data, data + size);
-    std::unordered_multiset<uint8_t> umst(data, data + size);
+    std::unordered_set<uint8_t> uset(data, data + size);
+    std::multiset<uint8_t> multist(data, data + size);
+    std::unordered_multiset<uint8_t> umultiset(data, data + size);
 
     // parsing from STL containers
     json j_vector(vec);
@@ -52,9 +52,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     json j_list(lst);
     json j_flist(flist);
     json j_set(st);
-    json j_uset(ust);
-    json j_multiset(mst);
-    json j_umultiset(umst);
+    json j_uset(uset);
+    json j_multiset(multist);
+    json j_umultiset(umultiset);
 
     // json must be same for sequence containers
     assert(j_vector == j_deque);
@@ -82,7 +82,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     json j_vector2 = json::array();
     json j_vector3 = json::array();
 
-    for(int i = 0; i < (int)j_vector.size(); ++i)
+    for(std::size_t i = 0; i < j_vector.size(); ++i)
     {
         auto temp = j_vector.at(i);
         // testing at() method
@@ -91,29 +91,32 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
         // testing push_back and emplace back methods
     }
 
-    // these jsons must be the same
+    // these three json vectors must be the same
     assert(j_vector == j_vector2);
     assert(j_vector == j_vector3);
 
     std::map<std::string, uint8_t> mp;
-    std::unordered_map<std::string, uint8_t> ump;
-    std::multimap<std::string, uint8_t> mmp;
-    std::unordered_multimap<std::string, uint8_t> ummp;
+    std::unordered_map<std::string, uint8_t> umap;
+    std::multimap<std::string, uint8_t> multimp;
+    std::unordered_multimap<std::string, uint8_t> umultimap;
 
-    // converting each consecutive entry in the vector into a key-value pair
-    for(int i = 1; i < (int)vec.size(); i+=2)
+    // converting each consecutive entry in the vector into a key-value pair and adding them to map
+    for(std::size_t i = 1; i < vec.size(); i+=2)
     {
-        std::pair<std::string, uint8_t> insert_data = std::make_pair(std::to_string(vec[i-1]), vec[i]);
+    	int last_entry = static_cast<int>(vec[i-1]);
+    	std::string key_str = std::to_string(last_entry);
+        std::pair<std::string, uint8_t> insert_data = std::make_pair(key_str, vec[i]);
         mp.insert(insert_data);
-        ump.insert(insert_data);
-        mmp.insert(insert_data);
-        ummp.insert(insert_data);
+        umap.insert(insert_data);
+        multimp.insert(insert_data);
+        umultimap.insert(insert_data);
     }
 
+    // map -> json map
     json j_map(mp);
-    json j_umap(ump);
-    json j_multimap(mmp);
-    json j_umultimap(ummp);
+    json j_umap(umap);
+    json j_multimap(multimp);
+    json j_umultimap(umultimap);
 
     // iterating json map
     for(json::iterator it = j_map.begin(); it != j_map.end(); ++it)
