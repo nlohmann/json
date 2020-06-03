@@ -1489,6 +1489,18 @@ TEST_CASE("parser class")
             [1,2,[3,4,5],4,5]
         )";
 
+        auto structured_array = R"(
+            [
+                1,
+                {
+                     "foo": "bar"
+                },
+                {
+                     "qux": "baz"
+                }
+            ]
+        )";
+
         SECTION("filter nothing")
         {
             json j_object = json::parse(s_object, [](int, json::parse_event_t, const json&)
@@ -1555,6 +1567,41 @@ TEST_CASE("parser class")
             });
 
             CHECK (j_array == json({1, {3, 4, 5}, 4, 5}));
+        }
+
+        SECTION("filter object in array")
+        {
+            json j_filtered1 = json::parse(structured_array, [](int, json::parse_event_t e, const json & parsed)
+            {
+                if (e == json::parse_event_t::object_end and parsed.contains("foo"))
+                {
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            });
+
+            // the specified object will be discarded, and removed.
+            CHECK (j_filtered1.size() == 2);
+            CHECK (j_filtered1 == json({1, {{"qux", "baz"}}}));
+
+            json j_filtered2 = json::parse(structured_array, [](int, json::parse_event_t e, const json & parsed)
+            {
+                if (e == json::parse_event_t::object_end)
+                {
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            });
+
+            // removed all objects in array.
+            CHECK (j_filtered2.size() == 1);
+            CHECK (j_filtered2 == json({1}));
         }
 
         SECTION("filter specific events")
