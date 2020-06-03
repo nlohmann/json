@@ -272,7 +272,7 @@ TEST_CASE("value conversion")
                 json(json::value_t::null).get<std::vector<json>>(),
                 "[json.exception.type_error.302] type must be array, but is null");
 
-#if not defined(JSON_NOEXCEPTION)
+#if !defined(JSON_NOEXCEPTION)
             SECTION("reserve is called on containers that supports it")
             {
                 // make sure all values are properly copied

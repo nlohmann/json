@@ -1072,7 +1072,7 @@ TEST_CASE("element access 2")
     }
 }
 
-#if not defined(JSON_NOEXCEPTION)
+#if !defined(JSON_NOEXCEPTION)
 TEST_CASE("element access 2 (throwing tests)")
 {
     SECTION("object")

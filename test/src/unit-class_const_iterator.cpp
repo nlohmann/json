@@ -224,7 +224,7 @@ TEST_CASE("const_iterator class")
                 json::const_iterator it = j.cbegin();
                 CHECK((it.m_it.primitive_iterator.m_it == 1));
                 it++;
-                CHECK((it.m_it.primitive_iterator.m_it != 0 and it.m_it.primitive_iterator.m_it != 1));
+                CHECK((it.m_it.primitive_iterator.m_it != 0 && it.m_it.primitive_iterator.m_it != 1));
             }
 
             SECTION("number")
@@ -235,7 +235,7 @@ TEST_CASE("const_iterator class")
                 it++;
                 CHECK((it.m_it.primitive_iterator.m_it == 1));
                 it++;
-                CHECK((it.m_it.primitive_iterator.m_it != 0 and it.m_it.primitive_iterator.m_it != 1));
+                CHECK((it.m_it.primitive_iterator.m_it != 0 && it.m_it.primitive_iterator.m_it != 1));
             }
 
             SECTION("object")
@@ -275,7 +275,7 @@ TEST_CASE("const_iterator class")
                 json::const_iterator it = j.cbegin();
                 CHECK((it.m_it.primitive_iterator.m_it == 1));
                 ++it;
-                CHECK((it.m_it.primitive_iterator.m_it != 0 and it.m_it.primitive_iterator.m_it != 1));
+                CHECK((it.m_it.primitive_iterator.m_it != 0 && it.m_it.primitive_iterator.m_it != 1));
             }
 
             SECTION("number")
@@ -286,7 +286,7 @@ TEST_CASE("const_iterator class")
                 ++it;
                 CHECK((it.m_it.primitive_iterator.m_it == 1));
                 ++it;
-                CHECK((it.m_it.primitive_iterator.m_it != 0 and it.m_it.primitive_iterator.m_it != 1));
+                CHECK((it.m_it.primitive_iterator.m_it != 0 && it.m_it.primitive_iterator.m_it != 1));
             }
 
             SECTION("object")
@@ -335,7 +335,7 @@ TEST_CASE("const_iterator class")
                 it--;
                 CHECK((it.m_it.primitive_iterator.m_it == 0));
                 it--;
-                CHECK((it.m_it.primitive_iterator.m_it != 0 and it.m_it.primitive_iterator.m_it != 1));
+                CHECK((it.m_it.primitive_iterator.m_it != 0 && it.m_it.primitive_iterator.m_it != 1));
             }
 
             SECTION("object")
@@ -384,7 +384,7 @@ TEST_CASE("const_iterator class")
                 --it;
                 CHECK((it.m_it.primitive_iterator.m_it == 0));
                 --it;
-                CHECK((it.m_it.primitive_iterator.m_it != 0 and it.m_it.primitive_iterator.m_it != 1));
+                CHECK((it.m_it.primitive_iterator.m_it != 0 && it.m_it.primitive_iterator.m_it != 1));
             }
 
             SECTION("object")

@@ -217,7 +217,7 @@ TEST_CASE("Unicode" * doctest::skip())
                 for (int byte1 = 0x00; byte1 <= 0x7F; ++byte1)
                 {
                     // unescaped control characters are parse errors in JSON
-                    if (0x00 <= byte1 and byte1 <= 0x1F)
+                    if (0x00 <= byte1 && byte1 <= 0x1F)
                     {
                         check_utf8string(false, byte1);
                         continue;
@@ -274,7 +274,7 @@ TEST_CASE("Unicode" * doctest::skip())
                     for (int byte2 = 0x00; byte2 <= 0xFF; ++byte2)
                     {
                         // skip correct second byte
-                        if (0x80 <= byte2 and byte2 <= 0xBF)
+                        if (0x80 <= byte2 && byte2 <= 0xBF)
                         {
                             continue;
                         }
@@ -331,7 +331,7 @@ TEST_CASE("Unicode" * doctest::skip())
                     for (int byte2 = 0x00; byte2 <= 0xFF; ++byte2)
                     {
                         // skip correct second byte
-                        if (0xA0 <= byte2 and byte2 <= 0xBF)
+                        if (0xA0 <= byte2 && byte2 <= 0xBF)
                         {
                             continue;
                         }
@@ -354,7 +354,7 @@ TEST_CASE("Unicode" * doctest::skip())
                         for (int byte3 = 0x00; byte3 <= 0xFF; ++byte3)
                         {
                             // skip correct third byte
-                            if (0x80 <= byte3 and byte3 <= 0xBF)
+                            if (0x80 <= byte3 && byte3 <= 0xBF)
                             {
                                 continue;
                             }
@@ -412,7 +412,7 @@ TEST_CASE("Unicode" * doctest::skip())
                     for (int byte2 = 0x00; byte2 <= 0xFF; ++byte2)
                     {
                         // skip correct second byte
-                        if (0x80 <= byte2 and byte2 <= 0xBF)
+                        if (0x80 <= byte2 && byte2 <= 0xBF)
                         {
                             continue;
                         }
@@ -435,7 +435,7 @@ TEST_CASE("Unicode" * doctest::skip())
                         for (int byte3 = 0x00; byte3 <= 0xFF; ++byte3)
                         {
                             // skip correct third byte
-                            if (0x80 <= byte3 and byte3 <= 0xBF)
+                            if (0x80 <= byte3 && byte3 <= 0xBF)
                             {
                                 continue;
                             }
@@ -493,7 +493,7 @@ TEST_CASE("Unicode" * doctest::skip())
                     for (int byte2 = 0x00; byte2 <= 0xFF; ++byte2)
                     {
                         // skip correct second byte
-                        if (0x80 <= byte2 and byte2 <= 0x9F)
+                        if (0x80 <= byte2 && byte2 <= 0x9F)
                         {
                             continue;
                         }
@@ -516,7 +516,7 @@ TEST_CASE("Unicode" * doctest::skip())
                         for (int byte3 = 0x00; byte3 <= 0xFF; ++byte3)
                         {
                             // skip correct third byte
-                            if (0x80 <= byte3 and byte3 <= 0xBF)
+                            if (0x80 <= byte3 && byte3 <= 0xBF)
                             {
                                 continue;
                             }
@@ -574,7 +574,7 @@ TEST_CASE("Unicode" * doctest::skip())
                     for (int byte2 = 0x00; byte2 <= 0xFF; ++byte2)
                     {
                         // skip correct second byte
-                        if (0x80 <= byte2 and byte2 <= 0xBF)
+                        if (0x80 <= byte2 && byte2 <= 0xBF)
                         {
                             continue;
                         }
@@ -597,7 +597,7 @@ TEST_CASE("Unicode" * doctest::skip())
                         for (int byte3 = 0x00; byte3 <= 0xFF; ++byte3)
                         {
                             // skip correct third byte
-                            if (0x80 <= byte3 and byte3 <= 0xBF)
+                            if (0x80 <= byte3 && byte3 <= 0xBF)
                             {
                                 continue;
                             }
@@ -673,7 +673,7 @@ TEST_CASE("Unicode" * doctest::skip())
                     for (int byte2 = 0x00; byte2 <= 0xFF; ++byte2)
                     {
                         // skip correct second byte
-                        if (0x90 <= byte2 and byte2 <= 0xBF)
+                        if (0x90 <= byte2 && byte2 <= 0xBF)
                         {
                             continue;
                         }
@@ -699,7 +699,7 @@ TEST_CASE("Unicode" * doctest::skip())
                         for (int byte3 = 0x00; byte3 <= 0xFF; ++byte3)
                         {
                             // skip correct third byte
-                            if (0x80 <= byte3 and byte3 <= 0xBF)
+                            if (0x80 <= byte3 && byte3 <= 0xBF)
                             {
                                 continue;
                             }
@@ -725,7 +725,7 @@ TEST_CASE("Unicode" * doctest::skip())
                             for (int byte4 = 0x00; byte4 <= 0xFF; ++byte4)
                             {
                                 // skip fourth second byte
-                                if (0x80 <= byte3 and byte3 <= 0xBF)
+                                if (0x80 <= byte3 && byte3 <= 0xBF)
                                 {
                                     continue;
                                 }
@@ -802,7 +802,7 @@ TEST_CASE("Unicode" * doctest::skip())
                     for (int byte2 = 0x00; byte2 <= 0xFF; ++byte2)
                     {
                         // skip correct second byte
-                        if (0x80 <= byte2 and byte2 <= 0xBF)
+                        if (0x80 <= byte2 && byte2 <= 0xBF)
                         {
                             continue;
                         }
@@ -828,7 +828,7 @@ TEST_CASE("Unicode" * doctest::skip())
                         for (int byte3 = 0x00; byte3 <= 0xFF; ++byte3)
                         {
                             // skip correct third byte
-                            if (0x80 <= byte3 and byte3 <= 0xBF)
+                            if (0x80 <= byte3 && byte3 <= 0xBF)
                             {
                                 continue;
                             }
@@ -854,7 +854,7 @@ TEST_CASE("Unicode" * doctest::skip())
                             for (int byte4 = 0x00; byte4 <= 0xFF; ++byte4)
                             {
                                 // skip correct fourth byte
-                                if (0x80 <= byte3 and byte3 <= 0xBF)
+                                if (0x80 <= byte3 && byte3 <= 0xBF)
                                 {
                                     continue;
                                 }
@@ -931,7 +931,7 @@ TEST_CASE("Unicode" * doctest::skip())
                     for (int byte2 = 0x00; byte2 <= 0xFF; ++byte2)
                     {
                         // skip correct second byte
-                        if (0x80 <= byte2 and byte2 <= 0x8F)
+                        if (0x80 <= byte2 && byte2 <= 0x8F)
                         {
                             continue;
                         }
@@ -957,7 +957,7 @@ TEST_CASE("Unicode" * doctest::skip())
                         for (int byte3 = 0x00; byte3 <= 0xFF; ++byte3)
                         {
                             // skip correct third byte
-                            if (0x80 <= byte3 and byte3 <= 0xBF)
+                            if (0x80 <= byte3 && byte3 <= 0xBF)
                             {
                                 continue;
                             }
@@ -983,7 +983,7 @@ TEST_CASE("Unicode" * doctest::skip())
                             for (int byte4 = 0x00; byte4 <= 0xFF; ++byte4)
                             {
                                 // skip correct fourth byte
-                                if (0x80 <= byte3 and byte3 <= 0xBF)
+                                if (0x80 <= byte3 && byte3 <= 0xBF)
                                 {
                                     continue;
                                 }
@@ -1030,7 +1030,7 @@ TEST_CASE("Unicode" * doctest::skip())
                     // they will never be assigned a character, so there should be no
                     // reason to encode them. The official Unicode standard says that
                     // no UTF forms, including UTF-16, can encode these code points.
-                    if (cp >= 0xD800u and cp <= 0xDFFFu)
+                    if (cp >= 0xD800u && cp <= 0xDFFFu)
                     {
                         // if we would not skip these code points, we would get a
                         // "missing low surrogate" exception
@@ -1117,7 +1117,7 @@ TEST_CASE("Unicode" * doctest::skip())
                 {
                     for (std::size_t cp2 = 0x0000u; cp2 <= 0xFFFFu; ++cp2)
                     {
-                        if (0xDC00u <= cp2 and cp2 <= 0xDFFFu)
+                        if (0xDC00u <= cp2 && cp2 <= 0xDFFFu)
                         {
                             continue;
                         }
@@ -1163,7 +1163,7 @@ TEST_CASE("Unicode" * doctest::skip())
             for (auto s : j)
             {
                 // skip non-string JSON values
-                if (not s.is_string())
+                if (!s.is_string())
                 {
                     continue;
                 }

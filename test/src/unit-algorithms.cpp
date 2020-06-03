@@ -55,7 +55,7 @@ TEST_CASE("algorithms")
         {
             CHECK(std::any_of(j_array.begin(), j_array.end(), [](const json & value)
             {
-                return value.is_string() and value.get<std::string>() == "foo";
+                return value.is_string() && value.get<std::string>() == "foo";
             }));
             CHECK(std::any_of(j_object.begin(), j_object.end(), [](const json & value)
             {
@@ -139,14 +139,14 @@ TEST_CASE("algorithms")
             {
                 CHECK(std::equal(j_array.begin(), j_array.end(), j_array.begin()));
                 CHECK(std::equal(j_object.begin(), j_object.end(), j_object.begin()));
-                CHECK(not std::equal(j_array.begin(), j_array.end(), j_object.begin()));
+                CHECK(!std::equal(j_array.begin(), j_array.end(), j_object.begin()));
             }
 
             SECTION("using user-defined comparison")
             {
                 // compare objects only by size of its elements
                 json j_array2 = {13, 29, 3, {"Hello", "World"}, true, false, {{"one", 1}, {"two", 2}, {"three", 3}}, "foo", "baz"};
-                CHECK(not std::equal(j_array.begin(), j_array.end(), j_array2.begin()));
+                CHECK(!std::equal(j_array.begin(), j_array.end(), j_array2.begin()));
                 CHECK(std::equal(j_array.begin(), j_array.end(), j_array2.begin(),
                                  [](const json & a, const json & b)
                 {
@@ -213,7 +213,7 @@ TEST_CASE("algorithms")
                 return v.is_string();
             });
             CHECK(std::distance(j_array.begin(), it) == 2);
-            CHECK(not it[2].is_string());
+            CHECK(!it[2].is_string());
         }
     }
 

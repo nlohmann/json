@@ -766,7 +766,7 @@ TEST_CASE("Incomplete BSON Input")
         CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
 
         SaxCountdown scp(0);
-        CHECK(not json::sax_parse(incomplete_bson, &scp, json::input_format_t::bson));
+        CHECK(!json::sax_parse(incomplete_bson, &scp, json::input_format_t::bson));
     }
 
     SECTION("Incomplete BSON Input 2")
@@ -784,7 +784,7 @@ TEST_CASE("Incomplete BSON Input")
         CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
 
         SaxCountdown scp(0);
-        CHECK(not json::sax_parse(incomplete_bson, &scp, json::input_format_t::bson));
+        CHECK(!json::sax_parse(incomplete_bson, &scp, json::input_format_t::bson));
     }
 
     SECTION("Incomplete BSON Input 3")
@@ -808,7 +808,7 @@ TEST_CASE("Incomplete BSON Input")
         CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
 
         SaxCountdown scp(1);
-        CHECK(not json::sax_parse(incomplete_bson, &scp, json::input_format_t::bson));
+        CHECK(!json::sax_parse(incomplete_bson, &scp, json::input_format_t::bson));
     }
 
     SECTION("Incomplete BSON Input 4")
@@ -825,7 +825,7 @@ TEST_CASE("Incomplete BSON Input")
         CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
 
         SaxCountdown scp(0);
-        CHECK(not json::sax_parse(incomplete_bson, &scp, json::input_format_t::bson));
+        CHECK(!json::sax_parse(incomplete_bson, &scp, json::input_format_t::bson));
     }
 
     SECTION("Improve coverage")
@@ -835,7 +835,7 @@ TEST_CASE("Incomplete BSON Input")
             json j = {{"key", "value"}};
             auto bson_vec = json::to_bson(j);
             SaxCountdown scp(2);
-            CHECK(not json::sax_parse(bson_vec, &scp, json::input_format_t::bson));
+            CHECK(!json::sax_parse(bson_vec, &scp, json::input_format_t::bson));
         }
 
         SECTION("array")
@@ -846,7 +846,7 @@ TEST_CASE("Incomplete BSON Input")
             };
             auto bson_vec = json::to_bson(j);
             SaxCountdown scp(2);
-            CHECK(not json::sax_parse(bson_vec, &scp, json::input_format_t::bson));
+            CHECK(!json::sax_parse(bson_vec, &scp, json::input_format_t::bson));
         }
     }
 }
@@ -887,7 +887,7 @@ TEST_CASE("Unsupported BSON input")
     CHECK(json::from_bson(bson, true, false).is_discarded());
 
     SaxCountdown scp(0);
-    CHECK(not json::sax_parse(bson, &scp, json::input_format_t::bson));
+    CHECK(!json::sax_parse(bson, &scp, json::input_format_t::bson));
 }
 
 TEST_CASE("BSON numerical data")
