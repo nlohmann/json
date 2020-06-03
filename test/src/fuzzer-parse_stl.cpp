@@ -131,12 +131,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
         json j1 = json::parse(data, data + size);
         // parse using vector
         json j_vec = json::parse(vec);
-        // parse using deque
-        json j_deq = json::parse(deq);
 
-        // all three must be equal
+        // both of them must be equal
         assert(j1 == j_vec);
-        assert(j1 == j_deq);
     }
     catch (const json::parse_error&)
     {
