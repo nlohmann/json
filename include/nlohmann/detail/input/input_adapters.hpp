@@ -131,7 +131,7 @@ class input_buffer_adapter
     {
         if (JSON_HEDLEY_LIKELY(cursor < limit))
         {
-            assert(cursor != nullptr and limit != nullptr);
+            assert(cursor != nullptr && limit != nullptr);
             return std::char_traits<char>::to_int_type(*(cursor++));
         }
 
@@ -238,7 +238,7 @@ struct wide_string_input_helper<WideStringType, 2>
                 utf8_bytes[1] = static_cast<std::char_traits<char>::int_type>(0x80u | (wc & 0x3Fu));
                 utf8_bytes_filled = 2;
             }
-            else if (0xD800 > wc or wc >= 0xE000)
+            else if (0xD800 > wc || wc >= 0xE000)
             {
                 utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(0xE0u | ((wc >> 12u)));
                 utf8_bytes[1] = static_cast<std::char_traits<char>::int_type>(0x80u | ((wc >> 6u) & 0x3Fu));
@@ -331,24 +331,24 @@ inline input_stream_adapter input_adapter(std::istream&& stream)
     return input_stream_adapter(stream);
 }
 
-template<typename CharT, typename SizeT,
-         typename std::enable_if<
-             std::is_pointer<CharT>::value and
-             std::is_integral<typename std::remove_pointer<CharT>::type>::value and
-             not std::is_same<SizeT, bool>::value and
-             sizeof(typename std::remove_pointer<CharT>::type) == 1,
-             int>::type = 0>
+template < typename CharT, typename SizeT,
+           typename std::enable_if <
+               std::is_pointer<CharT>::value&&
+               std::is_integral<typename std::remove_pointer<CharT>::type>::value&&
+               !std::is_same<SizeT, bool>::value&&
+               sizeof(typename std::remove_pointer<CharT>::type) == 1,
+               int >::type = 0 >
 input_buffer_adapter input_adapter(CharT b, SizeT l)
 {
     return input_buffer_adapter(reinterpret_cast<const char*>(b), l);
 }
 
-template<typename CharT,
-         typename std::enable_if<
-             std::is_pointer<CharT>::value and
-             std::is_integral<typename std::remove_pointer<CharT>::type>::value and
-             sizeof(typename std::remove_pointer<CharT>::type) == 1,
-             int>::type = 0>
+template < typename CharT,
+           typename std::enable_if <
+               std::is_pointer<CharT>::value&&
+               std::is_integral<typename std::remove_pointer<CharT>::type>::value&&
+               sizeof(typename std::remove_pointer<CharT>::type) == 1,
+               int >::type = 0 >
 input_buffer_adapter input_adapter(CharT b)
 {
     return input_adapter(reinterpret_cast<const char*>(b),
@@ -408,10 +408,10 @@ inline wide_string_input_adapter<std::u32string> input_adapter(const std::u32str
     return wide_string_input_adapter<std::u32string>(ws);
 }
 
-template<class ContiguousContainer, typename
-         std::enable_if<not std::is_pointer<ContiguousContainer>::value and
-                        std::is_base_of<std::random_access_iterator_tag, typename iterator_traits<decltype(std::begin(std::declval<ContiguousContainer const>()))>::iterator_category>::value,
-                        int>::type = 0>
+template < class ContiguousContainer, typename
+           std::enable_if < !std::is_pointer<ContiguousContainer>::value&&
+                            std::is_base_of<std::random_access_iterator_tag, typename iterator_traits<decltype(std::begin(std::declval<ContiguousContainer const>()))>::iterator_category>::value,
+                            int >::type = 0 >
 input_buffer_adapter input_adapter(const ContiguousContainer& c)
 {
     return input_adapter(std::begin(c), std::end(c));
@@ -430,21 +430,21 @@ input_buffer_adapter input_adapter(T (&array)[N])
 class span_input_adapter
 {
   public:
-    template<typename CharT,
-             typename std::enable_if<
-                 std::is_pointer<CharT>::value and
-                 std::is_integral<typename std::remove_pointer<CharT>::type>::value and
-                 sizeof(typename std::remove_pointer<CharT>::type) == 1,
-                 int>::type = 0>
+    template < typename CharT,
+               typename std::enable_if <
+                   std::is_pointer<CharT>::value&&
+                   std::is_integral<typename std::remove_pointer<CharT>::type>::value&&
+                   sizeof(typename std::remove_pointer<CharT>::type) == 1,
+                   int >::type = 0 >
     span_input_adapter(CharT b, std::size_t l)
         : ia(reinterpret_cast<const char*>(b), l) {}
 
-    template<typename CharT,
-             typename std::enable_if<
-                 std::is_pointer<CharT>::value and
-                 std::is_integral<typename std::remove_pointer<CharT>::type>::value and
-                 sizeof(typename std::remove_pointer<CharT>::type) == 1,
-                 int>::type = 0>
+    template < typename CharT,
+               typename std::enable_if <
+                   std::is_pointer<CharT>::value&&
+                   std::is_integral<typename std::remove_pointer<CharT>::type>::value&&
+                   sizeof(typename std::remove_pointer<CharT>::type) == 1,
+                   int >::type = 0 >
     span_input_adapter(CharT b)
         : span_input_adapter(reinterpret_cast<const char*>(b),
                              std::strlen(reinterpret_cast<const char*>(b))) {}
@@ -461,10 +461,10 @@ class span_input_adapter
         : span_input_adapter(std::begin(array), std::end(array)) {}
 
     /// input adapter for contiguous container
-    template<class ContiguousContainer, typename
-             std::enable_if<not std::is_pointer<ContiguousContainer>::value and
-                            std::is_base_of<std::random_access_iterator_tag, typename iterator_traits<decltype(std::begin(std::declval<ContiguousContainer const>()))>::iterator_category>::value,
-                            int>::type = 0>
+    template < class ContiguousContainer, typename
+               std::enable_if < !std::is_pointer<ContiguousContainer>::value&&
+                                std::is_base_of<std::random_access_iterator_tag, typename iterator_traits<decltype(std::begin(std::declval<ContiguousContainer const>()))>::iterator_category>::value,
+                                int >::type = 0 >
     span_input_adapter(const ContiguousContainer& c)
         : span_input_adapter(std::begin(c), std::end(c)) {}
 

@@ -423,7 +423,7 @@ class iter_impl
     */
     bool operator!=(const iter_impl& other) const
     {
-        return not operator==(other);
+        return !operator==(other);
     }
 
     /*!
@@ -459,7 +459,7 @@ class iter_impl
     */
     bool operator<=(const iter_impl& other) const
     {
-        return not other.operator < (*this);
+        return !other.operator < (*this);
     }
 
     /*!
@@ -468,7 +468,7 @@ class iter_impl
     */
     bool operator>(const iter_impl& other) const
     {
-        return not operator<=(other);
+        return !operator<=(other);
     }
 
     /*!
@@ -477,7 +477,7 @@ class iter_impl
     */
     bool operator>=(const iter_impl& other) const
     {
-        return not operator<(other);
+        return !operator<(other);
     }
 
     /*!

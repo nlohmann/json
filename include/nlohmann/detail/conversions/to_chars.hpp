@@ -38,7 +38,7 @@ For a detailed description of the algorithm see:
 namespace dtoa_impl
 {
 
-template <typename Target, typename Source>
+template<typename Target, typename Source>
 Target reinterpret_bits(const Source source)
 {
     static_assert(sizeof(Target) == sizeof(Source), "size mismatch");
@@ -179,7 +179,7 @@ boundaries.
 
 @pre value must be finite and positive
 */
-template <typename FloatType>
+template<typename FloatType>
 boundaries compute_boundaries(FloatType value)
 {
     assert(std::isfinite(value));
@@ -232,7 +232,7 @@ boundaries compute_boundaries(FloatType value)
     //      -----------------+------+------+-------------+-------------+---  (B)
     //                       v-     m-     v             m+            v+
 
-    const bool lower_boundary_is_closer = F == 0 and E > 1;
+    const bool lower_boundary_is_closer = F == 0 && E > 1;
     const diyfp m_plus = diyfp(2 * v.f + 1, v.e - 1);
     const diyfp m_minus = lower_boundary_is_closer
                           ? diyfp(4 * v.f - 1, v.e - 2)  // (B)
@@ -567,8 +567,8 @@ inline void grisu2_round(char* buf, int len, std::uint64_t dist, std::uint64_t d
     // integer arithmetic.
 
     while (rest < dist
-            and delta - rest >= ten_k
-            and (rest + ten_k < dist or dist - rest > rest + ten_k - dist))
+            && delta - rest >= ten_k
+            && (rest + ten_k < dist || dist - rest > rest + ten_k - dist))
     {
         assert(buf[len - 1] != '0');
         buf[len - 1]--;
@@ -879,7 +879,7 @@ v = buf * 10^decimal_exponent
 len is the length of the buffer (number of decimal digits)
 The buffer must be large enough, i.e. >= max_digits10.
 */
-template <typename FloatType>
+template<typename FloatType>
 JSON_HEDLEY_NON_NULL(1)
 void grisu2(char* buf, int& len, int& decimal_exponent, FloatType value)
 {
@@ -986,7 +986,7 @@ inline char* format_buffer(char* buf, int len, int decimal_exponent,
     // k is the length of the buffer (number of decimal digits)
     // n is the position of the decimal point relative to the start of the buffer.
 
-    if (k <= n and n <= max_exp)
+    if (k <= n && n <= max_exp)
     {
         // digits[000]
         // len <= max_exp + 2
@@ -998,7 +998,7 @@ inline char* format_buffer(char* buf, int len, int decimal_exponent,
         return buf + (static_cast<size_t>(n) + 2);
     }
 
-    if (0 < n and n <= max_exp)
+    if (0 < n && n <= max_exp)
     {
         // dig.its
         // len <= max_digits10 + 1
@@ -1010,7 +1010,7 @@ inline char* format_buffer(char* buf, int len, int decimal_exponent,
         return buf + (static_cast<size_t>(k) + 1U);
     }
 
-    if (min_exp < n and n <= 0)
+    if (min_exp < n && n <= 0)
     {
         // 0.[000]digits
         // len <= 2 + (-min_exp - 1) + max_digits10
@@ -1055,7 +1055,7 @@ format. Returns an iterator pointing past-the-end of the decimal representation.
 @note The buffer must be large enough.
 @note The result is NOT null-terminated.
 */
-template <typename FloatType>
+template<typename FloatType>
 JSON_HEDLEY_NON_NULL(1, 2)
 JSON_HEDLEY_RETURNS_NON_NULL
 char* to_chars(char* first, const char* last, FloatType value)
