@@ -21,7 +21,7 @@ interface json::sax_t {
     + {abstract} bool end_array()
     + {abstract} bool key(string_t& val)
 
-    + {abstract} bool parse_error(std::size_t position, const std::string& last_token, const detail::exception& ex)
+    + {abstract} bool parse_error(std::size_t position, const std::string& last_token, const json::exception& ex)
 }
 ```
 
@@ -51,7 +51,7 @@ bool end_array();
 bool key(string_t& val);
 
 // called when a parse error occurs; byte position, the last token, and an exception is passed
-bool parse_error(std::size_t position, const std::string& last_token, const detail::exception& ex);
+bool parse_error(std::size_t position, const std::string& last_token, const json::exception& ex);
 ```
 
 The return value of each function determines whether parsing should proceed.
