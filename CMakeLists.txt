@@ -33,6 +33,7 @@ set(NLOHMANN_JSON_CMAKE_CONFIG_DIR          "${CMAKE_CURRENT_BINARY_DIR}")
 set(NLOHMANN_JSON_CMAKE_VERSION_CONFIG_FILE "${NLOHMANN_JSON_CMAKE_CONFIG_DIR}/${PROJECT_NAME}ConfigVersion.cmake")
 set(NLOHMANN_JSON_CMAKE_PROJECT_CONFIG_FILE "${NLOHMANN_JSON_CMAKE_CONFIG_DIR}/${PROJECT_NAME}Config.cmake")
 set(NLOHMANN_JSON_CMAKE_PROJECT_TARGETS_FILE "${NLOHMANN_JSON_CMAKE_CONFIG_DIR}/${PROJECT_NAME}Targets.cmake")
+set(BUILD_CXX_STD "c++11" CACHE STRING "build the library with C++11 standard(-DBUILD_CXX_STD=c++11)")
 
 if (JSON_MultipleHeaders)
     set(NLOHMANN_JSON_INCLUDE_BUILD_DIR "${PROJECT_SOURCE_DIR}/include/")
@@ -40,6 +41,17 @@ if (JSON_MultipleHeaders)
 else()
     set(NLOHMANN_JSON_INCLUDE_BUILD_DIR "${PROJECT_SOURCE_DIR}/single_include/")
     message(STATUS "Using the single-header code from ${NLOHMANN_JSON_INCLUDE_BUILD_DIR}")
+endif()
+
+#
+## Build Language Standard
+#
+if (BUILD_CXX_STD STREQUAL "c++11")
+    set(CXX_STD "cxx_std_11")
+elseif (BUILD_CXX_STD STREQUAL "c++14")
+    set(CXX_STD "cxx_std_14")
+elseif (BUILD_CXX_STD STREQUAL "c++17")
+    set(CXX_STD "cxx_std_17")
 endif()
 
 ##
@@ -51,7 +63,7 @@ add_library(${PROJECT_NAME}::${NLOHMANN_JSON_TARGET_NAME} ALIAS ${NLOHMANN_JSON_
 if (${CMAKE_VERSION} VERSION_LESS "3.8.0")
     target_compile_features(${NLOHMANN_JSON_TARGET_NAME} INTERFACE cxx_range_for)
 else()
-    target_compile_features(${NLOHMANN_JSON_TARGET_NAME} INTERFACE cxx_std_11)
+    target_compile_features(${NLOHMANN_JSON_TARGET_NAME} INTERFACE ${CXX_STD})
 endif()
 
 target_include_directories(
