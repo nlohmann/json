@@ -43,8 +43,10 @@ using nlohmann::json;
 #include <list>
 #include <cstdio>
 #include <test_data.hpp>
-
-#if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_HAS_CXX17) && _HAS_CXX17 == 1) // fix for issue #464
+// fix for issue #464
+#if (defined(__cplusplus) && __cplusplus >= 201703L) || \
+    (defined(_HAS_CXX17) && _HAS_CXX17 == 1) || \
+    (defined(__clang__) && __clang_major__ == 5 && __clang_minor__ >= 0)
     #define JSON_HAS_CPP_17
 #endif
 
