@@ -4753,13 +4753,14 @@ inline input_stream_adapter input_adapter(std::istream&& stream)
     return input_stream_adapter(stream);
 }
 
-template<typename CharT,
+template<typename CharT, typename SizeT,
          typename std::enable_if<
              std::is_pointer<CharT>::value and
              std::is_integral<typename std::remove_pointer<CharT>::type>::value and
+             not std::is_same<SizeT, bool>::value and
              sizeof(typename std::remove_pointer<CharT>::type) == 1,
              int>::type = 0>
-input_buffer_adapter input_adapter(CharT b, std::size_t l)
+input_buffer_adapter input_adapter(CharT b, SizeT l)
 {
     return input_buffer_adapter(reinterpret_cast<const char*>(b), l);
 }
@@ -5357,7 +5358,7 @@ class json_sax_dom_callback_parser
         ref_stack.pop_back();
         keep_stack.pop_back();
 
-        if (not ref_stack.empty() and ref_stack.back() and ref_stack.back()->is_object())
+        if (not ref_stack.empty() and ref_stack.back() and ref_stack.back()->is_structured())
         {
             // remove discarded value
             for (auto it = ref_stack.back()->begin(); it != ref_stack.back()->end(); ++it)
@@ -9456,7 +9457,7 @@ scan_number_done:
         std::string result;
         for (const auto c : token_string)
         {
-            if ('\x00' <= c and c <= '\x1F')
+            if (static_cast<unsigned char>(c) <= '\x1F')
             {
                 // escape control characters
                 std::array<char, 9> cs{{}};
@@ -18999,7 +19000,7 @@ class basic_json
                    not std::is_same<ValueType, typename string_t::value_type>::value and
                    not detail::is_basic_json<ValueType>::value
                    and not std::is_same<ValueType, std::initializer_list<typename string_t::value_type>>::value
-#if defined(JSON_HAS_CPP_17) && (defined(__GNUC__) || (defined(_MSC_VER) and _MSC_VER <= 1914))
+#if defined(JSON_HAS_CPP_17) && (defined(__GNUC__) || (defined(_MSC_VER) and _MSC_VER >= 1910 and _MSC_VER <= 1914))
                    and not std::is_same<ValueType, typename std::string_view>::value
 #endif
                    and detail::is_detected<detail::get_template_function, const basic_json_t&, ValueType>::value

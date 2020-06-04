@@ -1367,7 +1367,7 @@ scan_number_done:
         std::string result;
         for (const auto c : token_string)
         {
-            if ('\x00' <= c and c <= '\x1F')
+            if (static_cast<unsigned char>(c) <= '\x1F')
             {
                 // escape control characters
                 std::array<char, 9> cs{{}};

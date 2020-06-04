@@ -11,11 +11,8 @@ jobs:
           name: Install required tools
           command: 'apt-get update && apt-get install -y gcc g++ git cmake'
       - run:
-          name: Show versions
-          command: 'g++ --version ; uname -a; cmake --version'
-      - run:
           name: Run CMake
-          command: 'mkdir build ; cd build ; cmake ..'
+          command: 'mkdir build ; cd build ; cmake .. -DJSON_BuildTests=On'
       - run:
           name: Compile
           command: 'cmake --build build'
@@ -34,11 +31,8 @@ jobs:
           name: Install required tools
           command: 'pacman -Sy --noconfirm base base-devel gcc git cmake'
       - run:
-          name: Show versions
-          command: 'g++ --version ; uname -a; cmake --version'
-      - run:
           name: Run CMake
-          command: 'mkdir build ; cd build ; cmake ..'
+          command: 'mkdir build ; cd build ; cmake .. -DJSON_BuildTests=On'
       - run:
           name: Compile
           command: 'cmake --build build'
