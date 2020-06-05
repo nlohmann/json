@@ -12096,10 +12096,6 @@ namespace nlohmann
 namespace detail
 {
 
-
-template<typename T>
-struct output_adapter_impl;
-
 // Output to a string, append() is faster than insert(str.end(),...) on some compilers,
 // so it's worth having a special override for it.
 template<typename StringType>
@@ -12127,7 +12123,7 @@ struct string_output_adapter
 template<class IteratorType>
 struct iterator_output_adapter
 {
-    using char_type = char; //?????????????????????????
+    using char_type = char; // N.B. This can't be right, but there's no way to infer that
 
     iterator_output_adapter(IteratorType dst) : dst_(dst) {}
 
