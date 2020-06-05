@@ -12208,8 +12208,6 @@ class output_string_adapter : public output_adapter_protocol<CharType>
   private:
     StringType& str;
 };
-/// dump to alternative string type, as defined in basic_json template
-/// see https://github.com/nlohmann/json/pull/1006
 template<typename CharType, typename StringType = std::basic_string<CharType>>
 class output_adapter
 {
