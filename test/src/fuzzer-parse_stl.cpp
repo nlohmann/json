@@ -42,21 +42,21 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     // parsing from STL containers
     json j_vector(vec);
 
-    json j_vector2 = json::array();
-    json j_vector3 = json::array();
-
-    for(std::size_t i = 0; i < j_vector.size(); ++i)
+    std::map<std::string, uint8_t> mp;
+    for(std::size_t i = 1; i < vec.size(); i+=2)
     {
-        auto temp = j_vector.at(i);
-        // testing at() method
-        j_vector2.push_back(temp);
-        j_vector3.emplace_back(temp);
-        // testing push_back and emplace back methods
+    	int last_entry = static_cast<int>(vec[i-1]);
+    	std::string key_str = std::to_string(last_entry);
+        std::pair<std::string, uint8_t> insert_data = std::make_pair(key_str, vec[i]);
+        mp.insert(insert_data);
     }
-
-    // these three json vectors must be the same
-    assert(j_vector == j_vector2);
-    assert(j_vector == j_vector3);
+    json j_map(mp);
+    // iterating json map
+    for(json::iterator it = j_map.begin(); it != j_map.end(); ++it)
+    {
+        auto temp1 = it.key();
+        auto temp2 = it.value();
+    }
 
     return 0;
 }
