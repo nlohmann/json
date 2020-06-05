@@ -22313,12 +22313,12 @@ class basic_json
     {
         // read width member and use it as indentation parameter if nonzero
         const bool pretty_print = o.width() > 0;
-        const auto indentation = pretty_print ? o.width() : 0;
+        const auto indentation = pretty_print ? o.width() : -1;
 
         // reset width to 0 for subsequent calls to this stream
         o.width(0);
 
-        j.dump_to(o, indentation, ' ', false);
+        j.dump_to(o, indentation, o.fill(), false);
         return o;
     }
 
