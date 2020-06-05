@@ -97,6 +97,7 @@ class output_string_adapter : public output_adapter_protocol<CharType>
   private:
     StringType& str;
 };
+
 template<typename CharType, typename StringType = std::basic_string<CharType>>
 class output_adapter
 {
