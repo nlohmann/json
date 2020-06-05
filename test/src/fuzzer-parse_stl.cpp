@@ -42,28 +42,21 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     // parsing from STL containers
     json j_vector(vec);
 
-    std::map<std::string, uint8_t> mp;
-    std::unordered_map<std::string, uint8_t> umap;
-    std::multimap<std::string, uint8_t> multimp;
-    std::unordered_multimap<std::string, uint8_t> umultimap;
+    json j_vector2 = json::array();
+    json j_vector3 = json::array();
 
-    // converting each consecutive entry in the vector into a key-value pair and adding them to map
-    for(std::size_t i = 1; i < vec.size(); i+=2)
+    for(std::size_t i = 0; i < j_vector.size(); ++i)
     {
-    	int last_entry = static_cast<int>(vec[i-1]);
-    	std::string key_str = std::to_string(last_entry);
-        std::pair<std::string, uint8_t> insert_data = std::make_pair(key_str, vec[i]);
-        mp.insert(insert_data);
-        umap.insert(insert_data);
-        multimp.insert(insert_data);
-        umultimap.insert(insert_data);
+        auto temp = j_vector.at(i);
+        // testing at() method
+        j_vector2.push_back(temp);
+        j_vector3.emplace_back(temp);
+        // testing push_back and emplace back methods
     }
 
-    // map -> json map
-    json j_map(mp);
-    json j_umap(umap);
-    json j_multimap(multimp);
-    json j_umultimap(umultimap);
+    // these three json vectors must be the same
+    assert(j_vector == j_vector2);
+    assert(j_vector == j_vector3);
 
     return 0;
 }
