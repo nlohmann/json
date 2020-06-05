@@ -36,29 +36,21 @@ using json = nlohmann::json;
 // see http://llvm.org/docs/LibFuzzer.html
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
-    // putting data in several STL containers
-    std::vector<uint8_t> vec(data, data + size);
+    json j_vector2 = json::array();
+    json j_vector3 = json::array();
 
-    // parsing from STL containers
-    json j_vector(vec);
-
-    // iterating json array and testing get() method
-    for(json::iterator it = j_vector.begin(); it != j_vector.end(); ++it)
+    for(std::size_t i = 0; i < j_vector.size(); ++i)
     {
-        try
-        {
-            int temp = (*it).get<int>();
-        }
-        catch(const json::type_error)
-        {
-            // input might not be convertible to integer
-        }
+        auto temp = j_vector.at(i);
+        // testing at() method
+        j_vector2.push_back(temp);
+        j_vector3.emplace_back(temp);
+        // testing push_back and emplace back methods
     }
 
-    for(auto& element : j_vector)
-    {
-        // range-based iteration
-    }
+    // these three json vectors must be the same
+    assert(j_vector == j_vector2);
+    assert(j_vector == j_vector3);
 
     return 0;
 }
