@@ -38,27 +38,27 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     // putting data in several STL containers
     std::vector<uint8_t> vec(data, data + size);
-    std::deque<uint8_t> deq(data, data + size);
-    std::list<uint8_t> lst(data, data + size);
-    std::forward_list<uint8_t> flist(data, data + size);
-    std::set<uint8_t> st(data, data + size);
-    std::unordered_set<uint8_t> uset(data, data + size);
-    std::multiset<uint8_t> multist(data, data + size);
-    std::unordered_multiset<uint8_t> umultiset(data, data + size);
 
     // parsing from STL containers
     json j_vector(vec);
-    json j_deque(deq);
-    json j_list(lst);
-    json j_flist(flist);
-    json j_set(st);
-    json j_uset(uset);
-    json j_multiset(multist);
-    json j_umultiset(umultiset);
 
-    // json must be same for sequence containers
-    assert(j_vector == j_deque);
-    assert(j_vector == j_list);
-    assert(j_vector == j_flist);
+    // iterating json array and testing get() method
+    for(json::iterator it = j_vector.begin(); it != j_vector.end(); ++it)
+    {
+        try
+        {
+            int temp = (*it).get<int>();
+        }
+        catch(const json::type_error)
+        {
+            // input might not be convertible to integer
+        }
+    }
+
+    for(auto& element : j_vector)
+    {
+        // range-based iteration
+    }
+
     return 0;
 }
