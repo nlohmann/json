@@ -36,6 +36,12 @@ using json = nlohmann::json;
 // see http://llvm.org/docs/LibFuzzer.html
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
+    // putting data in several STL containers
+    std::vector<uint8_t> vec(data, data + size);
+
+    // parsing from STL containers
+    json j_vector(vec);
+
     json j_vector2 = json::array();
     json j_vector3 = json::array();
 
