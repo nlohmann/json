@@ -44,6 +44,7 @@ SOURCES = src/unit.cpp \
           src/unit-testsuites.cpp \
           src/unit-ubjson.cpp \
           src/unit-unicode.cpp \
+          src/unit-user_defined_input.cpp \
           src/unit-wstring.cpp
 
 OBJECTS = $(SOURCES:.cpp=.o)
