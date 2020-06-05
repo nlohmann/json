@@ -174,7 +174,8 @@ class basic_json
 
     template<typename BasicJsonType, typename InputType>
     friend class ::nlohmann::detail::parser;
-    friend ::nlohmann::detail::serializer<basic_json>;
+    template<typename BasicJsonType, typename OutputAdapterType>
+    friend class ::nlohmann::detail::serializer;
     template<typename BasicJsonType>
     friend class ::nlohmann::detail::iter_impl;
     template<typename BasicJsonType, typename CharType>
@@ -211,14 +212,12 @@ class basic_json
     using iteration_proxy = ::nlohmann::detail::iteration_proxy<Iterator>;
     template<typename Base> using json_reverse_iterator = ::nlohmann::detail::json_reverse_iterator<Base>;
 
-    template<typename CharType>
-    using output_adapter_t = ::nlohmann::detail::output_adapter_t<CharType>;
-
     template<typename InputType>
     using binary_reader = ::nlohmann::detail::binary_reader<basic_json, InputType>;
     template<typename CharType> using binary_writer = ::nlohmann::detail::binary_writer<basic_json, CharType>;
 
-    using serializer = ::nlohmann::detail::serializer<basic_json>;
+    template<typename OutputAdapterType>
+    using serializer = ::nlohmann::detail::serializer<basic_json, OutputAdapterType>;
 
   public:
     using value_t = detail::value_t;
@@ -2269,7 +2268,23 @@ class basic_json
                   const error_handler_t error_handler = error_handler_t::strict) const
     {
         string_t result;
-        serializer s(detail::output_adapter<char, string_t>(result), indent_char, error_handler);
+
+        dump_to(result, indent, indent_char, ensure_ascii, error_handler);
+
+        return result;
+    }
+
+
+    template <typename OutputType>
+    void dump_to(OutputType&& dst,
+                 const int indent = -1,
+                 const char indent_char = ' ',
+                 const bool ensure_ascii = false,
+                 const error_handler_t error_handler = error_handler_t::strict) const
+    {
+        auto oa = detail::output_adapter(std::forward<OutputType>(dst));
+        using serializer_t = serializer<decltype(oa)>;
+        serializer<decltype(oa)> s(std::move(oa), indent_char, error_handler);
 
         if (indent >= 0)
         {
@@ -2279,10 +2294,7 @@ class basic_json
         {
             s.dump(*this, false, ensure_ascii, 0);
         }
-
-        return result;
     }
-
     /*!
     @brief return the type of the JSON value (explicit)
 
@@ -6516,9 +6528,7 @@ class basic_json
         // reset width to 0 for subsequent calls to this stream
         o.width(0);
 
-        // do the actual serialization
-        serializer s(detail::output_adapter<char>(o), o.fill());
-        s.dump(j, pretty_print, false, static_cast<unsigned int>(indentation));
+        j.dump_to(o, indentation, ' ', false);
         return o;
     }
 
@@ -6976,14 +6986,11 @@ class basic_json
         return result;
     }
 
-    static void to_cbor(const basic_json& j, detail::output_adapter<uint8_t> o)
+    template<typename OutputType>
+    static void to_cbor(const basic_json& j, OutputType&& o)
     {
-        binary_writer<uint8_t>(o).write_cbor(j);
-    }
-
-    static void to_cbor(const basic_json& j, detail::output_adapter<char> o)
-    {
-        binary_writer<char>(o).write_cbor(j);
+        auto oa = detail::output_adapter(std::forward<OutputType>(o));
+        binary_writer<decltype(oa)>(std::move(oa)).write_cbor(j);
     }
 
     /*!
@@ -7073,15 +7080,13 @@ class basic_json
         return result;
     }
 
-    static void to_msgpack(const basic_json& j, detail::output_adapter<uint8_t> o)
+    template<typename OutputType>
+    static void to_msgpack(const basic_json& j, OutputType&& o)
     {
-        binary_writer<uint8_t>(o).write_msgpack(j);
+        auto oa = detail::output_adapter(std::forward<OutputType>(o));
+        binary_writer<decltype(oa)>(std::move(oa)).write_msgpack(j);
     }
 
-    static void to_msgpack(const basic_json& j, detail::output_adapter<char> o)
-    {
-        binary_writer<char>(o).write_msgpack(j);
-    }
 
     /*!
     @brief create a UBJSON serialization of a given JSON value
@@ -7174,22 +7179,17 @@ class basic_json
                                           const bool use_type = false)
     {
         std::vector<uint8_t> result;
-        to_ubjson(j, result, use_size, use_type);
+        to_ubjson(j, std::back_inserter(result), use_size, use_type);
         return result;
     }
 
-    static void to_ubjson(const basic_json& j, detail::output_adapter<uint8_t> o,
+    template<typename OutputType>
+    static void to_ubjson(const basic_json& j, OutputType&& o,
                           const bool use_size = false, const bool use_type = false)
     {
-        binary_writer<uint8_t>(o).write_ubjson(j, use_size, use_type);
+        auto oa = detail::output_adapter(std::forward<OutputType>(o));
+        binary_writer<decltype(oa)>(std::move(oa)).write_ubjson(j, use_size, use_type);
     }
-
-    static void to_ubjson(const basic_json& j, detail::output_adapter<char> o,
-                          const bool use_size = false, const bool use_type = false)
-    {
-        binary_writer<char>(o).write_ubjson(j, use_size, use_type);
-    }
-
 
     /*!
     @brief Serializes the given JSON object `j` to BSON and returns a vector
@@ -7262,17 +7262,11 @@ class basic_json
     @pre The input `j` shall be an object: `j.is_object() == true`
     @sa @ref to_bson(const basic_json&)
     */
-    static void to_bson(const basic_json& j, detail::output_adapter<uint8_t> o)
+    template<typename OutputType>
+    static void to_bson(const basic_json& j, OutputType&& o)
     {
-        binary_writer<uint8_t>(o).write_bson(j);
-    }
-
-    /*!
-    @copydoc to_bson(const basic_json&, detail::output_adapter<uint8_t>)
-    */
-    static void to_bson(const basic_json& j, detail::output_adapter<char> o)
-    {
-        binary_writer<char>(o).write_bson(j);
+        auto oa = detail::output_adapter(std::forward<OutputType>(o));
+        binary_writer<decltype(oa)>(std::move(oa)).write_bson(j);
     }
 
 

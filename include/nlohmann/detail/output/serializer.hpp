@@ -38,7 +38,7 @@ enum class error_handler_t
     ignore   ///< ignore invalid UTF-8 sequences
 };
 
-template<typename BasicJsonType>
+template<typename BasicJsonType, typename OutputAdapterType>
 class serializer
 {
     using string_t = typename BasicJsonType::string_t;
@@ -46,16 +46,19 @@ class serializer
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using binary_char_t = typename BasicJsonType::binary_t::value_type;
+    using output_adapter_t = OutputAdapterType;
+
     static constexpr std::uint8_t UTF8_ACCEPT = 0;
     static constexpr std::uint8_t UTF8_REJECT = 1;
 
+    static_assert(sizeof(typename output_adapter_t::char_type) == 1, "can only serialize to UTF-8");
   public:
     /*!
     @param[in] s  output stream to serialize to
     @param[in] ichar  indentation character to use
     @param[in] error_handler_  how to react on decoding errors
     */
-    serializer(output_adapter_t<char> s, const char ichar,
+    serializer(output_adapter_t s, const char ichar,
                error_handler_t error_handler_ = error_handler_t::strict)
         : o(std::move(s))
         , loc(std::localeconv())
@@ -107,13 +110,13 @@ class serializer
             {
                 if (val.m_value.object->empty())
                 {
-                    o->write_characters("{}", 2);
+                    o.write_characters("{}", 2);
                     return;
                 }
 
                 if (pretty_print)
                 {
-                    o->write_characters("{\n", 2);
+                    o.write_characters("{\n", 2);
 
                     // variable to hold indentation for recursive calls
                     const auto new_indent = current_indent + indent_step;
@@ -126,51 +129,51 @@ class serializer
                     auto i = val.m_value.object->cbegin();
                     for (std::size_t cnt = 0; cnt < val.m_value.object->size() - 1; ++cnt, ++i)
                     {
-                        o->write_characters(indent_string.c_str(), new_indent);
-                        o->write_character('\"');
+                        o.write_characters(indent_string.c_str(), new_indent);
+                        o.write_character('\"');
                         dump_escaped(i->first, ensure_ascii);
-                        o->write_characters("\": ", 3);
+                        o.write_characters("\": ", 3);
                         dump(i->second, true, ensure_ascii, indent_step, new_indent);
-                        o->write_characters(",\n", 2);
+                        o.write_characters(",\n", 2);
                     }
 
                     // last element
                     assert(i != val.m_value.object->cend());
                     assert(std::next(i) == val.m_value.object->cend());
-                    o->write_characters(indent_string.c_str(), new_indent);
-                    o->write_character('\"');
+                    o.write_characters(indent_string.c_str(), new_indent);
+                    o.write_character('\"');
                     dump_escaped(i->first, ensure_ascii);
-                    o->write_characters("\": ", 3);
+                    o.write_characters("\": ", 3);
                     dump(i->second, true, ensure_ascii, indent_step, new_indent);
 
-                    o->write_character('\n');
-                    o->write_characters(indent_string.c_str(), current_indent);
-                    o->write_character('}');
+                    o.write_character('\n');
+                    o.write_characters(indent_string.c_str(), current_indent);
+                    o.write_character('}');
                 }
                 else
                 {
-                    o->write_character('{');
+                    o.write_character('{');
 
                     // first n-1 elements
                     auto i = val.m_value.object->cbegin();
                     for (std::size_t cnt = 0; cnt < val.m_value.object->size() - 1; ++cnt, ++i)
                     {
-                        o->write_character('\"');
+                        o.write_character('\"');
                         dump_escaped(i->first, ensure_ascii);
-                        o->write_characters("\":", 2);
+                        o.write_characters("\":", 2);
                         dump(i->second, false, ensure_ascii, indent_step, current_indent);
-                        o->write_character(',');
+                        o.write_character(',');
                     }
 
                     // last element
                     assert(i != val.m_value.object->cend());
                     assert(std::next(i) == val.m_value.object->cend());
-                    o->write_character('\"');
+                    o.write_character('\"');
                     dump_escaped(i->first, ensure_ascii);
-                    o->write_characters("\":", 2);
+                    o.write_characters("\":", 2);
                     dump(i->second, false, ensure_ascii, indent_step, current_indent);
 
-                    o->write_character('}');
+                    o.write_character('}');
                 }
 
                 return;
@@ -180,13 +183,13 @@ class serializer
             {
                 if (val.m_value.array->empty())
                 {
-                    o->write_characters("[]", 2);
+                    o.write_characters("[]", 2);
                     return;
                 }
 
                 if (pretty_print)
                 {
-                    o->write_characters("[\n", 2);
+                    o.write_characters("[\n", 2);
 
                     // variable to hold indentation for recursive calls
                     const auto new_indent = current_indent + indent_step;
@@ -199,37 +202,37 @@ class serializer
                     for (auto i = val.m_value.array->cbegin();
                             i != val.m_value.array->cend() - 1; ++i)
                     {
-                        o->write_characters(indent_string.c_str(), new_indent);
+                        o.write_characters(indent_string.c_str(), new_indent);
                         dump(*i, true, ensure_ascii, indent_step, new_indent);
-                        o->write_characters(",\n", 2);
+                        o.write_characters(",\n", 2);
                     }
 
                     // last element
                     assert(not val.m_value.array->empty());
-                    o->write_characters(indent_string.c_str(), new_indent);
+                    o.write_characters(indent_string.c_str(), new_indent);
                     dump(val.m_value.array->back(), true, ensure_ascii, indent_step, new_indent);
 
-                    o->write_character('\n');
-                    o->write_characters(indent_string.c_str(), current_indent);
-                    o->write_character(']');
+                    o.write_character('\n');
+                    o.write_characters(indent_string.c_str(), current_indent);
+                    o.write_character(']');
                 }
                 else
                 {
-                    o->write_character('[');
+                    o.write_character('[');
 
                     // first n-1 elements
                     for (auto i = val.m_value.array->cbegin();
                             i != val.m_value.array->cend() - 1; ++i)
                     {
                         dump(*i, false, ensure_ascii, indent_step, current_indent);
-                        o->write_character(',');
+                        o.write_character(',');
                     }
 
                     // last element
                     assert(not val.m_value.array->empty());
                     dump(val.m_value.array->back(), false, ensure_ascii, indent_step, current_indent);
 
-                    o->write_character(']');
+                    o.write_character(']');
                 }
 
                 return;
@@ -237,9 +240,9 @@ class serializer
 
             case value_t::string:
             {
-                o->write_character('\"');
+                o.write_character('\"');
                 dump_escaped(*val.m_value.string, ensure_ascii);
-                o->write_character('\"');
+                o.write_character('\"');
                 return;
             }
 
@@ -247,7 +250,7 @@ class serializer
             {
                 if (pretty_print)
                 {
-                    o->write_characters("{\n", 2);
+                    o.write_characters("{\n", 2);
 
                     // variable to hold indentation for recursive calls
                     const auto new_indent = current_indent + indent_step;
@@ -256,9 +259,9 @@ class serializer
                         indent_string.resize(indent_string.size() * 2, ' ');
                     }
 
-                    o->write_characters(indent_string.c_str(), new_indent);
+                    o.write_characters(indent_string.c_str(), new_indent);
 
-                    o->write_characters("\"bytes\": [", 10);
+                    o.write_characters("\"bytes\": [", 10);
 
                     if (not val.m_value.binary->empty())
                     {
@@ -266,30 +269,30 @@ class serializer
                                 i != val.m_value.binary->cend() - 1; ++i)
                         {
                             dump_integer(*i);
-                            o->write_characters(", ", 2);
+                            o.write_characters(", ", 2);
                         }
                         dump_integer(val.m_value.binary->back());
                     }
 
-                    o->write_characters("],\n", 3);
-                    o->write_characters(indent_string.c_str(), new_indent);
+                    o.write_characters("],\n", 3);
+                    o.write_characters(indent_string.c_str(), new_indent);
 
-                    o->write_characters("\"subtype\": ", 11);
+                    o.write_characters("\"subtype\": ", 11);
                     if (val.m_value.binary->has_subtype())
                     {
                         dump_integer(val.m_value.binary->subtype());
                     }
                     else
                     {
-                        o->write_characters("null", 4);
+                        o.write_characters("null", 4);
                     }
-                    o->write_character('\n');
-                    o->write_characters(indent_string.c_str(), current_indent);
-                    o->write_character('}');
+                    o.write_character('\n');
+                    o.write_characters(indent_string.c_str(), current_indent);
+                    o.write_character('}');
                 }
                 else
                 {
-                    o->write_characters("{\"bytes\":[", 10);
+                    o.write_characters("{\"bytes\":[", 10);
 
                     if (not val.m_value.binary->empty())
                     {
@@ -297,20 +300,20 @@ class serializer
                                 i != val.m_value.binary->cend() - 1; ++i)
                         {
                             dump_integer(*i);
-                            o->write_character(',');
+                            o.write_character(',');
                         }
                         dump_integer(val.m_value.binary->back());
                     }
 
-                    o->write_characters("],\"subtype\":", 12);
+                    o.write_characters("],\"subtype\":", 12);
                     if (val.m_value.binary->has_subtype())
                     {
                         dump_integer(val.m_value.binary->subtype());
-                        o->write_character('}');
+                        o.write_character('}');
                     }
                     else
                     {
-                        o->write_characters("null}", 5);
+                        o.write_characters("null}", 5);
                     }
                 }
                 return;
@@ -320,11 +323,11 @@ class serializer
             {
                 if (val.m_value.boolean)
                 {
-                    o->write_characters("true", 4);
+                    o.write_characters("true", 4);
                 }
                 else
                 {
-                    o->write_characters("false", 5);
+                    o.write_characters("false", 5);
                 }
                 return;
             }
@@ -349,13 +352,13 @@ class serializer
 
             case value_t::discarded:
             {
-                o->write_characters("<discarded>", 11);
+                o.write_characters("<discarded>", 11);
                 return;
             }
 
             case value_t::null:
             {
-                o->write_characters("null", 4);
+                o.write_characters("null", 4);
                 return;
             }
 
@@ -483,7 +486,7 @@ class serializer
                     // written ("\uxxxx\uxxxx\0") for one code point
                     if (string_buffer.size() - bytes < 13)
                     {
-                        o->write_characters(string_buffer.data(), bytes);
+                        o.write_characters(string_buffer.data(), bytes);
                         bytes = 0;
                     }
 
@@ -534,9 +537,9 @@ class serializer
                                 }
                                 else
                                 {
-                                    string_buffer[bytes++] = detail::binary_writer<BasicJsonType, char>::to_char_type('\xEF');
-                                    string_buffer[bytes++] = detail::binary_writer<BasicJsonType, char>::to_char_type('\xBF');
-                                    string_buffer[bytes++] = detail::binary_writer<BasicJsonType, char>::to_char_type('\xBD');
+                                    string_buffer[bytes++] = detail::binary_writer<BasicJsonType, output_adapter_t>::to_char_type('\xEF');
+                                    string_buffer[bytes++] = detail::binary_writer<BasicJsonType, output_adapter_t>::to_char_type('\xBF');
+                                    string_buffer[bytes++] = detail::binary_writer<BasicJsonType, output_adapter_t>::to_char_type('\xBD');
                                 }
 
                                 // write buffer and reset index; there must be 13 bytes
@@ -544,7 +547,7 @@ class serializer
                                 // written ("\uxxxx\uxxxx\0") for one code point
                                 if (string_buffer.size() - bytes < 13)
                                 {
-                                    o->write_characters(string_buffer.data(), bytes);
+                                    o.write_characters(string_buffer.data(), bytes);
                                     bytes = 0;
                                 }
 
@@ -583,7 +586,7 @@ class serializer
             // write buffer
             if (bytes > 0)
             {
-                o->write_characters(string_buffer.data(), bytes);
+                o.write_characters(string_buffer.data(), bytes);
             }
         }
         else
@@ -601,22 +604,22 @@ class serializer
                 case error_handler_t::ignore:
                 {
                     // write all accepted bytes
-                    o->write_characters(string_buffer.data(), bytes_after_last_accept);
+                    o.write_characters(string_buffer.data(), bytes_after_last_accept);
                     break;
                 }
 
                 case error_handler_t::replace:
                 {
                     // write all accepted bytes
-                    o->write_characters(string_buffer.data(), bytes_after_last_accept);
+                    o.write_characters(string_buffer.data(), bytes_after_last_accept);
                     // add a replacement character
                     if (ensure_ascii)
                     {
-                        o->write_characters("\\ufffd", 6);
+                        o.write_characters("\\ufffd", 6);
                     }
                     else
                     {
-                        o->write_characters("\xEF\xBF\xBD", 3);
+                        o.write_characters("\xEF\xBF\xBD", 3);
                     }
                     break;
                 }
@@ -696,7 +699,7 @@ class serializer
         // special case for "0"
         if (x == 0)
         {
-            o->write_character('0');
+            o.write_character('0');
             return;
         }
 
@@ -750,7 +753,7 @@ class serializer
             *(--buffer_ptr) = static_cast<char>('0' + abs_value);
         }
 
-        o->write_characters(number_buffer.data(), n_chars);
+        o.write_characters(number_buffer.data(), n_chars);
     }
 
     /*!
@@ -766,7 +769,7 @@ class serializer
         // NaN / inf
         if (not std::isfinite(x))
         {
-            o->write_characters("null", 4);
+            o.write_characters("null", 4);
             return;
         }
 
@@ -787,7 +790,7 @@ class serializer
         char* begin = number_buffer.data();
         char* end = ::nlohmann::detail::to_chars(begin, begin + number_buffer.size(), x);
 
-        o->write_characters(begin, static_cast<size_t>(end - begin));
+        o.write_characters(begin, static_cast<size_t>(end - begin));
     }
 
     void dump_float(number_float_t x, std::false_type /*is_ieee_single_or_double*/)
@@ -823,7 +826,7 @@ class serializer
             }
         }
 
-        o->write_characters(number_buffer.data(), static_cast<std::size_t>(len));
+        o.write_characters(number_buffer.data(), static_cast<std::size_t>(len));
 
         // determine if need to append ".0"
         const bool value_is_int_like =
@@ -835,7 +838,7 @@ class serializer
 
         if (value_is_int_like)
         {
-            o->write_characters(".0", 2);
+            o.write_characters(".0", 2);
         }
     }
 
@@ -922,7 +925,7 @@ class serializer
 
   private:
     /// the output of the serializer
-    output_adapter_t<char> o = nullptr;
+    output_adapter_t o;
 
     /// a (hopefully) large enough character buffer
     std::array<char, 64> number_buffer{{}};

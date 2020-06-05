@@ -14,110 +14,134 @@ namespace nlohmann
 {
 namespace detail
 {
-/// abstract output adapter interface
-template<typename CharType> struct output_adapter_protocol
+
+
+template<typename T>
+struct output_adapter_impl;
+
+// Output to a string, append() is faster than insert(str.end(),...) on some compilers,
+// so it's worth having a special override for it.
+template<typename StringType>
+struct string_output_adapter
 {
-    virtual void write_character(CharType c) = 0;
-    virtual void write_characters(const CharType* s, std::size_t length) = 0;
-    virtual ~output_adapter_protocol() = default;
-};
+    using char_type = typename StringType::value_type;
 
-/// a type to simplify interfaces
-template<typename CharType>
-using output_adapter_t = std::shared_ptr<output_adapter_protocol<CharType>>;
+    string_output_adapter(StringType& dst) : dst_(dst) {}
 
-/// output adapter for byte vectors
-template<typename CharType>
-class output_vector_adapter : public output_adapter_protocol<CharType>
-{
-  public:
-    explicit output_vector_adapter(std::vector<CharType>& vec) noexcept
-        : v(vec)
-    {}
-
-    void write_character(CharType c) override
+    void write_character(char_type c)
     {
-        v.push_back(c);
+        dst_.push_back(c);
     }
 
-    JSON_HEDLEY_NON_NULL(2)
-    void write_characters(const CharType* s, std::size_t length) override
+    void write_characters(const char_type* str, std::size_t len)
     {
-        std::copy(s, s + length, std::back_inserter(v));
+        dst_.append(str, len);
     }
 
   private:
-    std::vector<CharType>& v;
+    StringType& dst_;
 };
 
-/// output adapter for output streams
-template<typename CharType>
-class output_stream_adapter : public output_adapter_protocol<CharType>
+// Output to an iterator-like object
+template<class IteratorType>
+struct iterator_output_adapter
 {
-  public:
-    explicit output_stream_adapter(std::basic_ostream<CharType>& s) noexcept
-        : stream(s)
-    {}
+    using char_type = char; //?????????????????????????
 
-    void write_character(CharType c) override
+    iterator_output_adapter(IteratorType dst) : dst_(dst) {}
+
+    void write_character(char_type c)
     {
-        stream.put(c);
+        *dst_++ = c;
     }
 
-    JSON_HEDLEY_NON_NULL(2)
-    void write_characters(const CharType* s, std::size_t length) override
+    void write_characters(const char_type* str, std::size_t len)
     {
-        stream.write(s, static_cast<std::streamsize>(length));
+        std::copy(str, str + len, dst_);
     }
 
   private:
-    std::basic_ostream<CharType>& stream;
+    IteratorType dst_;
 };
 
-/// output adapter for basic_string
-template<typename CharType, typename StringType = std::basic_string<CharType>>
-class output_string_adapter : public output_adapter_protocol<CharType>
+// Output to a stream-like object
+template<class StreamType>
+struct stream_output_adapter
 {
-  public:
-    explicit output_string_adapter(StringType& s) noexcept
-        : str(s)
-    {}
+    using char_type = typename StreamType::char_type;
 
-    void write_character(CharType c) override
+    stream_output_adapter(StreamType& dst) : dst_(dst) {}
+
+    void write_character(char_type c)
     {
-        str.push_back(c);
+        dst_.put(c);
     }
 
-    JSON_HEDLEY_NON_NULL(2)
-    void write_characters(const CharType* s, std::size_t length) override
+    void write_characters(const char_type* str, std::size_t len)
     {
-        str.append(s, length);
+        dst_.write(str, len);
     }
 
   private:
-    StringType& str;
+    StreamType& dst_;
 };
 
-template<typename CharType, typename StringType = std::basic_string<CharType>>
-class output_adapter
+template<typename T, typename = void>
+struct is_output_iterator : public std::false_type {};
+
+template<typename T>
+struct is_output_iterator<T,
+           typename std::enable_if<
+           std::is_same<
+           typename std::iterator_traits<T>::iterator_category,
+           std::output_iterator_tag>::value
+           >::type> : public std::true_type {};
+
+template <typename T>
+constexpr auto has_push_back (int)
+-> decltype( std::declval<T>().push_back('a'),
+             std::true_type() );
+
+template <typename>
+constexpr std::false_type has_push_back (long);
+
+// If the parameter is a basic_string
+template<typename CharT, typename Traits, typename Allocator>
+string_output_adapter<std::basic_string<CharT, Traits, Allocator>> output_adapter(std::basic_string<CharT, Traits, Allocator>& dst)
 {
-  public:
-    output_adapter(std::vector<CharType>& vec)
-        : oa(std::make_shared<output_vector_adapter<CharType>>(vec)) {}
+    return string_output_adapter<std::basic_string<CharT, Traits, Allocator>>(dst);
+}
 
-    output_adapter(std::basic_ostream<CharType>& s)
-        : oa(std::make_shared<output_stream_adapter<CharType>>(s)) {}
+// If the parameter is an output iterator
+template<typename IteratorType,
+         typename std::enable_if<
+             is_output_iterator<IteratorType>::value,
+             int>::type = 0>
+auto output_adapter(IteratorType dst) -> iterator_output_adapter<IteratorType>
+{
+    return iterator_output_adapter<IteratorType>(std::move(dst));
+}
 
-    output_adapter(StringType& s)
-        : oa(std::make_shared<output_string_adapter<CharType, StringType>>(s)) {}
+// Try to extract an output iterator from the parameter
+template<typename ContainerType,
+         typename std::enable_if<
+             decltype(has_push_back<ContainerType>(0))::value,
+             int>::type = 0>
+auto output_adapter(ContainerType& dst) -> decltype(output_adapter(std::back_inserter(dst)))
+{
+    return output_adapter(std::back_inserter(dst));
+}
 
-    operator output_adapter_t<CharType>()
-    {
-        return oa;
-    }
 
-  private:
-    output_adapter_t<CharType> oa = nullptr;
-};
+// If all else fails, treat it as a stream
+template<typename StreamType, typename std::enable_if<
+             not is_output_iterator<StreamType>::value and
+             not decltype(has_push_back<StreamType>(0))::value,
+             int>::type = 0>
+stream_output_adapter<StreamType> output_adapter(StreamType& dst)
+{
+    return stream_output_adapter<StreamType>(dst);
+}
+
 }  // namespace detail
 }  // namespace nlohmann
