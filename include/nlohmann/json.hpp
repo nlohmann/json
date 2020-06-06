@@ -4764,7 +4764,7 @@ class basic_json
                 future 4.0.0 of the library. Please use @ref items() instead;
                 that is, replace `json::iterator_wrapper(j)` with `j.items()`.
     */
-    JSON_HEDLEY_DEPRECATED(3.1.0)
+    JSON_HEDLEY_DEPRECATED_FOR(3.1.0, items())
     static iteration_proxy<iterator> iterator_wrapper(reference ref) noexcept
     {
         return ref.items();
@@ -4773,7 +4773,7 @@ class basic_json
     /*!
     @copydoc iterator_wrapper(reference)
     */
-    JSON_HEDLEY_DEPRECATED(3.1.0)
+    JSON_HEDLEY_DEPRECATED_FOR(3.1.0, items())
     static iteration_proxy<const_iterator> iterator_wrapper(const_reference ref) noexcept
     {
         return ref.items();
@@ -6530,7 +6530,7 @@ class basic_json
                 instead; that is, replace calls like `j >> o;` with `o << j;`.
     @since version 1.0.0; deprecated since version 3.0.0
     */
-    JSON_HEDLEY_DEPRECATED(3.0.0)
+    JSON_HEDLEY_DEPRECATED_FOR(3.0.0, operator<<(std::ostream&, const basic_json&))
     friend std::ostream& operator>>(const basic_json& j, std::ostream& o)
     {
         return o << j;
@@ -6731,8 +6731,8 @@ class basic_json
     }
 
     template <typename SAX>
-    JSON_HEDLEY_NON_NULL(2)
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, sax_parse(ptr, ptr + len, ...))
+    JSON_HEDLEY_NON_NULL(2)
     static bool sax_parse(detail::span_input_adapter&& i, SAX* sax,
                           input_format_t format = input_format_t::json,
                           const bool strict = true)
@@ -6743,9 +6743,6 @@ class basic_json
                : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia)).sax_parse(format, sax, strict);
     }
 
-
-
-
     /*!
     @brief deserialize from stream
     @deprecated This stream operator is deprecated and will be removed in
@@ -6754,7 +6751,7 @@ class basic_json
                 instead; that is, replace calls like `j << i;` with `i >> j;`.
     @since version 1.0.0; deprecated since version 3.0.0
     */
-    JSON_HEDLEY_DEPRECATED(3.0.0)
+    JSON_HEDLEY_DEPRECATED_FOR(3.0.0, operator>>(std::istream&, basic_json&))
     friend std::istream& operator<<(basic_json& j, std::istream& i)
     {
         return operator>>(i, j);

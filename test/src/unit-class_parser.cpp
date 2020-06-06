@@ -1587,7 +1587,7 @@ TEST_CASE("parser class")
             CHECK (j_filtered1.size() == 2);
             CHECK (j_filtered1 == json({1, {{"qux", "baz"}}}));
 
-            json j_filtered2 = json::parse(structured_array, [](int, json::parse_event_t e, const json & /*parsed*/)
+            json j_filtered2 = json::parse(structured_array, [](int, json::parse_event_t e, const json& /*parsed*/)
             {
                 if (e == json::parse_event_t::object_end)
                 {

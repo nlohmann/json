@@ -87,7 +87,6 @@ TEST_CASE("Custom iterator")
         using reference = const char&;
         using iterator_category = std::input_iterator_tag;
 
-
         MyIterator& operator++()
         {
             ++ptr;
@@ -117,6 +116,4 @@ TEST_CASE("Custom iterator")
     CHECK(as_json.at(3) == 4);
 }
 
-
-
-}
+} // namespace
