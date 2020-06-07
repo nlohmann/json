@@ -22327,7 +22327,7 @@ class basic_json
     /*!
     @brief deserialize from a compatible input
 
-    This function reads from a compatible input. Examples are:
+    @tparam InputType A compatible input, for instance
     - an std::istream object
     - a FILE pointer
     - a C-style array of characters
@@ -22428,6 +22428,33 @@ class basic_json
         return result;
     }
 
+    /*!
+    @brief check if the input is valid JSON
+
+    Unlike the @ref parse(InputType&&, const parser_callback_t,const bool)
+    function, this function neither throws an exception in case of invalid JSON
+    input (i.e., a parse error) nor creates diagnostic information.
+
+    @tparam InputType A compatible input, for instance
+    - an std::istream object
+    - a FILE pointer
+    - a C-style array of characters
+    - a pointer to a null-terminated string of single byte characters
+    - an object obj for which begin(obj) and end(obj) produces a valid pair of
+      iterators.
+
+    @param[in] i input to read from
+
+    @return Whether the input read from @a i is valid JSON.
+
+    @complexity Linear in the length of the input. The parser is a predictive
+    LL(1) parser.
+
+    @note A UTF-8 byte order mark is silently ignored.
+
+    @liveexample{The example below demonstrates the `accept()` function reading
+    from a string.,accept__string}
+    */
     template<typename InputType>
     static bool accept(InputType&& i)
     {
