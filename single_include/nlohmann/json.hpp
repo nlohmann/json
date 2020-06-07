@@ -9514,18 +9514,18 @@ scan_number_done:
             // literals
             case 't':
             {
-                char_type true_literal[] = "true";
-                return scan_literal(true_literal, 4, token_type::literal_true);
+                std::array<char_type, 4> true_literal = {{'t', 'r', 'u', 'e'}};
+                return scan_literal(true_literal.data(), true_literal.size(), token_type::literal_true);
             }
             case 'f':
             {
-                char_type false_literal[] = "false";
-                return scan_literal(false_literal, 5, token_type::literal_false);
+                std::array<char_type, 5> false_literal = {{'f', 'a', 'l', 's', 'e'}};
+                return scan_literal(false_literal.data(), false_literal.size(), token_type::literal_false);
             }
             case 'n':
             {
-                char_type null_literal[] = "null";
-                return scan_literal(null_literal, 4, token_type::literal_null);
+                std::array<char_type, 4> null_literal = {{'n', 'u', 'l', 'l'}};
+                return scan_literal(null_literal.data(), null_literal.size(), token_type::literal_null);
             }
 
             // string
