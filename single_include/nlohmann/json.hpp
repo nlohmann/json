@@ -22494,8 +22494,8 @@ class basic_json
     }
 
     template <typename SAX>
-    JSON_HEDLEY_NON_NULL(2)
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, sax_parse(ptr, ptr + len, ...))
+    JSON_HEDLEY_NON_NULL(2)
     static bool sax_parse(detail::span_input_adapter&& i, SAX* sax,
                           input_format_t format = input_format_t::json,
                           const bool strict = true)
