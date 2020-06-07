@@ -1040,7 +1040,7 @@ TEST_CASE("deserialization")
     }
 }
 
-TEST_CASE_TEMPLATE("deserialization of different character types", T,
+TEST_CASE_TEMPLATE("deserialization of different character types (ASCII)", T,
                    char, unsigned char, signed char,
                    wchar_t,
                    char16_t, char32_t,
