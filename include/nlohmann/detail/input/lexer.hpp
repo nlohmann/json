@@ -106,12 +106,14 @@ class lexer : public lexer_base<BasicJsonType>
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
     using string_t = typename BasicJsonType::string_t;
+    using char_type = typename InputAdapterType::char_type;
+    using char_int_type = typename std::char_traits<char_type>::int_type;
 
   public:
     using token_type = typename lexer_base<BasicJsonType>::token_type;
 
     explicit lexer(InputAdapterType&& adapter)
-        : ia(std::move(adapter)), decimal_point_char(get_decimal_point()) {}
+        : ia(std::move(adapter)), decimal_point_char(static_cast<char_type>(get_decimal_point())) {}
 
     // delete because of pointer members
     lexer(const lexer&) = delete;
@@ -201,7 +203,7 @@ class lexer : public lexer_base<BasicJsonType>
 
     @return true if and only if no range violation was detected
     */
-    bool next_byte_in_range(std::initializer_list<int> ranges)
+    bool next_byte_in_range(std::initializer_list<char_int_type> ranges)
     {
         assert(ranges.size() == 2 or ranges.size() == 4 or ranges.size() == 6);
         add(current);
@@ -252,7 +254,7 @@ class lexer : public lexer_base<BasicJsonType>
             switch (get())
             {
                 // end of file while parsing string
-                case std::char_traits<char>::eof():
+                case std::char_traits<char_type>::eof():
                 {
                     error_message = "invalid string: missing closing quote";
                     return token_type::parse_error;
@@ -370,28 +372,28 @@ class lexer : public lexer_base<BasicJsonType>
                             if (codepoint < 0x80)
                             {
                                 // 1-byte characters: 0xxxxxxx (ASCII)
-                                add(codepoint);
+                                add(static_cast<char_int_type>(codepoint));
                             }
                             else if (codepoint <= 0x7FF)
                             {
                                 // 2-byte characters: 110xxxxx 10xxxxxx
-                                add(static_cast<int>(0xC0u | (static_cast<unsigned int>(codepoint) >> 6u)));
-                                add(static_cast<int>(0x80u | (static_cast<unsigned int>(codepoint) & 0x3Fu)));
+                                add(static_cast<char_int_type>(0xC0u | (static_cast<unsigned int>(codepoint) >> 6u)));
+                                add(static_cast<char_int_type>(0x80u | (static_cast<unsigned int>(codepoint) & 0x3Fu)));
                             }
                             else if (codepoint <= 0xFFFF)
                             {
                                 // 3-byte characters: 1110xxxx 10xxxxxx 10xxxxxx
-                                add(static_cast<int>(0xE0u | (static_cast<unsigned int>(codepoint) >> 12u)));
-                                add(static_cast<int>(0x80u | ((static_cast<unsigned int>(codepoint) >> 6u) & 0x3Fu)));
-                                add(static_cast<int>(0x80u | (static_cast<unsigned int>(codepoint) & 0x3Fu)));
+                                add(static_cast<char_int_type>(0xE0u | (static_cast<unsigned int>(codepoint) >> 12u)));
+                                add(static_cast<char_int_type>(0x80u | ((static_cast<unsigned int>(codepoint) >> 6u) & 0x3Fu)));
+                                add(static_cast<char_int_type>(0x80u | (static_cast<unsigned int>(codepoint) & 0x3Fu)));
                             }
                             else
                             {
                                 // 4-byte characters: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-                                add(static_cast<int>(0xF0u | (static_cast<unsigned int>(codepoint) >> 18u)));
-                                add(static_cast<int>(0x80u | ((static_cast<unsigned int>(codepoint) >> 12u) & 0x3Fu)));
-                                add(static_cast<int>(0x80u | ((static_cast<unsigned int>(codepoint) >> 6u) & 0x3Fu)));
-                                add(static_cast<int>(0x80u | (static_cast<unsigned int>(codepoint) & 0x3Fu)));
+                                add(static_cast<char_int_type>(0xF0u | (static_cast<unsigned int>(codepoint) >> 18u)));
+                                add(static_cast<char_int_type>(0x80u | ((static_cast<unsigned int>(codepoint) >> 12u) & 0x3Fu)));
+                                add(static_cast<char_int_type>(0x80u | ((static_cast<unsigned int>(codepoint) >> 6u) & 0x3Fu)));
+                                add(static_cast<char_int_type>(0x80u | (static_cast<unsigned int>(codepoint) & 0x3Fu)));
                             }
 
                             break;
@@ -1213,13 +1215,13 @@ scan_number_done:
     @param[in] return_type   the token type to return on success
     */
     JSON_HEDLEY_NON_NULL(2)
-    token_type scan_literal(const char* literal_text, const std::size_t length,
+    token_type scan_literal(const char_type* literal_text, const std::size_t length,
                             token_type return_type)
     {
         assert(current == literal_text[0]);
         for (std::size_t i = 1; i < length; ++i)
         {
-            if (JSON_HEDLEY_UNLIKELY(get() != literal_text[i]))
+            if (JSON_HEDLEY_UNLIKELY(std::char_traits<char_type>::to_char_type(get()) != literal_text[i]))
             {
                 error_message = "invalid literal";
                 return token_type::parse_error;
@@ -1237,7 +1239,7 @@ scan_number_done:
     {
         token_buffer.clear();
         token_string.clear();
-        token_string.push_back(std::char_traits<char>::to_char_type(current));
+        token_string.push_back(std::char_traits<char_type>::to_char_type(current));
     }
 
     /*
@@ -1250,7 +1252,7 @@ scan_number_done:
 
     @return character read from the input
     */
-    std::char_traits<char>::int_type get()
+    char_int_type get()
     {
         ++position.chars_read_total;
         ++position.chars_read_current_line;
@@ -1265,9 +1267,9 @@ scan_number_done:
             current = ia.get_character();
         }
 
-        if (JSON_HEDLEY_LIKELY(current != std::char_traits<char>::eof()))
+        if (JSON_HEDLEY_LIKELY(current != std::char_traits<char_type>::eof()))
         {
-            token_string.push_back(std::char_traits<char>::to_char_type(current));
+            token_string.push_back(std::char_traits<char_type>::to_char_type(current));
         }
 
         if (current == '\n')
@@ -1306,7 +1308,7 @@ scan_number_done:
             --position.chars_read_current_line;
         }
 
-        if (JSON_HEDLEY_LIKELY(current != std::char_traits<char>::eof()))
+        if (JSON_HEDLEY_LIKELY(current != std::char_traits<char_type>::eof()))
         {
             assert(not token_string.empty());
             token_string.pop_back();
@@ -1314,9 +1316,9 @@ scan_number_done:
     }
 
     /// add a character to token_buffer
-    void add(int c)
+    void add(char_int_type c)
     {
-        token_buffer.push_back(std::char_traits<char>::to_char_type(c));
+        token_buffer.push_back(static_cast<typename string_t::value_type>(c));
     }
 
   public:
@@ -1377,7 +1379,7 @@ scan_number_done:
             else
             {
                 // add character as is
-                result.push_back(c);
+                result.push_back(static_cast<std::string::value_type>(c));
             }
         }
 
@@ -1447,11 +1449,20 @@ scan_number_done:
 
             // literals
             case 't':
-                return scan_literal("true", 4, token_type::literal_true);
+            {
+                std::array<char_type, 4> true_literal = {{'t', 'r', 'u', 'e'}};
+                return scan_literal(true_literal.data(), true_literal.size(), token_type::literal_true);
+            }
             case 'f':
-                return scan_literal("false", 5, token_type::literal_false);
+            {
+                std::array<char_type, 5> false_literal = {{'f', 'a', 'l', 's', 'e'}};
+                return scan_literal(false_literal.data(), false_literal.size(), token_type::literal_false);
+            }
             case 'n':
-                return scan_literal("null", 4, token_type::literal_null);
+            {
+                std::array<char_type, 4> null_literal = {{'n', 'u', 'l', 'l'}};
+                return scan_literal(null_literal.data(), null_literal.size(), token_type::literal_null);
+            }
 
             // string
             case '\"':
@@ -1474,7 +1485,7 @@ scan_number_done:
             // end of input (the null byte is needed when parsing from
             // string literals)
             case '\0':
-            case std::char_traits<char>::eof():
+            case std::char_traits<char_type>::eof():
                 return token_type::end_of_input;
 
             // error
@@ -1489,7 +1500,7 @@ scan_number_done:
     InputAdapterType ia;
 
     /// the current character
-    std::char_traits<char>::int_type current = std::char_traits<char>::eof();
+    char_int_type current = std::char_traits<char_type>::eof();
 
     /// whether the next get() call should just return current
     bool next_unget = false;
@@ -1498,7 +1509,7 @@ scan_number_done:
     position_t position {};
 
     /// raw input token string (for error messages)
-    std::vector<char> token_string {};
+    std::vector<char_type> token_string {};
 
     /// buffer for variable-length tokens (numbers, strings)
     string_t token_buffer {};
@@ -1512,7 +1523,7 @@ scan_number_done:
     number_float_t value_float = 0;
 
     /// the decimal point
-    const char decimal_point_char = '.';
+    const char_type decimal_point_char = '.';
 };
 }  // namespace detail
 }  // namespace nlohmann

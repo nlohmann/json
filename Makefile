@@ -361,7 +361,7 @@ pedantic_gcc:
 		-Wunused-const-variable=2                         \
 		-Wunused-function                                 \
 		-Wunused-label                                    \
-		-Wunused-local-typedefs                           \
+		-Wno-unused-local-typedefs                           \
 		-Wunused-macros                                   \
 		-Wunused-parameter                                \
 		-Wunused-result                                   \
