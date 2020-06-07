@@ -113,7 +113,7 @@ class lexer : public lexer_base<BasicJsonType>
     using token_type = typename lexer_base<BasicJsonType>::token_type;
 
     explicit lexer(InputAdapterType&& adapter)
-        : ia(std::move(adapter)), decimal_point_char(static_cast<char_type>(get_decimal_point())) {}
+        : ia(std::move(adapter)), decimal_point_char(static_cast<char_int_type>(get_decimal_point())) {}
 
     // delete because of pointer members
     lexer(const lexer&) = delete;
@@ -1218,7 +1218,7 @@ scan_number_done:
     token_type scan_literal(const char_type* literal_text, const std::size_t length,
                             token_type return_type)
     {
-        assert(current == literal_text[0]);
+        assert(std::char_traits<char_type>::to_char_type(current) == literal_text[0]);
         for (std::size_t i = 1; i < length; ++i)
         {
             if (JSON_HEDLEY_UNLIKELY(std::char_traits<char_type>::to_char_type(get()) != literal_text[i]))
@@ -1523,7 +1523,7 @@ scan_number_done:
     number_float_t value_float = 0;
 
     /// the decimal point
-    const char_type decimal_point_char = '.';
+    const char_int_type decimal_point_char = '.';
 };
 }  // namespace detail
 }  // namespace nlohmann
