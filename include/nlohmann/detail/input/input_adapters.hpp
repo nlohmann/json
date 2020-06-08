@@ -339,15 +339,18 @@ struct iterator_input_adapter_factory
     }
 };
 
-// This test breaks astyle formatting when inlined in a template specialization.
 template<typename T>
-inline constexpr bool is_iterator_of_multibyte()
+struct is_iterator_of_multibyte
 {
-    return sizeof(typename std::iterator_traits<T>::value_type) > 1;
-}
+    using value_type = typename std::iterator_traits<T>::value_type;
+    enum
+    {
+        value = sizeof(value_type) > 1
+    };
+};
 
 template<typename IteratorType>
-struct iterator_input_adapter_factory<IteratorType, enable_if_t<is_iterator_of_multibyte<IteratorType>()>>
+struct iterator_input_adapter_factory<IteratorType, enable_if_t<is_iterator_of_multibyte<IteratorType>::value>>
 {
     using iterator_type = IteratorType;
     using char_type = typename std::iterator_traits<iterator_type>::value_type;
