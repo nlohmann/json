@@ -247,15 +247,15 @@ struct wide_string_input_helper<BaseInputAdapter, 2>
             }
             else if (wc <= 0x7FF)
             {
-                utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(0xC0u | ((wc >> 6u)));
-                utf8_bytes[1] = static_cast<std::char_traits<char>::int_type>(0x80u | (wc & 0x3Fu));
+                utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(0xC0u | ((static_cast<unsigned int>(wc) >> 6u)));
+                utf8_bytes[1] = static_cast<std::char_traits<char>::int_type>(0x80u | (static_cast<unsigned int>(wc) & 0x3Fu));
                 utf8_bytes_filled = 2;
             }
             else if (0xD800 > wc or wc >= 0xE000)
             {
-                utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(0xE0u | ((wc >> 12u)));
-                utf8_bytes[1] = static_cast<std::char_traits<char>::int_type>(0x80u | ((wc >> 6u) & 0x3Fu));
-                utf8_bytes[2] = static_cast<std::char_traits<char>::int_type>(0x80u | (wc & 0x3Fu));
+                utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(0xE0u | ((static_cast<unsigned int>(wc) >> 12u)));
+                utf8_bytes[1] = static_cast<std::char_traits<char>::int_type>(0x80u | ((static_cast<unsigned int>(wc) >> 6u) & 0x3Fu));
+                utf8_bytes[2] = static_cast<std::char_traits<char>::int_type>(0x80u | (static_cast<unsigned int>(wc) & 0x3Fu));
                 utf8_bytes_filled = 3;
             }
             else
@@ -263,7 +263,7 @@ struct wide_string_input_helper<BaseInputAdapter, 2>
                 if (JSON_HEDLEY_UNLIKELY(not input.empty()))
                 {
                     const auto wc2 = static_cast<unsigned int>(input.get_character());
-                    const auto charcode = 0x10000u + (((wc & 0x3FFu) << 10u) | (wc2 & 0x3FFu));
+                    const auto charcode = 0x10000u + (((static_cast<unsigned int>(wc) & 0x3FFu) << 10u) | (wc2 & 0x3FFu));
                     utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(0xF0u | (charcode >> 18u));
                     utf8_bytes[1] = static_cast<std::char_traits<char>::int_type>(0x80u | ((charcode >> 12u) & 0x3Fu));
                     utf8_bytes[2] = static_cast<std::char_traits<char>::int_type>(0x80u | ((charcode >> 6u) & 0x3Fu));
@@ -339,15 +339,18 @@ struct iterator_input_adapter_factory
     }
 };
 
-// This test breaks astyle formatting when inlined in a template specialization.
 template<typename T>
-inline constexpr bool is_iterator_of_multibyte()
+struct is_iterator_of_multibyte
 {
-    return sizeof(typename std::iterator_traits<T>::value_type) > 1;
-}
+    using value_type = typename std::iterator_traits<T>::value_type;
+    enum
+    {
+        value = sizeof(value_type) > 1
+    };
+};
 
 template<typename IteratorType>
-struct iterator_input_adapter_factory<IteratorType, enable_if_t<is_iterator_of_multibyte<IteratorType>()>>
+struct iterator_input_adapter_factory<IteratorType, enable_if_t<is_iterator_of_multibyte<IteratorType>::value>>
 {
     using iterator_type = IteratorType;
     using char_type = typename std::iterator_traits<iterator_type>::value_type;
