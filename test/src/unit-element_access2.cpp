@@ -148,6 +148,45 @@ TEST_CASE("element access 2")
 
         SECTION("access specified element with default value")
         {
+            SECTION("move semantics")
+            {
+                SECTION("json is rvalue")
+                {
+                    json j = {{"x", "123"}};
+                    std::string defval = "default";
+                    auto val = std::move(j).value("x", defval);
+
+                    CHECK(j["x"] == "");
+                    CHECK(defval == "default");
+                    CHECK(val == "123");
+                }
+
+                SECTION("default is rvalue")
+                {
+                    json j = {{"x", "123"}};
+                    std::string defval = "default";
+                    auto val = std::move(j).value("y", std::move(defval));
+
+                    CHECK(j["x"] == "123");
+                    CHECK(defval == "");
+                    CHECK(val == "default");
+                }
+
+                SECTION("access on non-object value")
+                {
+                    json j_nonobject(json::value_t::array);
+                    const json j_nonobject_const(j_nonobject);
+                    std::string defval = "default";
+
+                    CHECK_THROWS_AS(std::move(j_nonobject).value("foo", defval), json::type_error&);
+                    CHECK_THROWS_AS(std::move(j_nonobject_const).value("foo", defval), json::type_error&);
+                    CHECK_THROWS_WITH(std::move(j_nonobject).value("foo", defval),
+                                      "[json.exception.type_error.306] cannot use value() with array");
+                    CHECK_THROWS_WITH(std::move(j_nonobject_const).value("foo", defval),
+                                      "[json.exception.type_error.306] cannot use value() with array");
+                }
+            }
+
             SECTION("given a key")
             {
                 SECTION("access existing value")
