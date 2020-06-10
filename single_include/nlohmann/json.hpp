@@ -19567,6 +19567,31 @@ class basic_json
     }
 
     /*!
+    @brief overload for a default value of type rvalue
+    @copydoc basic_json::value(const typename object_t::key_type&, const ValueType&) const
+    */
+    template<class ValueType, typename std::enable_if<
+                 std::is_convertible<basic_json_t, detail::uncvref_t<ValueType>>::value
+                 and not std::is_same<value_t, ValueType>::value, int>::type = 0>
+    detail::uncvref_t<ValueType> value(const typename object_t::key_type& key, ValueType && default_value) &&
+    {
+        // only works for objects
+        if (JSON_HEDLEY_LIKELY(is_object()))
+        {
+            // if key is found, return value and given default value otherwise
+            const auto it = find(key);
+            if (it != end())
+            {
+                return std::move(it->template get_ref<ValueType&>());
+            }
+
+            return std::forward<ValueType>(default_value);
+        }
+
+        JSON_THROW(type_error::create(306, "cannot use value() with " + std::string(type_name())));
+    }
+
+    /*!
     @brief overload for a default value of type const char*
     @copydoc basic_json::value(const typename object_t::key_type&, const ValueType&) const
     */
