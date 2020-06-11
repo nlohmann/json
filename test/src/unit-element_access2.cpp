@@ -464,6 +464,14 @@ TEST_CASE("element access 2")
                 CHECK(j_const[json::object_t::key_type("array")] == j["array"]);
             }
 
+            SECTION("access not-existing value")
+            {
+                // not existing access
+                CHECK_THROWS_AS(j_const["not-existing"], json::out_of_range&);
+                CHECK_THROWS_WITH(j_const["not-existing"],
+                                  "[json.exception.out_of_range.403] key 'not-existing' not found");
+            }
+
             SECTION("access on non-object type")
             {
                 SECTION("null")
