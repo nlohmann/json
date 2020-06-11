@@ -202,6 +202,10 @@ TEST_CASE("JSON pointers")
             CHECK(j[json::json_pointer("/foo/1")] == j["foo"][1]);
             CHECK(j["/foo/1"_json_pointer] == j["foo"][1]);
 
+            CHECK_THROWS_AS(j[json::json_pointer("/foo/2")], json::out_of_range&);
+            CHECK_THROWS_WITH(j[json::json_pointer("/foo/2")],
+                              "[json.exception.out_of_range.401] array index (2) is out of range");
+
             // checked array access
             CHECK(j.at(json::json_pointer("/foo/0")) == j["foo"][0]);
             CHECK(j.at(json::json_pointer("/foo/1")) == j["foo"][1]);
@@ -216,6 +220,11 @@ TEST_CASE("JSON pointers")
             CHECK(j[json::json_pointer("/g|h")] == j["g|h"]);
             CHECK(j[json::json_pointer("/i\\j")] == j["i\\j"]);
             CHECK(j[json::json_pointer("/k\"l")] == j["k\"l"]);
+
+            // not existing access
+            CHECK_THROWS_AS(j[json::json_pointer("/not-existing")], json::out_of_range&);
+            CHECK_THROWS_WITH(j[json::json_pointer("/not-existing")],
+                              "[json.exception.out_of_range.403] key 'not-existing' not found");
 
             // checked access
             CHECK(j.at(json::json_pointer("/ ")) == j[" "]);

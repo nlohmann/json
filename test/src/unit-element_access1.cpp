@@ -185,6 +185,13 @@ TEST_CASE("element access 1")
                 CHECK(j_const[7] == json({1, 2, 3}));
             }
 
+            SECTION("access outside bounds")
+            {
+                CHECK_THROWS_AS(j_const[8], json::out_of_range&);
+                CHECK_THROWS_WITH(j_const[8],
+                                  "[json.exception.out_of_range.401] array index (8) is out of range");
+            }
+
             SECTION("access on non-array type")
             {
                 SECTION("null")

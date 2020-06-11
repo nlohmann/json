@@ -19312,6 +19312,11 @@ class basic_json
         // const operator[] only works for arrays
         if (JSON_HEDLEY_LIKELY(is_array()))
         {
+            if (JSON_HEDLEY_LIKELY(idx >= m_value.array->size()))
+            {
+                JSON_THROW(out_of_range::create(401, "array index (" + std::to_string(idx) +
+                                                ") is out of range"));
+            }
             return m_value.array->operator[](idx);
         }
 
@@ -19399,7 +19404,11 @@ class basic_json
         // const operator[] only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
         {
-            assert(m_value.object->find(key) != m_value.object->end());
+            if (JSON_HEDLEY_LIKELY(m_value.object->find(key) == m_value.object->end()))
+            {
+                // create better exception explanation
+                JSON_THROW(out_of_range::create(403, "key '" + key + "' not found"));
+            }
             return m_value.object->find(key)->second;
         }
 
@@ -19491,7 +19500,11 @@ class basic_json
         // at only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
         {
-            assert(m_value.object->find(key) != m_value.object->end());
+            if (JSON_HEDLEY_LIKELY(m_value.object->find(key) == m_value.object->end()))
+            {
+                // create better exception explanation
+                JSON_THROW(out_of_range::create(403, "key '" + std::string(key) + "' not found"));
+            }
             return m_value.object->find(key)->second;
         }
 
