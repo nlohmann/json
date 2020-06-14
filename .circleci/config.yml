@@ -1,6 +1,6 @@
 version: 2
 jobs:
-  build:
+  build_stable:
     docker:
       - image: debian:stretch
 
@@ -8,23 +8,41 @@ jobs:
       - checkout
 
       - run:
-          name: Install sudo
-          command: 'apt-get update && apt-get install -y sudo && rm -rf /var/lib/apt/lists/*'
+          name: Install required tools
+          command: 'apt-get update && apt-get install -y gcc g++ git cmake'
       - run:
-          name: Install GCC
-          command: 'apt-get update && apt-get install -y gcc g++'
-      - run:
-          name: Install CMake
-          command: 'apt-get update && sudo apt-get install -y cmake'
-      - run:
-          name: Create build files
-          command: 'mkdir build ; cd build ; cmake ..'
-      - run:
-          name: Versions
-          command: 'g++ --version ; uname -a'
+          name: Run CMake
+          command: 'mkdir build ; cd build ; cmake .. -DJSON_BuildTests=On'
       - run:
           name: Compile
           command: 'cmake --build build'
       - run:
           name: Execute test suite
-          command: 'cd build ; ctest -j 2'
+          command: 'cd build ; ctest --output-on-failure -j 2'
+
+  build_bleeding_edge:
+    docker:
+      - image: archlinux
+
+    steps:
+      - checkout
+
+      - run:
+          name: Install required tools
+          command: 'pacman -Sy --noconfirm base base-devel gcc git cmake'
+      - run:
+          name: Run CMake
+          command: 'mkdir build ; cd build ; cmake .. -DJSON_BuildTests=On'
+      - run:
+          name: Compile
+          command: 'cmake --build build'
+      - run:
+          name: Execute test suite
+          command: 'cd build ; ctest --output-on-failure -j 2'
+
+workflows:
+  version: 2
+  build_and_test_all:
+    jobs:
+      - build_stable
+      - build_bleeding_edge

@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.7.3
+|  |  |__   |  |  | | | |  version 3.8.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -41,6 +41,7 @@ using nlohmann::json;
 #include <sstream>
 #include <iostream>
 #include <iomanip>
+#include <test_data.hpp>
 
 namespace
 {
@@ -1073,11 +1074,11 @@ TEST_CASE("Unicode" * doctest::skip())
 
                 CHECK_THROWS_AS(_ = json::parse("\"\\uD800]\""), json::parse_error&);
                 CHECK_THROWS_WITH(_ = json::parse("\"\\uD800]\""),
-                                  "[json.exception.parse_error.101] parse error at line 1, column 8: syntax error while parsing value - invalid string: surrogate U+DC00..U+DFFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD800]'");
+                                  "[json.exception.parse_error.101] parse error at line 1, column 8: syntax error while parsing value - invalid string: surrogate U+D800..U+DBFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD800]'");
 
                 CHECK_THROWS_AS(_ = json::parse("\"\\uD800\\v\""), json::parse_error&);
                 CHECK_THROWS_WITH(_ = json::parse("\"\\uD800\\v\""),
-                                  "[json.exception.parse_error.101] parse error at line 1, column 9: syntax error while parsing value - invalid string: surrogate U+DC00..U+DFFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD800\\v'");
+                                  "[json.exception.parse_error.101] parse error at line 1, column 9: syntax error while parsing value - invalid string: surrogate U+D800..U+DBFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD800\\v'");
 
                 CHECK_THROWS_AS(_ = json::parse("\"\\uD800\\u123\""), json::parse_error&);
                 CHECK_THROWS_WITH(_ = json::parse("\"\\uD800\\u123\""),
@@ -1085,11 +1086,11 @@ TEST_CASE("Unicode" * doctest::skip())
 
                 CHECK_THROWS_AS(_ = json::parse("\"\\uD800\\uDBFF\""), json::parse_error&);
                 CHECK_THROWS_WITH(_ = json::parse("\"\\uD800\\uDBFF\""),
-                                  "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing value - invalid string: surrogate U+DC00..U+DFFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD800\\uDBFF'");
+                                  "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing value - invalid string: surrogate U+D800..U+DBFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD800\\uDBFF'");
 
                 CHECK_THROWS_AS(_ = json::parse("\"\\uD800\\uE000\""), json::parse_error&);
                 CHECK_THROWS_WITH(_ = json::parse("\"\\uD800\\uE000\""),
-                                  "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing value - invalid string: surrogate U+DC00..U+DFFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD800\\uE000'");
+                                  "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing value - invalid string: surrogate U+D800..U+DBFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD800\\uE000'");
             }
         }
 
@@ -1148,7 +1149,7 @@ TEST_CASE("Unicode" * doctest::skip())
     {
         // read a file with all unicode characters stored as single-character
         // strings in a JSON array
-        std::ifstream f("test/data/json_nlohmann_tests/all_unicode.json");
+        std::ifstream f(TEST_DATA_DIRECTORY "/json_nlohmann_tests/all_unicode.json");
         json j;
         CHECK_NOTHROW(f >> j);
 
@@ -1193,7 +1194,7 @@ TEST_CASE("Unicode" * doctest::skip())
         SECTION("in a stream")
         {
             // read a file with a UTF-8 BOM
-            std::ifstream f("test/data/json_nlohmann_tests/bom.json");
+            std::ifstream f(TEST_DATA_DIRECTORY "/json_nlohmann_tests/bom.json");
             json j;
             CHECK_NOTHROW(f >> j);
         }

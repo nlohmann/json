@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.7.3
+|  |  |__   |  |  | | | |  version 3.8.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -40,7 +40,8 @@ namespace
 json::lexer::token_type scan_string(const char* s);
 json::lexer::token_type scan_string(const char* s)
 {
-    return json::lexer(nlohmann::detail::input_adapter(s)).scan();
+    auto ia = nlohmann::detail::input_adapter(s);
+    return nlohmann::detail::lexer<json, decltype(ia)>(std::move(ia)).scan();
 }
 }
 

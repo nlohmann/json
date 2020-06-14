@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.7.3
+|  |  |__   |  |  | | | |  version 3.8.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -34,6 +34,7 @@ using nlohmann::json;
 
 #include <fstream>
 #include <sstream>
+#include <test_data.hpp>
 
 TEST_CASE("object inspection")
 {
@@ -48,6 +49,7 @@ TEST_CASE("object inspection")
             CHECK(not j.is_number_integer());
             CHECK(not j.is_number_unsigned());
             CHECK(not j.is_number_float());
+            CHECK(not j.is_binary());
             CHECK(j.is_object());
             CHECK(not j.is_array());
             CHECK(not j.is_string());
@@ -65,6 +67,7 @@ TEST_CASE("object inspection")
             CHECK(not j.is_number_integer());
             CHECK(not j.is_number_unsigned());
             CHECK(not j.is_number_float());
+            CHECK(not j.is_binary());
             CHECK(not j.is_object());
             CHECK(j.is_array());
             CHECK(not j.is_string());
@@ -82,6 +85,7 @@ TEST_CASE("object inspection")
             CHECK(not j.is_number_integer());
             CHECK(not j.is_number_unsigned());
             CHECK(not j.is_number_float());
+            CHECK(not j.is_binary());
             CHECK(not j.is_object());
             CHECK(not j.is_array());
             CHECK(not j.is_string());
@@ -99,6 +103,7 @@ TEST_CASE("object inspection")
             CHECK(not j.is_number_integer());
             CHECK(not j.is_number_unsigned());
             CHECK(not j.is_number_float());
+            CHECK(not j.is_binary());
             CHECK(not j.is_object());
             CHECK(not j.is_array());
             CHECK(not j.is_string());
@@ -116,6 +121,7 @@ TEST_CASE("object inspection")
             CHECK(not j.is_number_integer());
             CHECK(not j.is_number_unsigned());
             CHECK(not j.is_number_float());
+            CHECK(not j.is_binary());
             CHECK(not j.is_object());
             CHECK(not j.is_array());
             CHECK(j.is_string());
@@ -133,6 +139,7 @@ TEST_CASE("object inspection")
             CHECK(j.is_number_integer());
             CHECK(not j.is_number_unsigned());
             CHECK(not j.is_number_float());
+            CHECK(not j.is_binary());
             CHECK(not j.is_object());
             CHECK(not j.is_array());
             CHECK(not j.is_string());
@@ -150,6 +157,7 @@ TEST_CASE("object inspection")
             CHECK(j.is_number_integer());
             CHECK(j.is_number_unsigned());
             CHECK(not j.is_number_float());
+            CHECK(not j.is_binary());
             CHECK(not j.is_object());
             CHECK(not j.is_array());
             CHECK(not j.is_string());
@@ -167,6 +175,25 @@ TEST_CASE("object inspection")
             CHECK(not j.is_number_integer());
             CHECK(not j.is_number_unsigned());
             CHECK(j.is_number_float());
+            CHECK(not j.is_binary());
+            CHECK(not j.is_object());
+            CHECK(not j.is_array());
+            CHECK(not j.is_string());
+            CHECK(not j.is_discarded());
+            CHECK(j.is_primitive());
+            CHECK(not j.is_structured());
+        }
+
+        SECTION("binary")
+        {
+            json j(json::value_t::binary);
+            CHECK(not j.is_null());
+            CHECK(not j.is_boolean());
+            CHECK(not j.is_number());
+            CHECK(not j.is_number_integer());
+            CHECK(not j.is_number_unsigned());
+            CHECK(not j.is_number_float());
+            CHECK(j.is_binary());
             CHECK(not j.is_object());
             CHECK(not j.is_array());
             CHECK(not j.is_string());
@@ -184,6 +211,7 @@ TEST_CASE("object inspection")
             CHECK(not j.is_number_integer());
             CHECK(not j.is_number_unsigned());
             CHECK(not j.is_number_float());
+            CHECK(not j.is_binary());
             CHECK(not j.is_object());
             CHECK(not j.is_array());
             CHECK(not j.is_string());
@@ -233,6 +261,9 @@ TEST_CASE("object inspection")
             // important test, because it yields a resize of the indent_string
             // inside the dump() function
             CHECK(j.dump(1024).size() == 15472);
+
+            const auto binary = json::binary({1, 2, 3}, 128);
+            CHECK(binary.dump(1024).size() == 2086);
         }
 
         SECTION("dump and floating-point numbers")
@@ -265,8 +296,8 @@ TEST_CASE("object inspection")
         {
             SECTION("parsing yields the same JSON value")
             {
-                std::ifstream f_escaped("test/data/json_nlohmann_tests/all_unicode_ascii.json");
-                std::ifstream f_unescaped("test/data/json_nlohmann_tests/all_unicode.json");
+                std::ifstream f_escaped(TEST_DATA_DIRECTORY "/json_nlohmann_tests/all_unicode_ascii.json");
+                std::ifstream f_unescaped(TEST_DATA_DIRECTORY "/json_nlohmann_tests/all_unicode.json");
 
                 json j1 = json::parse(f_escaped);
                 json j2 = json::parse(f_unescaped);
@@ -275,8 +306,8 @@ TEST_CASE("object inspection")
 
             SECTION("dumping yields the same JSON text")
             {
-                std::ifstream f_escaped("test/data/json_nlohmann_tests/all_unicode_ascii.json");
-                std::ifstream f_unescaped("test/data/json_nlohmann_tests/all_unicode.json");
+                std::ifstream f_escaped(TEST_DATA_DIRECTORY "/json_nlohmann_tests/all_unicode_ascii.json");
+                std::ifstream f_unescaped(TEST_DATA_DIRECTORY "/json_nlohmann_tests/all_unicode.json");
 
                 json value = json::parse(f_unescaped);
                 std::string text = value.dump(4, ' ', true);
@@ -435,6 +466,13 @@ TEST_CASE("object inspection")
         SECTION("number (floating-point)")
         {
             json j = 42.23;
+            json::value_t t = j;
+            CHECK(t == j.type());
+        }
+
+        SECTION("binary")
+        {
+            json j = json::binary({});
             json::value_t t = j;
             CHECK(t == j.type());
         }

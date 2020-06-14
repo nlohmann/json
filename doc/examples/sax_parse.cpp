@@ -79,6 +79,12 @@ class sax_event_consumer : public json::json_sax_t
         return true;
     }
 
+    bool binary(json::binary_t& val) override
+    {
+        events.push_back("binary");
+        return true;
+    }
+
     bool parse_error(std::size_t position, const std::string& last_token, const json::exception& ex) override
     {
         events.push_back("error: " + std::string(ex.what()));

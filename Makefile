@@ -32,10 +32,8 @@ all:
 	@echo "ChangeLog.md - generate ChangeLog file"
 	@echo "check - compile and execute test suite"
 	@echo "check-amalgamation - check whether sources have been amalgamated"
-	@echo "check-fast - compile and execute test suite (skip long-running tests)"
 	@echo "clean - remove built files"
 	@echo "coverage - create coverage information with lcov"
-	@echo "coverage-fast - create coverage information with fastcov"
 	@echo "cppcheck - analyze code with cppcheck"
 	@echo "cpplint - analyze code with cpplint"
 	@echo "clang_tidy - analyze code with Clang-Tidy"
@@ -65,10 +63,6 @@ json_unit:
 check:
 	$(MAKE) check -C test
 
-# run unit tests and skip expensive tests
-check-fast:
-	$(MAKE) check -C test TEST_PATTERN=""
-
 
 ##########################################################################
 # coverage
@@ -77,19 +71,10 @@ check-fast:
 coverage:
 	rm -fr build_coverage
 	mkdir build_coverage
-	cd build_coverage ; CXX=g++-8 cmake .. -GNinja -DJSON_Coverage=ON -DJSON_MultipleHeaders=ON
+	cd build_coverage ; cmake .. -GNinja -DCMAKE_BUILD_TYPE=Debug -DJSON_Coverage=ON -DJSON_MultipleHeaders=ON
 	cd build_coverage ; ninja
-	cd build_coverage ; ctest -E '.*_default' -j10
+	cd build_coverage ; ctest -j10
 	cd build_coverage ; ninja lcov_html
-	open build_coverage/test/html/index.html
-
-coverage-fast:
-	rm -fr build_coverage
-	mkdir build_coverage
-	cd build_coverage ; CXX=g++-9 cmake .. -GNinja -DJSON_Coverage=ON -DJSON_MultipleHeaders=ON
-	cd build_coverage ; ninja
-	cd build_coverage ; ctest -E '.*_default' -j10
-	cd build_coverage ; ninja fastcov_html
 	open build_coverage/test/html/index.html
 
 ##########################################################################
@@ -117,7 +102,8 @@ doctest:
 # -Wno-switch-enum -Wno-covered-switch-default: pedantic/contradicting warnings about switches
 # -Wno-weak-vtables: exception class is defined inline, but has virtual method
 pedantic_clang:
-	$(MAKE) json_unit CXX=c++ CXXFLAGS=" \
+	rm -fr build_pedantic
+	CXXFLAGS=" \
 		-std=c++11 -Wno-c++98-compat -Wno-c++98-compat-pedantic \
 		-Werror \
 		-Weverything \
@@ -130,232 +116,271 @@ pedantic_clang:
 		-Wno-padded \
 		-Wno-range-loop-analysis \
 		-Wno-switch-enum -Wno-covered-switch-default \
-		-Wno-weak-vtables"
+		-Wno-weak-vtables" cmake -S . -B build_pedantic -GNinja -DCMAKE_BUILD_TYPE=Debug -DJSON_MultipleHeaders=ON -DJSON_BuildTests=On
+	cmake --build build_pedantic
 
 # calling GCC with most warnings
 pedantic_gcc:
-	$(MAKE) json_unit CXX=/usr/local/bin/g++-9 CXXFLAGS=" \
+	rm -fr build_pedantic
+	CXXFLAGS=" \
 		-std=c++11 \
-		-Waddress \
-		-Waddress-of-packed-member \
-		-Waggressive-loop-optimizations \
-		-Waligned-new=all \
-		-Wall \
-		-Walloc-zero \
-		-Walloca \
-		-Warray-bounds \
-		-Warray-bounds=2 \
-		-Wattribute-alias=2 \
-		-Wattribute-warning \
-		-Wattributes \
-		-Wbool-compare \
-		-Wbool-operation \
-		-Wbuiltin-declaration-mismatch \
-		-Wbuiltin-macro-redefined \
-		-Wcannot-profile \
-		-Wcast-align \
-		-Wcast-function-type \
-		-Wcast-qual \
-		-Wcatch-value=3 \
-		-Wchar-subscripts \
-		-Wclass-conversion \
-		-Wclass-memaccess \
-		-Wclobbered \
-		-Wcomment \
-		-Wcomments \
-		-Wconditionally-supported \
-		-Wconversion \
-		-Wconversion-null \
-		-Wcoverage-mismatch \
-		-Wcpp \
-		-Wctor-dtor-privacy \
-		-Wdangling-else \
-		-Wdate-time \
-		-Wdelete-incomplete \
-		-Wdelete-non-virtual-dtor \
-		-Wdeprecated \
-		-Wdeprecated-copy \
-		-Wdeprecated-copy-dtor \
-		-Wdeprecated-declarations \
-		-Wdisabled-optimization \
-		-Wdiv-by-zero \
-		-Wdouble-promotion \
-		-Wduplicated-branches \
-		-Wduplicated-cond \
-		-Weffc++ \
-		-Wempty-body \
-		-Wendif-labels \
-		-Wenum-compare \
-		-Wexpansion-to-defined \
+		-pedantic \
 		-Werror \
-		-Wextra \
-		-Wextra-semi \
-		-Wfloat-conversion \
-		-Wformat \
-		-Wformat-contains-nul \
-		-Wformat-extra-args \
-		-Wformat-nonliteral \
-		-Wformat-overflow=2 \
-		-Wformat-security \
-		-Wformat-signedness \
-		-Wformat-truncation=2 \
-		-Wformat-y2k \
-		-Wformat-zero-length \
-		-Wformat=2 \
-		-Wframe-address \
-		-Wfree-nonheap-object \
-		-Whsa \
-		-Wif-not-aligned \
-		-Wignored-attributes \
-		-Wignored-qualifiers \
-		-Wimplicit-fallthrough=5 \
-		-Winherited-variadic-ctor \
-		-Winit-list-lifetime \
-		-Winit-self \
-		-Winline \
-		-Wint-in-bool-context \
-		-Wint-to-pointer-cast \
-		-Winvalid-memory-model \
-		-Winvalid-offsetof \
-		-Winvalid-pch \
-		-Wliteral-suffix \
-		-Wlogical-not-parentheses \
-		-Wlogical-op \
-		-Wlto-type-mismatch \
-		-Wmain \
-		-Wmaybe-uninitialized \
-		-Wmemset-elt-size \
-		-Wmemset-transposed-args \
-		-Wmisleading-indentation \
-		-Wmissing-attributes \
-		-Wmissing-braces \
-		-Wmissing-declarations \
-		-Wmissing-field-initializers \
-		-Wmissing-format-attribute \
-		-Wmissing-include-dirs \
-		-Wmissing-noreturn \
-		-Wmissing-profile \
-		-Wmultichar \
-		-Wmultiple-inheritance \
-		-Wmultistatement-macros \
-		-Wnarrowing \
-		-Wno-deprecated-declarations \
-		-Wno-float-equal \
-		-Wno-long-long \
-		-Wno-namespaces \
-		-Wno-padded \
-		-Wno-switch-enum \
-		-Wno-system-headers \
-		-Wno-templates \
-		-Wno-undef \
-		-Wnoexcept \
-		-Wnoexcept-type \
-		-Wnon-template-friend \
-		-Wnon-virtual-dtor \
-		-Wnonnull \
-		-Wnonnull-compare \
-		-Wnonportable-cfstrings \
-		-Wnormalized \
-		-Wnull-dereference \
-		-Wodr \
-		-Wold-style-cast \
-		-Wopenmp-simd \
-		-Woverflow \
-		-Woverlength-strings \
-		-Woverloaded-virtual \
-		-Wpacked \
-		-Wpacked-bitfield-compat \
-		-Wpacked-not-aligned \
-		-Wparentheses \
-		-Wpedantic \
-		-Wpessimizing-move \
-		-Wplacement-new=2 \
-		-Wpmf-conversions \
-		-Wpointer-arith \
-		-Wpointer-compare \
-		-Wpragmas \
-		-Wprio-ctor-dtor \
-		-Wpsabi \
-		-Wredundant-decls \
-		-Wredundant-move \
-		-Wregister \
-		-Wreorder \
-		-Wrestrict \
-		-Wreturn-local-addr \
-		-Wreturn-type \
-		-Wscalar-storage-order \
-		-Wsequence-point \
-		-Wshadow \
-		-Wshadow-compatible-local \
-		-Wshadow-local \
-		-Wshadow=compatible-local \
-		-Wshadow=global \
-		-Wshadow=local \
-		-Wshift-count-negative \
-		-Wshift-count-overflow \
-		-Wshift-negative-value \
-		-Wshift-overflow=2 \
-		-Wsign-compare \
-		-Wsign-conversion \
-		-Wsign-promo \
-		-Wsized-deallocation \
-		-Wsizeof-array-argument \
-		-Wsizeof-pointer-div \
-		-Wsizeof-pointer-memaccess \
-		-Wstack-protector \
-		-Wstrict-aliasing=3 \
-		-Wstrict-null-sentinel \
-		-Wstrict-overflow=5 \
-		-Wstringop-overflow=4 \
-		-Wstringop-truncation \
-		-Wsubobject-linkage \
-		-Wsuggest-attribute=cold \
-		-Wsuggest-attribute=const \
-		-Wsuggest-attribute=format \
-		-Wsuggest-attribute=malloc \
-		-Wsuggest-attribute=noreturn \
-		-Wsuggest-attribute=pure \
-		-Wsuggest-final-methods \
-		-Wsuggest-final-types \
-		-Wsuggest-override \
-		-Wswitch \
-		-Wswitch-bool \
-		-Wswitch-default \
-		-Wswitch-unreachable \
-		-Wsync-nand \
-		-Wsynth \
-		-Wtautological-compare \
-		-Wterminate \
-		-Wtrampolines \
-		-Wtrigraphs \
-		-Wtype-limits \
-		-Wuninitialized \
-		-Wunknown-pragmas \
-		-Wunreachable-code \
-		-Wunsafe-loop-optimizations \
-		-Wunused \
-		-Wunused-but-set-parameter \
-		-Wunused-but-set-variable \
-		-Wunused-const-variable=2 \
-		-Wunused-function \
-		-Wunused-label \
-		-Wunused-local-typedefs \
-		-Wunused-macros \
-		-Wunused-parameter \
-		-Wunused-result \
-		-Wunused-value \
-		-Wunused-variable \
-		-Wuseless-cast \
-		-Wvarargs \
-		-Wvariadic-macros \
-		-Wvector-operation-performance \
-		-Wvirtual-inheritance \
-		-Wvirtual-move-assign \
-		-Wvla \
-		-Wvolatile-register-var \
-		-Wwrite-strings \
-		-Wzero-as-null-pointer-constant \
-		"
+		--all-warnings                                    \
+		--extra-warnings                                  \
+		-W                                                \
+		-Wno-abi-tag                                         \
+		-Waddress                                         \
+		-Waddress-of-packed-member                        \
+		-Wno-aggregate-return                                \
+		-Waggressive-loop-optimizations                   \
+		-Waligned-new=all                                 \
+		-Wall                                             \
+		-Walloc-zero                                      \
+		-Walloca                                          \
+		-Wanalyzer-double-fclose                          \
+		-Wanalyzer-double-free                            \
+		-Wanalyzer-exposure-through-output-file           \
+		-Wanalyzer-file-leak                              \
+		-Wanalyzer-free-of-non-heap                       \
+		-Wanalyzer-malloc-leak                            \
+		-Wanalyzer-null-argument                          \
+		-Wanalyzer-null-dereference                       \
+		-Wanalyzer-possible-null-argument                 \
+		-Wanalyzer-possible-null-dereference              \
+		-Wanalyzer-stale-setjmp-buffer                    \
+		-Wanalyzer-tainted-array-index                    \
+		-Wanalyzer-too-complex                            \
+		-Wanalyzer-unsafe-call-within-signal-handler      \
+		-Wanalyzer-use-after-free                         \
+		-Wanalyzer-use-of-pointer-in-stale-stack-frame    \
+		-Warith-conversion                                \
+		-Warray-bounds                                    \
+		-Warray-bounds=2                                  \
+		-Wattribute-alias=2                               \
+		-Wattribute-warning                               \
+		-Wattributes                                      \
+		-Wbool-compare                                    \
+		-Wbool-operation                                  \
+		-Wbuiltin-declaration-mismatch                    \
+		-Wbuiltin-macro-redefined                         \
+		-Wc++0x-compat                                    \
+		-Wc++11-compat                                    \
+		-Wc++14-compat                                    \
+		-Wc++17-compat                                    \
+		-Wc++1z-compat                                    \
+		-Wc++20-compat                                    \
+		-Wc++2a-compat                                    \
+		-Wcannot-profile                                  \
+		-Wcast-align                                      \
+		-Wcast-align=strict                               \
+		-Wcast-function-type                              \
+		-Wcast-qual                                       \
+		-Wcatch-value=3                                   \
+		-Wchar-subscripts                                 \
+		-Wclass-conversion                                \
+		-Wclass-memaccess                                 \
+		-Wclobbered                                       \
+		-Wcomma-subscript                                 \
+		-Wcomment                                         \
+		-Wcomments                                        \
+		-Wconditionally-supported                         \
+		-Wconversion                                      \
+		-Wconversion-null                                 \
+		-Wcoverage-mismatch                               \
+		-Wcpp                                             \
+		-Wctor-dtor-privacy                               \
+		-Wdangling-else                                   \
+		-Wdate-time                                       \
+		-Wdelete-incomplete                               \
+		-Wdelete-non-virtual-dtor                         \
+		-Wdeprecated                                      \
+		-Wdeprecated-copy                                 \
+		-Wdeprecated-copy-dtor                            \
+		-Wdeprecated-declarations                         \
+		-Wdisabled-optimization                           \
+		-Wdiv-by-zero                                     \
+		-Wdouble-promotion                                \
+		-Wduplicated-branches                             \
+		-Wduplicated-cond                                 \
+		-Weffc++                                          \
+		-Wempty-body                                      \
+		-Wendif-labels                                    \
+		-Wenum-compare                                    \
+		-Wexpansion-to-defined                            \
+		-Wextra                                           \
+		-Wextra-semi                                      \
+		-Wfloat-conversion                                \
+		-Wfloat-equal                                     \
+		-Wformat -Wformat-contains-nul                    \
+		-Wformat -Wformat-extra-args                      \
+		-Wformat -Wformat-nonliteral                      \
+		-Wformat -Wformat-security                        \
+		-Wformat -Wformat-y2k                             \
+		-Wformat -Wformat-zero-length                     \
+		-Wformat-diag                                     \
+		-Wformat-overflow=2                               \
+		-Wformat-signedness                               \
+		-Wformat-truncation=2                             \
+		-Wformat=2                                        \
+		-Wframe-address                                   \
+		-Wfree-nonheap-object                             \
+		-Whsa                                             \
+		-Wif-not-aligned                                  \
+		-Wignored-attributes                              \
+		-Wignored-qualifiers                              \
+		-Wimplicit-fallthrough=5                          \
+		-Winaccessible-base                               \
+		-Winherited-variadic-ctor                         \
+		-Winit-list-lifetime                              \
+		-Winit-self                                       \
+		-Winline                                          \
+		-Wint-in-bool-context                             \
+		-Wint-to-pointer-cast                             \
+		-Winvalid-memory-model                            \
+		-Winvalid-offsetof                                \
+		-Winvalid-pch                                     \
+		-Wliteral-suffix                                  \
+		-Wlogical-not-parentheses                         \
+		-Wlogical-op                                      \
+		-Wno-long-long                                       \
+		-Wlto-type-mismatch                               \
+		-Wmain                                            \
+		-Wmaybe-uninitialized                             \
+		-Wmemset-elt-size                                 \
+		-Wmemset-transposed-args                          \
+		-Wmisleading-indentation                          \
+		-Wmismatched-tags                                 \
+		-Wmissing-attributes                              \
+		-Wmissing-braces                                  \
+		-Wmissing-declarations                            \
+		-Wmissing-field-initializers                      \
+		-Wmissing-include-dirs                            \
+		-Wmissing-profile                                 \
+		-Wmultichar                                       \
+		-Wmultiple-inheritance                            \
+		-Wmultistatement-macros                           \
+		-Wno-namespaces                                      \
+		-Wnarrowing                                       \
+		-Wno-noexcept                                        \
+		-Wnoexcept-type                                   \
+		-Wnon-template-friend                             \
+		-Wnon-virtual-dtor                                \
+		-Wnonnull                                         \
+		-Wnonnull-compare                                 \
+		-Wnonportable-cfstrings                           \
+		-Wnormalized=nfkc                                 \
+		-Wnull-dereference                                \
+		-Wodr                                             \
+		-Wold-style-cast                                  \
+		-Wopenmp-simd                                     \
+		-Woverflow                                        \
+		-Woverlength-strings                              \
+		-Woverloaded-virtual                              \
+		-Wpacked                                          \
+		-Wpacked-bitfield-compat                          \
+		-Wpacked-not-aligned                              \
+		-Wno-padded                                          \
+		-Wparentheses                                     \
+		-Wpedantic                                        \
+		-Wpessimizing-move                                \
+		-Wplacement-new=2                                 \
+		-Wpmf-conversions                                 \
+		-Wpointer-arith                                   \
+		-Wpointer-compare                                 \
+		-Wpragmas                                         \
+		-Wprio-ctor-dtor                                  \
+		-Wpsabi                                           \
+		-Wredundant-decls                                 \
+		-Wredundant-move                                  \
+		-Wredundant-tags                                  \
+		-Wregister                                        \
+		-Wreorder                                         \
+		-Wrestrict                                        \
+		-Wreturn-local-addr                               \
+		-Wreturn-type                                     \
+		-Wscalar-storage-order                            \
+		-Wsequence-point                                  \
+		-Wshadow=compatible-local                         \
+		-Wshadow=global                                   \
+		-Wshadow=local                                    \
+		-Wshift-count-negative                            \
+		-Wshift-count-overflow                            \
+		-Wshift-negative-value                            \
+		-Wshift-overflow=2                                \
+		-Wsign-compare                                    \
+		-Wsign-conversion                                 \
+		-Wsign-promo                                      \
+		-Wsized-deallocation                              \
+		-Wsizeof-array-argument                           \
+		-Wsizeof-pointer-div                              \
+		-Wsizeof-pointer-memaccess                        \
+		-Wstack-protector                                 \
+		-Wstrict-aliasing                                 \
+		-Wstrict-aliasing=3                               \
+		-Wstrict-null-sentinel                            \
+		-Wstrict-overflow                                 \
+		-Wstrict-overflow=5                               \
+		-Wstring-compare                                  \
+		-Wstringop-overflow                               \
+		-Wstringop-overflow=4                             \
+		-Wstringop-truncation                             \
+		-Wsubobject-linkage                               \
+		-Wsuggest-attribute=cold                          \
+		-Wsuggest-attribute=const                         \
+		-Wsuggest-attribute=format                        \
+		-Wsuggest-attribute=malloc                        \
+		-Wsuggest-attribute=noreturn                      \
+		-Wsuggest-attribute=pure                          \
+		-Wsuggest-final-methods                           \
+		-Wsuggest-final-types                             \
+		-Wsuggest-override                                \
+		-Wswitch                                          \
+		-Wswitch-bool                                     \
+		-Wswitch-default                                  \
+		-Wno-switch-enum                                     \
+		-Wswitch-outside-range                            \
+		-Wswitch-unreachable                              \
+		-Wsync-nand                                       \
+		-Wsynth                                           \
+		-Wno-system-headers                                  \
+		-Wtautological-compare                            \
+		-Wno-templates                                       \
+		-Wterminate                                       \
+		-Wtrampolines                                     \
+		-Wtrigraphs                                       \
+		-Wtype-limits                                     \
+		-Wundef                                           \
+		-Wuninitialized                                   \
+		-Wunknown-pragmas                                 \
+		-Wunreachable-code                                \
+		-Wunsafe-loop-optimizations                       \
+		-Wunused                                          \
+		-Wunused-but-set-parameter                        \
+		-Wunused-but-set-variable                         \
+		-Wunused-const-variable=2                         \
+		-Wunused-function                                 \
+		-Wunused-label                                    \
+		-Wno-unused-local-typedefs                           \
+		-Wunused-macros                                   \
+		-Wunused-parameter                                \
+		-Wunused-result                                   \
+		-Wunused-value                                    \
+		-Wunused-variable                                 \
+		-Wuseless-cast                                    \
+		-Wvarargs                                         \
+		-Wvariadic-macros                                 \
+		-Wvector-operation-performance                    \
+		-Wvirtual-inheritance                             \
+		-Wvirtual-move-assign                             \
+		-Wvla                                             \
+		-Wvolatile                                        \
+		-Wvolatile-register-var                           \
+		-Wwrite-strings                                   \
+		-Wzero-as-null-pointer-constant                   \
+		-Wzero-length-bounds                              \
+		" cmake -S . -B build_pedantic -GNinja -DCMAKE_BUILD_TYPE=Debug -DJSON_MultipleHeaders=ON -DJSON_BuildTests=On
+	cmake --build build_pedantic
 
 ##########################################################################
 # benchmarks
@@ -364,7 +389,7 @@ pedantic_gcc:
 run_benchmarks:
 	rm -fr build_benchmarks
 	mkdir build_benchmarks
-	cd build_benchmarks ; cmake ../benchmarks -GNinja -DCMAKE_BUILD_TYPE=Release
+	cd build_benchmarks ; cmake ../benchmarks -GNinja -DCMAKE_BUILD_TYPE=Release -DJSON_BuildTests=On
 	cd build_benchmarks ; ninja
 	cd build_benchmarks ; ./json_benchmarks
 
@@ -441,7 +466,7 @@ cppcheck:
 clang_analyze:
 	rm -fr clang_analyze_build
 	mkdir clang_analyze_build
-	cd clang_analyze_build ; CCC_CXX=$(COMPILER_DIR)/clang++ CXX=$(COMPILER_DIR)/clang++ $(COMPILER_DIR)/scan-build cmake .. -GNinja
+	cd clang_analyze_build ; CCC_CXX=$(COMPILER_DIR)/clang++ CXX=$(COMPILER_DIR)/clang++ $(COMPILER_DIR)/scan-build cmake .. -GNinja -DJSON_BuildTests=On
 	cd clang_analyze_build ; \
 		$(COMPILER_DIR)/scan-build \
 			-enable-checker alpha.core.BoolAssignment,alpha.core.CallAndMessageUnInitRefArg,alpha.core.CastSize,alpha.core.CastToStruct,alpha.core.Conversion,alpha.core.DynamicTypeChecker,alpha.core.FixedAddr,alpha.core.PointerArithm,alpha.core.PointerSub,alpha.core.SizeofPtr,alpha.core.StackAddressAsyncEscape,alpha.core.TestAfterDivZero,alpha.deadcode.UnreachableCode,core.builtin.BuiltinFunctions,core.builtin.NoReturnFunctions,core.CallAndMessage,core.DivideZero,core.DynamicTypePropagation,core.NonnilStringConstants,core.NonNullParamChecker,core.NullDereference,core.StackAddressEscape,core.UndefinedBinaryOperatorResult,core.uninitialized.ArraySubscript,core.uninitialized.Assign,core.uninitialized.Branch,core.uninitialized.CapturedBlockVariable,core.uninitialized.UndefReturn,core.VLASize,cplusplus.InnerPointer,cplusplus.Move,cplusplus.NewDelete,cplusplus.NewDeleteLeaks,cplusplus.SelfAssignment,deadcode.DeadStores,nullability.NullableDereferenced,nullability.NullablePassedToNonnull,nullability.NullableReturnedFromNonnull,nullability.NullPassedToNonnull,nullability.NullReturnedFromNonnull \
@@ -483,9 +508,9 @@ oclint:
 clang_sanitize:
 	rm -fr clang_sanitize_build
 	mkdir clang_sanitize_build
-	cd clang_sanitize_build ; CXX=$(COMPILER_DIR)/clang++ cmake .. -DJSON_Sanitizer=On -DJSON_MultipleHeaders=ON -GNinja
+	cd clang_sanitize_build ; CXX=$(COMPILER_DIR)/clang++ cmake .. -DJSON_Sanitizer=On -DJSON_MultipleHeaders=ON -DJSON_BuildTests=On -GNinja
 	cd clang_sanitize_build ; ninja
-	cd clang_sanitize_build ; ctest -E '.*_default' -j10
+	cd clang_sanitize_build ; ctest -j10
 
 
 ##########################################################################
@@ -579,7 +604,7 @@ check_cmake_flags:
 NEXT_VERSION ?= "unreleased"
 
 ChangeLog.md:
-	github_changelog_generator -o ChangeLog.md --simple-list --release-url https://github.com/nlohmann/json/releases/tag/%s --future-release $(NEXT_VERSION)
+	github_changelog_generator -o ChangeLog.md --user nlohmann --project json --simple-list --release-url https://github.com/nlohmann/json/releases/tag/%s --future-release $(NEXT_VERSION)
 	$(SED) -i 's|https://github.com/nlohmann/json/releases/tag/HEAD|https://github.com/nlohmann/json/tree/HEAD|' ChangeLog.md
 	$(SED) -i '2i All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org/).' ChangeLog.md
 

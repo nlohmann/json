@@ -14,6 +14,7 @@ int main()
     json j_object = {{"one", 1}, {"two", 2}};
     json j_array = {1, 2, 4, 8, 16};
     json j_string = "Hello, world";
+    json j_binary = json::binary({1, 2, 3});
 
     // call is_number_integer()
     std::cout << std::boolalpha;
@@ -25,4 +26,5 @@ int main()
     std::cout << j_object.is_number_integer() << '\n';
     std::cout << j_array.is_number_integer() << '\n';
     std::cout << j_string.is_number_integer() << '\n';
+    std::cout << j_binary.is_number_integer() << '\n';
 }

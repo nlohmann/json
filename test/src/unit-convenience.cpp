@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.7.3
+|  |  |__   |  |  | | | |  version 3.8.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -58,6 +58,7 @@ TEST_CASE("convenience functions")
         CHECK(std::string(json(json::value_t::number_integer).type_name()) == "number");
         CHECK(std::string(json(json::value_t::number_unsigned).type_name()) == "number");
         CHECK(std::string(json(json::value_t::number_float).type_name()) == "number");
+        CHECK(std::string(json(json::value_t::binary).type_name()) == "binary");
         CHECK(std::string(json(json::value_t::boolean).type_name()) == "boolean");
         CHECK(std::string(json(json::value_t::string).type_name()) == "string");
         CHECK(std::string(json(json::value_t::discarded).type_name()) == "discarded");

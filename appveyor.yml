@@ -85,7 +85,7 @@ environment:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
       configuration: Release
       platform: x64
-      CXX_FLAGS: "/permissive- /std:c++latest /utf-8 /F4000000"
+      CXX_FLAGS: "/permissive- /std:c++latest /Zc:__cplusplus /utf-8 /F4000000"
       LINKER_FLAGS: "/STACK:4000000"
       GENERATOR: Visual Studio 15 2017
 
@@ -112,7 +112,7 @@ before_build:
   # for with_win_header build, inject the inclusion of Windows.h to the single-header library
   - ps: if ($env:name -Eq "with_win_header") { $header_path = "single_include\nlohmann\json.hpp" }
   - ps: if ($env:name -Eq "with_win_header") { "#include <Windows.h>`n" + (Get-Content $header_path | Out-String) | Set-Content $header_path }
-  - if "%GENERATOR%"=="Ninja" (cmake . -G "%GENERATOR%" -DCMAKE_BUILD_TYPE="%configuration%" -DCMAKE_CXX_FLAGS="%CXX_FLAGS%" -DCMAKE_EXE_LINKER_FLAGS="%LINKER_FLAGS%" -DCMAKE_IGNORE_PATH="C:/Program Files/Git/usr/bin") else (cmake . -G "%GENERATOR%" -A "%GENERATOR_PLATFORM%" -DCMAKE_CXX_FLAGS="%CXX_FLAGS%" -DCMAKE_EXE_LINKER_FLAGS="%LINKER_FLAGS%" -DCMAKE_IGNORE_PATH="C:/Program Files/Git/usr/bin")
+  - if "%GENERATOR%"=="Ninja" (cmake . -G "%GENERATOR%" -DCMAKE_BUILD_TYPE="%configuration%" -DCMAKE_CXX_FLAGS="%CXX_FLAGS%" -DCMAKE_EXE_LINKER_FLAGS="%LINKER_FLAGS%" -DCMAKE_IGNORE_PATH="C:/Program Files/Git/usr/bin" -DJSON_BuildTests=On) else (cmake . -G "%GENERATOR%" -A "%GENERATOR_PLATFORM%" -DCMAKE_CXX_FLAGS="%CXX_FLAGS%" -DCMAKE_EXE_LINKER_FLAGS="%LINKER_FLAGS%" -DCMAKE_IGNORE_PATH="C:/Program Files/Git/usr/bin" -DJSON_BuildTests=On)
 
 build_script:
   - cmake --build . --config "%configuration%"
@@ -123,4 +123,4 @@ test_script:
   # as it is extremely slow to run and cause
   # occasional timeouts on AppVeyor.
   # More info: https://github.com/nlohmann/json/pull/1570
-  - if "%configuration%"=="Debug" ctest --exclude-regex "test-unicode_all" -C "%configuration%" -V -j
+  - if "%configuration%"=="Debug" ctest --exclude-regex "test-unicode" -C "%configuration%" -V -j

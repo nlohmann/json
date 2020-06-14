@@ -7,6 +7,10 @@ assignees: ''
 
 ---
 
-- Describe the feature in as much detail as possible.
+#### Which feature do you want to see in the library?
 
-- Include sample usage where appropriate.
+<!-- Describe the feature in as much detail as possible. -->
+
+#### How would the feature be usable for other users?
+
+<!-- Include sample usage where appropriate. -->

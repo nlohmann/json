@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.7.3
+|  |  |__   |  |  | | | |  version 3.8.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -225,9 +225,9 @@ TEST_CASE("alternative string type")
 
         {
             alt_json doc;
-            doc["list"] = { 1, 0, 2 };
+            doc["object"] = { {"currency", "USD"}, {"value", 42.99} };
             alt_string dump = doc.dump();
-            CHECK(dump == R"({"list":[1,0,2]})");
+            CHECK(dump == R"({"object":{"currency":"USD","value":42.99}})");
         }
     }
 

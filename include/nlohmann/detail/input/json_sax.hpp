@@ -23,14 +23,11 @@ input.
 template<typename BasicJsonType>
 struct json_sax
 {
-    /// type for (signed) integers
     using number_integer_t = typename BasicJsonType::number_integer_t;
-    /// type for unsigned integers
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
-    /// type for floating-point numbers
     using number_float_t = typename BasicJsonType::number_float_t;
-    /// type for strings
     using string_t = typename BasicJsonType::string_t;
+    using binary_t = typename BasicJsonType::binary_t;
 
     /*!
     @brief a null value was read
@@ -74,6 +71,14 @@ struct json_sax
     @note It is safe to move the passed string.
     */
     virtual bool string(string_t& val) = 0;
+
+    /*!
+    @brief a binary string was read
+    @param[in] val  binary value
+    @return whether parsing should proceed
+    @note It is safe to move the passed binary.
+    */
+    virtual bool binary(binary_t& val) = 0;
 
     /*!
     @brief the beginning of an object was read
@@ -149,6 +154,7 @@ class json_sax_dom_parser
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
     using string_t = typename BasicJsonType::string_t;
+    using binary_t = typename BasicJsonType::binary_t;
 
     /*!
     @param[in, out] r  reference to a JSON value that is manipulated while
@@ -199,6 +205,12 @@ class json_sax_dom_parser
     bool string(string_t& val)
     {
         handle_value(val);
+        return true;
+    }
+
+    bool binary(binary_t& val)
+    {
+        handle_value(std::move(val));
         return true;
     }
 
@@ -331,6 +343,7 @@ class json_sax_dom_callback_parser
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
     using string_t = typename BasicJsonType::string_t;
+    using binary_t = typename BasicJsonType::binary_t;
     using parser_callback_t = typename BasicJsonType::parser_callback_t;
     using parse_event_t = typename BasicJsonType::parse_event_t;
 
@@ -385,6 +398,12 @@ class json_sax_dom_callback_parser
         return true;
     }
 
+    bool binary(binary_t& val)
+    {
+        handle_value(std::move(val));
+        return true;
+    }
+
     bool start_object(std::size_t len)
     {
         // check callback for object start
@@ -433,7 +452,7 @@ class json_sax_dom_callback_parser
         ref_stack.pop_back();
         keep_stack.pop_back();
 
-        if (not ref_stack.empty() and ref_stack.back() and ref_stack.back()->is_object())
+        if (not ref_stack.empty() and ref_stack.back() and ref_stack.back()->is_structured())
         {
             // remove discarded value
             for (auto it = ref_stack.back()->begin(); it != ref_stack.back()->end(); ++it)
@@ -635,6 +654,7 @@ class json_sax_acceptor
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
     using string_t = typename BasicJsonType::string_t;
+    using binary_t = typename BasicJsonType::binary_t;
 
     bool null()
     {
@@ -666,7 +686,12 @@ class json_sax_acceptor
         return true;
     }
 
-    bool start_object(std::size_t  /*unused*/ = std::size_t(-1))
+    bool binary(binary_t& /*unused*/)
+    {
+        return true;
+    }
+
+    bool start_object(std::size_t /*unused*/ = std::size_t(-1))
     {
         return true;
     }
@@ -681,7 +706,7 @@ class json_sax_acceptor
         return true;
     }
 
-    bool start_array(std::size_t  /*unused*/ = std::size_t(-1))
+    bool start_array(std::size_t /*unused*/ = std::size_t(-1))
     {
         return true;
     }

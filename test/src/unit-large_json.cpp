@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.7.3
+|  |  |__   |  |  | | | |  version 3.8.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -43,7 +43,8 @@ TEST_CASE("tests on very large JSONs")
         std::string s(2 * depth, '[');
         std::fill(s.begin() + depth, s.end(), ']');
 
-        CHECK_NOTHROW(nlohmann::json::parse(s));
+        json _;
+        CHECK_NOTHROW(_ = nlohmann::json::parse(s));
     }
 }
 

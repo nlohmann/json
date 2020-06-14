@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (fuzz test support)
-|  |  |__   |  |  | | | |  version 3.7.3
+|  |  |__   |  |  | | | |  version 3.8.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 This file implements a parser test suitable for fuzz testing. Given a byte
@@ -11,6 +11,12 @@ array data, it performs the following steps:
 - vec = to_ubjson(j1)
 - j2 = from_ubjson(vec)
 - assert(j1 == j2)
+- vec2 = to_ubjson(j1, use_size = true, use_type = false)
+- j3 = from_ubjson(vec2)
+- assert(j1 == j3)
+- vec3 = to_ubjson(j1, use_size = true, use_type = true)
+- j4 = from_ubjson(vec3)
+- assert(j1 == j4)
 
 The provided function `LLVMFuzzerTestOneInput` can be used in different fuzzer
 drivers.
@@ -35,14 +41,24 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 
         try
         {
-            // step 2: round trip
-            std::vector<uint8_t> vec2 = json::to_ubjson(j1);
+            // step 2.1: round trip without adding size annotations to container types
+            std::vector<uint8_t> vec2 = json::to_ubjson(j1, false, false);
+
+            // step 2.2: round trip with adding size annotations but without adding type annonations to container types
+            std::vector<uint8_t> vec3 = json::to_ubjson(j1, true, false);
+
+            // step 2.3: round trip with adding size as well as type annotations to container types
+            std::vector<uint8_t> vec4 = json::to_ubjson(j1, true, true);
 
             // parse serialization
             json j2 = json::from_ubjson(vec2);
+            json j3 = json::from_ubjson(vec3);
+            json j4 = json::from_ubjson(vec4);
 
             // serializations must match
-            assert(json::to_ubjson(j2) == vec2);
+            assert(json::to_ubjson(j2, false, false) == vec2);
+            assert(json::to_ubjson(j3, true, false) == vec3);
+            assert(json::to_ubjson(j4, true, true) == vec4);
         }
         catch (const json::parse_error&)
         {

@@ -1,10 +1,10 @@
 #pragma once
 
-#include <ciso646> // not
 #include <limits> // numeric_limits
 #include <type_traits> // false_type, is_constructible, is_integral, is_same, true_type
 #include <utility> // declval
 
+#include <nlohmann/detail/boolean_operators.hpp>
 #include <nlohmann/detail/iterators/iterator_traits.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/cpp_future.hpp>
@@ -40,6 +40,19 @@ template<typename> struct is_basic_json : std::false_type {};
 
 NLOHMANN_BASIC_JSON_TPL_DECLARATION
 struct is_basic_json<NLOHMANN_BASIC_JSON_TPL> : std::true_type {};
+
+//////////////////////
+// json_ref helpers //
+//////////////////////
+
+template <typename>
+class json_ref;
+
+template<typename>
+struct is_json_ref : std::false_type {};
+
+template <typename T>
+struct is_json_ref<json_ref<T>> : std::true_type {};
 
 //////////////////////////
 // aliases for detected //

@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.7.3
+|  |  |__   |  |  | | | |  version 3.8.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -33,6 +33,7 @@ SOFTWARE.
 using nlohmann::json;
 
 #include <fstream>
+#include <test_data.hpp>
 
 TEST_CASE("JSON patch")
 {
@@ -1258,8 +1259,9 @@ TEST_CASE("JSON patch")
     SECTION("Tests from github.com/json-patch/json-patch-tests")
     {
         for (auto filename :
-                {"test/data/json-patch-tests/spec_tests.json",
-                 "test/data/json-patch-tests/tests.json"
+                {
+                    TEST_DATA_DIRECTORY "/json-patch-tests/spec_tests.json",
+                    TEST_DATA_DIRECTORY "/json-patch-tests/tests.json"
                 })
         {
             CAPTURE(filename)

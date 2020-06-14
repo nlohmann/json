@@ -22,12 +22,14 @@ These pages contain the API documentation of JSON for Modern C++, a C++11 header
       @link nlohmann::basic_json::is_object is_object @endlink,
       @link nlohmann::basic_json::is_array is_array @endlink,
       @link nlohmann::basic_json::is_string is_string @endlink,
-      @link nlohmann::basic_json::is_discarded is_discarded @endlink -- check for value type
+      @link nlohmann::basic_json::is_discarded is_discarded @endlink,
+      @link nlohmann::basic_json::is_binary is_binary @endlink -- check for value type
     - @link nlohmann::basic_json::operator value_t() const operator value_t @endlink -- type of the value (implicit conversion)
   - value access
     - @link nlohmann::basic_json::get get @endlink -- get a value
     - @link nlohmann::basic_json::get_ptr get_ptr @endlink -- get a value pointer
     - @link nlohmann::basic_json::get_ref get_ref @endlink -- get a value reference
+    - @link nlohmann::basic_json::get_binary get_binary @endlink -- get a binary value
     - @link nlohmann::basic_json::operator ValueType() const operator ValueType @endlink -- get a value (implicit conversion)
     - @link nlohmann::basic_json::value value @endlink -- get a value from an object and return default value if key is not present
   - exceptions
@@ -67,8 +69,9 @@ These pages contain the API documentation of JSON for Modern C++, a C++11 header
     - @link nlohmann::basic_json::number_integer_t signed integers @endlink
     - @link nlohmann::basic_json::number_unsigned_t unsigned integers @endlink
     - @link nlohmann::basic_json::number_float_t floating-point @endlink
+  - @link nlohmann::basic_json::binary_t binary values @endlink
 - further JSON standards
-  - @link nlohmann::json_pointer JSON Pointer @endlink (REF 6901)
+  - @link nlohmann::json_pointer JSON Pointer @endlink (RFC 6901)
   - @link nlohmann::basic_json::patch JSON Patch @endlink (RFC 6902)
   - @link nlohmann::basic_json::merge_patch JSON Merge Patch @endlink (RFC 7396)
 
@@ -80,8 +83,8 @@ Note that this table only lists those exceptions thrown due to the type. For ins
 
 <table>
   <tr>
-    <th rowspan="2">group</td>
-    <th rowspan="2">function</td>
+    <th rowspan="2">group</th>
+    <th rowspan="2">function</th>
     <th colspan="6">JSON value type</th>
   </tr>
   <tr>
@@ -324,9 +327,9 @@ Note that this table only lists those exceptions thrown due to the type. For ins
   </tr>
 </table>
 
-@copyright Copyright &copy; 2013-2019 Niels Lohmann. The code is licensed under the [MIT License](http://opensource.org/licenses/MIT).
+@copyright Copyright &copy; 2013-2020 Niels Lohmann. The code is licensed under the [MIT License](http://opensource.org/licenses/MIT).
 
 @author [Niels Lohmann](http://nlohmann.me)
 @see https://github.com/nlohmann/json to download the source code
 
-@version 3.7.3
+@version 3.8.0

@@ -24,44 +24,45 @@ namespace detail
 // parser //
 ////////////
 
+enum class parse_event_t : uint8_t
+{
+    /// the parser read `{` and started to process a JSON object
+    object_start,
+    /// the parser read `}` and finished processing a JSON object
+    object_end,
+    /// the parser read `[` and started to process a JSON array
+    array_start,
+    /// the parser read `]` and finished processing a JSON array
+    array_end,
+    /// the parser read a key of a value in an object
+    key,
+    /// the parser finished reading a JSON value
+    value
+};
+
+template<typename BasicJsonType>
+using parser_callback_t =
+    std::function<bool(int depth, parse_event_t event, BasicJsonType& parsed)>;
+
 /*!
 @brief syntax analysis
 
-This class implements a recursive decent parser.
+This class implements a recursive descent parser.
 */
-template<typename BasicJsonType>
+template<typename BasicJsonType, typename InputAdapterType>
 class parser
 {
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
     using string_t = typename BasicJsonType::string_t;
-    using lexer_t = lexer<BasicJsonType>;
+    using lexer_t = lexer<BasicJsonType, InputAdapterType>;
     using token_type = typename lexer_t::token_type;
 
   public:
-    enum class parse_event_t : uint8_t
-    {
-        /// the parser read `{` and started to process a JSON object
-        object_start,
-        /// the parser read `}` and finished processing a JSON object
-        object_end,
-        /// the parser read `[` and started to process a JSON array
-        array_start,
-        /// the parser read `]` and finished processing a JSON array
-        array_end,
-        /// the parser read a key of a value in an object
-        key,
-        /// the parser finished reading a JSON value
-        value
-    };
-
-    using parser_callback_t =
-        std::function<bool(int depth, parse_event_t event, BasicJsonType& parsed)>;
-
     /// a parser reading from an input adapter
-    explicit parser(detail::input_adapter_t&& adapter,
-                    const parser_callback_t cb = nullptr,
+    explicit parser(InputAdapterType&& adapter,
+                    const parser_callback_t<BasicJsonType> cb = nullptr,
                     const bool allow_exceptions_ = true)
         : callback(cb), m_lexer(std::move(adapter)), allow_exceptions(allow_exceptions_)
     {
@@ -486,7 +487,7 @@ class parser
 
   private:
     /// callback function
-    const parser_callback_t callback = nullptr;
+    const parser_callback_t<BasicJsonType> callback = nullptr;
     /// the type of the last read token
     token_type last_token = token_type::uninitialized;
     /// the lexer

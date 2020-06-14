@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.7.3
+|  |  |__   |  |  | | | |  version 3.8.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -232,5 +232,48 @@ TEST_CASE("controlled bad_alloc")
             CHECK_THROWS_AS(my_json(s), std::bad_alloc&);
             next_construct_fails = false;
         }
+    }
+}
+
+namespace
+{
+template<class T>
+struct allocator_no_forward : std::allocator<T>
+{
+    allocator_no_forward() {}
+    template <class U>
+    allocator_no_forward(allocator_no_forward<U>) {}
+
+    template <class U>
+    struct rebind
+    {
+        using other =  allocator_no_forward<U>;
+    };
+
+    template <class... Args>
+    void construct(T* p, const Args& ... args) noexcept(noexcept(::new (static_cast<void*>(p)) T(args...)))
+    {
+        // force copy even if move is available
+        ::new (static_cast<void*>(p)) T(args...);
+    }
+};
+}
+
+TEST_CASE("bad my_allocator::construct")
+{
+    SECTION("my_allocator::construct doesn't forward")
+    {
+        using bad_alloc_json = nlohmann::basic_json<std::map,
+              std::vector,
+              std::string,
+              bool,
+              std::int64_t,
+              std::uint64_t,
+              double,
+              allocator_no_forward>;
+
+        bad_alloc_json j;
+        j["test"] = bad_alloc_json::array_t();
+        j["test"].push_back("should not leak");
     }
 }

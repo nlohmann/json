@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.7.3
+|  |  |__   |  |  | | | |  version 3.8.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -74,6 +74,21 @@ class SaxEventLogger
     bool string(std::string& val)
     {
         events.push_back("string(" + val + ")");
+        return true;
+    }
+
+    bool binary(json::binary_t& val)
+    {
+        std::string binary_contents = "binary(";
+        std::string comma_space = "";
+        for (auto b : val)
+        {
+            binary_contents.append(comma_space);
+            binary_contents.append(std::to_string(static_cast<int>(b)));
+            comma_space = ", ";
+        }
+        binary_contents.append(")");
+        events.push_back(binary_contents);
         return true;
     }
 
@@ -164,6 +179,11 @@ class SaxCountdown : public nlohmann::json::json_sax_t
     }
 
     bool string(std::string&) override
+    {
+        return events_left-- > 0;
+    }
+
+    bool binary(json::binary_t&) override
     {
         return events_left-- > 0;
     }
@@ -1225,17 +1245,17 @@ TEST_CASE("parser class")
         // missing part of a surrogate pair
         CHECK_THROWS_AS(_ = json::parse("\"\\uD80C\""), json::parse_error&);
         CHECK_THROWS_WITH(_ = json::parse("\"\\uD80C\""),
-                          "[json.exception.parse_error.101] parse error at line 1, column 8: syntax error while parsing value - invalid string: surrogate U+DC00..U+DFFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD80C\"'");
+                          "[json.exception.parse_error.101] parse error at line 1, column 8: syntax error while parsing value - invalid string: surrogate U+D800..U+DBFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD80C\"'");
         // invalid surrogate pair
         CHECK_THROWS_AS(_ = json::parse("\"\\uD80C\\uD80C\""), json::parse_error&);
         CHECK_THROWS_AS(_ = json::parse("\"\\uD80C\\u0000\""), json::parse_error&);
         CHECK_THROWS_AS(_ = json::parse("\"\\uD80C\\uFFFF\""), json::parse_error&);
         CHECK_THROWS_WITH(_ = json::parse("\"\\uD80C\\uD80C\""),
-                          "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing value - invalid string: surrogate U+DC00..U+DFFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD80C\\uD80C'");
+                          "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing value - invalid string: surrogate U+D800..U+DBFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD80C\\uD80C'");
         CHECK_THROWS_WITH(_ = json::parse("\"\\uD80C\\u0000\""),
-                          "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing value - invalid string: surrogate U+DC00..U+DFFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD80C\\u0000'");
+                          "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing value - invalid string: surrogate U+D800..U+DBFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD80C\\u0000'");
         CHECK_THROWS_WITH(_ = json::parse("\"\\uD80C\\uFFFF\""),
-                          "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing value - invalid string: surrogate U+DC00..U+DFFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD80C\\uFFFF'");
+                          "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing value - invalid string: surrogate U+D800..U+DBFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD80C\\uFFFF'");
     }
 
     SECTION("parse errors (accept)")
@@ -1426,7 +1446,7 @@ TEST_CASE("parser class")
 
     SECTION("tests found by mutate++")
     {
-        // test case to make sure no comma preceeds the first key
+        // test case to make sure no comma precedes the first key
         CHECK_THROWS_AS(parser_helper("{,\"key\": false}"), json::parse_error&);
         CHECK_THROWS_WITH(parser_helper("{,\"key\": false}"),
                           "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing object key - unexpected ','; expected string literal");
@@ -1467,6 +1487,18 @@ TEST_CASE("parser class")
 
         auto s_array = R"(
             [1,2,[3,4,5],4,5]
+        )";
+
+        auto structured_array = R"(
+            [
+                1,
+                {
+                     "foo": "bar"
+                },
+                {
+                     "qux": "baz"
+                }
+            ]
         )";
 
         SECTION("filter nothing")
@@ -1535,6 +1567,41 @@ TEST_CASE("parser class")
             });
 
             CHECK (j_array == json({1, {3, 4, 5}, 4, 5}));
+        }
+
+        SECTION("filter object in array")
+        {
+            json j_filtered1 = json::parse(structured_array, [](int, json::parse_event_t e, const json & parsed)
+            {
+                if (e == json::parse_event_t::object_end and parsed.contains("foo"))
+                {
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            });
+
+            // the specified object will be discarded, and removed.
+            CHECK (j_filtered1.size() == 2);
+            CHECK (j_filtered1 == json({1, {{"qux", "baz"}}}));
+
+            json j_filtered2 = json::parse(structured_array, [](int, json::parse_event_t e, const json& /*parsed*/)
+            {
+                if (e == json::parse_event_t::object_end)
+                {
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            });
+
+            // removed all objects in array.
+            CHECK (j_filtered2.size() == 1);
+            CHECK (j_filtered2 == json({1}));
         }
 
         SECTION("filter specific events")

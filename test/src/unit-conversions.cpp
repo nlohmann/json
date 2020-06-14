@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.7.3
+|  |  |__   |  |  | | | |  version 3.8.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -188,7 +188,6 @@ TEST_CASE("value conversion")
             CHECK(json(o) == j);
         }
     }
-
 
     SECTION("get an object (implicit)")
     {
@@ -1256,6 +1255,124 @@ TEST_CASE("value conversion")
         {
             double n = j;
             CHECK(json(n).m_value.number_float == Approx(j.m_value.number_float));
+        }
+    }
+
+    SECTION("get a binary value (explicit)")
+    {
+        json::binary_t n_reference{{1, 2, 3}};
+        json j(n_reference);
+
+        SECTION("binary_t")
+        {
+            json::binary_t b = j.get<json::binary_t>();
+            CHECK(*json(b).m_value.binary == *j.m_value.binary);
+        }
+
+        SECTION("get_binary()")
+        {
+            SECTION("non-const")
+            {
+                auto& b = j.get_binary();
+                CHECK(*json(b).m_value.binary == *j.m_value.binary);
+            }
+
+            SECTION("non-const")
+            {
+                const json j_const = j;
+                const auto& b = j_const.get_binary();
+                CHECK(*json(b).m_value.binary == *j.m_value.binary);
+            }
+        }
+
+        SECTION("exception in case of a non-string type")
+        {
+            json j_null(json::value_t::null);
+            json j_object(json::value_t::object);
+            json j_array(json::value_t::array);
+            json j_string(json::value_t::string);
+            json j_boolean(json::value_t::boolean);
+            const json j_null_const(json::value_t::null);
+            const json j_object_const(json::value_t::object);
+            const json j_array_const(json::value_t::array);
+            const json j_string_const(json::value_t::string);
+            const json j_boolean_const(json::value_t::boolean);
+
+            CHECK_THROWS_WITH_AS(j_null.get<json::binary_t>(),
+                                 "[json.exception.type_error.302] type must be binary, but is null",
+                                 json::type_error&);
+            CHECK_THROWS_WITH_AS(j_object.get<json::binary_t>(),
+                                 "[json.exception.type_error.302] type must be binary, but is object",
+                                 json::type_error&);
+            CHECK_THROWS_WITH_AS(j_array.get<json::binary_t>(),
+                                 "[json.exception.type_error.302] type must be binary, but is array",
+                                 json::type_error&);
+            CHECK_THROWS_WITH_AS(j_string.get<json::binary_t>(),
+                                 "[json.exception.type_error.302] type must be binary, but is string",
+                                 json::type_error&);
+            CHECK_THROWS_WITH_AS(j_boolean.get<json::binary_t>(),
+                                 "[json.exception.type_error.302] type must be binary, but is boolean",
+                                 json::type_error&);
+
+            CHECK_THROWS_WITH_AS(j_null_const.get<json::binary_t>(),
+                                 "[json.exception.type_error.302] type must be binary, but is null",
+                                 json::type_error&);
+            CHECK_THROWS_WITH_AS(j_object_const.get<json::binary_t>(),
+                                 "[json.exception.type_error.302] type must be binary, but is object",
+                                 json::type_error&);
+            CHECK_THROWS_WITH_AS(j_array_const.get<json::binary_t>(),
+                                 "[json.exception.type_error.302] type must be binary, but is array",
+                                 json::type_error&);
+            CHECK_THROWS_WITH_AS(j_string_const.get<json::binary_t>(),
+                                 "[json.exception.type_error.302] type must be binary, but is string",
+                                 json::type_error&);
+            CHECK_THROWS_WITH_AS(j_boolean_const.get<json::binary_t>(),
+                                 "[json.exception.type_error.302] type must be binary, but is boolean",
+                                 json::type_error&);
+
+            CHECK_THROWS_WITH_AS(j_null.get_binary(),
+                                 "[json.exception.type_error.302] type must be binary, but is null",
+                                 json::type_error&);
+            CHECK_THROWS_WITH_AS(j_object.get_binary(),
+                                 "[json.exception.type_error.302] type must be binary, but is object",
+                                 json::type_error&);
+            CHECK_THROWS_WITH_AS(j_array.get_binary(),
+                                 "[json.exception.type_error.302] type must be binary, but is array",
+                                 json::type_error&);
+            CHECK_THROWS_WITH_AS(j_string.get_binary(),
+                                 "[json.exception.type_error.302] type must be binary, but is string",
+                                 json::type_error&);
+            CHECK_THROWS_WITH_AS(j_boolean.get_binary(),
+                                 "[json.exception.type_error.302] type must be binary, but is boolean",
+                                 json::type_error&);
+
+            CHECK_THROWS_WITH_AS(j_null_const.get_binary(),
+                                 "[json.exception.type_error.302] type must be binary, but is null",
+                                 json::type_error&);
+            CHECK_THROWS_WITH_AS(j_object_const.get_binary(),
+                                 "[json.exception.type_error.302] type must be binary, but is object",
+                                 json::type_error&);
+            CHECK_THROWS_WITH_AS(j_array_const.get_binary(),
+                                 "[json.exception.type_error.302] type must be binary, but is array",
+                                 json::type_error&);
+            CHECK_THROWS_WITH_AS(j_string_const.get_binary(),
+                                 "[json.exception.type_error.302] type must be binary, but is string",
+                                 json::type_error&);
+            CHECK_THROWS_WITH_AS(j_boolean_const.get_binary(),
+                                 "[json.exception.type_error.302] type must be binary, but is boolean",
+                                 json::type_error&);
+        }
+    }
+
+    SECTION("get a binary value (implicit)")
+    {
+        json::binary_t n_reference{{1, 2, 3}};
+        json j(n_reference);
+
+        SECTION("binary_t")
+        {
+            json::binary_t b = j;
+            CHECK(*json(b).m_value.binary == *j.m_value.binary);
         }
     }
 

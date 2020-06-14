@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.1)
 ## PROJECT
 ## name and version
 ##
-project(nlohmann_json VERSION 3.7.3 LANGUAGES CXX)
+project(nlohmann_json VERSION 3.8.0 LANGUAGES CXX)
 
 ##
 ## INCLUDE
@@ -89,8 +89,13 @@ endif()
 ## install header files, generate and install cmake config files for find_package()
 ##
 include(CMakePackageConfigHelpers)
-write_basic_package_version_file(
-    ${NLOHMANN_JSON_CMAKE_VERSION_CONFIG_FILE} COMPATIBILITY SameMajorVersion
+# use a custom package version config file instead of
+# write_basic_package_version_file to ensure that it's architecture-independent
+# https://github.com/nlohmann/json/issues/1697
+configure_file(
+    "cmake/nlohmann_jsonConfigVersion.cmake.in"
+    ${NLOHMANN_JSON_CMAKE_VERSION_CONFIG_FILE}
+    @ONLY
 )
 configure_file(
     ${NLOHMANN_JSON_CMAKE_CONFIG_TEMPLATE}
@@ -112,7 +117,7 @@ if(JSON_Install)
             FILES ${NLOHMANN_NATVIS_FILE}
             DESTINATION .
     )
-    endif()
+endif()
     export(
         TARGETS ${NLOHMANN_JSON_TARGET_NAME}
         NAMESPACE ${PROJECT_NAME}::

@@ -3,6 +3,13 @@ option(JSON_Valgrind "Execute test suite with Valgrind" OFF)
 option(JSON_NoExceptions "Build test suite without exceptions" OFF)
 option(JSON_Coverage "Build test suite with coverage information" OFF)
 
+# download test data
+include(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/download_test_data.cmake)
+
+# test fixture to download test data
+add_test(NAME "download_test_data" COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target download_test_data)
+set_tests_properties(download_test_data PROPERTIES FIXTURES_SETUP TEST_DATA)
+
 if(JSON_Sanitizer)
     message(STATUS "Building test suite with Clang sanitizer")
     if(NOT MSVC)
@@ -27,12 +34,6 @@ endif()
 
 if(JSON_Coverage)
     message(STATUS "Building test suite with coverage information")
-    if(NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-        message(FATAL_ERROR "JSON_Coverage requires GCC.")
-    endif()
-
-    # enable profiling
-    set(CMAKE_CXX_FLAGS "--coverage -g -O0 -fprofile-arcs -ftest-coverage")
 
     # from https://github.com/RWTH-HPC/CMake-codecov/blob/master/cmake/FindGcov.cmake
     get_filename_component(COMPILER_PATH "${CMAKE_CXX_COMPILER}" PATH)
@@ -51,22 +52,13 @@ if(JSON_Coverage)
         COMMAND genhtml --title "JSON for Modern C++" --legend --demangle-cpp --output-directory html --show-details --branch-coverage json.info.filtered.noexcept
         COMMENT "Generating HTML report test/html/index.html"
     )
-
-    add_custom_target(fastcov_html
-        COMMAND ${CMAKE_SOURCE_DIR}/test/thirdparty/fastcov/fastcov.py --branch-coverage --lcov -o json.info --gcov ${GCOV_BIN} --compiler-directory ${CMAKE_BINARY_DIR} --source-files ${SOURCE_FILES}
-        COMMAND ${CMAKE_SOURCE_DIR}/test/thirdparty/imapdl/filterbr.py json.info > json.info.noexcept
-        COMMAND genhtml --title "JSON for Modern C++" --legend --demangle-cpp --output-directory html --show-details --branch-coverage json.info.noexcept
-        COMMENT "Generating HTML report test/html/index.html"
-    )
 endif()
 
 #############################################################################
 # doctest library with the main function to speed up build
 #############################################################################
 
-add_library(doctest_main OBJECT
-    "src/unit.cpp"
-)
+add_library(doctest_main OBJECT src/unit.cpp)
 set_target_properties(doctest_main PROPERTIES
     COMPILE_DEFINITIONS "$<$<CXX_COMPILER_ID:MSVC>:_SCL_SECURE_NO_WARNINGS>"
     COMPILE_OPTIONS "$<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>"
@@ -87,11 +79,9 @@ if(MSVC)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
     endif()
 
-    # Disable warning C4389: '==': signed/unsigned mismatch
-	# Disable warning C4309: 'static_cast': truncation of constant value
 	# Disable warning C4566: character represented by universal-character-name '\uFF01' cannot be represented in the current code page (1252)
 	# Disable warning C4996: 'nlohmann::basic_json<std::map,std::vector,std::string,bool,int64_t,uint64_t,double,std::allocator,nlohmann::adl_serializer>::operator <<': was declared deprecated
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4389 /wd4309 /wd4566 /wd4996")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4566 /wd4996")
 
 	# https://github.com/nlohmann/json/issues/1114
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /bigobj")
@@ -143,6 +133,7 @@ set(files
     src/unit-ubjson.cpp
     src/unit-udt.cpp
     src/unit-unicode.cpp
+    src/unit-user_defined_input.cpp
     src/unit-wstring.cpp)
 
 foreach(file ${files})
@@ -150,44 +141,51 @@ foreach(file ${files})
     string(REGEX REPLACE "unit-([^$]+)" "test-\\1" testcase ${file_basename})
 
     add_executable(${testcase} $<TARGET_OBJECTS:doctest_main> ${file})
-    target_compile_definitions(${testcase} PRIVATE
-      DOCTEST_CONFIG_SUPER_FAST_ASSERTS
-    )
+    target_compile_definitions(${testcase} PRIVATE DOCTEST_CONFIG_SUPER_FAST_ASSERTS)
     target_compile_options(${testcase} PRIVATE
         $<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>
         $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wno-deprecated;-Wno-float-equal>
         $<$<CXX_COMPILER_ID:GNU>:-Wno-deprecated-declarations>
     )
-    target_include_directories(${testcase} PRIVATE
-        thirdparty/doctest
-        thirdparty/fifo_map
-    )
-    target_link_libraries(${testcase} ${NLOHMANN_JSON_TARGET_NAME})
+    target_include_directories(${testcase} PRIVATE ${CMAKE_BINARY_DIR}/include thirdparty/doctest thirdparty/fifo_map)
+    target_link_libraries(${testcase} PRIVATE ${NLOHMANN_JSON_TARGET_NAME})
 
-    add_test(NAME "${testcase}_default"
-      COMMAND ${testcase} ${DOCTEST_TEST_FILTER}
-      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    )
-    set_tests_properties("${testcase}_default" PROPERTIES LABELS "default")
+    if (JSON_Coverage)
+        target_compile_options(${testcase} PRIVATE --coverage)
+        target_link_libraries(${testcase} PRIVATE --coverage)
+    endif()
 
-    add_test(NAME "${testcase}_all"
-      COMMAND ${testcase} ${DOCTEST_TEST_FILTER} --no-skip
-      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    add_test(NAME "${testcase}"
+        COMMAND ${testcase} ${DOCTEST_TEST_FILTER} --no-skip
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     )
-    set_tests_properties("${testcase}_all" PROPERTIES LABELS "all")
+    set_tests_properties("${testcase}" PROPERTIES LABELS "all" FIXTURES_REQUIRED TEST_DATA)
 
     if(JSON_Valgrind)
         add_test(NAME "${testcase}_valgrind"
-          COMMAND ${memcheck_command} ${CMAKE_CURRENT_BINARY_DIR}/${testcase} ${DOCTEST_TEST_FILTER}
-          WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            COMMAND ${memcheck_command} ${CMAKE_CURRENT_BINARY_DIR}/${testcase} ${DOCTEST_TEST_FILTER}
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         )
         set_tests_properties("${testcase}_valgrind" PROPERTIES LABELS "valgrind")
     endif()
 endforeach()
 
+add_executable(json_unit EXCLUDE_FROM_ALL $<TARGET_OBJECTS:doctest_main> ${files})
+target_compile_definitions(json_unit PRIVATE DOCTEST_CONFIG_SUPER_FAST_ASSERTS)
+target_compile_options(json_unit PRIVATE
+    $<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>
+    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wno-deprecated;-Wno-float-equal>
+    $<$<CXX_COMPILER_ID:GNU>:-Wno-deprecated-declarations>
+)
+target_include_directories(json_unit PRIVATE ${CMAKE_BINARY_DIR}/include thirdparty/doctest thirdparty/fifo_map)
+target_link_libraries(json_unit ${NLOHMANN_JSON_TARGET_NAME})
+add_dependencies(json_unit download_test_data)
+
 #############################################################################
 # Test the generated build configs
 #############################################################################
+
 add_subdirectory(cmake_import)
 add_subdirectory(cmake_import_minver)
 add_subdirectory(cmake_add_subdirectory)
+add_subdirectory(cmake_fetch_content)

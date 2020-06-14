@@ -2,12 +2,13 @@
 
 #include <array> // array
 #include <cassert> // assert
-#include <ciso646> // or, and, not
 #include <cmath>   // signbit, isfinite
 #include <cstdint> // intN_t, uintN_t
 #include <cstring> // memcpy, memmove
 #include <limits> // numeric_limits
 #include <type_traits> // conditional
+
+#include <nlohmann/detail/boolean_operators.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 
 namespace nlohmann
@@ -990,11 +991,11 @@ inline char* format_buffer(char* buf, int len, int decimal_exponent,
         // digits[000]
         // len <= max_exp + 2
 
-        std::memset(buf + k, '0', static_cast<size_t>(n - k));
+        std::memset(buf + k, '0', static_cast<size_t>(n) - static_cast<size_t>(k));
         // Make it look like a floating-point number (#362, #378)
         buf[n + 0] = '.';
         buf[n + 1] = '0';
-        return buf + (n + 2);
+        return buf + (static_cast<size_t>(n) + 2);
     }
 
     if (0 < n and n <= max_exp)
@@ -1004,9 +1005,9 @@ inline char* format_buffer(char* buf, int len, int decimal_exponent,
 
         assert(k > n);
 
-        std::memmove(buf + (n + 1), buf + n, static_cast<size_t>(k - n));
+        std::memmove(buf + (static_cast<size_t>(n) + 1), buf + n, static_cast<size_t>(k) - static_cast<size_t>(n));
         buf[n] = '.';
-        return buf + (k + 1);
+        return buf + (static_cast<size_t>(k) + 1U);
     }
 
     if (min_exp < n and n <= 0)
@@ -1014,11 +1015,11 @@ inline char* format_buffer(char* buf, int len, int decimal_exponent,
         // 0.[000]digits
         // len <= 2 + (-min_exp - 1) + max_digits10
 
-        std::memmove(buf + (2 + -n), buf, static_cast<size_t>(k));
+        std::memmove(buf + (2 + static_cast<size_t>(-n)), buf, static_cast<size_t>(k));
         buf[0] = '0';
         buf[1] = '.';
         std::memset(buf + 2, '0', static_cast<size_t>(-n));
-        return buf + (2 + (-n) + k);
+        return buf + (2U + static_cast<size_t>(-n) + static_cast<size_t>(k));
     }
 
     if (k == 1)
@@ -1033,9 +1034,9 @@ inline char* format_buffer(char* buf, int len, int decimal_exponent,
         // d.igitsE+123
         // len <= max_digits10 + 1 + 5
 
-        std::memmove(buf + 2, buf + 1, static_cast<size_t>(k - 1));
+        std::memmove(buf + 2, buf + 1, static_cast<size_t>(k) - 1);
         buf[1] = '.';
-        buf += 1 + k;
+        buf += 1 + static_cast<size_t>(k);
     }
 
     *buf++ = 'e';

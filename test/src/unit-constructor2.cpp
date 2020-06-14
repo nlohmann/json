@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.7.3
+|  |  |__   |  |  | | | |  version 3.8.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -91,6 +91,13 @@ TEST_CASE("other constructors and destructor")
             json k(j);
             CHECK(j == k);
         }
+
+        SECTION("binary")
+        {
+            json j = json::binary({1, 2, 3});
+            json k(j);
+            CHECK(j == k);
+        }
     }
 
     SECTION("move constructor")
@@ -163,6 +170,14 @@ TEST_CASE("other constructors and destructor")
         SECTION("number (floating-point)")
         {
             json j(42.23);
+            json k;
+            k = j;
+            CHECK(j == k);
+        }
+
+        SECTION("binary")
+        {
+            json j = json::binary({1, 2, 3});
             json k;
             k = j;
             CHECK(j == k);
