@@ -1,7 +1,338 @@
-# Change Log
+# Changelog
 All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [v3.8.0](https://github.com/nlohmann/json/releases/tag/v3.8.0) (2020-06-14)
+
+[Full Changelog](https://github.com/nlohmann/json/compare/v3.7.3...v3.8.0)
+
+- sorry delete this issue, i'm stupid [\#2187](https://github.com/nlohmann/json/issues/2187)
+- Append to a std::nlohmann::json type [\#2186](https://github.com/nlohmann/json/issues/2186)
+- Object properties should not be re-sorted alphabetically [\#2179](https://github.com/nlohmann/json/issues/2179)
+- Some troubles to compile the last revision [\#2177](https://github.com/nlohmann/json/issues/2177)
+- ​\#​ Top level CMakeLists.txt​
+​project​\(FOO\)
+...
+​option​\(FOO\_USE\_EXTERNAL\_JSON ​"Use an external JSON library"​ ​OFF​\)
+...
+​add\_subdirectory​\(thirdparty\)
+...
+​add\_library​\(foo ...\)
+...
+​\#​ Note that the namespaced target will always be available regardless of the​
+​\#​ import method​
+​target\_link\_libraries​\(foo ​PRIVATE​ nlohmann\_json::nlohmann\_json\) [\#2170](https://github.com/nlohmann/json/issues/2170)
+- https://www.github.com/nlohmann/json/tree/develop/include%2Fnlohmann%2Fjson\_fwd.hpp [\#2169](https://github.com/nlohmann/json/issues/2169)
+- templated from\_json of non primitive types causes gcc error [\#2168](https://github.com/nlohmann/json/issues/2168)
+- few warnings/errors in copy assignment [\#2167](https://github.com/nlohmann/json/issues/2167)
+- Different output when upgrading from clang 9 to clang 10 [\#2166](https://github.com/nlohmann/json/issues/2166)
+- Cannot build with VS 2019 / C++17 [\#2163](https://github.com/nlohmann/json/issues/2163)
+- Q: When I received an illegal string,How the program knows? [\#2162](https://github.com/nlohmann/json/issues/2162)
+- Problem while reading a json file [\#2161](https://github.com/nlohmann/json/issues/2161)
+- converting std::chrono::system\_clock::time\_point to json. [\#2159](https://github.com/nlohmann/json/issues/2159)
+-  how to parse vector\<struct\> format [\#2157](https://github.com/nlohmann/json/issues/2157)
+- nlohmann::json and =nullptr [\#2156](https://github.com/nlohmann/json/issues/2156)
+- test-cbor fails [\#2154](https://github.com/nlohmann/json/issues/2154)
+- Accessing array inside array syntax?  [\#2151](https://github.com/nlohmann/json/issues/2151)
+- Best way to catch errors when querying json [\#2150](https://github.com/nlohmann/json/issues/2150)
+- Adding a value to an existing json puts it at the beginning instead of the end [\#2149](https://github.com/nlohmann/json/issues/2149)
+- JSON Data Mapping Key-Value from other Key-Value [\#2148](https://github.com/nlohmann/json/issues/2148)
+- Conflicts with std \<any\> compiling with GCC 10 [\#2146](https://github.com/nlohmann/json/issues/2146)
+- Incorrect CMake FetchContent example [\#2142](https://github.com/nlohmann/json/issues/2142)
+- Help for a Beginner? [\#2141](https://github.com/nlohmann/json/issues/2141)
+- Read Json from File [\#2139](https://github.com/nlohmann/json/issues/2139)
+- How to feed a predefined integer value into json string [\#2138](https://github.com/nlohmann/json/issues/2138)
+- getting json array inside json object [\#2135](https://github.com/nlohmann/json/issues/2135)
+- Add .contains example to doc [\#2133](https://github.com/nlohmann/json/issues/2133)
+- Is it safe to return string.c\_str\(\) received from get\(\)? [\#2130](https://github.com/nlohmann/json/issues/2130)
+- GCC 10: Compilation error when including any before including json header in C++17 mode [\#2129](https://github.com/nlohmann/json/issues/2129)
+- Intersection of two json files [\#2127](https://github.com/nlohmann/json/issues/2127)
+- App crashes when dump method called for non ascii chars. [\#2126](https://github.com/nlohmann/json/issues/2126)
+- iterator based erase method [\#2122](https://github.com/nlohmann/json/issues/2122)
+- quick and convenient api to get/set nested json values [\#2120](https://github.com/nlohmann/json/issues/2120)
+- assigning nullptr to std::string [\#2118](https://github.com/nlohmann/json/issues/2118)
+- usless\_cast warnings with gcc 9.3 and 10.1 \(C++17\) [\#2114](https://github.com/nlohmann/json/issues/2114)
+- clang 10 warning [\#2113](https://github.com/nlohmann/json/issues/2113)
+- Possible incorrect \_MSC\_VER reference [\#2112](https://github.com/nlohmann/json/issues/2112)
+- warning under gcc 10.1 [\#2110](https://github.com/nlohmann/json/issues/2110)
+- Wdeprecated-declarations from GCC v10.1.0 [\#2109](https://github.com/nlohmann/json/issues/2109)
+- Global std::vector from json [\#2108](https://github.com/nlohmann/json/issues/2108)
+- heap-buffer-overflow when using nlohmann/json, ASAN, and gtest [\#2107](https://github.com/nlohmann/json/issues/2107)
+- exception 0x770DC5AF when i read an special char in json file [\#2106](https://github.com/nlohmann/json/issues/2106)
+- json::parse\(\) fails to parse a dump\(2,' '\) output, yet does successfully parse dump\(\) [\#2105](https://github.com/nlohmann/json/issues/2105)
+- run test-udt error  in MSVC 19.16.27034.0 [\#2103](https://github.com/nlohmann/json/issues/2103)
+- Unable to dump to stringstream [\#2102](https://github.com/nlohmann/json/issues/2102)
+- Can't ad an object in another objet [\#2101](https://github.com/nlohmann/json/issues/2101)
+- Implicit conversion causes "cannot use operator\[\] with a string argument with string" [\#2098](https://github.com/nlohmann/json/issues/2098)
+- C++20: char8\_t [\#2097](https://github.com/nlohmann/json/issues/2097)
+- UTF8  [\#2095](https://github.com/nlohmann/json/issues/2095)
+- Compilation issues when included in project [\#2094](https://github.com/nlohmann/json/issues/2094)
+- string value with null character causes infinite loop [\#2093](https://github.com/nlohmann/json/issues/2093)
+- corrupted size vs. prev\_size \(aborted\) [\#2092](https://github.com/nlohmann/json/issues/2092)
+- Get string field content without return std::string copy  [\#2091](https://github.com/nlohmann/json/issues/2091)
+- JSON Comments \(JSON 5\) [\#2090](https://github.com/nlohmann/json/issues/2090)
+- Remove \#include \<ciso646\> [\#2089](https://github.com/nlohmann/json/issues/2089)
+- JSON library as a git submodule [\#2088](https://github.com/nlohmann/json/issues/2088)
+- Apple Clang 11.0.3 on MacOS Catalina 10.15.4 not compiling [\#2087](https://github.com/nlohmann/json/issues/2087)
+- Value function return empty object even if it exist [\#2086](https://github.com/nlohmann/json/issues/2086)
+- Cannot debug but Run works [\#2085](https://github.com/nlohmann/json/issues/2085)
+- Question about serialization. [\#2084](https://github.com/nlohmann/json/issues/2084)
+- How to include in an external project [\#2083](https://github.com/nlohmann/json/issues/2083)
+- Missing tests for binary values [\#2082](https://github.com/nlohmann/json/issues/2082)
+- How to override default string serialization? [\#2079](https://github.com/nlohmann/json/issues/2079)
+- Can't have a json type as a property in an arbitrary type [\#2078](https://github.com/nlohmann/json/issues/2078)
+- New release? [\#2075](https://github.com/nlohmann/json/issues/2075)
+- CMake FetchContent \> Updating the documentation? [\#2073](https://github.com/nlohmann/json/issues/2073)
+- How to convert STL Vector \(of user defined type\) to Json [\#2072](https://github.com/nlohmann/json/issues/2072)
+- how to make an array of objects [\#2070](https://github.com/nlohmann/json/issues/2070)
+- ‘\_\_int64’ was not declared [\#2068](https://github.com/nlohmann/json/issues/2068)
+- \[json.exception.type\_error.317\] cannot serialize binary data to text JSON [\#2067](https://github.com/nlohmann/json/issues/2067)
+- Unexpected end of input; expected '\[', '{', or a literal [\#2066](https://github.com/nlohmann/json/issues/2066)
+- Json structure can be nested? [\#2065](https://github.com/nlohmann/json/issues/2065)
+- Bug: returning reference to local temporary object [\#2064](https://github.com/nlohmann/json/issues/2064)
+- Allow to use non strict parsing [\#2063](https://github.com/nlohmann/json/issues/2063)
+- Crashing on json::at [\#2062](https://github.com/nlohmann/json/issues/2062)
+- Add support for JSONC [\#2061](https://github.com/nlohmann/json/issues/2061)
+- How to convert a const std::vector\<char8\_t\> message to a json, to be able to parse it and extract information from it? Can you point to any examples? [\#2058](https://github.com/nlohmann/json/issues/2058)
+- Nice library [\#2057](https://github.com/nlohmann/json/issues/2057)
+- json.hpp:15372:22: error: expected unqualified-id if \(not std::isfinite\(x\)\): Started getting this bug after updating my XCode [\#2056](https://github.com/nlohmann/json/issues/2056)
+- Confused as how I can extract the values from the JSON object. [\#2055](https://github.com/nlohmann/json/issues/2055)
+- Warnings with GCC 10 [\#2052](https://github.com/nlohmann/json/issues/2052)
+- Warnings with Clang 10 [\#2049](https://github.com/nlohmann/json/issues/2049)
+- Update doctest [\#2048](https://github.com/nlohmann/json/issues/2048)
+- Unclear error message: "cannot use operator\[\] with a string argument with array" [\#2047](https://github.com/nlohmann/json/issues/2047)
+- Serializing std::variant\<T, std::vector\<T\>\> [\#2045](https://github.com/nlohmann/json/issues/2045)
+- Crash when parse big jsonfile [\#2042](https://github.com/nlohmann/json/issues/2042)
+- How to check if a key exists without silently generating null objects on the path [\#2041](https://github.com/nlohmann/json/issues/2041)
+- Crash when traversing over items\(\) of temporary json objects [\#2040](https://github.com/nlohmann/json/issues/2040)
+- How to parse multiple line value ? [\#2039](https://github.com/nlohmann/json/issues/2039)
+- SAX API uses unsigned std::size\_t but  -1 if element size is not known; [\#2037](https://github.com/nlohmann/json/issues/2037)
+- How to parse big decimal data [\#2036](https://github.com/nlohmann/json/issues/2036)
+- how use   template \<typename T\> struct adl\_serializer  [\#2035](https://github.com/nlohmann/json/issues/2035)
+- auto iterator returned by find to handle value depending if is string or numeric. [\#2032](https://github.com/nlohmann/json/issues/2032)
+- pass find returned iterator to numeric variable. [\#2031](https://github.com/nlohmann/json/issues/2031)
+- Parse error on valid json file [\#2029](https://github.com/nlohmann/json/issues/2029)
+- Is here any elegant way to combine serialization and deserialization code? [\#2028](https://github.com/nlohmann/json/issues/2028)
+- Notes about dump function [\#2027](https://github.com/nlohmann/json/issues/2027)
+- Different JSON printouts for empty dictionary on Linux and Mac. [\#2026](https://github.com/nlohmann/json/issues/2026)
+- easier way to get exception reason out of json\_sax\_dom\_callback\_parser without exceptions [\#2024](https://github.com/nlohmann/json/issues/2024)
+- Using fifo\_map with base class and derived class [\#2023](https://github.com/nlohmann/json/issues/2023)
+- Error reading JSON File  [\#2022](https://github.com/nlohmann/json/issues/2022)
+- Parse causing crash on android.  Cannot catch. [\#2021](https://github.com/nlohmann/json/issues/2021)
+- Extra backslashes in nested json [\#2020](https://github.com/nlohmann/json/issues/2020)
+- How to create patch for merge\_patch input ? [\#2018](https://github.com/nlohmann/json/issues/2018)
+- CppUTest/include/CppUTestExt/MockSupport.h:40: error: default argument for ‘MockFailureReporter\* failureReporterForThisCall’ has type ‘void\*’ [\#2017](https://github.com/nlohmann/json/issues/2017)
+- including another file [\#2016](https://github.com/nlohmann/json/issues/2016)
+- GNU PREREQ Error with gcc 9.3.0 [\#2015](https://github.com/nlohmann/json/issues/2015)
+- Parse error: json.exception.parse\_error.101 - invalid string: ill-formed UTF-8 byte [\#2014](https://github.com/nlohmann/json/issues/2014)
+- Add more flexibility to basic\_json's ObjectType \(and ArrayType\) [\#2013](https://github.com/nlohmann/json/issues/2013)
+- afl persistent mode [\#2012](https://github.com/nlohmann/json/issues/2012)
+- Compiler Errors under VS2019 in Appveyor CI [\#2009](https://github.com/nlohmann/json/issues/2009)
+- Another compilation failure with Visual Studio [\#2007](https://github.com/nlohmann/json/issues/2007)
+- Implicit cast to std::string broken again with VS2019 16.5.0 [\#2006](https://github.com/nlohmann/json/issues/2006)
+- error: no matching member function for call to 'AddRaw' [\#2005](https://github.com/nlohmann/json/issues/2005)
+- When I re-create an object again after the network request, an error is reported [\#2003](https://github.com/nlohmann/json/issues/2003)
+- How to merge \(and not replace\) different Json::Value objects in jsoncpp [\#2001](https://github.com/nlohmann/json/issues/2001)
+- scalar transforms to list [\#2000](https://github.com/nlohmann/json/issues/2000)
+- Dump JSON containing multibyte characters [\#1999](https://github.com/nlohmann/json/issues/1999)
+- Build error  when modify value [\#1998](https://github.com/nlohmann/json/issues/1998)
+- How do i include a vector of pointers in my json? [\#1997](https://github.com/nlohmann/json/issues/1997)
+- Compiler error wrt incomplete types changed in gcc8.3.0-26 [\#1996](https://github.com/nlohmann/json/issues/1996)
+- NaN-like comparison behavior of discarded is inconvenient [\#1988](https://github.com/nlohmann/json/issues/1988)
+- Maintaining JSON package in my CMake [\#1987](https://github.com/nlohmann/json/issues/1987)
+- reading int number and string number [\#1986](https://github.com/nlohmann/json/issues/1986)
+- Build error: keyword is hidden by macro definition! [\#1985](https://github.com/nlohmann/json/issues/1985)
+- JSON patch diff for op=add formation is not as per standard \(RFC 6902\) [\#1983](https://github.com/nlohmann/json/issues/1983)
+- json\_pointer.contains\(\) exception is incorrectly raised [\#1982](https://github.com/nlohmann/json/issues/1982)
+- Error with non existing key [\#1981](https://github.com/nlohmann/json/issues/1981)
+- Closed [\#1978](https://github.com/nlohmann/json/issues/1978)
+- Where is the library built and what is the name? [\#1977](https://github.com/nlohmann/json/issues/1977)
+- The cmake\_import example does not build [\#1976](https://github.com/nlohmann/json/issues/1976)
+- Dumping core when reading invalid file [\#1975](https://github.com/nlohmann/json/issues/1975)
+- Abort in dump\(\) method [\#1973](https://github.com/nlohmann/json/issues/1973)
+- Unclear docs regarding parser\_callback\_t callbacks [\#1972](https://github.com/nlohmann/json/issues/1972)
+- Possible memory leak on push\_back [\#1971](https://github.com/nlohmann/json/issues/1971)
+- Is it possible to get a safe mutable reference/pointer to internal variant used in nlohmann json?  [\#1970](https://github.com/nlohmann/json/issues/1970)
+- Getting a flatten json to map\<string, string\> [\#1957](https://github.com/nlohmann/json/issues/1957)
+- forced type conversion or lexical cast without exception. [\#1955](https://github.com/nlohmann/json/issues/1955)
+- Add json\_view type support to avoid excessive copying [\#1954](https://github.com/nlohmann/json/issues/1954)
+- Adding "examples" section for real-life usages [\#1953](https://github.com/nlohmann/json/issues/1953)
+- GDB pretty printing support [\#1952](https://github.com/nlohmann/json/issues/1952)
+- Add nlohmann::json::key\_type [\#1951](https://github.com/nlohmann/json/issues/1951)
+- cannot use operator\[\] with a string argument with string [\#1949](https://github.com/nlohmann/json/issues/1949)
+- std::ifstream \>\> json error [\#1948](https://github.com/nlohmann/json/issues/1948)
+- Cannot update json data in an iterator? [\#1947](https://github.com/nlohmann/json/issues/1947)
+- How can i build this library in VS 2017? [\#1943](https://github.com/nlohmann/json/issues/1943)
+- json\_pointer.contains\(\) exceptions when path not found [\#1942](https://github.com/nlohmann/json/issues/1942)
+- Nested objects serialize/deserialize [\#1941](https://github.com/nlohmann/json/issues/1941)
+- Compile warning on architectures that are not x86 [\#1939](https://github.com/nlohmann/json/issues/1939)
+- Version of nlohmann-json-dev in debian packages [\#1938](https://github.com/nlohmann/json/issues/1938)
+- Create a json object for every cycle  [\#1937](https://github.com/nlohmann/json/issues/1937)
+- How to get the object name? [\#1936](https://github.com/nlohmann/json/issues/1936)
+- Reserve and resize function for basic json [\#1935](https://github.com/nlohmann/json/issues/1935)
+- How to use json parse in tsl::ordread\_map? [\#1934](https://github.com/nlohmann/json/issues/1934)
+- C++14 support is not enabled with msvc2015 [\#1932](https://github.com/nlohmann/json/issues/1932)
+- Need help with to\_json for derived class, keep getting "cannot use operator" [\#1931](https://github.com/nlohmann/json/issues/1931)
+- How to handle std::vector\<std::uint8\_t\> [\#1930](https://github.com/nlohmann/json/issues/1930)
+- Heap corruption issue [\#1929](https://github.com/nlohmann/json/issues/1929)
+- Add `std::wistream` support. [\#1928](https://github.com/nlohmann/json/issues/1928)
+- This i can write and read any file thanks [\#1927](https://github.com/nlohmann/json/issues/1927)
+- How can I get this simple example working? [\#1926](https://github.com/nlohmann/json/issues/1926)
+- emplace\_back does not seems to work with the int 0 [\#1925](https://github.com/nlohmann/json/issues/1925)
+- Why nlohmann does not release memory [\#1924](https://github.com/nlohmann/json/issues/1924)
+- Is it possible to have template `json::parse` with `noexcept` specifier? [\#1922](https://github.com/nlohmann/json/issues/1922)
+- JSON to wstring? [\#1921](https://github.com/nlohmann/json/issues/1921)
+- GCC 10 tests build failure [\#1920](https://github.com/nlohmann/json/issues/1920)
+- Size of binary json representations [\#1919](https://github.com/nlohmann/json/issues/1919)
+- Accessing strings \(for example in keys or values\) without having the lib create a copy of it. [\#1916](https://github.com/nlohmann/json/issues/1916)
+- operator== documentation should show how to apply custom comparison function [\#1915](https://github.com/nlohmann/json/issues/1915)
+- char8\_t and std::u8string support [\#1914](https://github.com/nlohmann/json/issues/1914)
+- std::is\_pod is deprecated in C++20 [\#1913](https://github.com/nlohmann/json/issues/1913)
+- Incomplete types reported by \(experimental\) GCC10 [\#1912](https://github.com/nlohmann/json/issues/1912)
+- Compile warnings on MSVC 14.2 [\#1911](https://github.com/nlohmann/json/issues/1911)
+- How to parse json file with   type composition  of std::optional  and std::variant [\#1910](https://github.com/nlohmann/json/issues/1910)
+- why root\_schema be  implemented as unique\_ptr in json-validator.cpp，could I use it as shared\_ptr? [\#1908](https://github.com/nlohmann/json/issues/1908)
+- compile error in gcc-6.3.0 [\#1906](https://github.com/nlohmann/json/issues/1906)
+- Scalar constexpr is odr-used when used as json initializer [\#1905](https://github.com/nlohmann/json/issues/1905)
+- install Slack app [\#1904](https://github.com/nlohmann/json/issues/1904)
+- typo in a comment [\#1903](https://github.com/nlohmann/json/issues/1903)
+- Watch JSON variables in Debug [\#1902](https://github.com/nlohmann/json/issues/1902)
+- does Json sdk cares about dfc dfd utf8 issue? [\#1901](https://github.com/nlohmann/json/issues/1901)
+- Compilation failure using Clang on Windows [\#1898](https://github.com/nlohmann/json/issues/1898)
+- Allow multiple line string value in JSON [\#1897](https://github.com/nlohmann/json/issues/1897)
+- Writing map to json file  [\#1896](https://github.com/nlohmann/json/issues/1896)
+- Small documentation mistake [\#1895](https://github.com/nlohmann/json/issues/1895)
+- why static function `parse` cann't find in visual studio 2019 [\#1894](https://github.com/nlohmann/json/issues/1894)
+- Best way to handle json files with missing key value pairs. [\#1893](https://github.com/nlohmann/json/issues/1893)
+- accessing json object as multimap [\#1892](https://github.com/nlohmann/json/issues/1892)
+- What is the best way to parse vec3s into glm::vec3 [\#1891](https://github.com/nlohmann/json/issues/1891)
+- Get array of items without using vector [\#1890](https://github.com/nlohmann/json/issues/1890)
+- Build errors \(clang 11.0.0\) on macOS 10.15.2 [\#1889](https://github.com/nlohmann/json/issues/1889)
+- Multiple arrays to vectors help [\#1888](https://github.com/nlohmann/json/issues/1888)
+- json::parse\(begin, end\) parse error on first character using uchar\* [\#1887](https://github.com/nlohmann/json/issues/1887)
+- issue in free\(\) [\#1886](https://github.com/nlohmann/json/issues/1886)
+- is\_number\_unsigned\(\) returns false for positive integers \(int or 0 or 1 literals\) [\#1885](https://github.com/nlohmann/json/issues/1885)
+- MSVC build failure with /Zc:\_\_cplusplus and C++17 [\#1883](https://github.com/nlohmann/json/issues/1883)
+- RFC 6901 op:replace & arrays [\#1882](https://github.com/nlohmann/json/issues/1882)
+- Problem with serialization of my custom template doubly-linked list [\#1881](https://github.com/nlohmann/json/issues/1881)
+- is\_array\(\) is True, but raise 'cannot use operator\[\] for object iterators' [\#1880](https://github.com/nlohmann/json/issues/1880)
+- Serialize dynamic array [\#1879](https://github.com/nlohmann/json/issues/1879)
+- Serialization of struct object. [\#1877](https://github.com/nlohmann/json/issues/1877)
+- warning:c4503 [\#1875](https://github.com/nlohmann/json/issues/1875)
+- Why are flattened empty objects/arrays not representable? [\#1874](https://github.com/nlohmann/json/issues/1874)
+- Container Overflow \(ASAN\) when using operator \>\> on an ifs [\#1873](https://github.com/nlohmann/json/issues/1873)
+- Sub-array to vector or map object? [\#1870](https://github.com/nlohmann/json/issues/1870)
+- WIP: QT \(cute\) type supports [\#1869](https://github.com/nlohmann/json/issues/1869)
+- Compiler flags to disable features and shrink code size [\#1868](https://github.com/nlohmann/json/issues/1868)
+- null strings [\#1867](https://github.com/nlohmann/json/issues/1867)
+- Struct with array of struct and \_\_attribute\_\_\(\(packed\)\) [\#1866](https://github.com/nlohmann/json/issues/1866)
+- Best way to extract numbers in the string? [\#1865](https://github.com/nlohmann/json/issues/1865)
+- Displaying \\?\Volume{guid} from string to json giving error [\#1864](https://github.com/nlohmann/json/issues/1864)
+- not working when compiling as x86 [\#1863](https://github.com/nlohmann/json/issues/1863)
+- Skipping evaluation of log line expressions with a macro, is it possible? [\#1862](https://github.com/nlohmann/json/issues/1862)
+- Suppress warnings [\#1861](https://github.com/nlohmann/json/issues/1861)
+- conflit with g++ compile option -mwindows [\#1860](https://github.com/nlohmann/json/issues/1860)
+- How to serialize nested classes to semi-flat JSON object? [\#1859](https://github.com/nlohmann/json/issues/1859)
+- Memory Requirement for large json file [\#1858](https://github.com/nlohmann/json/issues/1858)
+- Query a binary format \(BSON, CBOR, MessagePack, UBJSON\) [\#1856](https://github.com/nlohmann/json/issues/1856)
+- Documentation on operator\[\] behavior with missing keys [\#1855](https://github.com/nlohmann/json/issues/1855)
+- Problem in converting string into JSON; Can't parse successfully. [\#1854](https://github.com/nlohmann/json/issues/1854)
+- json.at\_or\_default\(key, defaultval\) [\#1852](https://github.com/nlohmann/json/issues/1852)
+- please improve the enum conversion documentation \(my example gist provided\) [\#1851](https://github.com/nlohmann/json/issues/1851)
+- Default value returned on ValueType nlohmann::basic\_json::value \(const typename object\_t::key\_type& key, const ValueType& default\_value\) 	 [\#1850](https://github.com/nlohmann/json/issues/1850)
+- Accounting for arbitrary precision numerical literals [\#1849](https://github.com/nlohmann/json/issues/1849)
+- While trying to make a simple array, I get a nested array instead [\#1848](https://github.com/nlohmann/json/issues/1848)
+- How to reuse the parser and serializer intermediate storage? [\#1847](https://github.com/nlohmann/json/issues/1847)
+- Too much content in json.hpp leads to slow compilation [\#1845](https://github.com/nlohmann/json/issues/1845)
+- Cannot read some data in json file [\#1843](https://github.com/nlohmann/json/issues/1843)
+- Precompiled JSON library? [\#1842](https://github.com/nlohmann/json/issues/1842)
+- Please change assert into throw\(maybe\) in line 17946 [\#1841](https://github.com/nlohmann/json/issues/1841)
+- JSON for modern C++ ECCN information [\#1840](https://github.com/nlohmann/json/issues/1840)
+- CI: reduce build time for Travis valgrind [\#1836](https://github.com/nlohmann/json/issues/1836)
+- How do I traverse a json object and add new elements into the hierarchy [\#1834](https://github.com/nlohmann/json/issues/1834)
+- Invalid UTF-8 byte at index 1: 0x65 [\#1831](https://github.com/nlohmann/json/issues/1831)
+- Serialize big data in json [\#1828](https://github.com/nlohmann/json/issues/1828)
+- Backslash '\' in value causes exception [\#1827](https://github.com/nlohmann/json/issues/1827)
+- from\_json for non default constructible class with dependency injection [\#1819](https://github.com/nlohmann/json/issues/1819)
+- Fail to build when including json.hpp as a system include [\#1818](https://github.com/nlohmann/json/issues/1818)
+- Semi-frequent timeouts in `test-unicode\_all` with 3.6.1 \(aarch64\) [\#1816](https://github.com/nlohmann/json/issues/1816)
+- input\_adapter not user extensible [\#1813](https://github.com/nlohmann/json/issues/1813)
+- crash at json::destroy on android  [\#1812](https://github.com/nlohmann/json/issues/1812)
+- Logs are repeating while cmake [\#1809](https://github.com/nlohmann/json/issues/1809)
+- Add a the possibility to add dynamic json objects [\#1795](https://github.com/nlohmann/json/issues/1795)
+- Unnecessary test data file in the release [\#1790](https://github.com/nlohmann/json/issues/1790)
+- Add support for parse stack limiting [\#1788](https://github.com/nlohmann/json/issues/1788)
+- GCC -Wuseless-cast warnings [\#1777](https://github.com/nlohmann/json/issues/1777)
+- compilation issue with NVCC 9.0 [\#1773](https://github.com/nlohmann/json/issues/1773)
+- Unexpected behavior with fifo\_map json when copy and append  [\#1763](https://github.com/nlohmann/json/issues/1763)
+- Parse error [\#1761](https://github.com/nlohmann/json/issues/1761)
+- Assignment \(using value\(\)\) to nonexistent element behaves differently on Xcode 8 vs Xcode 10 [\#1758](https://github.com/nlohmann/json/issues/1758)
+- Readme out of date [\#1756](https://github.com/nlohmann/json/issues/1756)
+- cmake\_\* tests don't use the build system's compiler [\#1747](https://github.com/nlohmann/json/issues/1747)
+- Static assertions for template type properties required [\#1729](https://github.com/nlohmann/json/issues/1729)
+- Use float and possibly half in json::to\_cbor [\#1719](https://github.com/nlohmann/json/issues/1719)
+- json::from\_cbor does not respect allow\_exceptions = false when input is string literal [\#1715](https://github.com/nlohmann/json/issues/1715)
+- /Zc:\_\_cplusplus leads to C2416 [\#1695](https://github.com/nlohmann/json/issues/1695)
+- `unflatten` vs objects with number-ish keys [\#1575](https://github.com/nlohmann/json/issues/1575)
+- A "thinner" source code tar as part of release? [\#1572](https://github.com/nlohmann/json/issues/1572)
+- Repository is almost 450MB [\#1497](https://github.com/nlohmann/json/issues/1497)
+- Substantial performance penalty caused by polymorphic input adapter  [\#1457](https://github.com/nlohmann/json/issues/1457)
+- Move tests to a separate repo [\#1235](https://github.com/nlohmann/json/issues/1235)
+- reduce repos size [\#1185](https://github.com/nlohmann/json/issues/1185)
+- CMakeLists.txt in release zips? [\#1184](https://github.com/nlohmann/json/issues/1184)
+- Minimal branch? [\#1066](https://github.com/nlohmann/json/issues/1066)
+- Move test blobs to a submodule? [\#732](https://github.com/nlohmann/json/issues/732)
+- \[Question\] When using this as git submodule, will it clone the whole thing include test data and benchmark? [\#620](https://github.com/nlohmann/json/issues/620)
+- Need to improve ignores.. [\#567](https://github.com/nlohmann/json/issues/567)
+- Minimal repository \(current size very large\) [\#556](https://github.com/nlohmann/json/issues/556)
+- For a header-only library you have to clone 214MB [\#482](https://github.com/nlohmann/json/issues/482)
+- 17 MB / 90 MB repo size!? [\#96](https://github.com/nlohmann/json/issues/96)
+
+- Improve parse\_ubjson\_fuzzer [\#2182](https://github.com/nlohmann/json/pull/2182) ([tanuj208](https://github.com/tanuj208))
+- Add input adapter tests [\#2178](https://github.com/nlohmann/json/pull/2178) ([nlohmann](https://github.com/nlohmann))
+- Fix warnings [\#2174](https://github.com/nlohmann/json/pull/2174) ([nlohmann](https://github.com/nlohmann))
+- Fix PR\#1006 [\#2158](https://github.com/nlohmann/json/pull/2158) ([dota17](https://github.com/dota17))
+- Fix issue\#1972 [\#2153](https://github.com/nlohmann/json/pull/2153) ([dota17](https://github.com/dota17))
+- Update URLs to HTTPS [\#2152](https://github.com/nlohmann/json/pull/2152) ([TotalCaesar659](https://github.com/TotalCaesar659))
+- Fix Issue\#1813: user defined input adapters [\#2145](https://github.com/nlohmann/json/pull/2145) ([FrancoisChabot](https://github.com/FrancoisChabot))
+- Fix issue\#1939: Cast character to unsigned for comparison [\#2144](https://github.com/nlohmann/json/pull/2144) ([XyFreak](https://github.com/XyFreak))
+- Fix issue\#2142: readme: fix typo in CMake FetchContent example [\#2143](https://github.com/nlohmann/json/pull/2143) ([quentin-dev](https://github.com/quentin-dev))
+- Respect allow\_exceptions=false for binary formats [\#2140](https://github.com/nlohmann/json/pull/2140) ([nlohmann](https://github.com/nlohmann))
+- Fix issue 2112 [\#2137](https://github.com/nlohmann/json/pull/2137) ([dota17](https://github.com/dota17))
+- Add bleeding edge GCC to CI [\#2136](https://github.com/nlohmann/json/pull/2136) ([aokellermann](https://github.com/aokellermann))
+- Clean up implementation of binary type [\#2125](https://github.com/nlohmann/json/pull/2125) ([nlohmann](https://github.com/nlohmann))
+- Fixed a compilation error in MSVC [\#2121](https://github.com/nlohmann/json/pull/2121) ([gistrec](https://github.com/gistrec))
+- Overwork CI [\#2119](https://github.com/nlohmann/json/pull/2119) ([nlohmann](https://github.com/nlohmann))
+- Fix warnings from Clang 10 and GCC 9 [\#2116](https://github.com/nlohmann/json/pull/2116) ([nlohmann](https://github.com/nlohmann))
+- Do not include \<ciso646\> when using C++17 [\#2115](https://github.com/nlohmann/json/pull/2115) ([nlohmann](https://github.com/nlohmann))
+- Fix issue\#2086: disallow json::value\_t type parameter in value\(\) [\#2104](https://github.com/nlohmann/json/pull/2104) ([dota17](https://github.com/dota17))
+- Fix Coveralls integration [\#2100](https://github.com/nlohmann/json/pull/2100) ([nlohmann](https://github.com/nlohmann))
+- Add tests for binary values [\#2099](https://github.com/nlohmann/json/pull/2099) ([nlohmann](https://github.com/nlohmann))
+- Use external test data [\#2081](https://github.com/nlohmann/json/pull/2081) ([nlohmann](https://github.com/nlohmann))
+- Remove Doozer CI [\#2080](https://github.com/nlohmann/json/pull/2080) ([nlohmann](https://github.com/nlohmann))
+- Fix README.md. Missing ``` [\#2077](https://github.com/nlohmann/json/pull/2077) ([ArthurSonzogni](https://github.com/ArthurSonzogni))
+- Fix error message about invalid surrogate pairs [\#2076](https://github.com/nlohmann/json/pull/2076) ([rmisev](https://github.com/rmisev))
+- Add CMake fetchcontent documentation and tests [\#2074](https://github.com/nlohmann/json/pull/2074) ([ArthurSonzogni](https://github.com/ArthurSonzogni))
+- Properly pass serialize\_binary to dump function [\#2071](https://github.com/nlohmann/json/pull/2071) ([nlohmann](https://github.com/nlohmann))
+- Fix returning reference to local temporary object [\#2069](https://github.com/nlohmann/json/pull/2069) ([nlohmann](https://github.com/nlohmann))
+- updated wandbox link [\#2060](https://github.com/nlohmann/json/pull/2060) ([alexandermyasnikov](https://github.com/alexandermyasnikov))
+- Fix bug in diff function [\#2054](https://github.com/nlohmann/json/pull/2054) ([nlohmann](https://github.com/nlohmann))
+- Fix GCC compiler warnings [\#2053](https://github.com/nlohmann/json/pull/2053) ([nlohmann](https://github.com/nlohmann))
+- Fix Clang compiler warnings [\#2051](https://github.com/nlohmann/json/pull/2051) ([nlohmann](https://github.com/nlohmann))
+- Update doctest to 2.3.7 [\#2050](https://github.com/nlohmann/json/pull/2050) ([nlohmann](https://github.com/nlohmann))
+- Fix issue\#1719 [\#2044](https://github.com/nlohmann/json/pull/2044) ([dota17](https://github.com/dota17))
+- Add missing testcase about NaN in unit-constructor1.cpp [\#2043](https://github.com/nlohmann/json/pull/2043) ([dota17](https://github.com/dota17))
+- Templatize basic\_json constructor from json\_ref [\#2034](https://github.com/nlohmann/json/pull/2034) ([ArtemSarmini](https://github.com/ArtemSarmini))
+- Replace deprecated std::is\_pod [\#2033](https://github.com/nlohmann/json/pull/2033) ([nlohmann](https://github.com/nlohmann))
+- fix \#1982:json\_pointer.contains\(\) exception is incorrectly raised [\#2019](https://github.com/nlohmann/json/pull/2019) ([dota17](https://github.com/dota17))
+- catch exceptions for json\_pointer : ..../+99 [\#1990](https://github.com/nlohmann/json/pull/1990) ([dota17](https://github.com/dota17))
+- fix warnings in serializer.hpp for VS2019 [\#1969](https://github.com/nlohmann/json/pull/1969) ([dota17](https://github.com/dota17))
+- Fix C26451 warnnings in to\_chars.hpp [\#1967](https://github.com/nlohmann/json/pull/1967) ([dota17](https://github.com/dota17))
+- templated input adapters [\#1950](https://github.com/nlohmann/json/pull/1950) ([FrancoisChabot](https://github.com/FrancoisChabot))
+- make CMake's version config file architecture-independent [\#1746](https://github.com/nlohmann/json/pull/1746) ([uhoreg](https://github.com/uhoreg))
+- Add binary type support to all binary file formats, as well as an internally represented binary type [\#1662](https://github.com/nlohmann/json/pull/1662) ([OmnipotentEntity](https://github.com/OmnipotentEntity))
+
 ## [v3.7.3](https://github.com/nlohmann/json/releases/tag/v3.7.3) (2019-11-17)
+
 [Full Changelog](https://github.com/nlohmann/json/compare/v3.7.2...v3.7.3)
 
 - Project branches [\#1839](https://github.com/nlohmann/json/issues/1839)
@@ -13,6 +344,7 @@ All notable changes to this project will be documented in this file. This projec
 - Fix quadratic destruction complexity [\#1838](https://github.com/nlohmann/json/pull/1838) ([nickaein](https://github.com/nickaein))
 
 ## [v3.7.2](https://github.com/nlohmann/json/releases/tag/v3.7.2) (2019-11-10)
+
 [Full Changelog](https://github.com/nlohmann/json/compare/v3.7.1...v3.7.2)
 
 - Segmentation fault in destructor in case of large inputs [\#1835](https://github.com/nlohmann/json/issues/1835)
@@ -29,6 +361,7 @@ All notable changes to this project will be documented in this file. This projec
 - Prevent stackoverflow caused by recursive deconstruction [\#1436](https://github.com/nlohmann/json/pull/1436) ([nickaein](https://github.com/nickaein))
 
 ## [v3.7.1](https://github.com/nlohmann/json/releases/tag/v3.7.1) (2019-11-06)
+
 [Full Changelog](https://github.com/nlohmann/json/compare/v3.7.0...v3.7.1)
 
 - std::is\_constructible is always true with tuple [\#1825](https://github.com/nlohmann/json/issues/1825)
@@ -162,6 +495,7 @@ All notable changes to this project will be documented in this file. This projec
 - release: add singleinclude and meson.build to include.zip [\#1694](https://github.com/nlohmann/json/pull/1694) ([eli-schwartz](https://github.com/eli-schwartz))
 
 ## [v3.7.0](https://github.com/nlohmann/json/releases/tag/v3.7.0) (2019-07-28)
+
 [Full Changelog](https://github.com/nlohmann/json/compare/v3.6.1...v3.7.0)
 
 - How can I retrieve uknown strings from json file in my C++ program. [\#1684](https://github.com/nlohmann/json/issues/1684)
@@ -239,10 +573,8 @@ All notable changes to this project will be documented in this file. This projec
 - Writing an array into a nlohmann::json object [\#1578](https://github.com/nlohmann/json/issues/1578)
 - compilation error when using with another library [\#1577](https://github.com/nlohmann/json/issues/1577)
 - Homebrew on OSX doesn't install cmake config file [\#1576](https://github.com/nlohmann/json/issues/1576)
-- `unflatten` vs objects with number-ish keys [\#1575](https://github.com/nlohmann/json/issues/1575)
 - JSON Parse Out of Range Error [\#1574](https://github.com/nlohmann/json/issues/1574)
 - Integrating into existing CMake Project [\#1573](https://github.com/nlohmann/json/issues/1573)
-- A "thinner" source code tar as part of release? [\#1572](https://github.com/nlohmann/json/issues/1572)
 - conversion to std::string failed [\#1571](https://github.com/nlohmann/json/issues/1571)
 - jPtr operation does not throw [\#1569](https://github.com/nlohmann/json/issues/1569)
 - How to generate dll file for this project [\#1568](https://github.com/nlohmann/json/issues/1568)
@@ -289,11 +621,10 @@ All notable changes to this project will be documented in this file. This projec
 - Intermittent issues with loadJSON [\#1484](https://github.com/nlohmann/json/issues/1484)
 - use json construct std::string [\#1462](https://github.com/nlohmann/json/issues/1462)
 - JSON Creation [\#1461](https://github.com/nlohmann/json/issues/1461)
-- Substantial performance penalty caused by polymorphic input adapter  [\#1457](https://github.com/nlohmann/json/issues/1457)
 - Null bytes in files are treated like EOF [\#1095](https://github.com/nlohmann/json/issues/1095)
 - Feature: to\_string\(const json& j\); [\#916](https://github.com/nlohmann/json/issues/916)
 
-- Use GNUInstallDirs instead of hard-coded path. [\#1673](https://github.com/nlohmann/json/pull/1673) ([remyabel](https://github.com/remyabel))
+- Use GNUInstallDirs instead of hard-coded path. [\#1673](https://github.com/nlohmann/json/pull/1673) ([ghost](https://github.com/ghost))
 - Package Manager: MSYS2 \(pacman\) [\#1670](https://github.com/nlohmann/json/pull/1670) ([podsvirov](https://github.com/podsvirov))
 - Fix json.hpp compilation issue with other typedefs with same name \(Issue \#1642\) [\#1643](https://github.com/nlohmann/json/pull/1643) ([kevinlul](https://github.com/kevinlul))
 - Add explicit conversion from json to std::string\_view in conversion unit test [\#1639](https://github.com/nlohmann/json/pull/1639) ([taylorhoward92](https://github.com/taylorhoward92))
@@ -306,7 +637,12 @@ All notable changes to this project will be documented in this file. This projec
 - moved from Catch to doctest for unit tests [\#1439](https://github.com/nlohmann/json/pull/1439) ([onqtam](https://github.com/onqtam))
 
 ## [v3.6.1](https://github.com/nlohmann/json/releases/tag/v3.6.1) (2019-03-20)
-[Full Changelog](https://github.com/nlohmann/json/compare/v3.6.0...v3.6.1)
+
+[Full Changelog](https://github.com/nlohmann/json/compare/3.6.1...v3.6.1)
+
+## [3.6.1](https://github.com/nlohmann/json/releases/tag/3.6.1) (2019-03-20)
+
+[Full Changelog](https://github.com/nlohmann/json/compare/v3.6.0...3.6.1)
 
 - Failed to build with \<Windows.h\> [\#1531](https://github.com/nlohmann/json/issues/1531)
 - Compiling 3.6.0 with GCC \> 7, array vs std::array \#590 is back [\#1530](https://github.com/nlohmann/json/issues/1530)
@@ -314,6 +650,7 @@ All notable changes to this project will be documented in this file. This projec
 - unable to parse json  [\#1525](https://github.com/nlohmann/json/issues/1525)
 
 ## [v3.6.0](https://github.com/nlohmann/json/releases/tag/v3.6.0) (2019-03-19)
+
 [Full Changelog](https://github.com/nlohmann/json/compare/v3.5.0...v3.6.0)
 
 - How can I turn a string of a json array into a json array? [\#1526](https://github.com/nlohmann/json/issues/1526)
@@ -332,7 +669,6 @@ All notable changes to this project will be documented in this file. This projec
 - Error compiling with clang and `JSON\_NOEXCEPTION`: need to include `cstdlib` [\#1500](https://github.com/nlohmann/json/issues/1500)
 - The code compiles unsuccessfully with android-ndk-r10e [\#1499](https://github.com/nlohmann/json/issues/1499)
 - Cmake 3.1 in develop, when is it likely to make it into a stable release? [\#1498](https://github.com/nlohmann/json/issues/1498)
-- Repository is almost 450MB [\#1497](https://github.com/nlohmann/json/issues/1497)
 - Some Help please object inside array [\#1494](https://github.com/nlohmann/json/issues/1494)
 - How to get data into vector of user-defined type from a Json object [\#1493](https://github.com/nlohmann/json/issues/1493)
 - how to find subelement  without loop [\#1490](https://github.com/nlohmann/json/issues/1490)
@@ -420,7 +756,7 @@ All notable changes to this project will be documented in this file. This projec
 - :rotating\_light: fixed unused variable warning [\#1435](https://github.com/nlohmann/json/pull/1435) ([pboettch](https://github.com/pboettch))
 - allow push\_back\(\) and pop\_back\(\) calls on json\_pointer [\#1434](https://github.com/nlohmann/json/pull/1434) ([pboettch](https://github.com/pboettch))
 - Add instructions about using nlohmann/json with the conda package manager [\#1430](https://github.com/nlohmann/json/pull/1430) ([nicoddemus](https://github.com/nicoddemus))
-- Updated year in README.md [\#1425](https://github.com/nlohmann/json/pull/1425) ([hijxf](https://github.com/hijxf))
+- Updated year in README.md [\#1425](https://github.com/nlohmann/json/pull/1425) ([jef](https://github.com/jef))
 - Fixed broken links in the README file [\#1423](https://github.com/nlohmann/json/pull/1423) ([skypjack](https://github.com/skypjack))
 - Fixed broken links in the README file [\#1420](https://github.com/nlohmann/json/pull/1420) ([skypjack](https://github.com/skypjack))
 - docs: typo in README [\#1417](https://github.com/nlohmann/json/pull/1417) ([wythe](https://github.com/wythe))
@@ -430,6 +766,7 @@ All notable changes to this project will be documented in this file. This projec
 - CMake: Optional Install if Embedded [\#1330](https://github.com/nlohmann/json/pull/1330) ([ax3l](https://github.com/ax3l))
 
 ## [v3.5.0](https://github.com/nlohmann/json/releases/tag/v3.5.0) (2018-12-21)
+
 [Full Changelog](https://github.com/nlohmann/json/compare/v3.4.0...v3.5.0)
 
 - Copyconstructor inserts original into array with single element [\#1397](https://github.com/nlohmann/json/issues/1397)
@@ -507,6 +844,7 @@ All notable changes to this project will be documented in this file. This projec
 - Fix EOL Whitespaces & CMake Spelling [\#1329](https://github.com/nlohmann/json/pull/1329) ([ax3l](https://github.com/ax3l))
 
 ## [v3.4.0](https://github.com/nlohmann/json/releases/tag/v3.4.0) (2018-10-30)
+
 [Full Changelog](https://github.com/nlohmann/json/compare/v3.3.0...v3.4.0)
 
 - Big uint64\_t values are serialized wrong [\#1327](https://github.com/nlohmann/json/issues/1327)
@@ -541,7 +879,6 @@ All notable changes to this project will be documented in this file. This projec
 - BSON support [\#1244](https://github.com/nlohmann/json/issues/1244)
 - enum to json mapping [\#1208](https://github.com/nlohmann/json/issues/1208)
 - Soften the landing when dumping non-UTF8 strings \(type\_error.316 exception\) [\#1198](https://github.com/nlohmann/json/issues/1198)
-- CMakeLists.txt in release zips? [\#1184](https://github.com/nlohmann/json/issues/1184)
 
 - Add macro to define enum/JSON mapping [\#1323](https://github.com/nlohmann/json/pull/1323) ([nlohmann](https://github.com/nlohmann))
 - Add BSON support [\#1320](https://github.com/nlohmann/json/pull/1320) ([nlohmann](https://github.com/nlohmann))
@@ -556,7 +893,12 @@ All notable changes to this project will be documented in this file. This projec
 - Thirdparty benchmark: Fix Clang detection. [\#1277](https://github.com/nlohmann/json/pull/1277) ([Lord-Kamina](https://github.com/Lord-Kamina))
 
 ## [v3.3.0](https://github.com/nlohmann/json/releases/tag/v3.3.0) (2018-10-05)
-[Full Changelog](https://github.com/nlohmann/json/compare/v3.2.0...v3.3.0)
+
+[Full Changelog](https://github.com/nlohmann/json/compare/3.3.0...v3.3.0)
+
+## [3.3.0](https://github.com/nlohmann/json/releases/tag/3.3.0) (2018-10-05)
+
+[Full Changelog](https://github.com/nlohmann/json/compare/v3.2.0...3.3.0)
 
 - When key is not found print the key name into error too [\#1273](https://github.com/nlohmann/json/issues/1273)
 - Visual Studio 2017 15.8.5 "conditional expression is constant" warning on Line 1851 in json.hpp [\#1268](https://github.com/nlohmann/json/issues/1268)
@@ -574,7 +916,6 @@ All notable changes to this project will be documented in this file. This projec
 - Doesn't compile under C++17 [\#1239](https://github.com/nlohmann/json/issues/1239)
 - Conversion operator for nlohmann::json is not SFINAE friendly [\#1237](https://github.com/nlohmann/json/issues/1237)
 - Custom deserialization of number\_float\_t [\#1236](https://github.com/nlohmann/json/issues/1236)
-- Move tests to a separate repo [\#1235](https://github.com/nlohmann/json/issues/1235)
 - deprecated-declarations warnings when compiling tests with GCC 8.2.1. [\#1233](https://github.com/nlohmann/json/issues/1233)
 - Incomplete type with json\_fwd.hpp [\#1232](https://github.com/nlohmann/json/issues/1232)
 - Parse Error [\#1229](https://github.com/nlohmann/json/issues/1229)
@@ -624,7 +965,12 @@ All notable changes to this project will be documented in this file. This projec
 - Export package to allow builds without installing [\#1202](https://github.com/nlohmann/json/pull/1202) ([dennisfischer](https://github.com/dennisfischer))
 
 ## [v3.2.0](https://github.com/nlohmann/json/releases/tag/v3.2.0) (2018-08-20)
-[Full Changelog](https://github.com/nlohmann/json/compare/v3.1.2...v3.2.0)
+
+[Full Changelog](https://github.com/nlohmann/json/compare/3.2.0...v3.2.0)
+
+## [3.2.0](https://github.com/nlohmann/json/releases/tag/3.2.0) (2018-08-20)
+
+[Full Changelog](https://github.com/nlohmann/json/compare/v3.1.2...3.2.0)
 
 - Am I doing this wrong? Getting an empty string [\#1199](https://github.com/nlohmann/json/issues/1199)
 - Incompatible Pointer Type [\#1196](https://github.com/nlohmann/json/issues/1196)
@@ -634,7 +980,6 @@ All notable changes to this project will be documented in this file. This projec
 - Add key name when throwing type error [\#1189](https://github.com/nlohmann/json/issues/1189)
 - Not able to include in visual studio code? [\#1188](https://github.com/nlohmann/json/issues/1188)
 - Get an Index or row number of an element [\#1186](https://github.com/nlohmann/json/issues/1186)
-- reduce repos size [\#1185](https://github.com/nlohmann/json/issues/1185)
 - Difference between `merge\_patch` and `update` [\#1183](https://github.com/nlohmann/json/issues/1183)
 - Is there a way to get an element from a JSON without throwing an exception on failure? [\#1182](https://github.com/nlohmann/json/issues/1182)
 - to\_string? [\#1181](https://github.com/nlohmann/json/issues/1181)
@@ -723,7 +1068,6 @@ All notable changes to this project will be documented in this file. This projec
 - Deserializing std::array doesn't compiler \(no insert\(\)\) [\#1071](https://github.com/nlohmann/json/issues/1071)
 - Serializing OpenCV Mat problem [\#1070](https://github.com/nlohmann/json/issues/1070)
 - Compilation error with ICPC compiler [\#1068](https://github.com/nlohmann/json/issues/1068)
-- Minimal branch? [\#1066](https://github.com/nlohmann/json/issues/1066)
 - Not existing value, crash [\#1065](https://github.com/nlohmann/json/issues/1065)
 - cyryllic symbols [\#1064](https://github.com/nlohmann/json/issues/1064)
 - newbie usage question [\#1063](https://github.com/nlohmann/json/issues/1063)
@@ -802,7 +1146,12 @@ All notable changes to this project will be documented in this file. This projec
 - Added public target\_compile\_features for auto and constexpr [\#1026](https://github.com/nlohmann/json/pull/1026) ([ktonon](https://github.com/ktonon))
 
 ## [v3.1.2](https://github.com/nlohmann/json/releases/tag/v3.1.2) (2018-03-14)
-[Full Changelog](https://github.com/nlohmann/json/compare/v3.1.1...v3.1.2)
+
+[Full Changelog](https://github.com/nlohmann/json/compare/3.1.2...v3.1.2)
+
+## [3.1.2](https://github.com/nlohmann/json/releases/tag/3.1.2) (2018-03-14)
+
+[Full Changelog](https://github.com/nlohmann/json/compare/v3.1.1...3.1.2)
 
 - STL containers are always serialized to a nested array like \[\[1,2,3\]\] [\#1013](https://github.com/nlohmann/json/issues/1013)
 - The library doesn't want to insert an unordered\_map [\#1010](https://github.com/nlohmann/json/issues/1010)
@@ -833,12 +1182,12 @@ All notable changes to this project will be documented in this file. This projec
 
 - Allowing for user-defined string type in lexer/parser [\#1009](https://github.com/nlohmann/json/pull/1009) ([nlohmann](https://github.com/nlohmann))
 - dump to alternative string type, as defined in basic\_json template [\#1006](https://github.com/nlohmann/json/pull/1006) ([agrianius](https://github.com/agrianius))
-- Fix memory leak during parser callback [\#1001](https://github.com/nlohmann/json/pull/1001) ([nlohmann](https://github.com/nlohmann))
 - fixed misprinted condition detected by PVS Studio. [\#992](https://github.com/nlohmann/json/pull/992) ([bogemic](https://github.com/bogemic))
 - Fix/basic json conversion [\#986](https://github.com/nlohmann/json/pull/986) ([theodelrieu](https://github.com/theodelrieu))
 - Make integration section concise [\#981](https://github.com/nlohmann/json/pull/981) ([wla80](https://github.com/wla80))
 
 ## [v3.1.1](https://github.com/nlohmann/json/releases/tag/v3.1.1) (2018-02-13)
+
 [Full Changelog](https://github.com/nlohmann/json/compare/v3.1.0...v3.1.1)
 
 - Updation of child object isn't reflected in parent Object [\#968](https://github.com/nlohmann/json/issues/968)
@@ -856,13 +1205,19 @@ All notable changes to this project will be documented in this file. This projec
 - \[Request\] Macro generating from\_json\(\) and to\_json\(\) [\#895](https://github.com/nlohmann/json/issues/895)
 - basic\_json::value throws exception instead of returning default value [\#871](https://github.com/nlohmann/json/issues/871)
 
+- Fix memory leak during parser callback [\#1001](https://github.com/nlohmann/json/pull/1001) ([nlohmann](https://github.com/nlohmann))
 - Fix constraints on from\_json\(CompatibleArrayType\) [\#969](https://github.com/nlohmann/json/pull/969) ([theodelrieu](https://github.com/theodelrieu))
 - Make coveralls watch the include folder [\#957](https://github.com/nlohmann/json/pull/957) ([theodelrieu](https://github.com/theodelrieu))
 - Fix links in README.md [\#955](https://github.com/nlohmann/json/pull/955) ([patrikhuber](https://github.com/patrikhuber))
 - Add a note about installing the library with cget [\#954](https://github.com/nlohmann/json/pull/954) ([pfultz2](https://github.com/pfultz2))
 
 ## [v3.1.0](https://github.com/nlohmann/json/releases/tag/v3.1.0) (2018-02-01)
-[Full Changelog](https://github.com/nlohmann/json/compare/v3.0.1...v3.1.0)
+
+[Full Changelog](https://github.com/nlohmann/json/compare/3.1.0...v3.1.0)
+
+## [3.1.0](https://github.com/nlohmann/json/releases/tag/3.1.0) (2018-02-01)
+
+[Full Changelog](https://github.com/nlohmann/json/compare/v3.0.1...3.1.0)
 
 - Order of the elements in JSON object [\#952](https://github.com/nlohmann/json/issues/952)
 - I have a proposal [\#949](https://github.com/nlohmann/json/issues/949)
@@ -925,7 +1280,12 @@ All notable changes to this project will be documented in this file. This projec
 - Refactor/split it [\#700](https://github.com/nlohmann/json/pull/700) ([theodelrieu](https://github.com/theodelrieu))
 
 ## [v3.0.1](https://github.com/nlohmann/json/releases/tag/v3.0.1) (2017-12-29)
-[Full Changelog](https://github.com/nlohmann/json/compare/v3.0.0...v3.0.1)
+
+[Full Changelog](https://github.com/nlohmann/json/compare/3.0.1...v3.0.1)
+
+## [3.0.1](https://github.com/nlohmann/json/releases/tag/3.0.1) (2017-12-29)
+
+[Full Changelog](https://github.com/nlohmann/json/compare/v3.0.0...3.0.1)
 
 - Problem parsing array to global vector [\#896](https://github.com/nlohmann/json/issues/896)
 - Invalid RFC6902 copy operation succeeds [\#894](https://github.com/nlohmann/json/issues/894)
@@ -948,7 +1308,12 @@ All notable changes to this project will be documented in this file. This projec
 - :wrench: Fix up a few more effc++ items [\#858](https://github.com/nlohmann/json/pull/858) ([mattismyname](https://github.com/mattismyname))
 
 ## [v3.0.0](https://github.com/nlohmann/json/releases/tag/v3.0.0) (2017-12-17)
-[Full Changelog](https://github.com/nlohmann/json/compare/v2.1.1...v3.0.0)
+
+[Full Changelog](https://github.com/nlohmann/json/compare/3.0.0...v3.0.0)
+
+## [3.0.0](https://github.com/nlohmann/json/releases/tag/3.0.0) (2017-12-17)
+
+[Full Changelog](https://github.com/nlohmann/json/compare/v2.1.1...3.0.0)
 
 - unicode strings [\#878](https://github.com/nlohmann/json/issues/878)
 - Visual Studio 2017 15.5 C++17 std::allocator deprecations [\#872](https://github.com/nlohmann/json/issues/872)
@@ -1052,7 +1417,6 @@ All notable changes to this project will be documented in this file. This projec
 - Compilation Error on Clang 5.0 Upgrade [\#735](https://github.com/nlohmann/json/issues/735)
 - Compilation error with std::map\<std::string, std::string\> on vs 2015 [\#734](https://github.com/nlohmann/json/issues/734)
 - Benchmarks for Binary formats [\#733](https://github.com/nlohmann/json/issues/733)
-- Move test blobs to a submodule? [\#732](https://github.com/nlohmann/json/issues/732)
 - Support \n symbols in json string. [\#731](https://github.com/nlohmann/json/issues/731)
 - Project's name is too generic and hard to search for [\#730](https://github.com/nlohmann/json/issues/730)
 - Visual Studio 2015 IntelliTrace problems [\#729](https://github.com/nlohmann/json/issues/729)
@@ -1137,7 +1501,6 @@ All notable changes to this project will be documented in this file. This projec
 - Discussion: How to structure the parsing function families [\#623](https://github.com/nlohmann/json/issues/623)
 - Question: How to erase subtree [\#622](https://github.com/nlohmann/json/issues/622)
 - Insertion into nested json field [\#621](https://github.com/nlohmann/json/issues/621)
-- \[Question\] When using this as git submodule, will it clone the whole thing include test data and benchmark? [\#620](https://github.com/nlohmann/json/issues/620)
 - Question: return static json object from function [\#618](https://github.com/nlohmann/json/issues/618)
 - icc16 error [\#617](https://github.com/nlohmann/json/issues/617)
 - \[-Wdeprecated-declarations\] in row `j \>\> ss;` in file `json.hpp:7405:26` and FAILED unit tests with MinGWx64! [\#616](https://github.com/nlohmann/json/issues/616)
@@ -1179,7 +1542,6 @@ All notable changes to this project will be documented in this file. This projec
 - Request: Object.at\(\) with default return value [\#570](https://github.com/nlohmann/json/issues/570)
 - Internal structure gets corrupted while parsing [\#569](https://github.com/nlohmann/json/issues/569)
 - create template \<typename Iter\> basic\_json from\_cbor\(Iter begin, Iter end\) [\#568](https://github.com/nlohmann/json/issues/568)
-- Need to improve ignores.. [\#567](https://github.com/nlohmann/json/issues/567)
 - Conan.io [\#566](https://github.com/nlohmann/json/issues/566)
 - contradictory documentation regarding json::find [\#565](https://github.com/nlohmann/json/issues/565)
 - Unexpected '\"' in middle of array [\#564](https://github.com/nlohmann/json/issues/564)
@@ -1189,7 +1551,6 @@ All notable changes to this project will be documented in this file. This projec
 - Tip: Don't upgrade to VS2017 if using json initializer list constructs [\#559](https://github.com/nlohmann/json/issues/559)
 - parse error - unexpected end of input [\#558](https://github.com/nlohmann/json/issues/558)
 - Cant modify existing numbers inside a json object [\#557](https://github.com/nlohmann/json/issues/557)
-- Minimal repository \(current size very large\) [\#556](https://github.com/nlohmann/json/issues/556)
 - Better support for SAX style serialize and deserialize in new version? [\#554](https://github.com/nlohmann/json/issues/554)
 - Cannot convert from json array to std::array [\#553](https://github.com/nlohmann/json/issues/553)
 - Do not define an unnamed namespace in a header file \(DCL59-CPP\) [\#552](https://github.com/nlohmann/json/issues/552)
@@ -1250,7 +1611,6 @@ All notable changes to this project will be documented in this file. This projec
 - Using fifo\_map [\#485](https://github.com/nlohmann/json/issues/485)
 - Cannot get float pointer for value stored as `0` [\#484](https://github.com/nlohmann/json/issues/484)
 - byte string support [\#483](https://github.com/nlohmann/json/issues/483)
-- For a header-only library you have to clone 214MB [\#482](https://github.com/nlohmann/json/issues/482)
 - https://github.com/nlohmann/json\#execute-unit-tests [\#481](https://github.com/nlohmann/json/issues/481)
 - Remove deprecated constructor basic\_json\(std::istream&\) [\#480](https://github.com/nlohmann/json/issues/480)
 - writing the binary json file? [\#479](https://github.com/nlohmann/json/issues/479)
@@ -1311,38 +1671,14 @@ All notable changes to this project will be documented in this file. This projec
 - Digraph warning [\#679](https://github.com/nlohmann/json/pull/679) ([traits](https://github.com/traits))
 - massage -\> message [\#678](https://github.com/nlohmann/json/pull/678) ([DmitryKuk](https://github.com/DmitryKuk))
 - Fix "not constraint" grammar in docs [\#674](https://github.com/nlohmann/json/pull/674) ([wincent](https://github.com/wincent))
-- Add documentation for integration with CMake and hunter [\#671](https://github.com/nlohmann/json/pull/671) ([dan-42](https://github.com/dan-42))
-- REFACTOR: rewrite CMakeLists.txt for better inlcude and reuse [\#669](https://github.com/nlohmann/json/pull/669) ([dan-42](https://github.com/dan-42))
-- enable\_testing only if the JSON\_BuildTests is ON [\#666](https://github.com/nlohmann/json/pull/666) ([effolkronium](https://github.com/effolkronium))
-- Support moving from rvalues in std::initializer\_list [\#663](https://github.com/nlohmann/json/pull/663) ([himikof](https://github.com/himikof))
-- add ensure\_ascii parameter to dump. \#330 [\#654](https://github.com/nlohmann/json/pull/654) ([ryanjmulder](https://github.com/ryanjmulder))
-- Rename BuildTests to JSON\_BuildTests [\#652](https://github.com/nlohmann/json/pull/652) ([olegendo](https://github.com/olegendo))
-- Don't include \<iostream\>, use std::make\_shared [\#650](https://github.com/nlohmann/json/pull/650) ([olegendo](https://github.com/olegendo))
-- Refacto/split basic json [\#643](https://github.com/nlohmann/json/pull/643) ([theodelrieu](https://github.com/theodelrieu))
-- fix typo in operator\_\_notequal example [\#630](https://github.com/nlohmann/json/pull/630) ([Chocobo1](https://github.com/Chocobo1))
-- Fix MSVC warning C4819 [\#629](https://github.com/nlohmann/json/pull/629) ([Chocobo1](https://github.com/Chocobo1))
-- \[BugFix\] Add parentheses around std::min [\#626](https://github.com/nlohmann/json/pull/626) ([koemeet](https://github.com/koemeet))
-- add pair/tuple conversions [\#624](https://github.com/nlohmann/json/pull/624) ([theodelrieu](https://github.com/theodelrieu))
-- remove std::pair support [\#615](https://github.com/nlohmann/json/pull/615) ([theodelrieu](https://github.com/theodelrieu))
-- Add pair support, fix CompatibleObject conversions \(fixes \#600\) [\#609](https://github.com/nlohmann/json/pull/609) ([theodelrieu](https://github.com/theodelrieu))
-- \#550 Fix iterator related compiling issues for Intel icc [\#598](https://github.com/nlohmann/json/pull/598) ([HenryRLee](https://github.com/HenryRLee))
-- Issue \#593 Fix the arithmetic operators in the iterator and reverse iterator [\#595](https://github.com/nlohmann/json/pull/595) ([HenryRLee](https://github.com/HenryRLee))
-- fix doxygen error of basic\_json::get\(\) [\#583](https://github.com/nlohmann/json/pull/583) ([zhaohuaxishi](https://github.com/zhaohuaxishi))
-- Fixing assignement for iterator wrapper second, and adding unit test [\#579](https://github.com/nlohmann/json/pull/579) ([Type1J](https://github.com/Type1J))
-- Adding first and second properties to iteration\_proxy\_internal [\#578](https://github.com/nlohmann/json/pull/578) ([Type1J](https://github.com/Type1J))
-- Adding support for Meson. [\#576](https://github.com/nlohmann/json/pull/576) ([Type1J](https://github.com/Type1J))
-- add enum class default conversions [\#545](https://github.com/nlohmann/json/pull/545) ([theodelrieu](https://github.com/theodelrieu))
-- Properly pop diagnostics [\#540](https://github.com/nlohmann/json/pull/540) ([tinloaf](https://github.com/tinloaf))
-- Add Visual Studio 17 image to appveyor build matrix [\#536](https://github.com/nlohmann/json/pull/536) ([vpetrigo](https://github.com/vpetrigo))
-- UTF8 encoding enhancement [\#534](https://github.com/nlohmann/json/pull/534) ([TedLyngmo](https://github.com/TedLyngmo))
-- Fix typo [\#530](https://github.com/nlohmann/json/pull/530) ([berkus](https://github.com/berkus))
-- Make exception base class visible in basic\_json [\#526](https://github.com/nlohmann/json/pull/526) ([krzysztofwos](https://github.com/krzysztofwos))
-- :art: Namespace `uint8\_t` from the C++ stdlib [\#510](https://github.com/nlohmann/json/pull/510) ([alex-weej](https://github.com/alex-weej))
-- add to\_json method for C arrays [\#508](https://github.com/nlohmann/json/pull/508) ([theodelrieu](https://github.com/theodelrieu))
-- Fix -Weffc++ warnings \(GNU 6.3.1\) [\#496](https://github.com/nlohmann/json/pull/496) ([TedLyngmo](https://github.com/TedLyngmo))
 
 ## [v2.1.1](https://github.com/nlohmann/json/releases/tag/v2.1.1) (2017-02-25)
-[Full Changelog](https://github.com/nlohmann/json/compare/v2.1.0...v2.1.1)
+
+[Full Changelog](https://github.com/nlohmann/json/compare/2.1.1...v2.1.1)
+
+## [2.1.1](https://github.com/nlohmann/json/releases/tag/2.1.1) (2017-02-25)
+
+[Full Changelog](https://github.com/nlohmann/json/compare/v2.1.0...2.1.1)
 
 - warning in the library [\#472](https://github.com/nlohmann/json/issues/472)
 - How to create an array of Objects? [\#470](https://github.com/nlohmann/json/issues/470)
@@ -1374,9 +1710,15 @@ All notable changes to this project will be documented in this file. This projec
 - TurpentineDistillery feature/locale independent str to num [\#450](https://github.com/nlohmann/json/pull/450) ([nlohmann](https://github.com/nlohmann))
 - README: adjust boost::optional example [\#439](https://github.com/nlohmann/json/pull/439) ([jaredgrubb](https://github.com/jaredgrubb))
 - fix \#414 - comparing to 0 literal [\#415](https://github.com/nlohmann/json/pull/415) ([stanmihai4](https://github.com/stanmihai4))
+- locale-independent num-to-str [\#378](https://github.com/nlohmann/json/pull/378) ([TurpentineDistillery](https://github.com/TurpentineDistillery))
 
 ## [v2.1.0](https://github.com/nlohmann/json/releases/tag/v2.1.0) (2017-01-28)
-[Full Changelog](https://github.com/nlohmann/json/compare/v2.0.10...v2.1.0)
+
+[Full Changelog](https://github.com/nlohmann/json/compare/2.1.0...v2.1.0)
+
+## [2.1.0](https://github.com/nlohmann/json/releases/tag/2.1.0) (2017-01-28)
+
+[Full Changelog](https://github.com/nlohmann/json/compare/v2.0.10...2.1.0)
 
 - Parsing multiple JSON objects from a string or stream [\#438](https://github.com/nlohmann/json/issues/438)
 - Use-of-uninitialized-value \(OSS-Fuzz issue 477\) [\#437](https://github.com/nlohmann/json/issues/437)
@@ -1397,6 +1739,7 @@ All notable changes to this project will be documented in this file. This projec
 - comparing to 0 literal [\#414](https://github.com/nlohmann/json/issues/414)
 - Single char converted to ASCII code instead of string [\#413](https://github.com/nlohmann/json/issues/413)
 - How to know if a string  was parsed as utf-8? [\#406](https://github.com/nlohmann/json/issues/406)
+- Heap-buffer-overflow \(OSS-Fuzz issue 342\) [\#405](https://github.com/nlohmann/json/issues/405)
 - Overloaded += to add objects to an array makes no sense? [\#404](https://github.com/nlohmann/json/issues/404)
 - Finding a value in an array [\#399](https://github.com/nlohmann/json/issues/399)
 - add release information in static function [\#397](https://github.com/nlohmann/json/issues/397)
@@ -1412,17 +1755,20 @@ All notable changes to this project will be documented in this file. This projec
 
 - conversion from/to user-defined types [\#435](https://github.com/nlohmann/json/pull/435) ([nlohmann](https://github.com/nlohmann))
 - Fix documentation error [\#430](https://github.com/nlohmann/json/pull/430) ([vjon](https://github.com/vjon))
-- locale-independent num-to-str [\#378](https://github.com/nlohmann/json/pull/378) ([TurpentineDistillery](https://github.com/TurpentineDistillery))
 
 ## [v2.0.10](https://github.com/nlohmann/json/releases/tag/v2.0.10) (2017-01-02)
-[Full Changelog](https://github.com/nlohmann/json/compare/v2.0.9...v2.0.10)
+
+[Full Changelog](https://github.com/nlohmann/json/compare/2.0.10...v2.0.10)
+
+## [2.0.10](https://github.com/nlohmann/json/releases/tag/2.0.10) (2017-01-02)
+
+[Full Changelog](https://github.com/nlohmann/json/compare/v2.0.9...2.0.10)
 
 - Heap-buffer-overflow \(OSS-Fuzz issue 367\) [\#412](https://github.com/nlohmann/json/issues/412)
 - Heap-buffer-overflow \(OSS-Fuzz issue 366\) [\#411](https://github.com/nlohmann/json/issues/411)
 - Use-of-uninitialized-value \(OSS-Fuzz issue 347\) [\#409](https://github.com/nlohmann/json/issues/409)
 - Heap-buffer-overflow \(OSS-Fuzz issue 344\) [\#408](https://github.com/nlohmann/json/issues/408)
 - Heap-buffer-overflow \(OSS-Fuzz issue 343\) [\#407](https://github.com/nlohmann/json/issues/407)
-- Heap-buffer-overflow \(OSS-Fuzz issue 342\) [\#405](https://github.com/nlohmann/json/issues/405)
 - strerror throwing error in compiler VS2015 [\#403](https://github.com/nlohmann/json/issues/403)
 - json::parse of std::string being underlined by Visual Studio [\#402](https://github.com/nlohmann/json/issues/402)
 - Explicitly getting string without .dump\(\)  [\#401](https://github.com/nlohmann/json/issues/401)
@@ -1435,7 +1781,12 @@ All notable changes to this project will be documented in this file. This projec
 - Add Doozer build badge [\#400](https://github.com/nlohmann/json/pull/400) ([andoma](https://github.com/andoma))
 
 ## [v2.0.9](https://github.com/nlohmann/json/releases/tag/v2.0.9) (2016-12-16)
-[Full Changelog](https://github.com/nlohmann/json/compare/v2.0.8...v2.0.9)
+
+[Full Changelog](https://github.com/nlohmann/json/compare/2.0.9...v2.0.9)
+
+## [2.0.9](https://github.com/nlohmann/json/releases/tag/2.0.9) (2016-12-16)
+
+[Full Changelog](https://github.com/nlohmann/json/compare/v2.0.8...2.0.9)
 
 - \#pragma GCC diagnostic ignored "-Wdocumentation" [\#393](https://github.com/nlohmann/json/issues/393)
 - How to parse this json file and write separate sub object as json files? [\#392](https://github.com/nlohmann/json/issues/392)
@@ -1458,7 +1809,12 @@ All notable changes to this project will be documented in this file. This projec
 - Fix issue \#380: Signed integer overflow check [\#390](https://github.com/nlohmann/json/pull/390) ([qwename](https://github.com/qwename))
 
 ## [v2.0.8](https://github.com/nlohmann/json/releases/tag/v2.0.8) (2016-12-02)
-[Full Changelog](https://github.com/nlohmann/json/compare/v2.0.7...v2.0.8)
+
+[Full Changelog](https://github.com/nlohmann/json/compare/2.0.8...v2.0.8)
+
+## [2.0.8](https://github.com/nlohmann/json/releases/tag/2.0.8) (2016-12-02)
+
+[Full Changelog](https://github.com/nlohmann/json/compare/v2.0.7...2.0.8)
 
 - Reading from file [\#374](https://github.com/nlohmann/json/issues/374)
 - Compiler warnings? [\#372](https://github.com/nlohmann/json/issues/372)
@@ -1485,6 +1841,7 @@ All notable changes to this project will be documented in this file. This projec
 - Using QString as string type [\#274](https://github.com/nlohmann/json/issues/274)
 
 ## [v2.0.7](https://github.com/nlohmann/json/releases/tag/v2.0.7) (2016-11-02)
+
 [Full Changelog](https://github.com/nlohmann/json/compare/v2.0.6...v2.0.7)
 
 - JSON5 [\#348](https://github.com/nlohmann/json/issues/348)
@@ -1504,6 +1861,7 @@ All notable changes to this project will be documented in this file. This projec
 - fix minor grammar/style issue in README.md [\#336](https://github.com/nlohmann/json/pull/336) ([seeekr](https://github.com/seeekr))
 
 ## [v2.0.6](https://github.com/nlohmann/json/releases/tag/v2.0.6) (2016-10-15)
+
 [Full Changelog](https://github.com/nlohmann/json/compare/v2.0.5...v2.0.6)
 
 - How to handle json files? [\#333](https://github.com/nlohmann/json/issues/333)
@@ -1523,6 +1881,7 @@ All notable changes to this project will be documented in this file. This projec
 - trivial documentation fix [\#313](https://github.com/nlohmann/json/pull/313) ([5tefan](https://github.com/5tefan))
 
 ## [v2.0.5](https://github.com/nlohmann/json/releases/tag/v2.0.5) (2016-09-14)
+
 [Full Changelog](https://github.com/nlohmann/json/compare/v2.0.4...v2.0.5)
 
 - \[feature request\]: schema validator and comments [\#311](https://github.com/nlohmann/json/issues/311)
@@ -1531,6 +1890,7 @@ All notable changes to this project will be documented in this file. This projec
 - No matching member function for call to 'get\_impl' [\#308](https://github.com/nlohmann/json/issues/308)
 
 ## [v2.0.4](https://github.com/nlohmann/json/releases/tag/v2.0.4) (2016-09-11)
+
 [Full Changelog](https://github.com/nlohmann/json/compare/v2.0.3...v2.0.4)
 
 - Parsing fails without space at end of file [\#306](https://github.com/nlohmann/json/issues/306)
@@ -1538,6 +1898,7 @@ All notable changes to this project will be documented in this file. This projec
 - Unused variable warning [\#304](https://github.com/nlohmann/json/issues/304)
 
 ## [v2.0.3](https://github.com/nlohmann/json/releases/tag/v2.0.3) (2016-08-31)
+
 [Full Changelog](https://github.com/nlohmann/json/compare/v2.0.2...v2.0.3)
 
 - warning C4706: assignment within conditional expression [\#295](https://github.com/nlohmann/json/issues/295)
@@ -1554,6 +1915,7 @@ All notable changes to this project will be documented in this file. This projec
 - unit-constructor1.cpp: Fix floating point truncation warning [\#300](https://github.com/nlohmann/json/pull/300) ([t-b](https://github.com/t-b))
 
 ## [v2.0.2](https://github.com/nlohmann/json/releases/tag/v2.0.2) (2016-07-31)
+
 [Full Changelog](https://github.com/nlohmann/json/compare/v2.0.1...v2.0.2)
 
 - can function dump\(\)  return string in the order I push in the json object ? [\#286](https://github.com/nlohmann/json/issues/286)
@@ -1569,6 +1931,7 @@ All notable changes to this project will be documented in this file. This projec
 - Update hexify to use array lookup instead of ternary \(\#270\) [\#275](https://github.com/nlohmann/json/pull/275) ([dtoma](https://github.com/dtoma))
 
 ## [v2.0.1](https://github.com/nlohmann/json/releases/tag/v2.0.1) (2016-06-28)
+
 [Full Changelog](https://github.com/nlohmann/json/compare/v2.0.0...v2.0.1)
 
 - Compilation error. [\#273](https://github.com/nlohmann/json/issues/273)
@@ -1577,6 +1940,7 @@ All notable changes to this project will be documented in this file. This projec
 - fixed a tiny typo [\#271](https://github.com/nlohmann/json/pull/271) ([feroldi](https://github.com/feroldi))
 
 ## [v2.0.0](https://github.com/nlohmann/json/releases/tag/v2.0.0) (2016-06-23)
+
 [Full Changelog](https://github.com/nlohmann/json/compare/v1.1.0...v2.0.0)
 
 - json::diff generates incorrect patch when removing multiple array elements. [\#269](https://github.com/nlohmann/json/issues/269)
@@ -1651,6 +2015,7 @@ All notable changes to this project will be documented in this file. This projec
 - Issue \#178 - Extending support to full uint64\_t/int64\_t range and unsigned type \(updated\) [\#193](https://github.com/nlohmann/json/pull/193) ([twelsby](https://github.com/twelsby))
 
 ## [v1.1.0](https://github.com/nlohmann/json/releases/tag/v1.1.0) (2016-01-24)
+
 [Full Changelog](https://github.com/nlohmann/json/compare/v1.0.0...v1.1.0)
 
 - Small error in pull \#185 [\#194](https://github.com/nlohmann/json/issues/194)
@@ -1679,6 +2044,7 @@ All notable changes to this project will be documented in this file. This projec
 - Fixed some typos in CONTRIBUTING.md [\#182](https://github.com/nlohmann/json/pull/182) ([nibroc](https://github.com/nibroc))
 
 ## [v1.0.0](https://github.com/nlohmann/json/releases/tag/v1.0.0) (2015-12-27)
+
 [Full Changelog](https://github.com/nlohmann/json/compare/v1.0.0-rc1...v1.0.0)
 
 - add key name to exception [\#160](https://github.com/nlohmann/json/issues/160)
@@ -1731,13 +2097,15 @@ All notable changes to this project will be documented in this file. This projec
 - Use the right variable name in doc string [\#115](https://github.com/nlohmann/json/pull/115) ([whoshuu](https://github.com/whoshuu))
 
 ## [v1.0.0-rc1](https://github.com/nlohmann/json/releases/tag/v1.0.0-rc1) (2015-07-26)
+
+[Full Changelog](https://github.com/nlohmann/json/compare/4502e7e51c0569419c26e75fbdd5748170603e54...v1.0.0-rc1)
+
 - Finish documenting the public interface in Doxygen [\#102](https://github.com/nlohmann/json/issues/102)
 - Binary string causes numbers to be dumped as hex [\#101](https://github.com/nlohmann/json/issues/101)
 - failed to iterator json object with reverse\_iterator [\#100](https://github.com/nlohmann/json/issues/100)
 - 'noexcept' : unknown override specifier [\#99](https://github.com/nlohmann/json/issues/99)
 - json float parsing problem [\#98](https://github.com/nlohmann/json/issues/98)
 - Adjust wording to JSON RFC [\#97](https://github.com/nlohmann/json/issues/97)
-- 17 MB / 90 MB repo size!? [\#96](https://github.com/nlohmann/json/issues/96)
 - static analysis warnings [\#94](https://github.com/nlohmann/json/issues/94)
 - reverse\_iterator operator inheritance problem [\#93](https://github.com/nlohmann/json/issues/93)
 - init error [\#92](https://github.com/nlohmann/json/issues/92)
@@ -1808,19 +2176,7 @@ All notable changes to this project will be documented in this file. This projec
 - Fix compilation of json\_unit with GCC 5 [\#59](https://github.com/nlohmann/json/pull/59) ([dkopecek](https://github.com/dkopecek))
 - Parse streams incrementally. [\#40](https://github.com/nlohmann/json/pull/40) ([aburgh](https://github.com/aburgh))
 - Feature/small float serialization [\#38](https://github.com/nlohmann/json/pull/38) ([jrandall](https://github.com/jrandall))
-- template version with re2c scanner [\#36](https://github.com/nlohmann/json/pull/36) ([nlohmann](https://github.com/nlohmann))
-- more descriptive documentation in example [\#33](https://github.com/nlohmann/json/pull/33) ([luxe](https://github.com/luxe))
-- Fix string conversion under Clang [\#26](https://github.com/nlohmann/json/pull/26) ([wancw](https://github.com/wancw))
-- Fixed dumping of strings [\#24](https://github.com/nlohmann/json/pull/24) ([Teemperor](https://github.com/Teemperor))
-- Added a remark to the readme that coverage is GCC only for now [\#23](https://github.com/nlohmann/json/pull/23) ([Teemperor](https://github.com/Teemperor))
-- Unicode escaping [\#22](https://github.com/nlohmann/json/pull/22) ([Teemperor](https://github.com/Teemperor))
-- Implemented the JSON spec for string parsing for everything but the \uXXXX escaping [\#21](https://github.com/nlohmann/json/pull/21) ([Teemperor](https://github.com/Teemperor))
-- add the std iterator typedefs to iterator and const\_iterator [\#19](https://github.com/nlohmann/json/pull/19) ([kirkshoop](https://github.com/kirkshoop))
-- Fixed escaped quotes [\#18](https://github.com/nlohmann/json/pull/18) ([Teemperor](https://github.com/Teemperor))
-- Fix double delete on std::bad\_alloc exception [\#14](https://github.com/nlohmann/json/pull/14) ([elliotgoodrich](https://github.com/elliotgoodrich))
-- Added CMake and lcov [\#6](https://github.com/nlohmann/json/pull/6) ([Teemperor](https://github.com/Teemperor))
-- Version 2.0 [\#5](https://github.com/nlohmann/json/pull/5) ([nlohmann](https://github.com/nlohmann))
 
 
 
-\* *This Change Log was automatically generated by [github_changelog_generator](https://github.com/skywinder/Github-Changelog-Generator)*
+\* *This Changelog was automatically generated by [github_changelog_generator](https://github.com/github-changelog-generator/github-changelog-generator)*
