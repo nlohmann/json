@@ -1451,6 +1451,7 @@ I deeply appreciate the help of the following people.
 - [Quentin Barbarat](https://github.com/quentin-dev) fixed an example in the documentation.
 - [XyFreak](https://github.com/XyFreak) fixed a compiler warning.
 - [TotalCaesar659](https://github.com/TotalCaesar659) fixed links in the README.
+- [Tanuj Garg](https://github.com/tanuj208) improved the fuzzer coverage for UBSAN input.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
