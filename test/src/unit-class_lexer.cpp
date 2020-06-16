@@ -127,6 +127,8 @@ TEST_CASE("lexer class")
             // store scan() result
             const auto res = scan_string(s.c_str());
 
+            CAPTURE(s);
+
             switch (c)
             {
                 // single characters that are valid tokens
@@ -161,6 +163,9 @@ TEST_CASE("lexer class")
                     break;
                 }
 
+                //                case ('/'):
+                //                    break;
+
                 // anything else is not expected
                 default:
                 {
@@ -179,4 +184,19 @@ TEST_CASE("lexer class")
         s += "\"";
         CHECK((scan_string(s.c_str()) == json::lexer::token_type::value_string));
     }
+
+    //    SECTION("ignore comments")
+    //    {
+    //        CHECK((scan_string("/") == json::lexer::token_type::parse_error));
+    //
+    //        CHECK((scan_string("/!") == json::lexer::token_type::parse_error));
+    //        CHECK((scan_string("/*") == json::lexer::token_type::parse_error));
+    //        CHECK((scan_string("/**") == json::lexer::token_type::parse_error));
+    //
+    //        CHECK((scan_string("//") == json::lexer::token_type::end_of_input));
+    //        CHECK((scan_string("/**/") == json::lexer::token_type::end_of_input));
+    //        CHECK((scan_string("/** /") == json::lexer::token_type::parse_error));
+    //
+    //        CHECK((scan_string("/***/") == json::lexer::token_type::end_of_input));
+    //    }
 }

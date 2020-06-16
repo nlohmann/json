@@ -112,8 +112,11 @@ class lexer : public lexer_base<BasicJsonType>
   public:
     using token_type = typename lexer_base<BasicJsonType>::token_type;
 
-    explicit lexer(InputAdapterType&& adapter)
-        : ia(std::move(adapter)), decimal_point_char(static_cast<char_int_type>(get_decimal_point())) {}
+    explicit lexer(InputAdapterType&& adapter, bool ignore_comments_ = false)
+        : ia(std::move(adapter))
+        , ignore_comments(ignore_comments_)
+        , decimal_point_char(static_cast<char_int_type>(get_decimal_point()))
+    {}
 
     // delete because of pointer members
     lexer(const lexer&) = delete;
@@ -131,7 +134,7 @@ class lexer : public lexer_base<BasicJsonType>
     JSON_HEDLEY_PURE
     static char get_decimal_point() noexcept
     {
-        const auto loc = localeconv();
+        const auto* loc = localeconv();
         assert(loc != nullptr);
         return (loc->decimal_point == nullptr) ? '.' : *(loc->decimal_point);
     }
@@ -826,6 +829,71 @@ class lexer : public lexer_base<BasicJsonType>
         }
     }
 
+    /*!
+     * @brief scan a comment
+     * @return whether comment could be scanned successfully
+     */
+    bool scan_comment()
+    {
+        // remember character after '/' to distinguish comment types
+        const auto comment_char = get();
+
+        // expect // or /* to start a comment
+        if (comment_char != '/' and comment_char != '*')
+        {
+            return false;
+        }
+
+        while (true)
+        {
+            switch (get())
+            {
+                // EOF inside a /* comment is an error, in // it is OK
+                case std::char_traits<char_type>::eof():
+                case '\0':
+                {
+                    return comment_char == '/';
+                }
+
+                // a newline ends the // comment
+                case '\n':
+                case '\r':
+                {
+                    if (comment_char == '/')
+                    {
+                        return true;
+                    }
+                    break;
+                }
+
+                // */ ends the /* comment
+                case '*':
+                {
+                    if (comment_char == '*')
+                    {
+                        switch (get())
+                        {
+                            case '/':
+                            {
+                                return true;
+                            }
+
+                            default:
+                            {
+                                unget();
+                                break;
+                            }
+                        }
+                    }
+                    break;
+                }
+
+                default:
+                    break;
+            }
+        }
+    }
+
     JSON_HEDLEY_NON_NULL(2)
     static void strtof(float& f, const char* str, char** endptr) noexcept
     {
@@ -1431,6 +1499,17 @@ scan_number_done:
         }
         while (current == ' ' or current == '\t' or current == '\n' or current == '\r');
 
+        // ignore comments
+        if (ignore_comments and current == '/')
+        {
+            if (not scan_comment())
+            {
+                error_message = "invalid comment";
+                return token_type::parse_error;
+            }
+            get();
+        }
+
         switch (current)
         {
             // structural characters
@@ -1498,6 +1577,9 @@ scan_number_done:
   private:
     /// input adapter
     InputAdapterType ia;
+
+    /// whether comments should be ignored (true) or signaled as errors (false)
+    const bool ignore_comments = false;
 
     /// the current character
     char_int_type current = std::char_traits<char_type>::eof();
