@@ -1,5 +1,3 @@
-find_package(Git)
-
 set(JSON_TEST_DATA_URL     https://github.com/nlohmann/json_test_data)
 set(JSON_TEST_DATA_VERSION 2.0.0)
 
@@ -9,6 +7,7 @@ if(JSON_TestDataDirectory)
     add_custom_target(download_test_data)
     file(WRITE ${CMAKE_BINARY_DIR}/include/test_data.hpp "#define TEST_DATA_DIRECTORY \"${JSON_TestDataDirectory}\"\n")
 else()
+    find_package(Git)
     # target to download test data
     add_custom_target(download_test_data
         COMMAND test -d json_test_data || ${GIT_EXECUTABLE} clone -c advice.detachedHead=false --branch v${JSON_TEST_DATA_VERSION} ${JSON_TEST_DATA_URL}.git --quiet --depth 1
