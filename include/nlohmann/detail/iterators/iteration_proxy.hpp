@@ -12,7 +12,8 @@ namespace nlohmann
 {
 namespace detail
 {
-template<typename string_type>
+template<typename string_type, typename std::enable_if<
+             std::is_same<char, typename string_type::value_type>::value, int>::type = 0>
 void int_to_string( string_type& target, std::size_t value )
 {
     target = std::to_string(value);
