@@ -504,8 +504,18 @@ class binary_writer
 
             case value_t::number_float:
             {
-                oa->write_character(get_msgpack_float_prefix(j.m_value.number_float));
-                write_number(j.m_value.number_float);
+                if (static_cast<double>(j.m_value.number_float) >= static_cast<double>(std::numeric_limits<float>::lowest()) and
+                        static_cast<double>(j.m_value.number_float) <= static_cast<double>((std::numeric_limits<float>::max)()) and
+                        static_cast<double>(static_cast<float>(j.m_value.number_float)) == static_cast<double>(j.m_value.number_float))
+                {
+                    oa->write_character(get_msgpack_float_prefix(static_cast<float>(j.m_value.number_float)));
+                    write_number(static_cast<float>(j.m_value.number_float));
+                }
+                else
+                {
+                    oa->write_character(get_msgpack_float_prefix(j.m_value.number_float));
+                    write_number(j.m_value.number_float);
+                }
                 break;
             }
 

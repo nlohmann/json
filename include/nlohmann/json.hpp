@@ -7040,7 +7040,8 @@ class basic_json
     number_unsigned | 256..65535                        | uint 16          | 0xCD
     number_unsigned | 65536..4294967295                 | uint 32          | 0xCE
     number_unsigned | 4294967296..18446744073709551615  | uint 64          | 0xCF
-    number_float    | *any value*                       | float 64         | 0xCB
+    number_float    | *any value representable by a float*     | float 32 | 0xCA
+    number_float    | *any value NOT representable by a float* | float 64 | 0xCB
     string          | *length*: 0..31                   | fixstr           | 0xA0..0xBF
     string          | *length*: 32..255                 | str 8            | 0xD9
     string          | *length*: 256..65535              | str 16           | 0xDA
@@ -7063,9 +7064,6 @@ class basic_json
           - byte strings with more than 4294967295 bytes
           - arrays with more than 4294967295 elements
           - objects with more than 4294967295 elements
-
-    @note The following MessagePack types are not used in the conversion:
-          - float 32 (0xCA)
 
     @note Any MessagePack output created @ref to_msgpack can be successfully
           parsed by @ref from_msgpack.
