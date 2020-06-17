@@ -835,62 +835,54 @@ class lexer : public lexer_base<BasicJsonType>
      */
     bool scan_comment()
     {
-        // remember character after '/' to distinguish comment types
-        const auto comment_char = get();
-
-        // expect // or /* to start a comment
-        if (comment_char != '/' and comment_char != '*')
+        switch (get())
         {
-            return false;
-        }
-
-        while (true)
-        {
-            switch (get())
+            case '/':
             {
-                // EOF inside a /* comment is an error, in // it is OK
-                case std::char_traits<char_type>::eof():
-                case '\0':
+                while (true)
                 {
-                    return comment_char == '/';
-                }
-
-                // a newline ends the // comment
-                case '\n':
-                case '\r':
-                {
-                    if (comment_char == '/')
+                    switch (get())
                     {
-                        return true;
+                        case '\n':
+                        case '\r':
+                            return true;
+
+                        default:
+                            break;
                     }
-                    break;
                 }
+            }
 
-                // */ ends the /* comment
-                case '*':
+            case '*':
+            {
+                while (true)
                 {
-                    if (comment_char == '*')
+                    switch (get())
                     {
-                        switch (get())
-                        {
-                            case '/':
-                            {
-                                return true;
-                            }
+                        case std::char_traits<char_type>::eof():
+                        case '\0':
+                            return false;
 
-                            default:
+                        case '*':
+                        {
+                            switch (get())
                             {
-                                unget();
-                                break;
+                                case '/':
+                                    return true;
+
+                                default:
+                                {
+                                    unget();
+                                    break;
+                                }
                             }
                         }
                     }
-                    break;
                 }
-
-                default:
-                    break;
             }
+
+            default:
+                return false;
         }
     }
 
