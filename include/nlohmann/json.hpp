@@ -3788,7 +3788,6 @@ class basic_json
         JSON_THROW(type_error::create(306, "cannot use value() with " + std::string(type_name())));
     }
 
-
     /*!
     @brief overload for a default value of type const char*
     @copydoc basic_json::value(const typename object_t::key_type&, const ValueType&) const
