@@ -187,7 +187,6 @@ TEST_CASE("element access 2")
                     CHECK(j.value("_", 12.34) == Approx(12.34));
                     CHECK(j.value("_", json({{"foo", "bar"}})) == json({{"foo", "bar"}}));
                     CHECK(j.value("_", json({10, 100})) == json({10, 100}));
-                    CHECK(j.value("_", std::move("default_value")) == "default_value");
 
                     CHECK(j_const.value("_", 2) == 2);
                     CHECK(j_const.value("_", 2u) == 2u);
@@ -196,7 +195,6 @@ TEST_CASE("element access 2")
                     CHECK(j_const.value("_", 12.34) == Approx(12.34));
                     CHECK(j_const.value("_", json({{"foo", "bar"}})) == json({{"foo", "bar"}}));
                     CHECK(j_const.value("_", json({10, 100})) == json({10, 100}));
-                    CHECK(j_const.value("_", std::move("default_value")) == "default_value");
                 }
 
                 SECTION("access on non-object type")
