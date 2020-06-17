@@ -837,6 +837,7 @@ class lexer : public lexer_base<BasicJsonType>
     {
         switch (get())
         {
+            // single-line comments skip input until a newline or EOF is read
             case '/':
             {
                 while (true)
@@ -845,6 +846,8 @@ class lexer : public lexer_base<BasicJsonType>
                     {
                         case '\n':
                         case '\r':
+                        case std::char_traits<char_type>::eof():
+                        case '\0':
                             return true;
 
                         default:
@@ -853,6 +856,7 @@ class lexer : public lexer_base<BasicJsonType>
                 }
             }
 
+            // multi-line comments skip input until */ is read
             case '*':
             {
                 while (true)
@@ -877,10 +881,14 @@ class lexer : public lexer_base<BasicJsonType>
                                 }
                             }
                         }
+
+                        default:
+                            break;
                     }
                 }
             }
 
+            // unexpected character after reading '/'
             default:
                 return false;
         }
