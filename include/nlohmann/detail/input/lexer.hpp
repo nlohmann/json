@@ -1507,7 +1507,13 @@ scan_number_done:
                 error_message = "invalid comment";
                 return token_type::parse_error;
             }
-            get();
+
+            // skip following whitespace
+            do
+            {
+                get();
+            }
+            while (current == ' ' or current == '\t' or current == '\n' or current == '\r');
         }
 
         switch (current)
