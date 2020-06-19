@@ -2772,6 +2772,15 @@ uses the standard template types.
 @since version 1.0.0
 */
 using json = basic_json<>;
+
+template<class Key, class T, class IgnoredLess, class Allocator, class Container>
+struct ordered_map;
+
+/*!
+@since version 3.9.0
+*/
+using ordered_json = basic_json<nlohmann::ordered_map>;
+
 }  // namespace nlohmann
 
 #endif  // INCLUDE_NLOHMANN_JSON_FWD_HPP_
@@ -15852,6 +15861,70 @@ class serializer
 // #include <nlohmann/detail/value_t.hpp>
 
 // #include <nlohmann/json_fwd.hpp>
+
+// #include <nlohmann/ordered_map.hpp>
+
+
+#include <functional> // less
+#include <memory> // allocator
+#include <utility> // pair
+#include <vector> // vector
+
+namespace nlohmann
+{
+
+/// ordered_map: a minimal map-like container that preserves insertion order
+/// for use within nlohmann::basic_json<ordered_map>
+template<class Key, class T, class IgnoredLess = std::less<Key>,
+         class Allocator = std::allocator<std::pair<const Key, T>>,
+         class Container = std::vector<std::pair<const Key, T>, Allocator>>
+struct ordered_map : Container
+{
+    using key_type = Key;
+    using mapped_type = T;
+    using value_type = std::pair<const Key, T>;
+    using Container::Container;
+
+    std::pair<typename Container::iterator, bool> emplace(Key&& key, T&& t)
+    {
+        for (auto it = this->begin(); it != this->end(); ++it)
+        {
+            if (it->first == key)
+            {
+                return {it, false};
+            }
+        }
+
+        this->emplace_back(key, t);
+        return {--this->end(), true};
+    }
+
+    std::size_t erase(const Key& key)
+    {
+        std::size_t result = 0;
+        for (auto it = this->begin(); it != this->end(); )
+        {
+            if (it->first == key)
+            {
+                ++result;
+                it = Container::erase(it);
+            }
+            else
+            {
+                ++it;
+            }
+        }
+
+        return result;
+    }
+
+    T& operator[]( Key&& key )
+    {
+        return emplace(std::move(key), T{}).first->second;
+    }
+};
+
+}  // namespace nlohmann
 
 
 /*!
