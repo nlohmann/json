@@ -2777,6 +2777,10 @@ template<class Key, class T, class IgnoredLess, class Allocator, class Container
 struct ordered_map;
 
 /*!
+@brief ordered JSON class
+
+This type preserves the insertion order of object keys.
+
 @since version 3.9.0
 */
 using ordered_json = basic_json<nlohmann::ordered_map>;
@@ -15875,17 +15879,18 @@ namespace nlohmann
 
 /// ordered_map: a minimal map-like container that preserves insertion order
 /// for use within nlohmann::basic_json<ordered_map>
-template<class Key, class T, class IgnoredLess = std::less<Key>,
-         class Allocator = std::allocator<std::pair<const Key, T>>,
-         class Container = std::vector<std::pair<const Key, T>, Allocator>>
+template <class Key, class T, class IgnoredLess = std::less<Key>,
+          class Allocator = std::allocator<std::pair<Key, T>>,
+          class Container = std::vector<std::pair<Key, T>, Allocator>>
 struct ordered_map : Container
 {
     using key_type = Key;
     using mapped_type = T;
-    using value_type = std::pair<const Key, T>;
+    using value_type = typename Container::value_type;
+    using size_type = typename Container::size_type;
     using Container::Container;
 
-    std::pair<typename Container::iterator, bool> emplace(Key&& key, T&& t)
+    std::pair<typename Container::iterator, bool> emplace(key_type&& key, T&& t)
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
@@ -15894,33 +15899,26 @@ struct ordered_map : Container
                 return {it, false};
             }
         }
-
-        this->emplace_back(key, t);
+        Container::emplace_back(key, t);
         return {--this->end(), true};
     }
 
-    std::size_t erase(const Key& key)
+    T& operator[](Key&& key)
     {
-        std::size_t result = 0;
-        for (auto it = this->begin(); it != this->end(); )
+        return emplace(std::move(key), T{}).first->second;
+    }
+
+    size_type erase(const Key& key)
+    {
+        for (auto it = this->begin(); it != this->end(); ++it)
         {
             if (it->first == key)
             {
-                ++result;
-                it = Container::erase(it);
-            }
-            else
-            {
-                ++it;
+                Container::erase(it);
+                return 1;
             }
         }
-
-        return result;
-    }
-
-    T& operator[]( Key&& key )
-    {
-        return emplace(std::move(key), T{}).first->second;
+        return 0;
     }
 };
 

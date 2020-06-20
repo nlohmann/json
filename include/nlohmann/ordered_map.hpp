@@ -10,14 +10,15 @@ namespace nlohmann
 
 /// ordered_map: a minimal map-like container that preserves insertion order
 /// for use within nlohmann::basic_json<ordered_map>
-template<class Key, class T, class IgnoredLess = std::less<Key>,
-         class Allocator = std::allocator<std::pair<const Key, T>>,
-         class Container = std::vector<std::pair<const Key, T>, Allocator>>
+template <class Key, class T, class IgnoredLess = std::less<Key>,
+          class Allocator = std::allocator<std::pair<Key, T>>,
+          class Container = std::vector<std::pair<Key, T>, Allocator>>
 struct ordered_map : Container
 {
     using key_type = Key;
     using mapped_type = T;
-    using value_type = std::pair<const Key, T>;
+    using value_type = typename Container::value_type;
+    using size_type = typename Container::size_type;
     using Container::Container;
 
     std::pair<typename Container::iterator, bool> emplace(key_type&& key, T&& t)
@@ -29,33 +30,26 @@ struct ordered_map : Container
                 return {it, false};
             }
         }
-
-        this->emplace_back(key, t);
+        Container::emplace_back(key, t);
         return {--this->end(), true};
     }
 
-    std::size_t erase(const key_type& key)
+    T& operator[](Key&& key)
     {
-        std::size_t result = 0;
-        for (auto it = this->begin(); it != this->end();)
+        return emplace(std::move(key), T{}).first->second;
+    }
+
+    size_type erase(const Key& key)
+    {
+        for (auto it = this->begin(); it != this->end(); ++it)
         {
             if (it->first == key)
             {
-                ++result;
-                it = Container::erase(it);
-            }
-            else
-            {
-                ++it;
+                Container::erase(it);
+                return 1;
             }
         }
-
-        return result;
-    }
-
-    T& operator[](key_type&& key)
-    {
-        return emplace(std::move(key), T{}).first->second;
+        return 0;
     }
 };
 
