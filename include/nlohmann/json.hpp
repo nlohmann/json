@@ -8179,7 +8179,7 @@ class basic_json
                     else
                     {
                         const auto idx = json_pointer::array_index(last_path);
-                        if (JSON_HEDLEY_UNLIKELY(static_cast<size_type>(idx) > parent.size()))
+                        if (JSON_HEDLEY_UNLIKELY(idx > parent.size()))
                         {
                             // avoid undefined behavior
                             JSON_THROW(out_of_range::create(401, "array index " + std::to_string(idx) + " is out of range"));
@@ -8222,7 +8222,7 @@ class basic_json
             else if (parent.is_array())
             {
                 // note erase performs range check
-                parent.erase(static_cast<size_type>(json_pointer::array_index(last_path)));
+                parent.erase(json_pointer::array_index(last_path));
             }
         };
 
