@@ -783,6 +783,40 @@ TEST_CASE("MessagePack")
                     CHECK(json::from_msgpack(result) == v);
                     CHECK(json::from_msgpack(result, true, false) == j);
                 }
+
+                SECTION("1.0")
+                {
+                    double v = 1.0;
+                    json j = v;
+                    std::vector<uint8_t> expected =
+                    {
+                        0xca, 0x3f, 0x80, 0x00, 0x00
+                    };
+                    const auto result = json::to_msgpack(j);
+                    CHECK(result == expected);
+
+                    // roundtrip
+                    CHECK(json::from_msgpack(result) == j);
+                    CHECK(json::from_msgpack(result) == v);
+                    CHECK(json::from_msgpack(result, true, false) == j);
+                }
+
+                SECTION("128.128")
+                {
+                    double v = 128.1280059814453125;
+                    json j = v;
+                    std::vector<uint8_t> expected =
+                    {
+                        0xca, 0x43, 0x00, 0x20, 0xc5
+                    };
+                    const auto result = json::to_msgpack(j);
+                    CHECK(result == expected);
+
+                    // roundtrip
+                    CHECK(json::from_msgpack(result) == j);
+                    CHECK(json::from_msgpack(result) == v);
+                    CHECK(json::from_msgpack(result, true, false) == j);
+                }
             }
         }
 
