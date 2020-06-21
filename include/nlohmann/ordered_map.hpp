@@ -17,11 +17,12 @@ struct ordered_map : Container
 {
     using key_type = Key;
     using mapped_type = T;
-    using value_type = typename Container::value_type;
-    using size_type = typename Container::size_type;
+    using typename Container::iterator;
+    using typename Container::value_type;
+    using typename Container::size_type;
     using Container::Container;
 
-    std::pair<typename Container::iterator, bool> emplace(key_type&& key, T&& t)
+    std::pair<iterator, bool> emplace(key_type&& key, T&& t)
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
