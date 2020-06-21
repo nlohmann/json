@@ -1557,4 +1557,6 @@ $ cmake --build .
 $ ctest --output-on-failure
 ```
 
-For more information, have a look at the file [.travis.yml](https://github.com/nlohmann/json/blob/master/.travis.yml).
+Note that during the `ctest` stage, several JSON test files are downloaded from an [external repository](https://github.com/nlohmann/json_test_data). If policies forbid downloading artifacts during testing, you can download the files yourself and pass the directory with the test files via `-DJSON_TestDataDirectory=path` to CMake. Then, no Internet connectivity is required. See [issue #2189](https://github.com/nlohmann/json/issues/2189) for more information.
+
+In case you have downloaded the library rather than checked out the code via Git, test `cmake_fetch_content_configure`. Please execute `ctest -LE git_required` to skip these tests. See [issue #2189](https://github.com/nlohmann/json/issues/2189) for more information.

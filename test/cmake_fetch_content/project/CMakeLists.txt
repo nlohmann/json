@@ -4,9 +4,8 @@ project(DummyImport CXX)
 
 include(FetchContent)
 
-FetchContent_Declare(json
-  GIT_REPOSITORY ${CMAKE_CURRENT_SOURCE_DIR}/../../..
-  GIT_TAG HEAD)
+get_filename_component(GIT_REPOSITORY_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../../.. ABSOLUTE)
+FetchContent_Declare(json GIT_REPOSITORY ${GIT_REPOSITORY_DIRECTORY} GIT_TAG HEAD)
 
 FetchContent_GetProperties(json)
 if(NOT json_POPULATED)
