@@ -45,6 +45,15 @@ json::lexer::token_type scan_string(const char* s, const bool ignore_comments)
 }
 }
 
+std::string get_error_message(const char* s, const bool ignore_comments = false);
+std::string get_error_message(const char* s, const bool ignore_comments)
+{
+    auto ia = nlohmann::detail::input_adapter(s);
+    auto lexer = nlohmann::detail::lexer<json, decltype(ia)>(std::move(ia), ignore_comments);
+    lexer.scan();
+    return lexer.get_error_message();
+}
+
 TEST_CASE("lexer class")
 {
     SECTION("scan")
@@ -185,32 +194,48 @@ TEST_CASE("lexer class")
     SECTION("fail on comments")
     {
         CHECK((scan_string("/", false) == json::lexer::token_type::parse_error));
+        CHECK(get_error_message("/", false) == "invalid literal");
 
         CHECK((scan_string("/!", false) == json::lexer::token_type::parse_error));
+        CHECK(get_error_message("/!", false) == "invalid literal");
         CHECK((scan_string("/*", false) == json::lexer::token_type::parse_error));
+        CHECK(get_error_message("/*", false) == "invalid literal");
         CHECK((scan_string("/**", false) == json::lexer::token_type::parse_error));
+        CHECK(get_error_message("/**", false) == "invalid literal");
 
         CHECK((scan_string("//", false) == json::lexer::token_type::parse_error));
+        CHECK(get_error_message("//", false) == "invalid literal");
         CHECK((scan_string("/**/", false) == json::lexer::token_type::parse_error));
+        CHECK(get_error_message("/**/", false) == "invalid literal");
         CHECK((scan_string("/** /", false) == json::lexer::token_type::parse_error));
+        CHECK(get_error_message("/** /", false) == "invalid literal");
 
         CHECK((scan_string("/***/", false) == json::lexer::token_type::parse_error));
+        CHECK(get_error_message("/***/", false) == "invalid literal");
         CHECK((scan_string("/* true */", false) == json::lexer::token_type::parse_error));
+        CHECK(get_error_message("/* true */", false) == "invalid literal");
         CHECK((scan_string("/*/**/", false) == json::lexer::token_type::parse_error));
+        CHECK(get_error_message("/*/**/", false) == "invalid literal");
         CHECK((scan_string("/*/* */", false) == json::lexer::token_type::parse_error));
+        CHECK(get_error_message("/*/* */", false) == "invalid literal");
     }
 
     SECTION("ignore comments")
     {
         CHECK((scan_string("/", true) == json::lexer::token_type::parse_error));
+        CHECK(get_error_message("/", true) == "invalid comment; expecting '/' or '*' after '/'");
 
         CHECK((scan_string("/!", true) == json::lexer::token_type::parse_error));
+        CHECK(get_error_message("/!", true) == "invalid comment; expecting '/' or '*' after '/'");
         CHECK((scan_string("/*", true) == json::lexer::token_type::parse_error));
+        CHECK(get_error_message("/*", true) == "invalid comment; missing closing '*/'");
         CHECK((scan_string("/**", true) == json::lexer::token_type::parse_error));
+        CHECK(get_error_message("/**", true) == "invalid comment; missing closing '*/'");
 
         CHECK((scan_string("//", true) == json::lexer::token_type::end_of_input));
         CHECK((scan_string("/**/", true) == json::lexer::token_type::end_of_input));
         CHECK((scan_string("/** /", true) == json::lexer::token_type::parse_error));
+        CHECK(get_error_message("/** /", true) == "invalid comment; missing closing '*/'");
 
         CHECK((scan_string("/***/", true) == json::lexer::token_type::end_of_input));
         CHECK((scan_string("/* true */", true) == json::lexer::token_type::end_of_input));

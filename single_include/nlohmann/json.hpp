@@ -8932,7 +8932,10 @@ class lexer : public lexer_base<BasicJsonType>
                     {
                         case std::char_traits<char_type>::eof():
                         case '\0':
+                        {
+                            error_message = "invalid comment; missing closing '*/'";
                             return false;
+                        }
 
                         case '*':
                         {
@@ -8957,7 +8960,10 @@ class lexer : public lexer_base<BasicJsonType>
 
             // unexpected character after reading '/'
             default:
+            {
+                error_message = "invalid comment; expecting '/' or '*' after '/'";
                 return false;
+            }
         }
     }
 
@@ -9571,7 +9577,6 @@ scan_number_done:
         {
             if (not scan_comment())
             {
-                error_message = "invalid comment";
                 return token_type::parse_error;
             }
 
