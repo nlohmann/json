@@ -15880,8 +15880,8 @@ namespace nlohmann
 /// ordered_map: a minimal map-like container that preserves insertion order
 /// for use within nlohmann::basic_json<ordered_map>
 template <class Key, class T, class IgnoredLess = std::less<Key>,
-          class Allocator = std::allocator<std::pair<Key, T>>,
-          class Container = std::vector<std::pair<Key, T>, Allocator>>
+          class IgnoredAllocator = std::allocator<std::pair<Key, T>>,
+          class Container = std::vector<std::pair<Key, T>>>
 struct ordered_map : Container
 {
     using key_type = Key;
@@ -16348,6 +16348,7 @@ class basic_json
     using object_t = ObjectType<StringType,
           basic_json,
           object_comparator_t,
+          // TODO: AllocatorType<ObjectType::value_type>
           AllocatorType<std::pair<const StringType,
           basic_json>>>;
 
