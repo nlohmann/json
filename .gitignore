@@ -26,6 +26,8 @@ cmake-build-debug
 
 test/test-*
 test/test_data.hpp
+Temporary
+
 /.vs
 .vscode
 

@@ -496,9 +496,7 @@ class basic_json
     using object_t = ObjectType<StringType,
           basic_json,
           object_comparator_t,
-          // TODO: AllocatorType<ObjectType::value_type>
-          AllocatorType<std::pair<const StringType,
-          basic_json>>>;
+          AllocatorType<typename ObjectType<StringType, basic_json>::value_type>>;
 
     /*!
     @brief a type for an array

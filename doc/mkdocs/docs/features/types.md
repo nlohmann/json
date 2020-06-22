@@ -89,7 +89,7 @@ From the template arguments, the following types are derived:
 ```cpp
 using object_comparator_t = std::less<>;
 using object_t = ObjectType<StringType, basic_json, object_comparator_t,
-                   AllocatorType<std::pair<const StringType, basic_json>>>;
+          AllocatorType<typename ObjectType<StringType, basic_json>::value_type>>;
 
 using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
 
