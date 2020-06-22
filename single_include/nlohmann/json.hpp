@@ -3654,7 +3654,9 @@ template<typename string_type, typename std::enable_if<
              std::is_same<char, typename string_type::value_type>::value, int>::type = 0>
 void int_to_string( string_type& target, std::size_t value )
 {
-    target = std::to_string(value);
+    // For ADL
+    using std::to_string;
+    target = to_string(value);
 }
 template <typename IteratorType> class iteration_proxy_value
 {
