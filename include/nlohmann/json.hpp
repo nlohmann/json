@@ -6565,8 +6565,9 @@ class basic_json
     (optional)
     @param[in] allow_exceptions  whether to throw exceptions in case of a
     parse error (optional, true by default)
-    @param[in] ignore_comments  whether comments should be ignored (true) or
-    yield a parse error (true); (optional, false by default)
+    @param[in] ignore_comments  whether comments should be ignored and treated
+    like whitespace (true) or yield a parse error (true); (optional, false by
+    default)
 
     @return deserialized JSON value; in case of a parse error and
             @a allow_exceptions set to `false`, the return value will be
@@ -6623,8 +6624,9 @@ class basic_json
     (optional)
     @param[in] allow_exceptions  whether to throw exceptions in case of a
     parse error (optional, true by default)
-    @param[in] ignore_comments  whether comments should be ignored (true) or
-    yield a parse error (true); (optional, false by default)
+    @param[in] ignore_comments  whether comments should be ignored and treated
+    like whitespace (true) or yield a parse error (true); (optional, false by
+    default)
 
     @return deserialized JSON value; in case of a parse error and
             @a allow_exceptions set to `false`, the return value will be
@@ -6676,8 +6678,9 @@ class basic_json
       iterators.
 
     @param[in] i input to read from
-    @param[in] ignore_comments  whether comments should be ignored (true) or
-    yield a parse error (true); (optional, false by default)
+    @param[in] ignore_comments  whether comments should be ignored and treated
+    like whitespace (true) or yield a parse error (true); (optional, false by
+    default)
 
     @return Whether the input read from @a i is valid JSON.
 
@@ -6728,9 +6731,9 @@ class basic_json
     @param[in,out] sax  SAX event listener
     @param[in] format  the format to parse (JSON, CBOR, MessagePack, or UBJSON)
     @param[in] strict  whether the input has to be consumed completely
-    @param[in] ignore_comments  whether comments should be ignored (true) or
-    yield a parse error (true); (optional, false by default); only applieds to
-    the JSON file format.
+    @param[in] ignore_comments  whether comments should be ignored and treated
+    like whitespace (true) or yield a parse error (true); (optional, false by
+    default); only applies to the JSON file format.
 
     @return return value of the last processed SAX event
 

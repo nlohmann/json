@@ -1489,6 +1489,15 @@ scan_number_done:
         return true;
     }
 
+    void skip_whitespace()
+    {
+        do
+        {
+            get();
+        }
+        while (current == ' ' or current == '\t' or current == '\n' or current == '\r');
+    }
+
     token_type scan()
     {
         // initially, skip the BOM
@@ -1499,11 +1508,7 @@ scan_number_done:
         }
 
         // read next character and ignore whitespace
-        do
-        {
-            get();
-        }
-        while (current == ' ' or current == '\t' or current == '\n' or current == '\r');
+        skip_whitespace();
 
         // ignore comments
         if (ignore_comments and current == '/')
@@ -1514,11 +1519,7 @@ scan_number_done:
             }
 
             // skip following whitespace
-            do
-            {
-                get();
-            }
-            while (current == ' ' or current == '\t' or current == '\n' or current == '\r');
+            skip_whitespace();
         }
 
         switch (current)

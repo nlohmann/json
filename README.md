@@ -1508,7 +1508,7 @@ The library supports **Unicode input** as follows:
 
 ### Comments in JSON
 
-This library does not support comments. It does so for three reasons:
+This library does not support comments by default. It does so for three reasons:
 
 1. Comments are not part of the [JSON specification](https://tools.ietf.org/html/rfc8259). You may argue that `//` or `/* */` are allowed in JavaScript, but JSON is not JavaScript.
 2. This was not an oversight: Douglas Crockford [wrote on this](https://plus.google.com/118095276221607585885/posts/RK8qyGVaGSr) in May 2012:
@@ -1519,11 +1519,7 @@ This library does not support comments. It does so for three reasons:
 
 3. It is dangerous for interoperability if some libraries would add comment support while others don't. Please check [The Harmful Consequences of the Robustness Principle](https://tools.ietf.org/html/draft-iab-protocol-maintenance-01) on this.
 
-This library will not support comments in the future. If you wish to use comments, I see three options:
-
-1. Strip comments before using this library.
-2. Use a different JSON library with comment support.
-3. Use a format that natively supports comments (e.g., YAML or JSON5).
+However, you can pass set parameter `ignore_comments` to true in the `parse` function to ignore `//` or `/* */` comments. Comments will then be treated as whitespace.
 
 ### Order of object keys
 
