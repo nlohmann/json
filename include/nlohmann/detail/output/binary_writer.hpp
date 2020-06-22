@@ -573,7 +573,7 @@ class binary_writer
                 const auto N = j.m_value.binary->size();
                 if (N <= (std::numeric_limits<std::uint8_t>::max)())
                 {
-                    std::uint8_t output_type;
+                    std::uint8_t output_type{};
                     bool fixed = true;
                     if (use_ext)
                     {
@@ -615,30 +615,18 @@ class binary_writer
                 }
                 else if (N <= (std::numeric_limits<std::uint16_t>::max)())
                 {
-                    std::uint8_t output_type;
-                    if (use_ext)
-                    {
-                        output_type = 0xC8; // ext 16
-                    }
-                    else
-                    {
-                        output_type = 0xC5; // bin 16
-                    }
+                    std::uint8_t output_type = use_ext
+                                               ? 0xC8 // ext 16
+                                               : 0xC5; // bin 16
 
                     oa->write_character(to_char_type(output_type));
                     write_number(static_cast<std::uint16_t>(N));
                 }
                 else if (N <= (std::numeric_limits<std::uint32_t>::max)())
                 {
-                    std::uint8_t output_type;
-                    if (use_ext)
-                    {
-                        output_type = 0xC9; // ext 32
-                    }
-                    else
-                    {
-                        output_type = 0xC6; // bin 32
-                    }
+                    std::uint8_t output_type = use_ext
+                                               ? 0xC9 // ext 32
+                                               : 0xC6; // bin 32
 
                     oa->write_character(to_char_type(output_type));
                     write_number(static_cast<std::uint32_t>(N));

@@ -76,7 +76,7 @@ class input_stream_adapter
     {
         // clear stream flags; we use underlying streambuf I/O, do not
         // maintain ifstream flags, except eof
-        if (is)
+        if (is != nullptr)
         {
             is->clear(is->rdstate() & std::ios::eofbit);
         }
@@ -411,7 +411,7 @@ template < typename CharT,
 contiguous_bytes_input_adapter input_adapter(CharT b)
 {
     auto length = std::strlen(reinterpret_cast<const char*>(b));
-    auto ptr = reinterpret_cast<const char*>(b);
+    const auto* ptr = reinterpret_cast<const char*>(b);
     return input_adapter(ptr, ptr + length);
 }
 
