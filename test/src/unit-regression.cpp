@@ -52,15 +52,11 @@ using nlohmann::json;
     #include <variant>
 #endif
 
-#include "fifo_map.hpp"
-
 /////////////////////////////////////////////////////////////////////
 // for #972
 /////////////////////////////////////////////////////////////////////
 
-template<class K, class V, class dummy_compare, class A>
-using my_workaround_fifo_map = nlohmann::fifo_map<K, V, nlohmann::fifo_map_compare<K>, A>;
-using my_json = nlohmann::basic_json<my_workaround_fifo_map>;
+using my_json = nlohmann::ordered_json;
 
 /////////////////////////////////////////////////////////////////////
 // for #977

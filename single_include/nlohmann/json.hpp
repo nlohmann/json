@@ -16348,9 +16348,7 @@ class basic_json
     using object_t = ObjectType<StringType,
           basic_json,
           object_comparator_t,
-          // Note: instantiating ObjectType with dummy allocator to extract ::value_type
-          AllocatorType<typename ObjectType<StringType, basic_json, object_comparator_t, AllocatorType<int>
-                                            >::value_type>>;
+          AllocatorType<typename ObjectType<StringType, basic_json>::value_type>>;
 
     /*!
     @brief a type for an array
