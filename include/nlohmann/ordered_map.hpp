@@ -46,7 +46,14 @@ struct ordered_map : Container
         {
             if (it->first == key)
             {
-                Container::erase(it);
+                // Since we cannot move const Keys, re-construct them in place
+                for (auto next = it; ++next != this->end(); ++it)
+                {
+                    // *it = std::move(*next); // deleted
+                    it->~value_type(); // Destroy but keep allocation
+                    new (&*it) value_type{std::move(*next)};
+                }
+                Container::pop_back();
                 return 1;
             }
         }

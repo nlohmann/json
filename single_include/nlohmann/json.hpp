@@ -15915,7 +15915,14 @@ struct ordered_map : Container
         {
             if (it->first == key)
             {
-                Container::erase(it);
+                // Since we cannot move const Keys, re-construct them in place
+                for (auto next = it; ++next != this->end(); ++it)
+                {
+                    // *it = std::move(*next); // deleted
+                    it->~value_type(); // Destroy but keep allocation
+                    new (&*it) value_type{std::move(*next)};
+                }
+                Container::pop_back();
                 return 1;
             }
         }
@@ -16351,9 +16358,9 @@ class basic_json
           // Note the use of std::map default allocator as a placeholder
           // to extract the actual ObjectType::value_type
           AllocatorType<typename
-            ObjectType<StringType,basic_json,object_comparator_t,
-                std::allocator<std::pair<const StringType, basic_json>>
-                    >::value_type>>;
+          ObjectType<StringType, basic_json, object_comparator_t,
+          std::allocator<std::pair<const StringType, basic_json>>
+          >::value_type>>;
 
     /*!
     @brief a type for an array
