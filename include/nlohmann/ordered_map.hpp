@@ -11,8 +11,8 @@ namespace nlohmann
 /// ordered_map: a minimal map-like container that preserves insertion order
 /// for use within nlohmann::basic_json<ordered_map>
 template <class Key, class T, class IgnoredLess = std::less<Key>,
-          class Allocator = std::allocator<std::pair<Key, T>>,
-          class Container = std::vector<std::pair<Key, T>, Allocator>>
+          class Allocator = std::allocator<std::pair<const Key, T>>,
+          class Container = std::vector<std::pair<const Key, T>, Allocator>>
 struct ordered_map : Container
 {
     using key_type = Key;
