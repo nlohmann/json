@@ -16348,9 +16348,12 @@ class basic_json
     using object_t = ObjectType<StringType,
           basic_json,
           object_comparator_t,
-          // Note: instantiating ObjectType with dummy allocator to extract ::value_type
-          AllocatorType<typename ObjectType<StringType, basic_json, object_comparator_t, AllocatorType<int>
-                                            >::value_type>>;
+          // Note the use of std::map default allocator as a placeholder
+          // to extract the actual ObjectType::value_type
+          AllocatorType<typename
+            ObjectType<StringType,basic_json,object_comparator_t,
+                std::allocator<std::pair<const StringType, basic_json>>
+                    >::value_type>>;
 
     /*!
     @brief a type for an array
