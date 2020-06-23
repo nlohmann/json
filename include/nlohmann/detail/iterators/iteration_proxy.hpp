@@ -12,8 +12,7 @@ namespace nlohmann
 {
 namespace detail
 {
-template<typename string_type, typename std::enable_if<
-             std::is_same<char, typename string_type::value_type>::value, int>::type = 0>
+template<typename string_type>
 void int_to_string( string_type& target, std::size_t value )
 {
     // For ADL
