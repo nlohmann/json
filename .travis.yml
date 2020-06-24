@@ -218,6 +218,17 @@ matrix:
         sources: ['ubuntu-toolchain-r-test']
         packages: ['g++-9', 'ninja-build']
 
+  - os: linux
+    compiler: gcc
+    env:
+      - COMPILER=g++-9
+      - CXXFLAGS=-std=c++17
+      - CMAKECXXSTANDARD=17
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test']
+        packages: ['g++-9', 'ninja-build']
+
   # Linux / Clang
 
   - os: linux
@@ -328,7 +339,11 @@ script:
 
   # compile and execute unit tests
   - mkdir -p build && cd build
-  - cmake .. ${CMAKE_OPTIONS} -DJSON_MultipleHeaders=${MULTIPLE_HEADERS} -GNinja && cmake --build . --config Release
+  - if [[ "${CMAKECXXSTANDARD}" != "" ]]; then
+    cmake .. ${CMAKE_OPTIONS} -DJSON_MultipleHeaders=${MULTIPLE_HEADERS} -DCMAKE_CXX_STANDARD=${CMAKECXXSTANDARD} -GNinja && cmake --build . --config Release ;
+    else
+    cmake .. ${CMAKE_OPTIONS} -DJSON_MultipleHeaders=${MULTIPLE_HEADERS} -GNinja && cmake --build . --config Release ;
+    fi
   - ctest -C Release --timeout 2700 -V -j
   - cd ..
 
