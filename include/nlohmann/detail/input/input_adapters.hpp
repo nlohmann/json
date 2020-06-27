@@ -403,9 +403,9 @@ using contiguous_bytes_input_adapter = decltype(input_adapter(std::declval<const
 // Null-delimited strings, and the like.
 template < typename CharT,
            typename std::enable_if <
-               std::is_pointer<CharT>::value &&
-               not std::is_array<CharT>::value &&
-               std::is_integral<typename std::remove_pointer<CharT>::type>::value &&
+               std::is_pointer<CharT>::value&&
+               not std::is_array<CharT>::value&&
+               std::is_integral<typename std::remove_pointer<CharT>::type>::value&&
                sizeof(typename std::remove_pointer<CharT>::type) == 1,
                int >::type = 0 >
 contiguous_bytes_input_adapter input_adapter(CharT b)

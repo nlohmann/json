@@ -1511,7 +1511,7 @@ scan_number_done:
         skip_whitespace();
 
         // ignore comments
-        if (ignore_comments and current == '/')
+        if (ignore_comments && current == '/')
         {
             if (not scan_comment())
             {
