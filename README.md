@@ -416,7 +416,7 @@ Please note that setting the exception bit for `failbit` is inappropriate for th
 
 #### Read from iterator range
 
-You can also parse JSON from an iterator range; that is, from any container accessible by iterators whose content is stored as contiguous byte sequence, for instance a `std::vector<std::uint8_t>`:
+You can also parse JSON from an iterator range; that is, from any container accessible by iterators whose `value_type` is an integral type of 1, 2 or 4 bytes, which will be interpreted as UTF-8, UTF-16 and UTF-32 respectively. For instance, a `std::vector<std::uint8_t>`, or a `std::list<std::uint16_t>`:
 
 ```cpp
 std::vector<std::uint8_t> v = {'t', 'r', 'u', 'e'};
@@ -428,6 +428,53 @@ You may leave the iterators for the range [begin, end):
 ```cpp
 std::vector<std::uint8_t> v = {'t', 'r', 'u', 'e'};
 json j = json::parse(v);
+```
+
+#### Custom data source
+
+Since the parse function accepts arbitrary iterator ranges, you can provide your own data sources by implementing the `LegacyInputIterator` concept.
+
+```cpp
+struct MyContainer {
+  void advance();
+  const char& get_current();
+};
+
+struct MyIterator {
+    using difference_type = std::ptrdiff_t;
+    using value_type = char;
+    using pointer = const char*;
+    using reference = const char&;
+    using iterator_category = std::input_iterator_tag;
+
+    MyIterator& operator++() {
+        MyContainer.advance();
+        return *this;
+    }
+
+    bool operator!=(const MyIterator& rhs) const {
+        return rhs.target != target;
+    }
+
+    reference operator*() const {
+        return target.get_current();
+    }
+
+    MyContainer* target = nullptr;
+};
+
+MyIterator begin(MyContainer& tgt) {
+    return MyIterator{&tgt};
+}
+
+MyIterator end(const MyContainer&) {
+    return {}; 
+}
+
+void foo() {
+    MyContainer c;
+    json j = json::parse(c);
+}
 ```
 
 #### SAX interface
@@ -1404,6 +1451,7 @@ I deeply appreciate the help of the following people.
 - [Quentin Barbarat](https://github.com/quentin-dev) fixed an example in the documentation.
 - [XyFreak](https://github.com/XyFreak) fixed a compiler warning.
 - [TotalCaesar659](https://github.com/TotalCaesar659) fixed links in the README.
+- [Tanuj Garg](https://github.com/tanuj208) improved the fuzzer coverage for UBSAN input.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
@@ -1460,7 +1508,7 @@ The library supports **Unicode input** as follows:
 
 ### Comments in JSON
 
-This library does not support comments. It does so for three reasons:
+This library does not support comments by default. It does so for three reasons:
 
 1. Comments are not part of the [JSON specification](https://tools.ietf.org/html/rfc8259). You may argue that `//` or `/* */` are allowed in JavaScript, but JSON is not JavaScript.
 2. This was not an oversight: Douglas Crockford [wrote on this](https://plus.google.com/118095276221607585885/posts/RK8qyGVaGSr) in May 2012:
@@ -1471,11 +1519,7 @@ This library does not support comments. It does so for three reasons:
 
 3. It is dangerous for interoperability if some libraries would add comment support while others don't. Please check [The Harmful Consequences of the Robustness Principle](https://tools.ietf.org/html/draft-iab-protocol-maintenance-01) on this.
 
-This library will not support comments in the future. If you wish to use comments, I see three options:
-
-1. Strip comments before using this library.
-2. Use a different JSON library with comment support.
-3. Use a format that natively supports comments (e.g., YAML or JSON5).
+However, you can pass set parameter `ignore_comments` to true in the `parse` function to ignore `//` or `/* */` comments. Comments will then be treated as whitespace.
 
 ### Order of object keys
 
@@ -1509,4 +1553,6 @@ $ cmake --build .
 $ ctest --output-on-failure
 ```
 
-For more information, have a look at the file [.travis.yml](https://github.com/nlohmann/json/blob/master/.travis.yml).
+Note that during the `ctest` stage, several JSON test files are downloaded from an [external repository](https://github.com/nlohmann/json_test_data). If policies forbid downloading artifacts during testing, you can download the files yourself and pass the directory with the test files via `-DJSON_TestDataDirectory=path` to CMake. Then, no Internet connectivity is required. See [issue #2189](https://github.com/nlohmann/json/issues/2189) for more information.
+
+In case you have downloaded the library rather than checked out the code via Git, test `cmake_fetch_content_configure`. Please execute `ctest -LE git_required` to skip these tests. See [issue #2189](https://github.com/nlohmann/json/issues/2189) for more information.

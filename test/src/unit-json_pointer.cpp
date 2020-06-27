@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.7.3
+|  |  |__   |  |  | | | |  version 3.8.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -348,12 +348,29 @@ TEST_CASE("JSON pointers")
             CHECK_THROWS_WITH(j_const["/1+1"_json_pointer] == 1,
                               "[json.exception.out_of_range.404] unresolved reference token '1+1'");
 
-            CHECK_THROWS_AS(j["/111111111111111111111111"_json_pointer] = 1, json::out_of_range&);
-            CHECK_THROWS_WITH(j["/111111111111111111111111"_json_pointer] = 1,
-                              "[json.exception.out_of_range.404] unresolved reference token '111111111111111111111111'");
-            CHECK_THROWS_AS(j_const["/111111111111111111111111"_json_pointer] == 1, json::out_of_range&);
-            CHECK_THROWS_WITH(j_const["/111111111111111111111111"_json_pointer] == 1,
-                              "[json.exception.out_of_range.404] unresolved reference token '111111111111111111111111'");
+            {
+                auto too_large_index = std::to_string((std::numeric_limits<unsigned long long>::max)()) + "1";
+                json::json_pointer jp(std::string("/") + too_large_index);
+                std::string throw_msg = std::string("[json.exception.out_of_range.404] unresolved reference token '") + too_large_index + "'";
+
+                CHECK_THROWS_AS(j[jp] = 1, json::out_of_range&);
+                CHECK_THROWS_WITH(j[jp] = 1, throw_msg.c_str());
+                CHECK_THROWS_AS(j_const[jp] == 1, json::out_of_range&);
+                CHECK_THROWS_WITH(j_const[jp] == 1, throw_msg.c_str());
+            }
+
+            if (sizeof(typename json::size_type) < sizeof(unsigned long long))
+            {
+                auto size_type_max_uul = static_cast<unsigned long long>((std::numeric_limits<json::size_type>::max)());
+                auto too_large_index = std::to_string(size_type_max_uul);
+                json::json_pointer jp(std::string("/") + too_large_index);
+                std::string throw_msg = std::string("[json.exception.out_of_range.410] array index ") + too_large_index + " exceeds size_type";
+
+                CHECK_THROWS_AS(j[jp] = 1, json::out_of_range&);
+                CHECK_THROWS_WITH(j[jp] = 1, throw_msg.c_str());
+                CHECK_THROWS_AS(j_const[jp] == 1, json::out_of_range&);
+                CHECK_THROWS_WITH(j_const[jp] == 1, throw_msg.c_str());
+            }
 
             CHECK_THROWS_AS(j.at("/one"_json_pointer) = 1, json::parse_error&);
             CHECK_THROWS_WITH(j.at("/one"_json_pointer) = 1,

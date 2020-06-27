@@ -5,7 +5,7 @@
 #---------------------------------------------------------------------------
 DOXYFILE_ENCODING      = UTF-8
 PROJECT_NAME           = "JSON for Modern C++"
-PROJECT_NUMBER         = 3.7.3
+PROJECT_NUMBER         = 3.8.0
 PROJECT_BRIEF          =
 PROJECT_LOGO           =
 OUTPUT_DIRECTORY       = .
@@ -110,9 +110,7 @@ WARN_LOGFILE           =
 # Configuration options related to the input files
 #---------------------------------------------------------------------------
 INPUT                  = ../single_include/nlohmann/json.hpp \
-                         index.md \
-                         faq.md \
-                         binary_formats.md
+                         index.md
 INPUT_ENCODING         = UTF-8
 FILE_PATTERNS          =
 RECURSIVE              = NO

@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.7.3
+|  |  |__   |  |  | | | |  version 3.8.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -359,9 +359,9 @@ TEST_CASE("formatting")
     {
         auto check_float = [](float number, const std::string & expected)
         {
-            char buf[33];
-            char* end = nlohmann::detail::to_chars(buf, buf + 32, number);
-            std::string actual(buf, end);
+            std::array<char, 33> buf{};
+            char* end = nlohmann::detail::to_chars(buf.data(), buf.data() + 32, number);
+            std::string actual(buf.data(), end);
 
             CHECK(actual == expected);
         };
@@ -419,9 +419,9 @@ TEST_CASE("formatting")
     {
         auto check_double = [](double number, const std::string & expected)
         {
-            char buf[33];
-            char* end = nlohmann::detail::to_chars(buf, buf + 32, number);
-            std::string actual(buf, end);
+            std::array<char, 33> buf{};
+            char* end = nlohmann::detail::to_chars(buf.data(), buf.data() + 32, number);
+            std::string actual(buf.data(), end);
 
             CHECK(actual == expected);
         };

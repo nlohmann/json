@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.7.3
+|  |  |__   |  |  | | | |  version 3.8.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -1038,4 +1038,61 @@ TEST_CASE("deserialization")
             "start_array()"
         }));
     }
+}
+
+TEST_CASE_TEMPLATE("deserialization of different character types (ASCII)", T,
+                   char, unsigned char, signed char,
+                   wchar_t,
+                   char16_t, char32_t,
+                   std::uint8_t, std::int8_t,
+                   std::int16_t, std::uint16_t,
+                   std::int32_t, std::uint32_t)
+{
+    std::vector<T> v = {'t', 'r', 'u', 'e'};
+    CHECK(json::parse(v) == json(true));
+    CHECK(json::accept(v));
+
+    SaxEventLogger l;
+    CHECK(json::sax_parse(v, &l));
+    CHECK(l.events.size() == 1);
+    CHECK(l.events == std::vector<std::string>({"boolean(true)"}));
+}
+
+TEST_CASE_TEMPLATE("deserialization of different character types (UTF-8)", T,
+                   char, unsigned char, std::uint8_t)
+{
+    // a star emoji
+    std::vector<T> v = {'"', static_cast<T>(0xe2), static_cast<T>(0xad), static_cast<T>(0x90), static_cast<T>(0xef), static_cast<T>(0xb8), static_cast<T>(0x8f), '"'};
+    CHECK(json::parse(v).dump(-1, ' ', true) == "\"\\u2b50\\ufe0f\"");
+    CHECK(json::accept(v));
+
+    SaxEventLogger l;
+    CHECK(json::sax_parse(v, &l));
+    CHECK(l.events.size() == 1);
+}
+
+TEST_CASE_TEMPLATE("deserialization of different character types (UTF-16)", T,
+                   char16_t, std::uint16_t)
+{
+    // a star emoji
+    std::vector<T> v = {static_cast<T>('"'), static_cast<T>(0x2b50), static_cast<T>(0xfe0f), static_cast<T>('"')};
+    CHECK(json::parse(v).dump(-1, ' ', true) == "\"\\u2b50\\ufe0f\"");
+    CHECK(json::accept(v));
+
+    SaxEventLogger l;
+    CHECK(json::sax_parse(v, &l));
+    CHECK(l.events.size() == 1);
+}
+
+TEST_CASE_TEMPLATE("deserialization of different character types (UTF-32)", T,
+                   char32_t, std::uint32_t)
+{
+    // a star emoji
+    std::vector<T> v = {static_cast<T>('"'), static_cast<T>(0x2b50), static_cast<T>(0xfe0f), static_cast<T>('"')};
+    CHECK(json::parse(v).dump(-1, ' ', true) == "\"\\u2b50\\ufe0f\"");
+    CHECK(json::accept(v));
+
+    SaxEventLogger l;
+    CHECK(json::sax_parse(v, &l));
+    CHECK(l.events.size() == 1);
 }

@@ -26,3 +26,9 @@ cmake-build-debug
 
 test/test-*
 /.vs
+
+doc/mkdocs/venv/
+doc/mkdocs/docs/images
+doc/mkdocs/docs/examples
+doc/mkdocs/site
+doc/mkdocs/docs/__pycache__/
