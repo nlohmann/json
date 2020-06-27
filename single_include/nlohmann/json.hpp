@@ -8183,8 +8183,11 @@ class lexer : public lexer_base<BasicJsonType>
   public:
     using token_type = typename lexer_base<BasicJsonType>::token_type;
 
-    explicit lexer(InputAdapterType&& adapter)
-        : ia(std::move(adapter)), decimal_point_char(static_cast<char_int_type>(get_decimal_point())) {}
+    explicit lexer(InputAdapterType&& adapter, bool ignore_comments_ = false)
+        : ia(std::move(adapter))
+        , ignore_comments(ignore_comments_)
+        , decimal_point_char(static_cast<char_int_type>(get_decimal_point()))
+    {}
 
     // delete because of pointer members
     lexer(const lexer&) = delete;
@@ -8897,6 +8900,77 @@ class lexer : public lexer_base<BasicJsonType>
         }
     }
 
+    /*!
+     * @brief scan a comment
+     * @return whether comment could be scanned successfully
+     */
+    bool scan_comment()
+    {
+        switch (get())
+        {
+            // single-line comments skip input until a newline or EOF is read
+            case '/':
+            {
+                while (true)
+                {
+                    switch (get())
+                    {
+                        case '\n':
+                        case '\r':
+                        case std::char_traits<char_type>::eof():
+                        case '\0':
+                            return true;
+
+                        default:
+                            break;
+                    }
+                }
+            }
+
+            // multi-line comments skip input until */ is read
+            case '*':
+            {
+                while (true)
+                {
+                    switch (get())
+                    {
+                        case std::char_traits<char_type>::eof():
+                        case '\0':
+                        {
+                            error_message = "invalid comment; missing closing '*/'";
+                            return false;
+                        }
+
+                        case '*':
+                        {
+                            switch (get())
+                            {
+                                case '/':
+                                    return true;
+
+                                default:
+                                {
+                                    unget();
+                                    break;
+                                }
+                            }
+                        }
+
+                        default:
+                            break;
+                    }
+                }
+            }
+
+            // unexpected character after reading '/'
+            default:
+            {
+                error_message = "invalid comment; expecting '/' or '*' after '/'";
+                return false;
+            }
+        }
+    }
+
     JSON_HEDLEY_NON_NULL(2)
     static void strtof(float& f, const char* str, char** endptr) noexcept
     {
@@ -9486,6 +9560,15 @@ scan_number_done:
         return true;
     }
 
+    void skip_whitespace()
+    {
+        do
+        {
+            get();
+        }
+        while (current == ' ' or current == '\t' or current == '\n' or current == '\r');
+    }
+
     token_type scan()
     {
         // initially, skip the BOM
@@ -9496,11 +9579,19 @@ scan_number_done:
         }
 
         // read next character and ignore whitespace
-        do
+        skip_whitespace();
+
+        // ignore comments
+        if (ignore_comments and current == '/')
         {
-            get();
+            if (not scan_comment())
+            {
+                return token_type::parse_error;
+            }
+
+            // skip following whitespace
+            skip_whitespace();
         }
-        while (current == ' ' or current == '\t' or current == '\n' or current == '\r');
 
         switch (current)
         {
@@ -9569,6 +9660,9 @@ scan_number_done:
   private:
     /// input adapter
     InputAdapterType ia;
+
+    /// whether comments should be ignored (true) or signaled as errors (false)
+    const bool ignore_comments = false;
 
     /// the current character
     char_int_type current = std::char_traits<char_type>::eof();
@@ -9672,8 +9766,11 @@ class parser
     /// a parser reading from an input adapter
     explicit parser(InputAdapterType&& adapter,
                     const parser_callback_t<BasicJsonType> cb = nullptr,
-                    const bool allow_exceptions_ = true)
-        : callback(cb), m_lexer(std::move(adapter)), allow_exceptions(allow_exceptions_)
+                    const bool allow_exceptions_ = true,
+                    const bool skip_comments = false)
+        : callback(cb)
+        , m_lexer(std::move(adapter), skip_comments)
+        , allow_exceptions(allow_exceptions_)
     {
         // read first token
         get_token();
@@ -15994,10 +16091,12 @@ class basic_json
     static ::nlohmann::detail::parser<basic_json, InputAdapterType> parser(
         InputAdapterType adapter,
         detail::parser_callback_t<basic_json>cb = nullptr,
-        bool allow_exceptions = true
+        const bool allow_exceptions = true,
+        const bool ignore_comments = false
     )
     {
-        return ::nlohmann::detail::parser<basic_json, InputAdapterType>(std::move(adapter), std::move(cb), allow_exceptions);
+        return ::nlohmann::detail::parser<basic_json, InputAdapterType>(std::move(adapter),
+                std::move(cb), allow_exceptions, ignore_comments);
     }
 
     using primitive_iterator_t = ::nlohmann::detail::primitive_iterator_t;
@@ -22389,6 +22488,9 @@ class basic_json
     (optional)
     @param[in] allow_exceptions  whether to throw exceptions in case of a
     parse error (optional, true by default)
+    @param[in] ignore_comments  whether comments should be ignored and treated
+    like whitespace (true) or yield a parse error (true); (optional, false by
+    default)
 
     @return deserialized JSON value; in case of a parse error and
             @a allow_exceptions set to `false`, the return value will be
@@ -22417,16 +22519,18 @@ class basic_json
     @liveexample{The example below demonstrates the `parse()` function reading
     from a contiguous container.,parse__contiguouscontainer__parser_callback_t}
 
-    @since version 2.0.3 (contiguous containers)
+    @since version 2.0.3 (contiguous containers); version 3.9.0 allowed to
+    ignore comments.
     */
     template<typename InputType>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json parse(InputType&& i,
                             const parser_callback_t cb = nullptr,
-                            const bool allow_exceptions = true)
+                            const bool allow_exceptions = true,
+                            const bool ignore_comments = false)
     {
         basic_json result;
-        parser(detail::input_adapter(std::forward<InputType>(i)), cb, allow_exceptions).parse(true, result);
+        parser(detail::input_adapter(std::forward<InputType>(i)), cb, allow_exceptions, ignore_comments).parse(true, result);
         return result;
     }
 
@@ -22443,6 +22547,9 @@ class basic_json
     (optional)
     @param[in] allow_exceptions  whether to throw exceptions in case of a
     parse error (optional, true by default)
+    @param[in] ignore_comments  whether comments should be ignored and treated
+    like whitespace (true) or yield a parse error (true); (optional, false by
+    default)
 
     @return deserialized JSON value; in case of a parse error and
             @a allow_exceptions set to `false`, the return value will be
@@ -22458,10 +22565,11 @@ class basic_json
     static basic_json parse(IteratorType first,
                             IteratorType last,
                             const parser_callback_t cb = nullptr,
-                            const bool allow_exceptions = true)
+                            const bool allow_exceptions = true,
+                            const bool ignore_comments = false)
     {
         basic_json result;
-        parser(detail::input_adapter(std::move(first), std::move(last)), cb, allow_exceptions).parse(true, result);
+        parser(detail::input_adapter(std::move(first), std::move(last)), cb, allow_exceptions, ignore_comments).parse(true, result);
         return result;
     }
 
@@ -22469,10 +22577,11 @@ class basic_json
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, parse(ptr, ptr + len))
     static basic_json parse(detail::span_input_adapter&& i,
                             const parser_callback_t cb = nullptr,
-                            const bool allow_exceptions = true)
+                            const bool allow_exceptions = true,
+                            const bool ignore_comments = false)
     {
         basic_json result;
-        parser(i.get(), cb, allow_exceptions).parse(true, result);
+        parser(i.get(), cb, allow_exceptions, ignore_comments).parse(true, result);
         return result;
     }
 
@@ -22492,6 +22601,9 @@ class basic_json
       iterators.
 
     @param[in] i input to read from
+    @param[in] ignore_comments  whether comments should be ignored and treated
+    like whitespace (true) or yield a parse error (true); (optional, false by
+    default)
 
     @return Whether the input read from @a i is valid JSON.
 
@@ -22504,22 +22616,25 @@ class basic_json
     from a string.,accept__string}
     */
     template<typename InputType>
-    static bool accept(InputType&& i)
+    static bool accept(InputType&& i,
+                       const bool ignore_comments = false)
     {
-        return parser(detail::input_adapter(std::forward<InputType>(i))).accept(true);
+        return parser(detail::input_adapter(std::forward<InputType>(i)), nullptr, false, ignore_comments).accept(true);
     }
 
     template<typename IteratorType>
-    static bool accept(IteratorType first, IteratorType last)
+    static bool accept(IteratorType first, IteratorType last,
+                       const bool ignore_comments = false)
     {
-        return parser(detail::input_adapter(std::move(first), std::move(last))).accept(true);
+        return parser(detail::input_adapter(std::move(first), std::move(last)), nullptr, false, ignore_comments).accept(true);
     }
 
     JSON_HEDLEY_WARN_UNUSED_RESULT
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, accept(ptr, ptr + len))
-    static bool accept(detail::span_input_adapter&& i)
+    static bool accept(detail::span_input_adapter&& i,
+                       const bool ignore_comments = false)
     {
-        return parser(i.get()).accept(true);
+        return parser(i.get(), nullptr, false, ignore_comments).accept(true);
     }
 
     /*!
@@ -22539,6 +22654,9 @@ class basic_json
     @param[in,out] sax  SAX event listener
     @param[in] format  the format to parse (JSON, CBOR, MessagePack, or UBJSON)
     @param[in] strict  whether the input has to be consumed completely
+    @param[in] ignore_comments  whether comments should be ignored and treated
+    like whitespace (true) or yield a parse error (true); (optional, false by
+    default); only applies to the JSON file format.
 
     @return return value of the last processed SAX event
 
@@ -22563,11 +22681,12 @@ class basic_json
     JSON_HEDLEY_NON_NULL(2)
     static bool sax_parse(InputType&& i, SAX* sax,
                           input_format_t format = input_format_t::json,
-                          const bool strict = true)
+                          const bool strict = true,
+                          const bool ignore_comments = false)
     {
         auto ia = detail::input_adapter(std::forward<InputType>(i));
         return format == input_format_t::json
-               ? parser(std::move(ia)).sax_parse(sax, strict)
+               ? parser(std::move(ia), nullptr, true, ignore_comments).sax_parse(sax, strict)
                : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia)).sax_parse(format, sax, strict);
     }
 
@@ -22575,11 +22694,12 @@ class basic_json
     JSON_HEDLEY_NON_NULL(3)
     static bool sax_parse(IteratorType first, IteratorType last, SAX* sax,
                           input_format_t format = input_format_t::json,
-                          const bool strict = true)
+                          const bool strict = true,
+                          const bool ignore_comments = false)
     {
         auto ia = detail::input_adapter(std::move(first), std::move(last));
         return format == input_format_t::json
-               ? parser(std::move(ia)).sax_parse(sax, strict)
+               ? parser(std::move(ia), nullptr, true, ignore_comments).sax_parse(sax, strict)
                : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia)).sax_parse(format, sax, strict);
     }
 
@@ -22588,11 +22708,12 @@ class basic_json
     JSON_HEDLEY_NON_NULL(2)
     static bool sax_parse(detail::span_input_adapter&& i, SAX* sax,
                           input_format_t format = input_format_t::json,
-                          const bool strict = true)
+                          const bool strict = true,
+                          const bool ignore_comments = false)
     {
         auto ia = i.get();
         return format == input_format_t::json
-               ? parser(std::move(ia)).sax_parse(sax, strict)
+               ? parser(std::move(ia), nullptr, true, ignore_comments).sax_parse(sax, strict)
                : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia)).sax_parse(format, sax, strict);
     }
 

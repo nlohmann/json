@@ -112,8 +112,11 @@ class lexer : public lexer_base<BasicJsonType>
   public:
     using token_type = typename lexer_base<BasicJsonType>::token_type;
 
-    explicit lexer(InputAdapterType&& adapter)
-        : ia(std::move(adapter)), decimal_point_char(static_cast<char_int_type>(get_decimal_point())) {}
+    explicit lexer(InputAdapterType&& adapter, bool ignore_comments_ = false)
+        : ia(std::move(adapter))
+        , ignore_comments(ignore_comments_)
+        , decimal_point_char(static_cast<char_int_type>(get_decimal_point()))
+    {}
 
     // delete because of pointer members
     lexer(const lexer&) = delete;
@@ -826,6 +829,77 @@ class lexer : public lexer_base<BasicJsonType>
         }
     }
 
+    /*!
+     * @brief scan a comment
+     * @return whether comment could be scanned successfully
+     */
+    bool scan_comment()
+    {
+        switch (get())
+        {
+            // single-line comments skip input until a newline or EOF is read
+            case '/':
+            {
+                while (true)
+                {
+                    switch (get())
+                    {
+                        case '\n':
+                        case '\r':
+                        case std::char_traits<char_type>::eof():
+                        case '\0':
+                            return true;
+
+                        default:
+                            break;
+                    }
+                }
+            }
+
+            // multi-line comments skip input until */ is read
+            case '*':
+            {
+                while (true)
+                {
+                    switch (get())
+                    {
+                        case std::char_traits<char_type>::eof():
+                        case '\0':
+                        {
+                            error_message = "invalid comment; missing closing '*/'";
+                            return false;
+                        }
+
+                        case '*':
+                        {
+                            switch (get())
+                            {
+                                case '/':
+                                    return true;
+
+                                default:
+                                {
+                                    unget();
+                                    break;
+                                }
+                            }
+                        }
+
+                        default:
+                            break;
+                    }
+                }
+            }
+
+            // unexpected character after reading '/'
+            default:
+            {
+                error_message = "invalid comment; expecting '/' or '*' after '/'";
+                return false;
+            }
+        }
+    }
+
     JSON_HEDLEY_NON_NULL(2)
     static void strtof(float& f, const char* str, char** endptr) noexcept
     {
@@ -1415,6 +1489,15 @@ scan_number_done:
         return true;
     }
 
+    void skip_whitespace()
+    {
+        do
+        {
+            get();
+        }
+        while (current == ' ' or current == '\t' or current == '\n' or current == '\r');
+    }
+
     token_type scan()
     {
         // initially, skip the BOM
@@ -1425,11 +1508,19 @@ scan_number_done:
         }
 
         // read next character and ignore whitespace
-        do
+        skip_whitespace();
+
+        // ignore comments
+        if (ignore_comments and current == '/')
         {
-            get();
+            if (not scan_comment())
+            {
+                return token_type::parse_error;
+            }
+
+            // skip following whitespace
+            skip_whitespace();
         }
-        while (current == ' ' or current == '\t' or current == '\n' or current == '\r');
 
         switch (current)
         {
@@ -1498,6 +1589,9 @@ scan_number_done:
   private:
     /// input adapter
     InputAdapterType ia;
+
+    /// whether comments should be ignored (true) or signaled as errors (false)
+    const bool ignore_comments = false;
 
     /// the current character
     char_int_type current = std::char_traits<char_type>::eof();
