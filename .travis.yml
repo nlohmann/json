@@ -223,7 +223,7 @@ matrix:
     env:
       - COMPILER=g++-9
       - CXXFLAGS=-std=c++17
-      - CMAKECXXSTANDARD=17
+      - CMAKE_CXX_STANDARD=17
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test']
@@ -339,8 +339,8 @@ script:
 
   # compile and execute unit tests
   - mkdir -p build && cd build
-  - if [[ "${CMAKECXXSTANDARD}" != "" ]]; then
-    cmake .. ${CMAKE_OPTIONS} -DJSON_MultipleHeaders=${MULTIPLE_HEADERS} -DCMAKE_CXX_STANDARD=${CMAKECXXSTANDARD} -GNinja && cmake --build . --config Release ;
+  - if [[ "${CMAKE_CXX_STANDARD}" != "" ]]; then
+    cmake .. ${CMAKE_OPTIONS} -DJSON_MultipleHeaders=${MULTIPLE_HEADERS} -DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD} -GNinja && cmake --build . --config Release ;
     else
     cmake .. ${CMAKE_OPTIONS} -DJSON_MultipleHeaders=${MULTIPLE_HEADERS} -GNinja && cmake --build . --config Release ;
     fi
