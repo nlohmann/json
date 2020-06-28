@@ -11529,7 +11529,6 @@ class json_pointer
     */
     BasicJsonType& get_and_create(BasicJsonType& j) const
     {
-        using size_type = typename BasicJsonType::size_type;
         auto result = &j;
 
         // in case no reference tokens exist, return a reference to the JSON value
@@ -11602,7 +11601,6 @@ class json_pointer
     */
     BasicJsonType& get_unchecked(BasicJsonType* ptr) const
     {
-        using size_type = typename BasicJsonType::size_type;
         for (const auto& reference_token : reference_tokens)
         {
             // convert null values to arrays or objects before continuing
@@ -11662,7 +11660,6 @@ class json_pointer
     */
     BasicJsonType& get_checked(BasicJsonType* ptr) const
     {
-        using size_type = typename BasicJsonType::size_type;
         for (const auto& reference_token : reference_tokens)
         {
             switch (ptr->type())
@@ -11712,7 +11709,6 @@ class json_pointer
     */
     const BasicJsonType& get_unchecked(const BasicJsonType* ptr) const
     {
-        using size_type = typename BasicJsonType::size_type;
         for (const auto& reference_token : reference_tokens)
         {
             switch (ptr->type())
@@ -11755,7 +11751,6 @@ class json_pointer
     */
     const BasicJsonType& get_checked(const BasicJsonType* ptr) const
     {
-        using size_type = typename BasicJsonType::size_type;
         for (const auto& reference_token : reference_tokens)
         {
             switch (ptr->type())
@@ -11796,7 +11791,6 @@ class json_pointer
     */
     bool contains(const BasicJsonType* ptr) const
     {
-        using size_type = typename BasicJsonType::size_type;
         for (const auto& reference_token : reference_tokens)
         {
             switch (ptr->type())
