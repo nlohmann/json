@@ -869,6 +869,42 @@ Some important things:
 * In function `from_json`, use function [`at()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a93403e803947b86f4da2d1fb3345cf2c.html#a93403e803947b86f4da2d1fb3345cf2c) to access the object values rather than `operator[]`. In case a key does not exist, `at` throws an exception that you can handle, whereas `operator[]` exhibits undefined behavior.
 * You do not need to add serializers or deserializers for STL types like `std::vector`: the library already implements these.
 
+#### Simplify your life with macros
+
+If you just want to serialize/deserialize some structs, the `to_json`/`from_json` functions can be a lot of boilerplate.
+
+There are two macros to make your life easier as long as you (1) want to use a JSON object as serialization and (2) want to use the member variable names as object keys in that object:
+
+- `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(name, member1, member2, ...)` is to be defined inside of the namespace of the class/struct to create code for.
+- `NLOHMANN_DEFINE_TYPE_INTRUSIVE(name, member1, member2, ...)` is to be defined inside of the class/struct to create code for. This macro can also access private members.
+
+In both macros, the first parameter is the name of the class/struct, and all remaining parameters name the members.
+
+##### Examples
+
+The `to_json`/`from_json` functions for the `person` struct above can be created with:
+
+```cpp
+namespace ns {
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(person, name, address, age);
+}
+```
+
+Here is an example with private members, where `NLOHMANN_DEFINE_TYPE_INTRUSIVE` is needed:
+
+```cpp
+namespace ns {
+    class address {
+      private:
+        std::string street;
+        int housenumber;
+        int postcode;
+        
+      public:
+        NLOHMANN_DEFINE_TYPE_INTRUSIVE(address, street, housenumber, postcode);
+    };
+}
+```
 
 #### How do I convert third-party types?
 

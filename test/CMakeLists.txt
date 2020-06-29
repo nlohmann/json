@@ -132,6 +132,7 @@ set(files
     src/unit-to_chars.cpp
     src/unit-ubjson.cpp
     src/unit-udt.cpp
+    src/unit-udt_macro.cpp
     src/unit-unicode.cpp
     src/unit-user_defined_input.cpp
     src/unit-wstring.cpp)

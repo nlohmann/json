@@ -124,3 +124,44 @@
     basic_json<ObjectType, ArrayType, StringType, BooleanType,             \
     NumberIntegerType, NumberUnsignedType, NumberFloatType,                \
     AllocatorType, JSONSerializer, BinaryType>
+
+// Macros to simplify conversion from/to types
+
+#define NLOHMANN_JSON_EXPAND( x ) x
+#define NLOHMANN_JSON_GET_MACRO(_1,_2,_3,_4,_5,_6, _7, _8, _9, _10, _11, NAME,...) NAME
+
+#define NLOHMANN_JSON_PASTE(...) NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_GET_MACRO(__VA_ARGS__, NLOHMANN_JSON_PASTE11, \
+        NLOHMANN_JSON_PASTE10, NLOHMANN_JSON_PASTE9, NLOHMANN_JSON_PASTE8, NLOHMANN_JSON_PASTE7, \
+        NLOHMANN_JSON_PASTE6, NLOHMANN_JSON_PASTE5, NLOHMANN_JSON_PASTE4, NLOHMANN_JSON_PASTE3, \
+        NLOHMANN_JSON_PASTE2, NLOHMANN_JSON_PASTE1)(__VA_ARGS__))
+#define NLOHMANN_JSON_PASTE2(func,  v1)                                      func(v1)
+#define NLOHMANN_JSON_PASTE3(func,  v1, v2)                                  NLOHMANN_JSON_PASTE2(func, v1) NLOHMANN_JSON_PASTE2(func, v2)
+#define NLOHMANN_JSON_PASTE4(func,  v1, v2, v3)                              NLOHMANN_JSON_PASTE2(func, v1) NLOHMANN_JSON_PASTE3(func, v2, v3)
+#define NLOHMANN_JSON_PASTE5(func,  v1, v2, v3, v4)                          NLOHMANN_JSON_PASTE2(func, v1) NLOHMANN_JSON_PASTE4(func, v2, v3, v4)
+#define NLOHMANN_JSON_PASTE6(func,  v1, v2, v3, v4, v5)                      NLOHMANN_JSON_PASTE2(func, v1) NLOHMANN_JSON_PASTE5(func, v2, v3, v4, v5)
+#define NLOHMANN_JSON_PASTE7(func,  v1, v2, v3, v4, v5, v6)                  NLOHMANN_JSON_PASTE2(func, v1) NLOHMANN_JSON_PASTE6(func, v2, v3, v4, v5, v6)
+#define NLOHMANN_JSON_PASTE8(func,  v1, v2, v3, v4, v5, v6, v7)              NLOHMANN_JSON_PASTE2(func, v1) NLOHMANN_JSON_PASTE7(func, v2, v3, v4, v5, v6, v7)
+#define NLOHMANN_JSON_PASTE9(func,  v1, v2, v3, v4, v5, v6, v7, v8)          NLOHMANN_JSON_PASTE2(func, v1) NLOHMANN_JSON_PASTE8(func, v2, v3, v4, v5, v6, v7, v8)
+#define NLOHMANN_JSON_PASTE10(func, v1, v2, v3, v4, v5, v6, v7, v8, v9)      NLOHMANN_JSON_PASTE2(func, v1) NLOHMANN_JSON_PASTE8(func, v2, v3, v4, v5, v6, v7, v8, v9)
+#define NLOHMANN_JSON_PASTE11(func, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10) NLOHMANN_JSON_PASTE2(func, v1) NLOHMANN_JSON_PASTE8(func, v2, v3, v4, v5, v6, v7, v8, v9, v10)
+
+#define NLOHMANN_JSON_TO(v1) j[#v1] = t.v1;
+#define NLOHMANN_JSON_FROM(v1) j.at(#v1).get_to(t.v1);
+
+/*!
+@brief macro
+@def NLOHMANN_DEFINE_TYPE_INTRUSIVE
+@since version 3.9.0
+*/
+#define NLOHMANN_DEFINE_TYPE_INTRUSIVE(Type, ...)  \
+    friend void to_json(nlohmann::json& j, const Type& t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) } \
+    friend void from_json(const nlohmann::json& j, Type& t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, __VA_ARGS__)) }
+
+/*!
+@brief macro
+@def NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE
+@since version 3.9.0
+*/
+#define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Type, ...)  \
+    void to_json(nlohmann::json& j, const Type& t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) } \
+    void from_json(const nlohmann::json& j, Type& t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, __VA_ARGS__)) }
