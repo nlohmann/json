@@ -32,8 +32,6 @@ SOFTWARE.
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
-#include <utility>
-
 namespace persons
 {
 class person_with_private_data
@@ -46,7 +44,7 @@ class person_with_private_data
   public:
     bool operator==(const person_with_private_data& rhs) const
     {
-        return std::tie(name, age, metadata) == std::tie(rhs.name, rhs.age, rhs.metadata);
+        return name == rhs.name && age == rhs.age && metadata == rhs.metadata;
     }
 
     person_with_private_data() = default;
@@ -68,7 +66,7 @@ class person_without_private_data_1
 
     bool operator==(const person_without_private_data_1& rhs) const
     {
-        return std::tie(name, age, metadata) == std::tie(rhs.name, rhs.age, rhs.metadata);
+        return name == rhs.name && age == rhs.age && metadata == rhs.metadata;
     }
 
     person_without_private_data_1() = default;
@@ -90,7 +88,7 @@ class person_without_private_data_2
 
     bool operator==(const person_without_private_data_2& rhs) const
     {
-        return std::tie(name, age, metadata) == std::tie(rhs.name, rhs.age, rhs.metadata);
+        return name == rhs.name && age == rhs.age && metadata == rhs.metadata;
     }
 
     person_without_private_data_2() = default;
