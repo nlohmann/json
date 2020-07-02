@@ -2773,7 +2773,7 @@ uses the standard template types.
 */
 using json = basic_json<>;
 
-template<class Key, class T, class IgnoredLess, class Allocator>
+template<class Key, class T, class IgnoredLess, class Allocator, class Container>
 struct ordered_map;
 
 /*!
@@ -15880,16 +15880,22 @@ namespace nlohmann
 /// ordered_map: a minimal map-like container that preserves insertion order
 /// for use within nlohmann::basic_json<ordered_map>
 template <class Key, class T, class IgnoredLess = std::less<Key>,
-          class Allocator = std::allocator<std::pair<const Key, T>>>
-struct ordered_map : std::vector<typename Allocator::value_type, Allocator>
+          class Allocator = std::allocator<std::pair<const Key, T>>,
+          class Container = std::vector<std::pair<const Key, T>, Allocator>>
+struct ordered_map : Container
 {
-    using Container = std::vector<typename Allocator::value_type, Allocator>;
     using key_type = Key;
     using mapped_type = T;
     using typename Container::iterator;
-    using typename Container::value_type;
     using typename Container::size_type;
-    using Container::Container;
+    using typename Container::value_type;
+
+    // Explicit constructors instead of `using Container::Container`
+    // otherwise older compilers like GCC 5.5 choke on it
+    ordered_map(const Allocator& alloc = Allocator()) : Container{alloc} {}
+    template <class It>
+    ordered_map(It first, It last, const Allocator& alloc = Allocator())
+        : Container{first, last, alloc} {}
 
     std::pair<iterator, bool> emplace(key_type&& key, T&& t)
     {
