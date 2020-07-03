@@ -2773,7 +2773,7 @@ uses the standard template types.
 */
 using json = basic_json<>;
 
-template<class Key, class T, class IgnoredLess, class Allocator, class Container>
+template<class Key, class T, class IgnoredLess, class Allocator>
 struct ordered_map;
 
 /*!
@@ -15880,12 +15880,12 @@ namespace nlohmann
 /// ordered_map: a minimal map-like container that preserves insertion order
 /// for use within nlohmann::basic_json<ordered_map>
 template <class Key, class T, class IgnoredLess = std::less<Key>,
-          class Allocator = std::allocator<std::pair<const Key, T>>,
-          class Container = std::vector<std::pair<const Key, T>, Allocator>>
-struct ordered_map : Container
+          class Allocator = std::allocator<std::pair<const Key, T>>>
+struct ordered_map : std::vector<std::pair<const Key, T>, Allocator>
 {
     using key_type = Key;
     using mapped_type = T;
+    using Container = std::vector<std::pair<const Key, T>, Allocator>;
     using typename Container::iterator;
     using typename Container::size_type;
     using typename Container::value_type;
@@ -16063,7 +16063,7 @@ class basic_json
         InputAdapterType adapter,
         detail::parser_callback_t<basic_json>cb = nullptr,
         bool allow_exceptions = true
-    )
+                                 )
     {
         return ::nlohmann::detail::parser<basic_json, InputAdapterType>(std::move(adapter), std::move(cb), allow_exceptions);
     }
@@ -24534,7 +24534,7 @@ template<>
 inline void swap<nlohmann::json>(nlohmann::json& j1, nlohmann::json& j2) noexcept(
     is_nothrow_move_constructible<nlohmann::json>::value and
     is_nothrow_move_assignable<nlohmann::json>::value
-)
+                              )
 {
     j1.swap(j2);
 }
