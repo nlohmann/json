@@ -25,11 +25,7 @@ benchmarks/files/numbers/*.json
 cmake-build-debug
 
 test/test-*
-test/test_data.hpp
-Temporary
-
 /.vs
-.vscode
 
 doc/mkdocs/venv/
 doc/mkdocs/docs/images
