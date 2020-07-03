@@ -61,7 +61,7 @@ uses the standard template types.
 */
 using json = basic_json<>;
 
-template<class Key, class T, class IgnoredLess, class Allocator, class Container>
+template<class Key, class T, class IgnoredLess, class Allocator>
 struct ordered_map;
 
 /*!

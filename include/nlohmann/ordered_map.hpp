@@ -22,11 +22,13 @@ struct ordered_map : std::vector<std::pair<const Key, T>, Allocator>
     using typename Container::value_type;
 
     // Explicit constructors instead of `using Container::Container`
-    // otherwise older compilers like GCC 5.5 choke on it
+    // otherwise older compilers choke on it (GCC <= 5.5, xcode <= 9.4)
     ordered_map(const Allocator& alloc = Allocator()) : Container{alloc} {}
     template <class It>
     ordered_map(It first, It last, const Allocator& alloc = Allocator())
         : Container{first, last, alloc} {}
+    ordered_map(std::initializer_list<T> init, const Allocator& alloc = Allocator() )
+        : Container{init, alloc} {}
 
     std::pair<iterator, bool> emplace(key_type&& key, T&& t)
     {
