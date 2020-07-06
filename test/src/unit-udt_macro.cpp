@@ -37,9 +37,9 @@ namespace persons
 class person_with_private_data
 {
   private:
-    std::string name;
+    std::string name = "";
     int age = 0;
-    json metadata;
+    json metadata = nullptr;
 
   public:
     bool operator==(const person_with_private_data& rhs) const
@@ -48,21 +48,21 @@ class person_with_private_data
     }
 
     person_with_private_data() = default;
-    person_with_private_data(std::string name, int age, json metadata)
-        : name(std::move(name))
-        , age(age)
-        , metadata(std::move(metadata))
+    person_with_private_data(std::string name_, int age_, json metadata_)
+        : name(std::move(name_))
+        , age(age_)
+        , metadata(std::move(metadata_))
     {}
 
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(person_with_private_data, age, name, metadata);
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(person_with_private_data, age, name, metadata)
 };
 
 class person_without_private_data_1
 {
   public:
-    std::string name;
-    int age = 0;
-    json metadata;
+  std::string name = "";
+  int age = 0;
+  json metadata = nullptr;
 
     bool operator==(const person_without_private_data_1& rhs) const
     {
@@ -70,21 +70,21 @@ class person_without_private_data_1
     }
 
     person_without_private_data_1() = default;
-    person_without_private_data_1(std::string name, int age, json metadata)
-        : name(std::move(name))
-        , age(age)
-        , metadata(std::move(metadata))
+    person_without_private_data_1(std::string name_, int age_, json metadata_)
+        : name(std::move(name_))
+        , age(age_)
+        , metadata(std::move(metadata_))
     {}
 
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(person_without_private_data_1, age, name, metadata);
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(person_without_private_data_1, age, name, metadata)
 };
 
 class person_without_private_data_2
 {
   public:
-    std::string name;
-    int age = 0;
-    json metadata;
+  std::string name = "";
+  int age = 0;
+  json metadata = nullptr;
 
     bool operator==(const person_without_private_data_2& rhs) const
     {
@@ -92,14 +92,14 @@ class person_without_private_data_2
     }
 
     person_without_private_data_2() = default;
-    person_without_private_data_2(std::string name, int age, json metadata)
-        : name(std::move(name))
-        , age(age)
-        , metadata(std::move(metadata))
+    person_without_private_data_2(std::string name_, int age_, json metadata_)
+        : name(std::move(name_))
+        , age(age_)
+        , metadata(std::move(metadata_))
     {}
 };
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(person_without_private_data_2, age, name, metadata);
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(person_without_private_data_2, age, name, metadata)
 } // namespace persons
 
 TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRUSIVE", T,

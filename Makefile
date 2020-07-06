@@ -253,7 +253,7 @@ pedantic_gcc:
 		-Wmismatched-tags                                 \
 		-Wmissing-attributes                              \
 		-Wmissing-braces                                  \
-		-Wmissing-declarations                            \
+		-Wno-missing-declarations                            \
 		-Wmissing-field-initializers                      \
 		-Wmissing-include-dirs                            \
 		-Wmissing-profile                                 \
