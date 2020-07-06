@@ -77,6 +77,12 @@
     #define JSON_INTERNAL_CATCH JSON_INTERNAL_CATCH_USER
 #endif
 
+// allow to override assert
+#if !defined(JSON_ASSERT)
+    #include <cassert> // assert
+    #define JSON_ASSERT(x) assert(x)
+#endif
+
 /*!
 @brief macro to briefly define a mapping between an enum and JSON
 @def NLOHMANN_JSON_SERIALIZE_ENUM

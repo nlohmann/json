@@ -9,6 +9,7 @@
 #endif
 
 // clean up
+#undef JSON_ASSERT
 #undef JSON_INTERNAL_CATCH
 #undef JSON_CATCH
 #undef JSON_THROW

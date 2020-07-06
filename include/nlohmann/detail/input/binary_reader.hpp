@@ -2,7 +2,6 @@
 
 #include <algorithm> // generate_n
 #include <array> // array
-#include <cassert> // assert
 #include <cmath> // ldexp
 #include <cstddef> // size_t
 #include <cstdint> // uint8_t, uint16_t, uint32_t, uint64_t
@@ -109,7 +108,7 @@ class binary_reader
                 break;
 
             default:            // LCOV_EXCL_LINE
-                assert(false);  // LCOV_EXCL_LINE
+                JSON_ASSERT(false);  // LCOV_EXCL_LINE
         }
 
         // strict mode: next byte must be EOF
@@ -717,8 +716,8 @@ class binary_reader
                 {
                     const int exp = (half >> 10u) & 0x1Fu;
                     const unsigned int mant = half & 0x3FFu;
-                    assert(0 <= exp and exp <= 32);
-                    assert(mant <= 1024);
+                    JSON_ASSERT(0 <= exp and exp <= 32);
+                    JSON_ASSERT(mant <= 1024);
                     switch (exp)
                     {
                         case 0:
@@ -2295,7 +2294,7 @@ class binary_reader
                 break;
 
             default:            // LCOV_EXCL_LINE
-                assert(false);  // LCOV_EXCL_LINE
+                JSON_ASSERT(false);  // LCOV_EXCL_LINE
         }
 
         return error_msg + " " + context + ": " + detail;
