@@ -27,24 +27,33 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+// avoid warning when assert does not abort
+#if defined(__GNUC__)
+    #pragma GCC diagnostic ignored "-Wstrict-overflow"
+#endif
+
 #include "doctest_compatibility.h"
 
 /// global variable to record side effect of assert calls
-int assert_counter = 0;
+static int assert_counter;
 
 /// set failure variable to true instead of calling assert(x)
-#define JSON_ASSERT(x) if (!(x)) ++assert_counter;
+#define JSON_ASSERT(x) {if (!(x)) ++assert_counter; }
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
 TEST_CASE("JSON_ASSERT(x)")
 {
-  const json j = {{"bar", 1}};
-  CHECK(assert_counter == 0);
+    assert_counter = 0;
+    const json j = {{"bar", 1}};
+    CHECK(assert_counter == 0);
 
-  // accessing non-exising key in const value would assert
-  j["foo"] == 1;
+    // accessing non-existing key in const value would assert
+    if (j["foo"] == 1)
+    {
+        CHECK(true);
+    }
 
-  CHECK(assert_counter == 1);
+    CHECK(assert_counter == 1);
 }
