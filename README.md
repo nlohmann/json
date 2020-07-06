@@ -886,7 +886,7 @@ The `to_json`/`from_json` functions for the `person` struct above can be created
 
 ```cpp
 namespace ns {
-    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(person, name, address, age);
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(person, name, address, age)
 }
 ```
 
@@ -901,7 +901,7 @@ namespace ns {
         int postcode;
         
       public:
-        NLOHMANN_DEFINE_TYPE_INTRUSIVE(address, street, housenumber, postcode);
+        NLOHMANN_DEFINE_TYPE_INTRUSIVE(address, street, housenumber, postcode)
     };
 }
 ```
