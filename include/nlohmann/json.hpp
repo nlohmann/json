@@ -2238,7 +2238,8 @@ class basic_json
     @param[in] error_handler  how to react on decoding errors; there are three
     possible values: `strict` (throws and exception in case a decoding error
     occurs; default), `replace` (replace invalid UTF-8 sequences with U+FFFD),
-    and `ignore` (ignore invalid UTF-8 sequences during serialization).
+    and `ignore` (ignore invalid UTF-8 sequences during serialization; all
+    bytes are copied to the output unchanged).
 
     @return string containing the serialization of the JSON value
 
