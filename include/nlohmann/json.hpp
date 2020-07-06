@@ -3020,6 +3020,18 @@ class basic_json
         return v;
     }
 
+    // specialization to allow to call get_to with a basic_json value
+    // see https://github.com/nlohmann/json/issues/2175
+    template<typename ValueType,
+             detail::enable_if_t <
+                 detail::is_basic_json<ValueType>::value,
+                 int> = 0>
+    ValueType & get_to(ValueType& v) const
+    {
+        v = *this;
+        return v;
+    }
+
     template <
         typename T, std::size_t N,
         typename Array = T (&)[N],
