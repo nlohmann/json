@@ -114,6 +114,7 @@ struct my_allocator : std::allocator<T>
     {
         if (next_destroy_fails)
         {
+            (void)p; // Ignored unused
             next_destroy_fails = false;
             throw std::bad_alloc();
         }

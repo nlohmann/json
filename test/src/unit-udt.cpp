@@ -817,7 +817,9 @@ class Evil
   public:
     Evil() = default;
     template <typename T>
-    Evil(T t) : m_i(sizeof(t)) {}
+    Evil(T t) : m_i(sizeof(t)) {
+      (void)t; // Ignored unused
+    }
 
     int m_i = 0;
 };
