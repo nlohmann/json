@@ -308,6 +308,7 @@ matrix:
     env:
       - COMPILER=clang++-7
       - CXXFLAGS=-std=c++1z
+      - CMAKE_CXX_STANDARD=17
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-7']
@@ -331,14 +332,12 @@ script:
   - if [[ "${COMPILER}" != "" ]]; then export CXX=${COMPILER}; fi
   # by default, use the single-header version
   - if [[ "${MULTIPLE_HEADERS}" == "" ]]; then export MULTIPLE_HEADERS=OFF; fi
+  # by default, use the cxx11 standard
+  - if [[ "${CMAKE_CXX_STANDARD}" == "" ]]; then export CMAKE_CXX_STANDARD=11; fi
 
   # compile and execute unit tests
   - mkdir -p build && cd build
-  - if [[ "${CMAKE_CXX_STANDARD}" != "" ]]; then
-    cmake .. ${CMAKE_OPTIONS} -DJSON_MultipleHeaders=${MULTIPLE_HEADERS} -DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD} -DJSON_BuildTests=On -GNinja && cmake --build . --config Release ;
-    else
-    cmake .. ${CMAKE_OPTIONS} -DJSON_MultipleHeaders=${MULTIPLE_HEADERS} -DJSON_BuildTests=On -GNinja && cmake --build . --config Release ;
-    fi
+  - cmake .. ${CMAKE_OPTIONS} -DJSON_MultipleHeaders=${MULTIPLE_HEADERS} -DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD} -DJSON_BuildTests=On -GNinja && cmake --build . --config Release ;
   - ctest -C Release --timeout 2700 -V -j
   - cd ..
 
