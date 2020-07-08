@@ -45,15 +45,16 @@ using nlohmann::json;
 
 TEST_CASE("JSON_ASSERT(x)")
 {
-    assert_counter = 0;
-    const json j = {{"bar", 1}};
-    CHECK(assert_counter == 0);
-
-    // accessing non-existing key in const value would assert
-    if (j["foo"] == 1)
+    SECTION("basic_json(first, second)")
     {
-        CHECK(true);
-    }
+        assert_counter = 0;
+        CHECK(assert_counter == 0);
 
-    CHECK(assert_counter == 1);
+        json::iterator it;
+        json j;
+
+        CHECK_THROWS_WITH_AS(json(it, j.end()), "[json.exception.invalid_iterator.201] iterators are not compatible", json::invalid_iterator);
+
+        CHECK(assert_counter == 1);
+    }
 }

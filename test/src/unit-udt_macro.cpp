@@ -60,9 +60,9 @@ class person_with_private_data
 class person_without_private_data_1
 {
   public:
-  std::string name = "";
-  int age = 0;
-  json metadata = nullptr;
+    std::string name = "";
+    int age = 0;
+    json metadata = nullptr;
 
     bool operator==(const person_without_private_data_1& rhs) const
     {
@@ -82,9 +82,9 @@ class person_without_private_data_1
 class person_without_private_data_2
 {
   public:
-  std::string name = "";
-  int age = 0;
-  json metadata = nullptr;
+    std::string name = "";
+    int age = 0;
+    json metadata = nullptr;
 
     bool operator==(const person_without_private_data_2& rhs) const
     {
