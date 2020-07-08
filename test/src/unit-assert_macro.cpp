@@ -43,6 +43,8 @@ static int assert_counter;
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+// the test assumes exceptions to work
+#if not defined(JSON_NOEXCEPTION)
 TEST_CASE("JSON_ASSERT(x)")
 {
     SECTION("basic_json(first, second)")
@@ -53,8 +55,11 @@ TEST_CASE("JSON_ASSERT(x)")
         json::iterator it;
         json j;
 
+        // in case assertions do not abort execution, an exception is thrown
         CHECK_THROWS_WITH_AS(json(it, j.end()), "[json.exception.invalid_iterator.201] iterators are not compatible", json::invalid_iterator);
 
+        // check that assertion actually happened
         CHECK(assert_counter == 1);
     }
 }
+#endif
