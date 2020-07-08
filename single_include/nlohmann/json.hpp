@@ -19715,7 +19715,7 @@ class basic_json
     template<class ValueType, typename std::enable_if<
                  std::is_convertible<basic_json_t, ValueType>::value
                  and not std::is_same<value_t, ValueType>::value, int>::type = 0>
-    ValueType value(const typename object_t::key_type& key, ValueType && default_value) const
+    ValueType value(const typename object_t::key_type& key, const ValueType& default_value) const
     {
         // at only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
@@ -19727,7 +19727,7 @@ class basic_json
                 return *it;
             }
 
-            return std::move(default_value);
+            return default_value;
         }
 
         JSON_THROW(type_error::create(306, "cannot use value() with " + std::string(type_name())));
@@ -19739,7 +19739,7 @@ class basic_json
     */
     string_t value(const typename object_t::key_type& key, const char* default_value) const
     {
-        return value(key, std::move(string_t(default_value)));
+        return value(key, string_t(default_value));
     }
 
     /*!
@@ -19787,7 +19787,7 @@ class basic_json
     */
     template<class ValueType, typename std::enable_if<
                  std::is_convertible<basic_json_t, ValueType>::value, int>::type = 0>
-    ValueType value(const json_pointer& ptr, ValueType && default_value) const
+    ValueType value(const json_pointer& ptr, const ValueType& default_value) const
     {
         // at only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
@@ -19799,7 +19799,7 @@ class basic_json
             }
             JSON_INTERNAL_CATCH (out_of_range&)
             {
-                return std::move(default_value);
+                return default_value;
             }
         }
 
@@ -19813,7 +19813,7 @@ class basic_json
     JSON_HEDLEY_NON_NULL(3)
     string_t value(const json_pointer& ptr, const char* default_value) const
     {
-        return value(ptr, std::move(string_t(default_value)));
+        return value(ptr, string_t(default_value));
     }
 
     /*!
