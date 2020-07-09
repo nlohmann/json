@@ -16363,8 +16363,8 @@ class basic_json
     using object_t = ObjectType<StringType,
           basic_json,
           object_comparator_t,
-          // Note: this forces object_t::value_type to match std::map's
-          AllocatorType<std::pair<const StringType, basic_json>>>;
+          AllocatorType<std::pair<const StringType,
+          basic_json>>>;
 
     /*!
     @brief a type for an array
