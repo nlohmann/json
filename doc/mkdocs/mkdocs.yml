@@ -49,6 +49,7 @@ nav:
     - features/json_patch.md
     - features/merge_patch.md
     - features/enum_conversion.md
+    - features/macros.md
     - Parsing:
       - features/parsing/index.md
       - features/parsing/parse_exceptions.md
