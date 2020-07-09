@@ -9030,6 +9030,20 @@ class lexer : public lexer_base<BasicJsonType>
         f = std::strtold(str, endptr);
     }
 
+    template < detail::enable_if_t<sizeof(number_unsigned_t) <= 64, int> = 0>
+               JSON_HEDLEY_NON_NULL(2)
+               auto strtoull(const char* str, char** str_end) -> decltype(std::strtoull(str, str_end, 10))
+    {
+        return std::strtoull(str, str_end, 10);
+    }
+
+    template < detail::enable_if_t<sizeof(number_integer_t) <= 64, int> = 0>
+               JSON_HEDLEY_NON_NULL(2)
+               auto strtoll(const char* str, char** str_end) -> decltype(std::strtoll(str, str_end, 10))
+    {
+        return std::strtoll(str, str_end, 10);
+    }
+
     /*!
     @brief scan a number literal
 
@@ -9354,7 +9368,7 @@ scan_number_done:
         // try to parse integers first and fall back to floats
         if (number_type == token_type::value_unsigned)
         {
-            const auto x = std::strtoull(token_buffer.data(), &endptr, 10);
+            const auto x = strtoull(token_buffer.data(), &endptr);
 
             // we checked the number format before
             assert(endptr == token_buffer.data() + token_buffer.size());
@@ -9370,7 +9384,7 @@ scan_number_done:
         }
         else if (number_type == token_type::value_integer)
         {
-            const auto x = std::strtoll(token_buffer.data(), &endptr, 10);
+            const auto x = strtoll(token_buffer.data(), &endptr);
 
             // we checked the number format before
             assert(endptr == token_buffer.data() + token_buffer.size());
@@ -9786,7 +9800,7 @@ enum class parse_event_t : uint8_t
 
 template<typename BasicJsonType>
 using parser_callback_t =
-    std::function<bool(int depth, parse_event_t event, BasicJsonType& parsed)>;
+std::function<bool(int depth, parse_event_t event, BasicJsonType& parsed)>;
 
 /*!
 @brief syntax analysis
@@ -9803,7 +9817,7 @@ class parser
     using lexer_t = lexer<BasicJsonType, InputAdapterType>;
     using token_type = typename lexer_t::token_type;
 
-  public:
+public:
     /// a parser reading from an input adapter
     explicit parser(InputAdapterType&& adapter,
                     const parser_callback_t<BasicJsonType> cb = nullptr,
@@ -9913,7 +9927,7 @@ class parser
         return result;
     }
 
-  private:
+private:
     template <typename SAX>
     JSON_HEDLEY_NON_NULL(2)
     bool sax_parse_internal(SAX* sax)
@@ -10232,7 +10246,7 @@ class parser
         return error_msg;
     }
 
-  private:
+private:
     /// callback function
     const parser_callback_t<BasicJsonType> callback = nullptr;
     /// the type of the last read token
@@ -10455,7 +10469,7 @@ class iter_impl
     static_assert(is_basic_json<typename std::remove_const<BasicJsonType>::type>::value,
                   "iter_impl only accepts (const) basic_json");
 
-  public:
+public:
 
     /// The std::iterator class template (used as a base class to provide typedefs) is deprecated in C++17.
     /// The C++ Standard has never required user-defined iterators to derive from std::iterator.
@@ -10568,7 +10582,7 @@ class iter_impl
         return *this;
     }
 
-  private:
+private:
     /*!
     @brief set the iterator to the first value
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
@@ -10636,7 +10650,7 @@ class iter_impl
         }
     }
 
-  public:
+public:
     /*!
     @brief return a reference to the value pointed to by the iterator
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
@@ -11032,7 +11046,7 @@ class iter_impl
         return operator*();
     }
 
-  private:
+private:
     /// associated JSON instance
     pointer m_object = nullptr;
     /// the actual iterator of the associated instance
@@ -11079,7 +11093,7 @@ create @ref const_reverse_iterator).
 template<typename Base>
 class json_reverse_iterator : public std::reverse_iterator<Base>
 {
-  public:
+public:
     using difference_type = std::ptrdiff_t;
     /// shortcut to the reverse iterator adapter
     using base_iterator = std::reverse_iterator<Base>;
@@ -11194,7 +11208,7 @@ class json_pointer
     NLOHMANN_BASIC_JSON_TPL_DECLARATION
     friend class basic_json;
 
-  public:
+public:
     /*!
     @brief create JSON pointer
 
@@ -11492,7 +11506,7 @@ class json_pointer
         return reference_tokens.empty();
     }
 
-  private:
+private:
     /*!
     @param[in] s  reference token to be converted into an array index
 
@@ -12163,7 +12177,7 @@ namespace detail
 template<typename BasicJsonType>
 class json_ref
 {
-  public:
+public:
     using value_type = BasicJsonType;
 
     json_ref(value_type&& value)
@@ -12218,7 +12232,7 @@ class json_ref
         return static_cast<value_type const*>(value_ref);
     }
 
-  private:
+private:
     mutable value_type owned_value = nullptr;
     value_type* value_ref = nullptr;
     const bool is_rvalue = true;
@@ -12281,7 +12295,7 @@ using output_adapter_t = std::shared_ptr<output_adapter_protocol<CharType>>;
 template<typename CharType>
 class output_vector_adapter : public output_adapter_protocol<CharType>
 {
-  public:
+public:
     explicit output_vector_adapter(std::vector<CharType>& vec) noexcept
         : v(vec)
     {}
@@ -12297,7 +12311,7 @@ class output_vector_adapter : public output_adapter_protocol<CharType>
         std::copy(s, s + length, std::back_inserter(v));
     }
 
-  private:
+private:
     std::vector<CharType>& v;
 };
 
@@ -12305,7 +12319,7 @@ class output_vector_adapter : public output_adapter_protocol<CharType>
 template<typename CharType>
 class output_stream_adapter : public output_adapter_protocol<CharType>
 {
-  public:
+public:
     explicit output_stream_adapter(std::basic_ostream<CharType>& s) noexcept
         : stream(s)
     {}
@@ -12321,7 +12335,7 @@ class output_stream_adapter : public output_adapter_protocol<CharType>
         stream.write(s, static_cast<std::streamsize>(length));
     }
 
-  private:
+private:
     std::basic_ostream<CharType>& stream;
 };
 
@@ -12329,7 +12343,7 @@ class output_stream_adapter : public output_adapter_protocol<CharType>
 template<typename CharType, typename StringType = std::basic_string<CharType>>
 class output_string_adapter : public output_adapter_protocol<CharType>
 {
-  public:
+public:
     explicit output_string_adapter(StringType& s) noexcept
         : str(s)
     {}
@@ -12345,14 +12359,14 @@ class output_string_adapter : public output_adapter_protocol<CharType>
         str.append(s, length);
     }
 
-  private:
+private:
     StringType& str;
 };
 
 template<typename CharType, typename StringType = std::basic_string<CharType>>
 class output_adapter
 {
-  public:
+public:
     output_adapter(std::vector<CharType>& vec)
         : oa(std::make_shared<output_vector_adapter<CharType>>(vec)) {}
 
@@ -12367,7 +12381,7 @@ class output_adapter
         return oa;
     }
 
-  private:
+private:
     output_adapter_t<CharType> oa = nullptr;
 };
 }  // namespace detail
@@ -12392,7 +12406,7 @@ class binary_writer
     using binary_t = typename BasicJsonType::binary_t;
     using number_float_t = typename BasicJsonType::number_float_t;
 
-  public:
+public:
     /*!
     @brief create a binary writer
 
@@ -13248,7 +13262,7 @@ class binary_writer
         }
     }
 
-  private:
+private:
     //////////
     // BSON //
     //////////
@@ -13877,7 +13891,7 @@ class binary_writer
         }
     }
 
-  public:
+public:
     // The following to_char_type functions are implement the conversion
     // between uint8_t and CharType. In case CharType is not unsigned,
     // such a conversion is required to allow values greater than 128.
@@ -13918,7 +13932,7 @@ class binary_writer
         return x;
     }
 
-  private:
+private:
     /// whether we can assume little endianess
     const bool is_little_endian = little_endianess();
 
@@ -15099,7 +15113,7 @@ class serializer
     static constexpr std::uint8_t UTF8_ACCEPT = 0;
     static constexpr std::uint8_t UTF8_REJECT = 1;
 
-  public:
+public:
     /*!
     @param[in] s  output stream to serialize to
     @param[in] ichar  indentation character to use
@@ -15414,7 +15428,7 @@ class serializer
         }
     }
 
-  private:
+private:
     /*!
     @brief dump escaped string
 
@@ -15970,7 +15984,7 @@ class serializer
         return static_cast<number_unsigned_t>(-(x + 1)) + 1;
     }
 
-  private:
+private:
     /// the output of the serializer
     output_adapter_t<char> o = nullptr;
 
@@ -16128,7 +16142,7 @@ class basic_json
         detail::parser_callback_t<basic_json>cb = nullptr,
         const bool allow_exceptions = true,
         const bool ignore_comments = false
-    )
+                                 )
     {
         return ::nlohmann::detail::parser<basic_json, InputAdapterType>(std::move(adapter),
                 std::move(cb), allow_exceptions, ignore_comments);
@@ -24664,7 +24678,7 @@ template<>
 inline void swap<nlohmann::json>(nlohmann::json& j1, nlohmann::json& j2) noexcept(
     is_nothrow_move_constructible<nlohmann::json>::value and
     is_nothrow_move_assignable<nlohmann::json>::value
-)
+                              )
 {
     j1.swap(j2);
 }

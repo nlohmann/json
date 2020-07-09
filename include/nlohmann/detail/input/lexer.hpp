@@ -918,6 +918,20 @@ class lexer : public lexer_base<BasicJsonType>
         f = std::strtold(str, endptr);
     }
 
+    template < detail::enable_if_t<sizeof(number_unsigned_t) <= 64, int> = 0>
+               JSON_HEDLEY_NON_NULL(2)
+               auto strtoull(const char* str, char** str_end) -> decltype(std::strtoull(str, str_end, 10))
+    {
+        return std::strtoull(str, str_end, 10);
+    }
+
+    template < detail::enable_if_t<sizeof(number_integer_t) <= 64, int> = 0>
+               JSON_HEDLEY_NON_NULL(2)
+               auto strtoll(const char* str, char** str_end) -> decltype(std::strtoll(str, str_end, 10))
+    {
+        return std::strtoll(str, str_end, 10);
+    }
+
     /*!
     @brief scan a number literal
 
@@ -1242,7 +1256,7 @@ scan_number_done:
         // try to parse integers first and fall back to floats
         if (number_type == token_type::value_unsigned)
         {
-            const auto x = std::strtoull(token_buffer.data(), &endptr, 10);
+            const auto x = strtoull(token_buffer.data(), &endptr);
 
             // we checked the number format before
             assert(endptr == token_buffer.data() + token_buffer.size());
@@ -1258,7 +1272,7 @@ scan_number_done:
         }
         else if (number_type == token_type::value_integer)
         {
-            const auto x = std::strtoll(token_buffer.data(), &endptr, 10);
+            const auto x = strtoll(token_buffer.data(), &endptr);
 
             // we checked the number format before
             assert(endptr == token_buffer.data() + token_buffer.size());
