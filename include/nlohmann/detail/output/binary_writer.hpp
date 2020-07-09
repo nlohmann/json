@@ -38,7 +38,7 @@ class binary_writer
     */
     explicit binary_writer(output_adapter_t<CharType> adapter) : oa(adapter)
     {
-        assert(oa);
+        JSON_ASSERT(oa);
     }
 
     /*!
@@ -754,7 +754,7 @@ class binary_writer
                 bool prefix_required = true;
                 if (use_type and not j.m_value.array->empty())
                 {
-                    assert(use_count);
+                    JSON_ASSERT(use_count);
                     const CharType first_prefix = ubjson_prefix(j.front());
                     const bool same_prefix = std::all_of(j.begin() + 1, j.end(),
                                                          [this, first_prefix](const BasicJsonType & v)
@@ -798,7 +798,7 @@ class binary_writer
 
                 if (use_type and not j.m_value.binary->empty())
                 {
-                    assert(use_count);
+                    JSON_ASSERT(use_count);
                     oa->write_character(to_char_type('$'));
                     oa->write_character('U');
                 }
@@ -842,7 +842,7 @@ class binary_writer
                 bool prefix_required = true;
                 if (use_type and not j.m_value.object->empty())
                 {
-                    assert(use_count);
+                    JSON_ASSERT(use_count);
                     const CharType first_prefix = ubjson_prefix(j.front());
                     const bool same_prefix = std::all_of(j.begin(), j.end(),
                                                          [this, first_prefix](const BasicJsonType & v)
@@ -1134,7 +1134,7 @@ class binary_writer
 
             // LCOV_EXCL_START
             default:
-                assert(false);
+                JSON_ASSERT(false);
                 return 0ul;
                 // LCOV_EXCL_STOP
         }
@@ -1181,7 +1181,7 @@ class binary_writer
 
             // LCOV_EXCL_START
             default:
-                assert(false);
+                JSON_ASSERT(false);
                 return;
                 // LCOV_EXCL_STOP
         }

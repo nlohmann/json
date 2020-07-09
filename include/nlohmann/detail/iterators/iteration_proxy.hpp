@@ -74,7 +74,7 @@ template <typename IteratorType> class iteration_proxy_value
     /// return key of the iterator
     const string_type& key() const
     {
-        assert(anchor.m_object != nullptr);
+        JSON_ASSERT(anchor.m_object != nullptr);
 
         switch (anchor.m_object->type())
         {

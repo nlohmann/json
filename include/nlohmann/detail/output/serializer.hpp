@@ -2,7 +2,6 @@
 
 #include <algorithm> // reverse, remove, fill, find, none_of
 #include <array> // array
-#include <cassert> // assert
 #include <clocale> // localeconv, lconv
 #include <cmath> // labs, isfinite, isnan, signbit
 #include <cstddef> // size_t, ptrdiff_t
@@ -135,8 +134,8 @@ class serializer
                     }
 
                     // last element
-                    assert(i != val.m_value.object->cend());
-                    assert(std::next(i) == val.m_value.object->cend());
+                    JSON_ASSERT(i != val.m_value.object->cend());
+                    JSON_ASSERT(std::next(i) == val.m_value.object->cend());
                     o->write_characters(indent_string.c_str(), new_indent);
                     o->write_character('\"');
                     dump_escaped(i->first, ensure_ascii);
@@ -163,8 +162,8 @@ class serializer
                     }
 
                     // last element
-                    assert(i != val.m_value.object->cend());
-                    assert(std::next(i) == val.m_value.object->cend());
+                    JSON_ASSERT(i != val.m_value.object->cend());
+                    JSON_ASSERT(std::next(i) == val.m_value.object->cend());
                     o->write_character('\"');
                     dump_escaped(i->first, ensure_ascii);
                     o->write_characters("\":", 2);
@@ -205,7 +204,7 @@ class serializer
                     }
 
                     // last element
-                    assert(not val.m_value.array->empty());
+                    JSON_ASSERT(not val.m_value.array->empty());
                     o->write_characters(indent_string.c_str(), new_indent);
                     dump(val.m_value.array->back(), true, ensure_ascii, indent_step, new_indent);
 
@@ -226,7 +225,7 @@ class serializer
                     }
 
                     // last element
-                    assert(not val.m_value.array->empty());
+                    JSON_ASSERT(not val.m_value.array->empty());
                     dump(val.m_value.array->back(), false, ensure_ascii, indent_step, current_indent);
 
                     o->write_character(']');
@@ -360,7 +359,7 @@ class serializer
             }
 
             default:            // LCOV_EXCL_LINE
-                assert(false);  // LCOV_EXCL_LINE
+                JSON_ASSERT(false);  // LCOV_EXCL_LINE
         }
     }
 
@@ -559,7 +558,7 @@ class serializer
                         }
 
                         default:            // LCOV_EXCL_LINE
-                            assert(false);  // LCOV_EXCL_LINE
+                            JSON_ASSERT(false);  // LCOV_EXCL_LINE
                     }
                     break;
                 }
@@ -622,7 +621,7 @@ class serializer
                 }
 
                 default:            // LCOV_EXCL_LINE
-                    assert(false);  // LCOV_EXCL_LINE
+                    JSON_ASSERT(false);  // LCOV_EXCL_LINE
             }
         }
     }
@@ -723,7 +722,7 @@ class serializer
         }
 
         // spare 1 byte for '\0'
-        assert(n_chars < number_buffer.size() - 1);
+        JSON_ASSERT(n_chars < number_buffer.size() - 1);
 
         // jump to the end to generate the string from backward
         // so we later avoid reversing the result
@@ -799,9 +798,9 @@ class serializer
         std::ptrdiff_t len = (std::snprintf)(number_buffer.data(), number_buffer.size(), "%.*g", d, x);
 
         // negative value indicates an error
-        assert(len > 0);
+        JSON_ASSERT(len > 0);
         // check if buffer was large enough
-        assert(static_cast<std::size_t>(len) < number_buffer.size());
+        JSON_ASSERT(static_cast<std::size_t>(len) < number_buffer.size());
 
         // erase thousands separator
         if (thousands_sep != '\0')
@@ -809,7 +808,7 @@ class serializer
             const auto end = std::remove(number_buffer.begin(),
                                          number_buffer.begin() + len, thousands_sep);
             std::fill(end, number_buffer.end(), '\0');
-            assert((end - number_buffer.begin()) <= len);
+            JSON_ASSERT((end - number_buffer.begin()) <= len);
             len = (end - number_buffer.begin());
         }
 
@@ -889,7 +888,7 @@ class serializer
                 : (0xFFu >> type) & (byte);
 
         std::size_t index = 256u + static_cast<size_t>(state) * 16u + static_cast<size_t>(type);
-        assert(index < 400);
+        JSON_ASSERT(index < 400);
         state = utf8d[index];
         return state;
     }
@@ -901,7 +900,7 @@ class serializer
      */
     number_unsigned_t remove_sign(number_unsigned_t x)
     {
-        assert(false); // LCOV_EXCL_LINE
+        JSON_ASSERT(false); // LCOV_EXCL_LINE
         return x; // LCOV_EXCL_LINE
     }
 
@@ -916,7 +915,7 @@ class serializer
      */
     inline number_unsigned_t remove_sign(number_integer_t x) noexcept
     {
-        assert(x < 0 and x < (std::numeric_limits<number_integer_t>::max)());
+        JSON_ASSERT(x < 0 and x < (std::numeric_limits<number_integer_t>::max)());
         return static_cast<number_unsigned_t>(-(x + 1)) + 1;
     }
 

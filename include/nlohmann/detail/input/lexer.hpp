@@ -135,7 +135,7 @@ class lexer : public lexer_base<BasicJsonType>
     static char get_decimal_point() noexcept
     {
         const auto* loc = localeconv();
-        assert(loc != nullptr);
+        JSON_ASSERT(loc != nullptr);
         return (loc->decimal_point == nullptr) ? '.' : *(loc->decimal_point);
     }
 
@@ -161,7 +161,7 @@ class lexer : public lexer_base<BasicJsonType>
     int get_codepoint()
     {
         // this function only makes sense after reading `\u`
-        assert(current == 'u');
+        JSON_ASSERT(current == 'u');
         int codepoint = 0;
 
         const auto factors = { 12u, 8u, 4u, 0u };
@@ -187,7 +187,7 @@ class lexer : public lexer_base<BasicJsonType>
             }
         }
 
-        assert(0x0000 <= codepoint and codepoint <= 0xFFFF);
+        JSON_ASSERT(0x0000 <= codepoint and codepoint <= 0xFFFF);
         return codepoint;
     }
 
@@ -208,7 +208,7 @@ class lexer : public lexer_base<BasicJsonType>
     */
     bool next_byte_in_range(std::initializer_list<char_int_type> ranges)
     {
-        assert(ranges.size() == 2 or ranges.size() == 4 or ranges.size() == 6);
+        JSON_ASSERT(ranges.size() == 2 or ranges.size() == 4 or ranges.size() == 6);
         add(current);
 
         for (auto range = ranges.begin(); range != ranges.end(); ++range)
@@ -249,7 +249,7 @@ class lexer : public lexer_base<BasicJsonType>
         reset();
 
         // we entered the function by reading an open quote
-        assert(current == '\"');
+        JSON_ASSERT(current == '\"');
 
         while (true)
         {
@@ -369,7 +369,7 @@ class lexer : public lexer_base<BasicJsonType>
                             }
 
                             // result of the above calculation yields a proper codepoint
-                            assert(0x00 <= codepoint and codepoint <= 0x10FFFF);
+                            JSON_ASSERT(0x00 <= codepoint and codepoint <= 0x10FFFF);
 
                             // translate codepoint into bytes
                             if (codepoint < 0x80)
@@ -998,7 +998,7 @@ class lexer : public lexer_base<BasicJsonType>
 
             // all other characters are rejected outside scan_number()
             default:            // LCOV_EXCL_LINE
-                assert(false);  // LCOV_EXCL_LINE
+                JSON_ASSERT(false);  // LCOV_EXCL_LINE
         }
 
 scan_number_minus:
@@ -1245,7 +1245,7 @@ scan_number_done:
             const auto x = std::strtoull(token_buffer.data(), &endptr, 10);
 
             // we checked the number format before
-            assert(endptr == token_buffer.data() + token_buffer.size());
+            JSON_ASSERT(endptr == token_buffer.data() + token_buffer.size());
 
             if (errno == 0)
             {
@@ -1261,7 +1261,7 @@ scan_number_done:
             const auto x = std::strtoll(token_buffer.data(), &endptr, 10);
 
             // we checked the number format before
-            assert(endptr == token_buffer.data() + token_buffer.size());
+            JSON_ASSERT(endptr == token_buffer.data() + token_buffer.size());
 
             if (errno == 0)
             {
@@ -1278,7 +1278,7 @@ scan_number_done:
         strtof(value_float, token_buffer.data(), &endptr);
 
         // we checked the number format before
-        assert(endptr == token_buffer.data() + token_buffer.size());
+        JSON_ASSERT(endptr == token_buffer.data() + token_buffer.size());
 
         return token_type::value_float;
     }
@@ -1292,7 +1292,7 @@ scan_number_done:
     token_type scan_literal(const char_type* literal_text, const std::size_t length,
                             token_type return_type)
     {
-        assert(std::char_traits<char_type>::to_char_type(current) == literal_text[0]);
+        JSON_ASSERT(std::char_traits<char_type>::to_char_type(current) == literal_text[0]);
         for (std::size_t i = 1; i < length; ++i)
         {
             if (JSON_HEDLEY_UNLIKELY(std::char_traits<char_type>::to_char_type(get()) != literal_text[i]))
@@ -1384,7 +1384,7 @@ scan_number_done:
 
         if (JSON_HEDLEY_LIKELY(current != std::char_traits<char_type>::eof()))
         {
-            assert(not token_string.empty());
+            JSON_ASSERT(not token_string.empty());
             token_string.pop_back();
         }
     }

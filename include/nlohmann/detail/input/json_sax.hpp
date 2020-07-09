@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cassert> // assert
 #include <cstddef>
 #include <string> // string
 #include <utility> // move
@@ -280,7 +279,7 @@ class json_sax_dom_parser
                 case 5:
                     JSON_THROW(*dynamic_cast<const detail::other_error*>(&ex));
                 default:
-                    assert(false);
+                    JSON_ASSERT(false);
                     // LCOV_EXCL_STOP
             }
         }
@@ -309,7 +308,7 @@ class json_sax_dom_parser
             return &root;
         }
 
-        assert(ref_stack.back()->is_array() or ref_stack.back()->is_object());
+        JSON_ASSERT(ref_stack.back()->is_array() or ref_stack.back()->is_object());
 
         if (ref_stack.back()->is_array())
         {
@@ -317,8 +316,8 @@ class json_sax_dom_parser
             return &(ref_stack.back()->m_value.array->back());
         }
 
-        assert(ref_stack.back()->is_object());
-        assert(object_element);
+        JSON_ASSERT(ref_stack.back()->is_object());
+        JSON_ASSERT(object_element);
         *object_element = BasicJsonType(std::forward<Value>(v));
         return object_element;
     }
@@ -447,8 +446,8 @@ class json_sax_dom_callback_parser
             *ref_stack.back() = discarded;
         }
 
-        assert(not ref_stack.empty());
-        assert(not keep_stack.empty());
+        JSON_ASSERT(not ref_stack.empty());
+        JSON_ASSERT(not keep_stack.empty());
         ref_stack.pop_back();
         keep_stack.pop_back();
 
@@ -499,8 +498,8 @@ class json_sax_dom_callback_parser
             }
         }
 
-        assert(not ref_stack.empty());
-        assert(not keep_stack.empty());
+        JSON_ASSERT(not ref_stack.empty());
+        JSON_ASSERT(not keep_stack.empty());
         ref_stack.pop_back();
         keep_stack.pop_back();
 
@@ -534,7 +533,7 @@ class json_sax_dom_callback_parser
                 case 5:
                     JSON_THROW(*dynamic_cast<const detail::other_error*>(&ex));
                 default:
-                    assert(false);
+                    JSON_ASSERT(false);
                     // LCOV_EXCL_STOP
             }
         }
@@ -565,7 +564,7 @@ class json_sax_dom_callback_parser
     template<typename Value>
     std::pair<bool, BasicJsonType*> handle_value(Value&& v, const bool skip_callback = false)
     {
-        assert(not keep_stack.empty());
+        JSON_ASSERT(not keep_stack.empty());
 
         // do not handle this value if we know it would be added to a discarded
         // container
@@ -600,7 +599,7 @@ class json_sax_dom_callback_parser
         }
 
         // we now only expect arrays and objects
-        assert(ref_stack.back()->is_array() or ref_stack.back()->is_object());
+        JSON_ASSERT(ref_stack.back()->is_array() or ref_stack.back()->is_object());
 
         // array
         if (ref_stack.back()->is_array())
@@ -610,9 +609,9 @@ class json_sax_dom_callback_parser
         }
 
         // object
-        assert(ref_stack.back()->is_object());
+        JSON_ASSERT(ref_stack.back()->is_object());
         // check if we should store an element for the current key
-        assert(not key_keep_stack.empty());
+        JSON_ASSERT(not key_keep_stack.empty());
         const bool store_element = key_keep_stack.back();
         key_keep_stack.pop_back();
 
@@ -621,7 +620,7 @@ class json_sax_dom_callback_parser
             return {false, nullptr};
         }
 
-        assert(object_element);
+        JSON_ASSERT(object_element);
         *object_element = std::move(value);
         return {true, object_element};
     }
