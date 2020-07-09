@@ -942,7 +942,7 @@ class lexer : public lexer_base<BasicJsonType>
 
         if (str_end != nullptr)
         {
-            *str_end = (char*)p;
+            *str_end = const_cast<char*>(p);
         }
 
         return val;
@@ -978,7 +978,7 @@ class lexer : public lexer_base<BasicJsonType>
 
         if (str_end != nullptr)
         {
-            *str_end = (char*)p;
+            *str_end = const_cast<char*>(p);
         }
 
         return val;

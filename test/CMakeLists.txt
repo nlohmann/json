@@ -94,6 +94,7 @@ endif()
 set(files
     src/unit-algorithms.cpp
     src/unit-allocator.cpp
+    src/unit-alt-number.cpp
     src/unit-alt-string.cpp
     src/unit-bson.cpp
     src/unit-capacity.cpp
