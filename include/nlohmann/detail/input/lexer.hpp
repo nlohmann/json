@@ -918,18 +918,70 @@ class lexer : public lexer_base<BasicJsonType>
         f = std::strtold(str, endptr);
     }
 
-    template < detail::enable_if_t<sizeof(number_unsigned_t) <= 64, int> = 0>
-               JSON_HEDLEY_NON_NULL(2)
-               auto strtoull(const char* str, char** str_end) -> decltype(std::strtoull(str, str_end, 10))
+    template<typename NumberType>
+    struct is_64_bit : std::integral_constant < bool, (sizeof(NumberType) <= 8) >
+    {};
+
+    JSON_HEDLEY_NON_NULL(2)
+    unsigned long long strtoull(const char* str, char** str_end, std::true_type)
     {
         return std::strtoull(str, str_end, 10);
     }
 
-    template < detail::enable_if_t<sizeof(number_integer_t) <= 64, int> = 0>
-               JSON_HEDLEY_NON_NULL(2)
-               auto strtoll(const char* str, char** str_end) -> decltype(std::strtoll(str, str_end, 10))
+    JSON_HEDLEY_NON_NULL(2)
+    number_unsigned_t strtoull(const char* str, char** str_end, std::false_type)
+    {
+        number_unsigned_t val = 0;
+        const char* p = str;
+
+        while (*p >= '0' and * p <= '9')
+        {
+            val = (10 * val) + (*p - '0');
+            p++;
+        }
+
+        if (str_end != nullptr)
+        {
+            *str_end = (char*)p;
+        }
+
+        return val;
+    }
+
+    JSON_HEDLEY_NON_NULL(2)
+    long long strtoll(const char* str, char** str_end, std::true_type)
     {
         return std::strtoll(str, str_end, 10);
+    }
+
+    JSON_HEDLEY_NON_NULL(2)
+    number_integer_t strtoll(const char* str, char** str_end, std::false_type)
+    {
+        number_integer_t val = 0;
+        const char* p = str;
+
+        if (*p == '-')
+        {
+            p++;
+        }
+
+        while (*p >= '0' and * p <= '9')
+        {
+            val = (10 * val) + (*p - '0');
+            p++;
+        }
+
+        if (*str == '-')
+        {
+            val = val * -1;
+        }
+
+        if (str_end != nullptr)
+        {
+            *str_end = (char*)p;
+        }
+
+        return val;
     }
 
     /*!
@@ -1256,7 +1308,7 @@ scan_number_done:
         // try to parse integers first and fall back to floats
         if (number_type == token_type::value_unsigned)
         {
-            const auto x = strtoull(token_buffer.data(), &endptr);
+            const auto x = strtoull(token_buffer.data(), &endptr, is_64_bit<number_unsigned_t>());
 
             // we checked the number format before
             assert(endptr == token_buffer.data() + token_buffer.size());
@@ -1272,7 +1324,7 @@ scan_number_done:
         }
         else if (number_type == token_type::value_integer)
         {
-            const auto x = strtoll(token_buffer.data(), &endptr);
+            const auto x = strtoll(token_buffer.data(), &endptr, is_64_bit<number_integer_t>());
 
             // we checked the number format before
             assert(endptr == token_buffer.data() + token_buffer.size());
