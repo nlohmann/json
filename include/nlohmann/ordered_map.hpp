@@ -57,7 +57,6 @@ struct ordered_map : std::vector<std::pair<const Key, T>, Allocator>
                 // Since we cannot move const Keys, re-construct them in place
                 for (auto next = it; ++next != this->end(); ++it)
                 {
-                    // *it = std::move(*next); // deleted
                     it->~value_type(); // Destroy but keep allocation
                     new (&*it) value_type{std::move(*next)};
                 }
