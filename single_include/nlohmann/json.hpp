@@ -35,7 +35,6 @@ SOFTWARE.
 #define NLOHMANN_JSON_VERSION_PATCH 0
 
 #include <algorithm> // all_of, find, for_each
-#include <cassert> // assert
 #include <cstddef> // nullptr_t, ptrdiff_t, size_t
 #include <functional> // hash, less
 #include <initializer_list> // initializer_list
@@ -2105,6 +2104,12 @@ JSON_HEDLEY_DIAGNOSTIC_POP
     #define JSON_INTERNAL_CATCH JSON_INTERNAL_CATCH_USER
 #endif
 
+// allow to override assert
+#if !defined(JSON_ASSERT)
+    #include <cassert> // assert
+    #define JSON_ASSERT(x) assert(x)
+#endif
+
 /*!
 @brief macro to briefly define a mapping between an enum and JSON
 @def NLOHMANN_JSON_SERIALIZE_ENUM
@@ -3757,7 +3762,7 @@ template <typename IteratorType> class iteration_proxy_value
     /// return key of the iterator
     const string_type& key() const
     {
-        assert(anchor.m_object != nullptr);
+        JSON_ASSERT(anchor.m_object != nullptr);
 
         switch (anchor.m_object->type())
         {
@@ -4451,7 +4456,6 @@ class byte_container_with_subtype : public BinaryType
 
 #include <algorithm> // generate_n
 #include <array> // array
-#include <cassert> // assert
 #include <cmath> // ldexp
 #include <cstddef> // size_t
 #include <cstdint> // uint8_t, uint16_t, uint32_t, uint64_t
@@ -4468,7 +4472,6 @@ class byte_container_with_subtype : public BinaryType
 
 
 #include <array> // array
-#include <cassert> // assert
 #include <cstddef> // size_t
 #include <cstdio> //FILE *
 #include <cstring> // strlen
@@ -4766,13 +4769,13 @@ class wide_string_input_adapter
         {
             fill_buffer<sizeof(WideCharType)>();
 
-            assert(utf8_bytes_filled > 0);
-            assert(utf8_bytes_index == 0);
+            JSON_ASSERT(utf8_bytes_filled > 0);
+            JSON_ASSERT(utf8_bytes_index == 0);
         }
 
         // use buffer
-        assert(utf8_bytes_filled > 0);
-        assert(utf8_bytes_index < utf8_bytes_filled);
+        JSON_ASSERT(utf8_bytes_filled > 0);
+        JSON_ASSERT(utf8_bytes_index < utf8_bytes_filled);
         return utf8_bytes[utf8_bytes_index++];
     }
 
@@ -4926,7 +4929,6 @@ class span_input_adapter
 // #include <nlohmann/detail/input/json_sax.hpp>
 
 
-#include <cassert> // assert
 #include <cstddef>
 #include <string> // string
 #include <utility> // move
@@ -5208,7 +5210,7 @@ class json_sax_dom_parser
                 case 5:
                     JSON_THROW(*dynamic_cast<const detail::other_error*>(&ex));
                 default:
-                    assert(false);
+                    JSON_ASSERT(false);
                     // LCOV_EXCL_STOP
             }
         }
@@ -5237,7 +5239,7 @@ class json_sax_dom_parser
             return &root;
         }
 
-        assert(ref_stack.back()->is_array() or ref_stack.back()->is_object());
+        JSON_ASSERT(ref_stack.back()->is_array() or ref_stack.back()->is_object());
 
         if (ref_stack.back()->is_array())
         {
@@ -5245,8 +5247,8 @@ class json_sax_dom_parser
             return &(ref_stack.back()->m_value.array->back());
         }
 
-        assert(ref_stack.back()->is_object());
-        assert(object_element);
+        JSON_ASSERT(ref_stack.back()->is_object());
+        JSON_ASSERT(object_element);
         *object_element = BasicJsonType(std::forward<Value>(v));
         return object_element;
     }
@@ -5375,8 +5377,8 @@ class json_sax_dom_callback_parser
             *ref_stack.back() = discarded;
         }
 
-        assert(not ref_stack.empty());
-        assert(not keep_stack.empty());
+        JSON_ASSERT(not ref_stack.empty());
+        JSON_ASSERT(not keep_stack.empty());
         ref_stack.pop_back();
         keep_stack.pop_back();
 
@@ -5427,8 +5429,8 @@ class json_sax_dom_callback_parser
             }
         }
 
-        assert(not ref_stack.empty());
-        assert(not keep_stack.empty());
+        JSON_ASSERT(not ref_stack.empty());
+        JSON_ASSERT(not keep_stack.empty());
         ref_stack.pop_back();
         keep_stack.pop_back();
 
@@ -5462,7 +5464,7 @@ class json_sax_dom_callback_parser
                 case 5:
                     JSON_THROW(*dynamic_cast<const detail::other_error*>(&ex));
                 default:
-                    assert(false);
+                    JSON_ASSERT(false);
                     // LCOV_EXCL_STOP
             }
         }
@@ -5493,7 +5495,7 @@ class json_sax_dom_callback_parser
     template<typename Value>
     std::pair<bool, BasicJsonType*> handle_value(Value&& v, const bool skip_callback = false)
     {
-        assert(not keep_stack.empty());
+        JSON_ASSERT(not keep_stack.empty());
 
         // do not handle this value if we know it would be added to a discarded
         // container
@@ -5528,7 +5530,7 @@ class json_sax_dom_callback_parser
         }
 
         // we now only expect arrays and objects
-        assert(ref_stack.back()->is_array() or ref_stack.back()->is_object());
+        JSON_ASSERT(ref_stack.back()->is_array() or ref_stack.back()->is_object());
 
         // array
         if (ref_stack.back()->is_array())
@@ -5538,9 +5540,9 @@ class json_sax_dom_callback_parser
         }
 
         // object
-        assert(ref_stack.back()->is_object());
+        JSON_ASSERT(ref_stack.back()->is_object());
         // check if we should store an element for the current key
-        assert(not key_keep_stack.empty());
+        JSON_ASSERT(not key_keep_stack.empty());
         const bool store_element = key_keep_stack.back();
         key_keep_stack.pop_back();
 
@@ -5549,7 +5551,7 @@ class json_sax_dom_callback_parser
             return {false, nullptr};
         }
 
-        assert(object_element);
+        JSON_ASSERT(object_element);
         *object_element = std::move(value);
         return {true, object_element};
     }
@@ -5893,7 +5895,7 @@ class binary_reader
                 break;
 
             default:            // LCOV_EXCL_LINE
-                assert(false);  // LCOV_EXCL_LINE
+                JSON_ASSERT(false);  // LCOV_EXCL_LINE
         }
 
         // strict mode: next byte must be EOF
@@ -6501,8 +6503,8 @@ class binary_reader
                 {
                     const int exp = (half >> 10u) & 0x1Fu;
                     const unsigned int mant = half & 0x3FFu;
-                    assert(0 <= exp and exp <= 32);
-                    assert(mant <= 1024);
+                    JSON_ASSERT(0 <= exp and exp <= 32);
+                    JSON_ASSERT(mant <= 1024);
                     switch (exp)
                     {
                         case 0:
@@ -8079,7 +8081,7 @@ class binary_reader
                 break;
 
             default:            // LCOV_EXCL_LINE
-                assert(false);  // LCOV_EXCL_LINE
+                JSON_ASSERT(false);  // LCOV_EXCL_LINE
         }
 
         return error_msg + " " + context + ": " + detail;
@@ -8247,7 +8249,7 @@ class lexer : public lexer_base<BasicJsonType>
     static char get_decimal_point() noexcept
     {
         const auto* loc = localeconv();
-        assert(loc != nullptr);
+        JSON_ASSERT(loc != nullptr);
         return (loc->decimal_point == nullptr) ? '.' : *(loc->decimal_point);
     }
 
@@ -8273,7 +8275,7 @@ class lexer : public lexer_base<BasicJsonType>
     int get_codepoint()
     {
         // this function only makes sense after reading `\u`
-        assert(current == 'u');
+        JSON_ASSERT(current == 'u');
         int codepoint = 0;
 
         const auto factors = { 12u, 8u, 4u, 0u };
@@ -8299,7 +8301,7 @@ class lexer : public lexer_base<BasicJsonType>
             }
         }
 
-        assert(0x0000 <= codepoint and codepoint <= 0xFFFF);
+        JSON_ASSERT(0x0000 <= codepoint and codepoint <= 0xFFFF);
         return codepoint;
     }
 
@@ -8320,7 +8322,7 @@ class lexer : public lexer_base<BasicJsonType>
     */
     bool next_byte_in_range(std::initializer_list<char_int_type> ranges)
     {
-        assert(ranges.size() == 2 or ranges.size() == 4 or ranges.size() == 6);
+        JSON_ASSERT(ranges.size() == 2 or ranges.size() == 4 or ranges.size() == 6);
         add(current);
 
         for (auto range = ranges.begin(); range != ranges.end(); ++range)
@@ -8361,7 +8363,7 @@ class lexer : public lexer_base<BasicJsonType>
         reset();
 
         // we entered the function by reading an open quote
-        assert(current == '\"');
+        JSON_ASSERT(current == '\"');
 
         while (true)
         {
@@ -8481,7 +8483,7 @@ class lexer : public lexer_base<BasicJsonType>
                             }
 
                             // result of the above calculation yields a proper codepoint
-                            assert(0x00 <= codepoint and codepoint <= 0x10FFFF);
+                            JSON_ASSERT(0x00 <= codepoint and codepoint <= 0x10FFFF);
 
                             // translate codepoint into bytes
                             if (codepoint < 0x80)
@@ -9176,7 +9178,7 @@ class lexer : public lexer_base<BasicJsonType>
 
             // all other characters are rejected outside scan_number()
             default:            // LCOV_EXCL_LINE
-                assert(false);  // LCOV_EXCL_LINE
+                JSON_ASSERT(false);  // LCOV_EXCL_LINE
         }
 
 scan_number_minus:
@@ -9423,7 +9425,7 @@ scan_number_done:
             const auto x = strtoull(token_buffer.data(), &endptr, is_64_bit<number_unsigned_t>());
 
             // we checked the number format before
-            assert(endptr == token_buffer.data() + token_buffer.size());
+            JSON_ASSERT(endptr == token_buffer.data() + token_buffer.size());
 
             if (errno == 0)
             {
@@ -9439,7 +9441,7 @@ scan_number_done:
             const auto x = strtoll(token_buffer.data(), &endptr, is_64_bit<number_integer_t>());
 
             // we checked the number format before
-            assert(endptr == token_buffer.data() + token_buffer.size());
+            JSON_ASSERT(endptr == token_buffer.data() + token_buffer.size());
 
             if (errno == 0)
             {
@@ -9456,7 +9458,7 @@ scan_number_done:
         strtof(value_float, token_buffer.data(), &endptr);
 
         // we checked the number format before
-        assert(endptr == token_buffer.data() + token_buffer.size());
+        JSON_ASSERT(endptr == token_buffer.data() + token_buffer.size());
 
         return token_type::value_float;
     }
@@ -9470,7 +9472,7 @@ scan_number_done:
     token_type scan_literal(const char_type* literal_text, const std::size_t length,
                             token_type return_type)
     {
-        assert(std::char_traits<char_type>::to_char_type(current) == literal_text[0]);
+        JSON_ASSERT(std::char_traits<char_type>::to_char_type(current) == literal_text[0]);
         for (std::size_t i = 1; i < length; ++i)
         {
             if (JSON_HEDLEY_UNLIKELY(std::char_traits<char_type>::to_char_type(get()) != literal_text[i]))
@@ -9562,7 +9564,7 @@ scan_number_done:
 
         if (JSON_HEDLEY_LIKELY(current != std::char_traits<char_type>::eof()))
         {
-            assert(not token_string.empty());
+            JSON_ASSERT(not token_string.empty());
             token_string.pop_back();
         }
     }
@@ -9803,7 +9805,6 @@ scan_number_done:
 // #include <nlohmann/detail/input/parser.hpp>
 
 
-#include <cassert> // assert
 #include <cmath> // isfinite
 #include <cstdint> // uint8_t
 #include <functional> // function
@@ -10193,7 +10194,7 @@ class parser
                     // new value, we need to evaluate the new state first.
                     // By setting skip_to_state_evaluation to false, we
                     // are effectively jumping to the beginning of this if.
-                    assert(not states.empty());
+                    JSON_ASSERT(not states.empty());
                     states.pop_back();
                     skip_to_state_evaluation = true;
                     continue;
@@ -10249,7 +10250,7 @@ class parser
                     // new value, we need to evaluate the new state first.
                     // By setting skip_to_state_evaluation to false, we
                     // are effectively jumping to the beginning of this if.
-                    assert(not states.empty());
+                    JSON_ASSERT(not states.empty());
                     states.pop_back();
                     skip_to_state_evaluation = true;
                     continue;
@@ -10555,7 +10556,7 @@ class iter_impl
     */
     explicit iter_impl(pointer object) noexcept : m_object(object)
     {
-        assert(m_object != nullptr);
+        JSON_ASSERT(m_object != nullptr);
 
         switch (m_object->m_type)
         {
@@ -10641,7 +10642,7 @@ class iter_impl
     */
     void set_begin() noexcept
     {
-        assert(m_object != nullptr);
+        JSON_ASSERT(m_object != nullptr);
 
         switch (m_object->m_type)
         {
@@ -10678,7 +10679,7 @@ class iter_impl
     */
     void set_end() noexcept
     {
-        assert(m_object != nullptr);
+        JSON_ASSERT(m_object != nullptr);
 
         switch (m_object->m_type)
         {
@@ -10709,19 +10710,19 @@ class iter_impl
     */
     reference operator*() const
     {
-        assert(m_object != nullptr);
+        JSON_ASSERT(m_object != nullptr);
 
         switch (m_object->m_type)
         {
             case value_t::object:
             {
-                assert(m_it.object_iterator != m_object->m_value.object->end());
+                JSON_ASSERT(m_it.object_iterator != m_object->m_value.object->end());
                 return m_it.object_iterator->second;
             }
 
             case value_t::array:
             {
-                assert(m_it.array_iterator != m_object->m_value.array->end());
+                JSON_ASSERT(m_it.array_iterator != m_object->m_value.array->end());
                 return *m_it.array_iterator;
             }
 
@@ -10746,19 +10747,19 @@ class iter_impl
     */
     pointer operator->() const
     {
-        assert(m_object != nullptr);
+        JSON_ASSERT(m_object != nullptr);
 
         switch (m_object->m_type)
         {
             case value_t::object:
             {
-                assert(m_it.object_iterator != m_object->m_value.object->end());
+                JSON_ASSERT(m_it.object_iterator != m_object->m_value.object->end());
                 return &(m_it.object_iterator->second);
             }
 
             case value_t::array:
             {
-                assert(m_it.array_iterator != m_object->m_value.array->end());
+                JSON_ASSERT(m_it.array_iterator != m_object->m_value.array->end());
                 return &*m_it.array_iterator;
             }
 
@@ -10791,7 +10792,7 @@ class iter_impl
     */
     iter_impl& operator++()
     {
-        assert(m_object != nullptr);
+        JSON_ASSERT(m_object != nullptr);
 
         switch (m_object->m_type)
         {
@@ -10834,7 +10835,7 @@ class iter_impl
     */
     iter_impl& operator--()
     {
-        assert(m_object != nullptr);
+        JSON_ASSERT(m_object != nullptr);
 
         switch (m_object->m_type)
         {
@@ -10872,7 +10873,7 @@ class iter_impl
             JSON_THROW(invalid_iterator::create(212, "cannot compare iterators of different containers"));
         }
 
-        assert(m_object != nullptr);
+        JSON_ASSERT(m_object != nullptr);
 
         switch (m_object->m_type)
         {
@@ -10908,7 +10909,7 @@ class iter_impl
             JSON_THROW(invalid_iterator::create(212, "cannot compare iterators of different containers"));
         }
 
-        assert(m_object != nullptr);
+        JSON_ASSERT(m_object != nullptr);
 
         switch (m_object->m_type)
         {
@@ -10956,7 +10957,7 @@ class iter_impl
     */
     iter_impl& operator+=(difference_type i)
     {
-        assert(m_object != nullptr);
+        JSON_ASSERT(m_object != nullptr);
 
         switch (m_object->m_type)
         {
@@ -11027,7 +11028,7 @@ class iter_impl
     */
     difference_type operator-(const iter_impl& other) const
     {
-        assert(m_object != nullptr);
+        JSON_ASSERT(m_object != nullptr);
 
         switch (m_object->m_type)
         {
@@ -11048,7 +11049,7 @@ class iter_impl
     */
     reference operator[](difference_type n) const
     {
-        assert(m_object != nullptr);
+        JSON_ASSERT(m_object != nullptr);
 
         switch (m_object->m_type)
         {
@@ -11079,7 +11080,7 @@ class iter_impl
     */
     const typename object_t::key_type& key() const
     {
-        assert(m_object != nullptr);
+        JSON_ASSERT(m_object != nullptr);
 
         if (JSON_HEDLEY_LIKELY(m_object->is_object()))
         {
@@ -11236,7 +11237,6 @@ class json_reverse_iterator : public std::reverse_iterator<Base>
 
 
 #include <algorithm> // all_of
-#include <cassert> // assert
 #include <cctype> // isdigit
 #include <limits> // max
 #include <numeric> // accumulate
@@ -12019,7 +12019,7 @@ class json_pointer
                     pos != std::string::npos;
                     pos = reference_token.find_first_of('~', pos + 1))
             {
-                assert(reference_token[pos] == '~');
+                JSON_ASSERT(reference_token[pos] == '~');
 
                 // ~ must be followed by 0 or 1
                 if (JSON_HEDLEY_UNLIKELY(pos == reference_token.size() - 1 or
@@ -12054,7 +12054,7 @@ class json_pointer
     static void replace_substring(std::string& s, const std::string& f,
                                   const std::string& t)
     {
-        assert(not f.empty());
+        JSON_ASSERT(not f.empty());
         for (auto pos = s.find(f);                // find first occurrence of f
                 pos != std::string::npos;         // make sure f was found
                 s.replace(pos, f.size(), t),      // replace with t, and
@@ -12466,7 +12466,7 @@ class binary_writer
     */
     explicit binary_writer(output_adapter_t<CharType> adapter) : oa(adapter)
     {
-        assert(oa);
+        JSON_ASSERT(oa);
     }
 
     /*!
@@ -13182,7 +13182,7 @@ class binary_writer
                 bool prefix_required = true;
                 if (use_type and not j.m_value.array->empty())
                 {
-                    assert(use_count);
+                    JSON_ASSERT(use_count);
                     const CharType first_prefix = ubjson_prefix(j.front());
                     const bool same_prefix = std::all_of(j.begin() + 1, j.end(),
                                                          [this, first_prefix](const BasicJsonType & v)
@@ -13226,7 +13226,7 @@ class binary_writer
 
                 if (use_type and not j.m_value.binary->empty())
                 {
-                    assert(use_count);
+                    JSON_ASSERT(use_count);
                     oa->write_character(to_char_type('$'));
                     oa->write_character('U');
                 }
@@ -13270,7 +13270,7 @@ class binary_writer
                 bool prefix_required = true;
                 if (use_type and not j.m_value.object->empty())
                 {
-                    assert(use_count);
+                    JSON_ASSERT(use_count);
                     const CharType first_prefix = ubjson_prefix(j.front());
                     const bool same_prefix = std::all_of(j.begin(), j.end(),
                                                          [this, first_prefix](const BasicJsonType & v)
@@ -13562,7 +13562,7 @@ class binary_writer
 
             // LCOV_EXCL_START
             default:
-                assert(false);
+                JSON_ASSERT(false);
                 return 0ul;
                 // LCOV_EXCL_STOP
         }
@@ -13609,7 +13609,7 @@ class binary_writer
 
             // LCOV_EXCL_START
             default:
-                assert(false);
+                JSON_ASSERT(false);
                 return;
                 // LCOV_EXCL_STOP
         }
@@ -14001,7 +14001,6 @@ class binary_writer
 
 #include <algorithm> // reverse, remove, fill, find, none_of
 #include <array> // array
-#include <cassert> // assert
 #include <clocale> // localeconv, lconv
 #include <cmath> // labs, isfinite, isnan, signbit
 #include <cstddef> // size_t, ptrdiff_t
@@ -14018,7 +14017,6 @@ class binary_writer
 
 
 #include <array> // array
-#include <cassert> // assert
 #include <cmath>   // signbit, isfinite
 #include <cstdint> // intN_t, uintN_t
 #include <cstring> // memcpy, memmove
@@ -14082,8 +14080,8 @@ struct diyfp // f * 2^e
     */
     static diyfp sub(const diyfp& x, const diyfp& y) noexcept
     {
-        assert(x.e == y.e);
-        assert(x.f >= y.f);
+        JSON_ASSERT(x.e == y.e);
+        JSON_ASSERT(x.f >= y.f);
 
         return {x.f - y.f, x.e};
     }
@@ -14159,7 +14157,7 @@ struct diyfp // f * 2^e
     */
     static diyfp normalize(diyfp x) noexcept
     {
-        assert(x.f != 0);
+        JSON_ASSERT(x.f != 0);
 
         while ((x.f >> 63u) == 0)
         {
@@ -14178,8 +14176,8 @@ struct diyfp // f * 2^e
     {
         const int delta = x.e - target_exponent;
 
-        assert(delta >= 0);
-        assert(((x.f << delta) >> delta) == x.f);
+        JSON_ASSERT(delta >= 0);
+        JSON_ASSERT(((x.f << delta) >> delta) == x.f);
 
         return {x.f << delta, target_exponent};
     }
@@ -14201,8 +14199,8 @@ boundaries.
 template <typename FloatType>
 boundaries compute_boundaries(FloatType value)
 {
-    assert(std::isfinite(value));
-    assert(value > 0);
+    JSON_ASSERT(std::isfinite(value));
+    JSON_ASSERT(value > 0);
 
     // Convert the IEEE representation into a diyfp.
     //
@@ -14482,18 +14480,18 @@ inline cached_power get_cached_power_for_binary_exponent(int e)
     //      k = ceil((kAlpha - e - 1) * 0.30102999566398114)
     // for |e| <= 1500, but doesn't require floating-point operations.
     // NB: log_10(2) ~= 78913 / 2^18
-    assert(e >= -1500);
-    assert(e <=  1500);
+    JSON_ASSERT(e >= -1500);
+    JSON_ASSERT(e <=  1500);
     const int f = kAlpha - e - 1;
     const int k = (f * 78913) / (1 << 18) + static_cast<int>(f > 0);
 
     const int index = (-kCachedPowersMinDecExp + k + (kCachedPowersDecStep - 1)) / kCachedPowersDecStep;
-    assert(index >= 0);
-    assert(static_cast<std::size_t>(index) < kCachedPowers.size());
+    JSON_ASSERT(index >= 0);
+    JSON_ASSERT(static_cast<std::size_t>(index) < kCachedPowers.size());
 
     const cached_power cached = kCachedPowers[static_cast<std::size_t>(index)];
-    assert(kAlpha <= cached.e + e + 64);
-    assert(kGamma >= cached.e + e + 64);
+    JSON_ASSERT(kAlpha <= cached.e + e + 64);
+    JSON_ASSERT(kGamma >= cached.e + e + 64);
 
     return cached;
 }
@@ -14561,10 +14559,10 @@ inline int find_largest_pow10(const std::uint32_t n, std::uint32_t& pow10)
 inline void grisu2_round(char* buf, int len, std::uint64_t dist, std::uint64_t delta,
                          std::uint64_t rest, std::uint64_t ten_k)
 {
-    assert(len >= 1);
-    assert(dist <= delta);
-    assert(rest <= delta);
-    assert(ten_k > 0);
+    JSON_ASSERT(len >= 1);
+    JSON_ASSERT(dist <= delta);
+    JSON_ASSERT(rest <= delta);
+    JSON_ASSERT(ten_k > 0);
 
     //               <--------------------------- delta ---->
     //                                  <---- dist --------->
@@ -14589,7 +14587,7 @@ inline void grisu2_round(char* buf, int len, std::uint64_t dist, std::uint64_t d
             and delta - rest >= ten_k
             and (rest + ten_k < dist or dist - rest > rest + ten_k - dist))
     {
-        assert(buf[len - 1] != '0');
+        JSON_ASSERT(buf[len - 1] != '0');
         buf[len - 1]--;
         rest += ten_k;
     }
@@ -14617,8 +14615,8 @@ inline void grisu2_digit_gen(char* buffer, int& length, int& decimal_exponent,
     // Grisu2 generates the digits of M+ from left to right and stops as soon as
     // V is in [M-,M+].
 
-    assert(M_plus.e >= kAlpha);
-    assert(M_plus.e <= kGamma);
+    JSON_ASSERT(M_plus.e >= kAlpha);
+    JSON_ASSERT(M_plus.e <= kGamma);
 
     std::uint64_t delta = diyfp::sub(M_plus, M_minus).f; // (significand of (M+ - M-), implicit exponent is e)
     std::uint64_t dist  = diyfp::sub(M_plus, w      ).f; // (significand of (M+ - w ), implicit exponent is e)
@@ -14639,7 +14637,7 @@ inline void grisu2_digit_gen(char* buffer, int& length, int& decimal_exponent,
     //
     // Generate the digits of the integral part p1 = d[n-1]...d[1]d[0]
 
-    assert(p1 > 0);
+    JSON_ASSERT(p1 > 0);
 
     std::uint32_t pow10;
     const int k = find_largest_pow10(p1, pow10);
@@ -14675,7 +14673,7 @@ inline void grisu2_digit_gen(char* buffer, int& length, int& decimal_exponent,
         //      M+ = buffer * 10^n + (d * 10^(n-1) + r) + p2 * 2^e
         //         = (buffer * 10 + d) * 10^(n-1) + (r + p2 * 2^e)
         //
-        assert(d <= 9);
+        JSON_ASSERT(d <= 9);
         buffer[length++] = static_cast<char>('0' + d); // buffer := buffer * 10 + d
         //
         //      M+ = buffer * 10^(n-1) + (r + p2 * 2^e)
@@ -14762,7 +14760,7 @@ inline void grisu2_digit_gen(char* buffer, int& length, int& decimal_exponent,
     //
     // and stop as soon as 10^-m * r * 2^e <= delta * 2^e
 
-    assert(p2 > delta);
+    JSON_ASSERT(p2 > delta);
 
     int m = 0;
     for (;;)
@@ -14773,7 +14771,7 @@ inline void grisu2_digit_gen(char* buffer, int& length, int& decimal_exponent,
         //         = buffer * 10^-m + 10^-m * (1/10 * (10 * p2)                   ) * 2^e
         //         = buffer * 10^-m + 10^-m * (1/10 * ((10*p2 div 2^-e) * 2^-e + (10*p2 mod 2^-e)) * 2^e
         //
-        assert(p2 <= (std::numeric_limits<std::uint64_t>::max)() / 10);
+        JSON_ASSERT(p2 <= (std::numeric_limits<std::uint64_t>::max)() / 10);
         p2 *= 10;
         const std::uint64_t d = p2 >> -one.e;     // d = (10 * p2) div 2^-e
         const std::uint64_t r = p2 & (one.f - 1); // r = (10 * p2) mod 2^-e
@@ -14782,7 +14780,7 @@ inline void grisu2_digit_gen(char* buffer, int& length, int& decimal_exponent,
         //         = buffer * 10^-m + 10^-m * (1/10 * (d + r * 2^e))
         //         = (buffer * 10 + d) * 10^(-m-1) + 10^(-m-1) * r * 2^e
         //
-        assert(d <= 9);
+        JSON_ASSERT(d <= 9);
         buffer[length++] = static_cast<char>('0' + d); // buffer := buffer * 10 + d
         //
         //      M+ = buffer * 10^(-m-1) + 10^(-m-1) * r * 2^e
@@ -14843,8 +14841,8 @@ JSON_HEDLEY_NON_NULL(1)
 inline void grisu2(char* buf, int& len, int& decimal_exponent,
                    diyfp m_minus, diyfp v, diyfp m_plus)
 {
-    assert(m_plus.e == m_minus.e);
-    assert(m_plus.e == v.e);
+    JSON_ASSERT(m_plus.e == m_minus.e);
+    JSON_ASSERT(m_plus.e == v.e);
 
     //  --------(-----------------------+-----------------------)--------    (A)
     //          m-                      v                       m+
@@ -14905,8 +14903,8 @@ void grisu2(char* buf, int& len, int& decimal_exponent, FloatType value)
     static_assert(diyfp::kPrecision >= std::numeric_limits<FloatType>::digits + 3,
                   "internal error: not enough precision");
 
-    assert(std::isfinite(value));
-    assert(value > 0);
+    JSON_ASSERT(std::isfinite(value));
+    JSON_ASSERT(value > 0);
 
     // If the neighbors (and boundaries) of 'value' are always computed for double-precision
     // numbers, all float's can be recovered using strtod (and strtof). However, the resulting
@@ -14942,8 +14940,8 @@ JSON_HEDLEY_NON_NULL(1)
 JSON_HEDLEY_RETURNS_NON_NULL
 inline char* append_exponent(char* buf, int e)
 {
-    assert(e > -1000);
-    assert(e <  1000);
+    JSON_ASSERT(e > -1000);
+    JSON_ASSERT(e <  1000);
 
     if (e < 0)
     {
@@ -14995,8 +14993,8 @@ JSON_HEDLEY_RETURNS_NON_NULL
 inline char* format_buffer(char* buf, int len, int decimal_exponent,
                            int min_exp, int max_exp)
 {
-    assert(min_exp < 0);
-    assert(max_exp > 0);
+    JSON_ASSERT(min_exp < 0);
+    JSON_ASSERT(max_exp > 0);
 
     const int k = len;
     const int n = len + decimal_exponent;
@@ -15022,7 +15020,7 @@ inline char* format_buffer(char* buf, int len, int decimal_exponent,
         // dig.its
         // len <= max_digits10 + 1
 
-        assert(k > n);
+        JSON_ASSERT(k > n);
 
         std::memmove(buf + (static_cast<size_t>(n) + 1), buf + n, static_cast<size_t>(k) - static_cast<size_t>(n));
         buf[n] = '.';
@@ -15080,7 +15078,7 @@ JSON_HEDLEY_RETURNS_NON_NULL
 char* to_chars(char* first, const char* last, FloatType value)
 {
     static_cast<void>(last); // maybe unused - fix warning
-    assert(std::isfinite(value));
+    JSON_ASSERT(std::isfinite(value));
 
     // Use signbit(value) instead of (value < 0) since signbit works for -0.
     if (std::signbit(value))
@@ -15098,7 +15096,7 @@ char* to_chars(char* first, const char* last, FloatType value)
         return first;
     }
 
-    assert(last - first >= std::numeric_limits<FloatType>::max_digits10);
+    JSON_ASSERT(last - first >= std::numeric_limits<FloatType>::max_digits10);
 
     // Compute v = buffer * 10^decimal_exponent.
     // The decimal digits are stored in the buffer, which needs to be interpreted
@@ -15108,16 +15106,16 @@ char* to_chars(char* first, const char* last, FloatType value)
     int decimal_exponent = 0;
     dtoa_impl::grisu2(first, len, decimal_exponent, value);
 
-    assert(len <= std::numeric_limits<FloatType>::max_digits10);
+    JSON_ASSERT(len <= std::numeric_limits<FloatType>::max_digits10);
 
     // Format the buffer like printf("%.*g", prec, value)
     constexpr int kMinExp = -4;
     // Use digits10 here to increase compatibility with version 2.
     constexpr int kMaxExp = std::numeric_limits<FloatType>::digits10;
 
-    assert(last - first >= kMaxExp + 2);
-    assert(last - first >= 2 + (-kMinExp - 1) + std::numeric_limits<FloatType>::max_digits10);
-    assert(last - first >= std::numeric_limits<FloatType>::max_digits10 + 6);
+    JSON_ASSERT(last - first >= kMaxExp + 2);
+    JSON_ASSERT(last - first >= 2 + (-kMinExp - 1) + std::numeric_limits<FloatType>::max_digits10);
+    JSON_ASSERT(last - first >= std::numeric_limits<FloatType>::max_digits10 + 6);
 
     return dtoa_impl::format_buffer(first, len, decimal_exponent, kMinExp, kMaxExp);
 }
@@ -15251,8 +15249,8 @@ class serializer
                     }
 
                     // last element
-                    assert(i != val.m_value.object->cend());
-                    assert(std::next(i) == val.m_value.object->cend());
+                    JSON_ASSERT(i != val.m_value.object->cend());
+                    JSON_ASSERT(std::next(i) == val.m_value.object->cend());
                     o->write_characters(indent_string.c_str(), new_indent);
                     o->write_character('\"');
                     dump_escaped(i->first, ensure_ascii);
@@ -15279,8 +15277,8 @@ class serializer
                     }
 
                     // last element
-                    assert(i != val.m_value.object->cend());
-                    assert(std::next(i) == val.m_value.object->cend());
+                    JSON_ASSERT(i != val.m_value.object->cend());
+                    JSON_ASSERT(std::next(i) == val.m_value.object->cend());
                     o->write_character('\"');
                     dump_escaped(i->first, ensure_ascii);
                     o->write_characters("\":", 2);
@@ -15321,7 +15319,7 @@ class serializer
                     }
 
                     // last element
-                    assert(not val.m_value.array->empty());
+                    JSON_ASSERT(not val.m_value.array->empty());
                     o->write_characters(indent_string.c_str(), new_indent);
                     dump(val.m_value.array->back(), true, ensure_ascii, indent_step, new_indent);
 
@@ -15342,7 +15340,7 @@ class serializer
                     }
 
                     // last element
-                    assert(not val.m_value.array->empty());
+                    JSON_ASSERT(not val.m_value.array->empty());
                     dump(val.m_value.array->back(), false, ensure_ascii, indent_step, current_indent);
 
                     o->write_character(']');
@@ -15476,7 +15474,7 @@ class serializer
             }
 
             default:            // LCOV_EXCL_LINE
-                assert(false);  // LCOV_EXCL_LINE
+                JSON_ASSERT(false);  // LCOV_EXCL_LINE
         }
     }
 
@@ -15675,7 +15673,7 @@ class serializer
                         }
 
                         default:            // LCOV_EXCL_LINE
-                            assert(false);  // LCOV_EXCL_LINE
+                            JSON_ASSERT(false);  // LCOV_EXCL_LINE
                     }
                     break;
                 }
@@ -15738,7 +15736,7 @@ class serializer
                 }
 
                 default:            // LCOV_EXCL_LINE
-                    assert(false);  // LCOV_EXCL_LINE
+                    JSON_ASSERT(false);  // LCOV_EXCL_LINE
             }
         }
     }
@@ -15839,7 +15837,7 @@ class serializer
         }
 
         // spare 1 byte for '\0'
-        assert(n_chars < number_buffer.size() - 1);
+        JSON_ASSERT(n_chars < number_buffer.size() - 1);
 
         // jump to the end to generate the string from backward
         // so we later avoid reversing the result
@@ -15915,9 +15913,9 @@ class serializer
         std::ptrdiff_t len = (std::snprintf)(number_buffer.data(), number_buffer.size(), "%.*g", d, x);
 
         // negative value indicates an error
-        assert(len > 0);
+        JSON_ASSERT(len > 0);
         // check if buffer was large enough
-        assert(static_cast<std::size_t>(len) < number_buffer.size());
+        JSON_ASSERT(static_cast<std::size_t>(len) < number_buffer.size());
 
         // erase thousands separator
         if (thousands_sep != '\0')
@@ -15925,7 +15923,7 @@ class serializer
             const auto end = std::remove(number_buffer.begin(),
                                          number_buffer.begin() + len, thousands_sep);
             std::fill(end, number_buffer.end(), '\0');
-            assert((end - number_buffer.begin()) <= len);
+            JSON_ASSERT((end - number_buffer.begin()) <= len);
             len = (end - number_buffer.begin());
         }
 
@@ -16005,7 +16003,7 @@ class serializer
                 : (0xFFu >> type) & (byte);
 
         std::size_t index = 256u + static_cast<size_t>(state) * 16u + static_cast<size_t>(type);
-        assert(index < 400);
+        JSON_ASSERT(index < 400);
         state = utf8d[index];
         return state;
     }
@@ -16017,7 +16015,7 @@ class serializer
      */
     number_unsigned_t remove_sign(number_unsigned_t x)
     {
-        assert(false); // LCOV_EXCL_LINE
+        JSON_ASSERT(false); // LCOV_EXCL_LINE
         return x; // LCOV_EXCL_LINE
     }
 
@@ -16032,7 +16030,7 @@ class serializer
      */
     inline number_unsigned_t remove_sign(number_integer_t x) noexcept
     {
-        assert(x < 0 and x < (std::numeric_limits<number_integer_t>::max)());
+        JSON_ASSERT(x < 0 and x < (std::numeric_limits<number_integer_t>::max)());
         return static_cast<number_unsigned_t>(-(x + 1)) + 1;
     }
 
@@ -16920,7 +16918,7 @@ class basic_json
         };
         std::unique_ptr<T, decltype(deleter)> object(AllocatorTraits::allocate(alloc, 1), deleter);
         AllocatorTraits::construct(alloc, object.get(), std::forward<Args>(args)...);
-        assert(object != nullptr);
+        JSON_ASSERT(object != nullptr);
         return object.release();
     }
 
@@ -17215,10 +17213,10 @@ class basic_json
     */
     void assert_invariant() const noexcept
     {
-        assert(m_type != value_t::object or m_value.object != nullptr);
-        assert(m_type != value_t::array or m_value.array != nullptr);
-        assert(m_type != value_t::string or m_value.string != nullptr);
-        assert(m_type != value_t::binary or m_value.binary != nullptr);
+        JSON_ASSERT(m_type != value_t::object or m_value.object != nullptr);
+        JSON_ASSERT(m_type != value_t::array or m_value.array != nullptr);
+        JSON_ASSERT(m_type != value_t::string or m_value.string != nullptr);
+        JSON_ASSERT(m_type != value_t::binary or m_value.binary != nullptr);
     }
 
   public:
@@ -17511,7 +17509,7 @@ class basic_json
                 m_type = value_t::discarded;
                 break;
             default:            // LCOV_EXCL_LINE
-                assert(false);  // LCOV_EXCL_LINE
+                JSON_ASSERT(false);  // LCOV_EXCL_LINE
         }
         assert_invariant();
     }
@@ -17911,8 +17909,8 @@ class basic_json
                  std::is_same<InputIT, typename basic_json_t::const_iterator>::value, int>::type = 0>
     basic_json(InputIT first, InputIT last)
     {
-        assert(first.m_object != nullptr);
-        assert(last.m_object != nullptr);
+        JSON_ASSERT(first.m_object != nullptr);
+        JSON_ASSERT(last.m_object != nullptr);
 
         // make sure iterator fits the current value
         if (JSON_HEDLEY_UNLIKELY(first.m_object != last.m_object))
@@ -19629,7 +19627,7 @@ class basic_json
         // const operator[] only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
         {
-            assert(m_value.object->find(key) != m_value.object->end());
+            JSON_ASSERT(m_value.object->find(key) != m_value.object->end());
             return m_value.object->find(key)->second;
         }
 
@@ -19721,7 +19719,7 @@ class basic_json
         // at only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
         {
-            assert(m_value.object->find(key) != m_value.object->end());
+            JSON_ASSERT(m_value.object->find(key) != m_value.object->end());
             return m_value.object->find(key)->second;
         }
 
@@ -21489,7 +21487,7 @@ class basic_json
     iterator insert_iterator(const_iterator pos, Args&& ... args)
     {
         iterator result(this);
-        assert(m_value.array != nullptr);
+        JSON_ASSERT(m_value.array != nullptr);
 
         auto insert_pos = std::distance(m_value.array->begin(), pos.m_it.array_iterator);
         m_value.array->insert(pos.m_it.array_iterator, std::forward<Args>(args)...);
@@ -24254,7 +24252,7 @@ class basic_json
 
                 // if there exists a parent it cannot be primitive
                 default:            // LCOV_EXCL_LINE
-                    assert(false);  // LCOV_EXCL_LINE
+                    JSON_ASSERT(false);  // LCOV_EXCL_LINE
             }
         };
 
@@ -24789,6 +24787,7 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 #endif
 
 // clean up
+#undef JSON_ASSERT
 #undef JSON_INTERNAL_CATCH
 #undef JSON_CATCH
 #undef JSON_THROW

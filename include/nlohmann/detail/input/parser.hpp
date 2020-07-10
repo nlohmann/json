@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cassert> // assert
 #include <cmath> // isfinite
 #include <cstdint> // uint8_t
 #include <functional> // function
@@ -383,7 +382,7 @@ class parser
                     // new value, we need to evaluate the new state first.
                     // By setting skip_to_state_evaluation to false, we
                     // are effectively jumping to the beginning of this if.
-                    assert(not states.empty());
+                    JSON_ASSERT(not states.empty());
                     states.pop_back();
                     skip_to_state_evaluation = true;
                     continue;
@@ -439,7 +438,7 @@ class parser
                     // new value, we need to evaluate the new state first.
                     // By setting skip_to_state_evaluation to false, we
                     // are effectively jumping to the beginning of this if.
-                    assert(not states.empty());
+                    JSON_ASSERT(not states.empty());
                     states.pop_back();
                     skip_to_state_evaluation = true;
                     continue;

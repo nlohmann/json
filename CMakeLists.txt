@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.1)
 ## PROJECT
 ## name and version
 ##
-project(nlohmann_json VERSION 3.8.0 LANGUAGES CXX)
+project(nlohmann_json VERSION 3.8.0 DESCRIPTION "JSON for Modern C++" LANGUAGES CXX)
 
 ##
 ## INCLUDE
@@ -79,6 +79,12 @@ if (MSVC)
     )
 endif()
 
+# Install a pkg-config file, so other tools can find this.
+CONFIGURE_FILE(
+  "${CMAKE_CURRENT_SOURCE_DIR}/cmake/pkg-config.pc.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc"
+)
+
 ##
 ## TESTS
 ## create and configure the unit test target
@@ -138,5 +144,9 @@ endif()
         EXPORT ${NLOHMANN_JSON_TARGETS_EXPORT_NAME}
         NAMESPACE ${PROJECT_NAME}::
         DESTINATION ${NLOHMANN_JSON_CONFIG_INSTALL_DIR}
+    )
+    install(
+        FILES "${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc"
+        DESTINATION lib/pkgconfig
     )
 endif()
