@@ -2773,7 +2773,7 @@ uses the standard template types.
 */
 using json = basic_json<>;
 
-template<class Key, class T, class IgnoredLess, class Allocator, class Container>
+template<class Key, class T, class IgnoredLess, class Allocator>
 struct ordered_map;
 
 /*!
@@ -15880,17 +15880,26 @@ namespace nlohmann
 /// ordered_map: a minimal map-like container that preserves insertion order
 /// for use within nlohmann::basic_json<ordered_map>
 template <class Key, class T, class IgnoredLess = std::less<Key>,
-          class Allocator = std::allocator<std::pair<Key, T>>,
-          class Container = std::vector<std::pair<Key, T>, Allocator>>
-struct ordered_map : Container
+          class Allocator = std::allocator<std::pair<const Key, T>>>
+struct ordered_map : std::vector<std::pair<const Key, T>, Allocator>
 {
     using key_type = Key;
     using mapped_type = T;
-    using value_type = typename Container::value_type;
-    using size_type = typename Container::size_type;
-    using Container::Container;
+    using Container = std::vector<std::pair<const Key, T>, Allocator>;
+    using typename Container::iterator;
+    using typename Container::size_type;
+    using typename Container::value_type;
 
-    std::pair<typename Container::iterator, bool> emplace(key_type&& key, T&& t)
+    // Explicit constructors instead of `using Container::Container`
+    // otherwise older compilers choke on it (GCC <= 5.5, xcode <= 9.4)
+    ordered_map(const Allocator& alloc = Allocator()) : Container{alloc} {}
+    template <class It>
+    ordered_map(It first, It last, const Allocator& alloc = Allocator())
+        : Container{first, last, alloc} {}
+    ordered_map(std::initializer_list<T> init, const Allocator& alloc = Allocator() )
+        : Container{init, alloc} {}
+
+    std::pair<iterator, bool> emplace(key_type&& key, T&& t)
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
@@ -15914,7 +15923,13 @@ struct ordered_map : Container
         {
             if (it->first == key)
             {
-                Container::erase(it);
+                // Since we cannot move const Keys, re-construct them in place
+                for (auto next = it; ++next != this->end(); ++it)
+                {
+                    it->~value_type(); // Destroy but keep allocation
+                    new (&*it) value_type{std::move(*next)};
+                }
+                Container::pop_back();
                 return 1;
             }
         }
@@ -16049,7 +16064,7 @@ class basic_json
         InputAdapterType adapter,
         detail::parser_callback_t<basic_json>cb = nullptr,
         bool allow_exceptions = true
-    )
+                                 )
     {
         return ::nlohmann::detail::parser<basic_json, InputAdapterType>(std::move(adapter), std::move(cb), allow_exceptions);
     }
