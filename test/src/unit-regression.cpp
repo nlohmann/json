@@ -1945,6 +1945,15 @@ TEST_CASE("regression tests")
                   )
         );
     }
+
+    SECTION("PR #2181 - regression bug with lvalue")
+    {
+        // see https://github.com/nlohmann/json/pull/2181#issuecomment-653326060
+        json j{{"x", "test"}};
+        std::string defval = "default value";
+        auto val = j.value("x", defval);
+        auto val2 = j.value("y", defval);
+    }
 }
 
 #if not defined(JSON_NOEXCEPTION)

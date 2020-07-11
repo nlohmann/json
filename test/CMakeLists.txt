@@ -95,6 +95,7 @@ set(files
     src/unit-algorithms.cpp
     src/unit-allocator.cpp
     src/unit-alt-string.cpp
+    src/unit-assert_macro.cpp
     src/unit-bson.cpp
     src/unit-capacity.cpp
     src/unit-cbor.cpp
@@ -133,6 +134,7 @@ set(files
     src/unit-to_chars.cpp
     src/unit-ubjson.cpp
     src/unit-udt.cpp
+    src/unit-udt_macro.cpp
     src/unit-unicode.cpp
     src/unit-user_defined_input.cpp
     src/unit-wstring.cpp)

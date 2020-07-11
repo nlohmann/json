@@ -112,8 +112,11 @@ class lexer : public lexer_base<BasicJsonType>
   public:
     using token_type = typename lexer_base<BasicJsonType>::token_type;
 
-    explicit lexer(InputAdapterType&& adapter)
-        : ia(std::move(adapter)), decimal_point_char(static_cast<char_int_type>(get_decimal_point())) {}
+    explicit lexer(InputAdapterType&& adapter, bool ignore_comments_ = false)
+        : ia(std::move(adapter))
+        , ignore_comments(ignore_comments_)
+        , decimal_point_char(static_cast<char_int_type>(get_decimal_point()))
+    {}
 
     // delete because of pointer members
     lexer(const lexer&) = delete;
@@ -131,8 +134,8 @@ class lexer : public lexer_base<BasicJsonType>
     JSON_HEDLEY_PURE
     static char get_decimal_point() noexcept
     {
-        const auto loc = localeconv();
-        assert(loc != nullptr);
+        const auto* loc = localeconv();
+        JSON_ASSERT(loc != nullptr);
         return (loc->decimal_point == nullptr) ? '.' : *(loc->decimal_point);
     }
 
@@ -158,7 +161,7 @@ class lexer : public lexer_base<BasicJsonType>
     int get_codepoint()
     {
         // this function only makes sense after reading `\u`
-        assert(current == 'u');
+        JSON_ASSERT(current == 'u');
         int codepoint = 0;
 
         const auto factors = { 12u, 8u, 4u, 0u };
@@ -184,7 +187,7 @@ class lexer : public lexer_base<BasicJsonType>
             }
         }
 
-        assert(0x0000 <= codepoint and codepoint <= 0xFFFF);
+        JSON_ASSERT(0x0000 <= codepoint and codepoint <= 0xFFFF);
         return codepoint;
     }
 
@@ -205,7 +208,7 @@ class lexer : public lexer_base<BasicJsonType>
     */
     bool next_byte_in_range(std::initializer_list<char_int_type> ranges)
     {
-        assert(ranges.size() == 2 or ranges.size() == 4 or ranges.size() == 6);
+        JSON_ASSERT(ranges.size() == 2 or ranges.size() == 4 or ranges.size() == 6);
         add(current);
 
         for (auto range = ranges.begin(); range != ranges.end(); ++range)
@@ -246,7 +249,7 @@ class lexer : public lexer_base<BasicJsonType>
         reset();
 
         // we entered the function by reading an open quote
-        assert(current == '\"');
+        JSON_ASSERT(current == '\"');
 
         while (true)
         {
@@ -366,7 +369,7 @@ class lexer : public lexer_base<BasicJsonType>
                             }
 
                             // result of the above calculation yields a proper codepoint
-                            assert(0x00 <= codepoint and codepoint <= 0x10FFFF);
+                            JSON_ASSERT(0x00 <= codepoint and codepoint <= 0x10FFFF);
 
                             // translate codepoint into bytes
                             if (codepoint < 0x80)
@@ -826,6 +829,77 @@ class lexer : public lexer_base<BasicJsonType>
         }
     }
 
+    /*!
+     * @brief scan a comment
+     * @return whether comment could be scanned successfully
+     */
+    bool scan_comment()
+    {
+        switch (get())
+        {
+            // single-line comments skip input until a newline or EOF is read
+            case '/':
+            {
+                while (true)
+                {
+                    switch (get())
+                    {
+                        case '\n':
+                        case '\r':
+                        case std::char_traits<char_type>::eof():
+                        case '\0':
+                            return true;
+
+                        default:
+                            break;
+                    }
+                }
+            }
+
+            // multi-line comments skip input until */ is read
+            case '*':
+            {
+                while (true)
+                {
+                    switch (get())
+                    {
+                        case std::char_traits<char_type>::eof():
+                        case '\0':
+                        {
+                            error_message = "invalid comment; missing closing '*/'";
+                            return false;
+                        }
+
+                        case '*':
+                        {
+                            switch (get())
+                            {
+                                case '/':
+                                    return true;
+
+                                default:
+                                {
+                                    unget();
+                                    break;
+                                }
+                            }
+                        }
+
+                        default:
+                            break;
+                    }
+                }
+            }
+
+            // unexpected character after reading '/'
+            default:
+            {
+                error_message = "invalid comment; expecting '/' or '*' after '/'";
+                return false;
+            }
+        }
+    }
+
     JSON_HEDLEY_NON_NULL(2)
     static void strtof(float& f, const char* str, char** endptr) noexcept
     {
@@ -924,7 +998,7 @@ class lexer : public lexer_base<BasicJsonType>
 
             // all other characters are rejected outside scan_number()
             default:            // LCOV_EXCL_LINE
-                assert(false);  // LCOV_EXCL_LINE
+                JSON_ASSERT(false);  // LCOV_EXCL_LINE
         }
 
 scan_number_minus:
@@ -1171,7 +1245,7 @@ scan_number_done:
             const auto x = std::strtoull(token_buffer.data(), &endptr, 10);
 
             // we checked the number format before
-            assert(endptr == token_buffer.data() + token_buffer.size());
+            JSON_ASSERT(endptr == token_buffer.data() + token_buffer.size());
 
             if (errno == 0)
             {
@@ -1187,7 +1261,7 @@ scan_number_done:
             const auto x = std::strtoll(token_buffer.data(), &endptr, 10);
 
             // we checked the number format before
-            assert(endptr == token_buffer.data() + token_buffer.size());
+            JSON_ASSERT(endptr == token_buffer.data() + token_buffer.size());
 
             if (errno == 0)
             {
@@ -1204,7 +1278,7 @@ scan_number_done:
         strtof(value_float, token_buffer.data(), &endptr);
 
         // we checked the number format before
-        assert(endptr == token_buffer.data() + token_buffer.size());
+        JSON_ASSERT(endptr == token_buffer.data() + token_buffer.size());
 
         return token_type::value_float;
     }
@@ -1218,7 +1292,7 @@ scan_number_done:
     token_type scan_literal(const char_type* literal_text, const std::size_t length,
                             token_type return_type)
     {
-        assert(std::char_traits<char_type>::to_char_type(current) == literal_text[0]);
+        JSON_ASSERT(std::char_traits<char_type>::to_char_type(current) == literal_text[0]);
         for (std::size_t i = 1; i < length; ++i)
         {
             if (JSON_HEDLEY_UNLIKELY(std::char_traits<char_type>::to_char_type(get()) != literal_text[i]))
@@ -1310,7 +1384,7 @@ scan_number_done:
 
         if (JSON_HEDLEY_LIKELY(current != std::char_traits<char_type>::eof()))
         {
-            assert(not token_string.empty());
+            JSON_ASSERT(not token_string.empty());
             token_string.pop_back();
         }
     }
@@ -1415,6 +1489,15 @@ scan_number_done:
         return true;
     }
 
+    void skip_whitespace()
+    {
+        do
+        {
+            get();
+        }
+        while (current == ' ' or current == '\t' or current == '\n' or current == '\r');
+    }
+
     token_type scan()
     {
         // initially, skip the BOM
@@ -1425,11 +1508,19 @@ scan_number_done:
         }
 
         // read next character and ignore whitespace
-        do
+        skip_whitespace();
+
+        // ignore comments
+        if (ignore_comments and current == '/')
         {
-            get();
+            if (not scan_comment())
+            {
+                return token_type::parse_error;
+            }
+
+            // skip following whitespace
+            skip_whitespace();
         }
-        while (current == ' ' or current == '\t' or current == '\n' or current == '\r');
 
         switch (current)
         {
@@ -1498,6 +1589,9 @@ scan_number_done:
   private:
     /// input adapter
     InputAdapterType ia;
+
+    /// whether comments should be ignored (true) or signaled as errors (false)
+    const bool ignore_comments = false;
 
     /// the current character
     char_int_type current = std::char_traits<char_type>::eof();

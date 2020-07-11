@@ -224,6 +224,7 @@ class SaxCountdown : public nlohmann::json::json_sax_t
 
 json parser_helper(const std::string& s);
 bool accept_helper(const std::string& s);
+void comments_helper(const std::string& s);
 
 json parser_helper(const std::string& s)
 {
@@ -240,6 +241,8 @@ json parser_helper(const std::string& s)
     nlohmann::detail::json_sax_dom_parser<json> sdp(j_sax);
     json::sax_parse(s, &sdp);
     CHECK(j_sax == j);
+
+    comments_helper(s);
 
     return j;
 }
@@ -275,10 +278,50 @@ bool accept_helper(const std::string& s)
     // 6. check if this approach came to the same result
     CHECK(ok_noexcept == ok_noexcept_cb);
 
-    // 7. return result
+    // 7. check if comments are properly ignored
+    if (ok_accept)
+    {
+        comments_helper(s);
+    }
+
+    // 8. return result
     return ok_accept;
 }
+
+void comments_helper(const std::string& s)
+{
+    json _;
+
+    // parse/accept with default parser
+    CHECK_NOTHROW(_ = json::parse(s));
+    CHECK(json::accept(s));
+
+    // parse/accept while skipping comments
+    CHECK_NOTHROW(_ = json::parse(s, nullptr, false, true));
+    CHECK(json::accept(s, true));
+
+    std::vector<std::string> json_with_comments;
+
+    // start with a comment
+    json_with_comments.push_back(std::string("// this is a comment\n") + s);
+    json_with_comments.push_back(std::string("/* this is a comment */") + s);
+    // end with a comment
+    json_with_comments.push_back(s + "// this is a comment");
+    json_with_comments.push_back(s + "/* this is a comment */");
+
+    // check all strings
+    for (const auto& json_with_comment : json_with_comments)
+    {
+        CAPTURE(json_with_comment)
+        CHECK_THROWS_AS(_ = json::parse(json_with_comment), json::parse_error);
+        CHECK(not json::accept(json_with_comment));
+
+        CHECK_NOTHROW(_ = json::parse(json_with_comment, nullptr, true, true));
+        CHECK(json::accept(json_with_comment, true));
+    }
 }
+
+} // namespace
 
 TEST_CASE("parser class")
 {
@@ -1833,5 +1876,11 @@ TEST_CASE("parser class")
                 CHECK(json::sax_parse("\"foo\"", &s) == false);
             }
         }
+    }
+
+    SECTION("error messages for comments")
+    {
+        CHECK_THROWS_WITH_AS(json::parse("/a", nullptr, true, true), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid comment; expecting '/' or '*' after '/'; last read: '/a'", json::parse_error);
+        CHECK_THROWS_WITH_AS(json::parse("/*", nullptr, true, true), "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid comment; missing closing '*/'; last read: '/*<U+0000>'", json::parse_error);
     }
 }

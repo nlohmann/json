@@ -1,8 +1,8 @@
 #pragma once
 
 #include <algorithm> // all_of
-#include <cassert> // assert
 #include <cctype> // isdigit
+#include <limits> // max
 #include <numeric> // accumulate
 #include <string> // string
 #include <utility> // move
@@ -325,10 +325,15 @@ class json_pointer
 
     @return integer representation of @a s
 
+    @throw parse_error.106  if an array index begins with '0'
+    @throw parse_error.109  if an array index begins not with a digit
     @throw out_of_range.404 if string @a s could not be converted to an integer
+    @throw out_of_range.410 if an array index exceeds size_type
     */
-    static int array_index(const std::string& s)
+    static typename BasicJsonType::size_type array_index(const std::string& s)
     {
+        using size_type = typename BasicJsonType::size_type;
+
         // error condition (cf. RFC 6901, Sect. 4)
         if (JSON_HEDLEY_UNLIKELY(s.size() > 1 and s[0] == '0'))
         {
@@ -344,10 +349,10 @@ class json_pointer
         }
 
         std::size_t processed_chars = 0;
-        int res = 0;
+        unsigned long long res = 0;
         JSON_TRY
         {
-            res = std::stoi(s, &processed_chars);
+            res = std::stoull(s, &processed_chars);
         }
         JSON_CATCH(std::out_of_range&)
         {
@@ -360,7 +365,14 @@ class json_pointer
             JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + s + "'"));
         }
 
-        return res;
+        // only triggered on special platforms (like 32bit), see also
+        // https://github.com/nlohmann/json/pull/2203
+        if (res >= static_cast<unsigned long long>((std::numeric_limits<size_type>::max)()))
+        {
+            JSON_THROW(detail::out_of_range::create(410, "array index " + s + " exceeds size_type")); // LCOV_EXCL_LINE
+        }
+
+        return static_cast<size_type>(res);
     }
 
     json_pointer top() const
@@ -385,7 +397,6 @@ class json_pointer
     */
     BasicJsonType& get_and_create(BasicJsonType& j) const
     {
-        using size_type = typename BasicJsonType::size_type;
         auto result = &j;
 
         // in case no reference tokens exist, return a reference to the JSON value
@@ -419,7 +430,7 @@ class json_pointer
                 case detail::value_t::array:
                 {
                     // create an entry in the array
-                    result = &result->operator[](static_cast<size_type>(array_index(reference_token)));
+                    result = &result->operator[](array_index(reference_token));
                     break;
                 }
 
@@ -458,7 +469,6 @@ class json_pointer
     */
     BasicJsonType& get_unchecked(BasicJsonType* ptr) const
     {
-        using size_type = typename BasicJsonType::size_type;
         for (const auto& reference_token : reference_tokens)
         {
             // convert null values to arrays or objects before continuing
@@ -497,8 +507,7 @@ class json_pointer
                     else
                     {
                         // convert array index to number; unchecked access
-                        ptr = &ptr->operator[](
-                                  static_cast<size_type>(array_index(reference_token)));
+                        ptr = &ptr->operator[](array_index(reference_token));
                     }
                     break;
                 }
@@ -519,7 +528,6 @@ class json_pointer
     */
     BasicJsonType& get_checked(BasicJsonType* ptr) const
     {
-        using size_type = typename BasicJsonType::size_type;
         for (const auto& reference_token : reference_tokens)
         {
             switch (ptr->type())
@@ -542,7 +550,7 @@ class json_pointer
                     }
 
                     // note: at performs range check
-                    ptr = &ptr->at(static_cast<size_type>(array_index(reference_token)));
+                    ptr = &ptr->at(array_index(reference_token));
                     break;
                 }
 
@@ -569,7 +577,6 @@ class json_pointer
     */
     const BasicJsonType& get_unchecked(const BasicJsonType* ptr) const
     {
-        using size_type = typename BasicJsonType::size_type;
         for (const auto& reference_token : reference_tokens)
         {
             switch (ptr->type())
@@ -592,8 +599,7 @@ class json_pointer
                     }
 
                     // use unchecked array access
-                    ptr = &ptr->operator[](
-                              static_cast<size_type>(array_index(reference_token)));
+                    ptr = &ptr->operator[](array_index(reference_token));
                     break;
                 }
 
@@ -613,7 +619,6 @@ class json_pointer
     */
     const BasicJsonType& get_checked(const BasicJsonType* ptr) const
     {
-        using size_type = typename BasicJsonType::size_type;
         for (const auto& reference_token : reference_tokens)
         {
             switch (ptr->type())
@@ -636,7 +641,7 @@ class json_pointer
                     }
 
                     // note: at performs range check
-                    ptr = &ptr->at(static_cast<size_type>(array_index(reference_token)));
+                    ptr = &ptr->at(array_index(reference_token));
                     break;
                 }
 
@@ -654,7 +659,6 @@ class json_pointer
     */
     bool contains(const BasicJsonType* ptr) const
     {
-        using size_type = typename BasicJsonType::size_type;
         for (const auto& reference_token : reference_tokens)
         {
             switch (ptr->type())
@@ -700,7 +704,7 @@ class json_pointer
                         }
                     }
 
-                    const auto idx = static_cast<size_type>(array_index(reference_token));
+                    const auto idx = array_index(reference_token);
                     if (idx >= ptr->size())
                     {
                         // index out of range
@@ -776,7 +780,7 @@ class json_pointer
                     pos != std::string::npos;
                     pos = reference_token.find_first_of('~', pos + 1))
             {
-                assert(reference_token[pos] == '~');
+                JSON_ASSERT(reference_token[pos] == '~');
 
                 // ~ must be followed by 0 or 1
                 if (JSON_HEDLEY_UNLIKELY(pos == reference_token.size() - 1 or
@@ -811,7 +815,7 @@ class json_pointer
     static void replace_substring(std::string& s, const std::string& f,
                                   const std::string& t)
     {
-        assert(not f.empty());
+        JSON_ASSERT(not f.empty());
         for (auto pos = s.find(f);                // find first occurrence of f
                 pos != std::string::npos;         // make sure f was found
                 s.replace(pos, f.size(), t),      // replace with t, and

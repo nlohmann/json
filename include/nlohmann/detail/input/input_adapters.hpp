@@ -1,7 +1,6 @@
 #pragma once
 
 #include <array> // array
-#include <cassert> // assert
 #include <cstddef> // size_t
 #include <cstdio> //FILE *
 #include <cstring> // strlen
@@ -76,7 +75,7 @@ class input_stream_adapter
     {
         // clear stream flags; we use underlying streambuf I/O, do not
         // maintain ifstream flags, except eof
-        if (is)
+        if (is != nullptr)
         {
             is->clear(is->rdstate() & std::ios::eofbit);
         }
@@ -297,13 +296,13 @@ class wide_string_input_adapter
         {
             fill_buffer<sizeof(WideCharType)>();
 
-            assert(utf8_bytes_filled > 0);
-            assert(utf8_bytes_index == 0);
+            JSON_ASSERT(utf8_bytes_filled > 0);
+            JSON_ASSERT(utf8_bytes_index == 0);
         }
 
         // use buffer
-        assert(utf8_bytes_filled > 0);
-        assert(utf8_bytes_index < utf8_bytes_filled);
+        JSON_ASSERT(utf8_bytes_filled > 0);
+        JSON_ASSERT(utf8_bytes_index < utf8_bytes_filled);
         return utf8_bytes[utf8_bytes_index++];
     }
 
@@ -411,7 +410,7 @@ template < typename CharT,
 contiguous_bytes_input_adapter input_adapter(CharT b)
 {
     auto length = std::strlen(reinterpret_cast<const char*>(b));
-    auto ptr = reinterpret_cast<const char*>(b);
+    const auto* ptr = reinterpret_cast<const char*>(b);
     return input_adapter(ptr, ptr + length);
 }
 

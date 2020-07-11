@@ -27,6 +27,7 @@
 - [Integration](#integration)
   - [CMake](#cmake)
   - [Package Managers](#package-managers)
+  - [Pkg-config](#pkg-config)
 - [Examples](#examples)
   - [JSON as first-class data type](#json-as-first-class-data-type)
   - [Serialization / Deserialization](#serialization--deserialization)
@@ -229,6 +230,20 @@ If you are using [`build2`](https://build2.org), you can use the [`nlohmann-json
 Please file issues [here](https://github.com/build2-packaging/nlohmann-json) if you experience problems with the packages.
 
 If you are using [`wsjcpp`](https://wsjcpp.org), you can use the command `wsjcpp install "https://github.com/nlohmann/json:develop"` to get the latest version. Note you can change the branch ":develop" to an existing tag or another branch.
+
+### Pkg-config
+
+If you are using bare Makefiles, you can use `pkg-config` to generate the include flags that point to where the library is installed:
+
+```sh
+pkg-config nlohmann_json --cflags
+```
+
+Users of the Meson build system will also be able to use a system wide library, which will be found by `pkg-config`:
+
+```meson
+json = dependency('nlohmann_json', required: true)
+```
 
 ## Examples
 
@@ -869,6 +884,42 @@ Some important things:
 * In function `from_json`, use function [`at()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a93403e803947b86f4da2d1fb3345cf2c.html#a93403e803947b86f4da2d1fb3345cf2c) to access the object values rather than `operator[]`. In case a key does not exist, `at` throws an exception that you can handle, whereas `operator[]` exhibits undefined behavior.
 * You do not need to add serializers or deserializers for STL types like `std::vector`: the library already implements these.
 
+#### Simplify your life with macros
+
+If you just want to serialize/deserialize some structs, the `to_json`/`from_json` functions can be a lot of boilerplate.
+
+There are two macros to make your life easier as long as you (1) want to use a JSON object as serialization and (2) want to use the member variable names as object keys in that object:
+
+- `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(name, member1, member2, ...)` is to be defined inside of the namespace of the class/struct to create code for.
+- `NLOHMANN_DEFINE_TYPE_INTRUSIVE(name, member1, member2, ...)` is to be defined inside of the class/struct to create code for. This macro can also access private members.
+
+In both macros, the first parameter is the name of the class/struct, and all remaining parameters name the members.
+
+##### Examples
+
+The `to_json`/`from_json` functions for the `person` struct above can be created with:
+
+```cpp
+namespace ns {
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(person, name, address, age)
+}
+```
+
+Here is an example with private members, where `NLOHMANN_DEFINE_TYPE_INTRUSIVE` is needed:
+
+```cpp
+namespace ns {
+    class address {
+      private:
+        std::string street;
+        int housenumber;
+        int postcode;
+        
+      public:
+        NLOHMANN_DEFINE_TYPE_INTRUSIVE(address, street, housenumber, postcode)
+    };
+}
+```
 
 #### How do I convert third-party types?
 
@@ -1508,7 +1559,7 @@ The library supports **Unicode input** as follows:
 
 ### Comments in JSON
 
-This library does not support comments. It does so for three reasons:
+This library does not support comments by default. It does so for three reasons:
 
 1. Comments are not part of the [JSON specification](https://tools.ietf.org/html/rfc8259). You may argue that `//` or `/* */` are allowed in JavaScript, but JSON is not JavaScript.
 2. This was not an oversight: Douglas Crockford [wrote on this](https://plus.google.com/118095276221607585885/posts/RK8qyGVaGSr) in May 2012:
@@ -1519,11 +1570,7 @@ This library does not support comments. It does so for three reasons:
 
 3. It is dangerous for interoperability if some libraries would add comment support while others don't. Please check [The Harmful Consequences of the Robustness Principle](https://tools.ietf.org/html/draft-iab-protocol-maintenance-01) on this.
 
-This library will not support comments in the future. If you wish to use comments, I see three options:
-
-1. Strip comments before using this library.
-2. Use a different JSON library with comment support.
-3. Use a format that natively supports comments (e.g., YAML or JSON5).
+However, you can pass set parameter `ignore_comments` to true in the `parse` function to ignore `//` or `/* */` comments. Comments will then be treated as whitespace.
 
 ### Order of object keys
 
@@ -1542,7 +1589,7 @@ Here is a related issue [#1924](https://github.com/nlohmann/json/issues/1924).
 
 ### Further notes
 
-- The code contains numerous debug **assertions** which can be switched off by defining the preprocessor macro `NDEBUG`, see the [documentation of `assert`](https://en.cppreference.com/w/cpp/error/assert). In particular, note [`operator[]`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a233b02b0839ef798942dd46157cc0fe6.html#a233b02b0839ef798942dd46157cc0fe6) implements **unchecked access** for const objects: If the given key is not present, the behavior is undefined (think of a dereferenced null pointer) and yields an [assertion failure](https://github.com/nlohmann/json/issues/289) if assertions are switched on. If you are not sure whether an element in an object exists, use checked access with the [`at()` function](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a73ae333487310e3302135189ce8ff5d8.html#a73ae333487310e3302135189ce8ff5d8).
+- The code contains numerous debug **assertions** which can be switched off by defining the preprocessor macro `NDEBUG`, see the [documentation of `assert`](https://en.cppreference.com/w/cpp/error/assert). In particular, note [`operator[]`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a233b02b0839ef798942dd46157cc0fe6.html#a233b02b0839ef798942dd46157cc0fe6) implements **unchecked access** for const objects: If the given key is not present, the behavior is undefined (think of a dereferenced null pointer) and yields an [assertion failure](https://github.com/nlohmann/json/issues/289) if assertions are switched on. If you are not sure whether an element in an object exists, use checked access with the [`at()` function](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a73ae333487310e3302135189ce8ff5d8.html#a73ae333487310e3302135189ce8ff5d8). Furthermore, you can define `JSON_ASSERT(x)` to replace calls to `assert(x)`.
 - As the exact type of a number is not defined in the [JSON specification](https://tools.ietf.org/html/rfc8259.html), this library tries to choose the best fitting C++ number type automatically. As a result, the type `double` may be used to store numbers which may yield [**floating-point exceptions**](https://github.com/nlohmann/json/issues/181) in certain rare situations if floating-point exceptions have been unmasked in the calling code. These exceptions are not caused by the library and need to be fixed in the calling code, such as by re-masking the exceptions prior to calling library functions.
 - The code can be compiled without C++ **runtime type identification** features; that is, you can use the `-fno-rtti` compiler flag.
 - **Exceptions** are used widely within the library. They can, however, be switched off with either using the compiler flag `-fno-exceptions` or by defining the symbol `JSON_NOEXCEPTION`. In this case, exceptions are replaced by `abort()` calls. You can further control this behavior by defining `JSON_THROW_USER´` (overriding `throw`), `JSON_TRY_USER` (overriding `try`), and `JSON_CATCH_USER` (overriding `catch`). Note that `JSON_THROW_USER` should leave the current scope (e.g., by throwing or aborting), as continuing after it may yield undefined behavior.
@@ -1559,4 +1606,6 @@ $ cmake --build .
 $ ctest --output-on-failure
 ```
 
-For more information, have a look at the file [.travis.yml](https://github.com/nlohmann/json/blob/master/.travis.yml).
+Note that during the `ctest` stage, several JSON test files are downloaded from an [external repository](https://github.com/nlohmann/json_test_data). If policies forbid downloading artifacts during testing, you can download the files yourself and pass the directory with the test files via `-DJSON_TestDataDirectory=path` to CMake. Then, no Internet connectivity is required. See [issue #2189](https://github.com/nlohmann/json/issues/2189) for more information.
+
+In case you have downloaded the library rather than checked out the code via Git, test `cmake_fetch_content_configure`. Please execute `ctest -LE git_required` to skip these tests. See [issue #2189](https://github.com/nlohmann/json/issues/2189) for more information.

@@ -32,6 +32,24 @@ Exceptions are used widely within the library. They can, however, be switched of
 
 Note that `JSON_THROW_USER` should leave the current scope (e.g., by throwing or aborting), as continuing after it may yield undefined behavior.
 
+??? example
+
+    The code below switches off exceptions and creates a log entry with a detailed error message in case of errors.
+
+    ```cpp
+    #include <iostream>
+    
+    #define JSON_TRY_USER if(true)
+    #define JSON_CATCH_USER(exception) if(false)
+    #define JSON_THROW_USER(exception)                           \
+        {std::clog << "Error in " << __FILE__ << ":" << __LINE__ \
+                   << " (function " << __FUNCTION__ << ") - "    \
+                   << (exception).what() << std::endl;           \
+         std::abort();}
+    
+    #include <nlohmann/json.hpp>
+    ```
+
 ## Parse errors
 
 This exception is thrown by the library when a parse error occurs. Parse errors

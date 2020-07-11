@@ -35,7 +35,6 @@ SOFTWARE.
 #define NLOHMANN_JSON_VERSION_PATCH 0
 
 #include <algorithm> // all_of, find, for_each
-#include <cassert> // assert
 #include <cstddef> // nullptr_t, ptrdiff_t, size_t
 #include <functional> // hash, less
 #include <initializer_list> // initializer_list
@@ -2048,7 +2047,11 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 #endif
 
 // C++ language standard detection
-#if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_HAS_CXX17) && _HAS_CXX17 == 1) // fix for issue #464
+#if (defined(__cplusplus) && __cplusplus >= 202002L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 202002L)
+    #define JSON_HAS_CPP_20
+    #define JSON_HAS_CPP_17
+    #define JSON_HAS_CPP_14
+#elif (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_HAS_CXX17) && _HAS_CXX17 == 1) // fix for issue #464
     #define JSON_HAS_CPP_17
     #define JSON_HAS_CPP_14
 #elif (defined(__cplusplus) && __cplusplus >= 201402L) || (defined(_HAS_CXX14) && _HAS_CXX14 == 1)
@@ -2101,6 +2104,12 @@ JSON_HEDLEY_DIAGNOSTIC_POP
     #define JSON_INTERNAL_CATCH JSON_INTERNAL_CATCH_USER
 #endif
 
+// allow to override assert
+#if !defined(JSON_ASSERT)
+    #include <cassert> // assert
+    #define JSON_ASSERT(x) assert(x)
+#endif
+
 /*!
 @brief macro to briefly define a mapping between an enum and JSON
 @def NLOHMANN_JSON_SERIALIZE_ENUM
@@ -2148,6 +2157,47 @@ JSON_HEDLEY_DIAGNOSTIC_POP
     basic_json<ObjectType, ArrayType, StringType, BooleanType,             \
     NumberIntegerType, NumberUnsignedType, NumberFloatType,                \
     AllocatorType, JSONSerializer, BinaryType>
+
+// Macros to simplify conversion from/to types
+
+#define NLOHMANN_JSON_EXPAND( x ) x
+#define NLOHMANN_JSON_GET_MACRO(_1,_2,_3,_4,_5,_6, _7, _8, _9, _10, _11, NAME,...) NAME
+
+#define NLOHMANN_JSON_PASTE(...) NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_GET_MACRO(__VA_ARGS__, NLOHMANN_JSON_PASTE11, \
+        NLOHMANN_JSON_PASTE10, NLOHMANN_JSON_PASTE9, NLOHMANN_JSON_PASTE8, NLOHMANN_JSON_PASTE7, \
+        NLOHMANN_JSON_PASTE6, NLOHMANN_JSON_PASTE5, NLOHMANN_JSON_PASTE4, NLOHMANN_JSON_PASTE3, \
+        NLOHMANN_JSON_PASTE2, NLOHMANN_JSON_PASTE1)(__VA_ARGS__))
+#define NLOHMANN_JSON_PASTE2(func,  v1)                                      func(v1)
+#define NLOHMANN_JSON_PASTE3(func,  v1, v2)                                  NLOHMANN_JSON_PASTE2(func, v1) NLOHMANN_JSON_PASTE2(func, v2)
+#define NLOHMANN_JSON_PASTE4(func,  v1, v2, v3)                              NLOHMANN_JSON_PASTE2(func, v1) NLOHMANN_JSON_PASTE3(func, v2, v3)
+#define NLOHMANN_JSON_PASTE5(func,  v1, v2, v3, v4)                          NLOHMANN_JSON_PASTE2(func, v1) NLOHMANN_JSON_PASTE4(func, v2, v3, v4)
+#define NLOHMANN_JSON_PASTE6(func,  v1, v2, v3, v4, v5)                      NLOHMANN_JSON_PASTE2(func, v1) NLOHMANN_JSON_PASTE5(func, v2, v3, v4, v5)
+#define NLOHMANN_JSON_PASTE7(func,  v1, v2, v3, v4, v5, v6)                  NLOHMANN_JSON_PASTE2(func, v1) NLOHMANN_JSON_PASTE6(func, v2, v3, v4, v5, v6)
+#define NLOHMANN_JSON_PASTE8(func,  v1, v2, v3, v4, v5, v6, v7)              NLOHMANN_JSON_PASTE2(func, v1) NLOHMANN_JSON_PASTE7(func, v2, v3, v4, v5, v6, v7)
+#define NLOHMANN_JSON_PASTE9(func,  v1, v2, v3, v4, v5, v6, v7, v8)          NLOHMANN_JSON_PASTE2(func, v1) NLOHMANN_JSON_PASTE8(func, v2, v3, v4, v5, v6, v7, v8)
+#define NLOHMANN_JSON_PASTE10(func, v1, v2, v3, v4, v5, v6, v7, v8, v9)      NLOHMANN_JSON_PASTE2(func, v1) NLOHMANN_JSON_PASTE8(func, v2, v3, v4, v5, v6, v7, v8, v9)
+#define NLOHMANN_JSON_PASTE11(func, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10) NLOHMANN_JSON_PASTE2(func, v1) NLOHMANN_JSON_PASTE8(func, v2, v3, v4, v5, v6, v7, v8, v9, v10)
+
+#define NLOHMANN_JSON_TO(v1) j[#v1] = t.v1;
+#define NLOHMANN_JSON_FROM(v1) j.at(#v1).get_to(t.v1);
+
+/*!
+@brief macro
+@def NLOHMANN_DEFINE_TYPE_INTRUSIVE
+@since version 3.9.0
+*/
+#define NLOHMANN_DEFINE_TYPE_INTRUSIVE(Type, ...)  \
+    friend void to_json(nlohmann::json& j, const Type& t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) } \
+    friend void from_json(const nlohmann::json& j, Type& t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, __VA_ARGS__)) }
+
+/*!
+@brief macro
+@def NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE
+@since version 3.9.0
+*/
+#define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Type, ...)  \
+    void to_json(nlohmann::json& j, const Type& t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) } \
+    void from_json(const nlohmann::json& j, Type& t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, __VA_ARGS__)) }
 
 
 namespace nlohmann
@@ -2772,19 +2822,6 @@ uses the standard template types.
 @since version 1.0.0
 */
 using json = basic_json<>;
-
-template<class Key, class T, class IgnoredLess, class Allocator>
-struct ordered_map;
-
-/*!
-@brief ordered JSON class
-
-This type preserves the insertion order of object keys.
-
-@since version 3.9.0
-*/
-using ordered_json = basic_json<nlohmann::ordered_map>;
-
 }  // namespace nlohmann
 
 #endif  // INCLUDE_NLOHMANN_JSON_FWD_HPP_
@@ -3666,7 +3703,9 @@ namespace detail
 template<typename string_type>
 void int_to_string( string_type& target, std::size_t value )
 {
-    target = std::to_string(value);
+    // For ADL
+    using std::to_string;
+    target = to_string(value);
 }
 template <typename IteratorType> class iteration_proxy_value
 {
@@ -3723,7 +3762,7 @@ template <typename IteratorType> class iteration_proxy_value
     /// return key of the iterator
     const string_type& key() const
     {
-        assert(anchor.m_object != nullptr);
+        JSON_ASSERT(anchor.m_object != nullptr);
 
         switch (anchor.m_object->type())
         {
@@ -4417,7 +4456,6 @@ class byte_container_with_subtype : public BinaryType
 
 #include <algorithm> // generate_n
 #include <array> // array
-#include <cassert> // assert
 #include <cmath> // ldexp
 #include <cstddef> // size_t
 #include <cstdint> // uint8_t, uint16_t, uint32_t, uint64_t
@@ -4434,7 +4472,6 @@ class byte_container_with_subtype : public BinaryType
 
 
 #include <array> // array
-#include <cassert> // assert
 #include <cstddef> // size_t
 #include <cstdio> //FILE *
 #include <cstring> // strlen
@@ -4511,7 +4548,7 @@ class input_stream_adapter
     {
         // clear stream flags; we use underlying streambuf I/O, do not
         // maintain ifstream flags, except eof
-        if (is)
+        if (is != nullptr)
         {
             is->clear(is->rdstate() & std::ios::eofbit);
         }
@@ -4732,13 +4769,13 @@ class wide_string_input_adapter
         {
             fill_buffer<sizeof(WideCharType)>();
 
-            assert(utf8_bytes_filled > 0);
-            assert(utf8_bytes_index == 0);
+            JSON_ASSERT(utf8_bytes_filled > 0);
+            JSON_ASSERT(utf8_bytes_index == 0);
         }
 
         // use buffer
-        assert(utf8_bytes_filled > 0);
-        assert(utf8_bytes_index < utf8_bytes_filled);
+        JSON_ASSERT(utf8_bytes_filled > 0);
+        JSON_ASSERT(utf8_bytes_index < utf8_bytes_filled);
         return utf8_bytes[utf8_bytes_index++];
     }
 
@@ -4846,7 +4883,7 @@ template < typename CharT,
 contiguous_bytes_input_adapter input_adapter(CharT b)
 {
     auto length = std::strlen(reinterpret_cast<const char*>(b));
-    auto ptr = reinterpret_cast<const char*>(b);
+    const auto* ptr = reinterpret_cast<const char*>(b);
     return input_adapter(ptr, ptr + length);
 }
 
@@ -4892,7 +4929,6 @@ class span_input_adapter
 // #include <nlohmann/detail/input/json_sax.hpp>
 
 
-#include <cassert> // assert
 #include <cstddef>
 #include <string> // string
 #include <utility> // move
@@ -5163,18 +5199,18 @@ class json_sax_dom_parser
             switch ((ex.id / 100) % 100)
             {
                 case 1:
-                    JSON_THROW(*static_cast<const detail::parse_error*>(&ex));
+                    JSON_THROW(*dynamic_cast<const detail::parse_error*>(&ex));
                 case 4:
-                    JSON_THROW(*static_cast<const detail::out_of_range*>(&ex));
+                    JSON_THROW(*dynamic_cast<const detail::out_of_range*>(&ex));
                 // LCOV_EXCL_START
                 case 2:
-                    JSON_THROW(*static_cast<const detail::invalid_iterator*>(&ex));
+                    JSON_THROW(*dynamic_cast<const detail::invalid_iterator*>(&ex));
                 case 3:
-                    JSON_THROW(*static_cast<const detail::type_error*>(&ex));
+                    JSON_THROW(*dynamic_cast<const detail::type_error*>(&ex));
                 case 5:
-                    JSON_THROW(*static_cast<const detail::other_error*>(&ex));
+                    JSON_THROW(*dynamic_cast<const detail::other_error*>(&ex));
                 default:
-                    assert(false);
+                    JSON_ASSERT(false);
                     // LCOV_EXCL_STOP
             }
         }
@@ -5203,7 +5239,7 @@ class json_sax_dom_parser
             return &root;
         }
 
-        assert(ref_stack.back()->is_array() or ref_stack.back()->is_object());
+        JSON_ASSERT(ref_stack.back()->is_array() or ref_stack.back()->is_object());
 
         if (ref_stack.back()->is_array())
         {
@@ -5211,8 +5247,8 @@ class json_sax_dom_parser
             return &(ref_stack.back()->m_value.array->back());
         }
 
-        assert(ref_stack.back()->is_object());
-        assert(object_element);
+        JSON_ASSERT(ref_stack.back()->is_object());
+        JSON_ASSERT(object_element);
         *object_element = BasicJsonType(std::forward<Value>(v));
         return object_element;
     }
@@ -5341,8 +5377,8 @@ class json_sax_dom_callback_parser
             *ref_stack.back() = discarded;
         }
 
-        assert(not ref_stack.empty());
-        assert(not keep_stack.empty());
+        JSON_ASSERT(not ref_stack.empty());
+        JSON_ASSERT(not keep_stack.empty());
         ref_stack.pop_back();
         keep_stack.pop_back();
 
@@ -5393,8 +5429,8 @@ class json_sax_dom_callback_parser
             }
         }
 
-        assert(not ref_stack.empty());
-        assert(not keep_stack.empty());
+        JSON_ASSERT(not ref_stack.empty());
+        JSON_ASSERT(not keep_stack.empty());
         ref_stack.pop_back();
         keep_stack.pop_back();
 
@@ -5417,18 +5453,18 @@ class json_sax_dom_callback_parser
             switch ((ex.id / 100) % 100)
             {
                 case 1:
-                    JSON_THROW(*static_cast<const detail::parse_error*>(&ex));
+                    JSON_THROW(*dynamic_cast<const detail::parse_error*>(&ex));
                 case 4:
-                    JSON_THROW(*static_cast<const detail::out_of_range*>(&ex));
+                    JSON_THROW(*dynamic_cast<const detail::out_of_range*>(&ex));
                 // LCOV_EXCL_START
                 case 2:
-                    JSON_THROW(*static_cast<const detail::invalid_iterator*>(&ex));
+                    JSON_THROW(*dynamic_cast<const detail::invalid_iterator*>(&ex));
                 case 3:
-                    JSON_THROW(*static_cast<const detail::type_error*>(&ex));
+                    JSON_THROW(*dynamic_cast<const detail::type_error*>(&ex));
                 case 5:
-                    JSON_THROW(*static_cast<const detail::other_error*>(&ex));
+                    JSON_THROW(*dynamic_cast<const detail::other_error*>(&ex));
                 default:
-                    assert(false);
+                    JSON_ASSERT(false);
                     // LCOV_EXCL_STOP
             }
         }
@@ -5459,7 +5495,7 @@ class json_sax_dom_callback_parser
     template<typename Value>
     std::pair<bool, BasicJsonType*> handle_value(Value&& v, const bool skip_callback = false)
     {
-        assert(not keep_stack.empty());
+        JSON_ASSERT(not keep_stack.empty());
 
         // do not handle this value if we know it would be added to a discarded
         // container
@@ -5494,7 +5530,7 @@ class json_sax_dom_callback_parser
         }
 
         // we now only expect arrays and objects
-        assert(ref_stack.back()->is_array() or ref_stack.back()->is_object());
+        JSON_ASSERT(ref_stack.back()->is_array() or ref_stack.back()->is_object());
 
         // array
         if (ref_stack.back()->is_array())
@@ -5504,9 +5540,9 @@ class json_sax_dom_callback_parser
         }
 
         // object
-        assert(ref_stack.back()->is_object());
+        JSON_ASSERT(ref_stack.back()->is_object());
         // check if we should store an element for the current key
-        assert(not key_keep_stack.empty());
+        JSON_ASSERT(not key_keep_stack.empty());
         const bool store_element = key_keep_stack.back();
         key_keep_stack.pop_back();
 
@@ -5515,7 +5551,7 @@ class json_sax_dom_callback_parser
             return {false, nullptr};
         }
 
-        assert(object_element);
+        JSON_ASSERT(object_element);
         *object_element = std::move(value);
         return {true, object_element};
     }
@@ -5859,7 +5895,7 @@ class binary_reader
                 break;
 
             default:            // LCOV_EXCL_LINE
-                assert(false);  // LCOV_EXCL_LINE
+                JSON_ASSERT(false);  // LCOV_EXCL_LINE
         }
 
         // strict mode: next byte must be EOF
@@ -5895,7 +5931,7 @@ class binary_reader
     */
     bool parse_bson_internal()
     {
-        std::int32_t document_size;
+        std::int32_t document_size{};
         get_number<std::int32_t, true>(input_format_t::bson, document_size);
 
         if (JSON_HEDLEY_UNLIKELY(not sax->start_object(std::size_t(-1))))
@@ -5934,8 +5970,6 @@ class binary_reader
             }
             *out++ = static_cast<typename string_t::value_type>(current);
         }
-
-        return true;
     }
 
     /*!
@@ -5980,7 +6014,7 @@ class binary_reader
         }
 
         // All BSON binary values have a subtype
-        std::uint8_t subtype;
+        std::uint8_t subtype{};
         get_number<std::uint8_t>(input_format_t::bson, subtype);
         result.set_subtype(subtype);
 
@@ -6004,13 +6038,13 @@ class binary_reader
         {
             case 0x01: // double
             {
-                double number;
+                double number{};
                 return get_number<double, true>(input_format_t::bson, number) and sax->number_float(static_cast<number_float_t>(number), "");
             }
 
             case 0x02: // string
             {
-                std::int32_t len;
+                std::int32_t len{};
                 string_t value;
                 return get_number<std::int32_t, true>(input_format_t::bson, len) and get_bson_string(len, value) and sax->string(value);
             }
@@ -6027,7 +6061,7 @@ class binary_reader
 
             case 0x05: // binary
             {
-                std::int32_t len;
+                std::int32_t len{};
                 binary_t value;
                 return get_number<std::int32_t, true>(input_format_t::bson, len) and get_bson_binary(len, value) and sax->binary(value);
             }
@@ -6044,13 +6078,13 @@ class binary_reader
 
             case 0x10: // int32
             {
-                std::int32_t value;
+                std::int32_t value{};
                 return get_number<std::int32_t, true>(input_format_t::bson, value) and sax->number_integer(value);
             }
 
             case 0x12: // int64
             {
-                std::int64_t value;
+                std::int64_t value{};
                 return get_number<std::int64_t, true>(input_format_t::bson, value) and sax->number_integer(value);
             }
 
@@ -6115,7 +6149,7 @@ class binary_reader
     */
     bool parse_bson_array()
     {
-        std::int32_t document_size;
+        std::int32_t document_size{};
         get_number<std::int32_t, true>(input_format_t::bson, document_size);
 
         if (JSON_HEDLEY_UNLIKELY(not sax->start_array(std::size_t(-1))))
@@ -6179,25 +6213,25 @@ class binary_reader
 
             case 0x18: // Unsigned integer (one-byte uint8_t follows)
             {
-                std::uint8_t number;
+                std::uint8_t number{};
                 return get_number(input_format_t::cbor, number) and sax->number_unsigned(number);
             }
 
             case 0x19: // Unsigned integer (two-byte uint16_t follows)
             {
-                std::uint16_t number;
+                std::uint16_t number{};
                 return get_number(input_format_t::cbor, number) and sax->number_unsigned(number);
             }
 
             case 0x1A: // Unsigned integer (four-byte uint32_t follows)
             {
-                std::uint32_t number;
+                std::uint32_t number{};
                 return get_number(input_format_t::cbor, number) and sax->number_unsigned(number);
             }
 
             case 0x1B: // Unsigned integer (eight-byte uint64_t follows)
             {
-                std::uint64_t number;
+                std::uint64_t number{};
                 return get_number(input_format_t::cbor, number) and sax->number_unsigned(number);
             }
 
@@ -6230,25 +6264,25 @@ class binary_reader
 
             case 0x38: // Negative integer (one-byte uint8_t follows)
             {
-                std::uint8_t number;
+                std::uint8_t number{};
                 return get_number(input_format_t::cbor, number) and sax->number_integer(static_cast<number_integer_t>(-1) - number);
             }
 
             case 0x39: // Negative integer -1-n (two-byte uint16_t follows)
             {
-                std::uint16_t number;
+                std::uint16_t number{};
                 return get_number(input_format_t::cbor, number) and sax->number_integer(static_cast<number_integer_t>(-1) - number);
             }
 
             case 0x3A: // Negative integer -1-n (four-byte uint32_t follows)
             {
-                std::uint32_t number;
+                std::uint32_t number{};
                 return get_number(input_format_t::cbor, number) and sax->number_integer(static_cast<number_integer_t>(-1) - number);
             }
 
             case 0x3B: // Negative integer -1-n (eight-byte uint64_t follows)
             {
-                std::uint64_t number;
+                std::uint64_t number{};
                 return get_number(input_format_t::cbor, number) and sax->number_integer(static_cast<number_integer_t>(-1)
                         - static_cast<number_integer_t>(number));
             }
@@ -6352,25 +6386,25 @@ class binary_reader
 
             case 0x98: // array (one-byte uint8_t for n follows)
             {
-                std::uint8_t len;
+                std::uint8_t len{};
                 return get_number(input_format_t::cbor, len) and get_cbor_array(static_cast<std::size_t>(len));
             }
 
             case 0x99: // array (two-byte uint16_t for n follow)
             {
-                std::uint16_t len;
+                std::uint16_t len{};
                 return get_number(input_format_t::cbor, len) and get_cbor_array(static_cast<std::size_t>(len));
             }
 
             case 0x9A: // array (four-byte uint32_t for n follow)
             {
-                std::uint32_t len;
+                std::uint32_t len{};
                 return get_number(input_format_t::cbor, len) and get_cbor_array(static_cast<std::size_t>(len));
             }
 
             case 0x9B: // array (eight-byte uint64_t for n follow)
             {
-                std::uint64_t len;
+                std::uint64_t len{};
                 return get_number(input_format_t::cbor, len) and get_cbor_array(static_cast<std::size_t>(len));
             }
 
@@ -6406,25 +6440,25 @@ class binary_reader
 
             case 0xB8: // map (one-byte uint8_t for n follows)
             {
-                std::uint8_t len;
+                std::uint8_t len{};
                 return get_number(input_format_t::cbor, len) and get_cbor_object(static_cast<std::size_t>(len));
             }
 
             case 0xB9: // map (two-byte uint16_t for n follow)
             {
-                std::uint16_t len;
+                std::uint16_t len{};
                 return get_number(input_format_t::cbor, len) and get_cbor_object(static_cast<std::size_t>(len));
             }
 
             case 0xBA: // map (four-byte uint32_t for n follow)
             {
-                std::uint32_t len;
+                std::uint32_t len{};
                 return get_number(input_format_t::cbor, len) and get_cbor_object(static_cast<std::size_t>(len));
             }
 
             case 0xBB: // map (eight-byte uint64_t for n follow)
             {
-                std::uint64_t len;
+                std::uint64_t len{};
                 return get_number(input_format_t::cbor, len) and get_cbor_object(static_cast<std::size_t>(len));
             }
 
@@ -6469,8 +6503,8 @@ class binary_reader
                 {
                     const int exp = (half >> 10u) & 0x1Fu;
                     const unsigned int mant = half & 0x3FFu;
-                    assert(0 <= exp and exp <= 32);
-                    assert(mant <= 1024);
+                    JSON_ASSERT(0 <= exp and exp <= 32);
+                    JSON_ASSERT(mant <= 1024);
                     switch (exp)
                     {
                         case 0:
@@ -6490,13 +6524,13 @@ class binary_reader
 
             case 0xFA: // Single-Precision Float (four-byte IEEE 754)
             {
-                float number;
+                float number{};
                 return get_number(input_format_t::cbor, number) and sax->number_float(static_cast<number_float_t>(number), "");
             }
 
             case 0xFB: // Double-Precision Float (eight-byte IEEE 754)
             {
-                double number;
+                double number{};
                 return get_number(input_format_t::cbor, number) and sax->number_float(static_cast<number_float_t>(number), "");
             }
 
@@ -6559,25 +6593,25 @@ class binary_reader
 
             case 0x78: // UTF-8 string (one-byte uint8_t for n follows)
             {
-                std::uint8_t len;
+                std::uint8_t len{};
                 return get_number(input_format_t::cbor, len) and get_string(input_format_t::cbor, len, result);
             }
 
             case 0x79: // UTF-8 string (two-byte uint16_t for n follow)
             {
-                std::uint16_t len;
+                std::uint16_t len{};
                 return get_number(input_format_t::cbor, len) and get_string(input_format_t::cbor, len, result);
             }
 
             case 0x7A: // UTF-8 string (four-byte uint32_t for n follow)
             {
-                std::uint32_t len;
+                std::uint32_t len{};
                 return get_number(input_format_t::cbor, len) and get_string(input_format_t::cbor, len, result);
             }
 
             case 0x7B: // UTF-8 string (eight-byte uint64_t for n follow)
             {
-                std::uint64_t len;
+                std::uint64_t len{};
                 return get_number(input_format_t::cbor, len) and get_string(input_format_t::cbor, len, result);
             }
 
@@ -6654,28 +6688,28 @@ class binary_reader
 
             case 0x58: // Binary data (one-byte uint8_t for n follows)
             {
-                std::uint8_t len;
+                std::uint8_t len{};
                 return get_number(input_format_t::cbor, len) and
                        get_binary(input_format_t::cbor, len, result);
             }
 
             case 0x59: // Binary data (two-byte uint16_t for n follow)
             {
-                std::uint16_t len;
+                std::uint16_t len{};
                 return get_number(input_format_t::cbor, len) and
                        get_binary(input_format_t::cbor, len, result);
             }
 
             case 0x5A: // Binary data (four-byte uint32_t for n follow)
             {
-                std::uint32_t len;
+                std::uint32_t len{};
                 return get_number(input_format_t::cbor, len) and
                        get_binary(input_format_t::cbor, len, result);
             }
 
             case 0x5B: // Binary data (eight-byte uint64_t for n follow)
             {
-                std::uint64_t len;
+                std::uint64_t len{};
                 return get_number(input_format_t::cbor, len) and
                        get_binary(input_format_t::cbor, len, result);
             }
@@ -7040,85 +7074,85 @@ class binary_reader
 
             case 0xCA: // float 32
             {
-                float number;
+                float number{};
                 return get_number(input_format_t::msgpack, number) and sax->number_float(static_cast<number_float_t>(number), "");
             }
 
             case 0xCB: // float 64
             {
-                double number;
+                double number{};
                 return get_number(input_format_t::msgpack, number) and sax->number_float(static_cast<number_float_t>(number), "");
             }
 
             case 0xCC: // uint 8
             {
-                std::uint8_t number;
+                std::uint8_t number{};
                 return get_number(input_format_t::msgpack, number) and sax->number_unsigned(number);
             }
 
             case 0xCD: // uint 16
             {
-                std::uint16_t number;
+                std::uint16_t number{};
                 return get_number(input_format_t::msgpack, number) and sax->number_unsigned(number);
             }
 
             case 0xCE: // uint 32
             {
-                std::uint32_t number;
+                std::uint32_t number{};
                 return get_number(input_format_t::msgpack, number) and sax->number_unsigned(number);
             }
 
             case 0xCF: // uint 64
             {
-                std::uint64_t number;
+                std::uint64_t number{};
                 return get_number(input_format_t::msgpack, number) and sax->number_unsigned(number);
             }
 
             case 0xD0: // int 8
             {
-                std::int8_t number;
+                std::int8_t number{};
                 return get_number(input_format_t::msgpack, number) and sax->number_integer(number);
             }
 
             case 0xD1: // int 16
             {
-                std::int16_t number;
+                std::int16_t number{};
                 return get_number(input_format_t::msgpack, number) and sax->number_integer(number);
             }
 
             case 0xD2: // int 32
             {
-                std::int32_t number;
+                std::int32_t number{};
                 return get_number(input_format_t::msgpack, number) and sax->number_integer(number);
             }
 
             case 0xD3: // int 64
             {
-                std::int64_t number;
+                std::int64_t number{};
                 return get_number(input_format_t::msgpack, number) and sax->number_integer(number);
             }
 
             case 0xDC: // array 16
             {
-                std::uint16_t len;
+                std::uint16_t len{};
                 return get_number(input_format_t::msgpack, len) and get_msgpack_array(static_cast<std::size_t>(len));
             }
 
             case 0xDD: // array 32
             {
-                std::uint32_t len;
+                std::uint32_t len{};
                 return get_number(input_format_t::msgpack, len) and get_msgpack_array(static_cast<std::size_t>(len));
             }
 
             case 0xDE: // map 16
             {
-                std::uint16_t len;
+                std::uint16_t len{};
                 return get_number(input_format_t::msgpack, len) and get_msgpack_object(static_cast<std::size_t>(len));
             }
 
             case 0xDF: // map 32
             {
-                std::uint32_t len;
+                std::uint32_t len{};
                 return get_number(input_format_t::msgpack, len) and get_msgpack_object(static_cast<std::size_t>(len));
             }
 
@@ -7223,19 +7257,19 @@ class binary_reader
 
             case 0xD9: // str 8
             {
-                std::uint8_t len;
+                std::uint8_t len{};
                 return get_number(input_format_t::msgpack, len) and get_string(input_format_t::msgpack, len, result);
             }
 
             case 0xDA: // str 16
             {
-                std::uint16_t len;
+                std::uint16_t len{};
                 return get_number(input_format_t::msgpack, len) and get_string(input_format_t::msgpack, len, result);
             }
 
             case 0xDB: // str 32
             {
-                std::uint32_t len;
+                std::uint32_t len{};
                 return get_number(input_format_t::msgpack, len) and get_string(input_format_t::msgpack, len, result);
             }
 
@@ -7270,29 +7304,29 @@ class binary_reader
         {
             case 0xC4: // bin 8
             {
-                std::uint8_t len;
+                std::uint8_t len{};
                 return get_number(input_format_t::msgpack, len) and
                        get_binary(input_format_t::msgpack, len, result);
             }
 
             case 0xC5: // bin 16
             {
-                std::uint16_t len;
+                std::uint16_t len{};
                 return get_number(input_format_t::msgpack, len) and
                        get_binary(input_format_t::msgpack, len, result);
             }
 
             case 0xC6: // bin 32
             {
-                std::uint32_t len;
+                std::uint32_t len{};
                 return get_number(input_format_t::msgpack, len) and
                        get_binary(input_format_t::msgpack, len, result);
             }
 
             case 0xC7: // ext 8
             {
-                std::uint8_t len;
-                std::int8_t subtype;
+                std::uint8_t len{};
+                std::int8_t subtype{};
                 return get_number(input_format_t::msgpack, len) and
                        get_number(input_format_t::msgpack, subtype) and
                        get_binary(input_format_t::msgpack, len, result) and
@@ -7301,8 +7335,8 @@ class binary_reader
 
             case 0xC8: // ext 16
             {
-                std::uint16_t len;
-                std::int8_t subtype;
+                std::uint16_t len{};
+                std::int8_t subtype{};
                 return get_number(input_format_t::msgpack, len) and
                        get_number(input_format_t::msgpack, subtype) and
                        get_binary(input_format_t::msgpack, len, result) and
@@ -7311,8 +7345,8 @@ class binary_reader
 
             case 0xC9: // ext 32
             {
-                std::uint32_t len;
-                std::int8_t subtype;
+                std::uint32_t len{};
+                std::int8_t subtype{};
                 return get_number(input_format_t::msgpack, len) and
                        get_number(input_format_t::msgpack, subtype) and
                        get_binary(input_format_t::msgpack, len, result) and
@@ -7321,7 +7355,7 @@ class binary_reader
 
             case 0xD4: // fixext 1
             {
-                std::int8_t subtype;
+                std::int8_t subtype{};
                 return get_number(input_format_t::msgpack, subtype) and
                        get_binary(input_format_t::msgpack, 1, result) and
                        assign_and_return_true(subtype);
@@ -7329,7 +7363,7 @@ class binary_reader
 
             case 0xD5: // fixext 2
             {
-                std::int8_t subtype;
+                std::int8_t subtype{};
                 return get_number(input_format_t::msgpack, subtype) and
                        get_binary(input_format_t::msgpack, 2, result) and
                        assign_and_return_true(subtype);
@@ -7337,7 +7371,7 @@ class binary_reader
 
             case 0xD6: // fixext 4
             {
-                std::int8_t subtype;
+                std::int8_t subtype{};
                 return get_number(input_format_t::msgpack, subtype) and
                        get_binary(input_format_t::msgpack, 4, result) and
                        assign_and_return_true(subtype);
@@ -7345,7 +7379,7 @@ class binary_reader
 
             case 0xD7: // fixext 8
             {
-                std::int8_t subtype;
+                std::int8_t subtype{};
                 return get_number(input_format_t::msgpack, subtype) and
                        get_binary(input_format_t::msgpack, 8, result) and
                        assign_and_return_true(subtype);
@@ -7353,7 +7387,7 @@ class binary_reader
 
             case 0xD8: // fixext 16
             {
-                std::int8_t subtype;
+                std::int8_t subtype{};
                 return get_number(input_format_t::msgpack, subtype) and
                        get_binary(input_format_t::msgpack, 16, result) and
                        assign_and_return_true(subtype);
@@ -7462,31 +7496,31 @@ class binary_reader
         {
             case 'U':
             {
-                std::uint8_t len;
+                std::uint8_t len{};
                 return get_number(input_format_t::ubjson, len) and get_string(input_format_t::ubjson, len, result);
             }
 
             case 'i':
             {
-                std::int8_t len;
+                std::int8_t len{};
                 return get_number(input_format_t::ubjson, len) and get_string(input_format_t::ubjson, len, result);
             }
 
             case 'I':
             {
-                std::int16_t len;
+                std::int16_t len{};
                 return get_number(input_format_t::ubjson, len) and get_string(input_format_t::ubjson, len, result);
             }
 
             case 'l':
             {
-                std::int32_t len;
+                std::int32_t len{};
                 return get_number(input_format_t::ubjson, len) and get_string(input_format_t::ubjson, len, result);
             }
 
             case 'L':
             {
-                std::int64_t len;
+                std::int64_t len{};
                 return get_number(input_format_t::ubjson, len) and get_string(input_format_t::ubjson, len, result);
             }
 
@@ -7506,7 +7540,7 @@ class binary_reader
         {
             case 'U':
             {
-                std::uint8_t number;
+                std::uint8_t number{};
                 if (JSON_HEDLEY_UNLIKELY(not get_number(input_format_t::ubjson, number)))
                 {
                     return false;
@@ -7517,7 +7551,7 @@ class binary_reader
 
             case 'i':
             {
-                std::int8_t number;
+                std::int8_t number{};
                 if (JSON_HEDLEY_UNLIKELY(not get_number(input_format_t::ubjson, number)))
                 {
                     return false;
@@ -7528,7 +7562,7 @@ class binary_reader
 
             case 'I':
             {
-                std::int16_t number;
+                std::int16_t number{};
                 if (JSON_HEDLEY_UNLIKELY(not get_number(input_format_t::ubjson, number)))
                 {
                     return false;
@@ -7539,7 +7573,7 @@ class binary_reader
 
             case 'l':
             {
-                std::int32_t number;
+                std::int32_t number{};
                 if (JSON_HEDLEY_UNLIKELY(not get_number(input_format_t::ubjson, number)))
                 {
                     return false;
@@ -7550,7 +7584,7 @@ class binary_reader
 
             case 'L':
             {
-                std::int64_t number;
+                std::int64_t number{};
                 if (JSON_HEDLEY_UNLIKELY(not get_number(input_format_t::ubjson, number)))
                 {
                     return false;
@@ -7635,43 +7669,43 @@ class binary_reader
 
             case 'U':
             {
-                std::uint8_t number;
+                std::uint8_t number{};
                 return get_number(input_format_t::ubjson, number) and sax->number_unsigned(number);
             }
 
             case 'i':
             {
-                std::int8_t number;
+                std::int8_t number{};
                 return get_number(input_format_t::ubjson, number) and sax->number_integer(number);
             }
 
             case 'I':
             {
-                std::int16_t number;
+                std::int16_t number{};
                 return get_number(input_format_t::ubjson, number) and sax->number_integer(number);
             }
 
             case 'l':
             {
-                std::int32_t number;
+                std::int32_t number{};
                 return get_number(input_format_t::ubjson, number) and sax->number_integer(number);
             }
 
             case 'L':
             {
-                std::int64_t number;
+                std::int64_t number{};
                 return get_number(input_format_t::ubjson, number) and sax->number_integer(number);
             }
 
             case 'd':
             {
-                float number;
+                float number{};
                 return get_number(input_format_t::ubjson, number) and sax->number_float(static_cast<number_float_t>(number), "");
             }
 
             case 'D':
             {
-                double number;
+                double number{};
                 return get_number(input_format_t::ubjson, number) and sax->number_float(static_cast<number_float_t>(number), "");
             }
 
@@ -8047,7 +8081,7 @@ class binary_reader
                 break;
 
             default:            // LCOV_EXCL_LINE
-                assert(false);  // LCOV_EXCL_LINE
+                JSON_ASSERT(false);  // LCOV_EXCL_LINE
         }
 
         return error_msg + " " + context + ": " + detail;
@@ -8192,8 +8226,11 @@ class lexer : public lexer_base<BasicJsonType>
   public:
     using token_type = typename lexer_base<BasicJsonType>::token_type;
 
-    explicit lexer(InputAdapterType&& adapter)
-        : ia(std::move(adapter)), decimal_point_char(static_cast<char_int_type>(get_decimal_point())) {}
+    explicit lexer(InputAdapterType&& adapter, bool ignore_comments_ = false)
+        : ia(std::move(adapter))
+        , ignore_comments(ignore_comments_)
+        , decimal_point_char(static_cast<char_int_type>(get_decimal_point()))
+    {}
 
     // delete because of pointer members
     lexer(const lexer&) = delete;
@@ -8211,8 +8248,8 @@ class lexer : public lexer_base<BasicJsonType>
     JSON_HEDLEY_PURE
     static char get_decimal_point() noexcept
     {
-        const auto loc = localeconv();
-        assert(loc != nullptr);
+        const auto* loc = localeconv();
+        JSON_ASSERT(loc != nullptr);
         return (loc->decimal_point == nullptr) ? '.' : *(loc->decimal_point);
     }
 
@@ -8238,7 +8275,7 @@ class lexer : public lexer_base<BasicJsonType>
     int get_codepoint()
     {
         // this function only makes sense after reading `\u`
-        assert(current == 'u');
+        JSON_ASSERT(current == 'u');
         int codepoint = 0;
 
         const auto factors = { 12u, 8u, 4u, 0u };
@@ -8264,7 +8301,7 @@ class lexer : public lexer_base<BasicJsonType>
             }
         }
 
-        assert(0x0000 <= codepoint and codepoint <= 0xFFFF);
+        JSON_ASSERT(0x0000 <= codepoint and codepoint <= 0xFFFF);
         return codepoint;
     }
 
@@ -8285,7 +8322,7 @@ class lexer : public lexer_base<BasicJsonType>
     */
     bool next_byte_in_range(std::initializer_list<char_int_type> ranges)
     {
-        assert(ranges.size() == 2 or ranges.size() == 4 or ranges.size() == 6);
+        JSON_ASSERT(ranges.size() == 2 or ranges.size() == 4 or ranges.size() == 6);
         add(current);
 
         for (auto range = ranges.begin(); range != ranges.end(); ++range)
@@ -8326,7 +8363,7 @@ class lexer : public lexer_base<BasicJsonType>
         reset();
 
         // we entered the function by reading an open quote
-        assert(current == '\"');
+        JSON_ASSERT(current == '\"');
 
         while (true)
         {
@@ -8446,7 +8483,7 @@ class lexer : public lexer_base<BasicJsonType>
                             }
 
                             // result of the above calculation yields a proper codepoint
-                            assert(0x00 <= codepoint and codepoint <= 0x10FFFF);
+                            JSON_ASSERT(0x00 <= codepoint and codepoint <= 0x10FFFF);
 
                             // translate codepoint into bytes
                             if (codepoint < 0x80)
@@ -8906,6 +8943,77 @@ class lexer : public lexer_base<BasicJsonType>
         }
     }
 
+    /*!
+     * @brief scan a comment
+     * @return whether comment could be scanned successfully
+     */
+    bool scan_comment()
+    {
+        switch (get())
+        {
+            // single-line comments skip input until a newline or EOF is read
+            case '/':
+            {
+                while (true)
+                {
+                    switch (get())
+                    {
+                        case '\n':
+                        case '\r':
+                        case std::char_traits<char_type>::eof():
+                        case '\0':
+                            return true;
+
+                        default:
+                            break;
+                    }
+                }
+            }
+
+            // multi-line comments skip input until */ is read
+            case '*':
+            {
+                while (true)
+                {
+                    switch (get())
+                    {
+                        case std::char_traits<char_type>::eof():
+                        case '\0':
+                        {
+                            error_message = "invalid comment; missing closing '*/'";
+                            return false;
+                        }
+
+                        case '*':
+                        {
+                            switch (get())
+                            {
+                                case '/':
+                                    return true;
+
+                                default:
+                                {
+                                    unget();
+                                    break;
+                                }
+                            }
+                        }
+
+                        default:
+                            break;
+                    }
+                }
+            }
+
+            // unexpected character after reading '/'
+            default:
+            {
+                error_message = "invalid comment; expecting '/' or '*' after '/'";
+                return false;
+            }
+        }
+    }
+
     JSON_HEDLEY_NON_NULL(2)
     static void strtof(float& f, const char* str, char** endptr) noexcept
     {
@@ -9004,7 +9112,7 @@ class lexer : public lexer_base<BasicJsonType>
 
             // all other characters are rejected outside scan_number()
             default:            // LCOV_EXCL_LINE
-                assert(false);  // LCOV_EXCL_LINE
+                JSON_ASSERT(false);  // LCOV_EXCL_LINE
         }
 
 scan_number_minus:
@@ -9251,7 +9359,7 @@ scan_number_done:
             const auto x = std::strtoull(token_buffer.data(), &endptr, 10);
 
             // we checked the number format before
-            assert(endptr == token_buffer.data() + token_buffer.size());
+            JSON_ASSERT(endptr == token_buffer.data() + token_buffer.size());
 
             if (errno == 0)
             {
@@ -9267,7 +9375,7 @@ scan_number_done:
             const auto x = std::strtoll(token_buffer.data(), &endptr, 10);
 
             // we checked the number format before
-            assert(endptr == token_buffer.data() + token_buffer.size());
+            JSON_ASSERT(endptr == token_buffer.data() + token_buffer.size());
 
             if (errno == 0)
             {
@@ -9284,7 +9392,7 @@ scan_number_done:
         strtof(value_float, token_buffer.data(), &endptr);
 
         // we checked the number format before
-        assert(endptr == token_buffer.data() + token_buffer.size());
+        JSON_ASSERT(endptr == token_buffer.data() + token_buffer.size());
 
         return token_type::value_float;
     }
@@ -9298,7 +9406,7 @@ scan_number_done:
     token_type scan_literal(const char_type* literal_text, const std::size_t length,
                             token_type return_type)
     {
-        assert(std::char_traits<char_type>::to_char_type(current) == literal_text[0]);
+        JSON_ASSERT(std::char_traits<char_type>::to_char_type(current) == literal_text[0]);
         for (std::size_t i = 1; i < length; ++i)
         {
             if (JSON_HEDLEY_UNLIKELY(std::char_traits<char_type>::to_char_type(get()) != literal_text[i]))
@@ -9390,7 +9498,7 @@ scan_number_done:
 
         if (JSON_HEDLEY_LIKELY(current != std::char_traits<char_type>::eof()))
         {
-            assert(not token_string.empty());
+            JSON_ASSERT(not token_string.empty());
             token_string.pop_back();
         }
     }
@@ -9495,6 +9603,15 @@ scan_number_done:
         return true;
     }
 
+    void skip_whitespace()
+    {
+        do
+        {
+            get();
+        }
+        while (current == ' ' or current == '\t' or current == '\n' or current == '\r');
+    }
+
     token_type scan()
     {
         // initially, skip the BOM
@@ -9505,11 +9622,19 @@ scan_number_done:
         }
 
         // read next character and ignore whitespace
-        do
+        skip_whitespace();
+
+        // ignore comments
+        if (ignore_comments and current == '/')
         {
-            get();
+            if (not scan_comment())
+            {
+                return token_type::parse_error;
+            }
+
+            // skip following whitespace
+            skip_whitespace();
         }
-        while (current == ' ' or current == '\t' or current == '\n' or current == '\r');
 
         switch (current)
         {
@@ -9579,6 +9704,9 @@ scan_number_done:
     /// input adapter
     InputAdapterType ia;
 
+    /// whether comments should be ignored (true) or signaled as errors (false)
+    const bool ignore_comments = false;
+
     /// the current character
     char_int_type current = std::char_traits<char_type>::eof();
 
@@ -9611,7 +9739,6 @@ scan_number_done:
 // #include <nlohmann/detail/input/parser.hpp>
 
 
-#include <cassert> // assert
 #include <cmath> // isfinite
 #include <cstdint> // uint8_t
 #include <functional> // function
@@ -9681,8 +9808,11 @@ class parser
     /// a parser reading from an input adapter
     explicit parser(InputAdapterType&& adapter,
                     const parser_callback_t<BasicJsonType> cb = nullptr,
-                    const bool allow_exceptions_ = true)
-        : callback(cb), m_lexer(std::move(adapter)), allow_exceptions(allow_exceptions_)
+                    const bool allow_exceptions_ = true,
+                    const bool skip_comments = false)
+        : callback(cb)
+        , m_lexer(std::move(adapter), skip_comments)
+        , allow_exceptions(allow_exceptions_)
     {
         // read first token
         get_token();
@@ -9998,7 +10128,7 @@ class parser
                     // new value, we need to evaluate the new state first.
                     // By setting skip_to_state_evaluation to false, we
                     // are effectively jumping to the beginning of this if.
-                    assert(not states.empty());
+                    JSON_ASSERT(not states.empty());
                     states.pop_back();
                     skip_to_state_evaluation = true;
                     continue;
@@ -10054,7 +10184,7 @@ class parser
                     // new value, we need to evaluate the new state first.
                     // By setting skip_to_state_evaluation to false, we
                     // are effectively jumping to the beginning of this if.
-                    assert(not states.empty());
+                    JSON_ASSERT(not states.empty());
                     states.pop_back();
                     skip_to_state_evaluation = true;
                     continue;
@@ -10258,8 +10388,6 @@ template<typename BasicJsonType> struct internal_iterator
     typename BasicJsonType::object_t::iterator object_iterator {};
     /// iterator for JSON arrays
     typename BasicJsonType::array_t::iterator array_iterator {};
-    /// iterator for JSON binary arrays
-    typename BasicJsonType::binary_t::container_type::iterator binary_iterator {};
     /// generic iterator for all other types
     primitive_iterator_t primitive_iterator {};
 };
@@ -10362,7 +10490,7 @@ class iter_impl
     */
     explicit iter_impl(pointer object) noexcept : m_object(object)
     {
-        assert(m_object != nullptr);
+        JSON_ASSERT(m_object != nullptr);
 
         switch (m_object->m_type)
         {
@@ -10448,7 +10576,7 @@ class iter_impl
     */
     void set_begin() noexcept
     {
-        assert(m_object != nullptr);
+        JSON_ASSERT(m_object != nullptr);
 
         switch (m_object->m_type)
         {
@@ -10485,7 +10613,7 @@ class iter_impl
     */
     void set_end() noexcept
     {
-        assert(m_object != nullptr);
+        JSON_ASSERT(m_object != nullptr);
 
         switch (m_object->m_type)
         {
@@ -10516,19 +10644,19 @@ class iter_impl
     */
     reference operator*() const
     {
-        assert(m_object != nullptr);
+        JSON_ASSERT(m_object != nullptr);
 
         switch (m_object->m_type)
         {
             case value_t::object:
             {
-                assert(m_it.object_iterator != m_object->m_value.object->end());
+                JSON_ASSERT(m_it.object_iterator != m_object->m_value.object->end());
                 return m_it.object_iterator->second;
             }
 
             case value_t::array:
             {
-                assert(m_it.array_iterator != m_object->m_value.array->end());
+                JSON_ASSERT(m_it.array_iterator != m_object->m_value.array->end());
                 return *m_it.array_iterator;
             }
 
@@ -10553,19 +10681,19 @@ class iter_impl
     */
     pointer operator->() const
     {
-        assert(m_object != nullptr);
+        JSON_ASSERT(m_object != nullptr);
 
         switch (m_object->m_type)
         {
             case value_t::object:
             {
-                assert(m_it.object_iterator != m_object->m_value.object->end());
+                JSON_ASSERT(m_it.object_iterator != m_object->m_value.object->end());
                 return &(m_it.object_iterator->second);
             }
 
             case value_t::array:
             {
-                assert(m_it.array_iterator != m_object->m_value.array->end());
+                JSON_ASSERT(m_it.array_iterator != m_object->m_value.array->end());
                 return &*m_it.array_iterator;
             }
 
@@ -10598,7 +10726,7 @@ class iter_impl
     */
     iter_impl& operator++()
     {
-        assert(m_object != nullptr);
+        JSON_ASSERT(m_object != nullptr);
 
         switch (m_object->m_type)
         {
@@ -10641,7 +10769,7 @@ class iter_impl
     */
     iter_impl& operator--()
     {
-        assert(m_object != nullptr);
+        JSON_ASSERT(m_object != nullptr);
 
         switch (m_object->m_type)
         {
@@ -10679,7 +10807,7 @@ class iter_impl
             JSON_THROW(invalid_iterator::create(212, "cannot compare iterators of different containers"));
         }
 
-        assert(m_object != nullptr);
+        JSON_ASSERT(m_object != nullptr);
 
         switch (m_object->m_type)
         {
@@ -10715,7 +10843,7 @@ class iter_impl
             JSON_THROW(invalid_iterator::create(212, "cannot compare iterators of different containers"));
         }
 
-        assert(m_object != nullptr);
+        JSON_ASSERT(m_object != nullptr);
 
         switch (m_object->m_type)
         {
@@ -10763,7 +10891,7 @@ class iter_impl
     */
     iter_impl& operator+=(difference_type i)
     {
-        assert(m_object != nullptr);
+        JSON_ASSERT(m_object != nullptr);
 
         switch (m_object->m_type)
         {
@@ -10834,7 +10962,7 @@ class iter_impl
     */
     difference_type operator-(const iter_impl& other) const
     {
-        assert(m_object != nullptr);
+        JSON_ASSERT(m_object != nullptr);
 
         switch (m_object->m_type)
         {
@@ -10855,7 +10983,7 @@ class iter_impl
     */
     reference operator[](difference_type n) const
     {
-        assert(m_object != nullptr);
+        JSON_ASSERT(m_object != nullptr);
 
         switch (m_object->m_type)
         {
@@ -10886,7 +11014,7 @@ class iter_impl
     */
     const typename object_t::key_type& key() const
     {
-        assert(m_object != nullptr);
+        JSON_ASSERT(m_object != nullptr);
 
         if (JSON_HEDLEY_LIKELY(m_object->is_object()))
         {
@@ -11043,8 +11171,8 @@ class json_reverse_iterator : public std::reverse_iterator<Base>
 
 
 #include <algorithm> // all_of
-#include <cassert> // assert
 #include <cctype> // isdigit
+#include <limits> // max
 #include <numeric> // accumulate
 #include <string> // string
 #include <utility> // move
@@ -11370,10 +11498,15 @@ class json_pointer
 
     @return integer representation of @a s
 
+    @throw parse_error.106  if an array index begins with '0'
+    @throw parse_error.109  if an array index begins not with a digit
     @throw out_of_range.404 if string @a s could not be converted to an integer
+    @throw out_of_range.410 if an array index exceeds size_type
     */
-    static int array_index(const std::string& s)
+    static typename BasicJsonType::size_type array_index(const std::string& s)
     {
+        using size_type = typename BasicJsonType::size_type;
+
         // error condition (cf. RFC 6901, Sect. 4)
         if (JSON_HEDLEY_UNLIKELY(s.size() > 1 and s[0] == '0'))
         {
@@ -11389,10 +11522,10 @@ class json_pointer
         }
 
         std::size_t processed_chars = 0;
-        int res = 0;
+        unsigned long long res = 0;
         JSON_TRY
         {
-            res = std::stoi(s, &processed_chars);
+            res = std::stoull(s, &processed_chars);
         }
         JSON_CATCH(std::out_of_range&)
         {
@@ -11405,7 +11538,14 @@ class json_pointer
             JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + s + "'"));
         }
 
-        return res;
+        // only triggered on special platforms (like 32bit), see also
+        // https://github.com/nlohmann/json/pull/2203
+        if (res >= static_cast<unsigned long long>((std::numeric_limits<size_type>::max)()))
+        {
+            JSON_THROW(detail::out_of_range::create(410, "array index " + s + " exceeds size_type")); // LCOV_EXCL_LINE
+        }
+
+        return static_cast<size_type>(res);
     }
 
     json_pointer top() const
@@ -11430,7 +11570,6 @@ class json_pointer
     */
     BasicJsonType& get_and_create(BasicJsonType& j) const
     {
-        using size_type = typename BasicJsonType::size_type;
         auto result = &j;
 
         // in case no reference tokens exist, return a reference to the JSON value
@@ -11464,7 +11603,7 @@ class json_pointer
                 case detail::value_t::array:
                 {
                     // create an entry in the array
-                    result = &result->operator[](static_cast<size_type>(array_index(reference_token)));
+                    result = &result->operator[](array_index(reference_token));
                     break;
                 }
 
@@ -11503,7 +11642,6 @@ class json_pointer
     */
     BasicJsonType& get_unchecked(BasicJsonType* ptr) const
     {
-        using size_type = typename BasicJsonType::size_type;
         for (const auto& reference_token : reference_tokens)
         {
             // convert null values to arrays or objects before continuing
@@ -11542,8 +11680,7 @@ class json_pointer
                     else
                     {
                         // convert array index to number; unchecked access
-                        ptr = &ptr->operator[](
-                                  static_cast<size_type>(array_index(reference_token)));
+                        ptr = &ptr->operator[](array_index(reference_token));
                     }
                     break;
                 }
@@ -11564,7 +11701,6 @@ class json_pointer
     */
     BasicJsonType& get_checked(BasicJsonType* ptr) const
     {
-        using size_type = typename BasicJsonType::size_type;
         for (const auto& reference_token : reference_tokens)
         {
             switch (ptr->type())
@@ -11587,7 +11723,7 @@ class json_pointer
                     }
 
                     // note: at performs range check
-                    ptr = &ptr->at(static_cast<size_type>(array_index(reference_token)));
+                    ptr = &ptr->at(array_index(reference_token));
                     break;
                 }
 
@@ -11614,7 +11750,6 @@ class json_pointer
     */
     const BasicJsonType& get_unchecked(const BasicJsonType* ptr) const
     {
-        using size_type = typename BasicJsonType::size_type;
         for (const auto& reference_token : reference_tokens)
         {
             switch (ptr->type())
@@ -11637,8 +11772,7 @@ class json_pointer
                     }
 
                     // use unchecked array access
-                    ptr = &ptr->operator[](
-                              static_cast<size_type>(array_index(reference_token)));
+                    ptr = &ptr->operator[](array_index(reference_token));
                     break;
                 }
 
@@ -11658,7 +11792,6 @@ class json_pointer
     */
     const BasicJsonType& get_checked(const BasicJsonType* ptr) const
     {
-        using size_type = typename BasicJsonType::size_type;
         for (const auto& reference_token : reference_tokens)
         {
             switch (ptr->type())
@@ -11681,7 +11814,7 @@ class json_pointer
                     }
 
                     // note: at performs range check
-                    ptr = &ptr->at(static_cast<size_type>(array_index(reference_token)));
+                    ptr = &ptr->at(array_index(reference_token));
                     break;
                 }
 
@@ -11699,7 +11832,6 @@ class json_pointer
     */
     bool contains(const BasicJsonType* ptr) const
     {
-        using size_type = typename BasicJsonType::size_type;
         for (const auto& reference_token : reference_tokens)
         {
             switch (ptr->type())
@@ -11745,7 +11877,7 @@ class json_pointer
                         }
                     }
 
-                    const auto idx = static_cast<size_type>(array_index(reference_token));
+                    const auto idx = array_index(reference_token);
                     if (idx >= ptr->size())
                     {
                         // index out of range
@@ -11821,7 +11953,7 @@ class json_pointer
                     pos != std::string::npos;
                     pos = reference_token.find_first_of('~', pos + 1))
             {
-                assert(reference_token[pos] == '~');
+                JSON_ASSERT(reference_token[pos] == '~');
 
                 // ~ must be followed by 0 or 1
                 if (JSON_HEDLEY_UNLIKELY(pos == reference_token.size() - 1 or
@@ -11856,7 +11988,7 @@ class json_pointer
     static void replace_substring(std::string& s, const std::string& f,
                                   const std::string& t)
     {
-        assert(not f.empty());
+        JSON_ASSERT(not f.empty());
         for (auto pos = s.find(f);                // find first occurrence of f
                 pos != std::string::npos;         // make sure f was found
                 s.replace(pos, f.size(), t),      // replace with t, and
@@ -12035,23 +12167,30 @@ class json_ref
     using value_type = BasicJsonType;
 
     json_ref(value_type&& value)
-        : owned_value(std::move(value)), value_ref(&owned_value), is_rvalue(true)
+        : owned_value(std::move(value))
+        , value_ref(&owned_value)
+        , is_rvalue(true)
     {}
 
     json_ref(const value_type& value)
-        : value_ref(const_cast<value_type*>(&value)), is_rvalue(false)
+        : value_ref(const_cast<value_type*>(&value))
+        , is_rvalue(false)
     {}
 
     json_ref(std::initializer_list<json_ref> init)
-        : owned_value(init), value_ref(&owned_value), is_rvalue(true)
+        : owned_value(init)
+        , value_ref(&owned_value)
+        , is_rvalue(true)
     {}
 
     template <
         class... Args,
         enable_if_t<std::is_constructible<value_type, Args...>::value, int> = 0 >
     json_ref(Args && ... args)
-        : owned_value(std::forward<Args>(args)...), value_ref(&owned_value),
-          is_rvalue(true) {}
+        : owned_value(std::forward<Args>(args)...)
+        , value_ref(&owned_value)
+        , is_rvalue(true)
+    {}
 
     // class should be movable only
     json_ref(json_ref&&) = default;
@@ -12082,7 +12221,7 @@ class json_ref
   private:
     mutable value_type owned_value = nullptr;
     value_type* value_ref = nullptr;
-    const bool is_rvalue;
+    const bool is_rvalue = true;
 };
 }  // namespace detail
 }  // namespace nlohmann
@@ -12251,6 +12390,7 @@ class binary_writer
 {
     using string_t = typename BasicJsonType::string_t;
     using binary_t = typename BasicJsonType::binary_t;
+    using number_float_t = typename BasicJsonType::number_float_t;
 
   public:
     /*!
@@ -12260,7 +12400,7 @@ class binary_writer
     */
     explicit binary_writer(output_adapter_t<CharType> adapter) : oa(adapter)
     {
-        assert(oa);
+        JSON_ASSERT(oa);
     }
 
     /*!
@@ -12417,18 +12557,7 @@ class binary_writer
                 }
                 else
                 {
-                    if (static_cast<double>(j.m_value.number_float) >= static_cast<double>(std::numeric_limits<float>::lowest()) and
-                            static_cast<double>(j.m_value.number_float) <= static_cast<double>((std::numeric_limits<float>::max)()) and
-                            static_cast<double>(static_cast<float>(j.m_value.number_float)) == static_cast<double>(j.m_value.number_float))
-                    {
-                        oa->write_character(get_cbor_float_prefix(static_cast<float>(j.m_value.number_float)));
-                        write_number(static_cast<float>(j.m_value.number_float));
-                    }
-                    else
-                    {
-                        oa->write_character(get_cbor_float_prefix(j.m_value.number_float));
-                        write_number(j.m_value.number_float);
-                    }
+                    write_compact_float(j.m_value.number_float, detail::input_format_t::cbor);
                 }
                 break;
             }
@@ -12727,8 +12856,7 @@ class binary_writer
 
             case value_t::number_float:
             {
-                oa->write_character(get_msgpack_float_prefix(j.m_value.number_float));
-                write_number(j.m_value.number_float);
+                write_compact_float(j.m_value.number_float, detail::input_format_t::msgpack);
                 break;
             }
 
@@ -12807,7 +12935,7 @@ class binary_writer
                 const auto N = j.m_value.binary->size();
                 if (N <= (std::numeric_limits<std::uint8_t>::max)())
                 {
-                    std::uint8_t output_type;
+                    std::uint8_t output_type{};
                     bool fixed = true;
                     if (use_ext)
                     {
@@ -12849,30 +12977,18 @@ class binary_writer
                 }
                 else if (N <= (std::numeric_limits<std::uint16_t>::max)())
                 {
-                    std::uint8_t output_type;
-                    if (use_ext)
-                    {
-                        output_type = 0xC8; // ext 16
-                    }
-                    else
-                    {
-                        output_type = 0xC5; // bin 16
-                    }
+                    std::uint8_t output_type = use_ext
+                                               ? 0xC8 // ext 16
+                                               : 0xC5; // bin 16
 
                     oa->write_character(to_char_type(output_type));
                     write_number(static_cast<std::uint16_t>(N));
                 }
                 else if (N <= (std::numeric_limits<std::uint32_t>::max)())
                 {
-                    std::uint8_t output_type;
-                    if (use_ext)
-                    {
-                        output_type = 0xC9; // ext 32
-                    }
-                    else
-                    {
-                        output_type = 0xC6; // bin 32
-                    }
+                    std::uint8_t output_type = use_ext
+                                               ? 0xC9 // ext 32
+                                               : 0xC6; // bin 32
 
                     oa->write_character(to_char_type(output_type));
                     write_number(static_cast<std::uint32_t>(N));
@@ -13000,7 +13116,7 @@ class binary_writer
                 bool prefix_required = true;
                 if (use_type and not j.m_value.array->empty())
                 {
-                    assert(use_count);
+                    JSON_ASSERT(use_count);
                     const CharType first_prefix = ubjson_prefix(j.front());
                     const bool same_prefix = std::all_of(j.begin() + 1, j.end(),
                                                          [this, first_prefix](const BasicJsonType & v)
@@ -13044,7 +13160,7 @@ class binary_writer
 
                 if (use_type and not j.m_value.binary->empty())
                 {
-                    assert(use_count);
+                    JSON_ASSERT(use_count);
                     oa->write_character(to_char_type('$'));
                     oa->write_character('U');
                 }
@@ -13088,7 +13204,7 @@ class binary_writer
                 bool prefix_required = true;
                 if (use_type and not j.m_value.object->empty())
                 {
-                    assert(use_count);
+                    JSON_ASSERT(use_count);
                     const CharType first_prefix = ubjson_prefix(j.front());
                     const bool same_prefix = std::all_of(j.begin(), j.end(),
                                                          [this, first_prefix](const BasicJsonType & v)
@@ -13380,7 +13496,7 @@ class binary_writer
 
             // LCOV_EXCL_START
             default:
-                assert(false);
+                JSON_ASSERT(false);
                 return 0ul;
                 // LCOV_EXCL_STOP
         }
@@ -13427,7 +13543,7 @@ class binary_writer
 
             // LCOV_EXCL_START
             default:
-                assert(false);
+                JSON_ASSERT(false);
                 return;
                 // LCOV_EXCL_STOP
         }
@@ -13741,6 +13857,26 @@ class binary_writer
         oa->write_characters(vec.data(), sizeof(NumberType));
     }
 
+    void write_compact_float(const number_float_t n, detail::input_format_t format)
+    {
+        if (static_cast<double>(n) >= static_cast<double>(std::numeric_limits<float>::lowest()) and
+                static_cast<double>(n) <= static_cast<double>((std::numeric_limits<float>::max)()) and
+                static_cast<double>(static_cast<float>(n)) == static_cast<double>(n))
+        {
+            oa->write_character(format == detail::input_format_t::cbor
+                                ? get_cbor_float_prefix(static_cast<float>(n))
+                                : get_msgpack_float_prefix(static_cast<float>(n)));
+            write_number(static_cast<float>(n));
+        }
+        else
+        {
+            oa->write_character(format == detail::input_format_t::cbor
+                                ? get_cbor_float_prefix(n)
+                                : get_msgpack_float_prefix(n));
+            write_number(n);
+        }
+    }
+
   public:
     // The following to_char_type functions are implement the conversion
     // between uint8_t and CharType. In case CharType is not unsigned,
@@ -13799,14 +13935,13 @@ class binary_writer
 
 #include <algorithm> // reverse, remove, fill, find, none_of
 #include <array> // array
-#include <cassert> // assert
 #include <clocale> // localeconv, lconv
 #include <cmath> // labs, isfinite, isnan, signbit
 #include <cstddef> // size_t, ptrdiff_t
 #include <cstdint> // uint8_t
 #include <cstdio> // snprintf
 #include <limits> // numeric_limits
-#include <string> // string
+#include <string> // string, char_traits
 #include <type_traits> // is_same
 #include <utility> // move
 
@@ -13816,7 +13951,6 @@ class binary_writer
 
 
 #include <array> // array
-#include <cassert> // assert
 #include <cmath>   // signbit, isfinite
 #include <cstdint> // intN_t, uintN_t
 #include <cstring> // memcpy, memmove
@@ -13880,8 +14014,8 @@ struct diyfp // f * 2^e
     */
     static diyfp sub(const diyfp& x, const diyfp& y) noexcept
     {
-        assert(x.e == y.e);
-        assert(x.f >= y.f);
+        JSON_ASSERT(x.e == y.e);
+        JSON_ASSERT(x.f >= y.f);
 
         return {x.f - y.f, x.e};
     }
@@ -13957,7 +14091,7 @@ struct diyfp // f * 2^e
     */
     static diyfp normalize(diyfp x) noexcept
     {
-        assert(x.f != 0);
+        JSON_ASSERT(x.f != 0);
 
         while ((x.f >> 63u) == 0)
         {
@@ -13976,8 +14110,8 @@ struct diyfp // f * 2^e
     {
         const int delta = x.e - target_exponent;
 
-        assert(delta >= 0);
-        assert(((x.f << delta) >> delta) == x.f);
+        JSON_ASSERT(delta >= 0);
+        JSON_ASSERT(((x.f << delta) >> delta) == x.f);
 
         return {x.f << delta, target_exponent};
     }
@@ -13999,8 +14133,8 @@ boundaries.
 template <typename FloatType>
 boundaries compute_boundaries(FloatType value)
 {
-    assert(std::isfinite(value));
-    assert(value > 0);
+    JSON_ASSERT(std::isfinite(value));
+    JSON_ASSERT(value > 0);
 
     // Convert the IEEE representation into a diyfp.
     //
@@ -14280,18 +14414,18 @@ inline cached_power get_cached_power_for_binary_exponent(int e)
     //      k = ceil((kAlpha - e - 1) * 0.30102999566398114)
     // for |e| <= 1500, but doesn't require floating-point operations.
     // NB: log_10(2) ~= 78913 / 2^18
-    assert(e >= -1500);
-    assert(e <=  1500);
+    JSON_ASSERT(e >= -1500);
+    JSON_ASSERT(e <=  1500);
     const int f = kAlpha - e - 1;
     const int k = (f * 78913) / (1 << 18) + static_cast<int>(f > 0);
 
     const int index = (-kCachedPowersMinDecExp + k + (kCachedPowersDecStep - 1)) / kCachedPowersDecStep;
-    assert(index >= 0);
-    assert(static_cast<std::size_t>(index) < kCachedPowers.size());
+    JSON_ASSERT(index >= 0);
+    JSON_ASSERT(static_cast<std::size_t>(index) < kCachedPowers.size());
 
     const cached_power cached = kCachedPowers[static_cast<std::size_t>(index)];
-    assert(kAlpha <= cached.e + e + 64);
-    assert(kGamma >= cached.e + e + 64);
+    JSON_ASSERT(kAlpha <= cached.e + e + 64);
+    JSON_ASSERT(kGamma >= cached.e + e + 64);
 
     return cached;
 }
@@ -14359,10 +14493,10 @@ inline int find_largest_pow10(const std::uint32_t n, std::uint32_t& pow10)
 inline void grisu2_round(char* buf, int len, std::uint64_t dist, std::uint64_t delta,
                          std::uint64_t rest, std::uint64_t ten_k)
 {
-    assert(len >= 1);
-    assert(dist <= delta);
-    assert(rest <= delta);
-    assert(ten_k > 0);
+    JSON_ASSERT(len >= 1);
+    JSON_ASSERT(dist <= delta);
+    JSON_ASSERT(rest <= delta);
+    JSON_ASSERT(ten_k > 0);
 
     //               <--------------------------- delta ---->
     //                                  <---- dist --------->
@@ -14387,7 +14521,7 @@ inline void grisu2_round(char* buf, int len, std::uint64_t dist, std::uint64_t d
             and delta - rest >= ten_k
             and (rest + ten_k < dist or dist - rest > rest + ten_k - dist))
     {
-        assert(buf[len - 1] != '0');
+        JSON_ASSERT(buf[len - 1] != '0');
         buf[len - 1]--;
         rest += ten_k;
     }
@@ -14415,8 +14549,8 @@ inline void grisu2_digit_gen(char* buffer, int& length, int& decimal_exponent,
     // Grisu2 generates the digits of M+ from left to right and stops as soon as
     // V is in [M-,M+].
 
-    assert(M_plus.e >= kAlpha);
-    assert(M_plus.e <= kGamma);
+    JSON_ASSERT(M_plus.e >= kAlpha);
+    JSON_ASSERT(M_plus.e <= kGamma);
 
     std::uint64_t delta = diyfp::sub(M_plus, M_minus).f; // (significand of (M+ - M-), implicit exponent is e)
     std::uint64_t dist  = diyfp::sub(M_plus, w      ).f; // (significand of (M+ - w ), implicit exponent is e)
@@ -14437,7 +14571,7 @@ inline void grisu2_digit_gen(char* buffer, int& length, int& decimal_exponent,
     //
     // Generate the digits of the integral part p1 = d[n-1]...d[1]d[0]
 
-    assert(p1 > 0);
+    JSON_ASSERT(p1 > 0);
 
     std::uint32_t pow10;
     const int k = find_largest_pow10(p1, pow10);
@@ -14473,7 +14607,7 @@ inline void grisu2_digit_gen(char* buffer, int& length, int& decimal_exponent,
         //      M+ = buffer * 10^n + (d * 10^(n-1) + r) + p2 * 2^e
         //         = (buffer * 10 + d) * 10^(n-1) + (r + p2 * 2^e)
         //
-        assert(d <= 9);
+        JSON_ASSERT(d <= 9);
         buffer[length++] = static_cast<char>('0' + d); // buffer := buffer * 10 + d
         //
         //      M+ = buffer * 10^(n-1) + (r + p2 * 2^e)
@@ -14560,7 +14694,7 @@ inline void grisu2_digit_gen(char* buffer, int& length, int& decimal_exponent,
     //
     // and stop as soon as 10^-m * r * 2^e <= delta * 2^e
 
-    assert(p2 > delta);
+    JSON_ASSERT(p2 > delta);
 
     int m = 0;
     for (;;)
@@ -14571,7 +14705,7 @@ inline void grisu2_digit_gen(char* buffer, int& length, int& decimal_exponent,
         //         = buffer * 10^-m + 10^-m * (1/10 * (10 * p2)                   ) * 2^e
         //         = buffer * 10^-m + 10^-m * (1/10 * ((10*p2 div 2^-e) * 2^-e + (10*p2 mod 2^-e)) * 2^e
         //
-        assert(p2 <= (std::numeric_limits<std::uint64_t>::max)() / 10);
+        JSON_ASSERT(p2 <= (std::numeric_limits<std::uint64_t>::max)() / 10);
         p2 *= 10;
         const std::uint64_t d = p2 >> -one.e;     // d = (10 * p2) div 2^-e
         const std::uint64_t r = p2 & (one.f - 1); // r = (10 * p2) mod 2^-e
@@ -14580,7 +14714,7 @@ inline void grisu2_digit_gen(char* buffer, int& length, int& decimal_exponent,
         //         = buffer * 10^-m + 10^-m * (1/10 * (d + r * 2^e))
         //         = (buffer * 10 + d) * 10^(-m-1) + 10^(-m-1) * r * 2^e
         //
-        assert(d <= 9);
+        JSON_ASSERT(d <= 9);
         buffer[length++] = static_cast<char>('0' + d); // buffer := buffer * 10 + d
         //
         //      M+ = buffer * 10^(-m-1) + 10^(-m-1) * r * 2^e
@@ -14641,8 +14775,8 @@ JSON_HEDLEY_NON_NULL(1)
 inline void grisu2(char* buf, int& len, int& decimal_exponent,
                    diyfp m_minus, diyfp v, diyfp m_plus)
 {
-    assert(m_plus.e == m_minus.e);
-    assert(m_plus.e == v.e);
+    JSON_ASSERT(m_plus.e == m_minus.e);
+    JSON_ASSERT(m_plus.e == v.e);
 
     //  --------(-----------------------+-----------------------)--------    (A)
     //          m-                      v                       m+
@@ -14703,8 +14837,8 @@ void grisu2(char* buf, int& len, int& decimal_exponent, FloatType value)
     static_assert(diyfp::kPrecision >= std::numeric_limits<FloatType>::digits + 3,
                   "internal error: not enough precision");
 
-    assert(std::isfinite(value));
-    assert(value > 0);
+    JSON_ASSERT(std::isfinite(value));
+    JSON_ASSERT(value > 0);
 
     // If the neighbors (and boundaries) of 'value' are always computed for double-precision
     // numbers, all float's can be recovered using strtod (and strtof). However, the resulting
@@ -14740,8 +14874,8 @@ JSON_HEDLEY_NON_NULL(1)
 JSON_HEDLEY_RETURNS_NON_NULL
 inline char* append_exponent(char* buf, int e)
 {
-    assert(e > -1000);
-    assert(e <  1000);
+    JSON_ASSERT(e > -1000);
+    JSON_ASSERT(e <  1000);
 
     if (e < 0)
     {
@@ -14793,8 +14927,8 @@ JSON_HEDLEY_RETURNS_NON_NULL
 inline char* format_buffer(char* buf, int len, int decimal_exponent,
                            int min_exp, int max_exp)
 {
-    assert(min_exp < 0);
-    assert(max_exp > 0);
+    JSON_ASSERT(min_exp < 0);
+    JSON_ASSERT(max_exp > 0);
 
     const int k = len;
     const int n = len + decimal_exponent;
@@ -14820,7 +14954,7 @@ inline char* format_buffer(char* buf, int len, int decimal_exponent,
         // dig.its
         // len <= max_digits10 + 1
 
-        assert(k > n);
+        JSON_ASSERT(k > n);
 
         std::memmove(buf + (static_cast<size_t>(n) + 1), buf + n, static_cast<size_t>(k) - static_cast<size_t>(n));
         buf[n] = '.';
@@ -14878,7 +15012,7 @@ JSON_HEDLEY_RETURNS_NON_NULL
 char* to_chars(char* first, const char* last, FloatType value)
 {
     static_cast<void>(last); // maybe unused - fix warning
-    assert(std::isfinite(value));
+    JSON_ASSERT(std::isfinite(value));
 
     // Use signbit(value) instead of (value < 0) since signbit works for -0.
     if (std::signbit(value))
@@ -14896,7 +15030,7 @@ char* to_chars(char* first, const char* last, FloatType value)
         return first;
     }
 
-    assert(last - first >= std::numeric_limits<FloatType>::max_digits10);
+    JSON_ASSERT(last - first >= std::numeric_limits<FloatType>::max_digits10);
 
     // Compute v = buffer * 10^decimal_exponent.
     // The decimal digits are stored in the buffer, which needs to be interpreted
@@ -14906,16 +15040,16 @@ char* to_chars(char* first, const char* last, FloatType value)
     int decimal_exponent = 0;
     dtoa_impl::grisu2(first, len, decimal_exponent, value);
 
-    assert(len <= std::numeric_limits<FloatType>::max_digits10);
+    JSON_ASSERT(len <= std::numeric_limits<FloatType>::max_digits10);
 
     // Format the buffer like printf("%.*g", prec, value)
     constexpr int kMinExp = -4;
     // Use digits10 here to increase compatibility with version 2.
     constexpr int kMaxExp = std::numeric_limits<FloatType>::digits10;
 
-    assert(last - first >= kMaxExp + 2);
-    assert(last - first >= 2 + (-kMinExp - 1) + std::numeric_limits<FloatType>::max_digits10);
-    assert(last - first >= std::numeric_limits<FloatType>::max_digits10 + 6);
+    JSON_ASSERT(last - first >= kMaxExp + 2);
+    JSON_ASSERT(last - first >= 2 + (-kMinExp - 1) + std::numeric_limits<FloatType>::max_digits10);
+    JSON_ASSERT(last - first >= std::numeric_limits<FloatType>::max_digits10 + 6);
 
     return dtoa_impl::format_buffer(first, len, decimal_exponent, kMinExp, kMaxExp);
 }
@@ -14973,8 +15107,8 @@ class serializer
                error_handler_t error_handler_ = error_handler_t::strict)
         : o(std::move(s))
         , loc(std::localeconv())
-        , thousands_sep(loc->thousands_sep == nullptr ? '\0' : * (loc->thousands_sep))
-        , decimal_point(loc->decimal_point == nullptr ? '\0' : * (loc->decimal_point))
+        , thousands_sep(loc->thousands_sep == nullptr ? '\0' : std::char_traits<char>::to_char_type(* (loc->thousands_sep)))
+        , decimal_point(loc->decimal_point == nullptr ? '\0' : std::char_traits<char>::to_char_type(* (loc->decimal_point)))
         , indent_char(ichar)
         , indent_string(512, indent_char)
         , error_handler(error_handler_)
@@ -15049,8 +15183,8 @@ class serializer
                     }
 
                     // last element
-                    assert(i != val.m_value.object->cend());
-                    assert(std::next(i) == val.m_value.object->cend());
+                    JSON_ASSERT(i != val.m_value.object->cend());
+                    JSON_ASSERT(std::next(i) == val.m_value.object->cend());
                     o->write_characters(indent_string.c_str(), new_indent);
                     o->write_character('\"');
                     dump_escaped(i->first, ensure_ascii);
@@ -15077,8 +15211,8 @@ class serializer
                     }
 
                     // last element
-                    assert(i != val.m_value.object->cend());
-                    assert(std::next(i) == val.m_value.object->cend());
+                    JSON_ASSERT(i != val.m_value.object->cend());
+                    JSON_ASSERT(std::next(i) == val.m_value.object->cend());
                     o->write_character('\"');
                     dump_escaped(i->first, ensure_ascii);
                     o->write_characters("\":", 2);
@@ -15119,7 +15253,7 @@ class serializer
                     }
 
                     // last element
-                    assert(not val.m_value.array->empty());
+                    JSON_ASSERT(not val.m_value.array->empty());
                     o->write_characters(indent_string.c_str(), new_indent);
                     dump(val.m_value.array->back(), true, ensure_ascii, indent_step, new_indent);
 
@@ -15140,7 +15274,7 @@ class serializer
                     }
 
                     // last element
-                    assert(not val.m_value.array->empty());
+                    JSON_ASSERT(not val.m_value.array->empty());
                     dump(val.m_value.array->back(), false, ensure_ascii, indent_step, current_indent);
 
                     o->write_character(']');
@@ -15274,7 +15408,7 @@ class serializer
             }
 
             default:            // LCOV_EXCL_LINE
-                assert(false);  // LCOV_EXCL_LINE
+                JSON_ASSERT(false);  // LCOV_EXCL_LINE
         }
     }
 
@@ -15473,7 +15607,7 @@ class serializer
                         }
 
                         default:            // LCOV_EXCL_LINE
-                            assert(false);  // LCOV_EXCL_LINE
+                            JSON_ASSERT(false);  // LCOV_EXCL_LINE
                     }
                     break;
                 }
@@ -15536,7 +15670,7 @@ class serializer
                 }
 
                 default:            // LCOV_EXCL_LINE
-                    assert(false);  // LCOV_EXCL_LINE
+                    JSON_ASSERT(false);  // LCOV_EXCL_LINE
             }
         }
     }
@@ -15637,7 +15771,7 @@ class serializer
         }
 
         // spare 1 byte for '\0'
-        assert(n_chars < number_buffer.size() - 1);
+        JSON_ASSERT(n_chars < number_buffer.size() - 1);
 
         // jump to the end to generate the string from backward
         // so we later avoid reversing the result
@@ -15713,9 +15847,9 @@ class serializer
         std::ptrdiff_t len = (std::snprintf)(number_buffer.data(), number_buffer.size(), "%.*g", d, x);
 
         // negative value indicates an error
-        assert(len > 0);
+        JSON_ASSERT(len > 0);
         // check if buffer was large enough
-        assert(static_cast<std::size_t>(len) < number_buffer.size());
+        JSON_ASSERT(static_cast<std::size_t>(len) < number_buffer.size());
 
         // erase thousands separator
         if (thousands_sep != '\0')
@@ -15723,7 +15857,7 @@ class serializer
             const auto end = std::remove(number_buffer.begin(),
                                          number_buffer.begin() + len, thousands_sep);
             std::fill(end, number_buffer.end(), '\0');
-            assert((end - number_buffer.begin()) <= len);
+            JSON_ASSERT((end - number_buffer.begin()) <= len);
             len = (end - number_buffer.begin());
         }
 
@@ -15803,7 +15937,7 @@ class serializer
                 : (0xFFu >> type) & (byte);
 
         std::size_t index = 256u + static_cast<size_t>(state) * 16u + static_cast<size_t>(type);
-        assert(index < 400);
+        JSON_ASSERT(index < 400);
         state = utf8d[index];
         return state;
     }
@@ -15815,7 +15949,7 @@ class serializer
      */
     number_unsigned_t remove_sign(number_unsigned_t x)
     {
-        assert(false); // LCOV_EXCL_LINE
+        JSON_ASSERT(false); // LCOV_EXCL_LINE
         return x; // LCOV_EXCL_LINE
     }
 
@@ -15830,7 +15964,7 @@ class serializer
      */
     inline number_unsigned_t remove_sign(number_integer_t x) noexcept
     {
-        assert(x < 0 and x < (std::numeric_limits<number_integer_t>::max)());
+        JSON_ASSERT(x < 0 and x < (std::numeric_limits<number_integer_t>::max)());
         return static_cast<number_unsigned_t>(-(x + 1)) + 1;
     }
 
@@ -15865,79 +15999,6 @@ class serializer
 // #include <nlohmann/detail/value_t.hpp>
 
 // #include <nlohmann/json_fwd.hpp>
-
-// #include <nlohmann/ordered_map.hpp>
-
-
-#include <functional> // less
-#include <memory> // allocator
-#include <utility> // pair
-#include <vector> // vector
-
-namespace nlohmann
-{
-
-/// ordered_map: a minimal map-like container that preserves insertion order
-/// for use within nlohmann::basic_json<ordered_map>
-template <class Key, class T, class IgnoredLess = std::less<Key>,
-          class Allocator = std::allocator<std::pair<const Key, T>>>
-struct ordered_map : std::vector<std::pair<const Key, T>, Allocator>
-{
-    using key_type = Key;
-    using mapped_type = T;
-    using Container = std::vector<std::pair<const Key, T>, Allocator>;
-    using typename Container::iterator;
-    using typename Container::size_type;
-    using typename Container::value_type;
-
-    // Explicit constructors instead of `using Container::Container`
-    // otherwise older compilers choke on it (GCC <= 5.5, xcode <= 9.4)
-    ordered_map(const Allocator& alloc = Allocator()) : Container{alloc} {}
-    template <class It>
-    ordered_map(It first, It last, const Allocator& alloc = Allocator())
-        : Container{first, last, alloc} {}
-    ordered_map(std::initializer_list<T> init, const Allocator& alloc = Allocator() )
-        : Container{init, alloc} {}
-
-    std::pair<iterator, bool> emplace(key_type&& key, T&& t)
-    {
-        for (auto it = this->begin(); it != this->end(); ++it)
-        {
-            if (it->first == key)
-            {
-                return {it, false};
-            }
-        }
-        Container::emplace_back(key, t);
-        return {--this->end(), true};
-    }
-
-    T& operator[](Key&& key)
-    {
-        return emplace(std::move(key), T{}).first->second;
-    }
-
-    size_type erase(const Key& key)
-    {
-        for (auto it = this->begin(); it != this->end(); ++it)
-        {
-            if (it->first == key)
-            {
-                // Since we cannot move const Keys, re-construct them in place
-                for (auto next = it; ++next != this->end(); ++it)
-                {
-                    it->~value_type(); // Destroy but keep allocation
-                    new (&*it) value_type{std::move(*next)};
-                }
-                Container::pop_back();
-                return 1;
-            }
-        }
-        return 0;
-    }
-};
-
-}  // namespace nlohmann
 
 
 /*!
@@ -16063,10 +16124,12 @@ class basic_json
     static ::nlohmann::detail::parser<basic_json, InputAdapterType> parser(
         InputAdapterType adapter,
         detail::parser_callback_t<basic_json>cb = nullptr,
-        bool allow_exceptions = true
-                                 )
+        const bool allow_exceptions = true,
+        const bool ignore_comments = false
+    )
     {
-        return ::nlohmann::detail::parser<basic_json, InputAdapterType>(std::move(adapter), std::move(cb), allow_exceptions);
+        return ::nlohmann::detail::parser<basic_json, InputAdapterType>(std::move(adapter),
+                std::move(cb), allow_exceptions, ignore_comments);
     }
 
     using primitive_iterator_t = ::nlohmann::detail::primitive_iterator_t;
@@ -16789,7 +16852,7 @@ class basic_json
         };
         std::unique_ptr<T, decltype(deleter)> object(AllocatorTraits::allocate(alloc, 1), deleter);
         AllocatorTraits::construct(alloc, object.get(), std::forward<Args>(args)...);
-        assert(object != nullptr);
+        JSON_ASSERT(object != nullptr);
         return object.release();
     }
 
@@ -17084,10 +17147,10 @@ class basic_json
     */
     void assert_invariant() const noexcept
     {
-        assert(m_type != value_t::object or m_value.object != nullptr);
-        assert(m_type != value_t::array or m_value.array != nullptr);
-        assert(m_type != value_t::string or m_value.string != nullptr);
-        assert(m_type != value_t::binary or m_value.binary != nullptr);
+        JSON_ASSERT(m_type != value_t::object or m_value.object != nullptr);
+        JSON_ASSERT(m_type != value_t::array or m_value.array != nullptr);
+        JSON_ASSERT(m_type != value_t::string or m_value.string != nullptr);
+        JSON_ASSERT(m_type != value_t::binary or m_value.binary != nullptr);
     }
 
   public:
@@ -17380,7 +17443,7 @@ class basic_json
                 m_type = value_t::discarded;
                 break;
             default:            // LCOV_EXCL_LINE
-                assert(false);  // LCOV_EXCL_LINE
+                JSON_ASSERT(false);  // LCOV_EXCL_LINE
         }
         assert_invariant();
     }
@@ -17780,8 +17843,8 @@ class basic_json
                  std::is_same<InputIT, typename basic_json_t::const_iterator>::value, int>::type = 0>
     basic_json(InputIT first, InputIT last)
     {
-        assert(first.m_object != nullptr);
-        assert(last.m_object != nullptr);
+        JSON_ASSERT(first.m_object != nullptr);
+        JSON_ASSERT(last.m_object != nullptr);
 
         // make sure iterator fits the current value
         if (JSON_HEDLEY_UNLIKELY(first.m_object != last.m_object))
@@ -18103,7 +18166,8 @@ class basic_json
     @param[in] error_handler  how to react on decoding errors; there are three
     possible values: `strict` (throws and exception in case a decoding error
     occurs; default), `replace` (replace invalid UTF-8 sequences with U+FFFD),
-    and `ignore` (ignore invalid UTF-8 sequences during serialization).
+    and `ignore` (ignore invalid UTF-8 sequences during serialization; all
+    bytes are copied to the output unchanged).
 
     @return string containing the serialization of the JSON value
 
@@ -18884,6 +18948,18 @@ class basic_json
         return v;
     }
 
+    // specialization to allow to call get_to with a basic_json value
+    // see https://github.com/nlohmann/json/issues/2175
+    template<typename ValueType,
+             detail::enable_if_t <
+                 detail::is_basic_json<ValueType>::value,
+                 int> = 0>
+    ValueType & get_to(ValueType& v) const
+    {
+        v = *this;
+        return v;
+    }
+
     template <
         typename T, std::size_t N,
         typename Array = T (&)[N],
@@ -19485,7 +19561,7 @@ class basic_json
         // const operator[] only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
         {
-            assert(m_value.object->find(key) != m_value.object->end());
+            JSON_ASSERT(m_value.object->find(key) != m_value.object->end());
             return m_value.object->find(key)->second;
         }
 
@@ -19577,7 +19653,7 @@ class basic_json
         // at only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
         {
-            assert(m_value.object->find(key) != m_value.object->end());
+            JSON_ASSERT(m_value.object->find(key) != m_value.object->end());
             return m_value.object->find(key)->second;
         }
 
@@ -21345,7 +21421,7 @@ class basic_json
     iterator insert_iterator(const_iterator pos, Args&& ... args)
     {
         iterator result(this);
-        assert(m_value.array != nullptr);
+        JSON_ASSERT(m_value.array != nullptr);
 
         auto insert_pos = std::distance(m_value.array->begin(), pos.m_it.array_iterator);
         m_value.array->insert(pos.m_it.array_iterator, std::forward<Args>(args)...);
@@ -21727,6 +21803,34 @@ class basic_json
         std::swap(m_type, other.m_type);
         std::swap(m_value, other.m_value);
         assert_invariant();
+    }
+
+    /*!
+    @brief exchanges the values
+
+    Exchanges the contents of the JSON value from @a left with those of @a right. Does not
+    invoke any move, copy, or swap operations on individual elements. All
+    iterators and references remain valid. The past-the-end iterator is
+    invalidated. implemented as a friend function callable via ADL.
+
+    @param[in,out] left JSON value to exchange the contents with
+    @param[in,out] right JSON value to exchange the contents with
+
+    @complexity Constant.
+
+    @liveexample{The example below shows how JSON values can be swapped with
+    `swap()`.,swap__reference}
+
+    @since version 1.0.0
+    */
+    friend void swap(reference left, reference right) noexcept (
+        std::is_nothrow_move_constructible<value_t>::value and
+        std::is_nothrow_move_assignable<value_t>::value and
+        std::is_nothrow_move_constructible<json_value>::value and
+        std::is_nothrow_move_assignable<json_value>::value
+    )
+    {
+        left.swap(right);
     }
 
     /*!
@@ -22430,6 +22534,9 @@ class basic_json
     (optional)
     @param[in] allow_exceptions  whether to throw exceptions in case of a
     parse error (optional, true by default)
+    @param[in] ignore_comments  whether comments should be ignored and treated
+    like whitespace (true) or yield a parse error (true); (optional, false by
+    default)
 
     @return deserialized JSON value; in case of a parse error and
             @a allow_exceptions set to `false`, the return value will be
@@ -22458,16 +22565,18 @@ class basic_json
     @liveexample{The example below demonstrates the `parse()` function reading
     from a contiguous container.,parse__contiguouscontainer__parser_callback_t}
 
-    @since version 2.0.3 (contiguous containers)
+    @since version 2.0.3 (contiguous containers); version 3.9.0 allowed to
+    ignore comments.
     */
     template<typename InputType>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json parse(InputType&& i,
                             const parser_callback_t cb = nullptr,
-                            const bool allow_exceptions = true)
+                            const bool allow_exceptions = true,
+                            const bool ignore_comments = false)
     {
         basic_json result;
-        parser(detail::input_adapter(std::forward<InputType>(i)), cb, allow_exceptions).parse(true, result);
+        parser(detail::input_adapter(std::forward<InputType>(i)), cb, allow_exceptions, ignore_comments).parse(true, result);
         return result;
     }
 
@@ -22484,6 +22593,9 @@ class basic_json
     (optional)
     @param[in] allow_exceptions  whether to throw exceptions in case of a
     parse error (optional, true by default)
+    @param[in] ignore_comments  whether comments should be ignored and treated
+    like whitespace (true) or yield a parse error (true); (optional, false by
+    default)
 
     @return deserialized JSON value; in case of a parse error and
             @a allow_exceptions set to `false`, the return value will be
@@ -22499,10 +22611,11 @@ class basic_json
     static basic_json parse(IteratorType first,
                             IteratorType last,
                             const parser_callback_t cb = nullptr,
-                            const bool allow_exceptions = true)
+                            const bool allow_exceptions = true,
+                            const bool ignore_comments = false)
     {
         basic_json result;
-        parser(detail::input_adapter(std::move(first), std::move(last)), cb, allow_exceptions).parse(true, result);
+        parser(detail::input_adapter(std::move(first), std::move(last)), cb, allow_exceptions, ignore_comments).parse(true, result);
         return result;
     }
 
@@ -22510,10 +22623,11 @@ class basic_json
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, parse(ptr, ptr + len))
     static basic_json parse(detail::span_input_adapter&& i,
                             const parser_callback_t cb = nullptr,
-                            const bool allow_exceptions = true)
+                            const bool allow_exceptions = true,
+                            const bool ignore_comments = false)
     {
         basic_json result;
-        parser(i.get(), cb, allow_exceptions).parse(true, result);
+        parser(i.get(), cb, allow_exceptions, ignore_comments).parse(true, result);
         return result;
     }
 
@@ -22533,6 +22647,9 @@ class basic_json
       iterators.
 
     @param[in] i input to read from
+    @param[in] ignore_comments  whether comments should be ignored and treated
+    like whitespace (true) or yield a parse error (true); (optional, false by
+    default)
 
     @return Whether the input read from @a i is valid JSON.
 
@@ -22545,22 +22662,25 @@ class basic_json
     from a string.,accept__string}
     */
     template<typename InputType>
-    static bool accept(InputType&& i)
+    static bool accept(InputType&& i,
+                       const bool ignore_comments = false)
     {
-        return parser(detail::input_adapter(std::forward<InputType>(i))).accept(true);
+        return parser(detail::input_adapter(std::forward<InputType>(i)), nullptr, false, ignore_comments).accept(true);
     }
 
     template<typename IteratorType>
-    static bool accept(IteratorType first, IteratorType last)
+    static bool accept(IteratorType first, IteratorType last,
+                       const bool ignore_comments = false)
     {
-        return parser(detail::input_adapter(std::move(first), std::move(last))).accept(true);
+        return parser(detail::input_adapter(std::move(first), std::move(last)), nullptr, false, ignore_comments).accept(true);
     }
 
     JSON_HEDLEY_WARN_UNUSED_RESULT
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, accept(ptr, ptr + len))
-    static bool accept(detail::span_input_adapter&& i)
+    static bool accept(detail::span_input_adapter&& i,
+                       const bool ignore_comments = false)
     {
-        return parser(i.get()).accept(true);
+        return parser(i.get(), nullptr, false, ignore_comments).accept(true);
     }
 
     /*!
@@ -22580,6 +22700,9 @@ class basic_json
     @param[in,out] sax  SAX event listener
     @param[in] format  the format to parse (JSON, CBOR, MessagePack, or UBJSON)
     @param[in] strict  whether the input has to be consumed completely
+    @param[in] ignore_comments  whether comments should be ignored and treated
+    like whitespace (true) or yield a parse error (true); (optional, false by
+    default); only applies to the JSON file format.
 
     @return return value of the last processed SAX event
 
@@ -22604,11 +22727,12 @@ class basic_json
     JSON_HEDLEY_NON_NULL(2)
     static bool sax_parse(InputType&& i, SAX* sax,
                           input_format_t format = input_format_t::json,
-                          const bool strict = true)
+                          const bool strict = true,
+                          const bool ignore_comments = false)
     {
         auto ia = detail::input_adapter(std::forward<InputType>(i));
         return format == input_format_t::json
-               ? parser(std::move(ia)).sax_parse(sax, strict)
+               ? parser(std::move(ia), nullptr, true, ignore_comments).sax_parse(sax, strict)
                : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia)).sax_parse(format, sax, strict);
     }
 
@@ -22616,11 +22740,12 @@ class basic_json
     JSON_HEDLEY_NON_NULL(3)
     static bool sax_parse(IteratorType first, IteratorType last, SAX* sax,
                           input_format_t format = input_format_t::json,
-                          const bool strict = true)
+                          const bool strict = true,
+                          const bool ignore_comments = false)
     {
         auto ia = detail::input_adapter(std::move(first), std::move(last));
         return format == input_format_t::json
-               ? parser(std::move(ia)).sax_parse(sax, strict)
+               ? parser(std::move(ia), nullptr, true, ignore_comments).sax_parse(sax, strict)
                : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia)).sax_parse(format, sax, strict);
     }
 
@@ -22629,11 +22754,12 @@ class basic_json
     JSON_HEDLEY_NON_NULL(2)
     static bool sax_parse(detail::span_input_adapter&& i, SAX* sax,
                           input_format_t format = input_format_t::json,
-                          const bool strict = true)
+                          const bool strict = true,
+                          const bool ignore_comments = false)
     {
         auto ia = i.get();
         return format == input_format_t::json
-               ? parser(std::move(ia)).sax_parse(sax, strict)
+               ? parser(std::move(ia), nullptr, true, ignore_comments).sax_parse(sax, strict)
                : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia)).sax_parse(format, sax, strict);
     }
 
@@ -22907,7 +23033,8 @@ class basic_json
     number_unsigned | 256..65535                        | uint 16          | 0xCD
     number_unsigned | 65536..4294967295                 | uint 32          | 0xCE
     number_unsigned | 4294967296..18446744073709551615  | uint 64          | 0xCF
-    number_float    | *any value*                       | float 64         | 0xCB
+    number_float    | *any value representable by a float*     | float 32 | 0xCA
+    number_float    | *any value NOT representable by a float* | float 64 | 0xCB
     string          | *length*: 0..31                   | fixstr           | 0xA0..0xBF
     string          | *length*: 32..255                 | str 8            | 0xD9
     string          | *length*: 256..65535              | str 16           | 0xDA
@@ -22930,9 +23057,6 @@ class basic_json
           - byte strings with more than 4294967295 bytes
           - arrays with more than 4294967295 elements
           - objects with more than 4294967295 elements
-
-    @note The following MessagePack types are not used in the conversion:
-          - float 32 (0xCA)
 
     @note Any MessagePack output created @ref to_msgpack can be successfully
           parsed by @ref from_msgpack.
@@ -24048,7 +24172,7 @@ class basic_json
                     else
                     {
                         const auto idx = json_pointer::array_index(last_path);
-                        if (JSON_HEDLEY_UNLIKELY(static_cast<size_type>(idx) > parent.size()))
+                        if (JSON_HEDLEY_UNLIKELY(idx > parent.size()))
                         {
                             // avoid undefined behavior
                             JSON_THROW(out_of_range::create(401, "array index " + std::to_string(idx) + " is out of range"));
@@ -24062,7 +24186,7 @@ class basic_json
 
                 // if there exists a parent it cannot be primitive
                 default:            // LCOV_EXCL_LINE
-                    assert(false);  // LCOV_EXCL_LINE
+                    JSON_ASSERT(false);  // LCOV_EXCL_LINE
             }
         };
 
@@ -24091,7 +24215,7 @@ class basic_json
             else if (parent.is_array())
             {
                 // note erase performs range check
-                parent.erase(static_cast<size_type>(json_pointer::array_index(last_path)));
+                parent.erase(json_pointer::array_index(last_path));
             }
         };
 
@@ -24526,6 +24650,9 @@ struct less<::nlohmann::detail::value_t>
     }
 };
 
+// C++20 prohibit function specialization in the std namespace.
+#ifndef JSON_HAS_CPP_20
+
 /*!
 @brief exchanges the values of two JSON objects
 
@@ -24539,6 +24666,8 @@ inline void swap<nlohmann::json>(nlohmann::json& j1, nlohmann::json& j2) noexcep
 {
     j1.swap(j2);
 }
+
+#endif
 
 } // namespace std
 
@@ -24592,6 +24721,7 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 #endif
 
 // clean up
+#undef JSON_ASSERT
 #undef JSON_INTERNAL_CATCH
 #undef JSON_CATCH
 #undef JSON_THROW

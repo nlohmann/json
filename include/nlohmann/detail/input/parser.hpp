@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cassert> // assert
 #include <cmath> // isfinite
 #include <cstdint> // uint8_t
 #include <functional> // function
@@ -63,8 +62,11 @@ class parser
     /// a parser reading from an input adapter
     explicit parser(InputAdapterType&& adapter,
                     const parser_callback_t<BasicJsonType> cb = nullptr,
-                    const bool allow_exceptions_ = true)
-        : callback(cb), m_lexer(std::move(adapter)), allow_exceptions(allow_exceptions_)
+                    const bool allow_exceptions_ = true,
+                    const bool skip_comments = false)
+        : callback(cb)
+        , m_lexer(std::move(adapter), skip_comments)
+        , allow_exceptions(allow_exceptions_)
     {
         // read first token
         get_token();
@@ -380,7 +382,7 @@ class parser
                     // new value, we need to evaluate the new state first.
                     // By setting skip_to_state_evaluation to false, we
                     // are effectively jumping to the beginning of this if.
-                    assert(not states.empty());
+                    JSON_ASSERT(not states.empty());
                     states.pop_back();
                     skip_to_state_evaluation = true;
                     continue;
@@ -436,7 +438,7 @@ class parser
                     // new value, we need to evaluate the new state first.
                     // By setting skip_to_state_evaluation to false, we
                     // are effectively jumping to the beginning of this if.
-                    assert(not states.empty());
+                    JSON_ASSERT(not states.empty());
                     states.pop_back();
                     skip_to_state_evaluation = true;
                     continue;

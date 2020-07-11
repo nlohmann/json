@@ -15,6 +15,12 @@ include(ExternalProject)
 ##
 ## OPTIONS
 ##
+
+if (POLICY CMP0077)
+    # Allow CMake 3.13+ to override options when using FetchContent / add_subdirectory.
+    cmake_policy(SET CMP0077 NEW)
+endif ()
+
 option(JSON_BuildTests "Build the unit tests when BUILD_TESTING is enabled." ON)
 option(JSON_Install "Install CMake targets during install step." ON)
 option(JSON_MultipleHeaders "Use non-amalgamated version of the library." OFF)
@@ -72,6 +78,12 @@ if (MSVC)
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/${NLOHMANN_NATVIS_FILE}>
     )
 endif()
+
+# Install a pkg-config file, so other tools can find this.
+CONFIGURE_FILE(
+  "${CMAKE_CURRENT_SOURCE_DIR}/cmake/pkg-config.pc.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc"
+)
 
 ##
 ## TESTS
@@ -132,5 +144,9 @@ endif()
         EXPORT ${NLOHMANN_JSON_TARGETS_EXPORT_NAME}
         NAMESPACE ${PROJECT_NAME}::
         DESTINATION ${NLOHMANN_JSON_CONFIG_INSTALL_DIR}
+    )
+    install(
+        FILES "${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc"
+        DESTINATION lib/pkgconfig
     )
 endif()

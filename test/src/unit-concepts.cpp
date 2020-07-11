@@ -154,7 +154,7 @@ TEST_CASE("concepts")
                 json j {1, 2, 3};
                 json::iterator it1 = j.begin();
                 json::iterator it2 = j.end();
-                std::swap(it1, it2);
+                swap(it1, it2);
                 CHECK(it1 == j.end());
                 CHECK(it2 == j.begin());
             }
@@ -162,7 +162,7 @@ TEST_CASE("concepts")
                 json j {1, 2, 3};
                 json::const_iterator it1 = j.cbegin();
                 json::const_iterator it2 = j.cend();
-                std::swap(it1, it2);
+                swap(it1, it2);
                 CHECK(it1 == j.end());
                 CHECK(it2 == j.begin());
             }

@@ -15,7 +15,9 @@ namespace detail
 template<typename string_type>
 void int_to_string( string_type& target, std::size_t value )
 {
-    target = std::to_string(value);
+    // For ADL
+    using std::to_string;
+    target = to_string(value);
 }
 template <typename IteratorType> class iteration_proxy_value
 {
@@ -72,7 +74,7 @@ template <typename IteratorType> class iteration_proxy_value
     /// return key of the iterator
     const string_type& key() const
     {
-        assert(anchor.m_object != nullptr);
+        JSON_ASSERT(anchor.m_object != nullptr);
 
         switch (anchor.m_object->type())
         {

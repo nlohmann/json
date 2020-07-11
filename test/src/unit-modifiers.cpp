@@ -878,7 +878,8 @@ TEST_CASE("modifiers")
                 json j("hello world");
                 json k(42.23);
 
-                std::swap(j, k);
+                using std::swap;
+                swap(j, k);
 
                 CHECK(j == json(42.23));
                 CHECK(k == json("hello world"));
