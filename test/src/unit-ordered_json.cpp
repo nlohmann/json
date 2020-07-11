@@ -59,6 +59,13 @@ TEST_CASE("ordered_json")
     CHECK(j.dump() == "{\"element2\":2,\"element3\":3}");
     CHECK(oj.dump() == "{\"element3\":3,\"element2\":2}");
 
+    // remove again and nothing changes
+    j.erase("element1");
+    oj.erase("element1");
+
+    CHECK(j.dump() == "{\"element2\":2,\"element3\":3}");
+    CHECK(oj.dump() == "{\"element3\":3,\"element2\":2}");
+
     // There are no dup keys cause constructor calls emplace...
     json multi {{"z", 1}, {"m", 2}, {"m", 3}, {"y", 4}, {"m", 5}};
     CHECK(multi.size() == 3);
