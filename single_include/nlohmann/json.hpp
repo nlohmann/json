@@ -9609,7 +9609,7 @@ scan_number_done:
         {
             get();
         }
-        while (current == ' ' or current == '\t' or current == '\n' or current == '\r');
+        while (current == ' ' || current == '\t' || current == '\n' || current == '\r');
     }
 
     token_type scan()
