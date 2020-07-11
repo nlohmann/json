@@ -314,7 +314,7 @@ void comments_helper(const std::string& s)
     {
         CAPTURE(json_with_comment)
         CHECK_THROWS_AS(_ = json::parse(json_with_comment), json::parse_error);
-        CHECK(not json::accept(json_with_comment));
+        CHECK(!json::accept(json_with_comment));
 
         CHECK_NOTHROW(_ = json::parse(json_with_comment, nullptr, true, true));
         CHECK(json::accept(json_with_comment, true));

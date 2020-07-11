@@ -44,7 +44,7 @@ static int assert_counter;
 using nlohmann::json;
 
 // the test assumes exceptions to work
-#if not defined(JSON_NOEXCEPTION)
+#if !defined(JSON_NOEXCEPTION)
 TEST_CASE("JSON_ASSERT(x)")
 {
     SECTION("basic_json(first, second)")
