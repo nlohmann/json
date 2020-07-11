@@ -4688,7 +4688,7 @@ struct wide_string_input_helper<BaseInputAdapter, 2>
             }
             else
             {
-                if (JSON_HEDLEY_UNLIKELY(not input.empty()))
+                if (JSON_HEDLEY_UNLIKELY(!input.empty()))
                 {
                     const auto wc2 = static_cast<unsigned int>(input.get_character());
                     const auto charcode = 0x10000u + (((static_cast<unsigned int>(wc) & 0x3FFu) << 10u) | (wc2 & 0x3FFu));
@@ -4832,7 +4832,7 @@ using contiguous_bytes_input_adapter = decltype(input_adapter(std::declval<const
 template < typename CharT,
            typename std::enable_if <
                std::is_pointer<CharT>::value&&
-               not std::is_array<CharT>::value&&
+               !std::is_array<CharT>::value&&
                std::is_integral<typename std::remove_pointer<CharT>::type>::value&&
                sizeof(typename std::remove_pointer<CharT>::type) == 1,
                int >::type = 0 >
@@ -9584,7 +9584,7 @@ scan_number_done:
         // ignore comments
         if (ignore_comments && current == '/')
         {
-            if (not scan_comment())
+            if (!scan_comment())
             {
                 return token_type::parse_error;
             }

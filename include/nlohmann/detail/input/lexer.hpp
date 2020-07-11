@@ -1513,7 +1513,7 @@ scan_number_done:
         // ignore comments
         if (ignore_comments && current == '/')
         {
-            if (not scan_comment())
+            if (!scan_comment())
             {
                 return token_type::parse_error;
             }
