@@ -85,7 +85,7 @@ class iter_impl
     */
     explicit iter_impl(pointer object) noexcept : m_object(object)
     {
-        assert(m_object != nullptr);
+        JSON_ASSERT(m_object != nullptr);
 
         switch (m_object->m_type)
         {
@@ -171,7 +171,7 @@ class iter_impl
     */
     void set_begin() noexcept
     {
-        assert(m_object != nullptr);
+        JSON_ASSERT(m_object != nullptr);
 
         switch (m_object->m_type)
         {
@@ -208,7 +208,7 @@ class iter_impl
     */
     void set_end() noexcept
     {
-        assert(m_object != nullptr);
+        JSON_ASSERT(m_object != nullptr);
 
         switch (m_object->m_type)
         {
@@ -239,19 +239,19 @@ class iter_impl
     */
     reference operator*() const
     {
-        assert(m_object != nullptr);
+        JSON_ASSERT(m_object != nullptr);
 
         switch (m_object->m_type)
         {
             case value_t::object:
             {
-                assert(m_it.object_iterator != m_object->m_value.object->end());
+                JSON_ASSERT(m_it.object_iterator != m_object->m_value.object->end());
                 return m_it.object_iterator->second;
             }
 
             case value_t::array:
             {
-                assert(m_it.array_iterator != m_object->m_value.array->end());
+                JSON_ASSERT(m_it.array_iterator != m_object->m_value.array->end());
                 return *m_it.array_iterator;
             }
 
@@ -276,19 +276,19 @@ class iter_impl
     */
     pointer operator->() const
     {
-        assert(m_object != nullptr);
+        JSON_ASSERT(m_object != nullptr);
 
         switch (m_object->m_type)
         {
             case value_t::object:
             {
-                assert(m_it.object_iterator != m_object->m_value.object->end());
+                JSON_ASSERT(m_it.object_iterator != m_object->m_value.object->end());
                 return &(m_it.object_iterator->second);
             }
 
             case value_t::array:
             {
-                assert(m_it.array_iterator != m_object->m_value.array->end());
+                JSON_ASSERT(m_it.array_iterator != m_object->m_value.array->end());
                 return &*m_it.array_iterator;
             }
 
@@ -321,7 +321,7 @@ class iter_impl
     */
     iter_impl& operator++()
     {
-        assert(m_object != nullptr);
+        JSON_ASSERT(m_object != nullptr);
 
         switch (m_object->m_type)
         {
@@ -364,7 +364,7 @@ class iter_impl
     */
     iter_impl& operator--()
     {
-        assert(m_object != nullptr);
+        JSON_ASSERT(m_object != nullptr);
 
         switch (m_object->m_type)
         {
@@ -402,7 +402,7 @@ class iter_impl
             JSON_THROW(invalid_iterator::create(212, "cannot compare iterators of different containers"));
         }
 
-        assert(m_object != nullptr);
+        JSON_ASSERT(m_object != nullptr);
 
         switch (m_object->m_type)
         {
@@ -438,7 +438,7 @@ class iter_impl
             JSON_THROW(invalid_iterator::create(212, "cannot compare iterators of different containers"));
         }
 
-        assert(m_object != nullptr);
+        JSON_ASSERT(m_object != nullptr);
 
         switch (m_object->m_type)
         {
@@ -486,7 +486,7 @@ class iter_impl
     */
     iter_impl& operator+=(difference_type i)
     {
-        assert(m_object != nullptr);
+        JSON_ASSERT(m_object != nullptr);
 
         switch (m_object->m_type)
         {
@@ -557,7 +557,7 @@ class iter_impl
     */
     difference_type operator-(const iter_impl& other) const
     {
-        assert(m_object != nullptr);
+        JSON_ASSERT(m_object != nullptr);
 
         switch (m_object->m_type)
         {
@@ -578,7 +578,7 @@ class iter_impl
     */
     reference operator[](difference_type n) const
     {
-        assert(m_object != nullptr);
+        JSON_ASSERT(m_object != nullptr);
 
         switch (m_object->m_type)
         {
@@ -609,7 +609,7 @@ class iter_impl
     */
     const typename object_t::key_type& key() const
     {
-        assert(m_object != nullptr);
+        JSON_ASSERT(m_object != nullptr);
 
         if (JSON_HEDLEY_LIKELY(m_object->is_object()))
         {

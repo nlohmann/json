@@ -35,7 +35,6 @@ SOFTWARE.
 #define NLOHMANN_JSON_VERSION_PATCH 0
 
 #include <algorithm> // all_of, find, for_each
-#include <cassert> // assert
 #include <cstddef> // nullptr_t, ptrdiff_t, size_t
 #include <functional> // hash, less
 #include <initializer_list> // initializer_list
@@ -924,7 +923,7 @@ class basic_json
         };
         std::unique_ptr<T, decltype(deleter)> object(AllocatorTraits::allocate(alloc, 1), deleter);
         AllocatorTraits::construct(alloc, object.get(), std::forward<Args>(args)...);
-        assert(object != nullptr);
+        JSON_ASSERT(object != nullptr);
         return object.release();
     }
 
@@ -1219,10 +1218,10 @@ class basic_json
     */
     void assert_invariant() const noexcept
     {
-        assert(m_type != value_t::object || m_value.object != nullptr);
-        assert(m_type != value_t::array || m_value.array != nullptr);
-        assert(m_type != value_t::string || m_value.string != nullptr);
-        assert(m_type != value_t::binary || m_value.binary != nullptr);
+        JSON_ASSERT(m_type != value_t::object || m_value.object != nullptr);
+        JSON_ASSERT(m_type != value_t::array || m_value.array != nullptr);
+        JSON_ASSERT(m_type != value_t::string || m_value.string != nullptr);
+        JSON_ASSERT(m_type != value_t::binary || m_value.binary != nullptr);
     }
 
   public:
@@ -1515,7 +1514,7 @@ class basic_json
                 m_type = value_t::discarded;
                 break;
             default:            // LCOV_EXCL_LINE
-                assert(false);  // LCOV_EXCL_LINE
+                JSON_ASSERT(false);  // LCOV_EXCL_LINE
         }
         assert_invariant();
     }
@@ -1915,8 +1914,8 @@ class basic_json
                    std::is_same<InputIT, typename basic_json_t::const_iterator>::value, int >::type = 0 >
     basic_json(InputIT first, InputIT last)
     {
-        assert(first.m_object != nullptr);
-        assert(last.m_object != nullptr);
+        JSON_ASSERT(first.m_object != nullptr);
+        JSON_ASSERT(last.m_object != nullptr);
 
         // make sure iterator fits the current value
         if (JSON_HEDLEY_UNLIKELY(first.m_object != last.m_object))
@@ -2238,7 +2237,8 @@ class basic_json
     @param[in] error_handler  how to react on decoding errors; there are three
     possible values: `strict` (throws and exception in case a decoding error
     occurs; default), `replace` (replace invalid UTF-8 sequences with U+FFFD),
-    and `ignore` (ignore invalid UTF-8 sequences during serialization).
+    and `ignore` (ignore invalid UTF-8 sequences during serialization; all
+    bytes are copied to the output unchanged).
 
     @return string containing the serialization of the JSON value
 
@@ -3019,6 +3019,18 @@ class basic_json
         return v;
     }
 
+    // specialization to allow to call get_to with a basic_json value
+    // see https://github.com/nlohmann/json/issues/2175
+    template<typename ValueType,
+             detail::enable_if_t <
+                 detail::is_basic_json<ValueType>::value,
+                 int> = 0>
+    ValueType & get_to(ValueType& v) const
+    {
+        v = *this;
+        return v;
+    }
+
     template <
         typename T, std::size_t N,
         typename Array = T (&)[N],
@@ -3620,7 +3632,7 @@ class basic_json
         // const operator[] only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
         {
-            assert(m_value.object->find(key) != m_value.object->end());
+            JSON_ASSERT(m_value.object->find(key) != m_value.object->end());
             return m_value.object->find(key)->second;
         }
 
@@ -3712,7 +3724,7 @@ class basic_json
         // at only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
         {
-            assert(m_value.object->find(key) != m_value.object->end());
+            JSON_ASSERT(m_value.object->find(key) != m_value.object->end());
             return m_value.object->find(key)->second;
         }
 
@@ -3772,7 +3784,7 @@ class basic_json
     template < class ValueType, typename std::enable_if <
                    std::is_convertible<basic_json_t, ValueType>::value
                    && !std::is_same<value_t, ValueType>::value, int >::type = 0 >
-    ValueType value(const typename object_t::key_type& key, ValueType && default_value) const
+    ValueType value(const typename object_t::key_type& key, const ValueType& default_value) const
     {
         // at only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
@@ -3784,7 +3796,7 @@ class basic_json
                 return *it;
             }
 
-            return std::move(default_value);
+            return default_value;
         }
 
         JSON_THROW(type_error::create(306, "cannot use value() with " + std::string(type_name())));
@@ -3796,7 +3808,7 @@ class basic_json
     */
     string_t value(const typename object_t::key_type& key, const char* default_value) const
     {
-        return value(key, std::move(string_t(default_value)));
+        return value(key, string_t(default_value));
     }
 
     /*!
@@ -3844,7 +3856,7 @@ class basic_json
     */
     template<class ValueType, typename std::enable_if<
                  std::is_convertible<basic_json_t, ValueType>::value, int>::type = 0>
-    ValueType value(const json_pointer& ptr, ValueType && default_value) const
+    ValueType value(const json_pointer& ptr, const ValueType& default_value) const
     {
         // at only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
@@ -3856,7 +3868,7 @@ class basic_json
             }
             JSON_INTERNAL_CATCH (out_of_range&)
             {
-                return std::move(default_value);
+                return default_value;
             }
         }
 
@@ -3870,7 +3882,7 @@ class basic_json
     JSON_HEDLEY_NON_NULL(3)
     string_t value(const json_pointer& ptr, const char* default_value) const
     {
-        return value(ptr, std::move(string_t(default_value)));
+        return value(ptr, string_t(default_value));
     }
 
     /*!
@@ -5480,7 +5492,7 @@ class basic_json
     iterator insert_iterator(const_iterator pos, Args&& ... args)
     {
         iterator result(this);
-        assert(m_value.array != nullptr);
+        JSON_ASSERT(m_value.array != nullptr);
 
         auto insert_pos = std::distance(m_value.array->begin(), pos.m_it.array_iterator);
         m_value.array->insert(pos.m_it.array_iterator, std::forward<Args>(args)...);
@@ -8245,7 +8257,7 @@ class basic_json
 
                 // if there exists a parent it cannot be primitive
                 default:            // LCOV_EXCL_LINE
-                    assert(false);  // LCOV_EXCL_LINE
+                    JSON_ASSERT(false);  // LCOV_EXCL_LINE
             }
         };
 

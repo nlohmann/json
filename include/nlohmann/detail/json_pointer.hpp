@@ -1,7 +1,6 @@
 #pragma once
 
 #include <algorithm> // all_of
-#include <cassert> // assert
 #include <cctype> // isdigit
 #include <limits> // max
 #include <numeric> // accumulate
@@ -398,7 +397,6 @@ class json_pointer
     */
     BasicJsonType& get_and_create(BasicJsonType& j) const
     {
-        using size_type = typename BasicJsonType::size_type;
         auto result = &j;
 
         // in case no reference tokens exist, return a reference to the JSON value
@@ -471,7 +469,6 @@ class json_pointer
     */
     BasicJsonType& get_unchecked(BasicJsonType* ptr) const
     {
-        using size_type = typename BasicJsonType::size_type;
         for (const auto& reference_token : reference_tokens)
         {
             // convert null values to arrays or objects before continuing
@@ -531,7 +528,6 @@ class json_pointer
     */
     BasicJsonType& get_checked(BasicJsonType* ptr) const
     {
-        using size_type = typename BasicJsonType::size_type;
         for (const auto& reference_token : reference_tokens)
         {
             switch (ptr->type())
@@ -581,7 +577,6 @@ class json_pointer
     */
     const BasicJsonType& get_unchecked(const BasicJsonType* ptr) const
     {
-        using size_type = typename BasicJsonType::size_type;
         for (const auto& reference_token : reference_tokens)
         {
             switch (ptr->type())
@@ -624,7 +619,6 @@ class json_pointer
     */
     const BasicJsonType& get_checked(const BasicJsonType* ptr) const
     {
-        using size_type = typename BasicJsonType::size_type;
         for (const auto& reference_token : reference_tokens)
         {
             switch (ptr->type())
@@ -665,7 +659,6 @@ class json_pointer
     */
     bool contains(const BasicJsonType* ptr) const
     {
-        using size_type = typename BasicJsonType::size_type;
         for (const auto& reference_token : reference_tokens)
         {
             switch (ptr->type())
@@ -787,7 +780,7 @@ class json_pointer
                     pos != std::string::npos;
                     pos = reference_token.find_first_of('~', pos + 1))
             {
-                assert(reference_token[pos] == '~');
+                JSON_ASSERT(reference_token[pos] == '~');
 
                 // ~ must be followed by 0 or 1
                 if (JSON_HEDLEY_UNLIKELY(pos == reference_token.size() - 1 ||
@@ -822,7 +815,7 @@ class json_pointer
     static void replace_substring(std::string& s, const std::string& f,
                                   const std::string& t)
     {
-        assert(!f.empty());
+        JSON_ASSERT(!f.empty());
         for (auto pos = s.find(f);                // find first occurrence of f
                 pos != std::string::npos;         // make sure f was found
                 s.replace(pos, f.size(), t),      // replace with t, and
