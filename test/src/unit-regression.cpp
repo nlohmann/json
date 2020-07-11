@@ -1965,9 +1965,14 @@ TEST_CASE("regression tests, exceptions dependent")
 /////////////////////////////////////////////////////////////////////
 // for #1642
 /////////////////////////////////////////////////////////////////////
+
+// the code below fails with Clang on Windows, so we need to exclude it there
+#if defined(__clang__) && (defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__))
+#else
 template <typename T> class array {};
 template <typename T> class object {};
 template <typename T> class string {};
 template <typename T> class number_integer {};
 template <typename T> class number_unsigned {};
 template <typename T> class number_float {};
+#endif
