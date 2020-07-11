@@ -12,7 +12,6 @@
 #include <type_traits> // is_same
 #include <utility> // move
 
-#include <nlohmann/detail/boolean_operators.hpp>
 #include <nlohmann/detail/conversions/to_chars.hpp>
 #include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/macro_scope.hpp>

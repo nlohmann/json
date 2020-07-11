@@ -48,7 +48,6 @@ SOFTWARE.
 
 #include <nlohmann/adl_serializer.hpp>
 #include <nlohmann/byte_container_with_subtype.hpp>
-#include <nlohmann/detail/boolean_operators.hpp>
 #include <nlohmann/detail/conversions/from_json.hpp>
 #include <nlohmann/detail/conversions/to_json.hpp>
 #include <nlohmann/detail/exceptions.hpp>

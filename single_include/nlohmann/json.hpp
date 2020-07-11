@@ -66,16 +66,6 @@ SOFTWARE.
 #include <utility> // pair, declval
 #include <valarray> // valarray
 
-// #include <nlohmann/detail/boolean_operators.hpp>
-
-
-// Header <ciso646> is removed in C++20.
-// See <https://github.com/nlohmann/json/issues/2089> for more information.
-
-#if __cplusplus <= 201703L
-    #include <ciso646> // and, not, or
-#endif
-
 // #include <nlohmann/detail/exceptions.hpp>
 
 
@@ -2556,9 +2546,6 @@ class other_error : public exception
 #include <cstddef> // size_t
 #include <type_traits> // conditional, enable_if, false_type, integral_constant, is_constructible, is_integral, is_same, remove_cv, remove_reference, true_type
 
-// #include <nlohmann/detail/boolean_operators.hpp>
-
-
 namespace nlohmann
 {
 namespace detail
@@ -2623,8 +2610,6 @@ constexpr T static_const<T>::value;
 #include <limits> // numeric_limits
 #include <type_traits> // false_type, is_constructible, is_integral, is_same, true_type
 #include <utility> // declval
-
-// #include <nlohmann/detail/boolean_operators.hpp>
 
 // #include <nlohmann/detail/iterators/iterator_traits.hpp>
 
@@ -3210,9 +3195,6 @@ struct is_constructible_tuple<T1, std::tuple<Args...>> : conjunction<std::is_con
 #include <cstdint> // uint8_t
 #include <string> // string
 
-// #include <nlohmann/detail/boolean_operators.hpp>
-
-
 namespace nlohmann
 {
 namespace detail
@@ -3680,8 +3662,6 @@ constexpr const auto& from_json = detail::static_const<detail::from_json_fn>::va
 #include <utility> // move, forward, declval, pair
 #include <valarray> // valarray
 #include <vector> // vector
-
-// #include <nlohmann/detail/boolean_operators.hpp>
 
 // #include <nlohmann/detail/iterators/iteration_proxy.hpp>
 
@@ -4442,8 +4422,6 @@ class byte_container_with_subtype : public BinaryType
 };
 
 }  // namespace nlohmann
-
-// #include <nlohmann/detail/boolean_operators.hpp>
 
 // #include <nlohmann/detail/conversions/from_json.hpp>
 
@@ -10401,8 +10379,6 @@ template<typename BasicJsonType> struct internal_iterator
 #include <iterator> // iterator, random_access_iterator_tag, bidirectional_iterator_tag, advance, next
 #include <type_traits> // conditional, is_const, remove_const
 
-// #include <nlohmann/detail/boolean_operators.hpp>
-
 // #include <nlohmann/detail/exceptions.hpp>
 
 // #include <nlohmann/detail/iterators/internal_iterator.hpp>
@@ -13946,8 +13922,6 @@ class binary_writer
 #include <type_traits> // is_same
 #include <utility> // move
 
-// #include <nlohmann/detail/boolean_operators.hpp>
-
 // #include <nlohmann/detail/conversions/to_chars.hpp>
 
 
@@ -13957,8 +13931,6 @@ class binary_writer
 #include <cstring> // memcpy, memmove
 #include <limits> // numeric_limits
 #include <type_traits> // conditional
-
-// #include <nlohmann/detail/boolean_operators.hpp>
 
 // #include <nlohmann/detail/macro_scope.hpp>
 

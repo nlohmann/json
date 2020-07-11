@@ -7,7 +7,6 @@
 #include <limits> // numeric_limits
 #include <type_traits> // conditional
 
-#include <nlohmann/detail/boolean_operators.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 
 namespace nlohmann

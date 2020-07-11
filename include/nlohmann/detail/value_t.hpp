@@ -5,8 +5,6 @@
 #include <cstdint> // uint8_t
 #include <string> // string
 
-#include <nlohmann/detail/boolean_operators.hpp>
-
 namespace nlohmann
 {
 namespace detail
