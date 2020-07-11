@@ -12,7 +12,7 @@ namespace nlohmann
 /// for use within nlohmann::basic_json<ordered_map>
 template <class Key, class T, class IgnoredLess = std::less<Key>,
           class Allocator = std::allocator<std::pair<const Key, T>>>
-struct ordered_map : std::vector<std::pair<const Key, T>, Allocator>
+                  struct ordered_map : std::vector<std::pair<const Key, T>, Allocator>
 {
     using key_type = Key;
     using mapped_type = T;
