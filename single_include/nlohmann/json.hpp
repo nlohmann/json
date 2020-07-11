@@ -13825,8 +13825,8 @@ class binary_writer
 
     void write_compact_float(const number_float_t n, detail::input_format_t format)
     {
-        if (static_cast<double>(n) >= static_cast<double>(std::numeric_limits<float>::lowest()) and
-                static_cast<double>(n) <= static_cast<double>((std::numeric_limits<float>::max)()) and
+        if (static_cast<double>(n) >= static_cast<double>(std::numeric_limits<float>::lowest()) &&
+                static_cast<double>(n) <= static_cast<double>((std::numeric_limits<float>::max)()) &&
                 static_cast<double>(static_cast<float>(n)) == static_cast<double>(n))
         {
             oa->write_character(format == detail::input_format_t::cbor
@@ -21779,9 +21779,9 @@ class basic_json
     @since version 1.0.0
     */
     friend void swap(reference left, reference right) noexcept (
-        std::is_nothrow_move_constructible<value_t>::value and
-        std::is_nothrow_move_assignable<value_t>::value and
-        std::is_nothrow_move_constructible<json_value>::value and
+        std::is_nothrow_move_constructible<value_t>::value&&
+        std::is_nothrow_move_assignable<value_t>::value&&
+        std::is_nothrow_move_constructible<json_value>::value&&
         std::is_nothrow_move_assignable<json_value>::value
     )
     {

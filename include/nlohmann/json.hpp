@@ -5883,9 +5883,9 @@ class basic_json
     @since version 1.0.0
     */
     friend void swap(reference left, reference right) noexcept (
-        std::is_nothrow_move_constructible<value_t>::value and
-        std::is_nothrow_move_assignable<value_t>::value and
-        std::is_nothrow_move_constructible<json_value>::value and
+        std::is_nothrow_move_constructible<value_t>::value&&
+        std::is_nothrow_move_assignable<value_t>::value&&
+        std::is_nothrow_move_constructible<json_value>::value&&
         std::is_nothrow_move_assignable<json_value>::value
     )
     {

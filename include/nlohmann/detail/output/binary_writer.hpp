@@ -1497,8 +1497,8 @@ class binary_writer
 
     void write_compact_float(const number_float_t n, detail::input_format_t format)
     {
-        if (static_cast<double>(n) >= static_cast<double>(std::numeric_limits<float>::lowest()) and
-                static_cast<double>(n) <= static_cast<double>((std::numeric_limits<float>::max)()) and
+        if (static_cast<double>(n) >= static_cast<double>(std::numeric_limits<float>::lowest()) &&
+                static_cast<double>(n) <= static_cast<double>((std::numeric_limits<float>::max)()) &&
                 static_cast<double>(static_cast<float>(n)) == static_cast<double>(n))
         {
             oa->write_character(format == detail::input_format_t::cbor
