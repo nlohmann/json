@@ -254,7 +254,7 @@ bool accept_helper(const std::string& s)
     // 1. parse s without exceptions
     json j;
     CHECK_NOTHROW(json::parser(nlohmann::detail::input_adapter(s), nullptr, false).parse(true, j));
-    const bool ok_noexcept = not j.is_discarded();
+    const bool ok_noexcept = !j.is_discarded();
 
     // 2. accept s
     const bool ok_accept = json::parser(nlohmann::detail::input_adapter(s)).accept(true);
@@ -265,7 +265,7 @@ bool accept_helper(const std::string& s)
     // 4. parse with SAX (compare with relaxed accept result)
     SaxEventLogger el;
     CHECK_NOTHROW(json::sax_parse(s, &el, json::input_format_t::json, false));
-    CHECK(json::parser(nlohmann::detail::input_adapter(s)).accept(false) == not el.errored);
+    CHECK(json::parser(nlohmann::detail::input_adapter(s)).accept(false) == !el.errored);
 
     // 5. parse with simple callback
     json::parser_callback_t cb = [](int, json::parse_event_t, json&)
@@ -273,7 +273,7 @@ bool accept_helper(const std::string& s)
         return true;
     };
     json j_cb = json::parse(s, cb, false);
-    const bool ok_noexcept_cb = not j_cb.is_discarded();
+    const bool ok_noexcept_cb = !j_cb.is_discarded();
 
     // 6. check if this approach came to the same result
     CHECK(ok_noexcept == ok_noexcept_cb);
@@ -314,7 +314,7 @@ void comments_helper(const std::string& s)
     {
         CAPTURE(json_with_comment)
         CHECK_THROWS_AS(_ = json::parse(json_with_comment), json::parse_error);
-        CHECK(not json::accept(json_with_comment));
+        CHECK(!json::accept(json_with_comment));
 
         CHECK_NOTHROW(_ = json::parse(json_with_comment, nullptr, true, true));
         CHECK(json::accept(json_with_comment, true));
@@ -941,7 +941,7 @@ TEST_CASE("parser class")
             SECTION("overflow")
             {
                 // overflows during parsing
-                CHECK(not accept_helper("1.18973e+4932"));
+                CHECK(!accept_helper("1.18973e+4932"));
             }
 
             SECTION("invalid numbers")
@@ -1616,7 +1616,7 @@ TEST_CASE("parser class")
         {
             json j_filtered1 = json::parse(structured_array, [](int, json::parse_event_t e, const json & parsed)
             {
-                if (e == json::parse_event_t::object_end and parsed.contains("foo"))
+                if (e == json::parse_event_t::object_end && parsed.contains("foo"))
                 {
                     return false;
                 }
@@ -1655,7 +1655,7 @@ TEST_CASE("parser class")
                     json j_object = json::parse(s_object, [](int, json::parse_event_t e, const json&)
                     {
                         static bool first = true;
-                        if (e == json::parse_event_t::object_end and first)
+                        if (e == json::parse_event_t::object_end && first)
                         {
                             first = false;
                             return false;
@@ -1674,7 +1674,7 @@ TEST_CASE("parser class")
                     json j_array = json::parse(s_array, [](int, json::parse_event_t e, const json&)
                     {
                         static bool first = true;
-                        if (e == json::parse_event_t::array_end and first)
+                        if (e == json::parse_event_t::array_end && first)
                         {
                             first = false;
                             return false;

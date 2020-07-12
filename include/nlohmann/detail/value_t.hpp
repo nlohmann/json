@@ -5,8 +5,6 @@
 #include <cstdint> // uint8_t
 #include <string> // string
 
-#include <nlohmann/detail/boolean_operators.hpp>
-
 namespace nlohmann
 {
 namespace detail
@@ -77,7 +75,7 @@ inline bool operator<(const value_t lhs, const value_t rhs) noexcept
 
     const auto l_index = static_cast<std::size_t>(lhs);
     const auto r_index = static_cast<std::size_t>(rhs);
-    return l_index < order.size() and r_index < order.size() and order[l_index] < order[r_index];
+    return l_index < order.size() && r_index < order.size() && order[l_index] < order[r_index];
 }
 }  // namespace detail
 }  // namespace nlohmann

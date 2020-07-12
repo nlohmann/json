@@ -9,10 +9,10 @@ namespace nlohmann
 {
 namespace detail
 {
-template <typename It, typename = void>
+template<typename It, typename = void>
 struct iterator_types {};
 
-template <typename It>
+template<typename It>
 struct iterator_types <
     It,
     void_t<typename It::difference_type, typename It::value_type, typename It::pointer,
@@ -27,18 +27,18 @@ struct iterator_types <
 
 // This is required as some compilers implement std::iterator_traits in a way that
 // doesn't work with SFINAE. See https://github.com/nlohmann/json/issues/1341.
-template <typename T, typename = void>
+template<typename T, typename = void>
 struct iterator_traits
 {
 };
 
-template <typename T>
+template<typename T>
 struct iterator_traits < T, enable_if_t < !std::is_pointer<T>::value >>
             : iterator_types<T>
 {
 };
 
-template <typename T>
+template<typename T>
 struct iterator_traits<T*, enable_if_t<std::is_object<T>::value>>
 {
     using iterator_category = std::random_access_iterator_tag;

@@ -254,12 +254,12 @@ TEST_CASE("regression tests")
             json j1 = INFINITY;
             CHECK(j1.is_number_float());
             json::number_float_t f1 = j1;
-            CHECK(not std::isfinite(f1));
+            CHECK(!std::isfinite(f1));
 
             json j2 = json::number_float_t(INFINITY);
             CHECK(j2.is_number_float());
             json::number_float_t f2 = j2;
-            CHECK(not std::isfinite(f2));
+            CHECK(!std::isfinite(f2));
         }
     }
 
@@ -1350,10 +1350,10 @@ TEST_CASE("regression tests")
         CHECK(j["a"] >  3);
 
 
-        CHECK(not(j["a"] <= 4));
-        CHECK(not(j["a"] <  4));
-        CHECK(not(j["a"] >= 6));
-        CHECK(not(j["a"] >  6));
+        CHECK(!(j["a"] <= 4));
+        CHECK(!(j["a"] <  4));
+        CHECK(!(j["a"] >= 6));
+        CHECK(!(j["a"] >  6));
 
         // scalar op json
         CHECK(5 == j["a"]);
@@ -1364,10 +1364,10 @@ TEST_CASE("regression tests")
         CHECK(3 <= j["a"]);
         CHECK(3 <  j["a"]);
 
-        CHECK(not(4 >= j["a"]));
-        CHECK(not(4 >  j["a"]));
-        CHECK(not(6 <= j["a"]));
-        CHECK(not(6 <  j["a"]));
+        CHECK(!(4 >= j["a"]));
+        CHECK(!(4 >  j["a"]));
+        CHECK(!(6 <= j["a"]));
+        CHECK(!(6 <  j["a"]));
     }
 
     SECTION("issue #575 - heap-buffer-overflow (OSS-Fuzz 1400)")
@@ -1608,7 +1608,7 @@ TEST_CASE("regression tests")
         json::parser_callback_t cb = [](int /*depth*/, json::parse_event_t event, json & parsed)
         {
             // skip object elements with key "Thumbnail"
-            if (event == json::parse_event_t::key and parsed == json("Thumbnail"))
+            if (event == json::parse_event_t::key && parsed == json("Thumbnail"))
             {
                 return false;
             }
@@ -1680,7 +1680,7 @@ TEST_CASE("regression tests")
         json::parser_callback_t cb = [&](int, json::parse_event_t event, json & parsed)
         {
             // skip uninteresting events
-            if (event == json::parse_event_t::value and !parsed.is_primitive())
+            if (event == json::parse_event_t::value && !parsed.is_primitive())
             {
                 return false;
             }
@@ -1760,7 +1760,7 @@ TEST_CASE("regression tests")
     SECTION("issue #1292 - Serializing std::variant causes stack overflow")
     {
         static_assert(
-            not std::is_constructible<json, std::variant<int, float>>::value, "");
+            !std::is_constructible<json, std::variant<int, float>>::value, "");
     }
 #endif
 
@@ -1956,7 +1956,7 @@ TEST_CASE("regression tests")
     }
 }
 
-#if not defined(JSON_NOEXCEPTION)
+#if !defined(JSON_NOEXCEPTION)
 TEST_CASE("regression tests, exceptions dependent")
 {
     SECTION("issue #1340 - eof not set on exhausted input stream")
@@ -1974,9 +1974,14 @@ TEST_CASE("regression tests, exceptions dependent")
 /////////////////////////////////////////////////////////////////////
 // for #1642
 /////////////////////////////////////////////////////////////////////
+
+// the code below fails with Clang on Windows, so we need to exclude it there
+#if defined(__clang__) && (defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__))
+#else
 template <typename T> class array {};
 template <typename T> class object {};
 template <typename T> class string {};
 template <typename T> class number_integer {};
 template <typename T> class number_unsigned {};
 template <typename T> class number_float {};
+#endif

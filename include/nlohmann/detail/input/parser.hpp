@@ -91,7 +91,7 @@ class parser
             result.assert_invariant();
 
             // in strict mode, input must be completely read
-            if (strict and (get_token() != token_type::end_of_input))
+            if (strict && (get_token() != token_type::end_of_input))
             {
                 sdp.parse_error(m_lexer.get_position(),
                                 m_lexer.get_token_string(),
@@ -120,7 +120,7 @@ class parser
             result.assert_invariant();
 
             // in strict mode, input must be completely read
-            if (strict and (get_token() != token_type::end_of_input))
+            if (strict && (get_token() != token_type::end_of_input))
             {
                 sdp.parse_error(m_lexer.get_position(),
                                 m_lexer.get_token_string(),
@@ -149,7 +149,7 @@ class parser
         return sax_parse(&sax_acceptor, strict);
     }
 
-    template <typename SAX>
+    template<typename SAX>
     JSON_HEDLEY_NON_NULL(2)
     bool sax_parse(SAX* sax, const bool strict = true)
     {
@@ -157,7 +157,7 @@ class parser
         const bool result = sax_parse_internal(sax);
 
         // strict mode: next byte must be EOF
-        if (result and strict and (get_token() != token_type::end_of_input))
+        if (result && strict && (get_token() != token_type::end_of_input))
         {
             return sax->parse_error(m_lexer.get_position(),
                                     m_lexer.get_token_string(),
@@ -169,7 +169,7 @@ class parser
     }
 
   private:
-    template <typename SAX>
+    template<typename SAX>
     JSON_HEDLEY_NON_NULL(2)
     bool sax_parse_internal(SAX* sax)
     {
@@ -181,14 +181,14 @@ class parser
 
         while (true)
         {
-            if (not skip_to_state_evaluation)
+            if (!skip_to_state_evaluation)
             {
                 // invariant: get_token() was called before each iteration
                 switch (last_token)
                 {
                     case token_type::begin_object:
                     {
-                        if (JSON_HEDLEY_UNLIKELY(not sax->start_object(std::size_t(-1))))
+                        if (JSON_HEDLEY_UNLIKELY(!sax->start_object(std::size_t(-1))))
                         {
                             return false;
                         }
@@ -196,7 +196,7 @@ class parser
                         // closing } -> we are done
                         if (get_token() == token_type::end_object)
                         {
-                            if (JSON_HEDLEY_UNLIKELY(not sax->end_object()))
+                            if (JSON_HEDLEY_UNLIKELY(!sax->end_object()))
                             {
                                 return false;
                             }
@@ -211,7 +211,7 @@ class parser
                                                     parse_error::create(101, m_lexer.get_position(),
                                                             exception_message(token_type::value_string, "object key")));
                         }
-                        if (JSON_HEDLEY_UNLIKELY(not sax->key(m_lexer.get_string())))
+                        if (JSON_HEDLEY_UNLIKELY(!sax->key(m_lexer.get_string())))
                         {
                             return false;
                         }
@@ -235,7 +235,7 @@ class parser
 
                     case token_type::begin_array:
                     {
-                        if (JSON_HEDLEY_UNLIKELY(not sax->start_array(std::size_t(-1))))
+                        if (JSON_HEDLEY_UNLIKELY(!sax->start_array(std::size_t(-1))))
                         {
                             return false;
                         }
@@ -243,7 +243,7 @@ class parser
                         // closing ] -> we are done
                         if (get_token() == token_type::end_array)
                         {
-                            if (JSON_HEDLEY_UNLIKELY(not sax->end_array()))
+                            if (JSON_HEDLEY_UNLIKELY(!sax->end_array()))
                             {
                                 return false;
                             }
@@ -261,14 +261,14 @@ class parser
                     {
                         const auto res = m_lexer.get_number_float();
 
-                        if (JSON_HEDLEY_UNLIKELY(not std::isfinite(res)))
+                        if (JSON_HEDLEY_UNLIKELY(!std::isfinite(res)))
                         {
                             return sax->parse_error(m_lexer.get_position(),
                                                     m_lexer.get_token_string(),
                                                     out_of_range::create(406, "number overflow parsing '" + m_lexer.get_token_string() + "'"));
                         }
 
-                        if (JSON_HEDLEY_UNLIKELY(not sax->number_float(res, m_lexer.get_string())))
+                        if (JSON_HEDLEY_UNLIKELY(!sax->number_float(res, m_lexer.get_string())))
                         {
                             return false;
                         }
@@ -278,7 +278,7 @@ class parser
 
                     case token_type::literal_false:
                     {
-                        if (JSON_HEDLEY_UNLIKELY(not sax->boolean(false)))
+                        if (JSON_HEDLEY_UNLIKELY(!sax->boolean(false)))
                         {
                             return false;
                         }
@@ -287,7 +287,7 @@ class parser
 
                     case token_type::literal_null:
                     {
-                        if (JSON_HEDLEY_UNLIKELY(not sax->null()))
+                        if (JSON_HEDLEY_UNLIKELY(!sax->null()))
                         {
                             return false;
                         }
@@ -296,7 +296,7 @@ class parser
 
                     case token_type::literal_true:
                     {
-                        if (JSON_HEDLEY_UNLIKELY(not sax->boolean(true)))
+                        if (JSON_HEDLEY_UNLIKELY(!sax->boolean(true)))
                         {
                             return false;
                         }
@@ -305,7 +305,7 @@ class parser
 
                     case token_type::value_integer:
                     {
-                        if (JSON_HEDLEY_UNLIKELY(not sax->number_integer(m_lexer.get_number_integer())))
+                        if (JSON_HEDLEY_UNLIKELY(!sax->number_integer(m_lexer.get_number_integer())))
                         {
                             return false;
                         }
@@ -314,7 +314,7 @@ class parser
 
                     case token_type::value_string:
                     {
-                        if (JSON_HEDLEY_UNLIKELY(not sax->string(m_lexer.get_string())))
+                        if (JSON_HEDLEY_UNLIKELY(!sax->string(m_lexer.get_string())))
                         {
                             return false;
                         }
@@ -323,7 +323,7 @@ class parser
 
                     case token_type::value_unsigned:
                     {
-                        if (JSON_HEDLEY_UNLIKELY(not sax->number_unsigned(m_lexer.get_number_unsigned())))
+                        if (JSON_HEDLEY_UNLIKELY(!sax->number_unsigned(m_lexer.get_number_unsigned())))
                         {
                             return false;
                         }
@@ -373,7 +373,7 @@ class parser
                 // closing ]
                 if (JSON_HEDLEY_LIKELY(last_token == token_type::end_array))
                 {
-                    if (JSON_HEDLEY_UNLIKELY(not sax->end_array()))
+                    if (JSON_HEDLEY_UNLIKELY(!sax->end_array()))
                     {
                         return false;
                     }
@@ -382,7 +382,7 @@ class parser
                     // new value, we need to evaluate the new state first.
                     // By setting skip_to_state_evaluation to false, we
                     // are effectively jumping to the beginning of this if.
-                    JSON_ASSERT(not states.empty());
+                    JSON_ASSERT(!states.empty());
                     states.pop_back();
                     skip_to_state_evaluation = true;
                     continue;
@@ -407,7 +407,7 @@ class parser
                                                         exception_message(token_type::value_string, "object key")));
                     }
 
-                    if (JSON_HEDLEY_UNLIKELY(not sax->key(m_lexer.get_string())))
+                    if (JSON_HEDLEY_UNLIKELY(!sax->key(m_lexer.get_string())))
                     {
                         return false;
                     }
@@ -429,7 +429,7 @@ class parser
                 // closing }
                 if (JSON_HEDLEY_LIKELY(last_token == token_type::end_object))
                 {
-                    if (JSON_HEDLEY_UNLIKELY(not sax->end_object()))
+                    if (JSON_HEDLEY_UNLIKELY(!sax->end_object()))
                     {
                         return false;
                     }
@@ -438,7 +438,7 @@ class parser
                     // new value, we need to evaluate the new state first.
                     // By setting skip_to_state_evaluation to false, we
                     // are effectively jumping to the beginning of this if.
-                    JSON_ASSERT(not states.empty());
+                    JSON_ASSERT(!states.empty());
                     states.pop_back();
                     skip_to_state_evaluation = true;
                     continue;
@@ -462,7 +462,7 @@ class parser
     {
         std::string error_msg = "syntax error ";
 
-        if (not context.empty())
+        if (!context.empty())
         {
             error_msg += "while parsing " + context + " ";
         }

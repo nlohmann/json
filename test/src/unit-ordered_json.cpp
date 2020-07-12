@@ -27,39 +27,53 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-// avoid warning when assert does not abort
-#if defined(__GNUC__)
-    #pragma GCC diagnostic ignored "-Wstrict-overflow"
-#endif
-
 #include "doctest_compatibility.h"
-
-/// global variable to record side effect of assert calls
-static int assert_counter;
-
-/// set failure variable to true instead of calling assert(x)
-#define JSON_ASSERT(x) {if (!(x)) ++assert_counter; }
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;
+using nlohmann::ordered_json;
 
-// the test assumes exceptions to work
-#if !defined(JSON_NOEXCEPTION)
-TEST_CASE("JSON_ASSERT(x)")
+
+TEST_CASE("ordered_json")
 {
-    SECTION("basic_json(first, second)")
-    {
-        assert_counter = 0;
-        CHECK(assert_counter == 0);
+    json j;
+    ordered_json oj;
 
-        json::iterator it;
-        json j;
+    j["element3"] = 3;
+    j["element1"] = 1;
+    j["element2"] = 2;
 
-        // in case assertions do not abort execution, an exception is thrown
-        CHECK_THROWS_WITH_AS(json(it, j.end()), "[json.exception.invalid_iterator.201] iterators are not compatible", json::invalid_iterator);
+    oj["element3"] = 3;
+    oj["element1"] = 1;
+    oj["element2"] = 2;
 
-        // check that assertion actually happened
-        CHECK(assert_counter == 1);
-    }
+    CHECK(j.dump() == "{\"element1\":1,\"element2\":2,\"element3\":3}");
+    CHECK(oj.dump() == "{\"element3\":3,\"element1\":1,\"element2\":2}");
+
+    CHECK(j == json(oj));
+    CHECK(ordered_json(json(oj)) == ordered_json(j));
+
+    j.erase("element1");
+    oj.erase("element1");
+
+    CHECK(j.dump() == "{\"element2\":2,\"element3\":3}");
+    CHECK(oj.dump() == "{\"element3\":3,\"element2\":2}");
+
+    // remove again and nothing changes
+    j.erase("element1");
+    oj.erase("element1");
+
+    CHECK(j.dump() == "{\"element2\":2,\"element3\":3}");
+    CHECK(oj.dump() == "{\"element3\":3,\"element2\":2}");
+
+    // There are no dup keys cause constructor calls emplace...
+    json multi {{"z", 1}, {"m", 2}, {"m", 3}, {"y", 4}, {"m", 5}};
+    CHECK(multi.size() == 3);
+    CHECK(multi.dump() == "{\"m\":2,\"y\":4,\"z\":1}");
+
+    ordered_json multi_ordered {{"z", 1}, {"m", 2}, {"m", 3}, {"y", 4}, {"m", 5}};
+    CHECK(multi_ordered.size() == 3);
+    CHECK(multi_ordered.dump() == "{\"z\":1,\"m\":2,\"y\":4}");
+    CHECK(multi_ordered.erase("m") == 1);
+    CHECK(multi_ordered.dump() == "{\"z\":1,\"y\":4}");
 }
-#endif

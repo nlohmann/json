@@ -1077,7 +1077,7 @@ TEST_CASE("CBOR")
                 {
                     json j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x7c, 0x00}));
                     json::number_float_t d = j;
-                    CHECK(not std::isfinite(d));
+                    CHECK(!std::isfinite(d));
                     CHECK(j.dump() == "null");
                 }
 
@@ -1869,7 +1869,7 @@ TEST_CASE("CBOR")
             {
                 const auto result = json::from_cbor(vec, false);
                 CHECK(result == json());
-                CHECK(not json::from_cbor(vec, false, false).is_discarded());
+                CHECK(!json::from_cbor(vec, false, false).is_discarded());
             }
 
             SECTION("strict mode")
@@ -1889,21 +1889,21 @@ TEST_CASE("CBOR")
         {
             std::vector<uint8_t> v = {0x83, 0x01, 0x02, 0x03};
             SaxCountdown scp(0);
-            CHECK(not json::sax_parse(v, &scp, json::input_format_t::cbor));
+            CHECK(!json::sax_parse(v, &scp, json::input_format_t::cbor));
         }
 
         SECTION("start_object(len)")
         {
             std::vector<uint8_t> v = {0xA1, 0x63, 0x66, 0x6F, 0x6F, 0xF4};
             SaxCountdown scp(0);
-            CHECK(not json::sax_parse(v, &scp, json::input_format_t::cbor));
+            CHECK(!json::sax_parse(v, &scp, json::input_format_t::cbor));
         }
 
         SECTION("key()")
         {
             std::vector<uint8_t> v = {0xA1, 0x63, 0x66, 0x6F, 0x6F, 0xF4};
             SaxCountdown scp(1);
-            CHECK(not json::sax_parse(v, &scp, json::input_format_t::cbor));
+            CHECK(!json::sax_parse(v, &scp, json::input_format_t::cbor));
         }
     }
 }
@@ -1954,7 +1954,7 @@ TEST_CASE("single CBOR roundtrip")
     }
 }
 
-#if not defined(JSON_NOEXCEPTION)
+#if !defined(JSON_NOEXCEPTION)
 TEST_CASE("CBOR regressions")
 {
     SECTION("fuzz test results")
@@ -2274,7 +2274,7 @@ TEST_CASE("CBOR roundtrips" * doctest::skip())
     }
 }
 
-#if not defined(JSON_NOEXCEPTION)
+#if !defined(JSON_NOEXCEPTION)
 TEST_CASE("all CBOR first bytes")
 {
     // these bytes will fail immediately with exception parse_error.112

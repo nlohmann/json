@@ -335,7 +335,7 @@ class json_pointer
         using size_type = typename BasicJsonType::size_type;
 
         // error condition (cf. RFC 6901, Sect. 4)
-        if (JSON_HEDLEY_UNLIKELY(s.size() > 1 and s[0] == '0'))
+        if (JSON_HEDLEY_UNLIKELY(s.size() > 1 && s[0] == '0'))
         {
             JSON_THROW(detail::parse_error::create(106, 0,
                                                    "array index '" + s +
@@ -343,7 +343,7 @@ class json_pointer
         }
 
         // error condition (cf. RFC 6901, Sect. 4)
-        if (JSON_HEDLEY_UNLIKELY(s.size() > 1 and not (s[0] >= '1' and s[0] <= '9')))
+        if (JSON_HEDLEY_UNLIKELY(s.size() > 1 && !(s[0] >= '1' && s[0] <= '9')))
         {
             JSON_THROW(detail::parse_error::create(109, 0, "array index '" + s + "' is not a number"));
         }
@@ -483,7 +483,7 @@ class json_pointer
                 });
 
                 // change value to array for numbers or "-" or to object otherwise
-                *ptr = (nums or reference_token == "-")
+                *ptr = (nums || reference_token == "-")
                        ? detail::value_t::array
                        : detail::value_t::object;
             }
@@ -665,7 +665,7 @@ class json_pointer
             {
                 case detail::value_t::object:
                 {
-                    if (not ptr->contains(reference_token))
+                    if (!ptr->contains(reference_token))
                     {
                         // we did not find the key in the object
                         return false;
@@ -682,21 +682,21 @@ class json_pointer
                         // "-" always fails the range check
                         return false;
                     }
-                    if (JSON_HEDLEY_UNLIKELY(reference_token.size() == 1 and not ("0" <= reference_token and reference_token <= "9")))
+                    if (JSON_HEDLEY_UNLIKELY(reference_token.size() == 1 && !("0" <= reference_token && reference_token <= "9")))
                     {
                         // invalid char
                         return false;
                     }
                     if (JSON_HEDLEY_UNLIKELY(reference_token.size() > 1))
                     {
-                        if (JSON_HEDLEY_UNLIKELY(not ('1' <= reference_token[0] and reference_token[0] <= '9')))
+                        if (JSON_HEDLEY_UNLIKELY(!('1' <= reference_token[0] && reference_token[0] <= '9')))
                         {
                             // first char should be between '1' and '9'
                             return false;
                         }
                         for (std::size_t i = 1; i < reference_token.size(); i++)
                         {
-                            if (JSON_HEDLEY_UNLIKELY(not ('0' <= reference_token[i] and reference_token[i] <= '9')))
+                            if (JSON_HEDLEY_UNLIKELY(!('0' <= reference_token[i] && reference_token[i] <= '9')))
                             {
                                 // other char should be between '0' and '9'
                                 return false;
@@ -783,8 +783,8 @@ class json_pointer
                 JSON_ASSERT(reference_token[pos] == '~');
 
                 // ~ must be followed by 0 or 1
-                if (JSON_HEDLEY_UNLIKELY(pos == reference_token.size() - 1 or
-                                         (reference_token[pos + 1] != '0' and
+                if (JSON_HEDLEY_UNLIKELY(pos == reference_token.size() - 1 ||
+                                         (reference_token[pos + 1] != '0' &&
                                           reference_token[pos + 1] != '1')))
                 {
                     JSON_THROW(detail::parse_error::create(108, 0, "escape character '~' must be followed with '0' or '1'"));
@@ -815,7 +815,7 @@ class json_pointer
     static void replace_substring(std::string& s, const std::string& f,
                                   const std::string& t)
     {
-        JSON_ASSERT(not f.empty());
+        JSON_ASSERT(!f.empty());
         for (auto pos = s.find(f);                // find first occurrence of f
                 pos != std::string::npos;         // make sure f was found
                 s.replace(pos, f.size(), t),      // replace with t, and
@@ -910,7 +910,7 @@ class json_pointer
     static BasicJsonType
     unflatten(const BasicJsonType& value)
     {
-        if (JSON_HEDLEY_UNLIKELY(not value.is_object()))
+        if (JSON_HEDLEY_UNLIKELY(!value.is_object()))
         {
             JSON_THROW(detail::type_error::create(314, "only objects can be unflattened"));
         }
@@ -920,7 +920,7 @@ class json_pointer
         // iterate the JSON object values
         for (const auto& element : *value.m_value.object)
         {
-            if (JSON_HEDLEY_UNLIKELY(not element.second.is_primitive()))
+            if (JSON_HEDLEY_UNLIKELY(!element.second.is_primitive()))
             {
                 JSON_THROW(detail::type_error::create(315, "values in object must be primitive"));
             }
@@ -966,7 +966,7 @@ class json_pointer
     friend bool operator!=(json_pointer const& lhs,
                            json_pointer const& rhs) noexcept
     {
-        return not (lhs == rhs);
+        return !(lhs == rhs);
     }
 
     /// the reference tokens
