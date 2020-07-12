@@ -9039,7 +9039,7 @@ class lexer : public lexer_base<BasicJsonType>
         number_unsigned_t val = 0;
         const char* p = str;
 
-        while (*p >= '0' and * p <= '9')
+        while (*p >= '0' && * p <= '9')
         {
             val = (10U * val) + static_cast<number_unsigned_t>((*p - '0'));
             p++;
