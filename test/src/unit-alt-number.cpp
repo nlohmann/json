@@ -99,7 +99,7 @@ TEST_CASE("Alternative number types")
         }
     }
 
-// 128-bit arithmetic does not work with sanitizers
+    // 128-bit arithmetic does not work with sanitizers
 #if defined(__SIZEOF_INT128__) && !defined(__SANITIZE_ADDRESS__)
     SECTION("128 bit integers")
     {
