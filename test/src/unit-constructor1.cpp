@@ -847,7 +847,7 @@ TEST_CASE("constructors")
 
             // check round trip of NaN
             json::number_float_t d = j;
-            CHECK((std::isnan(d) and std::isnan(n)) == true);
+            CHECK((std::isnan(d) && std::isnan(n)) == true);
 
             // check that NaN is serialized to null
             CHECK(j.dump() == "null");

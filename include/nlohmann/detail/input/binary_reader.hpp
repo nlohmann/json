@@ -112,7 +112,7 @@ class binary_reader
         }
 
         // strict mode: next byte must be EOF
-        if (result and strict)
+        if (result && strict)
         {
             if (format == input_format_t::ubjson)
             {
@@ -147,12 +147,12 @@ class binary_reader
         std::int32_t document_size{};
         get_number<std::int32_t, true>(input_format_t::bson, document_size);
 
-        if (JSON_HEDLEY_UNLIKELY(not sax->start_object(std::size_t(-1))))
+        if (JSON_HEDLEY_UNLIKELY(!sax->start_object(std::size_t(-1))))
         {
             return false;
         }
 
-        if (JSON_HEDLEY_UNLIKELY(not parse_bson_element_list(/*is_array*/false)))
+        if (JSON_HEDLEY_UNLIKELY(!parse_bson_element_list(/*is_array*/false)))
         {
             return false;
         }
@@ -173,7 +173,7 @@ class binary_reader
         while (true)
         {
             get();
-            if (JSON_HEDLEY_UNLIKELY(not unexpect_eof(input_format_t::bson, "cstring")))
+            if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::bson, "cstring")))
             {
                 return false;
             }
@@ -205,7 +205,7 @@ class binary_reader
             return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message(input_format_t::bson, "string length must be at least 1, is " + std::to_string(len), "string")));
         }
 
-        return get_string(input_format_t::bson, len - static_cast<NumberType>(1), result) and get() != std::char_traits<char_type>::eof();
+        return get_string(input_format_t::bson, len - static_cast<NumberType>(1), result) && get() != std::char_traits<char_type>::eof();
     }
 
     /*!
@@ -252,14 +252,14 @@ class binary_reader
             case 0x01: // double
             {
                 double number{};
-                return get_number<double, true>(input_format_t::bson, number) and sax->number_float(static_cast<number_float_t>(number), "");
+                return get_number<double, true>(input_format_t::bson, number) && sax->number_float(static_cast<number_float_t>(number), "");
             }
 
             case 0x02: // string
             {
                 std::int32_t len{};
                 string_t value;
-                return get_number<std::int32_t, true>(input_format_t::bson, len) and get_bson_string(len, value) and sax->string(value);
+                return get_number<std::int32_t, true>(input_format_t::bson, len) && get_bson_string(len, value) && sax->string(value);
             }
 
             case 0x03: // object
@@ -276,7 +276,7 @@ class binary_reader
             {
                 std::int32_t len{};
                 binary_t value;
-                return get_number<std::int32_t, true>(input_format_t::bson, len) and get_bson_binary(len, value) and sax->binary(value);
+                return get_number<std::int32_t, true>(input_format_t::bson, len) && get_bson_binary(len, value) && sax->binary(value);
             }
 
             case 0x08: // boolean
@@ -292,13 +292,13 @@ class binary_reader
             case 0x10: // int32
             {
                 std::int32_t value{};
-                return get_number<std::int32_t, true>(input_format_t::bson, value) and sax->number_integer(value);
+                return get_number<std::int32_t, true>(input_format_t::bson, value) && sax->number_integer(value);
             }
 
             case 0x12: // int64
             {
                 std::int64_t value{};
-                return get_number<std::int64_t, true>(input_format_t::bson, value) and sax->number_integer(value);
+                return get_number<std::int64_t, true>(input_format_t::bson, value) && sax->number_integer(value);
             }
 
             default: // anything else not supported (yet)
@@ -328,23 +328,23 @@ class binary_reader
 
         while (auto element_type = get())
         {
-            if (JSON_HEDLEY_UNLIKELY(not unexpect_eof(input_format_t::bson, "element list")))
+            if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::bson, "element list")))
             {
                 return false;
             }
 
             const std::size_t element_type_parse_position = chars_read;
-            if (JSON_HEDLEY_UNLIKELY(not get_bson_cstr(key)))
+            if (JSON_HEDLEY_UNLIKELY(!get_bson_cstr(key)))
             {
                 return false;
             }
 
-            if (not is_array and not sax->key(key))
+            if (!is_array && !sax->key(key))
             {
                 return false;
             }
 
-            if (JSON_HEDLEY_UNLIKELY(not parse_bson_element_internal(element_type, element_type_parse_position)))
+            if (JSON_HEDLEY_UNLIKELY(!parse_bson_element_internal(element_type, element_type_parse_position)))
             {
                 return false;
             }
@@ -365,12 +365,12 @@ class binary_reader
         std::int32_t document_size{};
         get_number<std::int32_t, true>(input_format_t::bson, document_size);
 
-        if (JSON_HEDLEY_UNLIKELY(not sax->start_array(std::size_t(-1))))
+        if (JSON_HEDLEY_UNLIKELY(!sax->start_array(std::size_t(-1))))
         {
             return false;
         }
 
-        if (JSON_HEDLEY_UNLIKELY(not parse_bson_element_list(/*is_array*/true)))
+        if (JSON_HEDLEY_UNLIKELY(!parse_bson_element_list(/*is_array*/true)))
         {
             return false;
         }
@@ -427,25 +427,25 @@ class binary_reader
             case 0x18: // Unsigned integer (one-byte uint8_t follows)
             {
                 std::uint8_t number{};
-                return get_number(input_format_t::cbor, number) and sax->number_unsigned(number);
+                return get_number(input_format_t::cbor, number) && sax->number_unsigned(number);
             }
 
             case 0x19: // Unsigned integer (two-byte uint16_t follows)
             {
                 std::uint16_t number{};
-                return get_number(input_format_t::cbor, number) and sax->number_unsigned(number);
+                return get_number(input_format_t::cbor, number) && sax->number_unsigned(number);
             }
 
             case 0x1A: // Unsigned integer (four-byte uint32_t follows)
             {
                 std::uint32_t number{};
-                return get_number(input_format_t::cbor, number) and sax->number_unsigned(number);
+                return get_number(input_format_t::cbor, number) && sax->number_unsigned(number);
             }
 
             case 0x1B: // Unsigned integer (eight-byte uint64_t follows)
             {
                 std::uint64_t number{};
-                return get_number(input_format_t::cbor, number) and sax->number_unsigned(number);
+                return get_number(input_format_t::cbor, number) && sax->number_unsigned(number);
             }
 
             // Negative integer -1-0x00..-1-0x17 (-1..-24)
@@ -478,25 +478,25 @@ class binary_reader
             case 0x38: // Negative integer (one-byte uint8_t follows)
             {
                 std::uint8_t number{};
-                return get_number(input_format_t::cbor, number) and sax->number_integer(static_cast<number_integer_t>(-1) - number);
+                return get_number(input_format_t::cbor, number) && sax->number_integer(static_cast<number_integer_t>(-1) - number);
             }
 
             case 0x39: // Negative integer -1-n (two-byte uint16_t follows)
             {
                 std::uint16_t number{};
-                return get_number(input_format_t::cbor, number) and sax->number_integer(static_cast<number_integer_t>(-1) - number);
+                return get_number(input_format_t::cbor, number) && sax->number_integer(static_cast<number_integer_t>(-1) - number);
             }
 
             case 0x3A: // Negative integer -1-n (four-byte uint32_t follows)
             {
                 std::uint32_t number{};
-                return get_number(input_format_t::cbor, number) and sax->number_integer(static_cast<number_integer_t>(-1) - number);
+                return get_number(input_format_t::cbor, number) && sax->number_integer(static_cast<number_integer_t>(-1) - number);
             }
 
             case 0x3B: // Negative integer -1-n (eight-byte uint64_t follows)
             {
                 std::uint64_t number{};
-                return get_number(input_format_t::cbor, number) and sax->number_integer(static_cast<number_integer_t>(-1)
+                return get_number(input_format_t::cbor, number) && sax->number_integer(static_cast<number_integer_t>(-1)
                         - static_cast<number_integer_t>(number));
             }
 
@@ -532,7 +532,7 @@ class binary_reader
             case 0x5F: // Binary data (indefinite length)
             {
                 binary_t b;
-                return get_cbor_binary(b) and sax->binary(b);
+                return get_cbor_binary(b) && sax->binary(b);
             }
 
             // UTF-8 string (0x00..0x17 bytes follow)
@@ -567,7 +567,7 @@ class binary_reader
             case 0x7F: // UTF-8 string (indefinite length)
             {
                 string_t s;
-                return get_cbor_string(s) and sax->string(s);
+                return get_cbor_string(s) && sax->string(s);
             }
 
             // array (0x00..0x17 data items follow)
@@ -600,25 +600,25 @@ class binary_reader
             case 0x98: // array (one-byte uint8_t for n follows)
             {
                 std::uint8_t len{};
-                return get_number(input_format_t::cbor, len) and get_cbor_array(static_cast<std::size_t>(len));
+                return get_number(input_format_t::cbor, len) && get_cbor_array(static_cast<std::size_t>(len));
             }
 
             case 0x99: // array (two-byte uint16_t for n follow)
             {
                 std::uint16_t len{};
-                return get_number(input_format_t::cbor, len) and get_cbor_array(static_cast<std::size_t>(len));
+                return get_number(input_format_t::cbor, len) && get_cbor_array(static_cast<std::size_t>(len));
             }
 
             case 0x9A: // array (four-byte uint32_t for n follow)
             {
                 std::uint32_t len{};
-                return get_number(input_format_t::cbor, len) and get_cbor_array(static_cast<std::size_t>(len));
+                return get_number(input_format_t::cbor, len) && get_cbor_array(static_cast<std::size_t>(len));
             }
 
             case 0x9B: // array (eight-byte uint64_t for n follow)
             {
                 std::uint64_t len{};
-                return get_number(input_format_t::cbor, len) and get_cbor_array(static_cast<std::size_t>(len));
+                return get_number(input_format_t::cbor, len) && get_cbor_array(static_cast<std::size_t>(len));
             }
 
             case 0x9F: // array (indefinite length)
@@ -654,25 +654,25 @@ class binary_reader
             case 0xB8: // map (one-byte uint8_t for n follows)
             {
                 std::uint8_t len{};
-                return get_number(input_format_t::cbor, len) and get_cbor_object(static_cast<std::size_t>(len));
+                return get_number(input_format_t::cbor, len) && get_cbor_object(static_cast<std::size_t>(len));
             }
 
             case 0xB9: // map (two-byte uint16_t for n follow)
             {
                 std::uint16_t len{};
-                return get_number(input_format_t::cbor, len) and get_cbor_object(static_cast<std::size_t>(len));
+                return get_number(input_format_t::cbor, len) && get_cbor_object(static_cast<std::size_t>(len));
             }
 
             case 0xBA: // map (four-byte uint32_t for n follow)
             {
                 std::uint32_t len{};
-                return get_number(input_format_t::cbor, len) and get_cbor_object(static_cast<std::size_t>(len));
+                return get_number(input_format_t::cbor, len) && get_cbor_object(static_cast<std::size_t>(len));
             }
 
             case 0xBB: // map (eight-byte uint64_t for n follow)
             {
                 std::uint64_t len{};
-                return get_number(input_format_t::cbor, len) and get_cbor_object(static_cast<std::size_t>(len));
+                return get_number(input_format_t::cbor, len) && get_cbor_object(static_cast<std::size_t>(len));
             }
 
             case 0xBF: // map (indefinite length)
@@ -690,12 +690,12 @@ class binary_reader
             case 0xF9: // Half-Precision Float (two-byte IEEE 754)
             {
                 const auto byte1_raw = get();
-                if (JSON_HEDLEY_UNLIKELY(not unexpect_eof(input_format_t::cbor, "number")))
+                if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::cbor, "number")))
                 {
                     return false;
                 }
                 const auto byte2_raw = get();
-                if (JSON_HEDLEY_UNLIKELY(not unexpect_eof(input_format_t::cbor, "number")))
+                if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::cbor, "number")))
                 {
                     return false;
                 }
@@ -716,7 +716,7 @@ class binary_reader
                 {
                     const int exp = (half >> 10u) & 0x1Fu;
                     const unsigned int mant = half & 0x3FFu;
-                    JSON_ASSERT(0 <= exp and exp <= 32);
+                    JSON_ASSERT(0 <= exp&& exp <= 32);
                     JSON_ASSERT(mant <= 1024);
                     switch (exp)
                     {
@@ -738,13 +738,13 @@ class binary_reader
             case 0xFA: // Single-Precision Float (four-byte IEEE 754)
             {
                 float number{};
-                return get_number(input_format_t::cbor, number) and sax->number_float(static_cast<number_float_t>(number), "");
+                return get_number(input_format_t::cbor, number) && sax->number_float(static_cast<number_float_t>(number), "");
             }
 
             case 0xFB: // Double-Precision Float (eight-byte IEEE 754)
             {
                 double number{};
-                return get_number(input_format_t::cbor, number) and sax->number_float(static_cast<number_float_t>(number), "");
+                return get_number(input_format_t::cbor, number) && sax->number_float(static_cast<number_float_t>(number), "");
             }
 
             default: // anything else (0xFF is handled inside the other types)
@@ -768,7 +768,7 @@ class binary_reader
     */
     bool get_cbor_string(string_t& result)
     {
-        if (JSON_HEDLEY_UNLIKELY(not unexpect_eof(input_format_t::cbor, "string")))
+        if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::cbor, "string")))
         {
             return false;
         }
@@ -807,25 +807,25 @@ class binary_reader
             case 0x78: // UTF-8 string (one-byte uint8_t for n follows)
             {
                 std::uint8_t len{};
-                return get_number(input_format_t::cbor, len) and get_string(input_format_t::cbor, len, result);
+                return get_number(input_format_t::cbor, len) && get_string(input_format_t::cbor, len, result);
             }
 
             case 0x79: // UTF-8 string (two-byte uint16_t for n follow)
             {
                 std::uint16_t len{};
-                return get_number(input_format_t::cbor, len) and get_string(input_format_t::cbor, len, result);
+                return get_number(input_format_t::cbor, len) && get_string(input_format_t::cbor, len, result);
             }
 
             case 0x7A: // UTF-8 string (four-byte uint32_t for n follow)
             {
                 std::uint32_t len{};
-                return get_number(input_format_t::cbor, len) and get_string(input_format_t::cbor, len, result);
+                return get_number(input_format_t::cbor, len) && get_string(input_format_t::cbor, len, result);
             }
 
             case 0x7B: // UTF-8 string (eight-byte uint64_t for n follow)
             {
                 std::uint64_t len{};
-                return get_number(input_format_t::cbor, len) and get_string(input_format_t::cbor, len, result);
+                return get_number(input_format_t::cbor, len) && get_string(input_format_t::cbor, len, result);
             }
 
             case 0x7F: // UTF-8 string (indefinite length)
@@ -833,7 +833,7 @@ class binary_reader
                 while (get() != 0xFF)
                 {
                     string_t chunk;
-                    if (not get_cbor_string(chunk))
+                    if (!get_cbor_string(chunk))
                     {
                         return false;
                     }
@@ -863,7 +863,7 @@ class binary_reader
     */
     bool get_cbor_binary(binary_t& result)
     {
-        if (JSON_HEDLEY_UNLIKELY(not unexpect_eof(input_format_t::cbor, "binary")))
+        if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::cbor, "binary")))
         {
             return false;
         }
@@ -902,28 +902,28 @@ class binary_reader
             case 0x58: // Binary data (one-byte uint8_t for n follows)
             {
                 std::uint8_t len{};
-                return get_number(input_format_t::cbor, len) and
+                return get_number(input_format_t::cbor, len) &&
                        get_binary(input_format_t::cbor, len, result);
             }
 
             case 0x59: // Binary data (two-byte uint16_t for n follow)
             {
                 std::uint16_t len{};
-                return get_number(input_format_t::cbor, len) and
+                return get_number(input_format_t::cbor, len) &&
                        get_binary(input_format_t::cbor, len, result);
             }
 
             case 0x5A: // Binary data (four-byte uint32_t for n follow)
             {
                 std::uint32_t len{};
-                return get_number(input_format_t::cbor, len) and
+                return get_number(input_format_t::cbor, len) &&
                        get_binary(input_format_t::cbor, len, result);
             }
 
             case 0x5B: // Binary data (eight-byte uint64_t for n follow)
             {
                 std::uint64_t len{};
-                return get_number(input_format_t::cbor, len) and
+                return get_number(input_format_t::cbor, len) &&
                        get_binary(input_format_t::cbor, len, result);
             }
 
@@ -932,7 +932,7 @@ class binary_reader
                 while (get() != 0xFF)
                 {
                     binary_t chunk;
-                    if (not get_cbor_binary(chunk))
+                    if (!get_cbor_binary(chunk))
                     {
                         return false;
                     }
@@ -956,7 +956,7 @@ class binary_reader
     */
     bool get_cbor_array(const std::size_t len)
     {
-        if (JSON_HEDLEY_UNLIKELY(not sax->start_array(len)))
+        if (JSON_HEDLEY_UNLIKELY(!sax->start_array(len)))
         {
             return false;
         }
@@ -965,7 +965,7 @@ class binary_reader
         {
             for (std::size_t i = 0; i < len; ++i)
             {
-                if (JSON_HEDLEY_UNLIKELY(not parse_cbor_internal()))
+                if (JSON_HEDLEY_UNLIKELY(!parse_cbor_internal()))
                 {
                     return false;
                 }
@@ -975,7 +975,7 @@ class binary_reader
         {
             while (get() != 0xFF)
             {
-                if (JSON_HEDLEY_UNLIKELY(not parse_cbor_internal(false)))
+                if (JSON_HEDLEY_UNLIKELY(!parse_cbor_internal(false)))
                 {
                     return false;
                 }
@@ -992,7 +992,7 @@ class binary_reader
     */
     bool get_cbor_object(const std::size_t len)
     {
-        if (JSON_HEDLEY_UNLIKELY(not sax->start_object(len)))
+        if (JSON_HEDLEY_UNLIKELY(!sax->start_object(len)))
         {
             return false;
         }
@@ -1003,12 +1003,12 @@ class binary_reader
             for (std::size_t i = 0; i < len; ++i)
             {
                 get();
-                if (JSON_HEDLEY_UNLIKELY(not get_cbor_string(key) or not sax->key(key)))
+                if (JSON_HEDLEY_UNLIKELY(!get_cbor_string(key) || !sax->key(key)))
                 {
                     return false;
                 }
 
-                if (JSON_HEDLEY_UNLIKELY(not parse_cbor_internal()))
+                if (JSON_HEDLEY_UNLIKELY(!parse_cbor_internal()))
                 {
                     return false;
                 }
@@ -1019,12 +1019,12 @@ class binary_reader
         {
             while (get() != 0xFF)
             {
-                if (JSON_HEDLEY_UNLIKELY(not get_cbor_string(key) or not sax->key(key)))
+                if (JSON_HEDLEY_UNLIKELY(!get_cbor_string(key) || !sax->key(key)))
                 {
                     return false;
                 }
 
-                if (JSON_HEDLEY_UNLIKELY(not parse_cbor_internal()))
+                if (JSON_HEDLEY_UNLIKELY(!parse_cbor_internal()))
                 {
                     return false;
                 }
@@ -1257,7 +1257,7 @@ class binary_reader
             case 0xDB: // str 32
             {
                 string_t s;
-                return get_msgpack_string(s) and sax->string(s);
+                return get_msgpack_string(s) && sax->string(s);
             }
 
             case 0xC0: // nil
@@ -1282,91 +1282,91 @@ class binary_reader
             case 0xD8: // fixext 16
             {
                 binary_t b;
-                return get_msgpack_binary(b) and sax->binary(b);
+                return get_msgpack_binary(b) && sax->binary(b);
             }
 
             case 0xCA: // float 32
             {
                 float number{};
-                return get_number(input_format_t::msgpack, number) and sax->number_float(static_cast<number_float_t>(number), "");
+                return get_number(input_format_t::msgpack, number) && sax->number_float(static_cast<number_float_t>(number), "");
             }
 
             case 0xCB: // float 64
             {
                 double number{};
-                return get_number(input_format_t::msgpack, number) and sax->number_float(static_cast<number_float_t>(number), "");
+                return get_number(input_format_t::msgpack, number) && sax->number_float(static_cast<number_float_t>(number), "");
             }
 
             case 0xCC: // uint 8
             {
                 std::uint8_t number{};
-                return get_number(input_format_t::msgpack, number) and sax->number_unsigned(number);
+                return get_number(input_format_t::msgpack, number) && sax->number_unsigned(number);
             }
 
             case 0xCD: // uint 16
             {
                 std::uint16_t number{};
-                return get_number(input_format_t::msgpack, number) and sax->number_unsigned(number);
+                return get_number(input_format_t::msgpack, number) && sax->number_unsigned(number);
             }
 
             case 0xCE: // uint 32
             {
                 std::uint32_t number{};
-                return get_number(input_format_t::msgpack, number) and sax->number_unsigned(number);
+                return get_number(input_format_t::msgpack, number) && sax->number_unsigned(number);
             }
 
             case 0xCF: // uint 64
             {
                 std::uint64_t number{};
-                return get_number(input_format_t::msgpack, number) and sax->number_unsigned(number);
+                return get_number(input_format_t::msgpack, number) && sax->number_unsigned(number);
             }
 
             case 0xD0: // int 8
             {
                 std::int8_t number{};
-                return get_number(input_format_t::msgpack, number) and sax->number_integer(number);
+                return get_number(input_format_t::msgpack, number) && sax->number_integer(number);
             }
 
             case 0xD1: // int 16
             {
                 std::int16_t number{};
-                return get_number(input_format_t::msgpack, number) and sax->number_integer(number);
+                return get_number(input_format_t::msgpack, number) && sax->number_integer(number);
             }
 
             case 0xD2: // int 32
             {
                 std::int32_t number{};
-                return get_number(input_format_t::msgpack, number) and sax->number_integer(number);
+                return get_number(input_format_t::msgpack, number) && sax->number_integer(number);
             }
 
             case 0xD3: // int 64
             {
                 std::int64_t number{};
-                return get_number(input_format_t::msgpack, number) and sax->number_integer(number);
+                return get_number(input_format_t::msgpack, number) && sax->number_integer(number);
             }
 
             case 0xDC: // array 16
             {
                 std::uint16_t len{};
-                return get_number(input_format_t::msgpack, len) and get_msgpack_array(static_cast<std::size_t>(len));
+                return get_number(input_format_t::msgpack, len) && get_msgpack_array(static_cast<std::size_t>(len));
             }
 
             case 0xDD: // array 32
             {
                 std::uint32_t len{};
-                return get_number(input_format_t::msgpack, len) and get_msgpack_array(static_cast<std::size_t>(len));
+                return get_number(input_format_t::msgpack, len) && get_msgpack_array(static_cast<std::size_t>(len));
             }
 
             case 0xDE: // map 16
             {
                 std::uint16_t len{};
-                return get_number(input_format_t::msgpack, len) and get_msgpack_object(static_cast<std::size_t>(len));
+                return get_number(input_format_t::msgpack, len) && get_msgpack_object(static_cast<std::size_t>(len));
             }
 
             case 0xDF: // map 32
             {
                 std::uint32_t len{};
-                return get_number(input_format_t::msgpack, len) and get_msgpack_object(static_cast<std::size_t>(len));
+                return get_number(input_format_t::msgpack, len) && get_msgpack_object(static_cast<std::size_t>(len));
             }
 
             // negative fixint
@@ -1424,7 +1424,7 @@ class binary_reader
     */
     bool get_msgpack_string(string_t& result)
     {
-        if (JSON_HEDLEY_UNLIKELY(not unexpect_eof(input_format_t::msgpack, "string")))
+        if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::msgpack, "string")))
         {
             return false;
         }
@@ -1471,19 +1471,19 @@ class binary_reader
             case 0xD9: // str 8
             {
                 std::uint8_t len{};
-                return get_number(input_format_t::msgpack, len) and get_string(input_format_t::msgpack, len, result);
+                return get_number(input_format_t::msgpack, len) && get_string(input_format_t::msgpack, len, result);
             }
 
             case 0xDA: // str 16
             {
                 std::uint16_t len{};
-                return get_number(input_format_t::msgpack, len) and get_string(input_format_t::msgpack, len, result);
+                return get_number(input_format_t::msgpack, len) && get_string(input_format_t::msgpack, len, result);
             }
 
             case 0xDB: // str 32
             {
                 std::uint32_t len{};
-                return get_number(input_format_t::msgpack, len) and get_string(input_format_t::msgpack, len, result);
+                return get_number(input_format_t::msgpack, len) && get_string(input_format_t::msgpack, len, result);
             }
 
             default:
@@ -1518,21 +1518,21 @@ class binary_reader
             case 0xC4: // bin 8
             {
                 std::uint8_t len{};
-                return get_number(input_format_t::msgpack, len) and
+                return get_number(input_format_t::msgpack, len) &&
                        get_binary(input_format_t::msgpack, len, result);
             }
 
             case 0xC5: // bin 16
             {
                 std::uint16_t len{};
-                return get_number(input_format_t::msgpack, len) and
+                return get_number(input_format_t::msgpack, len) &&
                        get_binary(input_format_t::msgpack, len, result);
             }
 
             case 0xC6: // bin 32
             {
                 std::uint32_t len{};
-                return get_number(input_format_t::msgpack, len) and
+                return get_number(input_format_t::msgpack, len) &&
                        get_binary(input_format_t::msgpack, len, result);
             }
 
@@ -1540,9 +1540,9 @@ class binary_reader
             {
                 std::uint8_t len{};
                 std::int8_t subtype{};
-                return get_number(input_format_t::msgpack, len) and
-                       get_number(input_format_t::msgpack, subtype) and
-                       get_binary(input_format_t::msgpack, len, result) and
+                return get_number(input_format_t::msgpack, len) &&
+                       get_number(input_format_t::msgpack, subtype) &&
+                       get_binary(input_format_t::msgpack, len, result) &&
                        assign_and_return_true(subtype);
             }
 
@@ -1550,9 +1550,9 @@ class binary_reader
             {
                 std::uint16_t len{};
                 std::int8_t subtype{};
-                return get_number(input_format_t::msgpack, len) and
-                       get_number(input_format_t::msgpack, subtype) and
-                       get_binary(input_format_t::msgpack, len, result) and
+                return get_number(input_format_t::msgpack, len) &&
+                       get_number(input_format_t::msgpack, subtype) &&
+                       get_binary(input_format_t::msgpack, len, result) &&
                        assign_and_return_true(subtype);
             }
 
@@ -1560,49 +1560,49 @@ class binary_reader
             {
                 std::uint32_t len{};
                 std::int8_t subtype{};
-                return get_number(input_format_t::msgpack, len) and
-                       get_number(input_format_t::msgpack, subtype) and
-                       get_binary(input_format_t::msgpack, len, result) and
+                return get_number(input_format_t::msgpack, len) &&
+                       get_number(input_format_t::msgpack, subtype) &&
+                       get_binary(input_format_t::msgpack, len, result) &&
                        assign_and_return_true(subtype);
             }
 
             case 0xD4: // fixext 1
             {
                 std::int8_t subtype{};
-                return get_number(input_format_t::msgpack, subtype) and
-                       get_binary(input_format_t::msgpack, 1, result) and
+                return get_number(input_format_t::msgpack, subtype) &&
+                       get_binary(input_format_t::msgpack, 1, result) &&
                        assign_and_return_true(subtype);
             }
 
             case 0xD5: // fixext 2
             {
                 std::int8_t subtype{};
-                return get_number(input_format_t::msgpack, subtype) and
-                       get_binary(input_format_t::msgpack, 2, result) and
+                return get_number(input_format_t::msgpack, subtype) &&
+                       get_binary(input_format_t::msgpack, 2, result) &&
                        assign_and_return_true(subtype);
             }
 
             case 0xD6: // fixext 4
             {
                 std::int8_t subtype{};
-                return get_number(input_format_t::msgpack, subtype) and
-                       get_binary(input_format_t::msgpack, 4, result) and
+                return get_number(input_format_t::msgpack, subtype) &&
+                       get_binary(input_format_t::msgpack, 4, result) &&
                        assign_and_return_true(subtype);
             }
 
             case 0xD7: // fixext 8
             {
                 std::int8_t subtype{};
-                return get_number(input_format_t::msgpack, subtype) and
-                       get_binary(input_format_t::msgpack, 8, result) and
+                return get_number(input_format_t::msgpack, subtype) &&
+                       get_binary(input_format_t::msgpack, 8, result) &&
                        assign_and_return_true(subtype);
             }
 
             case 0xD8: // fixext 16
             {
                 std::int8_t subtype{};
-                return get_number(input_format_t::msgpack, subtype) and
-                       get_binary(input_format_t::msgpack, 16, result) and
+                return get_number(input_format_t::msgpack, subtype) &&
+                       get_binary(input_format_t::msgpack, 16, result) &&
                        assign_and_return_true(subtype);
             }
 
@@ -1617,14 +1617,14 @@ class binary_reader
     */
     bool get_msgpack_array(const std::size_t len)
     {
-        if (JSON_HEDLEY_UNLIKELY(not sax->start_array(len)))
+        if (JSON_HEDLEY_UNLIKELY(!sax->start_array(len)))
         {
             return false;
         }
 
         for (std::size_t i = 0; i < len; ++i)
         {
-            if (JSON_HEDLEY_UNLIKELY(not parse_msgpack_internal()))
+            if (JSON_HEDLEY_UNLIKELY(!parse_msgpack_internal()))
             {
                 return false;
             }
@@ -1639,7 +1639,7 @@ class binary_reader
     */
     bool get_msgpack_object(const std::size_t len)
     {
-        if (JSON_HEDLEY_UNLIKELY(not sax->start_object(len)))
+        if (JSON_HEDLEY_UNLIKELY(!sax->start_object(len)))
         {
             return false;
         }
@@ -1648,12 +1648,12 @@ class binary_reader
         for (std::size_t i = 0; i < len; ++i)
         {
             get();
-            if (JSON_HEDLEY_UNLIKELY(not get_msgpack_string(key) or not sax->key(key)))
+            if (JSON_HEDLEY_UNLIKELY(!get_msgpack_string(key) || !sax->key(key)))
             {
                 return false;
             }
 
-            if (JSON_HEDLEY_UNLIKELY(not parse_msgpack_internal()))
+            if (JSON_HEDLEY_UNLIKELY(!parse_msgpack_internal()))
             {
                 return false;
             }
@@ -1700,7 +1700,7 @@ class binary_reader
             get();  // TODO(niels): may we ignore N here?
         }
 
-        if (JSON_HEDLEY_UNLIKELY(not unexpect_eof(input_format_t::ubjson, "value")))
+        if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::ubjson, "value")))
         {
             return false;
         }
@@ -1710,31 +1710,31 @@ class binary_reader
             case 'U':
             {
                 std::uint8_t len{};
-                return get_number(input_format_t::ubjson, len) and get_string(input_format_t::ubjson, len, result);
+                return get_number(input_format_t::ubjson, len) && get_string(input_format_t::ubjson, len, result);
             }
 
             case 'i':
             {
                 std::int8_t len{};
-                return get_number(input_format_t::ubjson, len) and get_string(input_format_t::ubjson, len, result);
+                return get_number(input_format_t::ubjson, len) && get_string(input_format_t::ubjson, len, result);
             }
 
             case 'I':
             {
                 std::int16_t len{};
-                return get_number(input_format_t::ubjson, len) and get_string(input_format_t::ubjson, len, result);
+                return get_number(input_format_t::ubjson, len) && get_string(input_format_t::ubjson, len, result);
             }
 
             case 'l':
             {
                 std::int32_t len{};
-                return get_number(input_format_t::ubjson, len) and get_string(input_format_t::ubjson, len, result);
+                return get_number(input_format_t::ubjson, len) && get_string(input_format_t::ubjson, len, result);
             }
 
             case 'L':
             {
                 std::int64_t len{};
-                return get_number(input_format_t::ubjson, len) and get_string(input_format_t::ubjson, len, result);
+                return get_number(input_format_t::ubjson, len) && get_string(input_format_t::ubjson, len, result);
             }
 
             default:
@@ -1754,7 +1754,7 @@ class binary_reader
             case 'U':
             {
                 std::uint8_t number{};
-                if (JSON_HEDLEY_UNLIKELY(not get_number(input_format_t::ubjson, number)))
+                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format_t::ubjson, number)))
                 {
                     return false;
                 }
@@ -1765,7 +1765,7 @@ class binary_reader
             case 'i':
             {
                 std::int8_t number{};
-                if (JSON_HEDLEY_UNLIKELY(not get_number(input_format_t::ubjson, number)))
+                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format_t::ubjson, number)))
                 {
                     return false;
                 }
@@ -1776,7 +1776,7 @@ class binary_reader
             case 'I':
             {
                 std::int16_t number{};
-                if (JSON_HEDLEY_UNLIKELY(not get_number(input_format_t::ubjson, number)))
+                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format_t::ubjson, number)))
                 {
                     return false;
                 }
@@ -1787,7 +1787,7 @@ class binary_reader
             case 'l':
             {
                 std::int32_t number{};
-                if (JSON_HEDLEY_UNLIKELY(not get_number(input_format_t::ubjson, number)))
+                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format_t::ubjson, number)))
                 {
                     return false;
                 }
@@ -1798,7 +1798,7 @@ class binary_reader
             case 'L':
             {
                 std::int64_t number{};
-                if (JSON_HEDLEY_UNLIKELY(not get_number(input_format_t::ubjson, number)))
+                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format_t::ubjson, number)))
                 {
                     return false;
                 }
@@ -1834,7 +1834,7 @@ class binary_reader
         if (current == '$')
         {
             result.second = get();  // must not ignore 'N', because 'N' maybe the type
-            if (JSON_HEDLEY_UNLIKELY(not unexpect_eof(input_format_t::ubjson, "type")))
+            if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::ubjson, "type")))
             {
                 return false;
             }
@@ -1842,7 +1842,7 @@ class binary_reader
             get_ignore_noop();
             if (JSON_HEDLEY_UNLIKELY(current != '#'))
             {
-                if (JSON_HEDLEY_UNLIKELY(not unexpect_eof(input_format_t::ubjson, "value")))
+                if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::ubjson, "value")))
                 {
                     return false;
                 }
@@ -1883,49 +1883,49 @@ class binary_reader
             case 'U':
             {
                 std::uint8_t number{};
-                return get_number(input_format_t::ubjson, number) and sax->number_unsigned(number);
+                return get_number(input_format_t::ubjson, number) && sax->number_unsigned(number);
             }
 
             case 'i':
             {
                 std::int8_t number{};
-                return get_number(input_format_t::ubjson, number) and sax->number_integer(number);
+                return get_number(input_format_t::ubjson, number) && sax->number_integer(number);
             }
 
             case 'I':
             {
                 std::int16_t number{};
-                return get_number(input_format_t::ubjson, number) and sax->number_integer(number);
+                return get_number(input_format_t::ubjson, number) && sax->number_integer(number);
             }
 
             case 'l':
             {
                 std::int32_t number{};
-                return get_number(input_format_t::ubjson, number) and sax->number_integer(number);
+                return get_number(input_format_t::ubjson, number) && sax->number_integer(number);
             }
 
             case 'L':
             {
                 std::int64_t number{};
-                return get_number(input_format_t::ubjson, number) and sax->number_integer(number);
+                return get_number(input_format_t::ubjson, number) && sax->number_integer(number);
             }
 
             case 'd':
             {
                 float number{};
-                return get_number(input_format_t::ubjson, number) and sax->number_float(static_cast<number_float_t>(number), "");
+                return get_number(input_format_t::ubjson, number) && sax->number_float(static_cast<number_float_t>(number), "");
             }
 
             case 'D':
             {
                 double number{};
-                return get_number(input_format_t::ubjson, number) and sax->number_float(static_cast<number_float_t>(number), "");
+                return get_number(input_format_t::ubjson, number) && sax->number_float(static_cast<number_float_t>(number), "");
             }
 
             case 'C':  // char
             {
                 get();
-                if (JSON_HEDLEY_UNLIKELY(not unexpect_eof(input_format_t::ubjson, "char")))
+                if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::ubjson, "char")))
                 {
                     return false;
                 }
@@ -1941,7 +1941,7 @@ class binary_reader
             case 'S':  // string
             {
                 string_t s;
-                return get_ubjson_string(s) and sax->string(s);
+                return get_ubjson_string(s) && sax->string(s);
             }
 
             case '[':  // array
@@ -1964,14 +1964,14 @@ class binary_reader
     bool get_ubjson_array()
     {
         std::pair<std::size_t, char_int_type> size_and_type;
-        if (JSON_HEDLEY_UNLIKELY(not get_ubjson_size_type(size_and_type)))
+        if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_type(size_and_type)))
         {
             return false;
         }
 
         if (size_and_type.first != string_t::npos)
         {
-            if (JSON_HEDLEY_UNLIKELY(not sax->start_array(size_and_type.first)))
+            if (JSON_HEDLEY_UNLIKELY(!sax->start_array(size_and_type.first)))
             {
                 return false;
             }
@@ -1982,7 +1982,7 @@ class binary_reader
                 {
                     for (std::size_t i = 0; i < size_and_type.first; ++i)
                     {
-                        if (JSON_HEDLEY_UNLIKELY(not get_ubjson_value(size_and_type.second)))
+                        if (JSON_HEDLEY_UNLIKELY(!get_ubjson_value(size_and_type.second)))
                         {
                             return false;
                         }
@@ -1993,7 +1993,7 @@ class binary_reader
             {
                 for (std::size_t i = 0; i < size_and_type.first; ++i)
                 {
-                    if (JSON_HEDLEY_UNLIKELY(not parse_ubjson_internal()))
+                    if (JSON_HEDLEY_UNLIKELY(!parse_ubjson_internal()))
                     {
                         return false;
                     }
@@ -2002,14 +2002,14 @@ class binary_reader
         }
         else
         {
-            if (JSON_HEDLEY_UNLIKELY(not sax->start_array(std::size_t(-1))))
+            if (JSON_HEDLEY_UNLIKELY(!sax->start_array(std::size_t(-1))))
             {
                 return false;
             }
 
             while (current != ']')
             {
-                if (JSON_HEDLEY_UNLIKELY(not parse_ubjson_internal(false)))
+                if (JSON_HEDLEY_UNLIKELY(!parse_ubjson_internal(false)))
                 {
                     return false;
                 }
@@ -2026,7 +2026,7 @@ class binary_reader
     bool get_ubjson_object()
     {
         std::pair<std::size_t, char_int_type> size_and_type;
-        if (JSON_HEDLEY_UNLIKELY(not get_ubjson_size_type(size_and_type)))
+        if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_type(size_and_type)))
         {
             return false;
         }
@@ -2034,7 +2034,7 @@ class binary_reader
         string_t key;
         if (size_and_type.first != string_t::npos)
         {
-            if (JSON_HEDLEY_UNLIKELY(not sax->start_object(size_and_type.first)))
+            if (JSON_HEDLEY_UNLIKELY(!sax->start_object(size_and_type.first)))
             {
                 return false;
             }
@@ -2043,11 +2043,11 @@ class binary_reader
             {
                 for (std::size_t i = 0; i < size_and_type.first; ++i)
                 {
-                    if (JSON_HEDLEY_UNLIKELY(not get_ubjson_string(key) or not sax->key(key)))
+                    if (JSON_HEDLEY_UNLIKELY(!get_ubjson_string(key) || !sax->key(key)))
                     {
                         return false;
                     }
-                    if (JSON_HEDLEY_UNLIKELY(not get_ubjson_value(size_and_type.second)))
+                    if (JSON_HEDLEY_UNLIKELY(!get_ubjson_value(size_and_type.second)))
                     {
                         return false;
                     }
@@ -2058,11 +2058,11 @@ class binary_reader
             {
                 for (std::size_t i = 0; i < size_and_type.first; ++i)
                 {
-                    if (JSON_HEDLEY_UNLIKELY(not get_ubjson_string(key) or not sax->key(key)))
+                    if (JSON_HEDLEY_UNLIKELY(!get_ubjson_string(key) || !sax->key(key)))
                     {
                         return false;
                     }
-                    if (JSON_HEDLEY_UNLIKELY(not parse_ubjson_internal()))
+                    if (JSON_HEDLEY_UNLIKELY(!parse_ubjson_internal()))
                     {
                         return false;
                     }
@@ -2072,18 +2072,18 @@ class binary_reader
         }
         else
         {
-            if (JSON_HEDLEY_UNLIKELY(not sax->start_object(std::size_t(-1))))
+            if (JSON_HEDLEY_UNLIKELY(!sax->start_object(std::size_t(-1))))
             {
                 return false;
             }
 
             while (current != '}')
             {
-                if (JSON_HEDLEY_UNLIKELY(not get_ubjson_string(key, false) or not sax->key(key)))
+                if (JSON_HEDLEY_UNLIKELY(!get_ubjson_string(key, false) || !sax->key(key)))
                 {
                     return false;
                 }
-                if (JSON_HEDLEY_UNLIKELY(not parse_ubjson_internal()))
+                if (JSON_HEDLEY_UNLIKELY(!parse_ubjson_internal()))
                 {
                     return false;
                 }
@@ -2152,7 +2152,7 @@ class binary_reader
         for (std::size_t i = 0; i < sizeof(NumberType); ++i)
         {
             get();
-            if (JSON_HEDLEY_UNLIKELY(not unexpect_eof(format, "number")))
+            if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(format, "number")))
             {
                 return false;
             }
@@ -2196,7 +2196,7 @@ class binary_reader
         std::generate_n(std::back_inserter(result), len, [this, &success, &format]()
         {
             get();
-            if (JSON_HEDLEY_UNLIKELY(not unexpect_eof(format, "string")))
+            if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(format, "string")))
             {
                 success = false;
             }
@@ -2228,7 +2228,7 @@ class binary_reader
         std::generate_n(std::back_inserter(result), len, [this, &success, &format]()
         {
             get();
-            if (JSON_HEDLEY_UNLIKELY(not unexpect_eof(format, "binary")))
+            if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(format, "binary")))
             {
                 success = false;
             }

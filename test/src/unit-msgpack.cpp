@@ -1578,21 +1578,21 @@ TEST_CASE("MessagePack")
         {
             std::vector<uint8_t> v = {0x93, 0x01, 0x02, 0x03};
             SaxCountdown scp(0);
-            CHECK(not json::sax_parse(v, &scp, json::input_format_t::msgpack));
+            CHECK(!json::sax_parse(v, &scp, json::input_format_t::msgpack));
         }
 
         SECTION("start_object(len)")
         {
             std::vector<uint8_t> v = {0x81, 0xa3, 0x66, 0x6F, 0x6F, 0xc2};
             SaxCountdown scp(0);
-            CHECK(not json::sax_parse(v, &scp, json::input_format_t::msgpack));
+            CHECK(!json::sax_parse(v, &scp, json::input_format_t::msgpack));
         }
 
         SECTION("key()")
         {
             std::vector<uint8_t> v = {0x81, 0xa3, 0x66, 0x6F, 0x6F, 0xc2};
             SaxCountdown scp(1);
-            CHECK(not json::sax_parse(v, &scp, json::input_format_t::msgpack));
+            CHECK(!json::sax_parse(v, &scp, json::input_format_t::msgpack));
         }
     }
 }

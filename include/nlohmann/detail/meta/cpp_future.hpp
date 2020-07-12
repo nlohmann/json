@@ -3,8 +3,6 @@
 #include <cstddef> // size_t
 #include <type_traits> // conditional, enable_if, false_type, integral_constant, is_constructible, is_integral, is_same, remove_cv, remove_reference, true_type
 
-#include <nlohmann/detail/boolean_operators.hpp>
-
 namespace nlohmann
 {
 namespace detail

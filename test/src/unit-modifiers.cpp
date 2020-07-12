@@ -114,7 +114,7 @@ TEST_CASE("modifiers")
                 json k = j;
 
                 j.clear();
-                CHECK(not j.empty());
+                CHECK(!j.empty());
                 CHECK(j == json(json::value_t::binary));
                 CHECK(j == json(k.type()));
             }
@@ -125,7 +125,7 @@ TEST_CASE("modifiers")
                 json k = j;
 
                 j.clear();
-                CHECK(not j.empty());
+                CHECK(!j.empty());
                 CHECK(j == json(json::value_t::binary));
                 CHECK(j == json(k.type()));
             }

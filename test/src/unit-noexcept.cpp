@@ -59,12 +59,12 @@ static_assert(noexcept(nlohmann::to_json(*j, 2.5)), "");
 static_assert(noexcept(nlohmann::to_json(*j, true)), "");
 static_assert(noexcept(nlohmann::to_json(*j, test{})), "");
 static_assert(noexcept(nlohmann::to_json(*j, pod{})), "");
-static_assert(not noexcept(nlohmann::to_json(*j, pod_bis{})), "");
+static_assert(!noexcept(nlohmann::to_json(*j, pod_bis{})), "");
 static_assert(noexcept(json(2)), "");
 static_assert(noexcept(json(test{})), "");
 static_assert(noexcept(json(pod{})), "");
 static_assert(noexcept(j->get<pod>()), "");
-static_assert(not noexcept(j->get<pod_bis>()), "");
+static_assert(!noexcept(j->get<pod_bis>()), "");
 static_assert(noexcept(json(pod{})), "");
 }
 

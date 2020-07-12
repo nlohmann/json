@@ -1586,42 +1586,42 @@ TEST_CASE("UBJSON")
         {
             std::vector<uint8_t> v = {'[', 'T', 'F', ']'};
             SaxCountdown scp(0);
-            CHECK(not json::sax_parse(v, &scp, json::input_format_t::ubjson));
+            CHECK(!json::sax_parse(v, &scp, json::input_format_t::ubjson));
         }
 
         SECTION("start_object()")
         {
             std::vector<uint8_t> v = {'{', 'i', 3, 'f', 'o', 'o', 'F', '}'};
             SaxCountdown scp(0);
-            CHECK(not json::sax_parse(v, &scp, json::input_format_t::ubjson));
+            CHECK(!json::sax_parse(v, &scp, json::input_format_t::ubjson));
         }
 
         SECTION("key() in object")
         {
             std::vector<uint8_t> v = {'{', 'i', 3, 'f', 'o', 'o', 'F', '}'};
             SaxCountdown scp(1);
-            CHECK(not json::sax_parse(v, &scp, json::input_format_t::ubjson));
+            CHECK(!json::sax_parse(v, &scp, json::input_format_t::ubjson));
         }
 
         SECTION("start_array(len)")
         {
             std::vector<uint8_t> v = {'[', '#', 'i', '2', 'T', 'F'};
             SaxCountdown scp(0);
-            CHECK(not json::sax_parse(v, &scp, json::input_format_t::ubjson));
+            CHECK(!json::sax_parse(v, &scp, json::input_format_t::ubjson));
         }
 
         SECTION("start_object(len)")
         {
             std::vector<uint8_t> v = {'{', '#', 'i', '1', 3, 'f', 'o', 'o', 'F'};
             SaxCountdown scp(0);
-            CHECK(not json::sax_parse(v, &scp, json::input_format_t::ubjson));
+            CHECK(!json::sax_parse(v, &scp, json::input_format_t::ubjson));
         }
 
         SECTION("key() in object with length")
         {
             std::vector<uint8_t> v = {'{', 'i', 3, 'f', 'o', 'o', 'F', '}'};
             SaxCountdown scp(1);
-            CHECK(not json::sax_parse(v, &scp, json::input_format_t::ubjson));
+            CHECK(!json::sax_parse(v, &scp, json::input_format_t::ubjson));
         }
     }
 
@@ -2363,7 +2363,7 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
     }
 }
 
-#if not defined(JSON_NOEXCEPTION)
+#if !defined(JSON_NOEXCEPTION)
 TEST_CASE("all UBJSON first bytes")
 {
     // these bytes will fail immediately with exception parse_error.112
