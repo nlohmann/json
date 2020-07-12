@@ -1190,6 +1190,7 @@ Though it's 2020 already, the support for C++11 is still a bit sparse. Currently
 
 - GCC 4.8 - 10.1 (and possibly later)
 - Clang 3.4 - 10.0 (and possibly later)
+- Apple Clang 9.1 - 12.0 (and possibly later)
 - Intel C++ Compiler 17.0.2 (and possibly later)
 - Microsoft Visual C++ 2015 / Build Tools 14.0.25123.0 (and possibly later)
 - Microsoft Visual C++ 2017 / Build Tools 15.5.180.51428 (and possibly later)
@@ -1235,6 +1236,8 @@ The following compilers are currently used in continuous integration at [Travis]
 | Clang 6.0.1 (6.0.1-svn334776-1~exp1~20190309042707.121)         | Ubuntu 14.04.5 LTS | Travis         |
 | Clang 7.1.0 (7.1.0-svn353565-1~exp1~20190419134007.64)          | Ubuntu 14.04.5 LTS | Travis         |
 | Clang 7.5.0 (Ubuntu 7.5.0-3ubuntu1~18.04)                       | Ubuntu 18.04.4 LTS | Travis         |
+| Clang 9.0.0 (x86_64-pc-windows-msvc)                            | Windows-10.0.17763 | GitHub Actions |
+| Clang 10.0.0 (x86_64-pc-windows-msvc)                           | Windows-10.0.17763 | GitHub Actions |
 | GCC 4.8.5 (Ubuntu 4.8.5-4ubuntu8~14.04.2)                       | Ubuntu 14.04.5 LTS | Travis         |
 | GCC 4.9.4 (Ubuntu 4.9.4-2ubuntu1~14.04.1)                       | Ubuntu 14.04.5 LTS | Travis         |
 | GCC 5.5.0 (Ubuntu 5.5.0-12ubuntu1~14.04)                        | Ubuntu 14.04.5 LTS | Travis         |
