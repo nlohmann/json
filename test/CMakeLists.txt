@@ -124,6 +124,7 @@ set(files
     src/unit-modifiers.cpp
     src/unit-msgpack.cpp
     src/unit-noexcept.cpp
+    src/unit-ordered_json.cpp
     src/unit-pointer_access.cpp
     src/unit-readme.cpp
     src/unit-reference_access.cpp

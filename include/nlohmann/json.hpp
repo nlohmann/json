@@ -70,6 +70,7 @@ SOFTWARE.
 #include <nlohmann/detail/output/serializer.hpp>
 #include <nlohmann/detail/value_t.hpp>
 #include <nlohmann/json_fwd.hpp>
+#include <nlohmann/ordered_map.hpp>
 
 /*!
 @brief namespace for Niels Lohmann
