@@ -109,6 +109,7 @@ TEST_CASE("Alternative number types")
         CHECK(std::numeric_limits<__uint128_t>::is_integer);
     }
 
+    /*
     SECTION("128 bit integers")
     {
         using json128 = nlohmann::basic_json<std::map, std::vector, std::string, bool, __int128_t, __uint128_t>;
@@ -133,5 +134,6 @@ TEST_CASE("Alternative number types")
             CHECK(json128::parse(j_signed_min.dump()) == j_signed_min);
         }
     }
+    */
 #endif
 }
