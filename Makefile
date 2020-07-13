@@ -468,7 +468,7 @@ cppcheck:
 clang_analyze:
 	rm -fr clang_analyze_build
 	mkdir clang_analyze_build
-	cd clang_analyze_build ; CCC_CXX=$(COMPILER_DIR)/clang++ CXX=$(COMPILER_DIR)/clang++ $(COMPILER_DIR)/scan-build cmake .. -GNinja -DJSON_BuildTests=On
+	cd clang_analyze_build ; CCC_CXX=$(COMPILER_DIR)/clang++ CXX=$(COMPILER_DIR)/clang++ $(COMPILER_DIR)/scan-build cmake .. -GNinja -DJSON_BuildTests=On -DJSON_MultipleHeaders=On
 	cd clang_analyze_build ; \
 		$(COMPILER_DIR)/scan-build \
 			-enable-checker alpha.core.BoolAssignment,alpha.core.CallAndMessageUnInitRefArg,alpha.core.CastSize,alpha.core.CastToStruct,alpha.core.Conversion,alpha.core.DynamicTypeChecker,alpha.core.FixedAddr,alpha.core.PointerArithm,alpha.core.PointerSub,alpha.core.SizeofPtr,alpha.core.StackAddressAsyncEscape,alpha.core.TestAfterDivZero,alpha.deadcode.UnreachableCode,core.builtin.BuiltinFunctions,core.builtin.NoReturnFunctions,core.CallAndMessage,core.DivideZero,core.DynamicTypePropagation,core.NonnilStringConstants,core.NonNullParamChecker,core.NullDereference,core.StackAddressEscape,core.UndefinedBinaryOperatorResult,core.uninitialized.ArraySubscript,core.uninitialized.Assign,core.uninitialized.Branch,core.uninitialized.CapturedBlockVariable,core.uninitialized.UndefReturn,core.VLASize,cplusplus.InnerPointer,cplusplus.Move,cplusplus.NewDelete,cplusplus.NewDeleteLeaks,cplusplus.SelfAssignment,deadcode.DeadStores,nullability.NullableDereferenced,nullability.NullablePassedToNonnull,nullability.NullableReturnedFromNonnull,nullability.NullPassedToNonnull,nullability.NullReturnedFromNonnull \
@@ -490,7 +490,7 @@ clang_tidy:
 pvs_studio:
 	rm -fr pvs_studio_build
 	mkdir pvs_studio_build
-	cd pvs_studio_build ; cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=On
+	cd pvs_studio_build ; cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=On -DJSON_MultipleHeaders=On
 	cd pvs_studio_build ; pvs-studio-analyzer analyze -j 10
 	cd pvs_studio_build ; plog-converter -a'GA:1,2;64:1;CS' -t fullhtml PVS-Studio.log -o pvs
 	open pvs_studio_build/pvs/index.html
@@ -499,7 +499,7 @@ pvs_studio:
 infer:
 	rm -fr infer_build
 	mkdir infer_build
-	cd infer_build ; infer compile -- cmake .. ; infer run -- make -j 4
+	cd infer_build ; infer compile -- cmake .. -DJSON_MultipleHeaders=On ; infer run -- make -j 4
 
 # call OCLint <http://oclint.org> static analyzer
 oclint:

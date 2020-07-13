@@ -3168,6 +3168,17 @@ struct is_compatible_integer_type_impl <
         RealLimits::is_signed == CompatibleLimits::is_signed;
 };
 
+// second version for 128 bit integers that fail std::is_integral test
+template<typename RealIntegerType, typename CompatibleNumberIntegerType>
+struct is_compatible_integer_type_impl < RealIntegerType, CompatibleNumberIntegerType,
+           enable_if_t < std::is_same<RealIntegerType, CompatibleNumberIntegerType>::value&&
+           !std::is_integral<CompatibleNumberIntegerType>::value&&
+       (std::is_unsigned<RealIntegerType>::value&& std::is_convertible<std::uint64_t, RealIntegerType>::value || !std::is_unsigned<RealIntegerType>::value&& std::is_convertible<std::int64_t, RealIntegerType>::value)&&
+       !is_64_bit<RealIntegerType>::value >>
+{
+    static constexpr auto value = true;
+};
+
 template<typename RealIntegerType, typename CompatibleNumberIntegerType>
 struct is_compatible_integer_type
     : is_compatible_integer_type_impl<RealIntegerType,
