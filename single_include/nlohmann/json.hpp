@@ -3146,6 +3146,10 @@ template<typename NumberType>
 struct is_64_bit : std::integral_constant < bool, (sizeof(NumberType) <= 8) >
 {};
 
+template<typename NumberType>
+struct is_128_bit_integral : std::integral_constant < bool, (((std::is_signed<NumberType>::value&& std::is_convertible<std::int64_t, NumberType>::value) || (std::is_unsigned<NumberType>::value&& std::is_convertible<std::uint64_t, NumberType>::value))&& !is_64_bit<NumberType>::value) >
+{};
+
 template<typename RealIntegerType, typename CompatibleNumberIntegerType,
          typename = void>
 struct is_compatible_integer_type_impl : std::false_type {};
@@ -3173,8 +3177,7 @@ template<typename RealIntegerType, typename CompatibleNumberIntegerType>
 struct is_compatible_integer_type_impl < RealIntegerType, CompatibleNumberIntegerType,
            enable_if_t < std::is_same<RealIntegerType, CompatibleNumberIntegerType>::value&&
            !std::is_integral<CompatibleNumberIntegerType>::value&&
-       (std::is_unsigned<RealIntegerType>::value&& std::is_convertible<std::uint64_t, RealIntegerType>::value || !std::is_unsigned<RealIntegerType>::value&& std::is_convertible<std::int64_t, RealIntegerType>::value)&&
-       !is_64_bit<RealIntegerType>::value >>
+           is_128_bit_integral<CompatibleNumberIntegerType>::value >>
 {
     static constexpr auto value = true;
 };
@@ -3315,7 +3318,7 @@ void from_json(const BasicJsonType& j, typename std::nullptr_t& n)
 
 // overloads for basic_json template parameters
 template < typename BasicJsonType, typename ArithmeticType,
-           enable_if_t < std::is_arithmetic<ArithmeticType>::value&&
+           enable_if_t < (std::is_arithmetic<ArithmeticType>::value || is_128_bit_integral<ArithmeticType>::value)&&
                          !std::is_same<ArithmeticType, typename BasicJsonType::boolean_t>::value,
                          int > = 0 >
 void get_arithmetic_value(const BasicJsonType& j, ArithmeticType& val)

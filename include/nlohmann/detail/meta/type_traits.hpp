@@ -327,8 +327,14 @@ template<typename BasicJsonType, typename ConstructibleArrayType>
 struct is_constructible_array_type
     : is_constructible_array_type_impl<BasicJsonType, ConstructibleArrayType> {};
 
+// true for types with up to 64 bit
 template<typename NumberType>
 struct is_64_bit : std::integral_constant < bool, (sizeof(NumberType) <= 8) >
+{};
+
+// true for types with at least 64 bit that con be convert from 64 bit integers
+template<typename NumberType>
+struct is_128_bit_integral : std::integral_constant < bool, (((std::is_signed<NumberType>::value&& std::is_convertible<std::int64_t, NumberType>::value) || (std::is_unsigned<NumberType>::value&& std::is_convertible<std::uint64_t, NumberType>::value))&& !is_64_bit<NumberType>::value) >
 {};
 
 template<typename RealIntegerType, typename CompatibleNumberIntegerType,
@@ -358,8 +364,7 @@ template<typename RealIntegerType, typename CompatibleNumberIntegerType>
 struct is_compatible_integer_type_impl < RealIntegerType, CompatibleNumberIntegerType,
            enable_if_t < std::is_same<RealIntegerType, CompatibleNumberIntegerType>::value&&
            !std::is_integral<CompatibleNumberIntegerType>::value&&
-       (std::is_unsigned<RealIntegerType>::value&& std::is_convertible<std::uint64_t, RealIntegerType>::value || !std::is_unsigned<RealIntegerType>::value&& std::is_convertible<std::int64_t, RealIntegerType>::value)&&
-       !is_64_bit<RealIntegerType>::value >>
+           is_128_bit_integral<CompatibleNumberIntegerType>::value >>
 {
     static constexpr auto value = true;
 };
