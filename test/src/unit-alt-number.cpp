@@ -107,6 +107,8 @@ TEST_CASE("Alternative number types")
         CHECK(std::is_integral<__uint128_t>::value);
         CHECK(std::numeric_limits<__int128_t>::is_integer);
         CHECK(std::numeric_limits<__uint128_t>::is_integer);
+        CHECK(std::is_convertible<std::int64_t, __int128_t>::value);
+        CHECK(std::is_convertible<std::uint64_t, __uint128_t>::value);
     }
 
     /*
