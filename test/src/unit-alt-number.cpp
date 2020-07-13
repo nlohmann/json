@@ -101,6 +101,14 @@ TEST_CASE("Alternative number types")
 
     // 128-bit arithmetic does not work with sanitizers
 #if defined(__SIZEOF_INT128__) && !defined(__SANITIZE_ADDRESS__)
+    SECTION("type traits")
+    {
+        CHECK(std::is_integral<__int128_t>::value);
+        CHECK(std::is_integral<__uint128_t>::value);
+        CHECK(std::numeric_limits<__int128_t>::is_integer);
+        CHECK(std::numeric_limits<__uint128_t>::is_integer);
+    }
+
     SECTION("128 bit integers")
     {
         using json128 = nlohmann::basic_json<std::map, std::vector, std::string, bool, __int128_t, __uint128_t>;

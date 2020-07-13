@@ -3142,6 +3142,10 @@ template<typename BasicJsonType, typename ConstructibleArrayType>
 struct is_constructible_array_type
     : is_constructible_array_type_impl<BasicJsonType, ConstructibleArrayType> {};
 
+template<typename NumberType>
+struct is_64_bit : std::integral_constant < bool, (sizeof(NumberType) <= 8) >
+{};
+
 template<typename RealIntegerType, typename CompatibleNumberIntegerType,
          typename = void>
 struct is_compatible_integer_type_impl : std::false_type {};
@@ -8118,6 +8122,8 @@ class binary_reader
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
+// #include <nlohmann/detail/meta/type_traits.hpp>
+
 
 namespace nlohmann
 {
@@ -9022,10 +9028,6 @@ class lexer : public lexer_base<BasicJsonType>
     {
         f = std::strtold(str, endptr);
     }
-
-    template<typename NumberType>
-    struct is_64_bit : std::integral_constant < bool, (sizeof(NumberType) <= 8) >
-    {};
 
     JSON_HEDLEY_NON_NULL(2)
     unsigned long long strtoull(const char* str, char** str_end, std::true_type)

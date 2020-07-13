@@ -327,6 +327,10 @@ template<typename BasicJsonType, typename ConstructibleArrayType>
 struct is_constructible_array_type
     : is_constructible_array_type_impl<BasicJsonType, ConstructibleArrayType> {};
 
+template<typename NumberType>
+struct is_64_bit : std::integral_constant < bool, (sizeof(NumberType) <= 8) >
+{};
+
 template<typename RealIntegerType, typename CompatibleNumberIntegerType,
          typename = void>
 struct is_compatible_integer_type_impl : std::false_type {};
