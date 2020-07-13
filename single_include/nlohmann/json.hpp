@@ -19760,7 +19760,7 @@ class basic_json
     */
     string_t value(const typename object_t::key_type& key, const char* default_value) const
     {
-        return value(key, std::move(string_t(default_value)));
+        return value(key, string_t(default_value));
     }
 
     /*!
@@ -19855,7 +19855,7 @@ class basic_json
     JSON_HEDLEY_NON_NULL(3)
     string_t value(const json_pointer& ptr, const char* default_value) const
     {
-        return value(ptr, std::move(string_t(default_value)));
+        return value(ptr, string_t(default_value));
     }
 
     /*!
