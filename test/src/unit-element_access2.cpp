@@ -282,6 +282,18 @@ TEST_CASE("element access 2")
                         CHECK_THROWS_WITH(j_nonobject_const.value("foo", 1),
                                           "[json.exception.type_error.306] cannot use value() with number");
                     }
+                    SECTION("default value is lvalue")
+                    {
+                        json j_nonobject(json::value_t::number_float);
+                        const json j_nonobject_const(j_nonobject);
+                        std::string defval = "default value";
+                        CHECK_THROWS_AS(j_nonobject.value("foo", defval), json::type_error&);
+                        CHECK_THROWS_AS(j_nonobject_const.value("foo", defval), json::type_error&);
+                        CHECK_THROWS_WITH(j_nonobject.value("foo", defval),
+                                          "[json.exception.type_error.306] cannot use value() with number");
+                        CHECK_THROWS_WITH(j_nonobject_const.value("foo", defval),
+                                          "[json.exception.type_error.306] cannot use value() with number");
+                    }
                 }
             }
 
