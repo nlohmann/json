@@ -4445,6 +4445,7 @@ class byte_container_with_subtype : public BinaryType
 // #include <nlohmann/detail/hash.hpp>
 
 
+#include <cstddef> // size_t
 #include <functional> // hash
 
 namespace nlohmann
@@ -4464,7 +4465,7 @@ std::size_t hash(const BasicJsonType& j)
     switch (j.type())
     {
         case BasicJsonType::value_t::null:
-        case BasicJsonType::discarded:
+        case BasicJsonType::value_t::discarded:
             return combine(static_cast<std::size_t>(j.type()), 0);
 
         case BasicJsonType::value_t::object:
