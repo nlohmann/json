@@ -2978,6 +2978,38 @@ class basic_json
     }
 
     /*!
+    @brief get a wrapped value (explicit)
+
+    Explicit type conversion between the JSON value and a compatible value wrapper
+    The value is converted by calling the @ref json_serializer<ValueType>
+    `try_deserialize()` method.
+
+    The function is equivalent to executing
+    @code {.cpp}
+    return JSONSerializer<ValueTypeCV>::try_deserialize(*this);
+    @endcode
+
+    @tparam ValueTypeCV the provided value type
+    @tparam ValueType the returned value type
+
+    @return copy of the JSON value, converted to @a ValueType wrapper
+
+    @throw what @ref json_serializer<ValueType> `try_deserialize()` method throws
+    */
+    template < typename ValueTypeCV, typename ValueType = detail::uncvref_t<ValueTypeCV>,
+               typename ReturnType = decltype(JSONSerializer<ValueType>::try_deserialize(std::declval<const basic_json_t&>())),
+               detail::enable_if_t < !std::is_same<basic_json_t, ValueType>::value &&
+                                     detail::has_try_deserialize<basic_json_t, ValueType>::value,
+                                     int > = 0 >
+    ReturnType try_get() const noexcept(noexcept(
+                                            JSONSerializer<ValueType>::try_deserialize(std::declval<const basic_json_t&>())))
+    {
+        static_assert(!std::is_reference<ValueTypeCV>::value,
+                      "get() cannot be used with reference types, you might want to use get_ref()");
+        return JSONSerializer<ValueType>::try_deserialize(*this);
+    }
+
+    /*!
     @brief get a value (explicit)
 
     Explicit type conversion between the JSON value and a compatible value.

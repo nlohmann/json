@@ -541,6 +541,105 @@ TEST_CASE("Non-copyable types" * doctest::test_suite("udt"))
     }
 }
 
+namespace udt
+{
+struct book
+{
+    std::shared_ptr<person> m_author;
+    std::string m_content;
+    book(std::shared_ptr<person> a, const std::string& c) : m_author(a), m_content(c) {}
+};
+
+// operators
+static bool operator==(const std::shared_ptr<person>& lhs, const std::shared_ptr<person>& rhs)
+{
+    if (!lhs && !rhs)
+    {
+        return true;
+    }
+
+    if (!lhs || ! rhs)
+    {
+        return false;
+    }
+
+    return *lhs == *rhs;
+}
+
+static bool operator==(const book& lhs, const book& rhs)
+{
+    return std::tie(lhs.m_author, lhs.m_content) ==
+           std::tie(rhs.m_author, rhs.m_content);
+}
+}
+
+namespace nlohmann
+{
+template <>
+struct adl_serializer<udt::book>
+{
+    static void to_json(json& j, const udt::book& opt)
+    {
+        j["author"] = opt.m_author;
+        j["content"] = opt.m_content;
+    }
+
+    // this is the overload needed for non-copyable types,
+    static std::unique_ptr<udt::book> try_deserialize(const json& j)
+    {
+        if (j.is_null())
+        {
+            return nullptr;
+        }
+        else
+        {
+            auto author = j["author"].get<std::shared_ptr<udt::person>>();
+
+            if (!j.contains("content") || j["content"].is_null())
+            {
+                return nullptr;
+            }
+
+            auto content = j["content"].get<std::string>();
+
+            return std::unique_ptr<udt::book>(new udt::book(author, content));
+        }
+    }
+};
+}
+
+TEST_CASE("try_deserialize" * doctest::test_suite("udt"))
+{
+    SECTION("from valid object")
+    {
+        auto person = udt::person{{42}, {"John Doe"}, udt::country::russia};
+        auto content = std::string{"Lorem ipsum dolor sit amet, consectetur adipiscing elit."};
+        udt::book book{std::shared_ptr<udt::person>(new udt::person(person)), content};
+
+        json j = book;
+
+        auto optBook = j.try_get<udt::book>();
+        REQUIRE(optBook);
+        CHECK(*optBook == book);
+    }
+
+    SECTION("from null")
+    {
+        json j = nullptr;
+
+        auto optBook = j.try_get<udt::book>();
+        REQUIRE(!optBook);
+    }
+
+    SECTION("from invalid object")
+    {
+        json j = R"({"author" : {"age":23, "name":"theo", "country":"France"}})"_json;
+
+        auto optBook = j.try_get<udt::book>();
+        REQUIRE(!optBook);
+    }
+}
+
 // custom serializer - advanced usage
 // pack structs that are pod-types (but not scalar types)
 // relies on adl for any other type
