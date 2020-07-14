@@ -1254,6 +1254,7 @@ The following compilers are currently used in continuous integration at [Travis]
 | MSVC 19.16.27035.0 (15.9.21+g9802d43bc3 for .NET Framework)     | Windows-10.0.14393 | AppVeyor       |
 | MSVC 19.25.28614.0 (Build Engine version 16.5.0+d4cbfca49 for .NET Framework) | Windows-10.0.17763  | AppVeyor       |
 | MSVC 19.25.28614.0 (Build Engine version 16.5.0+d4cbfca49 for .NET Framework) | Windows-10.0.17763  | GitHub Actions |
+| MSVC 19.25.28614.0 (Build Engine version 16.5.0+d4cbfca49 for .NET Framework) with ClangCL 10.0.0 | Windows-10.0.17763  | GitHub Actions |
 
 ## License
 
