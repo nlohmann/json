@@ -562,7 +562,7 @@ check-amalgamation:
 check-single-includes:
 	@for x in $(SRCS); do \
 	  echo "Checking self-sufficiency of $$x..." ; \
-	  echo "#include <$$x>\nint main() {}\n" | sed 's|include/||' > single_include_test.cpp; \
+	  echo "#include <$$x>\nint main() {}\n" | $(SED) 's|include/||' > single_include_test.cpp; \
 	  $(CXX) $(CXXFLAGS) -Iinclude -std=c++11 single_include_test.cpp -o single_include_test; \
 	  rm -f single_include_test.cpp single_include_test; \
 	done
@@ -572,7 +572,7 @@ check-single-includes:
 # CMake
 ##########################################################################
 
-# grep "^option" CMakeLists.txt test/CMakeLists.txt | sed 's/(/ /' | awk '{print $2}' | xargs
+# grep "^option" CMakeLists.txt test/CMakeLists.txt | $(SED) 's/(/ /' | awk '{print $2}' | xargs
 
 # check if all flags of our CMake files work
 check_cmake_flags_do:
@@ -651,6 +651,6 @@ clean:
 update_hedley:
 	rm -f include/nlohmann/thirdparty/hedley/hedley.hpp include/nlohmann/thirdparty/hedley/hedley_undef.hpp
 	curl https://raw.githubusercontent.com/nemequ/hedley/master/hedley.h -o include/nlohmann/thirdparty/hedley/hedley.hpp
-	gsed -i 's/HEDLEY_/JSON_HEDLEY_/g' include/nlohmann/thirdparty/hedley/hedley.hpp
-	grep "[[:blank:]]*#[[:blank:]]*undef" include/nlohmann/thirdparty/hedley/hedley.hpp | grep -v "__" | sort | uniq | gsed 's/ //g' | gsed 's/undef/undef /g' > include/nlohmann/thirdparty/hedley/hedley_undef.hpp
+	$(SED) -i 's/HEDLEY_/JSON_HEDLEY_/g' include/nlohmann/thirdparty/hedley/hedley.hpp
+	grep "[[:blank:]]*#[[:blank:]]*undef" include/nlohmann/thirdparty/hedley/hedley.hpp | grep -v "__" | sort | uniq | $(SED) 's/ //g' | $(SED) 's/undef/undef /g' > include/nlohmann/thirdparty/hedley/hedley_undef.hpp
 	$(MAKE) amalgamate
