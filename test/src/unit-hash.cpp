@@ -54,7 +54,7 @@ TEST_CASE("hash")
     hashes.insert(std::hash<json> {}(json("foo")));
 
     // number
-    hashes.insert(std::hash<json> {}(json(int(0))));
+    hashes.insert(std::hash<json> {}(json(0)));
     hashes.insert(std::hash<json> {}(json(unsigned(0))));
 
     hashes.insert(std::hash<json> {}(json(-1)));
