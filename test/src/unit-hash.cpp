@@ -32,59 +32,53 @@ SOFTWARE.
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
+#include <set>
+
 TEST_CASE("hash")
 {
-    SECTION("null")
-    {
-        CHECK(std::hash<json> {}(json(nullptr)) == 2654435769U);
-    }
+    // Collect hashes for different JSON values and make sure that they are distinct
+    // We cannot compare against fixed values, because the implementation of
+    // std::hash may differ between compilers.
 
-    SECTION("boolean")
-    {
-        CHECK(std::hash<json> {}(json(true)) == 2654436031U);
-        CHECK(std::hash<json> {}(json(false)) == 2654436030U);
-    }
+    std::set<std::size_t> hashes;
 
-    SECTION("string")
-    {
-        CHECK(std::hash<json> {}(json("")) == 11160318156688833227U);
-        CHECK(std::hash<json> {}(json("foo")) == 910203211069189493U);
-    }
+    // null
+    hashes.insert(std::hash<json> {}(json(nullptr)));
 
-    SECTION("number")
-    {
-        CHECK(std::hash<json> {}(json(int(0))) == 2654436095U);
-        CHECK(std::hash<json> {}(json(unsigned(0))) == 2654436156U);
+    // boolean
+    hashes.insert(std::hash<json> {}(json(true)));
+    hashes.insert(std::hash<json> {}(json(false)));
 
-        CHECK(std::hash<json> {}(json(-1)) == 2654436092U);
-        CHECK(std::hash<json> {}(json(0.0)) == 2654436221U);
-        CHECK(std::hash<json> {}(json(42.23)) == 4631140164097181104U);
-    }
+    // string
+    hashes.insert(std::hash<json> {}(json("")));
+    hashes.insert(std::hash<json> {}(json("foo")));
 
-    SECTION("array")
-    {
-        CHECK(std::hash<json> {}(json::array()) == 2654435899U);
-        CHECK(std::hash<json> {}(json::array({1, 2, 3})) == 717272658337467U);
-    }
+    // number
+    hashes.insert(std::hash<json> {}(json(int(0))));
+    hashes.insert(std::hash<json> {}(json(unsigned(0))));
 
-    SECTION("object")
-    {
-        CHECK(std::hash<json> {}(json::object()) == 2654435832U);
-        CHECK(std::hash<json> {}(json::object({{"foo", "bar"}})) == 4042265434648078139U);
-    }
+    hashes.insert(std::hash<json> {}(json(-1)));
+    hashes.insert(std::hash<json> {}(json(0.0)));
+    hashes.insert(std::hash<json> {}(json(42.23)));
 
-    SECTION("binary")
-    {
-        CHECK(std::hash<json> {}(json::binary({})) == 11093832941624U);
-        CHECK(std::hash<json> {}(json::binary({}, 0)) == 11093832941691U);
-        CHECK(std::hash<json> {}(json::binary({}, 42)) == 11093832941581U);
-        CHECK(std::hash<json> {}(json::binary({1, 2, 3})) == 3005324138949694928U);
-        CHECK(std::hash<json> {}(json::binary({1, 2, 3}, 0)) == 3005324138988516582U);
-        CHECK(std::hash<json> {}(json::binary({1, 2, 3}, 42)) == 3005324138986241627U);
-    }
+    // array
+    hashes.insert(std::hash<json> {}(json::array()));
+    hashes.insert(std::hash<json> {}(json::array({1, 2, 3})));
 
-    SECTION("discarded")
-    {
-        CHECK(std::hash<json> {}(json(json::value_t::discarded)) == 2654436338U);
-    }
+    // object
+    hashes.insert(std::hash<json> {}(json::object()));
+    hashes.insert(std::hash<json> {}(json::object({{"foo", "bar"}})));
+
+    // binary
+    hashes.insert(std::hash<json> {}(json::binary({})));
+    hashes.insert(std::hash<json> {}(json::binary({}, 0)));
+    hashes.insert(std::hash<json> {}(json::binary({}, 42)));
+    hashes.insert(std::hash<json> {}(json::binary({1, 2, 3})));
+    hashes.insert(std::hash<json> {}(json::binary({1, 2, 3}, 0)));
+    hashes.insert(std::hash<json> {}(json::binary({1, 2, 3}, 42)));
+
+    // discarded
+    hashes.insert(std::hash<json> {}(json(json::value_t::discarded)));
+
+    CHECK(hashes.size() == 21);
 }
