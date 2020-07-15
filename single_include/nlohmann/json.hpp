@@ -4453,7 +4453,7 @@ namespace nlohmann
 namespace detail
 {
 
-std::size_t combine(std::size_t seed, std::size_t h)
+std::size_t combine(std::size_t seed, std::size_t h) noexcept
 {
     seed ^= h + 0x9e3779b9 + (seed << 6U) + (seed >> 2U);
     return seed;
@@ -4462,6 +4462,11 @@ std::size_t combine(std::size_t seed, std::size_t h)
 template<typename BasicJsonType>
 std::size_t hash(const BasicJsonType& j)
 {
+    using string_t = typename BasicJsonType::string_t;
+    using number_integer_t = typename BasicJsonType::number_integer_t;
+    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+    using number_float_t = typename BasicJsonType::number_float_t;
+
     switch (j.type())
     {
         case BasicJsonType::value_t::null:
@@ -4473,7 +4478,7 @@ std::size_t hash(const BasicJsonType& j)
             auto seed = combine(static_cast<std::size_t>(j.type()), j.size());
             for (const auto& element : j.items())
             {
-                const auto h = std::hash<typename BasicJsonType::string_t> {}(element.key());
+                const auto h = std::hash<string_t> {}(element.key());
                 seed = combine(seed, h);
                 seed = combine(seed, hash(element.value()));
             }
@@ -4492,7 +4497,7 @@ std::size_t hash(const BasicJsonType& j)
 
         case BasicJsonType::value_t::string:
         {
-            const auto h = std::hash<typename BasicJsonType::string_t> {}(j.template get_ref<const typename BasicJsonType::string_t&>());
+            const auto h = std::hash<string_t> {}(j.template get_ref<const string_t&>());
             return combine(static_cast<std::size_t>(j.type()), h);
         }
 
@@ -4504,25 +4509,27 @@ std::size_t hash(const BasicJsonType& j)
 
         case BasicJsonType::value_t::number_integer:
         {
-            const auto h = std::hash<typename BasicJsonType::number_integer_t> {}(j.template get<typename BasicJsonType::number_integer_t>());
+            const auto h = std::hash<number_integer_t> {}(j.template get<number_integer_t>());
             return combine(static_cast<std::size_t>(j.type()), h);
         }
 
         case nlohmann::detail::value_t::number_unsigned:
         {
-            const auto h = std::hash<typename BasicJsonType::number_unsigned_t> {}(j.template get<typename BasicJsonType::number_unsigned_t>());
+            const auto h = std::hash<number_unsigned_t> {}(j.template get<number_unsigned_t>());
             return combine(static_cast<std::size_t>(j.type()), h);
         }
 
         case nlohmann::detail::value_t::number_float:
         {
-            const auto h = std::hash<typename BasicJsonType::number_float_t> {}(j.template get<typename BasicJsonType::number_float_t>());
+            const auto h = std::hash<number_float_t> {}(j.template get<number_float_t>());
             return combine(static_cast<std::size_t>(j.type()), h);
         }
 
         case nlohmann::detail::value_t::binary:
         {
             auto seed = combine(static_cast<std::size_t>(j.type()), j.get_binary().size());
+            const auto h = std::hash<bool> {}(j.get_binary().has_subtype());
+            seed = combine(seed, h);
             seed = combine(seed, j.get_binary().subtype());
             for (const auto byte : j.get_binary())
             {
@@ -4530,9 +4537,10 @@ std::size_t hash(const BasicJsonType& j)
             }
             return seed;
         }
-    }
 
-    return 0;
+        default: // LCOV_EXCL_LINE
+            JSON_ASSERT(false); // LCOV_EXCL_LINE
+    }
 }
 
 }  // namespace detail

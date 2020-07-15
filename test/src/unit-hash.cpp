@@ -1,0 +1,90 @@
+/*
+    __ _____ _____ _____
+ __|  |   __|     |   | |  JSON for Modern C++ (test suite)
+|  |  |__   |  |  | | | |  version 3.8.0
+|_____|_____|_____|_|___|  https://github.com/nlohmann/json
+
+Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+SPDX-License-Identifier: MIT
+Copyright (c) 2013-2019 Niels Lohmann <http://nlohmann.me>.
+
+Permission is hereby  granted, free of charge, to any  person obtaining a copy
+of this software and associated  documentation files (the "Software"), to deal
+in the Software  without restriction, including without  limitation the rights
+to  use, copy,  modify, merge,  publish, distribute,  sublicense, and/or  sell
+copies  of  the Software,  and  to  permit persons  to  whom  the Software  is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE  IS PROVIDED "AS  IS", WITHOUT WARRANTY  OF ANY KIND,  EXPRESS OR
+IMPLIED,  INCLUDING BUT  NOT  LIMITED TO  THE  WARRANTIES OF  MERCHANTABILITY,
+FITNESS FOR  A PARTICULAR PURPOSE AND  NONINFRINGEMENT. IN NO EVENT  SHALL THE
+AUTHORS  OR COPYRIGHT  HOLDERS  BE  LIABLE FOR  ANY  CLAIM,  DAMAGES OR  OTHER
+LIABILITY, WHETHER IN AN ACTION OF  CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
+#include "doctest_compatibility.h"
+
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
+
+TEST_CASE("hash")
+{
+    SECTION("null")
+    {
+        CHECK(std::hash<json> {}(json(nullptr)) == 2654435769U);
+    }
+
+    SECTION("boolean")
+    {
+        CHECK(std::hash<json> {}(json(true)) == 2654436031U);
+        CHECK(std::hash<json> {}(json(false)) == 2654436030U);
+    }
+
+    SECTION("string")
+    {
+        CHECK(std::hash<json> {}(json("")) == 11160318156688833227U);
+        CHECK(std::hash<json> {}(json("foo")) == 910203211069189493U);
+    }
+
+    SECTION("number")
+    {
+        CHECK(std::hash<json> {}(json(int(0))) == 2654436095U);
+        CHECK(std::hash<json> {}(json(unsigned(0))) == 2654436156U);
+
+        CHECK(std::hash<json> {}(json(-1)) == 2654436092U);
+        CHECK(std::hash<json> {}(json(0.0)) == 2654436221U);
+        CHECK(std::hash<json> {}(json(42.23)) == 4631140164097181104U);
+    }
+
+    SECTION("array")
+    {
+        CHECK(std::hash<json> {}(json::array()) == 2654435899U);
+        CHECK(std::hash<json> {}(json::array({1, 2, 3})) == 717272658337467U);
+    }
+
+    SECTION("object")
+    {
+        CHECK(std::hash<json> {}(json::object()) == 2654435832U);
+        CHECK(std::hash<json> {}(json::object({{"foo", "bar"}})) == 4042265434648078139U);
+    }
+
+    SECTION("binary")
+    {
+        CHECK(std::hash<json> {}(json::binary({})) == 11093832941624U);
+        CHECK(std::hash<json> {}(json::binary({}, 0)) == 11093832941691U);
+        CHECK(std::hash<json> {}(json::binary({}, 42)) == 11093832941581U);
+        CHECK(std::hash<json> {}(json::binary({1, 2, 3})) == 3005324138949694928U);
+        CHECK(std::hash<json> {}(json::binary({1, 2, 3}, 0)) == 3005324138988516582U);
+        CHECK(std::hash<json> {}(json::binary({1, 2, 3}, 42)) == 3005324138986241627U);
+    }
+
+    SECTION("discarded")
+    {
+        CHECK(std::hash<json> {}(json(json::value_t::discarded)) == 2654436338U);
+    }
+}
