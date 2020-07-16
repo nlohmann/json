@@ -5,7 +5,7 @@
 ##########################################################################
 
 # directory to recent compiler binaries
-COMPILER_DIR=/Users/niels/Documents/projects/compilers/local/bin
+COMPILER_DIR=/usr/local/opt/llvm/bin
 
 # find GNU sed to use `-i` parameter
 SED:=$(shell command -v gsed || which sed)
@@ -484,13 +484,13 @@ cpplint:
 
 # call Clang-Tidy <https://clang.llvm.org/extra/clang-tidy/>
 clang_tidy:
-	$(COMPILER_DIR)/clang-tidy $(AMALGAMATED_FILE) -- -Iinclude -std=c++11
+	$(COMPILER_DIR)/clang-tidy $(SRCS) -- -Iinclude -std=c++11
 
 # call PVS-Studio Analyzer <https://www.viva64.com/en/pvs-studio/>
 pvs_studio:
 	rm -fr pvs_studio_build
 	mkdir pvs_studio_build
-	cd pvs_studio_build ; cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=On
+	cd pvs_studio_build ; cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=On -DJSON_MultipleHeaders=ON
 	cd pvs_studio_build ; pvs-studio-analyzer analyze -j 10
 	cd pvs_studio_build ; plog-converter -a'GA:1,2;64:1;CS' -t fullhtml PVS-Studio.log -o pvs
 	open pvs_studio_build/pvs/index.html
@@ -499,7 +499,7 @@ pvs_studio:
 infer:
 	rm -fr infer_build
 	mkdir infer_build
-	cd infer_build ; infer compile -- cmake .. ; infer run -- make -j 4
+	cd infer_build ; infer compile -- cmake .. -DJSON_MultipleHeaders=ON ; infer run -- make -j 4
 
 # call OCLint <http://oclint.org> static analyzer
 oclint:
