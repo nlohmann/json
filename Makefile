@@ -577,12 +577,12 @@ check-single-includes:
 # check if all flags of our CMake files work
 check_cmake_flags_do:
 	$(CMAKE_BINARY) --version
-	for flag in '' JSON_BuildTests JSON_Install JSON_MultipleHeaders JSON_Sanitizer JSON_Valgrind JSON_NoExceptions JSON_Coverage; do \
+	for flag in JSON_BuildTests JSON_Install JSON_MultipleHeaders JSON_Sanitizer JSON_Valgrind JSON_NoExceptions JSON_Coverage; do \
 		rm -fr cmake_build; \
 		mkdir cmake_build; \
-		echo "$(CMAKE_BINARY) .. -D$$flag=On" ; \
+		echo "\n\n$(CMAKE_BINARY) .. -D$$flag=On\n" ; \
 		cd cmake_build ; \
-		CXX=g++-8 $(CMAKE_BINARY) .. -D$$flag=On -DCMAKE_CXX_COMPILE_FEATURES="cxx_std_11;cxx_range_for" -DCMAKE_CXX_FLAGS="-std=gnu++11" ; \
+		$(CMAKE_BINARY) -Werror=dev .. -D$$flag=On -DCMAKE_CXX_COMPILE_FEATURES="cxx_std_11;cxx_range_for" -DCMAKE_CXX_FLAGS="-std=gnu++11" ; \
 		test -f Makefile || exit 1 ; \
 		cd .. ; \
 	done;
