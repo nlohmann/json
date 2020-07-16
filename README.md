@@ -483,7 +483,7 @@ MyIterator begin(MyContainer& tgt) {
 }
 
 MyIterator end(const MyContainer&) {
-    return {}; 
+    return {};
 }
 
 void foo() {
@@ -761,7 +761,7 @@ j_document.merge_patch(j_patch);
 Supported types can be implicitly converted to JSON values.
 
 It is recommended to **NOT USE** implicit conversions **FROM** a JSON value.
-You can find more details about this recommendation [here](https://www.github.com/nlohmann/json/issues/958). 
+You can find more details about this recommendation [here](https://www.github.com/nlohmann/json/issues/958).
 
 ```cpp
 // strings
@@ -914,7 +914,7 @@ namespace ns {
         std::string street;
         int housenumber;
         int postcode;
-        
+
       public:
         NLOHMANN_DEFINE_TYPE_INTRUSIVE(address, street, housenumber, postcode)
     };
@@ -1254,6 +1254,7 @@ The following compilers are currently used in continuous integration at [Travis]
 | MSVC 19.16.27035.0 (15.9.21+g9802d43bc3 for .NET Framework)     | Windows-10.0.14393 | AppVeyor       |
 | MSVC 19.25.28614.0 (Build Engine version 16.5.0+d4cbfca49 for .NET Framework) | Windows-10.0.17763  | AppVeyor       |
 | MSVC 19.25.28614.0 (Build Engine version 16.5.0+d4cbfca49 for .NET Framework) | Windows-10.0.17763  | GitHub Actions |
+| MSVC 19.25.28614.0 (Build Engine version 16.5.0+d4cbfca49 for .NET Framework) with ClangCL 10.0.0 | Windows-10.0.17763  | GitHub Actions |
 
 ## License
 
@@ -1568,7 +1569,7 @@ This library does not support comments by default. It does so for three reasons:
 1. Comments are not part of the [JSON specification](https://tools.ietf.org/html/rfc8259). You may argue that `//` or `/* */` are allowed in JavaScript, but JSON is not JavaScript.
 2. This was not an oversight: Douglas Crockford [wrote on this](https://plus.google.com/118095276221607585885/posts/RK8qyGVaGSr) in May 2012:
 
-	> I removed comments from JSON because I saw people were using them to hold parsing directives, a practice which would have destroyed interoperability.  I know that the lack of comments makes some people sad, but it shouldn't. 
+	> I removed comments from JSON because I saw people were using them to hold parsing directives, a practice which would have destroyed interoperability.  I know that the lack of comments makes some people sad, but it shouldn't.
 
 	> Suppose you are using JSON to keep configuration files, which you would like to annotate. Go ahead and insert all the comments you like. Then pipe it through JSMin before handing it to your JSON parser.
 
@@ -1584,9 +1585,9 @@ If you do want to preserve the insertion order, you can try the type [`nlohmann:
 
 ### Memory Release
 
-We checked with Valgrind and the Address Sanitizer (ASAN) that there are no memory leaks. 
+We checked with Valgrind and the Address Sanitizer (ASAN) that there are no memory leaks.
 
-If you find that a parsing program with this library does not release memory, please consider the following case and it maybe unrelated to this library. 
+If you find that a parsing program with this library does not release memory, please consider the following case and it maybe unrelated to this library.
 
 **Your program is compiled with glibc.** There is a tunable threshold that glibc uses to decide whether to actually return memory to the system or whether to cache it for later reuse. If in your program you make lots of small allocations and those small allocations are not a contiguous block and are presumably below the threshold, then they will not get returned to the OS.
 Here is a related issue [#1924](https://github.com/nlohmann/json/issues/1924).
