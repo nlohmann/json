@@ -258,30 +258,14 @@ class json_sax_dom_parser
         return true;
     }
 
+    template<class Exception>
     bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/,
-                     const detail::exception& ex)
+                     const Exception& ex)
     {
         errored = true;
         if (allow_exceptions)
         {
-            // determine the proper exception type from the id
-            switch ((ex.id / 100) % 100)
-            {
-                case 1:
-                    JSON_THROW(*dynamic_cast<const detail::parse_error*>(&ex));
-                case 4:
-                    JSON_THROW(*dynamic_cast<const detail::out_of_range*>(&ex));
-                // LCOV_EXCL_START
-                case 2:
-                    JSON_THROW(*dynamic_cast<const detail::invalid_iterator*>(&ex));
-                case 3:
-                    JSON_THROW(*dynamic_cast<const detail::type_error*>(&ex));
-                case 5:
-                    JSON_THROW(*dynamic_cast<const detail::other_error*>(&ex));
-                default:
-                    JSON_ASSERT(false);
-                    // LCOV_EXCL_STOP
-            }
+            JSON_THROW(ex);
         }
         return false;
     }
@@ -512,30 +496,14 @@ class json_sax_dom_callback_parser
         return true;
     }
 
+    template<class Exception>
     bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/,
-                     const detail::exception& ex)
+                     const Exception& ex)
     {
         errored = true;
         if (allow_exceptions)
         {
-            // determine the proper exception type from the id
-            switch ((ex.id / 100) % 100)
-            {
-                case 1:
-                    JSON_THROW(*dynamic_cast<const detail::parse_error*>(&ex));
-                case 4:
-                    JSON_THROW(*dynamic_cast<const detail::out_of_range*>(&ex));
-                // LCOV_EXCL_START
-                case 2:
-                    JSON_THROW(*dynamic_cast<const detail::invalid_iterator*>(&ex));
-                case 3:
-                    JSON_THROW(*dynamic_cast<const detail::type_error*>(&ex));
-                case 5:
-                    JSON_THROW(*dynamic_cast<const detail::other_error*>(&ex));
-                default:
-                    JSON_ASSERT(false);
-                    // LCOV_EXCL_STOP
-            }
+            JSON_THROW(ex);
         }
         return false;
     }
