@@ -128,7 +128,7 @@ void from_json(const BasicJsonType& j, EnumType& e)
 
 // forward_list doesn't have an insert method
 template<typename BasicJsonType, typename T, typename Allocator,
-         enable_if_t<std::is_convertible<BasicJsonType, T>::value, int> = 0>
+         enable_if_t<is_getable<BasicJsonType, T>::value, int> = 0>
 void from_json(const BasicJsonType& j, std::forward_list<T, Allocator>& l)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
@@ -145,7 +145,7 @@ void from_json(const BasicJsonType& j, std::forward_list<T, Allocator>& l)
 
 // valarray doesn't have an insert method
 template<typename BasicJsonType, typename T,
-         enable_if_t<std::is_convertible<BasicJsonType, T>::value, int> = 0>
+         enable_if_t<is_getable<BasicJsonType, T>::value, int> = 0>
 void from_json(const BasicJsonType& j, std::valarray<T>& l)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
@@ -153,7 +153,11 @@ void from_json(const BasicJsonType& j, std::valarray<T>& l)
         JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(j.type_name())));
     }
     l.resize(j.size());
-    std::copy(j.begin(), j.end(), std::begin(l));
+    std::transform(j.begin(), j.end(), std::begin(l),
+                   [](const BasicJsonType & elem)
+    {
+        return elem.template get<T>();
+    });
 }
 
 template<typename BasicJsonType, typename T, std::size_t N>

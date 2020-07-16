@@ -94,6 +94,16 @@ using get_template_function = decltype(std::declval<T>().template get<U>());
 template<typename BasicJsonType, typename T, typename = void>
 struct has_from_json : std::false_type {};
 
+// trait checking if j.get<T> is valid
+// use this trait instead of std::is_constructible or std::is_convertible,
+// both rely on, or make use of implicit conversions, and thus fail when T
+// has several constructors/operator= (see https://github.com/nlohmann/json/issues/958)
+template <typename BasicJsonType, typename T>
+struct is_getable
+{
+    static constexpr bool value = is_detected<get_template_function, const BasicJsonType&, T>::value;
+};
+
 template<typename BasicJsonType, typename T>
 struct has_from_json < BasicJsonType, T,
            enable_if_t < !is_basic_json<T>::value >>
