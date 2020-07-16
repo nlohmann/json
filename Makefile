@@ -30,7 +30,6 @@ AMALGAMATED_FILE=single_include/nlohmann/json.hpp
 all:
 	@echo "amalgamate - amalgamate file single_include/nlohmann/json.hpp from the include/nlohmann sources"
 	@echo "ChangeLog.md - generate ChangeLog file"
-	@echo "check - compile and execute test suite"
 	@echo "check-amalgamation - check whether sources have been amalgamated"
 	@echo "clean - remove built files"
 	@echo "coverage - create coverage information with lcov"
@@ -44,24 +43,10 @@ all:
 	@echo "fuzz_testing_cbor - prepare fuzz testing of the CBOR parser"
 	@echo "fuzz_testing_msgpack - prepare fuzz testing of the MessagePack parser"
 	@echo "fuzz_testing_ubjson - prepare fuzz testing of the UBJSON parser"
-	@echo "json_unit - create single-file test executable"
 	@echo "pedantic_clang - run Clang with maximal warning flags"
 	@echo "pedantic_gcc - run GCC with maximal warning flags"
 	@echo "pretty - beautify code with Artistic Style"
 	@echo "run_benchmarks - build and run benchmarks"
-
-
-##########################################################################
-# unit tests
-##########################################################################
-
-# build unit tests
-json_unit:
-	@$(MAKE) json_unit -C test
-
-# run unit tests
-check:
-	$(MAKE) check -C test
 
 
 ##########################################################################
@@ -642,7 +627,6 @@ clean:
 	rm -fr cmake-3.1.0-Darwin64.tar.gz cmake-3.1.0-Darwin64
 	rm -fr build_coverage build_benchmarks fuzz-testing clang_analyze_build pvs_studio_build infer_build clang_sanitize_build cmake_build
 	$(MAKE) clean -Cdoc
-	$(MAKE) clean -Ctest
 
 ##########################################################################
 # Thirdparty code
