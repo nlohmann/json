@@ -112,6 +112,7 @@ set(files
     src/unit-deserialization.cpp
     src/unit-element_access1.cpp
     src/unit-element_access2.cpp
+    src/unit-hash.cpp
     src/unit-inspection.cpp
     src/unit-items.cpp
     src/unit-iterators1.cpp
