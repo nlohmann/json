@@ -1521,7 +1521,6 @@ scan_number_done:
             // skip following whitespace
             skip_whitespace();
         }
-        while (current == ' ' || current == '\t' || current == '\n' || current == '\r');
 
         switch (current)
         {

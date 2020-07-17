@@ -5,7 +5,7 @@
 ##########################################################################
 
 # directory to recent compiler binaries
-COMPILER_DIR=/Users/niels/Documents/projects/compilers/local/bin
+COMPILER_DIR=/usr/local/opt/llvm/bin
 
 # find GNU sed to use `-i` parameter
 SED:=$(shell command -v gsed || which sed)
@@ -30,7 +30,6 @@ AMALGAMATED_FILE=single_include/nlohmann/json.hpp
 all:
 	@echo "amalgamate - amalgamate file single_include/nlohmann/json.hpp from the include/nlohmann sources"
 	@echo "ChangeLog.md - generate ChangeLog file"
-	@echo "check - compile and execute test suite"
 	@echo "check-amalgamation - check whether sources have been amalgamated"
 	@echo "clean - remove built files"
 	@echo "coverage - create coverage information with lcov"
@@ -44,24 +43,10 @@ all:
 	@echo "fuzz_testing_cbor - prepare fuzz testing of the CBOR parser"
 	@echo "fuzz_testing_msgpack - prepare fuzz testing of the MessagePack parser"
 	@echo "fuzz_testing_ubjson - prepare fuzz testing of the UBJSON parser"
-	@echo "json_unit - create single-file test executable"
 	@echo "pedantic_clang - run Clang with maximal warning flags"
 	@echo "pedantic_gcc - run GCC with maximal warning flags"
 	@echo "pretty - beautify code with Artistic Style"
 	@echo "run_benchmarks - build and run benchmarks"
-
-
-##########################################################################
-# unit tests
-##########################################################################
-
-# build unit tests
-json_unit:
-	@$(MAKE) json_unit -C test
-
-# run unit tests
-check:
-	$(MAKE) check -C test
 
 
 ##########################################################################
@@ -484,13 +469,13 @@ cpplint:
 
 # call Clang-Tidy <https://clang.llvm.org/extra/clang-tidy/>
 clang_tidy:
-	$(COMPILER_DIR)/clang-tidy $(AMALGAMATED_FILE) -- -Iinclude -std=c++11
+	$(COMPILER_DIR)/clang-tidy $(SRCS) -- -Iinclude -std=c++11
 
 # call PVS-Studio Analyzer <https://www.viva64.com/en/pvs-studio/>
 pvs_studio:
 	rm -fr pvs_studio_build
 	mkdir pvs_studio_build
-	cd pvs_studio_build ; cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=On
+	cd pvs_studio_build ; cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=On -DJSON_MultipleHeaders=ON
 	cd pvs_studio_build ; pvs-studio-analyzer analyze -j 10
 	cd pvs_studio_build ; plog-converter -a'GA:1,2;64:1;CS' -t fullhtml PVS-Studio.log -o pvs
 	open pvs_studio_build/pvs/index.html
@@ -499,7 +484,7 @@ pvs_studio:
 infer:
 	rm -fr infer_build
 	mkdir infer_build
-	cd infer_build ; infer compile -- cmake .. ; infer run -- make -j 4
+	cd infer_build ; infer compile -- cmake .. -DJSON_MultipleHeaders=ON ; infer run -- make -j 4
 
 # call OCLint <http://oclint.org> static analyzer
 oclint:
@@ -577,12 +562,12 @@ check-single-includes:
 # check if all flags of our CMake files work
 check_cmake_flags_do:
 	$(CMAKE_BINARY) --version
-	for flag in '' JSON_BuildTests JSON_Install JSON_MultipleHeaders JSON_Sanitizer JSON_Valgrind JSON_NoExceptions JSON_Coverage; do \
+	for flag in JSON_BuildTests JSON_Install JSON_MultipleHeaders JSON_Sanitizer JSON_Valgrind JSON_NoExceptions JSON_Coverage; do \
 		rm -fr cmake_build; \
 		mkdir cmake_build; \
-		echo "$(CMAKE_BINARY) .. -D$$flag=On" ; \
+		echo "\n\n$(CMAKE_BINARY) .. -D$$flag=On\n" ; \
 		cd cmake_build ; \
-		CXX=g++-8 $(CMAKE_BINARY) .. -D$$flag=On -DCMAKE_CXX_COMPILE_FEATURES="cxx_std_11;cxx_range_for" -DCMAKE_CXX_FLAGS="-std=gnu++11" ; \
+		$(CMAKE_BINARY) -Werror=dev .. -D$$flag=On -DCMAKE_CXX_COMPILE_FEATURES="cxx_std_11;cxx_range_for" -DCMAKE_CXX_FLAGS="-std=gnu++11" ; \
 		test -f Makefile || exit 1 ; \
 		cd .. ; \
 	done;
@@ -642,7 +627,6 @@ clean:
 	rm -fr cmake-3.1.0-Darwin64.tar.gz cmake-3.1.0-Darwin64
 	rm -fr build_coverage build_benchmarks fuzz-testing clang_analyze_build pvs_studio_build infer_build clang_sanitize_build cmake_build
 	$(MAKE) clean -Cdoc
-	$(MAKE) clean -Ctest
 
 ##########################################################################
 # Thirdparty code

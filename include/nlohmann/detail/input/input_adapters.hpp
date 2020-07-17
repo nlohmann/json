@@ -36,7 +36,7 @@ class file_input_adapter
     using char_type = char;
 
     JSON_HEDLEY_NON_NULL(2)
-    explicit file_input_adapter(std::FILE* f)  noexcept
+    explicit file_input_adapter(std::FILE* f) noexcept
         : m_file(f)
     {}
 
@@ -90,7 +90,7 @@ class input_stream_adapter
     input_stream_adapter& operator=(input_stream_adapter&) = delete;
     input_stream_adapter& operator=(input_stream_adapter&& rhs) = delete;
 
-    input_stream_adapter(input_stream_adapter&& rhs) : is(rhs.is), sb(rhs.sb)
+    input_stream_adapter(input_stream_adapter&& rhs) noexcept : is(rhs.is), sb(rhs.sb)
     {
         rhs.is = nullptr;
         rhs.sb = nullptr;
