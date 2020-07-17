@@ -51,6 +51,7 @@ SOFTWARE.
 #include <nlohmann/detail/conversions/from_json.hpp>
 #include <nlohmann/detail/conversions/to_json.hpp>
 #include <nlohmann/detail/exceptions.hpp>
+#include <nlohmann/detail/hash.hpp>
 #include <nlohmann/detail/input/binary_reader.hpp>
 #include <nlohmann/detail/input/input_adapters.hpp>
 #include <nlohmann/detail/input/lexer.hpp>
@@ -8698,9 +8699,7 @@ struct hash<nlohmann::json>
     */
     std::size_t operator()(const nlohmann::json& j) const
     {
-        // a naive hashing via the string representation
-        const auto& h = hash<nlohmann::json::string_t>();
-        return h(j.dump());
+        return nlohmann::detail::hash(j);
     }
 };
 
