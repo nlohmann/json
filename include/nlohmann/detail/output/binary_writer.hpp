@@ -279,6 +279,12 @@ class binary_writer
 
             case value_t::binary:
             {
+                if (j.m_value.binary->has_subtype())
+                {
+                    write_number(static_cast<std::uint8_t>(0xd8));
+                    write_number(j.m_value.binary->subtype());
+                }
+
                 // step 1: write control byte and the binary array size
                 const auto N = j.m_value.binary->size();
                 if (N <= 0x17)

@@ -2503,6 +2503,8 @@ TEST_CASE("examples from RFC 7049 Appendix A")
         std::vector<uint8_t> expected((std::istreambuf_iterator<char>(f_bin)),
                                       std::istreambuf_iterator<char>());
         CHECK(j == json::binary(expected));
+
+        CHECK(json::to_cbor(json::binary(std::vector<uint8_t> {}, 0x42)) == std::vector<uint8_t> {0xd8, 0x42, 0x40});
     }
 
     SECTION("arrays")
