@@ -24,6 +24,13 @@ namespace nlohmann
 namespace detail
 {
 
+/// how to treat CBOR tags
+enum class cbor_tag_handler_t
+{
+    error,  ///< throw a parse_error exception in case of a tag
+    ignore   ///< ignore tags
+};
+
 /*!
 @brief determine system byte order
 
@@ -78,13 +85,15 @@ class binary_reader
     @param[in] format  the binary format to parse
     @param[in] sax_    a SAX event processor
     @param[in] strict  whether to expect the input to be consumed completed
+    @param[in] tag_handler  how to treat CBOR tags
 
     @return
     */
     JSON_HEDLEY_NON_NULL(3)
     bool sax_parse(const input_format_t format,
                    json_sax_t* sax_,
-                   const bool strict = true)
+                   const bool strict = true,
+                   const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)
     {
         sax = sax_;
         bool result = false;
@@ -96,7 +105,7 @@ class binary_reader
                 break;
 
             case input_format_t::cbor:
-                result = parse_cbor_internal();
+                result = parse_cbor_internal(true, tag_handler);
                 break;
 
             case input_format_t::msgpack:
@@ -386,10 +395,12 @@ class binary_reader
     @param[in] get_char  whether a new character should be retrieved from the
                          input (true, default) or whether the last read
                          character should be considered instead
+    @param[in] tag_handler how CBOR tags should be treated
 
     @return whether a valid CBOR value was passed to the SAX parser
     */
-    bool parse_cbor_internal(const bool get_char = true)
+    bool parse_cbor_internal(const bool get_char = true,
+                             cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)
     {
         switch (get_char ? get() : current)
         {
@@ -677,6 +688,73 @@ class binary_reader
 
             case 0xBF: // map (indefinite length)
                 return get_cbor_object(std::size_t(-1));
+
+            case 0xC6: // tagged item
+            case 0xC7:
+            case 0xC8:
+            case 0xC9:
+            case 0xCA:
+            case 0xCB:
+            case 0xCC:
+            case 0xCD:
+            case 0xCE:
+            case 0xCF:
+            case 0xD0:
+            case 0xD1:
+            case 0xD2:
+            case 0xD3:
+            case 0xD4:
+            case 0xD8: // tagged item (1 bytes follow)
+            case 0xD9: // tagged item (2 bytes follow)
+            case 0xDA: // tagged item (4 bytes follow)
+            case 0xDB: // tagged item (8 bytes follow)
+            {
+                switch (tag_handler)
+                {
+                    case cbor_tag_handler_t::error:
+                    {
+                        auto last_token = get_token_string();
+                        return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message(input_format_t::cbor, "invalid byte: 0x" + last_token, "value")));
+                    }
+
+                    case cbor_tag_handler_t::ignore:
+                    {
+                        switch (current)
+                        {
+                            case 0xD8:
+                            {
+                                std::uint8_t len{};
+                                get_number(input_format_t::cbor, len);
+                                break;
+                            }
+                            case 0xD9:
+                            {
+                                std::uint16_t len{};
+                                get_number(input_format_t::cbor, len);
+                                break;
+                            }
+                            case 0xDA:
+                            {
+                                std::uint32_t len{};
+                                get_number(input_format_t::cbor, len);
+                                break;
+                            }
+                            case 0xDB:
+                            {
+                                std::uint64_t len{};
+                                get_number(input_format_t::cbor, len);
+                                break;
+                            }
+                            default:
+                                break;
+                        }
+                        return parse_cbor_internal(true, tag_handler);
+                    }
+
+                    default:            // LCOV_EXCL_LINE
+                        JSON_ASSERT(false);  // LCOV_EXCL_LINE
+                }
+            }
 
             case 0xF4: // false
                 return sax->boolean(false);
