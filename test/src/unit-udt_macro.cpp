@@ -105,14 +105,14 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(person_without_private_data_2, age, name, met
 
 class person_with_private_alphabet
 {
-public:
+  public:
     bool operator==(const person_with_private_alphabet& other)
     {
-        return std::tie(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z) == 
+        return std::tie(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z) ==
                std::tie(other.a, other.b, other.c, other.d, other.e, other.f, other.g, other.h, other.i, other.j, other.k, other.l, other.m, other.n, other.o, other.p, other.q, other.r, other.s, other.t, other.u, other.v, other.w, other.x, other.y, other.z);
     }
-    
-private:
+
+  private:
     int a;
     int b;
     int c;
@@ -144,13 +144,13 @@ private:
 
 class person_with_public_alphabet
 {
-public:
+  public:
     bool operator==(const person_with_public_alphabet& other)
     {
-        return std::tie(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z) == 
+        return std::tie(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z) ==
                std::tie(other.a, other.b, other.c, other.d, other.e, other.f, other.g, other.h, other.i, other.j, other.k, other.l, other.m, other.n, other.o, other.p, other.q, other.r, other.s, other.t, other.u, other.v, other.w, other.x, other.y, other.z);
     }
-    
+
     int a;
     int b;
     int c;
@@ -214,10 +214,10 @@ TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/priv
                    persons::person_with_private_alphabet,
                    persons::person_with_public_alphabet)
 {
-    SECTION("person")
+    SECTION("alphabet")
     {
         {
-	    T obj1;
+            T obj1;
             nlohmann::json j = obj1; //via json object
             T obj2;
             j.get_to(obj2);
@@ -225,7 +225,7 @@ TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/priv
         }
 
         {
-	    T obj1;
+            T obj1;
             nlohmann::json j1 = obj1; //via json string
             std::string s = j1.dump();
             nlohmann::json j2 = nlohmann::json::parse(s);
@@ -235,7 +235,7 @@ TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/priv
         }
 
         {
-	    T obj1;
+            T obj1;
             nlohmann::json j1 = obj1; //via msgpack
             std::vector<uint8_t> buf = nlohmann::json::to_msgpack(j1);
             nlohmann::json j2 = nlohmann::json::from_msgpack(buf);
@@ -245,7 +245,7 @@ TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/priv
         }
 
         {
-	    T obj1;
+            T obj1;
             nlohmann::json j1 = obj1; //via bson
             std::vector<uint8_t> buf = nlohmann::json::to_bson(j1);
             nlohmann::json j2 = nlohmann::json::from_bson(buf);
@@ -255,7 +255,7 @@ TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/priv
         }
 
         {
-	    T obj1;
+            T obj1;
             nlohmann::json j1 = obj1; //via cbor
             std::vector<uint8_t> buf = nlohmann::json::to_cbor(j1);
             nlohmann::json j2 = nlohmann::json::from_cbor(buf);
@@ -265,7 +265,7 @@ TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/priv
         }
 
         {
-	    T obj1;
+            T obj1;
             nlohmann::json j1 = obj1; //via ubjson
             std::vector<uint8_t> buf = nlohmann::json::to_ubjson(j1);
             nlohmann::json j2 = nlohmann::json::from_ubjson(buf);
