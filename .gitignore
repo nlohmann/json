@@ -32,6 +32,3 @@ doc/mkdocs/docs/images
 doc/mkdocs/docs/examples
 doc/mkdocs/site
 doc/mkdocs/docs/__pycache__/
-/tools/NlohmannMacroBuilder/dist/
-/tools/NlohmannMacroBuilder/build/
-/tools/NlohmannMacroBuilder/nbproject/private
