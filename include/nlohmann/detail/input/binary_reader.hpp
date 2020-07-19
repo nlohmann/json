@@ -2278,7 +2278,7 @@ class binary_reader
                 success = false;
                 break;
             }
-            return std::char_traits<char_type>::to_char_type(current);
+            result.push_back(std::char_traits<char_type>::to_char_type(current));
         };
         return success;
     }
@@ -2310,7 +2310,7 @@ class binary_reader
                 success = false;
                 break;
             }
-            return static_cast<std::uint8_t>(current);
+            result.push_back(static_cast<std::uint8_t>(current));
         }
         return success;
     }
