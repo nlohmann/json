@@ -1954,6 +1954,16 @@ TEST_CASE("regression tests")
         auto val = j.value("x", defval);
         auto val2 = j.value("y", defval);
     }
+
+    SECTION("issue #2293 - eof doesnt cause parsing to stop")
+    {
+        std::vector<uint8_t> data =
+        {
+            0x7B, 0x6F, 0x62, 0x6A, 0x65, 0x63, 0x74, 0x20, 0x4F, 0x42
+        };
+        json result = json::from_cbor(data, true, false);
+        CHECK(result.is_discarded());
+    }
 }
 
 #if !defined(JSON_NOEXCEPTION)
