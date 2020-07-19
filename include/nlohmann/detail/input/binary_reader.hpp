@@ -2271,7 +2271,8 @@ class binary_reader
                     string_t& result)
     {
         bool success = true;
-        for(NumberType i = 0; i < len; i++) {
+        for (NumberType i = 0; i < len; i++)
+        {
             get();
             if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(format, "string")))
             {
@@ -2303,7 +2304,8 @@ class binary_reader
                     binary_t& result)
     {
         bool success = true;
-        for(NumberType i = 0; i < len; i++) {
+        for (NumberType i = 0; i < len; i++)
+        {
             get();
             if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(format, "binary")))
             {
