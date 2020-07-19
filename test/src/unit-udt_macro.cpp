@@ -222,7 +222,7 @@ TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/priv
             nlohmann::json j = obj1; //via json object
             T obj2;
             j.get_to(obj2);
-            assert(obj1 == obj2);
+            CHECK(obj1 == obj2);
         }
 
         {
@@ -232,7 +232,7 @@ TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/priv
             nlohmann::json j2 = nlohmann::json::parse(s);
             T obj2;
             j2.get_to(obj2);
-            assert(obj1 == obj2);
+            CHECK(obj1 == obj2);
         }
 
         {
@@ -242,7 +242,7 @@ TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/priv
             nlohmann::json j2 = nlohmann::json::from_msgpack(buf);
             T obj2;
             j2.get_to(obj2);
-            assert(obj1 == obj2);
+            CHECK(obj1 == obj2);
         }
 
         {
@@ -252,7 +252,7 @@ TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/priv
             nlohmann::json j2 = nlohmann::json::from_bson(buf);
             T obj2;
             j2.get_to(obj2);
-            assert(obj1 == obj2);
+            CHECK(obj1 == obj2);
         }
 
         {
@@ -262,7 +262,7 @@ TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/priv
             nlohmann::json j2 = nlohmann::json::from_cbor(buf);
             T obj2;
             j2.get_to(obj2);
-            assert(obj1 == obj2);
+            CHECK(obj1 == obj2);
         }
 
         {
@@ -272,7 +272,7 @@ TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/priv
             nlohmann::json j2 = nlohmann::json::from_ubjson(buf);
             T obj2;
             j2.get_to(obj2);
-            assert(obj1 == obj2);
+            CHECK(obj1 == obj2);
         }
     }
 }
