@@ -2016,6 +2016,10 @@ class binary_reader
                 for (std::size_t i = 0; i < size; ++i)
                 {
                     get();
+                    if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::ubjson, "number")))
+                    {
+                        return false;
+                    }
                     number_vector.push_back(current);
                 }
 
