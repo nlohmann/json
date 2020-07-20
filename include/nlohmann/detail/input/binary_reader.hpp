@@ -2012,36 +2012,37 @@ class binary_reader
                 }
 
                 // get number string
-                std::string s;
+                std::vector<char_int_type> number_vector;
                 for (std::size_t i = 0; i < size; ++i)
                 {
                     get();
-                    s.push_back(current);
+                    number_vector.push_back(current);
                 }
 
                 // parse number string
-                auto ia = detail::input_adapter(std::forward<std::string>(s));
-                auto l = detail::lexer<BasicJsonType, decltype(ia)>(std::move(ia), false);
-                const auto result_number = l.scan();
-                const auto result_remainder = l.scan();
+                auto number_ia = detail::input_adapter(std::forward<decltype(number_vector)>(number_vector));
+                auto number_lexer = detail::lexer<BasicJsonType, decltype(number_ia)>(std::move(number_ia), false);
+                const auto result_number = number_lexer.scan();
+                const auto number_string = number_lexer.get_token_string();
+                const auto result_remainder = number_lexer.scan();
 
                 using token_type = typename detail::lexer_base<BasicJsonType>::token_type;
 
                 if (JSON_HEDLEY_UNLIKELY(result_remainder != token_type::end_of_input))
                 {
-                    return sax->parse_error(chars_read, s, parse_error::create(115, chars_read, exception_message(input_format_t::ubjson, "invalid number text: " + s, "high-precision number")));
+                    return sax->parse_error(chars_read, number_string, parse_error::create(115, chars_read, exception_message(input_format_t::ubjson, "invalid number text: " + number_lexer.get_token_string(), "high-precision number")));
                 }
 
                 switch (result_number)
                 {
                     case token_type::value_integer:
-                        return sax->number_integer(l.get_number_integer());
+                        return sax->number_integer(number_lexer.get_number_integer());
                     case token_type::value_unsigned:
-                        return sax->number_unsigned(l.get_number_unsigned());
+                        return sax->number_unsigned(number_lexer.get_number_unsigned());
                     case token_type::value_float:
-                        return sax->number_float(l.get_number_float(), std::move(s));
+                        return sax->number_float(number_lexer.get_number_float(), std::move(number_string));
                     default:
-                        return sax->parse_error(chars_read, s, parse_error::create(115, chars_read, exception_message(input_format_t::ubjson, "invalid number text: " + s, "high-precision number")));
+                        return sax->parse_error(chars_read, number_string, parse_error::create(115, chars_read, exception_message(input_format_t::ubjson, "invalid number text: " + number_lexer.get_token_string(), "high-precision number")));
                 }
             }
 

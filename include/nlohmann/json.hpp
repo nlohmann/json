@@ -7507,7 +7507,7 @@ class basic_json
                                 const bool allow_exceptions = true,
                                 const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)
     {
-        return from_cbor(ptr, ptr + len, strict, tag_handler);
+        return from_cbor(ptr, ptr + len, strict, allow_exceptions, tag_handler);
     }
 
 

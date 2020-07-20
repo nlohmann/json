@@ -1328,7 +1328,7 @@ class binary_writer
             write_number_with_ubjson_prefix(number.size(), true);
             for (std::size_t i = 0; i < number.size(); ++i)
             {
-                oa->write_character(to_char_type(number[i]));
+                oa->write_character(to_char_type(static_cast<std::uint8_t>(number[i])));
             }
         }
     }
@@ -1392,7 +1392,7 @@ class binary_writer
             write_number_with_ubjson_prefix(number.size(), true);
             for (std::size_t i = 0; i < number.size(); ++i)
             {
-                oa->write_character(to_char_type(number[i]));
+                oa->write_character(to_char_type(static_cast<std::uint8_t>(number[i])));
             }
         }
         // LCOV_EXCL_STOP
