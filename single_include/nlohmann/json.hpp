@@ -23433,6 +23433,7 @@ class basic_json
     number_unsigned | 256..32767                        | int16       | `I`
     number_unsigned | 32768..2147483647                 | int32       | `l`
     number_unsigned | 2147483648..9223372036854775807   | int64       | `L`
+    number_unsigned | 2147483649..18446744073709551615  | high-precision | `H`
     number_float    | *any value*                       | float64     | `D`
     string          | *with shortest length indicator*  | string      | `S`
     array           | *see notes on optimized format*   | array       | `[`
@@ -23443,7 +23444,6 @@ class basic_json
 
     @note The following values can **not** be converted to a UBJSON value:
           - strings with more than 9223372036854775807 bytes (theoretical)
-          - unsigned integer numbers above 9223372036854775807
 
     @note The following markers are not used in the conversion:
           - `Z`: no-op values are not created.
