@@ -29,7 +29,6 @@ SOFTWARE.
 
 #include <string>
 #include <vector>
-#include <cassert>
 #include "doctest_compatibility.h"
 
 #include <nlohmann/json.hpp>
@@ -109,8 +108,32 @@ class person_with_private_alphabet
   public:
     bool operator==(const person_with_private_alphabet& other)
     {
-        return std::tie(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z) ==
-               std::tie(other.a, other.b, other.c, other.d, other.e, other.f, other.g, other.h, other.i, other.j, other.k, other.l, other.m, other.n, other.o, other.p, other.q, other.r, other.s, other.t, other.u, other.v, other.w, other.x, other.y, other.z);
+        return  a == other.a &&
+                b == other.b &&
+                c == other.c &&
+                d == other.d &&
+                e == other.e &&
+                f == other.f &&
+                g == other.g &&
+                h == other.h &&
+                i == other.i &&
+                j == other.j &&
+                k == other.k &&
+                l == other.l &&
+                m == other.m &&
+                n == other.n &&
+                o == other.o &&
+                p == other.p &&
+                q == other.q &&
+                r == other.r &&
+                s == other.s &&
+                t == other.t &&
+                u == other.u &&
+                v == other.v &&
+                w == other.w &&
+                x == other.x &&
+                y == other.y &&
+                z == other.z;
     }
 
   private:
@@ -148,8 +171,32 @@ class person_with_public_alphabet
   public:
     bool operator==(const person_with_public_alphabet& other)
     {
-        return std::tie(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z) ==
-               std::tie(other.a, other.b, other.c, other.d, other.e, other.f, other.g, other.h, other.i, other.j, other.k, other.l, other.m, other.n, other.o, other.p, other.q, other.r, other.s, other.t, other.u, other.v, other.w, other.x, other.y, other.z);
+        return  a == other.a &&
+                b == other.b &&
+                c == other.c &&
+                d == other.d &&
+                e == other.e &&
+                f == other.f &&
+                g == other.g &&
+                h == other.h &&
+                i == other.i &&
+                j == other.j &&
+                k == other.k &&
+                l == other.l &&
+                m == other.m &&
+                n == other.n &&
+                o == other.o &&
+                p == other.p &&
+                q == other.q &&
+                r == other.r &&
+                s == other.s &&
+                t == other.t &&
+                u == other.u &&
+                v == other.v &&
+                w == other.w &&
+                x == other.x &&
+                y == other.y &&
+                z == other.z;
     }
 
     int a;
