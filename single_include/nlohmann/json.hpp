@@ -2280,6 +2280,7 @@ json.exception.parse_error.110 | parse error at 1: cannot read 2 bytes from vect
 json.exception.parse_error.112 | parse error at 1: error reading CBOR; last byte: 0xF8 | Not all types of CBOR or MessagePack are supported. This exception occurs if an unsupported byte was read.
 json.exception.parse_error.113 | parse error at 2: expected a CBOR string; last byte: 0x98 | While parsing a map key, a value that is not a string has been read.
 json.exception.parse_error.114 | parse error: Unsupported BSON record type 0x0F | The parsing of the corresponding BSON record type is not implemented (yet).
+json.exception.parse_error.115 | parse error at byte 5: syntax error while parsing UBJSON high-precision number: invalid number text: 1A | A UBJSON high-precision number could not be parsed.
 
 @note For an input with n bytes, 1 is the index of the first character and n+1
       is the index of the terminating null byte or the end of file. This also
@@ -9502,30 +9503,45 @@ class binary_reader
 
             case 'H':
             {
+                // get size of following number string
                 std::size_t size{};
                 auto res = get_ubjson_size_value(size);
+                if (JSON_HEDLEY_UNLIKELY(!res))
+                {
+                    return res;
+                }
 
+                // get number string
                 std::string s;
-                for (int i = 0; i < size; ++i)
+                for (std::size_t i = 0; i < size; ++i)
                 {
                     get();
                     s.push_back(current);
                 }
 
+                // parse number string
                 auto ia = detail::input_adapter(std::forward<std::string>(s));
                 auto l = detail::lexer<BasicJsonType, decltype(ia)>(std::move(ia), false);
-                auto result = l.scan();
+                const auto result_number = l.scan();
+                const auto result_remainder = l.scan();
 
-                switch (result)
+                using token_type = typename detail::lexer_base<BasicJsonType>::token_type;
+
+                if (JSON_HEDLEY_UNLIKELY(result_remainder != token_type::end_of_input))
                 {
-                    case detail::lexer_base<BasicJsonType>::token_type::value_integer:
+                    return sax->parse_error(chars_read, s, parse_error::create(115, chars_read, exception_message(input_format_t::ubjson, "invalid number text: " + s, "high-precision number")));
+                }
+
+                switch (result_number)
+                {
+                    case token_type::value_integer:
                         return sax->number_integer(l.get_number_integer());
-                    case detail::lexer_base<BasicJsonType>::token_type::value_unsigned:
+                    case token_type::value_unsigned:
                         return sax->number_unsigned(l.get_number_unsigned());
-                    case detail::lexer_base<BasicJsonType>::token_type::value_float:
+                    case token_type::value_float:
                         return sax->number_float(l.get_number_float(), std::move(s));
                     default:
-                        return sax->parse_error(chars_read, s, parse_error::create(113, chars_read, exception_message(input_format_t::ubjson, "invalid number", "number")));
+                        return sax->parse_error(chars_read, s, parse_error::create(115, chars_read, exception_message(input_format_t::ubjson, "invalid number text: " + s, "high-precision number")));
                 }
             }
 
@@ -23881,6 +23897,7 @@ class basic_json
     int16       | number_integer                          | `I`
     int32       | number_integer                          | `l`
     int64       | number_integer                          | `L`
+    high-precision number | number_integer, number_unsigned, or number_float - depends on number string | 'H'
     string      | string                                  | `S`
     char        | string                                  | `C`
     array       | array (optimized values are supported)  | `[`

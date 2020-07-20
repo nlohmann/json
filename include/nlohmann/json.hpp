@@ -7686,6 +7686,7 @@ class basic_json
     int16       | number_integer                          | `I`
     int32       | number_integer                          | `l`
     int64       | number_integer                          | `L`
+    high-precision number | number_integer, number_unsigned, or number_float - depends on number string | 'H'
     string      | string                                  | `S`
     char        | string                                  | `C`
     array       | array (optimized values are supported)  | `[`

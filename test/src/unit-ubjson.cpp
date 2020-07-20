@@ -770,10 +770,39 @@ TEST_CASE("UBJSON")
 
             SECTION("high-precision number")
             {
-                std::vector<uint8_t> vec = {'H', 'i', 0x16, '3', '.', '1', '4', '1', '5', '9', '2', '6', '5', '3', '5', '8', '9', '7', '9', '3', '2', '3', '8', '4', '6'};
-                const auto j = json::from_ubjson(vec);
-                CHECK(j.is_number_float());
-                CHECK(j.dump() == "3.141592653589793");
+                SECTION("unsigned integer number")
+                {
+                    std::vector<uint8_t> vec = {'H', 'i', 0x14, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0'};
+                    const auto j = json::from_ubjson(vec);
+                    CHECK(j.is_number_unsigned());
+                    CHECK(j.dump() == "12345678901234567890");
+                }
+
+                SECTION("signed integer number")
+                {
+                    std::vector<uint8_t> vec = {'H', 'i', 0x13, '-', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8'};
+                    const auto j = json::from_ubjson(vec);
+                    CHECK(j.is_number_integer());
+                    CHECK(j.dump() == "-123456789012345678");
+                }
+
+                SECTION("floating-point number")
+                {
+                    std::vector<uint8_t> vec = {'H', 'i', 0x16, '3', '.', '1', '4', '1', '5', '9',  '2', '6', '5', '3', '5', '8', '9',  '7', '9', '3', '2', '3', '8', '4',  '6'};
+                    const auto j = json::from_ubjson(vec);
+                    CHECK(j.is_number_float());
+                    CHECK(j.dump() == "3.141592653589793");
+                }
+
+                SECTION("errors")
+                {
+                    std::vector<uint8_t> vec1 = {'H', 'i', 2, '1', 'A', '3'};
+                    CHECK_THROWS_WITH_AS(json::from_ubjson(vec1), "[json.exception.parse_error.115] parse error at byte 5: syntax error while parsing UBJSON high-precision number: invalid number text: 1A", json::parse_error);
+                    std::vector<uint8_t> vec2 = {'H', 'i', 2, '1', '.'};
+                    CHECK_THROWS_WITH_AS(json::from_ubjson(vec2), "[json.exception.parse_error.115] parse error at byte 5: syntax error while parsing UBJSON high-precision number: invalid number text: 1.", json::parse_error);
+                    std::vector<uint8_t> vec3 = {'H', 2, '1', '0'};
+                    CHECK_THROWS_WITH_AS(json::from_ubjson(vec3), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing UBJSON size: expected length type specification (U, i, I, l, L) after '#'; last byte: 0x02", json::parse_error);
+                }
             }
         }
 
