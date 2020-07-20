@@ -15,6 +15,7 @@
 #include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/input/input_adapters.hpp>
 #include <nlohmann/detail/input/json_sax.hpp>
+#include <nlohmann/detail/input/lexer.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/is_sax.hpp>
 #include <nlohmann/detail/value_t.hpp>
@@ -1998,6 +1999,35 @@ class binary_reader
             {
                 double number{};
                 return get_number(input_format_t::ubjson, number) && sax->number_float(static_cast<number_float_t>(number), "");
+            }
+
+            case 'H':
+            {
+                std::size_t size{};
+                auto res = get_ubjson_size_value(size);
+
+                std::string s;
+                for (int i = 0; i < size; ++i)
+                {
+                    get();
+                    s.push_back(current);
+                }
+
+                auto ia = detail::input_adapter(std::forward<std::string>(s));
+                auto l = detail::lexer<BasicJsonType, decltype(ia)>(std::move(ia), false);
+                auto result = l.scan();
+
+                switch (result)
+                {
+                    case detail::lexer_base<BasicJsonType>::token_type::value_integer:
+                        return sax->number_integer(l.get_number_integer());
+                    case detail::lexer_base<BasicJsonType>::token_type::value_unsigned:
+                        return sax->number_unsigned(l.get_number_unsigned());
+                    case detail::lexer_base<BasicJsonType>::token_type::value_float:
+                        return sax->number_float(l.get_number_float(), std::move(s));
+                    default:
+                        return sax->parse_error(chars_read, s, parse_error::create(113, chars_read, exception_message(input_format_t::ubjson, "invalid number", "number")));
+                }
             }
 
             case 'C':  // char
