@@ -137,32 +137,32 @@ class person_with_private_alphabet
     }
 
   private:
-    int a;
-    int b;
-    int c;
-    int d;
-    int e;
-    int f;
-    int g;
-    int h;
-    int i;
-    int j;
-    int k;
-    int l;
-    int m;
-    int n;
-    int o;
-    int p;
-    int q;
-    int r;
-    int s;
-    int t;
-    int u;
-    int v;
-    int w;
-    int x;
-    int y;
-    int z;
+    int a = 0;
+    int b = 0;
+    int c = 0;
+    int d = 0;
+    int e = 0;
+    int f = 0;
+    int g = 0;
+    int h = 0;
+    int i = 0;
+    int j = 0;
+    int k = 0;
+    int l = 0;
+    int m = 0;
+    int n = 0;
+    int o = 0;
+    int p = 0;
+    int q = 0;
+    int r = 0;
+    int s = 0;
+    int t = 0;
+    int u = 0;
+    int v = 0;
+    int w = 0;
+    int x = 0;
+    int y = 0;
+    int z = 0;
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(person_with_private_alphabet, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
 };
 
@@ -199,32 +199,32 @@ class person_with_public_alphabet
                 z == other.z;
     }
 
-    int a;
-    int b;
-    int c;
-    int d;
-    int e;
-    int f;
-    int g;
-    int h;
-    int i;
-    int j;
-    int k;
-    int l;
-    int m;
-    int n;
-    int o;
-    int p;
-    int q;
-    int r;
-    int s;
-    int t;
-    int u;
-    int v;
-    int w;
-    int x;
-    int y;
-    int z;
+    int a = 0;
+    int b = 0;
+    int c = 0;
+    int d = 0;
+    int e = 0;
+    int f = 0;
+    int g = 0;
+    int h = 0;
+    int i = 0;
+    int j = 0;
+    int k = 0;
+    int l = 0;
+    int m = 0;
+    int n = 0;
+    int o = 0;
+    int p = 0;
+    int q = 0;
+    int r = 0;
+    int s = 0;
+    int t = 0;
+    int u = 0;
+    int v = 0;
+    int w = 0;
+    int x = 0;
+    int y = 0;
+    int z = 0;
 };
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(person_with_public_alphabet, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
