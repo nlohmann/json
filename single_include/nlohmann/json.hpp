@@ -8264,7 +8264,7 @@ class binary_reader
                 success = false;
                 break;
             }
-            result.push_back(std::char_traits<char_type>::to_char_type(current));
+            result.push_back(static_cast<typename string_t::value_type>(current));
         };
         return success;
     }
@@ -23786,7 +23786,7 @@ class basic_json
                                 const bool allow_exceptions = true,
                                 const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)
     {
-        return from_cbor(ptr, ptr + len, strict, tag_handler);
+        return from_cbor(ptr, ptr + len, strict, allow_exceptions, tag_handler);
     }
 
 
