@@ -160,7 +160,7 @@ foreach(file ${files})
     endif()
 
     add_test(NAME "${testcase}"
-        COMMAND ${testcase} ${DOCTEST_TEST_FILTER} --no-skip
+        COMMAND ${testcase} ${DOCTEST_TEST_FILTER} --no-skip -s
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     )
     set_tests_properties("${testcase}" PROPERTIES LABELS "all" FIXTURES_REQUIRED TEST_DATA)
