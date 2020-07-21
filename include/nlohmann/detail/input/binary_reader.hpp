@@ -2012,7 +2012,7 @@ class binary_reader
                 }
 
                 // get number string
-                std::vector<char_int_type> number_vector;
+                std::vector<char> number_vector;
                 for (std::size_t i = 0; i < size; ++i)
                 {
                     get();
@@ -2020,7 +2020,7 @@ class binary_reader
                     {
                         return false;
                     }
-                    number_vector.push_back(current);
+                    number_vector.push_back(static_cast<char>(current));
                 }
 
                 // parse number string
