@@ -15,7 +15,7 @@ add_library(Foo SHARED Foo.cpp Bar.cpp)
 target_include_directories(Foo PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${nlohmann_json_source}/include)
 set_target_properties(Foo PROPERTIES CXX_STANDARD 11)
 
-add_library(Bar SHARED PRIVATE Bar.cpp)
+add_library(Bar SHARED Bar.cpp)
 target_link_libraries(Bar PRIVATE Foo)
 target_include_directories(Bar PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${nlohmann_json_source}/include)
 set_target_properties(Bar PROPERTIES CXX_STANDARD 11)
