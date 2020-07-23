@@ -92,6 +92,10 @@ There are two macros to make your life easier as long as you (1) want to use a J
 
 In both macros, the first parameter is the name of the class/struct, and all remaining parameters name the members.
 
+!!! note
+
+    At most 64 member variables can be passed to `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE` or `NLOHMANN_DEFINE_TYPE_INTRUSIVE`.
+
 ??? example
 
     The `to_json`/`from_json` functions for the `person` struct above can be created with:
