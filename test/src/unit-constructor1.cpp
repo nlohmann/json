@@ -341,7 +341,7 @@ TEST_CASE("constructors")
             CHECK(j.type() == json::value_t::array);
             CHECK(j == json({1, 2, 3, 4, 5}));
 
-            std::valarray<int> jva = j;
+            auto jva = j.get<std::valarray<int>>();
             CHECK(jva.size() == va.size());
             for (size_t i = 0; i < jva.size(); ++i)
             {
@@ -356,7 +356,7 @@ TEST_CASE("constructors")
             CHECK(j.type() == json::value_t::array);
             CHECK(j == json({1.2, 2.3, 3.4, 4.5, 5.6}));
 
-            std::valarray<double> jva = j;
+            auto jva = j.get<std::valarray<double>>();
             CHECK(jva.size() == va.size());
             for (size_t i = 0; i < jva.size(); ++i)
             {
@@ -846,7 +846,7 @@ TEST_CASE("constructors")
             CHECK(j.type() == json::value_t::number_float);
 
             // check round trip of NaN
-            json::number_float_t d = j;
+            json::number_float_t d{j};
             CHECK((std::isnan(d) && std::isnan(n)) == true);
 
             // check that NaN is serialized to null
@@ -861,7 +861,7 @@ TEST_CASE("constructors")
             CHECK(j.type() == json::value_t::number_float);
 
             // check round trip of infinity
-            json::number_float_t d = j;
+            json::number_float_t d{j};
             CHECK(d == n);
 
             // check that inf is serialized to null

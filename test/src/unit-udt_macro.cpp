@@ -243,7 +243,7 @@ TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRU
         CHECK(json(p1).dump() == "{\"age\":1,\"metadata\":{\"haircuts\":2},\"name\":\"Erik\"}");
 
         // deserialization
-        T p2 = json(p1);
+        auto p2 = json(p1).get<T>();
         CHECK(p2 == p1);
 
         // roundtrip
@@ -253,8 +253,7 @@ TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRU
         // check exception in case of missing field
         json j = json(p1);
         j.erase("age");
-        T p3;
-        CHECK_THROWS_WITH_AS(p3 = json(j), "[json.exception.out_of_range.403] key 'age' not found", json::out_of_range);
+        CHECK_THROWS_WITH_AS(j.get<T>(), "[json.exception.out_of_range.403] key 'age' not found", json::out_of_range);
     }
 }
 

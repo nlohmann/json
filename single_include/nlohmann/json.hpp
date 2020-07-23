@@ -2302,6 +2302,16 @@ JSON_HEDLEY_DIAGNOSTIC_POP
     void to_json(nlohmann::json& j, const Type& t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) } \
     void from_json(const nlohmann::json& j, Type& t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, __VA_ARGS__)) }
 
+#ifndef JSON_USE_IMPLICIT_CONVERSIONS
+    #define JSON_USE_IMPLICIT_CONVERSIONS 1
+#endif
+
+#if JSON_USE_IMPLICIT_CONVERSIONS
+    #define JSON_EXPLICIT
+#else
+    #define JSON_EXPLICIT explicit
+#endif
+
 
 namespace nlohmann
 {
@@ -3022,6 +3032,16 @@ using get_template_function = decltype(std::declval<T>().template get<U>());
 template<typename BasicJsonType, typename T, typename = void>
 struct has_from_json : std::false_type {};
 
+// trait checking if j.get<T> is valid
+// use this trait instead of std::is_constructible or std::is_convertible,
+// both rely on, or make use of implicit conversions, and thus fail when T
+// has several constructors/operator= (see https://github.com/nlohmann/json/issues/958)
+template <typename BasicJsonType, typename T>
+struct is_getable
+{
+    static constexpr bool value = is_detected<get_template_function, const BasicJsonType&, T>::value;
+};
+
 template<typename BasicJsonType, typename T>
 struct has_from_json < BasicJsonType, T,
            enable_if_t < !is_basic_json<T>::value >>
@@ -3507,7 +3527,7 @@ void from_json(const BasicJsonType& j, EnumType& e)
 
 // forward_list doesn't have an insert method
 template<typename BasicJsonType, typename T, typename Allocator,
-         enable_if_t<std::is_convertible<BasicJsonType, T>::value, int> = 0>
+         enable_if_t<is_getable<BasicJsonType, T>::value, int> = 0>
 void from_json(const BasicJsonType& j, std::forward_list<T, Allocator>& l)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
@@ -3524,7 +3544,7 @@ void from_json(const BasicJsonType& j, std::forward_list<T, Allocator>& l)
 
 // valarray doesn't have an insert method
 template<typename BasicJsonType, typename T,
-         enable_if_t<std::is_convertible<BasicJsonType, T>::value, int> = 0>
+         enable_if_t<is_getable<BasicJsonType, T>::value, int> = 0>
 void from_json(const BasicJsonType& j, std::valarray<T>& l)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
@@ -3532,7 +3552,11 @@ void from_json(const BasicJsonType& j, std::valarray<T>& l)
         JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(j.type_name())));
     }
     l.resize(j.size());
-    std::copy(j.begin(), j.end(), std::begin(l));
+    std::transform(j.begin(), j.end(), std::begin(l),
+                   [](const BasicJsonType & elem)
+    {
+        return elem.template get<T>();
+    });
 }
 
 template<typename BasicJsonType, typename T, std::size_t N>
@@ -19508,7 +19532,7 @@ class basic_json
 #endif
                    && detail::is_detected<detail::get_template_function, const basic_json_t&, ValueType>::value
                    , int >::type = 0 >
-    operator ValueType() const
+    JSON_EXPLICIT operator ValueType() const
     {
         // delegate the call to get<>() const
         return get<ValueType>();
@@ -20063,8 +20087,9 @@ class basic_json
 
     @since version 1.0.0
     */
+    // using std::is_convertible in a std::enable_if will fail when using explicit conversions
     template < class ValueType, typename std::enable_if <
-                   std::is_convertible<basic_json_t, ValueType>::value
+                   detail::is_getable<basic_json_t, ValueType>::value
                    && !std::is_same<value_t, ValueType>::value, int >::type = 0 >
     ValueType value(const typename object_t::key_type& key, const ValueType& default_value) const
     {
@@ -20075,7 +20100,7 @@ class basic_json
             const auto it = find(key);
             if (it != end())
             {
-                return *it;
+                return it->template get<ValueType>();
             }
 
             return default_value;
@@ -20137,7 +20162,7 @@ class basic_json
     @since version 2.0.2
     */
     template<class ValueType, typename std::enable_if<
-                 std::is_convertible<basic_json_t, ValueType>::value, int>::type = 0>
+                 detail::is_getable<basic_json_t, ValueType>::value, int>::type = 0>
     ValueType value(const json_pointer& ptr, const ValueType& default_value) const
     {
         // at only works for objects
@@ -20146,7 +20171,7 @@ class basic_json
             // if pointer resolves a value, return it or use default value
             JSON_TRY
             {
-                return ptr.get_checked(this);
+                return ptr.get_checked(this).template get<ValueType>();
             }
             JSON_INTERNAL_CATCH (out_of_range&)
             {
@@ -24620,8 +24645,8 @@ class basic_json
             }
 
             // collect mandatory members
-            const std::string op = get_value("op", "op", true);
-            const std::string path = get_value(op, "path", true);
+            const auto op = get_value("op", "op", true).template get<std::string>();
+            const auto path = get_value(op, "path", true).template get<std::string>();
             json_pointer ptr(path);
 
             switch (get_op(op))
@@ -24647,7 +24672,7 @@ class basic_json
 
                 case patch_operations::move:
                 {
-                    const std::string from_path = get_value("move", "from", true);
+                    const auto from_path = get_value("move", "from", true).template get<std::string>();
                     json_pointer from_ptr(from_path);
 
                     // the "from" location must exist - use at()
@@ -24664,7 +24689,7 @@ class basic_json
 
                 case patch_operations::copy:
                 {
-                    const std::string from_path = get_value("copy", "from", true);
+                    const auto from_path = get_value("copy", "from", true).template get<std::string>();
                     const json_pointer from_ptr(from_path);
 
                     // the "from" location must exist - use at()
@@ -25086,6 +25111,7 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 #undef JSON_HAS_CPP_17
 #undef NLOHMANN_BASIC_JSON_TPL_DECLARATION
 #undef NLOHMANN_BASIC_JSON_TPL
+#undef JSON_EXPLICIT
 
 // #include <nlohmann/thirdparty/hedley/hedley_undef.hpp>
 #undef JSON_HEDLEY_ALWAYS_INLINE

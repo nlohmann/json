@@ -3229,7 +3229,7 @@ class basic_json
 #endif
                    && detail::is_detected<detail::get_template_function, const basic_json_t&, ValueType>::value
                    , int >::type = 0 >
-    operator ValueType() const
+    JSON_EXPLICIT operator ValueType() const
     {
         // delegate the call to get<>() const
         return get<ValueType>();
@@ -3784,8 +3784,9 @@ class basic_json
 
     @since version 1.0.0
     */
+    // using std::is_convertible in a std::enable_if will fail when using explicit conversions
     template < class ValueType, typename std::enable_if <
-                   std::is_convertible<basic_json_t, ValueType>::value
+                   detail::is_getable<basic_json_t, ValueType>::value
                    && !std::is_same<value_t, ValueType>::value, int >::type = 0 >
     ValueType value(const typename object_t::key_type& key, const ValueType& default_value) const
     {
@@ -3796,7 +3797,7 @@ class basic_json
             const auto it = find(key);
             if (it != end())
             {
-                return *it;
+                return it->template get<ValueType>();
             }
 
             return default_value;
@@ -3858,7 +3859,7 @@ class basic_json
     @since version 2.0.2
     */
     template<class ValueType, typename std::enable_if<
-                 std::is_convertible<basic_json_t, ValueType>::value, int>::type = 0>
+                 detail::is_getable<basic_json_t, ValueType>::value, int>::type = 0>
     ValueType value(const json_pointer& ptr, const ValueType& default_value) const
     {
         // at only works for objects
@@ -3867,7 +3868,7 @@ class basic_json
             // if pointer resolves a value, return it or use default value
             JSON_TRY
             {
-                return ptr.get_checked(this);
+                return ptr.get_checked(this).template get<ValueType>();
             }
             JSON_INTERNAL_CATCH (out_of_range&)
             {
@@ -8341,8 +8342,8 @@ class basic_json
             }
 
             // collect mandatory members
-            const std::string op = get_value("op", "op", true);
-            const std::string path = get_value(op, "path", true);
+            const auto op = get_value("op", "op", true).template get<std::string>();
+            const auto path = get_value(op, "path", true).template get<std::string>();
             json_pointer ptr(path);
 
             switch (get_op(op))
@@ -8368,7 +8369,7 @@ class basic_json
 
                 case patch_operations::move:
                 {
-                    const std::string from_path = get_value("move", "from", true);
+                    const auto from_path = get_value("move", "from", true).template get<std::string>();
                     json_pointer from_ptr(from_path);
 
                     // the "from" location must exist - use at()
@@ -8385,7 +8386,7 @@ class basic_json
 
                 case patch_operations::copy:
                 {
-                    const std::string from_path = get_value("copy", "from", true);
+                    const auto from_path = get_value("copy", "from", true).template get<std::string>();
                     const json_pointer from_ptr(from_path);
 
                     // the "from" location must exist - use at()
