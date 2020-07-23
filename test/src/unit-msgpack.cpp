@@ -515,7 +515,7 @@ TEST_CASE("MessagePack")
                                             (static_cast<uint32_t>(result[2]) << 020) +
                                             (static_cast<uint32_t>(result[3]) << 010) +
                                             static_cast<uint32_t>(result[4]);
-                        CHECK(restored == i);
+                        CHECK(static_cast<std::int32_t>(restored) == i);
 
                         // roundtrip
                         CHECK(json::from_msgpack(result) == j);
