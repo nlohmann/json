@@ -24,6 +24,7 @@ endif ()
 option(JSON_BuildTests "Build the unit tests when BUILD_TESTING is enabled." ON)
 option(JSON_Install "Install CMake targets during install step." ON)
 option(JSON_MultipleHeaders "Use non-amalgamated version of the library." OFF)
+option(JSON_ImplicitConversions "Enable implicit conversions" ON)
 
 ##
 ## CONFIGURATION
@@ -59,6 +60,12 @@ if (${CMAKE_VERSION} VERSION_LESS "3.8.0")
 else()
     target_compile_features(${NLOHMANN_JSON_TARGET_NAME} INTERFACE cxx_std_11)
 endif()
+
+target_compile_definitions(
+    ${NLOHMANN_JSON_TARGET_NAME}
+    INTERFACE
+    JSON_USE_IMPLICIT_CONVERSIONS=$<BOOL:${JSON_ImplicitConversions}>
+)
 
 target_include_directories(
     ${NLOHMANN_JSON_TARGET_NAME}

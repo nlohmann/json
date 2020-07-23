@@ -2334,7 +2334,7 @@ class binary_reader
                 success = false;
                 break;
             }
-            result.push_back(std::char_traits<char_type>::to_char_type(current));
+            result.push_back(static_cast<typename string_t::value_type>(current));
         };
         return success;
     }

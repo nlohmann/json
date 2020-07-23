@@ -3,8 +3,7 @@ name: Windows
 on: [push, pull_request]
 
 jobs:
-  build:
-
+  msvc2019:
     runs-on: windows-latest
 
     steps:
@@ -15,3 +14,55 @@ jobs:
       run: cmake --build build --parallel 10
     - name: test
       run: cd build ; ctest -j 10 -C Debug --exclude-regex "test-unicode" --output-on-failure
+
+  clang9:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: install Clang
+        run: curl -fsSL -o LLVM9.exe https://releases.llvm.org/9.0.0/LLVM-9.0.0-win64.exe ; 7z x LLVM9.exe -y -o"C:/Program Files/LLVM"
+      - name: cmake
+        run: cmake -S . -B build -DCMAKE_CXX_COMPILER="C:/Program Files/LLVM/bin/clang++.exe" -G"MinGW Makefiles" -DCMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On
+      - name: build
+        run: cmake --build build --parallel 10
+      - name: test
+        run: cd build ; ctest -j 10 -C Debug --exclude-regex "test-unicode" --output-on-failure
+
+  clang10:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: install Clang
+        run: curl -fsSL -o LLVM10.exe https://github.com/llvm/llvm-project/releases/download/llvmorg-10.0.0/LLVM-10.0.0-win64.exe ; 7z x LLVM10.exe -y -o"C:/Program Files/LLVM"
+      - name: cmake
+        run: cmake -S . -B build -DCMAKE_CXX_COMPILER="C:/Program Files/LLVM/bin/clang++.exe" -G"MinGW Makefiles" -DCMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On
+      - name: build
+        run: cmake --build build --parallel 10
+      - name: test
+        run: cd build ; ctest -j 10 -C Debug --exclude-regex "test-unicode" --output-on-failure
+
+  clang-cl-10-x64:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: cmake
+        run: cmake -S . -B build -G "Visual Studio 16 2019" -A x64 -T ClangCL -DJSON_BuildTests=On
+      - name: build
+        run: cmake --build build --config Debug --parallel 10
+      - name: test
+        run: cd build ; ctest -j 10 -C Debug --exclude-regex "test-unicode" --output-on-failure
+
+  clang-cl-10-x86:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: cmake
+        run: cmake -S . -B build -G "Visual Studio 16 2019" -A Win32 -T ClangCL -DJSON_BuildTests=On
+      - name: build
+        run: cmake --build build --config Debug --parallel 10
+      - name: test
+        run: cd build ; ctest -j 10 -C Debug --exclude-regex "test-unicode" --output-on-failure

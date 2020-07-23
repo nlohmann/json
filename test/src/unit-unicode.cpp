@@ -1168,7 +1168,7 @@ TEST_CASE("Unicode" * doctest::skip())
                     continue;
                 }
 
-                std::string ptr = s;
+                auto ptr = s.get<std::string>();
 
                 // tilde must be followed by 0 or 1
                 if (ptr == "~")
