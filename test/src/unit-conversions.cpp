@@ -278,8 +278,8 @@ TEST_CASE("value conversion")
             SECTION("reserve is called on containers that supports it")
             {
                 // make sure all values are properly copied
-                json j({1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
-                auto v2 = j.get<std::vector<int>>();
+                json j2({1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
+                auto v2 = j2.get<std::vector<int>>();
                 CHECK(v2.size() == 10);
             }
 #endif
