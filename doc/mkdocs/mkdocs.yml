@@ -44,10 +44,12 @@ nav:
       - features/binary_formats/messagepack.md
       - features/binary_formats/ubjson.md
     - features/binary_values.md
+    - features/comments.md
     - features/iterators.md
     - features/json_pointer.md
     - features/json_patch.md
     - features/merge_patch.md
+    - features/object_order.md
     - features/enum_conversion.md
     - features/macros.md
     - Parsing:

@@ -165,7 +165,7 @@ JSON does not have a binary type, and this library does not introduce a new type
     Code:
     
     ```cpp
-    // create a binary value of subtype 42 (will be ignored by CBOR)
+    // create a binary value of subtype 42
     json j;
     j["binary"] = json::binary({0xCA, 0xFE, 0xBA, 0xBE}, 42);
 
@@ -173,17 +173,18 @@ JSON does not have a binary type, and this library does not introduce a new type
     auto v = json::to_cbor(j);      
     ```
             
-    `v` is a `std::vector<std::uint8t>` with the following 13 elements:
+    `v` is a `std::vector<std::uint8t>` with the following 15 elements:
     
     ```c
     0xA1                                   // map(1)
         0x66                               // text(6)
             0x62 0x69 0x6E 0x61 0x72 0x79  // "binary"
+        0xD8 0x2A                          // tag(42)
         0x44                               // bytes(4)
             0xCA 0xFE 0xBA 0xBE            // content
     ```
 
-    Note the subtype (42) is **not** serialized, and deserializing `v` would yield the following value:
+    Note that the subtype is serialized as tag. However, parsing tagged values yield a parse error unless `json::cbor_tag_handler_t::ignore` is passed to `json::from_cbor`.
 
     ```json
     {
