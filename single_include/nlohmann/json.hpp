@@ -14153,7 +14153,7 @@ class binary_writer
                     return 'L';
                 }
                 // anything else is treated as high-precision number
-                return 'H';
+                return 'H'; // LCOV_EXCL_LINE
             }
 
             case value_t::number_unsigned:
@@ -14179,7 +14179,7 @@ class binary_writer
                     return 'L';
                 }
                 // anything else is treated as high-precision number
-                return 'H';
+                return 'H'; // LCOV_EXCL_LINE
             }
 
             case value_t::number_float:
