@@ -158,7 +158,7 @@ JSON does not have a binary type, and this library does not introduce a new type
 
 ### CBOR
 
-[CBOR](binary_formats/cbor.md) supports binary values, but no subtypes. Any binary value will be serialized as byte strings. The library will choose the smallest representation using the length of the byte array.
+[CBOR](binary_formats/cbor.md) supports binary values, but no subtypes. Subtypes will be serialized as tags. Any binary value will be serialized as byte strings. The library will choose the smallest representation using the length of the byte array.
 
 ??? example
 
