@@ -2,6 +2,10 @@
 
 Some aspects of the library can be configured by defining preprocessor macros before including the `json.hpp` header.
 
+## `JSON_ASSERT(x)`
+
+The default value is `#!cpp assert(x)`.
+
 ## `JSON_CATCH_USER(exception)`
 
 This macro overrides `#!cpp catch` calls inside the library. The argument is the type of the exception to catch. As of version 3.8.0, the library only catches `std::out_of_range` exceptions internally to rethrow them as [`json::out_of_range`](../home/exceptions.md#out-of-range) exceptions. The macro is always followed by a scope.
