@@ -37,6 +37,7 @@ using nlohmann::json;
 #include <iomanip>
 #include <set>
 #include <test_data.hpp>
+#include <test_utils.hpp>
 
 namespace
 {
@@ -514,7 +515,7 @@ TEST_CASE("MessagePack")
                                             (static_cast<uint32_t>(result[2]) << 020) +
                                             (static_cast<uint32_t>(result[3]) << 010) +
                                             static_cast<uint32_t>(result[4]);
-                        CHECK(restored == i);
+                        CHECK(static_cast<std::int32_t>(restored) == i);
 
                         // roundtrip
                         CHECK(json::from_msgpack(result) == j);
@@ -1609,9 +1610,7 @@ TEST_CASE("single MessagePack roundtrip")
         json j1 = json::parse(f_json);
 
         // parse MessagePack file
-        std::ifstream f_msgpack(filename + ".msgpack", std::ios::binary);
-        std::vector<uint8_t> packed((std::istreambuf_iterator<char>(f_msgpack)),
-                                    std::istreambuf_iterator<char>());
+        auto packed = utils::read_binary_file(filename + ".msgpack");
         json j2;
         CHECK_NOTHROW(j2 = json::from_msgpack(packed));
 
@@ -1824,10 +1823,7 @@ TEST_CASE("MessagePack roundtrips" * doctest::skip())
                 json j1 = json::parse(f_json);
 
                 // parse MessagePack file
-                std::ifstream f_msgpack(filename + ".msgpack", std::ios::binary);
-                std::vector<uint8_t> packed(
-                    (std::istreambuf_iterator<char>(f_msgpack)),
-                    std::istreambuf_iterator<char>());
+                auto packed = utils::read_binary_file(filename + ".msgpack");
                 json j2;
                 CHECK_NOTHROW(j2 = json::from_msgpack(packed));
 
@@ -1857,10 +1853,7 @@ TEST_CASE("MessagePack roundtrips" * doctest::skip())
                 json j1 = json::parse(f_json);
 
                 // parse MessagePack file
-                std::ifstream f_msgpack(filename + ".msgpack", std::ios::binary);
-                std::vector<uint8_t> packed(
-                    (std::istreambuf_iterator<char>(f_msgpack)),
-                    std::istreambuf_iterator<char>());
+                auto packed = utils::read_binary_file(filename + ".msgpack");
                 json j2;
                 CHECK_NOTHROW(j2 = json::from_msgpack({packed.data(), packed.size()}));
 
@@ -1875,10 +1868,7 @@ TEST_CASE("MessagePack roundtrips" * doctest::skip())
                 json j1 = json::parse(f_json);
 
                 // parse MessagePack file
-                std::ifstream f_msgpack(filename + ".msgpack", std::ios::binary);
-                std::vector<uint8_t> packed(
-                    (std::istreambuf_iterator<char>(f_msgpack)),
-                    std::istreambuf_iterator<char>());
+                auto packed = utils::read_binary_file(filename + ".msgpack");
 
                 if (!exclude_packed.count(filename))
                 {
