@@ -24,7 +24,7 @@ endif ()
 option(JSON_BuildTests "Build the unit tests when BUILD_TESTING is enabled." ON)
 option(JSON_Install "Install CMake targets during install step." ON)
 option(JSON_MultipleHeaders "Use non-amalgamated version of the library." OFF)
-option(JSON_ImplicitConversions "Enable implicit conversions" ON)
+option(JSON_ImplicitConversions "Enable implicit conversions." ON)
 
 ##
 ## CONFIGURATION
@@ -47,6 +47,10 @@ if (JSON_MultipleHeaders)
 else()
     set(NLOHMANN_JSON_INCLUDE_BUILD_DIR "${PROJECT_SOURCE_DIR}/single_include/")
     message(STATUS "Using the single-header code from ${NLOHMANN_JSON_INCLUDE_BUILD_DIR}")
+endif()
+
+if (NOT JSON_ImplicitConversions)
+    message(STATUS "Implicit conversions are disabled")
 endif()
 
 ##

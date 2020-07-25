@@ -35,6 +35,7 @@ using nlohmann::json;
 #include <fstream>
 #include <set>
 #include <test_data.hpp>
+#include <test_utils.hpp>
 
 namespace
 {
@@ -2457,11 +2458,8 @@ TEST_CASE("UBJSON roundtrips" * doctest::skip())
                 std::ifstream f_json(filename);
                 json j1 = json::parse(f_json);
 
-                // parse MessagePack file
-                std::ifstream f_ubjson(filename + ".ubjson", std::ios::binary);
-                std::vector<uint8_t> packed(
-                    (std::istreambuf_iterator<char>(f_ubjson)),
-                    std::istreambuf_iterator<char>());
+                // parse UBJSON file
+                auto packed = utils::read_binary_file(filename + ".ubjson");
                 json j2;
                 CHECK_NOTHROW(j2 = json::from_ubjson(packed));
 
@@ -2475,7 +2473,7 @@ TEST_CASE("UBJSON roundtrips" * doctest::skip())
                 std::ifstream f_json(filename);
                 json j1 = json::parse(f_json);
 
-                // parse MessagePack file
+                // parse UBJSON file
                 std::ifstream f_ubjson(filename + ".ubjson", std::ios::binary);
                 json j2;
                 CHECK_NOTHROW(j2 = json::from_ubjson(f_ubjson));
@@ -2490,11 +2488,8 @@ TEST_CASE("UBJSON roundtrips" * doctest::skip())
                 std::ifstream f_json(filename);
                 json j1 = json::parse(f_json);
 
-                // parse MessagePack file
-                std::ifstream f_ubjson(filename + ".ubjson", std::ios::binary);
-                std::vector<uint8_t> packed(
-                    (std::istreambuf_iterator<char>(f_ubjson)),
-                    std::istreambuf_iterator<char>());
+                // parse UBJSON file
+                auto packed = utils::read_binary_file(filename + ".ubjson");
                 json j2;
                 CHECK_NOTHROW(j2 = json::from_ubjson({packed.data(), packed.size()}));
 
@@ -2508,11 +2503,8 @@ TEST_CASE("UBJSON roundtrips" * doctest::skip())
                 std::ifstream f_json(filename);
                 json j1 = json::parse(f_json);
 
-                // parse MessagePack file
-                std::ifstream f_ubjson(filename + ".ubjson", std::ios::binary);
-                std::vector<uint8_t> packed(
-                    (std::istreambuf_iterator<char>(f_ubjson)),
-                    std::istreambuf_iterator<char>());
+                // parse UBJSON file
+                auto packed = utils::read_binary_file(filename + ".ubjson");
 
                 {
                     INFO_WITH_TEMP(filename + ": output adapters: std::vector<uint8_t>");
