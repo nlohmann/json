@@ -1,16 +1,6 @@
-# Element Access
+# Unchecked access: operator[]
 
-There are many ways elements in a JSON value can be accessed:
-
-- unchecked access via `operator[]`
-- checked access via `at`
-- checked access with default value via `value`
-- iterators
-- JSON pointers
-
-## Unchecked access via `operator[]`
-
-### Overview
+## Overview
 
 Elements in a JSON object and a JSON array can be accessed via `#!cpp operator[]` similar to a `#!cpp std::map` and a `#!cpp std::vector`, respectively.
 
@@ -77,7 +67,7 @@ When accessing an invalid index (i.e., and index greater than or equal to the ar
     }
     ```
 
-### Notes
+## Notes
 
 !!! info "Design rationale"
 
@@ -96,9 +86,13 @@ When accessing an invalid index (i.e., and index greater than or equal to the ar
 
     - It is **undefined behavior** to access a const object with a non-existing key.
     - It is **undefined behavior** to access a const array with an invalid index.
-    - In debug mode, an **assertion** will fire in both cases. You can disable assertions by defining the preprocessor symbol `#!cpp NDEBUG` or redefine the macro [`JSON_ASSERT(x)`](macros.md#json_assertx).
+    - In debug mode, an **assertion** will fire in both cases. You can disable assertions by defining the preprocessor symbol `#!cpp NDEBUG` or redefine the macro [`JSON_ASSERT(x)`](../macros.md#json_assertx).
 
-### Summary
+!!! failure "Exceptions"
+
+    `operator[]` can only be used with objects (with a string argument) or with arrays (with a numeric argument). For other types, a [`basic_json::type_error`](../../home/exceptions.md#jsonexceptiontype_error305) is thrown.
+
+## Summary
 
 | scenario | non-const value | const value |
 | -------- | ------------- | ----------- |
