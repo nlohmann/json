@@ -14,7 +14,7 @@ and `ensure_ascii` parameters.
 ## Parameters
 
 `indent` (in)
-:   If indent is nonnegative, then array elements and object
+:   If `indent` is nonnegative, then array elements and object
     members will be pretty-printed with that indent level. An indent level of
     `0` will only insert newlines. `-1` (the default) selects the most compact
     representation.
