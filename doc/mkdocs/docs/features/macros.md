@@ -32,6 +32,26 @@ This macro overrides `#!cpp try` calls inside the library. It has no arguments a
 
 See [Switch off exceptions](../home/exceptions.md#switch-off-exceptions) for an example.
 
+## `JSON_USE_IMPLICIT_CONVERSIONS`
+
+When defined to `0`, implicit conversions are switched off. By default, implicit conversions are switched on.
+
+??? example
+
+    This is an example for an implicit conversion:
+    
+    ```cpp
+    json j = "Hello, world!";
+    std::string s = j;
+    ```
+    
+    When `JSON_USE_IMPLICIT_CONVERSIONS` is defined to `0`, the code above does no longer compile. Instead, it must be written like this:
+
+    ```cpp
+    json j = "Hello, world!";
+    auto s = j.get<std::string>();
+    ```
+
 ## `NLOHMANN_DEFINE_TYPE_INTRUSIVE(type, member...)`
 
 This macro can be used to simplify the serialization/deserialization of types if (1) want to use a JSON object as serialization and (2) want to use the member variable names as object keys in that object.
