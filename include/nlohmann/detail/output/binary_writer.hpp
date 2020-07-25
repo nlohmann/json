@@ -1319,7 +1319,17 @@ class binary_writer
         }
         else
         {
-            JSON_THROW(out_of_range::create(407, "integer number " + std::to_string(n) + " cannot be represented by UBJSON as it does not fit int64"));
+            if (add_prefix)
+            {
+                oa->write_character(to_char_type('H'));  // high-precision number
+            }
+
+            const auto number = BasicJsonType(n).dump();
+            write_number_with_ubjson_prefix(number.size(), true);
+            for (std::size_t i = 0; i < number.size(); ++i)
+            {
+                oa->write_character(to_char_type(static_cast<std::uint8_t>(number[i])));
+            }
         }
     }
 
@@ -1373,19 +1383,23 @@ class binary_writer
         // LCOV_EXCL_START
         else
         {
-            JSON_THROW(out_of_range::create(407, "integer number " + std::to_string(n) + " cannot be represented by UBJSON as it does not fit int64"));
+            if (add_prefix)
+            {
+                oa->write_character(to_char_type('H'));  // high-precision number
+            }
+
+            const auto number = BasicJsonType(n).dump();
+            write_number_with_ubjson_prefix(number.size(), true);
+            for (std::size_t i = 0; i < number.size(); ++i)
+            {
+                oa->write_character(to_char_type(static_cast<std::uint8_t>(number[i])));
+            }
         }
         // LCOV_EXCL_STOP
     }
 
     /*!
     @brief determine the type prefix of container values
-
-    @note This function does not need to be 100% accurate when it comes to
-          integer limits. In case a number exceeds the limits of int64_t,
-          this will be detected by a later call to function
-          write_number_with_ubjson_prefix. Therefore, we return 'L' for any
-          value that does not fit the previous limits.
     */
     CharType ubjson_prefix(const BasicJsonType& j) const noexcept
     {
@@ -1415,8 +1429,12 @@ class binary_writer
                 {
                     return 'l';
                 }
-                // no check and assume int64_t (see note above)
-                return 'L';
+                if ((std::numeric_limits<std::int64_t>::min)() <= j.m_value.number_integer && j.m_value.number_integer <= (std::numeric_limits<std::int64_t>::max)())
+                {
+                    return 'L';
+                }
+                // anything else is treated as high-precision number
+                return 'H'; // LCOV_EXCL_LINE
             }
 
             case value_t::number_unsigned:
@@ -1437,8 +1455,12 @@ class binary_writer
                 {
                     return 'l';
                 }
-                // no check and assume int64_t (see note above)
-                return 'L';
+                if (j.m_value.number_unsigned <= static_cast<std::uint64_t>((std::numeric_limits<std::int64_t>::max)()))
+                {
+                    return 'L';
+                }
+                // anything else is treated as high-precision number
+                return 'H'; // LCOV_EXCL_LINE
             }
 
             case value_t::number_float:
