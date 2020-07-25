@@ -263,6 +263,7 @@ class json_sax_dom_parser
                      const Exception& ex)
     {
         errored = true;
+        static_cast<void>(ex);
         if (allow_exceptions)
         {
             JSON_THROW(ex);
@@ -501,6 +502,7 @@ class json_sax_dom_callback_parser
                      const Exception& ex)
     {
         errored = true;
+        static_cast<void>(ex);
         if (allow_exceptions)
         {
             JSON_THROW(ex);
