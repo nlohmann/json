@@ -54,13 +54,13 @@ all:
 ##########################################################################
 
 coverage:
-	rm -fr build_coverage
-	mkdir build_coverage
-	cd build_coverage ; cmake .. -GNinja -DCMAKE_BUILD_TYPE=Debug -DJSON_Coverage=ON -DJSON_MultipleHeaders=ON
-	cd build_coverage ; ninja
-	cd build_coverage ; ctest -j10
-	cd build_coverage ; ninja lcov_html
-	open build_coverage/test/html/index.html
+	rm -fr cmake-build-coverage
+	mkdir cmake-build-coverage
+	cd cmake-build-coverage ; cmake .. -GNinja -DCMAKE_BUILD_TYPE=Debug -DJSON_Coverage=ON -DJSON_MultipleHeaders=ON
+	cd cmake-build-coverage ; ninja
+	cd cmake-build-coverage ; ctest -j10
+	cd cmake-build-coverage ; ninja lcov_html
+	open cmake-build-coverage/test/html/index.html
 
 ##########################################################################
 # documentation tests
@@ -88,7 +88,7 @@ doctest:
 # -Wno-switch-enum -Wno-covered-switch-default: pedantic/contradicting warnings about switches
 # -Wno-weak-vtables: exception class is defined inline, but has virtual method
 pedantic_clang:
-	rm -fr build_pedantic
+	rm -fr cmake-build-pedantic
 	CXXFLAGS=" \
 		-std=c++11 -Wno-c++98-compat -Wno-c++98-compat-pedantic \
 		-Werror \
@@ -103,12 +103,12 @@ pedantic_clang:
 		-Wno-padded \
 		-Wno-range-loop-analysis \
 		-Wno-switch-enum -Wno-covered-switch-default \
-		-Wno-weak-vtables" cmake -S . -B build_pedantic -GNinja -DCMAKE_BUILD_TYPE=Debug -DJSON_MultipleHeaders=ON -DJSON_BuildTests=On
-	cmake --build build_pedantic
+		-Wno-weak-vtables" cmake -S . -B cmake-build-pedantic -GNinja -DCMAKE_BUILD_TYPE=Debug -DJSON_MultipleHeaders=ON -DJSON_BuildTests=On
+	cmake --build cmake-build-pedantic
 
 # calling GCC with most warnings
 pedantic_gcc:
-	rm -fr build_pedantic
+	rm -fr cmake-build-pedantic
 	CXXFLAGS=" \
 		-std=c++11 \
 		-pedantic \
@@ -366,19 +366,19 @@ pedantic_gcc:
 		-Wwrite-strings                                   \
 		-Wzero-as-null-pointer-constant                   \
 		-Wzero-length-bounds                              \
-		" cmake -S . -B build_pedantic -GNinja -DCMAKE_BUILD_TYPE=Debug -DJSON_MultipleHeaders=ON -DJSON_BuildTests=On
-	cmake --build build_pedantic
+		" cmake -S . -B cmake-build-pedantic -GNinja -DCMAKE_BUILD_TYPE=Debug -DJSON_MultipleHeaders=ON -DJSON_BuildTests=On
+	cmake --build cmake-build-pedantic
 
 ##########################################################################
 # benchmarks
 ##########################################################################
 
 run_benchmarks:
-	rm -fr build_benchmarks
-	mkdir build_benchmarks
-	cd build_benchmarks ; cmake ../benchmarks -GNinja -DCMAKE_BUILD_TYPE=Release -DJSON_BuildTests=On
-	cd build_benchmarks ; ninja
-	cd build_benchmarks ; ./json_benchmarks
+	rm -fr cmake-build-benchmarks
+	mkdir cmake-build-benchmarks
+	cd cmake-build-benchmarks ; cmake ../benchmarks -GNinja -DCMAKE_BUILD_TYPE=Release -DJSON_BuildTests=On
+	cd cmake-build-benchmarks ; ninja
+	cd cmake-build-benchmarks ; ./json_benchmarks
 
 ##########################################################################
 # fuzzing
@@ -451,14 +451,14 @@ cppcheck:
 
 # call Clang Static Analyzer <https://clang-analyzer.llvm.org>
 clang_analyze:
-	rm -fr clang_analyze_build
-	mkdir clang_analyze_build
-	cd clang_analyze_build ; CCC_CXX=$(COMPILER_DIR)/clang++ CXX=$(COMPILER_DIR)/clang++ $(COMPILER_DIR)/scan-build cmake .. -GNinja -DJSON_BuildTests=On
-	cd clang_analyze_build ; \
+	rm -fr cmake-build-clang-analyze
+	mkdir cmake-build-clang-analyze
+	cd cmake-build-clang-analyze ; CCC_CXX=$(COMPILER_DIR)/clang++ CXX=$(COMPILER_DIR)/clang++ $(COMPILER_DIR)/scan-build cmake .. -GNinja -DJSON_BuildTests=On
+	cd cmake-build-clang-analyze ; \
 		$(COMPILER_DIR)/scan-build \
 			-enable-checker alpha.core.BoolAssignment,alpha.core.CallAndMessageUnInitRefArg,alpha.core.CastSize,alpha.core.CastToStruct,alpha.core.Conversion,alpha.core.DynamicTypeChecker,alpha.core.FixedAddr,alpha.core.PointerArithm,alpha.core.PointerSub,alpha.core.SizeofPtr,alpha.core.StackAddressAsyncEscape,alpha.core.TestAfterDivZero,alpha.deadcode.UnreachableCode,core.builtin.BuiltinFunctions,core.builtin.NoReturnFunctions,core.CallAndMessage,core.DivideZero,core.DynamicTypePropagation,core.NonnilStringConstants,core.NonNullParamChecker,core.NullDereference,core.StackAddressEscape,core.UndefinedBinaryOperatorResult,core.uninitialized.ArraySubscript,core.uninitialized.Assign,core.uninitialized.Branch,core.uninitialized.CapturedBlockVariable,core.uninitialized.UndefReturn,core.VLASize,cplusplus.InnerPointer,cplusplus.Move,cplusplus.NewDelete,cplusplus.NewDeleteLeaks,cplusplus.SelfAssignment,deadcode.DeadStores,nullability.NullableDereferenced,nullability.NullablePassedToNonnull,nullability.NullableReturnedFromNonnull,nullability.NullPassedToNonnull,nullability.NullReturnedFromNonnull \
 			--use-c++=$(COMPILER_DIR)/clang++ -analyze-headers -o report ninja
-	open clang_analyze_build/report/*/index.html
+	open cmake-build-clang-analyze/report/*/index.html
 
 # call cpplint <https://github.com/cpplint/cpplint>
 # Note: some errors expected due to false positives
@@ -473,18 +473,18 @@ clang_tidy:
 
 # call PVS-Studio Analyzer <https://www.viva64.com/en/pvs-studio/>
 pvs_studio:
-	rm -fr pvs_studio_build
-	mkdir pvs_studio_build
-	cd pvs_studio_build ; cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=On -DJSON_MultipleHeaders=ON
-	cd pvs_studio_build ; pvs-studio-analyzer analyze -j 10
-	cd pvs_studio_build ; plog-converter -a'GA:1,2;64:1;CS' -t fullhtml PVS-Studio.log -o pvs
-	open pvs_studio_build/pvs/index.html
+	rm -fr cmake-build-pvs-studio
+	mkdir cmake-build-pvs-studio
+	cd cmake-build-pvs-studio ; cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=On -DJSON_MultipleHeaders=ON
+	cd cmake-build-pvs-studio ; pvs-studio-analyzer analyze -j 10
+	cd cmake-build-pvs-studio ; plog-converter -a'GA:1,2;64:1;CS' -t fullhtml PVS-Studio.log -o pvs
+	open cmake-build-pvs-studio/pvs/index.html
 
 # call Infer <https://fbinfer.com> static analyzer
 infer:
-	rm -fr infer_build
-	mkdir infer_build
-	cd infer_build ; infer compile -- cmake .. -DJSON_MultipleHeaders=ON ; infer run -- make -j 4
+	rm -fr cmake-build-infer
+	mkdir cmake-build-infer
+	cd cmake-build-infer ; infer compile -- cmake .. -DJSON_MultipleHeaders=ON ; infer run -- make -j 4
 
 # call OCLint <http://oclint.org> static analyzer
 oclint:
@@ -493,11 +493,11 @@ oclint:
 
 # execute the test suite with Clang sanitizers (address and undefined behavior)
 clang_sanitize:
-	rm -fr clang_sanitize_build
-	mkdir clang_sanitize_build
-	cd clang_sanitize_build ; CXX=$(COMPILER_DIR)/clang++ cmake .. -DJSON_Sanitizer=On -DJSON_MultipleHeaders=ON -DJSON_BuildTests=On -GNinja
-	cd clang_sanitize_build ; ninja
-	cd clang_sanitize_build ; ctest -j10
+	rm -fr cmake-build-clang-sanitize
+	mkdir cmake-build-clang-sanitize
+	cd cmake-build-clang-sanitize ; CXX=$(COMPILER_DIR)/clang++ cmake .. -DJSON_Sanitizer=On -DJSON_MultipleHeaders=ON -DJSON_BuildTests=On -GNinja
+	cd cmake-build-clang-sanitize ; ninja
+	cd cmake-build-clang-sanitize ; ctest -j10
 
 
 ##########################################################################
@@ -525,7 +525,7 @@ pretty:
 	    --preserve-date \
 	    --suffix=none \
 	    --formatted \
-	   $(SRCS) $(AMALGAMATED_FILE) test/src/*.cpp benchmarks/src/benchmarks.cpp doc/examples/*.cpp
+	   $(SRCS) $(AMALGAMATED_FILE) test/src/*.cpp test/utils/*.hpp benchmarks/src/benchmarks.cpp doc/examples/*.cpp
 
 # create single header file
 amalgamate: $(AMALGAMATED_FILE)
@@ -625,7 +625,7 @@ clean:
 	rm -fr json_unit json_benchmarks fuzz fuzz-testing *.dSYM test/*.dSYM oclint_report.html
 	rm -fr benchmarks/files/numbers/*.json
 	rm -fr cmake-3.1.0-Darwin64.tar.gz cmake-3.1.0-Darwin64
-	rm -fr build_coverage build_benchmarks fuzz-testing clang_analyze_build pvs_studio_build infer_build clang_sanitize_build cmake_build
+	rm -fr cmake-build-coverage cmake-build-benchmarks fuzz-testing cmake-build-clang-analyze cmake-build-pvs-studio cmake-build-infer cmake-build-clang-sanitize cmake_build
 	$(MAKE) clean -Cdoc
 
 ##########################################################################

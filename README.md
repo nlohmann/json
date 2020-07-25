@@ -762,6 +762,7 @@ Supported types can be implicitly converted to JSON values.
 
 It is recommended to **NOT USE** implicit conversions **FROM** a JSON value.
 You can find more details about this recommendation [here](https://www.github.com/nlohmann/json/issues/958).
+You can switch off implicit conversions by defining `JSON_USE_IMPLICIT_CONVERSIONS` to `0` before including the `json.hpp` header. When using CMake, you can also achieve this by setting the option `JSON_ImplicitConversions` to `OFF`.
 
 ```cpp
 // strings

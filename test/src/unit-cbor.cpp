@@ -39,6 +39,7 @@ using nlohmann::json;
 #include <iostream>
 #include <set>
 #include <test_data.hpp>
+#include <test_utils.hpp>
 
 namespace
 {
@@ -1920,9 +1921,7 @@ TEST_CASE("single CBOR roundtrip")
         json j1 = json::parse(f_json);
 
         // parse CBOR file
-        std::ifstream f_cbor(filename + ".cbor", std::ios::binary);
-        std::vector<uint8_t> packed((std::istreambuf_iterator<char>(f_cbor)),
-                                    std::istreambuf_iterator<char>());
+        auto packed = utils::read_binary_file(filename + ".cbor");
         json j2;
         CHECK_NOTHROW(j2 = json::from_cbor(packed));
 
@@ -1994,10 +1993,7 @@ TEST_CASE("CBOR regressions")
             try
             {
                 // parse CBOR file
-                std::ifstream f_cbor(filename, std::ios::binary);
-                std::vector<uint8_t> vec1(
-                    (std::istreambuf_iterator<char>(f_cbor)),
-                    std::istreambuf_iterator<char>());
+                auto vec1 = utils::read_binary_file(filename);
                 json j1 = json::from_cbor(vec1);
 
                 try
@@ -2204,10 +2200,7 @@ TEST_CASE("CBOR roundtrips" * doctest::skip())
                 json j1 = json::parse(f_json);
 
                 // parse CBOR file
-                std::ifstream f_cbor(filename + ".cbor", std::ios::binary);
-                std::vector<uint8_t> packed(
-                    (std::istreambuf_iterator<char>(f_cbor)),
-                    std::istreambuf_iterator<char>());
+                auto packed = utils::read_binary_file(filename + ".cbor");
                 json j2;
                 CHECK_NOTHROW(j2 = json::from_cbor(packed));
 
@@ -2237,10 +2230,7 @@ TEST_CASE("CBOR roundtrips" * doctest::skip())
                 json j1 = json::parse(f_json);
 
                 // parse CBOR file
-                std::ifstream f_cbor(filename + ".cbor", std::ios::binary);
-                std::vector<uint8_t> packed(
-                    (std::istreambuf_iterator<char>(f_cbor)),
-                    std::istreambuf_iterator<char>());
+                auto packed = utils::read_binary_file(filename + ".cbor");
                 json j2;
                 CHECK_NOTHROW(j2 = json::from_cbor({packed.data(), packed.size()}));
 
@@ -2255,10 +2245,7 @@ TEST_CASE("CBOR roundtrips" * doctest::skip())
                 json j1 = json::parse(f_json);
 
                 // parse CBOR file
-                std::ifstream f_cbor(filename + ".cbor", std::ios::binary);
-                std::vector<uint8_t> packed(
-                    (std::istreambuf_iterator<char>(f_cbor)),
-                    std::istreambuf_iterator<char>());
+                auto packed = utils::read_binary_file(filename + ".cbor");
 
                 if (!exclude_packed.count(filename))
                 {
@@ -2493,15 +2480,11 @@ TEST_CASE("examples from RFC 7049 Appendix A")
 
     SECTION("byte arrays")
     {
-        std::ifstream f_cbor(TEST_DATA_DIRECTORY "/binary_data/cbor_binary.cbor", std::ios::binary);
-        std::vector<uint8_t> packed((std::istreambuf_iterator<char>(f_cbor)),
-                                    std::istreambuf_iterator<char>());
+        auto packed = utils::read_binary_file(TEST_DATA_DIRECTORY "/binary_data/cbor_binary.cbor");
         json j;
         CHECK_NOTHROW(j = json::from_cbor(packed));
 
-        std::ifstream f_bin(TEST_DATA_DIRECTORY "/binary_data/cbor_binary.out", std::ios::binary);
-        std::vector<uint8_t> expected((std::istreambuf_iterator<char>(f_bin)),
-                                      std::istreambuf_iterator<char>());
+        auto expected = utils::read_binary_file(TEST_DATA_DIRECTORY "/binary_data/cbor_binary.out");
         CHECK(j == json::binary(expected));
 
         CHECK(json::to_cbor(json::binary(std::vector<uint8_t> {}, 0x42)) == std::vector<uint8_t> {0xd8, 0x42, 0x40});
@@ -2721,5 +2704,26 @@ TEST_CASE("Tagged values")
             CHECK_THROWS_AS(json::from_cbor(v_tagged, true, true, json::cbor_tag_handler_t::error), json::parse_error);
             CHECK_THROWS_AS(json::from_cbor(v_tagged, true, true, json::cbor_tag_handler_t::ignore), json::parse_error);
         }
+    }
+
+    SECTION("tagged binary")
+    {
+        // create a binary value of subtype 42
+        json j;
+        j["binary"] = json::binary({0xCA, 0xFE, 0xBA, 0xBE}, 42);
+
+        // convert to CBOR
+        const auto v = json::to_cbor(j);
+        CHECK(v == std::vector<std::uint8_t> {0xA1, 0x66, 0x62, 0x69, 0x6E, 0x61, 0x72, 0x79, 0xD8, 0x2A, 0x44, 0xCA, 0xFE, 0xBA, 0xBE});
+
+        // parse error when parsing tagged value
+        CHECK_THROWS_AS(json::from_cbor(v), json::parse_error);
+        CHECK_THROWS_WITH(json::from_cbor(v), "[json.exception.parse_error.112] parse error at byte 9: syntax error while parsing CBOR value: invalid byte: 0xD8");
+
+        // binary without subtype when tags are ignored
+        json jb = json::from_cbor(v, true, true, json::cbor_tag_handler_t::ignore);
+        CHECK(jb.is_object());
+        CHECK(jb["binary"].is_binary());
+        CHECK(!jb["binary"].get_binary().has_subtype());
     }
 }

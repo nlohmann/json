@@ -151,7 +151,7 @@ foreach(file ${files})
         $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wno-deprecated;-Wno-float-equal>
         $<$<CXX_COMPILER_ID:GNU>:-Wno-deprecated-declarations>
     )
-    target_include_directories(${testcase} PRIVATE ${CMAKE_BINARY_DIR}/include thirdparty/doctest thirdparty/fifo_map)
+    target_include_directories(${testcase} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/utils ${CMAKE_BINARY_DIR}/include thirdparty/doctest thirdparty/fifo_map)
     target_link_libraries(${testcase} PRIVATE ${NLOHMANN_JSON_TARGET_NAME})
 
     if (JSON_Coverage)
