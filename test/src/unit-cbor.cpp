@@ -39,7 +39,7 @@ using nlohmann::json;
 #include <iostream>
 #include <set>
 #include <test_data.hpp>
-#include <test_utils.hpp>
+#include "test_utils.hpp"
 
 namespace
 {
@@ -2709,19 +2709,19 @@ TEST_CASE("Tagged values")
     SECTION("tagged binary")
     {
         // create a binary value of subtype 42
-        json j;
-        j["binary"] = json::binary({0xCA, 0xFE, 0xBA, 0xBE}, 42);
+        json j_binary;
+        j_binary["binary"] = json::binary({0xCA, 0xFE, 0xBA, 0xBE}, 42);
 
         // convert to CBOR
-        const auto v = json::to_cbor(j);
-        CHECK(v == std::vector<std::uint8_t> {0xA1, 0x66, 0x62, 0x69, 0x6E, 0x61, 0x72, 0x79, 0xD8, 0x2A, 0x44, 0xCA, 0xFE, 0xBA, 0xBE});
+        const auto vec = json::to_cbor(j_binary);
+        CHECK(vec == std::vector<std::uint8_t> {0xA1, 0x66, 0x62, 0x69, 0x6E, 0x61, 0x72, 0x79, 0xD8, 0x2A, 0x44, 0xCA, 0xFE, 0xBA, 0xBE});
 
         // parse error when parsing tagged value
-        CHECK_THROWS_AS(json::from_cbor(v), json::parse_error);
-        CHECK_THROWS_WITH(json::from_cbor(v), "[json.exception.parse_error.112] parse error at byte 9: syntax error while parsing CBOR value: invalid byte: 0xD8");
+        CHECK_THROWS_AS(json::from_cbor(vec), json::parse_error);
+        CHECK_THROWS_WITH(json::from_cbor(vec), "[json.exception.parse_error.112] parse error at byte 9: syntax error while parsing CBOR value: invalid byte: 0xD8");
 
         // binary without subtype when tags are ignored
-        json jb = json::from_cbor(v, true, true, json::cbor_tag_handler_t::ignore);
+        json jb = json::from_cbor(vec, true, true, json::cbor_tag_handler_t::ignore);
         CHECK(jb.is_object());
         CHECK(jb["binary"].is_binary());
         CHECK(!jb["binary"].get_binary().has_subtype());
