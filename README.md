@@ -1511,6 +1511,17 @@ I deeply appreciate the help of the following people.
 - [XyFreak](https://github.com/XyFreak) fixed a compiler warning.
 - [TotalCaesar659](https://github.com/TotalCaesar659) fixed links in the README.
 - [Tanuj Garg](https://github.com/tanuj208) improved the fuzzer coverage for UBSAN input.
+- [AODQ](https://github.com/AODQ) fixed a compiler warning.
+- [jwittbrodt](https://github.com/jwittbrodt) made `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE` inline.
+- [pfeatherstone](https://github.com/pfeatherstone) improved the upper bound of arguments of the `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE`/`NLOHMANN_DEFINE_TYPE_INTRUSIVE` macros.
+- [Jan Procházka](https://github.com/jprochazk) fixed a bug in the CBOR parser for binary and string values.
+- [T0b1-iOS](https://github.com/T0b1-iOS) fixed a bug in the new hash implementation.
+- [Matthew Bauer](https://github.com/matthewbauer) adjusted the CBOR writer to create tags for binary subtypes.
+- [gatopeich](https://github.com/gatopeich) implemented an ordered map container for `nlohmann::ordered_json`.
+- [Érico Nogueira Rolim](https://github.com/ericonr) added support for pkg-config.
+- [KonanM](https://github.com/KonanM) proposed an implementation for the `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE`/`NLOHMANN_DEFINE_TYPE_INTRUSIVE` macros.
+- [Guillaume Racicot](https://github.com/gracicot) implemented `string_view` support and allowed C++20 support.
+- [Alex Reinking](https://github.com/alexreinking) improved CMake support for `FetchContent`.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
