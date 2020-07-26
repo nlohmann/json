@@ -64,7 +64,6 @@ binary          | *size*: 4294967296..18446744073709551615   | byte string (8 by
 
 	If NaN or Infinity are stored inside a JSON number, they are serialized properly. This behavior differs from the normal JSON serialization which serializes NaN or Infinity to `null`.
 
-
 !!! info "Unused CBOR types"
 
 	The following CBOR types are not used in the conversion:
@@ -77,12 +76,15 @@ binary          | *size*: 4294967296..18446744073709551615   | byte string (8 by
       - bignum (0xC2..0xC3)
       - decimal fraction (0xC4)
       - bigfloat (0xC5)
-      - tagged items (0xC6..0xD4, 0xD8..0xDB)
       - expected conversions (0xD5..0xD7)
       - simple values (0xE0..0xF3, 0xF8)
       - undefined (0xF7)
       - half-precision floats (0xF9)
       - break (0xFF)
+
+!!! info "Tagged items"
+
+    Binary subtypes will be serialized as tagged items. See [binary values](../binary_values.md#cbor) for an example.
 
 ??? example
 
@@ -150,7 +152,6 @@ Double-Precision Float | number_float    | 0xFB
      - bignum (0xC2..0xC3)
      - decimal fraction (0xC4)
      - bigfloat (0xC5)
-     - tagged items (0xC6..0xD4, 0xD8..0xDB)
      - expected conversions (0xD5..0xD7)
      - simple values (0xE0..0xF3, 0xF8)
      - undefined (0xF7)
@@ -158,6 +159,10 @@ Double-Precision Float | number_float    | 0xFB
 !!! warning "Object keys"
 
 	CBOR allows map keys of any type, whereas JSON only allows strings as keys in object values. Therefore, CBOR maps with keys other than UTF-8 strings are rejected.
+
+!!! warning "Tagged items"
+
+    Tagged items will throw a parse error by default. However, they can be ignored by passing `cbor_tag_handler_t::ignore` to function `from_cbor`.
 
 ??? example
 

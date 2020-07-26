@@ -44,17 +44,24 @@ nav:
       - features/binary_formats/messagepack.md
       - features/binary_formats/ubjson.md
     - features/binary_values.md
+    - features/comments.md
+    - Element Access:
+      - features/element_access/index.md
+      - features/element_access/unchecked_access.md
+      - features/element_access/checked_access.md
+      - features/element_access/default_value.md
     - features/iterators.md
     - features/json_pointer.md
     - features/json_patch.md
     - features/merge_patch.md
+    - features/object_order.md
+    - Parsing:
+        - features/parsing/index.md
+        - features/parsing/parse_exceptions.md
+        - features/parsing/parser_callbacks.md
+        - features/parsing/sax_interface.md
     - features/enum_conversion.md
     - features/macros.md
-    - Parsing:
-      - features/parsing/index.md
-      - features/parsing/parse_exceptions.md
-      - features/parsing/parser_callbacks.md
-      - features/parsing/sax_interface.md
     - features/types.md
   - Integration:
     - integration/index.md
@@ -62,6 +69,11 @@ nav:
     - integration/package_managers.md
   - Doxygen:
     - doxygen/index.html
+  - API:
+      - basic_json:
+        - api/basic_json/index.md
+        - api/basic_json/dump.md
+        - api/basic_json/meta.md
 
 # Extras
 extra:
@@ -80,6 +92,7 @@ extra:
 # Extensions
 markdown_extensions:
   - admonition
+  - def_list
   - codehilite:
       guess_lang: false
   - toc:

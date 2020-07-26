@@ -16732,7 +16732,7 @@ class basic_json
     {
         basic_json result;
 
-        result["copyright"] = "(C) 2013-2017 Niels Lohmann";
+        result["copyright"] = "(C) 2013-2020 Niels Lohmann";
         result["name"] = "JSON for Modern C++";
         result["url"] = "https://github.com/nlohmann/json";
         result["version"]["string"] =
@@ -23424,7 +23424,6 @@ class basic_json
           - bignum (0xC2..0xC3)
           - decimal fraction (0xC4)
           - bigfloat (0xC5)
-          - tagged items (0xC6..0xD4, 0xD8..0xDB)
           - expected conversions (0xD5..0xD7)
           - simple values (0xE0..0xF3, 0xF8)
           - undefined (0xF7)
@@ -23811,7 +23810,6 @@ class basic_json
              - bignum (0xC2..0xC3)
              - decimal fraction (0xC4)
              - bigfloat (0xC5)
-             - tagged items (0xC6..0xD4, 0xD8..0xDB)
              - expected conversions (0xD5..0xD7)
              - simple values (0xE0..0xF3, 0xF8)
              - undefined (0xF7)
