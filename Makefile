@@ -525,7 +525,7 @@ pretty:
 	    --preserve-date \
 	    --suffix=none \
 	    --formatted \
-	   $(SRCS) $(AMALGAMATED_FILE) test/src/*.cpp test/utils/*.hpp benchmarks/src/benchmarks.cpp doc/examples/*.cpp
+	   $(SRCS) $(AMALGAMATED_FILE) test/src/*.cpp test/src/*.hpp benchmarks/src/benchmarks.cpp doc/examples/*.cpp
 
 # create single header file
 amalgamate: $(AMALGAMATED_FILE)
