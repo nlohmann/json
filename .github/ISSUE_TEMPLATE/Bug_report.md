@@ -47,7 +47,7 @@ assignees: ''
 
 <!-- Please add an `x` to the respective line. -->
 
-- [ ] latest release version 3.7.3
+- [ ] latest release version 3.9.0
 - [ ] other release - please state the version: ___
 - [ ] the `develop` branch
 

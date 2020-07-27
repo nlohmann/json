@@ -332,4 +332,4 @@ Note that this table only lists those exceptions thrown due to the type. For ins
 @author [Niels Lohmann](http://nlohmann.me)
 @see https://github.com/nlohmann/json to download the source code
 
-@version 3.8.0
+@version 3.9.0
