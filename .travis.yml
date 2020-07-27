@@ -10,17 +10,6 @@ sudo: required
 group: edge
 
 
-###################
-# global settings #
-###################
-
-env:
-  global:
-   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
-   #   via the "travis encrypt" command using the project repo's public key
-   - secure: "m89SSgE+ASLO38rSKx7MTXK3n5NkP9bIx95jwY71YEiuFzib30PDJ/DifKnXxBjvy/AkCGztErQRk/8ZCvq+4HXozU2knEGnL/RUitvlwbhzfh2D4lmS3BvWBGS3N3NewoPBrRmdcvnT0xjOGXxtZaJ3P74TkB9GBnlz/HmKORA="
-
-
 ################
 # build matrix #
 ################
@@ -129,6 +118,9 @@ matrix:
     env:
       - SPECIAL=coverity
       - COMPILER=clang++-3.6
+        # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+        #   via the "travis encrypt" command using the project repo's public key
+      - secure: "m89SSgE+ASLO38rSKx7MTXK3n5NkP9bIx95jwY71YEiuFzib30PDJ/DifKnXxBjvy/AkCGztErQRk/8ZCvq+4HXozU2knEGnL/RUitvlwbhzfh2D4lmS3BvWBGS3N3NewoPBrRmdcvnT0xjOGXxtZaJ3P74TkB9GBnlz/HmKORA="
 
   # OSX / Clang
 
@@ -149,6 +141,14 @@ matrix:
 
   - os: osx
     osx_image: xcode11.2
+
+  - os: osx
+    osx_image: xcode12
+
+  - os: osx
+    osx_image: xcode12
+    env:
+      - IMPLICIT_CONVERSIONS=OFF
 
   # Linux / GCC
 
@@ -203,6 +203,16 @@ matrix:
   - os: linux
     compiler: gcc
     env: COMPILER=g++-9
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test']
+        packages: ['g++-9', 'ninja-build']
+
+  - os: linux
+    compiler: gcc
+    env:
+      - COMPILER=g++-9
+      - IMPLICIT_CONVERSIONS=OFF
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test']
@@ -320,10 +330,12 @@ script:
   - if [[ "${COMPILER}" != "" ]]; then export CXX=${COMPILER}; fi
   # by default, use the single-header version
   - if [[ "${MULTIPLE_HEADERS}" == "" ]]; then export MULTIPLE_HEADERS=OFF; fi
+  # by default, use implicit conversions
+  - if [[ "${IMPLICIT_CONVERSIONS}" == "" ]]; then export IMPLICIT_CONVERSIONS=ON; fi
 
   # compile and execute unit tests
   - mkdir -p build && cd build
-  - cmake .. ${CMAKE_OPTIONS} -DJSON_MultipleHeaders=${MULTIPLE_HEADERS} -DJSON_BuildTests=On -GNinja && cmake --build . --config Release
+  - cmake .. ${CMAKE_OPTIONS} -DJSON_MultipleHeaders=${MULTIPLE_HEADERS} -DJSON_ImplicitConversions=${IMPLICIT_CONVERSIONS} -DJSON_BuildTests=On -GNinja && cmake --build . --config Release
   - ctest -C Release --timeout 2700 -V -j
   - cd ..
 

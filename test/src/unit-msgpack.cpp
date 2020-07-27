@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.8.0
+|  |  |__   |  |  | | | |  version 3.9.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -37,6 +37,7 @@ using nlohmann::json;
 #include <iomanip>
 #include <set>
 #include <test_data.hpp>
+#include "test_utils.hpp"
 
 namespace
 {
@@ -514,7 +515,7 @@ TEST_CASE("MessagePack")
                                             (static_cast<uint32_t>(result[2]) << 020) +
                                             (static_cast<uint32_t>(result[3]) << 010) +
                                             static_cast<uint32_t>(result[4]);
-                        CHECK(restored == i);
+                        CHECK(static_cast<std::int32_t>(restored) == i);
 
                         // roundtrip
                         CHECK(json::from_msgpack(result) == j);
@@ -774,6 +775,40 @@ TEST_CASE("MessagePack")
                     std::vector<uint8_t> expected =
                     {
                         0xcb, 0x40, 0x09, 0x21, 0xfb, 0x3f, 0xa6, 0xde, 0xfc
+                    };
+                    const auto result = json::to_msgpack(j);
+                    CHECK(result == expected);
+
+                    // roundtrip
+                    CHECK(json::from_msgpack(result) == j);
+                    CHECK(json::from_msgpack(result) == v);
+                    CHECK(json::from_msgpack(result, true, false) == j);
+                }
+
+                SECTION("1.0")
+                {
+                    double v = 1.0;
+                    json j = v;
+                    std::vector<uint8_t> expected =
+                    {
+                        0xca, 0x3f, 0x80, 0x00, 0x00
+                    };
+                    const auto result = json::to_msgpack(j);
+                    CHECK(result == expected);
+
+                    // roundtrip
+                    CHECK(json::from_msgpack(result) == j);
+                    CHECK(json::from_msgpack(result) == v);
+                    CHECK(json::from_msgpack(result, true, false) == j);
+                }
+
+                SECTION("128.128")
+                {
+                    double v = 128.1280059814453125;
+                    json j = v;
+                    std::vector<uint8_t> expected =
+                    {
+                        0xca, 0x43, 0x00, 0x20, 0xc5
                     };
                     const auto result = json::to_msgpack(j);
                     CHECK(result == expected);
@@ -1544,21 +1579,21 @@ TEST_CASE("MessagePack")
         {
             std::vector<uint8_t> v = {0x93, 0x01, 0x02, 0x03};
             SaxCountdown scp(0);
-            CHECK(not json::sax_parse(v, &scp, json::input_format_t::msgpack));
+            CHECK(!json::sax_parse(v, &scp, json::input_format_t::msgpack));
         }
 
         SECTION("start_object(len)")
         {
             std::vector<uint8_t> v = {0x81, 0xa3, 0x66, 0x6F, 0x6F, 0xc2};
             SaxCountdown scp(0);
-            CHECK(not json::sax_parse(v, &scp, json::input_format_t::msgpack));
+            CHECK(!json::sax_parse(v, &scp, json::input_format_t::msgpack));
         }
 
         SECTION("key()")
         {
             std::vector<uint8_t> v = {0x81, 0xa3, 0x66, 0x6F, 0x6F, 0xc2};
             SaxCountdown scp(1);
-            CHECK(not json::sax_parse(v, &scp, json::input_format_t::msgpack));
+            CHECK(!json::sax_parse(v, &scp, json::input_format_t::msgpack));
         }
     }
 }
@@ -1575,9 +1610,7 @@ TEST_CASE("single MessagePack roundtrip")
         json j1 = json::parse(f_json);
 
         // parse MessagePack file
-        std::ifstream f_msgpack(filename + ".msgpack", std::ios::binary);
-        std::vector<uint8_t> packed((std::istreambuf_iterator<char>(f_msgpack)),
-                                    std::istreambuf_iterator<char>());
+        auto packed = utils::read_binary_file(filename + ".msgpack");
         json j2;
         CHECK_NOTHROW(j2 = json::from_msgpack(packed));
 
@@ -1790,10 +1823,7 @@ TEST_CASE("MessagePack roundtrips" * doctest::skip())
                 json j1 = json::parse(f_json);
 
                 // parse MessagePack file
-                std::ifstream f_msgpack(filename + ".msgpack", std::ios::binary);
-                std::vector<uint8_t> packed(
-                    (std::istreambuf_iterator<char>(f_msgpack)),
-                    std::istreambuf_iterator<char>());
+                auto packed = utils::read_binary_file(filename + ".msgpack");
                 json j2;
                 CHECK_NOTHROW(j2 = json::from_msgpack(packed));
 
@@ -1823,10 +1853,7 @@ TEST_CASE("MessagePack roundtrips" * doctest::skip())
                 json j1 = json::parse(f_json);
 
                 // parse MessagePack file
-                std::ifstream f_msgpack(filename + ".msgpack", std::ios::binary);
-                std::vector<uint8_t> packed(
-                    (std::istreambuf_iterator<char>(f_msgpack)),
-                    std::istreambuf_iterator<char>());
+                auto packed = utils::read_binary_file(filename + ".msgpack");
                 json j2;
                 CHECK_NOTHROW(j2 = json::from_msgpack({packed.data(), packed.size()}));
 
@@ -1841,10 +1868,7 @@ TEST_CASE("MessagePack roundtrips" * doctest::skip())
                 json j1 = json::parse(f_json);
 
                 // parse MessagePack file
-                std::ifstream f_msgpack(filename + ".msgpack", std::ios::binary);
-                std::vector<uint8_t> packed(
-                    (std::istreambuf_iterator<char>(f_msgpack)),
-                    std::istreambuf_iterator<char>());
+                auto packed = utils::read_binary_file(filename + ".msgpack");
 
                 if (!exclude_packed.count(filename))
                 {

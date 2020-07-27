@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.8.0
+|  |  |__   |  |  | | | |  version 3.9.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -231,12 +231,12 @@ TEST_CASE("iterators 1")
             {
                 SECTION("!(begin != begin)")
                 {
-                    CHECK(not(j.begin() != j.begin()));
+                    CHECK(!(j.begin() != j.begin()));
                 }
 
                 SECTION("!(end != end)")
                 {
-                    CHECK(not(j.end() != j.end()));
+                    CHECK(!(j.end() != j.end()));
                 }
 
                 SECTION("begin < end")
@@ -286,7 +286,7 @@ TEST_CASE("iterators 1")
 
                 SECTION("!(begin == end)")
                 {
-                    CHECK(not(j.begin() == j.end()));
+                    CHECK(!(j.begin() == j.end()));
                 }
 
                 SECTION("begin != end")

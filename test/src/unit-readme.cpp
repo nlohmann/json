@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.8.0
+|  |  |__   |  |  | | | |  version 3.9.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -174,9 +174,9 @@ TEST_CASE("README" * doctest::skip())
             }
 
             // getter/setter
-            const std::string tmp = j[0];
+            const auto tmp = j[0].get<std::string>();
             j[1] = 42;
-            bool foo = j.at(2);
+            bool foo{j.at(2)};
             CHECK(foo == true);
 
             // other stuff
@@ -258,18 +258,18 @@ TEST_CASE("README" * doctest::skip())
             // strings
             std::string s1 = "Hello, world!";
             json js = s1;
-            std::string s2 = js;
+            auto s2 = js.get<std::string>();
 
             // Booleans
             bool b1 = true;
             json jb = b1;
-            bool b2 = jb;
+            bool b2{jb};
             CHECK(b2 == true);
 
             // numbers
             int i = 42;
             json jn = i;
-            double f = jn;
+            double f{jn};
             CHECK(f == 42);
 
             // etc.

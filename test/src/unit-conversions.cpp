@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.8.0
+|  |  |__   |  |  | | | |  version 3.9.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -189,6 +189,7 @@ TEST_CASE("value conversion")
         }
     }
 
+#if JSON_USE_IMPLICIT_CONVERSIONS
     SECTION("get an object (implicit)")
     {
         json::object_t o_reference = {{"object", json::object()},
@@ -230,6 +231,7 @@ TEST_CASE("value conversion")
             CHECK(json(o) == j);
         }
     }
+#endif
 
     SECTION("get an array (explicit)")
     {
@@ -272,11 +274,12 @@ TEST_CASE("value conversion")
                 json(json::value_t::null).get<std::vector<json>>(),
                 "[json.exception.type_error.302] type must be array, but is null");
 
-#if not defined(JSON_NOEXCEPTION)
+#if !defined(JSON_NOEXCEPTION)
             SECTION("reserve is called on containers that supports it")
             {
                 // make sure all values are properly copied
-                std::vector<int> v2 = json({1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
+                json j2({1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
+                auto v2 = j2.get<std::vector<int>>();
                 CHECK(v2.size() == 10);
             }
 #endif
@@ -405,6 +408,7 @@ TEST_CASE("value conversion")
         }
     }
 
+#if JSON_USE_IMPLICIT_CONVERSIONS
     SECTION("get an array (implicit)")
     {
         json::array_t a_reference{json(1),     json(1u),       json(2.2),
@@ -441,6 +445,7 @@ TEST_CASE("value conversion")
             CHECK(json(a) == j);
         }
     }
+#endif
 
     SECTION("get a string (explicit)")
     {
@@ -598,6 +603,7 @@ TEST_CASE("value conversion")
 
     }
 
+#if JSON_USE_IMPLICIT_CONVERSIONS
     SECTION("get a string (implicit)")
     {
         json::string_t s_reference{"Hello world"};
@@ -623,6 +629,7 @@ TEST_CASE("value conversion")
             CHECK(json(s) == j);
         }
     }
+#endif
 
     SECTION("get a boolean (explicit)")
     {
@@ -695,6 +702,7 @@ TEST_CASE("value conversion")
         }
     }
 
+#if JSON_USE_IMPLICIT_CONVERSIONS
     SECTION("get a boolean (implicit)")
     {
         json::boolean_t b_reference{true};
@@ -712,6 +720,7 @@ TEST_CASE("value conversion")
             CHECK(json(b) == j);
         }
     }
+#endif
 
     SECTION("get an integer number (explicit)")
     {
@@ -962,6 +971,7 @@ TEST_CASE("value conversion")
         }
     }
 
+#if JSON_USE_IMPLICIT_CONVERSIONS
     SECTION("get an integer number (implicit)")
     {
         json::number_integer_t n_reference{42};
@@ -1173,6 +1183,7 @@ TEST_CASE("value conversion")
             CHECK(json(n) == j_unsigned);
         }
     }
+#endif
 
     SECTION("get a floating-point number (explicit)")
     {
@@ -1234,6 +1245,7 @@ TEST_CASE("value conversion")
         }
     }
 
+#if JSON_USE_IMPLICIT_CONVERSIONS
     SECTION("get a floating-point number (implicit)")
     {
         json::number_float_t n_reference{42.23};
@@ -1257,6 +1269,7 @@ TEST_CASE("value conversion")
             CHECK(json(n).m_value.number_float == Approx(j.m_value.number_float));
         }
     }
+#endif
 
     SECTION("get a binary value (explicit)")
     {
@@ -1364,6 +1377,7 @@ TEST_CASE("value conversion")
         }
     }
 
+#if JSON_USE_IMPLICIT_CONVERSIONS
     SECTION("get a binary value (implicit)")
     {
         json::binary_t n_reference{{1, 2, 3}};
@@ -1375,6 +1389,7 @@ TEST_CASE("value conversion")
             CHECK(*json(b).m_value.binary == *j.m_value.binary);
         }
     }
+#endif
 
     SECTION("get an enum")
     {
@@ -1481,15 +1496,15 @@ TEST_CASE("value conversion")
                 SECTION("std::array is larger than JSON")
                 {
                     std::array<int, 6> arr6 = {{1, 2, 3, 4, 5, 6}};
-                    CHECK_THROWS_AS(arr6 = j1, json::out_of_range&);
-                    CHECK_THROWS_WITH(arr6 = j1, "[json.exception.out_of_range.401] "
+                    CHECK_THROWS_AS(j1.get_to(arr6), json::out_of_range&);
+                    CHECK_THROWS_WITH(j1.get_to(arr6), "[json.exception.out_of_range.401] "
                                       "array index 4 is out of range");
                 }
 
                 SECTION("std::array is smaller than JSON")
                 {
                     std::array<int, 2> arr2 = {{8, 9}};
-                    arr2 = j1;
+                    j1.get_to(arr2);
                     CHECK(arr2[0] == 1);
                     CHECK(arr2[1] == 2);
                 }

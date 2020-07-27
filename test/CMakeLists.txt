@@ -95,6 +95,7 @@ set(files
     src/unit-algorithms.cpp
     src/unit-allocator.cpp
     src/unit-alt-string.cpp
+    src/unit-assert_macro.cpp
     src/unit-bson.cpp
     src/unit-capacity.cpp
     src/unit-cbor.cpp
@@ -111,6 +112,7 @@ set(files
     src/unit-deserialization.cpp
     src/unit-element_access1.cpp
     src/unit-element_access2.cpp
+    src/unit-hash.cpp
     src/unit-inspection.cpp
     src/unit-items.cpp
     src/unit-iterators1.cpp
@@ -123,6 +125,7 @@ set(files
     src/unit-modifiers.cpp
     src/unit-msgpack.cpp
     src/unit-noexcept.cpp
+    src/unit-ordered_json.cpp
     src/unit-pointer_access.cpp
     src/unit-readme.cpp
     src/unit-reference_access.cpp
@@ -132,6 +135,7 @@ set(files
     src/unit-to_chars.cpp
     src/unit-ubjson.cpp
     src/unit-udt.cpp
+    src/unit-udt_macro.cpp
     src/unit-unicode.cpp
     src/unit-user_defined_input.cpp
     src/unit-wstring.cpp)
@@ -189,3 +193,4 @@ add_subdirectory(cmake_import)
 add_subdirectory(cmake_import_minver)
 add_subdirectory(cmake_add_subdirectory)
 add_subdirectory(cmake_fetch_content)
+add_subdirectory(cmake_target_include_directories)

@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.8.0
+|  |  |__   |  |  | | | |  version 3.9.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -312,6 +312,7 @@ TEST_CASE("basic usage" * doctest::test_suite("udt"))
             CHECK(name.m_val == "new name");
         }
 
+#if JSON_USE_IMPLICIT_CONVERSIONS
         SECTION("implicit conversions")
         {
             const udt::contact_book parsed_book = big_json;
@@ -335,6 +336,7 @@ TEST_CASE("basic usage" * doctest::test_suite("udt"))
             CHECK(book_name == udt::name{"C++"});
             CHECK(book == parsed_book);
         }
+#endif
     }
 }
 
@@ -551,7 +553,7 @@ struct pod_serializer
     template <
         typename BasicJsonType, typename U = T,
         typename std::enable_if <
-            not(std::is_pod<U>::value and std::is_class<U>::value), int >::type = 0 >
+            !(std::is_pod<U>::value && std::is_class<U>::value), int >::type = 0 >
     static void from_json(const BasicJsonType& j, U& t)
     {
         using nlohmann::from_json;
@@ -559,9 +561,9 @@ struct pod_serializer
     }
 
     // special behaviour for pods
-    template <typename BasicJsonType, typename U = T,
-              typename std::enable_if<
-                  std::is_pod<U>::value and std::is_class<U>::value, int>::type = 0>
+    template < typename BasicJsonType, typename U = T,
+               typename std::enable_if <
+                   std::is_pod<U>::value && std::is_class<U>::value, int >::type = 0 >
     static void from_json(const  BasicJsonType& j, U& t)
     {
         std::uint64_t value;
@@ -587,16 +589,16 @@ struct pod_serializer
     template <
         typename BasicJsonType, typename U = T,
         typename std::enable_if <
-            not(std::is_pod<U>::value and std::is_class<U>::value), int >::type = 0 >
+            !(std::is_pod<U>::value && std::is_class<U>::value), int >::type = 0 >
     static void to_json(BasicJsonType& j, const  T& t)
     {
         using nlohmann::to_json;
         to_json(j, t);
     }
 
-    template <typename BasicJsonType, typename U = T,
-              typename std::enable_if<
-                  std::is_pod<U>::value and std::is_class<U>::value, int>::type = 0>
+    template < typename BasicJsonType, typename U = T,
+               typename std::enable_if <
+                   std::is_pod<U>::value && std::is_class<U>::value, int >::type = 0 >
     static void to_json(BasicJsonType& j, const  T& t) noexcept
     {
         auto bytes = static_cast< const unsigned char*>(static_cast<const void*>(&t));
@@ -805,7 +807,7 @@ struct is_constructible_patched<T, decltype(void(json(std::declval<T>())))> : st
 
 TEST_CASE("an incomplete type does not trigger a compiler error in non-evaluated context" * doctest::test_suite("udt"))
 {
-    static_assert(not is_constructible_patched<json, incomplete>::value, "");
+    static_assert(!is_constructible_patched<json, incomplete>::value, "");
 }
 
 namespace
@@ -839,5 +841,5 @@ TEST_CASE("Issue #924")
 TEST_CASE("Issue #1237")
 {
     struct non_convertible_type {};
-    static_assert(not std::is_convertible<json, non_convertible_type>::value, "");
+    static_assert(!std::is_convertible<json, non_convertible_type>::value, "");
 }

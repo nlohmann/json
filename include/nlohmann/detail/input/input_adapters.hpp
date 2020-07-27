@@ -1,7 +1,6 @@
 #pragma once
 
 #include <array> // array
-#include <cassert> // assert
 #include <cstddef> // size_t
 #include <cstdio> //FILE *
 #include <cstring> // strlen
@@ -37,7 +36,7 @@ class file_input_adapter
     using char_type = char;
 
     JSON_HEDLEY_NON_NULL(2)
-    explicit file_input_adapter(std::FILE* f)  noexcept
+    explicit file_input_adapter(std::FILE* f) noexcept
         : m_file(f)
     {}
 
@@ -76,7 +75,7 @@ class input_stream_adapter
     {
         // clear stream flags; we use underlying streambuf I/O, do not
         // maintain ifstream flags, except eof
-        if (is)
+        if (is != nullptr)
         {
             is->clear(is->rdstate() & std::ios::eofbit);
         }
@@ -91,7 +90,7 @@ class input_stream_adapter
     input_stream_adapter& operator=(input_stream_adapter&) = delete;
     input_stream_adapter& operator=(input_stream_adapter&& rhs) = delete;
 
-    input_stream_adapter(input_stream_adapter&& rhs) : is(rhs.is), sb(rhs.sb)
+    input_stream_adapter(input_stream_adapter&& rhs) noexcept : is(rhs.is), sb(rhs.sb)
     {
         rhs.is = nullptr;
         rhs.sb = nullptr;
@@ -251,7 +250,7 @@ struct wide_string_input_helper<BaseInputAdapter, 2>
                 utf8_bytes[1] = static_cast<std::char_traits<char>::int_type>(0x80u | (static_cast<unsigned int>(wc) & 0x3Fu));
                 utf8_bytes_filled = 2;
             }
-            else if (0xD800 > wc or wc >= 0xE000)
+            else if (0xD800 > wc || wc >= 0xE000)
             {
                 utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(0xE0u | ((static_cast<unsigned int>(wc) >> 12u)));
                 utf8_bytes[1] = static_cast<std::char_traits<char>::int_type>(0x80u | ((static_cast<unsigned int>(wc) >> 6u) & 0x3Fu));
@@ -260,7 +259,7 @@ struct wide_string_input_helper<BaseInputAdapter, 2>
             }
             else
             {
-                if (JSON_HEDLEY_UNLIKELY(not input.empty()))
+                if (JSON_HEDLEY_UNLIKELY(!input.empty()))
                 {
                     const auto wc2 = static_cast<unsigned int>(input.get_character());
                     const auto charcode = 0x10000u + (((static_cast<unsigned int>(wc) & 0x3FFu) << 10u) | (wc2 & 0x3FFu));
@@ -297,13 +296,13 @@ class wide_string_input_adapter
         {
             fill_buffer<sizeof(WideCharType)>();
 
-            assert(utf8_bytes_filled > 0);
-            assert(utf8_bytes_index == 0);
+            JSON_ASSERT(utf8_bytes_filled > 0);
+            JSON_ASSERT(utf8_bytes_index == 0);
         }
 
         // use buffer
-        assert(utf8_bytes_filled > 0);
-        assert(utf8_bytes_index < utf8_bytes_filled);
+        JSON_ASSERT(utf8_bytes_filled > 0);
+        JSON_ASSERT(utf8_bytes_index < utf8_bytes_filled);
         return utf8_bytes[utf8_bytes_index++];
     }
 
@@ -403,15 +402,15 @@ using contiguous_bytes_input_adapter = decltype(input_adapter(std::declval<const
 // Null-delimited strings, and the like.
 template < typename CharT,
            typename std::enable_if <
-               std::is_pointer<CharT>::value and
-               not std::is_array<CharT>::value and
-               std::is_integral<typename std::remove_pointer<CharT>::type>::value and
+               std::is_pointer<CharT>::value&&
+               !std::is_array<CharT>::value&&
+               std::is_integral<typename std::remove_pointer<CharT>::type>::value&&
                sizeof(typename std::remove_pointer<CharT>::type) == 1,
                int >::type = 0 >
 contiguous_bytes_input_adapter input_adapter(CharT b)
 {
     auto length = std::strlen(reinterpret_cast<const char*>(b));
-    auto ptr = reinterpret_cast<const char*>(b);
+    const auto* ptr = reinterpret_cast<const char*>(b);
     return input_adapter(ptr, ptr + length);
 }
 
@@ -427,12 +426,12 @@ auto input_adapter(T (&array)[N]) -> decltype(input_adapter(array, array + N))
 class span_input_adapter
 {
   public:
-    template<typename CharT,
-             typename std::enable_if<
-                 std::is_pointer<CharT>::value and
-                 std::is_integral<typename std::remove_pointer<CharT>::type>::value and
-                 sizeof(typename std::remove_pointer<CharT>::type) == 1,
-                 int>::type = 0>
+    template < typename CharT,
+               typename std::enable_if <
+                   std::is_pointer<CharT>::value&&
+                   std::is_integral<typename std::remove_pointer<CharT>::type>::value&&
+                   sizeof(typename std::remove_pointer<CharT>::type) == 1,
+                   int >::type = 0 >
     span_input_adapter(CharT b, std::size_t l)
         : ia(reinterpret_cast<const char*>(b), reinterpret_cast<const char*>(b) + l) {}
 

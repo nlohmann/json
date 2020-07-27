@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.8.0
+|  |  |__   |  |  | | | |  version 3.9.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -208,7 +208,7 @@ TEST_CASE("iterator class")
                 json::iterator it = j.begin();
                 CHECK((it.m_it.primitive_iterator.m_it == 1));
                 it++;
-                CHECK((it.m_it.primitive_iterator.m_it != 0 and it.m_it.primitive_iterator.m_it != 1));
+                CHECK((it.m_it.primitive_iterator.m_it != 0 && it.m_it.primitive_iterator.m_it != 1));
             }
 
             SECTION("number")
@@ -219,7 +219,7 @@ TEST_CASE("iterator class")
                 it++;
                 CHECK((it.m_it.primitive_iterator.m_it == 1));
                 it++;
-                CHECK((it.m_it.primitive_iterator.m_it != 0 and it.m_it.primitive_iterator.m_it != 1));
+                CHECK((it.m_it.primitive_iterator.m_it != 0 && it.m_it.primitive_iterator.m_it != 1));
             }
 
             SECTION("object")
@@ -259,7 +259,7 @@ TEST_CASE("iterator class")
                 json::iterator it = j.begin();
                 CHECK((it.m_it.primitive_iterator.m_it == 1));
                 ++it;
-                CHECK((it.m_it.primitive_iterator.m_it != 0 and it.m_it.primitive_iterator.m_it != 1));
+                CHECK((it.m_it.primitive_iterator.m_it != 0 && it.m_it.primitive_iterator.m_it != 1));
             }
 
             SECTION("number")
@@ -270,7 +270,7 @@ TEST_CASE("iterator class")
                 ++it;
                 CHECK((it.m_it.primitive_iterator.m_it == 1));
                 ++it;
-                CHECK((it.m_it.primitive_iterator.m_it != 0 and it.m_it.primitive_iterator.m_it != 1));
+                CHECK((it.m_it.primitive_iterator.m_it != 0 && it.m_it.primitive_iterator.m_it != 1));
             }
 
             SECTION("object")
@@ -319,7 +319,7 @@ TEST_CASE("iterator class")
                 it--;
                 CHECK((it.m_it.primitive_iterator.m_it == 0));
                 it--;
-                CHECK((it.m_it.primitive_iterator.m_it != 0 and it.m_it.primitive_iterator.m_it != 1));
+                CHECK((it.m_it.primitive_iterator.m_it != 0 && it.m_it.primitive_iterator.m_it != 1));
             }
 
             SECTION("object")
@@ -368,7 +368,7 @@ TEST_CASE("iterator class")
                 --it;
                 CHECK((it.m_it.primitive_iterator.m_it == 0));
                 --it;
-                CHECK((it.m_it.primitive_iterator.m_it != 0 and it.m_it.primitive_iterator.m_it != 1));
+                CHECK((it.m_it.primitive_iterator.m_it != 0 && it.m_it.primitive_iterator.m_it != 1));
             }
 
             SECTION("object")

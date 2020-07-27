@@ -1,14 +1,12 @@
 #pragma once
 
 #include <array> // array
-#include <cassert> // assert
 #include <cmath>   // signbit, isfinite
 #include <cstdint> // intN_t, uintN_t
 #include <cstring> // memcpy, memmove
 #include <limits> // numeric_limits
 #include <type_traits> // conditional
 
-#include <nlohmann/detail/boolean_operators.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 
 namespace nlohmann
@@ -38,7 +36,7 @@ For a detailed description of the algorithm see:
 namespace dtoa_impl
 {
 
-template <typename Target, typename Source>
+template<typename Target, typename Source>
 Target reinterpret_bits(const Source source)
 {
     static_assert(sizeof(Target) == sizeof(Source), "size mismatch");
@@ -63,8 +61,8 @@ struct diyfp // f * 2^e
     */
     static diyfp sub(const diyfp& x, const diyfp& y) noexcept
     {
-        assert(x.e == y.e);
-        assert(x.f >= y.f);
+        JSON_ASSERT(x.e == y.e);
+        JSON_ASSERT(x.f >= y.f);
 
         return {x.f - y.f, x.e};
     }
@@ -140,7 +138,7 @@ struct diyfp // f * 2^e
     */
     static diyfp normalize(diyfp x) noexcept
     {
-        assert(x.f != 0);
+        JSON_ASSERT(x.f != 0);
 
         while ((x.f >> 63u) == 0)
         {
@@ -159,8 +157,8 @@ struct diyfp // f * 2^e
     {
         const int delta = x.e - target_exponent;
 
-        assert(delta >= 0);
-        assert(((x.f << delta) >> delta) == x.f);
+        JSON_ASSERT(delta >= 0);
+        JSON_ASSERT(((x.f << delta) >> delta) == x.f);
 
         return {x.f << delta, target_exponent};
     }
@@ -179,11 +177,11 @@ boundaries.
 
 @pre value must be finite and positive
 */
-template <typename FloatType>
+template<typename FloatType>
 boundaries compute_boundaries(FloatType value)
 {
-    assert(std::isfinite(value));
-    assert(value > 0);
+    JSON_ASSERT(std::isfinite(value));
+    JSON_ASSERT(value > 0);
 
     // Convert the IEEE representation into a diyfp.
     //
@@ -232,7 +230,7 @@ boundaries compute_boundaries(FloatType value)
     //      -----------------+------+------+-------------+-------------+---  (B)
     //                       v-     m-     v             m+            v+
 
-    const bool lower_boundary_is_closer = F == 0 and E > 1;
+    const bool lower_boundary_is_closer = F == 0 && E > 1;
     const diyfp m_plus = diyfp(2 * v.f + 1, v.e - 1);
     const diyfp m_minus = lower_boundary_is_closer
                           ? diyfp(4 * v.f - 1, v.e - 2)  // (B)
@@ -463,18 +461,18 @@ inline cached_power get_cached_power_for_binary_exponent(int e)
     //      k = ceil((kAlpha - e - 1) * 0.30102999566398114)
     // for |e| <= 1500, but doesn't require floating-point operations.
     // NB: log_10(2) ~= 78913 / 2^18
-    assert(e >= -1500);
-    assert(e <=  1500);
+    JSON_ASSERT(e >= -1500);
+    JSON_ASSERT(e <=  1500);
     const int f = kAlpha - e - 1;
     const int k = (f * 78913) / (1 << 18) + static_cast<int>(f > 0);
 
     const int index = (-kCachedPowersMinDecExp + k + (kCachedPowersDecStep - 1)) / kCachedPowersDecStep;
-    assert(index >= 0);
-    assert(static_cast<std::size_t>(index) < kCachedPowers.size());
+    JSON_ASSERT(index >= 0);
+    JSON_ASSERT(static_cast<std::size_t>(index) < kCachedPowers.size());
 
     const cached_power cached = kCachedPowers[static_cast<std::size_t>(index)];
-    assert(kAlpha <= cached.e + e + 64);
-    assert(kGamma >= cached.e + e + 64);
+    JSON_ASSERT(kAlpha <= cached.e + e + 64);
+    JSON_ASSERT(kGamma >= cached.e + e + 64);
 
     return cached;
 }
@@ -542,10 +540,10 @@ inline int find_largest_pow10(const std::uint32_t n, std::uint32_t& pow10)
 inline void grisu2_round(char* buf, int len, std::uint64_t dist, std::uint64_t delta,
                          std::uint64_t rest, std::uint64_t ten_k)
 {
-    assert(len >= 1);
-    assert(dist <= delta);
-    assert(rest <= delta);
-    assert(ten_k > 0);
+    JSON_ASSERT(len >= 1);
+    JSON_ASSERT(dist <= delta);
+    JSON_ASSERT(rest <= delta);
+    JSON_ASSERT(ten_k > 0);
 
     //               <--------------------------- delta ---->
     //                                  <---- dist --------->
@@ -567,10 +565,10 @@ inline void grisu2_round(char* buf, int len, std::uint64_t dist, std::uint64_t d
     // integer arithmetic.
 
     while (rest < dist
-            and delta - rest >= ten_k
-            and (rest + ten_k < dist or dist - rest > rest + ten_k - dist))
+            && delta - rest >= ten_k
+            && (rest + ten_k < dist || dist - rest > rest + ten_k - dist))
     {
-        assert(buf[len - 1] != '0');
+        JSON_ASSERT(buf[len - 1] != '0');
         buf[len - 1]--;
         rest += ten_k;
     }
@@ -598,8 +596,8 @@ inline void grisu2_digit_gen(char* buffer, int& length, int& decimal_exponent,
     // Grisu2 generates the digits of M+ from left to right and stops as soon as
     // V is in [M-,M+].
 
-    assert(M_plus.e >= kAlpha);
-    assert(M_plus.e <= kGamma);
+    JSON_ASSERT(M_plus.e >= kAlpha);
+    JSON_ASSERT(M_plus.e <= kGamma);
 
     std::uint64_t delta = diyfp::sub(M_plus, M_minus).f; // (significand of (M+ - M-), implicit exponent is e)
     std::uint64_t dist  = diyfp::sub(M_plus, w      ).f; // (significand of (M+ - w ), implicit exponent is e)
@@ -620,7 +618,7 @@ inline void grisu2_digit_gen(char* buffer, int& length, int& decimal_exponent,
     //
     // Generate the digits of the integral part p1 = d[n-1]...d[1]d[0]
 
-    assert(p1 > 0);
+    JSON_ASSERT(p1 > 0);
 
     std::uint32_t pow10;
     const int k = find_largest_pow10(p1, pow10);
@@ -656,7 +654,7 @@ inline void grisu2_digit_gen(char* buffer, int& length, int& decimal_exponent,
         //      M+ = buffer * 10^n + (d * 10^(n-1) + r) + p2 * 2^e
         //         = (buffer * 10 + d) * 10^(n-1) + (r + p2 * 2^e)
         //
-        assert(d <= 9);
+        JSON_ASSERT(d <= 9);
         buffer[length++] = static_cast<char>('0' + d); // buffer := buffer * 10 + d
         //
         //      M+ = buffer * 10^(n-1) + (r + p2 * 2^e)
@@ -743,7 +741,7 @@ inline void grisu2_digit_gen(char* buffer, int& length, int& decimal_exponent,
     //
     // and stop as soon as 10^-m * r * 2^e <= delta * 2^e
 
-    assert(p2 > delta);
+    JSON_ASSERT(p2 > delta);
 
     int m = 0;
     for (;;)
@@ -754,7 +752,7 @@ inline void grisu2_digit_gen(char* buffer, int& length, int& decimal_exponent,
         //         = buffer * 10^-m + 10^-m * (1/10 * (10 * p2)                   ) * 2^e
         //         = buffer * 10^-m + 10^-m * (1/10 * ((10*p2 div 2^-e) * 2^-e + (10*p2 mod 2^-e)) * 2^e
         //
-        assert(p2 <= (std::numeric_limits<std::uint64_t>::max)() / 10);
+        JSON_ASSERT(p2 <= (std::numeric_limits<std::uint64_t>::max)() / 10);
         p2 *= 10;
         const std::uint64_t d = p2 >> -one.e;     // d = (10 * p2) div 2^-e
         const std::uint64_t r = p2 & (one.f - 1); // r = (10 * p2) mod 2^-e
@@ -763,7 +761,7 @@ inline void grisu2_digit_gen(char* buffer, int& length, int& decimal_exponent,
         //         = buffer * 10^-m + 10^-m * (1/10 * (d + r * 2^e))
         //         = (buffer * 10 + d) * 10^(-m-1) + 10^(-m-1) * r * 2^e
         //
-        assert(d <= 9);
+        JSON_ASSERT(d <= 9);
         buffer[length++] = static_cast<char>('0' + d); // buffer := buffer * 10 + d
         //
         //      M+ = buffer * 10^(-m-1) + 10^(-m-1) * r * 2^e
@@ -824,8 +822,8 @@ JSON_HEDLEY_NON_NULL(1)
 inline void grisu2(char* buf, int& len, int& decimal_exponent,
                    diyfp m_minus, diyfp v, diyfp m_plus)
 {
-    assert(m_plus.e == m_minus.e);
-    assert(m_plus.e == v.e);
+    JSON_ASSERT(m_plus.e == m_minus.e);
+    JSON_ASSERT(m_plus.e == v.e);
 
     //  --------(-----------------------+-----------------------)--------    (A)
     //          m-                      v                       m+
@@ -879,15 +877,15 @@ v = buf * 10^decimal_exponent
 len is the length of the buffer (number of decimal digits)
 The buffer must be large enough, i.e. >= max_digits10.
 */
-template <typename FloatType>
+template<typename FloatType>
 JSON_HEDLEY_NON_NULL(1)
 void grisu2(char* buf, int& len, int& decimal_exponent, FloatType value)
 {
     static_assert(diyfp::kPrecision >= std::numeric_limits<FloatType>::digits + 3,
                   "internal error: not enough precision");
 
-    assert(std::isfinite(value));
-    assert(value > 0);
+    JSON_ASSERT(std::isfinite(value));
+    JSON_ASSERT(value > 0);
 
     // If the neighbors (and boundaries) of 'value' are always computed for double-precision
     // numbers, all float's can be recovered using strtod (and strtof). However, the resulting
@@ -923,8 +921,8 @@ JSON_HEDLEY_NON_NULL(1)
 JSON_HEDLEY_RETURNS_NON_NULL
 inline char* append_exponent(char* buf, int e)
 {
-    assert(e > -1000);
-    assert(e <  1000);
+    JSON_ASSERT(e > -1000);
+    JSON_ASSERT(e <  1000);
 
     if (e < 0)
     {
@@ -976,8 +974,8 @@ JSON_HEDLEY_RETURNS_NON_NULL
 inline char* format_buffer(char* buf, int len, int decimal_exponent,
                            int min_exp, int max_exp)
 {
-    assert(min_exp < 0);
-    assert(max_exp > 0);
+    JSON_ASSERT(min_exp < 0);
+    JSON_ASSERT(max_exp > 0);
 
     const int k = len;
     const int n = len + decimal_exponent;
@@ -986,7 +984,7 @@ inline char* format_buffer(char* buf, int len, int decimal_exponent,
     // k is the length of the buffer (number of decimal digits)
     // n is the position of the decimal point relative to the start of the buffer.
 
-    if (k <= n and n <= max_exp)
+    if (k <= n && n <= max_exp)
     {
         // digits[000]
         // len <= max_exp + 2
@@ -998,19 +996,19 @@ inline char* format_buffer(char* buf, int len, int decimal_exponent,
         return buf + (static_cast<size_t>(n) + 2);
     }
 
-    if (0 < n and n <= max_exp)
+    if (0 < n && n <= max_exp)
     {
         // dig.its
         // len <= max_digits10 + 1
 
-        assert(k > n);
+        JSON_ASSERT(k > n);
 
         std::memmove(buf + (static_cast<size_t>(n) + 1), buf + n, static_cast<size_t>(k) - static_cast<size_t>(n));
         buf[n] = '.';
         return buf + (static_cast<size_t>(k) + 1U);
     }
 
-    if (min_exp < n and n <= 0)
+    if (min_exp < n && n <= 0)
     {
         // 0.[000]digits
         // len <= 2 + (-min_exp - 1) + max_digits10
@@ -1055,13 +1053,13 @@ format. Returns an iterator pointing past-the-end of the decimal representation.
 @note The buffer must be large enough.
 @note The result is NOT null-terminated.
 */
-template <typename FloatType>
+template<typename FloatType>
 JSON_HEDLEY_NON_NULL(1, 2)
 JSON_HEDLEY_RETURNS_NON_NULL
 char* to_chars(char* first, const char* last, FloatType value)
 {
     static_cast<void>(last); // maybe unused - fix warning
-    assert(std::isfinite(value));
+    JSON_ASSERT(std::isfinite(value));
 
     // Use signbit(value) instead of (value < 0) since signbit works for -0.
     if (std::signbit(value))
@@ -1079,7 +1077,7 @@ char* to_chars(char* first, const char* last, FloatType value)
         return first;
     }
 
-    assert(last - first >= std::numeric_limits<FloatType>::max_digits10);
+    JSON_ASSERT(last - first >= std::numeric_limits<FloatType>::max_digits10);
 
     // Compute v = buffer * 10^decimal_exponent.
     // The decimal digits are stored in the buffer, which needs to be interpreted
@@ -1089,16 +1087,16 @@ char* to_chars(char* first, const char* last, FloatType value)
     int decimal_exponent = 0;
     dtoa_impl::grisu2(first, len, decimal_exponent, value);
 
-    assert(len <= std::numeric_limits<FloatType>::max_digits10);
+    JSON_ASSERT(len <= std::numeric_limits<FloatType>::max_digits10);
 
     // Format the buffer like printf("%.*g", prec, value)
     constexpr int kMinExp = -4;
     // Use digits10 here to increase compatibility with version 2.
     constexpr int kMaxExp = std::numeric_limits<FloatType>::digits10;
 
-    assert(last - first >= kMaxExp + 2);
-    assert(last - first >= 2 + (-kMinExp - 1) + std::numeric_limits<FloatType>::max_digits10);
-    assert(last - first >= std::numeric_limits<FloatType>::max_digits10 + 6);
+    JSON_ASSERT(last - first >= kMaxExp + 2);
+    JSON_ASSERT(last - first >= 2 + (-kMinExp - 1) + std::numeric_limits<FloatType>::max_digits10);
+    JSON_ASSERT(last - first >= std::numeric_limits<FloatType>::max_digits10 + 6);
 
     return dtoa_impl::format_buffer(first, len, decimal_exponent, kMinExp, kMaxExp);
 }

@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.8.0
+|  |  |__   |  |  | | | |  version 3.9.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -224,6 +224,7 @@ class SaxCountdown : public nlohmann::json::json_sax_t
 
 json parser_helper(const std::string& s);
 bool accept_helper(const std::string& s);
+void comments_helper(const std::string& s);
 
 json parser_helper(const std::string& s)
 {
@@ -241,6 +242,8 @@ json parser_helper(const std::string& s)
     json::sax_parse(s, &sdp);
     CHECK(j_sax == j);
 
+    comments_helper(s);
+
     return j;
 }
 
@@ -251,7 +254,7 @@ bool accept_helper(const std::string& s)
     // 1. parse s without exceptions
     json j;
     CHECK_NOTHROW(json::parser(nlohmann::detail::input_adapter(s), nullptr, false).parse(true, j));
-    const bool ok_noexcept = not j.is_discarded();
+    const bool ok_noexcept = !j.is_discarded();
 
     // 2. accept s
     const bool ok_accept = json::parser(nlohmann::detail::input_adapter(s)).accept(true);
@@ -262,7 +265,7 @@ bool accept_helper(const std::string& s)
     // 4. parse with SAX (compare with relaxed accept result)
     SaxEventLogger el;
     CHECK_NOTHROW(json::sax_parse(s, &el, json::input_format_t::json, false));
-    CHECK(json::parser(nlohmann::detail::input_adapter(s)).accept(false) == not el.errored);
+    CHECK(json::parser(nlohmann::detail::input_adapter(s)).accept(false) == !el.errored);
 
     // 5. parse with simple callback
     json::parser_callback_t cb = [](int, json::parse_event_t, json&)
@@ -270,15 +273,55 @@ bool accept_helper(const std::string& s)
         return true;
     };
     json j_cb = json::parse(s, cb, false);
-    const bool ok_noexcept_cb = not j_cb.is_discarded();
+    const bool ok_noexcept_cb = !j_cb.is_discarded();
 
     // 6. check if this approach came to the same result
     CHECK(ok_noexcept == ok_noexcept_cb);
 
-    // 7. return result
+    // 7. check if comments are properly ignored
+    if (ok_accept)
+    {
+        comments_helper(s);
+    }
+
+    // 8. return result
     return ok_accept;
 }
+
+void comments_helper(const std::string& s)
+{
+    json _;
+
+    // parse/accept with default parser
+    CHECK_NOTHROW(_ = json::parse(s));
+    CHECK(json::accept(s));
+
+    // parse/accept while skipping comments
+    CHECK_NOTHROW(_ = json::parse(s, nullptr, false, true));
+    CHECK(json::accept(s, true));
+
+    std::vector<std::string> json_with_comments;
+
+    // start with a comment
+    json_with_comments.push_back(std::string("// this is a comment\n") + s);
+    json_with_comments.push_back(std::string("/* this is a comment */") + s);
+    // end with a comment
+    json_with_comments.push_back(s + "// this is a comment");
+    json_with_comments.push_back(s + "/* this is a comment */");
+
+    // check all strings
+    for (const auto& json_with_comment : json_with_comments)
+    {
+        CAPTURE(json_with_comment)
+        CHECK_THROWS_AS(_ = json::parse(json_with_comment), json::parse_error);
+        CHECK(!json::accept(json_with_comment));
+
+        CHECK_NOTHROW(_ = json::parse(json_with_comment, nullptr, true, true));
+        CHECK(json::accept(json_with_comment, true));
+    }
 }
+
+} // namespace
 
 TEST_CASE("parser class")
 {
@@ -898,7 +941,7 @@ TEST_CASE("parser class")
             SECTION("overflow")
             {
                 // overflows during parsing
-                CHECK(not accept_helper("1.18973e+4932"));
+                CHECK(!accept_helper("1.18973e+4932"));
             }
 
             SECTION("invalid numbers")
@@ -1573,7 +1616,7 @@ TEST_CASE("parser class")
         {
             json j_filtered1 = json::parse(structured_array, [](int, json::parse_event_t e, const json & parsed)
             {
-                if (e == json::parse_event_t::object_end and parsed.contains("foo"))
+                if (e == json::parse_event_t::object_end && parsed.contains("foo"))
                 {
                     return false;
                 }
@@ -1612,7 +1655,7 @@ TEST_CASE("parser class")
                     json j_object = json::parse(s_object, [](int, json::parse_event_t e, const json&)
                     {
                         static bool first = true;
-                        if (e == json::parse_event_t::object_end and first)
+                        if (e == json::parse_event_t::object_end && first)
                         {
                             first = false;
                             return false;
@@ -1631,7 +1674,7 @@ TEST_CASE("parser class")
                     json j_array = json::parse(s_array, [](int, json::parse_event_t e, const json&)
                     {
                         static bool first = true;
-                        if (e == json::parse_event_t::array_end and first)
+                        if (e == json::parse_event_t::array_end && first)
                         {
                             first = false;
                             return false;
@@ -1833,5 +1876,11 @@ TEST_CASE("parser class")
                 CHECK(json::sax_parse("\"foo\"", &s) == false);
             }
         }
+    }
+
+    SECTION("error messages for comments")
+    {
+        CHECK_THROWS_WITH_AS(json::parse("/a", nullptr, true, true), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid comment; expecting '/' or '*' after '/'; last read: '/a'", json::parse_error);
+        CHECK_THROWS_WITH_AS(json::parse("/*", nullptr, true, true), "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid comment; missing closing '*/'; last read: '/*<U+0000>'", json::parse_error);
     }
 }

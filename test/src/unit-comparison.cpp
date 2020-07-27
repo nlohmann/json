@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.8.0
+|  |  |__   |  |  | | | |  version 3.9.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -165,7 +165,7 @@ TEST_CASE("lexicographical comparison operators")
                     CAPTURE(i)
                     CAPTURE(j)
                     // check definition
-                    CHECK( (j_values[i] != j_values[j]) == not(j_values[i] == j_values[j]) );
+                    CHECK( (j_values[i] != j_values[j]) == !(j_values[i] == j_values[j]) );
                 }
             }
 
@@ -173,8 +173,8 @@ TEST_CASE("lexicographical comparison operators")
             json j_null;
             CHECK( (j_null != nullptr) == false);
             CHECK( (nullptr != j_null) == false);
-            CHECK( (j_null != nullptr) == not(j_null == nullptr));
-            CHECK( (nullptr != j_null) == not(nullptr == j_null));
+            CHECK( (j_null != nullptr) == !(j_null == nullptr));
+            CHECK( (nullptr != j_null) == !(nullptr == j_null));
         }
 
         SECTION("comparison: less")
@@ -234,7 +234,7 @@ TEST_CASE("lexicographical comparison operators")
                     CAPTURE(i)
                     CAPTURE(j)
                     // check definition
-                    CHECK( (j_values[i] <= j_values[j]) == not(j_values[j] < j_values[i]) );
+                    CHECK( (j_values[i] <= j_values[j]) == !(j_values[j] < j_values[i]) );
                 }
             }
         }
@@ -262,7 +262,7 @@ TEST_CASE("lexicographical comparison operators")
                     CAPTURE(i)
                     CAPTURE(j)
                     // check definition
-                    CHECK( (j_values[i] >= j_values[j]) == not(j_values[i] < j_values[j]) );
+                    CHECK( (j_values[i] >= j_values[j]) == !(j_values[i] < j_values[j]) );
                 }
             }
         }

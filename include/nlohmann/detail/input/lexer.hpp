@@ -112,8 +112,11 @@ class lexer : public lexer_base<BasicJsonType>
   public:
     using token_type = typename lexer_base<BasicJsonType>::token_type;
 
-    explicit lexer(InputAdapterType&& adapter)
-        : ia(std::move(adapter)), decimal_point_char(static_cast<char_int_type>(get_decimal_point())) {}
+    explicit lexer(InputAdapterType&& adapter, bool ignore_comments_ = false)
+        : ia(std::move(adapter))
+        , ignore_comments(ignore_comments_)
+        , decimal_point_char(static_cast<char_int_type>(get_decimal_point()))
+    {}
 
     // delete because of pointer members
     lexer(const lexer&) = delete;
@@ -131,8 +134,8 @@ class lexer : public lexer_base<BasicJsonType>
     JSON_HEDLEY_PURE
     static char get_decimal_point() noexcept
     {
-        const auto loc = localeconv();
-        assert(loc != nullptr);
+        const auto* loc = localeconv();
+        JSON_ASSERT(loc != nullptr);
         return (loc->decimal_point == nullptr) ? '.' : *(loc->decimal_point);
     }
 
@@ -158,7 +161,7 @@ class lexer : public lexer_base<BasicJsonType>
     int get_codepoint()
     {
         // this function only makes sense after reading `\u`
-        assert(current == 'u');
+        JSON_ASSERT(current == 'u');
         int codepoint = 0;
 
         const auto factors = { 12u, 8u, 4u, 0u };
@@ -166,15 +169,15 @@ class lexer : public lexer_base<BasicJsonType>
         {
             get();
 
-            if (current >= '0' and current <= '9')
+            if (current >= '0' && current <= '9')
             {
                 codepoint += static_cast<int>((static_cast<unsigned int>(current) - 0x30u) << factor);
             }
-            else if (current >= 'A' and current <= 'F')
+            else if (current >= 'A' && current <= 'F')
             {
                 codepoint += static_cast<int>((static_cast<unsigned int>(current) - 0x37u) << factor);
             }
-            else if (current >= 'a' and current <= 'f')
+            else if (current >= 'a' && current <= 'f')
             {
                 codepoint += static_cast<int>((static_cast<unsigned int>(current) - 0x57u) << factor);
             }
@@ -184,7 +187,7 @@ class lexer : public lexer_base<BasicJsonType>
             }
         }
 
-        assert(0x0000 <= codepoint and codepoint <= 0xFFFF);
+        JSON_ASSERT(0x0000 <= codepoint && codepoint <= 0xFFFF);
         return codepoint;
     }
 
@@ -205,13 +208,13 @@ class lexer : public lexer_base<BasicJsonType>
     */
     bool next_byte_in_range(std::initializer_list<char_int_type> ranges)
     {
-        assert(ranges.size() == 2 or ranges.size() == 4 or ranges.size() == 6);
+        JSON_ASSERT(ranges.size() == 2 || ranges.size() == 4 || ranges.size() == 6);
         add(current);
 
         for (auto range = ranges.begin(); range != ranges.end(); ++range)
         {
             get();
-            if (JSON_HEDLEY_LIKELY(*range <= current and current <= *(++range)))
+            if (JSON_HEDLEY_LIKELY(*range <= current && current <= *(++range)))
             {
                 add(current);
             }
@@ -246,7 +249,7 @@ class lexer : public lexer_base<BasicJsonType>
         reset();
 
         // we entered the function by reading an open quote
-        assert(current == '\"');
+        JSON_ASSERT(current == '\"');
 
         while (true)
         {
@@ -317,10 +320,10 @@ class lexer : public lexer_base<BasicJsonType>
                             }
 
                             // check if code point is a high surrogate
-                            if (0xD800 <= codepoint1 and codepoint1 <= 0xDBFF)
+                            if (0xD800 <= codepoint1 && codepoint1 <= 0xDBFF)
                             {
                                 // expect next \uxxxx entry
-                                if (JSON_HEDLEY_LIKELY(get() == '\\' and get() == 'u'))
+                                if (JSON_HEDLEY_LIKELY(get() == '\\' && get() == 'u'))
                                 {
                                     const int codepoint2 = get_codepoint();
 
@@ -331,7 +334,7 @@ class lexer : public lexer_base<BasicJsonType>
                                     }
 
                                     // check if codepoint2 is a low surrogate
-                                    if (JSON_HEDLEY_LIKELY(0xDC00 <= codepoint2 and codepoint2 <= 0xDFFF))
+                                    if (JSON_HEDLEY_LIKELY(0xDC00 <= codepoint2 && codepoint2 <= 0xDFFF))
                                     {
                                         // overwrite codepoint
                                         codepoint = static_cast<int>(
@@ -358,7 +361,7 @@ class lexer : public lexer_base<BasicJsonType>
                             }
                             else
                             {
-                                if (JSON_HEDLEY_UNLIKELY(0xDC00 <= codepoint1 and codepoint1 <= 0xDFFF))
+                                if (JSON_HEDLEY_UNLIKELY(0xDC00 <= codepoint1 && codepoint1 <= 0xDFFF))
                                 {
                                     error_message = "invalid string: surrogate U+DC00..U+DFFF must follow U+D800..U+DBFF";
                                     return token_type::parse_error;
@@ -366,7 +369,7 @@ class lexer : public lexer_base<BasicJsonType>
                             }
 
                             // result of the above calculation yields a proper codepoint
-                            assert(0x00 <= codepoint and codepoint <= 0x10FFFF);
+                            JSON_ASSERT(0x00 <= codepoint && codepoint <= 0x10FFFF);
 
                             // translate codepoint into bytes
                             if (codepoint < 0x80)
@@ -733,7 +736,7 @@ class lexer : public lexer_base<BasicJsonType>
                 case 0xDE:
                 case 0xDF:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(not next_byte_in_range({0x80, 0xBF})))
+                    if (JSON_HEDLEY_UNLIKELY(!next_byte_in_range({0x80, 0xBF})))
                     {
                         return token_type::parse_error;
                     }
@@ -743,7 +746,7 @@ class lexer : public lexer_base<BasicJsonType>
                 // U+0800..U+0FFF: bytes E0 A0..BF 80..BF
                 case 0xE0:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(not (next_byte_in_range({0xA0, 0xBF, 0x80, 0xBF}))))
+                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({0xA0, 0xBF, 0x80, 0xBF}))))
                     {
                         return token_type::parse_error;
                     }
@@ -767,7 +770,7 @@ class lexer : public lexer_base<BasicJsonType>
                 case 0xEE:
                 case 0xEF:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(not (next_byte_in_range({0x80, 0xBF, 0x80, 0xBF}))))
+                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({0x80, 0xBF, 0x80, 0xBF}))))
                     {
                         return token_type::parse_error;
                     }
@@ -777,7 +780,7 @@ class lexer : public lexer_base<BasicJsonType>
                 // U+D000..U+D7FF: bytes ED 80..9F 80..BF
                 case 0xED:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(not (next_byte_in_range({0x80, 0x9F, 0x80, 0xBF}))))
+                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({0x80, 0x9F, 0x80, 0xBF}))))
                     {
                         return token_type::parse_error;
                     }
@@ -787,7 +790,7 @@ class lexer : public lexer_base<BasicJsonType>
                 // U+10000..U+3FFFF F0 90..BF 80..BF 80..BF
                 case 0xF0:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(not (next_byte_in_range({0x90, 0xBF, 0x80, 0xBF, 0x80, 0xBF}))))
+                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({0x90, 0xBF, 0x80, 0xBF, 0x80, 0xBF}))))
                     {
                         return token_type::parse_error;
                     }
@@ -799,7 +802,7 @@ class lexer : public lexer_base<BasicJsonType>
                 case 0xF2:
                 case 0xF3:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(not (next_byte_in_range({0x80, 0xBF, 0x80, 0xBF, 0x80, 0xBF}))))
+                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({0x80, 0xBF, 0x80, 0xBF, 0x80, 0xBF}))))
                     {
                         return token_type::parse_error;
                     }
@@ -809,7 +812,7 @@ class lexer : public lexer_base<BasicJsonType>
                 // U+100000..U+10FFFF F4 80..8F 80..BF 80..BF
                 case 0xF4:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(not (next_byte_in_range({0x80, 0x8F, 0x80, 0xBF, 0x80, 0xBF}))))
+                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({0x80, 0x8F, 0x80, 0xBF, 0x80, 0xBF}))))
                     {
                         return token_type::parse_error;
                     }
@@ -822,6 +825,77 @@ class lexer : public lexer_base<BasicJsonType>
                     error_message = "invalid string: ill-formed UTF-8 byte";
                     return token_type::parse_error;
                 }
+            }
+        }
+    }
+
+    /*!
+     * @brief scan a comment
+     * @return whether comment could be scanned successfully
+     */
+    bool scan_comment()
+    {
+        switch (get())
+        {
+            // single-line comments skip input until a newline or EOF is read
+            case '/':
+            {
+                while (true)
+                {
+                    switch (get())
+                    {
+                        case '\n':
+                        case '\r':
+                        case std::char_traits<char_type>::eof():
+                        case '\0':
+                            return true;
+
+                        default:
+                            break;
+                    }
+                }
+            }
+
+            // multi-line comments skip input until */ is read
+            case '*':
+            {
+                while (true)
+                {
+                    switch (get())
+                    {
+                        case std::char_traits<char_type>::eof():
+                        case '\0':
+                        {
+                            error_message = "invalid comment; missing closing '*/'";
+                            return false;
+                        }
+
+                        case '*':
+                        {
+                            switch (get())
+                            {
+                                case '/':
+                                    return true;
+
+                                default:
+                                {
+                                    unget();
+                                    break;
+                                }
+                            }
+                        }
+
+                        default:
+                            break;
+                    }
+                }
+            }
+
+            // unexpected character after reading '/'
+            default:
+            {
+                error_message = "invalid comment; expecting '/' or '*' after '/'";
+                return false;
             }
         }
     }
@@ -924,7 +998,7 @@ class lexer : public lexer_base<BasicJsonType>
 
             // all other characters are rejected outside scan_number()
             default:            // LCOV_EXCL_LINE
-                assert(false);  // LCOV_EXCL_LINE
+                JSON_ASSERT(false);  // LCOV_EXCL_LINE
         }
 
 scan_number_minus:
@@ -1171,7 +1245,7 @@ scan_number_done:
             const auto x = std::strtoull(token_buffer.data(), &endptr, 10);
 
             // we checked the number format before
-            assert(endptr == token_buffer.data() + token_buffer.size());
+            JSON_ASSERT(endptr == token_buffer.data() + token_buffer.size());
 
             if (errno == 0)
             {
@@ -1187,7 +1261,7 @@ scan_number_done:
             const auto x = std::strtoll(token_buffer.data(), &endptr, 10);
 
             // we checked the number format before
-            assert(endptr == token_buffer.data() + token_buffer.size());
+            JSON_ASSERT(endptr == token_buffer.data() + token_buffer.size());
 
             if (errno == 0)
             {
@@ -1204,7 +1278,7 @@ scan_number_done:
         strtof(value_float, token_buffer.data(), &endptr);
 
         // we checked the number format before
-        assert(endptr == token_buffer.data() + token_buffer.size());
+        JSON_ASSERT(endptr == token_buffer.data() + token_buffer.size());
 
         return token_type::value_float;
     }
@@ -1218,7 +1292,7 @@ scan_number_done:
     token_type scan_literal(const char_type* literal_text, const std::size_t length,
                             token_type return_type)
     {
-        assert(std::char_traits<char_type>::to_char_type(current) == literal_text[0]);
+        JSON_ASSERT(std::char_traits<char_type>::to_char_type(current) == literal_text[0]);
         for (std::size_t i = 1; i < length; ++i)
         {
             if (JSON_HEDLEY_UNLIKELY(std::char_traits<char_type>::to_char_type(get()) != literal_text[i]))
@@ -1310,7 +1384,7 @@ scan_number_done:
 
         if (JSON_HEDLEY_LIKELY(current != std::char_traits<char_type>::eof()))
         {
-            assert(not token_string.empty());
+            JSON_ASSERT(!token_string.empty());
             token_string.pop_back();
         }
     }
@@ -1406,7 +1480,7 @@ scan_number_done:
         if (get() == 0xEF)
         {
             // check if we completely parse the BOM
-            return get() == 0xBB and get() == 0xBF;
+            return get() == 0xBB && get() == 0xBF;
         }
 
         // the first character is not the beginning of the BOM; unget it to
@@ -1415,21 +1489,38 @@ scan_number_done:
         return true;
     }
 
+    void skip_whitespace()
+    {
+        do
+        {
+            get();
+        }
+        while (current == ' ' || current == '\t' || current == '\n' || current == '\r');
+    }
+
     token_type scan()
     {
         // initially, skip the BOM
-        if (position.chars_read_total == 0 and not skip_bom())
+        if (position.chars_read_total == 0 && !skip_bom())
         {
             error_message = "invalid BOM; must be 0xEF 0xBB 0xBF if given";
             return token_type::parse_error;
         }
 
         // read next character and ignore whitespace
-        do
+        skip_whitespace();
+
+        // ignore comments
+        if (ignore_comments && current == '/')
         {
-            get();
+            if (!scan_comment())
+            {
+                return token_type::parse_error;
+            }
+
+            // skip following whitespace
+            skip_whitespace();
         }
-        while (current == ' ' or current == '\t' or current == '\n' or current == '\r');
 
         switch (current)
         {
@@ -1498,6 +1589,9 @@ scan_number_done:
   private:
     /// input adapter
     InputAdapterType ia;
+
+    /// whether comments should be ignored (true) or signaled as errors (false)
+    const bool ignore_comments = false;
 
     /// the current character
     char_int_type current = std::char_traits<char_type>::eof();

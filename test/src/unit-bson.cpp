@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.8.0
+|  |  |__   |  |  | | | |  version 3.9.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -35,6 +35,7 @@ using nlohmann::json;
 #include <fstream>
 #include <sstream>
 #include <test_data.hpp>
+#include "test_utils.hpp"
 
 TEST_CASE("BSON")
 {
@@ -766,7 +767,7 @@ TEST_CASE("Incomplete BSON Input")
         CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
 
         SaxCountdown scp(0);
-        CHECK(not json::sax_parse(incomplete_bson, &scp, json::input_format_t::bson));
+        CHECK(!json::sax_parse(incomplete_bson, &scp, json::input_format_t::bson));
     }
 
     SECTION("Incomplete BSON Input 2")
@@ -784,7 +785,7 @@ TEST_CASE("Incomplete BSON Input")
         CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
 
         SaxCountdown scp(0);
-        CHECK(not json::sax_parse(incomplete_bson, &scp, json::input_format_t::bson));
+        CHECK(!json::sax_parse(incomplete_bson, &scp, json::input_format_t::bson));
     }
 
     SECTION("Incomplete BSON Input 3")
@@ -808,7 +809,7 @@ TEST_CASE("Incomplete BSON Input")
         CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
 
         SaxCountdown scp(1);
-        CHECK(not json::sax_parse(incomplete_bson, &scp, json::input_format_t::bson));
+        CHECK(!json::sax_parse(incomplete_bson, &scp, json::input_format_t::bson));
     }
 
     SECTION("Incomplete BSON Input 4")
@@ -825,7 +826,7 @@ TEST_CASE("Incomplete BSON Input")
         CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
 
         SaxCountdown scp(0);
-        CHECK(not json::sax_parse(incomplete_bson, &scp, json::input_format_t::bson));
+        CHECK(!json::sax_parse(incomplete_bson, &scp, json::input_format_t::bson));
     }
 
     SECTION("Improve coverage")
@@ -835,7 +836,7 @@ TEST_CASE("Incomplete BSON Input")
             json j = {{"key", "value"}};
             auto bson_vec = json::to_bson(j);
             SaxCountdown scp(2);
-            CHECK(not json::sax_parse(bson_vec, &scp, json::input_format_t::bson));
+            CHECK(!json::sax_parse(bson_vec, &scp, json::input_format_t::bson));
         }
 
         SECTION("array")
@@ -846,7 +847,7 @@ TEST_CASE("Incomplete BSON Input")
             };
             auto bson_vec = json::to_bson(j);
             SaxCountdown scp(2);
-            CHECK(not json::sax_parse(bson_vec, &scp, json::input_format_t::bson));
+            CHECK(!json::sax_parse(bson_vec, &scp, json::input_format_t::bson));
         }
     }
 }
@@ -887,7 +888,7 @@ TEST_CASE("Unsupported BSON input")
     CHECK(json::from_bson(bson, true, false).is_discarded());
 
     SaxCountdown scp(0);
-    CHECK(not json::sax_parse(bson, &scp, json::input_format_t::bson));
+    CHECK(!json::sax_parse(bson, &scp, json::input_format_t::bson));
 }
 
 TEST_CASE("BSON numerical data")
@@ -1263,10 +1264,7 @@ TEST_CASE("BSON roundtrips" * doctest::skip())
                 json j1 = json::parse(f_json);
 
                 // parse BSON file
-                std::ifstream f_bson(filename + ".bson", std::ios::binary);
-                std::vector<std::uint8_t> packed(
-                    (std::istreambuf_iterator<char>(f_bson)),
-                    std::istreambuf_iterator<char>());
+                auto packed = utils::read_binary_file(filename + ".bson");
                 json j2;
                 CHECK_NOTHROW(j2 = json::from_bson(packed));
 
@@ -1296,10 +1294,7 @@ TEST_CASE("BSON roundtrips" * doctest::skip())
                 json j1 = json::parse(f_json);
 
                 // parse BSON file
-                std::ifstream f_bson(filename + ".bson", std::ios::binary);
-                std::vector<std::uint8_t> packed(
-                    (std::istreambuf_iterator<char>(f_bson)),
-                    std::istreambuf_iterator<char>());
+                auto packed = utils::read_binary_file(filename + ".bson");
                 json j2;
                 CHECK_NOTHROW(j2 = json::from_bson({packed.data(), packed.size()}));
 
@@ -1314,10 +1309,7 @@ TEST_CASE("BSON roundtrips" * doctest::skip())
                 json j1 = json::parse(f_json);
 
                 // parse BSON file
-                std::ifstream f_bson(filename + ".bson", std::ios::binary);
-                std::vector<std::uint8_t> packed(
-                    (std::istreambuf_iterator<char>(f_bson)),
-                    std::istreambuf_iterator<char>());
+                auto packed = utils::read_binary_file(filename + ".bson");
 
                 {
                     INFO_WITH_TEMP(filename + ": output adapters: std::vector<std::uint8_t>");

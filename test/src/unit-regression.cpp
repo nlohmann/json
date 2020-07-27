@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.8.0
+|  |  |__   |  |  | | | |  version 3.9.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -240,12 +240,12 @@ TEST_CASE("regression tests")
         {
             json j1 = NAN;
             CHECK(j1.is_number_float());
-            json::number_float_t f1 = j1;
+            json::number_float_t f1{j1};
             CHECK(std::isnan(f1));
 
             json j2 = json::number_float_t(NAN);
             CHECK(j2.is_number_float());
-            json::number_float_t f2 = j2;
+            json::number_float_t f2{j2};
             CHECK(std::isnan(f2));
         }
 
@@ -253,13 +253,13 @@ TEST_CASE("regression tests")
         {
             json j1 = INFINITY;
             CHECK(j1.is_number_float());
-            json::number_float_t f1 = j1;
-            CHECK(not std::isfinite(f1));
+            json::number_float_t f1{j1};
+            CHECK(!std::isfinite(f1));
 
             json j2 = json::number_float_t(INFINITY);
             CHECK(j2.is_number_float());
-            json::number_float_t f2 = j2;
-            CHECK(not std::isfinite(f2));
+            json::number_float_t f2{j2};
+            CHECK(!std::isfinite(f2));
         }
     }
 
@@ -332,11 +332,11 @@ TEST_CASE("regression tests")
         json j;
         ss >> j;
 
-        std::string test = j["Test"];
+        auto test = j["Test"].get<std::string>();
         CHECK(test == "Test1");
-        int number = j["Number"];
+        int number{j["Number"]};
         CHECK(number == 100);
-        float foo = j["Foo"];
+        float foo{j["Foo"]};
         CHECK(static_cast<double>(foo) == Approx(42.42));
     }
 
@@ -453,6 +453,7 @@ TEST_CASE("regression tests")
         CHECK(j["string"] == "\u0007\u0007");
     }
 
+#if JSON_USE_IMPLICIT_CONVERSIONS
     SECTION("issue #144 - implicit assignment to std::string fails")
     {
         json o = {{"name", "value"}};
@@ -470,6 +471,7 @@ TEST_CASE("regression tests")
         CHECK_THROWS_AS(s2 = o["int"], json::type_error);
         CHECK_THROWS_WITH(s2 = o["int"], "[json.exception.type_error.302] type must be string, but is number");
     }
+#endif
 
     SECTION("issue #146 - character following a surrogate pair is skipped")
     {
@@ -689,7 +691,7 @@ TEST_CASE("regression tests")
             {"object", {{"key1", 1}, {"key2", 2}}},
         };
 
-        int at_integer = j.at("/object/key2"_json_pointer);
+        int at_integer{j.at("/object/key2"_json_pointer)};
         int val_integer = j.value("/object/key2"_json_pointer, 0);
 
         CHECK(at_integer == val_integer);
@@ -1233,6 +1235,7 @@ TEST_CASE("regression tests")
         CHECK(j["double_value"].is_number_float());
     }
 
+#if JSON_USE_IMPLICIT_CONVERSIONS
     SECTION("issue #464 - VS2017 implicit to std::string conversion fix")
     {
         json v = "test";
@@ -1240,6 +1243,7 @@ TEST_CASE("regression tests")
         test = v;
         CHECK(v == "test");
     }
+#endif
 
     SECTION("issue #465 - roundtrip error while parsing 1000000000000000010E5")
     {
@@ -1250,6 +1254,7 @@ TEST_CASE("regression tests")
         CHECK(s1 == s2);
     }
 
+#if JSON_USE_IMPLICIT_CONVERSIONS
     SECTION("issue #473 - inconsistent behavior in conversion to array type")
     {
         json j_array = {1, 2, 3, 4};
@@ -1298,6 +1303,7 @@ TEST_CASE("regression tests")
             CHECK_THROWS_WITH(create(j_null), "[json.exception.type_error.302] type must be array, but is null");
         }
     }
+#endif
 
     SECTION("issue #486 - json::value_t can't be a map's key type in VC++ 2015")
     {
@@ -1350,10 +1356,10 @@ TEST_CASE("regression tests")
         CHECK(j["a"] >  3);
 
 
-        CHECK(not(j["a"] <= 4));
-        CHECK(not(j["a"] <  4));
-        CHECK(not(j["a"] >= 6));
-        CHECK(not(j["a"] >  6));
+        CHECK(!(j["a"] <= 4));
+        CHECK(!(j["a"] <  4));
+        CHECK(!(j["a"] >= 6));
+        CHECK(!(j["a"] >  6));
 
         // scalar op json
         CHECK(5 == j["a"]);
@@ -1364,10 +1370,10 @@ TEST_CASE("regression tests")
         CHECK(3 <= j["a"]);
         CHECK(3 <  j["a"]);
 
-        CHECK(not(4 >= j["a"]));
-        CHECK(not(4 >  j["a"]));
-        CHECK(not(6 <= j["a"]));
-        CHECK(not(6 <  j["a"]));
+        CHECK(!(4 >= j["a"]));
+        CHECK(!(4 >  j["a"]));
+        CHECK(!(6 <= j["a"]));
+        CHECK(!(6 <  j["a"]));
     }
 
     SECTION("issue #575 - heap-buffer-overflow (OSS-Fuzz 1400)")
@@ -1377,6 +1383,7 @@ TEST_CASE("regression tests")
         CHECK_THROWS_AS(_ = json::parse(vec), json::parse_error&);
     }
 
+#if JSON_USE_IMPLICIT_CONVERSIONS
     SECTION("issue #600 - how does one convert a map in Json back to std::map?")
     {
         SECTION("example 1")
@@ -1409,6 +1416,7 @@ TEST_CASE("regression tests")
             CHECK(m1 == m2);
         }
     }
+#endif
 
     SECTION("issue #602 - BOM not skipped when using json:parse(iterator)")
     {
@@ -1417,6 +1425,7 @@ TEST_CASE("regression tests")
         CHECK_NOTHROW(_ = json::parse(i.begin(), i.end()));
     }
 
+#if JSON_USE_IMPLICIT_CONVERSIONS
     SECTION("issue #702 - conversion from valarray<double> to json fails to build")
     {
         SECTION("original example")
@@ -1445,6 +1454,7 @@ TEST_CASE("regression tests")
                               "[json.exception.type_error.302] type must be array, but is null");
         }
     }
+#endif
 
     SECTION("issue #367 - Behavior of operator>> should more closely resemble that of built-in overloads.")
     {
@@ -1456,9 +1466,9 @@ TEST_CASE("regression tests")
             i1_2_3 >> j2;
             i1_2_3 >> j3;
 
-            std::map<std::string, std::string> m1 = j1;
-            std::map<std::string, std::string> m2 = j2;
-            int i3 = j3;
+            auto m1 = j1.get<std::map<std::string, std::string>>();
+            auto m2 = j2.get<std::map<std::string, std::string>>();
+            int i3{j3};
 
             CHECK( m1 == ( std::map<std::string, std::string> {{ "first",  "one" }} ));
             CHECK( m2 == ( std::map<std::string, std::string> {{ "second", "two" }} ));
@@ -1506,13 +1516,14 @@ TEST_CASE("regression tests")
 
     SECTION("issue #838 - incorrect parse error with binary data in keys")
     {
-        uint8_t key1[] = { 103, 92, 117, 48, 48, 48, 55, 92, 114, 215, 126, 214, 95, 92, 34, 174, 40, 71, 38, 174, 40, 71, 38, 223, 134, 247, 127 };
-        std::string key1_str(key1, key1 + sizeof(key1) / sizeof(key1[0]));
+        uint8_t key1[] = { 103, 92, 117, 48, 48, 48, 55, 92, 114, 215, 126, 214, 95, 92, 34, 174, 40, 71, 38, 174, 40, 71, 38, 223, 134, 247, 127, 0 };
+        std::string key1_str(reinterpret_cast<char*>(key1));
         json j = key1_str;
         CHECK_THROWS_AS(j.dump(), json::type_error&);
         CHECK_THROWS_WITH(j.dump(), "[json.exception.type_error.316] invalid UTF-8 byte at index 10: 0x7E");
     }
 
+#if JSON_USE_IMPLICIT_CONVERSIONS
     SECTION("issue #843 - converting to array not working")
     {
         json j;
@@ -1520,6 +1531,7 @@ TEST_CASE("regression tests")
         j = ar;
         ar = j;
     }
+#endif
 
     SECTION("issue #894 - invalid RFC6902 copy operation succeeds")
     {
@@ -1608,7 +1620,7 @@ TEST_CASE("regression tests")
         json::parser_callback_t cb = [](int /*depth*/, json::parse_event_t event, json & parsed)
         {
             // skip object elements with key "Thumbnail"
-            if (event == json::parse_event_t::key and parsed == json("Thumbnail"))
+            if (event == json::parse_event_t::key && parsed == json("Thumbnail"))
             {
                 return false;
             }
@@ -1632,7 +1644,7 @@ TEST_CASE("regression tests")
     SECTION("issue #977 - Assigning between different json types")
     {
         foo_json lj = ns::foo{3};
-        ns::foo ff = lj;
+        ns::foo ff(lj);
         CHECK(lj.is_object());
         CHECK(lj.size() == 1);
         CHECK(lj["x"] == 3);
@@ -1680,7 +1692,7 @@ TEST_CASE("regression tests")
         json::parser_callback_t cb = [&](int, json::parse_event_t event, json & parsed)
         {
             // skip uninteresting events
-            if (event == json::parse_event_t::value and !parsed.is_primitive())
+            if (event == json::parse_event_t::value && !parsed.is_primitive())
             {
                 return false;
             }
@@ -1760,7 +1772,7 @@ TEST_CASE("regression tests")
     SECTION("issue #1292 - Serializing std::variant causes stack overflow")
     {
         static_assert(
-            not std::is_constructible<json, std::variant<int, float>>::value, "");
+            !std::is_constructible<json, std::variant<int, float>>::value, "");
     }
 #endif
 
@@ -1880,7 +1892,7 @@ TEST_CASE("regression tests")
     {
         {
             json j;
-            NonDefaultFromJsonStruct x = j;
+            NonDefaultFromJsonStruct x(j);
             NonDefaultFromJsonStruct y;
             CHECK(x == y);
         }
@@ -1945,9 +1957,28 @@ TEST_CASE("regression tests")
                   )
         );
     }
+
+    SECTION("PR #2181 - regression bug with lvalue")
+    {
+        // see https://github.com/nlohmann/json/pull/2181#issuecomment-653326060
+        json j{{"x", "test"}};
+        std::string defval = "default value";
+        auto val = j.value("x", defval);
+        auto val2 = j.value("y", defval);
+    }
+
+    SECTION("issue #2293 - eof doesnt cause parsing to stop")
+    {
+        std::vector<uint8_t> data =
+        {
+            0x7B, 0x6F, 0x62, 0x6A, 0x65, 0x63, 0x74, 0x20, 0x4F, 0x42
+        };
+        json result = json::from_cbor(data, true, false);
+        CHECK(result.is_discarded());
+    }
 }
 
-#if not defined(JSON_NOEXCEPTION)
+#if !defined(JSON_NOEXCEPTION)
 TEST_CASE("regression tests, exceptions dependent")
 {
     SECTION("issue #1340 - eof not set on exhausted input stream")
@@ -1965,9 +1996,14 @@ TEST_CASE("regression tests, exceptions dependent")
 /////////////////////////////////////////////////////////////////////
 // for #1642
 /////////////////////////////////////////////////////////////////////
+
+// the code below fails with Clang on Windows, so we need to exclude it there
+#if defined(__clang__) && (defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__))
+#else
 template <typename T> class array {};
 template <typename T> class object {};
 template <typename T> class string {};
 template <typename T> class number_integer {};
 template <typename T> class number_unsigned {};
 template <typename T> class number_float {};
+#endif

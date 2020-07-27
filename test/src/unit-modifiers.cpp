@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.8.0
+|  |  |__   |  |  | | | |  version 3.9.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -114,7 +114,7 @@ TEST_CASE("modifiers")
                 json k = j;
 
                 j.clear();
-                CHECK(not j.empty());
+                CHECK(!j.empty());
                 CHECK(j == json(json::value_t::binary));
                 CHECK(j == json(k.type()));
             }
@@ -125,7 +125,7 @@ TEST_CASE("modifiers")
                 json k = j;
 
                 j.clear();
-                CHECK(not j.empty());
+                CHECK(!j.empty());
                 CHECK(j == json(json::value_t::binary));
                 CHECK(j == json(k.type()));
             }
@@ -878,7 +878,8 @@ TEST_CASE("modifiers")
                 json j("hello world");
                 json k(42.23);
 
-                std::swap(j, k);
+                using std::swap;
+                swap(j, k);
 
                 CHECK(j == json(42.23));
                 CHECK(k == json("hello world"));

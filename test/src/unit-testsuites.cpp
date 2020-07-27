@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.8.0
+|  |  |__   |  |  | | | |  version 3.9.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -1235,7 +1235,7 @@ TEST_CASE("nst's JSONTestSuite (2)")
                 json _;
                 CHECK_THROWS_AS(_ = json::parse(f), json::parse_error&);
                 std::ifstream f2(filename);
-                CHECK(not json::accept(f2));
+                CHECK(!json::accept(f2));
             }
         }
 
@@ -1250,7 +1250,7 @@ TEST_CASE("nst's JSONTestSuite (2)")
             {
                 CAPTURE(filename)
                 std::ifstream f(filename);
-                CHECK(not json::accept(f));
+                CHECK(!json::accept(f));
             }
         }
 
@@ -1352,7 +1352,7 @@ TEST_CASE("nst's JSONTestSuite (2)")
                 json _;
                 CHECK_THROWS_AS(_ = json::parse(f), json::exception&); // could be parse_error or out_of_range
                 std::ifstream f2(filename);
-                CHECK(not json::accept(f2));
+                CHECK(!json::accept(f2));
             }
         }
     }

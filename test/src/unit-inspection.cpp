@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.8.0
+|  |  |__   |  |  | | | |  version 3.9.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -43,36 +43,36 @@ TEST_CASE("object inspection")
         SECTION("object")
         {
             json j {{"foo", 1}, {"bar", false}};
-            CHECK(not j.is_null());
-            CHECK(not j.is_boolean());
-            CHECK(not j.is_number());
-            CHECK(not j.is_number_integer());
-            CHECK(not j.is_number_unsigned());
-            CHECK(not j.is_number_float());
-            CHECK(not j.is_binary());
+            CHECK(!j.is_null());
+            CHECK(!j.is_boolean());
+            CHECK(!j.is_number());
+            CHECK(!j.is_number_integer());
+            CHECK(!j.is_number_unsigned());
+            CHECK(!j.is_number_float());
+            CHECK(!j.is_binary());
             CHECK(j.is_object());
-            CHECK(not j.is_array());
-            CHECK(not j.is_string());
-            CHECK(not j.is_discarded());
-            CHECK(not j.is_primitive());
+            CHECK(!j.is_array());
+            CHECK(!j.is_string());
+            CHECK(!j.is_discarded());
+            CHECK(!j.is_primitive());
             CHECK(j.is_structured());
         }
 
         SECTION("array")
         {
             json j {"foo", 1, 1u, 42.23, false};
-            CHECK(not j.is_null());
-            CHECK(not j.is_boolean());
-            CHECK(not j.is_number());
-            CHECK(not j.is_number_integer());
-            CHECK(not j.is_number_unsigned());
-            CHECK(not j.is_number_float());
-            CHECK(not j.is_binary());
-            CHECK(not j.is_object());
+            CHECK(!j.is_null());
+            CHECK(!j.is_boolean());
+            CHECK(!j.is_number());
+            CHECK(!j.is_number_integer());
+            CHECK(!j.is_number_unsigned());
+            CHECK(!j.is_number_float());
+            CHECK(!j.is_binary());
+            CHECK(!j.is_object());
             CHECK(j.is_array());
-            CHECK(not j.is_string());
-            CHECK(not j.is_discarded());
-            CHECK(not j.is_primitive());
+            CHECK(!j.is_string());
+            CHECK(!j.is_discarded());
+            CHECK(!j.is_primitive());
             CHECK(j.is_structured());
         }
 
@@ -80,144 +80,144 @@ TEST_CASE("object inspection")
         {
             json j(nullptr);
             CHECK(j.is_null());
-            CHECK(not j.is_boolean());
-            CHECK(not j.is_number());
-            CHECK(not j.is_number_integer());
-            CHECK(not j.is_number_unsigned());
-            CHECK(not j.is_number_float());
-            CHECK(not j.is_binary());
-            CHECK(not j.is_object());
-            CHECK(not j.is_array());
-            CHECK(not j.is_string());
-            CHECK(not j.is_discarded());
+            CHECK(!j.is_boolean());
+            CHECK(!j.is_number());
+            CHECK(!j.is_number_integer());
+            CHECK(!j.is_number_unsigned());
+            CHECK(!j.is_number_float());
+            CHECK(!j.is_binary());
+            CHECK(!j.is_object());
+            CHECK(!j.is_array());
+            CHECK(!j.is_string());
+            CHECK(!j.is_discarded());
             CHECK(j.is_primitive());
-            CHECK(not j.is_structured());
+            CHECK(!j.is_structured());
         }
 
         SECTION("boolean")
         {
             json j(true);
-            CHECK(not j.is_null());
+            CHECK(!j.is_null());
             CHECK(j.is_boolean());
-            CHECK(not j.is_number());
-            CHECK(not j.is_number_integer());
-            CHECK(not j.is_number_unsigned());
-            CHECK(not j.is_number_float());
-            CHECK(not j.is_binary());
-            CHECK(not j.is_object());
-            CHECK(not j.is_array());
-            CHECK(not j.is_string());
-            CHECK(not j.is_discarded());
+            CHECK(!j.is_number());
+            CHECK(!j.is_number_integer());
+            CHECK(!j.is_number_unsigned());
+            CHECK(!j.is_number_float());
+            CHECK(!j.is_binary());
+            CHECK(!j.is_object());
+            CHECK(!j.is_array());
+            CHECK(!j.is_string());
+            CHECK(!j.is_discarded());
             CHECK(j.is_primitive());
-            CHECK(not j.is_structured());
+            CHECK(!j.is_structured());
         }
 
         SECTION("string")
         {
             json j("Hello world");
-            CHECK(not j.is_null());
-            CHECK(not j.is_boolean());
-            CHECK(not j.is_number());
-            CHECK(not j.is_number_integer());
-            CHECK(not j.is_number_unsigned());
-            CHECK(not j.is_number_float());
-            CHECK(not j.is_binary());
-            CHECK(not j.is_object());
-            CHECK(not j.is_array());
+            CHECK(!j.is_null());
+            CHECK(!j.is_boolean());
+            CHECK(!j.is_number());
+            CHECK(!j.is_number_integer());
+            CHECK(!j.is_number_unsigned());
+            CHECK(!j.is_number_float());
+            CHECK(!j.is_binary());
+            CHECK(!j.is_object());
+            CHECK(!j.is_array());
             CHECK(j.is_string());
-            CHECK(not j.is_discarded());
+            CHECK(!j.is_discarded());
             CHECK(j.is_primitive());
-            CHECK(not j.is_structured());
+            CHECK(!j.is_structured());
         }
 
         SECTION("number (integer)")
         {
             json j(42);
-            CHECK(not j.is_null());
-            CHECK(not j.is_boolean());
+            CHECK(!j.is_null());
+            CHECK(!j.is_boolean());
             CHECK(j.is_number());
             CHECK(j.is_number_integer());
-            CHECK(not j.is_number_unsigned());
-            CHECK(not j.is_number_float());
-            CHECK(not j.is_binary());
-            CHECK(not j.is_object());
-            CHECK(not j.is_array());
-            CHECK(not j.is_string());
-            CHECK(not j.is_discarded());
+            CHECK(!j.is_number_unsigned());
+            CHECK(!j.is_number_float());
+            CHECK(!j.is_binary());
+            CHECK(!j.is_object());
+            CHECK(!j.is_array());
+            CHECK(!j.is_string());
+            CHECK(!j.is_discarded());
             CHECK(j.is_primitive());
-            CHECK(not j.is_structured());
+            CHECK(!j.is_structured());
         }
 
         SECTION("number (unsigned)")
         {
             json j(42u);
-            CHECK(not j.is_null());
-            CHECK(not j.is_boolean());
+            CHECK(!j.is_null());
+            CHECK(!j.is_boolean());
             CHECK(j.is_number());
             CHECK(j.is_number_integer());
             CHECK(j.is_number_unsigned());
-            CHECK(not j.is_number_float());
-            CHECK(not j.is_binary());
-            CHECK(not j.is_object());
-            CHECK(not j.is_array());
-            CHECK(not j.is_string());
-            CHECK(not j.is_discarded());
+            CHECK(!j.is_number_float());
+            CHECK(!j.is_binary());
+            CHECK(!j.is_object());
+            CHECK(!j.is_array());
+            CHECK(!j.is_string());
+            CHECK(!j.is_discarded());
             CHECK(j.is_primitive());
-            CHECK(not j.is_structured());
+            CHECK(!j.is_structured());
         }
 
         SECTION("number (floating-point)")
         {
             json j(42.23);
-            CHECK(not j.is_null());
-            CHECK(not j.is_boolean());
+            CHECK(!j.is_null());
+            CHECK(!j.is_boolean());
             CHECK(j.is_number());
-            CHECK(not j.is_number_integer());
-            CHECK(not j.is_number_unsigned());
+            CHECK(!j.is_number_integer());
+            CHECK(!j.is_number_unsigned());
             CHECK(j.is_number_float());
-            CHECK(not j.is_binary());
-            CHECK(not j.is_object());
-            CHECK(not j.is_array());
-            CHECK(not j.is_string());
-            CHECK(not j.is_discarded());
+            CHECK(!j.is_binary());
+            CHECK(!j.is_object());
+            CHECK(!j.is_array());
+            CHECK(!j.is_string());
+            CHECK(!j.is_discarded());
             CHECK(j.is_primitive());
-            CHECK(not j.is_structured());
+            CHECK(!j.is_structured());
         }
 
         SECTION("binary")
         {
             json j(json::value_t::binary);
-            CHECK(not j.is_null());
-            CHECK(not j.is_boolean());
-            CHECK(not j.is_number());
-            CHECK(not j.is_number_integer());
-            CHECK(not j.is_number_unsigned());
-            CHECK(not j.is_number_float());
+            CHECK(!j.is_null());
+            CHECK(!j.is_boolean());
+            CHECK(!j.is_number());
+            CHECK(!j.is_number_integer());
+            CHECK(!j.is_number_unsigned());
+            CHECK(!j.is_number_float());
             CHECK(j.is_binary());
-            CHECK(not j.is_object());
-            CHECK(not j.is_array());
-            CHECK(not j.is_string());
-            CHECK(not j.is_discarded());
+            CHECK(!j.is_object());
+            CHECK(!j.is_array());
+            CHECK(!j.is_string());
+            CHECK(!j.is_discarded());
             CHECK(j.is_primitive());
-            CHECK(not j.is_structured());
+            CHECK(!j.is_structured());
         }
 
         SECTION("discarded")
         {
             json j(json::value_t::discarded);
-            CHECK(not j.is_null());
-            CHECK(not j.is_boolean());
-            CHECK(not j.is_number());
-            CHECK(not j.is_number_integer());
-            CHECK(not j.is_number_unsigned());
-            CHECK(not j.is_number_float());
-            CHECK(not j.is_binary());
-            CHECK(not j.is_object());
-            CHECK(not j.is_array());
-            CHECK(not j.is_string());
+            CHECK(!j.is_null());
+            CHECK(!j.is_boolean());
+            CHECK(!j.is_number());
+            CHECK(!j.is_number_integer());
+            CHECK(!j.is_number_unsigned());
+            CHECK(!j.is_number_float());
+            CHECK(!j.is_binary());
+            CHECK(!j.is_object());
+            CHECK(!j.is_array());
+            CHECK(!j.is_string());
             CHECK(j.is_discarded());
-            CHECK(not j.is_primitive());
-            CHECK(not j.is_structured());
+            CHECK(!j.is_primitive());
+            CHECK(!j.is_structured());
         }
     }
 
