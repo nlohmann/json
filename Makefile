@@ -527,6 +527,10 @@ pretty:
 	    --formatted \
 	   $(SRCS) $(AMALGAMATED_FILE) test/src/*.cpp test/src/*.hpp benchmarks/src/benchmarks.cpp doc/examples/*.cpp
 
+# call the Clang-Format on all source files
+pretty_format:
+	for FILE in $(SRCS) $(AMALGAMATED_FILE) test/src/*.cpp test/src/*.hpp benchmarks/src/benchmarks.cpp doc/examples/*.cpp; do echo $$FILE; clang-format -i $$FILE; done
+
 # create single header file
 amalgamate: $(AMALGAMATED_FILE)
 
