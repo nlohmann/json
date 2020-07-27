@@ -57,16 +57,18 @@ Binary values are serialized as object containing two keys:
 
 ## Example
 
-The following example shows the effect of different `indent`,
+??? example
+
+    The following example shows the effect of different `indent`,
     `indent_char`, and `ensure_ascii` parameters to the result of the
     serialization.
 
-```cpp
---8<-- "examples/dump.cpp"
-```
-
-Output:
-
-```json
---8<-- "examples/dump.output"
-```
+    ```cpp
+    --8<-- "examples/dump.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/dump.output"
+    ```

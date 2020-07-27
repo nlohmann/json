@@ -74,6 +74,7 @@ nav:
         - api/basic_json/index.md
         - api/basic_json/dump.md
         - api/basic_json/meta.md
+        - api/basic_json/parse.md
 
 # Extras
 extra:
