@@ -1984,6 +1984,9 @@ TEST_CASE("regression tests")
         jsonAnimals.update(jsonCat);
         CHECK(jsonAnimals["animal"] == "cat");
 
+        auto jsonAnimals_parsed = nlohmann::ordered_json::parse(jsonAnimals.dump());
+        CHECK(jsonAnimals == jsonAnimals_parsed);
+
         std::vector<std::pair<std::string, int64_t>> intData = {std::make_pair("aaaa", 11),
                                                                 std::make_pair("bbb", 222)
                                                                };

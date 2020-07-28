@@ -122,4 +122,171 @@ TEST_CASE("ordered_map")
             CHECK(om.size() == 4);
         }
     }
+
+    SECTION("erase")
+    {
+        ordered_map<std::string, std::string> om;
+        om["eins"] = "one";
+        om["zwei"] = "two";
+        om["drei"] = "three";
+
+        {
+            auto it = om.begin();
+            CHECK(it->first == "eins");
+            ++it;
+            CHECK(it->first == "zwei");
+            ++it;
+            CHECK(it->first == "drei");
+            ++it;
+            CHECK(it == om.end());
+        }
+
+        SECTION("with Key&&")
+        {
+            CHECK(om.size() == 3);
+            CHECK(om.erase(std::string("eins")) == 1);
+            CHECK(om.size() == 2);
+            CHECK(om.erase(std::string("vier")) == 0);
+            CHECK(om.size() == 2);
+
+            auto it = om.begin();
+            CHECK(it->first == "zwei");
+            ++it;
+            CHECK(it->first == "drei");
+            ++it;
+            CHECK(it == om.end());
+        }
+
+        SECTION("with const Key&&")
+        {
+            const std::string eins = "eins";
+            const std::string vier = "vier";
+            CHECK(om.size() == 3);
+            CHECK(om.erase(eins) == 1);
+            CHECK(om.size() == 2);
+            CHECK(om.erase(vier) == 0);
+            CHECK(om.size() == 2);
+
+            auto it = om.begin();
+            CHECK(it->first == "zwei");
+            ++it;
+            CHECK(it->first == "drei");
+            ++it;
+            CHECK(it == om.end());
+        }
+
+        SECTION("with string literal")
+        {
+            CHECK(om.size() == 3);
+            CHECK(om.erase("eins") == 1);
+            CHECK(om.size() == 2);
+            CHECK(om.erase("vier") == 0);
+            CHECK(om.size() == 2);
+
+            auto it = om.begin();
+            CHECK(it->first == "zwei");
+            ++it;
+            CHECK(it->first == "drei");
+            ++it;
+            CHECK(it == om.end());
+        }
+
+        SECTION("with iterator")
+        {
+            CHECK(om.size() == 3);
+            CHECK(om.begin()->first == "eins");
+            CHECK(std::next(om.begin(), 1)->first == "zwei");
+            CHECK(std::next(om.begin(), 2)->first == "drei");
+
+            auto it = om.erase(om.begin());
+            CHECK(it->first == "zwei");
+            CHECK(om.size() == 2);
+
+            auto it2 = om.begin();
+            CHECK(it2->first == "zwei");
+            ++it2;
+            CHECK(it2->first == "drei");
+            ++it2;
+            CHECK(it2 == om.end());
+        }
+    }
+
+    SECTION("count")
+    {
+        ordered_map<std::string, std::string> om;
+        om["eins"] = "one";
+        om["zwei"] = "two";
+        om["drei"] = "three";
+
+        const std::string eins("eins");
+        const std::string vier("vier");
+        CHECK(om.count("eins") == 1);
+        CHECK(om.count(std::string("eins")) == 1);
+        CHECK(om.count(eins) == 1);
+        CHECK(om.count("vier") == 0);
+        CHECK(om.count(std::string("vier")) == 0);
+        CHECK(om.count(vier) == 0);
+    }
+
+    SECTION("find")
+    {
+        ordered_map<std::string, std::string> om;
+        om["eins"] = "one";
+        om["zwei"] = "two";
+        om["drei"] = "three";
+        const auto com = om;
+
+        const std::string eins("eins");
+        const std::string vier("vier");
+        CHECK(om.find("eins") == om.begin());
+        CHECK(om.find(std::string("eins")) == om.begin());
+        CHECK(om.find(eins) == om.begin());
+        CHECK(om.find("vier") == om.end());
+        CHECK(om.find(std::string("vier")) == om.end());
+        CHECK(om.find(vier) == om.end());
+
+        CHECK(com.find("eins") == com.begin());
+        CHECK(com.find(std::string("eins")) == com.begin());
+        CHECK(com.find(eins) == com.begin());
+        CHECK(com.find("vier") == com.end());
+        CHECK(com.find(std::string("vier")) == com.end());
+        CHECK(com.find(vier) == com.end());
+    }
+
+    SECTION("insert")
+    {
+        ordered_map<std::string, std::string> om;
+        om["eins"] = "one";
+        om["zwei"] = "two";
+        om["drei"] = "three";
+
+        SECTION("const value_type&")
+        {
+            ordered_map<std::string, std::string>::value_type vt1 {"eins", "1"};
+            ordered_map<std::string, std::string>::value_type vt4 {"vier", "four"};
+
+            auto res1 = om.insert(vt1);
+            CHECK(res1.first == om.begin());
+            CHECK(res1.second == false);
+            CHECK(om.size() == 3);
+
+            auto res4 = om.insert(vt4);
+            CHECK(res4.first == om.begin() + 3);
+            CHECK(res4.second == true);
+            CHECK(om.size() == 4);
+        }
+
+        SECTION("value_type&&")
+        {
+            auto res1 = om.insert({"eins", "1"});
+            CHECK(res1.first == om.begin());
+            CHECK(res1.second == false);
+            CHECK(om.size() == 3);
+
+            auto res4 = om.insert({"vier", "four"});
+            CHECK(res4.first == om.begin() + 3);
+            CHECK(res4.second == true);
+            CHECK(om.size() == 4);
+        }
+    }
 }
