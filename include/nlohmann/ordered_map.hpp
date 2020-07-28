@@ -30,7 +30,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
     ordered_map(std::initializer_list<T> init, const Allocator& alloc = Allocator() )
         : Container{init, alloc} {}
 
-    std::pair<iterator, bool> emplace(key_type&& key, T&& t)
+    std::pair<iterator, bool> emplace(const key_type& key, T&& t)
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
@@ -43,9 +43,40 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
         return {--this->end(), true};
     }
 
-    T& operator[](Key&& key)
+    T& operator[](const Key& key)
     {
-        return emplace(std::move(key), T{}).first->second;
+        return emplace(key, T{}).first->second;
+    }
+
+    const T& operator[](const Key& key) const
+    {
+        return at(key);
+    }
+
+    T& at(const Key& key)
+    {
+        for (auto it = this->begin(); it != this->end(); ++it)
+        {
+            if (it->first == key)
+            {
+                return it->second;
+            }
+        }
+
+        throw std::out_of_range("key not found");
+    }
+
+    const T& at(const Key& key) const
+    {
+        for (auto it = this->begin(); it != this->end(); ++it)
+        {
+            if (it->first == key)
+            {
+                return it->second;
+            }
+        }
+
+        throw std::out_of_range("key not found");
     }
 
     size_type erase(const Key& key)

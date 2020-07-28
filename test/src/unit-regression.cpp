@@ -1976,6 +1976,25 @@ TEST_CASE("regression tests")
         json result = json::from_cbor(data, true, false);
         CHECK(result.is_discarded());
     }
+
+    SECTION("issue #2315 - json.update and vector<pair>does not work with ordered_json")
+    {
+        nlohmann::ordered_json jsonAnimals = {{"animal", "dog"}};
+        nlohmann::ordered_json jsonCat = {{"animal", "cat"}};
+        jsonAnimals.update(jsonCat);
+        CHECK(jsonAnimals["animal"] == "cat");
+
+        std::vector<std::pair<std::string, int64_t>> intData = {std::make_pair("aaaa", 11),
+                                                                std::make_pair("bbb", 222)
+                                                               };
+        nlohmann::ordered_json jsonObj;
+        for (const auto& data : intData)
+        {
+            jsonObj[data.first] = data.second;
+        }
+        CHECK(jsonObj["aaaa"] == 11);
+        CHECK(jsonObj["bbb"] == 222);
+    }
 }
 
 #if !defined(JSON_NOEXCEPTION)
