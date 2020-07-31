@@ -126,10 +126,12 @@ set(files
     src/unit-msgpack.cpp
     src/unit-noexcept.cpp
     src/unit-ordered_json.cpp
+    src/unit-ordered_map.cpp
     src/unit-pointer_access.cpp
     src/unit-readme.cpp
     src/unit-reference_access.cpp
-    src/unit-regression.cpp
+    src/unit-regression1.cpp
+    src/unit-regression2.cpp
     src/unit-serialization.cpp
     src/unit-testsuites.cpp
     src/unit-to_chars.cpp

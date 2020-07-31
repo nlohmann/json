@@ -18,6 +18,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
     using mapped_type = T;
     using Container = std::vector<std::pair<const Key, T>, Allocator>;
     using typename Container::iterator;
+    using typename Container::const_iterator;
     using typename Container::size_type;
     using typename Container::value_type;
 
@@ -30,7 +31,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
     ordered_map(std::initializer_list<T> init, const Allocator& alloc = Allocator() )
         : Container{init, alloc} {}
 
-    std::pair<iterator, bool> emplace(key_type&& key, T&& t)
+    std::pair<iterator, bool> emplace(const key_type& key, T&& t)
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
@@ -43,9 +44,40 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
         return {--this->end(), true};
     }
 
-    T& operator[](Key&& key)
+    T& operator[](const Key& key)
     {
-        return emplace(std::move(key), T{}).first->second;
+        return emplace(key, T{}).first->second;
+    }
+
+    const T& operator[](const Key& key) const
+    {
+        return at(key);
+    }
+
+    T& at(const Key& key)
+    {
+        for (auto it = this->begin(); it != this->end(); ++it)
+        {
+            if (it->first == key)
+            {
+                return it->second;
+            }
+        }
+
+        throw std::out_of_range("key not found");
+    }
+
+    const T& at(const Key& key) const
+    {
+        for (auto it = this->begin(); it != this->end(); ++it)
+        {
+            if (it->first == key)
+            {
+                return it->second;
+            }
+        }
+
+        throw std::out_of_range("key not found");
     }
 
     size_type erase(const Key& key)
@@ -65,6 +97,74 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
             }
         }
         return 0;
+    }
+
+    iterator erase(iterator pos)
+    {
+        auto it = pos;
+
+        // Since we cannot move const Keys, re-construct them in place
+        for (auto next = it; ++next != this->end(); ++it)
+        {
+            it->~value_type(); // Destroy but keep allocation
+            new (&*it) value_type{std::move(*next)};
+        }
+        Container::pop_back();
+        return pos;
+    }
+
+    size_type count(const Key& key) const
+    {
+        for (auto it = this->begin(); it != this->end(); ++it)
+        {
+            if (it->first == key)
+            {
+                return 1;
+            }
+        }
+        return 0;
+    }
+
+    iterator find(const Key& key)
+    {
+        for (auto it = this->begin(); it != this->end(); ++it)
+        {
+            if (it->first == key)
+            {
+                return it;
+            }
+        }
+        return Container::end();
+    }
+
+    const_iterator find(const Key& key) const
+    {
+        for (auto it = this->begin(); it != this->end(); ++it)
+        {
+            if (it->first == key)
+            {
+                return it;
+            }
+        }
+        return Container::end();
+    }
+
+    std::pair<iterator, bool> insert( value_type&& value )
+    {
+        return emplace(value.first, std::move(value.second));
+    }
+
+    std::pair<iterator, bool> insert( const value_type& value )
+    {
+        for (auto it = this->begin(); it != this->end(); ++it)
+        {
+            if (it->first == value.first)
+            {
+                return {it, false};
+            }
+        }
+        Container::push_back(value);
+        return {--this->end(), true};
     }
 };
 
