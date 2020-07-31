@@ -478,4 +478,11 @@ TEST_CASE("regression tests 2")
         CHECK(jsonObj["aaaa"] == 11);
         CHECK(jsonObj["bbb"] == 222);
     }
+
+    SECTION("issue #2330 - ignore_comment=true fails on multiple consecutive lines starting with comments")
+    {
+        std::string ss = "//\n//\n{\n}\n";
+        json j = json::parse(ss, nullptr, true, true);
+        CHECK(j.dump() == "{}");
+    }
 }

@@ -241,5 +241,8 @@ TEST_CASE("lexer class")
         CHECK((scan_string("/* true */", true) == json::lexer::token_type::end_of_input));
         CHECK((scan_string("/*/**/", true) == json::lexer::token_type::end_of_input));
         CHECK((scan_string("/*/* */", true) == json::lexer::token_type::end_of_input));
+
+        CHECK((scan_string("//\n//\n", true) == json::lexer::token_type::end_of_input));
+        CHECK((scan_string("/**//**//**/", true) == json::lexer::token_type::end_of_input));
     }
 }
