@@ -880,13 +880,13 @@ class lexer : public lexer_base<BasicJsonType>
                                 default:
                                 {
                                     unget();
-                                    break;
+                                    continue;
                                 }
                             }
                         }
 
                         default:
-                            break;
+                            continue;
                     }
                 }
             }
