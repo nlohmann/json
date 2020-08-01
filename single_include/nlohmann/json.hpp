@@ -7390,7 +7390,7 @@ scan_number_done:
         skip_whitespace();
 
         // ignore comments
-        if (ignore_comments && current == '/')
+        while (ignore_comments && current == '/')
         {
             if (!scan_comment())
             {
