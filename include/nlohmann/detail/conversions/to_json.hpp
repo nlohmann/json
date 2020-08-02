@@ -175,7 +175,7 @@ struct external_constructor<value_t::array>
         j.m_type = value_t::array;
         j.m_value = value_t::array;
         j.m_value.array->resize(arr.size());
-        if (arr.size() > 0)
+        if (!arr.empty())
         {
             std::copy(std::begin(arr), std::end(arr), j.m_value.array->begin());
         }
