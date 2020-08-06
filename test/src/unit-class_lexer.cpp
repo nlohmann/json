@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.9.0
+|  |  |__   |  |  | | | |  version 3.9.1
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -241,5 +241,8 @@ TEST_CASE("lexer class")
         CHECK((scan_string("/* true */", true) == json::lexer::token_type::end_of_input));
         CHECK((scan_string("/*/**/", true) == json::lexer::token_type::end_of_input));
         CHECK((scan_string("/*/* */", true) == json::lexer::token_type::end_of_input));
+
+        CHECK((scan_string("//\n//\n", true) == json::lexer::token_type::end_of_input));
+        CHECK((scan_string("/**//**//**/", true) == json::lexer::token_type::end_of_input));
     }
 }

@@ -12,14 +12,14 @@ If you are using OS X and [Homebrew](http://brew.sh), just type
 
 ```sh
 brew tap nlohmann/json
-brew install nlohmann_json
+brew install nlohmann-json
 ```
 
 and you're set. If you want the bleeding edge rather than the latest release, use
 
 ```sh
 brew tap nlohmann/json
-brew install nlohmann_json --HEAD
+brew install nlohmann-json --HEAD
 ```
 
 instead.
@@ -38,19 +38,19 @@ instead.
 
 		```sh
 		brew tap nlohmann/json
-		brew install nlohmann_json
+		brew install nlohmann-json
 		```
 
-	3. Determine the include path, which defaults to `/usr/local/Cellar/nlohmann_json/$version/include`, where `$version` is the version of the library, e.g. `3.7.3`. The path of the library can be determined with
+	3. Determine the include path, which defaults to `/usr/local/Cellar/nlohmann-json/$version/include`, where `$version` is the version of the library, e.g. `3.7.3`. The path of the library can be determined with
 
 		```sh
-		brew list nlohmann_json
+		brew list nlohmann-json
 		```
 
 	4. Compile the code. For instance, the code can be compiled using Clang with
 
 		```sh
-		clang++ example.cpp -I/usr/local/Cellar/nlohmann_json/3.7.3/include -std=c++11 -o example
+		clang++ example.cpp -I/usr/local/Cellar/nlohmann-json/3.7.3/include -std=c++11 -o example
 		```
 
 ## Meson

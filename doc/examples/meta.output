@@ -11,7 +11,7 @@
     "version": {
         "major": 3,
         "minor": 9,
-        "patch": 0,
-        "string": "3.9.0"
+        "patch": 1,
+        "string": "3.9.1"
     }
 }

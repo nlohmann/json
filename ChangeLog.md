@@ -1,6 +1,29 @@
 # Changelog
 All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [v3.9.1](https://github.com/nlohmann/json/releases/tag/v3.9.1) (2020-08-06)
+
+[Full Changelog](https://github.com/nlohmann/json/compare/v3.9.0...v3.9.1)
+
+- Can't parse not formatted JSON. [\#2340](https://github.com/nlohmann/json/issues/2340)
+- parse returns desired array contained in array when JSON text begins with square bracket on gcc 7.5.0 [\#2339](https://github.com/nlohmann/json/issues/2339)
+- Unexpected deserialization difference between Mac and Linux [\#2338](https://github.com/nlohmann/json/issues/2338)
+- Reading ordered\_json from file causes compile error [\#2331](https://github.com/nlohmann/json/issues/2331)
+- ignore\_comment=true fails on multiple consecutive lines starting with comments [\#2330](https://github.com/nlohmann/json/issues/2330)
+- Update documentation about Homebrew installation and CMake integration - Homebrew [\#2326](https://github.com/nlohmann/json/issues/2326)
+- Chinese character initialize error [\#2325](https://github.com/nlohmann/json/issues/2325)
+- json.update and vector\<pair\>does not work with ordered\_json [\#2315](https://github.com/nlohmann/json/issues/2315)
+- Ambiguous call to overloaded function [\#2210](https://github.com/nlohmann/json/issues/2210)
+
+- Fix fallthrough warning [\#2333](https://github.com/nlohmann/json/pull/2333) ([nlohmann](https://github.com/nlohmann))
+- Fix lexer to properly cope with repeated comments [\#2332](https://github.com/nlohmann/json/pull/2332) ([nlohmann](https://github.com/nlohmann))
+- Fix name of Homebrew formula in documentation [\#2327](https://github.com/nlohmann/json/pull/2327) ([nlohmann](https://github.com/nlohmann))
+- fix typo [\#2320](https://github.com/nlohmann/json/pull/2320) ([wx257osn2](https://github.com/wx257osn2))
+- Fix a bug due to missing overloads in ordered\_map container [\#2319](https://github.com/nlohmann/json/pull/2319) ([nlohmann](https://github.com/nlohmann))
+- cmake: install pkg-config file relative to current\_binary\_dir [\#2318](https://github.com/nlohmann/json/pull/2318) ([eli-schwartz](https://github.com/eli-schwartz))
+- Fixed installation of pkg-config file on other than Ubuntu [\#2314](https://github.com/nlohmann/json/pull/2314) ([xvitaly](https://github.com/xvitaly))
+- Cleanup [\#2303](https://github.com/nlohmann/json/pull/2303) ([nlohmann](https://github.com/nlohmann))
+
 ## [v3.9.0](https://github.com/nlohmann/json/releases/tag/v3.9.0) (2020-07-27)
 
 [Full Changelog](https://github.com/nlohmann/json/compare/v3.8.0...v3.9.0)
@@ -80,7 +103,6 @@ All notable changes to this project will be documented in this file. This projec
 - Fix bug in CBOR tag handling [\#2308](https://github.com/nlohmann/json/pull/2308) ([nlohmann](https://github.com/nlohmann))
 - added inline to NLOHMANN\_DEFINE\_TYPE\_NON\_INTRUSIVE macro [\#2306](https://github.com/nlohmann/json/pull/2306) ([jwittbrodt](https://github.com/jwittbrodt))
 - fixes unused variable 'ex' for \#2304 [\#2305](https://github.com/nlohmann/json/pull/2305) ([AODQ](https://github.com/AODQ))
-- Cleanup [\#2303](https://github.com/nlohmann/json/pull/2303) ([nlohmann](https://github.com/nlohmann))
 - Add test with multiple translation units [\#2301](https://github.com/nlohmann/json/pull/2301) ([nlohmann](https://github.com/nlohmann))
 - Merge GitHub actions [\#2300](https://github.com/nlohmann/json/pull/2300) ([nlohmann](https://github.com/nlohmann))
 - Fix unused parameter [\#2299](https://github.com/nlohmann/json/pull/2299) ([nlohmann](https://github.com/nlohmann))
@@ -741,6 +763,8 @@ All notable changes to this project will be documented in this file. This projec
 - Added to\_string and added basic tests [\#1585](https://github.com/nlohmann/json/pull/1585) ([Macr0Nerd](https://github.com/Macr0Nerd))
 - Regression tests for MSVC [\#1570](https://github.com/nlohmann/json/pull/1570) ([nickaein](https://github.com/nickaein))
 - Fix/1511 [\#1555](https://github.com/nlohmann/json/pull/1555) ([theodelrieu](https://github.com/theodelrieu))
+- Remove C++17 extension warning from clang; \#1535 [\#1551](https://github.com/nlohmann/json/pull/1551) ([heavywatal](https://github.com/heavywatal))
+- moved from Catch to doctest for unit tests [\#1439](https://github.com/nlohmann/json/pull/1439) ([onqtam](https://github.com/onqtam))
 
 ## [v3.6.1](https://github.com/nlohmann/json/releases/tag/v3.6.1) (2019-03-20)
 
@@ -843,7 +867,6 @@ All notable changes to this project will be documented in this file. This projec
 - Implicit type conversion error on MSVC [\#1333](https://github.com/nlohmann/json/issues/1333)
 - NuGet Package [\#1132](https://github.com/nlohmann/json/issues/1132)
 
-- Remove C++17 extension warning from clang; \#1535 [\#1551](https://github.com/nlohmann/json/pull/1551) ([heavywatal](https://github.com/heavywatal))
 - Change macros to numeric\_limits [\#1514](https://github.com/nlohmann/json/pull/1514) ([naszta](https://github.com/naszta))
 - fix GCC 7.1.1 - 7.2.1 on CentOS [\#1496](https://github.com/nlohmann/json/pull/1496) ([lieff](https://github.com/lieff))
 - Update Buckaroo instructions in README.md [\#1495](https://github.com/nlohmann/json/pull/1495) ([njlr](https://github.com/njlr))
@@ -859,7 +882,6 @@ All notable changes to this project will be documented in this file. This projec
 - remove extra semicolon from readme [\#1451](https://github.com/nlohmann/json/pull/1451) ([Afforix](https://github.com/Afforix))
 - attempt to fix \#1445, flush buffer in serializer::dump\_escaped in UTF8\_REJECT case. [\#1446](https://github.com/nlohmann/json/pull/1446) ([scinart](https://github.com/scinart))
 - Use C++11 features supported by CMake 3.1. [\#1441](https://github.com/nlohmann/json/pull/1441) ([iwanders](https://github.com/iwanders))
-- moved from Catch to doctest for unit tests [\#1439](https://github.com/nlohmann/json/pull/1439) ([onqtam](https://github.com/onqtam))
 - :rotating\_light: fixed unused variable warning [\#1435](https://github.com/nlohmann/json/pull/1435) ([pboettch](https://github.com/pboettch))
 - allow push\_back\(\) and pop\_back\(\) calls on json\_pointer [\#1434](https://github.com/nlohmann/json/pull/1434) ([pboettch](https://github.com/pboettch))
 - Add instructions about using nlohmann/json with the conda package manager [\#1430](https://github.com/nlohmann/json/pull/1430) ([nicoddemus](https://github.com/nicoddemus))
@@ -870,6 +892,7 @@ All notable changes to this project will be documented in this file. This projec
 - Fix x64 target platform for appveyor [\#1414](https://github.com/nlohmann/json/pull/1414) ([nickaein](https://github.com/nickaein))
 - Improve dump\_integer performance [\#1411](https://github.com/nlohmann/json/pull/1411) ([nickaein](https://github.com/nickaein))
 - buildsystem: relax requirement on cmake version [\#1409](https://github.com/nlohmann/json/pull/1409) ([yann-morin-1998](https://github.com/yann-morin-1998))
+-  Added Support for Structured Bindings  [\#1391](https://github.com/nlohmann/json/pull/1391) ([pratikpc](https://github.com/pratikpc))
 - CMake: Optional Install if Embedded [\#1330](https://github.com/nlohmann/json/pull/1330) ([ax3l](https://github.com/ax3l))
 
 ## [v3.5.0](https://github.com/nlohmann/json/releases/tag/v3.5.0) (2018-12-21)
@@ -939,7 +962,6 @@ All notable changes to this project will be documented in this file. This projec
 - Check value for existence by json\_pointer [\#1194](https://github.com/nlohmann/json/issues/1194)
 
 - Feature/add file input adapter [\#1392](https://github.com/nlohmann/json/pull/1392) ([dumarjo](https://github.com/dumarjo))
--  Added Support for Structured Bindings  [\#1391](https://github.com/nlohmann/json/pull/1391) ([pratikpc](https://github.com/pratikpc))
 - Link to issue \#958 broken [\#1382](https://github.com/nlohmann/json/pull/1382) ([kjpus](https://github.com/kjpus))
 - readme: fix typo [\#1380](https://github.com/nlohmann/json/pull/1380) ([manu-chroma](https://github.com/manu-chroma))
 - recommend using explicit from JSON conversions [\#1363](https://github.com/nlohmann/json/pull/1363) ([theodelrieu](https://github.com/theodelrieu))
@@ -948,6 +970,7 @@ All notable changes to this project will be documented in this file. This projec
 - Set eofbit on exhausted input stream. [\#1343](https://github.com/nlohmann/json/pull/1343) ([mefyl](https://github.com/mefyl))
 - Add a SFINAE friendly iterator\_traits and use that instead. [\#1342](https://github.com/nlohmann/json/pull/1342) ([dgavedissian](https://github.com/dgavedissian))
 - Fix EOL Whitespaces & CMake Spelling [\#1329](https://github.com/nlohmann/json/pull/1329) ([ax3l](https://github.com/ax3l))
+- Add BSON support [\#1320](https://github.com/nlohmann/json/pull/1320) ([nlohmann](https://github.com/nlohmann))
 
 ## [v3.4.0](https://github.com/nlohmann/json/releases/tag/v3.4.0) (2018-10-30)
 
@@ -987,7 +1010,6 @@ All notable changes to this project will be documented in this file. This projec
 - Soften the landing when dumping non-UTF8 strings \(type\_error.316 exception\) [\#1198](https://github.com/nlohmann/json/issues/1198)
 
 - Add macro to define enum/JSON mapping [\#1323](https://github.com/nlohmann/json/pull/1323) ([nlohmann](https://github.com/nlohmann))
-- Add BSON support [\#1320](https://github.com/nlohmann/json/pull/1320) ([nlohmann](https://github.com/nlohmann))
 - Properly convert constants to CharType [\#1315](https://github.com/nlohmann/json/pull/1315) ([nlohmann](https://github.com/nlohmann))
 - Allow to set error handler for decoding errors [\#1314](https://github.com/nlohmann/json/pull/1314) ([nlohmann](https://github.com/nlohmann))
 - Add Meson related info to README [\#1305](https://github.com/nlohmann/json/pull/1305) ([koponomarenko](https://github.com/koponomarenko))
@@ -1975,6 +1997,7 @@ All notable changes to this project will be documented in this file. This projec
 - Fix usage examples' comments for std::multiset [\#321](https://github.com/nlohmann/json/pull/321) ([vasild](https://github.com/vasild))
 - Include dir relocation [\#318](https://github.com/nlohmann/json/pull/318) ([ChristophJud](https://github.com/ChristophJud))
 - trivial documentation fix [\#313](https://github.com/nlohmann/json/pull/313) ([5tefan](https://github.com/5tefan))
+- unit-constructor1.cpp: Fix floating point truncation warning [\#300](https://github.com/nlohmann/json/pull/300) ([t-b](https://github.com/t-b))
 
 ## [v2.0.5](https://github.com/nlohmann/json/releases/tag/v2.0.5) (2016-09-14)
 
@@ -2006,8 +2029,6 @@ All notable changes to this project will be documented in this file. This projec
 - Silently get numbers into smaller types [\#288](https://github.com/nlohmann/json/issues/288)
 - Incorrect parsing of large int64\_t numbers [\#287](https://github.com/nlohmann/json/issues/287)
 - \[question\]: macro to disable floating point support [\#284](https://github.com/nlohmann/json/issues/284)
-
-- unit-constructor1.cpp: Fix floating point truncation warning [\#300](https://github.com/nlohmann/json/pull/300) ([t-b](https://github.com/t-b))
 
 ## [v2.0.2](https://github.com/nlohmann/json/releases/tag/v2.0.2) (2016-07-31)
 
@@ -2085,7 +2106,6 @@ All notable changes to this project will be documented in this file. This projec
 - What is within scope? [\#192](https://github.com/nlohmann/json/issues/192)
 - Bugs in miloyip/nativejson-benchmark: roundtrips [\#187](https://github.com/nlohmann/json/issues/187)
 - Floating point exceptions [\#181](https://github.com/nlohmann/json/issues/181)
-- Integer conversion to unsigned [\#178](https://github.com/nlohmann/json/issues/178)
 - map string string fails to compile [\#176](https://github.com/nlohmann/json/issues/176)
 - In basic\_json::basic\_json\(const CompatibleArrayType& val\), the requirement of CompatibleArrayType is not strict enough. [\#174](https://github.com/nlohmann/json/issues/174)
 - Provide a FAQ [\#163](https://github.com/nlohmann/json/issues/163)
@@ -2104,7 +2124,6 @@ All notable changes to this project will be documented in this file. This projec
 - fixed noexcept; added constexpr [\#208](https://github.com/nlohmann/json/pull/208) ([nlohmann](https://github.com/nlohmann))
 - Add support for afl-fuzz testing [\#207](https://github.com/nlohmann/json/pull/207) ([mykter](https://github.com/mykter))
 - replaced ssize\_t occurrences with auto \(addresses \#204\) [\#205](https://github.com/nlohmann/json/pull/205) ([nlohmann](https://github.com/nlohmann))
-- Fixed issue \#199 - Small bugs in json.hpp \(get\_number\) and unit.cpp \(non-standard integer type test\) [\#200](https://github.com/nlohmann/json/pull/200) ([twelsby](https://github.com/twelsby))
 - Fix broken link [\#197](https://github.com/nlohmann/json/pull/197) ([vog](https://github.com/vog))
 - Issue \#195 - update Travis to Trusty due to gcc/clang strtod\(\) bug [\#196](https://github.com/nlohmann/json/pull/196) ([twelsby](https://github.com/twelsby))
 - Issue \#178 - Extending support to full uint64\_t/int64\_t range and unsigned type \(updated\) [\#193](https://github.com/nlohmann/json/pull/193) ([twelsby](https://github.com/twelsby))
@@ -2118,6 +2137,7 @@ All notable changes to this project will be documented in this file. This projec
 - Floating point equality [\#185](https://github.com/nlohmann/json/issues/185)
 - Unused variables in catch [\#180](https://github.com/nlohmann/json/issues/180)
 - Typo in documentation [\#179](https://github.com/nlohmann/json/issues/179)
+- Integer conversion to unsigned [\#178](https://github.com/nlohmann/json/issues/178)
 - JSON performance benchmark comparision [\#177](https://github.com/nlohmann/json/issues/177)
 - Since re2c is often ignored in pull requests, it may make sense to make a contributing.md file [\#175](https://github.com/nlohmann/json/issues/175)
 - Question about exceptions [\#173](https://github.com/nlohmann/json/issues/173)
@@ -2131,11 +2151,11 @@ All notable changes to this project will be documented in this file. This projec
 - range based for loop for objects [\#83](https://github.com/nlohmann/json/issues/83)
 - Consider submitting this to the Boost Library Incubator [\#66](https://github.com/nlohmann/json/issues/66)
 
+- Fixed issue \#199 - Small bugs in json.hpp \(get\_number\) and unit.cpp \(non-standard integer type test\) [\#200](https://github.com/nlohmann/json/pull/200) ([twelsby](https://github.com/twelsby))
 - Fixed Issue \#186 - add strto\(f|d|ld\) overload wrappers, "-0.0" special case and FP trailing zero [\#191](https://github.com/nlohmann/json/pull/191) ([twelsby](https://github.com/twelsby))
 - Issue \#185 - remove approx\(\) and use \#pragma to kill warnings [\#190](https://github.com/nlohmann/json/pull/190) ([twelsby](https://github.com/twelsby))
 - Fixed Issue \#171 - added two extra template overloads of operator\[\] for T\* arguments [\#189](https://github.com/nlohmann/json/pull/189) ([twelsby](https://github.com/twelsby))
 - Fixed issue \#167 - removed operator ValueType\(\) condition for VS2015 [\#188](https://github.com/nlohmann/json/pull/188) ([twelsby](https://github.com/twelsby))
-- Implementation of get\_ref\(\) [\#184](https://github.com/nlohmann/json/pull/184) ([dariomt](https://github.com/dariomt))
 - Fixed some typos in CONTRIBUTING.md [\#182](https://github.com/nlohmann/json/pull/182) ([nibroc](https://github.com/nibroc))
 
 ## [v1.0.0](https://github.com/nlohmann/json/releases/tag/v1.0.0) (2015-12-27)
@@ -2177,6 +2197,7 @@ All notable changes to this project will be documented in this file. This projec
 - Wishlist [\#65](https://github.com/nlohmann/json/issues/65)
 - Windows/Visual Studio \(through 2013\) is unsupported [\#62](https://github.com/nlohmann/json/issues/62)
 
+- Implementation of get\_ref\(\) [\#184](https://github.com/nlohmann/json/pull/184) ([dariomt](https://github.com/dariomt))
 - Replace sprintf with hex function, this fixes \#149 [\#153](https://github.com/nlohmann/json/pull/153) ([whackashoe](https://github.com/whackashoe))
 - Fix character skipping after a surrogate pair [\#146](https://github.com/nlohmann/json/pull/146) ([robertmrk](https://github.com/robertmrk))
 - Detect correctly pointer-to-const [\#137](https://github.com/nlohmann/json/pull/137) ([dariomt](https://github.com/dariomt))
