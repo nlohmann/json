@@ -6,7 +6,7 @@ using json = nlohmann::json;
 int main()
 {
     // create a binary value
-    json value = json::binary_array({1, 2, 3});
+    json value = json::binary({1, 2, 3});
 
     // create a binary_t
     json::binary_t binary = {{4, 5, 6}};

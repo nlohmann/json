@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.1)
 ## PROJECT
 ## name and version
 ##
-project(nlohmann_json VERSION 3.7.3 LANGUAGES CXX)
+project(nlohmann_json VERSION 3.9.1 LANGUAGES CXX)
 
 ##
 ## INCLUDE
@@ -15,9 +15,16 @@ include(ExternalProject)
 ##
 ## OPTIONS
 ##
+
+if (POLICY CMP0077)
+    # Allow CMake 3.13+ to override options when using FetchContent / add_subdirectory.
+    cmake_policy(SET CMP0077 NEW)
+endif ()
+
 option(JSON_BuildTests "Build the unit tests when BUILD_TESTING is enabled." ON)
 option(JSON_Install "Install CMake targets during install step." ON)
 option(JSON_MultipleHeaders "Use non-amalgamated version of the library." OFF)
+option(JSON_ImplicitConversions "Enable implicit conversions." ON)
 
 ##
 ## CONFIGURATION
@@ -33,6 +40,7 @@ set(NLOHMANN_JSON_CMAKE_CONFIG_DIR          "${CMAKE_CURRENT_BINARY_DIR}")
 set(NLOHMANN_JSON_CMAKE_VERSION_CONFIG_FILE "${NLOHMANN_JSON_CMAKE_CONFIG_DIR}/${PROJECT_NAME}ConfigVersion.cmake")
 set(NLOHMANN_JSON_CMAKE_PROJECT_CONFIG_FILE "${NLOHMANN_JSON_CMAKE_CONFIG_DIR}/${PROJECT_NAME}Config.cmake")
 set(NLOHMANN_JSON_CMAKE_PROJECT_TARGETS_FILE "${NLOHMANN_JSON_CMAKE_CONFIG_DIR}/${PROJECT_NAME}Targets.cmake")
+set(NLOHMANN_JSON_PKGCONFIG_INSTALL_DIR     "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
 
 if (JSON_MultipleHeaders)
     set(NLOHMANN_JSON_INCLUDE_BUILD_DIR "${PROJECT_SOURCE_DIR}/include/")
@@ -40,6 +48,10 @@ if (JSON_MultipleHeaders)
 else()
     set(NLOHMANN_JSON_INCLUDE_BUILD_DIR "${PROJECT_SOURCE_DIR}/single_include/")
     message(STATUS "Using the single-header code from ${NLOHMANN_JSON_INCLUDE_BUILD_DIR}")
+endif()
+
+if (NOT JSON_ImplicitConversions)
+    message(STATUS "Implicit conversions are disabled")
 endif()
 
 ##
@@ -53,6 +65,12 @@ if (${CMAKE_VERSION} VERSION_LESS "3.8.0")
 else()
     target_compile_features(${NLOHMANN_JSON_TARGET_NAME} INTERFACE cxx_std_11)
 endif()
+
+target_compile_definitions(
+    ${NLOHMANN_JSON_TARGET_NAME}
+    INTERFACE
+    JSON_USE_IMPLICIT_CONVERSIONS=$<BOOL:${JSON_ImplicitConversions}>
+)
 
 target_include_directories(
     ${NLOHMANN_JSON_TARGET_NAME}
@@ -72,6 +90,12 @@ if (MSVC)
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/${NLOHMANN_NATVIS_FILE}>
     )
 endif()
+
+# Install a pkg-config file, so other tools can find this.
+CONFIGURE_FILE(
+  "${CMAKE_CURRENT_SOURCE_DIR}/cmake/pkg-config.pc.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc"
+)
 
 ##
 ## TESTS
@@ -117,7 +141,7 @@ if(JSON_Install)
             FILES ${NLOHMANN_NATVIS_FILE}
             DESTINATION .
     )
-    endif()
+endif()
     export(
         TARGETS ${NLOHMANN_JSON_TARGET_NAME}
         NAMESPACE ${PROJECT_NAME}::
@@ -132,5 +156,9 @@ if(JSON_Install)
         EXPORT ${NLOHMANN_JSON_TARGETS_EXPORT_NAME}
         NAMESPACE ${PROJECT_NAME}::
         DESTINATION ${NLOHMANN_JSON_CONFIG_INSTALL_DIR}
+    )
+    install(
+        FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc"
+        DESTINATION ${NLOHMANN_JSON_PKGCONFIG_INSTALL_DIR}
     )
 endif()

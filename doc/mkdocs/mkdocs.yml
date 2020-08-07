@@ -1,0 +1,135 @@
+# Project information
+site_name: JSON for Modern C++
+site_author: Niels Lohmann
+site_url: https://squidfunk.github.io/mkdocs-material/
+
+# Repository
+repo_name: nlohmann/json
+repo_url: https://github.com/nlohmann/json
+edit_uri: edit/develop/doc/mkdocs/docs
+
+# Copyright
+copyright: Copyright &copy; 2013 - 2020 Niels Lohmann
+
+# Configuration
+theme:
+  name: material
+  language: en
+  palette:
+    primary: indigo
+    accent: indigo
+  font:
+    text: Roboto
+    code: Roboto Mono
+  features:
+    - tabs
+    - instant
+
+nav:
+  - Home:
+    - index.md
+    - home/license.md
+    - "Code of Conduct": home/code_of_conduct.md
+    - "FAQ": home/faq.md
+    - home/exceptions.md
+    - home/releases.md
+    - home/design_goals.md
+    - home/sponsors.md
+  - Features:
+    - features/arbitrary_types.md
+    - Binary Formats:
+      - features/binary_formats/index.md
+      - features/binary_formats/bson.md
+      - features/binary_formats/cbor.md
+      - features/binary_formats/messagepack.md
+      - features/binary_formats/ubjson.md
+    - features/binary_values.md
+    - features/comments.md
+    - Element Access:
+      - features/element_access/index.md
+      - features/element_access/unchecked_access.md
+      - features/element_access/checked_access.md
+      - features/element_access/default_value.md
+    - features/iterators.md
+    - features/json_pointer.md
+    - features/json_patch.md
+    - features/merge_patch.md
+    - features/object_order.md
+    - Parsing:
+        - features/parsing/index.md
+        - features/parsing/parse_exceptions.md
+        - features/parsing/parser_callbacks.md
+        - features/parsing/sax_interface.md
+    - features/enum_conversion.md
+    - features/macros.md
+    - features/types.md
+  - Integration:
+    - integration/index.md
+    - integration/cmake.md
+    - integration/package_managers.md
+  - Doxygen:
+    - doxygen/index.html
+  - API:
+      - basic_json:
+        - api/basic_json/index.md
+        - api/basic_json/dump.md
+        - api/basic_json/meta.md
+        - api/basic_json/parse.md
+
+# Extras
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/nlohmann
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/nlohmann
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/in/nielslohmann/
+    - icon: fontawesome/brands/xing
+      link: https://www.xing.com/profile/Niels_Lohmann
+    - icon: fontawesome/brands/paypal
+      link: https://www.paypal.me/nlohmann
+
+# Extensions
+markdown_extensions:
+  - admonition
+  - def_list
+  - codehilite:
+      guess_lang: false
+  - toc:
+      permalink: true
+  - pymdownx.arithmatex
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.critic
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - pymdownx.inlinehilite
+  - pymdownx.magiclink
+  - pymdownx.mark
+  #- pymdownx.smartsymbols
+  - pymdownx.superfences
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tabbed
+  - pymdownx.tilde
+  - pymdownx.snippets:
+      base_path: docs
+      check_paths: true
+  - plantuml_markdown:
+      format: svg
+
+plugins:
+    - search:
+        separator: '[\s\-\.]+'
+    - mkdocs-simple-hooks:
+        hooks:
+          on_post_build: "docs.hooks:copy_doxygen"
+    - minify:
+        minify_html: true
+
+extra_javascript:
+  - https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML

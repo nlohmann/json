@@ -12,13 +12,13 @@
 [![Language grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/nlohmann/json.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/nlohmann/json/context:cpp)
 [![Fuzzing Status](https://oss-fuzz-build-logs.storage.googleapis.com/badges/json.svg)](https://bugs.chromium.org/p/oss-fuzz/issues/list?sort=-opened&can=1&q=proj:json)
 [![Try online](https://img.shields.io/badge/try-online-blue.svg)](https://wandbox.org/permlink/3lCHrFUZANONKv7a)
-[![Documentation](https://img.shields.io/badge/docs-doxygen-blue.svg)](http://nlohmann.github.io/json)
+[![Documentation](https://img.shields.io/badge/docs-doxygen-blue.svg)](https://nlohmann.github.io/json/doxygen/index.html)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/nlohmann/json/master/LICENSE.MIT)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fnlohmann%2Fjson.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fnlohmann%2Fjson?ref=badge_shield)
 [![GitHub Releases](https://img.shields.io/github/release/nlohmann/json.svg)](https://github.com/nlohmann/json/releases)
 [![GitHub Downloads](https://img.shields.io/github/downloads/nlohmann/json/total)](https://github.com/nlohmann/json/releases)
-[![GitHub Issues](https://img.shields.io/github/issues/nlohmann/json.svg)](http://github.com/nlohmann/json/issues)
-[![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/nlohmann/json.svg)](http://isitmaintained.com/project/nlohmann/json "Average time to resolve an issue")
+[![GitHub Issues](https://img.shields.io/github/issues/nlohmann/json.svg)](https://github.com/nlohmann/json/issues)
+[![Average time to resolve an issue](https://isitmaintained.com/badge/resolution/nlohmann/json.svg)](https://isitmaintained.com/project/nlohmann/json "Average time to resolve an issue")
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/289/badge)](https://bestpractices.coreinfrastructure.org/projects/289)
 [![GitHub Sponsors](https://img.shields.io/badge/GitHub-Sponsors-ff69b4)](https://github.com/sponsors/nlohmann)
 
@@ -27,6 +27,7 @@
 - [Integration](#integration)
   - [CMake](#cmake)
   - [Package Managers](#package-managers)
+  - [Pkg-config](#pkg-config)
 - [Examples](#examples)
   - [JSON as first-class data type](#json-as-first-class-data-type)
   - [Serialization / Deserialization](#serialization--deserialization)
@@ -55,7 +56,7 @@ There are myriads of [JSON](https://json.org) libraries out there, and each may 
 
 - **Trivial integration**. Our whole code consists of a single header file [`json.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json.hpp). That's it. No library, no subproject, no dependencies, no complex build system. The class is written in vanilla C++11. All in all, everything should require no adjustment of your compiler flags or project settings.
 
-- **Serious testing**. Our class is heavily [unit-tested](https://github.com/nlohmann/json/tree/develop/test/src) and covers [100%](https://coveralls.io/r/nlohmann/json) of the code, including all exceptional behavior. Furthermore, we checked with [Valgrind](http://valgrind.org) and the [Clang Sanitizers](https://clang.llvm.org/docs/index.html) that there are no memory leaks. [Google OSS-Fuzz](https://github.com/google/oss-fuzz/tree/master/projects/json) additionally runs fuzz tests against all parsers 24/7, effectively executing billions of tests so far. To maintain high quality, the project is following the [Core Infrastructure Initiative (CII) best practices](https://bestpractices.coreinfrastructure.org/projects/289).
+- **Serious testing**. Our class is heavily [unit-tested](https://github.com/nlohmann/json/tree/develop/test/src) and covers [100%](https://coveralls.io/r/nlohmann/json) of the code, including all exceptional behavior. Furthermore, we checked with [Valgrind](https://valgrind.org) and the [Clang Sanitizers](https://clang.llvm.org/docs/index.html) that there are no memory leaks. [Google OSS-Fuzz](https://github.com/google/oss-fuzz/tree/master/projects/json) additionally runs fuzz tests against all parsers 24/7, effectively executing billions of tests so far. To maintain high quality, the project is following the [Core Infrastructure Initiative (CII) best practices](https://bestpractices.coreinfrastructure.org/projects/289).
 
 Other aspects were not so important to us:
 
@@ -148,7 +149,7 @@ Example:
 include(FetchContent)
 
 FetchContent_Declare(json
-  GIT_REPOSITORY https://github.com/nlohmann/json
+  GIT_REPOSITORY https://github.com/nlohmann/json.git
   GIT_TAG v3.7.3)
 
 FetchContent_GetProperties(json)
@@ -199,9 +200,9 @@ endif()
 
 ### Package Managers
 
-:beer: If you are using OS X and [Homebrew](http://brew.sh), just type `brew tap nlohmann/json` and `brew install nlohmann-json` and you're set. If you want the bleeding edge rather than the latest release, use `brew install nlohmann-json --HEAD`.
+:beer: If you are using OS X and [Homebrew](https://brew.sh), just type `brew tap nlohmann/json` and `brew install nlohmann-json` and you're set. If you want the bleeding edge rather than the latest release, use `brew install nlohmann-json --HEAD`.
 
-If you are using the [Meson Build System](http://mesonbuild.com), add this source tree as a [meson subproject](https://mesonbuild.com/Subprojects.html#using-a-subproject). You may also use the `include.zip` published in this project's [Releases](https://github.com/nlohmann/json/releases) to reduce the size of the vendored source tree. Alternatively, you can get a wrap file by downloading it from [Meson WrapDB](https://wrapdb.mesonbuild.com/nlohmann_json), or simply use `meson wrap install nlohmann_json`. Please see the meson project for any issues regarding the packaging.
+If you are using the [Meson Build System](https://mesonbuild.com), add this source tree as a [meson subproject](https://mesonbuild.com/Subprojects.html#using-a-subproject). You may also use the `include.zip` published in this project's [Releases](https://github.com/nlohmann/json/releases) to reduce the size of the vendored source tree. Alternatively, you can get a wrap file by downloading it from [Meson WrapDB](https://wrapdb.mesonbuild.com/nlohmann_json), or simply use `meson wrap install nlohmann_json`. Please see the meson project for any issues regarding the packaging.
 
 The provided meson.build can also be used as an alternative to cmake for installing `nlohmann_json` system-wide in which case a pkg-config file is installed. To use it, simply have your build system require the `nlohmann_json` pkg-config dependency. In Meson, it is preferred to use the [`dependency()`](https://mesonbuild.com/Reference-manual.html#dependency) object with a subproject fallback, rather than using the subproject directly.
 
@@ -215,7 +216,7 @@ If you are using [Buckaroo](https://buckaroo.pm), you can install this library's
 
 If you are using [vcpkg](https://github.com/Microsoft/vcpkg/) on your project for external dependencies, then you can use the [nlohmann-json package](https://github.com/Microsoft/vcpkg/tree/master/ports/nlohmann-json). Please see the vcpkg project for any issues regarding the packaging.
 
-If you are using [cget](http://cget.readthedocs.io/en/latest/), you can install the latest development version with `cget install nlohmann/json`. A specific version can be installed with `cget install nlohmann/json@v3.1.0`. Also, the multiple header version can be installed by adding the `-DJSON_MultipleHeaders=ON` flag (i.e., `cget install nlohmann/json -DJSON_MultipleHeaders=ON`).
+If you are using [cget](https://cget.readthedocs.io/en/latest/), you can install the latest development version with `cget install nlohmann/json`. A specific version can be installed with `cget install nlohmann/json@v3.1.0`. Also, the multiple header version can be installed by adding the `-DJSON_MultipleHeaders=ON` flag (i.e., `cget install nlohmann/json -DJSON_MultipleHeaders=ON`).
 
 If you are using [CocoaPods](https://cocoapods.org), you can use the library by adding pod `"nlohmann_json", '~>3.1.2'` to your podfile (see [an example](https://bitbucket.org/benman/nlohmann_json-cocoapod/src/master/)). Please file issues [here](https://bitbucket.org/benman/nlohmann_json-cocoapod/issues?status=new&status=open).
 
@@ -223,12 +224,26 @@ If you are using [NuGet](https://www.nuget.org), you can use the package [nlohma
 
 If you are using [conda](https://conda.io/), you can use the package [nlohmann_json](https://github.com/conda-forge/nlohmann_json-feedstock) from [conda-forge](https://conda-forge.org) executing `conda install -c conda-forge nlohmann_json`. Please file issues [here](https://github.com/conda-forge/nlohmann_json-feedstock/issues).
 
-If you are using [MSYS2](http://www.msys2.org/), your can use the [mingw-w64-nlohmann-json](https://packages.msys2.org/base/mingw-w64-nlohmann-json) package, just type `pacman -S mingw-w64-i686-nlohmann-json` or `pacman -S mingw-w64-x86_64-nlohmann-json` for installation. Please file issues [here](https://github.com/msys2/MINGW-packages/issues/new?title=%5Bnlohmann-json%5D) if you experience problems with the packages.
+If you are using [MSYS2](https://www.msys2.org/), your can use the [mingw-w64-nlohmann-json](https://packages.msys2.org/base/mingw-w64-nlohmann-json) package, just type `pacman -S mingw-w64-i686-nlohmann-json` or `pacman -S mingw-w64-x86_64-nlohmann-json` for installation. Please file issues [here](https://github.com/msys2/MINGW-packages/issues/new?title=%5Bnlohmann-json%5D) if you experience problems with the packages.
 
-If you are using [`build2`](https://build2.org), you can use the [`nlohmann-json`](https://cppget.org/nlohmann-json) package from the public repository http://cppget.org or directly from the [package's sources repository](https://github.com/build2-packaging/nlohmann-json). In your project's `manifest` file, just add `depends: nlohmann-json` (probably with some [version constraints](https://build2.org/build2-toolchain/doc/build2-toolchain-intro.xhtml#guide-add-remove-deps)). If you are not familiar with using dependencies in `build2`, [please read this introduction](https://build2.org/build2-toolchain/doc/build2-toolchain-intro.xhtml).
+If you are using [`build2`](https://build2.org), you can use the [`nlohmann-json`](https://cppget.org/nlohmann-json) package from the public repository https://cppget.org or directly from the [package's sources repository](https://github.com/build2-packaging/nlohmann-json). In your project's `manifest` file, just add `depends: nlohmann-json` (probably with some [version constraints](https://build2.org/build2-toolchain/doc/build2-toolchain-intro.xhtml#guide-add-remove-deps)). If you are not familiar with using dependencies in `build2`, [please read this introduction](https://build2.org/build2-toolchain/doc/build2-toolchain-intro.xhtml).
 Please file issues [here](https://github.com/build2-packaging/nlohmann-json) if you experience problems with the packages.
 
-If you are using [`wsjcpp`](http://wsjcpp.org), you can use the command `wsjcpp install "https://github.com/nlohmann/json:develop"` to get the latest version. Note you can change the branch ":develop" to an existing tag or another branch.
+If you are using [`wsjcpp`](https://wsjcpp.org), you can use the command `wsjcpp install "https://github.com/nlohmann/json:develop"` to get the latest version. Note you can change the branch ":develop" to an existing tag or another branch.
+
+### Pkg-config
+
+If you are using bare Makefiles, you can use `pkg-config` to generate the include flags that point to where the library is installed:
+
+```sh
+pkg-config nlohmann_json --cflags
+```
+
+Users of the Meson build system will also be able to use a system wide library, which will be found by `pkg-config`:
+
+```meson
+json = dependency('nlohmann_json', required: true)
+```
 
 ## Examples
 
@@ -416,7 +431,7 @@ Please note that setting the exception bit for `failbit` is inappropriate for th
 
 #### Read from iterator range
 
-You can also parse JSON from an iterator range; that is, from any container accessible by iterators whose content is stored as contiguous byte sequence, for instance a `std::vector<std::uint8_t>`:
+You can also parse JSON from an iterator range; that is, from any container accessible by iterators whose `value_type` is an integral type of 1, 2 or 4 bytes, which will be interpreted as UTF-8, UTF-16 and UTF-32 respectively. For instance, a `std::vector<std::uint8_t>`, or a `std::list<std::uint16_t>`:
 
 ```cpp
 std::vector<std::uint8_t> v = {'t', 'r', 'u', 'e'};
@@ -428,6 +443,53 @@ You may leave the iterators for the range [begin, end):
 ```cpp
 std::vector<std::uint8_t> v = {'t', 'r', 'u', 'e'};
 json j = json::parse(v);
+```
+
+#### Custom data source
+
+Since the parse function accepts arbitrary iterator ranges, you can provide your own data sources by implementing the `LegacyInputIterator` concept.
+
+```cpp
+struct MyContainer {
+  void advance();
+  const char& get_current();
+};
+
+struct MyIterator {
+    using difference_type = std::ptrdiff_t;
+    using value_type = char;
+    using pointer = const char*;
+    using reference = const char&;
+    using iterator_category = std::input_iterator_tag;
+
+    MyIterator& operator++() {
+        MyContainer.advance();
+        return *this;
+    }
+
+    bool operator!=(const MyIterator& rhs) const {
+        return rhs.target != target;
+    }
+
+    reference operator*() const {
+        return target.get_current();
+    }
+
+    MyContainer* target = nullptr;
+};
+
+MyIterator begin(MyContainer& tgt) {
+    return MyIterator{&tgt};
+}
+
+MyIterator end(const MyContainer&) {
+    return {};
+}
+
+void foo() {
+    MyContainer c;
+    json j = json::parse(c);
+}
 ```
 
 #### SAX interface
@@ -450,6 +512,8 @@ bool number_float(number_float_t val, const string_t& s);
 
 // called when a string is parsed; value is passed and can be safely moved away
 bool string(string_t& val);
+// called when a binary value is parsed; value is passed and can be safely moved away
+bool binary(binary_t& val);
 
 // called when an object or array begins or ends, resp. The number of elements is passed (or -1 if not known)
 bool start_object(std::size_t elements);
@@ -544,6 +608,11 @@ for (auto& [key, value] : o.items()) {
 }
 
 // find an entry
+if (o.contains("foo")) {
+  // there is an entry with key "foo"
+}
+
+// or via find and an iterator
 if (o.find("foo") != o.end()) {
   // there is an entry with key "foo"
 }
@@ -694,7 +763,8 @@ j_document.merge_patch(j_patch);
 Supported types can be implicitly converted to JSON values.
 
 It is recommended to **NOT USE** implicit conversions **FROM** a JSON value.
-You can find more details about this recommendation [here](https://www.github.com/nlohmann/json/issues/958). 
+You can find more details about this recommendation [here](https://www.github.com/nlohmann/json/issues/958).
+You can switch off implicit conversions by defining `JSON_USE_IMPLICIT_CONVERSIONS` to `0` before including the `json.hpp` header. When using CMake, you can also achieve this by setting the option `JSON_ImplicitConversions` to `OFF`.
 
 ```cpp
 // strings
@@ -817,6 +887,42 @@ Some important things:
 * In function `from_json`, use function [`at()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a93403e803947b86f4da2d1fb3345cf2c.html#a93403e803947b86f4da2d1fb3345cf2c) to access the object values rather than `operator[]`. In case a key does not exist, `at` throws an exception that you can handle, whereas `operator[]` exhibits undefined behavior.
 * You do not need to add serializers or deserializers for STL types like `std::vector`: the library already implements these.
 
+#### Simplify your life with macros
+
+If you just want to serialize/deserialize some structs, the `to_json`/`from_json` functions can be a lot of boilerplate.
+
+There are two macros to make your life easier as long as you (1) want to use a JSON object as serialization and (2) want to use the member variable names as object keys in that object:
+
+- `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(name, member1, member2, ...)` is to be defined inside of the namespace of the class/struct to create code for.
+- `NLOHMANN_DEFINE_TYPE_INTRUSIVE(name, member1, member2, ...)` is to be defined inside of the class/struct to create code for. This macro can also access private members.
+
+In both macros, the first parameter is the name of the class/struct, and all remaining parameters name the members.
+
+##### Examples
+
+The `to_json`/`from_json` functions for the `person` struct above can be created with:
+
+```cpp
+namespace ns {
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(person, name, address, age)
+}
+```
+
+Here is an example with private members, where `NLOHMANN_DEFINE_TYPE_INTRUSIVE` is needed:
+
+```cpp
+namespace ns {
+    class address {
+      private:
+        std::string street;
+        int housenumber;
+        int postcode;
+
+      public:
+        NLOHMANN_DEFINE_TYPE_INTRUSIVE(address, street, housenumber, postcode)
+    };
+}
+```
 
 #### How do I convert third-party types?
 
@@ -1011,7 +1117,7 @@ Other Important points:
 
 ### Binary formats (BSON, CBOR, MessagePack, and UBJSON)
 
-Though JSON is a ubiquitous data format, it is not a very compact format suitable for data exchange, for instance over a network. Hence, the library supports [BSON](http://bsonspec.org) (Binary JSON), [CBOR](http://cbor.io) (Concise Binary Object Representation), [MessagePack](http://msgpack.org), and [UBJSON](http://ubjson.org) (Universal Binary JSON Specification) to efficiently encode JSON values to byte vectors and to decode such vectors.
+Though JSON is a ubiquitous data format, it is not a very compact format suitable for data exchange, for instance over a network. Hence, the library supports [BSON](http://bsonspec.org) (Binary JSON), [CBOR](https://cbor.io) (Concise Binary Object Representation), [MessagePack](https://msgpack.org), and [UBJSON](http://ubjson.org) (Universal Binary JSON Specification) to efficiently encode JSON values to byte vectors and to decode such vectors.
 
 ```cpp
 // create a JSON value
@@ -1085,8 +1191,9 @@ auto cbor = json::to_msgpack(j); // 0xD5 (fixext2), 0x10, 0xCA, 0xFE
 
 Though it's 2020 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
 
-- GCC 4.8 - 10.0 (and possibly later)
+- GCC 4.8 - 10.1 (and possibly later)
 - Clang 3.4 - 10.0 (and possibly later)
+- Apple Clang 9.1 - 12.0 (and possibly later)
 - Intel C++ Compiler 17.0.2 (and possibly later)
 - Microsoft Visual C++ 2015 / Build Tools 14.0.25123.0 (and possibly later)
 - Microsoft Visual C++ 2017 / Build Tools 15.5.180.51428 (and possibly later)
@@ -1107,7 +1214,7 @@ Please note:
 
     The code compiles successfully with [Android NDK](https://developer.android.com/ndk/index.html?hl=ml), Revision 9 - 11 (and possibly later) and [CrystaX's Android NDK](https://www.crystax.net/en/android/ndk) version 10.
 
-- For GCC running on MinGW or Android SDK, the error `'to_string' is not a member of 'std'` (or similarly, for `strtod` or `strtof`) may occur. Note this is not an issue with the code,  but rather with the compiler itself. On Android, see above to build with a newer environment.  For MinGW, please refer to [this site](http://tehsausage.com/mingw-to-string) and [this discussion](https://github.com/nlohmann/json/issues/136) for information on how to fix this bug. For Android NDK using `APP_STL := gnustl_static`, please refer to [this discussion](https://github.com/nlohmann/json/issues/219).
+- For GCC running on MinGW or Android SDK, the error `'to_string' is not a member of 'std'` (or similarly, for `strtod` or `strtof`) may occur. Note this is not an issue with the code,  but rather with the compiler itself. On Android, see above to build with a newer environment.  For MinGW, please refer to [this site](https://tehsausage.com/mingw-to-string) and [this discussion](https://github.com/nlohmann/json/issues/136) for information on how to fix this bug. For Android NDK using `APP_STL := gnustl_static`, please refer to [this discussion](https://github.com/nlohmann/json/issues/219).
 
 - Unsupported versions of GCC and Clang are rejected by `#error` directives. This can be switched off by defining `JSON_SKIP_UNSUPPORTED_COMPILER_CHECK`. Note that you can expect no support in this case.
 
@@ -1122,6 +1229,7 @@ The following compilers are currently used in continuous integration at [Travis]
 | Apple Clang 10.0.1 (clang-1001.0.46.4); Xcode 10.2.1            | macOS 10.14.4      | Travis         |
 | Apple Clang 11.0.0 (clang-1100.0.33.12); Xcode 11.2.1           | macOS 10.14.6      | Travis         |
 | Apple Clang 11.0.3 (clang-1103.0.32.59); Xcode 11.4.1           | macOS 10.15.4      | GitHub Actions |
+| Apple Clang 12.0.0 (clang-1200.0.22.7); Xcode 11.4.1            | macOS 10.15.5      | Travis         |
 | Clang 3.5.0 (3.5.0-4ubuntu2~trusty2)                            | Ubuntu 14.04.5 LTS | Travis         |
 | Clang 3.6.2 (3.6.2-svn240577-1~exp1)                            | Ubuntu 14.04.5 LTS | Travis         |
 | Clang 3.7.1 (3.7.1-svn253571-1~exp1)                            | Ubuntu 14.04.5 LTS | Travis         |
@@ -1132,6 +1240,8 @@ The following compilers are currently used in continuous integration at [Travis]
 | Clang 6.0.1 (6.0.1-svn334776-1~exp1~20190309042707.121)         | Ubuntu 14.04.5 LTS | Travis         |
 | Clang 7.1.0 (7.1.0-svn353565-1~exp1~20190419134007.64)          | Ubuntu 14.04.5 LTS | Travis         |
 | Clang 7.5.0 (Ubuntu 7.5.0-3ubuntu1~18.04)                       | Ubuntu 18.04.4 LTS | Travis         |
+| Clang 9.0.0 (x86_64-pc-windows-msvc)                            | Windows-10.0.17763 | GitHub Actions |
+| Clang 10.0.0 (x86_64-pc-windows-msvc)                           | Windows-10.0.17763 | GitHub Actions |
 | GCC 4.8.5 (Ubuntu 4.8.5-4ubuntu8~14.04.2)                       | Ubuntu 14.04.5 LTS | Travis         |
 | GCC 4.9.4 (Ubuntu 4.9.4-2ubuntu1~14.04.1)                       | Ubuntu 14.04.5 LTS | Travis         |
 | GCC 5.5.0 (Ubuntu 5.5.0-12ubuntu1~14.04)                        | Ubuntu 14.04.5 LTS | Travis         |
@@ -1142,10 +1252,12 @@ The following compilers are currently used in continuous integration at [Travis]
 | GCC 7.5.0 (Ubuntu 7.5.0-3ubuntu1~18.04)                         | Ubuntu 18.04.4 LTS | GitHub Actions |
 | GCC 8.4.0 (Ubuntu 8.4.0-1ubuntu1~14.04)                         | Ubuntu 14.04.5 LTS | Travis         |
 | GCC 9.3.0 (Ubuntu 9.3.0-11ubuntu0~14.04)                        | Ubuntu 14.04.5 LTS | Travis         |
+| GCC 10.1.0 (Arch Linux latest)                                  | Arch Linux         | Circle CI      |
 | MSVC 19.0.24241.7 (Build Engine version 14.0.25420.1)           | Windows-6.3.9600   | AppVeyor       |
 | MSVC 19.16.27035.0 (15.9.21+g9802d43bc3 for .NET Framework)     | Windows-10.0.14393 | AppVeyor       |
 | MSVC 19.25.28614.0 (Build Engine version 16.5.0+d4cbfca49 for .NET Framework) | Windows-10.0.17763  | AppVeyor       |
 | MSVC 19.25.28614.0 (Build Engine version 16.5.0+d4cbfca49 for .NET Framework) | Windows-10.0.17763  | GitHub Actions |
+| MSVC 19.25.28614.0 (Build Engine version 16.5.0+d4cbfca49 for .NET Framework) with ClangCL 10.0.0 | Windows-10.0.17763  | GitHub Actions |
 
 ## License
 
@@ -1163,11 +1275,11 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 
 * * *
 
-The class contains the UTF-8 Decoder from Bjoern Hoehrmann which is licensed under the [MIT License](http://opensource.org/licenses/MIT) (see above). Copyright &copy; 2008-2009 [Björn Hoehrmann](http://bjoern.hoehrmann.de/) <bjoern@hoehrmann.de>
+The class contains the UTF-8 Decoder from Bjoern Hoehrmann which is licensed under the [MIT License](http://opensource.org/licenses/MIT) (see above). Copyright &copy; 2008-2009 [Björn Hoehrmann](https://bjoern.hoehrmann.de/) <bjoern@hoehrmann.de>
 
-The class contains a slightly modified version of the Grisu2 algorithm from Florian Loitsch which is licensed under the [MIT License](http://opensource.org/licenses/MIT) (see above). Copyright &copy; 2009 [Florian Loitsch](http://florian.loitsch.com/)
+The class contains a slightly modified version of the Grisu2 algorithm from Florian Loitsch which is licensed under the [MIT License](http://opensource.org/licenses/MIT) (see above). Copyright &copy; 2009 [Florian Loitsch](https://florian.loitsch.com/)
 
-The class contains a copy of [Hedley](https://nemequ.github.io/hedley/) from Evan Nemerson which is licensed as [CC0-1.0](http://creativecommons.org/publicdomain/zero/1.0/).
+The class contains a copy of [Hedley](https://nemequ.github.io/hedley/) from Evan Nemerson which is licensed as [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/).
 
 ## Contact
 
@@ -1224,7 +1336,7 @@ I deeply appreciate the help of the following people.
 - [Mário Feroldi](https://github.com/thelostt) fixed a small typo.
 - [duncanwerner](https://github.com/duncanwerner) found a really embarrassing performance regression in the 2.0.0 release.
 - [Damien](https://github.com/dtoma) fixed one of the last conversion warnings.
-- [Thomas Braun](https://github.com/t-b) fixed a warning in a test case.
+- [Thomas Braun](https://github.com/t-b) fixed a warning in a test case and adjusted MSVC calls in the CI.
 - [Théo DELRIEU](https://github.com/theodelrieu) patiently and constructively oversaw the long way toward [iterator-range parsing](https://github.com/nlohmann/json/issues/290). He also implemented the magic behind the serialization/deserialization of user-defined types and split the single header file into smaller chunks.
 - [Stefan](https://github.com/5tefan) fixed a minor issue in the documentation.
 - [Vasil Dimov](https://github.com/vasild) fixed the documentation regarding conversions from `std::multiset`.
@@ -1368,6 +1480,48 @@ I deeply appreciate the help of the following people.
 - [Florian Pigorsch](https://github.com/flopp) fixed a lot of typos.
 - [Camille Bégué](https://github.com/cbegue) fixed an issue in the conversion from  `std::pair` and `std::tuple` to `json`.
 - [Anthony VH](https://github.com/AnthonyVH) fixed a compile error in an enum deserialization.
+- [Yuriy Vountesmery](https://github.com/ua-code-dragon) noted a subtle bug in a preprocessor check.
+- [Chen](https://github.com/dota17) fixed numerous issues in the library.
+- [Antony Kellermann](https://github.com/aokellermann) added a CI step for GCC 10.1.
+- [Alex](https://github.com/gistrec) fixed an MSVC warning.
+- [Rainer](https://github.com/rvjr) proposed an improvement in the floating-point serialization in CBOR.
+- [Francois Chabot](https://github.com/FrancoisChabot) made performance improvements in the input adapters.
+- [Arthur Sonzogni](https://github.com/ArthurSonzogni) documented how the library can be included via `FetchContent`.
+- [Rimas Misevičius](https://github.com/rmisev) fixed an error message.
+- [Alexander Myasnikov](https://github.com/alexandermyasnikov) fixed some examples and a link in the README.
+- [Hubert Chathi](https://github.com/uhoreg) made CMake's version config file architecture-independent.
+- [OmnipotentEntity](https://github.com/OmnipotentEntity) implemented the binary values for CBOR, MessagePack, BSON, and UBJSON.
+- [ArtemSarmini](https://github.com/ArtemSarmini) fixed a compilation issue with GCC 10 and fixed a leak.
+- [Evgenii Sopov](https://github.com/sea-kg) integrated the library to the wsjcpp package manager.
+- [Sergey Linev](https://github.com/linev) fixed a compiler warning.
+- [Miguel Magalhães](https://github.com/magamig) fixed the year in the copyright.
+- [Gareth Sylvester-Bradley](https://github.com/garethsb-sony) fixed a compilation issue with MSVC.
+- [Alexander “weej” Jones](https://github.com/alex-weej) fixed an example in the README.
+- [Antoine Cœur](https://github.com/Coeur) fixed some typos in the documentation.
+- [jothepro](https://github.com/jothepro) updated links to the Hunter package.
+- [Dave Lee](https://github.com/kastiglione) fixed link in the README.
+- [Joël Lamotte](https://github.com/Klaim) added instruction for using Build2's package manager.
+- [Paul Jurczak](https://github.com/pauljurczak) fixed an example in the README.
+- [Sonu Lohani](https://github.com/sonulohani) fixed a warning.
+- [Carlos Gomes Martinho](https://github.com/gocarlos) updated the Conan package source.
+- [Konstantin Podsvirov](https://github.com/podsvirov) fixed the MSYS2 package documentation.
+- [Tridacnid](https://github.com/Tridacnid) improved the CMake tests.
+- [Michael](https://github.com/MBalszun) fixed MSVC warnings.
+- [Quentin Barbarat](https://github.com/quentin-dev) fixed an example in the documentation.
+- [XyFreak](https://github.com/XyFreak) fixed a compiler warning.
+- [TotalCaesar659](https://github.com/TotalCaesar659) fixed links in the README.
+- [Tanuj Garg](https://github.com/tanuj208) improved the fuzzer coverage for UBSAN input.
+- [AODQ](https://github.com/AODQ) fixed a compiler warning.
+- [jwittbrodt](https://github.com/jwittbrodt) made `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE` inline.
+- [pfeatherstone](https://github.com/pfeatherstone) improved the upper bound of arguments of the `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE`/`NLOHMANN_DEFINE_TYPE_INTRUSIVE` macros.
+- [Jan Procházka](https://github.com/jprochazk) fixed a bug in the CBOR parser for binary and string values.
+- [T0b1-iOS](https://github.com/T0b1-iOS) fixed a bug in the new hash implementation.
+- [Matthew Bauer](https://github.com/matthewbauer) adjusted the CBOR writer to create tags for binary subtypes.
+- [gatopeich](https://github.com/gatopeich) implemented an ordered map container for `nlohmann::ordered_json`.
+- [Érico Nogueira Rolim](https://github.com/ericonr) added support for pkg-config.
+- [KonanM](https://github.com/KonanM) proposed an implementation for the `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE`/`NLOHMANN_DEFINE_TYPE_INTRUSIVE` macros.
+- [Guillaume Racicot](https://github.com/gracicot) implemented `string_view` support and allowed C++20 support.
+- [Alex Reinking](https://github.com/alexreinking) improved CMake support for `FetchContent`.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
@@ -1377,10 +1531,10 @@ Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I
 The library itself consists of a single header file licensed under the MIT license. However, it is built, tested, documented, and whatnot using a lot of third-party tools and services. Thanks a lot!
 
 - [**amalgamate.py - Amalgamate C source and header files**](https://github.com/edlund/amalgamate) to create a single header file
-- [**American fuzzy lop**](http://lcamtuf.coredump.cx/afl/) for fuzz testing
+- [**American fuzzy lop**](https://lcamtuf.coredump.cx/afl/) for fuzz testing
 - [**AppVeyor**](https://www.appveyor.com) for [continuous integration](https://ci.appveyor.com/project/nlohmann/json) on Windows
 - [**Artistic Style**](http://astyle.sourceforge.net) for automatic source code indentation
-- [**CircleCI**](http://circleci.com) for [continuous integration](https://circleci.com/gh/nlohmann/json).
+- [**CircleCI**](https://circleci.com) for [continuous integration](https://circleci.com/gh/nlohmann/json).
 - [**Clang**](https://clang.llvm.org) for compilation with code sanitizers
 - [**CMake**](https://cmake.org) for build automation
 - [**Codacity**](https://www.codacy.com) for further [code analysis](https://www.codacy.com/app/nlohmann/json)
@@ -1388,19 +1542,19 @@ The library itself consists of a single header file licensed under the MIT licen
 - [**Coverity Scan**](https://scan.coverity.com) for [static analysis](https://scan.coverity.com/projects/nlohmann-json)
 - [**cppcheck**](http://cppcheck.sourceforge.net) for static analysis
 - [**doctest**](https://github.com/onqtam/doctest) for the unit tests
-- [**Doxygen**](http://www.stack.nl/~dimitri/doxygen/) to generate [documentation](https://nlohmann.github.io/json/)
+- [**Doxygen**](https://www.doxygen.nl/index.html) to generate [documentation](https://nlohmann.github.io/json/doxygen/index.html)
 - [**git-update-ghpages**](https://github.com/rstacruz/git-update-ghpages) to upload the documentation to gh-pages
 - [**GitHub Changelog Generator**](https://github.com/skywinder/github-changelog-generator) to generate the [ChangeLog](https://github.com/nlohmann/json/blob/develop/ChangeLog.md)
 - [**Google Benchmark**](https://github.com/google/benchmark) to implement the benchmarks
 - [**Hedley**](https://nemequ.github.io/hedley/) to avoid re-inventing several compiler-agnostic feature macros
 - [**lcov**](http://ltp.sourceforge.net/coverage/lcov.php) to process coverage information and create a HTML view
-- [**libFuzzer**](http://llvm.org/docs/LibFuzzer.html) to implement fuzz testing for OSS-Fuzz
+- [**libFuzzer**](https://llvm.org/docs/LibFuzzer.html) to implement fuzz testing for OSS-Fuzz
 - [**OSS-Fuzz**](https://github.com/google/oss-fuzz) for continuous fuzz testing of the library ([project repository](https://github.com/google/oss-fuzz/tree/master/projects/json))
 - [**Probot**](https://probot.github.io) for automating maintainer tasks such as closing stale issues, requesting missing information, or detecting toxic comments.
 - [**send_to_wandbox**](https://github.com/nlohmann/json/blob/develop/doc/scripts/send_to_wandbox.py) to send code examples to [Wandbox](http://melpon.org/wandbox)
 - [**Travis**](https://travis-ci.org) for [continuous integration](https://travis-ci.org/nlohmann/json) on Linux and macOS
-- [**Valgrind**](http://valgrind.org) to check for correct memory management
-- [**Wandbox**](http://melpon.org/wandbox) for [online examples](https://wandbox.org/permlink/3lCHrFUZANONKv7a)
+- [**Valgrind**](https://valgrind.org) to check for correct memory management
+- [**Wandbox**](https://wandbox.org) for [online examples](https://wandbox.org/permlink/3lCHrFUZANONKv7a)
 
 
 ## Projects using JSON for Modern C++
@@ -1417,49 +1571,47 @@ The library supports **Unicode input** as follows:
 - Only **UTF-8** encoded input is supported which is the default encoding for JSON according to [RFC 8259](https://tools.ietf.org/html/rfc8259.html#section-8.1).
 - `std::u16string` and `std::u32string` can be parsed, assuming UTF-16 and UTF-32 encoding, respectively. These encodings are not supported when reading from files or other input containers.
 - Other encodings such as Latin-1 or ISO 8859-1 are **not** supported and will yield parse or serialization errors.
-- [Unicode noncharacters](http://www.unicode.org/faq/private_use.html#nonchar1) will not be replaced by the library.
+- [Unicode noncharacters](https://www.unicode.org/faq/private_use.html#nonchar1) will not be replaced by the library.
 - Invalid surrogates (e.g., incomplete pairs such as `\uDEAD`) will yield parse errors.
 - The strings stored in the library are UTF-8 encoded. When using the default string type (`std::string`), note that its length/size functions return the number of stored bytes rather than the number of characters or glyphs.
 - When you store strings with different encodings in the library, calling [`dump()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a50ec80b02d0f3f51130d4abb5d1cfdc5.html#a50ec80b02d0f3f51130d4abb5d1cfdc5) may throw an exception unless `json::error_handler_t::replace` or `json::error_handler_t::ignore` are used as error handlers.
 
 ### Comments in JSON
 
-This library does not support comments. It does so for three reasons:
+This library does not support comments by default. It does so for three reasons:
 
 1. Comments are not part of the [JSON specification](https://tools.ietf.org/html/rfc8259). You may argue that `//` or `/* */` are allowed in JavaScript, but JSON is not JavaScript.
 2. This was not an oversight: Douglas Crockford [wrote on this](https://plus.google.com/118095276221607585885/posts/RK8qyGVaGSr) in May 2012:
 
-	> I removed comments from JSON because I saw people were using them to hold parsing directives, a practice which would have destroyed interoperability.  I know that the lack of comments makes some people sad, but it shouldn't. 
+	> I removed comments from JSON because I saw people were using them to hold parsing directives, a practice which would have destroyed interoperability.  I know that the lack of comments makes some people sad, but it shouldn't.
 
 	> Suppose you are using JSON to keep configuration files, which you would like to annotate. Go ahead and insert all the comments you like. Then pipe it through JSMin before handing it to your JSON parser.
 
 3. It is dangerous for interoperability if some libraries would add comment support while others don't. Please check [The Harmful Consequences of the Robustness Principle](https://tools.ietf.org/html/draft-iab-protocol-maintenance-01) on this.
 
-This library will not support comments in the future. If you wish to use comments, I see three options:
-
-1. Strip comments before using this library.
-2. Use a different JSON library with comment support.
-3. Use a format that natively supports comments (e.g., YAML or JSON5).
+However, you can pass set parameter `ignore_comments` to true in the `parse` function to ignore `//` or `/* */` comments. Comments will then be treated as whitespace.
 
 ### Order of object keys
 
-By default, the library does not preserve the **insertion order of object elements**. This is standards-compliant, as the [JSON standard](https://tools.ietf.org/html/rfc8259.html) defines objects as "an unordered collection of zero or more name/value pairs". If you do want to preserve the insertion order, you can specialize the object type with containers like [`tsl::ordered_map`](https://github.com/Tessil/ordered-map) ([integration](https://github.com/nlohmann/json/issues/546#issuecomment-304447518)) or [`nlohmann::fifo_map`](https://github.com/nlohmann/fifo_map) ([integration](https://github.com/nlohmann/json/issues/485#issuecomment-333652309)).
+By default, the library does not preserve the **insertion order of object elements**. This is standards-compliant, as the [JSON standard](https://tools.ietf.org/html/rfc8259.html) defines objects as "an unordered collection of zero or more name/value pairs".
+
+If you do want to preserve the insertion order, you can try the type [`nlohmann::ordered_json`](https://github.com/nlohmann/json/issues/2179). Alternatively, you can use a more sophisticated ordered map like [`tsl::ordered_map`](https://github.com/Tessil/ordered-map) ([integration](https://github.com/nlohmann/json/issues/546#issuecomment-304447518)) or [`nlohmann::fifo_map`](https://github.com/nlohmann/fifo_map) ([integration](https://github.com/nlohmann/json/issues/485#issuecomment-333652309)).
 
 ### Memory Release
 
-We checked with Valgrind and the Address Sanitizer (ASAN) that there are no memory leaks. 
+We checked with Valgrind and the Address Sanitizer (ASAN) that there are no memory leaks.
 
-If you find that a parsing program with this library does not release memory, please consider the following case and it maybe unrelated to this library. 
+If you find that a parsing program with this library does not release memory, please consider the following case and it maybe unrelated to this library.
 
 **Your program is compiled with glibc.** There is a tunable threshold that glibc uses to decide whether to actually return memory to the system or whether to cache it for later reuse. If in your program you make lots of small allocations and those small allocations are not a contiguous block and are presumably below the threshold, then they will not get returned to the OS.
 Here is a related issue [#1924](https://github.com/nlohmann/json/issues/1924).
 
 ### Further notes
 
-- The code contains numerous debug **assertions** which can be switched off by defining the preprocessor macro `NDEBUG`, see the [documentation of `assert`](https://en.cppreference.com/w/cpp/error/assert). In particular, note [`operator[]`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a233b02b0839ef798942dd46157cc0fe6.html#a233b02b0839ef798942dd46157cc0fe6) implements **unchecked access** for const objects: If the given key is not present, the behavior is undefined (think of a dereferenced null pointer) and yields an [assertion failure](https://github.com/nlohmann/json/issues/289) if assertions are switched on. If you are not sure whether an element in an object exists, use checked access with the [`at()` function](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a73ae333487310e3302135189ce8ff5d8.html#a73ae333487310e3302135189ce8ff5d8).
+- The code contains numerous debug **assertions** which can be switched off by defining the preprocessor macro `NDEBUG`, see the [documentation of `assert`](https://en.cppreference.com/w/cpp/error/assert). In particular, note [`operator[]`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a233b02b0839ef798942dd46157cc0fe6.html#a233b02b0839ef798942dd46157cc0fe6) implements **unchecked access** for const objects: If the given key is not present, the behavior is undefined (think of a dereferenced null pointer) and yields an [assertion failure](https://github.com/nlohmann/json/issues/289) if assertions are switched on. If you are not sure whether an element in an object exists, use checked access with the [`at()` function](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a73ae333487310e3302135189ce8ff5d8.html#a73ae333487310e3302135189ce8ff5d8). Furthermore, you can define `JSON_ASSERT(x)` to replace calls to `assert(x)`.
 - As the exact type of a number is not defined in the [JSON specification](https://tools.ietf.org/html/rfc8259.html), this library tries to choose the best fitting C++ number type automatically. As a result, the type `double` may be used to store numbers which may yield [**floating-point exceptions**](https://github.com/nlohmann/json/issues/181) in certain rare situations if floating-point exceptions have been unmasked in the calling code. These exceptions are not caused by the library and need to be fixed in the calling code, such as by re-masking the exceptions prior to calling library functions.
 - The code can be compiled without C++ **runtime type identification** features; that is, you can use the `-fno-rtti` compiler flag.
-- **Exceptions** are used widely within the library. They can, however, be switched off with either using the compiler flag `-fno-exceptions` or by defining the symbol `JSON_NOEXCEPTION`. In this case, exceptions are replaced by `abort()` calls. You can further control this behavior by defining `JSON_THROW_USER´` (overriding `throw`), `JSON_TRY_USER` (overriding `try`), and `JSON_CATCH_USER` (overriding `catch`). Note that `JSON_THROW_USER` should leave the current scope (e.g., by throwing or aborting), as continuing after it may yield undefined behavior.
+- **Exceptions** are used widely within the library. They can, however, be switched off with either using the compiler flag `-fno-exceptions` or by defining the symbol `JSON_NOEXCEPTION`. In this case, exceptions are replaced by `abort()` calls. You can further control this behavior by defining `JSON_THROW_USER` (overriding `throw`), `JSON_TRY_USER` (overriding `try`), and `JSON_CATCH_USER` (overriding `catch`). Note that `JSON_THROW_USER` should leave the current scope (e.g., by throwing or aborting), as continuing after it may yield undefined behavior.
 
 ## Execute unit tests
 
@@ -1468,9 +1620,11 @@ To compile and run the tests, you need to execute
 ```sh
 $ mkdir build
 $ cd build
-$ cmake ..
+$ cmake .. -DJSON_BuildTests=On
 $ cmake --build .
 $ ctest --output-on-failure
 ```
 
-For more information, have a look at the file [.travis.yml](https://github.com/nlohmann/json/blob/master/.travis.yml).
+Note that during the `ctest` stage, several JSON test files are downloaded from an [external repository](https://github.com/nlohmann/json_test_data). If policies forbid downloading artifacts during testing, you can download the files yourself and pass the directory with the test files via `-DJSON_TestDataDirectory=path` to CMake. Then, no Internet connectivity is required. See [issue #2189](https://github.com/nlohmann/json/issues/2189) for more information.
+
+In case you have downloaded the library rather than checked out the code via Git, test `cmake_fetch_content_configure`. Please execute `ctest -LE git_required` to skip these tests. See [issue #2189](https://github.com/nlohmann/json/issues/2189) for more information.
