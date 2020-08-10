@@ -4666,19 +4666,19 @@ std::size_t hash(const BasicJsonType& j)
             return combine(type, h);
         }
 
-        case nlohmann::detail::value_t::number_unsigned:
+        case BasicJsonType::value_t::number_unsigned:
         {
             const auto h = std::hash<number_unsigned_t> {}(j.template get<number_unsigned_t>());
             return combine(type, h);
         }
 
-        case nlohmann::detail::value_t::number_float:
+        case BasicJsonType::value_t::number_float:
         {
             const auto h = std::hash<number_float_t> {}(j.template get<number_float_t>());
             return combine(type, h);
         }
 
-        case nlohmann::detail::value_t::binary:
+        case BasicJsonType::value_t::binary:
         {
             auto seed = combine(type, j.get_binary().size());
             const auto h = std::hash<bool> {}(j.get_binary().has_subtype());
@@ -4691,8 +4691,9 @@ std::size_t hash(const BasicJsonType& j)
             return seed;
         }
 
-        default: // LCOV_EXCL_LINE
-            JSON_ASSERT(false); // LCOV_EXCL_LINE
+        default:                   // LCOV_EXCL_LINE
+            JSON_ASSERT(false);    // LCOV_EXCL_LINE
+            return 0;              // LCOV_EXCL_LINE
     }
 }
 
@@ -8391,8 +8392,9 @@ class binary_reader
                         return parse_cbor_internal(true, tag_handler);
                     }
 
-                    default:            // LCOV_EXCL_LINE
+                    default:                 // LCOV_EXCL_LINE
                         JSON_ASSERT(false);  // LCOV_EXCL_LINE
+                        return false;        // LCOV_EXCL_LINE
                 }
             }
 
