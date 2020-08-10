@@ -16395,6 +16395,9 @@ class serializer
 #include <utility> // pair
 #include <vector> // vector
 
+// #include <nlohmann/detail/macro_scope.hpp>
+
+
 namespace nlohmann
 {
 
@@ -16454,7 +16457,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
             }
         }
 
-        throw std::out_of_range("key not found");
+        JSON_THROW(std::out_of_range("key not found"));
     }
 
     const T& at(const Key& key) const
@@ -16467,7 +16470,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
             }
         }
 
-        throw std::out_of_range("key not found");
+        JSON_THROW(std::out_of_range("key not found"));
     }
 
     size_type erase(const Key& key)
