@@ -7793,7 +7793,7 @@ class basic_json
     string          | 0x02             | string
     document        | 0x03             | object
     array           | 0x04             | array
-    binary          | 0x05             | still unsupported
+    binary          | 0x05             | binary
     undefined       | 0x06             | still unsupported
     ObjectId        | 0x07             | still unsupported
     boolean         | 0x08             | boolean
