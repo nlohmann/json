@@ -8,8 +8,7 @@ Returns the number of elements in a JSON value.
     
 ## Return value
 
-The return value depends on the different types and is
-defined as follows:
+The return value depends on the different types and is defined as follows:
 
 Value type  | return value
 ----------- | -------------
@@ -27,22 +26,20 @@ No-throw guarantee: this function never throws exceptions.
 
 ## Complexity
 
-Constant, as long as [`array_t`](array_t.md) and [`object_t`](object_t.md) satisfy
-the Container concept; that is, their `size()` functions have constant
-complexity.
+Constant, as long as [`array_t`](array_t.md) and [`object_t`](object_t.md) satisfy the
+[Container](https://en.cppreference.com/w/cpp/named_req/Container) concept; that is, their `size()` functions have
+constant complexity.
 
 ## Notes
 
-This function does not return the length of a string stored as JSON
-value - it returns the number of elements in the JSON value which is `1` in
-the case of a string.
+This function does not return the length of a string stored as JSON value -- it returns the number of elements in the
+JSON value which is `1` in the case of a string.
 
 ## Example
 
 ??? example
 
-    The following code calls `size()` on the different value
-    types.
+    The following code calls `size()` on the different value types.
     
     ```cpp
     --8<-- "examples/size.cpp"

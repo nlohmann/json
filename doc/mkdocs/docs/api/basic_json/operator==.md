@@ -12,11 +12,10 @@ bool operator==(ScalarType lhs, const const_reference rhs) noexcept;
 
 Compares two JSON values for equality according to the following rules:
 
-- Two JSON values are equal if (1) they are from the same type and (2)
-  their stored values are the same according to their respective
-  `operator==`.
-- Integer and floating-point numbers are automatically converted before
-  comparison. Note that two NaN values are always treated as unequal.
+- Two JSON values are equal if (1) they are from the same type and (2) their stored values are the same according to
+  their respective `operator==`.
+- Integer and floating-point numbers are automatically converted before comparison. Note that two NaN values are always
+  treated as unequal.
 - Two JSON null values are equal.
 
 ## Template parameters
@@ -46,11 +45,10 @@ Linear.
 
 ## Notes
 
-- Floating-point inside JSON values numbers are compared with
-`json::number_float_t::operator==` which is `double::operator==` by
-default. To compare floating-point while respecting an epsilon, an alternative
-[comparison function](https://github.com/mariokonrad/marnav/blob/master/include/marnav/math/floatingpoint.hpp#L34-#L39)
-could be used, for instance
+- Floating-point inside JSON values numbers are compared with `json::number_float_t::operator==` which is
+  `double::operator==` by default. To compare floating-point while respecting an epsilon, an alternative
+  [comparison function](https://github.com/mariokonrad/marnav/blob/master/include/marnav/math/floatingpoint.hpp#L34-#L39)
+  could be used, for instance
 
     ```cpp
     template<typename T, typename = typename std::enable_if<std::is_floating_point<T>::value, T>::type>
@@ -84,18 +82,19 @@ could be used, for instance
 
 ## Example
 
-The example demonstrates comparing several JSON
-types.
+??? example
+
+    The example demonstrates comparing several JSON types.
+        
+    ```cpp
+    --8<-- "examples/operator__equal.cpp"
+    ```
     
-```cpp
---8<-- "examples/operator__equal.cpp"
-```
-
-Output:
-
-```json
---8<-- "examples/operator__equal.output"
-```
+    Output:
+    
+    ```json
+    --8<-- "examples/operator__equal.output"
+    ```
 
 ## Version history
 

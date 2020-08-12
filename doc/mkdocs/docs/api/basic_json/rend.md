@@ -5,8 +5,8 @@ reverse_iterator rend() noexcept;
 const_reverse_iterator rend() const noexcept;
 ```
 
-Returns an iterator to the reverse-end; that is, one before the first
-element. This element acts as a placeholder, attempting to access it results in undefined behavior.
+Returns an iterator to the reverse-end; that is, one before the first element. This element acts as a placeholder,
+attempting to access it results in undefined behavior.
 
 ![Illustration from cppreference.com](../../images/range-rbegin-rend.svg)
 

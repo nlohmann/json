@@ -11,7 +11,8 @@ void update(const_iterator first, const_iterator last);
 1. Inserts all values from JSON object `j` and overwrites existing keys.
 2. Inserts all values from from range `[first, last)` and overwrites existing keys.
 
-The function is motivated by Python's [dict.update](https://docs.python.org/3.6/library/stdtypes.html#dict.update) function.
+The function is motivated by Python's [dict.update](https://docs.python.org/3.6/library/stdtypes.html#dict.update)
+function.
 
 ## Parameters
 
@@ -27,16 +28,15 @@ The function is motivated by Python's [dict.update](https://docs.python.org/3.6/
 ## Exceptions
 
 1. The function can throw thw following exceptions:
-    - Throws [`type_error.312`](../../home/exceptions.md#jsonexceptiontype_error312) if called on JSON values other than objects;
-      example: `"cannot use update() with string"`
+    - Throws [`type_error.312`](../../home/exceptions.md#jsonexceptiontype_error312) if called on JSON values other than
+      objects; example: `"cannot use update() with string"`
 2. The function can throw thw following exceptions:
-    - Throws [`type_error.312`](../../home/exceptions.md#jsonexceptiontype_error312) if called on JSON values other than objects;
-      example: `"cannot use update() with string"`
-    - Throws [`invalid_iterator.202`](../../home/exceptions.md#jsonexceptioninvalid_iterator202) if called on an iterator which does not belong
-      to the current JSON value; example: `"iterator does not fit current
-      value"`
-    - Throws [`invalid_iterator.210`](../../home/exceptions.md#jsonexceptioninvalid_iterator210) if `first` and `last` do not belong to the
-      same JSON value; example: `"iterators do not fit"`
+    - Throws [`type_error.312`](../../home/exceptions.md#jsonexceptiontype_error312) if called on JSON values other than
+      objects; example: `"cannot use update() with string"`
+    - Throws [`invalid_iterator.202`](../../home/exceptions.md#jsonexceptioninvalid_iterator202) if called on an
+      iterator which does not belong to the current JSON value; example: `"iterator does not fit current value"`
+    - Throws [`invalid_iterator.210`](../../home/exceptions.md#jsonexceptioninvalid_iterator210) if `first` and `last`
+      do not belong to the same JSON value; example: `"iterators do not fit"`
 
 ## Complexity
 

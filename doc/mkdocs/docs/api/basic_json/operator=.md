@@ -9,9 +9,8 @@ basic_json& operator=(basic_json other) noexcept (
 );
 ```
 
-Copy assignment operator. Copies a JSON value via the "copy and swap"
-strategy: It is expressed in terms of the copy constructor, destructor,
-and the `swap()` member function.
+Copy assignment operator. Copies a JSON value via the "copy and swap" strategy: It is expressed in terms of the copy
+constructor, destructor, and the `swap()` member function.
 
 ## Parameters
 
@@ -26,10 +25,8 @@ Linear.
 
 ??? example
 
-    The code below shows and example for the copy assignment. It
-    creates a copy of value `a` which is then swapped with `b`. Finally\, the
-    copy of `a` (which is the null value after the swap) is
-    destroyed.
+    The code below shows and example for the copy assignment. It creates a copy of value `a` which is then swapped with
+    `b`. Finally, the copy of `a` (which is the null value after the swap) is destroyed.
      
     ```cpp
     --8<-- "examples/basic_json__copyassignment.cpp"

@@ -6,16 +6,13 @@ using parser_callback_t =
     std::function<bool(int depth, parse_event_t event, BasicJsonType& parsed)>;
 ```
 
-With a parser callback function, the result of parsing a JSON text can be
-influenced. When passed to [`parse`](parse.md), it is called on certain events
-(passed as [`parse_event_t`](parse_event_t.md) via parameter `event`) with a set recursion
-depth `depth` and context JSON value `parsed`. The return value of the
-callback function is a boolean indicating whether the element that emitted
-the callback shall be kept or not.
+With a parser callback function, the result of parsing a JSON text can be influenced. When passed to
+[`parse`](parse.md), it is called on certain events (passed as [`parse_event_t`](parse_event_t.md) via parameter
+`event`) with a set recursion depth `depth` and context JSON value `parsed`. The return value of the callback function
+is a boolean indicating whether the element that emitted the callback shall be kept or not.
 
-We distinguish six scenarios (determined by the event type) in which the
-callback function can be called. The following table describes the values
-of the parameters `depth`, `event`, and `parsed`.
+We distinguish six scenarios (determined by the event type) in which the callback function can be called. The following
+table describes the values of the parameters `depth`, `event`, and `parsed`.
 
 parameter `event` | description | parameter `depth` | parameter `parsed`
 ------------------ | ----------- | ------------------ | -------------------
@@ -28,13 +25,13 @@ parameter `event` | description | parameter `depth` | parameter `parsed`
 
 ![Example when certain parse events are triggered](../../images/callback_events.png)
 
-Discarding a value (i.e., returning `#!cpp false`) has different effects
-depending on the context in which function was called:
+Discarding a value (i.e., returning `#!cpp false`) has different effects depending on the context in which function was
+called:
 
-- Discarded values in structured types are skipped. That is, the parser
-  will behave as if the discarded value was never read.
-- In case a value outside a structured type is skipped, it is replaced
-  with `null`. This case happens if the top-level element is skipped.
+- Discarded values in structured types are skipped. That is, the parser will behave as if the discarded value was never
+  read.
+- In case a value outside a structured type is skipped, it is replaced with `null`. This case happens if the top-level
+  element is skipped.
 
 ## Parameters
 
@@ -51,9 +48,8 @@ depending on the context in which function was called:
 
 ## Return value
 
-Whether the JSON value which called the function during parsing
-should be kept (`#!cpp true`) or not (`#!cpp false`). In the latter case, it is either
-skipped completely or replaced by an empty discarded object.
+Whether the JSON value which called the function during parsing should be kept (`#!cpp true`) or not (`#!cpp false`). In
+the latter case, it is either skipped completely or replaced by an empty discarded object.
 
 # Example
 

@@ -23,8 +23,8 @@ Read from input and generate SAX events
 1. Read from a compatible input.
 2. Read from a pair of character iterators
     
-    The value_type of the iterator must be a integral type with size of 1, 2 or
-    4 bytes, which will be interpreted respectively as UTF-8, UTF-16 and UTF-32.
+    The value_type of the iterator must be a integral type with size of 1, 2 or 4 bytes, which will be interpreted
+    respectively as UTF-8, UTF-16 and UTF-32.
 
 The SAX event lister must follow the interface of `json_sax`.
 
@@ -61,9 +61,8 @@ The SAX event lister must follow the interface of `json_sax`.
 :   whether the input has to be consumed completely (optional, `#!cpp true` by default)
 
 `ignore_comments` (in)
-:   whether comments should be ignored and treated
-    like whitespace (`#!cpp true`) or yield a parse error (`#!cpp false`); (optional, `#!cpp false` by
-    default)
+:   whether comments should be ignored and treated like whitespace (`#!cpp true`) or yield a parse error
+    (`#!cpp false`); (optional, `#!cpp false` by default)
 
 `first` (in)
 :   iterator to start of character range
@@ -79,9 +78,8 @@ return value of the last processed SAX event
 
 ## Complexity
 
-Linear in the length of the input. The parser is a predictive
-LL(1) parser. The complexity can be higher if the SAX consumer `sax` has
-a super-linear complexity.
+Linear in the length of the input. The parser is a predictive LL(1) parser. The complexity can be higher if the SAX
+consumer `sax` has a super-linear complexity.
 
 ## Notes
 
@@ -91,9 +89,8 @@ A UTF-8 byte order mark is silently ignored.
 
 ??? example
 
-    The example below demonstrates the `sax_parse()` function
-    reading from string and processing the events with a user-defined SAX
-    event consumer.
+    The example below demonstrates the `sax_parse()` function reading from string and processing the events with a
+    user-defined SAX event consumer.
     
     ```cpp
     --8<-- "examples/sax_parse.cpp"

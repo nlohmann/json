@@ -4,9 +4,8 @@
 constexpr value_t type() const noexcept;
 ```
 
-Return the type of the JSON value as a value from the [`value_t`](value_t.md)
-enumeration.
-    
+Return the type of the JSON value as a value from the [`value_t`](value_t.md) enumeration.
+
 ## Return value
 
 the type of the JSON value
@@ -36,8 +35,7 @@ Constant.
 
 ??? example
 
-    The following code exemplifies `type()` for all JSON
-    types.
+    The following code exemplifies `type()` for all JSON types.
     
     ```cpp
     --8<-- "examples/type.cpp"

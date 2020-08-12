@@ -12,8 +12,8 @@ ValueType value(const json_pointer& ptr,
                 const ValueType& default_value) const;
 ```
 
-1. Returns either a copy of an object's element at the specified key `key`
-   or a given default value if no element with key `key` exists.
+1. Returns either a copy of an object's element at the specified key `key` or a given default value if no element with
+   key `key` exists.
    
     The function is basically equivalent to executing
     ```cpp
@@ -24,8 +24,8 @@ ValueType value(const json_pointer& ptr,
     }
     ```
 
-2. Returns either a copy of an object's element at the specified JSON pointer `ptr`
-   or a given default value if no value at `ptr` exists.
+2. Returns either a copy of an object's element at the specified JSON pointer `ptr` or a given default value if no value
+   at `ptr` exists.
    
     The function is basically equivalent to executing
     ```cpp
@@ -36,16 +36,14 @@ ValueType value(const json_pointer& ptr,
     }
     ```
 
-Unlike [`operator[]`](operator[].md), this
-function does not implicitly add an element to the position defined by `key`/`ptr`
-key. This function is furthermore also applicable to const objects.
+Unlike [`operator[]`](operator[].md), this function does not implicitly add an element to the position defined by
+`key`/`ptr` key. This function is furthermore also applicable to const objects.
 
 ## Template parameters
 
 `ValueType` 
-:   type compatible to JSON values, for instance `#!cpp int` for
-    JSON integer numbers, `#!cpp bool` for JSON booleans, or `#!cpp std::vector` types for
-    JSON arrays. Note the type of the expected value at `key`/`ptr` and the default
+:   type compatible to JSON values, for instance `#!cpp int` for JSON integer numbers, `#!cpp bool` for JSON booleans,
+    or `#!cpp std::vector` types for JSON arrays. Note the type of the expected value at `key`/`ptr` and the default
     value `default_value` must be compatible.
 
 ## Parameters
@@ -72,15 +70,15 @@ changes to any JSON value.
 ## Exceptions
 
 1. The function can throw thw following exceptions:
-    - Throws [`type_error.302`](../../home/exceptions.md#jsonexceptiontype_error302) if `default_value` does not match the type of the
-      value at `key`
-    - Throws [`type_error.306`](../../home/exceptions.md#jsonexceptiontype_error306) if the JSON value is not an object; in that case,
-      using `value()` with a key makes no sense.
+    - Throws [`type_error.302`](../../home/exceptions.md#jsonexceptiontype_error302) if `default_value` does not match
+      the type of the value at `key`
+    - Throws [`type_error.306`](../../home/exceptions.md#jsonexceptiontype_error306) if the JSON value is not an object;
+      in that case, using `value()` with a key makes no sense.
 2. The function can throw thw following exceptions:
-    - Throws [`type_error.302`](../../home/exceptions.md#jsonexceptiontype_error302) if `default_value` does not match the type of the
-      value at `ptr`
-    - Throws [`type_error.306`](../../home/exceptions.md#jsonexceptiontype_error306) if the JSON value is not an object; in that case,
-      using `value()` with a key makes no sense.
+    - Throws [`type_error.302`](../../home/exceptions.md#jsonexceptiontype_error302) if `default_value` does not match
+      the type of the value at `ptr`
+    - Throws [`type_error.306`](../../home/exceptions.md#jsonexceptiontype_error306) if the JSON value is not an object;
+      in that case, using `value()` with a key makes no sense.
 
 ## Complexity
 
@@ -91,8 +89,7 @@ changes to any JSON value.
 
 ??? example
 
-    The example below shows how object elements can be queried
-    with a default value.
+    The example below shows how object elements can be queried with a default value.
     
     ```cpp
     --8<-- "examples/basic_json__value.cpp"
@@ -106,8 +103,7 @@ changes to any JSON value.
 
 ??? example
 
-    The example below shows how object elements can be queried
-    with a default value.
+    The example below shows how object elements can be queried with a default value.
     
     ```cpp
     --8<-- "examples/basic_json__value_ptr.cpp"
