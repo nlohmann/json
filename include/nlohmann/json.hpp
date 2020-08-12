@@ -189,6 +189,7 @@ class basic_json
     /// workaround type for MSVC
     using basic_json_t = NLOHMANN_BASIC_JSON_TPL;
 
+  JSON_PRIVATE_UNLESS_TESTED:
     // convenience aliases for types residing in namespace detail;
     using lexer = ::nlohmann::detail::lexer_base<basic_json>;
 
@@ -204,6 +205,7 @@ class basic_json
                 std::move(cb), allow_exceptions, ignore_comments);
     }
 
+  private:
     using primitive_iterator_t = ::nlohmann::detail::primitive_iterator_t;
     template<typename BasicJsonType>
     using internal_iterator = ::nlohmann::detail::internal_iterator<BasicJsonType>;
@@ -220,6 +222,7 @@ class basic_json
     using binary_reader = ::nlohmann::detail::binary_reader<basic_json, InputType>;
     template<typename CharType> using binary_writer = ::nlohmann::detail::binary_writer<basic_json, CharType>;
 
+  JSON_PRIVATE_UNLESS_TESTED:
     using serializer = ::nlohmann::detail::serializer<basic_json>;
 
   public:
@@ -934,6 +937,7 @@ class basic_json
     // JSON value storage //
     ////////////////////////
 
+  JSON_PRIVATE_UNLESS_TESTED:
     /*!
     @brief a JSON value
 
@@ -1210,6 +1214,7 @@ class basic_json
         }
     };
 
+  private:
     /*!
     @brief checks the class invariants
 
@@ -6947,7 +6952,7 @@ class basic_json
     }
 
 
-  private:
+  JSON_PRIVATE_UNLESS_TESTED:
     //////////////////////
     // member variables //
     //////////////////////

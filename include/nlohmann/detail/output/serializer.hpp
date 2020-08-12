@@ -362,7 +362,7 @@ class serializer
         }
     }
 
-  private:
+  JSON_PRIVATE_UNLESS_TESTED:
     /*!
     @brief dump escaped string
 
@@ -625,6 +625,7 @@ class serializer
         }
     }
 
+  private:
     /*!
     @brief count digits
 

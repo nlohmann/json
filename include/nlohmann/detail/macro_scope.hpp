@@ -83,6 +83,13 @@
     #define JSON_ASSERT(x) assert(x)
 #endif
 
+// allow to access some private functions (needed by the test suite)
+#if defined(JSON_TESTS_PRIVATE)
+    #define JSON_PRIVATE_UNLESS_TESTED public
+#else
+    #define JSON_PRIVATE_UNLESS_TESTED private
+#endif
+
 /*!
 @brief macro to briefly define a mapping between an enum and JSON
 @def NLOHMANN_JSON_SERIALIZE_ENUM
