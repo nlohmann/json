@@ -72,9 +72,79 @@ nav:
   - API:
       - basic_json:
         - api/basic_json/index.md
+        - api/basic_json/accept.md
+        - api/basic_json/array.md
+        - api/basic_json/array_t.md
+        - api/basic_json/at.md
+        - api/basic_json/back.md
+        - api/basic_json/basic_json.md
+        - api/basic_json/~basic_json.md
+        - api/basic_json/begin.md
+        - api/basic_json/binary.md
+        - api/basic_json/boolean_t.md
+        - api/basic_json/cbegin.md
+        - api/basic_json/cend.md
+        - api/basic_json/clear.md
+        - api/basic_json/contains.md
+        - api/basic_json/count.md
+        - api/basic_json/crbegin.md
+        - api/basic_json/crend.md
+        - api/basic_json/diff.md
         - api/basic_json/dump.md
+        - api/basic_json/emplace.md
+        - api/basic_json/emplace_back.md
+        - api/basic_json/empty.md
+        - api/basic_json/end.md
+        - api/basic_json/erase.md
+        - api/basic_json/error_handler_t.md
+        - api/basic_json/find.md
+        - api/basic_json/flatten.md
+        - api/basic_json/front.md
+        - api/basic_json/insert.md
+        - api/basic_json/is_array.md
+        - api/basic_json/is_binary.md
+        - api/basic_json/is_boolean.md
+        - api/basic_json/is_discarded.md
+        - api/basic_json/is_null.md
+        - api/basic_json/is_number.md
+        - api/basic_json/is_number_float.md
+        - api/basic_json/is_number_integer.md
+        - api/basic_json/is_number_unsigned.md
+        - api/basic_json/is_object.md
+        - api/basic_json/is_primitive.md
+        - api/basic_json/is_string.md
+        - api/basic_json/is_structured.md
+        - api/basic_json/items.md
+        - api/basic_json/max_size.md
         - api/basic_json/meta.md
+        - api/basic_json/merge_patch.md
+        - api/basic_json/number_float_t.md
+        - api/basic_json/number_integer_t.md
+        - api/basic_json/number_unsigned_t.md
+        - api/basic_json/object.md
+        - api/basic_json/object_t.md
+        - api/basic_json/operator_value_t.md
+        - api/basic_json/operator[].md
+        - api/basic_json/operator=.md
+        - api/basic_json/operator==.md
+        - api/basic_json/operator!=.md
+        - api/basic_json/operator+=.md
         - api/basic_json/parse.md
+        - api/basic_json/parse_event_t.md
+        - api/basic_json/parser_callback_t.md
+        - api/basic_json/patch.md
+        - api/basic_json/push_back.md
+        - api/basic_json/rbegin.md
+        - api/basic_json/rend.md
+        - api/basic_json/sax_parse.md
+        - api/basic_json/size.md
+        - api/basic_json/string_t.md
+        - api/basic_json/type.md
+        - api/basic_json/type_name.md
+        - api/basic_json/unflatten.md
+        - api/basic_json/update.md
+        - api/basic_json/value.md
+        - api/basic_json/value_t.md
 
 # Extras
 extra:

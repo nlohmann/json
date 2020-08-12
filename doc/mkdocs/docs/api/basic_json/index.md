@@ -7,14 +7,19 @@
 Defined in header `<json.hpp>`
 
 ```cpp
-template<template<typename, typename, typename...> class ObjectType,  
-         template<typename, typename...> class ArrayType,             
-         class StringType, class BooleanType, class NumberIntegerType,
-         class NumberUnsignedType, class NumberFloatType,             
-         template<typename> class AllocatorType,                      
-         template<typename, typename = void> class JSONSerializer,    
-         class BinaryType>
-class basic_json
+template<
+    template<typename U, typename V, typename... Args> class ObjectType = std::map,
+    template<typename U, typename... Args> class ArrayType = std::vector,
+    class StringType = std::string,
+    class BooleanType = bool,
+    class NumberIntegerType = std::int64_t,
+    class NumberUnsignedType = std::uint64_t,
+    class NumberFloatType = double,
+    template<typename U> class AllocatorType = std::allocator,
+    template<typename T, typename SFINAE = void> class JSONSerializer = adl_serializer,
+    class BinaryType = std::vector<std::uint8_t>
+>
+class basic_json;
 ```
 
 ## Specializations
@@ -24,25 +29,29 @@ class basic_json
 
 ## Template parameters
 
-- ObjectType
-- ArrayType
-- StringType
-- BooleanType
-- NumberIntegerType
-- NumberUnsignedType
-- NumberFloatType
-- AllocatorType
-- JSONSerializer
-- BinaryType
+| Template parameter   | Description | Derived type |
+| -------------------- | ----------- | ------------ |
+| `ObjectType`         | type for JSON objects | [`object_t`](object_t.md) |
+| `ArrayType`          | type for JSON arrays | [`array_t`](array_t.md) |
+| `StringType`         | type for JSON strings and object keys | `string_t` |
+| `BooleanType`        | type for JSON booleans | `boolean_t` |
+| `NumberIntegerType`  | type for JSON integer numbers | [`number_integer_t`](number_integer_t.md) |
+| `NumberUnsignedType` | type for JSON unsigned integer numbers | [`number_unsigned_t`](number_unsigned_t.md) |
+| `NumberFloatType`    | type for JSON floating-point numbers | [`number_float_t`](number_float_t.md) |
+| `AllocatorType`      | type of the allocator to use | |
+| `JSONSerializer`     | the serializer to resolve internal calls to `to_json()` and `from_json()` | |
+| `BinaryType`         | type for binary arrays | `binary_t` |
 
 ## Iterator invalidation
 
+Todo
+
 ## Member types
 
-- value_t
+- [**value_t**](value_t.md) - the JSON type enumeration
 - json_pointer
 - json_serializer
-- error_handler_t
+- [**error_handler_t**](error_handler_t.md) - type to choose behavior on decoding errors
 - cbor_tag_handler_t
 - initializer_list_t
 - input_format_t
@@ -59,64 +68,68 @@ class basic_json
 
 ### Container types
 
-- value_type
-- reference
-- const_reference
-- difference_type
-- size_type
-- allocator_type
-- pointer
-- const_pointer
-- iterator
-- const_iterator
-- reverse_iterator
-- const_reverse_iterator
+| Type                   | Definition |
+| ---------------------- | ---------- |
+| value_type             | `#!cpp basic_json` |
+| reference              | `#!cpp value_type&` |
+| const_reference        | `#!cpp const value_type&` |
+| difference_type        | `#!cpp std::ptrdiff_t` |
+| size_type              | `#!cpp std::size_t` |
+| allocator_type         | `#!cpp AllocatorType<basic_json>` |
+| pointer                | `#!cpp std::allocator_traits<allocator_type>::pointer` |
+| const_pointer          | `#!cpp std::allocator_traits<allocator_type>::const_pointer` |
+| iterator               | [LegacyBidirectionalIterator](https://en.cppreference.com/w/cpp/named_req/BidirectionalIterator) |
+| const_iterator         | constant [LegacyBidirectionalIterator](https://en.cppreference.com/w/cpp/named_req/BidirectionalIterator) |
+| reverse_iterator       |  |
+| const_reverse_iterator |  |
+| iteration_proxy        |  |
 
 ### JSON value data types
 
 - object_comparator_t
-- object_t
-- array_t
-- string_t
-- boolean_t
-- number_integer_t
-- number_unsigned_t
-- number_float_t
+- [**object_t**](object_t.md) - type for objects
+- [**array_t**](array_t.md) - type for arrays
+- [**string_t**](string_t.md) - type for strings
+- [**boolean_t**](boolean_t.md) - type for booleans
+- [**number_integer_t**](number_integer_t.md) - type for numbers (integer)
+- [**number_unsigned_t**](number_unsigned_t.md) - type for numbers (unsigned)
+- [**number_float_t**](number_float_t.md) - type for numbers (floating-point)
 - binary_t
 
 ### Parser callback
 
-- parse_event_t
-- parser_callback_t
+- [**parse_event_t**](parse_event_t.md) - parser event types
+- [**parser_callback_t**](parser_callback_t.md) - per-element parser callback type
 
 ## Member functions
 
-- (constructor)
-- (destructor)
-- binary (static) - explicitly create a binary array
-- array (static) - explicitly create an array
-- object (static) - explicitly create an object
-- operator= - copy assignment
+- [(constructor)](basic_json.md)
+- [(destructor)](~basic_json.md)
+- [**operator=**](operator=.md) - copy assignment
+- [**array**](array_t.md) (static) - explicitly create an array
+- [**binary**](binary.md) (static) - explicitly create a binary array
+- [**object**](object_t.md) (static) - explicitly create an object
 
 ### Object inspection
 
 Functions to inspect the type of a JSON value.
 
-- type - return the type of the JSON value
-- is_primitive - return whether type is primitive
-- is_structured - return whether type is structured
-- is_null - return whether value is null
-- is_boolean - return whether value is a boolean
-- is_number - return whether value is a number
-- is_number_integer - return whether value is an integer number
-- is_number_unsigned - return whether value is an unsigned integer number
-- is_number_float - return whether value is a floating-point number
-- is_object - return whether value is an object
-- is_array - return whether value is an array
-- is_string - return whether value is a string
-- is_binary - return whether value is a binary array
-- is_discarded - return whether value is discarded
-- operator value_t - return the type of the JSON value
+- [**type**](type.md) - return the type of the JSON value
+- [**operator value_t**](operator_value_t.md) - return the type of the JSON value
+- [**type_name**](type_name.md) - return the type as string
+- [**is_primitive**](is_primitive.md) - return whether type is primitive
+- [**is_structured**](is_structured.md) - return whether type is structured
+- [**is_null**](is_null.md) - return whether value is null
+- [**is_boolean**](is_boolean.md) - return whether value is a boolean
+- [**is_number**](is_number.md) - return whether value is a number
+- [**is_number_integer**](is_number_integer.md) - return whether value is an integer number
+- [**is_number_unsigned**](is_number_unsigned.md) - return whether value is an unsigned integer number
+- [**is_number_float**](is_number_float.md) - return whether value is a floating-point number
+- [**is_object**](is_object.md) - return whether value is an object
+- [**is_array**](is_array.md) - return whether value is an array
+- [**is_string**](is_string.md) - return whether value is a string
+- [**is_binary**](is_binary.md) - return whether value is a binary array
+- [**is_discarded**](is_discarded.md) - return whether value is discarded
 
 ### Value access
 
@@ -133,56 +146,52 @@ Direct access to the stored value of a JSON value.
 
 Access to the JSON value
 
-- at - access specified array element with bounds checking
-- at - access specified object element with bounds checking
-- operator[] - access specified array element
-- operator[] - access specified object element
-- value - access specified object element with default value
-- front - access the first element
-- back - access the last element
-- erase - remove elements
+- [**at**](at.md) - access specified element with bounds checking
+- [**operator[]**](operator[].md) - access specified element
+- [**value**](value.md) - access specified object element with default value
+- [**front**](front.md) - access the first element
+- [**back**](back.md) - access the last element
 
 ### Lookup
 
-- find - find an element in a JSON object
-- count - returns the number of occurrences of a key in a JSON object
-- contains - check the existence of an element in a JSON object
+- [**find**](find.md) - find an element in a JSON object
+- [**count**](count.md) - returns the number of occurrences of a key in a JSON object
+- [**contains**](contains.md) - check the existence of an element in a JSON object
 
 ### Iterators
 
-- begin - returns an iterator to the first element
-- cbegin - returns a const iterator to the first element
-- end - returns an iterator to one past the last element
-- cend - returns a const iterator to one past the last element
-- rbegin - returns an iterator to the reverse-beginning
-- rend - returns an iterator to the reverse-end
-- crbegin - returns a const iterator to the reverse-beginning
-- crend - returns a const iterator to the reverse-end
-- items - wrapper to access iterator member functions in range-based for
+- [**begin**](begin.md) - returns an iterator to the first element
+- [**cbegin**](cbegin.md) - returns a const iterator to the first element
+- [**end**](end.md) - returns an iterator to one past the last element
+- [**cend**](cend.md) - returns a const iterator to one past the last element
+- [**rbegin**](rbegin.md) - returns an iterator to the reverse-beginning
+- [**rend**](rend.md) - returns an iterator to the reverse-end
+- [**crbegin**](crbegin.md) - returns a const iterator to the reverse-beginning
+- [**crend**](crend.md) - returns a const iterator to the reverse-end
+- [**items**](items.md) - wrapper to access iterator member functions in range-based for
 
 ### Capacity
 
-- empty - checks whether the container is empty
-- size - returns the number of elements
-- max_size - returns the maximum possible number of elements
+- [**empty**](empty.md) - checks whether the container is empty
+- [**size**](size.md) - returns the number of elements
+- [**max_size**](max_size.md) - returns the maximum possible number of elements
 
 ### Modifiers
 
-- clear - clears the contents
-- push_back - add an object to an array
-- operator+= - add an object to an array
-- push_back - add an object to an object
-- operator+= - add an object to an object
-- emplace_back - add an object to an array
-- emplace - add an object to an object if key does not exist
-- insert - inserts element
-- update - updates a JSON object from another object, overwriting existing keys 
+- [**clear**](clear.md) - clears the contents
+- [**push_back**](push_back.md) - add a value to an array/object
+- [**operator+=**](operator+=.md) - add a value to an array/object
+- [**emplace_back**](emplace_back.md) - add a value to an array
+- [**emplace**](emplace.md) - add a value to an object if key does not exist
+- [**erase**](erase.md) - remove elements
+- [**insert**](insert.md) - inserts elements
+- [**update**](update.md) - updates a JSON object from another object, overwriting existing keys 
 - swap - exchanges the values
 
 ### Lexicographical comparison operators
 
-- operator== - comparison: equal
-- operator!= - comparison: not equal
+- [**operator==**](operator==.md) - comparison: equal
+- [**operator!=**](operator!=.md) - comparison: not equal
 - operator< - comparison: less than
 - operator<= - comparison: less than or equal
 - operator> - comparison: greater than
@@ -196,29 +205,22 @@ Access to the JSON value
 ### Deserialization
 
 - [**parse**](parse.md) - deserialize from a compatible input
-- accept - check if the input is valid JSON
-- sax_parse - generate SAX events
-
-### Convenience functions
-
-- type_name - return the type as string
+- [**accept**](accept.md) - check if the input is valid JSON
+- [**sax_parse**](sax_parse.md) - generate SAX events
 
 ### JSON Pointer functions
 
-- at - access specified object element with bounds checking via JSON Pointer
-- operator[] - access specified element via JSON Pointer
-- value - access specified object element with default value via JSON Pointer
-- flatten - return flattened JSON value
-- unflatten - unflatten a previously flattened JSON value
+- [**flatten**](flatten.md) - return flattened JSON value
+- [**unflatten**](unflatten.md) - unflatten a previously flattened JSON value
 
 ### JSON Patch functions
 
-- patch - applies a JSON patch
-- diff (static) - creates a diff as a JSON patch
+- [**patch**](patch.md) - applies a JSON patch
+- [**diff**](diff.md) (static) - creates a diff as a JSON patch
 
 ### JSON Merge Patch functions
 
-- merge_patch - applies a JSON Merge Patch
+- [**merge_patch**](merge_patch.md) - applies a JSON Merge Patch
 
 ## Static functions
 
