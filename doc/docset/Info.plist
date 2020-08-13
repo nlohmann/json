@@ -10,5 +10,11 @@
 	<string>json</string>
 	<key>isDashDocset</key>
 	<true/>
+    <key>dashIndexFilePath</key>
+    <string>index.html</string>
+    <key>DashDocSetFallbackURL</key>
+    <string>https://nlohmann.github.io/json/</string>
+    <key>isJavaScriptEnabled</key>
+    <true/>
 </dict>
 </plist>

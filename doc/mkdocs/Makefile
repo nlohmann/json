@@ -2,6 +2,9 @@
 serve: prepare_files
 	venv/bin/mkdocs serve
 
+build: prepare_files
+	venv/bin/mkdocs build
+
 # create files that are not versioned inside the mkdocs folder
 prepare_files: clean
 	# build Doxygen
