@@ -129,6 +129,8 @@ nav:
         - api/basic_json/operator==.md
         - api/basic_json/operator!=.md
         - api/basic_json/operator+=.md
+        - api/basic_json/operator""_json.md
+        - api/basic_json/operator""_json_pointer.md
         - api/basic_json/parse.md
         - api/basic_json/parse_event_t.md
         - api/basic_json/parser_callback_t.md
@@ -146,6 +148,7 @@ nav:
         - api/basic_json/value.md
         - api/basic_json/value_t.md
       - api/json.md
+      - api/json_pointer.md
       - api/ordered_map.md
       - api/ordered_json.md
 

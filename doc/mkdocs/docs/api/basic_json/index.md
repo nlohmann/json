@@ -49,7 +49,7 @@ Todo
 ## Member types
 
 - [**value_t**](value_t.md) - the JSON type enumeration
-- json_pointer
+- [**json_pointer**](../json_pointer.md) - JSON Pointer implementation
 - json_serializer
 - [**error_handler_t**](error_handler_t.md) - type to choose behavior on decoding errors
 - cbor_tag_handler_t
@@ -245,8 +245,8 @@ Access to the JSON value
 
 ## Literals
 
-- operator""_json
-- operator""_json_pointer
+- [**operator""_json**](operator%22%22_json.md) - user-defined string literal for JSON values
+- [**operator""_json_pointer**](operator%22%22_json_pointer.md) - user-defined string literal for JSON pointers
 
 ## Helper classes
 
