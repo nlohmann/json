@@ -133,8 +133,8 @@ nav:
         - api/basic_json/operator==.md
         - api/basic_json/operator!=.md
         - api/basic_json/operator+=.md
-        - api/basic_json/operator""_json.md
-        - api/basic_json/operator""_json_pointer.md
+        - api/basic_json/operator_literal_json.md
+        - api/basic_json/operator_literal_json_pointer.md
         - api/basic_json/parse.md
         - api/basic_json/parse_event_t.md
         - api/basic_json/parser_callback_t.md

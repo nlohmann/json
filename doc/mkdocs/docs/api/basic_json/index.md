@@ -245,8 +245,8 @@ Access to the JSON value
 
 ## Literals
 
-- [**operator""_json**](operator%22%22_json.md) - user-defined string literal for JSON values
-- [**operator""_json_pointer**](operator%22%22_json_pointer.md) - user-defined string literal for JSON pointers
+- [**operator""_json**](operator_literal_json.md) - user-defined string literal for JSON values
+- [**operator""_json_pointer**](operator_literal_json_pointer.md) - user-defined string literal for JSON pointers
 
 ## Helper classes
 

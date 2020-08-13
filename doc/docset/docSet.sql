@@ -61,8 +61,8 @@ INSERT INTO searchIndex(name, type, path) VALUES ('operator+=', 'Operator', 'api
 INSERT INTO searchIndex(name, type, path) VALUES ('operator=', 'Operator', 'api/basic_json/operator=/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('operator==', 'Operator', 'api/basic_json/operator==/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('operator[]', 'Operator', 'api/basic_json/operator[]/index.html');
-INSERT INTO searchIndex(name, type, path) VALUES ('operator""_json', 'Literal', 'api/basic_json/operator%22%22_json/index.html');
-INSERT INTO searchIndex(name, type, path) VALUES ('operator""_json_pointer', 'Literal', 'api/basic_json/operator%22%22_json_pointer/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('operator""_json', 'Literal', 'api/basic_json/operator_literal_json/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('operator""_json_pointer', 'Literal', 'api/basic_json/operator_literal_json_pointer/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('operator value_t', 'Operator', 'api/basic_json/operator_value_t/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('ordered_json', 'Class', 'api/ordered_json/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('ordered_map', 'Class', 'api/ordered_map/index.html');
