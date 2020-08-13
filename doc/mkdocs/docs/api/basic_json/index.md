@@ -24,8 +24,8 @@ class basic_json;
 
 ## Specializations
 
-- json
-- ordered_json
+- [**json**](../json.md) - default specialization
+- [**ordered_json**](../ordered_json.md) - specialization that maintains the insertion order of object keys
 
 ## Template parameters
 

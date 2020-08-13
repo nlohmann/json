@@ -145,6 +145,9 @@ nav:
         - api/basic_json/update.md
         - api/basic_json/value.md
         - api/basic_json/value_t.md
+      - api/json.md
+      - api/ordered_map.md
+      - api/ordered_json.md
 
 # Extras
 extra:

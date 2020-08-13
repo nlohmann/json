@@ -627,7 +627,7 @@ clean:
 	rm -fr json_unit json_benchmarks fuzz fuzz-testing *.dSYM test/*.dSYM oclint_report.html
 	rm -fr benchmarks/files/numbers/*.json
 	rm -fr cmake-3.1.0-Darwin64.tar.gz cmake-3.1.0-Darwin64
-	rm -fr cmake-build-coverage cmake-build-benchmarks fuzz-testing cmake-build-clang-analyze cmake-build-pvs-studio cmake-build-infer cmake-build-clang-sanitize cmake_build
+	rm -fr cmake-build-coverage cmake-build-benchmarks cmake-build-pedantic fuzz-testing cmake-build-clang-analyze cmake-build-pvs-studio cmake-build-infer cmake-build-clang-sanitize cmake_build
 	$(MAKE) clean -Cdoc
 
 ##########################################################################
