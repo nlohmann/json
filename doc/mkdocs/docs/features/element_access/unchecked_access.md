@@ -47,7 +47,7 @@ The return value is a reference, so it can be modify the original value. In case
     }
     ```
 
-When accessing an invalid index (i.e., and index greater than or equal to the array size), the JSON array is resized such that the passed index is the new maximal index. Intermediate values are filled with `#!json null`.
+When accessing an invalid index (i.e., an index greater than or equal to the array size), the JSON array is resized such that the passed index is the new maximal index. Intermediate values are filled with `#!json null`.
 
 ??? example
 
