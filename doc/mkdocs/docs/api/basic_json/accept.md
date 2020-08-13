@@ -7,9 +7,8 @@ static bool accept(InputType&& i,
                    const bool ignore_comments = false);
 
 // (2)
-static bool accept(iterator first, iterator last,
-                   const bool ignore_comments = false);
-static bool accept(const_iterator first, const_iterator last,
+template<typename IteratorType>
+static bool accept(IteratorType first, IteratorType last,
                    const bool ignore_comments = false);
 ```
 
@@ -34,6 +33,9 @@ Unlike the [`parse`](parse.md) function, this function neither throws an excepti
     - a C-style array of characters
     - a pointer to a null-terminated string of single byte characters
     - an object `obj` for which `begin(obj)` and `end(obj)` produces a valid pair of iterators.
+
+`IteratorType`
+:   a compatible iterator type
 
 ## Parameters
 

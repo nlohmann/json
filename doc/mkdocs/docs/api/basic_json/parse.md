@@ -9,11 +9,8 @@ static basic_json parse(InputType&& i,
                         const bool ignore_comments = false);
 
 // (2)
-static basic_json parse(iterator first, iterator last,
-                        const parser_callback_t cb = nullptr,
-                        const bool allow_exceptions = true,
-                        const bool ignore_comments = false);
-static basic_json parse(const_iterator first, const_iterator last,
+template<typename IteratorType>
+static basic_json parse(IteratorType first, IteratorType last,
                         const parser_callback_t cb = nullptr,
                         const bool allow_exceptions = true,
                         const bool ignore_comments = false);
@@ -35,6 +32,9 @@ static basic_json parse(const_iterator first, const_iterator last,
     - a C-style array of characters
     - a pointer to a null-terminated string of single byte characters
     - an object `obj` for which `begin(obj)` and `end(obj)` produces a valid pair of iterators.
+
+`IteratorType`
+:   a compatible iterator type
 
 ## Parameters
 

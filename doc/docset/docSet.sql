@@ -80,6 +80,14 @@ INSERT INTO searchIndex(name, type, path) VALUES ('type', 'Method', 'api/basic_j
 INSERT INTO searchIndex(name, type, path) VALUES ('type_name', 'Method', 'api/basic_json/type_name/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('unflatten', 'Method', 'api/basic_json/unflatten/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('update', 'Method', 'api/basic_json/update/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('from_bson', 'Function', 'api/basic_json/from_bson/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('from_cbor', 'Function', 'api/basic_json/from_cbor/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('from_msgpack', 'Function', 'api/basic_json/from_msgpack/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('from_ubjson', 'Function', 'api/basic_json/from_ubjson/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('to_bson', 'Function', 'api/basic_json/to_bson/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('to_cbor', 'Function', 'api/basic_json/to_cbor/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('to_msgpack', 'Function', 'api/basic_json/to_msgpack/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('to_ubjson', 'Function', 'api/basic_json/to_ubjson/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('value', 'Method', 'api/basic_json/value/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('value_t', 'Enum', 'api/basic_json/value_t/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('~basic_json', 'Method', 'api/basic_json/~basic_json/index.html');
