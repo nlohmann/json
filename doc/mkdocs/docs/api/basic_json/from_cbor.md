@@ -53,7 +53,8 @@ Deserializes a given input to a JSON value using the CBOR (Concise Binary Object
 :   whether to throw exceptions in case of a parse error (optional, `#!cpp true` by default)
 
 `tag_handler` (in)
-:   how to treat CBOR tags (optional, `error` by default)
+:   how to treat CBOR tags (optional, `error` by default); see [`cbor_tag_handler_t`](cbor_tag_handler_t.md) for more
+    information
 
 ## Return value
 

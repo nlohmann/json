@@ -52,14 +52,14 @@ Todo
 - [**json_pointer**](../json_pointer.md) - JSON Pointer implementation
 - json_serializer
 - [**error_handler_t**](error_handler_t.md) - type to choose behavior on decoding errors
-- cbor_tag_handler_t
+- [**cbor_tag_handler_t**](cbor_tag_handler_t.md) - type to choose how to handle CBOR tags
 - initializer_list_t
-- input_format_t
+- [**input_format_t**](input_format_t.md) - type to choose the format to parse
 - json_sax_t
 
 ### Exceptions
 
-- exception
+- [**exception**](exception.md) - general exception of the `basic_json` class
 - parse_error
 - invalid_iterator
 - type_error
@@ -225,7 +225,7 @@ Access to the JSON value
 ## Static functions
 
 - [**meta**](meta.md) - returns version information on the library
-- get_allocator - returns the allocator associated with the container
+- [**get_allocator**](get_allocator.md) - returns the allocator associated with the container
 
 ### Binary formats
 

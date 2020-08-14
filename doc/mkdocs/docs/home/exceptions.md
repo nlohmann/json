@@ -454,7 +454,6 @@ Cannot get value for iterator: Either the iterator belongs to a null value or it
     [json.exception.invalid_iterator.214] cannot get value
     ```
 
-
 ## Type errors
 
 This exception is thrown in case of a type error; that is, a library function is executed on a JSON value whose type does not match the expected semantics.
@@ -683,7 +682,6 @@ The dynamic type of the object cannot be represented in the requested serializat
 !!! tip
 
     Encapsulate the JSON value in an object. That is, instead of serializing `#!json true`, serialize `#!json {"value": true}`
-
 
 ## Out of range
 

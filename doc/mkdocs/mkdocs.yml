@@ -83,6 +83,7 @@ nav:
         - api/basic_json/binary.md
         - api/basic_json/boolean_t.md
         - api/basic_json/cbegin.md
+        - api/basic_json/cbor_tag_handler_t.md
         - api/basic_json/cend.md
         - api/basic_json/clear.md
         - api/basic_json/contains.md
@@ -97,6 +98,7 @@ nav:
         - api/basic_json/end.md
         - api/basic_json/erase.md
         - api/basic_json/error_handler_t.md
+        - api/basic_json/exception.md
         - api/basic_json/find.md
         - api/basic_json/flatten.md
         - api/basic_json/from_bson.md
@@ -104,6 +106,8 @@ nav:
         - api/basic_json/from_msgpack.md
         - api/basic_json/from_ubjson.md
         - api/basic_json/front.md
+        - api/basic_json/get_allocator.md
+        - api/basic_json/input_format_t.md
         - api/basic_json/insert.md
         - api/basic_json/is_array.md
         - api/basic_json/is_binary.md

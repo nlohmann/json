@@ -8,11 +8,13 @@ INSERT INTO searchIndex(name, type, path) VALUES ('array', 'Function', 'api/basi
 INSERT INTO searchIndex(name, type, path) VALUES ('array_t', 'Type', 'api/basic_json/array_t/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('at', 'Method', 'api/basic_json/at/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('back', 'Method', 'api/basic_json/back/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('basic_json', 'Class', 'api/basic_json/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json', 'Constructor', 'api/basic_json/basic_json/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('begin', 'Method', 'api/basic_json/begin/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('binary', 'Function', 'api/basic_json/binary/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('boolean_t', 'Type', 'api/basic_json/boolean_t/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('cbegin', 'Method', 'api/basic_json/cbegin/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('cbor_tag_handler_t', 'Enum', 'api/basic_json/cbor_tag_handler_t/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('cend', 'Method', 'api/basic_json/cend/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('clear', 'Method', 'api/basic_json/clear/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('contains', 'Method', 'api/basic_json/contains/index.html');
@@ -27,10 +29,12 @@ INSERT INTO searchIndex(name, type, path) VALUES ('empty', 'Method', 'api/basic_
 INSERT INTO searchIndex(name, type, path) VALUES ('end', 'Method', 'api/basic_json/end/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('erase', 'Method', 'api/basic_json/erase/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('error_handler_t', 'Enum', 'api/basic_json/error_handler_t/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('exception', 'Class', 'api/basic_json/exception/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('find', 'Method', 'api/basic_json/find/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('flatten', 'Method', 'api/basic_json/flatten/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('front', 'Method', 'api/basic_json/front/index.html');
-INSERT INTO searchIndex(name, type, path) VALUES ('basic_json', 'Class', 'api/basic_json/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('get_allocator', 'Function', 'api/basic_json/get_allocator/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('input_format_t', 'Enum', 'api/basic_json/input_format_t/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('insert', 'Method', 'api/basic_json/insert/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('is_array', 'Method', 'api/basic_json/is_array/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('is_binary', 'Method', 'api/basic_json/is_binary/index.html');

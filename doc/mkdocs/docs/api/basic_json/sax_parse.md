@@ -55,7 +55,8 @@ The SAX event lister must follow the interface of `json_sax`.
 :   SAX event listener
 
 `format` (in)
-:    the format to parse (JSON, CBOR, MessagePack, or UBJSON) (optional, `input_format_t::json` by default)
+:    the format to parse (JSON, CBOR, MessagePack, or UBJSON) (optional, `input_format_t::json` by default), see
+     [`input_format_t`](input_format_t.md) for more information
 
 `strict` (in)
 :   whether the input has to be consumed completely (optional, `#!cpp true` by default)
