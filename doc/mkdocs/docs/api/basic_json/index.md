@@ -135,7 +135,7 @@ Functions to inspect the type of a JSON value.
 
 Direct access to the stored value of a JSON value.
 
-- get - get a value
+- [**get**](get.md) - get a value
 - get_to - get a value
 - get_ptr - get a pointer value
 - get_ref - get a reference value

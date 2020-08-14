@@ -106,6 +106,7 @@ nav:
         - api/basic_json/from_msgpack.md
         - api/basic_json/from_ubjson.md
         - api/basic_json/front.md
+        - api/basic_json/get.md
         - api/basic_json/get_allocator.md
         - api/basic_json/input_format_t.md
         - api/basic_json/insert.md
