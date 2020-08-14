@@ -60,11 +60,11 @@ Todo
 ### Exceptions
 
 - [**exception**](exception.md) - general exception of the `basic_json` class
-- parse_error
-- invalid_iterator
-- type_error
-- out_of_range
-- other_error
+    - [**parse_error**](parse_error.md) - exception indicating a parse error
+    - [**invalid_iterator**](invalid_iterator.md) - exception indicating errors with iterators
+    - [**type_error**](type_error.md) - exception indicating executing a member function with a wrong type
+    - [**out_of_range**](out_of_range.md) - exception indicating access out of the defined range
+    - [**other_error**](other_error.md) - exception indicating other library errors
 
 ### Container types
 

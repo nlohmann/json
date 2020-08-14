@@ -1,4 +1,4 @@
-# basic_json::exception
+# basic_basic_json::exception
 
 ```cpp
 class exception : public std::exception;
@@ -9,32 +9,32 @@ member `id` for exception ids. It is used as the base class for all exceptions t
 class can hence be used as "wildcard" to catch exceptions, see example below.
 
 ```plantuml
-std::exception <|-- json::exception
-json::exception <|-- json::parse_error
-json::exception <|-- json::invalid_iterator
-json::exception <|-- json::type_error
-json::exception <|-- json::out_of_range
-json::exception <|-- json::other_error
+std::exception <|-- basic_json::exception
+basic_json::exception <|-- basic_json::parse_error
+basic_json::exception <|-- basic_json::invalid_iterator
+basic_json::exception <|-- basic_json::type_error
+basic_json::exception <|-- basic_json::out_of_range
+basic_json::exception <|-- basic_json::other_error
 
 interface std::exception {}
 
-class json::exception #FFFF00 {
+class basic_json::exception #FFFF00 {
     + const int id
     + const char* what() const
 }
 
-class json::parse_error {
+class basic_json::parse_error {
     + const std::size_t byte
 }
 ```
 
 Subclasses:
 
-- `parse_error` for exceptions indicating a parse error
-- `invalid_iterator` for exceptions indicating errors with iterators
-- `type_error` for exceptions indicating executing a member function with a wrong type
-- `out_of_range` for exceptions indicating access out of the defined range
-- `other_error` for exceptions indicating other library errors
+- [`parse_error`](parse_error.md) for exceptions indicating a parse error
+- [`invalid_iterator`](invalid_iterator.md) for exceptions indicating errors with iterators
+- [`type_error`](type_error.md) for exceptions indicating executing a member function with a wrong type
+- [`out_of_range`](out_of_range.md) for exceptions indicating access out of the defined range
+- [`other_error`](other_error.md) for exceptions indicating other library errors
 
 ## Member functions
 

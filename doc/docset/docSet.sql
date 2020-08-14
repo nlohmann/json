@@ -36,6 +36,7 @@ INSERT INTO searchIndex(name, type, path) VALUES ('front', 'Method', 'api/basic_
 INSERT INTO searchIndex(name, type, path) VALUES ('get_allocator', 'Function', 'api/basic_json/get_allocator/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('input_format_t', 'Enum', 'api/basic_json/input_format_t/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('insert', 'Method', 'api/basic_json/insert/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('invalid_iterator', 'Class', 'api/basic_json/invalid_iterator/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('is_array', 'Method', 'api/basic_json/is_array/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('is_binary', 'Method', 'api/basic_json/is_binary/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('is_boolean', 'Method', 'api/basic_json/is_boolean/index.html');
@@ -70,7 +71,10 @@ INSERT INTO searchIndex(name, type, path) VALUES ('operator""_json_pointer', 'Li
 INSERT INTO searchIndex(name, type, path) VALUES ('operator value_t', 'Operator', 'api/basic_json/operator_value_t/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('ordered_json', 'Class', 'api/ordered_json/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('ordered_map', 'Class', 'api/ordered_map/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('out_of_range', 'Class', 'api/basic_json/out_of_range/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('other_error', 'Class', 'api/basic_json/other_error/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('parse', 'Function', 'api/basic_json/parse/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('parse_error', 'Class', 'api/basic_json/parse_error/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('parse_event_t', 'Enum', 'api/basic_json/parse_event_t/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('parser_callback_t', 'Type', 'api/basic_json/parser_callback_t/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('patch', 'Method', 'api/basic_json/patch/index.html');
@@ -81,6 +85,7 @@ INSERT INTO searchIndex(name, type, path) VALUES ('sax_parse', 'Function', 'api/
 INSERT INTO searchIndex(name, type, path) VALUES ('size', 'Method', 'api/basic_json/size/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('string_t', 'Type', 'api/basic_json/string_t/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('type', 'Method', 'api/basic_json/type/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('type_error', 'Class', 'api/basic_json/type_error/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('type_name', 'Method', 'api/basic_json/type_name/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('unflatten', 'Method', 'api/basic_json/unflatten/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('update', 'Method', 'api/basic_json/update/index.html');

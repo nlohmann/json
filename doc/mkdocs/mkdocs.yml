@@ -109,6 +109,7 @@ nav:
         - api/basic_json/get_allocator.md
         - api/basic_json/input_format_t.md
         - api/basic_json/insert.md
+        - api/basic_json/invalid_iterator.md
         - api/basic_json/is_array.md
         - api/basic_json/is_binary.md
         - api/basic_json/is_boolean.md
@@ -139,7 +140,10 @@ nav:
         - api/basic_json/operator+=.md
         - api/basic_json/operator_literal_json.md
         - api/basic_json/operator_literal_json_pointer.md
+        - api/basic_json/out_of_range.md
+        - api/basic_json/other_error.md
         - api/basic_json/parse.md
+        - api/basic_json/parse_error.md
         - api/basic_json/parse_event_t.md
         - api/basic_json/parser_callback_t.md
         - api/basic_json/patch.md
@@ -154,6 +158,7 @@ nav:
         - api/basic_json/to_msgpack.md
         - api/basic_json/to_ubjson.md
         - api/basic_json/type.md
+        - api/basic_json/type_error.md
         - api/basic_json/type_name.md
         - api/basic_json/unflatten.md
         - api/basic_json/update.md
