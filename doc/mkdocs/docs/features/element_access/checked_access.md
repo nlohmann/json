@@ -45,7 +45,7 @@ The return value is a reference, so it can be modify the original value.
     }
     ```
 
-When accessing an invalid index (i.e., and index greater than or equal to the array size) or the passed object key is non-existing, an exception is thrown.
+When accessing an invalid index (i.e., an index greater than or equal to the array size) or the passed object key is non-existing, an exception is thrown.
 
 ??? example
 
