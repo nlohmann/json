@@ -45,4 +45,10 @@ workflows:
   build_and_test_all:
     jobs:
       - build_stable
+          branches:
+            ignore:
+              gh-pages
       - build_bleeding_edge
+          branches:
+            ignore:
+              gh-pages
