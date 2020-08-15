@@ -68,33 +68,33 @@ Todo
 
 ### Container types
 
-| Type                   | Definition |
-| ---------------------- | ---------- |
-| value_type             | `#!cpp basic_json` |
-| reference              | `#!cpp value_type&` |
-| const_reference        | `#!cpp const value_type&` |
-| difference_type        | `#!cpp std::ptrdiff_t` |
-| size_type              | `#!cpp std::size_t` |
-| allocator_type         | `#!cpp AllocatorType<basic_json>` |
-| pointer                | `#!cpp std::allocator_traits<allocator_type>::pointer` |
-| const_pointer          | `#!cpp std::allocator_traits<allocator_type>::const_pointer` |
-| iterator               | [LegacyBidirectionalIterator](https://en.cppreference.com/w/cpp/named_req/BidirectionalIterator) |
-| const_iterator         | constant [LegacyBidirectionalIterator](https://en.cppreference.com/w/cpp/named_req/BidirectionalIterator) |
-| reverse_iterator       |  |
-| const_reverse_iterator |  |
-| iteration_proxy        |  |
+| Type                     | Definition |
+| ------------------------ | ---------- |
+| `value_type`             | `#!cpp basic_json` |
+| `reference`              | `#!cpp value_type&` |
+| `const_reference`        | `#!cpp const value_type&` |
+| `difference_type`        | `#!cpp std::ptrdiff_t` |
+| `size_type`              | `#!cpp std::size_t` |
+| `allocator_type`         | `#!cpp AllocatorType<basic_json>` |
+| `pointer`                | `#!cpp std::allocator_traits<allocator_type>::pointer` |
+| `const_pointer`          | `#!cpp std::allocator_traits<allocator_type>::const_pointer` |
+| `iterator`               | [LegacyBidirectionalIterator](https://en.cppreference.com/w/cpp/named_req/BidirectionalIterator) |
+| `const_iterator`         | constant [LegacyBidirectionalIterator](https://en.cppreference.com/w/cpp/named_req/BidirectionalIterator) |
+| `reverse_iterator`       |  |
+| `const_reverse_iterator` |  |
+| `iteration_proxy`        |  |
 
 ### JSON value data types
 
-- object_comparator_t
-- [**object_t**](object_t.md) - type for objects
 - [**array_t**](array_t.md) - type for arrays
-- [**string_t**](string_t.md) - type for strings
+- [**binary_t**](binary_t.md) - type for binary arrays
 - [**boolean_t**](boolean_t.md) - type for booleans
+- [**number_float_t**](number_float_t.md) - type for numbers (floating-point)
 - [**number_integer_t**](number_integer_t.md) - type for numbers (integer)
 - [**number_unsigned_t**](number_unsigned_t.md) - type for numbers (unsigned)
-- [**number_float_t**](number_float_t.md) - type for numbers (floating-point)
-- binary_t
+- [**object_comparator_t**](object_comparator_t.md) - comparator for objects
+- [**object_t**](object_t.md) - type for objects
+- [**string_t**](string_t.md) - type for strings
 
 ### Parser callback
 
@@ -137,10 +137,10 @@ Direct access to the stored value of a JSON value.
 
 - [**get**](get.md) - get a value
 - get_to - get a value
-- get_ptr - get a pointer value
-- get_ref - get a reference value
-- operator ValueType - get a value
-- get_binary - get a binary value
+- [**get_ptr**](get_ptr.md) - get a pointer value
+- [**get_ref**](get_ref.md) - get a reference value
+- [**operator ValueType**](operator_ValueType.md) - get a value
+- [**get_binary**](get_binary.md) - get a binary value
 
 ### Element access
 

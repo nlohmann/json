@@ -27,7 +27,7 @@ function.
 
 ## Exceptions
 
-1. The function can throw thw following exceptions:
+1. The function can throw the following exceptions:
     - Throws [`type_error.312`](../../home/exceptions.md#jsonexceptiontype_error312) if called on JSON values other than
       objects; example: `"cannot use update() with string"`
 2. The function can throw thw following exceptions:

@@ -35,13 +35,24 @@ With the default values for `ObjectType` (`std::map`), `StringType` (`std::strin
 (`std::allocator`), the default value for `object_t` is:
 
 ```cpp
+// until C++14
 std::map<
   std::string, // key_type
   basic_json, // value_type
   std::less<std::string>, // key_compare
   std::allocator<std::pair<const std::string, basic_json>> // allocator_type
 >
+
+// since C++14
+std::map<
+  std::string, // key_type
+  basic_json, // value_type
+  std::less<>, // key_compare
+  std::allocator<std::pair<const std::string, basic_json>> // allocator_type
+>
 ```
+
+See [`object_comparator_t`](object_comparator_t.md) for more information.
 
 #### Behavior
 

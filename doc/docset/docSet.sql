@@ -12,6 +12,7 @@ INSERT INTO searchIndex(name, type, path) VALUES ('basic_json', 'Class', 'api/ba
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json', 'Constructor', 'api/basic_json/basic_json/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('begin', 'Method', 'api/basic_json/begin/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('binary', 'Function', 'api/basic_json/binary/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('binary_t', 'Type', 'api/basic_json/binary_t/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('boolean_t', 'Type', 'api/basic_json/boolean_t/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('cbegin', 'Method', 'api/basic_json/cbegin/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('cbor_tag_handler_t', 'Enum', 'api/basic_json/cbor_tag_handler_t/index.html');
@@ -39,6 +40,9 @@ INSERT INTO searchIndex(name, type, path) VALUES ('from_ubjson', 'Function', 'ap
 INSERT INTO searchIndex(name, type, path) VALUES ('front', 'Method', 'api/basic_json/front/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('get', 'Method', 'api/basic_json/get/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('get_allocator', 'Function', 'api/basic_json/get_allocator/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('get_binary', 'Method', 'api/basic_json/get_binary/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('get_ptr', 'Method', 'api/basic_json/get_ptr/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('get_ref', 'Method', 'api/basic_json/get_ref/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('input_format_t', 'Enum', 'api/basic_json/input_format_t/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('insert', 'Method', 'api/basic_json/insert/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('invalid_iterator', 'Class', 'api/basic_json/invalid_iterator/index.html');
@@ -65,6 +69,7 @@ INSERT INTO searchIndex(name, type, path) VALUES ('number_float_t', 'Type', 'api
 INSERT INTO searchIndex(name, type, path) VALUES ('number_integer_t', 'Type', 'api/basic_json/number_integer_t/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('number_unsigned_t', 'Type', 'api/basic_json/number_unsigned_t/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('object', 'Function', 'api/basic_json/object/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('object_comparator_t', 'Type', 'api/basic_json/object_comparator_t/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('object_t', 'Type', 'api/basic_json/object_t/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('operator!=', 'Operator', 'api/basic_json/operator!=/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('operator+=', 'Operator', 'api/basic_json/operator+=/index.html');
@@ -73,6 +78,7 @@ INSERT INTO searchIndex(name, type, path) VALUES ('operator==', 'Operator', 'api
 INSERT INTO searchIndex(name, type, path) VALUES ('operator[]', 'Operator', 'api/basic_json/operator[]/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('operator""_json', 'Literal', 'api/basic_json/operator_literal_json/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('operator""_json_pointer', 'Literal', 'api/basic_json/operator_literal_json_pointer/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('operator ValueType', 'Operator', 'api/basic_json/operator_ValueType/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('operator value_t', 'Operator', 'api/basic_json/operator_value_t/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('ordered_json', 'Class', 'api/ordered_json/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('ordered_map', 'Class', 'api/ordered_map/index.html');

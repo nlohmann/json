@@ -81,6 +81,7 @@ nav:
         - api/basic_json/~basic_json.md
         - api/basic_json/begin.md
         - api/basic_json/binary.md
+        - api/basic_json/binary_t.md
         - api/basic_json/boolean_t.md
         - api/basic_json/cbegin.md
         - api/basic_json/cbor_tag_handler_t.md
@@ -108,6 +109,9 @@ nav:
         - api/basic_json/front.md
         - api/basic_json/get.md
         - api/basic_json/get_allocator.md
+        - api/basic_json/get_binary.md
+        - api/basic_json/get_ptr.md
+        - api/basic_json/get_ref.md
         - api/basic_json/input_format_t.md
         - api/basic_json/insert.md
         - api/basic_json/invalid_iterator.md
@@ -132,7 +136,9 @@ nav:
         - api/basic_json/number_integer_t.md
         - api/basic_json/number_unsigned_t.md
         - api/basic_json/object.md
+        - api/basic_json/object_comparator_t.md
         - api/basic_json/object_t.md
+        - api/basic_json/operator_ValueType.md
         - api/basic_json/operator_value_t.md
         - api/basic_json/operator[].md
         - api/basic_json/operator=.md
