@@ -146,6 +146,8 @@ nav:
         - api/basic_json/operator=.md
         - api/basic_json/operator==.md
         - api/basic_json/operator!=.md
+        - api/basic_json/operator<.md
+        - api/basic_json/operator>.md
         - api/basic_json/operator+=.md
         - api/basic_json/operator_literal_json.md
         - api/basic_json/operator_literal_json_pointer.md

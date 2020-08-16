@@ -81,9 +81,9 @@ Todo
 | `const_pointer`          | `#!cpp std::allocator_traits<allocator_type>::const_pointer` |
 | `iterator`               | [LegacyBidirectionalIterator](https://en.cppreference.com/w/cpp/named_req/BidirectionalIterator) |
 | `const_iterator`         | constant [LegacyBidirectionalIterator](https://en.cppreference.com/w/cpp/named_req/BidirectionalIterator) |
-| `reverse_iterator`       |  |
-| `const_reverse_iterator` |  |
-| `iteration_proxy`        |  |
+| `reverse_iterator`       | reverse iterator, derived from `iterator` |
+| `const_reverse_iterator` | reverse iterator, derived from `const_iterator` |
+| `iteration_proxy`        | helper type for [`items`](items.md) function |
 
 ### JSON value data types
 
@@ -193,9 +193,9 @@ Access to the JSON value
 
 - [**operator==**](operator==.md) - comparison: equal
 - [**operator!=**](operator!=.md) - comparison: not equal
-- operator< - comparison: less than
+- [**operator<**](operator<.md) - comparison: less than
 - operator<= - comparison: less than or equal
-- operator> - comparison: greater than
+- [**operator>**](operator>.md) - comparison: greater than
 - operator>= - comparison: greater than or equal
 
 ### Serialization
