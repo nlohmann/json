@@ -112,6 +112,7 @@ nav:
         - api/basic_json/get_binary.md
         - api/basic_json/get_ptr.md
         - api/basic_json/get_ref.md
+        - api/basic_json/get_to.md
         - api/basic_json/input_format_t.md
         - api/basic_json/insert.md
         - api/basic_json/invalid_iterator.md
@@ -129,6 +130,7 @@ nav:
         - api/basic_json/is_string.md
         - api/basic_json/is_structured.md
         - api/basic_json/items.md
+        - api/basic_json/json_serializer.md
         - api/basic_json/max_size.md
         - api/basic_json/meta.md
         - api/basic_json/merge_patch.md
@@ -171,6 +173,7 @@ nav:
         - api/basic_json/update.md
         - api/basic_json/value.md
         - api/basic_json/value_t.md
+      - api/adl_serializer.md
       - api/json.md
       - api/json_pointer.md
       - api/ordered_map.md
