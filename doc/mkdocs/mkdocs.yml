@@ -144,12 +144,12 @@ nav:
         - api/basic_json/operator_value_t.md
         - api/basic_json/operator[].md
         - api/basic_json/operator=.md
-        - api/basic_json/operator==.md
-        - api/basic_json/operator!=.md
-        - api/basic_json/operator<.md
-        - api/basic_json/operator<=.md
-        - api/basic_json/operator>.md
-        - api/basic_json/operator>=.md
+        - api/basic_json/operator_eq.md
+        - api/basic_json/operator_ne.md
+        - api/basic_json/operator_lt.md
+        - api/basic_json/operator_le.md
+        - api/basic_json/operator_gt.md
+        - api/basic_json/operator_ge.md
         - api/basic_json/operator+=.md
         - api/basic_json/operator_literal_json.md
         - api/basic_json/operator_literal_json_pointer.md
