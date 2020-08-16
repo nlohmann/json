@@ -1,9 +1,5 @@
 # basic_json
 
-!!! note
-    
-    This page is under construction.
-
 Defined in header `<json.hpp>`
 
 ```cpp
@@ -198,12 +194,12 @@ Access to the JSON value
 - [**operator>**](operator>.md) - comparison: greater than
 - [**operator>=**](operator>=.md) - comparison: greater than or equal
 
-### Serialization
+### Serialization / Dumping
 
 - [**dump**](dump.md) - serialization
 - to_string - user-defined to_string function for JSON values
 
-### Deserialization
+### Deserialization / Parsing
 
 - [**parse**](parse.md) (static) - deserialize from a compatible input
 - [**accept**](accept.md) (static) - check if the input is valid JSON
