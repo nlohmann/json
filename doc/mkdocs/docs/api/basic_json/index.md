@@ -194,9 +194,9 @@ Access to the JSON value
 - [**operator==**](operator==.md) - comparison: equal
 - [**operator!=**](operator!=.md) - comparison: not equal
 - [**operator<**](operator<.md) - comparison: less than
-- operator<= - comparison: less than or equal
+- [**operator<=**](operator<=.md) - comparison: less than or equal
 - [**operator>**](operator>.md) - comparison: greater than
-- operator>= - comparison: greater than or equal
+- [**operator>=**](operator>=.md) - comparison: greater than or equal
 
 ### Serialization
 

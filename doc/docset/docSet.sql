@@ -79,7 +79,9 @@ INSERT INTO searchIndex(name, type, path) VALUES ('operator+=', 'Operator', 'api
 INSERT INTO searchIndex(name, type, path) VALUES ('operator=', 'Operator', 'api/basic_json/operator=/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('operator==', 'Operator', 'api/basic_json/operator==/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('operator<', 'Operator', 'api/basic_json/operator</index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('operator<=', 'Operator', 'api/basic_json/operator<=/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('operator>', 'Operator', 'api/basic_json/operator>/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('operator>=', 'Operator', 'api/basic_json/operator>=/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('operator[]', 'Operator', 'api/basic_json/operator[]/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('operator""_json', 'Literal', 'api/basic_json/operator_literal_json/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('operator""_json_pointer', 'Literal', 'api/basic_json/operator_literal_json_pointer/index.html');
