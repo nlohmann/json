@@ -1,4 +1,4 @@
-# basic_basic_json::invalid_iterator
+# basic_json::invalid_iterator
 
 ```cpp
 class invalid_iterator : public exception;

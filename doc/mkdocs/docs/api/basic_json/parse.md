@@ -61,7 +61,7 @@ static basic_json parse(IteratorType first, IteratorType last,
 ## Return value
 
 Deserialized JSON value; in case of a parse error and `allow_exceptions` set to `#!cpp false`, the return value will be
-`value_t::discarded`.
+`value_t::discarded`. The latter can be checked with [`is_discarded`](is_discarded.md).
 
 ## Exception safety
 
@@ -79,7 +79,7 @@ super-linear complexity.
 
 ## Examples
 
-??? example
+??? example "Parsing from a charater array"
 
     The example below demonstrates the `parse()` function reading from an array.
 
@@ -93,7 +93,7 @@ super-linear complexity.
     --8<-- "examples/parse__array__parser_callback_t.output"
     ```
 
-??? example
+??? example "Parsing from a string"
 
     The example below demonstrates the `parse()` function with and without callback function.
 
@@ -107,7 +107,7 @@ super-linear complexity.
     --8<-- "examples/parse__string__parser_callback_t.output"
     ```
 
-??? example
+??? example "Parsing from an input stream"
 
     The example below demonstrates the `parse()` function with and without callback function.
 
@@ -121,7 +121,7 @@ super-linear complexity.
     --8<-- "examples/parse__istream__parser_callback_t.output"
     ```
 
-??? example
+??? example "Parsing from a contiguous container"
 
     The example below demonstrates the `parse()` function reading from a contiguous container.
 
@@ -133,6 +133,20 @@ super-linear complexity.
     
     ```json
     --8<-- "examples/parse__contiguouscontainer__parser_callback_t.output"
+    ```
+
+??? example "Effect of `allow_exceptions` parameter"
+
+    The example below demonstrates the effect of the `allow_exceptions` parameter in the ´parse()` function.
+
+    ```cpp
+    --8<-- "examples/parse__allow_exceptions.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/parse__allow_exceptions.output"
     ```
 
 ## Version history

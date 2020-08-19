@@ -1,4 +1,4 @@
-# basic_basic_json::other_error
+# basic_json::other_error
 
 ```cpp
 class other_error : public exception;

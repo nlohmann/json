@@ -1,4 +1,4 @@
-# basic_basic_json::parse_error
+# basic_json::parse_error
 
 ```cpp
 class parse_error : public exception;

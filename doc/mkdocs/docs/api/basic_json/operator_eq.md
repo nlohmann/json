@@ -12,11 +12,10 @@ bool operator==(ScalarType lhs, const const_reference rhs) noexcept;
 
 Compares two JSON values for equality according to the following rules:
 
-- Two JSON values are equal if (1) they are from the same type and (2) their stored values are the same according to
-  their respective `operator==`.
+- Two JSON values are equal if (1) they are not discarded, (2) they are from the same type, and (3) their stored values
+  are the same according to their respective `operator==`.
 - Integer and floating-point numbers are automatically converted before comparison. Note that two NaN values are always
   treated as unequal.
-- Two JSON null values are equal.
 
 ## Template parameters
 
@@ -45,11 +44,19 @@ Linear.
 
 ## Notes
 
-- Floating-point inside JSON values numbers are compared with `json::number_float_t::operator==` which is
-  `double::operator==` by default. To compare floating-point while respecting an epsilon, an alternative
-  [comparison function](https://github.com/mariokonrad/marnav/blob/master/include/marnav/math/floatingpoint.hpp#L34-#L39)
-  could be used, for instance
+!!! note
 
+    - NaN values never compare equal to themselves or to other NaN values.
+    - JSON `#!cpp null` values are all equal.
+    - Discarded values never compare equal to themselves.
+
+!!! note
+
+    Floating-point numbers inside JSON values numbers are compared with `json::number_float_t::operator==` which is
+    `double::operator==` by default. To compare floating-point while respecting an epsilon, an alternative
+    [comparison function](https://github.com/mariokonrad/marnav/blob/master/include/marnav/math/floatingpoint.hpp#L34-#L39)
+    could be used, for instance
+    
     ```cpp
     template<typename T, typename = typename std::enable_if<std::is_floating_point<T>::value, T>::type>
     inline bool is_same(T a, T b, T epsilon = std::numeric_limits<T>::epsilon()) noexcept
@@ -77,8 +84,6 @@ Linear.
     ...
     }
     ```
-
-- NaN values never compare equal to themselves or to other NaN values.
 
 ## Example
 

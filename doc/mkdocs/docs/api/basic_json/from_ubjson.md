@@ -52,7 +52,7 @@ Deserializes a given input to a JSON value using the UBJSON (Universal Binary JS
 ## Return value
 
 deserialized JSON value; in case of a parse error and `allow_exceptions` set to `#!cpp false`, the return value will be
-`value_t::discarded`.
+`value_t::discarded`. The latter can be checked with [`is_discarded`](is_discarded.md).
 
 ## Exception safety
 
