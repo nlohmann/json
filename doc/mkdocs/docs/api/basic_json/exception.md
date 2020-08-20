@@ -1,4 +1,4 @@
-# basic_basic_json::exception
+# basic_json::exception
 
 ```cpp
 class exception : public std::exception;

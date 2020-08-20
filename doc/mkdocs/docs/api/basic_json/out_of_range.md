@@ -1,4 +1,4 @@
-# basic_basic_json::out_of_range
+# basic_json::out_of_range
 
 ```cpp
 class out_of_range : public exception;
