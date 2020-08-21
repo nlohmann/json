@@ -21957,12 +21957,8 @@ class basic_json
         }
 
         // add element to array (perfect forwarding)
-#ifdef JSON_HAS_CPP_17
-        return m_value.array->emplace_back(std::forward<Args>(args)...);
-#else
         m_value.array->emplace_back(std::forward<Args>(args)...);
         return m_value.array->back();
-#endif
     }
 
     /*!
