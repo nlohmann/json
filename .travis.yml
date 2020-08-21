@@ -23,7 +23,7 @@ matrix:
     compiler: gcc
     env:
       - COMPILER=g++-9
-      - CXXFLAGS=-std=c++2a
+      - CXX_STANDARD=17
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test']
@@ -35,7 +35,7 @@ matrix:
     compiler: clang
     env:
       - COMPILER=clang++-7
-      - CXXFLAGS=-std=c++1z
+      - CXX_STANDARD=17
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-7']
@@ -62,13 +62,16 @@ script:
   # by default, use implicit conversions
   - if [[ "${IMPLICIT_CONVERSIONS}" == "" ]]; then export IMPLICIT_CONVERSIONS=ON; fi
 
+  # append CXX_STANDARD to CMAKE_OPTIONS if required
+  - CMAKE_OPTIONS+=${CXX_STANDARD:+ -DCMAKE_CXX_STANDARD=$CXX_STANDARD -DCMAKE_CXX_STANDARD_REQUIRED=ON}
+
   # force verbose build
   - CMAKE_OPTIONS+=" -DCMAKE_VERBOSE_MAKEFILE=ON"
 
   # compile and execute unit tests
   - mkdir -p build && cd build
   - cmake .. ${CMAKE_OPTIONS} -DJSON_MultipleHeaders=${MULTIPLE_HEADERS} -DJSON_ImplicitConversions=${IMPLICIT_CONVERSIONS} -DJSON_BuildTests=On -GNinja && cmake --build . --config Release --target test-conversions
-  - ctest -C Release --timeout 2700 -V -R  test-conversions -j
+  - ctest -C Release --timeout 2700 -V -R test-conversions -j
   - cd ..
 
   # check if homebrew works (only checks develop branch)   
