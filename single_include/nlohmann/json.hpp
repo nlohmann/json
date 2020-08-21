@@ -2048,6 +2048,25 @@ JSON_HEDLEY_DIAGNOSTIC_POP
     #define JSON_HAS_CPP_14
 #endif
 
+namespace nlohmann {
+namespace std_aliases { }
+using namespace std_aliases;
+}
+
+#if defined(JSON_HAS_CPP_17)
+    #if __has_include(<string_view>)
+        #include <string_view>
+        namespace nlohmann::std_aliases {
+            using std::string_view;
+        }
+    #elif __has_include(<experimental/string_view>)
+        #include <experimental/string_view>
+        namespace nlohmann::std_aliases {
+            using std::experimental::string_view;
+        }
+    #endif
+#endif
+
 // disable float-equal warnings on GCC/clang
 #if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
     #pragma GCC diagnostic push
@@ -19736,7 +19755,7 @@ class basic_json
                    !detail::is_basic_json<ValueType>::value
                    && !std::is_same<ValueType, std::initializer_list<typename string_t::value_type>>::value
 #if defined(JSON_HAS_CPP_17) && (defined(__GNUC__) || (defined(_MSC_VER) && _MSC_VER >= 1910 && _MSC_VER <= 1914))
-                   && !std::is_same<ValueType, typename std::string_view>::value
+                   && !std::is_same<ValueType, string_view>::value
 #endif
                    && detail::is_detected<detail::get_template_function, const basic_json_t&, ValueType>::value
                    , int >::type = 0 >
