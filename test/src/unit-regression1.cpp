@@ -47,10 +47,6 @@ using nlohmann::json;
     #define JSON_HAS_CPP_17
 #endif
 
-#ifdef JSON_HAS_CPP_17
-    #include <variant>
-#endif
-
 #include "fifo_map.hpp"
 
 /////////////////////////////////////////////////////////////////////

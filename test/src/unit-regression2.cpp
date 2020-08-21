@@ -48,7 +48,10 @@ using nlohmann::json;
 #endif
 
 #ifdef JSON_HAS_CPP_17
-    #include <variant>
+    #if __has_include(<variant>)
+        #define HAS_STD_VARIANT
+        #include <variant>
+    #endif
 #endif
 
 /////////////////////////////////////////////////////////////////////
@@ -247,7 +250,7 @@ TEST_CASE("regression tests 2")
         CHECK(diffs.size() == 1); // Note the change here, was 2
     }
 
-#ifdef JSON_HAS_CPP_17
+#ifdef HAS_STD_VARIANT
     SECTION("issue #1292 - Serializing std::variant causes stack overflow")
     {
         static_assert(
