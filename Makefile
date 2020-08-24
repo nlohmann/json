@@ -81,7 +81,6 @@ doctest:
 # -Wno-documentation-unknown-command: code uses user-defined commands like @complexity
 # -Wno-exit-time-destructors: warning in json code triggered by NLOHMANN_JSON_SERIALIZE_ENUM
 # -Wno-float-equal: not all comparisons in the tests can be replaced by Approx
-# -Wno-keyword-macro: unit-tests use "#define private public"
 # -Wno-missing-prototypes: for NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE
 # -Wno-padded: padding is nothing to warn about
 # -Wno-range-loop-analysis: items tests "for(const auto i...)"
@@ -98,7 +97,6 @@ pedantic_clang:
 		-Wno-documentation-unknown-command \
 		-Wno-exit-time-destructors \
 		-Wno-float-equal \
-		-Wno-keyword-macro \
 		-Wno-missing-prototypes \
 		-Wno-padded \
 		-Wno-range-loop-analysis \
@@ -629,7 +627,7 @@ clean:
 	rm -fr json_unit json_benchmarks fuzz fuzz-testing *.dSYM test/*.dSYM oclint_report.html
 	rm -fr benchmarks/files/numbers/*.json
 	rm -fr cmake-3.1.0-Darwin64.tar.gz cmake-3.1.0-Darwin64
-	rm -fr cmake-build-coverage cmake-build-benchmarks fuzz-testing cmake-build-clang-analyze cmake-build-pvs-studio cmake-build-infer cmake-build-clang-sanitize cmake_build
+	rm -fr cmake-build-coverage cmake-build-benchmarks cmake-build-pedantic fuzz-testing cmake-build-clang-analyze cmake-build-pvs-studio cmake-build-infer cmake-build-clang-sanitize cmake_build
 	$(MAKE) clean -Cdoc
 
 ##########################################################################

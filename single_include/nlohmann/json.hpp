@@ -2160,6 +2160,13 @@ JSON_HEDLEY_DIAGNOSTIC_POP
     #define JSON_ASSERT(x) assert(x)
 #endif
 
+// allow to access some private functions (needed by the test suite)
+#if defined(JSON_TESTS_PRIVATE)
+    #define JSON_PRIVATE_UNLESS_TESTED public
+#else
+    #define JSON_PRIVATE_UNLESS_TESTED private
+#endif
+
 /*!
 @brief macro to briefly define a mapping between an enum and JSON
 @def NLOHMANN_JSON_SERIALIZE_ENUM
@@ -10702,6 +10709,7 @@ class primitive_iterator_t
     static constexpr difference_type begin_value = 0;
     static constexpr difference_type end_value = begin_value + 1;
 
+  JSON_PRIVATE_UNLESS_TESTED:
     /// iterator as signed integer type
     difference_type m_it = (std::numeric_limits<std::ptrdiff_t>::min)();
 
@@ -10994,7 +11002,7 @@ class iter_impl
         return *this;
     }
 
-  private:
+  JSON_PRIVATE_UNLESS_TESTED:
     /*!
     @brief set the iterator to the first value
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
@@ -11458,7 +11466,7 @@ class iter_impl
         return operator*();
     }
 
-  private:
+  JSON_PRIVATE_UNLESS_TESTED:
     /// associated JSON instance
     pointer m_object = nullptr;
     /// the actual iterator of the associated instance
@@ -11973,6 +11981,7 @@ class json_pointer
         return static_cast<size_type>(res);
     }
 
+  JSON_PRIVATE_UNLESS_TESTED:
     json_pointer top() const
     {
         if (JSON_HEDLEY_UNLIKELY(empty()))
@@ -11985,6 +11994,7 @@ class json_pointer
         return result;
     }
 
+  private:
     /*!
     @brief create and return a reference to the pointed to value
 
@@ -12421,6 +12431,7 @@ class json_pointer
         {}
     }
 
+  JSON_PRIVATE_UNLESS_TESTED:
     /// escape "~" to "~0" and "/" to "~1"
     static std::string escape(std::string s)
     {
@@ -12436,6 +12447,7 @@ class json_pointer
         replace_substring(s, "~0", "~");
     }
 
+  private:
     /*!
     @param[in] reference_string  the reference string to the current value
     @param[in] value             the value to consider
@@ -15861,7 +15873,7 @@ class serializer
         }
     }
 
-  private:
+  JSON_PRIVATE_UNLESS_TESTED:
     /*!
     @brief dump escaped string
 
@@ -16124,6 +16136,7 @@ class serializer
         }
     }
 
+  private:
     /*!
     @brief count digits
 
@@ -16742,6 +16755,7 @@ class basic_json
     /// workaround type for MSVC
     using basic_json_t = NLOHMANN_BASIC_JSON_TPL;
 
+  JSON_PRIVATE_UNLESS_TESTED:
     // convenience aliases for types residing in namespace detail;
     using lexer = ::nlohmann::detail::lexer_base<basic_json>;
 
@@ -16757,6 +16771,7 @@ class basic_json
                 std::move(cb), allow_exceptions, ignore_comments);
     }
 
+  private:
     using primitive_iterator_t = ::nlohmann::detail::primitive_iterator_t;
     template<typename BasicJsonType>
     using internal_iterator = ::nlohmann::detail::internal_iterator<BasicJsonType>;
@@ -16773,6 +16788,7 @@ class basic_json
     using binary_reader = ::nlohmann::detail::binary_reader<basic_json, InputType>;
     template<typename CharType> using binary_writer = ::nlohmann::detail::binary_writer<basic_json, CharType>;
 
+  JSON_PRIVATE_UNLESS_TESTED:
     using serializer = ::nlohmann::detail::serializer<basic_json>;
 
   public:
@@ -17487,6 +17503,7 @@ class basic_json
     // JSON value storage //
     ////////////////////////
 
+  JSON_PRIVATE_UNLESS_TESTED:
     /*!
     @brief a JSON value
 
@@ -17763,6 +17780,7 @@ class basic_json
         }
     };
 
+  private:
     /*!
     @brief checks the class invariants
 
@@ -23500,7 +23518,7 @@ class basic_json
     }
 
 
-  private:
+  JSON_PRIVATE_UNLESS_TESTED:
     //////////////////////
     // member variables //
     //////////////////////
@@ -25356,6 +25374,7 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 #undef JSON_CATCH
 #undef JSON_THROW
 #undef JSON_TRY
+#undef JSON_PRIVATE_UNLESS_TESTED
 #undef JSON_HAS_CPP_14
 #undef JSON_HAS_CPP_17
 #undef NLOHMANN_BASIC_JSON_TPL_DECLARATION

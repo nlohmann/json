@@ -163,7 +163,7 @@ class iter_impl
         return *this;
     }
 
-  private:
+  JSON_PRIVATE_UNLESS_TESTED:
     /*!
     @brief set the iterator to the first value
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
@@ -627,7 +627,7 @@ class iter_impl
         return operator*();
     }
 
-  private:
+  JSON_PRIVATE_UNLESS_TESTED:
     /// associated JSON instance
     pointer m_object = nullptr;
     /// the actual iterator of the associated instance

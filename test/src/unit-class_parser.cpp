@@ -29,10 +29,9 @@ SOFTWARE.
 
 #include "doctest_compatibility.h"
 
-#define private public
+#define JSON_TESTS_PRIVATE
 #include <nlohmann/json.hpp>
 using nlohmann::json;
-#undef private
 
 #include <valarray>
 
