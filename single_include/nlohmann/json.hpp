@@ -119,11 +119,11 @@ struct position_t
  * SPDX-License-Identifier: CC0-1.0
  */
 
-#if !defined(JSON_HEDLEY_VERSION) || (JSON_HEDLEY_VERSION < 13)
+#if !defined(JSON_HEDLEY_VERSION) || (JSON_HEDLEY_VERSION < 14)
 #if defined(JSON_HEDLEY_VERSION)
     #undef JSON_HEDLEY_VERSION
 #endif
-#define JSON_HEDLEY_VERSION 13
+#define JSON_HEDLEY_VERSION 14
 
 #if defined(JSON_HEDLEY_STRINGIFY_EX)
     #undef JSON_HEDLEY_STRINGIFY_EX
@@ -196,18 +196,18 @@ struct position_t
 #if defined(JSON_HEDLEY_MSVC_VERSION)
     #undef JSON_HEDLEY_MSVC_VERSION
 #endif
-#if defined(_MSC_FULL_VER) && (_MSC_FULL_VER >= 140000000)
+#if defined(_MSC_FULL_VER) && (_MSC_FULL_VER >= 140000000) && !defined(__ICL)
     #define JSON_HEDLEY_MSVC_VERSION JSON_HEDLEY_VERSION_ENCODE(_MSC_FULL_VER / 10000000, (_MSC_FULL_VER % 10000000) / 100000, (_MSC_FULL_VER % 100000) / 100)
-#elif defined(_MSC_FULL_VER)
+#elif defined(_MSC_FULL_VER) && !defined(__ICL)
     #define JSON_HEDLEY_MSVC_VERSION JSON_HEDLEY_VERSION_ENCODE(_MSC_FULL_VER / 1000000, (_MSC_FULL_VER % 1000000) / 10000, (_MSC_FULL_VER % 10000) / 10)
-#elif defined(_MSC_VER)
+#elif defined(_MSC_VER) && !defined(__ICL)
     #define JSON_HEDLEY_MSVC_VERSION JSON_HEDLEY_VERSION_ENCODE(_MSC_VER / 100, _MSC_VER % 100, 0)
 #endif
 
 #if defined(JSON_HEDLEY_MSVC_VERSION_CHECK)
     #undef JSON_HEDLEY_MSVC_VERSION_CHECK
 #endif
-#if !defined(_MSC_VER)
+#if !defined(JSON_HEDLEY_MSVC_VERSION)
     #define JSON_HEDLEY_MSVC_VERSION_CHECK(major,minor,patch) (0)
 #elif defined(_MSC_VER) && (_MSC_VER >= 1400)
     #define JSON_HEDLEY_MSVC_VERSION_CHECK(major,minor,patch) (_MSC_FULL_VER >= ((major * 10000000) + (minor * 100000) + (patch)))
@@ -220,9 +220,9 @@ struct position_t
 #if defined(JSON_HEDLEY_INTEL_VERSION)
     #undef JSON_HEDLEY_INTEL_VERSION
 #endif
-#if defined(__INTEL_COMPILER) && defined(__INTEL_COMPILER_UPDATE)
+#if defined(__INTEL_COMPILER) && defined(__INTEL_COMPILER_UPDATE) && !defined(__ICL)
     #define JSON_HEDLEY_INTEL_VERSION JSON_HEDLEY_VERSION_ENCODE(__INTEL_COMPILER / 100, __INTEL_COMPILER % 100, __INTEL_COMPILER_UPDATE)
-#elif defined(__INTEL_COMPILER)
+#elif defined(__INTEL_COMPILER) && !defined(__ICL)
     #define JSON_HEDLEY_INTEL_VERSION JSON_HEDLEY_VERSION_ENCODE(__INTEL_COMPILER / 100, __INTEL_COMPILER % 100, 0)
 #endif
 
@@ -233,6 +233,22 @@ struct position_t
     #define JSON_HEDLEY_INTEL_VERSION_CHECK(major,minor,patch) (JSON_HEDLEY_INTEL_VERSION >= JSON_HEDLEY_VERSION_ENCODE(major, minor, patch))
 #else
     #define JSON_HEDLEY_INTEL_VERSION_CHECK(major,minor,patch) (0)
+#endif
+
+#if defined(JSON_HEDLEY_INTEL_CL_VERSION)
+    #undef JSON_HEDLEY_INTEL_CL_VERSION
+#endif
+#if defined(__INTEL_COMPILER) && defined(__INTEL_COMPILER_UPDATE) && defined(__ICL)
+    #define JSON_HEDLEY_INTEL_CL_VERSION JSON_HEDLEY_VERSION_ENCODE(__INTEL_COMPILER, __INTEL_COMPILER_UPDATE, 0)
+#endif
+
+#if defined(JSON_HEDLEY_INTEL_CL_VERSION_CHECK)
+    #undef JSON_HEDLEY_INTEL_CL_VERSION_CHECK
+#endif
+#if defined(JSON_HEDLEY_INTEL_CL_VERSION)
+    #define JSON_HEDLEY_INTEL_CL_VERSION_CHECK(major,minor,patch) (JSON_HEDLEY_INTEL_CL_VERSION >= JSON_HEDLEY_VERSION_ENCODE(major, minor, patch))
+#else
+    #define JSON_HEDLEY_INTEL_CL_VERSION_CHECK(major,minor,patch) (0)
 #endif
 
 #if defined(JSON_HEDLEY_PGI_VERSION)
@@ -787,6 +803,72 @@ struct position_t
     #define JSON_HEDLEY_GCC_HAS_WARNING(warning,major,minor,patch) JSON_HEDLEY_GCC_VERSION_CHECK(major,minor,patch)
 #endif
 
+#if \
+    (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)) || \
+    defined(__clang__) || \
+    JSON_HEDLEY_GCC_VERSION_CHECK(3,0,0) || \
+    JSON_HEDLEY_INTEL_VERSION_CHECK(13,0,0) || \
+    JSON_HEDLEY_IAR_VERSION_CHECK(8,0,0) || \
+    JSON_HEDLEY_PGI_VERSION_CHECK(18,4,0) || \
+    JSON_HEDLEY_ARM_VERSION_CHECK(4,1,0) || \
+    JSON_HEDLEY_TI_VERSION_CHECK(15,12,0) || \
+    JSON_HEDLEY_TI_ARMCL_VERSION_CHECK(4,7,0) || \
+    JSON_HEDLEY_TI_CL430_VERSION_CHECK(2,0,1) || \
+    JSON_HEDLEY_TI_CL2000_VERSION_CHECK(6,1,0) || \
+    JSON_HEDLEY_TI_CL6X_VERSION_CHECK(7,0,0) || \
+    JSON_HEDLEY_TI_CL7X_VERSION_CHECK(1,2,0) || \
+    JSON_HEDLEY_TI_CLPRU_VERSION_CHECK(2,1,0) || \
+    JSON_HEDLEY_CRAY_VERSION_CHECK(5,0,0) || \
+    JSON_HEDLEY_TINYC_VERSION_CHECK(0,9,17) || \
+    JSON_HEDLEY_SUNPRO_VERSION_CHECK(8,0,0) || \
+    (JSON_HEDLEY_IBM_VERSION_CHECK(10,1,0) && defined(__C99_PRAGMA_OPERATOR))
+    #define JSON_HEDLEY_PRAGMA(value) _Pragma(#value)
+#elif JSON_HEDLEY_MSVC_VERSION_CHECK(15,0,0)
+    #define JSON_HEDLEY_PRAGMA(value) __pragma(value)
+#else
+    #define JSON_HEDLEY_PRAGMA(value)
+#endif
+
+#if defined(JSON_HEDLEY_DIAGNOSTIC_PUSH)
+    #undef JSON_HEDLEY_DIAGNOSTIC_PUSH
+#endif
+#if defined(JSON_HEDLEY_DIAGNOSTIC_POP)
+    #undef JSON_HEDLEY_DIAGNOSTIC_POP
+#endif
+#if defined(__clang__)
+    #define JSON_HEDLEY_DIAGNOSTIC_PUSH _Pragma("clang diagnostic push")
+    #define JSON_HEDLEY_DIAGNOSTIC_POP _Pragma("clang diagnostic pop")
+#elif JSON_HEDLEY_INTEL_VERSION_CHECK(13,0,0)
+    #define JSON_HEDLEY_DIAGNOSTIC_PUSH _Pragma("warning(push)")
+    #define JSON_HEDLEY_DIAGNOSTIC_POP _Pragma("warning(pop)")
+#elif JSON_HEDLEY_GCC_VERSION_CHECK(4,6,0)
+    #define JSON_HEDLEY_DIAGNOSTIC_PUSH _Pragma("GCC diagnostic push")
+    #define JSON_HEDLEY_DIAGNOSTIC_POP _Pragma("GCC diagnostic pop")
+#elif \
+    JSON_HEDLEY_MSVC_VERSION_CHECK(15,0,0) || \
+    JSON_HEDLEY_INTEL_CL_VERSION_CHECK(2021,1,0)
+    #define JSON_HEDLEY_DIAGNOSTIC_PUSH __pragma(warning(push))
+    #define JSON_HEDLEY_DIAGNOSTIC_POP __pragma(warning(pop))
+#elif JSON_HEDLEY_ARM_VERSION_CHECK(5,6,0)
+    #define JSON_HEDLEY_DIAGNOSTIC_PUSH _Pragma("push")
+    #define JSON_HEDLEY_DIAGNOSTIC_POP _Pragma("pop")
+#elif \
+    JSON_HEDLEY_TI_VERSION_CHECK(15,12,0) || \
+    JSON_HEDLEY_TI_ARMCL_VERSION_CHECK(5,2,0) || \
+    JSON_HEDLEY_TI_CL430_VERSION_CHECK(4,4,0) || \
+    JSON_HEDLEY_TI_CL6X_VERSION_CHECK(8,1,0) || \
+    JSON_HEDLEY_TI_CL7X_VERSION_CHECK(1,2,0) || \
+    JSON_HEDLEY_TI_CLPRU_VERSION_CHECK(2,1,0)
+    #define JSON_HEDLEY_DIAGNOSTIC_PUSH _Pragma("diag_push")
+    #define JSON_HEDLEY_DIAGNOSTIC_POP _Pragma("diag_pop")
+#elif JSON_HEDLEY_PELLES_VERSION_CHECK(2,90,0)
+    #define JSON_HEDLEY_DIAGNOSTIC_PUSH _Pragma("warning(push)")
+    #define JSON_HEDLEY_DIAGNOSTIC_POP _Pragma("warning(pop)")
+#else
+    #define JSON_HEDLEY_DIAGNOSTIC_PUSH
+    #define JSON_HEDLEY_DIAGNOSTIC_POP
+#endif
+
 /* JSON_HEDLEY_DIAGNOSTIC_DISABLE_CPP98_COMPAT_WRAP_ is for
    HEDLEY INTERNAL USE ONLY.  API subject to change without notice. */
 #if defined(JSON_HEDLEY_DIAGNOSTIC_DISABLE_CPP98_COMPAT_WRAP_)
@@ -795,12 +877,22 @@ struct position_t
 #if defined(__cplusplus)
 #  if JSON_HEDLEY_HAS_WARNING("-Wc++98-compat")
 #    if JSON_HEDLEY_HAS_WARNING("-Wc++17-extensions")
-#      define JSON_HEDLEY_DIAGNOSTIC_DISABLE_CPP98_COMPAT_WRAP_(xpr) \
+#      if JSON_HEDLEY_HAS_WARNING("-Wc++1z-extensions")
+#        define JSON_HEDLEY_DIAGNOSTIC_DISABLE_CPP98_COMPAT_WRAP_(xpr) \
+    JSON_HEDLEY_DIAGNOSTIC_PUSH \
+    _Pragma("clang diagnostic ignored \"-Wc++98-compat\"") \
+    _Pragma("clang diagnostic ignored \"-Wc++17-extensions\"") \
+    _Pragma("clang diagnostic ignored \"-Wc++1z-extensions\"") \
+    xpr \
+    JSON_HEDLEY_DIAGNOSTIC_POP
+#      else
+#        define JSON_HEDLEY_DIAGNOSTIC_DISABLE_CPP98_COMPAT_WRAP_(xpr) \
     JSON_HEDLEY_DIAGNOSTIC_PUSH \
     _Pragma("clang diagnostic ignored \"-Wc++98-compat\"") \
     _Pragma("clang diagnostic ignored \"-Wc++17-extensions\"") \
     xpr \
     JSON_HEDLEY_DIAGNOSTIC_POP
+#      endif
 #    else
 #      define JSON_HEDLEY_DIAGNOSTIC_DISABLE_CPP98_COMPAT_WRAP_(xpr) \
     JSON_HEDLEY_DIAGNOSTIC_PUSH \
@@ -865,76 +957,12 @@ struct position_t
 #    define JSON_HEDLEY_CPP_CAST(T, expr) \
     JSON_HEDLEY_DIAGNOSTIC_PUSH \
     _Pragma("diag_suppress=Pe137") \
-    JSON_HEDLEY_DIAGNOSTIC_POP \
+    JSON_HEDLEY_DIAGNOSTIC_POP
 #  else
 #    define JSON_HEDLEY_CPP_CAST(T, expr) ((T) (expr))
 #  endif
 #else
 #  define JSON_HEDLEY_CPP_CAST(T, expr) (expr)
-#endif
-
-#if \
-    (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)) || \
-    defined(__clang__) || \
-    JSON_HEDLEY_GCC_VERSION_CHECK(3,0,0) || \
-    JSON_HEDLEY_INTEL_VERSION_CHECK(13,0,0) || \
-    JSON_HEDLEY_IAR_VERSION_CHECK(8,0,0) || \
-    JSON_HEDLEY_PGI_VERSION_CHECK(18,4,0) || \
-    JSON_HEDLEY_ARM_VERSION_CHECK(4,1,0) || \
-    JSON_HEDLEY_TI_VERSION_CHECK(15,12,0) || \
-    JSON_HEDLEY_TI_ARMCL_VERSION_CHECK(4,7,0) || \
-    JSON_HEDLEY_TI_CL430_VERSION_CHECK(2,0,1) || \
-    JSON_HEDLEY_TI_CL2000_VERSION_CHECK(6,1,0) || \
-    JSON_HEDLEY_TI_CL6X_VERSION_CHECK(7,0,0) || \
-    JSON_HEDLEY_TI_CL7X_VERSION_CHECK(1,2,0) || \
-    JSON_HEDLEY_TI_CLPRU_VERSION_CHECK(2,1,0) || \
-    JSON_HEDLEY_CRAY_VERSION_CHECK(5,0,0) || \
-    JSON_HEDLEY_TINYC_VERSION_CHECK(0,9,17) || \
-    JSON_HEDLEY_SUNPRO_VERSION_CHECK(8,0,0) || \
-    (JSON_HEDLEY_IBM_VERSION_CHECK(10,1,0) && defined(__C99_PRAGMA_OPERATOR))
-    #define JSON_HEDLEY_PRAGMA(value) _Pragma(#value)
-#elif JSON_HEDLEY_MSVC_VERSION_CHECK(15,0,0)
-    #define JSON_HEDLEY_PRAGMA(value) __pragma(value)
-#else
-    #define JSON_HEDLEY_PRAGMA(value)
-#endif
-
-#if defined(JSON_HEDLEY_DIAGNOSTIC_PUSH)
-    #undef JSON_HEDLEY_DIAGNOSTIC_PUSH
-#endif
-#if defined(JSON_HEDLEY_DIAGNOSTIC_POP)
-    #undef JSON_HEDLEY_DIAGNOSTIC_POP
-#endif
-#if defined(__clang__)
-    #define JSON_HEDLEY_DIAGNOSTIC_PUSH _Pragma("clang diagnostic push")
-    #define JSON_HEDLEY_DIAGNOSTIC_POP _Pragma("clang diagnostic pop")
-#elif JSON_HEDLEY_INTEL_VERSION_CHECK(13,0,0)
-    #define JSON_HEDLEY_DIAGNOSTIC_PUSH _Pragma("warning(push)")
-    #define JSON_HEDLEY_DIAGNOSTIC_POP _Pragma("warning(pop)")
-#elif JSON_HEDLEY_GCC_VERSION_CHECK(4,6,0)
-    #define JSON_HEDLEY_DIAGNOSTIC_PUSH _Pragma("GCC diagnostic push")
-    #define JSON_HEDLEY_DIAGNOSTIC_POP _Pragma("GCC diagnostic pop")
-#elif JSON_HEDLEY_MSVC_VERSION_CHECK(15,0,0)
-    #define JSON_HEDLEY_DIAGNOSTIC_PUSH __pragma(warning(push))
-    #define JSON_HEDLEY_DIAGNOSTIC_POP __pragma(warning(pop))
-#elif JSON_HEDLEY_ARM_VERSION_CHECK(5,6,0)
-    #define JSON_HEDLEY_DIAGNOSTIC_PUSH _Pragma("push")
-    #define JSON_HEDLEY_DIAGNOSTIC_POP _Pragma("pop")
-#elif \
-    JSON_HEDLEY_TI_VERSION_CHECK(15,12,0) || \
-    JSON_HEDLEY_TI_ARMCL_VERSION_CHECK(5,2,0) || \
-    JSON_HEDLEY_TI_CL430_VERSION_CHECK(4,4,0) || \
-    JSON_HEDLEY_TI_CL6X_VERSION_CHECK(8,1,0) || \
-    JSON_HEDLEY_TI_CL7X_VERSION_CHECK(1,2,0) || \
-    JSON_HEDLEY_TI_CLPRU_VERSION_CHECK(2,1,0)
-    #define JSON_HEDLEY_DIAGNOSTIC_PUSH _Pragma("diag_push")
-    #define JSON_HEDLEY_DIAGNOSTIC_POP _Pragma("diag_pop")
-#elif JSON_HEDLEY_PELLES_VERSION_CHECK(2,90,0)
-    #define JSON_HEDLEY_DIAGNOSTIC_PUSH _Pragma("warning(push)")
-    #define JSON_HEDLEY_DIAGNOSTIC_POP _Pragma("warning(pop)")
-#else
-    #define JSON_HEDLEY_DIAGNOSTIC_PUSH
-    #define JSON_HEDLEY_DIAGNOSTIC_POP
 #endif
 
 #if defined(JSON_HEDLEY_DIAGNOSTIC_DISABLE_DEPRECATED)
@@ -944,6 +972,10 @@ struct position_t
     #define JSON_HEDLEY_DIAGNOSTIC_DISABLE_DEPRECATED _Pragma("clang diagnostic ignored \"-Wdeprecated-declarations\"")
 #elif JSON_HEDLEY_INTEL_VERSION_CHECK(13,0,0)
     #define JSON_HEDLEY_DIAGNOSTIC_DISABLE_DEPRECATED _Pragma("warning(disable:1478 1786)")
+#elif JSON_HEDLEY_INTEL_CL_VERSION_CHECK(2021,1,0)
+    #define JSON_HEDLEY_DIAGNOSTIC_DISABLE_DEPRECATED __pragma(warning(disable:1478 1786))
+#elif JSON_HEDLEY_PGI_VERSION_CHECK(20,7,0)
+    #define JSON_HEDLEY_DIAGNOSTIC_DISABLE_DEPRECATED _Pragma("diag_suppress 1215,1216,1444,1445")
 #elif JSON_HEDLEY_PGI_VERSION_CHECK(17,10,0)
     #define JSON_HEDLEY_DIAGNOSTIC_DISABLE_DEPRECATED _Pragma("diag_suppress 1215,1444")
 #elif JSON_HEDLEY_GCC_VERSION_CHECK(4,3,0)
@@ -982,6 +1014,8 @@ struct position_t
     #define JSON_HEDLEY_DIAGNOSTIC_DISABLE_UNKNOWN_PRAGMAS _Pragma("clang diagnostic ignored \"-Wunknown-pragmas\"")
 #elif JSON_HEDLEY_INTEL_VERSION_CHECK(13,0,0)
     #define JSON_HEDLEY_DIAGNOSTIC_DISABLE_UNKNOWN_PRAGMAS _Pragma("warning(disable:161)")
+#elif JSON_HEDLEY_INTEL_CL_VERSION_CHECK(2021,1,0)
+    #define JSON_HEDLEY_DIAGNOSTIC_DISABLE_UNKNOWN_PRAGMAS __pragma(warning(disable:161))
 #elif JSON_HEDLEY_PGI_VERSION_CHECK(17,10,0)
     #define JSON_HEDLEY_DIAGNOSTIC_DISABLE_UNKNOWN_PRAGMAS _Pragma("diag_suppress 1675")
 #elif JSON_HEDLEY_GCC_VERSION_CHECK(4,3,0)
@@ -1011,8 +1045,12 @@ struct position_t
     #define JSON_HEDLEY_DIAGNOSTIC_DISABLE_UNKNOWN_CPP_ATTRIBUTES _Pragma("GCC diagnostic ignored \"-Wdeprecated-declarations\"")
 #elif JSON_HEDLEY_INTEL_VERSION_CHECK(17,0,0)
     #define JSON_HEDLEY_DIAGNOSTIC_DISABLE_UNKNOWN_CPP_ATTRIBUTES _Pragma("warning(disable:1292)")
+#elif JSON_HEDLEY_INTEL_CL_VERSION_CHECK(2021,1,0)
+    #define JSON_HEDLEY_DIAGNOSTIC_DISABLE_UNKNOWN_CPP_ATTRIBUTES __pragma(warning(disable:1292))
 #elif JSON_HEDLEY_MSVC_VERSION_CHECK(19,0,0)
     #define JSON_HEDLEY_DIAGNOSTIC_DISABLE_UNKNOWN_CPP_ATTRIBUTES __pragma(warning(disable:5030))
+#elif JSON_HEDLEY_PGI_VERSION_CHECK(20,7,0)
+    #define JSON_HEDLEY_DIAGNOSTIC_DISABLE_UNKNOWN_CPP_ATTRIBUTES _Pragma("diag_suppress 1097,1098")
 #elif JSON_HEDLEY_PGI_VERSION_CHECK(17,10,0)
     #define JSON_HEDLEY_DIAGNOSTIC_DISABLE_UNKNOWN_CPP_ATTRIBUTES _Pragma("diag_suppress 1097")
 #elif JSON_HEDLEY_SUNPRO_VERSION_CHECK(5,14,0) && defined(__cplusplus)
@@ -1047,12 +1085,11 @@ struct position_t
 #if defined(JSON_HEDLEY_DEPRECATED_FOR)
     #undef JSON_HEDLEY_DEPRECATED_FOR
 #endif
-#if JSON_HEDLEY_MSVC_VERSION_CHECK(14,0,0)
+#if \
+    JSON_HEDLEY_MSVC_VERSION_CHECK(14,0,0) || \
+    JSON_HEDLEY_INTEL_CL_VERSION_CHECK(2021,1,0)
     #define JSON_HEDLEY_DEPRECATED(since) __declspec(deprecated("Since " # since))
     #define JSON_HEDLEY_DEPRECATED_FOR(since, replacement) __declspec(deprecated("Since " #since "; use " #replacement))
-#elif defined(__cplusplus) && (__cplusplus >= 201402L)
-    #define JSON_HEDLEY_DEPRECATED(since) JSON_HEDLEY_DIAGNOSTIC_DISABLE_CPP98_COMPAT_WRAP_([[deprecated("Since " #since)]])
-    #define JSON_HEDLEY_DEPRECATED_FOR(since, replacement) JSON_HEDLEY_DIAGNOSTIC_DISABLE_CPP98_COMPAT_WRAP_([[deprecated("Since " #since "; use " #replacement)]])
 #elif \
     JSON_HEDLEY_HAS_EXTENSION(attribute_deprecated_with_message) || \
     JSON_HEDLEY_GCC_VERSION_CHECK(4,5,0) || \
@@ -1067,6 +1104,9 @@ struct position_t
     JSON_HEDLEY_TI_CLPRU_VERSION_CHECK(2,3,0)
     #define JSON_HEDLEY_DEPRECATED(since) __attribute__((__deprecated__("Since " #since)))
     #define JSON_HEDLEY_DEPRECATED_FOR(since, replacement) __attribute__((__deprecated__("Since " #since "; use " #replacement)))
+#elif defined(__cplusplus) && (__cplusplus >= 201402L)
+    #define JSON_HEDLEY_DEPRECATED(since) JSON_HEDLEY_DIAGNOSTIC_DISABLE_CPP98_COMPAT_WRAP_([[deprecated("Since " #since)]])
+    #define JSON_HEDLEY_DEPRECATED_FOR(since, replacement) JSON_HEDLEY_DIAGNOSTIC_DISABLE_CPP98_COMPAT_WRAP_([[deprecated("Since " #since "; use " #replacement)]])
 #elif \
     JSON_HEDLEY_HAS_ATTRIBUTE(deprecated) || \
     JSON_HEDLEY_GCC_VERSION_CHECK(3,1,0) || \
@@ -1086,7 +1126,8 @@ struct position_t
     #define JSON_HEDLEY_DEPRECATED_FOR(since, replacement) __attribute__((__deprecated__))
 #elif \
     JSON_HEDLEY_MSVC_VERSION_CHECK(13,10,0) || \
-    JSON_HEDLEY_PELLES_VERSION_CHECK(6,50,0)
+    JSON_HEDLEY_PELLES_VERSION_CHECK(6,50,0) || \
+    JSON_HEDLEY_INTEL_CL_VERSION_CHECK(2021,1,0)
     #define JSON_HEDLEY_DEPRECATED(since) __declspec(deprecated)
     #define JSON_HEDLEY_DEPRECATED_FOR(since, replacement) __declspec(deprecated)
 #elif JSON_HEDLEY_IAR_VERSION_CHECK(8,0,0)
@@ -1115,13 +1156,7 @@ struct position_t
 #if defined(JSON_HEDLEY_WARN_UNUSED_RESULT_MSG)
     #undef JSON_HEDLEY_WARN_UNUSED_RESULT_MSG
 #endif
-#if (JSON_HEDLEY_HAS_CPP_ATTRIBUTE(nodiscard) >= 201907L)
-    #define JSON_HEDLEY_WARN_UNUSED_RESULT JSON_HEDLEY_DIAGNOSTIC_DISABLE_CPP98_COMPAT_WRAP_([[nodiscard]])
-    #define JSON_HEDLEY_WARN_UNUSED_RESULT_MSG(msg) JSON_HEDLEY_DIAGNOSTIC_DISABLE_CPP98_COMPAT_WRAP_([[nodiscard(msg)]])
-#elif JSON_HEDLEY_HAS_CPP_ATTRIBUTE(nodiscard)
-    #define JSON_HEDLEY_WARN_UNUSED_RESULT JSON_HEDLEY_DIAGNOSTIC_DISABLE_CPP98_COMPAT_WRAP_([[nodiscard]])
-    #define JSON_HEDLEY_WARN_UNUSED_RESULT_MSG(msg) JSON_HEDLEY_DIAGNOSTIC_DISABLE_CPP98_COMPAT_WRAP_([[nodiscard]])
-#elif \
+#if \
     JSON_HEDLEY_HAS_ATTRIBUTE(warn_unused_result) || \
     JSON_HEDLEY_GCC_VERSION_CHECK(3,4,0) || \
     JSON_HEDLEY_INTEL_VERSION_CHECK(13,0,0) || \
@@ -1140,6 +1175,12 @@ struct position_t
     JSON_HEDLEY_PGI_VERSION_CHECK(17,10,0)
     #define JSON_HEDLEY_WARN_UNUSED_RESULT __attribute__((__warn_unused_result__))
     #define JSON_HEDLEY_WARN_UNUSED_RESULT_MSG(msg) __attribute__((__warn_unused_result__))
+#elif (JSON_HEDLEY_HAS_CPP_ATTRIBUTE(nodiscard) >= 201907L)
+    #define JSON_HEDLEY_WARN_UNUSED_RESULT JSON_HEDLEY_DIAGNOSTIC_DISABLE_CPP98_COMPAT_WRAP_([[nodiscard]])
+    #define JSON_HEDLEY_WARN_UNUSED_RESULT_MSG(msg) JSON_HEDLEY_DIAGNOSTIC_DISABLE_CPP98_COMPAT_WRAP_([[nodiscard(msg)]])
+#elif JSON_HEDLEY_HAS_CPP_ATTRIBUTE(nodiscard)
+    #define JSON_HEDLEY_WARN_UNUSED_RESULT JSON_HEDLEY_DIAGNOSTIC_DISABLE_CPP98_COMPAT_WRAP_([[nodiscard]])
+    #define JSON_HEDLEY_WARN_UNUSED_RESULT_MSG(msg) JSON_HEDLEY_DIAGNOSTIC_DISABLE_CPP98_COMPAT_WRAP_([[nodiscard]])
 #elif defined(_Check_return_) /* SAL */
     #define JSON_HEDLEY_WARN_UNUSED_RESULT _Check_return_
     #define JSON_HEDLEY_WARN_UNUSED_RESULT_MSG(msg) _Check_return_
@@ -1192,7 +1233,9 @@ struct position_t
     #define JSON_HEDLEY_NO_RETURN __attribute__((__noreturn__))
 #elif JSON_HEDLEY_SUNPRO_VERSION_CHECK(5,10,0)
     #define JSON_HEDLEY_NO_RETURN _Pragma("does_not_return")
-#elif JSON_HEDLEY_MSVC_VERSION_CHECK(13,10,0)
+#elif \
+    JSON_HEDLEY_MSVC_VERSION_CHECK(13,10,0) || \
+    JSON_HEDLEY_INTEL_CL_VERSION_CHECK(2021,1,0)
     #define JSON_HEDLEY_NO_RETURN __declspec(noreturn)
 #elif JSON_HEDLEY_TI_CL6X_VERSION_CHECK(6,0,0) && defined(__cplusplus)
     #define JSON_HEDLEY_NO_RETURN _Pragma("FUNC_NEVER_RETURNS;")
@@ -1224,7 +1267,8 @@ struct position_t
 #endif
 #if \
     JSON_HEDLEY_MSVC_VERSION_CHECK(13,10,0) || \
-    JSON_HEDLEY_INTEL_VERSION_CHECK(13,0,0)
+    JSON_HEDLEY_INTEL_VERSION_CHECK(13,0,0) || \
+    JSON_HEDLEY_INTEL_CL_VERSION_CHECK(2021,1,0)
     #define JSON_HEDLEY_ASSUME(expr) __assume(expr)
 #elif JSON_HEDLEY_HAS_BUILTIN(__builtin_assume)
     #define JSON_HEDLEY_ASSUME(expr) __builtin_assume(expr)
@@ -1356,7 +1400,7 @@ JSON_HEDLEY_DIAGNOSTIC_POP
     #define JSON_HEDLEY_UNPREDICTABLE(expr) __builtin_unpredictable((expr))
 #endif
 #if \
-  JSON_HEDLEY_HAS_BUILTIN(__builtin_expect_with_probability) || \
+  (JSON_HEDLEY_HAS_BUILTIN(__builtin_expect_with_probability) && !defined(JSON_HEDLEY_PGI_VERSION)) || \
   JSON_HEDLEY_GCC_VERSION_CHECK(9,0,0)
 #  define JSON_HEDLEY_PREDICT(expr, value, probability) __builtin_expect_with_probability(  (expr), (value), (probability))
 #  define JSON_HEDLEY_PREDICT_TRUE(expr, probability)   __builtin_expect_with_probability(!!(expr),    1   , (probability))
@@ -1364,7 +1408,7 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 #  define JSON_HEDLEY_LIKELY(expr)                      __builtin_expect                 (!!(expr),    1                  )
 #  define JSON_HEDLEY_UNLIKELY(expr)                    __builtin_expect                 (!!(expr),    0                  )
 #elif \
-  JSON_HEDLEY_HAS_BUILTIN(__builtin_expect) || \
+  (JSON_HEDLEY_HAS_BUILTIN(__builtin_expect) && !defined(JSON_HEDLEY_INTEL_CL_VERSION)) || \
   JSON_HEDLEY_GCC_VERSION_CHECK(3,0,0) || \
   JSON_HEDLEY_INTEL_VERSION_CHECK(13,0,0) || \
   (JSON_HEDLEY_SUNPRO_VERSION_CHECK(5,15,0) && defined(__cplusplus)) || \
@@ -1428,7 +1472,9 @@ JSON_HEDLEY_DIAGNOSTIC_POP
     #define JSON_HEDLEY_MALLOC __attribute__((__malloc__))
 #elif JSON_HEDLEY_SUNPRO_VERSION_CHECK(5,10,0)
     #define JSON_HEDLEY_MALLOC _Pragma("returns_new_memory")
-#elif JSON_HEDLEY_MSVC_VERSION_CHECK(14, 0, 0)
+#elif \
+    JSON_HEDLEY_MSVC_VERSION_CHECK(14,0,0) || \
+    JSON_HEDLEY_INTEL_CL_VERSION_CHECK(2021,1,0)
     #define JSON_HEDLEY_MALLOC __declspec(restrict)
 #else
     #define JSON_HEDLEY_MALLOC
@@ -1509,6 +1555,7 @@ JSON_HEDLEY_DIAGNOSTIC_POP
     JSON_HEDLEY_GCC_VERSION_CHECK(3,1,0) || \
     JSON_HEDLEY_MSVC_VERSION_CHECK(14,0,0) || \
     JSON_HEDLEY_INTEL_VERSION_CHECK(13,0,0) || \
+    JSON_HEDLEY_INTEL_CL_VERSION_CHECK(2021,1,0) || \
     JSON_HEDLEY_ARM_VERSION_CHECK(4,1,0) || \
     JSON_HEDLEY_IBM_VERSION_CHECK(10,1,0) || \
     JSON_HEDLEY_PGI_VERSION_CHECK(17,10,0) || \
@@ -1539,6 +1586,7 @@ JSON_HEDLEY_DIAGNOSTIC_POP
     #define JSON_HEDLEY_INLINE __inline__
 #elif \
     JSON_HEDLEY_MSVC_VERSION_CHECK(12,0,0) || \
+    JSON_HEDLEY_INTEL_CL_VERSION_CHECK(2021,1,0) || \
     JSON_HEDLEY_ARM_VERSION_CHECK(4,1,0) || \
     JSON_HEDLEY_TI_ARMCL_VERSION_CHECK(5,1,0) || \
     JSON_HEDLEY_TI_CL430_VERSION_CHECK(3,1,0) || \
@@ -1573,7 +1621,9 @@ JSON_HEDLEY_DIAGNOSTIC_POP
   JSON_HEDLEY_TI_CL7X_VERSION_CHECK(1,2,0) || \
   JSON_HEDLEY_TI_CLPRU_VERSION_CHECK(2,1,0)
 #  define JSON_HEDLEY_ALWAYS_INLINE __attribute__((__always_inline__)) JSON_HEDLEY_INLINE
-#elif JSON_HEDLEY_MSVC_VERSION_CHECK(12,0,0)
+#elif \
+  JSON_HEDLEY_MSVC_VERSION_CHECK(12,0,0) || \
+  JSON_HEDLEY_INTEL_CL_VERSION_CHECK(2021,1,0)
 #  define JSON_HEDLEY_ALWAYS_INLINE __forceinline
 #elif defined(__cplusplus) && \
     ( \
@@ -1613,7 +1663,9 @@ JSON_HEDLEY_DIAGNOSTIC_POP
     JSON_HEDLEY_TI_CL7X_VERSION_CHECK(1,2,0) || \
     JSON_HEDLEY_TI_CLPRU_VERSION_CHECK(2,1,0)
     #define JSON_HEDLEY_NEVER_INLINE __attribute__((__noinline__))
-#elif JSON_HEDLEY_MSVC_VERSION_CHECK(13,10,0)
+#elif \
+    JSON_HEDLEY_MSVC_VERSION_CHECK(13,10,0) || \
+    JSON_HEDLEY_INTEL_CL_VERSION_CHECK(2021,1,0)
     #define JSON_HEDLEY_NEVER_INLINE __declspec(noinline)
 #elif JSON_HEDLEY_PGI_VERSION_CHECK(10,2,0)
     #define JSON_HEDLEY_NEVER_INLINE _Pragma("noinline")
@@ -1676,6 +1728,7 @@ JSON_HEDLEY_DIAGNOSTIC_POP
     #define JSON_HEDLEY_NO_THROW __attribute__((__nothrow__))
 #elif \
     JSON_HEDLEY_MSVC_VERSION_CHECK(13,1,0) || \
+    JSON_HEDLEY_INTEL_CL_VERSION_CHECK(2021,1,0) || \
     JSON_HEDLEY_ARM_VERSION_CHECK(4,1,0)
     #define JSON_HEDLEY_NO_THROW __declspec(nothrow)
 #else
@@ -1840,7 +1893,7 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 #if \
   !defined(__cplusplus) && ( \
       (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)) || \
-      JSON_HEDLEY_HAS_FEATURE(c_static_assert) || \
+      (JSON_HEDLEY_HAS_FEATURE(c_static_assert) && !defined(JSON_HEDLEY_INTEL_CL_VERSION)) || \
       JSON_HEDLEY_GCC_VERSION_CHECK(6,0,0) || \
       JSON_HEDLEY_INTEL_VERSION_CHECK(13,0,0) || \
       defined(_Static_assert) \
@@ -1848,7 +1901,8 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 #  define JSON_HEDLEY_STATIC_ASSERT(expr, message) _Static_assert(expr, message)
 #elif \
   (defined(__cplusplus) && (__cplusplus >= 201103L)) || \
-  JSON_HEDLEY_MSVC_VERSION_CHECK(16,0,0)
+  JSON_HEDLEY_MSVC_VERSION_CHECK(16,0,0) || \
+  JSON_HEDLEY_INTEL_CL_VERSION_CHECK(2021,1,0)
 #  define JSON_HEDLEY_STATIC_ASSERT(expr, message) JSON_HEDLEY_DIAGNOSTIC_DISABLE_CPP98_COMPAT_WRAP_(static_assert(expr, message))
 #else
 #  define JSON_HEDLEY_STATIC_ASSERT(expr, message)
@@ -1908,7 +1962,9 @@ JSON_HEDLEY_DIAGNOSTIC_POP
   JSON_HEDLEY_PGI_VERSION_CHECK(18,4,0) || \
   JSON_HEDLEY_INTEL_VERSION_CHECK(13,0,0)
 #  define JSON_HEDLEY_WARNING(msg) JSON_HEDLEY_PRAGMA(GCC warning msg)
-#elif JSON_HEDLEY_MSVC_VERSION_CHECK(15,0,0)
+#elif \
+  JSON_HEDLEY_MSVC_VERSION_CHECK(15,0,0) || \
+  JSON_HEDLEY_INTEL_CL_VERSION_CHECK(2021,1,0)
 #  define JSON_HEDLEY_WARNING(msg) JSON_HEDLEY_PRAGMA(message(msg))
 #else
 #  define JSON_HEDLEY_WARNING(msg) JSON_HEDLEY_MESSAGE(msg)
@@ -1946,6 +2002,8 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 #endif
 #if JSON_HEDLEY_HAS_ATTRIBUTE(flag_enum)
     #define JSON_HEDLEY_FLAGS __attribute__((__flag_enum__))
+#else
+    #define JSON_HEDLEY_FLAGS
 #endif
 
 #if defined(JSON_HEDLEY_FLAGS_CAST)
@@ -1965,7 +2023,9 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 #if defined(JSON_HEDLEY_EMPTY_BASES)
     #undef JSON_HEDLEY_EMPTY_BASES
 #endif
-#if JSON_HEDLEY_MSVC_VERSION_CHECK(19,0,23918) && !JSON_HEDLEY_MSVC_VERSION_CHECK(20,0,0)
+#if \
+    (JSON_HEDLEY_MSVC_VERSION_CHECK(19,0,23918) && !JSON_HEDLEY_MSVC_VERSION_CHECK(20,0,0)) || \
+    JSON_HEDLEY_INTEL_CL_VERSION_CHECK(2021,1,0)
     #define JSON_HEDLEY_EMPTY_BASES __declspec(empty_bases)
 #else
     #define JSON_HEDLEY_EMPTY_BASES
@@ -25398,6 +25458,8 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 #undef JSON_HEDLEY_IBM_VERSION_CHECK
 #undef JSON_HEDLEY_IMPORT
 #undef JSON_HEDLEY_INLINE
+#undef JSON_HEDLEY_INTEL_CL_VERSION
+#undef JSON_HEDLEY_INTEL_CL_VERSION_CHECK
 #undef JSON_HEDLEY_INTEL_VERSION
 #undef JSON_HEDLEY_INTEL_VERSION_CHECK
 #undef JSON_HEDLEY_IS_CONSTANT
