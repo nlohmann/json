@@ -11,7 +11,9 @@ add_test(NAME cmake_import_build
 )
 set_tests_properties(cmake_import_configure PROPERTIES
   FIXTURES_SETUP cmake_import
+  LABELS not_reproducible
 )
 set_tests_properties(cmake_import_build PROPERTIES
   FIXTURES_REQUIRED cmake_import
+  LABELS not_reproducible
 )
