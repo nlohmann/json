@@ -142,6 +142,18 @@ set(files
     src/unit-user_defined_input.cpp
     src/unit-wstring.cpp)
 
+set(CLANG_AS_MSVC 0)
+set(MSVC_LIKE 0)
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+  set(MSVC_LIKE 1)
+elseif(CMAKE_CXX_SIMULATE_ID STREQUAL "MSVC"
+       AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang"
+       AND CMAKE_GENERATOR MATCHES "Visual Studio")
+  set(MSVC_LIKE 1)
+  set(CLANG_AS_MSVC 1)
+endif()
+
 foreach(file ${files})
     get_filename_component(file_basename ${file} NAME_WE)
     string(REGEX REPLACE "unit-([^$]+)" "test-\\1" testcase ${file_basename})
@@ -149,10 +161,12 @@ foreach(file ${files})
     add_executable(${testcase} $<TARGET_OBJECTS:doctest_main> ${file})
     target_compile_definitions(${testcase} PRIVATE DOCTEST_CONFIG_SUPER_FAST_ASSERTS)
     target_compile_options(${testcase} PRIVATE
-        $<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>
-        $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wno-deprecated;-Wno-float-equal>
+        $<${MSVC_LIKE}:/EHsc;/W4;/WX;$<$<CONFIG:Release>:/Od>>
+        $<$<NOT:${MSVC_LIKE}>:-Wno-deprecated;-Wno-float-equal;-Wall;-Wextra;-pedantic;-Werror>
         $<$<CXX_COMPILER_ID:GNU>:-Wno-deprecated-declarations>
+        $<${CLANG_AS_MSVC}:/clang:-Wno-deprecated;/clang:-pedantic;/clang:-Wno-deprecated-declarations;-Wno-float-equal>
     )
+
     target_include_directories(${testcase} PRIVATE ${CMAKE_BINARY_DIR}/include thirdparty/doctest thirdparty/fifo_map)
     target_link_libraries(${testcase} PRIVATE ${NLOHMANN_JSON_TARGET_NAME})
 
@@ -179,9 +193,10 @@ endforeach()
 add_executable(json_unit EXCLUDE_FROM_ALL $<TARGET_OBJECTS:doctest_main> ${files})
 target_compile_definitions(json_unit PRIVATE DOCTEST_CONFIG_SUPER_FAST_ASSERTS)
 target_compile_options(json_unit PRIVATE
-    $<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>
-    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wno-deprecated;-Wno-float-equal>
+    $<${MSVC_LIKE}:/EHsc;$<$<CONFIG:Release>:/Od>>
+    $<$<NOT:${MSVC_LIKE}>:-Wno-deprecated;-Wno-float-equal>
     $<$<CXX_COMPILER_ID:GNU>:-Wno-deprecated-declarations>
+    $<${CLANG_AS_MSVC}:/clang:-Wno-deprecated-declarations>
 )
 target_include_directories(json_unit PRIVATE ${CMAKE_BINARY_DIR}/include thirdparty/doctest thirdparty/fifo_map)
 target_link_libraries(json_unit ${NLOHMANN_JSON_TARGET_NAME})
