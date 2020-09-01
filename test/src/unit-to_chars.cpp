@@ -33,6 +33,11 @@ SOFTWARE.
 
 #include "doctest_compatibility.h"
 
+#if (DOCTEST_GCC >= DOCTEST_COMPILER(4, 8, 0)) && \
+    (DOCTEST_GCC < DOCTEST_COMPILER(5, 0, 0))
+    DOCTEST_GCC_SUPPRESS_WARNING("-Wmissing-field-initializers")
+#endif // gcc 4.8.x and 4.9.x
+
 #include <nlohmann/json.hpp>
 using nlohmann::detail::dtoa_impl::reinterpret_bits;
 

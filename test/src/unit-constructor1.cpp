@@ -28,7 +28,12 @@ SOFTWARE.
 */
 
 #include "doctest_compatibility.h"
+
 DOCTEST_GCC_SUPPRESS_WARNING("-Wfloat-equal")
+
+#if DOCTEST_CLANG && DOCTEST_CLANG >= DOCTEST_COMPILER(3, 6, 0)
+    DOCTEST_CLANG_SUPPRESS_WARNING("-Wkeyword-macro")
+#endif // clang 3.6.x
 
 #define JSON_TESTS_PRIVATE
 #include <nlohmann/json.hpp>

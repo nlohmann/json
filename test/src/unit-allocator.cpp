@@ -29,6 +29,10 @@ SOFTWARE.
 
 #include "doctest_compatibility.h"
 
+#if DOCTEST_CLANG && DOCTEST_CLANG >= DOCTEST_COMPILER(3, 6, 0)
+    DOCTEST_CLANG_SUPPRESS_WARNING("-Wkeyword-macro")
+#endif // clang 3.6.x
+
 #define JSON_TESTS_PRIVATE
 #include <nlohmann/json.hpp>
 using nlohmann::json;
@@ -95,6 +99,8 @@ struct my_allocator : std::allocator<T>
     {
         if (next_deallocate_fails)
         {
+            (void)p; // Ignored unused
+            (void)n; // ignored unused
             next_deallocate_fails = false;
             throw std::bad_alloc();
         }

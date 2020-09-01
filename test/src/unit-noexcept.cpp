@@ -31,6 +31,8 @@ SOFTWARE.
 
 #include <nlohmann/json.hpp>
 
+DOCTEST_CLANG_SUPPRESS_WARNING("-Wunneeded-internal-declaration")
+
 using nlohmann::json;
 
 namespace

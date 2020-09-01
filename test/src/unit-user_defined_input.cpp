@@ -29,6 +29,8 @@ SOFTWARE.
 
 #include "doctest_compatibility.h"
 
+DOCTEST_GCC_SUPPRESS_WARNING("-Wunused-local-typedefs")
+
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 

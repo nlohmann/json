@@ -29,6 +29,10 @@ SOFTWARE.
 
 #include "doctest_compatibility.h"
 
+#if DOCTEST_CLANG && DOCTEST_CLANG >= DOCTEST_COMPILER(3, 6, 0)
+    DOCTEST_CLANG_SUPPRESS_WARNING("-Wkeyword-macro")
+#endif // clang 3.6.x
+
 // for some reason including this after the json header leads to linker errors with VS 2017...
 #include <locale>
 
