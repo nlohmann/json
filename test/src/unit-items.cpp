@@ -39,6 +39,14 @@ using nlohmann::json;
     #define JSON_HAS_CPP_14
 #endif
 
+#if defined(DOCTEST_PLATFORM_WINDOWS) && defined(DOCTEST_CLANG) && DOCTEST_CLANG >= DOCTEST_COMPILER(10, 0, 0)
+    DOCTEST_CLANG_SUPPRESS_WARNING("-Wrange-loop-construct")
+// work around misdetection of platform on MacOSX Big Sur, this should be DOCTEST_PLATFORM_MAC
+// see also https://github.com/onqtam/doctest/issues/415
+#elif defined(DOCTEST_PLATFORM_LINUX) && defined(DOCTEST_CLANG) && DOCTEST_CLANG >= DOCTEST_COMPILER(12, 0, 0)
+    DOCTEST_CLANG_SUPPRESS_WARNING("-Wrange-loop-analysis")
+#endif
+
 TEST_CASE("iterator_wrapper")
 {
     SECTION("object")
