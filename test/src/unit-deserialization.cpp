@@ -29,6 +29,10 @@ SOFTWARE.
 
 #include "doctest_compatibility.h"
 
+#if DOCTEST_MSVC && DOCTEST_MSVC < DOCTEST_COMPILER(19, 20, 0)
+DOCTEST_MSVC_SUPPRESS_WARNING(4309) // 'conversion' : truncation of constant value
+#endif // VS 14 2015 and 15 2017
+
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
