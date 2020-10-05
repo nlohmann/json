@@ -67,19 +67,19 @@ Other aspects were not so important to us:
 See the [contribution guidelines](https://github.com/nlohmann/json/blob/master/.github/CONTRIBUTING.md#please-dont) for more information.
 
 
-## Sponsors
+## You can me on github
 
 You can sponsor this library at [GitHub Sponsors](https://github.com/sponsors/nlohmann).
 
 ### :label: Named Sponsors
-
+These four peoples sponser me on github.
 - [Michael Hartmann](https://github.com/reFX-Mike)
 - [Stefan Hagen](https://github.com/sthagen)
 - [Steve Sperandeo](https://github.com/homer6)
 - [Robert Jefe Lindstädt](https://github.com/eljefedelrodeodeljefe)
 
 Thanks everyone!
-
+Thanks again!
 
 ## Integration
 
@@ -973,7 +973,7 @@ namespace nlohmann {
                                   // adl_serializer<T>::from_json
             }
         }
-    };
+    };m
 }
 ```
 
