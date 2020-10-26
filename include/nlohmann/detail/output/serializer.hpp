@@ -881,6 +881,7 @@ class serializer
             }
         };
 
+        JSON_ASSERT(byte < 400);
         const std::uint8_t type = utf8d[byte];
 
         codep = (state != UTF8_ACCEPT)
