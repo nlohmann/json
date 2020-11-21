@@ -96,6 +96,26 @@ struct json_sax
     virtual bool key(string_t& val) = 0;
 
     /*!
+    @brief an object key was read
+    @param[in] val  object integer key
+    @return whether parsing should proceed
+    @note default to key(string_t& val) if no overload provided
+    */
+    virtual bool key(number_integer_t val){
+        return key(std::to_string(val));
+    }
+    
+    /*!
+    @brief an object key was read
+    @param[in] val  object unsigned key
+    @return whether parsing should proceed
+    @note default to key(string_t& val) if no overload provided
+    */
+    virtual bool key(number_unsigned_t val){
+        return key(std::to_string(val));
+    }
+
+    /*!
     @brief the end of an object was read
     @return whether parsing should proceed
     */
