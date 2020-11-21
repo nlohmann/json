@@ -101,7 +101,7 @@ struct json_sax
     @return whether parsing should proceed
     @note default to key(string_t& val) if no overload provided
     */
-    virtual bool key(number_integer_t val){
+    virtual bool key_integer(number_integer_t val){
         return key(std::to_string(val));
     }
     
@@ -111,7 +111,7 @@ struct json_sax
     @return whether parsing should proceed
     @note default to key(string_t& val) if no overload provided
     */
-    virtual bool key(number_unsigned_t val){
+    virtual bool key_unsigned(number_unsigned_t val){
         return key(std::to_string(val));
     }
 
