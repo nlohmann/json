@@ -91,6 +91,16 @@ class SaxCountdown
         return events_left-- > 0;
     }
 
+    bool key_integer(json::number_integer_t )
+    {
+        return events_left-- > 0;
+    }
+
+    bool key_unsigned(json::number_unsigned_t )
+    {
+        return events_left-- > 0;
+    }
+
     bool end_object()
     {
         return events_left-- > 0;

@@ -1731,7 +1731,7 @@ class binary_reader
         string_t key;
         for (std::size_t i = 0; i < len; ++i)
         {
-           switch (get())
+            switch (get())
             {
                 // fixstr
                 case 0xA0:
@@ -1774,8 +1774,8 @@ class binary_reader
                     {
                         return false;
                     }
+                    break;
                 }
-
 
                 // positive fixint
                 case 0x00:
@@ -1911,8 +1911,8 @@ class binary_reader
                     {
                         return false;
                     }
+                    break;
                 }
-
 
                 case 0xCC: // uint 8
                 {
@@ -1921,6 +1921,7 @@ class binary_reader
                     {
                         return false;
                     }
+                    break;
                 }
 
                 case 0xCD: // uint 16
@@ -1930,6 +1931,7 @@ class binary_reader
                     {
                         return false;
                     }
+                    break;
                 }
 
                 case 0xCE: // uint 32
@@ -1939,6 +1941,7 @@ class binary_reader
                     {
                         return false;
                     }
+                    break;
                 }
 
                 case 0xCF: // uint 64
@@ -1948,6 +1951,7 @@ class binary_reader
                     {
                         return false;
                     }
+                    break;
                 }
 
                 case 0xD0: // int 8
@@ -1957,6 +1961,7 @@ class binary_reader
                     {
                         return false;
                     }
+                    break;
                 }
 
                 case 0xD1: // int 16
@@ -1966,6 +1971,7 @@ class binary_reader
                     {
                         return false;
                     }
+                    break;
                 }
 
                 case 0xD2: // int 32
@@ -1975,6 +1981,7 @@ class binary_reader
                     {
                         return false;
                     }
+                    break;
                 }
 
                 case 0xD3: // int 64
@@ -1984,6 +1991,7 @@ class binary_reader
                     {
                         return false;
                     }
+                    break;
                 }
 
                 // negative fixint
@@ -2024,16 +2032,16 @@ class binary_reader
                     {
                         return false;
                     }
+                    break;
                 }
 
                 default: // anything else
                 {
                     auto last_token = get_token_string();
-                    return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message(input_format_t::msgpack, "invalid byte: 0x" + last_token, "value")));
+                    return sax->parse_error(chars_read, last_token, parse_error::create(110, chars_read, exception_message(input_format_t::msgpack, "invalid byte: 0x" + last_token, "object")));
                 }
 
             }
-
 
             if (JSON_HEDLEY_UNLIKELY(!parse_msgpack_internal()))
             {

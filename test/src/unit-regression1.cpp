@@ -985,7 +985,7 @@ TEST_CASE("regression tests 1")
         std::vector<uint8_t> vec1 {0x87};
         CHECK_THROWS_AS(_ = json::from_msgpack(vec1), json::parse_error&);
         CHECK_THROWS_WITH(_ = json::from_msgpack(vec1),
-                          "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing MessagePack string: unexpected end of input");
+                          "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing MessagePack object: invalid byte: 0xFF");
 
         // more test cases for MessagePack
         for (auto b :

@@ -110,6 +110,18 @@ class SaxEventLogger
         return true;
     }
 
+    bool key_integer(json::number_integer_t val)
+    {
+        events.push_back("key_integer(" + std::to_string(val) + ")");
+        return true;
+    }
+
+    bool key_unsigned(json::number_unsigned_t val)
+    {
+        events.push_back("key_integer(" + std::to_string(val) + ")");
+        return true;
+    }
+
     bool end_object()
     {
         events.push_back("end_object()");

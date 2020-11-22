@@ -101,18 +101,22 @@ struct json_sax
     @return whether parsing should proceed
     @note default to key(string_t& val) if no overload provided
     */
-    virtual bool key_integer(number_integer_t val){
-        return key(std::to_string(val));
+    virtual bool key_integer(number_integer_t val)
+    {
+        string_t as_str = std::to_string(val);
+        return key(as_str);
     }
-    
+
     /*!
     @brief an object key was read
     @param[in] val  object unsigned key
     @return whether parsing should proceed
     @note default to key(string_t& val) if no overload provided
     */
-    virtual bool key_unsigned(number_unsigned_t val){
-        return key(std::to_string(val));
+    virtual bool key_unsigned(number_unsigned_t val)
+    {
+        string_t as_str = std::to_string(val);
+        return key(as_str);
     }
 
     /*!
@@ -252,6 +256,19 @@ class json_sax_dom_parser
         object_element = &(ref_stack.back()->m_value.object->operator[](val));
         return true;
     }
+
+    bool key_integer(number_integer_t val)
+    {
+        string_t as_str = std::to_string(val);
+        return key(as_str);
+    }
+
+    bool key_unsigned(number_unsigned_t val)
+    {
+        string_t as_str = std::to_string(val);
+        return key(as_str);
+    }
+
 
     bool end_object()
     {
@@ -442,6 +459,19 @@ class json_sax_dom_callback_parser
 
         return true;
     }
+
+    bool key_integer(number_integer_t val)
+    {
+        string_t as_str = std::to_string(val);
+        return key(as_str);
+    }
+
+    bool key_unsigned(number_unsigned_t val)
+    {
+        string_t as_str = std::to_string(val);
+        return key(as_str);
+    }
+
 
     bool end_object()
     {
@@ -686,6 +716,16 @@ class json_sax_acceptor
     }
 
     bool key(string_t& /*unused*/)
+    {
+        return true;
+    }
+
+    bool key_integer(number_integer_t /*unused*/)
+    {
+        return true;
+    }
+
+    bool key_unsigned(number_unsigned_t /*unused*/)
     {
         return true;
     }
