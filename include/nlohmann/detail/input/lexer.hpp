@@ -929,17 +929,18 @@ class lexer : public lexer_base<BasicJsonType>
     accepts the number. State "error" is a trap state to model errors. In the
     table below, "anything" means any character but the ones listed before.
 
-    state    | 0        | 1-9      | e E      | +       | -       | .        | anything
-    ---------|----------|----------|----------|---------|---------|----------|-----------
-    init     | zero     | any1     | [error]  | [error] | minus   | [error]  | [error]
-    minus    | zero     | any1     | [error]  | [error] | [error] | [error]  | [error]
-    zero     | done     | done     | exponent | done    | done    | decimal1 | done
-    any1     | any1     | any1     | exponent | done    | done    | decimal1 | done
-    decimal1 | decimal2 | decimal2 | [error]  | [error] | [error] | [error]  | [error]
-    decimal2 | decimal2 | decimal2 | exponent | done    | done    | done     | done
-    exponent | any2     | any2     | [error]  | sign    | sign    | [error]  | [error]
-    sign     | any2     | any2     | [error]  | [error] | [error] | [error]  | [error]
-    any2     | any2     | any2     | done     | done    | done    | done     | done
+    state    | 0        | 1-9      | e E      | +       | -       | .        | x         | a-f A-F   | anything
+    ---------|----------|----------|----------|---------|---------|----------|-----------|-----------|-----------
+    init     | zero     | any1     | [error]  | [error] | minus   | [error]  | [error]   | [error]   | [error]
+    minus    | zero     | any1     | [error]  | [error] | [error] | [error]  | [error]   | [error]   | [error]
+    zero     | done     | done     | exponent | done    | done    | decimal1 | *hex1*    | done      | done
+    any1     | any1     | any1     | exponent | done    | done    | decimal1 | done      | done      | done
+    decimal1 | decimal2 | [error]  | [error]  | [error] | [error] | [error]  | [error]   | [error]   | [error]
+    decimal2 | decimal2 | decimal2 | exponent | done    | done    | done     | done      | done      | done
+    exponent | any2     | any2     | [error]  | sign    | sign    | [error]  | [error]   | [error]   | [error]
+    sign     | any2     | any2     | [error]  | [error] | [error] | [error]  | [error]   | [error]   | [error]
+    any2     | any2     | any2     | done     | done    | done    | done     | done      | done      | done
+    hex1     | hex1     | hex1     | hex1     | [error] | [error] | [error]  | [error]   | hex1      | done
 
     The state machine is realized with one label per state (prefixed with
     "scan_number_") and `goto` statements between them. The state machine
@@ -1087,6 +1088,52 @@ scan_number_any1:
             }
 
             default:
+                goto scan_number_done;
+        }
+
+scan_number_hex1:
+        // state: we are parsing a hex number having previously parsed '0x' or
+        // '0X' (however ugly that latter may be)
+        switch (get()) {
+            case '0': // in hex, we love padding with leading zeros
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+            case 'a':
+            case 'b':
+            case 'c':
+            case 'd':
+            case 'e':
+            case 'f':
+            case 'A':
+            case 'B':
+            case 'C':
+            case 'D':
+            case 'E':
+            case 'F':
+            {
+                add(current);
+                goto scan_number_hex1;
+            }
+
+            // omg, we are so not doing hex floating point
+            //case '.': {
+            //    add(decimal_point_char);
+            //    goto scan_number_decimal1;
+            //}
+
+            // safer to error while testing, but it would error on natural ends of numbers?
+            //default: {
+            //    error_message = "invalid hexidecimal number; expected hex digit";
+            //    return token_type::parse_error;
+            //}
+            default: 
                 goto scan_number_done;
         }
 
@@ -1242,7 +1289,7 @@ scan_number_done:
         // try to parse integers first and fall back to floats
         if (number_type == token_type::value_unsigned)
         {
-            const auto x = std::strtoull(token_buffer.data(), &endptr, 10);
+            const auto x = std::strtoull(token_buffer.data(), &endptr, 0);
 
             // we checked the number format before
             JSON_ASSERT(endptr == token_buffer.data() + token_buffer.size());
@@ -1258,7 +1305,7 @@ scan_number_done:
         }
         else if (number_type == token_type::value_integer)
         {
-            const auto x = std::strtoll(token_buffer.data(), &endptr, 10);
+            const auto x = std::strtoll(token_buffer.data(), &endptr, 0);
 
             // we checked the number format before
             JSON_ASSERT(endptr == token_buffer.data() + token_buffer.size());
