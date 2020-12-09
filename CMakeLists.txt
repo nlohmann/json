@@ -7,6 +7,13 @@ cmake_minimum_required(VERSION 3.1)
 project(nlohmann_json VERSION 3.9.1 LANGUAGES CXX)
 
 ##
+## MAIN_PROJECT CHECK
+##
+if (CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+  set(MAIN_PROJECT ON)
+endif()
+
+##
 ## INCLUDE
 ##
 ##
@@ -21,8 +28,8 @@ if (POLICY CMP0077)
     cmake_policy(SET CMP0077 NEW)
 endif ()
 
-option(JSON_BuildTests "Build the unit tests when BUILD_TESTING is enabled." ON)
-option(JSON_Install "Install CMake targets during install step." ON)
+option(JSON_BuildTests "Build the unit tests when BUILD_TESTING is enabled." ${MAIN_PROJECT})
+option(JSON_Install "Install CMake targets during install step." ${MAIN_PROJECT})
 option(JSON_MultipleHeaders "Use non-amalgamated version of the library." OFF)
 option(JSON_ImplicitConversions "Enable implicit conversions." ON)
 
@@ -101,9 +108,8 @@ CONFIGURE_FILE(
 ## TESTS
 ## create and configure the unit test target
 ##
-include(CTest) #adds option BUILD_TESTING (default ON)
-
-if(BUILD_TESTING AND JSON_BuildTests)
+if (JSON_BuildTests)
+    include(CTest) #adds option BUILD_TESTING (default ON)
     enable_testing()
     add_subdirectory(test)
 endif()
