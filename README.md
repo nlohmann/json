@@ -232,6 +232,15 @@ Please file issues [here](https://github.com/build2-packaging/nlohmann-json) if 
 
 If you are using [`wsjcpp`](https://wsjcpp.org), you can use the command `wsjcpp install "https://github.com/nlohmann/json:develop"` to get the latest version. Note you can change the branch ":develop" to an existing tag or another branch.
 
+If you are using [`CPM.cmake`](https://github.com/TheLartians/CPM.cmake), you can check this [`example`](https://github.com/TheLartians/CPM.cmake/tree/master/examples/json). After [adding CPM script](https://github.com/TheLartians/CPM.cmake#adding-cpm) to your project, implement the following snippet to your CMake:
+
+```cmake
+CPMAddPackage(
+    NAME nlohmann_json
+    GITHUB_REPOSITORY nlohmann/json
+    VERSION 3.9.1)
+```
+
 ### Pkg-config
 
 If you are using bare Makefiles, you can use `pkg-config` to generate the include flags that point to where the library is installed:
