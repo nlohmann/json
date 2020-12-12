@@ -125,18 +125,6 @@ matrix:
   # OSX / Clang
 
   - os: osx
-    osx_image: xcode9.3
-
-  - os: osx
-    osx_image: xcode9.4
-
-  - os: osx
-    osx_image: xcode10
-
-  - os: osx
-    osx_image: xcode10.1
-
-  - os: osx
     osx_image: xcode10.2
 
   - os: osx

@@ -14,7 +14,6 @@
 [![Try online](https://img.shields.io/badge/try-online-blue.svg)](https://wandbox.org/permlink/3lCHrFUZANONKv7a)
 [![Documentation](https://img.shields.io/badge/docs-doxygen-blue.svg)](https://nlohmann.github.io/json/doxygen/index.html)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/nlohmann/json/master/LICENSE.MIT)
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fnlohmann%2Fjson.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fnlohmann%2Fjson?ref=badge_shield)
 [![GitHub Releases](https://img.shields.io/github/release/nlohmann/json.svg)](https://github.com/nlohmann/json/releases)
 [![GitHub Downloads](https://img.shields.io/github/downloads/nlohmann/json/total)](https://github.com/nlohmann/json/releases)
 [![GitHub Issues](https://img.shields.io/github/issues/nlohmann/json.svg)](https://github.com/nlohmann/json/issues)
@@ -1223,10 +1222,6 @@ The following compilers are currently used in continuous integration at [Travis]
 
 | Compiler                                                        | Operating System   | CI Provider    |
 |-----------------------------------------------------------------|--------------------|----------------|
-| Apple Clang 9.1.0 (clang-902.0.39.1); Xcode 9.3                 | macOS 10.13.3      | Travis         |
-| Apple Clang 9.1.0 (clang-902.0.39.2); Xcode 9.4.1               | macOS 10.13.6      | Travis         |
-| Apple Clang 10.0.0 (clang-1000.11.45.2); Xcode 10.0             | macOS 10.13.6      | Travis         |
-| Apple Clang 10.0.0 (clang-1000.11.45.5); Xcode 10.1             | macOS 10.13.6      | Travis         |
 | Apple Clang 10.0.1 (clang-1001.0.46.4); Xcode 10.2.1            | macOS 10.14.4      | Travis         |
 | Apple Clang 11.0.0 (clang-1100.0.33.12); Xcode 11.2.1           | macOS 10.14.6      | Travis         |
 | Apple Clang 11.0.3 (clang-1103.0.32.59); Xcode 11.4.1           | macOS 10.15.4      | GitHub Actions |
