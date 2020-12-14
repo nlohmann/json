@@ -57,7 +57,7 @@ class json_ref
 
     value_type const* operator->() const
     {
-        return &**this;
+        return &** this;
     }
 
   private:
