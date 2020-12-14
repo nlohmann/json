@@ -55,70 +55,70 @@ namespace persons
         {}
 
 #define CREATE_PERSON_WITH_ALPHABET(ClassName, Visibility)                         \
-class ClassName{                                                                   \
-  public:                                                                          \
-    bool operator==(const ClassName& other){                                       \
-        return a == other.a &&                                                     \
-               b == other.b &&                                                     \
-               c == other.c &&                                                     \
-               d == other.d &&                                                     \
-               e == other.e &&                                                     \
-               f == other.f &&                                                     \
-               g == other.g &&                                                     \
-               h == other.h &&                                                     \
-               i == other.i &&                                                     \
-               j == other.j &&                                                     \
-               k == other.k &&                                                     \
-               l == other.l &&                                                     \
-               m == other.m &&                                                     \
-               n == other.n &&                                                     \
-               o == other.o &&                                                     \
-               p == other.p &&                                                     \
-               q == other.q &&                                                     \
-               r == other.r &&                                                     \
-               s == other.s &&                                                     \
-               t == other.t &&                                                     \
-               u == other.u &&                                                     \
-               v == other.v &&                                                     \
-               w == other.w &&                                                     \
-               x == other.x &&                                                     \
-               y == other.y &&                                                     \
-               z == other.z;                                                       \
-    }                                                                              \
-  Visibility:                                                                      \
-    int a = 0;                                                                     \
-    int b = 0;                                                                     \
-    int c = 0;                                                                     \
-    int d = 0;                                                                     \
-    int e = 0;                                                                     \
-    int f = 0;                                                                     \
-    int g = 0;                                                                     \
-    int h = 0;                                                                     \
-    int i = 0;                                                                     \
-    int j = 0;                                                                     \
-    int k = 0;                                                                     \
-    int l = 0;                                                                     \
-    int m = 0;                                                                     \
-    int n = 0;                                                                     \
-    int o = 0;                                                                     \
-    int p = 0;                                                                     \
-    int q = 0;                                                                     \
-    int r = 0;                                                                     \
-    int s = 0;                                                                     \
-    int t = 0;                                                                     \
-    int u = 0;                                                                     \
-    int v = 0;                                                                     \
-    int w = 0;                                                                     \
-    int x = 0;                                                                     \
-    int y = 0;                                                                     \
-    int z = 0;
+    class ClassName{                                                                   \
+      public:                                                                          \
+        bool operator==(const ClassName& other){                                       \
+            return a == other.a &&                                                     \
+                   b == other.b &&                                                     \
+                   c == other.c &&                                                     \
+                   d == other.d &&                                                     \
+                   e == other.e &&                                                     \
+                   f == other.f &&                                                     \
+                   g == other.g &&                                                     \
+                   h == other.h &&                                                     \
+                   i == other.i &&                                                     \
+                   j == other.j &&                                                     \
+                   k == other.k &&                                                     \
+                   l == other.l &&                                                     \
+                   m == other.m &&                                                     \
+                   n == other.n &&                                                     \
+                   o == other.o &&                                                     \
+                   p == other.p &&                                                     \
+                   q == other.q &&                                                     \
+                   r == other.r &&                                                     \
+                   s == other.s &&                                                     \
+                   t == other.t &&                                                     \
+                   u == other.u &&                                                     \
+                   v == other.v &&                                                     \
+                   w == other.w &&                                                     \
+                   x == other.x &&                                                     \
+                   y == other.y &&                                                     \
+                   z == other.z;                                                       \
+        }                                                                              \
+      Visibility:                                                                      \
+        int a = 0;                                                                     \
+        int b = 0;                                                                     \
+        int c = 0;                                                                     \
+        int d = 0;                                                                     \
+        int e = 0;                                                                     \
+        int f = 0;                                                                     \
+        int g = 0;                                                                     \
+        int h = 0;                                                                     \
+        int i = 0;                                                                     \
+        int j = 0;                                                                     \
+        int k = 0;                                                                     \
+        int l = 0;                                                                     \
+        int m = 0;                                                                     \
+        int n = 0;                                                                     \
+        int o = 0;                                                                     \
+        int p = 0;                                                                     \
+        int q = 0;                                                                     \
+        int r = 0;                                                                     \
+        int s = 0;                                                                     \
+        int t = 0;                                                                     \
+        int u = 0;                                                                     \
+        int v = 0;                                                                     \
+        int w = 0;                                                                     \
+        int x = 0;                                                                     \
+        int y = 0;                                                                     \
+        int z = 0;
 
 CREATE_PERSON(person_with_private_data, private)
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(person_with_private_data, age, name, metadata)
+NLOHMANN_DEFINE_TYPE_INTRUSIVE(person_with_private_data, age, name, metadata)
 };
 
 CREATE_PERSON(person_without_private_data_1, public)
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(person_without_private_data_1, age, name, metadata)
+NLOHMANN_DEFINE_TYPE_INTRUSIVE(person_without_private_data_1, age, name, metadata)
 };
 
 CREATE_PERSON(person_without_private_data_2, public)
@@ -126,29 +126,79 @@ CREATE_PERSON(person_without_private_data_2, public)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(person_without_private_data_2, age, name, metadata)
 
 
+CREATE_PERSON(person_t_with_private_data, private)
+NLOHMANN_DEFINE_TYPE_INTRUSIVE_T(person_t_with_private_data, age, name, metadata)
+};
+
+CREATE_PERSON(person_t_without_private_data_1, public)
+NLOHMANN_DEFINE_TYPE_INTRUSIVE_T(person_t_without_private_data_1, age, name, metadata)
+};
+
+CREATE_PERSON(person_t_without_private_data_2, public)
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_T(person_t_without_private_data_2, age, name, metadata)
+
+
 CREATE_PERSON_WITH_ALPHABET(person_with_private_alphabet, private)
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(person_with_private_alphabet, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
+NLOHMANN_DEFINE_TYPE_INTRUSIVE(person_with_private_alphabet, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
 };
 
 CREATE_PERSON_WITH_ALPHABET(person_with_public_alphabet, public)
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(person_with_public_alphabet, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
 
+
+CREATE_PERSON_WITH_ALPHABET(person_t_with_private_alphabet, private)
+NLOHMANN_DEFINE_TYPE_INTRUSIVE_T(person_t_with_private_alphabet, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
+};
+
+CREATE_PERSON_WITH_ALPHABET(person_t_with_public_alphabet, public)
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_T(person_t_with_public_alphabet, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
+
+
 } // namespace persons
 
-TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRUSIVE", T,
-                   persons::person_with_private_data,
-                   persons::person_without_private_data_1,
-                   persons::person_without_private_data_2)
+// Trick described in https://github.com/onqtam/doctest/blob/master/doc/markdown/parameterized-tests.md
+// in note "if you need parameterization on more than 1 type"
+template <typename TestedType_, typename BasicJsonType_ = nlohmann::json>
+struct TestTypePair
 {
+    using TestedType    = TestedType_;
+    using BasicJsonType = BasicJsonType_;
+};
+
+#define PERSON_PAIRS                                                                \
+    TestTypePair<persons::person_with_private_data>,                                \
+    TestTypePair<persons::person_without_private_data_1>,                           \
+    TestTypePair<persons::person_without_private_data_2>,                           \
+    TestTypePair<persons::person_t_with_private_data,      nlohmann::json>,         \
+    TestTypePair<persons::person_t_without_private_data_1, nlohmann::json>,         \
+    TestTypePair<persons::person_t_without_private_data_2, nlohmann::json>,         \
+    TestTypePair<persons::person_t_with_private_data,      nlohmann::ordered_json>, \
+    TestTypePair<persons::person_t_without_private_data_1, nlohmann::ordered_json>, \
+    TestTypePair<persons::person_t_without_private_data_2, nlohmann::ordered_json>
+
+TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRUSIVE T", PairT, PERSON_PAIRS)
+{
+    using T = typename PairT::TestedType;
+    using json = typename PairT::BasicJsonType;
+
     SECTION("person")
     {
         // serialization
         T p1("Erik", 1, {{"haircuts", 2}});
-        CHECK(json(p1).dump() == "{\"age\":1,\"metadata\":{\"haircuts\":2},\"name\":\"Erik\"}");
+        if ( std::is_same<json, nlohmann::ordered_json>::value )
+        {
+            CHECK(json(p1).dump() == "{\"age\":1,\"name\":\"Erik\",\"metadata\":{\"haircuts\":2}}");
+        }
+        else
+        {
+            CHECK(json(p1).dump() == "{\"age\":1,\"metadata\":{\"haircuts\":2},\"name\":\"Erik\"}");
+        }
 
         // deserialization
-        auto p2 = json(p1).get<T>();
+        auto p2 = json(p1).template get<T>();
         CHECK(p2 == p1);
 
         // roundtrip
@@ -158,19 +208,28 @@ TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRU
         // check exception in case of missing field
         json j = json(p1);
         j.erase("age");
-        CHECK_THROWS_WITH_AS(j.get<T>(), "[json.exception.out_of_range.403] key 'age' not found", json::out_of_range);
+        CHECK_THROWS_WITH_AS(j.template get<T>(), "[json.exception.out_of_range.403] key 'age' not found", typename json::out_of_range);
     }
 }
 
-TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/private member variables via NLOHMANN_DEFINE_TYPE_INTRUSIVE and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE", T,
-                   persons::person_with_private_alphabet,
-                   persons::person_with_public_alphabet)
+#define ALPHABET_PAIRS                                                             \
+    TestTypePair<persons::person_with_private_alphabet>,                           \
+    TestTypePair<persons::person_with_public_alphabet>,                            \
+    TestTypePair<persons::person_t_with_private_alphabet, nlohmann::json>,         \
+    TestTypePair<persons::person_t_with_public_alphabet,  nlohmann::json>,         \
+    TestTypePair<persons::person_t_with_private_alphabet, nlohmann::ordered_json>, \
+    TestTypePair<persons::person_t_with_public_alphabet,  nlohmann::ordered_json>
+
+TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/private member variables via NLOHMANN_DEFINE_TYPE_INTRUSIVE and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE", PairT, ALPHABET_PAIRS)
 {
+    using T = typename PairT::TestedType;
+    using json = typename PairT::BasicJsonType;
+
     SECTION("alphabet")
     {
         {
             T obj1;
-            nlohmann::json j = obj1; //via json object
+            json j = obj1; //via json object
             T obj2;
             j.get_to(obj2);
             bool ok = (obj1 == obj2);
@@ -179,9 +238,9 @@ TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/priv
 
         {
             T obj1;
-            nlohmann::json j1 = obj1; //via json string
+            json j1 = obj1; //via json string
             std::string s = j1.dump();
-            nlohmann::json j2 = nlohmann::json::parse(s);
+            json j2 = json::parse(s);
             T obj2;
             j2.get_to(obj2);
             bool ok = (obj1 == obj2);
@@ -190,9 +249,9 @@ TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/priv
 
         {
             T obj1;
-            nlohmann::json j1 = obj1; //via msgpack
-            std::vector<uint8_t> buf = nlohmann::json::to_msgpack(j1);
-            nlohmann::json j2 = nlohmann::json::from_msgpack(buf);
+            json j1 = obj1; //via msgpack
+            std::vector<uint8_t> buf = json::to_msgpack(j1);
+            json j2 = json::from_msgpack(buf);
             T obj2;
             j2.get_to(obj2);
             bool ok = (obj1 == obj2);
@@ -201,9 +260,9 @@ TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/priv
 
         {
             T obj1;
-            nlohmann::json j1 = obj1; //via bson
-            std::vector<uint8_t> buf = nlohmann::json::to_bson(j1);
-            nlohmann::json j2 = nlohmann::json::from_bson(buf);
+            json j1 = obj1; //via bson
+            std::vector<uint8_t> buf = json::to_bson(j1);
+            json j2 = json::from_bson(buf);
             T obj2;
             j2.get_to(obj2);
             bool ok = (obj1 == obj2);
@@ -212,9 +271,9 @@ TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/priv
 
         {
             T obj1;
-            nlohmann::json j1 = obj1; //via cbor
-            std::vector<uint8_t> buf = nlohmann::json::to_cbor(j1);
-            nlohmann::json j2 = nlohmann::json::from_cbor(buf);
+            json j1 = obj1; //via cbor
+            std::vector<uint8_t> buf = json::to_cbor(j1);
+            json j2 = json::from_cbor(buf);
             T obj2;
             j2.get_to(obj2);
             bool ok = (obj1 == obj2);
@@ -223,9 +282,9 @@ TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/priv
 
         {
             T obj1;
-            nlohmann::json j1 = obj1; //via ubjson
-            std::vector<uint8_t> buf = nlohmann::json::to_ubjson(j1);
-            nlohmann::json j2 = nlohmann::json::from_ubjson(buf);
+            json j1 = obj1; //via ubjson
+            std::vector<uint8_t> buf = json::to_ubjson(j1);
+            json j2 = json::from_ubjson(buf);
             T obj2;
             j2.get_to(obj2);
             bool ok = (obj1 == obj2);
