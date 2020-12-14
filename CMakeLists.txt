@@ -111,7 +111,7 @@ CONFIGURE_FILE(
 ## create and configure the unit test target
 ##
 if (JSON_BuildTests)
-    include(CTest) #adds option BUILD_TESTING (default ON)
+    include(CTest)
     enable_testing()
     add_subdirectory(test)
 endif()
