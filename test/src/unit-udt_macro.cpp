@@ -36,197 +36,102 @@ using nlohmann::json;
 
 namespace persons
 {
-class person_with_private_data
-{
-  private:
-    std::string name = "";
-    int age = 0;
-    json metadata = nullptr;
+#define CREATE_PERSON(ClassName, Visibility)                                       \
+    class ClassName {                                                              \
+      Visibility:                                                                  \
+        std::string name = "";                                                     \
+        int age = 0;                                                               \
+        json metadata = nullptr;                                                   \
+      public:                                                                      \
+        bool operator==(const ClassName& rhs) const                                \
+        {                                                                          \
+            return name == rhs.name && age == rhs.age && metadata == rhs.metadata; \
+        }                                                                          \
+        ClassName() = default;                                                     \
+        ClassName(std::string name_, int age_, json metadata_)                     \
+            : name(std::move(name_))                                               \
+            , age(age_)                                                            \
+            , metadata(std::move(metadata_))                                       \
+        {}
 
-  public:
-    bool operator==(const person_with_private_data& rhs) const
-    {
-        return name == rhs.name && age == rhs.age && metadata == rhs.metadata;
-    }
+#define CREATE_PERSON_WITH_ALPHABET(ClassName, Visibility)                         \
+class ClassName{                                                                   \
+  public:                                                                          \
+    bool operator==(const ClassName& other){                                       \
+        return a == other.a &&                                                     \
+               b == other.b &&                                                     \
+               c == other.c &&                                                     \
+               d == other.d &&                                                     \
+               e == other.e &&                                                     \
+               f == other.f &&                                                     \
+               g == other.g &&                                                     \
+               h == other.h &&                                                     \
+               i == other.i &&                                                     \
+               j == other.j &&                                                     \
+               k == other.k &&                                                     \
+               l == other.l &&                                                     \
+               m == other.m &&                                                     \
+               n == other.n &&                                                     \
+               o == other.o &&                                                     \
+               p == other.p &&                                                     \
+               q == other.q &&                                                     \
+               r == other.r &&                                                     \
+               s == other.s &&                                                     \
+               t == other.t &&                                                     \
+               u == other.u &&                                                     \
+               v == other.v &&                                                     \
+               w == other.w &&                                                     \
+               x == other.x &&                                                     \
+               y == other.y &&                                                     \
+               z == other.z;                                                       \
+    }                                                                              \
+  Visibility:                                                                      \
+    int a = 0;                                                                     \
+    int b = 0;                                                                     \
+    int c = 0;                                                                     \
+    int d = 0;                                                                     \
+    int e = 0;                                                                     \
+    int f = 0;                                                                     \
+    int g = 0;                                                                     \
+    int h = 0;                                                                     \
+    int i = 0;                                                                     \
+    int j = 0;                                                                     \
+    int k = 0;                                                                     \
+    int l = 0;                                                                     \
+    int m = 0;                                                                     \
+    int n = 0;                                                                     \
+    int o = 0;                                                                     \
+    int p = 0;                                                                     \
+    int q = 0;                                                                     \
+    int r = 0;                                                                     \
+    int s = 0;                                                                     \
+    int t = 0;                                                                     \
+    int u = 0;                                                                     \
+    int v = 0;                                                                     \
+    int w = 0;                                                                     \
+    int x = 0;                                                                     \
+    int y = 0;                                                                     \
+    int z = 0;
 
-    person_with_private_data() = default;
-    person_with_private_data(std::string name_, int age_, json metadata_)
-        : name(std::move(name_))
-        , age(age_)
-        , metadata(std::move(metadata_))
-    {}
-
+CREATE_PERSON(person_with_private_data, private)
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(person_with_private_data, age, name, metadata)
 };
 
-class person_without_private_data_1
-{
-  public:
-    std::string name = "";
-    int age = 0;
-    json metadata = nullptr;
-
-    bool operator==(const person_without_private_data_1& rhs) const
-    {
-        return name == rhs.name && age == rhs.age && metadata == rhs.metadata;
-    }
-
-    person_without_private_data_1() = default;
-    person_without_private_data_1(std::string name_, int age_, json metadata_)
-        : name(std::move(name_))
-        , age(age_)
-        , metadata(std::move(metadata_))
-    {}
-
+CREATE_PERSON(person_without_private_data_1, public)
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(person_without_private_data_1, age, name, metadata)
 };
 
-class person_without_private_data_2
-{
-  public:
-    std::string name = "";
-    int age = 0;
-    json metadata = nullptr;
-
-    bool operator==(const person_without_private_data_2& rhs) const
-    {
-        return name == rhs.name && age == rhs.age && metadata == rhs.metadata;
-    }
-
-    person_without_private_data_2() = default;
-    person_without_private_data_2(std::string name_, int age_, json metadata_)
-        : name(std::move(name_))
-        , age(age_)
-        , metadata(std::move(metadata_))
-    {}
+CREATE_PERSON(person_without_private_data_2, public)
 };
-
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(person_without_private_data_2, age, name, metadata)
 
-class person_with_private_alphabet
-{
-  public:
-    bool operator==(const person_with_private_alphabet& other)
-    {
-        return  a == other.a &&
-                b == other.b &&
-                c == other.c &&
-                d == other.d &&
-                e == other.e &&
-                f == other.f &&
-                g == other.g &&
-                h == other.h &&
-                i == other.i &&
-                j == other.j &&
-                k == other.k &&
-                l == other.l &&
-                m == other.m &&
-                n == other.n &&
-                o == other.o &&
-                p == other.p &&
-                q == other.q &&
-                r == other.r &&
-                s == other.s &&
-                t == other.t &&
-                u == other.u &&
-                v == other.v &&
-                w == other.w &&
-                x == other.x &&
-                y == other.y &&
-                z == other.z;
-    }
 
-  private:
-    int a = 0;
-    int b = 0;
-    int c = 0;
-    int d = 0;
-    int e = 0;
-    int f = 0;
-    int g = 0;
-    int h = 0;
-    int i = 0;
-    int j = 0;
-    int k = 0;
-    int l = 0;
-    int m = 0;
-    int n = 0;
-    int o = 0;
-    int p = 0;
-    int q = 0;
-    int r = 0;
-    int s = 0;
-    int t = 0;
-    int u = 0;
-    int v = 0;
-    int w = 0;
-    int x = 0;
-    int y = 0;
-    int z = 0;
+CREATE_PERSON_WITH_ALPHABET(person_with_private_alphabet, private)
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(person_with_private_alphabet, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
 };
 
-class person_with_public_alphabet
-{
-  public:
-    bool operator==(const person_with_public_alphabet& other)
-    {
-        return  a == other.a &&
-                b == other.b &&
-                c == other.c &&
-                d == other.d &&
-                e == other.e &&
-                f == other.f &&
-                g == other.g &&
-                h == other.h &&
-                i == other.i &&
-                j == other.j &&
-                k == other.k &&
-                l == other.l &&
-                m == other.m &&
-                n == other.n &&
-                o == other.o &&
-                p == other.p &&
-                q == other.q &&
-                r == other.r &&
-                s == other.s &&
-                t == other.t &&
-                u == other.u &&
-                v == other.v &&
-                w == other.w &&
-                x == other.x &&
-                y == other.y &&
-                z == other.z;
-    }
-
-    int a = 0;
-    int b = 0;
-    int c = 0;
-    int d = 0;
-    int e = 0;
-    int f = 0;
-    int g = 0;
-    int h = 0;
-    int i = 0;
-    int j = 0;
-    int k = 0;
-    int l = 0;
-    int m = 0;
-    int n = 0;
-    int o = 0;
-    int p = 0;
-    int q = 0;
-    int r = 0;
-    int s = 0;
-    int t = 0;
-    int u = 0;
-    int v = 0;
-    int w = 0;
-    int x = 0;
-    int y = 0;
-    int z = 0;
+CREATE_PERSON_WITH_ALPHABET(person_with_public_alphabet, public)
 };
-
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(person_with_public_alphabet, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
 
 } // namespace persons
