@@ -867,8 +867,9 @@ TEST_CASE("Negative size of binary value")
 
         0x00 // end marker
     };
-    CHECK_THROWS_AS(json::from_bson(input), json::parse_error);
-    CHECK_THROWS_WITH(json::from_bson(input), "[json.exception.parse_error.112] parse error at byte 15: syntax error while parsing BSON binary: byte array length cannot be negative, is -1");
+    json _;
+    CHECK_THROWS_AS(_ = json::from_bson(input), json::parse_error);
+    CHECK_THROWS_WITH(_ = json::from_bson(input), "[json.exception.parse_error.112] parse error at byte 15: syntax error while parsing BSON binary: byte array length cannot be negative, is -1");
 }
 
 TEST_CASE("Unsupported BSON input")
