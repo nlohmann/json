@@ -923,14 +923,14 @@ class basic_json
         AllocatorType<T> alloc;
         using AllocatorTraits = std::allocator_traits<AllocatorType<T>>;
 
-        auto deleter = [&](T * object)
+        auto deleter = [&](T * obj)
         {
-            AllocatorTraits::deallocate(alloc, object, 1);
+            AllocatorTraits::deallocate(alloc, obj, 1);
         };
-        std::unique_ptr<T, decltype(deleter)> object(AllocatorTraits::allocate(alloc, 1), deleter);
-        AllocatorTraits::construct(alloc, object.get(), std::forward<Args>(args)...);
-        JSON_ASSERT(object != nullptr);
-        return object.release();
+        std::unique_ptr<T, decltype(deleter)> obj(AllocatorTraits::allocate(alloc, 1), deleter);
+        AllocatorTraits::construct(alloc, obj.get(), std::forward<Args>(args)...);
+        JSON_ASSERT(obj != nullptr);
+        return obj.release();
     }
 
     ////////////////////////

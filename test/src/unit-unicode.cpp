@@ -1201,7 +1201,8 @@ TEST_CASE("Unicode" * doctest::skip())
         SECTION("with an iterator")
         {
             std::string i = "\xef\xbb\xbf{\n   \"foo\": true\n}";
-            CHECK_NOTHROW(json::parse(i.begin(), i.end()));
+            json _;
+            CHECK_NOTHROW(_ = json::parse(i.begin(), i.end()));
         }
     }
 

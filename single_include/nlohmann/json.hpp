@@ -2772,19 +2772,33 @@ class other_error : public exception
 
 #include <cstddef> // size_t
 #include <type_traits> // conditional, enable_if, false_type, integral_constant, is_constructible, is_integral, is_same, remove_cv, remove_reference, true_type
+#include <utility> // index_sequence, make_index_sequence, index_sequence_for
+
+// #include <nlohmann/detail/macro_scope.hpp>
+
 
 namespace nlohmann
 {
 namespace detail
 {
-// alias templates to reduce boilerplate
-template<bool B, typename T = void>
-using enable_if_t = typename std::enable_if<B, T>::type;
 
 template<typename T>
 using uncvref_t = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
 
-// implementation of C++14 index_sequence and affiliates
+#ifdef JSON_HAS_CPP_14
+
+// the following utilities are natively available in C++14
+using std::enable_if_t;
+using std::index_sequence;
+using std::make_index_sequence;
+using std::index_sequence_for;
+
+#else
+
+// alias templates to reduce boilerplate
+template<bool B, typename T = void>
+using enable_if_t = typename std::enable_if<B, T>::type;
+
 // source: https://stackoverflow.com/a/32223343
 template<std::size_t... Ints>
 struct index_sequence
@@ -2815,6 +2829,8 @@ template<> struct make_index_sequence<1> : index_sequence<0> {};
 template<typename... Ts>
 using index_sequence_for = make_index_sequence<sizeof...(Ts)>;
 
+#endif
+
 // dispatch utility (taken from ranges-v3)
 template<unsigned N> struct priority_tag : priority_tag < N - 1 > {};
 template<> struct priority_tag<0> {};
@@ -2828,6 +2844,7 @@ struct static_const
 
 template<typename T>
 constexpr T static_const<T>::value;
+
 }  // namespace detail
 }  // namespace nlohmann
 
@@ -3210,7 +3227,9 @@ struct is_iterator_traits<iterator_traits<T>>
         is_detected<reference_t, traits>::value;
 };
 
-// source: https://stackoverflow.com/a/37193089/4116453
+// The following implementation of is_complete_type is taken from
+// https://blogs.msdn.microsoft.com/vcblog/2015/12/02/partial-support-for-expression-sfinae-in-vs-2015-update-1/
+// and is written by Xiang Fan who agreed to using it in this library.
 
 template<typename T, typename = void>
 struct is_complete_type : std::false_type {};
@@ -3228,7 +3247,6 @@ struct is_compatible_object_type_impl <
     enable_if_t < is_detected<mapped_type_t, CompatibleObjectType>::value&&
     is_detected<key_type_t, CompatibleObjectType>::value >>
 {
-
     using object_t = typename BasicJsonType::object_t;
 
     // macOS's is_constructible does not play well with nonesuch...
@@ -17531,14 +17549,14 @@ class basic_json
         AllocatorType<T> alloc;
         using AllocatorTraits = std::allocator_traits<AllocatorType<T>>;
 
-        auto deleter = [&](T * object)
+        auto deleter = [&](T * obj)
         {
-            AllocatorTraits::deallocate(alloc, object, 1);
+            AllocatorTraits::deallocate(alloc, obj, 1);
         };
-        std::unique_ptr<T, decltype(deleter)> object(AllocatorTraits::allocate(alloc, 1), deleter);
-        AllocatorTraits::construct(alloc, object.get(), std::forward<Args>(args)...);
-        JSON_ASSERT(object != nullptr);
-        return object.release();
+        std::unique_ptr<T, decltype(deleter)> obj(AllocatorTraits::allocate(alloc, 1), deleter);
+        AllocatorTraits::construct(alloc, obj.get(), std::forward<Args>(args)...);
+        JSON_ASSERT(obj != nullptr);
+        return obj.release();
     }
 
     ////////////////////////
