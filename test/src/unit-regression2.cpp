@@ -250,6 +250,7 @@ TEST_CASE("regression tests 2")
 #ifdef JSON_HAS_CPP_17
     SECTION("issue #1292 - Serializing std::variant causes stack overflow")
     {
+        static_assert(false);
         static_assert(
             !std::is_constructible<json, std::variant<int, float>>::value, "");
     }
