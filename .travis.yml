@@ -298,7 +298,7 @@ matrix:
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-7']
-        packages: ['g++-6', 'clang-7', 'ninja-build']
+        packages: ['g++-7', 'clang-7', 'ninja-build']
 
 ################
 # build script #
