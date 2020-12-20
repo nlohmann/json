@@ -886,7 +886,6 @@ TEST_CASE("items()")
 #ifdef JSON_HAS_CPP_17
         SECTION("structured bindings")
         {
-            static_assert(false);
             json j = { {"A", 1}, {"B", 2} };
 
             std::map<std::string, int> m;

@@ -465,7 +465,6 @@ TEST_CASE("value conversion")
 #if defined(JSON_HAS_CPP_17)
         SECTION("std::string_view")
         {
-            static_assert(false);
             std::string_view s = j.get<std::string_view>();
             CHECK(json(s) == j);
         }
@@ -515,7 +514,6 @@ TEST_CASE("value conversion")
 #if defined(JSON_HAS_CPP_17)
         SECTION("exception in case of a non-string type using string_view")
         {
-            static_assert(false);
             CHECK_THROWS_AS(json(json::value_t::null).get<std::string_view>(), json::type_error&);
             CHECK_THROWS_AS(json(json::value_t::object).get<std::string_view>(), json::type_error&);
             CHECK_THROWS_AS(json(json::value_t::array).get<std::string_view>(), json::type_error&);
@@ -563,7 +561,6 @@ TEST_CASE("value conversion")
 #if defined(JSON_HAS_CPP_17)
         SECTION("std::string_view")
         {
-            static_assert(false);
             std::string s = "previous value";
             std::string_view sv = s;
             j.get_to(sv);
@@ -620,7 +617,6 @@ TEST_CASE("value conversion")
 #if defined(JSON_HAS_CPP_17)
         SECTION("std::string_view")
         {
-            static_assert(false);
             std::string_view s = j.get<std::string_view>();
             CHECK(json(s) == j);
         }
