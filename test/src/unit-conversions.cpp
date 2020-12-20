@@ -48,10 +48,6 @@ using nlohmann::json;
     #define JSON_HAS_CPP_14
 #endif
 
-#if defined(JSON_HAS_CPP_17)
-    #include <string_view>
-#endif
-
 TEST_CASE("value conversion")
 {
     SECTION("get an object (explicit)")
