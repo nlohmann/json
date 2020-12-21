@@ -14,7 +14,6 @@
 [![Try online](https://img.shields.io/badge/try-online-blue.svg)](https://wandbox.org/permlink/3lCHrFUZANONKv7a)
 [![Documentation](https://img.shields.io/badge/docs-doxygen-blue.svg)](https://nlohmann.github.io/json/doxygen/index.html)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/nlohmann/json/master/LICENSE.MIT)
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fnlohmann%2Fjson.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fnlohmann%2Fjson?ref=badge_shield)
 [![GitHub Releases](https://img.shields.io/github/release/nlohmann/json.svg)](https://github.com/nlohmann/json/releases)
 [![GitHub Downloads](https://img.shields.io/github/downloads/nlohmann/json/total)](https://github.com/nlohmann/json/releases)
 [![GitHub Issues](https://img.shields.io/github/issues/nlohmann/json.svg)](https://github.com/nlohmann/json/issues)
@@ -76,6 +75,7 @@ You can sponsor this library at [GitHub Sponsors](https://github.com/sponsors/nl
 - [Michael Hartmann](https://github.com/reFX-Mike)
 - [Stefan Hagen](https://github.com/sthagen)
 - [Steve Sperandeo](https://github.com/homer6)
+- [Robert Jefe Lindstädt](https://github.com/eljefedelrodeodeljefe)
 
 Thanks everyone!
 
@@ -231,6 +231,15 @@ Please file issues [here](https://github.com/build2-packaging/nlohmann-json) if 
 
 If you are using [`wsjcpp`](https://wsjcpp.org), you can use the command `wsjcpp install "https://github.com/nlohmann/json:develop"` to get the latest version. Note you can change the branch ":develop" to an existing tag or another branch.
 
+If you are using [`CPM.cmake`](https://github.com/TheLartians/CPM.cmake), you can check this [`example`](https://github.com/TheLartians/CPM.cmake/tree/master/examples/json). After [adding CPM script](https://github.com/TheLartians/CPM.cmake#adding-cpm) to your project, implement the following snippet to your CMake:
+
+```cmake
+CPMAddPackage(
+    NAME nlohmann_json
+    GITHUB_REPOSITORY nlohmann/json
+    VERSION 3.9.1)
+```
+
 ### Pkg-config
 
 If you are using bare Makefiles, you can use `pkg-config` to generate the include flags that point to where the library is installed:
@@ -247,7 +256,7 @@ json = dependency('nlohmann_json', required: true)
 
 ## Examples
 
-Beside the examples below, you may want to check the [documentation](https://nlohmann.github.io/json/) where each function contains a separate code example (e.g., check out [`emplace()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a5338e282d1d02bed389d852dd670d98d.html#a5338e282d1d02bed389d852dd670d98d)). All [example files](https://github.com/nlohmann/json/tree/develop/doc/examples) can be compiled and executed on their own (e.g., file [emplace.cpp](https://github.com/nlohmann/json/blob/develop/doc/examples/emplace.cpp)).
+Beside the examples below, you may want to check the [documentation](https://nlohmann.github.io/json/) where each function contains a separate code example (e.g., check out [`emplace()`](https://nlohmann.github.io/json/api/basic_json/emplace/)). All [example files](https://github.com/nlohmann/json/tree/develop/doc/examples) can be compiled and executed on their own (e.g., file [emplace.cpp](https://github.com/nlohmann/json/blob/develop/doc/examples/emplace.cpp)).
 
 ### JSON as first-class data type
 
@@ -316,7 +325,7 @@ json j2 = {
 };
 ```
 
-Note that in all these cases, you never need to "tell" the compiler which JSON value type you want to use. If you want to be explicit or express some edge cases, the functions [`json::array()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a9ad7ec0bc1082ed09d10900fbb20a21f.html#a9ad7ec0bc1082ed09d10900fbb20a21f) and [`json::object()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_aaf509a7c029100d292187068f61c99b8.html#aaf509a7c029100d292187068f61c99b8) will help:
+Note that in all these cases, you never need to "tell" the compiler which JSON value type you want to use. If you want to be explicit or express some edge cases, the functions [`json::array()`](https://nlohmann.github.io/json/api/basic_json/array/) and [`json::object()`](https://nlohmann.github.io/json/api/basic_json/object/) will help:
 
 ```cpp
 // a way to express the empty array []
@@ -351,7 +360,7 @@ auto j2 = R"(
 
 Note that without appending the `_json` suffix, the passed string literal is not parsed, but just used as JSON string value. That is, `json j = "{ \"happy\": true, \"pi\": 3.141 }"` would just store the string `"{ "happy": true, "pi": 3.141 }"` rather than parsing the actual object.
 
-The above example can also be expressed explicitly using [`json::parse()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a265a473e939184aa42655c9ccdf34e58.html#a265a473e939184aa42655c9ccdf34e58):
+The above example can also be expressed explicitly using [`json::parse()`](https://nlohmann.github.io/json/api/basic_json/parse/):
 
 ```cpp
 // parse explicitly
@@ -394,9 +403,9 @@ std::cout << cpp_string << " == " << cpp_string2 << " == " << j_string.get<std::
 std::cout << j_string << " == " << serialized_string << std::endl;
 ```
 
-[`.dump()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a50ec80b02d0f3f51130d4abb5d1cfdc5.html#a50ec80b02d0f3f51130d4abb5d1cfdc5) always returns the serialized value, and [`.get<std::string>()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_aa6602bb24022183ab989439e19345d08.html#aa6602bb24022183ab989439e19345d08) returns the originally stored string value.
+[`.dump()`](https://nlohmann.github.io/json/api/basic_json/dump/) returns the originally stored string value.
 
-Note the library only supports UTF-8. When you store strings with different encodings in the library, calling [`dump()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a50ec80b02d0f3f51130d4abb5d1cfdc5.html#a50ec80b02d0f3f51130d4abb5d1cfdc5) may throw an exception unless `json::error_handler_t::replace` or `json::error_handler_t::ignore` are used as error handlers.
+Note the library only supports UTF-8. When you store strings with different encodings in the library, calling [`dump()`](https://nlohmann.github.io/json/api/basic_json/dump/) may throw an exception unless `json::error_handler_t::replace` or `json::error_handler_t::ignore` are used as error handlers.
 
 #### To/from streams (e.g. files, string streams)
 
@@ -884,7 +893,7 @@ Some important things:
 * Those methods **MUST** be in your type's namespace (which can be the global namespace), or the library will not be able to locate them (in this example, they are in namespace `ns`, where `person` is defined).
 * Those methods **MUST** be available (e.g., proper headers must be included) everywhere you use these conversions. Look at [issue 1108](https://github.com/nlohmann/json/issues/1108) for errors that may occur otherwise.
 * When using `get<your_type>()`, `your_type` **MUST** be [DefaultConstructible](https://en.cppreference.com/w/cpp/named_req/DefaultConstructible). (There is a way to bypass this requirement described later.)
-* In function `from_json`, use function [`at()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a93403e803947b86f4da2d1fb3345cf2c.html#a93403e803947b86f4da2d1fb3345cf2c) to access the object values rather than `operator[]`. In case a key does not exist, `at` throws an exception that you can handle, whereas `operator[]` exhibits undefined behavior.
+* In function `from_json`, use function [`at()`](https://nlohmann.github.io/json/api/basic_json/at/) to access the object values rather than `operator[]`. In case a key does not exist, `at` throws an exception that you can handle, whereas `operator[]` exhibits undefined behavior.
 * You do not need to add serializers or deserializers for STL types like `std::vector`: the library already implements these.
 
 #### Simplify your life with macros
@@ -1222,10 +1231,6 @@ The following compilers are currently used in continuous integration at [Travis]
 
 | Compiler                                                        | Operating System   | CI Provider    |
 |-----------------------------------------------------------------|--------------------|----------------|
-| Apple Clang 9.1.0 (clang-902.0.39.1); Xcode 9.3                 | macOS 10.13.3      | Travis         |
-| Apple Clang 9.1.0 (clang-902.0.39.2); Xcode 9.4.1               | macOS 10.13.6      | Travis         |
-| Apple Clang 10.0.0 (clang-1000.11.45.2); Xcode 10.0             | macOS 10.13.6      | Travis         |
-| Apple Clang 10.0.0 (clang-1000.11.45.5); Xcode 10.1             | macOS 10.13.6      | Travis         |
 | Apple Clang 10.0.1 (clang-1001.0.46.4); Xcode 10.2.1            | macOS 10.14.4      | Travis         |
 | Apple Clang 11.0.0 (clang-1100.0.33.12); Xcode 11.2.1           | macOS 10.14.6      | Travis         |
 | Apple Clang 11.0.3 (clang-1103.0.32.59); Xcode 11.4.1           | macOS 10.15.4      | GitHub Actions |
@@ -1574,7 +1579,7 @@ The library supports **Unicode input** as follows:
 - [Unicode noncharacters](https://www.unicode.org/faq/private_use.html#nonchar1) will not be replaced by the library.
 - Invalid surrogates (e.g., incomplete pairs such as `\uDEAD`) will yield parse errors.
 - The strings stored in the library are UTF-8 encoded. When using the default string type (`std::string`), note that its length/size functions return the number of stored bytes rather than the number of characters or glyphs.
-- When you store strings with different encodings in the library, calling [`dump()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a50ec80b02d0f3f51130d4abb5d1cfdc5.html#a50ec80b02d0f3f51130d4abb5d1cfdc5) may throw an exception unless `json::error_handler_t::replace` or `json::error_handler_t::ignore` are used as error handlers.
+- When you store strings with different encodings in the library, calling [`dump()`](https://nlohmann.github.io/json/api/basic_json/dump/) may throw an exception unless `json::error_handler_t::replace` or `json::error_handler_t::ignore` are used as error handlers.
 
 ### Comments in JSON
 
@@ -1608,7 +1613,7 @@ Here is a related issue [#1924](https://github.com/nlohmann/json/issues/1924).
 
 ### Further notes
 
-- The code contains numerous debug **assertions** which can be switched off by defining the preprocessor macro `NDEBUG`, see the [documentation of `assert`](https://en.cppreference.com/w/cpp/error/assert). In particular, note [`operator[]`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a233b02b0839ef798942dd46157cc0fe6.html#a233b02b0839ef798942dd46157cc0fe6) implements **unchecked access** for const objects: If the given key is not present, the behavior is undefined (think of a dereferenced null pointer) and yields an [assertion failure](https://github.com/nlohmann/json/issues/289) if assertions are switched on. If you are not sure whether an element in an object exists, use checked access with the [`at()` function](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a73ae333487310e3302135189ce8ff5d8.html#a73ae333487310e3302135189ce8ff5d8). Furthermore, you can define `JSON_ASSERT(x)` to replace calls to `assert(x)`.
+- The code contains numerous debug **assertions** which can be switched off by defining the preprocessor macro `NDEBUG`, see the [documentation of `assert`](https://en.cppreference.com/w/cpp/error/assert). In particular, note [`operator[]`](https://nlohmann.github.io/json/api/basic_json/operator%5B%5D/) implements **unchecked access** for const objects: If the given key is not present, the behavior is undefined (think of a dereferenced null pointer) and yields an [assertion failure](https://github.com/nlohmann/json/issues/289) if assertions are switched on. If you are not sure whether an element in an object exists, use checked access with the [`at()` function](https://nlohmann.github.io/json/api/basic_json/at/). Furthermore, you can define `JSON_ASSERT(x)` to replace calls to `assert(x)`.
 - As the exact type of a number is not defined in the [JSON specification](https://tools.ietf.org/html/rfc8259.html), this library tries to choose the best fitting C++ number type automatically. As a result, the type `double` may be used to store numbers which may yield [**floating-point exceptions**](https://github.com/nlohmann/json/issues/181) in certain rare situations if floating-point exceptions have been unmasked in the calling code. These exceptions are not caused by the library and need to be fixed in the calling code, such as by re-masking the exceptions prior to calling library functions.
 - The code can be compiled without C++ **runtime type identification** features; that is, you can use the `-fno-rtti` compiler flag.
 - **Exceptions** are used widely within the library. They can, however, be switched off with either using the compiler flag `-fno-exceptions` or by defining the symbol `JSON_NOEXCEPTION`. In this case, exceptions are replaced by `abort()` calls. You can further control this behavior by defining `JSON_THROW_USER` (overriding `throw`), `JSON_TRY_USER` (overriding `try`), and `JSON_CATCH_USER` (overriding `catch`). Note that `JSON_THROW_USER` should leave the current scope (e.g., by throwing or aborting), as continuing after it may yield undefined behavior.
@@ -1628,3 +1633,5 @@ $ ctest --output-on-failure
 Note that during the `ctest` stage, several JSON test files are downloaded from an [external repository](https://github.com/nlohmann/json_test_data). If policies forbid downloading artifacts during testing, you can download the files yourself and pass the directory with the test files via `-DJSON_TestDataDirectory=path` to CMake. Then, no Internet connectivity is required. See [issue #2189](https://github.com/nlohmann/json/issues/2189) for more information.
 
 In case you have downloaded the library rather than checked out the code via Git, test `cmake_fetch_content_configure`. Please execute `ctest -LE git_required` to skip these tests. See [issue #2189](https://github.com/nlohmann/json/issues/2189) for more information.
+
+As Intel compilers use unsafe floating point optimization by default, the unit tests may fail. Use flag [`/fp:precise`](https://software.intel.com/content/www/us/en/develop/documentation/cpp-compiler-developer-guide-and-reference/top/compiler-reference/compiler-options/compiler-option-details/floating-point-options/fp-model-fp.html) then.

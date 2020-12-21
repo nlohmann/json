@@ -322,7 +322,7 @@ The iterators passed to constructor `basic_json(InputIT first, InputIT last)` ar
 
 ### json.exception.invalid_iterator.202
 
-In an erase or insert function, the passed iterator @a pos does not belong to the JSON value for which the function was called. It hence does not define a valid position for the deletion/insertion.
+In an [erase](../api/basic_json/erase.md) or insert function, the passed iterator `pos` does not belong to the JSON value for which the function was called. It hence does not define a valid position for the deletion/insertion.
 
 !!! failure "Example message"
 
@@ -335,7 +335,7 @@ In an erase or insert function, the passed iterator @a pos does not belong to th
 
 ### json.exception.invalid_iterator.203
 
-Either iterator passed to function `erase(IteratorType` first, IteratorType last) does not belong to the JSON value from which values shall be erased. It hence does not define a valid range to delete values from.
+Either iterator passed to function [`erase(IteratorType first, IteratorType last`)](../api/basic_json/erase.md) does not belong to the JSON value from which values shall be erased. It hence does not define a valid range to delete values from.
 
 !!! failure "Example message"
 
@@ -345,7 +345,7 @@ Either iterator passed to function `erase(IteratorType` first, IteratorType last
 
 ### json.exception.invalid_iterator.204
 
-When an iterator range for a primitive type (number, boolean, or string) is passed to a constructor or an erase function, this range has to be exactly (`begin(),` `end()),` because this is the only way the single stored value is expressed. All other ranges are invalid.
+When an iterator range for a primitive type (number, boolean, or string) is passed to a constructor or an [erase](../api/basic_json/erase.md) function, this range has to be exactly (`begin(),` `end()),` because this is the only way the single stored value is expressed. All other ranges are invalid.
 
 !!! failure "Example message"
 
@@ -355,7 +355,7 @@ When an iterator range for a primitive type (number, boolean, or string) is pass
 
 ### json.exception.invalid_iterator.205
 
-When an iterator for a primitive type (number, boolean, or string) is passed to an erase function, the iterator has to be the `begin()` iterator, because it is the only way to address the stored value. All other iterators are invalid.
+When an iterator for a primitive type (number, boolean, or string) is passed to an [erase](../api/basic_json/erase.md) function, the iterator has to be the `begin()` iterator, because it is the only way to address the stored value. All other iterators are invalid.
 
 !!! failure "Example message"
 
@@ -454,7 +454,6 @@ Cannot get value for iterator: Either the iterator belongs to a null value or it
     [json.exception.invalid_iterator.214] cannot get value
     ```
 
-
 ## Type errors
 
 This exception is thrown in case of a type error; that is, a library function is executed on a JSON value whose type does not match the expected semantics.
@@ -549,7 +548,7 @@ The `value()` member functions can only be executed for certain JSON types.
 
 ### json.exception.type_error.307
 
-The `erase()` member functions can only be executed for certain JSON types.
+The [`erase()`](../api/basic_json/erase.md) member functions can only be executed for certain JSON types.
 
 !!! failure "Example message"
 
@@ -683,7 +682,6 @@ The dynamic type of the object cannot be represented in the requested serializat
 !!! tip
 
     Encapsulate the JSON value in an object. That is, instead of serializing `#!json true`, serialize `#!json {"value": true}`
-
 
 ## Out of range
 

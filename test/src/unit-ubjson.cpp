@@ -805,12 +805,13 @@ TEST_CASE("UBJSON")
                     std::vector<uint8_t> vec1 = {'H', 'i', '1'};
                     CHECK(json::from_ubjson(vec1, true, false).is_discarded());
 
+                    json _;
                     std::vector<uint8_t> vec2 = {'H', 'i', 2, '1', 'A', '3'};
-                    CHECK_THROWS_WITH_AS(json::from_ubjson(vec2), "[json.exception.parse_error.115] parse error at byte 5: syntax error while parsing UBJSON high-precision number: invalid number text: 1A", json::parse_error);
+                    CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vec2), "[json.exception.parse_error.115] parse error at byte 5: syntax error while parsing UBJSON high-precision number: invalid number text: 1A", json::parse_error);
                     std::vector<uint8_t> vec3 = {'H', 'i', 2, '1', '.'};
-                    CHECK_THROWS_WITH_AS(json::from_ubjson(vec3), "[json.exception.parse_error.115] parse error at byte 5: syntax error while parsing UBJSON high-precision number: invalid number text: 1.", json::parse_error);
+                    CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vec3), "[json.exception.parse_error.115] parse error at byte 5: syntax error while parsing UBJSON high-precision number: invalid number text: 1.", json::parse_error);
                     std::vector<uint8_t> vec4 = {'H', 2, '1', '0'};
-                    CHECK_THROWS_WITH_AS(json::from_ubjson(vec4), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing UBJSON size: expected length type specification (U, i, I, l, L) after '#'; last byte: 0x02", json::parse_error);
+                    CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vec4), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing UBJSON size: expected length type specification (U, i, I, l, L) after '#'; last byte: 0x02", json::parse_error);
                 }
 
                 SECTION("serialization")

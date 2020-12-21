@@ -29,10 +29,9 @@ SOFTWARE.
 
 #include "doctest_compatibility.h"
 
-#define private public
+#define JSON_TESTS_PRIVATE
 #include <nlohmann/json.hpp>
 using nlohmann::json;
-#undef private
 
 #include <deque>
 #include <forward_list>
@@ -47,18 +46,6 @@ using nlohmann::json;
     #define JSON_HAS_CPP_14
 #elif (defined(__cplusplus) && __cplusplus >= 201402L) || (defined(_HAS_CXX14) && _HAS_CXX14 == 1)
     #define JSON_HAS_CPP_14
-#endif
-
-#ifdef JSON_HAS_CPP_17
-    #if __has_include(<optional>)
-        #include <optional>
-    #elif __has_include(<experimental/optional>)
-        #include <experimental/optional>
-    #endif
-#endif
-
-#if defined(JSON_HAS_CPP_17)
-    #include <string_view>
 #endif
 
 TEST_CASE("value conversion")

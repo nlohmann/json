@@ -752,8 +752,9 @@ class binary_reader
                         return parse_cbor_internal(true, tag_handler);
                     }
 
-                    default:            // LCOV_EXCL_LINE
+                    default:                 // LCOV_EXCL_LINE
                         JSON_ASSERT(false);  // LCOV_EXCL_LINE
+                        return false;        // LCOV_EXCL_LINE
                 }
             }
 

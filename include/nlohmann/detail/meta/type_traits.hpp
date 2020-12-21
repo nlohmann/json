@@ -168,7 +168,9 @@ struct is_iterator_traits<iterator_traits<T>>
         is_detected<reference_t, traits>::value;
 };
 
-// source: https://stackoverflow.com/a/37193089/4116453
+// The following implementation of is_complete_type is taken from
+// https://blogs.msdn.microsoft.com/vcblog/2015/12/02/partial-support-for-expression-sfinae-in-vs-2015-update-1/
+// and is written by Xiang Fan who agreed to using it in this library.
 
 template<typename T, typename = void>
 struct is_complete_type : std::false_type {};
@@ -186,7 +188,6 @@ struct is_compatible_object_type_impl <
     enable_if_t < is_detected<mapped_type_t, CompatibleObjectType>::value&&
     is_detected<key_type_t, CompatibleObjectType>::value >>
 {
-
     using object_t = typename BasicJsonType::object_t;
 
     // macOS's is_constructible does not play well with nonesuch...

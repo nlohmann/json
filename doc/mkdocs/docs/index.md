@@ -2,6 +2,6 @@
 
 !!! note
     
-    This page is under construction. You probably want to see the [Doxygen documentation](doxygen).
+    This page is under construction.
 
 ![](images/json.gif)
