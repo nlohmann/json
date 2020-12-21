@@ -16663,6 +16663,10 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
 }  // namespace nlohmann
 
 
+#if defined(JSON_HAS_CPP_17)
+    #include <string_view>
+#endif
+
 /*!
 @brief namespace for Niels Lohmann
 @see https://github.com/nlohmann
