@@ -325,7 +325,7 @@ script:
   - CMAKE_OPTIONS+=${CXX_STANDARD:+ -DCMAKE_CXX_STANDARD=$CXX_STANDARD -DCMAKE_CXX_STANDARD_REQUIRED=ON}
 
   # build configuration
-  - CMAKE_OPTIONS+=" -DCMAKE_BUILD_TYPE=Debug"
+  - CMAKE_OPTIONS+=" -DCMAKE_BUILD_TYPE=Release"
 
   # compile and execute unit tests
   - mkdir -p build && cd build
