@@ -372,7 +372,7 @@ typename iterator_input_adapter_factory<IteratorType>::adapter_type input_adapte
 
 // Convenience shorthand from container to iterator
 template<typename ContainerType>
-auto input_adapter(const ContainerType& container) -> decltype(input_adapter(begin(container), end(container)))
+typename iterator_input_adapter_factory<typename ContainerType::const_iterator>::adapter_type input_adapter(const ContainerType& container)
 {
     // Enable ADL
     using std::begin;

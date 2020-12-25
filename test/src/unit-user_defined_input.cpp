@@ -50,6 +50,8 @@ TEST_CASE("Use arbitrary stdlib container")
 
 struct MyContainer
 {
+    using iterator = const char*;
+    using const_iterator = iterator;
     const char* data;
 };
 
