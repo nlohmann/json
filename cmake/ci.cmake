@@ -1,10 +1,22 @@
+###############################################################################
+# Needed tools.
+###############################################################################
+
+include(FindPython3)
+find_package(Python3 COMPONENTS Interpreter)
+
 find_program(CLANG_TIDY_TOOL NAMES clang-tidy REQUIRED)
 find_program(CLANG_TOOL NAMES clang++-HEAD clang++-11 clang++ REQUIRED)
 find_program(CPPCHECK_TOOL NAMES cppcheck REQUIRED)
 find_program(GCC_TOOL NAMES g++-HEAD g++-11 g++ REQUIRED)
+find_program(INFER_TOOL NAMES infer REQUIRED)
+find_program(IWYU_TOOL NAMES iwyu_tool.py REQUIRED)
 find_program(PLOG_CONVERTER_TOOL NAMES plog-converter REQUIRED)
 find_program(PVS_STUDIO_ANALYZER_TOOL NAMES pvs-studio-analyzer REQUIRED)
 find_program(SCAN_BUILD_TOOL NAMES scan-build REQUIRED)
+
+# the individual source files
+file(GLOB_RECURSE SRC_FILES ${PROJECT_SOURCE_DIR}/include/nlohmann/*.hpp)
 
 set(CLANG_CXXFLAGS "-std=c++11                        \
     -Werror                                           \
@@ -295,6 +307,10 @@ add_custom_target(ci_test_clang
     COMMENT "Compile and test with Clang"
 )
 
+###############################################################################
+# Sanitizers.
+###############################################################################
+
 set(CLANG_CXX_FLAGS_SANITIZER "-g -O0 -fsanitize=address -fsanitize=undefined -fsanitize=integer -fsanitize=nullability -fno-omit-frame-pointer -fno-sanitize-recover=all -fsanitize-recover=unsigned-integer-overflow")
 
 add_custom_target(ci_test_clang_sanitizer
@@ -304,31 +320,59 @@ add_custom_target(ci_test_clang_sanitizer
     COMMENT "Compile and test with Clang"
 )
 
+###############################################################################
+# Check code with Clang Static Analyzer.
+###############################################################################
+
 set(CLANG_ANALYZER_CHECKS "fuchsia.HandleChecker,nullability.NullableDereferenced,nullability.NullablePassedToNonnull,nullability.NullableReturnedFromNonnull,optin.cplusplus.UninitializedObject,optin.cplusplus.VirtualCall,optin.mpi.MPI-Checker,optin.osx.OSObjectCStyleCast,optin.osx.cocoa.localizability.EmptyLocalizationContextChecker,optin.osx.cocoa.localizability.NonLocalizedStringChecker,optin.performance.GCDAntipattern,optin.performance.Padding,optin.portability.UnixAPI,security.FloatLoopCounter,security.insecureAPI.DeprecatedOrUnsafeBufferHandling,security.insecureAPI.bcmp,security.insecureAPI.bcopy,security.insecureAPI.bzero,security.insecureAPI.rand,security.insecureAPI.strcpy,valist.CopyToSelf,valist.Uninitialized,valist.Unterminated,webkit.NoUncountedMemberChecker,webkit.RefCntblBaseVirtualDtor,core.CallAndMessage,core.DivideZero,core.NonNullParamChecker,core.NullDereference,core.StackAddressEscape,core.UndefinedBinaryOperatorResult,core.VLASize,core.uninitialized.ArraySubscript,core.uninitialized.Assign,core.uninitialized.Branch,core.uninitialized.CapturedBlockVariable,core.uninitialized.UndefReturn,cplusplus.InnerPointer,cplusplus.Move,cplusplus.NewDelete,cplusplus.NewDeleteLeaks,cplusplus.PlacementNew,cplusplus.PureVirtualCall,deadcode.DeadStores,nullability.NullPassedToNonnull,nullability.NullReturnedFromNonnull,osx.API,osx.MIG,osx.NumberObjectConversion,osx.OSObjectRetainCount,osx.ObjCProperty,osx.SecKeychainAPI,osx.cocoa.AtSync,osx.cocoa.AutoreleaseWrite,osx.cocoa.ClassRelease,osx.cocoa.Dealloc,osx.cocoa.IncompatibleMethodTypes,osx.cocoa.Loops,osx.cocoa.MissingSuperCall,osx.cocoa.NSAutoreleasePool,osx.cocoa.NSError,osx.cocoa.NilArg,osx.cocoa.NonNilReturnValue,osx.cocoa.ObjCGenerics,osx.cocoa.RetainCount,osx.cocoa.RunLoopAutoreleaseLeak,osx.cocoa.SelfInit,osx.cocoa.SuperDealloc,osx.cocoa.UnusedIvars,osx.cocoa.VariadicMethodTypes,osx.coreFoundation.CFError,osx.coreFoundation.CFNumber,osx.coreFoundation.CFRetainRelease,osx.coreFoundation.containers.OutOfBounds,osx.coreFoundation.containers.PointerSizedValues,security.insecureAPI.UncheckedReturn,security.insecureAPI.decodeValueOfObjCType,security.insecureAPI.getpw,security.insecureAPI.gets,security.insecureAPI.mkstemp,security.insecureAPI.mktemp,security.insecureAPI.vfork,unix.API,unix.Malloc,unix.MallocSizeof,unix.MismatchedDeallocator,unix.Vfork,unix.cstring.BadSizeArg,unix.cstring.NullArg")
 
-add_custom_target(ci_test_clang_analyze
+add_custom_target(ci_clang_analyze
     COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_clang_analyze -DJSON_BuildTests=ON -GNinja
     COMMAND cd ${PROJECT_BINARY_DIR}/build_clang_analyze && ${SCAN_BUILD_TOOL} -enable-checker ${CLANG_ANALYZER_CHECKS} --use-c++=${CLANG_TOOL} -analyze-headers -o ${PROJECT_BINARY_DIR}/report ninja
-    COMMENT "Compile and test with Clang Analyzer"
+    COMMENT "Check code with Clang Analyzer"
 )
+
+###############################################################################
+# Check code with Cppcheck.
+###############################################################################
 
 add_custom_target(ci_cppcheck
     COMMAND ${CPPCHECK_TOOL} --enable=warning --inline-suppr --inconclusive --force --std=c++11 ${PROJECT_SOURCE_DIR}/single_include/nlohmann/json.hpp --error-exitcode=1
     COMMENT "Check code with Cppcheck"
 )
 
-file(GLOB_RECURSE SRC_FILES ${PROJECT_SOURCE_DIR}/include/nlohmann/*.hpp)
+###############################################################################
+# Check code with cpplint.
+###############################################################################
 
 add_custom_target(ci_cpplint
-    COMMAND ${CMAKE_SOURCE_DIR}/third_party/cpplint/cpplint.py --filter=-whitespace,-legal,-runtime/references,-runtime/explicit --quiet --recursive ${SRC_FILES}
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/third_party/cpplint/cpplint.py --filter=-whitespace,-legal,-runtime/references,-runtime/explicit --quiet --recursive ${SRC_FILES}
     COMMENT "Check code with cpplint"
 )
+
+###############################################################################
+# Check code with Clang-Tidy.
+###############################################################################
 
 add_custom_target(ci_clang_tidy
     COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_clang_tidy -DJSON_BuildTests=ON -DJSON_MultipleHeaders=ON -GNinja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_CXX_CLANG_TIDY=clang-tidy
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_clang_tidy
     COMMENT "Check code with Clang-Tidy"
 )
+
+###############################################################################
+# Check code with iwyu.
+###############################################################################
+
+add_custom_target(ci_iwyu
+    COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_iwyu -DJSON_BuildTests=ON -DJSON_MultipleHeaders=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_iwyu && ${IWYU_TOOL} -p ${PROJECT_BINARY_DIR}/build_iwyu -j 10
+    COMMENT "Check code with iwyu"
+)
+
+###############################################################################
+# Check code with PVS-Studio Analyzer <https://www.viva64.com/en/pvs-studio/>.
+###############################################################################
 
 add_custom_target(ci_pvs_studio
     COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_pvs_studio -DJSON_BuildTests=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
@@ -337,20 +381,48 @@ add_custom_target(ci_pvs_studio
     COMMENT "Check code with PVS Studio"
 )
 
+###############################################################################
+# Check code with Infer <https://fbinfer.com> static analyzer.
+###############################################################################
+
+add_custom_target(ci_infer
+    COMMAND mkdir -p ${PROJECT_BINARY_DIR}/build_infer
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_infer && ${INFER_TOOL} compile -- ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug ${PROJECT_SOURCE_DIR} -DJSON_BuildTests=ON -DJSON_MultipleHeaders=ON
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_infer && ${INFER_TOOL} run -- make -j10
+    COMMENT "Check code with Infer"
+)
+
+###############################################################################
+# Check if every header in the include folder includes sufficient headers to
+# be compiled individually.
+###############################################################################
+
 foreach(SRC_FILE ${SRC_FILES})
-    string(MD5 filename "${SRC_FILE}")
-    file(WRITE "${PROJECT_BINARY_DIR}/single/${filename}.cpp" "#include <${SRC_FILE}>\nint main() {}\n")
-    add_executable(single_${filename} EXCLUDE_FROM_ALL ${PROJECT_BINARY_DIR}/single/${filename}.cpp)
-    target_include_directories(single_${filename} PRIVATE ${PROJECT_SOURCE_DIR}/include)
-    target_compile_features(single_${filename} PRIVATE cxx_std_11)
-    list(APPEND single_binaries single_${filename})
+    # get relative path of the header file
+    file(RELATIVE_PATH RELATIVE_SRC_FILE "${PROJECT_SOURCE_DIR}/include/nlohmann" "${SRC_FILE}")
+    # replace slashes and strip suffix
+    string(REPLACE "/" "_" RELATIVE_SRC_FILE "${RELATIVE_SRC_FILE}")
+    string(REPLACE ".hpp" "" RELATIVE_SRC_FILE "${RELATIVE_SRC_FILE}")
+    # create code file
+    file(WRITE "${PROJECT_BINARY_DIR}/src_single/${RELATIVE_SRC_FILE}.cpp" "#include \"${SRC_FILE}\"\n\nint main()\n{}\n")
+    # create executable
+    add_executable(single_${RELATIVE_SRC_FILE} EXCLUDE_FROM_ALL ${PROJECT_BINARY_DIR}/src_single/${RELATIVE_SRC_FILE}.cpp)
+    target_include_directories(single_${RELATIVE_SRC_FILE} PRIVATE ${PROJECT_SOURCE_DIR}/include)
+    target_compile_features(single_${RELATIVE_SRC_FILE} PRIVATE cxx_std_11)
+    # remember binary for ci_single_binaries target
+    list(APPEND single_binaries single_${RELATIVE_SRC_FILE})
 endforeach()
 
 add_custom_target(ci_single_binaries
     DEPENDS ${single_binaries}
+    COMMENT "Check if headers are self-contained"
 )
 
+###############################################################################
+# Clean up all generated files.
+###############################################################################
+
 add_custom_target(ci_clean
-    COMMAND rm -fr ${PROJECT_BINARY_DIR}/build_g++ ${PROJECT_BINARY_DIR}/build_clang ${PROJECT_BINARY_DIR}/build_clang_analyze ${PROJECT_BINARY_DIR}/build_clang_tidy ${PROJECT_BINARY_DIR}/build_pvs_studio ${PROJECT_BINARY_DIR}/build_clang_sanitizer ${single_binaries}
+    COMMAND rm -fr ${PROJECT_BINARY_DIR}/build_g++ ${PROJECT_BINARY_DIR}/build_clang ${PROJECT_BINARY_DIR}/build_clang_analyze ${PROJECT_BINARY_DIR}/build_clang_tidy ${PROJECT_BINARY_DIR}/build_pvs_studio ${PROJECT_BINARY_DIR}/build_clang_sanitizer ${PROJECT_BINARY_DIR}/build_infer ${PROJECT_BINARY_DIR}/build_iwyu ${single_binaries}
     COMMENT "Clean generated directories"
 )
