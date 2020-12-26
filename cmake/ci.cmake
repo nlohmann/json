@@ -310,6 +310,11 @@ add_custom_target(ci_cppcheck
 
 file(GLOB_RECURSE SRC_FILES ${PROJECT_SOURCE_DIR}/include/nlohmann/*.hpp)
 
+add_custom_target(ci_cpplint
+    COMMAND ${CMAKE_SOURCE_DIR}/third_party/cpplint/cpplint.py --filter=-whitespace,-legal,-runtime/references,-runtime/explicit --quiet --recursive ${SRC_FILES}
+    COMMENT "Check code with cpplint"
+)
+
 add_custom_target(ci_clang_tidy
     COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_clang_tidy -DJSON_BuildTests=ON -DJSON_MultipleHeaders=ON -GNinja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_CXX_CLANG_TIDY=clang-tidy
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_clang_tidy
