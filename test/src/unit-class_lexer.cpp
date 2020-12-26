@@ -135,7 +135,7 @@ TEST_CASE("lexer class")
             // store scan() result
             const auto res = scan_string(s.c_str());
 
-            CAPTURE(s);
+            CAPTURE(s)
 
             switch (c)
             {

@@ -10065,7 +10065,7 @@ class binary_reader
                 break;
             }
             result.push_back(static_cast<typename string_t::value_type>(current));
-        };
+        }
         return success;
     }
 
