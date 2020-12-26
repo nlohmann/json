@@ -34,6 +34,11 @@ option(JSON_BuildTests "Build the unit tests when BUILD_TESTING is enabled." ${M
 option(JSON_Install "Install CMake targets during install step." ${MAIN_PROJECT})
 option(JSON_MultipleHeaders "Use non-amalgamated version of the library." OFF)
 option(JSON_ImplicitConversions "Enable implicit conversions." ON)
+option(JSON_CI "Enable CI build targets." OFF)
+
+if (JSON_CI)
+    include(cmake/ci.cmake)
+endif ()
 
 ##
 ## CONFIGURATION
