@@ -2818,6 +2818,7 @@ constexpr T static_const<T>::value;
 #include <limits> // numeric_limits
 #include <type_traits> // false_type, is_constructible, is_integral, is_same, true_type
 #include <utility> // declval
+#include <tuple> // tuple
 
 // #include <nlohmann/detail/iterators/iterator_traits.hpp>
 
@@ -4671,6 +4672,9 @@ class byte_container_with_subtype : public BinaryType
 #include <cstddef> // size_t, uint8_t
 #include <functional> // hash
 
+// #include <nlohmann/detail/macro_scope.hpp>
+
+
 namespace nlohmann
 {
 namespace detail
@@ -4799,6 +4803,7 @@ std::size_t hash(const BasicJsonType& j)
 #include <limits> // numeric_limits
 #include <string> // char_traits, string
 #include <utility> // make_pair, move
+#include <vector> // vector
 
 // #include <nlohmann/detail/exceptions.hpp>
 
@@ -10706,6 +10711,9 @@ class parser
 
 #include <cstddef> // ptrdiff_t
 #include <limits>  // numeric_limits
+
+// #include <nlohmann/detail/macro_scope.hpp>
+
 
 namespace nlohmann
 {
@@ -25410,6 +25418,8 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 #undef JSON_EXPLICIT
 
 // #include <nlohmann/thirdparty/hedley/hedley_undef.hpp>
+
+
 #undef JSON_HEDLEY_ALWAYS_INLINE
 #undef JSON_HEDLEY_ARM_VERSION
 #undef JSON_HEDLEY_ARM_VERSION_CHECK
