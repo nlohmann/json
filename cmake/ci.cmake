@@ -295,6 +295,15 @@ add_custom_target(ci_test_clang
     COMMENT "Compile and test with Clang"
 )
 
+set(CLANG_CXX_FLAGS_SANITIZER "-g -O0 -fsanitize=address -fsanitize=undefined -fsanitize=integer -fsanitize=nullability -fno-omit-frame-pointer -fno-sanitize-recover=all -fsanitize-recover=unsigned-integer-overflow")
+
+add_custom_target(ci_test_clang_sanitizer
+    COMMAND CXX=${CLANG_TOOL} CXXFLAGS=${CLANG_CXX_FLAGS_SANITIZER} ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_clang_sanitizer -DJSON_BuildTests=ON -GNinja
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_clang_sanitizer
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_clang_sanitizer/test && ${CMAKE_CTEST_COMMAND} -j10
+    COMMENT "Compile and test with Clang"
+)
+
 set(CLANG_ANALYZER_CHECKS "fuchsia.HandleChecker,nullability.NullableDereferenced,nullability.NullablePassedToNonnull,nullability.NullableReturnedFromNonnull,optin.cplusplus.UninitializedObject,optin.cplusplus.VirtualCall,optin.mpi.MPI-Checker,optin.osx.OSObjectCStyleCast,optin.osx.cocoa.localizability.EmptyLocalizationContextChecker,optin.osx.cocoa.localizability.NonLocalizedStringChecker,optin.performance.GCDAntipattern,optin.performance.Padding,optin.portability.UnixAPI,security.FloatLoopCounter,security.insecureAPI.DeprecatedOrUnsafeBufferHandling,security.insecureAPI.bcmp,security.insecureAPI.bcopy,security.insecureAPI.bzero,security.insecureAPI.rand,security.insecureAPI.strcpy,valist.CopyToSelf,valist.Uninitialized,valist.Unterminated,webkit.NoUncountedMemberChecker,webkit.RefCntblBaseVirtualDtor,core.CallAndMessage,core.DivideZero,core.NonNullParamChecker,core.NullDereference,core.StackAddressEscape,core.UndefinedBinaryOperatorResult,core.VLASize,core.uninitialized.ArraySubscript,core.uninitialized.Assign,core.uninitialized.Branch,core.uninitialized.CapturedBlockVariable,core.uninitialized.UndefReturn,cplusplus.InnerPointer,cplusplus.Move,cplusplus.NewDelete,cplusplus.NewDeleteLeaks,cplusplus.PlacementNew,cplusplus.PureVirtualCall,deadcode.DeadStores,nullability.NullPassedToNonnull,nullability.NullReturnedFromNonnull,osx.API,osx.MIG,osx.NumberObjectConversion,osx.OSObjectRetainCount,osx.ObjCProperty,osx.SecKeychainAPI,osx.cocoa.AtSync,osx.cocoa.AutoreleaseWrite,osx.cocoa.ClassRelease,osx.cocoa.Dealloc,osx.cocoa.IncompatibleMethodTypes,osx.cocoa.Loops,osx.cocoa.MissingSuperCall,osx.cocoa.NSAutoreleasePool,osx.cocoa.NSError,osx.cocoa.NilArg,osx.cocoa.NonNilReturnValue,osx.cocoa.ObjCGenerics,osx.cocoa.RetainCount,osx.cocoa.RunLoopAutoreleaseLeak,osx.cocoa.SelfInit,osx.cocoa.SuperDealloc,osx.cocoa.UnusedIvars,osx.cocoa.VariadicMethodTypes,osx.coreFoundation.CFError,osx.coreFoundation.CFNumber,osx.coreFoundation.CFRetainRelease,osx.coreFoundation.containers.OutOfBounds,osx.coreFoundation.containers.PointerSizedValues,security.insecureAPI.UncheckedReturn,security.insecureAPI.decodeValueOfObjCType,security.insecureAPI.getpw,security.insecureAPI.gets,security.insecureAPI.mkstemp,security.insecureAPI.mktemp,security.insecureAPI.vfork,unix.API,unix.Malloc,unix.MallocSizeof,unix.MismatchedDeallocator,unix.Vfork,unix.cstring.BadSizeArg,unix.cstring.NullArg")
 
 add_custom_target(ci_test_clang_analyze
@@ -328,7 +337,20 @@ add_custom_target(ci_pvs_studio
     COMMENT "Check code with PVS Studio"
 )
 
+foreach(SRC_FILE ${SRC_FILES})
+    string(MD5 filename "${SRC_FILE}")
+    file(WRITE "${PROJECT_BINARY_DIR}/single/${filename}.cpp" "#include <${SRC_FILE}>\nint main() {}\n")
+    add_executable(single_${filename} EXCLUDE_FROM_ALL ${PROJECT_BINARY_DIR}/single/${filename}.cpp)
+    target_include_directories(single_${filename} PRIVATE ${PROJECT_SOURCE_DIR}/include)
+    target_compile_features(single_${filename} PRIVATE cxx_std_11)
+    list(APPEND single_binaries single_${filename})
+endforeach()
+
+add_custom_target(ci_single_binaries
+    DEPENDS ${single_binaries}
+)
+
 add_custom_target(ci_clean
-    COMMAND rm -fr ${PROJECT_BINARY_DIR}/build_g++ ${PROJECT_BINARY_DIR}/build_clang ${PROJECT_BINARY_DIR}/build_clang_analyze ${PROJECT_BINARY_DIR}/build_clang_tidy ${PROJECT_BINARY_DIR}/build_pvs_studio
+    COMMAND rm -fr ${PROJECT_BINARY_DIR}/build_g++ ${PROJECT_BINARY_DIR}/build_clang ${PROJECT_BINARY_DIR}/build_clang_analyze ${PROJECT_BINARY_DIR}/build_clang_tidy ${PROJECT_BINARY_DIR}/build_pvs_studio ${PROJECT_BINARY_DIR}/build_clang_sanitizer ${single_binaries}
     COMMENT "Clean generated directories"
 )
