@@ -97,6 +97,7 @@ matrix:
       - COMPILER=g++-7
       - CMAKE_OPTIONS=-DJSON_Coverage=ON
       - MULTIPLE_HEADERS=ON
+      - BUILD_TYPE=Debug
 
   # Coverity (only for branch coverity_scan)
 
@@ -324,8 +325,8 @@ script:
   # append CXX_STANDARD to CMAKE_OPTIONS if required
   - CMAKE_OPTIONS+=${CXX_STANDARD:+ -DCMAKE_CXX_STANDARD=$CXX_STANDARD -DCMAKE_CXX_STANDARD_REQUIRED=ON}
 
-  # build configuration
-  - CMAKE_OPTIONS+=" -DCMAKE_BUILD_TYPE=Release"
+  # build configuration (Release by default)
+  - CMAKE_OPTIONS+=" -DCMAKE_BUILD_TYPE=${BUILD_TYPE:-Release}"
 
   # compile and execute unit tests
   - mkdir -p build && cd build
