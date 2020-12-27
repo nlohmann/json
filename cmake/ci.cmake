@@ -1,6 +1,8 @@
 # macOS
 
-# brew install llvm cppcheck viva64/pvs-studio/pvs-studio iwyu
+# brew install llvm cppcheck iwyu infer oclint/formulae/oclint
+# brew install viva64/pvs-studio/pvs-studio
+#   (you will need credentials)
 # brew install gcc --HEAD
 
 ###############################################################################
@@ -12,29 +14,30 @@ find_package(Python3 COMPONENTS Interpreter)
 
 find_program(CLANG_TIDY_TOOL NAMES clang-tidy REQUIRED)
 execute_process(COMMAND ${CLANG_TIDY_TOOL} --version OUTPUT_VARIABLE CLANG_TIDY_TOOL_VERSION ERROR_VARIABLE CLANG_TIDY_TOOL_VERSION)
-string(REGEX MATCH "[0-9]+(\\.[0-9]*)+" CLANG_TIDY_TOOL_VERSION "${CLANG_TIDY_TOOL_VERSION}")
+string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" CLANG_TIDY_TOOL_VERSION "${CLANG_TIDY_TOOL_VERSION}")
 message(STATUS "🔖 Clang-Tidy ${CLANG_TIDY_TOOL_VERSION} (${CLANG_TIDY_TOOL})")
 
 find_program(CLANG_TOOL NAMES clang++-HEAD clang++-11 clang++ REQUIRED)
 execute_process(COMMAND ${CLANG_TOOL} --version OUTPUT_VARIABLE CLANG_TOOL_VERSION ERROR_VARIABLE CLANG_TOOL_VERSION)
-string(REGEX MATCH "[0-9]+(\\.[0-9]*)+" CLANG_TOOL_VERSION "${CLANG_TOOL_VERSION}")
+string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" CLANG_TOOL_VERSION "${CLANG_TOOL_VERSION}")
 message(STATUS "🔖 Clang ${CLANG_TOOL_VERSION} (${CLANG_TOOL})")
 
 find_program(CPPCHECK_TOOL NAMES cppcheck REQUIRED)
 execute_process(COMMAND ${CPPCHECK_TOOL} --version OUTPUT_VARIABLE CPPCHECK_TOOL_VERSION ERROR_VARIABLE CPPCHECK_TOOL_VERSION)
-string(REGEX MATCH "[0-9]+(\\.[0-9]*)+" CPPCHECK_TOOL_VERSION "${CPPCHECK_TOOL_VERSION}")
+string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" CPPCHECK_TOOL_VERSION "${CPPCHECK_TOOL_VERSION}")
 message(STATUS "🔖 Cppcheck ${CPPCHECK_TOOL_VERSION} (${CPPCHECK_TOOL})")
 
 find_program(GCC_TOOL NAMES g++-HEAD g++-11 g++ REQUIRED)
 execute_process(COMMAND ${GCC_TOOL} --version OUTPUT_VARIABLE GCC_TOOL_VERSION ERROR_VARIABLE GCC_TOOL_VERSION)
-string(REGEX MATCH "[0-9]+(\\.[0-9]*)+" GCC_TOOL_VERSION "${GCC_TOOL_VERSION}")
+string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" GCC_TOOL_VERSION "${GCC_TOOL_VERSION}")
 message(STATUS "🔖 GCC ${GCC_TOOL_VERSION} (${GCC_TOOL})")
 
 find_program(INFER_TOOL NAMES infer REQUIRED)
 execute_process(COMMAND ${INFER_TOOL} --version OUTPUT_VARIABLE INFER_TOOL_VERSION ERROR_VARIABLE INFER_TOOL_VERSION)
-string(REGEX MATCH "[0-9]+(\\.[0-9]*)+" INFER_TOOL_VERSION "${INFER_TOOL_VERSION}")
+string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" INFER_TOOL_VERSION "${INFER_TOOL_VERSION}")
 message(STATUS "🔖 Infer ${INFER_TOOL_VERSION} (${INFER_TOOL})")
 
+find_program(OCLINT_TOOL NAMES oclint-json-compilation-database REQUIRED)
 find_program(IWYU_TOOL NAMES iwyu_tool.py REQUIRED)
 find_program(PLOG_CONVERTER_TOOL NAMES plog-converter REQUIRED)
 find_program(PVS_STUDIO_ANALYZER_TOOL NAMES pvs-studio-analyzer REQUIRED)
@@ -376,6 +379,23 @@ add_custom_target(ci_cpplint
 )
 
 ###############################################################################
+# Check code with OCLint.
+###############################################################################
+
+file(COPY ${PROJECT_SOURCE_DIR}/single_include/nlohmann/json.hpp DESTINATION ${PROJECT_BINARY_DIR}/src_single)
+file(RENAME ${PROJECT_BINARY_DIR}/src_single/json.hpp ${PROJECT_BINARY_DIR}/src_single/all.cpp)
+file(APPEND "${PROJECT_BINARY_DIR}/src_single/all.cpp" "\n\nint main()\n{}\n")
+
+add_executable(single_all ${PROJECT_BINARY_DIR}/src_single/all.cpp)
+target_compile_features(single_all PRIVATE cxx_std_11)
+
+add_custom_target(ci_oclint
+    COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_oclint -DJSON_BuildTests=OFF -DJSON_CI=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+    COMMAND ${OCLINT_TOOL} -i ${PROJECT_BINARY_DIR}/src_single/all.cpp -p ${PROJECT_BINARY_DIR}/build_oclint -- -report-type html -enable-global-analysis -o oclint_report.html
+    COMMENT "Check code with OCLint"
+)
+
+###############################################################################
 # Check code with Clang-Tidy.
 ###############################################################################
 
@@ -448,6 +468,6 @@ add_custom_target(ci_single_binaries
 ###############################################################################
 
 add_custom_target(ci_clean
-    COMMAND rm -fr ${PROJECT_BINARY_DIR}/build_g++ ${PROJECT_BINARY_DIR}/build_clang ${PROJECT_BINARY_DIR}/build_clang_analyze ${PROJECT_BINARY_DIR}/build_clang_tidy ${PROJECT_BINARY_DIR}/build_pvs_studio ${PROJECT_BINARY_DIR}/build_clang_sanitizer ${PROJECT_BINARY_DIR}/build_infer ${PROJECT_BINARY_DIR}/build_iwyu ${single_binaries}
+    COMMAND rm -fr ${PROJECT_BINARY_DIR}/build_g++ ${PROJECT_BINARY_DIR}/build_clang ${PROJECT_BINARY_DIR}/build_clang_analyze ${PROJECT_BINARY_DIR}/build_clang_tidy ${PROJECT_BINARY_DIR}/build_pvs_studio ${PROJECT_BINARY_DIR}/build_clang_sanitizer ${PROJECT_BINARY_DIR}/build_infer ${PROJECT_BINARY_DIR}/build_iwyu ${PROJECT_BINARY_DIR}/build_oclint ${single_binaries}
     COMMENT "Clean generated directories"
 )
