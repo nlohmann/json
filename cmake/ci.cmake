@@ -1,3 +1,8 @@
+# macOS
+
+# brew install llvm cppcheck viva64/pvs-studio/pvs-studio iwyu
+# brew install gcc --HEAD
+
 ###############################################################################
 # Needed tools.
 ###############################################################################
@@ -6,10 +11,30 @@ include(FindPython3)
 find_package(Python3 COMPONENTS Interpreter)
 
 find_program(CLANG_TIDY_TOOL NAMES clang-tidy REQUIRED)
+execute_process(COMMAND ${CLANG_TIDY_TOOL} --version OUTPUT_VARIABLE CLANG_TIDY_TOOL_VERSION ERROR_VARIABLE CLANG_TIDY_TOOL_VERSION)
+string(REGEX MATCH "[0-9]+(\\.[0-9]*)+" CLANG_TIDY_TOOL_VERSION "${CLANG_TIDY_TOOL_VERSION}")
+message(STATUS "🔖 Clang-Tidy ${CLANG_TIDY_TOOL_VERSION} (${CLANG_TIDY_TOOL})")
+
 find_program(CLANG_TOOL NAMES clang++-HEAD clang++-11 clang++ REQUIRED)
+execute_process(COMMAND ${CLANG_TOOL} --version OUTPUT_VARIABLE CLANG_TOOL_VERSION ERROR_VARIABLE CLANG_TOOL_VERSION)
+string(REGEX MATCH "[0-9]+(\\.[0-9]*)+" CLANG_TOOL_VERSION "${CLANG_TOOL_VERSION}")
+message(STATUS "🔖 Clang ${CLANG_TOOL_VERSION} (${CLANG_TOOL})")
+
 find_program(CPPCHECK_TOOL NAMES cppcheck REQUIRED)
+execute_process(COMMAND ${CPPCHECK_TOOL} --version OUTPUT_VARIABLE CPPCHECK_TOOL_VERSION ERROR_VARIABLE CPPCHECK_TOOL_VERSION)
+string(REGEX MATCH "[0-9]+(\\.[0-9]*)+" CPPCHECK_TOOL_VERSION "${CPPCHECK_TOOL_VERSION}")
+message(STATUS "🔖 Cppcheck ${CPPCHECK_TOOL_VERSION} (${CPPCHECK_TOOL})")
+
 find_program(GCC_TOOL NAMES g++-HEAD g++-11 g++ REQUIRED)
+execute_process(COMMAND ${GCC_TOOL} --version OUTPUT_VARIABLE GCC_TOOL_VERSION ERROR_VARIABLE GCC_TOOL_VERSION)
+string(REGEX MATCH "[0-9]+(\\.[0-9]*)+" GCC_TOOL_VERSION "${GCC_TOOL_VERSION}")
+message(STATUS "🔖 GCC ${GCC_TOOL_VERSION} (${GCC_TOOL})")
+
 find_program(INFER_TOOL NAMES infer REQUIRED)
+execute_process(COMMAND ${INFER_TOOL} --version OUTPUT_VARIABLE INFER_TOOL_VERSION ERROR_VARIABLE INFER_TOOL_VERSION)
+string(REGEX MATCH "[0-9]+(\\.[0-9]*)+" INFER_TOOL_VERSION "${INFER_TOOL_VERSION}")
+message(STATUS "🔖 Infer ${INFER_TOOL_VERSION} (${INFER_TOOL})")
+
 find_program(IWYU_TOOL NAMES iwyu_tool.py REQUIRED)
 find_program(PLOG_CONVERTER_TOOL NAMES plog-converter REQUIRED)
 find_program(PVS_STUDIO_ANALYZER_TOOL NAMES pvs-studio-analyzer REQUIRED)
@@ -317,7 +342,7 @@ add_custom_target(ci_test_clang_sanitizer
     COMMAND CXX=${CLANG_TOOL} CXXFLAGS=${CLANG_CXX_FLAGS_SANITIZER} ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_clang_sanitizer -DJSON_BuildTests=ON -GNinja
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_clang_sanitizer
     COMMAND cd ${PROJECT_BINARY_DIR}/build_clang_sanitizer/test && ${CMAKE_CTEST_COMMAND} -j10
-    COMMENT "Compile and test with Clang"
+    COMMENT "Compile and test with sanitizers"
 )
 
 ###############################################################################
