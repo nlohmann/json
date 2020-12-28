@@ -1541,17 +1541,17 @@ scan_number_done:
             // literals
             case 't':
             {
-                std::array<char_type, 4> true_literal = {{'t', 'r', 'u', 'e'}};
+                std::array<char_type, 4> true_literal = {{char_type('t'), char_type('r'), char_type('u'), char_type('e')}};
                 return scan_literal(true_literal.data(), true_literal.size(), token_type::literal_true);
             }
             case 'f':
             {
-                std::array<char_type, 5> false_literal = {{'f', 'a', 'l', 's', 'e'}};
+                std::array<char_type, 5> false_literal = {{char_type('f'), char_type('a'), char_type('l'), char_type('s'), char_type('e')}};
                 return scan_literal(false_literal.data(), false_literal.size(), token_type::literal_false);
             }
             case 'n':
             {
-                std::array<char_type, 4> null_literal = {{'n', 'u', 'l', 'l'}};
+                std::array<char_type, 4> null_literal = {{char_type('n'), char_type('u'), char_type('l'), char_type('l')}};
                 return scan_literal(null_literal.data(), null_literal.size(), token_type::literal_null);
             }
 
