@@ -400,6 +400,33 @@ TEST_CASE("value conversion")
             json j2 = nbs;
             j2.get_to(nbs2);
             CHECK(std::equal(std::begin(nbs), std::end(nbs), std::begin(nbs2)));
+
+            SECTION("built-in array is larger than JSON")
+            {
+                json j1 = {1, 2, 3, 4};
+                int arr6[] = {1, 2, 3, 4, 5, 6};
+                CHECK_THROWS_AS(j1.get_to(arr6), json::type_error&);
+                CHECK_THROWS_WITH(j1.get_to(arr6), "[json.exception.type_error.302] "
+                                  "array size must be 6, but is 4");
+            }
+
+            SECTION("built-in array is smaller than JSON")
+            {
+                json j1 = {1, 2, 3, 4};
+                int arr2[] = {8, 9};
+                CHECK_THROWS_AS(j1.get_to(arr2), json::type_error&);
+                CHECK_THROWS_WITH(j1.get_to(arr2), "[json.exception.type_error.302] "
+                                  "array size must be 2, but is 4");
+            }
+
+            SECTION("built-in array from non-array type")
+            {
+                json j1;
+                int arr2[] = {8, 9};
+                CHECK_THROWS_AS(j1.get_to(arr2), json::type_error&);
+                CHECK_THROWS_WITH(j1.get_to(arr2), "[json.exception.type_error.302] "
+                                  "type must be array, but is null");
+            }
         }
 
         SECTION("std::deque<json>")
@@ -1615,8 +1642,10 @@ TEST_CASE("value conversion")
             {
                 CHECK_THROWS_AS((json().get<std::list<int>>()), json::type_error&);
                 CHECK_THROWS_AS((json().get<std::vector<int>>()), json::type_error&);
+                CHECK_THROWS_AS((json().get<std::array<int, 2>>()), json::type_error&);
                 CHECK_THROWS_AS((json().get<std::vector<json>>()), json::type_error&);
                 CHECK_THROWS_AS((json().get<std::list<json>>()), json::type_error&);
+                CHECK_THROWS_AS((json().get<std::array<json, 2>>()), json::type_error&);
                 CHECK_THROWS_AS((json().get<std::valarray<int>>()), json::type_error&);
 
                 // does type really must be an array? or it rather must not be null?
@@ -1628,10 +1657,16 @@ TEST_CASE("value conversion")
                     (json().get<std::vector<int>>()),
                     "[json.exception.type_error.302] type must be array, but is null");
                 CHECK_THROWS_WITH(
+                    (json().get<std::array<int, 2>>()),
+                    "[json.exception.type_error.302] type must be array, but is null");
+                CHECK_THROWS_WITH(
                     (json().get<std::vector<json>>()),
                     "[json.exception.type_error.302] type must be array, but is null");
                 CHECK_THROWS_WITH(
                     (json().get<std::list<json>>()),
+                    "[json.exception.type_error.302] type must be array, but is null");
+                CHECK_THROWS_WITH(
+                    (json().get<std::array<json, 2>>()),
                     "[json.exception.type_error.302] type must be array, but is null");
                 CHECK_THROWS_WITH(
                     (json().get<std::valarray<int>>()),

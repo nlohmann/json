@@ -3589,10 +3589,7 @@ auto from_json_array_impl(const BasicJsonType& j, std::array<T, N>& arr,
                           priority_tag<2> /*unused*/)
 -> decltype(j.template get<T>(), void())
 {
-    if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
-    {
-        JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(j.type_name())));
-    }
+    // array type check done in from_json already, only check size
     if (JSON_HEDLEY_UNLIKELY(j.size() != N))
     {
         JSON_THROW(type_error::create(302, "array size must be " + std::to_string(N) + ", but is " + std::to_string(j.size())));
