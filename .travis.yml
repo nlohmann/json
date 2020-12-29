@@ -300,6 +300,16 @@ matrix:
         sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-7']
         packages: ['g++-7', 'clang-7', 'ninja-build']
 
+  - os: linux
+    compiler: clang
+    env:
+      - COMPILER=clang++-7
+      - CXX_STANDARD=20
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-7']
+        packages: ['g++-7', 'clang-7', 'ninja-build']
+
 ################
 # build script #
 ################
