@@ -5186,7 +5186,8 @@ typename iterator_input_adapter_factory<IteratorType>::adapter_type input_adapte
 // Enables ADL on begin(container) and end(container)
 // Encloses the using declarations in namespace for not to leak them to outside scope
 
-namespace container_input_adapter_factory_impl {
+namespace container_input_adapter_factory_impl
+{
 
 using std::begin;
 using std::end;
@@ -5196,15 +5197,15 @@ struct container_input_adapter_factory {};
 
 template<typename ContainerType>
 struct container_input_adapter_factory< ContainerType,
-                                        void_t<decltype(begin(std::declval<ContainerType>()), end(std::declval<ContainerType>()))> >
-{
-    using adapter_type = decltype(input_adapter(begin(std::declval<ContainerType>()), end(std::declval<ContainerType>())));
+       void_t<decltype(begin(std::declval<ContainerType>()), end(std::declval<ContainerType>()))>>
+       {
+           using adapter_type = decltype(input_adapter(begin(std::declval<ContainerType>()), end(std::declval<ContainerType>())));
 
-    static adapter_type create(const ContainerType& container)
-    {
-        return input_adapter(begin(container), end(container));
-    }
-};
+           static adapter_type create(const ContainerType& container)
+{
+    return input_adapter(begin(container), end(container));
+}
+       };
 
 }
 
@@ -10924,8 +10925,10 @@ This class implements a both iterators (iterator and const_iterator) for the
 template<typename BasicJsonType>
 class iter_impl
 {
+    /// the iterator with BasicJsonType of different const-ness
+    using other_iter_impl = iter_impl<typename std::conditional<std::is_const<BasicJsonType>::value, typename std::remove_const<BasicJsonType>::type, const BasicJsonType>::type>;
     /// allow basic_json to access private members
-    friend iter_impl<typename std::conditional<std::is_const<BasicJsonType>::value, typename std::remove_const<BasicJsonType>::type, const BasicJsonType>::type>;
+    friend other_iter_impl;
     friend BasicJsonType;
     friend iteration_proxy<iter_impl>;
     friend iteration_proxy_value<iter_impl>;
@@ -11276,33 +11279,11 @@ class iter_impl
     }
 
     /*!
-    @brief  comparison: equal
+    @brief comparison: equal
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
-    bool operator==(const iter_impl<const BasicJsonType>& other) const
-    {
-        // if objects are not the same, the comparison is undefined
-        if (JSON_HEDLEY_UNLIKELY(m_object != other.m_object))
-        {
-            JSON_THROW(invalid_iterator::create(212, "cannot compare iterators of different containers"));
-        }
-
-        JSON_ASSERT(m_object != nullptr);
-
-        switch (m_object->m_type)
-        {
-            case value_t::object:
-                return (m_it.object_iterator == other.m_it.object_iterator);
-
-            case value_t::array:
-                return (m_it.array_iterator == other.m_it.array_iterator);
-
-            default:
-                return (m_it.primitive_iterator == other.m_it.primitive_iterator);
-        }
-    }
-
-    bool operator==(const iter_impl<typename std::remove_const<BasicJsonType>::type>& other) const
+    template < typename IterImpl, detail::enable_if_t < (std::is_same<IterImpl, iter_impl>::value || std::is_same<IterImpl, other_iter_impl>::value), std::nullptr_t > = nullptr >
+    bool operator==(const IterImpl& other) const
     {
         // if objects are not the same, the comparison is undefined
         if (JSON_HEDLEY_UNLIKELY(m_object != other.m_object))
@@ -11326,16 +11307,17 @@ class iter_impl
     }
 
     /*!
-    @brief  comparison: not equal
+    @brief comparison: not equal
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
-    bool operator!=(const iter_impl& other) const
+    template < typename IterImpl, detail::enable_if_t < (std::is_same<IterImpl, iter_impl>::value || std::is_same<IterImpl, other_iter_impl>::value), std::nullptr_t > = nullptr >
+    bool operator!=(const IterImpl& other) const
     {
         return !operator==(other);
     }
 
     /*!
-    @brief  comparison: smaller
+    @brief comparison: smaller
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
     bool operator<(const iter_impl& other) const
@@ -11362,7 +11344,7 @@ class iter_impl
     }
 
     /*!
-    @brief  comparison: less than or equal
+    @brief comparison: less than or equal
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
     bool operator<=(const iter_impl& other) const
@@ -11371,7 +11353,7 @@ class iter_impl
     }
 
     /*!
-    @brief  comparison: greater than
+    @brief comparison: greater than
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
     bool operator>(const iter_impl& other) const
@@ -11380,7 +11362,7 @@ class iter_impl
     }
 
     /*!
-    @brief  comparison: greater than or equal
+    @brief comparison: greater than or equal
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
     bool operator>=(const iter_impl& other) const
@@ -11389,7 +11371,7 @@ class iter_impl
     }
 
     /*!
-    @brief  add to iterator
+    @brief add to iterator
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
     iter_impl& operator+=(difference_type i)
@@ -11418,7 +11400,7 @@ class iter_impl
     }
 
     /*!
-    @brief  subtract from iterator
+    @brief subtract from iterator
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
     iter_impl& operator-=(difference_type i)
@@ -11427,7 +11409,7 @@ class iter_impl
     }
 
     /*!
-    @brief  add to iterator
+    @brief add to iterator
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
     iter_impl operator+(difference_type i) const
@@ -11438,7 +11420,7 @@ class iter_impl
     }
 
     /*!
-    @brief  addition of distance and iterator
+    @brief addition of distance and iterator
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
     friend iter_impl operator+(difference_type i, const iter_impl& it)
@@ -11449,7 +11431,7 @@ class iter_impl
     }
 
     /*!
-    @brief  subtract from iterator
+    @brief subtract from iterator
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
     iter_impl operator-(difference_type i) const
@@ -11460,7 +11442,7 @@ class iter_impl
     }
 
     /*!
-    @brief  return difference
+    @brief return difference
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
     difference_type operator-(const iter_impl& other) const
@@ -11481,7 +11463,7 @@ class iter_impl
     }
 
     /*!
-    @brief  access to successor
+    @brief access to successor
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
     reference operator[](difference_type n) const
@@ -11512,7 +11494,7 @@ class iter_impl
     }
 
     /*!
-    @brief  return the key of an object iterator
+    @brief return the key of an object iterator
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
     const typename object_t::key_type& key() const
@@ -11528,7 +11510,7 @@ class iter_impl
     }
 
     /*!
-    @brief  return the value of an iterator
+    @brief return the value of an iterator
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
     reference value() const
@@ -16845,7 +16827,7 @@ class basic_json
         detail::parser_callback_t<basic_json>cb = nullptr,
         const bool allow_exceptions = true,
         const bool ignore_comments = false
-    )
+                                 )
     {
         return ::nlohmann::detail::parser<basic_json, InputAdapterType>(std::move(adapter),
                 std::move(cb), allow_exceptions, ignore_comments);
@@ -25390,7 +25372,7 @@ template<>
 inline void swap<nlohmann::json>(nlohmann::json& j1, nlohmann::json& j2) noexcept(
     is_nothrow_move_constructible<nlohmann::json>::value&&
     is_nothrow_move_assignable<nlohmann::json>::value
-)
+                              )
 {
     j1.swap(j2);
 }
