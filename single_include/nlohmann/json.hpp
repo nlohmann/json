@@ -5183,14 +5183,35 @@ typename iterator_input_adapter_factory<IteratorType>::adapter_type input_adapte
 }
 
 // Convenience shorthand from container to iterator
-template<typename ContainerType>
-auto input_adapter(const ContainerType& container) -> decltype(input_adapter(begin(container), end(container)))
-{
-    // Enable ADL
-    using std::begin;
-    using std::end;
+// Enables ADL on begin(container) and end(container)
+// Encloses the using declarations in namespace for not to leak them to outside scope
 
-    return input_adapter(begin(container), end(container));
+namespace container_input_adapter_factory_impl {
+
+using std::begin;
+using std::end;
+
+template<typename ContainerType, typename Enable = void>
+struct container_input_adapter_factory {};
+
+template<typename ContainerType>
+struct container_input_adapter_factory< ContainerType,
+                                        void_t<decltype(begin(std::declval<ContainerType>()), end(std::declval<ContainerType>()))> >
+{
+    using adapter_type = decltype(input_adapter(begin(std::declval<ContainerType>()), end(std::declval<ContainerType>())));
+
+    static adapter_type create(const ContainerType& container)
+    {
+        return input_adapter(begin(container), end(container));
+    }
+};
+
+}
+
+template<typename ContainerType>
+typename container_input_adapter_factory_impl::container_input_adapter_factory<ContainerType>::adapter_type input_adapter(const ContainerType& container)
+{
+    return container_input_adapter_factory_impl::container_input_adapter_factory<ContainerType>::create(container);
 }
 
 // Special cases with fast paths
@@ -16801,7 +16822,7 @@ class basic_json
         detail::parser_callback_t<basic_json>cb = nullptr,
         const bool allow_exceptions = true,
         const bool ignore_comments = false
-                                 )
+    )
     {
         return ::nlohmann::detail::parser<basic_json, InputAdapterType>(std::move(adapter),
                 std::move(cb), allow_exceptions, ignore_comments);
@@ -25346,7 +25367,7 @@ template<>
 inline void swap<nlohmann::json>(nlohmann::json& j1, nlohmann::json& j2) noexcept(
     is_nothrow_move_constructible<nlohmann::json>::value&&
     is_nothrow_move_assignable<nlohmann::json>::value
-                              )
+)
 {
     j1.swap(j2);
 }
