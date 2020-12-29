@@ -393,7 +393,30 @@ class iter_impl
     @brief  comparison: equal
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
-    bool operator==(const iter_impl& other) const
+    bool operator==(const iter_impl<const BasicJsonType>& other) const
+    {
+        // if objects are not the same, the comparison is undefined
+        if (JSON_HEDLEY_UNLIKELY(m_object != other.m_object))
+        {
+            JSON_THROW(invalid_iterator::create(212, "cannot compare iterators of different containers"));
+        }
+
+        JSON_ASSERT(m_object != nullptr);
+
+        switch (m_object->m_type)
+        {
+            case value_t::object:
+                return (m_it.object_iterator == other.m_it.object_iterator);
+
+            case value_t::array:
+                return (m_it.array_iterator == other.m_it.array_iterator);
+
+            default:
+                return (m_it.primitive_iterator == other.m_it.primitive_iterator);
+        }
+    }
+
+    bool operator==(const iter_impl<typename std::remove_const<BasicJsonType>::type>& other) const
     {
         // if objects are not the same, the comparison is undefined
         if (JSON_HEDLEY_UNLIKELY(m_object != other.m_object))
