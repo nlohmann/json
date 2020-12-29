@@ -495,7 +495,7 @@ TEST_CASE("regression tests 2")
         const char DATA[] = R"("Hello, world!")";
         const auto s = std::as_bytes(std::span(DATA));
         json j = json::parse(s);
-        CHECK(j.dump() == "Hello, world!");
+        CHECK(j.dump() == "\"Hello, world!\"");
     }
 #endif
 }
