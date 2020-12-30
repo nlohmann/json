@@ -3,6 +3,8 @@
 #include <cstddef> // ptrdiff_t
 #include <limits>  // numeric_limits
 
+#include <nlohmann/detail/macro_scope.hpp>
+
 namespace nlohmann
 {
 namespace detail

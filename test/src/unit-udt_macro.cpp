@@ -54,10 +54,11 @@ namespace persons
             , metadata(std::move(metadata_))                                       \
         {}
 
-#define CREATE_PERSON_WITH_ALPHABET(ClassName, Visibility)                         \
+#define CREATE_PERSON_WITH_ALPHABET(ClassName, Visibility)                             \
     class ClassName{                                                                   \
       public:                                                                          \
-        bool operator==(const ClassName& other){                                       \
+        bool operator==(const ClassName& other) const                                  \
+        {                                                                              \
             return a == other.a &&                                                     \
                    b == other.b &&                                                     \
                    c == other.c &&                                                     \

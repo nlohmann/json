@@ -73,6 +73,10 @@ SOFTWARE.
 #include <nlohmann/json_fwd.hpp>
 #include <nlohmann/ordered_map.hpp>
 
+#if defined(JSON_HAS_CPP_17)
+    #include <string_view>
+#endif
+
 /*!
 @brief namespace for Niels Lohmann
 @see https://github.com/nlohmann
