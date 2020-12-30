@@ -106,7 +106,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(person_without_private_data_2, age, name, met
 class person_with_private_alphabet
 {
   public:
-    bool operator==(const person_with_private_alphabet& other)
+    bool operator==(const person_with_private_alphabet& other) const
     {
         return  a == other.a &&
                 b == other.b &&
@@ -169,7 +169,7 @@ class person_with_private_alphabet
 class person_with_public_alphabet
 {
   public:
-    bool operator==(const person_with_public_alphabet& other)
+    bool operator==(const person_with_public_alphabet& other) const
     {
         return  a == other.a &&
                 b == other.b &&

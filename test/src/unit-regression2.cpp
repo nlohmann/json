@@ -51,6 +51,10 @@ using nlohmann::json;
     #include <variant>
 #endif
 
+#ifdef JSON_HAS_CPP_20
+    #include <span>
+#endif
+
 /////////////////////////////////////////////////////////////////////
 // for #1021
 /////////////////////////////////////////////////////////////////////
@@ -484,4 +488,14 @@ TEST_CASE("regression tests 2")
         json j = json::parse(ss, nullptr, true, true);
         CHECK(j.dump() == "{}");
     }
+
+#ifdef JSON_HAS_CPP_20
+    SECTION("issue #2546 - parsing containers of std::byte")
+    {
+        const char DATA[] = R"("Hello, world!")";
+        const auto s = std::as_bytes(std::span(DATA));
+        json j = json::parse(s);
+        CHECK(j.dump() == "\"Hello, world!\"");
+    }
+#endif
 }
