@@ -509,7 +509,7 @@ TEST_CASE("parser class")
                 CHECK(parser_helper("\"€\"").get<json::string_t>() == "€");
                 CHECK(parser_helper("\"🎈\"").get<json::string_t>() == "🎈");
 
-                CHECK(parser_helper("\"\\ud80c\\udc60\"").get<json::string_t>() == u8"\U00013060");
+                CHECK(parser_helper("\"\\ud80c\\udc60\"").get<json::string_t>() == "\xf0\x93\x81\xa0");
                 CHECK(parser_helper("\"\\ud83c\\udf1e\"").get<json::string_t>() == "🌞");
             }
         }

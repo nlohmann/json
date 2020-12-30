@@ -38,8 +38,10 @@ This class implements a both iterators (iterator and const_iterator) for the
 template<typename BasicJsonType>
 class iter_impl
 {
+    /// the iterator with BasicJsonType of different const-ness
+    using other_iter_impl = iter_impl<typename std::conditional<std::is_const<BasicJsonType>::value, typename std::remove_const<BasicJsonType>::type, const BasicJsonType>::type>;
     /// allow basic_json to access private members
-    friend iter_impl<typename std::conditional<std::is_const<BasicJsonType>::value, typename std::remove_const<BasicJsonType>::type, const BasicJsonType>::type>;
+    friend other_iter_impl;
     friend BasicJsonType;
     friend iteration_proxy<iter_impl>;
     friend iteration_proxy_value<iter_impl>;
@@ -390,10 +392,11 @@ class iter_impl
     }
 
     /*!
-    @brief  comparison: equal
+    @brief comparison: equal
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
-    bool operator==(const iter_impl& other) const
+    template < typename IterImpl, detail::enable_if_t < (std::is_same<IterImpl, iter_impl>::value || std::is_same<IterImpl, other_iter_impl>::value), std::nullptr_t > = nullptr >
+    bool operator==(const IterImpl& other) const
     {
         // if objects are not the same, the comparison is undefined
         if (JSON_HEDLEY_UNLIKELY(m_object != other.m_object))
@@ -417,16 +420,17 @@ class iter_impl
     }
 
     /*!
-    @brief  comparison: not equal
+    @brief comparison: not equal
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
-    bool operator!=(const iter_impl& other) const
+    template < typename IterImpl, detail::enable_if_t < (std::is_same<IterImpl, iter_impl>::value || std::is_same<IterImpl, other_iter_impl>::value), std::nullptr_t > = nullptr >
+    bool operator!=(const IterImpl& other) const
     {
         return !operator==(other);
     }
 
     /*!
-    @brief  comparison: smaller
+    @brief comparison: smaller
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
     bool operator<(const iter_impl& other) const
@@ -453,7 +457,7 @@ class iter_impl
     }
 
     /*!
-    @brief  comparison: less than or equal
+    @brief comparison: less than or equal
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
     bool operator<=(const iter_impl& other) const
@@ -462,7 +466,7 @@ class iter_impl
     }
 
     /*!
-    @brief  comparison: greater than
+    @brief comparison: greater than
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
     bool operator>(const iter_impl& other) const
@@ -471,7 +475,7 @@ class iter_impl
     }
 
     /*!
-    @brief  comparison: greater than or equal
+    @brief comparison: greater than or equal
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
     bool operator>=(const iter_impl& other) const
@@ -480,7 +484,7 @@ class iter_impl
     }
 
     /*!
-    @brief  add to iterator
+    @brief add to iterator
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
     iter_impl& operator+=(difference_type i)
@@ -509,7 +513,7 @@ class iter_impl
     }
 
     /*!
-    @brief  subtract from iterator
+    @brief subtract from iterator
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
     iter_impl& operator-=(difference_type i)
@@ -518,7 +522,7 @@ class iter_impl
     }
 
     /*!
-    @brief  add to iterator
+    @brief add to iterator
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
     iter_impl operator+(difference_type i) const
@@ -529,7 +533,7 @@ class iter_impl
     }
 
     /*!
-    @brief  addition of distance and iterator
+    @brief addition of distance and iterator
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
     friend iter_impl operator+(difference_type i, const iter_impl& it)
@@ -540,7 +544,7 @@ class iter_impl
     }
 
     /*!
-    @brief  subtract from iterator
+    @brief subtract from iterator
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
     iter_impl operator-(difference_type i) const
@@ -551,7 +555,7 @@ class iter_impl
     }
 
     /*!
-    @brief  return difference
+    @brief return difference
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
     difference_type operator-(const iter_impl& other) const
@@ -572,7 +576,7 @@ class iter_impl
     }
 
     /*!
-    @brief  access to successor
+    @brief access to successor
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
     reference operator[](difference_type n) const
@@ -603,7 +607,7 @@ class iter_impl
     }
 
     /*!
-    @brief  return the key of an object iterator
+    @brief return the key of an object iterator
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
     const typename object_t::key_type& key() const
@@ -619,7 +623,7 @@ class iter_impl
     }
 
     /*!
-    @brief  return the value of an iterator
+    @brief return the value of an iterator
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
     reference value() const
