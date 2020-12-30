@@ -94,12 +94,14 @@ struct Data
     std::string b {};
 };
 
+void from_json(const json& j, Data& data);
 void from_json(const json& j, Data& data)
 {
     j["a"].get_to(data.a);
     j["b"].get_to(data.b);
 }
 
+bool operator==(Data const& lhs, Data const& rhs);
 bool operator==(Data const& lhs, Data const& rhs)
 {
     return lhs.a == rhs.a && lhs.b == rhs.b;

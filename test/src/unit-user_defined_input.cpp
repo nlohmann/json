@@ -131,6 +131,13 @@ TEST_CASE("Custom iterator")
         const char* ptr;
     };
 
+    // avoid -Wunused-local-typedefs
+    CHECK(std::is_same<MyIterator::difference_type, std::size_t>::value);
+    CHECK(std::is_same<MyIterator::value_type, char>::value);
+    CHECK(std::is_same<MyIterator::pointer, const char*>::value);
+    CHECK(std::is_same<MyIterator::reference, const char&>::value);
+    CHECK(std::is_same<MyIterator::iterator_category, std::input_iterator_tag>::value);
+
     MyIterator begin{raw_data};
     MyIterator end{raw_data + strlen(raw_data)};
 

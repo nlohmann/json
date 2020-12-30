@@ -51,12 +51,10 @@ set(CLANG_CXXFLAGS "-std=c++11                        \
     -Weverything                                      \
     -Wno-c++98-compat                                    \
     -Wno-c++98-compat-pedantic                           \
-    -Wno-c++2a-compat                                    \
     -Wno-deprecated-declarations                         \
     -Wno-documentation-unknown-command                   \
     -Wno-exit-time-destructors                           \
-    -Wno-float-equal                                     \
-    -Wno-missing-prototypes                              \
+    -Wno-extra-semi-stmt                                 \
     -Wno-padded                                          \
     -Wno-range-loop-analysis                             \
     -Wno-switch-enum -Wno-covered-switch-default         \
@@ -193,7 +191,7 @@ set(GCC_CXXFLAGS "-std=c++11                          \
     -Wmismatched-tags                                 \
     -Wmissing-attributes                              \
     -Wmissing-braces                                  \
-    -Wno-missing-declarations                            \
+    -Wmissing-declarations                            \
     -Wmissing-field-initializers                      \
     -Wmissing-include-dirs                            \
     -Wmissing-profile                                 \
@@ -301,7 +299,7 @@ set(GCC_CXXFLAGS "-std=c++11                          \
     -Wunused-const-variable=2                         \
     -Wunused-function                                 \
     -Wunused-label                                    \
-    -Wno-unused-local-typedefs                           \
+    -Wunused-local-typedefs                           \
     -Wunused-macros                                   \
     -Wunused-parameter                                \
     -Wunused-result                                   \

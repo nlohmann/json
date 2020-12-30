@@ -199,7 +199,7 @@ template <typename BasicJsonType>
 static void from_json(const BasicJsonType& j, country& c)
 {
     const auto str = j.template get<std::string>();
-    static const std::map<std::string, country> m =
+    const std::map<std::string, country> m =
     {
         {"中华人民共和国", country::china},
         {"France", country::france},
