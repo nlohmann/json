@@ -320,9 +320,9 @@ set(GCC_CXXFLAGS "-std=c++11                          \
 ")
 
 add_custom_target(ci_test_gcc
-    COMMAND CXX=${GCC_TOOL} CXXFLAGS=${GCC_CXXFLAGS} ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_g++ -DJSON_BuildTests=ON -GNinja
-    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_g++
-    COMMAND cd ${PROJECT_BINARY_DIR}/build_g++/test && ${CMAKE_CTEST_COMMAND} -j10
+    COMMAND CXX=${GCC_TOOL} CXXFLAGS=${GCC_CXXFLAGS} ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_gcc -DJSON_BuildTests=ON -GNinja
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_gcc
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_gcc/test && ${CMAKE_CTEST_COMMAND} -j10
     COMMENT "Compile and test with GCC"
 )
 
@@ -466,6 +466,6 @@ add_custom_target(ci_single_binaries
 ###############################################################################
 
 add_custom_target(ci_clean
-    COMMAND rm -fr ${PROJECT_BINARY_DIR}/build_g++ ${PROJECT_BINARY_DIR}/build_clang ${PROJECT_BINARY_DIR}/build_clang_analyze ${PROJECT_BINARY_DIR}/build_clang_tidy ${PROJECT_BINARY_DIR}/build_pvs_studio ${PROJECT_BINARY_DIR}/build_clang_sanitizer ${PROJECT_BINARY_DIR}/build_infer ${PROJECT_BINARY_DIR}/build_iwyu ${PROJECT_BINARY_DIR}/build_oclint ${single_binaries}
+    COMMAND rm -fr ${PROJECT_BINARY_DIR}/build_gcc ${PROJECT_BINARY_DIR}/build_clang ${PROJECT_BINARY_DIR}/build_clang_analyze ${PROJECT_BINARY_DIR}/build_clang_tidy ${PROJECT_BINARY_DIR}/build_pvs_studio ${PROJECT_BINARY_DIR}/build_clang_sanitizer ${PROJECT_BINARY_DIR}/build_infer ${PROJECT_BINARY_DIR}/build_iwyu ${PROJECT_BINARY_DIR}/build_oclint ${single_binaries}
     COMMENT "Clean generated directories"
 )
