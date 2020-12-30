@@ -1,7 +1,7 @@
 # Project information
 site_name: JSON for Modern C++
 site_author: Niels Lohmann
-site_url: https://squidfunk.github.io/mkdocs-material/
+site_url: https://json.nlohmann.me/
 
 # Repository
 repo_name: nlohmann/json

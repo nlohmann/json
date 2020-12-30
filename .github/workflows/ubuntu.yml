@@ -3,13 +3,61 @@ name: Ubuntu
 on: [push, pull_request]
 
 jobs:
-  build:
+  gcc_build:
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v1
+    - name: install_gcc
+      run: |
+           sudo apt update
+           sudo apt install gcc-10 g++-10
+      shell: bash
     - name: cmake
       run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On
+      env:
+        CC:   gcc-10
+        CXX:  g++-10
+    - name: build
+      run: cmake --build build --parallel 10
+    - name: test
+      run: cd build ; ctest -j 10 --output-on-failure
+
+  clang_build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: install_gcc
+      run: |
+           sudo apt update
+           sudo apt install clang-10
+      shell: bash
+    - name: cmake
+      run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On
+      env:
+        CC:   clang-10
+        CXX:  clang++-10
+    - name: build
+      run: cmake --build build --parallel 10
+    - name: test
+      run: cd build ; ctest -j 10 --output-on-failure
+
+  clang_build_cxx20:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: install_gcc
+      run: |
+           sudo apt update
+           sudo apt install clang-10
+      shell: bash
+    - name: cmake
+      run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On -DCMAKE_CXX_STANDARD=20 -DCMAKE_CXX_STANDARD_REQUIRED=ON
+      env:
+        CC:   clang-10
+        CXX:  clang++-10
     - name: build
       run: cmake --build build --parallel 10
     - name: test

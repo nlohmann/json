@@ -48,10 +48,6 @@ using nlohmann::json;
     #define JSON_HAS_CPP_14
 #endif
 
-#if defined(JSON_HAS_CPP_17)
-    #include <string_view>
-#endif
-
 TEST_CASE("value conversion")
 {
     SECTION("get an object (explicit)")
@@ -1706,3 +1702,11 @@ TEST_CASE("JSON to enum mapping")
         CHECK(TS_INVALID == json("what?").get<TaskState>());
     }
 }
+
+#ifdef JSON_HAS_CPP_17
+    #undef JSON_HAS_CPP_17
+#endif
+
+#ifdef JSON_HAS_CPP_14
+    #undef JSON_HAS_CPP_14
+#endif
