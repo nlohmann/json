@@ -37,8 +37,12 @@ execute_process(COMMAND ${INFER_TOOL} --version OUTPUT_VARIABLE INFER_TOOL_VERSI
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" INFER_TOOL_VERSION "${INFER_TOOL_VERSION}")
 message(STATUS "🔖 Infer ${INFER_TOOL_VERSION} (${INFER_TOOL})")
 
+find_program(IWYU_TOOL NAMES include-what-you-use iwyu REQUIRED)
+execute_process(COMMAND ${IWYU_TOOL} --version OUTPUT_VARIABLE IWYU_TOOL_VERSION ERROR_VARIABLE IWYU_TOOL_VERSION)
+string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" IWYU_TOOL_VERSION "${IWYU_TOOL_VERSION}")
+message(STATUS "🔖 include-what-you-use ${IWYU_TOOL_VERSION} (${IWYU_TOOL})")
+
 find_program(OCLINT_TOOL NAMES oclint-json-compilation-database REQUIRED)
-find_program(IWYU_TOOL NAMES iwyu_tool.py REQUIRED)
 find_program(PLOG_CONVERTER_TOOL NAMES plog-converter REQUIRED)
 find_program(PVS_STUDIO_ANALYZER_TOOL NAMES pvs-studio-analyzer REQUIRED)
 find_program(SCAN_BUILD_TOOL NAMES scan-build REQUIRED)
@@ -404,16 +408,6 @@ add_custom_target(ci_clang_tidy
 )
 
 ###############################################################################
-# Check code with iwyu.
-###############################################################################
-
-add_custom_target(ci_iwyu
-    COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_iwyu -DJSON_BuildTests=ON -DJSON_MultipleHeaders=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-    COMMAND cd ${PROJECT_BINARY_DIR}/build_iwyu && ${IWYU_TOOL} -p ${PROJECT_BINARY_DIR}/build_iwyu -j 10
-    COMMENT "Check code with iwyu"
-)
-
-###############################################################################
 # Check code with PVS-Studio Analyzer <https://www.viva64.com/en/pvs-studio/>.
 ###############################################################################
 
@@ -447,11 +441,12 @@ foreach(SRC_FILE ${SRC_FILES})
     string(REPLACE "/" "_" RELATIVE_SRC_FILE "${RELATIVE_SRC_FILE}")
     string(REPLACE ".hpp" "" RELATIVE_SRC_FILE "${RELATIVE_SRC_FILE}")
     # create code file
-    file(WRITE "${PROJECT_BINARY_DIR}/src_single/${RELATIVE_SRC_FILE}.cpp" "#include \"${SRC_FILE}\"\n\nint main()\n{}\n")
+    file(WRITE "${PROJECT_BINARY_DIR}/src_single/${RELATIVE_SRC_FILE}.cpp" "#include \"${SRC_FILE}\" // IWYU pragma: keep\n\nint main()\n{}\n")
     # create executable
     add_executable(single_${RELATIVE_SRC_FILE} EXCLUDE_FROM_ALL ${PROJECT_BINARY_DIR}/src_single/${RELATIVE_SRC_FILE}.cpp)
     target_include_directories(single_${RELATIVE_SRC_FILE} PRIVATE ${PROJECT_SOURCE_DIR}/include)
     target_compile_features(single_${RELATIVE_SRC_FILE} PRIVATE cxx_std_11)
+    set_property(TARGET single_${RELATIVE_SRC_FILE} PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${IWYU_TOOL})
     # remember binary for ci_single_binaries target
     list(APPEND single_binaries single_${RELATIVE_SRC_FILE})
 endforeach()
@@ -466,6 +461,6 @@ add_custom_target(ci_single_binaries
 ###############################################################################
 
 add_custom_target(ci_clean
-    COMMAND rm -fr ${PROJECT_BINARY_DIR}/build_gcc ${PROJECT_BINARY_DIR}/build_clang ${PROJECT_BINARY_DIR}/build_clang_analyze ${PROJECT_BINARY_DIR}/build_clang_tidy ${PROJECT_BINARY_DIR}/build_pvs_studio ${PROJECT_BINARY_DIR}/build_clang_sanitizer ${PROJECT_BINARY_DIR}/build_infer ${PROJECT_BINARY_DIR}/build_iwyu ${PROJECT_BINARY_DIR}/build_oclint ${single_binaries}
+    COMMAND rm -fr ${PROJECT_BINARY_DIR}/build_gcc ${PROJECT_BINARY_DIR}/build_clang ${PROJECT_BINARY_DIR}/build_clang_analyze ${PROJECT_BINARY_DIR}/build_clang_tidy ${PROJECT_BINARY_DIR}/build_pvs_studio ${PROJECT_BINARY_DIR}/build_clang_sanitizer ${PROJECT_BINARY_DIR}/build_infer ${PROJECT_BINARY_DIR}/build_oclint ${single_binaries}
     COMMENT "Clean generated directories"
 )

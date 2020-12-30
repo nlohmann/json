@@ -16511,7 +16511,11 @@ class serializer
 
 
 #include <functional> // less
+#include <initializer_list> // initializer_list
+#include <iterator> // input_iterator_tag, iterator_traits
 #include <memory> // allocator
+#include <stdexcept> // for out_of_range
+#include <type_traits> // enable_if, is_convertible
 #include <utility> // pair
 #include <vector> // vector
 
