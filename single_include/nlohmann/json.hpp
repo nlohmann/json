@@ -2312,6 +2312,10 @@ JSON_HEDLEY_DIAGNOSTIC_POP
     #define JSON_EXPLICIT explicit
 #endif
 
+#ifndef JSON_USE_STRICT_CONTAINER_SIZE
+    #define JSON_USE_STRICT_CONTAINER_SIZE 0
+#endif
+
 
 namespace nlohmann
 {
@@ -3564,6 +3568,7 @@ template<typename BasicJsonType, typename T, std::size_t N>
 auto from_json(const BasicJsonType& j, T (&arr)[N])
 -> decltype(j.template get<T>(), void())
 {
+#if JSON_USE_STRICT_CONTAINER_SIZE
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
         JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(j.type_name())));
@@ -3572,6 +3577,7 @@ auto from_json(const BasicJsonType& j, T (&arr)[N])
     {
         JSON_THROW(type_error::create(302, "array size must be " + std::to_string(N) + ", but is " + std::to_string(j.size())));
     }
+#endif
     for (std::size_t i = 0; i < N; ++i)
     {
         arr[i] = j.at(i).template get<T>();
@@ -3589,11 +3595,13 @@ auto from_json_array_impl(const BasicJsonType& j, std::array<T, N>& arr,
                           priority_tag<2> /*unused*/)
 -> decltype(j.template get<T>(), void())
 {
+#if JSON_USE_STRICT_CONTAINER_SIZE
     // array type check done in from_json already, only check size
     if (JSON_HEDLEY_UNLIKELY(j.size() != N))
     {
         JSON_THROW(type_error::create(302, "array size must be " + std::to_string(N) + ", but is " + std::to_string(j.size())));
     }
+#endif
     for (std::size_t i = 0; i < N; ++i)
     {
         arr[i] = j.at(i).template get<T>();
@@ -3739,6 +3747,7 @@ void from_json(const BasicJsonType& j, ArithmeticType& val)
 template<typename BasicJsonType, typename A1, typename A2>
 void from_json(const BasicJsonType& j, std::pair<A1, A2>& p)
 {
+#if JSON_USE_STRICT_CONTAINER_SIZE
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
         JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(j.type_name())));
@@ -3747,12 +3756,14 @@ void from_json(const BasicJsonType& j, std::pair<A1, A2>& p)
     {
         JSON_THROW(type_error::create(302, "array size must be 2, but is " + std::to_string(j.size())));
     }
+#endif
     p = {j.at(0).template get<A1>(), j.at(1).template get<A2>()};
 }
 
 template<typename BasicJsonType, typename Tuple, std::size_t... Idx>
 void from_json_tuple_impl(const BasicJsonType& j, Tuple& t, index_sequence<Idx...> /*unused*/)
 {
+#if JSON_USE_STRICT_CONTAINER_SIZE
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
         JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(j.type_name())));
@@ -3761,6 +3772,7 @@ void from_json_tuple_impl(const BasicJsonType& j, Tuple& t, index_sequence<Idx..
     {
         JSON_THROW(type_error::create(302, "array size must be " + std::to_string(sizeof...(Idx)) + ", but is " + std::to_string(j.size())));
     }
+#endif
     t = std::make_tuple(j.at(Idx).template get<typename std::tuple_element<Idx, Tuple>::type>()...);
 }
 

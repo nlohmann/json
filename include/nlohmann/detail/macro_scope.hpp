@@ -294,3 +294,7 @@
 #else
     #define JSON_EXPLICIT explicit
 #endif
+
+#ifndef JSON_USE_STRICT_CONTAINER_SIZE
+    #define JSON_USE_STRICT_CONTAINER_SIZE 0
+#endif
