@@ -1,9 +1,6 @@
 #pragma once
 
 // restore GCC/clang diagnostic settings
-#if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
-    #pragma GCC diagnostic pop
-#endif
 #if defined(__clang__)
     #pragma GCC diagnostic pop
 #endif
