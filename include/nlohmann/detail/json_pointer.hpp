@@ -87,9 +87,9 @@ class json_pointer
 
     @complexity Linear in the length of @a ptr.
 
-    @sa @ref operator/=(std::string) to append a reference token
-    @sa @ref operator/=(std::size_t) to append an array index
-    @sa @ref operator/(const json_pointer&, const json_pointer&) for a binary operator
+    @sa see @ref operator/=(std::string) to append a reference token
+    @sa see @ref operator/=(std::size_t) to append an array index
+    @sa see @ref operator/(const json_pointer&, const json_pointer&) for a binary operator
 
     @since version 3.6.0
     */
@@ -111,9 +111,9 @@ class json_pointer
 
     @complexity Amortized constant.
 
-    @sa @ref operator/=(const json_pointer&) to append a JSON pointer
-    @sa @ref operator/=(std::size_t) to append an array index
-    @sa @ref operator/(const json_pointer&, std::size_t) for a binary operator
+    @sa see @ref operator/=(const json_pointer&) to append a JSON pointer
+    @sa see @ref operator/=(std::size_t) to append an array index
+    @sa see @ref operator/(const json_pointer&, std::size_t) for a binary operator
 
     @since version 3.6.0
     */
@@ -133,9 +133,9 @@ class json_pointer
 
     @complexity Amortized constant.
 
-    @sa @ref operator/=(const json_pointer&) to append a JSON pointer
-    @sa @ref operator/=(std::string) to append a reference token
-    @sa @ref operator/(const json_pointer&, std::string) for a binary operator
+    @sa see @ref operator/=(const json_pointer&) to append a JSON pointer
+    @sa see @ref operator/=(std::string) to append a reference token
+    @sa see @ref operator/(const json_pointer&, std::string) for a binary operator
 
     @since version 3.6.0
     */
@@ -155,7 +155,7 @@ class json_pointer
 
     @complexity Linear in the length of @a lhs and @a rhs.
 
-    @sa @ref operator/=(const json_pointer&) to append a JSON pointer
+    @sa see @ref operator/=(const json_pointer&) to append a JSON pointer
 
     @since version 3.6.0
     */
@@ -176,7 +176,7 @@ class json_pointer
 
     @complexity Linear in the length of @a ptr.
 
-    @sa @ref operator/=(std::string) to append a reference token
+    @sa see @ref operator/=(std::string) to append a reference token
 
     @since version 3.6.0
     */
@@ -196,7 +196,7 @@ class json_pointer
 
     @complexity Linear in the length of @a ptr.
 
-    @sa @ref operator/=(std::size_t) to append an array index
+    @sa see @ref operator/=(std::size_t) to append an array index
 
     @since version 3.6.0
     */

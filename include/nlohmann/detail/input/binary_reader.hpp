@@ -89,7 +89,7 @@ class binary_reader
     @param[in] strict  whether to expect the input to be consumed completed
     @param[in] tag_handler  how to treat CBOR tags
 
-    @return
+    @return whether parsing was successful
     */
     JSON_HEDLEY_NON_NULL(3)
     bool sax_parse(const input_format_t format,
@@ -173,7 +173,7 @@ class binary_reader
 
     /*!
     @brief Parses a C-style string from the BSON input.
-    @param[in, out] result  A reference to the string variable where the read
+    @param[in,out] result  A reference to the string variable where the read
                             string is to be stored.
     @return `true` if the \x00-byte indicating the end of the string was
              encountered before the EOF; false` indicates an unexpected EOF.
@@ -201,7 +201,7 @@ class binary_reader
            input.
     @param[in] len  The length (including the zero-byte at the end) of the
                     string to be read.
-    @param[in, out] result  A reference to the string variable where the read
+    @param[in,out] result  A reference to the string variable where the read
                             string is to be stored.
     @tparam NumberType The type of the length @a len
     @pre len >= 1
@@ -222,7 +222,7 @@ class binary_reader
     /*!
     @brief Parses a byte array input of length @a len from the BSON input.
     @param[in] len  The length of the byte array to be read.
-    @param[in, out] result  A reference to the binary variable where the read
+    @param[in,out] result  A reference to the binary variable where the read
                             array is to be stored.
     @tparam NumberType The type of the length @a len
     @pre len >= 0

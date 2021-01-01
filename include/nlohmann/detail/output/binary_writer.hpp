@@ -1151,7 +1151,6 @@ class binary_writer
            key @a name.
     @param name The name to associate with the JSON entity @a j within the
                 current BSON document
-    @return The size of the BSON entry
     */
     void write_bson_element(const string_t& name,
                             const BasicJsonType& j)
@@ -1196,8 +1195,8 @@ class binary_writer
     /*!
     @brief Calculates the size of the BSON serialization of the given
            JSON-object @a j.
-    @param[in] j  JSON value to serialize
-    @pre       j.type() == value_t::object
+    @param[in] value  JSON value to serialize
+    @pre       value.type() == value_t::object
     */
     static std::size_t calc_bson_object_size(const typename BasicJsonType::object_t& value)
     {
@@ -1211,8 +1210,8 @@ class binary_writer
     }
 
     /*!
-    @param[in] j  JSON value to serialize
-    @pre       j.type() == value_t::object
+    @param[in] value  JSON value to serialize
+    @pre       value.type() == value_t::object
     */
     void write_bson_object(const typename BasicJsonType::object_t& value)
     {
