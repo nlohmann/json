@@ -331,7 +331,7 @@ add_custom_target(ci_test_gcc
 )
 
 add_custom_target(ci_test_clang
-    COMMAND CXX=${CLANG_TOOL} CXXFLAGS=${CLANG_CXXFLAGS} ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_clang -DJSON_BuildTests=ON -GNinja
+    COMMAND CXX=${CLANG_TOOL} CXXFLAGS=${CLANG_CXXFLAGS} ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_clang -DJSON_BuildTests=ON -DJSON_MultipleHeaders=ON -GNinja
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_clang
     COMMAND cd ${PROJECT_BINARY_DIR}/build_clang/test && ${CMAKE_CTEST_COMMAND} -j10
     COMMENT "Compile and test with Clang"
@@ -434,6 +434,8 @@ add_custom_target(ci_infer
 # be compiled individually.
 ###############################################################################
 
+set(iwyu_path_and_options ${IWYU_TOOL} -Xiwyu --max_line_length=300)
+
 foreach(SRC_FILE ${SRC_FILES})
     # get relative path of the header file
     file(RELATIVE_PATH RELATIVE_SRC_FILE "${PROJECT_SOURCE_DIR}/include/nlohmann" "${SRC_FILE}")
@@ -446,7 +448,7 @@ foreach(SRC_FILE ${SRC_FILES})
     add_executable(single_${RELATIVE_SRC_FILE} EXCLUDE_FROM_ALL ${PROJECT_BINARY_DIR}/src_single/${RELATIVE_SRC_FILE}.cpp)
     target_include_directories(single_${RELATIVE_SRC_FILE} PRIVATE ${PROJECT_SOURCE_DIR}/include)
     target_compile_features(single_${RELATIVE_SRC_FILE} PRIVATE cxx_std_11)
-    set_property(TARGET single_${RELATIVE_SRC_FILE} PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${IWYU_TOOL})
+    set_property(TARGET single_${RELATIVE_SRC_FILE} PROPERTY CXX_INCLUDE_WHAT_YOU_USE "${iwyu_path_and_options}")
     # remember binary for ci_single_binaries target
     list(APPEND single_binaries single_${RELATIVE_SRC_FILE})
 endforeach()
