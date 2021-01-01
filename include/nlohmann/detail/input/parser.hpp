@@ -497,5 +497,6 @@ class parser
     /// whether to throw exceptions in case of errors
     const bool allow_exceptions = true;
 };
+
 }  // namespace detail
 }  // namespace nlohmann

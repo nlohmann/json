@@ -2867,7 +2867,7 @@ class basic_json
 
     @tparam BasicJsonType == @ref basic_json
 
-    @return a copy of *this, converted into @tparam BasicJsonType
+    @return a copy of *this, converted into @a BasicJsonType
 
     @complexity Depending on the implementation of the called `from_json()`
                 method.
