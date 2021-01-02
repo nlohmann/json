@@ -1941,7 +1941,7 @@ class basic_json
         // make sure iterator fits the current value
         if (JSON_HEDLEY_UNLIKELY(first.m_object != last.m_object))
         {
-            JSON_THROW(invalid_iterator::create(201, "iterators are not compatible"));
+            JSON_THROW(invalid_iterator::create(201, diagnostics() + "iterators are not compatible"));
         }
 
         // copy type from first iterator
@@ -2774,7 +2774,7 @@ class basic_json
             return m_value.boolean;
         }
 
-        JSON_THROW(type_error::create(302, "type must be boolean, but is " + std::string(type_name())));
+        JSON_THROW(type_error::create(302, diagnostics() + "type must be boolean, but is " + std::string(type_name())));
     }
 
     /// get a pointer to the value (object)
@@ -2895,7 +2895,7 @@ class basic_json
             return *ptr;
         }
 
-        JSON_THROW(type_error::create(303, "incompatible ReferenceType for get_ref, actual type is " + std::string(obj.type_name())));
+        JSON_THROW(type_error::create(303, obj.diagnostics() + "incompatible ReferenceType for get_ref, actual type is " + std::string(obj.type_name())));
     }
 
   public:
@@ -3323,7 +3323,7 @@ class basic_json
     {
         if (!is_binary())
         {
-            JSON_THROW(type_error::create(302, "type must be binary, but is " + std::string(type_name())));
+            JSON_THROW(type_error::create(302, diagnostics() + "type must be binary, but is " + std::string(type_name())));
         }
 
         return *get_ptr<binary_t*>();
@@ -3334,7 +3334,7 @@ class basic_json
     {
         if (!is_binary())
         {
-            JSON_THROW(type_error::create(302, "type must be binary, but is " + std::string(type_name())));
+            JSON_THROW(type_error::create(302, diagnostics() + "type must be binary, but is " + std::string(type_name())));
         }
 
         return *get_ptr<const binary_t*>();
@@ -3395,12 +3395,12 @@ class basic_json
             JSON_CATCH (std::out_of_range&)
             {
                 // create better exception explanation
-                JSON_THROW(out_of_range::create(401, "array index " + std::to_string(idx) + " is out of range"));
+                JSON_THROW(out_of_range::create(401, diagnostics() + "array index " + std::to_string(idx) + " is out of range"));
             }
         }
         else
         {
-            JSON_THROW(type_error::create(304, "cannot use at() with " + std::string(type_name())));
+            JSON_THROW(type_error::create(304, diagnostics() + "cannot use at() with " + std::string(type_name())));
         }
     }
 
@@ -3442,12 +3442,12 @@ class basic_json
             JSON_CATCH (std::out_of_range&)
             {
                 // create better exception explanation
-                JSON_THROW(out_of_range::create(401, "array index " + std::to_string(idx) + " is out of range"));
+                JSON_THROW(out_of_range::create(401, diagnostics() + "array index " + std::to_string(idx) + " is out of range"));
             }
         }
         else
         {
-            JSON_THROW(type_error::create(304, "cannot use at() with " + std::string(type_name())));
+            JSON_THROW(type_error::create(304, diagnostics() + "cannot use at() with " + std::string(type_name())));
         }
     }
 
@@ -3499,12 +3499,12 @@ class basic_json
             JSON_CATCH (std::out_of_range&)
             {
                 // create better exception explanation
-                JSON_THROW(out_of_range::create(403, "key '" + key + "' not found"));
+                JSON_THROW(out_of_range::create(403, diagnostics() + "key '" + key + "' not found"));
             }
         }
         else
         {
-            JSON_THROW(type_error::create(304, "cannot use at() with " + std::string(type_name())));
+            JSON_THROW(type_error::create(304, diagnostics() + "cannot use at() with " + std::string(type_name())));
         }
     }
 
@@ -3550,12 +3550,12 @@ class basic_json
             JSON_CATCH (std::out_of_range&)
             {
                 // create better exception explanation
-                JSON_THROW(out_of_range::create(403, "key '" + key + "' not found"));
+                JSON_THROW(out_of_range::create(403, diagnostics() + "key '" + key + "' not found"));
             }
         }
         else
         {
-            JSON_THROW(type_error::create(304, "cannot use at() with " + std::string(type_name())));
+            JSON_THROW(type_error::create(304, diagnostics() + "cannot use at() with " + std::string(type_name())));
         }
     }
 
@@ -3617,7 +3617,7 @@ class basic_json
 #endif
         }
 
-        JSON_THROW(type_error::create(305, "cannot use operator[] with a numeric argument with " + std::string(type_name())));
+        JSON_THROW(type_error::create(305, diagnostics() + "cannot use operator[] with a numeric argument with " + std::string(type_name())));
     }
 
     /*!
@@ -3647,7 +3647,7 @@ class basic_json
             return m_value.array->operator[](idx);
         }
 
-        JSON_THROW(type_error::create(305, "cannot use operator[] with a numeric argument with " + std::string(type_name())));
+        JSON_THROW(type_error::create(305, diagnostics() + "cannot use operator[] with a numeric argument with " + std::string(type_name())));
     }
 
     /*!
@@ -3699,7 +3699,7 @@ class basic_json
 #endif
         }
 
-        JSON_THROW(type_error::create(305, "cannot use operator[] with a string argument with " + std::string(type_name())));
+        JSON_THROW(type_error::create(305, diagnostics() + "cannot use operator[] with a string argument with " + std::string(type_name())));
     }
 
     /*!
@@ -3741,7 +3741,7 @@ class basic_json
             return m_value.object->find(key)->second;
         }
 
-        JSON_THROW(type_error::create(305, "cannot use operator[] with a string argument with " + std::string(type_name())));
+        JSON_THROW(type_error::create(305, diagnostics() + "cannot use operator[] with a string argument with " + std::string(type_name())));
     }
 
     /*!
@@ -3795,7 +3795,7 @@ class basic_json
 #endif
         }
 
-        JSON_THROW(type_error::create(305, "cannot use operator[] with a string argument with " + std::string(type_name())));
+        JSON_THROW(type_error::create(305, diagnostics() + "cannot use operator[] with a string argument with " + std::string(type_name())));
     }
 
     /*!
@@ -3839,7 +3839,7 @@ class basic_json
             return m_value.object->find(key)->second;
         }
 
-        JSON_THROW(type_error::create(305, "cannot use operator[] with a string argument with " + std::string(type_name())));
+        JSON_THROW(type_error::create(305, diagnostics() + "cannot use operator[] with a string argument with " + std::string(type_name())));
     }
 
     /*!
@@ -3911,7 +3911,7 @@ class basic_json
             return default_value;
         }
 
-        JSON_THROW(type_error::create(306, "cannot use value() with " + std::string(type_name())));
+        JSON_THROW(type_error::create(306, diagnostics() + "cannot use value() with " + std::string(type_name())));
     }
 
     /*!
@@ -3984,7 +3984,7 @@ class basic_json
             }
         }
 
-        JSON_THROW(type_error::create(306, "cannot use value() with " + std::string(type_name())));
+        JSON_THROW(type_error::create(306, diagnostics() + "cannot use value() with " + std::string(type_name())));
     }
 
     /*!
@@ -4138,7 +4138,7 @@ class basic_json
         // make sure iterator fits the current value
         if (JSON_HEDLEY_UNLIKELY(this != pos.m_object))
         {
-            JSON_THROW(invalid_iterator::create(202, "iterator does not fit current value"));
+            JSON_THROW(invalid_iterator::create(202, diagnostics() + "iterator does not fit current value"));
         }
 
         IteratorType result = end();
@@ -4190,7 +4190,7 @@ class basic_json
             }
 
             default:
-                JSON_THROW(type_error::create(307, "cannot use erase() with " + std::string(type_name())));
+                JSON_THROW(type_error::create(307, diagnostics() + "cannot use erase() with " + std::string(type_name())));
         }
 
         return result;
@@ -4251,7 +4251,7 @@ class basic_json
         // make sure iterator fits the current value
         if (JSON_HEDLEY_UNLIKELY(this != first.m_object || this != last.m_object))
         {
-            JSON_THROW(invalid_iterator::create(203, "iterators do not fit current value"));
+            JSON_THROW(invalid_iterator::create(203, diagnostics() + "iterators do not fit current value"));
         }
 
         IteratorType result = end();
@@ -4268,7 +4268,7 @@ class basic_json
                 if (JSON_HEDLEY_LIKELY(!first.m_it.primitive_iterator.is_begin()
                                        || !last.m_it.primitive_iterator.is_end()))
                 {
-                    JSON_THROW(invalid_iterator::create(204, "iterators out of range"));
+                    JSON_THROW(invalid_iterator::create(204, diagnostics() + "iterators out of range"));
                 }
 
                 if (is_string())
@@ -4306,7 +4306,7 @@ class basic_json
             }
 
             default:
-                JSON_THROW(type_error::create(307, "cannot use erase() with " + std::string(type_name())));
+                JSON_THROW(type_error::create(307, diagnostics() + "cannot use erase() with " + std::string(type_name())));
         }
 
         return result;
@@ -4349,7 +4349,7 @@ class basic_json
             return m_value.object->erase(key);
         }
 
-        JSON_THROW(type_error::create(307, "cannot use erase() with " + std::string(type_name())));
+        JSON_THROW(type_error::create(307, diagnostics() + "cannot use erase() with " + std::string(type_name())));
     }
 
     /*!
@@ -4383,14 +4383,14 @@ class basic_json
         {
             if (JSON_HEDLEY_UNLIKELY(idx >= size()))
             {
-                JSON_THROW(out_of_range::create(401, "array index " + std::to_string(idx) + " is out of range"));
+                JSON_THROW(out_of_range::create(401, diagnostics() + "array index " + std::to_string(idx) + " is out of range"));
             }
 
             m_value.array->erase(m_value.array->begin() + static_cast<difference_type>(idx));
         }
         else
         {
-            JSON_THROW(type_error::create(307, "cannot use erase() with " + std::string(type_name())));
+            JSON_THROW(type_error::create(307, diagnostics() + "cannot use erase() with " + std::string(type_name())));
         }
     }
 
@@ -5335,7 +5335,7 @@ class basic_json
         // push_back only works for null objects or arrays
         if (JSON_HEDLEY_UNLIKELY(!(is_null() || is_array())))
         {
-            JSON_THROW(type_error::create(308, "cannot use push_back() with " + std::string(type_name())));
+            JSON_THROW(type_error::create(308, diagnostics() + "cannot use push_back() with " + std::string(type_name())));
         }
 
         // transform null object into an array
@@ -5373,7 +5373,7 @@ class basic_json
         // push_back only works for null objects or arrays
         if (JSON_HEDLEY_UNLIKELY(!(is_null() || is_array())))
         {
-            JSON_THROW(type_error::create(308, "cannot use push_back() with " + std::string(type_name())));
+            JSON_THROW(type_error::create(308, diagnostics() + "cannot use push_back() with " + std::string(type_name())));
         }
 
         // transform null object into an array
@@ -5426,7 +5426,7 @@ class basic_json
         // push_back only works for null objects or objects
         if (JSON_HEDLEY_UNLIKELY(!(is_null() || is_object())))
         {
-            JSON_THROW(type_error::create(308, "cannot use push_back() with " + std::string(type_name())));
+            JSON_THROW(type_error::create(308, diagnostics() + "cannot use push_back() with " + std::string(type_name())));
         }
 
         // transform null object into an object
@@ -5534,7 +5534,7 @@ class basic_json
         // emplace_back only works for null objects or arrays
         if (JSON_HEDLEY_UNLIKELY(!(is_null() || is_array())))
         {
-            JSON_THROW(type_error::create(311, "cannot use emplace_back() with " + std::string(type_name())));
+            JSON_THROW(type_error::create(311, diagnostics() + "cannot use emplace_back() with " + std::string(type_name())));
         }
 
         // transform null object into an array
@@ -5596,7 +5596,7 @@ class basic_json
         // emplace only works for null objects or arrays
         if (JSON_HEDLEY_UNLIKELY(!(is_null() || is_object())))
         {
-            JSON_THROW(type_error::create(311, "cannot use emplace() with " + std::string(type_name())));
+            JSON_THROW(type_error::create(311, diagnostics() + "cannot use emplace() with " + std::string(type_name())));
         }
 
         // transform null object into an object
@@ -5667,14 +5667,14 @@ class basic_json
             // check if iterator pos fits to this JSON value
             if (JSON_HEDLEY_UNLIKELY(pos.m_object != this))
             {
-                JSON_THROW(invalid_iterator::create(202, "iterator does not fit current value"));
+                JSON_THROW(invalid_iterator::create(202, diagnostics() + "iterator does not fit current value"));
             }
 
             // insert to array and return iterator
             return insert_iterator(pos, val);
         }
 
-        JSON_THROW(type_error::create(309, "cannot use insert() with " + std::string(type_name())));
+        JSON_THROW(type_error::create(309, diagnostics() + "cannot use insert() with " + std::string(type_name())));
     }
 
     /*!
@@ -5718,14 +5718,14 @@ class basic_json
             // check if iterator pos fits to this JSON value
             if (JSON_HEDLEY_UNLIKELY(pos.m_object != this))
             {
-                JSON_THROW(invalid_iterator::create(202, "iterator does not fit current value"));
+                JSON_THROW(invalid_iterator::create(202, diagnostics() + "iterator does not fit current value"));
             }
 
             // insert to array and return iterator
             return insert_iterator(pos, cnt, val);
         }
 
-        JSON_THROW(type_error::create(309, "cannot use insert() with " + std::string(type_name())));
+        JSON_THROW(type_error::create(309, diagnostics() + "cannot use insert() with " + std::string(type_name())));
     }
 
     /*!
@@ -5763,24 +5763,24 @@ class basic_json
         // insert only works for arrays
         if (JSON_HEDLEY_UNLIKELY(!is_array()))
         {
-            JSON_THROW(type_error::create(309, "cannot use insert() with " + std::string(type_name())));
+            JSON_THROW(type_error::create(309, diagnostics() + "cannot use insert() with " + std::string(type_name())));
         }
 
         // check if iterator pos fits to this JSON value
         if (JSON_HEDLEY_UNLIKELY(pos.m_object != this))
         {
-            JSON_THROW(invalid_iterator::create(202, "iterator does not fit current value"));
+            JSON_THROW(invalid_iterator::create(202, diagnostics() + "iterator does not fit current value"));
         }
 
         // check if range iterators belong to the same JSON object
         if (JSON_HEDLEY_UNLIKELY(first.m_object != last.m_object))
         {
-            JSON_THROW(invalid_iterator::create(210, "iterators do not fit"));
+            JSON_THROW(invalid_iterator::create(210, diagnostics() + "iterators do not fit"));
         }
 
         if (JSON_HEDLEY_UNLIKELY(first.m_object == this))
         {
-            JSON_THROW(invalid_iterator::create(211, "passed iterators may not belong to container"));
+            JSON_THROW(invalid_iterator::create(211, diagnostics() + "passed iterators may not belong to container"));
         }
 
         // insert to array and return iterator
@@ -5816,13 +5816,13 @@ class basic_json
         // insert only works for arrays
         if (JSON_HEDLEY_UNLIKELY(!is_array()))
         {
-            JSON_THROW(type_error::create(309, "cannot use insert() with " + std::string(type_name())));
+            JSON_THROW(type_error::create(309, diagnostics() + "cannot use insert() with " + std::string(type_name())));
         }
 
         // check if iterator pos fits to this JSON value
         if (JSON_HEDLEY_UNLIKELY(pos.m_object != this))
         {
-            JSON_THROW(invalid_iterator::create(202, "iterator does not fit current value"));
+            JSON_THROW(invalid_iterator::create(202, diagnostics() + "iterator does not fit current value"));
         }
 
         // insert to array and return iterator
@@ -5857,19 +5857,19 @@ class basic_json
         // insert only works for objects
         if (JSON_HEDLEY_UNLIKELY(!is_object()))
         {
-            JSON_THROW(type_error::create(309, "cannot use insert() with " + std::string(type_name())));
+            JSON_THROW(type_error::create(309, diagnostics() + "cannot use insert() with " + std::string(type_name())));
         }
 
         // check if range iterators belong to the same JSON object
         if (JSON_HEDLEY_UNLIKELY(first.m_object != last.m_object))
         {
-            JSON_THROW(invalid_iterator::create(210, "iterators do not fit"));
+            JSON_THROW(invalid_iterator::create(210, diagnostics() + "iterators do not fit"));
         }
 
         // passed iterators must belong to objects
         if (JSON_HEDLEY_UNLIKELY(!first.m_object->is_object()))
         {
-            JSON_THROW(invalid_iterator::create(202, "iterators first and last must point to objects"));
+            JSON_THROW(invalid_iterator::create(202, diagnostics() + "iterators first and last must point to objects"));
         }
 
         m_value.object->insert(first.m_it.object_iterator, last.m_it.object_iterator);
@@ -5906,11 +5906,11 @@ class basic_json
 
         if (JSON_HEDLEY_UNLIKELY(!is_object()))
         {
-            JSON_THROW(type_error::create(312, "cannot use update() with " + std::string(type_name())));
+            JSON_THROW(type_error::create(312, diagnostics() + "cannot use update() with " + std::string(type_name())));
         }
         if (JSON_HEDLEY_UNLIKELY(!j.is_object()))
         {
-            JSON_THROW(type_error::create(312, "cannot use update() with " + std::string(j.type_name())));
+            JSON_THROW(type_error::create(312, diagnostics() + "cannot use update() with " + std::string(j.type_name())));
         }
 
         for (auto it = j.cbegin(); it != j.cend(); ++it)
@@ -5957,20 +5957,20 @@ class basic_json
 
         if (JSON_HEDLEY_UNLIKELY(!is_object()))
         {
-            JSON_THROW(type_error::create(312, "cannot use update() with " + std::string(type_name())));
+            JSON_THROW(type_error::create(312, diagnostics() + "cannot use update() with " + std::string(type_name())));
         }
 
         // check if range iterators belong to the same JSON object
         if (JSON_HEDLEY_UNLIKELY(first.m_object != last.m_object))
         {
-            JSON_THROW(invalid_iterator::create(210, "iterators do not fit"));
+            JSON_THROW(invalid_iterator::create(210, diagnostics() + "iterators do not fit"));
         }
 
         // passed iterators must belong to objects
         if (JSON_HEDLEY_UNLIKELY(!first.m_object->is_object()
                                  || !last.m_object->is_object()))
         {
-            JSON_THROW(invalid_iterator::create(202, "iterators first and last must point to objects"));
+            JSON_THROW(invalid_iterator::create(202, diagnostics() + "iterators first and last must point to objects"));
         }
 
         for (auto it = first; it != last; ++it)
@@ -6065,7 +6065,7 @@ class basic_json
         }
         else
         {
-            JSON_THROW(type_error::create(310, "cannot use swap() with " + std::string(type_name())));
+            JSON_THROW(type_error::create(310, diagnostics() + "cannot use swap() with " + std::string(type_name())));
         }
     }
 
@@ -6098,7 +6098,7 @@ class basic_json
         }
         else
         {
-            JSON_THROW(type_error::create(310, "cannot use swap() with " + std::string(type_name())));
+            JSON_THROW(type_error::create(310, diagnostics() + "cannot use swap() with " + std::string(type_name())));
         }
     }
 
@@ -6131,7 +6131,7 @@ class basic_json
         }
         else
         {
-            JSON_THROW(type_error::create(310, "cannot use swap() with " + std::string(type_name())));
+            JSON_THROW(type_error::create(310, diagnostics() + "cannot use swap() with " + std::string(type_name())));
         }
     }
 
@@ -6164,7 +6164,7 @@ class basic_json
         }
         else
         {
-            JSON_THROW(type_error::create(310, "cannot use swap() with " + std::string(type_name())));
+            JSON_THROW(type_error::create(310, diagnostics() + "cannot use swap() with " + std::string(type_name())));
         }
     }
 
@@ -6178,7 +6178,7 @@ class basic_json
         }
         else
         {
-            JSON_THROW(type_error::create(310, "cannot use swap() with " + std::string(type_name())));
+            JSON_THROW(type_error::create(310, diagnostics() + "cannot use swap() with " + std::string(type_name())));
         }
     }
 
@@ -8343,7 +8343,7 @@ class basic_json
         };
 
         // wrapper for "add" operation; add value at ptr
-        const auto operation_add = [&result](json_pointer & ptr, basic_json val)
+        const auto operation_add = [this, &result](json_pointer & ptr, basic_json val)
         {
             // adding to the root of the target document means replacing it
             if (ptr.empty())
@@ -8387,7 +8387,7 @@ class basic_json
                         if (JSON_HEDLEY_UNLIKELY(idx > parent.size()))
                         {
                             // avoid undefined behavior
-                            JSON_THROW(out_of_range::create(401, "array index " + std::to_string(idx) + " is out of range"));
+                            JSON_THROW(out_of_range::create(401, diagnostics() + "array index " + std::to_string(idx) + " is out of range"));
                         }
 
                         // default case: insert add offset
@@ -8403,7 +8403,7 @@ class basic_json
         };
 
         // wrapper for "remove" operation; remove value at ptr
-        const auto operation_remove = [&result](json_pointer & ptr)
+        const auto operation_remove = [this, &result](json_pointer & ptr)
         {
             // get reference to parent of JSON pointer ptr
             const auto last_path = ptr.back();
@@ -8421,7 +8421,7 @@ class basic_json
                 }
                 else
                 {
-                    JSON_THROW(out_of_range::create(403, "key '" + last_path + "' not found"));
+                    JSON_THROW(out_of_range::create(403, diagnostics() + "key '" + last_path + "' not found"));
                 }
             }
             else if (parent.is_array())
@@ -8434,16 +8434,16 @@ class basic_json
         // type check: top level value must be an array
         if (JSON_HEDLEY_UNLIKELY(!json_patch.is_array()))
         {
-            JSON_THROW(parse_error::create(104, 0, "JSON patch must be an array of objects"));
+            JSON_THROW(parse_error::create(104, 0, diagnostics() + "JSON patch must be an array of objects"));
         }
 
         // iterate and apply the operations
         for (const auto& val : json_patch)
         {
             // wrapper to get a value for an operation
-            const auto get_value = [&val](const std::string & op,
-                                          const std::string & member,
-                                          bool string_type) -> basic_json &
+            const auto get_value = [this, &val](const std::string & op,
+                                                const std::string & member,
+                                                bool string_type) -> basic_json &
             {
                 // find value
                 auto it = val.m_value.object->find(member);
@@ -8454,13 +8454,13 @@ class basic_json
                 // check if desired value is present
                 if (JSON_HEDLEY_UNLIKELY(it == val.m_value.object->end()))
                 {
-                    JSON_THROW(parse_error::create(105, 0, error_msg + " must have member '" + member + "'"));
+                    JSON_THROW(parse_error::create(105, 0, diagnostics() + error_msg + " must have member '" + member + "'"));
                 }
 
                 // check if result is of type string
                 if (JSON_HEDLEY_UNLIKELY(string_type && !it->second.is_string()))
                 {
-                    JSON_THROW(parse_error::create(105, 0, error_msg + " must have string member '" + member + "'"));
+                    JSON_THROW(parse_error::create(105, 0, diagnostics() +  error_msg + " must have string member '" + member + "'"));
                 }
 
                 // no error: return value
@@ -8470,7 +8470,7 @@ class basic_json
             // type check: every element of the array must be an object
             if (JSON_HEDLEY_UNLIKELY(!val.is_object()))
             {
-                JSON_THROW(parse_error::create(104, 0, "JSON patch must be an array of objects"));
+                JSON_THROW(parse_error::create(104, 0, diagnostics() + "JSON patch must be an array of objects"));
             }
 
             // collect mandatory members
@@ -8548,7 +8548,7 @@ class basic_json
                     // throw an exception if test fails
                     if (JSON_HEDLEY_UNLIKELY(!success))
                     {
-                        JSON_THROW(other_error::create(501, "unsuccessful: " + val.dump()));
+                        JSON_THROW(other_error::create(501, diagnostics() + "unsuccessful: " + val.dump()));
                     }
 
                     break;
@@ -8558,7 +8558,7 @@ class basic_json
                 {
                     // op must be "add", "remove", "replace", "move", "copy", or
                     // "test"
-                    JSON_THROW(parse_error::create(105, 0, "operation value '" + op + "' is invalid"));
+                    JSON_THROW(parse_error::create(105, 0, diagnostics() + "operation value '" + op + "' is invalid"));
                 }
             }
         }
