@@ -2155,6 +2155,9 @@ class basic_json
     basic_json(basic_json&& other) noexcept
         : m_type(std::move(other.m_type)),
           m_value(std::move(other.m_value))
+#ifdef JSON_DIAGNOSTICS
+        , m_parent(other.m_parent)
+#endif
     {
         // check that passed value is valid
         other.assert_invariant();
@@ -2704,12 +2707,11 @@ class basic_json
 
     /// @}
 
-  private:
-#ifdef JSON_DIAGNOSTICS
-    std::string diagnostics()
+    std::string diagnostics() const
     {
-        std::string result;
-        for (basic_json* current = this; current->m_parent != nullptr; current = current->m_parent)
+#ifdef JSON_DIAGNOSTICS
+        std::vector<std::string> tokens;
+        for (const basic_json* current = this; current->m_parent != nullptr; current = current->m_parent)
         {
             switch (current->m_parent->type())
             {
@@ -2719,7 +2721,7 @@ class basic_json
                     {
                         if (current->m_parent->m_value.array->operator[](i) == *current)
                         {
-                            result = "/" + std::to_string(i) + result;
+                            tokens.emplace_back(std::to_string(i));
                             continue;
                         }
                     }
@@ -2728,11 +2730,11 @@ class basic_json
 
                 case value_t::object:
                 {
-                    for (auto it : *current->m_parent->m_value.object)
+                    for (const auto& element : *current->m_parent->m_value.object)
                     {
-                        if (it.second == *current)
+                        if (element.second == *current)
                         {
-                            result = "/" + it.first + result;
+                            tokens.emplace_back(element.first.c_str());
                             continue;
                         }
                     }
@@ -2744,10 +2746,22 @@ class basic_json
             }
         }
 
-        return result;
-    }
-#endif
+        if (tokens.empty())
+        {
+            return "";
+        }
 
+        return "(" + std::accumulate(tokens.begin(), tokens.end(), std::string{},
+                                     [](const std::string & a, const std::string & b)
+        {
+            return a + "/" + b;
+        }) + ") ";
+#else
+        return "";
+#endif
+    }
+
+  private:
     //////////////////
     // value access //
     //////////////////

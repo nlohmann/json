@@ -3513,7 +3513,7 @@ void from_json(const BasicJsonType& j, typename std::nullptr_t& n)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_null()))
     {
-        JSON_THROW(type_error::create(302, "type must be null, but is " + std::string(j.type_name())));
+        JSON_THROW(type_error::create(302, j.diagnostics() + "type must be null, but is " + std::string(j.type_name())));
     }
     n = nullptr;
 }
@@ -3544,7 +3544,7 @@ void get_arithmetic_value(const BasicJsonType& j, ArithmeticType& val)
         }
 
         default:
-            JSON_THROW(type_error::create(302, "type must be number, but is " + std::string(j.type_name())));
+            JSON_THROW(type_error::create(302, j.diagnostics() + "type must be number, but is " + std::string(j.type_name())));
     }
 }
 
@@ -3553,7 +3553,7 @@ void from_json(const BasicJsonType& j, typename BasicJsonType::boolean_t& b)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_boolean()))
     {
-        JSON_THROW(type_error::create(302, "type must be boolean, but is " + std::string(j.type_name())));
+        JSON_THROW(type_error::create(302, j.diagnostics() + "type must be boolean, but is " + std::string(j.type_name())));
     }
     b = *j.template get_ptr<const typename BasicJsonType::boolean_t*>();
 }
@@ -3563,7 +3563,7 @@ void from_json(const BasicJsonType& j, typename BasicJsonType::string_t& s)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_string()))
     {
-        JSON_THROW(type_error::create(302, "type must be string, but is " + std::string(j.type_name())));
+        JSON_THROW(type_error::create(302, j.diagnostics() + "type must be string, but is " + std::string(j.type_name())));
     }
     s = *j.template get_ptr<const typename BasicJsonType::string_t*>();
 }
@@ -3579,7 +3579,7 @@ void from_json(const BasicJsonType& j, ConstructibleStringType& s)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_string()))
     {
-        JSON_THROW(type_error::create(302, "type must be string, but is " + std::string(j.type_name())));
+        JSON_THROW(type_error::create(302, j.diagnostics() + "type must be string, but is " + std::string(j.type_name())));
     }
 
     s = *j.template get_ptr<const typename BasicJsonType::string_t*>();
@@ -3619,7 +3619,7 @@ void from_json(const BasicJsonType& j, std::forward_list<T, Allocator>& l)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
-        JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(j.type_name())));
+        JSON_THROW(type_error::create(302, j.diagnostics() + "type must be array, but is " + std::string(j.type_name())));
     }
     l.clear();
     std::transform(j.rbegin(), j.rend(),
@@ -3636,7 +3636,7 @@ void from_json(const BasicJsonType& j, std::valarray<T>& l)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
-        JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(j.type_name())));
+        JSON_THROW(type_error::create(302, j.diagnostics() + "type must be array, but is " + std::string(j.type_name())));
     }
     l.resize(j.size());
     std::transform(j.begin(), j.end(), std::begin(l),
@@ -3727,7 +3727,7 @@ void())
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
-        JSON_THROW(type_error::create(302, "type must be array, but is " +
+        JSON_THROW(type_error::create(302, j.diagnostics() + "type must be array, but is " +
                                       std::string(j.type_name())));
     }
 
@@ -3739,7 +3739,7 @@ void from_json(const BasicJsonType& j, typename BasicJsonType::binary_t& bin)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_binary()))
     {
-        JSON_THROW(type_error::create(302, "type must be binary, but is " + std::string(j.type_name())));
+        JSON_THROW(type_error::create(302, j.diagnostics() + "type must be binary, but is " + std::string(j.type_name())));
     }
 
     bin = *j.template get_ptr<const typename BasicJsonType::binary_t*>();
@@ -3751,7 +3751,7 @@ void from_json(const BasicJsonType& j, ConstructibleObjectType& obj)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_object()))
     {
-        JSON_THROW(type_error::create(302, "type must be object, but is " + std::string(j.type_name())));
+        JSON_THROW(type_error::create(302, j.diagnostics() + "type must be object, but is " + std::string(j.type_name())));
     }
 
     ConstructibleObjectType ret;
@@ -3805,7 +3805,7 @@ void from_json(const BasicJsonType& j, ArithmeticType& val)
         }
 
         default:
-            JSON_THROW(type_error::create(302, "type must be number, but is " + std::string(j.type_name())));
+            JSON_THROW(type_error::create(302, j.diagnostics() + "type must be number, but is " + std::string(j.type_name())));
     }
 }
 
@@ -3834,14 +3834,14 @@ void from_json(const BasicJsonType& j, std::map<Key, Value, Compare, Allocator>&
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
-        JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(j.type_name())));
+        JSON_THROW(type_error::create(302, j.diagnostics() + "type must be array, but is " + std::string(j.type_name())));
     }
     m.clear();
     for (const auto& p : j)
     {
         if (JSON_HEDLEY_UNLIKELY(!p.is_array()))
         {
-            JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(p.type_name())));
+            JSON_THROW(type_error::create(302, j.diagnostics() + "type must be array, but is " + std::string(p.type_name())));
         }
         m.emplace(p.at(0).template get<Key>(), p.at(1).template get<Value>());
     }
@@ -3854,14 +3854,14 @@ void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Hash, KeyE
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
-        JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(j.type_name())));
+        JSON_THROW(type_error::create(302, j.diagnostics() + "type must be array, but is " + std::string(j.type_name())));
     }
     m.clear();
     for (const auto& p : j)
     {
         if (JSON_HEDLEY_UNLIKELY(!p.is_array()))
         {
-            JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(p.type_name())));
+            JSON_THROW(type_error::create(302, j.diagnostics() + "type must be array, but is " + std::string(p.type_name())));
         }
         m.emplace(p.at(0).template get<Key>(), p.at(1).template get<Value>());
     }
@@ -5511,7 +5511,7 @@ class json_sax_dom_parser
 
         if (JSON_HEDLEY_UNLIKELY(len != std::size_t(-1) && len > ref_stack.back()->max_size()))
         {
-            JSON_THROW(out_of_range::create(408,
+            JSON_THROW(out_of_range::create(408, ref_stack.back()->diagnostics() +
                                             "excessive object size: " + std::to_string(len)));
         }
 
@@ -5537,7 +5537,7 @@ class json_sax_dom_parser
 
         if (JSON_HEDLEY_UNLIKELY(len != std::size_t(-1) && len > ref_stack.back()->max_size()))
         {
-            JSON_THROW(out_of_range::create(408,
+            JSON_THROW(out_of_range::create(408, ref_stack.back()->diagnostics() +
                                             "excessive array size: " + std::to_string(len)));
         }
 
@@ -5692,7 +5692,7 @@ class json_sax_dom_callback_parser
         // check object limit
         if (ref_stack.back() && JSON_HEDLEY_UNLIKELY(len != std::size_t(-1) && len > ref_stack.back()->max_size()))
         {
-            JSON_THROW(out_of_range::create(408, "excessive object size: " + std::to_string(len)));
+            JSON_THROW(out_of_range::create(408, ref_stack.back()->diagnostics() + "excessive object size: " + std::to_string(len)));
         }
 
         return true;
@@ -5755,7 +5755,7 @@ class json_sax_dom_callback_parser
         // check array limit
         if (ref_stack.back() && JSON_HEDLEY_UNLIKELY(len != std::size_t(-1) && len > ref_stack.back()->max_size()))
         {
-            JSON_THROW(out_of_range::create(408, "excessive array size: " + std::to_string(len)));
+            JSON_THROW(out_of_range::create(408, ref_stack.back()->diagnostics() + "excessive array size: " + std::to_string(len)));
         }
 
         return true;
@@ -11144,7 +11144,7 @@ class iter_impl
             }
 
             case value_t::null:
-                JSON_THROW(invalid_iterator::create(214, "cannot get value"));
+                JSON_THROW(invalid_iterator::create(214, m_object->diagnostics() + "cannot get value"));
 
             default:
             {
@@ -11153,7 +11153,7 @@ class iter_impl
                     return *m_object;
                 }
 
-                JSON_THROW(invalid_iterator::create(214, "cannot get value"));
+                JSON_THROW(invalid_iterator::create(214, m_object->diagnostics() + "cannot get value"));
             }
         }
     }
@@ -11187,7 +11187,7 @@ class iter_impl
                     return m_object;
                 }
 
-                JSON_THROW(invalid_iterator::create(214, "cannot get value"));
+                JSON_THROW(invalid_iterator::create(214, m_object->diagnostics() + "cannot get value"));
             }
         }
     }
@@ -11288,7 +11288,7 @@ class iter_impl
         // if objects are not the same, the comparison is undefined
         if (JSON_HEDLEY_UNLIKELY(m_object != other.m_object))
         {
-            JSON_THROW(invalid_iterator::create(212, "cannot compare iterators of different containers"));
+            JSON_THROW(invalid_iterator::create(212, m_object->diagnostics() + "cannot compare iterators of different containers"));
         }
 
         JSON_ASSERT(m_object != nullptr);
@@ -11325,7 +11325,7 @@ class iter_impl
         // if objects are not the same, the comparison is undefined
         if (JSON_HEDLEY_UNLIKELY(m_object != other.m_object))
         {
-            JSON_THROW(invalid_iterator::create(212, "cannot compare iterators of different containers"));
+            JSON_THROW(invalid_iterator::create(212, m_object->diagnostics() + "cannot compare iterators of different containers"));
         }
 
         JSON_ASSERT(m_object != nullptr);
@@ -11333,7 +11333,7 @@ class iter_impl
         switch (m_object->m_type)
         {
             case value_t::object:
-                JSON_THROW(invalid_iterator::create(213, "cannot compare order of object iterators"));
+                JSON_THROW(invalid_iterator::create(213, m_object->diagnostics() + "cannot compare order of object iterators"));
 
             case value_t::array:
                 return (m_it.array_iterator < other.m_it.array_iterator);
@@ -11381,7 +11381,7 @@ class iter_impl
         switch (m_object->m_type)
         {
             case value_t::object:
-                JSON_THROW(invalid_iterator::create(209, "cannot use offsets with object iterators"));
+                JSON_THROW(invalid_iterator::create(209, m_object->diagnostics() + "cannot use offsets with object iterators"));
 
             case value_t::array:
             {
@@ -11452,7 +11452,7 @@ class iter_impl
         switch (m_object->m_type)
         {
             case value_t::object:
-                JSON_THROW(invalid_iterator::create(209, "cannot use offsets with object iterators"));
+                JSON_THROW(invalid_iterator::create(209, m_object->diagnostics() + "cannot use offsets with object iterators"));
 
             case value_t::array:
                 return m_it.array_iterator - other.m_it.array_iterator;
@@ -11473,13 +11473,13 @@ class iter_impl
         switch (m_object->m_type)
         {
             case value_t::object:
-                JSON_THROW(invalid_iterator::create(208, "cannot use operator[] for object iterators"));
+                JSON_THROW(invalid_iterator::create(208, m_object->diagnostics() + "cannot use operator[] for object iterators"));
 
             case value_t::array:
                 return *std::next(m_it.array_iterator, n);
 
             case value_t::null:
-                JSON_THROW(invalid_iterator::create(214, "cannot get value"));
+                JSON_THROW(invalid_iterator::create(214, m_object->diagnostics() + "cannot get value"));
 
             default:
             {
@@ -11488,7 +11488,7 @@ class iter_impl
                     return *m_object;
                 }
 
-                JSON_THROW(invalid_iterator::create(214, "cannot get value"));
+                JSON_THROW(invalid_iterator::create(214, m_object->diagnostics() + "cannot get value"));
             }
         }
     }
@@ -11506,7 +11506,7 @@ class iter_impl
             return m_it.object_iterator->first;
         }
 
-        JSON_THROW(invalid_iterator::create(207, "cannot use key() for non-object iterators"));
+        JSON_THROW(invalid_iterator::create(207, m_object->diagnostics() + "cannot use key() for non-object iterators"));
     }
 
     /*!
@@ -18779,6 +18779,9 @@ class basic_json
     basic_json(basic_json&& other) noexcept
         : m_type(std::move(other.m_type)),
           m_value(std::move(other.m_value))
+#ifdef JSON_DIAGNOSTICS
+        , m_parent(other.m_parent)
+#endif
     {
         // check that passed value is valid
         other.assert_invariant();
@@ -19328,12 +19331,11 @@ class basic_json
 
     /// @}
 
-  private:
-#ifdef JSON_DIAGNOSTICS
-    std::string diagnostics()
+    std::string diagnostics() const
     {
-        std::string result;
-        for (basic_json* current = this; current->m_parent != nullptr; current = current->m_parent)
+#ifdef JSON_DIAGNOSTICS
+        std::vector<std::string> tokens;
+        for (const basic_json* current = this; current->m_parent != nullptr; current = current->m_parent)
         {
             switch (current->m_parent->type())
             {
@@ -19343,7 +19345,7 @@ class basic_json
                     {
                         if (current->m_parent->m_value.array->operator[](i) == *current)
                         {
-                            result = "/" + std::to_string(i) + result;
+                            tokens.emplace_back(std::to_string(i));
                             continue;
                         }
                     }
@@ -19352,11 +19354,11 @@ class basic_json
 
                 case value_t::object:
                 {
-                    for (auto it : *current->m_parent->m_value.object)
+                    for (const auto& element : *current->m_parent->m_value.object)
                     {
-                        if (it.second == *current)
+                        if (element.second == *current)
                         {
-                            result = "/" + it.first + result;
+                            tokens.emplace_back(element.first.c_str());
                             continue;
                         }
                     }
@@ -19368,10 +19370,22 @@ class basic_json
             }
         }
 
-        return result;
-    }
-#endif
+        if (tokens.empty())
+        {
+            return "";
+        }
 
+        return "(" + std::accumulate(tokens.begin(), tokens.end(), std::string{},
+                                     [](const std::string & a, const std::string & b)
+        {
+            return a + "/" + b;
+        }) + ") ";
+#else
+        return "";
+#endif
+    }
+
+  private:
     //////////////////
     // value access //
     //////////////////
