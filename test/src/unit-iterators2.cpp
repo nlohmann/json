@@ -271,13 +271,16 @@ TEST_CASE("iterators 2")
                 {
                     CHECK_THROWS_AS(j.begin() == k.begin(), json::invalid_iterator&);
                     CHECK_THROWS_AS(j.cbegin() == k.cbegin(), json::invalid_iterator&);
-                    CHECK_THROWS_WITH(j.begin() == k.begin(), "[json.exception.invalid_iterator.212] cannot compare iterators of different containers");
-                    CHECK_THROWS_WITH(j.cbegin() == k.cbegin(), "[json.exception.invalid_iterator.212] cannot compare iterators of different containers");
-
                     CHECK_THROWS_AS(j.begin() < k.begin(), json::invalid_iterator&);
                     CHECK_THROWS_AS(j.cbegin() < k.cbegin(), json::invalid_iterator&);
+#if JSON_DIAGNOSTICS
+                    // the output differs in each loop, so we cannot fix a string for the expected exception
+#else
+                    CHECK_THROWS_WITH(j.begin() == k.begin(), "[json.exception.invalid_iterator.212] cannot compare iterators of different containers");
+                    CHECK_THROWS_WITH(j.cbegin() == k.cbegin(), "[json.exception.invalid_iterator.212] cannot compare iterators of different containers");
                     CHECK_THROWS_WITH(j.begin() < k.begin(), "[json.exception.invalid_iterator.212] cannot compare iterators of different containers");
                     CHECK_THROWS_WITH(j.cbegin() < k.cbegin(), "[json.exception.invalid_iterator.212] cannot compare iterators of different containers");
+#endif
                 }
             }
         }
@@ -750,13 +753,16 @@ TEST_CASE("iterators 2")
                 {
                     CHECK_THROWS_AS(j.rbegin() == k.rbegin(), json::invalid_iterator&);
                     CHECK_THROWS_AS(j.crbegin() == k.crbegin(), json::invalid_iterator&);
-                    CHECK_THROWS_WITH(j.rbegin() == k.rbegin(), "[json.exception.invalid_iterator.212] cannot compare iterators of different containers");
-                    CHECK_THROWS_WITH(j.crbegin() == k.crbegin(), "[json.exception.invalid_iterator.212] cannot compare iterators of different containers");
-
                     CHECK_THROWS_AS(j.rbegin() < k.rbegin(), json::invalid_iterator&);
                     CHECK_THROWS_AS(j.crbegin() < k.crbegin(), json::invalid_iterator&);
+#if JSON_DIAGNOSTICS
+                    // the output differs in each loop, so we cannot fix a string for the expected exception
+#else
+                    CHECK_THROWS_WITH(j.rbegin() == k.rbegin(), "[json.exception.invalid_iterator.212] cannot compare iterators of different containers");
+                    CHECK_THROWS_WITH(j.crbegin() == k.crbegin(), "[json.exception.invalid_iterator.212] cannot compare iterators of different containers");
                     CHECK_THROWS_WITH(j.rbegin() < k.rbegin(), "[json.exception.invalid_iterator.212] cannot compare iterators of different containers");
                     CHECK_THROWS_WITH(j.crbegin() < k.crbegin(), "[json.exception.invalid_iterator.212] cannot compare iterators of different containers");
+#endif
                 }
             }
         }

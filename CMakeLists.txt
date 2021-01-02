@@ -64,6 +64,10 @@ if (NOT JSON_ImplicitConversions)
     message(STATUS "Implicit conversions are disabled")
 endif()
 
+if (JSON_Diagnostics)
+    message(STATUS "Diagnostics enabled")
+endif()
+
 ##
 ## TARGET
 ## create target and add include path

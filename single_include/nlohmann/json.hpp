@@ -5590,12 +5590,18 @@ class json_sax_dom_parser
         if (ref_stack.back()->is_array())
         {
             ref_stack.back()->m_value.array->emplace_back(std::forward<Value>(v));
+#if JSON_DIAGNOSTICS
+            ref_stack.back()->m_value.array->back().m_parent = ref_stack.back();
+#endif
             return &(ref_stack.back()->m_value.array->back());
         }
 
         JSON_ASSERT(ref_stack.back()->is_object());
         JSON_ASSERT(object_element);
         *object_element = BasicJsonType(std::forward<Value>(v));
+#if JSON_DIAGNOSTICS
+        object_element->m_parent = ref_stack.back();
+#endif
         return object_element;
     }
 
@@ -5866,7 +5872,10 @@ class json_sax_dom_callback_parser
         // array
         if (ref_stack.back()->is_array())
         {
-            ref_stack.back()->m_value.array->push_back(std::move(value));
+            ref_stack.back()->m_value.array->emplace_back(std::move(value));
+#if JSON_DIAGNOSTICS
+            ref_stack.back()->m_value.array->back().m_parent = ref_stack.back();
+#endif
             return {true, &(ref_stack.back()->m_value.array->back())};
         }
 
@@ -5884,6 +5893,9 @@ class json_sax_dom_callback_parser
 
         JSON_ASSERT(object_element);
         *object_element = std::move(value);
+#if JSON_DIAGNOSTICS
+        object_element->m_parent = ref_stack.back();
+#endif
         return {true, object_element};
     }
 
@@ -18496,6 +18508,12 @@ class basic_json
         : m_type(value_t::array)
     {
         m_value.array = create<array_t>(cnt, val);
+#if JSON_DIAGNOSTICS
+        for (auto& entry : *m_value.array)
+        {
+            entry.m_parent = this;
+        }
+#endif
         assert_invariant();
     }
 
@@ -18628,6 +18646,12 @@ class basic_json
             {
                 m_value.object = create<object_t>(first.m_it.object_iterator,
                                                   last.m_it.object_iterator);
+#if JSON_DIAGNOSTICS
+                for (auto& element : *m_value.object)
+                {
+                    element.second.m_parent = this;
+                }
+#endif
                 break;
             }
 
@@ -18635,6 +18659,12 @@ class basic_json
             {
                 m_value.array = create<array_t>(first.m_it.array_iterator,
                                                 last.m_it.array_iterator);
+#if JSON_DIAGNOSTICS
+                for (auto& element : *m_value.array)
+                {
+                    element.m_parent = this;
+                }
+#endif
                 break;
             }
 
@@ -18698,12 +18728,24 @@ class basic_json
             case value_t::object:
             {
                 m_value = *other.m_value.object;
+#if JSON_DIAGNOSTICS
+                for (auto& element : *m_value.object)
+                {
+                    element.second.m_parent = this;
+                }
+#endif
                 break;
             }
 
             case value_t::array:
             {
                 m_value = *other.m_value.array;
+#if JSON_DIAGNOSTICS
+                for (auto& element : *m_value.array)
+                {
+                    element.m_parent = this;
+                }
+#endif
                 break;
             }
 
@@ -18829,6 +18871,9 @@ class basic_json
         using std::swap;
         swap(m_type, other.m_type);
         swap(m_value, other.m_value);
+#if JSON_DIAGNOSTICS
+        m_parent = other.m_parent;
+#endif
 
         assert_invariant();
         return *this;
@@ -18853,6 +18898,9 @@ class basic_json
     {
         assert_invariant();
         m_value.destroy(m_type);
+#if JSON_DIAGNOSTICS
+        m_parent = nullptr;
+#endif
     }
 
     /// @}
@@ -19375,7 +19423,7 @@ class basic_json
             return "";
         }
 
-        return "(" + std::accumulate(tokens.begin(), tokens.end(), std::string{},
+        return "(" + std::accumulate(tokens.rbegin(), tokens.rend(), std::string{},
                                      [](const std::string & a, const std::string & b)
         {
             return a + "/" + b;
@@ -20228,7 +20276,10 @@ class basic_json
                                       idx - m_value.array->size() + 1,
                                       basic_json());
 #if JSON_DIAGNOSTICS
-                m_value.array->back().m_parent = this;
+                for (std::size_t i = idx + 1; i < m_value.array->size(); ++i)
+                {
+                    m_value.array->operator[](i).m_parent = this;
+                }
 #endif
             }
 
@@ -22233,6 +22284,11 @@ class basic_json
 
         // add element to array (perfect forwarding)
         auto res = m_value.object->emplace(std::forward<Args>(args)...);
+
+#if JSON_DIAGNOSTICS
+        res.first->second.m_parent = this;
+#endif
+
         // create result iterator and set iterator to the result of emplace
         auto it = begin();
         it.m_it.object_iterator = res.first;
@@ -22295,7 +22351,13 @@ class basic_json
             }
 
             // insert to array and return iterator
+#if JSON_DIAGNOSTICS
+            iterator result = insert_iterator(pos, val);
+            result->m_parent = this;
+            return result;
+#else
             return insert_iterator(pos, val);
+#endif
         }
 
         JSON_THROW(type_error::create(309, diagnostics() + "cannot use insert() with " + std::string(type_name())));
@@ -22346,7 +22408,16 @@ class basic_json
             }
 
             // insert to array and return iterator
+#if JSON_DIAGNOSTICS
+            iterator result = insert_iterator(pos, cnt, val);
+            for (size_type i = 0; i < cnt; ++i)
+            {
+                (result + i)->m_parent = this;
+            }
+            return result;
+#else
             return insert_iterator(pos, cnt, val);
+#endif
         }
 
         JSON_THROW(type_error::create(309, diagnostics() + "cannot use insert() with " + std::string(type_name())));
@@ -22408,7 +22479,16 @@ class basic_json
         }
 
         // insert to array and return iterator
+#if JSON_DIAGNOSTICS
+        iterator result = insert_iterator(pos, first.m_it.array_iterator, last.m_it.array_iterator);
+        for (std::size_t i = 0; i < std::distance(first, last); ++i)
+        {
+            (result + i)->m_parent = this;
+        }
+        return result;
+#else
         return insert_iterator(pos, first.m_it.array_iterator, last.m_it.array_iterator);
+#endif
     }
 
     /*!
@@ -22450,7 +22530,17 @@ class basic_json
         }
 
         // insert to array and return iterator
+#if JSON_DIAGNOSTICS
+        const auto size = ilist.size();
+        iterator result =  insert_iterator(pos, ilist.begin(), ilist.end());
+        for (std::size_t i = 0; i < size; ++i)
+        {
+            (result + i)->m_parent = this;
+        }
+        return result;
+#else
         return insert_iterator(pos, ilist.begin(), ilist.end());
+#endif
     }
 
     /*!
@@ -25011,7 +25101,7 @@ class basic_json
                         if (JSON_HEDLEY_UNLIKELY(idx > parent.size()))
                         {
                             // avoid undefined behavior
-                            JSON_THROW(out_of_range::create(401, diagnostics() + "array index " + std::to_string(idx) + " is out of range"));
+                            JSON_THROW(out_of_range::create(401, parent.diagnostics() + "array index " + std::to_string(idx) + " is out of range"));
                         }
 
                         // default case: insert add offset
@@ -25172,7 +25262,7 @@ class basic_json
                     // throw an exception if test fails
                     if (JSON_HEDLEY_UNLIKELY(!success))
                     {
-                        JSON_THROW(other_error::create(501, diagnostics() + "unsuccessful: " + val.dump()));
+                        JSON_THROW(other_error::create(501, val.diagnostics() + "unsuccessful: " + val.dump()));
                     }
 
                     break;

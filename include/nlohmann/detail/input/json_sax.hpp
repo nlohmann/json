@@ -298,12 +298,18 @@ class json_sax_dom_parser
         if (ref_stack.back()->is_array())
         {
             ref_stack.back()->m_value.array->emplace_back(std::forward<Value>(v));
+#if JSON_DIAGNOSTICS
+            ref_stack.back()->m_value.array->back().m_parent = ref_stack.back();
+#endif
             return &(ref_stack.back()->m_value.array->back());
         }
 
         JSON_ASSERT(ref_stack.back()->is_object());
         JSON_ASSERT(object_element);
         *object_element = BasicJsonType(std::forward<Value>(v));
+#if JSON_DIAGNOSTICS
+        object_element->m_parent = ref_stack.back();
+#endif
         return object_element;
     }
 
@@ -574,7 +580,10 @@ class json_sax_dom_callback_parser
         // array
         if (ref_stack.back()->is_array())
         {
-            ref_stack.back()->m_value.array->push_back(std::move(value));
+            ref_stack.back()->m_value.array->emplace_back(std::move(value));
+#if JSON_DIAGNOSTICS
+            ref_stack.back()->m_value.array->back().m_parent = ref_stack.back();
+#endif
             return {true, &(ref_stack.back()->m_value.array->back())};
         }
 
@@ -592,6 +601,9 @@ class json_sax_dom_callback_parser
 
         JSON_ASSERT(object_element);
         *object_element = std::move(value);
+#if JSON_DIAGNOSTICS
+        object_element->m_parent = ref_stack.back();
+#endif
         return {true, object_element};
     }
 
