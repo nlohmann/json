@@ -18266,7 +18266,7 @@ class basic_json
             std::for_each(init.begin(), init.end(), [this](const detail::json_ref<basic_json>& element_ref)
             {
                 auto element = element_ref.moved_or_copied();
-#ifdef JSON_DIAGNOSTICS
+#if JSON_DIAGNOSTICS
                 (*element.m_value.array)[1].m_parent = this;
 #endif
                 m_value.object->emplace(
@@ -18279,7 +18279,7 @@ class basic_json
             // the initializer list describes an array -> create array
             m_type = value_t::array;
             m_value.array = create<array_t>(init.begin(), init.end());
-#ifdef JSON_DIAGNOSTICS
+#if JSON_DIAGNOSTICS
             for (auto& element : *m_value.array)
             {
                 element.m_parent = this;
@@ -18779,7 +18779,7 @@ class basic_json
     basic_json(basic_json&& other) noexcept
         : m_type(std::move(other.m_type)),
           m_value(std::move(other.m_value))
-#ifdef JSON_DIAGNOSTICS
+#if JSON_DIAGNOSTICS
         , m_parent(other.m_parent)
 #endif
     {
@@ -19333,7 +19333,7 @@ class basic_json
 
     std::string diagnostics() const
     {
-#ifdef JSON_DIAGNOSTICS
+#if JSON_DIAGNOSTICS
         std::vector<std::string> tokens;
         for (const basic_json* current = this; current->m_parent != nullptr; current = current->m_parent)
         {
@@ -20008,7 +20008,7 @@ class basic_json
         {
             JSON_TRY
             {
-#ifdef JSON_DIAGNOSTICS
+#if JSON_DIAGNOSTICS
                 reference result = m_value.array->at(idx);
                 result.m_parent = this;
                 return result;
@@ -20112,7 +20112,7 @@ class basic_json
         {
             JSON_TRY
             {
-#ifdef JSON_DIAGNOSTICS
+#if JSON_DIAGNOSTICS
                 reference result = m_value.object->at(key);
                 result.m_parent = this;
                 return result;
@@ -20227,12 +20227,12 @@ class basic_json
                 m_value.array->insert(m_value.array->end(),
                                       idx - m_value.array->size() + 1,
                                       basic_json());
-#ifdef JSON_DIAGNOSTICS
+#if JSON_DIAGNOSTICS
                 m_value.array->back().m_parent = this;
 #endif
             }
 
-#ifdef JSON_DIAGNOSTICS
+#if JSON_DIAGNOSTICS
             reference result = m_value.array->operator[](idx);
             result.m_parent = this;
             return result;
@@ -20314,7 +20314,7 @@ class basic_json
         // operator[] only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
         {
-#ifdef JSON_DIAGNOSTICS
+#if JSON_DIAGNOSTICS
             reference result = m_value.object->operator[](key);
             result.m_parent = this;
             return result;
@@ -20410,7 +20410,7 @@ class basic_json
         // at only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
         {
-#ifdef JSON_DIAGNOSTICS
+#if JSON_DIAGNOSTICS
             reference result = m_value.object->operator[](key);
             result.m_parent = this;
             return result;
@@ -21972,7 +21972,7 @@ class basic_json
 
         // add element to array (move semantics)
         m_value.array->push_back(std::move(val));
-#ifdef JSON_DIAGNOSTICS
+#if JSON_DIAGNOSTICS
         m_value.array->back().m_parent = this;
 #endif
         // if val is moved from, basic_json move constructor marks it null so we do not call the destructor
@@ -22010,7 +22010,7 @@ class basic_json
 
         // add element to array
         m_value.array->push_back(val);
-#ifdef JSON_DIAGNOSTICS
+#if JSON_DIAGNOSTICS
         m_value.array->back().m_parent = this;
 #endif
     }
@@ -22062,7 +22062,7 @@ class basic_json
         }
 
         // add element to object
-#ifdef JSON_DIAGNOSTICS
+#if JSON_DIAGNOSTICS
         auto res = m_value.object->insert(val);
         res.first->second.m_parent = this;
 #else
@@ -22171,7 +22171,7 @@ class basic_json
 
         // add element to array (perfect forwarding)
 #ifdef JSON_HAS_CPP_17
-#ifdef JSON_DIAGNOSTICS
+#if JSON_DIAGNOSTICS
         reference result = m_value.array->emplace_back(std::forward<Args>(args)...);
         result.m_parent = this;
         return result;
@@ -22180,7 +22180,7 @@ class basic_json
 #endif
 #else
         m_value.array->emplace_back(std::forward<Args>(args)...);
-#ifdef JSON_DIAGNOSTICS
+#if JSON_DIAGNOSTICS
         m_value.array->back().m_parent = this;
 #endif
         return m_value.array->back();
@@ -23710,7 +23710,7 @@ class basic_json
     /// the value of the current element
     json_value m_value = {};
 
-#ifdef JSON_DIAGNOSTICS
+#if JSON_DIAGNOSTICS
     /// a pointer to a parent value (for debugging purposes)
     basic_json* m_parent = nullptr;
 #endif
