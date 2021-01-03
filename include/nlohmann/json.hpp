@@ -351,7 +351,7 @@ class basic_json
     {
         basic_json result;
 
-        result["copyright"] = "(C) 2013-2020 Niels Lohmann";
+        result["copyright"] = "(C) 2013-2021 Niels Lohmann";
         result["name"] = "JSON for Modern C++";
         result["url"] = "https://github.com/nlohmann/json";
         result["version"]["string"] =
