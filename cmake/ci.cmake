@@ -470,10 +470,46 @@ add_custom_target(ci_benchmarks
 )
 
 ###############################################################################
+# CMake flags
+###############################################################################
+
+add_custom_command(
+    OUTPUT cmake-3.1.0-Darwin64
+    COMMAND wget https://github.com/Kitware/CMake/releases/download/v3.1.0/cmake-3.1.0-Darwin64.tar.gz
+    COMMAND tar xfz cmake-3.1.0-Darwin64.tar.gz
+    COMMAND rm cmake-3.1.0-Darwin64.tar.gz
+    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+    COMMENT "Download CMake 3.1.0"
+)
+
+set(JSON_CMAKE_FLAGS "JSON_BuildTests;JSON_Install;JSON_MultipleHeaders;JSON_Sanitizer;JSON_Valgrind;JSON_NoExceptions;JSON_Coverage")
+
+foreach(JSON_CMAKE_FLAG ${JSON_CMAKE_FLAGS})
+    string(TOLOWER "ci_cmake_flag_${JSON_CMAKE_FLAG}" JSON_CMAKE_FLAG_TARGET)
+    add_custom_target("${JSON_CMAKE_FLAG_TARGET}"
+        COMMENT "Check CMake flag ${JSON_CMAKE_FLAG} (CMake ${CMAKE_VERSION})"
+        COMMAND ${CMAKE_COMMAND} -Werror=dev -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_${JSON_CMAKE_FLAG_TARGET} -D${JSON_CMAKE_FLAG}=ON
+    )
+    add_custom_target("${JSON_CMAKE_FLAG_TARGET}_31"
+        COMMENT "Check CMake flag ${JSON_CMAKE_FLAG} (CMake 3.1)"
+        COMMAND mkdir ${PROJECT_BINARY_DIR}/build_${JSON_CMAKE_FLAG_TARGET}_31
+        COMMAND cd ${PROJECT_BINARY_DIR}/build_${JSON_CMAKE_FLAG_TARGET}_31 && ${PROJECT_BINARY_DIR}/cmake-3.1.0-Darwin64/CMake.app/Contents/bin/cmake -Werror=dev ${PROJECT_SOURCE_DIR} -D${JSON_CMAKE_FLAG}=ON -DCMAKE_CXX_COMPILE_FEATURES="cxx_range_for" -DCMAKE_CXX_FLAGS="-std=gnu++11"
+        DEPENDS cmake-3.1.0-Darwin64
+    )
+    list(APPEND JSON_CMAKE_FLAG_TARGETS ${JSON_CMAKE_FLAG_TARGET} ${JSON_CMAKE_FLAG_TARGET}_31)
+    list(APPEND JSON_CMAKE_FLAG_BUILD_DIRS ${PROJECT_BINARY_DIR}/build_${JSON_CMAKE_FLAG_TARGET} ${PROJECT_BINARY_DIR}/build_${JSON_CMAKE_FLAG_TARGET}_31)
+endforeach()
+
+add_custom_target(ci_cmake_flags
+    DEPENDS ${JSON_CMAKE_FLAG_TARGETS}
+    COMMENT "Check CMake flags"
+)
+
+###############################################################################
 # Clean up all generated files.
 ###############################################################################
 
 add_custom_target(ci_clean
-    COMMAND rm -fr ${PROJECT_BINARY_DIR}/build_gcc ${PROJECT_BINARY_DIR}/build_clang ${PROJECT_BINARY_DIR}/build_clang_analyze ${PROJECT_BINARY_DIR}/build_clang_tidy ${PROJECT_BINARY_DIR}/build_pvs_studio ${PROJECT_BINARY_DIR}/build_clang_sanitizer ${PROJECT_BINARY_DIR}/build_infer ${PROJECT_BINARY_DIR}/build_oclint ${PROJECT_BINARY_DIR}/build_benchmarks ${single_binaries}
+    COMMAND rm -fr ${PROJECT_BINARY_DIR}/build_gcc ${PROJECT_BINARY_DIR}/build_clang ${PROJECT_BINARY_DIR}/build_clang_analyze ${PROJECT_BINARY_DIR}/build_clang_tidy ${PROJECT_BINARY_DIR}/build_pvs_studio ${PROJECT_BINARY_DIR}/build_clang_sanitizer ${PROJECT_BINARY_DIR}/build_infer ${PROJECT_BINARY_DIR}/build_oclint ${PROJECT_BINARY_DIR}/build_benchmarks cmake-3.1.0-Darwin64 ${JSON_CMAKE_FLAG_BUILD_DIRS} ${single_binaries}
     COMMENT "Clean generated directories"
 )
