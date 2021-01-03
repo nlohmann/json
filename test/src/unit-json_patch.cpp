@@ -1280,7 +1280,7 @@ TEST_CASE("JSON patch")
             std::ifstream f(filename);
             json suite = json::parse(f);
 
-            for (const auto test : suite)
+            for (const auto& test : suite)
             {
                 INFO_WITH_TEMP(test.value("comment", ""));
 

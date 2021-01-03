@@ -18509,9 +18509,9 @@ class basic_json
     {
         m_value.array = create<array_t>(cnt, val);
 #if JSON_DIAGNOSTICS
-        for (auto& entry : *m_value.array)
+        for (auto& element : *m_value.array)
         {
-            entry.m_parent = this;
+            element.m_parent = this;
         }
 #endif
         assert_invariant();
@@ -18831,6 +18831,32 @@ class basic_json
         // invalidate payload
         other.m_type = value_t::null;
         other.m_value = {};
+
+#if JSON_DIAGNOSTICS
+        switch (m_type)
+        {
+            case value_t::array:
+            {
+                for (auto& element : *m_value.array)
+                {
+                    element.m_parent = this;
+                }
+                break;
+            }
+
+            case value_t::object:
+            {
+                for (auto& element : *m_value.object)
+                {
+                    element.second.m_parent = this;
+                }
+                break;
+            }
+
+            default:
+                break;
+        }
+#endif
 
         assert_invariant();
     }
