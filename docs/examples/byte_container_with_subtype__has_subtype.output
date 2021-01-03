@@ -1,0 +1,2 @@
+c1.has_subtype() = false
+c2.has_subtype() = true

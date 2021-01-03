@@ -1,0 +1,91 @@
+version: '{build}'
+
+# only build PRs and commits to develop branch
+# (see https://help.appveyor.com/discussions/questions/55079-two-builds-per-commit-to-pull-request)
+branches:
+  only:
+    - develop
+
+only_commits:
+  files:
+    - .github/external_ci/appveyor.yml
+    - cmake/
+    - include/
+    - tests/
+    - CMakeLists.txt
+
+environment:
+  matrix:
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+      configuration: Debug
+      platform: x86
+      CXX_FLAGS: "/W4 /WX"
+      CMAKE_OPTIONS: ""
+      GENERATOR: Visual Studio 14 2015
+
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+      configuration: Release
+      platform: x86
+      CXX_FLAGS: "/W4 /WX"
+      CMAKE_OPTIONS: ""
+      GENERATOR: Visual Studio 14 2015
+
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+      configuration: Release
+      platform: x86
+      name: with_win_header
+      CXX_FLAGS: "/W4 /WX"
+      CMAKE_OPTIONS: ""
+      GENERATOR: Visual Studio 14 2015
+
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      configuration: Release
+      platform: x86
+      CXX_FLAGS: "/permissive- /std:c++latest /utf-8 /W4 /WX"
+      CMAKE_OPTIONS: ""
+      GENERATOR: Visual Studio 15 2017
+
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+      configuration: Release
+      platform: x86
+      CXX_FLAGS: "/W4 /WX"
+      CMAKE_OPTIONS: "-DJSON_ImplicitConversions=OFF"
+      GENERATOR: Visual Studio 16 2019
+
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+      configuration: Release
+      platform: x64
+      CXX_FLAGS: "/W4 /WX"
+      CMAKE_OPTIONS: ""
+      GENERATOR: Visual Studio 14 2015
+
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      configuration: Release
+      platform: x64
+      CXX_FLAGS: "/permissive- /std:c++latest /Zc:__cplusplus /utf-8 /W4 /WX"
+      CMAKE_OPTIONS: ""
+      GENERATOR: Visual Studio 15 2017
+
+init:
+  - cmake --version
+  - msbuild /version
+
+install:
+  - if "%platform%"=="x86"    set GENERATOR_PLATFORM=Win32
+
+before_build:
+  # for with_win_header build, inject the inclusion of Windows.h to the single-header library
+  - ps: if ($env:name -Eq "with_win_header") { $header_path = "single_include\nlohmann\json.hpp" }
+  - ps: if ($env:name -Eq "with_win_header") { "#include <Windows.h>`n" + (Get-Content $header_path | Out-String) | Set-Content $header_path }
+  - cmake . -G "%GENERATOR%" -A "%GENERATOR_PLATFORM%" -DCMAKE_CXX_FLAGS="%CXX_FLAGS%" -DCMAKE_IGNORE_PATH="C:/Program Files/Git/usr/bin" -DJSON_BuildTests=On "%CMAKE_OPTIONS%"
+
+build_script:
+  - cmake --build . --config "%configuration%" --parallel 2
+
+test_script:
+  - if "%configuration%"=="Release" ctest -C "%configuration%" --parallel 2 --output-on-failure
+  # On Debug builds, skip test-unicode_all
+  # as it is extremely slow to run and cause
+  # occasional timeouts on AppVeyor.
+  # More info: https://github.com/nlohmann/json/pull/1570
+  - if "%configuration%"=="Debug" ctest --exclude-regex "test-unicode" -C "%configuration%" --parallel 2 --output-on-failure
