@@ -1198,11 +1198,11 @@ auto cbor = json::to_msgpack(j); // 0xD5 (fixext2), 0x10, 0xCA, 0xFE
 
 ## Supported compilers
 
-Though it's 2020 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
+Though it's 2021 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
 
-- GCC 4.8 - 10.1 (and possibly later)
-- Clang 3.4 - 10.0 (and possibly later)
-- Apple Clang 9.1 - 12.0 (and possibly later)
+- GCC 4.8 - 11.0 (and possibly later)
+- Clang 3.4 - 11.0 (and possibly later)
+- Apple Clang 9.1 - 12.3 (and possibly later)
 - Intel C++ Compiler 17.0.2 (and possibly later)
 - Microsoft Visual C++ 2015 / Build Tools 14.0.25123.0 (and possibly later)
 - Microsoft Visual C++ 2017 / Build Tools 15.5.180.51428 (and possibly later)
@@ -1270,7 +1270,7 @@ The following compilers are currently used in continuous integration at [Travis]
 
 The class is licensed under the [MIT License](http://opensource.org/licenses/MIT):
 
-Copyright &copy; 2013-2019 [Niels Lohmann](http://nlohmann.me)
+Copyright &copy; 2013-2021 [Niels Lohmann](https://nlohmann.me)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
