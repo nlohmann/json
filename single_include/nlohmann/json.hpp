@@ -20295,11 +20295,16 @@ class basic_json
             // fill up array with null values if given idx is outside range
             if (idx >= m_value.array->size())
             {
-                m_value.array->insert(m_value.array->end(),
-                                      idx - m_value.array->size() + 1,
-                                      basic_json());
 #if JSON_DIAGNOSTICS
-                for (std::size_t i = idx + 1; i < m_value.array->size(); ++i)
+                // remember array size before resizing
+                const auto previous_size = m_value.array->size();
+#endif
+
+                m_value.array->resize(idx + 1);
+
+#if JSON_DIAGNOSTICS
+                // set parent for values added above
+                for (auto i = previous_size; i <= idx; ++i)
                 {
                     m_value.array->operator[](i).m_parent = this;
                 }
