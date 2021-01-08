@@ -106,8 +106,7 @@ struct is_getable
 };
 
 template<typename BasicJsonType, typename T>
-struct has_from_json < BasicJsonType, T,
-           enable_if_t < !is_basic_json<T>::value >>
+struct has_from_json < BasicJsonType, T, enable_if_t < !is_basic_json<T>::value >>
 {
     using serializer = typename BasicJsonType::template json_serializer<T, void>;
 

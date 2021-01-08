@@ -49,6 +49,7 @@ SOFTWARE.
 // #include <nlohmann/adl_serializer.hpp>
 
 
+#include <type_traits>
 #include <utility>
 
 // #include <nlohmann/detail/conversions/from_json.hpp>
@@ -2812,6 +2813,18 @@ constexpr T static_const<T>::value;
 }  // namespace detail
 }  // namespace nlohmann
 
+// #include <nlohmann/detail/meta/tag.hpp>
+
+
+namespace nlohmann
+{
+namespace detail
+{
+// dispatching helper struct
+template <class T> struct tag {};
+}  // namespace detail
+}  // namespace nlohmann
+
 // #include <nlohmann/detail/meta/type_traits.hpp>
 
 
@@ -3129,8 +3142,7 @@ struct is_getable
 };
 
 template<typename BasicJsonType, typename T>
-struct has_from_json < BasicJsonType, T,
-           enable_if_t < !is_basic_json<T>::value >>
+struct has_from_json < BasicJsonType, T, enable_if_t < !is_basic_json<T>::value >>
 {
     using serializer = typename BasicJsonType::template json_serializer<T, void>;
 
@@ -3734,6 +3746,27 @@ void())
     from_json_array_impl(j, arr, priority_tag<3> {});
 }
 
+template < typename BasicJsonType, typename Array, std::size_t... Is >
+Array from_json_array_impl(BasicJsonType&& j, tag<Array> /*unused*/, index_sequence<Is...> /*unused*/)
+{
+    return { std::forward<BasicJsonType>(j).at(Is).template get<typename Array::value_type>()... };
+}
+
+template < typename BasicJsonType, typename T, std::size_t N,
+           enable_if_t < !std::is_default_constructible<std::array<T, N>>::value, int > = 0 >
+auto from_json(BasicJsonType && j, tag<std::array<T, N>> t)
+-> decltype(j.template get<T>(),
+from_json_array_impl(std::forward<BasicJsonType>(j), t, make_index_sequence<N> {}))
+{
+    if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
+    {
+        JSON_THROW(type_error::create(302, "type must be array, but is " +
+                                      std::string(j.type_name())));
+    }
+
+    return from_json_array_impl(std::forward<BasicJsonType>(j), t, make_index_sequence<N> {});
+}
+
 template<typename BasicJsonType>
 void from_json(const BasicJsonType& j, typename BasicJsonType::binary_t& bin)
 {
@@ -3809,22 +3842,71 @@ void from_json(const BasicJsonType& j, ArithmeticType& val)
     }
 }
 
-template<typename BasicJsonType, typename A1, typename A2>
-void from_json(const BasicJsonType& j, std::pair<A1, A2>& p)
+template<typename BasicJsonType, typename A1, typename A2,
+         enable_if_t<std::is_default_constructible<std::pair<A1, A2>>::value, int> = 0>
+void from_json(BasicJsonType && j, std::pair<A1, A2>& p)
 {
-    p = {j.at(0).template get<A1>(), j.at(1).template get<A2>()};
+    if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
+    {
+        JSON_THROW(type_error::create(302, "type must be array, but is " +
+                                      std::string(j.type_name())));
+    }
+
+    p = {std::forward<BasicJsonType>(j).at(0).template get<A1>(),
+         std::forward<BasicJsonType>(j).at(1).template get<A2>()
+        };
+}
+
+template < typename BasicJsonType, class A1, class A2,
+           enable_if_t < !std::is_default_constructible<std::pair<A1, A2>>::value, int > = 0 >
+std::pair<A1, A2> from_json(BasicJsonType && j, tag<std::pair<A1, A2>> /*unused*/)
+{
+    if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
+    {
+        JSON_THROW(type_error::create(302, "type must be array, but is " +
+                                      std::string(j.type_name())));
+    }
+
+    return {std::forward<BasicJsonType>(j).at(0).template get<A1>(),
+            std::forward<BasicJsonType>(j).at(1).template get<A2>()};
 }
 
 template<typename BasicJsonType, typename Tuple, std::size_t... Idx>
-void from_json_tuple_impl(const BasicJsonType& j, Tuple& t, index_sequence<Idx...> /*unused*/)
+void from_json_tuple_impl(BasicJsonType&& j, Tuple& t, index_sequence<Idx...> /*unused*/)
 {
-    t = std::make_tuple(j.at(Idx).template get<typename std::tuple_element<Idx, Tuple>::type>()...);
+    t = std::make_tuple(std::forward<BasicJsonType>(j).at(Idx).template get<typename std::tuple_element<Idx, Tuple>::type>()...);
 }
 
-template<typename BasicJsonType, typename... Args>
-void from_json(const BasicJsonType& j, std::tuple<Args...>& t)
+template<typename BasicJsonType, typename... Args,
+         enable_if_t < std::is_default_constructible<std::tuple<Args...>>::value, int > = 0 >
+void from_json(BasicJsonType && j, std::tuple<Args...>& t)
 {
-    from_json_tuple_impl(j, t, index_sequence_for<Args...> {});
+    if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
+    {
+        JSON_THROW(type_error::create(302, "type must be array, but is " +
+                                      std::string(j.type_name())));
+    }
+
+    from_json_tuple_impl(std::forward<BasicJsonType>(j), t, index_sequence_for<Args...> {});
+}
+
+template<typename BasicJsonType, typename Tuple, std::size_t... Idx>
+Tuple from_json_tuple_impl(BasicJsonType&& j, tag<Tuple> /*unused*/, index_sequence<Idx...> /*unused*/)
+{
+    return std::make_tuple(std::forward<BasicJsonType>(j).at(Idx).template get<typename std::tuple_element<Idx, Tuple>::type>()...);
+}
+
+template < typename BasicJsonType, typename... Args,
+           enable_if_t < !std::is_default_constructible<std::tuple<Args...>>::value, int > = 0 >
+std::tuple<Args...> from_json(BasicJsonType && j, tag<std::tuple<Args...>> t)
+{
+    if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
+    {
+        JSON_THROW(type_error::create(302, "type must be array, but is " +
+                                      std::string(j.type_name())));
+    }
+
+    return from_json_tuple_impl(std::forward<BasicJsonType>(j), t, index_sequence_for<Args...> {});
 }
 
 template < typename BasicJsonType, typename Key, typename Value, typename Compare, typename Allocator,
@@ -3875,6 +3957,14 @@ struct from_json_fn
     -> decltype(from_json(j, val), void())
     {
         return from_json(j, val);
+    }
+
+    template<typename BasicJsonType, typename T>
+    auto operator()(const BasicJsonType& j, detail::tag<T> t) const
+    noexcept(noexcept(from_json(j, t)))
+    -> decltype(from_json(j, t))
+    {
+        return from_json(j, t);
     }
 };
 }  // namespace detail
@@ -4448,11 +4538,13 @@ constexpr const auto& to_json = detail::static_const<detail::to_json_fn>::value;
 } // namespace
 } // namespace nlohmann
 
+// #include <nlohmann/detail/meta/type_traits.hpp>
+
 
 namespace nlohmann
 {
 
-template<typename, typename>
+template<typename ValueType, typename>
 struct adl_serializer
 {
     /*!
@@ -4464,12 +4556,20 @@ struct adl_serializer
     @param[in] j        JSON value to read from
     @param[in,out] val  value to write to
     */
-    template<typename BasicJsonType, typename ValueType>
-    static auto from_json(BasicJsonType&& j, ValueType& val) noexcept(
+    template<typename BasicJsonType, typename U = ValueType>
+    static auto from_json(BasicJsonType && j, U& val) noexcept(
         noexcept(::nlohmann::from_json(std::forward<BasicJsonType>(j), val)))
     -> decltype(::nlohmann::from_json(std::forward<BasicJsonType>(j), val), void())
     {
         ::nlohmann::from_json(std::forward<BasicJsonType>(j), val);
+    }
+
+    template<typename BasicJsonType, typename U = ValueType>
+    static auto from_json(BasicJsonType && j) noexcept(
+    noexcept(::nlohmann::from_json(std::forward<BasicJsonType>(j), detail::tag<U> {})))
+    -> decltype(::nlohmann::from_json(std::forward<BasicJsonType>(j), detail::tag<U> {}))
+    {
+        return ::nlohmann::from_json(std::forward<BasicJsonType>(j), detail::tag<U> {});
     }
 
     /*!
@@ -4481,15 +4581,14 @@ struct adl_serializer
     @param[in,out] j  JSON value to write to
     @param[in] val    value to read from
     */
-    template<typename BasicJsonType, typename ValueType>
-    static auto to_json(BasicJsonType& j, ValueType&& val) noexcept(
-        noexcept(::nlohmann::to_json(j, std::forward<ValueType>(val))))
-    -> decltype(::nlohmann::to_json(j, std::forward<ValueType>(val)), void())
+    template<typename BasicJsonType, typename U = ValueType>
+    static auto to_json(BasicJsonType& j, U && val) noexcept(
+        noexcept(::nlohmann::to_json(j, std::forward<U>(val))))
+    -> decltype(::nlohmann::to_json(j, std::forward<U>(val)), void())
     {
-        ::nlohmann::to_json(j, std::forward<ValueType>(val));
+        ::nlohmann::to_json(j, std::forward<U>(val));
     }
 };
-
 }  // namespace nlohmann
 
 // #include <nlohmann/byte_container_with_subtype.hpp>

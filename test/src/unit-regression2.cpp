@@ -115,7 +115,7 @@ namespace nlohmann
 template <>
 struct adl_serializer<NonDefaultFromJsonStruct>
 {
-    static NonDefaultFromJsonStruct from_json (json const&) noexcept
+    static NonDefaultFromJsonStruct from_json (const json&) noexcept
     {
         return {};
     }
@@ -131,6 +131,28 @@ struct NotSerializableData
     int mydata;
     float myfloat;
 };
+
+
+/////////////////////////////////////////////////////////////////////
+// for #2574
+/////////////////////////////////////////////////////////////////////
+struct NonDefaultConstructible
+{
+    explicit NonDefaultConstructible (int x) : x(x) { }
+    int x;
+};
+
+namespace nlohmann
+{
+template <>
+struct adl_serializer<NonDefaultConstructible>
+{
+    static NonDefaultConstructible from_json (const json& j) noexcept
+    {
+        return NonDefaultConstructible(j.get<int>());
+    }
+};
+}
 
 
 TEST_CASE("regression tests 2")
@@ -498,4 +520,59 @@ TEST_CASE("regression tests 2")
         CHECK(j.dump() == "\"Hello, world!\"");
     }
 #endif
+
+    SECTION("issue #2574 - Deserialization to std::array, std::pair, and std::tuple with non-default constructable types fails")
+    {
+        SECTION("std::array")
+        {
+            json j = { 7, 4 };
+            auto arr = j.get<std::array<NonDefaultConstructible, 2>>();
+            CHECK(arr[0].x == 7);
+            CHECK(arr[1].x == 4);
+        }
+
+        SECTION("std::pair")
+        {
+            {
+                json j = { 3, 8 };
+                auto x = j.at(0).get<NonDefaultConstructible>();
+                CHECK(x.x == 3);
+
+                auto p = j.get<std::pair<NonDefaultConstructible, NonDefaultConstructible>>();
+                CHECK(p.first.x == 3);
+                CHECK(p.second.x == 8);
+            }
+
+            {
+                json j = { 4, 1 };
+                auto p = j.get<std::pair<int, NonDefaultConstructible>>();
+                CHECK(p.first == 4);
+                CHECK(p.second.x == 1);
+            }
+
+            {
+                json j = { 6, 7 };
+                auto p = j.get<std::pair<NonDefaultConstructible, int>>();
+                CHECK(p.first.x == 6);
+                CHECK(p.second == 7);
+            }
+        }
+
+        SECTION("std::tuple")
+        {
+            {
+                json j = { 9 };
+                auto t = j.get<std::tuple<NonDefaultConstructible>>();
+                CHECK(std::get<0>(t).x == 9);
+            }
+
+            {
+                json j = { 9, 8, 7 };
+                auto t = j.get<std::tuple<NonDefaultConstructible, int, NonDefaultConstructible>>();
+                CHECK(std::get<0>(t).x == 9);
+                CHECK(std::get<1>(t)   == 8);
+                CHECK(std::get<2>(t).x == 7);
+            }
+        }
+    }
 }
