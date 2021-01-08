@@ -3654,6 +3654,13 @@ class basic_json
             if (idx >= m_value.array->size())
             {
 #if JSON_DIAGNOSTICS
+                // remember array size before resizing
+                const auto previous_size = m_value.array->size();
+#endif
+
+                m_value.array->resize(idx + 1);
+
+#if JSON_DIAGNOSTICS
                 // set parent for values added above
                 for (auto i = previous_size; i <= idx; ++i)
                 {
