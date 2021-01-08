@@ -39,7 +39,7 @@ TEST_CASE("version information")
         json j = json::meta();
 
         CHECK(j["name"] == "JSON for Modern C++");
-        CHECK(j["copyright"] == "(C) 2013-2020 Niels Lohmann");
+        CHECK(j["copyright"] == "(C) 2013-2021 Niels Lohmann");
         CHECK(j["url"] == "https://github.com/nlohmann/json");
         CHECK(j["version"] == json(
         {
