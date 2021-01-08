@@ -20305,13 +20305,7 @@ class basic_json
 #endif
             }
 
-#if JSON_DIAGNOSTICS
-            reference result = m_value.array->operator[](idx);
-            result.m_parent = this;
-            return result;
-#else
             return m_value.array->operator[](idx);
-#endif
         }
 
         JSON_THROW(type_error::create(305, diagnostics() + "cannot use operator[] with a numeric argument with " + std::string(type_name())));
