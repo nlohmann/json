@@ -2185,9 +2185,6 @@ class basic_json
     basic_json(basic_json&& other) noexcept
         : m_type(std::move(other.m_type)),
           m_value(std::move(other.m_value))
-#if JSON_DIAGNOSTICS
-        , m_parent(other.m_parent)
-#endif
     {
         // check that passed value is valid
         other.assert_invariant();
@@ -2261,9 +2258,6 @@ class basic_json
         using std::swap;
         swap(m_type, other.m_type);
         swap(m_value, other.m_value);
-#if JSON_DIAGNOSTICS
-        m_parent = other.m_parent;
-#endif
 
         assert_invariant();
         return *this;
@@ -3659,13 +3653,6 @@ class basic_json
             // fill up array with null values if given idx is outside range
             if (idx >= m_value.array->size())
             {
-#if JSON_DIAGNOSTICS
-                // remember array size before resizing
-                const auto previous_size = m_value.array->size();
-#endif
-
-                m_value.array->resize(idx + 1);
-
 #if JSON_DIAGNOSTICS
                 // set parent for values added above
                 for (auto i = previous_size; i <= idx; ++i)
