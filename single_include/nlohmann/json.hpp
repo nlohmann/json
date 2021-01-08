@@ -18275,16 +18275,19 @@ class basic_json
             m_type = value_t::object;
             m_value = value_t::object;
 
-            std::for_each(init.begin(), init.end(), [this](const detail::json_ref<basic_json>& element_ref)
+            for (auto& element_ref : init)
             {
                 auto element = element_ref.moved_or_copied();
+                auto res = m_value.object->emplace(
+                               std::move(*((*element.m_value.array)[0].m_value.string)),
+                               std::move((*element.m_value.array)[1]));
+
 #if JSON_DIAGNOSTICS
-                (*element.m_value.array)[1].m_parent = this;
+                res.first->second.m_parent = this;
+#else
+                static_cast<void>(res);  // unused variable - fix warning
 #endif
-                m_value.object->emplace(
-                    std::move(*((*element.m_value.array)[0].m_value.string)),
-                    std::move((*element.m_value.array)[1]));
-            });
+            }
         }
         else
         {
