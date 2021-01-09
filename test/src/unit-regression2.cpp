@@ -525,10 +525,18 @@ TEST_CASE("regression tests 2")
     {
         SECTION("std::array")
         {
-            json j = { 7, 4 };
-            auto arr = j.get<std::array<NonDefaultConstructible, 2>>();
-            CHECK(arr[0].x == 7);
-            CHECK(arr[1].x == 4);
+            {
+                json j = { 7, 4 };
+                auto arr = j.get<std::array<NonDefaultConstructible, 2>>();
+                CHECK(arr[0].x == 7);
+                CHECK(arr[1].x == 4);
+
+            }
+
+            {
+                json j = 7;
+                CHECK_THROWS_AS((j.get<std::array<NonDefaultConstructible, 1>>()), json::type_error);
+            }
         }
 
         SECTION("std::pair")
@@ -556,6 +564,11 @@ TEST_CASE("regression tests 2")
                 CHECK(p.first.x == 6);
                 CHECK(p.second == 7);
             }
+
+            {
+                json j = 7;
+                CHECK_THROWS_AS((j.get<std::pair<NonDefaultConstructible, int>>()), json::type_error);
+            }
         }
 
         SECTION("std::tuple")
@@ -572,6 +585,11 @@ TEST_CASE("regression tests 2")
                 CHECK(std::get<0>(t).x == 9);
                 CHECK(std::get<1>(t)   == 8);
                 CHECK(std::get<2>(t).x == 7);
+            }
+
+            {
+                json j = 7;
+                CHECK_THROWS_AS((j.get<std::tuple<NonDefaultConstructible>>()), json::type_error);
             }
         }
     }
