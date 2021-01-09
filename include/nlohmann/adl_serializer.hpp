@@ -19,23 +19,37 @@ struct adl_serializer
     This function is usually called by the `get()` function of the
     @ref basic_json class (either explicit or via conversion operators).
 
+    @note This function is chosen for value types which can be default constructed.
+
     @param[in] j        JSON value to read from
     @param[in,out] val  value to write to
     */
-    template<typename BasicJsonType, typename U = ValueType>
-    static auto from_json(BasicJsonType && j, U& val) noexcept(
+    template<typename BasicJsonType, typename TargetType = ValueType>
+    static auto from_json(BasicJsonType && j, TargetType& val) noexcept(
         noexcept(::nlohmann::from_json(std::forward<BasicJsonType>(j), val)))
     -> decltype(::nlohmann::from_json(std::forward<BasicJsonType>(j), val), void())
     {
         ::nlohmann::from_json(std::forward<BasicJsonType>(j), val);
     }
 
-    template<typename BasicJsonType, typename U = ValueType>
+    /*!
+    @brief convert a JSON value to any value type
+
+    This function is usually called by the `get()` function of the
+    @ref basic_json class (either explicit or via conversion operators).
+
+    @note This function is chosen for value types which can not be default constructed.
+
+    @param[in] j  JSON value to read from
+
+    @return copy of the JSON value, converted to @a ValueType
+    */
+    template<typename BasicJsonType, typename TargetType = ValueType>
     static auto from_json(BasicJsonType && j) noexcept(
-    noexcept(::nlohmann::from_json(std::forward<BasicJsonType>(j), detail::tag<U> {})))
-    -> decltype(::nlohmann::from_json(std::forward<BasicJsonType>(j), detail::tag<U> {}))
+    noexcept(::nlohmann::from_json(std::forward<BasicJsonType>(j), detail::tag<TargetType> {})))
+    -> decltype(::nlohmann::from_json(std::forward<BasicJsonType>(j), detail::tag<TargetType> {}))
     {
-        return ::nlohmann::from_json(std::forward<BasicJsonType>(j), detail::tag<U> {});
+        return ::nlohmann::from_json(std::forward<BasicJsonType>(j), detail::tag<TargetType> {});
     }
 
     /*!
@@ -47,12 +61,12 @@ struct adl_serializer
     @param[in,out] j  JSON value to write to
     @param[in] val    value to read from
     */
-    template<typename BasicJsonType, typename U = ValueType>
-    static auto to_json(BasicJsonType& j, U && val) noexcept(
-        noexcept(::nlohmann::to_json(j, std::forward<U>(val))))
-    -> decltype(::nlohmann::to_json(j, std::forward<U>(val)), void())
+    template<typename BasicJsonType, typename TargetType = ValueType>
+    static auto to_json(BasicJsonType& j, TargetType && val) noexcept(
+        noexcept(::nlohmann::to_json(j, std::forward<TargetType>(val))))
+    -> decltype(::nlohmann::to_json(j, std::forward<TargetType>(val)), void())
     {
-        ::nlohmann::to_json(j, std::forward<U>(val));
+        ::nlohmann::to_json(j, std::forward<TargetType>(val));
     }
 };
 }  // namespace nlohmann

@@ -462,6 +462,8 @@ struct from_json_fn
         return from_json(j, val);
     }
 
+    // overload to pass calls to built-in from_json functions for non-default constructible STL
+    // types (e.g. std::array<X>, where X is not default constructible).
     template<typename BasicJsonType, typename T>
     auto operator()(const BasicJsonType& j, detail::tag<T> t) const
     noexcept(noexcept(from_json(j, t)))
