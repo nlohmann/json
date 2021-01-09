@@ -5,6 +5,7 @@
 #include <utility> // move
 #include <vector> // vector
 
+#include <nlohmann/detail/diagnostics_t.hpp>
 #include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 
@@ -154,6 +155,7 @@ class json_sax_dom_parser
     using number_float_t = typename BasicJsonType::number_float_t;
     using string_t = typename BasicJsonType::string_t;
     using binary_t = typename BasicJsonType::binary_t;
+    using diagnostics_t = detail::diagnostics_t<BasicJsonType>;
 
     /*!
     @param[in, out] r  reference to a JSON value that is manipulated while
@@ -219,8 +221,7 @@ class json_sax_dom_parser
 
         if (JSON_HEDLEY_UNLIKELY(len != std::size_t(-1) && len > ref_stack.back()->max_size()))
         {
-            JSON_THROW(out_of_range::create(408, ref_stack.back()->diagnostics() +
-                                            "excessive object size: " + std::to_string(len)));
+            JSON_THROW(out_of_range::create(408, "excessive object size: " + std::to_string(len), diagnostics_t(*ref_stack.back())));
         }
 
         return true;
@@ -245,8 +246,7 @@ class json_sax_dom_parser
 
         if (JSON_HEDLEY_UNLIKELY(len != std::size_t(-1) && len > ref_stack.back()->max_size()))
         {
-            JSON_THROW(out_of_range::create(408, ref_stack.back()->diagnostics() +
-                                            "excessive array size: " + std::to_string(len)));
+            JSON_THROW(out_of_range::create(408, "excessive array size: " + std::to_string(len), diagnostics_t(*ref_stack.back())));
         }
 
         return true;
@@ -336,6 +336,7 @@ class json_sax_dom_callback_parser
     using binary_t = typename BasicJsonType::binary_t;
     using parser_callback_t = typename BasicJsonType::parser_callback_t;
     using parse_event_t = typename BasicJsonType::parse_event_t;
+    using diagnostics_t = detail::diagnostics_t<BasicJsonType>;
 
     json_sax_dom_callback_parser(BasicJsonType& r,
                                  const parser_callback_t cb,
@@ -406,7 +407,7 @@ class json_sax_dom_callback_parser
         // check object limit
         if (ref_stack.back() && JSON_HEDLEY_UNLIKELY(len != std::size_t(-1) && len > ref_stack.back()->max_size()))
         {
-            JSON_THROW(out_of_range::create(408, ref_stack.back()->diagnostics() + "excessive object size: " + std::to_string(len)));
+            JSON_THROW(out_of_range::create(408, "excessive object size: " + std::to_string(len), diagnostics_t(*ref_stack.back())));
         }
 
         return true;
@@ -469,7 +470,7 @@ class json_sax_dom_callback_parser
         // check array limit
         if (ref_stack.back() && JSON_HEDLEY_UNLIKELY(len != std::size_t(-1) && len > ref_stack.back()->max_size()))
         {
-            JSON_THROW(out_of_range::create(408, ref_stack.back()->diagnostics() + "excessive array size: " + std::to_string(len)));
+            JSON_THROW(out_of_range::create(408, "excessive array size: " + std::to_string(len), diagnostics_t(*ref_stack.back())));
         }
 
         return true;

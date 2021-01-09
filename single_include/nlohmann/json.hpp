@@ -73,6 +73,175 @@ SOFTWARE.
 #include <stdexcept> // runtime_error
 #include <string> // to_string
 
+// #include <nlohmann/detail/diagnostics_t.hpp>
+
+
+#include <string>
+#include <vector>
+// #include <nlohmann/detail/value_t.hpp>
+
+
+#include <array> // array
+#include <cstddef> // size_t
+#include <cstdint> // uint8_t
+#include <string> // string
+
+namespace nlohmann
+{
+namespace detail
+{
+///////////////////////////
+// JSON type enumeration //
+///////////////////////////
+
+/*!
+@brief the JSON type enumeration
+
+This enumeration collects the different JSON types. It is internally used to
+distinguish the stored values, and the functions @ref basic_json::is_null(),
+@ref basic_json::is_object(), @ref basic_json::is_array(),
+@ref basic_json::is_string(), @ref basic_json::is_boolean(),
+@ref basic_json::is_number() (with @ref basic_json::is_number_integer(),
+@ref basic_json::is_number_unsigned(), and @ref basic_json::is_number_float()),
+@ref basic_json::is_discarded(), @ref basic_json::is_primitive(), and
+@ref basic_json::is_structured() rely on it.
+
+@note There are three enumeration entries (number_integer, number_unsigned, and
+number_float), because the library distinguishes these three types for numbers:
+@ref basic_json::number_unsigned_t is used for unsigned integers,
+@ref basic_json::number_integer_t is used for signed integers, and
+@ref basic_json::number_float_t is used for floating-point numbers or to
+approximate integers which do not fit in the limits of their respective type.
+
+@sa @ref basic_json::basic_json(const value_t value_type) -- create a JSON
+value with the default value for a given type
+
+@since version 1.0.0
+*/
+enum class value_t : std::uint8_t
+{
+    null,             ///< null value
+    object,           ///< object (unordered set of name/value pairs)
+    array,            ///< array (ordered collection of values)
+    string,           ///< string value
+    boolean,          ///< boolean value
+    number_integer,   ///< number value (signed integer)
+    number_unsigned,  ///< number value (unsigned integer)
+    number_float,     ///< number value (floating-point)
+    binary,           ///< binary array (ordered collection of bytes)
+    discarded         ///< discarded by the parser callback function
+};
+
+/*!
+@brief comparison operator for JSON types
+
+Returns an ordering that is similar to Python:
+- order: null < boolean < number < object < array < string < binary
+- furthermore, each type is not smaller than itself
+- discarded values are not comparable
+- binary is represented as a b"" string in python and directly comparable to a
+  string; however, making a binary array directly comparable with a string would
+  be surprising behavior in a JSON file.
+
+@since version 1.0.0
+*/
+inline bool operator<(const value_t lhs, const value_t rhs) noexcept
+{
+    static constexpr std::array<std::uint8_t, 9> order = {{
+            0 /* null */, 3 /* object */, 4 /* array */, 5 /* string */,
+            1 /* boolean */, 2 /* integer */, 2 /* unsigned */, 2 /* float */,
+            6 /* binary */
+        }
+    };
+
+    const auto l_index = static_cast<std::size_t>(lhs);
+    const auto r_index = static_cast<std::size_t>(rhs);
+    return l_index < order.size() && r_index < order.size() && order[l_index] < order[r_index];
+}
+}  // namespace detail
+}  // namespace nlohmann
+
+
+namespace nlohmann
+{
+namespace detail
+{
+
+template<typename BasicJsonType>
+class diagnostics_t
+{
+  public:
+    diagnostics_t() noexcept = default;
+    diagnostics_t(const BasicJsonType& j) noexcept
+        : m_j(&j)
+    {}
+
+    std::string diagnostics() const
+    {
+#if JSON_DIAGNOSTICS
+        if (m_j == nullptr)
+        {
+            return "";
+        }
+
+        std::vector<std::string> tokens;
+        for (const auto* current = m_j; current->m_parent != nullptr; current = current->m_parent)
+        {
+            switch (current->m_parent->type())
+            {
+                case value_t::array:
+                {
+                    for (std::size_t i = 0; i < current->m_parent->m_value.array->size(); ++i)
+                    {
+                        if (current->m_parent->m_value.array->operator[](i) == *current)
+                        {
+                            tokens.emplace_back(std::to_string(i));
+                            continue;
+                        }
+                    }
+                    break;
+                }
+
+                case value_t::object:
+                {
+                    for (const auto& element : *current->m_parent->m_value.object)
+                    {
+                        if (element.second == *current)
+                        {
+                            tokens.emplace_back(element.first.c_str());
+                            continue;
+                        }
+                    }
+                    break;
+                }
+
+                default:
+                    break;
+            }
+        }
+
+        if (tokens.empty())
+        {
+            return "";
+        }
+
+        return "(" + std::accumulate(tokens.rbegin(), tokens.rend(), std::string{},
+                                     [](const std::string & a, const std::string & b)
+        {
+            return a + "/" + b;
+        }) + ") ";
+#else
+        return "";
+#endif
+    }
+
+  private:
+    const BasicJsonType* m_j = static_cast<const BasicJsonType*>(nullptr);
+};
+
+} // namespace detail
+} // namespace nlohmann
+
 // #include <nlohmann/detail/input/position_t.hpp>
 
 
@@ -2500,18 +2669,20 @@ class parse_error : public exception
     @param[in] what_arg  the explanatory string
     @return parse_error object
     */
-    static parse_error create(int id_, const position_t& pos, const std::string& what_arg)
+    template<typename BasicJsonType>
+    static parse_error create(int id_, const position_t& pos, const std::string& what_arg, const detail::diagnostics_t<BasicJsonType>& diagnostics)
     {
         std::string w = exception::name("parse_error", id_) + "parse error" +
-                        position_string(pos) + ": " + what_arg;
+                        position_string(pos) + ": " + diagnostics.diagnostics() + what_arg;
         return parse_error(id_, pos.chars_read_total, w.c_str());
     }
 
-    static parse_error create(int id_, std::size_t byte_, const std::string& what_arg)
+    template<typename BasicJsonType>
+    static parse_error create(int id_, std::size_t byte_, const std::string& what_arg, const detail::diagnostics_t<BasicJsonType>& diagnostics)
     {
         std::string w = exception::name("parse_error", id_) + "parse error" +
                         (byte_ != 0 ? (" at byte " + std::to_string(byte_)) : "") +
-                        ": " + what_arg;
+                        ": " + diagnostics.diagnostics() + what_arg;
         return parse_error(id_, byte_, w.c_str());
     }
 
@@ -2577,9 +2748,10 @@ caught.,invalid_iterator}
 class invalid_iterator : public exception
 {
   public:
-    static invalid_iterator create(int id_, const std::string& what_arg)
+    template<typename BasicJsonType>
+    static invalid_iterator create(int id_, const std::string& what_arg, const detail::diagnostics_t<BasicJsonType>& diagnostics)
     {
-        std::string w = exception::name("invalid_iterator", id_) + what_arg;
+        std::string w = exception::name("invalid_iterator", id_) + diagnostics.diagnostics() + what_arg;
         return invalid_iterator(id_, w.c_str());
     }
 
@@ -2631,9 +2803,10 @@ caught.,type_error}
 class type_error : public exception
 {
   public:
-    static type_error create(int id_, const std::string& what_arg)
+    template<typename BasicJsonType>
+    static type_error create(int id_, const std::string& what_arg, const detail::diagnostics_t<BasicJsonType>& diagnostics)
     {
-        std::string w = exception::name("type_error", id_) + what_arg;
+        std::string w = exception::name("type_error", id_) + diagnostics.diagnostics() + what_arg;
         return type_error(id_, w.c_str());
     }
 
@@ -2678,9 +2851,10 @@ caught.,out_of_range}
 class out_of_range : public exception
 {
   public:
-    static out_of_range create(int id_, const std::string& what_arg)
+    template<typename BasicJsonType>
+    static out_of_range create(int id_, const std::string& what_arg, const detail::diagnostics_t<BasicJsonType>& diagnostics)
     {
-        std::string w = exception::name("out_of_range", id_) + what_arg;
+        std::string w = exception::name("out_of_range", id_) + diagnostics.diagnostics() + what_arg;
         return out_of_range(id_, w.c_str());
     }
 
@@ -2716,9 +2890,10 @@ caught.,other_error}
 class other_error : public exception
 {
   public:
-    static other_error create(int id_, const std::string& what_arg)
+    template<typename BasicJsonType>
+    static other_error create(int id_, const std::string& what_arg, const detail::diagnostics_t<BasicJsonType>& diagnostics)
     {
-        std::string w = exception::name("other_error", id_) + what_arg;
+        std::string w = exception::name("other_error", id_) + diagnostics.diagnostics() + what_arg;
         return other_error(id_, w.c_str());
     }
 
@@ -2728,6 +2903,8 @@ class other_error : public exception
 };
 }  // namespace detail
 }  // namespace nlohmann
+
+// #include <nlohmann/detail/diagnostics_t.hpp>
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
@@ -3423,87 +3600,6 @@ struct is_constructible_tuple<T1, std::tuple<Args...>> : conjunction<std::is_con
 // #include <nlohmann/detail/value_t.hpp>
 
 
-#include <array> // array
-#include <cstddef> // size_t
-#include <cstdint> // uint8_t
-#include <string> // string
-
-namespace nlohmann
-{
-namespace detail
-{
-///////////////////////////
-// JSON type enumeration //
-///////////////////////////
-
-/*!
-@brief the JSON type enumeration
-
-This enumeration collects the different JSON types. It is internally used to
-distinguish the stored values, and the functions @ref basic_json::is_null(),
-@ref basic_json::is_object(), @ref basic_json::is_array(),
-@ref basic_json::is_string(), @ref basic_json::is_boolean(),
-@ref basic_json::is_number() (with @ref basic_json::is_number_integer(),
-@ref basic_json::is_number_unsigned(), and @ref basic_json::is_number_float()),
-@ref basic_json::is_discarded(), @ref basic_json::is_primitive(), and
-@ref basic_json::is_structured() rely on it.
-
-@note There are three enumeration entries (number_integer, number_unsigned, and
-number_float), because the library distinguishes these three types for numbers:
-@ref basic_json::number_unsigned_t is used for unsigned integers,
-@ref basic_json::number_integer_t is used for signed integers, and
-@ref basic_json::number_float_t is used for floating-point numbers or to
-approximate integers which do not fit in the limits of their respective type.
-
-@sa @ref basic_json::basic_json(const value_t value_type) -- create a JSON
-value with the default value for a given type
-
-@since version 1.0.0
-*/
-enum class value_t : std::uint8_t
-{
-    null,             ///< null value
-    object,           ///< object (unordered set of name/value pairs)
-    array,            ///< array (ordered collection of values)
-    string,           ///< string value
-    boolean,          ///< boolean value
-    number_integer,   ///< number value (signed integer)
-    number_unsigned,  ///< number value (unsigned integer)
-    number_float,     ///< number value (floating-point)
-    binary,           ///< binary array (ordered collection of bytes)
-    discarded         ///< discarded by the parser callback function
-};
-
-/*!
-@brief comparison operator for JSON types
-
-Returns an ordering that is similar to Python:
-- order: null < boolean < number < object < array < string < binary
-- furthermore, each type is not smaller than itself
-- discarded values are not comparable
-- binary is represented as a b"" string in python and directly comparable to a
-  string; however, making a binary array directly comparable with a string would
-  be surprising behavior in a JSON file.
-
-@since version 1.0.0
-*/
-inline bool operator<(const value_t lhs, const value_t rhs) noexcept
-{
-    static constexpr std::array<std::uint8_t, 9> order = {{
-            0 /* null */, 3 /* object */, 4 /* array */, 5 /* string */,
-            1 /* boolean */, 2 /* integer */, 2 /* unsigned */, 2 /* float */,
-            6 /* binary */
-        }
-    };
-
-    const auto l_index = static_cast<std::size_t>(lhs);
-    const auto r_index = static_cast<std::size_t>(rhs);
-    return l_index < order.size() && r_index < order.size() && order[l_index] < order[r_index];
-}
-}  // namespace detail
-}  // namespace nlohmann
-
-
 namespace nlohmann
 {
 namespace detail
@@ -3513,7 +3609,7 @@ void from_json(const BasicJsonType& j, typename std::nullptr_t& n)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_null()))
     {
-        JSON_THROW(type_error::create(302, j.diagnostics() + "type must be null, but is " + std::string(j.type_name())));
+        JSON_THROW(type_error::create(302, "type must be null, but is " + std::string(j.type_name()), detail::diagnostics_t<BasicJsonType>(j)));
     }
     n = nullptr;
 }
@@ -3544,7 +3640,7 @@ void get_arithmetic_value(const BasicJsonType& j, ArithmeticType& val)
         }
 
         default:
-            JSON_THROW(type_error::create(302, j.diagnostics() + "type must be number, but is " + std::string(j.type_name())));
+            JSON_THROW(type_error::create(302, "type must be number, but is " + std::string(j.type_name()), detail::diagnostics_t<BasicJsonType>(j)));
     }
 }
 
@@ -3553,7 +3649,7 @@ void from_json(const BasicJsonType& j, typename BasicJsonType::boolean_t& b)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_boolean()))
     {
-        JSON_THROW(type_error::create(302, j.diagnostics() + "type must be boolean, but is " + std::string(j.type_name())));
+        JSON_THROW(type_error::create(302, "type must be boolean, but is " + std::string(j.type_name()), detail::diagnostics_t<BasicJsonType>(j)));
     }
     b = *j.template get_ptr<const typename BasicJsonType::boolean_t*>();
 }
@@ -3563,7 +3659,7 @@ void from_json(const BasicJsonType& j, typename BasicJsonType::string_t& s)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_string()))
     {
-        JSON_THROW(type_error::create(302, j.diagnostics() + "type must be string, but is " + std::string(j.type_name())));
+        JSON_THROW(type_error::create(302, "type must be string, but is " + std::string(j.type_name()), detail::diagnostics_t<BasicJsonType>(j)));
     }
     s = *j.template get_ptr<const typename BasicJsonType::string_t*>();
 }
@@ -3579,7 +3675,7 @@ void from_json(const BasicJsonType& j, ConstructibleStringType& s)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_string()))
     {
-        JSON_THROW(type_error::create(302, j.diagnostics() + "type must be string, but is " + std::string(j.type_name())));
+        JSON_THROW(type_error::create(302, "type must be string, but is " + std::string(j.type_name()), detail::diagnostics_t<BasicJsonType>(j)));
     }
 
     s = *j.template get_ptr<const typename BasicJsonType::string_t*>();
@@ -3619,7 +3715,7 @@ void from_json(const BasicJsonType& j, std::forward_list<T, Allocator>& l)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
-        JSON_THROW(type_error::create(302, j.diagnostics() + "type must be array, but is " + std::string(j.type_name())));
+        JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(j.type_name()), detail::diagnostics_t<BasicJsonType>(j)));
     }
     l.clear();
     std::transform(j.rbegin(), j.rend(),
@@ -3636,7 +3732,7 @@ void from_json(const BasicJsonType& j, std::valarray<T>& l)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
-        JSON_THROW(type_error::create(302, j.diagnostics() + "type must be array, but is " + std::string(j.type_name())));
+        JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(j.type_name()), detail::diagnostics_t<BasicJsonType>(j)));
     }
     l.resize(j.size());
     std::transform(j.begin(), j.end(), std::begin(l),
@@ -3727,8 +3823,7 @@ void())
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
-        JSON_THROW(type_error::create(302, j.diagnostics() + "type must be array, but is " +
-                                      std::string(j.type_name())));
+        JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(j.type_name()), detail::diagnostics_t<BasicJsonType>(j)));
     }
 
     from_json_array_impl(j, arr, priority_tag<3> {});
@@ -3739,7 +3834,7 @@ void from_json(const BasicJsonType& j, typename BasicJsonType::binary_t& bin)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_binary()))
     {
-        JSON_THROW(type_error::create(302, j.diagnostics() + "type must be binary, but is " + std::string(j.type_name())));
+        JSON_THROW(type_error::create(302, "type must be binary, but is " + std::string(j.type_name()), detail::diagnostics_t<BasicJsonType>(j)));
     }
 
     bin = *j.template get_ptr<const typename BasicJsonType::binary_t*>();
@@ -3751,7 +3846,7 @@ void from_json(const BasicJsonType& j, ConstructibleObjectType& obj)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_object()))
     {
-        JSON_THROW(type_error::create(302, j.diagnostics() + "type must be object, but is " + std::string(j.type_name())));
+        JSON_THROW(type_error::create(302, "type must be object, but is " + std::string(j.type_name()), detail::diagnostics_t<BasicJsonType>(j)));
     }
 
     ConstructibleObjectType ret;
@@ -3805,7 +3900,7 @@ void from_json(const BasicJsonType& j, ArithmeticType& val)
         }
 
         default:
-            JSON_THROW(type_error::create(302, j.diagnostics() + "type must be number, but is " + std::string(j.type_name())));
+            JSON_THROW(type_error::create(302, "type must be number, but is " + std::string(j.type_name()), detail::diagnostics_t<BasicJsonType>(j)));
     }
 }
 
@@ -3834,14 +3929,14 @@ void from_json(const BasicJsonType& j, std::map<Key, Value, Compare, Allocator>&
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
-        JSON_THROW(type_error::create(302, j.diagnostics() + "type must be array, but is " + std::string(j.type_name())));
+        JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(j.type_name()), detail::diagnostics_t<BasicJsonType>(j)));
     }
     m.clear();
     for (const auto& p : j)
     {
         if (JSON_HEDLEY_UNLIKELY(!p.is_array()))
         {
-            JSON_THROW(type_error::create(302, j.diagnostics() + "type must be array, but is " + std::string(p.type_name())));
+            JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(p.type_name()), detail::diagnostics_t<BasicJsonType>(j)));
         }
         m.emplace(p.at(0).template get<Key>(), p.at(1).template get<Value>());
     }
@@ -3854,14 +3949,14 @@ void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Hash, KeyE
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
-        JSON_THROW(type_error::create(302, j.diagnostics() + "type must be array, but is " + std::string(j.type_name())));
+        JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(j.type_name()), detail::diagnostics_t<BasicJsonType>(j)));
     }
     m.clear();
     for (const auto& p : j)
     {
         if (JSON_HEDLEY_UNLIKELY(!p.is_array()))
         {
-            JSON_THROW(type_error::create(302, j.diagnostics() + "type must be array, but is " + std::string(p.type_name())));
+            JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(p.type_name()), detail::diagnostics_t<BasicJsonType>(j)));
         }
         m.emplace(p.at(0).template get<Key>(), p.at(1).template get<Value>());
     }
@@ -4666,6 +4761,8 @@ class byte_container_with_subtype : public BinaryType
 
 // #include <nlohmann/detail/exceptions.hpp>
 
+// #include <nlohmann/detail/diagnostics_t.hpp>
+
 // #include <nlohmann/detail/hash.hpp>
 
 
@@ -4804,6 +4901,8 @@ std::size_t hash(const BasicJsonType& j)
 #include <string> // char_traits, string
 #include <utility> // make_pair, move
 #include <vector> // vector
+
+// #include <nlohmann/detail/diagnostics_t.hpp>
 
 // #include <nlohmann/detail/exceptions.hpp>
 
@@ -5295,6 +5394,8 @@ class span_input_adapter
 #include <utility> // move
 #include <vector> // vector
 
+// #include <nlohmann/detail/diagnostics_t.hpp>
+
 // #include <nlohmann/detail/exceptions.hpp>
 
 // #include <nlohmann/detail/macro_scope.hpp>
@@ -5446,6 +5547,7 @@ class json_sax_dom_parser
     using number_float_t = typename BasicJsonType::number_float_t;
     using string_t = typename BasicJsonType::string_t;
     using binary_t = typename BasicJsonType::binary_t;
+    using diagnostics_t = detail::diagnostics_t<BasicJsonType>;
 
     /*!
     @param[in, out] r  reference to a JSON value that is manipulated while
@@ -5511,8 +5613,7 @@ class json_sax_dom_parser
 
         if (JSON_HEDLEY_UNLIKELY(len != std::size_t(-1) && len > ref_stack.back()->max_size()))
         {
-            JSON_THROW(out_of_range::create(408, ref_stack.back()->diagnostics() +
-                                            "excessive object size: " + std::to_string(len)));
+            JSON_THROW(out_of_range::create(408, "excessive object size: " + std::to_string(len), diagnostics_t(*ref_stack.back())));
         }
 
         return true;
@@ -5537,8 +5638,7 @@ class json_sax_dom_parser
 
         if (JSON_HEDLEY_UNLIKELY(len != std::size_t(-1) && len > ref_stack.back()->max_size()))
         {
-            JSON_THROW(out_of_range::create(408, ref_stack.back()->diagnostics() +
-                                            "excessive array size: " + std::to_string(len)));
+            JSON_THROW(out_of_range::create(408, "excessive array size: " + std::to_string(len), diagnostics_t(*ref_stack.back())));
         }
 
         return true;
@@ -5628,6 +5728,7 @@ class json_sax_dom_callback_parser
     using binary_t = typename BasicJsonType::binary_t;
     using parser_callback_t = typename BasicJsonType::parser_callback_t;
     using parse_event_t = typename BasicJsonType::parse_event_t;
+    using diagnostics_t = detail::diagnostics_t<BasicJsonType>;
 
     json_sax_dom_callback_parser(BasicJsonType& r,
                                  const parser_callback_t cb,
@@ -5698,7 +5799,7 @@ class json_sax_dom_callback_parser
         // check object limit
         if (ref_stack.back() && JSON_HEDLEY_UNLIKELY(len != std::size_t(-1) && len > ref_stack.back()->max_size()))
         {
-            JSON_THROW(out_of_range::create(408, ref_stack.back()->diagnostics() + "excessive object size: " + std::to_string(len)));
+            JSON_THROW(out_of_range::create(408, "excessive object size: " + std::to_string(len), diagnostics_t(*ref_stack.back())));
         }
 
         return true;
@@ -5761,7 +5862,7 @@ class json_sax_dom_callback_parser
         // check array limit
         if (ref_stack.back() && JSON_HEDLEY_UNLIKELY(len != std::size_t(-1) && len > ref_stack.back()->max_size()))
         {
-            JSON_THROW(out_of_range::create(408, ref_stack.back()->diagnostics() + "excessive array size: " + std::to_string(len)));
+            JSON_THROW(out_of_range::create(408, "excessive array size: " + std::to_string(len), diagnostics_t(*ref_stack.back())));
         }
 
         return true;
@@ -7827,6 +7928,7 @@ class binary_reader
     using json_sax_t = SAX;
     using char_type = typename InputAdapterType::char_type;
     using char_int_type = typename std::char_traits<char_type>::int_type;
+    using diagnostics_t = detail::diagnostics_t<BasicJsonType>;
 
   public:
     /*!
@@ -7900,7 +8002,7 @@ class binary_reader
             if (JSON_HEDLEY_UNLIKELY(current != std::char_traits<char_type>::eof()))
             {
                 return sax->parse_error(chars_read, get_token_string(),
-                                        parse_error::create(110, chars_read, exception_message(format, "expected end of input; last byte: 0x" + get_token_string(), "value")));
+                                        parse_error::create(110, chars_read, exception_message(format, "expected end of input; last byte: 0x" + get_token_string(), "value"), diagnostics_t()));
             }
         }
 
@@ -7976,7 +8078,7 @@ class binary_reader
         if (JSON_HEDLEY_UNLIKELY(len < 1))
         {
             auto last_token = get_token_string();
-            return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message(input_format_t::bson, "string length must be at least 1, is " + std::to_string(len), "string")));
+            return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message(input_format_t::bson, "string length must be at least 1, is " + std::to_string(len), "string"), diagnostics_t()));
         }
 
         return get_string(input_format_t::bson, len - static_cast<NumberType>(1), result) && get() != std::char_traits<char_type>::eof();
@@ -7997,7 +8099,7 @@ class binary_reader
         if (JSON_HEDLEY_UNLIKELY(len < 0))
         {
             auto last_token = get_token_string();
-            return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message(input_format_t::bson, "byte array length cannot be negative, is " + std::to_string(len), "binary")));
+            return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message(input_format_t::bson, "byte array length cannot be negative, is " + std::to_string(len), "binary"), diagnostics_t()));
         }
 
         // All BSON binary values have a subtype
@@ -8079,7 +8181,7 @@ class binary_reader
             {
                 std::array<char, 3> cr{{}};
                 (std::snprintf)(cr.data(), cr.size(), "%.2hhX", static_cast<unsigned char>(element_type));
-                return sax->parse_error(element_type_parse_position, std::string(cr.data()), parse_error::create(114, element_type_parse_position, "Unsupported BSON record type 0x" + std::string(cr.data())));
+                return sax->parse_error(element_type_parse_position, std::string(cr.data()), parse_error::create(114, element_type_parse_position, "Unsupported BSON record type 0x" + std::string(cr.data()), diagnostics_t()));
             }
         }
     }
@@ -8479,7 +8581,7 @@ class binary_reader
                     case cbor_tag_handler_t::error:
                     {
                         auto last_token = get_token_string();
-                        return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message(input_format_t::cbor, "invalid byte: 0x" + last_token, "value")));
+                        return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message(input_format_t::cbor, "invalid byte: 0x" + last_token, "value"), diagnostics_t()));
                     }
 
                     case cbor_tag_handler_t::ignore:
@@ -8594,7 +8696,7 @@ class binary_reader
             default: // anything else (0xFF is handled inside the other types)
             {
                 auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message(input_format_t::cbor, "invalid byte: 0x" + last_token, "value")));
+                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message(input_format_t::cbor, "invalid byte: 0x" + last_token, "value"), diagnostics_t()));
             }
         }
     }
@@ -8689,7 +8791,7 @@ class binary_reader
             default:
             {
                 auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format_t::cbor, "expected length specification (0x60-0x7B) or indefinite string type (0x7F); last byte: 0x" + last_token, "string")));
+                return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format_t::cbor, "expected length specification (0x60-0x7B) or indefinite string type (0x7F); last byte: 0x" + last_token, "string"), diagnostics_t()));
             }
         }
     }
@@ -8788,7 +8890,7 @@ class binary_reader
             default:
             {
                 auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format_t::cbor, "expected length specification (0x40-0x5B) or indefinite binary array type (0x5F); last byte: 0x" + last_token, "binary")));
+                return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format_t::cbor, "expected length specification (0x40-0x5B) or indefinite binary array type (0x5F); last byte: 0x" + last_token, "binary"), diagnostics_t()));
             }
         }
     }
@@ -9255,7 +9357,7 @@ class binary_reader
             default: // anything else
             {
                 auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message(input_format_t::msgpack, "invalid byte: 0x" + last_token, "value")));
+                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message(input_format_t::msgpack, "invalid byte: 0x" + last_token, "value"), diagnostics_t()));
             }
         }
     }
@@ -9337,7 +9439,7 @@ class binary_reader
             default:
             {
                 auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format_t::msgpack, "expected length specification (0xA0-0xBF, 0xD9-0xDB); last byte: 0x" + last_token, "string")));
+                return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format_t::msgpack, "expected length specification (0xA0-0xBF, 0xD9-0xDB); last byte: 0x" + last_token, "string"), diagnostics_t()));
             }
         }
     }
@@ -9587,7 +9689,7 @@ class binary_reader
 
             default:
                 auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format_t::ubjson, "expected length type specification (U, i, I, l, L); last byte: 0x" + last_token, "string")));
+                return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format_t::ubjson, "expected length type specification (U, i, I, l, L); last byte: 0x" + last_token, "string"), diagnostics_t()));
         }
     }
 
@@ -9657,7 +9759,7 @@ class binary_reader
             default:
             {
                 auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format_t::ubjson, "expected length type specification (U, i, I, l, L) after '#'; last byte: 0x" + last_token, "size")));
+                return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format_t::ubjson, "expected length type specification (U, i, I, l, L) after '#'; last byte: 0x" + last_token, "size"), diagnostics_t()));
             }
         }
     }
@@ -9695,7 +9797,7 @@ class binary_reader
                     return false;
                 }
                 auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message(input_format_t::ubjson, "expected '#' after type information; last byte: 0x" + last_token, "size")));
+                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message(input_format_t::ubjson, "expected '#' after type information; last byte: 0x" + last_token, "size"), diagnostics_t()));
             }
 
             return get_ubjson_size_value(result.first);
@@ -9785,7 +9887,7 @@ class binary_reader
                 if (JSON_HEDLEY_UNLIKELY(current > 127))
                 {
                     auto last_token = get_token_string();
-                    return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format_t::ubjson, "byte after 'C' must be in range 0x00..0x7F; last byte: 0x" + last_token, "char")));
+                    return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format_t::ubjson, "byte after 'C' must be in range 0x00..0x7F; last byte: 0x" + last_token, "char"), diagnostics_t()));
                 }
                 string_t s(1, static_cast<typename string_t::value_type>(current));
                 return sax->string(s);
@@ -9806,7 +9908,7 @@ class binary_reader
             default: // anything else
             {
                 auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message(input_format_t::ubjson, "invalid byte: 0x" + last_token, "value")));
+                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message(input_format_t::ubjson, "invalid byte: 0x" + last_token, "value"), diagnostics_t()));
             }
         }
     }
@@ -9984,7 +10086,7 @@ class binary_reader
 
         if (JSON_HEDLEY_UNLIKELY(result_remainder != token_type::end_of_input))
         {
-            return sax->parse_error(chars_read, number_string, parse_error::create(115, chars_read, exception_message(input_format_t::ubjson, "invalid number text: " + number_lexer.get_token_string(), "high-precision number")));
+            return sax->parse_error(chars_read, number_string, parse_error::create(115, chars_read, exception_message(input_format_t::ubjson, "invalid number text: " + number_lexer.get_token_string(), "high-precision number"), diagnostics_t()));
         }
 
         switch (result_number)
@@ -9996,7 +10098,7 @@ class binary_reader
             case token_type::value_float:
                 return sax->number_float(number_lexer.get_number_float(), std::move(number_string));
             default:
-                return sax->parse_error(chars_read, number_string, parse_error::create(115, chars_read, exception_message(input_format_t::ubjson, "invalid number text: " + number_lexer.get_token_string(), "high-precision number")));
+                return sax->parse_error(chars_read, number_string, parse_error::create(115, chars_read, exception_message(input_format_t::ubjson, "invalid number text: " + number_lexer.get_token_string(), "high-precision number"), diagnostics_t()));
         }
     }
 
@@ -10152,7 +10254,7 @@ class binary_reader
         if (JSON_HEDLEY_UNLIKELY(current == std::char_traits<char_type>::eof()))
         {
             return sax->parse_error(chars_read, "<end of file>",
-                                    parse_error::create(110, chars_read, exception_message(format, "unexpected end of input", context)));
+                                    parse_error::create(110, chars_read, exception_message(format, "unexpected end of input", context), diagnostics_t()));
         }
         return true;
     }
@@ -10239,6 +10341,8 @@ class binary_reader
 
 // #include <nlohmann/detail/exceptions.hpp>
 
+// #include <nlohmann/detail/diagnostics_t.hpp>
+
 // #include <nlohmann/detail/input/input_adapters.hpp>
 
 // #include <nlohmann/detail/input/json_sax.hpp>
@@ -10294,6 +10398,7 @@ class parser
     using string_t = typename BasicJsonType::string_t;
     using lexer_t = lexer<BasicJsonType, InputAdapterType>;
     using token_type = typename lexer_t::token_type;
+    using diagnostics_t = detail::diagnostics_t<BasicJsonType>;
 
   public:
     /// a parser reading from an input adapter
@@ -10333,7 +10438,7 @@ class parser
                 sdp.parse_error(m_lexer.get_position(),
                                 m_lexer.get_token_string(),
                                 parse_error::create(101, m_lexer.get_position(),
-                                                    exception_message(token_type::end_of_input, "value")));
+                                                    exception_message(token_type::end_of_input, "value"), diagnostics_t()));
             }
 
             // in case of an error, return discarded value
@@ -10362,7 +10467,7 @@ class parser
                 sdp.parse_error(m_lexer.get_position(),
                                 m_lexer.get_token_string(),
                                 parse_error::create(101, m_lexer.get_position(),
-                                                    exception_message(token_type::end_of_input, "value")));
+                                                    exception_message(token_type::end_of_input, "value"), diagnostics_t()));
             }
 
             // in case of an error, return discarded value
@@ -10399,7 +10504,7 @@ class parser
             return sax->parse_error(m_lexer.get_position(),
                                     m_lexer.get_token_string(),
                                     parse_error::create(101, m_lexer.get_position(),
-                                            exception_message(token_type::end_of_input, "value")));
+                                            exception_message(token_type::end_of_input, "value"), diagnostics_t()));
         }
 
         return result;
@@ -10446,7 +10551,7 @@ class parser
                             return sax->parse_error(m_lexer.get_position(),
                                                     m_lexer.get_token_string(),
                                                     parse_error::create(101, m_lexer.get_position(),
-                                                            exception_message(token_type::value_string, "object key")));
+                                                            exception_message(token_type::value_string, "object key"), diagnostics_t()));
                         }
                         if (JSON_HEDLEY_UNLIKELY(!sax->key(m_lexer.get_string())))
                         {
@@ -10459,7 +10564,7 @@ class parser
                             return sax->parse_error(m_lexer.get_position(),
                                                     m_lexer.get_token_string(),
                                                     parse_error::create(101, m_lexer.get_position(),
-                                                            exception_message(token_type::name_separator, "object separator")));
+                                                            exception_message(token_type::name_separator, "object separator"), diagnostics_t()));
                         }
 
                         // remember we are now inside an object
@@ -10502,7 +10607,7 @@ class parser
                         {
                             return sax->parse_error(m_lexer.get_position(),
                                                     m_lexer.get_token_string(),
-                                                    out_of_range::create(406, "number overflow parsing '" + m_lexer.get_token_string() + "'"));
+                                                    out_of_range::create(406, "number overflow parsing '" + m_lexer.get_token_string() + "'", diagnostics_t()));
                         }
 
                         if (JSON_HEDLEY_UNLIKELY(!sax->number_float(res, m_lexer.get_string())))
@@ -10573,7 +10678,7 @@ class parser
                         return sax->parse_error(m_lexer.get_position(),
                                                 m_lexer.get_token_string(),
                                                 parse_error::create(101, m_lexer.get_position(),
-                                                        exception_message(token_type::uninitialized, "value")));
+                                                        exception_message(token_type::uninitialized, "value"), diagnostics_t()));
                     }
 
                     default: // the last token was unexpected
@@ -10581,7 +10686,7 @@ class parser
                         return sax->parse_error(m_lexer.get_position(),
                                                 m_lexer.get_token_string(),
                                                 parse_error::create(101, m_lexer.get_position(),
-                                                        exception_message(token_type::literal_or_value, "value")));
+                                                        exception_message(token_type::literal_or_value, "value"), diagnostics_t()));
                     }
                 }
             }
@@ -10628,7 +10733,7 @@ class parser
                 return sax->parse_error(m_lexer.get_position(),
                                         m_lexer.get_token_string(),
                                         parse_error::create(101, m_lexer.get_position(),
-                                                exception_message(token_type::end_array, "array")));
+                                                exception_message(token_type::end_array, "array"), diagnostics_t()));
             }
             else  // object
             {
@@ -10641,7 +10746,7 @@ class parser
                         return sax->parse_error(m_lexer.get_position(),
                                                 m_lexer.get_token_string(),
                                                 parse_error::create(101, m_lexer.get_position(),
-                                                        exception_message(token_type::value_string, "object key")));
+                                                        exception_message(token_type::value_string, "object key"), diagnostics_t()));
                     }
 
                     if (JSON_HEDLEY_UNLIKELY(!sax->key(m_lexer.get_string())))
@@ -10655,7 +10760,7 @@ class parser
                         return sax->parse_error(m_lexer.get_position(),
                                                 m_lexer.get_token_string(),
                                                 parse_error::create(101, m_lexer.get_position(),
-                                                        exception_message(token_type::name_separator, "object separator")));
+                                                        exception_message(token_type::name_separator, "object separator"), diagnostics_t()));
                     }
 
                     // parse values
@@ -10684,7 +10789,7 @@ class parser
                 return sax->parse_error(m_lexer.get_position(),
                                         m_lexer.get_token_string(),
                                         parse_error::create(101, m_lexer.get_position(),
-                                                exception_message(token_type::end_object, "object")));
+                                                exception_message(token_type::end_object, "object"), diagnostics_t()));
             }
         }
     }
@@ -10895,6 +11000,8 @@ template<typename BasicJsonType> struct internal_iterator
 #include <iterator> // iterator, random_access_iterator_tag, bidirectional_iterator_tag, advance, next
 #include <type_traits> // conditional, is_const, remove_const
 
+// #include <nlohmann/detail/diagnostics_t.hpp>
+
 // #include <nlohmann/detail/exceptions.hpp>
 
 // #include <nlohmann/detail/iterators/internal_iterator.hpp>
@@ -10950,6 +11057,7 @@ class iter_impl
     // make sure BasicJsonType is basic_json or const basic_json
     static_assert(is_basic_json<typename std::remove_const<BasicJsonType>::type>::value,
                   "iter_impl only accepts (const) basic_json");
+    using diagnostics_t = detail::diagnostics_t<BasicJsonType>;
 
   public:
 
@@ -11156,7 +11264,7 @@ class iter_impl
             }
 
             case value_t::null:
-                JSON_THROW(invalid_iterator::create(214, m_object->diagnostics() + "cannot get value"));
+                JSON_THROW(invalid_iterator::create(214, "cannot get value", diagnostics_t(*m_object)));
 
             default:
             {
@@ -11165,7 +11273,7 @@ class iter_impl
                     return *m_object;
                 }
 
-                JSON_THROW(invalid_iterator::create(214, m_object->diagnostics() + "cannot get value"));
+                JSON_THROW(invalid_iterator::create(214, "cannot get value", diagnostics_t(*m_object)));
             }
         }
     }
@@ -11199,7 +11307,7 @@ class iter_impl
                     return m_object;
                 }
 
-                JSON_THROW(invalid_iterator::create(214, m_object->diagnostics() + "cannot get value"));
+                JSON_THROW(invalid_iterator::create(214, "cannot get value", diagnostics_t(*m_object)));
             }
         }
     }
@@ -11300,7 +11408,7 @@ class iter_impl
         // if objects are not the same, the comparison is undefined
         if (JSON_HEDLEY_UNLIKELY(m_object != other.m_object))
         {
-            JSON_THROW(invalid_iterator::create(212, m_object->diagnostics() + "cannot compare iterators of different containers"));
+            JSON_THROW(invalid_iterator::create(212, "cannot compare iterators of different containers", diagnostics_t(*m_object)));
         }
 
         JSON_ASSERT(m_object != nullptr);
@@ -11337,7 +11445,7 @@ class iter_impl
         // if objects are not the same, the comparison is undefined
         if (JSON_HEDLEY_UNLIKELY(m_object != other.m_object))
         {
-            JSON_THROW(invalid_iterator::create(212, m_object->diagnostics() + "cannot compare iterators of different containers"));
+            JSON_THROW(invalid_iterator::create(212, "cannot compare iterators of different containers", diagnostics_t(*m_object)));
         }
 
         JSON_ASSERT(m_object != nullptr);
@@ -11345,7 +11453,7 @@ class iter_impl
         switch (m_object->m_type)
         {
             case value_t::object:
-                JSON_THROW(invalid_iterator::create(213, m_object->diagnostics() + "cannot compare order of object iterators"));
+                JSON_THROW(invalid_iterator::create(213, "cannot compare order of object iterators", diagnostics_t(*m_object)));
 
             case value_t::array:
                 return (m_it.array_iterator < other.m_it.array_iterator);
@@ -11393,7 +11501,7 @@ class iter_impl
         switch (m_object->m_type)
         {
             case value_t::object:
-                JSON_THROW(invalid_iterator::create(209, m_object->diagnostics() + "cannot use offsets with object iterators"));
+                JSON_THROW(invalid_iterator::create(209, "cannot use offsets with object iterators", diagnostics_t(*m_object)));
 
             case value_t::array:
             {
@@ -11464,7 +11572,7 @@ class iter_impl
         switch (m_object->m_type)
         {
             case value_t::object:
-                JSON_THROW(invalid_iterator::create(209, m_object->diagnostics() + "cannot use offsets with object iterators"));
+                JSON_THROW(invalid_iterator::create(209, "cannot use offsets with object iterators", diagnostics_t(*m_object)));
 
             case value_t::array:
                 return m_it.array_iterator - other.m_it.array_iterator;
@@ -11485,13 +11593,13 @@ class iter_impl
         switch (m_object->m_type)
         {
             case value_t::object:
-                JSON_THROW(invalid_iterator::create(208, m_object->diagnostics() + "cannot use operator[] for object iterators"));
+                JSON_THROW(invalid_iterator::create(208, "cannot use operator[] for object iterators", diagnostics_t(*m_object)));
 
             case value_t::array:
                 return *std::next(m_it.array_iterator, n);
 
             case value_t::null:
-                JSON_THROW(invalid_iterator::create(214, m_object->diagnostics() + "cannot get value"));
+                JSON_THROW(invalid_iterator::create(214, "cannot get value", diagnostics_t(*m_object)));
 
             default:
             {
@@ -11500,7 +11608,7 @@ class iter_impl
                     return *m_object;
                 }
 
-                JSON_THROW(invalid_iterator::create(214, m_object->diagnostics() + "cannot get value"));
+                JSON_THROW(invalid_iterator::create(214, "cannot get value", diagnostics_t(*m_object)));
             }
         }
     }
@@ -11518,7 +11626,7 @@ class iter_impl
             return m_it.object_iterator->first;
         }
 
-        JSON_THROW(invalid_iterator::create(207, m_object->diagnostics() + "cannot use key() for non-object iterators"));
+        JSON_THROW(invalid_iterator::create(207, "cannot use key() for non-object iterators", diagnostics_t(*m_object)));
     }
 
     /*!
@@ -11675,6 +11783,8 @@ class json_reverse_iterator : public std::reverse_iterator<Base>
 #include <utility> // move
 #include <vector> // vector
 
+// #include <nlohmann/detail/diagnostics_t.hpp>
+
 // #include <nlohmann/detail/exceptions.hpp>
 
 // #include <nlohmann/detail/macro_scope.hpp>
@@ -11690,6 +11800,8 @@ class json_pointer
     // allow basic_json to access private members
     NLOHMANN_BASIC_JSON_TPL_DECLARATION
     friend class basic_json;
+
+    using diagnostics_t = detail::diagnostics_t<BasicJsonType>;
 
   public:
     /*!
@@ -11917,7 +12029,7 @@ class json_pointer
     {
         if (JSON_HEDLEY_UNLIKELY(empty()))
         {
-            JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent"));
+            JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent", diagnostics_t()));
         }
 
         reference_tokens.pop_back();
@@ -11941,7 +12053,7 @@ class json_pointer
     {
         if (JSON_HEDLEY_UNLIKELY(empty()))
         {
-            JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent"));
+            JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent", diagnostics_t()));
         }
 
         return reference_tokens.back();
@@ -12007,15 +12119,13 @@ class json_pointer
         // error condition (cf. RFC 6901, Sect. 4)
         if (JSON_HEDLEY_UNLIKELY(s.size() > 1 && s[0] == '0'))
         {
-            JSON_THROW(detail::parse_error::create(106, 0,
-                                                   "array index '" + s +
-                                                   "' must not begin with '0'"));
+            JSON_THROW(detail::parse_error::create(106, 0, "array index '" + s + "' must not begin with '0'", diagnostics_t()));
         }
 
         // error condition (cf. RFC 6901, Sect. 4)
         if (JSON_HEDLEY_UNLIKELY(s.size() > 1 && !(s[0] >= '1' && s[0] <= '9')))
         {
-            JSON_THROW(detail::parse_error::create(109, 0, "array index '" + s + "' is not a number"));
+            JSON_THROW(detail::parse_error::create(109, 0, "array index '" + s + "' is not a number", diagnostics_t()));
         }
 
         std::size_t processed_chars = 0;
@@ -12026,20 +12136,20 @@ class json_pointer
         }
         JSON_CATCH(std::out_of_range&)
         {
-            JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + s + "'"));
+            JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + s + "'", diagnostics_t()));
         }
 
         // check if the string was completely read
         if (JSON_HEDLEY_UNLIKELY(processed_chars != s.size()))
         {
-            JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + s + "'"));
+            JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + s + "'", diagnostics_t()));
         }
 
         // only triggered on special platforms (like 32bit), see also
         // https://github.com/nlohmann/json/pull/2203
         if (res >= static_cast<unsigned long long>((std::numeric_limits<size_type>::max)()))
         {
-            JSON_THROW(detail::out_of_range::create(410, "array index " + s + " exceeds size_type")); // LCOV_EXCL_LINE
+            JSON_THROW(detail::out_of_range::create(410, "array index " + s + " exceeds size_type", diagnostics_t())); // LCOV_EXCL_LINE
         }
 
         return static_cast<size_type>(res);
@@ -12050,7 +12160,7 @@ class json_pointer
     {
         if (JSON_HEDLEY_UNLIKELY(empty()))
         {
-            JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent"));
+            JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent", diagnostics_t()));
         }
 
         json_pointer result = *this;
@@ -12113,7 +12223,7 @@ class json_pointer
                 single value; that is, with an empty list of reference tokens.
                 */
                 default:
-                    JSON_THROW(detail::type_error::create(313, "invalid value to unflatten"));
+                    JSON_THROW(detail::type_error::create(313, "invalid value to unflatten", diagnostics_t(j)));
             }
         }
 
@@ -12185,7 +12295,7 @@ class json_pointer
                 }
 
                 default:
-                    JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + reference_token + "'"));
+                    JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + reference_token + "'", diagnostics_t(*ptr)));
             }
         }
 
@@ -12218,7 +12328,7 @@ class json_pointer
                         // "-" always fails the range check
                         JSON_THROW(detail::out_of_range::create(402,
                                                                 "array index '-' (" + std::to_string(ptr->m_value.array->size()) +
-                                                                ") is out of range"));
+                                                                ") is out of range", diagnostics_t(*ptr)));
                     }
 
                     // note: at performs range check
@@ -12227,7 +12337,7 @@ class json_pointer
                 }
 
                 default:
-                    JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + reference_token + "'"));
+                    JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + reference_token + "'", diagnostics_t(*ptr)));
             }
         }
 
@@ -12265,9 +12375,7 @@ class json_pointer
                     if (JSON_HEDLEY_UNLIKELY(reference_token == "-"))
                     {
                         // "-" cannot be used for const access
-                        JSON_THROW(detail::out_of_range::create(402,
-                                                                "array index '-' (" + std::to_string(ptr->m_value.array->size()) +
-                                                                ") is out of range"));
+                        JSON_THROW(detail::out_of_range::create(402, "array index '-' (" + std::to_string(ptr->m_value.array->size()) + ") is out of range", diagnostics_t(*ptr)));
                     }
 
                     // use unchecked array access
@@ -12276,7 +12384,7 @@ class json_pointer
                 }
 
                 default:
-                    JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + reference_token + "'"));
+                    JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + reference_token + "'", diagnostics_t(*ptr)));
             }
         }
 
@@ -12309,7 +12417,7 @@ class json_pointer
                         // "-" always fails the range check
                         JSON_THROW(detail::out_of_range::create(402,
                                                                 "array index '-' (" + std::to_string(ptr->m_value.array->size()) +
-                                                                ") is out of range"));
+                                                                ") is out of range", diagnostics_t(*ptr)));
                     }
 
                     // note: at performs range check
@@ -12318,7 +12426,7 @@ class json_pointer
                 }
 
                 default:
-                    JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + reference_token + "'"));
+                    JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + reference_token + "'", diagnostics_t(*ptr)));
             }
         }
 
@@ -12422,9 +12530,7 @@ class json_pointer
         // check if nonempty reference string begins with slash
         if (JSON_HEDLEY_UNLIKELY(reference_string[0] != '/'))
         {
-            JSON_THROW(detail::parse_error::create(107, 1,
-                                                   "JSON pointer must be empty or begin with '/' - was: '" +
-                                                   reference_string + "'"));
+            JSON_THROW(detail::parse_error::create(107, 1, "JSON pointer must be empty or begin with '/' - was: '" + reference_string + "'", diagnostics_t()));
         }
 
         // extract the reference tokens:
@@ -12459,7 +12565,7 @@ class json_pointer
                                          (reference_token[pos + 1] != '0' &&
                                           reference_token[pos + 1] != '1')))
                 {
-                    JSON_THROW(detail::parse_error::create(108, 0, "escape character '~' must be followed with '0' or '1'"));
+                    JSON_THROW(detail::parse_error::create(108, 0, "escape character '~' must be followed with '0' or '1'", diagnostics_t()));
                 }
             }
 
@@ -12586,7 +12692,7 @@ class json_pointer
     {
         if (JSON_HEDLEY_UNLIKELY(!value.is_object()))
         {
-            JSON_THROW(detail::type_error::create(314, "only objects can be unflattened"));
+            JSON_THROW(detail::type_error::create(314, "only objects can be unflattened", diagnostics_t(value)));
         }
 
         BasicJsonType result;
@@ -12596,7 +12702,7 @@ class json_pointer
         {
             if (JSON_HEDLEY_UNLIKELY(!element.second.is_primitive()))
             {
-                JSON_THROW(detail::type_error::create(315, "values in object must be primitive"));
+                JSON_THROW(detail::type_error::create(315, "values in object must be primitive", diagnostics_t(element)));
             }
 
             // assign value to reference pointed to by JSON pointer; Note that if
@@ -12735,6 +12841,8 @@ class json_ref
 #include <limits> // numeric_limits
 #include <string> // string
 #include <cmath> // isnan, isinf
+
+// #include <nlohmann/detail/diagnostics_t.hpp>
 
 // #include <nlohmann/detail/input/binary_reader.hpp>
 
@@ -12912,7 +13020,7 @@ class binary_writer
 
             default:
             {
-                JSON_THROW(type_error::create(317, j.diagnostics() + "to serialize to BSON, top-level type must be object, but is " + std::string(j.type_name())));
+                JSON_THROW(type_error::create(317, "to serialize to BSON, top-level type must be object, but is " + std::string(j.type_name()), detail::diagnostics_t<BasicJsonType>(j)));;
             }
         }
     }
@@ -13761,8 +13869,7 @@ class binary_writer
         const auto it = name.find(static_cast<typename string_t::value_type>(0));
         if (JSON_HEDLEY_UNLIKELY(it != BasicJsonType::string_t::npos))
         {
-            JSON_THROW(out_of_range::create(409, j.diagnostics() +
-                                            "BSON key cannot contain code point U+0000 (at byte " + std::to_string(it) + ")"));
+            JSON_THROW(out_of_range::create(409, "BSON key cannot contain code point U+0000 (at byte " + std::to_string(it) + ")", detail::diagnostics_t<BasicJsonType>(j)));
         }
 
         return /*id*/ 1ul + name.size() + /*zero-terminator*/1u;
@@ -13886,7 +13993,7 @@ class binary_writer
         }
         else
         {
-            JSON_THROW(out_of_range::create(407, j.diagnostics() + "integer number " + std::to_string(j.m_value.number_unsigned) + " cannot be represented by BSON as it does not fit int64"));
+            JSON_THROW(out_of_range::create(407, "integer number " + std::to_string(j.m_value.number_unsigned) + " cannot be represented by BSON as it does not fit int64", detail::diagnostics_t<BasicJsonType>(j)));
         }
     }
 
@@ -15574,6 +15681,8 @@ char* to_chars(char* first, const char* last, FloatType value)
 } // namespace detail
 } // namespace nlohmann
 
+// #include <nlohmann/detail/diagnostics_t.hpp>
+
 // #include <nlohmann/detail/exceptions.hpp>
 
 // #include <nlohmann/detail/macro_scope.hpp>
@@ -16066,7 +16175,7 @@ class serializer
                         {
                             std::string sn(3, '\0');
                             (std::snprintf)(&sn[0], sn.size(), "%.2X", byte);
-                            JSON_THROW(type_error::create(316, "invalid UTF-8 byte at index " + std::to_string(i) + ": 0x" + sn));
+                            JSON_THROW(type_error::create(316, "invalid UTF-8 byte at index " + std::to_string(i) + ": 0x" + sn, detail::diagnostics_t<BasicJsonType>()));
                         }
 
                         case error_handler_t::ignore:
@@ -16160,7 +16269,7 @@ class serializer
                 {
                     std::string sn(3, '\0');
                     (std::snprintf)(&sn[0], sn.size(), "%.2X", static_cast<std::uint8_t>(s.back()));
-                    JSON_THROW(type_error::create(316, "incomplete UTF-8 string; last byte: 0x" + sn));
+                    JSON_THROW(type_error::create(316, "incomplete UTF-8 string; last byte: 0x" + sn, detail::diagnostics_t<BasicJsonType>()));
                 }
 
                 case error_handler_t::ignore:
@@ -16825,9 +16934,14 @@ class basic_json
     friend class ::nlohmann::detail::json_sax_dom_parser;
     template<typename BasicJsonType>
     friend class ::nlohmann::detail::json_sax_dom_callback_parser;
+    template<typename BasicJsonType>
+    friend class ::nlohmann::detail::diagnostics_t;
 
     /// workaround type for MSVC
     using basic_json_t = NLOHMANN_BASIC_JSON_TPL;
+
+    /// shortcut
+    using diagnostics_t = ::nlohmann::detail::diagnostics_t<basic_json>;
 
   JSON_PRIVATE_UNLESS_TESTED:
     // convenience aliases for types residing in namespace detail;
@@ -17696,7 +17810,7 @@ class basic_json
                     object = nullptr;  // silence warning, see #821
                     if (JSON_HEDLEY_UNLIKELY(t == value_t::null))
                     {
-                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.9.1")); // LCOV_EXCL_LINE
+                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.9.1", diagnostics_t())); // LCOV_EXCL_LINE
                     }
                     break;
                 }
@@ -18265,7 +18379,7 @@ class basic_json
             // if object is wanted but impossible, throw an exception
             if (JSON_HEDLEY_UNLIKELY(manual_type == value_t::object && !is_an_object))
             {
-                JSON_THROW(type_error::create(301, "cannot create object from initializer list"));
+                JSON_THROW(type_error::create(301, "cannot create object from initializer list", diagnostics_t()));
             }
         }
 
@@ -18586,7 +18700,7 @@ class basic_json
         // make sure iterator fits the current value
         if (JSON_HEDLEY_UNLIKELY(first.m_object != last.m_object))
         {
-            JSON_THROW(invalid_iterator::create(201, diagnostics() + "iterators are not compatible"));
+            JSON_THROW(invalid_iterator::create(201, "iterators are not compatible", diagnostics_t()));
         }
 
         // copy type from first iterator
@@ -18604,7 +18718,7 @@ class basic_json
                 if (JSON_HEDLEY_UNLIKELY(!first.m_it.primitive_iterator.is_begin()
                                          || !last.m_it.primitive_iterator.is_end()))
                 {
-                    JSON_THROW(invalid_iterator::create(204, "iterators out of range"));
+                    JSON_THROW(invalid_iterator::create(204, "iterators out of range", diagnostics_t()));
                 }
                 break;
             }
@@ -18678,8 +18792,7 @@ class basic_json
             }
 
             default:
-                JSON_THROW(invalid_iterator::create(206, "cannot construct with iterators from " +
-                                                    std::string(first.m_object->type_name())));
+                JSON_THROW(invalid_iterator::create(206, "cannot construct with iterators from " + std::string(first.m_object->type_name()), diagnostics_t()));
         }
 
         assert_invariant();
@@ -19399,60 +19512,6 @@ class basic_json
 
     /// @}
 
-    std::string diagnostics() const
-    {
-#if JSON_DIAGNOSTICS
-        std::vector<std::string> tokens;
-        for (const basic_json* current = this; current->m_parent != nullptr; current = current->m_parent)
-        {
-            switch (current->m_parent->type())
-            {
-                case value_t::array:
-                {
-                    for (std::size_t i = 0; i < current->m_parent->m_value.array->size(); ++i)
-                    {
-                        if (current->m_parent->m_value.array->operator[](i) == *current)
-                        {
-                            tokens.emplace_back(std::to_string(i));
-                            continue;
-                        }
-                    }
-                    break;
-                }
-
-                case value_t::object:
-                {
-                    for (const auto& element : *current->m_parent->m_value.object)
-                    {
-                        if (element.second == *current)
-                        {
-                            tokens.emplace_back(element.first.c_str());
-                            continue;
-                        }
-                    }
-                    break;
-                }
-
-                default:
-                    break;
-            }
-        }
-
-        if (tokens.empty())
-        {
-            return "";
-        }
-
-        return "(" + std::accumulate(tokens.rbegin(), tokens.rend(), std::string{},
-                                     [](const std::string & a, const std::string & b)
-        {
-            return a + "/" + b;
-        }) + ") ";
-#else
-        return "";
-#endif
-    }
-
   private:
     //////////////////
     // value access //
@@ -19466,7 +19525,7 @@ class basic_json
             return m_value.boolean;
         }
 
-        JSON_THROW(type_error::create(302, diagnostics() + "type must be boolean, but is " + std::string(type_name())));
+        JSON_THROW(type_error::create(302, "type must be boolean, but is " + std::string(type_name()), diagnostics_t(*this)));
     }
 
     /// get a pointer to the value (object)
@@ -19587,7 +19646,7 @@ class basic_json
             return *ptr;
         }
 
-        JSON_THROW(type_error::create(303, obj.diagnostics() + "incompatible ReferenceType for get_ref, actual type is " + std::string(obj.type_name())));
+        JSON_THROW(type_error::create(303, "incompatible ReferenceType for get_ref, actual type is " + std::string(obj.type_name()), diagnostics_t(obj)));
     }
 
   public:
@@ -20015,7 +20074,7 @@ class basic_json
     {
         if (!is_binary())
         {
-            JSON_THROW(type_error::create(302, diagnostics() + "type must be binary, but is " + std::string(type_name())));
+            JSON_THROW(type_error::create(302, "type must be binary, but is " + std::string(type_name()), diagnostics_t(*this)));
         }
 
         return *get_ptr<binary_t*>();
@@ -20026,7 +20085,7 @@ class basic_json
     {
         if (!is_binary())
         {
-            JSON_THROW(type_error::create(302, diagnostics() + "type must be binary, but is " + std::string(type_name())));
+            JSON_THROW(type_error::create(302, "type must be binary, but is " + std::string(type_name()), diagnostics_t(*this)));
         }
 
         return *get_ptr<const binary_t*>();
@@ -20087,12 +20146,12 @@ class basic_json
             JSON_CATCH (std::out_of_range&)
             {
                 // create better exception explanation
-                JSON_THROW(out_of_range::create(401, diagnostics() + "array index " + std::to_string(idx) + " is out of range"));
+                JSON_THROW(out_of_range::create(401, "array index " + std::to_string(idx) + " is out of range", diagnostics_t(*this)));
             }
         }
         else
         {
-            JSON_THROW(type_error::create(304, diagnostics() + "cannot use at() with " + std::string(type_name())));
+            JSON_THROW(type_error::create(304, "cannot use at() with " + std::string(type_name()), diagnostics_t(*this)));
         }
     }
 
@@ -20134,12 +20193,12 @@ class basic_json
             JSON_CATCH (std::out_of_range&)
             {
                 // create better exception explanation
-                JSON_THROW(out_of_range::create(401, diagnostics() + "array index " + std::to_string(idx) + " is out of range"));
+                JSON_THROW(out_of_range::create(401, "array index " + std::to_string(idx) + " is out of range", diagnostics_t(*this)));
             }
         }
         else
         {
-            JSON_THROW(type_error::create(304, diagnostics() + "cannot use at() with " + std::string(type_name())));
+            JSON_THROW(type_error::create(304, "cannot use at() with " + std::string(type_name()), diagnostics_t(*this)));
         }
     }
 
@@ -20191,12 +20250,12 @@ class basic_json
             JSON_CATCH (std::out_of_range&)
             {
                 // create better exception explanation
-                JSON_THROW(out_of_range::create(403, diagnostics() + "key '" + key + "' not found"));
+                JSON_THROW(out_of_range::create(403, "key '" + key + "' not found", diagnostics_t(*this)));
             }
         }
         else
         {
-            JSON_THROW(type_error::create(304, diagnostics() + "cannot use at() with " + std::string(type_name())));
+            JSON_THROW(type_error::create(304, "cannot use at() with " + std::string(type_name()), diagnostics_t(*this)));
         }
     }
 
@@ -20242,12 +20301,12 @@ class basic_json
             JSON_CATCH (std::out_of_range&)
             {
                 // create better exception explanation
-                JSON_THROW(out_of_range::create(403, diagnostics() + "key '" + key + "' not found"));
+                JSON_THROW(out_of_range::create(403, "key '" + key + "' not found", diagnostics_t(*this)));
             }
         }
         else
         {
-            JSON_THROW(type_error::create(304, diagnostics() + "cannot use at() with " + std::string(type_name())));
+            JSON_THROW(type_error::create(304, "cannot use at() with " + std::string(type_name()), diagnostics_t(*this)));
         }
     }
 
@@ -20311,7 +20370,7 @@ class basic_json
             return m_value.array->operator[](idx);
         }
 
-        JSON_THROW(type_error::create(305, diagnostics() + "cannot use operator[] with a numeric argument with " + std::string(type_name())));
+        JSON_THROW(type_error::create(305, "cannot use operator[] with a numeric argument with " + std::string(type_name()), diagnostics_t(*this)));
     }
 
     /*!
@@ -20341,7 +20400,7 @@ class basic_json
             return m_value.array->operator[](idx);
         }
 
-        JSON_THROW(type_error::create(305, diagnostics() + "cannot use operator[] with a numeric argument with " + std::string(type_name())));
+        JSON_THROW(type_error::create(305, "cannot use operator[] with a numeric argument with " + std::string(type_name()), diagnostics_t(*this)));
     }
 
     /*!
@@ -20393,7 +20452,7 @@ class basic_json
 #endif
         }
 
-        JSON_THROW(type_error::create(305, diagnostics() + "cannot use operator[] with a string argument with " + std::string(type_name())));
+        JSON_THROW(type_error::create(305, "cannot use operator[] with a string argument with " + std::string(type_name()), diagnostics_t(*this)));
     }
 
     /*!
@@ -20435,7 +20494,7 @@ class basic_json
             return m_value.object->find(key)->second;
         }
 
-        JSON_THROW(type_error::create(305, diagnostics() + "cannot use operator[] with a string argument with " + std::string(type_name())));
+        JSON_THROW(type_error::create(305, "cannot use operator[] with a string argument with " + std::string(type_name()), diagnostics_t(*this)));
     }
 
     /*!
@@ -20489,7 +20548,7 @@ class basic_json
 #endif
         }
 
-        JSON_THROW(type_error::create(305, diagnostics() + "cannot use operator[] with a string argument with " + std::string(type_name())));
+        JSON_THROW(type_error::create(305, "cannot use operator[] with a string argument with " + std::string(type_name()), diagnostics_t(*this)));
     }
 
     /*!
@@ -20533,7 +20592,7 @@ class basic_json
             return m_value.object->find(key)->second;
         }
 
-        JSON_THROW(type_error::create(305, diagnostics() + "cannot use operator[] with a string argument with " + std::string(type_name())));
+        JSON_THROW(type_error::create(305, "cannot use operator[] with a string argument with " + std::string(type_name()), diagnostics_t(*this)));
     }
 
     /*!
@@ -20605,7 +20664,7 @@ class basic_json
             return default_value;
         }
 
-        JSON_THROW(type_error::create(306, diagnostics() + "cannot use value() with " + std::string(type_name())));
+        JSON_THROW(type_error::create(306, "cannot use value() with " + std::string(type_name()), diagnostics_t(*this)));
     }
 
     /*!
@@ -20678,7 +20737,7 @@ class basic_json
             }
         }
 
-        JSON_THROW(type_error::create(306, diagnostics() + "cannot use value() with " + std::string(type_name())));
+        JSON_THROW(type_error::create(306, "cannot use value() with " + std::string(type_name()), diagnostics_t(*this)));
     }
 
     /*!
@@ -20832,7 +20891,7 @@ class basic_json
         // make sure iterator fits the current value
         if (JSON_HEDLEY_UNLIKELY(this != pos.m_object))
         {
-            JSON_THROW(invalid_iterator::create(202, diagnostics() + "iterator does not fit current value"));
+            JSON_THROW(invalid_iterator::create(202, "iterator does not fit current value", diagnostics_t(*this)));
         }
 
         IteratorType result = end();
@@ -20848,7 +20907,7 @@ class basic_json
             {
                 if (JSON_HEDLEY_UNLIKELY(!pos.m_it.primitive_iterator.is_begin()))
                 {
-                    JSON_THROW(invalid_iterator::create(205, "iterator out of range"));
+                    JSON_THROW(invalid_iterator::create(205, "iterator out of range", diagnostics_t(*this)));
                 }
 
                 if (is_string())
@@ -20884,7 +20943,7 @@ class basic_json
             }
 
             default:
-                JSON_THROW(type_error::create(307, diagnostics() + "cannot use erase() with " + std::string(type_name())));
+                JSON_THROW(type_error::create(307, "cannot use erase() with " + std::string(type_name()), diagnostics_t(*this)));
         }
 
         return result;
@@ -20945,7 +21004,7 @@ class basic_json
         // make sure iterator fits the current value
         if (JSON_HEDLEY_UNLIKELY(this != first.m_object || this != last.m_object))
         {
-            JSON_THROW(invalid_iterator::create(203, diagnostics() + "iterators do not fit current value"));
+            JSON_THROW(invalid_iterator::create(203, "iterators do not fit current value", diagnostics_t(*this)));
         }
 
         IteratorType result = end();
@@ -20962,7 +21021,7 @@ class basic_json
                 if (JSON_HEDLEY_LIKELY(!first.m_it.primitive_iterator.is_begin()
                                        || !last.m_it.primitive_iterator.is_end()))
                 {
-                    JSON_THROW(invalid_iterator::create(204, diagnostics() + "iterators out of range"));
+                    JSON_THROW(invalid_iterator::create(204, "iterators out of range", diagnostics_t(*this)));
                 }
 
                 if (is_string())
@@ -21000,7 +21059,7 @@ class basic_json
             }
 
             default:
-                JSON_THROW(type_error::create(307, diagnostics() + "cannot use erase() with " + std::string(type_name())));
+                JSON_THROW(type_error::create(307, "cannot use erase() with " + std::string(type_name()), diagnostics_t(*this)));
         }
 
         return result;
@@ -21043,7 +21102,7 @@ class basic_json
             return m_value.object->erase(key);
         }
 
-        JSON_THROW(type_error::create(307, diagnostics() + "cannot use erase() with " + std::string(type_name())));
+        JSON_THROW(type_error::create(307, "cannot use erase() with " + std::string(type_name()), diagnostics_t(*this)));
     }
 
     /*!
@@ -21077,14 +21136,14 @@ class basic_json
         {
             if (JSON_HEDLEY_UNLIKELY(idx >= size()))
             {
-                JSON_THROW(out_of_range::create(401, diagnostics() + "array index " + std::to_string(idx) + " is out of range"));
+                JSON_THROW(out_of_range::create(401, "array index " + std::to_string(idx) + " is out of range", diagnostics_t(*this)));
             }
 
             m_value.array->erase(m_value.array->begin() + static_cast<difference_type>(idx));
         }
         else
         {
-            JSON_THROW(type_error::create(307, diagnostics() + "cannot use erase() with " + std::string(type_name())));
+            JSON_THROW(type_error::create(307, "cannot use erase() with " + std::string(type_name()), diagnostics_t(*this)));
         }
     }
 
@@ -22029,7 +22088,7 @@ class basic_json
         // push_back only works for null objects or arrays
         if (JSON_HEDLEY_UNLIKELY(!(is_null() || is_array())))
         {
-            JSON_THROW(type_error::create(308, diagnostics() + "cannot use push_back() with " + std::string(type_name())));
+            JSON_THROW(type_error::create(308, "cannot use push_back() with " + std::string(type_name()), diagnostics_t(*this)));
         }
 
         // transform null object into an array
@@ -22067,7 +22126,7 @@ class basic_json
         // push_back only works for null objects or arrays
         if (JSON_HEDLEY_UNLIKELY(!(is_null() || is_array())))
         {
-            JSON_THROW(type_error::create(308, diagnostics() + "cannot use push_back() with " + std::string(type_name())));
+            JSON_THROW(type_error::create(308, "cannot use push_back() with " + std::string(type_name()), diagnostics_t(*this)));
         }
 
         // transform null object into an array
@@ -22120,7 +22179,7 @@ class basic_json
         // push_back only works for null objects or objects
         if (JSON_HEDLEY_UNLIKELY(!(is_null() || is_object())))
         {
-            JSON_THROW(type_error::create(308, diagnostics() + "cannot use push_back() with " + std::string(type_name())));
+            JSON_THROW(type_error::create(308, "cannot use push_back() with " + std::string(type_name()), diagnostics_t(*this)));
         }
 
         // transform null object into an object
@@ -22228,7 +22287,7 @@ class basic_json
         // emplace_back only works for null objects or arrays
         if (JSON_HEDLEY_UNLIKELY(!(is_null() || is_array())))
         {
-            JSON_THROW(type_error::create(311, diagnostics() + "cannot use emplace_back() with " + std::string(type_name())));
+            JSON_THROW(type_error::create(311, "cannot use emplace_back() with " + std::string(type_name()), diagnostics_t(*this)));
         }
 
         // transform null object into an array
@@ -22290,7 +22349,7 @@ class basic_json
         // emplace only works for null objects or arrays
         if (JSON_HEDLEY_UNLIKELY(!(is_null() || is_object())))
         {
-            JSON_THROW(type_error::create(311, diagnostics() + "cannot use emplace() with " + std::string(type_name())));
+            JSON_THROW(type_error::create(311, "cannot use emplace() with " + std::string(type_name()), diagnostics_t(*this)));
         }
 
         // transform null object into an object
@@ -22366,7 +22425,7 @@ class basic_json
             // check if iterator pos fits to this JSON value
             if (JSON_HEDLEY_UNLIKELY(pos.m_object != this))
             {
-                JSON_THROW(invalid_iterator::create(202, diagnostics() + "iterator does not fit current value"));
+                JSON_THROW(invalid_iterator::create(202, "iterator does not fit current value", diagnostics_t(*this)));
             }
 
             // insert to array and return iterator
@@ -22379,7 +22438,7 @@ class basic_json
 #endif
         }
 
-        JSON_THROW(type_error::create(309, diagnostics() + "cannot use insert() with " + std::string(type_name())));
+        JSON_THROW(type_error::create(309, "cannot use insert() with " + std::string(type_name()), diagnostics_t(*this)));
     }
 
     /*!
@@ -22423,7 +22482,7 @@ class basic_json
             // check if iterator pos fits to this JSON value
             if (JSON_HEDLEY_UNLIKELY(pos.m_object != this))
             {
-                JSON_THROW(invalid_iterator::create(202, diagnostics() + "iterator does not fit current value"));
+                JSON_THROW(invalid_iterator::create(202, "iterator does not fit current value", diagnostics_t(*this)));
             }
 
             // insert to array and return iterator
@@ -22439,7 +22498,7 @@ class basic_json
 #endif
         }
 
-        JSON_THROW(type_error::create(309, diagnostics() + "cannot use insert() with " + std::string(type_name())));
+        JSON_THROW(type_error::create(309, "cannot use insert() with " + std::string(type_name()), diagnostics_t(*this)));
     }
 
     /*!
@@ -22477,24 +22536,24 @@ class basic_json
         // insert only works for arrays
         if (JSON_HEDLEY_UNLIKELY(!is_array()))
         {
-            JSON_THROW(type_error::create(309, diagnostics() + "cannot use insert() with " + std::string(type_name())));
+            JSON_THROW(type_error::create(309, "cannot use insert() with " + std::string(type_name()), diagnostics_t(*this)));
         }
 
         // check if iterator pos fits to this JSON value
         if (JSON_HEDLEY_UNLIKELY(pos.m_object != this))
         {
-            JSON_THROW(invalid_iterator::create(202, diagnostics() + "iterator does not fit current value"));
+            JSON_THROW(invalid_iterator::create(202, "iterator does not fit current value", diagnostics_t(*this)));
         }
 
         // check if range iterators belong to the same JSON object
         if (JSON_HEDLEY_UNLIKELY(first.m_object != last.m_object))
         {
-            JSON_THROW(invalid_iterator::create(210, diagnostics() + "iterators do not fit"));
+            JSON_THROW(invalid_iterator::create(210, "iterators do not fit", diagnostics_t(*this)));
         }
 
         if (JSON_HEDLEY_UNLIKELY(first.m_object == this))
         {
-            JSON_THROW(invalid_iterator::create(211, diagnostics() + "passed iterators may not belong to container"));
+            JSON_THROW(invalid_iterator::create(211, "passed iterators may not belong to container", diagnostics_t(*this)));
         }
 
         // insert to array and return iterator
@@ -22539,13 +22598,13 @@ class basic_json
         // insert only works for arrays
         if (JSON_HEDLEY_UNLIKELY(!is_array()))
         {
-            JSON_THROW(type_error::create(309, diagnostics() + "cannot use insert() with " + std::string(type_name())));
+            JSON_THROW(type_error::create(309, "cannot use insert() with " + std::string(type_name()), diagnostics_t(*this)));
         }
 
         // check if iterator pos fits to this JSON value
         if (JSON_HEDLEY_UNLIKELY(pos.m_object != this))
         {
-            JSON_THROW(invalid_iterator::create(202, diagnostics() + "iterator does not fit current value"));
+            JSON_THROW(invalid_iterator::create(202, "iterator does not fit current value", diagnostics_t(*this)));
         }
 
         // insert to array and return iterator
@@ -22590,19 +22649,19 @@ class basic_json
         // insert only works for objects
         if (JSON_HEDLEY_UNLIKELY(!is_object()))
         {
-            JSON_THROW(type_error::create(309, diagnostics() + "cannot use insert() with " + std::string(type_name())));
+            JSON_THROW(type_error::create(309, "cannot use insert() with " + std::string(type_name()), diagnostics_t(*this)));
         }
 
         // check if range iterators belong to the same JSON object
         if (JSON_HEDLEY_UNLIKELY(first.m_object != last.m_object))
         {
-            JSON_THROW(invalid_iterator::create(210, diagnostics() + "iterators do not fit"));
+            JSON_THROW(invalid_iterator::create(210, "iterators do not fit", diagnostics_t(*this)));
         }
 
         // passed iterators must belong to objects
         if (JSON_HEDLEY_UNLIKELY(!first.m_object->is_object()))
         {
-            JSON_THROW(invalid_iterator::create(202, diagnostics() + "iterators first and last must point to objects"));
+            JSON_THROW(invalid_iterator::create(202, "iterators first and last must point to objects", diagnostics_t(*this)));
         }
 
         m_value.object->insert(first.m_it.object_iterator, last.m_it.object_iterator);
@@ -22639,11 +22698,11 @@ class basic_json
 
         if (JSON_HEDLEY_UNLIKELY(!is_object()))
         {
-            JSON_THROW(type_error::create(312, diagnostics() + "cannot use update() with " + std::string(type_name())));
+            JSON_THROW(type_error::create(312, "cannot use update() with " + std::string(type_name()), diagnostics_t(*this)));
         }
         if (JSON_HEDLEY_UNLIKELY(!j.is_object()))
         {
-            JSON_THROW(type_error::create(312, diagnostics() + "cannot use update() with " + std::string(j.type_name())));
+            JSON_THROW(type_error::create(312, "cannot use update() with " + std::string(j.type_name()), diagnostics_t(*this)));
         }
 
         for (auto it = j.cbegin(); it != j.cend(); ++it)
@@ -22690,20 +22749,20 @@ class basic_json
 
         if (JSON_HEDLEY_UNLIKELY(!is_object()))
         {
-            JSON_THROW(type_error::create(312, diagnostics() + "cannot use update() with " + std::string(type_name())));
+            JSON_THROW(type_error::create(312, "cannot use update() with " + std::string(type_name()), diagnostics_t(*this)));
         }
 
         // check if range iterators belong to the same JSON object
         if (JSON_HEDLEY_UNLIKELY(first.m_object != last.m_object))
         {
-            JSON_THROW(invalid_iterator::create(210, diagnostics() + "iterators do not fit"));
+            JSON_THROW(invalid_iterator::create(210, "iterators do not fit", diagnostics_t(*this)));
         }
 
         // passed iterators must belong to objects
         if (JSON_HEDLEY_UNLIKELY(!first.m_object->is_object()
                                  || !last.m_object->is_object()))
         {
-            JSON_THROW(invalid_iterator::create(202, diagnostics() + "iterators first and last must point to objects"));
+            JSON_THROW(invalid_iterator::create(202, "iterators first and last must point to objects", diagnostics_t(*this)));
         }
 
         for (auto it = first; it != last; ++it)
@@ -22798,7 +22857,7 @@ class basic_json
         }
         else
         {
-            JSON_THROW(type_error::create(310, diagnostics() + "cannot use swap() with " + std::string(type_name())));
+            JSON_THROW(type_error::create(310, "cannot use swap() with " + std::string(type_name()), diagnostics_t(*this)));
         }
     }
 
@@ -22831,7 +22890,7 @@ class basic_json
         }
         else
         {
-            JSON_THROW(type_error::create(310, diagnostics() + "cannot use swap() with " + std::string(type_name())));
+            JSON_THROW(type_error::create(310, "cannot use swap() with " + std::string(type_name()), diagnostics_t(*this)));
         }
     }
 
@@ -22864,7 +22923,7 @@ class basic_json
         }
         else
         {
-            JSON_THROW(type_error::create(310, diagnostics() + "cannot use swap() with " + std::string(type_name())));
+            JSON_THROW(type_error::create(310, "cannot use swap() with " + std::string(type_name()), diagnostics_t(*this)));
         }
     }
 
@@ -22897,7 +22956,7 @@ class basic_json
         }
         else
         {
-            JSON_THROW(type_error::create(310, diagnostics() + "cannot use swap() with " + std::string(type_name())));
+            JSON_THROW(type_error::create(310, "cannot use swap() with " + std::string(type_name()), diagnostics_t(*this)));
         }
     }
 
@@ -22911,7 +22970,7 @@ class basic_json
         }
         else
         {
-            JSON_THROW(type_error::create(310, diagnostics() + "cannot use swap() with " + std::string(type_name())));
+            JSON_THROW(type_error::create(310, "cannot use swap() with " + std::string(type_name()), diagnostics_t(*this)));
         }
     }
 
@@ -25120,7 +25179,7 @@ class basic_json
                         if (JSON_HEDLEY_UNLIKELY(idx > parent.size()))
                         {
                             // avoid undefined behavior
-                            JSON_THROW(out_of_range::create(401, parent.diagnostics() + "array index " + std::to_string(idx) + " is out of range"));
+                            JSON_THROW(out_of_range::create(401, "array index " + std::to_string(idx) + " is out of range", diagnostics_t(parent)));
                         }
 
                         // default case: insert add offset
@@ -25154,7 +25213,7 @@ class basic_json
                 }
                 else
                 {
-                    JSON_THROW(out_of_range::create(403, diagnostics() + "key '" + last_path + "' not found"));
+                    JSON_THROW(out_of_range::create(403, "key '" + last_path + "' not found", diagnostics_t(*this)));
                 }
             }
             else if (parent.is_array())
@@ -25167,7 +25226,7 @@ class basic_json
         // type check: top level value must be an array
         if (JSON_HEDLEY_UNLIKELY(!json_patch.is_array()))
         {
-            JSON_THROW(parse_error::create(104, 0, diagnostics() + "JSON patch must be an array of objects"));
+            JSON_THROW(parse_error::create(104, 0, "JSON patch must be an array of objects", diagnostics_t(json_patch)));
         }
 
         // iterate and apply the operations
@@ -25187,13 +25246,13 @@ class basic_json
                 // check if desired value is present
                 if (JSON_HEDLEY_UNLIKELY(it == val.m_value.object->end()))
                 {
-                    JSON_THROW(parse_error::create(105, 0, diagnostics() + error_msg + " must have member '" + member + "'"));
+                    JSON_THROW(parse_error::create(105, 0, error_msg + " must have member '" + member + "'", diagnostics_t(val)));
                 }
 
                 // check if result is of type string
                 if (JSON_HEDLEY_UNLIKELY(string_type && !it->second.is_string()))
                 {
-                    JSON_THROW(parse_error::create(105, 0, diagnostics() +  error_msg + " must have string member '" + member + "'"));
+                    JSON_THROW(parse_error::create(105, 0, error_msg + " must have string member '" + member + "'", diagnostics_t(val)));
                 }
 
                 // no error: return value
@@ -25203,7 +25262,7 @@ class basic_json
             // type check: every element of the array must be an object
             if (JSON_HEDLEY_UNLIKELY(!val.is_object()))
             {
-                JSON_THROW(parse_error::create(104, 0, diagnostics() + "JSON patch must be an array of objects"));
+                JSON_THROW(parse_error::create(104, 0, "JSON patch must be an array of objects", diagnostics_t(val)));
             }
 
             // collect mandatory members
@@ -25281,7 +25340,7 @@ class basic_json
                     // throw an exception if test fails
                     if (JSON_HEDLEY_UNLIKELY(!success))
                     {
-                        JSON_THROW(other_error::create(501, val.diagnostics() + "unsuccessful: " + val.dump()));
+                        JSON_THROW(other_error::create(501, "unsuccessful: " + val.dump(), diagnostics_t(val)));
                     }
 
                     break;
@@ -25291,7 +25350,7 @@ class basic_json
                 {
                     // op must be "add", "remove", "replace", "move", "copy", or
                     // "test"
-                    JSON_THROW(parse_error::create(105, 0, diagnostics() + "operation value '" + op + "' is invalid"));
+                    JSON_THROW(parse_error::create(105, 0, "operation value '" + op + "' is invalid", diagnostics_t(val)));
                 }
             }
         }

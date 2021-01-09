@@ -4,6 +4,7 @@
 #include <stdexcept> // runtime_error
 #include <string> // to_string
 
+#include <nlohmann/detail/diagnostics_t.hpp>
 #include <nlohmann/detail/input/position_t.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 
@@ -127,18 +128,20 @@ class parse_error : public exception
     @param[in] what_arg  the explanatory string
     @return parse_error object
     */
-    static parse_error create(int id_, const position_t& pos, const std::string& what_arg)
+    template<typename BasicJsonType>
+    static parse_error create(int id_, const position_t& pos, const std::string& what_arg, const detail::diagnostics_t<BasicJsonType>& diagnostics)
     {
         std::string w = exception::name("parse_error", id_) + "parse error" +
-                        position_string(pos) + ": " + what_arg;
+                        position_string(pos) + ": " + diagnostics.diagnostics() + what_arg;
         return parse_error(id_, pos.chars_read_total, w.c_str());
     }
 
-    static parse_error create(int id_, std::size_t byte_, const std::string& what_arg)
+    template<typename BasicJsonType>
+    static parse_error create(int id_, std::size_t byte_, const std::string& what_arg, const detail::diagnostics_t<BasicJsonType>& diagnostics)
     {
         std::string w = exception::name("parse_error", id_) + "parse error" +
                         (byte_ != 0 ? (" at byte " + std::to_string(byte_)) : "") +
-                        ": " + what_arg;
+                        ": " + diagnostics.diagnostics() + what_arg;
         return parse_error(id_, byte_, w.c_str());
     }
 
@@ -204,9 +207,10 @@ caught.,invalid_iterator}
 class invalid_iterator : public exception
 {
   public:
-    static invalid_iterator create(int id_, const std::string& what_arg)
+    template<typename BasicJsonType>
+    static invalid_iterator create(int id_, const std::string& what_arg, const detail::diagnostics_t<BasicJsonType>& diagnostics)
     {
-        std::string w = exception::name("invalid_iterator", id_) + what_arg;
+        std::string w = exception::name("invalid_iterator", id_) + diagnostics.diagnostics() + what_arg;
         return invalid_iterator(id_, w.c_str());
     }
 
@@ -258,9 +262,10 @@ caught.,type_error}
 class type_error : public exception
 {
   public:
-    static type_error create(int id_, const std::string& what_arg)
+    template<typename BasicJsonType>
+    static type_error create(int id_, const std::string& what_arg, const detail::diagnostics_t<BasicJsonType>& diagnostics)
     {
-        std::string w = exception::name("type_error", id_) + what_arg;
+        std::string w = exception::name("type_error", id_) + diagnostics.diagnostics() + what_arg;
         return type_error(id_, w.c_str());
     }
 
@@ -305,9 +310,10 @@ caught.,out_of_range}
 class out_of_range : public exception
 {
   public:
-    static out_of_range create(int id_, const std::string& what_arg)
+    template<typename BasicJsonType>
+    static out_of_range create(int id_, const std::string& what_arg, const detail::diagnostics_t<BasicJsonType>& diagnostics)
     {
-        std::string w = exception::name("out_of_range", id_) + what_arg;
+        std::string w = exception::name("out_of_range", id_) + diagnostics.diagnostics() + what_arg;
         return out_of_range(id_, w.c_str());
     }
 
@@ -343,9 +349,10 @@ caught.,other_error}
 class other_error : public exception
 {
   public:
-    static other_error create(int id_, const std::string& what_arg)
+    template<typename BasicJsonType>
+    static other_error create(int id_, const std::string& what_arg, const detail::diagnostics_t<BasicJsonType>& diagnostics)
     {
-        std::string w = exception::name("other_error", id_) + what_arg;
+        std::string w = exception::name("other_error", id_) + diagnostics.diagnostics() + what_arg;
         return other_error(id_, w.c_str());
     }
 

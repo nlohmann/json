@@ -3,6 +3,7 @@
 #include <iterator> // iterator, random_access_iterator_tag, bidirectional_iterator_tag, advance, next
 #include <type_traits> // conditional, is_const, remove_const
 
+#include <nlohmann/detail/diagnostics_t.hpp>
 #include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/iterators/internal_iterator.hpp>
 #include <nlohmann/detail/iterators/primitive_iterator.hpp>
@@ -51,6 +52,7 @@ class iter_impl
     // make sure BasicJsonType is basic_json or const basic_json
     static_assert(is_basic_json<typename std::remove_const<BasicJsonType>::type>::value,
                   "iter_impl only accepts (const) basic_json");
+    using diagnostics_t = detail::diagnostics_t<BasicJsonType>;
 
   public:
 
@@ -257,7 +259,7 @@ class iter_impl
             }
 
             case value_t::null:
-                JSON_THROW(invalid_iterator::create(214, m_object->diagnostics() + "cannot get value"));
+                JSON_THROW(invalid_iterator::create(214, "cannot get value", diagnostics_t(*m_object)));
 
             default:
             {
@@ -266,7 +268,7 @@ class iter_impl
                     return *m_object;
                 }
 
-                JSON_THROW(invalid_iterator::create(214, m_object->diagnostics() + "cannot get value"));
+                JSON_THROW(invalid_iterator::create(214, "cannot get value", diagnostics_t(*m_object)));
             }
         }
     }
@@ -300,7 +302,7 @@ class iter_impl
                     return m_object;
                 }
 
-                JSON_THROW(invalid_iterator::create(214, m_object->diagnostics() + "cannot get value"));
+                JSON_THROW(invalid_iterator::create(214, "cannot get value", diagnostics_t(*m_object)));
             }
         }
     }
@@ -401,7 +403,7 @@ class iter_impl
         // if objects are not the same, the comparison is undefined
         if (JSON_HEDLEY_UNLIKELY(m_object != other.m_object))
         {
-            JSON_THROW(invalid_iterator::create(212, m_object->diagnostics() + "cannot compare iterators of different containers"));
+            JSON_THROW(invalid_iterator::create(212, "cannot compare iterators of different containers", diagnostics_t(*m_object)));
         }
 
         JSON_ASSERT(m_object != nullptr);
@@ -438,7 +440,7 @@ class iter_impl
         // if objects are not the same, the comparison is undefined
         if (JSON_HEDLEY_UNLIKELY(m_object != other.m_object))
         {
-            JSON_THROW(invalid_iterator::create(212, m_object->diagnostics() + "cannot compare iterators of different containers"));
+            JSON_THROW(invalid_iterator::create(212, "cannot compare iterators of different containers", diagnostics_t(*m_object)));
         }
 
         JSON_ASSERT(m_object != nullptr);
@@ -446,7 +448,7 @@ class iter_impl
         switch (m_object->m_type)
         {
             case value_t::object:
-                JSON_THROW(invalid_iterator::create(213, m_object->diagnostics() + "cannot compare order of object iterators"));
+                JSON_THROW(invalid_iterator::create(213, "cannot compare order of object iterators", diagnostics_t(*m_object)));
 
             case value_t::array:
                 return (m_it.array_iterator < other.m_it.array_iterator);
@@ -494,7 +496,7 @@ class iter_impl
         switch (m_object->m_type)
         {
             case value_t::object:
-                JSON_THROW(invalid_iterator::create(209, m_object->diagnostics() + "cannot use offsets with object iterators"));
+                JSON_THROW(invalid_iterator::create(209, "cannot use offsets with object iterators", diagnostics_t(*m_object)));
 
             case value_t::array:
             {
@@ -565,7 +567,7 @@ class iter_impl
         switch (m_object->m_type)
         {
             case value_t::object:
-                JSON_THROW(invalid_iterator::create(209, m_object->diagnostics() + "cannot use offsets with object iterators"));
+                JSON_THROW(invalid_iterator::create(209, "cannot use offsets with object iterators", diagnostics_t(*m_object)));
 
             case value_t::array:
                 return m_it.array_iterator - other.m_it.array_iterator;
@@ -586,13 +588,13 @@ class iter_impl
         switch (m_object->m_type)
         {
             case value_t::object:
-                JSON_THROW(invalid_iterator::create(208, m_object->diagnostics() + "cannot use operator[] for object iterators"));
+                JSON_THROW(invalid_iterator::create(208, "cannot use operator[] for object iterators", diagnostics_t(*m_object)));
 
             case value_t::array:
                 return *std::next(m_it.array_iterator, n);
 
             case value_t::null:
-                JSON_THROW(invalid_iterator::create(214, m_object->diagnostics() + "cannot get value"));
+                JSON_THROW(invalid_iterator::create(214, "cannot get value", diagnostics_t(*m_object)));
 
             default:
             {
@@ -601,7 +603,7 @@ class iter_impl
                     return *m_object;
                 }
 
-                JSON_THROW(invalid_iterator::create(214, m_object->diagnostics() + "cannot get value"));
+                JSON_THROW(invalid_iterator::create(214, "cannot get value", diagnostics_t(*m_object)));
             }
         }
     }
@@ -619,7 +621,7 @@ class iter_impl
             return m_it.object_iterator->first;
         }
 
-        JSON_THROW(invalid_iterator::create(207, m_object->diagnostics() + "cannot use key() for non-object iterators"));
+        JSON_THROW(invalid_iterator::create(207, "cannot use key() for non-object iterators", diagnostics_t(*m_object)));
     }
 
     /*!
