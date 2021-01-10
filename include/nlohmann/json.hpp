@@ -5746,7 +5746,7 @@ class basic_json
             iterator result = insert_iterator(pos, cnt, val);
             for (size_type i = 0; i < cnt; ++i)
             {
-                (result + i)->m_parent = this;
+                (result + static_cast<typename iterator::difference_type>(i))->m_parent = this;
             }
             return result;
 #else
@@ -5815,7 +5815,7 @@ class basic_json
         // insert to array and return iterator
 #if JSON_DIAGNOSTICS
         iterator result = insert_iterator(pos, first.m_it.array_iterator, last.m_it.array_iterator);
-        for (std::size_t i = 0; i < std::distance(first, last); ++i)
+        for (typename iterator::difference_type i = 0; i < std::distance(first, last); ++i)
         {
             (result + i)->m_parent = this;
         }
@@ -5869,7 +5869,7 @@ class basic_json
         iterator result =  insert_iterator(pos, ilist.begin(), ilist.end());
         for (std::size_t i = 0; i < size; ++i)
         {
-            (result + i)->m_parent = this;
+            (result + static_cast<typename iterator::difference_type>(i))->m_parent = this;
         }
         return result;
 #else
@@ -8391,7 +8391,7 @@ class basic_json
         };
 
         // wrapper for "add" operation; add value at ptr
-        const auto operation_add = [this, &result](json_pointer & ptr, basic_json val)
+        const auto operation_add = [&result](json_pointer & ptr, basic_json val)
         {
             // adding to the root of the target document means replacing it
             if (ptr.empty())
@@ -8489,9 +8489,9 @@ class basic_json
         for (const auto& val : json_patch)
         {
             // wrapper to get a value for an operation
-            const auto get_value = [this, &val](const std::string & op,
-                                                const std::string & member,
-                                                bool string_type) -> basic_json &
+            const auto get_value = [&val](const std::string & op,
+                                          const std::string & member,
+                                          bool string_type) -> basic_json &
             {
                 // find value
                 auto it = val.m_value.object->find(member);
