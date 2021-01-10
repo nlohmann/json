@@ -236,6 +236,7 @@ class json_sax_dom_parser
 
     bool end_object()
     {
+        ref_stack.back()->set_parent(*ref_stack.back(), true);
         ref_stack.pop_back();
         return true;
     }
@@ -254,6 +255,7 @@ class json_sax_dom_parser
 
     bool end_array()
     {
+        ref_stack.back()->set_parent(*ref_stack.back(), true);
         ref_stack.pop_back();
         return true;
     }
@@ -298,18 +300,12 @@ class json_sax_dom_parser
         if (ref_stack.back()->is_array())
         {
             ref_stack.back()->m_value.array->emplace_back(std::forward<Value>(v));
-#if JSON_DIAGNOSTICS
-            ref_stack.back()->m_value.array->back().m_parent = ref_stack.back();
-#endif
             return &(ref_stack.back()->m_value.array->back());
         }
 
         JSON_ASSERT(ref_stack.back()->is_object());
         JSON_ASSERT(object_element);
         *object_element = BasicJsonType(std::forward<Value>(v));
-#if JSON_DIAGNOSTICS
-        object_element->m_parent = ref_stack.back();
-#endif
         return object_element;
     }
 
@@ -432,10 +428,17 @@ class json_sax_dom_callback_parser
 
     bool end_object()
     {
-        if (ref_stack.back() && !callback(static_cast<int>(ref_stack.size()) - 1, parse_event_t::object_end, *ref_stack.back()))
+        if (ref_stack.back())
         {
-            // discard object
-            *ref_stack.back() = discarded;
+            if (!callback(static_cast<int>(ref_stack.size()) - 1, parse_event_t::object_end, *ref_stack.back()))
+            {
+                // discard object
+                *ref_stack.back() = discarded;
+            }
+            else
+            {
+                ref_stack.back()->set_parent(*ref_stack.back(), true);
+            }
         }
 
         JSON_ASSERT(!ref_stack.empty());
@@ -483,7 +486,11 @@ class json_sax_dom_callback_parser
         if (ref_stack.back())
         {
             keep = callback(static_cast<int>(ref_stack.size()) - 1, parse_event_t::array_end, *ref_stack.back());
-            if (!keep)
+            if (keep)
+            {
+                ref_stack.back()->set_parent(*ref_stack.back(), true);
+            }
+            else
             {
                 // discard array
                 *ref_stack.back() = discarded;
@@ -582,9 +589,6 @@ class json_sax_dom_callback_parser
         if (ref_stack.back()->is_array())
         {
             ref_stack.back()->m_value.array->emplace_back(std::move(value));
-#if JSON_DIAGNOSTICS
-            ref_stack.back()->m_value.array->back().m_parent = ref_stack.back();
-#endif
             return {true, &(ref_stack.back()->m_value.array->back())};
         }
 
@@ -602,9 +606,6 @@ class json_sax_dom_callback_parser
 
         JSON_ASSERT(object_element);
         *object_element = std::move(value);
-#if JSON_DIAGNOSTICS
-        object_element->m_parent = ref_stack.back();
-#endif
         return {true, object_element};
     }
 
