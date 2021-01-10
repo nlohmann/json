@@ -15,7 +15,7 @@
 #include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/cpp_future.hpp>
-#include <nlohmann/detail/meta/tag.hpp>
+#include <nlohmann/detail/meta/identity_tag.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
 #include <nlohmann/detail/value_t.hpp>
 
@@ -250,16 +250,16 @@ void())
 }
 
 template < typename BasicJsonType, typename Array, std::size_t... Is >
-Array from_json_array_impl(BasicJsonType&& j, tag<Array> /*unused*/, index_sequence<Is...> /*unused*/)
+Array from_json_array_impl(BasicJsonType&& j, identity_tag<Array> /*unused*/, index_sequence<Is...> /*unused*/)
 {
     return { std::forward<BasicJsonType>(j).at(Is).template get<typename Array::value_type>()... };
 }
 
 template < typename BasicJsonType, typename T, std::size_t N,
            enable_if_t < !std::is_default_constructible<std::array<T, N>>::value, int > = 0 >
-auto from_json(BasicJsonType && j, tag<std::array<T, N>> t)
+auto from_json(BasicJsonType && j, identity_tag<std::array<T, N>> tag)
 -> decltype(j.template get<T>(),
-from_json_array_impl(std::forward<BasicJsonType>(j), t, make_index_sequence<N> {}))
+from_json_array_impl(std::forward<BasicJsonType>(j), tag, make_index_sequence<N> {}))
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
@@ -267,7 +267,7 @@ from_json_array_impl(std::forward<BasicJsonType>(j), t, make_index_sequence<N> {
                                       std::string(j.type_name())));
     }
 
-    return from_json_array_impl(std::forward<BasicJsonType>(j), t, make_index_sequence<N> {});
+    return from_json_array_impl(std::forward<BasicJsonType>(j), tag, make_index_sequence<N> {});
 }
 
 template<typename BasicJsonType>
@@ -345,44 +345,24 @@ void from_json(const BasicJsonType& j, ArithmeticType& val)
     }
 }
 
-template<typename BasicJsonType, typename A1, typename A2,
-         enable_if_t<std::is_default_constructible<std::pair<A1, A2>>::value, int> = 0>
-void from_json(BasicJsonType && j, std::pair<A1, A2>& p)
+template < typename BasicJsonType, class A1, class A2 >
+std::pair<A1, A2> from_json_pair_impl(BasicJsonType&& j, identity_tag<std::pair<A1, A2>> /*unused*/, priority_tag<0> /*unused*/)
 {
-    if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
-    {
-        JSON_THROW(type_error::create(302, "type must be array, but is " +
-                                      std::string(j.type_name())));
-    }
-
-    p = {std::forward<BasicJsonType>(j).at(0).template get<A1>(),
-         std::forward<BasicJsonType>(j).at(1).template get<A2>()
-        };
-}
-
-template < typename BasicJsonType, class A1, class A2,
-           enable_if_t < !std::is_default_constructible<std::pair<A1, A2>>::value, int > = 0 >
-std::pair<A1, A2> from_json(BasicJsonType && j, tag<std::pair<A1, A2>> /*unused*/)
-{
-    if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
-    {
-        JSON_THROW(type_error::create(302, "type must be array, but is " +
-                                      std::string(j.type_name())));
-    }
-
     return {std::forward<BasicJsonType>(j).at(0).template get<A1>(),
             std::forward<BasicJsonType>(j).at(1).template get<A2>()};
 }
 
-template<typename BasicJsonType, typename Tuple, std::size_t... Idx>
-void from_json_tuple_impl(BasicJsonType&& j, Tuple& t, index_sequence<Idx...> /*unused*/)
+
+template<typename BasicJsonType, typename A1, typename A2,
+         enable_if_t<std::is_default_constructible<std::pair<A1, A2>>::value, int> = 0>
+void from_json_pair_impl(BasicJsonType && j, std::pair<A1, A2>& p, priority_tag<1> /*unused*/)
 {
-    t = std::make_tuple(std::forward<BasicJsonType>(j).at(Idx).template get<typename std::tuple_element<Idx, Tuple>::type>()...);
+    p = from_json_pair_impl(std::forward<BasicJsonType>(j), identity_tag<std::pair<A1, A2>> {}, priority_tag<0> {});
 }
 
-template<typename BasicJsonType, typename... Args,
-         enable_if_t < std::is_default_constructible<std::tuple<Args...>>::value, int > = 0 >
-void from_json(BasicJsonType && j, std::tuple<Args...>& t)
+template<typename BasicJsonType, typename PairRelatedType>
+auto from_json(BasicJsonType&& j, PairRelatedType&& p)
+-> decltype(from_json_pair_impl(std::forward<BasicJsonType>(j), std::forward<PairRelatedType>(p), priority_tag<1> {}))
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
@@ -390,18 +370,25 @@ void from_json(BasicJsonType && j, std::tuple<Args...>& t)
                                       std::string(j.type_name())));
     }
 
-    from_json_tuple_impl(std::forward<BasicJsonType>(j), t, index_sequence_for<Args...> {});
+    return from_json_pair_impl(std::forward<BasicJsonType>(j), std::forward<PairRelatedType>(p), priority_tag<1> {});
 }
 
 template<typename BasicJsonType, typename Tuple, std::size_t... Idx>
-Tuple from_json_tuple_impl(BasicJsonType&& j, tag<Tuple> /*unused*/, index_sequence<Idx...> /*unused*/)
+Tuple from_json_tuple_impl(BasicJsonType&& j, identity_tag<Tuple> /*unused*/, index_sequence<Idx...> /*unused*/, priority_tag<0> /*unused*/)
 {
     return std::make_tuple(std::forward<BasicJsonType>(j).at(Idx).template get<typename std::tuple_element<Idx, Tuple>::type>()...);
 }
 
-template < typename BasicJsonType, typename... Args,
-           enable_if_t < !std::is_default_constructible<std::tuple<Args...>>::value, int > = 0 >
-std::tuple<Args...> from_json(BasicJsonType && j, tag<std::tuple<Args...>> t)
+template<typename BasicJsonType, typename Tuple, std::size_t... Idx,
+         enable_if_t<std::is_default_constructible<Tuple>::value, int> = 0>
+void from_json_tuple_impl(BasicJsonType && j, Tuple& t, index_sequence<Idx...> /*unused*/, priority_tag<1> /*unused*/)
+{
+    t = from_json_tuple_impl(std::forward<BasicJsonType>(j), identity_tag<Tuple> {}, priority_tag<0> {});
+}
+
+template<typename BasicJsonType, typename TupleRelated, std::size_t... Idx>
+auto from_json_tuple(BasicJsonType&& j, TupleRelated&& t, index_sequence<Idx...> idx)
+-> decltype(from_json_tuple_impl(std::forward<BasicJsonType>(j), std::forward<TupleRelated>(t), idx, priority_tag<1> {}))
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
@@ -409,7 +396,21 @@ std::tuple<Args...> from_json(BasicJsonType && j, tag<std::tuple<Args...>> t)
                                       std::string(j.type_name())));
     }
 
-    return from_json_tuple_impl(std::forward<BasicJsonType>(j), t, index_sequence_for<Args...> {});
+    return from_json_tuple_impl(std::forward<BasicJsonType>(j), std::forward<TupleRelated>(t), idx, priority_tag<1> {});
+}
+
+template<typename BasicJsonType, typename... Args>
+auto from_json(BasicJsonType&& j, std::tuple<Args...>& t)
+-> decltype(from_json_tuple(std::forward<BasicJsonType>(j), t, index_sequence_for<Args...> {}))
+{
+    from_json_tuple(std::forward<BasicJsonType>(j), t, index_sequence_for<Args...> {});
+}
+
+template<typename BasicJsonType, typename... Args>
+auto from_json(BasicJsonType&& j, identity_tag<std::tuple<Args...>> tag)
+-> decltype(from_json_tuple(std::forward<BasicJsonType>(j), std::move(tag), index_sequence_for<Args...> {}))
+{
+    return from_json_tuple(std::forward<BasicJsonType>(j), std::move(tag), index_sequence_for<Args...> {});
 }
 
 template < typename BasicJsonType, typename Key, typename Value, typename Compare, typename Allocator,
@@ -455,21 +456,11 @@ void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Hash, KeyE
 struct from_json_fn
 {
     template<typename BasicJsonType, typename T>
-    auto operator()(const BasicJsonType& j, T& val) const
-    noexcept(noexcept(from_json(j, val)))
-    -> decltype(from_json(j, val), void())
+    auto operator()(const BasicJsonType& j, T&& val) const
+    noexcept(noexcept(from_json(j, std::forward<T>(val))))
+    -> decltype(from_json(j, std::forward<T>(val)))
     {
-        return from_json(j, val);
-    }
-
-    // overload to pass calls to built-in from_json functions for non-default constructible STL
-    // types (e.g. std::array<X>, where X is not default constructible).
-    template<typename BasicJsonType, typename T>
-    auto operator()(const BasicJsonType& j, detail::tag<T> t) const
-    noexcept(noexcept(from_json(j, t)))
-    -> decltype(from_json(j, t))
-    {
-        return from_json(j, t);
+        return from_json(j, std::forward<T>(val));
     }
 };
 }  // namespace detail

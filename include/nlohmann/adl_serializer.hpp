@@ -5,6 +5,7 @@
 
 #include <nlohmann/detail/conversions/from_json.hpp>
 #include <nlohmann/detail/conversions/to_json.hpp>
+#include <nlohmann/detail/meta/identity_tag.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
 
 namespace nlohmann
@@ -46,10 +47,10 @@ struct adl_serializer
     */
     template<typename BasicJsonType, typename TargetType = ValueType>
     static auto from_json(BasicJsonType && j) noexcept(
-    noexcept(::nlohmann::from_json(std::forward<BasicJsonType>(j), detail::tag<TargetType> {})))
-    -> decltype(::nlohmann::from_json(std::forward<BasicJsonType>(j), detail::tag<TargetType> {}))
+    noexcept(::nlohmann::from_json(std::forward<BasicJsonType>(j), detail::identity_tag<TargetType> {})))
+    -> decltype(::nlohmann::from_json(std::forward<BasicJsonType>(j), detail::identity_tag<TargetType> {}))
     {
-        return ::nlohmann::from_json(std::forward<BasicJsonType>(j), detail::tag<TargetType> {});
+        return ::nlohmann::from_json(std::forward<BasicJsonType>(j), detail::identity_tag<TargetType> {});
     }
 
     /*!
