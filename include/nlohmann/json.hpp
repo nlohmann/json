@@ -1242,6 +1242,47 @@ class basic_json
         JSON_ASSERT(m_type != value_t::binary || m_value.binary != nullptr);
     }
 
+    reference set_parent(reference j, bool recursive)
+    {
+#if JSON_DIAGNOSTICS
+        if (recursive)
+        {
+            switch (m_type)
+            {
+                case value_t::array:
+                {
+                    for (auto& element : *m_value.array)
+                    {
+                        element.m_parent = this;
+                    }
+                    break;
+                }
+
+                case value_t::object:
+                {
+                    for (auto& element : *m_value.object)
+                    {
+                        element.second.m_parent = this;
+                    }
+                    break;
+                }
+
+                default:
+                    break;
+            }
+        }
+        else
+        {
+            j.m_parent = this;
+        }
+#else
+        static_cast<void>(j);
+        static_cast<void>(recursive);
+#endif
+
+        return j;
+    }
+
   public:
     //////////////////////////
     // JSON parser callback //
@@ -1651,12 +1692,7 @@ class basic_json
                 auto res = m_value.object->emplace(
                                std::move(*((*element.m_value.array)[0].m_value.string)),
                                std::move((*element.m_value.array)[1]));
-
-#if JSON_DIAGNOSTICS
-                res.first->second.m_parent = this;
-#else
-                static_cast<void>(res);  // unused variable - fix warning
-#endif
+                set_parent(res.first->second, false);
             }
         }
         else
@@ -1664,12 +1700,7 @@ class basic_json
             // the initializer list describes an array -> create array
             m_type = value_t::array;
             m_value.array = create<array_t>(init.begin(), init.end());
-#if JSON_DIAGNOSTICS
-            for (auto& element : *m_value.array)
-            {
-                element.m_parent = this;
-            }
-#endif
+            set_parent(*this, true);
         }
 
         assert_invariant();
@@ -1881,12 +1912,7 @@ class basic_json
         : m_type(value_t::array)
     {
         m_value.array = create<array_t>(cnt, val);
-#if JSON_DIAGNOSTICS
-        for (auto& element : *m_value.array)
-        {
-            element.m_parent = this;
-        }
-#endif
+        set_parent(*this, true);
         assert_invariant();
     }
 
@@ -2019,12 +2045,7 @@ class basic_json
             {
                 m_value.object = create<object_t>(first.m_it.object_iterator,
                                                   last.m_it.object_iterator);
-#if JSON_DIAGNOSTICS
-                for (auto& element : *m_value.object)
-                {
-                    element.second.m_parent = this;
-                }
-#endif
+                set_parent(*this, true);
                 break;
             }
 
@@ -2032,12 +2053,7 @@ class basic_json
             {
                 m_value.array = create<array_t>(first.m_it.array_iterator,
                                                 last.m_it.array_iterator);
-#if JSON_DIAGNOSTICS
-                for (auto& element : *m_value.array)
-                {
-                    element.m_parent = this;
-                }
-#endif
+                set_parent(*this, true);
                 break;
             }
 
@@ -2100,24 +2116,14 @@ class basic_json
             case value_t::object:
             {
                 m_value = *other.m_value.object;
-#if JSON_DIAGNOSTICS
-                for (auto& element : *m_value.object)
-                {
-                    element.second.m_parent = this;
-                }
-#endif
+                set_parent(*this, true);
                 break;
             }
 
             case value_t::array:
             {
                 m_value = *other.m_value.array;
-#if JSON_DIAGNOSTICS
-                for (auto& element : *m_value.array)
-                {
-                    element.m_parent = this;
-                }
-#endif
+                set_parent(*this, true);
                 break;
             }
 
@@ -2201,32 +2207,7 @@ class basic_json
         other.m_type = value_t::null;
         other.m_value = {};
 
-#if JSON_DIAGNOSTICS
-        switch (m_type)
-        {
-            case value_t::array:
-            {
-                for (auto& element : *m_value.array)
-                {
-                    element.m_parent = this;
-                }
-                break;
-            }
-
-            case value_t::object:
-            {
-                for (auto& element : *m_value.object)
-                {
-                    element.second.m_parent = this;
-                }
-                break;
-            }
-
-            default:
-                break;
-        }
-#endif
-
+        set_parent(*this, true);
         assert_invariant();
     }
 
@@ -3391,13 +3372,7 @@ class basic_json
         {
             JSON_TRY
             {
-#if JSON_DIAGNOSTICS
-                reference result = m_value.array->at(idx);
-                result.m_parent = this;
-                return result;
-#else
-                return m_value.array->at(idx);
-#endif
+                return set_parent(m_value.array->at(idx), false);
             }
             JSON_CATCH (std::out_of_range&)
             {
@@ -3495,13 +3470,7 @@ class basic_json
         {
             JSON_TRY
             {
-#if JSON_DIAGNOSTICS
-                reference result = m_value.object->at(key);
-                result.m_parent = this;
-                return result;
-#else
-                return m_value.object->at(key);
-#endif
+                return set_parent(m_value.object->at(key), false);
             }
             JSON_CATCH (std::out_of_range&)
             {
@@ -3699,13 +3668,7 @@ class basic_json
         // operator[] only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
         {
-#if JSON_DIAGNOSTICS
-            reference result = m_value.object->operator[](key);
-            result.m_parent = this;
-            return result;
-#else
-            return m_value.object->operator[](key);
-#endif
+            return set_parent(m_value.object->operator[](key), false);
         }
 
         JSON_THROW(type_error::create(305, "cannot use operator[] with a string argument with " + std::string(type_name()), diagnostics_t(*this)));
@@ -3795,13 +3758,7 @@ class basic_json
         // at only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
         {
-#if JSON_DIAGNOSTICS
-            reference result = m_value.object->operator[](key);
-            result.m_parent = this;
-            return result;
-#else
-            return m_value.object->operator[](key);
-#endif
+            return set_parent(m_value.object->operator[](key), false);
         }
 
         JSON_THROW(type_error::create(305, "cannot use operator[] with a string argument with " + std::string(type_name()), diagnostics_t(*this)));
@@ -5357,9 +5314,7 @@ class basic_json
 
         // add element to array (move semantics)
         m_value.array->push_back(std::move(val));
-#if JSON_DIAGNOSTICS
-        m_value.array->back().m_parent = this;
-#endif
+        set_parent(m_value.array->back(), false);
         // if val is moved from, basic_json move constructor marks it null so we do not call the destructor
     }
 
@@ -5395,9 +5350,7 @@ class basic_json
 
         // add element to array
         m_value.array->push_back(val);
-#if JSON_DIAGNOSTICS
-        m_value.array->back().m_parent = this;
-#endif
+        set_parent(m_value.array->back(), false);
     }
 
     /*!
@@ -5447,12 +5400,8 @@ class basic_json
         }
 
         // add element to object
-#if JSON_DIAGNOSTICS
         auto res = m_value.object->insert(val);
-        res.first->second.m_parent = this;
-#else
-        m_value.object->insert(val);
-#endif
+        set_parent(res.first->second, false);
     }
 
     /*!
@@ -5556,19 +5505,10 @@ class basic_json
 
         // add element to array (perfect forwarding)
 #ifdef JSON_HAS_CPP_17
-#if JSON_DIAGNOSTICS
-        reference result = m_value.array->emplace_back(std::forward<Args>(args)...);
-        result.m_parent = this;
-        return result;
-#else
-        return m_value.array->emplace_back(std::forward<Args>(args)...);
-#endif
+        return set_parent(m_value.array->emplace_back(std::forward<Args>(args)...), false);
 #else
         m_value.array->emplace_back(std::forward<Args>(args)...);
-#if JSON_DIAGNOSTICS
-        m_value.array->back().m_parent = this;
-#endif
-        return m_value.array->back();
+        return set_parent(m_value.array->back(), false);
 #endif
     }
 
@@ -5618,10 +5558,7 @@ class basic_json
 
         // add element to array (perfect forwarding)
         auto res = m_value.object->emplace(std::forward<Args>(args)...);
-
-#if JSON_DIAGNOSTICS
-        res.first->second.m_parent = this;
-#endif
+        set_parent(res.first->second, false);
 
         // create result iterator and set iterator to the result of emplace
         auto it = begin();
