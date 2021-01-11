@@ -543,9 +543,6 @@ TEST_CASE("regression tests 2")
         {
             {
                 json j = { 3, 8 };
-                auto x = j.at(0).get<NonDefaultConstructible>();
-                CHECK(x.x == 3);
-
                 auto p = j.get<std::pair<NonDefaultConstructible, NonDefaultConstructible>>();
                 CHECK(p.first.x == 3);
                 CHECK(p.second.x == 8);

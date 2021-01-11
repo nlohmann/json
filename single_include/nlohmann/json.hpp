@@ -3746,17 +3746,23 @@ void())
     from_json_array_impl(j, arr, priority_tag<3> {});
 }
 
-template < typename BasicJsonType, typename Array, std::size_t... Is >
-Array from_json_array_impl(BasicJsonType&& j, identity_tag<Array> /*unused*/, index_sequence<Is...> /*unused*/)
+template < typename T, typename BasicJsonType, typename ArrayType, std::size_t... Idx>
+ArrayType from_json_inplace_array_impl_base(BasicJsonType&& j, identity_tag<ArrayType> /*unused*/,
+        index_sequence<Idx...> /*unused*/)
 {
-    return { std::forward<BasicJsonType>(j).at(Is).template get<typename Array::value_type>()... };
+    return { std::forward<BasicJsonType>(j).at(Idx).template get<T>()... };
 }
 
-template < typename BasicJsonType, typename T, std::size_t N,
-           enable_if_t < !std::is_default_constructible<std::array<T, N>>::value, int > = 0 >
-auto from_json(BasicJsonType && j, identity_tag<std::array<T, N>> tag)
--> decltype(j.template get<T>(),
-from_json_array_impl(std::forward<BasicJsonType>(j), tag, make_index_sequence<N> {}))
+template < typename BasicJsonType, typename T, std::size_t N >
+auto from_json_inplace_array_impl(BasicJsonType&& j, identity_tag<std::array<T, N>> tag, priority_tag<0> /*unused*/)
+-> decltype(from_json_inplace_array_impl_base<T>(std::forward<BasicJsonType>(j), tag, make_index_sequence<N> {}))
+{
+    return from_json_inplace_array_impl_base<T>(std::forward<BasicJsonType>(j), tag, make_index_sequence<N> {});
+}
+
+template < typename BasicJsonType, typename ArrayType >
+auto from_json(BasicJsonType&& j, identity_tag<ArrayType> tag)
+-> decltype(from_json_inplace_array_impl(std::forward<BasicJsonType>(j), tag, priority_tag<0> {}))
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
@@ -3764,7 +3770,7 @@ from_json_array_impl(std::forward<BasicJsonType>(j), tag, make_index_sequence<N>
                                       std::string(j.type_name())));
     }
 
-    return from_json_array_impl(std::forward<BasicJsonType>(j), tag, make_index_sequence<N> {});
+    return from_json_inplace_array_impl(std::forward<BasicJsonType>(j), tag, priority_tag<0> {});
 }
 
 template<typename BasicJsonType>
@@ -3848,7 +3854,6 @@ std::pair<A1, A2> from_json_pair_impl(BasicJsonType&& j, identity_tag<std::pair<
     return {std::forward<BasicJsonType>(j).at(0).template get<A1>(),
             std::forward<BasicJsonType>(j).at(1).template get<A2>()};
 }
-
 
 template<typename BasicJsonType, typename A1, typename A2,
          enable_if_t<std::is_default_constructible<std::pair<A1, A2>>::value, int> = 0>
