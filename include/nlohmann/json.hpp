@@ -2908,7 +2908,6 @@ class basic_json
     - @ref json_serializer<ValueType> does not have a `from_json()` method of
       the form `ValueType from_json(const basic_json&)`
 
-    @tparam ValueTypeCV the provided value type
     @tparam ValueType the returned value type
 
     @return copy of the JSON value, converted to @a ValueType
@@ -2924,9 +2923,9 @@ class basic_json
 
     @since version 2.1.0
     */
-    template < typename ValueTypeCV, typename ValueType = detail::uncvref_t<ValueTypeCV>,
+    template < typename ValueType,
                detail::enable_if_t <
-                   detail::is_default_constructible<ValueType>::value &&
+                   detail::is_default_constructible<ValueType>::value&&
                    detail::has_from_json<basic_json_t, ValueType>::value,
                    int > = 0 >
     ValueType get_impl(detail::priority_tag<0> /*unused*/) const noexcept(noexcept(
@@ -2948,7 +2947,7 @@ class basic_json
 
     The function is equivalent to executing
     @code {.cpp}
-    return JSONSerializer<ValueTypeCV>::from_json(*this);
+    return JSONSerializer<ValueType>::from_json(*this);
     @endcode
 
     This overloads is chosen if:
@@ -2959,7 +2958,6 @@ class basic_json
     @note If @ref json_serializer<ValueType> has both overloads of
     `from_json()`, this one is chosen.
 
-    @tparam ValueTypeCV the provided value type
     @tparam ValueType the returned value type
 
     @return copy of the JSON value, converted to @a ValueType
@@ -2968,7 +2966,7 @@ class basic_json
 
     @since version 2.1.0
     */
-    template < typename ValueTypeCV, typename ValueType = detail::uncvref_t<ValueTypeCV>,
+    template < typename ValueType,
                detail::enable_if_t <
                    detail::has_non_default_from_json<basic_json_t, ValueType>::value,
                    int > = 0 >
@@ -2993,7 +2991,8 @@ class basic_json
 
     @since version 3.2.0
     */
-    template < typename BasicJsonType, detail::enable_if_t <
+    template < typename BasicJsonType,
+               detail::enable_if_t <
                    detail::is_basic_json<BasicJsonType>::value,
                    int > = 0 >
     BasicJsonType get_impl(detail::priority_tag<2> /*unused*/) const
@@ -3015,7 +3014,8 @@ class basic_json
 
     @since version 2.1.0
     */
-    template<typename BasicJsonType, detail::enable_if_t<
+    template<typename BasicJsonType,
+             detail::enable_if_t<
                  std::is_same<BasicJsonType, basic_json_t>::value,
                  int> = 0>
     basic_json get_impl(detail::priority_tag<3> /*unused*/) const
@@ -3027,8 +3027,10 @@ class basic_json
     @brief get a pointer value (explicit)
     @copydoc get()
     */
-    template<typename PointerType, detail::enable_if_t<
-                 std::is_pointer<PointerType>::value, int> = 0>
+    template<typename PointerType,
+             detail::enable_if_t<
+                 std::is_pointer<PointerType>::value,
+                 int> = 0>
     constexpr auto get_impl(detail::priority_tag<4> /*unused*/) const noexcept
     -> decltype(std::declval<const basic_json_t&>().template get_ptr<PointerType>())
     {
@@ -3061,8 +3063,9 @@ class basic_json
     @since version 2.1.0
     */
     template < typename ValueTypeCV, typename ValueType = detail::uncvref_t<ValueTypeCV>>
-    constexpr auto get() const noexcept(noexcept(get_impl<ValueType>(detail::priority_tag<4> {})))
-    -> decltype(get_impl<ValueType>(detail::priority_tag<4> {}))
+    constexpr auto get() const noexcept(
+    noexcept(std::declval<const basic_json_t&>().template get_impl<ValueType>(detail::priority_tag<4> {})))
+    -> decltype(std::declval<const basic_json_t&>().template get_impl<ValueType>(detail::priority_tag<4> {}))
     {
         // we cannot static_assert on ValueTypeCV being non-const, because
         // there is support for get<const basic_json_t>(), which is why we
