@@ -249,23 +249,16 @@ void())
     from_json_array_impl(j, arr, priority_tag<3> {});
 }
 
-template < typename T, typename BasicJsonType, typename ArrayType, std::size_t... Idx>
-ArrayType from_json_inplace_array_impl_base(BasicJsonType&& j, identity_tag<ArrayType> /*unused*/,
-        index_sequence<Idx...> /*unused*/)
+template < typename BasicJsonType, typename T, std::size_t... Idx >
+std::array<T, sizeof...(Idx)> from_json_inplace_array_impl(BasicJsonType&& j,
+        identity_tag<std::array<T, sizeof...(Idx)>> /*unused*/, index_sequence<Idx...> /*unused*/)
 {
     return { std::forward<BasicJsonType>(j).at(Idx).template get<T>()... };
 }
 
 template < typename BasicJsonType, typename T, std::size_t N >
-auto from_json_inplace_array_impl(BasicJsonType&& j, identity_tag<std::array<T, N>> tag, priority_tag<0> /*unused*/)
--> decltype(from_json_inplace_array_impl_base<T>(std::forward<BasicJsonType>(j), tag, make_index_sequence<N> {}))
-{
-    return from_json_inplace_array_impl_base<T>(std::forward<BasicJsonType>(j), tag, make_index_sequence<N> {});
-}
-
-template < typename BasicJsonType, typename ArrayType >
-auto from_json(BasicJsonType&& j, identity_tag<ArrayType> tag)
--> decltype(from_json_inplace_array_impl(std::forward<BasicJsonType>(j), tag, priority_tag<0> {}))
+auto from_json(BasicJsonType&& j, identity_tag<std::array<T, N>> tag)
+-> decltype(from_json_inplace_array_impl(std::forward<BasicJsonType>(j), tag, make_index_sequence<N> {}))
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
@@ -273,7 +266,7 @@ auto from_json(BasicJsonType&& j, identity_tag<ArrayType> tag)
                                       std::string(j.type_name())));
     }
 
-    return from_json_inplace_array_impl(std::forward<BasicJsonType>(j), tag, priority_tag<0> {});
+    return from_json_inplace_array_impl(std::forward<BasicJsonType>(j), tag, make_index_sequence<N> {});
 }
 
 template<typename BasicJsonType>
@@ -358,9 +351,8 @@ std::pair<A1, A2> from_json_pair_impl(BasicJsonType&& j, identity_tag<std::pair<
             std::forward<BasicJsonType>(j).at(1).template get<A2>()};
 }
 
-template<typename BasicJsonType, typename A1, typename A2,
-         enable_if_t<std::is_default_constructible<std::pair<A1, A2>>::value, int> = 0>
-void from_json_pair_impl(BasicJsonType && j, std::pair<A1, A2>& p, priority_tag<1> /*unused*/)
+template<typename BasicJsonType, typename A1, typename A2>
+void from_json_pair_impl(BasicJsonType&& j, std::pair<A1, A2>& p, priority_tag<1> /*unused*/)
 {
     p = from_json_pair_impl(std::forward<BasicJsonType>(j), identity_tag<std::pair<A1, A2>> {}, priority_tag<0> {});
 }
@@ -378,22 +370,27 @@ auto from_json(BasicJsonType&& j, PairRelatedType&& p)
     return from_json_pair_impl(std::forward<BasicJsonType>(j), std::forward<PairRelatedType>(p), priority_tag<1> {});
 }
 
-template<typename BasicJsonType, typename Tuple, std::size_t... Idx>
-Tuple from_json_tuple_impl(BasicJsonType&& j, identity_tag<Tuple> /*unused*/, index_sequence<Idx...> /*unused*/, priority_tag<0> /*unused*/)
+template<typename BasicJsonType, typename... Args, std::size_t... Idx>
+std::tuple<Args...> from_json_tuple_impl_base(BasicJsonType&& j, index_sequence<Idx...> /*unused*/)
 {
-    return std::make_tuple(std::forward<BasicJsonType>(j).at(Idx).template get<typename std::tuple_element<Idx, Tuple>::type>()...);
+    return std::make_tuple(std::forward<BasicJsonType>(j).at(Idx).template get<Args>()...);
 }
 
-template<typename BasicJsonType, typename Tuple, std::size_t... Idx,
-         enable_if_t<std::is_default_constructible<Tuple>::value, int> = 0>
-void from_json_tuple_impl(BasicJsonType && j, Tuple& t, index_sequence<Idx...> /*unused*/, priority_tag<1> /*unused*/)
+template<typename BasicJsonType, typename... Args>
+std::tuple<Args...> from_json_tuple_impl(BasicJsonType&& j, identity_tag<std::tuple<Args...>> /*unused*/, priority_tag<0> /*unused*/)
 {
-    t = from_json_tuple_impl(std::forward<BasicJsonType>(j), identity_tag<Tuple> {}, priority_tag<0> {});
+    return from_json_tuple_impl_base<BasicJsonType, Args...>(std::forward<BasicJsonType>(j), index_sequence_for<Args...> {});
 }
 
-template<typename BasicJsonType, typename TupleRelated, std::size_t... Idx>
-auto from_json_tuple(BasicJsonType&& j, TupleRelated&& t, index_sequence<Idx...> idx)
--> decltype(from_json_tuple_impl(std::forward<BasicJsonType>(j), std::forward<TupleRelated>(t), idx, priority_tag<1> {}))
+template<typename BasicJsonType, typename... Args>
+void from_json_tuple_impl(BasicJsonType&& j, std::tuple<Args...>& t, priority_tag<1> /*unused*/)
+{
+    t = from_json_tuple_impl_base<BasicJsonType, Args...>(std::forward<BasicJsonType>(j), index_sequence_for<Args...> {});
+}
+
+template<typename BasicJsonType, typename TupleRelated>
+auto from_json(BasicJsonType&& j, TupleRelated&& t)
+-> decltype(from_json_tuple_impl(std::forward<BasicJsonType>(j), std::forward<TupleRelated>(t), priority_tag<1> {}))
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
@@ -401,21 +398,7 @@ auto from_json_tuple(BasicJsonType&& j, TupleRelated&& t, index_sequence<Idx...>
                                       std::string(j.type_name())));
     }
 
-    return from_json_tuple_impl(std::forward<BasicJsonType>(j), std::forward<TupleRelated>(t), idx, priority_tag<1> {});
-}
-
-template<typename BasicJsonType, typename... Args>
-auto from_json(BasicJsonType&& j, std::tuple<Args...>& t)
--> decltype(from_json_tuple(std::forward<BasicJsonType>(j), t, index_sequence_for<Args...> {}))
-{
-    from_json_tuple(std::forward<BasicJsonType>(j), t, index_sequence_for<Args...> {});
-}
-
-template<typename BasicJsonType, typename... Args>
-auto from_json(BasicJsonType&& j, identity_tag<std::tuple<Args...>> tag)
--> decltype(from_json_tuple(std::forward<BasicJsonType>(j), std::move(tag), index_sequence_for<Args...> {}))
-{
-    return from_json_tuple(std::forward<BasicJsonType>(j), std::move(tag), index_sequence_for<Args...> {});
+    return from_json_tuple_impl(std::forward<BasicJsonType>(j), std::forward<TupleRelated>(t), priority_tag<1> {});
 }
 
 template < typename BasicJsonType, typename Key, typename Value, typename Compare, typename Allocator,
