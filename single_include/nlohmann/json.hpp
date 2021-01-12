@@ -3185,6 +3185,52 @@ struct has_to_json < BasicJsonType, T, enable_if_t < !is_basic_json<T>::value >>
 ///////////////////
 // is_ functions //
 ///////////////////
+// https://en.cppreference.com/w/cpp/types/conjunction
+template<class...> struct conjunction : std::true_type { };
+template<class B1> struct conjunction<B1> : B1 { };
+template<class B1, class... Bn>
+struct conjunction<B1, Bn...>
+: std::conditional<bool(B1::value), conjunction<Bn...>, B1>::type {};
+
+// Reimplementation of is_constructible and is_default_constructible, due to them being broken for
+// std::pair and std::tuple until LWG 2367 fix (see https://cplusplus.github.io/LWG/lwg-defects.html#2367).
+// This causes compile errors in e.g. clang 3.5 or gcc 4.9.
+// Based on commit fixing this in gcc: https://github.com/gcc-mirror/gcc/commit/d3c64041b32b6962ad6b2d879231537a477631fb
+template <typename T>
+struct is_default_constructible : std::is_default_constructible<T> {};
+
+template <typename T1, typename T2>
+struct is_default_constructible<std::pair<T1, T2>>
+            : conjunction<is_default_constructible<T1>, is_default_constructible<T2>> {};
+
+template <typename T1, typename T2>
+struct is_default_constructible<const std::pair<T1, T2>>
+            : conjunction<is_default_constructible<T1>, is_default_constructible<T2>> {};
+
+template <typename... Ts>
+struct is_default_constructible<std::tuple<Ts...>>
+            : conjunction<is_default_constructible<Ts>...> {};
+
+template <typename... Ts>
+struct is_default_constructible<const std::tuple<Ts...>>
+            : conjunction<is_default_constructible<Ts>...> {};
+
+
+template <typename T, typename... Args>
+struct is_constructible : std::is_constructible<T, Args...> {};
+
+template <typename T1, typename T2>
+struct is_constructible<std::pair<T1, T2>> : is_default_constructible<std::pair<T1, T2>> {};
+
+template <typename T1, typename T2>
+struct is_constructible<const std::pair<T1, T2>> : is_default_constructible<const std::pair<T1, T2>> {};
+
+template <typename... Ts>
+struct is_constructible<std::tuple<Ts...>> : is_default_constructible<std::tuple<Ts...>> {};
+
+template <typename... Ts>
+struct is_constructible<const std::tuple<Ts...>> : is_default_constructible<const std::tuple<Ts...>> {};
+
 
 template<typename T, typename = void>
 struct is_iterator_traits : std::false_type {};
@@ -3228,9 +3274,9 @@ struct is_compatible_object_type_impl <
 
     // macOS's is_constructible does not play well with nonesuch...
     static constexpr bool value =
-        std::is_constructible<typename object_t::key_type,
+        is_constructible<typename object_t::key_type,
         typename CompatibleObjectType::key_type>::value &&
-        std::is_constructible<typename object_t::mapped_type,
+        is_constructible<typename object_t::mapped_type,
         typename CompatibleObjectType::mapped_type>::value;
 };
 
@@ -3251,10 +3297,10 @@ struct is_constructible_object_type_impl <
     using object_t = typename BasicJsonType::object_t;
 
     static constexpr bool value =
-        (std::is_default_constructible<ConstructibleObjectType>::value &&
+        (is_default_constructible<ConstructibleObjectType>::value &&
          (std::is_move_assignable<ConstructibleObjectType>::value ||
           std::is_copy_assignable<ConstructibleObjectType>::value) &&
-         (std::is_constructible<typename ConstructibleObjectType::key_type,
+         (is_constructible<typename ConstructibleObjectType::key_type,
           typename object_t::key_type>::value &&
           std::is_same <
           typename object_t::mapped_type,
@@ -3282,7 +3328,7 @@ struct is_compatible_string_type_impl <
     value_type_t, CompatibleStringType>::value >>
 {
     static constexpr auto value =
-        std::is_constructible<typename BasicJsonType::string_t, CompatibleStringType>::value;
+        is_constructible<typename BasicJsonType::string_t, CompatibleStringType>::value;
 };
 
 template<typename BasicJsonType, typename ConstructibleStringType>
@@ -3300,7 +3346,7 @@ struct is_constructible_string_type_impl <
     value_type_t, ConstructibleStringType>::value >>
 {
     static constexpr auto value =
-        std::is_constructible<ConstructibleStringType,
+        is_constructible<ConstructibleStringType,
         typename BasicJsonType::string_t>::value;
 };
 
@@ -3323,7 +3369,7 @@ struct is_compatible_array_type_impl <
     iterator_traits<CompatibleArrayType >>::value >>
 {
     static constexpr bool value =
-        std::is_constructible<BasicJsonType,
+        is_constructible<BasicJsonType,
         typename CompatibleArrayType::value_type>::value;
 };
 
@@ -3346,7 +3392,7 @@ struct is_constructible_array_type_impl <
     BasicJsonType, ConstructibleArrayType,
     enable_if_t < !std::is_same<ConstructibleArrayType,
     typename BasicJsonType::value_type>::value&&
-    std::is_default_constructible<ConstructibleArrayType>::value&&
+    is_default_constructible<ConstructibleArrayType>::value&&
 (std::is_move_assignable<ConstructibleArrayType>::value ||
  std::is_copy_assignable<ConstructibleArrayType>::value)&&
 is_detected<value_type_t, ConstructibleArrayType>::value&&
@@ -3390,7 +3436,7 @@ struct is_compatible_integer_type_impl <
     using CompatibleLimits = std::numeric_limits<CompatibleNumberIntegerType>;
 
     static constexpr auto value =
-        std::is_constructible<RealIntegerType,
+        is_constructible<RealIntegerType,
         CompatibleNumberIntegerType>::value &&
         CompatibleLimits::is_integer &&
         RealLimits::is_signed == CompatibleLimits::is_signed;
@@ -3417,18 +3463,11 @@ template<typename BasicJsonType, typename CompatibleType>
 struct is_compatible_type
     : is_compatible_type_impl<BasicJsonType, CompatibleType> {};
 
-// https://en.cppreference.com/w/cpp/types/conjunction
-template<class...> struct conjunction : std::true_type { };
-template<class B1> struct conjunction<B1> : B1 { };
-template<class B1, class... Bn>
-struct conjunction<B1, Bn...>
-: std::conditional<bool(B1::value), conjunction<Bn...>, B1>::type {};
-
 template<typename T1, typename T2>
 struct is_constructible_tuple : std::false_type {};
 
 template<typename T1, typename... Args>
-struct is_constructible_tuple<T1, std::tuple<Args...>> : conjunction<std::is_constructible<T1, Args>...> {};
+struct is_constructible_tuple<T1, std::tuple<Args...>> : conjunction<is_constructible<T1, Args>...> {};
 }  // namespace detail
 }  // namespace nlohmann
 
@@ -3746,23 +3785,16 @@ void())
     from_json_array_impl(j, arr, priority_tag<3> {});
 }
 
-template < typename T, typename BasicJsonType, typename ArrayType, std::size_t... Idx>
-ArrayType from_json_inplace_array_impl_base(BasicJsonType&& j, identity_tag<ArrayType> /*unused*/,
-        index_sequence<Idx...> /*unused*/)
+template < typename BasicJsonType, typename T, std::size_t... Idx >
+std::array<T, sizeof...(Idx)> from_json_inplace_array_impl(BasicJsonType&& j,
+        identity_tag<std::array<T, sizeof...(Idx)>> /*unused*/, index_sequence<Idx...> /*unused*/)
 {
     return { std::forward<BasicJsonType>(j).at(Idx).template get<T>()... };
 }
 
 template < typename BasicJsonType, typename T, std::size_t N >
-auto from_json_inplace_array_impl(BasicJsonType&& j, identity_tag<std::array<T, N>> tag, priority_tag<0> /*unused*/)
--> decltype(from_json_inplace_array_impl_base<T>(std::forward<BasicJsonType>(j), tag, make_index_sequence<N> {}))
-{
-    return from_json_inplace_array_impl_base<T>(std::forward<BasicJsonType>(j), tag, make_index_sequence<N> {});
-}
-
-template < typename BasicJsonType, typename ArrayType >
-auto from_json(BasicJsonType&& j, identity_tag<ArrayType> tag)
--> decltype(from_json_inplace_array_impl(std::forward<BasicJsonType>(j), tag, priority_tag<0> {}))
+auto from_json(BasicJsonType&& j, identity_tag<std::array<T, N>> tag)
+-> decltype(from_json_inplace_array_impl(std::forward<BasicJsonType>(j), tag, make_index_sequence<N> {}))
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
@@ -3770,7 +3802,7 @@ auto from_json(BasicJsonType&& j, identity_tag<ArrayType> tag)
                                       std::string(j.type_name())));
     }
 
-    return from_json_inplace_array_impl(std::forward<BasicJsonType>(j), tag, priority_tag<0> {});
+    return from_json_inplace_array_impl(std::forward<BasicJsonType>(j), tag, make_index_sequence<N> {});
 }
 
 template<typename BasicJsonType>
@@ -3855,9 +3887,8 @@ std::pair<A1, A2> from_json_pair_impl(BasicJsonType&& j, identity_tag<std::pair<
             std::forward<BasicJsonType>(j).at(1).template get<A2>()};
 }
 
-template<typename BasicJsonType, typename A1, typename A2,
-         enable_if_t<std::is_default_constructible<std::pair<A1, A2>>::value, int> = 0>
-void from_json_pair_impl(BasicJsonType && j, std::pair<A1, A2>& p, priority_tag<1> /*unused*/)
+template<typename BasicJsonType, typename A1, typename A2>
+void from_json_pair_impl(BasicJsonType&& j, std::pair<A1, A2>& p, priority_tag<1> /*unused*/)
 {
     p = from_json_pair_impl(std::forward<BasicJsonType>(j), identity_tag<std::pair<A1, A2>> {}, priority_tag<0> {});
 }
@@ -3875,22 +3906,27 @@ auto from_json(BasicJsonType&& j, PairRelatedType&& p)
     return from_json_pair_impl(std::forward<BasicJsonType>(j), std::forward<PairRelatedType>(p), priority_tag<1> {});
 }
 
-template<typename BasicJsonType, typename Tuple, std::size_t... Idx>
-Tuple from_json_tuple_impl(BasicJsonType&& j, identity_tag<Tuple> /*unused*/, index_sequence<Idx...> /*unused*/, priority_tag<0> /*unused*/)
+template<typename BasicJsonType, typename... Args, std::size_t... Idx>
+std::tuple<Args...> from_json_tuple_impl_base(BasicJsonType&& j, index_sequence<Idx...> /*unused*/)
 {
-    return std::make_tuple(std::forward<BasicJsonType>(j).at(Idx).template get<typename std::tuple_element<Idx, Tuple>::type>()...);
+    return std::make_tuple(std::forward<BasicJsonType>(j).at(Idx).template get<Args>()...);
 }
 
-template<typename BasicJsonType, typename Tuple, std::size_t... Idx,
-         enable_if_t<std::is_default_constructible<Tuple>::value, int> = 0>
-void from_json_tuple_impl(BasicJsonType && j, Tuple& t, index_sequence<Idx...> /*unused*/, priority_tag<1> /*unused*/)
+template<typename BasicJsonType, typename... Args>
+std::tuple<Args...> from_json_tuple_impl(BasicJsonType&& j, identity_tag<std::tuple<Args...>> /*unused*/, priority_tag<0> /*unused*/)
 {
-    t = from_json_tuple_impl(std::forward<BasicJsonType>(j), identity_tag<Tuple> {}, priority_tag<0> {});
+    return from_json_tuple_impl_base<BasicJsonType, Args...>(std::forward<BasicJsonType>(j), index_sequence_for<Args...> {});
 }
 
-template<typename BasicJsonType, typename TupleRelated, std::size_t... Idx>
-auto from_json_tuple(BasicJsonType&& j, TupleRelated&& t, index_sequence<Idx...> idx)
--> decltype(from_json_tuple_impl(std::forward<BasicJsonType>(j), std::forward<TupleRelated>(t), idx, priority_tag<1> {}))
+template<typename BasicJsonType, typename... Args>
+void from_json_tuple_impl(BasicJsonType&& j, std::tuple<Args...>& t, priority_tag<1> /*unused*/)
+{
+    t = from_json_tuple_impl_base<BasicJsonType, Args...>(std::forward<BasicJsonType>(j), index_sequence_for<Args...> {});
+}
+
+template<typename BasicJsonType, typename TupleRelated>
+auto from_json(BasicJsonType&& j, TupleRelated&& t)
+-> decltype(from_json_tuple_impl(std::forward<BasicJsonType>(j), std::forward<TupleRelated>(t), priority_tag<1> {}))
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
@@ -3898,21 +3934,7 @@ auto from_json_tuple(BasicJsonType&& j, TupleRelated&& t, index_sequence<Idx...>
                                       std::string(j.type_name())));
     }
 
-    return from_json_tuple_impl(std::forward<BasicJsonType>(j), std::forward<TupleRelated>(t), idx, priority_tag<1> {});
-}
-
-template<typename BasicJsonType, typename... Args>
-auto from_json(BasicJsonType&& j, std::tuple<Args...>& t)
--> decltype(from_json_tuple(std::forward<BasicJsonType>(j), t, index_sequence_for<Args...> {}))
-{
-    from_json_tuple(std::forward<BasicJsonType>(j), t, index_sequence_for<Args...> {});
-}
-
-template<typename BasicJsonType, typename... Args>
-auto from_json(BasicJsonType&& j, identity_tag<std::tuple<Args...>> tag)
--> decltype(from_json_tuple(std::forward<BasicJsonType>(j), std::move(tag), index_sequence_for<Args...> {}))
-{
-    return from_json_tuple(std::forward<BasicJsonType>(j), std::move(tag), index_sequence_for<Args...> {});
+    return from_json_tuple_impl(std::forward<BasicJsonType>(j), std::forward<TupleRelated>(t), priority_tag<1> {});
 }
 
 template < typename BasicJsonType, typename Key, typename Value, typename Compare, typename Allocator,
@@ -19575,50 +19597,53 @@ class basic_json
     /// @{
 
     /*!
-    @brief get special-case overload
+    @brief get a pointer value (implicit)
 
-    This overloads avoids a lot of template boilerplate, it can be seen as the
-    identity method
+    Implicit pointer access to the internally stored JSON value. No copies are
+    made.
 
-    @tparam BasicJsonType == @ref basic_json
+    @warning Writing data to the pointee of the result yields an undefined
+    state.
 
-    @return a copy of *this
+    @tparam PointerType pointer type; must be a pointer to @ref array_t, @ref
+    object_t, @ref string_t, @ref boolean_t, @ref number_integer_t,
+    @ref number_unsigned_t, or @ref number_float_t. Enforced by a static
+    assertion.
+
+    @return pointer to the internally stored JSON value if the requested
+    pointer type @a PointerType fits to the JSON value; `nullptr` otherwise
 
     @complexity Constant.
 
-    @since version 2.1.0
+    @liveexample{The example below shows how pointers to internal values of a
+    JSON value can be requested. Note that no type conversions are made and a
+    `nullptr` is returned if the value and the requested pointer type does not
+    match.,get_ptr}
+
+    @since version 1.0.0
     */
-    template<typename BasicJsonType, detail::enable_if_t<
-                 std::is_same<typename std::remove_const<BasicJsonType>::type, basic_json_t>::value,
-                 int> = 0>
-    basic_json get() const
+    template<typename PointerType, typename std::enable_if<
+                 std::is_pointer<PointerType>::value, int>::type = 0>
+    auto get_ptr() noexcept -> decltype(std::declval<basic_json_t&>().get_impl_ptr(std::declval<PointerType>()))
     {
-        return *this;
+        // delegate the call to get_impl_ptr<>()
+        return get_impl_ptr(static_cast<PointerType>(nullptr));
     }
 
     /*!
-    @brief get special-case overload
-
-    This overloads converts the current @ref basic_json in a different
-    @ref basic_json type
-
-    @tparam BasicJsonType == @ref basic_json
-
-    @return a copy of *this, converted into @tparam BasicJsonType
-
-    @complexity Depending on the implementation of the called `from_json()`
-                method.
-
-    @since version 3.2.0
+    @brief get a pointer value (implicit)
+    @copydoc get_ptr()
     */
-    template < typename BasicJsonType, detail::enable_if_t <
-                   !std::is_same<BasicJsonType, basic_json>::value&&
-                   detail::is_basic_json<BasicJsonType>::value, int > = 0 >
-    BasicJsonType get() const
+    template < typename PointerType, typename std::enable_if <
+                   std::is_pointer<PointerType>::value&&
+                   std::is_const<typename std::remove_pointer<PointerType>::type>::value, int >::type = 0 >
+    constexpr auto get_ptr() const noexcept -> decltype(std::declval<const basic_json_t&>().get_impl_ptr(std::declval<PointerType>()))
     {
-        return *this;
+        // delegate the call to get_impl_ptr<>() const
+        return get_impl_ptr(static_cast<PointerType>(nullptr));
     }
 
+  private:
     /*!
     @brief get a value (explicit)
 
@@ -19660,21 +19685,12 @@ class basic_json
     */
     template < typename ValueTypeCV, typename ValueType = detail::uncvref_t<ValueTypeCV>,
                detail::enable_if_t <
-                   !detail::is_basic_json<ValueType>::value &&
-                   detail::has_from_json<basic_json_t, ValueType>::value &&
-                   !detail::has_non_default_from_json<basic_json_t, ValueType>::value,
+                   detail::is_default_constructible<ValueType>::value &&
+                   detail::has_from_json<basic_json_t, ValueType>::value,
                    int > = 0 >
-    ValueType get() const noexcept(noexcept(
-                                       JSONSerializer<ValueType>::from_json(std::declval<const basic_json_t&>(), std::declval<ValueType&>())))
+    ValueType get_impl(detail::priority_tag<0> /*unused*/) const noexcept(noexcept(
+                JSONSerializer<ValueType>::from_json(std::declval<const basic_json_t&>(), std::declval<ValueType&>())))
     {
-        // we cannot static_assert on ValueTypeCV being non-const, because
-        // there is support for get<const basic_json_t>(), which is why we
-        // still need the uncvref
-        static_assert(!std::is_reference<ValueTypeCV>::value,
-                      "get() cannot be used with reference types, you might want to use get_ref()");
-        static_assert(std::is_default_constructible<ValueType>::value,
-                      "types must be DefaultConstructible when used with get()");
-
         ValueType ret;
         JSONSerializer<ValueType>::from_json(*this, ret);
         return ret;
@@ -19712,15 +19728,142 @@ class basic_json
     @since version 2.1.0
     */
     template < typename ValueTypeCV, typename ValueType = detail::uncvref_t<ValueTypeCV>,
-               detail::enable_if_t < !std::is_same<basic_json_t, ValueType>::value &&
-                                     detail::has_non_default_from_json<basic_json_t, ValueType>::value,
-                                     int > = 0 >
-    ValueType get() const noexcept(noexcept(
-                                       JSONSerializer<ValueType>::from_json(std::declval<const basic_json_t&>())))
+               detail::enable_if_t <
+                   detail::has_non_default_from_json<basic_json_t, ValueType>::value,
+                   int > = 0 >
+    ValueType get_impl(detail::priority_tag<1> /*unused*/) const noexcept(noexcept(
+                JSONSerializer<ValueType>::from_json(std::declval<const basic_json_t&>())))
     {
+        return JSONSerializer<ValueType>::from_json(*this);
+    }
+
+    /*!
+    @brief get special-case overload
+
+    This overloads converts the current @ref basic_json in a different
+    @ref basic_json type
+
+    @tparam BasicJsonType == @ref basic_json
+
+    @return a copy of *this, converted into @tparam BasicJsonType
+
+    @complexity Depending on the implementation of the called `from_json()`
+                method.
+
+    @since version 3.2.0
+    */
+    template < typename BasicJsonType, detail::enable_if_t <
+                   detail::is_basic_json<BasicJsonType>::value,
+                   int > = 0 >
+    BasicJsonType get_impl(detail::priority_tag<2> /*unused*/) const
+    {
+        return *this;
+    }
+
+    /*!
+    @brief get special-case overload
+
+    This overloads avoids a lot of template boilerplate, it can be seen as the
+    identity method
+
+    @tparam BasicJsonType == @ref basic_json
+
+    @return a copy of *this
+
+    @complexity Constant.
+
+    @since version 2.1.0
+    */
+    template<typename BasicJsonType, detail::enable_if_t<
+                 std::is_same<BasicJsonType, basic_json_t>::value,
+                 int> = 0>
+    basic_json get_impl(detail::priority_tag<3> /*unused*/) const
+    {
+        return *this;
+    }
+
+    /*!
+    @brief get a pointer value (explicit)
+    @copydoc get()
+    */
+    template<typename PointerType, detail::enable_if_t<
+                 std::is_pointer<PointerType>::value, int> = 0>
+    constexpr auto get_impl(detail::priority_tag<4> /*unused*/) const noexcept
+    -> decltype(std::declval<const basic_json_t&>().template get_ptr<PointerType>())
+    {
+        // delegate the call to get_ptr
+        return get_ptr<PointerType>();
+    }
+
+  public:
+    /*!
+    @brief get a (pointer) value (explicit)
+
+    Performs explicit type conversion between the JSON value and a compatible value if required.
+
+    - If the requested type is a pointer to the internally stored JSON value that pointer is returned.
+    No copies are made.
+
+    - If the requested type is the current @ref basic_json, or a different @ref basic_json convertible
+    from the current @ref basic_json.
+
+    - Otherwise the value is converted by calling the @ref json_serializer<ValueType> `from_json()`
+    method.
+
+    @tparam ValueTypeCV the provided value type
+    @tparam ValueType the returned value type
+
+    @return copy of the JSON value, converted to @tparam ValueType if necessary
+
+    @throw what @ref json_serializer<ValueType> `from_json()` method throws if conversion is required
+
+    @since version 2.1.0
+    */
+    template < typename ValueTypeCV, typename ValueType = detail::uncvref_t<ValueTypeCV>>
+    constexpr auto get() const noexcept(noexcept(get_impl<ValueType>(detail::priority_tag<4> {})))
+    -> decltype(get_impl<ValueType>(detail::priority_tag<4> {}))
+    {
+        // we cannot static_assert on ValueTypeCV being non-const, because
+        // there is support for get<const basic_json_t>(), which is why we
+        // still need the uncvref
         static_assert(!std::is_reference<ValueTypeCV>::value,
                       "get() cannot be used with reference types, you might want to use get_ref()");
-        return JSONSerializer<ValueType>::from_json(*this);
+        return get_impl<ValueType>(detail::priority_tag<4> {});
+    }
+
+    /*!
+    @brief get a pointer value (explicit)
+
+    Explicit pointer access to the internally stored JSON value. No copies are
+    made.
+
+    @warning The pointer becomes invalid if the underlying JSON object
+    changes.
+
+    @tparam PointerType pointer type; must be a pointer to @ref array_t, @ref
+    object_t, @ref string_t, @ref boolean_t, @ref number_integer_t,
+    @ref number_unsigned_t, or @ref number_float_t.
+
+    @return pointer to the internally stored JSON value if the requested
+    pointer type @a PointerType fits to the JSON value; `nullptr` otherwise
+
+    @complexity Constant.
+
+    @liveexample{The example below shows how pointers to internal values of a
+    JSON value can be requested. Note that no type conversions are made and a
+    `nullptr` is returned if the value and the requested pointer type does not
+    match.,get__PointerType}
+
+    @sa @ref get_ptr() for explicit pointer-member access
+
+    @since version 1.0.0
+    */
+    template<typename PointerType, typename std::enable_if<
+                 std::is_pointer<PointerType>::value, int>::type = 0>
+    auto get() noexcept -> decltype(std::declval<basic_json_t&>().template get_ptr<PointerType>())
+    {
+        // delegate the call to get_ptr
+        return get_ptr<PointerType>();
     }
 
     /*!
@@ -19791,101 +19934,6 @@ class basic_json
     {
         JSONSerializer<Array>::from_json(*this, v);
         return v;
-    }
-
-
-    /*!
-    @brief get a pointer value (implicit)
-
-    Implicit pointer access to the internally stored JSON value. No copies are
-    made.
-
-    @warning Writing data to the pointee of the result yields an undefined
-    state.
-
-    @tparam PointerType pointer type; must be a pointer to @ref array_t, @ref
-    object_t, @ref string_t, @ref boolean_t, @ref number_integer_t,
-    @ref number_unsigned_t, or @ref number_float_t. Enforced by a static
-    assertion.
-
-    @return pointer to the internally stored JSON value if the requested
-    pointer type @a PointerType fits to the JSON value; `nullptr` otherwise
-
-    @complexity Constant.
-
-    @liveexample{The example below shows how pointers to internal values of a
-    JSON value can be requested. Note that no type conversions are made and a
-    `nullptr` is returned if the value and the requested pointer type does not
-    match.,get_ptr}
-
-    @since version 1.0.0
-    */
-    template<typename PointerType, typename std::enable_if<
-                 std::is_pointer<PointerType>::value, int>::type = 0>
-    auto get_ptr() noexcept -> decltype(std::declval<basic_json_t&>().get_impl_ptr(std::declval<PointerType>()))
-    {
-        // delegate the call to get_impl_ptr<>()
-        return get_impl_ptr(static_cast<PointerType>(nullptr));
-    }
-
-    /*!
-    @brief get a pointer value (implicit)
-    @copydoc get_ptr()
-    */
-    template < typename PointerType, typename std::enable_if <
-                   std::is_pointer<PointerType>::value&&
-                   std::is_const<typename std::remove_pointer<PointerType>::type>::value, int >::type = 0 >
-    constexpr auto get_ptr() const noexcept -> decltype(std::declval<const basic_json_t&>().get_impl_ptr(std::declval<PointerType>()))
-    {
-        // delegate the call to get_impl_ptr<>() const
-        return get_impl_ptr(static_cast<PointerType>(nullptr));
-    }
-
-    /*!
-    @brief get a pointer value (explicit)
-
-    Explicit pointer access to the internally stored JSON value. No copies are
-    made.
-
-    @warning The pointer becomes invalid if the underlying JSON object
-    changes.
-
-    @tparam PointerType pointer type; must be a pointer to @ref array_t, @ref
-    object_t, @ref string_t, @ref boolean_t, @ref number_integer_t,
-    @ref number_unsigned_t, or @ref number_float_t.
-
-    @return pointer to the internally stored JSON value if the requested
-    pointer type @a PointerType fits to the JSON value; `nullptr` otherwise
-
-    @complexity Constant.
-
-    @liveexample{The example below shows how pointers to internal values of a
-    JSON value can be requested. Note that no type conversions are made and a
-    `nullptr` is returned if the value and the requested pointer type does not
-    match.,get__PointerType}
-
-    @sa @ref get_ptr() for explicit pointer-member access
-
-    @since version 1.0.0
-    */
-    template<typename PointerType, typename std::enable_if<
-                 std::is_pointer<PointerType>::value, int>::type = 0>
-    auto get() noexcept -> decltype(std::declval<basic_json_t&>().template get_ptr<PointerType>())
-    {
-        // delegate the call to get_ptr
-        return get_ptr<PointerType>();
-    }
-
-    /*!
-    @brief get a pointer value (explicit)
-    @copydoc get()
-    */
-    template<typename PointerType, typename std::enable_if<
-                 std::is_pointer<PointerType>::value, int>::type = 0>
-    constexpr auto get() const noexcept -> decltype(std::declval<const basic_json_t&>().template get_ptr<PointerType>())
-    {
-        // delegate the call to get_ptr
-        return get_ptr<PointerType>();
     }
 
     /*!
