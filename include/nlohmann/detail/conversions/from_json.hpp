@@ -188,7 +188,10 @@ auto from_json_array_impl(const BasicJsonType& j, std::array<T, N>& arr,
     }
 }
 
-template<typename BasicJsonType, typename ConstructibleArrayType>
+template<typename BasicJsonType, typename ConstructibleArrayType,
+         enable_if_t<
+             std::is_assignable<ConstructibleArrayType&, ConstructibleArrayType>::value,
+             int> = 0>
 auto from_json_array_impl(const BasicJsonType& j, ConstructibleArrayType& arr, priority_tag<1> /*unused*/)
 -> decltype(
     arr.reserve(std::declval<typename ConstructibleArrayType::size_type>()),
@@ -209,7 +212,10 @@ auto from_json_array_impl(const BasicJsonType& j, ConstructibleArrayType& arr, p
     arr = std::move(ret);
 }
 
-template<typename BasicJsonType, typename ConstructibleArrayType>
+template<typename BasicJsonType, typename ConstructibleArrayType,
+         enable_if_t<
+             std::is_assignable<ConstructibleArrayType&, ConstructibleArrayType>::value,
+             int> = 0>
 void from_json_array_impl(const BasicJsonType& j, ConstructibleArrayType& arr,
                           priority_tag<0> /*unused*/)
 {
@@ -344,53 +350,40 @@ void from_json(const BasicJsonType& j, ArithmeticType& val)
     }
 }
 
-template < typename BasicJsonType, class A1, class A2 >
-std::pair<A1, A2> from_json_pair_impl(BasicJsonType&& j, identity_tag<std::pair<A1, A2>> /*unused*/, priority_tag<0> /*unused*/)
-{
-    return {std::forward<BasicJsonType>(j).at(0).template get<A1>(),
-            std::forward<BasicJsonType>(j).at(1).template get<A2>()};
-}
-
-template<typename BasicJsonType, typename A1, typename A2>
-void from_json_pair_impl(BasicJsonType&& j, std::pair<A1, A2>& p, priority_tag<1> /*unused*/)
-{
-    p = from_json_pair_impl(std::forward<BasicJsonType>(j), identity_tag<std::pair<A1, A2>> {}, priority_tag<0> {});
-}
-
-template<typename BasicJsonType, typename PairRelatedType>
-auto from_json(BasicJsonType&& j, PairRelatedType&& p)
--> decltype(from_json_pair_impl(std::forward<BasicJsonType>(j), std::forward<PairRelatedType>(p), priority_tag<1> {}))
-{
-    if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
-    {
-        JSON_THROW(type_error::create(302, "type must be array, but is " +
-                                      std::string(j.type_name())));
-    }
-
-    return from_json_pair_impl(std::forward<BasicJsonType>(j), std::forward<PairRelatedType>(p), priority_tag<1> {});
-}
-
 template<typename BasicJsonType, typename... Args, std::size_t... Idx>
 std::tuple<Args...> from_json_tuple_impl_base(BasicJsonType&& j, index_sequence<Idx...> /*unused*/)
 {
     return std::make_tuple(std::forward<BasicJsonType>(j).at(Idx).template get<Args>()...);
 }
 
+template < typename BasicJsonType, class A1, class A2 >
+std::pair<A1, A2> from_json_tuple_impl(BasicJsonType&& j, identity_tag<std::pair<A1, A2>> /*unused*/, priority_tag<0> /*unused*/)
+{
+    return {std::forward<BasicJsonType>(j).at(0).template get<A1>(),
+            std::forward<BasicJsonType>(j).at(1).template get<A2>()};
+}
+
+template<typename BasicJsonType, typename A1, typename A2>
+void from_json_tuple_impl(BasicJsonType&& j, std::pair<A1, A2>& p, priority_tag<1> /*unused*/)
+{
+    p = from_json_tuple_impl(std::forward<BasicJsonType>(j), identity_tag<std::pair<A1, A2>> {}, priority_tag<0> {});
+}
+
 template<typename BasicJsonType, typename... Args>
-std::tuple<Args...> from_json_tuple_impl(BasicJsonType&& j, identity_tag<std::tuple<Args...>> /*unused*/, priority_tag<0> /*unused*/)
+std::tuple<Args...> from_json_tuple_impl(BasicJsonType&& j, identity_tag<std::tuple<Args...>> /*unused*/, priority_tag<2> /*unused*/)
 {
     return from_json_tuple_impl_base<BasicJsonType, Args...>(std::forward<BasicJsonType>(j), index_sequence_for<Args...> {});
 }
 
 template<typename BasicJsonType, typename... Args>
-void from_json_tuple_impl(BasicJsonType&& j, std::tuple<Args...>& t, priority_tag<1> /*unused*/)
+void from_json_tuple_impl(BasicJsonType&& j, std::tuple<Args...>& t, priority_tag<3> /*unused*/)
 {
     t = from_json_tuple_impl_base<BasicJsonType, Args...>(std::forward<BasicJsonType>(j), index_sequence_for<Args...> {});
 }
 
 template<typename BasicJsonType, typename TupleRelated>
 auto from_json(BasicJsonType&& j, TupleRelated&& t)
--> decltype(from_json_tuple_impl(std::forward<BasicJsonType>(j), std::forward<TupleRelated>(t), priority_tag<1> {}))
+-> decltype(from_json_tuple_impl(std::forward<BasicJsonType>(j), std::forward<TupleRelated>(t), priority_tag<3> {}))
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
@@ -398,7 +391,7 @@ auto from_json(BasicJsonType&& j, TupleRelated&& t)
                                       std::string(j.type_name())));
     }
 
-    return from_json_tuple_impl(std::forward<BasicJsonType>(j), std::forward<TupleRelated>(t), priority_tag<1> {});
+    return from_json_tuple_impl(std::forward<BasicJsonType>(j), std::forward<TupleRelated>(t), priority_tag<3> {});
 }
 
 template < typename BasicJsonType, typename Key, typename Value, typename Compare, typename Allocator,
