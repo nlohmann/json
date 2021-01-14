@@ -4337,9 +4337,7 @@ struct external_constructor<value_t::array>
         for (const bool x : arr)
         {
             j.m_value.array->push_back(x);
-#if JSON_DIAGNOSTICS
-            j.m_value.array->back().m_parent = &j;
-#endif
+            j.set_parent(j.m_value.array->back());
         }
         j.assert_invariant();
     }
