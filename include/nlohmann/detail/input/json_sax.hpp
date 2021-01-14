@@ -236,7 +236,7 @@ class json_sax_dom_parser
 
     bool end_object()
     {
-        ref_stack.back()->set_parent(*ref_stack.back(), true);
+        ref_stack.back()->set_parents();
         ref_stack.pop_back();
         return true;
     }
@@ -255,7 +255,7 @@ class json_sax_dom_parser
 
     bool end_array()
     {
-        ref_stack.back()->set_parent(*ref_stack.back(), true);
+        ref_stack.back()->set_parents();
         ref_stack.pop_back();
         return true;
     }
@@ -437,7 +437,7 @@ class json_sax_dom_callback_parser
             }
             else
             {
-                ref_stack.back()->set_parent(*ref_stack.back(), true);
+                ref_stack.back()->set_parents();
             }
         }
 
@@ -488,7 +488,7 @@ class json_sax_dom_callback_parser
             keep = callback(static_cast<int>(ref_stack.size()) - 1, parse_event_t::array_end, *ref_stack.back());
             if (keep)
             {
-                ref_stack.back()->set_parent(*ref_stack.back(), true);
+                ref_stack.back()->set_parents();
             }
             else
             {
