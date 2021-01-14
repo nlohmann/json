@@ -18042,6 +18042,19 @@ class basic_json
 #endif
     }
 
+    iterator set_parents(iterator it, typename iterator::difference_type count)
+    {
+#if JSON_DIAGNOSTICS
+        for (typename iterator::difference_type i = 0; i < count; ++i)
+        {
+            (it + i)->m_parent = this;
+        }
+#else
+        static_cast<void>(count);
+#endif
+        return it;
+    }
+
     reference set_parent(reference j)
     {
 #if JSON_DIAGNOSTICS
@@ -20356,7 +20369,7 @@ class basic_json
                 // set parent for values added above
                 for (auto i = previous_size; i <= idx; ++i)
                 {
-                    m_value.array->operator[](i).m_parent = this;
+                    set_parent(m_value.array->operator[](i));
                 }
 #endif
             }
@@ -22391,13 +22404,7 @@ class basic_json
             }
 
             // insert to array and return iterator
-#if JSON_DIAGNOSTICS
-            iterator result = insert_iterator(pos, val);
-            result->m_parent = this;
-            return result;
-#else
-            return insert_iterator(pos, val);
-#endif
+            return set_parents(insert_iterator(pos, val), static_cast<typename iterator::difference_type>(1));
         }
 
         JSON_THROW(type_error::create(309, "cannot use insert() with " + std::string(type_name()), diagnostics_t(*this)));
@@ -22448,16 +22455,7 @@ class basic_json
             }
 
             // insert to array and return iterator
-#if JSON_DIAGNOSTICS
-            iterator result = insert_iterator(pos, cnt, val);
-            for (size_type i = 0; i < cnt; ++i)
-            {
-                (result + static_cast<typename iterator::difference_type>(i))->m_parent = this;
-            }
-            return result;
-#else
-            return insert_iterator(pos, cnt, val);
-#endif
+            return set_parents(insert_iterator(pos, cnt, val), static_cast<typename iterator::difference_type>(cnt));
         }
 
         JSON_THROW(type_error::create(309, "cannot use insert() with " + std::string(type_name()), diagnostics_t(*this)));
@@ -22519,16 +22517,7 @@ class basic_json
         }
 
         // insert to array and return iterator
-#if JSON_DIAGNOSTICS
-        iterator result = insert_iterator(pos, first.m_it.array_iterator, last.m_it.array_iterator);
-        for (typename iterator::difference_type i = 0; i < std::distance(first, last); ++i)
-        {
-            (result + i)->m_parent = this;
-        }
-        return result;
-#else
-        return insert_iterator(pos, first.m_it.array_iterator, last.m_it.array_iterator);
-#endif
+        return set_parents(insert_iterator(pos, first.m_it.array_iterator, last.m_it.array_iterator), std::distance(first, last));
     }
 
     /*!
@@ -22570,17 +22559,7 @@ class basic_json
         }
 
         // insert to array and return iterator
-#if JSON_DIAGNOSTICS
-        const auto size = ilist.size();
-        iterator result =  insert_iterator(pos, ilist.begin(), ilist.end());
-        for (std::size_t i = 0; i < size; ++i)
-        {
-            (result + static_cast<typename iterator::difference_type>(i))->m_parent = this;
-        }
-        return result;
-#else
-        return insert_iterator(pos, ilist.begin(), ilist.end());
-#endif
+        return set_parents(insert_iterator(pos, ilist.begin(), ilist.end()), static_cast<typename iterator::difference_type>(ilist.size()));
     }
 
     /*!
