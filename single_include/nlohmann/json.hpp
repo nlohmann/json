@@ -17996,7 +17996,7 @@ class basic_json
     container's elements must have the current value as parent.
 
     @param[in] check_parents  whether the parent relation should be checked.
-               The value is true by default and should only be set to true
+               The value is true by default and should only be set to false
                during destruction of objects when the invariant does not
                need to hold.
     */
