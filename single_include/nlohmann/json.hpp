@@ -20364,8 +20364,10 @@ class basic_json
 #endif
                 m_value.array->resize(idx + 1);
 
+#if JSON_DIAGNOSTICS
                 // set parent for values added above
                 set_parents(begin() + previous_size, idx + 1 - previous_size);
+#endif
             }
 
             return m_value.array->operator[](idx);
