@@ -3607,16 +3607,10 @@ class basic_json
                 // remember array size before resizing
                 const auto previous_size = m_value.array->size();
 #endif
-
                 m_value.array->resize(idx + 1);
 
-#if JSON_DIAGNOSTICS
                 // set parent for values added above
-                for (auto i = previous_size; i <= idx; ++i)
-                {
-                    set_parent(m_value.array->operator[](i));
-                }
-#endif
+                set_parents(begin() + previous_size, idx + 1 - previous_size);
             }
 
             return m_value.array->operator[](idx);
@@ -5985,6 +5979,7 @@ class basic_json
         std::swap(m_value, other.m_value);
 
         set_parents();
+        other.set_parents();
         assert_invariant();
     }
 
