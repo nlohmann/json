@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <nlohmann/detail/value_t.hpp>
+#include <nlohmann/detail/string_escape.hpp>
 
 namespace nlohmann
 {
@@ -70,7 +71,7 @@ class diagnostics_t
         return "(" + std::accumulate(tokens.rbegin(), tokens.rend(), std::string{},
                                      [](const std::string & a, const std::string & b)
         {
-            return a + "/" + b;
+            return a + "/" + detail::escape(b);
         }) + ") ";
 #else
         return "";

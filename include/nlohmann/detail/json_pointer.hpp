@@ -11,6 +11,7 @@
 #include <nlohmann/detail/diagnostics_t.hpp>
 #include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
+#include <nlohmann/detail/string_escape.hpp>
 #include <nlohmann/detail/value_t.hpp>
 
 namespace nlohmann
@@ -70,7 +71,7 @@ class json_pointer
                                std::string{},
                                [](const std::string & a, const std::string & b)
         {
-            return a + "/" + escape(b);
+            return a + "/" + detail::escape(b);
         });
     }
 
@@ -791,51 +792,11 @@ class json_pointer
             }
 
             // finally, store the reference token
-            unescape(reference_token);
+            detail::unescape(reference_token);
             result.push_back(reference_token);
         }
 
         return result;
-    }
-
-    /*!
-    @brief replace all occurrences of a substring by another string
-
-    @param[in,out] s  the string to manipulate; changed so that all
-                   occurrences of @a f are replaced with @a t
-    @param[in]     f  the substring to replace with @a t
-    @param[in]     t  the string to replace @a f
-
-    @pre The search string @a f must not be empty. **This precondition is
-    enforced with an assertion.**
-
-    @since version 2.0.0
-    */
-    static void replace_substring(std::string& s, const std::string& f,
-                                  const std::string& t)
-    {
-        JSON_ASSERT(!f.empty());
-        for (auto pos = s.find(f);                // find first occurrence of f
-                pos != std::string::npos;         // make sure f was found
-                s.replace(pos, f.size(), t),      // replace with t, and
-                pos = s.find(f, pos + t.size()))  // find next occurrence of f
-        {}
-    }
-
-  JSON_PRIVATE_UNLESS_TESTED:
-    /// escape "~" to "~0" and "/" to "~1"
-    static std::string escape(std::string s)
-    {
-        replace_substring(s, "~", "~0");
-        replace_substring(s, "/", "~1");
-        return s;
-    }
-
-    /// unescape "~1" to tilde and "~0" to slash (order is important!)
-    static void unescape(std::string& s)
-    {
-        replace_substring(s, "~1", "/");
-        replace_substring(s, "~0", "~");
     }
 
   private:
@@ -883,7 +844,7 @@ class json_pointer
                     // iterate object and use keys as reference string
                     for (const auto& element : *value.m_value.object)
                     {
-                        flatten(reference_string + "/" + escape(element.first), element.second, result);
+                        flatten(reference_string + "/" + detail::escape(element.first), element.second, result);
                     }
                 }
                 break;

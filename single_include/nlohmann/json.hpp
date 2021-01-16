@@ -161,116 +161,10 @@ inline bool operator<(const value_t lhs, const value_t rhs) noexcept
 }  // namespace detail
 }  // namespace nlohmann
 
-
-namespace nlohmann
-{
-namespace detail
-{
-
-template<typename BasicJsonType>
-class diagnostics_t
-{
-  public:
-    diagnostics_t() noexcept = default;
-    diagnostics_t(const BasicJsonType& j) noexcept
-        : m_j(&j)
-    {}
-
-    std::string diagnostics() const
-    {
-#if JSON_DIAGNOSTICS
-        if (m_j == nullptr)
-        {
-            return "";
-        }
-
-        std::vector<std::string> tokens;
-        for (const auto* current = m_j; current->m_parent != nullptr; current = current->m_parent)
-        {
-            switch (current->m_parent->type())
-            {
-                case value_t::array:
-                {
-                    for (std::size_t i = 0; i < current->m_parent->m_value.array->size(); ++i)
-                    {
-                        if (current->m_parent->m_value.array->operator[](i) == *current)
-                        {
-                            tokens.emplace_back(std::to_string(i));
-                            continue;
-                        }
-                    }
-                    break;
-                }
-
-                case value_t::object:
-                {
-                    for (const auto& element : *current->m_parent->m_value.object)
-                    {
-                        if (element.second == *current)
-                        {
-                            tokens.emplace_back(element.first.c_str());
-                            continue;
-                        }
-                    }
-                    break;
-                }
-
-                default:
-                    break;
-            }
-        }
-
-        if (tokens.empty())
-        {
-            return "";
-        }
-
-        return "(" + std::accumulate(tokens.rbegin(), tokens.rend(), std::string{},
-                                     [](const std::string & a, const std::string & b)
-        {
-            return a + "/" + b;
-        }) + ") ";
-#else
-        return "";
-#endif
-    }
-
-  private:
-    const BasicJsonType* m_j = static_cast<const BasicJsonType*>(nullptr);
-};
-
-} // namespace detail
-} // namespace nlohmann
-
-// #include <nlohmann/detail/input/position_t.hpp>
+// #include <nlohmann/detail/string_escape.hpp>
 
 
-#include <cstddef> // size_t
-
-namespace nlohmann
-{
-namespace detail
-{
-/// struct to capture the start position of the current token
-struct position_t
-{
-    /// the total number of characters read
-    std::size_t chars_read_total = 0;
-    /// the number of characters read in the current line
-    std::size_t chars_read_current_line = 0;
-    /// the number of lines read
-    std::size_t lines_read = 0;
-
-    /// conversion to size_t to preserve SAX interface
-    constexpr operator size_t() const
-    {
-        return chars_read_total;
-    }
-};
-
-} // namespace detail
-} // namespace nlohmann
-
+#include <string>
 // #include <nlohmann/detail/macro_scope.hpp>
 
 
@@ -2547,6 +2441,178 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 #else
     #define JSON_EXPLICIT explicit
 #endif
+
+
+namespace nlohmann
+{
+namespace detail
+{
+
+/*!
+@brief replace all occurrences of a substring by another string
+
+@param[in,out] s  the string to manipulate; changed so that all
+               occurrences of @a f are replaced with @a t
+@param[in]     f  the substring to replace with @a t
+@param[in]     t  the string to replace @a f
+
+@pre The search string @a f must not be empty. **This precondition is
+enforced with an assertion.**
+
+@since version 2.0.0
+*/
+inline void replace_substring(std::string& s, const std::string& f,
+                              const std::string& t)
+{
+    JSON_ASSERT(!f.empty());
+    for (auto pos = s.find(f);                // find first occurrence of f
+            pos != std::string::npos;         // make sure f was found
+            s.replace(pos, f.size(), t),      // replace with t, and
+            pos = s.find(f, pos + t.size()))  // find next occurrence of f
+    {}
+}
+
+/*!
+ * @brief string escaping as described in RFC 6901 (Sect. 4)
+ * @param[in] s string to escape
+ * @return    escaped string
+ *
+ * Note the order of escaping "~" to "~0" and "/" to "~1" is important.
+ */
+inline std::string escape(std::string s)
+{
+    replace_substring(s, "~", "~0");
+    replace_substring(s, "/", "~1");
+    return s;
+}
+
+/*!
+ * @brief string unescaping as described in RFC 6901 (Sect. 4)
+ * @param[in] s string to unescape
+ * @return    unescaped string
+ *
+ * Note the order of escaping "~1" to "/" and "~0" to "~" is important.
+ */
+static void unescape(std::string& s)
+{
+    replace_substring(s, "~1", "/");
+    replace_substring(s, "~0", "~");
+}
+
+} // namespace detail
+} // namespace nlohmann
+
+
+namespace nlohmann
+{
+namespace detail
+{
+
+template<typename BasicJsonType>
+class diagnostics_t
+{
+  public:
+    diagnostics_t() noexcept = default;
+    diagnostics_t(const BasicJsonType& j) noexcept
+        : m_j(&j)
+    {}
+
+    std::string diagnostics() const
+    {
+#if JSON_DIAGNOSTICS
+        if (m_j == nullptr)
+        {
+            return "";
+        }
+
+        std::vector<std::string> tokens;
+        for (const auto* current = m_j; current->m_parent != nullptr; current = current->m_parent)
+        {
+            switch (current->m_parent->type())
+            {
+                case value_t::array:
+                {
+                    for (std::size_t i = 0; i < current->m_parent->m_value.array->size(); ++i)
+                    {
+                        if (current->m_parent->m_value.array->operator[](i) == *current)
+                        {
+                            tokens.emplace_back(std::to_string(i));
+                            continue;
+                        }
+                    }
+                    break;
+                }
+
+                case value_t::object:
+                {
+                    for (const auto& element : *current->m_parent->m_value.object)
+                    {
+                        if (element.second == *current)
+                        {
+                            tokens.emplace_back(element.first.c_str());
+                            continue;
+                        }
+                    }
+                    break;
+                }
+
+                default:
+                    break;
+            }
+        }
+
+        if (tokens.empty())
+        {
+            return "";
+        }
+
+        return "(" + std::accumulate(tokens.rbegin(), tokens.rend(), std::string{},
+                                     [](const std::string & a, const std::string & b)
+        {
+            return a + "/" + detail::escape(b);
+        }) + ") ";
+#else
+        return "";
+#endif
+    }
+
+  private:
+    const BasicJsonType* m_j = static_cast<const BasicJsonType*>(nullptr);
+};
+
+} // namespace detail
+} // namespace nlohmann
+
+// #include <nlohmann/detail/input/position_t.hpp>
+
+
+#include <cstddef> // size_t
+
+namespace nlohmann
+{
+namespace detail
+{
+/// struct to capture the start position of the current token
+struct position_t
+{
+    /// the total number of characters read
+    std::size_t chars_read_total = 0;
+    /// the number of characters read in the current line
+    std::size_t chars_read_current_line = 0;
+    /// the number of lines read
+    std::size_t lines_read = 0;
+
+    /// conversion to size_t to preserve SAX interface
+    constexpr operator size_t() const
+    {
+        return chars_read_total;
+    }
+};
+
+} // namespace detail
+} // namespace nlohmann
+
+// #include <nlohmann/detail/macro_scope.hpp>
 
 
 namespace nlohmann
@@ -11798,6 +11864,8 @@ class json_reverse_iterator : public std::reverse_iterator<Base>
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
+// #include <nlohmann/detail/string_escape.hpp>
+
 // #include <nlohmann/detail/value_t.hpp>
 
 
@@ -11858,7 +11926,7 @@ class json_pointer
                                std::string{},
                                [](const std::string & a, const std::string & b)
         {
-            return a + "/" + escape(b);
+            return a + "/" + detail::escape(b);
         });
     }
 
@@ -12579,51 +12647,11 @@ class json_pointer
             }
 
             // finally, store the reference token
-            unescape(reference_token);
+            detail::unescape(reference_token);
             result.push_back(reference_token);
         }
 
         return result;
-    }
-
-    /*!
-    @brief replace all occurrences of a substring by another string
-
-    @param[in,out] s  the string to manipulate; changed so that all
-                   occurrences of @a f are replaced with @a t
-    @param[in]     f  the substring to replace with @a t
-    @param[in]     t  the string to replace @a f
-
-    @pre The search string @a f must not be empty. **This precondition is
-    enforced with an assertion.**
-
-    @since version 2.0.0
-    */
-    static void replace_substring(std::string& s, const std::string& f,
-                                  const std::string& t)
-    {
-        JSON_ASSERT(!f.empty());
-        for (auto pos = s.find(f);                // find first occurrence of f
-                pos != std::string::npos;         // make sure f was found
-                s.replace(pos, f.size(), t),      // replace with t, and
-                pos = s.find(f, pos + t.size()))  // find next occurrence of f
-        {}
-    }
-
-  JSON_PRIVATE_UNLESS_TESTED:
-    /// escape "~" to "~0" and "/" to "~1"
-    static std::string escape(std::string s)
-    {
-        replace_substring(s, "~", "~0");
-        replace_substring(s, "/", "~1");
-        return s;
-    }
-
-    /// unescape "~1" to tilde and "~0" to slash (order is important!)
-    static void unescape(std::string& s)
-    {
-        replace_substring(s, "~1", "/");
-        replace_substring(s, "~0", "~");
     }
 
   private:
@@ -12671,7 +12699,7 @@ class json_pointer
                     // iterate object and use keys as reference string
                     for (const auto& element : *value.m_value.object)
                     {
-                        flatten(reference_string + "/" + escape(element.first), element.second, result);
+                        flatten(reference_string + "/" + detail::escape(element.first), element.second, result);
                     }
                 }
                 break;
@@ -25406,7 +25434,7 @@ class basic_json
                 for (auto it = source.cbegin(); it != source.cend(); ++it)
                 {
                     // escape the key name to be used in a JSON patch
-                    const auto key = json_pointer::escape(it.key());
+                    const auto key = detail::escape(it.key());
 
                     if (target.find(it.key()) != target.end())
                     {
@@ -25430,7 +25458,7 @@ class basic_json
                     if (source.find(it.key()) == source.end())
                     {
                         // found a key that is not in this -> add it
-                        const auto key = json_pointer::escape(it.key());
+                        const auto key = detail::escape(it.key());
                         result.push_back(
                         {
                             {"op", "add"}, {"path", path + "/" + key},
