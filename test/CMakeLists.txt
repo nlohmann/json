@@ -110,6 +110,7 @@ set(files
     src/unit-convenience.cpp
     src/unit-conversions.cpp
     src/unit-deserialization.cpp
+    src/unit-diagnostics.cpp
     src/unit-element_access1.cpp
     src/unit-element_access2.cpp
     src/unit-hash.cpp
