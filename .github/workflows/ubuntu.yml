@@ -89,7 +89,7 @@ jobs:
       - name: install_clang
         run: |
           sudo apt update
-          sudo apt install clang-10 ninja-build
+          sudo apt install clang-11 ninja-build
         shell: bash
       - name: cmake
         run: cmake -S . -B build -DJSON_CI=On
