@@ -99,6 +99,7 @@ jobs:
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
           sudo ./llvm.sh 11
+          sudo apt-get install clang-tools-11
         shell: bash
       - name: cmake
         run: cmake -S . -B build -DJSON_CI=On
