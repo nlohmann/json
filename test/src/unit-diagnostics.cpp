@@ -40,6 +40,13 @@ using nlohmann::json;
 
 TEST_CASE("Better diagnostics")
 {
+    SECTION("empty JSON Pointer")
+    {
+        json j = 1;
+        std::string s;
+        CHECK_THROWS_WITH_AS(s = j.get<std::string>(), "[json.exception.type_error.302] type must be string, but is number", json::type_error);
+    }
+
     SECTION("invalid type")
     {
         json j;

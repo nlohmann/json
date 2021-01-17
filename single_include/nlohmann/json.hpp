@@ -2556,14 +2556,14 @@ class diagnostics_t
                     break;
                 }
 
-                default:
-                    break;
+                default:   // LCOV_EXCL_LINE
+                    break; // LCOV_EXCL_LINE
             }
         }
 
         if (tokens.empty())
         {
-            return "";
+            return ""; // LCOV_EXCL_LINE
         }
 
         return "(" + std::accumulate(tokens.rbegin(), tokens.rend(), std::string{},
