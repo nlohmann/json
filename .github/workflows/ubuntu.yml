@@ -63,27 +63,6 @@ jobs:
     - name: test
       run: cd build ; ctest -j 10 --output-on-failure
 
-  ci_test_gcc:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v1
-      - name: install_ninja
-        run: |
-          sudo apt update
-          sudo apt install ninja-build
-        shell: bash
-      - name: install_gcc
-        run: |
-          sudo add-apt-repository ppa:ubuntu-toolchain-r/test
-          sudo apt update
-          sudo apt install gcc-11
-        shell: bash
-      - name: cmake
-        run: cmake -S . -B build -DJSON_CI=On
-      - name: build
-        run: cmake --build build --target ci_test_gcc --parallel 10
-
   ci_test_clang:
     runs-on: ubuntu-latest
 
@@ -103,4 +82,25 @@ jobs:
       - name: cmake
         run: cmake -S . -B build -DJSON_CI=On
       - name: build
-        run: cmake --build build --target ci_test_clang --parallel 10
+        run: cmake --build build --target ci_test_clang
+
+  ci_clang_analyze:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: install_ninja
+        run: |
+          sudo apt update
+          sudo apt install ninja-build
+        shell: bash
+      - name: install_clang
+        run: |
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 11
+        shell: bash
+      - name: cmake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: build
+        run: cmake --build build --target ci_clang_analyze
