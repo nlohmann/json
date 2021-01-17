@@ -70,8 +70,9 @@ jobs:
       - uses: actions/checkout@v1
       - name: install_gcc
         run: |
+          sudo add-apt-repository ppa:ubuntu-toolchain-r/test
           sudo apt update
-          sudo apt install gcc-10 g++-10 ninja-build
+          sudo apt install gcc-11 g++-11 ninja-build
         shell: bash
       - name: cmake
         run: cmake -S . -B build -DJSON_CI=On
@@ -89,7 +90,7 @@ jobs:
       - name: install_clang
         run: |
           sudo apt update
-          sudo apt install clang-11 ninja-build
+          sudo apt install clang-10 ninja-build
         shell: bash
       - name: cmake
         run: cmake -S . -B build -DJSON_CI=On
