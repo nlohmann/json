@@ -29,7 +29,12 @@ SOFTWARE.
 
 #include "doctest_compatibility.h"
 
+#ifdef JSON_DIAGNOSTICS
+    #undef JSON_DIAGNOSTICS
+#endif
+
 #define JSON_DIAGNOSTICS 1
+
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
@@ -40,7 +45,7 @@ TEST_CASE("Better diagnostics")
         json j;
         j["a"]["b"]["c"] = 1;
         std::string s;
-        CHECK_THROWS_WITH_AS(s = j["a"]["b"]["c"], "[json.exception.type_error.302] (/a/b/c) type must be string, but is number", json::type_error);
+        CHECK_THROWS_WITH_AS(s = j["a"]["b"]["c"].get<std::string>(), "[json.exception.type_error.302] (/a/b/c) type must be string, but is number", json::type_error);
     }
 
     SECTION("missing key")
