@@ -1255,6 +1255,8 @@ class basic_json
         {
             return j.m_parent == this;
         }));
+#else
+        static_cast<void>(check_parents);
 #endif
     }
 
@@ -3611,7 +3613,7 @@ class basic_json
 
 #if JSON_DIAGNOSTICS
                 // set parent for values added above
-                set_parents(begin() + previous_size, idx + 1 - previous_size);
+                set_parents(begin() + static_cast<typename iterator::difference_type>(previous_size), static_cast<typename iterator::difference_type>(idx + 1 - previous_size));
 #endif
             }
 
