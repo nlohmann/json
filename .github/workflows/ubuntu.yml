@@ -71,7 +71,7 @@ jobs:
       - name: install_gcc
         run: |
           sudo apt update
-          sudo apt install gcc-10 g++-10
+          sudo apt install gcc-10 g++-10 ninja-build
         shell: bash
       - name: cmake
         run: cmake -S . -B build -DJSON_CI=On
@@ -89,7 +89,7 @@ jobs:
       - name: install_clang
         run: |
           sudo apt update
-          sudo apt install clang-10
+          sudo apt install clang-10 ninja-build
         shell: bash
       - name: cmake
         run: cmake -S . -B build -DJSON_CI=On
