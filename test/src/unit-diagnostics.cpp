@@ -81,6 +81,6 @@ TEST_CASE("Better diagnostics")
         json j;
         j["a/b"]["m~n"] = 1;
         std::string s;
-        CHECK_THROWS_WITH_AS(s = j["a/b"]["m~n"], "[json.exception.type_error.302] (/a~1b/m~0n) type must be string, but is number", json::type_error);
+        CHECK_THROWS_WITH_AS(s = j["a/b"]["m~n"].get<std::string>(), "[json.exception.type_error.302] (/a~1b/m~0n) type must be string, but is number", json::type_error);
     }
 }
