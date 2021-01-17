@@ -70,9 +70,8 @@ jobs:
       - uses: actions/checkout@v1
       - name: install_gcc
         run: |
-          sudo add-apt-repository ppa:ubuntu-toolchain-r/test
           sudo apt update
-          sudo apt install gcc-11 g++-11 ninja-build
+          sudo apt install gcc-10 g++-10 ninja-build
         shell: bash
       - name: cmake
         run: cmake -S . -B build -DJSON_CI=On
@@ -87,15 +86,21 @@ jobs:
 
     steps:
       - uses: actions/checkout@v1
-      - name: install_clang
+      - name: install_ninja
         run: |
           sudo apt update
-          sudo apt install clang-10 ninja-build
+          sudo apt install ninja-build
+        shell: bash
+      - name: install_clang
+        run: |
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 11
         shell: bash
       - name: cmake
         run: cmake -S . -B build -DJSON_CI=On
         env:
-          CC:   clang-10
-          CXX:  clang++-10
+          CC:   clang-11
+          CXX:  clang++-11
       - name: build
         run: cmake --build build --target ci_test_clang --parallel 10
