@@ -12,7 +12,7 @@
 include(FindPython3)
 find_package(Python3 COMPONENTS Interpreter)
 
-find_program(CLANG_TIDY_TOOL NAMES clang-tidy)
+find_program(CLANG_TIDY_TOOL NAMES clang-tidy-11 clang-tidy)
 execute_process(COMMAND ${CLANG_TIDY_TOOL} --version OUTPUT_VARIABLE CLANG_TIDY_TOOL_VERSION ERROR_VARIABLE CLANG_TIDY_TOOL_VERSION)
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" CLANG_TIDY_TOOL_VERSION "${CLANG_TIDY_TOOL_VERSION}")
 message(STATUS "🔖 Clang-Tidy ${CLANG_TIDY_TOOL_VERSION} (${CLANG_TIDY_TOOL})")
@@ -45,7 +45,7 @@ message(STATUS "🔖 include-what-you-use ${IWYU_TOOL_VERSION} (${IWYU_TOOL})")
 find_program(OCLINT_TOOL NAMES oclint-json-compilation-database)
 find_program(PLOG_CONVERTER_TOOL NAMES plog-converter)
 find_program(PVS_STUDIO_ANALYZER_TOOL NAMES pvs-studio-analyzer)
-find_program(SCAN_BUILD_TOOL NAMES scan-build)
+find_program(SCAN_BUILD_TOOL NAMES scan-build-11 scan-build)
 
 # the individual source files
 file(GLOB_RECURSE SRC_FILES ${PROJECT_SOURCE_DIR}/include/nlohmann/*.hpp)
