@@ -2537,7 +2537,7 @@ class diagnostics_t
                         if (current->m_parent->m_value.array->operator[](i) == *current)
                         {
                             tokens.emplace_back(std::to_string(i));
-                            continue;
+                            break;
                         }
                     }
                     break;
@@ -2550,7 +2550,7 @@ class diagnostics_t
                         if (element.second == *current)
                         {
                             tokens.emplace_back(element.first.c_str());
-                            continue;
+                            break;
                         }
                     }
                     break;
@@ -2577,7 +2577,7 @@ class diagnostics_t
     }
 
   private:
-    const BasicJsonType* m_j = static_cast<const BasicJsonType*>(nullptr);
+    const BasicJsonType* m_j = nullptr;
 };
 
 } // namespace detail
