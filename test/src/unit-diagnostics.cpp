@@ -90,4 +90,9 @@ TEST_CASE("Better diagnostics")
         std::string s;
         CHECK_THROWS_WITH_AS(s = j["a/b"]["m~n"].get<std::string>(), "[json.exception.type_error.302] (/a~1b/m~0n) type must be string, but is number", json::type_error);
     }
+
+    SECTION("Parse error")
+    {
+        CHECK_THROWS_WITH_AS(json::parse(""), "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal", json::parse_error);
+    }
 }
