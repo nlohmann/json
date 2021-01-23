@@ -1,0 +1,38 @@
+name: build-and-test
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  job:
+    # TODO(dominic): Extend this to include compiler and set through env: CC/CXX.
+    name: ${{ matrix.os }}.${{ matrix.build_type }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-16.04, ubuntu-20.04, macos-latest, windows-latest]
+        build_type: ['Release', 'Debug']
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: create build environment
+      run: cmake -E make_directory ${{ runner.workspace }}/_build
+
+    - name: configure cmake
+      shell: bash
+      working-directory: ${{ runner.workspace }}/_build
+      run: cmake -DBENCHMARK_DOWNLOAD_DEPENDENCIES=ON $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+
+    - name: build
+      shell: bash
+      working-directory: ${{ runner.workspace }}/_build
+      run: cmake --build . --config ${{ matrix.build_type }}
+
+    - name: test
+      shell: bash
+      working-directory: ${{ runner.workspace }}/_build
+      run: ctest -C ${{ matrix.build_type }}

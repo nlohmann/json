@@ -1,0 +1,24 @@
+name: test-bindings
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  python_bindings:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.8
+      - name: Install benchmark
+        run:
+          python setup.py install
+      - name: Run example bindings
+        run:
+          python bindings/python/google_benchmark/example.py
