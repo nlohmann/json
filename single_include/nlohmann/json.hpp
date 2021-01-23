@@ -5202,7 +5202,7 @@ struct container_input_adapter_factory< ContainerType,
 }
        };
 
-}
+} // namespace container_input_adapter_factory_impl
 
 template<typename ContainerType>
 typename container_input_adapter_factory_impl::container_input_adapter_factory<ContainerType>::adapter_type input_adapter(const ContainerType& container)
