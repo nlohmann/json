@@ -1,6 +1,7 @@
 #pragma once
 
-#include <cstddef> // size_t, uint8_t
+#include <cstdint> // uint8_t
+#include <cstddef> // size_t
 #include <functional> // hash
 
 #include <nlohmann/detail/macro_scope.hpp>
