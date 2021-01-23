@@ -473,14 +473,27 @@ add_custom_target(ci_benchmarks
 # CMake flags
 ###############################################################################
 
-add_custom_command(
-    OUTPUT cmake-3.1.0-Darwin64
-    COMMAND wget https://github.com/Kitware/CMake/releases/download/v3.1.0/cmake-3.1.0-Darwin64.tar.gz
-    COMMAND tar xfz cmake-3.1.0-Darwin64.tar.gz
-    COMMAND rm cmake-3.1.0-Darwin64.tar.gz
-    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-    COMMENT "Download CMake 3.1.0"
-)
+if (APPLE)
+    add_custom_command(
+        OUTPUT cmake-3.1.0
+        COMMAND wget https://github.com/Kitware/CMake/releases/download/v3.1.0/cmake-3.1.0-Darwin64.tar.gz
+        COMMAND tar xfz cmake-3.1.0-Darwin64.tar.gz
+        COMMAND rm cmake-3.1.0-Darwin64.tar.gz
+        WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+        COMMENT "Download CMake 3.1.0"
+    )
+    set(CMAKE_310_BINARY ${PROJECT_BINARY_DIR}/cmake-3.1.0-Darwin64/CMake.app/Contents/bin/cmake)
+else()
+    add_custom_command(
+        OUTPUT cmake-3.1.0
+        COMMAND wget https://github.com/Kitware/CMake/releases/download/v3.1.0/cmake-3.1.0-Linux-x86_64.tar.gz
+        COMMAND tar xfz cmake-3.1.0-Linux-x86_64.tar.gz
+        COMMAND rm cmake-3.1.0-Linux-x86_64.tar.gz
+        WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+        COMMENT "Download CMake 3.1.0"
+    )
+    set(CMAKE_310_BINARY ${PROJECT_BINARY_DIR}/cmake-3.1.0-Linux-x86_64/bin/cmake)
+endif()
 
 set(JSON_CMAKE_FLAGS "JSON_BuildTests;JSON_Install;JSON_MultipleHeaders;JSON_Sanitizer;JSON_Valgrind;JSON_NoExceptions;JSON_Coverage")
 
@@ -493,8 +506,8 @@ foreach(JSON_CMAKE_FLAG ${JSON_CMAKE_FLAGS})
     add_custom_target("${JSON_CMAKE_FLAG_TARGET}_31"
         COMMENT "Check CMake flag ${JSON_CMAKE_FLAG} (CMake 3.1)"
         COMMAND mkdir ${PROJECT_BINARY_DIR}/build_${JSON_CMAKE_FLAG_TARGET}_31
-        COMMAND cd ${PROJECT_BINARY_DIR}/build_${JSON_CMAKE_FLAG_TARGET}_31 && ${PROJECT_BINARY_DIR}/cmake-3.1.0-Darwin64/CMake.app/Contents/bin/cmake -Werror=dev ${PROJECT_SOURCE_DIR} -D${JSON_CMAKE_FLAG}=ON -DCMAKE_CXX_COMPILE_FEATURES="cxx_range_for" -DCMAKE_CXX_FLAGS="-std=gnu++11"
-        DEPENDS cmake-3.1.0-Darwin64
+        COMMAND cd ${PROJECT_BINARY_DIR}/build_${JSON_CMAKE_FLAG_TARGET}_31 && ${CMAKE_310_BINARY} -Werror=dev ${PROJECT_SOURCE_DIR} -D${JSON_CMAKE_FLAG}=ON -DCMAKE_CXX_COMPILE_FEATURES="cxx_range_for" -DCMAKE_CXX_FLAGS="-std=gnu++11"
+        DEPENDS cmake-3.1.0
     )
     list(APPEND JSON_CMAKE_FLAG_TARGETS ${JSON_CMAKE_FLAG_TARGET} ${JSON_CMAKE_FLAG_TARGET}_31)
     list(APPEND JSON_CMAKE_FLAG_BUILD_DIRS ${PROJECT_BINARY_DIR}/build_${JSON_CMAKE_FLAG_TARGET} ${PROJECT_BINARY_DIR}/build_${JSON_CMAKE_FLAG_TARGET}_31)
