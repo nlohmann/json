@@ -95,4 +95,10 @@ TEST_CASE("Better diagnostics")
     {
         CHECK_THROWS_WITH_AS(json::parse(""), "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal", json::parse_error);
     }
+
+    SECTION("Regression test for https://github.com/nlohmann/json/pull/2562#pullrequestreview-574858448")
+    {
+        CHECK_THROWS_WITH_AS(json({"0", "0"})[1].get<int>(), "[json.exception.type_error.302] (/1) type must be number, but is string", json::type_error);
+        CHECK_THROWS_WITH_AS(json({"0", "1"})[1].get<int>(), "[json.exception.type_error.302] (/1) type must be number, but is string", json::type_error);
+    }
 }

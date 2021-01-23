@@ -36,7 +36,7 @@ class diagnostics_t
                 {
                     for (std::size_t i = 0; i < current->m_parent->m_value.array->size(); ++i)
                     {
-                        if (current->m_parent->m_value.array->operator[](i) == *current)
+                        if (&current->m_parent->m_value.array->operator[](i) == current)
                         {
                             tokens.emplace_back(std::to_string(i));
                             break;
@@ -49,7 +49,7 @@ class diagnostics_t
                 {
                     for (const auto& element : *current->m_parent->m_value.object)
                     {
-                        if (element.second == *current)
+                        if (&element.second == current)
                         {
                             tokens.emplace_back(element.first.c_str());
                             break;
