@@ -149,6 +149,7 @@ struct has_to_json < BasicJsonType, T, enable_if_t < !is_basic_json<T>::value >>
 ///////////////////
 // is_ functions //
 ///////////////////
+
 // https://en.cppreference.com/w/cpp/types/conjunction
 template<class...> struct conjunction : std::true_type { };
 template<class B1> struct conjunction<B1> : B1 { };

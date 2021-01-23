@@ -3185,6 +3185,7 @@ struct has_to_json < BasicJsonType, T, enable_if_t < !is_basic_json<T>::value >>
 ///////////////////
 // is_ functions //
 ///////////////////
+
 // https://en.cppreference.com/w/cpp/types/conjunction
 template<class...> struct conjunction : std::true_type { };
 template<class B1> struct conjunction<B1> : B1 { };
@@ -4568,7 +4569,7 @@ struct adl_serializer
     This function is usually called by the `get()` function of the
     @ref basic_json class (either explicit or via conversion operators).
 
-    @note This function is chosen for value types which can be default constructed.
+    @note This function is chosen for default-constructible value types.
 
     @param[in] j        JSON value to read from
     @param[in,out] val  value to write to
@@ -4587,7 +4588,7 @@ struct adl_serializer
     This function is usually called by the `get()` function of the
     @ref basic_json class (either explicit or via conversion operators).
 
-    @note This function is chosen for value types which can not be default constructed.
+    @note This function is chosen for value types which are not default-constructible.
 
     @param[in] j  JSON value to read from
 
