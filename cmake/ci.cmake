@@ -71,6 +71,7 @@ set(GCC_CXXFLAGS "-std=c++11                          \
     --all-warnings                                    \
     --extra-warnings                                  \
     -W                                                \
+    -WNSObject-attribute                              \
     -Wno-abi-tag                                         \
     -Waddress                                         \
     -Waddress-of-packed-member                        \
@@ -86,19 +87,25 @@ set(GCC_CXXFLAGS "-std=c++11                          \
     -Wanalyzer-file-leak                              \
     -Wanalyzer-free-of-non-heap                       \
     -Wanalyzer-malloc-leak                            \
+    -Wanalyzer-mismatching-deallocation               \
     -Wanalyzer-null-argument                          \
     -Wanalyzer-null-dereference                       \
     -Wanalyzer-possible-null-argument                 \
     -Wanalyzer-possible-null-dereference              \
+    -Wanalyzer-shift-count-negative                   \
+    -Wanalyzer-shift-count-overflow                   \
     -Wanalyzer-stale-setjmp-buffer                    \
     -Wanalyzer-tainted-array-index                    \
     -Wanalyzer-too-complex                            \
     -Wanalyzer-unsafe-call-within-signal-handler      \
     -Wanalyzer-use-after-free                         \
     -Wanalyzer-use-of-pointer-in-stale-stack-frame    \
+    -Wanalyzer-write-to-const                         \
+    -Wanalyzer-write-to-string-literal                \
     -Warith-conversion                                \
     -Warray-bounds                                    \
     -Warray-bounds=2                                  \
+    -Warray-parameter=2                               \
     -Wattribute-alias=2                               \
     -Wattribute-warning                               \
     -Wattributes                                      \
@@ -131,6 +138,7 @@ set(GCC_CXXFLAGS "-std=c++11                          \
     -Wconversion-null                                 \
     -Wcoverage-mismatch                               \
     -Wcpp                                             \
+    -Wctad-maybe-unsupported                          \
     -Wctor-dtor-privacy                               \
     -Wdangling-else                                   \
     -Wdate-time                                       \
@@ -140,6 +148,8 @@ set(GCC_CXXFLAGS "-std=c++11                          \
     -Wdeprecated-copy                                 \
     -Wdeprecated-copy-dtor                            \
     -Wdeprecated-declarations                         \
+    -Wdeprecated-enum-enum-conversion                 \
+    -Wdeprecated-enum-float-conversion                \
     -Wdisabled-optimization                           \
     -Wdiv-by-zero                                     \
     -Wdouble-promotion                                \
@@ -149,17 +159,12 @@ set(GCC_CXXFLAGS "-std=c++11                          \
     -Wempty-body                                      \
     -Wendif-labels                                    \
     -Wenum-compare                                    \
+    -Wenum-conversion                                 \
     -Wexpansion-to-defined                            \
     -Wextra                                           \
     -Wextra-semi                                      \
     -Wfloat-conversion                                \
     -Wfloat-equal                                     \
-    -Wformat -Wformat-contains-nul                    \
-    -Wformat -Wformat-extra-args                      \
-    -Wformat -Wformat-nonliteral                      \
-    -Wformat -Wformat-security                        \
-    -Wformat -Wformat-y2k                             \
-    -Wformat -Wformat-zero-length                     \
     -Wformat-diag                                     \
     -Wformat-overflow=2                               \
     -Wformat-signedness                               \
@@ -192,6 +197,8 @@ set(GCC_CXXFLAGS "-std=c++11                          \
     -Wmemset-elt-size                                 \
     -Wmemset-transposed-args                          \
     -Wmisleading-indentation                          \
+    -Wmismatched-dealloc                              \
+    -Wmismatched-new-delete                           \
     -Wmismatched-tags                                 \
     -Wmissing-attributes                              \
     -Wmissing-braces                                  \
@@ -210,7 +217,6 @@ set(GCC_CXXFLAGS "-std=c++11                          \
     -Wnon-virtual-dtor                                \
     -Wnonnull                                         \
     -Wnonnull-compare                                 \
-    -Wnonportable-cfstrings                           \
     -Wnormalized=nfkc                                 \
     -Wnull-dereference                                \
     -Wodr                                             \
@@ -233,6 +239,7 @@ set(GCC_CXXFLAGS "-std=c++11                          \
     -Wpragmas                                         \
     -Wprio-ctor-dtor                                  \
     -Wpsabi                                           \
+    -Wno-range-loop-construct                            \
     -Wredundant-decls                                 \
     -Wredundant-move                                  \
     -Wredundant-tags                                  \
@@ -255,6 +262,7 @@ set(GCC_CXXFLAGS "-std=c++11                          \
     -Wsign-promo                                      \
     -Wsized-deallocation                              \
     -Wsizeof-array-argument                           \
+    -Wsizeof-array-div                                \
     -Wsizeof-pointer-div                              \
     -Wsizeof-pointer-memaccess                        \
     -Wstack-protector                                 \
@@ -264,8 +272,8 @@ set(GCC_CXXFLAGS "-std=c++11                          \
     -Wstrict-overflow                                 \
     -Wstrict-overflow=5                               \
     -Wstring-compare                                  \
-    -Wstringop-overflow                               \
     -Wstringop-overflow=4                             \
+    -Wstringop-overread                               \
     -Wstringop-truncation                             \
     -Wsubobject-linkage                               \
     -Wsuggest-attribute=cold                          \
@@ -291,6 +299,7 @@ set(GCC_CXXFLAGS "-std=c++11                          \
     -Wterminate                                       \
     -Wtrampolines                                     \
     -Wtrigraphs                                       \
+    -Wtsan                                            \
     -Wtype-limits                                     \
     -Wundef                                           \
     -Wuninitialized                                   \
@@ -309,13 +318,15 @@ set(GCC_CXXFLAGS "-std=c++11                          \
     -Wunused-result                                   \
     -Wunused-value                                    \
     -Wunused-variable                                 \
-    -Wuseless-cast                                    \
+    -Wno-useless-cast                                    \
     -Wvarargs                                         \
     -Wvariadic-macros                                 \
     -Wvector-operation-performance                    \
+    -Wvexing-parse                                    \
     -Wvirtual-inheritance                             \
     -Wvirtual-move-assign                             \
     -Wvla                                             \
+    -Wvla-parameter                                   \
     -Wvolatile                                        \
     -Wvolatile-register-var                           \
     -Wwrite-strings                                   \
