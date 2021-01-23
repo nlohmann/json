@@ -16,7 +16,7 @@ See [Switch off exceptions](../home/exceptions.md#switch-off-exceptions) for an 
 
 This macro enables extended diagnostics for exception messages. Possible values are `1` to enable or `0` to disable (default).
 
-When enabled, exception messages contain a [JSON Pointer](json_pointer.md) to the JSON value that triggered the exception, see [Extended diagnostic messages](../home/exceptions.md#extended-diagnostic-messages) for an example.
+When enabled, exception messages contain a [JSON Pointer](json_pointer.md) to the JSON value that triggered the exception, see [Extended diagnostic messages](../home/exceptions.md#extended-diagnostic-messages) for an example. Note that enabling this macro increases the size of every JSON value by one pointer and adds some runtime overhead.
 
 The diagnostics messages can also be controlled with the CMake option `JSON_Diagnostics` (`OFF` by default) which sets `JSON_DIAGNOSTICS` accordingly.
 

@@ -52,8 +52,7 @@ Note that `JSON_THROW_USER` should leave the current scope (e.g., by throwing or
 
 ### Extended diagnostic messages
 
-Exceptions in the library are thrown in the local context of the JSON value they are detected. This makes detailed 
-diagnostics messages, and hence debugging, difficult.
+Exceptions in the library are thrown in the local context of the JSON value they are detected. This makes detailed diagnostics messages, and hence debugging, difficult.
 
 ??? example
 
@@ -86,7 +85,6 @@ As this global context comes at the price of storing one additional pointer per 
     ```
 
     Now the exception message contains a JSON Pointer `/address/housenumber` that indicates which value has the wrong type.
-
 
 
 ## Parse errors
