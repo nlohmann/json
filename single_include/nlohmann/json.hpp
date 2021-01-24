@@ -3196,7 +3196,6 @@ struct conjunction<B1, Bn...>
 // Reimplementation of is_constructible and is_default_constructible, due to them being broken for
 // std::pair and std::tuple until LWG 2367 fix (see https://cplusplus.github.io/LWG/lwg-defects.html#2367).
 // This causes compile errors in e.g. clang 3.5 or gcc 4.9.
-// Based on commit fixing this in gcc: https://github.com/gcc-mirror/gcc/commit/d3c64041b32b6962ad6b2d879231537a477631fb
 template <typename T>
 struct is_default_constructible : std::is_default_constructible<T> {};
 
