@@ -1528,6 +1528,7 @@ I deeply appreciate the help of the following people.
 - [KonanM](https://github.com/KonanM) proposed an implementation for the `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE`/`NLOHMANN_DEFINE_TYPE_INTRUSIVE` macros.
 - [Guillaume Racicot](https://github.com/gracicot) implemented `string_view` support and allowed C++20 support.
 - [Alex Reinking](https://github.com/alexreinking) improved CMake support for `FetchContent`.
+- [Hannes Domani](https://github.com/ssbssa) provided a GDB pretty printer.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
