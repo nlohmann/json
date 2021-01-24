@@ -884,7 +884,7 @@ class json_pointer
         {
             if (JSON_HEDLEY_UNLIKELY(!element.second.is_primitive()))
             {
-                JSON_THROW(detail::type_error::create(315, "values in object must be primitive", diagnostics_t(element)));
+                JSON_THROW(detail::type_error::create(315, "values in object must be primitive", diagnostics_t(element.second)));
             }
 
             // assign value to reference pointed to by JSON pointer; Note that if
