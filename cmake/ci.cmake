@@ -12,6 +12,8 @@
 include(FindPython3)
 find_package(Python3 COMPONENTS Interpreter)
 
+message(STATUS "🔖 CMake ${CMAKE_VERSION} (${CMAKE_COMMAND})")
+
 find_program(CLANG_TIDY_TOOL NAMES clang-tidy-11 clang-tidy)
 execute_process(COMMAND ${CLANG_TIDY_TOOL} --version OUTPUT_VARIABLE CLANG_TIDY_TOOL_VERSION ERROR_VARIABLE CLANG_TIDY_TOOL_VERSION)
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" CLANG_TIDY_TOOL_VERSION "${CLANG_TIDY_TOOL_VERSION}")
@@ -41,6 +43,11 @@ find_program(IWYU_TOOL NAMES include-what-you-use iwyu)
 execute_process(COMMAND ${IWYU_TOOL} --version OUTPUT_VARIABLE IWYU_TOOL_VERSION ERROR_VARIABLE IWYU_TOOL_VERSION)
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" IWYU_TOOL_VERSION "${IWYU_TOOL_VERSION}")
 message(STATUS "🔖 include-what-you-use ${IWYU_TOOL_VERSION} (${IWYU_TOOL})")
+
+find_program(VALGRIND_TOOL NAMES valgrind)
+execute_process(COMMAND ${VALGRIND_TOOL} --version OUTPUT_VARIABLE VALGRIND_TOOL_VERSION ERROR_VARIABLE VALGRIND_TOOL_VERSION)
+string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" VALGRIND_TOOL_VERSION "${VALGRIND_TOOL_VERSION}")
+message(STATUS "🔖 Valgrind ${VALGRIND_TOOL_VERSION} (${VALGRIND_TOOL})")
 
 find_program(OCLINT_TOOL NAMES oclint-json-compilation-database)
 find_program(PLOG_CONVERTER_TOOL NAMES plog-converter)
@@ -362,6 +369,17 @@ add_custom_target(ci_test_clang_sanitizer
 )
 
 ###############################################################################
+# Valgrind.
+###############################################################################
+
+add_custom_target(ci_test_valgrind
+    COMMAND CXX=${GCC_TOOL} ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_valgrind -DJSON_BuildTests=ON -GNinja -DMEMORYCHECK_COMMAND=${VALGRIND_TOOL} -DMEMORYCHECK_COMMAND_OPTIONS="--error-exitcode=1 --leak-check=full"
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_valgrind
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_valgrind/test && ${CMAKE_CTEST_COMMAND} -T memcheck -j10
+    COMMENT "Compile and test with Valgrind"
+)
+
+###############################################################################
 # Check code with Clang Static Analyzer.
 ###############################################################################
 
@@ -534,6 +552,6 @@ add_custom_target(ci_cmake_flags
 ###############################################################################
 
 add_custom_target(ci_clean
-    COMMAND rm -fr ${PROJECT_BINARY_DIR}/build_gcc ${PROJECT_BINARY_DIR}/build_clang ${PROJECT_BINARY_DIR}/build_clang_analyze ${PROJECT_BINARY_DIR}/build_clang_tidy ${PROJECT_BINARY_DIR}/build_pvs_studio ${PROJECT_BINARY_DIR}/build_clang_sanitizer ${PROJECT_BINARY_DIR}/build_infer ${PROJECT_BINARY_DIR}/build_oclint ${PROJECT_BINARY_DIR}/build_benchmarks cmake-3.1.0-Darwin64 ${JSON_CMAKE_FLAG_BUILD_DIRS} ${single_binaries}
+    COMMAND rm -fr ${PROJECT_BINARY_DIR}/build_gcc ${PROJECT_BINARY_DIR}/build_clang ${PROJECT_BINARY_DIR}/build_clang_analyze ${PROJECT_BINARY_DIR}/build_clang_tidy ${PROJECT_BINARY_DIR}/build_pvs_studio ${PROJECT_BINARY_DIR}/build_clang_sanitizer ${PROJECT_BINARY_DIR}/build_valgrind ${PROJECT_BINARY_DIR}/build_infer ${PROJECT_BINARY_DIR}/build_oclint ${PROJECT_BINARY_DIR}/build_benchmarks cmake-3.1.0-Darwin64 ${JSON_CMAKE_FLAG_BUILD_DIRS} ${single_binaries}
     COMMENT "Clean generated directories"
 )
