@@ -116,6 +116,7 @@ CONFIGURE_FILE(
 ## create and configure the unit test target
 ##
 if (JSON_BuildTests)
+    include(Dart)
     include(CTest)
     enable_testing()
     add_subdirectory(test)
