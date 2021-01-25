@@ -4,7 +4,8 @@
 #include <stdexcept> // runtime_error
 #include <string> // to_string
 
-#include <nlohmann/detail/diagnostics_t.hpp>
+#include <nlohmann/detail/value_t.hpp>
+#include <nlohmann/detail/string_escape.hpp>
 #include <nlohmann/detail/input/position_t.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 
@@ -64,6 +65,61 @@ class exception : public std::exception
     static std::string name(const std::string& ename, int id_)
     {
         return "[json.exception." + ename + "." + std::to_string(id_) + "] ";
+    }
+
+    template<typename BasicJsonType>
+    static std::string diagnostics(const BasicJsonType& leaf_element)
+    {
+#if JSON_DIAGNOSTICS
+        std::vector<std::string> tokens;
+        for (const auto* current = &leaf_element; current->m_parent != nullptr; current = current->m_parent)
+        {
+            switch (current->m_parent->type())
+            {
+                case value_t::array:
+                {
+                    for (std::size_t i = 0; i < current->m_parent->m_value.array->size(); ++i)
+                    {
+                        if (&current->m_parent->m_value.array->operator[](i) == current)
+                        {
+                            tokens.emplace_back(std::to_string(i));
+                            break;
+                        }
+                    }
+                    break;
+                }
+
+                case value_t::object:
+                {
+                    for (const auto& element : *current->m_parent->m_value.object)
+                    {
+                        if (&element.second == current)
+                        {
+                            tokens.emplace_back(element.first.c_str());
+                            break;
+                        }
+                    }
+                    break;
+                }
+
+                default:   // LCOV_EXCL_LINE
+                    break; // LCOV_EXCL_LINE
+            }
+        }
+
+        if (tokens.empty())
+        {
+            return "";
+        }
+
+        return "(" + std::accumulate(tokens.rbegin(), tokens.rend(), std::string{},
+                                     [](const std::string & a, const std::string & b)
+                                     {
+                                       return a + "/" + detail::escape(b);
+                                     }) + ") ";
+#else
+        return "";
+#endif
     }
 
   private:
@@ -129,19 +185,19 @@ class parse_error : public exception
     @return parse_error object
     */
     template<typename BasicJsonType>
-    static parse_error create(int id_, const position_t& pos, const std::string& what_arg, const detail::diagnostics_t<BasicJsonType>& diagnostics)
+    static parse_error create(int id_, const position_t& pos, const std::string& what_arg, const BasicJsonType& context)
     {
         std::string w = exception::name("parse_error", id_) + "parse error" +
-                        position_string(pos) + ": " + diagnostics.diagnostics() + what_arg;
+                        position_string(pos) + ": " + exception::diagnostics<BasicJsonType>(context) + what_arg;
         return parse_error(id_, pos.chars_read_total, w.c_str());
     }
 
     template<typename BasicJsonType>
-    static parse_error create(int id_, std::size_t byte_, const std::string& what_arg, const detail::diagnostics_t<BasicJsonType>& diagnostics)
+    static parse_error create(int id_, std::size_t byte_, const std::string& what_arg, const BasicJsonType& context)
     {
         std::string w = exception::name("parse_error", id_) + "parse error" +
                         (byte_ != 0 ? (" at byte " + std::to_string(byte_)) : "") +
-                        ": " + diagnostics.diagnostics() + what_arg;
+                        ": " + exception::diagnostics<BasicJsonType>(context) + what_arg;
         return parse_error(id_, byte_, w.c_str());
     }
 
@@ -208,9 +264,9 @@ class invalid_iterator : public exception
 {
   public:
     template<typename BasicJsonType>
-    static invalid_iterator create(int id_, const std::string& what_arg, const detail::diagnostics_t<BasicJsonType>& diagnostics)
+    static invalid_iterator create(int id_, const std::string& what_arg, const BasicJsonType& context)
     {
-        std::string w = exception::name("invalid_iterator", id_) + diagnostics.diagnostics() + what_arg;
+        std::string w = exception::name("invalid_iterator", id_) + exception::diagnostics(context) + what_arg;
         return invalid_iterator(id_, w.c_str());
     }
 
@@ -263,9 +319,9 @@ class type_error : public exception
 {
   public:
     template<typename BasicJsonType>
-    static type_error create(int id_, const std::string& what_arg, const detail::diagnostics_t<BasicJsonType>& diagnostics)
+    static type_error create(int id_, const std::string& what_arg, const BasicJsonType& context)
     {
-        std::string w = exception::name("type_error", id_) + diagnostics.diagnostics() + what_arg;
+        std::string w = exception::name("type_error", id_) + exception::diagnostics<BasicJsonType>(context) + what_arg;
         return type_error(id_, w.c_str());
     }
 
@@ -311,9 +367,9 @@ class out_of_range : public exception
 {
   public:
     template<typename BasicJsonType>
-    static out_of_range create(int id_, const std::string& what_arg, const detail::diagnostics_t<BasicJsonType>& diagnostics)
+    static out_of_range create(int id_, const std::string& what_arg, const BasicJsonType& context)
     {
-        std::string w = exception::name("out_of_range", id_) + diagnostics.diagnostics() + what_arg;
+        std::string w = exception::name("out_of_range", id_) + exception::diagnostics<BasicJsonType>(context) + what_arg;
         return out_of_range(id_, w.c_str());
     }
 
@@ -350,9 +406,9 @@ class other_error : public exception
 {
   public:
     template<typename BasicJsonType>
-    static other_error create(int id_, const std::string& what_arg, const detail::diagnostics_t<BasicJsonType>& diagnostics)
+    static other_error create(int id_, const std::string& what_arg, const BasicJsonType& context)
     {
-        std::string w = exception::name("other_error", id_) + diagnostics.diagnostics() + what_arg;
+        std::string w = exception::name("other_error", id_) + exception::diagnostics<BasicJsonType>(context) + what_arg;
         return other_error(id_, w.c_str());
     }
 

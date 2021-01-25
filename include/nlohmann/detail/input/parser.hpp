@@ -8,7 +8,6 @@
 #include <vector> // vector
 
 #include <nlohmann/detail/exceptions.hpp>
-#include <nlohmann/detail/diagnostics_t.hpp>
 #include <nlohmann/detail/input/input_adapters.hpp>
 #include <nlohmann/detail/input/json_sax.hpp>
 #include <nlohmann/detail/input/lexer.hpp>
@@ -58,7 +57,6 @@ class parser
     using string_t = typename BasicJsonType::string_t;
     using lexer_t = lexer<BasicJsonType, InputAdapterType>;
     using token_type = typename lexer_t::token_type;
-    using diagnostics_t = detail::diagnostics_t<BasicJsonType>;
 
   public:
     /// a parser reading from an input adapter
@@ -97,7 +95,7 @@ class parser
                 sdp.parse_error(m_lexer.get_position(),
                                 m_lexer.get_token_string(),
                                 parse_error::create(101, m_lexer.get_position(),
-                                                    exception_message(token_type::end_of_input, "value"), diagnostics_t()));
+                                                    exception_message(token_type::end_of_input, "value"), BasicJsonType()));
             }
 
             // in case of an error, return discarded value
@@ -124,8 +122,7 @@ class parser
             {
                 sdp.parse_error(m_lexer.get_position(),
                                 m_lexer.get_token_string(),
-                                parse_error::create(101, m_lexer.get_position(),
-                                                    exception_message(token_type::end_of_input, "value"), diagnostics_t()));
+                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_of_input, "value"), BasicJsonType()));
             }
 
             // in case of an error, return discarded value
@@ -163,8 +160,7 @@ class parser
         {
             return sax->parse_error(m_lexer.get_position(),
                                     m_lexer.get_token_string(),
-                                    parse_error::create(101, m_lexer.get_position(),
-                                            exception_message(token_type::end_of_input, "value"), diagnostics_t()));
+                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_of_input, "value"), BasicJsonType()));
         }
 
         return result;
@@ -210,8 +206,7 @@ class parser
                         {
                             return sax->parse_error(m_lexer.get_position(),
                                                     m_lexer.get_token_string(),
-                                                    parse_error::create(101, m_lexer.get_position(),
-                                                            exception_message(token_type::value_string, "object key"), diagnostics_t()));
+                                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::value_string, "object key"), BasicJsonType()));
                         }
                         if (JSON_HEDLEY_UNLIKELY(!sax->key(m_lexer.get_string())))
                         {
@@ -223,8 +218,7 @@ class parser
                         {
                             return sax->parse_error(m_lexer.get_position(),
                                                     m_lexer.get_token_string(),
-                                                    parse_error::create(101, m_lexer.get_position(),
-                                                            exception_message(token_type::name_separator, "object separator"), diagnostics_t()));
+                                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::name_separator, "object separator"), BasicJsonType()));
                         }
 
                         // remember we are now inside an object
@@ -267,7 +261,7 @@ class parser
                         {
                             return sax->parse_error(m_lexer.get_position(),
                                                     m_lexer.get_token_string(),
-                                                    out_of_range::create(406, "number overflow parsing '" + m_lexer.get_token_string() + "'", diagnostics_t()));
+                                                    out_of_range::create(406, "number overflow parsing '" + m_lexer.get_token_string() + "'", BasicJsonType()));
                         }
 
                         if (JSON_HEDLEY_UNLIKELY(!sax->number_float(res, m_lexer.get_string())))
@@ -337,16 +331,14 @@ class parser
                         // using "uninitialized" to avoid "expected" message
                         return sax->parse_error(m_lexer.get_position(),
                                                 m_lexer.get_token_string(),
-                                                parse_error::create(101, m_lexer.get_position(),
-                                                        exception_message(token_type::uninitialized, "value"), diagnostics_t()));
+                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::uninitialized, "value"), BasicJsonType()));
                     }
 
                     default: // the last token was unexpected
                     {
                         return sax->parse_error(m_lexer.get_position(),
                                                 m_lexer.get_token_string(),
-                                                parse_error::create(101, m_lexer.get_position(),
-                                                        exception_message(token_type::literal_or_value, "value"), diagnostics_t()));
+                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::literal_or_value, "value"), BasicJsonType()));
                     }
                 }
             }
@@ -392,8 +384,7 @@ class parser
 
                 return sax->parse_error(m_lexer.get_position(),
                                         m_lexer.get_token_string(),
-                                        parse_error::create(101, m_lexer.get_position(),
-                                                exception_message(token_type::end_array, "array"), diagnostics_t()));
+                                        parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_array, "array"), BasicJsonType()));
             }
             else  // object
             {
@@ -405,8 +396,7 @@ class parser
                     {
                         return sax->parse_error(m_lexer.get_position(),
                                                 m_lexer.get_token_string(),
-                                                parse_error::create(101, m_lexer.get_position(),
-                                                        exception_message(token_type::value_string, "object key"), diagnostics_t()));
+                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::value_string, "object key"), BasicJsonType()));
                     }
 
                     if (JSON_HEDLEY_UNLIKELY(!sax->key(m_lexer.get_string())))
@@ -419,8 +409,7 @@ class parser
                     {
                         return sax->parse_error(m_lexer.get_position(),
                                                 m_lexer.get_token_string(),
-                                                parse_error::create(101, m_lexer.get_position(),
-                                                        exception_message(token_type::name_separator, "object separator"), diagnostics_t()));
+                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::name_separator, "object separator"), BasicJsonType()));
                     }
 
                     // parse values
@@ -448,8 +437,7 @@ class parser
 
                 return sax->parse_error(m_lexer.get_position(),
                                         m_lexer.get_token_string(),
-                                        parse_error::create(101, m_lexer.get_position(),
-                                                exception_message(token_type::end_object, "object"), diagnostics_t()));
+                                        parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_object, "object"), BasicJsonType()));
             }
         }
     }

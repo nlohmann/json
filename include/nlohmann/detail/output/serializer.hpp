@@ -13,7 +13,6 @@
 #include <utility> // move
 
 #include <nlohmann/detail/conversions/to_chars.hpp>
-#include <nlohmann/detail/diagnostics_t.hpp>
 #include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/cpp_future.hpp>
@@ -45,7 +44,6 @@ class serializer
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using binary_char_t = typename BasicJsonType::binary_t::value_type;
-    using diagnostics_t = detail::diagnostics_t<BasicJsonType>;
     static constexpr std::uint8_t UTF8_ACCEPT = 0;
     static constexpr std::uint8_t UTF8_REJECT = 1;
 
@@ -501,7 +499,7 @@ class serializer
                         {
                             std::string sn(3, '\0');
                             (std::snprintf)(&sn[0], sn.size(), "%.2X", byte);
-                            JSON_THROW(type_error::create(316, "invalid UTF-8 byte at index " + std::to_string(i) + ": 0x" + sn, diagnostics_t()));
+                            JSON_THROW(type_error::create(316, "invalid UTF-8 byte at index " + std::to_string(i) + ": 0x" + sn, BasicJsonType()));
                         }
 
                         case error_handler_t::ignore:
@@ -595,7 +593,7 @@ class serializer
                 {
                     std::string sn(3, '\0');
                     (std::snprintf)(&sn[0], sn.size(), "%.2X", static_cast<std::uint8_t>(s.back()));
-                    JSON_THROW(type_error::create(316, "incomplete UTF-8 string; last byte: 0x" + sn, diagnostics_t()));
+                    JSON_THROW(type_error::create(316, "incomplete UTF-8 string; last byte: 0x" + sn, BasicJsonType()));
                 }
 
                 case error_handler_t::ignore:
