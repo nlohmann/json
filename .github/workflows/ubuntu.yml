@@ -116,3 +116,14 @@ jobs:
         run: cmake -S . -B build -DJSON_CI=On
       - name: build
         run: cmake --build build --target ci_test_gcc
+
+  ci_test_valgrind:
+    runs-on: ubuntu-latest
+    container:
+      image: nlohmann/json-ci:latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: cmake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: build
+        run: cmake --build build --target ci_test_valgrind
