@@ -114,9 +114,9 @@ class exception : public std::exception
 
         return "(" + std::accumulate(tokens.rbegin(), tokens.rend(), std::string{},
                                      [](const std::string & a, const std::string & b)
-                                     {
-                                       return a + "/" + detail::escape(b);
-                                     }) + ") ";
+        {
+            return a + "/" + detail::escape(b);
+        }) + ") ";
 #else
         return "";
 #endif
@@ -188,7 +188,7 @@ class parse_error : public exception
     static parse_error create(int id_, const position_t& pos, const std::string& what_arg, const BasicJsonType& context)
     {
         std::string w = exception::name("parse_error", id_) + "parse error" +
-                        position_string(pos) + ": " + exception::diagnostics<BasicJsonType>(context) + what_arg;
+                        position_string(pos) + ": " + exception::diagnostics(context) + what_arg;
         return parse_error(id_, pos.chars_read_total, w.c_str());
     }
 
@@ -197,7 +197,7 @@ class parse_error : public exception
     {
         std::string w = exception::name("parse_error", id_) + "parse error" +
                         (byte_ != 0 ? (" at byte " + std::to_string(byte_)) : "") +
-                        ": " + exception::diagnostics<BasicJsonType>(context) + what_arg;
+                        ": " + exception::diagnostics(context) + what_arg;
         return parse_error(id_, byte_, w.c_str());
     }
 
@@ -321,7 +321,7 @@ class type_error : public exception
     template<typename BasicJsonType>
     static type_error create(int id_, const std::string& what_arg, const BasicJsonType& context)
     {
-        std::string w = exception::name("type_error", id_) + exception::diagnostics<BasicJsonType>(context) + what_arg;
+        std::string w = exception::name("type_error", id_) + exception::diagnostics(context) + what_arg;
         return type_error(id_, w.c_str());
     }
 
@@ -369,7 +369,7 @@ class out_of_range : public exception
     template<typename BasicJsonType>
     static out_of_range create(int id_, const std::string& what_arg, const BasicJsonType& context)
     {
-        std::string w = exception::name("out_of_range", id_) + exception::diagnostics<BasicJsonType>(context) + what_arg;
+        std::string w = exception::name("out_of_range", id_) + exception::diagnostics(context) + what_arg;
         return out_of_range(id_, w.c_str());
     }
 
@@ -408,7 +408,7 @@ class other_error : public exception
     template<typename BasicJsonType>
     static other_error create(int id_, const std::string& what_arg, const BasicJsonType& context)
     {
-        std::string w = exception::name("other_error", id_) + exception::diagnostics<BasicJsonType>(context) + what_arg;
+        std::string w = exception::name("other_error", id_) + exception::diagnostics(context) + what_arg;
         return other_error(id_, w.c_str());
     }
 
