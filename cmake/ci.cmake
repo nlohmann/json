@@ -50,6 +50,11 @@ string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" VALGRIND_TOOL_VERSION "${VALGRIND_TOOL_V
 message(STATUS "🔖 Valgrind ${VALGRIND_TOOL_VERSION} (${VALGRIND_TOOL})")
 
 find_program(OCLINT_TOOL NAMES oclint-json-compilation-database)
+find_program(OCLINT_VERSION_TOOL NAMES oclint)
+execute_process(COMMAND ${OCLINT_VERSION_TOOL} --version OUTPUT_VARIABLE OCLINT_TOOL_VERSION ERROR_VARIABLE OCLINT_TOOL_VERSION)
+string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" OCLINT_TOOL_VERSION "${OCLINT_TOOL_VERSION}")
+message(STATUS "🔖 OCLint ${OCLINT_TOOL_VERSION} (${OCLINT_TOOL})")
+
 find_program(PLOG_CONVERTER_TOOL NAMES plog-converter)
 find_program(PVS_STUDIO_ANALYZER_TOOL NAMES pvs-studio-analyzer)
 find_program(SCAN_BUILD_TOOL NAMES scan-build-11 scan-build)
@@ -422,7 +427,7 @@ target_compile_features(single_all PRIVATE cxx_std_11)
 
 add_custom_target(ci_oclint
     COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_oclint -DJSON_BuildTests=OFF -DJSON_CI=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-    COMMAND ${OCLINT_TOOL} -i ${PROJECT_BINARY_DIR}/src_single/all.cpp -p ${PROJECT_BINARY_DIR}/build_oclint -- -report-type html -enable-global-analysis -o oclint_report.html
+    COMMAND ${OCLINT_TOOL} -i ${PROJECT_BINARY_DIR}/build_oclint/src_single/all.cpp -p ${PROJECT_BINARY_DIR}/build_oclint -- -report-type html -enable-global-analysis -o oclint_report.html
     COMMENT "Check code with OCLint"
 )
 
