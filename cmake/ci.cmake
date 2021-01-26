@@ -373,10 +373,9 @@ add_custom_target(ci_test_clang_sanitizer
 ###############################################################################
 
 add_custom_target(ci_test_valgrind
-    COMMAND CXX=${GCC_TOOL} ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_valgrind -DJSON_BuildTests=ON -GNinja -DMEMORYCHECK_COMMAND=${VALGRIND_TOOL} -DMEMORYCHECK_COMMAND_OPTIONS="--error-exitcode=1 --leak-check=full"
+    COMMAND CXX=${GCC_TOOL} ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_valgrind -DJSON_BuildTests=ON -DJSON_Valgrind=ON -GNinja
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_valgrind
-    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_valgrind --target download_test_data
-    COMMAND cd ${PROJECT_BINARY_DIR}/build_valgrind && ${CMAKE_CTEST_COMMAND} -T memcheck -j10
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_valgrind && ${CMAKE_CTEST_COMMAND} -L valgrind -j10
     COMMENT "Compile and test with Valgrind"
 )
 

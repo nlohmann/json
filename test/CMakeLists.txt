@@ -173,6 +173,7 @@ foreach(file ${files})
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         )
         set_tests_properties("${testcase}_valgrind" PROPERTIES LABELS "valgrind")
+        set_tests_properties("${testcase}_valgrind" PROPERTIES LABELS "all" FIXTURES_REQUIRED TEST_DATA)
     endif()
 endforeach()
 
