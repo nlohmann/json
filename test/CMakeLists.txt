@@ -172,8 +172,7 @@ foreach(file ${files})
             COMMAND ${memcheck_command} ${CMAKE_CURRENT_BINARY_DIR}/${testcase} ${DOCTEST_TEST_FILTER}
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         )
-        set_tests_properties("${testcase}_valgrind" PROPERTIES LABELS "valgrind")
-        set_tests_properties("${testcase}_valgrind" PROPERTIES LABELS "all" FIXTURES_REQUIRED TEST_DATA)
+        set_tests_properties("${testcase}_valgrind" PROPERTIES LABELS "valgrind" FIXTURES_REQUIRED TEST_DATA)
     endif()
 endforeach()
 
