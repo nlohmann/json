@@ -135,10 +135,8 @@ class iterator_input_adapter
             std::advance(current, 1);
             return result;
         }
-        else
-        {
-            return std::char_traits<char_type>::eof();
-        }
+
+        return std::char_traits<char_type>::eof();
     }
 
   private:
