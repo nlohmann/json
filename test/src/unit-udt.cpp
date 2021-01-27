@@ -68,8 +68,8 @@ struct address
 
 struct person
 {
-    age m_age;
-    name m_name;
+    age m_age{};
+    name m_name{};
     country m_country{};
     person() = default;
     person(const age& a, name  n, const country& c) : m_age(a), m_name(std::move(n)), m_country(c) {}
@@ -77,15 +77,15 @@ struct person
 
 struct contact
 {
-    person m_person;
-    address m_address;
+    person m_person{};
+    address m_address{};
     contact() = default;
     contact(person p, address a) : m_person(std::move(p)), m_address(std::move(a)) {}
 };
 
 struct contact_book
 {
-    name m_book_name;
+    name m_book_name{};
     std::vector<contact> m_contacts;
     contact_book() = default;
     contact_book(name n, std::vector<contact> c) : m_book_name(std::move(n)), m_contacts(std::move(c)) {}
@@ -347,8 +347,8 @@ namespace udt
 struct legacy_type
 {
     std::string number;
-    legacy_type() = default;
-    legacy_type(std::string  n) : number(std::move(n)) {}
+    legacy_type() : number() {}
+    legacy_type(std::string n) : number(std::move(n)) {}
 };
 } // namespace udt
 
@@ -620,7 +620,7 @@ struct small_pod
 struct non_pod
 {
     std::string s;
-    non_pod() = default;
+    non_pod() : s() {}
     non_pod(std::string S) : s(std::move(S)) {}
 };
 
