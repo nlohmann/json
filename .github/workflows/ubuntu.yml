@@ -3,25 +3,20 @@ name: Ubuntu
 on: [push, pull_request]
 
 jobs:
-  clang_build_cxx20:
+  ci_test_clang_cxx20:
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v1
     - name: install_clang
       run: |
-           sudo apt update
-           sudo apt install clang-10
+        sudo apt update
+        sudo apt install clang-10 ninja-build
       shell: bash
     - name: cmake
-      run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On -DCMAKE_CXX_STANDARD=20 -DCMAKE_CXX_STANDARD_REQUIRED=ON
-      env:
-        CC:   clang-10
-        CXX:  clang++-10
+      run: cmake -S . -B build -DJSON_CI=On
     - name: build
-      run: cmake --build build --parallel 10
-    - name: test
-      run: cd build ; ctest -j 10 --output-on-failure
+      run: cmake --build build --target ci_test_clang_cxx20
 
   ci_clang_analyze:
     runs-on: ubuntu-latest
@@ -69,8 +64,7 @@ jobs:
 
   ci_test_gcc:
     runs-on: ubuntu-latest
-    container:
-      image: nlohmann/json-ci:latest
+    container: nlohmann/json-ci:latest
     steps:
       - uses: actions/checkout@v2
       - name: cmake
@@ -80,8 +74,7 @@ jobs:
 
   ci_test_valgrind:
     runs-on: ubuntu-latest
-    container:
-      image: nlohmann/json-ci:latest
+    container: nlohmann/json-ci:latest
     steps:
       - uses: actions/checkout@v2
       - name: cmake
