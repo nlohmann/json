@@ -5,7 +5,6 @@ on: [push, pull_request]
 jobs:
   ci_test_clang_cxx20:
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v1
     - name: install_clang
@@ -20,7 +19,6 @@ jobs:
 
   ci_clang_analyze:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v1
       - name: install_ninja
@@ -42,7 +40,6 @@ jobs:
 
   ci_test_clang:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v1
       - name: install_ninja
@@ -81,3 +78,22 @@ jobs:
         run: cmake -S . -B build -DJSON_CI=On
       - name: build
         run: cmake --build build --target ci_test_valgrind
+
+  ci_cppcheck:
+    runs-on: ubuntu-latest
+    container: nlohmann/json-ci:latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: cmake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: build
+        run: cmake --build build --target ci_cppcheck
+
+  ci_cpplint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: cmake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: build
+        run: cmake --build build --target ci_cpplint
