@@ -1,10 +1,3 @@
-# macOS
-
-# brew install llvm cppcheck iwyu infer oclint/formulae/oclint
-# brew install viva64/pvs-studio/pvs-studio
-#   (you will need credentials)
-# brew install gcc --HEAD
-
 ###############################################################################
 # Needed tools.
 ###############################################################################
@@ -48,6 +41,11 @@ find_program(VALGRIND_TOOL NAMES valgrind)
 execute_process(COMMAND ${VALGRIND_TOOL} --version OUTPUT_VARIABLE VALGRIND_TOOL_VERSION ERROR_VARIABLE VALGRIND_TOOL_VERSION)
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" VALGRIND_TOOL_VERSION "${VALGRIND_TOOL_VERSION}")
 message(STATUS "🔖 Valgrind ${VALGRIND_TOOL_VERSION} (${VALGRIND_TOOL})")
+
+find_program(GIT_TOOL NAMES git)
+execute_process(COMMAND ${GIT_TOOL} --version OUTPUT_VARIABLE GIT_TOOL_VERSION ERROR_VARIABLE GIT_TOOL_VERSION)
+string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" GIT_TOOL_VERSION "${GIT_TOOL_VERSION}")
+message(STATUS "🔖 Git ${GIT_TOOL_VERSION} (${GIT_TOOL})")
 
 find_program(OCLINT_TOOL NAMES oclint-json-compilation-database)
 find_program(OCLINT_VERSION_TOOL NAMES oclint)
@@ -464,6 +462,32 @@ add_custom_target(ci_infer
 )
 
 ###############################################################################
+# Run test suite with previously downloaded test data.
+###############################################################################
+
+add_custom_target(ci_offline_testdata
+    COMMAND mkdir -p ${PROJECT_BINARY_DIR}/build_offline_testdata/test_data
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_offline_testdata/test_data && ${GIT_TOOL} clone -c advice.detachedHead=false --branch v3.0.0 https://github.com/nlohmann/json_test_data.git --quiet --depth 1
+    COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_offline_testdata -DJSON_BuildTests=ON -DJSON_TestDataDirectory=${PROJECT_BINARY_DIR}/build_offline_testdata/test_data/json_test_data -GNinja
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_offline_testdata
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_offline_testdata && ${CMAKE_CTEST_COMMAND} -j10 --output-on-failure
+    COMMENT "Check code with previously downloaded test data"
+)
+
+###############################################################################
+# Run test suite when project was not checked out from Git
+###############################################################################
+
+add_custom_target(ci_non_git_tests
+    COMMAND mkdir -p ${PROJECT_BINARY_DIR}/build_ci_non_git_tests/sources
+    COMMAND cd ${PROJECT_SOURCE_DIR} && for FILE in `${GIT_TOOL} ls-tree --name-only HEAD`\; do cp -r $$FILE ${PROJECT_BINARY_DIR}/build_ci_non_git_tests/sources \; done
+    COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug -S${PROJECT_BINARY_DIR}/build_ci_non_git_tests/sources -B${PROJECT_BINARY_DIR}/build_ci_non_git_tests -DJSON_BuildTests=ON -GNinja
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_ci_non_git_tests
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_ci_non_git_tests && ${CMAKE_CTEST_COMMAND} -j10 -LE git_required --output-on-failure
+    COMMENT "Check code when project was not checked out from Git"
+)
+
+###############################################################################
 # Check if every header in the include folder includes sufficient headers to
 # be compiled individually.
 ###############################################################################
@@ -557,6 +581,6 @@ add_custom_target(ci_cmake_flags
 ###############################################################################
 
 add_custom_target(ci_clean
-    COMMAND rm -fr ${PROJECT_BINARY_DIR}/build_gcc ${PROJECT_BINARY_DIR}/build_clang ${PROJECT_BINARY_DIR}/build_clang_analyze ${PROJECT_BINARY_DIR}/build_clang_tidy ${PROJECT_BINARY_DIR}/build_pvs_studio ${PROJECT_BINARY_DIR}/build_clang_sanitizer ${PROJECT_BINARY_DIR}/build_valgrind ${PROJECT_BINARY_DIR}/build_infer ${PROJECT_BINARY_DIR}/build_oclint ${PROJECT_BINARY_DIR}/build_benchmarks cmake-3.1.0-Darwin64 ${JSON_CMAKE_FLAG_BUILD_DIRS} ${single_binaries}
+    COMMAND rm -fr ${PROJECT_BINARY_DIR}/build_gcc ${PROJECT_BINARY_DIR}/build_clang ${PROJECT_BINARY_DIR}/build_clang_analyze ${PROJECT_BINARY_DIR}/build_clang_tidy ${PROJECT_BINARY_DIR}/build_pvs_studio ${PROJECT_BINARY_DIR}/build_clang_sanitizer ${PROJECT_BINARY_DIR}/build_valgrind ${PROJECT_BINARY_DIR}/build_infer ${PROJECT_BINARY_DIR}/build_oclint ${PROJECT_BINARY_DIR}/build_benchmarks ${PROJECT_BINARY_DIR}/build_ci_non_git_tests ${PROJECT_BINARY_DIR}/build_offline_testdata cmake-3.1.0-Darwin64 ${JSON_CMAKE_FLAG_BUILD_DIRS} ${single_binaries}
     COMMENT "Clean generated directories"
 )
