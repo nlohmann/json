@@ -5,17 +5,17 @@
 include(FindPython3)
 find_package(Python3 COMPONENTS Interpreter)
 
-message(STATUS "🔖 CMake ${CMAKE_VERSION} (${CMAKE_COMMAND})")
+find_program(CLANG_TOOL NAMES clang++-HEAD clang++-11 clang++)
+execute_process(COMMAND ${CLANG_TOOL} --version OUTPUT_VARIABLE CLANG_TOOL_VERSION ERROR_VARIABLE CLANG_TOOL_VERSION)
+string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" CLANG_TOOL_VERSION "${CLANG_TOOL_VERSION}")
+message(STATUS "🔖 Clang ${CLANG_TOOL_VERSION} (${CLANG_TOOL})")
 
 find_program(CLANG_TIDY_TOOL NAMES clang-tidy-11 clang-tidy)
 execute_process(COMMAND ${CLANG_TIDY_TOOL} --version OUTPUT_VARIABLE CLANG_TIDY_TOOL_VERSION ERROR_VARIABLE CLANG_TIDY_TOOL_VERSION)
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" CLANG_TIDY_TOOL_VERSION "${CLANG_TIDY_TOOL_VERSION}")
 message(STATUS "🔖 Clang-Tidy ${CLANG_TIDY_TOOL_VERSION} (${CLANG_TIDY_TOOL})")
 
-find_program(CLANG_TOOL NAMES clang++-HEAD clang++-11 clang++)
-execute_process(COMMAND ${CLANG_TOOL} --version OUTPUT_VARIABLE CLANG_TOOL_VERSION ERROR_VARIABLE CLANG_TOOL_VERSION)
-string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" CLANG_TOOL_VERSION "${CLANG_TOOL_VERSION}")
-message(STATUS "🔖 Clang ${CLANG_TOOL_VERSION} (${CLANG_TOOL})")
+message(STATUS "🔖 CMake ${CMAKE_VERSION} (${CMAKE_COMMAND})")
 
 find_program(CPPCHECK_TOOL NAMES cppcheck)
 execute_process(COMMAND ${CPPCHECK_TOOL} --version OUTPUT_VARIABLE CPPCHECK_TOOL_VERSION ERROR_VARIABLE CPPCHECK_TOOL_VERSION)
@@ -27,31 +27,36 @@ execute_process(COMMAND ${GCC_TOOL} --version OUTPUT_VARIABLE GCC_TOOL_VERSION E
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" GCC_TOOL_VERSION "${GCC_TOOL_VERSION}")
 message(STATUS "🔖 GCC ${GCC_TOOL_VERSION} (${GCC_TOOL})")
 
-find_program(INFER_TOOL NAMES infer)
-execute_process(COMMAND ${INFER_TOOL} --version OUTPUT_VARIABLE INFER_TOOL_VERSION ERROR_VARIABLE INFER_TOOL_VERSION)
-string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" INFER_TOOL_VERSION "${INFER_TOOL_VERSION}")
-message(STATUS "🔖 Infer ${INFER_TOOL_VERSION} (${INFER_TOOL})")
+find_program(GIT_TOOL NAMES git)
+execute_process(COMMAND ${GIT_TOOL} --version OUTPUT_VARIABLE GIT_TOOL_VERSION ERROR_VARIABLE GIT_TOOL_VERSION)
+string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" GIT_TOOL_VERSION "${GIT_TOOL_VERSION}")
+message(STATUS "🔖 Git ${GIT_TOOL_VERSION} (${GIT_TOOL})")
 
 find_program(IWYU_TOOL NAMES include-what-you-use iwyu)
 execute_process(COMMAND ${IWYU_TOOL} --version OUTPUT_VARIABLE IWYU_TOOL_VERSION ERROR_VARIABLE IWYU_TOOL_VERSION)
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" IWYU_TOOL_VERSION "${IWYU_TOOL_VERSION}")
 message(STATUS "🔖 include-what-you-use ${IWYU_TOOL_VERSION} (${IWYU_TOOL})")
 
-find_program(VALGRIND_TOOL NAMES valgrind)
-execute_process(COMMAND ${VALGRIND_TOOL} --version OUTPUT_VARIABLE VALGRIND_TOOL_VERSION ERROR_VARIABLE VALGRIND_TOOL_VERSION)
-string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" VALGRIND_TOOL_VERSION "${VALGRIND_TOOL_VERSION}")
-message(STATUS "🔖 Valgrind ${VALGRIND_TOOL_VERSION} (${VALGRIND_TOOL})")
+find_program(INFER_TOOL NAMES infer)
+execute_process(COMMAND ${INFER_TOOL} --version OUTPUT_VARIABLE INFER_TOOL_VERSION ERROR_VARIABLE INFER_TOOL_VERSION)
+string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" INFER_TOOL_VERSION "${INFER_TOOL_VERSION}")
+message(STATUS "🔖 Infer ${INFER_TOOL_VERSION} (${INFER_TOOL})")
 
-find_program(GIT_TOOL NAMES git)
-execute_process(COMMAND ${GIT_TOOL} --version OUTPUT_VARIABLE GIT_TOOL_VERSION ERROR_VARIABLE GIT_TOOL_VERSION)
-string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" GIT_TOOL_VERSION "${GIT_TOOL_VERSION}")
-message(STATUS "🔖 Git ${GIT_TOOL_VERSION} (${GIT_TOOL})")
+find_program(NINJA_TOOL NAMES ninja)
+execute_process(COMMAND ${NINJA_TOOL} --version OUTPUT_VARIABLE NINJA_TOOL_VERSION ERROR_VARIABLE NINJA_TOOL_VERSION)
+string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" NINJA_TOOL_VERSION "${NINJA_TOOL_VERSION}")
+message(STATUS "🔖 Ninja ${NINJA_TOOL_VERSION} (${NINJA_TOOL})")
 
 find_program(OCLINT_TOOL NAMES oclint-json-compilation-database)
 find_program(OCLINT_VERSION_TOOL NAMES oclint)
 execute_process(COMMAND ${OCLINT_VERSION_TOOL} --version OUTPUT_VARIABLE OCLINT_TOOL_VERSION ERROR_VARIABLE OCLINT_TOOL_VERSION)
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" OCLINT_TOOL_VERSION "${OCLINT_TOOL_VERSION}")
 message(STATUS "🔖 OCLint ${OCLINT_TOOL_VERSION} (${OCLINT_TOOL})")
+
+find_program(VALGRIND_TOOL NAMES valgrind)
+execute_process(COMMAND ${VALGRIND_TOOL} --version OUTPUT_VARIABLE VALGRIND_TOOL_VERSION ERROR_VARIABLE VALGRIND_TOOL_VERSION)
+string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" VALGRIND_TOOL_VERSION "${VALGRIND_TOOL_VERSION}")
+message(STATUS "🔖 Valgrind ${VALGRIND_TOOL_VERSION} (${VALGRIND_TOOL})")
 
 find_program(PLOG_CONVERTER_TOOL NAMES plog-converter)
 find_program(PVS_STUDIO_ANALYZER_TOOL NAMES pvs-studio-analyzer)
@@ -359,6 +364,26 @@ add_custom_target(ci_test_clang
 )
 
 ###############################################################################
+# Different C++ Standards.
+###############################################################################
+
+foreach(CXX_STANDARD 11 14 17 20)
+    add_custom_target(ci_test_gcc_${CXX_STANDARD}
+        COMMAND CXX=${GCC_TOOL} ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_gcc_${CXX_STANDARD} -DJSON_BuildTests=ON -DCMAKE_CXX_STANDARD=${CXX_STANDARD} -DCMAKE_CXX_STANDARD_REQUIRED=ON -GNinja
+        COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_gcc_${CXX_STANDARD}
+        COMMAND cd ${PROJECT_BINARY_DIR}/build_gcc_${CXX_STANDARD} && ${CMAKE_CTEST_COMMAND} -j10 --output-on-failure
+        COMMENT "Compile and test with GCC for C++${CXX_STANDARD}"
+    )
+
+    add_custom_target(ci_test_clang_${CXX_STANDARD}
+        COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_clang_${CXX_STANDARD} -DJSON_BuildTests=ON -DCMAKE_CXX_STANDARD=${CXX_STANDARD} -DCMAKE_CXX_STANDARD_REQUIRED=ON -GNinja
+        COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_clang_${CXX_STANDARD}
+        COMMAND cd ${PROJECT_BINARY_DIR}/build_clang_${CXX_STANDARD} && ${CMAKE_CTEST_COMMAND} -j10 --output-on-failure
+        COMMENT "Compile and test with Clang for C++${CXX_STANDARD}"
+    )
+endforeach()
+
+###############################################################################
 # Sanitizers.
 ###############################################################################
 
@@ -479,12 +504,23 @@ add_custom_target(ci_offline_testdata
 ###############################################################################
 
 add_custom_target(ci_non_git_tests
-    COMMAND mkdir -p ${PROJECT_BINARY_DIR}/build_ci_non_git_tests/sources
-    COMMAND cd ${PROJECT_SOURCE_DIR} && for FILE in `${GIT_TOOL} ls-tree --name-only HEAD`\; do cp -r $$FILE ${PROJECT_BINARY_DIR}/build_ci_non_git_tests/sources \; done
-    COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug -S${PROJECT_BINARY_DIR}/build_ci_non_git_tests/sources -B${PROJECT_BINARY_DIR}/build_ci_non_git_tests -DJSON_BuildTests=ON -GNinja
-    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_ci_non_git_tests
-    COMMAND cd ${PROJECT_BINARY_DIR}/build_ci_non_git_tests && ${CMAKE_CTEST_COMMAND} -j10 -LE git_required --output-on-failure
+    COMMAND mkdir -p ${PROJECT_BINARY_DIR}/build_non_git_tests/sources
+    COMMAND cd ${PROJECT_SOURCE_DIR} && for FILE in `${GIT_TOOL} ls-tree --name-only HEAD`\; do cp -r $$FILE ${PROJECT_BINARY_DIR}/build_non_git_tests/sources \; done
+    COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug -S${PROJECT_BINARY_DIR}/build_non_git_tests/sources -B${PROJECT_BINARY_DIR}/build_non_git_tests -DJSON_BuildTests=ON -GNinja
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_non_git_tests
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_non_git_tests && ${CMAKE_CTEST_COMMAND} -j10 -LE git_required --output-on-failure
     COMMENT "Check code when project was not checked out from Git"
+)
+
+###############################################################################
+# Run test suite and exclude tests that change installed files
+###############################################################################
+
+add_custom_target(ci_reproducible_tests
+    COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_reproducible_tests -DJSON_BuildTests=ON -GNinja
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_reproducible_tests
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_reproducible_tests && ${CMAKE_CTEST_COMMAND} -j10 -LE not_reproducible --output-on-failure
+    COMMENT "Check code and exclude tests that change installed files"
 )
 
 ###############################################################################
@@ -581,6 +617,6 @@ add_custom_target(ci_cmake_flags
 ###############################################################################
 
 add_custom_target(ci_clean
-    COMMAND rm -fr ${PROJECT_BINARY_DIR}/build_gcc ${PROJECT_BINARY_DIR}/build_clang ${PROJECT_BINARY_DIR}/build_clang_analyze ${PROJECT_BINARY_DIR}/build_clang_tidy ${PROJECT_BINARY_DIR}/build_pvs_studio ${PROJECT_BINARY_DIR}/build_clang_sanitizer ${PROJECT_BINARY_DIR}/build_valgrind ${PROJECT_BINARY_DIR}/build_infer ${PROJECT_BINARY_DIR}/build_oclint ${PROJECT_BINARY_DIR}/build_benchmarks ${PROJECT_BINARY_DIR}/build_ci_non_git_tests ${PROJECT_BINARY_DIR}/build_offline_testdata cmake-3.1.0-Darwin64 ${JSON_CMAKE_FLAG_BUILD_DIRS} ${single_binaries}
+    COMMAND rm -fr ${PROJECT_BINARY_DIR}/build_* cmake-3.1.0-Darwin64 ${JSON_CMAKE_FLAG_BUILD_DIRS} ${single_binaries}
     COMMENT "Clean generated directories"
 )
