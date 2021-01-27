@@ -97,3 +97,24 @@ jobs:
         run: cmake -S . -B build -DJSON_CI=On
       - name: build
         run: cmake --build build --target ci_cpplint
+
+  ci_clang_tidy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: install_ninja
+        run: |
+          sudo apt update
+          sudo apt install ninja-build
+        shell: bash
+      - name: install_clang
+        run: |
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 11
+          sudo apt-get install clang-tools-11
+        shell: bash
+      - name: cmake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: build
+        run: cmake --build build --target ci_clang_tidy || true
