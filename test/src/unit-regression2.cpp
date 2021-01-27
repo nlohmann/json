@@ -122,7 +122,7 @@ struct adl_serializer<NonDefaultFromJsonStruct>
         return {};
     }
 };
-}
+} // namespace nlohmann
 
 /////////////////////////////////////////////////////////////////////
 // for #1805
@@ -139,7 +139,7 @@ TEST_CASE("regression tests 2")
 {
     SECTION("issue #1001 - Fix memory leak during parser callback")
     {
-        auto geojsonExample = R"(
+        const auto* geojsonExample = R"(
           { "type": "FeatureCollection",
             "features": [
               { "type": "Feature",
@@ -174,7 +174,7 @@ TEST_CASE("regression tests 2")
                ]
              })";
 
-        json::parser_callback_t cb = [&](int, json::parse_event_t event, json & parsed)
+        json::parser_callback_t cb = [&](int /*level*/, json::parse_event_t event, json & parsed)
         {
             // skip uninteresting events
             if (event == json::parse_event_t::value && !parsed.is_primitive())
@@ -290,7 +290,7 @@ TEST_CASE("regression tests 2")
             json dump_test;
             dump_test["1"] = std::string(length, -1);
 
-            std::string expected = "{\"1\":\"";
+            std::string expected = R"({"1":")";
             for (int i = 0; i < length; ++i)
             {
                 expected += "\\ufffd";
@@ -307,7 +307,7 @@ TEST_CASE("regression tests 2")
             json dump_test;
             dump_test["1"] = std::string(length, -2);
 
-            std::string expected = "{\"1\":\"";
+            std::string expected = R"({"1":")";
             for (int i = 0; i < length; ++i)
             {
                 expected += "\xEF\xBF\xBD";
@@ -340,9 +340,9 @@ TEST_CASE("regression tests 2")
                 -54,  -28,  -26
             };
             std::string s;
-            for (unsigned i = 0; i < sizeof(data) / sizeof(int); i++)
+            for (int i : data)
             {
-                s += static_cast<char>(data[i]);
+                s += static_cast<char>(i);
             }
             dump_test["1"] = s;
             dump_test.dump(-1, ' ', true, nlohmann::json::error_handler_t::replace);

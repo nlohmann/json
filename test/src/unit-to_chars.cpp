@@ -38,7 +38,7 @@ using nlohmann::detail::dtoa_impl::reinterpret_bits;
 
 namespace
 {
-static float make_float(uint32_t sign_bit, uint32_t biased_exponent, uint32_t significand)
+float make_float(uint32_t sign_bit, uint32_t biased_exponent, uint32_t significand)
 {
     assert(sign_bit == 0 || sign_bit == 1);
     assert(biased_exponent <= 0xFF);

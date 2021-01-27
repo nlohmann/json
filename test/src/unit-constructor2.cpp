@@ -188,19 +188,19 @@ TEST_CASE("other constructors and destructor")
     {
         SECTION("object")
         {
-            auto j = new json {{"foo", 1}, {"bar", false}};
+            auto* j = new json {{"foo", 1}, {"bar", false}};
             delete j;
         }
 
         SECTION("array")
         {
-            auto j = new json {"foo", 1, 1u, false, 23.42};
+            auto* j = new json {"foo", 1, 1u, false, 23.42};
             delete j;
         }
 
         SECTION("string")
         {
-            auto j = new json("Hello world");
+            auto* j = new json("Hello world");
             delete j;
         }
     }

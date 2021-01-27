@@ -52,7 +52,7 @@ TEST_CASE("README" * doctest::skip())
 {
     {
         // redirect std::cout for the README file
-        auto old_cout_buffer = std::cout.rdbuf();
+        auto* old_cout_buffer = std::cout.rdbuf();
         std::ostringstream new_stream;
         std::cout.rdbuf(new_stream.rdbuf());
         {

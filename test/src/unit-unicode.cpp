@@ -168,7 +168,7 @@ void check_utf8string(bool success_expected, int byte1, int byte2 = -1, int byte
         CHECK_THROWS_AS(_ = json::parse(json_string), json::parse_error&);
     }
 }
-}
+} // namespace
 
 TEST_CASE("Unicode" * doctest::skip())
 {
@@ -1159,7 +1159,7 @@ TEST_CASE("Unicode" * doctest::skip())
 
         SECTION("check JSON Pointers")
         {
-            for (auto s : j)
+            for (const auto& s : j)
             {
                 // skip non-string JSON values
                 if (!s.is_string())
@@ -1176,7 +1176,7 @@ TEST_CASE("Unicode" * doctest::skip())
                 }
 
                 // JSON Pointers must begin with "/"
-                ptr = "/" + ptr;
+                ptr.insert(0, "/");
 
                 CHECK_NOTHROW(json::json_pointer("/" + ptr));
 
@@ -1256,7 +1256,7 @@ void roundtrip(bool success_expected, const std::string& s)
         CHECK_THROWS_AS(_ = json::parse(ps), json::parse_error&);
     }
 }
-}
+} // namespace
 
 TEST_CASE("Markus Kuhn's UTF-8 decoder capability and stress test")
 {

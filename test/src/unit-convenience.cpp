@@ -37,7 +37,7 @@ using nlohmann::json;
 
 namespace
 {
-void check_escaped(const char* original, const char* escaped = "", const bool ensure_ascii = false);
+void check_escaped(const char* original, const char* escaped = "", bool ensure_ascii = false);
 void check_escaped(const char* original, const char* escaped, const bool ensure_ascii)
 {
     std::stringstream ss;
@@ -45,7 +45,7 @@ void check_escaped(const char* original, const char* escaped, const bool ensure_
     s.dump_escaped(original, ensure_ascii);
     CHECK(ss.str() == escaped);
 }
-}
+} // namespace
 
 TEST_CASE("convenience functions")
 {
