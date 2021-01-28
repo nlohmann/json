@@ -54,7 +54,7 @@ float make_float(uint32_t sign_bit, uint32_t biased_exponent, uint32_t significa
 }
 
 // ldexp -- convert f * 2^e to IEEE single precision
-static float make_float(uint64_t f, int e)
+float make_float(uint64_t f, int e)
 {
     constexpr uint64_t kHiddenBit               = 0x00800000;
     constexpr uint64_t kSignificandMask         = 0x007FFFFF;
@@ -90,7 +90,7 @@ static float make_float(uint64_t f, int e)
     return reinterpret_bits<float>(static_cast<uint32_t>(bits));
 }
 
-static double make_double(uint64_t sign_bit, uint64_t biased_exponent, uint64_t significand)
+double make_double(uint64_t sign_bit, uint64_t biased_exponent, uint64_t significand)
 {
     assert(sign_bit == 0 || sign_bit == 1);
     assert(biased_exponent <= 0x7FF);
@@ -106,7 +106,7 @@ static double make_double(uint64_t sign_bit, uint64_t biased_exponent, uint64_t 
 }
 
 // ldexp -- convert f * 2^e to IEEE double precision
-static double make_double(uint64_t f, int e)
+double make_double(uint64_t f, int e)
 {
     constexpr uint64_t kHiddenBit               = 0x0010000000000000;
     constexpr uint64_t kSignificandMask         = 0x000FFFFFFFFFFFFF;
@@ -141,7 +141,7 @@ static double make_double(uint64_t f, int e)
     uint64_t bits = (f & kSignificandMask) | (biased_exponent << kPhysicalSignificandSize);
     return reinterpret_bits<double>(bits);
 }
-}
+} // namespace
 
 TEST_CASE("digit gen")
 {

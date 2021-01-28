@@ -37,11 +37,9 @@ DOCTEST_GCC_SUPPRESS_WARNING("-Wfloat-equal")
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
-#include <fstream>
-#include <sstream>
 #include <list>
 #include <cstdio>
-#include <test_data.hpp>
+#include <utility>
 
 #if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_HAS_CXX17) && _HAS_CXX17 == 1) // fix for issue #464
     #define JSON_HAS_CPP_17
@@ -68,7 +66,7 @@ namespace
 {
 struct NonDefaultFromJsonStruct { };
 
-inline bool operator== (NonDefaultFromJsonStruct const&, NonDefaultFromJsonStruct const&)
+inline bool operator== (NonDefaultFromJsonStruct const& /*unused*/, NonDefaultFromJsonStruct const& /*unused*/)
 {
     return true;
 }
@@ -80,7 +78,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(for_1647,
     {for_1647::one, "one"},
     {for_1647::two, "two"},
 })
-}
+} // namespace
 
 /////////////////////////////////////////////////////////////////////
 // for #1299
@@ -89,7 +87,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(for_1647,
 struct Data
 {
     Data() = default;
-    Data(const std::string& a_, const std::string b_) : a(a_), b(b_) {}
+    Data(std::string a_, const std::string b_) : a(std::move(a_)), b(b_) {}
     std::string a {};
     std::string b {};
 };

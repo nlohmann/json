@@ -115,7 +115,7 @@ class SaxCountdown
   private:
     int events_left = 0;
 };
-}
+} // namespace
 
 TEST_CASE("MessagePack")
 {
@@ -485,7 +485,7 @@ TEST_CASE("MessagePack")
                     numbers.push_back(-65536);
                     numbers.push_back(-77777);
                     numbers.push_back(-1048576);
-                    numbers.push_back(-2147483648ll);
+                    numbers.push_back(-2147483648LL);
                     for (auto i : numbers)
                     {
                         CAPTURE(i)
@@ -527,7 +527,7 @@ TEST_CASE("MessagePack")
                 {
                     std::vector<int64_t> numbers;
                     numbers.push_back(INT64_MIN);
-                    numbers.push_back(-2147483649ll);
+                    numbers.push_back(-2147483649LL);
                     for (auto i : numbers)
                     {
                         CAPTURE(i)

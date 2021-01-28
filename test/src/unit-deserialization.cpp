@@ -42,13 +42,13 @@ struct SaxEventLogger : public nlohmann::json_sax<json>
 {
     bool null() override
     {
-        events.push_back("null()");
+        events.emplace_back("null()");
         return true;
     }
 
     bool boolean(bool val) override
     {
-        events.push_back(val ? "boolean(true)" : "boolean(false)");
+        events.emplace_back(val ? "boolean(true)" : "boolean(false)");
         return true;
     }
 
@@ -64,7 +64,7 @@ struct SaxEventLogger : public nlohmann::json_sax<json>
         return true;
     }
 
-    bool number_float(json::number_float_t, const std::string& s) override
+    bool number_float(json::number_float_t /*val*/, const std::string& s) override
     {
         events.push_back("number_float(" + s + ")");
         return true;
@@ -79,7 +79,7 @@ struct SaxEventLogger : public nlohmann::json_sax<json>
     bool binary(json::binary_t& val) override
     {
         std::string binary_contents = "binary(";
-        std::string comma_space = "";
+        std::string comma_space;
         for (auto b : val)
         {
             binary_contents.append(comma_space);
@@ -95,7 +95,7 @@ struct SaxEventLogger : public nlohmann::json_sax<json>
     {
         if (elements == std::size_t(-1))
         {
-            events.push_back("start_object()");
+            events.emplace_back("start_object()");
         }
         else
         {
@@ -112,7 +112,7 @@ struct SaxEventLogger : public nlohmann::json_sax<json>
 
     bool end_object() override
     {
-        events.push_back("end_object()");
+        events.emplace_back("end_object()");
         return true;
     }
 
@@ -120,7 +120,7 @@ struct SaxEventLogger : public nlohmann::json_sax<json>
     {
         if (elements == std::size_t(-1))
         {
-            events.push_back("start_array()");
+            events.emplace_back("start_array()");
         }
         else
         {
@@ -131,11 +131,11 @@ struct SaxEventLogger : public nlohmann::json_sax<json>
 
     bool end_array() override
     {
-        events.push_back("end_array()");
+        events.emplace_back("end_array()");
         return true;
     }
 
-    bool parse_error(std::size_t position, const std::string&, const json::exception&) override
+    bool parse_error(std::size_t position, const std::string& /*last_token*/, const json::exception& /*ex*/) override
     {
         events.push_back("parse_error(" + std::to_string(position) + ")");
         return false;
@@ -150,7 +150,7 @@ struct SaxEventLoggerExitAfterStartObject : public SaxEventLogger
     {
         if (elements == std::size_t(-1))
         {
-            events.push_back("start_object()");
+            events.emplace_back("start_object()");
         }
         else
         {
@@ -175,7 +175,7 @@ struct SaxEventLoggerExitAfterStartArray : public SaxEventLogger
     {
         if (elements == std::size_t(-1))
         {
-            events.push_back("start_array()");
+            events.emplace_back("start_array()");
         }
         else
         {
@@ -184,7 +184,7 @@ struct SaxEventLoggerExitAfterStartArray : public SaxEventLogger
         return false;
     }
 };
-}
+} // namespace
 
 TEST_CASE("deserialization")
 {
@@ -192,10 +192,12 @@ TEST_CASE("deserialization")
     {
         SECTION("stream")
         {
-            std::stringstream ss1, ss2, ss3;
-            ss1 << "[\"foo\",1,2,3,false,{\"one\":1}]";
-            ss2 << "[\"foo\",1,2,3,false,{\"one\":1}]";
-            ss3 << "[\"foo\",1,2,3,false,{\"one\":1}]";
+            std::stringstream ss1;
+            std::stringstream ss2;
+            std::stringstream ss3;
+            ss1 << R"(["foo",1,2,3,false,{"one":1}])";
+            ss2 << R"(["foo",1,2,3,false,{"one":1}])";
+            ss3 << R"(["foo",1,2,3,false,{"one":1}])";
             json j = json::parse(ss1);
             CHECK(json::accept(ss2));
             CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
@@ -214,7 +216,7 @@ TEST_CASE("deserialization")
 
         SECTION("string literal")
         {
-            auto s = "[\"foo\",1,2,3,false,{\"one\":1}]";
+            const auto* s = R"(["foo",1,2,3,false,{"one":1}])";
             json j = json::parse(s);
             CHECK(json::accept(s));
             CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
@@ -233,7 +235,7 @@ TEST_CASE("deserialization")
 
         SECTION("string_t")
         {
-            json::string_t s = "[\"foo\",1,2,3,false,{\"one\":1}]";
+            json::string_t s = R"(["foo",1,2,3,false,{"one":1}])";
             json j = json::parse(s);
             CHECK(json::accept(s));
             CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
@@ -253,7 +255,7 @@ TEST_CASE("deserialization")
         SECTION("operator<<")
         {
             std::stringstream ss;
-            ss << "[\"foo\",1,2,3,false,{\"one\":1}]";
+            ss << R"(["foo",1,2,3,false,{"one":1}])";
             json j;
             j << ss;
             CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
@@ -262,7 +264,7 @@ TEST_CASE("deserialization")
         SECTION("operator>>")
         {
             std::stringstream ss;
-            ss << "[\"foo\",1,2,3,false,{\"one\":1}]";
+            ss << R"(["foo",1,2,3,false,{"one":1}])";
             json j;
             ss >> j;
             CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
@@ -278,12 +280,16 @@ TEST_CASE("deserialization")
     {
         SECTION("stream")
         {
-            std::stringstream ss1, ss2, ss3, ss4, ss5;
-            ss1 << "[\"foo\",1,2,3,false,{\"one\":1}";
-            ss2 << "[\"foo\",1,2,3,false,{\"one\":1}";
-            ss3 << "[\"foo\",1,2,3,false,{\"one\":1}";
-            ss4 << "[\"foo\",1,2,3,false,{\"one\":1}";
-            ss5 << "[\"foo\",1,2,3,false,{\"one\":1}";
+            std::stringstream ss1;
+            std::stringstream ss2;
+            std::stringstream ss3;
+            std::stringstream ss4;
+            std::stringstream ss5;
+            ss1 << R"(["foo",1,2,3,false,{"one":1})";
+            ss2 << R"(["foo",1,2,3,false,{"one":1})";
+            ss3 << R"(["foo",1,2,3,false,{"one":1})";
+            ss4 << R"(["foo",1,2,3,false,{"one":1})";
+            ss5 << R"(["foo",1,2,3,false,{"one":1})";
 
             json _;
             CHECK_THROWS_AS(_ = json::parse(ss1), json::parse_error&);
@@ -309,7 +315,7 @@ TEST_CASE("deserialization")
 
         SECTION("string")
         {
-            json::string_t s = "[\"foo\",1,2,3,false,{\"one\":1}";
+            json::string_t s = R"(["foo",1,2,3,false,{"one":1})";
             json _;
             CHECK_THROWS_AS(_ = json::parse(s), json::parse_error&);
             CHECK_THROWS_WITH(_ = json::parse(s),
@@ -334,9 +340,10 @@ TEST_CASE("deserialization")
 
         SECTION("operator<<")
         {
-            std::stringstream ss1, ss2;
-            ss1 << "[\"foo\",1,2,3,false,{\"one\":1}";
-            ss2 << "[\"foo\",1,2,3,false,{\"one\":1}";
+            std::stringstream ss1;
+            std::stringstream ss2;
+            ss1 << R"(["foo",1,2,3,false,{"one":1})";
+            ss2 << R"(["foo",1,2,3,false,{"one":1})";
             json j;
             CHECK_THROWS_AS(j << ss1, json::parse_error&);
             CHECK_THROWS_WITH(j << ss2,
@@ -345,9 +352,10 @@ TEST_CASE("deserialization")
 
         SECTION("operator>>")
         {
-            std::stringstream ss1, ss2;
-            ss1 << "[\"foo\",1,2,3,false,{\"one\":1}";
-            ss2 << "[\"foo\",1,2,3,false,{\"one\":1}";
+            std::stringstream ss1;
+            std::stringstream ss2;
+            ss1 << R"(["foo",1,2,3,false,{"one":1})";
+            ss2 << R"(["foo",1,2,3,false,{"one":1})";
             json j;
             CHECK_THROWS_AS(ss1 >> j, json::parse_error&);
             CHECK_THROWS_WITH(ss2 >> j,
@@ -404,7 +412,7 @@ TEST_CASE("deserialization")
 
             SECTION("from chars")
             {
-                uint8_t* v = new uint8_t[5];
+                auto* v = new uint8_t[5];
                 v[0] = 't';
                 v[1] = 'r';
                 v[2] = 'u';
@@ -860,7 +868,8 @@ TEST_CASE("deserialization")
             CHECK(json::parse(bom + "1") == 1);
             CHECK(json::parse(std::istringstream(bom + "1")) == 1);
 
-            SaxEventLogger l1, l2;
+            SaxEventLogger l1;
+            SaxEventLogger l2;
             CHECK(json::sax_parse(std::istringstream(bom + "1"), &l1));
             CHECK(json::sax_parse(bom + "1", &l2));
             CHECK(l1.events.size() == 1);
@@ -886,7 +895,8 @@ TEST_CASE("deserialization")
             CHECK_THROWS_WITH(_ = json::parse(std::istringstream(bom.substr(0, 2))),
                               "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid BOM; must be 0xEF 0xBB 0xBF if given; last read: '\xEF\xBB'");
 
-            SaxEventLogger l1, l2;
+            SaxEventLogger l1;
+            SaxEventLogger l2;
             CHECK(!json::sax_parse(std::istringstream(bom.substr(0, 2)), &l1));
             CHECK(!json::sax_parse(bom.substr(0, 2), &l2));
             CHECK(l1.events.size() == 1);
@@ -912,7 +922,8 @@ TEST_CASE("deserialization")
             CHECK_THROWS_WITH(_ = json::parse(std::istringstream(bom.substr(0, 1))),
                               "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid BOM; must be 0xEF 0xBB 0xBF if given; last read: '\xEF'");
 
-            SaxEventLogger l1, l2;
+            SaxEventLogger l1;
+            SaxEventLogger l2;
             CHECK(!json::sax_parse(std::istringstream(bom.substr(0, 1)), &l1));
             CHECK(!json::sax_parse(bom.substr(0, 1), &l2));
             CHECK(l1.events.size() == 1);
@@ -942,7 +953,7 @@ TEST_CASE("deserialization")
                         CAPTURE(i1)
                         CAPTURE(i2)
 
-                        std::string s = "";
+                        std::string s;
                         s.push_back(static_cast<char>(bom[0] + i0));
                         s.push_back(static_cast<char>(bom[1] + i1));
                         s.push_back(static_cast<char>(bom[2] + i2));
@@ -1012,7 +1023,7 @@ TEST_CASE("deserialization")
 
     SECTION("SAX and early abort")
     {
-        std::string s = "[1, [\"string\", 43.12], null, {\"key1\": true, \"key2\": false}]";
+        std::string s = R"([1, ["string", 43.12], null, {"key1": true, "key2": false}])";
 
         SaxEventLogger default_logger;
         SaxEventLoggerExitAfterStartObject exit_after_start_object;

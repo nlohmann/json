@@ -36,15 +36,15 @@ using nlohmann::json;
 namespace
 {
 // shortcut to scan a string literal
-json::lexer::token_type scan_string(const char* s, const bool ignore_comments = false);
+json::lexer::token_type scan_string(const char* s, bool ignore_comments = false);
 json::lexer::token_type scan_string(const char* s, const bool ignore_comments)
 {
     auto ia = nlohmann::detail::input_adapter(s);
     return nlohmann::detail::lexer<json, decltype(ia)>(std::move(ia), ignore_comments).scan();
 }
-}
+} // namespace
 
-std::string get_error_message(const char* s, const bool ignore_comments = false);
+std::string get_error_message(const char* s, bool ignore_comments = false);
 std::string get_error_message(const char* s, const bool ignore_comments)
 {
     auto ia = nlohmann::detail::input_adapter(s);

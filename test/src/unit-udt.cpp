@@ -32,7 +32,6 @@ SOFTWARE.
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
-#include <array>
 #include <map>
 #include <memory>
 #include <string>

@@ -794,7 +794,7 @@ TEST_CASE("constructors")
 
         SECTION("integer literal with l suffix")
         {
-            json j(42l);
+            json j(42L);
             CHECK(j.type() == json::value_t::number_integer);
             CHECK(j == j_reference);
         }
@@ -808,7 +808,7 @@ TEST_CASE("constructors")
 
         SECTION("integer literal with ll suffix")
         {
-            json j(42ll);
+            json j(42LL);
             CHECK(j.type() == json::value_t::number_integer);
             CHECK(j == j_reference);
         }
@@ -892,7 +892,7 @@ TEST_CASE("constructors")
 
         SECTION("long double")
         {
-            long double n = 42.23l;
+            long double n = 42.23L;
             json j(n);
             CHECK(j.type() == json::value_t::number_float);
             CHECK(j.m_value.number_float == Approx(j_reference.m_value.number_float));
@@ -914,7 +914,7 @@ TEST_CASE("constructors")
 
         SECTION("integer literal with l suffix")
         {
-            json j(42.23l);
+            json j(42.23L);
             CHECK(j.type() == json::value_t::number_float);
             CHECK(j.m_value.number_float == Approx(j_reference.m_value.number_float));
         }

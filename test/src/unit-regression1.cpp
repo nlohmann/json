@@ -104,7 +104,7 @@ struct foo_serializer < T, typename std::enable_if < !std::is_same<foo, T>::valu
         ::nlohmann::from_json(j, value);
     }
 };
-}
+} // namespace ns
 
 using foo_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t,
       std::uint64_t, double, std::allocator, ns::foo_serializer, std::vector<std::uint8_t>>;
@@ -127,7 +127,7 @@ struct nocopy
         j = {{"val", n.val}};
     }
 };
-}
+} // namespace
 
 TEST_CASE("regression tests 1")
 {
@@ -135,7 +135,7 @@ TEST_CASE("regression tests 1")
     {
         SECTION("escape_doublequote")
         {
-            auto s = "[\"\\\"foo\\\"\"]";
+            const auto* s = "[\"\\\"foo\\\"\"]";
             json j = json::parse(s);
             auto expected = R"(["\"foo\""])"_json;
             CHECK(j == expected);
@@ -245,7 +245,7 @@ TEST_CASE("regression tests 1")
 
     SECTION("issue #82 - lexer::get_number return NAN")
     {
-        const auto content = R"(
+        const auto* const content = R"(
         {
             "Test":"Test1",
             "Number":100,
@@ -633,7 +633,7 @@ TEST_CASE("regression tests 1")
 
     SECTION("issue #306 - Parsing fails without space at end of file")
     {
-        for (auto filename :
+        for (const auto* filename :
                 {
                     TEST_DATA_DIRECTORY "/regression/broken_file.json",
                     TEST_DATA_DIRECTORY "/regression/working_file.json"
@@ -648,7 +648,7 @@ TEST_CASE("regression tests 1")
 
     SECTION("issue #310 - make json_benchmarks no longer working in 2.0.4")
     {
-        for (auto filename :
+        for (const auto* filename :
                 {
                     TEST_DATA_DIRECTORY "/regression/floats.json",
                     TEST_DATA_DIRECTORY "/regression/signed_ints.json",
@@ -1385,8 +1385,10 @@ TEST_CASE("regression tests 1")
     {
         SECTION("example 1")
         {
-            std::istringstream i1_2_3( "{\"first\": \"one\" }{\"second\": \"two\"}3" );
-            json j1, j2, j3;
+            std::istringstream i1_2_3( R"({"first": "one" }{"second": "two"}3)" );
+            json j1;
+            json j2;
+            json j3;
             i1_2_3 >> j1;
             i1_2_3 >> j2;
             i1_2_3 >> j3;
@@ -1524,7 +1526,7 @@ TEST_CASE("regression tests 1")
     SECTION("issue #971 - Add a SAX parser - late bug")
     {
         // a JSON text
-        auto text = R"(
+        const auto* text = R"(
     {
         "Image": {
             "Width":  800,
@@ -1545,14 +1547,7 @@ TEST_CASE("regression tests 1")
         json::parser_callback_t cb = [](int /*depth*/, json::parse_event_t event, json & parsed)
         {
             // skip object elements with key "Thumbnail"
-            if (event == json::parse_event_t::key && parsed == json("Thumbnail"))
-            {
-                return false;
-            }
-            else
-            {
-                return true;
-            }
+            return !(event == json::parse_event_t::key && parsed == json("Thumbnail"));
         };
 
         // parse (with callback) and serialize JSON

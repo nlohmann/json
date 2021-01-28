@@ -219,7 +219,7 @@ TEST_CASE("CBOR")
                         // create expected byte vector
                         std::vector<uint8_t> expected;
                         expected.push_back(static_cast<uint8_t>(0x3b));
-                        uint64_t positive = static_cast<uint64_t>(-1 - i);
+                        auto positive = static_cast<uint64_t>(-1 - i);
                         expected.push_back(static_cast<uint8_t>((positive >> 56) & 0xff));
                         expected.push_back(static_cast<uint8_t>((positive >> 48) & 0xff));
                         expected.push_back(static_cast<uint8_t>((positive >> 40) & 0xff));
@@ -276,7 +276,7 @@ TEST_CASE("CBOR")
                         // create expected byte vector
                         std::vector<uint8_t> expected;
                         expected.push_back(static_cast<uint8_t>(0x3a));
-                        uint32_t positive = static_cast<uint32_t>(static_cast<uint64_t>(-1 - i) & 0x00000000ffffffff);
+                        auto positive = static_cast<uint32_t>(static_cast<uint64_t>(-1 - i) & 0x00000000ffffffff);
                         expected.push_back(static_cast<uint8_t>((positive >> 24) & 0xff));
                         expected.push_back(static_cast<uint8_t>((positive >> 16) & 0xff));
                         expected.push_back(static_cast<uint8_t>((positive >> 8) & 0xff));
@@ -317,7 +317,7 @@ TEST_CASE("CBOR")
                         // create expected byte vector
                         std::vector<uint8_t> expected;
                         expected.push_back(static_cast<uint8_t>(0x39));
-                        uint16_t positive = static_cast<uint16_t>(-1 - i);
+                        auto positive = static_cast<uint16_t>(-1 - i);
                         expected.push_back(static_cast<uint8_t>((positive >> 8) & 0xff));
                         expected.push_back(static_cast<uint8_t>(positive & 0xff));
 
@@ -328,7 +328,7 @@ TEST_CASE("CBOR")
 
                         // check individual bytes
                         CHECK(result[0] == 0x39);
-                        uint16_t restored = static_cast<uint16_t>(static_cast<uint8_t>(result[1]) * 256 + static_cast<uint8_t>(result[2]));
+                        auto restored = static_cast<uint16_t>(static_cast<uint8_t>(result[1]) * 256 + static_cast<uint8_t>(result[2]));
                         CHECK(restored == positive);
                         CHECK(-1 - restored == i);
 
@@ -346,7 +346,7 @@ TEST_CASE("CBOR")
                     const auto result = json::to_cbor(j);
                     CHECK(result == expected);
 
-                    int16_t restored = static_cast<int16_t>(-1 - ((result[1] << 8) + result[2]));
+                    auto restored = static_cast<int16_t>(-1 - ((result[1] << 8) + result[2]));
                     CHECK(restored == -9263);
 
                     // roundtrip
@@ -506,7 +506,7 @@ TEST_CASE("CBOR")
 
                         // check individual bytes
                         CHECK(result[0] == 0x19);
-                        uint16_t restored = static_cast<uint16_t>(static_cast<uint8_t>(result[1]) * 256 + static_cast<uint8_t>(result[2]));
+                        auto restored = static_cast<uint16_t>(static_cast<uint8_t>(result[1]) * 256 + static_cast<uint8_t>(result[2]));
                         CHECK(restored == i);
 
                         // roundtrip
@@ -634,7 +634,7 @@ TEST_CASE("CBOR")
 
                         // check individual bytes
                         CHECK(result[0] == 0xd1);
-                        int16_t restored = static_cast<int16_t>((result[1] << 8) + result[2]);
+                        auto restored = static_cast<int16_t>((result[1] << 8) + result[2]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -699,7 +699,7 @@ TEST_CASE("CBOR")
 
                         // check individual bytes
                         CHECK(result[0] == 0x18);
-                        uint8_t restored = static_cast<uint8_t>(result[1]);
+                        auto restored = static_cast<uint8_t>(result[1]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -733,7 +733,7 @@ TEST_CASE("CBOR")
 
                         // check individual bytes
                         CHECK(result[0] == 0x19);
-                        uint16_t restored = static_cast<uint16_t>(static_cast<uint8_t>(result[1]) * 256 + static_cast<uint8_t>(result[2]));
+                        auto restored = static_cast<uint16_t>(static_cast<uint8_t>(result[1]) * 256 + static_cast<uint8_t>(result[2]));
                         CHECK(restored == i);
 
                         // roundtrip
@@ -940,7 +940,7 @@ TEST_CASE("CBOR")
                 }
                 SECTION("-3.40282e+38(lowest float)")
                 {
-                    double v = static_cast<double>(std::numeric_limits<float>::lowest());
+                    auto v = static_cast<double>(std::numeric_limits<float>::lowest());
                     json j = v;
                     std::vector<uint8_t> expected =
                     {
@@ -1340,7 +1340,7 @@ TEST_CASE("CBOR")
 
             SECTION("{\"a\": {\"b\": {\"c\": {}}}}")
             {
-                json j = json::parse("{\"a\": {\"b\": {\"c\": {}}}}");
+                json j = json::parse(R"({"a": {"b": {"c": {}}}})");
                 std::vector<uint8_t> expected =
                 {
                     0xa1, 0x61, 0x61, 0xa1, 0x61, 0x62, 0xa1, 0x61, 0x63, 0xa0
@@ -2249,7 +2249,7 @@ TEST_CASE("CBOR roundtrips" * doctest::skip())
                 // parse CBOR file
                 auto packed = utils::read_binary_file(filename + ".cbor");
 
-                if (!exclude_packed.count(filename))
+                if (exclude_packed.count(filename) == 0u)
                 {
                     {
                         INFO_WITH_TEMP(filename + ": output adapters: std::vector<uint8_t>");
@@ -2323,7 +2323,7 @@ TEST_CASE("all CBOR first bytes")
             // check that parse_error.112 is only thrown if the
             // first byte is in the unsupported set
             INFO_WITH_TEMP(e.what());
-            if (std::find(unsupported.begin(), unsupported.end(), byte) != unsupported.end())
+            if (unsupported.find(byte) != unsupported.end())
             {
                 CHECK(e.id == 112);
             }
