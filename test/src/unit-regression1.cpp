@@ -1443,7 +1443,7 @@ TEST_CASE("regression tests 1")
 
     SECTION("issue #838 - incorrect parse error with binary data in keys")
     {
-        std::array<uint8_t, 28> key1 = { 103, 92, 117, 48, 48, 48, 55, 92, 114, 215, 126, 214, 95, 92, 34, 174, 40, 71, 38, 174, 40, 71, 38, 223, 134, 247, 127, 0 };
+        std::array<uint8_t, 28> key1 = {{ 103, 92, 117, 48, 48, 48, 55, 92, 114, 215, 126, 214, 95, 92, 34, 174, 40, 71, 38, 174, 40, 71, 38, 223, 134, 247, 127, 0 }};
         std::string key1_str(reinterpret_cast<char*>(key1.data()));
         json j = key1_str;
         CHECK_THROWS_AS(j.dump(), json::type_error&);
