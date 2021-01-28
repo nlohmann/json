@@ -14350,7 +14350,7 @@ class binary_writer
     void write_number(const NumberType n)
     {
         // step 1: write number to array of length NumberType
-        std::array<CharType, sizeof(NumberType)> vec;
+        std::array<CharType, sizeof(NumberType)> vec{};
         std::memcpy(vec.data(), &n, sizeof(NumberType));
 
         // step 2: write array to output (with possible reordering)
@@ -22564,7 +22564,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    void swap(array_t& other)
+    void swap(array_t& other) // NOLINT(bugprone-exception-escape)
     {
         // swap only works for arrays
         if (JSON_HEDLEY_LIKELY(is_array()))
@@ -22597,7 +22597,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    void swap(object_t& other)
+    void swap(object_t& other) // NOLINT(bugprone-exception-escape)
     {
         // swap only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
@@ -22630,7 +22630,7 @@ class basic_json
 
     @since version 1.0.0
     */
-    void swap(string_t& other)
+    void swap(string_t& other) // NOLINT(bugprone-exception-escape)
     {
         // swap only works for strings
         if (JSON_HEDLEY_LIKELY(is_string()))
@@ -22663,7 +22663,7 @@ class basic_json
 
     @since version 3.8.0
     */
-    void swap(binary_t& other)
+    void swap(binary_t& other) // NOLINT(bugprone-exception-escape)
     {
         // swap only works for strings
         if (JSON_HEDLEY_LIKELY(is_binary()))
@@ -22677,7 +22677,7 @@ class basic_json
     }
 
     /// @copydoc swap(binary_t&)
-    void swap(typename binary_t::container_type& other)
+    void swap(typename binary_t::container_type& other) // NOLINT(bugprone-exception-escape)
     {
         // swap only works for strings
         if (JSON_HEDLEY_LIKELY(is_binary()))
@@ -23470,7 +23470,9 @@ class basic_json
     {
         auto ia = i.get();
         return format == input_format_t::json
+               // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
                ? parser(std::move(ia), nullptr, true, ignore_comments).sax_parse(sax, strict)
+               // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
                : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia)).sax_parse(format, sax, strict);
     }
 
@@ -24156,6 +24158,7 @@ class basic_json
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
         auto ia = i.get();
+        // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
         const bool res = binary_reader<decltype(ia)>(std::move(ia)).sax_parse(input_format_t::cbor, &sdp, strict, tag_handler);
         return res ? result : basic_json(value_t::discarded);
     }
@@ -24295,6 +24298,7 @@ class basic_json
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
         auto ia = i.get();
+        // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
         const bool res = binary_reader<decltype(ia)>(std::move(ia)).sax_parse(input_format_t::msgpack, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
@@ -24410,6 +24414,7 @@ class basic_json
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
         auto ia = i.get();
+        // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
         const bool res = binary_reader<decltype(ia)>(std::move(ia)).sax_parse(input_format_t::ubjson, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
@@ -24523,6 +24528,7 @@ class basic_json
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
         auto ia = i.get();
+        // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
         const bool res = binary_reader<decltype(ia)>(std::move(ia)).sax_parse(input_format_t::bson, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
@@ -24957,12 +24963,14 @@ class basic_json
                 // check if desired value is present
                 if (JSON_HEDLEY_UNLIKELY(it == val.m_value.object->end()))
                 {
+                    // NOLINTNEXTLINE(performance-inefficient-string-concatenation)
                     JSON_THROW(parse_error::create(105, 0, error_msg + " must have member '" + member + "'"));
                 }
 
                 // check if result is of type string
                 if (JSON_HEDLEY_UNLIKELY(string_type && !it->second.is_string()))
                 {
+                    // NOLINTNEXTLINE(performance-inefficient-string-concatenation)
                     JSON_THROW(parse_error::create(105, 0, error_msg + " must have string member '" + member + "'"));
                 }
 
