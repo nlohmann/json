@@ -495,7 +495,7 @@ add_custom_target(ci_oclint
 add_custom_target(ci_clang_tidy
     COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=Debug -GNinja
-        -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_CXX_CLANG_TIDY=clang-tidy
+        -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_CXX_CLANG_TIDY=${CLANG_TIDY_TOOL}
         -DJSON_BuildTests=ON -DJSON_MultipleHeaders=ON
         -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_clang_tidy
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_clang_tidy
