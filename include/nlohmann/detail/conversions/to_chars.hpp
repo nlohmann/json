@@ -490,51 +490,49 @@ inline int find_largest_pow10(const std::uint32_t n, std::uint32_t& pow10)
         return 10;
     }
     // LCOV_EXCL_STOP
-    else if (n >= 100000000)
+    if (n >= 100000000)
     {
         pow10 = 100000000;
         return  9;
     }
-    else if (n >= 10000000)
+    if (n >= 10000000)
     {
         pow10 = 10000000;
         return  8;
     }
-    else if (n >= 1000000)
+    if (n >= 1000000)
     {
         pow10 = 1000000;
         return  7;
     }
-    else if (n >= 100000)
+    if (n >= 100000)
     {
         pow10 = 100000;
         return  6;
     }
-    else if (n >= 10000)
+    if (n >= 10000)
     {
         pow10 = 10000;
         return  5;
     }
-    else if (n >= 1000)
+    if (n >= 1000)
     {
         pow10 = 1000;
         return  4;
     }
-    else if (n >= 100)
+    if (n >= 100)
     {
         pow10 = 100;
         return  3;
     }
-    else if (n >= 10)
+    if (n >= 10)
     {
         pow10 = 10;
         return  2;
     }
-    else
-    {
-        pow10 = 1;
-        return 1;
-    }
+
+    pow10 = 1;
+    return 1;
 }
 
 inline void grisu2_round(char* buf, int len, std::uint64_t dist, std::uint64_t delta,

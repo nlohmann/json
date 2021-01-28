@@ -3944,7 +3944,7 @@ template<typename IteratorType> class iteration_proxy_value
     /// a string representation of the array index
     mutable string_type array_index_str = "0";
     /// an empty string (to return a reference for primitive values)
-    const string_type empty_str = "";
+    const string_type empty_str;
 
   public:
     explicit iteration_proxy_value(IteratorType it) noexcept : anchor(it) {}
@@ -4947,10 +4947,8 @@ class iterator_input_adapter
             std::advance(current, 1);
             return result;
         }
-        else
-        {
-            return std::char_traits<char_type>::eof();
-        }
+
+        return std::char_traits<char_type>::eof();
     }
 
   private:
@@ -10618,62 +10616,62 @@ class parser
                                         parse_error::create(101, m_lexer.get_position(),
                                                 exception_message(token_type::end_array, "array")));
             }
-            else  // object
+
+            // states.back() is false -> object
+
+            // comma -> next value
+            if (get_token() == token_type::value_separator)
             {
-                // comma -> next value
-                if (get_token() == token_type::value_separator)
+                // parse key
+                if (JSON_HEDLEY_UNLIKELY(get_token() != token_type::value_string))
                 {
-                    // parse key
-                    if (JSON_HEDLEY_UNLIKELY(get_token() != token_type::value_string))
-                    {
-                        return sax->parse_error(m_lexer.get_position(),
-                                                m_lexer.get_token_string(),
-                                                parse_error::create(101, m_lexer.get_position(),
-                                                        exception_message(token_type::value_string, "object key")));
-                    }
-
-                    if (JSON_HEDLEY_UNLIKELY(!sax->key(m_lexer.get_string())))
-                    {
-                        return false;
-                    }
-
-                    // parse separator (:)
-                    if (JSON_HEDLEY_UNLIKELY(get_token() != token_type::name_separator))
-                    {
-                        return sax->parse_error(m_lexer.get_position(),
-                                                m_lexer.get_token_string(),
-                                                parse_error::create(101, m_lexer.get_position(),
-                                                        exception_message(token_type::name_separator, "object separator")));
-                    }
-
-                    // parse values
-                    get_token();
-                    continue;
+                    return sax->parse_error(m_lexer.get_position(),
+                                            m_lexer.get_token_string(),
+                                            parse_error::create(101, m_lexer.get_position(),
+                                                    exception_message(token_type::value_string, "object key")));
                 }
 
-                // closing }
-                if (JSON_HEDLEY_LIKELY(last_token == token_type::end_object))
+                if (JSON_HEDLEY_UNLIKELY(!sax->key(m_lexer.get_string())))
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!sax->end_object()))
-                    {
-                        return false;
-                    }
-
-                    // We are done with this object. Before we can parse a
-                    // new value, we need to evaluate the new state first.
-                    // By setting skip_to_state_evaluation to false, we
-                    // are effectively jumping to the beginning of this if.
-                    JSON_ASSERT(!states.empty());
-                    states.pop_back();
-                    skip_to_state_evaluation = true;
-                    continue;
+                    return false;
                 }
 
-                return sax->parse_error(m_lexer.get_position(),
-                                        m_lexer.get_token_string(),
-                                        parse_error::create(101, m_lexer.get_position(),
-                                                exception_message(token_type::end_object, "object")));
+                // parse separator (:)
+                if (JSON_HEDLEY_UNLIKELY(get_token() != token_type::name_separator))
+                {
+                    return sax->parse_error(m_lexer.get_position(),
+                                            m_lexer.get_token_string(),
+                                            parse_error::create(101, m_lexer.get_position(),
+                                                    exception_message(token_type::name_separator, "object separator")));
+                }
+
+                // parse values
+                get_token();
+                continue;
             }
+
+            // closing }
+            if (JSON_HEDLEY_LIKELY(last_token == token_type::end_object))
+            {
+                if (JSON_HEDLEY_UNLIKELY(!sax->end_object()))
+                {
+                    return false;
+                }
+
+                // We are done with this object. Before we can parse a
+                // new value, we need to evaluate the new state first.
+                // By setting skip_to_state_evaluation to false, we
+                // are effectively jumping to the beginning of this if.
+                JSON_ASSERT(!states.empty());
+                states.pop_back();
+                skip_to_state_evaluation = true;
+                continue;
+            }
+
+            return sax->parse_error(m_lexer.get_position(),
+                                    m_lexer.get_token_string(),
+                                    parse_error::create(101, m_lexer.get_position(),
+                                            exception_message(token_type::end_object, "object")));
         }
     }
 
@@ -14948,51 +14946,49 @@ inline int find_largest_pow10(const std::uint32_t n, std::uint32_t& pow10)
         return 10;
     }
     // LCOV_EXCL_STOP
-    else if (n >= 100000000)
+    if (n >= 100000000)
     {
         pow10 = 100000000;
         return  9;
     }
-    else if (n >= 10000000)
+    if (n >= 10000000)
     {
         pow10 = 10000000;
         return  8;
     }
-    else if (n >= 1000000)
+    if (n >= 1000000)
     {
         pow10 = 1000000;
         return  7;
     }
-    else if (n >= 100000)
+    if (n >= 100000)
     {
         pow10 = 100000;
         return  6;
     }
-    else if (n >= 10000)
+    if (n >= 10000)
     {
         pow10 = 10000;
         return  5;
     }
-    else if (n >= 1000)
+    if (n >= 1000)
     {
         pow10 = 1000;
         return  4;
     }
-    else if (n >= 100)
+    if (n >= 100)
     {
         pow10 = 100;
         return  3;
     }
-    else if (n >= 10)
+    if (n >= 10)
     {
         pow10 = 10;
         return  2;
     }
-    else
-    {
-        pow10 = 1;
-        return 1;
-    }
+
+    pow10 = 1;
+    return 1;
 }
 
 inline void grisu2_round(char* buf, int len, std::uint64_t dist, std::uint64_t delta,
