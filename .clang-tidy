@@ -31,3 +31,5 @@ Checks: '*,
 CheckOptions:
   - key: hicpp-special-member-functions.AllowSoleDefaultDtor
     value: 1
+
+HeaderFilterRegex: '.*nlohmann.*'

@@ -618,8 +618,8 @@ struct small_pod
 
 struct non_pod
 {
-    std::string s;
-    non_pod() : s() {}
+    std::string s{};
+    non_pod() = default;
     non_pod(std::string S) : s(std::move(S)) {}
 };
 
