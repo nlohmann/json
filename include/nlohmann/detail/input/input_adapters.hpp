@@ -45,6 +45,7 @@ class file_input_adapter
     file_input_adapter(file_input_adapter&&) noexcept = default;
     file_input_adapter& operator=(const file_input_adapter&) = delete;
     file_input_adapter& operator=(file_input_adapter&&) = delete;
+    ~file_input_adapter() = default;
 
     std::char_traits<char>::int_type get_character() noexcept
     {
@@ -465,7 +466,7 @@ class span_input_adapter
 
     contiguous_bytes_input_adapter&& get()
     {
-        return std::move(ia);
+        return std::move(ia); // NOLINT(hicpp-move-const-arg,performance-move-const-arg)
     }
 
   private:

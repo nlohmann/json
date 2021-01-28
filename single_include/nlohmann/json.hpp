@@ -4854,6 +4854,7 @@ class file_input_adapter
     file_input_adapter(file_input_adapter&&) noexcept = default;
     file_input_adapter& operator=(const file_input_adapter&) = delete;
     file_input_adapter& operator=(file_input_adapter&&) = delete;
+    ~file_input_adapter() = default;
 
     std::char_traits<char>::int_type get_character() noexcept
     {
@@ -5274,7 +5275,7 @@ class span_input_adapter
 
     contiguous_bytes_input_adapter&& get()
     {
-        return std::move(ia);
+        return std::move(ia); // NOLINT(hicpp-move-const-arg,performance-move-const-arg)
     }
 
   private:
@@ -7435,7 +7436,7 @@ scan_number_done:
             {
                 // escape control characters
                 std::array<char, 9> cs{{}};
-                (std::snprintf)(cs.data(), cs.size(), "<U+%.4X>", static_cast<unsigned char>(c));
+                (std::snprintf)(cs.data(), cs.size(), "<U+%.4X>", static_cast<unsigned char>(c)); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-varar)
                 result += cs.data();
             }
             else
@@ -9958,8 +9959,8 @@ class binary_reader
         }
 
         // parse number string
-        auto number_ia = detail::input_adapter(std::forward<decltype(number_vector)>(number_vector));
-        auto number_lexer = detail::lexer<BasicJsonType, decltype(number_ia)>(std::move(number_ia), false);
+        using ia_type = decltype(detail::input_adapter(std::forward<decltype(number_vector)>(number_vector)));
+        auto number_lexer = detail::lexer<BasicJsonType, ia_type>(detail::input_adapter(std::forward<decltype(number_vector)>(number_vector)), false);
         const auto result_number = number_lexer.scan();
         const auto number_string = number_lexer.get_token_string();
         const auto result_remainder = number_lexer.scan();
@@ -10147,7 +10148,7 @@ class binary_reader
     std::string get_token_string() const
     {
         std::array<char, 3> cr{{}};
-        (std::snprintf)(cr.data(), cr.size(), "%.2hhX", static_cast<unsigned char>(current));
+        (std::snprintf)(cr.data(), cr.size(), "%.2hhX", static_cast<unsigned char>(current)); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
         return std::string{cr.data()};
     }
 

@@ -5,6 +5,7 @@ Checks: '*,
          -cppcoreguidelines-avoid-non-const-global-variables,
          -cppcoreguidelines-macro-usage,
          -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+         -cppcoreguidelines-pro-bounds-constant-array-index,
          -cppcoreguidelines-pro-bounds-pointer-arithmetic,
          -cppcoreguidelines-pro-type-reinterpret-cast,
          -cppcoreguidelines-pro-type-union-access,
@@ -23,14 +24,14 @@ Checks: '*,
          -hicpp-uppercase-literal-suffix,
          -llvm-header-guard,
          -llvm-include-order,
+         -llvmlibc-*,
          -misc-no-recursion,
          -misc-non-private-member-variables-in-classes,
          -modernize-use-trailing-return-type,
          -readability-function-size,
          -readability-magic-numbers,
          -readability-redundant-access-specifiers,
-         -readability-uppercase-literal-suffix,
-         -llvmlibc-*'
+         -readability-uppercase-literal-suffix'
 
 CheckOptions:
   - key: hicpp-special-member-functions.AllowSoleDefaultDtor

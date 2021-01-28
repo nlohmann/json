@@ -122,7 +122,6 @@ struct nocopy
     nocopy(nocopy&&) = delete;
     nocopy& operator=(const nocopy&) = delete;
     nocopy& operator=(nocopy&&) = delete;
-    ~nocopy() = default;
 
     int val = 0;
 
