@@ -86,7 +86,7 @@ struct contact
 struct contact_book
 {
     name m_book_name{};
-    std::vector<contact> m_contacts;
+    std::vector<contact> m_contacts{};
     contact_book() = default;
     contact_book(name n, std::vector<contact> c) : m_book_name(std::move(n)), m_contacts(std::move(c)) {}
 };
