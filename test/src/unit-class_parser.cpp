@@ -1691,7 +1691,7 @@ TEST_CASE("parser class")
 
         SECTION("from array")
         {
-            uint8_t v[] = {'t', 'r', 'u', 'e'};
+            uint8_t v[] = {'t', 'r', 'u', 'e'}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
             json j;
             json::parser(nlohmann::detail::input_adapter(std::begin(v), std::end(v))).parse(true, j);
             CHECK(j == json(true));

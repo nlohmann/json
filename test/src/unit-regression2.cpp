@@ -318,7 +318,7 @@ TEST_CASE("regression tests 2")
         SECTION("test case in issue #1445")
         {
             nlohmann::json dump_test;
-            const int data[] =
+            const std::array<int, 108> data =
             {
                 109,  108,  103,  125,  -122, -53,  115,
                 18,   3,    0,    102,  19,   1,    15,
@@ -395,7 +395,7 @@ TEST_CASE("regression tests 2")
 
         SECTION("string array")
         {
-            const char input[] = { 'B', 0x00 };
+            const std::array<char, 2> input = { 'B', 0x00 };
             json cbor = json::from_cbor(input, true, false);
             CHECK(cbor.is_discarded());
         }

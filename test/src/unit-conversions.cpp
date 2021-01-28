@@ -282,8 +282,8 @@ TEST_CASE("value conversion")
 
         SECTION("built-in arrays")
         {
-            const char str[] = "a string";
-            const int nbs[] = {0, 1, 2};
+            const char str[] = "a string"; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+            const int nbs[] = {0, 1, 2}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
 
             json j2 = nbs;
             json j3 = str;
@@ -387,8 +387,8 @@ TEST_CASE("value conversion")
 
         SECTION("built-in arrays")
         {
-            const int nbs[] = {0, 1, 2};
-            int nbs2[] = {0, 0, 0};
+            const int nbs[] = {0, 1, 2}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+            int nbs2[] = {0, 0, 0}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
 
             json j2 = nbs;
             j2.get_to(nbs2);
