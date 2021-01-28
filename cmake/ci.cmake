@@ -359,7 +359,7 @@ set(GCC_CXXFLAGS "-std=c++11                          \
 add_custom_target(ci_test_gcc
     COMMAND CXX=${GCC_TOOL} CXXFLAGS=${GCC_CXXFLAGS} ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=Debug -GNinja
-        -DJSON_BuildTests=ON
+        -DJSON_BuildTests=ON -DJSON_MultipleHeaders=ON
         -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_gcc
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_gcc
     COMMAND cd ${PROJECT_BINARY_DIR}/build_gcc && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
