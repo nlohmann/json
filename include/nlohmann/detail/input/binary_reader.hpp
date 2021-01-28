@@ -2211,8 +2211,8 @@ class binary_reader
         }
 
         // parse number string
-        using ia_type = decltype(detail::input_adapter(std::forward<decltype(number_vector)>(number_vector)));
-        auto number_lexer = detail::lexer<BasicJsonType, ia_type>(detail::input_adapter(std::forward<decltype(number_vector)>(number_vector)), false);
+        using ia_type = decltype(detail::input_adapter(number_vector));
+        auto number_lexer = detail::lexer<BasicJsonType, ia_type>(detail::input_adapter(number_vector), false);
         const auto result_number = number_lexer.scan();
         const auto number_string = number_lexer.get_token_string();
         const auto result_remainder = number_lexer.scan();

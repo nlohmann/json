@@ -309,7 +309,7 @@ class iter_impl
     @brief post-increment (it++)
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
-    iter_impl const operator++(int)
+    iter_impl const operator++(int) // NOLINT(readability-const-return-type)
     {
         auto result = *this;
         ++(*this);
@@ -352,7 +352,7 @@ class iter_impl
     @brief post-decrement (it--)
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
-    iter_impl const operator--(int)
+    iter_impl const operator--(int) // NOLINT(readability-const-return-type)
     {
         auto result = *this;
         --(*this);

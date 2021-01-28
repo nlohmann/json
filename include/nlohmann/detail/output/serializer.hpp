@@ -454,12 +454,14 @@ class serializer
                             {
                                 if (codepoint <= 0xFFFF)
                                 {
+                                    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
                                     (std::snprintf)(string_buffer.data() + bytes, 7, "\\u%04x",
                                                     static_cast<std::uint16_t>(codepoint));
                                     bytes += 6;
                                 }
                                 else
                                 {
+                                    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
                                     (std::snprintf)(string_buffer.data() + bytes, 13, "\\u%04x\\u%04x",
                                                     static_cast<std::uint16_t>(0xD7C0u + (codepoint >> 10u)),
                                                     static_cast<std::uint16_t>(0xDC00u + (codepoint & 0x3FFu)));
@@ -498,6 +500,7 @@ class serializer
                         case error_handler_t::strict:
                         {
                             std::string sn(3, '\0');
+                            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
                             (std::snprintf)(&sn[0], sn.size(), "%.2X", byte);
                             JSON_THROW(type_error::create(316, "invalid UTF-8 byte at index " + std::to_string(i) + ": 0x" + sn));
                         }
@@ -592,6 +595,7 @@ class serializer
                 case error_handler_t::strict:
                 {
                     std::string sn(3, '\0');
+                    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
                     (std::snprintf)(&sn[0], sn.size(), "%.2X", static_cast<std::uint8_t>(s.back()));
                     JSON_THROW(type_error::create(316, "incomplete UTF-8 string; last byte: 0x" + sn));
                 }
@@ -783,8 +787,8 @@ class serializer
 
     void dump_float(number_float_t x, std::true_type /*is_ieee_single_or_double*/)
     {
-        char* begin = number_buffer.data();
-        char* end = ::nlohmann::detail::to_chars(begin, begin + number_buffer.size(), x);
+        auto* begin = number_buffer.data();
+        auto* end = ::nlohmann::detail::to_chars(begin, begin + number_buffer.size(), x);
 
         o->write_characters(begin, static_cast<size_t>(end - begin));
     }
@@ -795,6 +799,7 @@ class serializer
         static constexpr auto d = std::numeric_limits<number_float_t>::max_digits10;
 
         // the actual conversion
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
         std::ptrdiff_t len = (std::snprintf)(number_buffer.data(), number_buffer.size(), "%.*g", d, x);
 
         // negative value indicates an error

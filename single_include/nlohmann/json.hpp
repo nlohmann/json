@@ -9959,8 +9959,8 @@ class binary_reader
         }
 
         // parse number string
-        using ia_type = decltype(detail::input_adapter(std::forward<decltype(number_vector)>(number_vector)));
-        auto number_lexer = detail::lexer<BasicJsonType, ia_type>(detail::input_adapter(std::forward<decltype(number_vector)>(number_vector)), false);
+        using ia_type = decltype(detail::input_adapter(number_vector));
+        auto number_lexer = detail::lexer<BasicJsonType, ia_type>(detail::input_adapter(number_vector), false);
         const auto result_number = number_lexer.scan();
         const auto number_string = number_lexer.get_token_string();
         const auto result_remainder = number_lexer.scan();
@@ -10817,7 +10817,7 @@ class primitive_iterator_t
         return *this;
     }
 
-    primitive_iterator_t const operator++(int) noexcept
+    primitive_iterator_t const operator++(int) noexcept // NOLINT(readability-const-return-type)
     {
         auto result = *this;
         ++m_it;
@@ -10830,7 +10830,7 @@ class primitive_iterator_t
         return *this;
     }
 
-    primitive_iterator_t const operator--(int) noexcept
+    primitive_iterator_t const operator--(int) noexcept // NOLINT(readability-const-return-type)
     {
         auto result = *this;
         --m_it;
@@ -11194,7 +11194,7 @@ class iter_impl
     @brief post-increment (it++)
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
-    iter_impl const operator++(int)
+    iter_impl const operator++(int) // NOLINT(readability-const-return-type)
     {
         auto result = *this;
         ++(*this);
@@ -11237,7 +11237,7 @@ class iter_impl
     @brief post-decrement (it--)
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
-    iter_impl const operator--(int)
+    iter_impl const operator--(int) // NOLINT(readability-const-return-type)
     {
         auto result = *this;
         --(*this);
@@ -11578,7 +11578,7 @@ class json_reverse_iterator : public std::reverse_iterator<Base>
     explicit json_reverse_iterator(const base_iterator& it) noexcept : base_iterator(it) {}
 
     /// post-increment (it++)
-    json_reverse_iterator const operator++(int)
+    json_reverse_iterator const operator++(int) // NOLINT(readability-const-return-type)
     {
         return static_cast<json_reverse_iterator>(base_iterator::operator++(1));
     }
@@ -11590,7 +11590,7 @@ class json_reverse_iterator : public std::reverse_iterator<Base>
     }
 
     /// post-decrement (it--)
-    json_reverse_iterator const operator--(int)
+    json_reverse_iterator const operator--(int) // NOLINT(readability-const-return-type)
     {
         return static_cast<json_reverse_iterator>(base_iterator::operator--(1));
     }
@@ -16004,12 +16004,14 @@ class serializer
                             {
                                 if (codepoint <= 0xFFFF)
                                 {
+                                    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
                                     (std::snprintf)(string_buffer.data() + bytes, 7, "\\u%04x",
                                                     static_cast<std::uint16_t>(codepoint));
                                     bytes += 6;
                                 }
                                 else
                                 {
+                                    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
                                     (std::snprintf)(string_buffer.data() + bytes, 13, "\\u%04x\\u%04x",
                                                     static_cast<std::uint16_t>(0xD7C0u + (codepoint >> 10u)),
                                                     static_cast<std::uint16_t>(0xDC00u + (codepoint & 0x3FFu)));
@@ -16048,6 +16050,7 @@ class serializer
                         case error_handler_t::strict:
                         {
                             std::string sn(3, '\0');
+                            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
                             (std::snprintf)(&sn[0], sn.size(), "%.2X", byte);
                             JSON_THROW(type_error::create(316, "invalid UTF-8 byte at index " + std::to_string(i) + ": 0x" + sn));
                         }
@@ -16142,6 +16145,7 @@ class serializer
                 case error_handler_t::strict:
                 {
                     std::string sn(3, '\0');
+                    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
                     (std::snprintf)(&sn[0], sn.size(), "%.2X", static_cast<std::uint8_t>(s.back()));
                     JSON_THROW(type_error::create(316, "incomplete UTF-8 string; last byte: 0x" + sn));
                 }
@@ -16333,8 +16337,8 @@ class serializer
 
     void dump_float(number_float_t x, std::true_type /*is_ieee_single_or_double*/)
     {
-        char* begin = number_buffer.data();
-        char* end = ::nlohmann::detail::to_chars(begin, begin + number_buffer.size(), x);
+        auto* begin = number_buffer.data();
+        auto* end = ::nlohmann::detail::to_chars(begin, begin + number_buffer.size(), x);
 
         o->write_characters(begin, static_cast<size_t>(end - begin));
     }
@@ -16345,6 +16349,7 @@ class serializer
         static constexpr auto d = std::numeric_limits<number_float_t>::max_digits10;
 
         // the actual conversion
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
         std::ptrdiff_t len = (std::snprintf)(number_buffer.data(), number_buffer.size(), "%.*g", d, x);
 
         // negative value indicates an error
