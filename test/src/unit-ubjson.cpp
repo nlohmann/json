@@ -51,42 +51,42 @@ class SaxCountdown
         return events_left-- > 0;
     }
 
-    bool boolean(bool)
+    bool boolean(bool /*unused*/)
     {
         return events_left-- > 0;
     }
 
-    bool number_integer(json::number_integer_t)
+    bool number_integer(json::number_integer_t /*unused*/)
     {
         return events_left-- > 0;
     }
 
-    bool number_unsigned(json::number_unsigned_t)
+    bool number_unsigned(json::number_unsigned_t /*unused*/)
     {
         return events_left-- > 0;
     }
 
-    bool number_float(json::number_float_t, const std::string&)
+    bool number_float(json::number_float_t /*unused*/, const std::string& /*unused*/)
     {
         return events_left-- > 0;
     }
 
-    bool string(std::string&)
+    bool string(std::string& /*unused*/)
     {
         return events_left-- > 0;
     }
 
-    bool binary(std::vector<std::uint8_t>&)
+    bool binary(std::vector<std::uint8_t>& /*unused*/)
     {
         return events_left-- > 0;
     }
 
-    bool start_object(std::size_t)
+    bool start_object(std::size_t /*unused*/)
     {
         return events_left-- > 0;
     }
 
-    bool key(std::string&)
+    bool key(std::string& /*unused*/)
     {
         return events_left-- > 0;
     }
@@ -96,7 +96,7 @@ class SaxCountdown
         return events_left-- > 0;
     }
 
-    bool start_array(std::size_t)
+    bool start_array(std::size_t /*unused*/)
     {
         return events_left-- > 0;
     }
@@ -106,7 +106,7 @@ class SaxCountdown
         return events_left-- > 0;
     }
 
-    bool parse_error(std::size_t, const std::string&, const json::exception&)
+    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const json::exception& /*unused*/)
     {
         return false;
     }
@@ -114,7 +114,7 @@ class SaxCountdown
   private:
     int events_left = 0;
 };
-}
+} // namespace
 
 TEST_CASE("UBJSON")
 {
@@ -175,16 +175,16 @@ TEST_CASE("UBJSON")
                 {
                     std::vector<int64_t> numbers;
                     numbers.push_back((std::numeric_limits<int64_t>::min)());
-                    numbers.push_back(-1000000000000000000ll);
-                    numbers.push_back(-100000000000000000ll);
-                    numbers.push_back(-10000000000000000ll);
-                    numbers.push_back(-1000000000000000ll);
-                    numbers.push_back(-100000000000000ll);
-                    numbers.push_back(-10000000000000ll);
-                    numbers.push_back(-1000000000000ll);
-                    numbers.push_back(-100000000000ll);
-                    numbers.push_back(-10000000000ll);
-                    numbers.push_back(-2147483649ll);
+                    numbers.push_back(-1000000000000000000LL);
+                    numbers.push_back(-100000000000000000LL);
+                    numbers.push_back(-10000000000000000LL);
+                    numbers.push_back(-1000000000000000LL);
+                    numbers.push_back(-100000000000000LL);
+                    numbers.push_back(-10000000000000LL);
+                    numbers.push_back(-1000000000000LL);
+                    numbers.push_back(-100000000000LL);
+                    numbers.push_back(-10000000000LL);
+                    numbers.push_back(-2147483649LL);
                     for (auto i : numbers)
                     {
                         CAPTURE(i)
@@ -1610,7 +1610,7 @@ TEST_CASE("UBJSON")
                 CHECK_THROWS_AS(_ = json::from_ubjson(v_ubjson), json::out_of_range&);
 
                 json j;
-                nlohmann::detail::json_sax_dom_callback_parser<json> scp(j, [](int, json::parse_event_t, const json&)
+                nlohmann::detail::json_sax_dom_callback_parser<json> scp(j, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/)
                 {
                     return true;
                 });

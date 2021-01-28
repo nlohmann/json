@@ -395,7 +395,7 @@ TEST_CASE("parser class")
                 CHECK_THROWS_AS(parser_helper("\uFF01"), json::parse_error&);
                 CHECK_THROWS_AS(parser_helper("[-4:1,]"), json::parse_error&);
                 // unescaped control characters
-                CHECK_THROWS_AS(parser_helper("\"\x00\""), json::parse_error&);
+                CHECK_THROWS_AS(parser_helper("\"\x00\""), json::parse_error&); // NOLINT(bugprone-string-literal-with-embedded-nul)
                 CHECK_THROWS_AS(parser_helper("\"\x01\""), json::parse_error&);
                 CHECK_THROWS_AS(parser_helper("\"\x02\""), json::parse_error&);
                 CHECK_THROWS_AS(parser_helper("\"\x03\""), json::parse_error&);
@@ -427,7 +427,7 @@ TEST_CASE("parser class")
                 CHECK_THROWS_AS(parser_helper("\"\x1d\""), json::parse_error&);
                 CHECK_THROWS_AS(parser_helper("\"\x1e\""), json::parse_error&);
                 CHECK_THROWS_AS(parser_helper("\"\x1f\""), json::parse_error&);
-                CHECK_THROWS_WITH(parser_helper("\"\x00\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: missing closing quote; last read: '\"'");
+                CHECK_THROWS_WITH(parser_helper("\"\x00\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: missing closing quote; last read: '\"'"); // NOLINT(bugprone-string-literal-with-embedded-nul)
                 CHECK_THROWS_WITH(parser_helper("\"\x01\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0001 (SOH) must be escaped to \\u0001; last read: '\"<U+0001>'");
                 CHECK_THROWS_WITH(parser_helper("\"\x02\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0002 (STX) must be escaped to \\u0002; last read: '\"<U+0002>'");
                 CHECK_THROWS_WITH(parser_helper("\"\x03\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0003 (ETX) must be escaped to \\u0003; last read: '\"<U+0003>'");
@@ -770,7 +770,7 @@ TEST_CASE("parser class")
                 CHECK(accept_helper("\uFF01") == false);
                 CHECK(accept_helper("[-4:1,]") == false);
                 // unescaped control characters
-                CHECK(accept_helper("\"\x00\"") == false);
+                CHECK(accept_helper("\"\x00\"") == false); // NOLINT(bugprone-string-literal-with-embedded-nul)
                 CHECK(accept_helper("\"\x01\"") == false);
                 CHECK(accept_helper("\"\x02\"") == false);
                 CHECK(accept_helper("\"\x03\"") == false);

@@ -135,7 +135,7 @@ TEST_CASE("regression tests 1")
     {
         SECTION("escape_doublequote")
         {
-            const auto* s = "[\"\\\"foo\\\"\"]";
+            const auto* s = R"(["\"foo\""])";
             json j = json::parse(s);
             auto expected = R"(["\"foo\""])"_json;
             CHECK(j == expected);

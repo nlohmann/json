@@ -345,8 +345,8 @@ namespace udt
 {
 struct legacy_type
 {
-    std::string number;
-    legacy_type() : number() {}
+    std::string number{};
+    legacy_type() = default;
     legacy_type(std::string n) : number(std::move(n)) {}
 };
 } // namespace udt

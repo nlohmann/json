@@ -87,7 +87,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(for_1647,
 struct Data
 {
     Data() = default;
-    Data(std::string a_, const std::string b_) : a(std::move(a_)), b(b_) {}
+    Data(std::string a_, std::string b_) : a(std::move(a_)), b(std::move(b_)) {}
     std::string a {};
     std::string b {};
 };
@@ -115,7 +115,7 @@ namespace nlohmann
 template <>
 struct adl_serializer<NonDefaultFromJsonStruct>
 {
-    static NonDefaultFromJsonStruct from_json (json const&) noexcept
+    static NonDefaultFromJsonStruct from_json (json const& /*unused*/) noexcept
     {
         return {};
     }

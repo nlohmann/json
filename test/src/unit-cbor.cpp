@@ -54,42 +54,42 @@ class SaxCountdown
         return events_left-- > 0;
     }
 
-    bool boolean(bool)
+    bool boolean(bool /*unused*/)
     {
         return events_left-- > 0;
     }
 
-    bool number_integer(json::number_integer_t)
+    bool number_integer(json::number_integer_t /*unused*/)
     {
         return events_left-- > 0;
     }
 
-    bool number_unsigned(json::number_unsigned_t)
+    bool number_unsigned(json::number_unsigned_t /*unused*/)
     {
         return events_left-- > 0;
     }
 
-    bool number_float(json::number_float_t, const std::string&)
+    bool number_float(json::number_float_t /*unused*/, const std::string& /*unused*/)
     {
         return events_left-- > 0;
     }
 
-    bool string(std::string&)
+    bool string(std::string& /*unused*/)
     {
         return events_left-- > 0;
     }
 
-    bool binary(std::vector<std::uint8_t>&)
+    bool binary(std::vector<std::uint8_t>& /*unused*/)
     {
         return events_left-- > 0;
     }
 
-    bool start_object(std::size_t)
+    bool start_object(std::size_t /*unused*/)
     {
         return events_left-- > 0;
     }
 
-    bool key(std::string&)
+    bool key(std::string& /*unused*/)
     {
         return events_left-- > 0;
     }
@@ -99,7 +99,7 @@ class SaxCountdown
         return events_left-- > 0;
     }
 
-    bool start_array(std::size_t)
+    bool start_array(std::size_t /*unused*/)
     {
         return events_left-- > 0;
     }
@@ -109,7 +109,7 @@ class SaxCountdown
         return events_left-- > 0;
     }
 
-    bool parse_error(std::size_t, const std::string&, const json::exception&)
+    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const json::exception& /*unused*/)
     {
         return false;
     }
@@ -117,7 +117,7 @@ class SaxCountdown
   private:
     int events_left = 0;
 };
-}
+} // namespace
 
 TEST_CASE("CBOR")
 {
@@ -294,7 +294,7 @@ TEST_CASE("CBOR")
                                             (static_cast<uint32_t>(result[3]) << 010) +
                                             static_cast<uint32_t>(result[4]);
                         CHECK(restored == positive);
-                        CHECK(-1ll - restored == i);
+                        CHECK(-1LL - restored == i);
 
                         // roundtrip
                         CHECK(json::from_cbor(result) == j);

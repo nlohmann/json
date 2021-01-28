@@ -235,7 +235,7 @@ struct allocator_no_forward : std::allocator<T>
 {
     allocator_no_forward() = default;
     template <class U>
-    allocator_no_forward(allocator_no_forward<U>) {}
+    allocator_no_forward(allocator_no_forward<U> /*unused*/) {}
 
     template <class U>
     struct rebind

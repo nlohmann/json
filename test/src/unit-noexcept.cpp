@@ -51,7 +51,7 @@ void to_json(json& /*unused*/, pod_bis /*unused*/) {}
 void from_json(const json& /*unused*/, pod /*unused*/) noexcept {}
 void from_json(const json& /*unused*/, pod_bis /*unused*/) {}
 
-static json* j = nullptr;
+json* j = nullptr;
 
 static_assert(noexcept(json{}), "");
 static_assert(noexcept(nlohmann::to_json(*j, 2)), "");
