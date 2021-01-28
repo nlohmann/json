@@ -4778,7 +4778,7 @@ std::size_t hash(const BasicJsonType& j)
         }
 
         default:                   // LCOV_EXCL_LINE
-            JSON_ASSERT(false);    // LCOV_EXCL_LINE
+            JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
             return 0;              // LCOV_EXCL_LINE
     }
 }
@@ -6987,7 +6987,7 @@ class lexer : public lexer_base<BasicJsonType>
 
             // all other characters are rejected outside scan_number()
             default:            // LCOV_EXCL_LINE
-                JSON_ASSERT(false);  // LCOV_EXCL_LINE
+                JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
         }
 
 scan_number_minus:
@@ -7867,7 +7867,7 @@ class binary_reader
                 break;
 
             default:            // LCOV_EXCL_LINE
-                JSON_ASSERT(false);  // LCOV_EXCL_LINE
+                JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
         }
 
         // strict mode: next byte must be EOF
@@ -8502,7 +8502,7 @@ class binary_reader
                     }
 
                     default:                 // LCOV_EXCL_LINE
-                        JSON_ASSERT(false);  // LCOV_EXCL_LINE
+                        JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
                         return false;        // LCOV_EXCL_LINE
                 }
             }
@@ -10035,7 +10035,7 @@ class binary_reader
     bool get_number(const input_format_t format, NumberType& result)
     {
         // step 1: read input into array with system's byte order
-        std::array<std::uint8_t, sizeof(NumberType)> vec;
+        std::array<std::uint8_t, sizeof(NumberType)> vec{};
         for (std::size_t i = 0; i < sizeof(NumberType); ++i)
         {
             get();
@@ -10183,7 +10183,7 @@ class binary_reader
                 break;
 
             default:            // LCOV_EXCL_LINE
-                JSON_ASSERT(false);  // LCOV_EXCL_LINE
+                JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
         }
 
         return error_msg + " " + context + ": " + detail;
@@ -10263,7 +10263,7 @@ enum class parse_event_t : uint8_t
 
 template<typename BasicJsonType>
 using parser_callback_t =
-    std::function<bool(int depth, parse_event_t event, BasicJsonType& parsed)>;
+    std::function<bool(int /*depth*/, parse_event_t /*event*/, BasicJsonType& /*parsed*/)>;
 
 /*!
 @brief syntax analysis
@@ -13981,7 +13981,7 @@ class binary_writer
 
             // LCOV_EXCL_START
             default:
-                JSON_ASSERT(false);
+                JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert)
                 return 0ul;
                 // LCOV_EXCL_STOP
         }
@@ -14027,7 +14027,7 @@ class binary_writer
 
             // LCOV_EXCL_START
             default:
-                JSON_ASSERT(false);
+                JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert)
                 return;
                 // LCOV_EXCL_STOP
         }
@@ -15908,7 +15908,7 @@ class serializer
             }
 
             default:            // LCOV_EXCL_LINE
-                JSON_ASSERT(false);  // LCOV_EXCL_LINE
+                JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
         }
     }
 
@@ -16110,7 +16110,7 @@ class serializer
                         }
 
                         default:            // LCOV_EXCL_LINE
-                            JSON_ASSERT(false);  // LCOV_EXCL_LINE
+                            JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
                     }
                     break;
                 }
@@ -16174,7 +16174,7 @@ class serializer
                 }
 
                 default:            // LCOV_EXCL_LINE
-                    JSON_ASSERT(false);  // LCOV_EXCL_LINE
+                    JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
             }
         }
     }
@@ -16254,7 +16254,7 @@ class serializer
         }
 
         // use a pointer to fill the buffer
-        auto buffer_ptr = number_buffer.begin();
+        auto buffer_ptr = number_buffer.begin(); // NOLINT(llvm-qualified-auto,readability-qualified-auto,cppcoreguidelines-pro-type-vararg,hicpp-vararg)
 
         const bool is_negative = std::is_same<NumberType, number_integer_t>::value && !(x >= 0); // see issue #755
         number_unsigned_t abs_value;
@@ -16456,7 +16456,7 @@ class serializer
      */
     number_unsigned_t remove_sign(number_unsigned_t x)
     {
-        JSON_ASSERT(false); // LCOV_EXCL_LINE
+        JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
         return x; // LCOV_EXCL_LINE
     }
 
@@ -16471,7 +16471,7 @@ class serializer
      */
     inline number_unsigned_t remove_sign(number_integer_t x) noexcept
     {
-        JSON_ASSERT(x < 0 && x < (std::numeric_limits<number_integer_t>::max)());
+        JSON_ASSERT(x < 0 && x < (std::numeric_limits<number_integer_t>::max)()); // NOLINT(misc-redundant-expression)
         return static_cast<number_unsigned_t>(-(x + 1)) + 1;
     }
 
@@ -18153,7 +18153,7 @@ class basic_json
                 m_type = value_t::discarded;
                 break;
             default:            // LCOV_EXCL_LINE
-                JSON_ASSERT(false);  // LCOV_EXCL_LINE
+                JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
         }
         assert_invariant();
     }
@@ -24901,7 +24901,7 @@ class basic_json
 
                 // if there exists a parent it cannot be primitive
                 default:            // LCOV_EXCL_LINE
-                    JSON_ASSERT(false);  // LCOV_EXCL_LINE
+                    JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
             }
         };
 

@@ -119,7 +119,7 @@ class binary_reader
                 break;
 
             default:            // LCOV_EXCL_LINE
-                JSON_ASSERT(false);  // LCOV_EXCL_LINE
+                JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
         }
 
         // strict mode: next byte must be EOF
@@ -754,7 +754,7 @@ class binary_reader
                     }
 
                     default:                 // LCOV_EXCL_LINE
-                        JSON_ASSERT(false);  // LCOV_EXCL_LINE
+                        JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
                         return false;        // LCOV_EXCL_LINE
                 }
             }
@@ -2287,7 +2287,7 @@ class binary_reader
     bool get_number(const input_format_t format, NumberType& result)
     {
         // step 1: read input into array with system's byte order
-        std::array<std::uint8_t, sizeof(NumberType)> vec;
+        std::array<std::uint8_t, sizeof(NumberType)> vec{};
         for (std::size_t i = 0; i < sizeof(NumberType); ++i)
         {
             get();
@@ -2435,7 +2435,7 @@ class binary_reader
                 break;
 
             default:            // LCOV_EXCL_LINE
-                JSON_ASSERT(false);  // LCOV_EXCL_LINE
+                JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
         }
 
         return error_msg + " " + context + ": " + detail;

@@ -1140,7 +1140,7 @@ class binary_writer
 
             // LCOV_EXCL_START
             default:
-                JSON_ASSERT(false);
+                JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert)
                 return 0ul;
                 // LCOV_EXCL_STOP
         }
@@ -1186,7 +1186,7 @@ class binary_writer
 
             // LCOV_EXCL_START
             default:
-                JSON_ASSERT(false);
+                JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert)
                 return;
                 // LCOV_EXCL_STOP
         }

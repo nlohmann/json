@@ -484,7 +484,14 @@ add_custom_target(ci_oclint
         -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
         -DJSON_BuildTests=OFF -DJSON_CI=ON
         -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_oclint
-    COMMAND ${OCLINT_TOOL} -i ${PROJECT_BINARY_DIR}/build_oclint/src_single/all.cpp -p ${PROJECT_BINARY_DIR}/build_oclint -- -report-type html -enable-global-analysis -o oclint_report.html
+    COMMAND ${OCLINT_TOOL} -i ${PROJECT_BINARY_DIR}/build_oclint/src_single/all.cpp -p ${PROJECT_BINARY_DIR}/build_oclint --
+        -report-type html -enable-global-analysis --max-priority-1=0 --max-priority-2=1000 --max-priority-3=2000
+        --disable-rule=MultipleUnaryOperator
+        --disable-rule=DoubleNegative
+        --disable-rule=ShortVariableName
+        --disable-rule=GotoStatement
+        --disable-rule=LongLine
+        -o ${PROJECT_BINARY_DIR}/build_oclint/oclint_report.html
     COMMENT "Check code with OCLint"
 )
 

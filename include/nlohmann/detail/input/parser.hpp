@@ -41,7 +41,7 @@ enum class parse_event_t : uint8_t
 
 template<typename BasicJsonType>
 using parser_callback_t =
-    std::function<bool(int depth, parse_event_t event, BasicJsonType& parsed)>;
+    std::function<bool(int /*depth*/, parse_event_t /*event*/, BasicJsonType& /*parsed*/)>;
 
 /*!
 @brief syntax analysis
