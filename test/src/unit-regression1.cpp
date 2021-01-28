@@ -119,6 +119,10 @@ struct nocopy
 {
     nocopy() = default;
     nocopy(const nocopy&) = delete;
+    nocopy(nocopy&&) = delete;
+    nocopy& operator=(const nocopy&) = delete;
+    nocopy& operator=(nocopy&&) = delete;
+    ~nocopy() = default;
 
     int val = 0;
 
@@ -408,18 +412,18 @@ TEST_CASE("regression tests 1")
         json j;
 
         // Non-const access with key as "char []"
-        char array_key[] = "Key1";
+        char array_key[] = "Key1"; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
         CHECK_NOTHROW(j[array_key] = 1);
         CHECK(j[array_key] == json(1));
 
         // Non-const access with key as "const char[]"
-        const char const_array_key[] = "Key2";
+        const char const_array_key[] = "Key2"; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
         CHECK_NOTHROW(j[const_array_key] = 2);
         CHECK(j[const_array_key] == json(2));
 
         // Non-const access with key as "char *"
-        char _ptr_key[] = "Key3";
-        char* ptr_key = &_ptr_key[0];
+        char _ptr_key[] = "Key3"; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+        char* ptr_key = &_ptr_key[0]; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
         CHECK_NOTHROW(j[ptr_key] = 3);
         CHECK(j[ptr_key] == json(3));
 
@@ -1099,10 +1103,10 @@ TEST_CASE("regression tests 1")
     SECTION("issue #414 - compare with literal 0)")
     {
 #define CHECK_TYPE(v) \
-    CHECK((json(v) == v));\
-    CHECK((v == json(v)));\
-    CHECK_FALSE((json(v) != v));\
-    CHECK_FALSE((v != json(v)));
+    CHECK((json(v) == (v)));\
+    CHECK(((v) == json(v)));\
+    CHECK_FALSE((json(v) != (v)));\
+    CHECK_FALSE(((v) != json(v)));
 
         CHECK_TYPE(nullptr)
         CHECK_TYPE(0)

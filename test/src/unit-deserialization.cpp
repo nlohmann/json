@@ -400,7 +400,7 @@ TEST_CASE("deserialization")
 
             SECTION("from array")
             {
-                uint8_t v[] = {'t', 'r', 'u', 'e'};
+                uint8_t v[] = {'t', 'r', 'u', 'e'}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
                 CHECK(json::parse(v) == json(true));
                 CHECK(json::accept(v));
 
@@ -496,7 +496,7 @@ TEST_CASE("deserialization")
 
             SECTION("from array")
             {
-                uint8_t v[] = {'t', 'r', 'u', 'e'};
+                uint8_t v[] = {'t', 'r', 'u', 'e'}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
                 CHECK(json::parse(std::begin(v), std::end(v)) == json(true));
                 CHECK(json::accept(std::begin(v), std::end(v)));
 
@@ -561,7 +561,7 @@ TEST_CASE("deserialization")
         {
             SECTION("case 1")
             {
-                uint8_t v[] = {'\"', 'a', 'a', 'a', 'a', 'a', 'a', '\\', 'u'};
+                std::array<std::uint8_t, 9> v = {{'\"', 'a', 'a', 'a', 'a', 'a', 'a', '\\', 'u'}};
                 json _;
                 CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error&);
                 CHECK(!json::accept(std::begin(v), std::end(v)));
@@ -578,7 +578,7 @@ TEST_CASE("deserialization")
 
             SECTION("case 2")
             {
-                uint8_t v[] = {'\"', 'a', 'a', 'a', 'a', 'a', 'a', '\\', 'u', '1'};
+                std::array<std::uint8_t, 10> v = {{'\"', 'a', 'a', 'a', 'a', 'a', 'a', '\\', 'u', '1'}};
                 json _;
                 CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error&);
                 CHECK(!json::accept(std::begin(v), std::end(v)));
@@ -595,7 +595,7 @@ TEST_CASE("deserialization")
 
             SECTION("case 3")
             {
-                uint8_t v[] = {'\"', 'a', 'a', 'a', 'a', 'a', 'a', '\\', 'u', '1', '1', '1', '1', '1', '1', '1', '1'};
+                std::array<std::uint8_t, 17> v = {{'\"', 'a', 'a', 'a', 'a', 'a', 'a', '\\', 'u', '1', '1', '1', '1', '1', '1', '1', '1'}};
                 json _;
                 CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error&);
                 CHECK(!json::accept(std::begin(v), std::end(v)));
@@ -612,7 +612,7 @@ TEST_CASE("deserialization")
 
             SECTION("case 4")
             {
-                uint8_t v[] = {'\"', 'a', 'a', 'a', 'a', 'a', 'a', 'u', '1', '1', '1', '1', '1', '1', '1', '1', '\\'};
+                std::array<std::uint8_t, 17> v = {{'\"', 'a', 'a', 'a', 'a', 'a', 'a', 'u', '1', '1', '1', '1', '1', '1', '1', '1', '\\'}};
                 json _;
                 CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error&);
                 CHECK(!json::accept(std::begin(v), std::end(v)));
@@ -629,7 +629,7 @@ TEST_CASE("deserialization")
 
             SECTION("case 5")
             {
-                uint8_t v[] = {'\"', 0x7F, 0xC1};
+                std::array<std::uint8_t, 3> v = {{'\"', 0x7F, 0xC1}};
                 json _;
                 CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error&);
                 CHECK(!json::accept(std::begin(v), std::end(v)));
@@ -646,7 +646,7 @@ TEST_CASE("deserialization")
 
             SECTION("case 6")
             {
-                uint8_t v[] = {'\"', 0x7F, 0xDF, 0x7F};
+                std::array<std::uint8_t, 4> v = {{'\"', 0x7F, 0xDF, 0x7F}};
                 json _;
                 CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error&);
                 CHECK_THROWS_WITH(_ = json::parse(std::begin(v), std::end(v)),
@@ -665,7 +665,7 @@ TEST_CASE("deserialization")
 
             SECTION("case 7")
             {
-                uint8_t v[] = {'\"', 0x7F, 0xDF, 0xC0};
+                std::array<std::uint8_t, 4> v = {{'\"', 0x7F, 0xDF, 0xC0}};
                 json _;
                 CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error&);
                 CHECK(!json::accept(std::begin(v), std::end(v)));
@@ -682,7 +682,7 @@ TEST_CASE("deserialization")
 
             SECTION("case 8")
             {
-                uint8_t v[] = {'\"', 0x7F, 0xE0, 0x9F};
+                std::array<std::uint8_t, 4> v = {{'\"', 0x7F, 0xE0, 0x9F}};
                 json _;
                 CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error&);
                 CHECK(!json::accept(std::begin(v), std::end(v)));
@@ -699,7 +699,7 @@ TEST_CASE("deserialization")
 
             SECTION("case 9")
             {
-                uint8_t v[] = {'\"', 0x7F, 0xEF, 0xC0};
+                std::array<std::uint8_t, 4> v = {{'\"', 0x7F, 0xEF, 0xC0}};
                 json _;
                 CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error&);
                 CHECK(!json::accept(std::begin(v), std::end(v)));
@@ -716,7 +716,7 @@ TEST_CASE("deserialization")
 
             SECTION("case 10")
             {
-                uint8_t v[] = {'\"', 0x7F, 0xED, 0x7F};
+                std::array<std::uint8_t, 4> v = {{'\"', 0x7F, 0xED, 0x7F}};
                 json _;
                 CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error&);
                 CHECK(!json::accept(std::begin(v), std::end(v)));
@@ -733,7 +733,7 @@ TEST_CASE("deserialization")
 
             SECTION("case 11")
             {
-                uint8_t v[] = {'\"', 0x7F, 0xF0, 0x8F};
+                std::array<std::uint8_t, 4> v = {{'\"', 0x7F, 0xF0, 0x8F}};
                 json _;
                 CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error&);
                 CHECK(!json::accept(std::begin(v), std::end(v)));
@@ -750,7 +750,7 @@ TEST_CASE("deserialization")
 
             SECTION("case 12")
             {
-                uint8_t v[] = {'\"', 0x7F, 0xF0, 0xC0};
+                std::array<std::uint8_t, 4> v = {{'\"', 0x7F, 0xF0, 0xC0}};
                 json _;
                 CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error&);
                 CHECK(!json::accept(std::begin(v), std::end(v)));
@@ -767,7 +767,7 @@ TEST_CASE("deserialization")
 
             SECTION("case 13")
             {
-                uint8_t v[] = {'\"', 0x7F, 0xF3, 0x7F};
+                std::array<std::uint8_t, 4> v = {{'\"', 0x7F, 0xF3, 0x7F}};
                 json _;
                 CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error&);
                 CHECK(!json::accept(std::begin(v), std::end(v)));
@@ -784,7 +784,7 @@ TEST_CASE("deserialization")
 
             SECTION("case 14")
             {
-                uint8_t v[] = {'\"', 0x7F, 0xF3, 0xC0};
+                std::array<std::uint8_t, 4> v = {{'\"', 0x7F, 0xF3, 0xC0}};
                 json _;
                 CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error&);
                 CHECK(!json::accept(std::begin(v), std::end(v)));
@@ -801,7 +801,7 @@ TEST_CASE("deserialization")
 
             SECTION("case 15")
             {
-                uint8_t v[] = {'\"', 0x7F, 0xF4, 0x7F};
+                std::array<std::uint8_t, 4> v = {{'\"', 0x7F, 0xF4, 0x7F}};
                 json _;
                 CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error&);
                 CHECK(!json::accept(std::begin(v), std::end(v)));
@@ -818,7 +818,7 @@ TEST_CASE("deserialization")
 
             SECTION("case 16")
             {
-                uint8_t v[] = {'{', '\"', '\"', ':', '1', '1'};
+                std::array<std::uint8_t, 6> v = {{'{', '\"', '\"', ':', '1', '1'}};
                 json _;
                 CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error&);
                 CHECK(!json::accept(std::begin(v), std::end(v)));

@@ -40,7 +40,7 @@ json::lexer::token_type scan_string(const char* s, bool ignore_comments = false)
 json::lexer::token_type scan_string(const char* s, const bool ignore_comments)
 {
     auto ia = nlohmann::detail::input_adapter(s);
-    return nlohmann::detail::lexer<json, decltype(ia)>(std::move(ia), ignore_comments).scan();
+    return nlohmann::detail::lexer<json, decltype(ia)>(std::move(ia), ignore_comments).scan(); // NOLINT(hicpp-move-const-arg,performance-move-const-arg)
 }
 } // namespace
 
@@ -48,7 +48,7 @@ std::string get_error_message(const char* s, bool ignore_comments = false);
 std::string get_error_message(const char* s, const bool ignore_comments)
 {
     auto ia = nlohmann::detail::input_adapter(s);
-    auto lexer = nlohmann::detail::lexer<json, decltype(ia)>(std::move(ia), ignore_comments);
+    auto lexer = nlohmann::detail::lexer<json, decltype(ia)>(std::move(ia), ignore_comments); // NOLINT(hicpp-move-const-arg,performance-move-const-arg)
     lexer.scan();
     return lexer.get_error_message();
 }

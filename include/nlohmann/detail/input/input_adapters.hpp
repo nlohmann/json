@@ -42,7 +42,7 @@ class file_input_adapter
 
     // make class move-only
     file_input_adapter(const file_input_adapter&) = delete;
-    file_input_adapter(file_input_adapter&&) = default;
+    file_input_adapter(file_input_adapter&&) noexcept = default;
     file_input_adapter& operator=(const file_input_adapter&) = delete;
     file_input_adapter& operator=(file_input_adapter&&) = delete;
 
@@ -88,9 +88,10 @@ class input_stream_adapter
     // delete because of pointer members
     input_stream_adapter(const input_stream_adapter&) = delete;
     input_stream_adapter& operator=(input_stream_adapter&) = delete;
-    input_stream_adapter& operator=(input_stream_adapter&& rhs) = delete;
+    input_stream_adapter& operator=(input_stream_adapter&&) = delete;
 
-    input_stream_adapter(input_stream_adapter&& rhs) noexcept : is(rhs.is), sb(rhs.sb)
+    input_stream_adapter(input_stream_adapter&& rhs) noexcept
+        : is(rhs.is), sb(rhs.sb)
     {
         rhs.is = nullptr;
         rhs.sb = nullptr;
@@ -125,7 +126,8 @@ class iterator_input_adapter
     using char_type = typename std::iterator_traits<IteratorType>::value_type;
 
     iterator_input_adapter(IteratorType first, IteratorType last)
-        : current(std::move(first)), end(std::move(last)) {}
+        : current(std::move(first)), end(std::move(last))
+    {}
 
     typename std::char_traits<char_type>::int_type get_character()
     {
@@ -150,7 +152,6 @@ class iterator_input_adapter
     {
         return current == end;
     }
-
 };
 
 

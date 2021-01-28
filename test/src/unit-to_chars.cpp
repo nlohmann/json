@@ -153,12 +153,12 @@ TEST_CASE("digit gen")
             CAPTURE(digits)
             CAPTURE(expected_exponent)
 
-            char buf[32];
+            std::array<char, 32> buf{};
             int len = 0;
             int exponent = 0;
-            nlohmann::detail::dtoa_impl::grisu2(buf, len, exponent, number);
+            nlohmann::detail::dtoa_impl::grisu2(buf.data(), len, exponent, number);
 
-            CHECK(digits == std::string(buf, buf + len));
+            CHECK(digits == std::string(buf.data(), buf.data() + len));
             CHECK(expected_exponent == exponent);
         };
 
