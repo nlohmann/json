@@ -54,7 +54,7 @@ class exception : public std::exception
     }
 
     /// the id of the exception
-    const int id;
+    const int id; // NOLINT(cppcoreguidelines-non-private-member-variables-in-classes)
 
   protected:
     JSON_HEDLEY_NON_NULL(3)
