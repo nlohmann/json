@@ -811,7 +811,7 @@ TEST_CASE("element access 2")
         {
             SECTION("existing element")
             {
-                for (const auto *key :
+                for (const auto* key :
                         {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"
                         })
                 {
@@ -900,7 +900,7 @@ TEST_CASE("element access 2")
         {
             SECTION("existing element")
             {
-                for (const auto *key :
+                for (const auto* key :
                         {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"
                         })
                 {
@@ -987,7 +987,7 @@ TEST_CASE("element access 2")
         {
             SECTION("existing element")
             {
-                for (const auto *key :
+                for (const auto* key :
                         {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"
                         })
                 {
