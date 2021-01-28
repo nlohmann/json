@@ -393,62 +393,62 @@ class parser
                                         parse_error::create(101, m_lexer.get_position(),
                                                 exception_message(token_type::end_array, "array")));
             }
-            else  // object
+
+            // states.back() is false -> object
+
+            // comma -> next value
+            if (get_token() == token_type::value_separator)
             {
-                // comma -> next value
-                if (get_token() == token_type::value_separator)
+                // parse key
+                if (JSON_HEDLEY_UNLIKELY(get_token() != token_type::value_string))
                 {
-                    // parse key
-                    if (JSON_HEDLEY_UNLIKELY(get_token() != token_type::value_string))
-                    {
-                        return sax->parse_error(m_lexer.get_position(),
-                                                m_lexer.get_token_string(),
-                                                parse_error::create(101, m_lexer.get_position(),
-                                                        exception_message(token_type::value_string, "object key")));
-                    }
-
-                    if (JSON_HEDLEY_UNLIKELY(!sax->key(m_lexer.get_string())))
-                    {
-                        return false;
-                    }
-
-                    // parse separator (:)
-                    if (JSON_HEDLEY_UNLIKELY(get_token() != token_type::name_separator))
-                    {
-                        return sax->parse_error(m_lexer.get_position(),
-                                                m_lexer.get_token_string(),
-                                                parse_error::create(101, m_lexer.get_position(),
-                                                        exception_message(token_type::name_separator, "object separator")));
-                    }
-
-                    // parse values
-                    get_token();
-                    continue;
+                    return sax->parse_error(m_lexer.get_position(),
+                                            m_lexer.get_token_string(),
+                                            parse_error::create(101, m_lexer.get_position(),
+                                                    exception_message(token_type::value_string, "object key")));
                 }
 
-                // closing }
-                if (JSON_HEDLEY_LIKELY(last_token == token_type::end_object))
+                if (JSON_HEDLEY_UNLIKELY(!sax->key(m_lexer.get_string())))
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!sax->end_object()))
-                    {
-                        return false;
-                    }
-
-                    // We are done with this object. Before we can parse a
-                    // new value, we need to evaluate the new state first.
-                    // By setting skip_to_state_evaluation to false, we
-                    // are effectively jumping to the beginning of this if.
-                    JSON_ASSERT(!states.empty());
-                    states.pop_back();
-                    skip_to_state_evaluation = true;
-                    continue;
+                    return false;
                 }
 
-                return sax->parse_error(m_lexer.get_position(),
-                                        m_lexer.get_token_string(),
-                                        parse_error::create(101, m_lexer.get_position(),
-                                                exception_message(token_type::end_object, "object")));
+                // parse separator (:)
+                if (JSON_HEDLEY_UNLIKELY(get_token() != token_type::name_separator))
+                {
+                    return sax->parse_error(m_lexer.get_position(),
+                                            m_lexer.get_token_string(),
+                                            parse_error::create(101, m_lexer.get_position(),
+                                                    exception_message(token_type::name_separator, "object separator")));
+                }
+
+                // parse values
+                get_token();
+                continue;
             }
+
+            // closing }
+            if (JSON_HEDLEY_LIKELY(last_token == token_type::end_object))
+            {
+                if (JSON_HEDLEY_UNLIKELY(!sax->end_object()))
+                {
+                    return false;
+                }
+
+                // We are done with this object. Before we can parse a
+                // new value, we need to evaluate the new state first.
+                // By setting skip_to_state_evaluation to false, we
+                // are effectively jumping to the beginning of this if.
+                JSON_ASSERT(!states.empty());
+                states.pop_back();
+                skip_to_state_evaluation = true;
+                continue;
+            }
+
+            return sax->parse_error(m_lexer.get_position(),
+                                    m_lexer.get_token_string(),
+                                    parse_error::create(101, m_lexer.get_position(),
+                                            exception_message(token_type::end_object, "object")));
         }
     }
 
