@@ -3903,6 +3903,7 @@ constexpr const auto& from_json = detail::static_const<detail::from_json_fn>::va
 #include <iterator> // input_iterator_tag
 #include <string> // string, to_string
 #include <tuple> // tuple_size, get, tuple_element
+#include <utility> // move
 
 // #include <nlohmann/detail/meta/type_traits.hpp>
 
@@ -3943,7 +3944,9 @@ template<typename IteratorType> class iteration_proxy_value
     const string_type empty_str{};
 
   public:
-    explicit iteration_proxy_value(IteratorType it) noexcept : anchor(std::move(it)) {}
+    explicit iteration_proxy_value(IteratorType it) noexcept
+        : anchor(std::move(it))
+    {}
 
     /// dereference operator (needed for range-based for)
     iteration_proxy_value& operator*()
