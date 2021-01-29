@@ -360,7 +360,7 @@ TEST_CASE("formatting")
         auto check_float = [](float number, const std::string & expected)
         {
             std::array<char, 33> buf{};
-            char* end = nlohmann::detail::to_chars(buf.data(), buf.data() + 32, number);
+            char* end = nlohmann::detail::to_chars(buf.data(), buf.data() + 32, number); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
             std::string actual(buf.data(), end);
 
             CHECK(actual == expected);
@@ -420,7 +420,7 @@ TEST_CASE("formatting")
         auto check_double = [](double number, const std::string & expected)
         {
             std::array<char, 33> buf{};
-            char* end = nlohmann::detail::to_chars(buf.data(), buf.data() + 32, number);
+            char* end = nlohmann::detail::to_chars(buf.data(), buf.data() + 32, number); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
             std::string actual(buf.data(), end);
 
             CHECK(actual == expected);
