@@ -422,7 +422,7 @@ TEST_CASE("regression tests 1")
 
         // Non-const access with key as "char *"
         char _ptr_key[] = "Key3"; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
-        char* ptr_key = &_ptr_key[0]; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+        char* ptr_key = &_ptr_key[0]; // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
         CHECK_NOTHROW(j[ptr_key] = 3);
         CHECK(j[ptr_key] == json(3));
 
@@ -735,7 +735,7 @@ TEST_CASE("regression tests 1")
         check_roundtrip(83623297654460.33);
         check_roundtrip(701466573254773.6);
         check_roundtrip(1369013370304513);
-        check_roundtrip(96963648023094720);
+        check_roundtrip(96963648023094720); // NOLINT(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
         check_roundtrip(3.478237409280108e+17);
     }
 

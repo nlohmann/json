@@ -1639,6 +1639,7 @@ TEST_CASE("value conversion")
 
 enum class cards {kreuz, pik, herz, karo};
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) - false positive
 NLOHMANN_JSON_SERIALIZE_ENUM(cards,
 {
     {cards::kreuz, "kreuz"},
@@ -1656,6 +1657,7 @@ enum TaskState
     TS_INVALID = -1,
 };
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) - false positive
 NLOHMANN_JSON_SERIALIZE_ENUM(TaskState,
 {
     {TS_INVALID, nullptr},

@@ -126,6 +126,11 @@ struct json_sax
                              const std::string& last_token,
                              const detail::exception& ex) = 0;
 
+    json_sax() = default;
+    json_sax(const json_sax&) = default;
+    json_sax(json_sax&&) noexcept = default;
+    json_sax& operator=(const json_sax&) = default;
+    json_sax& operator=(json_sax&&) noexcept = default;
     virtual ~json_sax() = default;
 };
 

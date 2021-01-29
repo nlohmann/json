@@ -376,7 +376,7 @@ struct adl_serializer<std::shared_ptr<T>>
         }
         else
         {
-            opt.reset(new T(j.get<T>()));
+            opt.reset(new T(j.get<T>())); // NOLINT(cppcoreguidelines-owning-memory)
         }
     }
 };
@@ -407,7 +407,7 @@ TEST_CASE("adl_serializer specialization" * doctest::test_suite("udt"))
             json j = optPerson;
             CHECK(j.is_null());
 
-            optPerson.reset(new udt::person{{42}, {"John Doe"}, udt::country::russia});
+            optPerson.reset(new udt::person{{42}, {"John Doe"}, udt::country::russia}); // NOLINT(cppcoreguidelines-owning-memory)
             j = optPerson;
             CHECK_FALSE(j.is_null());
 
@@ -520,7 +520,7 @@ TEST_CASE("Non-copyable types" * doctest::test_suite("udt"))
         json j = optPerson;
         CHECK(j.is_null());
 
-        optPerson.reset(new udt::person{{42}, {"John Doe"}, udt::country::russia});
+        optPerson.reset(new udt::person{{42}, {"John Doe"}, udt::country::russia}); // NOLINT(cppcoreguidelines-owning-memory,modernize-make-unique)
         j = optPerson;
         CHECK_FALSE(j.is_null());
 

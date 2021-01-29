@@ -412,7 +412,7 @@ TEST_CASE("deserialization")
 
             SECTION("from chars")
             {
-                auto* v = new uint8_t[5];
+                auto* v = new uint8_t[5]; // NOLINT(cppcoreguidelines-owning-memory)
                 v[0] = 't';
                 v[1] = 'r';
                 v[2] = 'u';
@@ -426,7 +426,7 @@ TEST_CASE("deserialization")
                 CHECK(l.events.size() == 1);
                 CHECK(l.events == std::vector<std::string>({"boolean(true)"}));
 
-                delete[] v;
+                delete[] v; // NOLINT(cppcoreguidelines-owning-memory)
             }
 
             SECTION("from std::string")
