@@ -3943,7 +3943,7 @@ template<typename IteratorType> class iteration_proxy_value
     const string_type empty_str{};
 
   public:
-    explicit iteration_proxy_value(IteratorType it) noexcept : anchor(it) {}
+    explicit iteration_proxy_value(IteratorType it) noexcept : anchor(std::move(it)) {}
 
     /// dereference operator (needed for range-based for)
     iteration_proxy_value& operator*()
@@ -5458,9 +5458,9 @@ class json_sax_dom_parser
 
     // make class move-only
     json_sax_dom_parser(const json_sax_dom_parser&) = delete;
-    json_sax_dom_parser(json_sax_dom_parser&&) = default;
+    json_sax_dom_parser(json_sax_dom_parser&&) = default; // NOLINT(hicpp-noexcept-move,performance-noexcept-move-constructor)
     json_sax_dom_parser& operator=(const json_sax_dom_parser&) = delete;
-    json_sax_dom_parser& operator=(json_sax_dom_parser&&) = default;
+    json_sax_dom_parser& operator=(json_sax_dom_parser&&) = default; // NOLINT(hicpp-noexcept-move,performance-noexcept-move-constructor)
     ~json_sax_dom_parser() = default;
 
     bool null()
@@ -5633,9 +5633,9 @@ class json_sax_dom_callback_parser
 
     // make class move-only
     json_sax_dom_callback_parser(const json_sax_dom_callback_parser&) = delete;
-    json_sax_dom_callback_parser(json_sax_dom_callback_parser&&) = default;
+    json_sax_dom_callback_parser(json_sax_dom_callback_parser&&) = default; // NOLINT(hicpp-noexcept-move,performance-noexcept-move-constructor)
     json_sax_dom_callback_parser& operator=(const json_sax_dom_callback_parser&) = delete;
-    json_sax_dom_callback_parser& operator=(json_sax_dom_callback_parser&&) = default;
+    json_sax_dom_callback_parser& operator=(json_sax_dom_callback_parser&&) = default; // NOLINT(hicpp-noexcept-move,performance-noexcept-move-constructor)
     ~json_sax_dom_callback_parser() = default;
 
     bool null()
@@ -11051,7 +11051,7 @@ class iter_impl
     @return const/non-const iterator
     @note It is not checked whether @a other is initialized.
     */
-    iter_impl& operator=(const iter_impl<typename std::remove_const<BasicJsonType>::type>& other) noexcept
+    iter_impl& operator=(const iter_impl<typename std::remove_const<BasicJsonType>::type>& other) noexcept // NOLINT(cert-oop54-cpp)
     {
         m_object = other.m_object;
         m_it = other.m_it;

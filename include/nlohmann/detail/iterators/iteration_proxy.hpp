@@ -42,7 +42,7 @@ template<typename IteratorType> class iteration_proxy_value
     const string_type empty_str{};
 
   public:
-    explicit iteration_proxy_value(IteratorType it) noexcept : anchor(it) {}
+    explicit iteration_proxy_value(IteratorType it) noexcept : anchor(std::move(it)) {}
 
     /// dereference operator (needed for range-based for)
     iteration_proxy_value& operator*()
