@@ -3751,7 +3751,7 @@ void from_json(const BasicJsonType& j, ConstructibleObjectType& obj)
     }
 
     ConstructibleObjectType ret;
-    auto inner_object = j.template get_ptr<const typename BasicJsonType::object_t*>();
+    const auto* inner_object = j.template get_ptr<const typename BasicJsonType::object_t*>();
     using value_type = typename ConstructibleObjectType::value_type;
     std::transform(
         inner_object->begin(), inner_object->end(),
@@ -4144,8 +4144,7 @@ struct external_constructor<value_t::binary>
     static void construct(BasicJsonType& j, const typename BasicJsonType::binary_t& b)
     {
         j.m_type = value_t::binary;
-        typename BasicJsonType::binary_t value{b};
-        j.m_value = value;
+        j.m_value = typename BasicJsonType::binary_t(b);
         j.assert_invariant();
     }
 
@@ -4153,8 +4152,7 @@ struct external_constructor<value_t::binary>
     static void construct(BasicJsonType& j, typename BasicJsonType::binary_t&& b)
     {
         j.m_type = value_t::binary;
-        typename BasicJsonType::binary_t value{std::move(b)};
-        j.m_value = value;
+        j.m_value = typename BasicJsonType::binary_t(std::move(b));;
         j.assert_invariant();
     }
 };
@@ -4393,9 +4391,9 @@ void to_json(BasicJsonType& j, typename BasicJsonType::object_t&& obj)
 template <
     typename BasicJsonType, typename T, std::size_t N,
     enable_if_t < !std::is_constructible<typename BasicJsonType::string_t,
-                  const T(&)[N]>::value,
+                  const T(&)[N]>::value, // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
                   int > = 0 >
-void to_json(BasicJsonType& j, const T(&arr)[N])
+void to_json(BasicJsonType& j, const T(&arr)[N]) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
 {
     external_constructor<value_t::array>::construct(j, arr);
 }
@@ -12055,7 +12053,7 @@ class json_pointer
     */
     BasicJsonType& get_and_create(BasicJsonType& j) const
     {
-        auto result = &j;
+        auto* result = &j;
 
         // in case no reference tokens exist, return a reference to the JSON value
         // j which will be overwritten by a primitive value
@@ -12877,7 +12875,7 @@ class binary_writer
 
     @param[in] adapter  output adapter to write to
     */
-    explicit binary_writer(output_adapter_t<CharType> adapter) : oa(adapter)
+    explicit binary_writer(output_adapter_t<CharType> adapter) : oa(std::move(adapter))
     {
         JSON_ASSERT(oa);
     }
@@ -19565,7 +19563,7 @@ class basic_json
         static_assert(std::is_default_constructible<ValueType>::value,
                       "types must be DefaultConstructible when used with get()");
 
-        ValueType ret;
+        ValueType ret{};
         JSONSerializer<ValueType>::from_json(*this, ret);
         return ret;
     }
@@ -19672,10 +19670,10 @@ class basic_json
 
     template <
         typename T, std::size_t N,
-        typename Array = T (&)[N],
+        typename Array = T (&)[N], // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
         detail::enable_if_t <
             detail::has_from_json<basic_json_t, Array>::value, int > = 0 >
-    Array get_to(T (&v)[N]) const
+    Array get_to(T (&v)[N]) const // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
     noexcept(noexcept(JSONSerializer<Array>::from_json(
                           std::declval<const basic_json_t&>(), v)))
     {
@@ -25381,7 +25379,7 @@ struct less<::nlohmann::detail::value_t>
 */
 template<>
 inline void swap<nlohmann::json>(nlohmann::json& j1, nlohmann::json& j2) noexcept(
-    is_nothrow_move_constructible<nlohmann::json>::value&&
+    is_nothrow_move_constructible<nlohmann::json>::value&&  // NOLINT(misc-redundant-expression)
     is_nothrow_move_assignable<nlohmann::json>::value
                               )
 {

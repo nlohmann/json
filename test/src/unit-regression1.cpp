@@ -115,7 +115,7 @@ using foo_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, 
 
 namespace
 {
-struct nocopy
+struct nocopy // NOLINT(cppcoreguidelines-special-member-functions,hicpp-special-member-functions)
 {
     nocopy() = default;
     nocopy(const nocopy&) = delete;

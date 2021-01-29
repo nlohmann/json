@@ -2029,20 +2029,18 @@ TEST_CASE("CBOR roundtrips" * doctest::skip())
     SECTION("input from flynn")
     {
         // most of these are excluded due to differences in key order (not a real problem)
-        auto exclude_packed = std::set<std::string>
-        {
-            TEST_DATA_DIRECTORY "/json.org/1.json",
-            TEST_DATA_DIRECTORY "/json.org/2.json",
-            TEST_DATA_DIRECTORY "/json.org/3.json",
-            TEST_DATA_DIRECTORY "/json.org/4.json",
-            TEST_DATA_DIRECTORY "/json.org/5.json",
-            TEST_DATA_DIRECTORY "/json_testsuite/sample.json", // kills AppVeyor
-            TEST_DATA_DIRECTORY "/json_tests/pass1.json",
-            TEST_DATA_DIRECTORY "/regression/working_file.json",
-            TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object.json",
-            TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_duplicated_key.json",
-            TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_long_strings.json",
-        };
+        std::set<std::string> exclude_packed;
+        exclude_packed.insert(TEST_DATA_DIRECTORY "/json.org/1.json");
+        exclude_packed.insert(TEST_DATA_DIRECTORY "/json.org/2.json");
+        exclude_packed.insert(TEST_DATA_DIRECTORY "/json.org/3.json");
+        exclude_packed.insert(TEST_DATA_DIRECTORY "/json.org/4.json");
+        exclude_packed.insert(TEST_DATA_DIRECTORY "/json.org/5.json");
+        exclude_packed.insert(TEST_DATA_DIRECTORY "/json_testsuite/sample.json"); // kills AppVeyor
+        exclude_packed.insert(TEST_DATA_DIRECTORY "/json_tests/pass1.json");
+        exclude_packed.insert(TEST_DATA_DIRECTORY "/regression/working_file.json");
+        exclude_packed.insert(TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object.json");
+        exclude_packed.insert(TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_duplicated_key.json");
+        exclude_packed.insert(TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_long_strings.json");
 
         for (std::string filename :
                 {

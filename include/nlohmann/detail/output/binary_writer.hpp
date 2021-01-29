@@ -36,7 +36,7 @@ class binary_writer
 
     @param[in] adapter  output adapter to write to
     */
-    explicit binary_writer(output_adapter_t<CharType> adapter) : oa(adapter)
+    explicit binary_writer(output_adapter_t<CharType> adapter) : oa(std::move(adapter))
     {
         JSON_ASSERT(oa);
     }

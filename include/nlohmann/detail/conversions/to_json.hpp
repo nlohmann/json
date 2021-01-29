@@ -73,8 +73,7 @@ struct external_constructor<value_t::binary>
     static void construct(BasicJsonType& j, const typename BasicJsonType::binary_t& b)
     {
         j.m_type = value_t::binary;
-        typename BasicJsonType::binary_t value{b};
-        j.m_value = value;
+        j.m_value = typename BasicJsonType::binary_t(b);
         j.assert_invariant();
     }
 
@@ -82,8 +81,7 @@ struct external_constructor<value_t::binary>
     static void construct(BasicJsonType& j, typename BasicJsonType::binary_t&& b)
     {
         j.m_type = value_t::binary;
-        typename BasicJsonType::binary_t value{std::move(b)};
-        j.m_value = value;
+        j.m_value = typename BasicJsonType::binary_t(std::move(b));;
         j.assert_invariant();
     }
 };
@@ -322,9 +320,9 @@ void to_json(BasicJsonType& j, typename BasicJsonType::object_t&& obj)
 template <
     typename BasicJsonType, typename T, std::size_t N,
     enable_if_t < !std::is_constructible<typename BasicJsonType::string_t,
-                  const T(&)[N]>::value,
+                  const T(&)[N]>::value, // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
                   int > = 0 >
-void to_json(BasicJsonType& j, const T(&arr)[N])
+void to_json(BasicJsonType& j, const T(&arr)[N]) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
 {
     external_constructor<value_t::array>::construct(j, arr);
 }

@@ -269,7 +269,7 @@ void from_json(const BasicJsonType& j, ConstructibleObjectType& obj)
     }
 
     ConstructibleObjectType ret;
-    auto inner_object = j.template get_ptr<const typename BasicJsonType::object_t*>();
+    const auto* inner_object = j.template get_ptr<const typename BasicJsonType::object_t*>();
     using value_type = typename ConstructibleObjectType::value_type;
     std::transform(
         inner_object->begin(), inner_object->end(),
