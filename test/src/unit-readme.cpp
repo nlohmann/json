@@ -158,7 +158,7 @@ TEST_CASE("README" * doctest::skip())
             j.push_back(true);
 
             // comparison
-            bool x = (j == R"(["foo", 1, true])");  // true
+            bool x = (j == R"(["foo", 1, true])"_json);  // true
             CHECK(x == true);
 
             // iterate the array
