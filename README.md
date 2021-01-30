@@ -365,7 +365,7 @@ The above example can also be expressed explicitly using [`json::parse()`](https
 
 ```cpp
 // parse explicitly
-auto j3 = json::parse("{ \"happy\": true, \"pi\": 3.141 }");
+auto j3 = json::parse(R"({"happy": true, "pi": 3.141})");
 ```
 
 You can also get a string representation of a JSON value (serialize):
@@ -577,7 +577,7 @@ j[1] = 42;
 bool foo = j.at(2);
 
 // comparison
-j == "[\"foo\", 42, true]"_json;  // true
+j == R"(["foo", 1, true])"_json;  // true
 
 // other stuff
 j.size();     // 3 entries
