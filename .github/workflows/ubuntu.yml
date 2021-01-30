@@ -117,3 +117,13 @@ jobs:
         run: cmake -S . -B build -DJSON_CI=On
       - name: build
         run: cmake --build build --target ci_test_clang_sanitizer
+
+  ci_test_coverage:
+    runs-on: ubuntu-latest
+    container: nlohmann/json-ci:latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: cmake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: build
+        run: cmake --build build --target ci_test_coverage

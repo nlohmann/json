@@ -30,6 +30,11 @@ execute_process(COMMAND ${GCC_TOOL} --version OUTPUT_VARIABLE GCC_TOOL_VERSION E
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" GCC_TOOL_VERSION "${GCC_TOOL_VERSION}")
 message(STATUS "🔖 GCC ${GCC_TOOL_VERSION} (${GCC_TOOL})")
 
+find_program(GCOV_TOOL NAMES gcov-HEAD gcov-11 gcov-10 gcov)
+execute_process(COMMAND ${GCOV_TOOL} --version OUTPUT_VARIABLE GCOV_TOOL_VERSION ERROR_VARIABLE GCOV_TOOL_VERSION)
+string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" GCOV_TOOL_VERSION "${GCOV_TOOL_VERSION}")
+message(STATUS "🔖 GCOV ${GCOV_TOOL_VERSION} (${GCOV_TOOL})")
+
 find_program(GIT_TOOL NAMES git)
 execute_process(COMMAND ${GIT_TOOL} --version OUTPUT_VARIABLE GIT_TOOL_VERSION ERROR_VARIABLE GIT_TOOL_VERSION)
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" GIT_TOOL_VERSION "${GIT_TOOL_VERSION}")
@@ -44,6 +49,11 @@ find_program(INFER_TOOL NAMES infer)
 execute_process(COMMAND ${INFER_TOOL} --version OUTPUT_VARIABLE INFER_TOOL_VERSION ERROR_VARIABLE INFER_TOOL_VERSION)
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" INFER_TOOL_VERSION "${INFER_TOOL_VERSION}")
 message(STATUS "🔖 Infer ${INFER_TOOL_VERSION} (${INFER_TOOL})")
+
+find_program(LCOV_TOOL NAMES lcov)
+execute_process(COMMAND ${LCOV_TOOL} --version OUTPUT_VARIABLE LCOV_TOOL_VERSION ERROR_VARIABLE LCOV_TOOL_VERSION)
+string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" LCOV_TOOL_VERSION "${LCOV_TOOL_VERSION}")
+message(STATUS "🔖 LCOV ${LCOV_TOOL_VERSION} (${LCOV_TOOL})")
 
 find_program(NINJA_TOOL NAMES ninja)
 execute_process(COMMAND ${NINJA_TOOL} --version OUTPUT_VARIABLE NINJA_TOOL_VERSION ERROR_VARIABLE NINJA_TOOL_VERSION)
@@ -61,6 +71,7 @@ execute_process(COMMAND ${VALGRIND_TOOL} --version OUTPUT_VARIABLE VALGRIND_TOOL
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" VALGRIND_TOOL_VERSION "${VALGRIND_TOOL_VERSION}")
 message(STATUS "🔖 Valgrind ${VALGRIND_TOOL_VERSION} (${VALGRIND_TOOL})")
 
+find_program(GENHTML_TOOL NAMES genhtml)
 find_program(PLOG_CONVERTER_TOOL NAMES plog-converter)
 find_program(PVS_STUDIO_ANALYZER_TOOL NAMES pvs-studio-analyzer)
 find_program(SCAN_BUILD_TOOL NAMES scan-build-11 scan-build)
@@ -403,6 +414,26 @@ foreach(CXX_STANDARD 11 14 17 20)
         COMMENT "Compile and test with Clang for C++${CXX_STANDARD}"
     )
 endforeach()
+
+###############################################################################
+# Coverage.
+###############################################################################
+
+add_custom_target(ci_test_coverage
+    COMMAND CXX=${GCC_TOOL} ${CMAKE_COMMAND}
+        -DCMAKE_BUILD_TYPE=Debug -GNinja -DCMAKE_CXX_FLAGS="--coverage;-fprofile-arcs;-ftest-coverage"
+        -DJSON_BuildTests=ON -DJSON_MultipleHeaders=ON
+        -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_coverage
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_coverage
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_coverage && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+
+    COMMAND ${LCOV_TOOL} --directory . --capture --output-file json.info --rc lcov_branch_coverage=1
+    COMMAND ${LCOV_TOOL} -e json.info ${SRC_FILES} --output-file json.info.filtered --gcov-tool ${GCOV_TOOL} --rc lcov_branch_coverage=1
+    COMMAND ${CMAKE_SOURCE_DIR}/test/thirdparty/imapdl/filterbr.py json.info.filtered > json.info.filtered.noexcept
+    COMMAND genhtml --title "JSON for Modern C++" --legend --demangle-cpp --output-directory html --show-details --branch-coverage json.info.filtered.noexcept
+
+    COMMENT "Compile and test with coverage"
+)
 
 ###############################################################################
 # Sanitizers.
