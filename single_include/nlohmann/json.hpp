@@ -3944,7 +3944,7 @@ template<typename IteratorType> class iteration_proxy_value
     /// a string representation of the array index
     mutable string_type array_index_str = "0";
     /// an empty string (to return a reference for primitive values)
-    const string_type empty_str;
+    const string_type empty_str{};
 
   public:
     explicit iteration_proxy_value(IteratorType it) noexcept : anchor(it) {}
