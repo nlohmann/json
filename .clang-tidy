@@ -38,5 +38,7 @@ CheckOptions:
   - key: hicpp-special-member-functions.AllowSoleDefaultDtor
     value: 1
 
+WarningsAsErrors: '*'
+
 #HeaderFilterRegex: '.*nlohmann.*'
-HeaderFilterRegex: '^(.*doctest.h)$'
+HeaderFilterRegex: 'include/.*'
