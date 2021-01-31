@@ -131,9 +131,9 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: code-coverage-report
-          path: build/build_coverage/html
+          path: html
       - name: Coveralls
         uses: coverallsapp/github-action@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          path-to-lcov: build/build_coverage/json.info
+          path-to-lcov: json.info
