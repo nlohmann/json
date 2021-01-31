@@ -128,9 +128,14 @@ jobs:
       - name: cmake
         run: cmake -S . -B build -DJSON_CI=On
       - name: build
-        run: cmake --build build --target ci_test_coverage
-      - name: copy
-        run: pwd ; ls -la ; cp -r /__w/json/json/build/build_coverage/html /workdir ; cp -r /__w/json/json/build/build_coverage/json.info /workdir
+        run: |
+          cmake --build build --target ci_test_coverage
+          pwd
+          ls -la
+          ls -la build
+          ls -la build/build_coverage
+          cp -r /__w/json/json/build/build_coverage/html /workdir
+          cp -r /__w/json/json/build/build_coverage/json.info /workdir
       - name: archive coverage report
         uses: actions/upload-artifact@v2
         with:
