@@ -136,4 +136,4 @@ jobs:
         uses: coverallsapp/github-action@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          path-to-lcov: /__w/json/json/build/json.info
+          path-to-lcov: /__w/json/json/build/json.info.filtered.noexcept
