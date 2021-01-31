@@ -130,15 +130,15 @@ jobs:
       - name: build
         run: |
           cmake --build build --target ci_test_coverage
-          cp -r /__w/json/json/build/html /workdir
-          cp -r /__w/json/json/build/json.info /workdir
+          cp -vr /__w/json/json/build/html /workdir
+          cp -vr /__w/json/json/build/json.info /workdir
       - name: archive coverage report
         uses: actions/upload-artifact@v2
         with:
           name: code-coverage-report
-          path: html
+          path: /__w/json/json/html
       - name: Coveralls
         uses: coverallsapp/github-action@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          path-to-lcov: json.info
+          path-to-lcov: /__w/json/json/json.info
