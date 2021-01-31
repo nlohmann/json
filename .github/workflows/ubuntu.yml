@@ -120,25 +120,20 @@ jobs:
 
   ci_test_coverage:
     runs-on: ubuntu-latest
-    container:
-      image: nlohmann/json-ci:latest
-      options: -v /__w/json/json:/workdir
+    container: nlohmann/json-ci:latest
     steps:
       - uses: actions/checkout@v2
       - name: cmake
         run: cmake -S . -B build -DJSON_CI=On
       - name: build
-        run: |
-          cmake --build build --target ci_test_coverage
-          cp -vr /__w/json/json/build/html /workdir
-          cp -vr /__w/json/json/build/json.info /workdir
+        run: cmake --build build --target ci_test_coverage
       - name: archive coverage report
         uses: actions/upload-artifact@v2
         with:
           name: code-coverage-report
-          path: /__w/json/json/html
+          path: /__w/json/json/build/html
       - name: Coveralls
         uses: coverallsapp/github-action@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          path-to-lcov: /__w/json/json/json.info
+          path-to-lcov: /__w/json/json/build/json.info
