@@ -407,7 +407,7 @@ TEST_CASE("adl_serializer specialization" * doctest::test_suite("udt"))
             json j = optPerson;
             CHECK(j.is_null());
 
-            optPerson.reset(new udt::person{{42}, {"John Doe"}, udt::country::russia}); // NOLINT(cppcoreguidelines-owning-memory)
+            optPerson.reset(new udt::person{{42}, {"John Doe"}, udt::country::russia}); // NOLINT(cppcoreguidelines-owning-memory,modernize-make-shared)
             j = optPerson;
             CHECK_FALSE(j.is_null());
 

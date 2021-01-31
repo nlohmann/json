@@ -1119,7 +1119,7 @@ TEST_CASE("constructors")
                 {
                     // This should break through any short string optimization in std::string
                     std::string source(1024, '!');
-                    const char* source_addr = source.data();
+                    const char* source_addr = source.data(); // NOLINT(clang-analyzer-cplusplus.InnerPointer)
                     json j = {std::move(source)};
                     CHECK(j[0].get_ref<std::string const&>().data() == source_addr);
                 }
@@ -1128,7 +1128,7 @@ TEST_CASE("constructors")
                 {
                     // This should break through any short string optimization in std::string
                     std::string source(1024, '!');
-                    const char* source_addr = source.data();
+                    const char* source_addr = source.data(); // NOLINT(clang-analyzer-cplusplus.InnerPointer)
                     json j = {{"key", std::move(source)}};
                     CHECK(j["key"].get_ref<std::string const&>().data() == source_addr);
                 }
@@ -1137,7 +1137,7 @@ TEST_CASE("constructors")
                 {
                     // This should break through any short string optimization in std::string
                     std::string source(1024, '!');
-                    const char* source_addr = source.data();
+                    const char* source_addr = source.data(); // NOLINT(clang-analyzer-cplusplus.InnerPointer)
                     json j = {{std::move(source), 42}};
                     CHECK(j.get_ref<json::object_t&>().begin()->first.data() == source_addr);
                 }
@@ -1148,7 +1148,7 @@ TEST_CASE("constructors")
                 SECTION("constructor with implicit types (array)")
                 {
                     json::array_t source = {1, 2, 3};
-                    const json* source_addr = source.data();
+                    const json* source_addr = source.data(); // NOLINT(clang-analyzer-cplusplus.InnerPointer)
                     json j {std::move(source)};
                     CHECK(j[0].get_ref<json::array_t const&>().data() == source_addr);
                 }
@@ -1156,7 +1156,7 @@ TEST_CASE("constructors")
                 SECTION("constructor with implicit types (object)")
                 {
                     json::array_t source = {1, 2, 3};
-                    const json* source_addr = source.data();
+                    const json* source_addr = source.data(); // NOLINT(clang-analyzer-cplusplus.InnerPointer)
                     json j {{"key", std::move(source)}};
                     CHECK(j["key"].get_ref<json::array_t const&>().data() == source_addr);
                 }
@@ -1164,7 +1164,7 @@ TEST_CASE("constructors")
                 SECTION("assignment with implicit types (array)")
                 {
                     json::array_t source = {1, 2, 3};
-                    const json* source_addr = source.data();
+                    const json* source_addr = source.data(); // NOLINT(clang-analyzer-cplusplus.InnerPointer)
                     json j = {std::move(source)};
                     CHECK(j[0].get_ref<json::array_t const&>().data() == source_addr);
                 }
@@ -1172,7 +1172,7 @@ TEST_CASE("constructors")
                 SECTION("assignment with implicit types (object)")
                 {
                     json::array_t source = {1, 2, 3};
-                    const json* source_addr = source.data();
+                    const json* source_addr = source.data(); // NOLINT(clang-analyzer-cplusplus.InnerPointer)
                     json j = {{"key", std::move(source)}};
                     CHECK(j["key"].get_ref<json::array_t const&>().data() == source_addr);
                 }

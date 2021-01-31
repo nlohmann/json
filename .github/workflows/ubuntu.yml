@@ -130,7 +130,7 @@ jobs:
       - name: build
         run: cmake --build build --target ci_test_coverage
       - name: copy
-        run: cp -r html /workdir ; cp -r json.info /workdir
+        run: cp -r build/build_coverage/html /workdir ; cp -r build/build_coverage/json.info /workdir
       - name: archive coverage report
         uses: actions/upload-artifact@v2
         with:

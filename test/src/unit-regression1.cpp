@@ -94,7 +94,7 @@ template<typename T>
 struct foo_serializer < T, typename std::enable_if < !std::is_same<foo, T>::value >::type >
 {
     template <typename BasicJsonType>
-    static void to_json(BasicJsonType& j, const T& value) noexcept
+    static void to_json(BasicJsonType& j, const T& value) noexcept // NOLINT(bugprone-exception-escape)
     {
         ::nlohmann::to_json(j, value);
     }
