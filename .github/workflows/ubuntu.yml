@@ -106,7 +106,7 @@ jobs:
       - name: cmake
         run: cmake -S . -B build -DJSON_CI=On
       - name: build
-        run: cmake --build build --target ci_clang_tidy || true
+        run: cmake --build build --target ci_clang_tidy
 
   ci_test_clang_sanitizer:
     runs-on: ubuntu-latest
@@ -127,3 +127,8 @@ jobs:
         run: cmake -S . -B build -DJSON_CI=On
       - name: build
         run: cmake --build build --target ci_test_coverage
+      - name: archive coverage report
+        uses: actions/upload-artifact@v2
+        with:
+          name: code-coverage-report
+          path: build_coverage/html
