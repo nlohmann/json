@@ -7834,9 +7834,9 @@ class binary_reader
 
     // make class move-only
     binary_reader(const binary_reader&) = delete;
-    binary_reader(binary_reader&&) noexcept = default;
+    binary_reader(binary_reader&&) = default; // NOLINT(hicpp-noexcept-move,performance-noexcept-move-constructor)
     binary_reader& operator=(const binary_reader&) = delete;
-    binary_reader& operator=(binary_reader&&) noexcept = default;
+    binary_reader& operator=(binary_reader&&) = default; // NOLINT(hicpp-noexcept-move,performance-noexcept-move-constructor)
     ~binary_reader() = default;
 
     /*!
@@ -18092,7 +18092,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                typename U = detail::uncvref_t<CompatibleType>,
                detail::enable_if_t <
                    !detail::is_basic_json<U>::value && detail::is_compatible_type<basic_json_t, U>::value, int > = 0 >
-    basic_json(CompatibleType && val) noexcept(noexcept( // NOLINT(bugprone-forwarding-reference-overload)
+    basic_json(CompatibleType && val) noexcept(noexcept( // NOLINT(bugprone-forwarding-reference-overload,bugprone-exception-escape)
                 JSONSerializer<U>::to_json(std::declval<basic_json_t&>(),
                                            std::forward<CompatibleType>(val))))
     {
@@ -25400,7 +25400,7 @@ struct less<::nlohmann::detail::value_t>
 @since version 1.0.0
 */
 template<>
-inline void swap<nlohmann::json>(nlohmann::json& j1, nlohmann::json& j2) noexcept(
+inline void swap<nlohmann::json>(nlohmann::json& j1, nlohmann::json& j2) noexcept( // NOLINT(readability-inconsistent-declaration-parameter-name)
     is_nothrow_move_constructible<nlohmann::json>::value&&  // NOLINT(misc-redundant-expression)
     is_nothrow_move_assignable<nlohmann::json>::value
                               )

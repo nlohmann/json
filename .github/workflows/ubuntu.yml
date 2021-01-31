@@ -120,13 +120,17 @@ jobs:
 
   ci_test_coverage:
     runs-on: ubuntu-latest
-    container: nlohmann/json-ci:latest
+    container:
+      image: nlohmann/json-ci:latest
+      options: -v /__w/json/json:/workdir
     steps:
       - uses: actions/checkout@v2
       - name: cmake
         run: cmake -S . -B build -DJSON_CI=On
       - name: build
         run: cmake --build build --target ci_test_coverage
+      - name: copy
+        run: cp -r html /workdir ; cp -r json.info /workdir
       - name: archive coverage report
         uses: actions/upload-artifact@v2
         with:
