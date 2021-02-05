@@ -32,6 +32,7 @@ SOFTWARE.
 #define JSON_TESTS_PRIVATE
 #include <nlohmann/json.hpp>
 using nlohmann::json;
+using nlohmann::ordered_json;
 
 #include <deque>
 #include <forward_list>
@@ -1684,6 +1685,9 @@ TEST_CASE("JSON to enum mapping")
 
         // invalid json -> first enum
         CHECK(cards::kreuz == json("what?").get<cards>());
+
+        // issue #2491, fixed in #2624
+        CHECK(ordered_json(cards::kreuz) == "kreuz");
     }
 
     SECTION("traditional enum")
