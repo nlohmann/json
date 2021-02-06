@@ -3305,7 +3305,7 @@ struct detector<Default, void_t<Op<Args...>>, Op, Args...>
 };
 
 template<template<class...> class Op, class... Args>
-using is_detected = typename detector<nonesuch, void, Op, Args...>::value_t;
+struct is_detected : detector<nonesuch, void, Op, Args...>::value_t {};
 
 template<template<class...> class Op, class... Args>
 using detected_t = typename detector<nonesuch, void, Op, Args...>::type;
@@ -20362,15 +20362,18 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @since version 1.0.0
     */
     template < typename ValueType, typename std::enable_if <
-                   !std::is_pointer<ValueType>::value&&
-                   !std::is_same<ValueType, detail::json_ref<basic_json>>::value&&
-                   !std::is_same<ValueType, typename string_t::value_type>::value&&
-                   !detail::is_basic_json<ValueType>::value
-                   && !std::is_same<ValueType, std::initializer_list<typename string_t::value_type>>::value
+                   detail::conjunction <
+                       std::integral_constant < bool,
+                               !std::is_pointer<ValueType>::value&&
+                               !std::is_same<ValueType, detail::json_ref<basic_json>>::value&&
+                               !std::is_same<ValueType, typename string_t::value_type>::value&&
+                               !detail::is_basic_json<ValueType>::value
+                               && !std::is_same<ValueType, std::initializer_list<typename string_t::value_type>>::value
 #if defined(JSON_HAS_CPP_17) && (defined(__GNUC__) || (defined(_MSC_VER) && _MSC_VER >= 1910 && _MSC_VER <= 1914))
-                   && !std::is_same<ValueType, typename std::string_view>::value
+                               && !std::is_same<ValueType, typename std::string_view>::value
 #endif
-                   && detail::is_detected<detail::get_template_function, const basic_json_t&, ValueType>::value
+                               >,
+                       detail::is_detected<detail::get_template_function, const basic_json_t&, ValueType >>::value
                    , int >::type = 0 >
     JSON_EXPLICIT operator ValueType() const
     {
