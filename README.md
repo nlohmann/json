@@ -577,7 +577,7 @@ j[1] = 42;
 bool foo = j.at(2);
 
 // comparison
-j == R"(["foo", 1, true])"_json;  // true
+j == R"(["foo", 1, true, 1.78])"_json;  // true
 
 // other stuff
 j.size();     // 3 entries
