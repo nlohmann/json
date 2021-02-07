@@ -577,7 +577,7 @@ j[1] = 42;
 bool foo = j.at(2);
 
 // comparison
-j == "[\"foo\", 42, true]"_json;  // true
+j == "[\"foo\", 42, true, 1.78]"_json;  // true
 
 // other stuff
 j.size();     // 3 entries
@@ -1528,6 +1528,7 @@ I deeply appreciate the help of the following people.
 - [KonanM](https://github.com/KonanM) proposed an implementation for the `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE`/`NLOHMANN_DEFINE_TYPE_INTRUSIVE` macros.
 - [Guillaume Racicot](https://github.com/gracicot) implemented `string_view` support and allowed C++20 support.
 - [Alex Reinking](https://github.com/alexreinking) improved CMake support for `FetchContent`.
+- [Hannes Domani](https://github.com/ssbssa) provided a GDB pretty printer.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
@@ -1636,5 +1637,7 @@ Note that during the `ctest` stage, several JSON test files are downloaded from 
 In case you have downloaded the library rather than checked out the code via Git, test `cmake_fetch_content_configure`. Please execute `ctest -LE git_required` to skip these tests. See [issue #2189](https://github.com/nlohmann/json/issues/2189) for more information.
 
 Some tests change the installed files and hence make the whole process not reproducible. Please execute `ctest -LE not_reproducible` to skip these tests. See [issue #2324](https://github.com/nlohmann/json/issues/2324) for more information.
+
+Note you need to call `cmake -LE "not_reproducible|git_required"` to exclude both labels. See [issue #2596](https://github.com/nlohmann/json/issues/2596) for more information.
 
 As Intel compilers use unsafe floating point optimization by default, the unit tests may fail. Use flag [`/fp:precise`](https://software.intel.com/content/www/us/en/develop/documentation/cpp-compiler-developer-guide-and-reference/top/compiler-reference/compiler-options/compiler-option-details/floating-point-options/fp-model-fp.html) then.
