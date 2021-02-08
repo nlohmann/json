@@ -17,55 +17,6 @@ group: edge
 matrix:
   include:
 
-  # Valgrind
-  - os: linux
-    compiler: gcc
-    env:
-      - COMPILER=g++-4.9
-      - CMAKE_OPTIONS=-DJSON_Valgrind=ON
-    addons:
-      apt:
-        sources: ['ubuntu-toolchain-r-test']
-        packages: ['g++-4.9', 'valgrind', 'ninja-build']
-
-  # clang sanitizer
-  - os: linux
-    compiler: clang
-    env:
-      - COMPILER=clang++-7
-      - CMAKE_OPTIONS=-DJSON_Sanitizer=ON
-      - UBSAN_OPTIONS=print_stacktrace=1,suppressions=$(pwd)/test/src/UBSAN.supp
-    addons:
-      apt:
-        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-7']
-        packages: ['g++-6', 'clang-7', 'ninja-build']
-    before_script:
-      - export PATH=$PATH:/usr/lib/llvm-7/bin
-
-  # cppcheck
-  - os: linux
-    compiler: gcc
-    env:
-      - COMPILER=g++-4.9
-      - SPECIAL=cppcheck
-    addons:
-      apt:
-        sources: ['ubuntu-toolchain-r-test']
-        packages: ['g++-4.9', 'cppcheck', 'ninja-build']
-    after_success:
-      - make cppcheck
-
-  # no exceptions
-  - os: linux
-    compiler: gcc
-    env:
-      - COMPILER=g++-4.9
-      - CMAKE_OPTIONS=-DJSON_NoExceptions=ON
-    addons:
-      apt:
-        sources: ['ubuntu-toolchain-r-test']
-        packages: ['g++-4.9', 'ninja-build']
-
   # check amalgamation
   - os: linux
     compiler: gcc
@@ -133,11 +84,6 @@ matrix:
   - os: osx
     osx_image: xcode12
 
-  - os: osx
-    osx_image: xcode12
-    env:
-      - IMPLICIT_CONVERSIONS=OFF
-
   # Linux / GCC
 
   - os: linux
@@ -191,16 +137,6 @@ matrix:
   - os: linux
     compiler: gcc
     env: COMPILER=g++-9
-    addons:
-      apt:
-        sources: ['ubuntu-toolchain-r-test']
-        packages: ['g++-9', 'ninja-build']
-
-  - os: linux
-    compiler: gcc
-    env:
-      - COMPILER=g++-9
-      - IMPLICIT_CONVERSIONS=OFF
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test']
@@ -318,15 +254,13 @@ script:
   - if [[ "${COMPILER}" != "" ]]; then export CXX=${COMPILER}; fi
   # by default, use the single-header version
   - if [[ "${MULTIPLE_HEADERS}" == "" ]]; then export MULTIPLE_HEADERS=OFF; fi
-  # by default, use implicit conversions
-  - if [[ "${IMPLICIT_CONVERSIONS}" == "" ]]; then export IMPLICIT_CONVERSIONS=ON; fi
 
   # append CXX_STANDARD to CMAKE_OPTIONS if required
   - CMAKE_OPTIONS+=${CXX_STANDARD:+ -DCMAKE_CXX_STANDARD=$CXX_STANDARD -DCMAKE_CXX_STANDARD_REQUIRED=ON}
 
   # compile and execute unit tests
   - mkdir -p build && cd build
-  - cmake .. ${CMAKE_OPTIONS} -DJSON_MultipleHeaders=${MULTIPLE_HEADERS} -DJSON_ImplicitConversions=${IMPLICIT_CONVERSIONS} -DJSON_BuildTests=On -GNinja && cmake --build . --config Release
+  - cmake .. ${CMAKE_OPTIONS} -DJSON_MultipleHeaders=${MULTIPLE_HEADERS} -DJSON_BuildTests=On -GNinja && cmake --build . --config Release
   - ctest -C Release --timeout 2700 -V -j
   - cd ..
 

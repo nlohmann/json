@@ -1228,7 +1228,7 @@ Please note:
 
 - Unsupported versions of GCC and Clang are rejected by `#error` directives. This can be switched off by defining `JSON_SKIP_UNSUPPORTED_COMPILER_CHECK`. Note that you can expect no support in this case.
 
-The following compilers are currently used in continuous integration at [Travis](https://travis-ci.org/nlohmann/json), [AppVeyor](https://ci.appveyor.com/project/nlohmann/json), [GitHub Actions](https://github.com/nlohmann/json/actions), and [CircleCI](https://circleci.com/gh/nlohmann/json):
+The following compilers are currently used in continuous integration at [Travis](https://travis-ci.org/nlohmann/json), [AppVeyor](https://ci.appveyor.com/project/nlohmann/json), and [GitHub Actions](https://github.com/nlohmann/json/actions):
 
 | Compiler                                                          | Operating System   | CI Provider    |
 |-------------------------------------------------------------------|--------------------|----------------|
@@ -1251,14 +1251,12 @@ The following compilers are currently used in continuous integration at [Travis]
 | GCC 4.8.5 (Ubuntu 4.8.5-4ubuntu8\~14.04.2)                        | Ubuntu 14.04.5 LTS | Travis         |
 | GCC 4.9.4 (Ubuntu 4.9.4-2ubuntu1\~14.04.1)                        | Ubuntu 14.04.5 LTS | Travis         |
 | GCC 5.5.0 (Ubuntu 5.5.0-12ubuntu1\~14.04)                         | Ubuntu 14.04.5 LTS | Travis         |
-| GCC 6.3.0 (Debian 6.3.0-18+deb9u1)                                | Debian 9           | Circle CI      |
 | GCC 6.5.0 (Ubuntu 6.5.0-2ubuntu1\~14.04.1)                        | Ubuntu 14.04.5 LTS | Travis         |
 | GCC 7.3.0 (x86_64-posix-seh-rev0, Built by MinGW-W64 project)     | Windows-6.3.9600   | AppVeyor       |
 | GCC 7.5.0 (Ubuntu 7.5.0-3ubuntu1\~14.04.1)                        | Ubuntu 14.04.5 LTS | Travis         |
 | GCC 7.5.0 (Ubuntu 7.5.0-3ubuntu1\~18.04)                          | Ubuntu 18.04.4 LTS | GitHub Actions |
 | GCC 8.4.0 (Ubuntu 8.4.0-1ubuntu1\~14.04)                          | Ubuntu 14.04.5 LTS | Travis         |
 | GCC 9.3.0 (Ubuntu 9.3.0-11ubuntu0\~14.04)                         | Ubuntu 14.04.5 LTS | Travis         |
-| GCC 10.1.0 (Arch Linux latest)                                    | Arch Linux         | Circle CI      |
 | MSVC 19.0.24241.7 (Build Engine version 14.0.25420.1)             | Windows-6.3.9600   | AppVeyor       |
 | MSVC 19.16.27035.0 (15.9.21+g9802d43bc3 for .NET Framework)       | Windows-10.0.14393 | AppVeyor       |
 | MSVC 19.25.28614.0 (Build Engine version 16.5.0+d4cbfca49 for .NET Framework) | Windows-10.0.17763  | AppVeyor       |
