@@ -8,6 +8,11 @@ set(N 10)
 include(FindPython3)
 find_package(Python3 COMPONENTS Interpreter)
 
+find_program(ASTYLE_TOOL NAMES astyle)
+execute_process(COMMAND ${ASTYLE_TOOL} --version OUTPUT_VARIABLE ASTYLE_TOOL_VERSION ERROR_VARIABLE ASTYLE_TOOL_VERSION)
+string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" ASTYLE_TOOL_VERSION "${ASTYLE_TOOL_VERSION}")
+message(STATUS "🔖 Artistic Style ${ASTYLE_TOOL_VERSION} (${ASTYLE_TOOL})")
+
 find_program(CLANG_TOOL NAMES clang++-HEAD clang++-11 clang++)
 execute_process(COMMAND ${CLANG_TOOL} --version OUTPUT_VARIABLE CLANG_TOOL_VERSION ERROR_VARIABLE CLANG_TOOL_VERSION)
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" CLANG_TOOL_VERSION "${CLANG_TOOL_VERSION}")
@@ -477,6 +482,34 @@ add_custom_target(ci_test_clang_sanitizer
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_clang_sanitizer
     COMMAND cd ${PROJECT_BINARY_DIR}/build_clang_sanitizer && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
     COMMENT "Compile and test with sanitizers"
+)
+
+###############################################################################
+# Check if header is amalgamated and sources are properly indented.
+###############################################################################
+
+set(ASTYLE_FLAGS --style=allman --indent=spaces=4 --indent-modifiers --indent-switches --indent-preproc-block --indent-preproc-define --indent-col1-comments --pad-oper --pad-header --align-pointer=type --align-reference=type --add-brackets --convert-tabs --close-templates --lineend=linux --preserve-date --formatted)
+
+file(GLOB_RECURSE SRC_FILES
+    ${PROJECT_SOURCE_DIR}/include/nlohmann/*.hpp
+    ${PROJECT_SOURCE_DIR}/test/src/*.cpp
+    ${PROJECT_SOURCE_DIR}/test/src/*.hpp
+    ${PROJECT_SOURCE_DIR}/benchmarks/src/benchmarks.cpp
+    ${PROJECT_SOURCE_DIR}/doc/examples/*.cpp
+)
+
+add_custom_target(ci_test_amalgamation
+    COMMAND rm -fr ${PROJECT_SOURCE_DIR}/single_include/nlohmann/json.hpp~
+    COMMAND cp ${PROJECT_SOURCE_DIR}/single_include/nlohmann/json.hpp ${PROJECT_SOURCE_DIR}/single_include/nlohmann/json.hpp~
+    COMMAND ${Python3_EXECUTABLE} ${PROJECT_SOURCE_DIR}/third_party/amalgamate/amalgamate.py -c ${PROJECT_SOURCE_DIR}/third_party/amalgamate/config.json -s .
+    COMMAND ${ASTYLE_TOOL} ${ASTYLE_FLAGS} --suffix=none --quiet ${PROJECT_SOURCE_DIR}/single_include/nlohmann/json.hpp
+    COMMAND diff ${PROJECT_SOURCE_DIR}/single_include/nlohmann/json.hpp~ ${PROJECT_SOURCE_DIR}/single_include/nlohmann/json.hpp
+
+    COMMAND ${ASTYLE_TOOL} ${ASTYLE_FLAGS} ${SRC_FILES}
+    COMMAND cd ${PROJECT_SOURCE_DIR} && for FILE in `find . -name '*.orig'`\; do false \; done
+
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+    COMMENT "Check amalagamation and indentation"
 )
 
 ###############################################################################
