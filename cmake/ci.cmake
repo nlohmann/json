@@ -490,7 +490,7 @@ add_custom_target(ci_test_clang_sanitizer
 
 set(ASTYLE_FLAGS --style=allman --indent=spaces=4 --indent-modifiers --indent-switches --indent-preproc-block --indent-preproc-define --indent-col1-comments --pad-oper --pad-header --align-pointer=type --align-reference=type --add-brackets --convert-tabs --close-templates --lineend=linux --preserve-date --formatted)
 
-file(GLOB_RECURSE SRC_FILES
+file(GLOB_RECURSE INDENT_FILES
     ${PROJECT_SOURCE_DIR}/include/nlohmann/*.hpp
     ${PROJECT_SOURCE_DIR}/test/src/*.cpp
     ${PROJECT_SOURCE_DIR}/test/src/*.hpp
@@ -505,7 +505,7 @@ add_custom_target(ci_test_amalgamation
     COMMAND ${ASTYLE_TOOL} ${ASTYLE_FLAGS} --suffix=none --quiet ${PROJECT_SOURCE_DIR}/single_include/nlohmann/json.hpp
     COMMAND diff ${PROJECT_SOURCE_DIR}/single_include/nlohmann/json.hpp~ ${PROJECT_SOURCE_DIR}/single_include/nlohmann/json.hpp
 
-    COMMAND ${ASTYLE_TOOL} ${ASTYLE_FLAGS} ${SRC_FILES}
+    COMMAND ${ASTYLE_TOOL} ${ASTYLE_FLAGS} ${INDENT_FILES}
     COMMAND cd ${PROJECT_SOURCE_DIR} && for FILE in `find . -name '*.orig'`\; do false \; done
 
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
