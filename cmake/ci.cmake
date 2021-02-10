@@ -431,7 +431,7 @@ add_custom_target(ci_test_noexceptions
     -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_noexceptions
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_noexceptions
     COMMAND cd ${PROJECT_BINARY_DIR}/build_noexceptions && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
-    COMMENT "Compile and test with with exceptions switched off"
+    COMMENT "Compile and test with exceptions switched off"
 )
 
 ###############################################################################
@@ -445,7 +445,21 @@ add_custom_target(ci_test_noimplicitconversions
     -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_noimplicitconversions
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_noimplicitconversions
     COMMAND cd ${PROJECT_BINARY_DIR}/build_noimplicitconversions && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
-    COMMENT "Compile and test with with implicit conversions switched off"
+    COMMENT "Compile and test with implicit conversions switched off"
+)
+
+###############################################################################
+# Enable improved diagnostics.
+###############################################################################
+
+add_custom_target(ci_test_diagnostics
+    COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND}
+    -DCMAKE_BUILD_TYPE=Debug -GNinja
+    -DJSON_BuildTests=ON -DJSON_MultipleHeaders=ON -DJSON_Diagnostics=ON
+    -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_diagnostics
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_diagnostics
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_diagnostics && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+    COMMENT "Compile and test with improved diagnostics enabled"
 )
 
 ###############################################################################
@@ -741,7 +755,7 @@ else()
     )
 endif()
 
-set(JSON_CMAKE_FLAGS "JSON_BuildTests;JSON_Install;JSON_MultipleHeaders;JSON_Sanitizer;JSON_Valgrind;JSON_NoExceptions;JSON_Coverage")
+set(JSON_CMAKE_FLAGS "JSON_BuildTests;JSON_Install;JSON_MultipleHeaders;JSON_Sanitizer;JSON_Valgrind;JSON_NoExceptions;JSON_Coverage;JSON_Diagnostics")
 
 foreach(JSON_CMAKE_FLAG ${JSON_CMAKE_FLAGS})
     string(TOLOWER "ci_cmake_flag_${JSON_CMAKE_FLAG}" JSON_CMAKE_FLAG_TARGET)

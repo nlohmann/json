@@ -3,6 +3,7 @@
 #include <exception> // exception
 #include <stdexcept> // runtime_error
 #include <string> // to_string
+#include <vector> // vector
 
 #include <nlohmann/detail/value_t.hpp>
 #include <nlohmann/detail/string_escape.hpp>
@@ -118,6 +119,7 @@ class exception : public std::exception
             return a + "/" + detail::escape(b);
         }) + ") ";
 #else
+        static_cast<void>(leaf_element);
         return "";
 #endif
     }
