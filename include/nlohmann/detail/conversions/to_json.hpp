@@ -130,6 +130,7 @@ struct external_constructor<value_t::array>
     {
         j.m_type = value_t::array;
         j.m_value = arr;
+        j.set_parents();
         j.assert_invariant();
     }
 
@@ -138,6 +139,7 @@ struct external_constructor<value_t::array>
     {
         j.m_type = value_t::array;
         j.m_value = std::move(arr);
+        j.set_parents();
         j.assert_invariant();
     }
 
@@ -150,6 +152,7 @@ struct external_constructor<value_t::array>
         using std::end;
         j.m_type = value_t::array;
         j.m_value.array = j.template create<typename BasicJsonType::array_t>(begin(arr), end(arr));
+        j.set_parents();
         j.assert_invariant();
     }
 
@@ -162,6 +165,7 @@ struct external_constructor<value_t::array>
         for (const bool x : arr)
         {
             j.m_value.array->push_back(x);
+            j.set_parent(j.m_value.array->back());
         }
         j.assert_invariant();
     }
@@ -177,6 +181,7 @@ struct external_constructor<value_t::array>
         {
             std::copy(std::begin(arr), std::end(arr), j.m_value.array->begin());
         }
+        j.set_parents();
         j.assert_invariant();
     }
 };
@@ -189,6 +194,7 @@ struct external_constructor<value_t::object>
     {
         j.m_type = value_t::object;
         j.m_value = obj;
+        j.set_parents();
         j.assert_invariant();
     }
 
@@ -197,6 +203,7 @@ struct external_constructor<value_t::object>
     {
         j.m_type = value_t::object;
         j.m_value = std::move(obj);
+        j.set_parents();
         j.assert_invariant();
     }
 
@@ -209,6 +216,7 @@ struct external_constructor<value_t::object>
 
         j.m_type = value_t::object;
         j.m_value.object = j.template create<typename BasicJsonType::object_t>(begin(obj), end(obj));
+        j.set_parents();
         j.assert_invariant();
     }
 };

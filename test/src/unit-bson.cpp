@@ -101,7 +101,11 @@ TEST_CASE("BSON")
             { std::string("en\0try", 6), true }
         };
         CHECK_THROWS_AS(json::to_bson(j), json::out_of_range&);
+#if JSON_DIAGNOSTICS
+        CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.out_of_range.409] (/en) BSON key cannot contain code point U+0000 (at byte 2)");
+#else
         CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.out_of_range.409] BSON key cannot contain code point U+0000 (at byte 2)");
+#endif
     }
 
     SECTION("string length must be at least 1")
@@ -1235,7 +1239,11 @@ TEST_CASE("BSON numerical data")
                     };
 
                     CHECK_THROWS_AS(json::to_bson(j), json::out_of_range&);
+#if JSON_DIAGNOSTICS
+                    CHECK_THROWS_WITH_STD_STR(json::to_bson(j), "[json.exception.out_of_range.407] (/entry) integer number " + std::to_string(i) + " cannot be represented by BSON as it does not fit int64");
+#else
                     CHECK_THROWS_WITH_STD_STR(json::to_bson(j), "[json.exception.out_of_range.407] integer number " + std::to_string(i) + " cannot be represented by BSON as it does not fit int64");
+#endif
                 }
             }
 

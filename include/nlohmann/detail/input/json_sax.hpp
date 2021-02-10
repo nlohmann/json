@@ -224,8 +224,7 @@ class json_sax_dom_parser
 
         if (JSON_HEDLEY_UNLIKELY(len != std::size_t(-1) && len > ref_stack.back()->max_size()))
         {
-            JSON_THROW(out_of_range::create(408,
-                                            "excessive object size: " + std::to_string(len)));
+            JSON_THROW(out_of_range::create(408, "excessive object size: " + std::to_string(len), *ref_stack.back()));
         }
 
         return true;
@@ -240,6 +239,7 @@ class json_sax_dom_parser
 
     bool end_object()
     {
+        ref_stack.back()->set_parents();
         ref_stack.pop_back();
         return true;
     }
@@ -250,8 +250,7 @@ class json_sax_dom_parser
 
         if (JSON_HEDLEY_UNLIKELY(len != std::size_t(-1) && len > ref_stack.back()->max_size()))
         {
-            JSON_THROW(out_of_range::create(408,
-                                            "excessive array size: " + std::to_string(len)));
+            JSON_THROW(out_of_range::create(408, "excessive array size: " + std::to_string(len), *ref_stack.back()));
         }
 
         return true;
@@ -259,6 +258,7 @@ class json_sax_dom_parser
 
     bool end_array()
     {
+        ref_stack.back()->set_parents();
         ref_stack.pop_back();
         return true;
     }
@@ -405,7 +405,7 @@ class json_sax_dom_callback_parser
         // check object limit
         if (ref_stack.back() && JSON_HEDLEY_UNLIKELY(len != std::size_t(-1) && len > ref_stack.back()->max_size()))
         {
-            JSON_THROW(out_of_range::create(408, "excessive object size: " + std::to_string(len)));
+            JSON_THROW(out_of_range::create(408, "excessive object size: " + std::to_string(len), *ref_stack.back()));
         }
 
         return true;
@@ -430,10 +430,17 @@ class json_sax_dom_callback_parser
 
     bool end_object()
     {
-        if (ref_stack.back() && !callback(static_cast<int>(ref_stack.size()) - 1, parse_event_t::object_end, *ref_stack.back()))
+        if (ref_stack.back())
         {
-            // discard object
-            *ref_stack.back() = discarded;
+            if (!callback(static_cast<int>(ref_stack.size()) - 1, parse_event_t::object_end, *ref_stack.back()))
+            {
+                // discard object
+                *ref_stack.back() = discarded;
+            }
+            else
+            {
+                ref_stack.back()->set_parents();
+            }
         }
 
         JSON_ASSERT(!ref_stack.empty());
@@ -468,7 +475,7 @@ class json_sax_dom_callback_parser
         // check array limit
         if (ref_stack.back() && JSON_HEDLEY_UNLIKELY(len != std::size_t(-1) && len > ref_stack.back()->max_size()))
         {
-            JSON_THROW(out_of_range::create(408, "excessive array size: " + std::to_string(len)));
+            JSON_THROW(out_of_range::create(408, "excessive array size: " + std::to_string(len), *ref_stack.back()));
         }
 
         return true;
@@ -481,7 +488,11 @@ class json_sax_dom_callback_parser
         if (ref_stack.back())
         {
             keep = callback(static_cast<int>(ref_stack.size()) - 1, parse_event_t::array_end, *ref_stack.back());
-            if (!keep)
+            if (keep)
+            {
+                ref_stack.back()->set_parents();
+            }
+            else
             {
                 // discard array
                 *ref_stack.back() = discarded;
@@ -579,7 +590,7 @@ class json_sax_dom_callback_parser
         // array
         if (ref_stack.back()->is_array())
         {
-            ref_stack.back()->m_value.array->push_back(std::move(value));
+            ref_stack.back()->m_value.array->emplace_back(std::move(value));
             return {true, &(ref_stack.back()->m_value.array->back())};
         }
 
