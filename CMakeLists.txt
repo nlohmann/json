@@ -34,6 +34,7 @@ option(JSON_BuildTests "Build the unit tests when BUILD_TESTING is enabled." ${M
 option(JSON_Install "Install CMake targets during install step." ${MAIN_PROJECT})
 option(JSON_MultipleHeaders "Use non-amalgamated version of the library." OFF)
 option(JSON_ImplicitConversions "Enable implicit conversions." ON)
+option(JSON_Diagnostics "Enable better diagnostic messages." OFF)
 
 ##
 ## CONFIGURATION
@@ -63,6 +64,10 @@ if (NOT JSON_ImplicitConversions)
     message(STATUS "Implicit conversions are disabled")
 endif()
 
+if (JSON_Diagnostics)
+    message(STATUS "Diagnostics enabled")
+endif()
+
 ##
 ## TARGET
 ## create target and add include path
@@ -79,6 +84,7 @@ target_compile_definitions(
     ${NLOHMANN_JSON_TARGET_NAME}
     INTERFACE
     JSON_USE_IMPLICIT_CONVERSIONS=$<BOOL:${JSON_ImplicitConversions}>
+    JSON_DIAGNOSTICS=$<BOOL:${JSON_Diagnostics}>
 )
 
 target_include_directories(

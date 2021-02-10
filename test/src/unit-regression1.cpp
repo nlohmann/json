@@ -394,7 +394,11 @@ TEST_CASE("regression tests 1")
         // improve coverage
         o["int"] = 1;
         CHECK_THROWS_AS(s2 = o["int"], json::type_error);
+#if JSON_DIAGNOSTICS
+        CHECK_THROWS_WITH(s2 = o["int"], "[json.exception.type_error.302] (/int) type must be string, but is number");
+#else
         CHECK_THROWS_WITH(s2 = o["int"], "[json.exception.type_error.302] type must be string, but is number");
+#endif
     }
 #endif
 

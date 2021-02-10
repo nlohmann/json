@@ -57,7 +57,7 @@ class binary_writer
 
             default:
             {
-                JSON_THROW(type_error::create(317, "to serialize to BSON, top-level type must be object, but is " + std::string(j.type_name())));
+                JSON_THROW(type_error::create(317, "to serialize to BSON, top-level type must be object, but is " + std::string(j.type_name()), j));;
             }
         }
     }
@@ -901,13 +901,12 @@ class binary_writer
     @return The size of a BSON document entry header, including the id marker
             and the entry name size (and its null-terminator).
     */
-    static std::size_t calc_bson_entry_header_size(const string_t& name)
+    static std::size_t calc_bson_entry_header_size(const string_t& name, const BasicJsonType& j)
     {
         const auto it = name.find(static_cast<typename string_t::value_type>(0));
         if (JSON_HEDLEY_UNLIKELY(it != BasicJsonType::string_t::npos))
         {
-            JSON_THROW(out_of_range::create(409,
-                                            "BSON key cannot contain code point U+0000 (at byte " + std::to_string(it) + ")"));
+            JSON_THROW(out_of_range::create(409, "BSON key cannot contain code point U+0000 (at byte " + std::to_string(it) + ")", j));
         }
 
         return /*id*/ 1ul + name.size() + /*zero-terminator*/1u;
@@ -1017,21 +1016,21 @@ class binary_writer
     @brief Writes a BSON element with key @a name and unsigned @a value
     */
     void write_bson_unsigned(const string_t& name,
-                             const std::uint64_t value)
+                             const BasicJsonType& j)
     {
-        if (value <= static_cast<std::uint64_t>((std::numeric_limits<std::int32_t>::max)()))
+        if (j.m_value.number_unsigned <= static_cast<std::uint64_t>((std::numeric_limits<std::int32_t>::max)()))
         {
             write_bson_entry_header(name, 0x10 /* int32 */);
-            write_number<std::int32_t, true>(static_cast<std::int32_t>(value));
+            write_number<std::int32_t, true>(static_cast<std::int32_t>(j.m_value.number_unsigned));
         }
-        else if (value <= static_cast<std::uint64_t>((std::numeric_limits<std::int64_t>::max)()))
+        else if (j.m_value.number_unsigned <= static_cast<std::uint64_t>((std::numeric_limits<std::int64_t>::max)()))
         {
             write_bson_entry_header(name, 0x12 /* int64 */);
-            write_number<std::int64_t, true>(static_cast<std::int64_t>(value));
+            write_number<std::int64_t, true>(static_cast<std::int64_t>(j.m_value.number_unsigned));
         }
         else
         {
-            JSON_THROW(out_of_range::create(407, "integer number " + std::to_string(value) + " cannot be represented by BSON as it does not fit int64"));
+            JSON_THROW(out_of_range::create(407, "integer number " + std::to_string(j.m_value.number_unsigned) + " cannot be represented by BSON as it does not fit int64", j));
         }
     }
 
@@ -1108,7 +1107,7 @@ class binary_writer
     static std::size_t calc_bson_element_size(const string_t& name,
             const BasicJsonType& j)
     {
-        const auto header_size = calc_bson_entry_header_size(name);
+        const auto header_size = calc_bson_entry_header_size(name, j);
         switch (j.type())
         {
             case value_t::object:
@@ -1177,7 +1176,7 @@ class binary_writer
                 return write_bson_integer(name, j.m_value.number_integer);
 
             case value_t::number_unsigned:
-                return write_bson_unsigned(name, j.m_value.number_unsigned);
+                return write_bson_unsigned(name, j);
 
             case value_t::string:
                 return write_bson_string(name, *j.m_value.string);
