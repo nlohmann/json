@@ -64,6 +64,7 @@ SOFTWARE.
 #include <nlohmann/detail/json_pointer.hpp>
 #include <nlohmann/detail/json_ref.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
+#include <nlohmann/detail/string_escape.hpp>
 #include <nlohmann/detail/meta/cpp_future.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
 #include <nlohmann/detail/output/binary_writer.hpp>
@@ -8655,7 +8656,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 for (auto it = source.cbegin(); it != source.cend(); ++it)
                 {
                     // escape the key name to be used in a JSON patch
-                    const auto path_key = path + "/" + json_pointer::escape(it.key());
+                    const auto path_key = path + "/" + detail::escape(it.key());
 
                     if (target.find(it.key()) != target.end())
                     {
@@ -8679,7 +8680,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     if (source.find(it.key()) == source.end())
                     {
                         // found a key that is not in this -> add it
-                        const auto path_key = path + "/" + json_pointer::escape(it.key());
+                        const auto path_key = path + "/" + detail::escape(it.key());
                         result.push_back(
                         {
                             {"op", "add"}, {"path", path_key},
