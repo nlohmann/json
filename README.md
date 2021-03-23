@@ -579,7 +579,7 @@ bool foo = j.at(2);
 j == R"(["foo", 1, true, 1.78])"_json;  // true
 
 // other stuff
-j.size();     // 3 entries
+j.size();     // 4 entries
 j.empty();    // false
 j.type();     // json::value_t::array
 j.clear();    // the array is empty again
