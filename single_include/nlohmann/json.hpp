@@ -18052,7 +18052,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                during destruction of objects when the invariant does not
                need to hold.
     */
-    void assert_invariant(bool check_parents = true) const noexcept
+    void assert_invariant(bool check_parents = true) const noexcept try
     {
         JSON_ASSERT(m_type != value_t::object || m_value.object != nullptr);
         JSON_ASSERT(m_type != value_t::array || m_value.array != nullptr);
@@ -18060,18 +18060,15 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         JSON_ASSERT(m_type != value_t::binary || m_value.binary != nullptr);
 
 #if JSON_DIAGNOSTICS
-        try
+        JSON_ASSERT(!check_parents || !is_structured() || std::all_of(begin(), end(), [this](const basic_json & j)
         {
-            JSON_ASSERT(!check_parents || !is_structured() || std::all_of(begin(), end(), [this](const basic_json & j)
-            {
-                return j.m_parent == this;
-            }));
-        }
-        catch (...) {}
+            return j.m_parent == this;
+        }));
 #else
         static_cast<void>(check_parents);
 #endif
     }
+    catch (...) {}
 
     void set_parents()
     {
