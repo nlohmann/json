@@ -1254,7 +1254,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 return j.m_parent == this;
             }));
         }
-        catch (..) {}
+        catch (...) {}
 #else
         static_cast<void>(check_parents);
 #endif
