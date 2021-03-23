@@ -32,6 +32,21 @@ void from_json(const BasicJsonType& j, typename std::nullptr_t& n)
     n = nullptr;
 }
 
+#ifdef JSON_HAS_CPP_17
+template<typename BasicJsonType, typename T>
+void from_json(const BasicJsonType& j, std::optional<T>& opt)
+{
+    if (j.is_null())
+    {
+        opt = std::nullopt;
+    }
+    else
+    {
+        opt = j.template get<T>();
+    }
+}
+#endif
+
 // overloads for basic_json template parameters
 template < typename BasicJsonType, typename ArithmeticType,
            enable_if_t < std::is_arithmetic<ArithmeticType>::value&&
