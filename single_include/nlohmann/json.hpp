@@ -18060,6 +18060,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         JSON_ASSERT(m_type != value_t::binary || m_value.binary != nullptr);
 
 #if JSON_DIAGNOSTICS
+        // cppcheck-suppress assertWithSideEffect
         JSON_ASSERT(!check_parents || !is_structured() || std::all_of(begin(), end(), [this](const basic_json & j)
         {
             return j.m_parent == this;
