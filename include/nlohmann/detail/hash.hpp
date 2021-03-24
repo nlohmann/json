@@ -1,6 +1,7 @@
 #pragma once
 
-#include <cstddef> // size_t, uint8_t
+#include <cstdint> // uint8_t
+#include <cstddef> // size_t
 #include <functional> // hash
 
 #include <nlohmann/detail/macro_scope.hpp>
@@ -111,7 +112,7 @@ std::size_t hash(const BasicJsonType& j)
         }
 
         default:                   // LCOV_EXCL_LINE
-            JSON_ASSERT(false);    // LCOV_EXCL_LINE
+            JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
             return 0;              // LCOV_EXCL_LINE
     }
 }

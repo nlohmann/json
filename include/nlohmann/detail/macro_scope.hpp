@@ -31,12 +31,6 @@
     #define JSON_HAS_CPP_14
 #endif
 
-// disable float-equal warnings on GCC/clang
-#if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wfloat-equal"
-#endif
-
 // disable documentation warnings on clang
 #if defined(__clang__)
     #pragma GCC diagnostic push
