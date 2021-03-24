@@ -4000,8 +4000,7 @@ auto from_json(BasicJsonType&& j, identity_tag<std::array<T, N>> tag)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
-        JSON_THROW(type_error::create(302, "type must be array, but is " +
-                                      std::string(j.type_name())));
+        JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(j.type_name()), j));
     }
 
     return from_json_inplace_array_impl(std::forward<BasicJsonType>(j), tag, make_index_sequence<N> {});
@@ -4119,8 +4118,7 @@ auto from_json(BasicJsonType&& j, TupleRelated&& t)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
-        JSON_THROW(type_error::create(302, "type must be array, but is " +
-                                      std::string(j.type_name())));
+        JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(j.type_name()), j));
     }
 
     return from_json_tuple_impl(std::forward<BasicJsonType>(j), std::forward<TupleRelated>(t), priority_tag<3> {});
