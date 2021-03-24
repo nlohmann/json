@@ -84,6 +84,7 @@ doctest:
 # -Wno-missing-prototypes: for NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE
 # -Wno-padded: padding is nothing to warn about
 # -Wno-range-loop-analysis: items tests "for(const auto i...)"
+# -Wno-extra-semi-stmt: spurious warnings for semicolons after JSON_ASSERT()
 # -Wno-switch-enum -Wno-covered-switch-default: pedantic/contradicting warnings about switches
 # -Wno-weak-vtables: exception class is defined inline, but has virtual method
 pedantic_clang:
@@ -100,6 +101,7 @@ pedantic_clang:
 		-Wno-missing-prototypes \
 		-Wno-padded \
 		-Wno-range-loop-analysis \
+		-Wno-extra-semi-stmt \
 		-Wno-switch-enum -Wno-covered-switch-default \
 		-Wno-weak-vtables" cmake -S . -B cmake-build-pedantic -GNinja -DCMAKE_BUILD_TYPE=Debug -DJSON_MultipleHeaders=ON -DJSON_BuildTests=On
 	cmake --build cmake-build-pedantic
@@ -639,4 +641,6 @@ update_hedley:
 	curl https://raw.githubusercontent.com/nemequ/hedley/master/hedley.h -o include/nlohmann/thirdparty/hedley/hedley.hpp
 	$(SED) -i 's/HEDLEY_/JSON_HEDLEY_/g' include/nlohmann/thirdparty/hedley/hedley.hpp
 	grep "[[:blank:]]*#[[:blank:]]*undef" include/nlohmann/thirdparty/hedley/hedley.hpp | grep -v "__" | sort | uniq | $(SED) 's/ //g' | $(SED) 's/undef/undef /g' > include/nlohmann/thirdparty/hedley/hedley_undef.hpp
+	$(SED) -i '1s/^/#pragma once\n\n/' include/nlohmann/thirdparty/hedley/hedley.hpp
+	$(SED) -i '1s/^/#pragma once\n\n/' include/nlohmann/thirdparty/hedley/hedley_undef.hpp
 	$(MAKE) amalgamate
