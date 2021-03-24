@@ -140,7 +140,7 @@ struct NotSerializableData
 
 struct NonDefaultConstructible
 {
-    explicit NonDefaultConstructible (int x) : x(x) { }
+    explicit NonDefaultConstructible (int a) : x(a) { }
     int x;
 };
 
@@ -154,7 +154,7 @@ struct adl_serializer<NonDefaultConstructible>
         return NonDefaultConstructible(j.get<int>());
     }
 };
-}
+} // namespace nlohmann
 
 
 TEST_CASE("regression tests 2")
