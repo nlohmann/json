@@ -20305,25 +20305,25 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     written using `at()`. It also demonstrates the different exceptions that
     can be thrown.,at__object_t_key_type}
     */
-    reference at(const typename object_t::key_type& key)
+    template < class KeyType, typename std::enable_if <
+#if defined(JSON_HAS_CPP_17)
+                   std::is_same<KeyType, std::string_view>::value ||
+#endif
+                   std::is_convertible<KeyType, typename object_t::key_type>::value, int >::type    = 0 >
+    reference at(const KeyType& key)
     {
         // at only works for objects
-        if (JSON_HEDLEY_LIKELY(is_object()))
-        {
-            JSON_TRY
-            {
-                return set_parent(m_value.object->at(key));
-            }
-            JSON_CATCH (std::out_of_range&)
-            {
-                // create better exception explanation
-                JSON_THROW(out_of_range::create(403, "key '" + key + "' not found", *this));
-            }
-        }
-        else
+        if (JSON_HEDLEY_UNLIKELY(is_object()))
         {
             JSON_THROW(type_error::create(304, "cannot use at() with " + std::string(type_name()), *this));
         }
+
+        auto it = m_value.object->find(key);
+        if (it == m_value.object->end())
+        {
+            JSON_THROW(out_of_range::create(403, "key '" + std::string(key) + "' not found", *this));
+        }
+        return set_parent(it->second);
     }
 
     /*!
@@ -20356,25 +20356,25 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     `at()`. It also demonstrates the different exceptions that can be thrown.,
     at__object_t_key_type_const}
     */
-    const_reference at(const typename object_t::key_type& key) const
+    template < class KeyType, typename std::enable_if <
+#if defined(JSON_HAS_CPP_17)
+                   std::is_same<KeyType, std::string_view>::value ||
+#endif
+                   std::is_convertible<KeyType, typename object_t::key_type>::value, int >::type    = 0 >
+    const_reference at(const KeyType& key) const
     {
         // at only works for objects
-        if (JSON_HEDLEY_LIKELY(is_object()))
-        {
-            JSON_TRY
-            {
-                return m_value.object->at(key);
-            }
-            JSON_CATCH (std::out_of_range&)
-            {
-                // create better exception explanation
-                JSON_THROW(out_of_range::create(403, "key '" + key + "' not found", *this));
-            }
-        }
-        else
+        if (JSON_HEDLEY_UNLIKELY(is_object()))
         {
             JSON_THROW(type_error::create(304, "cannot use at() with " + std::string(type_name()), *this));
         }
+
+        auto it = m_value.object->find(key);
+        if (it == m_value.object->end())
+        {
+            JSON_THROW(out_of_range::create(403, "key '" + std::string(key) + "' not found", *this));
+        }
+        return it->second;
     }
 
     /*!

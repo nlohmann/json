@@ -32,6 +32,10 @@ SOFTWARE.
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+#if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_HAS_CXX17) && _HAS_CXX17 == 1)
+    #define JSON_HAS_CPP_17
+#endif
+
 TEST_CASE("element access 2")
 {
     SECTION("object")
@@ -60,6 +64,26 @@ TEST_CASE("element access 2")
                 CHECK(j_const.at("floating") == json(42.23));
                 CHECK(j_const.at("object") == json::object());
                 CHECK(j_const.at("array") == json({1, 2, 3}));
+
+#if defined(JSON_HAS_CPP_17)
+                CHECK(j.at(std::string_view("integer")) == json(1));
+                CHECK(j.at(std::string_view("unsigned")) == json(1u));
+                CHECK(j.at(std::string_view("boolean")) == json(true));
+                CHECK(j.at(std::string_view("null")) == json(nullptr));
+                CHECK(j.at(std::string_view("string")) == json("hello world"));
+                CHECK(j.at(std::string_view("floating")) == json(42.23));
+                CHECK(j.at(std::string_view("object")) == json::object());
+                CHECK(j.at(std::string_view("array")) == json({1, 2, 3}));
+
+                CHECK(j_const.at(std::string_view("integer")) == json(1));
+                CHECK(j_const.at(std::string_view("unsigned")) == json(1u));
+                CHECK(j_const.at(std::string_view("boolean")) == json(true));
+                CHECK(j_const.at(std::string_view("null")) == json(nullptr));
+                CHECK(j_const.at(std::string_view("string")) == json("hello world"));
+                CHECK(j_const.at(std::string_view("floating")) == json(42.23));
+                CHECK(j_const.at(std::string_view("object")) == json::object());
+                CHECK(j_const.at(std::string_view("array")) == json({1, 2, 3}));
+#endif
             }
 
             SECTION("access outside bounds")
@@ -1106,4 +1130,8 @@ TEST_CASE("element access 2 (throwing tests)")
         }
     }
 }
+#endif
+
+#ifdef JSON_HAS_CPP_17
+    #undef JSON_HAS_CPP_17
 #endif
