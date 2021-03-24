@@ -3500,7 +3500,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     reference at(const KeyType& key)
     {
         // at only works for objects
-        if (JSON_HEDLEY_UNLIKELY(is_object()))
+        if (JSON_HEDLEY_UNLIKELY(!is_object()))
         {
             JSON_THROW(type_error::create(304, "cannot use at() with " + std::string(type_name()), *this));
         }
@@ -3551,7 +3551,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     const_reference at(const KeyType& key) const
     {
         // at only works for objects
-        if (JSON_HEDLEY_UNLIKELY(is_object()))
+        if (JSON_HEDLEY_UNLIKELY(!is_object()))
         {
             JSON_THROW(type_error::create(304, "cannot use at() with " + std::string(type_name()), *this));
         }
