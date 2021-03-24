@@ -188,6 +188,10 @@ JSON uses the `\uxxxx` format to describe Unicode characters. Code points above 
     parse error at 14: missing or wrong low surrogate
     ```
 
+!!! note
+
+    This exception is not used any more. Instead [json.exception.parse_error.101](#jsonexceptionparse_error101) with a more detailed description is used.
+
 ### json.exception.parse_error.103
 
 Unicode supports code points up to 0x10FFFF. Code points above 0x10FFFF are invalid.
@@ -197,6 +201,10 @@ Unicode supports code points up to 0x10FFFF. Code points above 0x10FFFF are inva
     ```
     parse error: code points above 0x10FFFF are invalid
     ```
+
+!!! note
+
+    This exception is not used any more. Instead [json.exception.parse_error.101](#jsonexceptionparse_error101) with a more detailed description is used.
 
 ### json.exception.parse_error.104
 
