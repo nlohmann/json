@@ -496,8 +496,11 @@ TEST_CASE("JSON pointers")
 
         // error for nonprimitve values
         CHECK_THROWS_AS(json({{"/1", {1, 2, 3}}}).unflatten(), json::type_error&);
-        CHECK_THROWS_WITH(json({{"/1", {1, 2, 3}}}).unflatten(),
-        "[json.exception.type_error.315] values in object must be primitive");
+#if JSON_DIAGNOSTICS
+        CHECK_THROWS_WITH(json({{"/1", {1, 2, 3}}}).unflatten(), "[json.exception.type_error.315] (/~11) values in object must be primitive");
+#else
+        CHECK_THROWS_WITH(json({{"/1", {1, 2, 3}}}).unflatten(), "[json.exception.type_error.315] values in object must be primitive");
+#endif
 
         // error for conflicting values
         json j_error = {{"", 42}, {"/foo", 17}};
@@ -527,7 +530,7 @@ TEST_CASE("JSON pointers")
 
     SECTION("string representation")
     {
-        for (auto ptr :
+        for (const auto* ptr :
                 {"", "/foo", "/foo/0", "/", "/a~1b", "/c%d", "/e^f", "/g|h", "/i\\j", "/k\"l", "/ ", "/m~0n"
                 })
         {

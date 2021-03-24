@@ -282,8 +282,8 @@ TEST_CASE("value conversion")
 
         SECTION("built-in arrays")
         {
-            const char str[] = "a string";
-            const int nbs[] = {0, 1, 2};
+            const char str[] = "a string"; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+            const int nbs[] = {0, 1, 2}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
 
             json j2 = nbs;
             json j3 = str;
@@ -387,8 +387,8 @@ TEST_CASE("value conversion")
 
         SECTION("built-in arrays")
         {
-            const int nbs[] = {0, 1, 2};
-            int nbs2[] = {0, 0, 0};
+            const int nbs[] = {0, 1, 2}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+            int nbs2[] = {0, 0, 0}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
 
             json j2 = nbs;
             j2.get_to(nbs2);
@@ -633,7 +633,7 @@ TEST_CASE("value conversion")
 
         SECTION("boolean_t")
         {
-            json::boolean_t b = j.get<json::boolean_t>();
+            auto b = j.get<json::boolean_t>();
             CHECK(json(b) == j);
         }
 
@@ -726,25 +726,25 @@ TEST_CASE("value conversion")
 
         SECTION("number_integer_t")
         {
-            json::number_integer_t n = j.get<json::number_integer_t>();
+            auto n = j.get<json::number_integer_t>();
             CHECK(json(n) == j);
         }
 
         SECTION("number_unsigned_t")
         {
-            json::number_unsigned_t n = j_unsigned.get<json::number_unsigned_t>();
+            auto n = j_unsigned.get<json::number_unsigned_t>();
             CHECK(json(n) == j_unsigned);
         }
 
         SECTION("short")
         {
-            short n = j.get<short>();
+            auto n = j.get<short>();
             CHECK(json(n) == j);
         }
 
         SECTION("unsigned short")
         {
-            unsigned short n = j.get<unsigned short>();
+            auto n = j.get<unsigned short>();
             CHECK(json(n) == j);
         }
 
@@ -756,7 +756,7 @@ TEST_CASE("value conversion")
 
         SECTION("unsigned int")
         {
-            unsigned int n = j.get<unsigned int>();
+            auto n = j.get<unsigned int>();
             CHECK(json(n) == j);
         }
 
@@ -768,163 +768,163 @@ TEST_CASE("value conversion")
 
         SECTION("unsigned long")
         {
-            unsigned long n = j.get<unsigned long>();
+            auto n = j.get<unsigned long>();
             CHECK(json(n) == j);
         }
 
         SECTION("long long")
         {
-            long long n = j.get<long long>();
+            auto n = j.get<long long>();
             CHECK(json(n) == j);
         }
 
         SECTION("unsigned long long")
         {
-            unsigned long long n = j.get<unsigned long long>();
+            auto n = j.get<unsigned long long>();
             CHECK(json(n) == j);
         }
 
         SECTION("int8_t")
         {
-            int8_t n = j.get<int8_t>();
+            auto n = j.get<int8_t>();
             CHECK(json(n) == j);
         }
 
         SECTION("int16_t")
         {
-            int16_t n = j.get<int16_t>();
+            auto n = j.get<int16_t>();
             CHECK(json(n) == j);
         }
 
         SECTION("int32_t")
         {
-            int32_t n = j.get<int32_t>();
+            auto n = j.get<int32_t>();
             CHECK(json(n) == j);
         }
 
         SECTION("int64_t")
         {
-            int64_t n = j.get<int64_t>();
+            auto n = j.get<int64_t>();
             CHECK(json(n) == j);
         }
 
         SECTION("int8_fast_t")
         {
-            int_fast8_t n = j.get<int_fast8_t>();
+            auto n = j.get<int_fast8_t>();
             CHECK(json(n) == j);
         }
 
         SECTION("int16_fast_t")
         {
-            int_fast16_t n = j.get<int_fast16_t>();
+            auto n = j.get<int_fast16_t>();
             CHECK(json(n) == j);
         }
 
         SECTION("int32_fast_t")
         {
-            int_fast32_t n = j.get<int_fast32_t>();
+            auto n = j.get<int_fast32_t>();
             CHECK(json(n) == j);
         }
 
         SECTION("int64_fast_t")
         {
-            int_fast64_t n = j.get<int_fast64_t>();
+            auto n = j.get<int_fast64_t>();
             CHECK(json(n) == j);
         }
 
         SECTION("int8_least_t")
         {
-            int_least8_t n = j.get<int_least8_t>();
+            auto n = j.get<int_least8_t>();
             CHECK(json(n) == j);
         }
 
         SECTION("int16_least_t")
         {
-            int_least16_t n = j.get<int_least16_t>();
+            auto n = j.get<int_least16_t>();
             CHECK(json(n) == j);
         }
 
         SECTION("int32_least_t")
         {
-            int_least32_t n = j.get<int_least32_t>();
+            auto n = j.get<int_least32_t>();
             CHECK(json(n) == j);
         }
 
         SECTION("int64_least_t")
         {
-            int_least64_t n = j.get<int_least64_t>();
+            auto n = j.get<int_least64_t>();
             CHECK(json(n) == j);
         }
 
         SECTION("uint8_t")
         {
-            uint8_t n = j.get<uint8_t>();
+            auto n = j.get<uint8_t>();
             CHECK(json(n) == j);
         }
 
         SECTION("uint16_t")
         {
-            uint16_t n = j.get<uint16_t>();
+            auto n = j.get<uint16_t>();
             CHECK(json(n) == j);
         }
 
         SECTION("uint32_t")
         {
-            uint32_t n = j.get<uint32_t>();
+            auto n = j.get<uint32_t>();
             CHECK(json(n) == j);
         }
 
         SECTION("uint64_t")
         {
-            uint64_t n = j.get<uint64_t>();
+            auto n = j.get<uint64_t>();
             CHECK(json(n) == j);
         }
 
         SECTION("uint8_fast_t")
         {
-            uint_fast8_t n = j.get<uint_fast8_t>();
+            auto n = j.get<uint_fast8_t>();
             CHECK(json(n) == j);
         }
 
         SECTION("uint16_fast_t")
         {
-            uint_fast16_t n = j.get<uint_fast16_t>();
+            auto n = j.get<uint_fast16_t>();
             CHECK(json(n) == j);
         }
 
         SECTION("uint32_fast_t")
         {
-            uint_fast32_t n = j.get<uint_fast32_t>();
+            auto n = j.get<uint_fast32_t>();
             CHECK(json(n) == j);
         }
 
         SECTION("uint64_fast_t")
         {
-            uint_fast64_t n = j.get<uint_fast64_t>();
+            auto n = j.get<uint_fast64_t>();
             CHECK(json(n) == j);
         }
 
         SECTION("uint8_least_t")
         {
-            uint_least8_t n = j.get<uint_least8_t>();
+            auto n = j.get<uint_least8_t>();
             CHECK(json(n) == j);
         }
 
         SECTION("uint16_least_t")
         {
-            uint_least16_t n = j.get<uint_least16_t>();
+            auto n = j.get<uint_least16_t>();
             CHECK(json(n) == j);
         }
 
         SECTION("uint32_least_t")
         {
-            uint_least32_t n = j.get<uint_least32_t>();
+            auto n = j.get<uint_least32_t>();
             CHECK(json(n) == j);
         }
 
         SECTION("uint64_least_t")
         {
-            uint_least64_t n = j.get<uint_least64_t>();
+            auto n = j.get<uint_least64_t>();
             CHECK(json(n) == j);
         }
 
@@ -976,13 +976,13 @@ TEST_CASE("value conversion")
 
         SECTION("number_integer_t")
         {
-            json::number_integer_t n = j.get<json::number_integer_t>();
+            auto n = j.get<json::number_integer_t>();
             CHECK(json(n) == j);
         }
 
         SECTION("number_unsigned_t")
         {
-            json::number_unsigned_t n = j_unsigned.get<json::number_unsigned_t>();
+            auto n = j_unsigned.get<json::number_unsigned_t>();
             CHECK(json(n) == j_unsigned);
         }
 
@@ -1187,19 +1187,19 @@ TEST_CASE("value conversion")
 
         SECTION("number_float_t")
         {
-            json::number_float_t n = j.get<json::number_float_t>();
+            auto n = j.get<json::number_float_t>();
             CHECK(json(n).m_value.number_float == Approx(j.m_value.number_float));
         }
 
         SECTION("float")
         {
-            float n = j.get<float>();
+            auto n = j.get<float>();
             CHECK(json(n).m_value.number_float == Approx(j.m_value.number_float));
         }
 
         SECTION("double")
         {
-            double n = j.get<double>();
+            auto n = j.get<double>();
             CHECK(json(n).m_value.number_float == Approx(j.m_value.number_float));
         }
 
@@ -1639,6 +1639,7 @@ TEST_CASE("value conversion")
 
 enum class cards {kreuz, pik, herz, karo};
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) - false positive
 NLOHMANN_JSON_SERIALIZE_ENUM(cards,
 {
     {cards::kreuz, "kreuz"},
@@ -1656,6 +1657,7 @@ enum TaskState
     TS_INVALID = -1,
 };
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) - false positive
 NLOHMANN_JSON_SERIALIZE_ENUM(TaskState,
 {
     {TS_INVALID, nullptr},

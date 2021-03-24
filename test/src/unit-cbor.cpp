@@ -54,42 +54,42 @@ class SaxCountdown
         return events_left-- > 0;
     }
 
-    bool boolean(bool)
+    bool boolean(bool /*unused*/)
     {
         return events_left-- > 0;
     }
 
-    bool number_integer(json::number_integer_t)
+    bool number_integer(json::number_integer_t /*unused*/)
     {
         return events_left-- > 0;
     }
 
-    bool number_unsigned(json::number_unsigned_t)
+    bool number_unsigned(json::number_unsigned_t /*unused*/)
     {
         return events_left-- > 0;
     }
 
-    bool number_float(json::number_float_t, const std::string&)
+    bool number_float(json::number_float_t /*unused*/, const std::string& /*unused*/)
     {
         return events_left-- > 0;
     }
 
-    bool string(std::string&)
+    bool string(std::string& /*unused*/)
     {
         return events_left-- > 0;
     }
 
-    bool binary(std::vector<std::uint8_t>&)
+    bool binary(std::vector<std::uint8_t>& /*unused*/)
     {
         return events_left-- > 0;
     }
 
-    bool start_object(std::size_t)
+    bool start_object(std::size_t /*unused*/)
     {
         return events_left-- > 0;
     }
 
-    bool key(std::string&)
+    bool key(std::string& /*unused*/)
     {
         return events_left-- > 0;
     }
@@ -99,7 +99,7 @@ class SaxCountdown
         return events_left-- > 0;
     }
 
-    bool start_array(std::size_t)
+    bool start_array(std::size_t /*unused*/)
     {
         return events_left-- > 0;
     }
@@ -109,7 +109,7 @@ class SaxCountdown
         return events_left-- > 0;
     }
 
-    bool parse_error(std::size_t, const std::string&, const json::exception&)
+    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const json::exception& /*unused*/) // NOLINT(readability-convert-member-functions-to-static)
     {
         return false;
     }
@@ -117,7 +117,7 @@ class SaxCountdown
   private:
     int events_left = 0;
 };
-}
+} // namespace
 
 TEST_CASE("CBOR")
 {
@@ -219,7 +219,7 @@ TEST_CASE("CBOR")
                         // create expected byte vector
                         std::vector<uint8_t> expected;
                         expected.push_back(static_cast<uint8_t>(0x3b));
-                        uint64_t positive = static_cast<uint64_t>(-1 - i);
+                        auto positive = static_cast<uint64_t>(-1 - i);
                         expected.push_back(static_cast<uint8_t>((positive >> 56) & 0xff));
                         expected.push_back(static_cast<uint8_t>((positive >> 48) & 0xff));
                         expected.push_back(static_cast<uint8_t>((positive >> 40) & 0xff));
@@ -276,7 +276,7 @@ TEST_CASE("CBOR")
                         // create expected byte vector
                         std::vector<uint8_t> expected;
                         expected.push_back(static_cast<uint8_t>(0x3a));
-                        uint32_t positive = static_cast<uint32_t>(static_cast<uint64_t>(-1 - i) & 0x00000000ffffffff);
+                        auto positive = static_cast<uint32_t>(static_cast<uint64_t>(-1 - i) & 0x00000000ffffffff);
                         expected.push_back(static_cast<uint8_t>((positive >> 24) & 0xff));
                         expected.push_back(static_cast<uint8_t>((positive >> 16) & 0xff));
                         expected.push_back(static_cast<uint8_t>((positive >> 8) & 0xff));
@@ -294,7 +294,7 @@ TEST_CASE("CBOR")
                                             (static_cast<uint32_t>(result[3]) << 010) +
                                             static_cast<uint32_t>(result[4]);
                         CHECK(restored == positive);
-                        CHECK(-1ll - restored == i);
+                        CHECK(-1LL - restored == i);
 
                         // roundtrip
                         CHECK(json::from_cbor(result) == j);
@@ -317,7 +317,7 @@ TEST_CASE("CBOR")
                         // create expected byte vector
                         std::vector<uint8_t> expected;
                         expected.push_back(static_cast<uint8_t>(0x39));
-                        uint16_t positive = static_cast<uint16_t>(-1 - i);
+                        auto positive = static_cast<uint16_t>(-1 - i);
                         expected.push_back(static_cast<uint8_t>((positive >> 8) & 0xff));
                         expected.push_back(static_cast<uint8_t>(positive & 0xff));
 
@@ -328,7 +328,7 @@ TEST_CASE("CBOR")
 
                         // check individual bytes
                         CHECK(result[0] == 0x39);
-                        uint16_t restored = static_cast<uint16_t>(static_cast<uint8_t>(result[1]) * 256 + static_cast<uint8_t>(result[2]));
+                        auto restored = static_cast<uint16_t>(static_cast<uint8_t>(result[1]) * 256 + static_cast<uint8_t>(result[2]));
                         CHECK(restored == positive);
                         CHECK(-1 - restored == i);
 
@@ -346,7 +346,7 @@ TEST_CASE("CBOR")
                     const auto result = json::to_cbor(j);
                     CHECK(result == expected);
 
-                    int16_t restored = static_cast<int16_t>(-1 - ((result[1] << 8) + result[2]));
+                    auto restored = static_cast<int16_t>(-1 - ((result[1] << 8) + result[2]));
                     CHECK(restored == -9263);
 
                     // roundtrip
@@ -506,7 +506,7 @@ TEST_CASE("CBOR")
 
                         // check individual bytes
                         CHECK(result[0] == 0x19);
-                        uint16_t restored = static_cast<uint16_t>(static_cast<uint8_t>(result[1]) * 256 + static_cast<uint8_t>(result[2]));
+                        auto restored = static_cast<uint16_t>(static_cast<uint8_t>(result[1]) * 256 + static_cast<uint8_t>(result[2]));
                         CHECK(restored == i);
 
                         // roundtrip
@@ -611,7 +611,7 @@ TEST_CASE("CBOR")
 
                 SECTION("-32768..-129 (int 16)")
                 {
-                    for (int16_t i = -32768; i <= -129; ++i)
+                    for (int16_t i = -32768; i <= int16_t(-129); ++i)
                     {
                         CAPTURE(i)
 
@@ -634,7 +634,7 @@ TEST_CASE("CBOR")
 
                         // check individual bytes
                         CHECK(result[0] == 0xd1);
-                        int16_t restored = static_cast<int16_t>((result[1] << 8) + result[2]);
+                        auto restored = static_cast<int16_t>((result[1] << 8) + result[2]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -699,7 +699,7 @@ TEST_CASE("CBOR")
 
                         // check individual bytes
                         CHECK(result[0] == 0x18);
-                        uint8_t restored = static_cast<uint8_t>(result[1]);
+                        auto restored = static_cast<uint8_t>(result[1]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -733,7 +733,7 @@ TEST_CASE("CBOR")
 
                         // check individual bytes
                         CHECK(result[0] == 0x19);
-                        uint16_t restored = static_cast<uint16_t>(static_cast<uint8_t>(result[1]) * 256 + static_cast<uint8_t>(result[2]));
+                        auto restored = static_cast<uint16_t>(static_cast<uint8_t>(result[1]) * 256 + static_cast<uint8_t>(result[2]));
                         CHECK(restored == i);
 
                         // roundtrip
@@ -940,7 +940,7 @@ TEST_CASE("CBOR")
                 }
                 SECTION("-3.40282e+38(lowest float)")
                 {
-                    double v = static_cast<double>(std::numeric_limits<float>::lowest());
+                    auto v = static_cast<double>(std::numeric_limits<float>::lowest());
                     json j = v;
                     std::vector<uint8_t> expected =
                     {
@@ -1340,7 +1340,7 @@ TEST_CASE("CBOR")
 
             SECTION("{\"a\": {\"b\": {\"c\": {}}}}")
             {
-                json j = json::parse("{\"a\": {\"b\": {\"c\": {}}}}");
+                json j = json::parse(R"({"a": {"b": {"c": {}}}})");
                 std::vector<uint8_t> expected =
                 {
                     0xa1, 0x61, 0x61, 0xa1, 0x61, 0x62, 0xa1, 0x61, 0x63, 0xa0
@@ -2029,20 +2029,18 @@ TEST_CASE("CBOR roundtrips" * doctest::skip())
     SECTION("input from flynn")
     {
         // most of these are excluded due to differences in key order (not a real problem)
-        auto exclude_packed = std::set<std::string>
-        {
-            TEST_DATA_DIRECTORY "/json.org/1.json",
-            TEST_DATA_DIRECTORY "/json.org/2.json",
-            TEST_DATA_DIRECTORY "/json.org/3.json",
-            TEST_DATA_DIRECTORY "/json.org/4.json",
-            TEST_DATA_DIRECTORY "/json.org/5.json",
-            TEST_DATA_DIRECTORY "/json_testsuite/sample.json", // kills AppVeyor
-            TEST_DATA_DIRECTORY "/json_tests/pass1.json",
-            TEST_DATA_DIRECTORY "/regression/working_file.json",
-            TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object.json",
-            TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_duplicated_key.json",
-            TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_long_strings.json",
-        };
+        std::set<std::string> exclude_packed;
+        exclude_packed.insert(TEST_DATA_DIRECTORY "/json.org/1.json");
+        exclude_packed.insert(TEST_DATA_DIRECTORY "/json.org/2.json");
+        exclude_packed.insert(TEST_DATA_DIRECTORY "/json.org/3.json");
+        exclude_packed.insert(TEST_DATA_DIRECTORY "/json.org/4.json");
+        exclude_packed.insert(TEST_DATA_DIRECTORY "/json.org/5.json");
+        exclude_packed.insert(TEST_DATA_DIRECTORY "/json_testsuite/sample.json"); // kills AppVeyor
+        exclude_packed.insert(TEST_DATA_DIRECTORY "/json_tests/pass1.json");
+        exclude_packed.insert(TEST_DATA_DIRECTORY "/regression/working_file.json");
+        exclude_packed.insert(TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object.json");
+        exclude_packed.insert(TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_duplicated_key.json");
+        exclude_packed.insert(TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_long_strings.json");
 
         for (std::string filename :
                 {
@@ -2249,7 +2247,7 @@ TEST_CASE("CBOR roundtrips" * doctest::skip())
                 // parse CBOR file
                 auto packed = utils::read_binary_file(filename + ".cbor");
 
-                if (!exclude_packed.count(filename))
+                if (exclude_packed.count(filename) == 0u)
                 {
                     {
                         INFO_WITH_TEMP(filename + ": output adapters: std::vector<uint8_t>");
@@ -2323,7 +2321,7 @@ TEST_CASE("all CBOR first bytes")
             // check that parse_error.112 is only thrown if the
             // first byte is in the unsupported set
             INFO_WITH_TEMP(e.what());
-            if (std::find(unsupported.begin(), unsupported.end(), byte) != unsupported.end())
+            if (unsupported.find(byte) != unsupported.end())
             {
                 CHECK(e.id == 112);
             }

@@ -42,13 +42,13 @@ class SaxEventLogger
   public:
     bool null()
     {
-        events.push_back("null()");
+        events.emplace_back("null()");
         return true;
     }
 
     bool boolean(bool val)
     {
-        events.push_back(val ? "boolean(true)" : "boolean(false)");
+        events.emplace_back(val ? "boolean(true)" : "boolean(false)");
         return true;
     }
 
@@ -64,7 +64,7 @@ class SaxEventLogger
         return true;
     }
 
-    bool number_float(json::number_float_t, const std::string& s)
+    bool number_float(json::number_float_t /*unused*/, const std::string& s)
     {
         events.push_back("number_float(" + s + ")");
         return true;
@@ -79,7 +79,7 @@ class SaxEventLogger
     bool binary(json::binary_t& val)
     {
         std::string binary_contents = "binary(";
-        std::string comma_space = "";
+        std::string comma_space;
         for (auto b : val)
         {
             binary_contents.append(comma_space);
@@ -95,7 +95,7 @@ class SaxEventLogger
     {
         if (elements == std::size_t(-1))
         {
-            events.push_back("start_object()");
+            events.emplace_back("start_object()");
         }
         else
         {
@@ -112,7 +112,7 @@ class SaxEventLogger
 
     bool end_object()
     {
-        events.push_back("end_object()");
+        events.emplace_back("end_object()");
         return true;
     }
 
@@ -120,7 +120,7 @@ class SaxEventLogger
     {
         if (elements == std::size_t(-1))
         {
-            events.push_back("start_array()");
+            events.emplace_back("start_array()");
         }
         else
         {
@@ -131,11 +131,11 @@ class SaxEventLogger
 
     bool end_array()
     {
-        events.push_back("end_array()");
+        events.emplace_back("end_array()");
         return true;
     }
 
-    bool parse_error(std::size_t position, const std::string&, const json::exception&)
+    bool parse_error(std::size_t position, const std::string& /*unused*/, const json::exception& /*unused*/)
     {
         errored = true;
         events.push_back("parse_error(" + std::to_string(position) + ")");
@@ -157,42 +157,42 @@ class SaxCountdown : public nlohmann::json::json_sax_t
         return events_left-- > 0;
     }
 
-    bool boolean(bool) override
+    bool boolean(bool /*val*/) override
     {
         return events_left-- > 0;
     }
 
-    bool number_integer(json::number_integer_t) override
+    bool number_integer(json::number_integer_t /*val*/) override
     {
         return events_left-- > 0;
     }
 
-    bool number_unsigned(json::number_unsigned_t) override
+    bool number_unsigned(json::number_unsigned_t /*val*/) override
     {
         return events_left-- > 0;
     }
 
-    bool number_float(json::number_float_t, const std::string&) override
+    bool number_float(json::number_float_t /*val*/, const std::string& /*s*/) override
     {
         return events_left-- > 0;
     }
 
-    bool string(std::string&) override
+    bool string(std::string& /*val*/) override
     {
         return events_left-- > 0;
     }
 
-    bool binary(json::binary_t&) override
+    bool binary(json::binary_t& /*val*/) override
     {
         return events_left-- > 0;
     }
 
-    bool start_object(std::size_t) override
+    bool start_object(std::size_t /*elements*/) override
     {
         return events_left-- > 0;
     }
 
-    bool key(std::string&) override
+    bool key(std::string& /*val*/) override
     {
         return events_left-- > 0;
     }
@@ -202,7 +202,7 @@ class SaxCountdown : public nlohmann::json::json_sax_t
         return events_left-- > 0;
     }
 
-    bool start_array(std::size_t) override
+    bool start_array(std::size_t /*elements*/) override
     {
         return events_left-- > 0;
     }
@@ -212,7 +212,7 @@ class SaxCountdown : public nlohmann::json::json_sax_t
         return events_left-- > 0;
     }
 
-    bool parse_error(std::size_t, const std::string&, const json::exception&) override
+    bool parse_error(std::size_t /*position*/, const std::string& /*last_token*/, const json::exception& /*ex*/) override
     {
         return false;
     }
@@ -267,7 +267,7 @@ bool accept_helper(const std::string& s)
     CHECK(json::parser(nlohmann::detail::input_adapter(s)).accept(false) == !el.errored);
 
     // 5. parse with simple callback
-    json::parser_callback_t cb = [](int, json::parse_event_t, json&)
+    json::parser_callback_t cb = [](int /*unused*/, json::parse_event_t /*unused*/, json& /*unused*/)
     {
         return true;
     };
@@ -395,7 +395,7 @@ TEST_CASE("parser class")
                 CHECK_THROWS_AS(parser_helper("\uFF01"), json::parse_error&);
                 CHECK_THROWS_AS(parser_helper("[-4:1,]"), json::parse_error&);
                 // unescaped control characters
-                CHECK_THROWS_AS(parser_helper("\"\x00\""), json::parse_error&);
+                CHECK_THROWS_AS(parser_helper("\"\x00\""), json::parse_error&); // NOLINT(bugprone-string-literal-with-embedded-nul)
                 CHECK_THROWS_AS(parser_helper("\"\x01\""), json::parse_error&);
                 CHECK_THROWS_AS(parser_helper("\"\x02\""), json::parse_error&);
                 CHECK_THROWS_AS(parser_helper("\"\x03\""), json::parse_error&);
@@ -427,7 +427,7 @@ TEST_CASE("parser class")
                 CHECK_THROWS_AS(parser_helper("\"\x1d\""), json::parse_error&);
                 CHECK_THROWS_AS(parser_helper("\"\x1e\""), json::parse_error&);
                 CHECK_THROWS_AS(parser_helper("\"\x1f\""), json::parse_error&);
-                CHECK_THROWS_WITH(parser_helper("\"\x00\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: missing closing quote; last read: '\"'");
+                CHECK_THROWS_WITH(parser_helper("\"\x00\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: missing closing quote; last read: '\"'"); // NOLINT(bugprone-string-literal-with-embedded-nul)
                 CHECK_THROWS_WITH(parser_helper("\"\x01\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0001 (SOH) must be escaped to \\u0001; last read: '\"<U+0001>'");
                 CHECK_THROWS_WITH(parser_helper("\"\x02\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0002 (STX) must be escaped to \\u0002; last read: '\"<U+0002>'");
                 CHECK_THROWS_WITH(parser_helper("\"\x03\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0003 (ETX) must be escaped to \\u0003; last read: '\"<U+0003>'");
@@ -641,8 +641,8 @@ TEST_CASE("parser class")
             SECTION("overflow")
             {
                 // overflows during parsing yield an exception
-                CHECK_THROWS_AS(parser_helper("1.18973e+4932") == json(), json::out_of_range&);
-                CHECK_THROWS_WITH(parser_helper("1.18973e+4932") == json(),
+                CHECK_THROWS_AS(parser_helper("1.18973e+4932").empty(), json::out_of_range&);
+                CHECK_THROWS_WITH(parser_helper("1.18973e+4932").empty(),
                                   "[json.exception.out_of_range.406] number overflow parsing '1.18973e+4932'");
             }
 
@@ -770,7 +770,7 @@ TEST_CASE("parser class")
                 CHECK(accept_helper("\uFF01") == false);
                 CHECK(accept_helper("[-4:1,]") == false);
                 // unescaped control characters
-                CHECK(accept_helper("\"\x00\"") == false);
+                CHECK(accept_helper("\"\x00\"") == false); // NOLINT(bugprone-string-literal-with-embedded-nul)
                 CHECK(accept_helper("\"\x01\"") == false);
                 CHECK(accept_helper("\"\x02\"") == false);
                 CHECK(accept_helper("\"\x03\"") == false);
@@ -1155,7 +1155,7 @@ TEST_CASE("parser class")
                 case ('r'):
                 case ('t'):
                 {
-                    CHECK_NOTHROW(parser_helper(s.c_str()));
+                    CHECK_NOTHROW(parser_helper(s));
                     break;
                 }
 
@@ -1168,11 +1168,11 @@ TEST_CASE("parser class")
                 // any other combination of backslash and character is invalid
                 default:
                 {
-                    CHECK_THROWS_AS(parser_helper(s.c_str()), json::parse_error&);
+                    CHECK_THROWS_AS(parser_helper(s), json::parse_error&);
                     // only check error message if c is not a control character
                     if (c > 0x1f)
                     {
-                        CHECK_THROWS_WITH_STD_STR(parser_helper(s.c_str()),
+                        CHECK_THROWS_WITH_STD_STR(parser_helper(s),
                                                   "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid string: forbidden character after backslash; last read: '\"\\" + std::string(1, static_cast<char>(c)) + "'");
                     }
                     break;
@@ -1233,49 +1233,49 @@ TEST_CASE("parser class")
                 if (valid(c))
                 {
                     CAPTURE(s1)
-                    CHECK_NOTHROW(parser_helper(s1.c_str()));
+                    CHECK_NOTHROW(parser_helper(s1));
                     CAPTURE(s2)
-                    CHECK_NOTHROW(parser_helper(s2.c_str()));
+                    CHECK_NOTHROW(parser_helper(s2));
                     CAPTURE(s3)
-                    CHECK_NOTHROW(parser_helper(s3.c_str()));
+                    CHECK_NOTHROW(parser_helper(s3));
                     CAPTURE(s4)
-                    CHECK_NOTHROW(parser_helper(s4.c_str()));
+                    CHECK_NOTHROW(parser_helper(s4));
                 }
                 else
                 {
                     CAPTURE(s1)
-                    CHECK_THROWS_AS(parser_helper(s1.c_str()), json::parse_error&);
+                    CHECK_THROWS_AS(parser_helper(s1), json::parse_error&);
                     // only check error message if c is not a control character
                     if (c > 0x1f)
                     {
-                        CHECK_THROWS_WITH_STD_STR(parser_helper(s1.c_str()),
+                        CHECK_THROWS_WITH_STD_STR(parser_helper(s1),
                                                   "[json.exception.parse_error.101] parse error at line 1, column 7: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '" + s1.substr(0, 7) + "'");
                     }
 
                     CAPTURE(s2)
-                    CHECK_THROWS_AS(parser_helper(s2.c_str()), json::parse_error&);
+                    CHECK_THROWS_AS(parser_helper(s2), json::parse_error&);
                     // only check error message if c is not a control character
                     if (c > 0x1f)
                     {
-                        CHECK_THROWS_WITH_STD_STR(parser_helper(s2.c_str()),
+                        CHECK_THROWS_WITH_STD_STR(parser_helper(s2),
                                                   "[json.exception.parse_error.101] parse error at line 1, column 6: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '" + s2.substr(0, 6) + "'");
                     }
 
                     CAPTURE(s3)
-                    CHECK_THROWS_AS(parser_helper(s3.c_str()), json::parse_error&);
+                    CHECK_THROWS_AS(parser_helper(s3), json::parse_error&);
                     // only check error message if c is not a control character
                     if (c > 0x1f)
                     {
-                        CHECK_THROWS_WITH_STD_STR(parser_helper(s3.c_str()),
+                        CHECK_THROWS_WITH_STD_STR(parser_helper(s3),
                                                   "[json.exception.parse_error.101] parse error at line 1, column 5: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '" + s3.substr(0, 5) + "'");
                     }
 
                     CAPTURE(s4)
-                    CHECK_THROWS_AS(parser_helper(s4.c_str()), json::parse_error&);
+                    CHECK_THROWS_AS(parser_helper(s4), json::parse_error&);
                     // only check error message if c is not a control character
                     if (c > 0x1f)
                     {
-                        CHECK_THROWS_WITH_STD_STR(parser_helper(s4.c_str()),
+                        CHECK_THROWS_WITH_STD_STR(parser_helper(s4),
                                                   "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '" + s4.substr(0, 4) + "'");
                     }
                 }
@@ -1381,7 +1381,7 @@ TEST_CASE("parser class")
                 case ('r'):
                 case ('t'):
                 {
-                    CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s.c_str()))).accept());
+                    CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s))).accept());
                     break;
                 }
 
@@ -1394,7 +1394,7 @@ TEST_CASE("parser class")
                 // any other combination of backslash and character is invalid
                 default:
                 {
-                    CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s.c_str()))).accept() == false);
+                    CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s))).accept() == false);
                     break;
                 }
             }
@@ -1453,27 +1453,27 @@ TEST_CASE("parser class")
                 if (valid(c))
                 {
                     CAPTURE(s1)
-                    CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s1.c_str()))).accept());
+                    CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s1))).accept());
                     CAPTURE(s2)
-                    CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s2.c_str()))).accept());
+                    CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s2))).accept());
                     CAPTURE(s3)
-                    CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s3.c_str()))).accept());
+                    CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s3))).accept());
                     CAPTURE(s4)
-                    CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s4.c_str()))).accept());
+                    CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s4))).accept());
                 }
                 else
                 {
                     CAPTURE(s1)
-                    CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s1.c_str()))).accept() == false);
+                    CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s1))).accept() == false);
 
                     CAPTURE(s2)
-                    CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s2.c_str()))).accept() == false);
+                    CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s2))).accept() == false);
 
                     CAPTURE(s3)
-                    CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s3.c_str()))).accept() == false);
+                    CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s3))).accept() == false);
 
                     CAPTURE(s4)
-                    CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s4.c_str()))).accept() == false);
+                    CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s4))).accept() == false);
                 }
             }
         }
@@ -1499,16 +1499,9 @@ TEST_CASE("parser class")
 
         // test case to make sure the callback is properly evaluated after reading a key
         {
-            json::parser_callback_t cb = [](int, json::parse_event_t event, json&)
+            json::parser_callback_t cb = [](int /*unused*/, json::parse_event_t event, json& /*unused*/)
             {
-                if (event == json::parse_event_t::key)
-                {
-                    return false;
-                }
-                else
-                {
-                    return true;
-                }
+                return event != json::parse_event_t::key;
             };
 
             json x = json::parse("{\"key\": false}", cb);
@@ -1518,7 +1511,7 @@ TEST_CASE("parser class")
 
     SECTION("callback function")
     {
-        auto s_object = R"(
+        const auto* s_object = R"(
             {
                 "foo": 2,
                 "bar": {
@@ -1527,11 +1520,11 @@ TEST_CASE("parser class")
             }
         )";
 
-        auto s_array = R"(
+        const auto* s_array = R"(
             [1,2,[3,4,5],4,5]
         )";
 
-        auto structured_array = R"(
+        const auto* structured_array = R"(
             [
                 1,
                 {
@@ -1545,14 +1538,14 @@ TEST_CASE("parser class")
 
         SECTION("filter nothing")
         {
-            json j_object = json::parse(s_object, [](int, json::parse_event_t, const json&)
+            json j_object = json::parse(s_object, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/)
             {
                 return true;
             });
 
             CHECK (j_object == json({{"foo", 2}, {"bar", {{"baz", 1}}}}));
 
-            json j_array = json::parse(s_array, [](int, json::parse_event_t, const json&)
+            json j_array = json::parse(s_array, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/)
             {
                 return true;
             });
@@ -1562,7 +1555,7 @@ TEST_CASE("parser class")
 
         SECTION("filter everything")
         {
-            json j_object = json::parse(s_object, [](int, json::parse_event_t, const json&)
+            json j_object = json::parse(s_object, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/)
             {
                 return false;
             });
@@ -1570,7 +1563,7 @@ TEST_CASE("parser class")
             // the top-level object will be discarded, leaving a null
             CHECK (j_object.is_null());
 
-            json j_array = json::parse(s_array, [](int, json::parse_event_t, const json&)
+            json j_array = json::parse(s_array, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/)
             {
                 return false;
             });
@@ -1581,31 +1574,17 @@ TEST_CASE("parser class")
 
         SECTION("filter specific element")
         {
-            json j_object = json::parse(s_object, [](int, json::parse_event_t, const json & j)
+            json j_object = json::parse(s_object, [](int /*unused*/, json::parse_event_t /*unused*/, const json & j)
             {
                 // filter all number(2) elements
-                if (j == json(2))
-                {
-                    return false;
-                }
-                else
-                {
-                    return true;
-                }
+                return j != json(2);
             });
 
             CHECK (j_object == json({{"bar", {{"baz", 1}}}}));
 
-            json j_array = json::parse(s_array, [](int, json::parse_event_t, const json & j)
+            json j_array = json::parse(s_array, [](int /*unused*/, json::parse_event_t /*unused*/, const json & j)
             {
-                if (j == json(2))
-                {
-                    return false;
-                }
-                else
-                {
-                    return true;
-                }
+                return j != json(2);
             });
 
             CHECK (j_array == json({1, {3, 4, 5}, 4, 5}));
@@ -1613,32 +1592,18 @@ TEST_CASE("parser class")
 
         SECTION("filter object in array")
         {
-            json j_filtered1 = json::parse(structured_array, [](int, json::parse_event_t e, const json & parsed)
+            json j_filtered1 = json::parse(structured_array, [](int /*unused*/, json::parse_event_t e, const json & parsed)
             {
-                if (e == json::parse_event_t::object_end && parsed.contains("foo"))
-                {
-                    return false;
-                }
-                else
-                {
-                    return true;
-                }
+                return !(e == json::parse_event_t::object_end && parsed.contains("foo"));
             });
 
             // the specified object will be discarded, and removed.
             CHECK (j_filtered1.size() == 2);
             CHECK (j_filtered1 == json({1, {{"qux", "baz"}}}));
 
-            json j_filtered2 = json::parse(structured_array, [](int, json::parse_event_t e, const json& /*parsed*/)
+            json j_filtered2 = json::parse(structured_array, [](int /*unused*/, json::parse_event_t e, const json& /*parsed*/)
             {
-                if (e == json::parse_event_t::object_end)
-                {
-                    return false;
-                }
-                else
-                {
-                    return true;
-                }
+                return e != json::parse_event_t::object_end;
             });
 
             // removed all objects in array.
@@ -1651,7 +1616,7 @@ TEST_CASE("parser class")
             SECTION("first closing event")
             {
                 {
-                    json j_object = json::parse(s_object, [](int, json::parse_event_t e, const json&)
+                    json j_object = json::parse(s_object, [](int /*unused*/, json::parse_event_t e, const json& /*unused*/)
                     {
                         static bool first = true;
                         if (e == json::parse_event_t::object_end && first)
@@ -1659,10 +1624,8 @@ TEST_CASE("parser class")
                             first = false;
                             return false;
                         }
-                        else
-                        {
-                            return true;
-                        }
+
+                        return true;
                     });
 
                     // the first completed object will be discarded
@@ -1670,7 +1633,7 @@ TEST_CASE("parser class")
                 }
 
                 {
-                    json j_array = json::parse(s_array, [](int, json::parse_event_t e, const json&)
+                    json j_array = json::parse(s_array, [](int /*unused*/, json::parse_event_t e, const json& /*unused*/)
                     {
                         static bool first = true;
                         if (e == json::parse_event_t::array_end && first)
@@ -1678,10 +1641,8 @@ TEST_CASE("parser class")
                             first = false;
                             return false;
                         }
-                        else
-                        {
-                            return true;
-                        }
+
+                        return true;
                     });
 
                     // the first completed array will be discarded
@@ -1696,29 +1657,15 @@ TEST_CASE("parser class")
             // object and array is discarded only after the closing character
             // has been read
 
-            json j_empty_object = json::parse("{}", [](int, json::parse_event_t e, const json&)
+            json j_empty_object = json::parse("{}", [](int /*unused*/, json::parse_event_t e, const json& /*unused*/)
             {
-                if (e == json::parse_event_t::object_end)
-                {
-                    return false;
-                }
-                else
-                {
-                    return true;
-                }
+                return e != json::parse_event_t::object_end;
             });
             CHECK(j_empty_object == json());
 
-            json j_empty_array = json::parse("[]", [](int, json::parse_event_t e, const json&)
+            json j_empty_array = json::parse("[]", [](int /*unused*/, json::parse_event_t e, const json& /*unused*/)
             {
-                if (e == json::parse_event_t::array_end)
-                {
-                    return false;
-                }
-                else
-                {
-                    return true;
-                }
+                return e != json::parse_event_t::array_end;
             });
             CHECK(j_empty_array == json());
         }
@@ -1744,7 +1691,7 @@ TEST_CASE("parser class")
 
         SECTION("from array")
         {
-            uint8_t v[] = {'t', 'r', 'u', 'e'};
+            uint8_t v[] = {'t', 'r', 'u', 'e'}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
             json j;
             json::parser(nlohmann::detail::input_adapter(std::begin(v), std::end(v))).parse(true, j);
             CHECK(j == json(true));
@@ -1784,7 +1731,7 @@ TEST_CASE("parser class")
     {
         SECTION("parser with callback")
         {
-            json::parser_callback_t cb = [](int, json::parse_event_t, json&)
+            json::parser_callback_t cb = [](int /*unused*/, json::parse_event_t /*unused*/, json& /*unused*/)
             {
                 return true;
             };

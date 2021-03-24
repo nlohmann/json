@@ -99,7 +99,7 @@ template <
     class T,
     class Compare = fifo_map_compare<Key>,
     class Allocator = std::allocator<std::pair<const Key, T>>
-    > class fifo_map
+    > class fifo_map // NOLINT(cppcoreguidelines-special-member-functions,hicpp-special-member-functions,-warnings-as-errors)
 {
   public:
     using key_type = Key;
@@ -514,10 +514,10 @@ template <
     internal_map_type m_map;
 };
 
-}
+} // namespace nlohmann
 
 // specialization of std::swap
-namespace std
+namespace std // NOLINT(cert-dcl58-cpp,-warnings-as-errors)
 {
 template <class Key, class T, class Compare, class Allocator>
 inline void swap(nlohmann::fifo_map<Key, T, Compare, Allocator>& m1,
@@ -525,6 +525,6 @@ inline void swap(nlohmann::fifo_map<Key, T, Compare, Allocator>& m1,
 {
     m1.swap(m2);
 }
-}
+} // namespace std
 
 #endif

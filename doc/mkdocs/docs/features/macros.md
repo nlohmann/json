@@ -12,6 +12,14 @@ This macro overrides `#!cpp catch` calls inside the library. The argument is the
 
 See [Switch off exceptions](../home/exceptions.md#switch-off-exceptions) for an example.
 
+## `JSON_DIAGNOSTICS`
+
+This macro enables extended diagnostics for exception messages. Possible values are `1` to enable or `0` to disable (default).
+
+When enabled, exception messages contain a [JSON Pointer](json_pointer.md) to the JSON value that triggered the exception, see [Extended diagnostic messages](../home/exceptions.md#extended-diagnostic-messages) for an example. Note that enabling this macro increases the size of every JSON value by one pointer and adds some runtime overhead.
+
+The diagnostics messages can also be controlled with the CMake option `JSON_Diagnostics` (`OFF` by default) which sets `JSON_DIAGNOSTICS` accordingly.
+
 ## `JSON_NOEXCEPTION`
 
 Exceptions can be switched off by defining the symbol `JSON_NOEXCEPTION`.
@@ -55,6 +63,8 @@ When defined to `0`, implicit conversions are switched off. By default, implicit
     json j = "Hello, world!";
     auto s = j.get<std::string>();
     ```
+
+Implicit conversions can also be controlled with the CMake option `JSON_ImplicitConversions` (`ON` by default) which sets `JSON_USE_IMPLICIT_CONVERSIONS` accordingly.
 
 ## `NLOHMANN_DEFINE_TYPE_INTRUSIVE(type, member...)`
 

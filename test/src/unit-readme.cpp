@@ -52,7 +52,7 @@ TEST_CASE("README" * doctest::skip())
 {
     {
         // redirect std::cout for the README file
-        auto old_cout_buffer = std::cout.rdbuf();
+        auto* old_cout_buffer = std::cout.rdbuf();
         std::ostringstream new_stream;
         std::cout.rdbuf(new_stream.rdbuf());
         {
@@ -123,7 +123,7 @@ TEST_CASE("README" * doctest::skip())
 
         {
             // create object from string literal
-            json j = "{ \"happy\": true, \"pi\": 3.141 }"_json;
+            json j = "{ \"happy\": true, \"pi\": 3.141 }"_json; // NOLINT(modernize-raw-string-literal)
 
             // or even nicer with a raw string literal
             auto j2 = R"(
@@ -134,7 +134,7 @@ TEST_CASE("README" * doctest::skip())
         )"_json;
 
             // or explicitly
-            auto j3 = json::parse("{ \"happy\": true, \"pi\": 3.141 }");
+            auto j3 = json::parse(R"({"happy": true, "pi": 3.141})");
 
             // explicit conversion to string
             std::string s = j.dump();    // {\"happy\":true,\"pi\":3.141}
@@ -158,17 +158,17 @@ TEST_CASE("README" * doctest::skip())
             j.push_back(true);
 
             // comparison
-            bool x = (j == "[\"foo\", 1, true]"_json);  // true
+            bool x = (j == R"(["foo", 1, true])"_json);  // true
             CHECK(x == true);
 
             // iterate the array
-            for (json::iterator it = j.begin(); it != j.end(); ++it)
+            for (json::iterator it = j.begin(); it != j.end(); ++it) // NOLINT(modernize-loop-convert)
             {
                 std::cout << *it << '\n';
             }
 
             // range-based for
-            for (auto element : j)
+            for (auto& element : j)
             {
                 std::cout << element << '\n';
             }

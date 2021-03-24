@@ -60,7 +60,7 @@ const char* begin(const MyContainer& c)
 
 const char* end(const MyContainer& c)
 {
-    return c.data + strlen(c.data);
+    return c.data + strlen(c.data); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 }
 
 TEST_CASE("Custom container non-member begin/end")
@@ -88,7 +88,7 @@ TEST_CASE("Custom container member begin/end")
 
         const char* end() const
         {
-            return data + strlen(data);
+            return data + strlen(data); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
         }
     };
 
@@ -114,7 +114,7 @@ TEST_CASE("Custom iterator")
 
         MyIterator& operator++()
         {
-            ++ptr;
+            ++ptr; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
             return *this;
         }
 
@@ -131,8 +131,15 @@ TEST_CASE("Custom iterator")
         const char* ptr;
     };
 
+    // avoid -Wunused-local-typedefs
+    CHECK(std::is_same<MyIterator::difference_type, std::size_t>::value);
+    CHECK(std::is_same<MyIterator::value_type, char>::value);
+    CHECK(std::is_same<MyIterator::pointer, const char*>::value);
+    CHECK(std::is_same<MyIterator::reference, const char&>::value);
+    CHECK(std::is_same<MyIterator::iterator_category, std::input_iterator_tag>::value);
+
     MyIterator begin{raw_data};
-    MyIterator end{raw_data + strlen(raw_data)};
+    MyIterator end{raw_data + strlen(raw_data)}; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
     json as_json = json::parse(begin, end);
     CHECK(as_json.at(0) == 1);
