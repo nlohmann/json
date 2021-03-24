@@ -56,11 +56,11 @@ TEST_CASE("reference access")
         json value = {{"one", 1}, {"two", 2}};
 
         // check if references are returned correctly
-        test_type& p1 = value.get_ref<test_type&>();
+        auto& p1 = value.get_ref<test_type&>();
         CHECK(&p1 == value.get_ptr<test_type*>());
         CHECK(p1 == value.get<test_type>());
 
-        const test_type& p2 = value.get_ref<const test_type&>();
+        const auto& p2 = value.get_ref<const test_type&>();
         CHECK(&p2 == value.get_ptr<const test_type*>());
         CHECK(p2 == value.get<test_type>());
 
@@ -95,7 +95,7 @@ TEST_CASE("reference access")
         // test_type& p1 = value.get_ref<test_type&>();
 
         // check if references are returned correctly
-        const test_type& p2 = value.get_ref<const test_type&>();
+        const auto& p2 = value.get_ref<const test_type&>();
         CHECK(&p2 == value.get_ptr<const test_type*>());
         CHECK(p2 == value.get<test_type>());
     }
@@ -106,11 +106,11 @@ TEST_CASE("reference access")
         json value = {1, 2, 3, 4};
 
         // check if references are returned correctly
-        test_type& p1 = value.get_ref<test_type&>();
+        auto& p1 = value.get_ref<test_type&>();
         CHECK(&p1 == value.get_ptr<test_type*>());
         CHECK(p1 == value.get<test_type>());
 
-        const test_type& p2 = value.get_ref<const test_type&>();
+        const auto& p2 = value.get_ref<const test_type&>();
         CHECK(&p2 == value.get_ptr<const test_type*>());
         CHECK(p2 == value.get<test_type>());
 
@@ -142,11 +142,11 @@ TEST_CASE("reference access")
         json value = "hello";
 
         // check if references are returned correctly
-        test_type& p1 = value.get_ref<test_type&>();
+        auto& p1 = value.get_ref<test_type&>();
         CHECK(&p1 == value.get_ptr<test_type*>());
         CHECK(p1 == value.get<test_type>());
 
-        const test_type& p2 = value.get_ref<const test_type&>();
+        const auto& p2 = value.get_ref<const test_type&>();
         CHECK(&p2 == value.get_ptr<const test_type*>());
         CHECK(p2 == value.get<test_type>());
 
@@ -178,11 +178,11 @@ TEST_CASE("reference access")
         json value = false;
 
         // check if references are returned correctly
-        test_type& p1 = value.get_ref<test_type&>();
+        auto& p1 = value.get_ref<test_type&>();
         CHECK(&p1 == value.get_ptr<test_type*>());
         CHECK(p1 == value.get<test_type>());
 
-        const test_type& p2 = value.get_ref<const test_type&>();
+        const auto& p2 = value.get_ref<const test_type&>();
         CHECK(&p2 == value.get_ptr<const test_type*>());
         CHECK(p2 == value.get<test_type>());
 
@@ -214,11 +214,11 @@ TEST_CASE("reference access")
         json value = -23;
 
         // check if references are returned correctly
-        test_type& p1 = value.get_ref<test_type&>();
+        auto& p1 = value.get_ref<test_type&>();
         CHECK(&p1 == value.get_ptr<test_type*>());
         CHECK(p1 == value.get<test_type>());
 
-        const test_type& p2 = value.get_ref<const test_type&>();
+        const auto& p2 = value.get_ref<const test_type&>();
         CHECK(&p2 == value.get_ptr<const test_type*>());
         CHECK(p2 == value.get<test_type>());
 
@@ -250,11 +250,11 @@ TEST_CASE("reference access")
         json value = 23u;
 
         // check if references are returned correctly
-        test_type& p1 = value.get_ref<test_type&>();
+        auto& p1 = value.get_ref<test_type&>();
         CHECK(&p1 == value.get_ptr<test_type*>());
         CHECK(p1 == value.get<test_type>());
 
-        const test_type& p2 = value.get_ref<const test_type&>();
+        const auto& p2 = value.get_ref<const test_type&>();
         CHECK(&p2 == value.get_ptr<const test_type*>());
         CHECK(p2 == value.get<test_type>());
 
@@ -286,11 +286,11 @@ TEST_CASE("reference access")
         json value = 42.23;
 
         // check if references are returned correctly
-        test_type& p1 = value.get_ref<test_type&>();
+        auto& p1 = value.get_ref<test_type&>();
         CHECK(&p1 == value.get_ptr<test_type*>());
         CHECK(p1 == value.get<test_type>());
 
-        const test_type& p2 = value.get_ref<const test_type&>();
+        const auto& p2 = value.get_ref<const test_type&>();
         CHECK(&p2 == value.get_ptr<const test_type*>());
         CHECK(p2 == value.get<test_type>());
 

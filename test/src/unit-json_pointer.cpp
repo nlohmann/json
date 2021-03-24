@@ -530,7 +530,7 @@ TEST_CASE("JSON pointers")
 
     SECTION("string representation")
     {
-        for (auto ptr :
+        for (const auto* ptr :
                 {"", "/foo", "/foo/0", "/", "/a~1b", "/c%d", "/e^f", "/g|h", "/i\\j", "/k\"l", "/ ", "/m~0n"
                 })
         {

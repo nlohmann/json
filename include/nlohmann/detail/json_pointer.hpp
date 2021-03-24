@@ -88,9 +88,9 @@ class json_pointer
 
     @complexity Linear in the length of @a ptr.
 
-    @sa @ref operator/=(std::string) to append a reference token
-    @sa @ref operator/=(std::size_t) to append an array index
-    @sa @ref operator/(const json_pointer&, const json_pointer&) for a binary operator
+    @sa see @ref operator/=(std::string) to append a reference token
+    @sa see @ref operator/=(std::size_t) to append an array index
+    @sa see @ref operator/(const json_pointer&, const json_pointer&) for a binary operator
 
     @since version 3.6.0
     */
@@ -112,9 +112,9 @@ class json_pointer
 
     @complexity Amortized constant.
 
-    @sa @ref operator/=(const json_pointer&) to append a JSON pointer
-    @sa @ref operator/=(std::size_t) to append an array index
-    @sa @ref operator/(const json_pointer&, std::size_t) for a binary operator
+    @sa see @ref operator/=(const json_pointer&) to append a JSON pointer
+    @sa see @ref operator/=(std::size_t) to append an array index
+    @sa see @ref operator/(const json_pointer&, std::size_t) for a binary operator
 
     @since version 3.6.0
     */
@@ -134,9 +134,9 @@ class json_pointer
 
     @complexity Amortized constant.
 
-    @sa @ref operator/=(const json_pointer&) to append a JSON pointer
-    @sa @ref operator/=(std::string) to append a reference token
-    @sa @ref operator/(const json_pointer&, std::string) for a binary operator
+    @sa see @ref operator/=(const json_pointer&) to append a JSON pointer
+    @sa see @ref operator/=(std::string) to append a reference token
+    @sa see @ref operator/(const json_pointer&, std::string) for a binary operator
 
     @since version 3.6.0
     */
@@ -156,7 +156,7 @@ class json_pointer
 
     @complexity Linear in the length of @a lhs and @a rhs.
 
-    @sa @ref operator/=(const json_pointer&) to append a JSON pointer
+    @sa see @ref operator/=(const json_pointer&) to append a JSON pointer
 
     @since version 3.6.0
     */
@@ -177,11 +177,11 @@ class json_pointer
 
     @complexity Linear in the length of @a ptr.
 
-    @sa @ref operator/=(std::string) to append a reference token
+    @sa see @ref operator/=(std::string) to append a reference token
 
     @since version 3.6.0
     */
-    friend json_pointer operator/(const json_pointer& ptr, std::string token)
+    friend json_pointer operator/(const json_pointer& ptr, std::string token) // NOLINT(performance-unnecessary-value-param)
     {
         return json_pointer(ptr) /= std::move(token);
     }
@@ -197,7 +197,7 @@ class json_pointer
 
     @complexity Linear in the length of @a ptr.
 
-    @sa @ref operator/=(std::size_t) to append an array index
+    @sa see @ref operator/=(std::size_t) to append an array index
 
     @since version 3.6.0
     */
@@ -348,7 +348,7 @@ class json_pointer
         }
 
         std::size_t processed_chars = 0;
-        unsigned long long res = 0;
+        unsigned long long res = 0;  // NOLINT(runtime/int)
         JSON_TRY
         {
             res = std::stoull(s, &processed_chars);
@@ -366,7 +366,7 @@ class json_pointer
 
         // only triggered on special platforms (like 32bit), see also
         // https://github.com/nlohmann/json/pull/2203
-        if (res >= static_cast<unsigned long long>((std::numeric_limits<size_type>::max)()))
+        if (res >= static_cast<unsigned long long>((std::numeric_limits<size_type>::max)()))  // NOLINT(runtime/int)
         {
             JSON_THROW(detail::out_of_range::create(410, "array index " + s + " exceeds size_type", BasicJsonType())); // LCOV_EXCL_LINE
         }
@@ -398,7 +398,7 @@ class json_pointer
     */
     BasicJsonType& get_and_create(BasicJsonType& j) const
     {
-        auto result = &j;
+        auto* result = &j;
 
         // in case no reference tokens exist, return a reference to the JSON value
         // j which will be overwritten by a primitive value

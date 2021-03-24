@@ -42,9 +42,10 @@ class file_input_adapter
 
     // make class move-only
     file_input_adapter(const file_input_adapter&) = delete;
-    file_input_adapter(file_input_adapter&&) = default;
+    file_input_adapter(file_input_adapter&&) noexcept = default;
     file_input_adapter& operator=(const file_input_adapter&) = delete;
     file_input_adapter& operator=(file_input_adapter&&) = delete;
+    ~file_input_adapter() = default;
 
     std::char_traits<char>::int_type get_character() noexcept
     {
@@ -88,9 +89,10 @@ class input_stream_adapter
     // delete because of pointer members
     input_stream_adapter(const input_stream_adapter&) = delete;
     input_stream_adapter& operator=(input_stream_adapter&) = delete;
-    input_stream_adapter& operator=(input_stream_adapter&& rhs) = delete;
+    input_stream_adapter& operator=(input_stream_adapter&&) = delete;
 
-    input_stream_adapter(input_stream_adapter&& rhs) noexcept : is(rhs.is), sb(rhs.sb)
+    input_stream_adapter(input_stream_adapter&& rhs) noexcept
+        : is(rhs.is), sb(rhs.sb)
     {
         rhs.is = nullptr;
         rhs.sb = nullptr;
@@ -125,7 +127,8 @@ class iterator_input_adapter
     using char_type = typename std::iterator_traits<IteratorType>::value_type;
 
     iterator_input_adapter(IteratorType first, IteratorType last)
-        : current(std::move(first)), end(std::move(last)) {}
+        : current(std::move(first)), end(std::move(last))
+    {}
 
     typename std::char_traits<char_type>::int_type get_character()
     {
@@ -150,7 +153,6 @@ class iterator_input_adapter
     {
         return current == end;
     }
-
 };
 
 
@@ -393,7 +395,7 @@ struct container_input_adapter_factory< ContainerType,
 }
        };
 
-}
+} // namespace container_input_adapter_factory_impl
 
 template<typename ContainerType>
 typename container_input_adapter_factory_impl::container_input_adapter_factory<ContainerType>::adapter_type input_adapter(const ContainerType& container)
@@ -435,7 +437,7 @@ contiguous_bytes_input_adapter input_adapter(CharT b)
 }
 
 template<typename T, std::size_t N>
-auto input_adapter(T (&array)[N]) -> decltype(input_adapter(array, array + N))
+auto input_adapter(T (&array)[N]) -> decltype(input_adapter(array, array + N)) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
 {
     return input_adapter(array, array + N);
 }
@@ -464,7 +466,7 @@ class span_input_adapter
 
     contiguous_bytes_input_adapter&& get()
     {
-        return std::move(ia);
+        return std::move(ia); // NOLINT(hicpp-move-const-arg,performance-move-const-arg)
     }
 
   private:

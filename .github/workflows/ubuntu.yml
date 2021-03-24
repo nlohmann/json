@@ -3,62 +3,177 @@ name: Ubuntu
 on: [push, pull_request]
 
 jobs:
-  gcc_build:
+  ci_test_clang_cxx20:
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v1
-    - name: install_gcc
+    - uses: actions/checkout@v2
+    - name: install_clang
       run: |
-           sudo apt update
-           sudo apt install gcc-10 g++-10
+        sudo apt update
+        sudo apt install clang-10 ninja-build
       shell: bash
     - name: cmake
-      run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On
-      env:
-        CC:   gcc-10
-        CXX:  g++-10
+      run: cmake -S . -B build -DJSON_CI=On
     - name: build
-      run: cmake --build build --parallel 10
-    - name: test
-      run: cd build ; ctest -j 10 --output-on-failure
+      run: cmake --build build --target ci_test_clang_cxx20
 
-  clang_build:
+  ci_clang_analyze:
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v1
-    - name: install_gcc
-      run: |
-           sudo apt update
-           sudo apt install clang-10
-      shell: bash
-    - name: cmake
-      run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On
-      env:
-        CC:   clang-10
-        CXX:  clang++-10
-    - name: build
-      run: cmake --build build --parallel 10
-    - name: test
-      run: cd build ; ctest -j 10 --output-on-failure
+      - uses: actions/checkout@v2
+      - name: install_ninja
+        run: |
+          sudo apt update
+          sudo apt install ninja-build
+        shell: bash
+      - name: install_clang
+        run: |
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 11
+          sudo apt-get install clang-tools-11
+        shell: bash
+      - name: cmake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: build
+        run: cmake --build build --target ci_clang_analyze
 
-  clang_build_cxx20:
+  ci_test_clang:
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v1
-    - name: install_gcc
-      run: |
-           sudo apt update
-           sudo apt install clang-10
-      shell: bash
-    - name: cmake
-      run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On -DCMAKE_CXX_STANDARD=20 -DCMAKE_CXX_STANDARD_REQUIRED=ON
-      env:
-        CC:   clang-10
-        CXX:  clang++-10
-    - name: build
-      run: cmake --build build --parallel 10
-    - name: test
-      run: cd build ; ctest -j 10 --output-on-failure
+      - uses: actions/checkout@v2
+      - name: install_ninja
+        run: |
+          sudo apt update
+          sudo apt install ninja-build
+        shell: bash
+      - name: install_clang
+        run: |
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 11
+          sudo apt-get install clang-tools-11
+        shell: bash
+      - name: cmake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: build
+        run: cmake --build build --target ci_test_clang
+
+  ci_test_gcc:
+    runs-on: ubuntu-latest
+    container: nlohmann/json-ci:latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: cmake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: build
+        run: cmake --build build --target ci_test_gcc
+
+  ci_test_valgrind:
+    runs-on: ubuntu-latest
+    container: nlohmann/json-ci:latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: cmake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: build
+        run: cmake --build build --target ci_test_valgrind
+
+  ci_cppcheck:
+    runs-on: ubuntu-latest
+    container: nlohmann/json-ci:latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: cmake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: build
+        run: cmake --build build --target ci_cppcheck
+
+  ci_cpplint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: cmake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: build
+        run: cmake --build build --target ci_cpplint
+
+  ci_clang_tidy:
+    runs-on: ubuntu-latest
+    container: nlohmann/json-ci:latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: cmake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: build
+        run: cmake --build build --target ci_clang_tidy
+
+  ci_test_amalgamation:
+    runs-on: ubuntu-latest
+    container: nlohmann/json-ci:latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: cmake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: build
+        run: cmake --build build --target ci_test_amalgamation
+
+  ci_test_diagnostics:
+    runs-on: ubuntu-latest
+    container: nlohmann/json-ci:latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: cmake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: build
+        run: cmake --build build --target ci_test_diagnostics
+
+  ci_test_noexceptions:
+    runs-on: ubuntu-latest
+    container: nlohmann/json-ci:latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: cmake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: build
+        run: cmake --build build --target ci_test_noexceptions
+
+  ci_test_noimplicitconversions:
+    runs-on: ubuntu-latest
+    container: nlohmann/json-ci:latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: cmake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: build
+        run: cmake --build build --target ci_test_noimplicitconversions
+
+  ci_test_clang_sanitizer:
+    runs-on: ubuntu-latest
+    container: nlohmann/json-ci:latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: cmake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: build
+        run: cmake --build build --target ci_test_clang_sanitizer
+
+  ci_test_coverage:
+    runs-on: ubuntu-latest
+    container: nlohmann/json-ci:latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: cmake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: build
+        run: cmake --build build --target ci_test_coverage
+      - name: archive coverage report
+        uses: actions/upload-artifact@v2
+        with:
+          name: code-coverage-report
+          path: /__w/json/json/build/html
+      - name: Coveralls
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path-to-lcov: /__w/json/json/build/json.info.filtered.noexcept

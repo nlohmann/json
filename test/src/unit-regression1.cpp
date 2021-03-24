@@ -94,7 +94,7 @@ template<typename T>
 struct foo_serializer < T, typename std::enable_if < !std::is_same<foo, T>::value >::type >
 {
     template <typename BasicJsonType>
-    static void to_json(BasicJsonType& j, const T& value) noexcept
+    static void to_json(BasicJsonType& j, const T& value) noexcept // NOLINT(bugprone-exception-escape)
     {
         ::nlohmann::to_json(j, value);
     }
@@ -104,7 +104,7 @@ struct foo_serializer < T, typename std::enable_if < !std::is_same<foo, T>::valu
         ::nlohmann::from_json(j, value);
     }
 };
-}
+} // namespace ns
 
 using foo_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t,
       std::uint64_t, double, std::allocator, ns::foo_serializer, std::vector<std::uint8_t>>;
@@ -115,10 +115,13 @@ using foo_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, 
 
 namespace
 {
-struct nocopy
+struct nocopy // NOLINT(cppcoreguidelines-special-member-functions,hicpp-special-member-functions)
 {
     nocopy() = default;
     nocopy(const nocopy&) = delete;
+    nocopy(nocopy&&) = delete;
+    nocopy& operator=(const nocopy&) = delete;
+    nocopy& operator=(nocopy&&) = delete;
 
     int val = 0;
 
@@ -127,7 +130,7 @@ struct nocopy
         j = {{"val", n.val}};
     }
 };
-}
+} // namespace
 
 TEST_CASE("regression tests 1")
 {
@@ -135,7 +138,7 @@ TEST_CASE("regression tests 1")
     {
         SECTION("escape_doublequote")
         {
-            auto s = "[\"\\\"foo\\\"\"]";
+            const auto* s = R"(["\"foo\""])";
             json j = json::parse(s);
             auto expected = R"(["\"foo\""])"_json;
             CHECK(j == expected);
@@ -245,7 +248,7 @@ TEST_CASE("regression tests 1")
 
     SECTION("issue #82 - lexer::get_number return NAN")
     {
-        const auto content = R"(
+        const auto* const content = R"(
         {
             "Test":"Test1",
             "Number":100,
@@ -412,18 +415,18 @@ TEST_CASE("regression tests 1")
         json j;
 
         // Non-const access with key as "char []"
-        char array_key[] = "Key1";
+        char array_key[] = "Key1"; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
         CHECK_NOTHROW(j[array_key] = 1);
         CHECK(j[array_key] == json(1));
 
         // Non-const access with key as "const char[]"
-        const char const_array_key[] = "Key2";
+        const char const_array_key[] = "Key2"; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
         CHECK_NOTHROW(j[const_array_key] = 2);
         CHECK(j[const_array_key] == json(2));
 
         // Non-const access with key as "char *"
-        char _ptr_key[] = "Key3";
-        char* ptr_key = &_ptr_key[0];
+        char _ptr_key[] = "Key3"; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+        char* ptr_key = &_ptr_key[0]; // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
         CHECK_NOTHROW(j[ptr_key] = 3);
         CHECK(j[ptr_key] == json(3));
 
@@ -637,7 +640,7 @@ TEST_CASE("regression tests 1")
 
     SECTION("issue #306 - Parsing fails without space at end of file")
     {
-        for (auto filename :
+        for (const auto* filename :
                 {
                     TEST_DATA_DIRECTORY "/regression/broken_file.json",
                     TEST_DATA_DIRECTORY "/regression/working_file.json"
@@ -652,7 +655,7 @@ TEST_CASE("regression tests 1")
 
     SECTION("issue #310 - make json_benchmarks no longer working in 2.0.4")
     {
-        for (auto filename :
+        for (const auto* filename :
                 {
                     TEST_DATA_DIRECTORY "/regression/floats.json",
                     TEST_DATA_DIRECTORY "/regression/signed_ints.json",
@@ -736,7 +739,7 @@ TEST_CASE("regression tests 1")
         check_roundtrip(83623297654460.33);
         check_roundtrip(701466573254773.6);
         check_roundtrip(1369013370304513);
-        check_roundtrip(96963648023094720);
+        check_roundtrip(96963648023094720); // NOLINT(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
         check_roundtrip(3.478237409280108e+17);
     }
 
@@ -1103,17 +1106,17 @@ TEST_CASE("regression tests 1")
     SECTION("issue #414 - compare with literal 0)")
     {
 #define CHECK_TYPE(v) \
-    CHECK((json(v) == v));\
-    CHECK((v == json(v)));\
-    CHECK_FALSE((json(v) != v));\
-    CHECK_FALSE((v != json(v)));
+    CHECK((json(v) == (v)));\
+    CHECK(((v) == json(v)));\
+    CHECK_FALSE((json(v) != (v)));\
+    CHECK_FALSE(((v) != json(v)));
 
         CHECK_TYPE(nullptr)
         CHECK_TYPE(0)
         CHECK_TYPE(0u)
         CHECK_TYPE(0L)
         CHECK_TYPE(0.0)
-        CHECK_TYPE("")
+        CHECK_TYPE("") // NOLINT(readability-container-size-empty)
 
 #undef CHECK_TYPE
     }
@@ -1389,8 +1392,10 @@ TEST_CASE("regression tests 1")
     {
         SECTION("example 1")
         {
-            std::istringstream i1_2_3( "{\"first\": \"one\" }{\"second\": \"two\"}3" );
-            json j1, j2, j3;
+            std::istringstream i1_2_3( R"({"first": "one" }{"second": "two"}3)" );
+            json j1;
+            json j2;
+            json j3;
             i1_2_3 >> j1;
             i1_2_3 >> j2;
             i1_2_3 >> j3;
@@ -1445,8 +1450,8 @@ TEST_CASE("regression tests 1")
 
     SECTION("issue #838 - incorrect parse error with binary data in keys")
     {
-        uint8_t key1[] = { 103, 92, 117, 48, 48, 48, 55, 92, 114, 215, 126, 214, 95, 92, 34, 174, 40, 71, 38, 174, 40, 71, 38, 223, 134, 247, 127, 0 };
-        std::string key1_str(reinterpret_cast<char*>(key1));
+        std::array<uint8_t, 28> key1 = {{ 103, 92, 117, 48, 48, 48, 55, 92, 114, 215, 126, 214, 95, 92, 34, 174, 40, 71, 38, 174, 40, 71, 38, 223, 134, 247, 127, 0 }};
+        std::string key1_str(reinterpret_cast<char*>(key1.data()));
         json j = key1_str;
         CHECK_THROWS_AS(j.dump(), json::type_error&);
         CHECK_THROWS_WITH(j.dump(), "[json.exception.type_error.316] invalid UTF-8 byte at index 10: 0x7E");
@@ -1528,7 +1533,7 @@ TEST_CASE("regression tests 1")
     SECTION("issue #971 - Add a SAX parser - late bug")
     {
         // a JSON text
-        auto text = R"(
+        const auto* text = R"(
     {
         "Image": {
             "Width":  800,
@@ -1549,14 +1554,7 @@ TEST_CASE("regression tests 1")
         json::parser_callback_t cb = [](int /*depth*/, json::parse_event_t event, json & parsed)
         {
             // skip object elements with key "Thumbnail"
-            if (event == json::parse_event_t::key && parsed == json("Thumbnail"))
-            {
-                return false;
-            }
-            else
-            {
-                return true;
-            }
+            return !(event == json::parse_event_t::key && parsed == json("Thumbnail"));
         };
 
         // parse (with callback) and serialize JSON

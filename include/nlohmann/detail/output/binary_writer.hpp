@@ -2,11 +2,12 @@
 
 #include <algorithm> // reverse
 #include <array> // array
+#include <cmath> // isnan, isinf
 #include <cstdint> // uint8_t, uint16_t, uint32_t, uint64_t
 #include <cstring> // memcpy
 #include <limits> // numeric_limits
 #include <string> // string
-#include <cmath> // isnan, isinf
+#include <utility> // move
 
 #include <nlohmann/detail/input/binary_reader.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
@@ -36,7 +37,7 @@ class binary_writer
 
     @param[in] adapter  output adapter to write to
     */
-    explicit binary_writer(output_adapter_t<CharType> adapter) : oa(adapter)
+    explicit binary_writer(output_adapter_t<CharType> adapter) : oa(std::move(adapter))
     {
         JSON_ASSERT(oa);
     }
@@ -1139,7 +1140,7 @@ class binary_writer
 
             // LCOV_EXCL_START
             default:
-                JSON_ASSERT(false);
+                JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert)
                 return 0ul;
                 // LCOV_EXCL_STOP
         }
@@ -1150,7 +1151,6 @@ class binary_writer
            key @a name.
     @param name The name to associate with the JSON entity @a j within the
                 current BSON document
-    @return The size of the BSON entry
     */
     void write_bson_element(const string_t& name,
                             const BasicJsonType& j)
@@ -1186,7 +1186,7 @@ class binary_writer
 
             // LCOV_EXCL_START
             default:
-                JSON_ASSERT(false);
+                JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert)
                 return;
                 // LCOV_EXCL_STOP
         }
@@ -1195,8 +1195,8 @@ class binary_writer
     /*!
     @brief Calculates the size of the BSON serialization of the given
            JSON-object @a j.
-    @param[in] j  JSON value to serialize
-    @pre       j.type() == value_t::object
+    @param[in] value  JSON value to serialize
+    @pre       value.type() == value_t::object
     */
     static std::size_t calc_bson_object_size(const typename BasicJsonType::object_t& value)
     {
@@ -1210,8 +1210,8 @@ class binary_writer
     }
 
     /*!
-    @param[in] j  JSON value to serialize
-    @pre       j.type() == value_t::object
+    @param[in] value  JSON value to serialize
+    @pre       value.type() == value_t::object
     */
     void write_bson_object(const typename BasicJsonType::object_t& value)
     {
@@ -1509,7 +1509,7 @@ class binary_writer
     void write_number(const NumberType n)
     {
         // step 1: write number to array of length NumberType
-        std::array<CharType, sizeof(NumberType)> vec;
+        std::array<CharType, sizeof(NumberType)> vec{};
         std::memcpy(vec.data(), &n, sizeof(NumberType));
 
         // step 2: write array to output (with possible reordering)

@@ -37,11 +37,9 @@ DOCTEST_GCC_SUPPRESS_WARNING("-Wfloat-equal")
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
-#include <fstream>
-#include <sstream>
 #include <list>
 #include <cstdio>
-#include <test_data.hpp>
+#include <utility>
 
 #if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_HAS_CXX17) && _HAS_CXX17 == 1) // fix for issue #464
     #define JSON_HAS_CPP_17
@@ -68,19 +66,20 @@ namespace
 {
 struct NonDefaultFromJsonStruct { };
 
-inline bool operator== (NonDefaultFromJsonStruct const&, NonDefaultFromJsonStruct const&)
+inline bool operator== (NonDefaultFromJsonStruct const& /*unused*/, NonDefaultFromJsonStruct const& /*unused*/)
 {
     return true;
 }
 
 enum class for_1647 { one, two };
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays): this is a false positive
 NLOHMANN_JSON_SERIALIZE_ENUM(for_1647,
 {
     {for_1647::one, "one"},
     {for_1647::two, "two"},
 })
-}
+} // namespace
 
 /////////////////////////////////////////////////////////////////////
 // for #1299
@@ -89,17 +88,19 @@ NLOHMANN_JSON_SERIALIZE_ENUM(for_1647,
 struct Data
 {
     Data() = default;
-    Data(const std::string& a_, const std::string b_) : a(a_), b(b_) {}
+    Data(std::string a_, std::string b_) : a(std::move(a_)), b(std::move(b_)) {}
     std::string a {};
     std::string b {};
 };
 
+void from_json(const json& j, Data& data);
 void from_json(const json& j, Data& data)
 {
     j["a"].get_to(data.a);
     j["b"].get_to(data.b);
 }
 
+bool operator==(Data const& lhs, Data const& rhs);
 bool operator==(Data const& lhs, Data const& rhs)
 {
     return lhs.a == rhs.a && lhs.b == rhs.b;
@@ -115,12 +116,12 @@ namespace nlohmann
 template <>
 struct adl_serializer<NonDefaultFromJsonStruct>
 {
-    static NonDefaultFromJsonStruct from_json (json const&) noexcept
+    static NonDefaultFromJsonStruct from_json (json const& /*unused*/) noexcept
     {
         return {};
     }
 };
-}
+} // namespace nlohmann
 
 /////////////////////////////////////////////////////////////////////
 // for #1805
@@ -137,7 +138,7 @@ TEST_CASE("regression tests 2")
 {
     SECTION("issue #1001 - Fix memory leak during parser callback")
     {
-        auto geojsonExample = R"(
+        const auto* geojsonExample = R"(
           { "type": "FeatureCollection",
             "features": [
               { "type": "Feature",
@@ -172,7 +173,7 @@ TEST_CASE("regression tests 2")
                ]
              })";
 
-        json::parser_callback_t cb = [&](int, json::parse_event_t event, json & parsed)
+        json::parser_callback_t cb = [&](int /*level*/, json::parse_event_t event, json & parsed)
         {
             // skip uninteresting events
             if (event == json::parse_event_t::value && !parsed.is_primitive())
@@ -288,7 +289,7 @@ TEST_CASE("regression tests 2")
             json dump_test;
             dump_test["1"] = std::string(length, -1);
 
-            std::string expected = "{\"1\":\"";
+            std::string expected = R"({"1":")";
             for (int i = 0; i < length; ++i)
             {
                 expected += "\\ufffd";
@@ -305,7 +306,7 @@ TEST_CASE("regression tests 2")
             json dump_test;
             dump_test["1"] = std::string(length, -2);
 
-            std::string expected = "{\"1\":\"";
+            std::string expected = R"({"1":")";
             for (int i = 0; i < length; ++i)
             {
                 expected += "\xEF\xBF\xBD";
@@ -318,29 +319,31 @@ TEST_CASE("regression tests 2")
         SECTION("test case in issue #1445")
         {
             nlohmann::json dump_test;
-            const int data[] =
+            const std::array<int, 108> data =
             {
-                109,  108,  103,  125,  -122, -53,  115,
-                18,   3,    0,    102,  19,   1,    15,
-                -110, 13,   -3,   -1,   -81,  32,   2,
-                0,    0,    0,    0,    0,    0,    0,
-                8,    0,    0,    0,    0,    0,    0,
-                0,    0,    0,    0,    0,    -80,  2,
-                0,    0,    96,   -118, 46,   -116, 46,
-                109,  -84,  -87,  108,  14,   109,  -24,
-                -83,  13,   -18,  -51,  -83,  -52,  -115,
-                14,   6,    32,   0,    0,    0,    0,
-                0,    0,    0,    0,    0,    0,    0,
-                64,   3,    0,    0,    0,    35,   -74,
-                -73,  55,   57,   -128, 0,    0,    0,
-                0,    0,    0,    0,    0,    0,    0,
-                0,    0,    33,   0,    0,    0,    -96,
-                -54,  -28,  -26
+                {
+                    109,  108,  103,  125,  -122, -53,  115,
+                    18,   3,    0,    102,  19,   1,    15,
+                    -110, 13,   -3,   -1,   -81,  32,   2,
+                    0,    0,    0,    0,    0,    0,    0,
+                    8,    0,    0,    0,    0,    0,    0,
+                    0,    0,    0,    0,    0,    -80,  2,
+                    0,    0,    96,   -118, 46,   -116, 46,
+                    109,  -84,  -87,  108,  14,   109,  -24,
+                    -83,  13,   -18,  -51,  -83,  -52,  -115,
+                    14,   6,    32,   0,    0,    0,    0,
+                    0,    0,    0,    0,    0,    0,    0,
+                    64,   3,    0,    0,    0,    35,   -74,
+                    -73,  55,   57,   -128, 0,    0,    0,
+                    0,    0,    0,    0,    0,    0,    0,
+                    0,    0,    33,   0,    0,    0,    -96,
+                    -54,  -28,  -26
+                }
             };
             std::string s;
-            for (unsigned i = 0; i < sizeof(data) / sizeof(int); i++)
+            for (int i : data)
             {
-                s += static_cast<char>(data[i]);
+                s += static_cast<char>(i);
             }
             dump_test["1"] = s;
             dump_test.dump(-1, ' ', true, nlohmann::json::error_handler_t::replace);
@@ -395,7 +398,7 @@ TEST_CASE("regression tests 2")
 
         SECTION("string array")
         {
-            const char input[] = { 'B', 0x00 };
+            const std::array<char, 2> input = {{ 'B', 0x00 }};
             json cbor = json::from_cbor(input, true, false);
             CHECK(cbor.is_discarded());
         }
@@ -430,8 +433,8 @@ TEST_CASE("regression tests 2")
 
     SECTION("issue #2067 - cannot serialize binary data to text JSON")
     {
-        const unsigned char data[] = {0x81, 0xA4, 0x64, 0x61, 0x74, 0x61, 0xC4, 0x0F, 0x33, 0x30, 0x30, 0x32, 0x33, 0x34, 0x30, 0x31, 0x30, 0x37, 0x30, 0x35, 0x30, 0x31, 0x30};
-        json j = json::from_msgpack(data, sizeof(data) / sizeof(data[0]));
+        const std::array<unsigned char, 23> data = {{0x81, 0xA4, 0x64, 0x61, 0x74, 0x61, 0xC4, 0x0F, 0x33, 0x30, 0x30, 0x32, 0x33, 0x34, 0x30, 0x31, 0x30, 0x37, 0x30, 0x35, 0x30, 0x31, 0x30}};
+        json j = json::from_msgpack(data.data(), data.size());
         CHECK_NOTHROW(
             j.dump(4,                              // Indent
                    ' ',                            // Indent char

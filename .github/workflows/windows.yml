@@ -7,7 +7,7 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: cmake
       run: cmake -S . -B build -G "Visual Studio 16 2019" -D CMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On
     - name: build
@@ -19,7 +19,7 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - name: install Clang
         run: curl -fsSL -o LLVM10.exe https://github.com/llvm/llvm-project/releases/download/llvmorg-10.0.0/LLVM-10.0.0-win64.exe ; 7z x LLVM10.exe -y -o"C:/Program Files/LLVM"
       - name: cmake
@@ -33,7 +33,7 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - name: cmake
         run: cmake -S . -B build -G "Visual Studio 16 2019" -A x64 -T ClangCL -DJSON_BuildTests=On
       - name: build
@@ -45,7 +45,7 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - name: cmake
         run: cmake -S . -B build -G "Visual Studio 16 2019" -A Win32 -T ClangCL -DJSON_BuildTests=On
       - name: build

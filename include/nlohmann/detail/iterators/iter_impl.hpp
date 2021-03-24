@@ -75,8 +75,10 @@ class iter_impl
         typename BasicJsonType::const_reference,
         typename BasicJsonType::reference>::type;
 
-    /// default constructor
     iter_impl() = default;
+    ~iter_impl() = default;
+    iter_impl(iter_impl&&) noexcept = default;
+    iter_impl& operator=(iter_impl&&) noexcept = default;
 
     /*!
     @brief constructor for a given JSON instance
@@ -138,8 +140,11 @@ class iter_impl
     */
     iter_impl& operator=(const iter_impl<const BasicJsonType>& other) noexcept
     {
-        m_object = other.m_object;
-        m_it = other.m_it;
+        if (&other != this)
+        {
+            m_object = other.m_object;
+            m_it = other.m_it;
+        }
         return *this;
     }
 
@@ -158,7 +163,7 @@ class iter_impl
     @return const/non-const iterator
     @note It is not checked whether @a other is initialized.
     */
-    iter_impl& operator=(const iter_impl<typename std::remove_const<BasicJsonType>::type>& other) noexcept
+    iter_impl& operator=(const iter_impl<typename std::remove_const<BasicJsonType>::type>& other) noexcept // NOLINT(cert-oop54-cpp)
     {
         m_object = other.m_object;
         m_it = other.m_it;
@@ -309,7 +314,7 @@ class iter_impl
     @brief post-increment (it++)
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
-    iter_impl const operator++(int)
+    iter_impl const operator++(int) // NOLINT(readability-const-return-type)
     {
         auto result = *this;
         ++(*this);
@@ -352,7 +357,7 @@ class iter_impl
     @brief post-decrement (it--)
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
-    iter_impl const operator--(int)
+    iter_impl const operator--(int) // NOLINT(readability-const-return-type)
     {
         auto result = *this;
         --(*this);

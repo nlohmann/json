@@ -20,6 +20,12 @@ template<typename CharType> struct output_adapter_protocol
     virtual void write_character(CharType c) = 0;
     virtual void write_characters(const CharType* s, std::size_t length) = 0;
     virtual ~output_adapter_protocol() = default;
+
+    output_adapter_protocol() = default;
+    output_adapter_protocol(const output_adapter_protocol&) = default;
+    output_adapter_protocol(output_adapter_protocol&&) noexcept = default;
+    output_adapter_protocol& operator=(const output_adapter_protocol&) = default;
+    output_adapter_protocol& operator=(output_adapter_protocol&&) noexcept = default;
 };
 
 /// a type to simplify interfaces

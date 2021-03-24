@@ -91,57 +91,7 @@ endif()
 # one executable for each unit test file
 #############################################################################
 
-set(files
-    src/unit-algorithms.cpp
-    src/unit-allocator.cpp
-    src/unit-alt-string.cpp
-    src/unit-assert_macro.cpp
-    src/unit-bson.cpp
-    src/unit-capacity.cpp
-    src/unit-cbor.cpp
-    src/unit-class_const_iterator.cpp
-    src/unit-class_iterator.cpp
-    src/unit-class_lexer.cpp
-    src/unit-class_parser.cpp
-    src/unit-comparison.cpp
-    src/unit-concepts.cpp
-    src/unit-constructor1.cpp
-    src/unit-constructor2.cpp
-    src/unit-convenience.cpp
-    src/unit-conversions.cpp
-    src/unit-deserialization.cpp
-    src/unit-diagnostics.cpp
-    src/unit-element_access1.cpp
-    src/unit-element_access2.cpp
-    src/unit-hash.cpp
-    src/unit-inspection.cpp
-    src/unit-items.cpp
-    src/unit-iterators1.cpp
-    src/unit-iterators2.cpp
-    src/unit-json_patch.cpp
-    src/unit-json_pointer.cpp
-    src/unit-large_json.cpp
-    src/unit-merge_patch.cpp
-    src/unit-meta.cpp
-    src/unit-modifiers.cpp
-    src/unit-msgpack.cpp
-    src/unit-noexcept.cpp
-    src/unit-ordered_json.cpp
-    src/unit-ordered_map.cpp
-    src/unit-pointer_access.cpp
-    src/unit-readme.cpp
-    src/unit-reference_access.cpp
-    src/unit-regression1.cpp
-    src/unit-regression2.cpp
-    src/unit-serialization.cpp
-    src/unit-testsuites.cpp
-    src/unit-to_chars.cpp
-    src/unit-ubjson.cpp
-    src/unit-udt.cpp
-    src/unit-udt_macro.cpp
-    src/unit-unicode.cpp
-    src/unit-user_defined_input.cpp
-    src/unit-wstring.cpp)
+file(GLOB files src/unit-*.cpp)
 
 foreach(file ${files})
     get_filename_component(file_basename ${file} NAME_WE)
@@ -173,7 +123,7 @@ foreach(file ${files})
             COMMAND ${memcheck_command} ${CMAKE_CURRENT_BINARY_DIR}/${testcase} ${DOCTEST_TEST_FILTER}
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         )
-        set_tests_properties("${testcase}_valgrind" PROPERTIES LABELS "valgrind")
+        set_tests_properties("${testcase}_valgrind" PROPERTIES LABELS "valgrind" FIXTURES_REQUIRED TEST_DATA)
     endif()
 endforeach()
 

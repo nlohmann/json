@@ -5,7 +5,6 @@
 [![Ubuntu](https://github.com/nlohmann/json/workflows/Ubuntu/badge.svg)](https://github.com/nlohmann/json/actions?query=workflow%3AUbuntu)
 [![macOS](https://github.com/nlohmann/json/workflows/macOS/badge.svg)](https://github.com/nlohmann/json/actions?query=workflow%3AmacOS)
 [![Windows](https://github.com/nlohmann/json/workflows/Windows/badge.svg)](https://github.com/nlohmann/json/actions?query=workflow%3AWindows)
-[![Build Status](https://circleci.com/gh/nlohmann/json.svg?style=svg)](https://circleci.com/gh/nlohmann/json)
 [![Coverage Status](https://coveralls.io/repos/github/nlohmann/json/badge.svg?branch=develop)](https://coveralls.io/github/nlohmann/json?branch=develop)
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/5550/badge.svg)](https://scan.coverity.com/projects/nlohmann-json)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/f3732b3327e34358a0e9d1fe9f661f08)](https://www.codacy.com/app/nlohmann/json?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=nlohmann/json&amp;utm_campaign=Badge_Grade)
@@ -365,7 +364,7 @@ The above example can also be expressed explicitly using [`json::parse()`](https
 
 ```cpp
 // parse explicitly
-auto j3 = json::parse("{ \"happy\": true, \"pi\": 3.141 }");
+auto j3 = json::parse(R"({"happy": true, "pi": 3.141})");
 ```
 
 You can also get a string representation of a JSON value (serialize):
@@ -577,7 +576,7 @@ j[1] = 42;
 bool foo = j.at(2);
 
 // comparison
-j == "[\"foo\", 42, true, 1.78]"_json;  // true
+j == R"(["foo", 1, true, 1.78])"_json;  // true
 
 // other stuff
 j.size();     // 4 entries
@@ -1228,7 +1227,7 @@ Please note:
 
 - Unsupported versions of GCC and Clang are rejected by `#error` directives. This can be switched off by defining `JSON_SKIP_UNSUPPORTED_COMPILER_CHECK`. Note that you can expect no support in this case.
 
-The following compilers are currently used in continuous integration at [Travis](https://travis-ci.org/nlohmann/json), [AppVeyor](https://ci.appveyor.com/project/nlohmann/json), [GitHub Actions](https://github.com/nlohmann/json/actions), and [CircleCI](https://circleci.com/gh/nlohmann/json):
+The following compilers are currently used in continuous integration at [Travis](https://travis-ci.org/nlohmann/json), [AppVeyor](https://ci.appveyor.com/project/nlohmann/json), and [GitHub Actions](https://github.com/nlohmann/json/actions):
 
 | Compiler                                                          | Operating System   | CI Provider    |
 |-------------------------------------------------------------------|--------------------|----------------|
@@ -1251,14 +1250,12 @@ The following compilers are currently used in continuous integration at [Travis]
 | GCC 4.8.5 (Ubuntu 4.8.5-4ubuntu8\~14.04.2)                        | Ubuntu 14.04.5 LTS | Travis         |
 | GCC 4.9.4 (Ubuntu 4.9.4-2ubuntu1\~14.04.1)                        | Ubuntu 14.04.5 LTS | Travis         |
 | GCC 5.5.0 (Ubuntu 5.5.0-12ubuntu1\~14.04)                         | Ubuntu 14.04.5 LTS | Travis         |
-| GCC 6.3.0 (Debian 6.3.0-18+deb9u1)                                | Debian 9           | Circle CI      |
 | GCC 6.5.0 (Ubuntu 6.5.0-2ubuntu1\~14.04.1)                        | Ubuntu 14.04.5 LTS | Travis         |
 | GCC 7.3.0 (x86_64-posix-seh-rev0, Built by MinGW-W64 project)     | Windows-6.3.9600   | AppVeyor       |
 | GCC 7.5.0 (Ubuntu 7.5.0-3ubuntu1\~14.04.1)                        | Ubuntu 14.04.5 LTS | Travis         |
 | GCC 7.5.0 (Ubuntu 7.5.0-3ubuntu1\~18.04)                          | Ubuntu 18.04.4 LTS | GitHub Actions |
 | GCC 8.4.0 (Ubuntu 8.4.0-1ubuntu1\~14.04)                          | Ubuntu 14.04.5 LTS | Travis         |
 | GCC 9.3.0 (Ubuntu 9.3.0-11ubuntu0\~14.04)                         | Ubuntu 14.04.5 LTS | Travis         |
-| GCC 10.1.0 (Arch Linux latest)                                    | Arch Linux         | Circle CI      |
 | MSVC 19.0.24241.7 (Build Engine version 14.0.25420.1)             | Windows-6.3.9600   | AppVeyor       |
 | MSVC 19.16.27035.0 (15.9.21+g9802d43bc3 for .NET Framework)       | Windows-10.0.14393 | AppVeyor       |
 | MSVC 19.25.28614.0 (Build Engine version 16.5.0+d4cbfca49 for .NET Framework) | Windows-10.0.17763  | AppVeyor       |
@@ -1541,7 +1538,6 @@ The library itself consists of a single header file licensed under the MIT licen
 - [**American fuzzy lop**](https://lcamtuf.coredump.cx/afl/) for fuzz testing
 - [**AppVeyor**](https://www.appveyor.com) for [continuous integration](https://ci.appveyor.com/project/nlohmann/json) on Windows
 - [**Artistic Style**](http://astyle.sourceforge.net) for automatic source code indentation
-- [**CircleCI**](https://circleci.com) for [continuous integration](https://circleci.com/gh/nlohmann/json).
 - [**Clang**](https://clang.llvm.org) for compilation with code sanitizers
 - [**CMake**](https://cmake.org) for build automation
 - [**Codacity**](https://www.codacy.com) for further [code analysis](https://www.codacy.com/app/nlohmann/json)
