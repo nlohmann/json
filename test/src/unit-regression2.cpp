@@ -149,7 +149,7 @@ namespace nlohmann
 template <>
 struct adl_serializer<NonDefaultConstructible>
 {
-    static NonDefaultConstructible from_json (json const& j) noexcept
+    static NonDefaultConstructible from_json (json const& j)
     {
         return NonDefaultConstructible(j.get<int>());
     }
