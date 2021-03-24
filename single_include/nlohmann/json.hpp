@@ -2245,6 +2245,7 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 
 
 #include <optional>
+#include <utility>
 
 namespace nlohmann
 {
