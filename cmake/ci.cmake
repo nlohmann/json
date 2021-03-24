@@ -441,7 +441,7 @@ add_custom_target(ci_test_noexceptions
 add_custom_target(ci_test_noimplicitconversions
     COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND}
     -DCMAKE_BUILD_TYPE=Debug -GNinja
-    -DJSON_BuildTests=ON -DJSON_MultipleHeaders=ON -DJSON_ImplicitConversions=ON
+    -DJSON_BuildTests=ON -DJSON_MultipleHeaders=ON -DJSON_ImplicitConversions=OFF
     -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_noimplicitconversions
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_noimplicitconversions
     COMMAND cd ${PROJECT_BINARY_DIR}/build_noimplicitconversions && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
