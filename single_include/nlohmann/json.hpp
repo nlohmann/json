@@ -20493,7 +20493,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     @since version 1.0.0
     */
-    reference operator[](const typename object_t::key_type& key)
+    template < class KeyType, typename std::enable_if <
+#if defined(JSON_HAS_CPP_17)
+                   std::is_same<KeyType, std::string_view>::value ||
+#endif
+                   std::is_convertible<KeyType, typename object_t::key_type>::value, int >::type    = 0 >
+    reference operator[](const KeyType& key)
     {
         // implicitly convert null value to an empty object
         if (is_null())
@@ -20542,7 +20547,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     @since version 1.0.0
     */
-    const_reference operator[](const typename object_t::key_type& key) const
+    template < class KeyType, typename std::enable_if <
+#if defined(JSON_HAS_CPP_17)
+                   std::is_same<KeyType, std::string_view>::value ||
+#endif
+                   std::is_convertible<KeyType, typename object_t::key_type>::value, int >::type    = 0 >
+    const_reference operator[](const KeyType& key) const
     {
         // const operator[] only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
@@ -20697,10 +20707,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @since version 1.0.0
     */
     // using std::is_convertible in a std::enable_if will fail when using explicit conversions
-    template < class ValueType, typename std::enable_if <
+    template < class KeyType, class ValueType, typename std::enable_if <
                    detail::is_getable<basic_json_t, ValueType>::value
-                   && !std::is_same<value_t, ValueType>::value, int >::type = 0 >
-    ValueType value(const typename object_t::key_type& key, const ValueType& default_value) const
+                   && !std::is_same<value_t, ValueType>::value&& (
+#if defined(JSON_HAS_CPP_17)
+                       std::is_same<KeyType, std::string_view>::value ||
+#endif
+                       std::is_convertible<KeyType, typename object_t::key_type>::value), int >::type    = 0 >
+    ValueType value(const KeyType& key, const ValueType& default_value) const
     {
         // at only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
@@ -20722,7 +20736,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @brief overload for a default value of type const char*
     @copydoc basic_json::value(const typename object_t::key_type&, const ValueType&) const
     */
-    string_t value(const typename object_t::key_type& key, const char* default_value) const
+    template < class KeyType, typename std::enable_if <
+#if defined(JSON_HAS_CPP_17)
+                   std::is_same<KeyType, std::string_view>::value ||
+#endif
+                   std::is_convertible<KeyType, typename object_t::key_type>::value, int >::type    = 0 >
+    string_t value(const KeyType& key, const char* default_value) const
     {
         return value(key, string_t(default_value));
     }
@@ -21145,7 +21164,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     @since version 1.0.0
     */
-    size_type erase(const typename object_t::key_type& key)
+    template < class KeyType, typename std::enable_if <
+#if defined(JSON_HAS_CPP_17)
+                   std::is_same<KeyType, std::string_view>::value ||
+#endif
+                   std::is_convertible<KeyType, typename object_t::key_type>::value, int >::type    = 0 >
+    size_type erase(const KeyType& key)
     {
         // this erase only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
