@@ -6,8 +6,10 @@ reference at(size_type idx);
 const_reference at(size_type idx) const;
 
 // (2)
-reference at(const typename object_t::key_type& key);
-const_reference at(const typename object_t::key_type& key) const;
+template<typename KeyT>
+reference at(KeyT && key);
+template<typename KeyT>
+const_reference at(KeyT && key) const;
 
 // (3)
 reference at(const json_pointer& ptr);
@@ -17,6 +19,11 @@ const_reference at(const json_pointer& ptr) const;
 1. Returns a reference to the element at specified location `idx`, with bounds checking.
 2. Returns a reference to the element at with specified key `key`, with bounds checking.
 3. Returns a reference to the element at with specified JSON pointer `ptr`, with bounds checking.
+
+## Template parameters
+
+`KeyT`
+:   A type convertible to an object key. This can also be a string literal or a string view (C++17).
 
 ## Parameters
 

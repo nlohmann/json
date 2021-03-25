@@ -6,8 +6,10 @@ reference operator[](size_type idx);
 const_reference operator[](size_type idx) const;
 
 // (2)
-reference operator[](const typename object_t::key_type& key);
-const_reference operator[](const typename object_t::key_type& key) const;
+template<typename KeyT>
+reference operator[](KeyT && key);
+template<typename KeyT>
+const_reference operator[](KeyT && key) const;
 template<typename T>
 reference operator[](T* key);
 template<typename T>
@@ -23,6 +25,9 @@ const_reference operator[](const json_pointer& ptr) const;
 3. Returns a reference to the element at with specified JSON pointer `ptr`.
 
 ## Template parameters
+
+`KeyT`
+:   A type convertible to an object key. This can also be a string literal or a string view (C++17).
 
 `T`
 :   string literal convertible to `object_t::key_type`

@@ -10,7 +10,8 @@ iterator erase(iterator first, iterator last);
 const_iterator erase(const_iterator first, const_iterator last);
 
 // (3)
-size_type erase(const typename object_t::key_type& key);
+template<typename KeyT>
+size_type erase(KeyT && key);
 
 // (4)
 void erase(const size_type idx);
@@ -30,6 +31,11 @@ void erase(const size_type idx);
 3. Removes an element from a JSON object by key.
 
 4. Removes an element from a JSON array by index.
+
+## Template parameters
+
+`KeyT`
+:   A type convertible to an object key. This can also be a string literal or a string view (C++17).
 
 ## Parameters
 
