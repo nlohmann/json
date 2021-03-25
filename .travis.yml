@@ -224,10 +224,13 @@ script:
   # append CXX_STANDARD to CMAKE_OPTIONS if required
   - CMAKE_OPTIONS+=${CXX_STANDARD:+ -DCMAKE_CXX_STANDARD=$CXX_STANDARD -DCMAKE_CXX_STANDARD_REQUIRED=ON}
 
+  # build configuration
+  - CMAKE_OPTIONS+=" -DCMAKE_BUILD_TYPE=Release"
+
   # compile and execute unit tests
   - mkdir -p build && cd build
-  - cmake .. ${CMAKE_OPTIONS} -DJSON_BuildTests=On -GNinja && cmake --build . --config Release
-  - ctest -C Release --timeout 2700 -V -j
+  - cmake .. ${CMAKE_OPTIONS} -DJSON_BuildTests=On -GNinja && cmake --build .
+  - ctest --timeout 2700 -V -j
   - cd ..
 
   # check if homebrew works (only checks develop branch)   
