@@ -3494,10 +3494,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     can be thrown.,at__object_t_key_type}
     */
     template < class KeyT, typename std::enable_if <
+                   !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value&& (
 #if defined(JSON_HAS_CPP_17)
-                   std::is_same<KeyT, std::string_view>::value ||
+                       std::is_same<KeyT, std::string_view>::value ||
 #endif
-                   std::is_convertible<KeyT, typename object_t::key_type>::value, int >::type    = 0 >
+                       std::is_convertible<KeyT, typename object_t::key_type>::value), int >::type    = 0 >
     reference at(KeyT && key)
     {
         // at only works for objects
@@ -3546,10 +3547,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     at__object_t_key_type_const}
     */
     template < class KeyT, typename std::enable_if <
+                   !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value&& (
 #if defined(JSON_HAS_CPP_17)
-                   std::is_same<KeyT, std::string_view>::value ||
+                       std::is_same<KeyT, std::string_view>::value ||
 #endif
-                   std::is_convertible<KeyT, typename object_t::key_type>::value, int >::type    = 0 >
+                       std::is_convertible<KeyT, typename object_t::key_type>::value), int >::type    = 0 >
     const_reference at(KeyT && key) const
     {
         // at only works for objects
@@ -3684,10 +3686,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @since version 1.0.0
     */
     template < class KeyT, typename std::enable_if <
+                   !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value&& (
 #if defined(JSON_HAS_CPP_17)
-                   std::is_same<KeyT, std::string_view>::value ||
+                       std::is_same<KeyT, std::string_view>::value ||
 #endif
-                   std::is_convertible<KeyT, typename object_t::key_type>::value, int >::type    = 0 >
+                       std::is_convertible<KeyT, typename object_t::key_type>::value), int >::type    = 0 >
     reference operator[](KeyT && key)
     {
         // implicitly convert null value to an empty object
@@ -3739,17 +3742,19 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @since version 1.0.0
     */
     template < class KeyT, typename std::enable_if <
+                   !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value&& (
 #if defined(JSON_HAS_CPP_17)
-                   std::is_same<KeyT, std::string_view>::value ||
+                       std::is_same<KeyT, std::string_view>::value ||
 #endif
-                   std::is_convertible<KeyT, typename object_t::key_type>::value, int >::type    = 0 >
+                       std::is_convertible<KeyT, typename object_t::key_type>::value), int >::type    = 0 >
     const_reference operator[](KeyT && key) const
     {
         // const operator[] only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
         {
-            JSON_ASSERT(m_value.object->find(std::forward<KeyT>(key)) != m_value.object->end());
-            return m_value.object->find(key)->second;
+            auto it = m_value.object->find(std::forward<KeyT>(key));
+            JSON_ASSERT(it != m_value.object->end());
+            return it->second;
         }
 
         JSON_THROW(type_error::create(305, "cannot use operator[] with a string argument with " + std::string(type_name()), *this));

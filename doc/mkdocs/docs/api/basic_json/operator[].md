@@ -27,7 +27,8 @@ const_reference operator[](const json_pointer& ptr) const;
 ## Template parameters
 
 `KeyT`
-:   A type convertible to an object key. This can also be a string literal or a string view (C++17).
+:   A type for an object key other than `basic_json::json_pointer`. This can also be a string literal or a string view
+    (C++17).
 
 `T`
 :   string literal convertible to `object_t::key_type`
