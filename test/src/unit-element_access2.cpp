@@ -931,12 +931,25 @@ TEST_CASE("element access 2")
                     CHECK(j.count(key) == 1);
                     CHECK(j_const.count(key) == 1);
                 }
+#if defined(JSON_HAS_CPP_17)
+                for (const std::string_view key :
+                        {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"
+                        })
+                {
+                    CHECK(j.count(key) == 1);
+                    CHECK(j_const.count(key) == 1);
+                }
+#endif
             }
 
             SECTION("nonexisting element")
             {
                 CHECK(j.count("foo") == 0);
                 CHECK(j_const.count("foo") == 0);
+#if defined(JSON_HAS_CPP_17)
+                CHECK(j.count(std::string_view("foo")) == 0);
+                CHECK(j_const.count(std::string_view("foo")) == 0);
+#endif
             }
 
             SECTION("all types")
@@ -947,6 +960,10 @@ TEST_CASE("element access 2")
                     const json j_nonobject_const(json::value_t::null);
                     CHECK(j_nonobject.count("foo") == 0);
                     CHECK(j_nonobject_const.count("foo") == 0);
+#if defined(JSON_HAS_CPP_17)
+                    CHECK(j.count(std::string_view("foo")) == 0);
+                    CHECK(j_const.count(std::string_view("foo")) == 0);
+#endif
                 }
 
                 SECTION("string")
@@ -955,6 +972,10 @@ TEST_CASE("element access 2")
                     const json j_nonobject_const(json::value_t::string);
                     CHECK(j_nonobject.count("foo") == 0);
                     CHECK(j_nonobject_const.count("foo") == 0);
+#if defined(JSON_HAS_CPP_17)
+                    CHECK(j.count(std::string_view("foo")) == 0);
+                    CHECK(j_const.count(std::string_view("foo")) == 0);
+#endif
                 }
 
                 SECTION("object")
@@ -963,6 +984,10 @@ TEST_CASE("element access 2")
                     const json j_nonobject_const(json::value_t::object);
                     CHECK(j_nonobject.count("foo") == 0);
                     CHECK(j_nonobject_const.count("foo") == 0);
+#if defined(JSON_HAS_CPP_17)
+                    CHECK(j.count(std::string_view("foo")) == 0);
+                    CHECK(j_const.count(std::string_view("foo")) == 0);
+#endif
                 }
 
                 SECTION("array")
@@ -971,6 +996,10 @@ TEST_CASE("element access 2")
                     const json j_nonobject_const(json::value_t::array);
                     CHECK(j_nonobject.count("foo") == 0);
                     CHECK(j_nonobject_const.count("foo") == 0);
+#if defined(JSON_HAS_CPP_17)
+                    CHECK(j.count(std::string_view("foo")) == 0);
+                    CHECK(j_const.count(std::string_view("foo")) == 0);
+#endif
                 }
 
                 SECTION("boolean")
@@ -979,6 +1008,10 @@ TEST_CASE("element access 2")
                     const json j_nonobject_const(json::value_t::boolean);
                     CHECK(j_nonobject.count("foo") == 0);
                     CHECK(j_nonobject_const.count("foo") == 0);
+#if defined(JSON_HAS_CPP_17)
+                    CHECK(j.count(std::string_view("foo")) == 0);
+                    CHECK(j_const.count(std::string_view("foo")) == 0);
+#endif
                 }
 
                 SECTION("number (integer)")
@@ -987,6 +1020,10 @@ TEST_CASE("element access 2")
                     const json j_nonobject_const(json::value_t::number_integer);
                     CHECK(j_nonobject.count("foo") == 0);
                     CHECK(j_nonobject_const.count("foo") == 0);
+#if defined(JSON_HAS_CPP_17)
+                    CHECK(j.count(std::string_view("foo")) == 0);
+                    CHECK(j_const.count(std::string_view("foo")) == 0);
+#endif
                 }
 
                 SECTION("number (unsigned)")
@@ -995,6 +1032,10 @@ TEST_CASE("element access 2")
                     const json j_nonobject_const(json::value_t::number_unsigned);
                     CHECK(j_nonobject.count("foo") == 0);
                     CHECK(j_nonobject_const.count("foo") == 0);
+#if defined(JSON_HAS_CPP_17)
+                    CHECK(j.count(std::string_view("foo")) == 0);
+                    CHECK(j_const.count(std::string_view("foo")) == 0);
+#endif
                 }
 
                 SECTION("number (floating-point)")
@@ -1003,6 +1044,10 @@ TEST_CASE("element access 2")
                     const json j_nonobject_const(json::value_t::number_float);
                     CHECK(j_nonobject.count("foo") == 0);
                     CHECK(j_nonobject_const.count("foo") == 0);
+#if defined(JSON_HAS_CPP_17)
+                    CHECK(j.count(std::string_view("foo")) == 0);
+                    CHECK(j_const.count(std::string_view("foo")) == 0);
+#endif
                 }
             }
         }
@@ -1018,12 +1063,26 @@ TEST_CASE("element access 2")
                     CHECK(j.contains(key) == true);
                     CHECK(j_const.contains(key) == true);
                 }
+
+#if defined(JSON_HAS_CPP_17)
+                for (const std::string_view key :
+                        {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"
+                        })
+                {
+                    CHECK(j.contains(key) == true);
+                    CHECK(j_const.contains(key) == true);
+                }
+#endif
             }
 
             SECTION("nonexisting element")
             {
                 CHECK(j.contains("foo") == false);
                 CHECK(j_const.contains("foo") == false);
+#if defined(JSON_HAS_CPP_17)
+                CHECK(j.contains(std::string_view("foo")) == false);
+                CHECK(j_const.contains(std::string_view("foo")) == false);
+#endif
             }
 
             SECTION("all types")
@@ -1034,6 +1093,10 @@ TEST_CASE("element access 2")
                     const json j_nonobject_const(json::value_t::null);
                     CHECK(j_nonobject.contains("foo") == false);
                     CHECK(j_nonobject_const.contains("foo") == false);
+#if defined(JSON_HAS_CPP_17)
+                    CHECK(j_nonobject.contains(std::string_view("foo")) == false);
+                    CHECK(j_nonobject_const.contains(std::string_view("foo")) == false);
+#endif
                 }
 
                 SECTION("string")
@@ -1042,6 +1105,10 @@ TEST_CASE("element access 2")
                     const json j_nonobject_const(json::value_t::string);
                     CHECK(j_nonobject.contains("foo") == false);
                     CHECK(j_nonobject_const.contains("foo") == false);
+#if defined(JSON_HAS_CPP_17)
+                    CHECK(j_nonobject.contains(std::string_view("foo")) == false);
+                    CHECK(j_nonobject_const.contains(std::string_view("foo")) == false);
+#endif
                 }
 
                 SECTION("object")
@@ -1050,6 +1117,10 @@ TEST_CASE("element access 2")
                     const json j_nonobject_const(json::value_t::object);
                     CHECK(j_nonobject.contains("foo") == false);
                     CHECK(j_nonobject_const.contains("foo") == false);
+#if defined(JSON_HAS_CPP_17)
+                    CHECK(j_nonobject.contains(std::string_view("foo")) == false);
+                    CHECK(j_nonobject_const.contains(std::string_view("foo")) == false);
+#endif
                 }
 
                 SECTION("array")
@@ -1058,6 +1129,10 @@ TEST_CASE("element access 2")
                     const json j_nonobject_const(json::value_t::array);
                     CHECK(j_nonobject.contains("foo") == false);
                     CHECK(j_nonobject_const.contains("foo") == false);
+#if defined(JSON_HAS_CPP_17)
+                    CHECK(j_nonobject.contains(std::string_view("foo")) == false);
+                    CHECK(j_nonobject_const.contains(std::string_view("foo")) == false);
+#endif
                 }
 
                 SECTION("boolean")
@@ -1066,6 +1141,10 @@ TEST_CASE("element access 2")
                     const json j_nonobject_const(json::value_t::boolean);
                     CHECK(j_nonobject.contains("foo") == false);
                     CHECK(j_nonobject_const.contains("foo") == false);
+#if defined(JSON_HAS_CPP_17)
+                    CHECK(j_nonobject.contains(std::string_view("foo")) == false);
+                    CHECK(j_nonobject_const.contains(std::string_view("foo")) == false);
+#endif
                 }
 
                 SECTION("number (integer)")
@@ -1074,6 +1153,10 @@ TEST_CASE("element access 2")
                     const json j_nonobject_const(json::value_t::number_integer);
                     CHECK(j_nonobject.contains("foo") == false);
                     CHECK(j_nonobject_const.contains("foo") == false);
+#if defined(JSON_HAS_CPP_17)
+                    CHECK(j_nonobject.contains(std::string_view("foo")) == false);
+                    CHECK(j_nonobject_const.contains(std::string_view("foo")) == false);
+#endif
                 }
 
                 SECTION("number (unsigned)")
@@ -1082,6 +1165,10 @@ TEST_CASE("element access 2")
                     const json j_nonobject_const(json::value_t::number_unsigned);
                     CHECK(j_nonobject.contains("foo") == false);
                     CHECK(j_nonobject_const.contains("foo") == false);
+#if defined(JSON_HAS_CPP_17)
+                    CHECK(j_nonobject.contains(std::string_view("foo")) == false);
+                    CHECK(j_nonobject_const.contains(std::string_view("foo")) == false);
+#endif
                 }
 
                 SECTION("number (floating-point)")
@@ -1090,6 +1177,10 @@ TEST_CASE("element access 2")
                     const json j_nonobject_const(json::value_t::number_float);
                     CHECK(j_nonobject.contains("foo") == false);
                     CHECK(j_nonobject_const.contains("foo") == false);
+#if defined(JSON_HAS_CPP_17)
+                    CHECK(j_nonobject.contains(std::string_view("foo")) == false);
+                    CHECK(j_nonobject_const.contains(std::string_view("foo")) == false);
+#endif
                 }
             }
         }
