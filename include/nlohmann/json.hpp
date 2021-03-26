@@ -3496,7 +3496,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     template < class KeyT, typename std::enable_if <
                    !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value&& (
 #if defined(JSON_HAS_CPP_17)
-                       std::is_same<KeyT, std::string_view>::value ||
+                       std::is_same<typename std::decay<KeyT>::type, std::string_view>::value ||
 #endif
                        std::is_convertible<KeyT, typename object_t::key_type>::value), int >::type    = 0 >
     reference at(KeyT && key)
@@ -3549,7 +3549,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     template < class KeyT, typename std::enable_if <
                    !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value&& (
 #if defined(JSON_HAS_CPP_17)
-                       std::is_same<KeyT, std::string_view>::value ||
+                       std::is_same<typename std::decay<KeyT>::type, std::string_view>::value ||
 #endif
                        std::is_convertible<KeyT, typename object_t::key_type>::value), int >::type    = 0 >
     const_reference at(KeyT && key) const
@@ -3688,7 +3688,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     template < class KeyT, typename std::enable_if <
                    !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value&& (
 #if defined(JSON_HAS_CPP_17)
-                       std::is_same<KeyT, std::string_view>::value ||
+                       std::is_same<typename std::decay<KeyT>::type, std::string_view>::value ||
 #endif
                        std::is_convertible<KeyT, typename object_t::key_type>::value), int >::type    = 0 >
     reference operator[](KeyT && key)
@@ -3744,7 +3744,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     template < class KeyT, typename std::enable_if <
                    !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value&& (
 #if defined(JSON_HAS_CPP_17)
-                       std::is_same<KeyT, std::string_view>::value ||
+                       std::is_same<typename std::decay<KeyT>::type, std::string_view>::value ||
 #endif
                        std::is_convertible<KeyT, typename object_t::key_type>::value), int >::type    = 0 >
     const_reference operator[](KeyT && key) const
@@ -4363,7 +4363,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     */
     template < class KeyT, typename std::enable_if <
 #if defined(JSON_HAS_CPP_17)
-                   std::is_same<KeyT, std::string_view>::value ||
+                   !std::is_same<typename std::decay<KeyT>::type, std::string_view>::value&&
 #endif
                    std::is_convertible<KeyT, typename object_t::key_type>::value, int >::type    = 0 >
     size_type erase(KeyT && key)
@@ -4376,6 +4376,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
         JSON_THROW(type_error::create(307, "cannot use erase() with " + std::string(type_name()), *this));
     }
+
+#if defined(JSON_HAS_CPP_17)
+    size_type erase(std::string_view key)
+    {
+        return erase(typename object_t::key_type(key.data(), key.size()));
+    }
+#endif
 
     /*!
     @brief remove element from a JSON array given an index
