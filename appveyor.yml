@@ -35,24 +35,6 @@ environment:
       GENERATOR: Visual Studio 16 2019
 
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-      configuration: Debug
-      COMPILER: mingw
-      platform: x86
-      CXX_FLAGS: ""
-      LINKER_FLAGS: ""
-      CMAKE_OPTIONS: ""
-      GENERATOR: Ninja
-
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-      configuration: Release
-      COMPILER: mingw
-      platform: x86
-      CXX_FLAGS: ""
-      LINKER_FLAGS: ""
-      CMAKE_OPTIONS: ""
-      GENERATOR: Ninja
-
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
       configuration: Release
       platform: x86
       CXX_FLAGS: ""
@@ -85,14 +67,6 @@ environment:
       CMAKE_OPTIONS: "-DJSON_ImplicitConversions=OFF"
       GENERATOR: Visual Studio 16 2019
 
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-      configuration: Release
-      platform: x64
-      CXX_FLAGS: ""
-      LINKER_FLAGS: ""
-      CMAKE_OPTIONS: ""
-      GENERATOR: Visual Studio 16 2019
-
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
       configuration: Release
       platform: x64
@@ -122,18 +96,13 @@ init:
   - msbuild /version
 
 install:
-  - if "%COMPILER%"=="mingw"  appveyor DownloadFile https://github.com/ninja-build/ninja/releases/download/v1.6.0/ninja-win.zip -FileName ninja.zip
-  - if "%COMPILER%"=="mingw"  7z x ninja.zip -oC:\projects\deps\ninja > nul
-  - if "%COMPILER%"=="mingw"  set PATH=C:\projects\deps\ninja;%PATH%
-  - if "%COMPILER%"=="mingw"  set PATH=C:\mingw-w64\x86_64-7.3.0-posix-seh-rt_v5-rev0\mingw64\bin;%PATH%
-  - if "%COMPILER%"=="mingw"  g++ --version
   - if "%platform%"=="x86"    set GENERATOR_PLATFORM=Win32
 
 before_build:
   # for with_win_header build, inject the inclusion of Windows.h to the single-header library
   - ps: if ($env:name -Eq "with_win_header") { $header_path = "single_include\nlohmann\json.hpp" }
   - ps: if ($env:name -Eq "with_win_header") { "#include <Windows.h>`n" + (Get-Content $header_path | Out-String) | Set-Content $header_path }
-  - if "%GENERATOR%"=="Ninja" (cmake . -G "%GENERATOR%" -DCMAKE_BUILD_TYPE="%configuration%" -DCMAKE_CXX_FLAGS="%CXX_FLAGS%" -DCMAKE_EXE_LINKER_FLAGS="%LINKER_FLAGS%" -DCMAKE_IGNORE_PATH="C:/Program Files/Git/usr/bin" -DJSON_BuildTests=On "%CMAKE_OPTIONS%") else (cmake . -G "%GENERATOR%" -A "%GENERATOR_PLATFORM%" -DCMAKE_CXX_FLAGS="%CXX_FLAGS%" -DCMAKE_EXE_LINKER_FLAGS="%LINKER_FLAGS%" -DCMAKE_IGNORE_PATH="C:/Program Files/Git/usr/bin" -DJSON_BuildTests=On "%CMAKE_OPTIONS%")
+  - cmake . -G "%GENERATOR%" -A "%GENERATOR_PLATFORM%" -DCMAKE_CXX_FLAGS="%CXX_FLAGS%" -DCMAKE_EXE_LINKER_FLAGS="%LINKER_FLAGS%" -DCMAKE_IGNORE_PATH="C:/Program Files/Git/usr/bin" -DJSON_BuildTests=On "%CMAKE_OPTIONS%"
 
 build_script:
   - cmake --build . --config "%configuration%"
