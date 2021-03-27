@@ -17,27 +17,6 @@ jobs:
     - name: build
       run: cmake --build build --target ci_test_clang_cxx20
 
-  ci_clang_analyze:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: install_ninja
-        run: |
-          sudo apt update
-          sudo apt install ninja-build
-        shell: bash
-      - name: install_clang
-        run: |
-          wget https://apt.llvm.org/llvm.sh
-          chmod +x llvm.sh
-          sudo ./llvm.sh 11
-          sudo apt-get install clang-tools-11
-        shell: bash
-      - name: cmake
-        run: cmake -S . -B build -DJSON_CI=On
-      - name: build
-        run: cmake --build build --target ci_clang_analyze
-
   ci_test_clang:
     runs-on: ubuntu-latest
     steps:
@@ -69,94 +48,31 @@ jobs:
       - name: build
         run: cmake --build build --target ci_test_gcc
 
-  ci_test_valgrind:
+  ci_static_analysis:
     runs-on: ubuntu-latest
     container: nlohmann/json-ci:latest
+    strategy:
+      matrix:
+        target: [ci_clang_tidy, ci_cppcheck, ci_test_valgrind, ci_test_clang_sanitizer, ci_test_amalgamation, ci_clang_analyze, ci_cpplint]
     steps:
       - uses: actions/checkout@v2
       - name: cmake
         run: cmake -S . -B build -DJSON_CI=On
       - name: build
-        run: cmake --build build --target ci_test_valgrind
+        run: cmake --build build --target ${{ matrix.target }}
 
-  ci_cppcheck:
+  ci_cmake_options:
     runs-on: ubuntu-latest
     container: nlohmann/json-ci:latest
+    strategy:
+      matrix:
+        target: [ci_test_diagnostics, ci_test_noexceptions, ci_test_noimplicitconversions]
     steps:
       - uses: actions/checkout@v2
       - name: cmake
         run: cmake -S . -B build -DJSON_CI=On
       - name: build
-        run: cmake --build build --target ci_cppcheck
-
-  ci_cpplint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: cmake
-        run: cmake -S . -B build -DJSON_CI=On
-      - name: build
-        run: cmake --build build --target ci_cpplint
-
-  ci_clang_tidy:
-    runs-on: ubuntu-latest
-    container: nlohmann/json-ci:latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: cmake
-        run: cmake -S . -B build -DJSON_CI=On
-      - name: build
-        run: cmake --build build --target ci_clang_tidy
-
-  ci_test_amalgamation:
-    runs-on: ubuntu-latest
-    container: nlohmann/json-ci:latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: cmake
-        run: cmake -S . -B build -DJSON_CI=On
-      - name: build
-        run: cmake --build build --target ci_test_amalgamation
-
-  ci_test_diagnostics:
-    runs-on: ubuntu-latest
-    container: nlohmann/json-ci:latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: cmake
-        run: cmake -S . -B build -DJSON_CI=On
-      - name: build
-        run: cmake --build build --target ci_test_diagnostics
-
-  ci_test_noexceptions:
-    runs-on: ubuntu-latest
-    container: nlohmann/json-ci:latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: cmake
-        run: cmake -S . -B build -DJSON_CI=On
-      - name: build
-        run: cmake --build build --target ci_test_noexceptions
-
-  ci_test_noimplicitconversions:
-    runs-on: ubuntu-latest
-    container: nlohmann/json-ci:latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: cmake
-        run: cmake -S . -B build -DJSON_CI=On
-      - name: build
-        run: cmake --build build --target ci_test_noimplicitconversions
-
-  ci_test_clang_sanitizer:
-    runs-on: ubuntu-latest
-    container: nlohmann/json-ci:latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: cmake
-        run: cmake -S . -B build -DJSON_CI=On
-      - name: build
-        run: cmake --build build --target ci_test_clang_sanitizer
+        run: cmake --build build --target ${{ matrix.target }}
 
   ci_test_coverage:
     runs-on: ubuntu-latest
@@ -177,3 +93,16 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path-to-lcov: /__w/json/json/build/json.info.filtered.noexcept
+
+  ci_test_compilers:
+    runs-on: ubuntu-latest
+    container: nlohmann/json-ci:latest
+    strategy:
+      matrix:
+        compiler: [g++-4.8, g++-4.9, g++-5, g++-7, g++-8, g++-9, g++-10, clang++-3.5, clang++-3.6, clang++-3.7, clang++-3.8, clang++-3.9, clang++-4.0, clang++-5.0, clang++-6.0, clang++-7, clang++-8, clang++-9, clang++-10, clang++-11]
+    steps:
+      - uses: actions/checkout@v2
+      - name: cmake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: build
+        run: cmake --build build --target ci_test_compiler_${{ matrix.compiler }}

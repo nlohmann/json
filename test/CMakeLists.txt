@@ -2,6 +2,7 @@ option(JSON_Sanitizer "Build test suite with Clang sanitizer" OFF)
 option(JSON_Valgrind "Execute test suite with Valgrind" OFF)
 option(JSON_NoExceptions "Build test suite without exceptions" OFF)
 option(JSON_Coverage "Build test suite with coverage information" OFF)
+option(JSON_FastTests "Whether to skip expensive tests" OFF)
 
 # download test data
 include(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/download_test_data.cmake)
@@ -112,10 +113,17 @@ foreach(file ${files})
         target_link_libraries(${testcase} PRIVATE --coverage)
     endif()
 
-    add_test(NAME "${testcase}"
-        COMMAND ${testcase} ${DOCTEST_TEST_FILTER} --no-skip
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    )
+    if (JSON_FastTests)
+        add_test(NAME "${testcase}"
+            COMMAND ${testcase} ${DOCTEST_TEST_FILTER}
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        )
+    else()
+        add_test(NAME "${testcase}"
+            COMMAND ${testcase} ${DOCTEST_TEST_FILTER} --no-skip
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        )
+    endif()
     set_tests_properties("${testcase}" PROPERTIES LABELS "all" FIXTURES_REQUIRED TEST_DATA)
 
     if(JSON_Valgrind)
