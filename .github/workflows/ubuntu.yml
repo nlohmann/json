@@ -110,4 +110,4 @@ jobs:
       - name: cmake
         run: cmake -S . -B build -DJSON_CI=On
       - name: build
-        run: cmake --build build --target ci_test_{{ matrix.compiler }}_cxx{{ matrix.standard }}
+        run: cmake --build build --target ci_test_${{ matrix.compiler }}_cxx${{ matrix.standard }}
