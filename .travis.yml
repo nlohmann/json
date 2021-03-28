@@ -46,12 +46,6 @@ matrix:
   - os: osx
     osx_image: xcode10.2
 
-  - os: osx
-    osx_image: xcode11.2
-
-  - os: osx
-    osx_image: xcode12
-
   # Linux / GCC
 
   - os: linux
