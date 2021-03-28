@@ -668,6 +668,56 @@ TEST_CASE("element access 2")
                 CHECK(j_const[json::object_t::key_type("array")] == j["array"]);
             }
 
+#ifdef JSON_HAS_CPP_17
+            SECTION("access within bounds (string_view)")
+            {
+                CHECK(j["integer"] == json(1));
+                CHECK(j[std::string_view("integer")] == j["integer"]);
+
+                CHECK(j["unsigned"] == json(1u));
+                CHECK(j[std::string_view("unsigned")] == j["unsigned"]);
+
+                CHECK(j["boolean"] == json(true));
+                CHECK(j[std::string_view("boolean")] == j["boolean"]);
+
+                CHECK(j["null"] == json(nullptr));
+                CHECK(j[std::string_view("null")] == j["null"]);
+
+                CHECK(j["string"] == json("hello world"));
+                CHECK(j[std::string_view("string")] == j["string"]);
+
+                CHECK(j["floating"] == json(42.23));
+                CHECK(j[std::string_view("floating")] == j["floating"]);
+
+                CHECK(j["object"] == json::object());
+                CHECK(j[std::string_view("object")] == j["object"]);
+
+                CHECK(j["array"] == json({1, 2, 3}));
+                CHECK(j[std::string_view("array")] == j["array"]);
+
+                CHECK(j_const["integer"] == json(1));
+                CHECK(j_const[std::string_view("integer")] == j["integer"]);
+
+                CHECK(j_const["boolean"] == json(true));
+                CHECK(j_const[std::string_view("boolean")] == j["boolean"]);
+
+                CHECK(j_const["null"] == json(nullptr));
+                CHECK(j_const[std::string_view("null")] == j["null"]);
+
+                CHECK(j_const["string"] == json("hello world"));
+                CHECK(j_const[std::string_view("string")] == j["string"]);
+
+                CHECK(j_const["floating"] == json(42.23));
+                CHECK(j_const[std::string_view("floating")] == j["floating"]);
+
+                CHECK(j_const["object"] == json::object());
+                CHECK(j_const[std::string_view("object")] == j["object"]);
+
+                CHECK(j_const["array"] == json({1, 2, 3}));
+                CHECK(j_const[std::string_view("array")] == j["array"]);
+            }
+#endif
+
             SECTION("access on non-object type")
             {
                 SECTION("null")
@@ -683,6 +733,13 @@ TEST_CASE("element access 2")
                     CHECK_THROWS_WITH(j_const_nonobject["foo"], "[json.exception.type_error.305] cannot use operator[] with a string argument with null");
                     CHECK_THROWS_WITH(j_const_nonobject[json::object_t::key_type("foo")],
                                       "[json.exception.type_error.305] cannot use operator[] with a string argument with null");
+
+#ifdef JSON_HAS_CPP_17
+                    CHECK_NOTHROW(j_nonobject2[std::string_view("foo")]);
+                    CHECK_THROWS_AS(j_const_nonobject[std::string_view("foo")], json::type_error&);
+                    CHECK_THROWS_WITH(j_const_nonobject[std::string_view("foo")],
+                                      "[json.exception.type_error.305] cannot use operator[] with a string argument with null");
+#endif
                 }
 
                 SECTION("boolean")
@@ -702,6 +759,15 @@ TEST_CASE("element access 2")
                                       "[json.exception.type_error.305] cannot use operator[] with a string argument with boolean");
                     CHECK_THROWS_WITH(j_const_nonobject[json::object_t::key_type("foo")],
                                       "[json.exception.type_error.305] cannot use operator[] with a string argument with boolean");
+
+#ifdef JSON_HAS_CPP_17
+                    CHECK_THROWS_AS(j_nonobject[std::string_view("foo")], json::type_error&);
+                    CHECK_THROWS_WITH(j_nonobject[std::string_view("foo")],
+                                      "[json.exception.type_error.305] cannot use operator[] with a string argument with boolean");
+                    CHECK_THROWS_AS(j_const_nonobject[std::string_view("foo")], json::type_error&);
+                    CHECK_THROWS_WITH(j_const_nonobject[std::string_view("foo")],
+                                      "[json.exception.type_error.305] cannot use operator[] with a string argument with boolean");
+#endif
                 }
 
                 SECTION("string")
@@ -721,6 +787,15 @@ TEST_CASE("element access 2")
                                       "[json.exception.type_error.305] cannot use operator[] with a string argument with string");
                     CHECK_THROWS_WITH(j_const_nonobject[json::object_t::key_type("foo")],
                                       "[json.exception.type_error.305] cannot use operator[] with a string argument with string");
+
+#ifdef JSON_HAS_CPP_17
+                    CHECK_THROWS_AS(j_nonobject[std::string_view("foo")], json::type_error&);
+                    CHECK_THROWS_WITH(j_nonobject[std::string_view("foo")],
+                                      "[json.exception.type_error.305] cannot use operator[] with a string argument with string");
+                    CHECK_THROWS_AS(j_const_nonobject[std::string_view("foo")], json::type_error&);
+                    CHECK_THROWS_WITH(j_const_nonobject[std::string_view("foo")],
+                                      "[json.exception.type_error.305] cannot use operator[] with a string argument with string");
+#endif
                 }
 
                 SECTION("array")
@@ -739,6 +814,15 @@ TEST_CASE("element access 2")
                                       "[json.exception.type_error.305] cannot use operator[] with a string argument with array");
                     CHECK_THROWS_WITH(j_const_nonobject[json::object_t::key_type("foo")],
                                       "[json.exception.type_error.305] cannot use operator[] with a string argument with array");
+
+#ifdef JSON_HAS_CPP_17
+                    CHECK_THROWS_AS(j_nonobject[std::string_view("foo")], json::type_error&);
+                    CHECK_THROWS_WITH(j_nonobject[std::string_view("foo")],
+                                      "[json.exception.type_error.305] cannot use operator[] with a string argument with array");
+                    CHECK_THROWS_AS(j_const_nonobject[std::string_view("foo")], json::type_error&);
+                    CHECK_THROWS_WITH(j_const_nonobject[std::string_view("foo")],
+                                      "[json.exception.type_error.305] cannot use operator[] with a string argument with array");
+#endif
                 }
 
                 SECTION("number (integer)")
@@ -758,6 +842,15 @@ TEST_CASE("element access 2")
                                       "[json.exception.type_error.305] cannot use operator[] with a string argument with number");
                     CHECK_THROWS_WITH(j_const_nonobject[json::object_t::key_type("foo")],
                                       "[json.exception.type_error.305] cannot use operator[] with a string argument with number");
+
+#ifdef JSON_HAS_CPP_17
+                    CHECK_THROWS_AS(j_nonobject[std::string_view("foo")], json::type_error&);
+                    CHECK_THROWS_WITH(j_nonobject[std::string_view("foo")],
+                                      "[json.exception.type_error.305] cannot use operator[] with a string argument with number");
+                    CHECK_THROWS_AS(j_const_nonobject[std::string_view("foo")], json::type_error&);
+                    CHECK_THROWS_WITH(j_const_nonobject[std::string_view("foo")],
+                                      "[json.exception.type_error.305] cannot use operator[] with a string argument with number");
+#endif
                 }
 
                 SECTION("number (unsigned)")
@@ -777,6 +870,15 @@ TEST_CASE("element access 2")
                                       "[json.exception.type_error.305] cannot use operator[] with a string argument with number");
                     CHECK_THROWS_WITH(j_const_nonobject[json::object_t::key_type("foo")],
                                       "[json.exception.type_error.305] cannot use operator[] with a string argument with number");
+
+#ifdef JSON_HAS_CPP_17
+                    CHECK_THROWS_AS(j_nonobject[std::string_view("foo")], json::type_error&);
+                    CHECK_THROWS_WITH(j_nonobject[std::string_view("foo")],
+                                      "[json.exception.type_error.305] cannot use operator[] with a string argument with number");
+                    CHECK_THROWS_AS(j_const_nonobject[std::string_view("foo")], json::type_error&);
+                    CHECK_THROWS_WITH(j_const_nonobject[std::string_view("foo")],
+                                      "[json.exception.type_error.305] cannot use operator[] with a string argument with number");
+#endif
                 }
 
                 SECTION("number (floating-point)")
@@ -796,6 +898,15 @@ TEST_CASE("element access 2")
                                       "[json.exception.type_error.305] cannot use operator[] with a string argument with number");
                     CHECK_THROWS_WITH(j_const_nonobject[json::object_t::key_type("foo")],
                                       "[json.exception.type_error.305] cannot use operator[] with a string argument with number");
+
+#ifdef JSON_HAS_CPP_17
+                    CHECK_THROWS_AS(j_nonobject[std::string_view("foo")], json::type_error&);
+                    CHECK_THROWS_WITH(j_nonobject[std::string_view("foo")],
+                                      "[json.exception.type_error.305] cannot use operator[] with a string argument with number");
+                    CHECK_THROWS_AS(j_const_nonobject[std::string_view("foo")], json::type_error&);
+                    CHECK_THROWS_WITH(j_const_nonobject[std::string_view("foo")],
+                                      "[json.exception.type_error.305] cannot use operator[] with a string argument with number");
+#endif
                 }
             }
         }

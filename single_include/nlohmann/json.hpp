@@ -20556,7 +20556,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     In case the value was `null` before, it is converted to an object.
 
     @param[in] key  key of the element to access
-    @tparam KeyT  a type convertible to an object key or a `std::string_view`
+    @tparam KeyT  a type convertible to an object key, excluding `std::string_view`
 
     @return reference to the element at key @a key
 
@@ -20575,11 +20575,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @since version 1.0.0
     */
     template < class KeyT, typename std::enable_if <
-                   !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value&& (
+                   !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value&&
 #if defined(JSON_HAS_CPP_17)
-                       std::is_same<typename std::decay<KeyT>::type, std::string_view>::value ||
+                   !std::is_same<typename std::decay<KeyT>::type, std::string_view>::value&&
 #endif
-                       std::is_convertible<KeyT, typename object_t::key_type>::value), int >::type    = 0 >
+                   std::is_convertible<KeyT, typename object_t::key_type>::value, int >::type    = 0 >
     reference operator[](KeyT && key)
     {
         // implicitly convert null value to an empty object
@@ -20599,6 +20599,33 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         JSON_THROW(type_error::create(305, "cannot use operator[] with a string argument with " + std::string(type_name()), *this));
     }
 
+#if defined(JSON_HAS_CPP_17)
+    /// @copydoc operator[](KeyT&&)
+    reference operator[](const std::string_view& key)
+    {
+        // implicitly convert null value to an empty object
+        if (is_null())
+        {
+            m_type = value_t::object;
+            m_value.object = create<object_t>();
+            assert_invariant();
+        }
+
+        // operator[] only works for objects
+        if (JSON_HEDLEY_LIKELY(is_object()))
+        {
+            if (auto it = m_value.object->find(key); it != m_value.object->end())
+            {
+                return it->second;
+            }
+
+            return set_parent(m_value.object->operator[](json::object_t::key_type(key)));
+        }
+
+        JSON_THROW(type_error::create(305, "cannot use operator[] with a string argument with " + std::string(type_name()), *this));
+    }
+#endif
+
     /*!
     @brief read-only access specified object element
 
@@ -20609,7 +20636,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     undefined.
 
     @param[in] key  key of the element to access
-    @tparam KeyT  a type convertible to an object key or a `std::string_view`
+    @tparam KeyT  a type convertible to an object key or, excluding `std::string_view`
 
     @return const reference to the element at key @a key
 
@@ -20631,11 +20658,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @since version 1.0.0
     */
     template < class KeyT, typename std::enable_if <
-                   !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value&& (
+                   !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value&&
 #if defined(JSON_HAS_CPP_17)
-                       std::is_same<typename std::decay<KeyT>::type, std::string_view>::value ||
+                   std::is_same<typename std::decay<KeyT>::type, std::string_view>::value&&
 #endif
-                       std::is_convertible<KeyT, typename object_t::key_type>::value), int >::type    = 0 >
+                   std::is_convertible<KeyT, typename object_t::key_type>::value, int >::type    = 0 >
     const_reference operator[](KeyT && key) const
     {
         // const operator[] only works for objects
@@ -20648,6 +20675,22 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
         JSON_THROW(type_error::create(305, "cannot use operator[] with a string argument with " + std::string(type_name()), *this));
     }
+
+#if defined(JSON_HAS_CPP_17)
+    /// @copydoc operator[](KeyT&&) const
+    const_reference operator[](const std::string_view& key) const
+    {
+        // operator[] only works for objects
+        if (JSON_HEDLEY_LIKELY(is_object()))
+        {
+            auto it = m_value.object->find(key);
+            JSON_ASSERT(it != m_value.object->end());
+            return it->second;
+        }
+
+        JSON_THROW(type_error::create(305, "cannot use operator[] with a string argument with " + std::string(type_name()), *this));
+    }
+#endif
 
     /*!
     @brief access specified object element
