@@ -30,7 +30,7 @@ execute_process(COMMAND ${CPPCHECK_TOOL} --version OUTPUT_VARIABLE CPPCHECK_TOOL
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" CPPCHECK_TOOL_VERSION "${CPPCHECK_TOOL_VERSION}")
 message(STATUS "🔖 Cppcheck ${CPPCHECK_TOOL_VERSION} (${CPPCHECK_TOOL})")
 
-find_program(GCC_TOOL NAMES g++-HEAD g++-11 g++-10 g++)
+find_program(GCC_TOOL NAMES g++-HEAD g++-11 g++-latest)
 execute_process(COMMAND ${GCC_TOOL} --version OUTPUT_VARIABLE GCC_TOOL_VERSION ERROR_VARIABLE GCC_TOOL_VERSION)
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" GCC_TOOL_VERSION "${GCC_TOOL_VERSION}")
 message(STATUS "🔖 GCC ${GCC_TOOL_VERSION} (${GCC_TOOL})")
@@ -85,7 +85,7 @@ find_program(SCAN_BUILD_TOOL NAMES scan-build-11 scan-build)
 file(GLOB_RECURSE SRC_FILES ${PROJECT_SOURCE_DIR}/include/nlohmann/*.hpp)
 
 ###############################################################################
-# Different C++ Standards.
+# Thorough check with recent compilers
 ###############################################################################
 
 set(CLANG_CXXFLAGS "-std=c++11                        \
@@ -783,6 +783,26 @@ add_custom_target(ci_cmake_flags
     DEPENDS ${JSON_CMAKE_FLAG_TARGETS}
     COMMENT "Check CMake flags"
 )
+
+###############################################################################
+# Use more installed compilers.
+###############################################################################
+
+foreach(COMPILER g++-4.8 g++-4.9 g++-5 g++-7 g++-8 g++-9 g++-10 clang++-3.5 clang++-3.6 clang++-3.7 clang++-3.8 clang++-3.9 clang++-4.0 clang++-5.0 clang++-6.0 clang++-7 clang++-8 clang++-9 clang++-10 clang++-11)
+    find_program(COMPILER_TOOL NAMES ${COMPILER})
+    if (COMPILER_TOOL)
+        add_custom_target(ci_test_compiler_${COMPILER}
+            COMMAND CXX=${COMPILER} ${CMAKE_COMMAND}
+                -DCMAKE_BUILD_TYPE=Debug -GNinja
+                -DJSON_BuildTests=ON -DJSON_FastTests=ON
+                -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_compiler_${COMPILER}
+            COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_compiler_${COMPILER}
+            COMMAND cd ${PROJECT_BINARY_DIR}/build_compiler_${COMPILER} && ${CMAKE_CTEST_COMMAND} --parallel ${N} --exclude-regex "test-unicode" --output-on-failure
+            COMMENT "Compile and test with ${COMPILER}"
+        )
+    endif()
+    unset(COMPILER_TOOL CACHE)
+endforeach()
 
 ###############################################################################
 # Clean up all generated files.
