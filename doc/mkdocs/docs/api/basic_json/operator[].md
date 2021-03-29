@@ -14,6 +14,8 @@ template<typename T>
 reference operator[](T* key);
 template<typename T>
 const_reference operator[](T* key) const;
+reference operator[](const std::string_view& key); // since C++17
+const_reference operator[](const std::string_view& key) const; // since C++17
 
 // (3)
 reference operator[](const json_pointer& ptr);
@@ -193,5 +195,6 @@ Strong exception safety: if an exception occurs, the original value stays intact
 ## Version history
 
 1. Added in version 1.0.0.
-2. Added in version 1.0.0. Overloads for `T* key` added in version 1.1.0.
+2. Added in version 1.0.0. Overloads for `T* key` added in version 1.1.0. Template and overload for `std::string_view`
+   added in version 3.10.0.
 3. Added in version 2.0.0.

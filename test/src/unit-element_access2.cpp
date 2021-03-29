@@ -608,6 +608,31 @@ TEST_CASE("element access 2")
             }
         }
 
+        SECTION("non-const operator[]")
+        {
+            {
+                json j_null;
+                CHECK(j_null.is_null());
+                j_null["key"] = 1;
+                CHECK(j_null.is_object());
+                CHECK(j_null.size() == 1);
+                j_null["key"] = 2;
+                CHECK(j_null.size() == 1);
+            }
+#ifdef JSON_HAS_CPP_17
+            {
+                std::string_view key = "key";
+                json j_null;
+                CHECK(j_null.is_null());
+                j_null[key] = 1;
+                CHECK(j_null.is_object());
+                CHECK(j_null.size() == 1);
+                j_null[key] = 2;
+                CHECK(j_null.size() == 1);
+            }
+#endif
+        }
+
         SECTION("front and back")
         {
             // "array" is the smallest key

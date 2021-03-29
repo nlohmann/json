@@ -20376,7 +20376,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     access by reference
     @sa see @ref value() for access by value with a default value
 
-    @since version 1.0.0
+    @since version 1.0.0; template added in version 3.10.0
 
     @liveexample{The example below shows how object elements can be read and
     written using `at()`. It also demonstrates the different exceptions that
@@ -20429,7 +20429,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     access by reference
     @sa see @ref value() for access by value with a default value
 
-    @since version 1.0.0
+    @since version 1.0.0; template added in version 3.10.0
 
     @liveexample{The example below shows how object elements can be read using
     `at()`. It also demonstrates the different exceptions that can be thrown.,
@@ -20556,7 +20556,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     In case the value was `null` before, it is converted to an object.
 
     @param[in] key  key of the element to access
-    @tparam KeyT  a type convertible to an object key, excluding `std::string_view`
+    @tparam KeyT  a type convertible to an object key
 
     @return reference to the element at key @a key
 
@@ -20572,7 +20572,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     with range checking
     @sa see @ref value() for access by value with a default value
 
-    @since version 1.0.0
+    @since version 1.0.0; template added in version 3.10.0
     */
     template < class KeyT, typename std::enable_if <
                    !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value&&
@@ -20600,7 +20600,33 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 
 #if defined(JSON_HAS_CPP_17)
-    /// @copydoc operator[](KeyT&&)
+    /*!
+    @brief access specified object element
+
+    Returns a reference to the element at with specified key @a key.
+
+    @note If @a key is not found in the object, then it is silently added to
+    the object and filled with a `null` value to make `key` a valid reference.
+    In case the value was `null` before, it is converted to an object.
+
+    @param[in] key  key of the element to access
+
+    @return reference to the element at key @a key
+
+    @throw type_error.305 if the JSON value is not an object or null; in that
+    cases, using the [] operator with a key makes no sense.
+
+    @complexity Logarithmic in the size of the container.
+
+    @liveexample{The example below shows how object elements can be read and
+    written using the `[]` operator.,operatorarray__key_type}
+
+    @sa see @ref at(const typename object_t::key_type&) for access by reference
+    with range checking
+    @sa see @ref value() for access by value with a default value
+
+    @since version 3.10.0
+    */
     reference operator[](const std::string_view& key)
     {
         // implicitly convert null value to an empty object
@@ -20638,7 +20664,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     undefined.
 
     @param[in] key  key of the element to access
-    @tparam KeyT  a type convertible to an object key or, excluding `std::string_view`
+    @tparam KeyT  a type convertible to an object key or
 
     @return const reference to the element at key @a key
 
@@ -20657,7 +20683,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     with range checking
     @sa see @ref value() for access by value with a default value
 
-    @since version 1.0.0
+    @since version 1.0.0; template added in version 3.10.0
     */
     template < class KeyT, typename std::enable_if <
                    !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value&&
@@ -20679,7 +20705,36 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 
 #if defined(JSON_HAS_CPP_17)
-    /// @copydoc operator[](KeyT&&) const
+    /*!
+    @brief read-only access specified object element
+
+    Returns a const reference to the element at with specified key @a key. No
+    bounds checking is performed.
+
+    @warning If the element with key @a key does not exist, the behavior is
+    undefined.
+
+    @param[in] key  key of the element to access
+
+    @return const reference to the element at key @a key
+
+    @pre The element with key @a key must exist. **This precondition is
+         enforced with an assertion.**
+
+    @throw type_error.305 if the JSON value is not an object; in that case,
+    using the [] operator with a key makes no sense.
+
+    @complexity Logarithmic in the size of the container.
+
+    @liveexample{The example below shows how object elements can be read using
+    the `[]` operator.,operatorarray__key_type_const}
+
+    @sa see @ref at(const typename object_t::key_type&) for access by reference
+    with range checking
+    @sa see @ref value() for access by value with a default value
+
+    @since version 3.10.0
+    */
     const_reference operator[](const std::string_view& key) const
     {
         // operator[] only works for objects
@@ -20811,6 +20866,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @param[in] key  key of the element to access
     @param[in] default_value  the value to return if @a key is not found
 
+    @tparam KeyType A type for an object key. This can also be a string
+    literal or a string view (C++17).
     @tparam ValueType type compatible to JSON values, for instance `int` for
     JSON integer numbers, `bool` for JSON booleans, or `std::vector` types for
     JSON arrays. Note the type of the expected value at @a key and the default
@@ -20834,7 +20891,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @sa see @ref operator[](const typename object_t::key_type&) for unchecked
     access by reference
 
-    @since version 1.0.0
+    @since version 1.0.0, KeyType template added in 3.10.0
     */
     // using std::is_convertible in a std::enable_if will fail when using explicit conversions
     template < class KeyType, class ValueType, typename std::enable_if <
@@ -20844,7 +20901,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                        std::is_same<KeyType, std::string_view>::value ||
 #endif
                        std::is_convertible<KeyType, typename object_t::key_type>::value), int >::type    = 0 >
-    ValueType value(const KeyType& key, const ValueType& default_value) const
+    ValueType value(KeyType && key, const ValueType& default_value) const
     {
         // at only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
@@ -21271,7 +21328,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     Removes elements from a JSON object with the key value @a key.
 
     @param[in] key value of the elements to remove
-    @tparam KeyT  a type convertible to an object key or a `std::string_view`
+    @tparam KeyT  a type convertible to an object key
 
     @return Number of elements removed. If @a ObjectType is the default
     `std::map` type, the return value will always be `0` (@a key was not
@@ -21293,7 +21350,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @sa see @ref erase(const size_type) -- removes the element from an array at
     the given index
 
-    @since version 1.0.0
+    @since version 1.0.0; template added in version 3.10.0
     */
     template < class KeyT, typename std::enable_if <
 #if defined(JSON_HAS_CPP_17)
@@ -21312,6 +21369,35 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 
 #if defined(JSON_HAS_CPP_17)
+    /*!
+    @brief remove element from a JSON object given a key
+
+    Removes elements from a JSON object with the key value @a key.
+
+    @param[in] key value of the elements to remove
+
+    @return Number of elements removed. If @a ObjectType is the default
+    `std::map` type, the return value will always be `0` (@a key was not
+    found) or `1` (@a key was found).
+
+    @post References and iterators to the erased elements are invalidated.
+    Other references and iterators are not affected.
+
+    @throw type_error.307 when called on a type other than JSON object;
+    example: `"cannot use erase() with null"`
+
+    @complexity `log(size()) + count(key)`
+
+    @liveexample{The example shows the effect of `erase()`.,erase__key_type}
+
+    @sa see @ref erase(IteratorType) -- removes the element at a given position
+    @sa see @ref erase(IteratorType, IteratorType) -- removes the elements in
+    the given range
+    @sa see @ref erase(const size_type) -- removes the element from an array at
+    the given index
+
+    @since version 3.10.0
+    */
     size_type erase(const std::string_view& key)
     {
         // this erase only works for objects
