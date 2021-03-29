@@ -401,7 +401,7 @@ foreach(CXX_STANDARD 11 14 17 20)
         COMMAND CXX=${GCC_TOOL} ${CMAKE_COMMAND}
             -DCMAKE_BUILD_TYPE=Debug -GNinja
             -DCMAKE_CXX_STANDARD=${CXX_STANDARD} -DCMAKE_CXX_STANDARD_REQUIRED=ON
-            -DJSON_BuildTests=ON
+            -DJSON_BuildTests=ON -DJSON_FastTests=ON
             -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_gcc_cxx${CXX_STANDARD}
         COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_gcc_cxx${CXX_STANDARD}
         COMMAND cd ${PROJECT_BINARY_DIR}/build_gcc_cxx${CXX_STANDARD} && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
@@ -650,7 +650,7 @@ add_custom_target(ci_offline_testdata
     COMMAND cd ${PROJECT_BINARY_DIR}/build_offline_testdata/test_data && ${GIT_TOOL} clone -c advice.detachedHead=false --branch v3.0.0 https://github.com/nlohmann/json_test_data.git --quiet --depth 1
     COMMAND ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=Debug -GNinja
-        -DJSON_BuildTests=ON -DJSON_TestDataDirectory=${PROJECT_BINARY_DIR}/build_offline_testdata/test_data/json_test_data
+        -DJSON_BuildTests=ON -DJSON_FastTests=ON -DJSON_TestDataDirectory=${PROJECT_BINARY_DIR}/build_offline_testdata/test_data/json_test_data
         -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_offline_testdata
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_offline_testdata
     COMMAND cd ${PROJECT_BINARY_DIR}/build_offline_testdata && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
@@ -666,7 +666,7 @@ add_custom_target(ci_non_git_tests
     COMMAND cd ${PROJECT_SOURCE_DIR} && for FILE in `${GIT_TOOL} ls-tree --name-only HEAD`\; do cp -r $$FILE ${PROJECT_BINARY_DIR}/build_non_git_tests/sources \; done
     COMMAND ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=Debug -GNinja
-        -DJSON_BuildTests=ON
+        -DJSON_BuildTests=ON -DJSON_FastTests=ON
         -S${PROJECT_BINARY_DIR}/build_non_git_tests/sources -B${PROJECT_BINARY_DIR}/build_non_git_tests
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_non_git_tests
     COMMAND cd ${PROJECT_BINARY_DIR}/build_non_git_tests && ${CMAKE_CTEST_COMMAND} --parallel ${N} -LE git_required --output-on-failure
@@ -680,7 +680,7 @@ add_custom_target(ci_non_git_tests
 add_custom_target(ci_reproducible_tests
     COMMAND ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=Debug -GNinja
-        -DJSON_BuildTests=ON
+        -DJSON_BuildTests=ON -DJSON_FastTests=ON
         -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_reproducible_tests
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_reproducible_tests
     COMMAND cd ${PROJECT_BINARY_DIR}/build_reproducible_tests && ${CMAKE_CTEST_COMMAND} --parallel ${N} -LE not_reproducible --output-on-failure
