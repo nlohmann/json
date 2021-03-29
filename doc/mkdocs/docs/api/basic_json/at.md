@@ -7,9 +7,9 @@ const_reference at(size_type idx) const;
 
 // (2)
 template<typename KeyT>
-reference at(KeyT && key);
+reference at(const KeyT& key);
 template<typename KeyT>
-const_reference at(KeyT && key) const;
+const_reference at(const KeyT& key) const;
 
 // (3)
 reference at(const json_pointer& ptr);

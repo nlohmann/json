@@ -10,12 +10,6 @@ template<typename KeyT>
 reference operator[](KeyT && key);
 template<typename KeyT>
 const_reference operator[](KeyT && key) const;
-template<typename T>
-reference operator[](T* key);
-template<typename T>
-const_reference operator[](T* key) const;
-reference operator[](const std::string_view& key); // since C++17
-const_reference operator[](const std::string_view& key) const; // since C++17
 
 // (3)
 reference operator[](const json_pointer& ptr);
@@ -31,9 +25,6 @@ const_reference operator[](const json_pointer& ptr) const;
 `KeyT`
 :   A type for an object key other than `basic_json::json_pointer`. This can also be a string literal or a string view
     (C++17).
-
-`T`
-:   string literal convertible to `object_t::key_type`
 
 ## Parameters
 
@@ -195,6 +186,6 @@ Strong exception safety: if an exception occurs, the original value stays intact
 ## Version history
 
 1. Added in version 1.0.0.
-2. Added in version 1.0.0. Overloads for `T* key` added in version 1.1.0. Template and overload for `std::string_view`
-   added in version 3.10.0.
+2. Added in version 1.0.0. Overloads for `T* key` added in version 1.1.0. Template `T* key` replaced by template `KeyT`
+   in version 3.10.0 which now also supports `std::string_view`.
 3. Added in version 2.0.0.
