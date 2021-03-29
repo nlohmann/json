@@ -1,4 +1,5 @@
-https://runkit.com/chaostheorx/es6-and-es7-supportx[JSON Data Set Sample
+https://runkit.com/chaostheorx/es6-and-es7-supportx                         
+[JSON Data Set Sample
 The JSON output from different Server APIs can range from simple to highly nested and complex. The examples on this page attempt to illustrate how the JSON Data Set treats specific formats, and gives examples of the different constructor options that allow the user to tweak its behavior. See our JSON Primer for more information.
 
 Example 1 - JSON Array with simple data types as elements.
