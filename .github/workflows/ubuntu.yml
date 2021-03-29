@@ -1,22 +1,13 @@
 name: Ubuntu
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - develop
+      - master
+  pull_request:
 
 jobs:
-  ci_test_clang_cxx20:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: install_clang
-      run: |
-        sudo apt update
-        sudo apt install clang-10 ninja-build
-      shell: bash
-    - name: cmake
-      run: cmake -S . -B build -DJSON_CI=On
-    - name: build
-      run: cmake --build build --target ci_test_clang_cxx20
-
   ci_test_clang:
     runs-on: ubuntu-latest
     steps:
@@ -53,7 +44,7 @@ jobs:
     container: nlohmann/json-ci:latest
     strategy:
       matrix:
-        target: [ci_clang_tidy, ci_cppcheck, ci_test_valgrind, ci_test_clang_sanitizer, ci_test_amalgamation, ci_clang_analyze, ci_cpplint]
+        target: [ci_clang_tidy, ci_cppcheck, ci_test_valgrind, ci_test_clang_sanitizer, ci_test_amalgamation, ci_clang_analyze, ci_cpplint, ci_cmake_flags, ci_single_binaries, ci_reproducible_tests, ci_non_git_tests, ci_offline_testdata]
     steps:
       - uses: actions/checkout@v2
       - name: cmake
@@ -106,3 +97,17 @@ jobs:
         run: cmake -S . -B build -DJSON_CI=On
       - name: build
         run: cmake --build build --target ci_test_compiler_${{ matrix.compiler }}
+
+  ci_test_standards:
+    runs-on: ubuntu-latest
+    container: nlohmann/json-ci:latest
+    strategy:
+      matrix:
+        standard: [11, 14, 17, 20]
+        compiler: [gcc, clang]
+    steps:
+      - uses: actions/checkout@v2
+      - name: cmake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: build
+        run: cmake --build build --target ci_test_${{ matrix.compiler }}_cxx${{ matrix.standard }}

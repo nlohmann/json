@@ -1,6 +1,11 @@
 name: macOS
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - develop
+      - master
+  pull_request:
 
 jobs:
   xcode:
