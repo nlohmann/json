@@ -3725,12 +3725,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // operator[] only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
         {
-            if (auto it = m_value.object->find(key); it != m_value.object->end())
+            auto it = m_value.object->find(key);
+            if (it != m_value.object->end())
             {
                 return it->second;
             }
 
-            return set_parent(m_value.object->operator[](json::object_t::key_type(key)));
+            auto result = m_value.object->emplace(key, nullptr);
+            return set_parent(result.first->second);
         }
 
         JSON_THROW(type_error::create(305, "cannot use operator[] with a string argument with " + std::string(type_name()), *this));
@@ -4421,9 +4423,22 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 
 #if defined(JSON_HAS_CPP_17)
-    size_type erase(std::string_view key)
+    size_type erase(const std::string_view& key)
     {
-        return erase(typename object_t::key_type(key.data(), key.size()));
+        // this erase only works for objects
+        if (JSON_HEDLEY_UNLIKELY(!is_object()))
+        {
+            JSON_THROW(type_error::create(307, "cannot use erase() with " + std::string(type_name()), *this));
+        }
+
+        const auto it = m_value.object->find(key);
+        if (it != m_value.object->end())
+        {
+            m_value.object->erase(it);
+            return 1;
+        }
+
+        return 0;
     }
 #endif
 
