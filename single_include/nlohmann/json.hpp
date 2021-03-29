@@ -17949,10 +17949,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 default:
                 {
                     object = nullptr;  // silence warning, see #821
+                    // LCOV_EXCL_START
                     if (JSON_HEDLEY_UNLIKELY(t == value_t::null))
                     {
-                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.9.1", basic_json())); // LCOV_EXCL_LINE
+                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.9.1", basic_json()));
                     }
+                    // LCOV_EXCL_STOP
                     break;
                 }
             }
@@ -20901,7 +20903,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                        std::is_same<KeyType, std::string_view>::value ||
 #endif
                        std::is_convertible<KeyType, typename object_t::key_type>::value), int >::type    = 0 >
-    ValueType value(KeyType && key, const ValueType& default_value) const
+    ValueType value(const KeyType& key, const ValueType& default_value) const
     {
         // at only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
