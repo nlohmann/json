@@ -4267,7 +4267,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             JSON_THROW(type_error::create(307, "cannot use erase() with " + std::string(type_name()), *this));
         }
 
-        const auto it = m_value.object->find(key);
+        const auto it = m_value.object->find(std::forward<KeyT>(key));
         if (it != m_value.object->end())
         {
             m_value.object->erase(it);
