@@ -394,5 +394,17 @@ struct is_constructible_tuple : std::false_type {};
 
 template<typename T1, typename... Args>
 struct is_constructible_tuple<T1, std::tuple<Args...>> : conjunction<std::is_constructible<T1, Args>...> {};
+
+/// type to check if KeyType can be used as object key
+template<typename BasicJsonType, typename KeyType>
+struct is_key_type
+{
+    static constexpr bool value =
+#if defined(JSON_HAS_CPP_17)
+        std::is_same<typename std::decay<KeyType>::type, std::string_view>::value ||
+#endif
+        std::is_convertible<KeyType, typename BasicJsonType::object_t::key_type>::value;
+};
+
 }  // namespace detail
 }  // namespace nlohmann

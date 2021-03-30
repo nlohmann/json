@@ -12,7 +12,6 @@ const_iterator erase(const_iterator first, const_iterator last);
 // (3)
 template<typename KeyT>
 size_type erase(KeyT && key);
-size_type erase(const std::string_view& key); // since C++17
 
 // (4)
 void erase(const size_type idx);
@@ -36,7 +35,7 @@ void erase(const size_type idx);
 ## Template parameters
 
 `KeyT`
-:   A type convertible to an object key. This can also be a string literal.
+:   A type convertible to an object key. This can also be a string literal or a string view (C++17).
 
 ## Parameters
 
@@ -182,4 +181,4 @@ Strong exception safety: if an exception occurs, the original value stays intact
 
 - Added in version 1.0.0.
 - Added support for binary types in version 3.8.0.
-- Added `KeyT` template and overload for `std::string_view` in version 3.10.0.
+- Added `KeyT` template in version 3.10.0.

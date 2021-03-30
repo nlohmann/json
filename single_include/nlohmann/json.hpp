@@ -3771,6 +3771,18 @@ struct is_constructible_tuple : std::false_type {};
 
 template<typename T1, typename... Args>
 struct is_constructible_tuple<T1, std::tuple<Args...>> : conjunction<std::is_constructible<T1, Args>...> {};
+
+/// type to check if KeyType can be used as object key
+template<typename BasicJsonType, typename KeyType>
+struct is_key_type
+{
+    static constexpr bool value =
+#if defined(JSON_HAS_CPP_17)
+        std::is_same<typename std::decay<KeyType>::type, std::string_view>::value ||
+#endif
+        std::is_convertible<KeyType, typename BasicJsonType::object_t::key_type>::value;
+};
+
 }  // namespace detail
 }  // namespace nlohmann
 
@@ -20384,12 +20396,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     written using `at()`. It also demonstrates the different exceptions that
     can be thrown.,at__object_t_key_type}
     */
-    template < class KeyT, typename std::enable_if <
-                   !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value&& (
-#if defined(JSON_HAS_CPP_17)
-                       std::is_same<typename std::decay<KeyT>::type, std::string_view>::value ||
-#endif
-                       std::is_convertible<KeyT, typename object_t::key_type>::value), int >::type    = 0 >
+    template < class KeyT, typename detail::enable_if_t <
+                   detail::is_key_type<basic_json_t, KeyT>::value&& !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value > ... >
     reference at(const KeyT& key)
     {
         // at only works for objects
@@ -20437,12 +20445,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     `at()`. It also demonstrates the different exceptions that can be thrown.,
     at__object_t_key_type_const}
     */
-    template < class KeyT, typename std::enable_if <
-                   !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value&& (
-#if defined(JSON_HAS_CPP_17)
-                       std::is_same<typename std::decay<KeyT>::type, std::string_view>::value ||
-#endif
-                       std::is_convertible<KeyT, typename object_t::key_type>::value), int >::type    = 0 >
+    template < class KeyT, typename detail::enable_if_t <
+                   detail::is_key_type<basic_json_t, KeyT>::value&& !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value > ... >
     const_reference at(const KeyT& key) const
     {
         // at only works for objects
@@ -20576,13 +20580,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     @since version 1.0.0; template KeyT added in version 3.10.0
     */
-    template < class KeyT, typename std::enable_if <
-                   !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value&& (
-#if defined(JSON_HAS_CPP_17)
-                       std::is_same<typename std::decay<KeyT>::type, std::string_view>::value ||
-#endif
-                       std::is_convertible<KeyT, typename object_t::key_type>::value), int >::type    = 0 >
-    reference operator[](KeyT && key)
+    template < class KeyT, typename detail::enable_if_t <
+                   detail::is_key_type<basic_json_t, KeyT>::value&& !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value > ... >
+    reference operator[](KeyT&& key)
     {
         // implicitly convert null value to an empty object
         if (is_null())
@@ -20639,13 +20639,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     @since version 1.0.0; template KeyT added in version 3.10.0
     */
-    template < class KeyT, typename std::enable_if <
-                   !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value&& (
-#if defined(JSON_HAS_CPP_17)
-                       std::is_same<typename std::decay<KeyT>::type, std::string_view>::value ||
-#endif
-                       std::is_convertible<KeyT, typename object_t::key_type>::value), int >::type    = 0 >
-    const_reference operator[](KeyT && key) const
+    template < class KeyT, typename detail::enable_if_t <
+                   detail::is_key_type<basic_json_t, KeyT>::value&& !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value > ... >
+    const_reference operator[](KeyT&& key) const
     {
         // operator[] only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
@@ -20711,13 +20707,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @since version 1.0.0, KeyType template added in 3.10.0
     */
     // using std::is_convertible in a std::enable_if will fail when using explicit conversions
-    template < class KeyType, class ValueType, typename std::enable_if <
+    template < class KeyType, class ValueType, typename detail::enable_if_t <
                    detail::is_getable<basic_json_t, ValueType>::value
-                   && !std::is_same<value_t, ValueType>::value&& (
-#if defined(JSON_HAS_CPP_17)
-                       std::is_same<KeyType, std::string_view>::value ||
-#endif
-                       std::is_convertible<KeyType, typename object_t::key_type>::value), int >::type    = 0 >
+                   && !std::is_same<value_t, ValueType>::value&& detail::is_key_type<basic_json_t, KeyType>::value > ... >
     ValueType value(const KeyType& key, const ValueType& default_value) const
     {
         // at only works for objects
@@ -20740,11 +20732,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @brief overload for a default value of type const char*
     @copydoc basic_json::value(const typename object_t::key_type&, const ValueType&) const
     */
-    template < class KeyType, typename std::enable_if <
-#if defined(JSON_HAS_CPP_17)
-                   std::is_same<KeyType, std::string_view>::value ||
-#endif
-                   std::is_convertible<KeyType, typename object_t::key_type>::value, int >::type    = 0 >
+    template < class KeyType, typename detail::enable_if_t <
+                   detail::is_key_type<basic_json_t, KeyType>::value > ... >
     string_t value(const KeyType& key, const char* default_value) const
     {
         return value(key, string_t(default_value));
@@ -21145,7 +21134,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     Removes elements from a JSON object with the key value @a key.
 
     @param[in] key value of the elements to remove
-    @tparam KeyT  a type convertible to an object key
+    @tparam KeyT a type convertible to an object key or a std::string_view
 
     @return Number of elements removed. If @a ObjectType is the default
     `std::map` type, the return value will always be `0` (@a key was not
@@ -21169,53 +21158,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     @since version 1.0.0; template added in version 3.10.0
     */
-    template < class KeyT, typename std::enable_if <
-#if defined(JSON_HAS_CPP_17)
-                   !std::is_same<typename std::decay<KeyT>::type, std::string_view>::value&&
-#endif
-                   std::is_convertible<KeyT, typename object_t::key_type>::value, int >::type    = 0 >
-    size_type erase(KeyT && key)
-    {
-        // this erase only works for objects
-        if (JSON_HEDLEY_LIKELY(is_object()))
-        {
-            return m_value.object->erase(std::forward<KeyT>(key));
-        }
-
-        JSON_THROW(type_error::create(307, "cannot use erase() with " + std::string(type_name()), *this));
-    }
-
-#if defined(JSON_HAS_CPP_17)
-    /*!
-    @brief remove element from a JSON object given a key
-
-    Removes elements from a JSON object with the key value @a key.
-
-    @param[in] key value of the elements to remove
-
-    @return Number of elements removed. If @a ObjectType is the default
-    `std::map` type, the return value will always be `0` (@a key was not
-    found) or `1` (@a key was found).
-
-    @post References and iterators to the erased elements are invalidated.
-    Other references and iterators are not affected.
-
-    @throw type_error.307 when called on a type other than JSON object;
-    example: `"cannot use erase() with null"`
-
-    @complexity `log(size()) + count(key)`
-
-    @liveexample{The example shows the effect of `erase()`.,erase__key_type}
-
-    @sa see @ref erase(IteratorType) -- removes the element at a given position
-    @sa see @ref erase(IteratorType, IteratorType) -- removes the elements in
-    the given range
-    @sa see @ref erase(const size_type) -- removes the element from an array at
-    the given index
-
-    @since version 3.10.0
-    */
-    size_type erase(const std::string_view& key)
+    template < class KeyT, typename detail::enable_if_t <
+                   detail::is_key_type<basic_json_t, KeyT>::value > ... >
+    size_type erase(KeyT&& key)
     {
         // this erase only works for objects
         if (JSON_HEDLEY_UNLIKELY(!is_object()))
@@ -21232,7 +21177,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
         return 0;
     }
-#endif
 
     /*!
     @brief remove element from a JSON array given an index
@@ -21310,7 +21254,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     @since version 1.0.0
     */
-    template<typename KeyT>
+    template < class KeyT, typename detail::enable_if_t <
+                   detail::is_key_type<basic_json_t, KeyT>::value > ... >
     iterator find(KeyT&& key)
     {
         auto result = end();
@@ -21327,7 +21272,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @brief find an element in a JSON object
     @copydoc find(KeyT&&)
     */
-    template<typename KeyT>
+    template < class KeyT, typename detail::enable_if_t <
+                   detail::is_key_type<basic_json_t, KeyT>::value > ... >
     const_iterator find(KeyT&& key) const
     {
         auto result = cend();
@@ -21361,7 +21307,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     @since version 1.0.0
     */
-    template<typename KeyT>
+    template < class KeyT, typename detail::enable_if_t <
+                   detail::is_key_type<basic_json_t, KeyT>::value > ... >
     size_type count(KeyT&& key) const
     {
         // return 0 for all nonobject types
@@ -21393,9 +21340,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     @since version 3.6.0
     */
-    template < typename KeyT, typename std::enable_if <
-                   !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value, int >::type = 0 >
-    bool contains(KeyT && key) const
+    template < class KeyT, typename detail::enable_if_t <
+                   !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value&& detail::is_key_type<basic_json_t, KeyT>::value > ... >
+    bool contains(KeyT&& key) const
     {
         return is_object() && m_value.object->find(std::forward<KeyT>(key)) != m_value.object->end();
     }
