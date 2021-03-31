@@ -11,7 +11,7 @@ const_iterator erase(const_iterator first, const_iterator last);
 
 // (3)
 template<typename KeyT>
-size_type erase(KeyT && key);
+size_type erase(const KeyT& key);
 
 // (4)
 void erase(const size_type idx);

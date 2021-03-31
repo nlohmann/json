@@ -3,7 +3,7 @@
 ```cpp
 // (1)
 template<class KeyType, class ValueType>
-ValueType value(const KeyType& key,
+ValueType value(KeyType && key,
                 const ValueType& default_value) const;
 
 // (2)

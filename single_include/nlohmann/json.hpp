@@ -20597,13 +20597,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // operator[] only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
         {
-            auto it = m_value.object->find(key);
-            if (it != m_value.object->end())
-            {
-                return it->second;
-            }
-
-            auto result = m_value.object->emplace(key, nullptr);
+            auto result = m_value.object->emplace(std::forward<KeyT>(key), nullptr);
             return set_parent(result.first->second);
         }
 
@@ -20712,13 +20706,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     template < class KeyType, class ValueType, typename detail::enable_if_t <
                    detail::is_getable<basic_json_t, ValueType>::value
                    && !std::is_same<value_t, ValueType>::value&& detail::is_key_type<basic_json_t, KeyType>::value > ... >
-    ValueType value(const KeyType& key, const ValueType& default_value) const
+    ValueType value(KeyType&& key, const ValueType& default_value) const
     {
         // at only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
         {
             // if key is found, return value and given default value otherwise
-            const auto it = find(key);
+            const auto it = find(std::forward<KeyType>(key));
             if (it != end())
             {
                 return it->template get<ValueType>();
@@ -21162,7 +21156,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     */
     template < class KeyT, typename detail::enable_if_t <
                    detail::is_key_type<basic_json_t, KeyT>::value > ... >
-    size_type erase(KeyT&& key)
+    size_type erase(const KeyT& key)
     {
         // this erase only works for objects
         if (JSON_HEDLEY_UNLIKELY(!is_object()))
@@ -21170,7 +21164,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             JSON_THROW(type_error::create(307, "cannot use erase() with " + std::string(type_name()), *this));
         }
 
-        const auto it = m_value.object->find(std::forward<KeyT>(key));
+        const auto it = m_value.object->find(key);
         if (it != m_value.object->end())
         {
             m_value.object->erase(it);
