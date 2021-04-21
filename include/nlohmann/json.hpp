@@ -6521,7 +6521,7 @@ class basic_json
 
     /// @name serialization
     /// @{
-
+#ifndef JSON_NO_IO
     /*!
     @brief serialize to stream
 
@@ -6581,7 +6581,7 @@ class basic_json
     {
         return o << j;
     }
-
+#endif  // JSON_NO_IO
     /// @}
 
 
@@ -6837,7 +6837,7 @@ class basic_json
                ? parser(std::move(ia), nullptr, true, ignore_comments).sax_parse(sax, strict)
                : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia)).sax_parse(format, sax, strict);
     }
-
+#ifndef JSON_NO_IO
     /*!
     @brief deserialize from stream
     @deprecated This stream operator is deprecated and will be removed in
@@ -6882,7 +6882,7 @@ class basic_json
         parser(detail::input_adapter(i)).parse(false, j);
         return i;
     }
-
+#endif // JSON_NO_IO
     /// @}
 
     ///////////////////////////
