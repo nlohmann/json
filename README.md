@@ -1201,8 +1201,8 @@ auto cbor = json::to_msgpack(j); // 0xD5 (fixext2), 0x10, 0xCA, 0xFE
 Though it's 2021 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
 
 - GCC 4.8 - 11.0 (and possibly later)
-- Clang 3.4 - 11.0 (and possibly later)
-- Apple Clang 9.1 - 12.3 (and possibly later)
+- Clang 3.4 - 12.0 (and possibly later)
+- Apple Clang 9.1 - 12.4 (and possibly later)
 - Intel C++ Compiler 17.0.2 (and possibly later)
 - Microsoft Visual C++ 2015 / Build Tools 14.0.25123.0 (and possibly later)
 - Microsoft Visual C++ 2017 / Build Tools 15.5.180.51428 (and possibly later)
@@ -1271,7 +1271,8 @@ The following compilers are currently used in continuous integration at [Travis]
 | Clang 10.0.0 with GNU-like command-line                           | Windows-10.0.17763 | GitHub Actions |
 | Clang 11.0.0 with GNU-like command-line                           | Windows-10.0.17763 | GitHub Actions |
 | Clang 11.0.0 with MSVC-like command-line                          | Windows-10.0.17763 | GitHub Actions |
-| Clang 11.1.0 (11.1.0-++20210204121720+1fdec59bffc1-1~exp1~20210203232336.162 | Ubuntu 20.04.2 LTS | GitHub Actions |
+| Clang 11.0.0 (11.0.0-2~ubuntu20.04.1)                             | Ubuntu 20.04.2 LTS | GitHub Actions |
+| Clang 12.1.0 (12.0.1-++20210423082613+072c90a863aa-1~exp1~20210423063319.76 | Ubuntu 20.04.2 LTS | GitHub Actions |
 | Visual Studio 14 2015 MSVC 19.0.24241.7 (Build Engine version 14.0.25420.1) | Windows-6.3.9600 | AppVeyor |
 | Visual Studio 15 2017 MSVC 19.16.27035.0 (Build Engine version 15.9.21+g9802d43bc3 for .NET Framework) | Windows-10.0.14393 | AppVeyor |
 | Visual Studio 15 2017 MSVC 19.16.27045.0 (Build Engine version 15.9.21+g9802d43bc3 for .NET Framework) | Windows-10.0.14393 | GitHub Actions |
