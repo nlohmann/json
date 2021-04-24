@@ -3465,6 +3465,9 @@ using to_json_function = decltype(T::to_json(std::declval<Args>()...));
 template<typename T, typename... Args>
 using from_json_function = decltype(T::from_json(std::declval<Args>()...));
 
+template<typename T, typename... Args>
+using try_deserialize_function = decltype(T::try_deserialize(std::declval<Args>()...));
+
 template<typename T, typename U>
 using get_template_function = decltype(std::declval<T>().template get<U>());
 
@@ -3505,6 +3508,20 @@ struct has_non_default_from_json < BasicJsonType, T, enable_if_t < !is_basic_jso
 
     static constexpr bool value =
         is_detected_exact<T, from_json_function, serializer,
+        const BasicJsonType&>::value;
+};
+
+template<typename BasicJsonType, typename T, typename = void>
+struct has_try_deserialize : std::false_type {};
+
+template<typename BasicJsonType, typename T>
+struct has_try_deserialize < BasicJsonType, T,
+           enable_if_t < !is_basic_json<T>::value >>
+{
+    using serializer = typename BasicJsonType::template json_serializer<T, void>;
+
+    static constexpr bool value =
+        is_detected<try_deserialize_function, serializer,
         const BasicJsonType&>::value;
 };
 
@@ -19955,6 +19972,38 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         static_assert(!std::is_reference<ValueTypeCV>::value,
                       "get() cannot be used with reference types, you might want to use get_ref()");
         return JSONSerializer<ValueType>::from_json(*this);
+    }
+
+    /*!
+    @brief get a wrapped value (explicit)
+
+    Explicit type conversion between the JSON value and a compatible value wrapper
+    The value is converted by calling the @ref json_serializer<ValueType>
+    `try_deserialize()` method.
+
+    The function is equivalent to executing
+    @code {.cpp}
+    return JSONSerializer<ValueTypeCV>::try_deserialize(*this);
+    @endcode
+
+    @tparam ValueTypeCV the provided value type
+    @tparam ValueType the returned value type
+
+    @return copy of the JSON value, converted to @a ValueType wrapper
+
+    @throw what @ref json_serializer<ValueType> `try_deserialize()` method throws
+    */
+    template < typename ValueTypeCV, typename ValueType = detail::uncvref_t<ValueTypeCV>,
+               typename ReturnType = decltype(JSONSerializer<ValueType>::try_deserialize(std::declval<const basic_json_t&>())),
+               detail::enable_if_t < !std::is_same<basic_json_t, ValueType>::value &&
+                                     detail::has_try_deserialize<basic_json_t, ValueType>::value,
+                                     int > = 0 >
+    ReturnType try_get() const noexcept(noexcept(
+                                            JSONSerializer<ValueType>::try_deserialize(std::declval<const basic_json_t&>())))
+    {
+        static_assert(!std::is_reference<ValueTypeCV>::value,
+                      "get() cannot be used with reference types, you might want to use get_ref()");
+        return JSONSerializer<ValueType>::try_deserialize(*this);
     }
 
     /*!
