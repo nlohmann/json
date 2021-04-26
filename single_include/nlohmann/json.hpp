@@ -2229,8 +2229,8 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 #endif
 
 // C++ language standard detection
-// if the user wants to manually specify the used c++ version this is skipped
-#ifndef JSON_VERSION_IS_PREDEFINED
+// if the user manually specified the used c++ version this is skipped
+#if !defined(JSON_HAS_CPP_20) && !defined(JSON_HAS_CPP_17) && !defined(JSON_HAS_CPP_14) && !defined(JSON_HAS_CPP_11)
     #if (defined(__cplusplus) && __cplusplus >= 202002L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 202002L)
         #define JSON_HAS_CPP_20
         #define JSON_HAS_CPP_17
@@ -2241,6 +2241,8 @@ JSON_HEDLEY_DIAGNOSTIC_POP
     #elif (defined(__cplusplus) && __cplusplus >= 201402L) || (defined(_HAS_CXX14) && _HAS_CXX14 == 1)
         #define JSON_HAS_CPP_14
     #endif
+    // the cpp 11 flag is always specified because it is the minimal required version
+    #define JSON_HAS_CPP_11
 #endif
 
 // disable documentation warnings on clang
