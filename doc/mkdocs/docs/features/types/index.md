@@ -1,4 +1,4 @@
-# Types
+# Overview
 
 This page gives an overview how JSON values are stored and how this can be configured.
 
@@ -107,7 +107,7 @@ using binary_t = nlohmann::byte_container_with_subtype<BinaryType>;
 
 ## Objects
 
-[RFC 7159](http://rfc7159.net/rfc7159) describes JSON objects as follows:
+[RFC 8259](https://tools.ietf.org/html/rfc8259) describes JSON objects as follows:
 
 > An object is an unordered collection of zero or more name/value pairs, where a name is a string and a value is a string, number, boolean, null, object, or array.
 
@@ -135,11 +135,11 @@ The choice of `object_t` influences the behavior of the JSON class. With the def
 
 ### Key order
 
-The order name/value pairs are added to the object is *not* preserved by the library. Therefore, iterating an object may return name/value pairs in a different order than they were originally stored. In fact, keys will be traversed in alphabetical order as `std::map` with `std::less` is used by default. Please note this behavior conforms to [RFC 7159](http://rfc7159.net/rfc7159), because any order implements the specified "unordered" nature of JSON objects.
+The order name/value pairs are added to the object is *not* preserved by the library. Therefore, iterating an object may return name/value pairs in a different order than they were originally stored. In fact, keys will be traversed in alphabetical order as `std::map` with `std::less` is used by default. Please note this behavior conforms to [RFC 8259](https://tools.ietf.org/html/rfc8259), because any order implements the specified "unordered" nature of JSON objects.
 
 ### Limits
 
-[RFC 7159](http://rfc7159.net/rfc7159) specifies:
+[RFC 8259](https://tools.ietf.org/html/rfc8259) specifies:
 
 > An implementation may set limits on the maximum depth of nesting.
 
@@ -152,7 +152,7 @@ Objects are stored as pointers in a `basic_json` type. That is, for any access t
 
 ## Arrays
 
-[RFC 7159](http://rfc7159.net/rfc7159) describes JSON arrays as follows:
+[RFC 8259](https://tools.ietf.org/html/rfc8259) describes JSON arrays as follows:
 
 > An array is an ordered sequence of zero or more values.
 
@@ -169,7 +169,7 @@ std::vector<
 
 ### Limits
 
-[RFC 7159](http://rfc7159.net/rfc7159) specifies:
+[RFC 8259](https://tools.ietf.org/html/rfc8259) specifies:
 
 > An implementation may set limits on the maximum depth of nesting.
 
@@ -182,7 +182,7 @@ Arrays are stored as pointers in a `basic_json` type. That is, for any access to
 
 ## Strings
 
-[RFC 7159](http://rfc7159.net/rfc7159) describes JSON strings as follows:
+[RFC 8259](https://tools.ietf.org/html/rfc8259) describes JSON strings as follows:
 
 > A string is a sequence of zero or more Unicode characters.
 
@@ -198,7 +198,7 @@ Strings are stored in UTF-8 encoding. Therefore, functions like `std::string::si
 
 ### String comparison
 
-[RFC 7159](http://rfc7159.net/rfc7159) states:
+[RFC 8259](https://tools.ietf.org/html/rfc8259) states:
 
 > Software implementations are typically required to test names of object members for equality. Implementations that transform the textual representation into sequences of Unicode code units and then perform the comparison numerically, code unit by code unit, are interoperable in the sense that implementations will agree in all cases on equality or inequality of two strings. For example, implementations that compare strings with escaped characters unconverted may incorrectly find that `"a\\b"` and `"a\u005Cb"` are not equal.
 
@@ -211,7 +211,7 @@ String values are stored as pointers in a `basic_json` type. That is, for any ac
 
 ## Booleans
 
-[RFC 7159](http://rfc7159.net/rfc7159) implicitly describes a boolean as a type which differentiates the two literals `true` and `false`.
+[RFC 8259](https://tools.ietf.org/html/rfc8259) implicitly describes a boolean as a type which differentiates the two literals `true` and `false`.
 
 ### Default type
 
@@ -223,7 +223,9 @@ Boolean values are stored directly inside a `basic_json` type.
 
 ## Numbers
 
-[RFC 7159](http://rfc7159.net/rfc7159) describes numbers as follows:
+See the [number handling](number_handling.md) article for a detailed discussion on how numbers are handled by this library.
+
+[RFC 8259](https://tools.ietf.org/html/rfc8259) describes numbers as follows:
 
 > The representation of numbers is similar to that used in most programming languages. A number is represented in base 10 using decimal digits. It contains an integer component that may be prefixed with an optional minus sign, which may be followed by a fraction part and/or an exponent part. Leading zeros are not allowed. (...) Numeric values that cannot be represented in the grammar below (such as Infinity and NaN) are not permitted.
 
@@ -242,7 +244,7 @@ With the default values for *NumberFloatType* (`#!cpp double`), the default valu
 
 ### Limits
 
-[RFC 7159](http://rfc7159.net/rfc7159) specifies:
+[RFC 8259](https://tools.ietf.org/html/rfc8259) specifies:
 
 > An implementation may set limits on the range and precision of numbers.
 
@@ -250,13 +252,13 @@ When the default type is used, the maximal integer number that can be stored is 
 
 When the default type is used, the maximal unsigned integer number that can be stored is `#!c 18446744073709551615` (`UINT64_MAX`) and the minimal integer number that can be stored is `#!c 0`. Integer numbers that are out of range will yield over/underflow when used in a constructor. During deserialization, too large or small integer numbers will be automatically be stored as `number_integer_t` or `number_float_t`.
 
-[RFC 7159](http://rfc7159.net/rfc7159) further states:
+[RFC 8259](https://tools.ietf.org/html/rfc8259) further states:
 
 > Note that when such software is used, numbers that are integers and are in the range $[-2^{53}+1, 2^{53}-1]$ are interoperable in the sense that implementations will agree exactly on their numeric values.
 
 As this range is a subrange of the exactly supported range [`INT64_MIN`, `INT64_MAX`], this class's integer type is interoperable.
 
-[RFC 7159](http://rfc7159.net/rfc7159) states:
+[RFC 8259](https://tools.ietf.org/html/rfc8259) states:
 
 > This specification allows implementations to set limits on the range and precision of numbers accepted. Since software that implements IEEE 754-2008 binary64 (double precision) numbers is generally available and widely used, good interoperability can be achieved by implementations that expect no more precision or range than these provide, in the sense that implementations will approximate JSON numbers within the expected precision.
 

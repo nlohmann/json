@@ -6,7 +6,7 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
 
 The type used to store JSON arrays.
 
-[RFC 7159](http://rfc7159.net/rfc7159) describes JSON arrays as follows:
+[RFC 8259](https://tools.ietf.org/html/rfc8259) describes JSON arrays as follows:
 > An array is an ordered sequence of zero or more values.
 
 To store objects in C++, a type is defined by the template parameters explained below.
@@ -35,7 +35,7 @@ std::vector<
 
 #### Limits
 
-[RFC 7159](http://rfc7159.net/rfc7159) specifies:
+[RFC 8259](https://tools.ietf.org/html/rfc8259) specifies:
 > An implementation may set limits on the maximum depth of nesting.
 
 In this class, the array's limit of nesting is not explicitly constrained. However, a maximum depth of nesting may be
