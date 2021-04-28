@@ -1167,7 +1167,7 @@ As `noexcept` and `constexpr` specifier have been added to several functions, th
 - Parser error messages are still very vague and contain no information on the error location.
 - The implemented `diff` function is rather primitive and does not create minimal diffs.
 - The name of function `iteration_wrapper` may change in the future and the function will be deprecated in the next release.
-- Roundtripping (i.e., parsing a JSON value from a string, serializing it, and comparing the strings) of floating-point numbers is not 100% accurate. Note that [RFC 7159](https://tools.ietf.org/html/rfc7159) defines no format to internally represent numbers and states not requirement for roundtripping. Nevertheless, benchmarks like [Native JSON Benchmark](https://github.com/miloyip/nativejson-benchmark) treat roundtripping deviations as conformance errors.
+- Roundtripping (i.e., parsing a JSON value from a string, serializing it, and comparing the strings) of floating-point numbers is not 100% accurate. Note that [RFC 8259](https://tools.ietf.org/html/rfc8259) defines no format to internally represent numbers and states not requirement for roundtripping. Nevertheless, benchmarks like [Native JSON Benchmark](https://github.com/miloyip/nativejson-benchmark) treat roundtripping deviations as conformance errors.
 
 
 ## v1.1.0
