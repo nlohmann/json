@@ -25972,8 +25972,10 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 #undef JSON_THROW
 #undef JSON_TRY
 #undef JSON_PRIVATE_UNLESS_TESTED
+#undef JSON_HAS_CPP_11
 #undef JSON_HAS_CPP_14
 #undef JSON_HAS_CPP_17
+#undef JSON_HAS_CPP_20
 #undef NLOHMANN_BASIC_JSON_TPL_DECLARATION
 #undef NLOHMANN_BASIC_JSON_TPL
 #undef JSON_EXPLICIT
