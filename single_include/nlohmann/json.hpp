@@ -5937,7 +5937,7 @@ class json_sax_dom_parser
         return true;
     }
 
-    bool key(string_t& val)
+    bool key(const string_t& val)
     {
         // add null at given key and store the reference for later
         object_element = &(ref_stack.back()->m_value.object->operator[](val));
