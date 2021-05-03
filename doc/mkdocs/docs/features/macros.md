@@ -20,6 +20,10 @@ When enabled, exception messages contain a [JSON Pointer](json_pointer.md) to th
 
 The diagnostics messages can also be controlled with the CMake option `JSON_Diagnostics` (`OFF` by default) which sets `JSON_DIAGNOSTICS` accordingly.
 
+## `JSON_HAS_CPP_11`, `JSON_HAS_CPP_14`, `JSON_HAS_CPP_17`, `JSON_HAS_CPP_20`
+
+The library targets C++11, but also supports some features introduced in later C++ versions (e.g., `std::string_view` support for C++17). For these new features, the library implements some preprocessor checks to determine the C++ standard. By defining any of these symbols, the internal check is overridden and the provided C++ version is unconditionally assumed. This can be helpful for compilers that only implement parts of the standard and would be detected incorrectly.
+
 ## `JSON_NOEXCEPTION`
 
 Exceptions can be switched off by defining the symbol `JSON_NOEXCEPTION`.

@@ -418,9 +418,9 @@ TEST_CASE("json.org examples")
     }
 }
 
-TEST_CASE("RFC 7159 examples")
+TEST_CASE("RFC 8259 examples")
 {
-    // here, we list all JSON values from the RFC 7159 document
+    // here, we list all JSON values from the RFC 8259 document
 
     SECTION("7. Strings")
     {

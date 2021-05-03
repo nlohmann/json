@@ -10,7 +10,7 @@ As for other containers, `begin()` returns an iterator to the first value and `e
 
 ### Iteration order for objects
 
-When iterating over objects, values are ordered with respect to the `object_comparator_t` type which defaults to `std::less`. See the [types documentation](types.md#key-order) for more information.
+When iterating over objects, values are ordered with respect to the `object_comparator_t` type which defaults to `std::less`. See the [types documentation](types/index.md#key-order) for more information.
 
 ??? example
 

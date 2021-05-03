@@ -589,7 +589,7 @@ TEST_CASE("parser class")
 
                 SECTION("edge cases")
                 {
-                    // From RFC7159, Section 6:
+                    // From RFC8259, Section 6:
                     // Note that when such software is used, numbers that are
                     // integers and are in the range [-(2**53)+1, (2**53)-1]
                     // are interoperable in the sense that implementations will
@@ -603,7 +603,7 @@ TEST_CASE("parser class")
 
                 SECTION("over the edge cases")  // issue #178 - Integer conversion to unsigned (incorrect handling of 64 bit integers)
                 {
-                    // While RFC7159, Section 6 specifies a preference for support
+                    // While RFC8259, Section 6 specifies a preference for support
                     // for ranges in range of IEEE 754-2008 binary64 (double precision)
                     // this does not accommodate 64 bit integers without loss of accuracy.
                     // As 64 bit integers are now widely used in software, it is desirable
@@ -888,7 +888,7 @@ TEST_CASE("parser class")
 
                 SECTION("edge cases")
                 {
-                    // From RFC7159, Section 6:
+                    // From RFC8259, Section 6:
                     // Note that when such software is used, numbers that are
                     // integers and are in the range [-(2**53)+1, (2**53)-1]
                     // are interoperable in the sense that implementations will
@@ -902,7 +902,7 @@ TEST_CASE("parser class")
 
                 SECTION("over the edge cases")  // issue #178 - Integer conversion to unsigned (incorrect handling of 64 bit integers)
                 {
-                    // While RFC7159, Section 6 specifies a preference for support
+                    // While RFC8259, Section 6 specifies a preference for support
                     // for ranges in range of IEEE 754-2008 binary64 (double precision)
                     // this does not accommodate 64 bit integers without loss of accuracy.
                     // As 64 bit integers are now widely used in software, it is desirable
