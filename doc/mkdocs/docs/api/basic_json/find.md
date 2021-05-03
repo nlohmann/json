@@ -2,10 +2,10 @@
 
 ```cpp
 template<typename KeyT>
-iterator find(KeyT && key);
+iterator find(const KeyT& key);
 
 template<typename KeyT>
-const_iterator find(KeyT && key) const
+const_iterator find(const KeyT& key) const
 ```
 
 Finds an element in a JSON object with key equivalent to `key`. If the element is not found or the JSON value is not an

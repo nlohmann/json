@@ -2,7 +2,7 @@
 
 ```cpp
 template<typename KeyT>
-size_type count(KeyT && key) const;
+size_type count(const KeyT& key) const;
 ```
 
 Returns the number of elements with key `key`. If `ObjectType` is the default `std::map` type, the return value will

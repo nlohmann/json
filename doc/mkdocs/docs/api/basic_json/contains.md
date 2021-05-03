@@ -2,7 +2,7 @@
 
 ```cpp
 template<typename KeyT>
-bool contains(KeyT && key) const;
+bool contains(const KeyT& key) const;
 ```
 
 Check whether an element exists in a JSON object with key equivalent to `key`. If the element is not found or the JSON

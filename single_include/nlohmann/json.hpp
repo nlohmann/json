@@ -20867,13 +20867,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     template < class KeyType, class ValueType, typename detail::enable_if_t <
                    detail::is_getable<basic_json_t, ValueType>::value
                    && !std::is_same<value_t, ValueType>::value&& detail::is_key_type<basic_json_t, KeyType>::value > ... >
-    ValueType value(KeyType&& key, const ValueType& default_value) const
+    ValueType value(const KeyType& key, ValueType&& default_value) const
     {
         // at only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
         {
             // if key is found, return value and given default value otherwise
-            const auto it = find(std::forward<KeyType>(key));
+            const auto it = find(key);
             if (it != end())
             {
                 return it->template get<ValueType>();
@@ -20941,7 +20941,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     */
     template<class ValueType, typename std::enable_if<
                  detail::is_getable<basic_json_t, ValueType>::value, int>::type = 0>
-    ValueType value(const json_pointer& ptr, const ValueType& default_value) const
+    ValueType value(const json_pointer& ptr, ValueType && default_value) const
     {
         // at only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
@@ -21413,13 +21413,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     */
     template < class KeyT, typename detail::enable_if_t <
                    detail::is_key_type<basic_json_t, KeyT>::value > ... >
-    iterator find(KeyT&& key)
+    iterator find(const KeyT& key)
     {
         auto result = end();
 
         if (is_object())
         {
-            result.m_it.object_iterator = m_value.object->find(std::forward<KeyT>(key));
+            result.m_it.object_iterator = m_value.object->find(key);
         }
 
         return result;
@@ -21427,17 +21427,17 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     /*!
     @brief find an element in a JSON object
-    @copydoc find(KeyT&&)
+    @copydoc find(const KeyT&)
     */
     template < class KeyT, typename detail::enable_if_t <
                    detail::is_key_type<basic_json_t, KeyT>::value > ... >
-    const_iterator find(KeyT&& key) const
+    const_iterator find(const KeyT& key) const
     {
         auto result = cend();
 
         if (is_object())
         {
-            result.m_it.object_iterator = m_value.object->find(std::forward<KeyT>(key));
+            result.m_it.object_iterator = m_value.object->find(key);
         }
 
         return result;
@@ -21466,10 +21466,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     */
     template < class KeyT, typename detail::enable_if_t <
                    detail::is_key_type<basic_json_t, KeyT>::value > ... >
-    size_type count(KeyT&& key) const
+    size_type count(const KeyT& key) const
     {
         // return 0 for all nonobject types
-        return is_object() ? m_value.object->count(std::forward<KeyT>(key)) : 0;
+        return is_object() ? m_value.object->count(key) : 0;
     }
 
     /*!
@@ -21492,16 +21492,16 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     @liveexample{The following code shows an example for `contains()`.,contains}
 
-    @sa see @ref find(KeyT&&) -- returns an iterator to an object element
+    @sa see @ref find(const KeyT&) -- returns an iterator to an object element
     @sa see @ref contains(const json_pointer&) const -- checks the existence for a JSON pointer
 
     @since version 3.6.0
     */
     template < class KeyT, typename detail::enable_if_t <
                    !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value&& detail::is_key_type<basic_json_t, KeyT>::value > ... >
-    bool contains(KeyT&& key) const
+    bool contains(const KeyT& key) const
     {
-        return is_object() && m_value.object->find(std::forward<KeyT>(key)) != m_value.object->end();
+        return is_object() && m_value.object->find(key) != m_value.object->end();
     }
 
     /*!

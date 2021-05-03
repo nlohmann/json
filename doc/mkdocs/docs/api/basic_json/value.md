@@ -3,13 +3,13 @@
 ```cpp
 // (1)
 template<class KeyType, class ValueType>
-ValueType value(KeyType && key,
-                const ValueType& default_value) const;
+ValueType value(const KeyType& key,
+                ValueType && default_value) const;
 
 // (2)
 template<class ValueType>
 ValueType value(const json_pointer& ptr,
-                const ValueType& default_value) const;
+                ValueType && default_value) const;
 ```
 
 1. Returns either a copy of an object's element at the specified key `key` or a given default value if no element with
