@@ -35,7 +35,8 @@ void erase(const size_type idx);
 ## Template parameters
 
 `KeyT`
-:   A type convertible to an object key. This can also be a string literal or a string view (C++17).
+:   A type for an object key that is less-than comparable with `string_t`. This can also be a string literal or a string
+    view (C++17).
 
 ## Parameters
 

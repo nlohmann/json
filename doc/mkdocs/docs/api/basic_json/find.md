@@ -14,7 +14,8 @@ object, `end()` is returned.
 ## Template parameters
 
 `KeyT`
-:   A type for an object key. This can also be a string literal or a string view (C++17).
+:   A type for an object key that is less-than comparable with `string_t`. This can also be a string literal or a string
+    view (C++17).
 
 ## Parameters
 

@@ -42,7 +42,8 @@ Unlike [`operator[]`](operator[].md), this function does not implicitly add an e
 ## Template parameters
 
 `KeyType`
-:   A type for an object key. This can also be a string literal or a string view (C++17).
+:   A type for an object key that is less-than comparable with `string_t`. This can also be a string literal or a string
+    view (C++17).
 `ValueType` 
 :   type compatible to JSON values, for instance `#!cpp int` for JSON integer numbers, `#!cpp bool` for JSON booleans,
     or `#!cpp std::vector` types for JSON arrays. Note the type of the expected value at `key`/`ptr` and the default
