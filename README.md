@@ -142,7 +142,7 @@ target_link_libraries(foo PRIVATE nlohmann_json::nlohmann_json)
 
 Since CMake v3.11,
 [FetchContent](https://cmake.org/cmake/help/v3.11/module/FetchContent.html) can
-be used to automatically download the repository as a dependency at configure type.
+be used to automatically download the repository as a dependency at configure time.
 
 Example:
 ```cmake
