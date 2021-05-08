@@ -17,4 +17,6 @@ steps:
   - mkdir build
   - cd build
   - ../cmake-3.20.2/bin/cmake ..
-  - cmake --build .
+  - make -j10
+  - cd test
+  - ctest -j10
