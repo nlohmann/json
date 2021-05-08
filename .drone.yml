@@ -1,0 +1,14 @@
+kind: pipeline
+name: test-on-arm64
+
+platform:
+  arch: arm64
+
+steps:
+- name: build
+  image: gcc
+  commands:
+  - mkdir build
+  - cd build
+  - cmake ..
+  - cmake --build .
