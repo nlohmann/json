@@ -8,6 +8,8 @@ steps:
 - name: build
   image: gcc
   commands:
+  - mkdir cm
+  - cd cm
   - git -c http.sslVerify=false clone https://gitlab.kitware.com/cmake/cmake.git
   - cd cmake
   - ./configure
