@@ -1,29 +1,4 @@
 kind: pipeline
-name: test-on-arm
-
-platform:
-  arch: arm
-
-steps:
-- name: build
-  image: gcc
-  commands:
-  - mkdir cm
-  - cd cm
-  - git -c http.sslVerify=false clone https://gitlab.kitware.com/cmake/cmake.git
-  - cd cmake
-  - ./configure
-  - make cmake ctest -j10
-  - cd ..
-  - mkdir build
-  - cd build
-  - ../cm/cmake/bin/cmake .. -DJSON_FastTests=ON
-  - make -j10
-  - cd test
-  - ../../cm/cmake/bin/ctest -j10
-
----
-kind: pipeline
 name: test-on-arm64
 
 platform:
