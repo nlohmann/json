@@ -19,4 +19,4 @@ steps:
   - ../cmake-3.20.2/bin/cmake ..
   - make -j10
   - cd test
-  - ctest -j10
+  - ../../cmake-3.20.2/bin/ctest -j10
