@@ -8,7 +8,7 @@ steps:
 - name: build
   image: gcc
   commands:
-  - git clone https://github.com/Kitware/CMake.git
+  - git -c http.sslVerify=false clone https://github.com/Kitware/CMake.git
   - cd CMake
   - ./configure
   - make cmake ctest -j10
