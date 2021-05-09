@@ -8,7 +8,7 @@ steps:
 - name: build
   image: gcc
   commands:
-  - wget https://github.com/Kitware/CMake/releases/download/v3.20.2/cmake-3.20.2.tar.gz
+  - wget --no-check-certificates https://github.com/Kitware/CMake/releases/download/v3.20.2/cmake-3.20.2.tar.gz
   - tar xfz cmake-3.20.2.tar.gz
   - cd cmake-3.20.2
   - ./configure
