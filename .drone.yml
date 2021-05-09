@@ -8,17 +8,17 @@ steps:
 - name: build
   image: gcc
   commands:
-  - git -c http.sslVerify=false clone https://github.com/Kitware/CMake.git
-  - cd CMake
+  - git -c http.sslVerify=false clone https://gitlab.kitware.com/cmake/cmake.git
+  - cd cmake
   - ./configure
   - make cmake ctest -j10
   - cd ..
   - mkdir build
   - cd build
-  - ../CMake/bin/cmake .. -DJSON_FastTests=ON
+  - ../cmake/bin/cmake .. -DJSON_FastTests=ON
   - make -j10
   - cd test
-  - ../../CMake/bin/ctest -j10
+  - ../../cmake/bin/ctest -j10
 
 ---
 kind: pipeline
