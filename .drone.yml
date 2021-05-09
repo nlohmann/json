@@ -17,10 +17,10 @@ steps:
   - cd ..
   - mkdir build
   - cd build
-  - ../cmake/bin/cmake .. -DJSON_FastTests=ON
+  - ../cm/cmake/bin/cmake .. -DJSON_FastTests=ON
   - make -j10
   - cd test
-  - ../../cmake/bin/ctest -j10
+  - ../../cm/cmake/bin/ctest -j10
 
 ---
 kind: pipeline
