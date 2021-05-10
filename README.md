@@ -1227,7 +1227,7 @@ Please note:
 
 - Unsupported versions of GCC and Clang are rejected by `#error` directives. This can be switched off by defining `JSON_SKIP_UNSUPPORTED_COMPILER_CHECK`. Note that you can expect no support in this case.
 
-The following compilers are currently used in continuous integration at [Travis](https://travis-ci.org/nlohmann/json), [AppVeyor](https://ci.appveyor.com/project/nlohmann/json), and [GitHub Actions](https://github.com/nlohmann/json/actions):
+The following compilers are currently used in continuous integration at [Travis](https://travis-ci.org/nlohmann/json), [AppVeyor](https://ci.appveyor.com/project/nlohmann/json), [Drone CI](https://cloud.drone.io/nlohmann/json), and [GitHub Actions](https://github.com/nlohmann/json/actions):
 
 | Compiler                                                          | Operating System   | CI Provider    |
 |-------------------------------------------------------------------|--------------------|----------------|
@@ -1256,6 +1256,7 @@ The following compilers are currently used in continuous integration at [Travis]
 | GCC 9.3.0 (Ubuntu 9.3.0-17ubuntu1~20.04)                          | Ubuntu 20.04.2 LTS | GitHub Actions |
 | GCC 10.2.0 (Ubuntu 10.2.0-5ubuntu1~20.04)                         | Ubuntu 20.04.2 LTS | GitHub Actions |
 | GCC 11.0.1 20210321 (experimental)                                | Ubuntu 20.04.2 LTS | GitHub Actions |
+| GCC 11.1.0                                                        | Ubuntu (aarch64)   | Drone CI       |
 | Clang 3.5.2 (3.5.2-3ubuntu1)                                      | Ubuntu 20.04.2 LTS | GitHub Actions |
 | Clang 3.6.2 (3.6.2-3ubuntu2)                                      | Ubuntu 20.04.2 LTS | GitHub Actions |
 | Clang 3.7.1 (3.7.1-2ubuntu2)                                      | Ubuntu 20.04.2 LTS | GitHub Actions |
