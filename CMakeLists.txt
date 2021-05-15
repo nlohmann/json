@@ -160,7 +160,7 @@ if(JSON_Install)
             FILES ${NLOHMANN_NATVIS_FILE}
             DESTINATION .
     )
-    endif() # NLOHMANN_ADD_NATVIS
+    endif()
     export(
         TARGETS ${NLOHMANN_JSON_TARGET_NAME}
         NAMESPACE ${PROJECT_NAME}::
@@ -180,4 +180,4 @@ if(JSON_Install)
         FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc"
         DESTINATION ${NLOHMANN_JSON_PKGCONFIG_INSTALL_DIR}
     )
-endif() # JSON_Install
+endif()
