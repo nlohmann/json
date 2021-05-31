@@ -2,15 +2,18 @@
 
 #include <array> // array
 #include <cstddef> // size_t
-#include <cstdio> //FILE *
 #include <cstring> // strlen
-#include <istream> // istream
 #include <iterator> // begin, end, iterator_traits, random_access_iterator_tag, distance, next
 #include <memory> // shared_ptr, make_shared, addressof
 #include <numeric> // accumulate
 #include <string> // string, char_traits
 #include <type_traits> // enable_if, is_base_of, is_pointer, is_integral, remove_pointer
 #include <utility> // pair, declval
+
+#ifndef JSON_NO_IO
+    #include <cstdio>   //FILE *
+    #include <istream>  // istream
+#endif                  // JSON_NO_IO
 
 #include <nlohmann/detail/iterators/iterator_traits.hpp>
 #include <nlohmann/detail/macro_scope.hpp>

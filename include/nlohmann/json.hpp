@@ -38,7 +38,9 @@ SOFTWARE.
 #include <cstddef> // nullptr_t, ptrdiff_t, size_t
 #include <functional> // hash, less
 #include <initializer_list> // initializer_list
-#include <iosfwd> // istream, ostream
+#ifndef JSON_NO_IO
+    #include <iosfwd> // istream, ostream
+#endif  // JSON_NO_IO
 #include <iterator> // random_access_iterator_tag
 #include <memory> // unique_ptr
 #include <numeric> // accumulate
@@ -7022,7 +7024,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         parser(detail::input_adapter(i)).parse(false, j);
         return i;
     }
-#endif // JSON_NO_IO
+#endif  // JSON_NO_IO
     /// @}
 
     ///////////////////////////
