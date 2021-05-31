@@ -2,12 +2,16 @@
 
 #include <algorithm> // copy
 #include <cstddef> // size_t
-#include <ios> // streamsize
 #include <iterator> // back_inserter
 #include <memory> // shared_ptr, make_shared
-#include <ostream> // basic_ostream
 #include <string> // basic_string
 #include <vector> // vector
+
+#ifndef JSON_NO_IO
+    #include <ios>      // streamsize
+    #include <ostream>  // basic_ostream
+#endif  // JSON_NO_IO
+
 #include <nlohmann/detail/macro_scope.hpp>
 
 namespace nlohmann
