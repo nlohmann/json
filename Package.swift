@@ -41,7 +41,7 @@ let package = Package(
                 [
                     "_SwiftPackageManagerFile.cpp"
                 ],
-            publicHeadersPath: "./single_include/nlohmann/")
+            publicHeadersPath: "./single_include/")
     ],
     
     cxxLanguageStandard: .cxx11
