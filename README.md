@@ -240,6 +240,8 @@ CPMAddPackage(
     VERSION 3.9.1)
 ```
 
+If you are using [Swift Package Manager](https://swift.org/package-manager/), you can use the library by adding a link to this repository. For instructions how to add this dependency to your app, follow the [official guide](https://developer.apple.com/documentation/swift_packages/adding_package_dependencies_to_your_app).
+
 ### Pkg-config
 
 If you are using bare Makefiles, you can use `pkg-config` to generate the include flags that point to where the library is installed:
