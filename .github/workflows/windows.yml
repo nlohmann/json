@@ -98,7 +98,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        version: [10, 11]
+        version: [11, 12]
 
     steps:
       - uses: actions/checkout@v2
