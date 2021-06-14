@@ -3,6 +3,8 @@
 #include <cstddef> // ptrdiff_t
 #include <limits>  // numeric_limits
 
+#include <nlohmann/detail/macro_scope.hpp>
+
 namespace nlohmann
 {
 namespace detail
@@ -23,6 +25,7 @@ class primitive_iterator_t
     static constexpr difference_type begin_value = 0;
     static constexpr difference_type end_value = begin_value + 1;
 
+  JSON_PRIVATE_UNLESS_TESTED:
     /// iterator as signed integer type
     difference_type m_it = (std::numeric_limits<std::ptrdiff_t>::min)();
 
@@ -84,7 +87,7 @@ class primitive_iterator_t
         return *this;
     }
 
-    primitive_iterator_t const operator++(int) noexcept
+    primitive_iterator_t const operator++(int) noexcept // NOLINT(readability-const-return-type)
     {
         auto result = *this;
         ++m_it;
@@ -97,7 +100,7 @@ class primitive_iterator_t
         return *this;
     }
 
-    primitive_iterator_t const operator--(int) noexcept
+    primitive_iterator_t const operator--(int) noexcept // NOLINT(readability-const-return-type)
     {
         auto result = *this;
         --m_it;

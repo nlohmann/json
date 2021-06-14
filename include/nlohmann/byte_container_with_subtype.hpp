@@ -39,15 +39,15 @@ class byte_container_with_subtype : public BinaryType
         : container_type(std::move(b))
     {}
 
-    byte_container_with_subtype(const container_type& b, std::uint8_t subtype) noexcept(noexcept(container_type(b)))
+    byte_container_with_subtype(const container_type& b, std::uint8_t subtype_) noexcept(noexcept(container_type(b)))
         : container_type(b)
-        , m_subtype(subtype)
+        , m_subtype(subtype_)
         , m_has_subtype(true)
     {}
 
-    byte_container_with_subtype(container_type&& b, std::uint8_t subtype) noexcept(noexcept(container_type(std::move(b))))
+    byte_container_with_subtype(container_type&& b, std::uint8_t subtype_) noexcept(noexcept(container_type(std::move(b))))
         : container_type(std::move(b))
-        , m_subtype(subtype)
+        , m_subtype(subtype_)
         , m_has_subtype(true)
     {}
 
@@ -73,16 +73,16 @@ class byte_container_with_subtype : public BinaryType
     @exceptionsafety No-throw guarantee: this member function never throws
     exceptions.
 
-    @sa @ref subtype() -- return the binary subtype
-    @sa @ref clear_subtype() -- clears the binary subtype
-    @sa @ref has_subtype() -- returns whether or not the binary value has a
+    @sa see @ref subtype() -- return the binary subtype
+    @sa see @ref clear_subtype() -- clears the binary subtype
+    @sa see @ref has_subtype() -- returns whether or not the binary value has a
     subtype
 
     @since version 3.8.0
     */
-    void set_subtype(std::uint8_t subtype) noexcept
+    void set_subtype(std::uint8_t subtype_) noexcept
     {
-        m_subtype = subtype;
+        m_subtype = subtype_;
         m_has_subtype = true;
     }
 
@@ -100,9 +100,9 @@ class byte_container_with_subtype : public BinaryType
     @exceptionsafety No-throw guarantee: this member function never throws
     exceptions.
 
-    @sa @ref set_subtype() -- sets the binary subtype
-    @sa @ref clear_subtype() -- clears the binary subtype
-    @sa @ref has_subtype() -- returns whether or not the binary value has a
+    @sa see @ref set_subtype() -- sets the binary subtype
+    @sa see @ref clear_subtype() -- clears the binary subtype
+    @sa see @ref has_subtype() -- returns whether or not the binary value has a
     subtype
 
     @since version 3.8.0
@@ -122,9 +122,9 @@ class byte_container_with_subtype : public BinaryType
     @exceptionsafety No-throw guarantee: this member function never throws
     exceptions.
 
-    @sa @ref subtype() -- return the binary subtype
-    @sa @ref set_subtype() -- sets the binary subtype
-    @sa @ref clear_subtype() -- clears the binary subtype
+    @sa see @ref subtype() -- return the binary subtype
+    @sa see @ref set_subtype() -- sets the binary subtype
+    @sa see @ref clear_subtype() -- clears the binary subtype
 
     @since version 3.8.0
     */
@@ -145,9 +145,9 @@ class byte_container_with_subtype : public BinaryType
     @exceptionsafety No-throw guarantee: this member function never throws
     exceptions.
 
-    @sa @ref subtype() -- return the binary subtype
-    @sa @ref set_subtype() -- sets the binary subtype
-    @sa @ref has_subtype() -- returns whether or not the binary value has a
+    @sa see @ref subtype() -- return the binary subtype
+    @sa see @ref set_subtype() -- sets the binary subtype
+    @sa see @ref has_subtype() -- returns whether or not the binary value has a
     subtype
 
     @since version 3.8.0

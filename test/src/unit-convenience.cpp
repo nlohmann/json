@@ -29,16 +29,15 @@ SOFTWARE.
 
 #include "doctest_compatibility.h"
 
-#define private public
+#define JSON_TESTS_PRIVATE
 #include <nlohmann/json.hpp>
 using nlohmann::json;
-#undef private
 
 #include <sstream>
 
 namespace
 {
-void check_escaped(const char* original, const char* escaped = "", const bool ensure_ascii = false);
+void check_escaped(const char* original, const char* escaped = "", bool ensure_ascii = false);
 void check_escaped(const char* original, const char* escaped, const bool ensure_ascii)
 {
     std::stringstream ss;
@@ -46,7 +45,7 @@ void check_escaped(const char* original, const char* escaped, const bool ensure_
     s.dump_escaped(original, ensure_ascii);
     CHECK(ss.str() == escaped);
 }
-}
+} // namespace
 
 TEST_CASE("convenience functions")
 {

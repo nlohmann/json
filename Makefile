@@ -81,10 +81,10 @@ doctest:
 # -Wno-documentation-unknown-command: code uses user-defined commands like @complexity
 # -Wno-exit-time-destructors: warning in json code triggered by NLOHMANN_JSON_SERIALIZE_ENUM
 # -Wno-float-equal: not all comparisons in the tests can be replaced by Approx
-# -Wno-keyword-macro: unit-tests use "#define private public"
 # -Wno-missing-prototypes: for NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE
 # -Wno-padded: padding is nothing to warn about
 # -Wno-range-loop-analysis: items tests "for(const auto i...)"
+# -Wno-extra-semi-stmt: spurious warnings for semicolons after JSON_ASSERT()
 # -Wno-switch-enum -Wno-covered-switch-default: pedantic/contradicting warnings about switches
 # -Wno-weak-vtables: exception class is defined inline, but has virtual method
 pedantic_clang:
@@ -98,10 +98,10 @@ pedantic_clang:
 		-Wno-documentation-unknown-command \
 		-Wno-exit-time-destructors \
 		-Wno-float-equal \
-		-Wno-keyword-macro \
 		-Wno-missing-prototypes \
 		-Wno-padded \
 		-Wno-range-loop-analysis \
+		-Wno-extra-semi-stmt \
 		-Wno-switch-enum -Wno-covered-switch-default \
 		-Wno-weak-vtables" cmake -S . -B cmake-build-pedantic -GNinja -DCMAKE_BUILD_TYPE=Debug -DJSON_MultipleHeaders=ON -DJSON_BuildTests=On
 	cmake --build cmake-build-pedantic
@@ -610,7 +610,7 @@ ChangeLog.md:
 release:
 	rm -fr release_files
 	mkdir release_files
-	zip -9 --recurse-paths -X include.zip $(SRCS) $(AMALGAMATED_FILE) meson.build
+	zip -9 --recurse-paths -X include.zip $(SRCS) $(AMALGAMATED_FILE) meson.build LICENSE.MIT
 	gpg --armor --detach-sig include.zip
 	mv include.zip include.zip.asc release_files
 	gpg --armor --detach-sig $(AMALGAMATED_FILE)
@@ -629,7 +629,7 @@ clean:
 	rm -fr json_unit json_benchmarks fuzz fuzz-testing *.dSYM test/*.dSYM oclint_report.html
 	rm -fr benchmarks/files/numbers/*.json
 	rm -fr cmake-3.1.0-Darwin64.tar.gz cmake-3.1.0-Darwin64
-	rm -fr cmake-build-coverage cmake-build-benchmarks fuzz-testing cmake-build-clang-analyze cmake-build-pvs-studio cmake-build-infer cmake-build-clang-sanitize cmake_build
+	rm -fr cmake-build-coverage cmake-build-benchmarks cmake-build-pedantic fuzz-testing cmake-build-clang-analyze cmake-build-pvs-studio cmake-build-infer cmake-build-clang-sanitize cmake_build
 	$(MAKE) clean -Cdoc
 
 ##########################################################################
@@ -641,4 +641,6 @@ update_hedley:
 	curl https://raw.githubusercontent.com/nemequ/hedley/master/hedley.h -o include/nlohmann/thirdparty/hedley/hedley.hpp
 	$(SED) -i 's/HEDLEY_/JSON_HEDLEY_/g' include/nlohmann/thirdparty/hedley/hedley.hpp
 	grep "[[:blank:]]*#[[:blank:]]*undef" include/nlohmann/thirdparty/hedley/hedley.hpp | grep -v "__" | sort | uniq | $(SED) 's/ //g' | $(SED) 's/undef/undef /g' > include/nlohmann/thirdparty/hedley/hedley_undef.hpp
+	$(SED) -i '1s/^/#pragma once\n\n/' include/nlohmann/thirdparty/hedley/hedley.hpp
+	$(SED) -i '1s/^/#pragma once\n\n/' include/nlohmann/thirdparty/hedley/hedley_undef.hpp
 	$(MAKE) amalgamate

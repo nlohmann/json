@@ -42,16 +42,16 @@ enum test
 struct pod {};
 struct pod_bis {};
 
-void to_json(json&, pod) noexcept;
-void to_json(json&, pod_bis);
-void from_json(const json&, pod) noexcept;
-void from_json(const json&, pod_bis);
-void to_json(json&, pod) noexcept {}
-void to_json(json&, pod_bis) {}
-void from_json(const json&, pod) noexcept {}
-void from_json(const json&, pod_bis) {}
+void to_json(json& /*unused*/, pod /*unused*/) noexcept;
+void to_json(json& /*unused*/, pod_bis /*unused*/);
+void from_json(const json& /*unused*/, pod /*unused*/) noexcept;
+void from_json(const json& /*unused*/, pod_bis /*unused*/);
+void to_json(json& /*unused*/, pod /*unused*/) noexcept {}
+void to_json(json& /*unused*/, pod_bis /*unused*/) {}
+void from_json(const json& /*unused*/, pod /*unused*/) noexcept {}
+void from_json(const json& /*unused*/, pod_bis /*unused*/) {}
 
-static json* j = nullptr;
+json* j = nullptr;
 
 static_assert(noexcept(json{}), "");
 static_assert(noexcept(nlohmann::to_json(*j, 2)), "");
@@ -66,7 +66,7 @@ static_assert(noexcept(json(pod{})), "");
 static_assert(noexcept(j->get<pod>()), "");
 static_assert(!noexcept(j->get<pod_bis>()), "");
 static_assert(noexcept(json(pod{})), "");
-}
+} // namespace
 
 TEST_CASE("runtime checks")
 {

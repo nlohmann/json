@@ -32,10 +32,9 @@ SOFTWARE.
 // for some reason including this after the json header leads to linker errors with VS 2017...
 #include <locale>
 
-#define private public
+#define JSON_TESTS_PRIVATE
 #include <nlohmann/json.hpp>
 using nlohmann::json;
-#undef private
 
 #include <fstream>
 #include <sstream>
@@ -169,7 +168,7 @@ void check_utf8string(bool success_expected, int byte1, int byte2 = -1, int byte
         CHECK_THROWS_AS(_ = json::parse(json_string), json::parse_error&);
     }
 }
-}
+} // namespace
 
 TEST_CASE("Unicode" * doctest::skip())
 {
@@ -1160,7 +1159,7 @@ TEST_CASE("Unicode" * doctest::skip())
 
         SECTION("check JSON Pointers")
         {
-            for (auto s : j)
+            for (const auto& s : j)
             {
                 // skip non-string JSON values
                 if (!s.is_string())
@@ -1177,13 +1176,13 @@ TEST_CASE("Unicode" * doctest::skip())
                 }
 
                 // JSON Pointers must begin with "/"
-                ptr = "/" + ptr;
+                ptr.insert(0, "/");
 
                 CHECK_NOTHROW(json::json_pointer("/" + ptr));
 
                 // check escape/unescape roundtrip
-                auto escaped = json::json_pointer::escape(ptr);
-                json::json_pointer::unescape(escaped);
+                auto escaped = nlohmann::detail::escape(ptr);
+                nlohmann::detail::unescape(escaped);
                 CHECK(escaped == ptr);
             }
         }
@@ -1202,7 +1201,8 @@ TEST_CASE("Unicode" * doctest::skip())
         SECTION("with an iterator")
         {
             std::string i = "\xef\xbb\xbf{\n   \"foo\": true\n}";
-            CHECK_NOTHROW(json::parse(i.begin(), i.end()));
+            json _;
+            CHECK_NOTHROW(_ = json::parse(i.begin(), i.end()));
         }
     }
 
@@ -1256,7 +1256,7 @@ void roundtrip(bool success_expected, const std::string& s)
         CHECK_THROWS_AS(_ = json::parse(ps), json::parse_error&);
     }
 }
-}
+} // namespace
 
 TEST_CASE("Markus Kuhn's UTF-8 decoder capability and stress test")
 {

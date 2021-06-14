@@ -17,87 +17,6 @@ group: edge
 matrix:
   include:
 
-  # Valgrind
-  - os: linux
-    compiler: gcc
-    env:
-      - COMPILER=g++-4.9
-      - CMAKE_OPTIONS=-DJSON_Valgrind=ON
-    addons:
-      apt:
-        sources: ['ubuntu-toolchain-r-test']
-        packages: ['g++-4.9', 'valgrind', 'ninja-build']
-
-  # clang sanitizer
-  - os: linux
-    compiler: clang
-    env:
-      - COMPILER=clang++-7
-      - CMAKE_OPTIONS=-DJSON_Sanitizer=ON
-      - UBSAN_OPTIONS=print_stacktrace=1,suppressions=$(pwd)/test/src/UBSAN.supp
-    addons:
-      apt:
-        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-7']
-        packages: ['g++-6', 'clang-7', 'ninja-build']
-    before_script:
-      - export PATH=$PATH:/usr/lib/llvm-7/bin
-
-  # cppcheck
-  - os: linux
-    compiler: gcc
-    env:
-      - COMPILER=g++-4.9
-      - SPECIAL=cppcheck
-    addons:
-      apt:
-        sources: ['ubuntu-toolchain-r-test']
-        packages: ['g++-4.9', 'cppcheck', 'ninja-build']
-    after_success:
-      - make cppcheck
-
-  # no exceptions
-  - os: linux
-    compiler: gcc
-    env:
-      - COMPILER=g++-4.9
-      - CMAKE_OPTIONS=-DJSON_NoExceptions=ON
-    addons:
-      apt:
-        sources: ['ubuntu-toolchain-r-test']
-        packages: ['g++-4.9', 'ninja-build']
-
-  # check amalgamation
-  - os: linux
-    compiler: gcc
-    env:
-      - COMPILER=g++-4.9
-      - SPECIAL=amalgamation
-      - MULTIPLE_HEADERS=ON
-    addons:
-      apt:
-        sources: ['ubuntu-toolchain-r-test']
-        packages: ['g++-4.9', 'astyle', 'ninja-build']
-    after_success:
-      - make check-amalgamation
-
-  # Coveralls (http://gronlier.fr/blog/2015/01/adding-code-coverage-to-your-c-project/)
-
-  - os: linux
-    compiler: gcc
-    dist: bionic
-    addons:
-      apt:
-        sources: ['ubuntu-toolchain-r-test']
-        packages: ['g++-7', 'ninja-build']
-    before_script:
-      - pip install --user cpp-coveralls
-    after_success:
-      - coveralls --build-root test --include include/nlohmann --gcov 'gcov-7' --gcov-options '\-lp'
-    env:
-      - COMPILER=g++-7
-      - CMAKE_OPTIONS=-DJSON_Coverage=ON
-      - MULTIPLE_HEADERS=ON
-
   # Coverity (only for branch coverity_scan)
 
   - os: linux
@@ -125,56 +44,9 @@ matrix:
   # OSX / Clang
 
   - os: osx
-    osx_image: xcode9.3
-
-  - os: osx
-    osx_image: xcode9.4
-
-  - os: osx
-    osx_image: xcode10
-
-  - os: osx
-    osx_image: xcode10.1
-
-  - os: osx
     osx_image: xcode10.2
 
-  - os: osx
-    osx_image: xcode11.2
-
-  - os: osx
-    osx_image: xcode12
-
-  - os: osx
-    osx_image: xcode12
-    env:
-      - IMPLICIT_CONVERSIONS=OFF
-
   # Linux / GCC
-
-  - os: linux
-    compiler: gcc
-    env: COMPILER=g++-4.8
-    addons:
-      apt:
-        sources: ['ubuntu-toolchain-r-test']
-        packages: ['g++-4.8', 'ninja-build']
-
-  - os: linux
-    compiler: gcc
-    env: COMPILER=g++-4.9
-    addons:
-      apt:
-        sources: ['ubuntu-toolchain-r-test']
-        packages: ['g++-4.9', 'ninja-build']
-
-  - os: linux
-    compiler: gcc
-    env: COMPILER=g++-5
-    addons:
-      apt:
-        sources: ['ubuntu-toolchain-r-test']
-        packages: ['g++-5', 'ninja-build']
 
   - os: linux
     compiler: gcc
@@ -183,134 +55,6 @@ matrix:
       apt:
         sources: ['ubuntu-toolchain-r-test']
         packages: ['g++-6', 'ninja-build']
-
-  - os: linux
-    compiler: gcc
-    env: COMPILER=g++-7
-    addons:
-      apt:
-        sources: ['ubuntu-toolchain-r-test']
-        packages: ['g++-7', 'ninja-build']
-
-  - os: linux
-    compiler: gcc
-    env: COMPILER=g++-8
-    addons:
-      apt:
-        sources: ['ubuntu-toolchain-r-test']
-        packages: ['g++-8', 'ninja-build']
-
-  - os: linux
-    compiler: gcc
-    env: COMPILER=g++-9
-    addons:
-      apt:
-        sources: ['ubuntu-toolchain-r-test']
-        packages: ['g++-9', 'ninja-build']
-
-  - os: linux
-    compiler: gcc
-    env:
-      - COMPILER=g++-9
-      - IMPLICIT_CONVERSIONS=OFF
-    addons:
-      apt:
-        sources: ['ubuntu-toolchain-r-test']
-        packages: ['g++-9', 'ninja-build']
-
-  - os: linux
-    compiler: gcc
-    env:
-      - COMPILER=g++-9
-      - CXXFLAGS=-std=c++2a
-    addons:
-      apt:
-        sources: ['ubuntu-toolchain-r-test']
-        packages: ['g++-9', 'ninja-build']
-
-  # Linux / Clang
-
-  - os: linux
-    compiler: clang
-    env: COMPILER=clang++-3.5
-    addons:
-      apt:
-        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.5']
-        packages: ['g++-6', 'clang-3.5', 'ninja-build']
-
-  - os: linux
-    compiler: clang
-    env: COMPILER=clang++-3.6
-    addons:
-      apt:
-        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.6']
-        packages: ['g++-6', 'clang-3.6', 'ninja-build']
-
-  - os: linux
-    compiler: clang
-    env: COMPILER=clang++-3.7
-    addons:
-      apt:
-        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.7']
-        packages: ['g++-6', 'clang-3.7', 'ninja-build']
-
-  - os: linux
-    compiler: clang
-    env: COMPILER=clang++-3.8
-    addons:
-      apt:
-        sources: ['ubuntu-toolchain-r-test']
-        packages: ['g++-6', 'clang-3.8', 'ninja-build']
-
-  - os: linux
-    compiler: clang
-    env: COMPILER=clang++-3.9
-    addons:
-      apt:
-        sources: ['ubuntu-toolchain-r-test']
-        packages: ['g++-6', 'clang-3.9', 'ninja-build']
-
-  - os: linux
-    compiler: clang
-    env: COMPILER=clang++-4.0
-    addons:
-      apt:
-        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-4.0']
-        packages: ['g++-6', 'clang-4.0', 'ninja-build']
-
-  - os: linux
-    compiler: clang
-    env: COMPILER=clang++-5.0
-    addons:
-      apt:
-        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-5.0']
-        packages: ['g++-6', 'clang-5.0', 'ninja-build']
-
-  - os: linux
-    compiler: clang
-    env: COMPILER=clang++-6.0
-    addons:
-      apt:
-        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-6.0']
-        packages: ['g++-6', 'clang-6.0', 'ninja-build']
-
-  - os: linux
-    compiler: clang
-    env: COMPILER=clang++-7
-    addons:
-      apt:
-        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-7']
-        packages: ['g++-6', 'clang-7', 'ninja-build']
-
-  - os: linux
-    compiler: clang
-    env:
-      - COMPILER=clang++-7
-      - CXXFLAGS=-std=c++1z
-    addons:
-      apt:
-        sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-7']
-        packages: ['g++-6', 'clang-7', 'ninja-build']
 
 ################
 # build script #
@@ -328,15 +72,17 @@ script:
 
   # make sure CXX is correctly set
   - if [[ "${COMPILER}" != "" ]]; then export CXX=${COMPILER}; fi
-  # by default, use the single-header version
-  - if [[ "${MULTIPLE_HEADERS}" == "" ]]; then export MULTIPLE_HEADERS=OFF; fi
-  # by default, use implicit conversions
-  - if [[ "${IMPLICIT_CONVERSIONS}" == "" ]]; then export IMPLICIT_CONVERSIONS=ON; fi
+
+  # append CXX_STANDARD to CMAKE_OPTIONS if required
+  - CMAKE_OPTIONS+=${CXX_STANDARD:+ -DCMAKE_CXX_STANDARD=$CXX_STANDARD -DCMAKE_CXX_STANDARD_REQUIRED=ON}
+
+  # build configuration
+  - CMAKE_OPTIONS+=" -DCMAKE_BUILD_TYPE=Release"
 
   # compile and execute unit tests
   - mkdir -p build && cd build
-  - cmake .. ${CMAKE_OPTIONS} -DJSON_MultipleHeaders=${MULTIPLE_HEADERS} -DJSON_ImplicitConversions=${IMPLICIT_CONVERSIONS} -DJSON_BuildTests=On -GNinja && cmake --build . --config Release
-  - ctest -C Release --timeout 2700 -V -j
+  - cmake .. ${CMAKE_OPTIONS} -DJSON_BuildTests=On -GNinja && cmake --build .
+  - ctest --timeout 2700 -V -j
   - cd ..
 
   # check if homebrew works (only checks develop branch)   
