@@ -88,7 +88,7 @@ Thanks everyone!
 #include <nlohmann/json.hpp>
 
 // for convenience
-using json = nlohmann::json;
+using nlohmann::json;
 ```
 
 to the files you want to process JSON and set the necessary switches to enable C++11 (e.g., `-std=c++11` for GCC and Clang).
