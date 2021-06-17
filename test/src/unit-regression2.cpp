@@ -39,6 +39,7 @@ using nlohmann::json;
 
 #include <list>
 #include <cstdio>
+#include <type_traits>
 #include <utility>
 
 #if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_HAS_CXX17) && _HAS_CXX17 == 1) // fix for issue #464
@@ -619,5 +620,10 @@ TEST_CASE("regression tests 2")
             // call to_json with a non-null JSON value
             nlohmann::to_json(o["foo"], s);
         }
+    }
+
+    SECTION("issue #2825 - Properly constrain the basic_json conversion operator")
+    {
+        static_assert(std::is_copy_assignable<nlohmann::ordered_json>::value, "");
     }
 }
