@@ -54,7 +54,7 @@ assert(p == p2);
 To make this work with one of your types, you only need to provide two functions:
 
 ```cpp
-using nlohmann::json;
+using json = nlohmann::json;
 
 namespace ns {
     void to_json(json& j, const person& p) {
