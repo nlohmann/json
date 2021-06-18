@@ -88,7 +88,7 @@ Thanks everyone!
 #include <nlohmann/json.hpp>
 
 // for convenience
-using nlohmann::json;
+using json = nlohmann::json;
 ```
 
 to the files you want to process JSON and set the necessary switches to enable C++11 (e.g., `-std=c++11` for GCC and Clang).
@@ -870,7 +870,7 @@ assert(p == p2);
 To make this work with one of your types, you only need to provide two functions:
 
 ```cpp
-using nlohmann::json;
+using json = nlohmann::json;
 
 namespace ns {
     void to_json(json& j, const person& p) {
