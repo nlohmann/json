@@ -186,12 +186,12 @@ When defined to `0`, implicit conversions are switched off. By default, implicit
 ??? example
 
     This is an example for an implicit conversion:
-    
+
     ```cpp
     json j = "Hello, world!";
     std::string s = j;
     ```
-    
+
     When `JSON_USE_IMPLICIT_CONVERSIONS` is defined to `0`, the code above does no longer compile. Instead, it must be
     written like this:
 
@@ -220,6 +220,10 @@ The first parameter is the name of the class/struct, and all remaining parameter
 
 See [Simplify your life with macros](arbitrary_types.md#simplify-your-life-with-macros) for an example.
 
+## `NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(type, member...)`
+
+This macro is similar to `NLOHMANN_DEFINE_TYPE_INTRUSIVE` but will throw no exceptions. When converting JSON object to type object, if any field is missing in JSON object, it will use default value constructed by the type itself.
+
 ## `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(type, member...)`
 
 This macro can be used to simplify the serialization/deserialization of types if (1) want to use a JSON object as
@@ -230,6 +234,10 @@ accessed. Use [`NLOHMANN_DEFINE_TYPE_INTRUSIVE`](#nlohmann_define_type_intrusive
 first parameter is the name of the class/struct, and all remaining parameters name the members.
 
 See [Simplify your life with macros](arbitrary_types.md#simplify-your-life-with-macros) for an example.
+
+## `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(type, member...)`
+
+This macro is similar to `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE` but will throw no exceptions. When converting JSON object to type object, if any field is missing in JSON object, it will use default value constructed by the type itself.
 
 ## `NLOHMANN_JSON_SERIALIZE_ENUM(type, ...)`
 
