@@ -27,7 +27,7 @@ The library targets C++11, but also supports some features introduced in later C
 ## `JSON_NOEXCEPTION`
 
 Exceptions can be switched off by defining the symbol `JSON_NOEXCEPTION`.
-When defining `JSON_NOEXCEPTION`, `#!cpp try` is replaced by `#!cpp if (true)`, 
+When defining `JSON_NOEXCEPTION`, `#!cpp try` is replaced by `#!cpp if (true)`,
 `#!cpp catch` is replaced by `#!cpp if (false)`, and `#!cpp throw` is replaced by `#!cpp std::abort()`.
 
 The same effect is achieved by setting the compiler flag `-fno-exceptions`.
@@ -55,12 +55,12 @@ When defined to `0`, implicit conversions are switched off. By default, implicit
 ??? example
 
     This is an example for an implicit conversion:
-    
+
     ```cpp
     json j = "Hello, world!";
     std::string s = j;
     ```
-    
+
     When `JSON_USE_IMPLICIT_CONVERSIONS` is defined to `0`, the code above does no longer compile. Instead, it must be written like this:
 
     ```cpp
@@ -79,6 +79,10 @@ The first parameter is the name of the class/struct, and all remaining parameter
 
 See [Simplify your life with macros](arbitrary_types.md#simplify-your-life-with-macros) for an example.
 
+## `NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(type, member...)`
+
+This macro is similar to `NLOHMANN_DEFINE_TYPE_INTRUSIVE` but will throw no exceptions. When converting JSON object to type object, if any field is missing in JSON object, it will use default value constructed by the type itself.
+
 ## `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(type, member...)`
 
 This macro can be used to simplify the serialization/deserialization of types if (1) want to use a JSON object as serialization and (2) want to use the member variable names as object keys in that object.
@@ -87,6 +91,10 @@ The macro is to be defined inside of the namespace of the class/struct to create
 The first parameter is the name of the class/struct, and all remaining parameters name the members.
 
 See [Simplify your life with macros](arbitrary_types.md#simplify-your-life-with-macros) for an example.
+
+## `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(type, member...)`
+
+This macro is similar to `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE` but will throw no exceptions. When converting JSON object to type object, if any field is missing in JSON object, it will use default value constructed by the type itself.
 
 ## `NLOHMANN_JSON_SERIALIZE_ENUM(type, ...)`
 
