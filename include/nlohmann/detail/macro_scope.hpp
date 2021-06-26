@@ -375,26 +375,56 @@
 #define NLOHMANN_JSON_FROM_WITH_DEFAULT(v1) nlohmann_json_t.v1 = nlohmann_json_j.value(#v1, nlohmann_json_default_obj.v1);
 
 /*!
-@brief macro
+@brief macro to briefly define intrusive serialization of a given type to/from JSON
+@note you can define your own specialized macroses like NLOHMANN_DEFINE_TYPE_INTRUSIVE
+@def NLOHMANN_DEFINE_TYPE_INTRUSIVE_IMPL
+@since version 3.9.2
+*/
+#define NLOHMANN_DEFINE_TYPE_INTRUSIVE_IMPL(BasicJsonType, Type, ...)                  \
+    friend void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t)   \
+    {                                                                                  \
+        NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__))       \
+    }                                                                                  \
+    friend void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) \
+    {                                                                                  \
+        NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, __VA_ARGS__))     \
+    }
+
+/*!
+@brief macro to briefly define non-intrusive serialization of a given type to/from JSON
+@note you can define your own specialized macroses like NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE
+@def NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_IMPL
+@since version 3.9.2
+*/
+#define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_IMPL(BasicJsonType, Type, ...)              \
+    inline void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t)   \
+    {                                                                                  \
+        NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__))       \
+    }                                                                                  \
+    inline void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) \
+    {                                                                                  \
+        NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, __VA_ARGS__))     \
+    }
+
+/*!
+@brief macro to briefly define intrusive serialization of given type to/from nlohmann::json
 @def NLOHMANN_DEFINE_TYPE_INTRUSIVE
 @since version 3.9.0
+@sa NLOHMANN_DEFINE_TYPE_INTRUSIVE_IMPL
 */
-#define NLOHMANN_DEFINE_TYPE_INTRUSIVE(Type, ...)  \
-    friend void to_json(nlohmann::json& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) } \
-    friend void from_json(const nlohmann::json& nlohmann_json_j, Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, __VA_ARGS__)) }
+#define NLOHMANN_DEFINE_TYPE_INTRUSIVE(Type, ...) NLOHMANN_DEFINE_TYPE_INTRUSIVE_IMPL(nlohmann::json, Type, __VA_ARGS__)
 
 #define NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(Type, ...)  \
     friend void to_json(nlohmann::json& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) } \
     friend void from_json(const nlohmann::json& nlohmann_json_j, Type& nlohmann_json_t) { Type nlohmann_json_default_obj; NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT, __VA_ARGS__)) }
 
 /*!
-@brief macro
+@brief macro to briefly define non-intrusive serialization of given type to/from nlohmann::json
 @def NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE
 @since version 3.9.0
+@sa NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_IMPL
 */
-#define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Type, ...)  \
-    inline void to_json(nlohmann::json& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) } \
-    inline void from_json(const nlohmann::json& nlohmann_json_j, Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, __VA_ARGS__)) }
+#define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Type, ...) NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_IMPL(nlohmann::json, Type, __VA_ARGS__)
 
 #define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(Type, ...)  \
     inline void to_json(nlohmann::json& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) } \
