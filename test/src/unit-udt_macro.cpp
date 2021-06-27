@@ -181,33 +181,33 @@ struct TestTypePair
 TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRUSIVE T", PairT, PERSON_PAIRS)
 {
     using T = typename PairT::TestedType;
-    using json = typename PairT::BasicJsonType;
+    using json_t = typename PairT::BasicJsonType;
 
     SECTION("person")
     {
         // serialization
         T p1("Erik", 1, {{"haircuts", 2}});
-        if ( std::is_same<json, nlohmann::ordered_json>::value )
+        if ( std::is_same<json_t, nlohmann::ordered_json>::value )
         {
-            CHECK(json(p1).dump() == "{\"age\":1,\"name\":\"Erik\",\"metadata\":{\"haircuts\":2}}");
+            CHECK(json_t(p1).dump() == "{\"age\":1,\"name\":\"Erik\",\"metadata\":{\"haircuts\":2}}");
         }
         else
         {
-            CHECK(json(p1).dump() == "{\"age\":1,\"metadata\":{\"haircuts\":2},\"name\":\"Erik\"}");
+            CHECK(json_t(p1).dump() == "{\"age\":1,\"metadata\":{\"haircuts\":2},\"name\":\"Erik\"}");
         }
 
         // deserialization
-        auto p2 = json(p1).template get<T>();
+        auto p2 = json_t(p1).template get<T>();
         CHECK(p2 == p1);
 
         // roundtrip
-        CHECK(T(json(p1)) == p1);
-        CHECK(json(T(json(p1))) == json(p1));
+        CHECK(T(json_t(p1)) == p1);
+        CHECK(json_t(T(json_t(p1))) == json_t(p1));
 
         // check exception in case of missing field
-        json j = json(p1);
+        json_t j = json_t(p1);
         j.erase("age");
-        CHECK_THROWS_WITH_AS(j.template get<T>(), "[json.exception.out_of_range.403] key 'age' not found", typename json::out_of_range);
+        CHECK_THROWS_WITH_AS(j.template get<T>(), "[json.exception.out_of_range.403] key 'age' not found", typename json_t::out_of_range);
     }
 }
 
@@ -222,13 +222,13 @@ TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRU
 TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/private member variables via NLOHMANN_DEFINE_TYPE_INTRUSIVE and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE", PairT, ALPHABET_PAIRS)
 {
     using T = typename PairT::TestedType;
-    using json = typename PairT::BasicJsonType;
+    using json_t = typename PairT::BasicJsonType;
 
     SECTION("alphabet")
     {
         {
             T obj1;
-            json j = obj1; //via json object
+            json_t j = obj1; //via json object
             T obj2;
             j.get_to(obj2);
             bool ok = (obj1 == obj2);
@@ -237,9 +237,9 @@ TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/priv
 
         {
             T obj1;
-            json j1 = obj1; //via json string
+            json_t j1 = obj1; //via json string
             std::string s = j1.dump();
-            json j2 = json::parse(s);
+            json_t j2 = json_t::parse(s);
             T obj2;
             j2.get_to(obj2);
             bool ok = (obj1 == obj2);
@@ -248,9 +248,9 @@ TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/priv
 
         {
             T obj1;
-            json j1 = obj1; //via msgpack
-            std::vector<uint8_t> buf = json::to_msgpack(j1);
-            json j2 = json::from_msgpack(buf);
+            json_t j1 = obj1; //via msgpack
+            std::vector<uint8_t> buf = json_t::to_msgpack(j1);
+            json_t j2 = json_t::from_msgpack(buf);
             T obj2;
             j2.get_to(obj2);
             bool ok = (obj1 == obj2);
@@ -259,9 +259,9 @@ TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/priv
 
         {
             T obj1;
-            json j1 = obj1; //via bson
-            std::vector<uint8_t> buf = json::to_bson(j1);
-            json j2 = json::from_bson(buf);
+            json_t j1 = obj1; //via bson
+            std::vector<uint8_t> buf = json_t::to_bson(j1);
+            json_t j2 = json_t::from_bson(buf);
             T obj2;
             j2.get_to(obj2);
             bool ok = (obj1 == obj2);
@@ -270,9 +270,9 @@ TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/priv
 
         {
             T obj1;
-            json j1 = obj1; //via cbor
-            std::vector<uint8_t> buf = json::to_cbor(j1);
-            json j2 = json::from_cbor(buf);
+            json_t j1 = obj1; //via cbor
+            std::vector<uint8_t> buf = json_t::to_cbor(j1);
+            json_t j2 = json_t::from_cbor(buf);
             T obj2;
             j2.get_to(obj2);
             bool ok = (obj1 == obj2);
@@ -281,9 +281,9 @@ TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/priv
 
         {
             T obj1;
-            json j1 = obj1; //via ubjson
-            std::vector<uint8_t> buf = json::to_ubjson(j1);
-            json j2 = json::from_ubjson(buf);
+            json_t j1 = obj1; //via ubjson
+            std::vector<uint8_t> buf = json_t::to_ubjson(j1);
+            json_t j2 = json_t::from_ubjson(buf);
             T obj2;
             j2.get_to(obj2);
             bool ok = (obj1 == obj2);
