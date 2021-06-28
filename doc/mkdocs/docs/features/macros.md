@@ -222,7 +222,7 @@ See [Simplify your life with macros](arbitrary_types.md#simplify-your-life-with-
 
 ## `NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(type, member...)`
 
-This macro is similar to `NLOHMANN_DEFINE_TYPE_INTRUSIVE`. It will not throw an exception in `from_json()` due to a missing value in the JSON, but can throw due to a mismatched type. In order to support that it requires that the type be default constructible. The `from_json()` function default constructs an object and uses its values as the defaults when calling the `value()` function.
+This macro is similar to `NLOHMANN_DEFINE_TYPE_INTRUSIVE`. It will not throw an exception in `from_json()` due to a missing value in the JSON object, but can throw due to a mismatched type. In order to support that it requires that the type be default constructible. The `from_json()` function default constructs an object and uses its values as the defaults when calling the `value()` function.
 
 ## `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(type, member...)`
 
@@ -237,7 +237,7 @@ See [Simplify your life with macros](arbitrary_types.md#simplify-your-life-with-
 
 ## `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(type, member...)`
 
-This macro is similar to `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE`. It will not throw an exception in `from_json()` due to a missing value in the JSON, but can throw due to a mismatched type. In order to support that it requires that the type be default constructible. The `from_json()` function default constructs an object and uses its values as the defaults when calling the `value()` function.
+This macro is similar to `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE`. It will not throw an exception in `from_json()` due to a missing value in the JSON object, but can throw due to a mismatched type. In order to support that it requires that the type be default constructible. The `from_json()` function default constructs an object and uses its values as the defaults when calling the `value()` function.
 
 ## `NLOHMANN_JSON_SERIALIZE_ENUM(type, ...)`
 
