@@ -334,6 +334,10 @@ TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRU
 {
     SECTION("person with default values")
     {
+        // serialization of default constructed object
+        T p0;
+        CHECK(json(p0).dump() == "{\"age\":0,\"metadata\":null,\"name\":\"\"}");
+
         // serialization
         T p1("Erik", 1, {{"haircuts", 2}});
         CHECK(json(p1).dump() == "{\"age\":1,\"metadata\":{\"haircuts\":2},\"name\":\"Erik\"}");
