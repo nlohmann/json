@@ -79,15 +79,15 @@ class person_with_private_data_2
         , metadata(std::move(metadata_))
     {}
 
-    std::string getName()
+    std::string getName() const
     {
         return name;
     }
-    int getAge()
+    int getAge() const
     {
         return age;
     }
-    json getMetadata()
+    json getMetadata() const
     {
         return metadata;
     }
@@ -158,15 +158,15 @@ class person_without_private_data_3
         , metadata(std::move(metadata_))
     {}
 
-    std::string getName()
+    std::string getName() const
     {
         return name;
     }
-    int getAge()
+    int getAge() const
     {
         return age;
     }
-    json getMetadata()
+    json getMetadata() const
     {
         return metadata;
     }
