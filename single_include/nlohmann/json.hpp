@@ -38,7 +38,9 @@ SOFTWARE.
 #include <cstddef> // nullptr_t, ptrdiff_t, size_t
 #include <functional> // hash, less
 #include <initializer_list> // initializer_list
-#include <iosfwd> // istream, ostream
+#ifndef JSON_NO_IO
+    #include <iosfwd> // istream, ostream
+#endif  // JSON_NO_IO
 #include <iterator> // random_access_iterator_tag
 #include <memory> // unique_ptr
 #include <numeric> // accumulate
@@ -5227,15 +5229,18 @@ std::size_t hash(const BasicJsonType& j)
 
 #include <array> // array
 #include <cstddef> // size_t
-#include <cstdio> //FILE *
 #include <cstring> // strlen
-#include <istream> // istream
 #include <iterator> // begin, end, iterator_traits, random_access_iterator_tag, distance, next
 #include <memory> // shared_ptr, make_shared, addressof
 #include <numeric> // accumulate
 #include <string> // string, char_traits
 #include <type_traits> // enable_if, is_base_of, is_pointer, is_integral, remove_pointer
 #include <utility> // pair, declval
+
+#ifndef JSON_NO_IO
+    #include <cstdio>   //FILE *
+    #include <istream>  // istream
+#endif                  // JSON_NO_IO
 
 // #include <nlohmann/detail/iterators/iterator_traits.hpp>
 
@@ -5253,6 +5258,7 @@ enum class input_format_t { json, cbor, msgpack, ubjson, bson };
 // input adapters //
 ////////////////////
 
+#ifndef JSON_NO_IO
 /*!
 Input adapter for stdio file access. This adapter read only 1 byte and do not use any
  buffer. This adapter is a very low level adapter.
@@ -5344,6 +5350,7 @@ class input_stream_adapter
     std::istream* is = nullptr;
     std::streambuf* sb = nullptr;
 };
+#endif  // JSON_NO_IO
 
 // General-purpose iterator-based adapter. It might not be as fast as
 // theoretically possible for some containers, but it is extremely versatile.
@@ -5630,6 +5637,7 @@ typename container_input_adapter_factory_impl::container_input_adapter_factory<C
     return container_input_adapter_factory_impl::container_input_adapter_factory<ContainerType>::create(container);
 }
 
+#ifndef JSON_NO_IO
 // Special cases with fast paths
 inline file_input_adapter input_adapter(std::FILE* file)
 {
@@ -5645,6 +5653,7 @@ inline input_stream_adapter input_adapter(std::istream&& stream)
 {
     return input_stream_adapter(stream);
 }
+#endif  // JSON_NO_IO
 
 using contiguous_bytes_input_adapter = decltype(input_adapter(std::declval<const char*>(), std::declval<const char*>()));
 
@@ -13119,12 +13128,16 @@ class json_ref
 
 #include <algorithm> // copy
 #include <cstddef> // size_t
-#include <ios> // streamsize
 #include <iterator> // back_inserter
 #include <memory> // shared_ptr, make_shared
-#include <ostream> // basic_ostream
 #include <string> // basic_string
 #include <vector> // vector
+
+#ifndef JSON_NO_IO
+    #include <ios>      // streamsize
+    #include <ostream>  // basic_ostream
+#endif  // JSON_NO_IO
+
 // #include <nlohmann/detail/macro_scope.hpp>
 
 
@@ -13174,6 +13187,7 @@ class output_vector_adapter : public output_adapter_protocol<CharType>
     std::vector<CharType>& v;
 };
 
+#ifndef JSON_NO_IO
 /// output adapter for output streams
 template<typename CharType>
 class output_stream_adapter : public output_adapter_protocol<CharType>
@@ -13197,6 +13211,7 @@ class output_stream_adapter : public output_adapter_protocol<CharType>
   private:
     std::basic_ostream<CharType>& stream;
 };
+#endif  // JSON_NO_IO
 
 /// output adapter for basic_string
 template<typename CharType, typename StringType = std::basic_string<CharType>>
@@ -13229,8 +13244,10 @@ class output_adapter
     output_adapter(std::vector<CharType>& vec)
         : oa(std::make_shared<output_vector_adapter<CharType>>(vec)) {}
 
+#ifndef JSON_NO_IO
     output_adapter(std::basic_ostream<CharType>& s)
         : oa(std::make_shared<output_stream_adapter<CharType>>(s)) {}
+#endif  // JSON_NO_IO
 
     output_adapter(StringType& s)
         : oa(std::make_shared<output_string_adapter<CharType, StringType>>(s)) {}
@@ -23679,7 +23696,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     /// @name serialization
     /// @{
-
+#ifndef JSON_NO_IO
     /*!
     @brief serialize to stream
 
@@ -23739,7 +23756,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     {
         return o << j;
     }
-
+#endif  // JSON_NO_IO
     /// @}
 
 
@@ -23997,7 +24014,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
                : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia)).sax_parse(format, sax, strict);
     }
-
+#ifndef JSON_NO_IO
     /*!
     @brief deserialize from stream
     @deprecated This stream operator is deprecated and will be removed in
@@ -24042,7 +24059,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         parser(detail::input_adapter(i)).parse(false, j);
         return i;
     }
-
+#endif  // JSON_NO_IO
     /// @}
 
     ///////////////////////////
