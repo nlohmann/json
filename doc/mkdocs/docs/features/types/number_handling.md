@@ -96,6 +96,21 @@ This is the same behavior as the code `#!c double x = 3.141592653589793238462643
     - All integers outside the range $[-2^{63}, 2^{64}-1]$, as well as floating-point numbers are stored as `double`.
       This also concurs with the specification above.
 
+### Zeros
+
+The JSON number grammar allows for different ways to express zero, and this library will store zeros differently:
+
+| Literal | Stored value and type | Serialization |
+| ------- | --------------------- | ------------- |
+| `0`     | `#!c std::uint64_t(0)` | `0`          |
+| `-0`    | `#!c std::int64_t(0)` | `0`           |
+| `0.0`   | `#!c double(0.0)`     | `0.0`         |
+| `-0.0`  | `#!c double(-0.0)`    | `-0.0`        |
+| `0E0`   | `#!c double(0.0)`     | `0.0`         |
+| `-0E0`  | `#!c double(-0.0)`    | `-0.0`        |
+
+That is, `-0` is stored as a signed integer, but the serialization does not reproduce the `-`.
+
 ### Number serialization
 
 - Integer numbers are serialized as is; that is, no scientific notation is used.
