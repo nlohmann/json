@@ -560,7 +560,7 @@ add_custom_target(ci_clang_analyze
 ###############################################################################
 
 add_custom_target(ci_cppcheck
-    COMMAND ${CPPCHECK_TOOL} --enable=warning --inline-suppr --inconclusive --force --std=c++11 ${PROJECT_SOURCE_DIR}/single_include/nlohmann/json.hpp --error-exitcode=1
+    COMMAND ${CPPCHECK_TOOL} --enable=warning --suppress=missingReturn --inline-suppr --inconclusive --force --std=c++11 ${PROJECT_SOURCE_DIR}/single_include/nlohmann/json.hpp --error-exitcode=1
     COMMENT "Check code with Cppcheck"
 )
 
