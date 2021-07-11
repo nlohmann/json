@@ -32,6 +32,10 @@ When defining `JSON_NOEXCEPTION`, `#!cpp try` is replaced by `#!cpp if (true)`,
 
 The same effect is achieved by setting the compiler flag `-fno-exceptions`.
 
+## `JSON_NO_IO`
+
+When defined, headers `<cstdio>`, `<ios>`, `<iosfwd>`, `<istream>`, and `<ostream>` are not included and parse functions relying on these headers are excluded. This is relevant for environment where these I/O functions are disallowed for security reasons (e.g., Intel Software Guard Extensions (SGX)).
+
 ## `JSON_SKIP_UNSUPPORTED_COMPILER_CHECK`
 
 When defined, the library will not create a compile error when a known unsupported compiler is detected. This allows to use the library with compilers that do not fully support C++11 and may only work if unsupported features are not used.
