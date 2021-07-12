@@ -22701,13 +22701,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @note: This uses std::distance to support GCC 4.8,
     ///        see https://github.com/nlohmann/json/pull/1257
     template<typename... Args>
-    iterator insert_iterator(const_iterator pos, typename iterator::difference_type cnt, Args&& ... args)
+    iterator insert_iterator(const_iterator pos, Args&& ... args)
     {
         iterator result(this);
         JSON_ASSERT(m_value.array != nullptr);
 
         auto insert_pos = std::distance(m_value.array->begin(), pos.m_it.array_iterator);
-        const auto capacity = m_value.array->capacity();
         m_value.array->insert(pos.m_it.array_iterator, std::forward<Args>(args)...);
         result.m_it.array_iterator = m_value.array->begin() + insert_pos;
 
@@ -22715,17 +22714,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // result.m_it.array_iterator = m_value.array->insert(pos.m_it.array_iterator, cnt, val);
         // but the return value of insert is missing in GCC 4.8, so it is written this way instead.
 
-        if (capacity == m_value.array->capacity())
-        {
-            // capacity has not changed: updating parent of inserted elements is sufficient
-            set_parents(result, cnt);
-        }
-        else
-        {
-            // capacity has changed: update all elements' parents
-            set_parents();
-        }
-
+        set_parents();
         return result;
     }
 
@@ -22763,7 +22752,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             }
 
             // insert to array and return iterator
-            return insert_iterator(pos, static_cast<typename iterator::difference_type>(1), val);
+            return insert_iterator(pos, val);
         }
 
         JSON_THROW(type_error::create(309, "cannot use insert() with " + std::string(type_name()), *this));
@@ -22814,7 +22803,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             }
 
             // insert to array and return iterator
-            return insert_iterator(pos, static_cast<typename iterator::difference_type>(cnt), cnt, val);
+            return insert_iterator(pos, cnt, val);
         }
 
         JSON_THROW(type_error::create(309, "cannot use insert() with " + std::string(type_name()), *this));
@@ -22876,7 +22865,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
 
         // insert to array and return iterator
-        return insert_iterator(pos, std::distance(first, last), first.m_it.array_iterator, last.m_it.array_iterator);
+        return insert_iterator(pos, first.m_it.array_iterator, last.m_it.array_iterator);
     }
 
     /*!
@@ -22918,7 +22907,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
 
         // insert to array and return iterator
-        return insert_iterator(pos, static_cast<typename iterator::difference_type>(ilist.size()), ilist.begin(), ilist.end());
+        return insert_iterator(pos, ilist.begin(), ilist.end());
     }
 
     /*!
