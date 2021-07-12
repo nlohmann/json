@@ -117,6 +117,8 @@ TEST_CASE("Better diagnostics")
             json j_arr = json::array();
             j_arr.push_back(json::object());
             j_arr.push_back(json::object());
+            j_arr.push_back(json::object());
+            j_arr.push_back(json::object());
             json j_obj = json::object();
             j_obj["key"] = j_arr;
         }
@@ -125,6 +127,8 @@ TEST_CASE("Better diagnostics")
         {
             json j_arr = json::array();
             auto object = json::object();
+            j_arr.push_back(object);
+            j_arr.push_back(object);
             j_arr.push_back(object);
             j_arr.push_back(object);
             json j_obj = json::object();
@@ -136,6 +140,8 @@ TEST_CASE("Better diagnostics")
             json j_arr = json::array();
             j_arr.emplace_back(json::object());
             j_arr.emplace_back(json::object());
+            j_arr.emplace_back(json::object());
+            j_arr.emplace_back(json::object());
             json j_obj = json::object();
             j_obj["key"] = j_arr;
         }
@@ -143,6 +149,8 @@ TEST_CASE("Better diagnostics")
         // iterator insert(const_iterator pos, const basic_json& val)
         {
             json j_arr = json::array();
+            j_arr.insert(j_arr.begin(), json::object());
+            j_arr.insert(j_arr.begin(), json::object());
             j_arr.insert(j_arr.begin(), json::object());
             j_arr.insert(j_arr.begin(), json::object());
             json j_obj = json::object();
