@@ -5429,7 +5429,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             // capacity has changed: update all elements' parents
             set_parents();
         }
-        set_parent(m_value.array->back());
     }
 
     /*!
