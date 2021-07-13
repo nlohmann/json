@@ -1304,9 +1304,21 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return it;
     }
 
-    reference set_parent(reference j)
+    reference set_parent(reference j, std::size_t old_capacity = -1)
     {
 #if JSON_DIAGNOSTICS
+        if (old_capacity != -1)
+        {
+            // see https://github.com/nlohmann/json/issues/2838
+            JSON_ASSERT(type() == value_t::array);
+            if (JSON_HEDLEY_UNLIKELY(m_value.array->capacity() != old_capacity))
+            {
+                // capacity has changed: update all parents
+                set_parents();
+                return j;
+            }
+        }
+
         j.m_parent = this;
 #else
         static_cast<void>(j);
@@ -5371,18 +5383,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
 
         // add element to array (move semantics)
-        const auto capacity = m_value.array->capacity();
+        const auto old_capacity = m_value.array->capacity();
         m_value.array->push_back(std::move(val));
-        if (capacity == m_value.array->capacity())
-        {
-            // capacity has not changed: updating parent of last element is sufficient
-            set_parent(m_value.array->back());
-        }
-        else
-        {
-            // capacity has changed: update all elements' parents
-            set_parents();
-        }
+        set_parent(m_value.array->back(), old_capacity);
         // if val is moved from, basic_json move constructor marks it null so we do not call the destructor
     }
 
@@ -5417,18 +5420,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
 
         // add element to array
-        const auto capacity = m_value.array->capacity();
+        const auto old_capacity = m_value.array->capacity();
         m_value.array->push_back(val);
-        if (capacity == m_value.array->capacity())
-        {
-            // capacity has not changed: updating parent of last element is sufficient
-            set_parent(m_value.array->back());
-        }
-        else
-        {
-            // capacity has changed: update all elements' parents
-            set_parents();
-        }
+        set_parent(m_value.array->back(), old_capacity);
     }
 
     /*!
@@ -5582,18 +5576,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
 
         // add element to array (perfect forwarding)
-        const auto capacity = m_value.array->capacity();
+        const auto old_capacity = m_value.array->capacity();
         m_value.array->emplace_back(std::forward<Args>(args)...);
-
-        if (capacity == m_value.array->capacity())
-        {
-            // capacity has not changed: updating parent of last element is sufficient
-            return set_parent(m_value.array->back());
-        }
-
-        // capacity has changed: update all elements' parents
-        set_parents();
-        return m_value.array->back();
+        return set_parent(m_value.array->back(), old_capacity);
     }
 
     /*!
