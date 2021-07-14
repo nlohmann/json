@@ -18339,12 +18339,25 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return it;
     }
 
-    reference set_parent(reference j)
+    reference set_parent(reference j, std::size_t old_capacity = std::size_t(-1))
     {
 #if JSON_DIAGNOSTICS
+        if (old_capacity != std::size_t(-1))
+        {
+            // see https://github.com/nlohmann/json/issues/2838
+            JSON_ASSERT(type() == value_t::array);
+            if (JSON_HEDLEY_UNLIKELY(m_value.array->capacity() != old_capacity))
+            {
+                // capacity has changed: update all parents
+                set_parents();
+                return j;
+            }
+        }
+
         j.m_parent = this;
 #else
         static_cast<void>(j);
+        static_cast<void>(old_capacity);
 #endif
         return j;
     }
@@ -22406,8 +22419,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
 
         // add element to array (move semantics)
+        const auto old_capacity = m_value.array->capacity();
         m_value.array->push_back(std::move(val));
-        set_parent(m_value.array->back());
+        set_parent(m_value.array->back(), old_capacity);
         // if val is moved from, basic_json move constructor marks it null so we do not call the destructor
     }
 
@@ -22442,8 +22456,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
 
         // add element to array
+        const auto old_capacity = m_value.array->capacity();
         m_value.array->push_back(val);
-        set_parent(m_value.array->back());
+        set_parent(m_value.array->back(), old_capacity);
     }
 
     /*!
@@ -22597,12 +22612,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
 
         // add element to array (perfect forwarding)
-#ifdef JSON_HAS_CPP_17
-        return set_parent(m_value.array->emplace_back(std::forward<Args>(args)...));
-#else
+        const auto old_capacity = m_value.array->capacity();
         m_value.array->emplace_back(std::forward<Args>(args)...);
-        return set_parent(m_value.array->back());
-#endif
+        return set_parent(m_value.array->back(), old_capacity);
     }
 
     /*!
@@ -22678,6 +22690,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // result.m_it.array_iterator = m_value.array->insert(pos.m_it.array_iterator, cnt, val);
         // but the return value of insert is missing in GCC 4.8, so it is written this way instead.
 
+        set_parents();
         return result;
     }
 
@@ -22715,7 +22728,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             }
 
             // insert to array and return iterator
-            return set_parents(insert_iterator(pos, val), static_cast<typename iterator::difference_type>(1));
+            return insert_iterator(pos, val);
         }
 
         JSON_THROW(type_error::create(309, "cannot use insert() with " + std::string(type_name()), *this));
@@ -22766,7 +22779,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             }
 
             // insert to array and return iterator
-            return set_parents(insert_iterator(pos, cnt, val), static_cast<typename iterator::difference_type>(cnt));
+            return insert_iterator(pos, cnt, val);
         }
 
         JSON_THROW(type_error::create(309, "cannot use insert() with " + std::string(type_name()), *this));
@@ -22828,7 +22841,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
 
         // insert to array and return iterator
-        return set_parents(insert_iterator(pos, first.m_it.array_iterator, last.m_it.array_iterator), std::distance(first, last));
+        return insert_iterator(pos, first.m_it.array_iterator, last.m_it.array_iterator);
     }
 
     /*!
@@ -22870,7 +22883,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
 
         // insert to array and return iterator
-        return set_parents(insert_iterator(pos, ilist.begin(), ilist.end()), static_cast<typename iterator::difference_type>(ilist.size()));
+        return insert_iterator(pos, ilist.begin(), ilist.end());
     }
 
     /*!
