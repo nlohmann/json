@@ -73,8 +73,7 @@ struct external_constructor<value_t::binary>
     static void construct(BasicJsonType& j, const typename BasicJsonType::binary_t& b)
     {
         j.m_type = value_t::binary;
-        typename BasicJsonType::binary_t value{b};
-        j.m_value = value;
+        j.m_value = typename BasicJsonType::binary_t(b);
         j.assert_invariant();
     }
 
@@ -82,8 +81,7 @@ struct external_constructor<value_t::binary>
     static void construct(BasicJsonType& j, typename BasicJsonType::binary_t&& b)
     {
         j.m_type = value_t::binary;
-        typename BasicJsonType::binary_t value{std::move(b)};
-        j.m_value = value;
+        j.m_value = typename BasicJsonType::binary_t(std::move(b));;
         j.assert_invariant();
     }
 };
@@ -132,6 +130,7 @@ struct external_constructor<value_t::array>
     {
         j.m_type = value_t::array;
         j.m_value = arr;
+        j.set_parents();
         j.assert_invariant();
     }
 
@@ -140,6 +139,7 @@ struct external_constructor<value_t::array>
     {
         j.m_type = value_t::array;
         j.m_value = std::move(arr);
+        j.set_parents();
         j.assert_invariant();
     }
 
@@ -152,6 +152,7 @@ struct external_constructor<value_t::array>
         using std::end;
         j.m_type = value_t::array;
         j.m_value.array = j.template create<typename BasicJsonType::array_t>(begin(arr), end(arr));
+        j.set_parents();
         j.assert_invariant();
     }
 
@@ -164,6 +165,7 @@ struct external_constructor<value_t::array>
         for (const bool x : arr)
         {
             j.m_value.array->push_back(x);
+            j.set_parent(j.m_value.array->back());
         }
         j.assert_invariant();
     }
@@ -179,6 +181,7 @@ struct external_constructor<value_t::array>
         {
             std::copy(std::begin(arr), std::end(arr), j.m_value.array->begin());
         }
+        j.set_parents();
         j.assert_invariant();
     }
 };
@@ -191,6 +194,7 @@ struct external_constructor<value_t::object>
     {
         j.m_type = value_t::object;
         j.m_value = obj;
+        j.set_parents();
         j.assert_invariant();
     }
 
@@ -199,6 +203,7 @@ struct external_constructor<value_t::object>
     {
         j.m_type = value_t::object;
         j.m_value = std::move(obj);
+        j.set_parents();
         j.assert_invariant();
     }
 
@@ -211,6 +216,7 @@ struct external_constructor<value_t::object>
 
         j.m_type = value_t::object;
         j.m_value.object = j.template create<typename BasicJsonType::object_t>(begin(obj), end(obj));
+        j.set_parents();
         j.assert_invariant();
     }
 };
@@ -322,9 +328,9 @@ void to_json(BasicJsonType& j, typename BasicJsonType::object_t&& obj)
 template <
     typename BasicJsonType, typename T, std::size_t N,
     enable_if_t < !std::is_constructible<typename BasicJsonType::string_t,
-                  const T(&)[N]>::value,
+                  const T(&)[N]>::value, // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
                   int > = 0 >
-void to_json(BasicJsonType& j, const T(&arr)[N])
+void to_json(BasicJsonType& j, const T(&arr)[N]) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
 {
     external_constructor<value_t::array>::construct(j, arr);
 }
@@ -367,8 +373,10 @@ struct to_json_fn
 }  // namespace detail
 
 /// namespace to hold default `to_json` function
-namespace
+/// to see why this is required:
+/// http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4381.html
+namespace // NOLINT(cert-dcl59-cpp,fuchsia-header-anon-namespaces,google-build-namespaces)
 {
-constexpr const auto& to_json = detail::static_const<detail::to_json_fn>::value;
+constexpr const auto& to_json = detail::static_const<detail::to_json_fn>::value; // NOLINT(misc-definitions-in-headers)
 } // namespace
 } // namespace nlohmann

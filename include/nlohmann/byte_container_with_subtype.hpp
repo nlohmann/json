@@ -73,9 +73,9 @@ class byte_container_with_subtype : public BinaryType
     @exceptionsafety No-throw guarantee: this member function never throws
     exceptions.
 
-    @sa @ref subtype() -- return the binary subtype
-    @sa @ref clear_subtype() -- clears the binary subtype
-    @sa @ref has_subtype() -- returns whether or not the binary value has a
+    @sa see @ref subtype() -- return the binary subtype
+    @sa see @ref clear_subtype() -- clears the binary subtype
+    @sa see @ref has_subtype() -- returns whether or not the binary value has a
     subtype
 
     @since version 3.8.0
@@ -100,9 +100,9 @@ class byte_container_with_subtype : public BinaryType
     @exceptionsafety No-throw guarantee: this member function never throws
     exceptions.
 
-    @sa @ref set_subtype() -- sets the binary subtype
-    @sa @ref clear_subtype() -- clears the binary subtype
-    @sa @ref has_subtype() -- returns whether or not the binary value has a
+    @sa see @ref set_subtype() -- sets the binary subtype
+    @sa see @ref clear_subtype() -- clears the binary subtype
+    @sa see @ref has_subtype() -- returns whether or not the binary value has a
     subtype
 
     @since version 3.8.0
@@ -122,9 +122,9 @@ class byte_container_with_subtype : public BinaryType
     @exceptionsafety No-throw guarantee: this member function never throws
     exceptions.
 
-    @sa @ref subtype() -- return the binary subtype
-    @sa @ref set_subtype() -- sets the binary subtype
-    @sa @ref clear_subtype() -- clears the binary subtype
+    @sa see @ref subtype() -- return the binary subtype
+    @sa see @ref set_subtype() -- sets the binary subtype
+    @sa see @ref clear_subtype() -- clears the binary subtype
 
     @since version 3.8.0
     */
@@ -145,9 +145,9 @@ class byte_container_with_subtype : public BinaryType
     @exceptionsafety No-throw guarantee: this member function never throws
     exceptions.
 
-    @sa @ref subtype() -- return the binary subtype
-    @sa @ref set_subtype() -- sets the binary subtype
-    @sa @ref has_subtype() -- returns whether or not the binary value has a
+    @sa see @ref subtype() -- return the binary subtype
+    @sa see @ref set_subtype() -- sets the binary subtype
+    @sa see @ref has_subtype() -- returns whether or not the binary value has a
     subtype
 
     @since version 3.8.0

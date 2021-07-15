@@ -8,7 +8,7 @@ try
 {
     j = json::parse(my_input);
 }
-catch (json::exception::parse_error& ex)
+catch (json::parse_error& ex)
 {
     std::cerr << "parse error at byte " << ex.byte << std::endl;
 }

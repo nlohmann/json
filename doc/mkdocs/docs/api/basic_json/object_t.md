@@ -9,7 +9,7 @@ using object_t = ObjectType<StringType,
 
 The type used to store JSON objects.
 
-[RFC 7159](http://rfc7159.net/rfc7159) describes JSON objects as follows:
+[RFC 8259](https://tools.ietf.org/html/rfc8259) describes JSON objects as follows:
 > An object is an unordered collection of zero or more name/value pairs, where a name is a string and a value is a
 > string, number, boolean, null, object, or array.
 
@@ -73,7 +73,7 @@ behavior:
 
 #### Limits
 
-[RFC 7159](http://rfc7159.net/rfc7159) specifies:
+[RFC 8259](https://tools.ietf.org/html/rfc8259) specifies:
 > An implementation may set limits on the maximum depth of nesting.
 
 In this class, the object's limit of nesting is not explicitly constrained. However, a maximum depth of nesting may be
@@ -90,7 +90,7 @@ Objects are stored as pointers in a `basic_json` type. That is, for any access t
 The order name/value pairs are added to the object is *not* preserved by the library. Therefore, iterating an object may
 return name/value pairs in a different order than they were originally stored. In fact, keys will be traversed in
 alphabetical order as `std::map` with `std::less` is used by default. Please note this behavior conforms to
-[RFC 7159](http://rfc7159.net/rfc7159), because any order implements the specified "unordered" nature of JSON objects.
+[RFC 8259](https://tools.ietf.org/html/rfc8259), because any order implements the specified "unordered" nature of JSON objects.
 
 ## Version history
 
