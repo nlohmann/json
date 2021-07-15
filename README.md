@@ -5,7 +5,6 @@
 [![Ubuntu](https://github.com/nlohmann/json/workflows/Ubuntu/badge.svg)](https://github.com/nlohmann/json/actions?query=workflow%3AUbuntu)
 [![macOS](https://github.com/nlohmann/json/workflows/macOS/badge.svg)](https://github.com/nlohmann/json/actions?query=workflow%3AmacOS)
 [![Windows](https://github.com/nlohmann/json/workflows/Windows/badge.svg)](https://github.com/nlohmann/json/actions?query=workflow%3AWindows)
-[![Build Status](https://circleci.com/gh/nlohmann/json.svg?style=svg)](https://circleci.com/gh/nlohmann/json)
 [![Coverage Status](https://coveralls.io/repos/github/nlohmann/json/badge.svg?branch=develop)](https://coveralls.io/github/nlohmann/json?branch=develop)
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/5550/badge.svg)](https://scan.coverity.com/projects/nlohmann-json)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/f3732b3327e34358a0e9d1fe9f661f08)](https://www.codacy.com/app/nlohmann/json?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=nlohmann/json&amp;utm_campaign=Badge_Grade)
@@ -143,7 +142,7 @@ target_link_libraries(foo PRIVATE nlohmann_json::nlohmann_json)
 
 Since CMake v3.11,
 [FetchContent](https://cmake.org/cmake/help/v3.11/module/FetchContent.html) can
-be used to automatically download the repository as a dependency at configure type.
+be used to automatically download the repository as a dependency at configure time.
 
 Example:
 ```cmake
@@ -207,7 +206,7 @@ If you are using the [Meson Build System](https://mesonbuild.com), add this sour
 
 The provided meson.build can also be used as an alternative to cmake for installing `nlohmann_json` system-wide in which case a pkg-config file is installed. To use it, simply have your build system require the `nlohmann_json` pkg-config dependency. In Meson, it is preferred to use the [`dependency()`](https://mesonbuild.com/Reference-manual.html#dependency) object with a subproject fallback, rather than using the subproject directly.
 
-If you are using [Conan](https://www.conan.io/) to manage your dependencies, merely add `nlohmann_json/x.y.z` to your `conanfile`'s requires, where `x.y.z` is the release version you want to use. Please file issues [here](https://github.com/conan-io/conan-center-index/issues) if you experience problems with the packages.
+If you are using [Conan](https://www.conan.io/) to manage your dependencies, merely add [`nlohmann_json/x.y.z`](https://conan.io/center/nlohmann_json) to your `conanfile`'s requires, where `x.y.z` is the release version you want to use. Please file issues [here](https://github.com/conan-io/conan-center-index/issues) if you experience problems with the packages.
 
 If you are using [Spack](https://www.spack.io/) to manage your dependencies, you can use the [`nlohmann-json` package](https://spack.readthedocs.io/en/latest/package_list.html#nlohmann-json). Please see the [spack project](https://github.com/spack/spack) for any issues regarding the packaging.
 
@@ -365,7 +364,7 @@ The above example can also be expressed explicitly using [`json::parse()`](https
 
 ```cpp
 // parse explicitly
-auto j3 = json::parse("{ \"happy\": true, \"pi\": 3.141 }");
+auto j3 = json::parse(R"({"happy": true, "pi": 3.141})");
 ```
 
 You can also get a string representation of a JSON value (serialize):
@@ -577,10 +576,10 @@ j[1] = 42;
 bool foo = j.at(2);
 
 // comparison
-j == "[\"foo\", 42, true]"_json;  // true
+j == R"(["foo", 1, true, 1.78])"_json;  // true
 
 // other stuff
-j.size();     // 3 entries
+j.size();     // 4 entries
 j.empty();    // false
 j.type();     // json::value_t::array
 j.clear();    // the array is empty again
@@ -871,7 +870,7 @@ assert(p == p2);
 To make this work with one of your types, you only need to provide two functions:
 
 ```cpp
-using nlohmann::json;
+using json = nlohmann::json;
 
 namespace ns {
     void to_json(json& j, const person& p) {
@@ -1127,7 +1126,7 @@ Other Important points:
 
 ### Binary formats (BSON, CBOR, MessagePack, and UBJSON)
 
-Though JSON is a ubiquitous data format, it is not a very compact format suitable for data exchange, for instance over a network. Hence, the library supports [BSON](http://bsonspec.org) (Binary JSON), [CBOR](https://cbor.io) (Concise Binary Object Representation), [MessagePack](https://msgpack.org), and [UBJSON](http://ubjson.org) (Universal Binary JSON Specification) to efficiently encode JSON values to byte vectors and to decode such vectors.
+Though JSON is a ubiquitous data format, it is not a very compact format suitable for data exchange, for instance over a network. Hence, the library supports [BSON](https://bsonspec.org) (Binary JSON), [CBOR](https://cbor.io) (Concise Binary Object Representation), [MessagePack](https://msgpack.org), and [UBJSON](https://ubjson.org) (Universal Binary JSON Specification) to efficiently encode JSON values to byte vectors and to decode such vectors.
 
 ```cpp
 // create a JSON value
@@ -1202,8 +1201,8 @@ auto cbor = json::to_msgpack(j); // 0xD5 (fixext2), 0x10, 0xCA, 0xFE
 Though it's 2021 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
 
 - GCC 4.8 - 11.0 (and possibly later)
-- Clang 3.4 - 11.0 (and possibly later)
-- Apple Clang 9.1 - 12.3 (and possibly later)
+- Clang 3.4 - 12.0 (and possibly later)
+- Apple Clang 9.1 - 12.4 (and possibly later)
 - Intel C++ Compiler 17.0.2 (and possibly later)
 - Microsoft Visual C++ 2015 / Build Tools 14.0.25123.0 (and possibly later)
 - Microsoft Visual C++ 2017 / Build Tools 15.5.180.51428 (and possibly later)
@@ -1228,48 +1227,64 @@ Please note:
 
 - Unsupported versions of GCC and Clang are rejected by `#error` directives. This can be switched off by defining `JSON_SKIP_UNSUPPORTED_COMPILER_CHECK`. Note that you can expect no support in this case.
 
-The following compilers are currently used in continuous integration at [Travis](https://travis-ci.org/nlohmann/json), [AppVeyor](https://ci.appveyor.com/project/nlohmann/json), [GitHub Actions](https://github.com/nlohmann/json/actions), and [CircleCI](https://circleci.com/gh/nlohmann/json):
+The following compilers are currently used in continuous integration at [Travis](https://travis-ci.org/nlohmann/json), [AppVeyor](https://ci.appveyor.com/project/nlohmann/json), [Drone CI](https://cloud.drone.io/nlohmann/json), and [GitHub Actions](https://github.com/nlohmann/json/actions):
 
 | Compiler                                                          | Operating System   | CI Provider    |
 |-------------------------------------------------------------------|--------------------|----------------|
 | Apple Clang 10.0.1 (clang-1001.0.46.4); Xcode 10.2.1              | macOS 10.14.4      | Travis         |
-| Apple Clang 11.0.0 (clang-1100.0.33.12); Xcode 11.2.1             | macOS 10.14.6      | Travis         |
-| Apple Clang 11.0.3 (clang-1103.0.32.59); Xcode 11.4.1             | macOS 10.15.4      | GitHub Actions |
-| Apple Clang 12.0.0 (clang-1200.0.22.7); Xcode 11.4.1              | macOS 10.15.5      | Travis         |
-| Clang 3.5.0 (3.5.0-4ubuntu2\~trusty2)                             | Ubuntu 14.04.5 LTS | Travis         |
-| Clang 3.6.2 (3.6.2-svn240577-1\~exp1)                             | Ubuntu 14.04.5 LTS | Travis         |
-| Clang 3.7.1 (3.7.1-svn253571-1\~exp1)                             | Ubuntu 14.04.5 LTS | Travis         |
-| Clang 3.8.0 (3.8.0-2ubuntu3\~trusty5)                             | Ubuntu 14.04.5 LTS | Travis         |
-| Clang 3.9.1 (3.9.1-4ubuntu3\~14.04.3)                             | Ubuntu 14.04.5 LTS | Travis         |
-| Clang 4.0.1 (4.0.1-svn305264-1\~exp1)                             | Ubuntu 14.04.5 LTS | Travis         |
-| Clang 5.0.2 (version 5.0.2-svn328729-1\~exp1\~20180509123505.100) | Ubuntu 14.04.5 LTS | Travis         |
-| Clang 6.0.1 (6.0.1-svn334776-1\~exp1\~20190309042707.121)         | Ubuntu 14.04.5 LTS | Travis         |
-| Clang 7.1.0 (7.1.0-svn353565-1\~exp1\~20190419134007.64)          | Ubuntu 14.04.5 LTS | Travis         |
-| Clang 7.5.0 (Ubuntu 7.5.0-3ubuntu1\~18.04)                        | Ubuntu 18.04.4 LTS | Travis         |
-| Clang 9.0.0 (x86_64-pc-windows-msvc)                              | Windows-10.0.17763 | GitHub Actions |
-| Clang 10.0.0 (x86_64-pc-windows-msvc)                             | Windows-10.0.17763 | GitHub Actions |
-| GCC 4.8.5 (Ubuntu 4.8.5-4ubuntu8\~14.04.2)                        | Ubuntu 14.04.5 LTS | Travis         |
-| GCC 4.9.4 (Ubuntu 4.9.4-2ubuntu1\~14.04.1)                        | Ubuntu 14.04.5 LTS | Travis         |
-| GCC 5.5.0 (Ubuntu 5.5.0-12ubuntu1\~14.04)                         | Ubuntu 14.04.5 LTS | Travis         |
-| GCC 6.3.0 (Debian 6.3.0-18+deb9u1)                                | Debian 9           | Circle CI      |
-| GCC 6.5.0 (Ubuntu 6.5.0-2ubuntu1\~14.04.1)                        | Ubuntu 14.04.5 LTS | Travis         |
-| GCC 7.3.0 (x86_64-posix-seh-rev0, Built by MinGW-W64 project)     | Windows-6.3.9600   | AppVeyor       |
-| GCC 7.5.0 (Ubuntu 7.5.0-3ubuntu1\~14.04.1)                        | Ubuntu 14.04.5 LTS | Travis         |
-| GCC 7.5.0 (Ubuntu 7.5.0-3ubuntu1\~18.04)                          | Ubuntu 18.04.4 LTS | GitHub Actions |
-| GCC 8.4.0 (Ubuntu 8.4.0-1ubuntu1\~14.04)                          | Ubuntu 14.04.5 LTS | Travis         |
-| GCC 9.3.0 (Ubuntu 9.3.0-11ubuntu0\~14.04)                         | Ubuntu 14.04.5 LTS | Travis         |
-| GCC 10.1.0 (Arch Linux latest)                                    | Arch Linux         | Circle CI      |
-| MSVC 19.0.24241.7 (Build Engine version 14.0.25420.1)             | Windows-6.3.9600   | AppVeyor       |
-| MSVC 19.16.27035.0 (15.9.21+g9802d43bc3 for .NET Framework)       | Windows-10.0.14393 | AppVeyor       |
-| MSVC 19.25.28614.0 (Build Engine version 16.5.0+d4cbfca49 for .NET Framework) | Windows-10.0.17763  | AppVeyor       |
-| MSVC 19.25.28614.0 (Build Engine version 16.5.0+d4cbfca49 for .NET Framework) | Windows-10.0.17763  | GitHub Actions |
-| MSVC 19.25.28614.0 (Build Engine version 16.5.0+d4cbfca49 for .NET Framework) with ClangCL 10.0.0 | Windows-10.0.17763  | GitHub Actions |
+| Apple Clang 10.0.1 (clang-1001.0.46.4); Xcode 10.3                | macOS 10.15.7      | GitHub Actions |
+| Apple Clang 11.0.0 (clang-1100.0.33.12); Xcode 11.2.1             | macOS 10.15.7      | GitHub Actions |
+| Apple Clang 11.0.0 (clang-1100.0.33.17); Xcode 11.3.1             | macOS 10.15.7      | GitHub Actions |
+| Apple Clang 11.0.3 (clang-1103.0.32.59); Xcode 11.4.1             | macOS 10.15.7      | GitHub Actions |
+| Apple Clang 11.0.3 (clang-1103.0.32.62); Xcode 11.5               | macOS 10.15.7      | GitHub Actions |
+| Apple Clang 11.0.3 (clang-1103.0.32.62); Xcode 11.6               | macOS 10.15.7      | GitHub Actions |
+| Apple Clang 11.0.3 (clang-1103.0.32.62); Xcode 11.7               | macOS 10.15.7      | GitHub Actions |
+| Apple Clang 12.0.0 (clang-1200.0.32.2); Xcode 12                  | macOS 10.15.7      | GitHub Actions |
+| Apple Clang 12.0.0 (clang-1200.0.32.21); Xcode 12.1               | macOS 10.15.7      | GitHub Actions |
+| Apple Clang 12.0.0 (clang-1200.0.32.21); Xcode 12.1.1             | macOS 10.15.7      | GitHub Actions |
+| Apple Clang 12.0.0 (clang-1200.0.32.27); Xcode 12.2               | macOS 10.15.7      | GitHub Actions |
+| Apple Clang 12.0.0 (clang-1200.0.32.28); Xcode 12.3               | macOS 10.15.7      | GitHub Actions |
+| Apple Clang 12.0.0 (clang-1200.0.32.29); Xcode 12.4               | macOS 10.15.7      | GitHub Actions |
+| GCC 4.8.5 (Ubuntu 4.8.5-4ubuntu2)                                 | Ubuntu 20.04.2 LTS | GitHub Actions |
+| GCC 4.9.3 (Ubuntu 4.9.3-13ubuntu2)                                | Ubuntu 20.04.2 LTS | GitHub Actions |
+| GCC 5.4.0 (Ubuntu 5.4.0-6ubuntu1~16.04.12)                        | Ubuntu 20.04.2 LTS | GitHub Actions |
+| GCC 6.5.0 (Ubuntu 6.5.0-2ubuntu1~14.04.1)                         | Ubuntu 14.04.5 LTS | Travis         |
+| GCC 7.5.0 (Ubuntu 7.5.0-6ubuntu2)                                 | Ubuntu 20.04.2 LTS | GitHub Actions |
+| GCC 8.1.0 (x86_64-posix-seh-rev0, Built by MinGW-W64 project)     | Windows-10.0.17763 | GitHub Actions |
+| GCC 8.1.0 (i686-posix-dwarf-rev0, Built by MinGW-W64 project)     | Windows-10.0.17763 | GitHub Actions |
+| GCC 8.4.0 (Ubuntu 8.4.0-3ubuntu2)                                 | Ubuntu 20.04.2 LTS | GitHub Actions |
+| GCC 9.3.0 (Ubuntu 9.3.0-17ubuntu1~20.04)                          | Ubuntu 20.04.2 LTS | GitHub Actions |
+| GCC 10.2.0 (Ubuntu 10.2.0-5ubuntu1~20.04)                         | Ubuntu 20.04.2 LTS | GitHub Actions |
+| GCC 11.0.1 20210321 (experimental)                                | Ubuntu 20.04.2 LTS | GitHub Actions |
+| GCC 11.1.0                                                        | Ubuntu (aarch64)   | Drone CI       |
+| Clang 3.5.2 (3.5.2-3ubuntu1)                                      | Ubuntu 20.04.2 LTS | GitHub Actions |
+| Clang 3.6.2 (3.6.2-3ubuntu2)                                      | Ubuntu 20.04.2 LTS | GitHub Actions |
+| Clang 3.7.1 (3.7.1-2ubuntu2)                                      | Ubuntu 20.04.2 LTS | GitHub Actions |
+| Clang 3.8.0 (3.8.0-2ubuntu4)                                      | Ubuntu 20.04.2 LTS | GitHub Actions |
+| Clang 3.9.1 (3.9.1-4ubuntu3\~16.04.2)                             | Ubuntu 20.04.2 LTS | GitHub Actions |
+| Clang 4.0.0 (4.0.0-1ubuntu1\~16.04.2)                             | Ubuntu 20.04.2 LTS | GitHub Actions |
+| Clang 5.0.0 (5.0.0-3\~16.04.1)                                    | Ubuntu 20.04.2 LTS | GitHub Actions |
+| Clang 6.0.1 (6.0.1-14)                                            | Ubuntu 20.04.2 LTS | GitHub Actions |
+| Clang 7.0.1 (7.0.1-12)                                            | Ubuntu 20.04.2 LTS | GitHub Actions |
+| Clang 8.0.1 (8.0.1-9)                                             | Ubuntu 20.04.2 LTS | GitHub Actions |
+| Clang 9.0.1 (9.0.1-12)                                            | Ubuntu 20.04.2 LTS | GitHub Actions |
+| Clang 10.0.0 (10.0.0-4ubuntu1)                                    | Ubuntu 20.04.2 LTS | GitHub Actions |
+| Clang 10.0.0 with GNU-like command-line                           | Windows-10.0.17763 | GitHub Actions |
+| Clang 11.0.0 with GNU-like command-line                           | Windows-10.0.17763 | GitHub Actions |
+| Clang 11.0.0 with MSVC-like command-line                          | Windows-10.0.17763 | GitHub Actions |
+| Clang 11.0.0 (11.0.0-2~ubuntu20.04.1)                             | Ubuntu 20.04.2 LTS | GitHub Actions |
+| Clang 12.1.0 (12.0.1-++20210423082613+072c90a863aa-1~exp1~20210423063319.76 | Ubuntu 20.04.2 LTS | GitHub Actions |
+| Visual Studio 14 2015 MSVC 19.0.24241.7 (Build Engine version 14.0.25420.1) | Windows-6.3.9600 | AppVeyor |
+| Visual Studio 15 2017 MSVC 19.16.27035.0 (Build Engine version 15.9.21+g9802d43bc3 for .NET Framework) | Windows-10.0.14393 | AppVeyor |
+| Visual Studio 15 2017 MSVC 19.16.27045.0 (Build Engine version 15.9.21+g9802d43bc3 for .NET Framework) | Windows-10.0.14393 | GitHub Actions |
+| Visual Studio 16 2019 MSVC 19.28.29912.0 (Build Engine version 16.9.0+57a23d249 for .NET Framework) | Windows-10.0.17763 | GitHub Actions |
+| Visual Studio 16 2019 MSVC 19.28.29912.0 (Build Engine version 16.9.0+57a23d249 for .NET Framework) | Windows-10.0.17763 | AppVeyor |
 
 ## License
 
-<img align="right" src="http://opensource.org/trademarks/opensource/OSI-Approved-License-100x137.png">
+<img align="right" src="https://opensource.org/trademarks/opensource/OSI-Approved-License-100x137.png">
 
-The class is licensed under the [MIT License](http://opensource.org/licenses/MIT):
+The class is licensed under the [MIT License](https://opensource.org/licenses/MIT):
 
 Copyright &copy; 2013-2021 [Niels Lohmann](https://nlohmann.me)
 
@@ -1281,11 +1296,13 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 
 * * *
 
-The class contains the UTF-8 Decoder from Bjoern Hoehrmann which is licensed under the [MIT License](http://opensource.org/licenses/MIT) (see above). Copyright &copy; 2008-2009 [Björn Hoehrmann](https://bjoern.hoehrmann.de/) <bjoern@hoehrmann.de>
+The class contains the UTF-8 Decoder from Bjoern Hoehrmann which is licensed under the [MIT License](https://opensource.org/licenses/MIT) (see above). Copyright &copy; 2008-2009 [Björn Hoehrmann](https://bjoern.hoehrmann.de/) <bjoern@hoehrmann.de>
 
-The class contains a slightly modified version of the Grisu2 algorithm from Florian Loitsch which is licensed under the [MIT License](http://opensource.org/licenses/MIT) (see above). Copyright &copy; 2009 [Florian Loitsch](https://florian.loitsch.com/)
+The class contains a slightly modified version of the Grisu2 algorithm from Florian Loitsch which is licensed under the [MIT License](https://opensource.org/licenses/MIT) (see above). Copyright &copy; 2009 [Florian Loitsch](https://florian.loitsch.com/)
 
 The class contains a copy of [Hedley](https://nemequ.github.io/hedley/) from Evan Nemerson which is licensed as [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/).
+
+The class contains parts of [Google Abseil](https://github.com/abseil/abseil-cpp) which is licensed under the [Apache 2.0 License](https://opensource.org/licenses/Apache-2.0).
 
 ## Contact
 
@@ -1528,6 +1545,7 @@ I deeply appreciate the help of the following people.
 - [KonanM](https://github.com/KonanM) proposed an implementation for the `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE`/`NLOHMANN_DEFINE_TYPE_INTRUSIVE` macros.
 - [Guillaume Racicot](https://github.com/gracicot) implemented `string_view` support and allowed C++20 support.
 - [Alex Reinking](https://github.com/alexreinking) improved CMake support for `FetchContent`.
+- [Hannes Domani](https://github.com/ssbssa) provided a GDB pretty printer.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
@@ -1540,7 +1558,6 @@ The library itself consists of a single header file licensed under the MIT licen
 - [**American fuzzy lop**](https://lcamtuf.coredump.cx/afl/) for fuzz testing
 - [**AppVeyor**](https://www.appveyor.com) for [continuous integration](https://ci.appveyor.com/project/nlohmann/json) on Windows
 - [**Artistic Style**](http://astyle.sourceforge.net) for automatic source code indentation
-- [**CircleCI**](https://circleci.com) for [continuous integration](https://circleci.com/gh/nlohmann/json).
 - [**Clang**](https://clang.llvm.org) for compilation with code sanitizers
 - [**CMake**](https://cmake.org) for build automation
 - [**Codacity**](https://www.codacy.com) for further [code analysis](https://www.codacy.com/app/nlohmann/json)
@@ -1557,7 +1574,7 @@ The library itself consists of a single header file licensed under the MIT licen
 - [**libFuzzer**](https://llvm.org/docs/LibFuzzer.html) to implement fuzz testing for OSS-Fuzz
 - [**OSS-Fuzz**](https://github.com/google/oss-fuzz) for continuous fuzz testing of the library ([project repository](https://github.com/google/oss-fuzz/tree/master/projects/json))
 - [**Probot**](https://probot.github.io) for automating maintainer tasks such as closing stale issues, requesting missing information, or detecting toxic comments.
-- [**send_to_wandbox**](https://github.com/nlohmann/json/blob/develop/doc/scripts/send_to_wandbox.py) to send code examples to [Wandbox](http://melpon.org/wandbox)
+- [**send_to_wandbox**](https://github.com/nlohmann/json/blob/develop/doc/scripts/send_to_wandbox.py) to send code examples to [Wandbox](https://wandbox.org)
 - [**Travis**](https://travis-ci.org) for [continuous integration](https://travis-ci.org/nlohmann/json) on Linux and macOS
 - [**Valgrind**](https://valgrind.org) to check for correct memory management
 - [**Wandbox**](https://wandbox.org) for [online examples](https://wandbox.org/permlink/3lCHrFUZANONKv7a)
@@ -1633,8 +1650,10 @@ $ ctest --output-on-failure
 
 Note that during the `ctest` stage, several JSON test files are downloaded from an [external repository](https://github.com/nlohmann/json_test_data). If policies forbid downloading artifacts during testing, you can download the files yourself and pass the directory with the test files via `-DJSON_TestDataDirectory=path` to CMake. Then, no Internet connectivity is required. See [issue #2189](https://github.com/nlohmann/json/issues/2189) for more information.
 
-In case you have downloaded the library rather than checked out the code via Git, test `cmake_fetch_content_configure`. Please execute `ctest -LE git_required` to skip these tests. See [issue #2189](https://github.com/nlohmann/json/issues/2189) for more information.
+In case you have downloaded the library rather than checked out the code via Git, test `cmake_fetch_content_configure` will fail. Please execute `ctest -LE git_required` to skip these tests. See [issue #2189](https://github.com/nlohmann/json/issues/2189) for more information.
 
 Some tests change the installed files and hence make the whole process not reproducible. Please execute `ctest -LE not_reproducible` to skip these tests. See [issue #2324](https://github.com/nlohmann/json/issues/2324) for more information.
+
+Note you need to call `cmake -LE "not_reproducible|git_required"` to exclude both labels. See [issue #2596](https://github.com/nlohmann/json/issues/2596) for more information.
 
 As Intel compilers use unsafe floating point optimization by default, the unit tests may fail. Use flag [`/fp:precise`](https://software.intel.com/content/www/us/en/develop/documentation/cpp-compiler-developer-guide-and-reference/top/compiler-reference/compiler-options/compiler-option-details/floating-point-options/fp-model-fp.html) then.

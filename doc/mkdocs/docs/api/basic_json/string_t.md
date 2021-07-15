@@ -6,7 +6,7 @@ using string_t = StringType;
 
 The type used to store JSON strings.
 
-[RFC 7159](http://rfc7159.net/rfc7159) describes JSON strings as follows:
+[RFC 8259](https://tools.ietf.org/html/rfc8259) describes JSON strings as follows:
 > A string is a sequence of zero or more Unicode characters.
 
 To store objects in C++, a type is defined by the template parameter described below. Unicode values are split by the
@@ -31,7 +31,7 @@ the number of bytes in the string rather than the number of characters or glyphs
 
 #### String comparison
 
-[RFC 7159](http://rfc7159.net/rfc7159) states:
+[RFC 8259](https://tools.ietf.org/html/rfc8259) states:
 > Software implementations are typically required to test names of object members for equality. Implementations that
 > transform the textual representation into sequences of Unicode code units and then perform the comparison numerically,
 > code unit by code unit, are interoperable in the sense that implementations will agree in all cases on equality or

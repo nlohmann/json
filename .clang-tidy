@@ -1,23 +1,44 @@
 Checks: '*,
+         -android-cloexec-fopen,
          -cppcoreguidelines-avoid-goto,
          -cppcoreguidelines-avoid-magic-numbers,
+         -cppcoreguidelines-avoid-non-const-global-variables,
          -cppcoreguidelines-macro-usage,
+         -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+         -cppcoreguidelines-pro-bounds-constant-array-index,
+         -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+         -cppcoreguidelines-pro-type-reinterpret-cast,
+         -cppcoreguidelines-pro-type-union-access,
          -fuchsia-default-arguments-calls,
          -fuchsia-default-arguments-declarations,
          -fuchsia-overloaded-operator,
          -google-explicit-constructor,
+         -google-readability-function-size,
+         -google-runtime-int,
          -google-runtime-references,
          -hicpp-avoid-goto,
          -hicpp-explicit-conversions,
+         -hicpp-function-size,
          -hicpp-no-array-decay,
+         -hicpp-no-assembler,
+         -hicpp-signed-bitwise,
          -hicpp-uppercase-literal-suffix,
          -llvm-header-guard,
          -llvm-include-order,
+         -llvmlibc-*,
+         -misc-no-recursion,
          -misc-non-private-member-variables-in-classes,
          -modernize-use-trailing-return-type,
+         -readability-function-size,
          -readability-magic-numbers,
+         -readability-redundant-access-specifiers,
          -readability-uppercase-literal-suffix'
 
 CheckOptions:
   - key: hicpp-special-member-functions.AllowSoleDefaultDtor
     value: 1
+
+WarningsAsErrors: '*'
+
+#HeaderFilterRegex: '.*nlohmann.*'
+HeaderFilterRegex: '.*hpp$'

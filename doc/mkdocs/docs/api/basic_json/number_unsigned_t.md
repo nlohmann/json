@@ -6,7 +6,7 @@ using number_unsigned_t = NumberUnsignedType;
 
 The type used to store JSON numbers (unsigned).
 
-[RFC 7159](http://rfc7159.net/rfc7159) describes numbers as follows:
+[RFC 8259](https://tools.ietf.org/html/rfc8259) describes numbers as follows:
 > The representation of numbers is similar to that used in most programming languages. A number is represented in base
 > 10 using decimal digits. It contains an integer component that may be prefixed with an optional minus sign, which may
 > be followed by a fraction part and/or an exponent part. Leading zeros are not allowed. (...) Numeric values that
@@ -36,7 +36,7 @@ With the default values for `NumberUnsignedType` (`std::uint64_t`), the default 
 
 #### Limits
 
-[RFC 7159](http://rfc7159.net/rfc7159) specifies:
+[RFC 8259](https://tools.ietf.org/html/rfc8259) specifies:
 > An implementation may set limits on the range and precision of numbers.
 
 When the default type is used, the maximal integer number that can be stored is `18446744073709551615` (UINT64_MAX) and
@@ -44,7 +44,7 @@ the minimal integer number that can be stored is `0`. Integer numbers that are o
 when used in a constructor. During deserialization, too large or small integer numbers will be automatically be stored
 as [`number_integer_t`](number_integer_t.md) or [`number_float_t`](number_float_t.md).
 
-[RFC 7159](http://rfc7159.net/rfc7159) further states:
+[RFC 8259](https://tools.ietf.org/html/rfc8259) further states:
 > Note that when such software is used, numbers that are integers and are in the range \f$[-2^{53}+1, 2^{53}-1]\f$ are
 > interoperable in the sense that implementations will agree exactly on their numeric values.
 

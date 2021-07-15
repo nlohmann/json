@@ -50,6 +50,43 @@ Note that `JSON_THROW_USER` should leave the current scope (e.g., by throwing or
     #include <nlohmann/json.hpp>
     ```
 
+### Extended diagnostic messages
+
+Exceptions in the library are thrown in the local context of the JSON value they are detected. This makes detailed diagnostics messages, and hence debugging, difficult.
+
+??? example
+
+    ```cpp
+    --8<-- "examples/diagnostics_standard.cpp"
+    ```
+    
+    Output:
+
+    ```
+    --8<-- "examples/diagnostics_standard.output"
+    ```
+
+    This exception can be hard to debug if storing the value `#!c "12"` and accessing it is further apart.
+
+To create better diagnostics messages, each JSON value needs a pointer to its parent value such that a global context (i.e., a path from the root value to the value that lead to the exception) can be created. That global context is provided as [JSON Pointer](../features/json_pointer.md).
+
+As this global context comes at the price of storing one additional pointer per JSON value and runtime overhead to maintain the parent relation, extended diagnostics are disabled by default. They can, however, be enabled by defining the preprocessor symbol [`JSON_DIAGNOSTICS`](../features/macros.md#json_diagnostics) to `1` before including `json.hpp`.
+
+??? example
+
+    ```cpp
+    --8<-- "examples/diagnostics_extended.cpp"
+    ```
+    
+    Output:
+
+    ```
+    --8<-- "examples/diagnostics_extended.output"
+    ```
+
+    Now the exception message contains a JSON Pointer `/address/housenumber` that indicates which value has the wrong type.
+
+
 ## Parse errors
 
 This exception is thrown by the library when a parse error occurs. Parse errors
@@ -151,6 +188,10 @@ JSON uses the `\uxxxx` format to describe Unicode characters. Code points above 
     parse error at 14: missing or wrong low surrogate
     ```
 
+!!! note
+
+    This exception is not used any more. Instead [json.exception.parse_error.101](#jsonexceptionparse_error101) with a more detailed description is used.
+
 ### json.exception.parse_error.103
 
 Unicode supports code points up to 0x10FFFF. Code points above 0x10FFFF are invalid.
@@ -160,6 +201,10 @@ Unicode supports code points up to 0x10FFFF. Code points above 0x10FFFF are inva
     ```
     parse error: code points above 0x10FFFF are invalid
     ```
+
+!!! note
+
+    This exception is not used any more. Instead [json.exception.parse_error.101](#jsonexceptionparse_error101) with a more detailed description is used.
 
 ### json.exception.parse_error.104
 

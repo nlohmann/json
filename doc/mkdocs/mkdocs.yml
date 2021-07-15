@@ -9,7 +9,7 @@ repo_url: https://github.com/nlohmann/json
 edit_uri: edit/develop/doc/mkdocs/docs
 
 # Copyright
-copyright: Copyright &copy; 2013 - 2020 Niels Lohmann
+copyright: Copyright &copy; 2013 - 2021 Niels Lohmann
 
 # Configuration
 theme:
@@ -62,7 +62,9 @@ nav:
         - features/parsing/sax_interface.md
     - features/enum_conversion.md
     - features/macros.md
-    - features/types.md
+    - Types:
+        - features/types/index.md
+        - features/types/number_handling.md
   - Integration:
     - integration/index.md
     - integration/cmake.md

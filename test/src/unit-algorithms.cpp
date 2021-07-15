@@ -43,7 +43,7 @@ TEST_CASE("algorithms")
         {
             CHECK(std::all_of(j_array.begin(), j_array.end(), [](const json & value)
             {
-                return value.size() > 0;
+                return !value.empty();
             }));
             CHECK(std::all_of(j_object.begin(), j_object.end(), [](const json & value)
             {
@@ -67,7 +67,7 @@ TEST_CASE("algorithms")
         {
             CHECK(std::none_of(j_array.begin(), j_array.end(), [](const json & value)
             {
-                return value.size() == 0;
+                return value.empty();
             }));
             CHECK(std::none_of(j_object.begin(), j_object.end(), [](const json & value)
             {

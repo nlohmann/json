@@ -39,7 +39,7 @@ namespace persons
 class person_with_private_data
 {
   private:
-    std::string name = "";
+    std::string name{};
     int age = 0;
     json metadata = nullptr;
 
@@ -62,7 +62,7 @@ class person_with_private_data
 class person_without_private_data_1
 {
   public:
-    std::string name = "";
+    std::string name{};
     int age = 0;
     json metadata = nullptr;
 
@@ -84,7 +84,7 @@ class person_without_private_data_1
 class person_without_private_data_2
 {
   public:
-    std::string name = "";
+    std::string name{};
     int age = 0;
     json metadata = nullptr;
 
