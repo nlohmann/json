@@ -4480,6 +4480,13 @@ namespace detail
 // constructors //
 //////////////////
 
+/*
+ * Note all external_constructor<>::construct functions need to call
+ * j.m_value.destroy(j.m_type) to avoid a memory leak in case j contains an
+ * allocated value (e.g., a string). See bug issue
+ * https://github.com/nlohmann/json/issues/2865 for more information.
+ */
+
 template<value_t> struct external_constructor;
 
 template<>
