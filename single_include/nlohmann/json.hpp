@@ -18200,7 +18200,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             binary = create<binary_t>(std::move(value));
         }
 
-        void destroy(value_t t) noexcept
+        void destroy(value_t t)
         {
             if (t == value_t::array || t == value_t::object)
             {
