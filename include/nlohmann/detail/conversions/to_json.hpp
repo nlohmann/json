@@ -236,6 +236,7 @@ template<typename BasicJsonType, typename CompatibleString,
          enable_if_t<std::is_constructible<typename BasicJsonType::string_t, CompatibleString>::value, int> = 0>
 void to_json(BasicJsonType& j, const CompatibleString& s)
 {
+    j.m_value.destroy(j.m_type);
     external_constructor<value_t::string>::construct(j, s);
 }
 
