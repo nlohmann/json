@@ -594,4 +594,30 @@ TEST_CASE("regression tests 2")
             }
         }
     }
+
+    SECTION("issue #2865 - ASAN detects memory leaks")
+    {
+        // the code below is expected to not leak memory
+        {
+            nlohmann::json o;
+            std::string s = "bar";
+
+            nlohmann::to_json(o["foo"], s);
+
+            nlohmann::json p = o;
+
+            // call to_json with a non-null JSON value
+            nlohmann::to_json(p["foo"], s);
+        }
+
+        {
+            nlohmann::json o;
+            std::string s = "bar";
+
+            nlohmann::to_json(o["foo"], s);
+
+            // call to_json with a non-null JSON value
+            nlohmann::to_json(o["foo"], s);
+        }
+    }
 }
