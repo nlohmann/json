@@ -4696,7 +4696,7 @@ void to_json(BasicJsonType& j, const CompatibleString& s)
 {
     if (!j.is_null())
     {
-        j = nullptr;
+        j = BasicJsonType();
     }
     external_constructor<value_t::string>::construct(j, s);
 }
