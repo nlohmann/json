@@ -1,5 +1,43 @@
 # Frequently Asked Questions (FAQ)
 
+## Known bugs
+
+### Brace initialization yields arrays
+
+!!! question
+
+    Why does
+
+    ```cpp
+    json j{true};
+    ```
+
+    and
+
+    ```cpp
+    json j(true);
+    ```
+
+    yield different results (`#!json [true]` vs. `#!json true`)?
+
+This is a known issue, and -- even worse -- the behavior differs between GCC and Clang. The "culprit" for this is the library's constructor overloads for initializer lists to allow syntax like
+
+```cpp
+json array = {1, 2, 3, 4};
+```
+
+for arrays and
+
+```cpp
+json object = {{"one", 1}, {"two", 2}}; 
+```
+
+for objects.
+
+!!! tip
+
+    To avoid any confusion and ensure portable code, **do not** use brace initialization with the types `basic_json`, `json`, or `ordered_json` unless you want to create an object or array as shown in the examples above.
+
 ## Limitations
 
 ### Relaxed parsing
@@ -8,7 +46,7 @@
 
 	- Can you add an option to ignore trailing commas?
 
-For the same reason this library does not support [comments](#comments), this library also does not support any feature which would jeopardize interoperability.
+This library does not support any feature which would jeopardize interoperability.
 
 
 ### Parse errors reading non-ASCII characters
@@ -32,13 +70,24 @@ The library supports **Unicode input** as follows:
 In most cases, the parser is right to complain, because the input is not UTF-8 encoded. This is especially true for Microsoft Windows where Latin-1 or ISO 8859-1 is often the standard encoding.
 
 
+## Exceptions
+
+### Parsing without exceptions
+
+!!! question
+
+    Is it possible to indicate a parse error without throwing an exception?
+
+Yes, see [Parsing and exceptions](../features/parsing/parse_exceptions.md).
+
+
 ### Key name in exceptions
 
 !!! question
 
 	Can I get the key of the object item that caused an exception?
 
-No, this is not possible. See <https://github.com/nlohmann/json/issues/932> for a longer discussion.
+Yes, you can. Please define the symbol [`JSON_DIAGNOSTICS`](../features/macros.md#json_diagnostics) to get [extended diagnostics messages](exceptions.md#extended-diagnostic-messages).
 
 
 ## Serialization issues
@@ -61,6 +110,7 @@ The library uses `std::numeric_limits<number_float_t>::digits10` (15 for IEEE `d
 
 	The website https://float.exposed gives a good insight into the internal storage of floating-point numbers.
 
+See [this section](../features/types/number_handling.md#number-serialization) on the library's number handling for more information.
 
 ## Compilation issues
 
