@@ -9298,38 +9298,41 @@ class binary_reader
             return false;
         }
 
-        string_t key;
-        if (len != std::size_t(-1))
+        if (len != 0)
         {
-            for (std::size_t i = 0; i < len; ++i)
+            string_t key;
+            if (len != std::size_t(-1))
             {
-                get();
-                if (JSON_HEDLEY_UNLIKELY(!get_cbor_string(key) || !sax->key(key)))
+                for (std::size_t i = 0; i < len; ++i)
                 {
-                    return false;
-                }
+                    get();
+                    if (JSON_HEDLEY_UNLIKELY(!get_cbor_string(key) || !sax->key(key)))
+                    {
+                        return false;
+                    }
 
-                if (JSON_HEDLEY_UNLIKELY(!parse_cbor_internal(true, tag_handler)))
-                {
-                    return false;
+                    if (JSON_HEDLEY_UNLIKELY(!parse_cbor_internal(true, tag_handler)))
+                    {
+                        return false;
+                    }
+                    key.clear();
                 }
-                key.clear();
             }
-        }
-        else
-        {
-            while (get() != 0xFF)
+            else
             {
-                if (JSON_HEDLEY_UNLIKELY(!get_cbor_string(key) || !sax->key(key)))
+                while (get() != 0xFF)
                 {
-                    return false;
-                }
+                    if (JSON_HEDLEY_UNLIKELY(!get_cbor_string(key) || !sax->key(key)))
+                    {
+                        return false;
+                    }
 
-                if (JSON_HEDLEY_UNLIKELY(!parse_cbor_internal(true, tag_handler)))
-                {
-                    return false;
+                    if (JSON_HEDLEY_UNLIKELY(!parse_cbor_internal(true, tag_handler)))
+                    {
+                        return false;
+                    }
+                    key.clear();
                 }
-                key.clear();
             }
         }
 
