@@ -104,6 +104,7 @@ set(CLANG_CXXFLAGS "-std=c++11                        \
 ")
 
 set(GCC_CXXFLAGS "-std=c++11                          \
+    -fanalyzer                                        \
     -pedantic                                         \
     -Werror                                           \
     --all-warnings                                    \
