@@ -69,8 +69,8 @@ nav:
     - integration/index.md
     - integration/cmake.md
     - integration/package_managers.md
-  - Doxygen:
-    - doxygen/index.html
+    - integration/pkg-config.md
+  - Doxygen: doxygen/index.html
   - API:
       - basic_json:
         - api/basic_json/index.md

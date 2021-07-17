@@ -22,6 +22,7 @@
 
 - [Design goals](#design-goals)
 - [Sponsors](#sponsors)
+- [Support](#support) ([documentation](https://json.nlohmann.me), [FAQ](http://127.0.0.1:8000/home/faq/), [discussions](https://github.com/nlohmann/json/discussions), [API](https://json.nlohmann.me/api/basic_json/), [bug issues](https://github.com/nlohmann/json/issues))
 - [Examples](#examples)
   - [JSON as first-class data type](#json-as-first-class-data-type)
   - [Serialization / Deserialization](#serialization--deserialization)
@@ -78,6 +79,16 @@ You can sponsor this library at [GitHub Sponsors](https://github.com/sponsors/nl
 - [Steve Wagner](https://github.com/ciroque)
 
 Thanks everyone!
+
+## Support
+
+:question: If you have a **question**, please check if it is already answered in the [**FAQ**](https://json.nlohmann.me/home/faq/) or the [**Q&A**](https://github.com/nlohmann/json/discussions/categories/q-a) section. If not, please [**ask a new question**](https://github.com/nlohmann/json/discussions/new) there.
+
+:books: If you want to **learn more** about how to use the library, check out the rest of the [**README**](#examples), have a look at [**code examples**](https://github.com/nlohmann/json/tree/develop/doc/examples), or browse through the [**help pages**](https://json.nlohmann.me).
+
+:construction: If you want to understand the **API** better, check out the [**API Reference**](https://json.nlohmann.me/api/basic_json/) or the [**Doxygen documentation**](https://json.nlohmann.me/doxygen/index.html).
+
+:bug: If you found a **bug**, please check the [**FAQ**](https://json.nlohmann.me/home/faq/) if it is a known issue or the result of a design decision. Please also have a look at the [**issue list**](https://github.com/nlohmann/json/issues) before you [**create a new issue**](https://github.com/nlohmann/json/issues/new/choose). Please provide as many information as possible to help us understand and reproduce your issue.
 
 
 ## Examples
