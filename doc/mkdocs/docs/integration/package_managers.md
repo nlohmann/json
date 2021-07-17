@@ -24,7 +24,7 @@ brew install nlohmann-json --HEAD
 
 instead.
 
-!!! example
+??? example
 
 	1. Create the following file:
 
@@ -63,7 +63,7 @@ The provided meson.build can also be used as an alternative to cmake for install
 
 If you are using [Conan](https://www.conan.io/) to manage your dependencies, merely add `nlohmann_json/x.y.z` to your `conanfile`'s requires, where `x.y.z` is the release version you want to use. Please file issues [here](https://github.com/conan-io/conan-center-index/issues) if you experience problems with the packages.
 
-!!! example
+??? example
 
 	1. Create the following files:
 
@@ -141,7 +141,7 @@ Please file issues [here](https://github.com/build2-packaging/nlohmann-json) if 
 
 If you are using [`wsjcpp`](http://wsjcpp.org), you can use the command `wsjcpp install "https://github.com/nlohmann/json:develop"` to get the latest version. Note you can change the branch ":develop" to an existing tag or another branch.
 
-### CPM.cmake
+## CPM.cmake
 
 If you are using [`CPM.cmake`](https://github.com/TheLartians/CPM.cmake), you can check this [`example`](https://github.com/TheLartians/CPM.cmake/tree/master/examples/json). After [adding CPM script](https://github.com/TheLartians/CPM.cmake#adding-cpm) to your project, implement the following snippet to your CMake:
 
