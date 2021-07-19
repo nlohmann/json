@@ -39,7 +39,7 @@ namespace persons
 #define START_CLASS_PERSON(ClassName, Visibility)                                  \
     class ClassName                                                                \
     {                                                                              \
-        Visibility : std::string name;                                             \
+        Visibility : std::string name{};                                           \
         int age = 0;                                                               \
         json metadata = nullptr;                                                   \
                                                                                    \
