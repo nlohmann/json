@@ -5263,7 +5263,7 @@ std::size_t hash(const BasicJsonType& j)
 #include <utility> // pair, declval
 
 #ifndef JSON_NO_IO
-    #include <cstdio>   //FILE *
+    #include <cstdio>   // FILE *
     #include <istream>  // istream
 #endif                  // JSON_NO_IO
 
