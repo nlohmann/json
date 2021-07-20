@@ -1,5 +1,5 @@
 # number of parallel jobs for CTest
-set(N 4)
+set(N 10)
 
 ###############################################################################
 # Needed tools.
@@ -494,7 +494,7 @@ add_custom_target(ci_test_clang_sanitizer
         -DJSON_BuildTests=ON
         -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_clang_sanitizer
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_clang_sanitizer
-    COMMAND cd ${PROJECT_BINARY_DIR}/build_clang_sanitizer && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_clang_sanitizer && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure --timeout 1500
     COMMENT "Compile and test with sanitizers"
 )
 
