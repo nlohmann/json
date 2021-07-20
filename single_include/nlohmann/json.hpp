@@ -2607,9 +2607,15 @@ using is_detected_convertible =
 @def NLOHMANN_DEFINE_TYPE_INTRUSIVE_IMPL
 @since version 3.9.2
 */
-#define NLOHMANN_DEFINE_TYPE_INTRUSIVE_IMPL(BasicJsonType, Type, ...)  \
-    friend void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) } \
-    friend void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, __VA_ARGS__)) }
+#define NLOHMANN_DEFINE_TYPE_INTRUSIVE_IMPL(BasicJsonType, Type, ...)                  \
+    friend void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t)   \
+    {                                                                                  \
+        NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__))       \
+    }                                                                                  \
+    friend void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) \
+    {                                                                                  \
+        NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, __VA_ARGS__))     \
+    }
 
 /*!
 @brief macro to briefly define non-intrusive serialization of a given type to/from JSON
@@ -2617,9 +2623,15 @@ using is_detected_convertible =
 @def NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_IMPL
 @since version 3.9.2
 */
-#define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_IMPL(BasicJsonType, Type, ...)  \
-    inline void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) } \
-    inline void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, __VA_ARGS__)) }
+#define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_IMPL(BasicJsonType, Type, ...)              \
+    inline void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t)   \
+    {                                                                                  \
+        NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__))       \
+    }                                                                                  \
+    inline void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) \
+    {                                                                                  \
+        NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, __VA_ARGS__))     \
+    }
 
 /*!
 @brief macro to briefly define intrusive serialization of given type to/from nlohmann::json
@@ -2699,7 +2711,7 @@ using is_detected_convertible =
     friend void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t)          \
     {                                                                                           \
         NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, __VA_ARGS__))              \
-    }                                                                                           \
+    }
 
 /*!
 @brief macro to briefly define non-intrusive serialization of a given type to/from any basic_json object
