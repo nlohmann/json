@@ -1,5 +1,5 @@
 # number of parallel jobs for CTest
-set(N 10)
+set(N 4)
 
 ###############################################################################
 # Needed tools.
