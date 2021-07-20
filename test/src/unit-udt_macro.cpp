@@ -39,10 +39,10 @@ namespace persons
 #define START_CLASS_PERSON(ClassName, Visibility)                                  \
     class ClassName                                                                \
     {                                                                              \
-        Visibility : std::string name{};                                           \
+      Visibility : std::string name{};                                           \
         int age = 0;                                                               \
         json metadata = nullptr;                                                   \
-                                                                                   \
+        \
       public:                                                                      \
         bool operator==(const ClassName& rhs) const                                \
         {                                                                          \
@@ -50,9 +50,9 @@ namespace persons
         }                                                                          \
         ClassName() = default;                                                     \
         ClassName(std::string name_, int age_, json metadata_)                     \
-          : name(std::move(name_))                                                 \
-          , age(age_)                                                              \
-          , metadata(std::move(metadata_))                                         \
+            : name(std::move(name_))                                                 \
+            , age(age_)                                                              \
+            , metadata(std::move(metadata_))                                         \
         {}
 
 #define START_CLASS_ALPHABET(ClassName, Visibility)   \
@@ -88,7 +88,7 @@ namespace persons
                    y == other.y &&                    \
                    z == other.z;                      \
         }                                             \
-        Visibility : int a = 0;                       \
+      Visibility : int a = 0;                       \
         int b = 0;                                    \
         int c = 0;                                    \
         int d = 0;                                    \
@@ -116,11 +116,11 @@ namespace persons
         int z = 0;
 
 START_CLASS_PERSON(person_with_private_data, private)
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(person_with_private_data, age, name, metadata)
+NLOHMANN_DEFINE_TYPE_INTRUSIVE(person_with_private_data, age, name, metadata)
 };
 
 START_CLASS_PERSON(person_without_private_data_1, public)
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(person_without_private_data_1, age, name, metadata)
+NLOHMANN_DEFINE_TYPE_INTRUSIVE(person_without_private_data_1, age, name, metadata)
 };
 
 START_CLASS_PERSON(person_without_private_data_2, public)
@@ -128,11 +128,11 @@ START_CLASS_PERSON(person_without_private_data_2, public)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(person_without_private_data_2, age, name, metadata)
 
 START_CLASS_PERSON(person_t_with_private_data, private)
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE_T(person_t_with_private_data, age, name, metadata)
+NLOHMANN_DEFINE_TYPE_INTRUSIVE_T(person_t_with_private_data, age, name, metadata)
 };
 
 START_CLASS_PERSON(person_t_without_private_data_1, public)
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE_T(person_t_without_private_data_1, age, name, metadata)
+NLOHMANN_DEFINE_TYPE_INTRUSIVE_T(person_t_without_private_data_1, age, name, metadata)
 };
 
 START_CLASS_PERSON(person_t_without_private_data_2, public)
@@ -140,7 +140,7 @@ START_CLASS_PERSON(person_t_without_private_data_2, public)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_T(person_t_without_private_data_2, age, name, metadata)
 
 START_CLASS_ALPHABET(person_with_private_alphabet, private)
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(person_with_private_alphabet, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
+NLOHMANN_DEFINE_TYPE_INTRUSIVE(person_with_private_alphabet, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
 };
 
 START_CLASS_ALPHABET(person_with_public_alphabet, public)
@@ -149,7 +149,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(person_with_public_alphabet, a, b, c, d, e, f
 
 
 START_CLASS_ALPHABET(person_t_with_private_alphabet, private)
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE_T(person_t_with_private_alphabet, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
+NLOHMANN_DEFINE_TYPE_INTRUSIVE_T(person_t_with_private_alphabet, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
 };
 
 START_CLASS_ALPHABET(person_t_with_public_alphabet, public)
