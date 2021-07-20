@@ -3552,7 +3552,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             JSON_CATCH (std::out_of_range&)
             {
                 // create better exception explanation
-                JSON_THROW(out_of_range::create(403, "key '" + key + "' not found", *this));
+                JSON_THROW(out_of_range::create(403, "key '" + std::string(key.begin(), key.end()) + "' not found", *this));
             }
         }
         else
@@ -3603,7 +3603,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             JSON_CATCH (std::out_of_range&)
             {
                 // create better exception explanation
-                JSON_THROW(out_of_range::create(403, "key '" + key + "' not found", *this));
+                JSON_THROW(out_of_range::create(403, "key '" + std::string(key.begin(), key.end()) + "' not found", *this));
             }
         }
         else
