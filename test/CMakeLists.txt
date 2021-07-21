@@ -81,10 +81,6 @@ foreach(file ${files})
     endif()
     set_tests_properties("${testcase}" PROPERTIES LABELS "all" FIXTURES_REQUIRED TEST_DATA)
 
-    if (${testcase} STREQUAL "test-unicode")
-        set_tests_properties("${testcase}" PROPERTIES RUN_SERIAL ON)
-    endif()
-
     if(JSON_Valgrind)
         add_test(NAME "${testcase}_valgrind"
             COMMAND ${memcheck_command} ${CMAKE_CURRENT_BINARY_DIR}/${testcase} ${DOCTEST_TEST_FILTER}

@@ -172,26 +172,27 @@ void check_utf8string(bool success_expected, int byte1, int byte2 = -1, int byte
 
 TEST_CASE("Unicode" * doctest::skip())
 {
-    /*
     SECTION("RFC 3629")
     {
-        // RFC 3629 describes in Sect. 4 the syntax of UTF-8 byte sequences as
-        // follows:
-        //
-        //     A UTF-8 string is a sequence of octets representing a sequence of UCS
-        //     characters.  An octet sequence is valid UTF-8 only if it matches the
-        //     following syntax, which is derived from the rules for encoding UTF-8
-        //     and is expressed in the ABNF of [RFC2234].
-        //
-        //     UTF8-octets = *( UTF8-char )
-        //     UTF8-char   = UTF8-1 / UTF8-2 / UTF8-3 / UTF8-4
-        //     UTF8-1      = %x00-7F
-        //     UTF8-2      = %xC2-DF UTF8-tail
-        //     UTF8-3      = %xE0 %xA0-BF UTF8-tail / %xE1-EC 2( UTF8-tail ) /
-        //                   %xED %x80-9F UTF8-tail / %xEE-EF 2( UTF8-tail )
-        //     UTF8-4      = %xF0 %x90-BF 2( UTF8-tail ) / %xF1-F3 3( UTF8-tail ) /
-        //                   %xF4 %x80-8F 2( UTF8-tail )
-        //     UTF8-tail   = %x80-BF
+        /*
+         RFC 3629 describes in Sect. 4 the syntax of UTF-8 byte sequences as
+         follows:
+
+             A UTF-8 string is a sequence of octets representing a sequence of UCS
+             characters.  An octet sequence is valid UTF-8 only if it matches the
+             following syntax, which is derived from the rules for encoding UTF-8
+             and is expressed in the ABNF of [RFC2234].
+
+             UTF8-octets = *( UTF8-char )
+             UTF8-char   = UTF8-1 / UTF8-2 / UTF8-3 / UTF8-4
+             UTF8-1      = %x00-7F
+             UTF8-2      = %xC2-DF UTF8-tail
+             UTF8-3      = %xE0 %xA0-BF UTF8-tail / %xE1-EC 2( UTF8-tail ) /
+                           %xED %x80-9F UTF8-tail / %xEE-EF 2( UTF8-tail )
+             UTF8-4      = %xF0 %x90-BF 2( UTF8-tail ) / %xF1-F3 3( UTF8-tail ) /
+                           %xF4 %x80-8F 2( UTF8-tail )
+             UTF8-tail   = %x80-BF
+         */
 
         SECTION("ill-formed first byte")
         {
@@ -995,7 +996,6 @@ TEST_CASE("Unicode" * doctest::skip())
             }
         }
     }
-    */
 
     SECTION("\\uxxxx sequences")
     {
