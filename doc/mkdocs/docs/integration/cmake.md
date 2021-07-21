@@ -63,7 +63,7 @@ target_link_libraries(foo PRIVATE nlohmann_json::nlohmann_json)
 ```
 
 !!! Note
-	The repository <https://github.com/nlohmann/json> download size quite large.
+	The repository <https://github.com/nlohmann/json> download size is quite large.
 	You might want to depend on a smaller repository. For instance, you might want to replace the URL above by
 	<https://github.com/ArthurSonzogni/nlohmann_json_cmake_fetchcontent>.
 
