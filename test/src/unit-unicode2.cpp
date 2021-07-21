@@ -183,7 +183,7 @@ void check_utf8string(bool success_expected, int byte1, int byte2 = -1, int byte
 }
 } // namespace
 
-TEST_CASE("Unicode (2/2)" * doctest::skip())
+TEST_CASE("Unicode (2/5)" * doctest::skip())
 {
     SECTION("RFC 3629")
     {

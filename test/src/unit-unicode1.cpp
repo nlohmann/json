@@ -39,7 +39,7 @@ using nlohmann::json;
 #include <iomanip>
 #include <test_data.hpp>
 
-TEST_CASE("Unicode (1/2)" * doctest::skip())
+TEST_CASE("Unicode (1/5)" * doctest::skip())
 {
     SECTION("\\uxxxx sequences")
     {
