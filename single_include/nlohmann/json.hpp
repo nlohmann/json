@@ -2248,6 +2248,176 @@ JSON_HEDLEY_DIAGNOSTIC_POP
     #define JSON_HAS_CPP_11
 #endif
 
+#ifdef JSON_HAS_CPP_17
+// #include <nlohmann/optional.hpp>
+
+
+#include <optional>
+#include <utility>
+
+namespace nlohmann
+{
+
+template <typename T>
+class optional : public std::optional<T>
+{
+    // *INDENT-OFF*
+
+    using base_type = std::optional<T>;
+
+    template <typename U, typename = optional>
+    struct has_conversion_operator : std::false_type { };
+
+    template <typename U>
+    struct has_conversion_operator<U,
+        decltype(std::declval<U>().operator optional())> : std::true_type { };
+
+    template <typename... U>
+    using is_base_constructible_from = std::is_constructible<base_type, U...>;
+
+    template <typename U>
+    using is_convertible_to_base = std::is_convertible<U, base_type>;
+
+    template <typename U>
+    using enable_int_if = std::enable_if_t<U::value, int>;
+
+    template <typename U>
+    using use_conversion_operator =
+        enable_int_if<
+            has_conversion_operator<U>
+        >;
+
+    template <typename U>
+    using use_implicit_forwarding =
+        enable_int_if<
+            std::conjunction<
+                std::negation<has_conversion_operator<U>>,
+                is_base_constructible_from<U>,
+                is_convertible_to_base<U>
+            >
+        >;
+
+    template <typename U>
+    using use_explicit_forwarding =
+        enable_int_if<
+            std::conjunction<
+                std::negation<has_conversion_operator<U>>,
+                is_base_constructible_from<U>,
+                std::negation<is_convertible_to_base<U>>
+            >
+        >;
+
+    template <typename... U>
+    using can_construct_in_place_from =
+        enable_int_if<
+            is_base_constructible_from<std::in_place_t, U...>
+        >;
+
+  public:
+
+    const base_type& base() const
+    {
+        return *this;
+    }
+
+    constexpr optional() noexcept = default;
+
+    constexpr optional(std::nullopt_t) noexcept
+        : base_type(std::nullopt)
+    {
+    }
+
+    template <typename U, use_conversion_operator<U> = 0>
+    constexpr optional(U&& value)
+        noexcept(noexcept(
+            base_type(std::forward<U>(value).operator optional())
+         )) :
+            base_type(std::forward<U>(value).operator optional())
+    {
+    }
+
+    template <typename U = T, use_implicit_forwarding<U> = 0>
+    constexpr optional(U&& value)
+        noexcept(noexcept(
+            base_type(std::forward<U>(value))
+        )) :
+            base_type(std::forward<U>(value))
+    {
+    }
+
+    template <typename U, use_explicit_forwarding<U> = 0>
+    explicit
+    constexpr optional(U&& value)
+        noexcept(noexcept(
+            base_type(std::forward<U>(value))
+        )) :
+            base_type(std::forward<U>(value))
+    {
+    }
+
+    template <typename U, typename... Args, can_construct_in_place_from<U, Args...> = 0>
+    explicit
+    constexpr optional(std::in_place_t, U&& u, Args&&... args)
+        noexcept(noexcept(
+            base_type(std::in_place, std::forward<U>(u), std::forward<Args>(args)...)
+        )) :
+            base_type(std::in_place, std::forward<U>(u), std::forward<Args>(args)...)
+    {
+    }
+
+    template <typename U, typename... Args, can_construct_in_place_from<std::initializer_list<U>&, Args...> = 0>
+    explicit
+    constexpr optional(std::in_place_t, std::initializer_list<U> u, Args&&... args)
+        noexcept(noexcept(
+            base_type(std::in_place, u, std::forward<Args>(args)...)
+        )) :
+            base_type(std::in_place, u, std::forward<Args>(args)...)
+    {
+    }
+
+    // *INDENT-ON*
+};
+
+template<class T, class U>
+constexpr bool operator == (const optional<T>& lhs, const optional<U>& rhs)
+{
+    return lhs.base() == rhs.base();
+}
+
+template<class T, class U>
+constexpr bool operator != (const optional<T>& lhs, const optional<U>& rhs)
+{
+    return lhs.base() != rhs.base();
+}
+
+template<class T, class U>
+constexpr bool operator < (const optional<T>& lhs, const optional<U>& rhs)
+{
+    return lhs.base() < rhs.base();
+}
+
+template<class T, class U>
+constexpr bool operator <= (const optional<T>& lhs, const optional<U>& rhs)
+{
+    return lhs.base() <= rhs.base();
+}
+
+template<class T, class U>
+constexpr bool operator > (const optional<T>& lhs, const optional<U>& rhs)
+{
+    return lhs.base() > rhs.base();
+}
+
+template<class T, class U>
+constexpr bool operator >= (const optional<T>& lhs, const optional<U>& rhs)
+{
+    return lhs.base() >= rhs.base();
+}
+
+}  // namespace nlohmann
+
+#endif
+
 // disable documentation warnings on clang
 #if defined(__clang__)
     #pragma GCC diagnostic push
@@ -3855,6 +4025,34 @@ void from_json(const BasicJsonType& j, typename std::nullptr_t& n)
     n = nullptr;
 }
 
+#ifdef JSON_HAS_CPP_17
+template<typename BasicJsonType, typename T>
+void from_json(const BasicJsonType& j, std::optional<T>& opt)
+{
+    if (j.is_null())
+    {
+        opt = std::nullopt;
+    }
+    else
+    {
+        opt = j.template get<T>();
+    }
+}
+
+template<typename BasicJsonType, typename T>
+void from_json(const BasicJsonType& j, nlohmann::optional<T>& opt)
+{
+    if (j.is_null())
+    {
+        opt = std::nullopt;
+    }
+    else
+    {
+        opt = j.template get<T>();
+    }
+}
+#endif
+
 // overloads for basic_json template parameters
 template < typename BasicJsonType, typename ArithmeticType,
            enable_if_t < std::is_arithmetic<ArithmeticType>::value&&
@@ -4713,6 +4911,22 @@ struct external_constructor<value_t::object>
 /////////////
 // to_json //
 /////////////
+
+#ifdef JSON_HAS_CPP_17
+template<typename BasicJsonType, typename T,
+         enable_if_t<std::is_constructible<BasicJsonType, T>::value, int> = 0>
+void to_json(BasicJsonType& j, const std::optional<T>& opt)
+{
+    if (opt.has_value())
+    {
+        j = *opt;
+    }
+    else
+    {
+        j = nullptr;
+    }
+}
+#endif
 
 template<typename BasicJsonType, typename T,
          enable_if_t<std::is_same<T, typename BasicJsonType::boolean_t>::value, int> = 0>

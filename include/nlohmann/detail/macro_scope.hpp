@@ -36,6 +36,10 @@
     #define JSON_HAS_CPP_11
 #endif
 
+#ifdef JSON_HAS_CPP_17
+    #include <nlohmann/optional.hpp>
+#endif
+
 // disable documentation warnings on clang
 #if defined(__clang__)
     #pragma GCC diagnostic push
