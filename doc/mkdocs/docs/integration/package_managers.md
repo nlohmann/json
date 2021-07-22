@@ -24,7 +24,7 @@ brew install nlohmann-json --HEAD
 
 instead.
 
-!!! example
+??? example
 
 	1. Create the following file:
 
@@ -63,7 +63,7 @@ The provided meson.build can also be used as an alternative to cmake for install
 
 If you are using [Conan](https://www.conan.io/) to manage your dependencies, merely add `nlohmann_json/x.y.z` to your `conanfile`'s requires, where `x.y.z` is the release version you want to use. Please file issues [here](https://github.com/conan-io/conan-center-index/issues) if you experience problems with the packages.
 
-!!! example
+??? example
 
 	1. Create the following files:
 
@@ -116,7 +116,6 @@ If you are using [vcpkg](https://github.com/Microsoft/vcpkg/) on your project fo
 
 If you are using [cget](http://cget.readthedocs.io/en/latest/), you can install the latest development version with `cget install nlohmann/json`. A specific version can be installed with `cget install nlohmann/json@v3.1.0`. Also, the multiple header version can be installed by adding the `-DJSON_MultipleHeaders=ON` flag (i.e., `cget install nlohmann/json -DJSON_MultipleHeaders=ON`).
 
-
 ## CocoaPods
 
 If you are using [CocoaPods](https://cocoapods.org), you can use the library by adding pod `"nlohmann_json", '~>3.1.2'` to your podfile (see [an example](https://bitbucket.org/benman/nlohmann_json-cocoapod/src/master/)). Please file issues [here](https://bitbucket.org/benman/nlohmann_json-cocoapod/issues?status=new&status=open).
@@ -141,3 +140,14 @@ Please file issues [here](https://github.com/build2-packaging/nlohmann-json) if 
 ## wsjcpp
 
 If you are using [`wsjcpp`](http://wsjcpp.org), you can use the command `wsjcpp install "https://github.com/nlohmann/json:develop"` to get the latest version. Note you can change the branch ":develop" to an existing tag or another branch.
+
+## CPM.cmake
+
+If you are using [`CPM.cmake`](https://github.com/TheLartians/CPM.cmake), you can check this [`example`](https://github.com/TheLartians/CPM.cmake/tree/master/examples/json). After [adding CPM script](https://github.com/TheLartians/CPM.cmake#adding-cpm) to your project, implement the following snippet to your CMake:
+
+```cmake
+CPMAddPackage(
+    NAME nlohmann_json
+    GITHUB_REPOSITORY nlohmann/json
+    VERSION 3.9.1)
+```

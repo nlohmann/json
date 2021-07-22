@@ -1,8 +1,5 @@
-option(JSON_Sanitizer "Build test suite with Clang sanitizer" OFF)
-option(JSON_Valgrind "Execute test suite with Valgrind" OFF)
-option(JSON_NoExceptions "Build test suite without exceptions" OFF)
-option(JSON_Coverage "Build test suite with coverage information" OFF)
-option(JSON_FastTests "Whether to skip expensive tests" OFF)
+option(JSON_Valgrind    "Execute test suite with Valgrind." OFF)
+option(JSON_FastTests   "Skip expensive/slow tests." OFF)
 
 # download test data
 include(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/download_test_data.cmake)
@@ -11,48 +8,11 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/download_test_data.cmake)
 add_test(NAME "download_test_data" COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target download_test_data)
 set_tests_properties(download_test_data PROPERTIES FIXTURES_SETUP TEST_DATA)
 
-if(JSON_Sanitizer)
-    message(STATUS "Building test suite with Clang sanitizer")
-    if(NOT MSVC)
-        set(CMAKE_CXX_FLAGS "-g -O0 -fsanitize=address -fsanitize=undefined -fsanitize=integer -fsanitize=nullability -fno-omit-frame-pointer -fno-sanitize-recover=all -fsanitize-recover=unsigned-integer-overflow")
-    endif()
-endif()
-
 if(JSON_Valgrind)
     find_program(CMAKE_MEMORYCHECK_COMMAND valgrind)
     message(STATUS "Executing test suite with Valgrind (${CMAKE_MEMORYCHECK_COMMAND})")
     set(memcheck_command "${CMAKE_MEMORYCHECK_COMMAND} ${CMAKE_MEMORYCHECK_COMMAND_OPTIONS} --error-exitcode=1 --leak-check=full")
     separate_arguments(memcheck_command)
-endif()
-
-if(JSON_NoExceptions)
-    message(STATUS "Building test suite without exceptions")
-    if(NOT MSVC)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DJSON_NOEXCEPTION")
-    endif()
-    set(DOCTEST_TEST_FILTER --no-throw)
-endif()
-
-if(JSON_Coverage)
-    message(STATUS "Building test suite with coverage information")
-
-    # from https://github.com/RWTH-HPC/CMake-codecov/blob/master/cmake/FindGcov.cmake
-    get_filename_component(COMPILER_PATH "${CMAKE_CXX_COMPILER}" PATH)
-    string(REGEX MATCH "^[0-9]+" GCC_VERSION "${CMAKE_CXX_COMPILER_VERSION}")
-    find_program(GCOV_BIN NAMES gcov-${GCC_VERSION} gcov HINTS ${COMPILER_PATH})
-
-    # collect all source files from the chosen include dir
-    file(GLOB_RECURSE SOURCE_FILES ${NLOHMANN_JSON_INCLUDE_BUILD_DIR}*.hpp)
-
-    # add target to collect coverage information and generate HTML file
-    # (filter script from https://stackoverflow.com/a/43726240/266378)
-    add_custom_target(lcov_html
-        COMMAND lcov --directory . --capture --output-file json.info --rc lcov_branch_coverage=1
-        COMMAND lcov -e json.info ${SOURCE_FILES} --output-file json.info.filtered --gcov-tool ${GCOV_BIN} --rc lcov_branch_coverage=1
-        COMMAND ${CMAKE_SOURCE_DIR}/test/thirdparty/imapdl/filterbr.py json.info.filtered > json.info.filtered.noexcept
-        COMMAND genhtml --title "JSON for Modern C++" --legend --demangle-cpp --output-directory html --show-details --branch-coverage json.info.filtered.noexcept
-        COMMENT "Generating HTML report test/html/index.html"
-    )
 endif()
 
 #############################################################################
@@ -107,11 +67,6 @@ foreach(file ${files})
     )
     target_include_directories(${testcase} PRIVATE ${CMAKE_BINARY_DIR}/include thirdparty/doctest thirdparty/fifo_map)
     target_link_libraries(${testcase} PRIVATE ${NLOHMANN_JSON_TARGET_NAME})
-
-    if (JSON_Coverage)
-        target_compile_options(${testcase} PRIVATE --coverage)
-        target_link_libraries(${testcase} PRIVATE --coverage)
-    endif()
 
     if (JSON_FastTests)
         add_test(NAME "${testcase}"

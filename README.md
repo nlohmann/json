@@ -7,7 +7,7 @@
 [![Windows](https://github.com/nlohmann/json/workflows/Windows/badge.svg)](https://github.com/nlohmann/json/actions?query=workflow%3AWindows)
 [![Coverage Status](https://coveralls.io/repos/github/nlohmann/json/badge.svg?branch=develop)](https://coveralls.io/github/nlohmann/json?branch=develop)
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/5550/badge.svg)](https://scan.coverity.com/projects/nlohmann-json)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/f3732b3327e34358a0e9d1fe9f661f08)](https://www.codacy.com/app/nlohmann/json?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=nlohmann/json&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/e0d1a9d5d6fd46fcb655c4cb930bb3e8)](https://www.codacy.com/gh/nlohmann/json/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=nlohmann/json&amp;utm_campaign=Badge_Grade)
 [![Language grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/nlohmann/json.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/nlohmann/json/context:cpp)
 [![Fuzzing Status](https://oss-fuzz-build-logs.storage.googleapis.com/badges/json.svg)](https://bugs.chromium.org/p/oss-fuzz/issues/list?sort=-opened&can=1&q=proj:json)
 [![Try online](https://img.shields.io/badge/try-online-blue.svg)](https://wandbox.org/permlink/3lCHrFUZANONKv7a)
@@ -22,10 +22,7 @@
 
 - [Design goals](#design-goals)
 - [Sponsors](#sponsors)
-- [Integration](#integration)
-  - [CMake](#cmake)
-  - [Package Managers](#package-managers)
-  - [Pkg-config](#pkg-config)
+- [Support](#support) ([documentation](https://json.nlohmann.me), [FAQ](http://127.0.0.1:8000/home/faq/), [discussions](https://github.com/nlohmann/json/discussions), [API](https://json.nlohmann.me/api/basic_json/), [bug issues](https://github.com/nlohmann/json/issues))
 - [Examples](#examples)
   - [JSON as first-class data type](#json-as-first-class-data-type)
   - [Serialization / Deserialization](#serialization--deserialization)
@@ -38,6 +35,10 @@
   - [Specializing enum conversion](#specializing-enum-conversion)
   - [Binary formats (BSON, CBOR, MessagePack, and UBJSON)](#binary-formats-bson-cbor-messagepack-and-ubjson)
 - [Supported compilers](#supported-compilers)
+- [Integration](#integration)
+  - [CMake](#cmake)
+  - [Package Managers](#package-managers)
+  - [Pkg-config](#pkg-config)
 - [License](#license)
 - [Contact](#contact)
 - [Thanks](#thanks)
@@ -79,180 +80,16 @@ You can sponsor this library at [GitHub Sponsors](https://github.com/sponsors/nl
 
 Thanks everyone!
 
+## Support
 
-## Integration
+:question: If you have a **question**, please check if it is already answered in the [**FAQ**](https://json.nlohmann.me/home/faq/) or the [**Q&A**](https://github.com/nlohmann/json/discussions/categories/q-a) section. If not, please [**ask a new question**](https://github.com/nlohmann/json/discussions/new) there.
 
-[`json.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json.hpp) is the single required file in `single_include/nlohmann` or [released here](https://github.com/nlohmann/json/releases). You need to add
+:books: If you want to **learn more** about how to use the library, check out the rest of the [**README**](#examples), have a look at [**code examples**](https://github.com/nlohmann/json/tree/develop/doc/examples), or browse through the [**help pages**](https://json.nlohmann.me).
 
-```cpp
-#include <nlohmann/json.hpp>
+:construction: If you want to understand the **API** better, check out the [**API Reference**](https://json.nlohmann.me/api/basic_json/) or the [**Doxygen documentation**](https://json.nlohmann.me/doxygen/index.html).
 
-// for convenience
-using json = nlohmann::json;
-```
+:bug: If you found a **bug**, please check the [**FAQ**](https://json.nlohmann.me/home/faq/) if it is a known issue or the result of a design decision. Please also have a look at the [**issue list**](https://github.com/nlohmann/json/issues) before you [**create a new issue**](https://github.com/nlohmann/json/issues/new/choose). Please provide as many information as possible to help us understand and reproduce your issue.
 
-to the files you want to process JSON and set the necessary switches to enable C++11 (e.g., `-std=c++11` for GCC and Clang).
-
-You can further use file [`include/nlohmann/json_fwd.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/json_fwd.hpp) for forward-declarations. The installation of json_fwd.hpp (as part of cmake's install step), can be achieved by setting `-DJSON_MultipleHeaders=ON`.
-
-### CMake
-
-You can also use the `nlohmann_json::nlohmann_json` interface target in CMake.  This target populates the appropriate usage requirements for `INTERFACE_INCLUDE_DIRECTORIES` to point to the appropriate include directories and `INTERFACE_COMPILE_FEATURES` for the necessary C++11 flags.
-
-#### External
-
-To use this library from a CMake project, you can locate it directly with `find_package()` and use the namespaced imported target from the generated package configuration:
-
-```cmake
-# CMakeLists.txt
-find_package(nlohmann_json 3.2.0 REQUIRED)
-...
-add_library(foo ...)
-...
-target_link_libraries(foo PRIVATE nlohmann_json::nlohmann_json)
-```
-
-The package configuration file, `nlohmann_jsonConfig.cmake`, can be used either from an install tree or directly out of the build tree.
-
-#### Embedded
-
-To embed the library directly into an existing CMake project, place the entire source tree in a subdirectory and call `add_subdirectory()` in your `CMakeLists.txt` file:
-
-```cmake
-# Typically you don't care so much for a third party library's tests to be
-# run from your own project's code.
-set(JSON_BuildTests OFF CACHE INTERNAL "")
-
-# If you only include this third party in PRIVATE source files, you do not
-# need to install it when your main project gets installed.
-# set(JSON_Install OFF CACHE INTERNAL "")
-
-# Don't use include(nlohmann_json/CMakeLists.txt) since that carries with it
-# unintended consequences that will break the build.  It's generally
-# discouraged (although not necessarily well documented as such) to use
-# include(...) for pulling in other CMake projects anyways.
-add_subdirectory(nlohmann_json)
-...
-add_library(foo ...)
-...
-target_link_libraries(foo PRIVATE nlohmann_json::nlohmann_json)
-```
-
-##### Embedded (FetchContent)
-
-Since CMake v3.11,
-[FetchContent](https://cmake.org/cmake/help/v3.11/module/FetchContent.html) can
-be used to automatically download the repository as a dependency at configure time.
-
-Example:
-```cmake
-include(FetchContent)
-
-FetchContent_Declare(json
-  GIT_REPOSITORY https://github.com/nlohmann/json.git
-  GIT_TAG v3.7.3)
-
-FetchContent_GetProperties(json)
-if(NOT json_POPULATED)
-  FetchContent_Populate(json)
-  add_subdirectory(${json_SOURCE_DIR} ${json_BINARY_DIR} EXCLUDE_FROM_ALL)
-endif()
-
-target_link_libraries(foo PRIVATE nlohmann_json::nlohmann_json)
-```
-
-**Note**: The repository https://github.com/nlohmann/json download size is huge.
-It contains all the dataset used for the benchmarks. You might want to depend on
-a smaller repository. For instance, you might want to replace the URL above by
-https://github.com/ArthurSonzogni/nlohmann_json_cmake_fetchcontent
-
-#### Supporting Both
-
-To allow your project to support either an externally supplied or an embedded JSON library, you can use a pattern akin to the following:
-
-``` cmake
-# Top level CMakeLists.txt
-project(FOO)
-...
-option(FOO_USE_EXTERNAL_JSON "Use an external JSON library" OFF)
-...
-add_subdirectory(thirdparty)
-...
-add_library(foo ...)
-...
-# Note that the namespaced target will always be available regardless of the
-# import method
-target_link_libraries(foo PRIVATE nlohmann_json::nlohmann_json)
-```
-```cmake
-# thirdparty/CMakeLists.txt
-...
-if(FOO_USE_EXTERNAL_JSON)
-  find_package(nlohmann_json 3.2.0 REQUIRED)
-else()
-  set(JSON_BuildTests OFF CACHE INTERNAL "")
-  add_subdirectory(nlohmann_json)
-endif()
-...
-```
-
-`thirdparty/nlohmann_json` is then a complete copy of this source tree.
-
-### Package Managers
-
-:beer: If you are using OS X and [Homebrew](https://brew.sh), just type `brew tap nlohmann/json` and `brew install nlohmann-json` and you're set. If you want the bleeding edge rather than the latest release, use `brew install nlohmann-json --HEAD`.
-
-If you are using the [Meson Build System](https://mesonbuild.com), add this source tree as a [meson subproject](https://mesonbuild.com/Subprojects.html#using-a-subproject). You may also use the `include.zip` published in this project's [Releases](https://github.com/nlohmann/json/releases) to reduce the size of the vendored source tree. Alternatively, you can get a wrap file by downloading it from [Meson WrapDB](https://wrapdb.mesonbuild.com/nlohmann_json), or simply use `meson wrap install nlohmann_json`. Please see the meson project for any issues regarding the packaging.
-
-The provided meson.build can also be used as an alternative to cmake for installing `nlohmann_json` system-wide in which case a pkg-config file is installed. To use it, simply have your build system require the `nlohmann_json` pkg-config dependency. In Meson, it is preferred to use the [`dependency()`](https://mesonbuild.com/Reference-manual.html#dependency) object with a subproject fallback, rather than using the subproject directly.
-
-If you are using [Conan](https://www.conan.io/) to manage your dependencies, merely add [`nlohmann_json/x.y.z`](https://conan.io/center/nlohmann_json) to your `conanfile`'s requires, where `x.y.z` is the release version you want to use. Please file issues [here](https://github.com/conan-io/conan-center-index/issues) if you experience problems with the packages.
-
-If you are using [Spack](https://www.spack.io/) to manage your dependencies, you can use the [`nlohmann-json` package](https://spack.readthedocs.io/en/latest/package_list.html#nlohmann-json). Please see the [spack project](https://github.com/spack/spack) for any issues regarding the packaging.
-
-If you are using [hunter](https://github.com/cpp-pm/hunter) on your project for external dependencies, then you can use the [nlohmann_json package](https://hunter.readthedocs.io/en/latest/packages/pkg/nlohmann_json.html). Please see the hunter project for any issues regarding the packaging.
-
-If you are using [Buckaroo](https://buckaroo.pm), you can install this library's module with `buckaroo add github.com/buckaroo-pm/nlohmann-json`. Please file issues [here](https://github.com/buckaroo-pm/nlohmann-json). There is a demo repo [here](https://github.com/njlr/buckaroo-nholmann-json-example).
-
-If you are using [vcpkg](https://github.com/Microsoft/vcpkg/) on your project for external dependencies, then you can use the [nlohmann-json package](https://github.com/Microsoft/vcpkg/tree/master/ports/nlohmann-json). Please see the vcpkg project for any issues regarding the packaging.
-
-If you are using [cget](https://cget.readthedocs.io/en/latest/), you can install the latest development version with `cget install nlohmann/json`. A specific version can be installed with `cget install nlohmann/json@v3.1.0`. Also, the multiple header version can be installed by adding the `-DJSON_MultipleHeaders=ON` flag (i.e., `cget install nlohmann/json -DJSON_MultipleHeaders=ON`).
-
-If you are using [CocoaPods](https://cocoapods.org), you can use the library by adding pod `"nlohmann_json", '~>3.1.2'` to your podfile (see [an example](https://bitbucket.org/benman/nlohmann_json-cocoapod/src/master/)). Please file issues [here](https://bitbucket.org/benman/nlohmann_json-cocoapod/issues?status=new&status=open).
-
-If you are using [NuGet](https://www.nuget.org), you can use the package [nlohmann.json](https://www.nuget.org/packages/nlohmann.json/). Please check [this extensive description](https://github.com/nlohmann/json/issues/1132#issuecomment-452250255) on how to use the package. Please files issues [here](https://github.com/hnkb/nlohmann-json-nuget/issues).
-
-If you are using [conda](https://conda.io/), you can use the package [nlohmann_json](https://github.com/conda-forge/nlohmann_json-feedstock) from [conda-forge](https://conda-forge.org) executing `conda install -c conda-forge nlohmann_json`. Please file issues [here](https://github.com/conda-forge/nlohmann_json-feedstock/issues).
-
-If you are using [MSYS2](https://www.msys2.org/), your can use the [mingw-w64-nlohmann-json](https://packages.msys2.org/base/mingw-w64-nlohmann-json) package, just type `pacman -S mingw-w64-i686-nlohmann-json` or `pacman -S mingw-w64-x86_64-nlohmann-json` for installation. Please file issues [here](https://github.com/msys2/MINGW-packages/issues/new?title=%5Bnlohmann-json%5D) if you experience problems with the packages.
-
-If you are using [`build2`](https://build2.org), you can use the [`nlohmann-json`](https://cppget.org/nlohmann-json) package from the public repository https://cppget.org or directly from the [package's sources repository](https://github.com/build2-packaging/nlohmann-json). In your project's `manifest` file, just add `depends: nlohmann-json` (probably with some [version constraints](https://build2.org/build2-toolchain/doc/build2-toolchain-intro.xhtml#guide-add-remove-deps)). If you are not familiar with using dependencies in `build2`, [please read this introduction](https://build2.org/build2-toolchain/doc/build2-toolchain-intro.xhtml).
-Please file issues [here](https://github.com/build2-packaging/nlohmann-json) if you experience problems with the packages.
-
-If you are using [`wsjcpp`](https://wsjcpp.org), you can use the command `wsjcpp install "https://github.com/nlohmann/json:develop"` to get the latest version. Note you can change the branch ":develop" to an existing tag or another branch.
-
-If you are using [`CPM.cmake`](https://github.com/TheLartians/CPM.cmake), you can check this [`example`](https://github.com/TheLartians/CPM.cmake/tree/master/examples/json). After [adding CPM script](https://github.com/TheLartians/CPM.cmake#adding-cpm) to your project, implement the following snippet to your CMake:
-
-```cmake
-CPMAddPackage(
-    NAME nlohmann_json
-    GITHUB_REPOSITORY nlohmann/json
-    VERSION 3.9.1)
-```
-
-### Pkg-config
-
-If you are using bare Makefiles, you can use `pkg-config` to generate the include flags that point to where the library is installed:
-
-```sh
-pkg-config nlohmann_json --cflags
-```
-
-Users of the Meson build system will also be able to use a system wide library, which will be found by `pkg-config`:
-
-```meson
-json = dependency('nlohmann_json', required: true)
-```
 
 ## Examples
 
@@ -1280,6 +1117,182 @@ The following compilers are currently used in continuous integration at [Travis]
 | Visual Studio 16 2019 MSVC 19.28.29912.0 (Build Engine version 16.9.0+57a23d249 for .NET Framework) | Windows-10.0.17763 | GitHub Actions |
 | Visual Studio 16 2019 MSVC 19.28.29912.0 (Build Engine version 16.9.0+57a23d249 for .NET Framework) | Windows-10.0.17763 | AppVeyor |
 
+
+## Integration
+
+[`json.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json.hpp) is the single required file in `single_include/nlohmann` or [released here](https://github.com/nlohmann/json/releases). You need to add
+
+```cpp
+#include <nlohmann/json.hpp>
+
+// for convenience
+using json = nlohmann::json;
+```
+
+to the files you want to process JSON and set the necessary switches to enable C++11 (e.g., `-std=c++11` for GCC and Clang).
+
+You can further use file [`include/nlohmann/json_fwd.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/json_fwd.hpp) for forward-declarations. The installation of json_fwd.hpp (as part of cmake's install step), can be achieved by setting `-DJSON_MultipleHeaders=ON`.
+
+### CMake
+
+You can also use the `nlohmann_json::nlohmann_json` interface target in CMake.  This target populates the appropriate usage requirements for `INTERFACE_INCLUDE_DIRECTORIES` to point to the appropriate include directories and `INTERFACE_COMPILE_FEATURES` for the necessary C++11 flags.
+
+#### External
+
+To use this library from a CMake project, you can locate it directly with `find_package()` and use the namespaced imported target from the generated package configuration:
+
+```cmake
+# CMakeLists.txt
+find_package(nlohmann_json 3.2.0 REQUIRED)
+...
+add_library(foo ...)
+...
+target_link_libraries(foo PRIVATE nlohmann_json::nlohmann_json)
+```
+
+The package configuration file, `nlohmann_jsonConfig.cmake`, can be used either from an install tree or directly out of the build tree.
+
+#### Embedded
+
+To embed the library directly into an existing CMake project, place the entire source tree in a subdirectory and call `add_subdirectory()` in your `CMakeLists.txt` file:
+
+```cmake
+# Typically you don't care so much for a third party library's tests to be
+# run from your own project's code.
+set(JSON_BuildTests OFF CACHE INTERNAL "")
+
+# If you only include this third party in PRIVATE source files, you do not
+# need to install it when your main project gets installed.
+# set(JSON_Install OFF CACHE INTERNAL "")
+
+# Don't use include(nlohmann_json/CMakeLists.txt) since that carries with it
+# unintended consequences that will break the build.  It's generally
+# discouraged (although not necessarily well documented as such) to use
+# include(...) for pulling in other CMake projects anyways.
+add_subdirectory(nlohmann_json)
+...
+add_library(foo ...)
+...
+target_link_libraries(foo PRIVATE nlohmann_json::nlohmann_json)
+```
+
+##### Embedded (FetchContent)
+
+Since CMake v3.11,
+[FetchContent](https://cmake.org/cmake/help/v3.11/module/FetchContent.html) can
+be used to automatically download the repository as a dependency at configure time.
+
+Example:
+```cmake
+include(FetchContent)
+
+FetchContent_Declare(json
+  GIT_REPOSITORY https://github.com/nlohmann/json.git
+  GIT_TAG v3.7.3)
+
+FetchContent_GetProperties(json)
+if(NOT json_POPULATED)
+  FetchContent_Populate(json)
+  add_subdirectory(${json_SOURCE_DIR} ${json_BINARY_DIR} EXCLUDE_FROM_ALL)
+endif()
+
+target_link_libraries(foo PRIVATE nlohmann_json::nlohmann_json)
+```
+
+**Note**: The repository https://github.com/nlohmann/json download size is huge.
+It contains all the dataset used for the benchmarks. You might want to depend on
+a smaller repository. For instance, you might want to replace the URL above by
+https://github.com/ArthurSonzogni/nlohmann_json_cmake_fetchcontent
+
+#### Supporting Both
+
+To allow your project to support either an externally supplied or an embedded JSON library, you can use a pattern akin to the following:
+
+``` cmake
+# Top level CMakeLists.txt
+project(FOO)
+...
+option(FOO_USE_EXTERNAL_JSON "Use an external JSON library" OFF)
+...
+add_subdirectory(thirdparty)
+...
+add_library(foo ...)
+...
+# Note that the namespaced target will always be available regardless of the
+# import method
+target_link_libraries(foo PRIVATE nlohmann_json::nlohmann_json)
+```
+```cmake
+# thirdparty/CMakeLists.txt
+...
+if(FOO_USE_EXTERNAL_JSON)
+  find_package(nlohmann_json 3.2.0 REQUIRED)
+else()
+  set(JSON_BuildTests OFF CACHE INTERNAL "")
+  add_subdirectory(nlohmann_json)
+endif()
+...
+```
+
+`thirdparty/nlohmann_json` is then a complete copy of this source tree.
+
+### Package Managers
+
+:beer: If you are using OS X and [Homebrew](https://brew.sh), just type `brew tap nlohmann/json` and `brew install nlohmann-json` and you're set. If you want the bleeding edge rather than the latest release, use `brew install nlohmann-json --HEAD`.
+
+If you are using the [Meson Build System](https://mesonbuild.com), add this source tree as a [meson subproject](https://mesonbuild.com/Subprojects.html#using-a-subproject). You may also use the `include.zip` published in this project's [Releases](https://github.com/nlohmann/json/releases) to reduce the size of the vendored source tree. Alternatively, you can get a wrap file by downloading it from [Meson WrapDB](https://wrapdb.mesonbuild.com/nlohmann_json), or simply use `meson wrap install nlohmann_json`. Please see the meson project for any issues regarding the packaging.
+
+The provided meson.build can also be used as an alternative to cmake for installing `nlohmann_json` system-wide in which case a pkg-config file is installed. To use it, simply have your build system require the `nlohmann_json` pkg-config dependency. In Meson, it is preferred to use the [`dependency()`](https://mesonbuild.com/Reference-manual.html#dependency) object with a subproject fallback, rather than using the subproject directly.
+
+If you are using [Conan](https://www.conan.io/) to manage your dependencies, merely add [`nlohmann_json/x.y.z`](https://conan.io/center/nlohmann_json) to your `conanfile`'s requires, where `x.y.z` is the release version you want to use. Please file issues [here](https://github.com/conan-io/conan-center-index/issues) if you experience problems with the packages.
+
+If you are using [Spack](https://www.spack.io/) to manage your dependencies, you can use the [`nlohmann-json` package](https://spack.readthedocs.io/en/latest/package_list.html#nlohmann-json). Please see the [spack project](https://github.com/spack/spack) for any issues regarding the packaging.
+
+If you are using [hunter](https://github.com/cpp-pm/hunter) on your project for external dependencies, then you can use the [nlohmann_json package](https://hunter.readthedocs.io/en/latest/packages/pkg/nlohmann_json.html). Please see the hunter project for any issues regarding the packaging.
+
+If you are using [Buckaroo](https://buckaroo.pm), you can install this library's module with `buckaroo add github.com/buckaroo-pm/nlohmann-json`. Please file issues [here](https://github.com/buckaroo-pm/nlohmann-json). There is a demo repo [here](https://github.com/njlr/buckaroo-nholmann-json-example).
+
+If you are using [vcpkg](https://github.com/Microsoft/vcpkg/) on your project for external dependencies, then you can use the [nlohmann-json package](https://github.com/Microsoft/vcpkg/tree/master/ports/nlohmann-json). Please see the vcpkg project for any issues regarding the packaging.
+
+If you are using [cget](https://cget.readthedocs.io/en/latest/), you can install the latest development version with `cget install nlohmann/json`. A specific version can be installed with `cget install nlohmann/json@v3.1.0`. Also, the multiple header version can be installed by adding the `-DJSON_MultipleHeaders=ON` flag (i.e., `cget install nlohmann/json -DJSON_MultipleHeaders=ON`).
+
+If you are using [CocoaPods](https://cocoapods.org), you can use the library by adding pod `"nlohmann_json", '~>3.1.2'` to your podfile (see [an example](https://bitbucket.org/benman/nlohmann_json-cocoapod/src/master/)). Please file issues [here](https://bitbucket.org/benman/nlohmann_json-cocoapod/issues?status=new&status=open).
+
+If you are using [NuGet](https://www.nuget.org), you can use the package [nlohmann.json](https://www.nuget.org/packages/nlohmann.json/). Please check [this extensive description](https://github.com/nlohmann/json/issues/1132#issuecomment-452250255) on how to use the package. Please files issues [here](https://github.com/hnkb/nlohmann-json-nuget/issues).
+
+If you are using [conda](https://conda.io/), you can use the package [nlohmann_json](https://github.com/conda-forge/nlohmann_json-feedstock) from [conda-forge](https://conda-forge.org) executing `conda install -c conda-forge nlohmann_json`. Please file issues [here](https://github.com/conda-forge/nlohmann_json-feedstock/issues).
+
+If you are using [MSYS2](https://www.msys2.org/), your can use the [mingw-w64-nlohmann-json](https://packages.msys2.org/base/mingw-w64-nlohmann-json) package, just type `pacman -S mingw-w64-i686-nlohmann-json` or `pacman -S mingw-w64-x86_64-nlohmann-json` for installation. Please file issues [here](https://github.com/msys2/MINGW-packages/issues/new?title=%5Bnlohmann-json%5D) if you experience problems with the packages.
+
+If you are using [`build2`](https://build2.org), you can use the [`nlohmann-json`](https://cppget.org/nlohmann-json) package from the public repository https://cppget.org or directly from the [package's sources repository](https://github.com/build2-packaging/nlohmann-json). In your project's `manifest` file, just add `depends: nlohmann-json` (probably with some [version constraints](https://build2.org/build2-toolchain/doc/build2-toolchain-intro.xhtml#guide-add-remove-deps)). If you are not familiar with using dependencies in `build2`, [please read this introduction](https://build2.org/build2-toolchain/doc/build2-toolchain-intro.xhtml).
+Please file issues [here](https://github.com/build2-packaging/nlohmann-json) if you experience problems with the packages.
+
+If you are using [`wsjcpp`](https://wsjcpp.org), you can use the command `wsjcpp install "https://github.com/nlohmann/json:develop"` to get the latest version. Note you can change the branch ":develop" to an existing tag or another branch.
+
+If you are using [`CPM.cmake`](https://github.com/TheLartians/CPM.cmake), you can check this [`example`](https://github.com/TheLartians/CPM.cmake/tree/master/examples/json). After [adding CPM script](https://github.com/TheLartians/CPM.cmake#adding-cpm) to your project, implement the following snippet to your CMake:
+
+```cmake
+CPMAddPackage(
+    NAME nlohmann_json
+    GITHUB_REPOSITORY nlohmann/json
+    VERSION 3.9.1)
+```
+
+### Pkg-config
+
+If you are using bare Makefiles, you can use `pkg-config` to generate the include flags that point to where the library is installed:
+
+```sh
+pkg-config nlohmann_json --cflags
+```
+
+Users of the Meson build system will also be able to use a system wide library, which will be found by `pkg-config`:
+
+```meson
+json = dependency('nlohmann_json', required: true)
+```
+
+
 ## License
 
 <img align="right" src="https://opensource.org/trademarks/opensource/OSI-Approved-License-100x137.png">
@@ -1546,6 +1559,7 @@ I deeply appreciate the help of the following people.
 - [Guillaume Racicot](https://github.com/gracicot) implemented `string_view` support and allowed C++20 support.
 - [Alex Reinking](https://github.com/alexreinking) improved CMake support for `FetchContent`.
 - [Hannes Domani](https://github.com/ssbssa) provided a GDB pretty printer.
+- Lars Wirzenius reviewed the README file.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 

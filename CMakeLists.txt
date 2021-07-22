@@ -30,12 +30,13 @@ if (POLICY CMP0077)
     cmake_policy(SET CMP0077 NEW)
 endif ()
 
-option(JSON_BuildTests "Build the unit tests when BUILD_TESTING is enabled." ${MAIN_PROJECT})
-option(JSON_Install "Install CMake targets during install step." ${MAIN_PROJECT})
-option(JSON_MultipleHeaders "Use non-amalgamated version of the library." OFF)
+option(JSON_BuildTests          "Build the unit tests when BUILD_TESTING is enabled." ${MAIN_PROJECT})
+option(JSON_CI                  "Enable CI build targets." OFF)
+option(JSON_Diagnostics         "Use extended diagnostic messages." OFF)
 option(JSON_ImplicitConversions "Enable implicit conversions." ON)
-option(JSON_Diagnostics "Enable better diagnostic messages." OFF)
-option(JSON_CI "Enable CI build targets." OFF)
+option(JSON_Install             "Install CMake targets during install step." ${MAIN_PROJECT})
+option(JSON_MultipleHeaders     "Use non-amalgamated version of the library." OFF)
+option(JSON_SystemInclude       "Include as system headers (skip for clang-tidy)." OFF)
 
 if (JSON_CI)
     include(cmake/ci.cmake)
@@ -73,6 +74,10 @@ if (JSON_Diagnostics)
     message(STATUS "Diagnostics enabled")
 endif()
 
+if (JSON_SystemInclude)
+    set(NLOHMANN_JSON_SYSTEM_INCLUDE "SYSTEM")
+endif()
+
 ##
 ## TARGET
 ## create target and add include path
@@ -94,7 +99,7 @@ target_compile_definitions(
 
 target_include_directories(
     ${NLOHMANN_JSON_TARGET_NAME}
-    INTERFACE
+    ${NLOHMANN_JSON_SYSTEM_INCLUDE} INTERFACE
     $<BUILD_INTERFACE:${NLOHMANN_JSON_INCLUDE_BUILD_DIR}>
     $<INSTALL_INTERFACE:include>
 )

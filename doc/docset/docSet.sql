@@ -126,11 +126,26 @@ INSERT INTO searchIndex(name, type, path) VALUES ('Binary Values', 'Guide', 'fea
 INSERT INTO searchIndex(name, type, path) VALUES ('Comments', 'Guide', 'features/comments/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('Iterators', 'Guide', 'features/iterators/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('Types', 'Guide', 'features/types/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('Number Handling', 'Guide', 'features/types/number_handling/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('Element Access', 'Guide', 'features/element_access/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('JSON Pointer', 'Guide', 'features/json_pointer/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('JSON Patch and Diff', 'Guide', 'features/json_patch/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('JSON Merge Patch', 'Guide', 'features/merge_patch/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('Object Order', 'Guide', 'features/object_order/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('Parsing and Exceptions', 'Guide', 'features/parsing/parse_exceptions/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('Parser Callbacks', 'Guide', 'features/parsing/parser_callbacks/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('SAX Interface', 'Guide', 'features/parsing/sax_interface/index.html');
 
 -- Macros
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_ASSERT', 'Macro', 'features/macros/index.html#json_assertx');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_CATCH_USER', 'Macro', 'features/macros/index.html#json_catch_userexception');
+INSERT INTO searchIndex(name, type, path) VALUES ('JSON_DIAGNOSTICS', 'Macro', 'features/macros/index.html#json_diagnostics');
+INSERT INTO searchIndex(name, type, path) VALUES ('JSON_HAS_CPP_11', 'Macro', 'features/macros/index.html#json_has_cpp_11-json_has_cpp_14-json_has_cpp_17-json_has_cpp_20');
+INSERT INTO searchIndex(name, type, path) VALUES ('JSON_HAS_CPP_14', 'Macro', 'features/macros/index.html#json_has_cpp_11-json_has_cpp_14-json_has_cpp_17-json_has_cpp_20');
+INSERT INTO searchIndex(name, type, path) VALUES ('JSON_HAS_CPP_17', 'Macro', 'features/macros/index.html#json_has_cpp_11-json_has_cpp_14-json_has_cpp_17-json_has_cpp_20');
+INSERT INTO searchIndex(name, type, path) VALUES ('JSON_HAS_CPP_20', 'Macro', 'features/macros/index.html#json_has_cpp_11-json_has_cpp_14-json_has_cpp_17-json_has_cpp_20');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_NOEXCEPTION', 'Macro', 'features/macros/index.html#json_noexception');
+INSERT INTO searchIndex(name, type, path) VALUES ('JSON_NO_IO', 'Macro', 'features/macros/index.html#json_no_io');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_SKIP_UNSUPPORTED_COMPILER_CHECK', 'Macro', 'features/macros/index.html#json_skip_unsupported_compiler_check');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_THROW_USER', 'Macro', 'features/macros/index.html#json_throw_userexception');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_TRY_USER', 'Macro', 'features/macros/index.html#json_try_user');
