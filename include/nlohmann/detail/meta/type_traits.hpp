@@ -157,6 +157,9 @@ template<class B1, class... Bn>
 struct conjunction<B1, Bn...>
 : std::conditional<bool(B1::value), conjunction<Bn...>, B1>::type {};
 
+// https://en.cppreference.com/w/cpp/types/negation
+template<class B> struct negation : std::integral_constant < bool, !B::value > { };
+
 // Reimplementation of is_constructible and is_default_constructible, due to them being broken for
 // std::pair and std::tuple until LWG 2367 fix (see https://cplusplus.github.io/LWG/lwg-defects.html#2367).
 // This causes compile errors in e.g. clang 3.5 or gcc 4.9.
