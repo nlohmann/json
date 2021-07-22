@@ -21015,7 +21015,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     */
     template<class ValueType, typename std::enable_if<
                  detail::is_getable<basic_json_t, ValueType>::value, int>::type = 0>
-    ValueType value(const json_pointer& ptr, ValueType && default_value) const
+    typename std::decay<ValueType>::type value(const json_pointer& ptr, ValueType && default_value) const
     {
         // at only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
@@ -21027,7 +21027,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             }
             JSON_INTERNAL_CATCH (out_of_range&)
             {
-                return default_value;
+                return std::forward<ValueType>(default_value);
             }
         }
 
