@@ -2,7 +2,7 @@
 
 ```cpp
 template<typename KeyT>
-bool contains(KeyT && key) const;
+bool contains(const KeyT& key) const;
 ```
 
 Check whether an element exists in a JSON object with key equivalent to `key`. If the element is not found or the JSON
@@ -11,7 +11,8 @@ value is not an object, `#!cpp false` is returned.
 ## Template parameters
 
 `KeyT`
-:   A type for an object key other than `basic_json::json_pointer`.
+:   A type for an object key other than `basic_json::json_pointer` that is less-than comparable with `string_t`. This
+    can also be a string literal or a string view (C++17).
 
 ## Parameters
 

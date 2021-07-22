@@ -435,5 +435,37 @@ struct is_constructible_tuple : std::false_type {};
 
 template<typename T1, typename... Args>
 struct is_constructible_tuple<T1, std::tuple<Args...>> : conjunction<is_constructible<T1, Args>...> {};
+
+/// type to check if KeyType can be used as object key
+
+template<typename ComparatorType, typename KeyType, typename ObjectKeyType, typename = void>
+struct is_key_type_comparable
+{
+    static constexpr bool value = false;
+};
+
+template<typename ComparatorType, typename KeyType, typename ObjectKeyType>
+struct is_key_type_comparable<ComparatorType, KeyType, ObjectKeyType, void_t<
+decltype(ComparatorType()(std::declval<KeyType const&>(), std::declval<ObjectKeyType const&>())),
+decltype(ComparatorType()(std::declval<ObjectKeyType const&>(), std::declval<KeyType const&>()))
+        >>
+{
+    static constexpr bool value = true;
+};
+
+template<typename BasicJsonType>
+class iter_impl;
+
+template<typename BasicJsonType, typename KeyType>
+struct is_usable_as_key_type
+{
+    static constexpr bool value =
+        is_key_type_comparable<typename BasicJsonType::object_comparator_t, typename BasicJsonType::object_t::key_type, KeyType>::value &&
+        !std::is_same<KeyType, typename BasicJsonType::iterator>::value &&
+        !std::is_same<KeyType, typename BasicJsonType::const_iterator>::value &&
+        // for Clang 3.5
+        !std::is_same<KeyType, detail::iter_impl<typename std::remove_const<BasicJsonType>::type>>::value;
+};
+
 }  // namespace detail
 }  // namespace nlohmann
