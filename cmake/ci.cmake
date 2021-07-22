@@ -755,7 +755,7 @@ else()
     )
 endif()
 
-set(JSON_CMAKE_FLAGS "JSON_BuildTests;JSON_Install;JSON_MultipleHeaders;JSON_ImplicitConversions;JSON_Sanitizer;JSON_Valgrind;JSON_NoExceptions;JSON_Coverage;JSON_Diagnostics;JSON_SystemInclude")
+set(JSON_CMAKE_FLAGS "JSON_BuildTests;JSON_Install;JSON_MultipleHeaders;JSON_ImplicitConversions;JSON_Valgrind;JSON_Diagnostics;JSON_SystemInclude")
 
 foreach(JSON_CMAKE_FLAG ${JSON_CMAKE_FLAGS})
     string(TOLOWER "ci_cmake_flag_${JSON_CMAKE_FLAG}" JSON_CMAKE_FLAG_TARGET)
