@@ -3863,7 +3863,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 return it->template get<typename std::decay<ValueType>::type>();
             }
 
-            return default_value;
+            return std::forward<ValueType>(default_value);
         }
 
         JSON_THROW(type_error::create(306, "cannot use value() with " + std::string(type_name()), *this));
@@ -3877,11 +3877,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                    detail::is_usable_as_key_type<basic_json_t, KeyType>::value > ... >
     string_t value(const KeyType& key, const char* default_value) const
     {
-#ifdef JSON_HAS_CPP_17
-        return value(key, std::string_view(default_value));
-#else
         return value(key, string_t(default_value));
-#endif
     }
 
     /*!
