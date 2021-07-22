@@ -3847,13 +3847,18 @@ decltype(ComparatorType()(std::declval<ObjectKeyType const&>(), std::declval<Key
     static constexpr bool value = true;
 };
 
+template<typename BasicJsonType>
+class iter_impl;
+
 template<typename BasicJsonType, typename KeyType>
 struct is_usable_as_key_type
 {
     static constexpr bool value =
         is_key_type_comparable<typename BasicJsonType::object_comparator_t, typename BasicJsonType::object_t::key_type, KeyType>::value &&
         !std::is_same<KeyType, typename BasicJsonType::iterator>::value &&
-        !std::is_same<KeyType, typename BasicJsonType::const_iterator>::value;
+        !std::is_same<KeyType, typename BasicJsonType::const_iterator>::value &&
+        // for Clang 3.5
+        !std::is_same<KeyType, detail::iter_impl<typename std::remove_const<BasicJsonType>::type>>::value;
 };
 
 }  // namespace detail
