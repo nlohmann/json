@@ -168,7 +168,7 @@ class sax_no_exception : public nlohmann::detail::json_sax_dom_parser<json>
 
     static bool parse_error(std::size_t /*position*/, const std::string& /*last_token*/, const json::exception& ex)
     {
-        error_string = new std::string(ex.what());
+        error_string = new std::string(ex.what()); // NOLINT(cppcoreguidelines-owning-memory)
         return false;
     }
 
