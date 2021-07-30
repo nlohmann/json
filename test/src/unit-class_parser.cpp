@@ -1381,7 +1381,7 @@ TEST_CASE("parser class")
                 case ('r'):
                 case ('t'):
                 {
-                    CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s))).accept());
+                    CHECK(json::parser(nlohmann::detail::input_adapter(s)).accept());
                     break;
                 }
 
@@ -1394,7 +1394,7 @@ TEST_CASE("parser class")
                 // any other combination of backslash and character is invalid
                 default:
                 {
-                    CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s))).accept() == false);
+                    CHECK(json::parser(nlohmann::detail::input_adapter(s)).accept() == false);
                     break;
                 }
             }
@@ -1445,35 +1445,35 @@ TEST_CASE("parser class")
                 std::string s = "\"\\u";
 
                 // create a string with the iterated character at each position
-                auto s1 = s + "000" + std::string(1, static_cast<char>(c)) + "\"";
-                auto s2 = s + "00" + std::string(1, static_cast<char>(c)) + "0\"";
-                auto s3 = s + "0" + std::string(1, static_cast<char>(c)) + "00\"";
-                auto s4 = s + std::string(1, static_cast<char>(c)) + "000\"";
+                const auto s1 = s + "000" + std::string(1, static_cast<char>(c)) + "\"";
+                const auto s2 = s + "00" + std::string(1, static_cast<char>(c)) + "0\"";
+                const auto s3 = s + "0" + std::string(1, static_cast<char>(c)) + "00\"";
+                const auto s4 = s + std::string(1, static_cast<char>(c)) + "000\"";
 
                 if (valid(c))
                 {
                     CAPTURE(s1)
-                    CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s1))).accept());
+                    CHECK(json::parser(nlohmann::detail::input_adapter(s1)).accept());
                     CAPTURE(s2)
-                    CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s2))).accept());
+                    CHECK(json::parser(nlohmann::detail::input_adapter(s2)).accept());
                     CAPTURE(s3)
-                    CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s3))).accept());
+                    CHECK(json::parser(nlohmann::detail::input_adapter(s3)).accept());
                     CAPTURE(s4)
-                    CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s4))).accept());
+                    CHECK(json::parser(nlohmann::detail::input_adapter(s4)).accept());
                 }
                 else
                 {
                     CAPTURE(s1)
-                    CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s1))).accept() == false);
+                    CHECK(json::parser(nlohmann::detail::input_adapter(s1)).accept() == false);
 
                     CAPTURE(s2)
-                    CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s2))).accept() == false);
+                    CHECK(json::parser(nlohmann::detail::input_adapter(s2)).accept() == false);
 
                     CAPTURE(s3)
-                    CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s3))).accept() == false);
+                    CHECK(json::parser(nlohmann::detail::input_adapter(s3)).accept() == false);
 
                     CAPTURE(s4)
-                    CHECK(json::parser(nlohmann::detail::input_adapter(std::string(s4))).accept() == false);
+                    CHECK(json::parser(nlohmann::detail::input_adapter(s4)).accept() == false);
                 }
             }
         }
