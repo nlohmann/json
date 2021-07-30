@@ -356,7 +356,7 @@ set(GCC_CXXFLAGS "-std=c++11                          \
     -Wunused-result                                   \
     -Wunused-value                                    \
     -Wunused-variable                                 \
-    -Wno-useless-cast                                    \
+    -Wuseless-cast                                    \
     -Wvarargs                                         \
     -Wvariadic-macros                                 \
     -Wvector-operation-performance                    \
