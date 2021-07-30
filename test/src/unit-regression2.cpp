@@ -649,7 +649,7 @@ TEST_CASE("regression tests 2")
 
         CHECK (!json::sax_parse("xyz", &sax));
         CHECK(*sax_no_exception::error_string == "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - invalid literal; last read: 'x'");
-        delete sax_no_exception::error_string;
+        delete sax_no_exception::error_string; // NOLINT(cppcoreguidelines-owning-memory)
     }
 
     SECTION("issue #2825 - Properly constrain the basic_json conversion operator")
