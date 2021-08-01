@@ -4982,6 +4982,8 @@ class byte_container_with_subtype : public BinaryType
   public:
     /// the type of the underlying container
     using container_type = BinaryType;
+    /// the type of the subtype
+    using subtype_type = std::uint8_t;
 
     byte_container_with_subtype() noexcept(noexcept(container_type()))
         : container_type()
@@ -4995,13 +4997,13 @@ class byte_container_with_subtype : public BinaryType
         : container_type(std::move(b))
     {}
 
-    byte_container_with_subtype(const container_type& b, std::uint8_t subtype_) noexcept(noexcept(container_type(b)))
+    byte_container_with_subtype(const container_type& b, subtype_type subtype_) noexcept(noexcept(container_type(b)))
         : container_type(b)
         , m_subtype(subtype_)
         , m_has_subtype(true)
     {}
 
-    byte_container_with_subtype(container_type&& b, std::uint8_t subtype_) noexcept(noexcept(container_type(std::move(b))))
+    byte_container_with_subtype(container_type&& b, subtype_type subtype_) noexcept(noexcept(container_type(std::move(b))))
         : container_type(std::move(b))
         , m_subtype(subtype_)
         , m_has_subtype(true)
@@ -5036,7 +5038,7 @@ class byte_container_with_subtype : public BinaryType
 
     @since version 3.8.0
     */
-    void set_subtype(std::uint8_t subtype_) noexcept
+    void set_subtype(subtype_type subtype_) noexcept
     {
         m_subtype = subtype_;
         m_has_subtype = true;
@@ -5046,7 +5048,7 @@ class byte_container_with_subtype : public BinaryType
     @brief return the binary subtype
 
     Returns the numerical subtype of the value if it has a subtype. If it does
-    not have a subtype, this function will return size_t(-1) as a sentinel
+    not have a subtype, this function will return subtype_type(-1) as a sentinel
     value.
 
     @return the numerical subtype of the binary value
@@ -5063,9 +5065,9 @@ class byte_container_with_subtype : public BinaryType
 
     @since version 3.8.0
     */
-    constexpr std::uint8_t subtype() const noexcept
+    constexpr subtype_type subtype() const noexcept
     {
-        return m_subtype;
+        return m_has_subtype ? m_subtype : subtype_type(-1);
     }
 
     /*!
@@ -5115,7 +5117,7 @@ class byte_container_with_subtype : public BinaryType
     }
 
   private:
-    std::uint8_t m_subtype = 0;
+    subtype_type m_subtype = 0;
     bool m_has_subtype = false;
 };
 
