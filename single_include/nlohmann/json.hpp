@@ -3835,6 +3835,20 @@ struct is_constructible_tuple : std::false_type {};
 
 template<typename T1, typename... Args>
 struct is_constructible_tuple<T1, std::tuple<Args...>> : conjunction<is_constructible<T1, Args>...> {};
+
+// to avoid useless casts (see https://github.com/nlohmann/json/issues/2893#issuecomment-889152324)
+template < typename T, typename U, enable_if_t < !std::is_same<T, U>::value, int > = 0 >
+T conditional_static_cast(U value)
+{
+    return static_cast<T>(value);
+}
+
+template<typename T, typename U, enable_if_t<std::is_same<T, U>::value, int> = 0>
+T conditional_static_cast(U value)
+{
+    return value;
+}
+
 }  // namespace detail
 }  // namespace nlohmann
 
@@ -8240,6 +8254,8 @@ struct is_sax_static_asserts
 }  // namespace detail
 }  // namespace nlohmann
 
+// #include <nlohmann/detail/meta/type_traits.hpp>
+
 // #include <nlohmann/detail/value_t.hpp>
 
 
@@ -8853,7 +8869,7 @@ class binary_reader
             case 0x9B: // array (eight-byte uint64_t for n follow)
             {
                 std::uint64_t len{};
-                return get_number(input_format_t::cbor, len) && get_cbor_array(static_cast<std::size_t>(len), tag_handler);
+                return get_number(input_format_t::cbor, len) && get_cbor_array(detail::conditional_static_cast<std::size_t>(len), tag_handler);
             }
 
             case 0x9F: // array (indefinite length)
@@ -8907,7 +8923,7 @@ class binary_reader
             case 0xBB: // map (eight-byte uint64_t for n follow)
             {
                 std::uint64_t len{};
-                return get_number(input_format_t::cbor, len) && get_cbor_object(static_cast<std::size_t>(len), tag_handler);
+                return get_number(input_format_t::cbor, len) && get_cbor_object(detail::conditional_static_cast<std::size_t>(len), tag_handler);
             }
 
             case 0xBF: // map (indefinite length)

@@ -435,5 +435,19 @@ struct is_constructible_tuple : std::false_type {};
 
 template<typename T1, typename... Args>
 struct is_constructible_tuple<T1, std::tuple<Args...>> : conjunction<is_constructible<T1, Args>...> {};
+
+// to avoid useless casts (see https://github.com/nlohmann/json/issues/2893#issuecomment-889152324)
+template < typename T, typename U, enable_if_t < !std::is_same<T, U>::value, int > = 0 >
+T conditional_static_cast(U value)
+{
+    return static_cast<T>(value);
+}
+
+template<typename T, typename U, enable_if_t<std::is_same<T, U>::value, int> = 0>
+T conditional_static_cast(U value)
+{
+    return value;
+}
+
 }  // namespace detail
 }  // namespace nlohmann
