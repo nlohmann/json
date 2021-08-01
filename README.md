@@ -1612,6 +1612,7 @@ The library supports **Unicode input** as follows:
 - Invalid surrogates (e.g., incomplete pairs such as `\uDEAD`) will yield parse errors.
 - The strings stored in the library are UTF-8 encoded. When using the default string type (`std::string`), note that its length/size functions return the number of stored bytes rather than the number of characters or glyphs.
 - When you store strings with different encodings in the library, calling [`dump()`](https://nlohmann.github.io/json/api/basic_json/dump/) may throw an exception unless `json::error_handler_t::replace` or `json::error_handler_t::ignore` are used as error handlers.
+- To store wide strings (e.g., `std::wstring`), you need to convert them to a a UTF-8 encoded `std::string` before, see [an example](https://json.nlohmann.me/home/faq/#wide-string-handling).
 
 ### Comments in JSON
 
