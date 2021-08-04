@@ -15993,6 +15993,8 @@ char* to_chars(char* first, const char* last, FloatType value)
         *first++ = '-';
     }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-equal"
     if (value == 0) // +-0
     {
         *first++ = '0';
@@ -16001,6 +16003,7 @@ char* to_chars(char* first, const char* last, FloatType value)
         *first++ = '0';
         return first;
     }
+#pragma GCC diagnostic pop
 
     JSON_ASSERT(last - first >= std::numeric_limits<FloatType>::max_digits10);
 
@@ -23375,6 +23378,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     */
     friend bool operator==(const_reference lhs, const_reference rhs) noexcept
     {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-equal"
         const auto lhs_type = lhs.type();
         const auto rhs_type = rhs.type();
 
@@ -23439,6 +23444,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
 
         return false;
+#pragma GCC diagnostic pop
     }
 
     /*!
