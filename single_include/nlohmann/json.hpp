@@ -4983,7 +4983,7 @@ class byte_container_with_subtype : public BinaryType
     /// the type of the underlying container
     using container_type = BinaryType;
     /// the type of the subtype
-    using subtype_type = std::uint8_t;
+    using subtype_type = std::uint64_t;
 
     byte_container_with_subtype() noexcept(noexcept(container_type()))
         : container_type()
