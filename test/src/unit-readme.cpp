@@ -28,7 +28,6 @@ SOFTWARE.
 */
 
 #include "doctest_compatibility.h"
-DOCTEST_GCC_SUPPRESS_WARNING("-Wfloat-equal")
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;

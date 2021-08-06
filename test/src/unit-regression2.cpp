@@ -28,7 +28,6 @@ SOFTWARE.
 */
 
 #include "doctest_compatibility.h"
-DOCTEST_GCC_SUPPRESS_WARNING("-Wfloat-equal")
 
 // for some reason including this after the json header leads to linker errors with VS 2017...
 #include <locale>
