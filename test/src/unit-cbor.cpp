@@ -2486,7 +2486,14 @@ TEST_CASE("examples from RFC 7049 Appendix A")
         auto expected = utils::read_binary_file(TEST_DATA_DIRECTORY "/binary_data/cbor_binary.out");
         CHECK(j == json::binary(expected));
 
+        // 0xd8
         CHECK(json::to_cbor(json::binary(std::vector<uint8_t> {}, 0x42)) == std::vector<uint8_t> {0xd8, 0x42, 0x40});
+        // 0xd9
+        CHECK(json::to_cbor(json::binary(std::vector<uint8_t> {}, 1000)) == std::vector<uint8_t> {0xd9, 0x03, 0xe8, 0x40});
+        // 0xda
+        CHECK(json::to_cbor(json::binary(std::vector<uint8_t> {}, 394216)) == std::vector<uint8_t> {0xda, 0x00, 0x06, 0x03, 0xe8, 0x40});
+        // 0xdb
+        CHECK(json::to_cbor(json::binary(std::vector<uint8_t> {}, 8589934590)) == std::vector<uint8_t> {0xdb, 0x00, 0x00, 0x00, 0x01, 0xff, 0xff, 0xff, 0xfe, 0x40});
     }
 
     SECTION("arrays")
