@@ -14827,6 +14827,8 @@ class binary_writer
 
     void write_compact_float(const number_float_t n, detail::input_format_t format)
     {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-equal"
         if (static_cast<double>(n) >= static_cast<double>(std::numeric_limits<float>::lowest()) &&
                 static_cast<double>(n) <= static_cast<double>((std::numeric_limits<float>::max)()) &&
                 static_cast<double>(static_cast<float>(n)) == static_cast<double>(n))
@@ -14843,6 +14845,7 @@ class binary_writer
                                 : get_msgpack_float_prefix(n));
             write_number(n);
         }
+#pragma GCC diagnostic pop
     }
 
   public:
@@ -15983,6 +15986,8 @@ char* to_chars(char* first, const char* last, FloatType value)
         *first++ = '-';
     }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-equal"
     if (value == 0) // +-0
     {
         *first++ = '0';
@@ -15991,6 +15996,7 @@ char* to_chars(char* first, const char* last, FloatType value)
         *first++ = '0';
         return first;
     }
+#pragma GCC diagnostic pop
 
     JSON_ASSERT(last - first >= std::numeric_limits<FloatType>::max_digits10);
 
@@ -23365,6 +23371,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     */
     friend bool operator==(const_reference lhs, const_reference rhs) noexcept
     {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-equal"
         const auto lhs_type = lhs.type();
         const auto rhs_type = rhs.type();
 
@@ -23429,6 +23437,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
 
         return false;
+#pragma GCC diagnostic pop
     }
 
     /*!
