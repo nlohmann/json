@@ -2560,6 +2560,8 @@ TEST_CASE("Tagged values")
         0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF, 0xD0, 0xD1, 0xD2, 0xD3, 0xD4
     })
         {
+            CAPTURE(b);
+
             // add tag to value
             auto v_tagged = v;
             v_tagged.insert(v_tagged.begin(), b);
