@@ -2572,6 +2572,9 @@ TEST_CASE("Tagged values")
             // check that parsing succeeds and gets original value in ignore mode
             auto j_tagged = json::from_cbor(v_tagged, true, true, json::cbor_tag_handler_t::ignore);
             CHECK(j_tagged == j);
+
+            auto j_tagged_stored = json::from_cbor(v_tagged, true, true, json::cbor_tag_handler_t::store);
+            CHECK(j_tagged_stored == j);
         }
     }
 

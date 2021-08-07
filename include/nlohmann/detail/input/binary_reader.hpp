@@ -791,7 +791,7 @@ class binary_reader
                                 break;
                             }
                             default:
-                                break;
+                                return parse_cbor_internal(true, tag_handler);
                         }
                         get();
                         return get_cbor_binary(b) && sax->binary(b);
