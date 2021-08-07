@@ -43,7 +43,7 @@ jobs:
       run: cmake -S . -B build -G "Visual Studio 15 2017" -A ${{ matrix.architecture }} -DJSON_BuildTests=On
       if: matrix.build_type == 'Release' && matrix.architecture != 'x64'
     - name: cmake
-      run: cmake -S . -B build -G "Visual Studio 15 2017" -A ${{ matrix.architecture }} -DJSON_BuildTests=On -DJSON_FastTests=ON -DCMAKE_EXE_LINKER_FLAGS="/STACK:4000000
+      run: cmake -S . -B build -G "Visual Studio 15 2017" -A ${{ matrix.architecture }} -DJSON_BuildTests=On -DJSON_FastTests=ON -DCMAKE_EXE_LINKER_FLAGS="/STACK:4000000"
       if: matrix.build_type == 'Debug'
     - name: build
       run: cmake --build build --config ${{ matrix.build_type }} --parallel 10
@@ -75,7 +75,7 @@ jobs:
       run: cmake -S . -B build -G "Visual Studio 16 2019" -A ${{ matrix.architecture }} -DJSON_BuildTests=On
       if: matrix.build_type == 'Release'
     - name: cmake
-      run: cmake -S . -B build -G "Visual Studio 16 2019" -A ${{ matrix.architecture }} -DJSON_BuildTests=On -DJSON_FastTests=ON -DCMAKE_EXE_LINKER_FLAGS="/STACK:4000000
+      run: cmake -S . -B build -G "Visual Studio 16 2019" -A ${{ matrix.architecture }} -DJSON_BuildTests=On -DJSON_FastTests=ON -DCMAKE_EXE_LINKER_FLAGS="/STACK:4000000"
       if: matrix.build_type == 'Debug'
     - name: build
       run: cmake --build build --config ${{ matrix.build_type }} --parallel 10
