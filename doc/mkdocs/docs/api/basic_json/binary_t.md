@@ -64,4 +64,4 @@ type `#!cpp binary_t*` must be dereferenced.
 
 ## Version history
 
-- Added in version 3.8.0.
+- Added in version 3.8.0. Changed type of subtype to `std::uint64_t` in version 3.9.2.
