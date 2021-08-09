@@ -77,7 +77,6 @@ struct position_t
     }
 };
 
-
 class exception : public std::exception
 {
   public:
@@ -86,7 +85,7 @@ class exception : public std::exception
         return m.what();
     }
 
-    const int id;
+    const int id; // NOLINT(cppcoreguidelines-non-private-member-variables-in-classes)
 
   protected:
     exception(int id_, const char* what_arg) : id(id_), m(what_arg) {}
@@ -123,7 +122,7 @@ class parse_error : public exception
     }
 };
 
-}  // namespace detail
+}  // namespace detail2
 }  // namespace nlohmann
 //
 
