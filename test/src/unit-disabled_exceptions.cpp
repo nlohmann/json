@@ -76,11 +76,6 @@ class exception : public std::exception
   protected:
     exception(const char* what_arg) : m(what_arg) {}
 
-    static std::string name(const std::string& ename)
-    {
-        return "[json.exception." + ename + "] ";
-    }
-
   private:
     std::runtime_error m;
 };
@@ -90,14 +85,12 @@ class parse_error : public exception
   public:
     static parse_error create(const std::string& what_arg)
     {
-        std::string w = exception::name("parse_error") + what_arg;
+        std::string w = "[json.exception.parse_error] " + what_arg;
         return parse_error(w.c_str());
     }
 
   private:
-    parse_error(const char* what_arg)
-        : exception(what_arg)
-    {}
+    parse_error(const char* what_arg) : exception(what_arg) {}
 };
 
 }  // namespace detail2
