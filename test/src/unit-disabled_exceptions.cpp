@@ -83,13 +83,6 @@ class exception : public std::exception
 class parse_error : public exception
 {
   public:
-    static parse_error create(const std::string& what_arg)
-    {
-        std::string w = "[json.exception.parse_error] " + what_arg;
-        return parse_error(w.c_str());
-    }
-
-  private:
     parse_error(const char* what_arg) : exception(what_arg) {}
 };
 
@@ -111,7 +104,8 @@ TEST_CASE("Tests with disabled exceptions")
 
     SECTION("test")
     {
-        auto error = nlohmann::detail2::parse_error::create("foo");
+        std::string w = "[json.exception.parse_error] foo";
+        auto error = nlohmann::detail2::parse_error(w.c_str());
         CHECK(std::string(error.what()) == "[json.exception.parse_error] foo");
     }
 }
