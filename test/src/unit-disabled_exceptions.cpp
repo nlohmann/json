@@ -65,18 +65,6 @@ namespace nlohmann
 namespace detail2
 {
 
-struct position_t
-{
-    std::size_t chars_read_total = 0;
-    std::size_t chars_read_current_line = 0;
-    std::size_t lines_read = 0;
-
-    constexpr operator size_t() const
-    {
-        return chars_read_total;
-    }
-};
-
 class exception : public std::exception
 {
   public:
@@ -85,14 +73,12 @@ class exception : public std::exception
         return m.what();
     }
 
-    const int id; // NOLINT(cppcoreguidelines-non-private-member-variables-in-classes)
-
   protected:
-    exception(int id_, const char* what_arg) : id(id_), m(what_arg) {}
+    exception(const char* what_arg) : m(what_arg) {}
 
-    static std::string name(const std::string& ename, int id_)
+    static std::string name(const std::string& ename)
     {
-        return "[json.exception." + ename + "." + std::to_string(id_) + "] ";
+        return "[json.exception." + ename + "] ";
     }
 
   private:
@@ -102,24 +88,16 @@ class exception : public std::exception
 class parse_error : public exception
 {
   public:
-    static parse_error create(int id_, const position_t& pos, const std::string& what_arg)
+    static parse_error create(const std::string& what_arg)
     {
-        std::string w = exception::name("parse_error", id_) + "parse error" +
-                        position_string(pos) + ": " + what_arg;
-        return parse_error(id_, pos.chars_read_total, w.c_str());
+        std::string w = exception::name("parse_error") + what_arg;
+        return parse_error(w.c_str());
     }
-
-    const std::size_t byte;
 
   private:
-    parse_error(int id_, std::size_t byte_, const char* what_arg)
-        : exception(id_, what_arg), byte(byte_) {}
-
-    static std::string position_string(const position_t& pos)
-    {
-        return " at line " + std::to_string(pos.lines_read + 1) +
-               ", column " + std::to_string(pos.chars_read_current_line);
-    }
+    parse_error(const char* what_arg)
+        : exception(what_arg)
+    {}
 };
 
 }  // namespace detail2
@@ -140,12 +118,7 @@ TEST_CASE("Tests with disabled exceptions")
 
     SECTION("test")
     {
-        nlohmann::detail2::position_t pos;
-        pos.chars_read_total = 100;
-        pos.chars_read_current_line = 50;
-        pos.lines_read = 1;
-
-        auto error = nlohmann::detail2::parse_error::create(100, pos, "foo");
-        CHECK(std::string(error.what()) == "[json.exception.parse_error.100] parse error at line 2, column 50: foo");
+        auto error = nlohmann::detail2::parse_error::create("foo");
+        CHECK(std::string(error.what()) == "[json.exception.parse_error] foo");
     }
 }
