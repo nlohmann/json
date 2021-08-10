@@ -53,11 +53,8 @@ class sax_no_exception : public nlohmann::detail::json_sax_dom_parser<json>
 std::string* sax_no_exception::error_string = nullptr;
 
 //
-#include <cstddef> // size_t
 #include <exception> // exception
 #include <stdexcept> // runtime_error
-#include <string> // to_string
-#include <vector> // vector
 
 //
 namespace nlohmann
@@ -83,6 +80,13 @@ class exception : public std::exception
 class parse_error : public exception
 {
   public:
+    static parse_error create(const std::string& what_arg)
+    {
+        std::string w = "[json.exception.parse_error] " + what_arg;
+        return parse_error(w.c_str());
+    }
+
+  private:
     parse_error(const char* what_arg) : exception(what_arg) {}
 };
 
@@ -104,8 +108,7 @@ TEST_CASE("Tests with disabled exceptions")
 
     SECTION("test")
     {
-        std::string w = "[json.exception.parse_error] foo";
-        auto error = nlohmann::detail2::parse_error(w.c_str());
+        auto error = nlohmann::detail2::parse_error::create("foo");
         CHECK(std::string(error.what()) == "[json.exception.parse_error] foo");
     }
 }
