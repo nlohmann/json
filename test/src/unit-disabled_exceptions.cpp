@@ -52,48 +52,6 @@ class sax_no_exception : public nlohmann::detail::json_sax_dom_parser<json>
 
 std::string* sax_no_exception::error_string = nullptr;
 
-//
-#include <exception> // exception
-#include <stdexcept> // runtime_error
-
-//
-namespace nlohmann
-{
-namespace detail2
-{
-
-class exception : public std::exception
-{
-  public:
-    const char* what() const noexcept override
-    {
-        return m.what();
-    }
-
-  protected:
-    exception(const char* what_arg) : m(what_arg) {}
-
-  private:
-    std::runtime_error m;
-};
-
-class parse_error : public exception
-{
-  public:
-    static parse_error create(const std::string& what_arg)
-    {
-        std::string w = "[json.exception.parse_error] " + what_arg;
-        return parse_error(w.c_str());
-    }
-
-  private:
-    parse_error(const char* what_arg) : exception(what_arg) {}
-};
-
-}  // namespace detail2
-}  // namespace nlohmann
-//
-
 TEST_CASE("Tests with disabled exceptions")
 {
     SECTION("issue #2824 - encoding of json::exception::what()")
@@ -102,13 +60,7 @@ TEST_CASE("Tests with disabled exceptions")
         sax_no_exception sax(j);
 
         CHECK (!json::sax_parse("xyz", &sax));
-        //CHECK(*sax_no_exception::error_string == "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - invalid literal; last read: 'x'");
+        CHECK(*sax_no_exception::error_string == "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - invalid literal; last read: 'x'");
         delete sax_no_exception::error_string; // NOLINT(cppcoreguidelines-owning-memory)
-    }
-
-    SECTION("test")
-    {
-        auto error = nlohmann::detail2::parse_error::create("foo");
-        CHECK(std::string(error.what()) == "[json.exception.parse_error] foo");
     }
 }
