@@ -90,6 +90,16 @@ foreach(file ${files})
     endif()
 endforeach()
 
+# disable exceptions for test-disabled_exceptions
+target_compile_definitions(test-disabled_exceptions PUBLIC JSON_NOEXCEPTION)
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_compile_options(test-disabled_exceptions PUBLIC -fno-exceptions)
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    # disabled due to https://github.com/nlohmann/json/discussions/2824
+    #target_compile_options(test-disabled_exceptions PUBLIC /EH)
+    #target_compile_definitions(test-disabled_exceptions PUBLIC _HAS_EXCEPTIONS=0)
+endif()
+
 add_executable(json_unit EXCLUDE_FROM_ALL $<TARGET_OBJECTS:doctest_main> ${files})
 target_compile_definitions(json_unit PRIVATE DOCTEST_CONFIG_SUPER_FAST_ASSERTS)
 target_compile_options(json_unit PRIVATE
