@@ -99,7 +99,7 @@ set(CLANG_CXXFLAGS "-std=c++11                        \
     -Wno-extra-semi-stmt                                 \
     -Wno-padded                                          \
     -Wno-range-loop-analysis                             \
-    -Wno-switch-enum -Wno-covered-switch-default         \
+    -Wno-covered-switch-default                          \
     -Wno-weak-vtables                                    \
 ")
 
@@ -326,7 +326,7 @@ set(GCC_CXXFLAGS "-std=c++11                          \
     -Wswitch                                          \
     -Wswitch-bool                                     \
     -Wswitch-default                                  \
-    -Wno-switch-enum                                     \
+    -Wswitch-enum                                     \
     -Wswitch-outside-range                            \
     -Wswitch-unreachable                              \
     -Wsync-nand                                       \
