@@ -1059,6 +1059,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     break;
                 }
 
+                case value_t::discarded:
                 default:
                 {
                     object = nullptr;  // silence warning, see #821
@@ -1216,6 +1217,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     break;
                 }
 
+                case value_t::null:
+                case value_t::boolean:
+                case value_t::number_integer:
+                case value_t::number_unsigned:
+                case value_t::number_float:
+                case value_t::discarded:
                 default:
                 {
                     break;
@@ -2206,6 +2213,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 break;
             }
 
+            case value_t::null:
+            case value_t::discarded:
             default:
                 break;
         }
@@ -4230,6 +4239,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 break;
             }
 
+            case value_t::null:
+            case value_t::discarded:
             default:
                 JSON_THROW(type_error::create(307, "cannot use erase() with " + std::string(type_name()), *this));
         }
@@ -5174,6 +5185,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 return m_value.object->size();
             }
 
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            case value_t::discarded:
             default:
             {
                 // all other types have size 1
@@ -5239,6 +5257,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 return m_value.object->max_size();
             }
 
+            case value_t::null:
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            case value_t::discarded:
             default:
             {
                 // all other types have max_size() == size()
@@ -7106,6 +7132,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     return "binary";
                 case value_t::discarded:
                     return "discarded";
+                case value_t::number_integer:
+                case value_t::number_unsigned:
+                case value_t::number_float:
                 default:
                     return "number";
             }

@@ -555,6 +555,14 @@ class json_pointer
                     break;
                 }
 
+                case detail::value_t::null:
+                case detail::value_t::string:
+                case detail::value_t::boolean:
+                case detail::value_t::number_integer:
+                case detail::value_t::number_unsigned:
+                case detail::value_t::number_float:
+                case detail::value_t::binary:
+                case detail::value_t::discarded:
                 default:
                     JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + reference_token + "'", *ptr));
             }
@@ -714,6 +722,14 @@ class json_pointer
                     break;
                 }
 
+                case detail::value_t::null:
+                case detail::value_t::string:
+                case detail::value_t::boolean:
+                case detail::value_t::number_integer:
+                case detail::value_t::number_unsigned:
+                case detail::value_t::number_float:
+                case detail::value_t::binary:
+                case detail::value_t::discarded:
                 default:
                 {
                     // we do not expect primitive values if there is still a

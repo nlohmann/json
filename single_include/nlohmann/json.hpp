@@ -3894,6 +3894,13 @@ void get_arithmetic_value(const BasicJsonType& j, ArithmeticType& val)
             break;
         }
 
+        case value_t::null:
+        case value_t::object:
+        case value_t::array:
+        case value_t::string:
+        case value_t::boolean:
+        case value_t::binary:
+        case value_t::discarded:
         default:
             JSON_THROW(type_error::create(302, "type must be number, but is " + std::string(j.type_name()), j));
     }
@@ -4179,6 +4186,12 @@ void from_json(const BasicJsonType& j, ArithmeticType& val)
             break;
         }
 
+        case value_t::null:
+        case value_t::object:
+        case value_t::array:
+        case value_t::string:
+        case value_t::binary:
+        case value_t::discarded:
         default:
             JSON_THROW(type_error::create(302, "type must be number, but is " + std::string(j.type_name()), j));
     }
@@ -4402,6 +4415,14 @@ template<typename IteratorType> class iteration_proxy_value
                 return anchor.key();
 
             // use an empty key for all primitive types
+            case value_t::null:
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            case value_t::discarded:
             default:
                 return empty_str;
         }
@@ -11049,6 +11070,13 @@ class parser
                                                 parse_error::create(101, m_lexer.get_position(), exception_message(token_type::uninitialized, "value"), BasicJsonType()));
                     }
 
+                    case token_type::uninitialized:
+                    case token_type::end_array:
+                    case token_type::end_object:
+                    case token_type::name_separator:
+                    case token_type::value_separator:
+                    case token_type::end_of_input:
+                    case token_type::literal_or_value:
                     default: // the last token was unexpected
                     {
                         return sax->parse_error(m_lexer.get_position(),
@@ -11472,6 +11500,14 @@ class iter_impl
                 break;
             }
 
+            case value_t::null:
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            case value_t::discarded:
             default:
             {
                 m_it.primitive_iterator = primitive_iterator_t();
@@ -11568,6 +11604,13 @@ class iter_impl
                 break;
             }
 
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            case value_t::discarded:
             default:
             {
                 m_it.primitive_iterator.set_begin();
@@ -11598,6 +11641,14 @@ class iter_impl
                 break;
             }
 
+            case value_t::null:
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            case value_t::discarded:
             default:
             {
                 m_it.primitive_iterator.set_end();
@@ -11632,6 +11683,13 @@ class iter_impl
             case value_t::null:
                 JSON_THROW(invalid_iterator::create(214, "cannot get value", *m_object));
 
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            case value_t::discarded:
             default:
             {
                 if (JSON_HEDLEY_LIKELY(m_it.primitive_iterator.is_begin()))
@@ -11666,6 +11724,14 @@ class iter_impl
                 return &*m_it.array_iterator;
             }
 
+            case value_t::null:
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            case value_t::discarded:
             default:
             {
                 if (JSON_HEDLEY_LIKELY(m_it.primitive_iterator.is_begin()))
@@ -11711,6 +11777,14 @@ class iter_impl
                 break;
             }
 
+            case value_t::null:
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            case value_t::discarded:
             default:
             {
                 ++m_it.primitive_iterator;
@@ -11754,6 +11828,13 @@ class iter_impl
                 break;
             }
 
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            case value_t::discarded:
             default:
             {
                 --m_it.primitive_iterator;
@@ -11787,6 +11868,14 @@ class iter_impl
             case value_t::array:
                 return (m_it.array_iterator == other.m_it.array_iterator);
 
+            case value_t::null:
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            case value_t::discarded:
             default:
                 return (m_it.primitive_iterator == other.m_it.primitive_iterator);
         }
@@ -12700,6 +12789,14 @@ class json_pointer
                     break;
                 }
 
+                case detail::value_t::null:
+                case detail::value_t::string:
+                case detail::value_t::boolean:
+                case detail::value_t::number_integer:
+                case detail::value_t::number_unsigned:
+                case detail::value_t::number_float:
+                case detail::value_t::binary:
+                case detail::value_t::discarded:
                 default:
                     JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + reference_token + "'", *ptr));
             }
@@ -12859,6 +12956,14 @@ class json_pointer
                     break;
                 }
 
+                case detail::value_t::null:
+                case detail::value_t::string:
+                case detail::value_t::boolean:
+                case detail::value_t::number_integer:
+                case detail::value_t::number_unsigned:
+                case detail::value_t::number_float:
+                case detail::value_t::binary:
+                case detail::value_t::discarded:
                 default:
                 {
                     // we do not expect primitive values if there is still a
@@ -18159,6 +18264,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     break;
                 }
 
+                case value_t::discarded:
                 default:
                 {
                     object = nullptr;  // silence warning, see #821
@@ -18316,6 +18422,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     break;
                 }
 
+                case value_t::null:
+                case value_t::boolean:
+                case value_t::number_integer:
+                case value_t::number_unsigned:
+                case value_t::number_float:
+                case value_t::discarded:
                 default:
                 {
                     break;
@@ -19306,6 +19418,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 break;
             }
 
+            case value_t::null:
+            case value_t::discarded:
             default:
                 break;
         }
@@ -21330,6 +21444,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 break;
             }
 
+            case value_t::null:
+            case value_t::discarded:
             default:
                 JSON_THROW(type_error::create(307, "cannot use erase() with " + std::string(type_name()), *this));
         }
@@ -22274,6 +22390,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 return m_value.object->size();
             }
 
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            case value_t::discarded:
             default:
             {
                 // all other types have size 1
@@ -22339,6 +22462,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 return m_value.object->max_size();
             }
 
+            case value_t::null:
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            case value_t::discarded:
             default:
             {
                 // all other types have max_size() == size()
@@ -24206,6 +24337,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     return "binary";
                 case value_t::discarded:
                     return "discarded";
+                case value_t::number_integer:
+                case value_t::number_unsigned:
+                case value_t::number_float:
                 default:
                     return "number";
             }
