@@ -100,6 +100,9 @@ struct my_allocator : std::allocator<T>
         std::allocator<T>::deallocate(p, n);
     }
 
+    // the code below warns about p in MSVC 2015 - this could be a bug
+    DOCTEST_MSVC_SUPPRESS_WARNING_PUSH
+    DOCTEST_MSVC_SUPPRESS_WARNING(4100)
     void destroy(T* p)
     {
         if (next_destroy_fails)
@@ -110,6 +113,7 @@ struct my_allocator : std::allocator<T>
 
         p->~T();
     }
+    DOCTEST_MSVC_SUPPRESS_WARNING_POP
 
     template <class U>
     struct rebind

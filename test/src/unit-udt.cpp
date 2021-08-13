@@ -809,6 +809,10 @@ TEST_CASE("an incomplete type does not trigger a compiler error in non-evaluated
     static_assert(!is_constructible_patched<json, incomplete>::value, "");
 }
 
+// the code below warns about t in MSVC 2015 - this could be a bug
+DOCTEST_MSVC_SUPPRESS_WARNING_PUSH
+DOCTEST_MSVC_SUPPRESS_WARNING(4100)
+
 namespace
 {
 class Evil
@@ -820,6 +824,8 @@ class Evil
 
     int m_i = 0;
 };
+
+DOCTEST_MSVC_SUPPRESS_WARNING_POP
 
 void from_json(const json& /*unused*/, Evil& /*unused*/) {}
 } // namespace
