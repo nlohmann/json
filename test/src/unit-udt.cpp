@@ -816,7 +816,10 @@ class Evil
   public:
     Evil() = default;
     template <typename T>
-    Evil(T t) : m_i(sizeof(t)) {}
+    Evil(T t) : m_i(sizeof(t))
+    {
+        static_cast<void>(t); // fix MSVC's C4100 warning
+    }
 
     int m_i = 0;
 };
