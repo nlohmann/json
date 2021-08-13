@@ -2697,14 +2697,14 @@ class exception : public std::exception
                     break;
                 }
 
-                case value_t::null:
-                case value_t::string:
-                case value_t::boolean:
-                case value_t::number_integer:
-                case value_t::number_unsigned:
-                case value_t::number_float:
-                case value_t::binary:
-                case value_t::discarded:
+                case value_t::null: // LCOV_EXCL_LINE
+                case value_t::string: // LCOV_EXCL_LINE
+                case value_t::boolean: // LCOV_EXCL_LINE
+                case value_t::number_integer: // LCOV_EXCL_LINE
+                case value_t::number_unsigned: // LCOV_EXCL_LINE
+                case value_t::number_float: // LCOV_EXCL_LINE
+                case value_t::binary: // LCOV_EXCL_LINE
+                case value_t::discarded: // LCOV_EXCL_LINE
                 default:   // LCOV_EXCL_LINE
                     break; // LCOV_EXCL_LINE
             }
@@ -8385,7 +8385,7 @@ class binary_reader
                 result = parse_ubjson_internal();
                 break;
 
-            case input_format_t::json:
+            case input_format_t::json: // LCOV_EXCL_LINE
             default:            // LCOV_EXCL_LINE
                 JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
         }
@@ -10719,7 +10719,7 @@ class binary_reader
                 error_msg += "BSON";
                 break;
 
-            case input_format_t::json:
+            case input_format_t::json: // LCOV_EXCL_LINE
             default:            // LCOV_EXCL_LINE
                 JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
         }
@@ -25811,13 +25811,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 }
 
                 // if there exists a parent it cannot be primitive
-                case value_t::string:
-                case value_t::boolean:
-                case value_t::number_integer:
-                case value_t::number_unsigned:
-                case value_t::number_float:
-                case value_t::binary:
-                case value_t::discarded:
+                case value_t::string: // LCOV_EXCL_LINE
+                case value_t::boolean: // LCOV_EXCL_LINE
+                case value_t::number_integer: // LCOV_EXCL_LINE
+                case value_t::number_unsigned: // LCOV_EXCL_LINE
+                case value_t::number_float: // LCOV_EXCL_LINE
+                case value_t::binary: // LCOV_EXCL_LINE
+                case value_t::discarded: // LCOV_EXCL_LINE
                 default:            // LCOV_EXCL_LINE
                     JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
             }
