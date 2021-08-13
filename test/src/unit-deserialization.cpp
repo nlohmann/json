@@ -1089,7 +1089,7 @@ TEST_CASE_TEMPLATE("deserialization of different character types (UTF-8)", T,
                    char, unsigned char, std::uint8_t)
 {
     // a star emoji
-    std::vector<T> v = {'"', static_cast<T>(0xe2), static_cast<T>(0xad), static_cast<T>(0x90), static_cast<T>(0xef), static_cast<T>(0xb8), static_cast<T>(0x8f), '"'};
+    std::vector<T> v = {'"', static_cast<T>(0xe2u), static_cast<T>(0xadu), static_cast<T>(0x90u), static_cast<T>(0xefu), static_cast<T>(0xb8u), static_cast<T>(0x8fu), '"'};
     CHECK(json::parse(v).dump(-1, ' ', true) == "\"\\u2b50\\ufe0f\"");
     CHECK(json::accept(v));
 
