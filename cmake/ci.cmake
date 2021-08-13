@@ -96,7 +96,6 @@ set(CLANG_CXXFLAGS "-std=c++11                        \
     -Wno-deprecated-declarations                         \
     -Wno-documentation-unknown-command                   \
     -Wno-exit-time-destructors                           \
-    -Wno-extra-semi-stmt                                 \
     -Wno-padded                                          \
     -Wno-range-loop-analysis                             \
     -Wno-switch-enum -Wno-covered-switch-default         \
