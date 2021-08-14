@@ -4,7 +4,8 @@
 enum class cbor_tag_handler_t
 {
     error,
-    ignore
+    ignore,
+    store
 };
 ```
 
@@ -16,6 +17,9 @@ error
 ignore
 :   ignore tags
 
+store
+:   store tagged values as binary container with subtype (for bytes 0xd8..0xdb)
+
 ## Version history
 
-- Added in version 3.9.0.
+- Added in version 3.9.0. Added value `store` in 3.9.2.

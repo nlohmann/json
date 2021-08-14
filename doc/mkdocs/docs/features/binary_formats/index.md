@@ -25,7 +25,7 @@ to efficiently encode JSON values to byte vectors and to decode such vectors.
 | Format      | Binary values | Binary subtypes |
 | ----------- | ------------- | --------------- |
 | BSON        | supported     | supported       |
-| CBOR        | supported     | not supported   |
+| CBOR        | supported     | supported       |
 | MessagePack | supported     | supported       |
 | UBJSON      | not supported | not supported   |
 

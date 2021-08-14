@@ -2486,7 +2486,22 @@ TEST_CASE("examples from RFC 7049 Appendix A")
         auto expected = utils::read_binary_file(TEST_DATA_DIRECTORY "/binary_data/cbor_binary.out");
         CHECK(j == json::binary(expected));
 
+        // 0xd8
         CHECK(json::to_cbor(json::binary(std::vector<uint8_t> {}, 0x42)) == std::vector<uint8_t> {0xd8, 0x42, 0x40});
+        CHECK(!json::from_cbor(json::to_cbor(json::binary(std::vector<uint8_t> {}, 0x42)), true, true, json::cbor_tag_handler_t::ignore).get_binary().has_subtype());
+        CHECK(json::from_cbor(json::to_cbor(json::binary(std::vector<uint8_t> {}, 0x42)), true, true, json::cbor_tag_handler_t::store).get_binary().subtype() == 0x42);
+        // 0xd9
+        CHECK(json::to_cbor(json::binary(std::vector<uint8_t> {}, 1000)) == std::vector<uint8_t> {0xd9, 0x03, 0xe8, 0x40});
+        CHECK(!json::from_cbor(json::to_cbor(json::binary(std::vector<uint8_t> {}, 1000)), true, true, json::cbor_tag_handler_t::ignore).get_binary().has_subtype());
+        CHECK(json::from_cbor(json::to_cbor(json::binary(std::vector<uint8_t> {}, 1000)), true, true, json::cbor_tag_handler_t::store).get_binary().subtype() == 1000);
+        // 0xda
+        CHECK(json::to_cbor(json::binary(std::vector<uint8_t> {}, 394216)) == std::vector<uint8_t> {0xda, 0x00, 0x06, 0x03, 0xe8, 0x40});
+        CHECK(!json::from_cbor(json::to_cbor(json::binary(std::vector<uint8_t> {}, 394216)), true, true, json::cbor_tag_handler_t::ignore).get_binary().has_subtype());
+        CHECK(json::from_cbor(json::to_cbor(json::binary(std::vector<uint8_t> {}, 394216)), true, true, json::cbor_tag_handler_t::store).get_binary().subtype() == 394216);
+        // 0xdb
+        CHECK(json::to_cbor(json::binary(std::vector<uint8_t> {}, 8589934590)) == std::vector<uint8_t> {0xdb, 0x00, 0x00, 0x00, 0x01, 0xff, 0xff, 0xff, 0xfe, 0x40});
+        CHECK(!json::from_cbor(json::to_cbor(json::binary(std::vector<uint8_t> {}, 8589934590)), true, true, json::cbor_tag_handler_t::ignore).get_binary().has_subtype());
+        CHECK(json::from_cbor(json::to_cbor(json::binary(std::vector<uint8_t> {}, 8589934590)), true, true, json::cbor_tag_handler_t::store).get_binary().subtype() == 8589934590);
     }
 
     SECTION("arrays")
@@ -2545,6 +2560,8 @@ TEST_CASE("Tagged values")
         0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF, 0xD0, 0xD1, 0xD2, 0xD3, 0xD4
     })
         {
+            CAPTURE(b);
+
             // add tag to value
             auto v_tagged = v;
             v_tagged.insert(v_tagged.begin(), b);
@@ -2557,6 +2574,9 @@ TEST_CASE("Tagged values")
             // check that parsing succeeds and gets original value in ignore mode
             auto j_tagged = json::from_cbor(v_tagged, true, true, json::cbor_tag_handler_t::ignore);
             CHECK(j_tagged == j);
+
+            auto j_tagged_stored = json::from_cbor(v_tagged, true, true, json::cbor_tag_handler_t::store);
+            CHECK(j_tagged_stored == j);
         }
     }
 
