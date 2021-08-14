@@ -32,6 +32,8 @@ When defining `JSON_NOEXCEPTION`, `#!cpp try` is replaced by `#!cpp if (true)`,
 
 The same effect is achieved by setting the compiler flag `-fno-exceptions`.
 
+Note the explanatory [`what()`](https://en.cppreference.com/w/cpp/error/exception/what) string of exceptions is not available for MSVC if exceptions are disabled, see [#2824](https://github.com/nlohmann/json/discussions/2824).
+
 ## `JSON_NO_IO`
 
 When defined, headers `<cstdio>`, `<ios>`, `<iosfwd>`, `<istream>`, and `<ostream>` are not included and parse functions relying on these headers are excluded. This is relevant for environment where these I/O functions are disallowed for security reasons (e.g., Intel Software Guard Extensions (SGX)).

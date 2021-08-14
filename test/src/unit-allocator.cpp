@@ -108,6 +108,7 @@ struct my_allocator : std::allocator<T>
             throw std::bad_alloc();
         }
 
+        static_cast<void>(p); // fix MSVC's C4100 warning
         p->~T();
     }
 
