@@ -1560,6 +1560,33 @@ I deeply appreciate the help of the following people.
 - [Alex Reinking](https://github.com/alexreinking) improved CMake support for `FetchContent`.
 - [Hannes Domani](https://github.com/ssbssa) provided a GDB pretty printer.
 - Lars Wirzenius reviewed the README file.
+- [Jun Jie](https://github.com/ongjunjie) fixed a compiler path in the CMake scripts.
+- [Ronak Buch](https://github.com/rbuch) fixed typos in the documentation.
+- [Alexander Karzhenkov](https://github.com/karzhenkov) fixed a move constructor and the Travis builds.
+- [Leonardo Lima](https://github.com/leozz37) added CPM.Cmake support.
+- [Joseph Blackman](https://github.com/jbzdarkid) fixed a warning.
+- [Yaroslav](https://github.com/YarikTH) updated doctest and implemented unit tests.
+- [Martin Stump](https://github.com/globberwops) fixed a bug in the CMake files.
+- [Jaakko Moisio](https://github.com/jasujm) fixed a bug in the input adapters.
+- [bl-ue](https://github.com/bl-ue) fixed some Markdown issues in the README file.
+- [William A. Wieselquist](https://github.com/wawiesel) fixed an example from the README.
+- [abbaswasim](https://github.com/abbaswasim) fixed an example from the README.
+- [Remy Jette](https://github.com/remyjette) fixed a warning.
+- [Fraser](https://github.com/frasermarlow) fixed the documentation.
+- [Ben Beasley](https://github.com/musicinmybrain) updated doctest.
+- [Doron Behar](https://github.com/doronbehar) fixed pkg-config.pc.
+- [raduteo](https://github.com/raduteo) fixed a warning.
+- [David Pfahler](https://github.com/theShmoo) added the possibility to compile the library without I/O support.
+- [Morten Fyhn Amundsen](https://github.com/mortenfyhn) fixed a typo.
+- [jpl-mac](https://github.com/jpl-mac) allowed to treat the library as a system header in CMake.
+- [Jason Dsouza](https://github.com/jasmcaus) fixed the indentation of the CMake file.
+- [offa](https://github.com/offa) added a link to Conan Center to the documentation.
+- [TotalCaesar659](https://github.com/TotalCaesar659) updated the links in the documentation to use HTTPS.
+- [Rafail Giavrimis](https://github.com/grafail) fixed the Google Benchmark default branch.
+- [Louis Dionne](https://github.com/ldionne) fixed a conversion operator.
+- [justanotheranonymoususer](https://github.com/justanotheranonymoususer) made the examples in the README more consistent.
+- [Finkman](https://github.com/Finkman) suppressed some `-Wfloat-equal` warnings.
+- [Ferry Huberts](https://github.com/fhuberts) fixed `-Wswitch-enum` warnings.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
