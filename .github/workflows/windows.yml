@@ -5,6 +5,7 @@ on:
     branches:
       - develop
       - master
+      - release/*
   pull_request:
 
 jobs:
