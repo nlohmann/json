@@ -29,6 +29,9 @@ SOFTWARE.
 
 #include "doctest_compatibility.h"
 
+DOCTEST_GCC_SUPPRESS_WARNING_PUSH
+DOCTEST_GCC_SUPPRESS_WARNING("-Wnoexcept")
+
 #include <nlohmann/json.hpp>
 
 using nlohmann::json;
@@ -95,3 +98,5 @@ TEST_CASE("runtime checks")
         from_json(j2, pod_bis());
     }
 }
+
+DOCTEST_GCC_SUPPRESS_WARNING_POP
