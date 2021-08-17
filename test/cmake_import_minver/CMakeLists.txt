@@ -11,7 +11,9 @@ add_test(NAME cmake_import_minver_build
 )
 set_tests_properties(cmake_import_minver_configure PROPERTIES
   FIXTURES_SETUP cmake_import_minver
+  LABELS not_reproducible
 )
 set_tests_properties(cmake_import_minver_build PROPERTIES
   FIXTURES_REQUIRED cmake_import_minver
+  LABELS not_reproducible
 )

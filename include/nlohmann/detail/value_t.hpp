@@ -32,7 +32,7 @@ number_float), because the library distinguishes these three types for numbers:
 @ref basic_json::number_float_t is used for floating-point numbers or to
 approximate integers which do not fit in the limits of their respective type.
 
-@sa @ref basic_json::basic_json(const value_t value_type) -- create a JSON
+@sa see @ref basic_json::basic_json(const value_t value_type) -- create a JSON
 value with the default value for a given type
 
 @since version 1.0.0

@@ -4,8 +4,8 @@
 static basic_json meta();
 ```
 
-This function returns a JSON object with information about the library,
-including the version number and information on the platform and compiler.
+This function returns a JSON object with information about the library, including the version number and information on
+the platform and compiler.
     
 ## Return value
 
@@ -22,8 +22,7 @@ key         | description
 
 ## Exception safety
 
-Strong guarantee: if an exception is thrown, there are no
-changes to any JSON value.
+Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
 
 ## Complexity
 
@@ -43,3 +42,7 @@ Output:
 ```json
 --8<-- "examples/meta.output"
 ```
+
+## Version history
+
+- Added in version 2.1.0.

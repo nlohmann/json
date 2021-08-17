@@ -38,8 +38,10 @@ This class implements a both iterators (iterator and const_iterator) for the
 template<typename BasicJsonType>
 class iter_impl
 {
+    /// the iterator with BasicJsonType of different const-ness
+    using other_iter_impl = iter_impl<typename std::conditional<std::is_const<BasicJsonType>::value, typename std::remove_const<BasicJsonType>::type, const BasicJsonType>::type>;
     /// allow basic_json to access private members
-    friend iter_impl<typename std::conditional<std::is_const<BasicJsonType>::value, typename std::remove_const<BasicJsonType>::type, const BasicJsonType>::type>;
+    friend other_iter_impl;
     friend BasicJsonType;
     friend iteration_proxy<iter_impl>;
     friend iteration_proxy_value<iter_impl>;
@@ -73,8 +75,10 @@ class iter_impl
         typename BasicJsonType::const_reference,
         typename BasicJsonType::reference>::type;
 
-    /// default constructor
     iter_impl() = default;
+    ~iter_impl() = default;
+    iter_impl(iter_impl&&) noexcept = default;
+    iter_impl& operator=(iter_impl&&) noexcept = default;
 
     /*!
     @brief constructor for a given JSON instance
@@ -100,6 +104,14 @@ class iter_impl
                 break;
             }
 
+            case value_t::null:
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            case value_t::discarded:
             default:
             {
                 m_it.primitive_iterator = primitive_iterator_t();
@@ -136,8 +148,11 @@ class iter_impl
     */
     iter_impl& operator=(const iter_impl<const BasicJsonType>& other) noexcept
     {
-        m_object = other.m_object;
-        m_it = other.m_it;
+        if (&other != this)
+        {
+            m_object = other.m_object;
+            m_it = other.m_it;
+        }
         return *this;
     }
 
@@ -156,14 +171,14 @@ class iter_impl
     @return const/non-const iterator
     @note It is not checked whether @a other is initialized.
     */
-    iter_impl& operator=(const iter_impl<typename std::remove_const<BasicJsonType>::type>& other) noexcept
+    iter_impl& operator=(const iter_impl<typename std::remove_const<BasicJsonType>::type>& other) noexcept // NOLINT(cert-oop54-cpp)
     {
         m_object = other.m_object;
         m_it = other.m_it;
         return *this;
     }
 
-  private:
+  JSON_PRIVATE_UNLESS_TESTED:
     /*!
     @brief set the iterator to the first value
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
@@ -193,6 +208,13 @@ class iter_impl
                 break;
             }
 
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            case value_t::discarded:
             default:
             {
                 m_it.primitive_iterator.set_begin();
@@ -223,6 +245,14 @@ class iter_impl
                 break;
             }
 
+            case value_t::null:
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            case value_t::discarded:
             default:
             {
                 m_it.primitive_iterator.set_end();
@@ -255,8 +285,15 @@ class iter_impl
             }
 
             case value_t::null:
-                JSON_THROW(invalid_iterator::create(214, "cannot get value"));
+                JSON_THROW(invalid_iterator::create(214, "cannot get value", *m_object));
 
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            case value_t::discarded:
             default:
             {
                 if (JSON_HEDLEY_LIKELY(m_it.primitive_iterator.is_begin()))
@@ -264,7 +301,7 @@ class iter_impl
                     return *m_object;
                 }
 
-                JSON_THROW(invalid_iterator::create(214, "cannot get value"));
+                JSON_THROW(invalid_iterator::create(214, "cannot get value", *m_object));
             }
         }
     }
@@ -291,6 +328,14 @@ class iter_impl
                 return &*m_it.array_iterator;
             }
 
+            case value_t::null:
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            case value_t::discarded:
             default:
             {
                 if (JSON_HEDLEY_LIKELY(m_it.primitive_iterator.is_begin()))
@@ -298,7 +343,7 @@ class iter_impl
                     return m_object;
                 }
 
-                JSON_THROW(invalid_iterator::create(214, "cannot get value"));
+                JSON_THROW(invalid_iterator::create(214, "cannot get value", *m_object));
             }
         }
     }
@@ -307,7 +352,7 @@ class iter_impl
     @brief post-increment (it++)
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
-    iter_impl const operator++(int)
+    iter_impl const operator++(int) // NOLINT(readability-const-return-type)
     {
         auto result = *this;
         ++(*this);
@@ -336,6 +381,14 @@ class iter_impl
                 break;
             }
 
+            case value_t::null:
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            case value_t::discarded:
             default:
             {
                 ++m_it.primitive_iterator;
@@ -350,7 +403,7 @@ class iter_impl
     @brief post-decrement (it--)
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
-    iter_impl const operator--(int)
+    iter_impl const operator--(int) // NOLINT(readability-const-return-type)
     {
         auto result = *this;
         --(*this);
@@ -379,6 +432,14 @@ class iter_impl
                 break;
             }
 
+            case value_t::null:
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            case value_t::discarded:
             default:
             {
                 --m_it.primitive_iterator;
@@ -390,15 +451,16 @@ class iter_impl
     }
 
     /*!
-    @brief  comparison: equal
+    @brief comparison: equal
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
-    bool operator==(const iter_impl& other) const
+    template < typename IterImpl, detail::enable_if_t < (std::is_same<IterImpl, iter_impl>::value || std::is_same<IterImpl, other_iter_impl>::value), std::nullptr_t > = nullptr >
+    bool operator==(const IterImpl& other) const
     {
         // if objects are not the same, the comparison is undefined
         if (JSON_HEDLEY_UNLIKELY(m_object != other.m_object))
         {
-            JSON_THROW(invalid_iterator::create(212, "cannot compare iterators of different containers"));
+            JSON_THROW(invalid_iterator::create(212, "cannot compare iterators of different containers", *m_object));
         }
 
         JSON_ASSERT(m_object != nullptr);
@@ -411,22 +473,31 @@ class iter_impl
             case value_t::array:
                 return (m_it.array_iterator == other.m_it.array_iterator);
 
+            case value_t::null:
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            case value_t::discarded:
             default:
                 return (m_it.primitive_iterator == other.m_it.primitive_iterator);
         }
     }
 
     /*!
-    @brief  comparison: not equal
+    @brief comparison: not equal
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
-    bool operator!=(const iter_impl& other) const
+    template < typename IterImpl, detail::enable_if_t < (std::is_same<IterImpl, iter_impl>::value || std::is_same<IterImpl, other_iter_impl>::value), std::nullptr_t > = nullptr >
+    bool operator!=(const IterImpl& other) const
     {
         return !operator==(other);
     }
 
     /*!
-    @brief  comparison: smaller
+    @brief comparison: smaller
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
     bool operator<(const iter_impl& other) const
@@ -434,7 +505,7 @@ class iter_impl
         // if objects are not the same, the comparison is undefined
         if (JSON_HEDLEY_UNLIKELY(m_object != other.m_object))
         {
-            JSON_THROW(invalid_iterator::create(212, "cannot compare iterators of different containers"));
+            JSON_THROW(invalid_iterator::create(212, "cannot compare iterators of different containers", *m_object));
         }
 
         JSON_ASSERT(m_object != nullptr);
@@ -442,18 +513,26 @@ class iter_impl
         switch (m_object->m_type)
         {
             case value_t::object:
-                JSON_THROW(invalid_iterator::create(213, "cannot compare order of object iterators"));
+                JSON_THROW(invalid_iterator::create(213, "cannot compare order of object iterators", *m_object));
 
             case value_t::array:
                 return (m_it.array_iterator < other.m_it.array_iterator);
 
+            case value_t::null:
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            case value_t::discarded:
             default:
                 return (m_it.primitive_iterator < other.m_it.primitive_iterator);
         }
     }
 
     /*!
-    @brief  comparison: less than or equal
+    @brief comparison: less than or equal
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
     bool operator<=(const iter_impl& other) const
@@ -462,7 +541,7 @@ class iter_impl
     }
 
     /*!
-    @brief  comparison: greater than
+    @brief comparison: greater than
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
     bool operator>(const iter_impl& other) const
@@ -471,7 +550,7 @@ class iter_impl
     }
 
     /*!
-    @brief  comparison: greater than or equal
+    @brief comparison: greater than or equal
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
     bool operator>=(const iter_impl& other) const
@@ -480,7 +559,7 @@ class iter_impl
     }
 
     /*!
-    @brief  add to iterator
+    @brief add to iterator
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
     iter_impl& operator+=(difference_type i)
@@ -490,7 +569,7 @@ class iter_impl
         switch (m_object->m_type)
         {
             case value_t::object:
-                JSON_THROW(invalid_iterator::create(209, "cannot use offsets with object iterators"));
+                JSON_THROW(invalid_iterator::create(209, "cannot use offsets with object iterators", *m_object));
 
             case value_t::array:
             {
@@ -498,6 +577,14 @@ class iter_impl
                 break;
             }
 
+            case value_t::null:
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            case value_t::discarded:
             default:
             {
                 m_it.primitive_iterator += i;
@@ -509,7 +596,7 @@ class iter_impl
     }
 
     /*!
-    @brief  subtract from iterator
+    @brief subtract from iterator
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
     iter_impl& operator-=(difference_type i)
@@ -518,7 +605,7 @@ class iter_impl
     }
 
     /*!
-    @brief  add to iterator
+    @brief add to iterator
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
     iter_impl operator+(difference_type i) const
@@ -529,7 +616,7 @@ class iter_impl
     }
 
     /*!
-    @brief  addition of distance and iterator
+    @brief addition of distance and iterator
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
     friend iter_impl operator+(difference_type i, const iter_impl& it)
@@ -540,7 +627,7 @@ class iter_impl
     }
 
     /*!
-    @brief  subtract from iterator
+    @brief subtract from iterator
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
     iter_impl operator-(difference_type i) const
@@ -551,7 +638,7 @@ class iter_impl
     }
 
     /*!
-    @brief  return difference
+    @brief return difference
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
     difference_type operator-(const iter_impl& other) const
@@ -561,18 +648,26 @@ class iter_impl
         switch (m_object->m_type)
         {
             case value_t::object:
-                JSON_THROW(invalid_iterator::create(209, "cannot use offsets with object iterators"));
+                JSON_THROW(invalid_iterator::create(209, "cannot use offsets with object iterators", *m_object));
 
             case value_t::array:
                 return m_it.array_iterator - other.m_it.array_iterator;
 
+            case value_t::null:
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            case value_t::discarded:
             default:
                 return m_it.primitive_iterator - other.m_it.primitive_iterator;
         }
     }
 
     /*!
-    @brief  access to successor
+    @brief access to successor
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
     reference operator[](difference_type n) const
@@ -582,14 +677,21 @@ class iter_impl
         switch (m_object->m_type)
         {
             case value_t::object:
-                JSON_THROW(invalid_iterator::create(208, "cannot use operator[] for object iterators"));
+                JSON_THROW(invalid_iterator::create(208, "cannot use operator[] for object iterators", *m_object));
 
             case value_t::array:
                 return *std::next(m_it.array_iterator, n);
 
             case value_t::null:
-                JSON_THROW(invalid_iterator::create(214, "cannot get value"));
+                JSON_THROW(invalid_iterator::create(214, "cannot get value", *m_object));
 
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            case value_t::discarded:
             default:
             {
                 if (JSON_HEDLEY_LIKELY(m_it.primitive_iterator.get_value() == -n))
@@ -597,13 +699,13 @@ class iter_impl
                     return *m_object;
                 }
 
-                JSON_THROW(invalid_iterator::create(214, "cannot get value"));
+                JSON_THROW(invalid_iterator::create(214, "cannot get value", *m_object));
             }
         }
     }
 
     /*!
-    @brief  return the key of an object iterator
+    @brief return the key of an object iterator
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
     const typename object_t::key_type& key() const
@@ -615,11 +717,11 @@ class iter_impl
             return m_it.object_iterator->first;
         }
 
-        JSON_THROW(invalid_iterator::create(207, "cannot use key() for non-object iterators"));
+        JSON_THROW(invalid_iterator::create(207, "cannot use key() for non-object iterators", *m_object));
     }
 
     /*!
-    @brief  return the value of an iterator
+    @brief return the value of an iterator
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
     reference value() const
@@ -627,7 +729,7 @@ class iter_impl
         return operator*();
     }
 
-  private:
+  JSON_PRIVATE_UNLESS_TESTED:
     /// associated JSON instance
     pointer m_object = nullptr;
     /// the actual iterator of the associated instance

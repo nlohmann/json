@@ -112,7 +112,7 @@ class lexer : public lexer_base<BasicJsonType>
   public:
     using token_type = typename lexer_base<BasicJsonType>::token_type;
 
-    explicit lexer(InputAdapterType&& adapter, bool ignore_comments_ = false)
+    explicit lexer(InputAdapterType&& adapter, bool ignore_comments_ = false) noexcept
         : ia(std::move(adapter))
         , ignore_comments(ignore_comments_)
         , decimal_point_char(static_cast<char_int_type>(get_decimal_point()))
@@ -120,9 +120,9 @@ class lexer : public lexer_base<BasicJsonType>
 
     // delete because of pointer members
     lexer(const lexer&) = delete;
-    lexer(lexer&&) = default;
+    lexer(lexer&&) = default; // NOLINT(hicpp-noexcept-move,performance-noexcept-move-constructor)
     lexer& operator=(lexer&) = delete;
-    lexer& operator=(lexer&&) = default;
+    lexer& operator=(lexer&&) = default; // NOLINT(hicpp-noexcept-move,performance-noexcept-move-constructor)
     ~lexer() = default;
 
   private:
@@ -231,7 +231,7 @@ class lexer : public lexer_base<BasicJsonType>
     /*!
     @brief scan a string literal
 
-    This function scans a string according to Sect. 7 of RFC 7159. While
+    This function scans a string according to Sect. 7 of RFC 8259. While
     scanning, bytes are escaped and copied into buffer token_buffer. Then the
     function returns successfully, token_buffer is *not* null-terminated (as it
     may contain \0 bytes), and token_buffer.size() is the number of bytes in the
@@ -921,10 +921,10 @@ class lexer : public lexer_base<BasicJsonType>
     /*!
     @brief scan a number literal
 
-    This function scans a string according to Sect. 6 of RFC 7159.
+    This function scans a string according to Sect. 6 of RFC 8259.
 
     The function is realized with a deterministic finite state machine derived
-    from the grammar described in RFC 7159. Starting in state "init", the
+    from the grammar described in RFC 8259. Starting in state "init", the
     input is read and used to determined the next state. Only state "done"
     accepts the number. State "error" is a trap state to model errors. In the
     table below, "anything" means any character but the ones listed before.
@@ -998,7 +998,7 @@ class lexer : public lexer_base<BasicJsonType>
 
             // all other characters are rejected outside scan_number()
             default:            // LCOV_EXCL_LINE
-                JSON_ASSERT(false);  // LCOV_EXCL_LINE
+                JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
         }
 
 scan_number_minus:
@@ -1236,7 +1236,7 @@ scan_number_done:
         // we are done scanning a number)
         unget();
 
-        char* endptr = nullptr;
+        char* endptr = nullptr; // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
         errno = 0;
 
         // try to parse integers first and fall back to floats
@@ -1447,7 +1447,7 @@ scan_number_done:
             {
                 // escape control characters
                 std::array<char, 9> cs{{}};
-                (std::snprintf)(cs.data(), cs.size(), "<U+%.4X>", static_cast<unsigned char>(c));
+                (std::snprintf)(cs.data(), cs.size(), "<U+%.4X>", static_cast<unsigned char>(c)); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
                 result += cs.data();
             }
             else
@@ -1541,17 +1541,17 @@ scan_number_done:
             // literals
             case 't':
             {
-                std::array<char_type, 4> true_literal = {{'t', 'r', 'u', 'e'}};
+                std::array<char_type, 4> true_literal = {{char_type('t'), char_type('r'), char_type('u'), char_type('e')}};
                 return scan_literal(true_literal.data(), true_literal.size(), token_type::literal_true);
             }
             case 'f':
             {
-                std::array<char_type, 5> false_literal = {{'f', 'a', 'l', 's', 'e'}};
+                std::array<char_type, 5> false_literal = {{char_type('f'), char_type('a'), char_type('l'), char_type('s'), char_type('e')}};
                 return scan_literal(false_literal.data(), false_literal.size(), token_type::literal_false);
             }
             case 'n':
             {
-                std::array<char_type, 4> null_literal = {{'n', 'u', 'l', 'l'}};
+                std::array<char_type, 4> null_literal = {{char_type('n'), char_type('u'), char_type('l'), char_type('l')}};
                 return scan_literal(null_literal.data(), null_literal.size(), token_type::literal_null);
             }
 

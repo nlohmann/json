@@ -20,27 +20,27 @@
 #endif
 
 // C++ language standard detection
-#if (defined(__cplusplus) && __cplusplus >= 202002L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 202002L)
-    #define JSON_HAS_CPP_20
-    #define JSON_HAS_CPP_17
-    #define JSON_HAS_CPP_14
-#elif (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_HAS_CXX17) && _HAS_CXX17 == 1) // fix for issue #464
-    #define JSON_HAS_CPP_17
-    #define JSON_HAS_CPP_14
-#elif (defined(__cplusplus) && __cplusplus >= 201402L) || (defined(_HAS_CXX14) && _HAS_CXX14 == 1)
-    #define JSON_HAS_CPP_14
-#endif
-
-// disable float-equal warnings on GCC/clang
-#if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wfloat-equal"
+// if the user manually specified the used c++ version this is skipped
+#if !defined(JSON_HAS_CPP_20) && !defined(JSON_HAS_CPP_17) && !defined(JSON_HAS_CPP_14) && !defined(JSON_HAS_CPP_11)
+    #if (defined(__cplusplus) && __cplusplus >= 202002L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 202002L)
+        #define JSON_HAS_CPP_20
+        #define JSON_HAS_CPP_17
+        #define JSON_HAS_CPP_14
+    #elif (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_HAS_CXX17) && _HAS_CXX17 == 1) // fix for issue #464
+        #define JSON_HAS_CPP_17
+        #define JSON_HAS_CPP_14
+    #elif (defined(__cplusplus) && __cplusplus >= 201402L) || (defined(_HAS_CXX14) && _HAS_CXX14 == 1)
+        #define JSON_HAS_CPP_14
+    #endif
+    // the cpp 11 flag is always specified because it is the minimal required version
+    #define JSON_HAS_CPP_11
 #endif
 
 // disable documentation warnings on clang
 #if defined(__clang__)
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wdocumentation"
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wdocumentation"
+    #pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
 #endif
 
 // allow to disable exceptions
@@ -81,6 +81,13 @@
 #if !defined(JSON_ASSERT)
     #include <cassert> // assert
     #define JSON_ASSERT(x) assert(x)
+#endif
+
+// allow to access some private functions (needed by the test suite)
+#if defined(JSON_TESTS_PRIVATE)
+    #define JSON_PRIVATE_UNLESS_TESTED public
+#else
+    #define JSON_PRIVATE_UNLESS_TESTED private
 #endif
 
 /*!

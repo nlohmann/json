@@ -10,7 +10,9 @@ add_test(NAME cmake_add_subdirectory_build
 )
 set_tests_properties(cmake_add_subdirectory_configure PROPERTIES
   FIXTURES_SETUP cmake_add_subdirectory
+  LABELS not_reproducible
 )
 set_tests_properties(cmake_add_subdirectory_build PROPERTIES
   FIXTURES_REQUIRED cmake_add_subdirectory
+  LABELS not_reproducible
 )

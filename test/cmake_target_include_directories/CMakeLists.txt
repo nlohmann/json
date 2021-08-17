@@ -10,7 +10,9 @@ add_test(NAME cmake_target_include_directories_build
 )
 set_tests_properties(cmake_target_include_directories_configure PROPERTIES
     FIXTURES_SETUP cmake_target_include_directories
+    LABELS not_reproducible
 )
 set_tests_properties(cmake_target_include_directories_build PROPERTIES
     FIXTURES_REQUIRED cmake_target_include_directories
+    LABELS not_reproducible
 )
