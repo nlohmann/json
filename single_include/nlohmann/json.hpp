@@ -2250,9 +2250,9 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 
 // disable documentation warnings on clang
 #if defined(__clang__)
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wdocumentation"
-    #pragma GCC diagnostic ignored "-Wdocumentation-unknown-command"
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wdocumentation"
+    #pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
 #endif
 
 // allow to disable exceptions
@@ -26424,9 +26424,9 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 // #include <nlohmann/detail/macro_unscope.hpp>
 
 
-// restore GCC/clang diagnostic settings
+// restore clang diagnostic settings
 #if defined(__clang__)
-    #pragma GCC diagnostic pop
+    #pragma clang diagnostic pop
 #endif
 
 // clean up

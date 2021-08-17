@@ -1,8 +1,8 @@
 #pragma once
 
-// restore GCC/clang diagnostic settings
+// restore clang diagnostic settings
 #if defined(__clang__)
-    #pragma GCC diagnostic pop
+    #pragma clang diagnostic pop
 #endif
 
 // clean up

@@ -29,6 +29,7 @@ SOFTWARE.
 
 #include "doctest_compatibility.h"
 
+// disable -Wnoexcept as exceptions are switched off for this test suite
 DOCTEST_GCC_SUPPRESS_WARNING_PUSH
 DOCTEST_GCC_SUPPRESS_WARNING("-Wnoexcept")
 

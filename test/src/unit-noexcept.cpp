@@ -29,6 +29,7 @@ SOFTWARE.
 
 #include "doctest_compatibility.h"
 
+// disable -Wnoexcept due to struct pod_bis
 DOCTEST_GCC_SUPPRESS_WARNING_PUSH
 DOCTEST_GCC_SUPPRESS_WARNING("-Wnoexcept")
 

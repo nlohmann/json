@@ -42,10 +42,9 @@ using nlohmann::json;
 #include <sstream>
 #include <iomanip>
 
-#if defined(_MSC_VER)
-    #pragma warning (push)
-    #pragma warning (disable : 4189) // local variable is initialized but not referenced
-#endif
+// local variable is initialized but not referenced
+DOCTEST_MSVC_SUPPRESS_WARNING_PUSH
+DOCTEST_MSVC_SUPPRESS_WARNING(4189)
 
 TEST_CASE("README" * doctest::skip())
 {
@@ -321,6 +320,4 @@ TEST_CASE("README" * doctest::skip())
     }
 }
 
-#if defined(_MSC_VER)
-    #pragma warning (pop)
-#endif
+DOCTEST_MSVC_SUPPRESS_WARNING_POP
