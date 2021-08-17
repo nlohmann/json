@@ -38,6 +38,9 @@ using nlohmann::json;
 #include <memory>
 #include <utility>
 
+DOCTEST_GCC_SUPPRESS_WARNING_PUSH
+DOCTEST_GCC_SUPPRESS_WARNING("-Wnoexcept")
+
 namespace udt
 {
 enum class country
@@ -845,3 +848,5 @@ TEST_CASE("Issue #1237")
     struct non_convertible_type {};
     static_assert(!std::is_convertible<json, non_convertible_type>::value, "");
 }
+
+DOCTEST_GCC_SUPPRESS_WARNING_POP
