@@ -111,7 +111,7 @@ set(GCC_CXXFLAGS "-std=c++11                          \
     -Wno-abi-tag                                         \
     -Waddress                                         \
     -Waddress-of-packed-member                        \
-    -Waggregate-return                                \
+    -Wno-aggregate-return                                \
     -Waggressive-loop-optimizations                   \
     -Waligned-new=all                                 \
     -Wall                                             \

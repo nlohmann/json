@@ -40,6 +40,7 @@
 #if defined(__clang__)
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wdocumentation"
+    #pragma GCC diagnostic ignored "-Wdocumentation-unknown-command"
 #endif
 
 // allow to disable exceptions
