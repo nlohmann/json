@@ -48,6 +48,10 @@ using nlohmann::json;
     #define JSON_HAS_CPP_14
 #endif
 
+// NLOHMANN_JSON_SERIALIZE_ENUM uses a static std::pair
+DOCTEST_GCC_SUPPRESS_WARNING_PUSH
+DOCTEST_GCC_SUPPRESS_WARNING("-Wexit-time-destructors")
+
 TEST_CASE("value conversion")
 {
     SECTION("get an object (explicit)")
@@ -1712,3 +1716,5 @@ TEST_CASE("JSON to enum mapping")
 #ifdef JSON_HAS_CPP_14
     #undef JSON_HAS_CPP_14
 #endif
+
+DOCTEST_GCC_SUPPRESS_WARNING_POP

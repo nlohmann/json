@@ -53,6 +53,10 @@ using nlohmann::json;
     #include <span>
 #endif
 
+// NLOHMANN_JSON_SERIALIZE_ENUM uses a static std::pair
+DOCTEST_GCC_SUPPRESS_WARNING_PUSH
+DOCTEST_GCC_SUPPRESS_WARNING("-Wexit-time-destructors")
+
 /////////////////////////////////////////////////////////////////////
 // for #1021
 /////////////////////////////////////////////////////////////////////
@@ -656,3 +660,5 @@ TEST_CASE("regression tests 2")
         static_assert(std::is_copy_assignable<nlohmann::ordered_json>::value, "");
     }
 }
+
+DOCTEST_GCC_SUPPRESS_WARNING_POP
