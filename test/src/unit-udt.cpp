@@ -29,6 +29,9 @@ SOFTWARE.
 
 #include "doctest_compatibility.h"
 
+DOCTEST_GCC_SUPPRESS_WARNING_PUSH
+DOCTEST_GCC_SUPPRESS_WARNING("-Wnoexcept")
+
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
@@ -37,9 +40,6 @@ using nlohmann::json;
 #include <string>
 #include <memory>
 #include <utility>
-
-DOCTEST_GCC_SUPPRESS_WARNING_PUSH
-DOCTEST_GCC_SUPPRESS_WARNING("-Wnoexcept")
 
 namespace udt
 {
