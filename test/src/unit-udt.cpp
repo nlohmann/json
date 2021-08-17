@@ -29,6 +29,10 @@ SOFTWARE.
 
 #include "doctest_compatibility.h"
 
+// disable -Wnoexcept due to class Evil
+DOCTEST_GCC_SUPPRESS_WARNING_PUSH
+DOCTEST_GCC_SUPPRESS_WARNING("-Wnoexcept")
+
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
@@ -845,3 +849,5 @@ TEST_CASE("Issue #1237")
     struct non_convertible_type {};
     static_assert(!std::is_convertible<json, non_convertible_type>::value, "");
 }
+
+DOCTEST_GCC_SUPPRESS_WARNING_POP

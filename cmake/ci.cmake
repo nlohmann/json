@@ -88,20 +88,35 @@ file(GLOB_RECURSE SRC_FILES ${PROJECT_SOURCE_DIR}/include/nlohmann/*.hpp)
 # Thorough check with recent compilers
 ###############################################################################
 
+# Ignored Clang warnings:
+# -Wno-c++98-compat               The library targets C++11.
+# -Wno-c++98-compat-pedantic      The library targets C++11.
+# -Wno-deprecated-declarations    The library contains annotations for deprecated functions.
+# -Wno-extra-semi-stmt            The library uses std::assert which triggers this warning.
+# -Wno-padded                     We do not care about padding warnings.
+# -Wno-covered-switch-default     All switches list all cases and a default case.
+# -Wno-weak-vtables               The library is header-only.
+
 set(CLANG_CXXFLAGS "-std=c++11                        \
     -Werror                                           \
     -Weverything                                      \
     -Wno-c++98-compat                                    \
     -Wno-c++98-compat-pedantic                           \
     -Wno-deprecated-declarations                         \
-    -Wno-documentation-unknown-command                   \
-    -Wno-exit-time-destructors                           \
     -Wno-extra-semi-stmt                                 \
     -Wno-padded                                          \
-    -Wno-range-loop-analysis                             \
     -Wno-covered-switch-default                          \
     -Wno-weak-vtables                                    \
 ")
+
+# Ignored GCC warnings:
+# -Wno-abi-tag                    We do not care about ABI tags.
+# -Wno-aggregate-return           The library uses aggregate returns.
+# -Wno-long-long                  The library uses the long long type to interface with system functions.
+# -Wno-namespaces                 The library uses namespaces.
+# -Wno-padded                     We do not care about padding warnings.
+# -Wno-system-headers             We do not care about warnings in system headers.
+# -Wno-templates                  The library uses templates.
 
 set(GCC_CXXFLAGS "-std=c++11                          \
     -pedantic                                         \
@@ -203,10 +218,16 @@ set(GCC_CXXFLAGS "-std=c++11                          \
     -Wextra-semi                                      \
     -Wfloat-conversion                                \
     -Wfloat-equal                                     \
+    -Wformat-contains-nul                             \
     -Wformat-diag                                     \
+    -Wformat-extra-args                               \
+    -Wformat-nonliteral                               \
     -Wformat-overflow=2                               \
+    -Wformat-security                                 \
     -Wformat-signedness                               \
     -Wformat-truncation=2                             \
+    -Wformat-y2k                                      \
+    -Wformat-zero-length                              \
     -Wformat=2                                        \
     -Wframe-address                                   \
     -Wfree-nonheap-object                             \
@@ -249,7 +270,7 @@ set(GCC_CXXFLAGS "-std=c++11                          \
     -Wmultistatement-macros                           \
     -Wno-namespaces                                      \
     -Wnarrowing                                       \
-    -Wno-noexcept                                        \
+    -Wnoexcept                                        \
     -Wnoexcept-type                                   \
     -Wnon-template-friend                             \
     -Wnon-virtual-dtor                                \
@@ -277,7 +298,7 @@ set(GCC_CXXFLAGS "-std=c++11                          \
     -Wpragmas                                         \
     -Wprio-ctor-dtor                                  \
     -Wpsabi                                           \
-    -Wno-range-loop-construct                            \
+    -Wrange-loop-construct                            \
     -Wredundant-decls                                 \
     -Wredundant-move                                  \
     -Wredundant-tags                                  \

@@ -41,6 +41,10 @@ using nlohmann::json;
 #include <iomanip>
 #include <test_data.hpp>
 
+// this test suite uses static variables with non-trivial destructors
+DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
+DOCTEST_CLANG_SUPPRESS_WARNING("-Wexit-time-destructors")
+
 namespace
 {
 extern size_t calls;
@@ -337,3 +341,5 @@ TEST_CASE("Unicode (5/5)" * doctest::skip())
         }
     }
 }
+
+DOCTEST_CLANG_SUPPRESS_WARNING_POP

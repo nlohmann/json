@@ -2250,8 +2250,9 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 
 // disable documentation warnings on clang
 #if defined(__clang__)
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wdocumentation"
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wdocumentation"
+    #pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
 #endif
 
 // allow to disable exceptions
@@ -5003,7 +5004,7 @@ order to override the binary type.
 @tparam BinaryType container to store bytes (`std::vector<std::uint8_t>` by
                    default)
 
-@since version 3.8.0; changed type of subtypes to std::uint64_t in 3.9.2.
+@since version 3.8.0; changed type of subtypes to std::uint64_t in 3.10.0.
 */
 template<typename BinaryType>
 class byte_container_with_subtype : public BinaryType
@@ -5093,7 +5094,7 @@ class byte_container_with_subtype : public BinaryType
     subtype
 
     @since version 3.8.0; fixed return value to properly return
-           subtype_type(-1) as documented in version 3.9.2
+           subtype_type(-1) as documented in version 3.10.0
     */
     constexpr subtype_type subtype() const noexcept
     {
@@ -26423,9 +26424,9 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 // #include <nlohmann/detail/macro_unscope.hpp>
 
 
-// restore GCC/clang diagnostic settings
+// restore clang diagnostic settings
 #if defined(__clang__)
-    #pragma GCC diagnostic pop
+    #pragma clang diagnostic pop
 #endif
 
 // clean up
