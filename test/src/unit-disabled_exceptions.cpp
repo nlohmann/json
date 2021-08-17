@@ -29,6 +29,9 @@ SOFTWARE.
 
 #include "doctest_compatibility.h"
 
+DOCTEST_GCC_SUPPRESS_WARNING_PUSH
+DOCTEST_GCC_SUPPRESS_WARNING("-Wnoexcept")
+
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
@@ -64,3 +67,5 @@ TEST_CASE("Tests with disabled exceptions")
         delete sax_no_exception::error_string; // NOLINT(cppcoreguidelines-owning-memory)
     }
 }
+
+DOCTEST_GCC_SUPPRESS_WARNING_POP
