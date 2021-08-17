@@ -95,6 +95,7 @@ file(GLOB_RECURSE SRC_FILES ${PROJECT_SOURCE_DIR}/include/nlohmann/*.hpp)
 # -Wno-extra-semi-stmt            The library uses std::assert which triggers this warning.
 # -Wno-padded                     We do not care about padding warnings.
 # -Wno-covered-switch-default     All switches list all cases and a default case.
+# -Wno-weak-vtables               The library is header-only.
 
 set(CLANG_CXXFLAGS "-std=c++11                        \
     -Werror                                           \
@@ -105,7 +106,18 @@ set(CLANG_CXXFLAGS "-std=c++11                        \
     -Wno-extra-semi-stmt                                 \
     -Wno-padded                                          \
     -Wno-covered-switch-default                          \
+    -Wno-weak-vtables                                    \
 ")
+
+# Ignored GCC warnings:
+# -Wno-abi-tag              We do not care about ABI tags.
+# -Wno-aggregate-return     The library uses aggregate returns.
+# -Wno-long-long            The library uses the long long type to interface with system functions.
+# -Wno-namespaces           The library uses namespaces.
+# -Wno-noexcept
+# -Wno-padded               We do not care about padding warnings.
+# -Wno-system-headers       We do not care about warnings in system headers.
+# -Wno-templates            The library uses templates.
 
 set(GCC_CXXFLAGS "-std=c++11                          \
     -pedantic                                         \
@@ -259,7 +271,7 @@ set(GCC_CXXFLAGS "-std=c++11                          \
     -Wmultistatement-macros                           \
     -Wno-namespaces                                      \
     -Wnarrowing                                       \
-    -Wno-noexcept                                        \
+    -Wnoexcept                                        \
     -Wnoexcept-type                                   \
     -Wnon-template-friend                             \
     -Wnon-virtual-dtor                                \
