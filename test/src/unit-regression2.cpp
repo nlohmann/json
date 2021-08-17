@@ -54,8 +54,8 @@ using nlohmann::json;
 #endif
 
 // NLOHMANN_JSON_SERIALIZE_ENUM uses a static std::pair
-DOCTEST_GCC_SUPPRESS_WARNING_PUSH
-DOCTEST_GCC_SUPPRESS_WARNING("-Wexit-time-destructors")
+DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
+DOCTEST_CLANG_SUPPRESS_WARNING("-Wexit-time-destructors")
 
 /////////////////////////////////////////////////////////////////////
 // for #1021
@@ -661,4 +661,4 @@ TEST_CASE("regression tests 2")
     }
 }
 
-DOCTEST_GCC_SUPPRESS_WARNING_POP
+DOCTEST_CLANG_SUPPRESS_WARNING_POP
