@@ -94,11 +94,9 @@ set(CLANG_CXXFLAGS "-std=c++11                        \
     -Wno-c++98-compat                                    \
     -Wno-c++98-compat-pedantic                           \
     -Wno-deprecated-declarations                         \
-    -Wno-documentation-unknown-command                   \
     -Wno-exit-time-destructors                           \
     -Wno-extra-semi-stmt                                 \
     -Wno-padded                                          \
-    -Wno-range-loop-analysis                             \
     -Wno-covered-switch-default                          \
     -Wno-weak-vtables                                    \
 ")
@@ -113,7 +111,7 @@ set(GCC_CXXFLAGS "-std=c++11                          \
     -Wno-abi-tag                                         \
     -Waddress                                         \
     -Waddress-of-packed-member                        \
-    -Wno-aggregate-return                                \
+    -Waggregate-return                                \
     -Waggressive-loop-optimizations                   \
     -Waligned-new=all                                 \
     -Wall                                             \
@@ -203,10 +201,16 @@ set(GCC_CXXFLAGS "-std=c++11                          \
     -Wextra-semi                                      \
     -Wfloat-conversion                                \
     -Wfloat-equal                                     \
+    -Wformat-contains-nul                             \
     -Wformat-diag                                     \
+    -Wformat-extra-args                               \
+    -Wformat-nonliteral                               \
     -Wformat-overflow=2                               \
+    -Wformat-security                                 \
     -Wformat-signedness                               \
     -Wformat-truncation=2                             \
+    -Wformat-y2k                                      \
+    -Wformat-zero-length                              \
     -Wformat=2                                        \
     -Wframe-address                                   \
     -Wfree-nonheap-object                             \
@@ -277,7 +281,7 @@ set(GCC_CXXFLAGS "-std=c++11                          \
     -Wpragmas                                         \
     -Wprio-ctor-dtor                                  \
     -Wpsabi                                           \
-    -Wno-range-loop-construct                            \
+    -Wrange-loop-construct                            \
     -Wredundant-decls                                 \
     -Wredundant-move                                  \
     -Wredundant-tags                                  \
