@@ -11,10 +11,10 @@ if (${CMAKE_VERSION} VERSION_GREATER "3.11.0")
   )
   set_tests_properties(cmake_fetch_content_configure PROPERTIES
     FIXTURES_SETUP cmake_fetch_content
-    LABELS git_required
+    LABELS "git_required;not_reproducible"
   )
   set_tests_properties(cmake_fetch_content_build PROPERTIES
     FIXTURES_REQUIRED cmake_fetch_content
-    LABELS git_required
+    LABELS "git_required;not_reproducible"
   )
 endif()

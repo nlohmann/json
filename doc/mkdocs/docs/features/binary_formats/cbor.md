@@ -55,6 +55,8 @@ binary          | *size*: 256..65535                         | byte string (2 by
 binary          | *size*: 65536..4294967295                  | byte string (4 bytes follow)       | 0x5A
 binary          | *size*: 4294967296..18446744073709551615   | byte string (8 bytes follow)       | 0x5B
 
+Binary values with subtype are mapped to tagged values (0xD8..0xDB) depending on the subtype, followed by a byte string,
+see "binary" cells in the table above.
 
 !!! success "Complete mapping"
 
@@ -162,7 +164,7 @@ Double-Precision Float | number_float    | 0xFB
 
 !!! warning "Tagged items"
 
-    Tagged items will throw a parse error by default. However, they can be ignored by passing `cbor_tag_handler_t::ignore` to function `from_cbor`.
+    Tagged items will throw a parse error by default. They can be ignored by passing `cbor_tag_handler_t::ignore` to function `from_cbor`. They can be stored by passing `cbor_tag_handler_t::store` to function `from_cbor`.
 
 ??? example
 
