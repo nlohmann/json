@@ -110,13 +110,13 @@ set(CLANG_CXXFLAGS "-std=c++11                        \
 ")
 
 # Ignored GCC warnings:
-# -Wno-abi-tag              We do not care about ABI tags.
-# -Wno-aggregate-return     The library uses aggregate returns.
-# -Wno-long-long            The library uses the long long type to interface with system functions.
-# -Wno-namespaces           The library uses namespaces.
-# -Wno-padded               We do not care about padding warnings.
-# -Wno-system-headers       We do not care about warnings in system headers.
-# -Wno-templates            The library uses templates.
+# -Wno-abi-tag                    We do not care about ABI tags.
+# -Wno-aggregate-return           The library uses aggregate returns.
+# -Wno-long-long                  The library uses the long long type to interface with system functions.
+# -Wno-namespaces                 The library uses namespaces.
+# -Wno-padded                     We do not care about padding warnings.
+# -Wno-system-headers             We do not care about warnings in system headers.
+# -Wno-templates                  The library uses templates.
 
 set(GCC_CXXFLAGS "-std=c++11                          \
     -pedantic                                         \

@@ -22,4 +22,4 @@ store
 
 ## Version history
 
-- Added in version 3.9.0. Added value `store` in 3.9.2.
+- Added in version 3.9.0. Added value `store` in 3.10.0.
