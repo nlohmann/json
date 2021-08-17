@@ -88,6 +88,14 @@ file(GLOB_RECURSE SRC_FILES ${PROJECT_SOURCE_DIR}/include/nlohmann/*.hpp)
 # Thorough check with recent compilers
 ###############################################################################
 
+# Ignored Clang warnings:
+# -Wno-c++98-compat               The library targets C++11.
+# -Wno-c++98-compat-pedantic      The library targets C++11.
+# -Wno-deprecated-declarations    The library contains annotations for deprecated functions.
+# -Wno-extra-semi-stmt            The library uses std::assert which triggers this warning.
+# -Wno-padded                     We do not care about padding warnings.
+# -Wno-covered-switch-default     All switches list all cases and a default case.
+
 set(CLANG_CXXFLAGS "-std=c++11                        \
     -Werror                                           \
     -Weverything                                      \
@@ -97,7 +105,6 @@ set(CLANG_CXXFLAGS "-std=c++11                        \
     -Wno-extra-semi-stmt                                 \
     -Wno-padded                                          \
     -Wno-covered-switch-default                          \
-    -Wno-weak-vtables                                    \
 ")
 
 set(GCC_CXXFLAGS "-std=c++11                          \
