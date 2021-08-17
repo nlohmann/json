@@ -94,7 +94,6 @@ set(CLANG_CXXFLAGS "-std=c++11                        \
     -Wno-c++98-compat                                    \
     -Wno-c++98-compat-pedantic                           \
     -Wno-deprecated-declarations                         \
-    -Wno-exit-time-destructors                           \
     -Wno-extra-semi-stmt                                 \
     -Wno-padded                                          \
     -Wno-covered-switch-default                          \
