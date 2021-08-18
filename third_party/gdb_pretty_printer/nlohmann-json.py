@@ -1,5 +1,4 @@
 import gdb
-import re
 
 class JsonValuePrinter:
     "Print a json-value"
@@ -13,7 +12,8 @@ class JsonValuePrinter:
         return self.val
 
 def json_lookup_function(val):
-    if re.search("^nlohmann::basic_json<.*>$", val.type.strip_typedefs().name):
+    name = val.type.strip_typedefs().name
+    if name and name.startswith("nlohmann::basic_json<") and name.endswith(">"):
         t = str(val['m_type'])
         if t.startswith("nlohmann::detail::value_t::"):
             try:
