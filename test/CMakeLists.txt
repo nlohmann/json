@@ -115,8 +115,12 @@ add_dependencies(json_unit download_test_data)
 # Test the generated build configs
 #############################################################################
 
-add_subdirectory(cmake_import)
-add_subdirectory(cmake_import_minver)
+# these tests depend on the generated file nlohmann_jsonConfig.cmake
+if (JSON_Install)
+    add_subdirectory(cmake_import)
+    add_subdirectory(cmake_import_minver)
+endif()
+
 add_subdirectory(cmake_add_subdirectory)
 add_subdirectory(cmake_fetch_content)
 add_subdirectory(cmake_target_include_directories)
