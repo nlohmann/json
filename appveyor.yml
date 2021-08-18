@@ -82,3 +82,5 @@ test_script:
   # occasional timeouts on AppVeyor.
   # More info: https://github.com/nlohmann/json/pull/1570
   - if "%configuration%"=="Debug" ctest --exclude-regex "test-unicode" -C "%configuration%" -V -j
+
+skip_branch_with_pr: true
