@@ -5169,6 +5169,8 @@ class byte_container_with_subtype : public BinaryType
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
+// #include <nlohmann/detail/value_t.hpp>
+
 
 namespace nlohmann
 {
