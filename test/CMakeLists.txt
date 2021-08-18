@@ -100,17 +100,6 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     #target_compile_definitions(test-disabled_exceptions PUBLIC _HAS_EXCEPTIONS=0)
 endif()
 
-add_executable(json_unit EXCLUDE_FROM_ALL $<TARGET_OBJECTS:doctest_main> ${files})
-target_compile_definitions(json_unit PRIVATE DOCTEST_CONFIG_SUPER_FAST_ASSERTS)
-target_compile_options(json_unit PRIVATE
-    $<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>
-    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wno-deprecated;-Wno-float-equal>
-    $<$<CXX_COMPILER_ID:GNU>:-Wno-deprecated-declarations>
-)
-target_include_directories(json_unit PRIVATE ${CMAKE_BINARY_DIR}/include thirdparty/doctest thirdparty/fifo_map)
-target_link_libraries(json_unit ${NLOHMANN_JSON_TARGET_NAME})
-add_dependencies(json_unit download_test_data)
-
 #############################################################################
 # Test the generated build configs
 #############################################################################
