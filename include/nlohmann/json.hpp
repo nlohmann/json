@@ -507,11 +507,22 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     8259](https://tools.ietf.org/html/rfc8259), because any order implements the
     specified "unordered" nature of JSON objects.
     */
-    using object_t = ObjectType<StringType,
-          basic_json,
-          object_comparator_t,
-          AllocatorType<std::pair<const StringType,
-          basic_json>>>;
+    using object_t = typename std::conditional <
+                     detail::has_bucket_count<ObjectType<int, int>>::value,
+
+                     std::unordered_map<StringType,
+                     basic_json,
+                     std::hash<StringType>,
+                     std::equal_to<StringType>,
+                     AllocatorType<std::pair<const StringType,
+                     basic_json>>>,
+
+                     std::map<StringType,
+                     basic_json,
+                     object_comparator_t,
+                     AllocatorType<std::pair<const StringType,
+                     basic_json>>>
+                     >::type;
 
     /*!
     @brief a type for an array

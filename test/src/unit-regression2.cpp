@@ -659,6 +659,18 @@ TEST_CASE("regression tests 2")
     {
         static_assert(std::is_copy_assignable<nlohmann::ordered_json>::value, "");
     }
+
+    SECTION("issue #2932 - Support for unordered_map as object_t")
+    {
+        using ujson = nlohmann::basic_json<std::unordered_map>;
+        ujson j;
+        j["a"] = 1;
+        j["b"] = 2;
+        CHECK(j.size() == 2);
+
+        // check that object_t is really a std::unordered_map
+        CHECK(ujson::object_t::hasher()("foo") == std::hash<std::string>()("foo"));
+    }
 }
 
 DOCTEST_CLANG_SUPPRESS_WARNING_POP

@@ -3858,6 +3858,24 @@ T conditional_static_cast(U value)
     return value;
 }
 
+// helper to check if a type has bucket_count function (and hence can tell a std::map and a std::unordered_map apart)
+template <typename T>
+class has_bucket_count
+{
+    typedef char one;
+
+    struct two
+    {
+        char x[2];
+    };
+
+    template <typename C> static one test( decltype(&C::bucket_count) ) ;
+    template <typename C> static two test(...);
+
+  public:
+    enum { value = sizeof(test<T>(0)) == sizeof(char) };
+};
+
 }  // namespace detail
 }  // namespace nlohmann
 
@@ -17890,11 +17908,22 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     8259](https://tools.ietf.org/html/rfc8259), because any order implements the
     specified "unordered" nature of JSON objects.
     */
-    using object_t = ObjectType<StringType,
-          basic_json,
-          object_comparator_t,
-          AllocatorType<std::pair<const StringType,
-          basic_json>>>;
+    using object_t = typename std::conditional <
+                     detail::has_bucket_count<ObjectType<int, int>>::value,
+
+                     std::unordered_map<StringType,
+                     basic_json,
+                     std::hash<StringType>,
+                     std::equal_to<StringType>,
+                     AllocatorType<std::pair<const StringType,
+                     basic_json>>>,
+
+                     std::map<StringType,
+                     basic_json,
+                     object_comparator_t,
+                     AllocatorType<std::pair<const StringType,
+                     basic_json>>>
+                     >::type;
 
     /*!
     @brief a type for an array
