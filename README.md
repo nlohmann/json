@@ -1252,7 +1252,7 @@ If you are using [hunter](https://github.com/cpp-pm/hunter) on your project for 
 
 If you are using [Buckaroo](https://buckaroo.pm), you can install this library's module with `buckaroo add github.com/buckaroo-pm/nlohmann-json`. Please file issues [here](https://github.com/buckaroo-pm/nlohmann-json). There is a demo repo [here](https://github.com/njlr/buckaroo-nholmann-json-example).
 
-If you are using [vcpkg](https://github.com/Microsoft/vcpkg/) on your project for external dependencies, then you can use the [nlohmann-json package](https://github.com/Microsoft/vcpkg/tree/master/ports/nlohmann-json). Please see the vcpkg project for any issues regarding the packaging.
+If you are using [vcpkg](https://github.com/Microsoft/vcpkg/) on your project for external dependencies, then you can install the [nlohmann-json package](https://github.com/Microsoft/vcpkg/tree/master/ports/nlohmann-json) with `vcpkg install nlohmann-json` and follow the then displayed descriptions. Please see the vcpkg project for any issues regarding the packaging.
 
 If you are using [cget](https://cget.readthedocs.io/en/latest/), you can install the latest development version with `cget install nlohmann/json`. A specific version can be installed with `cget install nlohmann/json@v3.1.0`. Also, the multiple header version can be installed by adding the `-DJSON_MultipleHeaders=ON` flag (i.e., `cget install nlohmann/json -DJSON_MultipleHeaders=ON`).
 
