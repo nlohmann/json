@@ -42,9 +42,11 @@ SOFTWARE.
     #include <iosfwd> // istream, ostream
 #endif  // JSON_NO_IO
 #include <iterator> // random_access_iterator_tag
+#include <map> // map
 #include <memory> // unique_ptr
 #include <numeric> // accumulate
 #include <string> // string, stoi, to_string
+#include <unordered_map> // unordered_map
 #include <utility> // declval, forward, move, pair, swap
 #include <vector> // vector
 
