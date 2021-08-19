@@ -11,14 +11,12 @@ Throughout this page, we will describe how to compile the example file `example.
 If you are using OS X and [Homebrew](http://brew.sh), just type
 
 ```sh
-brew tap nlohmann/json
 brew install nlohmann-json
 ```
 
 and you're set. If you want the bleeding edge rather than the latest release, use
 
 ```sh
-brew tap nlohmann/json
 brew install nlohmann-json --HEAD
 ```
 
@@ -37,7 +35,6 @@ instead.
 	2. Install the package
 
 		```sh
-		brew tap nlohmann/json
 		brew install nlohmann-json
 		```
 
