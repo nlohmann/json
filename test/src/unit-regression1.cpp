@@ -56,8 +56,11 @@ using nlohmann::json;
 // for #972
 /////////////////////////////////////////////////////////////////////
 
-template<class K, class V, class dummy_compare, class A>
-using my_workaround_fifo_map = nlohmann::fifo_map<K, V, nlohmann::fifo_map_compare<K>, A>;
+//template<class K, class V, class dummy_compare, class A>
+//using my_workaround_fifo_map = nlohmann::fifo_map<K, V, nlohmann::fifo_map_compare<K>, A>;
+
+template<class K, class V>
+using my_workaround_fifo_map = nlohmann::fifo_map<K, V, nlohmann::fifo_map_compare<K>>;
 using my_json = nlohmann::basic_json<my_workaround_fifo_map>;
 
 /////////////////////////////////////////////////////////////////////
