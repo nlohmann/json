@@ -3845,6 +3845,24 @@ struct is_constructible_tuple : std::false_type {};
 template<typename T1, typename... Args>
 struct is_constructible_tuple<T1, std::tuple<Args...>> : conjunction<is_constructible<T1, Args>...> {};
 
+// a naive helper to check if a type is an ordered_map (exploits the fact that
+// ordered_map inherits capacity() from std::vector)
+template <typename T>
+struct is_ordered_map
+{
+    using one = char;
+
+    struct two
+    {
+        char x[2]; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+    };
+
+    template <typename C> static one test( decltype(&C::capacity) ) ;
+    template <typename C> static two test(...);
+
+    enum { value = sizeof(test<T>(nullptr)) == sizeof(char) };
+};
+
 // to avoid useless casts (see https://github.com/nlohmann/json/issues/2893#issuecomment-889152324)
 template < typename T, typename U, enable_if_t < !std::is_same<T, U>::value, int > = 0 >
 T conditional_static_cast(U value)
@@ -18717,6 +18735,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 set_parents();
                 return j;
             }
+        }
+
+        // ordered_json uses a vector internally, so pointers could have
+        // been invalidated; see https://github.com/nlohmann/json/issues/2962
+        if (detail::is_ordered_map<object_t>::value)
+        {
+            set_parents();
+            return j;
         }
 
         j.m_parent = this;

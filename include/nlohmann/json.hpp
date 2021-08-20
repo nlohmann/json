@@ -1336,6 +1336,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             }
         }
 
+        // ordered_json uses a vector internally, so pointers could have
+        // been invalidated; see https://github.com/nlohmann/json/issues/2962
+        if (detail::is_ordered_map<object_t>::value)
+        {
+            set_parents();
+            return j;
+        }
+
         j.m_parent = this;
 #else
         static_cast<void>(j);
