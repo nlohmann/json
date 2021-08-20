@@ -67,7 +67,7 @@ class binary_writer
             case value_t::discarded:
             default:
             {
-                JSON_THROW(type_error::create(317, "to serialize to BSON, top-level type must be object, but is " + std::string(j.type_name()), j));;
+                JSON_THROW(type_error::create(317, "to serialize to BSON, top-level type must be object, but is " + std::string(j.type_name()), j));
             }
         }
     }
