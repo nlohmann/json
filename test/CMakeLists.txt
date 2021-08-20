@@ -101,9 +101,11 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 endif()
 
 # avoid stack overflow, see https://github.com/nlohmann/json/issues/2955
-target_link_libraries(test-cbor PRIVATE "$<$<CXX_COMPILER_ID:MSVC>:/STACK:4000000;>")
-target_link_libraries(test-msgpack PRIVATE "$<$<CXX_COMPILER_ID:MSVC>:/STACK:4000000;>")
-target_link_libraries(test-ubjson PRIVATE "$<$<CXX_COMPILER_ID:MSVC>:/STACK:4000000;>")
+if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    set_property(TARGET test-cbor APPEND_STRING PROPERTY LINK_FLAGS " /STACK:4000000")
+    set_property(TARGET test-msgpack APPEND_STRING PROPERTY LINK_FLAGS " /STACK:4000000")
+    set_property(TARGET test-ubjson APPEND_STRING PROPERTY LINK_FLAGS " /STACK:4000000")
+endif()
 
 #############################################################################
 # Test the generated build configs
