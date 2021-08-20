@@ -422,8 +422,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     // Use transparent comparator if possible, combined with perfect forwarding
     // on find() and count() calls prevents unnecessary string construction.
     using object_comparator_t = std::less<>;
+    using key_equal_t = std::equal_to<>;
 #else
     using object_comparator_t = std::less<StringType>;
+    using key_equal_t = std::equal_to<StringType>;
 #endif
 
     /*!
@@ -515,7 +517,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                      std::unordered_map<StringType,
                      basic_json,
                      std::hash<StringType>,
-                     std::equal_to<StringType>,
+                     key_equal_t,
                      AllocatorType<std::pair<const StringType,
                      basic_json>>>,
 

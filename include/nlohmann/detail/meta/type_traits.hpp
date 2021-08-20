@@ -451,20 +451,19 @@ T conditional_static_cast(U value)
 
 // helper to check if a type has bucket_count function (and hence can tell a std::map and a std::unordered_map apart)
 template <typename T>
-class has_bucket_count
+struct has_bucket_count
 {
-    typedef char one;
+    using one = char;
 
     struct two
     {
-        char x[2];
+        char x[2]; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
     };
 
     template <typename C> static one test( decltype(&C::bucket_count) ) ;
     template <typename C> static two test(...);
 
-  public:
-    enum { value = sizeof(test<T>(0)) == sizeof(char) };
+    enum { value = sizeof(test<T>(nullptr)) == sizeof(char) };
 };
 
 }  // namespace detail
