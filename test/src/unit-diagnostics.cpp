@@ -179,7 +179,7 @@ TEST_CASE("Better diagnostics")
     {
         nlohmann::ordered_json j;
         nlohmann::ordered_json j2;
-        const std::string value = "";
+        const std::string value;
         j["first"] = value;
         j["second"] = value;
         j2["something"] = j;
