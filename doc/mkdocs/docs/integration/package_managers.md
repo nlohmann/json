@@ -20,7 +20,7 @@ and you're set. If you want the bleeding edge rather than the latest release, us
 brew install nlohmann-json --HEAD
 ```
 
-instead.
+instead. See [nlohmann-json](https://formulae.brew.sh/formula/nlohmann-json) for more information.
 
 ??? example
 
