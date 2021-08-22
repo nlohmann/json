@@ -174,4 +174,14 @@ TEST_CASE("Better diagnostics")
             j_obj["key"] = j_arr;
         }
     }
+
+    SECTION("Regression test for issue #2962 - JSON_DIAGNOSTICS assertion for ordered_json")
+    {
+        nlohmann::ordered_json j;
+        nlohmann::ordered_json j2;
+        const std::string value;
+        j["first"] = value;
+        j["second"] = value;
+        j2["something"] = j;
+    }
 }
