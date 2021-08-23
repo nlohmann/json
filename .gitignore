@@ -12,10 +12,6 @@ build
 build_coverage
 clang_analyze_build
 
-doc/xml
-doc/html
-me.nlohmann.json.docset
-
 benchmarks/files/numbers/*.json
 
 .wsjcpp-logs/*
@@ -27,10 +23,11 @@ benchmarks/files/numbers/*.json
 test/test-*
 /.vs
 
+doc/html
 doc/mkdocs/venv/
 doc/mkdocs/docs/images
 doc/mkdocs/docs/examples
 doc/mkdocs/site
 doc/mkdocs/docs/__pycache__/
-doc/xml
-/doc/docset/nlohmann_json.docset/
+/doc/docset/JSON_for_Modern_C++.docset/
+/doc/docset/JSON_for_Modern_C++.tgz

@@ -11,3 +11,7 @@ make nlohmann_json.docset
 ```
 
 The generated folder `nlohmann_json.docset` can then be opened in the documentation browser.
+
+## Licenses
+
+The [JSON logo](https://commons.wikimedia.org/wiki/File:JSON_vector_logo.svg) is public domain.
