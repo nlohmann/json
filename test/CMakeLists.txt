@@ -100,23 +100,23 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     #target_compile_definitions(test-disabled_exceptions PUBLIC _HAS_EXCEPTIONS=0)
 endif()
 
-add_executable(json_unit EXCLUDE_FROM_ALL $<TARGET_OBJECTS:doctest_main> ${files})
-target_compile_definitions(json_unit PRIVATE DOCTEST_CONFIG_SUPER_FAST_ASSERTS)
-target_compile_options(json_unit PRIVATE
-    $<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>
-    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wno-deprecated;-Wno-float-equal>
-    $<$<CXX_COMPILER_ID:GNU>:-Wno-deprecated-declarations>
-)
-target_include_directories(json_unit PRIVATE ${CMAKE_BINARY_DIR}/include thirdparty/doctest thirdparty/fifo_map)
-target_link_libraries(json_unit ${NLOHMANN_JSON_TARGET_NAME})
-add_dependencies(json_unit download_test_data)
+# avoid stack overflow, see https://github.com/nlohmann/json/issues/2955
+if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    set_property(TARGET test-cbor APPEND_STRING PROPERTY LINK_FLAGS " /STACK:4000000")
+    set_property(TARGET test-msgpack APPEND_STRING PROPERTY LINK_FLAGS " /STACK:4000000")
+    set_property(TARGET test-ubjson APPEND_STRING PROPERTY LINK_FLAGS " /STACK:4000000")
+endif()
 
 #############################################################################
 # Test the generated build configs
 #############################################################################
 
-add_subdirectory(cmake_import)
-add_subdirectory(cmake_import_minver)
+# these tests depend on the generated file nlohmann_jsonConfig.cmake
+if (JSON_Install)
+    add_subdirectory(cmake_import)
+    add_subdirectory(cmake_import_minver)
+endif()
+
 add_subdirectory(cmake_add_subdirectory)
 add_subdirectory(cmake_fetch_content)
 add_subdirectory(cmake_target_include_directories)

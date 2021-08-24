@@ -1,6 +1,36 @@
 # Changelog
 All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [3.10.1](https://github.com/nlohmann/json/releases/tag/3.10.1) (2021-08-24)
+
+[Full Changelog](https://github.com/nlohmann/json/compare/v3.10.0...3.10.1)
+
+- "incomplete type ‘nlohmann::detail::wide\_string\_input\_helper" compilation error [\#2969](https://github.com/nlohmann/json/issues/2969)
+- JSON\_DIAGNOSTICS assertion for ordered\_json [\#2962](https://github.com/nlohmann/json/issues/2962)
+- Inserting in unordered json using a pointer retains the leading slash [\#2958](https://github.com/nlohmann/json/issues/2958)
+- Test  \#9: test-cbor test case sample.json fails in debug mode - Stack overflow [\#2955](https://github.com/nlohmann/json/issues/2955)
+- 3.10.0 broke at least the Bear project [\#2953](https://github.com/nlohmann/json/issues/2953)
+- 2 tests fail in 3.10.0: cmake\_fetch\_content\_configure, cmake\_fetch\_content\_build [\#2951](https://github.com/nlohmann/json/issues/2951)
+- ctest \(58+60,/67 cmake\_import\_configure\) fails when build with -D JSON\_Install:BOOL=OFF because of missing nlohmann\_jsonTargets.cmake [\#2946](https://github.com/nlohmann/json/issues/2946)
+- Document vcpkg usage [\#2944](https://github.com/nlohmann/json/issues/2944)
+- Linker error LNK2005 when compiling \(x64\) json-3.10.0.zip with Visual Studio 2019 16.11.1  [\#2941](https://github.com/nlohmann/json/issues/2941)
+- Move Travis jobs to travis-ci.com [\#2938](https://github.com/nlohmann/json/issues/2938)
+
+- Fixed typo in docs/api/basic\_json/parse.md [\#2968](https://github.com/nlohmann/json/pull/2968) ([mb0202](https://github.com/mb0202))
+- Add link to Homebrew package [\#2966](https://github.com/nlohmann/json/pull/2966) ([nlohmann](https://github.com/nlohmann))
+- Fix parent update for diagnostics with ordered\_json [\#2963](https://github.com/nlohmann/json/pull/2963) ([nlohmann](https://github.com/nlohmann))
+- Set stack size for some unit tests when using MSVC [\#2961](https://github.com/nlohmann/json/pull/2961) ([nlohmann](https://github.com/nlohmann))
+- Add regression test [\#2960](https://github.com/nlohmann/json/pull/2960) ([nlohmann](https://github.com/nlohmann))
+- Update Travis badge [\#2959](https://github.com/nlohmann/json/pull/2959) ([nlohmann](https://github.com/nlohmann))
+- Fix some extra ";" clang warnings [\#2957](https://github.com/nlohmann/json/pull/2957) ([Hallot](https://github.com/Hallot))
+- Add documentation for integration via vcpkg [\#2954](https://github.com/nlohmann/json/pull/2954) ([nlohmann](https://github.com/nlohmann))
+- Avoid duplicate AppVeyor builds [\#2952](https://github.com/nlohmann/json/pull/2952) ([nlohmann](https://github.com/nlohmann))
+- 🚨 fix gdb\_pretty\_printer failure on basic types [\#2950](https://github.com/nlohmann/json/pull/2950) ([senyai](https://github.com/senyai))
+- Add header to use value\_t [\#2948](https://github.com/nlohmann/json/pull/2948) ([nlohmann](https://github.com/nlohmann))
+- Skip some tests if JSON\_Install is not set [\#2947](https://github.com/nlohmann/json/pull/2947) ([nlohmann](https://github.com/nlohmann))
+- Remove outdated json\_unit test binary [\#2945](https://github.com/nlohmann/json/pull/2945) ([nlohmann](https://github.com/nlohmann))
+- Updating the Homebrew Command [\#2943](https://github.com/nlohmann/json/pull/2943) ([amirmasoudabdol](https://github.com/amirmasoudabdol))
+
 ## [v3.10.0](https://github.com/nlohmann/json/releases/tag/v3.10.0) (2021-08-17)
 
 [Full Changelog](https://github.com/nlohmann/json/compare/v3.9.1...v3.10.0)

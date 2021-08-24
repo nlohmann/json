@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.10.0
+|  |  |__   |  |  | | | |  version 3.10.1
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -173,5 +173,15 @@ TEST_CASE("Better diagnostics")
             json j_obj = json::object();
             j_obj["key"] = j_arr;
         }
+    }
+
+    SECTION("Regression test for issue #2962 - JSON_DIAGNOSTICS assertion for ordered_json")
+    {
+        nlohmann::ordered_json j;
+        nlohmann::ordered_json j2;
+        const std::string value;
+        j["first"] = value;
+        j["second"] = value;
+        j2["something"] = j;
     }
 }
