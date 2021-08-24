@@ -79,7 +79,7 @@ super-linear complexity.
 
 ## Examples
 
-??? example "Parsing from a charater array"
+??? example "Parsing from a character array"
 
     The example below demonstrates the `parse()` function reading from an array.
 
