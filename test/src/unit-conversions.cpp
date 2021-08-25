@@ -1231,10 +1231,9 @@ TEST_CASE("value conversion")
         }
         SECTION("exception in case of a non-numeric type")
         {
-            // CHECK_THROWS_AS(json(json::value_t::null).get<json::number_float_t>(),
-            //                 json::type_error&);
             CHECK_THROWS_AS(json(json::value_t::object).get<json::number_float_t>(),
                             json::type_error&);
+            CHECK_THROWS_AS(json(json::value_t::object).get<float>(), json::type_error&);
             CHECK_THROWS_AS(json(json::value_t::array).get<json::number_float_t>(),
                             json::type_error&);
             CHECK_THROWS_AS(json(json::value_t::string).get<json::number_float_t>(),
@@ -1242,9 +1241,6 @@ TEST_CASE("value conversion")
             CHECK_THROWS_AS(json(json::value_t::boolean).get<json::number_float_t>(),
                             json::type_error&);
 
-            // CHECK_THROWS_WITH(
-            //     json(json::value_t::null).get<json::number_float_t>(),
-            //     "[json.exception.type_error.302] type must be number, but is null");
             CHECK_THROWS_WITH(
                 json(json::value_t::object).get<json::number_float_t>(),
                 "[json.exception.type_error.302] type must be number, but is object");
