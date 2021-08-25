@@ -1486,6 +1486,8 @@ TEST_CASE("value conversion")
             json j3 = {1.2, 2.3, 3.4, 4.5};
             json j4 = {true, false, true};
             json j5 = {"one", "two", "three"};
+            json j6 = j3;
+            j6[1] = nullptr;
 
             SECTION("std::list")
             {
@@ -1494,6 +1496,7 @@ TEST_CASE("value conversion")
                 j3.get<std::list<double>>();
                 j4.get<std::list<bool>>();
                 j5.get<std::list<std::string>>();
+                j6.get<std::list<double>>();
             }
 
             SECTION("std::forward_list")
@@ -1503,6 +1506,7 @@ TEST_CASE("value conversion")
                 j3.get<std::forward_list<double>>();
                 j4.get<std::forward_list<bool>>();
                 j5.get<std::forward_list<std::string>>();
+                j6.get<std::forward_list<double>>();
             }
 
             SECTION("std::array")
@@ -1512,6 +1516,8 @@ TEST_CASE("value conversion")
                 j3.get<std::array<double, 4>>();
                 j4.get<std::array<bool, 3>>();
                 j5.get<std::array<std::string, 3>>();
+                j6.get<std::array<double, 4>>();
+
 
                 SECTION("std::array is larger than JSON")
                 {
@@ -1537,6 +1543,7 @@ TEST_CASE("value conversion")
                 j3.get<std::valarray<double>>();
                 j4.get<std::valarray<bool>>();
                 j5.get<std::valarray<std::string>>();
+                j6.get<std::valarray<double>>();
             }
 
             SECTION("std::vector")
@@ -1546,6 +1553,7 @@ TEST_CASE("value conversion")
                 j3.get<std::vector<double>>();
                 j4.get<std::vector<bool>>();
                 j5.get<std::vector<std::string>>();
+                j6.get<std::vector<double>>();
             }
 
             SECTION("std::deque")
@@ -1555,6 +1563,7 @@ TEST_CASE("value conversion")
                 j2.get<std::deque<double>>();
                 j4.get<std::deque<bool>>();
                 j5.get<std::deque<std::string>>();
+                j6.get<std::deque<double>>();
             }
 
             SECTION("std::set")
@@ -1564,6 +1573,7 @@ TEST_CASE("value conversion")
                 j3.get<std::set<double>>();
                 j4.get<std::set<bool>>();
                 j5.get<std::set<std::string>>();
+                j6.get<std::set<double>>();
             }
 
             SECTION("std::unordered_set")
@@ -1573,6 +1583,7 @@ TEST_CASE("value conversion")
                 j3.get<std::unordered_set<double>>();
                 j4.get<std::unordered_set<bool>>();
                 j5.get<std::unordered_set<std::string>>();
+                j6.get<std::unordered_set<double>>();
             }
 
             SECTION("std::map (array of pairs)")
