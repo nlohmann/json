@@ -3928,7 +3928,7 @@ void get_arithmetic_value(const BasicJsonType& j, ArithmeticType& val)
                 break;
             }
             // LCOV_EXCL_START
-            else if (std::numeric_limits<ArithmeticType>::has_quiet_NaN)
+            if (std::numeric_limits<ArithmeticType>::has_quiet_NaN)
             {
                 val = std::numeric_limits<ArithmeticType>::quiet_NaN();
                 break;
@@ -4234,7 +4234,7 @@ void from_json(const BasicJsonType& j, ArithmeticType& val)
                 break;
             }
             // LCOV_EXCL_START
-            else if (std::numeric_limits<ArithmeticType>::has_quiet_NaN)
+            if (std::numeric_limits<ArithmeticType>::has_quiet_NaN)
             {
                 val = std::numeric_limits<ArithmeticType>::quiet_NaN();
                 break;

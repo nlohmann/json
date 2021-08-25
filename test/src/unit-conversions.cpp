@@ -936,6 +936,7 @@ TEST_CASE("value conversion")
         {
             CHECK_THROWS_AS(json(json::value_t::null).get<json::number_integer_t>(),
                             json::type_error&);
+            CHECK_THROWS_AS(json(json::value_t::null).get<short>(), json::type_error&);
             CHECK_THROWS_AS(json(json::value_t::object).get<json::number_integer_t>(),
                             json::type_error&);
             CHECK_THROWS_AS(json(json::value_t::array).get<json::number_integer_t>(),
