@@ -59,17 +59,19 @@ void get_arithmetic_value(const BasicJsonType& j, ArithmeticType& val)
         }
         case value_t::null:
         {
-            if(std::numeric_limits<ArithmeticType>::has_quiet_NaN)
-            {
-                val = std::numeric_limits<ArithmeticType>::quiet_NaN();
-                break;
-            }
-            else if(std::numeric_limits<ArithmeticType>::has_signaling_NaN)
+            if(std::numeric_limits<ArithmeticType>::has_signaling_NaN)
             {
                 val = std::numeric_limits<ArithmeticType>::signaling_NaN();
                 break;
             }
+            // LCOV_EXCL_START
+            else if(std::numeric_limits<ArithmeticType>::has_quiet_NaN)
+            {
+                val = std::numeric_limits<ArithmeticType>::quiet_NaN();
+                break;
+            }
             // [[fallthrough]];
+            // LCOV_EXCL_STOP
         }
 
         case value_t::object:
@@ -364,17 +366,19 @@ void from_json(const BasicJsonType& j, ArithmeticType& val)
         }
         case value_t::null:
         {
-            if(std::numeric_limits<ArithmeticType>::has_quiet_NaN)
-            {
-                val = std::numeric_limits<ArithmeticType>::quiet_NaN();
-                break;
-            }
-            else if(std::numeric_limits<ArithmeticType>::has_signaling_NaN)
+            if(std::numeric_limits<ArithmeticType>::has_signaling_NaN)
             {
                 val = std::numeric_limits<ArithmeticType>::signaling_NaN();
                 break;
             }
+            // LCOV_EXCL_START
+            else if(std::numeric_limits<ArithmeticType>::has_quiet_NaN)
+            {
+                val = std::numeric_limits<ArithmeticType>::quiet_NaN();
+                break;
+            }
             // [[fallthrough]];
+            // LCOV_EXCL_STOP
         }
 
         case value_t::object:
