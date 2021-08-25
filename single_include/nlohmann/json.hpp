@@ -3933,10 +3933,9 @@ void get_arithmetic_value(const BasicJsonType& j, ArithmeticType& val)
                 val = std::numeric_limits<ArithmeticType>::quiet_NaN();
                 break;
             }
-            // [[fallthrough]];
             // LCOV_EXCL_STOP
+            JSON_HEDLEY_FALL_THROUGH;
         }
-
         case value_t::object:
         case value_t::array:
         case value_t::string:
@@ -4240,10 +4239,9 @@ void from_json(const BasicJsonType& j, ArithmeticType& val)
                 val = std::numeric_limits<ArithmeticType>::quiet_NaN();
                 break;
             }
-            // [[fallthrough]];
             // LCOV_EXCL_STOP
+            JSON_HEDLEY_FALL_THROUGH;
         }
-
         case value_t::object:
         case value_t::array:
         case value_t::string:
