@@ -57,8 +57,21 @@ void get_arithmetic_value(const BasicJsonType& j, ArithmeticType& val)
             val = static_cast<ArithmeticType>(*j.template get_ptr<const typename BasicJsonType::number_float_t*>());
             break;
         }
-
         case value_t::null:
+        {
+            if(std::numeric_limits<ArithmeticType>::has_quiet_NaN)
+            {
+                val = std::numeric_limits<ArithmeticType>::quiet_NaN();
+                break;
+            }
+            else if(std::numeric_limits<ArithmeticType>::has_signaling_NaN)
+            {
+                val = std::numeric_limits<ArithmeticType>::signaling_NaN();
+                break;
+            }
+            // [[fallthrough]];
+        }
+
         case value_t::object:
         case value_t::array:
         case value_t::string:
@@ -349,8 +362,21 @@ void from_json(const BasicJsonType& j, ArithmeticType& val)
             val = static_cast<ArithmeticType>(*j.template get_ptr<const typename BasicJsonType::boolean_t*>());
             break;
         }
-
         case value_t::null:
+        {
+            if(std::numeric_limits<ArithmeticType>::has_quiet_NaN)
+            {
+                val = std::numeric_limits<ArithmeticType>::quiet_NaN();
+                break;
+            }
+            else if(std::numeric_limits<ArithmeticType>::has_signaling_NaN)
+            {
+                val = std::numeric_limits<ArithmeticType>::signaling_NaN();
+                break;
+            }
+            // [[fallthrough]];
+        }
+
         case value_t::object:
         case value_t::array:
         case value_t::string:

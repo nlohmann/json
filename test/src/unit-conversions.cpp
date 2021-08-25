@@ -1207,10 +1207,31 @@ TEST_CASE("value conversion")
             CHECK(json(n).m_value.number_float == Approx(j.m_value.number_float));
         }
 
-        SECTION("exception in case of a non-string type")
+        SECTION("null as NaN")
         {
-            CHECK_THROWS_AS(json(json::value_t::null).get<json::number_float_t>(),
-                            json::type_error&);
+            json jNull(nullptr);
+            SECTION("number_float_t")
+            {
+                auto n = jNull.get<json::number_float_t>();
+                CHECK(std::isnan(n));
+            }
+
+            SECTION("float")
+            {
+                auto n = jNull.get<float>();
+                CHECK(std::isnan(n));
+            }
+
+            SECTION("double")
+            {
+                auto n = jNull.get<double>();
+                CHECK(std::isnan(n));
+            }
+        }
+        SECTION("exception in case of a non-numeric type")
+        {
+            // CHECK_THROWS_AS(json(json::value_t::null).get<json::number_float_t>(),
+            //                 json::type_error&);
             CHECK_THROWS_AS(json(json::value_t::object).get<json::number_float_t>(),
                             json::type_error&);
             CHECK_THROWS_AS(json(json::value_t::array).get<json::number_float_t>(),
@@ -1220,9 +1241,9 @@ TEST_CASE("value conversion")
             CHECK_THROWS_AS(json(json::value_t::boolean).get<json::number_float_t>(),
                             json::type_error&);
 
-            CHECK_THROWS_WITH(
-                json(json::value_t::null).get<json::number_float_t>(),
-                "[json.exception.type_error.302] type must be number, but is null");
+            // CHECK_THROWS_WITH(
+            //     json(json::value_t::null).get<json::number_float_t>(),
+            //     "[json.exception.type_error.302] type must be number, but is null");
             CHECK_THROWS_WITH(
                 json(json::value_t::object).get<json::number_float_t>(),
                 "[json.exception.type_error.302] type must be number, but is object");
