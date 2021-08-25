@@ -61,6 +61,7 @@ SOFTWARE.
 #include <array> // array
 #include <forward_list> // forward_list
 #include <iterator> // inserter, front_inserter, end
+#include <limits> // numeric_limits
 #include <map> // map
 #include <string> // string
 #include <tuple> // tuple, make_tuple
