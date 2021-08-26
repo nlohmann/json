@@ -301,3 +301,7 @@
 #else
     #define JSON_EXPLICIT explicit
 #endif
+
+#ifndef JSON_DIAGNOSTICS
+    #define JSON_DIAGNOSTICS 0
+#endif

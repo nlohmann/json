@@ -1,11 +1,20 @@
 # Changelog
 All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [3.10.1](https://github.com/nlohmann/json/releases/tag/3.10.1) (2021-08-24)
+## [3.10.2](https://github.com/nlohmann/json/releases/tag/3.10.2) (2021-08-26)
 
-[Full Changelog](https://github.com/nlohmann/json/compare/v3.10.0...3.10.1)
+[Full Changelog](https://github.com/nlohmann/json/compare/v3.10.1...3.10.2)
 
+- Annoying -Wundef on new JSON\_DIAGNOSTICS macro [\#2975](https://github.com/nlohmann/json/issues/2975)
+- += issue with multiple redirection. [\#2970](https://github.com/nlohmann/json/issues/2970)
 - "incomplete type ‘nlohmann::detail::wide\_string\_input\_helper" compilation error [\#2969](https://github.com/nlohmann/json/issues/2969)
+
+- Fix -Wunused warnings on JSON\_DIAGNOSTICS  [\#2976](https://github.com/nlohmann/json/pull/2976) ([gcerretani](https://github.com/gcerretani))
+
+## [v3.10.1](https://github.com/nlohmann/json/releases/tag/v3.10.1) (2021-08-24)
+
+[Full Changelog](https://github.com/nlohmann/json/compare/v3.10.0...v3.10.1)
+
 - JSON\_DIAGNOSTICS assertion for ordered\_json [\#2962](https://github.com/nlohmann/json/issues/2962)
 - Inserting in unordered json using a pointer retains the leading slash [\#2958](https://github.com/nlohmann/json/issues/2958)
 - Test  \#9: test-cbor test case sample.json fails in debug mode - Stack overflow [\#2955](https://github.com/nlohmann/json/issues/2955)
