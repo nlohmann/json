@@ -1,4 +1,5 @@
 Checks: '*,
+         -altera-struct-pack-align,
          -android-cloexec-fopen,
          -cppcoreguidelines-avoid-goto,
          -cppcoreguidelines-avoid-magic-numbers,
@@ -30,6 +31,7 @@ Checks: '*,
          -misc-non-private-member-variables-in-classes,
          -modernize-use-trailing-return-type,
          -readability-function-size,
+         -readability-function-cognitive-complexity,
          -readability-magic-numbers,
          -readability-redundant-access-specifiers,
          -readability-uppercase-literal-suffix'

@@ -79,7 +79,7 @@ message(STATUS "🔖 Valgrind ${VALGRIND_TOOL_VERSION} (${VALGRIND_TOOL})")
 find_program(GENHTML_TOOL NAMES genhtml)
 find_program(PLOG_CONVERTER_TOOL NAMES plog-converter)
 find_program(PVS_STUDIO_ANALYZER_TOOL NAMES pvs-studio-analyzer)
-find_program(SCAN_BUILD_TOOL NAMES scan-build-11 scan-build)
+find_program(SCAN_BUILD_TOOL NAMES scan-build-12 scan-build-11 scan-build)
 
 # the individual source files
 file(GLOB_RECURSE SRC_FILES ${PROJECT_SOURCE_DIR}/include/nlohmann/*.hpp)
@@ -96,6 +96,7 @@ file(GLOB_RECURSE SRC_FILES ${PROJECT_SOURCE_DIR}/include/nlohmann/*.hpp)
 # -Wno-padded                     We do not care about padding warnings.
 # -Wno-covered-switch-default     All switches list all cases and a default case.
 # -Wno-weak-vtables               The library is header-only.
+# -Wreserved-identifier           See https://github.com/onqtam/doctest/issues/536.
 
 set(CLANG_CXXFLAGS "-std=c++11                        \
     -Werror                                           \
@@ -107,6 +108,7 @@ set(CLANG_CXXFLAGS "-std=c++11                        \
     -Wno-padded                                          \
     -Wno-covered-switch-default                          \
     -Wno-weak-vtables                                    \
+    -Wno-reserved-identifier                             \
 ")
 
 # Ignored GCC warnings:
