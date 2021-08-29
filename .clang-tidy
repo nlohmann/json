@@ -1,6 +1,7 @@
 Checks: '*,
          -altera-struct-pack-align,
          -android-cloexec-fopen,
+         -concurrency-mt-unsafe,
          -cppcoreguidelines-avoid-goto,
          -cppcoreguidelines-avoid-magic-numbers,
          -cppcoreguidelines-avoid-non-const-global-variables,
