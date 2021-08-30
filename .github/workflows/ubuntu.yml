@@ -80,7 +80,7 @@ jobs:
     container: ghcr.io/nlohmann/json-ci:v1.0.0
     strategy:
       matrix:
-        compiler: [g++-4.8, g++-4.9, g++-5, g++-7, g++-8, g++-9, g++-10, clang++-3.5, clang++-3.6, clang++-3.7, clang++-3.8, clang++-3.9, clang++-4.0, clang++-5.0, clang++-6.0, clang++-7, clang++-8, clang++-9, clang++-10, clang++-11]
+        compiler: [g++-4.8, g++-4.9, g++-5, g++-7, g++-8, g++-9, g++-10, clang++-3.5, clang++-3.6, clang++-3.7, clang++-3.8, clang++-3.9, clang++-4.0, clang++-5.0, clang++-6.0, clang++-7, clang++-8, clang++-9, clang++-10, clang++-11, clang++-12]
     steps:
       - uses: actions/checkout@v2
       - name: cmake
