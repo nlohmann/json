@@ -3849,6 +3849,33 @@ struct is_constructible_tuple : std::false_type {};
 template<typename T1, typename... Args>
 struct is_constructible_tuple<T1, std::tuple<Args...>> : conjunction<is_constructible<T1, Args>...> {};
 
+/// type to check if KeyType can be used as object key
+
+template<typename ComparatorType, typename KeyType, typename ObjectKeyType, typename = void>
+struct is_key_type_comparable
+{
+    static constexpr bool value = false;
+};
+
+template<typename ComparatorType, typename KeyType, typename ObjectKeyType>
+struct is_key_type_comparable<ComparatorType, KeyType, ObjectKeyType, void_t<
+decltype(ComparatorType()(std::declval<KeyType const&>(), std::declval<ObjectKeyType const&>())),
+decltype(ComparatorType()(std::declval<ObjectKeyType const&>(), std::declval<KeyType const&>()))
+        >>
+{
+    static constexpr bool value = true;
+};
+
+template<typename BasicJsonType, typename KeyType>
+struct is_usable_as_key_type
+{
+    static constexpr bool value =
+        is_key_type_comparable<typename BasicJsonType::object_comparator_t, typename BasicJsonType::object_t::key_type, KeyType>::value &&
+        !std::is_same<KeyType, typename BasicJsonType::iterator>::value &&
+        !std::is_same<KeyType, typename BasicJsonType::const_iterator>::value;
+};
+
+
 // a naive helper to check if a type is an ordered_map (exploits the fact that
 // ordered_map inherits capacity() from std::vector)
 template <typename T>
@@ -18468,10 +18495,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 default:
                 {
                     object = nullptr;  // silence warning, see #821
+                    // LCOV_EXCL_START
                     if (JSON_HEDLEY_UNLIKELY(t == value_t::null))
                     {
-                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.10.2", basic_json())); // LCOV_EXCL_LINE
+                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.10.2", basic_json()));
                     }
+                    // LCOV_EXCL_STOP
                     break;
                 }
             }
@@ -20962,6 +20991,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     Returns a reference to the element at with specified key @a key, with
     bounds checking.
 
+    @tparam KeyT  a type convertible to an object key or a `std::string_view`
     @param[in] key  key of the element to access
 
     @return reference to the element at key @a key
@@ -20980,31 +21010,28 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     access by reference
     @sa see @ref value() for access by value with a default value
 
-    @since version 1.0.0
+    @since version 1.0.0; template added in version 3.10.0
 
     @liveexample{The example below shows how object elements can be read and
     written using `at()`. It also demonstrates the different exceptions that
     can be thrown.,at__object_t_key_type}
     */
-    reference at(const typename object_t::key_type& key)
+    template < class KeyT, typename detail::enable_if_t <
+                   detail::is_usable_as_key_type<basic_json_t, KeyT>::value&& !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value > ... >
+    reference at(const KeyT& key)
     {
         // at only works for objects
-        if (JSON_HEDLEY_LIKELY(is_object()))
-        {
-            JSON_TRY
-            {
-                return set_parent(m_value.object->at(key));
-            }
-            JSON_CATCH (std::out_of_range&)
-            {
-                // create better exception explanation
-                JSON_THROW(out_of_range::create(403, "key '" + key + "' not found", *this));
-            }
-        }
-        else
+        if (JSON_HEDLEY_UNLIKELY(!is_object()))
         {
             JSON_THROW(type_error::create(304, "cannot use at() with " + std::string(type_name()), *this));
         }
+
+        auto it = m_value.object->find(key);
+        if (it == m_value.object->end())
+        {
+            JSON_THROW(out_of_range::create(403, "key '" + std::string(key) + "' not found", *this));
+        }
+        return set_parent(it->second);
     }
 
     /*!
@@ -21014,6 +21041,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     with bounds checking.
 
     @param[in] key  key of the element to access
+    @tparam KeyT  a type convertible to an object key or a `std::string_view`
 
     @return const reference to the element at key @a key
 
@@ -21031,31 +21059,28 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     access by reference
     @sa see @ref value() for access by value with a default value
 
-    @since version 1.0.0
+    @since version 1.0.0; template added in version 3.10.0
 
     @liveexample{The example below shows how object elements can be read using
     `at()`. It also demonstrates the different exceptions that can be thrown.,
     at__object_t_key_type_const}
     */
-    const_reference at(const typename object_t::key_type& key) const
+    template < class KeyT, typename detail::enable_if_t <
+                   detail::is_usable_as_key_type<basic_json_t, KeyT>::value&& !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value > ... >
+    const_reference at(const KeyT& key) const
     {
         // at only works for objects
-        if (JSON_HEDLEY_LIKELY(is_object()))
-        {
-            JSON_TRY
-            {
-                return m_value.object->at(key);
-            }
-            JSON_CATCH (std::out_of_range&)
-            {
-                // create better exception explanation
-                JSON_THROW(out_of_range::create(403, "key '" + key + "' not found", *this));
-            }
-        }
-        else
+        if (JSON_HEDLEY_UNLIKELY(!is_object()))
         {
             JSON_THROW(type_error::create(304, "cannot use at() with " + std::string(type_name()), *this));
         }
+
+        auto it = m_value.object->find(key);
+        if (it == m_value.object->end())
+        {
+            JSON_THROW(out_of_range::create(403, "key '" + std::string(key) + "' not found", *this));
+        }
+        return it->second;
     }
 
     /*!
@@ -21157,6 +21182,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     In case the value was `null` before, it is converted to an object.
 
     @param[in] key  key of the element to access
+    @tparam KeyT  a type convertible to an object key or a std::string_view
 
     @return reference to the element at key @a key
 
@@ -21172,9 +21198,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     with range checking
     @sa see @ref value() for access by value with a default value
 
-    @since version 1.0.0
+    @since version 1.0.0; template KeyT added in version 3.10.0
     */
-    reference operator[](const typename object_t::key_type& key)
+    template < class KeyT, typename detail::enable_if_t <
+                   detail::is_usable_as_key_type<basic_json_t, KeyT>::value&& !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value > ... >
+    reference operator[](KeyT&& key)
     {
         // implicitly convert null value to an empty object
         if (is_null())
@@ -21187,7 +21215,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // operator[] only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
         {
-            return set_parent(m_value.object->operator[](key));
+            auto result = m_value.object->emplace(std::forward<KeyT>(key), nullptr);
+            return set_parent(result.first->second);
         }
 
         JSON_THROW(type_error::create(305, "cannot use operator[] with a string argument with " + std::string(type_name()), *this));
@@ -21203,6 +21232,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     undefined.
 
     @param[in] key  key of the element to access
+    @tparam KeyT  a type convertible to an object key or a std::string_view
 
     @return const reference to the element at key @a key
 
@@ -21221,107 +21251,18 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     with range checking
     @sa see @ref value() for access by value with a default value
 
-    @since version 1.0.0
+    @since version 1.0.0; template KeyT added in version 3.10.0
     */
-    const_reference operator[](const typename object_t::key_type& key) const
+    template < class KeyT, typename detail::enable_if_t <
+                   detail::is_usable_as_key_type<basic_json_t, KeyT>::value&& !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value > ... >
+    const_reference operator[](KeyT&& key) const
     {
-        // const operator[] only works for objects
+        // operator[] only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
         {
-            JSON_ASSERT(m_value.object->find(key) != m_value.object->end());
-            return m_value.object->find(key)->second;
-        }
-
-        JSON_THROW(type_error::create(305, "cannot use operator[] with a string argument with " + std::string(type_name()), *this));
-    }
-
-    /*!
-    @brief access specified object element
-
-    Returns a reference to the element at with specified key @a key.
-
-    @note If @a key is not found in the object, then it is silently added to
-    the object and filled with a `null` value to make `key` a valid reference.
-    In case the value was `null` before, it is converted to an object.
-
-    @param[in] key  key of the element to access
-
-    @return reference to the element at key @a key
-
-    @throw type_error.305 if the JSON value is not an object or null; in that
-    cases, using the [] operator with a key makes no sense.
-
-    @complexity Logarithmic in the size of the container.
-
-    @liveexample{The example below shows how object elements can be read and
-    written using the `[]` operator.,operatorarray__key_type}
-
-    @sa see @ref at(const typename object_t::key_type&) for access by reference
-    with range checking
-    @sa see @ref value() for access by value with a default value
-
-    @since version 1.1.0
-    */
-    template<typename T>
-    JSON_HEDLEY_NON_NULL(2)
-    reference operator[](T* key)
-    {
-        // implicitly convert null to object
-        if (is_null())
-        {
-            m_type = value_t::object;
-            m_value = value_t::object;
-            assert_invariant();
-        }
-
-        // at only works for objects
-        if (JSON_HEDLEY_LIKELY(is_object()))
-        {
-            return set_parent(m_value.object->operator[](key));
-        }
-
-        JSON_THROW(type_error::create(305, "cannot use operator[] with a string argument with " + std::string(type_name()), *this));
-    }
-
-    /*!
-    @brief read-only access specified object element
-
-    Returns a const reference to the element at with specified key @a key. No
-    bounds checking is performed.
-
-    @warning If the element with key @a key does not exist, the behavior is
-    undefined.
-
-    @param[in] key  key of the element to access
-
-    @return const reference to the element at key @a key
-
-    @pre The element with key @a key must exist. **This precondition is
-         enforced with an assertion.**
-
-    @throw type_error.305 if the JSON value is not an object; in that case,
-    using the [] operator with a key makes no sense.
-
-    @complexity Logarithmic in the size of the container.
-
-    @liveexample{The example below shows how object elements can be read using
-    the `[]` operator.,operatorarray__key_type_const}
-
-    @sa see @ref at(const typename object_t::key_type&) for access by reference
-    with range checking
-    @sa see @ref value() for access by value with a default value
-
-    @since version 1.1.0
-    */
-    template<typename T>
-    JSON_HEDLEY_NON_NULL(2)
-    const_reference operator[](T* key) const
-    {
-        // at only works for objects
-        if (JSON_HEDLEY_LIKELY(is_object()))
-        {
-            JSON_ASSERT(m_value.object->find(key) != m_value.object->end());
-            return m_value.object->find(key)->second;
+            auto it = m_value.object->find(std::forward<KeyT>(key));
+            JSON_ASSERT(it != m_value.object->end());
+            return it->second;
         }
 
         JSON_THROW(type_error::create(305, "cannot use operator[] with a string argument with " + std::string(type_name()), *this));
@@ -21352,6 +21293,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @param[in] key  key of the element to access
     @param[in] default_value  the value to return if @a key is not found
 
+    @tparam KeyType A type for an object key. This can also be a string
+    literal or a string view (C++17).
     @tparam ValueType type compatible to JSON values, for instance `int` for
     JSON integer numbers, `bool` for JSON booleans, or `std::vector` types for
     JSON arrays. Note the type of the expected value at @a key and the default
@@ -21375,13 +21318,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @sa see @ref operator[](const typename object_t::key_type&) for unchecked
     access by reference
 
-    @since version 1.0.0
+    @since version 1.0.0, KeyType template added in 3.10.0
     */
     // using std::is_convertible in a std::enable_if will fail when using explicit conversions
-    template < class ValueType, typename std::enable_if <
+    template < class KeyType, class ValueType, typename detail::enable_if_t <
                    detail::is_getable<basic_json_t, ValueType>::value
-                   && !std::is_same<value_t, ValueType>::value, int >::type = 0 >
-    ValueType value(const typename object_t::key_type& key, const ValueType& default_value) const
+                   && !std::is_same<value_t, ValueType>::value&& detail::is_usable_as_key_type<basic_json_t, KeyType>::value > ... >
+    typename std::decay<ValueType>::type value(const KeyType& key, ValueType&& default_value) const
     {
         // at only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
@@ -21390,10 +21333,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             const auto it = find(key);
             if (it != end())
             {
-                return it->template get<ValueType>();
+                return it->template get<typename std::decay<ValueType>::type>();
             }
 
-            return default_value;
+            return std::forward<ValueType>(default_value);
         }
 
         JSON_THROW(type_error::create(306, "cannot use value() with " + std::string(type_name()), *this));
@@ -21403,7 +21346,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @brief overload for a default value of type const char*
     @copydoc basic_json::value(const typename object_t::key_type&, const ValueType&) const
     */
-    string_t value(const typename object_t::key_type& key, const char* default_value) const
+    template < class KeyType, typename detail::enable_if_t <
+                   detail::is_usable_as_key_type<basic_json_t, KeyType>::value > ... >
+    string_t value(const KeyType& key, const char* default_value) const
     {
         return value(key, string_t(default_value));
     }
@@ -21453,7 +21398,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     */
     template<class ValueType, typename std::enable_if<
                  detail::is_getable<basic_json_t, ValueType>::value, int>::type = 0>
-    ValueType value(const json_pointer& ptr, const ValueType& default_value) const
+    typename std::decay<ValueType>::type value(const json_pointer& ptr, ValueType && default_value) const
     {
         // at only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
@@ -21465,7 +21410,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             }
             JSON_INTERNAL_CATCH (out_of_range&)
             {
-                return default_value;
+                return std::forward<ValueType>(default_value);
             }
         }
 
@@ -21807,6 +21752,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     Removes elements from a JSON object with the key value @a key.
 
     @param[in] key value of the elements to remove
+    @tparam KeyT a type convertible to an object key or a std::string_view
 
     @return Number of elements removed. If @a ObjectType is the default
     `std::map` type, the return value will always be `0` (@a key was not
@@ -21828,17 +21774,26 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @sa see @ref erase(const size_type) -- removes the element from an array at
     the given index
 
-    @since version 1.0.0
+    @since version 1.0.0; template added in version 3.10.0
     */
-    size_type erase(const typename object_t::key_type& key)
+    template < class KeyT, typename detail::enable_if_t <
+                   detail::is_usable_as_key_type<basic_json_t, KeyT>::value > ... >
+    size_type erase(const KeyT& key)
     {
         // this erase only works for objects
-        if (JSON_HEDLEY_LIKELY(is_object()))
+        if (JSON_HEDLEY_UNLIKELY(!is_object()))
         {
-            return m_value.object->erase(key);
+            JSON_THROW(type_error::create(307, "cannot use erase() with " + std::string(type_name()), *this));
         }
 
-        JSON_THROW(type_error::create(307, "cannot use erase() with " + std::string(type_name()), *this));
+        const auto it = m_value.object->find(key);
+        if (it != m_value.object->end())
+        {
+            m_value.object->erase(it);
+            return 1;
+        }
+
+        return 0;
     }
 
     /*!
@@ -21917,14 +21872,15 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     @since version 1.0.0
     */
-    template<typename KeyT>
-    iterator find(KeyT&& key)
+    template < class KeyT, typename detail::enable_if_t <
+                   detail::is_usable_as_key_type<basic_json_t, KeyT>::value > ... >
+    iterator find(const KeyT& key)
     {
         auto result = end();
 
         if (is_object())
         {
-            result.m_it.object_iterator = m_value.object->find(std::forward<KeyT>(key));
+            result.m_it.object_iterator = m_value.object->find(key);
         }
 
         return result;
@@ -21932,16 +21888,17 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     /*!
     @brief find an element in a JSON object
-    @copydoc find(KeyT&&)
+    @copydoc find(const KeyT&)
     */
-    template<typename KeyT>
-    const_iterator find(KeyT&& key) const
+    template < class KeyT, typename detail::enable_if_t <
+                   detail::is_usable_as_key_type<basic_json_t, KeyT>::value > ... >
+    const_iterator find(const KeyT& key) const
     {
         auto result = cend();
 
         if (is_object())
         {
-            result.m_it.object_iterator = m_value.object->find(std::forward<KeyT>(key));
+            result.m_it.object_iterator = m_value.object->find(key);
         }
 
         return result;
@@ -21968,11 +21925,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     @since version 1.0.0
     */
-    template<typename KeyT>
-    size_type count(KeyT&& key) const
+    template < class KeyT, typename detail::enable_if_t <
+                   detail::is_usable_as_key_type<basic_json_t, KeyT>::value > ... >
+    size_type count(const KeyT& key) const
     {
         // return 0 for all nonobject types
-        return is_object() ? m_value.object->count(std::forward<KeyT>(key)) : 0;
+        return is_object() ? m_value.object->count(key) : 0;
     }
 
     /*!
@@ -21995,16 +21953,16 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     @liveexample{The following code shows an example for `contains()`.,contains}
 
-    @sa see @ref find(KeyT&&) -- returns an iterator to an object element
+    @sa see @ref find(const KeyT&) -- returns an iterator to an object element
     @sa see @ref contains(const json_pointer&) const -- checks the existence for a JSON pointer
 
     @since version 3.6.0
     */
-    template < typename KeyT, typename std::enable_if <
-                   !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value, int >::type = 0 >
-    bool contains(KeyT && key) const
+    template < class KeyT, typename detail::enable_if_t <
+                   !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value&& detail::is_usable_as_key_type<basic_json_t, KeyT>::value > ... >
+    bool contains(const KeyT& key) const
     {
-        return is_object() && m_value.object->find(std::forward<KeyT>(key)) != m_value.object->end();
+        return is_object() && m_value.object->find(key) != m_value.object->end();
     }
 
     /*!
