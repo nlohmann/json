@@ -157,6 +157,9 @@ template<class B1, class... Bn>
 struct conjunction<B1, Bn...>
 : std::conditional<bool(B1::value), conjunction<Bn...>, B1>::type {};
 
+// https://en.cppreference.com/w/cpp/types/negation
+template<class B> struct negation : std::integral_constant < bool, !B::value > { };
+
 // Reimplementation of is_constructible and is_default_constructible, due to them being broken for
 // std::pair and std::tuple until LWG 2367 fix (see https://cplusplus.github.io/LWG/lwg-defects.html#2367).
 // This causes compile errors in e.g. clang 3.5 or gcc 4.9.
@@ -458,6 +461,38 @@ struct is_usable_as_key_type
         !std::is_same<KeyType, typename BasicJsonType::iterator>::value &&
         !std::is_same<KeyType, typename BasicJsonType::const_iterator>::value;
 };
+
+
+// a naive helper to check if a type is an ordered_map (exploits the fact that
+// ordered_map inherits capacity() from std::vector)
+template <typename T>
+struct is_ordered_map
+{
+    using one = char;
+
+    struct two
+    {
+        char x[2]; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+    };
+
+    template <typename C> static one test( decltype(&C::capacity) ) ;
+    template <typename C> static two test(...);
+
+    enum { value = sizeof(test<T>(nullptr)) == sizeof(char) }; // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+};
+
+// to avoid useless casts (see https://github.com/nlohmann/json/issues/2893#issuecomment-889152324)
+template < typename T, typename U, enable_if_t < !std::is_same<T, U>::value, int > = 0 >
+T conditional_static_cast(U value)
+{
+    return static_cast<T>(value);
+}
+
+template<typename T, typename U, enable_if_t<std::is_same<T, U>::value, int> = 0>
+T conditional_static_cast(U value)
+{
+    return value;
+}
 
 }  // namespace detail
 }  // namespace nlohmann

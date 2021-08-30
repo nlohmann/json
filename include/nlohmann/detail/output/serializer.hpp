@@ -389,7 +389,7 @@ class serializer
 
         for (std::size_t i = 0; i < s.size(); ++i)
         {
-            const auto byte = static_cast<uint8_t>(s[i]);
+            const auto byte = static_cast<std::uint8_t>(s[i]);
 
             switch (decode(state, codepoint, byte))
             {
@@ -674,6 +674,7 @@ class serializer
     @tparam NumberType either @a number_integer_t or @a number_unsigned_t
     */
     template < typename NumberType, detail::enable_if_t <
+                   std::is_integral<NumberType>::value ||
                    std::is_same<NumberType, number_unsigned_t>::value ||
                    std::is_same<NumberType, number_integer_t>::value ||
                    std::is_same<NumberType, binary_char_t>::value,
@@ -706,7 +707,7 @@ class serializer
         // use a pointer to fill the buffer
         auto buffer_ptr = number_buffer.begin(); // NOLINT(llvm-qualified-auto,readability-qualified-auto,cppcoreguidelines-pro-type-vararg,hicpp-vararg)
 
-        const bool is_negative = std::is_same<NumberType, number_integer_t>::value && !(x >= 0); // see issue #755
+        const bool is_negative = std::is_signed<NumberType>::value && !(x >= 0); // see issue #755
         number_unsigned_t abs_value;
 
         unsigned int n_chars{};

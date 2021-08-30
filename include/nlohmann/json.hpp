@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++
-|  |  |__   |  |  | | | |  version 3.9.1
+|  |  |__   |  |  | | | |  version 3.10.2
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -31,8 +31,8 @@ SOFTWARE.
 #define INCLUDE_NLOHMANN_JSON_HPP_
 
 #define NLOHMANN_JSON_VERSION_MAJOR 3
-#define NLOHMANN_JSON_VERSION_MINOR 9
-#define NLOHMANN_JSON_VERSION_PATCH 1
+#define NLOHMANN_JSON_VERSION_MINOR 10
+#define NLOHMANN_JSON_VERSION_PATCH 2
 
 #include <algorithm> // all_of, find, for_each
 #include <cstddef> // nullptr_t, ptrdiff_t, size_t
@@ -902,8 +902,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     #### Notes on subtypes
 
     - CBOR
-       - Binary values are represented as byte strings. No subtypes are
-         supported and will be ignored when CBOR is written.
+       - Binary values are represented as byte strings. Subtypes are serialized
+         as tagged values.
     - MessagePack
        - If a subtype is given and the binary array contains exactly 1, 2, 4, 8,
          or 16 elements, the fixext family (fixext1, fixext2, fixext4, fixext8)
@@ -1059,13 +1059,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     break;
                 }
 
+                case value_t::discarded:
                 default:
                 {
                     object = nullptr;  // silence warning, see #821
                     // LCOV_EXCL_START
                     if (JSON_HEDLEY_UNLIKELY(t == value_t::null))
                     {
-                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.9.1", basic_json()));
+                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.10.2", basic_json()));
                     }
                     // LCOV_EXCL_STOP
                     break;
@@ -1218,6 +1219,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     break;
                 }
 
+                case value_t::null:
+                case value_t::boolean:
+                case value_t::number_integer:
+                case value_t::number_unsigned:
+                case value_t::number_float:
+                case value_t::discarded:
                 default:
                 {
                     break;
@@ -1289,6 +1296,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 break;
             }
 
+            case value_t::null:
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            case value_t::discarded:
             default:
                 break;
         }
@@ -1322,6 +1337,21 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 return j;
             }
         }
+
+        // ordered_json uses a vector internally, so pointers could have
+        // been invalidated; see https://github.com/nlohmann/json/issues/2962
+#ifdef JSON_HEDLEY_MSVC_VERSION
+#pragma warning(push )
+#pragma warning(disable : 4127) // ignore warning to replace if with if constexpr
+#endif
+        if (detail::is_ordered_map<object_t>::value)
+        {
+            set_parents();
+            return j;
+        }
+#ifdef JSON_HEDLEY_MSVC_VERSION
+#pragma warning( pop )
+#endif
 
         j.m_parent = this;
 #else
@@ -1499,7 +1529,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
       @ref number_float_t, and all convertible number types such as `int`,
       `size_t`, `int64_t`, `float` or `double` can be used.
     - **boolean**: @ref boolean_t / `bool` can be used.
-    - **binary**: @ref binary_t / `std::vector<uint8_t>` may be used,
+    - **binary**: @ref binary_t / `std::vector<std::uint8_t>` may be used,
       unfortunately because string literals cannot be distinguished from binary
       character arrays by the C++ type system, all types compatible with `const
       char*` will be directed to the string constructor instead.  This is both
@@ -1819,7 +1849,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @since version 3.8.0
     */
     JSON_HEDLEY_WARN_UNUSED_RESULT
-    static basic_json binary(const typename binary_t::container_type& init, std::uint8_t subtype)
+    static basic_json binary(const typename binary_t::container_type& init, typename binary_t::subtype_type subtype)
     {
         auto res = basic_json();
         res.m_type = value_t::binary;
@@ -1837,9 +1867,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return res;
     }
 
-    /// @copydoc binary(const typename binary_t::container_type&, std::uint8_t)
+    /// @copydoc binary(const typename binary_t::container_type&, typename binary_t::subtype_type)
     JSON_HEDLEY_WARN_UNUSED_RESULT
-    static basic_json binary(typename binary_t::container_type&& init, std::uint8_t subtype)
+    static basic_json binary(typename binary_t::container_type&& init, typename binary_t::subtype_type subtype)
     {
         auto res = basic_json();
         res.m_type = value_t::binary;
@@ -2053,6 +2083,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 break;
             }
 
+            case value_t::null:
+            case value_t::object:
+            case value_t::array:
+            case value_t::binary:
+            case value_t::discarded:
             default:
                 break;
         }
@@ -2109,6 +2144,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 break;
             }
 
+            case value_t::null:
+            case value_t::discarded:
             default:
                 JSON_THROW(invalid_iterator::create(206, "cannot construct with iterators from " + std::string(first.m_object->type_name()), *first.m_object));
         }
@@ -2208,6 +2245,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 break;
             }
 
+            case value_t::null:
+            case value_t::discarded:
             default:
                 break;
         }
@@ -3361,17 +3400,19 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @since version 1.0.0
     */
     template < typename ValueType, typename std::enable_if <
-                   !std::is_pointer<ValueType>::value&&
-                   !std::is_same<ValueType, detail::json_ref<basic_json>>::value&&
-                   !std::is_same<ValueType, typename string_t::value_type>::value&&
-                   !detail::is_basic_json<ValueType>::value
-                   && !std::is_same<ValueType, std::initializer_list<typename string_t::value_type>>::value
+                   detail::conjunction <
+                       detail::negation<std::is_pointer<ValueType>>,
+                       detail::negation<std::is_same<ValueType, detail::json_ref<basic_json>>>,
+                                        detail::negation<std::is_same<ValueType, typename string_t::value_type>>,
+                                        detail::negation<detail::is_basic_json<ValueType>>,
+                                        detail::negation<std::is_same<ValueType, std::initializer_list<typename string_t::value_type>>>,
+
 #if defined(JSON_HAS_CPP_17) && (defined(__GNUC__) || (defined(_MSC_VER) && _MSC_VER >= 1910 && _MSC_VER <= 1914))
-                   && !std::is_same<ValueType, typename std::string_view>::value
+                                                detail::negation<std::is_same<ValueType, std::string_view>>,
 #endif
-                   && detail::is_detected<detail::get_template_function, const basic_json_t&, ValueType>::value
-                   , int >::type = 0 >
-    JSON_EXPLICIT operator ValueType() const
+                                                detail::is_detected_lazy<detail::get_template_function, const basic_json_t&, ValueType>
+                                                >::value, int >::type = 0 >
+                                        JSON_EXPLICIT operator ValueType() const
     {
         // delegate the call to get<>() const
         return get<ValueType>();
@@ -4146,6 +4187,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 break;
             }
 
+            case value_t::null:
+            case value_t::discarded:
             default:
                 JSON_THROW(type_error::create(307, "cannot use erase() with " + std::string(type_name()), *this));
         }
@@ -4262,6 +4305,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 break;
             }
 
+            case value_t::null:
+            case value_t::discarded:
             default:
                 JSON_THROW(type_error::create(307, "cannot use erase() with " + std::string(type_name()), *this));
         }
@@ -5030,6 +5075,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 return m_value.object->empty();
             }
 
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            case value_t::discarded:
             default:
             {
                 // all other types are nonempty
@@ -5103,6 +5155,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 return m_value.object->size();
             }
 
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            case value_t::discarded:
             default:
             {
                 // all other types have size 1
@@ -5168,6 +5227,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 return m_value.object->max_size();
             }
 
+            case value_t::null:
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            case value_t::discarded:
             default:
             {
                 // all other types have max_size() == size()
@@ -5275,6 +5342,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 break;
             }
 
+            case value_t::null:
+            case value_t::discarded:
             default:
                 break;
         }
@@ -6207,6 +6276,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     */
     friend bool operator==(const_reference lhs, const_reference rhs) noexcept
     {
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-equal"
+#endif
         const auto lhs_type = lhs.type();
         const auto rhs_type = rhs.type();
 
@@ -6241,6 +6314,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 case value_t::binary:
                     return *lhs.m_value.binary == *rhs.m_value.binary;
 
+                case value_t::discarded:
                 default:
                     return false;
             }
@@ -6271,6 +6345,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
 
         return false;
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
     }
 
     /*!
@@ -6404,6 +6481,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 case value_t::binary:
                     return (*lhs.m_value.binary) < (*rhs.m_value.binary);
 
+                case value_t::discarded:
                 default:
                     return false;
             }
@@ -7028,6 +7106,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     return "binary";
                 case value_t::discarded:
                     return "discarded";
+                case value_t::number_integer:
+                case value_t::number_unsigned:
+                case value_t::number_float:
                 default:
                     return "number";
             }
@@ -7113,6 +7194,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     binary          | *size*: 65536..4294967295                  | byte string (4 bytes follow)       | 0x5A
     binary          | *size*: 4294967296..18446744073709551615   | byte string (8 bytes follow)       | 0x5B
 
+    Binary values with subtype are mapped to tagged values (0xD8..0xDB)
+    depending on the subtype, followed by a byte string, see "binary" cells
+    in the table above.
+
     @note The mapping is **complete** in the sense that any JSON value type
           can be converted to a CBOR value.
 
@@ -7153,16 +7238,16 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @since version 2.0.9; compact representation of floating-point numbers
            since version 3.8.0
     */
-    static std::vector<uint8_t> to_cbor(const basic_json& j)
+    static std::vector<std::uint8_t> to_cbor(const basic_json& j)
     {
-        std::vector<uint8_t> result;
+        std::vector<std::uint8_t> result;
         to_cbor(j, result);
         return result;
     }
 
-    static void to_cbor(const basic_json& j, detail::output_adapter<uint8_t> o)
+    static void to_cbor(const basic_json& j, detail::output_adapter<std::uint8_t> o)
     {
-        binary_writer<uint8_t>(o).write_cbor(j);
+        binary_writer<std::uint8_t>(o).write_cbor(j);
     }
 
     static void to_cbor(const basic_json& j, detail::output_adapter<char> o)
@@ -7248,16 +7333,16 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     @since version 2.0.9
     */
-    static std::vector<uint8_t> to_msgpack(const basic_json& j)
+    static std::vector<std::uint8_t> to_msgpack(const basic_json& j)
     {
-        std::vector<uint8_t> result;
+        std::vector<std::uint8_t> result;
         to_msgpack(j, result);
         return result;
     }
 
-    static void to_msgpack(const basic_json& j, detail::output_adapter<uint8_t> o)
+    static void to_msgpack(const basic_json& j, detail::output_adapter<std::uint8_t> o)
     {
-        binary_writer<uint8_t>(o).write_msgpack(j);
+        binary_writer<std::uint8_t>(o).write_msgpack(j);
     }
 
     static void to_msgpack(const basic_json& j, detail::output_adapter<char> o)
@@ -7351,19 +7436,19 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     @since version 3.1.0
     */
-    static std::vector<uint8_t> to_ubjson(const basic_json& j,
-                                          const bool use_size = false,
-                                          const bool use_type = false)
+    static std::vector<std::uint8_t> to_ubjson(const basic_json& j,
+            const bool use_size = false,
+            const bool use_type = false)
     {
-        std::vector<uint8_t> result;
+        std::vector<std::uint8_t> result;
         to_ubjson(j, result, use_size, use_type);
         return result;
     }
 
-    static void to_ubjson(const basic_json& j, detail::output_adapter<uint8_t> o,
+    static void to_ubjson(const basic_json& j, detail::output_adapter<std::uint8_t> o,
                           const bool use_size = false, const bool use_type = false)
     {
-        binary_writer<uint8_t>(o).write_ubjson(j, use_size, use_type);
+        binary_writer<std::uint8_t>(o).write_ubjson(j, use_size, use_type);
     }
 
     static void to_ubjson(const basic_json& j, detail::output_adapter<char> o,
@@ -7429,9 +7514,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @sa see @ref to_cbor(const basic_json&) for the related CBOR format
     @sa see @ref to_msgpack(const basic_json&) for the related MessagePack format
     */
-    static std::vector<uint8_t> to_bson(const basic_json& j)
+    static std::vector<std::uint8_t> to_bson(const basic_json& j)
     {
-        std::vector<uint8_t> result;
+        std::vector<std::uint8_t> result;
         to_bson(j, result);
         return result;
     }
@@ -7444,13 +7529,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @pre The input `j` shall be an object: `j.is_object() == true`
     @sa see @ref to_bson(const basic_json&)
     */
-    static void to_bson(const basic_json& j, detail::output_adapter<uint8_t> o)
+    static void to_bson(const basic_json& j, detail::output_adapter<std::uint8_t> o)
     {
-        binary_writer<uint8_t>(o).write_bson(j);
+        binary_writer<std::uint8_t>(o).write_bson(j);
     }
 
     /*!
-    @copydoc to_bson(const basic_json&, detail::output_adapter<uint8_t>)
+    @copydoc to_bson(const basic_json&, detail::output_adapter<std::uint8_t>)
     */
     static void to_bson(const basic_json& j, detail::output_adapter<char> o)
     {
@@ -8361,6 +8446,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 }
 
                 // if there exists a parent it cannot be primitive
+                case value_t::string: // LCOV_EXCL_LINE
+                case value_t::boolean: // LCOV_EXCL_LINE
+                case value_t::number_integer: // LCOV_EXCL_LINE
+                case value_t::number_unsigned: // LCOV_EXCL_LINE
+                case value_t::number_float: // LCOV_EXCL_LINE
+                case value_t::binary: // LCOV_EXCL_LINE
+                case value_t::discarded: // LCOV_EXCL_LINE
                 default:            // LCOV_EXCL_LINE
                     JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
             }
@@ -8520,6 +8612,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     break;
                 }
 
+                case patch_operations::invalid:
                 default:
                 {
                     // op must be "add", "remove", "replace", "move", "copy", or
@@ -8676,6 +8769,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 break;
             }
 
+            case value_t::null:
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::binary:
+            case value_t::discarded:
             default:
             {
                 // both primitive type: replace value
@@ -8838,7 +8939,7 @@ template<>
 inline void swap<nlohmann::json>(nlohmann::json& j1, nlohmann::json& j2) noexcept( // NOLINT(readability-inconsistent-declaration-parameter-name)
     is_nothrow_move_constructible<nlohmann::json>::value&&  // NOLINT(misc-redundant-expression)
     is_nothrow_move_assignable<nlohmann::json>::value
-)
+                              )
 {
     j1.swap(j2);
 }

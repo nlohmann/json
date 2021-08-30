@@ -148,7 +148,7 @@ static bool ParseOneFlag(const char *Param) {
         int Val = MyStol(Str);
         *FlagDescriptions[F].IntFlag = Val;
         if (Flags.verbosity >= 2)
-          Printf("Flag: %s %d\n", Name, Val);;
+          Printf("Flag: %s %d\n", Name, Val);
         return true;
       } else if (FlagDescriptions[F].UIntFlag) {
         unsigned int Val = std::stoul(Str);

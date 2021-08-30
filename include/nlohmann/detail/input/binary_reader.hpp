@@ -19,6 +19,7 @@
 #include <nlohmann/detail/input/lexer.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/is_sax.hpp>
+#include <nlohmann/detail/meta/type_traits.hpp>
 #include <nlohmann/detail/value_t.hpp>
 
 namespace nlohmann
@@ -29,8 +30,9 @@ namespace detail
 /// how to treat CBOR tags
 enum class cbor_tag_handler_t
 {
-    error,  ///< throw a parse_error exception in case of a tag
-    ignore   ///< ignore tags
+    error,   ///< throw a parse_error exception in case of a tag
+    ignore,  ///< ignore tags
+    store    ///< store tags as binary type
 };
 
 /*!
@@ -118,6 +120,7 @@ class binary_reader
                 result = parse_ubjson_internal();
                 break;
 
+            case input_format_t::json: // LCOV_EXCL_LINE
             default:            // LCOV_EXCL_LINE
                 JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
         }
@@ -631,7 +634,7 @@ class binary_reader
             case 0x9B: // array (eight-byte uint64_t for n follow)
             {
                 std::uint64_t len{};
-                return get_number(input_format_t::cbor, len) && get_cbor_array(static_cast<std::size_t>(len), tag_handler);
+                return get_number(input_format_t::cbor, len) && get_cbor_array(detail::conditional_static_cast<std::size_t>(len), tag_handler);
             }
 
             case 0x9F: // array (indefinite length)
@@ -685,7 +688,7 @@ class binary_reader
             case 0xBB: // map (eight-byte uint64_t for n follow)
             {
                 std::uint64_t len{};
-                return get_number(input_format_t::cbor, len) && get_cbor_object(static_cast<std::size_t>(len), tag_handler);
+                return get_number(input_format_t::cbor, len) && get_cbor_object(detail::conditional_static_cast<std::size_t>(len), tag_handler);
             }
 
             case 0xBF: // map (indefinite length)
@@ -721,36 +724,78 @@ class binary_reader
 
                     case cbor_tag_handler_t::ignore:
                     {
+                        // ignore binary subtype
                         switch (current)
                         {
                             case 0xD8:
                             {
-                                std::uint8_t len{};
-                                get_number(input_format_t::cbor, len);
+                                std::uint8_t subtype_to_ignore{};
+                                get_number(input_format_t::cbor, subtype_to_ignore);
                                 break;
                             }
                             case 0xD9:
                             {
-                                std::uint16_t len{};
-                                get_number(input_format_t::cbor, len);
+                                std::uint16_t subtype_to_ignore{};
+                                get_number(input_format_t::cbor, subtype_to_ignore);
                                 break;
                             }
                             case 0xDA:
                             {
-                                std::uint32_t len{};
-                                get_number(input_format_t::cbor, len);
+                                std::uint32_t subtype_to_ignore{};
+                                get_number(input_format_t::cbor, subtype_to_ignore);
                                 break;
                             }
                             case 0xDB:
                             {
-                                std::uint64_t len{};
-                                get_number(input_format_t::cbor, len);
+                                std::uint64_t subtype_to_ignore{};
+                                get_number(input_format_t::cbor, subtype_to_ignore);
                                 break;
                             }
                             default:
                                 break;
                         }
                         return parse_cbor_internal(true, tag_handler);
+                    }
+
+                    case cbor_tag_handler_t::store:
+                    {
+                        binary_t b;
+                        // use binary subtype and store in binary container
+                        switch (current)
+                        {
+                            case 0xD8:
+                            {
+                                std::uint8_t subtype{};
+                                get_number(input_format_t::cbor, subtype);
+                                b.set_subtype(detail::conditional_static_cast<typename binary_t::subtype_type>(subtype));
+                                break;
+                            }
+                            case 0xD9:
+                            {
+                                std::uint16_t subtype{};
+                                get_number(input_format_t::cbor, subtype);
+                                b.set_subtype(detail::conditional_static_cast<typename binary_t::subtype_type>(subtype));
+                                break;
+                            }
+                            case 0xDA:
+                            {
+                                std::uint32_t subtype{};
+                                get_number(input_format_t::cbor, subtype);
+                                b.set_subtype(detail::conditional_static_cast<typename binary_t::subtype_type>(subtype));
+                                break;
+                            }
+                            case 0xDB:
+                            {
+                                std::uint64_t subtype{};
+                                get_number(input_format_t::cbor, subtype);
+                                b.set_subtype(detail::conditional_static_cast<typename binary_t::subtype_type>(subtype));
+                                break;
+                            }
+                            default:
+                                return parse_cbor_internal(true, tag_handler);
+                        }
+                        get();
+                        return get_cbor_binary(b) && sax->binary(b);
                     }
 
                     default:                 // LCOV_EXCL_LINE
@@ -2235,6 +2280,20 @@ class binary_reader
                 return sax->number_unsigned(number_lexer.get_number_unsigned());
             case token_type::value_float:
                 return sax->number_float(number_lexer.get_number_float(), std::move(number_string));
+            case token_type::uninitialized:
+            case token_type::literal_true:
+            case token_type::literal_false:
+            case token_type::literal_null:
+            case token_type::value_string:
+            case token_type::begin_array:
+            case token_type::begin_object:
+            case token_type::end_array:
+            case token_type::end_object:
+            case token_type::name_separator:
+            case token_type::value_separator:
+            case token_type::parse_error:
+            case token_type::end_of_input:
+            case token_type::literal_or_value:
             default:
                 return sax->parse_error(chars_read, number_string, parse_error::create(115, chars_read, exception_message(input_format_t::ubjson, "invalid number text: " + number_lexer.get_token_string(), "high-precision number"), BasicJsonType()));
         }
@@ -2437,6 +2496,7 @@ class binary_reader
                 error_msg += "BSON";
                 break;
 
+            case input_format_t::json: // LCOV_EXCL_LINE
             default:            // LCOV_EXCL_LINE
                 JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
         }

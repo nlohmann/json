@@ -1,6 +1,6 @@
 [![JSON for Modern C++](https://raw.githubusercontent.com/nlohmann/json/master/doc/json.gif)](https://github.com/nlohmann/json/releases)
 
-[![Build Status](https://travis-ci.org/nlohmann/json.svg?branch=master)](https://travis-ci.org/nlohmann/json)
+[![Build Status](https://app.travis-ci.com/nlohmann/json.svg?branch=develop)](https://app.travis-ci.com/nlohmann/json)
 [![Build Status](https://ci.appveyor.com/api/projects/status/1acb366xfyg3qybk/branch/develop?svg=true)](https://ci.appveyor.com/project/nlohmann/json)
 [![Ubuntu](https://github.com/nlohmann/json/workflows/Ubuntu/badge.svg)](https://github.com/nlohmann/json/actions?query=workflow%3AUbuntu)
 [![macOS](https://github.com/nlohmann/json/workflows/macOS/badge.svg)](https://github.com/nlohmann/json/actions?query=workflow%3AmacOS)
@@ -10,7 +10,7 @@
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/e0d1a9d5d6fd46fcb655c4cb930bb3e8)](https://www.codacy.com/gh/nlohmann/json/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=nlohmann/json&amp;utm_campaign=Badge_Grade)
 [![Language grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/nlohmann/json.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/nlohmann/json/context:cpp)
 [![Fuzzing Status](https://oss-fuzz-build-logs.storage.googleapis.com/badges/json.svg)](https://bugs.chromium.org/p/oss-fuzz/issues/list?sort=-opened&can=1&q=proj:json)
-[![Try online](https://img.shields.io/badge/try-online-blue.svg)](https://wandbox.org/permlink/3lCHrFUZANONKv7a)
+[![Try online](https://img.shields.io/badge/try-online-blue.svg)](https://wandbox.org/permlink/7p8sQckddTc0Y81T)
 [![Documentation](https://img.shields.io/badge/docs-doxygen-blue.svg)](https://nlohmann.github.io/json/doxygen/index.html)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/nlohmann/json/master/LICENSE.MIT)
 [![GitHub Releases](https://img.shields.io/github/release/nlohmann/json.svg)](https://github.com/nlohmann/json/releases)
@@ -1110,7 +1110,8 @@ The following compilers are currently used in continuous integration at [Travis]
 | Clang 11.0.0 with GNU-like command-line                           | Windows-10.0.17763 | GitHub Actions |
 | Clang 11.0.0 with MSVC-like command-line                          | Windows-10.0.17763 | GitHub Actions |
 | Clang 11.0.0 (11.0.0-2~ubuntu20.04.1)                             | Ubuntu 20.04.2 LTS | GitHub Actions |
-| Clang 12.1.0 (12.0.1-++20210423082613+072c90a863aa-1~exp1~20210423063319.76 | Ubuntu 20.04.2 LTS | GitHub Actions |
+| Clang 12.0.0 (11.0.0-2~ubuntu20.04.1)                             | Ubuntu 20.04.2 LTS | GitHub Actions |
+| Clang 13.0.0 (13.0.0-++20210828094952+9c49fee5e7ac-1exp120210828075752.71 | Ubuntu 20.04.2 LTS | GitHub Actions |
 | Visual Studio 14 2015 MSVC 19.0.24241.7 (Build Engine version 14.0.25420.1) | Windows-6.3.9600 | AppVeyor |
 | Visual Studio 15 2017 MSVC 19.16.27035.0 (Build Engine version 15.9.21+g9802d43bc3 for .NET Framework) | Windows-10.0.14393 | AppVeyor |
 | Visual Studio 15 2017 MSVC 19.16.27045.0 (Build Engine version 15.9.21+g9802d43bc3 for .NET Framework) | Windows-10.0.14393 | GitHub Actions |
@@ -1238,7 +1239,7 @@ endif()
 
 ### Package Managers
 
-:beer: If you are using OS X and [Homebrew](https://brew.sh), just type `brew tap nlohmann/json` and `brew install nlohmann-json` and you're set. If you want the bleeding edge rather than the latest release, use `brew install nlohmann-json --HEAD`.
+:beer: If you are using OS X and [Homebrew](https://brew.sh), just type `brew install nlohmann-json` and you're set. If you want the bleeding edge rather than the latest release, use `brew install nlohmann-json --HEAD`. See [nlohmann-json](https://formulae.brew.sh/formula/nlohmann-json) for more information.
 
 If you are using the [Meson Build System](https://mesonbuild.com), add this source tree as a [meson subproject](https://mesonbuild.com/Subprojects.html#using-a-subproject). You may also use the `include.zip` published in this project's [Releases](https://github.com/nlohmann/json/releases) to reduce the size of the vendored source tree. Alternatively, you can get a wrap file by downloading it from [Meson WrapDB](https://wrapdb.mesonbuild.com/nlohmann_json), or simply use `meson wrap install nlohmann_json`. Please see the meson project for any issues regarding the packaging.
 
@@ -1252,7 +1253,7 @@ If you are using [hunter](https://github.com/cpp-pm/hunter) on your project for 
 
 If you are using [Buckaroo](https://buckaroo.pm), you can install this library's module with `buckaroo add github.com/buckaroo-pm/nlohmann-json`. Please file issues [here](https://github.com/buckaroo-pm/nlohmann-json). There is a demo repo [here](https://github.com/njlr/buckaroo-nholmann-json-example).
 
-If you are using [vcpkg](https://github.com/Microsoft/vcpkg/) on your project for external dependencies, then you can use the [nlohmann-json package](https://github.com/Microsoft/vcpkg/tree/master/ports/nlohmann-json). Please see the vcpkg project for any issues regarding the packaging.
+If you are using [vcpkg](https://github.com/Microsoft/vcpkg/) on your project for external dependencies, then you can install the [nlohmann-json package](https://github.com/Microsoft/vcpkg/tree/master/ports/nlohmann-json) with `vcpkg install nlohmann-json` and follow the then displayed descriptions. Please see the vcpkg project for any issues regarding the packaging.
 
 If you are using [cget](https://cget.readthedocs.io/en/latest/), you can install the latest development version with `cget install nlohmann/json`. A specific version can be installed with `cget install nlohmann/json@v3.1.0`. Also, the multiple header version can be installed by adding the `-DJSON_MultipleHeaders=ON` flag (i.e., `cget install nlohmann/json -DJSON_MultipleHeaders=ON`).
 
@@ -1560,6 +1561,37 @@ I deeply appreciate the help of the following people.
 - [Alex Reinking](https://github.com/alexreinking) improved CMake support for `FetchContent`.
 - [Hannes Domani](https://github.com/ssbssa) provided a GDB pretty printer.
 - Lars Wirzenius reviewed the README file.
+- [Jun Jie](https://github.com/ongjunjie) fixed a compiler path in the CMake scripts.
+- [Ronak Buch](https://github.com/rbuch) fixed typos in the documentation.
+- [Alexander Karzhenkov](https://github.com/karzhenkov) fixed a move constructor and the Travis builds.
+- [Leonardo Lima](https://github.com/leozz37) added CPM.Cmake support.
+- [Joseph Blackman](https://github.com/jbzdarkid) fixed a warning.
+- [Yaroslav](https://github.com/YarikTH) updated doctest and implemented unit tests.
+- [Martin Stump](https://github.com/globberwops) fixed a bug in the CMake files.
+- [Jaakko Moisio](https://github.com/jasujm) fixed a bug in the input adapters.
+- [bl-ue](https://github.com/bl-ue) fixed some Markdown issues in the README file.
+- [William A. Wieselquist](https://github.com/wawiesel) fixed an example from the README.
+- [abbaswasim](https://github.com/abbaswasim) fixed an example from the README.
+- [Remy Jette](https://github.com/remyjette) fixed a warning.
+- [Fraser](https://github.com/frasermarlow) fixed the documentation.
+- [Ben Beasley](https://github.com/musicinmybrain) updated doctest.
+- [Doron Behar](https://github.com/doronbehar) fixed pkg-config.pc.
+- [raduteo](https://github.com/raduteo) fixed a warning.
+- [David Pfahler](https://github.com/theShmoo) added the possibility to compile the library without I/O support.
+- [Morten Fyhn Amundsen](https://github.com/mortenfyhn) fixed a typo.
+- [jpl-mac](https://github.com/jpl-mac) allowed to treat the library as a system header in CMake.
+- [Jason Dsouza](https://github.com/jasmcaus) fixed the indentation of the CMake file.
+- [offa](https://github.com/offa) added a link to Conan Center to the documentation.
+- [TotalCaesar659](https://github.com/TotalCaesar659) updated the links in the documentation to use HTTPS.
+- [Rafail Giavrimis](https://github.com/grafail) fixed the Google Benchmark default branch.
+- [Louis Dionne](https://github.com/ldionne) fixed a conversion operator.
+- [justanotheranonymoususer](https://github.com/justanotheranonymoususer) made the examples in the README more consistent.
+- [Finkman](https://github.com/Finkman) suppressed some `-Wfloat-equal` warnings.
+- [Ferry Huberts](https://github.com/fhuberts) fixed `-Wswitch-enum` warnings.
+- [Arseniy Terekhin](https://github.com/senyai) made the GDB pretty-printer robust against unset variable names.
+- [Amir Masoud Abdol](https://github.com/amirmasoudabdol) updated the Homebrew command as nlohmann/json is now in homebrew-core.
+- [Hallot](https://github.com/Hallot) fixed some `-Wextra-semi-stmt warnings`.
+- [Giovanni Cerretani](https://github.com/gcerretani) fixed `-Wunused` warnings on `JSON_DIAGNOSTICS`.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
@@ -1591,7 +1623,7 @@ The library itself consists of a single header file licensed under the MIT licen
 - [**send_to_wandbox**](https://github.com/nlohmann/json/blob/develop/doc/scripts/send_to_wandbox.py) to send code examples to [Wandbox](https://wandbox.org)
 - [**Travis**](https://travis-ci.org) for [continuous integration](https://travis-ci.org/nlohmann/json) on Linux and macOS
 - [**Valgrind**](https://valgrind.org) to check for correct memory management
-- [**Wandbox**](https://wandbox.org) for [online examples](https://wandbox.org/permlink/3lCHrFUZANONKv7a)
+- [**Wandbox**](https://wandbox.org) for [online examples](https://wandbox.org/permlink/7p8sQckddTc0Y81T)
 
 
 ## Projects using JSON for Modern C++
@@ -1612,6 +1644,7 @@ The library supports **Unicode input** as follows:
 - Invalid surrogates (e.g., incomplete pairs such as `\uDEAD`) will yield parse errors.
 - The strings stored in the library are UTF-8 encoded. When using the default string type (`std::string`), note that its length/size functions return the number of stored bytes rather than the number of characters or glyphs.
 - When you store strings with different encodings in the library, calling [`dump()`](https://nlohmann.github.io/json/api/basic_json/dump/) may throw an exception unless `json::error_handler_t::replace` or `json::error_handler_t::ignore` are used as error handlers.
+- To store wide strings (e.g., `std::wstring`), you need to convert them to a a UTF-8 encoded `std::string` before, see [an example](https://json.nlohmann.me/home/faq/#wide-string-handling).
 
 ### Comments in JSON
 
@@ -1648,7 +1681,7 @@ Here is a related issue [#1924](https://github.com/nlohmann/json/issues/1924).
 - The code contains numerous debug **assertions** which can be switched off by defining the preprocessor macro `NDEBUG`, see the [documentation of `assert`](https://en.cppreference.com/w/cpp/error/assert). In particular, note [`operator[]`](https://nlohmann.github.io/json/api/basic_json/operator%5B%5D/) implements **unchecked access** for const objects: If the given key is not present, the behavior is undefined (think of a dereferenced null pointer) and yields an [assertion failure](https://github.com/nlohmann/json/issues/289) if assertions are switched on. If you are not sure whether an element in an object exists, use checked access with the [`at()` function](https://nlohmann.github.io/json/api/basic_json/at/). Furthermore, you can define `JSON_ASSERT(x)` to replace calls to `assert(x)`.
 - As the exact type of a number is not defined in the [JSON specification](https://tools.ietf.org/html/rfc8259.html), this library tries to choose the best fitting C++ number type automatically. As a result, the type `double` may be used to store numbers which may yield [**floating-point exceptions**](https://github.com/nlohmann/json/issues/181) in certain rare situations if floating-point exceptions have been unmasked in the calling code. These exceptions are not caused by the library and need to be fixed in the calling code, such as by re-masking the exceptions prior to calling library functions.
 - The code can be compiled without C++ **runtime type identification** features; that is, you can use the `-fno-rtti` compiler flag.
-- **Exceptions** are used widely within the library. They can, however, be switched off with either using the compiler flag `-fno-exceptions` or by defining the symbol `JSON_NOEXCEPTION`. In this case, exceptions are replaced by `abort()` calls. You can further control this behavior by defining `JSON_THROW_USER` (overriding `throw`), `JSON_TRY_USER` (overriding `try`), and `JSON_CATCH_USER` (overriding `catch`). Note that `JSON_THROW_USER` should leave the current scope (e.g., by throwing or aborting), as continuing after it may yield undefined behavior.
+- **Exceptions** are used widely within the library. They can, however, be switched off with either using the compiler flag `-fno-exceptions` or by defining the symbol `JSON_NOEXCEPTION`. In this case, exceptions are replaced by `abort()` calls. You can further control this behavior by defining `JSON_THROW_USER` (overriding `throw`), `JSON_TRY_USER` (overriding `try`), and `JSON_CATCH_USER` (overriding `catch`). Note that `JSON_THROW_USER` should leave the current scope (e.g., by throwing or aborting), as continuing after it may yield undefined behavior. Note the explanatory [`what()`](https://en.cppreference.com/w/cpp/error/exception/what) string of exceptions is not available for MSVC if exceptions are disabled, see [#2824](https://github.com/nlohmann/json/discussions/2824).
 
 ## Execute unit tests
 

@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.9.1
+|  |  |__   |  |  | | | |  version 3.10.2
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -28,17 +28,18 @@ SOFTWARE.
 */
 
 #include "doctest_compatibility.h"
-DOCTEST_GCC_SUPPRESS_WARNING("-Wfloat-equal")
 
 // for some reason including this after the json header leads to linker errors with VS 2017...
 #include <locale>
 
 #define JSON_TESTS_PRIVATE
 #include <nlohmann/json.hpp>
-using nlohmann::json;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
 
 #include <list>
 #include <cstdio>
+#include <type_traits>
 #include <utility>
 
 #if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_HAS_CXX17) && _HAS_CXX17 == 1) // fix for issue #464
@@ -52,6 +53,10 @@ using nlohmann::json;
 #ifdef JSON_HAS_CPP_20
     #include <span>
 #endif
+
+// NLOHMANN_JSON_SERIALIZE_ENUM uses a static std::pair
+DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
+DOCTEST_CLANG_SUPPRESS_WARNING("-Wexit-time-destructors")
 
 /////////////////////////////////////////////////////////////////////
 // for #1021
@@ -155,6 +160,26 @@ struct adl_serializer<NonDefaultConstructible>
     }
 };
 } // namespace nlohmann
+
+/////////////////////////////////////////////////////////////////////
+// for #2824
+/////////////////////////////////////////////////////////////////////
+
+class sax_no_exception : public nlohmann::detail::json_sax_dom_parser<json>
+{
+  public:
+    explicit sax_no_exception(json& j) : nlohmann::detail::json_sax_dom_parser<json>(j, false) {}
+
+    static bool parse_error(std::size_t /*position*/, const std::string& /*last_token*/, const json::exception& ex)
+    {
+        error_string = new std::string(ex.what()); // NOLINT(cppcoreguidelines-owning-memory)
+        return false;
+    }
+
+    static std::string* error_string;
+};
+
+std::string* sax_no_exception::error_string = nullptr;
 
 
 TEST_CASE("regression tests 2")
@@ -620,4 +645,40 @@ TEST_CASE("regression tests 2")
             nlohmann::to_json(o["foo"], s);
         }
     }
+
+    SECTION("issue #2824 - encoding of json::exception::what()")
+    {
+        json j;
+        sax_no_exception sax(j);
+
+        CHECK (!json::sax_parse("xyz", &sax));
+        CHECK(*sax_no_exception::error_string == "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - invalid literal; last read: 'x'");
+        delete sax_no_exception::error_string; // NOLINT(cppcoreguidelines-owning-memory)
+    }
+
+    SECTION("issue #2825 - Properly constrain the basic_json conversion operator")
+    {
+        static_assert(std::is_copy_assignable<nlohmann::ordered_json>::value, "");
+    }
+
+    SECTION("issue #2958 - Inserting in unordered json using a pointer retains the leading slash")
+    {
+        std::string p = "/root";
+
+        // matching types
+        json test1;
+        test1[json::json_pointer(p)] = json::object();
+        CHECK(test1.dump() == "{\"root\":{}}");
+
+        ordered_json test2;
+        test2[ordered_json::json_pointer(p)] = json::object();
+        CHECK(test2.dump() == "{\"root\":{}}");
+
+        // mixed type - the JSON Pointer is implicitly converted into a string "/root"
+        ordered_json test3;
+        test3[json::json_pointer(p)] = json::object();
+        CHECK(test3.dump() == "{\"/root\":{}}");
+    }
 }
+
+DOCTEST_CLANG_SUPPRESS_WARNING_POP

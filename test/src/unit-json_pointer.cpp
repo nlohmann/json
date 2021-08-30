@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.9.1
+|  |  |__   |  |  | | | |  version 3.10.2
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -358,10 +358,10 @@ TEST_CASE("JSON pointers")
                 CHECK_THROWS_WITH(j_const[jp] == 1, throw_msg.c_str());
             }
 
-#if defined(_MSC_VER)
-#pragma warning (push)
-#pragma warning (disable : 4127) // on some machines, the check below is not constant
-#endif
+            // on some machines, the check below is not constant
+            DOCTEST_MSVC_SUPPRESS_WARNING_PUSH
+            DOCTEST_MSVC_SUPPRESS_WARNING(4127)
+
             if (sizeof(typename json::size_type) < sizeof(unsigned long long))
             {
                 auto size_type_max_uul = static_cast<unsigned long long>((std::numeric_limits<json::size_type>::max)());
@@ -375,9 +375,7 @@ TEST_CASE("JSON pointers")
                 CHECK_THROWS_WITH(j_const[jp] == 1, throw_msg.c_str());
             }
 
-#if defined(_MSC_VER)
-#pragma warning (pop)
-#endif
+            DOCTEST_MSVC_SUPPRESS_WARNING_POP
 
             CHECK_THROWS_AS(j.at("/one"_json_pointer) = 1, json::parse_error&);
             CHECK_THROWS_WITH(j.at("/one"_json_pointer) = 1,

@@ -44,7 +44,7 @@ for objects.
 
 !!! question
 
-	- Can you add an option to ignore trailing commas?
+	Can you add an option to ignore trailing commas?
 
 This library does not support any feature which would jeopardize interoperability.
 
@@ -69,6 +69,45 @@ The library supports **Unicode input** as follows:
 
 In most cases, the parser is right to complain, because the input is not UTF-8 encoded. This is especially true for Microsoft Windows where Latin-1 or ISO 8859-1 is often the standard encoding.
 
+
+### Wide string handling
+
+!!! question
+
+    Why are wide strings (e.g., `std::wstring`) dumped as arrays of numbers?
+
+As described [above](#parse-errors-reading-non-ascii-characters), the library assumes UTF-8 as encoding.  To store a wide string, you need to change the encoding.
+
+!!! example
+
+    ```cpp
+    #include <codecvt> // codecvt_utf8
+    #include <locale>  // wstring_convert
+    
+    // encoding function
+    std::string to_utf8(std::wstring& wide_string)
+    {
+        static std::wstring_convert<std::codecvt_utf8<wchar_t>> utf8_conv;
+        return utf8_conv.to_bytes(wide_string);
+    }
+    
+    json j;
+    std::wstring ws = L"車B1234 こんにちは";
+    
+    j["original"] = ws;
+    j["encoded"] = to_utf8(ws);
+    
+    std::cout << j << std::endl;
+    ```
+    
+    The result is:
+    
+    ```json
+    {
+      "encoded": "車B1234 こんにちは",
+      "original": [36554, 66, 49, 50, 51, 52, 32, 12371, 12435, 12395, 12385, 12399]
+    }
+    ```
 
 ## Exceptions
 

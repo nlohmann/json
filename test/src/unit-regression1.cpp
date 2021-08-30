@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.9.1
+|  |  |__   |  |  | | | |  version 3.10.2
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -28,7 +28,6 @@ SOFTWARE.
 */
 
 #include "doctest_compatibility.h"
-DOCTEST_GCC_SUPPRESS_WARNING("-Wfloat-equal")
 
 // for some reason including this after the json header leads to linker errors with VS 2017...
 #include <locale>

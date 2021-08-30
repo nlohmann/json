@@ -94,7 +94,7 @@ struct external_constructor<value_t::binary>
     {
         j.m_value.destroy(j.m_type);
         j.m_type = value_t::binary;
-        j.m_value = typename BasicJsonType::binary_t(std::move(b));;
+        j.m_value = typename BasicJsonType::binary_t(std::move(b));
         j.assert_invariant();
     }
 };

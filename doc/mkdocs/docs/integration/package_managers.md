@@ -11,18 +11,16 @@ Throughout this page, we will describe how to compile the example file `example.
 If you are using OS X and [Homebrew](http://brew.sh), just type
 
 ```sh
-brew tap nlohmann/json
 brew install nlohmann-json
 ```
 
 and you're set. If you want the bleeding edge rather than the latest release, use
 
 ```sh
-brew tap nlohmann/json
 brew install nlohmann-json --HEAD
 ```
 
-instead.
+instead. See [nlohmann-json](https://formulae.brew.sh/formula/nlohmann-json) for more information.
 
 ??? example
 
@@ -37,7 +35,6 @@ instead.
 	2. Install the package
 
 		```sh
-		brew tap nlohmann/json
 		brew install nlohmann-json
 		```
 
@@ -110,7 +107,40 @@ If you are using [Buckaroo](https://buckaroo.pm), you can install this library's
 
 ## vcpkg
 
-If you are using [vcpkg](https://github.com/Microsoft/vcpkg/) on your project for external dependencies, then you can use the [nlohmann-json package](https://github.com/Microsoft/vcpkg/tree/master/ports/nlohmann-json). Please see the vcpkg project for any issues regarding the packaging.
+If you are using [vcpkg](https://github.com/Microsoft/vcpkg/) on your project for external dependencies, then you can install the [nlohmann-json package](https://github.com/Microsoft/vcpkg/tree/master/ports/nlohmann-json) with `vcpkg install nlohmann-json` and follow the then displayed descriptions. Please see the vcpkg project for any issues regarding the packaging.
+
+??? example
+
+	1. Create the following files:
+
+		=== "CMakeLists.txt"
+
+		    ```cmake
+			--8<-- "integration/vcpkg/CMakeLists.txt"
+		    ```
+
+		=== "example.cpp"
+
+			```cpp
+			--8<-- "integration/vcpkg/example.cpp"
+			```
+
+    2. Install package:
+
+        ```sh
+        vcpkg install nlohmann-json
+        ```
+
+	3. Build:
+
+		```sh
+		mkdir build
+		cd build
+		cmake .. -DCMAKE_TOOLCHAIN_FILE=/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake
+		cmake --build .
+		```
+
+    Note you need to adjust `/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake` to your system.
 
 ## cget
 

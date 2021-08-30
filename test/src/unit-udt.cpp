@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.9.1
+|  |  |__   |  |  | | | |  version 3.10.2
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -28,6 +28,10 @@ SOFTWARE.
 */
 
 #include "doctest_compatibility.h"
+
+// disable -Wnoexcept due to class Evil
+DOCTEST_GCC_SUPPRESS_WARNING_PUSH
+DOCTEST_GCC_SUPPRESS_WARNING("-Wnoexcept")
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;
@@ -816,7 +820,10 @@ class Evil
   public:
     Evil() = default;
     template <typename T>
-    Evil(T t) : m_i(sizeof(t)) {}
+    Evil(T t) : m_i(sizeof(t))
+    {
+        static_cast<void>(t); // fix MSVC's C4100 warning
+    }
 
     int m_i = 0;
 };
@@ -842,3 +849,5 @@ TEST_CASE("Issue #1237")
     struct non_convertible_type {};
     static_assert(!std::is_convertible<json, non_convertible_type>::value, "");
 }
+
+DOCTEST_GCC_SUPPRESS_WARNING_POP

@@ -23,7 +23,7 @@ namespace detail
 // parser //
 ////////////
 
-enum class parse_event_t : uint8_t
+enum class parse_event_t : std::uint8_t
 {
     /// the parser read `{` and started to process a JSON object
     object_start,
@@ -334,6 +334,13 @@ class parser
                                                 parse_error::create(101, m_lexer.get_position(), exception_message(token_type::uninitialized, "value"), BasicJsonType()));
                     }
 
+                    case token_type::uninitialized:
+                    case token_type::end_array:
+                    case token_type::end_object:
+                    case token_type::name_separator:
+                    case token_type::value_separator:
+                    case token_type::end_of_input:
+                    case token_type::literal_or_value:
                     default: // the last token was unexpected
                     {
                         return sax->parse_error(m_lexer.get_position(),

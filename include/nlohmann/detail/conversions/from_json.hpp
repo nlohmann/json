@@ -58,6 +58,13 @@ void get_arithmetic_value(const BasicJsonType& j, ArithmeticType& val)
             break;
         }
 
+        case value_t::null:
+        case value_t::object:
+        case value_t::array:
+        case value_t::string:
+        case value_t::boolean:
+        case value_t::binary:
+        case value_t::discarded:
         default:
             JSON_THROW(type_error::create(302, "type must be number, but is " + std::string(j.type_name()), j));
     }
@@ -343,6 +350,12 @@ void from_json(const BasicJsonType& j, ArithmeticType& val)
             break;
         }
 
+        case value_t::null:
+        case value_t::object:
+        case value_t::array:
+        case value_t::string:
+        case value_t::binary:
+        case value_t::discarded:
         default:
             JSON_THROW(type_error::create(302, "type must be number, but is " + std::string(j.type_name()), j));
     }

@@ -29,22 +29,44 @@ SOFTWARE.
 
 #include "doctest_compatibility.h"
 
+// disable -Wnoexcept as exceptions are switched off for this test suite
+DOCTEST_GCC_SUPPRESS_WARNING_PUSH
+DOCTEST_GCC_SUPPRESS_WARNING("-Wnoexcept")
+
 #include <nlohmann/json.hpp>
-using nlohmann::json;
+using json = nlohmann::json;
 
-#include <algorithm>
+/////////////////////////////////////////////////////////////////////
+// for #2824
+/////////////////////////////////////////////////////////////////////
 
-TEST_CASE("tests on very large JSONs")
+class sax_no_exception : public nlohmann::detail::json_sax_dom_parser<json>
 {
-    SECTION("issue #1419 - Segmentation fault (stack overflow) due to unbounded recursion")
+  public:
+    explicit sax_no_exception(json& j) : nlohmann::detail::json_sax_dom_parser<json>(j, false) {}
+
+    static bool parse_error(std::size_t /*position*/, const std::string& /*last_token*/, const json::exception& ex)
     {
-        const auto depth = 5000000;
+        error_string = new std::string(ex.what()); // NOLINT(cppcoreguidelines-owning-memory)
+        return false;
+    }
 
-        std::string s(2 * depth, '[');
-        std::fill(s.begin() + depth, s.end(), ']');
+    static std::string* error_string;
+};
 
-        json _;
-        CHECK_NOTHROW(_ = nlohmann::json::parse(s));
+std::string* sax_no_exception::error_string = nullptr;
+
+TEST_CASE("Tests with disabled exceptions")
+{
+    SECTION("issue #2824 - encoding of json::exception::what()")
+    {
+        json j;
+        sax_no_exception sax(j);
+
+        CHECK (!json::sax_parse("xyz", &sax));
+        CHECK(*sax_no_exception::error_string == "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - invalid literal; last read: 'x'");
+        delete sax_no_exception::error_string; // NOLINT(cppcoreguidelines-owning-memory)
     }
 }
 
+DOCTEST_GCC_SUPPRESS_WARNING_POP

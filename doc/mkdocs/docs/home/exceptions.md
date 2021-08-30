@@ -50,6 +50,8 @@ Note that `JSON_THROW_USER` should leave the current scope (e.g., by throwing or
     #include <nlohmann/json.hpp>
     ```
 
+Note the explanatory [`what()`](https://en.cppreference.com/w/cpp/error/exception/what) string of exceptions is not available for MSVC if exceptions are disabled, see [#2824](https://github.com/nlohmann/json/discussions/2824).
+
 ### Extended diagnostic messages
 
 Exceptions in the library are thrown in the local context of the JSON value they are detected. This makes detailed diagnostics messages, and hence debugging, difficult.

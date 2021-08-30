@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.9.1
+|  |  |__   |  |  | | | |  version 3.10.2
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -28,6 +28,10 @@ SOFTWARE.
 */
 
 #include "doctest_compatibility.h"
+
+// disable -Wnoexcept due to struct pod_bis
+DOCTEST_GCC_SUPPRESS_WARNING_PUSH
+DOCTEST_GCC_SUPPRESS_WARNING("-Wnoexcept")
 
 #include <nlohmann/json.hpp>
 
@@ -95,3 +99,5 @@ TEST_CASE("runtime checks")
         from_json(j2, pod_bis());
     }
 }
+
+DOCTEST_GCC_SUPPRESS_WARNING_POP

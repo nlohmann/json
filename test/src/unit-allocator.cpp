@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.9.1
+|  |  |__   |  |  | | | |  version 3.10.2
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -108,6 +108,7 @@ struct my_allocator : std::allocator<T>
             throw std::bad_alloc();
         }
 
+        static_cast<void>(p); // fix MSVC's C4100 warning
         p->~T();
     }
 

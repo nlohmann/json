@@ -102,6 +102,14 @@ class exception : public std::exception
                     break;
                 }
 
+                case value_t::null: // LCOV_EXCL_LINE
+                case value_t::string: // LCOV_EXCL_LINE
+                case value_t::boolean: // LCOV_EXCL_LINE
+                case value_t::number_integer: // LCOV_EXCL_LINE
+                case value_t::number_unsigned: // LCOV_EXCL_LINE
+                case value_t::number_float: // LCOV_EXCL_LINE
+                case value_t::binary: // LCOV_EXCL_LINE
+                case value_t::discarded: // LCOV_EXCL_LINE
                 default:   // LCOV_EXCL_LINE
                     break; // LCOV_EXCL_LINE
             }

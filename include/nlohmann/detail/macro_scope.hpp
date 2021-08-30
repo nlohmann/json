@@ -38,8 +38,9 @@
 
 // disable documentation warnings on clang
 #if defined(__clang__)
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wdocumentation"
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wdocumentation"
+    #pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
 #endif
 
 // allow to disable exceptions
@@ -299,4 +300,8 @@
     #define JSON_EXPLICIT
 #else
     #define JSON_EXPLICIT explicit
+#endif
+
+#ifndef JSON_DIAGNOSTICS
+    #define JSON_DIAGNOSTICS 0
 #endif

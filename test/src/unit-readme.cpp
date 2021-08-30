@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.9.1
+|  |  |__   |  |  | | | |  version 3.10.2
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -28,7 +28,6 @@ SOFTWARE.
 */
 
 #include "doctest_compatibility.h"
-DOCTEST_GCC_SUPPRESS_WARNING("-Wfloat-equal")
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;
@@ -43,10 +42,9 @@ using nlohmann::json;
 #include <sstream>
 #include <iomanip>
 
-#if defined(_MSC_VER)
-    #pragma warning (push)
-    #pragma warning (disable : 4189) // local variable is initialized but not referenced
-#endif
+// local variable is initialized but not referenced
+DOCTEST_MSVC_SUPPRESS_WARNING_PUSH
+DOCTEST_MSVC_SUPPRESS_WARNING(4189)
 
 TEST_CASE("README" * doctest::skip())
 {
@@ -322,6 +320,4 @@ TEST_CASE("README" * doctest::skip())
     }
 }
 
-#if defined(_MSC_VER)
-    #pragma warning (pop)
-#endif
+DOCTEST_MSVC_SUPPRESS_WARNING_POP

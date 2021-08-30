@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.9.1
+|  |  |__   |  |  | | | |  version 3.10.2
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -38,6 +38,12 @@ using nlohmann::json;
 #elif (defined(__cplusplus) && __cplusplus >= 201402L) || (defined(_HAS_CXX14) && _HAS_CXX14 == 1)
     #define JSON_HAS_CPP_14
 #endif
+
+// This test suite uses range for loops where values are copied. This is inefficient in usual code, but required to achieve 100% coverage.
+DOCTEST_GCC_SUPPRESS_WARNING_PUSH
+DOCTEST_GCC_SUPPRESS_WARNING("-Wrange-loop-construct")
+DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
+DOCTEST_CLANG_SUPPRESS_WARNING("-Wrange-loop-construct")
 
 TEST_CASE("iterator_wrapper")
 {
@@ -1456,3 +1462,6 @@ TEST_CASE("items()")
 #ifdef JSON_HAS_CPP_14
     #undef JSON_HAS_CPP_14
 #endif
+
+DOCTEST_GCC_SUPPRESS_WARNING_POP
+DOCTEST_CLANG_SUPPRESS_WARNING_POP

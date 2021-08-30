@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.9.1
+|  |  |__   |  |  | | | |  version 3.10.2
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -47,6 +47,10 @@ using nlohmann::json;
 #elif (defined(__cplusplus) && __cplusplus >= 201402L) || (defined(_HAS_CXX14) && _HAS_CXX14 == 1)
     #define JSON_HAS_CPP_14
 #endif
+
+// NLOHMANN_JSON_SERIALIZE_ENUM uses a static std::pair
+DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
+DOCTEST_CLANG_SUPPRESS_WARNING("-Wexit-time-destructors")
 
 TEST_CASE("value conversion")
 {
@@ -1712,3 +1716,5 @@ TEST_CASE("JSON to enum mapping")
 #ifdef JSON_HAS_CPP_14
     #undef JSON_HAS_CPP_14
 #endif
+
+DOCTEST_CLANG_SUPPRESS_WARNING_POP
