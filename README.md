@@ -10,7 +10,7 @@
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/e0d1a9d5d6fd46fcb655c4cb930bb3e8)](https://www.codacy.com/gh/nlohmann/json/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=nlohmann/json&amp;utm_campaign=Badge_Grade)
 [![Language grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/nlohmann/json.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/nlohmann/json/context:cpp)
 [![Fuzzing Status](https://oss-fuzz-build-logs.storage.googleapis.com/badges/json.svg)](https://bugs.chromium.org/p/oss-fuzz/issues/list?sort=-opened&can=1&q=proj:json)
-[![Try online](https://img.shields.io/badge/try-online-blue.svg)](https://wandbox.org/permlink/3lCHrFUZANONKv7a)
+[![Try online](https://img.shields.io/badge/try-online-blue.svg)](https://wandbox.org/permlink/7p8sQckddTc0Y81T)
 [![Documentation](https://img.shields.io/badge/docs-doxygen-blue.svg)](https://nlohmann.github.io/json/doxygen/index.html)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/nlohmann/json/master/LICENSE.MIT)
 [![GitHub Releases](https://img.shields.io/github/release/nlohmann/json.svg)](https://github.com/nlohmann/json/releases)
@@ -1111,7 +1111,8 @@ The following compilers are currently used in continuous integration at [Travis]
 | Clang 11.0.0 with GNU-like command-line                           | Windows-10.0.17763 | GitHub Actions |
 | Clang 11.0.0 with MSVC-like command-line                          | Windows-10.0.17763 | GitHub Actions |
 | Clang 11.0.0 (11.0.0-2~ubuntu20.04.1)                             | Ubuntu 20.04.2 LTS | GitHub Actions |
-| Clang 12.1.0 (12.0.1-++20210423082613+072c90a863aa-1~exp1~20210423063319.76 | Ubuntu 20.04.2 LTS | GitHub Actions |
+| Clang 12.0.0 (11.0.0-2~ubuntu20.04.1)                             | Ubuntu 20.04.2 LTS | GitHub Actions |
+| Clang 13.0.0 (13.0.0-++20210828094952+9c49fee5e7ac-1exp120210828075752.71 | Ubuntu 20.04.2 LTS | GitHub Actions |
 | Visual Studio 14 2015 MSVC 19.0.24241.7 (Build Engine version 14.0.25420.1) | Windows-6.3.9600 | AppVeyor |
 | Visual Studio 15 2017 MSVC 19.16.27035.0 (Build Engine version 15.9.21+g9802d43bc3 for .NET Framework) | Windows-10.0.14393 | AppVeyor |
 | Visual Studio 15 2017 MSVC 19.16.27045.0 (Build Engine version 15.9.21+g9802d43bc3 for .NET Framework) | Windows-10.0.14393 | GitHub Actions |
@@ -1590,6 +1591,10 @@ I deeply appreciate the help of the following people.
 - [justanotheranonymoususer](https://github.com/justanotheranonymoususer) made the examples in the README more consistent.
 - [Finkman](https://github.com/Finkman) suppressed some `-Wfloat-equal` warnings.
 - [Ferry Huberts](https://github.com/fhuberts) fixed `-Wswitch-enum` warnings.
+- [Arseniy Terekhin](https://github.com/senyai) made the GDB pretty-printer robust against unset variable names.
+- [Amir Masoud Abdol](https://github.com/amirmasoudabdol) updated the Homebrew command as nlohmann/json is now in homebrew-core.
+- [Hallot](https://github.com/Hallot) fixed some `-Wextra-semi-stmt warnings`.
+- [Giovanni Cerretani](https://github.com/gcerretani) fixed `-Wunused` warnings on `JSON_DIAGNOSTICS`.
 - [Bogdan Popescu](https://github.com/Kapeli) hosts the [docset](https://github.com/Kapeli/Dash-User-Contributions/tree/master/docsets/JSON_for_Modern_C%2B%2B) for offline documentation viewers.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
@@ -1622,7 +1627,7 @@ The library itself consists of a single header file licensed under the MIT licen
 - [**send_to_wandbox**](https://github.com/nlohmann/json/blob/develop/doc/scripts/send_to_wandbox.py) to send code examples to [Wandbox](https://wandbox.org)
 - [**Travis**](https://travis-ci.org) for [continuous integration](https://travis-ci.org/nlohmann/json) on Linux and macOS
 - [**Valgrind**](https://valgrind.org) to check for correct memory management
-- [**Wandbox**](https://wandbox.org) for [online examples](https://wandbox.org/permlink/3lCHrFUZANONKv7a)
+- [**Wandbox**](https://wandbox.org) for [online examples](https://wandbox.org/permlink/7p8sQckddTc0Y81T)
 
 
 ## Projects using JSON for Modern C++
