@@ -7611,6 +7611,23 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         binary_writer<char>(o).write_bson(j);
     }
 
+    static std::vector<std::uint8_t> to_bon8(const basic_json& j)
+    {
+        std::vector<std::uint8_t> result;
+        to_bon8(j, result);
+        return result;
+    }
+
+    static void to_bon8(const basic_json& j, detail::output_adapter<std::uint8_t> o)
+    {
+        binary_writer<std::uint8_t>(o).write_bon8(j);
+    }
+
+    static void to_bon8(const basic_json& j, detail::output_adapter<char> o)
+    {
+        binary_writer<char>(o).write_bon8(j);
+    }
+
 
     /*!
     @brief create a JSON value from an input in CBOR format

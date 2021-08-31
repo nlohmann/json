@@ -923,6 +923,158 @@ class binary_writer
         }
     }
 
+    /*!
+    @param[in] j  JSON value to serialize
+    */
+    void write_bon8(const BasicJsonType& j)
+    {
+        switch (j.type())
+        {
+            case value_t::null:
+            {
+                oa->write_character(to_char_type(0xFA));
+                break;
+            }
+
+            case value_t::boolean:
+            {
+                oa->write_character(j.m_value.boolean
+                                    ? to_char_type(0xF9)
+                                    : to_char_type(0xF8));
+                break;
+            }
+
+            case value_t::number_float:
+            {
+                // special values
+                if (j.m_value.number_float == -1.0)
+                {
+                    oa->write_character(to_char_type(0xFB));
+                    break;
+                }
+                if (j.m_value.number_float == 0.0)
+                {
+                    oa->write_character(to_char_type(0xFC));
+                    break;
+                }
+                if (j.m_value.number_float == 1.0)
+                {
+                    oa->write_character(to_char_type(0xFD));
+                    break;
+                }
+
+                // write float with prefix
+                write_compact_float(j.m_value.number_float, detail::input_format_t::bon8);
+                break;
+            }
+
+            case value_t::string:
+            {
+                // empty string: use end-of-text symbol
+                if (j.m_value.string->empty())
+                {
+                    oa->write_character(to_char_type(0xFF));
+                    break;
+                }
+
+                // write strings as is
+                oa->write_characters(
+                    reinterpret_cast<const CharType*>(j.m_value.string->c_str()),
+                    j.m_value.string->size());
+                break;
+            }
+
+            case value_t::array:
+            {
+                const auto N = j.m_value.array->size();
+                if (N <= 4)
+                {
+                    // start array with count (80..84)
+                    oa->write_character(to_char_type(0x80 + N));
+                }
+                else
+                {
+                    // start array
+                    oa->write_character(to_char_type(0x85));
+                }
+
+                // write each element
+                for (std::size_t i = 0; i < N; ++i)
+                {
+                    const auto& el = j.m_value.array->operator[](i);
+
+                    // check if 0xFF after nonempty string and string is required
+                    if (i > 0)
+                    {
+                        const auto& prev = j.m_value.array->operator[](i - 1);
+                        if (el.is_string() && prev.is_string() && !prev.m_value.string->empty())
+                        {
+                            oa->write_character(to_char_type(0xFF));
+                        }
+                    }
+
+                    write_bon8(el);
+                }
+
+                if (N > 4)
+                {
+                    // end of container
+                    oa->write_character(to_char_type(0xFE));
+                }
+                break;
+            }
+
+            case value_t::object:
+            {
+                const auto N = j.m_value.object->size();
+                if (N <= 4)
+                {
+                    // start object with count (86..8A)
+                    oa->write_character(to_char_type(0x86 + N));
+                }
+                else
+                {
+                    // start object
+                    oa->write_character(to_char_type(0x8B));
+                }
+
+                // write each element
+                for (auto it = j.m_value.object->begin(); it != j.m_value.object->end(); ++it)
+                {
+                    const auto& key = it->first;
+                    const auto& value = it->second;
+
+                    write_bon8(key);
+
+                    // check if we need a 0xFF separator between key and value
+                    if (!key.empty() && value.is_string())
+                    {
+                        oa->write_character(to_char_type(0xFF));
+                    }
+
+                    write_bon8(value);
+
+                    // check if we need a 0xFF separator between the value and the next key
+                    if (value.is_string() && !value.m_value.string->empty() && std::next(it) != j.m_value.object->end())
+                    {
+                        oa->write_character(to_char_type(0xFF));
+                    }
+                }
+
+                if (N > 4)
+                {
+                    // end of container
+                    oa->write_character(to_char_type(0xFE));
+                }
+                break;
+            }
+
+            case value_t::discarded:
+            default:
+                break;
+        }
+    }
+
   private:
     //////////
     // BSON //
@@ -1524,6 +1676,20 @@ class binary_writer
         return 'D';  // float 64
     }
 
+    //////////
+    // BON8 //
+    //////////
+
+    static constexpr CharType get_bon8_float_prefix(float /*unused*/)
+    {
+        return to_char_type(0x8E);
+    }
+
+    static constexpr CharType get_bon8_float_prefix(double /*unused*/)
+    {
+        return to_char_type(0x8F);
+    }
+
     ///////////////////////
     // Utility functions //
     ///////////////////////
@@ -1566,16 +1732,38 @@ class binary_writer
                 static_cast<double>(n) <= static_cast<double>((std::numeric_limits<float>::max)()) &&
                 static_cast<double>(static_cast<float>(n)) == static_cast<double>(n))
         {
-            oa->write_character(format == detail::input_format_t::cbor
-                                ? get_cbor_float_prefix(static_cast<float>(n))
-                                : get_msgpack_float_prefix(static_cast<float>(n)));
+            switch (format)
+            {
+                case input_format_t::cbor:
+                    get_cbor_float_prefix(static_cast<float>(n));
+                    break;
+                case input_format_t::msgpack:
+                    get_msgpack_float_prefix(static_cast<float>(n));
+                    break;
+                case input_format_t::bon8:
+                    get_bon8_float_prefix(static_cast<float>(n));
+                    break;
+                default:
+                    break;
+            }
             write_number(static_cast<float>(n));
         }
         else
         {
-            oa->write_character(format == detail::input_format_t::cbor
-                                ? get_cbor_float_prefix(n)
-                                : get_msgpack_float_prefix(n));
+            switch (format)
+            {
+                case input_format_t::cbor:
+                    get_cbor_float_prefix(n);
+                    break;
+                case input_format_t::msgpack:
+                    get_msgpack_float_prefix(n);
+                    break;
+                case input_format_t::bon8:
+                    get_bon8_float_prefix(n);
+                    break;
+                default:
+                    break;
+            }
             write_number(n);
         }
 #ifdef __GNUC__
