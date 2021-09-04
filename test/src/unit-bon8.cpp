@@ -155,6 +155,360 @@ TEST_CASE("BON8")
             }
         }
 
+        SECTION("unsigned integers")
+        {
+            SECTION("0..39")
+            {
+                SECTION("0")
+                {
+                    json j = 0U;
+                    std::vector<uint8_t> expected = {0x90};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+
+                SECTION("39")
+                {
+                    json j = 39U;
+                    std::vector<uint8_t> expected = {0xB7};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+            }
+
+            SECTION("40..3839")
+            {
+                SECTION("40")
+                {
+                    json j = 40U;
+                    std::vector<uint8_t> expected = {0xC2, 0x28};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+
+                SECTION("3839")
+                {
+                    json j = 3839U;
+                    std::vector<uint8_t> expected = {0xDF, 0x7F};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+            }
+
+            SECTION("3840..524287")
+            {
+                SECTION("3840")
+                {
+                    json j = 3840U;
+                    std::vector<uint8_t> expected = {0xE0, 0x0F, 0x00};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+
+                SECTION("524287")
+                {
+                    json j = 524287U;
+                    std::vector<uint8_t> expected = {0xEF, 0x7F, 0xFF};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+            }
+
+            SECTION("524288..67108863")
+            {
+                SECTION("524288")
+                {
+                    json j = 524288U;
+                    std::vector<uint8_t> expected = {0xF0, 0x08, 0x00, 0x00};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+
+                SECTION("67108863")
+                {
+                    json j = 67108863U;
+                    std::vector<uint8_t> expected = {0xF7, 0x7F, 0xFF, 0xFF};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+            }
+
+            SECTION("67108864..2147483647 (int32max)")
+            {
+                SECTION("67108864")
+                {
+                    json j = 67108864U;
+                    std::vector<uint8_t> expected = {0x8C, 0x04, 0x00, 0x00, 0x00};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+
+                SECTION("2147483647 (int32max)")
+                {
+                    json j = 2147483647U;
+                    std::vector<uint8_t> expected = {0x8C, 0x7F, 0xFF, 0xFF, 0xFF};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+            }
+
+            SECTION("2147483648..9223372036854775807 (int64max)")
+            {
+                SECTION("2147483648")
+                {
+                    json j = 2147483648U;
+                    std::vector<uint8_t> expected = {0x8D, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+
+                SECTION("9223372036854775807 (int64max)")
+                {
+                    json j = 9223372036854775807U;
+                    std::vector<uint8_t> expected = {0x8D, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+            }
+
+            SECTION("greater than int64max")
+            {
+                json j = 9223372036854775808U;
+                CHECK_THROWS_WITH_AS(json::to_bon8(j), "[json.exception.out_of_range.407] integer number 9223372036854775808 cannot be represented by BON8 as it does not fit int64", json::out_of_range);
+            }
+        }
+
+        SECTION("signed integers")
+        {
+            SECTION("-9223372036854775808 (int64min)..-2147483649")
+            {
+                SECTION("-9223372036854775808")
+                {
+                    json j = INT64_MIN;
+                    std::vector<uint8_t> expected = {0x8D, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+
+                SECTION("-2147483649")
+                {
+                    json j = -2147483649;
+                    std::vector<uint8_t> expected = {0x8D, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F, 0xFF, 0xFF, 0xFF};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+            }
+
+            SECTION("-2147483648 (int32min)..-33554433")
+            {
+                SECTION("-2147483648")
+                {
+                    json j = -2147483648;
+                    std::vector<uint8_t> expected = {0x8C, 0x80, 0x00, 0x00, 0x00};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+
+                SECTION("-33554433")
+                {
+                    json j = -33554433;
+                    std::vector<uint8_t> expected = {0x8C, 0xFD, 0xFF, 0xFF, 0xFF};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+            }
+
+            SECTION("-33554432..-262145")
+            {
+                SECTION("-33554432")
+                {
+                    json j = -33554432;
+                    std::vector<uint8_t> expected = {0xF7, 0xFF, 0xFF, 0xFF};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+
+                SECTION("-262145")
+                {
+                    json j = -262145;
+                    std::vector<uint8_t> expected = {0xF0, 0xC4, 0x00, 0x00};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+            }
+
+            SECTION("-262144..-1921")
+            {
+                SECTION("-262144")
+                {
+                    json j = -262144;
+                    std::vector<uint8_t> expected = {0xEF, 0xFF, 0xFF};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+
+                SECTION("-1921")
+                {
+                    json j = -1921;
+                    std::vector<uint8_t> expected = {0xE0, 0xC7, 0x80};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+            }
+
+            SECTION("-1920..-11")
+            {
+                SECTION("-1920")
+                {
+                    json j = -1920;
+                    std::vector<uint8_t> expected = {0xDF, 0xFF};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+
+                SECTION("-11")
+                {
+                    json j = -11;
+                    std::vector<uint8_t> expected = {0xC2, 0xCA};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+            }
+
+            SECTION("-10..-1")
+            {
+                SECTION("-10")
+                {
+                    json j = -10;
+                    std::vector<uint8_t> expected = {0xC1};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+
+                SECTION("-1")
+                {
+                    json j = -1;
+                    std::vector<uint8_t> expected = {0xB8};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+            }
+
+            SECTION("0..39")
+            {
+                SECTION("0")
+                {
+                    json j = 0;
+                    std::vector<uint8_t> expected = {0x90};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+
+                SECTION("39")
+                {
+                    json j = 39;
+                    std::vector<uint8_t> expected = {0xB7};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+            }
+
+            SECTION("40..3839")
+            {
+                SECTION("40")
+                {
+                    json j = 40;
+                    std::vector<uint8_t> expected = {0xC2, 0x28};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+
+                SECTION("3839")
+                {
+                    json j = 3839;
+                    std::vector<uint8_t> expected = {0xDF, 0x7F};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+            }
+
+            SECTION("3840..524287")
+            {
+                SECTION("3840")
+                {
+                    json j = 3840;
+                    std::vector<uint8_t> expected = {0xE0, 0x0F, 0x00};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+
+                SECTION("524287")
+                {
+                    json j = 524287;
+                    std::vector<uint8_t> expected = {0xEF, 0x7F, 0xFF};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+            }
+
+            SECTION("524288..67108863")
+            {
+                SECTION("524288")
+                {
+                    json j = 524288;
+                    std::vector<uint8_t> expected = {0xF0, 0x08, 0x00, 0x00};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+
+                SECTION("67108863")
+                {
+                    json j = 67108863;
+                    std::vector<uint8_t> expected = {0xF7, 0x7F, 0xFF, 0xFF};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+            }
+
+            SECTION("67108864..2147483647 (int32max)")
+            {
+                SECTION("67108864")
+                {
+                    json j = 67108864;
+                    std::vector<uint8_t> expected = {0x8C, 0x04, 0x00, 0x00, 0x00};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+
+                SECTION("2147483647 (int32max)")
+                {
+                    json j = 2147483647;
+                    std::vector<uint8_t> expected = {0x8C, 0x7F, 0xFF, 0xFF, 0xFF};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+            }
+
+            SECTION("2147483648..9223372036854775807 (int64max)")
+            {
+                SECTION("2147483648")
+                {
+                    json j = 2147483648;
+                    std::vector<uint8_t> expected = {0x8D, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+
+                SECTION("9223372036854775807 (int64max)")
+                {
+                    json j = 9223372036854775807;
+                    std::vector<uint8_t> expected = {0x8D, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+            }
+        }
+
         SECTION("floating-point numbers")
         {
             SECTION("-1.0")
@@ -177,6 +531,14 @@ TEST_CASE("BON8")
             {
                 json j = 1.0;
                 std::vector<uint8_t> expected = {0xFD};
+                const auto result = json::to_bon8(j);
+                CHECK(result == expected);
+            }
+
+            SECTION("-0.0")
+            {
+                json j = -0.0;
+                std::vector<uint8_t> expected = {0x8E, 0x80, 0x00, 0x00, 0x00};
                 const auto result = json::to_bon8(j);
                 CHECK(result == expected);
             }
