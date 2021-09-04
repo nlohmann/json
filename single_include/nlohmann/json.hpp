@@ -8414,6 +8414,7 @@ class binary_reader
                 result = parse_ubjson_internal();
                 break;
 
+            case input_format_t::bon8: // LCOV_EXCL_LINE
             case input_format_t::json: // LCOV_EXCL_LINE
             default:            // LCOV_EXCL_LINE
                 JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
@@ -10790,6 +10791,7 @@ class binary_reader
                 error_msg += "BSON";
                 break;
 
+            case input_format_t::bon8: // LCOV_EXCL_LINE
             case input_format_t::json: // LCOV_EXCL_LINE
             default:            // LCOV_EXCL_LINE
                 JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
@@ -14518,7 +14520,7 @@ class binary_writer
 
             case value_t::number_unsigned:
             {
-                if (j.m_value.number_unsigned > std::numeric_limits<std::int64_t>::max())
+                if (j.m_value.number_unsigned > (std::numeric_limits<std::int64_t>::max)())
                 {
                     JSON_THROW(out_of_range::create(407, "integer number " + std::to_string(j.m_value.number_unsigned) + " cannot be represented by BON8 as it does not fit int64", j));
                 }
@@ -15269,74 +15271,74 @@ class binary_writer
 
     void write_bon8_integer(typename BasicJsonType::number_integer_t value)
     {
-        if (value < std::numeric_limits<std::int32_t>::min() || value > std::numeric_limits<std::int32_t>::max())
+        if (value < (std::numeric_limits<std::int32_t>::min)() || value > (std::numeric_limits<std::int32_t>::max)())
         {
             // 64 bit integers
-            oa->write_character(0x8D);
+            oa->write_character(to_char_type(0x8D));
             write_number(static_cast<std::int64_t>(value));
         }
         else if (value < -33554432 || value > 67108863)
         {
             // 32 bit integers
-            oa->write_character(0x8C);
+            oa->write_character(to_char_type(0x8C));
             write_number(static_cast<std::int32_t>(value));
         }
         else if (value < -262144)
         {
             JSON_ASSERT(value >= -33554432);
             value = -value - 1;
-            oa->write_character(0xF0 + (value >> 22 & 0x07));
-            oa->write_character(0xC0 + (value >> 16 & 0x3F));
-            oa->write_character(value >> 8);
-            oa->write_character(value);
+            oa->write_character(to_char_type(0xF0 + (value >> 22 & 0x07)));
+            oa->write_character(to_char_type(0xC0 + (value >> 16 & 0x3F)));
+            oa->write_character(to_char_type(value >> 8));
+            oa->write_character(to_char_type(value));
         }
         else if (value < -1920)
         {
             JSON_ASSERT(value >= -262144);
             value = -value - 1;
-            oa->write_character(0xE0 + (value >> 14 & 0x0F));
-            oa->write_character(0xC0 + (value >> 8 & 0x3F));
-            oa->write_character(value);
+            oa->write_character(to_char_type(0xE0 + (value >> 14 & 0x0F)));
+            oa->write_character(to_char_type(0xC0 + (value >> 8 & 0x3F)));
+            oa->write_character(to_char_type(value));
         }
         else if (value < -10)
         {
             JSON_ASSERT(value >= -1920);
             value = -value - 1;
-            oa->write_character(0xC2 + (value >> 6 & 0x1F));
-            oa->write_character(0xC0 + (value & 0x3F));
+            oa->write_character(to_char_type(0xC2 + (value >> 6 & 0x1F)));
+            oa->write_character(to_char_type(0xC0 + (value & 0x3F)));
         }
         else if (value < 0)
         {
             JSON_ASSERT(value >= -10);
             value = -value - 1;
-            oa->write_character(0xB8 + value);
+            oa->write_character(to_char_type(0xB8 + value));
         }
         else if (value <= 39)
         {
             JSON_ASSERT(value >= 0);
-            oa->write_character(0x90 + value);
+            oa->write_character(to_char_type(0x90 + value));
         }
         else if (value <= 3839)
         {
             JSON_ASSERT(value >= 0);
-            oa->write_character(0xC2 + (value >> 7 & 0x1F));
-            oa->write_character(value & 0x7F);
+            oa->write_character(to_char_type(0xC2 + (value >> 7 & 0x1F)));
+            oa->write_character(to_char_type(value & 0x7F));
         }
         else if (value <= 524287)
         {
             JSON_ASSERT(value >= 0);
-            oa->write_character(0xE0 + (value >> 15 & 0x0F));
-            oa->write_character(value >> 8 & 0x7F);
-            oa->write_character(value);
+            oa->write_character(to_char_type(0xE0 + (value >> 15 & 0x0F)));
+            oa->write_character(to_char_type(value >> 8 & 0x7F));
+            oa->write_character(to_char_type(value));
         }
         else
         {
             JSON_ASSERT(value >= 0);
             JSON_ASSERT(value <= 67108863);
-            oa->write_character(0xF0 + (value >> 23 & 0x17));
-            oa->write_character(value >> 16 & 0x7F);
-            oa->write_character(value >> 8);
-            oa->write_character(value);
+            oa->write_character(to_char_type(0xF0 + (value >> 23 & 0x17)));
+            oa->write_character(to_char_type(value >> 16 & 0x7F));
+            oa->write_character(to_char_type(value >> 8));
+            oa->write_character(to_char_type(value));
         }
     }
 
@@ -15403,6 +15405,9 @@ class binary_writer
                 case input_format_t::bon8:
                     oa->write_character(get_bon8_float_prefix(static_cast<float>(n)));
                     break;
+                case input_format_t::bson:
+                case input_format_t::json:
+                case input_format_t::ubjson:
                 default:
                     break;
             }
@@ -15421,6 +15426,9 @@ class binary_writer
                 case input_format_t::bon8:
                     oa->write_character(get_bon8_float_prefix(n));
                     break;
+                case input_format_t::bson:
+                case input_format_t::json:
+                case input_format_t::ubjson:
                 default:
                     break;
             }
