@@ -292,7 +292,7 @@ TEST_CASE("BON8")
 
                 SECTION("-2147483649")
                 {
-                    json j = -2147483649;
+                    json j = -2147483649L;
                     std::vector<uint8_t> expected = {0x8D, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F, 0xFF, 0xFF, 0xFF};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
@@ -303,7 +303,7 @@ TEST_CASE("BON8")
             {
                 SECTION("-2147483648")
                 {
-                    json j = -2147483648;
+                    json j = -2147483648L;
                     std::vector<uint8_t> expected = {0x8C, 0x80, 0x00, 0x00, 0x00};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);

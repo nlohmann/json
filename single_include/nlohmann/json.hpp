@@ -14520,7 +14520,7 @@ class binary_writer
 
             case value_t::number_unsigned:
             {
-                if (j.m_value.number_unsigned > (std::numeric_limits<std::int64_t>::max)())
+                if (j.m_value.number_unsigned > static_cast<typename BasicJsonType::number_unsigned_t>((std::numeric_limits<std::int64_t>::max)()))
                 {
                     JSON_THROW(out_of_range::create(407, "integer number " + std::to_string(j.m_value.number_unsigned) + " cannot be represented by BON8 as it does not fit int64", j));
                 }
@@ -14579,7 +14579,7 @@ class binary_writer
                 if (N <= 4)
                 {
                     // start array with count (80..84)
-                    oa->write_character(to_char_type(0x80 + N));
+                    oa->write_character(static_cast<std::uint8_t>(0x80 + N));
                 }
                 else
                 {
@@ -14619,7 +14619,7 @@ class binary_writer
                 if (N <= 4)
                 {
                     // start object with count (86..8A)
-                    oa->write_character(to_char_type(0x86 + N));
+                    oa->write_character(static_cast<std::uint8_t>(0x86 + N));
                 }
                 else
                 {
@@ -14658,6 +14658,7 @@ class binary_writer
                 break;
             }
 
+            case value_t::binary:
             case value_t::discarded:
             default:
                 break;
@@ -15287,58 +15288,58 @@ class binary_writer
         {
             JSON_ASSERT(value >= -33554432);
             value = -value - 1;
-            oa->write_character(to_char_type(0xF0 + (value >> 22 & 0x07)));
-            oa->write_character(to_char_type(0xC0 + (value >> 16 & 0x3F)));
-            oa->write_character(to_char_type(value >> 8));
-            oa->write_character(to_char_type(value));
+            oa->write_character(static_cast<std::uint8_t>(0xF0 + (value >> 22 & 0x07)));
+            oa->write_character(static_cast<std::uint8_t>(0xC0 + (value >> 16 & 0x3F)));
+            oa->write_character(static_cast<std::uint8_t>(value >> 8));
+            oa->write_character(static_cast<std::uint8_t>(value));
         }
         else if (value < -1920)
         {
             JSON_ASSERT(value >= -262144);
             value = -value - 1;
-            oa->write_character(to_char_type(0xE0 + (value >> 14 & 0x0F)));
-            oa->write_character(to_char_type(0xC0 + (value >> 8 & 0x3F)));
-            oa->write_character(to_char_type(value));
+            oa->write_character(static_cast<std::uint8_t>(0xE0 + (value >> 14 & 0x0F)));
+            oa->write_character(static_cast<std::uint8_t>(0xC0 + (value >> 8 & 0x3F)));
+            oa->write_character(static_cast<std::uint8_t>(value));
         }
         else if (value < -10)
         {
             JSON_ASSERT(value >= -1920);
             value = -value - 1;
-            oa->write_character(to_char_type(0xC2 + (value >> 6 & 0x1F)));
-            oa->write_character(to_char_type(0xC0 + (value & 0x3F)));
+            oa->write_character(static_cast<std::uint8_t>(0xC2 + (value >> 6 & 0x1F)));
+            oa->write_character(static_cast<std::uint8_t>(0xC0 + (value & 0x3F)));
         }
         else if (value < 0)
         {
             JSON_ASSERT(value >= -10);
             value = -value - 1;
-            oa->write_character(to_char_type(0xB8 + value));
+            oa->write_character(static_cast<std::uint8_t>(0xB8 + value));
         }
         else if (value <= 39)
         {
             JSON_ASSERT(value >= 0);
-            oa->write_character(to_char_type(0x90 + value));
+            oa->write_character(static_cast<std::uint8_t>(0x90 + value));
         }
         else if (value <= 3839)
         {
             JSON_ASSERT(value >= 0);
-            oa->write_character(to_char_type(0xC2 + (value >> 7 & 0x1F)));
-            oa->write_character(to_char_type(value & 0x7F));
+            oa->write_character(static_cast<std::uint8_t>(0xC2 + (value >> 7 & 0x1F)));
+            oa->write_character(static_cast<std::uint8_t>(value & 0x7F));
         }
         else if (value <= 524287)
         {
             JSON_ASSERT(value >= 0);
-            oa->write_character(to_char_type(0xE0 + (value >> 15 & 0x0F)));
-            oa->write_character(to_char_type(value >> 8 & 0x7F));
-            oa->write_character(to_char_type(value));
+            oa->write_character(static_cast<std::uint8_t>(0xE0 + (value >> 15 & 0x0F)));
+            oa->write_character(static_cast<std::uint8_t>(value >> 8 & 0x7F));
+            oa->write_character(static_cast<std::uint8_t>(value));
         }
         else
         {
             JSON_ASSERT(value >= 0);
             JSON_ASSERT(value <= 67108863);
-            oa->write_character(to_char_type(0xF0 + (value >> 23 & 0x17)));
-            oa->write_character(to_char_type(value >> 16 & 0x7F));
-            oa->write_character(to_char_type(value >> 8));
-            oa->write_character(to_char_type(value));
+            oa->write_character(static_cast<std::uint8_t>(0xF0 + (value >> 23 & 0x17)));
+            oa->write_character(static_cast<std::uint8_t>(value >> 16 & 0x7F));
+            oa->write_character(static_cast<std::uint8_t>(value >> 8));
+            oa->write_character(static_cast<std::uint8_t>(value));
         }
     }
 
