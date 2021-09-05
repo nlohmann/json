@@ -15425,11 +15425,13 @@ class binary_writer
                 case input_format_t::bon8:
                     oa->write_character(get_bon8_float_prefix(static_cast<float>(n)));
                     break;
+                // LCOV_EXCL_START
                 case input_format_t::bson:
                 case input_format_t::json:
                 case input_format_t::ubjson:
                 default:
                     break;
+                    // LCOV_EXCL_STOP
             }
             write_number(static_cast<float>(n));
         }
@@ -15446,11 +15448,13 @@ class binary_writer
                 case input_format_t::bon8:
                     oa->write_character(get_bon8_float_prefix(n));
                     break;
+                // LCOV_EXCL_START
                 case input_format_t::bson:
                 case input_format_t::json:
                 case input_format_t::ubjson:
                 default:
                     break;
+                    // LCOV_EXCL_STOP
             }
             write_number(n);
         }

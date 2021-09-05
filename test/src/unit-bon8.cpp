@@ -435,36 +435,61 @@ TEST_CASE("BON8")
 
         SECTION("floating-point numbers")
         {
-            SECTION("-1.0")
+            SECTION("special values")
             {
-                json j = -1.0;
-                std::vector<uint8_t> expected = {0xFB};
-                const auto result = json::to_bon8(j);
-                CHECK(result == expected);
+                SECTION("-1.0")
+                {
+                    json j = -1.0;
+                    std::vector<uint8_t> expected = {0xFB};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+
+                SECTION("0.0")
+                {
+                    json j = 0.0;
+                    std::vector<uint8_t> expected = {0xFC};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+
+                SECTION("1.0")
+                {
+                    json j = 1.0;
+                    std::vector<uint8_t> expected = {0xFD};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+
+                SECTION("-0.0")
+                {
+                    json j = -0.0;
+                    std::vector<uint8_t> expected = {0x8E, 0x80, 0x00, 0x00, 0x00};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
             }
 
-            SECTION("0.0")
+            SECTION("floats")
             {
-                json j = 0.0;
-                std::vector<uint8_t> expected = {0xFC};
-                const auto result = json::to_bon8(j);
-                CHECK(result == expected);
+                SECTION("2.0")
+                {
+                    json j = 2.0;
+                    std::vector<uint8_t> expected = {0x8E, 0x40, 0x00, 0x00, 0x00};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
             }
 
-            SECTION("1.0")
+            SECTION("doubles")
             {
-                json j = 1.0;
-                std::vector<uint8_t> expected = {0xFD};
-                const auto result = json::to_bon8(j);
-                CHECK(result == expected);
-            }
-
-            SECTION("-0.0")
-            {
-                json j = -0.0;
-                std::vector<uint8_t> expected = {0x8E, 0x80, 0x00, 0x00, 0x00};
-                const auto result = json::to_bon8(j);
-                CHECK(result == expected);
+                SECTION("100000000.1")
+                {
+                    json j = 100000000.1;
+                    std::vector<uint8_t> expected = {0x8F, 0x41, 0x97, 0xD7, 0x84, 0x00, 0x66, 0x66, 0x66};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
             }
         }
 
