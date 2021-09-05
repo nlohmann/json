@@ -596,6 +596,17 @@ TEST_CASE("BON8")
                     CHECK(result == expected);
                 }
             }
+
+            SECTION("object without count")
+            {
+                SECTION("{\"one\": 1, \"two\": 2, \"three\": 3, \"four\": 4, \"five\": 5}")
+                {
+                    json j = R"({"one": 1, "two": 2, "three": 3, "four": 4, "five": 5})"_json;
+                    std::vector<uint8_t> expected = {0x8b, 'f', 'i', 'v', 'e', 0x95, 'f', 'o', 'u', 'r', 0x94, 'o', 'n', 'e', 0x91, 't', 'h', 'r', 'e', 'e', 0x93, 't', 'w', 'o', 0x92, 0xFE};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+            }
         }
     }
 }
