@@ -481,7 +481,7 @@ TEST_CASE("BON8")
             SECTION("other strings")
             {
                 json j = "This is a string.";
-                std::vector<uint8_t> expected = {'T', 'h', 'i', 's', ' ', 'i', 's', ' ', 'a', ' ', 's', 't', 'r', 'i', 'n', 'g', '.'};
+                std::vector<uint8_t> expected = {'T', 'h', 'i', 's', ' ', 'i', 's', ' ', 'a', ' ', 's', 't', 'r', 'i', 'n', 'g', '.', 0xFF};
                 const auto result = json::to_bon8(j);
                 CHECK(result == expected);
             }
@@ -534,7 +534,7 @@ TEST_CASE("BON8")
                 SECTION("[\"s\", \"s\"]")
                 {
                     json j = {"s", "s"};
-                    std::vector<uint8_t> expected = {0x82, 's', 0xFF, 's'};
+                    std::vector<uint8_t> expected = {0x82, 's', 0xFF, 's', 0xFF};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
                 }
@@ -542,7 +542,31 @@ TEST_CASE("BON8")
                 SECTION("[\"\", \"s\"]")
                 {
                     json j = {"", "s"};
-                    std::vector<uint8_t> expected = {0x82, 0xFF, 's'};
+                    std::vector<uint8_t> expected = {0x82, 0xFF, 's', 0xFF};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+
+                SECTION("[[[\"foo\"]]]")
+                {
+                    json j = R"([[["foo"]]])"_json;
+                    std::vector<uint8_t> expected = {0x81, 0x81, 0x81, 'f', 'o', 'o', 0xFF};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+
+                SECTION("[[[1]]]")
+                {
+                    json j = R"([[[1]]])"_json;
+                    std::vector<uint8_t> expected = {0x81, 0x81, 0x81, 0x91};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+
+                SECTION("[[[\"\"]]]")
+                {
+                    json j = R"([[[""]]])"_json;
+                    std::vector<uint8_t> expected = {0x81, 0x81, 0x81, 0xFF};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
                 }
@@ -591,7 +615,15 @@ TEST_CASE("BON8")
                 SECTION("{\"a\": \"\", \"c\": \"d\"}")
                 {
                     json j = {{"a", ""}, {"c", "d"}};
-                    std::vector<uint8_t> expected = {0x88, 'a', 0xFF, 0xFF, 'c', 0xFF, 'd'};
+                    std::vector<uint8_t> expected = {0x88, 'a', 0xFF, 0xFF, 'c', 0xFF, 'd', 0xFF};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+
+                SECTION("{\"a\": \"b\", \"c\": \"d\"}")
+                {
+                    json j = {{"a", "b"}, {"c", "d"}};
+                    std::vector<uint8_t> expected = {0x88, 'a', 0xFF, 'b', 0xFF, 'c', 0xFF, 'd', 0xFF};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
                 }

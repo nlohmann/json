@@ -928,166 +928,10 @@ class binary_writer
     */
     void write_bon8(const BasicJsonType& j)
     {
-        switch (j.type())
+        const bool last_written_value_is_string = write_bon8_internal(j);
+        if (last_written_value_is_string)
         {
-            case value_t::null:
-            {
-                oa->write_character(to_char_type(0xFA));
-                break;
-            }
-
-            case value_t::boolean:
-            {
-                oa->write_character(j.m_value.boolean
-                                    ? to_char_type(0xF9)
-                                    : to_char_type(0xF8));
-                break;
-            }
-
-            case value_t::number_unsigned:
-            {
-                if (j.m_value.number_unsigned > static_cast<typename BasicJsonType::number_unsigned_t>((std::numeric_limits<std::int64_t>::max)()))
-                {
-                    JSON_THROW(out_of_range::create(407, "integer number " + std::to_string(j.m_value.number_unsigned) + " cannot be represented by BON8 as it does not fit int64", j));
-                }
-                write_bon8_integer(static_cast<typename BasicJsonType::number_integer_t>(j.m_value.number_unsigned));
-                break;
-            }
-
-            case value_t::number_integer:
-            {
-                write_bon8_integer(j.m_value.number_integer);
-                break;
-            }
-
-            case value_t::number_float:
-            {
-                // special values
-                if (j.m_value.number_float == -1.0)
-                {
-                    oa->write_character(to_char_type(0xFB));
-                }
-                else if (j.m_value.number_float == 0.0 && !std::signbit(j.m_value.number_float))
-                {
-                    oa->write_character(to_char_type(0xFC));
-                }
-                else if (j.m_value.number_float == 1.0)
-                {
-                    oa->write_character(to_char_type(0xFD));
-                }
-                else
-                {
-                    // write float with prefix
-                    write_compact_float(j.m_value.number_float, detail::input_format_t::bon8);
-                }
-                break;
-            }
-
-            case value_t::string:
-            {
-                // empty string: use end-of-text symbol
-                if (j.m_value.string->empty())
-                {
-                    oa->write_character(to_char_type(0xFF));
-                    break;
-                }
-
-                // write strings as is
-                oa->write_characters(
-                    reinterpret_cast<const CharType*>(j.m_value.string->c_str()),
-                    j.m_value.string->size());
-                break;
-            }
-
-            case value_t::array:
-            {
-                const auto N = j.m_value.array->size();
-                if (N <= 4)
-                {
-                    // start array with count (80..84)
-                    oa->write_character(static_cast<std::uint8_t>(0x80 + N));
-                }
-                else
-                {
-                    // start array
-                    oa->write_character(to_char_type(0x85));
-                }
-
-                // write each element
-                for (std::size_t i = 0; i < N; ++i)
-                {
-                    const auto& el = j.m_value.array->operator[](i);
-
-                    // check if 0xFF after nonempty string and string is required
-                    if (i > 0)
-                    {
-                        const auto& prev = j.m_value.array->operator[](i - 1);
-                        if (el.is_string() && prev.is_string() && !prev.m_value.string->empty())
-                        {
-                            oa->write_character(to_char_type(0xFF));
-                        }
-                    }
-
-                    write_bon8(el);
-                }
-
-                if (N > 4)
-                {
-                    // end of container
-                    oa->write_character(to_char_type(0xFE));
-                }
-                break;
-            }
-
-            case value_t::object:
-            {
-                const auto N = j.m_value.object->size();
-                if (N <= 4)
-                {
-                    // start object with count (86..8A)
-                    oa->write_character(static_cast<std::uint8_t>(0x86 + N));
-                }
-                else
-                {
-                    // start object
-                    oa->write_character(to_char_type(0x8B));
-                }
-
-                // write each element
-                for (auto it = j.m_value.object->begin(); it != j.m_value.object->end(); ++it)
-                {
-                    const auto& key = it->first;
-                    const auto& value = it->second;
-
-                    write_bon8(key);
-
-                    // check if we need a 0xFF separator between key and value
-                    if (!key.empty() && value.is_string())
-                    {
-                        oa->write_character(to_char_type(0xFF));
-                    }
-
-                    write_bon8(value);
-
-                    // check if we need a 0xFF separator between the value and the next key
-                    if (value.is_string() && !value.m_value.string->empty() && std::next(it) != j.m_value.object->end())
-                    {
-                        oa->write_character(to_char_type(0xFF));
-                    }
-                }
-
-                if (N > 4)
-                {
-                    // end of container
-                    oa->write_character(to_char_type(0xFE));
-                }
-                break;
-            }
-
-            case value_t::binary:
-            case value_t::discarded:
-            default:
-                break;
+            oa->write_character(to_char_type(0xFF));
         }
     }
 
@@ -1695,6 +1539,181 @@ class binary_writer
     //////////
     // BON8 //
     //////////
+
+    /*!
+     * @param j
+     * @return whether the last written value was a string
+     */
+    bool write_bon8_internal(const BasicJsonType& j)
+    {
+        switch (j.type())
+        {
+            case value_t::null:
+            {
+                oa->write_character(to_char_type(0xFA));
+                return false;
+            }
+
+            case value_t::boolean:
+            {
+                oa->write_character(j.m_value.boolean
+                                    ? to_char_type(0xF9)
+                                    : to_char_type(0xF8));
+                return false;
+            }
+
+            case value_t::number_unsigned:
+            {
+                if (j.m_value.number_unsigned > static_cast<typename BasicJsonType::number_unsigned_t>((std::numeric_limits<std::int64_t>::max)()))
+                {
+                    JSON_THROW(out_of_range::create(407, "integer number " + std::to_string(j.m_value.number_unsigned) + " cannot be represented by BON8 as it does not fit int64", j));
+                }
+                write_bon8_integer(static_cast<typename BasicJsonType::number_integer_t>(j.m_value.number_unsigned));
+                return false;
+            }
+
+            case value_t::number_integer:
+            {
+                write_bon8_integer(j.m_value.number_integer);
+                return false;
+            }
+
+            case value_t::number_float:
+            {
+                // special values
+                if (j.m_value.number_float == -1.0)
+                {
+                    oa->write_character(to_char_type(0xFB));
+                }
+                else if (j.m_value.number_float == 0.0 && !std::signbit(j.m_value.number_float))
+                {
+                    oa->write_character(to_char_type(0xFC));
+                }
+                else if (j.m_value.number_float == 1.0)
+                {
+                    oa->write_character(to_char_type(0xFD));
+                }
+                else
+                {
+                    // write float with prefix
+                    write_compact_float(j.m_value.number_float, detail::input_format_t::bon8);
+                }
+                return false;
+            }
+
+            case value_t::string:
+            {
+                // empty string: use end-of-text symbol
+                if (j.m_value.string->empty())
+                {
+                    oa->write_character(to_char_type(0xFF));
+                    return false; // already wrote 0xFF byte
+                }
+
+                // write strings as is
+                oa->write_characters(
+                    reinterpret_cast<const CharType*>(j.m_value.string->c_str()),
+                    j.m_value.string->size());
+                return true;
+            }
+
+            case value_t::array:
+            {
+                bool last_written_value_is_string = false;
+                const auto N = j.m_value.array->size();
+                if (N <= 4)
+                {
+                    // start array with count (80..84)
+                    oa->write_character(static_cast<std::uint8_t>(0x80 + N));
+                }
+                else
+                {
+                    // start array
+                    oa->write_character(to_char_type(0x85));
+                }
+
+                // write each element
+                for (std::size_t i = 0; i < N; ++i)
+                {
+                    const auto& el = j.m_value.array->operator[](i);
+
+                    // check if 0xFF after nonempty string and string is required
+                    if (i > 0)
+                    {
+                        const auto& prev = j.m_value.array->operator[](i - 1);
+                        if (el.is_string() && prev.is_string() && !prev.m_value.string->empty())
+                        {
+                            oa->write_character(to_char_type(0xFF));
+                        }
+                    }
+
+                    last_written_value_is_string = write_bon8_internal(el);
+                }
+
+                if (N > 4)
+                {
+                    // end of container
+                    oa->write_character(to_char_type(0xFE));
+                    last_written_value_is_string = false; // 0xFE is not a string byte
+                }
+
+                return last_written_value_is_string;
+            }
+
+            case value_t::object:
+            {
+                bool last_written_value_is_string = false;
+                const auto N = j.m_value.object->size();
+                if (N <= 4)
+                {
+                    // start object with count (86..8A)
+                    oa->write_character(static_cast<std::uint8_t>(0x86 + N));
+                }
+                else
+                {
+                    // start object
+                    oa->write_character(to_char_type(0x8B));
+                }
+
+                // write each element
+                for (auto it = j.m_value.object->begin(); it != j.m_value.object->end(); ++it)
+                {
+                    const auto& key = it->first;
+                    const auto& value = it->second;
+
+                    write_bon8_internal(key);
+
+                    // check if we need a 0xFF separator between key and value
+                    if (!key.empty() && value.is_string())
+                    {
+                        oa->write_character(to_char_type(0xFF));
+                    }
+
+                    last_written_value_is_string = write_bon8_internal(value);
+
+                    // check if we need a 0xFF separator between the value and the next key
+                    if (value.is_string() && !value.m_value.string->empty() && std::next(it) != j.m_value.object->end())
+                    {
+                        oa->write_character(to_char_type(0xFF));
+                    }
+                }
+
+                if (N > 4)
+                {
+                    // end of container
+                    oa->write_character(to_char_type(0xFE));
+                    last_written_value_is_string = false; // 0xFE is not a string byte
+                }
+
+                return last_written_value_is_string;
+            }
+
+            case value_t::binary:
+            case value_t::discarded:
+            default:
+                return false;
+        }
+    }
 
     void write_bon8_integer(typename BasicJsonType::number_integer_t value)
     {
