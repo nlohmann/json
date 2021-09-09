@@ -679,6 +679,23 @@ TEST_CASE("regression tests 2")
         test3[json::json_pointer(p)] = json::object();
         CHECK(test3.dump() == "{\"/root\":{}}");
     }
+
+    SECTION("issue #3007 - Parent pointers properly set when using update()")
+    {
+      json j = json::object();
+      json lower = json::object();
+
+      {
+        json j2 = json::object();
+        j2["one"] = 1;
+
+        j.update(j2);
+      }
+
+      for (auto const & kv : j) {
+        CHECK(kv.m_parent == &j);
+      }
+    }
 }
 
 DOCTEST_CLANG_SUPPRESS_WARNING_POP
