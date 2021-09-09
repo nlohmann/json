@@ -197,7 +197,8 @@ TEST_CASE("Better diagnostics")
             j.update(j2);
         }
 
-        for (auto const & kv : j) {
+        for (auto const& kv : j)
+        {
             CHECK(kv.m_parent == &j);
         }
     }
