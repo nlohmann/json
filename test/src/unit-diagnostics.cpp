@@ -188,17 +188,17 @@ TEST_CASE("Better diagnostics")
 
     SECTION("Regression test for issue #3007 - Parent pointers properly set when using update()")
     {
-      json j = json::object();
+        json j = json::object();
 
-      {
-        json j2 = json::object();
-        j2["one"] = 1;
+        {
+            json j2 = json::object();
+            j2["one"] = 1;
 
-        j.update(j2);
-      }
+            j.update(j2);
+        }
 
-      for (auto const & kv : j) {
-        CHECK(kv.m_parent == &j);
-      }
+        for (auto const & kv : j) {
+            CHECK(kv.m_parent == &j);
+        }
     }
 }
