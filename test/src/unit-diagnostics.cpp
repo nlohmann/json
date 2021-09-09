@@ -34,6 +34,7 @@ SOFTWARE.
 #endif
 
 #define JSON_DIAGNOSTICS 1
+#define JSON_TESTS_PRIVATE
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;
