@@ -23477,6 +23477,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         for (auto it = first; it != last; ++it)
         {
             m_value.object->operator[](it.key()) = it.value();
+#if JSON_DIAGNOSTICS
+            m_value.object->operator[](it.key()).m_parent = this;
+#endif
         }
     }
 
