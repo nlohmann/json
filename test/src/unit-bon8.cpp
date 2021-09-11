@@ -56,6 +56,7 @@ TEST_CASE("BON8")
             std::vector<uint8_t> expected = {0xFA};
             const auto result = json::to_bon8(j);
             CHECK(result == expected);
+            CHECK(json::from_bon8(result) == j);
         }
 
         SECTION("boolean")
@@ -66,6 +67,7 @@ TEST_CASE("BON8")
                 std::vector<uint8_t> expected = {0xF9};
                 const auto result = json::to_bon8(j);
                 CHECK(result == expected);
+                CHECK(json::from_bon8(result) == j);
             }
 
             SECTION("false")
@@ -74,6 +76,7 @@ TEST_CASE("BON8")
                 std::vector<uint8_t> expected = {0xF8};
                 const auto result = json::to_bon8(j);
                 CHECK(result == expected);
+                CHECK(json::from_bon8(result) == j);
             }
         }
 
@@ -87,6 +90,7 @@ TEST_CASE("BON8")
                     std::vector<uint8_t> expected = {0x90};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
+                    CHECK(json::from_bon8(result) == j);
                 }
 
                 SECTION("39")
@@ -95,6 +99,7 @@ TEST_CASE("BON8")
                     std::vector<uint8_t> expected = {0xB7};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
+                    CHECK(json::from_bon8(result) == j);
                 }
             }
 
@@ -163,6 +168,7 @@ TEST_CASE("BON8")
                     std::vector<uint8_t> expected = {0x8C, 0x04, 0x08, 0x0F, 0x28};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
+                    CHECK(json::from_bon8(result) == j);
                 }
 
                 SECTION("2147483647 (int32max)")
@@ -171,6 +177,7 @@ TEST_CASE("BON8")
                     std::vector<uint8_t> expected = {0x8C, 0x7F, 0xFF, 0xFF, 0xFF};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
+                    CHECK(json::from_bon8(result) == j);
                 }
             }
 
@@ -182,6 +189,7 @@ TEST_CASE("BON8")
                     std::vector<uint8_t> expected = {0x8D, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
+                    CHECK(json::from_bon8(result) == j);
                 }
 
                 SECTION("9223372036854775807 (int64max)")
@@ -190,6 +198,7 @@ TEST_CASE("BON8")
                     std::vector<uint8_t> expected = {0x8D, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
+                    CHECK(json::from_bon8(result) == j);
                 }
             }
 
@@ -210,6 +219,7 @@ TEST_CASE("BON8")
                     std::vector<uint8_t> expected = {0x8D, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
+                    CHECK(json::from_bon8(result) == j);
                 }
 
                 SECTION("-2147483649")
@@ -219,6 +229,7 @@ TEST_CASE("BON8")
                     std::vector<uint8_t> expected = {0x8D, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F, 0xFF, 0xFF, 0xFF};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
+                    CHECK(json::from_bon8(result) == j);
                 }
             }
 
@@ -231,6 +242,7 @@ TEST_CASE("BON8")
                     std::vector<uint8_t> expected = {0x8C, 0x80, 0x00, 0x00, 0x00};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
+                    CHECK(json::from_bon8(result) == j);
                 }
 
                 SECTION("-33818507")
@@ -239,6 +251,7 @@ TEST_CASE("BON8")
                     std::vector<uint8_t> expected = {0x8C, 0xFD, 0xFB, 0xF8, 0x75};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
+                    CHECK(json::from_bon8(result) == j);
                 }
             }
 
@@ -307,6 +320,7 @@ TEST_CASE("BON8")
                     std::vector<uint8_t> expected = {0xC1};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
+                    CHECK(json::from_bon8(result) == j);
                 }
 
                 SECTION("-1")
@@ -315,6 +329,7 @@ TEST_CASE("BON8")
                     std::vector<uint8_t> expected = {0xB8};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
+                    CHECK(json::from_bon8(result) == j);
                 }
             }
 
@@ -326,6 +341,7 @@ TEST_CASE("BON8")
                     std::vector<uint8_t> expected = {0x90};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
+                    CHECK(json::from_bon8(result) == j);
                 }
 
                 SECTION("39")
@@ -334,6 +350,7 @@ TEST_CASE("BON8")
                     std::vector<uint8_t> expected = {0xB7};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
+                    CHECK(json::from_bon8(result) == j);
                 }
             }
 
@@ -443,6 +460,7 @@ TEST_CASE("BON8")
                     std::vector<uint8_t> expected = {0xFB};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
+                    CHECK(json::from_bon8(result) == j);
                 }
 
                 SECTION("0.0")
@@ -451,6 +469,7 @@ TEST_CASE("BON8")
                     std::vector<uint8_t> expected = {0xFC};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
+                    CHECK(json::from_bon8(result) == j);
                 }
 
                 SECTION("1.0")
@@ -459,6 +478,7 @@ TEST_CASE("BON8")
                     std::vector<uint8_t> expected = {0xFD};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
+                    CHECK(json::from_bon8(result) == j);
                 }
 
                 SECTION("-0.0")
@@ -467,6 +487,7 @@ TEST_CASE("BON8")
                     std::vector<uint8_t> expected = {0x8E, 0x80, 0x00, 0x00, 0x00};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
+                    CHECK(json::from_bon8(result) == j);
                 }
 
                 SECTION("NAN")
@@ -475,6 +496,8 @@ TEST_CASE("BON8")
                     std::vector<uint8_t> expected = {0x8E, 0x7F, 0x80, 0x00, 0x01};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
+                    json::number_float_t d{json::from_bon8(result)};
+                    CHECK(std::isnan(d));
                 }
 
                 SECTION("infinity")
@@ -483,6 +506,7 @@ TEST_CASE("BON8")
                     std::vector<uint8_t> expected = {0x8E, 0x7F, 0x80, 0x00, 0x00};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
+                    CHECK(json::from_bon8(result) == j);
                 }
 
                 SECTION("-infinity")
@@ -491,6 +515,7 @@ TEST_CASE("BON8")
                     std::vector<uint8_t> expected = {0x8E, 0xFF, 0x80, 0x00, 0x00};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
+                    CHECK(json::from_bon8(result) == j);
                 }
             }
 
@@ -502,6 +527,7 @@ TEST_CASE("BON8")
                     std::vector<uint8_t> expected = {0x8E, 0x40, 0x00, 0x00, 0x00};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
+                    CHECK(json::from_bon8(result) == j);
                 }
             }
 
@@ -513,6 +539,7 @@ TEST_CASE("BON8")
                     std::vector<uint8_t> expected = {0x8F, 0x41, 0x97, 0xD7, 0x84, 0x00, 0x66, 0x66, 0x66};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
+                    CHECK(json::from_bon8(result) == j);
                 }
             }
         }
@@ -546,6 +573,7 @@ TEST_CASE("BON8")
                     std::vector<uint8_t> expected = {0x80};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
+                    CHECK(json::from_bon8(result) == j);
                 }
 
                 SECTION("[false]")
@@ -554,6 +582,7 @@ TEST_CASE("BON8")
                     std::vector<uint8_t> expected = {0x81, 0xF8};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
+                    CHECK(json::from_bon8(result) == j);
                 }
 
                 SECTION("[false, null]")
@@ -562,6 +591,7 @@ TEST_CASE("BON8")
                     std::vector<uint8_t> expected = {0x82, 0xF8, 0xFA};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
+                    CHECK(json::from_bon8(result) == j);
                 }
 
                 SECTION("[false, null, true]")
@@ -570,6 +600,7 @@ TEST_CASE("BON8")
                     std::vector<uint8_t> expected = {0x83, 0xF8, 0xFA, 0xF9};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
+                    CHECK(json::from_bon8(result) == j);
                 }
 
                 SECTION("[false, null, true, 1.0]")
@@ -578,6 +609,7 @@ TEST_CASE("BON8")
                     std::vector<uint8_t> expected = {0x84, 0xF8, 0xFA, 0xF9, 0xFD};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
+                    CHECK(json::from_bon8(result) == j);
                 }
 
                 SECTION("[\"s\", \"s\"]")
@@ -610,6 +642,7 @@ TEST_CASE("BON8")
                     std::vector<uint8_t> expected = {0x81, 0x81, 0x81, 0x91};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
+                    CHECK(json::from_bon8(result) == j);
                 }
 
                 SECTION("[[[\"\"]]]")
@@ -629,6 +662,7 @@ TEST_CASE("BON8")
                     std::vector<uint8_t> expected = {0x85, 0xF8, 0xFA, 0xF9, 0xFD, 0x80, 0xFC, 0xFE};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
+                    CHECK(json::from_bon8(result) == j);
                 }
             }
         }
