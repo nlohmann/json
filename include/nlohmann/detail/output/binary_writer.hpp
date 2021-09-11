@@ -1723,40 +1723,40 @@ class binary_writer
             oa->write_character(to_char_type(0x8D));
             write_number(static_cast<std::int64_t>(value));
         }
-        else if (value < -33554432 || value > 67637031)
+        else if (value < -33818506 || value > 67637031)
         {
             // 32 bit integers
             oa->write_character(to_char_type(0x8C));
             write_number(static_cast<std::int32_t>(value));
         }
-        else if (value < -262144)
+        else if (value <= -264075)
         {
-            JSON_ASSERT(value >= -33554432);
-            value = -value - 1;
+            JSON_ASSERT(value >= -33818506);
+            value = -(value + 264075);
             oa->write_character(static_cast<std::uint8_t>(0xF0 + (value >> 22 & 0x07)));
             oa->write_character(static_cast<std::uint8_t>(0xC0 + (value >> 16 & 0x3F)));
             oa->write_character(static_cast<std::uint8_t>(value >> 8));
             oa->write_character(static_cast<std::uint8_t>(value));
         }
-        else if (value < -1920)
+        else if (value <= -1931)
         {
-            JSON_ASSERT(value >= -262144);
-            value = -value - 1;
+            JSON_ASSERT(value >= -264074);
+            value = -(value + 1931);
             oa->write_character(static_cast<std::uint8_t>(0xE0 + (value >> 14 & 0x0F)));
             oa->write_character(static_cast<std::uint8_t>(0xC0 + (value >> 8 & 0x3F)));
             oa->write_character(static_cast<std::uint8_t>(value));
         }
-        else if (value < -10)
+        else if (value <= -11)
         {
-            JSON_ASSERT(value >= -1920);
-            value = -value - 1;
+            JSON_ASSERT(value >= -1930);
+            value = -(value + 11);
             oa->write_character(static_cast<std::uint8_t>(0xC2 + (value >> 6 & 0x1F)));
             oa->write_character(static_cast<std::uint8_t>(0xC0 + (value & 0x3F)));
         }
-        else if (value < 0)
+        else if (value <= -1)
         {
             JSON_ASSERT(value >= -10);
-            value = -value - 1;
+            value = -(value + 1);
             oa->write_character(static_cast<std::uint8_t>(0xB8 + value));
         }
         else if (value <= 39)
