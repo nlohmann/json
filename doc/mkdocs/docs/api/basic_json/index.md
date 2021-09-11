@@ -230,6 +230,7 @@ Access to the JSON value
 - [**from_cbor**](from_cbor.md) (static) - create a JSON value from an input in CBOR format
 - [**from_msgpack**](from_msgpack.md) (static) - create a JSON value from an input in MessagePack format
 - [**from_ubjson**](from_ubjson.md) (static) - create a JSON value from an input in UBJSON format
+- [**to_bon8**](to_bon8.md) (static) - create a BON8 serialization of a given JSON value
 - [**to_bson**](to_bson.md) (static) - create a BSON serialization of a given JSON value
 - [**to_cbor**](to_cbor.md) (static) - create a CBOR serialization of a given JSON value
 - [**to_msgpack**](to_msgpack.md) (static) - create a MessagePack serialization of a given JSON value

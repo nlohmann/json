@@ -168,6 +168,7 @@ nav:
         - api/basic_json/sax_parse.md
         - api/basic_json/size.md
         - api/basic_json/string_t.md
+        - api/basic_json/to_bon8.md
         - api/basic_json/to_bson.md
         - api/basic_json/to_cbor.md
         - api/basic_json/to_msgpack.md

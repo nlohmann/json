@@ -25027,6 +25027,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @sa see @ref to_msgpack(const basic_json&) for the related MessagePack format
     @sa see @ref to_ubjson(const basic_json&, const bool, const bool) for the
              related UBJSON format
+    @sa see @ref to_bson(const basic_json&) for the related BSON format
+    @sa see @ref to_bon8(const basic_json&) for the related BON8 format
 
     @since version 2.0.9; compact representation of floating-point numbers
            since version 3.8.0
@@ -25123,6 +25125,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @sa see @ref to_cbor(const basic_json& for the related CBOR format
     @sa see @ref to_ubjson(const basic_json&, const bool, const bool) for the
              related UBJSON format
+    @sa see @ref to_bon8(const basic_json&) for the related BON8 format
 
     @since version 2.0.9
     */
@@ -25226,6 +25229,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         analogous deserialization
     @sa see @ref to_cbor(const basic_json& for the related CBOR format
     @sa see @ref to_msgpack(const basic_json&) for the related MessagePack format
+    @sa see @ref to_bon8(const basic_json&) for the related BON8 format
 
     @since version 3.1.0
     */
@@ -25306,6 +25310,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
              related UBJSON format
     @sa see @ref to_cbor(const basic_json&) for the related CBOR format
     @sa see @ref to_msgpack(const basic_json&) for the related MessagePack format
+    @sa see @ref to_bon8(const basic_json&) for the related BON8 format
     */
     static std::vector<std::uint8_t> to_bson(const basic_json& j)
     {
@@ -25335,6 +25340,44 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         binary_writer<char>(o).write_bson(j);
     }
 
+    /*!
+    @brief Serializes the given JSON object `j` to BON8 and returns a vector
+           containing the corresponding BON8-representation.
+
+    BON8 is a binary format that encodes JSON values using those byte sequences
+    that would form invalid UTF-8 strings. As a result, strings do not need to
+    be re-encoded.
+
+    @note The mapping is **complete** in the sense that any JSON value type
+    can be converted to a BON8 value.
+
+    @note The following values can **not** be converted to a BON8 value:
+    - integers larger than 9223372036854775807
+
+    @throw out_of_range.407  if `j.is_number_unsigned() && j.get<std::uint64_t>() > 9223372036854775807`
+
+    @note Any BON8 output created via @ref to_bon8 can be successfully parsed
+          by @ref from_bon8.
+
+    @param[in] j  JSON value to serialize
+    @return BON8 serialization as byte vector
+
+    @complexity Linear in the size of the JSON value @a j.
+
+    @liveexample{The example shows the serialization of a JSON value to a byte
+    vector in BON8 format.,to_bon8}
+
+    @sa https://github.com/ttauri-project/ttauri/blob/main/docs/BON8.md
+    @sa see @ref from_bon8(detail::input_adapter&&, const bool strict) for the
+        analogous deserialization
+    @sa see @ref to_ubjson(const basic_json&, const bool, const bool) for the
+             related UBJSON format
+    @sa see @ref to_cbor(const basic_json&) for the related CBOR format
+    @sa see @ref to_msgpack(const basic_json&) for the related MessagePack format
+    @sa see @ref to_bson(const basic_json&) for the related BSON format
+
+    @since version 3.11.0
+    */
     static std::vector<std::uint8_t> to_bon8(const basic_json& j)
     {
         std::vector<std::uint8_t> result;
@@ -25342,11 +25385,21 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return result;
     }
 
+    /*!
+    @brief Serializes the given JSON object `j` to BON8 and forwards the
+           corresponding BON8-representation to the given output_adapter `o`.
+    @param j The JSON object to convert to BON8.
+    @param o The output adapter that receives the binary BON8 representation.
+    @sa see @ref to_bon8(const basic_json&)
+    */
     static void to_bon8(const basic_json& j, detail::output_adapter<std::uint8_t> o)
     {
         binary_writer<std::uint8_t>(o).write_bon8(j);
     }
 
+    /*!
+    @copydoc to_bon8(const basic_json&, detail::output_adapter<std::uint8_t>)
+    */
     static void to_bon8(const basic_json& j, detail::output_adapter<char> o)
     {
         binary_writer<char>(o).write_bon8(j);

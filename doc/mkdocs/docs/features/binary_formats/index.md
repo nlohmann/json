@@ -6,6 +6,7 @@ Though JSON is a ubiquitous data format, it is not a very compact format suitabl
 - [CBOR](cbor.md) (Concise Binary Object Representation),
 - [MessagePack](messagepack.md), and
 - [UBJSON](ubjson.md) (Universal Binary JSON)
+- BON8
 
 to efficiently encode JSON values to byte vectors and to decode such vectors.
 
@@ -19,6 +20,7 @@ to efficiently encode JSON values to byte vectors and to decode such vectors.
 | CBOR        | complete                                      | incomplete, but all JSON types are supported |
 | MessagePack | complete                                      | complete                                     |
 | UBJSON      | complete                                      | complete                                     |
+| BON8        | complete                                      | not yet implemented                          |
 
 ### Binary values
 
@@ -28,6 +30,7 @@ to efficiently encode JSON values to byte vectors and to decode such vectors.
 | CBOR        | supported     | supported       |
 | MessagePack | supported     | supported       |
 | UBJSON      | not supported | not supported   |
+| BON8        | not supported | not supported   |
 
 See [binary values](../binary_values.md) for more information.
 
