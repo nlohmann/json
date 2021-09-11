@@ -98,69 +98,69 @@ TEST_CASE("BON8")
                 }
             }
 
-            SECTION("40..3839")
+            SECTION("40..3879")
             {
                 SECTION("40")
                 {
                     json j = 40U;
-                    std::vector<uint8_t> expected = {0xC2, 0x28};
+                    std::vector<uint8_t> expected = {0xC2, 0x00};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
                 }
 
-                SECTION("3839")
+                SECTION("3879")
                 {
-                    json j = 3839U;
+                    json j = 3879U;
                     std::vector<uint8_t> expected = {0xDF, 0x7F};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
                 }
             }
 
-            SECTION("3840..524287")
+            SECTION("3880..524287")
             {
-                SECTION("3840")
+                SECTION("3880")
                 {
-                    json j = 3840U;
-                    std::vector<uint8_t> expected = {0xE0, 0x0F, 0x00};
+                    json j = 3880U;
+                    std::vector<uint8_t> expected = {0xE0, 0x00, 0x00};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
                 }
 
-                SECTION("524287")
+                SECTION("528167")
                 {
-                    json j = 524287U;
+                    json j = 528167U;
                     std::vector<uint8_t> expected = {0xEF, 0x7F, 0xFF};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
                 }
             }
 
-            SECTION("524288..67108863")
+            SECTION("528168..67637031")
             {
-                SECTION("524288")
+                SECTION("528168")
                 {
-                    json j = 524288U;
-                    std::vector<uint8_t> expected = {0xF0, 0x08, 0x00, 0x00};
+                    json j = 528168U;
+                    std::vector<uint8_t> expected = {0xF0, 0x00, 0x00, 0x00};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
                 }
 
-                SECTION("67108863")
+                SECTION("67637031")
                 {
-                    json j = 67108863U;
+                    json j = 67637031U;
                     std::vector<uint8_t> expected = {0xF7, 0x7F, 0xFF, 0xFF};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
                 }
             }
 
-            SECTION("67108864..2147483647 (int32max)")
+            SECTION("67637032..2147483647 (int32max)")
             {
-                SECTION("67108864")
+                SECTION("67637032")
                 {
-                    json j = 67108864U;
-                    std::vector<uint8_t> expected = {0x8C, 0x04, 0x00, 0x00, 0x00};
+                    json j = 67637032U;
+                    std::vector<uint8_t> expected = {0x8C, 0x04, 0x08, 0x0F, 0x28};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
                 }
@@ -337,69 +337,69 @@ TEST_CASE("BON8")
                 }
             }
 
-            SECTION("40..3839")
+            SECTION("40..3879")
             {
                 SECTION("40")
                 {
                     json j = 40;
-                    std::vector<uint8_t> expected = {0xC2, 0x28};
+                    std::vector<uint8_t> expected = {0xC2, 0x00};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
                 }
 
-                SECTION("3839")
+                SECTION("3879")
                 {
-                    json j = 3839;
+                    json j = 3879;
                     std::vector<uint8_t> expected = {0xDF, 0x7F};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
                 }
             }
 
-            SECTION("3840..524287")
+            SECTION("3880..524287")
             {
-                SECTION("3840")
+                SECTION("3880")
                 {
-                    json j = 3840;
-                    std::vector<uint8_t> expected = {0xE0, 0x0F, 0x00};
+                    json j = 3880;
+                    std::vector<uint8_t> expected = {0xE0, 0x00, 0x00};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
                 }
 
-                SECTION("524287")
+                SECTION("528167")
                 {
-                    json j = 524287;
+                    json j = 528167;
                     std::vector<uint8_t> expected = {0xEF, 0x7F, 0xFF};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
                 }
             }
 
-            SECTION("524288..67108863")
+            SECTION("528168..67637031")
             {
-                SECTION("524288")
+                SECTION("528168")
                 {
-                    json j = 524288;
-                    std::vector<uint8_t> expected = {0xF0, 0x08, 0x00, 0x00};
+                    json j = 528168;
+                    std::vector<uint8_t> expected = {0xF0, 0x00, 0x00, 0x00};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
                 }
 
-                SECTION("67108863")
+                SECTION("67637031")
                 {
-                    json j = 67108863;
+                    json j = 67637031;
                     std::vector<uint8_t> expected = {0xF7, 0x7F, 0xFF, 0xFF};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
                 }
             }
 
-            SECTION("67108864..2147483647 (int32max)")
+            SECTION("67637032..2147483647 (int32max)")
             {
-                SECTION("67108864")
+                SECTION("67637032")
                 {
-                    json j = 67108864;
-                    std::vector<uint8_t> expected = {0x8C, 0x04, 0x00, 0x00, 0x00};
+                    json j = 67637032;
+                    std::vector<uint8_t> expected = {0x8C, 0x04, 0x08, 0x0F, 0x28};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
                 }

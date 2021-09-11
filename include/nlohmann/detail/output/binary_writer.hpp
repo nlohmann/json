@@ -1723,7 +1723,7 @@ class binary_writer
             oa->write_character(to_char_type(0x8D));
             write_number(static_cast<std::int64_t>(value));
         }
-        else if (value < -33554432 || value > 67108863)
+        else if (value < -33554432 || value > 67637031)
         {
             // 32 bit integers
             oa->write_character(to_char_type(0x8C));
@@ -1764,23 +1764,26 @@ class binary_writer
             JSON_ASSERT(value >= 0);
             oa->write_character(static_cast<std::uint8_t>(0x90 + value));
         }
-        else if (value <= 3839)
+        else if (value <= 3879)
         {
-            JSON_ASSERT(value >= 0);
+            JSON_ASSERT(value >= 40);
+            value -= 40;
             oa->write_character(static_cast<std::uint8_t>(0xC2 + (value >> 7 & 0x1F)));
             oa->write_character(static_cast<std::uint8_t>(value & 0x7F));
         }
-        else if (value <= 524287)
+        else if (value <= 528167)
         {
-            JSON_ASSERT(value >= 0);
+            JSON_ASSERT(value >= 3880);
+            value -= 3880;
             oa->write_character(static_cast<std::uint8_t>(0xE0 + (value >> 15 & 0x0F)));
             oa->write_character(static_cast<std::uint8_t>(value >> 8 & 0x7F));
             oa->write_character(static_cast<std::uint8_t>(value));
         }
         else
         {
-            JSON_ASSERT(value >= 0);
-            JSON_ASSERT(value <= 67108863);
+            JSON_ASSERT(value >= 528168);
+            JSON_ASSERT(value <= 67637031);
+            value -= 528168;
             oa->write_character(static_cast<std::uint8_t>(0xF0 + (value >> 23 & 0x17)));
             oa->write_character(static_cast<std::uint8_t>(value >> 16 & 0x7F));
             oa->write_character(static_cast<std::uint8_t>(value >> 8));
