@@ -102,6 +102,7 @@ endif()
 
 # avoid stack overflow, see https://github.com/nlohmann/json/issues/2955
 if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    set_property(TARGET test-binary_formats APPEND_STRING PROPERTY LINK_FLAGS " /STACK:4000000")
     set_property(TARGET test-cbor APPEND_STRING PROPERTY LINK_FLAGS " /STACK:4000000")
     set_property(TARGET test-msgpack APPEND_STRING PROPERTY LINK_FLAGS " /STACK:4000000")
     set_property(TARGET test-ubjson APPEND_STRING PROPERTY LINK_FLAGS " /STACK:4000000")
