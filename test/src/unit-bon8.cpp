@@ -468,6 +468,30 @@ TEST_CASE("BON8")
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
                 }
+
+                SECTION("NAN")
+                {
+                    json j = NAN;
+                    std::vector<uint8_t> expected = {0x8E, 0x7F, 0x80, 0x00, 0x01};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+
+                SECTION("infinity")
+                {
+                    json j = INFINITY;
+                    std::vector<uint8_t> expected = {0x8E, 0x7F, 0x80, 0x00, 0x00};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
+
+                SECTION("-infinity")
+                {
+                    json j = -INFINITY;
+                    std::vector<uint8_t> expected = {0x8E, 0xFF, 0x80, 0x00, 0x00};
+                    const auto result = json::to_bon8(j);
+                    CHECK(result == expected);
+                }
             }
 
             SECTION("floats")

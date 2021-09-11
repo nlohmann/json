@@ -1593,6 +1593,14 @@ class binary_writer
                 {
                     oa->write_character(to_char_type(0xFD));
                 }
+                else if (std::isnan(j.m_value.number_float))
+                {
+                    oa->write_character(to_char_type(0x8E));
+                    oa->write_character(to_char_type(0x7F));
+                    oa->write_character(to_char_type(0x80));
+                    oa->write_character(to_char_type(0x00));
+                    oa->write_character(to_char_type(0x01));
+                }
                 else
                 {
                     // write float with prefix
@@ -1839,9 +1847,9 @@ class binary_writer
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
 #endif
-        if (static_cast<double>(n) >= static_cast<double>(std::numeric_limits<float>::lowest()) &&
-                static_cast<double>(n) <= static_cast<double>((std::numeric_limits<float>::max)()) &&
-                static_cast<double>(static_cast<float>(n)) == static_cast<double>(n))
+        if (std::isnan(n) || std::isinf(n) || (static_cast<double>(n) >= static_cast<double>(std::numeric_limits<float>::lowest()) &&
+                                               static_cast<double>(n) <= static_cast<double>((std::numeric_limits<float>::max)()) &&
+                                               static_cast<double>(static_cast<float>(n)) == static_cast<double>(n)))
         {
             switch (format)
             {
