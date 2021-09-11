@@ -10728,10 +10728,16 @@ class binary_reader
             case 0xFD:
                 return sax->number_float(1.0, "");
 
-            default: // anything else
+            case 0xFE:
             {
                 auto last_token = get_token_string();
                 return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message(input_format_t::bon8, "invalid byte: 0x" + last_token, "value"), BasicJsonType()));
+            }
+
+            default:
+            {
+                string_t s;
+                return get_bon8_string(s) && sax->string(s);
             }
         }
     }
@@ -10769,7 +10775,97 @@ class binary_reader
 
     bool get_bon8_object(const std::size_t len)
     {
-        return false;
+        if (JSON_HEDLEY_UNLIKELY(!sax->start_object(len)))
+        {
+            return false;
+        }
+
+        if (len != 0)
+        {
+            string_t key;
+            if (len != std::size_t(-1))
+            {
+                for (std::size_t i = 0; i < len; ++i)
+                {
+                    get();
+                    if (JSON_HEDLEY_UNLIKELY(!get_bon8_string(key) || !sax->key(key)))
+                    {
+                        return false;
+                    }
+
+                    if (JSON_HEDLEY_UNLIKELY(!parse_bon8_internal(false)))
+                    {
+                        return false;
+                    }
+                    key.clear();
+                }
+            }
+            else
+            {
+                while (get() != 0xFE)
+                {
+                    if (JSON_HEDLEY_UNLIKELY(!get_bon8_string(key) || !sax->key(key)))
+                    {
+                        return false;
+                    }
+
+                    if (JSON_HEDLEY_UNLIKELY(!parse_bon8_internal(false)))
+                    {
+                        return false;
+                    }
+                    key.clear();
+                }
+            }
+        }
+
+        return sax->end_object();
+    }
+
+    bool get_bon8_string(string_t& result)
+    {
+        while (true)
+        {
+            if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::bon8, "string")))
+            {
+                return false;
+            }
+
+            if ((current & 0x80) == 0x00)
+            {
+                result.push_back(static_cast<typename string_t::value_type>(current));
+                get();
+            }
+            else if ((current & 0xE0) == 0xC0)
+            {
+                result.push_back(static_cast<typename string_t::value_type>(current));
+                result.push_back(static_cast<typename string_t::value_type>(get()));
+                get();
+            }
+            else if ((current & 0xF0) == 0xE0)
+            {
+                result.push_back(static_cast<typename string_t::value_type>(current));
+                result.push_back(static_cast<typename string_t::value_type>(get()));
+                result.push_back(static_cast<typename string_t::value_type>(get()));
+                get();
+            }
+            else if ((current & 0xF8) == 0xF0)
+            {
+                result.push_back(static_cast<typename string_t::value_type>(current));
+                result.push_back(static_cast<typename string_t::value_type>(get()));
+                result.push_back(static_cast<typename string_t::value_type>(get()));
+                result.push_back(static_cast<typename string_t::value_type>(get()));
+                get();
+            }
+            else if (current == 0xFF)
+            {
+                get();
+                return true;
+            }
+            else
+            {
+                return true;
+            }
+        }
     }
 
     ///////////////////////
