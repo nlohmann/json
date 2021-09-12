@@ -30,6 +30,7 @@ jobs:
         run: cmake --build build --target ci_test_gcc
 
   ci_static_analysis:
+    needs: [ci_test_clang, ci_test_gcc]
     runs-on: ubuntu-latest
     container: ghcr.io/nlohmann/json-ci:v1.0.0
     strategy:
@@ -43,6 +44,7 @@ jobs:
         run: cmake --build build --target ${{ matrix.target }}
 
   ci_cmake_options:
+    needs: ci_static_analysis
     runs-on: ubuntu-latest
     container: ghcr.io/nlohmann/json-ci:v1.0.0
     strategy:
@@ -56,6 +58,7 @@ jobs:
         run: cmake --build build --target ${{ matrix.target }}
 
   ci_test_coverage:
+    needs: ci_static_analysis
     runs-on: ubuntu-latest
     container: ghcr.io/nlohmann/json-ci:v1.0.0
     steps:
@@ -76,6 +79,7 @@ jobs:
           path-to-lcov: /__w/json/json/build/json.info.filtered.noexcept
 
   ci_test_compilers:
+    needs: ci_static_analysis
     runs-on: ubuntu-latest
     container: ghcr.io/nlohmann/json-ci:v1.0.0
     strategy:
@@ -89,6 +93,7 @@ jobs:
         run: cmake --build build --target ci_test_compiler_${{ matrix.compiler }}
 
   ci_test_standards:
+    needs: ci_static_analysis
     runs-on: ubuntu-latest
     container: ghcr.io/nlohmann/json-ci:v1.0.0
     strategy:
