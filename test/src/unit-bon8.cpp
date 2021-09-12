@@ -641,6 +641,39 @@ TEST_CASE("BON8")
                 CHECK(result == expected);
                 CHECK(json::from_bon8(result) == j);
             }
+
+            SECTION("multi-byte, 2 bytes")
+            {
+                json j = "\xC2\xA3";
+                std::vector<uint8_t> expected = {0xC2, 0xA3, 0xFF};
+                const auto result = json::to_bon8(j);
+                CHECK(result == expected);
+                CHECK(json::from_bon8(result) == j);
+            }
+
+            SECTION("multi-byte, 3 bytes")
+            {
+                json j = "\xEF\xB8\xBB";
+                std::vector<uint8_t> expected = {0xEF, 0xB8, 0xBB, 0xFF};
+                const auto result = json::to_bon8(j);
+                CHECK(result == expected);
+                CHECK(json::from_bon8(result) == j);
+            }
+
+            SECTION("multi-byte, 4 bytes")
+            {
+                json j = "\xF0\x9F\x80\x84";
+                std::vector<uint8_t> expected = {0xF0, 0x9F, 0x80, 0x84, 0xFF};
+                const auto result = json::to_bon8(j);
+                CHECK(result == expected);
+                CHECK(json::from_bon8(result) == j);
+            }
+
+            SECTION("invalid string")
+            {
+                std::vector<uint8_t> v = {0xF0, 0x9F, 0x80, 0x84};
+                CHECK_THROWS_WITH_AS(json::from_bon8(v), "[json.exception.parse_error.110] parse error at byte 5: syntax error while parsing BON8 string: unexpected end of input", json::parse_error);
+            }
         }
 
         SECTION("array")
@@ -820,9 +853,16 @@ TEST_CASE("BON8")
             CHECK(!json::sax_parse(v, &scp, json::input_format_t::bon8));
         }
 
-        SECTION("error in array")
+        SECTION("error in array with size")
         {
             std::vector<uint8_t> v = {0x81};
+            SaxCountdown scp(1000);
+            CHECK(!json::sax_parse(v, &scp, json::input_format_t::bon8));
+        }
+
+        SECTION("error in array without size")
+        {
+            std::vector<uint8_t> v = {0x85};
             SaxCountdown scp(1000);
             CHECK(!json::sax_parse(v, &scp, json::input_format_t::bon8));
         }
@@ -841,9 +881,16 @@ TEST_CASE("BON8")
             CHECK(!json::sax_parse(v, &scp, json::input_format_t::bon8));
         }
 
-        SECTION("error in object")
+        SECTION("error in object with size")
         {
             std::vector<uint8_t> v = {0x87, 'f', 'o', 'o', 0xFF};
+            SaxCountdown scp(1000);
+            CHECK(!json::sax_parse(v, &scp, json::input_format_t::bon8));
+        }
+
+        SECTION("error in object without size")
+        {
+            std::vector<uint8_t> v = {0x8B, 'f', 'o', 'o', 0xFF};
             SaxCountdown scp(1000);
             CHECK(!json::sax_parse(v, &scp, json::input_format_t::bon8));
         }

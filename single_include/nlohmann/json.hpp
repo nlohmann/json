@@ -10839,21 +10839,45 @@ class binary_reader
             {
                 result.push_back(static_cast<typename string_t::value_type>(current));
                 result.push_back(static_cast<typename string_t::value_type>(get()));
+                if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::bon8, "string")))
+                {
+                    return false;
+                }
                 get();
             }
             else if ((current & 0xF0) == 0xE0)
             {
                 result.push_back(static_cast<typename string_t::value_type>(current));
                 result.push_back(static_cast<typename string_t::value_type>(get()));
+                if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::bon8, "string")))
+                {
+                    return false;
+                }
                 result.push_back(static_cast<typename string_t::value_type>(get()));
+                if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::bon8, "string")))
+                {
+                    return false;
+                }
                 get();
             }
             else if ((current & 0xF8) == 0xF0)
             {
                 result.push_back(static_cast<typename string_t::value_type>(current));
                 result.push_back(static_cast<typename string_t::value_type>(get()));
+                if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::bon8, "string")))
+                {
+                    return false;
+                }
                 result.push_back(static_cast<typename string_t::value_type>(get()));
+                if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::bon8, "string")))
+                {
+                    return false;
+                }
                 result.push_back(static_cast<typename string_t::value_type>(get()));
+                if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::bon8, "string")))
+                {
+                    return false;
+                }
                 get();
             }
             else if (current == 0xFF)
