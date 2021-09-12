@@ -10696,7 +10696,7 @@ class binary_reader
             case 0xB5:
             case 0xB6:
             case 0xB7:
-                return sax->number_unsigned(current - 0x90);
+                return sax->number_unsigned(static_cast<number_unsigned_t>(current) - static_cast<number_unsigned_t>(0x90));
 
             case 0xB8:
             case 0xB9:
@@ -10708,7 +10708,7 @@ class binary_reader
             case 0xBF:
             case 0xC0:
             case 0xC1:
-                return sax->number_integer(0xB7 - current);
+                return sax->number_integer(static_cast<number_integer_t>(0xB7) - static_cast<number_integer_t>(current));
 
             case 0xF8:
                 return sax->boolean(false);
