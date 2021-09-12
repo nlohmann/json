@@ -672,7 +672,8 @@ TEST_CASE("BON8")
             SECTION("invalid string")
             {
                 std::vector<uint8_t> v = {0xF0, 0x9F, 0x80, 0x84};
-                CHECK_THROWS_WITH_AS(json::from_bon8(v), "[json.exception.parse_error.110] parse error at byte 5: syntax error while parsing BON8 string: unexpected end of input", json::parse_error);
+                json j;
+                CHECK_THROWS_WITH_AS(j = json::from_bon8(v), "[json.exception.parse_error.110] parse error at byte 5: syntax error while parsing BON8 string: unexpected end of input", json::parse_error);
             }
         }
 
