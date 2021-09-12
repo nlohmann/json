@@ -184,4 +184,54 @@ TEST_CASE("Better diagnostics")
         j["second"] = value;
         j2["something"] = j;
     }
+
+    SECTION("Regression test for issue #3007 - Parent pointers properly set when using update()")
+    {
+        // void update(const_reference j)
+        {
+            json j = json::object();
+
+            {
+                json j2 = json::object();
+                j2["one"] = 1;
+
+                j.update(j2);
+            }
+
+            // Must call operator[] on const element, otherwise m_parent gets updated.
+            auto const& constJ = j;
+            CHECK_THROWS_WITH_AS(constJ["one"].at(0), "[json.exception.type_error.304] (/one) cannot use at() with number", json::type_error);
+        }
+
+        // void update(const_iterator first, const_iterator last)
+        {
+            json j = json::object();
+
+            {
+                json j2 = json::object();
+                j2["one"] = 1;
+
+                j.update(j2.begin(), j2.end());
+            }
+
+            // Must call operator[] on const element, otherwise m_parent gets updated.
+            auto const& constJ = j;
+            CHECK_THROWS_WITH_AS(constJ["one"].at(0), "[json.exception.type_error.304] (/one) cannot use at() with number", json::type_error);
+        }
+
+        // Code from #3007 triggering unwanted assertion without fix to update().
+        {
+            json root = json::array();
+            json lower = json::object();
+
+            {
+                json lowest = json::object();
+                lowest["one"] = 1;
+
+                lower.update(lowest);
+            }
+
+            root.push_back(lower);
+        }
+    }
 }
