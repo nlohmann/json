@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.9.1
+|  |  |__   |  |  | | | |  version 3.10.2
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -29,13 +29,18 @@ SOFTWARE.
 
 #include "doctest_compatibility.h"
 
+// disable -Wnoexcept due to class Evil
+DOCTEST_GCC_SUPPRESS_WARNING_PUSH
+DOCTEST_GCC_SUPPRESS_WARNING("-Wnoexcept")
+
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
-#include <array>
 #include <map>
+#include <memory>
 #include <string>
 #include <memory>
+#include <utility>
 
 namespace udt
 {
@@ -55,40 +60,40 @@ struct age
 struct name
 {
     std::string m_val;
-    name(const std::string rhs = "") : m_val(rhs) {}
+    name(std::string rhs = "") : m_val(std::move(rhs)) {}
 };
 
 struct address
 {
     std::string m_val;
-    address(const std::string rhs = "") : m_val(rhs) {}
+    address(std::string rhs = "") : m_val(std::move(rhs)) {}
 };
 
 struct person
 {
-    age m_age;
-    name m_name;
-    country m_country;
-    person() : m_age(), m_name(), m_country() {}
-    person(const age& a, const name& n, const country& c) : m_age(a), m_name(n), m_country(c) {}
+    age m_age{};
+    name m_name{};
+    country m_country{};
+    person() = default;
+    person(const age& a, name  n, const country& c) : m_age(a), m_name(std::move(n)), m_country(c) {}
 };
 
 struct contact
 {
-    person m_person;
-    address m_address;
-    contact() : m_person(), m_address() {}
-    contact(const person& p, const address& a) : m_person(p), m_address(a) {}
+    person m_person{};
+    address m_address{};
+    contact() = default;
+    contact(person p, address a) : m_person(std::move(p)), m_address(std::move(a)) {}
 };
 
 struct contact_book
 {
-    name m_book_name;
-    std::vector<contact> m_contacts;
-    contact_book() : m_book_name(), m_contacts() {}
-    contact_book(const name& n, const std::vector<contact>& c) : m_book_name(n), m_contacts(c) {}
+    name m_book_name{};
+    std::vector<contact> m_contacts{};
+    contact_book() = default;
+    contact_book(name n, std::vector<contact> c) : m_book_name(std::move(n)), m_contacts(std::move(c)) {}
 };
-}
+} // namespace udt
 
 // to_json methods
 namespace udt
@@ -112,13 +117,13 @@ static void to_json(BasicJsonType& j, country c)
     switch (c)
     {
         case country::china:
-            j = u8"中华人民共和国";
+            j = "中华人民共和国";
             return;
         case country::france:
             j = "France";
             return;
         case country::russia:
-            j = u8"Российская Федерация";
+            j = "Российская Федерация";
             return;
         default:
             break;
@@ -178,7 +183,7 @@ static bool operator==(const contact_book& lhs, const contact_book& rhs)
     return std::tie(lhs.m_book_name, lhs.m_contacts) ==
            std::tie(rhs.m_book_name, rhs.m_contacts);
 }
-}
+} // namespace udt
 
 // from_json methods
 namespace udt
@@ -199,15 +204,15 @@ template <typename BasicJsonType>
 static void from_json(const BasicJsonType& j, country& c)
 {
     const auto str = j.template get<std::string>();
-    static const std::map<std::string, country> m =
+    const std::map<std::string, country> m =
     {
-        {u8"中华人民共和国", country::china},
+        {"中华人民共和国", country::china},
         {"France", country::france},
-        {u8"Российская Федерация", country::russia}
+        {"Российская Федерация", country::russia}
     };
 
     const auto it = m.find(str);
-    // TODO test exceptions
+    // TODO(nlohmann) test exceptions
     c = it->second;
 }
 
@@ -235,7 +240,7 @@ static void from_json(const nlohmann::json& j, contact_book& cb)
     cb.m_book_name = j["name"].get<name>();
     cb.m_contacts = j["contacts"].get<std::vector<contact>>();
 }
-}
+} // namespace udt
 
 TEST_CASE("basic usage" * doctest::test_suite("udt"))
 {
@@ -248,7 +253,7 @@ TEST_CASE("basic usage" * doctest::test_suite("udt"))
     const udt::name n{"theo"};
     const udt::country c{udt::country::france};
     const udt::person sfinae_addict{a, n, c};
-    const udt::person senior_programmer{{42}, {u8"王芳"}, udt::country::china};
+    const udt::person senior_programmer{{42}, {"王芳"}, udt::country::china};
     const udt::address addr{"Paris"};
     const udt::contact cpp_programmer{sfinae_addict, addr};
     const udt::contact_book book{{"C++"}, {cpp_programmer, {senior_programmer, addr}}};
@@ -265,14 +270,14 @@ TEST_CASE("basic usage" * doctest::test_suite("udt"))
 
         CHECK(
             json(book) ==
-            u8R"({"name":"C++", "contacts" : [{"person" : {"age":23, "name":"theo", "country":"France"}, "address":"Paris"}, {"person" : {"age":42, "country":"中华人民共和国", "name":"王芳"}, "address":"Paris"}]})"_json);
+            R"({"name":"C++", "contacts" : [{"person" : {"age":23, "name":"theo", "country":"France"}, "address":"Paris"}, {"person" : {"age":42, "country":"中华人民共和国", "name":"王芳"}, "address":"Paris"}]})"_json);
 
     }
 
     SECTION("conversion from json via free-functions")
     {
         const auto big_json =
-            u8R"({"name":"C++", "contacts" : [{"person" : {"age":23, "name":"theo", "country":"France"}, "address":"Paris"}, {"person" : {"age":42, "country":"中华人民共和国", "name":"王芳"}, "address":"Paris"}]})"_json;
+            R"({"name":"C++", "contacts" : [{"person" : {"age":23, "name":"theo", "country":"France"}, "address":"Paris"}, {"person" : {"age":42, "country":"中华人民共和国", "name":"王芳"}, "address":"Paris"}]})"_json;
         SECTION("via explicit calls to get")
         {
             const auto parsed_book = big_json.get<udt::contact_book>();
@@ -344,11 +349,11 @@ namespace udt
 {
 struct legacy_type
 {
-    std::string number;
-    legacy_type() : number() {}
-    legacy_type(const std::string& n) : number(n) {}
+    std::string number{};
+    legacy_type() = default;
+    legacy_type(std::string n) : number(std::move(n)) {}
 };
-}
+} // namespace udt
 
 namespace nlohmann
 {
@@ -375,7 +380,7 @@ struct adl_serializer<std::shared_ptr<T>>
         }
         else
         {
-            opt.reset(new T(j.get<T>()));
+            opt.reset(new T(j.get<T>())); // NOLINT(cppcoreguidelines-owning-memory)
         }
     }
 };
@@ -393,7 +398,7 @@ struct adl_serializer<udt::legacy_type>
         l.number = std::to_string(j.get<int>());
     }
 };
-}
+} // namespace nlohmann
 
 TEST_CASE("adl_serializer specialization" * doctest::test_suite("udt"))
 {
@@ -406,7 +411,7 @@ TEST_CASE("adl_serializer specialization" * doctest::test_suite("udt"))
             json j = optPerson;
             CHECK(j.is_null());
 
-            optPerson.reset(new udt::person{{42}, {"John Doe"}, udt::country::russia});
+            optPerson.reset(new udt::person{{42}, {"John Doe"}, udt::country::russia}); // NOLINT(cppcoreguidelines-owning-memory,modernize-make-shared)
             j = optPerson;
             CHECK_FALSE(j.is_null());
 
@@ -453,23 +458,23 @@ template <>
 struct adl_serializer<std::vector<float>>
 {
     using type = std::vector<float>;
-    static void to_json(json& j, const type&)
+    static void to_json(json& j, const type& /*type*/)
     {
         j = "hijacked!";
     }
 
-    static void from_json(const json&, type& opt)
+    static void from_json(const json& /*unnamed*/, type& opt)
     {
         opt = {42.0, 42.0, 42.0};
     }
 
     // preferred version
-    static type from_json(const json&)
+    static type from_json(const json& /*unnamed*/)
     {
         return {4.0, 5.0, 6.0};
     }
 };
-}
+} // namespace nlohmann
 
 TEST_CASE("even supported types can be specialized" * doctest::test_suite("udt"))
 {
@@ -504,13 +509,11 @@ struct adl_serializer<std::unique_ptr<T>>
         {
             return nullptr;
         }
-        else
-        {
-            return std::unique_ptr<T>(new T(j.get<T>()));
-        }
+
+        return std::unique_ptr<T>(new T(j.get<T>()));
     }
 };
-}
+} // namespace nlohmann
 
 TEST_CASE("Non-copyable types" * doctest::test_suite("udt"))
 {
@@ -521,7 +524,7 @@ TEST_CASE("Non-copyable types" * doctest::test_suite("udt"))
         json j = optPerson;
         CHECK(j.is_null());
 
-        optPerson.reset(new udt::person{{42}, {"John Doe"}, udt::country::russia});
+        optPerson.reset(new udt::person{{42}, {"John Doe"}, udt::country::russia}); // NOLINT(cppcoreguidelines-owning-memory,modernize-make-unique)
         j = optPerson;
         CHECK_FALSE(j.is_null());
 
@@ -566,8 +569,8 @@ struct pod_serializer
                    std::is_pod<U>::value && std::is_class<U>::value, int >::type = 0 >
     static void from_json(const  BasicJsonType& j, U& t)
     {
-        std::uint64_t value;
-        // TODO The following block is no longer relevant in this serializer, make another one that shows the issue
+        std::uint64_t value = 0;
+        // The following block is no longer relevant in this serializer, make another one that shows the issue
         // the problem arises only when one from_json method is defined without any constraint
         //
         // Why cannot we simply use: j.get<std::uint64_t>() ?
@@ -582,7 +585,7 @@ struct pod_serializer
         // calling get calls from_json, for now, we cannot do this in custom
         // serializers
         nlohmann::from_json(j, value);
-        auto bytes = static_cast<char*>(static_cast<void*>(&value));
+        auto* bytes = static_cast<char*>(static_cast<void*>(&value));
         std::memcpy(&t, bytes, sizeof(value));
     }
 
@@ -601,8 +604,8 @@ struct pod_serializer
                    std::is_pod<U>::value && std::is_class<U>::value, int >::type = 0 >
     static void to_json(BasicJsonType& j, const  T& t) noexcept
     {
-        auto bytes = static_cast< const unsigned char*>(static_cast<const void*>(&t));
-        std::uint64_t value;
+        const auto* bytes = static_cast< const unsigned char*>(static_cast<const void*>(&t));
+        std::uint64_t value = 0;
         std::memcpy(&value, bytes, sizeof(value));
         nlohmann::to_json(j, value);
     }
@@ -619,9 +622,9 @@ struct small_pod
 
 struct non_pod
 {
-    std::string s;
-    non_pod() : s() {}
-    non_pod(const std::string& S) : s(S) {}
+    std::string s{};
+    non_pod() = default;
+    non_pod(std::string S) : s(std::move(S)) {}
 };
 
 template <typename BasicJsonType>
@@ -651,7 +654,7 @@ static std::ostream& operator<<(std::ostream& os, small_pod l)
 {
     return os << "begin: " << l.begin << ", middle: " << l.middle << ", end: " << l.end;
 }
-}
+} // namespace udt
 
 TEST_CASE("custom serializer for pods" * doctest::test_suite("udt"))
 {
@@ -803,7 +806,7 @@ struct is_constructible_patched : std::false_type {};
 
 template <typename T>
 struct is_constructible_patched<T, decltype(void(json(std::declval<T>())))> : std::true_type {};
-}
+} // namespace
 
 TEST_CASE("an incomplete type does not trigger a compiler error in non-evaluated context" * doctest::test_suite("udt"))
 {
@@ -817,13 +820,16 @@ class Evil
   public:
     Evil() = default;
     template <typename T>
-    Evil(T t) : m_i(sizeof(t)) {}
+    Evil(T t) : m_i(sizeof(t))
+    {
+        static_cast<void>(t); // fix MSVC's C4100 warning
+    }
 
     int m_i = 0;
 };
 
-void from_json(const json&, Evil&) {}
-}
+void from_json(const json& /*unused*/, Evil& /*unused*/) {}
+} // namespace
 
 TEST_CASE("Issue #924")
 {
@@ -843,3 +849,5 @@ TEST_CASE("Issue #1237")
     struct non_convertible_type {};
     static_assert(!std::is_convertible<json, non_convertible_type>::value, "");
 }
+
+DOCTEST_GCC_SUPPRESS_WARNING_POP

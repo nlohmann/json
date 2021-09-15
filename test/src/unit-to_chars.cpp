@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.9.1
+|  |  |__   |  |  | | | |  version 3.10.2
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -38,7 +38,7 @@ using nlohmann::detail::dtoa_impl::reinterpret_bits;
 
 namespace
 {
-static float make_float(uint32_t sign_bit, uint32_t biased_exponent, uint32_t significand)
+float make_float(uint32_t sign_bit, uint32_t biased_exponent, uint32_t significand)
 {
     assert(sign_bit == 0 || sign_bit == 1);
     assert(biased_exponent <= 0xFF);
@@ -54,7 +54,7 @@ static float make_float(uint32_t sign_bit, uint32_t biased_exponent, uint32_t si
 }
 
 // ldexp -- convert f * 2^e to IEEE single precision
-static float make_float(uint64_t f, int e)
+float make_float(uint64_t f, int e)
 {
     constexpr uint64_t kHiddenBit               = 0x00800000;
     constexpr uint64_t kSignificandMask         = 0x007FFFFF;
@@ -90,7 +90,7 @@ static float make_float(uint64_t f, int e)
     return reinterpret_bits<float>(static_cast<uint32_t>(bits));
 }
 
-static double make_double(uint64_t sign_bit, uint64_t biased_exponent, uint64_t significand)
+double make_double(uint64_t sign_bit, uint64_t biased_exponent, uint64_t significand)
 {
     assert(sign_bit == 0 || sign_bit == 1);
     assert(biased_exponent <= 0x7FF);
@@ -106,7 +106,7 @@ static double make_double(uint64_t sign_bit, uint64_t biased_exponent, uint64_t 
 }
 
 // ldexp -- convert f * 2^e to IEEE double precision
-static double make_double(uint64_t f, int e)
+double make_double(uint64_t f, int e)
 {
     constexpr uint64_t kHiddenBit               = 0x0010000000000000;
     constexpr uint64_t kSignificandMask         = 0x000FFFFFFFFFFFFF;
@@ -141,7 +141,7 @@ static double make_double(uint64_t f, int e)
     uint64_t bits = (f & kSignificandMask) | (biased_exponent << kPhysicalSignificandSize);
     return reinterpret_bits<double>(bits);
 }
-}
+} // namespace
 
 TEST_CASE("digit gen")
 {
@@ -153,12 +153,12 @@ TEST_CASE("digit gen")
             CAPTURE(digits)
             CAPTURE(expected_exponent)
 
-            char buf[32];
+            std::array<char, 32> buf{};
             int len = 0;
             int exponent = 0;
-            nlohmann::detail::dtoa_impl::grisu2(buf, len, exponent, number);
+            nlohmann::detail::dtoa_impl::grisu2(buf.data(), len, exponent, number);
 
-            CHECK(digits == std::string(buf, buf + len));
+            CHECK(digits == std::string(buf.data(), buf.data() + len));
             CHECK(expected_exponent == exponent);
         };
 
@@ -217,12 +217,12 @@ TEST_CASE("digit gen")
             CAPTURE(digits)
             CAPTURE(expected_exponent)
 
-            char buf[32];
+            std::array<char, 32> buf{};
             int len = 0;
             int exponent = 0;
-            nlohmann::detail::dtoa_impl::grisu2(buf, len, exponent, number);
+            nlohmann::detail::dtoa_impl::grisu2(buf.data(), len, exponent, number);
 
-            CHECK(digits == std::string(buf, buf + len));
+            CHECK(digits == std::string(buf.data(), buf.data() + len));
             CHECK(expected_exponent == exponent);
         };
 
@@ -360,7 +360,7 @@ TEST_CASE("formatting")
         auto check_float = [](float number, const std::string & expected)
         {
             std::array<char, 33> buf{};
-            char* end = nlohmann::detail::to_chars(buf.data(), buf.data() + 32, number);
+            char* end = nlohmann::detail::to_chars(buf.data(), buf.data() + 32, number); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
             std::string actual(buf.data(), end);
 
             CHECK(actual == expected);
@@ -420,7 +420,7 @@ TEST_CASE("formatting")
         auto check_double = [](double number, const std::string & expected)
         {
             std::array<char, 33> buf{};
-            char* end = nlohmann::detail::to_chars(buf.data(), buf.data() + 32, number);
+            char* end = nlohmann::detail::to_chars(buf.data(), buf.data() + 32, number); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
             std::string actual(buf.data(), end);
 
             CHECK(actual == expected);

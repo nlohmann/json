@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.9.1
+|  |  |__   |  |  | | | |  version 3.10.2
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -202,7 +202,7 @@ TEST_CASE("element access 2")
                     SECTION("null")
                     {
                         json j_nonobject(json::value_t::null);
-                        const json j_nonobject_const(j_nonobject);
+                        const json j_nonobject_const(json::value_t::null);
                         CHECK_THROWS_AS(j_nonobject.value("foo", 1), json::type_error&);
                         CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), json::type_error&);
                         CHECK_THROWS_WITH(j_nonobject.value("foo", 1),
@@ -214,7 +214,7 @@ TEST_CASE("element access 2")
                     SECTION("boolean")
                     {
                         json j_nonobject(json::value_t::boolean);
-                        const json j_nonobject_const(j_nonobject);
+                        const json j_nonobject_const(json::value_t::boolean);
                         CHECK_THROWS_AS(j_nonobject.value("foo", 1), json::type_error&);
                         CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), json::type_error&);
                         CHECK_THROWS_WITH(j_nonobject.value("foo", 1),
@@ -226,7 +226,7 @@ TEST_CASE("element access 2")
                     SECTION("string")
                     {
                         json j_nonobject(json::value_t::string);
-                        const json j_nonobject_const(j_nonobject);
+                        const json j_nonobject_const(json::value_t::string);
                         CHECK_THROWS_AS(j_nonobject.value("foo", 1), json::type_error&);
                         CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), json::type_error&);
                         CHECK_THROWS_WITH(j_nonobject.value("foo", 1),
@@ -238,7 +238,7 @@ TEST_CASE("element access 2")
                     SECTION("array")
                     {
                         json j_nonobject(json::value_t::array);
-                        const json j_nonobject_const(j_nonobject);
+                        const json j_nonobject_const(json::value_t::array);
                         CHECK_THROWS_AS(j_nonobject.value("foo", 1), json::type_error&);
                         CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), json::type_error&);
                         CHECK_THROWS_WITH(j_nonobject.value("foo", 1),
@@ -250,7 +250,7 @@ TEST_CASE("element access 2")
                     SECTION("number (integer)")
                     {
                         json j_nonobject(json::value_t::number_integer);
-                        const json j_nonobject_const(j_nonobject);
+                        const json j_nonobject_const(json::value_t::number_integer);
                         CHECK_THROWS_AS(j_nonobject.value("foo", 1), json::type_error&);
                         CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), json::type_error&);
                         CHECK_THROWS_WITH(j_nonobject.value("foo", 1),
@@ -262,7 +262,7 @@ TEST_CASE("element access 2")
                     SECTION("number (unsigned)")
                     {
                         json j_nonobject(json::value_t::number_unsigned);
-                        const json j_nonobject_const(j_nonobject);
+                        const json j_nonobject_const(json::value_t::number_unsigned);
                         CHECK_THROWS_AS(j_nonobject.value("foo", 1), json::type_error&);
                         CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), json::type_error&);
                         CHECK_THROWS_WITH(j_nonobject.value("foo", 1),
@@ -274,7 +274,7 @@ TEST_CASE("element access 2")
                     SECTION("number (floating-point)")
                     {
                         json j_nonobject(json::value_t::number_float);
-                        const json j_nonobject_const(j_nonobject);
+                        const json j_nonobject_const(json::value_t::number_float);
                         CHECK_THROWS_AS(j_nonobject.value("foo", 1), json::type_error&);
                         CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), json::type_error&);
                         CHECK_THROWS_WITH(j_nonobject.value("foo", 1),
@@ -320,7 +320,7 @@ TEST_CASE("element access 2")
                     SECTION("null")
                     {
                         json j_nonobject(json::value_t::null);
-                        const json j_nonobject_const(j_nonobject);
+                        const json j_nonobject_const(json::value_t::null);
                         CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), json::type_error&);
                         CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), json::type_error&);
                         CHECK_THROWS_WITH(j_nonobject.value("/foo"_json_pointer, 1),
@@ -332,7 +332,7 @@ TEST_CASE("element access 2")
                     SECTION("boolean")
                     {
                         json j_nonobject(json::value_t::boolean);
-                        const json j_nonobject_const(j_nonobject);
+                        const json j_nonobject_const(json::value_t::boolean);
                         CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), json::type_error&);
                         CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), json::type_error&);
                         CHECK_THROWS_WITH(j_nonobject.value("/foo"_json_pointer, 1),
@@ -344,7 +344,7 @@ TEST_CASE("element access 2")
                     SECTION("string")
                     {
                         json j_nonobject(json::value_t::string);
-                        const json j_nonobject_const(j_nonobject);
+                        const json j_nonobject_const(json::value_t::string);
                         CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), json::type_error&);
                         CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), json::type_error&);
                         CHECK_THROWS_WITH(j_nonobject.value("/foo"_json_pointer, 1),
@@ -356,7 +356,7 @@ TEST_CASE("element access 2")
                     SECTION("array")
                     {
                         json j_nonobject(json::value_t::array);
-                        const json j_nonobject_const(j_nonobject);
+                        const json j_nonobject_const(json::value_t::array);
                         CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), json::type_error&);
                         CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), json::type_error&);
                         CHECK_THROWS_WITH(j_nonobject.value("/foo"_json_pointer, 1),
@@ -368,7 +368,7 @@ TEST_CASE("element access 2")
                     SECTION("number (integer)")
                     {
                         json j_nonobject(json::value_t::number_integer);
-                        const json j_nonobject_const(j_nonobject);
+                        const json j_nonobject_const(json::value_t::number_integer);
                         CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), json::type_error&);
                         CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), json::type_error&);
                         CHECK_THROWS_WITH(j_nonobject.value("/foo"_json_pointer, 1),
@@ -380,7 +380,7 @@ TEST_CASE("element access 2")
                     SECTION("number (unsigned)")
                     {
                         json j_nonobject(json::value_t::number_unsigned);
-                        const json j_nonobject_const(j_nonobject);
+                        const json j_nonobject_const(json::value_t::number_unsigned);
                         CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), json::type_error&);
                         CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), json::type_error&);
                         CHECK_THROWS_WITH(j_nonobject.value("/foo"_json_pointer, 1),
@@ -392,7 +392,7 @@ TEST_CASE("element access 2")
                     SECTION("number (floating-point)")
                     {
                         json j_nonobject(json::value_t::number_float);
-                        const json j_nonobject_const(j_nonobject);
+                        const json j_nonobject_const(json::value_t::number_float);
                         CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), json::type_error&);
                         CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), json::type_error&);
                         CHECK_THROWS_WITH(j_nonobject.value("/foo"_json_pointer, 1),
@@ -811,7 +811,7 @@ TEST_CASE("element access 2")
         {
             SECTION("existing element")
             {
-                for (auto key :
+                for (const auto* key :
                         {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"
                         })
                 {
@@ -900,7 +900,7 @@ TEST_CASE("element access 2")
         {
             SECTION("existing element")
             {
-                for (auto key :
+                for (const auto* key :
                         {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"
                         })
                 {
@@ -920,7 +920,7 @@ TEST_CASE("element access 2")
                 SECTION("null")
                 {
                     json j_nonobject(json::value_t::null);
-                    const json j_nonobject_const(j_nonobject);
+                    const json j_nonobject_const(json::value_t::null);
                     CHECK(j_nonobject.count("foo") == 0);
                     CHECK(j_nonobject_const.count("foo") == 0);
                 }
@@ -928,7 +928,7 @@ TEST_CASE("element access 2")
                 SECTION("string")
                 {
                     json j_nonobject(json::value_t::string);
-                    const json j_nonobject_const(j_nonobject);
+                    const json j_nonobject_const(json::value_t::string);
                     CHECK(j_nonobject.count("foo") == 0);
                     CHECK(j_nonobject_const.count("foo") == 0);
                 }
@@ -936,7 +936,7 @@ TEST_CASE("element access 2")
                 SECTION("object")
                 {
                     json j_nonobject(json::value_t::object);
-                    const json j_nonobject_const(j_nonobject);
+                    const json j_nonobject_const(json::value_t::object);
                     CHECK(j_nonobject.count("foo") == 0);
                     CHECK(j_nonobject_const.count("foo") == 0);
                 }
@@ -944,7 +944,7 @@ TEST_CASE("element access 2")
                 SECTION("array")
                 {
                     json j_nonobject(json::value_t::array);
-                    const json j_nonobject_const(j_nonobject);
+                    const json j_nonobject_const(json::value_t::array);
                     CHECK(j_nonobject.count("foo") == 0);
                     CHECK(j_nonobject_const.count("foo") == 0);
                 }
@@ -952,7 +952,7 @@ TEST_CASE("element access 2")
                 SECTION("boolean")
                 {
                     json j_nonobject(json::value_t::boolean);
-                    const json j_nonobject_const(j_nonobject);
+                    const json j_nonobject_const(json::value_t::boolean);
                     CHECK(j_nonobject.count("foo") == 0);
                     CHECK(j_nonobject_const.count("foo") == 0);
                 }
@@ -960,7 +960,7 @@ TEST_CASE("element access 2")
                 SECTION("number (integer)")
                 {
                     json j_nonobject(json::value_t::number_integer);
-                    const json j_nonobject_const(j_nonobject);
+                    const json j_nonobject_const(json::value_t::number_integer);
                     CHECK(j_nonobject.count("foo") == 0);
                     CHECK(j_nonobject_const.count("foo") == 0);
                 }
@@ -968,7 +968,7 @@ TEST_CASE("element access 2")
                 SECTION("number (unsigned)")
                 {
                     json j_nonobject(json::value_t::number_unsigned);
-                    const json j_nonobject_const(j_nonobject);
+                    const json j_nonobject_const(json::value_t::number_unsigned);
                     CHECK(j_nonobject.count("foo") == 0);
                     CHECK(j_nonobject_const.count("foo") == 0);
                 }
@@ -976,7 +976,7 @@ TEST_CASE("element access 2")
                 SECTION("number (floating-point)")
                 {
                     json j_nonobject(json::value_t::number_float);
-                    const json j_nonobject_const(j_nonobject);
+                    const json j_nonobject_const(json::value_t::number_float);
                     CHECK(j_nonobject.count("foo") == 0);
                     CHECK(j_nonobject_const.count("foo") == 0);
                 }
@@ -987,7 +987,7 @@ TEST_CASE("element access 2")
         {
             SECTION("existing element")
             {
-                for (auto key :
+                for (const auto* key :
                         {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"
                         })
                 {
@@ -1007,7 +1007,7 @@ TEST_CASE("element access 2")
                 SECTION("null")
                 {
                     json j_nonobject(json::value_t::null);
-                    const json j_nonobject_const(j_nonobject);
+                    const json j_nonobject_const(json::value_t::null);
                     CHECK(j_nonobject.contains("foo") == false);
                     CHECK(j_nonobject_const.contains("foo") == false);
                 }
@@ -1015,7 +1015,7 @@ TEST_CASE("element access 2")
                 SECTION("string")
                 {
                     json j_nonobject(json::value_t::string);
-                    const json j_nonobject_const(j_nonobject);
+                    const json j_nonobject_const(json::value_t::string);
                     CHECK(j_nonobject.contains("foo") == false);
                     CHECK(j_nonobject_const.contains("foo") == false);
                 }
@@ -1023,7 +1023,7 @@ TEST_CASE("element access 2")
                 SECTION("object")
                 {
                     json j_nonobject(json::value_t::object);
-                    const json j_nonobject_const(j_nonobject);
+                    const json j_nonobject_const(json::value_t::object);
                     CHECK(j_nonobject.contains("foo") == false);
                     CHECK(j_nonobject_const.contains("foo") == false);
                 }
@@ -1031,7 +1031,7 @@ TEST_CASE("element access 2")
                 SECTION("array")
                 {
                     json j_nonobject(json::value_t::array);
-                    const json j_nonobject_const(j_nonobject);
+                    const json j_nonobject_const(json::value_t::array);
                     CHECK(j_nonobject.contains("foo") == false);
                     CHECK(j_nonobject_const.contains("foo") == false);
                 }
@@ -1039,7 +1039,7 @@ TEST_CASE("element access 2")
                 SECTION("boolean")
                 {
                     json j_nonobject(json::value_t::boolean);
-                    const json j_nonobject_const(j_nonobject);
+                    const json j_nonobject_const(json::value_t::boolean);
                     CHECK(j_nonobject.contains("foo") == false);
                     CHECK(j_nonobject_const.contains("foo") == false);
                 }
@@ -1047,7 +1047,7 @@ TEST_CASE("element access 2")
                 SECTION("number (integer)")
                 {
                     json j_nonobject(json::value_t::number_integer);
-                    const json j_nonobject_const(j_nonobject);
+                    const json j_nonobject_const(json::value_t::number_integer);
                     CHECK(j_nonobject.contains("foo") == false);
                     CHECK(j_nonobject_const.contains("foo") == false);
                 }
@@ -1055,7 +1055,7 @@ TEST_CASE("element access 2")
                 SECTION("number (unsigned)")
                 {
                     json j_nonobject(json::value_t::number_unsigned);
-                    const json j_nonobject_const(j_nonobject);
+                    const json j_nonobject_const(json::value_t::number_unsigned);
                     CHECK(j_nonobject.contains("foo") == false);
                     CHECK(j_nonobject_const.contains("foo") == false);
                 }
@@ -1063,7 +1063,7 @@ TEST_CASE("element access 2")
                 SECTION("number (floating-point)")
                 {
                     json j_nonobject(json::value_t::number_float);
-                    const json j_nonobject_const(j_nonobject);
+                    const json j_nonobject_const(json::value_t::number_float);
                     CHECK(j_nonobject.contains("foo") == false);
                     CHECK(j_nonobject_const.contains("foo") == false);
                 }
@@ -1078,7 +1078,7 @@ TEST_CASE("element access 2 (throwing tests)")
     SECTION("object")
     {
         json j = {{"integer", 1}, {"unsigned", 1u}, {"floating", 42.23}, {"null", nullptr}, {"string", "hello world"}, {"boolean", true}, {"object", json::object()}, {"array", {1, 2, 3}}};
-        const json j_const = j;
+        const json j_const = {{"integer", 1}, {"unsigned", 1u}, {"floating", 42.23}, {"null", nullptr}, {"string", "hello world"}, {"boolean", true}, {"object", json::object()}, {"array", {1, 2, 3}}};
 
         SECTION("access specified element with default value")
         {

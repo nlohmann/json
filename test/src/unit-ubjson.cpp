@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.9.1
+|  |  |__   |  |  | | | |  version 3.10.2
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -51,42 +51,42 @@ class SaxCountdown
         return events_left-- > 0;
     }
 
-    bool boolean(bool)
+    bool boolean(bool /*unused*/)
     {
         return events_left-- > 0;
     }
 
-    bool number_integer(json::number_integer_t)
+    bool number_integer(json::number_integer_t /*unused*/)
     {
         return events_left-- > 0;
     }
 
-    bool number_unsigned(json::number_unsigned_t)
+    bool number_unsigned(json::number_unsigned_t /*unused*/)
     {
         return events_left-- > 0;
     }
 
-    bool number_float(json::number_float_t, const std::string&)
+    bool number_float(json::number_float_t /*unused*/, const std::string& /*unused*/)
     {
         return events_left-- > 0;
     }
 
-    bool string(std::string&)
+    bool string(std::string& /*unused*/)
     {
         return events_left-- > 0;
     }
 
-    bool binary(std::vector<std::uint8_t>&)
+    bool binary(std::vector<std::uint8_t>& /*unused*/)
     {
         return events_left-- > 0;
     }
 
-    bool start_object(std::size_t)
+    bool start_object(std::size_t /*unused*/)
     {
         return events_left-- > 0;
     }
 
-    bool key(std::string&)
+    bool key(std::string& /*unused*/)
     {
         return events_left-- > 0;
     }
@@ -96,7 +96,7 @@ class SaxCountdown
         return events_left-- > 0;
     }
 
-    bool start_array(std::size_t)
+    bool start_array(std::size_t /*unused*/)
     {
         return events_left-- > 0;
     }
@@ -106,7 +106,7 @@ class SaxCountdown
         return events_left-- > 0;
     }
 
-    bool parse_error(std::size_t, const std::string&, const json::exception&)
+    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const json::exception& /*unused*/) // NOLINT(readability-convert-member-functions-to-static)
     {
         return false;
     }
@@ -114,7 +114,7 @@ class SaxCountdown
   private:
     int events_left = 0;
 };
-}
+} // namespace
 
 TEST_CASE("UBJSON")
 {
@@ -175,16 +175,16 @@ TEST_CASE("UBJSON")
                 {
                     std::vector<int64_t> numbers;
                     numbers.push_back((std::numeric_limits<int64_t>::min)());
-                    numbers.push_back(-1000000000000000000ll);
-                    numbers.push_back(-100000000000000000ll);
-                    numbers.push_back(-10000000000000000ll);
-                    numbers.push_back(-1000000000000000ll);
-                    numbers.push_back(-100000000000000ll);
-                    numbers.push_back(-10000000000000ll);
-                    numbers.push_back(-1000000000000ll);
-                    numbers.push_back(-100000000000ll);
-                    numbers.push_back(-10000000000ll);
-                    numbers.push_back(-2147483649ll);
+                    numbers.push_back(-1000000000000000000LL);
+                    numbers.push_back(-100000000000000000LL);
+                    numbers.push_back(-10000000000000000LL);
+                    numbers.push_back(-1000000000000000LL);
+                    numbers.push_back(-100000000000000LL);
+                    numbers.push_back(-10000000000000LL);
+                    numbers.push_back(-1000000000000LL);
+                    numbers.push_back(-100000000000LL);
+                    numbers.push_back(-10000000000LL);
+                    numbers.push_back(-2147483649LL);
                     for (auto i : numbers)
                     {
                         CAPTURE(i)
@@ -302,7 +302,7 @@ TEST_CASE("UBJSON")
 
                         // check individual bytes
                         CHECK(result[0] == 'I');
-                        int16_t restored = static_cast<int16_t>(((result[1] << 8) + result[2]));
+                        auto restored = static_cast<int16_t>(((result[1] << 8) + result[2]));
                         CHECK(restored == i);
 
                         // roundtrip
@@ -323,7 +323,7 @@ TEST_CASE("UBJSON")
 
                     // check individual bytes
                     CHECK(result[0] == 'I');
-                    int16_t restored = static_cast<int16_t>(((result[1] << 8) + result[2]));
+                    auto restored = static_cast<int16_t>(((result[1] << 8) + result[2]));
                     CHECK(restored == -9263);
 
                     // roundtrip
@@ -455,7 +455,7 @@ TEST_CASE("UBJSON")
 
                         // check individual bytes
                         CHECK(result[0] == 'I');
-                        uint16_t restored = static_cast<uint16_t>(static_cast<uint8_t>(result[1]) * 256 + static_cast<uint8_t>(result[2]));
+                        auto restored = static_cast<uint16_t>(static_cast<uint8_t>(result[1]) * 256 + static_cast<uint8_t>(result[2]));
                         CHECK(restored == i);
 
                         // roundtrip
@@ -583,7 +583,7 @@ TEST_CASE("UBJSON")
 
                         // check individual bytes
                         CHECK(result[0] == 'i');
-                        uint8_t restored = static_cast<uint8_t>(result[1]);
+                        auto restored = static_cast<uint8_t>(result[1]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -616,7 +616,7 @@ TEST_CASE("UBJSON")
 
                         // check individual bytes
                         CHECK(result[0] == 'U');
-                        uint8_t restored = static_cast<uint8_t>(result[1]);
+                        auto restored = static_cast<uint8_t>(result[1]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -650,7 +650,7 @@ TEST_CASE("UBJSON")
 
                         // check individual bytes
                         CHECK(result[0] == 'I');
-                        uint16_t restored = static_cast<uint16_t>(static_cast<uint8_t>(result[1]) * 256 + static_cast<uint8_t>(result[2]));
+                        auto restored = static_cast<uint16_t>(static_cast<uint8_t>(result[1]) * 256 + static_cast<uint8_t>(result[2]));
                         CHECK(restored == i);
 
                         // roundtrip
@@ -805,12 +805,13 @@ TEST_CASE("UBJSON")
                     std::vector<uint8_t> vec1 = {'H', 'i', '1'};
                     CHECK(json::from_ubjson(vec1, true, false).is_discarded());
 
+                    json _;
                     std::vector<uint8_t> vec2 = {'H', 'i', 2, '1', 'A', '3'};
-                    CHECK_THROWS_WITH_AS(json::from_ubjson(vec2), "[json.exception.parse_error.115] parse error at byte 5: syntax error while parsing UBJSON high-precision number: invalid number text: 1A", json::parse_error);
+                    CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vec2), "[json.exception.parse_error.115] parse error at byte 5: syntax error while parsing UBJSON high-precision number: invalid number text: 1A", json::parse_error);
                     std::vector<uint8_t> vec3 = {'H', 'i', 2, '1', '.'};
-                    CHECK_THROWS_WITH_AS(json::from_ubjson(vec3), "[json.exception.parse_error.115] parse error at byte 5: syntax error while parsing UBJSON high-precision number: invalid number text: 1.", json::parse_error);
+                    CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vec3), "[json.exception.parse_error.115] parse error at byte 5: syntax error while parsing UBJSON high-precision number: invalid number text: 1.", json::parse_error);
                     std::vector<uint8_t> vec4 = {'H', 2, '1', '0'};
-                    CHECK_THROWS_WITH_AS(json::from_ubjson(vec4), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing UBJSON size: expected length type specification (U, i, I, l, L) after '#'; last byte: 0x02", json::parse_error);
+                    CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vec4), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing UBJSON size: expected length type specification (U, i, I, l, L) after '#'; last byte: 0x02", json::parse_error);
                 }
 
                 SECTION("serialization")
@@ -1534,7 +1535,7 @@ TEST_CASE("UBJSON")
             {
                 SECTION("size=false type=false")
                 {
-                    json j = json::parse("{\"a\": {\"b\": {\"c\": {}}}}");
+                    json j = json::parse(R"({"a": {"b": {"c": {}}}})");
                     std::vector<uint8_t> expected =
                     {
                         '{', 'i', 1, 'a', '{', 'i', 1, 'b', '{', 'i', 1, 'c', '{', '}', '}', '}', '}'
@@ -1549,7 +1550,7 @@ TEST_CASE("UBJSON")
 
                 SECTION("size=true type=false")
                 {
-                    json j = json::parse("{\"a\": {\"b\": {\"c\": {}}}}");
+                    json j = json::parse(R"({"a": {"b": {"c": {}}}})");
                     std::vector<uint8_t> expected =
                     {
                         '{', '#', 'i', 1, 'i', 1, 'a', '{', '#', 'i', 1, 'i', 1, 'b', '{', '#', 'i', 1, 'i', 1, 'c', '{', '#', 'i', 0
@@ -1564,7 +1565,7 @@ TEST_CASE("UBJSON")
 
                 SECTION("size=true type=true")
                 {
-                    json j = json::parse("{\"a\": {\"b\": {\"c\": {}}}}");
+                    json j = json::parse(R"({"a": {"b": {"c": {}}}})");
                     std::vector<uint8_t> expected =
                     {
                         '{', '$', '{', '#', 'i', 1, 'i', 1, 'a', '$', '{', '#', 'i', 1, 'i', 1, 'b', '$', '{', '#', 'i', 1, 'i', 1, 'c', '#', 'i', 0
@@ -1609,7 +1610,7 @@ TEST_CASE("UBJSON")
                 CHECK_THROWS_AS(_ = json::from_ubjson(v_ubjson), json::out_of_range&);
 
                 json j;
-                nlohmann::detail::json_sax_dom_callback_parser<json> scp(j, [](int, json::parse_event_t, const json&)
+                nlohmann::detail::json_sax_dom_callback_parser<json> scp(j, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/)
                 {
                     return true;
                 });
@@ -1623,7 +1624,7 @@ TEST_CASE("UBJSON")
                 CHECK_THROWS_AS(_ = json::from_ubjson(v_ubjson), json::out_of_range&);
 
                 json j;
-                nlohmann::detail::json_sax_dom_callback_parser<json> scp(j, [](int, json::parse_event_t, const json&)
+                nlohmann::detail::json_sax_dom_callback_parser<json> scp(j, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/)
                 {
                     return true;
                 });
@@ -2438,7 +2439,7 @@ TEST_CASE("all UBJSON first bytes")
             // check that parse_error.112 is only thrown if the
             // first byte is not in the supported set
             INFO_WITH_TEMP(e.what());
-            if (std::find(supported.begin(), supported.end(), byte) == supported.end())
+            if (supported.find(byte) == supported.end())
             {
                 CHECK(e.id == 112);
             }

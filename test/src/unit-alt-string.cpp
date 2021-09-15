@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.9.1
+|  |  |__   |  |  | | | |  version 3.10.2
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -152,7 +152,7 @@ class alt_string
   private:
     std::string str_impl {};
 
-    friend bool ::operator<(const char*, const alt_string&);
+    friend bool ::operator<(const char* /*op1*/, const alt_string& /*op2*/);
 };
 
 void int_to_string(alt_string& target, std::size_t value)
@@ -233,24 +233,24 @@ TEST_CASE("alternative string type")
 
     SECTION("parse")
     {
-        auto doc = alt_json::parse("{\"foo\": \"bar\"}");
+        auto doc = alt_json::parse(R"({"foo": "bar"})");
         alt_string dump = doc.dump();
         CHECK(dump == R"({"foo":"bar"})");
     }
 
     SECTION("items")
     {
-        auto doc = alt_json::parse("{\"foo\": \"bar\"}");
+        auto doc = alt_json::parse(R"({"foo": "bar"})");
 
-        for ( auto item : doc.items() )
+        for (const auto& item : doc.items())
         {
-            CHECK( item.key() == "foo" );
-            CHECK( item.value() == "bar" );
+            CHECK(item.key() == "foo");
+            CHECK(item.value() == "bar");
         }
 
-        auto doc_array = alt_json::parse("[\"foo\", \"bar\"]");
+        auto doc_array = alt_json::parse(R"(["foo", "bar"])");
 
-        for ( auto item : doc_array.items() )
+        for (const auto& item : doc_array.items())
         {
             if (item.key() == "0" )
             {
@@ -258,11 +258,11 @@ TEST_CASE("alternative string type")
             }
             else if (item.key() == "1" )
             {
-                CHECK( item.value() == "bar" );
+                CHECK(item.value() == "bar");
             }
             else
             {
-                CHECK( false );
+                CHECK(false);
             }
         }
     }

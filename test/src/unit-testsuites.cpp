@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.9.1
+|  |  |__   |  |  | | | |  version 3.10.2
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -41,7 +41,7 @@ TEST_CASE("compliance tests from json.org")
 
     SECTION("expected failures")
     {
-        for (auto filename :
+        for (const auto* filename :
                 {
                     //TEST_DATA_DIRECTORY "/json_tests/fail1.json",
                     TEST_DATA_DIRECTORY "/json_tests/fail2.json",
@@ -90,7 +90,7 @@ TEST_CASE("compliance tests from json.org")
         // these tests fail above, because the parser does not end on EOF;
         // they succeed when the operator>> is used, because it does not
         // have this constraint
-        for (auto filename :
+        for (const auto* filename :
                 {
                     TEST_DATA_DIRECTORY "/json_tests/fail7.json",
                     TEST_DATA_DIRECTORY "/json_tests/fail8.json",
@@ -106,7 +106,7 @@ TEST_CASE("compliance tests from json.org")
 
     SECTION("expected passes")
     {
-        for (auto filename :
+        for (const auto* filename :
                 {
                     TEST_DATA_DIRECTORY "/json_tests/pass1.json",
                     TEST_DATA_DIRECTORY "/json_tests/pass2.json",
@@ -235,13 +235,9 @@ TEST_CASE("compliance tests from nativejson-benchmark")
                     5708990770823839524233143877797980545530986496.0);
 
         {
-            char n1e308[312];   // '1' followed by 308 '0'
+            std::string n1e308(312, '0');   // '1' followed by 308 '0'
             n1e308[0] = '[';
             n1e308[1] = '1';
-            for (int j = 2; j < 310; j++)
-            {
-                n1e308[j] = '0';
-            }
             n1e308[310] = ']';
             n1e308[311] = '\0';
             TEST_DOUBLE(n1e308, 1E308);
@@ -272,20 +268,20 @@ TEST_CASE("compliance tests from nativejson-benchmark")
 
         TEST_STRING("[\"\"]", "");
         TEST_STRING("[\"Hello\"]", "Hello");
-        TEST_STRING("[\"Hello\\nWorld\"]", "Hello\nWorld");
+        TEST_STRING(R"(["Hello\nWorld"])", "Hello\nWorld");
         //TEST_STRING("[\"Hello\\u0000World\"]", "Hello\0World");
-        TEST_STRING("[\"\\\"\\\\/\\b\\f\\n\\r\\t\"]", "\"\\/\b\f\n\r\t");
-        TEST_STRING("[\"\\u0024\"]", "\x24");         // Dollar sign U+0024
-        TEST_STRING("[\"\\u00A2\"]", "\xC2\xA2");     // Cents sign U+00A2
-        TEST_STRING("[\"\\u20AC\"]", "\xE2\x82\xAC"); // Euro sign U+20AC
-        TEST_STRING("[\"\\uD834\\uDD1E\"]", "\xF0\x9D\x84\x9E");  // G clef sign U+1D11E
+        TEST_STRING(R"(["\"\\/\b\f\n\r\t"])", "\"\\/\b\f\n\r\t");
+        TEST_STRING(R"(["\u0024"])", "$");         // Dollar sign U+0024
+        TEST_STRING(R"(["\u00A2"])", "\xC2\xA2");     // Cents sign U+00A2
+        TEST_STRING(R"(["\u20AC"])", "\xE2\x82\xAC"); // Euro sign U+20AC
+        TEST_STRING(R"(["\uD834\uDD1E"])", "\xF0\x9D\x84\x9E");  // G clef sign U+1D11E
     }
 
     SECTION("roundtrip")
     {
         // test cases are from https://github.com/miloyip/nativejson-benchmark/tree/master/test/data/roundtrip
 
-        for (auto filename :
+        for (const auto* filename :
                 {
                     TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip01.json",
                     TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip02.json",
@@ -422,9 +418,9 @@ TEST_CASE("json.org examples")
     }
 }
 
-TEST_CASE("RFC 7159 examples")
+TEST_CASE("RFC 8259 examples")
 {
-    // here, we list all JSON values from the RFC 7159 document
+    // here, we list all JSON values from the RFC 8259 document
 
     SECTION("7. Strings")
     {
@@ -441,7 +437,7 @@ TEST_CASE("RFC 7159 examples")
     SECTION("13 Examples")
     {
         {
-            auto json_contents = R"(
+            const auto* json_contents = R"(
             {
                  "Image": {
                      "Width":  800,
@@ -462,7 +458,7 @@ TEST_CASE("RFC 7159 examples")
         }
 
         {
-            auto json_contents = R"(
+            const auto* json_contents = R"(
                 [
                     {
                        "precision": "zip",
@@ -500,7 +496,7 @@ TEST_CASE("nst's JSONTestSuite")
     {
         SECTION("y")
         {
-            for (auto filename :
+            for (const auto* filename :
                     {
                         TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_arraysWithSpaces.json",
                         TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_empty-string.json",
@@ -610,7 +606,7 @@ TEST_CASE("nst's JSONTestSuite")
 
         SECTION("n")
         {
-            for (auto filename :
+            for (const auto* filename :
                     {
                         TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/n_array_1_true_without_comma.json",
                         TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/n_array_a_invalid_utf8.json",
@@ -822,7 +818,7 @@ TEST_CASE("nst's JSONTestSuite")
             // these tests fail above, because the parser does not end on EOF;
             // they succeed when the operator>> is used, because it does not
             // have this constraint
-            for (auto filename :
+            for (const auto* filename :
                     {
                         TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/n_array_comma_after_close.json",
                         TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/n_array_extra_close.json",
@@ -852,7 +848,7 @@ TEST_CASE("nst's JSONTestSuite")
 
         SECTION("i -> y")
         {
-            for (auto filename :
+            for (const auto* filename :
                     {
                         // we do not pose a limit on nesting
                         TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/i_structure_500_nested_arrays.json",
@@ -876,7 +872,7 @@ TEST_CASE("nst's JSONTestSuite")
         // numbers that overflow during parsing
         SECTION("i/y -> n (out of range)")
         {
-            for (auto filename :
+            for (const auto* filename :
                     {
                         TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/i_number_neg_int_huge_exp.json",
                         TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/i_number_pos_double_huge_exp.json",
@@ -895,7 +891,7 @@ TEST_CASE("nst's JSONTestSuite")
 
         SECTION("i -> n")
         {
-            for (auto filename :
+            for (const auto* filename :
                     {
                         TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/i_object_key_lone_2nd_surrogate.json",
                         TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/i_string_1st_surrogate_but_2nd_missing.json",
@@ -928,7 +924,7 @@ TEST_CASE("nst's JSONTestSuite (2)")
     {
         SECTION("y")
         {
-            for (auto filename :
+            for (const auto* filename :
                     {
                         TEST_DATA_DIRECTORY "/nst_json_testsuite2/test_parsing/y_array_arraysWithSpaces.json",
                         TEST_DATA_DIRECTORY "/nst_json_testsuite2/test_parsing/y_array_empty-string.json",
@@ -1039,7 +1035,7 @@ TEST_CASE("nst's JSONTestSuite (2)")
 
         SECTION("n")
         {
-            for (auto filename :
+            for (const auto* filename :
                     {
                         TEST_DATA_DIRECTORY "/nst_json_testsuite2/test_parsing/n_array_1_true_without_comma.json",
                         TEST_DATA_DIRECTORY "/nst_json_testsuite2/test_parsing/n_array_a_invalid_utf8.json",
@@ -1241,7 +1237,7 @@ TEST_CASE("nst's JSONTestSuite (2)")
 
         SECTION("n (previously overflowed)")
         {
-            for (auto filename :
+            for (const auto* filename :
                     {
                         TEST_DATA_DIRECTORY "/nst_json_testsuite2/test_parsing/n_structure_100000_opening_arrays.json",
                         TEST_DATA_DIRECTORY "/nst_json_testsuite2/test_parsing/n_structure_open_array_object.json"
@@ -1256,7 +1252,7 @@ TEST_CASE("nst's JSONTestSuite (2)")
 
         SECTION("i -> y")
         {
-            for (auto filename :
+            for (const auto* filename :
                     {
                         TEST_DATA_DIRECTORY "/nst_json_testsuite2/test_parsing/i_number_double_huge_neg_exp.json",
                         //TEST_DATA_DIRECTORY "/nst_json_testsuite2/test_parsing/i_number_huge_exp.json",
@@ -1307,7 +1303,7 @@ TEST_CASE("nst's JSONTestSuite (2)")
 
         SECTION("i -> n")
         {
-            for (auto filename :
+            for (const auto* filename :
                     {
                         //TEST_DATA_DIRECTORY "/nst_json_testsuite2/test_parsing/i_number_double_huge_neg_exp.json",
                         TEST_DATA_DIRECTORY "/nst_json_testsuite2/test_parsing/i_number_huge_exp.json",
@@ -1373,7 +1369,7 @@ std::string trim(const std::string& str)
     size_t last = str.find_last_not_of(' ');
     return str.substr(first, (last - first + 1));
 }
-}
+} // namespace
 
 TEST_CASE("Big List of Naughty Strings")
 {
@@ -1399,7 +1395,7 @@ TEST_CASE("Big List of Naughty Strings")
             line = trim(line);
 
             // remove trailing comma
-            line = line.substr(0, line.find_last_of(","));
+            line = line.substr(0, line.find_last_of(','));
 
             // discard lines without at least two characters (quotes)
             if (line.size() < 2)

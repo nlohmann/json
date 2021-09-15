@@ -1,17 +1,44 @@
 name: macOS
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - develop
+      - master
+      - release/*
+  pull_request:
 
 jobs:
-  build:
-
-    runs-on: macos-latest
+  xcode:
+    runs-on: macos-10.15
+    strategy:
+      matrix:
+        xcode: [12.4, 12.3, 12.2, 12.1.1, 12.1, 12, 11.7, 11.6, 11.5, 11.4.1, 11.3.1, 11.2.1, 10.3]
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode }}.app/Contents/Developer
 
     steps:
-    - uses: actions/checkout@v1
-    - name: cmake
-      run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On
-    - name: build
-      run: cmake --build build --parallel 10
-    - name: test
-      run: cd build ; ctest -j 10 --output-on-failure
+      - uses: actions/checkout@v2
+      - name: cmake
+        run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On -DJSON_FastTests=ON
+      - name: build
+        run: cmake --build build --parallel 10
+      - name: test
+        run: cd build ; ctest -j 10 --output-on-failure
+
+  xcode_standards:
+    runs-on: macos-10.15
+    strategy:
+      matrix:
+        standard: [11, 14, 17, 20]
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_12.4.app/Contents/Developer
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: cmake
+        run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On -DCMAKE_CXX_STANDARD=${{ matrix.standard }} -DCMAKE_CXX_STANDARD_REQUIRED=ON
+      - name: build
+        run: cmake --build build --parallel 10
+      - name: test
+        run: cd build ; ctest -j 10 --output-on-failure

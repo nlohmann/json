@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.9.1
+|  |  |__   |  |  | | | |  version 3.10.2
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -39,6 +39,12 @@ using nlohmann::json;
     #define JSON_HAS_CPP_14
 #endif
 
+// This test suite uses range for loops where values are copied. This is inefficient in usual code, but required to achieve 100% coverage.
+DOCTEST_GCC_SUPPRESS_WARNING_PUSH
+DOCTEST_GCC_SUPPRESS_WARNING("-Wrange-loop-construct")
+DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
+DOCTEST_CLANG_SUPPRESS_WARNING("-Wrange-loop-construct")
+
 TEST_CASE("iterator_wrapper")
 {
     SECTION("object")
@@ -48,7 +54,7 @@ TEST_CASE("iterator_wrapper")
             json j = { {"A", 1}, {"B", 2} };
             int counter = 1;
 
-            for (auto i : json::iterator_wrapper(j))
+            for (auto i : json::iterator_wrapper(j)) // NOLINT(performance-for-range-copy)
             {
                 switch (counter++)
                 {
@@ -125,7 +131,7 @@ TEST_CASE("iterator_wrapper")
             json j = { {"A", 1}, {"B", 2} };
             int counter = 1;
 
-            for (const auto i : json::iterator_wrapper(j))
+            for (const auto i : json::iterator_wrapper(j)) // NOLINT(performance-for-range-copy)
             {
                 switch (counter++)
                 {
@@ -194,7 +200,7 @@ TEST_CASE("iterator_wrapper")
             const json j = { {"A", 1}, {"B", 2} };
             int counter = 1;
 
-            for (auto i : json::iterator_wrapper(j))
+            for (auto i : json::iterator_wrapper(j)) // NOLINT(performance-for-range-copy)
             {
                 switch (counter++)
                 {
@@ -260,7 +266,7 @@ TEST_CASE("iterator_wrapper")
             const json j = { {"A", 1}, {"B", 2} };
             int counter = 1;
 
-            for (const auto i : json::iterator_wrapper(j))
+            for (const auto i : json::iterator_wrapper(j)) // NOLINT(performance-for-range-copy)
             {
                 switch (counter++)
                 {
@@ -329,7 +335,7 @@ TEST_CASE("iterator_wrapper")
             json j = { "A", "B" };
             int counter = 1;
 
-            for (auto i : json::iterator_wrapper(j))
+            for (auto i : json::iterator_wrapper(j)) // NOLINT(performance-for-range-copy)
             {
                 switch (counter++)
                 {
@@ -406,7 +412,7 @@ TEST_CASE("iterator_wrapper")
             json j = { "A", "B" };
             int counter = 1;
 
-            for (const auto i : json::iterator_wrapper(j))
+            for (const auto i : json::iterator_wrapper(j)) // NOLINT(performance-for-range-copy)
             {
                 switch (counter++)
                 {
@@ -475,7 +481,7 @@ TEST_CASE("iterator_wrapper")
             const json j = { "A", "B" };
             int counter = 1;
 
-            for (auto i : json::iterator_wrapper(j))
+            for (auto i : json::iterator_wrapper(j)) // NOLINT(performance-for-range-copy)
             {
                 switch (counter++)
                 {
@@ -541,7 +547,7 @@ TEST_CASE("iterator_wrapper")
             const json j = { "A", "B" };
             int counter = 1;
 
-            for (const auto i : json::iterator_wrapper(j))
+            for (const auto i : json::iterator_wrapper(j)) // NOLINT(performance-for-range-copy)
             {
                 switch (counter++)
                 {
@@ -610,7 +616,7 @@ TEST_CASE("iterator_wrapper")
             json j = 1;
             int counter = 1;
 
-            for (auto i : json::iterator_wrapper(j))
+            for (auto i : json::iterator_wrapper(j)) // NOLINT(performance-for-range-copy)
             {
                 ++counter;
                 CHECK(i.key() == "");
@@ -646,7 +652,7 @@ TEST_CASE("iterator_wrapper")
             json j = 1;
             int counter = 1;
 
-            for (const auto i : json::iterator_wrapper(j))
+            for (const auto i : json::iterator_wrapper(j)) // NOLINT(performance-for-range-copy)
             {
                 ++counter;
                 CHECK(i.key() == "");
@@ -679,7 +685,7 @@ TEST_CASE("iterator_wrapper")
             const json j = 1;
             int counter = 1;
 
-            for (auto i : json::iterator_wrapper(j))
+            for (auto i : json::iterator_wrapper(j)) // NOLINT(performance-for-range-copy)
             {
                 ++counter;
                 CHECK(i.key() == "");
@@ -709,7 +715,7 @@ TEST_CASE("iterator_wrapper")
             const json j = 1;
             int counter = 1;
 
-            for (const auto i : json::iterator_wrapper(j))
+            for (const auto i : json::iterator_wrapper(j)) // NOLINT(performance-for-range-copy)
             {
                 ++counter;
                 CHECK(i.key() == "");
@@ -745,7 +751,7 @@ TEST_CASE("items()")
             json j = { {"A", 1}, {"B", 2} };
             int counter = 1;
 
-            for (auto i : j.items())
+            for (auto i : j.items()) // NOLINT(performance-for-range-copy)
             {
                 switch (counter++)
                 {
@@ -822,7 +828,7 @@ TEST_CASE("items()")
             json j = { {"A", 1}, {"B", 2} };
             int counter = 1;
 
-            for (const auto i : j.items())
+            for (const auto i : j.items()) // NOLINT(performance-for-range-copy)
             {
                 switch (counter++)
                 {
@@ -907,7 +913,7 @@ TEST_CASE("items()")
             const json j = { {"A", 1}, {"B", 2} };
             int counter = 1;
 
-            for (auto i : j.items())
+            for (auto i : j.items()) // NOLINT(performance-for-range-copy)
             {
                 switch (counter++)
                 {
@@ -973,7 +979,7 @@ TEST_CASE("items()")
             const json j = { {"A", 1}, {"B", 2} };
             int counter = 1;
 
-            for (const auto i : j.items())
+            for (const auto i : j.items()) // NOLINT(performance-for-range-copy)
             {
                 switch (counter++)
                 {
@@ -1042,7 +1048,7 @@ TEST_CASE("items()")
             json j = { "A", "B" };
             int counter = 1;
 
-            for (auto i : j.items())
+            for (auto i : j.items()) // NOLINT(performance-for-range-copy)
             {
                 switch (counter++)
                 {
@@ -1119,7 +1125,7 @@ TEST_CASE("items()")
             json j = { "A", "B" };
             int counter = 1;
 
-            for (const auto i : j.items())
+            for (const auto i : j.items()) // NOLINT(performance-for-range-copy)
             {
                 switch (counter++)
                 {
@@ -1188,7 +1194,7 @@ TEST_CASE("items()")
             const json j = { "A", "B" };
             int counter = 1;
 
-            for (auto i : j.items())
+            for (auto i : j.items()) // NOLINT(performance-for-range-copy)
             {
                 switch (counter++)
                 {
@@ -1254,7 +1260,7 @@ TEST_CASE("items()")
             const json j = { "A", "B" };
             int counter = 1;
 
-            for (const auto i : j.items())
+            for (const auto i : j.items()) // NOLINT(performance-for-range-copy)
             {
                 switch (counter++)
                 {
@@ -1323,7 +1329,7 @@ TEST_CASE("items()")
             json j = 1;
             int counter = 1;
 
-            for (auto i : j.items())
+            for (auto i : j.items()) // NOLINT(performance-for-range-copy)
             {
                 ++counter;
                 CHECK(i.key() == "");
@@ -1359,7 +1365,7 @@ TEST_CASE("items()")
             json j = 1;
             int counter = 1;
 
-            for (const auto i : j.items())
+            for (const auto i : j.items()) // NOLINT(performance-for-range-copy)
             {
                 ++counter;
                 CHECK(i.key() == "");
@@ -1392,7 +1398,7 @@ TEST_CASE("items()")
             const json j = 1;
             int counter = 1;
 
-            for (auto i : j.items())
+            for (auto i : j.items()) // NOLINT(performance-for-range-copy)
             {
                 ++counter;
                 CHECK(i.key() == "");
@@ -1422,7 +1428,7 @@ TEST_CASE("items()")
             const json j = 1;
             int counter = 1;
 
-            for (const auto i : j.items())
+            for (const auto i : j.items()) // NOLINT(performance-for-range-copy)
             {
                 ++counter;
                 CHECK(i.key() == "");
@@ -1448,3 +1454,14 @@ TEST_CASE("items()")
         }
     }
 }
+
+#ifdef JSON_HAS_CPP_17
+    #undef JSON_HAS_CPP_17
+#endif
+
+#ifdef JSON_HAS_CPP_14
+    #undef JSON_HAS_CPP_14
+#endif
+
+DOCTEST_GCC_SUPPRESS_WARNING_POP
+DOCTEST_CLANG_SUPPRESS_WARNING_POP

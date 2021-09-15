@@ -1,7 +1,11 @@
 #pragma once
 
-#include <cstddef> // size_t, uint8_t
+#include <cstdint> // uint8_t
+#include <cstddef> // size_t
 #include <functional> // hash
+
+#include <nlohmann/detail/macro_scope.hpp>
+#include <nlohmann/detail/value_t.hpp>
 
 namespace nlohmann
 {
@@ -83,24 +87,24 @@ std::size_t hash(const BasicJsonType& j)
             return combine(type, h);
         }
 
-        case nlohmann::detail::value_t::number_unsigned:
+        case BasicJsonType::value_t::number_unsigned:
         {
             const auto h = std::hash<number_unsigned_t> {}(j.template get<number_unsigned_t>());
             return combine(type, h);
         }
 
-        case nlohmann::detail::value_t::number_float:
+        case BasicJsonType::value_t::number_float:
         {
             const auto h = std::hash<number_float_t> {}(j.template get<number_float_t>());
             return combine(type, h);
         }
 
-        case nlohmann::detail::value_t::binary:
+        case BasicJsonType::value_t::binary:
         {
             auto seed = combine(type, j.get_binary().size());
             const auto h = std::hash<bool> {}(j.get_binary().has_subtype());
             seed = combine(seed, h);
-            seed = combine(seed, j.get_binary().subtype());
+            seed = combine(seed, static_cast<std::size_t>(j.get_binary().subtype()));
             for (const auto byte : j.get_binary())
             {
                 seed = combine(seed, std::hash<std::uint8_t> {}(byte));
@@ -108,8 +112,9 @@ std::size_t hash(const BasicJsonType& j)
             return seed;
         }
 
-        default: // LCOV_EXCL_LINE
-            JSON_ASSERT(false); // LCOV_EXCL_LINE
+        default:                   // LCOV_EXCL_LINE
+            JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
+            return 0;              // LCOV_EXCL_LINE
     }
 }
 

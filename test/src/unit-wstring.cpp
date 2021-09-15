@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.9.1
+|  |  |__   |  |  | | | |  version 3.10.2
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -51,7 +51,7 @@ bool u32string_is_utf32()
 {
     return (std::u32string(U"💩") == std::u32string(U"\U0001F4A9"));
 }
-}
+} // namespace
 
 TEST_CASE("wide strings")
 {

@@ -9,10 +9,10 @@ JSON itself does not have a binary value. As such, binary values are an extensio
 ```plantuml
 class json::binary_t {
     -- setters --
-    +void set_subtype(std::uint8_t subtype)
+    +void set_subtype(std::uint64_t subtype)
     +void clear_subtype()
     -- getters --
-    +std::uint8_t subtype() const
+    +std::uint64_t subtype() const
     +bool has_subtype() const
 }
 
@@ -68,7 +68,7 @@ j.get_binary().has_subtype();  // returns true
 j.get_binary().size();         // returns 4
 ```
 
-For convencience, binary JSON values can be constructed via `json::binary`:
+For convenience, binary JSON values can be constructed via `json::binary`:
 
 ```cpp
 auto j2 = json::binary({0xCA, 0xFE, 0xBA, 0xBE}, 23);
@@ -76,6 +76,7 @@ auto j3 = json::binary({0xCA, 0xFE, 0xBA, 0xBE});
 
 j2 == j;                        // returns true
 j3.get_binary().has_subtype();  // returns false
+j3.get_binary().subtype();      // returns std::uint64_t(-1) as j3 has no subtype
 ```
 
 
@@ -184,7 +185,7 @@ JSON does not have a binary type, and this library does not introduce a new type
             0xCA 0xFE 0xBA 0xBE            // content
     ```
 
-    Note that the subtype is serialized as tag. However, parsing tagged values yield a parse error unless `json::cbor_tag_handler_t::ignore` is passed to `json::from_cbor`.
+    Note that the subtype is serialized as tag. However, parsing tagged values yield a parse error unless `json::cbor_tag_handler_t::ignore` or `json::cbor_tag_handler_t::store` is passed to `json::from_cbor`.
 
     ```json
     {

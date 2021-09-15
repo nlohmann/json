@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.9.1
+|  |  |__   |  |  | | | |  version 3.10.2
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -29,10 +29,9 @@ SOFTWARE.
 
 #include "doctest_compatibility.h"
 
-#define private public
+#define JSON_TESTS_PRIVATE
 #include <nlohmann/json.hpp>
 using nlohmann::json;
-#undef private
 
 TEST_CASE("JSON pointers")
 {
@@ -359,6 +358,10 @@ TEST_CASE("JSON pointers")
                 CHECK_THROWS_WITH(j_const[jp] == 1, throw_msg.c_str());
             }
 
+            // on some machines, the check below is not constant
+            DOCTEST_MSVC_SUPPRESS_WARNING_PUSH
+            DOCTEST_MSVC_SUPPRESS_WARNING(4127)
+
             if (sizeof(typename json::size_type) < sizeof(unsigned long long))
             {
                 auto size_type_max_uul = static_cast<unsigned long long>((std::numeric_limits<json::size_type>::max)());
@@ -371,6 +374,8 @@ TEST_CASE("JSON pointers")
                 CHECK_THROWS_AS(j_const[jp] == 1, json::out_of_range&);
                 CHECK_THROWS_WITH(j_const[jp] == 1, throw_msg.c_str());
             }
+
+            DOCTEST_MSVC_SUPPRESS_WARNING_POP
 
             CHECK_THROWS_AS(j.at("/one"_json_pointer) = 1, json::parse_error&);
             CHECK_THROWS_WITH(j.at("/one"_json_pointer) = 1,
@@ -497,8 +502,11 @@ TEST_CASE("JSON pointers")
 
         // error for nonprimitve values
         CHECK_THROWS_AS(json({{"/1", {1, 2, 3}}}).unflatten(), json::type_error&);
-        CHECK_THROWS_WITH(json({{"/1", {1, 2, 3}}}).unflatten(),
-        "[json.exception.type_error.315] values in object must be primitive");
+#if JSON_DIAGNOSTICS
+        CHECK_THROWS_WITH(json({{"/1", {1, 2, 3}}}).unflatten(), "[json.exception.type_error.315] (/~11) values in object must be primitive");
+#else
+        CHECK_THROWS_WITH(json({{"/1", {1, 2, 3}}}).unflatten(), "[json.exception.type_error.315] values in object must be primitive");
+#endif
 
         // error for conflicting values
         json j_error = {{"", 42}, {"/foo", 17}};
@@ -528,7 +536,7 @@ TEST_CASE("JSON pointers")
 
     SECTION("string representation")
     {
-        for (auto ptr :
+        for (const auto* ptr :
                 {"", "/foo", "/foo/0", "/", "/a~1b", "/c%d", "/e^f", "/g|h", "/i\\j", "/k\"l", "/ ", "/m~0n"
                 })
         {

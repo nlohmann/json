@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.9.1
+|  |  |__   |  |  | | | |  version 3.10.2
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -41,7 +41,7 @@ bool f(A a, B b, U u = U())
 {
     return u(a, b);
 }
-}
+} // namespace
 
 TEST_CASE("lexicographical comparison operators")
 {
@@ -143,10 +143,10 @@ TEST_CASE("lexicographical comparison operators")
 
             // comparison with discarded elements
             json j_discarded(json::value_t::discarded);
-            for (size_t i = 0; i < j_values.size(); ++i)
+            for (const auto& v : j_values)
             {
-                CHECK( (j_values[i] == j_discarded) == false);
-                CHECK( (j_discarded == j_values[i]) == false);
+                CHECK( (v == j_discarded) == false);
+                CHECK( (j_discarded == v) == false);
                 CHECK( (j_discarded == j_discarded) == false);
             }
 

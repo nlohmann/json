@@ -11,3 +11,10 @@ target_link_libraries(with_namespace_target nlohmann_json::nlohmann_json)
 
 add_executable(without_namespace_target main.cpp)
 target_link_libraries(without_namespace_target nlohmann_json)
+
+if(NOT MSVC)
+    add_executable(without_exceptions main.cpp)
+    target_link_libraries(without_exceptions nlohmann_json::nlohmann_json)
+    target_compile_definitions(without_exceptions PRIVATE JSON_NOEXCEPTION)
+    target_compile_options(without_exceptions PRIVATE -fno-exceptions)
+endif()

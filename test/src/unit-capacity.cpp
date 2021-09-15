@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.9.1
+|  |  |__   |  |  | | | |  version 3.10.2
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -437,7 +437,7 @@ TEST_CASE("capacity")
         SECTION("boolean")
         {
             json j = true;
-            const json j_const(j);
+            const json j_const = true;
 
             SECTION("result of max_size")
             {
@@ -449,7 +449,7 @@ TEST_CASE("capacity")
         SECTION("string")
         {
             json j = "hello world";
-            const json j_const(j);
+            const json j_const = "hello world";
 
             SECTION("result of max_size")
             {
@@ -463,7 +463,7 @@ TEST_CASE("capacity")
             SECTION("empty array")
             {
                 json j = json::array();
-                const json j_const(j);
+                const json j_const = json::array();
 
                 SECTION("result of max_size")
                 {
@@ -475,7 +475,7 @@ TEST_CASE("capacity")
             SECTION("filled array")
             {
                 json j = {1, 2, 3};
-                const json j_const(j);
+                const json j_const = {1, 2, 3};
 
                 SECTION("result of max_size")
                 {
@@ -490,7 +490,7 @@ TEST_CASE("capacity")
             SECTION("empty object")
             {
                 json j = json::object();
-                const json j_const(j);
+                const json j_const = json::object();
 
                 SECTION("result of max_size")
                 {
@@ -502,7 +502,7 @@ TEST_CASE("capacity")
             SECTION("filled object")
             {
                 json j = {{"one", 1}, {"two", 2}, {"three", 3}};
-                const json j_const(j);
+                const json j_const = {{"one", 1}, {"two", 2}, {"three", 3}};
 
                 SECTION("result of max_size")
                 {
@@ -515,7 +515,7 @@ TEST_CASE("capacity")
         SECTION("number (integer)")
         {
             json j = -23;
-            const json j_const(j);
+            const json j_const = -23;
 
             SECTION("result of max_size")
             {
@@ -527,7 +527,7 @@ TEST_CASE("capacity")
         SECTION("number (unsigned)")
         {
             json j = 23u;
-            const json j_const(j);
+            const json j_const = 23u;
 
             SECTION("result of max_size")
             {
@@ -539,7 +539,7 @@ TEST_CASE("capacity")
         SECTION("number (float)")
         {
             json j = 23.42;
-            const json j_const(j);
+            const json j_const = 23.42;
 
             SECTION("result of max_size")
             {
@@ -551,7 +551,7 @@ TEST_CASE("capacity")
         SECTION("null")
         {
             json j = nullptr;
-            const json j_const(j);
+            const json j_const = nullptr;
 
             SECTION("result of max_size")
             {

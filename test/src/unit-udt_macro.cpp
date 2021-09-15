@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.9.1
+|  |  |__   |  |  | | | |  version 3.10.2
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -39,7 +39,7 @@ namespace persons
 class person_with_private_data
 {
   private:
-    std::string name = "";
+    std::string name{};
     int age = 0;
     json metadata = nullptr;
 
@@ -62,7 +62,7 @@ class person_with_private_data
 class person_without_private_data_1
 {
   public:
-    std::string name = "";
+    std::string name{};
     int age = 0;
     json metadata = nullptr;
 
@@ -84,7 +84,7 @@ class person_without_private_data_1
 class person_without_private_data_2
 {
   public:
-    std::string name = "";
+    std::string name{};
     int age = 0;
     json metadata = nullptr;
 
@@ -106,7 +106,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(person_without_private_data_2, age, name, met
 class person_with_private_alphabet
 {
   public:
-    bool operator==(const person_with_private_alphabet& other)
+    bool operator==(const person_with_private_alphabet& other) const
     {
         return  a == other.a &&
                 b == other.b &&
@@ -169,7 +169,7 @@ class person_with_private_alphabet
 class person_with_public_alphabet
 {
   public:
-    bool operator==(const person_with_public_alphabet& other)
+    bool operator==(const person_with_public_alphabet& other) const
     {
         return  a == other.a &&
                 b == other.b &&

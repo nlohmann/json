@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleIdentifier</key>
+	<string>nlohmann_json</string>
+	<key>CFBundleName</key>
+	<string>JSON for Modern C++</string>
+	<key>DocSetPlatformFamily</key>
+	<string>json</string>
+	<key>isDashDocset</key>
+	<true/>
+    <key>dashIndexFilePath</key>
+    <string>index.html</string>
+    <key>DashDocSetFallbackURL</key>
+    <string>https://nlohmann.github.io/json/</string>
+    <key>isJavaScriptEnabled</key>
+    <true/>
+</dict>
+</plist>

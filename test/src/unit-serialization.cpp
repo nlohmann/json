@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.9.1
+|  |  |__   |  |  | | | |  version 3.10.2
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -183,10 +183,10 @@ TEST_CASE("serialization")
             CHECK(to_string(j) == "\"" + expected + "\"");
         };
 
-        test("{\"x\":5,\"y\":6}", "{\\\"x\\\":5,\\\"y\\\":6}");
-        test("{\"x\":[10,null,null,null]}", "{\\\"x\\\":[10,null,null,null]}");
+        test(R"({"x":5,"y":6})", R"({\"x\":5,\"y\":6})");
+        test("{\"x\":[10,null,null,null]}", R"({\"x\":[10,null,null,null]})");
         test("test", "test");
-        test("[3,\"false\",false]", "[3,\\\"false\\\",false]");
+        test("[3,\"false\",false]", R"([3,\"false\",false])");
     }
 }
 

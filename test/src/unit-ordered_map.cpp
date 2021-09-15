@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.9.1
+|  |  |__   |  |  | | | |  version 3.10.2
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -49,6 +49,7 @@ TEST_CASE("ordered_map")
             std::map<std::string, std::string> m {{"eins", "one"}, {"zwei", "two"}, {"drei", "three"}};
             ordered_map<std::string, std::string> om(m.begin(), m.end());
             const auto com = om;
+            om.clear(); // silence a warning by forbidding having "const auto& com = om;"
             CHECK(com.size() == 3);
         }
     }
