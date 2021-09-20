@@ -4053,6 +4053,7 @@ auto from_json(const BasicJsonType& j, T (&arr)[N]) // NOLINT(cppcoreguidelines-
         JSON_THROW(type_error::create(302, "array size must be " + std::to_string(N) + ", but is " + std::to_string(j.size()), j));
     }
 #endif
+
     for (std::size_t i = 0; i < N; ++i)
     {
         arr[i] = j.at(i).template get<T>();
@@ -4077,6 +4078,7 @@ auto from_json_array_impl(const BasicJsonType& j, std::array<T, N>& arr,
         JSON_THROW(type_error::create(302, "array size must be " + std::to_string(N) + ", but is " + std::to_string(j.size()), j));
     }
 #endif
+
     for (std::size_t i = 0; i < N; ++i)
     {
         arr[i] = j.at(i).template get<T>();
@@ -4160,6 +4162,7 @@ std::array<T, sizeof...(Idx)> from_json_inplace_array_impl(BasicJsonType&& j,
         JSON_THROW(type_error::create(302, "array size must be " + std::to_string(sizeof...(Idx)) + ", but is " + std::to_string(j.size()), j));
     }
 #endif
+
     return { { std::forward<BasicJsonType>(j).at(Idx).template get<T>()... } };
 }
 
@@ -17663,7 +17666,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         detail::parser_callback_t<basic_json>cb = nullptr,
         const bool allow_exceptions = true,
         const bool ignore_comments = false
-    )
+                                 )
     {
         return ::nlohmann::detail::parser<basic_json, InputAdapterType>(std::move(adapter),
                 std::move(cb), allow_exceptions, ignore_comments);
