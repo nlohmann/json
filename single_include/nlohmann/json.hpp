@@ -2343,12 +2343,13 @@ JSON_HEDLEY_DIAGNOSTIC_POP
              class NumberUnsignedType, class NumberFloatType,              \
              template<typename> class AllocatorType,                       \
              template<typename, typename = void> class JSONSerializer,     \
-             class BinaryType>
+             class BinaryType,                                             \
+             class MetaDataType>
 
 #define NLOHMANN_BASIC_JSON_TPL                                            \
     basic_json<ObjectType, ArrayType, StringType, BooleanType,             \
     NumberIntegerType, NumberUnsignedType, NumberFloatType,                \
-    AllocatorType, JSONSerializer, BinaryType>
+    AllocatorType, JSONSerializer, BinaryType, MetaDataType>
 
 // Macros to simplify conversion from/to types
 
@@ -3380,7 +3381,8 @@ template<template<typename U, typename V, typename... Args> class ObjectType =
          template<typename U> class AllocatorType = std::allocator,
          template<typename T, typename SFINAE = void> class JSONSerializer =
          adl_serializer,
-         class BinaryType = std::vector<std::uint8_t>>
+         class BinaryType = std::vector<std::uint8_t>,
+         class MetaDataType = void>
 class basic_json;
 
 /*!
@@ -12354,6 +12356,38 @@ class json_reverse_iterator : public std::reverse_iterator<Base>
 
 // #include <nlohmann/detail/iterators/primitive_iterator.hpp>
 
+// #include <nlohmann/detail/json_metadata.hpp>
+
+
+namespace nlohmann
+{
+namespace detail
+{
+template<class MetaDataType>
+class json_metadata
+{
+  public:
+    using metadata_t = MetaDataType;
+    metadata_t& metadata()
+    {
+        return m_metadata;
+    }
+    const metadata_t& metadata() const
+    {
+        return m_metadata;
+    }
+  private:
+    metadata_t m_metadata;
+};
+
+template<>
+class json_metadata<void>
+{
+    //no metadata
+};
+}  // namespace detail
+}  // namespace nlohmann
+
 // #include <nlohmann/detail/json_pointer.hpp>
 
 
@@ -17580,6 +17614,7 @@ Format](https://tools.ietf.org/html/rfc8259)
 */
 NLOHMANN_BASIC_JSON_TPL_DECLARATION
 class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-special-member-functions)
+    : public ::nlohmann::detail::json_metadata<MetaDataType>
 {
   private:
     template<detail::value_t> friend struct detail::external_constructor;
@@ -17602,6 +17637,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     /// workaround type for MSVC
     using basic_json_t = NLOHMANN_BASIC_JSON_TPL;
+    using json_metadata_t = ::nlohmann::detail::json_metadata<MetaDataType>;
 
   JSON_PRIVATE_UNLESS_TESTED:
     // convenience aliases for types residing in namespace detail;
@@ -19594,7 +19630,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @since version 1.0.0
     */
     basic_json(const basic_json& other)
-        : m_type(other.m_type)
+        : json_metadata_t(other),
+          m_type(other.m_type)
     {
         // check of passed value is valid
         other.assert_invariant();
@@ -19686,7 +19723,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @since version 1.0.0
     */
     basic_json(basic_json&& other) noexcept
-        : m_type(std::move(other.m_type)),
+        : json_metadata_t(std::move(other)),
+          m_type(std::move(other.m_type)),
           m_value(std::move(other.m_value))
     {
         // check that passed value is valid
@@ -19727,11 +19765,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         std::is_nothrow_move_constructible<value_t>::value&&
         std::is_nothrow_move_assignable<value_t>::value&&
         std::is_nothrow_move_constructible<json_value>::value&&
-        std::is_nothrow_move_assignable<json_value>::value
+        std::is_nothrow_move_assignable<json_value>::value&&
+        std::is_nothrow_move_assignable<json_metadata_t>::value
     )
     {
         // check that passed value is valid
         other.assert_invariant();
+
+        json_metadata_t::operator=(std::move(other));
 
         using std::swap;
         swap(m_type, other.m_type);
