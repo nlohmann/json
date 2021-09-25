@@ -18,7 +18,7 @@ class json_metadata
         return m_metadata;
     }
   private:
-    metadata_t m_metadata;
+    metadata_t m_metadata = {};
 };
 
 template<>

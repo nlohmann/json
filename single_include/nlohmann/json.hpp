@@ -12377,7 +12377,7 @@ class json_metadata
         return m_metadata;
     }
   private:
-    metadata_t m_metadata;
+    metadata_t m_metadata = {};
 };
 
 template<>
@@ -17649,7 +17649,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         detail::parser_callback_t<basic_json>cb = nullptr,
         const bool allow_exceptions = true,
         const bool ignore_comments = false
-                                 )
+    )
     {
         return ::nlohmann::detail::parser<basic_json, InputAdapterType>(std::move(adapter),
                 std::move(cb), allow_exceptions, ignore_comments);
@@ -19772,11 +19772,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // check that passed value is valid
         other.assert_invariant();
 
-        json_metadata_t::operator=(std::move(other));
-
         using std::swap;
         swap(m_type, other.m_type);
         swap(m_value, other.m_value);
+        json_metadata_t::operator=(std::move(other));
 
         set_parents();
         assert_invariant();

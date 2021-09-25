@@ -2333,11 +2333,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // check that passed value is valid
         other.assert_invariant();
 
-        json_metadata_t::operator=(std::move(other));
-
         using std::swap;
         swap(m_type, other.m_type);
         swap(m_value, other.m_value);
+        json_metadata_t::operator=(std::move(other));
 
         set_parents();
         assert_invariant();
