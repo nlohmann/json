@@ -21119,6 +21119,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     set_parents(begin() + static_cast<typename iterator::difference_type>(old_size), static_cast<typename iterator::difference_type>(idx + 1 - old_size));
                 }
 #endif
+                assert_invariant();
             }
 
             return m_value.array->operator[](idx);
