@@ -145,6 +145,26 @@ struct has_to_json < BasicJsonType, T, enable_if_t < !is_basic_json<T>::value >>
         T>::value;
 };
 
+template<typename Json, typename T>
+struct has_to_json_member {
+private:
+    template<typename U>
+    static auto check(int) -> decltype(std::declval<U>().to_json(std::declval<Json&>()), std::true_type());
+    template<typename U>
+    static std::false_type check(...);
+public:
+    static constexpr bool value = std::is_same_v<decltype(check<T>(0)),std::true_type>;
+};
+template<typename Json, typename T>
+struct has_from_json_member {
+private:
+    template<typename U>
+    static auto check(int) -> decltype(std::declval<U>().from_json(std::declval<const Json&>()), std::true_type());
+    template<typename U>
+    static std::false_type check(...);
+public:
+    static constexpr bool value = std::is_same_v<decltype(check<T>(0)),std::true_type>;
+};
 
 ///////////////////
 // is_ functions //
@@ -274,6 +294,7 @@ struct is_constructible_object_type_impl <
           typename ConstructibleObjectType::mapped_type >::value)) ||
         (has_from_json<BasicJsonType,
          typename ConstructibleObjectType::mapped_type>::value ||
+         has_from_json_member<BasicJsonType, typename ConstructibleObjectType::mapped_type>::value ||
          has_non_default_from_json <
          BasicJsonType,
          typename ConstructibleObjectType::mapped_type >::value);
@@ -379,6 +400,7 @@ detected_t<value_type_t, ConstructibleArrayType >>::value >>
          typename BasicJsonType::array_t::value_type>::value ||
          has_from_json<BasicJsonType,
          typename ConstructibleArrayType::value_type>::value ||
+         has_from_json_member<BasicJsonType, typename ConstructibleArrayType::value_type>::value ||
          has_non_default_from_json <
          BasicJsonType, typename ConstructibleArrayType::value_type >::value);
 };
