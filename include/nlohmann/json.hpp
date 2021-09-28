@@ -1655,6 +1655,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         assert_invariant();
     }
 
+    template<typename T, detail::enable_if_t<detail::has_to_json_member<basic_json, T>::value, int> = 0>
+    basic_json(const T& val) {
+        val.to_json(*this);
+        set_parents();
+        assert_invariant();
+    }
+
     /*!
     @brief create a container (array or object) from an initializer list
 
@@ -3114,6 +3121,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return JSONSerializer<ValueType>::from_json(*this);
     }
 
+    template<typename ValueType, detail::enable_if_t<detail::has_from_json_member<basic_json_t, ValueType>::value, int> = 0>
+    ValueType get_impl(detail::priority_tag<-1>)const{
+        ValueType v{};
+        v.from_json(*this);
+        return v;
+        }
+
     /*!
     @brief get special-case overload
 
@@ -3293,6 +3307,15 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 JSONSerializer<ValueType>::from_json(std::declval<const basic_json_t&>(), v)))
     {
         JSONSerializer<ValueType>::from_json(*this, v);
+        return v;
+    }
+
+    template<typename ValueType, detail::enable_if_t<
+        !detail::is_basic_json<ValueType>::value &&
+        detail::has_from_json_member<basic_json_t, ValueType>::value, int> = 0>
+    ValueType& get_to(ValueType& v) const
+    {
+        v.from_json(*this);
         return v;
     }
 

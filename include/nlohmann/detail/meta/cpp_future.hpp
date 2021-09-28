@@ -138,7 +138,7 @@ using index_sequence_for = make_index_sequence<sizeof...(Ts)>;
 
 // dispatch utility (taken from ranges-v3)
 template<unsigned N> struct priority_tag : priority_tag < N - 1 > {};
-template<> struct priority_tag<0> {};
+template<> struct priority_tag<-1> {};
 
 // taken from ranges-v3
 template<typename T>
