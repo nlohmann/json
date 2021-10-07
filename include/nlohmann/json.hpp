@@ -3695,15 +3695,25 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             if (idx >= m_value.array->size())
             {
 #if JSON_DIAGNOSTICS
-                // remember array size before resizing
-                const auto previous_size = m_value.array->size();
+                // remember array size & capacity before resizing
+                const auto old_size = m_value.array->size();
+                const auto old_capacity = m_value.array->capacity();
 #endif
                 m_value.array->resize(idx + 1);
 
 #if JSON_DIAGNOSTICS
-                // set parent for values added above
-                set_parents(begin() + static_cast<typename iterator::difference_type>(previous_size), static_cast<typename iterator::difference_type>(idx + 1 - previous_size));
+                if (JSON_HEDLEY_UNLIKELY(m_value.array->capacity() != old_capacity))
+                {
+                    // capacity has changed: update all parents
+                    set_parents();
+                }
+                else
+                {
+                    // set parent for values added above
+                    set_parents(begin() + static_cast<typename iterator::difference_type>(old_size), static_cast<typename iterator::difference_type>(idx + 1 - old_size));
+                }
 #endif
+                assert_invariant();
             }
 
             return m_value.array->operator[](idx);
