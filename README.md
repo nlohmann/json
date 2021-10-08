@@ -10,7 +10,7 @@
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/e0d1a9d5d6fd46fcb655c4cb930bb3e8)](https://www.codacy.com/gh/nlohmann/json/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=nlohmann/json&amp;utm_campaign=Badge_Grade)
 [![Language grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/nlohmann/json.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/nlohmann/json/context:cpp)
 [![Fuzzing Status](https://oss-fuzz-build-logs.storage.googleapis.com/badges/json.svg)](https://bugs.chromium.org/p/oss-fuzz/issues/list?sort=-opened&can=1&q=proj:json)
-[![Try online](https://img.shields.io/badge/try-online-blue.svg)](https://wandbox.org/permlink/7p8sQckddTc0Y81T)
+[![Try online](https://img.shields.io/badge/try-online-blue.svg)](https://wandbox.org/permlink/0LzTlmYG06u8qJN5)
 [![Documentation](https://img.shields.io/badge/docs-doxygen-blue.svg)](https://nlohmann.github.io/json/doxygen/index.html)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/nlohmann/json/master/LICENSE.MIT)
 [![GitHub Releases](https://img.shields.io/github/release/nlohmann/json.svg)](https://github.com/nlohmann/json/releases)
@@ -1596,6 +1596,7 @@ I deeply appreciate the help of the following people.
 - [Hallot](https://github.com/Hallot) fixed some `-Wextra-semi-stmt warnings`.
 - [Giovanni Cerretani](https://github.com/gcerretani) fixed `-Wunused` warnings on `JSON_DIAGNOSTICS`.
 - [Bogdan Popescu](https://github.com/Kapeli) hosts the [docset](https://github.com/Kapeli/Dash-User-Contributions/tree/master/docsets/JSON_for_Modern_C%2B%2B) for offline documentation viewers.
+- [Carl Smedstad](https://github.com/carlsmedstad) fixed an assertion error when using `JSON_DIAGNOSTICS`.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
@@ -1627,7 +1628,7 @@ The library itself consists of a single header file licensed under the MIT licen
 - [**send_to_wandbox**](https://github.com/nlohmann/json/blob/develop/doc/scripts/send_to_wandbox.py) to send code examples to [Wandbox](https://wandbox.org)
 - [**Travis**](https://travis-ci.org) for [continuous integration](https://travis-ci.org/nlohmann/json) on Linux and macOS
 - [**Valgrind**](https://valgrind.org) to check for correct memory management
-- [**Wandbox**](https://wandbox.org) for [online examples](https://wandbox.org/permlink/7p8sQckddTc0Y81T)
+- [**Wandbox**](https://wandbox.org) for [online examples](https://wandbox.org/permlink/0LzTlmYG06u8qJN5)
 
 
 ## Projects using JSON for Modern C++

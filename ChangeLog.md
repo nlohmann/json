@@ -1,15 +1,46 @@
 # Changelog
 All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [3.10.2](https://github.com/nlohmann/json/releases/tag/3.10.2) (2021-08-26)
+## [3.10.3](https://github.com/nlohmann/json/releases/tag/3.10.3) (2021-10-08)
 
-[Full Changelog](https://github.com/nlohmann/json/compare/v3.10.1...3.10.2)
+[Full Changelog](https://github.com/nlohmann/json/compare/v3.10.2...3.10.3)
+
+- Parsing an emtpy string returns a string with size 1 instead of expected 0 [\#3057](https://github.com/nlohmann/json/issues/3057)
+- Linking error  "duplicate symbol: std::type\_info::operator==" on static build with MinGW [\#3042](https://github.com/nlohmann/json/issues/3042)
+- Yet another assertion failure when inserting into arrays with JSON\_DIAGNOSTICS set [\#3032](https://github.com/nlohmann/json/issues/3032)
+- accept and parse function not work well with a pure number string [\#3029](https://github.com/nlohmann/json/issues/3029)
+- push\_back doesn't work for serializing containers [\#3027](https://github.com/nlohmann/json/issues/3027)
+- Strange behaviour when creating array with single element [\#3025](https://github.com/nlohmann/json/issues/3025)
+- Input ordered\_json doesn't work [\#3023](https://github.com/nlohmann/json/issues/3023)
+- Issue iterating through 'items' [\#3021](https://github.com/nlohmann/json/issues/3021)
+- Cannot spell the namespace right [\#3015](https://github.com/nlohmann/json/issues/3015)
+- JSON Parse error when reading json object from file [\#3011](https://github.com/nlohmann/json/issues/3011)
+- Parent pointer not properly set when using update\(\) [\#3007](https://github.com/nlohmann/json/issues/3007)
+- Overwriting terminated null character [\#3001](https://github.com/nlohmann/json/issues/3001)
+- 'operator =' is ambiguous on VS2017 [\#2997](https://github.com/nlohmann/json/issues/2997)
+- JSON Patch for Array Elements [\#2994](https://github.com/nlohmann/json/issues/2994)
+- JSON Parse throwing error [\#2983](https://github.com/nlohmann/json/issues/2983)
+- to\_{binary format} does not provide a mechanism for specifying a custom allocator for the returned type. [\#2982](https://github.com/nlohmann/json/issues/2982)
+- 3.10.1 zip json.hpp has version number 3.10.0 instead of 3.10.1 [\#2973](https://github.com/nlohmann/json/issues/2973)
+- Assertion failure when serializing array with JSON\_DIAGNOSTICS set [\#2926](https://github.com/nlohmann/json/issues/2926)
+
+- Fix Clang version [\#3040](https://github.com/nlohmann/json/pull/3040) ([nlohmann](https://github.com/nlohmann))
+- Fix assertion failure for JSON\_DIAGNOSTICS [\#3037](https://github.com/nlohmann/json/pull/3037) ([carlsmedstad](https://github.com/carlsmedstad))
+- meta: fix is\_compatible/constructible traits [\#3020](https://github.com/nlohmann/json/pull/3020) ([theodelrieu](https://github.com/theodelrieu))
+- Set parent pointers for values inserted via update\(\) \(fixes \#3007\). [\#3008](https://github.com/nlohmann/json/pull/3008) ([AnthonyVH](https://github.com/AnthonyVH))
+- Allow allocators for output\_vector\_adapter [\#2989](https://github.com/nlohmann/json/pull/2989) ([nlohmann](https://github.com/nlohmann))
+- Re-add Clang 12 [\#2986](https://github.com/nlohmann/json/pull/2986) ([nlohmann](https://github.com/nlohmann))
+- Use new Docker image [\#2981](https://github.com/nlohmann/json/pull/2981) ([nlohmann](https://github.com/nlohmann))
+- Fix -Wunused warnings on JSON\_DIAGNOSTICS  [\#2976](https://github.com/nlohmann/json/pull/2976) ([gcerretani](https://github.com/gcerretani))
+- Update docset generation script [\#2967](https://github.com/nlohmann/json/pull/2967) ([nlohmann](https://github.com/nlohmann))
+
+## [v3.10.2](https://github.com/nlohmann/json/releases/tag/v3.10.2) (2021-08-26)
+
+[Full Changelog](https://github.com/nlohmann/json/compare/v3.10.1...v3.10.2)
 
 - Annoying -Wundef on new JSON\_DIAGNOSTICS macro [\#2975](https://github.com/nlohmann/json/issues/2975)
 - += issue with multiple redirection. [\#2970](https://github.com/nlohmann/json/issues/2970)
 - "incomplete type ‘nlohmann::detail::wide\_string\_input\_helper" compilation error [\#2969](https://github.com/nlohmann/json/issues/2969)
-
-- Fix -Wunused warnings on JSON\_DIAGNOSTICS  [\#2976](https://github.com/nlohmann/json/pull/2976) ([gcerretani](https://github.com/gcerretani))
 
 ## [v3.10.1](https://github.com/nlohmann/json/releases/tag/v3.10.1) (2021-08-24)
 
