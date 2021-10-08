@@ -1,21 +1,25 @@
-nlohmann_json.docset: Info.plist docSet.sql
+JSON_for_Modern_C++.docset: Info.plist docSet.sql
 	$(MAKE) clean
-	mkdir -p nlohmann_json.docset/Contents/Resources/Documents/
-	cp info.plist nlohmann_json.docset/Contents
+	mkdir -p JSON_for_Modern_C++.docset/Contents/Resources/Documents/
+	cp icon*.png JSON_for_Modern_C++.docset
+	cp Info.plist JSON_for_Modern_C++.docset/Contents
 	# build and copy documentation
 	$(MAKE) build -C ../mkdocs
-	cp -r ../mkdocs/site/* nlohmann_json.docset/Contents/Resources/Documents
+	cp -r ../mkdocs/site/* JSON_for_Modern_C++.docset/Contents/Resources/Documents
 	# patch CSS to hide navigation items
-	echo "\n\nheader, footer, navi, div.md-sidebar--primary, nav.md-tabs--active, a.md-content__button { display: none; }" >> nlohmann_json.docset/Contents/Resources/Documents/assets/stylesheets/main.b5d04df8.min.css
+	echo "\n\nheader, footer, navi, div.md-sidebar--primary, nav.md-tabs--active, a.md-content__button { display: none; }" >> "$$(ls JSON_for_Modern_C++.docset/Contents/Resources/Documents/assets/stylesheets/main.*.min.css)"
 	# fix spacing
-	echo "\n\ndiv.md-sidebar div.md-sidebar--secondary, div.md-main__inner { top: 0; margin-top: 0 }" >> nlohmann_json.docset/Contents/Resources/Documents/assets/stylesheets/main.b5d04df8.min.css
+	echo "\n\ndiv.md-sidebar div.md-sidebar--secondary, div.md-main__inner { top: 0; margin-top: 0 }" >> "$$(ls JSON_for_Modern_C++.docset/Contents/Resources/Documents/assets/stylesheets/main.*.min.css)"
 	# remove "JSON for Modern C++" from page titles
-	find nlohmann_json.docset/Contents/Resources/Documents -type f -exec gsed -i 's| - JSON for Modern C++</title>|</title>|' {} +
+	find JSON_for_Modern_C++.docset/Contents/Resources/Documents -type f -exec gsed -i 's| - JSON for Modern C++</title>|</title>|' {} +
 	# clean up
-	rm nlohmann_json.docset/Contents/Resources/Documents/hooks.py
-	rm nlohmann_json.docset/Contents/Resources/Documents/sitemap.*
+	rm JSON_for_Modern_C++.docset/Contents/Resources/Documents/hooks.py
+	rm JSON_for_Modern_C++.docset/Contents/Resources/Documents/sitemap.*
 	# generate index
-	sqlite3 nlohmann_json.docset/Contents/Resources/docSet.dsidx < docSet.sql
+	sqlite3 JSON_for_Modern_C++.docset/Contents/Resources/docSet.dsidx < docSet.sql
+
+JSON_for_Modern_C++.tgz: JSON_for_Modern_C++.docset
+	tar --exclude='.DS_Store' -cvzf JSON_for_Modern_C++.tgz JSON_for_Modern_C++.docset
 
 clean:
-	rm -fr nlohmann_json.docset
+	rm -fr JSON_for_Modern_C++.docset JSON_for_Modern_C++.tgz

@@ -43,7 +43,7 @@ check_output: $(EXAMPLES:.cpp=.test)
 
 
 clean:
-	rm -fr me.nlohmann.json.docset html xml $(EXAMPLES:.cpp=)
+	rm -fr me.nlohmann.json.docset html $(EXAMPLES:.cpp=)
 	$(MAKE) clean -C docset
 	$(MAKE) clean -C mkdocs
 
@@ -70,23 +70,3 @@ upload: clean doxygen check_output
 	scripts/git-update-ghpages nlohmann/json html
 	rm -fr html
 	open http://nlohmann.github.io/json/
-
-
-##########################################################################
-# docset
-##########################################################################
-
-# create docset for Dash
-docset: create_output
-	cp Doxyfile Doxyfile_docset
-	$(SED) -i 's/DISABLE_INDEX          = NO/DISABLE_INDEX          = YES/' Doxyfile_docset
-	$(SED) -i 's/SEARCHENGINE           = YES/SEARCHENGINE           = NO/' Doxyfile_docset
-	$(SED) -i 's@HTML_EXTRA_STYLESHEET  = css/mylayout.css@HTML_EXTRA_STYLESHEET  = css/mylayout_docset.css@' Doxyfile_docset
-	rm -fr html *.docset
-	doxygen Doxyfile_docset
-	$(SED) -i 's@&lt; ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberFloatType, AllocatorType &gt;@@g' html/*.html
-	$(SED) -i 's@&lt;&#160;ObjectType,&#160;ArrayType,&#160;StringType,&#160;BooleanType,&#160;NumberIntegerType,&#160;NumberFloatType,&#160;AllocatorType&#160;&gt;@@g' html/*.html
-	make -C html
-	mv html/*.docset .
-	$(SED) -i 's@<string>doxygen</string>@<string>json</string>@' me.nlohmann.json.docset/Contents/Info.plist
-	rm -fr Doxyfile_docset html

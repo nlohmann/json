@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.10.2
+|  |  |__   |  |  | | | |  version 3.10.3
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -181,6 +181,13 @@ class sax_no_exception : public nlohmann::detail::json_sax_dom_parser<json>
 
 std::string* sax_no_exception::error_string = nullptr;
 
+/////////////////////////////////////////////////////////////////////
+// for #2982
+/////////////////////////////////////////////////////////////////////
+
+template<class T>
+class my_allocator : public std::allocator<T>
+{};
 
 TEST_CASE("regression tests 2")
 {
@@ -678,6 +685,15 @@ TEST_CASE("regression tests 2")
         ordered_json test3;
         test3[json::json_pointer(p)] = json::object();
         CHECK(test3.dump() == "{\"/root\":{}}");
+    }
+
+    SECTION("issue #2982 - to_{binary format} does not provide a mechanism for specifying a custom allocator for the returned type")
+    {
+        std::vector<std::uint8_t, my_allocator<std::uint8_t>> my_vector;
+        json j = {1, 2, 3, 4};
+        json::to_cbor(j, my_vector);
+        json k = json::from_cbor(my_vector);
+        CHECK(j == k);
     }
 }
 

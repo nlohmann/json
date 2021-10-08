@@ -19,5 +19,6 @@
 #undef NLOHMANN_BASIC_JSON_TPL_DECLARATION
 #undef NLOHMANN_BASIC_JSON_TPL
 #undef JSON_EXPLICIT
+#undef NLOHMANN_CAN_CALL_STD_FUNC_IMPL
 
 #include <nlohmann/thirdparty/hedley/hedley_undef.hpp>
