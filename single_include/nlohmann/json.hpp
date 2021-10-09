@@ -23484,7 +23484,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     @since version 3.0.0
     */
-    void update(const_reference j)
+    void update(const_reference j, bool recursive = false)
     {
         // implicitly convert null value to an empty object
         if (is_null())
@@ -23505,6 +23505,15 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
         for (auto it = j.cbegin(); it != j.cend(); ++it)
         {
+            if (recursive && it.value().is_object())
+            {
+                auto it2 = m_value.object->find(it.key());
+                if (it2 != m_value.object->end())
+                {
+                    it2->second.update(it.value(), recursive);
+                    continue;
+                }
+            }
             m_value.object->operator[](it.key()) = it.value();
 #if JSON_DIAGNOSTICS
             m_value.object->operator[](it.key()).m_parent = this;

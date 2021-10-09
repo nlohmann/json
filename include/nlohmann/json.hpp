@@ -5984,6 +5984,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     Inserts all values from JSON object @a j and overwrites existing keys.
 
     @param[in] j  JSON object to read values from
+    @param[in] merge_objects  when true, existing keys are not overwritten, but
+                              contents of objects are merged recursively
+                              (default: false)
 
     @throw type_error.312 if called on JSON values other than objects; example:
     `"cannot use update() with string"`
@@ -5995,9 +5998,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     @sa https://docs.python.org/3.6/library/stdtypes.html#dict.update
 
-    @since version 3.0.0
+    @since version 3.0.0, `merge_objects` parameter added in 3.10.4.
     */
-    void update(const_reference j)
+    void update(const_reference j, bool merge_objects = false)
     {
         // implicitly convert null value to an empty object
         if (is_null())
@@ -6018,6 +6021,15 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
         for (auto it = j.cbegin(); it != j.cend(); ++it)
         {
+            if (merge_objects && it.value().is_object())
+            {
+                auto it2 = m_value.object->find(it.key());
+                if (it2 != m_value.object->end())
+                {
+                    it2->second.update(it.value(), true);
+                    continue;
+                }
+            }
             m_value.object->operator[](it.key()) = it.value();
 #if JSON_DIAGNOSTICS
             m_value.object->operator[](it.key()).m_parent = this;
