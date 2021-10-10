@@ -53,6 +53,10 @@ Currently, only `remove`, `add`, and `replace` operations are generated.
     --8<-- "examples/diff.output"
     ```
 
+## See also
+
+- [RFC 6902 (JSON Patch)](https://tools.ietf.org/html/rfc6902)
+
 ## Version history
 
 - Added in version 2.0.0.

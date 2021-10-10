@@ -53,6 +53,11 @@ Linear in the lengths of `apply_patch`.
     --8<-- "examples/merge_patch.output"
     ```
 
+## See also
+
+- [RFC 7396 (JSON Merge Patch)](https://tools.ietf.org/html/rfc7396)
+- [patch](patch.md) apply a JSON patch
+
 ## Version history
 
 - Added in version 3.0.0.

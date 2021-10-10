@@ -52,6 +52,10 @@ their original type. Apart from this example, for a JSON value `j`, the followin
     --8<-- "examples/unflatten.output"
     ```
 
+## See also
+
+- [flatten](flatten.md) the reverse function
+
 ## Version history
 
 - Added in version 2.0.0.

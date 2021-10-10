@@ -6930,28 +6930,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return ptr.get_checked(this);
     }
 
-    /*!
-    @brief return flattened JSON value
-
-    The function creates a JSON object whose keys are JSON pointers (see [RFC
-    6901](https://tools.ietf.org/html/rfc6901)) and whose values are all
-    primitive. The original JSON value can be restored using the @ref
-    unflatten() function.
-
-    @return an object that maps JSON pointers to primitive values
-
-    @note Empty objects and arrays are flattened to `null` and will not be
-          reconstructed correctly by the @ref unflatten() function.
-
-    @complexity Linear in the size the JSON value.
-
-    @liveexample{The following code shows how a JSON object is flattened to an
-    object whose keys consist of JSON pointers.,flatten}
-
-    @sa see @ref unflatten() for the reverse function
-
-    @since version 2.0.0
-    */
+    /// @brief return flattened JSON value
+    /// @sa https://json.nlohmann.me/api/basic_json/flatten/
     basic_json flatten() const
     {
         basic_json result(value_t::object);
@@ -6959,36 +6939,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return result;
     }
 
-    /*!
-    @brief unflatten a previously flattened JSON value
-
-    The function restores the arbitrary nesting of a JSON value that has been
-    flattened before using the @ref flatten() function. The JSON value must
-    meet certain constraints:
-    1. The value must be an object.
-    2. The keys must be JSON pointers (see
-       [RFC 6901](https://tools.ietf.org/html/rfc6901))
-    3. The mapped values must be primitive JSON types.
-
-    @return the original JSON from a flattened version
-
-    @note Empty objects and arrays are flattened by @ref flatten() to `null`
-          values and can not unflattened to their original type. Apart from
-          this example, for a JSON value `j`, the following is always true:
-          `j == j.flatten().unflatten()`.
-
-    @complexity Linear in the size the JSON value.
-
-    @throw type_error.314  if value is not an object
-    @throw type_error.315  if object values are not primitive
-
-    @liveexample{The following code shows how a flattened JSON object is
-    unflattened into the original nested JSON object.,unflatten}
-
-    @sa see @ref flatten() for the reverse function
-
-    @since version 2.0.0
-    */
+    /// @brief unflatten a previously flattened JSON value
+    /// @sa https://json.nlohmann.me/api/basic_json/unflatten/
     basic_json unflatten() const
     {
         return json_pointer::unflatten(*this);
@@ -7003,53 +6955,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @name JSON Patch functions
     /// @{
 
-    /*!
-    @brief applies a JSON patch
-
-    [JSON Patch](http://jsonpatch.com) defines a JSON document structure for
-    expressing a sequence of operations to apply to a JSON) document. With
-    this function, a JSON Patch is applied to the current JSON value by
-    executing all operations from the patch.
-
-    @param[in] json_patch  JSON patch document
-    @return patched document
-
-    @note The application of a patch is atomic: Either all operations succeed
-          and the patched document is returned or an exception is thrown. In
-          any case, the original value is not changed: the patch is applied
-          to a copy of the value.
-
-    @throw parse_error.104 if the JSON patch does not consist of an array of
-    objects
-
-    @throw parse_error.105 if the JSON patch is malformed (e.g., mandatory
-    attributes are missing); example: `"operation add must have member path"`
-
-    @throw out_of_range.401 if an array index is out of range.
-
-    @throw out_of_range.403 if a JSON pointer inside the patch could not be
-    resolved successfully in the current JSON value; example: `"key baz not
-    found"`
-
-    @throw out_of_range.405 if JSON pointer has no parent ("add", "remove",
-    "move")
-
-    @throw other_error.501 if "test" operation was unsuccessful
-
-    @complexity Linear in the size of the JSON value and the length of the
-    JSON patch. As usually only a fraction of the JSON value is affected by
-    the patch, the complexity can usually be neglected.
-
-    @liveexample{The following code shows how a JSON patch is applied to a
-    value.,patch}
-
-    @sa see @ref diff -- create a JSON patch by comparing two JSON values
-
-    @sa [RFC 6902 (JSON Patch)](https://tools.ietf.org/html/rfc6902)
-    @sa [RFC 6901 (JSON Pointer)](https://tools.ietf.org/html/rfc6901)
-
-    @since version 2.0.0
-    */
+    /// @brief applies a JSON patch
+    /// @sa https://json.nlohmann.me/api/basic_json/patch/
     basic_json patch(const basic_json& json_patch) const
     {
         // make a working copy to apply the patch to
@@ -7322,39 +7229,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return result;
     }
 
-    /*!
-    @brief creates a diff as a JSON patch
-
-    Creates a [JSON Patch](http://jsonpatch.com) so that value @a source can
-    be changed into the value @a target by calling @ref patch function.
-
-    @invariant For two JSON values @a source and @a target, the following code
-    yields always `true`:
-    @code {.cpp}
-    source.patch(diff(source, target)) == target;
-    @endcode
-
-    @note Currently, only `remove`, `add`, and `replace` operations are
-          generated.
-
-    @param[in] source  JSON value to compare from
-    @param[in] target  JSON value to compare against
-    @param[in] path    helper value to create JSON pointers
-
-    @return a JSON patch to convert the @a source to @a target
-
-    @complexity Linear in the lengths of @a source and @a target.
-
-    @liveexample{The following code shows how a JSON patch is created as a
-    diff for two JSON values.,diff}
-
-    @sa see @ref patch -- apply a JSON patch
-    @sa see @ref merge_patch -- apply a JSON Merge Patch
-
-    @sa [RFC 6902 (JSON Patch)](https://tools.ietf.org/html/rfc6902)
-
-    @since version 2.0.0
-    */
+    /// @brief creates a diff as a JSON patch
+    /// @sa https://json.nlohmann.me/api/basic_json/diff/
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json diff(const basic_json& source, const basic_json& target,
                            const std::string& path = "")
@@ -7497,48 +7373,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @name JSON Merge Patch functions
     /// @{
 
-    /*!
-    @brief applies a JSON Merge Patch
-
-    The merge patch format is primarily intended for use with the HTTP PATCH
-    method as a means of describing a set of modifications to a target
-    resource's content. This function applies a merge patch to the current
-    JSON value.
-
-    The function implements the following algorithm from Section 2 of
-    [RFC 7396 (JSON Merge Patch)](https://tools.ietf.org/html/rfc7396):
-
-    ```
-    define MergePatch(Target, Patch):
-      if Patch is an Object:
-        if Target is not an Object:
-          Target = {} // Ignore the contents and set it to an empty Object
-        for each Name/Value pair in Patch:
-          if Value is null:
-            if Name exists in Target:
-              remove the Name/Value pair from Target
-          else:
-            Target[Name] = MergePatch(Target[Name], Value)
-        return Target
-      else:
-        return Patch
-    ```
-
-    Thereby, `Target` is the current object; that is, the patch is applied to
-    the current value.
-
-    @param[in] apply_patch  the patch to apply
-
-    @complexity Linear in the lengths of @a patch.
-
-    @liveexample{The following code shows how a JSON Merge Patch is applied to
-    a JSON document.,merge_patch}
-
-    @sa see @ref patch -- apply a JSON patch
-    @sa [RFC 7396 (JSON Merge Patch)](https://tools.ietf.org/html/rfc7396)
-
-    @since version 3.0.0
-    */
+    /// @brief applies a JSON Merge Patch
+    /// @sa https://json.nlohmann.me/api/basic_json/merge_patch/
     void merge_patch(const basic_json& apply_patch)
     {
         if (apply_patch.is_object())
@@ -7645,38 +7481,16 @@ inline void swap<nlohmann::json>(nlohmann::json& j1, nlohmann::json& j2) noexcep
 
 } // namespace std
 
-/*!
-@brief user-defined string literal for JSON values
-
-This operator implements a user-defined string literal for JSON objects. It
-can be used by adding `"_json"` to a string literal and returns a JSON object
-if no parse error occurred.
-
-@param[in] s  a string representation of a JSON object
-@param[in] n  the length of string @a s
-@return a JSON object
-
-@since version 1.0.0
-*/
+/// @brief user-defined string literal for JSON values
+/// @sa https://json.nlohmann.me/api/basic_json/operator_literal_json/
 JSON_HEDLEY_NON_NULL(1)
 inline nlohmann::json operator "" _json(const char* s, std::size_t n)
 {
     return nlohmann::json::parse(s, s + n);
 }
 
-/*!
-@brief user-defined string literal for JSON pointer
-
-This operator implements a user-defined string literal for JSON Pointers. It
-can be used by adding `"_json_pointer"` to a string literal and returns a JSON pointer
-object if no parse error occurred.
-
-@param[in] s  a string representation of a JSON Pointer
-@param[in] n  the length of string @a s
-@return a JSON pointer object
-
-@since version 2.0.0
-*/
+/// @brief user-defined string literal for JSON pointer
+/// @sa https://json.nlohmann.me/api/basic_json/operator_literal_json_pointer/
 JSON_HEDLEY_NON_NULL(1)
 inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std::size_t n)
 {

@@ -41,6 +41,10 @@ Empty objects and arrays are flattened to `#!json null` and will not be reconstr
     --8<-- "examples/flatten.output"
     ```
 
+## See also
+
+- [unflatten](unflatten.md) the reverse function
+
 ## Version history
 
 - Added in version 2.0.0.

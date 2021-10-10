@@ -61,6 +61,12 @@ is thrown. In any case, the original value is not changed: the patch is applied 
     --8<-- "examples/patch.output"
     ```
 
+## See also
+
+- [RFC 6902 (JSON Patch)](https://tools.ietf.org/html/rfc6902)
+- [RFC 6901 (JSON Pointer)](https://tools.ietf.org/html/rfc6901)
+- [merge_patch](merge_patch.md) applies a JSON Merge Patch
+
 ## Version history
 
 - Added in version 2.0.0.
