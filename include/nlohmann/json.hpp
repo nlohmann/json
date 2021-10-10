@@ -6657,66 +6657,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 
 
-    /*!
-    @brief Create a JSON value from an input in BSON format
-
-    Deserializes a given input @a i to a JSON value using the BSON (Binary JSON)
-    serialization format.
-
-    The library maps BSON record types to JSON value types as follows:
-
-    BSON type       | BSON marker byte | JSON value type
-    --------------- | ---------------- | ---------------------------
-    double          | 0x01             | number_float
-    string          | 0x02             | string
-    document        | 0x03             | object
-    array           | 0x04             | array
-    binary          | 0x05             | binary
-    undefined       | 0x06             | still unsupported
-    ObjectId        | 0x07             | still unsupported
-    boolean         | 0x08             | boolean
-    UTC Date-Time   | 0x09             | still unsupported
-    null            | 0x0A             | null
-    Regular Expr.   | 0x0B             | still unsupported
-    DB Pointer      | 0x0C             | still unsupported
-    JavaScript Code | 0x0D             | still unsupported
-    Symbol          | 0x0E             | still unsupported
-    JavaScript Code | 0x0F             | still unsupported
-    int32           | 0x10             | number_integer
-    Timestamp       | 0x11             | still unsupported
-    128-bit decimal float | 0x13       | still unsupported
-    Max Key         | 0x7F             | still unsupported
-    Min Key         | 0xFF             | still unsupported
-
-    @warning The mapping is **incomplete**. The unsupported mappings
-             are indicated in the table above.
-
-    @param[in] i  an input in BSON format convertible to an input adapter
-    @param[in] strict  whether to expect the input to be consumed until EOF
-                       (true by default)
-    @param[in] allow_exceptions  whether to throw exceptions in case of a
-    parse error (optional, true by default)
-
-    @return deserialized JSON value; in case of a parse error and
-            @a allow_exceptions set to `false`, the return value will be
-            value_t::discarded.
-
-    @throw parse_error.114 if an unsupported BSON record type is encountered
-
-    @complexity Linear in the size of the input @a i.
-
-    @liveexample{The example shows the deserialization of a byte vector in
-    BSON format to a JSON value.,from_bson}
-
-    @sa http://bsonspec.org/spec.html
-    @sa see @ref to_bson(const basic_json&) for the analogous serialization
-    @sa see @ref from_cbor(InputType&&, const bool, const bool, const cbor_tag_handler_t) for the
-        related CBOR format
-    @sa see @ref from_msgpack(InputType&&, const bool, const bool) for
-        the related MessagePack format
-    @sa see @ref from_ubjson(InputType&&, const bool, const bool) for the
-        related UBJSON format
-    */
+    /// @brief Create a JSON value from an input in BSON format
+    /// @sa https://json.nlohmann.me/api/basic_json/from_bson/
     template<typename InputType>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_bson(InputType&& i,
@@ -6730,9 +6672,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return res ? result : basic_json(value_t::discarded);
     }
 
-    /*!
-    @copydoc from_bson(InputType&&, const bool, const bool)
-    */
+    /// @brief Create a JSON value from an input in BSON format
+    /// @sa https://json.nlohmann.me/api/basic_json/from_bson/
     template<typename IteratorType>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_bson(IteratorType first, IteratorType last,
