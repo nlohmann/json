@@ -21558,48 +21558,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @name capacity
     /// @{
 
-    /*!
-    @brief checks whether the container is empty.
-
-    Checks if a JSON value has no elements (i.e. whether its @ref size is `0`).
-
-    @return The return value depends on the different types and is
-            defined as follows:
-            Value type  | return value
-            ----------- | -------------
-            null        | `true`
-            boolean     | `false`
-            string      | `false`
-            number      | `false`
-            binary      | `false`
-            object      | result of function `object_t::empty()`
-            array       | result of function `array_t::empty()`
-
-    @liveexample{The following code uses `empty()` to check if a JSON
-    object contains any elements.,empty}
-
-    @complexity Constant, as long as @ref array_t and @ref object_t satisfy
-    the Container concept; that is, their `empty()` functions have constant
-    complexity.
-
-    @iterators No changes.
-
-    @exceptionsafety No-throw guarantee: this function never throws exceptions.
-
-    @note This function does not return whether a string stored as JSON value
-    is empty - it returns whether the JSON container itself is empty which is
-    false in the case of a string.
-
-    @requirement This function helps `basic_json` satisfying the
-    [Container](https://en.cppreference.com/w/cpp/named_req/Container)
-    requirements:
-    - The complexity is constant.
-    - Has the semantics of `begin() == end()`.
-
-    @sa see @ref size() -- returns the number of elements
-
-    @since version 1.0.0
-    */
+    /// @brief checks whether the container is empty.
+    /// @sa https://json.nlohmann.me/api/basic_json/empty/
     bool empty() const noexcept
     {
         switch (m_type)
@@ -21637,49 +21597,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
     }
 
-    /*!
-    @brief returns the number of elements
-
-    Returns the number of elements in a JSON value.
-
-    @return The return value depends on the different types and is
-            defined as follows:
-            Value type  | return value
-            ----------- | -------------
-            null        | `0`
-            boolean     | `1`
-            string      | `1`
-            number      | `1`
-            binary      | `1`
-            object      | result of function object_t::size()
-            array       | result of function array_t::size()
-
-    @liveexample{The following code calls `size()` on the different value
-    types.,size}
-
-    @complexity Constant, as long as @ref array_t and @ref object_t satisfy
-    the Container concept; that is, their size() functions have constant
-    complexity.
-
-    @iterators No changes.
-
-    @exceptionsafety No-throw guarantee: this function never throws exceptions.
-
-    @note This function does not return the length of a string stored as JSON
-    value - it returns the number of elements in the JSON value which is 1 in
-    the case of a string.
-
-    @requirement This function helps `basic_json` satisfying the
-    [Container](https://en.cppreference.com/w/cpp/named_req/Container)
-    requirements:
-    - The complexity is constant.
-    - Has the semantics of `std::distance(begin(), end())`.
-
-    @sa see @ref empty() -- checks whether the container is empty
-    @sa see @ref max_size() -- returns the maximal number of elements
-
-    @since version 1.0.0
-    */
+    /// @brief returns the number of elements
+    /// @sa https://json.nlohmann.me/api/basic_json/size/
     size_type size() const noexcept
     {
         switch (m_type)
@@ -21717,47 +21636,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
     }
 
-    /*!
-    @brief returns the maximum possible number of elements
-
-    Returns the maximum number of elements a JSON value is able to hold due to
-    system or library implementation limitations, i.e. `std::distance(begin(),
-    end())` for the JSON value.
-
-    @return The return value depends on the different types and is
-            defined as follows:
-            Value type  | return value
-            ----------- | -------------
-            null        | `0` (same as `size()`)
-            boolean     | `1` (same as `size()`)
-            string      | `1` (same as `size()`)
-            number      | `1` (same as `size()`)
-            binary      | `1` (same as `size()`)
-            object      | result of function `object_t::max_size()`
-            array       | result of function `array_t::max_size()`
-
-    @liveexample{The following code calls `max_size()` on the different value
-    types. Note the output is implementation specific.,max_size}
-
-    @complexity Constant, as long as @ref array_t and @ref object_t satisfy
-    the Container concept; that is, their `max_size()` functions have constant
-    complexity.
-
-    @iterators No changes.
-
-    @exceptionsafety No-throw guarantee: this function never throws exceptions.
-
-    @requirement This function helps `basic_json` satisfying the
-    [Container](https://en.cppreference.com/w/cpp/named_req/Container)
-    requirements:
-    - The complexity is constant.
-    - Has the semantics of returning `b.size()` where `b` is the largest
-      possible JSON value.
-
-    @sa see @ref size() -- returns the number of elements
-
-    @since version 1.0.0
-    */
+    /// @brief returns the maximum possible number of elements
+    /// @sa https://json.nlohmann.me/api/basic_json/max_size/
     size_type max_size() const noexcept
     {
         switch (m_type)
@@ -21800,43 +21680,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @name modifiers
     /// @{
 
-    /*!
-    @brief clears the contents
-
-    Clears the content of a JSON value and resets it to the default value as
-    if @ref basic_json(value_t) would have been called with the current value
-    type from @ref type():
-
-    Value type  | initial value
-    ----------- | -------------
-    null        | `null`
-    boolean     | `false`
-    string      | `""`
-    number      | `0`
-    binary      | An empty byte vector
-    object      | `{}`
-    array       | `[]`
-
-    @post Has the same effect as calling
-    @code {.cpp}
-    *this = basic_json(type());
-    @endcode
-
-    @liveexample{The example below shows the effect of `clear()` to different
-    JSON types.,clear}
-
-    @complexity Linear in the size of the JSON value.
-
-    @iterators All iterators, pointers and references related to this container
-               are invalidated.
-
-    @exceptionsafety No-throw guarantee: this function never throws exceptions.
-
-    @sa see @ref basic_json(value_t) -- constructor that creates an object with the
-        same value than calling `clear()`
-
-    @since version 1.0.0
-    */
+    /// @brief clears the contents
+    /// @sa https://json.nlohmann.me/api/basic_json/clear/
     void clear() noexcept
     {
         switch (m_type)
@@ -22085,29 +21930,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return *this;
     }
 
-    /*!
-    @brief add an object to an array
-
-    Creates a JSON value from the passed parameters @a args to the end of the
-    JSON value. If the function is called on a JSON null value, an empty array
-    is created before appending the value created from @a args.
-
-    @param[in] args arguments to forward to a constructor of @ref basic_json
-    @tparam Args compatible types to create a @ref basic_json object
-
-    @return reference to the inserted element
-
-    @throw type_error.311 when called on a type other than JSON array or
-    null; example: `"cannot use emplace_back() with number"`
-
-    @complexity Amortized constant.
-
-    @liveexample{The example shows how `push_back()` can be used to add
-    elements to a JSON array. Note how the `null` value was silently converted
-    to a JSON array.,emplace_back}
-
-    @since version 2.0.8, returns reference since 3.7.0
-    */
+    /// @brief add an object to an array
+    /// @sa https://json.nlohmann.me/api/basic_json/emplace_back/
     template<class... Args>
     reference emplace_back(Args&& ... args)
     {
@@ -22131,33 +21955,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return set_parent(m_value.array->back(), old_capacity);
     }
 
-    /*!
-    @brief add an object to an object if key does not exist
-
-    Inserts a new element into a JSON object constructed in-place with the
-    given @a args if there is no element with the key in the container. If the
-    function is called on a JSON null value, an empty object is created before
-    appending the value created from @a args.
-
-    @param[in] args arguments to forward to a constructor of @ref basic_json
-    @tparam Args compatible types to create a @ref basic_json object
-
-    @return a pair consisting of an iterator to the inserted element, or the
-            already-existing element if no insertion happened, and a bool
-            denoting whether the insertion took place.
-
-    @throw type_error.311 when called on a type other than JSON object or
-    null; example: `"cannot use emplace() with number"`
-
-    @complexity Logarithmic in the size of the container, O(log(`size()`)).
-
-    @liveexample{The example shows how `emplace()` can be used to add elements
-    to a JSON object. Note how the `null` value was silently converted to a
-    JSON object. Further note how no value is added if there was already one
-    value stored with the same key.,emplace}
-
-    @since version 2.0.8
-    */
+    /// @brief add an object to an object if key does not exist
+    /// @sa https://json.nlohmann.me/api/basic_json/emplace/
     template<class... Args>
     std::pair<iterator, bool> emplace(Args&& ... args)
     {
@@ -22772,61 +22571,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @name lexicographical comparison operators
     /// @{
 
-    /*!
-    @brief comparison: equal
-
-    Compares two JSON values for equality according to the following rules:
-    - Two JSON values are equal if (1) they are from the same type and (2)
-      their stored values are the same according to their respective
-      `operator==`.
-    - Integer and floating-point numbers are automatically converted before
-      comparison. Note that two NaN values are always treated as unequal.
-    - Two JSON null values are equal.
-
-    @note Floating-point inside JSON values numbers are compared with
-    `json::number_float_t::operator==` which is `double::operator==` by
-    default. To compare floating-point while respecting an epsilon, an alternative
-    [comparison function](https://github.com/mariokonrad/marnav/blob/master/include/marnav/math/floatingpoint.hpp#L34-#L39)
-    could be used, for instance
-    @code {.cpp}
-    template<typename T, typename = typename std::enable_if<std::is_floating_point<T>::value, T>::type>
-    inline bool is_same(T a, T b, T epsilon = std::numeric_limits<T>::epsilon()) noexcept
-    {
-        return std::abs(a - b) <= epsilon;
-    }
-    @endcode
-    Or you can self-defined operator equal function like this:
-    @code {.cpp}
-    bool my_equal(const_reference lhs, const_reference rhs) {
-    const auto lhs_type lhs.type();
-    const auto rhs_type rhs.type();
-    if (lhs_type == rhs_type) {
-        switch(lhs_type)
-            // self_defined case
-            case value_t::number_float:
-                return std::abs(lhs - rhs) <= std::numeric_limits<float>::epsilon();
-            // other cases remain the same with the original
-            ...
-    }
-    ...
-    }
-    @endcode
-
-    @note NaN values never compare equal to themselves or to other NaN values.
-
-    @param[in] lhs  first JSON value to consider
-    @param[in] rhs  second JSON value to consider
-    @return whether the values @a lhs and @a rhs are equal
-
-    @exceptionsafety No-throw guarantee: this function never throws exceptions.
-
-    @complexity Linear.
-
-    @liveexample{The example demonstrates comparing several JSON
-    types.,operator__equal}
-
-    @since version 1.0.0
-    */
+    /// @brief comparison: equal
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_eq/
     friend bool operator==(const_reference lhs, const_reference rhs) noexcept
     {
 #ifdef __GNUC__
@@ -22903,10 +22649,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 #endif
     }
 
-    /*!
-    @brief comparison: equal
-    @copydoc operator==(const_reference, const_reference)
-    */
+    /// @brief comparison: equal
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_eq/
     template<typename ScalarType, typename std::enable_if<
                  std::is_scalar<ScalarType>::value, int>::type = 0>
     friend bool operator==(const_reference lhs, ScalarType rhs) noexcept
@@ -22914,10 +22658,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return lhs == basic_json(rhs);
     }
 
-    /*!
-    @brief comparison: equal
-    @copydoc operator==(const_reference, const_reference)
-    */
+    /// @brief comparison: equal
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_eq/
     template<typename ScalarType, typename std::enable_if<
                  std::is_scalar<ScalarType>::value, int>::type = 0>
     friend bool operator==(ScalarType lhs, const_reference rhs) noexcept
@@ -22925,33 +22667,15 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return basic_json(lhs) == rhs;
     }
 
-    /*!
-    @brief comparison: not equal
-
-    Compares two JSON values for inequality by calculating `not (lhs == rhs)`.
-
-    @param[in] lhs  first JSON value to consider
-    @param[in] rhs  second JSON value to consider
-    @return whether the values @a lhs and @a rhs are not equal
-
-    @complexity Linear.
-
-    @exceptionsafety No-throw guarantee: this function never throws exceptions.
-
-    @liveexample{The example demonstrates comparing several JSON
-    types.,operator__notequal}
-
-    @since version 1.0.0
-    */
+    /// @brief comparison: not equal
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_ne/
     friend bool operator!=(const_reference lhs, const_reference rhs) noexcept
     {
         return !(lhs == rhs);
     }
 
-    /*!
-    @brief comparison: not equal
-    @copydoc operator!=(const_reference, const_reference)
-    */
+    /// @brief comparison: not equal
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_ne/
     template<typename ScalarType, typename std::enable_if<
                  std::is_scalar<ScalarType>::value, int>::type = 0>
     friend bool operator!=(const_reference lhs, ScalarType rhs) noexcept
@@ -22959,10 +22683,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return lhs != basic_json(rhs);
     }
 
-    /*!
-    @brief comparison: not equal
-    @copydoc operator!=(const_reference, const_reference)
-    */
+    /// @brief comparison: not equal
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_ne/
     template<typename ScalarType, typename std::enable_if<
                  std::is_scalar<ScalarType>::value, int>::type = 0>
     friend bool operator!=(ScalarType lhs, const_reference rhs) noexcept
@@ -22970,32 +22692,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return basic_json(lhs) != rhs;
     }
 
-    /*!
-    @brief comparison: less than
-
-    Compares whether one JSON value @a lhs is less than another JSON value @a
-    rhs according to the following rules:
-    - If @a lhs and @a rhs have the same type, the values are compared using
-      the default `<` operator.
-    - Integer and floating-point numbers are automatically converted before
-      comparison
-    - In case @a lhs and @a rhs have different types, the values are ignored
-      and the order of the types is considered, see
-      @ref operator<(const value_t, const value_t).
-
-    @param[in] lhs  first JSON value to consider
-    @param[in] rhs  second JSON value to consider
-    @return whether @a lhs is less than @a rhs
-
-    @complexity Linear.
-
-    @exceptionsafety No-throw guarantee: this function never throws exceptions.
-
-    @liveexample{The example demonstrates comparing several JSON
-    types.,operator__less}
-
-    @since version 1.0.0
-    */
+    /// @brief comparison: less than
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_lt/
     friend bool operator<(const_reference lhs, const_reference rhs) noexcept
     {
         const auto lhs_type = lhs.type();
@@ -23070,10 +22768,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return operator<(lhs_type, rhs_type);
     }
 
-    /*!
-    @brief comparison: less than
-    @copydoc operator<(const_reference, const_reference)
-    */
+    /// @brief comparison: less than
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_lt/
     template<typename ScalarType, typename std::enable_if<
                  std::is_scalar<ScalarType>::value, int>::type = 0>
     friend bool operator<(const_reference lhs, ScalarType rhs) noexcept
@@ -23081,10 +22777,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return lhs < basic_json(rhs);
     }
 
-    /*!
-    @brief comparison: less than
-    @copydoc operator<(const_reference, const_reference)
-    */
+    /// @brief comparison: less than
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_lt/
     template<typename ScalarType, typename std::enable_if<
                  std::is_scalar<ScalarType>::value, int>::type = 0>
     friend bool operator<(ScalarType lhs, const_reference rhs) noexcept
@@ -23092,34 +22786,15 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return basic_json(lhs) < rhs;
     }
 
-    /*!
-    @brief comparison: less than or equal
-
-    Compares whether one JSON value @a lhs is less than or equal to another
-    JSON value by calculating `not (rhs < lhs)`.
-
-    @param[in] lhs  first JSON value to consider
-    @param[in] rhs  second JSON value to consider
-    @return whether @a lhs is less than or equal to @a rhs
-
-    @complexity Linear.
-
-    @exceptionsafety No-throw guarantee: this function never throws exceptions.
-
-    @liveexample{The example demonstrates comparing several JSON
-    types.,operator__greater}
-
-    @since version 1.0.0
-    */
+    /// @brief comparison: less than or equal
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_le/
     friend bool operator<=(const_reference lhs, const_reference rhs) noexcept
     {
         return !(rhs < lhs);
     }
 
-    /*!
-    @brief comparison: less than or equal
-    @copydoc operator<=(const_reference, const_reference)
-    */
+    /// @brief comparison: less than or equal
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_le/
     template<typename ScalarType, typename std::enable_if<
                  std::is_scalar<ScalarType>::value, int>::type = 0>
     friend bool operator<=(const_reference lhs, ScalarType rhs) noexcept
@@ -23127,10 +22802,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return lhs <= basic_json(rhs);
     }
 
-    /*!
-    @brief comparison: less than or equal
-    @copydoc operator<=(const_reference, const_reference)
-    */
+    /// @brief comparison: less than or equal
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_le/
     template<typename ScalarType, typename std::enable_if<
                  std::is_scalar<ScalarType>::value, int>::type = 0>
     friend bool operator<=(ScalarType lhs, const_reference rhs) noexcept
@@ -23138,34 +22811,15 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return basic_json(lhs) <= rhs;
     }
 
-    /*!
-    @brief comparison: greater than
-
-    Compares whether one JSON value @a lhs is greater than another
-    JSON value by calculating `not (lhs <= rhs)`.
-
-    @param[in] lhs  first JSON value to consider
-    @param[in] rhs  second JSON value to consider
-    @return whether @a lhs is greater than to @a rhs
-
-    @complexity Linear.
-
-    @exceptionsafety No-throw guarantee: this function never throws exceptions.
-
-    @liveexample{The example demonstrates comparing several JSON
-    types.,operator__lessequal}
-
-    @since version 1.0.0
-    */
+    /// @brief comparison: greater than
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_gt/
     friend bool operator>(const_reference lhs, const_reference rhs) noexcept
     {
         return !(lhs <= rhs);
     }
 
-    /*!
-    @brief comparison: greater than
-    @copydoc operator>(const_reference, const_reference)
-    */
+    /// @brief comparison: greater than
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_gt/
     template<typename ScalarType, typename std::enable_if<
                  std::is_scalar<ScalarType>::value, int>::type = 0>
     friend bool operator>(const_reference lhs, ScalarType rhs) noexcept
@@ -23173,10 +22827,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return lhs > basic_json(rhs);
     }
 
-    /*!
-    @brief comparison: greater than
-    @copydoc operator>(const_reference, const_reference)
-    */
+    /// @brief comparison: greater than
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_gt/
     template<typename ScalarType, typename std::enable_if<
                  std::is_scalar<ScalarType>::value, int>::type = 0>
     friend bool operator>(ScalarType lhs, const_reference rhs) noexcept
@@ -23184,34 +22836,15 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return basic_json(lhs) > rhs;
     }
 
-    /*!
-    @brief comparison: greater than or equal
-
-    Compares whether one JSON value @a lhs is greater than or equal to another
-    JSON value by calculating `not (lhs < rhs)`.
-
-    @param[in] lhs  first JSON value to consider
-    @param[in] rhs  second JSON value to consider
-    @return whether @a lhs is greater than or equal to @a rhs
-
-    @complexity Linear.
-
-    @exceptionsafety No-throw guarantee: this function never throws exceptions.
-
-    @liveexample{The example demonstrates comparing several JSON
-    types.,operator__greaterequal}
-
-    @since version 1.0.0
-    */
+    /// @brief comparison: greater than or equal
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_ge/
     friend bool operator>=(const_reference lhs, const_reference rhs) noexcept
     {
         return !(lhs < rhs);
     }
 
-    /*!
-    @brief comparison: greater than or equal
-    @copydoc operator>=(const_reference, const_reference)
-    */
+    /// @brief comparison: greater than or equal
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_ge/
     template<typename ScalarType, typename std::enable_if<
                  std::is_scalar<ScalarType>::value, int>::type = 0>
     friend bool operator>=(const_reference lhs, ScalarType rhs) noexcept
@@ -23219,10 +22852,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return lhs >= basic_json(rhs);
     }
 
-    /*!
-    @brief comparison: greater than or equal
-    @copydoc operator>=(const_reference, const_reference)
-    */
+    /// @brief comparison: greater than or equal
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_ge/
     template<typename ScalarType, typename std::enable_if<
                  std::is_scalar<ScalarType>::value, int>::type = 0>
     friend bool operator>=(ScalarType lhs, const_reference rhs) noexcept
