@@ -2,7 +2,7 @@
 
 ```cpp
 template<typename PointerType>
-PointerType get_ptr();
+PointerType get_ptr() noexcept;
 
 template<typename PointerType>
 constexpr const PointerType get_ptr() const noexcept;
@@ -25,7 +25,7 @@ otherwise
 
 ## Exception safety
 
-Strong exception safety: if an exception occurs, the original value stays intact.
+No-throw guarantee: this function never throws exceptions.
 
 ## Complexity
 

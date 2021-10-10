@@ -13,3 +13,7 @@ associated allocator
 ## Version history
 
 - Unknown.
+
+!!! note
+
+    This documentation page is a stub.

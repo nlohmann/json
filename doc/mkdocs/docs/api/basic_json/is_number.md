@@ -44,6 +44,12 @@ constexpr bool is_number() const noexcept
     --8<-- "examples/is_number.output"
     ```
 
+# See also
+
+- [is_number_integer()](is_number_integer.md) check if value is an integer or unsigned integer number
+- [is_number_unsigned()](is_number_unsigned.md) check if value is an unsigned integer number
+- [is_number_float()](is_number_float.md) check if value is a floating-point number
+
 ## Version history
 
 - Added in version 1.0.0.

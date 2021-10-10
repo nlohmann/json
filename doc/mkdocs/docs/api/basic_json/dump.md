@@ -7,8 +7,9 @@ string_t dump(const int indent = -1,
               const error_handler_t error_handler = error_handler_t::strict) const;
 ```
 
-Serialization function for JSON values. The function tries to mimic Python's `json.dumps()` function, and currently
-supports its `indent` and `ensure_ascii` parameters.
+Serialization function for JSON values. The function tries to mimic Python's
+[`json.dumps()` function](https://docs.python.org/2/library/json.html#json.dump), and currently  supports its `indent`
+and `ensure_ascii` parameters.
     
 ## Parameters
 
@@ -32,6 +33,11 @@ supports its `indent` and `ensure_ascii` parameters.
 ## Return value
 
 string containing the serialization of the JSON value
+
+## Exceptions
+
+Throws [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316) if a string stored inside the JSON value
+is not UTF-8 encoded and `error_handler` is set to `strict`
 
 ## Exception safety
 
@@ -64,3 +70,10 @@ Binary values are serialized as object containing two keys:
     ```json
     --8<-- "examples/dump.output"
     ```
+
+## Version history
+
+- Added in version 1.0.0.
+- Indentation character `indent_char`, option `ensure_ascii` and exceptions added in version 3.0.0.
+- Error handlers added in version 3.4.0.
+- Serialization of binary values added in version 3.8.0.

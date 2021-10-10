@@ -50,6 +50,11 @@ This function is only needed to express two edge cases that cannot be realized w
     --8<-- "examples/array.output"
     ```
 
+## See also
+
+- [`basic_json(initializer_list_t)`](basic_json.md) - create a JSON value from an initializer list
+- [`object`](object.md) - create a JSON object value from an initializer list
+
 ## Version history
 
 - Added in version 1.0.0.

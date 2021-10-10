@@ -53,6 +53,11 @@ the initializer list constructor `basic_json(initializer_list_t, bool, value_t)`
     --8<-- "examples/object.output"
     ```
 
+## See also
+
+- [`basic_json(initializer_list_t)`](basic_json.md) - create a JSON value from an initializer list
+- [`array`](array.md) - create a JSON array value from an initializer list
+
 ## Version history
 
 - Added in version 1.0.0.

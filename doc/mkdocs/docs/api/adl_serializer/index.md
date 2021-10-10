@@ -27,5 +27,5 @@ struct adl_serializer {
 
 ## Member functions
 
-- **from_json** - convert a JSON value to any value type
-- **to_json** - convert any value type to a JSON value
+- [**from_json**](from_json.md) - convert a JSON value to any value type
+- [**to_json**](to_json.md) - convert any value type to a JSON value

@@ -70,7 +70,6 @@ nav:
     - integration/cmake.md
     - integration/package_managers.md
     - integration/pkg-config.md
-  - Doxygen: doxygen/index.html
   - API:
       - basic_json:
         - api/basic_json/index.md
@@ -179,7 +178,10 @@ nav:
         - api/basic_json/update.md
         - api/basic_json/value.md
         - api/basic_json/value_t.md
-      - api/adl_serializer.md
+      - adl_serializer:
+        - api/adl_serializer/index.md
+        - api/adl_serializer/from_json.md
+        - api/adl_serializer/to_json.md
       - api/json.md
       - api/json_pointer.md
       - api/ordered_map.md
@@ -234,9 +236,6 @@ markdown_extensions:
 plugins:
     - search:
         separator: '[\s\-\.]+'
-    - mkdocs-simple-hooks:
-        hooks:
-          on_post_build: "docs.hooks:copy_doxygen"
     - minify:
         minify_html: true
 

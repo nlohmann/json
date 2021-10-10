@@ -44,7 +44,7 @@ Todo
 
 ## Member types
 
-- [**adl_serializer**](../adl_serializer.md) - the default serializer
+- [**adl_serializer**](../adl_serializer) - the default serializer
 - [**value_t**](value_t.md) - the JSON type enumeration
 - [**json_pointer**](../json_pointer.md) - JSON Pointer implementation
 - [**json_serializer**](json_serializer.md) - type of the serializer to for conversions from/to JSON

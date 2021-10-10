@@ -318,6 +318,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     /*!
     @brief returns the allocator associated with the container
+    @sa https://json.nlohmann.me/api/basic_json/get_allocator/
     */
     static allocator_type get_allocator()
     {
@@ -326,29 +327,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     /*!
     @brief returns version information on the library
-
-    This function returns a JSON object with information about the library,
-    including the version number and information on the platform and compiler.
-
-    @return JSON object holding version information
-    key         | description
-    ----------- | ---------------
-    `compiler`  | Information on the used compiler. It is an object with the following keys: `c++` (the used C++ standard), `family` (the compiler family; possible values are `clang`, `icc`, `gcc`, `ilecpp`, `msvc`, `pgcpp`, `sunpro`, and `unknown`), and `version` (the compiler version).
-    `copyright` | The copyright line for the library as string.
-    `name`      | The name of the library as string.
-    `platform`  | The used platform as string. Possible values are `win32`, `linux`, `apple`, `unix`, and `unknown`.
-    `url`       | The URL of the project as string.
-    `version`   | The version of the library. It is an object with the following keys: `major`, `minor`, and `patch` as defined by [Semantic Versioning](http://semver.org), and `string` (the version string).
-
-    @liveexample{The following code shows an example output of the `meta()`
-    function.,meta}
-
-    @exceptionsafety Strong guarantee: if an exception is thrown, there are no
-    changes to any JSON value.
-
-    @complexity Constant.
-
-    @since 2.1.0
+    @sa https://json.nlohmann.me/api/basic_json/meta/
     */
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json meta()
@@ -1364,72 +1343,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     // JSON parser callback //
     //////////////////////////
 
-    /*!
-    @brief parser event types
-
-    The parser callback distinguishes the following events:
-    - `object_start`: the parser read `{` and started to process a JSON object
-    - `key`: the parser read a key of a value in an object
-    - `object_end`: the parser read `}` and finished processing a JSON object
-    - `array_start`: the parser read `[` and started to process a JSON array
-    - `array_end`: the parser read `]` and finished processing a JSON array
-    - `value`: the parser finished reading a JSON value
-
-    @image html callback_events.png "Example when certain parse events are triggered"
-
-    @sa see @ref parser_callback_t for more information and examples
-    */
+    /// @brief parser event types
+    /// @sa https://json.nlohmann.me/api/basic_json/parse_event_t/
     using parse_event_t = detail::parse_event_t;
 
-    /*!
-    @brief per-element parser callback type
-
-    With a parser callback function, the result of parsing a JSON text can be
-    influenced. When passed to @ref parse, it is called on certain events
-    (passed as @ref parse_event_t via parameter @a event) with a set recursion
-    depth @a depth and context JSON value @a parsed. The return value of the
-    callback function is a boolean indicating whether the element that emitted
-    the callback shall be kept or not.
-
-    We distinguish six scenarios (determined by the event type) in which the
-    callback function can be called. The following table describes the values
-    of the parameters @a depth, @a event, and @a parsed.
-
-    parameter @a event | description | parameter @a depth | parameter @a parsed
-    ------------------ | ----------- | ------------------ | -------------------
-    parse_event_t::object_start | the parser read `{` and started to process a JSON object | depth of the parent of the JSON object | a JSON value with type discarded
-    parse_event_t::key | the parser read a key of a value in an object | depth of the currently parsed JSON object | a JSON string containing the key
-    parse_event_t::object_end | the parser read `}` and finished processing a JSON object | depth of the parent of the JSON object | the parsed JSON object
-    parse_event_t::array_start | the parser read `[` and started to process a JSON array | depth of the parent of the JSON array | a JSON value with type discarded
-    parse_event_t::array_end | the parser read `]` and finished processing a JSON array | depth of the parent of the JSON array | the parsed JSON array
-    parse_event_t::value | the parser finished reading a JSON value | depth of the value | the parsed JSON value
-
-    @image html callback_events.png "Example when certain parse events are triggered"
-
-    Discarding a value (i.e., returning `false`) has different effects
-    depending on the context in which function was called:
-
-    - Discarded values in structured types are skipped. That is, the parser
-      will behave as if the discarded value was never read.
-    - In case a value outside a structured type is skipped, it is replaced
-      with `null`. This case happens if the top-level element is skipped.
-
-    @param[in] depth  the depth of the recursion during parsing
-
-    @param[in] event  an event of type parse_event_t indicating the context in
-    the callback function has been called
-
-    @param[in,out] parsed  the current intermediate parse result; note that
-    writing to this value has no effect for parse_event_t::key events
-
-    @return Whether the JSON value which called the function during parsing
-    should be kept (`true`) or not (`false`). In the latter case, it is either
-    skipped completely or replaced by an empty discarded object.
-
-    @sa see @ref parse for examples
-
-    @since version 1.0.0
-    */
+    /// @brief per-element parser callback type
+    /// @sa https://json.nlohmann.me/api/basic_json/parser_callback_t/
     using parser_callback_t = detail::parser_callback_t<basic_json>;
 
     //////////////////
@@ -1441,128 +1360,24 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// assignment, static functions creating objects, and the destructor.
     /// @{
 
-    /*!
-    @brief create an empty value with a given type
-
-    Create an empty JSON value with a given type. The value will be default
-    initialized with an empty value which depends on the type:
-
-    Value type  | initial value
-    ----------- | -------------
-    null        | `null`
-    boolean     | `false`
-    string      | `""`
-    number      | `0`
-    object      | `{}`
-    array       | `[]`
-    binary      | empty array
-
-    @param[in] v  the type of the value to create
-
-    @complexity Constant.
-
-    @exceptionsafety Strong guarantee: if an exception is thrown, there are no
-    changes to any JSON value.
-
-    @liveexample{The following code shows the constructor for different @ref
-    value_t values,basic_json__value_t}
-
-    @sa see @ref clear() -- restores the postcondition of this constructor
-
-    @since version 1.0.0
-    */
+    /// @brief create an empty value with a given type
+    /// @sa https://json.nlohmann.me/api/basic_json/basic_json/
     basic_json(const value_t v)
         : m_type(v), m_value(v)
     {
         assert_invariant();
     }
 
-    /*!
-    @brief create a null object
-
-    Create a `null` JSON value. It either takes a null pointer as parameter
-    (explicitly creating `null`) or no parameter (implicitly creating `null`).
-    The passed null pointer itself is not read -- it is only used to choose
-    the right constructor.
-
-    @complexity Constant.
-
-    @exceptionsafety No-throw guarantee: this constructor never throws
-    exceptions.
-
-    @liveexample{The following code shows the constructor with and without a
-    null pointer parameter.,basic_json__nullptr_t}
-
-    @since version 1.0.0
-    */
+    /// @brief create a null object
+    /// @sa https://json.nlohmann.me/api/basic_json/basic_json/
     basic_json(std::nullptr_t = nullptr) noexcept
         : basic_json(value_t::null)
     {
         assert_invariant();
     }
 
-    /*!
-    @brief create a JSON value
-
-    This is a "catch all" constructor for all compatible JSON types; that is,
-    types for which a `to_json()` method exists. The constructor forwards the
-    parameter @a val to that method (to `json_serializer<U>::to_json` method
-    with `U = uncvref_t<CompatibleType>`, to be exact).
-
-    Template type @a CompatibleType includes, but is not limited to, the
-    following types:
-    - **arrays**: @ref array_t and all kinds of compatible containers such as
-      `std::vector`, `std::deque`, `std::list`, `std::forward_list`,
-      `std::array`, `std::valarray`, `std::set`, `std::unordered_set`,
-      `std::multiset`, and `std::unordered_multiset` with a `value_type` from
-      which a @ref basic_json value can be constructed.
-    - **objects**: @ref object_t and all kinds of compatible associative
-      containers such as `std::map`, `std::unordered_map`, `std::multimap`,
-      and `std::unordered_multimap` with a `key_type` compatible to
-      @ref string_t and a `value_type` from which a @ref basic_json value can
-      be constructed.
-    - **strings**: @ref string_t, string literals, and all compatible string
-      containers can be used.
-    - **numbers**: @ref number_integer_t, @ref number_unsigned_t,
-      @ref number_float_t, and all convertible number types such as `int`,
-      `size_t`, `int64_t`, `float` or `double` can be used.
-    - **boolean**: @ref boolean_t / `bool` can be used.
-    - **binary**: @ref binary_t / `std::vector<std::uint8_t>` may be used,
-      unfortunately because string literals cannot be distinguished from binary
-      character arrays by the C++ type system, all types compatible with `const
-      char*` will be directed to the string constructor instead.  This is both
-      for backwards compatibility, and due to the fact that a binary type is not
-      a standard JSON type.
-
-    See the examples below.
-
-    @tparam CompatibleType a type such that:
-    - @a CompatibleType is not derived from `std::istream`,
-    - @a CompatibleType is not @ref basic_json (to avoid hijacking copy/move
-         constructors),
-    - @a CompatibleType is not a different @ref basic_json type (i.e. with different template arguments)
-    - @a CompatibleType is not a @ref basic_json nested type (e.g.,
-         @ref json_pointer, @ref iterator, etc ...)
-    - `json_serializer<U>` has a `to_json(basic_json_t&, CompatibleType&&)` method
-
-    @tparam U = `uncvref_t<CompatibleType>`
-
-    @param[in] val the value to be forwarded to the respective constructor
-
-    @complexity Usually linear in the size of the passed @a val, also
-                depending on the implementation of the called `to_json()`
-                method.
-
-    @exceptionsafety Depends on the called constructor. For types directly
-    supported by the library (i.e., all types for which no `to_json()` function
-    was provided), strong guarantee holds: if an exception is thrown, there are
-    no changes to any JSON value.
-
-    @liveexample{The following code shows the constructor with several
-    compatible types.,basic_json__CompatibleType}
-
-    @since version 2.1.0
-    */
+    /// @brief create a JSON value from compatible types
+    /// @sa https://json.nlohmann.me/api/basic_json/basic_json/
     template < typename CompatibleType,
                typename U = detail::uncvref_t<CompatibleType>,
                detail::enable_if_t <
@@ -1576,32 +1391,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         assert_invariant();
     }
 
-    /*!
-    @brief create a JSON value from an existing one
-
-    This is a constructor for existing @ref basic_json types.
-    It does not hijack copy/move constructors, since the parameter has different
-    template arguments than the current ones.
-
-    The constructor tries to convert the internal @ref m_value of the parameter.
-
-    @tparam BasicJsonType a type such that:
-    - @a BasicJsonType is a @ref basic_json type.
-    - @a BasicJsonType has different template arguments than @ref basic_json_t.
-
-    @param[in] val the @ref basic_json value to be converted.
-
-    @complexity Usually linear in the size of the passed @a val, also
-                depending on the implementation of the called `to_json()`
-                method.
-
-    @exceptionsafety Depends on the called constructor. For types directly
-    supported by the library (i.e., all types for which no `to_json()` function
-    was provided), strong guarantee holds: if an exception is thrown, there are
-    no changes to any JSON value.
-
-    @since version 3.2.0
-    */
+    /// @brief create a JSON value from an existing one
+    /// @sa https://json.nlohmann.me/api/basic_json/basic_json/
     template < typename BasicJsonType,
                detail::enable_if_t <
                    detail::is_basic_json<BasicJsonType>::value&& !std::is_same<basic_json, BasicJsonType>::value, int > = 0 >
@@ -1655,80 +1446,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         assert_invariant();
     }
 
-    /*!
-    @brief create a container (array or object) from an initializer list
-
-    Creates a JSON value of type array or object from the passed initializer
-    list @a init. In case @a type_deduction is `true` (default), the type of
-    the JSON value to be created is deducted from the initializer list @a init
-    according to the following rules:
-
-    1. If the list is empty, an empty JSON object value `{}` is created.
-    2. If the list consists of pairs whose first element is a string, a JSON
-       object value is created where the first elements of the pairs are
-       treated as keys and the second elements are as values.
-    3. In all other cases, an array is created.
-
-    The rules aim to create the best fit between a C++ initializer list and
-    JSON values. The rationale is as follows:
-
-    1. The empty initializer list is written as `{}` which is exactly an empty
-       JSON object.
-    2. C++ has no way of describing mapped types other than to list a list of
-       pairs. As JSON requires that keys must be of type string, rule 2 is the
-       weakest constraint one can pose on initializer lists to interpret them
-       as an object.
-    3. In all other cases, the initializer list could not be interpreted as
-       JSON object type, so interpreting it as JSON array type is safe.
-
-    With the rules described above, the following JSON values cannot be
-    expressed by an initializer list:
-
-    - the empty array (`[]`): use @ref array(initializer_list_t)
-      with an empty initializer list in this case
-    - arrays whose elements satisfy rule 2: use @ref
-      array(initializer_list_t) with the same initializer list
-      in this case
-
-    @note When used without parentheses around an empty initializer list, @ref
-    basic_json() is called instead of this function, yielding the JSON null
-    value.
-
-    @param[in] init  initializer list with JSON values
-
-    @param[in] type_deduction internal parameter; when set to `true`, the type
-    of the JSON value is deducted from the initializer list @a init; when set
-    to `false`, the type provided via @a manual_type is forced. This mode is
-    used by the functions @ref array(initializer_list_t) and
-    @ref object(initializer_list_t).
-
-    @param[in] manual_type internal parameter; when @a type_deduction is set
-    to `false`, the created JSON value will use the provided type (only @ref
-    value_t::array and @ref value_t::object are valid); when @a type_deduction
-    is set to `true`, this parameter has no effect
-
-    @throw type_error.301 if @a type_deduction is `false`, @a manual_type is
-    `value_t::object`, but @a init contains an element which is not a pair
-    whose first element is a string. In this case, the constructor could not
-    create an object. If @a type_deduction would have be `true`, an array
-    would have been created. See @ref object(initializer_list_t)
-    for an example.
-
-    @complexity Linear in the size of the initializer list @a init.
-
-    @exceptionsafety Strong guarantee: if an exception is thrown, there are no
-    changes to any JSON value.
-
-    @liveexample{The example below shows how JSON values are created from
-    initializer lists.,basic_json__list_init_t}
-
-    @sa see @ref array(initializer_list_t) -- create a JSON array
-    value from an initializer list
-    @sa see @ref object(initializer_list_t) -- create a JSON object
-    value from an initializer list
-
-    @since version 1.0.0
-    */
+    /// @brief create a container (array or object) from an initializer list
+    /// @sa https://json.nlohmann.me/api/basic_json/basic_json/
     basic_json(initializer_list_t init,
                bool type_deduction = true,
                value_t manual_type = value_t::array)
@@ -1875,115 +1594,24 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return res;
     }
 
-    /*!
-    @brief explicitly create an array from an initializer list
-
-    Creates a JSON array value from a given initializer list. That is, given a
-    list of values `a, b, c`, creates the JSON value `[a, b, c]`. If the
-    initializer list is empty, the empty array `[]` is created.
-
-    @note This function is only needed to express two edge cases that cannot
-    be realized with the initializer list constructor (@ref
-    basic_json(initializer_list_t, bool, value_t)). These cases
-    are:
-    1. creating an array whose elements are all pairs whose first element is a
-    string -- in this case, the initializer list constructor would create an
-    object, taking the first elements as keys
-    2. creating an empty array -- passing the empty initializer list to the
-    initializer list constructor yields an empty object
-
-    @param[in] init  initializer list with JSON values to create an array from
-    (optional)
-
-    @return JSON array value
-
-    @complexity Linear in the size of @a init.
-
-    @exceptionsafety Strong guarantee: if an exception is thrown, there are no
-    changes to any JSON value.
-
-    @liveexample{The following code shows an example for the `array`
-    function.,array}
-
-    @sa see @ref basic_json(initializer_list_t, bool, value_t) --
-    create a JSON value from an initializer list
-    @sa see @ref object(initializer_list_t) -- create a JSON object
-    value from an initializer list
-
-    @since version 1.0.0
-    */
+    /// @brief explicitly create an array from an initializer list
+    /// @sa https://json.nlohmann.me/api/basic_json/array/
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json array(initializer_list_t init = {})
     {
         return basic_json(init, false, value_t::array);
     }
 
-    /*!
-    @brief explicitly create an object from an initializer list
-
-    Creates a JSON object value from a given initializer list. The initializer
-    lists elements must be pairs, and their first elements must be strings. If
-    the initializer list is empty, the empty object `{}` is created.
-
-    @note This function is only added for symmetry reasons. In contrast to the
-    related function @ref array(initializer_list_t), there are
-    no cases which can only be expressed by this function. That is, any
-    initializer list @a init can also be passed to the initializer list
-    constructor @ref basic_json(initializer_list_t, bool, value_t).
-
-    @param[in] init  initializer list to create an object from (optional)
-
-    @return JSON object value
-
-    @throw type_error.301 if @a init is not a list of pairs whose first
-    elements are strings. In this case, no object can be created. When such a
-    value is passed to @ref basic_json(initializer_list_t, bool, value_t),
-    an array would have been created from the passed initializer list @a init.
-    See example below.
-
-    @complexity Linear in the size of @a init.
-
-    @exceptionsafety Strong guarantee: if an exception is thrown, there are no
-    changes to any JSON value.
-
-    @liveexample{The following code shows an example for the `object`
-    function.,object}
-
-    @sa see @ref basic_json(initializer_list_t, bool, value_t) --
-    create a JSON value from an initializer list
-    @sa see @ref array(initializer_list_t) -- create a JSON array
-    value from an initializer list
-
-    @since version 1.0.0
-    */
+    /// @brief explicitly create an object from an initializer list
+    /// @sa https://json.nlohmann.me/api/basic_json/object/
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json object(initializer_list_t init = {})
     {
         return basic_json(init, false, value_t::object);
     }
 
-    /*!
-    @brief construct an array with count copies of given value
-
-    Constructs a JSON array value by creating @a cnt copies of a passed value.
-    In case @a cnt is `0`, an empty array is created.
-
-    @param[in] cnt  the number of JSON copies of @a val to create
-    @param[in] val  the JSON value to copy
-
-    @post `std::distance(begin(),end()) == cnt` holds.
-
-    @complexity Linear in @a cnt.
-
-    @exceptionsafety Strong guarantee: if an exception is thrown, there are no
-    changes to any JSON value.
-
-    @liveexample{The following code shows examples for the @ref
-    basic_json(size_type\, const basic_json&)
-    constructor.,basic_json__size_type_basic_json}
-
-    @since version 1.0.0
-    */
+    /// @brief construct an array with count copies of given value
+    /// @sa https://json.nlohmann.me/api/basic_json/basic_json/
     basic_json(size_type cnt, const basic_json& val)
         : m_type(value_t::array)
     {
@@ -1992,61 +1620,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         assert_invariant();
     }
 
-    /*!
-    @brief construct a JSON container given an iterator range
-
-    Constructs the JSON value with the contents of the range `[first, last)`.
-    The semantics depends on the different types a JSON value can have:
-    - In case of a null type, invalid_iterator.206 is thrown.
-    - In case of other primitive types (number, boolean, or string), @a first
-      must be `begin()` and @a last must be `end()`. In this case, the value is
-      copied. Otherwise, invalid_iterator.204 is thrown.
-    - In case of structured types (array, object), the constructor behaves as
-      similar versions for `std::vector` or `std::map`; that is, a JSON array
-      or object is constructed from the values in the range.
-
-    @tparam InputIT an input iterator type (@ref iterator or @ref
-    const_iterator)
-
-    @param[in] first begin of the range to copy from (included)
-    @param[in] last end of the range to copy from (excluded)
-
-    @pre Iterators @a first and @a last must be initialized. **This
-         precondition is enforced with an assertion (see warning).** If
-         assertions are switched off, a violation of this precondition yields
-         undefined behavior.
-
-    @pre Range `[first, last)` is valid. Usually, this precondition cannot be
-         checked efficiently. Only certain edge cases are detected; see the
-         description of the exceptions below. A violation of this precondition
-         yields undefined behavior.
-
-    @warning A precondition is enforced with a runtime assertion that will
-             result in calling `std::abort` if this precondition is not met.
-             Assertions can be disabled by defining `NDEBUG` at compile time.
-             See https://en.cppreference.com/w/cpp/error/assert for more
-             information.
-
-    @throw invalid_iterator.201 if iterators @a first and @a last are not
-    compatible (i.e., do not belong to the same JSON value). In this case,
-    the range `[first, last)` is undefined.
-    @throw invalid_iterator.204 if iterators @a first and @a last belong to a
-    primitive type (number, boolean, or string), but @a first does not point
-    to the first element any more. In this case, the range `[first, last)` is
-    undefined. See example code below.
-    @throw invalid_iterator.206 if iterators @a first and @a last belong to a
-    null value. In this case, the range `[first, last)` is undefined.
-
-    @complexity Linear in distance between @a first and @a last.
-
-    @exceptionsafety Strong guarantee: if an exception is thrown, there are no
-    changes to any JSON value.
-
-    @liveexample{The example below shows several ways to create JSON values by
-    specifying a subrange with iterators.,basic_json__InputIt_InputIt}
-
-    @since version 1.0.0
-    */
+    /// @brief construct a JSON container given an iterator range
+    /// @sa https://json.nlohmann.me/api/basic_json/basic_json/
     template < class InputIT, typename std::enable_if <
                    std::is_same<InputIT, typename basic_json_t::iterator>::value ||
                    std::is_same<InputIT, typename basic_json_t::const_iterator>::value, int >::type = 0 >
@@ -2162,31 +1737,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                                  std::is_same<typename JsonRef::value_type, basic_json>>::value, int> = 0 >
     basic_json(const JsonRef& ref) : basic_json(ref.moved_or_copied()) {}
 
-    /*!
-    @brief copy constructor
-
-    Creates a copy of a given JSON value.
-
-    @param[in] other  the JSON value to copy
-
-    @post `*this == other`
-
-    @complexity Linear in the size of @a other.
-
-    @exceptionsafety Strong guarantee: if an exception is thrown, there are no
-    changes to any JSON value.
-
-    @requirement This function helps `basic_json` satisfying the
-    [Container](https://en.cppreference.com/w/cpp/named_req/Container)
-    requirements:
-    - The complexity is linear.
-    - As postcondition, it holds: `other == basic_json(other)`.
-
-    @liveexample{The following code shows an example for the copy
-    constructor.,basic_json__basic_json}
-
-    @since version 1.0.0
-    */
+    /// @brief copy constructor
+    /// @sa https://json.nlohmann.me/api/basic_json/basic_json/
     basic_json(const basic_json& other)
         : m_type(other.m_type)
     {
@@ -2253,32 +1805,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         assert_invariant();
     }
 
-    /*!
-    @brief move constructor
-
-    Move constructor. Constructs a JSON value with the contents of the given
-    value @a other using move semantics. It "steals" the resources from @a
-    other and leaves it as JSON null value.
-
-    @param[in,out] other  value to move to this object
-
-    @post `*this` has the same value as @a other before the call.
-    @post @a other is a JSON null value.
-
-    @complexity Constant.
-
-    @exceptionsafety No-throw guarantee: this constructor never throws
-    exceptions.
-
-    @requirement This function helps `basic_json` satisfying the
-    [MoveConstructible](https://en.cppreference.com/w/cpp/named_req/MoveConstructible)
-    requirements.
-
-    @liveexample{The code below shows the move constructor explicitly called
-    via std::move.,basic_json__moveconstructor}
-
-    @since version 1.0.0
-    */
+    /// @brief move constructor
+    /// @sa https://json.nlohmann.me/api/basic_json/basic_json/
     basic_json(basic_json&& other) noexcept
         : m_type(std::move(other.m_type)),
           m_value(std::move(other.m_value))
@@ -2294,29 +1822,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         assert_invariant();
     }
 
-    /*!
-    @brief copy assignment
-
-    Copy assignment operator. Copies a JSON value via the "copy and swap"
-    strategy: It is expressed in terms of the copy constructor, destructor,
-    and the `swap()` member function.
-
-    @param[in] other  value to copy from
-
-    @complexity Linear.
-
-    @requirement This function helps `basic_json` satisfying the
-    [Container](https://en.cppreference.com/w/cpp/named_req/Container)
-    requirements:
-    - The complexity is linear.
-
-    @liveexample{The code below shows and example for the copy assignment. It
-    creates a copy of value `a` which is then swapped with `b`. Finally\, the
-    copy of `a` (which is the null value after the swap) is
-    destroyed.,basic_json__copyassignment}
-
-    @since version 1.0.0
-    */
+    /// @brief copy assignment
+    /// @sa https://json.nlohmann.me/api/basic_json/operator=/
     basic_json& operator=(basic_json other) noexcept (
         std::is_nothrow_move_constructible<value_t>::value&&
         std::is_nothrow_move_assignable<value_t>::value&&
@@ -2336,21 +1843,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return *this;
     }
 
-    /*!
-    @brief destructor
-
-    Destroys the JSON value and frees all allocated memory.
-
-    @complexity Linear.
-
-    @requirement This function helps `basic_json` satisfying the
-    [Container](https://en.cppreference.com/w/cpp/named_req/Container)
-    requirements:
-    - The complexity is linear.
-    - All stored elements are destroyed and all memory is freed.
-
-    @since version 1.0.0
-    */
+    /// @brief destructor
+    /// @sa https://json.nlohmann.me/api/basic_json/~basic_json/
     ~basic_json() noexcept
     {
         assert_invariant(false);
@@ -2368,53 +1862,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// Functions to inspect the type of a JSON value.
     /// @{
 
-    /*!
-    @brief serialization
-
-    Serialization function for JSON values. The function tries to mimic
-    Python's `json.dumps()` function, and currently supports its @a indent
-    and @a ensure_ascii parameters.
-
-    @param[in] indent If indent is nonnegative, then array elements and object
-    members will be pretty-printed with that indent level. An indent level of
-    `0` will only insert newlines. `-1` (the default) selects the most compact
-    representation.
-    @param[in] indent_char The character to use for indentation if @a indent is
-    greater than `0`. The default is ` ` (space).
-    @param[in] ensure_ascii If @a ensure_ascii is true, all non-ASCII characters
-    in the output are escaped with `\uXXXX` sequences, and the result consists
-    of ASCII characters only.
-    @param[in] error_handler  how to react on decoding errors; there are three
-    possible values: `strict` (throws and exception in case a decoding error
-    occurs; default), `replace` (replace invalid UTF-8 sequences with U+FFFD),
-    and `ignore` (ignore invalid UTF-8 sequences during serialization; all
-    bytes are copied to the output unchanged).
-
-    @return string containing the serialization of the JSON value
-
-    @throw type_error.316 if a string stored inside the JSON value is not
-                          UTF-8 encoded and @a error_handler is set to strict
-
-    @note Binary values are serialized as object containing two keys:
-      - "bytes": an array of bytes as integers
-      - "subtype": the subtype as integer or "null" if the binary has no subtype
-
-    @complexity Linear.
-
-    @exceptionsafety Strong guarantee: if an exception is thrown, there are no
-    changes in the JSON value.
-
-    @liveexample{The following example shows the effect of different @a indent\,
-    @a indent_char\, and @a ensure_ascii parameters to the result of the
-    serialization.,dump}
-
-    @see https://docs.python.org/2/library/json.html#json.dump
-
-    @since version 1.0.0; indentation character @a indent_char, option
-           @a ensure_ascii and exceptions added in version 3.0.0; error
-           handlers added in version 3.4.0; serialization of binary values added
-           in version 3.8.0.
-    */
+    /// @brief serialization
+    /// @sa https://json.nlohmann.me/api/basic_json/dump/
     string_t dump(const int indent = -1,
                   const char indent_char = ' ',
                   const bool ensure_ascii = false,
@@ -2435,397 +1884,106 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return result;
     }
 
-    /*!
-    @brief return the type of the JSON value (explicit)
-
-    Return the type of the JSON value as a value from the @ref value_t
-    enumeration.
-
-    @return the type of the JSON value
-            Value type                | return value
-            ------------------------- | -------------------------
-            null                      | value_t::null
-            boolean                   | value_t::boolean
-            string                    | value_t::string
-            number (integer)          | value_t::number_integer
-            number (unsigned integer) | value_t::number_unsigned
-            number (floating-point)   | value_t::number_float
-            object                    | value_t::object
-            array                     | value_t::array
-            binary                    | value_t::binary
-            discarded                 | value_t::discarded
-
-    @complexity Constant.
-
-    @exceptionsafety No-throw guarantee: this member function never throws
-    exceptions.
-
-    @liveexample{The following code exemplifies `type()` for all JSON
-    types.,type}
-
-    @sa see @ref operator value_t() -- return the type of the JSON value (implicit)
-    @sa see @ref type_name() -- return the type as string
-
-    @since version 1.0.0
-    */
+    /// @brief return the type of the JSON value (explicit)
+    /// @sa https://json.nlohmann.me/api/basic_json/type/
     constexpr value_t type() const noexcept
     {
         return m_type;
     }
 
-    /*!
-    @brief return whether type is primitive
-
-    This function returns true if and only if the JSON type is primitive
-    (string, number, boolean, or null).
-
-    @return `true` if type is primitive (string, number, boolean, or null),
-    `false` otherwise.
-
-    @complexity Constant.
-
-    @exceptionsafety No-throw guarantee: this member function never throws
-    exceptions.
-
-    @liveexample{The following code exemplifies `is_primitive()` for all JSON
-    types.,is_primitive}
-
-    @sa see @ref is_structured() -- returns whether JSON value is structured
-    @sa see @ref is_null() -- returns whether JSON value is `null`
-    @sa see @ref is_string() -- returns whether JSON value is a string
-    @sa see @ref is_boolean() -- returns whether JSON value is a boolean
-    @sa see @ref is_number() -- returns whether JSON value is a number
-    @sa see @ref is_binary() -- returns whether JSON value is a binary array
-
-    @since version 1.0.0
-    */
+    /// @brief return whether type is primitive
+    /// @sa https://json.nlohmann.me/api/basic_json/is_primitive/
     constexpr bool is_primitive() const noexcept
     {
         return is_null() || is_string() || is_boolean() || is_number() || is_binary();
     }
 
-    /*!
-    @brief return whether type is structured
-
-    This function returns true if and only if the JSON type is structured
-    (array or object).
-
-    @return `true` if type is structured (array or object), `false` otherwise.
-
-    @complexity Constant.
-
-    @exceptionsafety No-throw guarantee: this member function never throws
-    exceptions.
-
-    @liveexample{The following code exemplifies `is_structured()` for all JSON
-    types.,is_structured}
-
-    @sa see @ref is_primitive() -- returns whether value is primitive
-    @sa see @ref is_array() -- returns whether value is an array
-    @sa see @ref is_object() -- returns whether value is an object
-
-    @since version 1.0.0
-    */
+    /// @brief return whether type is structured
+    /// @sa https://json.nlohmann.me/api/basic_json/is_structured/
     constexpr bool is_structured() const noexcept
     {
         return is_array() || is_object();
     }
 
-    /*!
-    @brief return whether value is null
-
-    This function returns true if and only if the JSON value is null.
-
-    @return `true` if type is null, `false` otherwise.
-
-    @complexity Constant.
-
-    @exceptionsafety No-throw guarantee: this member function never throws
-    exceptions.
-
-    @liveexample{The following code exemplifies `is_null()` for all JSON
-    types.,is_null}
-
-    @since version 1.0.0
-    */
+    /// @brief return whether value is null
+    /// @sa https://json.nlohmann.me/api/basic_json/is_null/
     constexpr bool is_null() const noexcept
     {
         return m_type == value_t::null;
     }
 
-    /*!
-    @brief return whether value is a boolean
-
-    This function returns true if and only if the JSON value is a boolean.
-
-    @return `true` if type is boolean, `false` otherwise.
-
-    @complexity Constant.
-
-    @exceptionsafety No-throw guarantee: this member function never throws
-    exceptions.
-
-    @liveexample{The following code exemplifies `is_boolean()` for all JSON
-    types.,is_boolean}
-
-    @since version 1.0.0
-    */
+    /// @brief return whether value is a boolean
+    /// @sa https://json.nlohmann.me/api/basic_json/is_boolean/
     constexpr bool is_boolean() const noexcept
     {
         return m_type == value_t::boolean;
     }
 
-    /*!
-    @brief return whether value is a number
-
-    This function returns true if and only if the JSON value is a number. This
-    includes both integer (signed and unsigned) and floating-point values.
-
-    @return `true` if type is number (regardless whether integer, unsigned
-    integer or floating-type), `false` otherwise.
-
-    @complexity Constant.
-
-    @exceptionsafety No-throw guarantee: this member function never throws
-    exceptions.
-
-    @liveexample{The following code exemplifies `is_number()` for all JSON
-    types.,is_number}
-
-    @sa see @ref is_number_integer() -- check if value is an integer or unsigned
-    integer number
-    @sa see @ref is_number_unsigned() -- check if value is an unsigned integer
-    number
-    @sa see @ref is_number_float() -- check if value is a floating-point number
-
-    @since version 1.0.0
-    */
+    /// @brief return whether value is a number
+    /// @sa https://json.nlohmann.me/api/basic_json/is_number/
     constexpr bool is_number() const noexcept
     {
         return is_number_integer() || is_number_float();
     }
 
-    /*!
-    @brief return whether value is an integer number
-
-    This function returns true if and only if the JSON value is a signed or
-    unsigned integer number. This excludes floating-point values.
-
-    @return `true` if type is an integer or unsigned integer number, `false`
-    otherwise.
-
-    @complexity Constant.
-
-    @exceptionsafety No-throw guarantee: this member function never throws
-    exceptions.
-
-    @liveexample{The following code exemplifies `is_number_integer()` for all
-    JSON types.,is_number_integer}
-
-    @sa see @ref is_number() -- check if value is a number
-    @sa see @ref is_number_unsigned() -- check if value is an unsigned integer
-    number
-    @sa see @ref is_number_float() -- check if value is a floating-point number
-
-    @since version 1.0.0
-    */
+    /// @brief return whether value is an integer number
+    /// @sa https://json.nlohmann.me/api/basic_json/is_number_integer/
     constexpr bool is_number_integer() const noexcept
     {
         return m_type == value_t::number_integer || m_type == value_t::number_unsigned;
     }
 
-    /*!
-    @brief return whether value is an unsigned integer number
-
-    This function returns true if and only if the JSON value is an unsigned
-    integer number. This excludes floating-point and signed integer values.
-
-    @return `true` if type is an unsigned integer number, `false` otherwise.
-
-    @complexity Constant.
-
-    @exceptionsafety No-throw guarantee: this member function never throws
-    exceptions.
-
-    @liveexample{The following code exemplifies `is_number_unsigned()` for all
-    JSON types.,is_number_unsigned}
-
-    @sa see @ref is_number() -- check if value is a number
-    @sa see @ref is_number_integer() -- check if value is an integer or unsigned
-    integer number
-    @sa see @ref is_number_float() -- check if value is a floating-point number
-
-    @since version 2.0.0
-    */
+    /// @brief return whether value is an unsigned integer number
+    /// @sa https://json.nlohmann.me/api/basic_json/is_number_unsigned/
     constexpr bool is_number_unsigned() const noexcept
     {
         return m_type == value_t::number_unsigned;
     }
 
-    /*!
-    @brief return whether value is a floating-point number
-
-    This function returns true if and only if the JSON value is a
-    floating-point number. This excludes signed and unsigned integer values.
-
-    @return `true` if type is a floating-point number, `false` otherwise.
-
-    @complexity Constant.
-
-    @exceptionsafety No-throw guarantee: this member function never throws
-    exceptions.
-
-    @liveexample{The following code exemplifies `is_number_float()` for all
-    JSON types.,is_number_float}
-
-    @sa see @ref is_number() -- check if value is number
-    @sa see @ref is_number_integer() -- check if value is an integer number
-    @sa see @ref is_number_unsigned() -- check if value is an unsigned integer
-    number
-
-    @since version 1.0.0
-    */
+    /// @brief return whether value is a floating-point number
+    /// @sa https://json.nlohmann.me/api/basic_json/is_number_float/
     constexpr bool is_number_float() const noexcept
     {
         return m_type == value_t::number_float;
     }
 
-    /*!
-    @brief return whether value is an object
-
-    This function returns true if and only if the JSON value is an object.
-
-    @return `true` if type is object, `false` otherwise.
-
-    @complexity Constant.
-
-    @exceptionsafety No-throw guarantee: this member function never throws
-    exceptions.
-
-    @liveexample{The following code exemplifies `is_object()` for all JSON
-    types.,is_object}
-
-    @since version 1.0.0
-    */
+    /// @brief return whether value is an object
+    /// @sa https://json.nlohmann.me/api/basic_json/is_object/
     constexpr bool is_object() const noexcept
     {
         return m_type == value_t::object;
     }
 
-    /*!
-    @brief return whether value is an array
-
-    This function returns true if and only if the JSON value is an array.
-
-    @return `true` if type is array, `false` otherwise.
-
-    @complexity Constant.
-
-    @exceptionsafety No-throw guarantee: this member function never throws
-    exceptions.
-
-    @liveexample{The following code exemplifies `is_array()` for all JSON
-    types.,is_array}
-
-    @since version 1.0.0
-    */
+    /// @brief return whether value is an array
+    /// @sa https://json.nlohmann.me/api/basic_json/is_array/
     constexpr bool is_array() const noexcept
     {
         return m_type == value_t::array;
     }
 
-    /*!
-    @brief return whether value is a string
-
-    This function returns true if and only if the JSON value is a string.
-
-    @return `true` if type is string, `false` otherwise.
-
-    @complexity Constant.
-
-    @exceptionsafety No-throw guarantee: this member function never throws
-    exceptions.
-
-    @liveexample{The following code exemplifies `is_string()` for all JSON
-    types.,is_string}
-
-    @since version 1.0.0
-    */
+    /// @brief return whether value is a string
+    /// @sa https://json.nlohmann.me/api/basic_json/is_string/
     constexpr bool is_string() const noexcept
     {
         return m_type == value_t::string;
     }
 
-    /*!
-    @brief return whether value is a binary array
-
-    This function returns true if and only if the JSON value is a binary array.
-
-    @return `true` if type is binary array, `false` otherwise.
-
-    @complexity Constant.
-
-    @exceptionsafety No-throw guarantee: this member function never throws
-    exceptions.
-
-    @liveexample{The following code exemplifies `is_binary()` for all JSON
-    types.,is_binary}
-
-    @since version 3.8.0
-    */
+    /// @brief return whether value is a binary array
+    /// @sa https://json.nlohmann.me/api/basic_json/is_binary/
     constexpr bool is_binary() const noexcept
     {
         return m_type == value_t::binary;
     }
 
-    /*!
-    @brief return whether value is discarded
-
-    This function returns true if and only if the JSON value was discarded
-    during parsing with a callback function (see @ref parser_callback_t).
-
-    @note This function will always be `false` for JSON values after parsing.
-    That is, discarded values can only occur during parsing, but will be
-    removed when inside a structured value or replaced by null in other cases.
-
-    @return `true` if type is discarded, `false` otherwise.
-
-    @complexity Constant.
-
-    @exceptionsafety No-throw guarantee: this member function never throws
-    exceptions.
-
-    @liveexample{The following code exemplifies `is_discarded()` for all JSON
-    types.,is_discarded}
-
-    @since version 1.0.0
-    */
+    /// @brief return whether value is discarded
+    /// @sa https://json.nlohmann.me/api/basic_json/is_discarded/
     constexpr bool is_discarded() const noexcept
     {
         return m_type == value_t::discarded;
     }
 
-    /*!
-    @brief return the type of the JSON value (implicit)
-
-    Implicitly return the type of the JSON value as a value from the @ref
-    value_t enumeration.
-
-    @return the type of the JSON value
-
-    @complexity Constant.
-
-    @exceptionsafety No-throw guarantee: this member function never throws
-    exceptions.
-
-    @liveexample{The following code exemplifies the @ref value_t operator for
-    all JSON types.,operator__value_t}
-
-    @sa see @ref type() -- return the type of the JSON value (explicit)
-    @sa see @ref type_name() -- return the type as string
-
-    @since version 1.0.0
-    */
+    /// @brief return the type of the JSON value (implicit)
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_value_t/
     constexpr operator value_t() const noexcept
     {
         return m_type;
@@ -2975,32 +2133,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// Direct access to the stored value of a JSON value.
     /// @{
 
-    /*!
-    @brief get a pointer value (implicit)
-
-    Implicit pointer access to the internally stored JSON value. No copies are
-    made.
-
-    @warning Writing data to the pointee of the result yields an undefined
-    state.
-
-    @tparam PointerType pointer type; must be a pointer to @ref array_t, @ref
-    object_t, @ref string_t, @ref boolean_t, @ref number_integer_t,
-    @ref number_unsigned_t, or @ref number_float_t. Enforced by a static
-    assertion.
-
-    @return pointer to the internally stored JSON value if the requested
-    pointer type @a PointerType fits to the JSON value; `nullptr` otherwise
-
-    @complexity Constant.
-
-    @liveexample{The example below shows how pointers to internal values of a
-    JSON value can be requested. Note that no type conversions are made and a
-    `nullptr` is returned if the value and the requested pointer type does not
-    match.,get_ptr}
-
-    @since version 1.0.0
-    */
+    /// @brief get a pointer value (implicit)
+    /// @sa https://json.nlohmann.me/api/basic_json/get_ptr/
     template<typename PointerType, typename std::enable_if<
                  std::is_pointer<PointerType>::value, int>::type = 0>
     auto get_ptr() noexcept -> decltype(std::declval<basic_json_t&>().get_impl_ptr(std::declval<PointerType>()))
@@ -3009,10 +2143,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return get_impl_ptr(static_cast<PointerType>(nullptr));
     }
 
-    /*!
-    @brief get a pointer value (implicit)
-    @copydoc get_ptr()
-    */
+    /// @brief get a pointer value (implicit)
+    /// @sa https://json.nlohmann.me/api/basic_json/get_ptr/
     template < typename PointerType, typename std::enable_if <
                    std::is_pointer<PointerType>::value&&
                    std::is_const<typename std::remove_pointer<PointerType>::type>::value, int >::type = 0 >
@@ -3251,39 +2383,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return get_ptr<PointerType>();
     }
 
-    /*!
-    @brief get a value (explicit)
-
-    Explicit type conversion between the JSON value and a compatible value.
-    The value is filled into the input parameter by calling the @ref json_serializer<ValueType>
-    `from_json()` method.
-
-    The function is equivalent to executing
-    @code {.cpp}
-    ValueType v;
-    JSONSerializer<ValueType>::from_json(*this, v);
-    @endcode
-
-    This overloads is chosen if:
-    - @a ValueType is not @ref basic_json,
-    - @ref json_serializer<ValueType> has a `from_json()` method of the form
-      `void from_json(const basic_json&, ValueType&)`, and
-
-    @tparam ValueType the input parameter type.
-
-    @return the input parameter, allowing chaining calls.
-
-    @throw what @ref json_serializer<ValueType> `from_json()` method throws
-
-    @liveexample{The example below shows several conversions from JSON values
-    to other types. There a few things to note: (1) Floating-point numbers can
-    be converted to integers\, (2) A JSON array can be converted to a standard
-    `std::vector<short>`\, (3) A JSON object can be converted to C++
-    associative containers such as `std::unordered_map<std::string\,
-    json>`.,get_to}
-
-    @since version 3.3.0
-    */
+    /// @brief get a value (explicit)
+    /// @sa https://json.nlohmann.me/api/basic_json/get_to/
     template < typename ValueType,
                detail::enable_if_t <
                    !detail::is_basic_json<ValueType>::value&&

@@ -7,8 +7,6 @@ build: prepare_files
 
 # create files that are not versioned inside the mkdocs folder
 prepare_files: clean
-	# build Doxygen
-	$(MAKE) -C ..
 	# create subfolders
 	mkdir docs/images docs/examples
 	# copy images
@@ -27,6 +25,7 @@ publish: prepare_files
 # install a Python virtual environment
 install_venv: requirements.txt
 	python3 -mvenv venv
+	venv/bin/pip install wheel
 	venv/bin/pip install -r requirements.txt
 
 # uninstall the virtual environment

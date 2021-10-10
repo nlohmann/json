@@ -49,6 +49,8 @@ basic_json(basic_json&& other) noexcept;
     array       | `#!json []`
     binary      | empty array
 
+    The postcondition of this constructor can be restored by calling [`clear()`](clear.md).
+
 2. Create a `#!json null` JSON value. It either takes a null pointer as parameter (explicitly creating `#!json null`)
    or no parameter (implicitly creating `#!json null`). The passed null pointer itself is not read -- it is only used to
    choose the right constructor.
@@ -104,6 +106,9 @@ basic_json(basic_json&& other) noexcept;
     
     - the empty array (`#!json []`): use `array(initializer_list_t)` with an empty initializer list in this case
     - arrays whose elements satisfy rule 2: use `array(initializer_list_t)` with the same initializer list in this case
+   
+    Function [`array()`](array.md) and [`object()`](object.md) force array and object creation from initializer lists,
+    respectively.
         
 6. Constructs a JSON array value by creating `cnt` copies of a passed value. In case `cnt` is `0`, an empty array is
    created.
@@ -141,6 +146,9 @@ basic_json(basic_json&& other) noexcept;
 
     - `BasicJsonType` is a `basic_json` type.
     - `BasicJsonType` has different template arguments than `basic_json_t`.
+
+`U`:
+:   `uncvref_t<CompatibleType>`
 
 ## Parameters
 
@@ -269,7 +277,7 @@ basic_json(basic_json&& other) noexcept;
 
 ## Example
 
-??? example
+??? example "Example: (1) create an empty value with a given type"
 
     The following code shows the constructor for different `value_t` values.
      
@@ -283,7 +291,7 @@ basic_json(basic_json&& other) noexcept;
     --8<-- "examples/basic_json__value_t.output"
     ```
 
-??? example
+??? example "Example: (2) create a `#!json null` object"
 
     The following code shows the constructor with and without a null pointer parameter.
      
@@ -297,7 +305,7 @@ basic_json(basic_json&& other) noexcept;
     --8<-- "examples/basic_json__nullptr_t.output"
     ```
 
-??? example
+??? example "Example: (3) create a JSON value from compatible types"
 
     The following code shows the constructor with several compatible types.
      
@@ -311,7 +319,7 @@ basic_json(basic_json&& other) noexcept;
     --8<-- "examples/basic_json__CompatibleType.output"
     ```
 
-??? example
+??? example "Example: (5) create a container (array or object) from an initializer list"
 
     The example below shows how JSON values are created from initializer lists.
      
@@ -325,7 +333,7 @@ basic_json(basic_json&& other) noexcept;
     --8<-- "examples/basic_json__list_init_t.output"
     ```
 
-??? example
+??? example "Example: (6) construct an array with count copies of given value"
 
     The following code shows examples for creating arrays with several copies of a given value.
      
@@ -339,7 +347,7 @@ basic_json(basic_json&& other) noexcept;
     --8<-- "examples/basic_json__size_type_basic_json.output"
     ```
 
-??? example
+??? example "Example: (7) construct a JSON container given an iterator range"
 
     The example below shows several ways to create JSON values by specifying a subrange with iterators.
      
@@ -353,7 +361,7 @@ basic_json(basic_json&& other) noexcept;
     --8<-- "examples/basic_json__InputIt_InputIt.output"
     ```
 
-??? example
+??? example "Example: (8) copy constructor"
 
     The following code shows an example for the copy constructor.
      
@@ -367,7 +375,7 @@ basic_json(basic_json&& other) noexcept;
     --8<-- "examples/basic_json__basic_json.output"
     ```
 
-??? example
+??? example "Example: (9) move constructor"
 
     The code below shows the move constructor explicitly called via `std::move`.
      

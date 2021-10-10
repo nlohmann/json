@@ -30,18 +30,20 @@ Constant.
 
 ## Example
 
-The following code shows an example output of the `meta()`
-function.
+??? example
 
-```cpp
---8<-- "examples/meta.cpp"
-```
-
-Output:
-
-```json
---8<-- "examples/meta.output"
-```
+    The following code shows an example output of the `meta()`
+    function.
+    
+    ```cpp
+    --8<-- "examples/meta.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/meta.output"
+    ```
 
 ## Version history
 
