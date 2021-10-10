@@ -5,12 +5,14 @@
 void update(const_reference j, bool merge_objects = false);
 
 // (2)
-void update(const_iterator first, const_iterator last);
+void update(const_iterator first, const_iterator last, bool merge_objects = false);
 ```
 
-1. Inserts all values from JSON object `j`. and overwrites existing keys. When `merge_objects` is `#!c false` (default),
-   existing keys are overwritten. When `merge_objects` is `#!c true`, recursively merges objects with common keys.
-2. Inserts all values from from range `[first, last)` and overwrites existing keys.
+1. Inserts all values from JSON object `j`.
+2. Inserts all values from from range `[first, last)`
+
+When `merge_objects` is `#!c false` (default), existing keys are overwritten. When `merge_objects` is `#!c true`,
+recursively merges objects with common keys.
 
 The function is motivated by Python's [dict.update](https://docs.python.org/3.6/library/stdtypes.html#dict.update)
 function.
