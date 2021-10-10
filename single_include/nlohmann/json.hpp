@@ -20675,75 +20675,22 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return value(ptr, string_t(default_value));
     }
 
-    /*!
-    @brief access the first element
-
-    Returns a reference to the first element in the container. For a JSON
-    container `c`, the expression `c.front()` is equivalent to `*c.begin()`.
-
-    @return In case of a structured type (array or object), a reference to the
-    first element is returned. In case of number, string, boolean, or binary
-    values, a reference to the value is returned.
-
-    @complexity Constant.
-
-    @pre The JSON value must not be `null` (would throw `std::out_of_range`)
-    or an empty array or object (undefined behavior, **guarded by
-    assertions**).
-    @post The JSON value remains unchanged.
-
-    @throw invalid_iterator.214 when called on `null` value
-
-    @liveexample{The following code shows an example for `front()`.,front}
-
-    @sa see @ref back() -- access the last element
-
-    @since version 1.0.0
-    */
+    /// @brief access the first element
+    /// @sa https://json.nlohmann.me/api/basic_json/front/
     reference front()
     {
         return *begin();
     }
 
-    /*!
-    @copydoc basic_json::front()
-    */
+    /// @brief access the first element
+    /// @sa https://json.nlohmann.me/api/basic_json/front/
     const_reference front() const
     {
         return *cbegin();
     }
 
-    /*!
-    @brief access the last element
-
-    Returns a reference to the last element in the container. For a JSON
-    container `c`, the expression `c.back()` is equivalent to
-    @code {.cpp}
-    auto tmp = c.end();
-    --tmp;
-    return *tmp;
-    @endcode
-
-    @return In case of a structured type (array or object), a reference to the
-    last element is returned. In case of number, string, boolean, or binary
-    values, a reference to the value is returned.
-
-    @complexity Constant.
-
-    @pre The JSON value must not be `null` (would throw `std::out_of_range`)
-    or an empty array or object (undefined behavior, **guarded by
-    assertions**).
-    @post The JSON value remains unchanged.
-
-    @throw invalid_iterator.214 when called on a `null` value. See example
-    below.
-
-    @liveexample{The following code shows an example for `back()`.,back}
-
-    @sa see @ref front() -- access the first element
-
-    @since version 1.0.0
-    */
+    /// @brief access the last element
+    /// @sa https://json.nlohmann.me/api/basic_json/back/
     reference back()
     {
         auto tmp = end();
@@ -20751,9 +20698,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return *tmp;
     }
 
-    /*!
-    @copydoc basic_json::back()
-    */
+    /// @brief access the last element
+    /// @sa https://json.nlohmann.me/api/basic_json/back/
     const_reference back() const
     {
         auto tmp = cend();
@@ -21140,27 +21086,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return result;
     }
 
-    /*!
-    @brief returns the number of occurrences of a key in a JSON object
-
-    Returns the number of elements with key @a key. If ObjectType is the
-    default `std::map` type, the return value will always be `0` (@a key was
-    not found) or `1` (@a key was found).
-
-    @note This method always returns `0` when executed on a JSON type that is
-          not an object.
-
-    @param[in] key key value of the element to count
-
-    @return Number of elements with key @a key. If the JSON value is not an
-    object, the return value will be `0`.
-
-    @complexity Logarithmic in the size of the JSON object.
-
-    @liveexample{The example shows how `count()` is used.,count}
-
-    @since version 1.0.0
-    */
+    /// @brief returns the number of occurrences of a key in a JSON object
+    /// @sa https://json.nlohmann.me/api/basic_json/count/
     template<typename KeyT>
     size_type count(KeyT&& key) const
     {
@@ -21168,31 +21095,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return is_object() ? m_value.object->count(std::forward<KeyT>(key)) : 0;
     }
 
-    /*!
-    @brief check the existence of an element in a JSON object
-
-    Check whether an element exists in a JSON object with key equivalent to
-    @a key. If the element is not found or the JSON value is not an object,
-    false is returned.
-
-    @note This method always returns false when executed on a JSON type
-          that is not an object.
-
-    @param[in] key key value to check its existence.
-
-    @return true if an element with specified @a key exists. If no such
-    element with such key is found or the JSON value is not an object,
-    false is returned.
-
-    @complexity Logarithmic in the size of the JSON object.
-
-    @liveexample{The following code shows an example for `contains()`.,contains}
-
-    @sa see @ref find(KeyT&&) -- returns an iterator to an object element
-    @sa see @ref contains(const json_pointer&) const -- checks the existence for a JSON pointer
-
-    @since version 3.6.0
-    */
+    /// @brief check the existence of an element in a JSON object
+    /// @sa https://json.nlohmann.me/api/basic_json/contains/
     template < typename KeyT, typename std::enable_if <
                    !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value, int >::type = 0 >
     bool contains(KeyT && key) const
@@ -21200,32 +21104,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return is_object() && m_value.object->find(std::forward<KeyT>(key)) != m_value.object->end();
     }
 
-    /*!
-    @brief check the existence of an element in a JSON object given a JSON pointer
-
-    Check whether the given JSON pointer @a ptr can be resolved in the current
-    JSON value.
-
-    @note This method can be executed on any JSON value type.
-
-    @param[in] ptr JSON pointer to check its existence.
-
-    @return true if the JSON pointer can be resolved to a stored value, false
-    otherwise.
-
-    @post If `j.contains(ptr)` returns true, it is safe to call `j[ptr]`.
-
-    @throw parse_error.106   if an array index begins with '0'
-    @throw parse_error.109   if an array index was not a number
-
-    @complexity Logarithmic in the size of the JSON object.
-
-    @liveexample{The following code shows an example for `contains()`.,contains_json_pointer}
-
-    @sa see @ref contains(KeyT &&) const -- checks the existence of a key
-
-    @since version 3.7.0
-    */
+    /// @brief check the existence of an element in a JSON object given a JSON pointer
+    /// @sa https://json.nlohmann.me/api/basic_json/contains/
     bool contains(const json_pointer& ptr) const
     {
         return ptr.contains(this);

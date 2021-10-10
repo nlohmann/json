@@ -48,6 +48,10 @@ Constant.
     --8<-- "examples/front.output"
     ```
 
+## See also
+
+- [back](back.md) to access the last element
+
 ## Version history
 
 - Added in version 1.0.0.

@@ -55,6 +55,10 @@ Constant.
     --8<-- "examples/back.output"
     ```
 
+## See also
+
+- [front](front.md) to access the first element
+
 ## Version history
 
 - Added in version 1.0.0.
