@@ -96,6 +96,15 @@ TEST_CASE("Better diagnostics")
         json _;
         CHECK_THROWS_WITH_AS(_ = json::parse(""), "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal", json::parse_error);
     }
+
+    SECTION("Wrong type in update()")
+    {
+        json j = {{"foo", "bar"}};
+        json k = {{"bla", 1}};
+
+        CHECK_THROWS_WITH_AS(j.update(k["bla"].begin(), k["bla"].end()), "[json.exception.type_error.312] (/bla) cannot use update() with number", json::type_error);
+        CHECK_THROWS_WITH_AS(j.update(k["bla"]), "[json.exception.type_error.312] (/bla) cannot use update() with number", json::type_error);
+    }
 }
 
 TEST_CASE("Regression tests for extended diagnostics")
