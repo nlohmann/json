@@ -189,6 +189,32 @@ template<class T>
 class my_allocator : public std::allocator<T>
 {};
 
+/////////////////////////////////////////////////////////////////////
+// for #3077
+/////////////////////////////////////////////////////////////////////
+
+class FooAlloc
+{};
+
+class Foo
+{
+  public:
+    explicit Foo(const FooAlloc& = FooAlloc()) : value(false) {}
+
+    bool value;
+};
+
+class FooBar
+{
+  public:
+    Foo foo;
+};
+
+inline void from_json(const nlohmann::json& j, FooBar& fb)
+{
+    j.at("value").get_to(fb.foo.value);
+}
+
 TEST_CASE("regression tests 2")
 {
     SECTION("issue #1001 - Fix memory leak during parser callback")
@@ -694,6 +720,14 @@ TEST_CASE("regression tests 2")
         json::to_cbor(j, my_vector);
         json k = json::from_cbor(my_vector);
         CHECK(j == k);
+    }
+
+    SECTION("issue #3077 - explicit constructor with default does not compile")
+    {
+        json j;
+        j[0]["value"] = true;
+        std::vector<FooBar> foo;
+        j.get_to(foo);
     }
 }
 
