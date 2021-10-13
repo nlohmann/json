@@ -199,7 +199,7 @@ class FooAlloc
 class Foo
 {
   public:
-    explicit Foo(const FooAlloc& /* unused */ = FooAlloc()) : value(false) {}
+    explicit Foo(const FooAlloc& /* unused */ = FooAlloc()) {}
 
     bool value = false;
 };
