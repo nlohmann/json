@@ -20928,26 +20928,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
     }
 
-    /*!
-    @brief add an object to an array
-
-    Appends the given element @a val to the end of the JSON value. If the
-    function is called on a JSON null value, an empty array is created before
-    appending @a val.
-
-    @param[in] val the value to add to the JSON array
-
-    @throw type_error.308 when called on a type other than JSON array or
-    null; example: `"cannot use push_back() with number"`
-
-    @complexity Amortized constant.
-
-    @liveexample{The example shows how `push_back()` and `+=` can be used to
-    add elements to a JSON array. Note how the `null` value was silently
-    converted to a JSON array.,push_back}
-
-    @since version 1.0.0
-    */
+    /// @brief add an object to an array
+    /// @sa https://json.nlohmann.me/api/basic_json/push_back/
     void push_back(basic_json&& val)
     {
         // push_back only works for null objects or arrays
@@ -20971,20 +20953,16 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // if val is moved from, basic_json move constructor marks it null so we do not call the destructor
     }
 
-    /*!
-    @brief add an object to an array
-    @copydoc push_back(basic_json&&)
-    */
+    /// @brief add an object to an array
+    /// @sa https://json.nlohmann.me/api/basic_json/operator+=/
     reference operator+=(basic_json&& val)
     {
         push_back(std::move(val));
         return *this;
     }
 
-    /*!
-    @brief add an object to an array
-    @copydoc push_back(basic_json&&)
-    */
+    /// @brief add an object to an array
+    /// @sa https://json.nlohmann.me/api/basic_json/push_back/
     void push_back(const basic_json& val)
     {
         // push_back only works for null objects or arrays
@@ -21007,36 +20985,16 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         set_parent(m_value.array->back(), old_capacity);
     }
 
-    /*!
-    @brief add an object to an array
-    @copydoc push_back(basic_json&&)
-    */
+    /// @brief add an object to an array
+    /// @sa https://json.nlohmann.me/api/basic_json/operator+=/
     reference operator+=(const basic_json& val)
     {
         push_back(val);
         return *this;
     }
 
-    /*!
-    @brief add an object to an object
-
-    Inserts the given element @a val to the JSON object. If the function is
-    called on a JSON null value, an empty object is created before inserting
-    @a val.
-
-    @param[in] val the value to add to the JSON object
-
-    @throw type_error.308 when called on a type other than JSON object or
-    null; example: `"cannot use push_back() with number"`
-
-    @complexity Logarithmic in the size of the container, O(log(`size()`)).
-
-    @liveexample{The example shows how `push_back()` and `+=` can be used to
-    add elements to a JSON object. Note how the `null` value was silently
-    converted to a JSON object.,push_back__object_t__value}
-
-    @since version 1.0.0
-    */
+    /// @brief add an object to an object
+    /// @sa https://json.nlohmann.me/api/basic_json/push_back/
     void push_back(const typename object_t::value_type& val)
     {
         // push_back only works for null objects or objects
@@ -21058,41 +21016,16 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         set_parent(res.first->second);
     }
 
-    /*!
-    @brief add an object to an object
-    @copydoc push_back(const typename object_t::value_type&)
-    */
+    /// @brief add an object to an object
+    /// @sa https://json.nlohmann.me/api/basic_json/operator+=/
     reference operator+=(const typename object_t::value_type& val)
     {
         push_back(val);
         return *this;
     }
 
-    /*!
-    @brief add an object to an object
-
-    This function allows to use `push_back` with an initializer list. In case
-
-    1. the current value is an object,
-    2. the initializer list @a init contains only two elements, and
-    3. the first element of @a init is a string,
-
-    @a init is converted into an object element and added using
-    @ref push_back(const typename object_t::value_type&). Otherwise, @a init
-    is converted to a JSON value and added using @ref push_back(basic_json&&).
-
-    @param[in] init  an initializer list
-
-    @complexity Linear in the size of the initializer list @a init.
-
-    @note This function is required to resolve an ambiguous overload error,
-          because pairs like `{"key", "value"}` can be both interpreted as
-          `object_t::value_type` or `std::initializer_list<basic_json>`, see
-          https://github.com/nlohmann/json/issues/235 for more information.
-
-    @liveexample{The example shows how initializer lists are treated as
-    objects when possible.,push_back__initializer_list}
-    */
+    /// @brief add an object to an object
+    /// @sa https://json.nlohmann.me/api/basic_json/push_back/
     void push_back(initializer_list_t init)
     {
         if (is_object() && init.size() == 2 && (*init.begin())->is_string())
@@ -21107,10 +21040,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
     }
 
-    /*!
-    @brief add an object to an object
-    @copydoc push_back(initializer_list_t)
-    */
+    /// @brief add an object to an object
+    /// @sa https://json.nlohmann.me/api/basic_json/operator+=/
     reference operator+=(initializer_list_t init)
     {
         push_back(init);

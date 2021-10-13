@@ -58,7 +58,7 @@ void push_back(initializer_list_t init);
 
 ## Examples
 
-??? example
+??? example "Example: (1) add element to array"
 
     The example shows how `push_back()` and `+=` can be used to add elements to a JSON array. Note how the `null` value
     was silently converted to a JSON array.
@@ -73,7 +73,7 @@ void push_back(initializer_list_t init);
     --8<-- "examples/push_back.output"
     ```
 
-??? example
+??? example "Example: (2) add element to object"
 
     The example shows how `push_back()` and `+=` can be used to add elements to a JSON object. Note how the `null` value
     was silently converted to a JSON object.
@@ -88,7 +88,7 @@ void push_back(initializer_list_t init);
     --8<-- "examples/push_back__object_t__value.output"
     ```
 
-??? example
+??? example "Example: (3) add to object from initializer list"
 
     The example shows how initializer lists are treated as objects when possible.
 
