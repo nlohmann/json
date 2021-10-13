@@ -3950,6 +3950,10 @@ T conditional_static_cast(U value)
 // #include <nlohmann/detail/value_t.hpp>
 
 
+#ifdef JSON_HAS_CPP_17
+    #include <filesystem>
+#endif
+
 namespace nlohmann
 {
 namespace detail
@@ -4375,6 +4379,18 @@ void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Hash, KeyE
     }
 }
 
+#ifdef JSON_HAS_CPP_17
+template<typename BasicJsonType>
+void from_json(const BasicJsonType& j, std::filesystem::path& p)
+{
+    if (JSON_HEDLEY_UNLIKELY(!j.is_string()))
+    {
+        JSON_THROW(type_error::create(302, "type must be string, but is " + std::string(j.type_name()), j));
+    }
+    p = *j.template get_ptr<const typename BasicJsonType::string_t*>();
+}
+#endif
+
 struct from_json_fn
 {
     template<typename BasicJsonType, typename T>
@@ -4609,6 +4625,10 @@ class tuple_element<N, ::nlohmann::detail::iteration_proxy_value<IteratorType >>
 
 // #include <nlohmann/detail/value_t.hpp>
 
+
+#ifdef JSON_HAS_CPP_17
+    #include <filesystem>
+#endif
 
 namespace nlohmann
 {
@@ -4981,6 +5001,14 @@ void to_json(BasicJsonType& j, const T& t)
 {
     to_json_tuple_impl(j, t, make_index_sequence<std::tuple_size<T>::value> {});
 }
+
+#ifdef JSON_HAS_CPP_17
+template<typename BasicJsonType>
+void to_json(BasicJsonType& j, const std::filesystem::path& p)
+{
+    j = p.string();
+}
+#endif
 
 struct to_json_fn
 {

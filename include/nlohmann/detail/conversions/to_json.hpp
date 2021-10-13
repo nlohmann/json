@@ -15,6 +15,10 @@
 #include <nlohmann/detail/meta/type_traits.hpp>
 #include <nlohmann/detail/value_t.hpp>
 
+#ifdef JSON_HAS_CPP_17
+    #include <filesystem>
+#endif
+
 namespace nlohmann
 {
 namespace detail
@@ -386,6 +390,14 @@ void to_json(BasicJsonType& j, const T& t)
 {
     to_json_tuple_impl(j, t, make_index_sequence<std::tuple_size<T>::value> {});
 }
+
+#ifdef JSON_HAS_CPP_17
+template<typename BasicJsonType>
+void to_json(BasicJsonType& j, const std::filesystem::path& p)
+{
+    j = p.string();
+}
+#endif
 
 struct to_json_fn
 {
