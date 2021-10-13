@@ -21125,28 +21125,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return result;
     }
 
-    /*!
-    @brief inserts element
-
-    Inserts element @a val before iterator @a pos.
-
-    @param[in] pos iterator before which the content will be inserted; may be
-    the end() iterator
-    @param[in] val element to insert
-    @return iterator pointing to the inserted @a val.
-
-    @throw type_error.309 if called on JSON values other than arrays;
-    example: `"cannot use insert() with string"`
-    @throw invalid_iterator.202 if @a pos is not an iterator of *this;
-    example: `"iterator does not fit current value"`
-
-    @complexity Constant plus linear in the distance between @a pos and end of
-    the container.
-
-    @liveexample{The example shows how `insert()` is used.,insert}
-
-    @since version 1.0.0
-    */
+    /// @brief inserts element into array
+    /// @sa https://json.nlohmann.me/api/basic_json/insert/
     iterator insert(const_iterator pos, const basic_json& val)
     {
         // insert only works for arrays
@@ -21165,39 +21145,15 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         JSON_THROW(type_error::create(309, "cannot use insert() with " + std::string(type_name()), *this));
     }
 
-    /*!
-    @brief inserts element
-    @copydoc insert(const_iterator, const basic_json&)
-    */
+    /// @brief inserts element into array
+    /// @sa https://json.nlohmann.me/api/basic_json/insert/
     iterator insert(const_iterator pos, basic_json&& val)
     {
         return insert(pos, val);
     }
 
-    /*!
-    @brief inserts elements
-
-    Inserts @a cnt copies of @a val before iterator @a pos.
-
-    @param[in] pos iterator before which the content will be inserted; may be
-    the end() iterator
-    @param[in] cnt number of copies of @a val to insert
-    @param[in] val element to insert
-    @return iterator pointing to the first element inserted, or @a pos if
-    `cnt==0`
-
-    @throw type_error.309 if called on JSON values other than arrays; example:
-    `"cannot use insert() with string"`
-    @throw invalid_iterator.202 if @a pos is not an iterator of *this;
-    example: `"iterator does not fit current value"`
-
-    @complexity Linear in @a cnt plus linear in the distance between @a pos
-    and end of the container.
-
-    @liveexample{The example shows how `insert()` is used.,insert__count}
-
-    @since version 1.0.0
-    */
+    /// @brief inserts copies of element into array
+    /// @sa https://json.nlohmann.me/api/basic_json/insert/
     iterator insert(const_iterator pos, size_type cnt, const basic_json& val)
     {
         // insert only works for arrays
@@ -21216,36 +21172,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         JSON_THROW(type_error::create(309, "cannot use insert() with " + std::string(type_name()), *this));
     }
 
-    /*!
-    @brief inserts elements
-
-    Inserts elements from range `[first, last)` before iterator @a pos.
-
-    @param[in] pos iterator before which the content will be inserted; may be
-    the end() iterator
-    @param[in] first begin of the range of elements to insert
-    @param[in] last end of the range of elements to insert
-
-    @throw type_error.309 if called on JSON values other than arrays; example:
-    `"cannot use insert() with string"`
-    @throw invalid_iterator.202 if @a pos is not an iterator of *this;
-    example: `"iterator does not fit current value"`
-    @throw invalid_iterator.210 if @a first and @a last do not belong to the
-    same JSON value; example: `"iterators do not fit"`
-    @throw invalid_iterator.211 if @a first or @a last are iterators into
-    container for which insert is called; example: `"passed iterators may not
-    belong to container"`
-
-    @return iterator pointing to the first element inserted, or @a pos if
-    `first==last`
-
-    @complexity Linear in `std::distance(first, last)` plus linear in the
-    distance between @a pos and end of the container.
-
-    @liveexample{The example shows how `insert()` is used.,insert__range}
-
-    @since version 1.0.0
-    */
+    /// @brief inserts range of elements into array
+    /// @sa https://json.nlohmann.me/api/basic_json/insert/
     iterator insert(const_iterator pos, const_iterator first, const_iterator last)
     {
         // insert only works for arrays
@@ -21275,30 +21203,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return insert_iterator(pos, first.m_it.array_iterator, last.m_it.array_iterator);
     }
 
-    /*!
-    @brief inserts elements
-
-    Inserts elements from initializer list @a ilist before iterator @a pos.
-
-    @param[in] pos iterator before which the content will be inserted; may be
-    the end() iterator
-    @param[in] ilist initializer list to insert the values from
-
-    @throw type_error.309 if called on JSON values other than arrays; example:
-    `"cannot use insert() with string"`
-    @throw invalid_iterator.202 if @a pos is not an iterator of *this;
-    example: `"iterator does not fit current value"`
-
-    @return iterator pointing to the first element inserted, or @a pos if
-    `ilist` is empty
-
-    @complexity Linear in `ilist.size()` plus linear in the distance between
-    @a pos and end of the container.
-
-    @liveexample{The example shows how `insert()` is used.,insert__ilist}
-
-    @since version 1.0.0
-    */
+    /// @brief inserts elements from initializer list into array
+    /// @sa https://json.nlohmann.me/api/basic_json/insert/
     iterator insert(const_iterator pos, initializer_list_t ilist)
     {
         // insert only works for arrays
@@ -21317,29 +21223,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return insert_iterator(pos, ilist.begin(), ilist.end());
     }
 
-    /*!
-    @brief inserts elements
-
-    Inserts elements from range `[first, last)`.
-
-    @param[in] first begin of the range of elements to insert
-    @param[in] last end of the range of elements to insert
-
-    @throw type_error.309 if called on JSON values other than objects; example:
-    `"cannot use insert() with string"`
-    @throw invalid_iterator.202 if iterator @a first or @a last does does not
-    point to an object; example: `"iterators first and last must point to
-    objects"`
-    @throw invalid_iterator.210 if @a first and @a last do not belong to the
-    same JSON value; example: `"iterators do not fit"`
-
-    @complexity Logarithmic: `O(N*log(size() + N))`, where `N` is the number
-    of elements to insert.
-
-    @liveexample{The example shows how `insert()` is used.,insert__range_object}
-
-    @since version 3.0.0
-    */
+    /// @brief inserts range of elements into object
+    /// @sa https://json.nlohmann.me/api/basic_json/insert/
     void insert(const_iterator first, const_iterator last)
     {
         // insert only works for objects
