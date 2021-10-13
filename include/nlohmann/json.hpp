@@ -2032,15 +2032,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return get<ValueType>();
     }
 
-    /*!
-    @return reference to the binary value
-
-    @throw type_error.302 if the value is not binary
-
-    @sa see @ref is_binary() to check if the value is binary
-
-    @since version 3.8.0
-    */
+    /// @brief get a binary value
+    /// @sa https://json.nlohmann.me/api/basic_json/get_binary/
     binary_t& get_binary()
     {
         if (!is_binary())
@@ -2051,7 +2044,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return *get_ptr<binary_t*>();
     }
 
-    /// @copydoc get_binary()
+    /// @brief get a binary value
+    /// @sa https://json.nlohmann.me/api/basic_json/get_binary/
     const binary_t& get_binary() const
     {
         if (!is_binary())
