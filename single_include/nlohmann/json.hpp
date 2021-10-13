@@ -20556,8 +20556,16 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     ValueType get_impl(detail::priority_tag<0> /*unused*/) const noexcept(noexcept(
                 JSONSerializer<ValueType>::from_json(std::declval<const basic_json_t&>(), std::declval<ValueType&>())))
     {
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Weffc++"
+#endif
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init,hicpp-member-init): see https://github.com/nlohmann/json/issues/3077
         ValueType ret;
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
+
         JSONSerializer<ValueType>::from_json(*this, ret);
         return ret;
     }

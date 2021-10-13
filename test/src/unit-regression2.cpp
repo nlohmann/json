@@ -727,10 +727,7 @@ TEST_CASE("regression tests 2")
         json j;
         j[0]["value"] = true;
         std::vector<FooBar> foo;
-        DOCTEST_GCC_SUPPRESS_WARNING_PUSH
-        DOCTEST_GCC_SUPPRESS_WARNING(-Weffc++)
         j.get_to(foo);
-        DOCTEST_GCC_SUPPRESS_WARNING_POP
     }
 }
 
