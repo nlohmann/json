@@ -17803,19 +17803,15 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @}
 
 
-    /*!
-    @brief returns the allocator associated with the container
-    @sa https://json.nlohmann.me/api/basic_json/get_allocator/
-    */
+    /// @brief returns the allocator associated with the container
+    /// @sa https://json.nlohmann.me/api/basic_json/get_allocator/
     static allocator_type get_allocator()
     {
         return allocator_type();
     }
 
-    /*!
-    @brief returns version information on the library
-    @sa https://json.nlohmann.me/api/basic_json/meta/
-    */
+    /// @brief returns version information on the library
+    /// @sa https://json.nlohmann.me/api/basic_json/meta/
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json meta()
     {
@@ -17882,6 +17878,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// the template arguments passed to class @ref basic_json.
     /// @{
 
+    /// @brief object key comparator type
+    /// @sa https://json.nlohmann.me/api/basic_json/object_comparator_t/
 #if defined(JSON_HAS_CPP_14)
     // Use transparent comparator if possible, combined with perfect forwarding
     // on find() and count() calls prevents unnecessary string construction.
@@ -17890,501 +17888,42 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     using object_comparator_t = std::less<StringType>;
 #endif
 
-    /*!
-    @brief a type for an object
-
-    [RFC 8259](https://tools.ietf.org/html/rfc8259) describes JSON objects as follows:
-    > An object is an unordered collection of zero or more name/value pairs,
-    > where a name is a string and a value is a string, number, boolean, null,
-    > object, or array.
-
-    To store objects in C++, a type is defined by the template parameters
-    described below.
-
-    @tparam ObjectType  the container to store objects (e.g., `std::map` or
-    `std::unordered_map`)
-    @tparam StringType the type of the keys or names (e.g., `std::string`).
-    The comparison function `std::less<StringType>` is used to order elements
-    inside the container.
-    @tparam AllocatorType the allocator to use for objects (e.g.,
-    `std::allocator`)
-
-    #### Default type
-
-    With the default values for @a ObjectType (`std::map`), @a StringType
-    (`std::string`), and @a AllocatorType (`std::allocator`), the default
-    value for @a object_t is:
-
-    @code {.cpp}
-    std::map<
-      std::string, // key_type
-      basic_json, // value_type
-      std::less<std::string>, // key_compare
-      std::allocator<std::pair<const std::string, basic_json>> // allocator_type
-    >
-    @endcode
-
-    #### Behavior
-
-    The choice of @a object_t influences the behavior of the JSON class. With
-    the default type, objects have the following behavior:
-
-    - When all names are unique, objects will be interoperable in the sense
-      that all software implementations receiving that object will agree on
-      the name-value mappings.
-    - When the names within an object are not unique, it is unspecified which
-      one of the values for a given key will be chosen. For instance,
-      `{"key": 2, "key": 1}` could be equal to either `{"key": 1}` or
-      `{"key": 2}`.
-    - Internally, name/value pairs are stored in lexicographical order of the
-      names. Objects will also be serialized (see @ref dump) in this order.
-      For instance, `{"b": 1, "a": 2}` and `{"a": 2, "b": 1}` will be stored
-      and serialized as `{"a": 2, "b": 1}`.
-    - When comparing objects, the order of the name/value pairs is irrelevant.
-      This makes objects interoperable in the sense that they will not be
-      affected by these differences. For instance, `{"b": 1, "a": 2}` and
-      `{"a": 2, "b": 1}` will be treated as equal.
-
-    #### Limits
-
-    [RFC 8259](https://tools.ietf.org/html/rfc8259) specifies:
-    > An implementation may set limits on the maximum depth of nesting.
-
-    In this class, the object's limit of nesting is not explicitly constrained.
-    However, a maximum depth of nesting may be introduced by the compiler or
-    runtime environment. A theoretical limit can be queried by calling the
-    @ref max_size function of a JSON object.
-
-    #### Storage
-
-    Objects are stored as pointers in a @ref basic_json type. That is, for any
-    access to object values, a pointer of type `object_t*` must be
-    dereferenced.
-
-    @sa see @ref array_t -- type for an array value
-
-    @since version 1.0.0
-
-    @note The order name/value pairs are added to the object is *not*
-    preserved by the library. Therefore, iterating an object may return
-    name/value pairs in a different order than they were originally stored. In
-    fact, keys will be traversed in alphabetical order as `std::map` with
-    `std::less` is used by default. Please note this behavior conforms to [RFC
-    8259](https://tools.ietf.org/html/rfc8259), because any order implements the
-    specified "unordered" nature of JSON objects.
-    */
+    /// @brief a type for an object
+    /// @sa https://json.nlohmann.me/api/basic_json/object_t/
     using object_t = ObjectType<StringType,
           basic_json,
           object_comparator_t,
           AllocatorType<std::pair<const StringType,
           basic_json>>>;
 
-    /*!
-    @brief a type for an array
-
-    [RFC 8259](https://tools.ietf.org/html/rfc8259) describes JSON arrays as follows:
-    > An array is an ordered sequence of zero or more values.
-
-    To store objects in C++, a type is defined by the template parameters
-    explained below.
-
-    @tparam ArrayType  container type to store arrays (e.g., `std::vector` or
-    `std::list`)
-    @tparam AllocatorType allocator to use for arrays (e.g., `std::allocator`)
-
-    #### Default type
-
-    With the default values for @a ArrayType (`std::vector`) and @a
-    AllocatorType (`std::allocator`), the default value for @a array_t is:
-
-    @code {.cpp}
-    std::vector<
-      basic_json, // value_type
-      std::allocator<basic_json> // allocator_type
-    >
-    @endcode
-
-    #### Limits
-
-    [RFC 8259](https://tools.ietf.org/html/rfc8259) specifies:
-    > An implementation may set limits on the maximum depth of nesting.
-
-    In this class, the array's limit of nesting is not explicitly constrained.
-    However, a maximum depth of nesting may be introduced by the compiler or
-    runtime environment. A theoretical limit can be queried by calling the
-    @ref max_size function of a JSON array.
-
-    #### Storage
-
-    Arrays are stored as pointers in a @ref basic_json type. That is, for any
-    access to array values, a pointer of type `array_t*` must be dereferenced.
-
-    @sa see @ref object_t -- type for an object value
-
-    @since version 1.0.0
-    */
+    /// @brief a type for an array
+    /// @sa https://json.nlohmann.me/api/basic_json/array_t/
     using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
 
-    /*!
-    @brief a type for a string
-
-    [RFC 8259](https://tools.ietf.org/html/rfc8259) describes JSON strings as follows:
-    > A string is a sequence of zero or more Unicode characters.
-
-    To store objects in C++, a type is defined by the template parameter
-    described below. Unicode values are split by the JSON class into
-    byte-sized characters during deserialization.
-
-    @tparam StringType  the container to store strings (e.g., `std::string`).
-    Note this container is used for keys/names in objects, see @ref object_t.
-
-    #### Default type
-
-    With the default values for @a StringType (`std::string`), the default
-    value for @a string_t is:
-
-    @code {.cpp}
-    std::string
-    @endcode
-
-    #### Encoding
-
-    Strings are stored in UTF-8 encoding. Therefore, functions like
-    `std::string::size()` or `std::string::length()` return the number of
-    bytes in the string rather than the number of characters or glyphs.
-
-    #### String comparison
-
-    [RFC 8259](https://tools.ietf.org/html/rfc8259) states:
-    > Software implementations are typically required to test names of object
-    > members for equality. Implementations that transform the textual
-    > representation into sequences of Unicode code units and then perform the
-    > comparison numerically, code unit by code unit, are interoperable in the
-    > sense that implementations will agree in all cases on equality or
-    > inequality of two strings. For example, implementations that compare
-    > strings with escaped characters unconverted may incorrectly find that
-    > `"a\\b"` and `"a\u005Cb"` are not equal.
-
-    This implementation is interoperable as it does compare strings code unit
-    by code unit.
-
-    #### Storage
-
-    String values are stored as pointers in a @ref basic_json type. That is,
-    for any access to string values, a pointer of type `string_t*` must be
-    dereferenced.
-
-    @since version 1.0.0
-    */
+    /// @brief a type for a string
+    /// @sa https://json.nlohmann.me/api/basic_json/string_t/
     using string_t = StringType;
 
-    /*!
-    @brief a type for a boolean
-
-    [RFC 8259](https://tools.ietf.org/html/rfc8259) implicitly describes a boolean as a
-    type which differentiates the two literals `true` and `false`.
-
-    To store objects in C++, a type is defined by the template parameter @a
-    BooleanType which chooses the type to use.
-
-    #### Default type
-
-    With the default values for @a BooleanType (`bool`), the default value for
-    @a boolean_t is:
-
-    @code {.cpp}
-    bool
-    @endcode
-
-    #### Storage
-
-    Boolean values are stored directly inside a @ref basic_json type.
-
-    @since version 1.0.0
-    */
+    /// @brief a type for a boolean
+    /// @sa https://json.nlohmann.me/api/basic_json/boolean_t/
     using boolean_t = BooleanType;
 
-    /*!
-    @brief a type for a number (integer)
-
-    [RFC 8259](https://tools.ietf.org/html/rfc8259) describes numbers as follows:
-    > The representation of numbers is similar to that used in most
-    > programming languages. A number is represented in base 10 using decimal
-    > digits. It contains an integer component that may be prefixed with an
-    > optional minus sign, which may be followed by a fraction part and/or an
-    > exponent part. Leading zeros are not allowed. (...) Numeric values that
-    > cannot be represented in the grammar below (such as Infinity and NaN)
-    > are not permitted.
-
-    This description includes both integer and floating-point numbers.
-    However, C++ allows more precise storage if it is known whether the number
-    is a signed integer, an unsigned integer or a floating-point number.
-    Therefore, three different types, @ref number_integer_t, @ref
-    number_unsigned_t and @ref number_float_t are used.
-
-    To store integer numbers in C++, a type is defined by the template
-    parameter @a NumberIntegerType which chooses the type to use.
-
-    #### Default type
-
-    With the default values for @a NumberIntegerType (`int64_t`), the default
-    value for @a number_integer_t is:
-
-    @code {.cpp}
-    int64_t
-    @endcode
-
-    #### Default behavior
-
-    - The restrictions about leading zeros is not enforced in C++. Instead,
-      leading zeros in integer literals lead to an interpretation as octal
-      number. Internally, the value will be stored as decimal number. For
-      instance, the C++ integer literal `010` will be serialized to `8`.
-      During deserialization, leading zeros yield an error.
-    - Not-a-number (NaN) values will be serialized to `null`.
-
-    #### Limits
-
-    [RFC 8259](https://tools.ietf.org/html/rfc8259) specifies:
-    > An implementation may set limits on the range and precision of numbers.
-
-    When the default type is used, the maximal integer number that can be
-    stored is `9223372036854775807` (INT64_MAX) and the minimal integer number
-    that can be stored is `-9223372036854775808` (INT64_MIN). Integer numbers
-    that are out of range will yield over/underflow when used in a
-    constructor. During deserialization, too large or small integer numbers
-    will be automatically be stored as @ref number_unsigned_t or @ref
-    number_float_t.
-
-    [RFC 8259](https://tools.ietf.org/html/rfc8259) further states:
-    > Note that when such software is used, numbers that are integers and are
-    > in the range \f$[-2^{53}+1, 2^{53}-1]\f$ are interoperable in the sense
-    > that implementations will agree exactly on their numeric values.
-
-    As this range is a subrange of the exactly supported range [INT64_MIN,
-    INT64_MAX], this class's integer type is interoperable.
-
-    #### Storage
-
-    Integer number values are stored directly inside a @ref basic_json type.
-
-    @sa see @ref number_float_t -- type for number values (floating-point)
-
-    @sa see @ref number_unsigned_t -- type for number values (unsigned integer)
-
-    @since version 1.0.0
-    */
+    /// @brief a type for a number (integer)
+    /// @sa https://json.nlohmann.me/api/basic_json/number_integer_t/
     using number_integer_t = NumberIntegerType;
 
-    /*!
-    @brief a type for a number (unsigned)
-
-    [RFC 8259](https://tools.ietf.org/html/rfc8259) describes numbers as follows:
-    > The representation of numbers is similar to that used in most
-    > programming languages. A number is represented in base 10 using decimal
-    > digits. It contains an integer component that may be prefixed with an
-    > optional minus sign, which may be followed by a fraction part and/or an
-    > exponent part. Leading zeros are not allowed. (...) Numeric values that
-    > cannot be represented in the grammar below (such as Infinity and NaN)
-    > are not permitted.
-
-    This description includes both integer and floating-point numbers.
-    However, C++ allows more precise storage if it is known whether the number
-    is a signed integer, an unsigned integer or a floating-point number.
-    Therefore, three different types, @ref number_integer_t, @ref
-    number_unsigned_t and @ref number_float_t are used.
-
-    To store unsigned integer numbers in C++, a type is defined by the
-    template parameter @a NumberUnsignedType which chooses the type to use.
-
-    #### Default type
-
-    With the default values for @a NumberUnsignedType (`uint64_t`), the
-    default value for @a number_unsigned_t is:
-
-    @code {.cpp}
-    uint64_t
-    @endcode
-
-    #### Default behavior
-
-    - The restrictions about leading zeros is not enforced in C++. Instead,
-      leading zeros in integer literals lead to an interpretation as octal
-      number. Internally, the value will be stored as decimal number. For
-      instance, the C++ integer literal `010` will be serialized to `8`.
-      During deserialization, leading zeros yield an error.
-    - Not-a-number (NaN) values will be serialized to `null`.
-
-    #### Limits
-
-    [RFC 8259](https://tools.ietf.org/html/rfc8259) specifies:
-    > An implementation may set limits on the range and precision of numbers.
-
-    When the default type is used, the maximal integer number that can be
-    stored is `18446744073709551615` (UINT64_MAX) and the minimal integer
-    number that can be stored is `0`. Integer numbers that are out of range
-    will yield over/underflow when used in a constructor. During
-    deserialization, too large or small integer numbers will be automatically
-    be stored as @ref number_integer_t or @ref number_float_t.
-
-    [RFC 8259](https://tools.ietf.org/html/rfc8259) further states:
-    > Note that when such software is used, numbers that are integers and are
-    > in the range \f$[-2^{53}+1, 2^{53}-1]\f$ are interoperable in the sense
-    > that implementations will agree exactly on their numeric values.
-
-    As this range is a subrange (when considered in conjunction with the
-    number_integer_t type) of the exactly supported range [0, UINT64_MAX],
-    this class's integer type is interoperable.
-
-    #### Storage
-
-    Integer number values are stored directly inside a @ref basic_json type.
-
-    @sa see @ref number_float_t -- type for number values (floating-point)
-    @sa see @ref number_integer_t -- type for number values (integer)
-
-    @since version 2.0.0
-    */
+    /// @brief a type for a number (unsigned)
+    /// @sa https://json.nlohmann.me/api/basic_json/number_unsigned_t/
     using number_unsigned_t = NumberUnsignedType;
 
-    /*!
-    @brief a type for a number (floating-point)
-
-    [RFC 8259](https://tools.ietf.org/html/rfc8259) describes numbers as follows:
-    > The representation of numbers is similar to that used in most
-    > programming languages. A number is represented in base 10 using decimal
-    > digits. It contains an integer component that may be prefixed with an
-    > optional minus sign, which may be followed by a fraction part and/or an
-    > exponent part. Leading zeros are not allowed. (...) Numeric values that
-    > cannot be represented in the grammar below (such as Infinity and NaN)
-    > are not permitted.
-
-    This description includes both integer and floating-point numbers.
-    However, C++ allows more precise storage if it is known whether the number
-    is a signed integer, an unsigned integer or a floating-point number.
-    Therefore, three different types, @ref number_integer_t, @ref
-    number_unsigned_t and @ref number_float_t are used.
-
-    To store floating-point numbers in C++, a type is defined by the template
-    parameter @a NumberFloatType which chooses the type to use.
-
-    #### Default type
-
-    With the default values for @a NumberFloatType (`double`), the default
-    value for @a number_float_t is:
-
-    @code {.cpp}
-    double
-    @endcode
-
-    #### Default behavior
-
-    - The restrictions about leading zeros is not enforced in C++. Instead,
-      leading zeros in floating-point literals will be ignored. Internally,
-      the value will be stored as decimal number. For instance, the C++
-      floating-point literal `01.2` will be serialized to `1.2`. During
-      deserialization, leading zeros yield an error.
-    - Not-a-number (NaN) values will be serialized to `null`.
-
-    #### Limits
-
-    [RFC 8259](https://tools.ietf.org/html/rfc8259) states:
-    > This specification allows implementations to set limits on the range and
-    > precision of numbers accepted. Since software that implements IEEE
-    > 754-2008 binary64 (double precision) numbers is generally available and
-    > widely used, good interoperability can be achieved by implementations
-    > that expect no more precision or range than these provide, in the sense
-    > that implementations will approximate JSON numbers within the expected
-    > precision.
-
-    This implementation does exactly follow this approach, as it uses double
-    precision floating-point numbers. Note values smaller than
-    `-1.79769313486232e+308` and values greater than `1.79769313486232e+308`
-    will be stored as NaN internally and be serialized to `null`.
-
-    #### Storage
-
-    Floating-point number values are stored directly inside a @ref basic_json
-    type.
-
-    @sa see @ref number_integer_t -- type for number values (integer)
-
-    @sa see @ref number_unsigned_t -- type for number values (unsigned integer)
-
-    @since version 1.0.0
-    */
+    /// @brief a type for a number (floating-point)
+    /// @sa https://json.nlohmann.me/api/basic_json/number_float_t/
     using number_float_t = NumberFloatType;
 
-    /*!
-    @brief a type for a packed binary type
-
-    This type is a type designed to carry binary data that appears in various
-    serialized formats, such as CBOR's Major Type 2, MessagePack's bin, and
-    BSON's generic binary subtype. This type is NOT a part of standard JSON and
-    exists solely for compatibility with these binary types. As such, it is
-    simply defined as an ordered sequence of zero or more byte values.
-
-    Additionally, as an implementation detail, the subtype of the binary data is
-    carried around as a `std::uint8_t`, which is compatible with both of the
-    binary data formats that use binary subtyping, (though the specific
-    numbering is incompatible with each other, and it is up to the user to
-    translate between them).
-
-    [CBOR's RFC 7049](https://tools.ietf.org/html/rfc7049) describes this type
-    as:
-    > Major type 2: a byte string. The string's length in bytes is represented
-    > following the rules for positive integers (major type 0).
-
-    [MessagePack's documentation on the bin type
-    family](https://github.com/msgpack/msgpack/blob/master/spec.md#bin-format-family)
-    describes this type as:
-    > Bin format family stores an byte array in 2, 3, or 5 bytes of extra bytes
-    > in addition to the size of the byte array.
-
-    [BSON's specifications](http://bsonspec.org/spec.html) describe several
-    binary types; however, this type is intended to represent the generic binary
-    type which has the description:
-    > Generic binary subtype - This is the most commonly used binary subtype and
-    > should be the 'default' for drivers and tools.
-
-    None of these impose any limitations on the internal representation other
-    than the basic unit of storage be some type of array whose parts are
-    decomposable into bytes.
-
-    The default representation of this binary format is a
-    `std::vector<std::uint8_t>`, which is a very common way to represent a byte
-    array in modern C++.
-
-    #### Default type
-
-    The default values for @a BinaryType is `std::vector<std::uint8_t>`
-
-    #### Storage
-
-    Binary Arrays are stored as pointers in a @ref basic_json type. That is,
-    for any access to array values, a pointer of the type `binary_t*` must be
-    dereferenced.
-
-    #### Notes on subtypes
-
-    - CBOR
-       - Binary values are represented as byte strings. Subtypes are serialized
-         as tagged values.
-    - MessagePack
-       - If a subtype is given and the binary array contains exactly 1, 2, 4, 8,
-         or 16 elements, the fixext family (fixext1, fixext2, fixext4, fixext8)
-         is used. For other sizes, the ext family (ext8, ext16, ext32) is used.
-         The subtype is then added as singed 8-bit integer.
-       - If no subtype is given, the bin family (bin8, bin16, bin32) is used.
-    - BSON
-       - If a subtype is given, it is used and added as unsigned 8-bit integer.
-       - If no subtype is given, the generic binary subtype 0x00 is used.
-
-    @sa see @ref binary -- create a binary array
-
-    @since version 3.8.0
-    */
+    /// @brief a type for a packed binary type
+    /// @sa https://json.nlohmann.me/api/basic_json/binary_t/
     using binary_t = nlohmann::byte_container_with_subtype<BinaryType>;
+
     /// @}
 
   private:
@@ -19024,34 +18563,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return res;
     }
 
-    /*!
-    @brief explicitly create a binary array (with subtype)
-
-    Creates a JSON binary array value from a given binary container. Binary
-    values are part of various binary formats, such as CBOR, MessagePack, and
-    BSON. This constructor is used to create a value for serialization to those
-    formats.
-
-    @note Note, this function exists because of the difficulty in correctly
-    specifying the correct template overload in the standard value ctor, as both
-    JSON arrays and JSON binary arrays are backed with some form of a
-    `std::vector`. Because JSON binary arrays are a non-standard extension it
-    was decided that it would be best to prevent automatic initialization of a
-    binary array type, for backwards compatibility and so it does not happen on
-    accident.
-
-    @param[in] init container containing bytes to use as binary type
-    @param[in] subtype subtype to use in MessagePack and BSON
-
-    @return JSON binary array value
-
-    @complexity Linear in the size of @a init.
-
-    @exceptionsafety Strong guarantee: if an exception is thrown, there are no
-    changes to any JSON value.
-
-    @since version 3.8.0
-    */
+    /// @brief explicitly create a binary array (with subtype)
+    /// @sa https://json.nlohmann.me/api/basic_json/binary/
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json binary(const typename binary_t::container_type& init, typename binary_t::subtype_type subtype)
     {
@@ -19061,7 +18574,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return res;
     }
 
-    /// @copydoc binary(const typename binary_t::container_type&)
+    /// @brief explicitly create a binary array
+    /// @sa https://json.nlohmann.me/api/basic_json/binary/
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json binary(typename binary_t::container_type&& init)
     {
@@ -19071,7 +18585,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return res;
     }
 
-    /// @copydoc binary(const typename binary_t::container_type&, typename binary_t::subtype_type)
+    /// @brief explicitly create a binary array (with subtype)
+    /// @sa https://json.nlohmann.me/api/basic_json/binary/
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json binary(typename binary_t::container_type&& init, typename binary_t::subtype_type subtype)
     {
