@@ -17,10 +17,10 @@ Value type                                         | return value
 boolean                                            | `"boolean"`
 string                                             | `"string"`
 number (integer, unsigned integer, floating-point) | `"number"`
-object                                             | `"object`
-array                                              | `"array`
-binary                                             | `"binary`
-discarded                                          | `"discarded`
+object                                             | `"object"`
+array                                              | `"array"`
+binary                                             | `"binary"`
+discarded                                          | `"discarded"`
 
 ## Exception safety
 

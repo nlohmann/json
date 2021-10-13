@@ -21248,25 +21248,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         m_value.object->insert(first.m_it.object_iterator, last.m_it.object_iterator);
     }
 
-    /*!
-    @brief updates a JSON object from another object, overwriting existing keys
-
-    Inserts all values from JSON object @a j and overwrites existing keys.
-
-    @param[in] j  JSON object to read values from
-
-    @throw type_error.312 if called on JSON values other than objects; example:
-    `"cannot use update() with string"`
-
-    @complexity O(N*log(size() + N)), where N is the number of elements to
-                insert.
-
-    @liveexample{The example shows how `update()` is used.,update}
-
-    @sa https://docs.python.org/3.6/library/stdtypes.html#dict.update
-
-    @since version 3.0.0
-    */
+    /// @brief updates a JSON object from another object, overwriting existing keys
+    /// @sa https://json.nlohmann.me/api/basic_json/update/
     void update(const_reference j)
     {
         // implicitly convert null value to an empty object
@@ -21295,32 +21278,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
     }
 
-    /*!
-    @brief updates a JSON object from another object, overwriting existing keys
-
-    Inserts all values from from range `[first, last)` and overwrites existing
-    keys.
-
-    @param[in] first begin of the range of elements to insert
-    @param[in] last end of the range of elements to insert
-
-    @throw type_error.312 if called on JSON values other than objects; example:
-    `"cannot use update() with string"`
-    @throw invalid_iterator.202 if iterator @a first or @a last does does not
-    point to an object; example: `"iterators first and last must point to
-    objects"`
-    @throw invalid_iterator.210 if @a first and @a last do not belong to the
-    same JSON value; example: `"iterators do not fit"`
-
-    @complexity O(N*log(size() + N)), where N is the number of elements to
-                insert.
-
-    @liveexample{The example shows how `update()` is used__range.,update}
-
-    @sa https://docs.python.org/3.6/library/stdtypes.html#dict.update
-
-    @since version 3.0.0
-    */
+    /// @brief updates a JSON object from another object, overwriting existing keys
+    /// @sa https://json.nlohmann.me/api/basic_json/update/
     void update(const_iterator first, const_iterator last)
     {
         // implicitly convert null value to an empty object
@@ -21943,57 +21902,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @name deserialization
     /// @{
 
-    /*!
-    @brief deserialize from a compatible input
-
-    @tparam InputType A compatible input, for instance
-    - an std::istream object
-    - a FILE pointer
-    - a C-style array of characters
-    - a pointer to a null-terminated string of single byte characters
-    - an object obj for which begin(obj) and end(obj) produces a valid pair of
-      iterators.
-
-    @param[in] i  input to read from
-    @param[in] cb  a parser callback function of type @ref parser_callback_t
-    which is used to control the deserialization by filtering unwanted values
-    (optional)
-    @param[in] allow_exceptions  whether to throw exceptions in case of a
-    parse error (optional, true by default)
-    @param[in] ignore_comments  whether comments should be ignored and treated
-    like whitespace (true) or yield a parse error (true); (optional, false by
-    default)
-
-    @return deserialized JSON value; in case of a parse error and
-            @a allow_exceptions set to `false`, the return value will be
-            value_t::discarded.
-
-    @throw parse_error.101 if a parse error occurs; example: `""unexpected end
-    of input; expected string literal""`
-    @throw parse_error.102 if to_unicode fails or surrogate error
-    @throw parse_error.103 if to_unicode fails
-
-    @complexity Linear in the length of the input. The parser is a predictive
-    LL(1) parser. The complexity can be higher if the parser callback function
-    @a cb or reading from the input @a i has a super-linear complexity.
-
-    @note A UTF-8 byte order mark is silently ignored.
-
-    @liveexample{The example below demonstrates the `parse()` function reading
-    from an array.,parse__array__parser_callback_t}
-
-    @liveexample{The example below demonstrates the `parse()` function with
-    and without callback function.,parse__string__parser_callback_t}
-
-    @liveexample{The example below demonstrates the `parse()` function with
-    and without callback function.,parse__istream__parser_callback_t}
-
-    @liveexample{The example below demonstrates the `parse()` function reading
-    from a contiguous container.,parse__contiguouscontainer__parser_callback_t}
-
-    @since version 2.0.3 (contiguous containers); version 3.9.0 allowed to
-    ignore comments.
-    */
+    /// @brief deserialize from a compatible input
+    /// @sa https://json.nlohmann.me/api/basic_json/parse/
     template<typename InputType>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json parse(InputType&& i,
@@ -22006,32 +21916,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return result;
     }
 
-    /*!
-    @brief deserialize from a pair of character iterators
-
-    The value_type of the iterator must be a integral type with size of 1, 2 or
-    4 bytes, which will be interpreted respectively as UTF-8, UTF-16 and UTF-32.
-
-    @param[in] first iterator to start of character range
-    @param[in] last  iterator to end of character range
-    @param[in] cb  a parser callback function of type @ref parser_callback_t
-    which is used to control the deserialization by filtering unwanted values
-    (optional)
-    @param[in] allow_exceptions  whether to throw exceptions in case of a
-    parse error (optional, true by default)
-    @param[in] ignore_comments  whether comments should be ignored and treated
-    like whitespace (true) or yield a parse error (true); (optional, false by
-    default)
-
-    @return deserialized JSON value; in case of a parse error and
-            @a allow_exceptions set to `false`, the return value will be
-            value_t::discarded.
-
-    @throw parse_error.101 if a parse error occurs; example: `""unexpected end
-    of input; expected string literal""`
-    @throw parse_error.102 if to_unicode fails or surrogate error
-    @throw parse_error.103 if to_unicode fails
-    */
+    /// @brief deserialize from a pair of character iterators
+    /// @sa https://json.nlohmann.me/api/basic_json/parse/
     template<typename IteratorType>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json parse(IteratorType first,
@@ -22057,36 +21943,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return result;
     }
 
-    /*!
-    @brief check if the input is valid JSON
-
-    Unlike the @ref parse(InputType&&, const parser_callback_t,const bool)
-    function, this function neither throws an exception in case of invalid JSON
-    input (i.e., a parse error) nor creates diagnostic information.
-
-    @tparam InputType A compatible input, for instance
-    - an std::istream object
-    - a FILE pointer
-    - a C-style array of characters
-    - a pointer to a null-terminated string of single byte characters
-    - an object obj for which begin(obj) and end(obj) produces a valid pair of
-      iterators.
-
-    @param[in] i input to read from
-    @param[in] ignore_comments  whether comments should be ignored and treated
-    like whitespace (true) or yield a parse error (true); (optional, false by
-    default)
-
-    @return Whether the input read from @a i is valid JSON.
-
-    @complexity Linear in the length of the input. The parser is a predictive
-    LL(1) parser.
-
-    @note A UTF-8 byte order mark is silently ignored.
-
-    @liveexample{The example below demonstrates the `accept()` function reading
-    from a string.,accept__string}
-    */
+    /// @brief check if the input is valid JSON
+    /// @sa https://json.nlohmann.me/api/basic_json/accept/
     template<typename InputType>
     static bool accept(InputType&& i,
                        const bool ignore_comments = false)
@@ -22094,6 +21952,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return parser(detail::input_adapter(std::forward<InputType>(i)), nullptr, false, ignore_comments).accept(true);
     }
 
+    /// @brief check if the input is valid JSON
+    /// @sa https://json.nlohmann.me/api/basic_json/accept/
     template<typename IteratorType>
     static bool accept(IteratorType first, IteratorType last,
                        const bool ignore_comments = false)
@@ -22109,46 +21969,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return parser(i.get(), nullptr, false, ignore_comments).accept(true);
     }
 
-    /*!
-    @brief generate SAX events
-
-    The SAX event lister must follow the interface of @ref json_sax.
-
-    This function reads from a compatible input. Examples are:
-    - an std::istream object
-    - a FILE pointer
-    - a C-style array of characters
-    - a pointer to a null-terminated string of single byte characters
-    - an object obj for which begin(obj) and end(obj) produces a valid pair of
-      iterators.
-
-    @param[in] i  input to read from
-    @param[in,out] sax  SAX event listener
-    @param[in] format  the format to parse (JSON, CBOR, MessagePack, or UBJSON)
-    @param[in] strict  whether the input has to be consumed completely
-    @param[in] ignore_comments  whether comments should be ignored and treated
-    like whitespace (true) or yield a parse error (true); (optional, false by
-    default); only applies to the JSON file format.
-
-    @return return value of the last processed SAX event
-
-    @throw parse_error.101 if a parse error occurs; example: `""unexpected end
-    of input; expected string literal""`
-    @throw parse_error.102 if to_unicode fails or surrogate error
-    @throw parse_error.103 if to_unicode fails
-
-    @complexity Linear in the length of the input. The parser is a predictive
-    LL(1) parser. The complexity can be higher if the SAX consumer @a sax has
-    a super-linear complexity.
-
-    @note A UTF-8 byte order mark is silently ignored.
-
-    @liveexample{The example below demonstrates the `sax_parse()` function
-    reading from string and processing the events with a user-defined SAX
-    event consumer.,sax_parse}
-
-    @since version 3.2.0
-    */
+    /// @brief generate SAX events
+    /// @sa https://json.nlohmann.me/api/basic_json/sax_parse/
     template <typename InputType, typename SAX>
     JSON_HEDLEY_NON_NULL(2)
     static bool sax_parse(InputType&& i, SAX* sax,
@@ -22162,6 +21984,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia)).sax_parse(format, sax, strict);
     }
 
+    /// @brief generate SAX events
+    /// @sa https://json.nlohmann.me/api/basic_json/sax_parse/
     template<class IteratorType, class SAX>
     JSON_HEDLEY_NON_NULL(3)
     static bool sax_parse(IteratorType first, IteratorType last, SAX* sax,
@@ -22242,63 +22066,32 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     // convenience functions //
     ///////////////////////////
 
-    /*!
-    @brief return the type as string
-
-    Returns the type name as string to be used in error messages - usually to
-    indicate that a function was called on a wrong JSON type.
-
-    @return a string representation of a the @a m_type member:
-            Value type  | return value
-            ----------- | -------------
-            null        | `"null"`
-            boolean     | `"boolean"`
-            string      | `"string"`
-            number      | `"number"` (for all number types)
-            object      | `"object"`
-            array       | `"array"`
-            binary      | `"binary"`
-            discarded   | `"discarded"`
-
-    @exceptionsafety No-throw guarantee: this function never throws exceptions.
-
-    @complexity Constant.
-
-    @liveexample{The following code exemplifies `type_name()` for all JSON
-    types.,type_name}
-
-    @sa see @ref type() -- return the type of the JSON value
-    @sa see @ref operator value_t() -- return the type of the JSON value (implicit)
-
-    @since version 1.0.0, public since 2.1.0, `const char*` and `noexcept`
-    since 3.0.0
-    */
+    /// @brief return the type as string
+    /// @sa https://json.nlohmann.me/api/basic_json/type_name/
     JSON_HEDLEY_RETURNS_NON_NULL
     const char* type_name() const noexcept
     {
+        switch (m_type)
         {
-            switch (m_type)
-            {
-                case value_t::null:
-                    return "null";
-                case value_t::object:
-                    return "object";
-                case value_t::array:
-                    return "array";
-                case value_t::string:
-                    return "string";
-                case value_t::boolean:
-                    return "boolean";
-                case value_t::binary:
-                    return "binary";
-                case value_t::discarded:
-                    return "discarded";
-                case value_t::number_integer:
-                case value_t::number_unsigned:
-                case value_t::number_float:
-                default:
-                    return "number";
-            }
+            case value_t::null:
+                return "null";
+            case value_t::object:
+                return "object";
+            case value_t::array:
+                return "array";
+            case value_t::string:
+                return "string";
+            case value_t::boolean:
+                return "boolean";
+            case value_t::binary:
+                return "binary";
+            case value_t::discarded:
+                return "discarded";
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            default:
+                return "number";
         }
     }
 
