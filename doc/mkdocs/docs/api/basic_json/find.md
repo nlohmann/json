@@ -54,6 +54,10 @@ This method always returns `end()` when executed on a JSON type that is not an o
     --8<-- "examples/find__key_type.output"
     ```
 
+## See also
+
+- [contains](contains.md) checks whether a key exists
+
 ## Version history
 
 - Added in version 1.0.0.

@@ -86,7 +86,8 @@ When iterating over an array, `key()` will return the index of the element as st
 
 ## Version history
 
-- Added in version 3.0.0.
+- Added `iterator_wrapper` in version 3.0.0.
+- Added `items` and deprecated `iterator_wrapper` in version 3.1.0.
 - Added structured binding support in version 3.5.0.
 
 !!! note

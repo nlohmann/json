@@ -3054,30 +3054,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @name lookup
     /// @{
 
-    /*!
-    @brief find an element in a JSON object
-
-    Finds an element in a JSON object with key equivalent to @a key. If the
-    element is not found or the JSON value is not an object, end() is
-    returned.
-
-    @note This method always returns @ref end() when executed on a JSON type
-          that is not an object.
-
-    @param[in] key key value of the element to search for.
-
-    @return Iterator to an element with key equivalent to @a key. If no such
-    element is found or the JSON value is not an object, past-the-end (see
-    @ref end()) iterator is returned.
-
-    @complexity Logarithmic in the size of the JSON object.
-
-    @liveexample{The example shows how `find()` is used.,find__key_type}
-
-    @sa see @ref contains(KeyT&&) const -- checks whether a key exists
-
-    @since version 1.0.0
-    */
+    /// @brief find an element in a JSON object
+    /// @sa https://json.nlohmann.me/api/basic_json/find/
     template<typename KeyT>
     iterator find(KeyT&& key)
     {
@@ -3091,10 +3069,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return result;
     }
 
-    /*!
-    @brief find an element in a JSON object
-    @copydoc find(KeyT&&)
-    */
+    /// @brief find an element in a JSON object
+    /// @sa https://json.nlohmann.me/api/basic_json/find/
     template<typename KeyT>
     const_iterator find(KeyT&& key) const
     {
@@ -3143,30 +3119,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @name iterators
     /// @{
 
-    /*!
-    @brief returns an iterator to the first element
-
-    Returns an iterator to the first element.
-
-    @image html range-begin-end.svg "Illustration from cppreference.com"
-
-    @return iterator to the first element
-
-    @complexity Constant.
-
-    @requirement This function helps `basic_json` satisfying the
-    [Container](https://en.cppreference.com/w/cpp/named_req/Container)
-    requirements:
-    - The complexity is constant.
-
-    @liveexample{The following code shows an example for `begin()`.,begin}
-
-    @sa see @ref cbegin() -- returns a const iterator to the beginning
-    @sa see @ref end() -- returns an iterator to the end
-    @sa see @ref cend() -- returns a const iterator to the end
-
-    @since version 1.0.0
-    */
+    /// @brief returns an iterator to the first element
+    /// @sa https://json.nlohmann.me/api/basic_json/begin/
     iterator begin() noexcept
     {
         iterator result(this);
@@ -3174,39 +3128,15 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return result;
     }
 
-    /*!
-    @copydoc basic_json::cbegin()
-    */
+    /// @brief returns an iterator to the first element
+    /// @sa https://json.nlohmann.me/api/basic_json/begin/
     const_iterator begin() const noexcept
     {
         return cbegin();
     }
 
-    /*!
-    @brief returns a const iterator to the first element
-
-    Returns a const iterator to the first element.
-
-    @image html range-begin-end.svg "Illustration from cppreference.com"
-
-    @return const iterator to the first element
-
-    @complexity Constant.
-
-    @requirement This function helps `basic_json` satisfying the
-    [Container](https://en.cppreference.com/w/cpp/named_req/Container)
-    requirements:
-    - The complexity is constant.
-    - Has the semantics of `const_cast<const basic_json&>(*this).begin()`.
-
-    @liveexample{The following code shows an example for `cbegin()`.,cbegin}
-
-    @sa see @ref begin() -- returns an iterator to the beginning
-    @sa see @ref end() -- returns an iterator to the end
-    @sa see @ref cend() -- returns a const iterator to the end
-
-    @since version 1.0.0
-    */
+    /// @brief returns a const iterator to the first element
+    /// @sa https://json.nlohmann.me/api/basic_json/cbegin/
     const_iterator cbegin() const noexcept
     {
         const_iterator result(this);
@@ -3214,30 +3144,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return result;
     }
 
-    /*!
-    @brief returns an iterator to one past the last element
-
-    Returns an iterator to one past the last element.
-
-    @image html range-begin-end.svg "Illustration from cppreference.com"
-
-    @return iterator one past the last element
-
-    @complexity Constant.
-
-    @requirement This function helps `basic_json` satisfying the
-    [Container](https://en.cppreference.com/w/cpp/named_req/Container)
-    requirements:
-    - The complexity is constant.
-
-    @liveexample{The following code shows an example for `end()`.,end}
-
-    @sa see @ref cend() -- returns a const iterator to the end
-    @sa see @ref begin() -- returns an iterator to the beginning
-    @sa see @ref cbegin() -- returns a const iterator to the beginning
-
-    @since version 1.0.0
-    */
+    /// @brief returns an iterator to one past the last element
+    /// @sa https://json.nlohmann.me/api/basic_json/end/
     iterator end() noexcept
     {
         iterator result(this);
@@ -3245,39 +3153,15 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return result;
     }
 
-    /*!
-    @copydoc basic_json::cend()
-    */
+    /// @brief returns an iterator to one past the last element
+    /// @sa https://json.nlohmann.me/api/basic_json/end/
     const_iterator end() const noexcept
     {
         return cend();
     }
 
-    /*!
-    @brief returns a const iterator to one past the last element
-
-    Returns a const iterator to one past the last element.
-
-    @image html range-begin-end.svg "Illustration from cppreference.com"
-
-    @return const iterator one past the last element
-
-    @complexity Constant.
-
-    @requirement This function helps `basic_json` satisfying the
-    [Container](https://en.cppreference.com/w/cpp/named_req/Container)
-    requirements:
-    - The complexity is constant.
-    - Has the semantics of `const_cast<const basic_json&>(*this).end()`.
-
-    @liveexample{The following code shows an example for `cend()`.,cend}
-
-    @sa see @ref end() -- returns an iterator to the end
-    @sa see @ref begin() -- returns an iterator to the beginning
-    @sa see @ref cbegin() -- returns a const iterator to the beginning
-
-    @since version 1.0.0
-    */
+    /// @brief returns an iterator to one past the last element
+    /// @sa https://json.nlohmann.me/api/basic_json/cend/
     const_iterator cend() const noexcept
     {
         const_iterator result(this);
@@ -3285,132 +3169,43 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return result;
     }
 
-    /*!
-    @brief returns an iterator to the reverse-beginning
-
-    Returns an iterator to the reverse-beginning; that is, the last element.
-
-    @image html range-rbegin-rend.svg "Illustration from cppreference.com"
-
-    @complexity Constant.
-
-    @requirement This function helps `basic_json` satisfying the
-    [ReversibleContainer](https://en.cppreference.com/w/cpp/named_req/ReversibleContainer)
-    requirements:
-    - The complexity is constant.
-    - Has the semantics of `reverse_iterator(end())`.
-
-    @liveexample{The following code shows an example for `rbegin()`.,rbegin}
-
-    @sa see @ref crbegin() -- returns a const reverse iterator to the beginning
-    @sa see @ref rend() -- returns a reverse iterator to the end
-    @sa see @ref crend() -- returns a const reverse iterator to the end
-
-    @since version 1.0.0
-    */
+    /// @brief returns an iterator to the reverse-beginning
+    /// @sa https://json.nlohmann.me/api/basic_json/rbegin/
     reverse_iterator rbegin() noexcept
     {
         return reverse_iterator(end());
     }
 
-    /*!
-    @copydoc basic_json::crbegin()
-    */
+    /// @brief returns an iterator to the reverse-beginning
+    /// @sa https://json.nlohmann.me/api/basic_json/rbegin/
     const_reverse_iterator rbegin() const noexcept
     {
         return crbegin();
     }
 
-    /*!
-    @brief returns an iterator to the reverse-end
-
-    Returns an iterator to the reverse-end; that is, one before the first
-    element.
-
-    @image html range-rbegin-rend.svg "Illustration from cppreference.com"
-
-    @complexity Constant.
-
-    @requirement This function helps `basic_json` satisfying the
-    [ReversibleContainer](https://en.cppreference.com/w/cpp/named_req/ReversibleContainer)
-    requirements:
-    - The complexity is constant.
-    - Has the semantics of `reverse_iterator(begin())`.
-
-    @liveexample{The following code shows an example for `rend()`.,rend}
-
-    @sa see @ref crend() -- returns a const reverse iterator to the end
-    @sa see @ref rbegin() -- returns a reverse iterator to the beginning
-    @sa see @ref crbegin() -- returns a const reverse iterator to the beginning
-
-    @since version 1.0.0
-    */
+    /// @brief returns an iterator to the reverse-end
+    /// @sa https://json.nlohmann.me/api/basic_json/rend/
     reverse_iterator rend() noexcept
     {
         return reverse_iterator(begin());
     }
 
-    /*!
-    @copydoc basic_json::crend()
-    */
+    /// @brief returns an iterator to the reverse-end
+    /// @sa https://json.nlohmann.me/api/basic_json/rend/
     const_reverse_iterator rend() const noexcept
     {
         return crend();
     }
 
-    /*!
-    @brief returns a const reverse iterator to the last element
-
-    Returns a const iterator to the reverse-beginning; that is, the last
-    element.
-
-    @image html range-rbegin-rend.svg "Illustration from cppreference.com"
-
-    @complexity Constant.
-
-    @requirement This function helps `basic_json` satisfying the
-    [ReversibleContainer](https://en.cppreference.com/w/cpp/named_req/ReversibleContainer)
-    requirements:
-    - The complexity is constant.
-    - Has the semantics of `const_cast<const basic_json&>(*this).rbegin()`.
-
-    @liveexample{The following code shows an example for `crbegin()`.,crbegin}
-
-    @sa see @ref rbegin() -- returns a reverse iterator to the beginning
-    @sa see @ref rend() -- returns a reverse iterator to the end
-    @sa see @ref crend() -- returns a const reverse iterator to the end
-
-    @since version 1.0.0
-    */
+    /// @brief returns a const reverse iterator to the last element
+    /// @sa https://json.nlohmann.me/api/basic_json/crbegin/
     const_reverse_iterator crbegin() const noexcept
     {
         return const_reverse_iterator(cend());
     }
 
-    /*!
-    @brief returns a const reverse iterator to one before the first
-
-    Returns a const reverse iterator to the reverse-end; that is, one before
-    the first element.
-
-    @image html range-rbegin-rend.svg "Illustration from cppreference.com"
-
-    @complexity Constant.
-
-    @requirement This function helps `basic_json` satisfying the
-    [ReversibleContainer](https://en.cppreference.com/w/cpp/named_req/ReversibleContainer)
-    requirements:
-    - The complexity is constant.
-    - Has the semantics of `const_cast<const basic_json&>(*this).rend()`.
-
-    @liveexample{The following code shows an example for `crend()`.,crend}
-
-    @sa see @ref rend() -- returns a reverse iterator to the end
-    @sa see @ref rbegin() -- returns a reverse iterator to the beginning
-    @sa see @ref crbegin() -- returns a const reverse iterator to the beginning
-
-    @since version 1.0.0
-    */
+    /// @brief returns a const reverse iterator to one before the first
+    /// @sa https://json.nlohmann.me/api/basic_json/crend/
     const_reverse_iterator crend() const noexcept
     {
         return const_reverse_iterator(cbegin());
@@ -3419,59 +3214,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
   public:
     /*!
     @brief wrapper to access iterator member functions in range-based for
-
-    This function allows to access @ref iterator::key() and @ref
-    iterator::value() during range-based for loops. In these loops, a
-    reference to the JSON values is returned, so there is no access to the
-    underlying iterator.
-
-    For loop without iterator_wrapper:
-
-    @code{cpp}
-    for (auto it = j_object.begin(); it != j_object.end(); ++it)
-    {
-        std::cout << "key: " << it.key() << ", value:" << it.value() << '\n';
-    }
-    @endcode
-
-    Range-based for loop without iterator proxy:
-
-    @code{cpp}
-    for (auto it : j_object)
-    {
-        // "it" is of type json::reference and has no key() member
-        std::cout << "value: " << it << '\n';
-    }
-    @endcode
-
-    Range-based for loop with iterator proxy:
-
-    @code{cpp}
-    for (auto it : json::iterator_wrapper(j_object))
-    {
-        std::cout << "key: " << it.key() << ", value:" << it.value() << '\n';
-    }
-    @endcode
-
-    @note When iterating over an array, `key()` will return the index of the
-          element as string (see example).
-
-    @param[in] ref  reference to a JSON value
-    @return iteration proxy object wrapping @a ref with an interface to use in
-            range-based for loops
-
-    @liveexample{The following code shows how the wrapper is used,iterator_wrapper}
-
-    @exceptionsafety Strong guarantee: if an exception is thrown, there are no
-    changes in the JSON value.
-
-    @complexity Constant.
-
-    @note The name of this function is not yet final and may change in the
-    future.
-
-    @deprecated This stream operator is deprecated and will be removed in
-                future 4.0.0 of the library. Please use @ref items() instead;
+    @sa https://json.nlohmann.me/api/basic_json/items/
+    @deprecated This function is deprecated since 3.1.0 and will be removed in
+                version 4.0.0 of the library. Please use @ref items() instead;
                 that is, replace `json::iterator_wrapper(j)` with `j.items()`.
     */
     JSON_HEDLEY_DEPRECATED_FOR(3.1.0, items())
@@ -3489,82 +3234,15 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return ref.items();
     }
 
-    /*!
-    @brief helper to access iterator member functions in range-based for
-
-    This function allows to access @ref iterator::key() and @ref
-    iterator::value() during range-based for loops. In these loops, a
-    reference to the JSON values is returned, so there is no access to the
-    underlying iterator.
-
-    For loop without `items()` function:
-
-    @code{cpp}
-    for (auto it = j_object.begin(); it != j_object.end(); ++it)
-    {
-        std::cout << "key: " << it.key() << ", value:" << it.value() << '\n';
-    }
-    @endcode
-
-    Range-based for loop without `items()` function:
-
-    @code{cpp}
-    for (auto it : j_object)
-    {
-        // "it" is of type json::reference and has no key() member
-        std::cout << "value: " << it << '\n';
-    }
-    @endcode
-
-    Range-based for loop with `items()` function:
-
-    @code{cpp}
-    for (auto& el : j_object.items())
-    {
-        std::cout << "key: " << el.key() << ", value:" << el.value() << '\n';
-    }
-    @endcode
-
-    The `items()` function also allows to use
-    [structured bindings](https://en.cppreference.com/w/cpp/language/structured_binding)
-    (C++17):
-
-    @code{cpp}
-    for (auto& [key, val] : j_object.items())
-    {
-        std::cout << "key: " << key << ", value:" << val << '\n';
-    }
-    @endcode
-
-    @note When iterating over an array, `key()` will return the index of the
-          element as string (see example). For primitive types (e.g., numbers),
-          `key()` returns an empty string.
-
-    @warning Using `items()` on temporary objects is dangerous. Make sure the
-             object's lifetime exeeds the iteration. See
-             <https://github.com/nlohmann/json/issues/2040> for more
-             information.
-
-    @return iteration proxy object wrapping @a ref with an interface to use in
-            range-based for loops
-
-    @liveexample{The following code shows how the function is used.,items}
-
-    @exceptionsafety Strong guarantee: if an exception is thrown, there are no
-    changes in the JSON value.
-
-    @complexity Constant.
-
-    @since version 3.1.0, structured bindings support since 3.5.0.
-    */
+    /// @brief helper to access iterator member functions in range-based for
+    /// @sa https://json.nlohmann.me/api/basic_json/items/
     iteration_proxy<iterator> items() noexcept
     {
         return iteration_proxy<iterator>(*this);
     }
 
-    /*!
-    @copydoc items()
-    */
+    /// @brief helper to access iterator member functions in range-based for
+    /// @sa https://json.nlohmann.me/api/basic_json/items/
     iteration_proxy<const_iterator> items() const noexcept
     {
         return iteration_proxy<const_iterator>(*this);
