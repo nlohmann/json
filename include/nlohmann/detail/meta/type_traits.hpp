@@ -309,43 +309,20 @@ struct is_constructible_object_type
     : is_constructible_object_type_impl<BasicJsonType,
       ConstructibleObjectType> {};
 
-template<typename BasicJsonType, typename CompatibleStringType,
-         typename = void>
-struct is_compatible_string_type_impl : std::false_type {};
-
 template<typename BasicJsonType, typename CompatibleStringType>
-struct is_compatible_string_type_impl <
-    BasicJsonType, CompatibleStringType,
-    enable_if_t<is_detected_convertible<typename BasicJsonType::string_t::value_type,
-    range_value_t,
-    CompatibleStringType>::value >>
+struct is_compatible_string_type
 {
     static constexpr auto value =
         is_constructible<typename BasicJsonType::string_t, CompatibleStringType>::value;
 };
 
 template<typename BasicJsonType, typename ConstructibleStringType>
-struct is_compatible_string_type
-    : is_compatible_string_type_impl<BasicJsonType, ConstructibleStringType> {};
-
-template<typename BasicJsonType, typename ConstructibleStringType,
-         typename = void>
-struct is_constructible_string_type_impl : std::false_type {};
-
-template<typename BasicJsonType, typename ConstructibleStringType>
-struct is_constructible_string_type_impl <
-    BasicJsonType, ConstructibleStringType,
-    enable_if_t<is_detected_exact<typename BasicJsonType::string_t::value_type,
-    value_type_t, ConstructibleStringType>::value >>
+struct is_constructible_string_type
 {
     static constexpr auto value =
         is_constructible<ConstructibleStringType,
         typename BasicJsonType::string_t>::value;
 };
-
-template<typename BasicJsonType, typename ConstructibleStringType>
-struct is_constructible_string_type
-    : is_constructible_string_type_impl<BasicJsonType, ConstructibleStringType> {};
 
 template<typename BasicJsonType, typename CompatibleArrayType, typename = void>
 struct is_compatible_array_type_impl : std::false_type {};
@@ -355,7 +332,10 @@ struct is_compatible_array_type_impl <
     BasicJsonType, CompatibleArrayType,
     enable_if_t <
     is_detected<iterator_t, CompatibleArrayType>::value&&
-    is_iterator_traits<iterator_traits<detected_t<iterator_t, CompatibleArrayType>>>::value >>
+    is_iterator_traits<iterator_traits<detected_t<iterator_t, CompatibleArrayType>>>::value&&
+// special case for types like std::filesystem::path whose iterator's value_type are themselves
+// c.f. https://github.com/nlohmann/json/pull/3073
+    !std::is_same<CompatibleArrayType, detected_t<range_value_t, CompatibleArrayType>>::value >>
 {
     static constexpr bool value =
         is_constructible<BasicJsonType,
@@ -388,8 +368,11 @@ struct is_constructible_array_type_impl <
 is_detected<iterator_t, ConstructibleArrayType>::value&&
 is_iterator_traits<iterator_traits<detected_t<iterator_t, ConstructibleArrayType>>>::value&&
 is_detected<range_value_t, ConstructibleArrayType>::value&&
-is_complete_type <
-detected_t<range_value_t, ConstructibleArrayType >>::value >>
+// special case for types like std::filesystem::path whose iterator's value_type are themselves
+// c.f. https://github.com/nlohmann/json/pull/3073
+!std::is_same<ConstructibleArrayType, detected_t<range_value_t, ConstructibleArrayType>>::value&&
+        is_complete_type <
+        detected_t<range_value_t, ConstructibleArrayType >>::value >>
 {
     using value_type = range_value_t<ConstructibleArrayType>;
 
