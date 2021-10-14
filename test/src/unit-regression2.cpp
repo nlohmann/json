@@ -207,7 +207,7 @@ class Foo
 class FooBar
 {
   public:
-    Foo foo;
+    Foo foo{};
 };
 
 inline void from_json(const nlohmann::json& j, FooBar& fb)
