@@ -201,6 +201,32 @@ template<class T>
 class my_allocator : public std::allocator<T>
 {};
 
+/////////////////////////////////////////////////////////////////////
+// for #3077
+/////////////////////////////////////////////////////////////////////
+
+class FooAlloc
+{};
+
+class Foo
+{
+  public:
+    explicit Foo(const FooAlloc& /* unused */ = FooAlloc()) {}
+
+    bool value = false;
+};
+
+class FooBar
+{
+  public:
+    Foo foo{};
+};
+
+inline void from_json(const nlohmann::json& j, FooBar& fb)
+{
+    j.at("value").get_to(fb.foo.value);
+}
+
 TEST_CASE("regression tests 2")
 {
     SECTION("issue #1001 - Fix memory leak during parser callback")
@@ -712,6 +738,14 @@ TEST_CASE("regression tests 2")
         CHECK(j_path == text_path);
     }
 #endif
+
+    SECTION("issue #3077 - explicit constructor with default does not compile")
+    {
+        json j;
+        j[0]["value"] = true;
+        std::vector<FooBar> foo;
+        j.get_to(foo);
+    }
 }
 
 DOCTEST_CLANG_SUPPRESS_WARNING_POP
