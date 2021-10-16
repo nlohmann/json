@@ -18,8 +18,8 @@ reference operator[](const json_pointer& ptr);
 const_reference operator[](const json_pointer& ptr) const;
 ```
 
-1. Returns a reference to the element at specified location `idx`.
-2. Returns a reference to the element at with specified key `key`.
+1. Returns a reference to the array element at specified location `idx`.
+2. Returns a reference to the object element at with specified key `key`.
 3. Returns a reference to the element at with specified JSON pointer `ptr`.
 
 ## Template parameters
@@ -99,7 +99,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
 
 ## Example
 
-??? example
+??? example "Example (1): access specified array element"
 
     The example below shows how array elements can be read and written using `[]` operator. Note the addition of
     `#!json null` values.
@@ -114,7 +114,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
     --8<-- "examples/operatorarray__size_type.output"
     ```
 
-??? example
+??? example "Example (1): access specified array element"
 
     The example below shows how array elements can be read using the `[]` operator.
 
@@ -128,7 +128,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
     --8<-- "examples/operatorarray__size_type_const.output"
     ```
 
-??? example
+??? example "Example (2): access specified object element"
 
     The example below shows how object elements can be read and written using the `[]` operator.
     
@@ -142,7 +142,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
     --8<-- "examples/operatorarray__key_type.output"
     ```
 
-??? example
+??? example "Example (2): access specified object element"
 
     The example below shows how object elements can be read using the `[]` operator.
     
@@ -156,7 +156,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
     --8<-- "examples/operatorarray__key_type_const.output"
     ```
 
-??? example
+??? example "Example (3): access specified element via JSON Pointer"
 
     The example below shows how values can be read and written using JSON Pointers.
     
@@ -170,7 +170,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
     --8<-- "examples/operatorjson_pointer.output"
     ```
 
-??? example
+??? example "Example (3): access specified element via JSON Pointer"
 
     The example below shows how values can be read using JSON Pointers.
     

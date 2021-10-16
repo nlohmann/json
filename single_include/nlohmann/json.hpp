@@ -19568,32 +19568,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// Access to the JSON value.
     /// @{
 
-    /*!
-    @brief access specified array element with bounds checking
-
-    Returns a reference to the element at specified location @a idx, with
-    bounds checking.
-
-    @param[in] idx  index of the element to access
-
-    @return reference to the element at index @a idx
-
-    @throw type_error.304 if the JSON value is not an array; in this case,
-    calling `at` with an index makes no sense. See example below.
-    @throw out_of_range.401 if the index @a idx is out of range of the array;
-    that is, `idx >= size()`. See example below.
-
-    @exceptionsafety Strong guarantee: if an exception is thrown, there are no
-    changes in the JSON value.
-
-    @complexity Constant.
-
-    @since version 1.0.0
-
-    @liveexample{The example below shows how array elements can be read and
-    written using `at()`. It also demonstrates the different exceptions that
-    can be thrown.,at__size_type}
-    */
+    /// @brief access specified array element with bounds checking
+    /// @sa https://json.nlohmann.me/api/basic_json/at/
     reference at(size_type idx)
     {
         // at only works for arrays
@@ -19615,32 +19591,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
     }
 
-    /*!
-    @brief access specified array element with bounds checking
-
-    Returns a const reference to the element at specified location @a idx,
-    with bounds checking.
-
-    @param[in] idx  index of the element to access
-
-    @return const reference to the element at index @a idx
-
-    @throw type_error.304 if the JSON value is not an array; in this case,
-    calling `at` with an index makes no sense. See example below.
-    @throw out_of_range.401 if the index @a idx is out of range of the array;
-    that is, `idx >= size()`. See example below.
-
-    @exceptionsafety Strong guarantee: if an exception is thrown, there are no
-    changes in the JSON value.
-
-    @complexity Constant.
-
-    @since version 1.0.0
-
-    @liveexample{The example below shows how array elements can be read using
-    `at()`. It also demonstrates the different exceptions that can be thrown.,
-    at__size_type_const}
-    */
+    /// @brief access specified array element with bounds checking
+    /// @sa https://json.nlohmann.me/api/basic_json/at/
     const_reference at(size_type idx) const
     {
         // at only works for arrays
@@ -19662,36 +19614,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
     }
 
-    /*!
-    @brief access specified object element with bounds checking
-
-    Returns a reference to the element at with specified key @a key, with
-    bounds checking.
-
-    @param[in] key  key of the element to access
-
-    @return reference to the element at key @a key
-
-    @throw type_error.304 if the JSON value is not an object; in this case,
-    calling `at` with a key makes no sense. See example below.
-    @throw out_of_range.403 if the key @a key is is not stored in the object;
-    that is, `find(key) == end()`. See example below.
-
-    @exceptionsafety Strong guarantee: if an exception is thrown, there are no
-    changes in the JSON value.
-
-    @complexity Logarithmic in the size of the container.
-
-    @sa see @ref operator[](const typename object_t::key_type&) for unchecked
-    access by reference
-    @sa see @ref value() for access by value with a default value
-
-    @since version 1.0.0
-
-    @liveexample{The example below shows how object elements can be read and
-    written using `at()`. It also demonstrates the different exceptions that
-    can be thrown.,at__object_t_key_type}
-    */
+    /// @brief access specified object element with bounds checking
+    /// @sa https://json.nlohmann.me/api/basic_json/at/
     reference at(const typename object_t::key_type& key)
     {
         // at only works for objects
@@ -19713,36 +19637,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
     }
 
-    /*!
-    @brief access specified object element with bounds checking
-
-    Returns a const reference to the element at with specified key @a key,
-    with bounds checking.
-
-    @param[in] key  key of the element to access
-
-    @return const reference to the element at key @a key
-
-    @throw type_error.304 if the JSON value is not an object; in this case,
-    calling `at` with a key makes no sense. See example below.
-    @throw out_of_range.403 if the key @a key is is not stored in the object;
-    that is, `find(key) == end()`. See example below.
-
-    @exceptionsafety Strong guarantee: if an exception is thrown, there are no
-    changes in the JSON value.
-
-    @complexity Logarithmic in the size of the container.
-
-    @sa see @ref operator[](const typename object_t::key_type&) for unchecked
-    access by reference
-    @sa see @ref value() for access by value with a default value
-
-    @since version 1.0.0
-
-    @liveexample{The example below shows how object elements can be read using
-    `at()`. It also demonstrates the different exceptions that can be thrown.,
-    at__object_t_key_type_const}
-    */
+    /// @brief access specified object element with bounds checking
+    /// @sa https://json.nlohmann.me/api/basic_json/at/
     const_reference at(const typename object_t::key_type& key) const
     {
         // at only works for objects
@@ -19764,31 +19660,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
     }
 
-    /*!
-    @brief access specified array element
-
-    Returns a reference to the element at specified location @a idx.
-
-    @note If @a idx is beyond the range of the array (i.e., `idx >= size()`),
-    then the array is silently filled up with `null` values to make `idx` a
-    valid reference to the last stored element.
-
-    @param[in] idx  index of the element to access
-
-    @return reference to the element at index @a idx
-
-    @throw type_error.305 if the JSON value is not an array or null; in that
-    cases, using the [] operator with an index makes no sense.
-
-    @complexity Constant if @a idx is in the range of the array. Otherwise
-    linear in `idx - size()`.
-
-    @liveexample{The example below shows how array elements can be read and
-    written using `[]` operator. Note the addition of `null`
-    values.,operatorarray__size_type}
-
-    @since version 1.0.0
-    */
+    /// @brief access specified array element
+    /// @sa https://json.nlohmann.me/api/basic_json/operator%5B%5D/
     reference operator[](size_type idx)
     {
         // implicitly convert null value to an empty array
@@ -19833,25 +19706,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         JSON_THROW(type_error::create(305, "cannot use operator[] with a numeric argument with " + std::string(type_name()), *this));
     }
 
-    /*!
-    @brief access specified array element
-
-    Returns a const reference to the element at specified location @a idx.
-
-    @param[in] idx  index of the element to access
-
-    @return const reference to the element at index @a idx
-
-    @throw type_error.305 if the JSON value is not an array; in that case,
-    using the [] operator with an index makes no sense.
-
-    @complexity Constant.
-
-    @liveexample{The example below shows how array elements can be read using
-    the `[]` operator.,operatorarray__size_type_const}
-
-    @since version 1.0.0
-    */
+    /// @brief access specified array element
+    /// @sa https://json.nlohmann.me/api/basic_json/operator%5B%5D/
     const_reference operator[](size_type idx) const
     {
         // const operator[] only works for arrays
@@ -19863,33 +19719,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         JSON_THROW(type_error::create(305, "cannot use operator[] with a numeric argument with " + std::string(type_name()), *this));
     }
 
-    /*!
-    @brief access specified object element
-
-    Returns a reference to the element at with specified key @a key.
-
-    @note If @a key is not found in the object, then it is silently added to
-    the object and filled with a `null` value to make `key` a valid reference.
-    In case the value was `null` before, it is converted to an object.
-
-    @param[in] key  key of the element to access
-
-    @return reference to the element at key @a key
-
-    @throw type_error.305 if the JSON value is not an object or null; in that
-    cases, using the [] operator with a key makes no sense.
-
-    @complexity Logarithmic in the size of the container.
-
-    @liveexample{The example below shows how object elements can be read and
-    written using the `[]` operator.,operatorarray__key_type}
-
-    @sa see @ref at(const typename object_t::key_type&) for access by reference
-    with range checking
-    @sa see @ref value() for access by value with a default value
-
-    @since version 1.0.0
-    */
+    /// @brief access specified object element
+    /// @sa https://json.nlohmann.me/api/basic_json/operator%5B%5D/
     reference operator[](const typename object_t::key_type& key)
     {
         // implicitly convert null value to an empty object
@@ -19909,36 +19740,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         JSON_THROW(type_error::create(305, "cannot use operator[] with a string argument with " + std::string(type_name()), *this));
     }
 
-    /*!
-    @brief read-only access specified object element
-
-    Returns a const reference to the element at with specified key @a key. No
-    bounds checking is performed.
-
-    @warning If the element with key @a key does not exist, the behavior is
-    undefined.
-
-    @param[in] key  key of the element to access
-
-    @return const reference to the element at key @a key
-
-    @pre The element with key @a key must exist. **This precondition is
-         enforced with an assertion.**
-
-    @throw type_error.305 if the JSON value is not an object; in that case,
-    using the [] operator with a key makes no sense.
-
-    @complexity Logarithmic in the size of the container.
-
-    @liveexample{The example below shows how object elements can be read using
-    the `[]` operator.,operatorarray__key_type_const}
-
-    @sa see @ref at(const typename object_t::key_type&) for access by reference
-    with range checking
-    @sa see @ref value() for access by value with a default value
-
-    @since version 1.0.0
-    */
+    /// @brief access specified object element
+    /// @sa https://json.nlohmann.me/api/basic_json/operator%5B%5D/
     const_reference operator[](const typename object_t::key_type& key) const
     {
         // const operator[] only works for objects
@@ -19951,33 +19754,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         JSON_THROW(type_error::create(305, "cannot use operator[] with a string argument with " + std::string(type_name()), *this));
     }
 
-    /*!
-    @brief access specified object element
-
-    Returns a reference to the element at with specified key @a key.
-
-    @note If @a key is not found in the object, then it is silently added to
-    the object and filled with a `null` value to make `key` a valid reference.
-    In case the value was `null` before, it is converted to an object.
-
-    @param[in] key  key of the element to access
-
-    @return reference to the element at key @a key
-
-    @throw type_error.305 if the JSON value is not an object or null; in that
-    cases, using the [] operator with a key makes no sense.
-
-    @complexity Logarithmic in the size of the container.
-
-    @liveexample{The example below shows how object elements can be read and
-    written using the `[]` operator.,operatorarray__key_type}
-
-    @sa see @ref at(const typename object_t::key_type&) for access by reference
-    with range checking
-    @sa see @ref value() for access by value with a default value
-
-    @since version 1.1.0
-    */
+    /// @brief access specified object element
+    /// @sa https://json.nlohmann.me/api/basic_json/operator%5B%5D/
     template<typename T>
     JSON_HEDLEY_NON_NULL(2)
     reference operator[](T* key)
@@ -19999,36 +19777,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         JSON_THROW(type_error::create(305, "cannot use operator[] with a string argument with " + std::string(type_name()), *this));
     }
 
-    /*!
-    @brief read-only access specified object element
-
-    Returns a const reference to the element at with specified key @a key. No
-    bounds checking is performed.
-
-    @warning If the element with key @a key does not exist, the behavior is
-    undefined.
-
-    @param[in] key  key of the element to access
-
-    @return const reference to the element at key @a key
-
-    @pre The element with key @a key must exist. **This precondition is
-         enforced with an assertion.**
-
-    @throw type_error.305 if the JSON value is not an object; in that case,
-    using the [] operator with a key makes no sense.
-
-    @complexity Logarithmic in the size of the container.
-
-    @liveexample{The example below shows how object elements can be read using
-    the `[]` operator.,operatorarray__key_type_const}
-
-    @sa see @ref at(const typename object_t::key_type&) for access by reference
-    with range checking
-    @sa see @ref value() for access by value with a default value
-
-    @since version 1.1.0
-    */
+    /// @brief access specified object element
+    /// @sa https://json.nlohmann.me/api/basic_json/operator%5B%5D/
     template<typename T>
     JSON_HEDLEY_NON_NULL(2)
     const_reference operator[](T* key) const
@@ -22883,153 +22633,29 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @name JSON Pointer functions
     /// @{
 
-    /*!
-    @brief access specified element via JSON Pointer
-
-    Uses a JSON pointer to retrieve a reference to the respective JSON value.
-    No bound checking is performed. Similar to @ref operator[](const typename
-    object_t::key_type&), `null` values are created in arrays and objects if
-    necessary.
-
-    In particular:
-    - If the JSON pointer points to an object key that does not exist, it
-      is created an filled with a `null` value before a reference to it
-      is returned.
-    - If the JSON pointer points to an array index that does not exist, it
-      is created an filled with a `null` value before a reference to it
-      is returned. All indices between the current maximum and the given
-      index are also filled with `null`.
-    - The special value `-` is treated as a synonym for the index past the
-      end.
-
-    @param[in] ptr  a JSON pointer
-
-    @return reference to the element pointed to by @a ptr
-
-    @complexity Constant.
-
-    @throw parse_error.106   if an array index begins with '0'
-    @throw parse_error.109   if an array index was not a number
-    @throw out_of_range.404  if the JSON pointer can not be resolved
-
-    @liveexample{The behavior is shown in the example.,operatorjson_pointer}
-
-    @since version 2.0.0
-    */
+    /// @brief access specified element via JSON Pointer
+    /// @sa https://json.nlohmann.me/api/basic_json/operator%5B%5D/
     reference operator[](const json_pointer& ptr)
     {
         return ptr.get_unchecked(this);
     }
 
-    /*!
-    @brief access specified element via JSON Pointer
-
-    Uses a JSON pointer to retrieve a reference to the respective JSON value.
-    No bound checking is performed. The function does not change the JSON
-    value; no `null` values are created. In particular, the special value
-    `-` yields an exception.
-
-    @param[in] ptr  JSON pointer to the desired element
-
-    @return const reference to the element pointed to by @a ptr
-
-    @complexity Constant.
-
-    @throw parse_error.106   if an array index begins with '0'
-    @throw parse_error.109   if an array index was not a number
-    @throw out_of_range.402  if the array index '-' is used
-    @throw out_of_range.404  if the JSON pointer can not be resolved
-
-    @liveexample{The behavior is shown in the example.,operatorjson_pointer_const}
-
-    @since version 2.0.0
-    */
+    /// @brief access specified element via JSON Pointer
+    /// @sa https://json.nlohmann.me/api/basic_json/operator%5B%5D/
     const_reference operator[](const json_pointer& ptr) const
     {
         return ptr.get_unchecked(this);
     }
 
-    /*!
-    @brief access specified element via JSON Pointer
-
-    Returns a reference to the element at with specified JSON pointer @a ptr,
-    with bounds checking.
-
-    @param[in] ptr  JSON pointer to the desired element
-
-    @return reference to the element pointed to by @a ptr
-
-    @throw parse_error.106 if an array index in the passed JSON pointer @a ptr
-    begins with '0'. See example below.
-
-    @throw parse_error.109 if an array index in the passed JSON pointer @a ptr
-    is not a number. See example below.
-
-    @throw out_of_range.401 if an array index in the passed JSON pointer @a ptr
-    is out of range. See example below.
-
-    @throw out_of_range.402 if the array index '-' is used in the passed JSON
-    pointer @a ptr. As `at` provides checked access (and no elements are
-    implicitly inserted), the index '-' is always invalid. See example below.
-
-    @throw out_of_range.403 if the JSON pointer describes a key of an object
-    which cannot be found. See example below.
-
-    @throw out_of_range.404 if the JSON pointer @a ptr can not be resolved.
-    See example below.
-
-    @exceptionsafety Strong guarantee: if an exception is thrown, there are no
-    changes in the JSON value.
-
-    @complexity Constant.
-
-    @since version 2.0.0
-
-    @liveexample{The behavior is shown in the example.,at_json_pointer}
-    */
+    /// @brief access specified element via JSON Pointer
+    /// @sa https://json.nlohmann.me/api/basic_json/at/
     reference at(const json_pointer& ptr)
     {
         return ptr.get_checked(this);
     }
 
-    /*!
-    @brief access specified element via JSON Pointer
-
-    Returns a const reference to the element at with specified JSON pointer @a
-    ptr, with bounds checking.
-
-    @param[in] ptr  JSON pointer to the desired element
-
-    @return reference to the element pointed to by @a ptr
-
-    @throw parse_error.106 if an array index in the passed JSON pointer @a ptr
-    begins with '0'. See example below.
-
-    @throw parse_error.109 if an array index in the passed JSON pointer @a ptr
-    is not a number. See example below.
-
-    @throw out_of_range.401 if an array index in the passed JSON pointer @a ptr
-    is out of range. See example below.
-
-    @throw out_of_range.402 if the array index '-' is used in the passed JSON
-    pointer @a ptr. As `at` provides checked access (and no elements are
-    implicitly inserted), the index '-' is always invalid. See example below.
-
-    @throw out_of_range.403 if the JSON pointer describes a key of an object
-    which cannot be found. See example below.
-
-    @throw out_of_range.404 if the JSON pointer @a ptr can not be resolved.
-    See example below.
-
-    @exceptionsafety Strong guarantee: if an exception is thrown, there are no
-    changes in the JSON value.
-
-    @complexity Constant.
-
-    @since version 2.0.0
-
-    @liveexample{The behavior is shown in the example.,at_json_pointer_const}
-    */
+    /// @brief access specified element via JSON Pointer
+    /// @sa https://json.nlohmann.me/api/basic_json/at/
     const_reference at(const json_pointer& ptr) const
     {
         return ptr.get_checked(this);

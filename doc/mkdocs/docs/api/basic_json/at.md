@@ -14,8 +14,8 @@ reference at(const json_pointer& ptr);
 const_reference at(const json_pointer& ptr) const;
 ```
 
-1. Returns a reference to the element at specified location `idx`, with bounds checking.
-2. Returns a reference to the element at with specified key `key`, with bounds checking.
+1. Returns a reference to the array element at specified location `idx`, with bounds checking.
+2. Returns a reference to the object element at with specified key `key`, with bounds checking.
 3. Returns a reference to the element at with specified JSON pointer `ptr`, with bounds checking.
 
 ## Parameters
@@ -74,7 +74,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
 
 ## Example
 
-??? example
+??? example "Example: (1) access specified array element with bounds checking"
 
     The example below shows how array elements can be read and written using `at()`. It also demonstrates the different
     exceptions that can be thrown.
@@ -89,7 +89,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
     --8<-- "examples/at__size_type.output"
     ```
 
-??? example
+??? example "Example: (1) access specified array element with bounds checking"
 
     The example below shows how array elements can be read using `at()`. It also demonstrates the different exceptions
     that can be thrown.
@@ -104,7 +104,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
     --8<-- "examples/at__size_type_const.output"
     ```
 
-??? example
+??? example "Example: (2) access specified object element with bounds checking"
 
     The example below shows how object elements can be read and written using `at()`. It also demonstrates the different
     exceptions that can be thrown.
@@ -119,7 +119,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
     --8<-- "examples/at__object_t_key_type.output"
     ```
 
-??? example
+??? example "Example (2) access specified object element with bounds checking"
 
     The example below shows how object elements can be read using `at()`. It also demonstrates the different exceptions
     that can be thrown.
@@ -134,7 +134,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
     --8<-- "examples/at__object_t_key_type_const.output"
     ```
 
-??? example
+??? example "Example (3) access specified element via JSON Pointer"
 
     The example below shows how object elements can be read and written using `at()`. It also demonstrates the different
     exceptions that can be thrown.
@@ -149,7 +149,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
     --8<-- "examples/at_json_pointer.output"
     ```
 
-??? example
+??? example "Example (3) access specified element via JSON Pointer"
 
     The example below shows how object elements can be read using `at()`. It also demonstrates the different exceptions
     that can be thrown.
