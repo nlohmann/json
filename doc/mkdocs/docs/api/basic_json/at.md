@@ -164,6 +164,11 @@ Strong exception safety: if an exception occurs, the original value stays intact
     --8<-- "examples/at_json_pointer_const.output"
     ```
 
+## See also
+
+- see [`operator[]`](operator%5B%5D.md) for unchecked access by reference
+- see [`value`](value.md) for access with default value
+
 ## Version history
 
 1. Added in version 1.0.0.

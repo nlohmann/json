@@ -2292,57 +2292,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         JSON_THROW(type_error::create(305, "cannot use operator[] with a string argument with " + std::string(type_name()), *this));
     }
 
-    /*!
-    @brief access specified object element with default value
-
-    Returns either a copy of an object's element at the specified key @a key
-    or a given default value if no element with key @a key exists.
-
-    The function is basically equivalent to executing
-    @code {.cpp}
-    try {
-        return at(key);
-    } catch(out_of_range) {
-        return default_value;
-    }
-    @endcode
-
-    @note Unlike @ref at(const typename object_t::key_type&), this function
-    does not throw if the given key @a key was not found.
-
-    @note Unlike @ref operator[](const typename object_t::key_type& key), this
-    function does not implicitly add an element to the position defined by @a
-    key. This function is furthermore also applicable to const objects.
-
-    @param[in] key  key of the element to access
-    @param[in] default_value  the value to return if @a key is not found
-
-    @tparam ValueType type compatible to JSON values, for instance `int` for
-    JSON integer numbers, `bool` for JSON booleans, or `std::vector` types for
-    JSON arrays. Note the type of the expected value at @a key and the default
-    value @a default_value must be compatible.
-
-    @return copy of the element at key @a key or @a default_value if @a key
-    is not found
-
-    @throw type_error.302 if @a default_value does not match the type of the
-    value at @a key
-    @throw type_error.306 if the JSON value is not an object; in that case,
-    using `value()` with a key makes no sense.
-
-    @complexity Logarithmic in the size of the container.
-
-    @liveexample{The example below shows how object elements can be queried
-    with a default value.,basic_json__value}
-
-    @sa see @ref at(const typename object_t::key_type&) for access by reference
-    with range checking
-    @sa see @ref operator[](const typename object_t::key_type&) for unchecked
-    access by reference
-
-    @since version 1.0.0
-    */
-    // using std::is_convertible in a std::enable_if will fail when using explicit conversions
+    /// @brief access specified object element with default value
+    /// @sa https://json.nlohmann.me/api/basic_json/value/
+    /// using std::is_convertible in a std::enable_if will fail when using explicit conversions
     template < class ValueType, typename std::enable_if <
                    detail::is_getable<basic_json_t, ValueType>::value
                    && !std::is_same<value_t, ValueType>::value, int >::type = 0 >
@@ -2364,58 +2316,16 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         JSON_THROW(type_error::create(306, "cannot use value() with " + std::string(type_name()), *this));
     }
 
-    /*!
-    @brief overload for a default value of type const char*
-    @copydoc basic_json::value(const typename object_t::key_type&, const ValueType&) const
-    */
+    /// @brief access specified object element with default value
+    /// @sa https://json.nlohmann.me/api/basic_json/value/
+    /// overload for a default value of type const char*
     string_t value(const typename object_t::key_type& key, const char* default_value) const
     {
         return value(key, string_t(default_value));
     }
 
-    /*!
-    @brief access specified object element via JSON Pointer with default value
-
-    Returns either a copy of an object's element at the specified key @a key
-    or a given default value if no element with key @a key exists.
-
-    The function is basically equivalent to executing
-    @code {.cpp}
-    try {
-        return at(ptr);
-    } catch(out_of_range) {
-        return default_value;
-    }
-    @endcode
-
-    @note Unlike @ref at(const json_pointer&), this function does not throw
-    if the given key @a key was not found.
-
-    @param[in] ptr  a JSON pointer to the element to access
-    @param[in] default_value  the value to return if @a ptr found no value
-
-    @tparam ValueType type compatible to JSON values, for instance `int` for
-    JSON integer numbers, `bool` for JSON booleans, or `std::vector` types for
-    JSON arrays. Note the type of the expected value at @a key and the default
-    value @a default_value must be compatible.
-
-    @return copy of the element at key @a key or @a default_value if @a key
-    is not found
-
-    @throw type_error.302 if @a default_value does not match the type of the
-    value at @a ptr
-    @throw type_error.306 if the JSON value is not an object; in that case,
-    using `value()` with a key makes no sense.
-
-    @complexity Logarithmic in the size of the container.
-
-    @liveexample{The example below shows how object elements can be queried
-    with a default value.,basic_json__value_ptr}
-
-    @sa see @ref operator[](const json_pointer&) for unchecked access by reference
-
-    @since version 2.0.2
-    */
+    /// @brief access specified object element via JSON Pointer with default value
+    /// @sa https://json.nlohmann.me/api/basic_json/value/
     template<class ValueType, typename std::enable_if<
                  detail::is_getable<basic_json_t, ValueType>::value, int>::type = 0>
     ValueType value(const json_pointer& ptr, const ValueType& default_value) const
@@ -2437,10 +2347,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         JSON_THROW(type_error::create(306, "cannot use value() with " + std::string(type_name()), *this));
     }
 
-    /*!
-    @brief overload for a default value of type const char*
-    @copydoc basic_json::value(const json_pointer&, ValueType) const
-    */
+    /// @brief access specified object element via JSON Pointer with default value
+    /// @sa https://json.nlohmann.me/api/basic_json/value/
+    /// overload for a default value of type const char*
     JSON_HEDLEY_NON_NULL(3)
     string_t value(const json_pointer& ptr, const char* default_value) const
     {
