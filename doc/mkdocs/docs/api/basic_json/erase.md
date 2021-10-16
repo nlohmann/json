@@ -115,7 +115,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
 
 ## Example
 
-??? example
+??? example "Example: (1) remove element given an iterator"
 
     The example shows the effect of `erase()` for different JSON types using an iterator.
     
@@ -129,7 +129,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
     --8<-- "examples/erase__IteratorType.output"
     ```
 
-??? example
+??? example "Example: (2) remove elements given an iterator range"
 
     The example shows the effect of `erase()` for different JSON types using an iterator range.
     
@@ -143,7 +143,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
     --8<-- "examples/erase__IteratorType_IteratorType.output"
     ```
 
-??? example
+??? example "Example: (3) remove element from a JSON object given a key"
 
     The example shows the effect of `erase()` for different JSON types using an object key.
     
@@ -157,7 +157,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
     --8<-- "examples/erase__key_type.output"
     ```
 
-??? example
+??? example "Example: (4) remove element from a JSON array given an index"
 
     The example shows the effect of `erase()` using an array index.
     

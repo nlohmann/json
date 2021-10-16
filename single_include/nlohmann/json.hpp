@@ -20230,52 +20230,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return *tmp;
     }
 
-    /*!
-    @brief remove element given an iterator
-
-    Removes the element specified by iterator @a pos. The iterator @a pos must
-    be valid and dereferenceable. Thus the `end()` iterator (which is valid,
-    but is not dereferenceable) cannot be used as a value for @a pos.
-
-    If called on a primitive type other than `null`, the resulting JSON value
-    will be `null`.
-
-    @param[in] pos iterator to the element to remove
-    @return Iterator following the last removed element. If the iterator @a
-    pos refers to the last element, the `end()` iterator is returned.
-
-    @tparam IteratorType an @ref iterator or @ref const_iterator
-
-    @post Invalidates iterators and references at or after the point of the
-    erase, including the `end()` iterator.
-
-    @throw type_error.307 if called on a `null` value; example: `"cannot use
-    erase() with null"`
-    @throw invalid_iterator.202 if called on an iterator which does not belong
-    to the current JSON value; example: `"iterator does not fit current
-    value"`
-    @throw invalid_iterator.205 if called on a primitive type with invalid
-    iterator (i.e., any iterator which is not `begin()`); example: `"iterator
-    out of range"`
-
-    @complexity The complexity depends on the type:
-    - objects: amortized constant
-    - arrays: linear in distance between @a pos and the end of the container
-    - strings and binary: linear in the length of the member
-    - other types: constant
-
-    @liveexample{The example shows the result of `erase()` for different JSON
-    types.,erase__IteratorType}
-
-    @sa see @ref erase(IteratorType, IteratorType) -- removes the elements in
-    the given range
-    @sa see @ref erase(const typename object_t::key_type&) -- removes the element
-    from an object at the given key
-    @sa see @ref erase(const size_type) -- removes the element from an array at
-    the given index
-
-    @since version 1.0.0
-    */
+    /// @brief remove element given an iterator
+    /// @sa https://json.nlohmann.me/api/basic_json/erase/
     template < class IteratorType, typename std::enable_if <
                    std::is_same<IteratorType, typename basic_json_t::iterator>::value ||
                    std::is_same<IteratorType, typename basic_json_t::const_iterator>::value, int >::type
@@ -20345,52 +20301,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return result;
     }
 
-    /*!
-    @brief remove elements given an iterator range
-
-    Removes the element specified by the range `[first; last)`. The iterator
-    @a first does not need to be dereferenceable if `first == last`: erasing
-    an empty range is a no-op.
-
-    If called on a primitive type other than `null`, the resulting JSON value
-    will be `null`.
-
-    @param[in] first iterator to the beginning of the range to remove
-    @param[in] last iterator past the end of the range to remove
-    @return Iterator following the last removed element. If the iterator @a
-    second refers to the last element, the `end()` iterator is returned.
-
-    @tparam IteratorType an @ref iterator or @ref const_iterator
-
-    @post Invalidates iterators and references at or after the point of the
-    erase, including the `end()` iterator.
-
-    @throw type_error.307 if called on a `null` value; example: `"cannot use
-    erase() with null"`
-    @throw invalid_iterator.203 if called on iterators which does not belong
-    to the current JSON value; example: `"iterators do not fit current value"`
-    @throw invalid_iterator.204 if called on a primitive type with invalid
-    iterators (i.e., if `first != begin()` and `last != end()`); example:
-    `"iterators out of range"`
-
-    @complexity The complexity depends on the type:
-    - objects: `log(size()) + std::distance(first, last)`
-    - arrays: linear in the distance between @a first and @a last, plus linear
-      in the distance between @a last and end of the container
-    - strings and binary: linear in the length of the member
-    - other types: constant
-
-    @liveexample{The example shows the result of `erase()` for different JSON
-    types.,erase__IteratorType_IteratorType}
-
-    @sa see @ref erase(IteratorType) -- removes the element at a given position
-    @sa see @ref erase(const typename object_t::key_type&) -- removes the element
-    from an object at the given key
-    @sa see @ref erase(const size_type) -- removes the element from an array at
-    the given index
-
-    @since version 1.0.0
-    */
+    /// @brief remove elements given an iterator range
+    /// @sa https://json.nlohmann.me/api/basic_json/erase/
     template < class IteratorType, typename std::enable_if <
                    std::is_same<IteratorType, typename basic_json_t::iterator>::value ||
                    std::is_same<IteratorType, typename basic_json_t::const_iterator>::value, int >::type
@@ -20463,35 +20375,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return result;
     }
 
-    /*!
-    @brief remove element from a JSON object given a key
-
-    Removes elements from a JSON object with the key value @a key.
-
-    @param[in] key value of the elements to remove
-
-    @return Number of elements removed. If @a ObjectType is the default
-    `std::map` type, the return value will always be `0` (@a key was not
-    found) or `1` (@a key was found).
-
-    @post References and iterators to the erased elements are invalidated.
-    Other references and iterators are not affected.
-
-    @throw type_error.307 when called on a type other than JSON object;
-    example: `"cannot use erase() with null"`
-
-    @complexity `log(size()) + count(key)`
-
-    @liveexample{The example shows the effect of `erase()`.,erase__key_type}
-
-    @sa see @ref erase(IteratorType) -- removes the element at a given position
-    @sa see @ref erase(IteratorType, IteratorType) -- removes the elements in
-    the given range
-    @sa see @ref erase(const size_type) -- removes the element from an array at
-    the given index
-
-    @since version 1.0.0
-    */
+    /// @brief remove element from a JSON object given a key
+    /// @sa https://json.nlohmann.me/api/basic_json/erase/
     size_type erase(const typename object_t::key_type& key)
     {
         // this erase only works for objects
@@ -20503,30 +20388,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         JSON_THROW(type_error::create(307, "cannot use erase() with " + std::string(type_name()), *this));
     }
 
-    /*!
-    @brief remove element from a JSON array given an index
-
-    Removes element from a JSON array at the index @a idx.
-
-    @param[in] idx index of the element to remove
-
-    @throw type_error.307 when called on a type other than JSON object;
-    example: `"cannot use erase() with null"`
-    @throw out_of_range.401 when `idx >= size()`; example: `"array index 17
-    is out of range"`
-
-    @complexity Linear in distance between @a idx and the end of the container.
-
-    @liveexample{The example shows the effect of `erase()`.,erase__size_type}
-
-    @sa see @ref erase(IteratorType) -- removes the element at a given position
-    @sa see @ref erase(IteratorType, IteratorType) -- removes the elements in
-    the given range
-    @sa see @ref erase(const typename object_t::key_type&) -- removes the element
-    from an object at the given key
-
-    @since version 1.0.0
-    */
+    /// @brief remove element from a JSON array given an index
+    /// @sa https://json.nlohmann.me/api/basic_json/erase/
     void erase(const size_type idx)
     {
         // this erase only works for arrays
@@ -20727,7 +20590,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 
     /*!
-    @copydoc iterator_wrapper(reference)
+    @brief wrapper to access iterator member functions in range-based for
+    @sa https://json.nlohmann.me/api/basic_json/items/
+    @deprecated This function is deprecated since 3.1.0 and will be removed in
+            version 4.0.0 of the library. Please use @ref items() instead;
+            that is, replace `json::iterator_wrapper(j)` with `j.items()`.
     */
     JSON_HEDLEY_DEPRECATED_FOR(3.1.0, items())
     static iteration_proxy<const_iterator> iterator_wrapper(const_reference ref) noexcept
