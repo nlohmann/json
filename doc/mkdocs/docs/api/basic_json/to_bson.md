@@ -15,6 +15,8 @@ so-called document).
 1. Returns a byte vector containing the BSON serialization.
 2. Writes the BSON serialization to an output adapter.
 
+The exact mapping and its limitations is described on a [dedicated page](../../features/binary_formats/bson.md).
+
 ## Parameters
 
 `j` (in)

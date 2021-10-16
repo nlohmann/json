@@ -19,6 +19,8 @@ aims to be more compact than JSON itself, yet more efficient to parse.
 1. Returns a byte vector containing the UBJSON serialization.
 2. Writes the UBJSON serialization to an output adapter.
 
+The exact mapping and its limitations is described on a [dedicated page](../../features/binary_formats/ubjson.md).
+
 ## Parameters
 
 `j` (in)

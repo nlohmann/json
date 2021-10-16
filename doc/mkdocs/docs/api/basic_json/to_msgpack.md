@@ -15,6 +15,8 @@ serialization format which aims to be more compact than JSON itself, yet more ef
 1. Returns a byte vector containing the MessagePack serialization.
 2. Writes the MessagePack serialization to an output adapter.
 
+The exact mapping and its limitations is described on a [dedicated page](../../features/binary_formats/messagepack.md).
+
 ## Parameters
 
 `j` (in)

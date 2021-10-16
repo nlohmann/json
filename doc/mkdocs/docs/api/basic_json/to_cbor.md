@@ -16,6 +16,8 @@ parse.
 1. Returns a byte vector containing the CBOR serialization.
 2. Writes the CBOR serialization to an output adapter.
 
+The exact mapping and its limitations is described on a [dedicated page](../../features/binary_formats/cbor.md).
+
 ## Parameters
 
 `j` (in)

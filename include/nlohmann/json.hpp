@@ -2734,26 +2734,22 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 
   public:
-    /*!
-    @brief wrapper to access iterator member functions in range-based for
-    @sa https://json.nlohmann.me/api/basic_json/items/
-    @deprecated This function is deprecated since 3.1.0 and will be removed in
-                version 4.0.0 of the library. Please use @ref items() instead;
-                that is, replace `json::iterator_wrapper(j)` with `j.items()`.
-    */
+    /// @brief wrapper to access iterator member functions in range-based for
+    /// @sa https://json.nlohmann.me/api/basic_json/items/
+    /// @deprecated This function is deprecated since 3.1.0 and will be removed in
+    ///             version 4.0.0 of the library. Please use @ref items() instead;
+    ///             that is, replace `json::iterator_wrapper(j)` with `j.items()`.
     JSON_HEDLEY_DEPRECATED_FOR(3.1.0, items())
     static iteration_proxy<iterator> iterator_wrapper(reference ref) noexcept
     {
         return ref.items();
     }
 
-    /*!
-    @brief wrapper to access iterator member functions in range-based for
-    @sa https://json.nlohmann.me/api/basic_json/items/
-    @deprecated This function is deprecated since 3.1.0 and will be removed in
-            version 4.0.0 of the library. Please use @ref items() instead;
-            that is, replace `json::iterator_wrapper(j)` with `j.items()`.
-    */
+    /// @brief wrapper to access iterator member functions in range-based for
+    /// @sa https://json.nlohmann.me/api/basic_json/items/
+    /// @deprecated This function is deprecated since 3.1.0 and will be removed in
+    ///         version 4.0.0 of the library. Please use @ref items() instead;
+    ///         that is, replace `json::iterator_wrapper(j)` with `j.items()`.
     JSON_HEDLEY_DEPRECATED_FOR(3.1.0, items())
     static iteration_proxy<const_iterator> iterator_wrapper(const_reference ref) noexcept
     {
@@ -4159,104 +4155,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @{
 
   public:
-    /*!
-    @brief create a CBOR serialization of a given JSON value
-
-    Serializes a given JSON value @a j to a byte vector using the CBOR (Concise
-    Binary Object Representation) serialization format. CBOR is a binary
-    serialization format which aims to be more compact than JSON itself, yet
-    more efficient to parse.
-
-    The library uses the following mapping from JSON values types to
-    CBOR types according to the CBOR specification (RFC 7049):
-
-    JSON value type | value/range                                | CBOR type                          | first byte
-    --------------- | ------------------------------------------ | ---------------------------------- | ---------------
-    null            | `null`                                     | Null                               | 0xF6
-    boolean         | `true`                                     | True                               | 0xF5
-    boolean         | `false`                                    | False                              | 0xF4
-    number_integer  | -9223372036854775808..-2147483649          | Negative integer (8 bytes follow)  | 0x3B
-    number_integer  | -2147483648..-32769                        | Negative integer (4 bytes follow)  | 0x3A
-    number_integer  | -32768..-129                               | Negative integer (2 bytes follow)  | 0x39
-    number_integer  | -128..-25                                  | Negative integer (1 byte follow)   | 0x38
-    number_integer  | -24..-1                                    | Negative integer                   | 0x20..0x37
-    number_integer  | 0..23                                      | Integer                            | 0x00..0x17
-    number_integer  | 24..255                                    | Unsigned integer (1 byte follow)   | 0x18
-    number_integer  | 256..65535                                 | Unsigned integer (2 bytes follow)  | 0x19
-    number_integer  | 65536..4294967295                          | Unsigned integer (4 bytes follow)  | 0x1A
-    number_integer  | 4294967296..18446744073709551615           | Unsigned integer (8 bytes follow)  | 0x1B
-    number_unsigned | 0..23                                      | Integer                            | 0x00..0x17
-    number_unsigned | 24..255                                    | Unsigned integer (1 byte follow)   | 0x18
-    number_unsigned | 256..65535                                 | Unsigned integer (2 bytes follow)  | 0x19
-    number_unsigned | 65536..4294967295                          | Unsigned integer (4 bytes follow)  | 0x1A
-    number_unsigned | 4294967296..18446744073709551615           | Unsigned integer (8 bytes follow)  | 0x1B
-    number_float    | *any value representable by a float*       | Single-Precision Float             | 0xFA
-    number_float    | *any value NOT representable by a float*   | Double-Precision Float             | 0xFB
-    string          | *length*: 0..23                            | UTF-8 string                       | 0x60..0x77
-    string          | *length*: 23..255                          | UTF-8 string (1 byte follow)       | 0x78
-    string          | *length*: 256..65535                       | UTF-8 string (2 bytes follow)      | 0x79
-    string          | *length*: 65536..4294967295                | UTF-8 string (4 bytes follow)      | 0x7A
-    string          | *length*: 4294967296..18446744073709551615 | UTF-8 string (8 bytes follow)      | 0x7B
-    array           | *size*: 0..23                              | array                              | 0x80..0x97
-    array           | *size*: 23..255                            | array (1 byte follow)              | 0x98
-    array           | *size*: 256..65535                         | array (2 bytes follow)             | 0x99
-    array           | *size*: 65536..4294967295                  | array (4 bytes follow)             | 0x9A
-    array           | *size*: 4294967296..18446744073709551615   | array (8 bytes follow)             | 0x9B
-    object          | *size*: 0..23                              | map                                | 0xA0..0xB7
-    object          | *size*: 23..255                            | map (1 byte follow)                | 0xB8
-    object          | *size*: 256..65535                         | map (2 bytes follow)               | 0xB9
-    object          | *size*: 65536..4294967295                  | map (4 bytes follow)               | 0xBA
-    object          | *size*: 4294967296..18446744073709551615   | map (8 bytes follow)               | 0xBB
-    binary          | *size*: 0..23                              | byte string                        | 0x40..0x57
-    binary          | *size*: 23..255                            | byte string (1 byte follow)        | 0x58
-    binary          | *size*: 256..65535                         | byte string (2 bytes follow)       | 0x59
-    binary          | *size*: 65536..4294967295                  | byte string (4 bytes follow)       | 0x5A
-    binary          | *size*: 4294967296..18446744073709551615   | byte string (8 bytes follow)       | 0x5B
-
-    Binary values with subtype are mapped to tagged values (0xD8..0xDB)
-    depending on the subtype, followed by a byte string, see "binary" cells
-    in the table above.
-
-    @note The mapping is **complete** in the sense that any JSON value type
-          can be converted to a CBOR value.
-
-    @note If NaN or Infinity are stored inside a JSON number, they are
-          serialized properly. This behavior differs from the @ref dump()
-          function which serializes NaN or Infinity to `null`.
-
-    @note The following CBOR types are not used in the conversion:
-          - UTF-8 strings terminated by "break" (0x7F)
-          - arrays terminated by "break" (0x9F)
-          - maps terminated by "break" (0xBF)
-          - byte strings terminated by "break" (0x5F)
-          - date/time (0xC0..0xC1)
-          - bignum (0xC2..0xC3)
-          - decimal fraction (0xC4)
-          - bigfloat (0xC5)
-          - expected conversions (0xD5..0xD7)
-          - simple values (0xE0..0xF3, 0xF8)
-          - undefined (0xF7)
-          - half-precision floats (0xF9)
-          - break (0xFF)
-
-    @param[in] j  JSON value to serialize
-    @return CBOR serialization as byte vector
-
-    @complexity Linear in the size of the JSON value @a j.
-
-    @liveexample{The example shows the serialization of a JSON value to a byte
-    vector in CBOR format.,to_cbor}
-
-    @sa http://cbor.io
-    @sa see @ref from_cbor(InputType&&, const bool, const bool, const cbor_tag_handler_t) for the
-        analogous deserialization
-    @sa see @ref to_msgpack(const basic_json&) for the related MessagePack format
-    @sa see @ref to_ubjson(const basic_json&, const bool, const bool) for the
-             related UBJSON format
-
-    @since version 2.0.9; compact representation of floating-point numbers
-           since version 3.8.0
-    */
+    /// @brief create a CBOR serialization of a given JSON value
+    /// @sa https://json.nlohmann.me/api/basic_json/to_cbor/
     static std::vector<std::uint8_t> to_cbor(const basic_json& j)
     {
         std::vector<std::uint8_t> result;
@@ -4264,94 +4164,22 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return result;
     }
 
+    /// @brief create a CBOR serialization of a given JSON value
+    /// @sa https://json.nlohmann.me/api/basic_json/to_cbor/
     static void to_cbor(const basic_json& j, detail::output_adapter<std::uint8_t> o)
     {
         binary_writer<std::uint8_t>(o).write_cbor(j);
     }
 
+    /// @brief create a CBOR serialization of a given JSON value
+    /// @sa https://json.nlohmann.me/api/basic_json/to_cbor/
     static void to_cbor(const basic_json& j, detail::output_adapter<char> o)
     {
         binary_writer<char>(o).write_cbor(j);
     }
 
-    /*!
-    @brief create a MessagePack serialization of a given JSON value
-
-    Serializes a given JSON value @a j to a byte vector using the MessagePack
-    serialization format. MessagePack is a binary serialization format which
-    aims to be more compact than JSON itself, yet more efficient to parse.
-
-    The library uses the following mapping from JSON values types to
-    MessagePack types according to the MessagePack specification:
-
-    JSON value type | value/range                       | MessagePack type | first byte
-    --------------- | --------------------------------- | ---------------- | ----------
-    null            | `null`                            | nil              | 0xC0
-    boolean         | `true`                            | true             | 0xC3
-    boolean         | `false`                           | false            | 0xC2
-    number_integer  | -9223372036854775808..-2147483649 | int64            | 0xD3
-    number_integer  | -2147483648..-32769               | int32            | 0xD2
-    number_integer  | -32768..-129                      | int16            | 0xD1
-    number_integer  | -128..-33                         | int8             | 0xD0
-    number_integer  | -32..-1                           | negative fixint  | 0xE0..0xFF
-    number_integer  | 0..127                            | positive fixint  | 0x00..0x7F
-    number_integer  | 128..255                          | uint 8           | 0xCC
-    number_integer  | 256..65535                        | uint 16          | 0xCD
-    number_integer  | 65536..4294967295                 | uint 32          | 0xCE
-    number_integer  | 4294967296..18446744073709551615  | uint 64          | 0xCF
-    number_unsigned | 0..127                            | positive fixint  | 0x00..0x7F
-    number_unsigned | 128..255                          | uint 8           | 0xCC
-    number_unsigned | 256..65535                        | uint 16          | 0xCD
-    number_unsigned | 65536..4294967295                 | uint 32          | 0xCE
-    number_unsigned | 4294967296..18446744073709551615  | uint 64          | 0xCF
-    number_float    | *any value representable by a float*     | float 32 | 0xCA
-    number_float    | *any value NOT representable by a float* | float 64 | 0xCB
-    string          | *length*: 0..31                   | fixstr           | 0xA0..0xBF
-    string          | *length*: 32..255                 | str 8            | 0xD9
-    string          | *length*: 256..65535              | str 16           | 0xDA
-    string          | *length*: 65536..4294967295       | str 32           | 0xDB
-    array           | *size*: 0..15                     | fixarray         | 0x90..0x9F
-    array           | *size*: 16..65535                 | array 16         | 0xDC
-    array           | *size*: 65536..4294967295         | array 32         | 0xDD
-    object          | *size*: 0..15                     | fix map          | 0x80..0x8F
-    object          | *size*: 16..65535                 | map 16           | 0xDE
-    object          | *size*: 65536..4294967295         | map 32           | 0xDF
-    binary          | *size*: 0..255                    | bin 8            | 0xC4
-    binary          | *size*: 256..65535                | bin 16           | 0xC5
-    binary          | *size*: 65536..4294967295         | bin 32           | 0xC6
-
-    @note The mapping is **complete** in the sense that any JSON value type
-          can be converted to a MessagePack value.
-
-    @note The following values can **not** be converted to a MessagePack value:
-          - strings with more than 4294967295 bytes
-          - byte strings with more than 4294967295 bytes
-          - arrays with more than 4294967295 elements
-          - objects with more than 4294967295 elements
-
-    @note Any MessagePack output created @ref to_msgpack can be successfully
-          parsed by @ref from_msgpack.
-
-    @note If NaN or Infinity are stored inside a JSON number, they are
-          serialized properly. This behavior differs from the @ref dump()
-          function which serializes NaN or Infinity to `null`.
-
-    @param[in] j  JSON value to serialize
-    @return MessagePack serialization as byte vector
-
-    @complexity Linear in the size of the JSON value @a j.
-
-    @liveexample{The example shows the serialization of a JSON value to a byte
-    vector in MessagePack format.,to_msgpack}
-
-    @sa http://msgpack.org
-    @sa see @ref from_msgpack for the analogous deserialization
-    @sa see @ref to_cbor(const basic_json& for the related CBOR format
-    @sa see @ref to_ubjson(const basic_json&, const bool, const bool) for the
-             related UBJSON format
-
-    @since version 2.0.9
-    */
+    /// @brief create a MessagePack serialization of a given JSON value
+    /// @sa https://json.nlohmann.me/api/basic_json/to_msgpack/
     static std::vector<std::uint8_t> to_msgpack(const basic_json& j)
     {
         std::vector<std::uint8_t> result;
@@ -4359,102 +4187,22 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return result;
     }
 
+    /// @brief create a MessagePack serialization of a given JSON value
+    /// @sa https://json.nlohmann.me/api/basic_json/to_msgpack/
     static void to_msgpack(const basic_json& j, detail::output_adapter<std::uint8_t> o)
     {
         binary_writer<std::uint8_t>(o).write_msgpack(j);
     }
 
+    /// @brief create a MessagePack serialization of a given JSON value
+    /// @sa https://json.nlohmann.me/api/basic_json/to_msgpack/
     static void to_msgpack(const basic_json& j, detail::output_adapter<char> o)
     {
         binary_writer<char>(o).write_msgpack(j);
     }
 
-    /*!
-    @brief create a UBJSON serialization of a given JSON value
-
-    Serializes a given JSON value @a j to a byte vector using the UBJSON
-    (Universal Binary JSON) serialization format. UBJSON aims to be more compact
-    than JSON itself, yet more efficient to parse.
-
-    The library uses the following mapping from JSON values types to
-    UBJSON types according to the UBJSON specification:
-
-    JSON value type | value/range                       | UBJSON type | marker
-    --------------- | --------------------------------- | ----------- | ------
-    null            | `null`                            | null        | `Z`
-    boolean         | `true`                            | true        | `T`
-    boolean         | `false`                           | false       | `F`
-    number_integer  | -9223372036854775808..-2147483649 | int64       | `L`
-    number_integer  | -2147483648..-32769               | int32       | `l`
-    number_integer  | -32768..-129                      | int16       | `I`
-    number_integer  | -128..127                         | int8        | `i`
-    number_integer  | 128..255                          | uint8       | `U`
-    number_integer  | 256..32767                        | int16       | `I`
-    number_integer  | 32768..2147483647                 | int32       | `l`
-    number_integer  | 2147483648..9223372036854775807   | int64       | `L`
-    number_unsigned | 0..127                            | int8        | `i`
-    number_unsigned | 128..255                          | uint8       | `U`
-    number_unsigned | 256..32767                        | int16       | `I`
-    number_unsigned | 32768..2147483647                 | int32       | `l`
-    number_unsigned | 2147483648..9223372036854775807   | int64       | `L`
-    number_unsigned | 2147483649..18446744073709551615  | high-precision | `H`
-    number_float    | *any value*                       | float64     | `D`
-    string          | *with shortest length indicator*  | string      | `S`
-    array           | *see notes on optimized format*   | array       | `[`
-    object          | *see notes on optimized format*   | map         | `{`
-
-    @note The mapping is **complete** in the sense that any JSON value type
-          can be converted to a UBJSON value.
-
-    @note The following values can **not** be converted to a UBJSON value:
-          - strings with more than 9223372036854775807 bytes (theoretical)
-
-    @note The following markers are not used in the conversion:
-          - `Z`: no-op values are not created.
-          - `C`: single-byte strings are serialized with `S` markers.
-
-    @note Any UBJSON output created @ref to_ubjson can be successfully parsed
-          by @ref from_ubjson.
-
-    @note If NaN or Infinity are stored inside a JSON number, they are
-          serialized properly. This behavior differs from the @ref dump()
-          function which serializes NaN or Infinity to `null`.
-
-    @note The optimized formats for containers are supported: Parameter
-          @a use_size adds size information to the beginning of a container and
-          removes the closing marker. Parameter @a use_type further checks
-          whether all elements of a container have the same type and adds the
-          type marker to the beginning of the container. The @a use_type
-          parameter must only be used together with @a use_size = true. Note
-          that @a use_size = true alone may result in larger representations -
-          the benefit of this parameter is that the receiving side is
-          immediately informed on the number of elements of the container.
-
-    @note If the JSON data contains the binary type, the value stored is a list
-          of integers, as suggested by the UBJSON documentation.  In particular,
-          this means that serialization and the deserialization of a JSON
-          containing binary values into UBJSON and back will result in a
-          different JSON object.
-
-    @param[in] j  JSON value to serialize
-    @param[in] use_size  whether to add size annotations to container types
-    @param[in] use_type  whether to add type annotations to container types
-                         (must be combined with @a use_size = true)
-    @return UBJSON serialization as byte vector
-
-    @complexity Linear in the size of the JSON value @a j.
-
-    @liveexample{The example shows the serialization of a JSON value to a byte
-    vector in UBJSON format.,to_ubjson}
-
-    @sa http://ubjson.org
-    @sa see @ref from_ubjson(InputType&&, const bool, const bool) for the
-        analogous deserialization
-    @sa see @ref to_cbor(const basic_json& for the related CBOR format
-    @sa see @ref to_msgpack(const basic_json&) for the related MessagePack format
-
-    @since version 3.1.0
-    */
+    /// @brief create a UBJSON serialization of a given JSON value
+    /// @sa https://json.nlohmann.me/api/basic_json/to_ubjson/
     static std::vector<std::uint8_t> to_ubjson(const basic_json& j,
             const bool use_size = false,
             const bool use_type = false)
@@ -4464,75 +4212,24 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return result;
     }
 
+    /// @brief create a UBJSON serialization of a given JSON value
+    /// @sa https://json.nlohmann.me/api/basic_json/to_ubjson/
     static void to_ubjson(const basic_json& j, detail::output_adapter<std::uint8_t> o,
                           const bool use_size = false, const bool use_type = false)
     {
         binary_writer<std::uint8_t>(o).write_ubjson(j, use_size, use_type);
     }
 
+    /// @brief create a UBJSON serialization of a given JSON value
+    /// @sa https://json.nlohmann.me/api/basic_json/to_ubjson/
     static void to_ubjson(const basic_json& j, detail::output_adapter<char> o,
                           const bool use_size = false, const bool use_type = false)
     {
         binary_writer<char>(o).write_ubjson(j, use_size, use_type);
     }
 
-
-    /*!
-    @brief Serializes the given JSON object `j` to BSON and returns a vector
-           containing the corresponding BSON-representation.
-
-    BSON (Binary JSON) is a binary format in which zero or more ordered key/value pairs are
-    stored as a single entity (a so-called document).
-
-    The library uses the following mapping from JSON values types to BSON types:
-
-    JSON value type | value/range                       | BSON type   | marker
-    --------------- | --------------------------------- | ----------- | ------
-    null            | `null`                            | null        | 0x0A
-    boolean         | `true`, `false`                   | boolean     | 0x08
-    number_integer  | -9223372036854775808..-2147483649 | int64       | 0x12
-    number_integer  | -2147483648..2147483647           | int32       | 0x10
-    number_integer  | 2147483648..9223372036854775807   | int64       | 0x12
-    number_unsigned | 0..2147483647                     | int32       | 0x10
-    number_unsigned | 2147483648..9223372036854775807   | int64       | 0x12
-    number_unsigned | 9223372036854775808..18446744073709551615| --   | --
-    number_float    | *any value*                       | double      | 0x01
-    string          | *any value*                       | string      | 0x02
-    array           | *any value*                       | document    | 0x04
-    object          | *any value*                       | document    | 0x03
-    binary          | *any value*                       | binary      | 0x05
-
-    @warning The mapping is **incomplete**, since only JSON-objects (and things
-    contained therein) can be serialized to BSON.
-    Also, integers larger than 9223372036854775807 cannot be serialized to BSON,
-    and the keys may not contain U+0000, since they are serialized a
-    zero-terminated c-strings.
-
-    @throw out_of_range.407  if `j.is_number_unsigned() && j.get<std::uint64_t>() > 9223372036854775807`
-    @throw out_of_range.409  if a key in `j` contains a NULL (U+0000)
-    @throw type_error.317    if `!j.is_object()`
-
-    @pre The input `j` is required to be an object: `j.is_object() == true`.
-
-    @note Any BSON output created via @ref to_bson can be successfully parsed
-          by @ref from_bson.
-
-    @param[in] j  JSON value to serialize
-    @return BSON serialization as byte vector
-
-    @complexity Linear in the size of the JSON value @a j.
-
-    @liveexample{The example shows the serialization of a JSON value to a byte
-    vector in BSON format.,to_bson}
-
-    @sa http://bsonspec.org/spec.html
-    @sa see @ref from_bson(detail::input_adapter&&, const bool strict) for the
-        analogous deserialization
-    @sa see @ref to_ubjson(const basic_json&, const bool, const bool) for the
-             related UBJSON format
-    @sa see @ref to_cbor(const basic_json&) for the related CBOR format
-    @sa see @ref to_msgpack(const basic_json&) for the related MessagePack format
-    */
+    /// @brief create a BSON serialization of a given JSON value
+    /// @sa https://json.nlohmann.me/api/basic_json/to_bson/
     static std::vector<std::uint8_t> to_bson(const basic_json& j)
     {
         std::vector<std::uint8_t> result;
@@ -4540,130 +4237,22 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return result;
     }
 
-    /*!
-    @brief Serializes the given JSON object `j` to BSON and forwards the
-           corresponding BSON-representation to the given output_adapter `o`.
-    @param j The JSON object to convert to BSON.
-    @param o The output adapter that receives the binary BSON representation.
-    @pre The input `j` shall be an object: `j.is_object() == true`
-    @sa see @ref to_bson(const basic_json&)
-    */
+    /// @brief create a BSON serialization of a given JSON value
+    /// @sa https://json.nlohmann.me/api/basic_json/to_bson/
     static void to_bson(const basic_json& j, detail::output_adapter<std::uint8_t> o)
     {
         binary_writer<std::uint8_t>(o).write_bson(j);
     }
 
-    /*!
-    @copydoc to_bson(const basic_json&, detail::output_adapter<std::uint8_t>)
-    */
+    /// @brief create a BSON serialization of a given JSON value
+    /// @sa https://json.nlohmann.me/api/basic_json/to_bson/
     static void to_bson(const basic_json& j, detail::output_adapter<char> o)
     {
         binary_writer<char>(o).write_bson(j);
     }
 
-
-    /*!
-    @brief create a JSON value from an input in CBOR format
-
-    Deserializes a given input @a i to a JSON value using the CBOR (Concise
-    Binary Object Representation) serialization format.
-
-    The library maps CBOR types to JSON value types as follows:
-
-    CBOR type              | JSON value type | first byte
-    ---------------------- | --------------- | ----------
-    Integer                | number_unsigned | 0x00..0x17
-    Unsigned integer       | number_unsigned | 0x18
-    Unsigned integer       | number_unsigned | 0x19
-    Unsigned integer       | number_unsigned | 0x1A
-    Unsigned integer       | number_unsigned | 0x1B
-    Negative integer       | number_integer  | 0x20..0x37
-    Negative integer       | number_integer  | 0x38
-    Negative integer       | number_integer  | 0x39
-    Negative integer       | number_integer  | 0x3A
-    Negative integer       | number_integer  | 0x3B
-    Byte string            | binary          | 0x40..0x57
-    Byte string            | binary          | 0x58
-    Byte string            | binary          | 0x59
-    Byte string            | binary          | 0x5A
-    Byte string            | binary          | 0x5B
-    UTF-8 string           | string          | 0x60..0x77
-    UTF-8 string           | string          | 0x78
-    UTF-8 string           | string          | 0x79
-    UTF-8 string           | string          | 0x7A
-    UTF-8 string           | string          | 0x7B
-    UTF-8 string           | string          | 0x7F
-    array                  | array           | 0x80..0x97
-    array                  | array           | 0x98
-    array                  | array           | 0x99
-    array                  | array           | 0x9A
-    array                  | array           | 0x9B
-    array                  | array           | 0x9F
-    map                    | object          | 0xA0..0xB7
-    map                    | object          | 0xB8
-    map                    | object          | 0xB9
-    map                    | object          | 0xBA
-    map                    | object          | 0xBB
-    map                    | object          | 0xBF
-    False                  | `false`         | 0xF4
-    True                   | `true`          | 0xF5
-    Null                   | `null`          | 0xF6
-    Half-Precision Float   | number_float    | 0xF9
-    Single-Precision Float | number_float    | 0xFA
-    Double-Precision Float | number_float    | 0xFB
-
-    @warning The mapping is **incomplete** in the sense that not all CBOR
-             types can be converted to a JSON value. The following CBOR types
-             are not supported and will yield parse errors (parse_error.112):
-             - date/time (0xC0..0xC1)
-             - bignum (0xC2..0xC3)
-             - decimal fraction (0xC4)
-             - bigfloat (0xC5)
-             - expected conversions (0xD5..0xD7)
-             - simple values (0xE0..0xF3, 0xF8)
-             - undefined (0xF7)
-
-    @warning CBOR allows map keys of any type, whereas JSON only allows
-             strings as keys in object values. Therefore, CBOR maps with keys
-             other than UTF-8 strings are rejected (parse_error.113).
-
-    @note Any CBOR output created @ref to_cbor can be successfully parsed by
-          @ref from_cbor.
-
-    @param[in] i  an input in CBOR format convertible to an input adapter
-    @param[in] strict  whether to expect the input to be consumed until EOF
-                       (true by default)
-    @param[in] allow_exceptions  whether to throw exceptions in case of a
-    parse error (optional, true by default)
-    @param[in] tag_handler how to treat CBOR tags (optional, error by default)
-
-    @return deserialized JSON value; in case of a parse error and
-            @a allow_exceptions set to `false`, the return value will be
-            value_t::discarded.
-
-    @throw parse_error.110 if the given input ends prematurely or the end of
-    file was not reached when @a strict was set to true
-    @throw parse_error.112 if unsupported features from CBOR were
-    used in the given input @a v or if the input is not valid CBOR
-    @throw parse_error.113 if a string was expected as map key, but not found
-
-    @complexity Linear in the size of the input @a i.
-
-    @liveexample{The example shows the deserialization of a byte vector in CBOR
-    format to a JSON value.,from_cbor}
-
-    @sa http://cbor.io
-    @sa see @ref to_cbor(const basic_json&) for the analogous serialization
-    @sa see @ref from_msgpack(InputType&&, const bool, const bool) for the
-        related MessagePack format
-    @sa see @ref from_ubjson(InputType&&, const bool, const bool) for the
-        related UBJSON format
-
-    @since version 2.0.9; parameter @a start_index since 2.1.1; changed to
-           consume input adapters, removed start_index parameter, and added
-           @a strict parameter since 3.0.0; added @a allow_exceptions parameter
-           since 3.2.0; added @a tag_handler parameter since 3.9.0.
-    */
+    /// @brief create a JSON value from an input in CBOR format
+    /// @sa https://json.nlohmann.me/api/basic_json/from_cbor/
     template<typename InputType>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_cbor(InputType&& i,
@@ -4678,9 +4267,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return res ? result : basic_json(value_t::discarded);
     }
 
-    /*!
-    @copydoc from_cbor(InputType&&, const bool, const bool, const cbor_tag_handler_t)
-    */
+    /// @brief create a JSON value from an input in CBOR format
+    /// @sa https://json.nlohmann.me/api/basic_json/from_cbor/
     template<typename IteratorType>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_cbor(IteratorType first, IteratorType last,
@@ -4722,92 +4310,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return res ? result : basic_json(value_t::discarded);
     }
 
-    /*!
-    @brief create a JSON value from an input in MessagePack format
-
-    Deserializes a given input @a i to a JSON value using the MessagePack
-    serialization format.
-
-    The library maps MessagePack types to JSON value types as follows:
-
-    MessagePack type | JSON value type | first byte
-    ---------------- | --------------- | ----------
-    positive fixint  | number_unsigned | 0x00..0x7F
-    fixmap           | object          | 0x80..0x8F
-    fixarray         | array           | 0x90..0x9F
-    fixstr           | string          | 0xA0..0xBF
-    nil              | `null`          | 0xC0
-    false            | `false`         | 0xC2
-    true             | `true`          | 0xC3
-    float 32         | number_float    | 0xCA
-    float 64         | number_float    | 0xCB
-    uint 8           | number_unsigned | 0xCC
-    uint 16          | number_unsigned | 0xCD
-    uint 32          | number_unsigned | 0xCE
-    uint 64          | number_unsigned | 0xCF
-    int 8            | number_integer  | 0xD0
-    int 16           | number_integer  | 0xD1
-    int 32           | number_integer  | 0xD2
-    int 64           | number_integer  | 0xD3
-    str 8            | string          | 0xD9
-    str 16           | string          | 0xDA
-    str 32           | string          | 0xDB
-    array 16         | array           | 0xDC
-    array 32         | array           | 0xDD
-    map 16           | object          | 0xDE
-    map 32           | object          | 0xDF
-    bin 8            | binary          | 0xC4
-    bin 16           | binary          | 0xC5
-    bin 32           | binary          | 0xC6
-    ext 8            | binary          | 0xC7
-    ext 16           | binary          | 0xC8
-    ext 32           | binary          | 0xC9
-    fixext 1         | binary          | 0xD4
-    fixext 2         | binary          | 0xD5
-    fixext 4         | binary          | 0xD6
-    fixext 8         | binary          | 0xD7
-    fixext 16        | binary          | 0xD8
-    negative fixint  | number_integer  | 0xE0-0xFF
-
-    @note Any MessagePack output created @ref to_msgpack can be successfully
-          parsed by @ref from_msgpack.
-
-    @param[in] i  an input in MessagePack format convertible to an input
-                  adapter
-    @param[in] strict  whether to expect the input to be consumed until EOF
-                       (true by default)
-    @param[in] allow_exceptions  whether to throw exceptions in case of a
-    parse error (optional, true by default)
-
-    @return deserialized JSON value; in case of a parse error and
-            @a allow_exceptions set to `false`, the return value will be
-            value_t::discarded.
-
-    @throw parse_error.110 if the given input ends prematurely or the end of
-    file was not reached when @a strict was set to true
-    @throw parse_error.112 if unsupported features from MessagePack were
-    used in the given input @a i or if the input is not valid MessagePack
-    @throw parse_error.113 if a string was expected as map key, but not found
-
-    @complexity Linear in the size of the input @a i.
-
-    @liveexample{The example shows the deserialization of a byte vector in
-    MessagePack format to a JSON value.,from_msgpack}
-
-    @sa http://msgpack.org
-    @sa see @ref to_msgpack(const basic_json&) for the analogous serialization
-    @sa see @ref from_cbor(InputType&&, const bool, const bool, const cbor_tag_handler_t) for the
-        related CBOR format
-    @sa see @ref from_ubjson(InputType&&, const bool, const bool) for
-        the related UBJSON format
-    @sa see @ref from_bson(InputType&&, const bool, const bool) for
-        the related BSON format
-
-    @since version 2.0.9; parameter @a start_index since 2.1.1; changed to
-           consume input adapters, removed start_index parameter, and added
-           @a strict parameter since 3.0.0; added @a allow_exceptions parameter
-           since 3.2.0
-    */
+    /// @brief create a JSON value from an input in MessagePack format
+    /// @sa https://json.nlohmann.me/api/basic_json/from_msgpack/
     template<typename InputType>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_msgpack(InputType&& i,
@@ -4821,9 +4325,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return res ? result : basic_json(value_t::discarded);
     }
 
-    /*!
-    @copydoc from_msgpack(InputType&&, const bool, const bool)
-    */
+    /// @brief create a JSON value from an input in MessagePack format
+    /// @sa https://json.nlohmann.me/api/basic_json/from_msgpack/
     template<typename IteratorType>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_msgpack(IteratorType first, IteratorType last,
@@ -4836,7 +4339,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         const bool res = binary_reader<decltype(ia)>(std::move(ia)).sax_parse(input_format_t::msgpack, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
-
 
     template<typename T>
     JSON_HEDLEY_WARN_UNUSED_RESULT
@@ -4862,69 +4364,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return res ? result : basic_json(value_t::discarded);
     }
 
-
-    /*!
-    @brief create a JSON value from an input in UBJSON format
-
-    Deserializes a given input @a i to a JSON value using the UBJSON (Universal
-    Binary JSON) serialization format.
-
-    The library maps UBJSON types to JSON value types as follows:
-
-    UBJSON type | JSON value type                         | marker
-    ----------- | --------------------------------------- | ------
-    no-op       | *no value, next value is read*          | `N`
-    null        | `null`                                  | `Z`
-    false       | `false`                                 | `F`
-    true        | `true`                                  | `T`
-    float32     | number_float                            | `d`
-    float64     | number_float                            | `D`
-    uint8       | number_unsigned                         | `U`
-    int8        | number_integer                          | `i`
-    int16       | number_integer                          | `I`
-    int32       | number_integer                          | `l`
-    int64       | number_integer                          | `L`
-    high-precision number | number_integer, number_unsigned, or number_float - depends on number string | 'H'
-    string      | string                                  | `S`
-    char        | string                                  | `C`
-    array       | array (optimized values are supported)  | `[`
-    object      | object (optimized values are supported) | `{`
-
-    @note The mapping is **complete** in the sense that any UBJSON value can
-          be converted to a JSON value.
-
-    @param[in] i  an input in UBJSON format convertible to an input adapter
-    @param[in] strict  whether to expect the input to be consumed until EOF
-                       (true by default)
-    @param[in] allow_exceptions  whether to throw exceptions in case of a
-    parse error (optional, true by default)
-
-    @return deserialized JSON value; in case of a parse error and
-            @a allow_exceptions set to `false`, the return value will be
-            value_t::discarded.
-
-    @throw parse_error.110 if the given input ends prematurely or the end of
-    file was not reached when @a strict was set to true
-    @throw parse_error.112 if a parse error occurs
-    @throw parse_error.113 if a string could not be parsed successfully
-
-    @complexity Linear in the size of the input @a i.
-
-    @liveexample{The example shows the deserialization of a byte vector in
-    UBJSON format to a JSON value.,from_ubjson}
-
-    @sa http://ubjson.org
-    @sa see @ref to_ubjson(const basic_json&, const bool, const bool) for the
-             analogous serialization
-    @sa see @ref from_cbor(InputType&&, const bool, const bool, const cbor_tag_handler_t) for the
-        related CBOR format
-    @sa see @ref from_msgpack(InputType&&, const bool, const bool) for
-        the related MessagePack format
-    @sa see @ref from_bson(InputType&&, const bool, const bool) for
-        the related BSON format
-
-    @since version 3.1.0; added @a allow_exceptions parameter since 3.2.0
-    */
+    /// @brief create a JSON value from an input in UBJSON format
+    /// @sa https://json.nlohmann.me/api/basic_json/from_ubjson/
     template<typename InputType>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_ubjson(InputType&& i,
@@ -4938,9 +4379,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return res ? result : basic_json(value_t::discarded);
     }
 
-    /*!
-    @copydoc from_ubjson(InputType&&, const bool, const bool)
-    */
+    /// @brief create a JSON value from an input in UBJSON format
+    /// @sa https://json.nlohmann.me/api/basic_json/from_ubjson/
     template<typename IteratorType>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_ubjson(IteratorType first, IteratorType last,
@@ -4978,8 +4418,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return res ? result : basic_json(value_t::discarded);
     }
 
-
-    /// @brief Create a JSON value from an input in BSON format
+    /// @brief create a JSON value from an input in BSON format
     /// @sa https://json.nlohmann.me/api/basic_json/from_bson/
     template<typename InputType>
     JSON_HEDLEY_WARN_UNUSED_RESULT
@@ -4994,7 +4433,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return res ? result : basic_json(value_t::discarded);
     }
 
-    /// @brief Create a JSON value from an input in BSON format
+    /// @brief create a JSON value from an input in BSON format
     /// @sa https://json.nlohmann.me/api/basic_json/from_bson/
     template<typename IteratorType>
     JSON_HEDLEY_WARN_UNUSED_RESULT

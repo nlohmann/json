@@ -18,6 +18,8 @@ Deserializes a given input to a JSON value using the UBJSON (Universal Binary JS
 1. Reads from a compatible input.
 2. Reads from an iterator range.
 
+The exact mapping and its limitations is described on a [dedicated page](../../features/binary_formats/ubjson.md).
+
 ## Template parameters
 
 `InputType`
@@ -53,6 +55,14 @@ Deserializes a given input to a JSON value using the UBJSON (Universal Binary JS
 
 deserialized JSON value; in case of a parse error and `allow_exceptions` set to `#!cpp false`, the return value will be
 `value_t::discarded`. The latter can be checked with [`is_discarded`](is_discarded.md).
+
+## Exceptions
+
+- Throws [parse_error.110](../../home/exceptions.md#jsonexceptionparse_error110) if the given input ends prematurely or
+  the end of file was not reached when `strict` was set to true
+- Throws [parse_error.112](../../home/exceptions.md#jsonexceptionparse_error112) if a parse error occurs
+- Throws [parse_error.113](../../home/exceptions.md#jsonexceptionparse_error113) if a string could not be parsed 
+  successfully
 
 ## Exception safety
 

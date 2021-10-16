@@ -18,34 +18,7 @@ Deserializes a given input to a JSON value using the BSON (Binary JSON) serializ
 1. Reads from a compatible input.
 2. Reads from an iterator range.
 
-The library maps BSON record types to JSON value types as follows:
-
-BSON type       | BSON marker byte | JSON value type
---------------- | ---------------- | ---------------------------
-double          | 0x01             | number_float
-string          | 0x02             | string
-document        | 0x03             | object
-array           | 0x04             | array
-binary          | 0x05             | binary
-undefined       | 0x06             | still unsupported
-ObjectId        | 0x07             | still unsupported
-boolean         | 0x08             | boolean
-UTC Date-Time   | 0x09             | still unsupported
-null            | 0x0A             | null
-Regular Expr.   | 0x0B             | still unsupported
-DB Pointer      | 0x0C             | still unsupported
-JavaScript Code | 0x0D             | still unsupported
-Symbol          | 0x0E             | still unsupported
-JavaScript Code | 0x0F             | still unsupported
-int32           | 0x10             | number_integer
-Timestamp       | 0x11             | still unsupported
-128-bit decimal float | 0x13       | still unsupported
-Max Key         | 0x7F             | still unsupported
-Min Key         | 0xFF             | still unsupported
-
-!!! warning
-
-    The mapping is **incomplete**. The unsupported mappings are indicated in the table above.
+The exact mapping and its limitations is described on a [dedicated page](../../features/binary_formats/bson.md).
 
 ## Template parameters
 
