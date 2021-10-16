@@ -1,9 +1,35 @@
 # Changelog
 All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [3.10.3](https://github.com/nlohmann/json/releases/tag/3.10.3) (2021-10-08)
+## [3.10.4](https://github.com/nlohmann/json/releases/tag/3.10.4) (2021-10-16)
 
-[Full Changelog](https://github.com/nlohmann/json/compare/v3.10.2...3.10.3)
+[Full Changelog](https://github.com/nlohmann/json/compare/v3.10.3...3.10.4)
+
+- Compiler error in output serializer due to 'incompatible initializer' [\#3081](https://github.com/nlohmann/json/issues/3081)
+- Strange behaviour when using std::sort on std::vector\<json\> [\#3080](https://github.com/nlohmann/json/issues/3080)
+- Unhandled exception: nlohmann::detail::parse\_error [\#3078](https://github.com/nlohmann/json/issues/3078)
+- explicit constructor with default does not compile [\#3077](https://github.com/nlohmann/json/issues/3077)
+- Parse an object but get an array using GCC [\#3076](https://github.com/nlohmann/json/issues/3076)
+- Version 3.10.3 breaks backward-compatibility with 3.10.2 [\#3070](https://github.com/nlohmann/json/issues/3070)
+- Feature request, Add to\_json/from\_json to align with other to/from binary api.  [\#3067](https://github.com/nlohmann/json/issues/3067)
+- vcpkg is out of date [\#3066](https://github.com/nlohmann/json/issues/3066)
+
+- Revert invalid fix [\#3082](https://github.com/nlohmann/json/pull/3082) ([nlohmann](https://github.com/nlohmann))
+- Allow to use get with explicit constructor [\#3079](https://github.com/nlohmann/json/pull/3079) ([nlohmann](https://github.com/nlohmann))
+- fix std::filesystem::path regression [\#3073](https://github.com/nlohmann/json/pull/3073) ([theodelrieu](https://github.com/theodelrieu))
+- Fix Clang version [\#3040](https://github.com/nlohmann/json/pull/3040) ([nlohmann](https://github.com/nlohmann))
+- Fix assertion failure for JSON\_DIAGNOSTICS [\#3037](https://github.com/nlohmann/json/pull/3037) ([carlsmedstad](https://github.com/carlsmedstad))
+- meta: fix is\_compatible/constructible traits [\#3020](https://github.com/nlohmann/json/pull/3020) ([theodelrieu](https://github.com/theodelrieu))
+- Set parent pointers for values inserted via update\(\) \(fixes \#3007\). [\#3008](https://github.com/nlohmann/json/pull/3008) ([AnthonyVH](https://github.com/AnthonyVH))
+- Allow allocators for output\_vector\_adapter [\#2989](https://github.com/nlohmann/json/pull/2989) ([nlohmann](https://github.com/nlohmann))
+- Re-add Clang 12 [\#2986](https://github.com/nlohmann/json/pull/2986) ([nlohmann](https://github.com/nlohmann))
+- Use new Docker image [\#2981](https://github.com/nlohmann/json/pull/2981) ([nlohmann](https://github.com/nlohmann))
+- Fix -Wunused warnings on JSON\_DIAGNOSTICS  [\#2976](https://github.com/nlohmann/json/pull/2976) ([gcerretani](https://github.com/gcerretani))
+- Update docset generation script [\#2967](https://github.com/nlohmann/json/pull/2967) ([nlohmann](https://github.com/nlohmann))
+
+## [v3.10.3](https://github.com/nlohmann/json/releases/tag/v3.10.3) (2021-10-08)
+
+[Full Changelog](https://github.com/nlohmann/json/compare/v3.10.2...v3.10.3)
 
 - Parsing an emtpy string returns a string with size 1 instead of expected 0 [\#3057](https://github.com/nlohmann/json/issues/3057)
 - Linking error  "duplicate symbol: std::type\_info::operator==" on static build with MinGW [\#3042](https://github.com/nlohmann/json/issues/3042)
@@ -23,16 +49,6 @@ All notable changes to this project will be documented in this file. This projec
 - to\_{binary format} does not provide a mechanism for specifying a custom allocator for the returned type. [\#2982](https://github.com/nlohmann/json/issues/2982)
 - 3.10.1 zip json.hpp has version number 3.10.0 instead of 3.10.1 [\#2973](https://github.com/nlohmann/json/issues/2973)
 - Assertion failure when serializing array with JSON\_DIAGNOSTICS set [\#2926](https://github.com/nlohmann/json/issues/2926)
-
-- Fix Clang version [\#3040](https://github.com/nlohmann/json/pull/3040) ([nlohmann](https://github.com/nlohmann))
-- Fix assertion failure for JSON\_DIAGNOSTICS [\#3037](https://github.com/nlohmann/json/pull/3037) ([carlsmedstad](https://github.com/carlsmedstad))
-- meta: fix is\_compatible/constructible traits [\#3020](https://github.com/nlohmann/json/pull/3020) ([theodelrieu](https://github.com/theodelrieu))
-- Set parent pointers for values inserted via update\(\) \(fixes \#3007\). [\#3008](https://github.com/nlohmann/json/pull/3008) ([AnthonyVH](https://github.com/AnthonyVH))
-- Allow allocators for output\_vector\_adapter [\#2989](https://github.com/nlohmann/json/pull/2989) ([nlohmann](https://github.com/nlohmann))
-- Re-add Clang 12 [\#2986](https://github.com/nlohmann/json/pull/2986) ([nlohmann](https://github.com/nlohmann))
-- Use new Docker image [\#2981](https://github.com/nlohmann/json/pull/2981) ([nlohmann](https://github.com/nlohmann))
-- Fix -Wunused warnings on JSON\_DIAGNOSTICS  [\#2976](https://github.com/nlohmann/json/pull/2976) ([gcerretani](https://github.com/gcerretani))
-- Update docset generation script [\#2967](https://github.com/nlohmann/json/pull/2967) ([nlohmann](https://github.com/nlohmann))
 
 ## [v3.10.2](https://github.com/nlohmann/json/releases/tag/v3.10.2) (2021-08-26)
 
