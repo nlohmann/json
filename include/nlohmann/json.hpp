@@ -1073,64 +1073,34 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
 
         /// constructor for strings
-        json_value(const string_t& value)
-        {
-            string = create<string_t>(value);
-        }
+        json_value(const string_t& value) : string(create<string_t>(value)) {}
 
         /// constructor for rvalue strings
-        json_value(string_t&& value)
-        {
-            string = create<string_t>(std::move(value));
-        }
+        json_value(string_t&& value) : string(create<string_t>(std::move(value))) {}
 
         /// constructor for objects
-        json_value(const object_t& value)
-        {
-            object = create<object_t>(value);
-        }
+        json_value(const object_t& value) : object(create<object_t>(value)) {}
 
         /// constructor for rvalue objects
-        json_value(object_t&& value)
-        {
-            object = create<object_t>(std::move(value));
-        }
+        json_value(object_t&& value) : object(create<object_t>(std::move(value))) {}
 
         /// constructor for arrays
-        json_value(const array_t& value)
-        {
-            array = create<array_t>(value);
-        }
+        json_value(const array_t& value) : array(create<array_t>(value)) {}
 
         /// constructor for rvalue arrays
-        json_value(array_t&& value)
-        {
-            array = create<array_t>(std::move(value));
-        }
+        json_value(array_t&& value) : array(create<array_t>(std::move(value))) {}
 
         /// constructor for binary arrays
-        json_value(const typename binary_t::container_type& value)
-        {
-            binary = create<binary_t>(value);
-        }
+        json_value(const typename binary_t::container_type& value) : binary(create<binary_t>(value)) {}
 
         /// constructor for rvalue binary arrays
-        json_value(typename binary_t::container_type&& value)
-        {
-            binary = create<binary_t>(std::move(value));
-        }
+        json_value(typename binary_t::container_type&& value) : binary(create<binary_t>(std::move(value))) {}
 
         /// constructor for binary arrays (internal type)
-        json_value(const binary_t& value)
-        {
-            binary = create<binary_t>(value);
-        }
+        json_value(const binary_t& value) : binary(create<binary_t>(value)) {}
 
         /// constructor for rvalue binary arrays (internal type)
-        json_value(binary_t&& value)
-        {
-            binary = create<binary_t>(std::move(value));
-        }
+        json_value(binary_t&& value) : binary(create<binary_t>(std::move(value))) {}
 
         void destroy(value_t t)
         {
