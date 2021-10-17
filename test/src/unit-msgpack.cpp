@@ -719,7 +719,7 @@ TEST_CASE("MessagePack")
                 {
                     for (uint64_t i :
                             {
-                                4294967296lu, 18446744073709551615lu
+                                4294967296LU, 18446744073709551615LU
                             })
                     {
                         CAPTURE(i)
