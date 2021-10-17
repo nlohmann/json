@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.10.2
+|  |  |__   |  |  | | | |  version 3.10.4
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -848,6 +848,36 @@ TEST_CASE("Issue #1237")
 {
     struct non_convertible_type {};
     static_assert(!std::is_convertible<json, non_convertible_type>::value, "");
+}
+
+namespace
+{
+class no_iterator_type
+{
+  public:
+    no_iterator_type(std::initializer_list<int> l)
+        : _v(l)
+    {}
+
+    std::vector<int>::const_iterator begin() const
+    {
+        return _v.begin();
+    }
+
+    std::vector<int>::const_iterator end() const
+    {
+        return _v.end();
+    }
+
+  private:
+    std::vector<int> _v;
+};
+}  // namespace
+
+TEST_CASE("compatible array type, without iterator type alias")
+{
+    no_iterator_type vec{1, 2, 3};
+    json j = vec;
 }
 
 DOCTEST_GCC_SUPPRESS_WARNING_POP

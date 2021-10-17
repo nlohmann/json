@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.10.2
+|  |  |__   |  |  | | | |  version 3.10.4
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -232,6 +232,23 @@ TEST_CASE("Better diagnostics")
             }
 
             root.push_back(lower);
+        }
+    }
+
+    SECTION("Regression test for https://github.com/nlohmann/json/issues/3032")
+    {
+        // reference operator[](size_type idx)
+        {
+            json j_arr = json::array();
+            j_arr[0] = 0;
+            j_arr[1] = 1;
+            j_arr[2] = 2;
+            j_arr[3] = 3;
+            j_arr[4] = 4;
+            j_arr[5] = 5;
+            j_arr[6] = 6;
+            j_arr[7] = 7;
+            json j_arr_copy = j_arr;
         }
     }
 }
