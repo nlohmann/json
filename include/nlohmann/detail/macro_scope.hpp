@@ -1,7 +1,8 @@
 #pragma once
 
-#include <utility> // pair
+#include <utility> // declval, pair
 #include <nlohmann/thirdparty/hedley/hedley.hpp>
+#include <nlohmann/detail/meta/detected.hpp>
 
 // This file contains all internal macro definitions
 // You MUST include macro_unscope.hpp at the end of json.hpp to undef all of them
@@ -291,6 +292,45 @@
 #define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Type, ...)  \
     inline void to_json(nlohmann::json& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) } \
     inline void from_json(const nlohmann::json& nlohmann_json_j, Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, __VA_ARGS__)) }
+
+
+// inspired from https://stackoverflow.com/a/26745591
+// allows to call any std function as if (e.g. with begin):
+// using std::begin; begin(x);
+//
+// it allows using the detected idiom to retrieve the return type
+// of such an expression
+#define NLOHMANN_CAN_CALL_STD_FUNC_IMPL(std_name)                                 \
+    namespace detail {                                                            \
+    using std::std_name;                                                          \
+    \
+    template<typename... T>                                                       \
+    using result_of_##std_name = decltype(std_name(std::declval<T>()...));        \
+    }                                                                             \
+    \
+    namespace detail2 {                                                           \
+    struct std_name##_tag                                                         \
+    {                                                                             \
+    };                                                                            \
+    \
+    template<typename... T>                                                       \
+    std_name##_tag std_name(T&&...);                                              \
+    \
+    template<typename... T>                                                       \
+    using result_of_##std_name = decltype(std_name(std::declval<T>()...));        \
+    \
+    template<typename... T>                                                       \
+    struct would_call_std_##std_name                                              \
+    {                                                                             \
+        static constexpr auto const value = ::nlohmann::detail::                  \
+                                            is_detected_exact<std_name##_tag, result_of_##std_name, T...>::value; \
+    };                                                                            \
+    } /* namespace detail2 */ \
+    \
+    template<typename... T>                                                       \
+    struct would_call_std_##std_name : detail2::would_call_std_##std_name<T...>   \
+    {                                                                             \
+    }
 
 #ifndef JSON_USE_IMPLICIT_CONVERSIONS
     #define JSON_USE_IMPLICIT_CONVERSIONS 1

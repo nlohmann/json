@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++
-|  |  |__   |  |  | | | |  version 3.10.2
+|  |  |__   |  |  | | | |  version 3.10.4
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -32,7 +32,7 @@ SOFTWARE.
 
 #define NLOHMANN_JSON_VERSION_MAJOR 3
 #define NLOHMANN_JSON_VERSION_MINOR 10
-#define NLOHMANN_JSON_VERSION_PATCH 2
+#define NLOHMANN_JSON_VERSION_PATCH 4
 
 #include <algorithm> // all_of, find, for_each
 #include <cstddef> // nullptr_t, ptrdiff_t, size_t
@@ -167,7 +167,7 @@ inline bool operator<(const value_t lhs, const value_t rhs) noexcept
 // #include <nlohmann/detail/macro_scope.hpp>
 
 
-#include <utility> // pair
+#include <utility> // declval, pair
 // #include <nlohmann/thirdparty/hedley/hedley.hpp>
 
 
@@ -2214,6 +2214,83 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 
 #endif /* !defined(JSON_HEDLEY_VERSION) || (JSON_HEDLEY_VERSION < X) */
 
+// #include <nlohmann/detail/meta/detected.hpp>
+
+
+#include <type_traits>
+
+// #include <nlohmann/detail/meta/void_t.hpp>
+
+
+namespace nlohmann
+{
+namespace detail
+{
+template<typename ...Ts> struct make_void
+{
+    using type = void;
+};
+template<typename ...Ts> using void_t = typename make_void<Ts...>::type;
+} // namespace detail
+}  // namespace nlohmann
+
+
+// https://en.cppreference.com/w/cpp/experimental/is_detected
+namespace nlohmann
+{
+namespace detail
+{
+struct nonesuch
+{
+    nonesuch() = delete;
+    ~nonesuch() = delete;
+    nonesuch(nonesuch const&) = delete;
+    nonesuch(nonesuch const&&) = delete;
+    void operator=(nonesuch const&) = delete;
+    void operator=(nonesuch&&) = delete;
+};
+
+template<class Default,
+         class AlwaysVoid,
+         template<class...> class Op,
+         class... Args>
+struct detector
+{
+    using value_t = std::false_type;
+    using type = Default;
+};
+
+template<class Default, template<class...> class Op, class... Args>
+struct detector<Default, void_t<Op<Args...>>, Op, Args...>
+{
+    using value_t = std::true_type;
+    using type = Op<Args...>;
+};
+
+template<template<class...> class Op, class... Args>
+using is_detected = typename detector<nonesuch, void, Op, Args...>::value_t;
+
+template<template<class...> class Op, class... Args>
+struct is_detected_lazy : is_detected<Op, Args...> { };
+
+template<template<class...> class Op, class... Args>
+using detected_t = typename detector<nonesuch, void, Op, Args...>::type;
+
+template<class Default, template<class...> class Op, class... Args>
+using detected_or = detector<Default, void, Op, Args...>;
+
+template<class Default, template<class...> class Op, class... Args>
+using detected_or_t = typename detected_or<Default, Op, Args...>::type;
+
+template<class Expected, template<class...> class Op, class... Args>
+using is_detected_exact = std::is_same<Expected, detected_t<Op, Args...>>;
+
+template<class To, template<class...> class Op, class... Args>
+using is_detected_convertible =
+    std::is_convertible<detected_t<Op, Args...>, To>;
+}  // namespace detail
+}  // namespace nlohmann
+
 
 // This file contains all internal macro definitions
 // You MUST include macro_unscope.hpp at the end of json.hpp to undef all of them
@@ -2503,6 +2580,45 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 #define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Type, ...)  \
     inline void to_json(nlohmann::json& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) } \
     inline void from_json(const nlohmann::json& nlohmann_json_j, Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, __VA_ARGS__)) }
+
+
+// inspired from https://stackoverflow.com/a/26745591
+// allows to call any std function as if (e.g. with begin):
+// using std::begin; begin(x);
+//
+// it allows using the detected idiom to retrieve the return type
+// of such an expression
+#define NLOHMANN_CAN_CALL_STD_FUNC_IMPL(std_name)                                 \
+    namespace detail {                                                            \
+    using std::std_name;                                                          \
+    \
+    template<typename... T>                                                       \
+    using result_of_##std_name = decltype(std_name(std::declval<T>()...));        \
+    }                                                                             \
+    \
+    namespace detail2 {                                                           \
+    struct std_name##_tag                                                         \
+    {                                                                             \
+    };                                                                            \
+    \
+    template<typename... T>                                                       \
+    std_name##_tag std_name(T&&...);                                              \
+    \
+    template<typename... T>                                                       \
+    using result_of_##std_name = decltype(std_name(std::declval<T>()...));        \
+    \
+    template<typename... T>                                                       \
+    struct would_call_std_##std_name                                              \
+    {                                                                             \
+        static constexpr auto const value = ::nlohmann::detail::                  \
+                                            is_detected_exact<std_name##_tag, result_of_##std_name, T...>::value; \
+    };                                                                            \
+    } /* namespace detail2 */ \
+    \
+    template<typename... T>                                                       \
+    struct would_call_std_##std_name : detail2::would_call_std_##std_name<T...>   \
+    {                                                                             \
+    }
 
 #ifndef JSON_USE_IMPLICIT_CONVERSIONS
     #define JSON_USE_IMPLICIT_CONVERSIONS 1
@@ -3207,25 +3323,15 @@ template <class T> struct identity_tag {};
 #include <utility> // declval
 #include <tuple> // tuple
 
+// #include <nlohmann/detail/macro_scope.hpp>
+
+
 // #include <nlohmann/detail/iterators/iterator_traits.hpp>
 
 
 #include <iterator> // random_access_iterator_tag
 
 // #include <nlohmann/detail/meta/void_t.hpp>
-
-
-namespace nlohmann
-{
-namespace detail
-{
-template<typename ...Ts> struct make_void
-{
-    using type = void;
-};
-template<typename ...Ts> using void_t = typename make_void<Ts...>::type;
-} // namespace detail
-}  // namespace nlohmann
 
 // #include <nlohmann/detail/meta/cpp_future.hpp>
 
@@ -3275,73 +3381,31 @@ struct iterator_traits<T*, enable_if_t<std::is_object<T>::value>>
 } // namespace detail
 } // namespace nlohmann
 
+// #include <nlohmann/detail/meta/call_std/begin.hpp>
+
+
 // #include <nlohmann/detail/macro_scope.hpp>
+
+
+namespace nlohmann
+{
+NLOHMANN_CAN_CALL_STD_FUNC_IMPL(begin);
+} // namespace nlohmann
+
+// #include <nlohmann/detail/meta/call_std/end.hpp>
+
+
+// #include <nlohmann/detail/macro_scope.hpp>
+
+
+namespace nlohmann
+{
+NLOHMANN_CAN_CALL_STD_FUNC_IMPL(end);
+}  // namespace nlohmann
 
 // #include <nlohmann/detail/meta/cpp_future.hpp>
 
 // #include <nlohmann/detail/meta/detected.hpp>
-
-
-#include <type_traits>
-
-// #include <nlohmann/detail/meta/void_t.hpp>
-
-
-// https://en.cppreference.com/w/cpp/experimental/is_detected
-namespace nlohmann
-{
-namespace detail
-{
-struct nonesuch
-{
-    nonesuch() = delete;
-    ~nonesuch() = delete;
-    nonesuch(nonesuch const&) = delete;
-    nonesuch(nonesuch const&&) = delete;
-    void operator=(nonesuch const&) = delete;
-    void operator=(nonesuch&&) = delete;
-};
-
-template<class Default,
-         class AlwaysVoid,
-         template<class...> class Op,
-         class... Args>
-struct detector
-{
-    using value_t = std::false_type;
-    using type = Default;
-};
-
-template<class Default, template<class...> class Op, class... Args>
-struct detector<Default, void_t<Op<Args...>>, Op, Args...>
-{
-    using value_t = std::true_type;
-    using type = Op<Args...>;
-};
-
-template<template<class...> class Op, class... Args>
-using is_detected = typename detector<nonesuch, void, Op, Args...>::value_t;
-
-template<template<class...> class Op, class... Args>
-struct is_detected_lazy : is_detected<Op, Args...> { };
-
-template<template<class...> class Op, class... Args>
-using detected_t = typename detector<nonesuch, void, Op, Args...>::type;
-
-template<class Default, template<class...> class Op, class... Args>
-using detected_or = detector<Default, void, Op, Args...>;
-
-template<class Default, template<class...> class Op, class... Args>
-using detected_or_t = typename detected_or<Default, Op, Args...>::type;
-
-template<class Expected, template<class...> class Op, class... Args>
-using is_detected_exact = std::is_same<Expected, detected_t<Op, Args...>>;
-
-template<class To, template<class...> class Op, class... Args>
-using is_detected_convertible =
-    std::is_convertible<detected_t<Op, Args...>, To>;
-}  // namespace detail
-}  // namespace nlohmann
 
 // #include <nlohmann/json_fwd.hpp>
 #ifndef INCLUDE_NLOHMANN_JSON_FWD_HPP_
@@ -3492,9 +3556,6 @@ using reference_t = typename T::reference;
 template<typename T>
 using iterator_category_t = typename T::iterator_category;
 
-template<typename T>
-using iterator_t = typename T::iterator;
-
 template<typename T, typename... Args>
 using to_json_function = decltype(T::to_json(std::declval<Args>()...));
 
@@ -3630,6 +3691,31 @@ struct is_iterator_traits<iterator_traits<T>>
         is_detected<reference_t, traits>::value;
 };
 
+template<typename T>
+struct is_range
+{
+  private:
+    using t_ref = typename std::add_lvalue_reference<T>::type;
+
+    using iterator = detected_t<result_of_begin, t_ref>;
+    using sentinel = detected_t<result_of_end, t_ref>;
+
+    // to be 100% correct, it should use https://en.cppreference.com/w/cpp/iterator/input_or_output_iterator
+    // and https://en.cppreference.com/w/cpp/iterator/sentinel_for
+    // but reimplementing these would be too much work, as a lot of other concepts are used underneath
+    static constexpr auto is_iterator_begin =
+        is_iterator_traits<iterator_traits<iterator>>::value;
+
+  public:
+    static constexpr bool value = !std::is_same<iterator, nonesuch>::value && !std::is_same<sentinel, nonesuch>::value && is_iterator_begin;
+};
+
+template<typename R>
+using iterator_t = enable_if_t<is_range<R>::value, result_of_begin<decltype(std::declval<R&>())>>;
+
+template<typename T>
+using range_value_t = value_type_t<iterator_traits<iterator_t<T>>>;
+
 // The following implementation of is_complete_type is taken from
 // https://blogs.msdn.microsoft.com/vcblog/2015/12/02/partial-support-for-expression-sfinae-in-vs-2015-update-1/
 // and is written by Xiang Fan who agreed to using it in this library.
@@ -3697,42 +3783,20 @@ struct is_constructible_object_type
     : is_constructible_object_type_impl<BasicJsonType,
       ConstructibleObjectType> {};
 
-template<typename BasicJsonType, typename CompatibleStringType,
-         typename = void>
-struct is_compatible_string_type_impl : std::false_type {};
-
 template<typename BasicJsonType, typename CompatibleStringType>
-struct is_compatible_string_type_impl <
-    BasicJsonType, CompatibleStringType,
-    enable_if_t<is_detected_exact<typename BasicJsonType::string_t::value_type,
-    value_type_t, CompatibleStringType>::value >>
+struct is_compatible_string_type
 {
     static constexpr auto value =
         is_constructible<typename BasicJsonType::string_t, CompatibleStringType>::value;
 };
 
 template<typename BasicJsonType, typename ConstructibleStringType>
-struct is_compatible_string_type
-    : is_compatible_string_type_impl<BasicJsonType, ConstructibleStringType> {};
-
-template<typename BasicJsonType, typename ConstructibleStringType,
-         typename = void>
-struct is_constructible_string_type_impl : std::false_type {};
-
-template<typename BasicJsonType, typename ConstructibleStringType>
-struct is_constructible_string_type_impl <
-    BasicJsonType, ConstructibleStringType,
-    enable_if_t<is_detected_exact<typename BasicJsonType::string_t::value_type,
-    value_type_t, ConstructibleStringType>::value >>
+struct is_constructible_string_type
 {
     static constexpr auto value =
         is_constructible<ConstructibleStringType,
         typename BasicJsonType::string_t>::value;
 };
-
-template<typename BasicJsonType, typename ConstructibleStringType>
-struct is_constructible_string_type
-    : is_constructible_string_type_impl<BasicJsonType, ConstructibleStringType> {};
 
 template<typename BasicJsonType, typename CompatibleArrayType, typename = void>
 struct is_compatible_array_type_impl : std::false_type {};
@@ -3740,17 +3804,16 @@ struct is_compatible_array_type_impl : std::false_type {};
 template<typename BasicJsonType, typename CompatibleArrayType>
 struct is_compatible_array_type_impl <
     BasicJsonType, CompatibleArrayType,
-    enable_if_t < is_detected<value_type_t, CompatibleArrayType>::value&&
+    enable_if_t <
     is_detected<iterator_t, CompatibleArrayType>::value&&
-// This is needed because json_reverse_iterator has a ::iterator type...
-// Therefore it is detected as a CompatibleArrayType.
-// The real fix would be to have an Iterable concept.
-    !is_iterator_traits <
-    iterator_traits<CompatibleArrayType >>::value >>
+    is_iterator_traits<iterator_traits<detected_t<iterator_t, CompatibleArrayType>>>::value&&
+// special case for types like std::filesystem::path whose iterator's value_type are themselves
+// c.f. https://github.com/nlohmann/json/pull/3073
+    !std::is_same<CompatibleArrayType, detected_t<range_value_t, CompatibleArrayType>>::value >>
 {
     static constexpr bool value =
         is_constructible<BasicJsonType,
-        typename CompatibleArrayType::value_type>::value;
+        range_value_t<CompatibleArrayType>>::value;
 };
 
 template<typename BasicJsonType, typename CompatibleArrayType>
@@ -3772,28 +3835,29 @@ struct is_constructible_array_type_impl <
     BasicJsonType, ConstructibleArrayType,
     enable_if_t < !std::is_same<ConstructibleArrayType,
     typename BasicJsonType::value_type>::value&&
+    !is_compatible_string_type<BasicJsonType, ConstructibleArrayType>::value&&
     is_default_constructible<ConstructibleArrayType>::value&&
 (std::is_move_assignable<ConstructibleArrayType>::value ||
  std::is_copy_assignable<ConstructibleArrayType>::value)&&
-is_detected<value_type_t, ConstructibleArrayType>::value&&
 is_detected<iterator_t, ConstructibleArrayType>::value&&
-is_complete_type <
-detected_t<value_type_t, ConstructibleArrayType >>::value >>
+is_iterator_traits<iterator_traits<detected_t<iterator_t, ConstructibleArrayType>>>::value&&
+is_detected<range_value_t, ConstructibleArrayType>::value&&
+// special case for types like std::filesystem::path whose iterator's value_type are themselves
+// c.f. https://github.com/nlohmann/json/pull/3073
+!std::is_same<ConstructibleArrayType, detected_t<range_value_t, ConstructibleArrayType>>::value&&
+        is_complete_type <
+        detected_t<range_value_t, ConstructibleArrayType >>::value >>
 {
-    static constexpr bool value =
-        // This is needed because json_reverse_iterator has a ::iterator type,
-        // furthermore, std::back_insert_iterator (and other iterators) have a
-        // base class `iterator`... Therefore it is detected as a
-        // ConstructibleArrayType. The real fix would be to have an Iterable
-        // concept.
-        !is_iterator_traits<iterator_traits<ConstructibleArrayType>>::value &&
+    using value_type = range_value_t<ConstructibleArrayType>;
 
-        (std::is_same<typename ConstructibleArrayType::value_type,
-         typename BasicJsonType::array_t::value_type>::value ||
-         has_from_json<BasicJsonType,
-         typename ConstructibleArrayType::value_type>::value ||
-         has_non_default_from_json <
-         BasicJsonType, typename ConstructibleArrayType::value_type >::value);
+    static constexpr bool value =
+        std::is_same<value_type,
+        typename BasicJsonType::array_t::value_type>::value ||
+        has_from_json<BasicJsonType,
+        value_type>::value ||
+        has_non_default_from_json <
+        BasicJsonType,
+        value_type >::value;
 };
 
 template<typename BasicJsonType, typename ConstructibleArrayType>
@@ -3849,33 +3913,6 @@ struct is_constructible_tuple : std::false_type {};
 template<typename T1, typename... Args>
 struct is_constructible_tuple<T1, std::tuple<Args...>> : conjunction<is_constructible<T1, Args>...> {};
 
-/// type to check if KeyType can be used as object key
-
-template<typename ComparatorType, typename KeyType, typename ObjectKeyType, typename = void>
-struct is_key_type_comparable
-{
-    static constexpr bool value = false;
-};
-
-template<typename ComparatorType, typename KeyType, typename ObjectKeyType>
-struct is_key_type_comparable<ComparatorType, KeyType, ObjectKeyType, void_t<
-decltype(ComparatorType()(std::declval<KeyType const&>(), std::declval<ObjectKeyType const&>())),
-decltype(ComparatorType()(std::declval<ObjectKeyType const&>(), std::declval<KeyType const&>()))
-        >>
-{
-    static constexpr bool value = true;
-};
-
-template<typename BasicJsonType, typename KeyType>
-struct is_usable_as_key_type
-{
-    static constexpr bool value =
-        is_key_type_comparable<typename BasicJsonType::object_comparator_t, typename BasicJsonType::object_t::key_type, KeyType>::value &&
-        !std::is_same<KeyType, typename BasicJsonType::iterator>::value &&
-        !std::is_same<KeyType, typename BasicJsonType::const_iterator>::value;
-};
-
-
 // a naive helper to check if a type is an ordered_map (exploits the fact that
 // ordered_map inherits capacity() from std::vector)
 template <typename T>
@@ -3912,6 +3949,10 @@ T conditional_static_cast(U value)
 
 // #include <nlohmann/detail/value_t.hpp>
 
+
+#ifdef JSON_HAS_CPP_17
+    #include <filesystem>
+#endif
 
 namespace nlohmann
 {
@@ -4063,7 +4104,7 @@ void from_json(const BasicJsonType& j, std::valarray<T>& l)
 }
 
 template<typename BasicJsonType, typename T, std::size_t N>
-auto from_json(const BasicJsonType& j, T (&arr)[N]) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+auto from_json(const BasicJsonType& j, T (&arr)[N])  // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
 -> decltype(j.template get<T>(), void())
 {
     for (std::size_t i = 0; i < N; ++i)
@@ -4338,6 +4379,18 @@ void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Hash, KeyE
     }
 }
 
+#ifdef JSON_HAS_CPP_17
+template<typename BasicJsonType>
+void from_json(const BasicJsonType& j, std::filesystem::path& p)
+{
+    if (JSON_HEDLEY_UNLIKELY(!j.is_string()))
+    {
+        JSON_THROW(type_error::create(302, "type must be string, but is " + std::string(j.type_name()), j));
+    }
+    p = *j.template get_ptr<const typename BasicJsonType::string_t*>();
+}
+#endif
+
 struct from_json_fn
 {
     template<typename BasicJsonType, typename T>
@@ -4370,6 +4423,8 @@ constexpr const auto& from_json = detail::static_const<detail::from_json_fn>::va
 #include <utility> // move, forward, declval, pair
 #include <valarray> // valarray
 #include <vector> // vector
+
+// #include <nlohmann/detail/macro_scope.hpp>
 
 // #include <nlohmann/detail/iterators/iteration_proxy.hpp>
 
@@ -4570,6 +4625,10 @@ class tuple_element<N, ::nlohmann::detail::iteration_proxy_value<IteratorType >>
 
 // #include <nlohmann/detail/value_t.hpp>
 
+
+#ifdef JSON_HAS_CPP_17
+    #include <filesystem>
+#endif
 
 namespace nlohmann
 {
@@ -4942,6 +5001,14 @@ void to_json(BasicJsonType& j, const T& t)
 {
     to_json_tuple_impl(j, t, make_index_sequence<std::tuple_size<T>::value> {});
 }
+
+#ifdef JSON_HAS_CPP_17
+template<typename BasicJsonType>
+void to_json(BasicJsonType& j, const std::filesystem::path& p)
+{
+    j = p.string();
+}
+#endif
 
 struct to_json_fn
 {
@@ -13512,11 +13579,11 @@ template<typename CharType>
 using output_adapter_t = std::shared_ptr<output_adapter_protocol<CharType>>;
 
 /// output adapter for byte vectors
-template<typename CharType>
+template<typename CharType, typename AllocatorType = std::allocator<CharType>>
 class output_vector_adapter : public output_adapter_protocol<CharType>
 {
   public:
-    explicit output_vector_adapter(std::vector<CharType>& vec) noexcept
+    explicit output_vector_adapter(std::vector<CharType, AllocatorType>& vec) noexcept
         : v(vec)
     {}
 
@@ -13532,7 +13599,7 @@ class output_vector_adapter : public output_adapter_protocol<CharType>
     }
 
   private:
-    std::vector<CharType>& v;
+    std::vector<CharType, AllocatorType>& v;
 };
 
 #ifndef JSON_NO_IO
@@ -13589,8 +13656,9 @@ template<typename CharType, typename StringType = std::basic_string<CharType>>
 class output_adapter
 {
   public:
-    output_adapter(std::vector<CharType>& vec)
-        : oa(std::make_shared<output_vector_adapter<CharType>>(vec)) {}
+    template<typename AllocatorType = std::allocator<CharType>>
+    output_adapter(std::vector<CharType, AllocatorType>& vec)
+        : oa(std::make_shared<output_vector_adapter<CharType, AllocatorType>>(vec)) {}
 
 #ifndef JSON_NO_IO
     output_adapter(std::basic_ostream<CharType>& s)
@@ -17167,8 +17235,8 @@ class serializer
         // erase thousands separator
         if (thousands_sep != '\0')
         {
-            auto* const end = std::remove(number_buffer.begin(),
-                                          number_buffer.begin() + len, thousands_sep);
+            // NOLINTNEXTLINE(readability-qualified-auto,llvm-qualified-auto): std::remove returns an iterator, see https://github.com/nlohmann/json/issues/3081
+            const auto end = std::remove(number_buffer.begin(), number_buffer.begin() + len, thousands_sep);
             std::fill(end, number_buffer.end(), '\0');
             JSON_ASSERT((end - number_buffer.begin()) <= len);
             len = (end - number_buffer.begin());
@@ -17177,7 +17245,8 @@ class serializer
         // convert decimal point to '.'
         if (decimal_point != '\0' && decimal_point != '.')
         {
-            auto* const dec_pos = std::find(number_buffer.begin(), number_buffer.end(), decimal_point);
+            // NOLINTNEXTLINE(readability-qualified-auto,llvm-qualified-auto): std::find returns an iterator, see https://github.com/nlohmann/json/issues/3081
+            const auto dec_pos = std::find(number_buffer.begin(), number_buffer.end(), decimal_point);
             if (dec_pos != number_buffer.end())
             {
                 *dec_pos = '.';
@@ -18495,12 +18564,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 default:
                 {
                     object = nullptr;  // silence warning, see #821
-                    // LCOV_EXCL_START
                     if (JSON_HEDLEY_UNLIKELY(t == value_t::null))
                     {
-                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.10.2", basic_json()));
+                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.10.4", basic_json())); // LCOV_EXCL_LINE
                     }
-                    // LCOV_EXCL_STOP
                     break;
                 }
             }
@@ -20503,7 +20570,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     ValueType get_impl(detail::priority_tag<0> /*unused*/) const noexcept(noexcept(
                 JSONSerializer<ValueType>::from_json(std::declval<const basic_json_t&>(), std::declval<ValueType&>())))
     {
-        ValueType ret{};
+        auto ret = ValueType();
         JSONSerializer<ValueType>::from_json(*this, ret);
         return ret;
     }
@@ -20991,7 +21058,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     Returns a reference to the element at with specified key @a key, with
     bounds checking.
 
-    @tparam KeyT  a type convertible to an object key or a `std::string_view`
     @param[in] key  key of the element to access
 
     @return reference to the element at key @a key
@@ -21010,28 +21076,31 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     access by reference
     @sa see @ref value() for access by value with a default value
 
-    @since version 1.0.0; template added in version 3.10.0
+    @since version 1.0.0
 
     @liveexample{The example below shows how object elements can be read and
     written using `at()`. It also demonstrates the different exceptions that
     can be thrown.,at__object_t_key_type}
     */
-    template < class KeyT, typename detail::enable_if_t <
-                   detail::is_usable_as_key_type<basic_json_t, KeyT>::value&& !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value > ... >
-    reference at(const KeyT& key)
+    reference at(const typename object_t::key_type& key)
     {
         // at only works for objects
-        if (JSON_HEDLEY_UNLIKELY(!is_object()))
+        if (JSON_HEDLEY_LIKELY(is_object()))
+        {
+            JSON_TRY
+            {
+                return set_parent(m_value.object->at(key));
+            }
+            JSON_CATCH (std::out_of_range&)
+            {
+                // create better exception explanation
+                JSON_THROW(out_of_range::create(403, "key '" + key + "' not found", *this));
+            }
+        }
+        else
         {
             JSON_THROW(type_error::create(304, "cannot use at() with " + std::string(type_name()), *this));
         }
-
-        auto it = m_value.object->find(key);
-        if (it == m_value.object->end())
-        {
-            JSON_THROW(out_of_range::create(403, "key '" + std::string(key) + "' not found", *this));
-        }
-        return set_parent(it->second);
     }
 
     /*!
@@ -21041,7 +21110,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     with bounds checking.
 
     @param[in] key  key of the element to access
-    @tparam KeyT  a type convertible to an object key or a `std::string_view`
 
     @return const reference to the element at key @a key
 
@@ -21059,28 +21127,31 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     access by reference
     @sa see @ref value() for access by value with a default value
 
-    @since version 1.0.0; template added in version 3.10.0
+    @since version 1.0.0
 
     @liveexample{The example below shows how object elements can be read using
     `at()`. It also demonstrates the different exceptions that can be thrown.,
     at__object_t_key_type_const}
     */
-    template < class KeyT, typename detail::enable_if_t <
-                   detail::is_usable_as_key_type<basic_json_t, KeyT>::value&& !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value > ... >
-    const_reference at(const KeyT& key) const
+    const_reference at(const typename object_t::key_type& key) const
     {
         // at only works for objects
-        if (JSON_HEDLEY_UNLIKELY(!is_object()))
+        if (JSON_HEDLEY_LIKELY(is_object()))
+        {
+            JSON_TRY
+            {
+                return m_value.object->at(key);
+            }
+            JSON_CATCH (std::out_of_range&)
+            {
+                // create better exception explanation
+                JSON_THROW(out_of_range::create(403, "key '" + key + "' not found", *this));
+            }
+        }
+        else
         {
             JSON_THROW(type_error::create(304, "cannot use at() with " + std::string(type_name()), *this));
         }
-
-        auto it = m_value.object->find(key);
-        if (it == m_value.object->end())
-        {
-            JSON_THROW(out_of_range::create(403, "key '" + std::string(key) + "' not found", *this));
-        }
-        return it->second;
     }
 
     /*!
@@ -21125,15 +21196,25 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             if (idx >= m_value.array->size())
             {
 #if JSON_DIAGNOSTICS
-                // remember array size before resizing
-                const auto previous_size = m_value.array->size();
+                // remember array size & capacity before resizing
+                const auto old_size = m_value.array->size();
+                const auto old_capacity = m_value.array->capacity();
 #endif
                 m_value.array->resize(idx + 1);
 
 #if JSON_DIAGNOSTICS
-                // set parent for values added above
-                set_parents(begin() + static_cast<typename iterator::difference_type>(previous_size), static_cast<typename iterator::difference_type>(idx + 1 - previous_size));
+                if (JSON_HEDLEY_UNLIKELY(m_value.array->capacity() != old_capacity))
+                {
+                    // capacity has changed: update all parents
+                    set_parents();
+                }
+                else
+                {
+                    // set parent for values added above
+                    set_parents(begin() + static_cast<typename iterator::difference_type>(old_size), static_cast<typename iterator::difference_type>(idx + 1 - old_size));
+                }
 #endif
+                assert_invariant();
             }
 
             return m_value.array->operator[](idx);
@@ -21182,7 +21263,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     In case the value was `null` before, it is converted to an object.
 
     @param[in] key  key of the element to access
-    @tparam KeyT  a type convertible to an object key or a std::string_view
 
     @return reference to the element at key @a key
 
@@ -21198,11 +21278,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     with range checking
     @sa see @ref value() for access by value with a default value
 
-    @since version 1.0.0; template KeyT added in version 3.10.0
+    @since version 1.0.0
     */
-    template < class KeyT, typename detail::enable_if_t <
-                   detail::is_usable_as_key_type<basic_json_t, KeyT>::value&& !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value > ... >
-    reference operator[](KeyT&& key)
+    reference operator[](const typename object_t::key_type& key)
     {
         // implicitly convert null value to an empty object
         if (is_null())
@@ -21215,8 +21293,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // operator[] only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
         {
-            auto result = m_value.object->emplace(std::forward<KeyT>(key), nullptr);
-            return set_parent(result.first->second);
+            return set_parent(m_value.object->operator[](key));
         }
 
         JSON_THROW(type_error::create(305, "cannot use operator[] with a string argument with " + std::string(type_name()), *this));
@@ -21232,7 +21309,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     undefined.
 
     @param[in] key  key of the element to access
-    @tparam KeyT  a type convertible to an object key or a std::string_view
 
     @return const reference to the element at key @a key
 
@@ -21251,18 +21327,107 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     with range checking
     @sa see @ref value() for access by value with a default value
 
-    @since version 1.0.0; template KeyT added in version 3.10.0
+    @since version 1.0.0
     */
-    template < class KeyT, typename detail::enable_if_t <
-                   detail::is_usable_as_key_type<basic_json_t, KeyT>::value&& !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value > ... >
-    const_reference operator[](KeyT&& key) const
+    const_reference operator[](const typename object_t::key_type& key) const
     {
-        // operator[] only works for objects
+        // const operator[] only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
         {
-            auto it = m_value.object->find(std::forward<KeyT>(key));
-            JSON_ASSERT(it != m_value.object->end());
-            return it->second;
+            JSON_ASSERT(m_value.object->find(key) != m_value.object->end());
+            return m_value.object->find(key)->second;
+        }
+
+        JSON_THROW(type_error::create(305, "cannot use operator[] with a string argument with " + std::string(type_name()), *this));
+    }
+
+    /*!
+    @brief access specified object element
+
+    Returns a reference to the element at with specified key @a key.
+
+    @note If @a key is not found in the object, then it is silently added to
+    the object and filled with a `null` value to make `key` a valid reference.
+    In case the value was `null` before, it is converted to an object.
+
+    @param[in] key  key of the element to access
+
+    @return reference to the element at key @a key
+
+    @throw type_error.305 if the JSON value is not an object or null; in that
+    cases, using the [] operator with a key makes no sense.
+
+    @complexity Logarithmic in the size of the container.
+
+    @liveexample{The example below shows how object elements can be read and
+    written using the `[]` operator.,operatorarray__key_type}
+
+    @sa see @ref at(const typename object_t::key_type&) for access by reference
+    with range checking
+    @sa see @ref value() for access by value with a default value
+
+    @since version 1.1.0
+    */
+    template<typename T>
+    JSON_HEDLEY_NON_NULL(2)
+    reference operator[](T* key)
+    {
+        // implicitly convert null to object
+        if (is_null())
+        {
+            m_type = value_t::object;
+            m_value = value_t::object;
+            assert_invariant();
+        }
+
+        // at only works for objects
+        if (JSON_HEDLEY_LIKELY(is_object()))
+        {
+            return set_parent(m_value.object->operator[](key));
+        }
+
+        JSON_THROW(type_error::create(305, "cannot use operator[] with a string argument with " + std::string(type_name()), *this));
+    }
+
+    /*!
+    @brief read-only access specified object element
+
+    Returns a const reference to the element at with specified key @a key. No
+    bounds checking is performed.
+
+    @warning If the element with key @a key does not exist, the behavior is
+    undefined.
+
+    @param[in] key  key of the element to access
+
+    @return const reference to the element at key @a key
+
+    @pre The element with key @a key must exist. **This precondition is
+         enforced with an assertion.**
+
+    @throw type_error.305 if the JSON value is not an object; in that case,
+    using the [] operator with a key makes no sense.
+
+    @complexity Logarithmic in the size of the container.
+
+    @liveexample{The example below shows how object elements can be read using
+    the `[]` operator.,operatorarray__key_type_const}
+
+    @sa see @ref at(const typename object_t::key_type&) for access by reference
+    with range checking
+    @sa see @ref value() for access by value with a default value
+
+    @since version 1.1.0
+    */
+    template<typename T>
+    JSON_HEDLEY_NON_NULL(2)
+    const_reference operator[](T* key) const
+    {
+        // at only works for objects
+        if (JSON_HEDLEY_LIKELY(is_object()))
+        {
+            JSON_ASSERT(m_value.object->find(key) != m_value.object->end());
+            return m_value.object->find(key)->second;
         }
 
         JSON_THROW(type_error::create(305, "cannot use operator[] with a string argument with " + std::string(type_name()), *this));
@@ -21293,8 +21458,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @param[in] key  key of the element to access
     @param[in] default_value  the value to return if @a key is not found
 
-    @tparam KeyType A type for an object key. This can also be a string
-    literal or a string view (C++17).
     @tparam ValueType type compatible to JSON values, for instance `int` for
     JSON integer numbers, `bool` for JSON booleans, or `std::vector` types for
     JSON arrays. Note the type of the expected value at @a key and the default
@@ -21318,13 +21481,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @sa see @ref operator[](const typename object_t::key_type&) for unchecked
     access by reference
 
-    @since version 1.0.0, KeyType template added in 3.10.0
+    @since version 1.0.0
     */
     // using std::is_convertible in a std::enable_if will fail when using explicit conversions
-    template < class KeyType, class ValueType, typename detail::enable_if_t <
+    template < class ValueType, typename std::enable_if <
                    detail::is_getable<basic_json_t, ValueType>::value
-                   && !std::is_same<value_t, ValueType>::value&& detail::is_usable_as_key_type<basic_json_t, KeyType>::value > ... >
-    typename std::decay<ValueType>::type value(const KeyType& key, ValueType&& default_value) const
+                   && !std::is_same<value_t, ValueType>::value, int >::type = 0 >
+    ValueType value(const typename object_t::key_type& key, const ValueType& default_value) const
     {
         // at only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
@@ -21333,10 +21496,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             const auto it = find(key);
             if (it != end())
             {
-                return it->template get<typename std::decay<ValueType>::type>();
+                return it->template get<ValueType>();
             }
 
-            return std::forward<ValueType>(default_value);
+            return default_value;
         }
 
         JSON_THROW(type_error::create(306, "cannot use value() with " + std::string(type_name()), *this));
@@ -21346,9 +21509,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @brief overload for a default value of type const char*
     @copydoc basic_json::value(const typename object_t::key_type&, const ValueType&) const
     */
-    template < class KeyType, typename detail::enable_if_t <
-                   detail::is_usable_as_key_type<basic_json_t, KeyType>::value > ... >
-    string_t value(const KeyType& key, const char* default_value) const
+    string_t value(const typename object_t::key_type& key, const char* default_value) const
     {
         return value(key, string_t(default_value));
     }
@@ -21398,7 +21559,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     */
     template<class ValueType, typename std::enable_if<
                  detail::is_getable<basic_json_t, ValueType>::value, int>::type = 0>
-    typename std::decay<ValueType>::type value(const json_pointer& ptr, ValueType && default_value) const
+    ValueType value(const json_pointer& ptr, const ValueType& default_value) const
     {
         // at only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
@@ -21410,7 +21571,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             }
             JSON_INTERNAL_CATCH (out_of_range&)
             {
-                return std::forward<ValueType>(default_value);
+                return default_value;
             }
         }
 
@@ -21752,7 +21913,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     Removes elements from a JSON object with the key value @a key.
 
     @param[in] key value of the elements to remove
-    @tparam KeyT a type convertible to an object key or a std::string_view
 
     @return Number of elements removed. If @a ObjectType is the default
     `std::map` type, the return value will always be `0` (@a key was not
@@ -21774,26 +21934,17 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @sa see @ref erase(const size_type) -- removes the element from an array at
     the given index
 
-    @since version 1.0.0; template added in version 3.10.0
+    @since version 1.0.0
     */
-    template < class KeyT, typename detail::enable_if_t <
-                   detail::is_usable_as_key_type<basic_json_t, KeyT>::value > ... >
-    size_type erase(const KeyT& key)
+    size_type erase(const typename object_t::key_type& key)
     {
         // this erase only works for objects
-        if (JSON_HEDLEY_UNLIKELY(!is_object()))
+        if (JSON_HEDLEY_LIKELY(is_object()))
         {
-            JSON_THROW(type_error::create(307, "cannot use erase() with " + std::string(type_name()), *this));
+            return m_value.object->erase(key);
         }
 
-        const auto it = m_value.object->find(key);
-        if (it != m_value.object->end())
-        {
-            m_value.object->erase(it);
-            return 1;
-        }
-
-        return 0;
+        JSON_THROW(type_error::create(307, "cannot use erase() with " + std::string(type_name()), *this));
     }
 
     /*!
@@ -21872,15 +22023,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     @since version 1.0.0
     */
-    template < class KeyT, typename detail::enable_if_t <
-                   detail::is_usable_as_key_type<basic_json_t, KeyT>::value > ... >
-    iterator find(const KeyT& key)
+    template<typename KeyT>
+    iterator find(KeyT&& key)
     {
         auto result = end();
 
         if (is_object())
         {
-            result.m_it.object_iterator = m_value.object->find(key);
+            result.m_it.object_iterator = m_value.object->find(std::forward<KeyT>(key));
         }
 
         return result;
@@ -21888,17 +22038,16 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     /*!
     @brief find an element in a JSON object
-    @copydoc find(const KeyT&)
+    @copydoc find(KeyT&&)
     */
-    template < class KeyT, typename detail::enable_if_t <
-                   detail::is_usable_as_key_type<basic_json_t, KeyT>::value > ... >
-    const_iterator find(const KeyT& key) const
+    template<typename KeyT>
+    const_iterator find(KeyT&& key) const
     {
         auto result = cend();
 
         if (is_object())
         {
-            result.m_it.object_iterator = m_value.object->find(key);
+            result.m_it.object_iterator = m_value.object->find(std::forward<KeyT>(key));
         }
 
         return result;
@@ -21925,12 +22074,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     @since version 1.0.0
     */
-    template < class KeyT, typename detail::enable_if_t <
-                   detail::is_usable_as_key_type<basic_json_t, KeyT>::value > ... >
-    size_type count(const KeyT& key) const
+    template<typename KeyT>
+    size_type count(KeyT&& key) const
     {
         // return 0 for all nonobject types
-        return is_object() ? m_value.object->count(key) : 0;
+        return is_object() ? m_value.object->count(std::forward<KeyT>(key)) : 0;
     }
 
     /*!
@@ -21953,16 +22101,16 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     @liveexample{The following code shows an example for `contains()`.,contains}
 
-    @sa see @ref find(const KeyT&) -- returns an iterator to an object element
+    @sa see @ref find(KeyT&&) -- returns an iterator to an object element
     @sa see @ref contains(const json_pointer&) const -- checks the existence for a JSON pointer
 
     @since version 3.6.0
     */
-    template < class KeyT, typename detail::enable_if_t <
-                   !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value&& detail::is_usable_as_key_type<basic_json_t, KeyT>::value > ... >
-    bool contains(const KeyT& key) const
+    template < typename KeyT, typename std::enable_if <
+                   !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value, int >::type = 0 >
+    bool contains(KeyT && key) const
     {
-        return is_object() && m_value.object->find(key) != m_value.object->end();
+        return is_object() && m_value.object->find(std::forward<KeyT>(key)) != m_value.object->end();
     }
 
     /*!
@@ -23372,6 +23520,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         for (auto it = j.cbegin(); it != j.cend(); ++it)
         {
             m_value.object->operator[](it.key()) = it.value();
+#if JSON_DIAGNOSTICS
+            m_value.object->operator[](it.key()).m_parent = this;
+#endif
         }
     }
 
@@ -23432,6 +23583,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         for (auto it = first; it != last; ++it)
         {
             m_value.object->operator[](it.key()) = it.value();
+#if JSON_DIAGNOSTICS
+            m_value.object->operator[](it.key()).m_parent = this;
+#endif
         }
     }
 
@@ -26440,6 +26594,7 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 #undef NLOHMANN_BASIC_JSON_TPL_DECLARATION
 #undef NLOHMANN_BASIC_JSON_TPL
 #undef JSON_EXPLICIT
+#undef NLOHMANN_CAN_CALL_STD_FUNC_IMPL
 
 // #include <nlohmann/thirdparty/hedley/hedley_undef.hpp>
 

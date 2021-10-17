@@ -11,3 +11,9 @@ make nlohmann_json.docset
 ```
 
 The generated folder `nlohmann_json.docset` can then be opened in the documentation browser.
+
+A recent version is also part of the [Dash user contributions](https://github.com/Kapeli/Dash-User-Contributions/tree/master/docsets/JSON_for_Modern_C%2B%2B).
+
+## Licenses
+
+The [JSON logo](https://commons.wikimedia.org/wiki/File:JSON_vector_logo.svg) is public domain.

@@ -5,8 +5,11 @@
 #include <utility> // declval
 #include <tuple> // tuple
 
-#include <nlohmann/detail/iterators/iterator_traits.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
+
+#include <nlohmann/detail/iterators/iterator_traits.hpp>
+#include <nlohmann/detail/meta/call_std/begin.hpp>
+#include <nlohmann/detail/meta/call_std/end.hpp>
 #include <nlohmann/detail/meta/cpp_future.hpp>
 #include <nlohmann/detail/meta/detected.hpp>
 #include <nlohmann/json_fwd.hpp>
@@ -78,9 +81,6 @@ using reference_t = typename T::reference;
 
 template<typename T>
 using iterator_category_t = typename T::iterator_category;
-
-template<typename T>
-using iterator_t = typename T::iterator;
 
 template<typename T, typename... Args>
 using to_json_function = decltype(T::to_json(std::declval<Args>()...));
@@ -217,6 +217,31 @@ struct is_iterator_traits<iterator_traits<T>>
         is_detected<reference_t, traits>::value;
 };
 
+template<typename T>
+struct is_range
+{
+  private:
+    using t_ref = typename std::add_lvalue_reference<T>::type;
+
+    using iterator = detected_t<result_of_begin, t_ref>;
+    using sentinel = detected_t<result_of_end, t_ref>;
+
+    // to be 100% correct, it should use https://en.cppreference.com/w/cpp/iterator/input_or_output_iterator
+    // and https://en.cppreference.com/w/cpp/iterator/sentinel_for
+    // but reimplementing these would be too much work, as a lot of other concepts are used underneath
+    static constexpr auto is_iterator_begin =
+        is_iterator_traits<iterator_traits<iterator>>::value;
+
+  public:
+    static constexpr bool value = !std::is_same<iterator, nonesuch>::value && !std::is_same<sentinel, nonesuch>::value && is_iterator_begin;
+};
+
+template<typename R>
+using iterator_t = enable_if_t<is_range<R>::value, result_of_begin<decltype(std::declval<R&>())>>;
+
+template<typename T>
+using range_value_t = value_type_t<iterator_traits<iterator_t<T>>>;
+
 // The following implementation of is_complete_type is taken from
 // https://blogs.msdn.microsoft.com/vcblog/2015/12/02/partial-support-for-expression-sfinae-in-vs-2015-update-1/
 // and is written by Xiang Fan who agreed to using it in this library.
@@ -284,42 +309,20 @@ struct is_constructible_object_type
     : is_constructible_object_type_impl<BasicJsonType,
       ConstructibleObjectType> {};
 
-template<typename BasicJsonType, typename CompatibleStringType,
-         typename = void>
-struct is_compatible_string_type_impl : std::false_type {};
-
 template<typename BasicJsonType, typename CompatibleStringType>
-struct is_compatible_string_type_impl <
-    BasicJsonType, CompatibleStringType,
-    enable_if_t<is_detected_exact<typename BasicJsonType::string_t::value_type,
-    value_type_t, CompatibleStringType>::value >>
+struct is_compatible_string_type
 {
     static constexpr auto value =
         is_constructible<typename BasicJsonType::string_t, CompatibleStringType>::value;
 };
 
 template<typename BasicJsonType, typename ConstructibleStringType>
-struct is_compatible_string_type
-    : is_compatible_string_type_impl<BasicJsonType, ConstructibleStringType> {};
-
-template<typename BasicJsonType, typename ConstructibleStringType,
-         typename = void>
-struct is_constructible_string_type_impl : std::false_type {};
-
-template<typename BasicJsonType, typename ConstructibleStringType>
-struct is_constructible_string_type_impl <
-    BasicJsonType, ConstructibleStringType,
-    enable_if_t<is_detected_exact<typename BasicJsonType::string_t::value_type,
-    value_type_t, ConstructibleStringType>::value >>
+struct is_constructible_string_type
 {
     static constexpr auto value =
         is_constructible<ConstructibleStringType,
         typename BasicJsonType::string_t>::value;
 };
-
-template<typename BasicJsonType, typename ConstructibleStringType>
-struct is_constructible_string_type
-    : is_constructible_string_type_impl<BasicJsonType, ConstructibleStringType> {};
 
 template<typename BasicJsonType, typename CompatibleArrayType, typename = void>
 struct is_compatible_array_type_impl : std::false_type {};
@@ -327,17 +330,16 @@ struct is_compatible_array_type_impl : std::false_type {};
 template<typename BasicJsonType, typename CompatibleArrayType>
 struct is_compatible_array_type_impl <
     BasicJsonType, CompatibleArrayType,
-    enable_if_t < is_detected<value_type_t, CompatibleArrayType>::value&&
+    enable_if_t <
     is_detected<iterator_t, CompatibleArrayType>::value&&
-// This is needed because json_reverse_iterator has a ::iterator type...
-// Therefore it is detected as a CompatibleArrayType.
-// The real fix would be to have an Iterable concept.
-    !is_iterator_traits <
-    iterator_traits<CompatibleArrayType >>::value >>
+    is_iterator_traits<iterator_traits<detected_t<iterator_t, CompatibleArrayType>>>::value&&
+// special case for types like std::filesystem::path whose iterator's value_type are themselves
+// c.f. https://github.com/nlohmann/json/pull/3073
+    !std::is_same<CompatibleArrayType, detected_t<range_value_t, CompatibleArrayType>>::value >>
 {
     static constexpr bool value =
         is_constructible<BasicJsonType,
-        typename CompatibleArrayType::value_type>::value;
+        range_value_t<CompatibleArrayType>>::value;
 };
 
 template<typename BasicJsonType, typename CompatibleArrayType>
@@ -359,28 +361,29 @@ struct is_constructible_array_type_impl <
     BasicJsonType, ConstructibleArrayType,
     enable_if_t < !std::is_same<ConstructibleArrayType,
     typename BasicJsonType::value_type>::value&&
+    !is_compatible_string_type<BasicJsonType, ConstructibleArrayType>::value&&
     is_default_constructible<ConstructibleArrayType>::value&&
 (std::is_move_assignable<ConstructibleArrayType>::value ||
  std::is_copy_assignable<ConstructibleArrayType>::value)&&
-is_detected<value_type_t, ConstructibleArrayType>::value&&
 is_detected<iterator_t, ConstructibleArrayType>::value&&
-is_complete_type <
-detected_t<value_type_t, ConstructibleArrayType >>::value >>
+is_iterator_traits<iterator_traits<detected_t<iterator_t, ConstructibleArrayType>>>::value&&
+is_detected<range_value_t, ConstructibleArrayType>::value&&
+// special case for types like std::filesystem::path whose iterator's value_type are themselves
+// c.f. https://github.com/nlohmann/json/pull/3073
+!std::is_same<ConstructibleArrayType, detected_t<range_value_t, ConstructibleArrayType>>::value&&
+        is_complete_type <
+        detected_t<range_value_t, ConstructibleArrayType >>::value >>
 {
-    static constexpr bool value =
-        // This is needed because json_reverse_iterator has a ::iterator type,
-        // furthermore, std::back_insert_iterator (and other iterators) have a
-        // base class `iterator`... Therefore it is detected as a
-        // ConstructibleArrayType. The real fix would be to have an Iterable
-        // concept.
-        !is_iterator_traits<iterator_traits<ConstructibleArrayType>>::value &&
+    using value_type = range_value_t<ConstructibleArrayType>;
 
-        (std::is_same<typename ConstructibleArrayType::value_type,
-         typename BasicJsonType::array_t::value_type>::value ||
-         has_from_json<BasicJsonType,
-         typename ConstructibleArrayType::value_type>::value ||
-         has_non_default_from_json <
-         BasicJsonType, typename ConstructibleArrayType::value_type >::value);
+    static constexpr bool value =
+        std::is_same<value_type,
+        typename BasicJsonType::array_t::value_type>::value ||
+        has_from_json<BasicJsonType,
+        value_type>::value ||
+        has_non_default_from_json <
+        BasicJsonType,
+        value_type >::value;
 };
 
 template<typename BasicJsonType, typename ConstructibleArrayType>
