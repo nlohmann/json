@@ -102,6 +102,7 @@ foreach(file ${files})
                     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
                 )
             endif()
+            set_tests_properties("${testcase}_cpp17" PROPERTIES LABELS "all" FIXTURES_REQUIRED TEST_DATA)
         endif()
     endif()
 
