@@ -37,6 +37,23 @@
     #define JSON_HAS_CPP_11
 #endif
 
+#ifdef JSON_HAS_CPP_17
+    // set JSON_STD_FILESYSTEM_EXPERIMENTAL to 1 if <experimental/filesystem> should be taken instead of <filesystem>
+    #if defined(__cpp_lib_filesystem)
+        #define JSON_STD_FILESYSTEM_EXPERIMENTAL 0
+    #elif defined(__cpp_lib_experimental_filesystem)
+        #define JSON_STD_FILESYSTEM_EXPERIMENTAL 1
+    #elif !defined(__has_include)
+        #define JSON_STD_FILESYSTEM_EXPERIMENTAL 1
+    #elif __has_include(<filesystem>)
+        #define JSON_STD_FILESYSTEM_EXPERIMENTAL 0
+    #elif __has_include(<experimental/filesystem>)
+        #define JSON_STD_FILESYSTEM_EXPERIMENTAL 1
+    #else
+        #define JSON_STD_FILESYSTEM_EXPERIMENTAL 0
+    #endif
+#endif
+
 // disable documentation warnings on clang
 #if defined(__clang__)
     #pragma clang diagnostic push

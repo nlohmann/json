@@ -2325,6 +2325,23 @@ using is_detected_convertible =
     #define JSON_HAS_CPP_11
 #endif
 
+#ifdef JSON_HAS_CPP_17
+    // set JSON_STD_FILESYSTEM_EXPERIMENTAL to 1 if <experimental/filesystem> should be taken instead of <filesystem>
+    #if defined(__cpp_lib_filesystem)
+        #define JSON_STD_FILESYSTEM_EXPERIMENTAL 0
+    #elif defined(__cpp_lib_experimental_filesystem)
+        #define JSON_STD_FILESYSTEM_EXPERIMENTAL 1
+    #elif !defined(__has_include)
+        #define JSON_STD_FILESYSTEM_EXPERIMENTAL 1
+    #elif __has_include(<filesystem>)
+        #define JSON_STD_FILESYSTEM_EXPERIMENTAL 0
+    #elif __has_include(<experimental/filesystem>)
+        #define JSON_STD_FILESYSTEM_EXPERIMENTAL 1
+    #else
+        #define JSON_STD_FILESYSTEM_EXPERIMENTAL 0
+    #endif
+#endif
+
 // disable documentation warnings on clang
 #if defined(__clang__)
     #pragma clang diagnostic push
@@ -3951,7 +3968,19 @@ T conditional_static_cast(U value)
 
 
 #ifdef JSON_HAS_CPP_17
-    #include <filesystem>
+#if JSON_STD_FILESYSTEM_EXPERIMENTAL
+#include <experimental/filesystem>
+namespace nlohmann::detail
+{
+namespace std_fs = std::experimental::filesystem;
+}
+#else
+#include <filesystem>
+namespace nlohmann::detail
+{
+namespace std_fs = std::filesystem;
+}
+#endif
 #endif
 
 namespace nlohmann
@@ -4381,7 +4410,7 @@ void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Hash, KeyE
 
 #ifdef JSON_HAS_CPP_17
 template<typename BasicJsonType>
-void from_json(const BasicJsonType& j, std::filesystem::path& p)
+void from_json(const BasicJsonType& j, std_fs::path& p)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_string()))
     {
@@ -4627,7 +4656,19 @@ class tuple_element<N, ::nlohmann::detail::iteration_proxy_value<IteratorType >>
 
 
 #ifdef JSON_HAS_CPP_17
-    #include <filesystem>
+#if JSON_STD_FILESYSTEM_EXPERIMENTAL
+#include <experimental/filesystem>
+namespace nlohmann::detail
+{
+namespace std_fs = std::experimental::filesystem;
+}
+#else
+#include <filesystem>
+namespace nlohmann::detail
+{
+namespace std_fs = std::filesystem;
+}
+#endif
 #endif
 
 namespace nlohmann
@@ -5004,7 +5045,7 @@ void to_json(BasicJsonType& j, const T& t)
 
 #ifdef JSON_HAS_CPP_17
 template<typename BasicJsonType>
-void to_json(BasicJsonType& j, const std::filesystem::path& p)
+void to_json(BasicJsonType& j, const std_fs::path& p)
 {
     j = p.string();
 }
@@ -26591,6 +26632,7 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 #undef JSON_HAS_CPP_14
 #undef JSON_HAS_CPP_17
 #undef JSON_HAS_CPP_20
+#undef JSON_STD_FILESYSTEM_EXPERIMENTAL
 #undef NLOHMANN_BASIC_JSON_TPL_DECLARATION
 #undef NLOHMANN_BASIC_JSON_TPL
 #undef JSON_EXPLICIT

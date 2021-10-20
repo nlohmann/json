@@ -47,8 +47,20 @@ using ordered_json = nlohmann::ordered_json;
 #endif
 
 #ifdef JSON_HAS_CPP_17
-    #include <filesystem>
-    #include <variant>
+#include <variant>
+#if JSON_STD_FILESYSTEM_EXPERIMENTAL
+#include <experimental/filesystem>
+namespace nlohmann::detail
+{
+namespace std_fs = std::experimental::filesystem;
+}
+#else
+#include <filesystem>
+namespace nlohmann::detail
+{
+namespace std_fs = std::filesystem;
+}
+#endif
 #endif
 
 #ifdef JSON_HAS_CPP_20
@@ -731,10 +743,10 @@ TEST_CASE("regression tests 2")
 #ifdef JSON_HAS_CPP_17
     SECTION("issue #3070 - Version 3.10.3 breaks backward-compatibility with 3.10.2 ")
     {
-        std::filesystem::path text_path("/tmp/text.txt");
+        nlohmann::detail::std_fs::path text_path("/tmp/text.txt");
         json j(text_path);
 
-        const auto j_path = j.get<std::filesystem::path>();
+        const auto j_path = j.get<nlohmann::detail::std_fs::path>();
         CHECK(j_path == text_path);
     }
 #endif
