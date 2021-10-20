@@ -69,6 +69,7 @@ using ordered_json = nlohmann::ordered_json;
     #endif
 #endif
 
+#ifdef JSON_STD_FILESYSTEM_EXPERIMENTAL
 #if JSON_STD_FILESYSTEM_EXPERIMENTAL
 #include <experimental/filesystem>
 namespace nlohmann::detail
@@ -81,6 +82,7 @@ namespace nlohmann::detail
 {
 namespace std_fs = std::filesystem;
 } // namespace nlohmann::detail
+#endif
 #endif
 #endif
 
