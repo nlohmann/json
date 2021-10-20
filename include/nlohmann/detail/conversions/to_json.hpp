@@ -15,7 +15,7 @@
 #include <nlohmann/detail/meta/type_traits.hpp>
 #include <nlohmann/detail/value_t.hpp>
 
-#ifdef JSON_HAS_CPP_17
+#ifdef JSON_STD_FILESYSTEM_EXPERIMENTAL
 #if JSON_STD_FILESYSTEM_EXPERIMENTAL
 #include <experimental/filesystem>
 namespace nlohmann::detail
@@ -403,7 +403,7 @@ void to_json(BasicJsonType& j, const T& t)
     to_json_tuple_impl(j, t, make_index_sequence<std::tuple_size<T>::value> {});
 }
 
-#ifdef JSON_HAS_CPP_17
+#ifdef JSON_STD_FILESYSTEM_EXPERIMENTAL
 template<typename BasicJsonType>
 void to_json(BasicJsonType& j, const std_fs::path& p)
 {

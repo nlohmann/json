@@ -2340,6 +2340,11 @@ using is_detected_convertible =
     #else
         #define JSON_STD_FILESYSTEM_EXPERIMENTAL 0
     #endif
+
+    // std::filesystem does not work on MinGW GCC 8: https://sourceforge.net/p/mingw-w64/bugs/737/
+    #if __MINGW32__ && __GNUC__ == 8
+        #undef JSON_STD_FILESYSTEM_EXPERIMENTAL
+    #endif
 #endif
 
 // disable documentation warnings on clang
@@ -3967,7 +3972,7 @@ T conditional_static_cast(U value)
 // #include <nlohmann/detail/value_t.hpp>
 
 
-#ifdef JSON_HAS_CPP_17
+#ifdef JSON_STD_FILESYSTEM_EXPERIMENTAL
 #if JSON_STD_FILESYSTEM_EXPERIMENTAL
 #include <experimental/filesystem>
 namespace nlohmann::detail
@@ -4408,7 +4413,7 @@ void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Hash, KeyE
     }
 }
 
-#ifdef JSON_HAS_CPP_17
+#ifdef JSON_STD_FILESYSTEM_EXPERIMENTAL
 template<typename BasicJsonType>
 void from_json(const BasicJsonType& j, std_fs::path& p)
 {
@@ -4655,7 +4660,7 @@ class tuple_element<N, ::nlohmann::detail::iteration_proxy_value<IteratorType >>
 // #include <nlohmann/detail/value_t.hpp>
 
 
-#ifdef JSON_HAS_CPP_17
+#ifdef JSON_STD_FILESYSTEM_EXPERIMENTAL
 #if JSON_STD_FILESYSTEM_EXPERIMENTAL
 #include <experimental/filesystem>
 namespace nlohmann::detail
@@ -5043,7 +5048,7 @@ void to_json(BasicJsonType& j, const T& t)
     to_json_tuple_impl(j, t, make_index_sequence<std::tuple_size<T>::value> {});
 }
 
-#ifdef JSON_HAS_CPP_17
+#ifdef JSON_STD_FILESYSTEM_EXPERIMENTAL
 template<typename BasicJsonType>
 void to_json(BasicJsonType& j, const std_fs::path& p)
 {

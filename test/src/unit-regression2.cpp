@@ -62,6 +62,11 @@ using ordered_json = nlohmann::ordered_json;
     #define JSON_STD_FILESYSTEM_EXPERIMENTAL 1
 #else
     #define JSON_STD_FILESYSTEM_EXPERIMENTAL 0
+
+    // std::filesystem does not work on MinGW GCC 8: https://sourceforge.net/p/mingw-w64/bugs/737/
+    #if __MINGW32__ && __GNUC__ == 8
+        #undef JSON_STD_FILESYSTEM_EXPERIMENTAL
+    #endif
 #endif
 
 #if JSON_STD_FILESYSTEM_EXPERIMENTAL
@@ -379,9 +384,7 @@ TEST_CASE("regression tests 2")
 #ifdef JSON_HAS_CPP_17
     SECTION("issue #1292 - Serializing std::variant causes stack overflow")
     {
-        static_assert(
-            !std::is_constructible<json, std::variant<int, float>>::value,
-            "");
+        static_assert(!std::is_constructible<json, std::variant<int, float>>::value, "unexpected value");
     }
 #endif
 
@@ -756,7 +759,7 @@ TEST_CASE("regression tests 2")
         CHECK(j == k);
     }
 
-#ifdef JSON_HAS_CPP_17
+#ifdef JSON_STD_FILESYSTEM_EXPERIMENTAL
     SECTION("issue #3070 - Version 3.10.3 breaks backward-compatibility with 3.10.2 ")
     {
         nlohmann::detail::std_fs::path text_path("/tmp/text.txt");

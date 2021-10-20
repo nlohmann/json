@@ -19,7 +19,7 @@
 #include <nlohmann/detail/meta/type_traits.hpp>
 #include <nlohmann/detail/value_t.hpp>
 
-#ifdef JSON_HAS_CPP_17
+#ifdef JSON_STD_FILESYSTEM_EXPERIMENTAL
 #if JSON_STD_FILESYSTEM_EXPERIMENTAL
 #include <experimental/filesystem>
 namespace nlohmann::detail
@@ -460,7 +460,7 @@ void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Hash, KeyE
     }
 }
 
-#ifdef JSON_HAS_CPP_17
+#ifdef JSON_STD_FILESYSTEM_EXPERIMENTAL
 template<typename BasicJsonType>
 void from_json(const BasicJsonType& j, std_fs::path& p)
 {

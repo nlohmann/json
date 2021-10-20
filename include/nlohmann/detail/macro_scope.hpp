@@ -52,6 +52,11 @@
     #else
         #define JSON_STD_FILESYSTEM_EXPERIMENTAL 0
     #endif
+
+    // std::filesystem does not work on MinGW GCC 8: https://sourceforge.net/p/mingw-w64/bugs/737/
+    #if __MINGW32__ && __GNUC__ == 8
+        #undef JSON_STD_FILESYSTEM_EXPERIMENTAL
+    #endif
 #endif
 
 // disable documentation warnings on clang
