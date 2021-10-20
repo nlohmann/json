@@ -62,11 +62,11 @@ using ordered_json = nlohmann::ordered_json;
             #define JSON_HAS_EXPERIMENTAL_FILESYSTEM 1
         #endif
 
-        //// std::filesystem does not work on MinGW GCC 8: https://sourceforge.net/p/mingw-w64/bugs/737/
-        //#if defined(__MINGW32__) && defined(__GNUC__) && __GNUC__ == 8
-        //    #undef JSON_HAS_FILESYSTEM
-        //    #undef JSON_HAS_EXPERIMENTAL_FILESYSTEM
-        //#endif
+        // std::filesystem does not work on MinGW GCC 8: https://sourceforge.net/p/mingw-w64/bugs/737/
+        #if defined(__MINGW32__) && defined(__GNUC__) && __GNUC__ == 8
+            #undef JSON_HAS_FILESYSTEM
+            #undef JSON_HAS_EXPERIMENTAL_FILESYSTEM
+        #endif
     #endif
 #endif
 
