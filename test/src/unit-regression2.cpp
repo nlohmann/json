@@ -49,23 +49,33 @@ using ordered_json = nlohmann::ordered_json;
 #ifdef JSON_HAS_CPP_17
     #include <variant>
 
-    #if defined(__cpp_lib_filesystem)
-        #define JSON_HAS_FILESYSTEM 1
-    #elif defined(__cpp_lib_experimental_filesystem)
-        #define JSON_HAS_EXPERIMENTAL_FILESYSTEM 1
-    #elif !defined(__has_include)
-        #define JSON_HAS_EXPERIMENTAL_FILESYSTEM 1
-    #elif __has_include(<filesystem>)
-        #define JSON_HAS_FILESYSTEM 1
-    #elif __has_include(<experimental/filesystem>)
-        #define JSON_HAS_EXPERIMENTAL_FILESYSTEM 1
-    #endif
+    #if !defined(JSON_HAS_FILESYSTEM) && !defined(JSON_HAS_EXPERIMENTAL_FILESYSTEM)
+        #if defined(__cpp_lib_filesystem)
+            #define JSON_HAS_FILESYSTEM 1
+        #elif defined(__cpp_lib_experimental_filesystem)
+            #define JSON_HAS_EXPERIMENTAL_FILESYSTEM 1
+        #elif !defined(__has_include)
+            #define JSON_HAS_EXPERIMENTAL_FILESYSTEM 1
+        #elif __has_include(<filesystem>)
+            #define JSON_HAS_FILESYSTEM 1
+        #elif __has_include(<experimental/filesystem>)
+            #define JSON_HAS_EXPERIMENTAL_FILESYSTEM 1
+        #endif
 
-    // std::filesystem does not work on MinGW GCC 8: https://sourceforge.net/p/mingw-w64/bugs/737/
-    #if defined(__MINGW32__) && defined(__GNUC__) && __GNUC__ == 8
-        #undef JSON_HAS_FILESYSTEM
-        #undef JSON_HAS_EXPERIMENTAL_FILESYSTEM
+        // std::filesystem does not work on MinGW GCC 8: https://sourceforge.net/p/mingw-w64/bugs/737/
+        #if defined(__MINGW32__) && defined(__GNUC__) && __GNUC__ == 8
+            #undef JSON_HAS_FILESYSTEM
+            #undef JSON_HAS_EXPERIMENTAL_FILESYSTEM
+        #endif
     #endif
+#endif
+
+#ifndef JSON_HAS_EXPERIMENTAL_FILESYSTEM
+    #define JSON_HAS_EXPERIMENTAL_FILESYSTEM 0
+#endif
+
+#ifndef JSON_HAS_FILESYSTEM
+    #define JSON_HAS_FILESYSTEM 0
 #endif
 
 #if JSON_HAS_EXPERIMENTAL_FILESYSTEM
