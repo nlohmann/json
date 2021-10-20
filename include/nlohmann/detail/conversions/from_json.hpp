@@ -25,13 +25,13 @@
 namespace nlohmann::detail
 {
 namespace std_fs = std::experimental::filesystem;
-}
+} // namespace nlohmann::detail
 #else
 #include <filesystem>
 namespace nlohmann::detail
 {
 namespace std_fs = std::filesystem;
-}
+} // namespace nlohmann::detail
 #endif
 #endif
 

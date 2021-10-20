@@ -205,7 +205,7 @@ TEST_CASE("regression tests 1")
         // check if the actual value was stored
         CHECK(j2 == 102);
 
-        static_assert(std::is_same<decltype(anon_enum_value), decltype(u)>::value, "");
+        static_assert(std::is_same<decltype(anon_enum_value), decltype(u)>::value, "types must be the same");
 
         j.push_back(json::object(
         {

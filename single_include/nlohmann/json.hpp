@@ -3314,8 +3314,6 @@ struct static_const
     static constexpr T value{};
 };
 
-template<typename T>
-constexpr T static_const<T>::value;
 
 }  // namespace detail
 }  // namespace nlohmann
@@ -3973,13 +3971,13 @@ T conditional_static_cast(U value)
 namespace nlohmann::detail
 {
 namespace std_fs = std::experimental::filesystem;
-}
+} // namespace nlohmann::detail
 #else
 #include <filesystem>
 namespace nlohmann::detail
 {
 namespace std_fs = std::filesystem;
-}
+} // namespace nlohmann::detail
 #endif
 #endif
 
@@ -4661,13 +4659,13 @@ class tuple_element<N, ::nlohmann::detail::iteration_proxy_value<IteratorType >>
 namespace nlohmann::detail
 {
 namespace std_fs = std::experimental::filesystem;
-}
+} // namespace nlohmann::detail
 #else
 #include <filesystem>
 namespace nlohmann::detail
 {
 namespace std_fs = std::filesystem;
-}
+} // namespace nlohmann::detail
 #endif
 #endif
 
