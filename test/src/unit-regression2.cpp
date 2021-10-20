@@ -49,42 +49,40 @@ using ordered_json = nlohmann::ordered_json;
 #ifdef JSON_HAS_CPP_17
 #include <variant>
 
-// set JSON_STD_FILESYSTEM_EXPERIMENTAL to 1 if <experimental/filesystem> should be taken instead of <filesystem>
-#if defined(__cpp_lib_filesystem)
-    #define JSON_STD_FILESYSTEM_EXPERIMENTAL 0
-#elif defined(__cpp_lib_experimental_filesystem)
-    #define JSON_STD_FILESYSTEM_EXPERIMENTAL 1
-#elif !defined(__has_include)
-    #define JSON_STD_FILESYSTEM_EXPERIMENTAL 1
-#elif __has_include(<filesystem>)
-    #define JSON_STD_FILESYSTEM_EXPERIMENTAL 0
-#elif __has_include(<experimental/filesystem>)
-    #define JSON_STD_FILESYSTEM_EXPERIMENTAL 1
-#else
-    #define JSON_STD_FILESYSTEM_EXPERIMENTAL 0
+#ifdef JSON_HAS_CPP_17
+    #if defined(__cpp_lib_filesystem)
+        #define JSON_HAS_FILESYSTEM 1
+    #elif defined(__cpp_lib_experimental_filesystem)
+        #define JSON_HAS_EXPERIMENTAL_FILESYSTEM 1
+    #elif !defined(__has_include)
+        #define JSON_HAS_EXPERIMENTAL_FILESYSTEM 1
+    #elif __has_include(<filesystem>)
+        #define JSON_HAS_FILESYSTEM 1
+    #elif __has_include(<experimental/filesystem>)
+        #define JSON_HAS_EXPERIMENTAL_FILESYSTEM 1
+    #endif
 
     // std::filesystem does not work on MinGW GCC 8: https://sourceforge.net/p/mingw-w64/bugs/737/
     #if defined(__MINGW32__) && defined(__GNUC__) && __GNUC__ == 8
-        #undef JSON_STD_FILESYSTEM_EXPERIMENTAL
+        #undef JSON_HAS_FILESYSTEM
+        #undef JSON_HAS_EXPERIMENTAL_FILESYSTEM
     #endif
 #endif
 
-#ifdef JSON_STD_FILESYSTEM_EXPERIMENTAL
-#if JSON_STD_FILESYSTEM_EXPERIMENTAL
+#if JSON_HAS_EXPERIMENTAL_FILESYSTEM
 #include <experimental/filesystem>
 namespace nlohmann::detail
 {
 namespace std_fs = std::experimental::filesystem;
 } // namespace nlohmann::detail
-#else
+#elif JSON_HAS_FILESYSTEM
 #include <filesystem>
 namespace nlohmann::detail
 {
 namespace std_fs = std::filesystem;
 } // namespace nlohmann::detail
 #endif
-#endif
-#endif
+
 
 #ifdef JSON_HAS_CPP_20
     #include <span>
@@ -761,7 +759,7 @@ TEST_CASE("regression tests 2")
         CHECK(j == k);
     }
 
-#ifdef JSON_STD_FILESYSTEM_EXPERIMENTAL
+#if JSON_HAS_FILESYSTEM || JSON_HAS_EXPERIMENTAL_FILESYSTEM
     SECTION("issue #3070 - Version 3.10.3 breaks backward-compatibility with 3.10.2 ")
     {
         nlohmann::detail::std_fs::path text_path("/tmp/text.txt");

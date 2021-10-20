@@ -15,20 +15,18 @@
 #include <nlohmann/detail/meta/type_traits.hpp>
 #include <nlohmann/detail/value_t.hpp>
 
-#ifdef JSON_STD_FILESYSTEM_EXPERIMENTAL
-#if JSON_STD_FILESYSTEM_EXPERIMENTAL
+#if JSON_HAS_EXPERIMENTAL_FILESYSTEM
 #include <experimental/filesystem>
 namespace nlohmann::detail
 {
 namespace std_fs = std::experimental::filesystem;
 } // namespace nlohmann::detail
-#else
+#elif JSON_HAS_FILESYSTEM
 #include <filesystem>
 namespace nlohmann::detail
 {
 namespace std_fs = std::filesystem;
 } // namespace nlohmann::detail
-#endif
 #endif
 
 namespace nlohmann
@@ -403,7 +401,7 @@ void to_json(BasicJsonType& j, const T& t)
     to_json_tuple_impl(j, t, make_index_sequence<std::tuple_size<T>::value> {});
 }
 
-#ifdef JSON_STD_FILESYSTEM_EXPERIMENTAL
+#if JSON_HAS_FILESYSTEM || JSON_HAS_EXPERIMENTAL_FILESYSTEM
 template<typename BasicJsonType>
 void to_json(BasicJsonType& j, const std_fs::path& p)
 {
