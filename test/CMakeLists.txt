@@ -68,6 +68,34 @@ foreach(file ${files})
     target_include_directories(${testcase} PRIVATE ${CMAKE_BINARY_DIR}/include thirdparty/doctest thirdparty/fifo_map)
     target_link_libraries(${testcase} PRIVATE ${NLOHMANN_JSON_TARGET_NAME})
 
+    # add a copy with C++17 compilation
+    file(READ ${file} FILE_CONTENT)
+    string(FIND "${FILE_CONTENT}" "JSON_HAS_CPP_17" CPP_17_FOUND)
+    if(NOT ${CPP_17_FOUND} EQUAL -1)
+        add_executable(${testcase}_cpp17 $<TARGET_OBJECTS:doctest_main> ${file})
+        target_compile_definitions(${testcase}_cpp17 PRIVATE DOCTEST_CONFIG_SUPER_FAST_ASSERTS)
+        target_compile_options(${testcase}_cpp17 PRIVATE
+            $<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>
+            $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wno-deprecated;-Wno-float-equal>
+            $<$<CXX_COMPILER_ID:GNU>:-Wno-deprecated-declarations>
+        )
+        target_include_directories(${testcase}_cpp17 PRIVATE ${CMAKE_BINARY_DIR}/include thirdparty/doctest thirdparty/fifo_map)
+        target_link_libraries(${testcase}_cpp17 PRIVATE ${NLOHMANN_JSON_TARGET_NAME})
+        set_target_properties(${testcase}_cpp17 PROPERTIES CXX_STANDARD 17)
+
+        if (JSON_FastTests)
+            add_test(NAME "${testcase}_cpp17"
+                COMMAND ${testcase}_cpp17 ${DOCTEST_TEST_FILTER}
+                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            )
+        else()
+            add_test(NAME "${testcase}_cpp17"
+                COMMAND ${testcase}_cpp17 ${DOCTEST_TEST_FILTER} --no-skip
+                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            )
+        endif()
+    endif()
+
     if (JSON_FastTests)
         add_test(NAME "${testcase}"
             COMMAND ${testcase} ${DOCTEST_TEST_FILTER}
