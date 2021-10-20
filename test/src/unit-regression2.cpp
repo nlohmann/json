@@ -47,9 +47,8 @@ using ordered_json = nlohmann::ordered_json;
 #endif
 
 #ifdef JSON_HAS_CPP_17
-#include <variant>
+    #include <variant>
 
-#ifdef JSON_HAS_CPP_17
     #if defined(__cpp_lib_filesystem)
         #define JSON_HAS_FILESYSTEM 1
     #elif defined(__cpp_lib_experimental_filesystem)
