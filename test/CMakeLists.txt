@@ -58,6 +58,10 @@ foreach(feature ${CMAKE_CXX_COMPILE_FEATURES})
         set(compiler_supports_cpp_17 TRUE)
     endif()
 endforeach()
+# Clang only supports C++17 starting from Clang 5.0
+if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 5.0)
+    unset(compiler_supports_cpp_17)
+endif()
 
 file(GLOB files src/unit-*.cpp)
 
