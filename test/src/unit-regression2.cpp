@@ -87,13 +87,13 @@ using ordered_json = nlohmann::ordered_json;
         #endif
 
         // no filesystem support before iOS 13
-        #if defined(__IPHONE_OS_VERSION_MIN_REQUIRED) and __IPHONE_OS_VERSION_MIN_REQUIRED < 130000
+        #if defined(__IPHONE_OS_VERSION_MIN_REQUIRED) && __IPHONE_OS_VERSION_MIN_REQUIRED < 130000
             #undef JSON_HAS_FILESYSTEM
             #undef JSON_HAS_EXPERIMENTAL_FILESYSTEM
         #endif
 
         // no filesystem support before macOS Catalina
-        #if defined(__MAC_OS_X_VERSION_MIN_REQUIRED) and __MAC_OS_X_VERSION_MIN_REQUIRED < 101500
+        #if defined(__MAC_OS_X_VERSION_MIN_REQUIRED) && __MAC_OS_X_VERSION_MIN_REQUIRED < 101500
             #undef JSON_HAS_FILESYSTEM
             #undef JSON_HAS_EXPERIMENTAL_FILESYSTEM
         #endif
