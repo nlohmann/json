@@ -34,7 +34,6 @@ SOFTWARE.
 
 #define JSON_TESTS_PRIVATE
 #include <nlohmann/json.hpp>
-#include <nlohmann/thirdparty/hedley/hedley.hpp>
 using json = nlohmann::json;
 using ordered_json = nlohmann::ordered_json;
 
