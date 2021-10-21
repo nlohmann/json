@@ -62,6 +62,10 @@ endforeach()
 if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 5.0)
     unset(compiler_supports_cpp_17)
 endif()
+# MSVC 2015 (14.0) does not support C++17
+if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 19.1)
+    unset(compiler_supports_cpp_17)
+endif()
 
 file(GLOB files src/unit-*.cpp)
 
