@@ -56,6 +56,36 @@
             #undef JSON_HAS_FILESYSTEM
             #undef JSON_HAS_EXPERIMENTAL_FILESYSTEM
         #endif
+
+        // no filesystem support before GCC 8: https://en.cppreference.com/w/cpp/compiler_support
+        #if defined(__GNUC__) && !defined(__clang__) && __GNUC__ < 8
+            #undef JSON_HAS_FILESYSTEM
+            #undef JSON_HAS_EXPERIMENTAL_FILESYSTEM
+        #endif
+
+        // no filesystem support before Clang 7: https://en.cppreference.com/w/cpp/compiler_support
+        #if defined(__clang_major__) && __clang_major__ < 7
+            #undef JSON_HAS_FILESYSTEM
+            #undef JSON_HAS_EXPERIMENTAL_FILESYSTEM
+        #endif
+
+        // no filesystem support before MSVC 19.14: https://en.cppreference.com/w/cpp/compiler_support
+        #if defined(_MSC_VER) && _MSC_VER < 1940
+            #undef JSON_HAS_FILESYSTEM
+            #undef JSON_HAS_EXPERIMENTAL_FILESYSTEM
+        #endif
+
+        // no filesystem support before iOS 13
+        #if defined(__IPHONE_OS_VERSION_MIN_REQUIRED) and __IPHONE_OS_VERSION_MIN_REQUIRED < 130000
+            #undef JSON_HAS_FILESYSTEM
+            #undef JSON_HAS_EXPERIMENTAL_FILESYSTEM
+        #endif
+
+        // no filesystem support before macOS Catalina
+        #if defined(__MAC_OS_X_VERSION_MIN_REQUIRED) and __MAC_OS_X_VERSION_MIN_REQUIRED < 101500
+            #undef JSON_HAS_FILESYSTEM
+            #undef JSON_HAS_EXPERIMENTAL_FILESYSTEM
+        #endif
     #endif
 #endif
 

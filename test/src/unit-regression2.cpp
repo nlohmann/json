@@ -34,6 +34,7 @@ SOFTWARE.
 
 #define JSON_TESTS_PRIVATE
 #include <nlohmann/json.hpp>
+#include <nlohmann/thirdparty/hedley/hedley.hpp>
 using json = nlohmann::json;
 using ordered_json = nlohmann::ordered_json;
 
@@ -64,6 +65,36 @@ using ordered_json = nlohmann::ordered_json;
 
         // std::filesystem does not work on MinGW GCC 8: https://sourceforge.net/p/mingw-w64/bugs/737/
         #if defined(__MINGW32__) && defined(__GNUC__) && __GNUC__ == 8
+            #undef JSON_HAS_FILESYSTEM
+            #undef JSON_HAS_EXPERIMENTAL_FILESYSTEM
+        #endif
+
+        // no filesystem support before GCC 8: https://en.cppreference.com/w/cpp/compiler_support
+        #if defined(__GNUC__) && __GNUC__ < 8 && !defined(__clang__)
+            #undef JSON_HAS_FILESYSTEM
+            #undef JSON_HAS_EXPERIMENTAL_FILESYSTEM
+        #endif
+
+        // no filesystem support before Clang 7: https://en.cppreference.com/w/cpp/compiler_support
+        #if defined(__clang_major__) && __clang_major__ < 7
+            #undef JSON_HAS_FILESYSTEM
+            #undef JSON_HAS_EXPERIMENTAL_FILESYSTEM
+        #endif
+
+        // no filesystem support before MSVC 19.14: https://en.cppreference.com/w/cpp/compiler_support
+        #if defined(_MSC_VER) && _MSC_VER < 1940
+            #undef JSON_HAS_FILESYSTEM
+            #undef JSON_HAS_EXPERIMENTAL_FILESYSTEM
+        #endif
+
+        // no filesystem support before iOS 13
+        #if defined(__IPHONE_OS_VERSION_MIN_REQUIRED) and __IPHONE_OS_VERSION_MIN_REQUIRED < 130000
+            #undef JSON_HAS_FILESYSTEM
+            #undef JSON_HAS_EXPERIMENTAL_FILESYSTEM
+        #endif
+
+        // no filesystem support before macOS Catalina
+        #if defined(__MAC_OS_X_VERSION_MIN_REQUIRED) and __MAC_OS_X_VERSION_MIN_REQUIRED < 101500
             #undef JSON_HAS_FILESYSTEM
             #undef JSON_HAS_EXPERIMENTAL_FILESYSTEM
         #endif
