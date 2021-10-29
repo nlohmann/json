@@ -2776,7 +2776,7 @@ class exception : public std::exception
 
   protected:
     JSON_HEDLEY_NON_NULL(3)
-    exception(int id_, const char* what_arg) : id(id_), m(what_arg) {}
+    exception(int id_, const char* what_arg) : id(id_), m(what_arg) {} // NOLINT(bugprone-throw-keyword-missing)
 
     static std::string name(const std::string& ename, int id_)
     {
@@ -2914,7 +2914,7 @@ class parse_error : public exception
     {
         std::string w = exception::name("parse_error", id_) + "parse error" +
                         position_string(pos) + ": " + exception::diagnostics(context) + what_arg;
-        return parse_error(id_, pos.chars_read_total, w.c_str());
+        return {id_, pos.chars_read_total, w.c_str()};
     }
 
     template<typename BasicJsonType>
@@ -2923,7 +2923,7 @@ class parse_error : public exception
         std::string w = exception::name("parse_error", id_) + "parse error" +
                         (byte_ != 0 ? (" at byte " + std::to_string(byte_)) : "") +
                         ": " + exception::diagnostics(context) + what_arg;
-        return parse_error(id_, byte_, w.c_str());
+        return {id_, byte_, w.c_str()};
     }
 
     /*!
@@ -2992,7 +2992,7 @@ class invalid_iterator : public exception
     static invalid_iterator create(int id_, const std::string& what_arg, const BasicJsonType& context)
     {
         std::string w = exception::name("invalid_iterator", id_) + exception::diagnostics(context) + what_arg;
-        return invalid_iterator(id_, w.c_str());
+        return {id_, w.c_str()};
     }
 
   private:
@@ -3047,7 +3047,7 @@ class type_error : public exception
     static type_error create(int id_, const std::string& what_arg, const BasicJsonType& context)
     {
         std::string w = exception::name("type_error", id_) + exception::diagnostics(context) + what_arg;
-        return type_error(id_, w.c_str());
+        return {id_, w.c_str()};
     }
 
   private:
@@ -3095,7 +3095,7 @@ class out_of_range : public exception
     static out_of_range create(int id_, const std::string& what_arg, const BasicJsonType& context)
     {
         std::string w = exception::name("out_of_range", id_) + exception::diagnostics(context) + what_arg;
-        return out_of_range(id_, w.c_str());
+        return {id_, w.c_str()};
     }
 
   private:
@@ -3134,7 +3134,7 @@ class other_error : public exception
     static other_error create(int id_, const std::string& what_arg, const BasicJsonType& context)
     {
         std::string w = exception::name("other_error", id_) + exception::diagnostics(context) + what_arg;
-        return other_error(id_, w.c_str());
+        return {id_, w.c_str()};
     }
 
   private:
@@ -11621,7 +11621,7 @@ This class implements a both iterators (iterator and const_iterator) for the
        iterators in version 3.0.0 (see https://github.com/nlohmann/json/issues/593)
 */
 template<typename BasicJsonType>
-class iter_impl
+class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-special-member-functions)
 {
     /// the iterator with BasicJsonType of different const-ness
     using other_iter_impl = iter_impl<typename std::conditional<std::is_const<BasicJsonType>::value, typename std::remove_const<BasicJsonType>::type, const BasicJsonType>::type>;
@@ -15315,6 +15315,8 @@ class binary_writer
 #include <cstdio> // snprintf
 #include <limits> // numeric_limits
 #include <string> // string, char_traits
+#include <iomanip> // setfill, setw
+#include <sstream> // stringstream
 #include <type_traits> // is_same
 #include <utility> // move
 
@@ -16923,10 +16925,9 @@ class serializer
                     {
                         case error_handler_t::strict:
                         {
-                            std::string sn(9, '\0');
-                            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
-                            (std::snprintf)(&sn[0], sn.size(), "%.2X", byte);
-                            JSON_THROW(type_error::create(316, "invalid UTF-8 byte at index " + std::to_string(i) + ": 0x" + sn, BasicJsonType()));
+                            std::stringstream ss;
+                            ss << std::uppercase << std::setfill('0') << std::setw(2) << std::hex << (byte | 0);
+                            JSON_THROW(type_error::create(316, "invalid UTF-8 byte at index " + std::to_string(i) + ": 0x" + ss.str(), BasicJsonType()));
                         }
 
                         case error_handler_t::ignore:
@@ -17018,10 +17019,9 @@ class serializer
             {
                 case error_handler_t::strict:
                 {
-                    std::string sn(9, '\0');
-                    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
-                    (std::snprintf)(&sn[0], sn.size(), "%.2X", static_cast<std::uint8_t>(s.back()));
-                    JSON_THROW(type_error::create(316, "incomplete UTF-8 string; last byte: 0x" + sn, BasicJsonType()));
+                    std::stringstream ss;
+                    ss << std::uppercase << std::setfill('0') << std::setw(2) << std::hex << (static_cast<std::uint8_t>(s.back()) | 0);
+                    JSON_THROW(type_error::create(316, "incomplete UTF-8 string; last byte: 0x" + ss.str(), BasicJsonType()));
                 }
 
                 case error_handler_t::ignore:
@@ -18574,64 +18574,34 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
 
         /// constructor for strings
-        json_value(const string_t& value)
-        {
-            string = create<string_t>(value);
-        }
+        json_value(const string_t& value) : string(create<string_t>(value)) {}
 
         /// constructor for rvalue strings
-        json_value(string_t&& value)
-        {
-            string = create<string_t>(std::move(value));
-        }
+        json_value(string_t&& value) : string(create<string_t>(std::move(value))) {}
 
         /// constructor for objects
-        json_value(const object_t& value)
-        {
-            object = create<object_t>(value);
-        }
+        json_value(const object_t& value) : object(create<object_t>(value)) {}
 
         /// constructor for rvalue objects
-        json_value(object_t&& value)
-        {
-            object = create<object_t>(std::move(value));
-        }
+        json_value(object_t&& value) : object(create<object_t>(std::move(value))) {}
 
         /// constructor for arrays
-        json_value(const array_t& value)
-        {
-            array = create<array_t>(value);
-        }
+        json_value(const array_t& value) : array(create<array_t>(value)) {}
 
         /// constructor for rvalue arrays
-        json_value(array_t&& value)
-        {
-            array = create<array_t>(std::move(value));
-        }
+        json_value(array_t&& value) : array(create<array_t>(std::move(value))) {}
 
         /// constructor for binary arrays
-        json_value(const typename binary_t::container_type& value)
-        {
-            binary = create<binary_t>(value);
-        }
+        json_value(const typename binary_t::container_type& value) : binary(create<binary_t>(value)) {}
 
         /// constructor for rvalue binary arrays
-        json_value(typename binary_t::container_type&& value)
-        {
-            binary = create<binary_t>(std::move(value));
-        }
+        json_value(typename binary_t::container_type&& value) : binary(create<binary_t>(std::move(value))) {}
 
         /// constructor for binary arrays (internal type)
-        json_value(const binary_t& value)
-        {
-            binary = create<binary_t>(value);
-        }
+        json_value(const binary_t& value) : binary(create<binary_t>(value)) {}
 
         /// constructor for rvalue binary arrays (internal type)
-        json_value(binary_t&& value)
-        {
-            binary = create<binary_t>(std::move(value));
-        }
+        json_value(binary_t&& value) : binary(create<binary_t>(std::move(value))) {}
 
         void destroy(value_t t)
         {
