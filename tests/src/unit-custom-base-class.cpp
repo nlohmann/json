@@ -283,23 +283,23 @@ TEST_CASE("JSON Visit Node")
 
     std::set<std::string> expected
     {
-        "\"/null\" - null - null",
-        "\"/int\" - number_integer - -1",
-        "\"/uint\" - number_unsigned - 1",
-        "\"/float\" - number_float - 1.0",
-        "\"/boolean\" - boolean - true",
-        "\"/string\" - string - \"string\"",
-        "\"/array/0\" - number_integer - 0",
-        "\"/array/1\" - number_integer - 1",
+        "/null - null - null",
+        "/int - number_integer - -1",
+        "/uint - number_unsigned - 1",
+        "/float - number_float - 1.0",
+        "/boolean - boolean - true",
+        "/string - string - \"string\"",
+        "/array/0 - number_integer - 0",
+        "/array/1 - number_integer - 1",
 
-        "\"/array/2/null\" - null - null",
-        "\"/array/2/int\" - number_integer - -1",
-        "\"/array/2/uint\" - number_unsigned - 1",
-        "\"/array/2/float\" - number_float - 1.0",
-        "\"/array/2/boolean\" - boolean - true",
-        "\"/array/2/string\" - string - \"string\"",
-        "\"/array/2/array/0\" - number_integer - 0",
-        "\"/array/2/array/1\" - number_integer - 1"
+        "/array/2/null - null - null",
+        "/array/2/int - number_integer - -1",
+        "/array/2/uint - number_unsigned - 1",
+        "/array/2/float - number_float - 1.0",
+        "/array/2/boolean - boolean - true",
+        "/array/2/string - string - \"string\"",
+        "/array/2/array/0 - number_integer - 0",
+        "/array/2/array/1 - number_integer - 1"
     };
 
     json.visit(
@@ -325,6 +325,7 @@ TEST_CASE("JSON Visit Node")
             }
             str << " - "  << j.dump();
             CHECK(json.at(p) == j);
+            INFO(str.str());
             CHECK(expected.count(str.str()) == 1);
             expected.erase(str.str());
         }
