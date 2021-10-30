@@ -17519,7 +17519,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
         //               ^        ^
         //               it       it + elements_affected
 
-        for (auto it = first; std::next(it, elements_affected) != this->end(); ++it)
+        for (auto it = first; std::next(it, elements_affected) != Container::end(); ++it)
         {
             it->~value_type(); // destroy but keep allocation
             new (&*it) value_type{std::move(*std::next(it, elements_affected))}; // "move" next element to it
