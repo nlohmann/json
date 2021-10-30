@@ -746,6 +746,23 @@ TEST_CASE("regression tests 2")
         std::vector<FooBar> foo;
         j.get_to(foo);
     }
+
+    SECTION("issue #3108 - ordered_json doesn't support range based erase")
+    {
+        ordered_json j = {1, 2, 2, 4};
+
+        auto last = std::unique(j.begin(), j.end());
+        j.erase(last, j.end());
+
+        CHECK(j.dump() == "[1,2,4]");
+
+        j.erase(std::remove_if(j.begin(), j.end(), [](const ordered_json & val)
+        {
+            return val == 2;
+        }), j.end());
+
+        CHECK(j.dump() == "[1,4]");
+    }
 }
 
 DOCTEST_CLANG_SUPPRESS_WARNING_POP

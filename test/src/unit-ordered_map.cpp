@@ -210,6 +210,45 @@ TEST_CASE("ordered_map")
             ++it2;
             CHECK(it2 == om.end());
         }
+
+        SECTION("with iterator pair")
+        {
+            SECTION("range in the middle")
+            {
+                // need more elements
+                om["vier"] = "four";
+                om["fünf"] = "five";
+
+                // delete "zwei" and "drei"
+                auto it = om.erase(om.begin() + 1, om.begin() + 3);
+                CHECK(it->first == "vier");
+                CHECK(om.size() == 3);
+            }
+
+            SECTION("range at the beginning")
+            {
+                // need more elements
+                om["vier"] = "four";
+                om["fünf"] = "five";
+
+                // delete "eins" and "zwei"
+                auto it = om.erase(om.begin(), om.begin() + 2);
+                CHECK(it->first == "drei");
+                CHECK(om.size() == 3);
+            }
+
+            SECTION("range at the end")
+            {
+                // need more elements
+                om["vier"] = "four";
+                om["fünf"] = "five";
+
+                // delete "vier" and "fünf"
+                auto it = om.erase(om.begin() + 3, om.end());
+                CHECK(it == om.end());
+                CHECK(om.size() == 3);
+            }
+        }
     }
 
     SECTION("count")
