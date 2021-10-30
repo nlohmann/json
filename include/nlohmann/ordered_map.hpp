@@ -143,7 +143,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
         //             first    last
 
         // remove the unneeded elements at the end of the vector
-        Container::resize(static_cast<size_type>(this->size() - elements_affected));
+        Container::resize(this->size() - static_cast<size_type>(elements_affected));
 
         // [ a, b, c, d, h, i, j ]
         //               ^        ^
