@@ -307,7 +307,7 @@ TEST_CASE("JSON Visit Node")
                const json_with_visitor_t& j)
         {
             std::stringstream str;
-            str << p << " - " ;
+            str << p.to_string() << " - " ;
              using value_t = nlohmann::detail::value_t;
             switch(j.type())
             {
