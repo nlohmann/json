@@ -240,12 +240,13 @@
              class NumberUnsignedType, class NumberFloatType,              \
              template<typename> class AllocatorType,                       \
              template<typename, typename = void> class JSONSerializer,     \
-             class BinaryType>
+             class BinaryType,                                             \
+             class CustomBaseClass>
 
 #define NLOHMANN_BASIC_JSON_TPL                                            \
     basic_json<ObjectType, ArrayType, StringType, BooleanType,             \
     NumberIntegerType, NumberUnsignedType, NumberFloatType,                \
-    AllocatorType, JSONSerializer, BinaryType>
+    AllocatorType, JSONSerializer, BinaryType, CustomBaseClass>
 
 // Macros to simplify conversion from/to types
 
