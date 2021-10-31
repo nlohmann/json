@@ -130,10 +130,12 @@ TEST_CASE("JSON Node Metadata")
 
         const json moved = std::move(value);
 
+        const json copy_after_moved_from{value};
+
         CHECK(moved.metadata().size()  == 2);
         CHECK(moved.metadata().at(0)   == 1);
         CHECK(moved.metadata().at(1)   == 2);
-        CHECK(value.metadata().size()  == 0);
+        CHECK(copy_after_moved_from.metadata().size()  == 0);
     }
     SECTION("move assign")
     {
@@ -179,7 +181,7 @@ TEST_CASE("JSON Node Metadata")
         (*value.metadata()) = 42;
         auto moved = std::move(value);
 
-        CHECK(value.metadata() == nullptr);
+        CHECK(value.metadata() == nullptr); // NOLINT
         CHECK(moved.metadata() != nullptr);
         CHECK(*moved.metadata() == 42);
     }
@@ -258,26 +260,12 @@ void visitor_adaptor::do_visit(const Ptr& ptr, const Fnc& fnc) const
         case value_t::discarded:
             break;
         case value_t::null:
-            fnc(ptr, json);
-            break;
         case value_t::string:
-            fnc(ptr, json);
-            break;
         case value_t::boolean:
-            fnc(ptr, json);
-            break;
         case value_t::number_integer:
-            fnc(ptr, json);
-            break;
         case value_t::number_unsigned:
-            fnc(ptr, json);
-            break;
         case value_t::number_float:
-            fnc(ptr, json);
-            break;
         case value_t::binary:
-            fnc(ptr, json);
-            break;
         default:
             fnc(ptr, json);
     }
