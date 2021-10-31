@@ -17592,69 +17592,7 @@ namespace nlohmann
 /*!
 @brief a class to store JSON values
 
-@tparam ObjectType type for JSON objects (`std::map` by default; will be used
-in @ref object_t)
-@tparam ArrayType type for JSON arrays (`std::vector` by default; will be used
-in @ref array_t)
-@tparam StringType type for JSON strings and object keys (`std::string` by
-default; will be used in @ref string_t)
-@tparam BooleanType type for JSON booleans (`bool` by default; will be used
-in @ref boolean_t)
-@tparam NumberIntegerType type for JSON integer numbers (`int64_t` by
-default; will be used in @ref number_integer_t)
-@tparam NumberUnsignedType type for JSON unsigned integer numbers (@c
-`uint64_t` by default; will be used in @ref number_unsigned_t)
-@tparam NumberFloatType type for JSON floating-point numbers (`double` by
-default; will be used in @ref number_float_t)
-@tparam BinaryType type for packed binary data for compatibility with binary
-serialization formats (`std::vector<std::uint8_t>` by default; will be used in
-@ref binary_t)
-@tparam AllocatorType type of the allocator to use (`std::allocator` by
-default)
-@tparam JSONSerializer the serializer to resolve internal calls to `to_json()`
-and `from_json()` (@ref adl_serializer by default)
-
-@requirement The class satisfies the following concept requirements:
-- Basic
- - [DefaultConstructible](https://en.cppreference.com/w/cpp/named_req/DefaultConstructible):
-   JSON values can be default constructed. The result will be a JSON null
-   value.
- - [MoveConstructible](https://en.cppreference.com/w/cpp/named_req/MoveConstructible):
-   A JSON value can be constructed from an rvalue argument.
- - [CopyConstructible](https://en.cppreference.com/w/cpp/named_req/CopyConstructible):
-   A JSON value can be copy-constructed from an lvalue expression.
- - [MoveAssignable](https://en.cppreference.com/w/cpp/named_req/MoveAssignable):
-   A JSON value van be assigned from an rvalue argument.
- - [CopyAssignable](https://en.cppreference.com/w/cpp/named_req/CopyAssignable):
-   A JSON value can be copy-assigned from an lvalue expression.
- - [Destructible](https://en.cppreference.com/w/cpp/named_req/Destructible):
-   JSON values can be destructed.
-- Layout
- - [StandardLayoutType](https://en.cppreference.com/w/cpp/named_req/StandardLayoutType):
-   JSON values have
-   [standard layout](https://en.cppreference.com/w/cpp/language/data_members#Standard_layout):
-   All non-static data members are private and standard layout types, the
-   class has no virtual functions or (virtual) base classes.
-- Library-wide
- - [EqualityComparable](https://en.cppreference.com/w/cpp/named_req/EqualityComparable):
-   JSON values can be compared with `==`, see @ref
-   operator==(const_reference,const_reference).
- - [LessThanComparable](https://en.cppreference.com/w/cpp/named_req/LessThanComparable):
-   JSON values can be compared with `<`, see @ref
-   operator<(const_reference,const_reference).
- - [Swappable](https://en.cppreference.com/w/cpp/named_req/Swappable):
-   Any JSON lvalue or rvalue of can be swapped with any lvalue or rvalue of
-   other compatible types, using unqualified function call @ref swap().
- - [NullablePointer](https://en.cppreference.com/w/cpp/named_req/NullablePointer):
-   JSON values can be compared against `std::nullptr_t` objects which are used
-   to model the `null` value.
-- Container
- - [Container](https://en.cppreference.com/w/cpp/named_req/Container):
-   JSON values can be used like STL containers and provide iterator access.
- - [ReversibleContainer](https://en.cppreference.com/w/cpp/named_req/ReversibleContainer);
-   JSON values can be used like STL containers and provide reverse iterator
-   access.
-
+@internal
 @invariant The member variables @a m_value and @a m_type have the following
 relationship:
 - If `m_type == value_t::object`, then `m_value.object != nullptr`.
@@ -17662,12 +17600,8 @@ relationship:
 - If `m_type == value_t::string`, then `m_value.string != nullptr`.
 The invariants are checked by member function assert_invariant().
 
-@internal
 @note ObjectType trick from https://stackoverflow.com/a/9860911
 @endinternal
-
-@see [RFC 8259: The JavaScript Object Notation (JSON) Data Interchange
-Format](https://tools.ietf.org/html/rfc8259)
 
 @since version 1.0.0
 
@@ -17759,17 +17693,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// Classes to implement user-defined exceptions.
     /// @{
 
-    /// @copydoc detail::exception
     using exception = detail::exception;
-    /// @copydoc detail::parse_error
     using parse_error = detail::parse_error;
-    /// @copydoc detail::invalid_iterator
     using invalid_iterator = detail::invalid_iterator;
-    /// @copydoc detail::type_error
     using type_error = detail::type_error;
-    /// @copydoc detail::out_of_range
     using out_of_range = detail::out_of_range;
-    /// @copydoc detail::other_error
     using other_error = detail::other_error;
 
     /// @}
@@ -18511,33 +18439,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         assert_invariant();
     }
 
-    /*!
-    @brief explicitly create a binary array (without subtype)
-
-    Creates a JSON binary array value from a given binary container. Binary
-    values are part of various binary formats, such as CBOR, MessagePack, and
-    BSON. This constructor is used to create a value for serialization to those
-    formats.
-
-    @note Note, this function exists because of the difficulty in correctly
-    specifying the correct template overload in the standard value ctor, as both
-    JSON arrays and JSON binary arrays are backed with some form of a
-    `std::vector`. Because JSON binary arrays are a non-standard extension it
-    was decided that it would be best to prevent automatic initialization of a
-    binary array type, for backwards compatibility and so it does not happen on
-    accident.
-
-    @param[in] init container containing bytes to use as binary type
-
-    @return JSON binary array value
-
-    @complexity Linear in the size of @a init.
-
-    @exceptionsafety Strong guarantee: if an exception is thrown, there are no
-    changes to any JSON value.
-
-    @since version 3.8.0
-    */
+    /// @brief explicitly create a binary array (without subtype)
+    /// @sa https://json.nlohmann.me/api/basic_json/binary/
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json binary(const typename binary_t::container_type& init)
     {
@@ -20823,23 +20726,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
     }
 
-    /*!
-    @brief exchanges the values
-
-    Exchanges the contents of the JSON value with those of @a other. Does not
-    invoke any move, copy, or swap operations on individual elements. All
-    iterators and references remain valid. The past-the-end iterator is
-    invalidated.
-
-    @param[in,out] other JSON value to exchange the contents with
-
-    @complexity Constant.
-
-    @liveexample{The example below shows how JSON values can be swapped with
-    `swap()`.,swap__reference}
-
-    @since version 1.0.0
-    */
+    /// @brief exchanges the values
+    /// @sa https://json.nlohmann.me/api/basic_json/swap/
     void swap(reference other) noexcept (
         std::is_nothrow_move_constructible<value_t>::value&&
         std::is_nothrow_move_assignable<value_t>::value&&
@@ -20855,24 +20743,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         assert_invariant();
     }
 
-    /*!
-    @brief exchanges the values
-
-    Exchanges the contents of the JSON value from @a left with those of @a right. Does not
-    invoke any move, copy, or swap operations on individual elements. All
-    iterators and references remain valid. The past-the-end iterator is
-    invalidated. implemented as a friend function callable via ADL.
-
-    @param[in,out] left JSON value to exchange the contents with
-    @param[in,out] right JSON value to exchange the contents with
-
-    @complexity Constant.
-
-    @liveexample{The example below shows how JSON values can be swapped with
-    `swap()`.,swap__reference}
-
-    @since version 1.0.0
-    */
+    /// @brief exchanges the values
+    /// @sa https://json.nlohmann.me/api/basic_json/swap/
     friend void swap(reference left, reference right) noexcept (
         std::is_nothrow_move_constructible<value_t>::value&&
         std::is_nothrow_move_assignable<value_t>::value&&
@@ -20883,26 +20755,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         left.swap(right);
     }
 
-    /*!
-    @brief exchanges the values
-
-    Exchanges the contents of a JSON array with those of @a other. Does not
-    invoke any move, copy, or swap operations on individual elements. All
-    iterators and references remain valid. The past-the-end iterator is
-    invalidated.
-
-    @param[in,out] other array to exchange the contents with
-
-    @throw type_error.310 when JSON value is not an array; example: `"cannot
-    use swap() with string"`
-
-    @complexity Constant.
-
-    @liveexample{The example below shows how arrays can be swapped with
-    `swap()`.,swap__array_t}
-
-    @since version 1.0.0
-    */
+    /// @brief exchanges the values
+    /// @sa https://json.nlohmann.me/api/basic_json/swap/
     void swap(array_t& other) // NOLINT(bugprone-exception-escape)
     {
         // swap only works for arrays
@@ -20916,26 +20770,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
     }
 
-    /*!
-    @brief exchanges the values
-
-    Exchanges the contents of a JSON object with those of @a other. Does not
-    invoke any move, copy, or swap operations on individual elements. All
-    iterators and references remain valid. The past-the-end iterator is
-    invalidated.
-
-    @param[in,out] other object to exchange the contents with
-
-    @throw type_error.310 when JSON value is not an object; example:
-    `"cannot use swap() with string"`
-
-    @complexity Constant.
-
-    @liveexample{The example below shows how objects can be swapped with
-    `swap()`.,swap__object_t}
-
-    @since version 1.0.0
-    */
+    /// @brief exchanges the values
+    /// @sa https://json.nlohmann.me/api/basic_json/swap/
     void swap(object_t& other) // NOLINT(bugprone-exception-escape)
     {
         // swap only works for objects
@@ -20949,26 +20785,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
     }
 
-    /*!
-    @brief exchanges the values
-
-    Exchanges the contents of a JSON string with those of @a other. Does not
-    invoke any move, copy, or swap operations on individual elements. All
-    iterators and references remain valid. The past-the-end iterator is
-    invalidated.
-
-    @param[in,out] other string to exchange the contents with
-
-    @throw type_error.310 when JSON value is not a string; example: `"cannot
-    use swap() with boolean"`
-
-    @complexity Constant.
-
-    @liveexample{The example below shows how strings can be swapped with
-    `swap()`.,swap__string_t}
-
-    @since version 1.0.0
-    */
+    /// @brief exchanges the values
+    /// @sa https://json.nlohmann.me/api/basic_json/swap/
     void swap(string_t& other) // NOLINT(bugprone-exception-escape)
     {
         // swap only works for strings
@@ -20982,26 +20800,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
     }
 
-    /*!
-    @brief exchanges the values
-
-    Exchanges the contents of a JSON string with those of @a other. Does not
-    invoke any move, copy, or swap operations on individual elements. All
-    iterators and references remain valid. The past-the-end iterator is
-    invalidated.
-
-    @param[in,out] other binary to exchange the contents with
-
-    @throw type_error.310 when JSON value is not a string; example: `"cannot
-    use swap() with boolean"`
-
-    @complexity Constant.
-
-    @liveexample{The example below shows how strings can be swapped with
-    `swap()`.,swap__binary_t}
-
-    @since version 3.8.0
-    */
+    /// @brief exchanges the values
+    /// @sa https://json.nlohmann.me/api/basic_json/swap/
     void swap(binary_t& other) // NOLINT(bugprone-exception-escape)
     {
         // swap only works for strings
@@ -21015,7 +20815,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
     }
 
-    /// @copydoc swap(binary_t&)
+    /// @brief exchanges the values
+    /// @sa https://json.nlohmann.me/api/basic_json/swap/
     void swap(typename binary_t::container_type& other) // NOLINT(bugprone-exception-escape)
     {
         // swap only works for strings

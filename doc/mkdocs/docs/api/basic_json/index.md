@@ -42,6 +42,48 @@ class basic_json;
 
 Todo
 
+## Requirements
+
+The class satisfies the following concept requirements:
+
+### Basic
+
+- [DefaultConstructible](https://en.cppreference.com/w/cpp/named_req/DefaultConstructible): JSON values can be default
+  constructed. The result will be a JSON null value.
+- [MoveConstructible](https://en.cppreference.com/w/cpp/named_req/MoveConstructible): A JSON value can be constructed
+  from an rvalue argument.
+- [CopyConstructible](https://en.cppreference.com/w/cpp/named_req/CopyConstructible): A JSON value can be
+  copy-constructed from an lvalue expression.
+- [MoveAssignable](https://en.cppreference.com/w/cpp/named_req/MoveAssignable): A JSON value van be assigned from an
+  rvalue argument.
+- [CopyAssignable](https://en.cppreference.com/w/cpp/named_req/CopyAssignable): A JSON value can be copy-assigned from
+  an lvalue expression.
+- [Destructible](https://en.cppreference.com/w/cpp/named_req/Destructible): JSON values can be destructed.
+
+### Layout
+
+- [StandardLayoutType](https://en.cppreference.com/w/cpp/named_req/StandardLayoutType): JSON values have
+  [standard layout](https://en.cppreference.com/w/cpp/language/data_members#Standard_layout): All non-static data
+  members are private and standard layout types, the class has no virtual functions or (virtual) base classes.
+
+### Library-wide
+
+- [EqualityComparable](https://en.cppreference.com/w/cpp/named_req/EqualityComparable): JSON values can be compared with
+  `==`, see [`operator==`](operator_eq.md).
+- [LessThanComparable](https://en.cppreference.com/w/cpp/named_req/LessThanComparable): JSON values can be compared with
+  `<`, see [`operator<`](operator_le).
+- [Swappable](https://en.cppreference.com/w/cpp/named_req/Swappable): Any JSON lvalue or rvalue of can be swapped with
+  any lvalue or rvalue of other compatible types, using unqualified function `swap`.
+- [NullablePointer](https://en.cppreference.com/w/cpp/named_req/NullablePointer): JSON values can be compared against
+  `std::nullptr_t` objects which are used to model the `null` value.
+
+### Container
+
+- [Container](https://en.cppreference.com/w/cpp/named_req/Container): JSON values can be used like STL containers and
+  provide iterator access.
+- [ReversibleContainer](https://en.cppreference.com/w/cpp/named_req/ReversibleContainer): JSON values can be used like
+  STL containers and provide reverse iterator access.
+
 ## Member types
 
 - [**adl_serializer**](../adl_serializer) - the default serializer
@@ -183,7 +225,7 @@ Access to the JSON value
 - [**erase**](erase.md) - remove elements
 - [**insert**](insert.md) - inserts elements
 - [**update**](update.md) - updates a JSON object from another object, overwriting existing keys 
-- swap - exchanges the values
+- [**swap**](swap.md) - exchanges the values
 
 ### Lexicographical comparison operators
 
@@ -250,3 +292,7 @@ Access to the JSON value
 - std::hash<nlohmann::json\>
 - std::less<nlohmann::value_t\>
 - std::swap<nlohmann::json\>
+
+## See also
+
+- [RFC 8259: The JavaScript Object Notation (JSON) Data Interchange Format](https://tools.ietf.org/html/rfc8259)
