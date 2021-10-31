@@ -66,7 +66,7 @@ using json_with_metadata =
     nlohmann::adl_serializer,
     std::vector<std::uint8_t>,
     json_metadata<T>
->;
+    >;
 
 TEST_CASE("JSON Node Metadata")
 {
@@ -216,18 +216,18 @@ class visitor_adaptor
 };
 
 using json_with_visitor_t = nlohmann::basic_json <
-    std::map,
-    std::vector,
-    std::string,
-    bool,
-    std::int64_t,
-    std::uint64_t,
-    double,
-    std::allocator,
-    nlohmann::adl_serializer,
-    std::vector<std::uint8_t>,
-    visitor_adaptor
->;
+                            std::map,
+                            std::vector,
+                            std::string,
+                            bool,
+                            std::int64_t,
+                            std::uint64_t,
+                            double,
+                            std::allocator,
+                            nlohmann::adl_serializer,
+                            std::vector<std::uint8_t>,
+                            visitor_adaptor
+                            >;
 
 
 template <class Fnc>
@@ -241,30 +241,45 @@ void visitor_adaptor::do_visit(const Ptr& ptr, const Fnc& fnc) const
 {
     using value_t = nlohmann::detail::value_t;
     const json_with_visitor_t& json = *static_cast<const json_with_visitor_t*>(this);
-    switch(json.type())
+    switch (json.type())
     {
-    case value_t::object:
-        for(const auto& entry : json.items())
-        {
-            entry.value().do_visit(ptr/entry.key(), fnc);
-        }
-        break;
-    case value_t::array:
-        for(std::size_t i = 0; i < json.size(); ++i)
-        {
-            json.at(i).do_visit(ptr/std::to_string(i), fnc);
-        }
-        break;
-    case value_t::discarded: break;
-    case value_t::null: fnc(ptr, json); break;
-    case value_t::string: fnc(ptr, json); break;
-    case value_t::boolean: fnc(ptr, json); break;
-    case value_t::number_integer: fnc(ptr, json); break;
-    case value_t::number_unsigned: fnc(ptr, json); break;
-    case value_t::number_float: fnc(ptr, json); break;
-    case value_t::binary: fnc(ptr, json); break;
-    default:
-        fnc(ptr, json);
+        case value_t::object:
+            for (const auto& entry : json.items())
+            {
+                entry.value().do_visit(ptr / entry.key(), fnc);
+            }
+            break;
+        case value_t::array:
+            for (std::size_t i = 0; i < json.size(); ++i)
+            {
+                json.at(i).do_visit(ptr / std::to_string(i), fnc);
+            }
+            break;
+        case value_t::discarded:
+            break;
+        case value_t::null:
+            fnc(ptr, json);
+            break;
+        case value_t::string:
+            fnc(ptr, json);
+            break;
+        case value_t::boolean:
+            fnc(ptr, json);
+            break;
+        case value_t::number_integer:
+            fnc(ptr, json);
+            break;
+        case value_t::number_unsigned:
+            fnc(ptr, json);
+            break;
+        case value_t::number_float:
+            fnc(ptr, json);
+            break;
+        case value_t::binary:
+            fnc(ptr, json);
+            break;
+        default:
+            fnc(ptr, json);
     }
 }
 
@@ -303,32 +318,54 @@ TEST_CASE("JSON Visit Node")
     };
 
     json.visit(
-                [&](const json_with_visitor_t::json_pointer& p,
-               const json_with_visitor_t& j)
+        [&](const json_with_visitor_t::json_pointer & p,
+            const json_with_visitor_t& j)
+    {
+        std::stringstream str;
+        str << p.to_string() << " - " ;
+        using value_t = nlohmann::detail::value_t;
+        switch (j.type())
         {
-            std::stringstream str;
-            str << p.to_string() << " - " ;
-             using value_t = nlohmann::detail::value_t;
-            switch(j.type())
-            {
-            case value_t::object: str << "object"; break;
-            case value_t::array: str << "array"; break;
-            case value_t::discarded: str << "discarded"; break;
-            case value_t::null: str << "null"; break;
-            case value_t::string: str << "string"; break;
-            case value_t::boolean: str << "boolean"; break;
-            case value_t::number_integer: str << "number_integer"; break;
-            case value_t::number_unsigned: str << "number_unsigned"; break;
-            case value_t::number_float: str << "number_float"; break;
-            case value_t::binary: str << "binary"; break;
-            default: str << "error"; break;
-            }
-            str << " - "  << j.dump();
-            CHECK(json.at(p) == j);
-            INFO(str.str());
-            CHECK(expected.count(str.str()) == 1);
-            expected.erase(str.str());
+            case value_t::object:
+                str << "object";
+                break;
+            case value_t::array:
+                str << "array";
+                break;
+            case value_t::discarded:
+                str << "discarded";
+                break;
+            case value_t::null:
+                str << "null";
+                break;
+            case value_t::string:
+                str << "string";
+                break;
+            case value_t::boolean:
+                str << "boolean";
+                break;
+            case value_t::number_integer:
+                str << "number_integer";
+                break;
+            case value_t::number_unsigned:
+                str << "number_unsigned";
+                break;
+            case value_t::number_float:
+                str << "number_float";
+                break;
+            case value_t::binary:
+                str << "binary";
+                break;
+            default:
+                str << "error";
+                break;
         }
+        str << " - "  << j.dump();
+        CHECK(json.at(p) == j);
+        INFO(str.str());
+        CHECK(expected.count(str.str()) == 1);
+        expected.erase(str.str());
+    }
     );
     CHECK(expected.empty());
 }
