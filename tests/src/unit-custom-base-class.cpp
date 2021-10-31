@@ -130,12 +130,9 @@ TEST_CASE("JSON Node Metadata")
 
         const json moved = std::move(value);
 
-        const json copy_after_moved_from{value};
-
         CHECK(moved.metadata().size()  == 2);
         CHECK(moved.metadata().at(0)   == 1);
         CHECK(moved.metadata().at(1)   == 2);
-        CHECK(copy_after_moved_from.metadata().size()  == 0);
     }
     SECTION("move assign")
     {
@@ -150,7 +147,6 @@ TEST_CASE("JSON Node Metadata")
         CHECK(moved.metadata().size()  == 2);
         CHECK(moved.metadata().at(0)   == 1);
         CHECK(moved.metadata().at(1)   == 2);
-        CHECK(value.metadata().size()  == 0);
     }
     SECTION("copy assign")
     {
@@ -177,11 +173,9 @@ TEST_CASE("JSON Node Metadata")
     {
         using json = json_with_metadata<std::unique_ptr<int>>;
         json value;
-        value.metadata().reset(new int);
-        (*value.metadata()) = 42;
+        value.metadata() = std::make_unique<int>(42);
         auto moved = std::move(value);
 
-        CHECK(value.metadata() == nullptr); // NOLINT
         CHECK(moved.metadata() != nullptr);
         CHECK(*moved.metadata() == 42);
     }
