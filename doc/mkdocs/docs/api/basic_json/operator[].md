@@ -33,7 +33,7 @@ const_reference operator[](const json_pointer& ptr) const;
 :   index of the element to access
 
 `key` (in)
-:   object key of the elements to remove
+:   object key of the element to access
     
 `ptr` (in)
 :   JSON pointer to the desired element
@@ -48,10 +48,10 @@ const_reference operator[](const json_pointer& ptr) const;
 
 1. The function can throw the following exceptions:
     - Throws [`type_error.305`](../../home/exceptions.md#jsonexceptiontype_error305) if the JSON value is not an array
-      or null; in that cases, using the `[]` operator with an index makes no sense.
+      or null; in that case, using the `[]` operator with an index makes no sense.
 2. The function can throw the following exceptions:
-    - Throws [`type_error.305`](../../home/exceptions.md#jsonexceptiontype_error305) if the JSON value is not an array
-      or null; in that cases, using the `[]` operator with an index makes no sense.
+    - Throws [`type_error.305`](../../home/exceptions.md#jsonexceptiontype_error305) if the JSON value is not an object
+      or null; in that case, using the `[]` operator with a key makes no sense.
 3. The function can throw the following exceptions:
     - Throws [`parse_error.106`](../../home/exceptions.md#jsonexceptionparse_error106) if an array index in the passed
       JSON pointer `ptr` begins with '0'.

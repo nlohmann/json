@@ -648,7 +648,7 @@ TEST_CASE("JSON patch")
                 CHECK(target == R"({ "D": "Berlin", "F": "Paris", "GB": "London" })"_json);
 
                 // create a diff from two JSONs
-                json p2 = json::diff(target, source);
+                json p2 = json::diff(target, source); // NOLINT(readability-suspicious-call-argument)
                 // p2 = [{"op": "delete", "path": "/GB"}]
                 CHECK(p2 == R"([{"op":"remove","path":"/GB"}])"_json);
             }
