@@ -3638,37 +3638,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @name serialization
     /// @{
 #ifndef JSON_NO_IO
-    /*!
-    @brief serialize to stream
-
-    Serialize the given JSON value @a j to the output stream @a o. The JSON
-    value will be serialized using the @ref dump member function.
-
-    - The indentation of the output can be controlled with the member variable
-      `width` of the output stream @a o. For instance, using the manipulator
-      `std::setw(4)` on @a o sets the indentation level to `4` and the
-      serialization result is the same as calling `dump(4)`.
-
-    - The indentation character can be controlled with the member variable
-      `fill` of the output stream @a o. For instance, the manipulator
-      `std::setfill('\\t')` sets indentation to use a tab character rather than
-      the default space character.
-
-    @param[in,out] o  stream to serialize to
-    @param[in] j  JSON value to serialize
-
-    @return the stream @a o
-
-    @throw type_error.316 if a string stored inside the JSON value is not
-                          UTF-8 encoded
-
-    @complexity Linear.
-
-    @liveexample{The example below shows the serialization with different
-    parameters to `width` to adjust the indentation level.,operator_serialize}
-
-    @since version 1.0.0; indentation character added in version 3.0.0
-    */
+    /// @brief serialize to stream
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_ltlt/
     friend std::ostream& operator<<(std::ostream& o, const basic_json& j)
     {
         // read width member and use it as indentation parameter if nonzero
