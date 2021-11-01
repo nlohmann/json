@@ -35,6 +35,8 @@ SOFTWARE.
 
 #include <nlohmann/json.hpp>
 
+// Test extending nlohmann::json by using a custom base class.
+// Add some metadata to each node ant test the behaviour of copy / move
 template<class MetaDataType>
 class json_metadata
 {
@@ -201,6 +203,8 @@ TEST_CASE("JSON Node Metadata")
     }
 }
 
+// Test extending nlohmann::json by using a custom base class.
+// Add a custom member function template iterating over the whole json tree.
 class visitor_adaptor
 {
   public:
