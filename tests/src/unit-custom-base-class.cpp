@@ -173,7 +173,7 @@ TEST_CASE("JSON Node Metadata")
     {
         using json = json_with_metadata<std::unique_ptr<int>>;
         json value;
-        value.metadata().reset(new int(42));
+        value.metadata().reset(new int(42)); // NOLINT
         auto moved = std::move(value);
 
         CHECK(moved.metadata() != nullptr);
