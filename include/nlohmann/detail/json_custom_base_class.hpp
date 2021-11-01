@@ -1,6 +1,6 @@
 #pragma once
 
-#include <type_traits>
+#include <type_traits> // conditional, is_same
 
 namespace nlohmann
 {
