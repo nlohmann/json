@@ -151,6 +151,7 @@ nav:
         - api/basic_json/operator_ltlt.md
         - api/basic_json/operator_le.md
         - api/basic_json/operator_gt.md
+        - api/basic_json/operator_gtgt.md
         - api/basic_json/operator_ge.md
         - api/basic_json/operator+=.md
         - api/basic_json/operator_literal_json.md

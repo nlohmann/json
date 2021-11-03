@@ -3640,14 +3640,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return o;
     }
 
-    /*!
-    @brief serialize to stream
-    @deprecated This stream operator is deprecated and will be removed in
-                future 4.0.0 of the library. Please use
-                @ref operator<<(std::ostream&, const basic_json&)
-                instead; that is, replace calls like `j >> o;` with `o << j;`.
-    @since version 1.0.0; deprecated since version 3.0.0
-    */
+    /// @brief serialize to stream
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_ltlt/
+    /// @deprecated This function is deprecated since 3.0.0 and will be removed in
+    ///             version 4.0.0 of the library. Please use
+    ///             operator<<(std::ostream&, const basic_json&) instead; that is,
+    ///             replace calls like `j >> o;` with `o << j;`.
     JSON_HEDLEY_DEPRECATED_FOR(3.0.0, operator<<(std::ostream&, const basic_json&))
     friend std::ostream& operator>>(const basic_json& j, std::ostream& o)
     {
@@ -3761,6 +3759,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia)).sax_parse(format, sax, strict);
     }
 
+    /// @brief generate SAX events
+    /// @sa https://json.nlohmann.me/api/basic_json/sax_parse/
+    /// @deprecated This function is deprecated since 3.8.0 and will be removed in
+    ///             version 4.0.0 of the library. Please use
+    ///             sax_parse(ptr, ptr + len) instead.
     template <typename SAX>
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, sax_parse(ptr, ptr + len, ...))
     JSON_HEDLEY_NON_NULL(2)
@@ -3777,45 +3780,20 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia)).sax_parse(format, sax, strict);
     }
 #ifndef JSON_NO_IO
-    /*!
-    @brief deserialize from stream
-    @deprecated This stream operator is deprecated and will be removed in
-                version 4.0.0 of the library. Please use
-                @ref operator>>(std::istream&, basic_json&)
-                instead; that is, replace calls like `j << i;` with `i >> j;`.
-    @since version 1.0.0; deprecated since version 3.0.0
-    */
+    /// @brief deserialize from stream
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_gtgt/
+    /// @deprecated This stream operator is deprecated since 3.0.0 and will be removed in
+    ///             version 4.0.0 of the library. Please use
+    ///             operator>>(std::istream&, basic_json&) instead; that is,
+    ///             replace calls like `j << i;` with `i >> j;`.
     JSON_HEDLEY_DEPRECATED_FOR(3.0.0, operator>>(std::istream&, basic_json&))
     friend std::istream& operator<<(basic_json& j, std::istream& i)
     {
         return operator>>(i, j);
     }
 
-    /*!
-    @brief deserialize from stream
-
-    Deserializes an input stream to a JSON value.
-
-    @param[in,out] i  input stream to read a serialized JSON value from
-    @param[in,out] j  JSON value to write the deserialized input to
-
-    @throw parse_error.101 in case of an unexpected token
-    @throw parse_error.102 if to_unicode fails or surrogate error
-    @throw parse_error.103 if to_unicode fails
-
-    @complexity Linear in the length of the input. The parser is a predictive
-    LL(1) parser.
-
-    @note A UTF-8 byte order mark is silently ignored.
-
-    @liveexample{The example below shows how a JSON value is constructed by
-    reading a serialization from a stream.,operator_deserialize}
-
-    @sa parse(std::istream&, const parser_callback_t) for a variant with a
-    parser callback function to filter values while parsing
-
-    @since version 1.0.0
-    */
+    /// @brief deserialize from stream
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_gtgt/
     friend std::istream& operator>>(std::istream& i, basic_json& j)
     {
         parser(detail::input_adapter(i)).parse(false, j);

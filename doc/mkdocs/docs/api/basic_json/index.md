@@ -280,7 +280,7 @@ Access to the JSON value
 ## Non-member functions
 
 - [**operator<<(std::ostream&)**](operator_ltlt.md) - serialize to stream
-- operator>>(std::istream&) - deserialize from stream
+- [**operator>>(std::istream&)**](operator_gtgt.md) - deserialize from stream
 
 ## Literals
 
