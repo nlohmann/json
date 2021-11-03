@@ -20661,30 +20661,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/update/
     void update(const_reference j)
     {
-        // implicitly convert null value to an empty object
-        if (is_null())
-        {
-            m_type = value_t::object;
-            m_value.object = create<object_t>();
-            assert_invariant();
-        }
-
-        if (JSON_HEDLEY_UNLIKELY(!is_object()))
-        {
-            JSON_THROW(type_error::create(312, "cannot use update() with " + std::string(type_name()), *this));
-        }
-        if (JSON_HEDLEY_UNLIKELY(!j.is_object()))
-        {
-            JSON_THROW(type_error::create(312, "cannot use update() with " + std::string(j.type_name()), *this));
-        }
-
-        for (auto it = j.cbegin(); it != j.cend(); ++it)
-        {
-            m_value.object->operator[](it.key()) = it.value();
-#if JSON_DIAGNOSTICS
-            m_value.object->operator[](it.key()).m_parent = this;
-#endif
-        }
+        update(j.begin(), j.end(), merge_objects);
     }
 
     /// @brief updates a JSON object from another object, overwriting existing keys
@@ -20711,14 +20688,22 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
 
         // passed iterators must belong to objects
-        if (JSON_HEDLEY_UNLIKELY(!first.m_object->is_object()
-                                 || !last.m_object->is_object()))
+        if (JSON_HEDLEY_UNLIKELY(!first.m_object->is_object()))
         {
-            JSON_THROW(invalid_iterator::create(202, "iterators first and last must point to objects", *this));
+            JSON_THROW(type_error::create(312, "cannot use update() with " + std::string(first.m_object->type_name()), *first.m_object));
         }
 
         for (auto it = first; it != last; ++it)
         {
+            if (merge_objects && it.value().is_object())
+            {
+                auto it2 = m_value.object->find(it.key());
+                if (it2 != m_value.object->end())
+                {
+                    it2->second.update(it.value(), true);
+                    continue;
+                }
+            }
             m_value.object->operator[](it.key()) = it.value();
 #if JSON_DIAGNOSTICS
             m_value.object->operator[](it.key()).m_parent = this;
