@@ -22251,10 +22251,10 @@ struct less< ::nlohmann::detail::value_t>
 
 @since version 1.0.0
 */
-template<>
-inline void swap<nlohmann::json>(nlohmann::json& j1, nlohmann::json& j2) noexcept(  // NOLINT(readability-inconsistent-declaration-parameter-name)
-    is_nothrow_move_constructible<nlohmann::json>::value&&                          // NOLINT(misc-redundant-expression)
-    is_nothrow_move_assignable<nlohmann::json>::value)
+NLOHMANN_BASIC_JSON_TPL_DECLARATION
+inline void swap(nlohmann::NLOHMANN_BASIC_JSON_TPL& j1, nlohmann::NLOHMANN_BASIC_JSON_TPL& j2) noexcept(  // NOLINT(readability-inconsistent-declaration-parameter-name)
+    is_nothrow_move_constructible<nlohmann::NLOHMANN_BASIC_JSON_TPL>::value&&                          // NOLINT(misc-redundant-expression)
+    is_nothrow_move_assignable<nlohmann::NLOHMANN_BASIC_JSON_TPL>::value)
 {
     j1.swap(j2);
 }
