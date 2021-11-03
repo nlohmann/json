@@ -4707,7 +4707,7 @@ std::string to_string(const NLOHMANN_BASIC_JSON_TPL& j)
 // nonmember support //
 ///////////////////////
 
-namespace std
+namespace std // NOLINT(cert-dcl58-cpp)
 {
 
 /// hash value for JSON objects

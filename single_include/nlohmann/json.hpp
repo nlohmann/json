@@ -22208,7 +22208,7 @@ std::string to_string(const NLOHMANN_BASIC_JSON_TPL& j)
 // nonmember support //
 ///////////////////////
 
-namespace std
+namespace std // NOLINT(cert-dcl58-cpp)
 {
 
 /// hash value for JSON objects
@@ -22249,7 +22249,7 @@ struct less< ::nlohmann::detail::value_t>
 /*!
 @brief exchanges the values of two JSON objects
 
-@since version 1.0.0
+@since version 1.0.0, extended for arbitrary basic_json types in 3.10.5.
 */
 NLOHMANN_BASIC_JSON_TPL_DECLARATION
 inline void swap(nlohmann::NLOHMANN_BASIC_JSON_TPL& j1, nlohmann::NLOHMANN_BASIC_JSON_TPL& j2) noexcept(  // NOLINT(readability-inconsistent-declaration-parameter-name)
