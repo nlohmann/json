@@ -4708,15 +4708,15 @@ std::string to_string(const NLOHMANN_BASIC_JSON_TPL& j)
 ///////////////////////
 
 /// hash value for JSON objects
-template<typename BasicJsonType>
-struct std::hash
+NLOHMANN_BASIC_JSON_TPL_DECLARATION
+struct std::hash<nlohmann::NLOHMANN_BASIC_JSON_TPL>
 {
     /*!
     @brief return a hash value for a JSON object
 
     @since version 1.0.0, extended for arbitrary basic_json types in 3.10.5.
     */
-    std::size_t operator()(const BasicJsonType& j) const
+    std::size_t operator()(const nlohmann::NLOHMANN_BASIC_JSON_TPL& j) const
     {
         return nlohmann::detail::hash(j);
     }
@@ -4751,14 +4751,14 @@ namespace std
 @since version 1.0.0
 */
 template<>
-inline void swap<nlohmann::json>(nlohmann::json& j1, nlohmann::json& j2) noexcept( // NOLINT(readability-inconsistent-declaration-parameter-name)
-    is_nothrow_move_constructible<nlohmann::json>::value&&  // NOLINT(misc-redundant-expression)
-    is_nothrow_move_assignable<nlohmann::json>::value
-                              )
+inline void swap<nlohmann::json>(nlohmann::json& j1, nlohmann::json& j2) noexcept(  // NOLINT(readability-inconsistent-declaration-parameter-name)
+    is_nothrow_move_constructible<nlohmann::json>::value&&                          // NOLINT(misc-redundant-expression)
+    is_nothrow_move_assignable<nlohmann::json>::value)
 {
     j1.swap(j2);
 }
 
+}
 // namespace std
 
 #endif
