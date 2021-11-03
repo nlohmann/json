@@ -23455,6 +23455,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     Inserts all values from JSON object @a j and overwrites existing keys.
 
     @param[in] j  JSON object to read values from
+    @param[in] merge_objects  when true, existing keys are not overwritten, but
+                              contents of objects are merged recursively
+                              (default: false)
 
     @throw type_error.312 if called on JSON values other than objects; example:
     `"cannot use update() with string"`
@@ -23466,34 +23469,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     @sa https://docs.python.org/3.6/library/stdtypes.html#dict.update
 
-    @since version 3.0.0
+    @since version 3.0.0, `merge_objects` parameter added in 3.10.4.
     */
-    void update(const_reference j)
+    void update(const_reference j, bool merge_objects = false)
     {
-        // implicitly convert null value to an empty object
-        if (is_null())
-        {
-            m_type = value_t::object;
-            m_value.object = create<object_t>();
-            assert_invariant();
-        }
-
-        if (JSON_HEDLEY_UNLIKELY(!is_object()))
-        {
-            JSON_THROW(type_error::create(312, "cannot use update() with " + std::string(type_name()), *this));
-        }
-        if (JSON_HEDLEY_UNLIKELY(!j.is_object()))
-        {
-            JSON_THROW(type_error::create(312, "cannot use update() with " + std::string(j.type_name()), *this));
-        }
-
-        for (auto it = j.cbegin(); it != j.cend(); ++it)
-        {
-            m_value.object->operator[](it.key()) = it.value();
-#if JSON_DIAGNOSTICS
-            m_value.object->operator[](it.key()).m_parent = this;
-#endif
-        }
+        update(j.begin(), j.end(), merge_objects);
     }
 
     /*!
@@ -23504,12 +23484,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     @param[in] first begin of the range of elements to insert
     @param[in] last end of the range of elements to insert
+    @param[in] merge_objects  when true, existing keys are not overwritten, but
+                              contents of objects are merged recursively
+                              (default: false)
 
     @throw type_error.312 if called on JSON values other than objects; example:
     `"cannot use update() with string"`
-    @throw invalid_iterator.202 if iterator @a first or @a last does does not
-    point to an object; example: `"iterators first and last must point to
-    objects"`
+    @throw type_error.312 if iterator @a first or @a last does does not
+    point to an object; example: `"cannot use update() with string"`
     @throw invalid_iterator.210 if @a first and @a last do not belong to the
     same JSON value; example: `"iterators do not fit"`
 
@@ -23520,9 +23502,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     @sa https://docs.python.org/3.6/library/stdtypes.html#dict.update
 
-    @since version 3.0.0
+    @since version 3.0.0, `merge_objects` parameter added in 3.10.4.
     */
-    void update(const_iterator first, const_iterator last)
+    void update(const_iterator first, const_iterator last, bool merge_objects = false)
     {
         // implicitly convert null value to an empty object
         if (is_null())
@@ -23544,14 +23526,22 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
 
         // passed iterators must belong to objects
-        if (JSON_HEDLEY_UNLIKELY(!first.m_object->is_object()
-                                 || !last.m_object->is_object()))
+        if (JSON_HEDLEY_UNLIKELY(!first.m_object->is_object()))
         {
-            JSON_THROW(invalid_iterator::create(202, "iterators first and last must point to objects", *this));
+            JSON_THROW(type_error::create(312, "cannot use update() with " + std::string(first.m_object->type_name()), *first.m_object));
         }
 
         for (auto it = first; it != last; ++it)
         {
+            if (merge_objects && it.value().is_object())
+            {
+                auto it2 = m_value.object->find(it.key());
+                if (it2 != m_value.object->end())
+                {
+                    it2->second.update(it.value(), true);
+                    continue;
+                }
+            }
             m_value.object->operator[](it.key()) = it.value();
 #if JSON_DIAGNOSTICS
             m_value.object->operator[](it.key()).m_parent = this;
