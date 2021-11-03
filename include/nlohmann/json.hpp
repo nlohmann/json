@@ -4758,8 +4758,7 @@ inline void swap<nlohmann::json>(nlohmann::json& j1, nlohmann::json& j2) noexcep
     j1.swap(j2);
 }
 
-}
-// namespace std
+} // namespace std
 
 #endif
 
