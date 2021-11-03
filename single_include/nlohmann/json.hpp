@@ -22208,9 +22208,12 @@ std::string to_string(const NLOHMANN_BASIC_JSON_TPL& j)
 // nonmember support //
 ///////////////////////
 
+namespace std
+{
+
 /// hash value for JSON objects
 NLOHMANN_BASIC_JSON_TPL_DECLARATION
-struct std::hash<nlohmann::NLOHMANN_BASIC_JSON_TPL>
+struct hash<nlohmann::NLOHMANN_BASIC_JSON_TPL>
 {
     /*!
     @brief return a hash value for a JSON object
@@ -22227,7 +22230,7 @@ struct std::hash<nlohmann::NLOHMANN_BASIC_JSON_TPL>
 /// @note: do not remove the space after '<',
 ///        see https://github.com/nlohmann/json/pull/679
 template<>
-struct std::less< ::nlohmann::detail::value_t>
+struct less< ::nlohmann::detail::value_t>
 {
     /*!
     @brief compare two value_t enum values
@@ -22243,9 +22246,6 @@ struct std::less< ::nlohmann::detail::value_t>
 // C++20 prohibit function specialization in the std namespace.
 #ifndef JSON_HAS_CPP_20
 
-namespace std
-{
-
 /*!
 @brief exchanges the values of two JSON objects
 
@@ -22259,9 +22259,9 @@ inline void swap<nlohmann::json>(nlohmann::json& j1, nlohmann::json& j2) noexcep
     j1.swap(j2);
 }
 
-} // namespace std
-
 #endif
+
+} // namespace std
 
 /// @brief user-defined string literal for JSON values
 /// @sa https://json.nlohmann.me/api/basic_json/operator_literal_json/
