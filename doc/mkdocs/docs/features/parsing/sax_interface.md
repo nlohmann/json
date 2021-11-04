@@ -69,5 +69,5 @@ Note the `sax_parse` function only returns a `#!cpp bool` indicating the result 
 
 ## See also
 
-- [json_say](../../api/json_sax/index.md) - documentation of the SAX interface
+- [json_sax](../../api/json_sax/index.md) - documentation of the SAX interface
 - [sax_parse](../../api/basic_json/sax_parse.md) - SAX parser

@@ -173,6 +173,7 @@ nav:
         - api/basic_json/to_bson.md
         - api/basic_json/to_cbor.md
         - api/basic_json/to_msgpack.md
+        - api/basic_json/to_string.md
         - api/basic_json/to_ubjson.md
         - api/basic_json/type.md
         - api/basic_json/type_error.md

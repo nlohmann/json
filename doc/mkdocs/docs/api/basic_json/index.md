@@ -239,7 +239,6 @@ Access to the JSON value
 ### Serialization / Dumping
 
 - [**dump**](dump.md) - serialization
-- to_string - user-defined to_string function for JSON values
 
 ### Deserialization / Parsing
 
@@ -281,6 +280,7 @@ Access to the JSON value
 
 - [**operator<<(std::ostream&)**](operator_ltlt.md) - serialize to stream
 - [**operator>>(std::istream&)**](operator_gtgt.md) - deserialize from stream
+- [**to_string**](to_string.md) - user-defined `to_string` function for JSON values
 
 ## Literals
 
