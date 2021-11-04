@@ -188,6 +188,21 @@ nav:
         - api/adl_serializer/to_json.md
       - api/json.md
       - api/json_pointer.md
+      - json_sax:
+        - api/json_sax/index.md
+        - api/json_sax/binary.md
+        - api/json_sax/boolean.md
+        - api/json_sax/end_array.md
+        - api/json_sax/end_object.md
+        - api/json_sax/key.md
+        - api/json_sax/null.md
+        - api/json_sax/number_float.md
+        - api/json_sax/number_integer.md
+        - api/json_sax/number_unsigned.md
+        - api/json_sax/parse_error.md
+        - api/json_sax/start_array.md
+        - api/json_sax/start_object.md
+        - api/json_sax/string.md
       - api/ordered_map.md
       - api/ordered_json.md
 

@@ -1785,7 +1785,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return v;
     }
 
-    // specialization to allow to call get_to with a basic_json value
+    // specialization to allow calling get_to with a basic_json value
     // see https://github.com/nlohmann/json/issues/2175
     template<typename ValueType,
              detail::enable_if_t <
@@ -2858,7 +2858,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         const auto old_capacity = m_value.array->capacity();
         m_value.array->push_back(std::move(val));
         set_parent(m_value.array->back(), old_capacity);
-        // if val is moved from, basic_json move constructor marks it null so we do not call the destructor
+        // if val is moved from, basic_json move constructor marks it null, so we do not call the destructor
     }
 
     /// @brief add an object to an array
@@ -4551,7 +4551,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     ++i;
                 }
 
-                // i now reached the end of at least one array
+                // We now reached the end of at least one array
                 // in a second pass, traverse the remaining elements
 
                 // remove my remaining elements

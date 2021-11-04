@@ -2332,7 +2332,7 @@ using is_detected_convertible =
     #pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
 #endif
 
-// allow to disable exceptions
+// allow disabling exceptions
 #if (defined(__cpp_exceptions) || defined(__EXCEPTIONS) || defined(_CPPUNWIND)) && !defined(JSON_NOEXCEPTION)
     #define JSON_THROW(exception) throw exception
     #define JSON_TRY try
@@ -2366,7 +2366,7 @@ using is_detected_convertible =
     #define JSON_INTERNAL_CATCH JSON_INTERNAL_CATCH_USER
 #endif
 
-// allow to override assert
+// allow overriding assert
 #if !defined(JSON_ASSERT)
     #include <cassert> // assert
     #define JSON_ASSERT(x) assert(x)
@@ -5503,7 +5503,7 @@ class input_stream_adapter
 
     // std::istream/std::streambuf use std::char_traits<char>::to_int_type, to
     // ensure that std::char_traits<char>::eof() and the character 0xFF do not
-    // end up as the same value, eg. 0xFFFFFFFF.
+    // end up as the same value, e.g. 0xFFFFFFFF.
     std::char_traits<char>::int_type get_character()
     {
         auto res = sb->sbumpc();
@@ -5849,7 +5849,7 @@ auto input_adapter(T (&array)[N]) -> decltype(input_adapter(array, array + N)) /
 }
 
 // This class only handles inputs of input_buffer_adapter type.
-// It's required so that expressions like {ptr, len} can be implicitely casted
+// It's required so that expressions like {ptr, len} can be implicitly cast
 // to the correct adapter.
 class span_input_adapter
 {
@@ -5942,7 +5942,7 @@ struct json_sax
     virtual bool number_unsigned(number_unsigned_t val) = 0;
 
     /*!
-    @brief an floating-point number was read
+    @brief a floating-point number was read
     @param[in] val  floating-point value
     @param[in] s    raw token value
     @return whether parsing should proceed
@@ -5950,18 +5950,18 @@ struct json_sax
     virtual bool number_float(number_float_t val, const string_t& s) = 0;
 
     /*!
-    @brief a string was read
+    @brief a string value was read
     @param[in] val  string value
     @return whether parsing should proceed
-    @note It is safe to move the passed string.
+    @note It is safe to move the passed string value.
     */
     virtual bool string(string_t& val) = 0;
 
     /*!
-    @brief a binary string was read
+    @brief a binary value was read
     @param[in] val  binary value
     @return whether parsing should proceed
-    @note It is safe to move the passed binary.
+    @note It is safe to move the passed binary value.
     */
     virtual bool binary(binary_t& val) = 0;
 
@@ -6945,7 +6945,7 @@ class lexer : public lexer_base<BasicJsonType>
                                                         // low surrogate occupies the least significant 15 bits
                                                         + static_cast<unsigned int>(codepoint2)
                                                         // there is still the 0xD800, 0xDC00 and 0x10000 noise
-                                                        // in the result so we have to subtract with:
+                                                        // in the result, so we have to subtract with:
                                                         // (0xD800 << 10) + DC00 - 0x10000 = 0x35FDC00
                                                         - 0x35FDC00u);
                                     }
@@ -16189,7 +16189,7 @@ void grisu2(char* buf, int& len, int& decimal_exponent, FloatType value)
     //
     // The documentation for 'std::to_chars' (https://en.cppreference.com/w/cpp/utility/to_chars)
     // says "value is converted to a string as if by std::sprintf in the default ("C") locale"
-    // and since sprintf promotes float's to double's, I think this is exactly what 'std::to_chars'
+    // and since sprintf promotes floats to doubles, I think this is exactly what 'std::to_chars'
     // does.
     // On the other hand, the documentation for 'std::to_chars' requires that "parsing the
     // representation using the corresponding std::from_chars function recovers value exactly". That
@@ -17127,7 +17127,7 @@ class serializer
         // spare 1 byte for '\0'
         JSON_ASSERT(n_chars < number_buffer.size() - 1);
 
-        // jump to the end to generate the string from backward
+        // jump to the end to generate the string from backward,
         // so we later avoid reversing the result
         buffer_ptr += n_chars;
 
@@ -17229,7 +17229,7 @@ class serializer
 
         o->write_characters(number_buffer.data(), static_cast<std::size_t>(len));
 
-        // determine if need to append ".0"
+        // determine if we need to append ".0"
         const bool value_is_int_like =
             std::none_of(number_buffer.begin(), number_buffer.begin() + len + 1,
                          [](char c)
@@ -19260,7 +19260,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return v;
     }
 
-    // specialization to allow to call get_to with a basic_json value
+    // specialization to allow calling get_to with a basic_json value
     // see https://github.com/nlohmann/json/issues/2175
     template<typename ValueType,
              detail::enable_if_t <
@@ -20333,7 +20333,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         const auto old_capacity = m_value.array->capacity();
         m_value.array->push_back(std::move(val));
         set_parent(m_value.array->back(), old_capacity);
-        // if val is moved from, basic_json move constructor marks it null so we do not call the destructor
+        // if val is moved from, basic_json move constructor marks it null, so we do not call the destructor
     }
 
     /// @brief add an object to an array
@@ -22026,7 +22026,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     ++i;
                 }
 
-                // i now reached the end of at least one array
+                // We now reached the end of at least one array
                 // in a second pass, traverse the remaining elements
 
                 // remove my remaining elements

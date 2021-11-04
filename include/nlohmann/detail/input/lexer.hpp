@@ -343,7 +343,7 @@ class lexer : public lexer_base<BasicJsonType>
                                                         // low surrogate occupies the least significant 15 bits
                                                         + static_cast<unsigned int>(codepoint2)
                                                         // there is still the 0xD800, 0xDC00 and 0x10000 noise
-                                                        // in the result so we have to subtract with:
+                                                        // in the result, so we have to subtract with:
                                                         // (0xD800 << 10) + DC00 - 0x10000 = 0x35FDC00
                                                         - 0x35FDC00u);
                                     }

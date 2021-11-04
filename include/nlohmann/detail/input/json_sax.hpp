@@ -56,7 +56,7 @@ struct json_sax
     virtual bool number_unsigned(number_unsigned_t val) = 0;
 
     /*!
-    @brief an floating-point number was read
+    @brief a floating-point number was read
     @param[in] val  floating-point value
     @param[in] s    raw token value
     @return whether parsing should proceed
@@ -64,18 +64,18 @@ struct json_sax
     virtual bool number_float(number_float_t val, const string_t& s) = 0;
 
     /*!
-    @brief a string was read
+    @brief a string value was read
     @param[in] val  string value
     @return whether parsing should proceed
-    @note It is safe to move the passed string.
+    @note It is safe to move the passed string value.
     */
     virtual bool string(string_t& val) = 0;
 
     /*!
-    @brief a binary string was read
+    @brief a binary value was read
     @param[in] val  binary value
     @return whether parsing should proceed
-    @note It is safe to move the passed binary.
+    @note It is safe to move the passed binary value.
     */
     virtual bool binary(binary_t& val) = 0;
 

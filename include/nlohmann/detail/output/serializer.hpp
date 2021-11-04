@@ -729,7 +729,7 @@ class serializer
         // spare 1 byte for '\0'
         JSON_ASSERT(n_chars < number_buffer.size() - 1);
 
-        // jump to the end to generate the string from backward
+        // jump to the end to generate the string from backward,
         // so we later avoid reversing the result
         buffer_ptr += n_chars;
 
@@ -831,7 +831,7 @@ class serializer
 
         o->write_characters(number_buffer.data(), static_cast<std::size_t>(len));
 
-        // determine if need to append ".0"
+        // determine if we need to append ".0"
         const bool value_is_int_like =
             std::none_of(number_buffer.begin(), number_buffer.begin() + len + 1,
                          [](char c)
