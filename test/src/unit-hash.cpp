@@ -31,10 +31,11 @@ SOFTWARE.
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
 
 #include <set>
 
-TEST_CASE("hash")
+TEST_CASE("hash<nlohmann::json>")
 {
     // Collect hashes for different JSON values and make sure that they are distinct
     // We cannot compare against fixed values, because the implementation of
@@ -79,6 +80,55 @@ TEST_CASE("hash")
 
     // discarded
     hashes.insert(std::hash<json> {}(json(json::value_t::discarded)));
+
+    CHECK(hashes.size() == 21);
+}
+
+TEST_CASE("hash<nlohmann::ordered_json>")
+{
+    // Collect hashes for different JSON values and make sure that they are distinct
+    // We cannot compare against fixed values, because the implementation of
+    // std::hash may differ between compilers.
+
+    std::set<std::size_t> hashes;
+
+    // null
+    hashes.insert(std::hash<ordered_json> {}(ordered_json(nullptr)));
+
+    // boolean
+    hashes.insert(std::hash<ordered_json> {}(ordered_json(true)));
+    hashes.insert(std::hash<ordered_json> {}(ordered_json(false)));
+
+    // string
+    hashes.insert(std::hash<ordered_json> {}(ordered_json("")));
+    hashes.insert(std::hash<ordered_json> {}(ordered_json("foo")));
+
+    // number
+    hashes.insert(std::hash<ordered_json> {}(ordered_json(0)));
+    hashes.insert(std::hash<ordered_json> {}(ordered_json(unsigned(0))));
+
+    hashes.insert(std::hash<ordered_json> {}(ordered_json(-1)));
+    hashes.insert(std::hash<ordered_json> {}(ordered_json(0.0)));
+    hashes.insert(std::hash<ordered_json> {}(ordered_json(42.23)));
+
+    // array
+    hashes.insert(std::hash<ordered_json> {}(ordered_json::array()));
+    hashes.insert(std::hash<ordered_json> {}(ordered_json::array({1, 2, 3})));
+
+    // object
+    hashes.insert(std::hash<ordered_json> {}(ordered_json::object()));
+    hashes.insert(std::hash<ordered_json> {}(ordered_json::object({{"foo", "bar"}})));
+
+    // binary
+    hashes.insert(std::hash<ordered_json> {}(ordered_json::binary({})));
+    hashes.insert(std::hash<ordered_json> {}(ordered_json::binary({}, 0)));
+    hashes.insert(std::hash<ordered_json> {}(ordered_json::binary({}, 42)));
+    hashes.insert(std::hash<ordered_json> {}(ordered_json::binary({1, 2, 3})));
+    hashes.insert(std::hash<ordered_json> {}(ordered_json::binary({1, 2, 3}, 0)));
+    hashes.insert(std::hash<ordered_json> {}(ordered_json::binary({1, 2, 3}, 42)));
+
+    // discarded
+    hashes.insert(std::hash<ordered_json> {}(ordered_json(ordered_json::value_t::discarded)));
 
     CHECK(hashes.size() == 21);
 }
