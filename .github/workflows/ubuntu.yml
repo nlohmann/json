@@ -101,3 +101,13 @@ jobs:
         run: cmake -S . -B build -DJSON_CI=On
       - name: build
         run: cmake --build build --target ci_test_${{ matrix.compiler }}_cxx${{ matrix.standard }}
+
+  # https://github.com/sobolevn/misspell-fixer-action
+  detect_and_fix_misspells:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: sobolevn/misspell-fixer-action@master
+    - uses: peter-evans/create-pull-request@v2.4.4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
