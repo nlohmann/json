@@ -8,9 +8,10 @@ This type is a type designed to carry binary data that appears in various serial
 2, MessagePack's bin, and BSON's generic binary subtype. This type is NOT a part of standard JSON and exists solely for
 compatibility with these binary types. As such, it is simply defined as an ordered sequence of zero or more byte values.
 
-Additionally, as an implementation detail, the subtype of the binary data is carried around as a `std::uint8_t`, which
+Additionally, as an implementation detail, the subtype of the binary data is carried around as a `std::uint64_t`, which
 is compatible with both of the binary data formats that use binary subtyping, (though the specific numbering is
-incompatible with each other, and it is up to the user to translate between them).
+incompatible with each other, and it is up to the user to translate between them). The subtype is added to `BinaryType`
+via the helper type [byte_container_with_subtype](../byte_container_with_subtype.md).
 
 [CBOR's RFC 7049](https://tools.ietf.org/html/rfc7049) describes this type as:
 > Major type 2: a byte string. The string's length in bytes is represented following the rules for positive integers
@@ -61,6 +62,10 @@ type `#!cpp binary_t*` must be dereferenced.
 - BSON
     - If a subtype is given, it is used and added as unsigned 8-bit integer.
     - If no subtype is given, the generic binary subtype 0x00 is used.
+
+## See also
+
+- [byte_container_with_subtype](../byte_container_with_subtype.md)
 
 ## Version history
 

@@ -181,6 +181,7 @@ nav:
         - api/basic_json/update.md
         - api/basic_json/value.md
         - api/basic_json/value_t.md
+      - api/byte_container_with_subtype.md
       - adl_serializer:
         - api/adl_serializer/index.md
         - api/adl_serializer/from_json.md
