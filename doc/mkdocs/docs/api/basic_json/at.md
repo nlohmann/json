@@ -45,7 +45,7 @@ const_reference at(const json_pointer& ptr) const;
 2. The function can throw the following exceptions:
     - Throws [`type_error.304`](../../home/exceptions.md#jsonexceptiontype_error304) if the JSON value is not an object;
       in this case, calling `at` with a key makes no sense. See example below.
-    - Throws [`out_of_range.403`](../../home/exceptions.md#jsonexceptionout_of_range403) if the key `key` is is not
+    - Throws [`out_of_range.403`](../../home/exceptions.md#jsonexceptionout_of_range403) if the key `key` is not
       stored in the object; that is, `find(key) == end()`. See example below.
 3. The function can throw the following exceptions:
     - Throws [`parse_error.106`](../../home/exceptions.md#jsonexceptionparse_error106) if an array index in the passed

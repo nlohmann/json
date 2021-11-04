@@ -9,7 +9,7 @@ void update(const_iterator first, const_iterator last, bool merge_objects = fals
 ```
 
 1. Inserts all values from JSON object `j`.
-2. Inserts all values from from range `[first, last)`
+2. Inserts all values from range `[first, last)`
 
 When `merge_objects` is `#!c false` (default), existing keys are overwritten. When `merge_objects` is `#!c true`,
 recursively merges objects with common keys.

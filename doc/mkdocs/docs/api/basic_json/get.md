@@ -31,7 +31,7 @@ constexpr const PointerType get_ptr() const noexcept;
     return ret;
     ```
 
-    This overloads is chosen if:
+    This overload is chosen if:
     
     - `ValueType` is not `basic_json`,
     - `json_serializer<ValueType>` has a `from_json()` method of the form
@@ -48,7 +48,7 @@ constexpr const PointerType get_ptr() const noexcept;
     return JSONSerializer<ValueTypeCV>::from_json(*this);
     ``` 
    
-    This overloads is chosen if:
+    This overload is chosen if:
     
     - `ValueType` is not `basic_json` and
     - `json_serializer<ValueType>` has a `from_json()` method of the form

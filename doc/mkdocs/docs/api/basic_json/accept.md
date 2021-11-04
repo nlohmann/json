@@ -17,7 +17,7 @@ Checks whether the input is valid JSON.
 1. Reads from a compatible input.
 2. Reads from a pair of character iterators
     
-    The value_type of the iterator must be a integral type with size of 1, 2 or 4 bytes, which will be interpreted
+    The value_type of the iterator must be an integral type with size of 1, 2 or 4 bytes, which will be interpreted
     respectively as UTF-8, UTF-16 and UTF-32.
     
 Unlike the [`parse`](parse.md) function, this function neither throws an exception in case of invalid JSON input

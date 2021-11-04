@@ -5,7 +5,7 @@ iteration_proxy<iterator> items() noexcept;
 iteration_proxy<const_iterator> items() const noexcept;
 ```
 
-This function allows to access `iterator::key()` and `iterator::value()` during range-based for loops. In these loops, a
+This function allows accessing `iterator::key()` and `iterator::value()` during range-based for loops. In these loops, a
 reference to the JSON values is returned, so there is no access to the underlying iterator.
 
 For loop without `items()` function:
@@ -36,7 +36,7 @@ for (auto& el : j_object.items())
 }
 ```
 
-The `items()` function also allows to use
+The `items()` function also allows using
 [structured bindings](https://en.cppreference.com/w/cpp/language/structured_binding) (C++17):
 
 ```cpp

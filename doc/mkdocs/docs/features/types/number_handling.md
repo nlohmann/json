@@ -80,7 +80,7 @@ number without loss of  precision. If this is impossible (e.g., if the number is
 
 ### Number limits
 
-- Any 64 bit signed or unsigned integer can be stored without loss of precision.
+- Any 64-bit signed or unsigned integer can be stored without loss of precision.
 - Numbers exceeding the limits of `#!c double` (i.e., numbers that after conversion via
 [`std::strtod`](https://en.cppreference.com/w/cpp/string/byte/strtof) are not satisfying
 [`std::isfinite`](https://en.cppreference.com/w/cpp/numeric/math/isfinite) such as `#!c 1E400`) will throw exception
@@ -116,7 +116,7 @@ That is, `-0` is stored as a signed integer, but the serialization does not repr
 - Integer numbers are serialized as is; that is, no scientific notation is used.
 - Floating-point numbers are serialized as specified by the `#!c %g` printf modifier with 
   [`std::numeric_limits<double>::max_digits10`](https://en.cppreference.com/w/cpp/types/numeric_limits/max_digits10)
-  significant digits). The rationale is to use the shortest representation while still allow round-tripping.
+  significant digits. The rationale is to use the shortest representation while still allow round-tripping.
 
 !!! hint "Notes regarding precision of floating-point numbers"
 
@@ -283,7 +283,7 @@ the stored number:
 - [`is_number_unsigned()`](../../api/basic_json/is_number_unsigned.md) returns `#!c true` for unsigned integers only
 - [`is_number_float()`](../../api/basic_json/is_number_float.md) returns `#!c true` for floating-point numbers
 - [`type_name()`](../../api/basic_json/type_name.md) returns `#!c "number"` for any number type
-- [`type()`](../../api/basic_json/type.md) returns an different enumerator of
+- [`type()`](../../api/basic_json/type.md) returns a different enumerator of
   [`value_t`](../../api/basic_json/value_t.md) for all number types
 
 | function | unsigned integer | signed integer | floating-point | string |

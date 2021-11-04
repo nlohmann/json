@@ -23,7 +23,7 @@ Read from input and generate SAX events
 1. Read from a compatible input.
 2. Read from a pair of character iterators
     
-    The value_type of the iterator must be a integral type with size of 1, 2 or 4 bytes, which will be interpreted
+    The value_type of the iterator must be an integral type with size of 1, 2 or 4 bytes, which will be interpreted
     respectively as UTF-8, UTF-16 and UTF-32.
 
 The SAX event lister must follow the interface of `json_sax`.

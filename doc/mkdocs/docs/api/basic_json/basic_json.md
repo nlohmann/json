@@ -201,7 +201,7 @@ basic_json(basic_json&& other) noexcept;
       `[first, last)` is undefined.
     - Throws [`invalid_iterator.204`](../../home/exceptions.md#jsonexceptioninvalid_iterator204) if iterators `first`
       and `last` belong to a primitive type (number, boolean, or string), but `first` does not point to the first
-      element any more. In this case, the range `[first, last)` is undefined. See example code below.
+      element anymore. In this case, the range `[first, last)` is undefined. See example code below.
     - Throws [`invalid_iterator.206`](../../home/exceptions.md#jsonexceptioninvalid_iterator206) if iterators `first`
       and `last` belong to a `#!json null` value. In this case, the range `[first, last)` is undefined.
 8. /

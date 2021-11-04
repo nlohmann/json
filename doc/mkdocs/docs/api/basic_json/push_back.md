@@ -18,7 +18,7 @@ void push_back(initializer_list_t init);
 2. Inserts the given element `val` to the JSON object. If the function is called on a JSON null value, an empty object
    is created before inserting `val`.
 
-3. This function allows to use `push_back` with an initializer list. In case
+3. This function allows using `push_back` with an initializer list. In case
 
     1. the current value is an object,
     2. the initializer list `init` contains only two elements, and

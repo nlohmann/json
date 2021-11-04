@@ -16,7 +16,7 @@ ValueType v;
 JSONSerializer<ValueType>::from_json(*this, v);
 ```
 
-This overloads is chosen if:
+This overload is chosen if:
 
 - `ValueType` is not `basic_json`,
 - `json_serializer<ValueType>` has a `from_json()` method of the form `void from_json(const basic_json&, ValueType&)`

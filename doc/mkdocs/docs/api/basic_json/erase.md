@@ -17,7 +17,7 @@ void erase(const size_type idx);
 ```
 
 1. Removes an element from a JSON value specified by iterator `pos`. The iterator `pos` must be valid and
-   dereferenceable. Thus the `end()` iterator (which is valid, but is not dereferenceable) cannot be used as a value for
+   dereferenceable. Thus, the `end()` iterator (which is valid, but is not dereferenceable) cannot be used as a value for
    `pos`.
    
     If called on a primitive type other than `#!json null`, the resulting JSON value will be `#!json null`.
@@ -107,8 +107,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
 
 ## Notes
 
-1. Invalidates iterators and references at or after the point of the
-   erase, including the `end()` iterator.
+1. Invalidates iterators and references at or after the point of the `erase`, including the `end()` iterator.
 2. /
 3. References and iterators to the erased elements are invalidated. Other references and iterators are not affected.
 4. /

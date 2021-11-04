@@ -19,7 +19,7 @@ via the helper type [byte_container_with_subtype](../byte_container_with_subtype
 
 [MessagePack's documentation on the bin type
 family](https://github.com/msgpack/msgpack/blob/master/spec.md#bin-format-family) describes this type as:
-> Bin format family stores an byte array in 2, 3, or 5 bytes of extra bytes in addition to the size of the byte array.
+> Bin format family stores a byte array in 2, 3, or 5 bytes of extra bytes in addition to the size of the byte array.
 
 [BSON's specifications](http://bsonspec.org/spec.html) describe several binary types; however, this type is intended to
 represent the generic binary type which has the description:

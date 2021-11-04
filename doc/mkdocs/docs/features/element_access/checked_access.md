@@ -27,7 +27,7 @@ The `#!cpp at()` member function performs checked access; that is, it returns a 
     | `#!cpp j.at("hobbies").at(0)`  | `#!json "hiking"` |
     | `#!cpp j.at("hobbies").at(1)`  | `#!json "reading"` |
 
-The return value is a reference, so it can be modify the original value.
+The return value is a reference, so it can be modified by the original value.
 
 ??? example
 

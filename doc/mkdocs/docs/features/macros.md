@@ -80,7 +80,7 @@ Implicit conversions can also be controlled with the CMake option `JSON_Implicit
 
 This macro can be used to simplify the serialization/deserialization of types if (1) want to use a JSON object as serialization and (2) want to use the member variable names as object keys in that object.
 
-The macro is to be defined inside of the class/struct to create code for. Unlike [`NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE`](#nlohmann_define_type_non_intrusivetype-member), it can access private members.
+The macro is to be defined inside the class/struct to create code for. Unlike [`NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE`](#nlohmann_define_type_non_intrusivetype-member), it can access private members.
 The first parameter is the name of the class/struct, and all remaining parameters name the members.
 
 See [Simplify your life with macros](arbitrary_types.md#simplify-your-life-with-macros) for an example.
@@ -89,7 +89,7 @@ See [Simplify your life with macros](arbitrary_types.md#simplify-your-life-with-
 
 This macro can be used to simplify the serialization/deserialization of types if (1) want to use a JSON object as serialization and (2) want to use the member variable names as object keys in that object.
 
-The macro is to be defined inside of the namespace of the class/struct to create code for. Private members cannot be accessed. Use [`NLOHMANN_DEFINE_TYPE_INTRUSIVE`](#nlohmann_define_type_intrusivetype-member) in these scenarios.
+The macro is to be defined inside the namespace of the class/struct to create code for. Private members cannot be accessed. Use [`NLOHMANN_DEFINE_TYPE_INTRUSIVE`](#nlohmann_define_type_intrusivetype-member) in these scenarios.
 The first parameter is the name of the class/struct, and all remaining parameters name the members.
 
 See [Simplify your life with macros](arbitrary_types.md#simplify-your-life-with-macros) for an example.

@@ -9,7 +9,7 @@ wrong JSON type.
     
 ## Return value
 
-a string representation of a the type ([`value_t`](value_t.md)):
+a string representation of the type ([`value_t`](value_t.md)):
 
 Value type                                         | return value
 -------------------------------------------------- | -------------------------

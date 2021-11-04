@@ -80,9 +80,9 @@ const_reference operator[](const json_pointer& ptr) const;
    
     In particular:
 
-    - If the JSON pointer points to an object key that does not exist, it is created an filled with a `#!json null`
+    - If the JSON pointer points to an object key that does not exist, it is created and filled with a `#!json null`
       value before a reference to it is returned.
-    - If the JSON pointer points to an array index that does not exist, it is created an filled with a `#!json null`
+    - If the JSON pointer points to an array index that does not exist, it is created and filled with a `#!json null`
       value before a reference to it is returned. All indices between the current maximum and the given index are also
       filled with `#!json null`.
     - The special value `-` is treated as a synonym for the index past the end.
@@ -93,7 +93,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
 
 ## Complexity
 
-1. Constant if `idx` is in the range of the array. Otherwise linear in `idx - size()`.
+1. Constant if `idx` is in the range of the array. Otherwise, linear in `idx - size()`.
 2. Logarithmic in the size of the container.
 3. Constant
 

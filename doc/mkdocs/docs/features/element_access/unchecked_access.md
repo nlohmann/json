@@ -27,7 +27,7 @@ Elements in a JSON object and a JSON array can be accessed via `#!cpp operator[]
     | `#!cpp j["hobbies"][0]`  | `#!json "hiking"` |
     | `#!cpp j["hobbies"][1]`  | `#!json "reading"` |
 
-The return value is a reference, so it can be modify the original value. In case the passed object key is non-existing, a `#!json null` value is inserted which can be immediately be overwritten.
+The return value is a reference, so it can modify the original value. In case the passed object key is non-existing, a `#!json null` value is inserted which can be immediately be overwritten.
 
 ??? example
 
