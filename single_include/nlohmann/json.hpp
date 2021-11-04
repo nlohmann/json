@@ -26437,20 +26437,19 @@ std::string to_string(const NLOHMANN_BASIC_JSON_TPL& j)
 // nonmember support //
 ///////////////////////
 
-// specialization of std::swap, and std::hash
-namespace std
+namespace std // NOLINT(cert-dcl58-cpp)
 {
 
 /// hash value for JSON objects
-template<>
-struct hash<nlohmann::json>
+NLOHMANN_BASIC_JSON_TPL_DECLARATION
+struct hash<nlohmann::NLOHMANN_BASIC_JSON_TPL>
 {
     /*!
     @brief return a hash value for a JSON object
 
-    @since version 1.0.0
+    @since version 1.0.0, extended for arbitrary basic_json types in 3.10.5.
     */
-    std::size_t operator()(const nlohmann::json& j) const
+    std::size_t operator()(const nlohmann::NLOHMANN_BASIC_JSON_TPL& j) const
     {
         return nlohmann::detail::hash(j);
     }
@@ -26460,7 +26459,7 @@ struct hash<nlohmann::json>
 /// @note: do not remove the space after '<',
 ///        see https://github.com/nlohmann/json/pull/679
 template<>
-struct less<::nlohmann::detail::value_t>
+struct less< ::nlohmann::detail::value_t>
 {
     /*!
     @brief compare two value_t enum values
@@ -26479,13 +26478,12 @@ struct less<::nlohmann::detail::value_t>
 /*!
 @brief exchanges the values of two JSON objects
 
-@since version 1.0.0
+@since version 1.0.0, extended for arbitrary basic_json types in 3.10.5.
 */
-template<>
-inline void swap<nlohmann::json>(nlohmann::json& j1, nlohmann::json& j2) noexcept( // NOLINT(readability-inconsistent-declaration-parameter-name)
-    is_nothrow_move_constructible<nlohmann::json>::value&&  // NOLINT(misc-redundant-expression)
-    is_nothrow_move_assignable<nlohmann::json>::value
-                              )
+NLOHMANN_BASIC_JSON_TPL_DECLARATION
+inline void swap(nlohmann::NLOHMANN_BASIC_JSON_TPL& j1, nlohmann::NLOHMANN_BASIC_JSON_TPL& j2) noexcept(  // NOLINT(readability-inconsistent-declaration-parameter-name)
+    is_nothrow_move_constructible<nlohmann::NLOHMANN_BASIC_JSON_TPL>::value&&                          // NOLINT(misc-redundant-expression)
+    is_nothrow_move_assignable<nlohmann::NLOHMANN_BASIC_JSON_TPL>::value)
 {
     j1.swap(j2);
 }
