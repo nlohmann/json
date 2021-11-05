@@ -19210,32 +19210,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return v;
     }
 
-    /*!
-    @brief get a reference value (implicit)
-
-    Implicit reference access to the internally stored JSON value. No copies
-    are made.
-
-    @warning Writing data to the referee of the result yields an undefined
-    state.
-
-    @tparam ReferenceType reference type; must be a reference to @ref array_t,
-    @ref object_t, @ref string_t, @ref boolean_t, @ref number_integer_t, or
-    @ref number_float_t. Enforced by static assertion.
-
-    @return reference to the internally stored JSON value if the requested
-    reference type @a ReferenceType fits to the JSON value; throws
-    type_error.303 otherwise
-
-    @throw type_error.303 in case passed type @a ReferenceType is incompatible
-    with the stored JSON value; see example below
-
-    @complexity Constant.
-
-    @liveexample{The example shows several calls to `get_ref()`.,get_ref}
-
-    @since version 1.1.0
-    */
+    /// @brief get a reference value (implicit)
+    /// @sa https://json.nlohmann.me/api/basic_json/get_ref/
     template<typename ReferenceType, typename std::enable_if<
                  std::is_reference<ReferenceType>::value, int>::type = 0>
     ReferenceType get_ref()
@@ -19244,10 +19220,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return get_ref_impl<ReferenceType>(*this);
     }
 
-    /*!
-    @brief get a reference value (implicit)
-    @copydoc get_ref()
-    */
+    /// @brief get a reference value (implicit)
+    /// @sa https://json.nlohmann.me/api/basic_json/get_ref/
     template < typename ReferenceType, typename std::enable_if <
                    std::is_reference<ReferenceType>::value&&
                    std::is_const<typename std::remove_reference<ReferenceType>::type>::value, int >::type = 0 >
