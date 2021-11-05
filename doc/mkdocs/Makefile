@@ -8,15 +8,15 @@ build: prepare_files
 # create files that are not versioned inside the mkdocs folder
 prepare_files: clean
 	# create subfolders
-	mkdir docs/images docs/examples
+	mkdir docs/examples
 	# copy images
-	cp -vr ../json.gif ../images/range-begin-end.svg ../images/range-rbegin-rend.svg ../images/callback_events.png ../images/json_syntax_number.png docs/images
+	cp -vr ../json.gif docs/images
 	# copy examples
 	cp -vr ../examples/*.cpp ../examples/*.output docs/examples
 
 # clean subfolders
 clean:
-	rm -fr docs/images docs/examples
+	rm -fr docs/images/json.gif docs/examples
 
 # publish site to GitHub pages
 publish: prepare_files
