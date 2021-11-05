@@ -28,7 +28,7 @@ constexpr bool is_number() const noexcept
 }
 ```
 
-## Example
+## Examples
 
 ??? example
 

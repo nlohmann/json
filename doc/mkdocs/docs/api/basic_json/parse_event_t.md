@@ -20,7 +20,7 @@ The parser callback distinguishes the following events:
 - `array_end`: the parser read `]` and finished processing a JSON array
 - `value`: the parser finished reading a JSON value
 
-## Example
+## Examples
 
 ![Example when certain parse events are triggered](../../images/callback_events.png)
 

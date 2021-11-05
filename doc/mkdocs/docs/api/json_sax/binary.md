@@ -15,7 +15,7 @@ A binary value was read.
 
 Whether parsing should proceed.
 
-## Note
+## Notes
 
 It is safe to move the passed binary value.
 

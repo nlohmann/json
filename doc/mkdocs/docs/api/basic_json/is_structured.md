@@ -36,7 +36,7 @@ The term *structured* stems from [RFC 8259](https://tools.ietf.org/html/rfc8259)
 
 Note that though strings are containers in C++, they are treated as primitive values in JSON.
 
-## Example
+## Examples
 
 ??? example
 

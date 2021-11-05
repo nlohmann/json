@@ -25,7 +25,7 @@ Linear in the size the JSON value.
 Empty objects and arrays are flattened to `#!json null` and will not be reconstructed correctly by the
 [`unflatten()`](unflatten.md) function.
 
-## Example
+## Examples
 
 ??? example
 

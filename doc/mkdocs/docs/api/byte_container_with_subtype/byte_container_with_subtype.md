@@ -25,3 +25,6 @@ byte_container_with_subtype(container_type&& container, subtype_type subtype);
 `subtype` (in)
 :   subtype
 
+## Version history
+
+Since version 3.8.0.

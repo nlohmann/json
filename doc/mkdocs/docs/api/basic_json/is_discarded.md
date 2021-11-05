@@ -51,7 +51,7 @@ Constant.
 This function will always be `#!cpp false` for JSON values after parsing. That is, discarded values can only occur
 during parsing, but will be removed when inside a structured value or replaced by null in other cases.
 
-## Example
+## Examples
 
 ??? example
 

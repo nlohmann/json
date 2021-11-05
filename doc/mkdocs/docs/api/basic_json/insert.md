@@ -52,6 +52,10 @@ void insert(const_iterator first, const_iterator last);
 4. iterator pointing to the first element inserted, or `pos` if `ilist` is empty
 5. /
 
+## Exception safety
+
+Strong exception safety: if an exception occurs, the original value stays intact.
+
 ## Exceptions
 
 1. The function can throw the following exceptions:
@@ -86,10 +90,6 @@ void insert(const_iterator first, const_iterator last);
     - Throws [`invalid_iterator.210`](../../home/exceptions.md#jsonexceptioninvalid_iterator210) if `first` and `last`
       do not belong to the same JSON value; example: `"iterators do not fit"`
 
-## Exception safety
-
-Strong exception safety: if an exception occurs, the original value stays intact.
-
 ## Complexity
 
 1. Constant plus linear in the distance between `pos` and end of the container.
@@ -98,7 +98,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
 4. Linear in `ilist.size()` plus linear in the distance between `pos` and end of the container.
 5. Logarithmic: `O(N*log(size() + N))`, where `N` is the number of elements to insert.
 
-## Example
+## Examples
 
 ??? example "Example (1): insert element into array"
 

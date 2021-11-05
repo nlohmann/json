@@ -44,7 +44,7 @@ bool empty() const noexcept
 This function does not return whether a string stored as JSON value is empty -- it returns whether the JSON container
 itself is empty which is `#!cpp false` in the case of a string.
 
-## Example
+## Examples
 
 ??? example
 

@@ -21,7 +21,7 @@ constructor, destructor, and the `swap()` member function.
 
 Linear.
 
-## Example
+## Examples
 
 ??? example
 

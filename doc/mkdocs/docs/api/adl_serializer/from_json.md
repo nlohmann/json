@@ -35,3 +35,7 @@ Copy of the JSON value, converted to `ValueType`
 !!! note
 
     This documentation page is a stub.
+
+## Version history
+
+- Added in version 2.1.0.

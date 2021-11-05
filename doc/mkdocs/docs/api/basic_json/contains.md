@@ -58,7 +58,7 @@ Logarithmic in the size of the JSON object.
 
     If `#!cpp j.contains(x)` returns `#!c true` for a key or JSON pointer `x`, then it is safe to call `j[x]`.
 
-## Example
+## Examples
 
 ??? example "Example (1) check with key"
 

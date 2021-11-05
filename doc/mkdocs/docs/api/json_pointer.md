@@ -22,3 +22,7 @@ class json_pointer;
 - **back** - return last reference token
 - **push_back** - append an unescaped token at the end of the pointer
 - **empty** - return whether pointer points to the root document
+
+## Version history
+
+Added in version 2.0.0.

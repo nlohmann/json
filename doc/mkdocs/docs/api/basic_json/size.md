@@ -35,7 +35,7 @@ constant complexity.
 This function does not return the length of a string stored as JSON value -- it returns the number of elements in the
 JSON value which is `1` in the case of a string.
 
-## Example
+## Examples
 
 ??? example
 

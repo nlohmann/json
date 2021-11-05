@@ -10,7 +10,7 @@ constexpr const PointerType get_ptr() const noexcept;
 
 Implicit pointer access to the internally stored JSON value. No copies are made.
 
-## Template arguments
+## Template parameters
 
 `PointerType`
 :   pointer type; must be a pointer to [`array_t`](array_t.md), [`object_t`](object_t.md), [`string_t`](string_t.md),
@@ -37,7 +37,7 @@ Constant.
 
     Writing data to the pointee of the result yields an undefined state.
 
-## Example
+## Examples
 
 ??? example
 

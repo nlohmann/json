@@ -20,3 +20,7 @@ This function is usually called by the constructors of the [basic_json](../basic
 !!! note
 
     This documentation page is a stub.
+
+## Version history
+
+- Added in version 2.1.0.

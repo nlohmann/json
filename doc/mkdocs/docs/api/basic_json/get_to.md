@@ -34,7 +34,7 @@ the input parameter, allowing chaining calls
 
 Depends on what `json_serializer<ValueType>` `from_json()` method throws
 
-## Example
+## Examples
 
 ??? example
 

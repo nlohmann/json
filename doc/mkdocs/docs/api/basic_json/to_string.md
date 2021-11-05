@@ -16,14 +16,14 @@ This function implements a user-defined to_string for JSON objects.
 
 string containing the serialization of the JSON value
 
+## Exception safety
+
+Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
+
 ## Exceptions
 
 Throws [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316) if a string stored inside the JSON value
 is not UTF-8 encoded
-
-## Exception safety
-
-Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
 
 ## Complexity
 

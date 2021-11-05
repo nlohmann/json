@@ -68,7 +68,7 @@ When iterating over an array, `key()` will return the index of the element as st
     Using `items()` on temporary objects is dangerous. Make sure the object's lifetime exeeds the iteration. See
     <https://github.com/nlohmann/json/issues/2040> for more information.
 
-## Example
+## Examples
 
 ??? example
 

@@ -58,6 +58,10 @@ void erase(const size_type idx);
    (`key` was not found) or `1` (`key` was found).
 4. /
 
+## Exception safety
+
+Strong exception safety: if an exception occurs, the original value stays intact.
+
 ## Exceptions
 
 1. The function can throw the following exceptions:
@@ -85,10 +89,6 @@ void erase(const size_type idx);
     - Throws [`out_of_range.401`](../../home/exceptions.md#jsonexceptionout_of_range401) when `idx >= size()`; example:
       `"array index 17 is out of range"`
 
-## Exception safety
-
-Strong exception safety: if an exception occurs, the original value stays intact.
-
 ## Complexity
 
 1. The complexity depends on the type:
@@ -112,7 +112,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
 3. References and iterators to the erased elements are invalidated. Other references and iterators are not affected.
 4. /
 
-## Example
+## Examples
 
 ??? example "Example: (1) remove element given an iterator"
 

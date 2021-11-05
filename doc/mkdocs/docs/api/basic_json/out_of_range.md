@@ -39,7 +39,7 @@ class basic_json::out_of_range #FFFF00 {}
 
 - **id** - the id of the exception
 
-## Example
+## Examples
 
 ??? example
 

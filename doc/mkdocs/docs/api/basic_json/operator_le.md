@@ -38,7 +38,7 @@ No-throw guarantee: this function never throws exceptions.
 
 Linear.
 
-## Example
+## Examples
 
 ??? example
 

@@ -94,7 +94,7 @@ Depends on what `json_serializer<ValueType>` `from_json()` method throws
 
     Writing data to the pointee (overload 3) of the result yields an undefined state.
 
-## Example
+## Examples
 
 ??? example
 

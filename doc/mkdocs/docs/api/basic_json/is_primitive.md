@@ -38,7 +38,7 @@ The term *primitive* stems from [RFC 8259](https://tools.ietf.org/html/rfc8259):
 This library extends primitive types to binary types, because binary types are  roughly comparable to strings. Hence,
 `is_primitive()` returns `#!cpp true` for binary values.
 
-## Example
+## Examples
 
 ??? example
 

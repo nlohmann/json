@@ -183,6 +183,22 @@ basic_json(basic_json&& other) noexcept;
 `other` (in)
 :   the JSON value to copy/move
 
+## Exception safety
+
+1. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
+2. No-throw guarantee: this constructor never throws exceptions.
+3. Depends on the called constructor. For types directly supported by the library (i.e., all types for which no
+   `to_json()` function was provided), strong guarantee holds: if an exception is thrown, there are no changes to any
+   JSON value.
+4. Depends on the called constructor. For types directly supported by the library (i.e., all types for which no
+   `to_json()` function was provided), strong guarantee holds: if an exception is thrown, there are no changes to any
+   JSON value.
+5. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
+6. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
+7. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
+8. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
+9. No-throw guarantee: this constructor never throws exceptions.
+
 ## Exceptions
 
 1. /
@@ -206,22 +222,6 @@ basic_json(basic_json&& other) noexcept;
       and `last` belong to a `#!json null` value. In this case, the range `[first, last)` is undefined.
 8. /
 9. The function does not throw exceptions.
-
-## Exception safety
-
-1. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
-2. No-throw guarantee: this constructor never throws exceptions.
-3. Depends on the called constructor. For types directly supported by the library (i.e., all types for which no
-   `to_json()` function was provided), strong guarantee holds: if an exception is thrown, there are no changes to any
-   JSON value.
-4. Depends on the called constructor. For types directly supported by the library (i.e., all types for which no
-   `to_json()` function was provided), strong guarantee holds: if an exception is thrown, there are no changes to any
-   JSON value.
-5. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
-6. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
-7. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
-8. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
-9. No-throw guarantee: this constructor never throws exceptions.
 
 ## Complexity
 
@@ -275,7 +275,7 @@ basic_json(basic_json&& other) noexcept;
         - `#!cpp `*this` has the same value as `other` before the call.
         - `other` is a JSON `#!json null` value
 
-## Example
+## Examples
 
 ??? example "Example: (1) create an empty value with a given type"
 

@@ -37,7 +37,7 @@ No-throw guarantee: this function never throws exceptions.
 
 Linear.
 
-## Example
+## Examples
 
 The example demonstrates comparing several JSON
 types.

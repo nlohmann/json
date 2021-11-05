@@ -38,12 +38,12 @@ class basic_json::parse_error #FFFF00 {
 - **id** - the id of the exception
 - **byte** - byte index of the parse error
 
-## Note
+## Notes
 
 For an input with _n_ bytes, 1 is the index of the first character and _n_+1 is the index of the terminating null byte
 or the end of file. This also holds true when reading a byte vector for binary formats.
 
-## Example
+## Examples
 
 ??? example
 

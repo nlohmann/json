@@ -56,20 +56,20 @@ The exact mapping and its limitations is described on a [dedicated page](../../f
 deserialized JSON value; in case of a parse error and `allow_exceptions` set to `#!cpp false`, the return value will be
 `value_t::discarded`.  The latter can be checked with [`is_discarded`](is_discarded.md).
 
+## Exception safety
+
+Strong guarantee: if an exception is thrown, there are no changes in the JSON value.
+
 ## Exceptions
 
 Throws [`parse_error.114`](../../home/exceptions.md#jsonexceptionparse_error114) if an unsupported BSON record type is
 encountered.
 
-## Exception safety
-
-Strong guarantee: if an exception is thrown, there are no changes in the JSON value.
-
 ## Complexity
 
 Linear in the size of the input.
 
-## Example
+## Examples
 
 ??? example
 

@@ -35,6 +35,10 @@ const_reference at(const json_pointer& ptr) const;
 2. reference to the element at key `key`
 3. reference to the element pointed to by `ptr`
 
+## Exception safety
+
+Strong exception safety: if an exception occurs, the original value stays intact.
+
 ## Exceptions
 
 1. The function can throw the following exceptions:
@@ -62,17 +66,13 @@ const_reference at(const json_pointer& ptr) const;
     - Throws [`out_of_range.404`](../../home/exceptions.md#jsonexceptionout_of_range404) if the JSON pointer `ptr` can
       not be resolved. See example below.
 
-## Exception safety
-
-Strong exception safety: if an exception occurs, the original value stays intact.
-
 ## Complexity
 
 1. Constant
 2. Logarithmic in the size of the container.
 3. Constant
 
-## Example
+## Examples
 
 ??? example "Example: (1) access specified array element with bounds checking"
 

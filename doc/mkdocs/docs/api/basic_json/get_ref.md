@@ -10,7 +10,7 @@ const ReferenceType get_ref() const;
 
 Implicit reference access to the internally stored JSON value. No copies are made.
 
-## Template arguments
+## Template parameters
 
 `ReferenceType`
 :   reference type; must be a reference to [`array_t`](array_t.md), [`object_t`](object_t.md),
@@ -42,7 +42,7 @@ Constant.
 
     Writing data to the referee of the result yields an undefined state.
 
-## Example
+## Examples
 
 ??? example
 

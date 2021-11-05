@@ -29,3 +29,7 @@ struct adl_serializer {
 
 - [**from_json**](from_json.md) - convert a JSON value to any value type
 - [**to_json**](to_json.md) - convert any value type to a JSON value
+
+## Version history
+
+- Added in version 2.1.0.

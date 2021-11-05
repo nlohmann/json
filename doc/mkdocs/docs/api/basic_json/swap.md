@@ -70,7 +70,7 @@ void swap(typename binary_t::container_type& other);
 
 Constant.
 
-## Example
+## Examples
 
 ??? example "Example: Swap JSON value (1, 2)"
 

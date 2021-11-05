@@ -34,7 +34,7 @@ is not UTF-8 encoded. Note that unlike the [`dump`](dump.md) member functions, n
 
 Linear.
 
-## Example
+## Examples
 
 ??? example
 

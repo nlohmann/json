@@ -11,13 +11,13 @@ Returns the numerical subtype of the value if it has a subtype. If it does not h
 
 the numerical subtype of the binary value, or `subtype_type(-1)` if no subtype is set
 
-## Complexity
-
-Constant.
-
 ## Exception safety
 
 No-throw guarantee: this function never throws exceptions.
+
+## Complexity
+
+Constant.
 
 ## Version history
 

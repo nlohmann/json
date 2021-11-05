@@ -15,7 +15,7 @@ A string value was read.
 
 Whether parsing should proceed.
 
-## Note
+## Notes
 
 It is safe to move the passed string value.
 

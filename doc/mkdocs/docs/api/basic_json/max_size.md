@@ -36,7 +36,7 @@ constant complexity.
 This function does not return the maximal length of a string stored as JSON value -- it returns the maximal number of
 string elements the JSON value can store which is `1`.
 
-## Example
+## Examples
 
 ??? example
 

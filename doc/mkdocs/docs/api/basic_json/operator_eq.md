@@ -85,7 +85,7 @@ Linear.
     }
     ```
 
-## Example
+## Examples
 
 ??? example
 

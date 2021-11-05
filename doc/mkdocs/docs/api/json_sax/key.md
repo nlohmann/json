@@ -15,7 +15,7 @@ An object key was read.
 
 Whether parsing should proceed.
 
-## Note
+## Notes
 
 It is safe to move the passed object key value.
 

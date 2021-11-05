@@ -17,6 +17,10 @@ the patch.
 
 patched document
 
+## Exception safety
+
+Strong guarantee: if an exception is thrown, there are no changes in the JSON value.
+
 ## Exceptions
 
 - Throws [`parse_error.104`](../../home/exceptions.md#jsonexceptionparse_error104) if the JSON patch does not consist of
@@ -31,21 +35,17 @@ patched document
 - Throws [`out_of_range.501`](../../home/exceptions.md#jsonexceptionother_error501) if "test" operation was
   unsuccessful.
 
-## Exception safety
-
-Strong guarantee: if an exception is thrown, there are no changes in the JSON value.
-
 ## Complexity
 
 Linear in the size of the JSON value and the length of the JSON patch. As usually only a fraction of the JSON value is
 affected by the patch, the complexity can usually be neglected.
 
-## Note
+## Notes
 
 The application of a patch is atomic: Either all operations succeed and the patched document is returned or an exception
 is thrown. In any case, the original value is not changed: the patch is applied to a copy of the value.
 
-## Example
+## Examples
 
 ??? example
 

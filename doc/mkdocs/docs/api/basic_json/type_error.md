@@ -39,7 +39,7 @@ class basic_json::type_error #FFFF00 {}
 
 - **id** - the id of the exception
 
-## Example
+## Examples
 
 ??? example
 

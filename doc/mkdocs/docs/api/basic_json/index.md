@@ -296,3 +296,7 @@ Access to the JSON value
 ## See also
 
 - [RFC 8259: The JavaScript Object Notation (JSON) Data Interchange Format](https://tools.ietf.org/html/rfc8259)
+
+## Version history
+
+- Added in version 1.0.0.

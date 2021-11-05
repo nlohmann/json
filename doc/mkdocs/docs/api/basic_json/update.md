@@ -50,7 +50,7 @@ function.
 1. O(N*log(size() + N)), where N is the number of elements to insert.
 2. O(N*log(size() + N)), where N is the number of elements to insert.
 
-## Example
+## Examples
 
 ??? example
 

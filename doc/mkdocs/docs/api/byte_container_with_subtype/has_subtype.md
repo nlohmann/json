@@ -10,13 +10,13 @@ Returns whether the value has a subtype.
 
 whether the value has a subtype
 
-## Complexity
-
-Constant.
-
 ## Exception safety
 
 No-throw guarantee: this function never throws exceptions.
+
+## Complexity
+
+Constant.
 
 ## Version history
 

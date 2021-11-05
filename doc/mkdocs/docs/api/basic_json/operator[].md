@@ -44,6 +44,10 @@ const_reference operator[](const json_pointer& ptr) const;
 2. reference to the element at key `key`
 3. reference to the element pointed to by `ptr`
 
+## Exception safety
+
+Strong exception safety: if an exception occurs, the original value stays intact.
+
 ## Exceptions
 
 1. The function can throw the following exceptions:
@@ -61,6 +65,12 @@ const_reference operator[](const json_pointer& ptr) const;
       in the passed JSON pointer `ptr` for the const version.
     - Throws [`out_of_range.404`](../../home/exceptions.md#jsonexceptionout_of_range404) if the JSON pointer `ptr` can
       not be resolved.
+
+## Complexity
+
+1. Constant if `idx` is in the range of the array. Otherwise, linear in `idx - size()`.
+2. Logarithmic in the size of the container.
+3. Constant
 
 ## Notes
 
@@ -87,17 +97,7 @@ const_reference operator[](const json_pointer& ptr) const;
       filled with `#!json null`.
     - The special value `-` is treated as a synonym for the index past the end.
 
-## Exception safety
-
-Strong exception safety: if an exception occurs, the original value stays intact.
-
-## Complexity
-
-1. Constant if `idx` is in the range of the array. Otherwise, linear in `idx - size()`.
-2. Logarithmic in the size of the container.
-3. Constant
-
-## Example
+## Examples
 
 ??? example "Example (1): access specified array element"
 

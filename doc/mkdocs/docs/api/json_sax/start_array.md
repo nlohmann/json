@@ -15,7 +15,7 @@ The beginning of an array was read.
 
 Whether parsing should proceed.
 
-## Note
+## Notes
 
 Binary formats may report the number of elements.
 

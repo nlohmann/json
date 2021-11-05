@@ -37,7 +37,7 @@ Thereby, `Target` is the current object; that is, the patch is applied to the cu
 
 Linear in the lengths of `apply_patch`.
 
-## Example
+## Examples
 
 ??? example
 

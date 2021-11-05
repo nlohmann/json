@@ -28,7 +28,7 @@ Strong guarantee: if an exception is thrown, there are no changes to any JSON va
 
 Constant.
 
-## Example
+## Examples
 
 ??? example
 

@@ -56,6 +56,10 @@ The exact mapping and its limitations is described on a [dedicated page](../../f
 deserialized JSON value; in case of a parse error and `allow_exceptions` set to `#!cpp false`, the return value will be
 `value_t::discarded`. The latter can be checked with [`is_discarded`](is_discarded.md).
 
+## Exception safety
+
+Strong guarantee: if an exception is thrown, there are no changes in the JSON value.
+
 ## Exceptions
 
 - Throws [parse_error.110](../../home/exceptions.md#jsonexceptionparse_error110) if the given input ends prematurely or
@@ -64,15 +68,11 @@ deserialized JSON value; in case of a parse error and `allow_exceptions` set to 
 - Throws [parse_error.113](../../home/exceptions.md#jsonexceptionparse_error113) if a string could not be parsed 
   successfully
 
-## Exception safety
-
-Strong guarantee: if an exception is thrown, there are no changes in the JSON value.
-
 ## Complexity
 
 Linear in the size of the input.
 
-## Example
+## Examples
 
 ??? example
 

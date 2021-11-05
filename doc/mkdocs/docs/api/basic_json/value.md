@@ -88,7 +88,7 @@ changes to any JSON value.
 1. Logarithmic in the size of the container.
 2. Logarithmic in the size of the container.
 
-## Example
+## Examples
 
 ??? example "Example (1): access specified object element with default value"
 

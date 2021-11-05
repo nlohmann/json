@@ -38,7 +38,7 @@ class basic_json::invalid_iterator #FFFF00 {}
 
 - **id** - the id of the exception
 
-## Example
+## Examples
 
 ??? example
 

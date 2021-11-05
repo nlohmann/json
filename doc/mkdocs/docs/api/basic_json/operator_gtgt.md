@@ -29,11 +29,11 @@ the stream `i`
 
 Linear in the length of the input. The parser is a predictive LL(1) parser.
 
-## Note
+## Notes
 
 A UTF-8 byte order mark is silently ignored.
 
-## Example
+## Examples
 
 ??? example
 

@@ -44,7 +44,7 @@ Subclasses:
 
 - **id** - the id of the exception
 
-## Example
+## Examples
 
 ??? example
 

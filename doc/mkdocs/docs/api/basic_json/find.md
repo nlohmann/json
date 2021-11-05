@@ -38,7 +38,7 @@ Logarithmic in the size of the JSON object.
 
 This method always returns `end()` when executed on a JSON type that is not an object.
 
-## Example
+## Examples
 
 ??? example
 

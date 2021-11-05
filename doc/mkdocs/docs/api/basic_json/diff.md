@@ -33,11 +33,11 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 
 Linear in the lengths of `source` and `target`.
 
-## Note
+## Notes
 
 Currently, only `remove`, `add`, and `replace` operations are generated.
           
-## Example
+## Examples
 
 ??? example
 

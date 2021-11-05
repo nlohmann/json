@@ -38,7 +38,7 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 
 Linear in the size of the JSON value `j`.
 
-## Example
+## Examples
 
 ??? example
 

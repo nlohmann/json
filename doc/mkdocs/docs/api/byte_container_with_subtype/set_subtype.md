@@ -12,13 +12,13 @@ serialization.
 `subtype` (in)
 :   subtype to set
 
-## Complexity
-
-Constant.
-
 ## Exception safety
 
 No-throw guarantee: this function never throws exceptions.
+
+## Complexity
+
+Constant.
 
 ## Version history
 

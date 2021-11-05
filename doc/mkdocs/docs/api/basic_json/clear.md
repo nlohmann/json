@@ -35,7 +35,7 @@ Linear in the size of the JSON value.
 
 All iterators, pointers and references related to this container are invalidated.
 
-## Example
+## Examples
 
 ??? example
 
