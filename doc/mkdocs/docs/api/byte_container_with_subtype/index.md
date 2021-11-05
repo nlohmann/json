@@ -5,7 +5,7 @@ template<typename BinaryType>
 class byte_container_with_subtype : public BinaryType
 ```
 
-This type extends the template parameter `BinaryType` provided to [`basic_json`](basic_json/index.md) with a subtype
+This type extends the template parameter `BinaryType` provided to [`basic_json`](../basic_json/index.md) with a subtype
 used by BSON and MessagePack. This type exists so that the user does not have to specify a type themselves with a
 specific naming scheme in  order to override the binary type.
 
@@ -21,14 +21,13 @@ specific naming scheme in  order to override the binary type.
 
 ## Member functions
 
-- (constructor)
-- (destructor)
+- [(constructor)](byte_container_with_subtype.md)
 - **operator==** - comparison: equal
 - **operator!=** - comparison: not equal
-- **set_subtype** - sets the binary subtype
-- **subtype** - return the binary subtype
-- **has_subtype** - return whether the value has a subtype
-- **clear_subtype** - clears the binary subtype
+- [**set_subtype**](subtype.md) - sets the binary subtype
+- [**subtype**](subtype.md) - return the binary subtype
+- [**has_subtype**](has_subtype.md) - return whether the value has a subtype
+- [**clear_subtype**](clear_subtype.md) - clears the binary subtype
 
 ## Version history
 

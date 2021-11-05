@@ -11,7 +11,7 @@ compatibility with these binary types. As such, it is simply defined as an order
 Additionally, as an implementation detail, the subtype of the binary data is carried around as a `std::uint64_t`, which
 is compatible with both of the binary data formats that use binary subtyping, (though the specific numbering is
 incompatible with each other, and it is up to the user to translate between them). The subtype is added to `BinaryType`
-via the helper type [byte_container_with_subtype](../byte_container_with_subtype.md).
+via the helper type [byte_container_with_subtype](../byte_container_with_subtype/index.md).
 
 [CBOR's RFC 7049](https://tools.ietf.org/html/rfc7049) describes this type as:
 > Major type 2: a byte string. The string's length in bytes is represented following the rules for positive integers
@@ -65,7 +65,7 @@ type `#!cpp binary_t*` must be dereferenced.
 
 ## See also
 
-- [byte_container_with_subtype](../byte_container_with_subtype.md)
+- [byte_container_with_subtype](../byte_container_with_subtype/index.md)
 
 ## Version history
 
