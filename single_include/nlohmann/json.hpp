@@ -12371,7 +12371,7 @@ namespace nlohmann
 {
 
 /// @brief JSON Pointer defines a string syntax for identifying a specific value within a JSON document
-/// @sa http://127.0.0.1:8000/api/json_pointer/
+/// @sa https://json.nlohmann.me/api/json_pointer/
 template<typename BasicJsonType>
 class json_pointer
 {
@@ -12381,13 +12381,13 @@ class json_pointer
 
   public:
     /// @brief create JSON pointer
-    /// @sa http://127.0.0.1:8000/api/json_pointer/json_pointer/
+    /// @sa https://json.nlohmann.me/api/json_pointer/json_pointer/
     explicit json_pointer(const std::string& s = "")
         : reference_tokens(split(s))
     {}
 
     /// @brief return a string representation of the JSON pointer
-    /// @sa http://127.0.0.1:8000/api/json_pointer/to_string/
+    /// @sa https://json.nlohmann.me/api/json_pointer/to_string/
     std::string to_string() const
     {
         return std::accumulate(reference_tokens.begin(), reference_tokens.end(),
@@ -12399,14 +12399,14 @@ class json_pointer
     }
 
     /// @brief return a string representation of the JSON pointer
-    /// @sa http://127.0.0.1:8000/api/json_pointer/operator_string/
+    /// @sa https://json.nlohmann.me/api/json_pointer/operator_string/
     operator std::string() const
     {
         return to_string();
     }
 
     /// @brief append another JSON pointer at the end of this JSON pointer
-    /// @sa http://127.0.0.1:8000/api/json_pointer/operator_slasheq/
+    /// @sa https://json.nlohmann.me/api/json_pointer/operator_slasheq/
     json_pointer& operator/=(const json_pointer& ptr)
     {
         reference_tokens.insert(reference_tokens.end(),
@@ -12416,7 +12416,7 @@ class json_pointer
     }
 
     /// @brief append an unescaped reference token at the end of this JSON pointer
-    /// @sa http://127.0.0.1:8000/api/json_pointer/operator_slasheq/
+    /// @sa https://json.nlohmann.me/api/json_pointer/operator_slasheq/
     json_pointer& operator/=(std::string token)
     {
         push_back(std::move(token));
@@ -12424,14 +12424,14 @@ class json_pointer
     }
 
     /// @brief append an array index at the end of this JSON pointer
-    /// @sa http://127.0.0.1:8000/api/json_pointer/operator_slasheq/
+    /// @sa https://json.nlohmann.me/api/json_pointer/operator_slasheq/
     json_pointer& operator/=(std::size_t array_idx)
     {
         return *this /= std::to_string(array_idx);
     }
 
     /// @brief create a new JSON pointer by appending the right JSON pointer at the end of the left JSON pointer
-    /// @sa http://127.0.0.1:8000/api/json_pointer/operator_slash/
+    /// @sa https://json.nlohmann.me/api/json_pointer/operator_slash/
     friend json_pointer operator/(const json_pointer& lhs,
                                   const json_pointer& rhs)
     {
@@ -12439,21 +12439,21 @@ class json_pointer
     }
 
     /// @brief create a new JSON pointer by appending the unescaped token at the end of the JSON pointer
-    /// @sa http://127.0.0.1:8000/api/json_pointer/operator_slash/
+    /// @sa https://json.nlohmann.me/api/json_pointer/operator_slash/
     friend json_pointer operator/(const json_pointer& lhs, std::string token) // NOLINT(performance-unnecessary-value-param)
     {
         return json_pointer(lhs) /= std::move(token);
     }
 
     /// @brief create a new JSON pointer by appending the array-index-token at the end of the JSON pointer
-    /// @sa http://127.0.0.1:8000/api/json_pointer/operator_slash/
+    /// @sa https://json.nlohmann.me/api/json_pointer/operator_slash/
     friend json_pointer operator/(const json_pointer& lhs, std::size_t array_idx)
     {
         return json_pointer(lhs) /= array_idx;
     }
 
     /// @brief returns the parent of this JSON pointer
-    /// @sa http://127.0.0.1:8000/api/json_pointer/parent_pointer/
+    /// @sa https://json.nlohmann.me/api/json_pointer/parent_pointer/
     json_pointer parent_pointer() const
     {
         if (empty())
@@ -12467,7 +12467,7 @@ class json_pointer
     }
 
     /// @brief remove last reference token
-    /// @sa http://127.0.0.1:8000/api/json_pointer/pop_back/
+    /// @sa https://json.nlohmann.me/api/json_pointer/pop_back/
     void pop_back()
     {
         if (JSON_HEDLEY_UNLIKELY(empty()))
@@ -12479,7 +12479,7 @@ class json_pointer
     }
 
     /// @brief return last reference token
-    /// @sa http://127.0.0.1:8000/api/json_pointer/back/
+    /// @sa https://json.nlohmann.me/api/json_pointer/back/
     const std::string& back() const
     {
         if (JSON_HEDLEY_UNLIKELY(empty()))
@@ -12491,21 +12491,21 @@ class json_pointer
     }
 
     /// @brief append an unescaped token at the end of the reference pointer
-    /// @sa http://127.0.0.1:8000/api/json_pointer/push_back/
+    /// @sa https://json.nlohmann.me/api/json_pointer/push_back/
     void push_back(const std::string& token)
     {
         reference_tokens.push_back(token);
     }
 
     /// @brief append an unescaped token at the end of the reference pointer
-    /// @sa http://127.0.0.1:8000/api/json_pointer/push_back/
+    /// @sa https://json.nlohmann.me/api/json_pointer/push_back/
     void push_back(std::string&& token)
     {
         reference_tokens.push_back(std::move(token));
     }
 
     /// @brief return whether pointer points to the root document
-    /// @sa http://127.0.0.1:8000/api/json_pointer/empty/
+    /// @sa https://json.nlohmann.me/api/json_pointer/empty/
     bool empty() const noexcept
     {
         return reference_tokens.empty();
