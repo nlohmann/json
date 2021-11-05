@@ -11,6 +11,7 @@
 namespace nlohmann
 {
 
+/// @sa https://json.nlohmann.me/api/adl_serializer/
 template<typename ValueType, typename>
 struct adl_serializer
 {

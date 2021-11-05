@@ -18,11 +18,6 @@ template<
 class basic_json;
 ```
 
-## Specializations
-
-- [**json**](../json.md) - default specialization
-- [**ordered_json**](../ordered_json.md) - specialization that maintains the insertion order of object keys
-
 ## Template parameters
 
 | Template parameter   | Description | Derived type |
@@ -37,6 +32,11 @@ class basic_json;
 | `AllocatorType`      | type of the allocator to use | |
 | `JSONSerializer`     | the serializer to resolve internal calls to `to_json()` and `from_json()` | [`json_serializer`](json_serializer.md) |
 | `BinaryType`         | type for binary arrays | [`binary_t`](binary_t.md) |
+
+## Specializations
+
+- [**json**](../json.md) - default specialization
+- [**ordered_json**](../ordered_json.md) - specialization that maintains the insertion order of object keys
 
 ## Iterator invalidation
 

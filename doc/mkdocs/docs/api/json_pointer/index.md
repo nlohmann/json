@@ -5,7 +5,9 @@ template<typename BasicJsonType>
 class json_pointer;
 ```
 
-JSON Pointer defines a string syntax for identifying a specific value within a JSON document.
+A JSON pointer defines a string syntax for identifying a specific value within a JSON document. It can be used with
+functions [`at`](../basic_json/at.md) and [`operator[]`](../basic_json/operator%5B%5D.md). Furthermore, JSON pointers
+are the base for JSON patches.
 
 ## Template parameters
 
@@ -27,7 +29,7 @@ JSON Pointer defines a string syntax for identifying a specific value within a J
 
 ## See also
 
-[RFC 6901](https://datatracker.ietf.org/doc/html/rfc6901)
+- [RFC 6901](https://datatracker.ietf.org/doc/html/rfc6901)
 
 ## Version history
 

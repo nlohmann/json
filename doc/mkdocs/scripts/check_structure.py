@@ -5,8 +5,8 @@ import glob
 
 def check_structure():
     expected_headers = [
-        'Specializations',
         'Template parameters',
+        'Specializations',
         'Iterator invalidation',
         'Requirements',
         'Member types',
