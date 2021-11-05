@@ -88,7 +88,7 @@ The class satisfies the following concept requirements:
 
 - [**adl_serializer**](../adl_serializer) - the default serializer
 - [**value_t**](value_t.md) - the JSON type enumeration
-- [**json_pointer**](../json_pointer.md) - JSON Pointer implementation
+- [**json_pointer**](../json_pointer/index.md) - JSON Pointer implementation
 - [**json_serializer**](json_serializer.md) - type of the serializer to for conversions from/to JSON
 - [**error_handler_t**](error_handler_t.md) - type to choose behavior on decoding errors
 - [**cbor_tag_handler_t**](cbor_tag_handler_t.md) - type to choose how to handle CBOR tags

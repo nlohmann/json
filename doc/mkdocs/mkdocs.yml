@@ -194,7 +194,18 @@ nav:
         - 'from_json': api/adl_serializer/from_json.md
         - 'to_json': api/adl_serializer/to_json.md
       - api/json.md
-      - api/json_pointer.md
+      - json_pointer:
+        - 'Overview': api/json_pointer/index.md
+        - '(Constructor)': api/json_pointer/json_pointer.md
+        - 'back': api/json_pointer/back.md
+        - 'empty': api/json_pointer/empty.md
+        - 'operator std::string': api/json_pointer/operator_string.md
+        - 'operator/': api/json_pointer/operator_slash.md
+        - 'operator/=': api/json_pointer/operator_slasheq.md
+        - 'parent_pointer': api/json_pointer/parent_pointer.md
+        - 'pop_back': api/json_pointer/pop_back.md
+        - 'push_back': api/json_pointer/push_back.md
+        - 'to_string': api/json_pointer/to_string.md
       - json_sax:
         - 'Overview': api/json_sax/index.md
         - 'binary': api/json_sax/binary.md

@@ -41,6 +41,10 @@ def check_structure():
             for lineno, line in enumerate(file_content.readlines()):
                 line = line.strip()
 
+                # lines longer than 160 characters are bad (unless they are tables)
+                if len(line) > 160 and '|' not in line:
+                    print(f'{file}:{lineno+1}: Error: line is too long ({len(line)} vs. 160 chars)!')
+
                 # check if headers are correct
                 if line.startswith('## '):
                     header = line.strip('## ')
