@@ -1,7 +1,7 @@
 # basic_json::operator<
 
 ```cpp
-bool operator<(const_reference lhs, const_reference rhs) noexcept,
+bool operator<(const_reference lhs, const_reference rhs) noexcept;
 
 template<typename ScalarType>
 bool operator<(const_reference lhs, const ScalarType rhs) noexcept;

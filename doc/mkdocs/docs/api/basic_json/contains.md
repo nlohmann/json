@@ -6,7 +6,7 @@ template<typename KeyT>
 bool contains(KeyT && key) const;
 
 // (2)
-bool contains(const json_pointer& ptr) const
+bool contains(const json_pointer& ptr) const;
 ```
 
 1. Check whether an element exists in a JSON object with key equivalent to `key`. If the element is not found or the 

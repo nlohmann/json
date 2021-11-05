@@ -4,7 +4,7 @@
 template<typename ValueType>
 ValueType& get_to(ValueType& v) const noexcept(
     noexcept(JSONSerializer<ValueType>::from_json(
-        std::declval<const basic_json_t&>(), v)))
+        std::declval<const basic_json_t&>(), v)));
 ```
 
 Explicit type conversion between the JSON value and a compatible value. The value is filled into the input parameter by

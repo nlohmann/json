@@ -11,6 +11,9 @@ A floating-point number was read.
 `val` (in)
 :   floating-point value
 
+`s` (in)
+:   string representation of the original input
+
 ## Return value
 
 Whether parsing should proceed.

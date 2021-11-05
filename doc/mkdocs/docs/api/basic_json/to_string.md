@@ -2,7 +2,7 @@
 
 ```cpp
 template <typename BasicJsonType>
-std::string to_string(const BasicJsonType& j)
+std::string to_string(const BasicJsonType& j);
 ```
 
 This function implements a user-defined to_string for JSON objects.

@@ -1,7 +1,7 @@
 # basic_json::operator""_json
 
 ```cpp
-json operator "" _json(const char* s, std::size_t n)
+json operator "" _json(const char* s, std::size_t n);
 ```
 
 This operator implements a user-defined string literal for JSON objects. It can be used by adding `#!cpp _json` to a

@@ -1,7 +1,7 @@
 # basic_json::operator""_json_pointer
 
 ```cpp
-json_pointer operator "" _json_pointer(const char* s, std::size_t n)
+json_pointer operator "" _json_pointer(const char* s, std::size_t n);
 ```
 
 This operator implements a user-defined string literal for JSON Pointers. It can be used by adding `#!cpp _json_pointer`

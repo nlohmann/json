@@ -2,7 +2,7 @@
 
 ```cpp
 template<typename BinaryType>
-class byte_container_with_subtype : public BinaryType
+class byte_container_with_subtype : public BinaryType;
 ```
 
 This type extends the template parameter `BinaryType` provided to [`basic_json`](../basic_json/index.md) with a subtype

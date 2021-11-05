@@ -1,7 +1,7 @@
 # operator>>(basic_json)
 
 ```cpp
-std::istream& operator>>(std::istream& i, basic_json& j)
+std::istream& operator>>(std::istream& i, basic_json& j);
 ```
 
 Deserializes an input stream to a JSON value.

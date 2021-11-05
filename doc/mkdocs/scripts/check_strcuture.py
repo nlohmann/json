@@ -36,10 +36,12 @@ def check_structure():
         with open(file) as file_content:
             header_idx = -1
             existing_headers = []
+            in_initial_code_example = False
 
             for lineno, line in enumerate(file_content.readlines()):
                 line = line.strip()
 
+                # check if headers are correct
                 if line.startswith('## '):
                     header = line.strip('## ')
                     existing_headers.append(header)
@@ -51,6 +53,17 @@ def check_structure():
                         header_idx = idx
                     else:
                         print(f'{file}:{lineno+1}: Error: header "{header}" is not part of the expected headers!')
+
+                # code example
+                if line == '```cpp' and header_idx == -1:
+                    in_initial_code_example = True
+
+                if in_initial_code_example and line.startswith('//'):
+                    if any(map(str.isdigit, line)) and '(' not in line:
+                        print(f'{file}:{lineno+1}: Number should be in parentheses: {line}')
+
+                if line == '```' and in_initial_code_example:
+                    in_initial_code_example = False
 
             for required_header in required_headers:
                 if required_header not in existing_headers:

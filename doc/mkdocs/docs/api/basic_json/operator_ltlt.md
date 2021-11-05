@@ -1,7 +1,7 @@
 # operator<<(basic_json)
 
 ```cpp
-std::ostream& operator<<(std::ostream& o, const basic_json& j)
+std::ostream& operator<<(std::ostream& o, const basic_json& j);
 ```
 
 Serialize the given JSON value `j` to the output stream `o`. The JSON value will be serialized using the

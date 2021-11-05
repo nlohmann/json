@@ -1,38 +1,38 @@
 # basic_json::basic_json
 
 ```cpp
-// 1
+// (1)
 basic_json(const value_t v);
 
-// 2
+// (2)
 basic_json(std::nullptr_t = nullptr) noexcept;
 
-// 3
+// (3)
 template<typename CompatibleType>
 basic_json(CompatibleType&& val) noexcept(noexcept(
            JSONSerializer<U>::to_json(std::declval<basic_json_t&>(),
                                       std::forward<CompatibleType>(val))));
 
-// 4
+// (4)
 template<typename BasicJsonType>
 basic_json(const BasicJsonType& val);
 
-// 5
+// (5)
 basic_json(initializer_list_t init,
            bool type_deduction = true,
            value_t manual_type = value_t::array);
 
-// 6
+// (6)
 basic_json(size_type cnt, const basic_json& val);
 
-// 7
+// (7)
 basic_json(iterator first, iterator last);
 basic_json(const_iterator first, const_iterator last);
 
-// 8
+// (8)
 basic_json(const basic_json& other);
 
-// 9
+// (9)
 basic_json(basic_json&& other) noexcept;
 ```
 
