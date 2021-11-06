@@ -142,6 +142,10 @@ Constant.
     --8<-- "examples/swap__binary_t.output"
     ```
 
+## See also
+
+- [std::swap<basic_json\>](std_swap.md)
+
 ## Version history
 
 1. Since version 1.0.0.

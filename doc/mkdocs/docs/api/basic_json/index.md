@@ -94,7 +94,7 @@ The class satisfies the following concept requirements:
 - [**cbor_tag_handler_t**](cbor_tag_handler_t.md) - type to choose how to handle CBOR tags
 - initializer_list_t
 - [**input_format_t**](input_format_t.md) - type to choose the format to parse
-- json_sax_t
+- [**json_sax_t**](../json_sax/index.md) - type for SAX events
 
 ### Exceptions
 
@@ -289,9 +289,8 @@ Access to the JSON value
 
 ## Helper classes
 
-- std::hash<nlohmann::json\>
-- std::less<nlohmann::value_t\>
-- std::swap<nlohmann::json\>
+- [**std::hash&lt;basic_json&gt;**](std_hash.md) - return a hash value for a JSON object
+- [**std::swap&lt;basic_json&gt;**](std_swap.md) - exchanges the values of two JSON objects
 
 ## See also
 

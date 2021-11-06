@@ -21709,15 +21709,11 @@ std::string to_string(const NLOHMANN_BASIC_JSON_TPL& j)
 namespace std // NOLINT(cert-dcl58-cpp)
 {
 
-/// hash value for JSON objects
+/// @brief hash value for JSON objects
+/// @sa https://json.nlohmann.me/api/basic_json/std_hash/
 NLOHMANN_BASIC_JSON_TPL_DECLARATION
 struct hash<nlohmann::NLOHMANN_BASIC_JSON_TPL>
 {
-    /*!
-    @brief return a hash value for a JSON object
-
-    @since version 1.0.0, extended for arbitrary basic_json types in 3.10.5.
-    */
     std::size_t operator()(const nlohmann::NLOHMANN_BASIC_JSON_TPL& j) const
     {
         return nlohmann::detail::hash(j);
@@ -21744,11 +21740,8 @@ struct less< ::nlohmann::detail::value_t>
 // C++20 prohibit function specialization in the std namespace.
 #ifndef JSON_HAS_CPP_20
 
-/*!
-@brief exchanges the values of two JSON objects
-
-@since version 1.0.0, extended for arbitrary basic_json types in 3.10.5.
-*/
+/// @brief exchanges the values of two JSON objects
+/// @sa https://json.nlohmann.me/api/basic_json/std_swap/
 NLOHMANN_BASIC_JSON_TPL_DECLARATION
 inline void swap(nlohmann::NLOHMANN_BASIC_JSON_TPL& j1, nlohmann::NLOHMANN_BASIC_JSON_TPL& j2) noexcept(  // NOLINT(readability-inconsistent-declaration-parameter-name)
     is_nothrow_move_constructible<nlohmann::NLOHMANN_BASIC_JSON_TPL>::value&&                          // NOLINT(misc-redundant-expression)
