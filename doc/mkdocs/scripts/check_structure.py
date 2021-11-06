@@ -41,6 +41,10 @@ def check_structure():
             for lineno, line in enumerate(file_content.readlines()):
                 line = line.strip()
 
+                # Overview pages should have a better title
+                if line == '# Overview':
+                    print(f'{file}:{lineno+1}: Error: overview pages should have a better title!')
+
                 # lines longer than 160 characters are bad (unless they are tables)
                 if len(line) > 160 and '|' not in line:
                     print(f'{file}:{lineno+1}: Error: line is too long ({len(line)} vs. 160 chars)!')

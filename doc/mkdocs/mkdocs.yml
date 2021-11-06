@@ -20,10 +20,13 @@ theme:
     accent: indigo
   font:
     text: Roboto
-    code: Roboto Mono
+    code: JetBrains Mono
   features:
-    - tabs
-    - instant
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.indexes
+    - navigation.top
 
 nav:
   - Home:
@@ -70,7 +73,7 @@ nav:
     - integration/cmake.md
     - integration/package_managers.md
     - integration/pkg-config.md
-  - API:
+  - API Documentation:
       - basic_json:
         - 'Overview': api/basic_json/index.md
         - '(Constructor)': api/basic_json/basic_json.md
@@ -239,10 +242,13 @@ extra:
       link: https://www.xing.com/profile/Niels_Lohmann
     - icon: fontawesome/brands/paypal
       link: https://www.paypal.me/nlohmann
+  generator: false
 
 # Extensions
 markdown_extensions:
+  - abbr
   - admonition
+  - attr_list
   - def_list
   - codehilite:
       guess_lang: false
@@ -274,7 +280,8 @@ markdown_extensions:
 
 plugins:
     - search:
-        separator: '[\s\-\.]+'
+        separator: '[\s\-\.]'
+        lang: en
     - minify:
         minify_html: true
 

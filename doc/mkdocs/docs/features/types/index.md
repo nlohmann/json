@@ -1,4 +1,4 @@
-# Overview
+# Types
 
 This page gives an overview how JSON values are stored and how this can be configured.
 

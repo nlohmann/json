@@ -1,4 +1,4 @@
-# Overview
+# Binary Formats
 
 Though JSON is a ubiquitous data format, it is not a very compact format suitable for data exchange, for instance over a network. Hence, the library supports
 
