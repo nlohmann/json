@@ -92,7 +92,7 @@ The class satisfies the following concept requirements:
 - [**json_serializer**](json_serializer.md) - type of the serializer to for conversions from/to JSON
 - [**error_handler_t**](error_handler_t.md) - type to choose behavior on decoding errors
 - [**cbor_tag_handler_t**](cbor_tag_handler_t.md) - type to choose how to handle CBOR tags
-- initializer_list_t
+- **initializer_list_t** - type for initializer lists of `basic_json` values
 - [**input_format_t**](input_format_t.md) - type to choose the format to parse
 - [**json_sax_t**](../json_sax/index.md) - type for SAX events
 
@@ -145,9 +145,9 @@ The class satisfies the following concept requirements:
 - [(constructor)](basic_json.md)
 - [(destructor)](~basic_json.md)
 - [**operator=**](operator=.md) - copy assignment
-- [**array**](array_t.md) (static) - explicitly create an array
-- [**binary**](binary.md) (static) - explicitly create a binary array
-- [**object**](object_t.md) (static) - explicitly create an object
+- [**array**](array_t.md) (_static_) - explicitly create an array
+- [**binary**](binary.md) (_static_) - explicitly create a binary array
+- [**object**](object_t.md) (_static_) - explicitly create an object
 
 ### Object inspection
 
@@ -242,9 +242,9 @@ Access to the JSON value
 
 ### Deserialization / Parsing
 
-- [**parse**](parse.md) (static) - deserialize from a compatible input
-- [**accept**](accept.md) (static) - check if the input is valid JSON
-- [**sax_parse**](sax_parse.md) (static) - generate SAX events
+- [**parse**](parse.md) (_static_) - deserialize from a compatible input
+- [**accept**](accept.md) (_static_) - check if the input is valid JSON
+- [**sax_parse**](sax_parse.md) (_static_) - generate SAX events
 
 ### JSON Pointer functions
 
@@ -254,7 +254,7 @@ Access to the JSON value
 ### JSON Patch functions
 
 - [**patch**](patch.md) - applies a JSON patch
-- [**diff**](diff.md) (static) - creates a diff as a JSON patch
+- [**diff**](diff.md) (_static_) - creates a diff as a JSON patch
 
 ### JSON Merge Patch functions
 
@@ -267,14 +267,14 @@ Access to the JSON value
 
 ### Binary formats
 
-- [**from_bson**](from_bson.md) (static) - create a JSON value from an input in BSON format
-- [**from_cbor**](from_cbor.md) (static) - create a JSON value from an input in CBOR format
-- [**from_msgpack**](from_msgpack.md) (static) - create a JSON value from an input in MessagePack format
-- [**from_ubjson**](from_ubjson.md) (static) - create a JSON value from an input in UBJSON format
-- [**to_bson**](to_bson.md) (static) - create a BSON serialization of a given JSON value
-- [**to_cbor**](to_cbor.md) (static) - create a CBOR serialization of a given JSON value
-- [**to_msgpack**](to_msgpack.md) (static) - create a MessagePack serialization of a given JSON value
-- [**to_ubjson**](to_ubjson.md) (static) - create a UBJSON serialization of a given JSON value
+- [**from_bson**](from_bson.md) (_static_) - create a JSON value from an input in BSON format
+- [**from_cbor**](from_cbor.md) (_static_) - create a JSON value from an input in CBOR format
+- [**from_msgpack**](from_msgpack.md) (_static_) - create a JSON value from an input in MessagePack format
+- [**from_ubjson**](from_ubjson.md) (_static_) - create a JSON value from an input in UBJSON format
+- [**to_bson**](to_bson.md) (_static_) - create a BSON serialization of a given JSON value
+- [**to_cbor**](to_cbor.md) (_static_) - create a CBOR serialization of a given JSON value
+- [**to_msgpack**](to_msgpack.md) (_static_) - create a MessagePack serialization of a given JSON value
+- [**to_ubjson**](to_ubjson.md) (_static_) - create a UBJSON serialization of a given JSON value
 
 ## Non-member functions
 

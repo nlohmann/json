@@ -33,11 +33,12 @@ def check_structure():
         'Version history'
     ]
 
-    for file in glob.glob('api/**/*.md', recursive=True):
+    for file in sorted(glob.glob('api/**/*.md', recursive=True)):
         with open(file) as file_content:
             header_idx = -1
             existing_headers = []
             in_initial_code_example = False
+            previous_line = None
 
             for lineno, line in enumerate(file_content.readlines()):
                 line = line.strip()
@@ -73,6 +74,12 @@ def check_structure():
 
                 if line == '```' and in_initial_code_example:
                     in_initial_code_example = False
+
+                # consecutive blank lines are bad
+                if line == '' and previous_line == '':
+                    print(f'{file}:{lineno}-{lineno+1}: Error: Consecutive blank lines!')
+
+                previous_line = line
 
             for required_header in required_headers:
                 if required_header not in existing_headers:

@@ -55,6 +55,22 @@ range [0, UINT64_MAX], this class's integer type is interoperable.
 
 Integer number values are stored directly inside a `basic_json` type.
 
+## Examples
+
+??? example
+
+    The following code shows that `number_unsigned_t` is by default, a typedef to `#!cpp std::uint64_t`.
+     
+    ```cpp
+    --8<-- "examples/number_unsigned_t.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/number_unsigned_t.output"
+    ```
+
 ## Version history
 
 - Added in version 2.0.0.

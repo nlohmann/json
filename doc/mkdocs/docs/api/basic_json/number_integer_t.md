@@ -55,6 +55,22 @@ interoperable.
 
 Integer number values are stored directly inside a `basic_json` type.
 
+## Examples
+
+??? example
+
+    The following code shows that `number_integer_t` is by default, a typedef to `#!cpp std::int64_t`.
+     
+    ```cpp
+    --8<-- "examples/number_integer_t.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/number_integer_t.output"
+    ```
+
 ## Version history
 
 - Added in version 1.0.0.

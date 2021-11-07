@@ -92,6 +92,22 @@ return name/value pairs in a different order than they were originally stored. I
 alphabetical order as `std::map` with `std::less` is used by default. Please note this behavior conforms to
 [RFC 8259](https://tools.ietf.org/html/rfc8259), because any order implements the specified "unordered" nature of JSON objects.
 
+## Examples
+
+??? example
+
+    The following code shows that `object_t` is by default, a typedef to `#!cpp std::map<json::string_t, json>`.
+     
+    ```cpp
+    --8<-- "examples/object_t.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/object_t.output"
+    ```
+
 ## Version history
 
 - Added in version 1.0.0.

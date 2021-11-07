@@ -63,6 +63,23 @@ type `#!cpp binary_t*` must be dereferenced.
     - If a subtype is given, it is used and added as unsigned 8-bit integer.
     - If no subtype is given, the generic binary subtype 0x00 is used.
 
+## Examples
+
+??? example
+
+    The following code shows that `binary_t` is by default, a typedef to
+    `#!cpp nlohmann::byte_container_with_subtype<std::vector<std::uint8_t>>`.
+     
+    ```cpp
+    --8<-- "examples/binary_t.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/binary_t.output"
+    ```
+
 ## See also
 
 - [byte_container_with_subtype](../byte_container_with_subtype/index.md)

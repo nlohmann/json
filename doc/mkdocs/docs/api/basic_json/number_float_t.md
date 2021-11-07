@@ -49,6 +49,22 @@ and be serialized to `null`.
 
 Floating-point number values are stored directly inside a `basic_json` type.
 
+## Examples
+
+??? example
+
+    The following code shows that `number_float_t` is by default, a typedef to `#!cpp double`.
+     
+    ```cpp
+    --8<-- "examples/number_float_t.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/number_float_t.output"
+    ```
+
 ## Version history
 
 - Added in version 1.0.0.

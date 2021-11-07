@@ -47,6 +47,22 @@ introduced by the compiler or runtime environment. A theoretical limit can be qu
 Arrays are stored as pointers in a `basic_json` type. That is, for any access to array values, a pointer of type
 `#!cpp array_t*` must be dereferenced.
 
+## Examples
+
+??? example
+
+    The following code shows that `array_t` is by default, a typedef to `#!cpp std::vector<nlohmann::json>`.
+     
+    ```cpp
+    --8<-- "examples/array_t.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/array_t.output"
+    ```
+
 ## Version history
 
 - Added in version 1.0.0.

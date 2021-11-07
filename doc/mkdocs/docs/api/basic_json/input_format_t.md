@@ -25,7 +25,7 @@ ubjson
 :   UBJSON (Universal Binary JSON)
 
 bson
-:   BSON (Bin­ary JSON)
+:   BSON (Binary JSON)
 
 ## Version history
 
