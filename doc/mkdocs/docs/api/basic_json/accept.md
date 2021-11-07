@@ -93,3 +93,12 @@ Linear in the length of the input. The parser is a predictive LL(1) parser.
 
 - Added in version 3.0.0.
 - Ignoring comments via `ignore_comments` added in version 3.9.0.
+
+!!! warning "Deprecation"
+
+    Overload (2) replaces calls to `accept` with a pair of iterators as their first parameter which has been
+    deprecated in version 3.8.0. This overload will be removed in version 4.0.0. Please replace all calls like
+    `#!cpp accept({ptr, ptr+len}, ...);` with `#!cpp accept(ptr, ptr+len, ...);`.
+
+    You should be warned by your compiler with a `-Wdeprecated-declarations` warning if you are using a deprecated
+    function.

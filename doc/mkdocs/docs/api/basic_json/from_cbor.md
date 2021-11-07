@@ -103,3 +103,15 @@ Linear in the size of the input.
 - Changed to consume input adapters, removed `start_index` parameter, and added `strict` parameter in version 3.0.0.
 - Added `allow_exceptions` parameter in version 3.2.0.
 - Added `tag_handler` parameter in version 3.9.0.
+
+!!! warning "Deprecation"
+
+    - Overload (2) replaces calls to `from_cbor` with a pointer and a length as first two parameters, which has been
+      deprecated in version 3.8.0. This overload will be removed in version 4.0.0. Please replace all calls like
+      `#!cpp from_cbor(ptr, len, ...);` with `#!cpp from_cbor(ptr, ptr+len, ...);`.
+    - Overload (2) replaces calls to `from_cbor` with a pair of iterators as their first parameter, which has been
+      deprecated in version 3.8.0. This overload will be removed in version 4.0.0. Please replace all calls like
+      `#!cpp from_cbor({ptr, ptr+len}, ...);` with `#!cpp from_cbor(ptr, ptr+len, ...);`.
+
+    You should be warned by your compiler with a `-Wdeprecated-declarations` warning if you are using a deprecated
+    function.

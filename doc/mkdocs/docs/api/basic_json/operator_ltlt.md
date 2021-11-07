@@ -54,3 +54,9 @@ Linear.
 
 - Added in version 1.0.0
 - Support for indentation character added in version 3.0.0.
+
+!!! warning "Deprecation"
+
+    This function replaces function `#!cpp std::ostream& operator>>(const basic_json& j, std::ostream& o)` which has
+    been deprecated in version 3.0.0. It will be removed in version 4.0.0. Please replace calls like `#!cpp j >> o;`
+    with `#!cpp o << j;`.

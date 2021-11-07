@@ -89,10 +89,22 @@ Linear in the size of the input.
 
 - [BSON specification](http://bsonspec.org/spec.html)
 - [to_bson](to_bson.md) for the analogous serialization
-- [to_cbor](to_cbor.md) for the related CBOR format
+- [from_cbor](from_cbor.md) for the related CBOR format
 - [from_msgpack](from_msgpack.md) for the related MessagePack format
 - [from_ubjson](from_ubjson.md) for the related UBJSON format
 
 ## Version history
 
 - Added in version 3.4.0.
+
+!!! warning "Deprecation"
+
+    - Overload (2) replaces calls to `from_bson` with a pointer and a length as first two parameters, which has been
+      deprecated in version 3.8.0. This overload will be removed in version 4.0.0. Please replace all calls like
+      `#!cpp from_bson(ptr, len, ...);` with `#!cpp from_bson(ptr, ptr+len, ...);`.
+    - Overload (2) replaces calls to `from_bson` with a pair of iterators as their first parameter, which has been
+      deprecated in version 3.8.0. This overload will be removed in version 4.0.0. Please replace all calls like
+      `#!cpp from_bson({ptr, ptr+len}, ...);` with `#!cpp from_bson(ptr, ptr+len, ...);`.
+
+    You should be warned by your compiler with a `-Wdeprecated-declarations` warning if you are using a deprecated
+    function.

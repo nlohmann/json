@@ -90,8 +90,11 @@ When iterating over an array, `key()` will return the index of the element as st
 - Added `items` and deprecated `iterator_wrapper` in version 3.1.0.
 - Added structured binding support in version 3.5.0.
 
-!!! note
+!!! warning "Deprecation"
 
     This function replaces the static function `iterator_wrapper` which was introduced in version 1.0.0, but has been
     deprecated in version 3.1.0. Function `iterator_wrapper` will be removed in version 4.0.0. Please replace all
     occurrences of `#!cpp iterator_wrapper(j)` with `#!cpp j.items()`.
+
+    You should be warned by your compiler with a `-Wdeprecated-declarations` warning if you are using a deprecated
+    function.
