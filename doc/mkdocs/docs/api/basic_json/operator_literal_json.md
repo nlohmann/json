@@ -27,6 +27,22 @@ The function can throw anything that [`parse(s, s+n)`](parse.md) would throw.
 
 Linear.
 
+## Examples
+
+??? example
+
+    The following code shows how to create JSON values from string literals.
+     
+    ```cpp
+    --8<-- "examples/operator_literal_json.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/operator_literal_json.output"
+    ```
+
 ## Version history
 
 - Added in version 1.0.0.

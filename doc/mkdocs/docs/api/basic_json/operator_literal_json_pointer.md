@@ -27,6 +27,22 @@ The function can throw anything that [`json_pointer::json_pointer`](../json_poin
 
 Linear.
 
+## Examples
+
+??? example
+
+    The following code shows how to create JSON Pointers from string literals.
+     
+    ```cpp
+    --8<-- "examples/operator_literal_json_pointer.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/operator_literal_json_pointer.output"
+    ```
+
 ## Version history
 
 - Added in version 2.0.0.

@@ -8,6 +8,14 @@ namespace std {
 
 Exchanges the values of two JSON objects.
 
+## Parameters
+
+`j1` (in, out)
+:   value to be replaced by `j2`
+
+`j2` (in, out)
+:   value to be replaced by `j1`
+
 ## Possible implementation
 
 ```cpp
@@ -16,6 +24,22 @@ void swap(nlohmann::basic_json& j1, nlohmann::basic_json& j2)
     j1.swap(j2);
 }
 ```
+
+## Examples
+
+??? example
+
+    The following code shows how two values are swapped with `std::swap`.
+     
+    ```cpp
+    --8<-- "examples/std_swap.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/std_swap.output"
+    ```
 
 ## See also
 

@@ -45,6 +45,22 @@ standard value ctor, as both JSON arrays and JSON binary arrays are backed with 
 JSON binary arrays are a non-standard extension it was decided that it would be best to prevent automatic initialization
 of a binary array type, for backwards compatibility and so it does not happen on accident.
 
+## Examples
+
+??? example
+
+    The following code shows how to create a binary value.
+     
+    ```cpp
+    --8<-- "examples/binary.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/binary.output"
+    ```
+
 ## Version history
 
 - Added in version 3.8.0.
