@@ -27,6 +27,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+/****************************************************************************\
+ * Note on documentation: The source files contain links to the online      *
+ * documentation of the public API at https://json.nlohmann.me. This URL    *
+ * contains the most recent documentation and should also be applicable to  *
+ * previous versions; documentation for deprecated functions is not         *
+ * removed, but marked deprecated. See "Generate documentation" section in  *
+ * file doc/README.md.                                                      *
+\****************************************************************************/
+
 #ifndef INCLUDE_NLOHMANN_JSON_HPP_
 #define INCLUDE_NLOHMANN_JSON_HPP_
 
@@ -21720,11 +21729,9 @@ struct hash<nlohmann::NLOHMANN_BASIC_JSON_TPL>
     }
 };
 
-/// specialization for std::less<value_t>
-/// @note: do not remove the space after '<',
-///        see https://github.com/nlohmann/json/pull/679
+// specialization for std::less<value_t>
 template<>
-struct less< ::nlohmann::detail::value_t>
+struct less< ::nlohmann::detail::value_t> // do not remove the space after '<', see https://github.com/nlohmann/json/pull/679
 {
     /*!
     @brief compare two value_t enum values
