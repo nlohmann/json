@@ -1,4 +1,4 @@
-# basic_json::get_ptr
+# <small>nlohmann::basic_json::</small>get_ptr
 
 ```cpp
 template<typename PointerType>

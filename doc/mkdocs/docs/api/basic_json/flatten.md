@@ -1,4 +1,4 @@
-# basic_json::flatten
+# <small>nlohmann::basic_json::</small>flatten
 
 ```cpp
 basic_json flatten() const;

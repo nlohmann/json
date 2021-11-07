@@ -1,4 +1,4 @@
-# basic_json::number_integer_t
+# <small>nlohmann::basic_json::</small>number_integer_t
 
 ```cpp
 using number_integer_t = NumberIntegerType;

@@ -1,4 +1,4 @@
-# basic_json::binary
+# <small>nlohmann::basic_json::</small>binary
 
 ```cpp
 // (1)

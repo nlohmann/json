@@ -198,7 +198,7 @@ nav:
         - 'Overview': api/adl_serializer/index.md
         - 'from_json': api/adl_serializer/from_json.md
         - 'to_json': api/adl_serializer/to_json.md
-      - api/json.md
+      - 'json': api/json.md
       - json_pointer:
         - 'Overview': api/json_pointer/index.md
         - '(Constructor)': api/json_pointer/json_pointer.md
@@ -226,8 +226,8 @@ nav:
         - 'start_array': api/json_sax/start_array.md
         - 'start_object': api/json_sax/start_object.md
         - 'string': api/json_sax/string.md
-      - api/ordered_map.md
-      - api/ordered_json.md
+      - 'ordered_json': api/ordered_json.md
+      - 'ordered_map': api/ordered_map.md
 
 # Extras
 extra:

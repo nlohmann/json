@@ -1,4 +1,4 @@
-# basic_json::object_t
+# <small>nlohmann::basic_json::</small>object_t
 
 ```cpp
 using object_t = ObjectType<StringType,

@@ -1,7 +1,7 @@
-# ordered_json
+# <small>nlohmann::</small>ordered_json
 
 ```cpp
-using ordered_json = basic_json<nlohmann::ordered_map>;
+using ordered_json = basic_json<ordered_map>;
 ```
 
 This type preserves the insertion order of object keys.

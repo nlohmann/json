@@ -1,4 +1,4 @@
-# basic_json::operator""_json
+# <small>nlohmann::basic_json::</small>operator""_json
 
 ```cpp
 json operator "" _json(const char* s, std::size_t n);

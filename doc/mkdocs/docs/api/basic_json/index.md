@@ -1,6 +1,6 @@
-# basic_json
+# <small>nlohmann::</small>basic_json
 
-Defined in header `<json.hpp>`
+<small>Defined in header `<nlohmann/json.hpp>`</small>
 
 ```cpp
 template<

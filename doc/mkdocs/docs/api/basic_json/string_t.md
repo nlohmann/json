@@ -1,4 +1,4 @@
-# basic_json::string_t
+# <small>nlohmann::basic_json::</small>string_t
 
 ```cpp
 using string_t = StringType;

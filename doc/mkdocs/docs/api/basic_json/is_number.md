@@ -1,4 +1,4 @@
-# basic_json::is_number
+# <small>nlohmann::basic_json::</small>is_number
 
 ```cpp
 constexpr bool is_number() const noexcept;

@@ -1,4 +1,4 @@
-# byte_container_with_subtype::byte_container_with_subtype
+# <small>nlohmann::byte_container_with_subtype::</small>byte_container_with_subtype
 
 ```cpp
 // (1)

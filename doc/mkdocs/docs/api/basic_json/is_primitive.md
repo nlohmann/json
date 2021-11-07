@@ -1,4 +1,4 @@
-# basic_json::is_primitive
+# <small>nlohmann::basic_json::</small>is_primitive
 
 ```cpp
 constexpr bool is_primitive() const noexcept;

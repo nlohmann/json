@@ -1,4 +1,4 @@
-# basic_json::to_bson
+# <small>nlohmann::basic_json::</small>to_bson
 
 ```cpp
 // (1)

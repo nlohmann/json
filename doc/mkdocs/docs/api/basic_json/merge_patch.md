@@ -1,4 +1,4 @@
-# basic_json::merge_patch
+# <small>nlohmann::basic_json::</small>merge_patch
 
 ```cpp
 void merge_patch(const basic_json& apply_patch);

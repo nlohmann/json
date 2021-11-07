@@ -1,4 +1,4 @@
-# json_sax::binary
+# <small>nlohmann::json_sax::</small>binary
 
 ```cpp
 virtual bool binary(binary_t& val) = 0;

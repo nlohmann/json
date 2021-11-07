@@ -1,4 +1,4 @@
-# basic_json::type_name
+# <small>nlohmann::basic_json::</small>type_name
 
 ```cpp
 const char* type_name() const noexcept;

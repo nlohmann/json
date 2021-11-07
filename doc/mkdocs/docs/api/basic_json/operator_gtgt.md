@@ -51,7 +51,8 @@ A UTF-8 byte order mark is silently ignored.
 
 ## See also
 
-- [parse](parse.md) for a variant with a parser callback function to filter values while parsing
+- [accept](accept.md) - check if the input is valid JSON
+- [parse](parse.md) - deserialize from a compatible input
 
 ## Version history
 

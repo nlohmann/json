@@ -1,4 +1,4 @@
-# json_sax::end_object
+# <small>nlohmann::json_sax::</small>end_object
 
 ```cpp
 virtual bool end_object() = 0;

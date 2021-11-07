@@ -1,4 +1,4 @@
-# basic_json::type_error
+# <small>nlohmann::basic_json::</small>type_error
 
 ```cpp
 class type_error : public exception;

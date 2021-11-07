@@ -1,4 +1,4 @@
-# basic_json::number_unsigned_t
+# <small>nlohmann::basic_json::</small>number_unsigned_t
 
 ```cpp
 using number_unsigned_t = NumberUnsignedType;

@@ -1,4 +1,4 @@
-# json_sax::parse_error
+# <small>nlohmann::json_sax::</small>parse_error
 
 ```cpp
 virtual bool parse_error(std::size_t position,

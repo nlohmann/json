@@ -1,4 +1,4 @@
-# basic_json::is_number_float
+# <small>nlohmann::basic_json::</small>is_number_float
 
 ```cpp
 constexpr bool is_number_float() const noexcept;

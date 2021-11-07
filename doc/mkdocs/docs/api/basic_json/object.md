@@ -1,4 +1,4 @@
-# basic_json::object
+# <small>nlohmann::basic_json::</small>object
 
 ```cpp
 static basic_json object(initializer_list_t init = {});

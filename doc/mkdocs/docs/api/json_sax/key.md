@@ -1,4 +1,4 @@
-# json_sax::key
+# <small>nlohmann::json_sax::</small>key
 
 ```cpp
 virtual bool key(string_t& val) = 0;

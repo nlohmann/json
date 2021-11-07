@@ -1,4 +1,4 @@
-# json_pointer::pop_back
+# <small>nlohmann::json_pointer::</small>pop_back
 
 ```cpp
 void pop_back();

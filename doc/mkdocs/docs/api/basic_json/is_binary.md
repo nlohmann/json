@@ -1,4 +1,4 @@
-# basic_json::is_binary
+# <small>nlohmann::basic_json::</small>is_binary
 
 ```cpp
 constexpr bool is_binary() const noexcept;

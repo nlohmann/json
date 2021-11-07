@@ -1,4 +1,4 @@
-# byte_container_with_subtype::set_subtype
+# <small>nlohmann::byte_container_with_subtype::</small>set_subtype
 
 ```cpp
 void set_subtype(subtype_type subtype) noexcept;

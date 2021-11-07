@@ -1,4 +1,4 @@
-# json_pointer::json_pointer
+# <small>nlohmann::json_pointer::</small>json_pointer
 
 ```cpp
 explicit json_pointer(const std::string& s = "");

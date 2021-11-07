@@ -1,4 +1,4 @@
-# json_pointer::to_string
+# <small>nlohmann::json_pointer::</small>to_string
 
 ```cpp
 std::string to_string() const;

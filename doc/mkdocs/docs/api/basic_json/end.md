@@ -1,4 +1,4 @@
-# basic_json::end
+# <small>nlohmann::basic_json::</small>end
 
 ```cpp
 iterator end() noexcept;

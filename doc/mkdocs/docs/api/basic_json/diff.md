@@ -1,4 +1,4 @@
-# basic_json::diff
+# <small>nlohmann::basic_json::</small>diff
 
 ```cpp
 static basic_json diff(const basic_json& source,

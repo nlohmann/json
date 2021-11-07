@@ -1,4 +1,4 @@
-# basic_json::from_msgpack
+# <small>nlohmann::basic_json::</small>from_msgpack
 
 ```cpp
 // (1)

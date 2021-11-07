@@ -1,4 +1,4 @@
-# basic_json::begin
+# <small>nlohmann::basic_json::</small>begin
 
 ```cpp
 iterator begin() noexcept;

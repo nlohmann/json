@@ -1,4 +1,4 @@
-# basic_json::~basic_json
+# <small>nlohmann::basic_json::</small>~basic_json
 
 ```cpp
 ~basic_json() noexcept;

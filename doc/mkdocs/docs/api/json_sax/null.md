@@ -1,4 +1,4 @@
-# json_sax::null
+# <small>nlohmann::json_sax::</small>null
 
 ```cpp
 virtual bool null() = 0;

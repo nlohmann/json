@@ -1,4 +1,4 @@
-# basic_json::input_format_t
+# <small>nlohmann::basic_json::</small>input_format_t
 
 ```cpp
 enum class input_format_t {

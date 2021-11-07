@@ -1,4 +1,4 @@
-# basic_json::emplace
+# <small>nlohmann::basic_json::</small>emplace
 
 ```cpp
 template<class... Args>

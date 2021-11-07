@@ -1,4 +1,4 @@
-# basic_json::rbegin
+# <small>nlohmann::basic_json::</small>rbegin
 
 ```cpp
 reverse_iterator rbegin() noexcept;

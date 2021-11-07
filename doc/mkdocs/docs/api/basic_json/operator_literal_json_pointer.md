@@ -1,4 +1,4 @@
-# basic_json::operator""_json_pointer
+# <small>nlohmann::basic_json::</small>operator""_json_pointer
 
 ```cpp
 json_pointer operator "" _json_pointer(const char* s, std::size_t n);

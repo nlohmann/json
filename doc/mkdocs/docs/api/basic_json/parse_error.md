@@ -1,4 +1,4 @@
-# basic_json::parse_error
+# <small>nlohmann::basic_json::</small>parse_error
 
 ```cpp
 class parse_error : public exception;

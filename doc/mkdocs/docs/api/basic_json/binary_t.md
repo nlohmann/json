@@ -1,4 +1,4 @@
-# basic_json::binary_t
+# <small>nlohmann::basic_json::</small>binary_t
 
 ```cpp
 using binary_t = byte_container_with_subtype<BinaryType>;

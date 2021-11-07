@@ -1,4 +1,4 @@
-# json_pointer::parent_pointer
+# <small>nlohmann::json_pointer::</small>parent_pointer
 
 ```cpp
 json_pointer parent_pointer() const;

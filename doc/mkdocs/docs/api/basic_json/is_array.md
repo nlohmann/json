@@ -1,4 +1,4 @@
-# basic_json::is_array
+# <small>nlohmann::basic_json::</small>is_array
 
 ```cpp
 constexpr bool is_array() const noexcept;

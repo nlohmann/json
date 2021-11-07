@@ -1,4 +1,4 @@
-# basic_json::is_number_unsigned
+# <small>nlohmann::basic_json::</small>is_number_unsigned
 
 ```cpp
 constexpr bool is_number_unsigned() const noexcept;

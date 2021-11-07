@@ -1,4 +1,4 @@
-# basic_json::cend
+# <small>nlohmann::basic_json::</small>cend
 
 ```cpp
 const_iterator cend() const noexcept;

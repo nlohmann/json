@@ -1,4 +1,4 @@
-# basic_json::boolean_t
+# <small>nlohmann::basic_json::</small>boolean_t
 
 ```cpp
 using boolean_t = BooleanType;

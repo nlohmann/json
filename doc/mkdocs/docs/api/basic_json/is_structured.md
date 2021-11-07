@@ -1,4 +1,4 @@
-# basic_json::is_structured
+# <small>nlohmann::basic_json::</small>is_structured
 
 ```cpp
 constexpr bool is_structured() const noexcept;

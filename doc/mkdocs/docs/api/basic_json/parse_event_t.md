@@ -1,4 +1,4 @@
-# basic_json::parse_event_t
+# <small>nlohmann::basic_json::</small>parse_event_t
 
 ```cpp
 enum class parse_event_t : std::uint8_t {

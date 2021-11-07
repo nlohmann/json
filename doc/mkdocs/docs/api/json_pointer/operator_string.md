@@ -1,4 +1,4 @@
-# json_pointer::operator std::string
+# <small>nlohmann::json_pointer::</small>operator std::string
 
 ```cpp
 operator std::string() const

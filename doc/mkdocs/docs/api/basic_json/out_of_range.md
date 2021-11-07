@@ -1,4 +1,4 @@
-# basic_json::out_of_range
+# <small>nlohmann::basic_json::</small>out_of_range
 
 ```cpp
 class out_of_range : public exception;

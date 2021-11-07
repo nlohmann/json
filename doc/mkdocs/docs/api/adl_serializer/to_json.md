@@ -1,4 +1,4 @@
-# adl_serializer::to_json
+# <small>nlohmann::adl_serializer::</small>to_json
 
 ```cpp
 template<typename BasicJsonType, typename TargetType = ValueType>

@@ -1,4 +1,4 @@
-# basic_json::exception
+# <small>nlohmann::basic_json::</small>exception
 
 ```cpp
 class exception : public std::exception;

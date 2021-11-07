@@ -1,4 +1,4 @@
-# basic_json::cbegin
+# <small>nlohmann::basic_json::</small>cbegin
 
 ```cpp
 const_iterator cbegin() const noexcept;

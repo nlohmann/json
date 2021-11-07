@@ -1,4 +1,4 @@
-# json_pointer::empty
+# <small>nlohmann::json_pointer::</small>empty
 
 ```cpp
 bool empty() const noexcept;

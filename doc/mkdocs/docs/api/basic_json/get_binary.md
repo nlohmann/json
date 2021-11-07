@@ -1,4 +1,4 @@
-# basic_json::get_binary
+# <small>nlohmann::basic_json::</small>get_binary
 
 ```cpp
 binary_t& get_binary();

@@ -1,4 +1,4 @@
-# basic_json::other_error
+# <small>nlohmann::basic_json::</small>other_error
 
 ```cpp
 class other_error : public exception;

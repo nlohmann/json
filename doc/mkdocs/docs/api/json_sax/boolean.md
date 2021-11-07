@@ -1,4 +1,4 @@
-# json_sax::boolean
+# <small>nlohmann::json_sax::</small>boolean
 
 ```cpp
 virtual bool boolean(bool val) = 0;

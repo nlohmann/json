@@ -1,4 +1,4 @@
-# ordered_map
+# <small>nlohmann::</small>ordered_map
 
 ```cpp
 template<class Key, class T, class IgnoredLess = std::less<Key>,
@@ -6,7 +6,8 @@ template<class Key, class T, class IgnoredLess = std::less<Key>,
 struct ordered_map : std::vector<std::pair<const Key, T>, Allocator>;
 ```
 
-A minimal map-like container that preserves insertion order for use within `nlohmann::basic_json<ordered_map>`.
+A minimal map-like container that preserves insertion order for use within [`nlohmann::ordered_json`](ordered_json.md)
+(`nlohmann::basic_json<ordered_map>`).
 
 ## Template parameters
 
@@ -17,7 +18,7 @@ A minimal map-like container that preserves insertion order for use within `nloh
 :   mapped type
 
 `IgnoredLess`
-:   comparison function (ignored and only added to ensure compatibility with `std::map`)
+:   comparison function (ignored and only added to ensure compatibility with `#!cpp std::map`)
 
 `Allocator`
 :   allocator type
@@ -43,6 +44,26 @@ A minimal map-like container that preserves insertion order for use within `nloh
 - **count**
 - **find**
 - **insert**
+
+## Examples
+
+??? example
+
+    The example shows the different behavior of `std::map` and `nlohmann::ordered_map`.
+     
+    ```cpp
+    --8<-- "examples/ordered_map.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/ordered_map.output"
+    ```
+
+## See also
+
+- [ordered_json](ordered_json.md)
 
 ## Version history
 

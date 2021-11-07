@@ -1,4 +1,4 @@
-# basic_json::clear
+# <small>nlohmann::basic_json::</small>clear
 
 ```cpp
 void clear() noexcept;

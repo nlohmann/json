@@ -1,4 +1,4 @@
-# basic_json::front
+# <small>nlohmann::basic_json::</small>front
 
 ```cpp
 reference front();

@@ -1,4 +1,4 @@
-# json_pointer::back
+# <small>nlohmann::json_pointer::</small>back
 
 ```cpp
 const std::string& back() const;

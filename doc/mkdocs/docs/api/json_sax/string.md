@@ -1,4 +1,4 @@
-# json_sax::string
+# <small>nlohmann::json_sax::</small>string
 
 ```cpp
 virtual bool string(string_t& val) = 0;

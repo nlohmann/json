@@ -1,4 +1,4 @@
-# basic_json::is_boolean
+# <small>nlohmann::basic_json::</small>is_boolean
 
 ```cpp
 constexpr bool is_boolean() const noexcept;

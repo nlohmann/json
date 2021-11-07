@@ -1,4 +1,4 @@
-# basic_json::size
+# <small>nlohmann::basic_json::</small>size
 
 ```cpp
 size_type size() const noexcept;

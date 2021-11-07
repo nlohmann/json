@@ -1,4 +1,4 @@
-# basic_json::type
+# <small>nlohmann::basic_json::</small>type
 
 ```cpp
 constexpr value_t type() const noexcept;

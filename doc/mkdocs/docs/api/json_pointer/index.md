@@ -1,4 +1,4 @@
-# json_pointer
+# <small>nlohmann::</small>json_pointer
 
 ```cpp
 template<typename BasicJsonType>

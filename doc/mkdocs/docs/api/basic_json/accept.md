@@ -1,4 +1,4 @@
-# basic_json::accept
+# <small>nlohmann::basic_json::</small>accept
 
 ```cpp
 // (1)
@@ -83,6 +83,11 @@ Linear in the length of the input. The parser is a predictive LL(1) parser.
     ```json
     --8<-- "examples/accept__string.output"
     ```
+
+## See also
+
+- [parse](parse.md) - deserialize from a compatible input
+- [operator>>](operator_gtgt.md) - deserialize from stream
 
 ## Version history
 

@@ -1,4 +1,4 @@
-# basic_json::is_object
+# <small>nlohmann::basic_json::</small>is_object
 
 ```cpp
 constexpr bool is_object() const noexcept;

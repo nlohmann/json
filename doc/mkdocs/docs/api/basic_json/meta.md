@@ -1,4 +1,4 @@
-# basic_json::meta
+# <small>nlohmann::basic_json::</small>meta
 
 ```cpp
 static basic_json meta();

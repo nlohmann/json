@@ -1,4 +1,4 @@
-# basic_json::max_size
+# <small>nlohmann::basic_json::</small>max_size
 
 ```cpp
 size_type max_size() const noexcept;

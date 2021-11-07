@@ -1,4 +1,4 @@
-# basic_json::number_float_t
+# <small>nlohmann::basic_json::</small>number_float_t
 
 ```cpp
 using number_float_t = NumberFloatType;

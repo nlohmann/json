@@ -1,4 +1,4 @@
-# basic_json::empty
+# <small>nlohmann::basic_json::</small>empty
 
 ```cpp
 bool empty() const noexcept;

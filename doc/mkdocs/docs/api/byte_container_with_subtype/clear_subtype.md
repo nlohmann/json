@@ -1,4 +1,4 @@
-# byte_container_with_subtype::clear_subtype
+# <small>nlohmann::byte_container_with_subtype::</small>clear_subtype
 
 ```cpp
 void clear_subtype() noexcept;

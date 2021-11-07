@@ -1,4 +1,4 @@
-# basic_json::object_comparator_t
+# <small>nlohmann::basic_json::</small>object_comparator_t
 
 ```cpp
 using object_comparator_t = std::less<StringType>;  // until C++14

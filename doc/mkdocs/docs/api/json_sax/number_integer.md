@@ -1,4 +1,4 @@
-# json_sax::number_integer
+# <small>nlohmann::json_sax::</small>number_integer
 
 ```cpp
 virtual bool number_integer(number_integer_t val) = 0;

@@ -1,4 +1,4 @@
-# basic_json::parser_callback_t
+# <small>nlohmann::basic_json::</small>parser_callback_t
 
 ```cpp
 template<typename BasicJsonType>

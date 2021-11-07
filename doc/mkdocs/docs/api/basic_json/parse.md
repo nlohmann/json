@@ -1,4 +1,4 @@
-# basic_json::parse
+# <small>nlohmann::basic_json::</small>parse
 
 ```cpp
 // (1)
@@ -179,6 +179,11 @@ super-linear complexity.
     ```json
     --8<-- "examples/parse__allow_exceptions.output"
     ```
+
+## See also
+
+- [accept](accept.md) - check if the input is valid JSON
+- [operator>>](operator_gtgt.md) - deserialize from stream
 
 ## Version history
 

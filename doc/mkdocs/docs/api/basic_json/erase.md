@@ -1,4 +1,4 @@
-# basic_json::erase
+# <small>nlohmann::basic_json::</small>erase
 
 ```cpp
 // (1)

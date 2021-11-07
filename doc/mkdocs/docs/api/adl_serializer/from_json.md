@@ -1,4 +1,4 @@
-# adl_serializer::from_json
+# <small>nlohmann::adl_serializer::</small>from_json
 
 ```cpp
 // (1)

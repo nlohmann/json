@@ -1,4 +1,4 @@
-# basic_json::array_t
+# <small>nlohmann::basic_json::</small>array_t
 
 ```cpp
 using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;

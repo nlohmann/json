@@ -1,4 +1,4 @@
-# basic_json::is_discarded
+# <small>nlohmann::basic_json::</small>is_discarded
 
 ```cpp
 constexpr bool is_discarded() const noexcept;

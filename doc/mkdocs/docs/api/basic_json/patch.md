@@ -1,4 +1,4 @@
-# basic_json::patch
+# <small>nlohmann::basic_json::</small>patch
 
 ```cpp
 basic_json patch(const basic_json& json_patch) const;

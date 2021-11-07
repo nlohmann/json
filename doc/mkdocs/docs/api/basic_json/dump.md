@@ -1,4 +1,4 @@
-# basic_json::dump
+# <small>nlohmann::basic_json::</small>dump
 
 ```cpp
 string_t dump(const int indent = -1,

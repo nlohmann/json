@@ -1,4 +1,4 @@
-# basic_json::to_cbor
+# <small>nlohmann::basic_json::</small>to_cbor
 
 ```cpp
 // (1)

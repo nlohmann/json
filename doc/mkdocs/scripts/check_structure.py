@@ -29,6 +29,7 @@ def check_structure():
     ]
 
     required_headers = [
+        'Examples',
         'Version history'
     ]
 

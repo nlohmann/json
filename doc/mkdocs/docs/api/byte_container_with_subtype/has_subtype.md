@@ -1,4 +1,4 @@
-# byte_container_with_subtype::has_subtype
+# <small>nlohmann::byte_container_with_subtype::</small>has_subtype
 
 ```cpp
 constexpr bool has_subtype() const noexcept;
