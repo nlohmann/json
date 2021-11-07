@@ -280,7 +280,7 @@ markdown_extensions:
 
 plugins:
     - search:
-        separator: '[\s\-\.]'
+        separator: '[\s\-\._]'
         lang: en
     - minify:
         minify_html: true
