@@ -1627,10 +1627,8 @@ The library itself consists of a single header file licensed under the MIT licen
 - [**libFuzzer**](https://llvm.org/docs/LibFuzzer.html) to implement fuzz testing for OSS-Fuzz
 - [**OSS-Fuzz**](https://github.com/google/oss-fuzz) for continuous fuzz testing of the library ([project repository](https://github.com/google/oss-fuzz/tree/master/projects/json))
 - [**Probot**](https://probot.github.io) for automating maintainer tasks such as closing stale issues, requesting missing information, or detecting toxic comments.
-- [**send_to_wandbox**](https://github.com/nlohmann/json/blob/develop/doc/scripts/send_to_wandbox.py) to send code examples to [Wandbox](https://wandbox.org)
 - [**Travis**](https://travis-ci.org) for [continuous integration](https://travis-ci.org/nlohmann/json) on Linux and macOS
 - [**Valgrind**](https://valgrind.org) to check for correct memory management
-- [**Wandbox**](https://wandbox.org) for [online examples](https://wandbox.org/permlink/1mp10JbaANo6FUc7)
 
 
 ## Projects using JSON for Modern C++

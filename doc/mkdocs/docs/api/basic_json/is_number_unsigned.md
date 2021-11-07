@@ -35,7 +35,7 @@ Constant.
     --8<-- "examples/is_number_unsigned.output"
     ```
 
-# See also
+## See also
 
 - [is_number()](is_number.md) check if value is a number
 - [is_number_integer()](is_number_integer.md) check if value is an integer or unsigned integer number

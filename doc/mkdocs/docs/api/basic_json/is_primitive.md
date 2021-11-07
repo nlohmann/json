@@ -54,7 +54,7 @@ This library extends primitive types to binary types, because binary types are  
     --8<-- "examples/is_primitive.output"
     ```
 
-# See also
+## See also
 
 - [is_structured()](is_structured.md) returns whether JSON value is structured
 - [is_null()](is_null.md) returns whether JSON value is `null`

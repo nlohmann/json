@@ -52,7 +52,7 @@ Note that though strings are containers in C++, they are treated as primitive va
     --8<-- "examples/is_structured.output"
     ```
 
-# See also
+## See also
 
 - [is_primitive()](is_primitive.md) returns whether JSON value is primitive
 - [is_array()](is_array.md) returns whether value is an array

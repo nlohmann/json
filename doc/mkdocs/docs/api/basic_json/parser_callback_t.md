@@ -51,7 +51,7 @@ called:
 Whether the JSON value which called the function during parsing should be kept (`#!cpp true`) or not (`#!cpp false`). In
 the latter case, it is either skipped completely or replaced by an empty discarded object.
 
-# Example
+## Examples
 
 ??? example
 

@@ -33,15 +33,25 @@ def check_structure():
         'Version history'
     ]
 
-    for file in sorted(glob.glob('api/**/*.md', recursive=True)):
+    files = sorted(glob.glob('api/**/*.md', recursive=True))
+    for file in files:
         with open(file) as file_content:
             header_idx = -1
             existing_headers = []
             in_initial_code_example = False
             previous_line = None
+            h1sections = 0
 
             for lineno, line in enumerate(file_content.readlines()):
                 line = line.strip()
+
+                if line.startswith('# '):
+                    h1sections += 1
+
+                # there should only be one top-level title
+                if h1sections > 1:
+                    print(f'{file}:{lineno+1}: Error: unexpected top-level title "{line}"!')
+                    h1sections = 1
 
                 # Overview pages should have a better title
                 if line == '# Overview':
@@ -85,6 +95,7 @@ def check_structure():
                 if required_header not in existing_headers:
                     print(f'{file}:{lineno+1}: Error: required header "{required_header}" was not found!')
 
+    print(f'\nchecked {len(files)} files')
 
 if __name__ == '__main__':
     check_structure()
