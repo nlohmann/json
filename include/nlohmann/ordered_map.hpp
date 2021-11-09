@@ -112,8 +112,8 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
 
     iterator erase(iterator first, iterator last)
     {
-        const auto offset = std::distance(Container::begin(), first);
         const auto elements_affected = std::distance(first, last);
+        const auto offset = std::distance(Container::begin(), first);
 
         // This is the start situation. We need to delete elements_affected
         // elements (3 in this example: e, f, g), and need to return an
@@ -153,8 +153,8 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
         //             first    last
 
         // first is now pointing past the last deleted element, but we cannot
-        // use this iterator got invalidated by the resize call. Instead, we
-        // can return begin() + offset.
+        // use this iterator, because it may have been invalidated by the
+        // resize call. Instead, we can return begin() + offset.
         return Container::begin() + offset;
     }
 
