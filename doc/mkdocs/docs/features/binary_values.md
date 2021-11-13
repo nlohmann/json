@@ -198,7 +198,7 @@ JSON does not have a binary type, and this library does not introduce a new type
 
 ### MessagePack
 
-[MessagePack](binary_formats/messagepack.md) supports binary values and subtypes. If a subtype is given, the ext family is used. The library will choose the smallest representation among fixext1, fixext2, fixext4, fixext8, ext8, ext16, and ext32. The subtype is then added as singed 8-bit integer.
+[MessagePack](binary_formats/messagepack.md) supports binary values and subtypes. If a subtype is given, the ext family is used. The library will choose the smallest representation among fixext1, fixext2, fixext4, fixext8, ext8, ext16, and ext32. The subtype is then added as signed 8-bit integer.
 
 If no subtype is given, the bin family (bin8, bin16, bin32) is used.
 
@@ -282,7 +282,7 @@ If no subtype is given, the bin family (bin8, bin16, bin32) is used.
         0x23 0x69 0x01                  // '#' i 1 number of object elements
         0x69 0x06                       // i 6 (length of the key)
         0x62 0x69 0x6E 0x61 0x72 0x79   // "binary"
-            0x24 0x55                   // '$' 'U' type of the array elements: unsinged integers
+            0x24 0x55                   // '$' 'U' type of the array elements: unsigned integers
             0x23 0x69 0x04              // '#' i 4 number of array elements
             0xCA 0xFE 0xBA 0xBE         // content
     ```
