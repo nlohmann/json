@@ -128,7 +128,7 @@ That is, `-0` is stored as a signed integer, but the serialization does not repr
     - The serialization can be in scientific notation even if the input is not: `#!c 0.0000972439793401814` will be 
       serialized as `#!c 9.72439793401814e-05`. The reverse can also be true: `#!c 12345E-5` will be serialized as
       `#!c 0.12345`.
-    - Conversions from `#!c float` to `#!c double` can also introduce rouding errors:
+    - Conversions from `#!c float` to `#!c double` can also introduce rounding errors:
         ```cpp
         float f = 0.3;
         json j = f;
