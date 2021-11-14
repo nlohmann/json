@@ -59,12 +59,12 @@ void insert(const_iterator first, const_iterator last);
       arrays; example: `"cannot use insert() with string"`
     - Throws [`invalid_iterator.202`](../../home/exceptions.md#jsonexceptioninvalid_iterator202) if called on an
       iterator which does not belong to the current JSON value; example: `"iterator does not fit current value"`
-2. The function can throw thw following exceptions:
+2. The function can throw the following exceptions:
     - Throws [`type_error.309`](../../home/exceptions.md#jsonexceptiontype_error309) if called on JSON values other than
       arrays; example: `"cannot use insert() with string"`
     - Throws [`invalid_iterator.202`](../../home/exceptions.md#jsonexceptioninvalid_iterator202) if called on an
       iterator which does not belong to the current JSON value; example: `"iterator does not fit current value"`
-3. The function can throw thw following exceptions:
+3. The function can throw the following exceptions:
     - Throws [`type_error.309`](../../home/exceptions.md#jsonexceptiontype_error309) if called on JSON values other than
       arrays; example: `"cannot use insert() with string"`
     - Throws [`invalid_iterator.202`](../../home/exceptions.md#jsonexceptioninvalid_iterator202) if called on an
@@ -73,12 +73,12 @@ void insert(const_iterator first, const_iterator last);
       do not belong to the same JSON value; example: `"iterators do not fit"`
     - Throws [`invalid_iterator.211`](../../home/exceptions.md#jsonexceptioninvalid_iterator211) if `first` or `last`
       are iterators into container for which insert is called; example: `"passed iterators may not belong to container"`
-4. The function can throw thw following exceptions:
+4. The function can throw the following exceptions:
     - Throws [`type_error.309`](../../home/exceptions.md#jsonexceptiontype_error309) if called on JSON values other than
       arrays; example: `"cannot use insert() with string"`
     - Throws [`invalid_iterator.202`](../../home/exceptions.md#jsonexceptioninvalid_iterator202) if called on an
       iterator which does not belong to the current JSON value; example: `"iterator does not fit current value"`
-5. The function can throw thw following exceptions:
+5. The function can throw the following exceptions:
     - Throws [`type_error.309`](../../home/exceptions.md#jsonexceptiontype_error309) if called on JSON values other than
       objects; example: `"cannot use insert() with string"`
     - Throws [`invalid_iterator.202`](../../home/exceptions.md#jsonexceptioninvalid_iterator202) if called on an

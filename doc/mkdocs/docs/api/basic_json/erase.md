@@ -68,7 +68,7 @@ void erase(const size_type idx);
     - Throws [`invalid_iterator.205`](../../home/exceptions.md#jsonexceptioninvalid_iterator205) if called on a
       primitive type with invalid iterator (i.e., any iterator which is not `begin()`); example: `"iterator out of
       range"`
-2. The function can throw thw following exceptions:
+2. The function can throw the following exceptions:
     - Throws [`type_error.307`](../../home/exceptions.md#jsonexceptiontype_error307) if called on a `null` value;
       example: `"cannot use erase() with null"`
     - Throws [`invalid_iterator.203`](../../home/exceptions.md#jsonexceptioninvalid_iterator203) if called on iterators
@@ -76,10 +76,10 @@ void erase(const size_type idx);
     - Throws [`invalid_iterator.204`](../../home/exceptions.md#jsonexceptioninvalid_iterator204) if called on a
       primitive type with invalid iterators (i.e., if `first != begin()` and `last != end()`); example: `"iterators out
       of range"`
-3. The function can throw thw following exceptions:
+3. The function can throw the following exceptions:
     - Throws [`type_error.307`](../../home/exceptions.md#jsonexceptiontype_error307) when called on a type other than
       JSON object; example: `"cannot use erase() with null"`
-4. The function can throw thw following exceptions:
+4. The function can throw the following exceptions:
     - Throws [`type_error.307`](../../home/exceptions.md#jsonexceptiontype_error307) when called on a type other than
       JSON object; example: `"cannot use erase() with null"`
     - Throws [`out_of_range.401`](../../home/exceptions.md#jsonexceptionout_of_range401) when `idx >= size()`; example:

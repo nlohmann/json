@@ -532,7 +532,7 @@ TEST_CASE("regression tests 2")
         auto val2 = j.value("y", defval);
     }
 
-    SECTION("issue #2293 - eof doesnt cause parsing to stop")
+    SECTION("issue #2293 - eof doesn't cause parsing to stop")
     {
         std::vector<uint8_t> data =
         {
