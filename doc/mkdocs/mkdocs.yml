@@ -228,6 +228,9 @@ nav:
         - 'string': api/json_sax/string.md
       - 'ordered_json': api/ordered_json.md
       - 'ordered_map': api/ordered_map.md
+      - macros:
+        - 'Overview': api/macros/index.md
+        - 'JSON_ASSERT(x)': api/macros/json_assert.md
 
 # Extras
 extra:
