@@ -3555,7 +3555,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     can be thrown.,at__object_t_key_type}
     */
     template < class KeyT, typename detail::enable_if_t <
-                   detail::is_usable_as_key_type<basic_json_t, KeyT>::value&& !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value, int> = 0>
+                   detail::is_usable_as_key_type<basic_json_t, KeyT>::value&& !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value, int > = 0 >
     reference at(const KeyT& key)
     {
         // at only works for objects
@@ -3604,7 +3604,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     at__object_t_key_type_const}
     */
     template < class KeyT, typename detail::enable_if_t <
-                   detail::is_usable_as_key_type<basic_json_t, KeyT>::value&& !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value, int> = 0>
+                   detail::is_usable_as_key_type<basic_json_t, KeyT>::value&& !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value, int > = 0 >
     const_reference at(const KeyT& key) const
     {
         // at only works for objects
@@ -3749,8 +3749,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @since version 1.0.0; template KeyT added in version 3.10.0
     */
     template < class KeyT, typename detail::enable_if_t <
-                   detail::is_usable_as_key_type<basic_json_t, KeyT>::value&& !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value, int> = 0>
-    reference operator[](KeyT&& key)
+                   detail::is_usable_as_key_type<basic_json_t, KeyT>::value&& !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value, int > = 0 >
+    reference operator[](KeyT && key)
     {
         // implicitly convert null value to an empty object
         if (is_null())
@@ -3802,8 +3802,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @since version 1.0.0; template KeyT added in version 3.10.0
     */
     template < class KeyT, typename detail::enable_if_t <
-                   detail::is_usable_as_key_type<basic_json_t, KeyT>::value&& !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value, int> = 0>
-    const_reference operator[](KeyT&& key) const
+                   detail::is_usable_as_key_type<basic_json_t, KeyT>::value&& !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value, int > = 0 >
+    const_reference operator[](KeyT && key) const
     {
         // operator[] only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
@@ -3871,8 +3871,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     // using std::is_convertible in a std::enable_if will fail when using explicit conversions
     template < class KeyType, class ValueType, typename detail::enable_if_t <
                    detail::is_getable<basic_json_t, ValueType>::value
-                   && !std::is_same<value_t, ValueType>::value&& detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int> = 0>
-    typename std::decay<ValueType>::type value(const KeyType& key, ValueType&& default_value) const
+                   && !std::is_same<value_t, ValueType>::value&& detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int > = 0 >
+    typename std::decay<ValueType>::type value(const KeyType& key, ValueType && default_value) const
     {
         // at only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
@@ -4507,7 +4507,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @since version 3.6.0
     */
     template < class KeyT, typename detail::enable_if_t <
-                   !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value&& detail::is_usable_as_key_type<basic_json_t, KeyT>::value, int> = 0>
+                   !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value&& detail::is_usable_as_key_type<basic_json_t, KeyT>::value, int > = 0 >
     bool contains(const KeyT& key) const
     {
         return is_object() && m_value.object->find(key) != m_value.object->end();
