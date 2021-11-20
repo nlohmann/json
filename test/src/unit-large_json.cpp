@@ -40,7 +40,7 @@ TEST_CASE("tests on very large JSONs")
     {
         const auto depth = 5000000;
 
-        std::string s(2 * depth, '[');
+        std::string s(static_cast<std::size_t>(2 * depth), '[');
         std::fill(s.begin() + depth, s.end(), ']');
 
         json _;

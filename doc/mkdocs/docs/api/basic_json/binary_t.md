@@ -55,7 +55,7 @@ type `#!cpp binary_t*` must be dereferenced.
 - MessagePack
     - If a subtype is given and the binary array contains exactly 1, 2, 4, 8, or 16 elements, the fixext family (fixext1,
       fixext2, fixext4, fixext8) is used. For other sizes, the ext family (ext8, ext16, ext32) is used. The subtype is
-      then added as singed 8-bit integer.
+      then added as signed 8-bit integer.
     - If no subtype is given, the bin family (bin8, bin16, bin32) is used.
 
 - BSON
