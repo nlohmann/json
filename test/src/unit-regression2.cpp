@@ -736,6 +736,10 @@ TEST_CASE("regression tests 2")
 
         const auto j_path = j.get<std::filesystem::path>();
         CHECK(j_path == text_path);
+
+        json j_integer = 1;
+        std::filesystem::path p;
+        CHECK_THROWS_WITH_AS(j_integer.get_to(p), "[json.exception.type_error.302] type must be string, but is number", json::type_error);
     }
 #endif
 
