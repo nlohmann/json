@@ -54,3 +54,4 @@ This method always returns `0` when executed on a JSON type that is not an objec
 ## Version history
 
 - Added in version 1.0.0.
+- Extended template `KeyT` in version 3.10.5 to also support `std::string_view`.

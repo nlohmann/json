@@ -182,4 +182,4 @@ Strong exception safety: if an exception occurs, the original value stays intact
 
 - Added in version 1.0.0.
 - Added support for binary types in version 3.8.0.
-- Added `KeyT` template in version 3.10.0.
+- Added `KeyT` template in version 3.10.5.

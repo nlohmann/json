@@ -121,4 +121,4 @@ changes to any JSON value.
 ## Version history
 
 1. Added in version 1.0.0.
-2. Added in version 2.0.2. `KeyType` template parameter added in 3.10.0.
+2. Added in version 2.0.2. `KeyType` template parameter added in 3.10.5.

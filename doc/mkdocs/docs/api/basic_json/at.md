@@ -175,5 +175,5 @@ Strong exception safety: if an exception occurs, the original value stays intact
 ## Version history
 
 1. Added in version 1.0.0.
-2. Added in version 1.0.0; `KeyT` template added in version 3.10.0.
+2. Added in version 1.0.0; `KeyT` template added in version 3.10.5.
 3. Added in version 2.0.0.

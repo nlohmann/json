@@ -187,5 +187,5 @@ Strong exception safety: if an exception occurs, the original value stays intact
 
 1. Added in version 1.0.0.
 2. Added in version 1.0.0. Overloads for `T* key` added in version 1.1.0. Template `T* key` replaced by template `KeyT`
-   in version 3.10.0 which now also supports `std::string_view`.
+   in version 3.10.5 which now also supports `std::string_view`.
 3. Added in version 2.0.0.

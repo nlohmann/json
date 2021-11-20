@@ -55,3 +55,4 @@ This method always returns `#!cpp false` when executed on a JSON type that is no
 ## Version history
 
 - Added in version 3.6.0.
+- Extended template `KeyT` in version 3.10.5 to also support `std::string_view`.
