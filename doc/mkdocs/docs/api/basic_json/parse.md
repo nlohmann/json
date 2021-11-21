@@ -19,7 +19,7 @@ static basic_json parse(IteratorType first, IteratorType last,
 1. Deserialize from a compatible input.
 2. Deserialize from a pair of character iterators
     
-    The value_type of the iterator must be a integral type with size of 1, 2 or 4 bytes, which will be interpreted
+    The `value_type` of the iterator must be an integral type with size of 1, 2 or 4 bytes, which will be interpreted
     respectively as UTF-8, UTF-16 and UTF-32.
 
 ## Template parameters
@@ -34,7 +34,10 @@ static basic_json parse(IteratorType first, IteratorType last,
     - an object `obj` for which `begin(obj)` and `end(obj)` produces a valid pair of iterators.
 
 `IteratorType`
-:   a compatible iterator type
+:   a compatible iterator type, for instance.
+
+    - a pair of `std::string::iterator` or `std::vector<std::uint8_t>::iterator`
+    - a pair of pointers such as `ptr` and `ptr + len`
 
 ## Parameters
 
@@ -133,6 +136,34 @@ super-linear complexity.
     
     ```json
     --8<-- "examples/parse__contiguouscontainer__parser_callback_t.output"
+    ```
+
+??? example "Parsing from a non null-terminated string"
+
+    The example below demonstrates the `parse()` function reading from a string that is not null-terminated.
+
+    ```cpp
+    --8<-- "examples/parse__pointers.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/parse__pointers.output"
+    ```
+
+??? example "Parsing from an iterator pair"
+
+    The example below demonstrates the `parse()` function reading from an iterator pair.
+
+    ```cpp
+    --8<-- "examples/parse__iterator_pair.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/parse__iterator_pair.output"
     ```
 
 ??? example "Effect of `allow_exceptions` parameter"

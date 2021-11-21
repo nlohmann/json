@@ -69,12 +69,12 @@ changes to any JSON value.
 
 ## Exceptions
 
-1. The function can throw thw following exceptions:
+1. The function can throw the following exceptions:
     - Throws [`type_error.302`](../../home/exceptions.md#jsonexceptiontype_error302) if `default_value` does not match
       the type of the value at `key`
     - Throws [`type_error.306`](../../home/exceptions.md#jsonexceptiontype_error306) if the JSON value is not an object;
       in that case, using `value()` with a key makes no sense.
-2. The function can throw thw following exceptions:
+2. The function can throw the following exceptions:
     - Throws [`type_error.302`](../../home/exceptions.md#jsonexceptiontype_error302) if `default_value` does not match
       the type of the value at `ptr`
     - Throws [`type_error.306`](../../home/exceptions.md#jsonexceptiontype_error306) if the JSON value is not an object;

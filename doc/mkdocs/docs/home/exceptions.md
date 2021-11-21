@@ -177,7 +177,7 @@ This error indicates a syntax error while deserializing a JSON text. The error m
 
 !!! tip
 
-    - Make sure the input is correctly read. Try to write the input to standard output to check if, for instance, the input file was successfully openened.
+    - Make sure the input is correctly read. Try to write the input to standard output to check if, for instance, the input file was successfully opened.
     - Paste the input to a JSON validator like <http://jsonlint.com> or a tool like [jq](https://stedolan.github.io/jq/).
 
 ### json.exception.parse_error.102
