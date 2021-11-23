@@ -3529,7 +3529,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     Returns a reference to the element at with specified key @a key, with
     bounds checking.
 
-    @tparam KeyT  a type convertible to an object key or a `std::string_view`
+    @tparam KeyT  a type comparable to an object key
     @param[in] key  key of the element to access
 
     @return reference to the element at key @a key
@@ -3579,7 +3579,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     with bounds checking.
 
     @param[in] key  key of the element to access
-    @tparam KeyT  a type convertible to an object key or a `std::string_view`
+    @tparam KeyT  a type comparable to an object key
 
     @return const reference to the element at key @a key
 
@@ -3730,7 +3730,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     In case the value was `null` before, it is converted to an object.
 
     @param[in] key  key of the element to access
-    @tparam KeyT  a type convertible to an object key or a std::string_view
+    @tparam KeyT  a type comparable to an object key
 
     @return reference to the element at key @a key
 
@@ -3780,7 +3780,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     undefined.
 
     @param[in] key  key of the element to access
-    @tparam KeyT  a type convertible to an object key or a std::string_view
+    @tparam KeyT  a type comparable to an object key
 
     @return const reference to the element at key @a key
 
@@ -3841,8 +3841,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @param[in] key  key of the element to access
     @param[in] default_value  the value to return if @a key is not found
 
-    @tparam KeyType A type for an object key. This can also be a string
-    literal or a string view (C++17).
+    @tparam KeyT  a type comparable to an object key
     @tparam ValueType type compatible to JSON values, for instance `int` for
     JSON integer numbers, `bool` for JSON booleans, or `std::vector` types for
     JSON arrays. Note the type of the expected value at @a key and the default
@@ -4300,7 +4299,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     Removes elements from a JSON object with the key value @a key.
 
     @param[in] key value of the elements to remove
-    @tparam KeyT a type convertible to an object key or a std::string_view
+    @tparam KeyT  a type comparable to an object key
 
     @return Number of elements removed. If @a ObjectType is the default
     `std::map` type, the return value will always be `0` (@a key was not
