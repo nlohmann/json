@@ -21460,12 +21460,21 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @brief overload for a default value of type const char*
     @copydoc basic_json::value(const typename object_t::key_type&, const ValueType&) const
     */
+#if defined(JSON_HAS_CPP_17) // avoid creating a string_t value from default_value
+    template < class KeyType, typename detail::enable_if_t <
+                   detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int> = 0>
+    std::string_view value(const KeyType& key, const char* default_value) const
+    {
+        return value(key, std::string_view(default_value));
+    }
+#else
     template < class KeyType, typename detail::enable_if_t <
                    detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int> = 0>
     string_t value(const KeyType& key, const char* default_value) const
     {
         return value(key, string_t(default_value));
     }
+#endif
 
     /*!
     @brief access specified object element via JSON Pointer with default value
