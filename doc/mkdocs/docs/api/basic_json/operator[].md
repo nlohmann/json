@@ -7,9 +7,9 @@ const_reference operator[](size_type idx) const;
 
 // (2)
 template<typename KeyT>
-reference operator[](KeyT && key);
+reference operator[](const KeyT& key);
 template<typename KeyT>
-const_reference operator[](KeyT && key) const;
+const_reference operator[](const KeyT& key) const;
 
 // (3)
 reference operator[](const json_pointer& ptr);
