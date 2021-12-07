@@ -2420,12 +2420,14 @@ using is_detected_convertible =
              class NumberUnsignedType, class NumberFloatType,              \
              template<typename> class AllocatorType,                       \
              template<typename, typename = void> class JSONSerializer,     \
-             class BinaryType>
+             class BinaryType,                                             \
+             template<typename, typename> class LexerType,                 \
+             template<typename> class SerializerType>
 
 #define NLOHMANN_BASIC_JSON_TPL                                            \
     basic_json<ObjectType, ArrayType, StringType, BooleanType,             \
     NumberIntegerType, NumberUnsignedType, NumberFloatType,                \
-    AllocatorType, JSONSerializer, BinaryType>
+    AllocatorType, JSONSerializer, BinaryType, LexerType, SerializerType>
 
 // Macros to simplify conversion from/to types
 
@@ -3434,6 +3436,25 @@ for serialization.
 template<typename T = void, typename SFINAE = void>
 struct adl_serializer;
 
+namespace detail
+{
+template<typename BasicJsonType, typename InputAdapterType, typename NumerizerType>
+class lexer;
+
+struct numerizer;
+
+template<typename BasicJsonType, typename InputAdapterType>
+using basic_lexer = lexer<BasicJsonType, InputAdapterType, numerizer>;
+
+struct symbolifier;
+
+template<typename BasicJsonType, typename SymbolifierType>
+class serializer;
+
+template<typename BasicJsonType>
+using basic_serializer = serializer<BasicJsonType, symbolifier>;
+}
+
 template<template<typename U, typename V, typename... Args> class ObjectType =
          std::map,
          template<typename U, typename... Args> class ArrayType = std::vector,
@@ -3444,7 +3465,9 @@ template<template<typename U, typename V, typename... Args> class ObjectType =
          template<typename U> class AllocatorType = std::allocator,
          template<typename T, typename SFINAE = void> class JSONSerializer =
          adl_serializer,
-         class BinaryType = std::vector<std::uint8_t>>
+         class BinaryType = std::vector<std::uint8_t>,
+         template<typename BasicJsonType, typename InputAdapterType> class LexerType = detail::basic_lexer,
+         template<typename BasicJsonType> class SerializerType = detail::basic_serializer>
 class basic_json;
 
 /*!
@@ -6641,6 +6664,51 @@ class json_sax_acceptor
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
+// #include <nlohmann/detail/input/numerizer.hpp>
+
+#include <cstdlib> // strtof, strtod, strtold, strtoll, strtoull
+
+namespace nlohmann
+{
+namespace detail
+{
+  
+struct numerizer
+{
+    JSON_HEDLEY_NON_NULL(2)
+    static void strtof(float& f, const char* str, char** endptr) noexcept
+    {
+        f = std::strtof(str, endptr);
+    }
+
+    JSON_HEDLEY_NON_NULL(2)
+    static void strtof(double& f, const char* str, char** endptr) noexcept
+    {
+        f = std::strtod(str, endptr);
+    }
+
+    JSON_HEDLEY_NON_NULL(2)
+    static void strtof(long double& f, const char* str, char** endptr) noexcept
+    {
+        f = std::strtold(str, endptr);
+    }
+    
+    JSON_HEDLEY_NON_NULL(2)
+    static unsigned long long int strtoull(const char* str, char** endptr, int base)
+    {
+        return std::strtoull(str, endptr, base);
+    }
+    
+    JSON_HEDLEY_NON_NULL(2)
+    static long long int strtoll(const char* str, char** endptr, int base)
+    {
+        return std::strtoll(str, endptr, base);
+    }
+};
+
+ 
+}
+}
 
 namespace nlohmann
 {
@@ -6727,7 +6795,7 @@ class lexer_base
 
 This class organizes the lexical analysis during JSON deserialization.
 */
-template<typename BasicJsonType, typename InputAdapterType>
+template<typename BasicJsonType, typename InputAdapterType, typename NumerizerType = numerizer>
 class lexer : public lexer_base<BasicJsonType>
 {
     using number_integer_t = typename BasicJsonType::number_integer_t;
@@ -7528,24 +7596,6 @@ class lexer : public lexer_base<BasicJsonType>
         }
     }
 
-    JSON_HEDLEY_NON_NULL(2)
-    static void strtof(float& f, const char* str, char** endptr) noexcept
-    {
-        f = std::strtof(str, endptr);
-    }
-
-    JSON_HEDLEY_NON_NULL(2)
-    static void strtof(double& f, const char* str, char** endptr) noexcept
-    {
-        f = std::strtod(str, endptr);
-    }
-
-    JSON_HEDLEY_NON_NULL(2)
-    static void strtof(long double& f, const char* str, char** endptr) noexcept
-    {
-        f = std::strtold(str, endptr);
-    }
-
     /*!
     @brief scan a number literal
 
@@ -7870,7 +7920,7 @@ scan_number_done:
         // try to parse integers first and fall back to floats
         if (number_type == token_type::value_unsigned)
         {
-            const auto x = std::strtoull(token_buffer.data(), &endptr, 10);
+            const auto x = NumerizerType::strtoull(token_buffer.data(), &endptr, 10);
 
             // we checked the number format before
             JSON_ASSERT(endptr == token_buffer.data() + token_buffer.size());
@@ -7886,7 +7936,7 @@ scan_number_done:
         }
         else if (number_type == token_type::value_integer)
         {
-            const auto x = std::strtoll(token_buffer.data(), &endptr, 10);
+            const auto x = NumerizerType::strtoll(token_buffer.data(), &endptr, 10);
 
             // we checked the number format before
             JSON_ASSERT(endptr == token_buffer.data() + token_buffer.size());
@@ -7903,7 +7953,7 @@ scan_number_done:
 
         // this code is reached if we parse a floating-point number or if an
         // integer conversion above failed
-        strtof(value_float, token_buffer.data(), &endptr);
+        NumerizerType::strtof(value_float, token_buffer.data(), &endptr);
 
         // we checked the number format before
         JSON_ASSERT(endptr == token_buffer.data() + token_buffer.size());
@@ -10973,14 +11023,14 @@ using parser_callback_t =
 
 This class implements a recursive descent parser.
 */
-template<typename BasicJsonType, typename InputAdapterType>
+template<template<typename, typename> class LexerType, typename BasicJsonType, typename InputAdapterType>
 class parser
 {
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
     using string_t = typename BasicJsonType::string_t;
-    using lexer_t = lexer<BasicJsonType, InputAdapterType>;
+    using lexer_t = LexerType<BasicJsonType, InputAdapterType>;
     using token_type = typename lexer_t::token_type;
 
   public:
@@ -16445,6 +16495,254 @@ char* to_chars(char* first, const char* last, FloatType value)
 
 // #include <nlohmann/detail/value_t.hpp>
 
+// #include <nlohmann/detail/output/symbolifier.hpp>
+
+
+#include <algorithm> // reverse, remove, fill, find, none_of
+#include <array> // array
+#include <clocale> // localeconv, lconv
+#include <cmath> // labs, isfinite, isnan, signbit
+#include <cstddef> // size_t, ptrdiff_t
+#include <cstdint> // uint8_t
+#include <cstdio> // snprintf
+#include <limits> // numeric_limits
+#include <string> // string, char_traits
+#include <iomanip> // setfill, setw
+#include <sstream> // stringstream
+#include <type_traits> // is_same
+#include <utility> // move
+
+
+namespace nlohmann
+{
+namespace detail
+{
+
+struct symbolifier
+{   
+    using number_buffer_t = std::array<char, 64>;
+    
+    template <typename number_unsigned_t>
+    static unsigned int count_digits(number_unsigned_t x) noexcept
+    {
+        unsigned int n_digits = 1;
+        for (;;)
+        {
+            if (x < 10)
+            {
+                return n_digits;
+            }
+            if (x < 100)
+            {
+                return n_digits + 1;
+            }
+            if (x < 1000)
+            {
+                return n_digits + 2;
+            }
+            if (x < 10000)
+            {
+                return n_digits + 3;
+            }
+            x = x / 10000u;
+            n_digits += 4;
+        }
+    }
+    
+    template <typename number_integral_t, typename number_unsigned_t =
+        typename std::make_unsigned<
+            number_integral_t>::type>
+    static number_unsigned_t remove_sign(number_integral_t x) noexcept
+    {
+        JSON_ASSERT(x < 0 && x < (std::numeric_limits<number_integral_t>::max)()); // NOLINT(misc-redundant-expression)
+        return static_cast<number_unsigned_t>(-(x + 1)) + 1;
+    }
+    
+    template <typename OutputAdapterType, typename number_integral_t,
+        typename number_unsigned_t = typename std::make_unsigned<
+            number_integral_t>::type>
+    static void dump_integer(OutputAdapterType& o, number_integral_t x)
+    {
+        static constexpr std::array<std::array<char, 2>, 100> digits_to_99
+        {
+            {
+                {{'0', '0'}}, {{'0', '1'}}, {{'0', '2'}}, {{'0', '3'}}, {{'0', '4'}}, {{'0', '5'}}, {{'0', '6'}}, {{'0', '7'}}, {{'0', '8'}}, {{'0', '9'}},
+                {{'1', '0'}}, {{'1', '1'}}, {{'1', '2'}}, {{'1', '3'}}, {{'1', '4'}}, {{'1', '5'}}, {{'1', '6'}}, {{'1', '7'}}, {{'1', '8'}}, {{'1', '9'}},
+                {{'2', '0'}}, {{'2', '1'}}, {{'2', '2'}}, {{'2', '3'}}, {{'2', '4'}}, {{'2', '5'}}, {{'2', '6'}}, {{'2', '7'}}, {{'2', '8'}}, {{'2', '9'}},
+                {{'3', '0'}}, {{'3', '1'}}, {{'3', '2'}}, {{'3', '3'}}, {{'3', '4'}}, {{'3', '5'}}, {{'3', '6'}}, {{'3', '7'}}, {{'3', '8'}}, {{'3', '9'}},
+                {{'4', '0'}}, {{'4', '1'}}, {{'4', '2'}}, {{'4', '3'}}, {{'4', '4'}}, {{'4', '5'}}, {{'4', '6'}}, {{'4', '7'}}, {{'4', '8'}}, {{'4', '9'}},
+                {{'5', '0'}}, {{'5', '1'}}, {{'5', '2'}}, {{'5', '3'}}, {{'5', '4'}}, {{'5', '5'}}, {{'5', '6'}}, {{'5', '7'}}, {{'5', '8'}}, {{'5', '9'}},
+                {{'6', '0'}}, {{'6', '1'}}, {{'6', '2'}}, {{'6', '3'}}, {{'6', '4'}}, {{'6', '5'}}, {{'6', '6'}}, {{'6', '7'}}, {{'6', '8'}}, {{'6', '9'}},
+                {{'7', '0'}}, {{'7', '1'}}, {{'7', '2'}}, {{'7', '3'}}, {{'7', '4'}}, {{'7', '5'}}, {{'7', '6'}}, {{'7', '7'}}, {{'7', '8'}}, {{'7', '9'}},
+                {{'8', '0'}}, {{'8', '1'}}, {{'8', '2'}}, {{'8', '3'}}, {{'8', '4'}}, {{'8', '5'}}, {{'8', '6'}}, {{'8', '7'}}, {{'8', '8'}}, {{'8', '9'}},
+                {{'9', '0'}}, {{'9', '1'}}, {{'9', '2'}}, {{'9', '3'}}, {{'9', '4'}}, {{'9', '5'}}, {{'9', '6'}}, {{'9', '7'}}, {{'9', '8'}}, {{'9', '9'}},
+            }
+        };
+
+        // special case for "0"
+        if (x == 0)
+        {
+            o->write_character('0');
+            return;
+        }
+        
+        number_buffer_t number_buffer{{}};
+
+        // use a pointer to fill the buffer
+        auto buffer_ptr = number_buffer.begin(); // NOLINT(llvm-qualified-auto,readability-qualified-auto,cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+
+        const bool is_negative = std::is_signed<number_integral_t>::value && !(x >= 0); // see issue #755
+        number_unsigned_t abs_value;
+
+        unsigned int n_chars{};
+
+        if (is_negative)
+        {
+            *buffer_ptr = '-';
+            abs_value = remove_sign(static_cast<number_integral_t>(x));
+
+            // account one more byte for the minus sign
+            n_chars = 1 + count_digits(abs_value);
+        }
+        else
+        {
+            abs_value = static_cast<number_unsigned_t>(x);
+            n_chars = count_digits(abs_value);
+        }
+
+        // spare 1 byte for '\0'
+        JSON_ASSERT(n_chars < number_buffer.size() - 1);
+
+        // jump to the end to generate the string from backward
+        // so we later avoid reversing the result
+        buffer_ptr += n_chars;
+
+        // Fast int2ascii implementation inspired by "Fastware" talk by Andrei Alexandrescu
+        // See: https://www.youtube.com/watch?v=o4-CwDo2zpg
+        while (abs_value >= 100)
+        {
+            const auto digits_index = static_cast<unsigned>((abs_value % 100));
+            abs_value /= 100;
+            *(--buffer_ptr) = digits_to_99[digits_index][1];
+            *(--buffer_ptr) = digits_to_99[digits_index][0];
+        }
+
+        if (abs_value >= 10)
+        {
+            const auto digits_index = static_cast<unsigned>(abs_value);
+            *(--buffer_ptr) = digits_to_99[digits_index][1];
+            *(--buffer_ptr) = digits_to_99[digits_index][0];
+        }
+        else
+        {
+            *(--buffer_ptr) = static_cast<char>('0' + abs_value);
+        }
+
+        o->write_characters(number_buffer.data(), n_chars);
+    }
+    
+    
+    template <typename OutputAdapterType, typename number_float_t,
+        detail::enable_if_t<
+            std::is_floating_point<number_float_t>::value, int> = 0>
+    static void dump_float(OutputAdapterType& o, number_float_t x)
+    {
+        // NaN / inf
+        if (!std::isfinite(x))
+        {
+            o->write_characters("null", 4);
+            return;
+        }
+
+        // If number_float_t is an IEEE-754 single or double precision number,
+        // use the Grisu2 algorithm to produce short numbers which are
+        // guaranteed to round-trip, using strtof and strtod, resp.
+        //
+        // NB: The test below works if <long double> == <double>.
+        static constexpr bool is_ieee_single_or_double
+            = (std::numeric_limits<number_float_t>::is_iec559 && std::numeric_limits<number_float_t>::digits == 24 && std::numeric_limits<number_float_t>::max_exponent == 128) ||
+              (std::numeric_limits<number_float_t>::is_iec559 && std::numeric_limits<number_float_t>::digits == 53 && std::numeric_limits<number_float_t>::max_exponent == 1024);
+
+        dump_float(o, x, std::integral_constant<bool, is_ieee_single_or_double>());
+    }
+    
+    template <typename OutputAdapterType, typename number_float_t,
+        detail::enable_if_t<
+            std::is_floating_point<number_float_t>::value, int> = 0>
+    static void dump_float(OutputAdapterType& o, number_float_t x, std::true_type /*is_ieee_single_or_double*/)
+    {
+        number_buffer_t number_buffer{{}};
+      
+        auto* begin = number_buffer.data();
+        auto* end = ::nlohmann::detail::to_chars(begin, begin + number_buffer.size(), x);
+
+        o->write_characters(begin, static_cast<size_t>(end - begin));
+    }
+    
+    template <typename OutputAdapterType, typename number_float_t,
+        detail::enable_if_t<
+            std::is_floating_point<number_float_t>::value, int> = 0>
+    static void dump_float(OutputAdapterType& o, number_float_t x, std::false_type /*is_ieee_single_or_double*/)
+    {
+        number_buffer_t number_buffer{{}};
+        
+        const std::lconv* loc(std::localeconv());
+        const char thousands_sep(loc->thousands_sep == nullptr ? '\0' : std::char_traits<char>::to_char_type(* (loc->thousands_sep)));
+        const char decimal_point(loc->decimal_point == nullptr ? '\0' : std::char_traits<char>::to_char_type(* (loc->decimal_point)));
+        
+        // get number of digits for a float -> text -> float round-trip
+        static constexpr auto d = std::numeric_limits<number_float_t>::max_digits10;
+
+        // the actual conversion
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+        std::ptrdiff_t len = (std::snprintf)(number_buffer.data(), number_buffer.size(), "%.*g", d, x);
+
+        // negative value indicates an error
+        JSON_ASSERT(len > 0);
+        // check if buffer was large enough
+        JSON_ASSERT(static_cast<std::size_t>(len) < number_buffer.size());
+
+        // erase thousands separator
+        if (thousands_sep != '\0')
+        {
+            // NOLINTNEXTLINE(readability-qualified-auto,llvm-qualified-auto): std::remove returns an iterator, see https://github.com/nlohmann/json/issues/3081
+            const auto end = std::remove(number_buffer.begin(), number_buffer.begin() + len, thousands_sep);
+            std::fill(end, number_buffer.end(), '\0');
+            JSON_ASSERT((end - number_buffer.begin()) <= len);
+            len = (end - number_buffer.begin());
+        }
+
+        // convert decimal point to '.'
+        if (decimal_point != '\0' && decimal_point != '.')
+        {
+            // NOLINTNEXTLINE(readability-qualified-auto,llvm-qualified-auto): std::find returns an iterator, see https://github.com/nlohmann/json/issues/3081
+            const auto dec_pos = std::find(number_buffer.begin(), number_buffer.end(), decimal_point);
+            if (dec_pos != number_buffer.end())
+            {
+                *dec_pos = '.';
+            }
+        }
+
+        o->write_characters(number_buffer.data(), static_cast<std::size_t>(len));
+
+        // determine if need to append ".0"
+        const bool value_is_int_like =
+            std::none_of(number_buffer.begin(), number_buffer.begin() + len + 1,
+                         [](char c)
+        {
+            return c == '.' || c == 'e';
+        });
+
+        if (value_is_int_like)
+        {
+            o->write_characters(".0", 2);
+        }
+    }
+  
+};
+  
+}
+}
 
 namespace nlohmann
 {
@@ -16462,7 +16760,7 @@ enum class error_handler_t
     ignore   ///< ignore invalid UTF-8 sequences
 };
 
-template<typename BasicJsonType>
+template<typename BasicJsonType, typename SymbolifierType = symbolifier>
 class serializer
 {
     using string_t = typename BasicJsonType::string_t;
@@ -16482,9 +16780,6 @@ class serializer
     serializer(output_adapter_t<char> s, const char ichar,
                error_handler_t error_handler_ = error_handler_t::strict)
         : o(std::move(s))
-        , loc(std::localeconv())
-        , thousands_sep(loc->thousands_sep == nullptr ? '\0' : std::char_traits<char>::to_char_type(* (loc->thousands_sep)))
-        , decimal_point(loc->decimal_point == nullptr ? '\0' : std::char_traits<char>::to_char_type(* (loc->decimal_point)))
         , indent_char(ichar)
         , indent_string(512, indent_char)
         , error_handler(error_handler_)
@@ -16689,10 +16984,10 @@ class serializer
                         for (auto i = val.m_value.binary->cbegin();
                                 i != val.m_value.binary->cend() - 1; ++i)
                         {
-                            dump_integer(*i);
+                            SymbolifierType::dump_integer(o, *i);
                             o->write_characters(", ", 2);
                         }
-                        dump_integer(val.m_value.binary->back());
+                        SymbolifierType::dump_integer(o, val.m_value.binary->back());
                     }
 
                     o->write_characters("],\n", 3);
@@ -16701,7 +16996,7 @@ class serializer
                     o->write_characters("\"subtype\": ", 11);
                     if (val.m_value.binary->has_subtype())
                     {
-                        dump_integer(val.m_value.binary->subtype());
+                        SymbolifierType::dump_integer(o, val.m_value.binary->subtype());
                     }
                     else
                     {
@@ -16720,16 +17015,16 @@ class serializer
                         for (auto i = val.m_value.binary->cbegin();
                                 i != val.m_value.binary->cend() - 1; ++i)
                         {
-                            dump_integer(*i);
+                            SymbolifierType::dump_integer(o, *i);
                             o->write_character(',');
                         }
-                        dump_integer(val.m_value.binary->back());
+                        SymbolifierType::dump_integer(o, val.m_value.binary->back());
                     }
 
                     o->write_characters("],\"subtype\":", 12);
                     if (val.m_value.binary->has_subtype())
                     {
-                        dump_integer(val.m_value.binary->subtype());
+                        SymbolifierType::dump_integer(o, val.m_value.binary->subtype());
                         o->write_character('}');
                     }
                     else
@@ -16755,19 +17050,19 @@ class serializer
 
             case value_t::number_integer:
             {
-                dump_integer(val.m_value.number_integer);
+                SymbolifierType::dump_integer(o, val.m_value.number_integer);
                 return;
             }
 
             case value_t::number_unsigned:
             {
-                dump_integer(val.m_value.number_unsigned);
+                SymbolifierType::dump_integer(o, val.m_value.number_unsigned);
                 return;
             }
 
             case value_t::number_float:
             {
-                dump_float(val.m_value.number_float);
+                SymbolifierType::dump_float(o, val.m_value.number_float);
                 return;
             }
 
@@ -17054,220 +17349,6 @@ class serializer
     }
 
   private:
-    /*!
-    @brief count digits
-
-    Count the number of decimal (base 10) digits for an input unsigned integer.
-
-    @param[in] x  unsigned integer number to count its digits
-    @return    number of decimal digits
-    */
-    inline unsigned int count_digits(number_unsigned_t x) noexcept
-    {
-        unsigned int n_digits = 1;
-        for (;;)
-        {
-            if (x < 10)
-            {
-                return n_digits;
-            }
-            if (x < 100)
-            {
-                return n_digits + 1;
-            }
-            if (x < 1000)
-            {
-                return n_digits + 2;
-            }
-            if (x < 10000)
-            {
-                return n_digits + 3;
-            }
-            x = x / 10000u;
-            n_digits += 4;
-        }
-    }
-
-    /*!
-    @brief dump an integer
-
-    Dump a given integer to output stream @a o. Works internally with
-    @a number_buffer.
-
-    @param[in] x  integer number (signed or unsigned) to dump
-    @tparam NumberType either @a number_integer_t or @a number_unsigned_t
-    */
-    template < typename NumberType, detail::enable_if_t <
-                   std::is_integral<NumberType>::value ||
-                   std::is_same<NumberType, number_unsigned_t>::value ||
-                   std::is_same<NumberType, number_integer_t>::value ||
-                   std::is_same<NumberType, binary_char_t>::value,
-                   int > = 0 >
-    void dump_integer(NumberType x)
-    {
-        static constexpr std::array<std::array<char, 2>, 100> digits_to_99
-        {
-            {
-                {{'0', '0'}}, {{'0', '1'}}, {{'0', '2'}}, {{'0', '3'}}, {{'0', '4'}}, {{'0', '5'}}, {{'0', '6'}}, {{'0', '7'}}, {{'0', '8'}}, {{'0', '9'}},
-                {{'1', '0'}}, {{'1', '1'}}, {{'1', '2'}}, {{'1', '3'}}, {{'1', '4'}}, {{'1', '5'}}, {{'1', '6'}}, {{'1', '7'}}, {{'1', '8'}}, {{'1', '9'}},
-                {{'2', '0'}}, {{'2', '1'}}, {{'2', '2'}}, {{'2', '3'}}, {{'2', '4'}}, {{'2', '5'}}, {{'2', '6'}}, {{'2', '7'}}, {{'2', '8'}}, {{'2', '9'}},
-                {{'3', '0'}}, {{'3', '1'}}, {{'3', '2'}}, {{'3', '3'}}, {{'3', '4'}}, {{'3', '5'}}, {{'3', '6'}}, {{'3', '7'}}, {{'3', '8'}}, {{'3', '9'}},
-                {{'4', '0'}}, {{'4', '1'}}, {{'4', '2'}}, {{'4', '3'}}, {{'4', '4'}}, {{'4', '5'}}, {{'4', '6'}}, {{'4', '7'}}, {{'4', '8'}}, {{'4', '9'}},
-                {{'5', '0'}}, {{'5', '1'}}, {{'5', '2'}}, {{'5', '3'}}, {{'5', '4'}}, {{'5', '5'}}, {{'5', '6'}}, {{'5', '7'}}, {{'5', '8'}}, {{'5', '9'}},
-                {{'6', '0'}}, {{'6', '1'}}, {{'6', '2'}}, {{'6', '3'}}, {{'6', '4'}}, {{'6', '5'}}, {{'6', '6'}}, {{'6', '7'}}, {{'6', '8'}}, {{'6', '9'}},
-                {{'7', '0'}}, {{'7', '1'}}, {{'7', '2'}}, {{'7', '3'}}, {{'7', '4'}}, {{'7', '5'}}, {{'7', '6'}}, {{'7', '7'}}, {{'7', '8'}}, {{'7', '9'}},
-                {{'8', '0'}}, {{'8', '1'}}, {{'8', '2'}}, {{'8', '3'}}, {{'8', '4'}}, {{'8', '5'}}, {{'8', '6'}}, {{'8', '7'}}, {{'8', '8'}}, {{'8', '9'}},
-                {{'9', '0'}}, {{'9', '1'}}, {{'9', '2'}}, {{'9', '3'}}, {{'9', '4'}}, {{'9', '5'}}, {{'9', '6'}}, {{'9', '7'}}, {{'9', '8'}}, {{'9', '9'}},
-            }
-        };
-
-        // special case for "0"
-        if (x == 0)
-        {
-            o->write_character('0');
-            return;
-        }
-
-        // use a pointer to fill the buffer
-        auto buffer_ptr = number_buffer.begin(); // NOLINT(llvm-qualified-auto,readability-qualified-auto,cppcoreguidelines-pro-type-vararg,hicpp-vararg)
-
-        const bool is_negative = std::is_signed<NumberType>::value && !(x >= 0); // see issue #755
-        number_unsigned_t abs_value;
-
-        unsigned int n_chars{};
-
-        if (is_negative)
-        {
-            *buffer_ptr = '-';
-            abs_value = remove_sign(static_cast<number_integer_t>(x));
-
-            // account one more byte for the minus sign
-            n_chars = 1 + count_digits(abs_value);
-        }
-        else
-        {
-            abs_value = static_cast<number_unsigned_t>(x);
-            n_chars = count_digits(abs_value);
-        }
-
-        // spare 1 byte for '\0'
-        JSON_ASSERT(n_chars < number_buffer.size() - 1);
-
-        // jump to the end to generate the string from backward
-        // so we later avoid reversing the result
-        buffer_ptr += n_chars;
-
-        // Fast int2ascii implementation inspired by "Fastware" talk by Andrei Alexandrescu
-        // See: https://www.youtube.com/watch?v=o4-CwDo2zpg
-        while (abs_value >= 100)
-        {
-            const auto digits_index = static_cast<unsigned>((abs_value % 100));
-            abs_value /= 100;
-            *(--buffer_ptr) = digits_to_99[digits_index][1];
-            *(--buffer_ptr) = digits_to_99[digits_index][0];
-        }
-
-        if (abs_value >= 10)
-        {
-            const auto digits_index = static_cast<unsigned>(abs_value);
-            *(--buffer_ptr) = digits_to_99[digits_index][1];
-            *(--buffer_ptr) = digits_to_99[digits_index][0];
-        }
-        else
-        {
-            *(--buffer_ptr) = static_cast<char>('0' + abs_value);
-        }
-
-        o->write_characters(number_buffer.data(), n_chars);
-    }
-
-    /*!
-    @brief dump a floating-point number
-
-    Dump a given floating-point number to output stream @a o. Works internally
-    with @a number_buffer.
-
-    @param[in] x  floating-point number to dump
-    */
-    void dump_float(number_float_t x)
-    {
-        // NaN / inf
-        if (!std::isfinite(x))
-        {
-            o->write_characters("null", 4);
-            return;
-        }
-
-        // If number_float_t is an IEEE-754 single or double precision number,
-        // use the Grisu2 algorithm to produce short numbers which are
-        // guaranteed to round-trip, using strtof and strtod, resp.
-        //
-        // NB: The test below works if <long double> == <double>.
-        static constexpr bool is_ieee_single_or_double
-            = (std::numeric_limits<number_float_t>::is_iec559 && std::numeric_limits<number_float_t>::digits == 24 && std::numeric_limits<number_float_t>::max_exponent == 128) ||
-              (std::numeric_limits<number_float_t>::is_iec559 && std::numeric_limits<number_float_t>::digits == 53 && std::numeric_limits<number_float_t>::max_exponent == 1024);
-
-        dump_float(x, std::integral_constant<bool, is_ieee_single_or_double>());
-    }
-
-    void dump_float(number_float_t x, std::true_type /*is_ieee_single_or_double*/)
-    {
-        auto* begin = number_buffer.data();
-        auto* end = ::nlohmann::detail::to_chars(begin, begin + number_buffer.size(), x);
-
-        o->write_characters(begin, static_cast<size_t>(end - begin));
-    }
-
-    void dump_float(number_float_t x, std::false_type /*is_ieee_single_or_double*/)
-    {
-        // get number of digits for a float -> text -> float round-trip
-        static constexpr auto d = std::numeric_limits<number_float_t>::max_digits10;
-
-        // the actual conversion
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
-        std::ptrdiff_t len = (std::snprintf)(number_buffer.data(), number_buffer.size(), "%.*g", d, x);
-
-        // negative value indicates an error
-        JSON_ASSERT(len > 0);
-        // check if buffer was large enough
-        JSON_ASSERT(static_cast<std::size_t>(len) < number_buffer.size());
-
-        // erase thousands separator
-        if (thousands_sep != '\0')
-        {
-            // NOLINTNEXTLINE(readability-qualified-auto,llvm-qualified-auto): std::remove returns an iterator, see https://github.com/nlohmann/json/issues/3081
-            const auto end = std::remove(number_buffer.begin(), number_buffer.begin() + len, thousands_sep);
-            std::fill(end, number_buffer.end(), '\0');
-            JSON_ASSERT((end - number_buffer.begin()) <= len);
-            len = (end - number_buffer.begin());
-        }
-
-        // convert decimal point to '.'
-        if (decimal_point != '\0' && decimal_point != '.')
-        {
-            // NOLINTNEXTLINE(readability-qualified-auto,llvm-qualified-auto): std::find returns an iterator, see https://github.com/nlohmann/json/issues/3081
-            const auto dec_pos = std::find(number_buffer.begin(), number_buffer.end(), decimal_point);
-            if (dec_pos != number_buffer.end())
-            {
-                *dec_pos = '.';
-            }
-        }
-
-        o->write_characters(number_buffer.data(), static_cast<std::size_t>(len));
-
-        // determine if need to append ".0"
-        const bool value_is_int_like =
-            std::none_of(number_buffer.begin(), number_buffer.begin() + len + 1,
-                         [](char c)
-        {
-            return c == '.' || c == 'e';
-        });
-
-        if (value_is_int_like)
-        {
-            o->write_characters(".0", 2);
-        }
-    }
 
     /*!
     @brief check whether a string is UTF-8 encoded
@@ -17325,45 +17406,9 @@ class serializer
         return state;
     }
 
-    /*
-     * Overload to make the compiler happy while it is instantiating
-     * dump_integer for number_unsigned_t.
-     * Must never be called.
-     */
-    number_unsigned_t remove_sign(number_unsigned_t x)
-    {
-        JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
-        return x; // LCOV_EXCL_LINE
-    }
-
-    /*
-     * Helper function for dump_integer
-     *
-     * This function takes a negative signed integer and returns its absolute
-     * value as unsigned integer. The plus/minus shuffling is necessary as we can
-     * not directly remove the sign of an arbitrary signed integer as the
-     * absolute values of INT_MIN and INT_MAX are usually not the same. See
-     * #1708 for details.
-     */
-    inline number_unsigned_t remove_sign(number_integer_t x) noexcept
-    {
-        JSON_ASSERT(x < 0 && x < (std::numeric_limits<number_integer_t>::max)()); // NOLINT(misc-redundant-expression)
-        return static_cast<number_unsigned_t>(-(x + 1)) + 1;
-    }
-
   private:
     /// the output of the serializer
     output_adapter_t<char> o = nullptr;
-
-    /// a (hopefully) large enough character buffer
-    std::array<char, 64> number_buffer{{}};
-
-    /// the locale
-    const std::lconv* loc = nullptr;
-    /// the locale's thousand separator character
-    const char thousands_sep = '\0';
-    /// the locale's decimal point character
-    const char decimal_point = '\0';
 
     /// string buffer
     std::array<char, 512> string_buffer{{}};
@@ -17739,17 +17784,17 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
   JSON_PRIVATE_UNLESS_TESTED:
     // convenience aliases for types residing in namespace detail;
-    using lexer = ::nlohmann::detail::lexer_base<basic_json>;
+    // using lexer = ::nlohmann::detail::lexer_base<basic_json>;
 
     template<typename InputAdapterType>
-    static ::nlohmann::detail::parser<basic_json, InputAdapterType> parser(
+    static ::nlohmann::detail::parser<LexerType, basic_json, InputAdapterType> parser(
         InputAdapterType adapter,
         detail::parser_callback_t<basic_json>cb = nullptr,
         const bool allow_exceptions = true,
         const bool ignore_comments = false
-                                 )
+    )
     {
-        return ::nlohmann::detail::parser<basic_json, InputAdapterType>(std::move(adapter),
+        return ::nlohmann::detail::parser<LexerType, basic_json, InputAdapterType>(std::move(adapter),
                 std::move(cb), allow_exceptions, ignore_comments);
     }
 
@@ -17771,7 +17816,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     template<typename CharType> using binary_writer = ::nlohmann::detail::binary_writer<basic_json, CharType>;
 
   JSON_PRIVATE_UNLESS_TESTED:
-    using serializer = ::nlohmann::detail::serializer<basic_json>;
+    // using serializer = ::nlohmann::detail::serializer<basic_json>;
+    using serializer = SerializerType<basic_json>;
 
   public:
     using value_t = detail::value_t;
