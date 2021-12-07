@@ -20,7 +20,7 @@ namespace nlohmann
 namespace detail
 {
 
-struct symbolifier
+struct denumerizer
 {   
     using number_buffer_t = std::array<char, 64>;
     

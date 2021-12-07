@@ -3446,13 +3446,13 @@ struct numerizer;
 template<typename BasicJsonType, typename InputAdapterType>
 using basic_lexer = lexer<BasicJsonType, InputAdapterType, numerizer>;
 
-struct symbolifier;
+struct denumerizer;
 
-template<typename BasicJsonType, typename SymbolifierType>
+template<typename BasicJsonType, typename DenumerizerType>
 class serializer;
 
 template<typename BasicJsonType>
-using basic_serializer = serializer<BasicJsonType, symbolifier>;
+using basic_serializer = serializer<BasicJsonType, denumerizer>;
 }
 
 template<template<typename U, typename V, typename... Args> class ObjectType =
@@ -16495,7 +16495,7 @@ char* to_chars(char* first, const char* last, FloatType value)
 
 // #include <nlohmann/detail/value_t.hpp>
 
-// #include <nlohmann/detail/output/symbolifier.hpp>
+// #include <nlohmann/detail/output/denumerizer.hpp>
 
 
 #include <algorithm> // reverse, remove, fill, find, none_of
@@ -16518,7 +16518,7 @@ namespace nlohmann
 namespace detail
 {
 
-struct symbolifier
+struct denumerizer
 {   
     using number_buffer_t = std::array<char, 64>;
     
@@ -16760,7 +16760,7 @@ enum class error_handler_t
     ignore   ///< ignore invalid UTF-8 sequences
 };
 
-template<typename BasicJsonType, typename SymbolifierType = symbolifier>
+template<typename BasicJsonType, typename DenumerizerType = denumerizer>
 class serializer
 {
     using string_t = typename BasicJsonType::string_t;
@@ -16984,10 +16984,10 @@ class serializer
                         for (auto i = val.m_value.binary->cbegin();
                                 i != val.m_value.binary->cend() - 1; ++i)
                         {
-                            SymbolifierType::dump_integer(o, *i);
+                            DenumerizerType::dump_integer(o, *i);
                             o->write_characters(", ", 2);
                         }
-                        SymbolifierType::dump_integer(o, val.m_value.binary->back());
+                        DenumerizerType::dump_integer(o, val.m_value.binary->back());
                     }
 
                     o->write_characters("],\n", 3);
@@ -16996,7 +16996,7 @@ class serializer
                     o->write_characters("\"subtype\": ", 11);
                     if (val.m_value.binary->has_subtype())
                     {
-                        SymbolifierType::dump_integer(o, val.m_value.binary->subtype());
+                        DenumerizerType::dump_integer(o, val.m_value.binary->subtype());
                     }
                     else
                     {
@@ -17015,16 +17015,16 @@ class serializer
                         for (auto i = val.m_value.binary->cbegin();
                                 i != val.m_value.binary->cend() - 1; ++i)
                         {
-                            SymbolifierType::dump_integer(o, *i);
+                            DenumerizerType::dump_integer(o, *i);
                             o->write_character(',');
                         }
-                        SymbolifierType::dump_integer(o, val.m_value.binary->back());
+                        DenumerizerType::dump_integer(o, val.m_value.binary->back());
                     }
 
                     o->write_characters("],\"subtype\":", 12);
                     if (val.m_value.binary->has_subtype())
                     {
-                        SymbolifierType::dump_integer(o, val.m_value.binary->subtype());
+                        DenumerizerType::dump_integer(o, val.m_value.binary->subtype());
                         o->write_character('}');
                     }
                     else
@@ -17050,19 +17050,19 @@ class serializer
 
             case value_t::number_integer:
             {
-                SymbolifierType::dump_integer(o, val.m_value.number_integer);
+                DenumerizerType::dump_integer(o, val.m_value.number_integer);
                 return;
             }
 
             case value_t::number_unsigned:
             {
-                SymbolifierType::dump_integer(o, val.m_value.number_unsigned);
+                DenumerizerType::dump_integer(o, val.m_value.number_unsigned);
                 return;
             }
 
             case value_t::number_float:
             {
-                SymbolifierType::dump_float(o, val.m_value.number_float);
+                DenumerizerType::dump_float(o, val.m_value.number_float);
                 return;
             }
 

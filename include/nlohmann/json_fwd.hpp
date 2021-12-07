@@ -34,13 +34,13 @@ struct numerizer;
 template<typename BasicJsonType, typename InputAdapterType>
 using basic_lexer = lexer<BasicJsonType, InputAdapterType, numerizer>;
 
-struct symbolifier;
+struct denumerizer;
 
-template<typename BasicJsonType, typename SymbolifierType>
+template<typename BasicJsonType, typename DenumerizerType>
 class serializer;
 
 template<typename BasicJsonType>
-using basic_serializer = serializer<BasicJsonType, symbolifier>;
+using basic_serializer = serializer<BasicJsonType, denumerizer>;
 }
 
 template<template<typename U, typename V, typename... Args> class ObjectType =
