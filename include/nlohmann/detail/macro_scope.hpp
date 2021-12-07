@@ -133,12 +133,13 @@
              template<typename> class AllocatorType,                       \
              template<typename, typename = void> class JSONSerializer,     \
              class BinaryType,                                             \
-             template<typename, typename> class LexerType>
+             template<typename, typename> class LexerType,                 \
+             template<typename> class SerializerType>
 
 #define NLOHMANN_BASIC_JSON_TPL                                            \
     basic_json<ObjectType, ArrayType, StringType, BooleanType,             \
     NumberIntegerType, NumberUnsignedType, NumberFloatType,                \
-    AllocatorType, JSONSerializer, BinaryType, LexerType>
+    AllocatorType, JSONSerializer, BinaryType, LexerType, SerializerType>
 
 // Macros to simplify conversion from/to types
 

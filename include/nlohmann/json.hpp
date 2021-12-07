@@ -231,7 +231,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     template<typename CharType> using binary_writer = ::nlohmann::detail::binary_writer<basic_json, CharType>;
 
   JSON_PRIVATE_UNLESS_TESTED:
-    using serializer = ::nlohmann::detail::serializer<basic_json>;
+    // using serializer = ::nlohmann::detail::serializer<basic_json>;
+    using serializer = SerializerType<basic_json>;
 
   public:
     using value_t = detail::value_t;
