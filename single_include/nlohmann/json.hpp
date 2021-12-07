@@ -17784,7 +17784,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
   JSON_PRIVATE_UNLESS_TESTED:
     // convenience aliases for types residing in namespace detail;
-    // using lexer = ::nlohmann::detail::lexer_base<basic_json>;
+    using lexer = ::nlohmann::detail::lexer_base<basic_json>;
 
     template<typename InputAdapterType>
     static ::nlohmann::detail::parser<LexerType, basic_json, InputAdapterType> parser(
