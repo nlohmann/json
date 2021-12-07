@@ -34,8 +34,13 @@ struct numerizer;
 template<typename BasicJsonType, typename InputAdapterType>
 using basic_lexer = lexer<BasicJsonType, InputAdapterType, numerizer>;
 
-template<typename BasicJsonType>
+struct symbolifier;
+
+template<typename BasicJsonType, typename SymbolifierType>
 class serializer;
+
+template<typename BasicJsonType>
+using basic_serializer = serializer<BasicJsonType, symbolifier>;
 }
 
 template<template<typename U, typename V, typename... Args> class ObjectType =
@@ -50,7 +55,7 @@ template<template<typename U, typename V, typename... Args> class ObjectType =
          adl_serializer,
          class BinaryType = std::vector<std::uint8_t>,
          template<typename BasicJsonType, typename InputAdapterType> class LexerType = detail::basic_lexer,
-         template<typename BasicJsonType> class SerializerType = detail::serializer>
+         template<typename BasicJsonType> class SerializerType = detail::basic_serializer>
 class basic_json;
 
 /*!
