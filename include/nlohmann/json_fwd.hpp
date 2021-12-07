@@ -26,8 +26,13 @@ struct adl_serializer;
 
 namespace detail
 {
-template<typename BasicJsonType, typename InputAdapterType>
+template<typename BasicJsonType, typename InputAdapterType, typename NumerizerType>
 class lexer;
+
+struct numerizer;
+
+template<typename BasicJsonType, typename InputAdapterType>
+using basic_lexer = lexer<BasicJsonType, InputAdapterType, numerizer>;
 
 template<typename BasicJsonType>
 class serializer;
@@ -44,7 +49,7 @@ template<template<typename U, typename V, typename... Args> class ObjectType =
          template<typename T, typename SFINAE = void> class JSONSerializer =
          adl_serializer,
          class BinaryType = std::vector<std::uint8_t>,
-         template<typename BasicJsonType, typename InputAdapterType> class LexerType = detail::lexer,
+         template<typename BasicJsonType, typename InputAdapterType> class LexerType = detail::basic_lexer,
          template<typename BasicJsonType> class SerializerType = detail::serializer>
 class basic_json;
 
