@@ -3453,21 +3453,29 @@ class serializer;
 
 template<typename BasicJsonType>
 using basic_serializer = serializer<BasicJsonType, denumerizer>;
-}
+}  // namespace detail
 
-template<template<typename U, typename V, typename... Args> class ObjectType =
-         std::map,
-         template<typename U, typename... Args> class ArrayType = std::vector,
-         class StringType = std::string, class BooleanType = bool,
+// temporary workaround: use a typedef to avoid cppcheck alarm in basic_json template class declaration
+using vector_of_uint8_t = std::vector<std::uint8_t>;
+
+template<template<typename U, typename V, typename... Args>
+         class ObjectType = std::map,
+         template<typename U, typename... Args>
+         class ArrayType = std::vector,
+         class StringType = std::string,
+         class BooleanType = bool,
          class NumberIntegerType = std::int64_t,
          class NumberUnsignedType = std::uint64_t,
          class NumberFloatType = double,
-         template<typename U> class AllocatorType = std::allocator,
-         template<typename T, typename SFINAE = void> class JSONSerializer =
-         adl_serializer,
-         class BinaryType = std::vector<std::uint8_t>,
-         template<typename BasicJsonType, typename InputAdapterType> class LexerType = detail::basic_lexer,
-         template<typename BasicJsonType> class SerializerType = detail::basic_serializer>
+         template<typename U>
+         class AllocatorType = std::allocator,
+         template<typename T, typename SFINAE = void>
+         class JSONSerializer = adl_serializer,
+         class BinaryType = vector_of_uint8_t,
+         template<typename BasicJsonType, typename InputAdapterType>
+         class LexerType = detail::basic_lexer,
+         template<typename BasicJsonType>
+         class SerializerType = detail::basic_serializer>
 class basic_json;
 
 /*!
@@ -6660,19 +6668,21 @@ class json_sax_acceptor
 
 // #include <nlohmann/detail/input/input_adapters.hpp>
 
-// #include <nlohmann/detail/input/position_t.hpp>
+// #include <nlohmann/detail/input/numerizer.hpp>
+
+
+
+#include <cstdint> // uint64_t, int64_t
+#include <cstdlib> // strtof, strtod, strtold, strtoll, strtoull
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
-// #include <nlohmann/detail/input/numerizer.hpp>
-
-#include <cstdlib> // strtof, strtod, strtold, strtoll, strtoull
 
 namespace nlohmann
 {
 namespace detail
 {
-  
+
 struct numerizer
 {
     JSON_HEDLEY_NON_NULL(2)
@@ -6692,23 +6702,27 @@ struct numerizer
     {
         f = std::strtold(str, endptr);
     }
-    
+
     JSON_HEDLEY_NON_NULL(2)
-    static unsigned long long int strtoull(const char* str, char** endptr, int base)
+    static uint64_t strtoull(const char* str, char** endptr, int base)
     {
         return std::strtoull(str, endptr, base);
     }
-    
+
     JSON_HEDLEY_NON_NULL(2)
-    static long long int strtoll(const char* str, char** endptr, int base)
+    static int64_t strtoll(const char* str, char** endptr, int base)
     {
         return std::strtoll(str, endptr, base);
     }
 };
 
- 
-}
-}
+}  // namespace detail
+}  // namespace nlohmann
+
+// #include <nlohmann/detail/input/position_t.hpp>
+
+// #include <nlohmann/detail/macro_scope.hpp>
+
 
 namespace nlohmann
 {
@@ -11023,7 +11037,7 @@ using parser_callback_t =
 
 This class implements a recursive descent parser.
 */
-template<template<typename, typename> class LexerType, typename BasicJsonType, typename InputAdapterType>
+template<typename BasicJsonType, typename InputAdapterType, template<typename, typename> class LexerType>
 class parser
 {
     using number_integer_t = typename BasicJsonType::number_integer_t;
@@ -15370,6 +15384,29 @@ class binary_writer
 #include <type_traits> // is_same
 #include <utility> // move
 
+// #include <nlohmann/detail/exceptions.hpp>
+
+// #include <nlohmann/detail/macro_scope.hpp>
+
+// #include <nlohmann/detail/output/binary_writer.hpp>
+
+// #include <nlohmann/detail/output/output_adapters.hpp>
+
+// #include <nlohmann/detail/value_t.hpp>
+
+// #include <nlohmann/detail/output/denumerizer.hpp>
+
+
+
+#include <algorithm> // reverse, remove, fill, find, none_of
+#include <array> // array
+#include <clocale> // localeconv, lconv
+#include <cmath> // labs, isfinite, isnan, signbit
+#include <cstddef> // size_t, ptrdiff_t
+#include <cstdio> // snprintf
+#include <limits> // numeric_limits
+#include <string> // char_traits
+
 // #include <nlohmann/detail/conversions/to_chars.hpp>
 
 
@@ -16483,34 +16520,9 @@ char* to_chars(char* first, const char* last, FloatType value)
 } // namespace detail
 } // namespace nlohmann
 
-// #include <nlohmann/detail/exceptions.hpp>
-
 // #include <nlohmann/detail/macro_scope.hpp>
 
 // #include <nlohmann/detail/meta/cpp_future.hpp>
-
-// #include <nlohmann/detail/output/binary_writer.hpp>
-
-// #include <nlohmann/detail/output/output_adapters.hpp>
-
-// #include <nlohmann/detail/value_t.hpp>
-
-// #include <nlohmann/detail/output/denumerizer.hpp>
-
-
-#include <algorithm> // reverse, remove, fill, find, none_of
-#include <array> // array
-#include <clocale> // localeconv, lconv
-#include <cmath> // labs, isfinite, isnan, signbit
-#include <cstddef> // size_t, ptrdiff_t
-#include <cstdint> // uint8_t
-#include <cstdio> // snprintf
-#include <limits> // numeric_limits
-#include <string> // string, char_traits
-#include <iomanip> // setfill, setw
-#include <sstream> // stringstream
-#include <type_traits> // is_same
-#include <utility> // move
 
 
 namespace nlohmann
@@ -16519,9 +16531,15 @@ namespace detail
 {
 
 struct denumerizer
-{   
+{
     using number_buffer_t = std::array<char, 64>;
-    
+
+    /*!
+    @brief count digits
+    Count the number of decimal (base 10) digits for an input unsigned integer.
+    @param[in] x  unsigned integer number to count its digits
+    @return    number of decimal digits
+    */
     template <typename number_unsigned_t>
     static unsigned int count_digits(number_unsigned_t x) noexcept
     {
@@ -16544,23 +16562,53 @@ struct denumerizer
             {
                 return n_digits + 3;
             }
-            x = x / 10000u;
+            x = static_cast<number_unsigned_t>(x / 10000u);
             n_digits += 4;
         }
     }
-    
-    template <typename number_integral_t, typename number_unsigned_t =
-        typename std::make_unsigned<
-            number_integral_t>::type>
-    static number_unsigned_t remove_sign(number_integral_t x) noexcept
+
+    /*
+     * Overload to make the compiler happy while it is instantiating
+     * dump_integer for number_unsigned_t.
+     * Must never be called.
+     */
+    template <typename number_unsigned_t,
+              detail::enable_if_t<
+                  std::is_unsigned<number_unsigned_t>::value, int> = 0>
+    static number_unsigned_t remove_sign(number_unsigned_t x) noexcept
     {
-        JSON_ASSERT(x < 0 && x < (std::numeric_limits<number_integral_t>::max)()); // NOLINT(misc-redundant-expression)
+        JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
+        return x; // LCOV_EXCL_LINE
+    }
+
+    /*
+     * Helper function for dump_integer
+     *
+     * This function takes a negative signed integer and returns its absolute
+     * value as unsigned integer. The plus/minus shuffling is necessary as we can
+     * not directly remove the sign of an arbitrary signed integer as the
+     * absolute values of INT_MIN and INT_MAX are usually not the same. See
+     * #1708 for details.
+     */
+    template <typename number_integer_t,
+              detail::enable_if_t<
+                  std::is_signed<number_integer_t>::value, int> = 0,
+              typename number_unsigned_t =
+              typename std::make_unsigned<number_integer_t>::type>
+    static number_unsigned_t remove_sign(number_integer_t x) noexcept
+    {
+        JSON_ASSERT(x < 0 && x < (std::numeric_limits<number_integer_t>::max)()); // NOLINT(misc-redundant-expression)
         return static_cast<number_unsigned_t>(-(x + 1)) + 1;
     }
-    
+
+    /*!
+    @brief dump an integer
+    Dump a given integer to output stream @a o.
+    @param[in] x  integer number (signed or unsigned) to dump
+    */
     template <typename OutputAdapterType, typename number_integral_t,
-        typename number_unsigned_t = typename std::make_unsigned<
-            number_integral_t>::type>
+              typename number_unsigned_t = typename std::make_unsigned<
+                  number_integral_t>::type>
     static void dump_integer(OutputAdapterType& o, number_integral_t x)
     {
         static constexpr std::array<std::array<char, 2>, 100> digits_to_99
@@ -16585,7 +16633,7 @@ struct denumerizer
             o->write_character('0');
             return;
         }
-        
+
         number_buffer_t number_buffer{{}};
 
         // use a pointer to fill the buffer
@@ -16640,11 +16688,15 @@ struct denumerizer
 
         o->write_characters(number_buffer.data(), n_chars);
     }
-    
-    
+
+    /*!
+    @brief dump a floating-point number
+    Dump a given floating-point number to output stream @a o.
+    @param[in] x  floating-point number to dump
+    */
     template <typename OutputAdapterType, typename number_float_t,
-        detail::enable_if_t<
-            std::is_floating_point<number_float_t>::value, int> = 0>
+              detail::enable_if_t<
+                  std::is_floating_point<number_float_t>::value, int> = 0>
     static void dump_float(OutputAdapterType& o, number_float_t x)
     {
         // NaN / inf
@@ -16665,31 +16717,31 @@ struct denumerizer
 
         dump_float(o, x, std::integral_constant<bool, is_ieee_single_or_double>());
     }
-    
+
     template <typename OutputAdapterType, typename number_float_t,
-        detail::enable_if_t<
-            std::is_floating_point<number_float_t>::value, int> = 0>
+              detail::enable_if_t<
+                  std::is_floating_point<number_float_t>::value, int> = 0>
     static void dump_float(OutputAdapterType& o, number_float_t x, std::true_type /*is_ieee_single_or_double*/)
     {
         number_buffer_t number_buffer{{}};
-      
+
         auto* begin = number_buffer.data();
         auto* end = ::nlohmann::detail::to_chars(begin, begin + number_buffer.size(), x);
 
         o->write_characters(begin, static_cast<size_t>(end - begin));
     }
-    
+
     template <typename OutputAdapterType, typename number_float_t,
-        detail::enable_if_t<
-            std::is_floating_point<number_float_t>::value, int> = 0>
+              detail::enable_if_t<
+                  std::is_floating_point<number_float_t>::value, int> = 0>
     static void dump_float(OutputAdapterType& o, number_float_t x, std::false_type /*is_ieee_single_or_double*/)
     {
         number_buffer_t number_buffer{{}};
-        
+
         const std::lconv* loc(std::localeconv());
         const char thousands_sep(loc->thousands_sep == nullptr ? '\0' : std::char_traits<char>::to_char_type(* (loc->thousands_sep)));
         const char decimal_point(loc->decimal_point == nullptr ? '\0' : std::char_traits<char>::to_char_type(* (loc->decimal_point)));
-        
+
         // get number of digits for a float -> text -> float round-trip
         static constexpr auto d = std::numeric_limits<number_float_t>::max_digits10;
 
@@ -16738,11 +16790,11 @@ struct denumerizer
             o->write_characters(".0", 2);
         }
     }
-  
 };
-  
-}
-}
+
+}  // namespace detail
+}  // namespace nlohmann
+
 
 namespace nlohmann
 {
@@ -17764,9 +17816,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     template<detail::value_t> friend struct detail::external_constructor;
     friend ::nlohmann::json_pointer<basic_json>;
 
-    template<typename BasicJsonType, typename InputType>
+    template<typename BasicJsonType, typename InputType, template<typename, typename> class>
     friend class ::nlohmann::detail::parser;
-    friend ::nlohmann::detail::serializer<basic_json>;
+    template<typename BasicJsonType, typename DenumerizerType>
+    friend class ::nlohmann::detail::serializer;
     template<typename BasicJsonType>
     friend class ::nlohmann::detail::iter_impl;
     template<typename BasicJsonType, typename CharType>
@@ -17787,14 +17840,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     using lexer = ::nlohmann::detail::lexer_base<basic_json>;
 
     template<typename InputAdapterType>
-    static ::nlohmann::detail::parser<LexerType, basic_json, InputAdapterType> parser(
+    static ::nlohmann::detail::parser<basic_json, InputAdapterType, LexerType> parser(
         InputAdapterType adapter,
         detail::parser_callback_t<basic_json>cb = nullptr,
         const bool allow_exceptions = true,
-        const bool ignore_comments = false
-    )
+        const bool ignore_comments = false)
     {
-        return ::nlohmann::detail::parser<LexerType, basic_json, InputAdapterType>(std::move(adapter),
+        return ::nlohmann::detail::parser<basic_json, InputAdapterType, LexerType>(std::move(adapter),
                 std::move(cb), allow_exceptions, ignore_comments);
     }
 

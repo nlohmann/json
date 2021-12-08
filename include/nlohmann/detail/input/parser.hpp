@@ -48,7 +48,7 @@ using parser_callback_t =
 
 This class implements a recursive descent parser.
 */
-template<template<typename, typename> class LexerType, typename BasicJsonType, typename InputAdapterType>
+template<typename BasicJsonType, typename InputAdapterType, template<typename, typename> class LexerType>
 class parser
 {
     using number_integer_t = typename BasicJsonType::number_integer_t;

@@ -179,9 +179,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     template<detail::value_t> friend struct detail::external_constructor;
     friend ::nlohmann::json_pointer<basic_json>;
 
-    template<typename BasicJsonType, typename InputType>
+    template<typename BasicJsonType, typename InputType, template<typename, typename> class>
     friend class ::nlohmann::detail::parser;
-    friend ::nlohmann::detail::serializer<basic_json>;
+    template<typename BasicJsonType, typename DenumerizerType>
+    friend class ::nlohmann::detail::serializer;
     template<typename BasicJsonType>
     friend class ::nlohmann::detail::iter_impl;
     template<typename BasicJsonType, typename CharType>
@@ -202,14 +203,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     using lexer = ::nlohmann::detail::lexer_base<basic_json>;
 
     template<typename InputAdapterType>
-    static ::nlohmann::detail::parser<LexerType, basic_json, InputAdapterType> parser(
+    static ::nlohmann::detail::parser<basic_json, InputAdapterType, LexerType> parser(
         InputAdapterType adapter,
         detail::parser_callback_t<basic_json>cb = nullptr,
         const bool allow_exceptions = true,
-        const bool ignore_comments = false
-    )
+        const bool ignore_comments = false)
     {
-        return ::nlohmann::detail::parser<LexerType, basic_json, InputAdapterType>(std::move(adapter),
+        return ::nlohmann::detail::parser<basic_json, InputAdapterType, LexerType>(std::move(adapter),
                 std::move(cb), allow_exceptions, ignore_comments);
     }
 

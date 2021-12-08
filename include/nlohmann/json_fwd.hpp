@@ -41,21 +41,29 @@ class serializer;
 
 template<typename BasicJsonType>
 using basic_serializer = serializer<BasicJsonType, denumerizer>;
-}
+}  // namespace detail
 
-template<template<typename U, typename V, typename... Args> class ObjectType =
-         std::map,
-         template<typename U, typename... Args> class ArrayType = std::vector,
-         class StringType = std::string, class BooleanType = bool,
+// temporary workaround: use a typedef to avoid cppcheck alarm in basic_json template class declaration
+using vector_of_uint8_t = std::vector<std::uint8_t>;
+
+template<template<typename U, typename V, typename... Args>
+         class ObjectType = std::map,
+         template<typename U, typename... Args>
+         class ArrayType = std::vector,
+         class StringType = std::string,
+         class BooleanType = bool,
          class NumberIntegerType = std::int64_t,
          class NumberUnsignedType = std::uint64_t,
          class NumberFloatType = double,
-         template<typename U> class AllocatorType = std::allocator,
-         template<typename T, typename SFINAE = void> class JSONSerializer =
-         adl_serializer,
-         class BinaryType = std::vector<std::uint8_t>,
-         template<typename BasicJsonType, typename InputAdapterType> class LexerType = detail::basic_lexer,
-         template<typename BasicJsonType> class SerializerType = detail::basic_serializer>
+         template<typename U>
+         class AllocatorType = std::allocator,
+         template<typename T, typename SFINAE = void>
+         class JSONSerializer = adl_serializer,
+         class BinaryType = vector_of_uint8_t,
+         template<typename BasicJsonType, typename InputAdapterType>
+         class LexerType = detail::basic_lexer,
+         template<typename BasicJsonType>
+         class SerializerType = detail::basic_serializer>
 class basic_json;
 
 /*!
