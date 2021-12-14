@@ -18818,15 +18818,15 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 #endif
     }
 
-    iterator set_parents(iterator it, typename iterator::difference_type count)
+    iterator set_parents(iterator it, typename iterator::difference_type count_set_parents)
     {
 #if JSON_DIAGNOSTICS
-        for (typename iterator::difference_type i = 0; i < count; ++i)
+        for (typename iterator::difference_type i = 0; i < count_set_parents; ++i)
         {
             (it + i)->m_parent = this;
         }
 #else
-        static_cast<void>(count);
+        static_cast<void>(count_set_parents);
 #endif
         return it;
     }
