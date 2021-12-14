@@ -37,6 +37,13 @@
     #define JSON_HAS_CPP_11
 #endif
 
+// Optimistically assume that all compilers providing C++17 support also
+// provide std::filesystem in their standard library. Realistically allow
+// overriding this because this is not the case in practice.
+#if defined(JSON_HAS_CPP_17) && !defined(JSON_NO_STD_FILESYSTEM)
+    #define JSON_HAS_STD_FILESYSTEM
+#endif
+
 // disable documentation warnings on clang
 #if defined(__clang__)
     #pragma clang diagnostic push

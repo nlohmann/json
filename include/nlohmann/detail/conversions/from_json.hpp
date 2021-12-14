@@ -19,7 +19,7 @@
 #include <nlohmann/detail/meta/type_traits.hpp>
 #include <nlohmann/detail/value_t.hpp>
 
-#ifdef JSON_HAS_CPP_17
+#ifdef JSON_HAS_STD_FILESYSTEM
     #include <filesystem>
 #endif
 
@@ -448,7 +448,7 @@ void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Hash, KeyE
     }
 }
 
-#ifdef JSON_HAS_CPP_17
+#ifdef JSON_HAS_STD_FILESYSTEM
 template<typename BasicJsonType>
 void from_json(const BasicJsonType& j, std::filesystem::path& p)
 {

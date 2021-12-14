@@ -2325,6 +2325,13 @@ using is_detected_convertible =
     #define JSON_HAS_CPP_11
 #endif
 
+// Optimistically assume that all compilers providing C++17 support also
+// provide std::filesystem in their standard library. Realistically allow
+// overriding this because this is not the case in practice.
+#if defined(JSON_HAS_CPP_17) && !defined(JSON_NO_STD_FILESYSTEM)
+    #define JSON_HAS_STD_FILESYSTEM
+#endif
+
 // disable documentation warnings on clang
 #if defined(__clang__)
     #pragma clang diagnostic push
@@ -3950,7 +3957,7 @@ T conditional_static_cast(U value)
 // #include <nlohmann/detail/value_t.hpp>
 
 
-#ifdef JSON_HAS_CPP_17
+#ifdef JSON_HAS_STD_FILESYSTEM
     #include <filesystem>
 #endif
 
@@ -4379,7 +4386,7 @@ void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Hash, KeyE
     }
 }
 
-#ifdef JSON_HAS_CPP_17
+#ifdef JSON_HAS_STD_FILESYSTEM
 template<typename BasicJsonType>
 void from_json(const BasicJsonType& j, std::filesystem::path& p)
 {
@@ -4626,7 +4633,7 @@ class tuple_element<N, ::nlohmann::detail::iteration_proxy_value<IteratorType >>
 // #include <nlohmann/detail/value_t.hpp>
 
 
-#ifdef JSON_HAS_CPP_17
+#ifdef JSON_HAS_STD_FILESYSTEM
     #include <filesystem>
 #endif
 
@@ -5002,7 +5009,7 @@ void to_json(BasicJsonType& j, const T& t)
     to_json_tuple_impl(j, t, make_index_sequence<std::tuple_size<T>::value> {});
 }
 
-#ifdef JSON_HAS_CPP_17
+#ifdef JSON_HAS_STD_FILESYSTEM
 template<typename BasicJsonType>
 void to_json(BasicJsonType& j, const std::filesystem::path& p)
 {
@@ -17747,7 +17754,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         detail::parser_callback_t<basic_json>cb = nullptr,
         const bool allow_exceptions = true,
         const bool ignore_comments = false
-                                 )
+    )
     {
         return ::nlohmann::detail::parser<basic_json, InputAdapterType>(std::move(adapter),
                 std::move(cb), allow_exceptions, ignore_comments);

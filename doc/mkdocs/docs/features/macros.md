@@ -38,6 +38,10 @@ Note the explanatory [`what()`](https://en.cppreference.com/w/cpp/error/exceptio
 
 When defined, headers `<cstdio>`, `<ios>`, `<iosfwd>`, `<istream>`, and `<ostream>` are not included and parse functions relying on these headers are excluded. This is relevant for environment where these I/O functions are disallowed for security reasons (e.g., Intel Software Guard Extensions (SGX)).
 
+## `JSON_NO_STD_FILESYSTEM`
+
+When defined, `<filesystem>` header is not included, even for C++17 compilers, and `std::filesystem::path` support is not available. This can be useful to disable automatically-detected `std::filesystem` support if its implementation in the standard library is suboptimal or even missing.
+
 ## `JSON_SKIP_UNSUPPORTED_COMPILER_CHECK`
 
 When defined, the library will not create a compile error when a known unsupported compiler is detected. This allows to use the library with compilers that do not fully support C++11 and may only work if unsupported features are not used.
