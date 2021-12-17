@@ -83,6 +83,14 @@ TEST_CASE("JSON patch")
             CHECK_THROWS_AS(doc2.patch(patch), json::out_of_range&);
             CHECK_THROWS_WITH(doc2.patch(patch),
                               "[json.exception.out_of_range.403] key 'a' not found");
+
+            json doc3 = R"({ "a": {} })"_json;
+            json patch3 = R"([{ "op": "add", "path": "/a/b/c", "value": 1 }])"_json;
+
+            // patch3 should cause an error because "b" does not exist in doc3
+            CHECK_THROWS_AS(doc3.patch(patch3), json::out_of_range&);
+            CHECK_THROWS_WITH(doc3.patch(patch3),
+                              "[json.exception.out_of_range.403] key 'b' not found");
         }
 
         SECTION("4.2 remove")

@@ -8456,7 +8456,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             // get reference to parent of JSON pointer ptr
             const auto last_path = ptr.back();
             ptr.pop_back();
-            basic_json& parent = result[ptr];
+            // parent must exist when performing patch add per RFC6902 specs
+            basic_json& parent = result.at(ptr);
 
             switch (parent.m_type)
             {
