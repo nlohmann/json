@@ -21383,6 +21383,19 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         JSON_THROW(type_error::create(305, "cannot use operator[] with a string argument with " + std::string(type_name()), *this));
     }
 
+    // see https://github.com/nlohmann/json/pull/2685#issuecomment-994015092
+    template<typename T, std::size_t n>
+    reference operator[](T * (&key)[n])
+    {
+        return operator[](static_cast<const T>(key));
+    }
+
+    template<typename T, std::size_t n>
+    const_reference operator[](T * (&key)[n]) const
+    {
+        return operator[](static_cast<const T>(key));
+    }
+
     /*!
     @brief access specified object element with default value
 
