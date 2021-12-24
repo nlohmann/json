@@ -183,7 +183,7 @@ TEST_CASE("regression tests 1")
             json::number_float_t f1{j1};
             CHECK(!std::isfinite(f1));
 
-            json j2 = json::static_cast<json::number_float_t>(INFINITY);
+            json j2 = static_cast<json::number_float_t>(INFINITY);
             CHECK(j2.is_number_float());
             json::number_float_t f2{j2};
             CHECK(!std::isfinite(f2));
