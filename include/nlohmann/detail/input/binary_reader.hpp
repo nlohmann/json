@@ -161,7 +161,7 @@ class binary_reader
         std::int32_t document_size{};
         get_number<std::int32_t, true>(input_format_t::bson, document_size);
 
-        if (JSON_HEDLEY_UNLIKELY(!sax->start_object(std::size_t(-1))))
+        if (JSON_HEDLEY_UNLIKELY(!sax->start_object(static_cast<std::size_t>(-1))))
         {
             return false;
         }
@@ -379,7 +379,7 @@ class binary_reader
         std::int32_t document_size{};
         get_number<std::int32_t, true>(input_format_t::bson, document_size);
 
-        if (JSON_HEDLEY_UNLIKELY(!sax->start_array(std::size_t(-1))))
+        if (JSON_HEDLEY_UNLIKELY(!sax->start_array(static_cast<std::size_t>(-1))))
         {
             return false;
         }
@@ -638,7 +638,7 @@ class binary_reader
             }
 
             case 0x9F: // array (indefinite length)
-                return get_cbor_array(std::size_t(-1), tag_handler);
+                return get_cbor_array(static_cast<std::size_t>(-1), tag_handler);
 
             // map (0x00..0x17 pairs of data items follow)
             case 0xA0:
@@ -692,7 +692,7 @@ class binary_reader
             }
 
             case 0xBF: // map (indefinite length)
-                return get_cbor_object(std::size_t(-1), tag_handler);
+                return get_cbor_object(static_cast<std::size_t>(-1), tag_handler);
 
             case 0xC6: // tagged item
             case 0xC7:
@@ -1076,7 +1076,7 @@ class binary_reader
     }
 
     /*!
-    @param[in] len  the length of the array or std::size_t(-1) for an
+    @param[in] len  the length of the array or static_cast<std::size_t>(-1) for an
                     array of indefinite size
     @param[in] tag_handler how CBOR tags should be treated
     @return whether array creation completed
@@ -1089,7 +1089,7 @@ class binary_reader
             return false;
         }
 
-        if (len != std::size_t(-1))
+        if (len != static_cast<std::size_t>(-1))
         {
             for (std::size_t i = 0; i < len; ++i)
             {
@@ -1114,7 +1114,7 @@ class binary_reader
     }
 
     /*!
-    @param[in] len  the length of the object or std::size_t(-1) for an
+    @param[in] len  the length of the object or static_cast<std::size_t>(-1) for an
                     object of indefinite size
     @param[in] tag_handler how CBOR tags should be treated
     @return whether object creation completed
@@ -1130,7 +1130,7 @@ class binary_reader
         if (len != 0)
         {
             string_t key;
-            if (len != std::size_t(-1))
+            if (len != static_cast<std::size_t>(-1))
             {
                 for (std::size_t i = 0; i < len; ++i)
                 {
@@ -2140,7 +2140,7 @@ class binary_reader
         }
         else
         {
-            if (JSON_HEDLEY_UNLIKELY(!sax->start_array(std::size_t(-1))))
+            if (JSON_HEDLEY_UNLIKELY(!sax->start_array(static_cast<std::size_t>(-1))))
             {
                 return false;
             }
@@ -2210,7 +2210,7 @@ class binary_reader
         }
         else
         {
-            if (JSON_HEDLEY_UNLIKELY(!sax->start_object(std::size_t(-1))))
+            if (JSON_HEDLEY_UNLIKELY(!sax->start_object(static_cast<std::size_t>(-1))))
             {
                 return false;
             }

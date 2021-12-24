@@ -1031,25 +1031,25 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
                 case value_t::boolean:
                 {
-                    boolean = boolean_t(false);
+                    boolean = static_cast<boolean_t>(false);
                     break;
                 }
 
                 case value_t::number_integer:
                 {
-                    number_integer = number_integer_t(0);
+                    number_integer = static_cast<number_integer_t>(0);
                     break;
                 }
 
                 case value_t::number_unsigned:
                 {
-                    number_unsigned = number_unsigned_t(0);
+                    number_unsigned = static_cast<number_unsigned_t>(0);
                     break;
                 }
 
                 case value_t::number_float:
                 {
-                    number_float = number_float_t(0.0);
+                    number_float = static_cast<number_float_t>(0.0);
                     break;
                 }
 
@@ -1291,10 +1291,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return it;
     }
 
-    reference set_parent(reference j, std::size_t old_capacity = std::size_t(-1))
+    reference set_parent(reference j, std::size_t old_capacity = static_cast<std::size_t>(-1))
     {
 #if JSON_DIAGNOSTICS
-        if (old_capacity != std::size_t(-1))
+        if (old_capacity != static_cast<std::size_t>(-1))
         {
             // see https://github.com/nlohmann/json/issues/2838
             JSON_ASSERT(type() == value_t::array);
