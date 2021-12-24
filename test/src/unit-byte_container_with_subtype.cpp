@@ -41,11 +41,11 @@ TEST_CASE("byte_container_with_subtype")
         nlohmann::byte_container_with_subtype<std::vector<std::uint8_t>> container;
 
         CHECK(!container.has_subtype());
-        CHECK(container.subtype() == subtype_type(-1));
+        CHECK(container.subtype() == static_cast<subtype_type>(-1));
 
         container.clear_subtype();
         CHECK(!container.has_subtype());
-        CHECK(container.subtype() == subtype_type(-1));
+        CHECK(container.subtype() == static_cast<subtype_type>(-1));
 
         container.set_subtype(42);
         CHECK(container.has_subtype());
@@ -60,7 +60,7 @@ TEST_CASE("byte_container_with_subtype")
 
         container.clear_subtype();
         CHECK(!container.has_subtype());
-        CHECK(container.subtype() == subtype_type(-1));
+        CHECK(container.subtype() == static_cast<subtype_type>(-1));
     }
 
     SECTION("comparisons")
