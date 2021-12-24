@@ -817,6 +817,8 @@ foreach(COMPILER g++-4.8 g++-4.9 g++-5 g++-6 g++-7 g++-8 g++-9 g++-10 clang++-3.
         # fix for https://github.com/nlohmann/json/pull/3101#issuecomment-998788786 / https://stackoverflow.com/a/64051725/266378
         if ("${COMPILER}" STREQUAL "clang++-9")
             set(ADDITIONAL_FLAGS "-DCMAKE_CXX_FLAGS=--gcc-toolchain=/root/gcc/9")
+        else()
+            unset(ADDITIONAL_FLAGS)
         endif()
 
         add_custom_target(ci_test_compiler_${COMPILER}
