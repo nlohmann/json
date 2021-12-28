@@ -817,6 +817,9 @@ foreach(COMPILER g++-4.8 g++-4.9 g++-5 g++-6 g++-7 g++-8 g++-9 g++-10 clang++-3.
         if ("${COMPILER}" STREQUAL "clang++-9")
             # fix for https://github.com/nlohmann/json/pull/3101#issuecomment-998788786 / https://stackoverflow.com/a/64051725/266378
             set(ADDITIONAL_FLAGS "-DCMAKE_CXX_FLAGS=--gcc-toolchain=/root/gcc/9")
+        elseif ("${COMPILER}" STREQUAL "g++-8")
+            # fix for https://gcc.gnu.org/bugzilla/show_bug.cgi?id=90050
+            set(ADDITIONAL_FLAGS "-DCMAKE_EXE_LINKER_FLAGS=-lstdc++fs")
         else()
             unset(ADDITIONAL_FLAGS)
         endif()
@@ -832,10 +835,7 @@ foreach(COMPILER g++-4.8 g++-4.9 g++-5 g++-6 g++-7 g++-8 g++-9 g++-10 clang++-3.
             COMMENT "Compile and test with ${COMPILER}"
         )
 
-        if ("${COMPILER}" STREQUAL "g++-8")
-            # fix for https://gcc.gnu.org/bugzilla/show_bug.cgi?id=90050
-            target_link_libraries(ci_test_compiler_${COMPILER} PUBLIC stdc++fs)
-        endif()
+        target_link_libraries(ci_test_compiler_${COMPILER} PUBLIC -lstdc++fs)
     endif()
     unset(COMPILER_TOOL CACHE)
 endforeach()
