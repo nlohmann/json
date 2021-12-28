@@ -22,7 +22,7 @@
 
 - [Design goals](#design-goals)
 - [Sponsors](#sponsors)
-- [Support](#support) ([documentation](https://json.nlohmann.me), [FAQ](http://127.0.0.1:8000/home/faq/), [discussions](https://github.com/nlohmann/json/discussions), [API](https://json.nlohmann.me/api/basic_json/), [bug issues](https://github.com/nlohmann/json/issues))
+- [Support](#support) ([documentation](https://json.nlohmann.me), [FAQ](https://json.nlohmann.me/home/faq/), [discussions](https://github.com/nlohmann/json/discussions), [API](https://json.nlohmann.me/api/basic_json/), [bug issues](https://github.com/nlohmann/json/issues))
 - [Examples](#examples)
   - [JSON as first-class data type](#json-as-first-class-data-type)
   - [Serialization / Deserialization](#serialization--deserialization)
