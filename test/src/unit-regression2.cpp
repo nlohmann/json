@@ -227,6 +227,16 @@ inline void from_json(const nlohmann::json& j, FooBar& fb)
     j.at("value").get_to(fb.foo.value);
 }
 
+/////////////////////////////////////////////////////////////////////
+// for #3215
+/////////////////////////////////////////////////////////////////////
+
+std::string f_3215()
+{
+    throw std::runtime_error("12");
+    return {};
+}
+
 TEST_CASE("regression tests 2")
 {
     SECTION("issue #1001 - Fix memory leak during parser callback")
@@ -762,6 +772,27 @@ TEST_CASE("regression tests 2")
         }), j.end());
 
         CHECK(j.dump() == "[1,4]");
+    }
+
+    SECTION("issue #3215 - Exception thrown during initialization causes a memory leak")
+    {
+        std::string s;
+        try
+        {
+            // std::map<std::string, std::string> j // no leak
+            nlohmann::json j // leak
+            {
+                {"smth", f_3215()}, // exception thrown here
+                {"smth", "smth"}
+            };
+            s = "initialized";
+        }
+        catch (std::runtime_error& e)
+        {
+            s = e.what();
+        }
+
+        CHECK(s == "12");
     }
 }
 
