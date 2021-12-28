@@ -11,15 +11,15 @@ i.e. `std::distance(begin(), end())` for the JSON value.
 
 The return value depends on the different types and is defined as follows:
 
-Value type  | return value
------------ | -------------
-null        | `0` (same as [`size()`](size.md))
-boolean     | `1` (same as [`size()`](size.md))
-string      | `1` (same as [`size()`](size.md))
-number      | `1` (same as [`size()`](size.md))
-binary      | `1` (same as [`size()`](size.md))
-object      | result of function `object_t::max_size()`
-array       | result of function `array_t::max_size()`
+| Value type | return value                              |
+|------------|-------------------------------------------|
+| null       | `0` (same as [`size()`](size.md))         |
+| boolean    | `1` (same as [`size()`](size.md))         |
+| string     | `1` (same as [`size()`](size.md))         |
+| number     | `1` (same as [`size()`](size.md))         |
+| binary     | `1` (same as [`size()`](size.md))         |
+| object     | result of function `object_t::max_size()` |
+| array      | result of function `array_t::max_size()`  |
 
 ## Exception safety
 

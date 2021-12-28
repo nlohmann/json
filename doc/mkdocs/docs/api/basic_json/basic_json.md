@@ -39,15 +39,15 @@ basic_json(basic_json&& other) noexcept;
 1. Create an empty JSON value with a given type. The value will be default initialized with an empty value which depends
    on the type:
    
-    Value type  | initial value
-    ----------- | -------------
-    null        | `#!json null`
-    boolean     | `#!json false`
-    string      | `#!json ""`
-    number      | `#!json 0`
-    object      | `#!json {}`
-    array       | `#!json []`
-    binary      | empty array
+    | Value type | initial value  |
+    |------------|----------------|
+    | null       | `#!json null`  |
+    | boolean    | `#!json false` |
+    | string     | `#!json ""`    |
+    | number     | `#!json 0`     |
+    | object     | `#!json {}`    |
+    | array      | `#!json []`    |
+    | binary     | empty array    |
 
     The postcondition of this constructor can be restored by calling [`clear()`](clear.md).
 

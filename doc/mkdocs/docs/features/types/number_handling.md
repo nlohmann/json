@@ -100,14 +100,14 @@ This is the same behavior as the code `#!c double x = 3.141592653589793238462643
 
 The JSON number grammar allows for different ways to express zero, and this library will store zeros differently:
 
-| Literal | Stored value and type | Serialization |
-| ------- | --------------------- | ------------- |
-| `0`     | `#!c std::uint64_t(0)` | `0`          |
-| `-0`    | `#!c std::int64_t(0)` | `0`           |
-| `0.0`   | `#!c double(0.0)`     | `0.0`         |
-| `-0.0`  | `#!c double(-0.0)`    | `-0.0`        |
-| `0E0`   | `#!c double(0.0)`     | `0.0`         |
-| `-0E0`  | `#!c double(-0.0)`    | `-0.0`        |
+| Literal | Stored value and type  | Serialization |
+|---------|------------------------|---------------|
+| `0`     | `#!c std::uint64_t(0)` | `0`           |
+| `-0`    | `#!c std::int64_t(0)`  | `0`           |
+| `0.0`   | `#!c double(0.0)`      | `0.0`         |
+| `-0.0`  | `#!c double(-0.0)`     | `-0.0`        |
+| `0E0`   | `#!c double(0.0)`      | `0.0`         |
+| `-0E0`  | `#!c double(-0.0)`     | `-0.0`        |
 
 That is, `-0` is stored as a signed integer, but the serialization does not reproduce the `-`.
 
@@ -286,24 +286,24 @@ the stored number:
 - [`type()`](../../api/basic_json/type.md) returns a different enumerator of
   [`value_t`](../../api/basic_json/value_t.md) for all number types
 
-| function | unsigned integer | signed integer | floating-point | string |
-| -------- | ---------------- | -------------- | -------------- | ------ |
-| [`is_number()`](../../api/basic_json/is_number.md) | `#!c true` | `#!c true` | `#!c true` | `#!c false` |
-| [`is_number_integer()`](../../api/basic_json/is_number_integer.md) | `#!c true` | `#!c true` | `#!c false` | `#!c false` |
-| [`is_number_unsigned()`](../../api/basic_json/is_number_unsigned.md) | `#!c true` | `#!c false` | `#!c false` | `#!c false` |
-| [`is_number_float()`](../../api/basic_json/is_number_float.md) | `#!c false` | `#!c false` | `#!c true` | `#!c false` |
-| [`type_name()`](../../api/basic_json/type_name.md) | `#!c "number"` | `#!c "number"` | `#!c "number"` | `#!c "string"` |
-| [`type()`](../../api/basic_json/type.md) | `number_unsigned` | `number_integer` | `number_float` | `string` |
+| function                                                             | unsigned integer  | signed integer   | floating-point | string         |
+|----------------------------------------------------------------------|-------------------|------------------|----------------|----------------|
+| [`is_number()`](../../api/basic_json/is_number.md)                   | `#!c true`        | `#!c true`       | `#!c true`     | `#!c false`    |
+| [`is_number_integer()`](../../api/basic_json/is_number_integer.md)   | `#!c true`        | `#!c true`       | `#!c false`    | `#!c false`    |
+| [`is_number_unsigned()`](../../api/basic_json/is_number_unsigned.md) | `#!c true`        | `#!c false`      | `#!c false`    | `#!c false`    |
+| [`is_number_float()`](../../api/basic_json/is_number_float.md)       | `#!c false`       | `#!c false`      | `#!c true`     | `#!c false`    |
+| [`type_name()`](../../api/basic_json/type_name.md)                   | `#!c "number"`    | `#!c "number"`   | `#!c "number"` | `#!c "string"` |
+| [`type()`](../../api/basic_json/type.md)                             | `number_unsigned` | `number_integer` | `number_float` | `string`       |
 
 ### Template number types
 
 The number types can be changed with template parameters.
 
-| position | number type | default type | possible values |
-| -------- | ----------- | ------------ | --------------- |
-| 5        | signed integers | `#!c std::int64_t` | `#!c std::int32_t`, `#!c std::int16_t`, etc. |
+| position | number type       | default type        | possible values                                |
+|----------|-------------------|---------------------|------------------------------------------------|
+| 5        | signed integers   | `#!c std::int64_t`  | `#!c std::int32_t`, `#!c std::int16_t`, etc.   |
 | 6        | unsigned integers | `#!c std::uint64_t` | `#!c std::uint32_t`, `#!c std::uint16_t`, etc. |
-| 7        | floating-point | `#!c double` | `#!c float`, `#!c long double` |
+| 7        | floating-point    | `#!c double`        | `#!c float`, `#!c long double`                 |
 
 !!! info "Constraints on number types"
 

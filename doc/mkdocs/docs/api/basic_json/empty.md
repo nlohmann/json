@@ -10,15 +10,15 @@ Checks if a JSON value has no elements (i.e. whether its [`size()`](size.md) is 
 
 The return value depends on the different types and is defined as follows:
 
-Value type  | return value
------------ | -------------
-null        | `#!cpp true`
-boolean     | `#!cpp false`
-string      | `#!cpp false`
-number      | `#!cpp false`
-binary      | `#!cpp false`
-object      | result of function `object_t::empty()`
-array       | result of function `array_t::empty()`
+| Value type | return value                           |
+|------------|----------------------------------------|
+| null       | `#!cpp true`                           |
+| boolean    | `#!cpp false`                          |
+| string     | `#!cpp false`                          |
+| number     | `#!cpp false`                          |
+| binary     | `#!cpp false`                          |
+| object     | result of function `object_t::empty()` |
+| array      | result of function `array_t::empty()`  |
 
 ## Exception safety
 

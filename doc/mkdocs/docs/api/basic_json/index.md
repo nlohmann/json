@@ -20,18 +20,18 @@ class basic_json;
 
 ## Template parameters
 
-| Template parameter   | Description | Derived type |
-| -------------------- | ----------- | ------------ |
-| `ObjectType`         | type for JSON objects | [`object_t`](object_t.md) |
-| `ArrayType`          | type for JSON arrays | [`array_t`](array_t.md) |
-| `StringType`         | type for JSON strings and object keys | [`string_t`](string_t.md) |
-| `BooleanType`        | type for JSON booleans | [`boolean_t`](boolean_t.md) |
-| `NumberIntegerType`  | type for JSON integer numbers | [`number_integer_t`](number_integer_t.md) |
-| `NumberUnsignedType` | type for JSON unsigned integer numbers | [`number_unsigned_t`](number_unsigned_t.md) |
-| `NumberFloatType`    | type for JSON floating-point numbers | [`number_float_t`](number_float_t.md) |
-| `AllocatorType`      | type of the allocator to use | |
-| `JSONSerializer`     | the serializer to resolve internal calls to `to_json()` and `from_json()` | [`json_serializer`](json_serializer.md) |
-| `BinaryType`         | type for binary arrays | [`binary_t`](binary_t.md) |
+| Template parameter   | Description                                                               | Derived type                                |
+|----------------------|---------------------------------------------------------------------------|---------------------------------------------|
+| `ObjectType`         | type for JSON objects                                                     | [`object_t`](object_t.md)                   |
+| `ArrayType`          | type for JSON arrays                                                      | [`array_t`](array_t.md)                     |
+| `StringType`         | type for JSON strings and object keys                                     | [`string_t`](string_t.md)                   |
+| `BooleanType`        | type for JSON booleans                                                    | [`boolean_t`](boolean_t.md)                 |
+| `NumberIntegerType`  | type for JSON integer numbers                                             | [`number_integer_t`](number_integer_t.md)   |
+| `NumberUnsignedType` | type for JSON unsigned integer numbers                                    | [`number_unsigned_t`](number_unsigned_t.md) |
+| `NumberFloatType`    | type for JSON floating-point numbers                                      | [`number_float_t`](number_float_t.md)       |
+| `AllocatorType`      | type of the allocator to use                                              |                                             |
+| `JSONSerializer`     | the serializer to resolve internal calls to `to_json()` and `from_json()` | [`json_serializer`](json_serializer.md)     |
+| `BinaryType`         | type for binary arrays                                                    | [`binary_t`](binary_t.md)                   |
 
 ## Specializations
 
@@ -107,21 +107,21 @@ The class satisfies the following concept requirements:
 
 ### Container types
 
-| Type                     | Definition |
-| ------------------------ | ---------- |
-| `value_type`             | `#!cpp basic_json` |
-| `reference`              | `#!cpp value_type&` |
-| `const_reference`        | `#!cpp const value_type&` |
-| `difference_type`        | `#!cpp std::ptrdiff_t` |
-| `size_type`              | `#!cpp std::size_t` |
-| `allocator_type`         | `#!cpp AllocatorType<basic_json>` |
-| `pointer`                | `#!cpp std::allocator_traits<allocator_type>::pointer` |
-| `const_pointer`          | `#!cpp std::allocator_traits<allocator_type>::const_pointer` |
-| `iterator`               | [LegacyBidirectionalIterator](https://en.cppreference.com/w/cpp/named_req/BidirectionalIterator) |
+| Type                     | Definition                                                                                                |
+|--------------------------|-----------------------------------------------------------------------------------------------------------|
+| `value_type`             | `#!cpp basic_json`                                                                                        |
+| `reference`              | `#!cpp value_type&`                                                                                       |
+| `const_reference`        | `#!cpp const value_type&`                                                                                 |
+| `difference_type`        | `#!cpp std::ptrdiff_t`                                                                                    |
+| `size_type`              | `#!cpp std::size_t`                                                                                       |
+| `allocator_type`         | `#!cpp AllocatorType<basic_json>`                                                                         |
+| `pointer`                | `#!cpp std::allocator_traits<allocator_type>::pointer`                                                    |
+| `const_pointer`          | `#!cpp std::allocator_traits<allocator_type>::const_pointer`                                              |
+| `iterator`               | [LegacyBidirectionalIterator](https://en.cppreference.com/w/cpp/named_req/BidirectionalIterator)          |
 | `const_iterator`         | constant [LegacyBidirectionalIterator](https://en.cppreference.com/w/cpp/named_req/BidirectionalIterator) |
-| `reverse_iterator`       | reverse iterator, derived from `iterator` |
-| `const_reverse_iterator` | reverse iterator, derived from `const_iterator` |
-| `iteration_proxy`        | helper type for [`items`](items.md) function |
+| `reverse_iterator`       | reverse iterator, derived from `iterator`                                                                 |
+| `const_reverse_iterator` | reverse iterator, derived from `const_iterator`                                                           |
+| `iteration_proxy`        | helper type for [`items`](items.md) function                                                              |
 
 ### JSON value data types
 
@@ -291,6 +291,22 @@ Access to the JSON value
 
 - [**std::hash&lt;basic_json&gt;**](std_hash.md) - return a hash value for a JSON object
 - [**std::swap&lt;basic_json&gt;**](std_swap.md) - exchanges the values of two JSON objects
+
+## Example
+
+??? example
+
+    The example shows how the library is used.
+    
+    ```cpp
+    --8<-- "examples/README.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/README.output"
+    ```
 
 ## See also
 

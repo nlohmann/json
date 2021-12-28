@@ -69,9 +69,9 @@ When accessing an invalid index (i.e., an index greater than or equal to the arr
 
 ## Summary
 
-| scenario | non-const value | const value |
-| -------- | ------------- | ----------- |
-| access to existing object key | reference to existing value is returned | const reference to existing value is returned |
-| access to valid array index | reference to existing value is returned | const reference to existing value is returned |
+| scenario                          | non-const value                                | const value                                    |
+|-----------------------------------|------------------------------------------------|------------------------------------------------|
+| access to existing object key     | reference to existing value is returned        | const reference to existing value is returned  |
+| access to valid array index       | reference to existing value is returned        | const reference to existing value is returned  |
 | access to non-existing object key | `basic_json::out_of_range` exception is thrown | `basic_json::out_of_range` exception is thrown |
-| access to invalid array index | `basic_json::out_of_range` exception is thrown | `basic_json::out_of_range` exception is thrown |
+| access to invalid array index     | `basic_json::out_of_range` exception is thrown | `basic_json::out_of_range` exception is thrown |

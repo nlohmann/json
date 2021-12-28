@@ -151,5 +151,5 @@ Note that "value" means a JSON value in this setting, not values stored in the u
 ## Iterator invalidation
 
 | Operations | invalidated iterators |
-| ---------- | --------------------- |
+|------------|-----------------------|
 | `clear`    | all                   |

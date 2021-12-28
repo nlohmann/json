@@ -11,16 +11,16 @@ wrong JSON type.
 
 a string representation of the type ([`value_t`](value_t.md)):
 
-Value type                                         | return value
--------------------------------------------------- | -------------------------
-`#!json null`                                      | `"null"`
-boolean                                            | `"boolean"`
-string                                             | `"string"`
-number (integer, unsigned integer, floating-point) | `"number"`
-object                                             | `"object"`
-array                                              | `"array"`
-binary                                             | `"binary"`
-discarded                                          | `"discarded"`
+| Value type                                         | return value  |
+|----------------------------------------------------|---------------|
+| `#!json null`                                      | `"null"`      |
+| boolean                                            | `"boolean"`   |
+| string                                             | `"string"`    |
+| number (integer, unsigned integer, floating-point) | `"number"`    |
+| object                                             | `"object"`    |
+| array                                              | `"array"`     |
+| binary                                             | `"binary"`    |
+| discarded                                          | `"discarded"` |
 
 ## Exception safety
 
