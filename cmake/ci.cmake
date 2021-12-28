@@ -831,8 +831,6 @@ foreach(COMPILER g++-4.8 g++-4.9 g++-5 g++-6 g++-7 g++-8 g++-9 g++-10 clang++-3.
             COMMAND cd ${PROJECT_BINARY_DIR}/build_compiler_${COMPILER} && ${CMAKE_CTEST_COMMAND} --parallel ${N} --exclude-regex "test-unicode" --output-on-failure
             COMMENT "Compile and test with ${COMPILER}"
         )
-
-        target_link_libraries(ci_test_compiler_${COMPILER} PUBLIC -lstdc++fs)
     endif()
     unset(COMPILER_TOOL CACHE)
 endforeach()
