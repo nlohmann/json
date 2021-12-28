@@ -101,6 +101,20 @@ Linear.
     --8<-- "examples/operator__equal.output"
     ```
 
+??? example
+
+    The example demonstrates comparing several JSON types against the null pointer (JSON `#!json null`).
+        
+    ```cpp
+    --8<-- "examples/operator__equal__nullptr_t.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/operator__equal__nullptr_t.output"
+    ```
+
 ## Version history
 
 - Added in version 1.0.0.

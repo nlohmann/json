@@ -7,7 +7,7 @@ using json = nlohmann::json;
 int main()
 {
     // a JSON text given as std::vector
-    std::vector<uint8_t> text = {'[', '1', ',', '2', ',', '3', ']', '\0'};
+    std::vector<std::uint8_t> text = {'[', '1', ',', '2', ',', '3', ']', '\0'};
 
     // parse and serialize JSON
     json j_complete = json::parse(text);

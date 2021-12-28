@@ -81,7 +81,7 @@ int main()
     json j_list(c_list);
 
     // create an array from std::forward_list
-    std::forward_list<int64_t> c_flist {12345678909876, 23456789098765, 34567890987654, 45678909876543};
+    std::forward_list<std::int64_t> c_flist {12345678909876, 23456789098765, 34567890987654, 45678909876543};
     json j_flist(c_flist);
 
     // create an array from std::array

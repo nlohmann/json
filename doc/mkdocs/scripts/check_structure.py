@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import glob
+import os.path
 
 
 def check_structure():
@@ -95,7 +96,26 @@ def check_structure():
                 if required_header not in existing_headers:
                     print(f'{file}:{lineno+1}: Error: required header "{required_header}" was not found!')
 
-    print(f'\nchecked {len(files)} files')
+
+def check_examples():
+    example_files = sorted(glob.glob('../../examples/*.cpp'))
+    markdown_files = sorted(glob.glob('**/*.md', recursive=True))
+
+    # check if every example file is used in at least one markdown file
+    for example_file in example_files:
+        example_file = os.path.join('examples', os.path.basename(example_file))
+
+        found = False
+        for markdown_file in markdown_files:
+            content = ' '.join(open(markdown_file).readlines())
+            if example_file in content:
+                found = True
+                break
+
+        if not found:
+            print(f'{example_file}: Error: example file is not used in any documentation file!')
+
 
 if __name__ == '__main__':
     check_structure()
+    check_examples()
