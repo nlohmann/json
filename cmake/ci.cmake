@@ -814,9 +814,12 @@ add_custom_target(ci_cmake_flags
 foreach(COMPILER g++-4.8 g++-4.9 g++-5 g++-6 g++-7 g++-8 g++-9 g++-10 clang++-3.5 clang++-3.6 clang++-3.7 clang++-3.8 clang++-3.9 clang++-4.0 clang++-5.0 clang++-6.0 clang++-7 clang++-8 clang++-9 clang++-10 clang++-11 clang++-12 clang++-13)
     find_program(COMPILER_TOOL NAMES ${COMPILER})
     if (COMPILER_TOOL)
-        # fix for https://github.com/nlohmann/json/pull/3101#issuecomment-998788786 / https://stackoverflow.com/a/64051725/266378
         if ("${COMPILER}" STREQUAL "clang++-9")
+            # fix for https://github.com/nlohmann/json/pull/3101#issuecomment-998788786 / https://stackoverflow.com/a/64051725/266378
             set(ADDITIONAL_FLAGS "-DCMAKE_CXX_FLAGS=--gcc-toolchain=/root/gcc/9")
+        elseif ("${COMPILER}" STREQUAL "g++-8")
+            # fix for https://gcc.gnu.org/bugzilla/show_bug.cgi?id=90050
+            set(ADDITIONAL_FLAGS "-DCMAKE_CXX_FLAGS=-lstdc++fs")
         else()
             unset(ADDITIONAL_FLAGS)
         endif()
