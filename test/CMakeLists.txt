@@ -99,6 +99,11 @@ foreach(file ${files})
             target_link_libraries(${testcase}_cpp17 PRIVATE ${NLOHMANN_JSON_TARGET_NAME})
             target_compile_features(${testcase}_cpp17 PRIVATE cxx_std_17)
 
+            if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 8.0 AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
+                # fix for https://gcc.gnu.org/bugzilla/show_bug.cgi?id=90050
+                target_link_libraries(${testcase}_cpp17 PRIVATE stdc++fs)
+            endif()
+
             if (JSON_FastTests)
                 add_test(NAME "${testcase}_cpp17"
                     COMMAND ${testcase}_cpp17 ${DOCTEST_TEST_FILTER}
