@@ -101,3 +101,13 @@ jobs:
         run: cmake -S . -B build -DJSON_CI=On
       - name: build
         run: cmake --build build --target ci_test_${{ matrix.compiler }}_cxx${{ matrix.standard }}
+
+  ci_icpc:
+    runs-on: ubuntu-latest
+    container: ghcr.io/nlohmann/json-ci:v2.1.0
+    steps:
+      - uses: actions/checkout@v2
+      - name: cmake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: build
+        run: cmake --build build --target ci_icpc

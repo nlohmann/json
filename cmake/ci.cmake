@@ -836,6 +836,22 @@ foreach(COMPILER g++-4.8 g++-4.9 g++-5 g++-6 g++-7 g++-8 g++-9 g++-10 clang++-3.
 endforeach()
 
 ###############################################################################
+# Intel C++ Compiler
+###############################################################################
+
+add_custom_target(ci_icpc
+    COMMAND source /opt/intel/oneapi/setvars.sh
+    COMMAND ${CMAKE_COMMAND}
+        -DCMAKE_BUILD_TYPE=Debug -GNinja
+        -DCMAKE_C_COMPILER=icc -DCMAKE_CXX_COMPILER=icpc
+        -DJSON_BuildTests=ON -DJSON_FastTests=ON
+        -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_icpc
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_icpc
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_icpc && ${CMAKE_CTEST_COMMAND} --parallel ${N} --exclude-regex "test-unicode" --output-on-failure
+    COMMENT "Compile and test with ICPC"
+)
+
+###############################################################################
 # Clean up all generated files.
 ###############################################################################
 
