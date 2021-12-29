@@ -231,10 +231,14 @@ inline void from_json(const nlohmann::json& j, FooBar& fb)
 // for #3215
 /////////////////////////////////////////////////////////////////////
 
-std::string f_3215()
+std::string f_3215(bool should_throw);
+std::string f_3215(bool should_throw)
 {
-    throw std::runtime_error("12");
-    return {};
+    if (should_throw)
+    {
+        throw std::runtime_error("12");
+    }
+    return "foo";
 }
 
 TEST_CASE("regression tests 2")
@@ -782,8 +786,8 @@ TEST_CASE("regression tests 2")
             // std::map<std::string, std::string> j // no leak
             nlohmann::json j // leak
             {
-                {"smth", f_3215()}, // exception thrown here
-                {"smth", "smth"}
+                {"smth", f_3215(true)}, // exception thrown here
+                {"smth", f_3215(false)}
             };
             s = "initialized";
         }
