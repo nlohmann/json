@@ -457,16 +457,16 @@ class serializer
                                 if (codepoint <= 0xFFFF)
                                 {
                                     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
-                                    (std::snprintf)(string_buffer.data() + bytes, 7, "\\u%04x",
-                                                    static_cast<std::uint16_t>(codepoint));
+                                    static_cast<void>((std::snprintf)(string_buffer.data() + bytes, 7, "\\u%04x",
+                                                                      static_cast<std::uint16_t>(codepoint)));
                                     bytes += 6;
                                 }
                                 else
                                 {
                                     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
-                                    (std::snprintf)(string_buffer.data() + bytes, 13, "\\u%04x\\u%04x",
-                                                    static_cast<std::uint16_t>(0xD7C0u + (codepoint >> 10u)),
-                                                    static_cast<std::uint16_t>(0xDC00u + (codepoint & 0x3FFu)));
+                                    static_cast<void>((std::snprintf)(string_buffer.data() + bytes, 13, "\\u%04x\\u%04x",
+                                                                      static_cast<std::uint16_t>(0xD7C0u + (codepoint >> 10u)),
+                                                                      static_cast<std::uint16_t>(0xDC00u + (codepoint & 0x3FFu))));
                                     bytes += 12;
                                 }
                             }

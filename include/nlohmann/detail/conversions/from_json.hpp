@@ -19,8 +19,18 @@
 #include <nlohmann/detail/meta/type_traits.hpp>
 #include <nlohmann/detail/value_t.hpp>
 
-#ifdef JSON_HAS_CPP_17
-    #include <filesystem>
+#if JSON_HAS_EXPERIMENTAL_FILESYSTEM
+#include <experimental/filesystem>
+namespace nlohmann::detail
+{
+namespace std_fs = std::experimental::filesystem;
+} // namespace nlohmann::detail
+#elif JSON_HAS_FILESYSTEM
+#include <filesystem>
+namespace nlohmann::detail
+{
+namespace std_fs = std::filesystem;
+} // namespace nlohmann::detail
 #endif
 
 namespace nlohmann
@@ -448,9 +458,9 @@ void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Hash, KeyE
     }
 }
 
-#ifdef JSON_HAS_CPP_17
+#if JSON_HAS_FILESYSTEM || JSON_HAS_EXPERIMENTAL_FILESYSTEM
 template<typename BasicJsonType>
-void from_json(const BasicJsonType& j, std::filesystem::path& p)
+void from_json(const BasicJsonType& j, std_fs::path& p)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_string()))
     {
