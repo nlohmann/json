@@ -13,3 +13,7 @@ json j_original = R"({
 j_original["/baz/1"_json_pointer];
 // "two"
 ```
+
+## See also
+
+- Class [`json_pointer`](../api/json_pointer/index.md)

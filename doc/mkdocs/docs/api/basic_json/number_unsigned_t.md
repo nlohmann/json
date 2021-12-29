@@ -1,4 +1,4 @@
-# basic_json::number_unsigned_t
+# <small>nlohmann::basic_json::</small>number_unsigned_t
 
 ```cpp
 using number_unsigned_t = NumberUnsignedType;
@@ -54,6 +54,22 @@ range [0, UINT64_MAX], this class's integer type is interoperable.
 #### Storage
 
 Integer number values are stored directly inside a `basic_json` type.
+
+## Examples
+
+??? example
+
+    The following code shows that `number_unsigned_t` is by default, a typedef to `#!cpp std::uint64_t`.
+     
+    ```cpp
+    --8<-- "examples/number_unsigned_t.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/number_unsigned_t.output"
+    ```
 
 ## Version history
 

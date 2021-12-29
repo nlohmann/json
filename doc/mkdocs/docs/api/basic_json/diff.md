@@ -1,4 +1,4 @@
-# basic_json::diff
+# <small>nlohmann::basic_json::</small>diff
 
 ```cpp
 static basic_json diff(const basic_json& source,
@@ -33,11 +33,11 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 
 Linear in the lengths of `source` and `target`.
 
-## Note
+## Notes
 
 Currently, only `remove`, `add`, and `replace` operations are generated.
           
-## Example
+## Examples
 
 ??? example
 
@@ -52,6 +52,10 @@ Currently, only `remove`, `add`, and `replace` operations are generated.
     ```json
     --8<-- "examples/diff.output"
     ```
+
+## See also
+
+- [RFC 6902 (JSON Patch)](https://tools.ietf.org/html/rfc6902)
 
 ## Version history
 

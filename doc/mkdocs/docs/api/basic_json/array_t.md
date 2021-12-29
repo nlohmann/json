@@ -1,4 +1,4 @@
-# basic_json::array_t
+# <small>nlohmann::basic_json::</small>array_t
 
 ```cpp
 using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
@@ -46,6 +46,22 @@ introduced by the compiler or runtime environment. A theoretical limit can be qu
 
 Arrays are stored as pointers in a `basic_json` type. That is, for any access to array values, a pointer of type
 `#!cpp array_t*` must be dereferenced.
+
+## Examples
+
+??? example
+
+    The following code shows that `array_t` is by default, a typedef to `#!cpp std::vector<nlohmann::json>`.
+     
+    ```cpp
+    --8<-- "examples/array_t.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/array_t.output"
+    ```
 
 ## Version history
 

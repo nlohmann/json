@@ -1,4 +1,4 @@
-# basic_json::to_bson
+# <small>nlohmann::basic_json::</small>to_bson
 
 ```cpp
 // (1)
@@ -14,6 +14,8 @@ so-called document).
 
 1. Returns a byte vector containing the BSON serialization.
 2. Writes the BSON serialization to an output adapter.
+
+The exact mapping and its limitations is described on a [dedicated page](../../features/binary_formats/bson.md).
 
 ## Parameters
 
@@ -36,7 +38,7 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 
 Linear in the size of the JSON value `j`.
 
-## Example
+## Examples
 
 ??? example
 

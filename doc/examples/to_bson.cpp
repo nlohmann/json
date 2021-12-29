@@ -10,7 +10,7 @@ int main()
     json j = R"({"compact": true, "schema": 0})"_json;
 
     // serialize it to BSON
-    std::vector<uint8_t> v = json::to_bson(j);
+    std::vector<std::uint8_t> v = json::to_bson(j);
 
     // print the vector content
     for (auto& byte : v)
