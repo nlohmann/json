@@ -1,4 +1,4 @@
-# basic_json::is_number_integer
+# <small>nlohmann::basic_json::</small>is_number_integer
 
 ```cpp
 constexpr bool is_number_integer() const noexcept;
@@ -19,7 +19,7 @@ No-throw guarantee: this member function never throws exceptions.
 
 Constant.
 
-## Example
+## Examples
 
 ??? example
 
@@ -34,6 +34,12 @@ Constant.
     ```json
     --8<-- "examples/is_number_integer.output"
     ```
+
+## See also
+
+- [is_number()](is_number.md) check if value is a number
+- [is_number_unsigned()](is_number_unsigned.md) check if value is an unsigned integer number
+- [is_number_float()](is_number_float.md) check if value is a floating-point number
 
 ## Version history
 

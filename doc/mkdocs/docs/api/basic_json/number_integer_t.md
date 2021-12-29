@@ -1,4 +1,4 @@
-# basic_json::number_integer_t
+# <small>nlohmann::basic_json::</small>number_integer_t
 
 ```cpp
 using number_integer_t = NumberIntegerType;
@@ -45,7 +45,7 @@ range will yield over/underflow when used in a constructor. During deserializati
 will be automatically be stored as [`number_unsigned_t`](number_unsigned_t.md) or [`number_float_t`](number_float_t.md).
 
 [RFC 8259](https://tools.ietf.org/html/rfc8259) further states:
-> Note that when such software is used, numbers that are integers and are in the range \f$[-2^{53}+1, 2^{53}-1]\f$ are
+> Note that when such software is used, numbers that are integers and are in the range $[-2^{53}+1, 2^{53}-1]$ are
 > interoperable in the sense that implementations will agree exactly on their numeric values.
 
 As this range is a subrange of the exactly supported range [INT64_MIN, INT64_MAX], this class's integer type is
@@ -54,6 +54,22 @@ interoperable.
 #### Storage
 
 Integer number values are stored directly inside a `basic_json` type.
+
+## Examples
+
+??? example
+
+    The following code shows that `number_integer_t` is by default, a typedef to `#!cpp std::int64_t`.
+     
+    ```cpp
+    --8<-- "examples/number_integer_t.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/number_integer_t.output"
+    ```
 
 ## Version history
 

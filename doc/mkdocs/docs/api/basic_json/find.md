@@ -1,11 +1,11 @@
-# basic_json::find
+# <small>nlohmann::basic_json::</small>find
 
 ```cpp
 template<typename KeyT>
 iterator find(KeyT&& key);
 
 template<typename KeyT>
-const_iterator find(KeyT&& key) const
+const_iterator find(KeyT&& key) const;
 ```
 
 Finds an element in a JSON object with key equivalent to `key`. If the element is not found or the JSON value is not an
@@ -38,7 +38,7 @@ Logarithmic in the size of the JSON object.
 
 This method always returns `end()` when executed on a JSON type that is not an object.
 
-## Example
+## Examples
 
 ??? example
 
@@ -53,6 +53,10 @@ This method always returns `end()` when executed on a JSON type that is not an o
     ```json
     --8<-- "examples/find__key_type.output"
     ```
+
+## See also
+
+- [contains](contains.md) checks whether a key exists
 
 ## Version history
 

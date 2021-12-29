@@ -1,4 +1,4 @@
-# basic_json::count
+# <small>nlohmann::basic_json::</small>count
 
 ```cpp
 template<typename KeyT>
@@ -34,7 +34,7 @@ Logarithmic in the size of the JSON object.
 
 This method always returns `0` when executed on a JSON type that is not an object.
 
-## Example
+## Examples
 
 ??? example
 

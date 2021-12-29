@@ -1,4 +1,4 @@
-# basic_json::binary
+# <small>nlohmann::basic_json::</small>binary
 
 ```cpp
 // (1)
@@ -44,6 +44,22 @@ Note, this function exists because of the difficulty in correctly specifying the
 standard value ctor, as both JSON arrays and JSON binary arrays are backed with some form of a `std::vector`. Because
 JSON binary arrays are a non-standard extension it was decided that it would be best to prevent automatic initialization
 of a binary array type, for backwards compatibility and so it does not happen on accident.
+
+## Examples
+
+??? example
+
+    The following code shows how to create a binary value.
+     
+    ```cpp
+    --8<-- "examples/binary.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/binary.output"
+    ```
 
 ## Version history
 

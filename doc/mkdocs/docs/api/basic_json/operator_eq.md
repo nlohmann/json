@@ -1,4 +1,4 @@
-# basic_json::operator==
+# <small>nlohmann::basic_json::</small>operator==
 
 ```cpp
 bool operator==(const_reference lhs, const_reference rhs) noexcept;
@@ -85,7 +85,7 @@ Linear.
     }
     ```
 
-## Example
+## Examples
 
 ??? example
 
@@ -99,6 +99,20 @@ Linear.
     
     ```json
     --8<-- "examples/operator__equal.output"
+    ```
+
+??? example
+
+    The example demonstrates comparing several JSON types against the null pointer (JSON `#!json null`).
+        
+    ```cpp
+    --8<-- "examples/operator__equal__nullptr_t.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/operator__equal__nullptr_t.output"
     ```
 
 ## Version history

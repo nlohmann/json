@@ -1,4 +1,4 @@
-# basic_json::from_ubjson
+# <small>nlohmann::basic_json::</small>from_ubjson
 
 ```cpp
 // (1)
@@ -17,6 +17,8 @@ Deserializes a given input to a JSON value using the UBJSON (Universal Binary JS
 
 1. Reads from a compatible input.
 2. Reads from an iterator range.
+
+The exact mapping and its limitations is described on a [dedicated page](../../features/binary_formats/ubjson.md).
 
 ## Template parameters
 
@@ -58,11 +60,19 @@ deserialized JSON value; in case of a parse error and `allow_exceptions` set to 
 
 Strong guarantee: if an exception is thrown, there are no changes in the JSON value.
 
+## Exceptions
+
+- Throws [parse_error.110](../../home/exceptions.md#jsonexceptionparse_error110) if the given input ends prematurely or
+  the end of file was not reached when `strict` was set to true
+- Throws [parse_error.112](../../home/exceptions.md#jsonexceptionparse_error112) if a parse error occurs
+- Throws [parse_error.113](../../home/exceptions.md#jsonexceptionparse_error113) if a string could not be parsed 
+  successfully
+
 ## Complexity
 
 Linear in the size of the input.
 
-## Example
+## Examples
 
 ??? example
 
@@ -82,3 +92,15 @@ Linear in the size of the input.
 
 - Added in version 3.1.0.
 - Added `allow_exceptions` parameter in version 3.2.0.
+
+!!! warning "Deprecation"
+
+    - Overload (2) replaces calls to `from_ubjson` with a pointer and a length as first two parameters, which has been
+      deprecated in version 3.8.0. This overload will be removed in version 4.0.0. Please replace all calls like
+      `#!cpp from_ubjson(ptr, len, ...);` with `#!cpp from_ubjson(ptr, ptr+len, ...);`.
+    - Overload (2) replaces calls to `from_ubjson` with a pair of iterators as their first parameter, which has been
+      deprecated in version 3.8.0. This overload will be removed in version 4.0.0. Please replace all calls like
+      `#!cpp from_ubjson({ptr, ptr+len}, ...);` with `#!cpp from_ubjson(ptr, ptr+len, ...);`.
+
+    You should be warned by your compiler with a `-Wdeprecated-declarations` warning if you are using a deprecated
+    function.

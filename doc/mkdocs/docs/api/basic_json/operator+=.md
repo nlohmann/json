@@ -1,4 +1,4 @@
-# basic_json::operator+=
+# <small>nlohmann::basic_json::</small>operator+=
 
 ```cpp
 // (1)
@@ -18,7 +18,7 @@ reference operator+=(initializer_list_t init);
 2. Inserts the given element `val` to the JSON object. If the function is called on a JSON null value, an empty object
    is created before inserting `val`.
 
-3. This function allows to use `operator+=` with an initializer list. In case
+3. This function allows using `operator+=` with an initializer list. In case
 
     1. the current value is an object,
     2. the initializer list `init` contains only two elements, and
@@ -62,7 +62,7 @@ interpreted as `object_t::value_type` or `std::initializer_list<basic_json>`, se
 
 ## Examples
 
-??? example
+??? example "Example: (1) add element to array"
 
     The example shows how `push_back()` and `+=` can be used to add elements to a JSON array. Note how the `null` value
     was silently converted to a JSON array.
@@ -77,7 +77,7 @@ interpreted as `object_t::value_type` or `std::initializer_list<basic_json>`, se
     --8<-- "examples/push_back.output"
     ```
 
-??? example
+??? example "Example: (2) add element to object"
 
     The example shows how `push_back()` and `+=` can be used to add elements to a JSON object. Note how the `null` value
     was silently converted to a JSON object.
@@ -92,7 +92,7 @@ interpreted as `object_t::value_type` or `std::initializer_list<basic_json>`, se
     --8<-- "examples/push_back__object_t__value.output"
     ```
 
-??? example
+??? example "Example: (3) add to object from initializer list"
 
     The example shows how initializer lists are treated as objects when possible.
 

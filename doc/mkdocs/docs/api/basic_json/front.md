@@ -1,4 +1,4 @@
-# basic_json::front
+# <small>nlohmann::basic_json::</small>front
 
 ```cpp
 reference front();
@@ -13,26 +13,26 @@ Returns a reference to the first element in the container. For a JSON container 
 In case of a structured type (array or object), a reference to the first element is returned. In case of number, string,
 boolean, or binary values, a reference to the value is returned.
 
+## Exception safety
+
+Strong guarantee: if an exception is thrown, there are no changes in the JSON value.
+
 ## Exceptions
 
 If the JSON value is `#!json null`, exception
 [`invalid_iterator.214`](../../home/exceptions.md#jsonexceptioninvalid_iterator214) is thrown.
 
-## Exception safety
-
-Strong guarantee: if an exception is thrown, there are no changes in the JSON value.
-
 ## Complexity
 
 Constant.
 
-## Note
+## Notes
 
 !!! danger
 
     Calling `front` on an empty array or object is undefined behavior and is **guarded by an assertion**!
 
-## Example
+## Examples
 
 ??? example
 
@@ -47,6 +47,10 @@ Constant.
     ```json
     --8<-- "examples/front.output"
     ```
+
+## See also
+
+- [back](back.md) to access the last element
 
 ## Version history
 

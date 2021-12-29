@@ -1,4 +1,4 @@
-# basic_json::sax_parse
+# <small>nlohmann::basic_json::</small>sax_parse
 
 ```cpp
 // (1)
@@ -23,10 +23,10 @@ Read from input and generate SAX events
 1. Read from a compatible input.
 2. Read from a pair of character iterators
     
-    The value_type of the iterator must be a integral type with size of 1, 2 or 4 bytes, which will be interpreted
+    The value_type of the iterator must be an integral type with size of 1, 2 or 4 bytes, which will be interpreted
     respectively as UTF-8, UTF-16 and UTF-32.
 
-The SAX event lister must follow the interface of `json_sax`.
+The SAX event lister must follow the interface of [`json_sax`](../json_sax/index.md).
 
 ## Template parameters
 
@@ -107,3 +107,9 @@ A UTF-8 byte order mark is silently ignored.
 
 - Added in version 3.2.0.
 - Ignoring comments via `ignore_comments` added in version 3.9.0.
+
+!!! warning "Deprecation"
+
+    Overload (2) replaces calls to `sax_parse` with a pair of iterators as their first parameter which has been
+    deprecated in version 3.8.0. This overload will be removed in version 4.0.0. Please replace all calls like
+    `#!cpp sax_parse({ptr, ptr+len});` with `#!cpp sax_parse(ptr, ptr+len);`.

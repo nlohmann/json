@@ -1,4 +1,4 @@
-# basic_json::get_binary
+# <small>nlohmann::basic_json::</small>get_binary
 
 ```cpp
 binary_t& get_binary();
@@ -23,6 +23,22 @@ Throws [`type_error.302`](../../home/exceptions.md#jsonexceptiontype_error302) i
 ## Complexity
 
 Constant.
+
+## Examples
+
+??? example
+
+    The following code shows how to query a binary value.
+     
+    ```cpp
+    --8<-- "examples/get_binary.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/get_binary.output"
+    ```
 
 ## Version history
 

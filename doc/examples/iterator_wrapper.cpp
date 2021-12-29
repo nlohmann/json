@@ -9,6 +9,12 @@ int main()
     json j_object = {{"one", 1}, {"two", 2}};
     json j_array = {1, 2, 4, 8, 16};
 
+    //////////////////////////////////////////////////////////////////////////
+    // The static function iterator_wrapper was deprecated in version 3.1.0
+    // and will be removed in version 4.0.0. Please replace all occurrences
+    // of iterator_wrapper(j) with j.items().
+    //////////////////////////////////////////////////////////////////////////
+
     // example for an object
     for (auto& x : json::iterator_wrapper(j_object))
     {
