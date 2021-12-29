@@ -112,7 +112,7 @@ class byte_container_with_subtype : public BinaryType
     */
     constexpr subtype_type subtype() const noexcept
     {
-        return m_has_subtype ? m_subtype : subtype_type(-1);
+        return m_has_subtype ? m_subtype : static_cast<subtype_type>(-1);
     }
 
     /*!
