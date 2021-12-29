@@ -104,7 +104,7 @@ jobs:
 
   ci_icpc:
     runs-on: ubuntu-latest
-    container: ghcr.io/nlohmann/json-ci:v2.1.0
+    container: ghcr.io/nlohmann/json-ci:v2.2.0
     steps:
       - uses: actions/checkout@v2
       - name: cmake
