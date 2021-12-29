@@ -836,6 +836,18 @@ foreach(COMPILER g++-4.8 g++-4.9 g++-5 g++-6 g++-7 g++-8 g++-9 g++-10 clang++-3.
 endforeach()
 
 ###############################################################################
+# CUDA example
+###############################################################################
+
+add_custom_target(ci_cuda_example
+    COMMAND ${CMAKE_COMMAND}
+        -DCMAKE_BUILD_TYPE=Debug -GNinja
+        -DCMAKE_CUDA_HOST_COMPILER=g++-8
+        -S${PROJECT_SOURCE_DIR}/test/cuda_example -B${PROJECT_BINARY_DIR}/build_cuda_example
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_cuda_example
+)
+
+###############################################################################
 # Clean up all generated files.
 ###############################################################################
 
