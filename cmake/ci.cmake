@@ -840,7 +840,6 @@ endforeach()
 ###############################################################################
 
 add_custom_target(ci_icpc
-    COMMAND . /opt/intel/oneapi/setvars.sh
     COMMAND ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=Debug -GNinja
         -DCMAKE_C_COMPILER=icc -DCMAKE_CXX_COMPILER=icpc

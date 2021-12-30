@@ -107,6 +107,8 @@ jobs:
     container: ghcr.io/nlohmann/json-ci:v2.2.0
     steps:
       - uses: actions/checkout@v2
+      - name: environment
+        run:  source /opt/intel/oneapi/setvars.sh
       - name: cmake
         run: cmake -S . -B build -DJSON_CI=On
       - name: build
