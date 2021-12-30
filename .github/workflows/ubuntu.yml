@@ -108,7 +108,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: environment
-        run:  source /opt/intel/oneapi/setvars.sh
+        run:  . /opt/intel/oneapi/setvars.sh
       - name: cmake
         run: cmake -S . -B build -DJSON_CI=On
       - name: build
