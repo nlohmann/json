@@ -1192,19 +1192,19 @@ TEST_CASE("value conversion")
         SECTION("number_float_t")
         {
             auto n = j.get<json::number_float_t>();
-            CHECK(json(n).m_value.number_float == Approx(j.m_value.number_float));
+            CHECK(json(n).m_value.number_float == Catch::Approx(j.m_value.number_float));
         }
 
         SECTION("float")
         {
             auto n = j.get<float>();
-            CHECK(json(n).m_value.number_float == Approx(j.m_value.number_float));
+            CHECK(json(n).m_value.number_float == Catch::Approx(j.m_value.number_float));
         }
 
         SECTION("double")
         {
             auto n = j.get<double>();
-            CHECK(json(n).m_value.number_float == Approx(j.m_value.number_float));
+            CHECK(json(n).m_value.number_float == Catch::Approx(j.m_value.number_float));
         }
 
         SECTION("exception in case of a non-string type")
@@ -1253,19 +1253,19 @@ TEST_CASE("value conversion")
         SECTION("number_float_t")
         {
             json::number_float_t n = j;
-            CHECK(json(n).m_value.number_float == Approx(j.m_value.number_float));
+            CHECK(json(n).m_value.number_float == Catch::Approx(j.m_value.number_float));
         }
 
         SECTION("float")
         {
             float n = j;
-            CHECK(json(n).m_value.number_float == Approx(j.m_value.number_float));
+            CHECK(json(n).m_value.number_float == Catch::Approx(j.m_value.number_float));
         }
 
         SECTION("double")
         {
             double n = j;
-            CHECK(json(n).m_value.number_float == Approx(j.m_value.number_float));
+            CHECK(json(n).m_value.number_float == Catch::Approx(j.m_value.number_float));
         }
     }
 #endif

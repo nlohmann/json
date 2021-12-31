@@ -43,10 +43,10 @@ using nlohmann::json;
 #include <iomanip>
 
 // local variable is initialized but not referenced
-DOCTEST_MSVC_SUPPRESS_WARNING_PUSH
-DOCTEST_MSVC_SUPPRESS_WARNING(4189)
+//DOCTEST_MSVC_SUPPRESS_WARNING_PUSH
+//DOCTEST_MSVC_SUPPRESS_WARNING(4189)
 
-TEST_CASE("README" * doctest::skip())
+TEST_CASE("README", "[.]")
 {
     {
         // redirect std::cout for the README file
@@ -320,4 +320,4 @@ TEST_CASE("README" * doctest::skip())
     }
 }
 
-DOCTEST_MSVC_SUPPRESS_WARNING_POP
+//DOCTEST_MSVC_SUPPRESS_WARNING_POP

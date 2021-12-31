@@ -344,9 +344,9 @@ TEST_CASE("JSON patch")
             // check that evaluation throws
             CHECK_THROWS_AS(doc.patch(patch), json::other_error);
 #if JSON_DIAGNOSTICS
-            CHECK_THROWS_WITH_STD_STR(doc.patch(patch), "[json.exception.other_error.501] (/0) unsuccessful: " + patch[0].dump());
+            CHECK_THROWS_WITH(doc.patch(patch), "[json.exception.other_error.501] (/0) unsuccessful: " + patch[0].dump());
 #else
-            CHECK_THROWS_WITH_STD_STR(doc.patch(patch), "[json.exception.other_error.501] unsuccessful: " + patch[0].dump());
+            CHECK_THROWS_WITH(doc.patch(patch), "[json.exception.other_error.501] unsuccessful: " + patch[0].dump());
 #endif
         }
 
@@ -489,9 +489,9 @@ TEST_CASE("JSON patch")
             // check that evaluation throws
             CHECK_THROWS_AS(doc.patch(patch), json::other_error);
 #if JSON_DIAGNOSTICS
-            CHECK_THROWS_WITH_STD_STR(doc.patch(patch), "[json.exception.other_error.501] (/0) unsuccessful: " + patch[0].dump());
+            CHECK_THROWS_WITH(doc.patch(patch), "[json.exception.other_error.501] (/0) unsuccessful: " + patch[0].dump());
 #else
-            CHECK_THROWS_WITH_STD_STR(doc.patch(patch), "[json.exception.other_error.501] unsuccessful: " + patch[0].dump());
+            CHECK_THROWS_WITH(doc.patch(patch), "[json.exception.other_error.501] unsuccessful: " + patch[0].dump());
 #endif
         }
 
@@ -1261,9 +1261,9 @@ TEST_CASE("JSON patch")
                 // the test will fail
                 CHECK_THROWS_AS(doc.patch(patch), json::other_error);
 #if JSON_DIAGNOSTICS
-                CHECK_THROWS_WITH_STD_STR(doc.patch(patch), "[json.exception.other_error.501] (/0) unsuccessful: " + patch[0].dump());
+                CHECK_THROWS_WITH(doc.patch(patch), "[json.exception.other_error.501] (/0) unsuccessful: " + patch[0].dump());
 #else
-                CHECK_THROWS_WITH_STD_STR(doc.patch(patch), "[json.exception.other_error.501] unsuccessful: " + patch[0].dump());
+                CHECK_THROWS_WITH(doc.patch(patch), "[json.exception.other_error.501] unsuccessful: " + patch[0].dump());
 #endif
             }
         }
@@ -1345,13 +1345,13 @@ TEST_CASE("JSON patch")
                     TEST_DATA_DIRECTORY "/json-patch-tests/tests.json"
                 })
         {
-            CAPTURE(filename)
+            CAPTURE(filename);
             std::ifstream f(filename);
             json suite = json::parse(f);
 
             for (const auto& test : suite)
             {
-                INFO_WITH_TEMP(test.value("comment", ""));
+                CAPTURE(test.value("comment", ""));
 
                 // skip tests marked as disabled
                 if (test.value("disabled", false))

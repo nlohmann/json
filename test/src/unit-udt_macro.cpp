@@ -257,71 +257,71 @@ TEMPLATE_TEST_CASE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRU
     }
 }
 
-TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/private member variables via NLOHMANN_DEFINE_TYPE_INTRUSIVE and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE", T,
+TEMPLATE_TEST_CASE("Serialization/deserialization of classes with 26 public/private member variables via NLOHMANN_DEFINE_TYPE_INTRUSIVE and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE", "",
                    persons::person_with_private_alphabet,
                    persons::person_with_public_alphabet)
 {
     SECTION("alphabet")
     {
         {
-            T obj1;
+            TestType obj1;
             nlohmann::json j = obj1; //via json object
-            T obj2;
+            TestType obj2;
             j.get_to(obj2);
             bool ok = (obj1 == obj2);
             CHECK(ok);
         }
 
         {
-            T obj1;
+            TestType obj1;
             nlohmann::json j1 = obj1; //via json string
             std::string s = j1.dump();
             nlohmann::json j2 = nlohmann::json::parse(s);
-            T obj2;
+            TestType obj2;
             j2.get_to(obj2);
             bool ok = (obj1 == obj2);
             CHECK(ok);
         }
 
         {
-            T obj1;
+            TestType obj1;
             nlohmann::json j1 = obj1; //via msgpack
             std::vector<uint8_t> buf = nlohmann::json::to_msgpack(j1);
             nlohmann::json j2 = nlohmann::json::from_msgpack(buf);
-            T obj2;
+            TestType obj2;
             j2.get_to(obj2);
             bool ok = (obj1 == obj2);
             CHECK(ok);
         }
 
         {
-            T obj1;
+            TestType obj1;
             nlohmann::json j1 = obj1; //via bson
             std::vector<uint8_t> buf = nlohmann::json::to_bson(j1);
             nlohmann::json j2 = nlohmann::json::from_bson(buf);
-            T obj2;
+            TestType obj2;
             j2.get_to(obj2);
             bool ok = (obj1 == obj2);
             CHECK(ok);
         }
 
         {
-            T obj1;
+            TestType obj1;
             nlohmann::json j1 = obj1; //via cbor
             std::vector<uint8_t> buf = nlohmann::json::to_cbor(j1);
             nlohmann::json j2 = nlohmann::json::from_cbor(buf);
-            T obj2;
+            TestType obj2;
             j2.get_to(obj2);
             bool ok = (obj1 == obj2);
             CHECK(ok);
         }
 
         {
-            T obj1;
+            TestType obj1;
             nlohmann::json j1 = obj1; //via ubjson
             std::vector<uint8_t> buf = nlohmann::json::to_ubjson(j1);
             nlohmann::json j2 = nlohmann::json::from_ubjson(buf);
-            T obj2;
+            TestType obj2;
             j2.get_to(obj2);
             bool ok = (obj1 == obj2);
             CHECK(ok);

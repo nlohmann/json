@@ -131,7 +131,7 @@ TEST_CASE("compliance tests from nativejson-benchmark")
         {
             CAPTURE(json_string);
             CAPTURE(expected);
-            CHECK(json::parse(json_string)[0].get<double>() == Approx(expected));
+            CHECK(json::parse(json_string)[0].get<double>() == Catch::Approx(expected));
         };
 
         TEST_DOUBLE("[0.0]", 0.0);
@@ -261,8 +261,8 @@ TEST_CASE("compliance tests from nativejson-benchmark")
     {
         auto TEST_STRING = [](const std::string & json_string, const std::string & expected)
         {
-            CAPTURE(json_string)
-            CAPTURE(expected)
+            CAPTURE(json_string);
+            CAPTURE(expected);
             CHECK(json::parse(json_string)[0].get<std::string>() == expected);
         };
 
@@ -317,12 +317,12 @@ TEST_CASE("compliance tests from nativejson-benchmark")
                     //TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip32.json" // same as roundtrip31
                 })
         {
-            CAPTURE(filename)
+            CAPTURE(filename);
             std::ifstream f(filename);
             std::string json_string( (std::istreambuf_iterator<char>(f) ),
                                      (std::istreambuf_iterator<char>()) );
 
-            CAPTURE(json_string)
+            CAPTURE(json_string);
             json j = json::parse(json_string);
             CHECK(j.dump() == json_string);
         }
@@ -597,7 +597,7 @@ TEST_CASE("nst's JSONTestSuite")
                     }
                 )
             {
-                CAPTURE(filename)
+                CAPTURE(filename);
                 std::ifstream f(filename);
                 json j;
                 CHECK_NOTHROW(f >> j);
@@ -806,7 +806,7 @@ TEST_CASE("nst's JSONTestSuite")
                     }
                 )
             {
-                CAPTURE(filename)
+                CAPTURE(filename);
                 std::ifstream f(filename);
                 json _;
                 CHECK_THROWS_AS(_ = json::parse(f), json::parse_error);
@@ -839,7 +839,7 @@ TEST_CASE("nst's JSONTestSuite")
                     }
                 )
             {
-                CAPTURE(filename)
+                CAPTURE(filename);
                 std::ifstream f(filename);
                 json j;
                 CHECK_NOTHROW(f >> j);
@@ -862,7 +862,7 @@ TEST_CASE("nst's JSONTestSuite")
                     }
                 )
             {
-                CAPTURE(filename)
+                CAPTURE(filename);
                 std::ifstream f(filename);
                 json j;
                 CHECK_NOTHROW(f >> j);
@@ -882,7 +882,7 @@ TEST_CASE("nst's JSONTestSuite")
                     }
                 )
             {
-                CAPTURE(filename)
+                CAPTURE(filename);
                 std::ifstream f(filename);
                 json j;
                 CHECK_THROWS_AS(f >> j, json::out_of_range);
@@ -909,7 +909,7 @@ TEST_CASE("nst's JSONTestSuite")
                     }
                 )
             {
-                CAPTURE(filename)
+                CAPTURE(filename);
                 std::ifstream f(filename);
                 json j;
                 CHECK_THROWS_AS(f >> j, json::parse_error);
@@ -1024,7 +1024,7 @@ TEST_CASE("nst's JSONTestSuite (2)")
                     }
                 )
             {
-                CAPTURE(filename)
+                CAPTURE(filename);
                 std::ifstream f(filename);
                 json _;
                 CHECK_NOTHROW(_ = json::parse(f));
@@ -1226,7 +1226,7 @@ TEST_CASE("nst's JSONTestSuite (2)")
                     }
                 )
             {
-                CAPTURE(filename)
+                CAPTURE(filename);
                 std::ifstream f(filename);
                 json _;
                 CHECK_THROWS_AS(_ = json::parse(f), json::parse_error);
@@ -1244,7 +1244,7 @@ TEST_CASE("nst's JSONTestSuite (2)")
                     }
                 )
             {
-                CAPTURE(filename)
+                CAPTURE(filename);
                 std::ifstream f(filename);
                 CHECK(!json::accept(f));
             }
@@ -1292,7 +1292,7 @@ TEST_CASE("nst's JSONTestSuite (2)")
                     }
                 )
             {
-                CAPTURE(filename)
+                CAPTURE(filename);
                 std::ifstream f(filename);
                 json _;
                 CHECK_NOTHROW(_ = json::parse(f));
@@ -1404,7 +1404,7 @@ TEST_CASE("Big List of Naughty Strings")
             }
 
             // check roundtrip
-            CAPTURE(line)
+            CAPTURE(line);
             json j = json::parse(line);
             CHECK(j.dump() == line);
         }

@@ -242,7 +242,7 @@ static void from_json(const nlohmann::json& j, contact_book& cb)
 }
 } // namespace udt
 
-TEST_CASE("basic usage" * doctest::test_suite("udt"))
+TEST_CASE("basic usage", "[udt]")
 {
 
     // a bit narcissistic maybe :) ?
@@ -400,7 +400,7 @@ struct adl_serializer<udt::legacy_type>
 };
 } // namespace nlohmann
 
-TEST_CASE("adl_serializer specialization" * doctest::test_suite("udt"))
+TEST_CASE("adl_serializer specialization", "[udt]")
 {
     SECTION("partial specialization")
     {
@@ -476,7 +476,7 @@ struct adl_serializer<std::vector<float>>
 };
 } // namespace nlohmann
 
-TEST_CASE("even supported types can be specialized" * doctest::test_suite("udt"))
+TEST_CASE("even supported types can be specialized", "[udt]")
 {
     json j = std::vector<float> {1.0, 2.0, 3.0};
     CHECK(j.dump() == R"("hijacked!")");
@@ -515,7 +515,7 @@ struct adl_serializer<std::unique_ptr<T>>
 };
 } // namespace nlohmann
 
-TEST_CASE("Non-copyable types" * doctest::test_suite("udt"))
+TEST_CASE("Non-copyable types", "[udt]")
 {
     SECTION("to_json")
     {
@@ -656,7 +656,7 @@ static std::ostream& operator<<(std::ostream& os, small_pod l)
 }
 } // namespace udt
 
-TEST_CASE("custom serializer for pods" * doctest::test_suite("udt"))
+TEST_CASE("custom serializer for pods", "[udt]")
 {
     using custom_json =
         nlohmann::basic_json<std::map, std::vector, std::string, bool,
@@ -696,7 +696,7 @@ struct another_adl_serializer
     }
 };
 
-TEST_CASE("custom serializer that does adl by default" * doctest::test_suite("udt"))
+TEST_CASE("custom serializer that does adl by default", "[udt]")
 {
     auto me = udt::person{{23}, {"theo"}, udt::country::france};
 
@@ -808,7 +808,7 @@ template <typename T>
 struct is_constructible_patched<T, decltype(void(json(std::declval<T>())))> : std::true_type {};
 } // namespace
 
-TEST_CASE("an incomplete type does not trigger a compiler error in non-evaluated context" * doctest::test_suite("udt"))
+TEST_CASE("an incomplete type does not trigger a compiler error in non-evaluated context", "[udt]")
 {
     static_assert(!is_constructible_patched<json, incomplete>::value, "");
 }

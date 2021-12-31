@@ -390,15 +390,15 @@ TEST_CASE("pointer access")
         // check if pointers are returned correctly
         test_type* p1 = value.get_ptr<test_type*>();
         CHECK(p1 == value.get_ptr<test_type*>());
-        CHECK(*p1 == Approx(value.get<test_type>()));
+        CHECK(*p1 == Catch::Approx(value.get<test_type>()));
 
         const test_type* p2 = value.get_ptr<const test_type*>();
         CHECK(p2 == value.get_ptr<const test_type*>());
-        CHECK(*p2 == Approx(value.get<test_type>()));
+        CHECK(*p2 == Catch::Approx(value.get<test_type>()));
 
         const test_type* const p3 = value.get_ptr<const test_type* const>();
         CHECK(p3 == value.get_ptr<const test_type* const>());
-        CHECK(*p3 == Approx(value.get<test_type>()));
+        CHECK(*p3 == Catch::Approx(value.get<test_type>()));
 
         // check if null pointers are returned correctly
         CHECK(value.get_ptr<json::object_t*>() == nullptr);
@@ -419,15 +419,15 @@ TEST_CASE("pointer access")
         // check if pointers are returned correctly
         test_type* p1 = value.get_ptr<test_type*>();
         CHECK(p1 == value.get_ptr<test_type*>());
-        CHECK(*p1 == Approx(value.get<test_type>()));
+        CHECK(*p1 == Catch::Approx(value.get<test_type>()));
 
         const test_type* p2 = value.get_ptr<const test_type*>();
         CHECK(p2 == value.get_ptr<const test_type*>());
-        CHECK(*p2 == Approx(value.get<test_type>()));
+        CHECK(*p2 == Catch::Approx(value.get<test_type>()));
 
         const test_type* const p3 = value.get_ptr<const test_type* const>();
         CHECK(p3 == value.get_ptr<const test_type* const>());
-        CHECK(*p3 == Approx(value.get<test_type>()));
+        CHECK(*p3 == Catch::Approx(value.get<test_type>()));
 
         // check if null pointers are returned correctly
         CHECK(value.get_ptr<const json::object_t*>() == nullptr);

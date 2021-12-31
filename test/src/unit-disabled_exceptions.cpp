@@ -69,4 +69,4 @@ TEST_CASE("Tests with disabled exceptions")
     }
 }
 
-DOCTEST_GCC_SUPPRESS_WARNING_POP
+//DOCTEST_GCC_SUPPRESS_WARNING_POP

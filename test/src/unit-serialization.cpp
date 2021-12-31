@@ -190,18 +190,18 @@ TEST_CASE("serialization")
     }
 }
 
-TEST_CASE_TEMPLATE("serialization for extreme integer values", T, int32_t, uint32_t, int64_t, uint64_t)
+TEMPLATE_TEST_CASE("serialization for extreme integer values", "", int32_t, uint32_t, int64_t, uint64_t)
 {
     SECTION("minimum")
     {
-        constexpr auto minimum = (std::numeric_limits<T>::min)();
+        constexpr auto minimum = (std::numeric_limits<TestType>::min)();
         json j = minimum;
         CHECK(j.dump() == std::to_string(minimum));
     }
 
     SECTION("maximum")
     {
-        constexpr auto maximum = (std::numeric_limits<T>::max)();
+        constexpr auto maximum = (std::numeric_limits<TestType>::max)();
         json j = maximum;
         CHECK(j.dump() == std::to_string(maximum));
     }

@@ -1172,7 +1172,7 @@ TEST_CASE("parser class")
                     // only check error message if c is not a control character
                     if (c > 0x1f)
                     {
-                        CHECK_THROWS_WITH_STD_STR(parser_helper(s),
+                        CHECK_THROWS_WITH(parser_helper(s),
                                                   "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid string: forbidden character after backslash; last read: '\"\\" + std::string(1, static_cast<char>(c)) + "'");
                     }
                     break;
@@ -1232,50 +1232,50 @@ TEST_CASE("parser class")
 
                 if (valid(c))
                 {
-                    CAPTURE(s1)
+                    CAPTURE(s1);
                     CHECK_NOTHROW(parser_helper(s1));
-                    CAPTURE(s2)
+                    CAPTURE(s2);
                     CHECK_NOTHROW(parser_helper(s2));
-                    CAPTURE(s3)
+                    CAPTURE(s3);
                     CHECK_NOTHROW(parser_helper(s3));
-                    CAPTURE(s4)
+                    CAPTURE(s4);
                     CHECK_NOTHROW(parser_helper(s4));
                 }
                 else
                 {
-                    CAPTURE(s1)
+                    CAPTURE(s1);
                     CHECK_THROWS_AS(parser_helper(s1), json::parse_error);
                     // only check error message if c is not a control character
                     if (c > 0x1f)
                     {
-                        CHECK_THROWS_WITH_STD_STR(parser_helper(s1),
+                        CHECK_THROWS_WITH(parser_helper(s1),
                                                   "[json.exception.parse_error.101] parse error at line 1, column 7: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '" + s1.substr(0, 7) + "'");
                     }
 
-                    CAPTURE(s2)
+                    CAPTURE(s2);
                     CHECK_THROWS_AS(parser_helper(s2), json::parse_error);
                     // only check error message if c is not a control character
                     if (c > 0x1f)
                     {
-                        CHECK_THROWS_WITH_STD_STR(parser_helper(s2),
+                        CHECK_THROWS_WITH(parser_helper(s2),
                                                   "[json.exception.parse_error.101] parse error at line 1, column 6: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '" + s2.substr(0, 6) + "'");
                     }
 
-                    CAPTURE(s3)
+                    CAPTURE(s3);
                     CHECK_THROWS_AS(parser_helper(s3), json::parse_error);
                     // only check error message if c is not a control character
                     if (c > 0x1f)
                     {
-                        CHECK_THROWS_WITH_STD_STR(parser_helper(s3),
+                        CHECK_THROWS_WITH(parser_helper(s3),
                                                   "[json.exception.parse_error.101] parse error at line 1, column 5: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '" + s3.substr(0, 5) + "'");
                     }
 
-                    CAPTURE(s4)
+                    CAPTURE(s4);
                     CHECK_THROWS_AS(parser_helper(s4), json::parse_error);
                     // only check error message if c is not a control character
                     if (c > 0x1f)
                     {
-                        CHECK_THROWS_WITH_STD_STR(parser_helper(s4),
+                        CHECK_THROWS_WITH(parser_helper(s4),
                                                   "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '" + s4.substr(0, 4) + "'");
                     }
                 }
@@ -1452,27 +1452,27 @@ TEST_CASE("parser class")
 
                 if (valid(c))
                 {
-                    CAPTURE(s1)
+                    CAPTURE(s1);
                     CHECK(json::parser(nlohmann::detail::input_adapter(s1)).accept());
-                    CAPTURE(s2)
+                    CAPTURE(s2);
                     CHECK(json::parser(nlohmann::detail::input_adapter(s2)).accept());
-                    CAPTURE(s3)
+                    CAPTURE(s3);
                     CHECK(json::parser(nlohmann::detail::input_adapter(s3)).accept());
-                    CAPTURE(s4)
+                    CAPTURE(s4);
                     CHECK(json::parser(nlohmann::detail::input_adapter(s4)).accept());
                 }
                 else
                 {
-                    CAPTURE(s1)
+                    CAPTURE(s1);
                     CHECK(json::parser(nlohmann::detail::input_adapter(s1)).accept() == false);
 
-                    CAPTURE(s2)
+                    CAPTURE(s2);
                     CHECK(json::parser(nlohmann::detail::input_adapter(s2)).accept() == false);
 
-                    CAPTURE(s3)
+                    CAPTURE(s3);
                     CHECK(json::parser(nlohmann::detail::input_adapter(s3)).accept() == false);
 
-                    CAPTURE(s4)
+                    CAPTURE(s4);
                     CHECK(json::parser(nlohmann::detail::input_adapter(s4)).accept() == false);
                 }
             }
