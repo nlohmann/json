@@ -1,8 +1,8 @@
-# basic_json::get_ptr
+# <small>nlohmann::basic_json::</small>get_ptr
 
 ```cpp
 template<typename PointerType>
-PointerType get_ptr();
+PointerType get_ptr() noexcept;
 
 template<typename PointerType>
 constexpr const PointerType get_ptr() const noexcept;
@@ -10,7 +10,7 @@ constexpr const PointerType get_ptr() const noexcept;
 
 Implicit pointer access to the internally stored JSON value. No copies are made.
 
-## Template arguments
+## Template parameters
 
 `PointerType`
 :   pointer type; must be a pointer to [`array_t`](array_t.md), [`object_t`](object_t.md), [`string_t`](string_t.md),
@@ -25,7 +25,7 @@ otherwise
 
 ## Exception safety
 
-Strong exception safety: if an exception occurs, the original value stays intact.
+No-throw guarantee: this function never throws exceptions.
 
 ## Complexity
 
@@ -37,7 +37,7 @@ Constant.
 
     Writing data to the pointee of the result yields an undefined state.
 
-## Example
+## Examples
 
 ??? example
 

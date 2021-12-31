@@ -1,4 +1,4 @@
-# basic_json::cend
+# <small>nlohmann::basic_json::</small>cend
 
 ```cpp
 const_iterator cend() const noexcept;
@@ -20,7 +20,7 @@ No-throw guarantee: this member function never throws exceptions.
 
 Constant.
 
-## Example
+## Examples
 
 ??? example
 

@@ -1,4 +1,4 @@
-# basic_json::binary_t
+# <small>nlohmann::basic_json::</small>binary_t
 
 ```cpp
 using binary_t = byte_container_with_subtype<BinaryType>;
@@ -8,9 +8,10 @@ This type is a type designed to carry binary data that appears in various serial
 2, MessagePack's bin, and BSON's generic binary subtype. This type is NOT a part of standard JSON and exists solely for
 compatibility with these binary types. As such, it is simply defined as an ordered sequence of zero or more byte values.
 
-Additionally, as an implementation detail, the subtype of the binary data is carried around as a `std::uint8_t`, which
+Additionally, as an implementation detail, the subtype of the binary data is carried around as a `std::uint64_t`, which
 is compatible with both of the binary data formats that use binary subtyping, (though the specific numbering is
-incompatible with each other, and it is up to the user to translate between them).
+incompatible with each other, and it is up to the user to translate between them). The subtype is added to `BinaryType`
+via the helper type [byte_container_with_subtype](../byte_container_with_subtype/index.md).
 
 [CBOR's RFC 7049](https://tools.ietf.org/html/rfc7049) describes this type as:
 > Major type 2: a byte string. The string's length in bytes is represented following the rules for positive integers
@@ -18,7 +19,7 @@ incompatible with each other, and it is up to the user to translate between them
 
 [MessagePack's documentation on the bin type
 family](https://github.com/msgpack/msgpack/blob/master/spec.md#bin-format-family) describes this type as:
-> Bin format family stores an byte array in 2, 3, or 5 bytes of extra bytes in addition to the size of the byte array.
+> Bin format family stores a byte array in 2, 3, or 5 bytes of extra bytes in addition to the size of the byte array.
 
 [BSON's specifications](http://bsonspec.org/spec.html) describe several binary types; however, this type is intended to
 represent the generic binary type which has the description:
@@ -55,12 +56,33 @@ type `#!cpp binary_t*` must be dereferenced.
 - MessagePack
     - If a subtype is given and the binary array contains exactly 1, 2, 4, 8, or 16 elements, the fixext family (fixext1,
       fixext2, fixext4, fixext8) is used. For other sizes, the ext family (ext8, ext16, ext32) is used. The subtype is
-      then added as singed 8-bit integer.
+      then added as signed 8-bit integer.
     - If no subtype is given, the bin family (bin8, bin16, bin32) is used.
 
 - BSON
     - If a subtype is given, it is used and added as unsigned 8-bit integer.
     - If no subtype is given, the generic binary subtype 0x00 is used.
+
+## Examples
+
+??? example
+
+    The following code shows that `binary_t` is by default, a typedef to
+    `#!cpp nlohmann::byte_container_with_subtype<std::vector<std::uint8_t>>`.
+     
+    ```cpp
+    --8<-- "examples/binary_t.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/binary_t.output"
+    ```
+
+## See also
+
+- [byte_container_with_subtype](../byte_container_with_subtype/index.md)
 
 ## Version history
 

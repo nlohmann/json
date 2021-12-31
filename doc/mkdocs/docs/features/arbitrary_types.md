@@ -87,8 +87,8 @@ If you just want to serialize/deserialize some structs, the `to_json`/`from_json
 
 There are two macros to make your life easier as long as you (1) want to use a JSON object as serialization and (2) want to use the member variable names as object keys in that object:
 
-- `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(name, member1, member2, ...)` is to be defined inside of the namespace of the class/struct to create code for.
-- `NLOHMANN_DEFINE_TYPE_INTRUSIVE(name, member1, member2, ...)` is to be defined inside of the class/struct to create code for. This macro can also access private members.
+- `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(name, member1, member2, ...)` is to be defined inside the namespace of the class/struct to create code for.
+- `NLOHMANN_DEFINE_TYPE_INTRUSIVE(name, member1, member2, ...)` is to be defined inside the class/struct to create code for. This macro can also access private members.
 
 In both macros, the first parameter is the name of the class/struct, and all remaining parameters name the members.
 
@@ -197,7 +197,7 @@ namespace nlohmann {
             return {j.get<int>()};
         }
 
-        // Here's the catch! You must provide a to_json method! Otherwise you
+        // Here's the catch! You must provide a to_json method! Otherwise, you
         // will not be able to convert move_only_type to json, since you fully
         // specialized adl_serializer on that type
         static void to_json(json& j, move_only_type t) {

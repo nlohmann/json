@@ -25,7 +25,7 @@ However, you can pass set parameter `ignore_comments` to `#!c true` in the parse
     }
     ```
     
-    When calling `parse` without additional argument, a parse error exception is thrown. If `skip_comments` is set to `#! true`, the comments are skipped during parsing:
+    When calling `parse` without additional argument, a parse error exception is thrown. If `ignore_comments` is set to `#! true`, the comments are ignored during parsing:
 
     ```cpp
     #include <iostream>
@@ -55,7 +55,7 @@ However, you can pass set parameter `ignore_comments` to `#!c true` in the parse
         json j = json::parse(s,
                              /* callback */ nullptr,
                              /* allow exceptions */ true,
-                             /* skip_comments */ true);
+                             /* ignore_comments */ true);
         std::cout << j.dump(2) << '\n';
     }
     ```

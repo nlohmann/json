@@ -52,6 +52,21 @@ endif()
 # one executable for each unit test file
 #############################################################################
 
+# check if compiler supports C++17
+foreach(feature ${CMAKE_CXX_COMPILE_FEATURES})
+    if (${feature} STREQUAL cxx_std_17)
+        set(compiler_supports_cpp_17 TRUE)
+    endif()
+endforeach()
+# Clang only supports C++17 starting from Clang 5.0
+if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 5.0)
+    unset(compiler_supports_cpp_17)
+endif()
+# MSVC 2015 (14.0) does not support C++17
+if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 19.1)
+    unset(compiler_supports_cpp_17)
+endif()
+
 file(GLOB files src/unit-*.cpp)
 
 foreach(file ${files})
@@ -67,6 +82,42 @@ foreach(file ${files})
     )
     target_include_directories(${testcase} PRIVATE ${CMAKE_BINARY_DIR}/include thirdparty/doctest thirdparty/fifo_map)
     target_link_libraries(${testcase} PRIVATE ${NLOHMANN_JSON_TARGET_NAME})
+
+    # add a copy with C++17 compilation
+    if (compiler_supports_cpp_17)
+        file(READ ${file} FILE_CONTENT)
+        string(FIND "${FILE_CONTENT}" "JSON_HAS_CPP_17" CPP_17_FOUND)
+        if(NOT ${CPP_17_FOUND} EQUAL -1)
+            add_executable(${testcase}_cpp17 $<TARGET_OBJECTS:doctest_main> ${file})
+            target_compile_definitions(${testcase}_cpp17 PRIVATE DOCTEST_CONFIG_SUPER_FAST_ASSERTS)
+            target_compile_options(${testcase}_cpp17 PRIVATE
+                $<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>
+                $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wno-deprecated;-Wno-float-equal>
+                $<$<CXX_COMPILER_ID:GNU>:-Wno-deprecated-declarations>
+            )
+            target_include_directories(${testcase}_cpp17 PRIVATE ${CMAKE_BINARY_DIR}/include thirdparty/doctest thirdparty/fifo_map)
+            target_link_libraries(${testcase}_cpp17 PRIVATE ${NLOHMANN_JSON_TARGET_NAME})
+            target_compile_features(${testcase}_cpp17 PRIVATE cxx_std_17)
+
+            if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 8.0 AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0 AND NOT MINGW)
+                # fix for https://gcc.gnu.org/bugzilla/show_bug.cgi?id=90050
+                target_link_libraries(${testcase}_cpp17 PRIVATE stdc++fs)
+            endif()
+
+            if (JSON_FastTests)
+                add_test(NAME "${testcase}_cpp17"
+                    COMMAND ${testcase}_cpp17 ${DOCTEST_TEST_FILTER}
+                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+                )
+            else()
+                add_test(NAME "${testcase}_cpp17"
+                    COMMAND ${testcase}_cpp17 ${DOCTEST_TEST_FILTER} --no-skip
+                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+                )
+            endif()
+            set_tests_properties("${testcase}_cpp17" PROPERTIES LABELS "all" FIXTURES_REQUIRED TEST_DATA)
+        endif()
+    endif()
 
     if (JSON_FastTests)
         add_test(NAME "${testcase}"

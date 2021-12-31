@@ -1,4 +1,4 @@
-# basic_json::exception
+# <small>nlohmann::basic_json::</small>exception
 
 ```cpp
 class exception : public std::exception;
@@ -44,7 +44,13 @@ Subclasses:
 
 - **id** - the id of the exception
 
-## Example
+## Notes
+
+To have nothrow-copy-constructible exceptions, we internally use `std::runtime_error` which can cope with
+arbitrary-length error messages. Intermediate strings are built with static functions and then passed to the actual
+constructor.
+
+## Examples
 
 ??? example
 
@@ -59,6 +65,10 @@ Subclasses:
     ```json
     --8<-- "examples/exception.output"
     ```
+
+## See also
+
+[List of exceptions](127.0.0.1:8000/home/exceptions/)
 
 ## Version history
 

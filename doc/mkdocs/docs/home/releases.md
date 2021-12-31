@@ -468,7 +468,7 @@ This release further fixes several bugs in the library. All changes are backward
 - allow compare user-defined string types (#1130)
 - better support for algorithms using iterators from `items()` (#1045, #1134)
 - added parameter to avoid compilation error with MSVC 2015 debug builds (#1114)
-- re-added accidentially skipped unit tests (#1176)
+- re-added accidentally skipped unit tests (#1176)
 - fixed MSVC issue with `std::swap` (#1168)
 
 ### :zap: Improvements
@@ -1008,7 +1008,7 @@ This release fixes a few bugs in the JSON parser found in the [Parsing JSON is a
 This release fixes the semantics of `operator[]` for JSON Pointers (see below). This fix is backwards compatible.
 
 ### Changes
-- **`operator[]` for JSON Pointers** now behaves like the other versions of `operator[]` and transforms `null` values into objects or arrays if required. This allows to created nested structues like `j["/foo/bar/2"] = 17` (yielding `{"foo": "bar": [null, null, 17]}`) without problems.
+- **`operator[]` for JSON Pointers** now behaves like the other versions of `operator[]` and transforms `null` values into objects or arrays if required. This allows to created nested structures like `j["/foo/bar/2"] = 17` (yielding `{"foo": "bar": [null, null, 17]}`) without problems.
 - overworked a helper SFINAE function
 - fixed some documentation issues
 - fixed the CMake files to allow to run the test suite outside the main project directory
@@ -1093,7 +1093,7 @@ This release combines a lot of small fixes and improvements. The release is back
 ### Changes
 - The **parser** has been overworked, and a lot of small issues have been fixed:
   - Improved parser performance by avoiding recursion and using move semantics for the return value.
-  - Unescaped control charaters `\x10`-`\x1f` are not accepted any more.
+  - Unescaped control characters `\x10`-`\x1f` are not accepted any more.
   - Fixed a bug in the parser when reading from an input stream.
   - Improved test case coverage for UTF-8 parsing: now, all valid Unicode code points are tested both escaped and unescaped.
   - The precision of output streams is now preserved by the parser.

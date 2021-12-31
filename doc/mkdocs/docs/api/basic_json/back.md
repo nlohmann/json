@@ -1,4 +1,4 @@
-# basic_json::back
+# <small>nlohmann::basic_json::</small>back
 
 ```cpp
 reference back();
@@ -20,26 +20,26 @@ return *tmp;
 In case of a structured type (array or object), a reference to the last element is returned. In case of number, string,
 boolean, or binary values, a reference to the value is returned.
 
+## Exception safety
+
+Strong guarantee: if an exception is thrown, there are no changes in the JSON value.
+
 ## Exceptions
 
 If the JSON value is `#!json null`, exception
 [`invalid_iterator.214`](../../home/exceptions.md#jsonexceptioninvalid_iterator214) is thrown.
 
-## Exception safety
-
-Strong guarantee: if an exception is thrown, there are no changes in the JSON value.
-
 ## Complexity
 
 Constant.
 
-## Note
+## Notes
 
 !!! danger
 
     Calling `back` on an empty array or object is undefined behavior and is **guarded by an assertion**!
 
-## Example
+## Examples
 
 ??? example
 
@@ -54,6 +54,10 @@ Constant.
     ```json
     --8<-- "examples/back.output"
     ```
+
+## See also
+
+- [front](front.md) to access the first element
 
 ## Version history
 

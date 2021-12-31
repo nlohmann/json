@@ -1,4 +1,4 @@
-# basic_json::parse
+# <small>nlohmann::basic_json::</small>parse
 
 ```cpp
 // (1)
@@ -180,8 +180,22 @@ super-linear complexity.
     --8<-- "examples/parse__allow_exceptions.output"
     ```
 
+## See also
+
+- [accept](accept.md) - check if the input is valid JSON
+- [operator>>](operator_gtgt.md) - deserialize from stream
+
 ## Version history
 
 - Added in version 1.0.0.
 - Overload for contiguous containers (1) added in version 2.0.3.
 - Ignoring comments via `ignore_comments` added in version 3.9.0.
+
+!!! warning "Deprecation"
+
+    Overload (2) replaces calls to `parse` with a pair of iterators as their first parameter which has been
+    deprecated in version 3.8.0. This overload will be removed in version 4.0.0. Please replace all calls like
+    `#!cpp parse({ptr, ptr+len}, ...);` with `#!cpp parse(ptr, ptr+len, ...);`.
+
+    You should be warned by your compiler with a `-Wdeprecated-declarations` warning if you are using a deprecated
+    function.

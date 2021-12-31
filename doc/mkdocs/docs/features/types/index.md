@@ -1,4 +1,4 @@
-# Overview
+# Types
 
 This page gives an overview how JSON values are stored and how this can be configured.
 
@@ -6,13 +6,13 @@ This page gives an overview how JSON values are stored and how this can be confi
 
 By default, JSON values are stored as follows:
 
-| JSON type | C++ type |
-| --------- | -------- |
-| object    | `std::map<std::string, basic_json>` |
-| array     | `std::vector<basic_json>` |
-| null      | `std::nullptr_t` |
-| string    | `std::string` |
-| boolean   | `bool` |
+| JSON type | C++ type                                      |
+|-----------|-----------------------------------------------|
+| object    | `std::map<std::string, basic_json>`           |
+| array     | `std::vector<basic_json>`                     |
+| null      | `std::nullptr_t`                              |
+| string    | `std::string`                                 |
+| boolean   | `bool`                                        |
 | number    | `std::int64_t`, `std::uint64_t`, and `double` |
 
 Note there are three different types for numbers - when parsing JSON text, the best fitting type is chosen.

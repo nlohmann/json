@@ -1,11 +1,9 @@
-# basic_json::object_comparator_t
+# <small>nlohmann::basic_json::</small>object_comparator_t
 
 ```cpp
-// until C++14
-using object_comparator_t = std::less<StringType>;
+using object_comparator_t = std::less<StringType>;  // until C++14
 
-// since C++14
-using object_comparator_t = std::less<>;
+using object_comparator_t = std::less<>;            // since C++14
 ```
 
 The comparator used in [`object_t`](object_t.md).

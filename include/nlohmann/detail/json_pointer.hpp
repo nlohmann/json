@@ -15,6 +15,9 @@
 
 namespace nlohmann
 {
+
+/// @brief JSON Pointer defines a string syntax for identifying a specific value within a JSON document
+/// @sa https://json.nlohmann.me/api/json_pointer/
 template<typename BasicJsonType>
 class json_pointer
 {
@@ -23,45 +26,14 @@ class json_pointer
     friend class basic_json;
 
   public:
-    /*!
-    @brief create JSON pointer
-
-    Create a JSON pointer according to the syntax described in
-    [Section 3 of RFC6901](https://tools.ietf.org/html/rfc6901#section-3).
-
-    @param[in] s  string representing the JSON pointer; if omitted, the empty
-                  string is assumed which references the whole JSON value
-
-    @throw parse_error.107 if the given JSON pointer @a s is nonempty and does
-                           not begin with a slash (`/`); see example below
-
-    @throw parse_error.108 if a tilde (`~`) in the given JSON pointer @a s is
-    not followed by `0` (representing `~`) or `1` (representing `/`); see
-    example below
-
-    @liveexample{The example shows the construction several valid JSON pointers
-    as well as the exceptional behavior.,json_pointer}
-
-    @since version 2.0.0
-    */
+    /// @brief create JSON pointer
+    /// @sa https://json.nlohmann.me/api/json_pointer/json_pointer/
     explicit json_pointer(const std::string& s = "")
         : reference_tokens(split(s))
     {}
 
-    /*!
-    @brief return a string representation of the JSON pointer
-
-    @invariant For each JSON pointer `ptr`, it holds:
-    @code {.cpp}
-    ptr == json_pointer(ptr.to_string());
-    @endcode
-
-    @return a string representation of the JSON pointer
-
-    @liveexample{The example shows the result of `to_string`.,json_pointer__to_string}
-
-    @since version 2.0.0
-    */
+    /// @brief return a string representation of the JSON pointer
+    /// @sa https://json.nlohmann.me/api/json_pointer/to_string/
     std::string to_string() const
     {
         return std::accumulate(reference_tokens.begin(), reference_tokens.end(),
@@ -72,28 +44,15 @@ class json_pointer
         });
     }
 
-    /// @copydoc to_string()
+    /// @brief return a string representation of the JSON pointer
+    /// @sa https://json.nlohmann.me/api/json_pointer/operator_string/
     operator std::string() const
     {
         return to_string();
     }
 
-    /*!
-    @brief append another JSON pointer at the end of this JSON pointer
-
-    @param[in] ptr  JSON pointer to append
-    @return JSON pointer with @a ptr appended
-
-    @liveexample{The example shows the usage of `operator/=`.,json_pointer__operator_add}
-
-    @complexity Linear in the length of @a ptr.
-
-    @sa see @ref operator/=(std::string) to append a reference token
-    @sa see @ref operator/=(std::size_t) to append an array index
-    @sa see @ref operator/(const json_pointer&, const json_pointer&) for a binary operator
-
-    @since version 3.6.0
-    */
+    /// @brief append another JSON pointer at the end of this JSON pointer
+    /// @sa https://json.nlohmann.me/api/json_pointer/operator_slasheq/
     json_pointer& operator/=(const json_pointer& ptr)
     {
         reference_tokens.insert(reference_tokens.end(),
@@ -102,123 +61,45 @@ class json_pointer
         return *this;
     }
 
-    /*!
-    @brief append an unescaped reference token at the end of this JSON pointer
-
-    @param[in] token  reference token to append
-    @return JSON pointer with @a token appended without escaping @a token
-
-    @liveexample{The example shows the usage of `operator/=`.,json_pointer__operator_add}
-
-    @complexity Amortized constant.
-
-    @sa see @ref operator/=(const json_pointer&) to append a JSON pointer
-    @sa see @ref operator/=(std::size_t) to append an array index
-    @sa see @ref operator/(const json_pointer&, std::size_t) for a binary operator
-
-    @since version 3.6.0
-    */
+    /// @brief append an unescaped reference token at the end of this JSON pointer
+    /// @sa https://json.nlohmann.me/api/json_pointer/operator_slasheq/
     json_pointer& operator/=(std::string token)
     {
         push_back(std::move(token));
         return *this;
     }
 
-    /*!
-    @brief append an array index at the end of this JSON pointer
-
-    @param[in] array_idx  array index to append
-    @return JSON pointer with @a array_idx appended
-
-    @liveexample{The example shows the usage of `operator/=`.,json_pointer__operator_add}
-
-    @complexity Amortized constant.
-
-    @sa see @ref operator/=(const json_pointer&) to append a JSON pointer
-    @sa see @ref operator/=(std::string) to append a reference token
-    @sa see @ref operator/(const json_pointer&, std::string) for a binary operator
-
-    @since version 3.6.0
-    */
+    /// @brief append an array index at the end of this JSON pointer
+    /// @sa https://json.nlohmann.me/api/json_pointer/operator_slasheq/
     json_pointer& operator/=(std::size_t array_idx)
     {
         return *this /= std::to_string(array_idx);
     }
 
-    /*!
-    @brief create a new JSON pointer by appending the right JSON pointer at the end of the left JSON pointer
-
-    @param[in] lhs  JSON pointer
-    @param[in] rhs  JSON pointer
-    @return a new JSON pointer with @a rhs appended to @a lhs
-
-    @liveexample{The example shows the usage of `operator/`.,json_pointer__operator_add_binary}
-
-    @complexity Linear in the length of @a lhs and @a rhs.
-
-    @sa see @ref operator/=(const json_pointer&) to append a JSON pointer
-
-    @since version 3.6.0
-    */
+    /// @brief create a new JSON pointer by appending the right JSON pointer at the end of the left JSON pointer
+    /// @sa https://json.nlohmann.me/api/json_pointer/operator_slash/
     friend json_pointer operator/(const json_pointer& lhs,
                                   const json_pointer& rhs)
     {
         return json_pointer(lhs) /= rhs;
     }
 
-    /*!
-    @brief create a new JSON pointer by appending the unescaped token at the end of the JSON pointer
-
-    @param[in] ptr  JSON pointer
-    @param[in] token  reference token
-    @return a new JSON pointer with unescaped @a token appended to @a ptr
-
-    @liveexample{The example shows the usage of `operator/`.,json_pointer__operator_add_binary}
-
-    @complexity Linear in the length of @a ptr.
-
-    @sa see @ref operator/=(std::string) to append a reference token
-
-    @since version 3.6.0
-    */
-    friend json_pointer operator/(const json_pointer& ptr, std::string token) // NOLINT(performance-unnecessary-value-param)
+    /// @brief create a new JSON pointer by appending the unescaped token at the end of the JSON pointer
+    /// @sa https://json.nlohmann.me/api/json_pointer/operator_slash/
+    friend json_pointer operator/(const json_pointer& lhs, std::string token) // NOLINT(performance-unnecessary-value-param)
     {
-        return json_pointer(ptr) /= std::move(token);
+        return json_pointer(lhs) /= std::move(token);
     }
 
-    /*!
-    @brief create a new JSON pointer by appending the array-index-token at the end of the JSON pointer
-
-    @param[in] ptr  JSON pointer
-    @param[in] array_idx  array index
-    @return a new JSON pointer with @a array_idx appended to @a ptr
-
-    @liveexample{The example shows the usage of `operator/`.,json_pointer__operator_add_binary}
-
-    @complexity Linear in the length of @a ptr.
-
-    @sa see @ref operator/=(std::size_t) to append an array index
-
-    @since version 3.6.0
-    */
-    friend json_pointer operator/(const json_pointer& ptr, std::size_t array_idx)
+    /// @brief create a new JSON pointer by appending the array-index-token at the end of the JSON pointer
+    /// @sa https://json.nlohmann.me/api/json_pointer/operator_slash/
+    friend json_pointer operator/(const json_pointer& lhs, std::size_t array_idx)
     {
-        return json_pointer(ptr) /= array_idx;
+        return json_pointer(lhs) /= array_idx;
     }
 
-    /*!
-    @brief returns the parent of this JSON pointer
-
-    @return parent of this JSON pointer; in case this JSON pointer is the root,
-            the root itself is returned
-
-    @complexity Linear in the length of the JSON pointer.
-
-    @liveexample{The example shows the result of `parent_pointer` for different
-    JSON Pointers.,json_pointer__parent_pointer}
-
-    @since version 3.6.0
-    */
+    /// @brief returns the parent of this JSON pointer
+    /// @sa https://json.nlohmann.me/api/json_pointer/parent_pointer/
     json_pointer parent_pointer() const
     {
         if (empty())
@@ -231,19 +112,8 @@ class json_pointer
         return res;
     }
 
-    /*!
-    @brief remove last reference token
-
-    @pre not `empty()`
-
-    @liveexample{The example shows the usage of `pop_back`.,json_pointer__pop_back}
-
-    @complexity Constant.
-
-    @throw out_of_range.405 if JSON pointer has no parent
-
-    @since version 3.6.0
-    */
+    /// @brief remove last reference token
+    /// @sa https://json.nlohmann.me/api/json_pointer/pop_back/
     void pop_back()
     {
         if (JSON_HEDLEY_UNLIKELY(empty()))
@@ -254,20 +124,8 @@ class json_pointer
         reference_tokens.pop_back();
     }
 
-    /*!
-    @brief return last reference token
-
-    @pre not `empty()`
-    @return last reference token
-
-    @liveexample{The example shows the usage of `back`.,json_pointer__back}
-
-    @complexity Constant.
-
-    @throw out_of_range.405 if JSON pointer has no parent
-
-    @since version 3.6.0
-    */
+    /// @brief return last reference token
+    /// @sa https://json.nlohmann.me/api/json_pointer/back/
     const std::string& back() const
     {
         if (JSON_HEDLEY_UNLIKELY(empty()))
@@ -278,43 +136,22 @@ class json_pointer
         return reference_tokens.back();
     }
 
-    /*!
-    @brief append an unescaped token at the end of the reference pointer
-
-    @param[in] token  token to add
-
-    @complexity Amortized constant.
-
-    @liveexample{The example shows the result of `push_back` for different
-    JSON Pointers.,json_pointer__push_back}
-
-    @since version 3.6.0
-    */
+    /// @brief append an unescaped token at the end of the reference pointer
+    /// @sa https://json.nlohmann.me/api/json_pointer/push_back/
     void push_back(const std::string& token)
     {
         reference_tokens.push_back(token);
     }
 
-    /// @copydoc push_back(const std::string&)
+    /// @brief append an unescaped token at the end of the reference pointer
+    /// @sa https://json.nlohmann.me/api/json_pointer/push_back/
     void push_back(std::string&& token)
     {
         reference_tokens.push_back(std::move(token));
     }
 
-    /*!
-    @brief return whether pointer points to the root document
-
-    @return true iff the JSON pointer points to the root document
-
-    @complexity Constant.
-
-    @exceptionsafety No-throw guarantee: this function never throws exceptions.
-
-    @liveexample{The example shows the result of `empty` for different JSON
-    Pointers.,json_pointer__empty}
-
-    @since version 3.6.0
-    */
+    /// @brief return whether pointer points to the root document
+    /// @sa https://json.nlohmann.me/api/json_pointer/empty/
     bool empty() const noexcept
     {
         return reference_tokens.empty();

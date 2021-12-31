@@ -66,7 +66,7 @@ The JSON iterators have two member functions, `key()` and `value()` to access th
 
 ### Range-based for loops
 
-C++11 allows to use range-based for loops to iterate over a container.
+C++11 allows using range-based for loops to iterate over a container.
 
 ```cpp
 for (auto it : j_object)
@@ -76,7 +76,7 @@ for (auto it : j_object)
 }
 ```
 
-For this reason, the `items()` function allows to access `iterator::key()` and `iterator::value()` during range-based for loops. In these loops, a reference to the JSON values is returned, so there is no access to the underlying iterator.
+For this reason, the `items()` function allows accessing `iterator::key()` and `iterator::value()` during range-based for loops. In these loops, a reference to the JSON values is returned, so there is no access to the underlying iterator.
 
 ```cpp
 for (auto& el : j_object.items())
@@ -85,7 +85,7 @@ for (auto& el : j_object.items())
 }
 ```
 
-The items() function also allows to use structured bindings (C++17):
+The items() function also allows using structured bindings (C++17):
 
 ```cpp
 for (auto& [key, val] : j_object.items())
@@ -100,7 +100,7 @@ for (auto& [key, val] : j_object.items())
     
 !!! warning
 
-    Using `items()` on temporary objects is dangerous. Make sure the object's lifetime exeeds the iteration. See <https://github.com/nlohmann/json/issues/2040> for more information.
+    Using `items()` on temporary objects is dangerous. Make sure the object's lifetime exceeds the iteration. See <https://github.com/nlohmann/json/issues/2040> for more information.
 
 ### Reverse iteration order
 
@@ -151,5 +151,5 @@ Note that "value" means a JSON value in this setting, not values stored in the u
 ## Iterator invalidation
 
 | Operations | invalidated iterators |
-| ---------- | --------------------- |
+|------------|-----------------------|
 | `clear`    | all                   |

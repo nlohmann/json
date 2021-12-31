@@ -1,4 +1,4 @@
-# basic_json::to_ubjson
+# <small>nlohmann::basic_json::</small>to_ubjson
 
 ```cpp
 // (1)
@@ -18,6 +18,8 @@ aims to be more compact than JSON itself, yet more efficient to parse.
 
 1. Returns a byte vector containing the UBJSON serialization.
 2. Writes the UBJSON serialization to an output adapter.
+
+The exact mapping and its limitations is described on a [dedicated page](../../features/binary_formats/ubjson.md).
 
 ## Parameters
 
@@ -47,7 +49,7 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 
 Linear in the size of the JSON value `j`.
 
-## Example
+## Examples
 
 ??? example
 

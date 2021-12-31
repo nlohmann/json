@@ -1,7 +1,7 @@
-# basic_json::operator""_json
+# <small>nlohmann::basic_json::</small>operator""_json
 
 ```cpp
-json operator "" _json(const char* s, std::size_t n)
+json operator "" _json(const char* s, std::size_t n);
 ```
 
 This operator implements a user-defined string literal for JSON objects. It can be used by adding `#!cpp _json` to a
@@ -26,6 +26,22 @@ The function can throw anything that [`parse(s, s+n)`](parse.md) would throw.
 ## Complexity
 
 Linear.
+
+## Examples
+
+??? example
+
+    The following code shows how to create JSON values from string literals.
+     
+    ```cpp
+    --8<-- "examples/operator_literal_json.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/operator_literal_json.output"
+    ```
 
 ## Version history
 

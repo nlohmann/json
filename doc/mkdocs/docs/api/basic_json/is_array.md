@@ -1,4 +1,4 @@
-# basic_json::is_array
+# <small>nlohmann::basic_json::</small>is_array
 
 ```cpp
 constexpr bool is_array() const noexcept;
@@ -18,7 +18,7 @@ No-throw guarantee: this member function never throws exceptions.
 
 Constant.
 
-## Example
+## Examples
 
 ??? example
 

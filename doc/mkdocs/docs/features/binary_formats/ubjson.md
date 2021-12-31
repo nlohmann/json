@@ -10,29 +10,29 @@ Universal Binary JSON (UBJSON) is a binary form directly imitating JSON, but req
 
 The library uses the following mapping from JSON values types to UBJSON types according to the UBJSON specification:
 
-JSON value type | value/range                       | UBJSON type | marker
---------------- | --------------------------------- | ----------- | ------
-null            | `null`                            | null        | `Z`
-boolean         | `true`                            | true        | `T`
-boolean         | `false`                           | false       | `F`
-number_integer  | -9223372036854775808..-2147483649 | int64       | `L`
-number_integer  | -2147483648..-32769               | int32       | `l`
-number_integer  | -32768..-129                      | int16       | `I`
-number_integer  | -128..127                         | int8        | `i`
-number_integer  | 128..255                          | uint8       | `U`
-number_integer  | 256..32767                        | int16       | `I`
-number_integer  | 32768..2147483647                 | int32       | `l`
-number_integer  | 2147483648..9223372036854775807   | int64       | `L`
-number_unsigned | 0..127                            | int8        | `i`
-number_unsigned | 128..255                          | uint8       | `U`
-number_unsigned | 256..32767                        | int16       | `I`
-number_unsigned | 32768..2147483647                 | int32       | `l`
-number_unsigned | 2147483648..9223372036854775807   | int64       | `L`
-number_unsigned | 2147483649..18446744073709551615  | high-precision | `H`
-number_float    | *any value*                       | float64     | `D`
-string          | *with shortest length indicator*  | string      | `S`
-array           | *see notes on optimized format*   | array       | `[`
-object          | *see notes on optimized format*   | map         | `{`
+| JSON value type | value/range                       | UBJSON type    | marker |
+|-----------------|-----------------------------------|----------------|--------|
+| null            | `null`                            | null           | `Z`    |
+| boolean         | `true`                            | true           | `T`    |
+| boolean         | `false`                           | false          | `F`    |
+| number_integer  | -9223372036854775808..-2147483649 | int64          | `L`    |
+| number_integer  | -2147483648..-32769               | int32          | `l`    |
+| number_integer  | -32768..-129                      | int16          | `I`    |
+| number_integer  | -128..127                         | int8           | `i`    |
+| number_integer  | 128..255                          | uint8          | `U`    |
+| number_integer  | 256..32767                        | int16          | `I`    |
+| number_integer  | 32768..2147483647                 | int32          | `l`    |
+| number_integer  | 2147483648..9223372036854775807   | int64          | `L`    |
+| number_unsigned | 0..127                            | int8           | `i`    |
+| number_unsigned | 128..255                          | uint8          | `U`    |
+| number_unsigned | 256..32767                        | int16          | `I`    |
+| number_unsigned | 32768..2147483647                 | int32          | `l`    |
+| number_unsigned | 2147483648..9223372036854775807   | int64          | `L`    |
+| number_unsigned | 2147483649..18446744073709551615  | high-precision | `H`    |
+| number_float    | *any value*                       | float64        | `D`    |
+| string          | *with shortest length indicator*  | string         | `S`    |
+| array           | *see notes on optimized format*   | array          | `[`    |
+| object          | *see notes on optimized format*   | map            | `{`    |
 
 !!! success "Complete mapping"
 
@@ -97,23 +97,23 @@ object          | *see notes on optimized format*   | map         | `{`
 
 The library maps UBJSON types to JSON value types as follows:
 
-UBJSON type | JSON value type                         | marker
------------ | --------------------------------------- | ------
-no-op       | *no value, next value is read*          | `N`
-null        | `null`                                  | `Z`
-false       | `false`                                 | `F`
-true        | `true`                                  | `T`
-float32     | number_float                            | `d`
-float64     | number_float                            | `D`
-uint8       | number_unsigned                         | `U`
-int8        | number_integer                          | `i`
-int16       | number_integer                          | `I`
-int32       | number_integer                          | `l`
-int64       | number_integer                          | `L`
-string      | string                                  | `S`
-char        | string                                  | `C`
-array       | array (optimized values are supported)  | `[`
-object      | object (optimized values are supported) | `{`
+| UBJSON type | JSON value type                         | marker |
+|-------------|-----------------------------------------|--------|
+| no-op       | *no value, next value is read*          | `N`    |
+| null        | `null`                                  | `Z`    |
+| false       | `false`                                 | `F`    |
+| true        | `true`                                  | `T`    |
+| float32     | number_float                            | `d`    |
+| float64     | number_float                            | `D`    |
+| uint8       | number_unsigned                         | `U`    |
+| int8        | number_integer                          | `i`    |
+| int16       | number_integer                          | `I`    |
+| int32       | number_integer                          | `l`    |
+| int64       | number_integer                          | `L`    |
+| string      | string                                  | `S`    |
+| char        | string                                  | `C`    |
+| array       | array (optimized values are supported)  | `[`    |
+| object      | object (optimized values are supported) | `{`    |
 
 !!! success "Complete mapping"
 

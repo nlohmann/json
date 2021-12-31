@@ -1,4 +1,4 @@
-# basic_json::type_name
+# <small>nlohmann::basic_json::</small>type_name
 
 ```cpp
 const char* type_name() const noexcept;
@@ -9,18 +9,18 @@ wrong JSON type.
     
 ## Return value
 
-a string representation of a the type ([`value_t`](value_t.md)):
+a string representation of the type ([`value_t`](value_t.md)):
 
-Value type                                         | return value
--------------------------------------------------- | -------------------------
-`#!json null`                                      | `"null"`
-boolean                                            | `"boolean"`
-string                                             | `"string"`
-number (integer, unsigned integer, floating-point) | `"number"`
-object                                             | `"object`
-array                                              | `"array`
-binary                                             | `"binary`
-discarded                                          | `"discarded`
+| Value type                                         | return value  |
+|----------------------------------------------------|---------------|
+| `#!json null`                                      | `"null"`      |
+| boolean                                            | `"boolean"`   |
+| string                                             | `"string"`    |
+| number (integer, unsigned integer, floating-point) | `"number"`    |
+| object                                             | `"object"`    |
+| array                                              | `"array"`     |
+| binary                                             | `"binary"`    |
+| discarded                                          | `"discarded"` |
 
 ## Exception safety
 
@@ -30,7 +30,7 @@ No-throw guarantee: this member function never throws exceptions.
 
 Constant.
 
-## Example
+## Examples
 
 ??? example
 

@@ -1,4 +1,4 @@
-# basic_json::out_of_range
+# <small>nlohmann::basic_json::</small>out_of_range
 
 ```cpp
 class out_of_range : public exception;
@@ -7,7 +7,7 @@ class out_of_range : public exception;
 This exception is thrown in case a library function is called on an input parameter that exceeds the expected range, for
 instance in case of array indices or nonexisting object keys.
 
-Exceptions have ids 4xx.
+Exceptions have ids 4xx (see [list of out-of-range errors](../../home/exceptions.md#out-of-range)).
 
 ```plantuml
 std::exception <|-- basic_json::exception
@@ -39,7 +39,7 @@ class basic_json::out_of_range #FFFF00 {}
 
 - **id** - the id of the exception
 
-## Example
+## Examples
 
 ??? example
 
@@ -54,6 +54,14 @@ class basic_json::out_of_range #FFFF00 {}
     ```json
     --8<-- "examples/out_of_range.output"
     ```
+
+## See also
+
+- [List of out-of-range errors](../../home/exceptions.md#out-of-range)
+- [`parse_error`](parse_error.md) for exceptions indicating a parse error
+- [`invalid_iterator`](invalid_iterator.md) for exceptions indicating errors with iterators
+- [`type_error`](type_error.md) for exceptions indicating executing a member function with a wrong type
+- [`other_error`](other_error.md) for exceptions indicating other library errors
 
 ## Version history
 

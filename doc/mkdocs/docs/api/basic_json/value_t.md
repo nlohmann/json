@@ -1,4 +1,4 @@
-# basic_json::value_t
+# <small>nlohmann::basic_json::</small>value_t
 
 ```cpp
 enum class value_t : std::uint8_t {
@@ -22,7 +22,7 @@ functions [`is_null`](is_null.md), [`is_object`](is_object.md), [`is_array`](is_
 [`is_discarded`](is_discarded.md), [`is_binary`](is_binary.md), [`is_primitive`](is_primitive.md), and
 [`is_structured`](is_structured.md) rely on it.
 
-## Note
+## Notes
 
 There are three enumeration entries (number_integer, number_unsigned, and number_float), because the library
 distinguishes these three types for numbers: [`number_unsigned_t`](number_unsigned_t.md) is used for unsigned integers,
