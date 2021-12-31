@@ -27,7 +27,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "doctest_compatibility.h"
+#include <catch2/catch_all.hpp>
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;
@@ -292,7 +292,7 @@ TEST_CASE("deserialization")
             ss5 << R"(["foo",1,2,3,false,{"one":1})";
 
             json _;
-            CHECK_THROWS_AS(_ = json::parse(ss1), json::parse_error&);
+            CHECK_THROWS_AS(_ = json::parse(ss1), json::parse_error);
             CHECK_THROWS_WITH(_ = json::parse(ss2),
                               "[json.exception.parse_error.101] parse error at line 1, column 29: syntax error while parsing array - unexpected end of input; expected ']'");
             CHECK(!json::accept(ss3));
@@ -317,7 +317,7 @@ TEST_CASE("deserialization")
         {
             json::string_t s = R"(["foo",1,2,3,false,{"one":1})";
             json _;
-            CHECK_THROWS_AS(_ = json::parse(s), json::parse_error&);
+            CHECK_THROWS_AS(_ = json::parse(s), json::parse_error);
             CHECK_THROWS_WITH(_ = json::parse(s),
                               "[json.exception.parse_error.101] parse error at line 1, column 29: syntax error while parsing array - unexpected end of input; expected ']'");
             CHECK(!json::accept(s));
@@ -345,7 +345,7 @@ TEST_CASE("deserialization")
             ss1 << R"(["foo",1,2,3,false,{"one":1})";
             ss2 << R"(["foo",1,2,3,false,{"one":1})";
             json j;
-            CHECK_THROWS_AS(j << ss1, json::parse_error&);
+            CHECK_THROWS_AS(j << ss1, json::parse_error);
             CHECK_THROWS_WITH(j << ss2,
                               "[json.exception.parse_error.101] parse error at line 1, column 29: syntax error while parsing array - unexpected end of input; expected ']'");
         }
@@ -357,14 +357,14 @@ TEST_CASE("deserialization")
             ss1 << R"(["foo",1,2,3,false,{"one":1})";
             ss2 << R"(["foo",1,2,3,false,{"one":1})";
             json j;
-            CHECK_THROWS_AS(ss1 >> j, json::parse_error&);
+            CHECK_THROWS_AS(ss1 >> j, json::parse_error);
             CHECK_THROWS_WITH(ss2 >> j,
                               "[json.exception.parse_error.101] parse error at line 1, column 29: syntax error while parsing array - unexpected end of input; expected ']'");
         }
 
         SECTION("user-defined string literal")
         {
-            CHECK_THROWS_AS("[\"foo\",1,2,3,false,{\"one\":1}"_json, json::parse_error&);
+            CHECK_THROWS_AS("[\"foo\",1,2,3,false,{\"one\":1}"_json, json::parse_error);
             CHECK_THROWS_WITH("[\"foo\",1,2,3,false,{\"one\":1}"_json,
                               "[json.exception.parse_error.101] parse error at line 1, column 29: syntax error while parsing array - unexpected end of input; expected ']'");
         }
@@ -457,7 +457,7 @@ TEST_CASE("deserialization")
             {
                 std::vector<uint8_t> v;
                 json _;
-                CHECK_THROWS_AS(_ = json::parse(v), json::parse_error&);
+                CHECK_THROWS_AS(_ = json::parse(v), json::parse_error);
                 CHECK(!json::accept(v));
 
                 SaxEventLogger l;
@@ -546,7 +546,7 @@ TEST_CASE("deserialization")
             {
                 std::vector<uint8_t> v;
                 json _;
-                CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error&);
+                CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error);
                 CHECK(!json::accept(std::begin(v), std::end(v)));
 
                 SaxEventLogger l;
@@ -563,7 +563,7 @@ TEST_CASE("deserialization")
             {
                 std::array<std::uint8_t, 9> v = {{'\"', 'a', 'a', 'a', 'a', 'a', 'a', '\\', 'u'}};
                 json _;
-                CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error&);
+                CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error);
                 CHECK(!json::accept(std::begin(v), std::end(v)));
 
                 json j_error;
@@ -580,7 +580,7 @@ TEST_CASE("deserialization")
             {
                 std::array<std::uint8_t, 10> v = {{'\"', 'a', 'a', 'a', 'a', 'a', 'a', '\\', 'u', '1'}};
                 json _;
-                CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error&);
+                CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error);
                 CHECK(!json::accept(std::begin(v), std::end(v)));
 
                 json j_error;
@@ -597,7 +597,7 @@ TEST_CASE("deserialization")
             {
                 std::array<std::uint8_t, 17> v = {{'\"', 'a', 'a', 'a', 'a', 'a', 'a', '\\', 'u', '1', '1', '1', '1', '1', '1', '1', '1'}};
                 json _;
-                CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error&);
+                CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error);
                 CHECK(!json::accept(std::begin(v), std::end(v)));
 
                 json j_error;
@@ -614,7 +614,7 @@ TEST_CASE("deserialization")
             {
                 std::array<std::uint8_t, 17> v = {{'\"', 'a', 'a', 'a', 'a', 'a', 'a', 'u', '1', '1', '1', '1', '1', '1', '1', '1', '\\'}};
                 json _;
-                CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error&);
+                CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error);
                 CHECK(!json::accept(std::begin(v), std::end(v)));
 
                 json j_error;
@@ -631,7 +631,7 @@ TEST_CASE("deserialization")
             {
                 std::array<std::uint8_t, 3> v = {{'\"', 0x7F, 0xC1}};
                 json _;
-                CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error&);
+                CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error);
                 CHECK(!json::accept(std::begin(v), std::end(v)));
 
                 json j_error;
@@ -648,7 +648,7 @@ TEST_CASE("deserialization")
             {
                 std::array<std::uint8_t, 4> v = {{'\"', 0x7F, 0xDF, 0x7F}};
                 json _;
-                CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error&);
+                CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error);
                 CHECK_THROWS_WITH(_ = json::parse(std::begin(v), std::end(v)),
                                   "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid string: ill-formed UTF-8 byte; last read: '\"\x7f\xdf\x7f'");
                 CHECK(!json::accept(std::begin(v), std::end(v)));
@@ -667,7 +667,7 @@ TEST_CASE("deserialization")
             {
                 std::array<std::uint8_t, 4> v = {{'\"', 0x7F, 0xDF, 0xC0}};
                 json _;
-                CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error&);
+                CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error);
                 CHECK(!json::accept(std::begin(v), std::end(v)));
 
                 json j_error;
@@ -684,7 +684,7 @@ TEST_CASE("deserialization")
             {
                 std::array<std::uint8_t, 4> v = {{'\"', 0x7F, 0xE0, 0x9F}};
                 json _;
-                CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error&);
+                CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error);
                 CHECK(!json::accept(std::begin(v), std::end(v)));
 
                 json j_error;
@@ -701,7 +701,7 @@ TEST_CASE("deserialization")
             {
                 std::array<std::uint8_t, 4> v = {{'\"', 0x7F, 0xEF, 0xC0}};
                 json _;
-                CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error&);
+                CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error);
                 CHECK(!json::accept(std::begin(v), std::end(v)));
 
                 json j_error;
@@ -718,7 +718,7 @@ TEST_CASE("deserialization")
             {
                 std::array<std::uint8_t, 4> v = {{'\"', 0x7F, 0xED, 0x7F}};
                 json _;
-                CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error&);
+                CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error);
                 CHECK(!json::accept(std::begin(v), std::end(v)));
 
                 json j_error;
@@ -735,7 +735,7 @@ TEST_CASE("deserialization")
             {
                 std::array<std::uint8_t, 4> v = {{'\"', 0x7F, 0xF0, 0x8F}};
                 json _;
-                CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error&);
+                CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error);
                 CHECK(!json::accept(std::begin(v), std::end(v)));
 
                 json j_error;
@@ -752,7 +752,7 @@ TEST_CASE("deserialization")
             {
                 std::array<std::uint8_t, 4> v = {{'\"', 0x7F, 0xF0, 0xC0}};
                 json _;
-                CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error&);
+                CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error);
                 CHECK(!json::accept(std::begin(v), std::end(v)));
 
                 json j_error;
@@ -769,7 +769,7 @@ TEST_CASE("deserialization")
             {
                 std::array<std::uint8_t, 4> v = {{'\"', 0x7F, 0xF3, 0x7F}};
                 json _;
-                CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error&);
+                CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error);
                 CHECK(!json::accept(std::begin(v), std::end(v)));
 
                 json j_error;
@@ -786,7 +786,7 @@ TEST_CASE("deserialization")
             {
                 std::array<std::uint8_t, 4> v = {{'\"', 0x7F, 0xF3, 0xC0}};
                 json _;
-                CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error&);
+                CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error);
                 CHECK(!json::accept(std::begin(v), std::end(v)));
 
                 json j_error;
@@ -803,7 +803,7 @@ TEST_CASE("deserialization")
             {
                 std::array<std::uint8_t, 4> v = {{'\"', 0x7F, 0xF4, 0x7F}};
                 json _;
-                CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error&);
+                CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error);
                 CHECK(!json::accept(std::begin(v), std::end(v)));
 
                 json j_error;
@@ -820,7 +820,7 @@ TEST_CASE("deserialization")
             {
                 std::array<std::uint8_t, 6> v = {{'{', '\"', '\"', ':', '1', '1'}};
                 json _;
-                CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error&);
+                CHECK_THROWS_AS(_ = json::parse(std::begin(v), std::end(v)), json::parse_error);
                 CHECK(!json::accept(std::begin(v), std::end(v)));
 
                 json j_error;
@@ -846,11 +846,11 @@ TEST_CASE("deserialization")
         SECTION("BOM only")
         {
             json _;
-            CHECK_THROWS_AS(_ = json::parse(bom), json::parse_error&);
+            CHECK_THROWS_AS(_ = json::parse(bom), json::parse_error);
             CHECK_THROWS_WITH(_ = json::parse(bom),
                               "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal");
 
-            CHECK_THROWS_AS(_ = json::parse(std::istringstream(bom)), json::parse_error&);
+            CHECK_THROWS_AS(_ = json::parse(std::istringstream(bom)), json::parse_error);
             CHECK_THROWS_WITH(_ = json::parse(std::istringstream(bom)),
                               "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal");
 
@@ -887,11 +887,11 @@ TEST_CASE("deserialization")
         SECTION("2 byte of BOM")
         {
             json _;
-            CHECK_THROWS_AS(_ = json::parse(bom.substr(0, 2)), json::parse_error&);
+            CHECK_THROWS_AS(_ = json::parse(bom.substr(0, 2)), json::parse_error);
             CHECK_THROWS_WITH(_ = json::parse(bom.substr(0, 2)),
                               "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid BOM; must be 0xEF 0xBB 0xBF if given; last read: '\xEF\xBB'");
 
-            CHECK_THROWS_AS(_ = json::parse(std::istringstream(bom.substr(0, 2))), json::parse_error&);
+            CHECK_THROWS_AS(_ = json::parse(std::istringstream(bom.substr(0, 2))), json::parse_error);
             CHECK_THROWS_WITH(_ = json::parse(std::istringstream(bom.substr(0, 2))),
                               "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid BOM; must be 0xEF 0xBB 0xBF if given; last read: '\xEF\xBB'");
 
@@ -914,11 +914,11 @@ TEST_CASE("deserialization")
         SECTION("1 byte of BOM")
         {
             json _;
-            CHECK_THROWS_AS(_ = json::parse(bom.substr(0, 1)), json::parse_error&);
+            CHECK_THROWS_AS(_ = json::parse(bom.substr(0, 1)), json::parse_error);
             CHECK_THROWS_WITH(_ = json::parse(bom.substr(0, 1)),
                               "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid BOM; must be 0xEF 0xBB 0xBF if given; last read: '\xEF'");
 
-            CHECK_THROWS_AS(_ = json::parse(std::istringstream(bom.substr(0, 1))), json::parse_error&);
+            CHECK_THROWS_AS(_ = json::parse(std::istringstream(bom.substr(0, 1))), json::parse_error);
             CHECK_THROWS_WITH(_ = json::parse(std::istringstream(bom.substr(0, 1))),
                               "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid BOM; must be 0xEF 0xBB 0xBF if given; last read: '\xEF'");
 
@@ -949,9 +949,9 @@ TEST_CASE("deserialization")
                     for (int i2 = -1; i2 < 2; ++i2)
                     {
                         // debug output for the variations
-                        CAPTURE(i0)
-                        CAPTURE(i1)
-                        CAPTURE(i2)
+                        CAPTURE(i0);
+                        CAPTURE(i1);
+                        CAPTURE(i2);
 
                         std::string s;
                         s.push_back(static_cast<char>(bom[0] + i0));
@@ -976,8 +976,8 @@ TEST_CASE("deserialization")
                         {
                             // any variation is an error
                             json _;
-                            CHECK_THROWS_AS(_ = json::parse(s + "null"), json::parse_error&);
-                            CHECK_THROWS_AS(_ = json::parse(std::istringstream(s + "null")), json::parse_error&);
+                            CHECK_THROWS_AS(_ = json::parse(s + "null"), json::parse_error);
+                            CHECK_THROWS_AS(_ = json::parse(std::istringstream(s + "null")), json::parse_error);
 
                             SaxEventLogger l;
                             CHECK(!json::sax_parse(s + "null", &l));
@@ -1067,7 +1067,7 @@ TEST_CASE("deserialization")
     }
 }
 
-TEST_CASE_TEMPLATE("deserialization of different character types (ASCII)", T,
+TEMPLATE_TEST_CASE("deserialization of different character types (ASCII)", "",
                    char, unsigned char, signed char,
                    wchar_t,
                    char16_t, char32_t,
@@ -1075,7 +1075,7 @@ TEST_CASE_TEMPLATE("deserialization of different character types (ASCII)", T,
                    std::int16_t, std::uint16_t,
                    std::int32_t, std::uint32_t)
 {
-    std::vector<T> v = {'t', 'r', 'u', 'e'};
+    std::vector<TestType> v = {'t', 'r', 'u', 'e'};
     CHECK(json::parse(v) == json(true));
     CHECK(json::accept(v));
 
@@ -1085,11 +1085,11 @@ TEST_CASE_TEMPLATE("deserialization of different character types (ASCII)", T,
     CHECK(l.events == std::vector<std::string>({"boolean(true)"}));
 }
 
-TEST_CASE_TEMPLATE("deserialization of different character types (UTF-8)", T,
+TEMPLATE_TEST_CASE("deserialization of different character types (UTF-8)", "",
                    char, unsigned char, std::uint8_t)
 {
     // a star emoji
-    std::vector<T> v = {'"', static_cast<T>(0xe2u), static_cast<T>(0xadu), static_cast<T>(0x90u), static_cast<T>(0xefu), static_cast<T>(0xb8u), static_cast<T>(0x8fu), '"'};
+    std::vector<TestType> v = {'"', static_cast<TestType>(0xe2u), static_cast<TestType>(0xadu), static_cast<TestType>(0x90u), static_cast<TestType>(0xefu), static_cast<TestType>(0xb8u), static_cast<TestType>(0x8fu), '"'};
     CHECK(json::parse(v).dump(-1, ' ', true) == "\"\\u2b50\\ufe0f\"");
     CHECK(json::accept(v));
 
@@ -1098,11 +1098,11 @@ TEST_CASE_TEMPLATE("deserialization of different character types (UTF-8)", T,
     CHECK(l.events.size() == 1);
 }
 
-TEST_CASE_TEMPLATE("deserialization of different character types (UTF-16)", T,
+TEMPLATE_TEST_CASE("deserialization of different character types (UTF-16)", "",
                    char16_t, std::uint16_t)
 {
     // a star emoji
-    std::vector<T> v = {static_cast<T>('"'), static_cast<T>(0x2b50), static_cast<T>(0xfe0f), static_cast<T>('"')};
+    std::vector<TestType> v = {static_cast<TestType>('"'), static_cast<TestType>(0x2b50), static_cast<TestType>(0xfe0f), static_cast<TestType>('"')};
     CHECK(json::parse(v).dump(-1, ' ', true) == "\"\\u2b50\\ufe0f\"");
     CHECK(json::accept(v));
 
@@ -1111,11 +1111,11 @@ TEST_CASE_TEMPLATE("deserialization of different character types (UTF-16)", T,
     CHECK(l.events.size() == 1);
 }
 
-TEST_CASE_TEMPLATE("deserialization of different character types (UTF-32)", T,
+TEMPLATE_TEST_CASE("deserialization of different character types (UTF-32)", "",
                    char32_t, std::uint32_t)
 {
     // a star emoji
-    std::vector<T> v = {static_cast<T>('"'), static_cast<T>(0x2b50), static_cast<T>(0xfe0f), static_cast<T>('"')};
+    std::vector<TestType> v = {static_cast<TestType>('"'), static_cast<TestType>(0x2b50), static_cast<TestType>(0xfe0f), static_cast<TestType>('"')};
     CHECK(json::parse(v).dump(-1, ' ', true) == "\"\\u2b50\\ufe0f\"");
     CHECK(json::accept(v));
 

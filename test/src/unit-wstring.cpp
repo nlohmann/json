@@ -27,7 +27,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "doctest_compatibility.h"
+#include <catch2/catch_all.hpp>
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;
@@ -71,7 +71,7 @@ TEST_CASE("wide strings")
         {
             std::wstring w = L"\"\xDBFF";
             json _;
-            CHECK_THROWS_AS(_ = json::parse(w), json::parse_error&);
+            CHECK_THROWS_AS(_ = json::parse(w), json::parse_error);
         }
     }
 
@@ -91,7 +91,7 @@ TEST_CASE("wide strings")
         {
             std::u16string w = u"\"\xDBFF";
             json _;
-            CHECK_THROWS_AS(_ = json::parse(w), json::parse_error&);
+            CHECK_THROWS_AS(_ = json::parse(w), json::parse_error);
         }
     }
 
@@ -111,7 +111,7 @@ TEST_CASE("wide strings")
         {
             std::u32string w = U"\"\x110000";
             json _;
-            CHECK_THROWS_AS(_ = json::parse(w), json::parse_error&);
+            CHECK_THROWS_AS(_ = json::parse(w), json::parse_error);
         }
     }
 }

@@ -27,7 +27,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "doctest_compatibility.h"
+#include <catch2/catch_all.hpp>
 
 // for some reason including this after the json header leads to linker errors with VS 2017...
 #include <locale>

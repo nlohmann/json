@@ -1,0 +1,213 @@
+language: cpp
+dist: xenial
+
+
+branches:
+  except:
+  - /dev-appveyor.*/
+
+common_sources: &all_sources
+  - ubuntu-toolchain-r-test
+  - llvm-toolchain-xenial
+  - llvm-toolchain-xenial-3.8
+  - llvm-toolchain-xenial-3.9
+  - llvm-toolchain-xenial-4.0
+  - llvm-toolchain-xenial-5.0
+  - llvm-toolchain-xenial-6.0
+  - llvm-toolchain-xenial-7
+  - llvm-toolchain-xenial-8
+
+
+matrix:
+  include:
+    # Clang builds
+    - os: linux
+      compiler: clang
+      addons:
+          apt:
+              sources: *all_sources
+              packages: ['clang-3.8']
+      env: COMPILER='clang++-3.8' CPP14=1
+
+    - os: linux
+      compiler: clang
+      addons:
+        apt:
+          sources: *all_sources
+          packages: ['clang-3.8', 'lcov']
+      env: COMPILER='clang++-3.8' CPP14=1 EXAMPLES=1 COVERAGE=1 EXTRAS=1
+
+    - os: linux
+      compiler: clang
+      addons:
+          apt:
+              sources: *all_sources
+              packages: ['clang-3.9']
+      env: COMPILER='clang++-3.9' CPP14=1
+
+    - os: linux
+      compiler: clang
+      addons:
+          apt:
+              sources: *all_sources
+              packages: ['clang-4.0']
+      env: COMPILER='clang++-4.0' CPP14=1
+
+    - os: linux
+      compiler: clang
+      addons:
+          apt:
+              sources: *all_sources
+              packages: ['clang-5.0']
+      env: COMPILER='clang++-5.0' CPP14=1
+
+    - os: linux
+      compiler: clang
+      addons:
+          apt:
+              sources: *all_sources
+              packages: ['clang-6.0']
+      env: COMPILER='clang++-6.0' CPP14=1
+
+    - os: linux
+      compiler: clang
+      addons:
+          apt:
+              sources: *all_sources
+              packages: ['clang-6.0', 'libstdc++-8-dev']
+      env: COMPILER='clang++-6.0' CPP17=1
+
+    - os: linux
+      compiler: clang
+      addons:
+          apt:
+              sources: *all_sources
+              packages: ['clang-7']
+      env: COMPILER='clang++-7' CPP14=1
+
+    - os: linux
+      compiler: clang
+      addons:
+          apt:
+              sources: *all_sources
+              packages: ['clang-8']
+      env: COMPILER='clang++-8' CPP14=1
+
+    - os: linux
+      compiler: clang
+      addons:
+          apt:
+              sources: *all_sources
+              packages: ['clang-8', 'libstdc++-8-dev']
+      env: COMPILER='clang++-8' CPP17=1 EXAMPLES=1 COVERAGE=1 EXTRAS=1
+
+
+    # GCC builds
+    - os: linux
+      compiler: gcc
+      addons:
+        apt:
+          sources: *all_sources
+          packages: ['g++-5']
+      env: COMPILER='g++-5' CPP14=1
+
+    - os: linux
+      compiler: gcc
+      addons:
+        apt:
+          sources: *all_sources
+          packages: ['g++-6']
+      env: COMPILER='g++-6' CPP14=1
+
+    - os: linux
+      compiler: gcc
+      addons:
+        apt:
+          sources: *all_sources
+          packages: ['g++-7', 'lcov']
+      env: COMPILER='g++-7' CPP14=1 EXAMPLES=1 COVERAGE=1 EXTRAS=1
+
+    - os: linux
+      compiler: gcc
+      addons:
+        apt:
+          sources: *all_sources
+          packages: ['g++-8']
+      env: COMPILER='g++-8' CPP17=1
+
+    # OSX Clang Builds
+    - os: osx
+      osx_image: xcode9.4
+      compiler: clang
+      env: COMPILER='clang++' CPP14=1
+
+    - os: osx
+      osx_image: xcode10.3
+      compiler: clang
+      env: COMPILER='clang++' CPP14=1
+
+    - os: osx
+      osx_image: xcode11.2
+      compiler: clang
+      env: COMPILER='clang++' CPP14=1
+
+    - os: osx
+      osx_image: xcode11.2
+      compiler: clang
+      env: COMPILER='clang++' CPP14=1 EXAMPLES=1 COVERAGE=1 EXTRAS=1
+
+
+
+    # Special builds, e.g. conan
+    - language: python
+      python:
+        - "3.7"
+      install:
+        - pip install conan-package-tools
+      env:
+        - CONAN_GCC_VERSIONS=8
+        - CONAN_DOCKER_IMAGE=conanio/gcc8
+        - CPP14=1
+      script:
+        - python .conan/build.py
+
+before_script:
+  - export CXX=${COMPILER}
+  - cd ${TRAVIS_BUILD_DIR}
+  # We want to regenerate the amalgamated header if the extra tests
+  # are enabled.
+  - |
+    if [[ ${EXTRAS} -eq 1 ]]; then
+      python3 ./tools/scripts/generateAmalgamatedFiles.py
+    fi
+
+  - |
+    if [[ ${CPP17} -eq 1 ]]; then
+      export CPP_STANDARD=17
+    elif [[ ${CPP14} -eq 1 ]]; then
+      export CPP_STANDARD=14
+    else
+      travis_terminate 4;
+    fi
+
+    # Use Debug builds for running Valgrind and building examples
+  - cmake -H. -BBuild-Debug -DCMAKE_BUILD_TYPE=Debug -Wdev -DCATCH_USE_VALGRIND=${VALGRIND} -DCATCH_BUILD_EXAMPLES=${EXAMPLES} -DCATCH_ENABLE_COVERAGE=${COVERAGE} -DCATCH_BUILD_EXTRA_TESTS=${EXTRAS} -DCMAKE_CXX_STANDARD=${CPP_STANDARD} -DCMAKE_CXX_STANDARD_REQUIRED=On -DCMAKE_CXX_EXTENSIONS=OFF -DCATCH_DEVELOPMENT_BUILD=ON
+    # Don't bother with release build for coverage build
+  - cmake -H. -BBuild-Release -DCMAKE_BUILD_TYPE=Release -Wdev -DCMAKE_CXX_STANDARD=${CPP_STANDARD} -DCMAKE_CXX_STANDARD_REQUIRED=On -DCMAKE_CXX_EXTENSIONS=OFF -DCATCH_DEVELOPMENT_BUILD=ON
+
+
+script:
+  - cd Build-Debug
+  - make -j 2
+  - CTEST_OUTPUT_ON_FAILURE=1 ctest -j 2
+    # Coverage collection does not work for OS X atm
+  - |
+    if [[ "${TRAVIS_OS_NAME}" == "linux" ]] && [[ "${COVERAGE}" == "1" ]]; then
+      make gcov
+      make lcov
+      bash <(curl -s https://codecov.io/bash) -X gcov || echo "Codecov did not collect coverage reports"
+    fi
+  - # Go to release build
+  - cd ../Build-Release
+  - make -j 2
+  - CTEST_OUTPUT_ON_FAILURE=1 ctest -j 2

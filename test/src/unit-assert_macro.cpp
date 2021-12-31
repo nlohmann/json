@@ -27,13 +27,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "doctest_compatibility.h"
+#include <catch2/catch_all.hpp>
 
 // avoid warning when assert does not abort
-DOCTEST_GCC_SUPPRESS_WARNING_PUSH
-DOCTEST_GCC_SUPPRESS_WARNING("-Wstrict-overflow")
-DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
-DOCTEST_CLANG_SUPPRESS_WARNING("-Wstrict-overflow")
+//DOCTEST_GCC_SUPPRESS_WARNING_PUSH
+//DOCTEST_GCC_SUPPRESS_WARNING("-Wstrict-overflow")
+//DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
+//DOCTEST_CLANG_SUPPRESS_WARNING("-Wstrict-overflow")
 
 /// global variable to record side effect of assert calls
 static int assert_counter;
@@ -57,7 +57,8 @@ TEST_CASE("JSON_ASSERT(x)")
         json j;
 
         // in case assertions do not abort execution, an exception is thrown
-        CHECK_THROWS_WITH_AS(json(it, j.end()), "[json.exception.invalid_iterator.201] iterators are not compatible", json::invalid_iterator);
+        CHECK_THROWS_AS(json(it, j.end()), json::invalid_iterator);
+        CHECK_THROWS_WITH(json(it, j.end()), "[json.exception.invalid_iterator.201] iterators are not compatible");
 
         // check that assertion actually happened
         CHECK(assert_counter == 1);
@@ -65,5 +66,5 @@ TEST_CASE("JSON_ASSERT(x)")
 }
 #endif
 
-DOCTEST_GCC_SUPPRESS_WARNING_POP
-DOCTEST_CLANG_SUPPRESS_WARNING_POP
+//DOCTEST_GCC_SUPPRESS_WARNING_POP
+//DOCTEST_CLANG_SUPPRESS_WARNING_POP

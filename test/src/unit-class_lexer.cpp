@@ -27,7 +27,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "doctest_compatibility.h"
+#include <catch2/catch_all.hpp>
 
 #define JSON_TESTS_PRIVATE
 #include <nlohmann/json.hpp>
@@ -135,7 +135,7 @@ TEST_CASE("lexer class")
             // store scan() result
             const auto res = scan_string(s.c_str());
 
-            CAPTURE(s)
+            CAPTURE(s);
 
             switch (c)
             {

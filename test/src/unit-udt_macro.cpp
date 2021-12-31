@@ -29,7 +29,7 @@ SOFTWARE.
 
 #include <string>
 #include <vector>
-#include "doctest_compatibility.h"
+#include <catch2/catch_all.hpp>
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;
@@ -231,7 +231,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(person_with_public_alphabet, a, b, c, d, e, f
 
 } // namespace persons
 
-TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRUSIVE", T,
+TEMPLATE_TEST_CASE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRUSIVE", "",
                    persons::person_with_private_data,
                    persons::person_without_private_data_1,
                    persons::person_without_private_data_2)
@@ -239,21 +239,21 @@ TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRU
     SECTION("person")
     {
         // serialization
-        T p1("Erik", 1, {{"haircuts", 2}});
+        TestType p1("Erik", 1, {{"haircuts", 2}});
         CHECK(json(p1).dump() == "{\"age\":1,\"metadata\":{\"haircuts\":2},\"name\":\"Erik\"}");
 
         // deserialization
-        auto p2 = json(p1).get<T>();
+        auto p2 = json(p1).get<TestType>();
         CHECK(p2 == p1);
 
         // roundtrip
-        CHECK(T(json(p1)) == p1);
-        CHECK(json(T(json(p1))) == json(p1));
+        CHECK(TestType(json(p1)) == p1);
+        CHECK(json(TestType(json(p1))) == json(p1));
 
         // check exception in case of missing field
         json j = json(p1);
         j.erase("age");
-        CHECK_THROWS_WITH_AS(j.get<T>(), "[json.exception.out_of_range.403] key 'age' not found", json::out_of_range);
+        CHECK_THROWS_WITH_AS(j.get<TestType>(), "[json.exception.out_of_range.403] key 'age' not found", json::out_of_range);
     }
 }
 

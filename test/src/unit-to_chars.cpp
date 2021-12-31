@@ -31,7 +31,7 @@ SOFTWARE.
 // Only compile these tests if 'float' and 'double' are IEEE-754 single- and
 // double-precision numbers, resp.
 
-#include "doctest_compatibility.h"
+#include <catch2/catch_all.hpp>
 
 #include <nlohmann/json.hpp>
 using nlohmann::detail::dtoa_impl::reinterpret_bits;
@@ -149,9 +149,9 @@ TEST_CASE("digit gen")
     {
         auto check_float = [](float number, const std::string & digits, int expected_exponent)
         {
-            CAPTURE(number)
-            CAPTURE(digits)
-            CAPTURE(expected_exponent)
+            CAPTURE(number);
+            CAPTURE(digits);
+            CAPTURE(expected_exponent);
 
             std::array<char, 32> buf{};
             int len = 0;
@@ -213,9 +213,9 @@ TEST_CASE("digit gen")
     {
         auto check_double = [](double number, const std::string & digits, int expected_exponent)
         {
-            CAPTURE(number)
-            CAPTURE(digits)
-            CAPTURE(expected_exponent)
+            CAPTURE(number);
+            CAPTURE(digits);
+            CAPTURE(expected_exponent);
 
             std::array<char, 32> buf{};
             int len = 0;

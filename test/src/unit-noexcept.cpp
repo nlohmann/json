@@ -27,11 +27,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "doctest_compatibility.h"
+#include <catch2/catch_all.hpp>
 
 // disable -Wnoexcept due to struct pod_bis
-DOCTEST_GCC_SUPPRESS_WARNING_PUSH
-DOCTEST_GCC_SUPPRESS_WARNING("-Wnoexcept")
+//DOCTEST_GCC_SUPPRESS_WARNING_PUSH
+//DOCTEST_GCC_SUPPRESS_WARNING("-Wnoexcept")
 
 #include <nlohmann/json.hpp>
 

@@ -28,4 +28,4 @@ SOFTWARE.
 */
 
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-#include "doctest_compatibility.h"
+#include <catch2/catch_all.hpp>

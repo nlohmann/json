@@ -27,7 +27,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "doctest_compatibility.h"
+#include <catch2/catch_all.hpp>
 
 // for some reason including this after the json header leads to linker errors with VS 2017...
 #include <locale>
@@ -42,8 +42,8 @@ using nlohmann::json;
 #include <test_data.hpp>
 
 // this test suite uses static variables with non-trivial destructors
-DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
-DOCTEST_CLANG_SUPPRESS_WARNING("-Wexit-time-destructors")
+//DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
+//DOCTEST_CLANG_SUPPRESS_WARNING("-Wexit-time-destructors")
 
 namespace
 {
@@ -57,10 +57,10 @@ void check_utf8dump(bool success_expected, int byte1, int byte2 = -1, int byte3 
     static std::string json_string;
     json_string.clear();
 
-    CAPTURE(byte1)
-    CAPTURE(byte2)
-    CAPTURE(byte3)
-    CAPTURE(byte4)
+    CAPTURE(byte1);
+    CAPTURE(byte2);
+    CAPTURE(byte3);
+    CAPTURE(byte4);
 
     json_string += std::string(1, static_cast<char>(byte1));
 
@@ -79,7 +79,7 @@ void check_utf8dump(bool success_expected, int byte1, int byte2 = -1, int byte3 
         json_string += std::string(1, static_cast<char>(byte4));
     }
 
-    CAPTURE(json_string)
+    CAPTURE(json_string);
 
     // store the string in a JSON value
     static json j;
@@ -118,7 +118,7 @@ void check_utf8dump(bool success_expected, int byte1, int byte2 = -1, int byte3 
     else
     {
         // strict mode must throw if success is not expected
-        CHECK_THROWS_AS(j.dump(), json::type_error&);
+        CHECK_THROWS_AS(j.dump(), json::type_error);
         // ignore and replace must create different dumps
         CHECK(s_ignored != s_replaced);
 
@@ -150,30 +150,30 @@ void check_utf8string(bool success_expected, int byte1, int byte2 = -1, int byte
     static std::string json_string;
     json_string = "\"";
 
-    CAPTURE(byte1)
+    CAPTURE(byte1);
     json_string += std::string(1, static_cast<char>(byte1));
 
     if (byte2 != -1)
     {
-        CAPTURE(byte2)
+        CAPTURE(byte2);
         json_string += std::string(1, static_cast<char>(byte2));
     }
 
     if (byte3 != -1)
     {
-        CAPTURE(byte3)
+        CAPTURE(byte3);
         json_string += std::string(1, static_cast<char>(byte3));
     }
 
     if (byte4 != -1)
     {
-        CAPTURE(byte4)
+        CAPTURE(byte4);
         json_string += std::string(1, static_cast<char>(byte4));
     }
 
     json_string += "\"";
 
-    CAPTURE(json_string)
+    CAPTURE(json_string);
 
     json _;
     if (success_expected)
@@ -182,12 +182,12 @@ void check_utf8string(bool success_expected, int byte1, int byte2 = -1, int byte
     }
     else
     {
-        CHECK_THROWS_AS(_ = json::parse(json_string), json::parse_error&);
+        CHECK_THROWS_AS(_ = json::parse(json_string), json::parse_error);
     }
 }
 } // namespace
 
-TEST_CASE("Unicode (3/5)" * doctest::skip())
+TEST_CASE("Unicode (3/5)", "[.]")
 {
     SECTION("RFC 3629")
     {
@@ -342,4 +342,4 @@ TEST_CASE("Unicode (3/5)" * doctest::skip())
     }
 }
 
-DOCTEST_CLANG_SUPPRESS_WARNING_POP
+//DOCTEST_CLANG_SUPPRESS_WARNING_POP

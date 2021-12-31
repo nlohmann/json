@@ -1,0 +1,9 @@
+includedir=@CMAKE_INSTALL_FULL_INCLUDEDIR@
+libdir=@CMAKE_INSTALL_FULL_LIBDIR@
+
+Name: Catch2
+Description: A modern, C++-native, test framework for C++14 and above
+URL: https://github.com/catchorg/Catch2
+Version: @Catch2_VERSION@
+Cflags: -I${includedir}
+Libs: -L${libdir} -lCatch2

@@ -1,0 +1,10 @@
+includedir=@CMAKE_INSTALL_FULL_INCLUDEDIR@
+libdir=@CMAKE_INSTALL_FULL_LIBDIR@
+pkg_version=@Catch2_VERSION@
+
+Name: Catch2-With-Main
+Description: A modern, C++-native test framework for C++14 and above (links in default main)
+Version: ${pkg_version}
+Requires: catch2 = ${pkg_version}
+Cflags: -I${includedir}
+Libs: -L${libdir} -lCatch2WithMain

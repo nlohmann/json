@@ -27,7 +27,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "doctest_compatibility.h"
+#include <catch2/catch_all.hpp>
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;
@@ -64,8 +64,8 @@ TEST_CASE("element access 2")
 
             SECTION("access outside bounds")
             {
-                CHECK_THROWS_AS(j.at("foo"), json::out_of_range&);
-                CHECK_THROWS_AS(j_const.at("foo"), json::out_of_range&);
+                CHECK_THROWS_AS(j.at("foo"), json::out_of_range);
+                CHECK_THROWS_AS(j_const.at("foo"), json::out_of_range);
                 CHECK_THROWS_WITH(j.at("foo"),
                                   "[json.exception.out_of_range.403] key 'foo' not found");
                 CHECK_THROWS_WITH(j_const.at("foo"),
@@ -78,8 +78,8 @@ TEST_CASE("element access 2")
                 {
                     json j_nonobject(json::value_t::null);
                     const json j_nonobject_const(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject.at("foo"), json::type_error&);
-                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), json::type_error&);
+                    CHECK_THROWS_AS(j_nonobject.at("foo"), json::type_error);
+                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), json::type_error);
                     CHECK_THROWS_WITH(j_nonobject.at("foo"), "[json.exception.type_error.304] cannot use at() with null");
                     CHECK_THROWS_WITH(j_nonobject_const.at("foo"), "[json.exception.type_error.304] cannot use at() with null");
                 }
@@ -88,8 +88,8 @@ TEST_CASE("element access 2")
                 {
                     json j_nonobject(json::value_t::boolean);
                     const json j_nonobject_const(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject.at("foo"), json::type_error&);
-                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), json::type_error&);
+                    CHECK_THROWS_AS(j_nonobject.at("foo"), json::type_error);
+                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), json::type_error);
                     CHECK_THROWS_WITH(j_nonobject.at("foo"), "[json.exception.type_error.304] cannot use at() with boolean");
                     CHECK_THROWS_WITH(j_nonobject_const.at("foo"), "[json.exception.type_error.304] cannot use at() with boolean");
                 }
@@ -98,8 +98,8 @@ TEST_CASE("element access 2")
                 {
                     json j_nonobject(json::value_t::string);
                     const json j_nonobject_const(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject.at("foo"), json::type_error&);
-                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), json::type_error&);
+                    CHECK_THROWS_AS(j_nonobject.at("foo"), json::type_error);
+                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), json::type_error);
                     CHECK_THROWS_WITH(j_nonobject.at("foo"), "[json.exception.type_error.304] cannot use at() with string");
                     CHECK_THROWS_WITH(j_nonobject_const.at("foo"), "[json.exception.type_error.304] cannot use at() with string");
                 }
@@ -108,8 +108,8 @@ TEST_CASE("element access 2")
                 {
                     json j_nonobject(json::value_t::array);
                     const json j_nonobject_const(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject.at("foo"), json::type_error&);
-                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), json::type_error&);
+                    CHECK_THROWS_AS(j_nonobject.at("foo"), json::type_error);
+                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), json::type_error);
                     CHECK_THROWS_WITH(j_nonobject.at("foo"), "[json.exception.type_error.304] cannot use at() with array");
                     CHECK_THROWS_WITH(j_nonobject_const.at("foo"), "[json.exception.type_error.304] cannot use at() with array");
                 }
@@ -118,8 +118,8 @@ TEST_CASE("element access 2")
                 {
                     json j_nonobject(json::value_t::number_integer);
                     const json j_nonobject_const(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject.at("foo"), json::type_error&);
-                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), json::type_error&);
+                    CHECK_THROWS_AS(j_nonobject.at("foo"), json::type_error);
+                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), json::type_error);
                     CHECK_THROWS_WITH(j_nonobject.at("foo"), "[json.exception.type_error.304] cannot use at() with number");
                     CHECK_THROWS_WITH(j_nonobject_const.at("foo"), "[json.exception.type_error.304] cannot use at() with number");
                 }
@@ -128,8 +128,8 @@ TEST_CASE("element access 2")
                 {
                     json j_nonobject(json::value_t::number_unsigned);
                     const json j_nonobject_const(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject.at("foo"), json::type_error&);
-                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), json::type_error&);
+                    CHECK_THROWS_AS(j_nonobject.at("foo"), json::type_error);
+                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), json::type_error);
                     CHECK_THROWS_WITH(j_nonobject.at("foo"), "[json.exception.type_error.304] cannot use at() with number");
                     CHECK_THROWS_WITH(j_nonobject_const.at("foo"), "[json.exception.type_error.304] cannot use at() with number");
                 }
@@ -138,8 +138,8 @@ TEST_CASE("element access 2")
                 {
                     json j_nonobject(json::value_t::number_float);
                     const json j_nonobject_const(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject.at("foo"), json::type_error&);
-                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), json::type_error&);
+                    CHECK_THROWS_AS(j_nonobject.at("foo"), json::type_error);
+                    CHECK_THROWS_AS(j_nonobject_const.at("foo"), json::type_error);
                     CHECK_THROWS_WITH(j_nonobject.at("foo"), "[json.exception.type_error.304] cannot use at() with number");
                     CHECK_THROWS_WITH(j_nonobject_const.at("foo"), "[json.exception.type_error.304] cannot use at() with number");
                 }
@@ -153,26 +153,26 @@ TEST_CASE("element access 2")
                 SECTION("access existing value")
                 {
                     CHECK(j.value("integer", 2) == 1);
-                    CHECK(j.value("integer", 1.0) == Approx(1));
+                    CHECK(j.value("integer", 1.0) == Catch::Approx(1));
                     CHECK(j.value("unsigned", 2) == 1u);
-                    CHECK(j.value("unsigned", 1.0) == Approx(1u));
+                    CHECK(j.value("unsigned", 1.0) == Catch::Approx(1u));
                     CHECK(j.value("null", json(1)) == json());
                     CHECK(j.value("boolean", false) == true);
                     CHECK(j.value("string", "bar") == "hello world");
                     CHECK(j.value("string", std::string("bar")) == "hello world");
-                    CHECK(j.value("floating", 12.34) == Approx(42.23));
+                    CHECK(j.value("floating", 12.34) == Catch::Approx(42.23));
                     CHECK(j.value("floating", 12) == 42);
                     CHECK(j.value("object", json({{"foo", "bar"}})) == json::object());
                     CHECK(j.value("array", json({10, 100})) == json({1, 2, 3}));
 
                     CHECK(j_const.value("integer", 2) == 1);
-                    CHECK(j_const.value("integer", 1.0) == Approx(1));
+                    CHECK(j_const.value("integer", 1.0) == Catch::Approx(1));
                     CHECK(j_const.value("unsigned", 2) == 1u);
-                    CHECK(j_const.value("unsigned", 1.0) == Approx(1u));
+                    CHECK(j_const.value("unsigned", 1.0) == Catch::Approx(1u));
                     CHECK(j_const.value("boolean", false) == true);
                     CHECK(j_const.value("string", "bar") == "hello world");
                     CHECK(j_const.value("string", std::string("bar")) == "hello world");
-                    CHECK(j_const.value("floating", 12.34) == Approx(42.23));
+                    CHECK(j_const.value("floating", 12.34) == Catch::Approx(42.23));
                     CHECK(j_const.value("floating", 12) == 42);
                     CHECK(j_const.value("object", json({{"foo", "bar"}})) == json::object());
                     CHECK(j_const.value("array", json({10, 100})) == json({1, 2, 3}));
@@ -184,7 +184,7 @@ TEST_CASE("element access 2")
                     CHECK(j.value("_", 2u) == 2u);
                     CHECK(j.value("_", false) == false);
                     CHECK(j.value("_", "bar") == "bar");
-                    CHECK(j.value("_", 12.34) == Approx(12.34));
+                    CHECK(j.value("_", 12.34) == Catch::Approx(12.34));
                     CHECK(j.value("_", json({{"foo", "bar"}})) == json({{"foo", "bar"}}));
                     CHECK(j.value("_", json({10, 100})) == json({10, 100}));
 
@@ -192,7 +192,7 @@ TEST_CASE("element access 2")
                     CHECK(j_const.value("_", 2u) == 2u);
                     CHECK(j_const.value("_", false) == false);
                     CHECK(j_const.value("_", "bar") == "bar");
-                    CHECK(j_const.value("_", 12.34) == Approx(12.34));
+                    CHECK(j_const.value("_", 12.34) == Catch::Approx(12.34));
                     CHECK(j_const.value("_", json({{"foo", "bar"}})) == json({{"foo", "bar"}}));
                     CHECK(j_const.value("_", json({10, 100})) == json({10, 100}));
                 }
@@ -203,8 +203,8 @@ TEST_CASE("element access 2")
                     {
                         json j_nonobject(json::value_t::null);
                         const json j_nonobject_const(json::value_t::null);
-                        CHECK_THROWS_AS(j_nonobject.value("foo", 1), json::type_error&);
-                        CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), json::type_error&);
+                        CHECK_THROWS_AS(j_nonobject.value("foo", 1), json::type_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), json::type_error);
                         CHECK_THROWS_WITH(j_nonobject.value("foo", 1),
                                           "[json.exception.type_error.306] cannot use value() with null");
                         CHECK_THROWS_WITH(j_nonobject_const.value("foo", 1),
@@ -215,8 +215,8 @@ TEST_CASE("element access 2")
                     {
                         json j_nonobject(json::value_t::boolean);
                         const json j_nonobject_const(json::value_t::boolean);
-                        CHECK_THROWS_AS(j_nonobject.value("foo", 1), json::type_error&);
-                        CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), json::type_error&);
+                        CHECK_THROWS_AS(j_nonobject.value("foo", 1), json::type_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), json::type_error);
                         CHECK_THROWS_WITH(j_nonobject.value("foo", 1),
                                           "[json.exception.type_error.306] cannot use value() with boolean");
                         CHECK_THROWS_WITH(j_nonobject_const.value("foo", 1),
@@ -227,8 +227,8 @@ TEST_CASE("element access 2")
                     {
                         json j_nonobject(json::value_t::string);
                         const json j_nonobject_const(json::value_t::string);
-                        CHECK_THROWS_AS(j_nonobject.value("foo", 1), json::type_error&);
-                        CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), json::type_error&);
+                        CHECK_THROWS_AS(j_nonobject.value("foo", 1), json::type_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), json::type_error);
                         CHECK_THROWS_WITH(j_nonobject.value("foo", 1),
                                           "[json.exception.type_error.306] cannot use value() with string");
                         CHECK_THROWS_WITH(j_nonobject_const.value("foo", 1),
@@ -239,8 +239,8 @@ TEST_CASE("element access 2")
                     {
                         json j_nonobject(json::value_t::array);
                         const json j_nonobject_const(json::value_t::array);
-                        CHECK_THROWS_AS(j_nonobject.value("foo", 1), json::type_error&);
-                        CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), json::type_error&);
+                        CHECK_THROWS_AS(j_nonobject.value("foo", 1), json::type_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), json::type_error);
                         CHECK_THROWS_WITH(j_nonobject.value("foo", 1),
                                           "[json.exception.type_error.306] cannot use value() with array");
                         CHECK_THROWS_WITH(j_nonobject_const.value("foo", 1),
@@ -251,8 +251,8 @@ TEST_CASE("element access 2")
                     {
                         json j_nonobject(json::value_t::number_integer);
                         const json j_nonobject_const(json::value_t::number_integer);
-                        CHECK_THROWS_AS(j_nonobject.value("foo", 1), json::type_error&);
-                        CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), json::type_error&);
+                        CHECK_THROWS_AS(j_nonobject.value("foo", 1), json::type_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), json::type_error);
                         CHECK_THROWS_WITH(j_nonobject.value("foo", 1),
                                           "[json.exception.type_error.306] cannot use value() with number");
                         CHECK_THROWS_WITH(j_nonobject_const.value("foo", 1),
@@ -263,8 +263,8 @@ TEST_CASE("element access 2")
                     {
                         json j_nonobject(json::value_t::number_unsigned);
                         const json j_nonobject_const(json::value_t::number_unsigned);
-                        CHECK_THROWS_AS(j_nonobject.value("foo", 1), json::type_error&);
-                        CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), json::type_error&);
+                        CHECK_THROWS_AS(j_nonobject.value("foo", 1), json::type_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), json::type_error);
                         CHECK_THROWS_WITH(j_nonobject.value("foo", 1),
                                           "[json.exception.type_error.306] cannot use value() with number");
                         CHECK_THROWS_WITH(j_nonobject_const.value("foo", 1),
@@ -275,8 +275,8 @@ TEST_CASE("element access 2")
                     {
                         json j_nonobject(json::value_t::number_float);
                         const json j_nonobject_const(json::value_t::number_float);
-                        CHECK_THROWS_AS(j_nonobject.value("foo", 1), json::type_error&);
-                        CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), json::type_error&);
+                        CHECK_THROWS_AS(j_nonobject.value("foo", 1), json::type_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("foo", 1), json::type_error);
                         CHECK_THROWS_WITH(j_nonobject.value("foo", 1),
                                           "[json.exception.type_error.306] cannot use value() with number");
                         CHECK_THROWS_WITH(j_nonobject_const.value("foo", 1),
@@ -290,26 +290,26 @@ TEST_CASE("element access 2")
                 SECTION("access existing value")
                 {
                     CHECK(j.value("/integer"_json_pointer, 2) == 1);
-                    CHECK(j.value("/integer"_json_pointer, 1.0) == Approx(1));
+                    CHECK(j.value("/integer"_json_pointer, 1.0) == Catch::Approx(1));
                     CHECK(j.value("/unsigned"_json_pointer, 2) == 1u);
-                    CHECK(j.value("/unsigned"_json_pointer, 1.0) == Approx(1u));
+                    CHECK(j.value("/unsigned"_json_pointer, 1.0) == Catch::Approx(1u));
                     CHECK(j.value("/null"_json_pointer, json(1)) == json());
                     CHECK(j.value("/boolean"_json_pointer, false) == true);
                     CHECK(j.value("/string"_json_pointer, "bar") == "hello world");
                     CHECK(j.value("/string"_json_pointer, std::string("bar")) == "hello world");
-                    CHECK(j.value("/floating"_json_pointer, 12.34) == Approx(42.23));
+                    CHECK(j.value("/floating"_json_pointer, 12.34) == Catch::Approx(42.23));
                     CHECK(j.value("/floating"_json_pointer, 12) == 42);
                     CHECK(j.value("/object"_json_pointer, json({{"foo", "bar"}})) == json::object());
                     CHECK(j.value("/array"_json_pointer, json({10, 100})) == json({1, 2, 3}));
 
                     CHECK(j_const.value("/integer"_json_pointer, 2) == 1);
-                    CHECK(j_const.value("/integer"_json_pointer, 1.0) == Approx(1));
+                    CHECK(j_const.value("/integer"_json_pointer, 1.0) == Catch::Approx(1));
                     CHECK(j_const.value("/unsigned"_json_pointer, 2) == 1u);
-                    CHECK(j_const.value("/unsigned"_json_pointer, 1.0) == Approx(1u));
+                    CHECK(j_const.value("/unsigned"_json_pointer, 1.0) == Catch::Approx(1u));
                     CHECK(j_const.value("/boolean"_json_pointer, false) == true);
                     CHECK(j_const.value("/string"_json_pointer, "bar") == "hello world");
                     CHECK(j_const.value("/string"_json_pointer, std::string("bar")) == "hello world");
-                    CHECK(j_const.value("/floating"_json_pointer, 12.34) == Approx(42.23));
+                    CHECK(j_const.value("/floating"_json_pointer, 12.34) == Catch::Approx(42.23));
                     CHECK(j_const.value("/floating"_json_pointer, 12) == 42);
                     CHECK(j_const.value("/object"_json_pointer, json({{"foo", "bar"}})) == json::object());
                     CHECK(j_const.value("/array"_json_pointer, json({10, 100})) == json({1, 2, 3}));
@@ -321,8 +321,8 @@ TEST_CASE("element access 2")
                     {
                         json j_nonobject(json::value_t::null);
                         const json j_nonobject_const(json::value_t::null);
-                        CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), json::type_error&);
-                        CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), json::type_error&);
+                        CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), json::type_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), json::type_error);
                         CHECK_THROWS_WITH(j_nonobject.value("/foo"_json_pointer, 1),
                                           "[json.exception.type_error.306] cannot use value() with null");
                         CHECK_THROWS_WITH(j_nonobject_const.value("/foo"_json_pointer, 1),
@@ -333,8 +333,8 @@ TEST_CASE("element access 2")
                     {
                         json j_nonobject(json::value_t::boolean);
                         const json j_nonobject_const(json::value_t::boolean);
-                        CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), json::type_error&);
-                        CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), json::type_error&);
+                        CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), json::type_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), json::type_error);
                         CHECK_THROWS_WITH(j_nonobject.value("/foo"_json_pointer, 1),
                                           "[json.exception.type_error.306] cannot use value() with boolean");
                         CHECK_THROWS_WITH(j_nonobject_const.value("/foo"_json_pointer, 1),
@@ -345,8 +345,8 @@ TEST_CASE("element access 2")
                     {
                         json j_nonobject(json::value_t::string);
                         const json j_nonobject_const(json::value_t::string);
-                        CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), json::type_error&);
-                        CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), json::type_error&);
+                        CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), json::type_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), json::type_error);
                         CHECK_THROWS_WITH(j_nonobject.value("/foo"_json_pointer, 1),
                                           "[json.exception.type_error.306] cannot use value() with string");
                         CHECK_THROWS_WITH(j_nonobject_const.value("/foo"_json_pointer, 1),
@@ -357,8 +357,8 @@ TEST_CASE("element access 2")
                     {
                         json j_nonobject(json::value_t::array);
                         const json j_nonobject_const(json::value_t::array);
-                        CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), json::type_error&);
-                        CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), json::type_error&);
+                        CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), json::type_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), json::type_error);
                         CHECK_THROWS_WITH(j_nonobject.value("/foo"_json_pointer, 1),
                                           "[json.exception.type_error.306] cannot use value() with array");
                         CHECK_THROWS_WITH(j_nonobject_const.value("/foo"_json_pointer, 1),
@@ -369,8 +369,8 @@ TEST_CASE("element access 2")
                     {
                         json j_nonobject(json::value_t::number_integer);
                         const json j_nonobject_const(json::value_t::number_integer);
-                        CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), json::type_error&);
-                        CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), json::type_error&);
+                        CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), json::type_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), json::type_error);
                         CHECK_THROWS_WITH(j_nonobject.value("/foo"_json_pointer, 1),
                                           "[json.exception.type_error.306] cannot use value() with number");
                         CHECK_THROWS_WITH(j_nonobject_const.value("/foo"_json_pointer, 1),
@@ -381,8 +381,8 @@ TEST_CASE("element access 2")
                     {
                         json j_nonobject(json::value_t::number_unsigned);
                         const json j_nonobject_const(json::value_t::number_unsigned);
-                        CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), json::type_error&);
-                        CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), json::type_error&);
+                        CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), json::type_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), json::type_error);
                         CHECK_THROWS_WITH(j_nonobject.value("/foo"_json_pointer, 1),
                                           "[json.exception.type_error.306] cannot use value() with number");
                         CHECK_THROWS_WITH(j_nonobject_const.value("/foo"_json_pointer, 1),
@@ -393,8 +393,8 @@ TEST_CASE("element access 2")
                     {
                         json j_nonobject(json::value_t::number_float);
                         const json j_nonobject_const(json::value_t::number_float);
-                        CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), json::type_error&);
-                        CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), json::type_error&);
+                        CHECK_THROWS_AS(j_nonobject.value("/foo"_json_pointer, 1), json::type_error);
+                        CHECK_THROWS_AS(j_nonobject_const.value("/foo"_json_pointer, 1), json::type_error);
                         CHECK_THROWS_WITH(j_nonobject.value("/foo"_json_pointer, 1),
                                           "[json.exception.type_error.306] cannot use value() with number");
                         CHECK_THROWS_WITH(j_nonobject_const.value("/foo"_json_pointer, 1),
@@ -473,8 +473,8 @@ TEST_CASE("element access 2")
                     const json j_const_nonobject(j_nonobject);
                     CHECK_NOTHROW(j_nonobject["foo"]);
                     CHECK_NOTHROW(j_nonobject2[json::object_t::key_type("foo")]);
-                    CHECK_THROWS_AS(j_const_nonobject["foo"], json::type_error&);
-                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], json::type_error&);
+                    CHECK_THROWS_AS(j_const_nonobject["foo"], json::type_error);
+                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], json::type_error);
                     CHECK_THROWS_WITH(j_const_nonobject["foo"], "[json.exception.type_error.305] cannot use operator[] with a string argument with null");
                     CHECK_THROWS_WITH(j_const_nonobject[json::object_t::key_type("foo")],
                                       "[json.exception.type_error.305] cannot use operator[] with a string argument with null");
@@ -484,10 +484,10 @@ TEST_CASE("element access 2")
                 {
                     json j_nonobject(json::value_t::boolean);
                     const json j_const_nonobject(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject["foo"], json::type_error&);
-                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], json::type_error&);
-                    CHECK_THROWS_AS(j_const_nonobject["foo"], json::type_error&);
-                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], json::type_error&);
+                    CHECK_THROWS_AS(j_nonobject["foo"], json::type_error);
+                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], json::type_error);
+                    CHECK_THROWS_AS(j_const_nonobject["foo"], json::type_error);
+                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], json::type_error);
                     CHECK_THROWS_WITH(j_nonobject["foo"],
                                       "[json.exception.type_error.305] cannot use operator[] with a string argument with boolean");
                     CHECK_THROWS_WITH(j_nonobject[json::object_t::key_type("foo")],
@@ -502,10 +502,10 @@ TEST_CASE("element access 2")
                 {
                     json j_nonobject(json::value_t::string);
                     const json j_const_nonobject(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject["foo"], json::type_error&);
-                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], json::type_error&);
-                    CHECK_THROWS_AS(j_const_nonobject["foo"], json::type_error&);
-                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], json::type_error&);
+                    CHECK_THROWS_AS(j_nonobject["foo"], json::type_error);
+                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], json::type_error);
+                    CHECK_THROWS_AS(j_const_nonobject["foo"], json::type_error);
+                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], json::type_error);
                     CHECK_THROWS_WITH(j_nonobject["foo"],
                                       "[json.exception.type_error.305] cannot use operator[] with a string argument with string");
                     CHECK_THROWS_WITH(j_nonobject[json::object_t::key_type("foo")],
@@ -520,10 +520,10 @@ TEST_CASE("element access 2")
                 {
                     json j_nonobject(json::value_t::array);
                     const json j_const_nonobject(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject["foo"], json::type_error&);
-                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], json::type_error&);
-                    CHECK_THROWS_AS(j_const_nonobject["foo"], json::type_error&);
-                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], json::type_error&);
+                    CHECK_THROWS_AS(j_nonobject["foo"], json::type_error);
+                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], json::type_error);
+                    CHECK_THROWS_AS(j_const_nonobject["foo"], json::type_error);
+                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], json::type_error);
                     CHECK_THROWS_WITH(j_nonobject["foo"],
                                       "[json.exception.type_error.305] cannot use operator[] with a string argument with array");
                     CHECK_THROWS_WITH(j_nonobject[json::object_t::key_type("foo")], "[json.exception.type_error.305] cannot use operator[] with a string argument with array");
@@ -537,10 +537,10 @@ TEST_CASE("element access 2")
                 {
                     json j_nonobject(json::value_t::number_integer);
                     const json j_const_nonobject(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject["foo"], json::type_error&);
-                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], json::type_error&);
-                    CHECK_THROWS_AS(j_const_nonobject["foo"], json::type_error&);
-                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], json::type_error&);
+                    CHECK_THROWS_AS(j_nonobject["foo"], json::type_error);
+                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], json::type_error);
+                    CHECK_THROWS_AS(j_const_nonobject["foo"], json::type_error);
+                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], json::type_error);
                     CHECK_THROWS_WITH(j_nonobject["foo"],
                                       "[json.exception.type_error.305] cannot use operator[] with a string argument with number");
                     CHECK_THROWS_WITH(j_nonobject[json::object_t::key_type("foo")],
@@ -555,10 +555,10 @@ TEST_CASE("element access 2")
                 {
                     json j_nonobject(json::value_t::number_unsigned);
                     const json j_const_nonobject(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject["foo"], json::type_error&);
-                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], json::type_error&);
-                    CHECK_THROWS_AS(j_const_nonobject["foo"], json::type_error&);
-                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], json::type_error&);
+                    CHECK_THROWS_AS(j_nonobject["foo"], json::type_error);
+                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], json::type_error);
+                    CHECK_THROWS_AS(j_const_nonobject["foo"], json::type_error);
+                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], json::type_error);
                     CHECK_THROWS_WITH(j_nonobject["foo"],
                                       "[json.exception.type_error.305] cannot use operator[] with a string argument with number");
                     CHECK_THROWS_WITH(j_nonobject[json::object_t::key_type("foo")],
@@ -573,10 +573,10 @@ TEST_CASE("element access 2")
                 {
                     json j_nonobject(json::value_t::number_float);
                     const json j_const_nonobject(j_nonobject);
-                    CHECK_THROWS_AS(j_nonobject["foo"], json::type_error&);
-                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], json::type_error&);
-                    CHECK_THROWS_AS(j_const_nonobject["foo"], json::type_error&);
-                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], json::type_error&);
+                    CHECK_THROWS_AS(j_nonobject["foo"], json::type_error);
+                    CHECK_THROWS_AS(j_nonobject[json::object_t::key_type("foo")], json::type_error);
+                    CHECK_THROWS_AS(j_const_nonobject["foo"], json::type_error);
+                    CHECK_THROWS_AS(j_const_nonobject[json::object_t::key_type("foo")], json::type_error);
                     CHECK_THROWS_WITH(j_nonobject["foo"],
                                       "[json.exception.type_error.305] cannot use operator[] with a string argument with number");
                     CHECK_THROWS_WITH(j_nonobject[json::object_t::key_type("foo")],
@@ -723,10 +723,10 @@ TEST_CASE("element access 2")
                     {
                         json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}, {"d", false}, {"e", true}};
                         json jobject2 = {{"a", "a"}, {"b", 1}, {"c", 17u}};
-                        CHECK_THROWS_AS(jobject.erase(jobject2.begin()), json::invalid_iterator&);
-                        CHECK_THROWS_AS(jobject.erase(jobject.begin(), jobject2.end()), json::invalid_iterator&);
-                        CHECK_THROWS_AS(jobject.erase(jobject2.begin(), jobject.end()), json::invalid_iterator&);
-                        CHECK_THROWS_AS(jobject.erase(jobject2.begin(), jobject2.end()), json::invalid_iterator&);
+                        CHECK_THROWS_AS(jobject.erase(jobject2.begin()), json::invalid_iterator);
+                        CHECK_THROWS_AS(jobject.erase(jobject.begin(), jobject2.end()), json::invalid_iterator);
+                        CHECK_THROWS_AS(jobject.erase(jobject2.begin(), jobject.end()), json::invalid_iterator);
+                        CHECK_THROWS_AS(jobject.erase(jobject2.begin(), jobject2.end()), json::invalid_iterator);
                         CHECK_THROWS_WITH(jobject.erase(jobject2.begin()),
                                           "[json.exception.invalid_iterator.202] iterator does not fit current value");
                         CHECK_THROWS_WITH(jobject.erase(jobject.begin(), jobject2.end()),
@@ -739,10 +739,10 @@ TEST_CASE("element access 2")
                     {
                         json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}, {"d", false}, {"e", true}};
                         json jobject2 = {{"a", "a"}, {"b", 1}, {"c", 17u}};
-                        CHECK_THROWS_AS(jobject.erase(jobject2.cbegin()), json::invalid_iterator&);
-                        CHECK_THROWS_AS(jobject.erase(jobject.cbegin(), jobject2.cend()), json::invalid_iterator&);
-                        CHECK_THROWS_AS(jobject.erase(jobject2.cbegin(), jobject.cend()), json::invalid_iterator&);
-                        CHECK_THROWS_AS(jobject.erase(jobject2.cbegin(), jobject2.cend()), json::invalid_iterator&);
+                        CHECK_THROWS_AS(jobject.erase(jobject2.cbegin()), json::invalid_iterator);
+                        CHECK_THROWS_AS(jobject.erase(jobject.cbegin(), jobject2.cend()), json::invalid_iterator);
+                        CHECK_THROWS_AS(jobject.erase(jobject2.cbegin(), jobject.cend()), json::invalid_iterator);
+                        CHECK_THROWS_AS(jobject.erase(jobject2.cbegin(), jobject2.cend()), json::invalid_iterator);
                         CHECK_THROWS_WITH(jobject.erase(jobject2.cbegin()),
                                           "[json.exception.invalid_iterator.202] iterator does not fit current value");
                         CHECK_THROWS_WITH(jobject.erase(jobject.cbegin(), jobject2.cend()),
@@ -760,7 +760,7 @@ TEST_CASE("element access 2")
                 SECTION("null")
                 {
                     json j_nonobject(json::value_t::null);
-                    CHECK_THROWS_AS(j_nonobject.erase("foo"), json::type_error&);
+                    CHECK_THROWS_AS(j_nonobject.erase("foo"), json::type_error);
                     CHECK_THROWS_WITH(j_nonobject.erase("foo"),
                                       "[json.exception.type_error.307] cannot use erase() with null");
                 }
@@ -768,7 +768,7 @@ TEST_CASE("element access 2")
                 SECTION("boolean")
                 {
                     json j_nonobject(json::value_t::boolean);
-                    CHECK_THROWS_AS(j_nonobject.erase("foo"), json::type_error&);
+                    CHECK_THROWS_AS(j_nonobject.erase("foo"), json::type_error);
                     CHECK_THROWS_WITH(j_nonobject.erase("foo"),
                                       "[json.exception.type_error.307] cannot use erase() with boolean");
                 }
@@ -776,7 +776,7 @@ TEST_CASE("element access 2")
                 SECTION("string")
                 {
                     json j_nonobject(json::value_t::string);
-                    CHECK_THROWS_AS(j_nonobject.erase("foo"), json::type_error&);
+                    CHECK_THROWS_AS(j_nonobject.erase("foo"), json::type_error);
                     CHECK_THROWS_WITH(j_nonobject.erase("foo"),
                                       "[json.exception.type_error.307] cannot use erase() with string");
                 }
@@ -784,7 +784,7 @@ TEST_CASE("element access 2")
                 SECTION("array")
                 {
                     json j_nonobject(json::value_t::array);
-                    CHECK_THROWS_AS(j_nonobject.erase("foo"), json::type_error&);
+                    CHECK_THROWS_AS(j_nonobject.erase("foo"), json::type_error);
                     CHECK_THROWS_WITH(j_nonobject.erase("foo"),
                                       "[json.exception.type_error.307] cannot use erase() with array");
                 }
@@ -792,7 +792,7 @@ TEST_CASE("element access 2")
                 SECTION("number (integer)")
                 {
                     json j_nonobject(json::value_t::number_integer);
-                    CHECK_THROWS_AS(j_nonobject.erase("foo"), json::type_error&);
+                    CHECK_THROWS_AS(j_nonobject.erase("foo"), json::type_error);
                     CHECK_THROWS_WITH(j_nonobject.erase("foo"),
                                       "[json.exception.type_error.307] cannot use erase() with number");
                 }
@@ -800,7 +800,7 @@ TEST_CASE("element access 2")
                 SECTION("number (floating-point)")
                 {
                     json j_nonobject(json::value_t::number_float);
-                    CHECK_THROWS_AS(j_nonobject.erase("foo"), json::type_error&);
+                    CHECK_THROWS_AS(j_nonobject.erase("foo"), json::type_error);
                     CHECK_THROWS_WITH(j_nonobject.erase("foo"),
                                       "[json.exception.type_error.307] cannot use erase() with number");
                 }
@@ -1090,7 +1090,7 @@ TEST_CASE("element access 2 (throwing tests)")
                     CHECK(j.value("/not/existing"_json_pointer, 2u) == 2u);
                     CHECK(j.value("/not/existing"_json_pointer, false) == false);
                     CHECK(j.value("/not/existing"_json_pointer, "bar") == "bar");
-                    CHECK(j.value("/not/existing"_json_pointer, 12.34) == Approx(12.34));
+                    CHECK(j.value("/not/existing"_json_pointer, 12.34) == Catch::Approx(12.34));
                     CHECK(j.value("/not/existing"_json_pointer, json({{"foo", "bar"}})) == json({{"foo", "bar"}}));
                     CHECK(j.value("/not/existing"_json_pointer, json({10, 100})) == json({10, 100}));
 
@@ -1098,7 +1098,7 @@ TEST_CASE("element access 2 (throwing tests)")
                     CHECK(j_const.value("/not/existing"_json_pointer, 2u) == 2u);
                     CHECK(j_const.value("/not/existing"_json_pointer, false) == false);
                     CHECK(j_const.value("/not/existing"_json_pointer, "bar") == "bar");
-                    CHECK(j_const.value("/not/existing"_json_pointer, 12.34) == Approx(12.34));
+                    CHECK(j_const.value("/not/existing"_json_pointer, 12.34) == Catch::Approx(12.34));
                     CHECK(j_const.value("/not/existing"_json_pointer, json({{"foo", "bar"}})) == json({{"foo", "bar"}}));
                     CHECK(j_const.value("/not/existing"_json_pointer, json({10, 100})) == json({10, 100}));
                 }

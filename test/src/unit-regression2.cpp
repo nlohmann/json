@@ -27,7 +27,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "doctest_compatibility.h"
+#include <catch2/catch_all.hpp>
 
 // for some reason including this after the json header leads to linker errors with VS 2017...
 #include <locale>
@@ -128,8 +128,8 @@ namespace std_fs = std::filesystem;
 #endif
 
 // NLOHMANN_JSON_SERIALIZE_ENUM uses a static std::pair
-DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
-DOCTEST_CLANG_SUPPRESS_WARNING("-Wexit-time-destructors")
+//DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
+//DOCTEST_CLANG_SUPPRESS_WARNING("-Wexit-time-destructors")
 
 /////////////////////////////////////////////////////////////////////
 // for #1021
@@ -837,4 +837,4 @@ TEST_CASE("regression tests 2")
     }
 }
 
-DOCTEST_CLANG_SUPPRESS_WARNING_POP
+//DOCTEST_CLANG_SUPPRESS_WARNING_POP

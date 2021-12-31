@@ -1,0 +1,25 @@
+# Load the cc_library rule.
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
+# Static library, without main.
+cc_library(
+    name = "catch2",
+    hdrs = glob(["src/catch2/**/*.hpp"]),
+    srcs = glob(["src/catch2/**/*.cpp"],
+                exclude=[ "src/catch2/internal/catch_main.cpp"]),
+    visibility = ["//visibility:public"],
+    copts = ["-std=c++14"],
+    linkstatic = True,
+    includes = ["src/"],
+)
+
+# Static library, with main.
+cc_library(
+    name = "catch2_main",
+    srcs = ["src/catch2/internal/catch_main.cpp"],
+    deps = [":catch2"],
+    visibility = ["//visibility:public"],
+    linkstatic = True,
+    copts = ["-std=c++14"],
+    includes = ["src/"],
+)

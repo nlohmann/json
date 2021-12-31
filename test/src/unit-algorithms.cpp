@@ -27,8 +27,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "doctest_compatibility.h"
-
+#include <catch2/catch_all.hpp>
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
@@ -241,7 +240,7 @@ TEST_CASE("algorithms")
             SECTION("sorting an object")
             {
                 json j({{"one", 1}, {"two", 2}});
-                CHECK_THROWS_AS(std::sort(j.begin(), j.end()), json::invalid_iterator&);
+                CHECK_THROWS_AS(std::sort(j.begin(), j.end()), json::invalid_iterator);
                 CHECK_THROWS_WITH(std::sort(j.begin(), j.end()),
                                   "[json.exception.invalid_iterator.209] cannot use offsets with object iterators");
             }

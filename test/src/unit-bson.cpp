@@ -27,7 +27,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "doctest_compatibility.h"
+#include <catch2/catch_all.hpp>
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;
@@ -44,7 +44,7 @@ TEST_CASE("BSON")
         SECTION("null")
         {
             json j = nullptr;
-            CHECK_THROWS_AS(json::to_bson(j), json::type_error&);
+            CHECK_THROWS_AS(json::to_bson(j), json::type_error);
             CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is null");
         }
 
@@ -53,14 +53,14 @@ TEST_CASE("BSON")
             SECTION("true")
             {
                 json j = true;
-                CHECK_THROWS_AS(json::to_bson(j), json::type_error&);
+                CHECK_THROWS_AS(json::to_bson(j), json::type_error);
                 CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is boolean");
             }
 
             SECTION("false")
             {
                 json j = false;
-                CHECK_THROWS_AS(json::to_bson(j), json::type_error&);
+                CHECK_THROWS_AS(json::to_bson(j), json::type_error);
                 CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is boolean");
             }
         }
@@ -68,28 +68,28 @@ TEST_CASE("BSON")
         SECTION("number")
         {
             json j = 42;
-            CHECK_THROWS_AS(json::to_bson(j), json::type_error&);
+            CHECK_THROWS_AS(json::to_bson(j), json::type_error);
             CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is number");
         }
 
         SECTION("float")
         {
             json j = 4.2;
-            CHECK_THROWS_AS(json::to_bson(j), json::type_error&);
+            CHECK_THROWS_AS(json::to_bson(j), json::type_error);
             CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is number");
         }
 
         SECTION("string")
         {
             json j = "not supported";
-            CHECK_THROWS_AS(json::to_bson(j), json::type_error&);
+            CHECK_THROWS_AS(json::to_bson(j), json::type_error);
             CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is string");
         }
 
         SECTION("array")
         {
             json j = std::vector<int> {1, 2, 3, 4, 5, 6, 7};
-            CHECK_THROWS_AS(json::to_bson(j), json::type_error&);
+            CHECK_THROWS_AS(json::to_bson(j), json::type_error);
             CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is array");
         }
     }
@@ -100,7 +100,7 @@ TEST_CASE("BSON")
         {
             { std::string("en\0try", 6), true }
         };
-        CHECK_THROWS_AS(json::to_bson(j), json::out_of_range&);
+        CHECK_THROWS_AS(json::to_bson(j), json::out_of_range);
 #if JSON_DIAGNOSTICS
         CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.out_of_range.409] (/en) BSON key cannot contain code point U+0000 (at byte 2)");
 #else
@@ -119,7 +119,7 @@ TEST_CASE("BSON")
             0x00, 0x00, 0x00, 0x80
         };
         json _;
-        CHECK_THROWS_AS(_ = json::from_bson(v), json::parse_error&);
+        CHECK_THROWS_AS(_ = json::from_bson(v), json::parse_error);
         CHECK_THROWS_WITH(_ = json::from_bson(v), "[json.exception.parse_error.112] parse error at byte 10: syntax error while parsing BSON string: string length must be at least 1, is -2147483648");
     }
 
@@ -764,7 +764,7 @@ TEST_CASE("Incomplete BSON Input")
         };
 
         json _;
-        CHECK_THROWS_AS(_ = json::from_bson(incomplete_bson), json::parse_error&);
+        CHECK_THROWS_AS(_ = json::from_bson(incomplete_bson), json::parse_error);
         CHECK_THROWS_WITH(_ = json::from_bson(incomplete_bson),
                           "[json.exception.parse_error.110] parse error at byte 9: syntax error while parsing BSON cstring: unexpected end of input");
 
@@ -783,7 +783,7 @@ TEST_CASE("Incomplete BSON Input")
         };
 
         json _;
-        CHECK_THROWS_AS(_ = json::from_bson(incomplete_bson), json::parse_error&);
+        CHECK_THROWS_AS(_ = json::from_bson(incomplete_bson), json::parse_error);
         CHECK_THROWS_WITH(_ = json::from_bson(incomplete_bson),
                           "[json.exception.parse_error.110] parse error at byte 6: syntax error while parsing BSON cstring: unexpected end of input");
         CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
@@ -807,7 +807,7 @@ TEST_CASE("Incomplete BSON Input")
         };
 
         json _;
-        CHECK_THROWS_AS(_ = json::from_bson(incomplete_bson), json::parse_error&);
+        CHECK_THROWS_AS(_ = json::from_bson(incomplete_bson), json::parse_error);
         CHECK_THROWS_WITH(_ = json::from_bson(incomplete_bson),
                           "[json.exception.parse_error.110] parse error at byte 28: syntax error while parsing BSON element list: unexpected end of input");
         CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
@@ -824,7 +824,7 @@ TEST_CASE("Incomplete BSON Input")
         };
 
         json _;
-        CHECK_THROWS_AS(_ = json::from_bson(incomplete_bson), json::parse_error&);
+        CHECK_THROWS_AS(_ = json::from_bson(incomplete_bson), json::parse_error);
         CHECK_THROWS_WITH(_ = json::from_bson(incomplete_bson),
                           "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing BSON number: unexpected end of input");
         CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
@@ -887,7 +887,7 @@ TEST_CASE("Unsupported BSON input")
     };
 
     json _;
-    CHECK_THROWS_AS(_ = json::from_bson(bson), json::parse_error&);
+    CHECK_THROWS_AS(_ = json::from_bson(bson), json::parse_error);
     CHECK_THROWS_WITH(_ = json::from_bson(bson),
                       "[json.exception.parse_error.114] parse error at byte 5: Unsupported BSON record type 0xFF");
     CHECK(json::from_bson(bson, true, false).is_discarded());
@@ -1238,7 +1238,7 @@ TEST_CASE("BSON numerical data")
                         0x00u // end marker
                     };
 
-                    CHECK_THROWS_AS(json::to_bson(j), json::out_of_range&);
+                    CHECK_THROWS_AS(json::to_bson(j), json::out_of_range);
 #if JSON_DIAGNOSTICS
                     CHECK_THROWS_WITH_STD_STR(json::to_bson(j), "[json.exception.out_of_range.407] (/entry) integer number " + std::to_string(i) + " cannot be represented by BSON as it does not fit int64");
 #else

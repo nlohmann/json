@@ -27,11 +27,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "doctest_compatibility.h"
+#include <catch2/catch_all.hpp>
 
 // disable -Wnoexcept due to class Evil
-DOCTEST_GCC_SUPPRESS_WARNING_PUSH
-DOCTEST_GCC_SUPPRESS_WARNING("-Wnoexcept")
+//DOCTEST_GCC_SUPPRESS_WARNING_PUSH
+//DOCTEST_GCC_SUPPRESS_WARNING("-Wnoexcept")
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;
@@ -880,4 +880,4 @@ TEST_CASE("compatible array type, without iterator type alias")
     json j = vec;
 }
 
-DOCTEST_GCC_SUPPRESS_WARNING_POP
+//DOCTEST_GCC_SUPPRESS_WARNING_POP

@@ -27,7 +27,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "doctest_compatibility.h"
+#include <catch2/catch_all.hpp>
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;
@@ -78,10 +78,10 @@ TEST_CASE("compliance tests from json.org")
                     TEST_DATA_DIRECTORY "/json_tests/fail33.json"
                 })
         {
-            CAPTURE(filename)
+            CAPTURE(filename);
             std::ifstream f(filename);
             json _;
-            CHECK_THROWS_AS(_ = json::parse(f), json::parse_error&);
+            CHECK_THROWS_AS(_ = json::parse(f), json::parse_error);
         }
     }
 
@@ -97,7 +97,7 @@ TEST_CASE("compliance tests from json.org")
                     TEST_DATA_DIRECTORY "/json_tests/fail10.json",
                 })
         {
-            CAPTURE(filename)
+            CAPTURE(filename);
             std::ifstream f(filename);
             json j;
             CHECK_NOTHROW(f >> j);
@@ -113,7 +113,7 @@ TEST_CASE("compliance tests from json.org")
                     TEST_DATA_DIRECTORY "/json_tests/pass3.json"
                 })
         {
-            CAPTURE(filename)
+            CAPTURE(filename);
             std::ifstream f(filename);
             json j;
             CHECK_NOTHROW(f >> j);
@@ -129,8 +129,8 @@ TEST_CASE("compliance tests from nativejson-benchmark")
     {
         auto TEST_DOUBLE = [](const std::string & json_string, const double expected)
         {
-            CAPTURE(json_string)
-            CAPTURE(expected)
+            CAPTURE(json_string);
+            CAPTURE(expected);
             CHECK(json::parse(json_string)[0].get<double>() == Approx(expected));
         };
 
@@ -809,7 +809,7 @@ TEST_CASE("nst's JSONTestSuite")
                 CAPTURE(filename)
                 std::ifstream f(filename);
                 json _;
-                CHECK_THROWS_AS(_ = json::parse(f), json::parse_error&);
+                CHECK_THROWS_AS(_ = json::parse(f), json::parse_error);
             }
         }
 
@@ -885,7 +885,7 @@ TEST_CASE("nst's JSONTestSuite")
                 CAPTURE(filename)
                 std::ifstream f(filename);
                 json j;
-                CHECK_THROWS_AS(f >> j, json::out_of_range&);
+                CHECK_THROWS_AS(f >> j, json::out_of_range);
             }
         }
 
@@ -912,7 +912,7 @@ TEST_CASE("nst's JSONTestSuite")
                 CAPTURE(filename)
                 std::ifstream f(filename);
                 json j;
-                CHECK_THROWS_AS(f >> j, json::parse_error&);
+                CHECK_THROWS_AS(f >> j, json::parse_error);
             }
         }
     }
@@ -1229,7 +1229,7 @@ TEST_CASE("nst's JSONTestSuite (2)")
                 CAPTURE(filename)
                 std::ifstream f(filename);
                 json _;
-                CHECK_THROWS_AS(_ = json::parse(f), json::parse_error&);
+                CHECK_THROWS_AS(_ = json::parse(f), json::parse_error);
                 std::ifstream f2(filename);
                 CHECK(!json::accept(f2));
             }
@@ -1343,10 +1343,10 @@ TEST_CASE("nst's JSONTestSuite (2)")
                     }
                 )
             {
-                CAPTURE(filename)
+                CAPTURE(filename);
                 std::ifstream f(filename);
                 json _;
-                CHECK_THROWS_AS(_ = json::parse(f), json::exception&); // could be parse_error or out_of_range
+                CHECK_THROWS_AS(_ = json::parse(f), json::exception); // could be parse_error or out_of_range
                 std::ifstream f2(filename);
                 CHECK(!json::accept(f2));
             }

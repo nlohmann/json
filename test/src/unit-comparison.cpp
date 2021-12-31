@@ -27,7 +27,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "doctest_compatibility.h"
+#include <catch2/catch_all.hpp>
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;
@@ -79,8 +79,8 @@ TEST_CASE("lexicographical comparison operators")
             {
                 for (size_t j = 0; j < j_types.size(); ++j)
                 {
-                    CAPTURE(i)
-                    CAPTURE(j)
+                    CAPTURE(i);
+                    CAPTURE(j);
                     // check precomputed values
                     CHECK(operator<(j_types[i], j_types[j]) == expected[i][j]);
                     CHECK(f(j_types[i], j_types[j]) == expected[i][j]);
@@ -132,10 +132,10 @@ TEST_CASE("lexicographical comparison operators")
             {
                 for (size_t j = 0; j < j_values.size(); ++j)
                 {
-                    CAPTURE(i)
-                    CAPTURE(j)
-                    CAPTURE(j_values[i])
-                    CAPTURE(j_values[j])
+                    CAPTURE(i);
+                    CAPTURE(j);
+                    CAPTURE(j_values[i]);
+                    CAPTURE(j_values[j]);
                     // check precomputed values
                     CHECK( (j_values[i] == j_values[j]) == expected[i][j] );
                 }
@@ -162,8 +162,8 @@ TEST_CASE("lexicographical comparison operators")
             {
                 for (size_t j = 0; j < j_values.size(); ++j)
                 {
-                    CAPTURE(i)
-                    CAPTURE(j)
+                    CAPTURE(i);
+                    CAPTURE(j);
                     // check definition
                     CHECK( (j_values[i] != j_values[j]) == !(j_values[i] == j_values[j]) );
                 }
@@ -205,10 +205,10 @@ TEST_CASE("lexicographical comparison operators")
             {
                 for (size_t j = 0; j < j_values.size(); ++j)
                 {
-                    CAPTURE(i)
-                    CAPTURE(j)
-                    CAPTURE(j_values[i])
-                    CAPTURE(j_values[j])
+                    CAPTURE(i);
+                    CAPTURE(j);
+                    CAPTURE(j_values[i]);
+                    CAPTURE(j_values[j]);
                     // check precomputed values
                     CHECK( (j_values[i] < j_values[j]) == expected[i][j] );
                 }
@@ -218,7 +218,7 @@ TEST_CASE("lexicographical comparison operators")
             json j_discarded(json::value_t::discarded);
             for (size_t i = 0; i < j_values.size(); ++i)
             {
-                CAPTURE(i)
+                CAPTURE(i);
                 CHECK( (j_values[i] < j_discarded) == false);
                 CHECK( (j_discarded < j_values[i]) == false);
                 CHECK( (j_discarded < j_discarded) == false);
@@ -231,8 +231,8 @@ TEST_CASE("lexicographical comparison operators")
             {
                 for (size_t j = 0; j < j_values.size(); ++j)
                 {
-                    CAPTURE(i)
-                    CAPTURE(j)
+                    CAPTURE(i);
+                    CAPTURE(j);
                     // check definition
                     CHECK( (j_values[i] <= j_values[j]) == !(j_values[j] < j_values[i]) );
                 }
@@ -245,8 +245,8 @@ TEST_CASE("lexicographical comparison operators")
             {
                 for (size_t j = 0; j < j_values.size(); ++j)
                 {
-                    CAPTURE(i)
-                    CAPTURE(j)
+                    CAPTURE(i);
+                    CAPTURE(j);
                     // check definition
                     CHECK( (j_values[i] > j_values[j]) == (j_values[j] < j_values[i]) );
                 }
@@ -259,8 +259,8 @@ TEST_CASE("lexicographical comparison operators")
             {
                 for (size_t j = 0; j < j_values.size(); ++j)
                 {
-                    CAPTURE(i)
-                    CAPTURE(j)
+                    CAPTURE(i);
+                    CAPTURE(j);
                     // check definition
                     CHECK( (j_values[i] >= j_values[j]) == !(j_values[i] < j_values[j]) );
                 }

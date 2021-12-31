@@ -1,6 +1,8 @@
 option(JSON_Valgrind    "Execute test suite with Valgrind." OFF)
 option(JSON_FastTests   "Skip expensive/slow tests." OFF)
 
+add_subdirectory(thirdparty/catch2)
+
 # download test data
 include(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/download_test_data.cmake)
 
@@ -14,22 +16,6 @@ if(JSON_Valgrind)
     set(memcheck_command "${CMAKE_MEMORYCHECK_COMMAND} ${CMAKE_MEMORYCHECK_COMMAND_OPTIONS} --error-exitcode=1 --leak-check=full")
     separate_arguments(memcheck_command)
 endif()
-
-#############################################################################
-# doctest library with the main function to speed up build
-#############################################################################
-
-add_library(doctest_main OBJECT src/unit.cpp)
-set_target_properties(doctest_main PROPERTIES
-    COMPILE_DEFINITIONS "$<$<CXX_COMPILER_ID:MSVC>:_SCL_SECURE_NO_WARNINGS>"
-    COMPILE_OPTIONS "$<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>"
-)
-if (${CMAKE_VERSION} VERSION_LESS "3.8.0")
-    target_compile_features(doctest_main PUBLIC cxx_range_for)
-else()
-    target_compile_features(doctest_main PUBLIC cxx_std_11)
-endif()
-target_include_directories(doctest_main PRIVATE "thirdparty/doctest")
 
 # https://stackoverflow.com/questions/2368811/how-to-set-warning-level-in-cmake
 if(MSVC)
@@ -73,30 +59,28 @@ foreach(file ${files})
     get_filename_component(file_basename ${file} NAME_WE)
     string(REGEX REPLACE "unit-([^$]+)" "test-\\1" testcase ${file_basename})
 
-    add_executable(${testcase} $<TARGET_OBJECTS:doctest_main> ${file})
-    target_compile_definitions(${testcase} PRIVATE DOCTEST_CONFIG_SUPER_FAST_ASSERTS)
+    add_executable(${testcase} ${file})
     target_compile_options(${testcase} PRIVATE
         $<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>
         $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wno-deprecated;-Wno-float-equal>
         $<$<CXX_COMPILER_ID:GNU>:-Wno-deprecated-declarations>
     )
-    target_include_directories(${testcase} PRIVATE ${CMAKE_BINARY_DIR}/include thirdparty/doctest thirdparty/fifo_map)
-    target_link_libraries(${testcase} PRIVATE ${NLOHMANN_JSON_TARGET_NAME})
+    target_include_directories(${testcase} PRIVATE ${CMAKE_BINARY_DIR}/include thirdparty/fifo_map)
+    target_link_libraries(${testcase} PRIVATE ${NLOHMANN_JSON_TARGET_NAME} Catch2::Catch2WithMain)
 
     # add a copy with C++17 compilation
     if (compiler_supports_cpp_17)
         file(READ ${file} FILE_CONTENT)
         string(FIND "${FILE_CONTENT}" "JSON_HAS_CPP_17" CPP_17_FOUND)
         if(NOT ${CPP_17_FOUND} EQUAL -1)
-            add_executable(${testcase}_cpp17 $<TARGET_OBJECTS:doctest_main> ${file})
-            target_compile_definitions(${testcase}_cpp17 PRIVATE DOCTEST_CONFIG_SUPER_FAST_ASSERTS)
+            add_executable(${testcase}_cpp17 ${file})
             target_compile_options(${testcase}_cpp17 PRIVATE
                 $<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>
                 $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wno-deprecated;-Wno-float-equal>
                 $<$<CXX_COMPILER_ID:GNU>:-Wno-deprecated-declarations>
             )
-            target_include_directories(${testcase}_cpp17 PRIVATE ${CMAKE_BINARY_DIR}/include thirdparty/doctest thirdparty/fifo_map)
-            target_link_libraries(${testcase}_cpp17 PRIVATE ${NLOHMANN_JSON_TARGET_NAME})
+            target_include_directories(${testcase}_cpp17 PRIVATE ${CMAKE_BINARY_DIR}/include thirdparty/fifo_map)
+            target_link_libraries(${testcase}_cpp17 PRIVATE ${NLOHMANN_JSON_TARGET_NAME} Catch2::Catch2WithMain)
             target_compile_features(${testcase}_cpp17 PRIVATE cxx_std_17)
 
             if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 8.0 AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0 AND NOT MINGW)
