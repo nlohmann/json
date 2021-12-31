@@ -1,4 +1,4 @@
-# basic_json::flatten
+# <small>nlohmann::basic_json::</small>flatten
 
 ```cpp
 basic_json flatten() const;
@@ -25,7 +25,7 @@ Linear in the size the JSON value.
 Empty objects and arrays are flattened to `#!json null` and will not be reconstructed correctly by the
 [`unflatten()`](unflatten.md) function.
 
-## Example
+## Examples
 
 ??? example
 
@@ -40,6 +40,10 @@ Empty objects and arrays are flattened to `#!json null` and will not be reconstr
     ```json
     --8<-- "examples/flatten.output"
     ```
+
+## See also
+
+- [unflatten](unflatten.md) the reverse function
 
 ## Version history
 

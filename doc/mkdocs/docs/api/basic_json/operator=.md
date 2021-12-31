@@ -1,4 +1,4 @@
-# basic_json::operator=
+# <small>nlohmann::basic_json::</small>operator=
 
 ```cpp
 basic_json& operator=(basic_json other) noexcept (
@@ -21,7 +21,7 @@ constructor, destructor, and the `swap()` member function.
 
 Linear.
 
-## Example
+## Examples
 
 ??? example
 

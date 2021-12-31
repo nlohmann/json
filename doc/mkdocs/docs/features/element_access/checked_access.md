@@ -27,7 +27,7 @@ The `#!cpp at()` member function performs checked access; that is, it returns a 
     | `#!cpp j.at("hobbies").at(0)`  | `#!json "hiking"` |
     | `#!cpp j.at("hobbies").at(1)`  | `#!json "reading"` |
 
-The return value is a reference, so it can be modify the original value.
+The return value is a reference, so it can be modified by the original value.
 
 ??? example
 
@@ -69,9 +69,9 @@ When accessing an invalid index (i.e., an index greater than or equal to the arr
 
 ## Summary
 
-| scenario | non-const value | const value |
-| -------- | ------------- | ----------- |
-| access to existing object key | reference to existing value is returned | const reference to existing value is returned |
-| access to valid array index | reference to existing value is returned | const reference to existing value is returned |
+| scenario                          | non-const value                                | const value                                    |
+|-----------------------------------|------------------------------------------------|------------------------------------------------|
+| access to existing object key     | reference to existing value is returned        | const reference to existing value is returned  |
+| access to valid array index       | reference to existing value is returned        | const reference to existing value is returned  |
 | access to non-existing object key | `basic_json::out_of_range` exception is thrown | `basic_json::out_of_range` exception is thrown |
-| access to invalid array index | `basic_json::out_of_range` exception is thrown | `basic_json::out_of_range` exception is thrown |
+| access to invalid array index     | `basic_json::out_of_range` exception is thrown | `basic_json::out_of_range` exception is thrown |

@@ -186,7 +186,7 @@ class parser
                 {
                     case token_type::begin_object:
                     {
-                        if (JSON_HEDLEY_UNLIKELY(!sax->start_object(std::size_t(-1))))
+                        if (JSON_HEDLEY_UNLIKELY(!sax->start_object(static_cast<std::size_t>(-1))))
                         {
                             return false;
                         }
@@ -231,7 +231,7 @@ class parser
 
                     case token_type::begin_array:
                     {
-                        if (JSON_HEDLEY_UNLIKELY(!sax->start_array(std::size_t(-1))))
+                        if (JSON_HEDLEY_UNLIKELY(!sax->start_array(static_cast<std::size_t>(-1))))
                         {
                             return false;
                         }

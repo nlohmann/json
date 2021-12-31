@@ -1,4 +1,4 @@
-# basic_json::from_bson
+# <small>nlohmann::basic_json::</small>from_bson
 
 ```cpp
 // (1)
@@ -17,6 +17,8 @@ Deserializes a given input to a JSON value using the BSON (Binary JSON) serializ
 
 1. Reads from a compatible input.
 2. Reads from an iterator range.
+
+The exact mapping and its limitations is described on a [dedicated page](../../features/binary_formats/bson.md).
 
 ## Template parameters
 
@@ -58,11 +60,16 @@ deserialized JSON value; in case of a parse error and `allow_exceptions` set to 
 
 Strong guarantee: if an exception is thrown, there are no changes in the JSON value.
 
+## Exceptions
+
+Throws [`parse_error.114`](../../home/exceptions.md#jsonexceptionparse_error114) if an unsupported BSON record type is
+encountered.
+
 ## Complexity
 
 Linear in the size of the input.
 
-## Example
+## Examples
 
 ??? example
 
@@ -78,6 +85,26 @@ Linear in the size of the input.
     --8<-- "examples/from_bson.output"
     ```
 
+## See also
+
+- [BSON specification](http://bsonspec.org/spec.html)
+- [to_bson](to_bson.md) for the analogous serialization
+- [from_cbor](from_cbor.md) for the related CBOR format
+- [from_msgpack](from_msgpack.md) for the related MessagePack format
+- [from_ubjson](from_ubjson.md) for the related UBJSON format
+
 ## Version history
 
 - Added in version 3.4.0.
+
+!!! warning "Deprecation"
+
+    - Overload (2) replaces calls to `from_bson` with a pointer and a length as first two parameters, which has been
+      deprecated in version 3.8.0. This overload will be removed in version 4.0.0. Please replace all calls like
+      `#!cpp from_bson(ptr, len, ...);` with `#!cpp from_bson(ptr, ptr+len, ...);`.
+    - Overload (2) replaces calls to `from_bson` with a pair of iterators as their first parameter, which has been
+      deprecated in version 3.8.0. This overload will be removed in version 4.0.0. Please replace all calls like
+      `#!cpp from_bson({ptr, ptr+len}, ...);` with `#!cpp from_bson(ptr, ptr+len, ...);`.
+
+    You should be warned by your compiler with a `-Wdeprecated-declarations` warning if you are using a deprecated
+    function.

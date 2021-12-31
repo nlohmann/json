@@ -1,6 +1,8 @@
 # Specializing enum conversion
 
-By default, enum values are serialized to JSON as integers. In some cases this could result in undesired behavior. If an enum is modified or re-ordered after data has been serialized to JSON, the later de-serialized JSON data may be undefined or a different enum value than was originally intended.
+By default, enum values are serialized to JSON as integers. In some cases this could result in undesired behavior. If an
+enum is modified or re-ordered after data has been serialized to JSON, the later de-serialized JSON data may be
+undefined or a different enum value than was originally intended.
 
 It is possible to more precisely specify how a given enum is mapped to and from JSON as shown below:
 
@@ -22,7 +24,8 @@ NLOHMANN_JSON_SERIALIZE_ENUM( TaskState, {
 })
 ```
 
-The `NLOHMANN_JSON_SERIALIZE_ENUM()` macro declares a set of `to_json()` / `from_json()` functions for type `TaskState` while avoiding repetition and boilerplate serialization code.
+The `NLOHMANN_JSON_SERIALIZE_ENUM()` macro declares a set of `to_json()` / `from_json()` functions for type `TaskState`
+while avoiding repetition and boilerplate serialization code.
 
 ## Usage
 
@@ -44,10 +47,13 @@ assert(jPi.get<TaskState>() == TS_INVALID );
 
 Just as in [Arbitrary Type Conversions](#arbitrary-types-conversions) above,
 
-- `NLOHMANN_JSON_SERIALIZE_ENUM()` MUST be declared in your enum type's namespace (which can be the global namespace), or the library will not be able to locate it and it will default to integer serialization.
+- `NLOHMANN_JSON_SERIALIZE_ENUM()` MUST be declared in your enum type's namespace (which can be the global namespace),
+  or the library will not be able to locate it, and it will default to integer serialization.
 - It MUST be available (e.g., proper headers must be included) everywhere you use the conversions.
 
 Other Important points:
 
-- When using `get<ENUM_TYPE>()`, undefined JSON values will default to the first pair specified in your map. Select this default pair carefully.
-- If an enum or JSON value is specified more than once in your map, the first matching occurrence from the top of the map will be returned when converting to or from JSON.
+- When using `get<ENUM_TYPE>()`, undefined JSON values will default to the first pair specified in your map. Select this
+  default pair carefully.
+- If an enum or JSON value is specified more than once in your map, the first matching occurrence from the top of the
+  map will be returned when converting to or from JSON.

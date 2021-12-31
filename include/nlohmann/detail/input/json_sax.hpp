@@ -56,7 +56,7 @@ struct json_sax
     virtual bool number_unsigned(number_unsigned_t val) = 0;
 
     /*!
-    @brief an floating-point number was read
+    @brief a floating-point number was read
     @param[in] val  floating-point value
     @param[in] s    raw token value
     @return whether parsing should proceed
@@ -64,18 +64,18 @@ struct json_sax
     virtual bool number_float(number_float_t val, const string_t& s) = 0;
 
     /*!
-    @brief a string was read
+    @brief a string value was read
     @param[in] val  string value
     @return whether parsing should proceed
-    @note It is safe to move the passed string.
+    @note It is safe to move the passed string value.
     */
     virtual bool string(string_t& val) = 0;
 
     /*!
-    @brief a binary string was read
+    @brief a binary value was read
     @param[in] val  binary value
     @return whether parsing should proceed
-    @note It is safe to move the passed binary.
+    @note It is safe to move the passed binary value.
     */
     virtual bool binary(binary_t& val) = 0;
 
@@ -222,7 +222,7 @@ class json_sax_dom_parser
     {
         ref_stack.push_back(handle_value(BasicJsonType::value_t::object));
 
-        if (JSON_HEDLEY_UNLIKELY(len != std::size_t(-1) && len > ref_stack.back()->max_size()))
+        if (JSON_HEDLEY_UNLIKELY(len != static_cast<std::size_t>(-1) && len > ref_stack.back()->max_size()))
         {
             JSON_THROW(out_of_range::create(408, "excessive object size: " + std::to_string(len), *ref_stack.back()));
         }
@@ -248,7 +248,7 @@ class json_sax_dom_parser
     {
         ref_stack.push_back(handle_value(BasicJsonType::value_t::array));
 
-        if (JSON_HEDLEY_UNLIKELY(len != std::size_t(-1) && len > ref_stack.back()->max_size()))
+        if (JSON_HEDLEY_UNLIKELY(len != static_cast<std::size_t>(-1) && len > ref_stack.back()->max_size()))
         {
             JSON_THROW(out_of_range::create(408, "excessive array size: " + std::to_string(len), *ref_stack.back()));
         }
@@ -403,7 +403,7 @@ class json_sax_dom_callback_parser
         ref_stack.push_back(val.second);
 
         // check object limit
-        if (ref_stack.back() && JSON_HEDLEY_UNLIKELY(len != std::size_t(-1) && len > ref_stack.back()->max_size()))
+        if (ref_stack.back() && JSON_HEDLEY_UNLIKELY(len != static_cast<std::size_t>(-1) && len > ref_stack.back()->max_size()))
         {
             JSON_THROW(out_of_range::create(408, "excessive object size: " + std::to_string(len), *ref_stack.back()));
         }
@@ -473,7 +473,7 @@ class json_sax_dom_callback_parser
         ref_stack.push_back(val.second);
 
         // check array limit
-        if (ref_stack.back() && JSON_HEDLEY_UNLIKELY(len != std::size_t(-1) && len > ref_stack.back()->max_size()))
+        if (ref_stack.back() && JSON_HEDLEY_UNLIKELY(len != static_cast<std::size_t>(-1) && len > ref_stack.back()->max_size()))
         {
             JSON_THROW(out_of_range::create(408, "excessive array size: " + std::to_string(len), *ref_stack.back()));
         }
@@ -676,7 +676,7 @@ class json_sax_acceptor
         return true;
     }
 
-    bool start_object(std::size_t /*unused*/ = std::size_t(-1))
+    bool start_object(std::size_t /*unused*/ = static_cast<std::size_t>(-1))
     {
         return true;
     }
@@ -691,7 +691,7 @@ class json_sax_acceptor
         return true;
     }
 
-    bool start_array(std::size_t /*unused*/ = std::size_t(-1))
+    bool start_array(std::size_t /*unused*/ = static_cast<std::size_t>(-1))
     {
         return true;
     }

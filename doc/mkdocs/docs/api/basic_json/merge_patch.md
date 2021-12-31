@@ -1,4 +1,4 @@
-# basic_json::merge_patch
+# <small>nlohmann::basic_json::</small>merge_patch
 
 ```cpp
 void merge_patch(const basic_json& apply_patch);
@@ -37,7 +37,7 @@ Thereby, `Target` is the current object; that is, the patch is applied to the cu
 
 Linear in the lengths of `apply_patch`.
 
-## Example
+## Examples
 
 ??? example
 
@@ -52,6 +52,11 @@ Linear in the lengths of `apply_patch`.
     ```json
     --8<-- "examples/merge_patch.output"
     ```
+
+## See also
+
+- [RFC 7396 (JSON Merge Patch)](https://tools.ietf.org/html/rfc7396)
+- [patch](patch.md) apply a JSON patch
 
 ## Version history
 

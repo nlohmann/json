@@ -1,4 +1,4 @@
-# basic_json::cbor_tag_handler_t
+# <small>nlohmann::basic_json::</small>cbor_tag_handler_t
 
 ```cpp
 enum class cbor_tag_handler_t

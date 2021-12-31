@@ -56,7 +56,7 @@ TEST_CASE("hash<nlohmann::json>")
 
     // number
     hashes.insert(std::hash<json> {}(json(0)));
-    hashes.insert(std::hash<json> {}(json(unsigned(0))));
+    hashes.insert(std::hash<json> {}(json(static_cast<unsigned>(0))));
 
     hashes.insert(std::hash<json> {}(json(-1)));
     hashes.insert(std::hash<json> {}(json(0.0)));
@@ -105,7 +105,7 @@ TEST_CASE("hash<nlohmann::ordered_json>")
 
     // number
     hashes.insert(std::hash<ordered_json> {}(ordered_json(0)));
-    hashes.insert(std::hash<ordered_json> {}(ordered_json(unsigned(0))));
+    hashes.insert(std::hash<ordered_json> {}(ordered_json(static_cast<unsigned>(0))));
 
     hashes.insert(std::hash<ordered_json> {}(ordered_json(-1)));
     hashes.insert(std::hash<ordered_json> {}(ordered_json(0.0)));

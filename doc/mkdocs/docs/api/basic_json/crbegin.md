@@ -1,4 +1,4 @@
-# basic_json::crbegin
+# <small>nlohmann::basic_json::</small>crbegin
 
 ```cpp
 const_reverse_iterator crbegin() const noexcept;
@@ -20,7 +20,7 @@ No-throw guarantee: this member function never throws exceptions.
 
 Constant.
 
-## Example
+## Examples
 
 ??? example
 

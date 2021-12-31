@@ -1,4 +1,4 @@
-# basic_json::begin
+# <small>nlohmann::basic_json::</small>begin
 
 ```cpp
 iterator begin() noexcept;
@@ -21,7 +21,7 @@ No-throw guarantee: this member function never throws exceptions.
 
 Constant.
 
-## Example
+## Examples
 
 ??? example
 

@@ -1,4 +1,4 @@
-# basic_json::size
+# <small>nlohmann::basic_json::</small>size
 
 ```cpp
 size_type size() const noexcept;
@@ -10,15 +10,15 @@ Returns the number of elements in a JSON value.
 
 The return value depends on the different types and is defined as follows:
 
-Value type  | return value
------------ | -------------
-null        | `0`
-boolean     | `1`
-string      | `1`
-number      | `1`
-binary      | `1`
-object      | result of function object_t::size()
-array       | result of function array_t::size()
+| Value type | return value                        |
+|------------|-------------------------------------|
+| null       | `0`                                 |
+| boolean    | `1`                                 |
+| string     | `1`                                 |
+| number     | `1`                                 |
+| binary     | `1`                                 |
+| object     | result of function object_t::size() |
+| array      | result of function array_t::size()  |
 
 ## Exception safety
 
@@ -35,7 +35,7 @@ constant complexity.
 This function does not return the length of a string stored as JSON value -- it returns the number of elements in the
 JSON value which is `1` in the case of a string.
 
-## Example
+## Examples
 
 ??? example
 

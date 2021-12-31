@@ -1,7 +1,7 @@
-# basic_json::operator<
+# <small>nlohmann::basic_json::</small>operator<
 
 ```cpp
-bool operator<(const_reference lhs, const_reference rhs) noexcept,
+bool operator<(const_reference lhs, const_reference rhs) noexcept;
 
 template<typename ScalarType>
 bool operator<(const_reference lhs, const ScalarType rhs) noexcept;
@@ -52,7 +52,7 @@ No-throw guarantee: this function never throws exceptions.
 
 Linear.
 
-## Example
+## Examples
 
 ??? example
 
