@@ -1588,7 +1588,7 @@ TEST_CASE("regression tests, exceptions dependent")
         json j;
         s >> j;
         s >> j;
-        CHECK_THROWS_AS(s >> j, json::parse_error const);
+        CHECK_THROWS_AS(s >> j, json::parse_error);
         CHECK(s.eof());
     }
 }

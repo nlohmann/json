@@ -61,7 +61,7 @@ TEST_CASE("JSON_ASSERT(x)")
         CHECK_THROWS_WITH(json(it, j.end()), "[json.exception.invalid_iterator.201] iterators are not compatible");
 
         // check that assertion actually happened
-        CHECK(assert_counter == 1);
+        CHECK(assert_counter == 2);
     }
 }
 #endif

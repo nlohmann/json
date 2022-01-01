@@ -1642,7 +1642,7 @@ TEST_CASE("single MessagePack roundtrip")
     }
 }
 
-TEST_CASE("MessagePack roundtrips" * doctest::skip())
+TEST_CASE("MessagePack roundtrips", "[.]")
 {
     SECTION("input from msgpack-python")
     {

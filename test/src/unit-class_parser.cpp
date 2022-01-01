@@ -1173,7 +1173,7 @@ TEST_CASE("parser class")
                     if (c > 0x1f)
                     {
                         CHECK_THROWS_WITH(parser_helper(s),
-                                                  "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid string: forbidden character after backslash; last read: '\"\\" + std::string(1, static_cast<char>(c)) + "'");
+                                          "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid string: forbidden character after backslash; last read: '\"\\" + std::string(1, static_cast<char>(c)) + "'");
                     }
                     break;
                 }
@@ -1249,7 +1249,7 @@ TEST_CASE("parser class")
                     if (c > 0x1f)
                     {
                         CHECK_THROWS_WITH(parser_helper(s1),
-                                                  "[json.exception.parse_error.101] parse error at line 1, column 7: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '" + s1.substr(0, 7) + "'");
+                                          "[json.exception.parse_error.101] parse error at line 1, column 7: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '" + s1.substr(0, 7) + "'");
                     }
 
                     CAPTURE(s2);
@@ -1258,7 +1258,7 @@ TEST_CASE("parser class")
                     if (c > 0x1f)
                     {
                         CHECK_THROWS_WITH(parser_helper(s2),
-                                                  "[json.exception.parse_error.101] parse error at line 1, column 6: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '" + s2.substr(0, 6) + "'");
+                                          "[json.exception.parse_error.101] parse error at line 1, column 6: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '" + s2.substr(0, 6) + "'");
                     }
 
                     CAPTURE(s3);
@@ -1267,7 +1267,7 @@ TEST_CASE("parser class")
                     if (c > 0x1f)
                     {
                         CHECK_THROWS_WITH(parser_helper(s3),
-                                                  "[json.exception.parse_error.101] parse error at line 1, column 5: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '" + s3.substr(0, 5) + "'");
+                                          "[json.exception.parse_error.101] parse error at line 1, column 5: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '" + s3.substr(0, 5) + "'");
                     }
 
                     CAPTURE(s4);
@@ -1276,7 +1276,7 @@ TEST_CASE("parser class")
                     if (c > 0x1f)
                     {
                         CHECK_THROWS_WITH(parser_helper(s4),
-                                                  "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '" + s4.substr(0, 4) + "'");
+                                          "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '" + s4.substr(0, 4) + "'");
                     }
                 }
             }
@@ -1827,7 +1827,9 @@ TEST_CASE("parser class")
     SECTION("error messages for comments")
     {
         json _;
-        CHECK_THROWS_WITH_AS(_ = json::parse("/a", nullptr, true, true), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid comment; expecting '/' or '*' after '/'; last read: '/a'", json::parse_error);
-        CHECK_THROWS_WITH_AS(_ = json::parse("/*", nullptr, true, true), "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid comment; missing closing '*/'; last read: '/*<U+0000>'", json::parse_error);
+        CHECK_THROWS_WITH(_ = json::parse("/a", nullptr, true, true), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid comment; expecting '/' or '*' after '/'; last read: '/a'");
+        CHECK_THROWS_AS(_ = json::parse("/a", nullptr, true, true), json::parse_error);
+        CHECK_THROWS_WITH(_ = json::parse("/*", nullptr, true, true), "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid comment; missing closing '*/'; last read: '/*<U+0000>'");
+        CHECK_THROWS_AS(_ = json::parse("/*", nullptr, true, true), json::parse_error);
     }
 }

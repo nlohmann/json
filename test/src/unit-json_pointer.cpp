@@ -359,8 +359,8 @@ TEST_CASE("JSON pointers")
             }
 
             // on some machines, the check below is not constant
-            DOCTEST_MSVC_SUPPRESS_WARNING_PUSH
-            DOCTEST_MSVC_SUPPRESS_WARNING(4127)
+            //DOCTEST_MSVC_SUPPRESS_WARNING_PUSH
+            //DOCTEST_MSVC_SUPPRESS_WARNING(4127)
 
             if (sizeof(typename json::size_type) < sizeof(unsigned long long))
             {
@@ -375,7 +375,7 @@ TEST_CASE("JSON pointers")
                 CHECK_THROWS_WITH(j_const[jp] == 1, throw_msg.c_str());
             }
 
-            DOCTEST_MSVC_SUPPRESS_WARNING_POP
+            //DOCTEST_MSVC_SUPPRESS_WARNING_POP
 
             CHECK_THROWS_AS(j.at("/one"_json_pointer) = 1, json::parse_error);
             CHECK_THROWS_WITH(j.at("/one"_json_pointer) = 1,

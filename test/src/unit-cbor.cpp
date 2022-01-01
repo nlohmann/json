@@ -450,7 +450,7 @@ TEST_CASE("CBOR")
                 {
                     for (size_t i = 24; i <= 255; ++i)
                     {
-                        CAPTURE(i)
+                        CAPTURE(i);
 
                         // create JSON value with integer number
                         json j = -1;
@@ -521,7 +521,7 @@ TEST_CASE("CBOR")
                                 65536u, 77777u, 1048576u
                             })
                     {
-                        CAPTURE(i)
+                        CAPTURE(i);
 
                         // create JSON value with integer number
                         json j = -1;
@@ -648,7 +648,7 @@ TEST_CASE("CBOR")
                 {
                     for (size_t i = 0; i <= 23; ++i)
                     {
-                        CAPTURE(i)
+                        CAPTURE(i);
 
                         // create JSON value with unsigned integer number
                         json j = i;
@@ -711,7 +711,7 @@ TEST_CASE("CBOR")
                 {
                     for (size_t i = 256; i <= 65535; ++i)
                     {
-                        CAPTURE(i)
+                        CAPTURE(i);
 
                         // create JSON value with unsigned integer number
                         json j = i;
@@ -1097,7 +1097,7 @@ TEST_CASE("CBOR")
             {
                 for (size_t N = 0; N <= 0x17; ++N)
                 {
-                    CAPTURE(N)
+                    CAPTURE(N);
 
                     // create JSON value with string containing of N * 'x'
                     const auto s = std::string(N, 'x');
@@ -1131,7 +1131,7 @@ TEST_CASE("CBOR")
             {
                 for (size_t N = 24; N <= 255; ++N)
                 {
-                    CAPTURE(N)
+                    CAPTURE(N);
 
                     // create JSON value with string containing of N * 'x'
                     const auto s = std::string(N, 'x');
@@ -1166,7 +1166,7 @@ TEST_CASE("CBOR")
                             256u, 999u, 1025u, 3333u, 2048u, 65535u
                         })
                 {
-                    CAPTURE(N)
+                    CAPTURE(N);
 
                     // create JSON value with string containing of N * 'x'
                     const auto s = std::string(N, 'x');
@@ -1199,7 +1199,7 @@ TEST_CASE("CBOR")
                             65536u, 77777u, 1048576u
                         })
                 {
-                    CAPTURE(N)
+                    CAPTURE(N);
 
                     // create JSON value with string containing of N * 'x'
                     const auto s = std::string(N, 'x');
@@ -1446,7 +1446,7 @@ TEST_CASE("CBOR")
             {
                 for (size_t N = 0; N <= 0x17; ++N)
                 {
-                    CAPTURE(N)
+                    CAPTURE(N);
 
                     // create JSON value with byte array containing of N * 'x'
                     const auto s = std::vector<uint8_t>(N, 'x');
@@ -1480,7 +1480,7 @@ TEST_CASE("CBOR")
             {
                 for (size_t N = 24; N <= 255; ++N)
                 {
-                    CAPTURE(N)
+                    CAPTURE(N);
 
                     // create JSON value with string containing of N * 'x'
                     const auto s = std::vector<uint8_t>(N, 'x');
@@ -1515,7 +1515,7 @@ TEST_CASE("CBOR")
                             256u, 999u, 1025u, 3333u, 2048u, 65535u
                         })
                 {
-                    CAPTURE(N)
+                    CAPTURE(N);
 
                     // create JSON value with string containing of N * 'x'
                     const auto s = std::vector<uint8_t>(N, 'x');
@@ -1548,7 +1548,7 @@ TEST_CASE("CBOR")
                             65536u, 77777u, 1048576u
                         })
                 {
-                    CAPTURE(N)
+                    CAPTURE(N);
 
                     // create JSON value with string containing of N * 'x'
                     const auto s = std::vector<uint8_t>(N, 'x');
@@ -1582,7 +1582,7 @@ TEST_CASE("CBOR")
                 auto j = json::from_cbor(input);
                 CHECK(j.is_binary());
                 auto k = json::binary({0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x99});
-                CAPTURE(j.dump(0, ' ', false, json::error_handler_t::strict))
+                CAPTURE(j.dump(0, ' ', false, json::error_handler_t::strict));
                 CHECK(j == k);
             }
 
@@ -1989,7 +1989,7 @@ TEST_CASE("CBOR regressions")
                     TEST_DATA_DIRECTORY "/cbor_regression/test21"
                 })
         {
-            CAPTURE(filename)
+            CAPTURE(filename);
 
             try
             {
@@ -2023,7 +2023,7 @@ TEST_CASE("CBOR regressions")
 }
 #endif
 
-TEST_CASE("CBOR roundtrips" * doctest::skip())
+TEST_CASE("CBOR roundtrips", "[.]")
 {
     SECTION("input from flynn")
     {
@@ -2190,10 +2190,10 @@ TEST_CASE("CBOR roundtrips" * doctest::skip())
                     TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_whitespace_array.json"
                 })
         {
-            CAPTURE(filename)
+            CAPTURE(filename);
 
             {
-                INFO_WITH_TEMP(filename + ": std::vector<uint8_t>");
+                CAPTURE(filename + ": std::vector<uint8_t>");
                 // parse JSON file
                 std::ifstream f_json(filename);
                 json j1 = json::parse(f_json);
@@ -2208,7 +2208,7 @@ TEST_CASE("CBOR roundtrips" * doctest::skip())
             }
 
             {
-                INFO_WITH_TEMP(filename + ": std::ifstream");
+                CAPTURE(filename + ": std::ifstream");
                 // parse JSON file
                 std::ifstream f_json(filename);
                 json j1 = json::parse(f_json);
@@ -2223,7 +2223,7 @@ TEST_CASE("CBOR roundtrips" * doctest::skip())
             }
 
             {
-                INFO_WITH_TEMP(filename + ": uint8_t* and size");
+                CAPTURE(filename + ": uint8_t* and size");
                 // parse JSON file
                 std::ifstream f_json(filename);
                 json j1 = json::parse(f_json);
@@ -2238,7 +2238,7 @@ TEST_CASE("CBOR roundtrips" * doctest::skip())
             }
 
             {
-                INFO_WITH_TEMP(filename + ": output to output adapters");
+                CAPTURE(filename + ": output to output adapters");
                 // parse JSON file
                 std::ifstream f_json(filename);
                 json j1 = json::parse(f_json);
@@ -2249,7 +2249,7 @@ TEST_CASE("CBOR roundtrips" * doctest::skip())
                 if (exclude_packed.count(filename) == 0u)
                 {
                     {
-                        INFO_WITH_TEMP(filename + ": output adapters: std::vector<uint8_t>");
+                        CAPTURE(filename + ": output adapters: std::vector<uint8_t>");
                         std::vector<uint8_t> vec;
                         json::to_cbor(j1, vec);
                         CHECK(vec == packed);
@@ -2319,7 +2319,7 @@ TEST_CASE("all CBOR first bytes")
         {
             // check that parse_error.112 is only thrown if the
             // first byte is in the unsupported set
-            INFO_WITH_TEMP(e.what());
+            CAPTURE(e.what());
             if (unsupported.find(byte) != unsupported.end())
             {
                 CHECK(e.id == 112);

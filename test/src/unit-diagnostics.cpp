@@ -110,8 +110,10 @@ TEST_CASE("Better diagnostics")
         json j = {{"foo", "bar"}};
         json k = {{"bla", 1}};
 
-        CHECK_THROWS_WITH_AS(j.update(k["bla"].begin(), k["bla"].end()), "[json.exception.type_error.312] (/bla) cannot use update() with number", json::type_error);
-        CHECK_THROWS_WITH_AS(j.update(k["bla"]), "[json.exception.type_error.312] (/bla) cannot use update() with number", json::type_error);
+        CHECK_THROWS_WITH(j.update(k["bla"].begin(), k["bla"].end()), "[json.exception.type_error.312] (/bla) cannot use update() with number");
+        CHECK_THROWS_AS(j.update(k["bla"].begin(), k["bla"].end()), json::type_error);
+        CHECK_THROWS_WITH(j.update(k["bla"]), "[json.exception.type_error.312] (/bla) cannot use update() with number");
+        CHECK_THROWS_AS(j.update(k["bla"]), json::type_error);
     }
 }
 
@@ -119,15 +121,18 @@ TEST_CASE("Regression tests for extended diagnostics")
 {
     SECTION("Regression test for https://github.com/nlohmann/json/pull/2562#pullrequestreview-574858448")
     {
-        CHECK_THROWS_WITH_AS(json({"0", "0"})[1].get<int>(), "[json.exception.type_error.302] (/1) type must be number, but is string", json::type_error);
-        CHECK_THROWS_WITH_AS(json({"0", "1"})[1].get<int>(), "[json.exception.type_error.302] (/1) type must be number, but is string", json::type_error);
+        CHECK_THROWS_WITH(json({"0", "0"})[1].get<int>(), "[json.exception.type_error.302] (/1) type must be number, but is string");
+        CHECK_THROWS_AS(json({"0", "0"})[1].get<int>(), json::type_error);
+        CHECK_THROWS_WITH(json({"0", "1"})[1].get<int>(), "[json.exception.type_error.302] (/1) type must be number, but is string");
+        CHECK_THROWS_AS(json({"0", "1"})[1].get<int>(), json::type_error);
     }
 
     SECTION("Regression test for https://github.com/nlohmann/json/pull/2562/files/380a613f2b5d32425021129cd1f371ddcfd54ddf#r563259793")
     {
         json j;
         j["/foo"] = {1, 2, 3};
-        CHECK_THROWS_WITH_AS(j.unflatten(), "[json.exception.type_error.315] (/~1foo) values in object must be primitive", json::type_error);
+        CHECK_THROWS_WITH(j.unflatten(), "[json.exception.type_error.315] (/~1foo) values in object must be primitive");
+        CHECK_THROWS_AS(j.unflatten(), json::type_error);
     }
 
     SECTION("Regression test for issue #2838 - Assertion failure when inserting into arrays with JSON_DIAGNOSTICS set")
@@ -220,7 +225,8 @@ TEST_CASE("Regression tests for extended diagnostics")
 
             // Must call operator[] on const element, otherwise m_parent gets updated.
             auto const& constJ = j;
-            CHECK_THROWS_WITH_AS(constJ["one"].at(0), "[json.exception.type_error.304] (/one) cannot use at() with number", json::type_error);
+            CHECK_THROWS_WITH(constJ["one"].at(0), "[json.exception.type_error.304] (/one) cannot use at() with number");
+            CHECK_THROWS_AS(constJ["one"].at(0), json::type_error);
         }
 
         // void update(const_iterator first, const_iterator last)
@@ -236,7 +242,8 @@ TEST_CASE("Regression tests for extended diagnostics")
 
             // Must call operator[] on const element, otherwise m_parent gets updated.
             auto const& constJ = j;
-            CHECK_THROWS_WITH_AS(constJ["one"].at(0), "[json.exception.type_error.304] (/one) cannot use at() with number", json::type_error);
+            CHECK_THROWS_WITH(constJ["one"].at(0), "[json.exception.type_error.304] (/one) cannot use at() with number");
+            CHECK_THROWS_AS(constJ["one"].at(0), json::type_error);
         }
 
         // Code from #3007 triggering unwanted assertion without fix to update().

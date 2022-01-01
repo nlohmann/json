@@ -253,7 +253,8 @@ TEMPLATE_TEST_CASE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRU
         // check exception in case of missing field
         json j = json(p1);
         j.erase("age");
-        CHECK_THROWS_WITH_AS(j.get<TestType>(), "[json.exception.out_of_range.403] key 'age' not found", json::out_of_range);
+        CHECK_THROWS_WITH(j.get<TestType>(), "[json.exception.out_of_range.403] key 'age' not found");
+        CHECK_THROWS_AS(j.get<TestType>(), json::out_of_range);
     }
 }
 

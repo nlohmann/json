@@ -807,11 +807,14 @@ TEST_CASE("UBJSON")
 
                     json _;
                     std::vector<uint8_t> vec2 = {'H', 'i', 2, '1', 'A', '3'};
-                    CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vec2), "[json.exception.parse_error.115] parse error at byte 5: syntax error while parsing UBJSON high-precision number: invalid number text: 1A", json::parse_error);
+                    CHECK_THROWS_WITH(_ = json::from_ubjson(vec2), "[json.exception.parse_error.115] parse error at byte 5: syntax error while parsing UBJSON high-precision number: invalid number text: 1A");
+                    CHECK_THROWS_AS(_ = json::from_ubjson(vec2), json::parse_error);
                     std::vector<uint8_t> vec3 = {'H', 'i', 2, '1', '.'};
-                    CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vec3), "[json.exception.parse_error.115] parse error at byte 5: syntax error while parsing UBJSON high-precision number: invalid number text: 1.", json::parse_error);
+                    CHECK_THROWS_WITH(_ = json::from_ubjson(vec3), "[json.exception.parse_error.115] parse error at byte 5: syntax error while parsing UBJSON high-precision number: invalid number text: 1.");
+                    CHECK_THROWS_AS(_ = json::from_ubjson(vec3), json::parse_error);
                     std::vector<uint8_t> vec4 = {'H', 2, '1', '0'};
-                    CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vec4), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing UBJSON size: expected length type specification (U, i, I, l, L) after '#'; last byte: 0x02", json::parse_error);
+                    CHECK_THROWS_WITH(_ = json::from_ubjson(vec4), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing UBJSON size: expected length type specification (U, i, I, l, L) after '#'; last byte: 0x02");
+                    CHECK_THROWS_AS(_ = json::from_ubjson(vec4), json::parse_error);
                 }
 
                 SECTION("serialization")
@@ -2428,7 +2431,7 @@ TEST_CASE("all UBJSON first bytes")
     for (auto i = 0; i < 256; ++i)
     {
         const auto byte = static_cast<uint8_t>(i);
-        CAPTURE(byte)
+        CAPTURE(byte);
 
         try
         {
@@ -2438,7 +2441,7 @@ TEST_CASE("all UBJSON first bytes")
         {
             // check that parse_error.112 is only thrown if the
             // first byte is not in the supported set
-            INFO_WITH_TEMP(e.what());
+            CAPTURE(e.what());
             if (supported.find(byte) == supported.end())
             {
                 CHECK(e.id == 112);
@@ -2452,7 +2455,7 @@ TEST_CASE("all UBJSON first bytes")
 }
 #endif
 
-TEST_CASE("UBJSON roundtrips" * doctest::skip())
+TEST_CASE("UBJSON roundtrips", "[.]")
 {
     SECTION("input from self-generated UBJSON files")
     {
@@ -2505,7 +2508,7 @@ TEST_CASE("UBJSON roundtrips" * doctest::skip())
             CAPTURE(filename);
 
             {
-                INFO_WITH_TEMP(filename + ": std::vector<uint8_t>");
+                CAPTURE(filename + ": std::vector<uint8_t>");
                 // parse JSON file
                 std::ifstream f_json(filename);
                 json j1 = json::parse(f_json);
@@ -2520,7 +2523,7 @@ TEST_CASE("UBJSON roundtrips" * doctest::skip())
             }
 
             {
-                INFO_WITH_TEMP(filename + ": std::ifstream");
+                CAPTURE(filename + ": std::ifstream");
                 // parse JSON file
                 std::ifstream f_json(filename);
                 json j1 = json::parse(f_json);
@@ -2535,7 +2538,7 @@ TEST_CASE("UBJSON roundtrips" * doctest::skip())
             }
 
             {
-                INFO_WITH_TEMP(filename + ": uint8_t* and size");
+                CAPTURE(filename + ": uint8_t* and size");
                 // parse JSON file
                 std::ifstream f_json(filename);
                 json j1 = json::parse(f_json);
@@ -2550,7 +2553,7 @@ TEST_CASE("UBJSON roundtrips" * doctest::skip())
             }
 
             {
-                INFO_WITH_TEMP(filename + ": output to output adapters");
+                CAPTURE(filename + ": output to output adapters");
                 // parse JSON file
                 std::ifstream f_json(filename);
                 json j1 = json::parse(f_json);
@@ -2559,7 +2562,7 @@ TEST_CASE("UBJSON roundtrips" * doctest::skip())
                 auto packed = utils::read_binary_file(filename + ".ubjson");
 
                 {
-                    INFO_WITH_TEMP(filename + ": output adapters: std::vector<uint8_t>");
+                    CAPTURE(filename + ": output adapters: std::vector<uint8_t>");
                     std::vector<uint8_t> vec;
                     json::to_ubjson(j1, vec);
                     CHECK(vec == packed);

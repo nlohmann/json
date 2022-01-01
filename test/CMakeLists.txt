@@ -95,7 +95,7 @@ foreach(file ${files})
                 )
             else()
                 add_test(NAME "${testcase}_cpp17"
-                    COMMAND ${testcase}_cpp17 ${DOCTEST_TEST_FILTER} --no-skip
+                    COMMAND ${testcase}_cpp17 ${DOCTEST_TEST_FILTER} "*"
                     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
                 )
             endif()
@@ -110,7 +110,7 @@ foreach(file ${files})
         )
     else()
         add_test(NAME "${testcase}"
-            COMMAND ${testcase} ${DOCTEST_TEST_FILTER} --no-skip
+            COMMAND ${testcase} ${DOCTEST_TEST_FILTER} "*"
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         )
     endif()
