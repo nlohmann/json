@@ -23,7 +23,7 @@ int main()
     json j = R"({"compact": true, "schema": false})"_json;
 
     // serialize it to UBJSON
-    std::vector<uint8_t> v = json::to_ubjson(j);
+    std::vector<std::uint8_t> v = json::to_ubjson(j);
 
     // print the vector content
     for (auto& byte : v)
@@ -36,11 +36,11 @@ int main()
     json array = {1, 2, 3, 4, 5, 6, 7, 8};
 
     // serialize it to UBJSON using default representation
-    std::vector<uint8_t> v_array = json::to_ubjson(array);
+    std::vector<std::uint8_t> v_array = json::to_ubjson(array);
     // serialize it to UBJSON using size optimization
-    std::vector<uint8_t> v_array_size = json::to_ubjson(array, true);
+    std::vector<std::uint8_t> v_array_size = json::to_ubjson(array, true);
     // serialize it to UBJSON using type optimization
-    std::vector<uint8_t> v_array_size_and_type = json::to_ubjson(array, true, true);
+    std::vector<std::uint8_t> v_array_size_and_type = json::to_ubjson(array, true, true);
 
     // print the vector contents
     for (auto& byte : v_array)

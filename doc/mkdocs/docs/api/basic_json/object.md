@@ -1,4 +1,4 @@
-# basic_json::object
+# <small>nlohmann::basic_json::</small>object
 
 ```cpp
 static basic_json object(initializer_list_t init = {});
@@ -16,16 +16,16 @@ elements must be strings. If the initializer list is empty, the empty object `#!
 
 JSON object value
 
+## Exception safety
+
+Strong guarantee: if an exception is thrown, there are no changes in the JSON value.
+
 ## Exceptions
 
 Throws [`type_error.301`](../../home/exceptions.md#jsonexceptiontype_error301) if `init` is not a list of pairs whose
 first elements are strings. In this case, no object can be created. When such a value is passed to
 `basic_json(initializer_list_t, bool, value_t)`, an array would have been created from the passed initializer list
 `init`. See example below.
-
-## Exception safety
-
-Strong guarantee: if an exception is thrown, there are no changes in the JSON value.
 
 ## Complexity
 
@@ -52,6 +52,11 @@ the initializer list constructor `basic_json(initializer_list_t, bool, value_t)`
     ```json
     --8<-- "examples/object.output"
     ```
+
+## See also
+
+- [`basic_json(initializer_list_t)`](basic_json.md) - create a JSON value from an initializer list
+- [`array`](array.md) - create a JSON array value from an initializer list
 
 ## Version history
 

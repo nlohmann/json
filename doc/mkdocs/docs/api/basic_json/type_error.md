@@ -1,4 +1,4 @@
-# basic_json::type_error
+# <small>nlohmann::basic_json::</small>type_error
 
 ```cpp
 class type_error : public exception;
@@ -7,7 +7,7 @@ class type_error : public exception;
 This exception is thrown in case of a type error; that is, a library function is executed on a JSON value whose type
 does not match the expected semantics.
 
-Exceptions have ids 3xx.
+Exceptions have ids 3xx (see [list of type errors](../../home/exceptions.md#type-errors)).
 
 ```plantuml
 std::exception <|-- basic_json::exception
@@ -39,7 +39,7 @@ class basic_json::type_error #FFFF00 {}
 
 - **id** - the id of the exception
 
-## Example
+## Examples
 
 ??? example
 
@@ -54,6 +54,14 @@ class basic_json::type_error #FFFF00 {}
     ```json
     --8<-- "examples/type_error.output"
     ```
+
+## See also
+
+- [List of type errors](../../home/exceptions.md#type-errors)
+- [`parse_error`](parse_error.md) for exceptions indicating a parse error
+- [`invalid_iterator`](invalid_iterator.md) for exceptions indicating errors with iterators
+- [`out_of_range`](out_of_range.md) for exceptions indicating access out of the defined range
+- [`other_error`](other_error.md) for exceptions indicating other library errors
 
 ## Version history
 

@@ -1,4 +1,4 @@
-# basic_json::operator ValueType
+# <small>nlohmann::basic_json::</small>operator ValueType
 
 ```cpp
 template<typename ValueType>
@@ -45,7 +45,7 @@ explicit operator ValueType() const;
 That is, implicit conversions can be switched off by defining
 [`JSON_USE_IMPLICIT_CONVERSIONS`](../../features/macros.md#json_use_implicit_conversions) to `0`.
 
-## Example
+## Examples
 
 ??? example
 

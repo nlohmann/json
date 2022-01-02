@@ -1,4 +1,4 @@
-# basic_json::number_float_t
+# <small>nlohmann::basic_json::</small>number_float_t
 
 ```cpp
 using number_float_t = NumberFloatType;
@@ -48,6 +48,22 @@ and be serialized to `null`.
 #### Storage
 
 Floating-point number values are stored directly inside a `basic_json` type.
+
+## Examples
+
+??? example
+
+    The following code shows that `number_float_t` is by default, a typedef to `#!cpp double`.
+     
+    ```cpp
+    --8<-- "examples/number_float_t.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/number_float_t.output"
+    ```
 
 ## Version history
 

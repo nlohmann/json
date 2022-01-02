@@ -36,7 +36,7 @@ int main()
     // out_of_range.401
     try
     {
-        // try to use a an invalid array index
+        // try to use an invalid array index
         json::const_reference ref = j.at("/array/4"_json_pointer);
     }
     catch (json::out_of_range& e)
@@ -58,7 +58,7 @@ int main()
     // out_of_range.403
     try
     {
-        // try to use a JSON pointer to an nonexistent object key
+        // try to use a JSON pointer to a nonexistent object key
         json::const_reference ref = j.at("/foo"_json_pointer);
     }
     catch (json::out_of_range& e)

@@ -1,4 +1,4 @@
-# basic_json::end
+# <small>nlohmann::basic_json::</small>end
 
 ```cpp
 iterator end() noexcept;
@@ -21,7 +21,7 @@ No-throw guarantee: this member function never throws exceptions.
 
 Constant.
 
-## Example
+## Examples
 
 ??? example
 

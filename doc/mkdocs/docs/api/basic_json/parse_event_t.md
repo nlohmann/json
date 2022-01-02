@@ -1,4 +1,4 @@
-# basic_json::parse_event_t
+# <small>nlohmann::basic_json::</small>parse_event_t
 
 ```cpp
 enum class parse_event_t : std::uint8_t {
@@ -20,7 +20,7 @@ The parser callback distinguishes the following events:
 - `array_end`: the parser read `]` and finished processing a JSON array
 - `value`: the parser finished reading a JSON value
 
-## Example
+## Examples
 
 ![Example when certain parse events are triggered](../../images/callback_events.png)
 

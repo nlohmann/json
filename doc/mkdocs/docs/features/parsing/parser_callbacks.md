@@ -20,14 +20,14 @@ using parser_callback_t =
 We distinguish six scenarios (determined by the event type) in which the callback function can be called. The following table describes the values
 of the parameters `depth`, `event`, and `parsed`.
 
-parameter `event` | description | parameter `depth` | parameter `parsed`
------------------- | ----------- | ------------------ | -------------------
-`parse_event_t::object_start` | the parser read `{` and started to process a JSON object | depth of the parent of the JSON object | a JSON value with type discarded
-`parse_event_t::key` | the parser read a key of a value in an object | depth of the currently parsed JSON object | a JSON string containing the key
-`parse_event_t::object_end` | the parser read `}` and finished processing a JSON object | depth of the parent of the JSON object | the parsed JSON object
-`parse_event_t::array_start` | the parser read `[` and started to process a JSON array | depth of the parent of the JSON array | a JSON value with type discarded
-`parse_event_t::array_end` | the parser read `]` and finished processing a JSON array | depth of the parent of the JSON array | the parsed JSON array
-`parse_event_t::value` | the parser finished reading a JSON value | depth of the value | the parsed JSON value
+| parameter `event`             | description                                               | parameter `depth`                         | parameter `parsed`               |
+|-------------------------------|-----------------------------------------------------------|-------------------------------------------|----------------------------------|
+| `parse_event_t::object_start` | the parser read `{` and started to process a JSON object  | depth of the parent of the JSON object    | a JSON value with type discarded |
+| `parse_event_t::key`          | the parser read a key of a value in an object             | depth of the currently parsed JSON object | a JSON string containing the key |
+| `parse_event_t::object_end`   | the parser read `}` and finished processing a JSON object | depth of the parent of the JSON object    | the parsed JSON object           |
+| `parse_event_t::array_start`  | the parser read `[` and started to process a JSON array   | depth of the parent of the JSON array     | a JSON value with type discarded |
+| `parse_event_t::array_end`    | the parser read `]` and finished processing a JSON array  | depth of the parent of the JSON array     | the parsed JSON array            |
+| `parse_event_t::value`        | the parser finished reading a JSON value                  | depth of the value                        | the parsed JSON value            |
 
 ??? example
 

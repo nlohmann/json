@@ -1,4 +1,4 @@
-# basic_json::max_size
+# <small>nlohmann::basic_json::</small>max_size
 
 ```cpp
 size_type max_size() const noexcept;
@@ -11,15 +11,15 @@ i.e. `std::distance(begin(), end())` for the JSON value.
 
 The return value depends on the different types and is defined as follows:
 
-Value type  | return value
------------ | -------------
-null        | `0` (same as [`size()`](size.md))
-boolean     | `1` (same as [`size()`](size.md))
-string      | `1` (same as [`size()`](size.md))
-number      | `1` (same as [`size()`](size.md))
-binary      | `1` (same as [`size()`](size.md))
-object      | result of function `object_t::max_size()`
-array       | result of function `array_t::max_size()`
+| Value type | return value                              |
+|------------|-------------------------------------------|
+| null       | `0` (same as [`size()`](size.md))         |
+| boolean    | `1` (same as [`size()`](size.md))         |
+| string     | `1` (same as [`size()`](size.md))         |
+| number     | `1` (same as [`size()`](size.md))         |
+| binary     | `1` (same as [`size()`](size.md))         |
+| object     | result of function `object_t::max_size()` |
+| array      | result of function `array_t::max_size()`  |
 
 ## Exception safety
 
@@ -36,7 +36,7 @@ constant complexity.
 This function does not return the maximal length of a string stored as JSON value -- it returns the maximal number of
 string elements the JSON value can store which is `1`.
 
-## Example
+## Examples
 
 ??? example
 

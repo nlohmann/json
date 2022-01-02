@@ -1,11 +1,11 @@
-# basic_json::operator""_json_pointer
+# <small>nlohmann::basic_json::</small>operator""_json_pointer
 
 ```cpp
-json_pointer operator "" _json_pointer(const char* s, std::size_t n)
+json_pointer operator "" _json_pointer(const char* s, std::size_t n);
 ```
 
 This operator implements a user-defined string literal for JSON Pointers. It can be used by adding `#!cpp _json_pointer`
-to a string literal and returns a [`json_pointer`](../json_pointer.md) object if no parse error occurred.
+to a string literal and returns a [`json_pointer`](../json_pointer/index.md) object if no parse error occurred.
 
 ## Parameters
 
@@ -17,15 +17,31 @@ to a string literal and returns a [`json_pointer`](../json_pointer.md) object if
 
 ## Return value
 
-[`json_pointer`](../json_pointer.md) value parsed from `s`
+[`json_pointer`](../json_pointer/index.md) value parsed from `s`
 
 ## Exceptions
 
-The function can throw anything that [`json_pointer::json_pointer`](../json_pointer.md) would throw.
+The function can throw anything that [`json_pointer::json_pointer`](../json_pointer/index.md) would throw.
 
 ## Complexity
 
 Linear.
+
+## Examples
+
+??? example
+
+    The following code shows how to create JSON Pointers from string literals.
+     
+    ```cpp
+    --8<-- "examples/operator_literal_json_pointer.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/operator_literal_json_pointer.output"
+    ```
 
 ## Version history
 

@@ -610,7 +610,7 @@ TEST_CASE("CBOR")
 
                 SECTION("-32768..-129 (int 16)")
                 {
-                    for (int16_t i = -32768; i <= int16_t(-129); ++i)
+                    for (int16_t i = -32768; i <= static_cast<std::int16_t>(-129); ++i)
                     {
                         CAPTURE(i)
 
