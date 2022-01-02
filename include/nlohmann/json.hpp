@@ -2111,46 +2111,20 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         JSON_THROW(type_error::create(305, "cannot use operator[] with a string argument with " + std::string(type_name()), *this));
     }
 
-    template<typename T>
-    using Alias = T;
-
     /// @brief access specified object element
     /// @sa https://json.nlohmann.me/api/basic_json/operator%5B%5D/
     template<typename T, std::size_t n>
-    reference operator[](Alias<T[n]> const& key)
+    reference operator[](T * (&key)[n])
     {
-        // implicitly convert null value to an empty object
-        if (is_null())
-        {
-            m_type = value_t::object;
-            m_value.object = create<object_t>();
-            assert_invariant();
-        }
-
-        // operator[] only works for objects
-        if (JSON_HEDLEY_LIKELY(is_object()))
-        {
-            auto result = m_value.object->emplace(key, nullptr);
-            return set_parent(result.first->second);
-        }
-
-        JSON_THROW(type_error::create(305, "cannot use operator[] with a string argument with " + std::string(type_name()), *this));
+        return operator[](static_cast<const T>(key));
     }
 
     /// @brief access specified object element
     /// @sa https://json.nlohmann.me/api/basic_json/operator%5B%5D/
     template<typename T, std::size_t n>
-    const_reference operator[](Alias<T[n]> const& key) const
+    const_reference operator[](T * (&key)[n]) const
     {
-        // operator[] only works for objects
-        if (JSON_HEDLEY_LIKELY(is_object()))
-        {
-            auto it = m_value.object->find(key);
-            JSON_ASSERT(it != m_value.object->end());
-            return it->second;
-        }
-
-        JSON_THROW(type_error::create(305, "cannot use operator[] with a string argument with " + std::string(type_name()), *this));
+        return operator[](static_cast<const T>(key));
     }
 
     /// @brief access specified object element with default value
