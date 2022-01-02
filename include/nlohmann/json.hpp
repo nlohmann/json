@@ -2074,7 +2074,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/operator%5B%5D/
     template < class KeyT, typename detail::enable_if_t <
                    detail::is_usable_as_key_type<basic_json_t, KeyT>::value&& !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value, int > = 0 >
-    reference operator[](const KeyT& key)
+    reference operator[](KeyT && key)
     {
         // implicitly convert null value to an empty object
         if (is_null())
@@ -2087,7 +2087,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // operator[] only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
         {
-            auto result = m_value.object->emplace(key, nullptr);
+            auto result = m_value.object->emplace(std::forward<KeyT>(key), nullptr);
             return set_parent(result.first->second);
         }
 
@@ -2098,12 +2098,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/operator%5B%5D/
     template < class KeyT, typename detail::enable_if_t <
                    detail::is_usable_as_key_type<basic_json_t, KeyT>::value&& !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value, int > = 0 >
-    const_reference operator[](const KeyT& key) const
+    const_reference operator[](KeyT && key) const
     {
         // operator[] only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
         {
-            auto it = m_value.object->find(key);
+            auto it = m_value.object->find(std::forward<KeyT>(key));
             JSON_ASSERT(it != m_value.object->end());
             return it->second;
         }
