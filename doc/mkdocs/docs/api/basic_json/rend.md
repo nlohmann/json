@@ -1,4 +1,4 @@
-# basic_json::rend
+# <small>nlohmann::basic_json::</small>rend
 
 ```cpp
 reverse_iterator rend() noexcept;
@@ -22,7 +22,7 @@ No-throw guarantee: this member function never throws exceptions.
 
 Constant.
 
-## Example
+## Examples
 
 ??? example
 

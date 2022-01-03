@@ -10,7 +10,7 @@ int main()
     json j = R"({"compact": true, "schema": 0})"_json;
 
     // serialize it to MessagePack
-    std::vector<uint8_t> v = json::to_msgpack(j);
+    std::vector<std::uint8_t> v = json::to_msgpack(j);
 
     // print the vector content
     for (auto& byte : v)

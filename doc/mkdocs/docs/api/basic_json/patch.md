@@ -1,11 +1,11 @@
-# basic_json::patch
+# <small>nlohmann::basic_json::</small>patch
 
 ```cpp
 basic_json patch(const basic_json& json_patch) const;
 ```
 
 [JSON Patch](http://jsonpatch.com) defines a JSON document structure for expressing a sequence of operations to apply to
-a JSON) document. With this function, a JSON Patch is applied to the current JSON value by executing all operations from
+a JSON document. With this function, a JSON Patch is applied to the current JSON value by executing all operations from
 the patch.
 
 ## Parameters
@@ -16,6 +16,10 @@ the patch.
 ## Return value
 
 patched document
+
+## Exception safety
+
+Strong guarantee: if an exception is thrown, there are no changes in the JSON value.
 
 ## Exceptions
 
@@ -31,21 +35,17 @@ patched document
 - Throws [`out_of_range.501`](../../home/exceptions.md#jsonexceptionother_error501) if "test" operation was
   unsuccessful.
 
-## Exception safety
-
-Strong guarantee: if an exception is thrown, there are no changes in the JSON value.
-
 ## Complexity
 
 Linear in the size of the JSON value and the length of the JSON patch. As usually only a fraction of the JSON value is
 affected by the patch, the complexity can usually be neglected.
 
-## Note
+## Notes
 
 The application of a patch is atomic: Either all operations succeed and the patched document is returned or an exception
 is thrown. In any case, the original value is not changed: the patch is applied to a copy of the value.
 
-## Example
+## Examples
 
 ??? example
 
@@ -60,6 +60,12 @@ is thrown. In any case, the original value is not changed: the patch is applied 
     ```json
     --8<-- "examples/patch.output"
     ```
+
+## See also
+
+- [RFC 6902 (JSON Patch)](https://tools.ietf.org/html/rfc6902)
+- [RFC 6901 (JSON Pointer)](https://tools.ietf.org/html/rfc6901)
+- [merge_patch](merge_patch.md) applies a JSON Merge Patch
 
 ## Version history
 

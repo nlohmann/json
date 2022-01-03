@@ -1,4 +1,4 @@
-# basic_json::operator!=
+# <small>nlohmann::basic_json::</small>operator!=
 
 ```cpp
 bool operator!=(const_reference lhs, const_reference rhs) noexcept;
@@ -37,20 +37,35 @@ No-throw guarantee: this function never throws exceptions.
 
 Linear.
 
-## Example
+## Examples
 
-The example demonstrates comparing several JSON
-types.
+??? example
+
+    The example demonstrates comparing several JSON types.
+        
+    ```cpp
+    --8<-- "examples/operator__notequal.cpp"
+    ```
     
-```cpp
---8<-- "examples/operator__notequal.cpp"
-```
+    Output:
+    
+    ```json
+    --8<-- "examples/operator__notequal.output"
+    ```
 
-Output:
+??? example
 
-```json
---8<-- "examples/operator__notequal.output"
-```
+    The example demonstrates comparing several JSON types against the null pointer (JSON `#!json null`).
+        
+    ```cpp
+    --8<-- "examples/operator__notequal__nullptr_t.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/operator__notequal__nullptr_t.output"
+    ```
 
 ## Version history
 

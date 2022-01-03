@@ -1,4 +1,4 @@
-# basic_json::empty
+# <small>nlohmann::basic_json::</small>empty
 
 ```cpp
 bool empty() const noexcept;
@@ -10,15 +10,15 @@ Checks if a JSON value has no elements (i.e. whether its [`size()`](size.md) is 
 
 The return value depends on the different types and is defined as follows:
 
-Value type  | return value
------------ | -------------
-null        | `#!cpp true`
-boolean     | `#!cpp false`
-string      | `#!cpp false`
-number      | `#!cpp false`
-binary      | `#!cpp false`
-object      | result of function `object_t::empty()`
-array       | result of function `array_t::empty()`
+| Value type | return value                           |
+|------------|----------------------------------------|
+| null       | `#!cpp true`                           |
+| boolean    | `#!cpp false`                          |
+| string     | `#!cpp false`                          |
+| number     | `#!cpp false`                          |
+| binary     | `#!cpp false`                          |
+| object     | result of function `object_t::empty()` |
+| array      | result of function `array_t::empty()`  |
 
 ## Exception safety
 
@@ -44,7 +44,7 @@ bool empty() const noexcept
 This function does not return whether a string stored as JSON value is empty -- it returns whether the JSON container
 itself is empty which is `#!cpp false` in the case of a string.
 
-## Example
+## Examples
 
 ??? example
 

@@ -1,4 +1,4 @@
-# basic_json::value
+# <small>nlohmann::basic_json::</small>value
 
 ```cpp
 // (1)
@@ -36,8 +36,11 @@ ValueType value(const json_pointer& ptr,
     }
     ```
 
-Unlike [`operator[]`](operator[].md), this function does not implicitly add an element to the position defined by
-`key`/`ptr` key. This function is furthermore also applicable to const objects.
+!!! note
+
+    - Unlike [`at`](at.md), this function does not throw if the given `key`/`ptr` was not found.
+    - Unlike [`operator[]`](operator[].md), this function does not implicitly add an element to the position defined by
+     `key`/`ptr` key. This function is furthermore also applicable to const objects.
 
 ## Template parameters
 
@@ -85,9 +88,9 @@ changes to any JSON value.
 1. Logarithmic in the size of the container.
 2. Logarithmic in the size of the container.
 
-## Example
+## Examples
 
-??? example
+??? example "Example (1): access specified object element with default value"
 
     The example below shows how object elements can be queried with a default value.
     
@@ -101,7 +104,7 @@ changes to any JSON value.
     --8<-- "examples/basic_json__value.output"
     ```
 
-??? example
+??? example "Example (2): access specified object element via JSON Pointer with default value"
 
     The example below shows how object elements can be queried with a default value.
     
@@ -114,6 +117,11 @@ changes to any JSON value.
     ```json
     --8<-- "examples/basic_json__value_ptr.output"
     ```
+
+## See also
+
+- see [`at`](at.md) for access by reference with range checking
+- see [`operator[]`](operator%5B%5D.md) for unchecked access by reference
 
 ## Version history
 

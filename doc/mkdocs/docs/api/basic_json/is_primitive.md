@@ -1,4 +1,4 @@
-# basic_json::is_primitive
+# <small>nlohmann::basic_json::</small>is_primitive
 
 ```cpp
 constexpr bool is_primitive() const noexcept;
@@ -38,7 +38,7 @@ The term *primitive* stems from [RFC 8259](https://tools.ietf.org/html/rfc8259):
 This library extends primitive types to binary types, because binary types are  roughly comparable to strings. Hence,
 `is_primitive()` returns `#!cpp true` for binary values.
 
-## Example
+## Examples
 
 ??? example
 
@@ -53,6 +53,15 @@ This library extends primitive types to binary types, because binary types are  
     ```json
     --8<-- "examples/is_primitive.output"
     ```
+
+## See also
+
+- [is_structured()](is_structured.md) returns whether JSON value is structured
+- [is_null()](is_null.md) returns whether JSON value is `null`
+- [is_string()](is_string.md) returns whether JSON value is a string
+- [is_boolean()](is_boolean.md) returns whether JSON value is a boolean
+- [is_number()](is_number.md) returns whether JSON value is a number
+- [is_binary()](is_binary.md) returns whether JSON value is a binary array
 
 ## Version history
 

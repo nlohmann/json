@@ -1,4 +1,4 @@
-# basic_json::error_handler_t
+# <small>nlohmann::basic_json::</small>error_handler_t
 
 ```cpp
 enum class error_handler_t {

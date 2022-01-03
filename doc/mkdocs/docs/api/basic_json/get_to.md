@@ -1,10 +1,10 @@
-# basic_json::get_to
+# <small>nlohmann::basic_json::</small>get_to
 
 ```cpp
 template<typename ValueType>
 ValueType& get_to(ValueType& v) const noexcept(
     noexcept(JSONSerializer<ValueType>::from_json(
-        std::declval<const basic_json_t&>(), v)))
+        std::declval<const basic_json_t&>(), v)));
 ```
 
 Explicit type conversion between the JSON value and a compatible value. The value is filled into the input parameter by
@@ -16,7 +16,7 @@ ValueType v;
 JSONSerializer<ValueType>::from_json(*this, v);
 ```
 
-This overloads is chosen if:
+This overload is chosen if:
 
 - `ValueType` is not `basic_json`,
 - `json_serializer<ValueType>` has a `from_json()` method of the form `void from_json(const basic_json&, ValueType&)`
@@ -34,7 +34,7 @@ the input parameter, allowing chaining calls
 
 Depends on what `json_serializer<ValueType>` `from_json()` method throws
 
-## Example
+## Examples
 
 ??? example
 

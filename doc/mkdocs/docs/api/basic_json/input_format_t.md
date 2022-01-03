@@ -1,4 +1,4 @@
-# basic_json::input_format_t
+# <small>nlohmann::basic_json::</small>input_format_t
 
 ```cpp
 enum class input_format_t {
@@ -25,7 +25,7 @@ ubjson
 :   UBJSON (Universal Binary JSON)
 
 bson
-:   BSON (Bin­ary JSON)
+:   BSON (Binary JSON)
 
 ## Version history
 

@@ -1,4 +1,4 @@
-# basic_json::cbegin
+# <small>nlohmann::basic_json::</small>cbegin
 
 ```cpp
 const_iterator cbegin() const noexcept;
@@ -20,7 +20,7 @@ No-throw guarantee: this member function never throws exceptions.
 
 Constant.
 
-## Example
+## Examples
 
 ??? example
 

@@ -27,7 +27,7 @@ Elements in a JSON object and a JSON array can be accessed via `#!cpp operator[]
     | `#!cpp j["hobbies"][0]`  | `#!json "hiking"` |
     | `#!cpp j["hobbies"][1]`  | `#!json "reading"` |
 
-The return value is a reference, so it can be modify the original value. In case the passed object key is non-existing, a `#!json null` value is inserted which can be immediately be overwritten.
+The return value is a reference, so it can modify the original value. In case the passed object key is non-existing, a `#!json null` value is inserted which can be immediately be overwritten.
 
 ??? example
 
@@ -94,9 +94,9 @@ When accessing an invalid index (i.e., an index greater than or equal to the arr
 
 ## Summary
 
-| scenario | non-const value | const value |
-| -------- | ------------- | ----------- |
-| access to existing object key | reference to existing value is returned | const reference to existing value is returned |
-| access to valid array index | reference to existing value is returned | const reference to existing value is returned |
-| access to non-existing object key | reference to newly inserted `#!json null` value is returned | **undefined behavior**; assertion in debug mode |
-| access to invalid array index | reference to newly inserted `#!json null` value is returned; any index between previous maximal index and passed index are filled with `#!json null` | **undefined behavior**; assertion in debug mode |
+| scenario                          | non-const value                                                                                                                                      | const value                                     |
+|-----------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------|
+| access to existing object key     | reference to existing value is returned                                                                                                              | const reference to existing value is returned   |
+| access to valid array index       | reference to existing value is returned                                                                                                              | const reference to existing value is returned   |
+| access to non-existing object key | reference to newly inserted `#!json null` value is returned                                                                                          | **undefined behavior**; assertion in debug mode |
+| access to invalid array index     | reference to newly inserted `#!json null` value is returned; any index between previous maximal index and passed index are filled with `#!json null` | **undefined behavior**; assertion in debug mode |

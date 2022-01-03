@@ -1,4 +1,4 @@
-# basic_json::to_msgpack
+# <small>nlohmann::basic_json::</small>to_msgpack
 
 ```cpp
 // (1)
@@ -14,6 +14,8 @@ serialization format which aims to be more compact than JSON itself, yet more ef
 
 1. Returns a byte vector containing the MessagePack serialization.
 2. Writes the MessagePack serialization to an output adapter.
+
+The exact mapping and its limitations is described on a [dedicated page](../../features/binary_formats/messagepack.md).
 
 ## Parameters
 
@@ -36,7 +38,7 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 
 Linear in the size of the JSON value `j`.
 
-## Example
+## Examples
 
 ??? example
 

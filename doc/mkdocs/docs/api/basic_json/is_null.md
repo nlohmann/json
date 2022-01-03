@@ -1,4 +1,4 @@
-# basic_json::is_null
+# <small>nlohmann::basic_json::</small>is_null
 
 ```cpp
 constexpr bool is_null() const noexcept;
@@ -18,7 +18,7 @@ No-throw guarantee: this member function never throws exceptions.
 
 Constant.
 
-## Example
+## Examples
 
 ??? example
 
