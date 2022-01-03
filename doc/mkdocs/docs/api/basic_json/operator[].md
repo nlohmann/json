@@ -1,4 +1,4 @@
-# basic_json::operator[]
+# <small>nlohmann::basic_json::</small>operator[]
 
 ```cpp
 // (1)
@@ -18,8 +18,8 @@ reference operator[](const json_pointer& ptr);
 const_reference operator[](const json_pointer& ptr) const;
 ```
 
-1. Returns a reference to the element at specified location `idx`.
-2. Returns a reference to the element at with specified key `key`.
+1. Returns a reference to the array element at specified location `idx`.
+2. Returns a reference to the object element at with specified key `key`.
 3. Returns a reference to the element at with specified JSON pointer `ptr`.
 
 ## Template parameters
@@ -33,7 +33,7 @@ const_reference operator[](const json_pointer& ptr) const;
 :   index of the element to access
 
 `key` (in)
-:   object key of the elements to remove
+:   object key of the element to access
     
 `ptr` (in)
 :   JSON pointer to the desired element
@@ -44,14 +44,18 @@ const_reference operator[](const json_pointer& ptr) const;
 2. reference to the element at key `key`
 3. reference to the element pointed to by `ptr`
 
+## Exception safety
+
+Strong exception safety: if an exception occurs, the original value stays intact.
+
 ## Exceptions
 
 1. The function can throw the following exceptions:
     - Throws [`type_error.305`](../../home/exceptions.md#jsonexceptiontype_error305) if the JSON value is not an array
-      or null; in that cases, using the `[]` operator with an index makes no sense.
+      or null; in that case, using the `[]` operator with an index makes no sense.
 2. The function can throw the following exceptions:
-    - Throws [`type_error.305`](../../home/exceptions.md#jsonexceptiontype_error305) if the JSON value is not an array
-      or null; in that cases, using the `[]` operator with an index makes no sense.
+    - Throws [`type_error.305`](../../home/exceptions.md#jsonexceptiontype_error305) if the JSON value is not an object
+      or null; in that case, using the `[]` operator with a key makes no sense.
 3. The function can throw the following exceptions:
     - Throws [`parse_error.106`](../../home/exceptions.md#jsonexceptionparse_error106) if an array index in the passed
       JSON pointer `ptr` begins with '0'.
@@ -61,6 +65,12 @@ const_reference operator[](const json_pointer& ptr) const;
       in the passed JSON pointer `ptr` for the const version.
     - Throws [`out_of_range.404`](../../home/exceptions.md#jsonexceptionout_of_range404) if the JSON pointer `ptr` can
       not be resolved.
+
+## Complexity
+
+1. Constant if `idx` is in the range of the array. Otherwise, linear in `idx - size()`.
+2. Logarithmic in the size of the container.
+3. Constant
 
 ## Notes
 
@@ -80,26 +90,16 @@ const_reference operator[](const json_pointer& ptr) const;
    
     In particular:
 
-    - If the JSON pointer points to an object key that does not exist, it is created an filled with a `#!json null`
+    - If the JSON pointer points to an object key that does not exist, it is created and filled with a `#!json null`
       value before a reference to it is returned.
-    - If the JSON pointer points to an array index that does not exist, it is created an filled with a `#!json null`
+    - If the JSON pointer points to an array index that does not exist, it is created and filled with a `#!json null`
       value before a reference to it is returned. All indices between the current maximum and the given index are also
       filled with `#!json null`.
     - The special value `-` is treated as a synonym for the index past the end.
 
-## Exception safety
+## Examples
 
-Strong exception safety: if an exception occurs, the original value stays intact.
-
-## Complexity
-
-1. Constant if `idx` is in the range of the array. Otherwise linear in `idx - size()`.
-2. Logarithmic in the size of the container.
-3. Constant
-
-## Example
-
-??? example
+??? example "Example (1): access specified array element"
 
     The example below shows how array elements can be read and written using `[]` operator. Note the addition of
     `#!json null` values.
@@ -114,7 +114,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
     --8<-- "examples/operatorarray__size_type.output"
     ```
 
-??? example
+??? example "Example (1): access specified array element"
 
     The example below shows how array elements can be read using the `[]` operator.
 
@@ -128,7 +128,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
     --8<-- "examples/operatorarray__size_type_const.output"
     ```
 
-??? example
+??? example "Example (2): access specified object element"
 
     The example below shows how object elements can be read and written using the `[]` operator.
     
@@ -142,7 +142,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
     --8<-- "examples/operatorarray__key_type.output"
     ```
 
-??? example
+??? example "Example (2): access specified object element"
 
     The example below shows how object elements can be read using the `[]` operator.
     
@@ -156,7 +156,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
     --8<-- "examples/operatorarray__key_type_const.output"
     ```
 
-??? example
+??? example "Example (3): access specified element via JSON Pointer"
 
     The example below shows how values can be read and written using JSON Pointers.
     
@@ -170,7 +170,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
     --8<-- "examples/operatorjson_pointer.output"
     ```
 
-??? example
+??? example "Example (3): access specified element via JSON Pointer"
 
     The example below shows how values can be read using JSON Pointers.
     
@@ -183,6 +183,11 @@ Strong exception safety: if an exception occurs, the original value stays intact
     ```json
     --8<-- "examples/operatorjson_pointer_const.output"
     ```
+
+## See also
+
+- see [`at`](at.md) for access by reference with range checking
+- see [`value`](value.md) for access with default value
 
 ## Version history
 

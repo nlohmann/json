@@ -13,12 +13,12 @@ execute_process(COMMAND ${ASTYLE_TOOL} --version OUTPUT_VARIABLE ASTYLE_TOOL_VER
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" ASTYLE_TOOL_VERSION "${ASTYLE_TOOL_VERSION}")
 message(STATUS "🔖 Artistic Style ${ASTYLE_TOOL_VERSION} (${ASTYLE_TOOL})")
 
-find_program(CLANG_TOOL NAMES clang++-HEAD clang++-13 clang++-12 clang++-11 clang++)
+find_program(CLANG_TOOL NAMES clang++-HEAD clang++-14 clang++-13 clang++-12 clang++-11 clang++)
 execute_process(COMMAND ${CLANG_TOOL} --version OUTPUT_VARIABLE CLANG_TOOL_VERSION ERROR_VARIABLE CLANG_TOOL_VERSION)
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" CLANG_TOOL_VERSION "${CLANG_TOOL_VERSION}")
 message(STATUS "🔖 Clang ${CLANG_TOOL_VERSION} (${CLANG_TOOL})")
 
-find_program(CLANG_TIDY_TOOL NAMES clang-tidy-12 clang-tidy-11 clang-tidy)
+find_program(CLANG_TIDY_TOOL NAMES clang-tidy-14 clang-tidy-13 clang-tidy-12 clang-tidy-11 clang-tidy)
 execute_process(COMMAND ${CLANG_TIDY_TOOL} --version OUTPUT_VARIABLE CLANG_TIDY_TOOL_VERSION ERROR_VARIABLE CLANG_TIDY_TOOL_VERSION)
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" CLANG_TIDY_TOOL_VERSION "${CLANG_TIDY_TOOL_VERSION}")
 message(STATUS "🔖 Clang-Tidy ${CLANG_TIDY_TOOL_VERSION} (${CLANG_TIDY_TOOL})")
@@ -79,7 +79,7 @@ message(STATUS "🔖 Valgrind ${VALGRIND_TOOL_VERSION} (${VALGRIND_TOOL})")
 find_program(GENHTML_TOOL NAMES genhtml)
 find_program(PLOG_CONVERTER_TOOL NAMES plog-converter)
 find_program(PVS_STUDIO_ANALYZER_TOOL NAMES pvs-studio-analyzer)
-find_program(SCAN_BUILD_TOOL NAMES scan-build-12 scan-build-11 scan-build)
+find_program(SCAN_BUILD_TOOL NAMES scan-build-14 scan-build-13 scan-build-12 scan-build-11 scan-build)
 
 # the individual source files
 file(GLOB_RECURSE SRC_FILES ${PROJECT_SOURCE_DIR}/include/nlohmann/*.hpp)
@@ -811,14 +811,22 @@ add_custom_target(ci_cmake_flags
 # Use more installed compilers.
 ###############################################################################
 
-foreach(COMPILER g++-4.8 g++-4.9 g++-5 g++-7 g++-8 g++-9 g++-10 clang++-3.5 clang++-3.6 clang++-3.7 clang++-3.8 clang++-3.9 clang++-4.0 clang++-5.0 clang++-6.0 clang++-7 clang++-8 clang++-9 clang++-10 clang++-11 clang++-12)
+foreach(COMPILER g++-4.8 g++-4.9 g++-5 g++-6 g++-7 g++-8 g++-9 g++-10 clang++-3.5 clang++-3.6 clang++-3.7 clang++-3.8 clang++-3.9 clang++-4.0 clang++-5.0 clang++-6.0 clang++-7 clang++-8 clang++-9 clang++-10 clang++-11 clang++-12 clang++-13)
     find_program(COMPILER_TOOL NAMES ${COMPILER})
     if (COMPILER_TOOL)
+        if ("${COMPILER}" STREQUAL "clang++-9")
+            # fix for https://github.com/nlohmann/json/pull/3101#issuecomment-998788786 / https://stackoverflow.com/a/64051725/266378
+            set(ADDITIONAL_FLAGS "-DCMAKE_CXX_FLAGS=--gcc-toolchain=/root/gcc/9")
+        else()
+            unset(ADDITIONAL_FLAGS)
+        endif()
+
         add_custom_target(ci_test_compiler_${COMPILER}
             COMMAND CXX=${COMPILER} ${CMAKE_COMMAND}
                 -DCMAKE_BUILD_TYPE=Debug -GNinja
                 -DJSON_BuildTests=ON -DJSON_FastTests=ON
                 -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_compiler_${COMPILER}
+                ${ADDITIONAL_FLAGS}
             COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_compiler_${COMPILER}
             COMMAND cd ${PROJECT_BINARY_DIR}/build_compiler_${COMPILER} && ${CMAKE_CTEST_COMMAND} --parallel ${N} --exclude-regex "test-unicode" --output-on-failure
             COMMENT "Compile and test with ${COMPILER}"
@@ -826,6 +834,18 @@ foreach(COMPILER g++-4.8 g++-4.9 g++-5 g++-7 g++-8 g++-9 g++-10 clang++-3.5 clan
     endif()
     unset(COMPILER_TOOL CACHE)
 endforeach()
+
+###############################################################################
+# CUDA example
+###############################################################################
+
+add_custom_target(ci_cuda_example
+    COMMAND ${CMAKE_COMMAND}
+        -DCMAKE_BUILD_TYPE=Debug -GNinja
+        -DCMAKE_CUDA_HOST_COMPILER=g++-8
+        -S${PROJECT_SOURCE_DIR}/test/cuda_example -B${PROJECT_BINARY_DIR}/build_cuda_example
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_cuda_example
+)
 
 ###############################################################################
 # Clean up all generated files.

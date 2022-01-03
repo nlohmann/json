@@ -1,4 +1,4 @@
-# basic_json::get
+# <small>nlohmann::basic_json::</small>get
 
 ```cpp
 // (1)
@@ -31,7 +31,7 @@ constexpr const PointerType get_ptr() const noexcept;
     return ret;
     ```
 
-    This overloads is chosen if:
+    This overload is chosen if:
     
     - `ValueType` is not `basic_json`,
     - `json_serializer<ValueType>` has a `from_json()` method of the form
@@ -48,7 +48,7 @@ constexpr const PointerType get_ptr() const noexcept;
     return JSONSerializer<ValueTypeCV>::from_json(*this);
     ``` 
    
-    This overloads is chosen if:
+    This overload is chosen if:
     
     - `ValueType` is not `basic_json` and
     - `json_serializer<ValueType>` has a `from_json()` method of the form
@@ -94,7 +94,7 @@ Depends on what `json_serializer<ValueType>` `from_json()` method throws
 
     Writing data to the pointee (overload 3) of the result yields an undefined state.
 
-## Example
+## Examples
 
 ??? example
 

@@ -1,4 +1,4 @@
-# basic_json::unflatten
+# <small>nlohmann::basic_json::</small>unflatten
 
 ```cpp
 basic_json unflatten() const;
@@ -15,16 +15,16 @@ The function restores the arbitrary nesting of a JSON value that has been flatte
 
 the original JSON from a flattened version
 
+## Exception safety
+
+Strong exception safety: if an exception occurs, the original value stays intact.
+
 ## Exceptions
 
 The function can throw the following exceptions:
 
 - Throws [`type_error.314`](../../home/exceptions.md#jsonexceptiontype_error314) if value is not an object
 - Throws [`type_error.315`](../../home/exceptions.md#jsonexceptiontype_error315) if object values are not primitive
-
-## Exception safety
-
-Strong exception safety: if an exception occurs, the original value stays intact.
 
 ## Complexity
 
@@ -36,7 +36,7 @@ Empty objects and arrays are flattened by [`flatten()`](flatten.md) to `#!json n
 their original type. Apart from this example, for a JSON value `j`, the following is always true:
 `#!cpp j == j.flatten().unflatten()`.
 
-## Example
+## Examples
 
 ??? example
 
@@ -51,6 +51,10 @@ their original type. Apart from this example, for a JSON value `j`, the followin
     ```json
     --8<-- "examples/unflatten.output"
     ```
+
+## See also
+
+- [flatten](flatten.md) the reverse function
 
 ## Version history
 

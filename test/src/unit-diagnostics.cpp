@@ -1,12 +1,12 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.10.4
+|  |  |__   |  |  | | | |  version 3.10.5
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 SPDX-License-Identifier: MIT
-Copyright (c) 2013-2019 Niels Lohmann <http://nlohmann.me>.
+Copyright (c) 2013-2022 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
 of this software and associated  documentation files (the "Software"), to deal
@@ -97,6 +97,18 @@ TEST_CASE("Better diagnostics")
         CHECK_THROWS_WITH_AS(_ = json::parse(""), "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal", json::parse_error);
     }
 
+    SECTION("Wrong type in update()")
+    {
+        json j = {{"foo", "bar"}};
+        json k = {{"bla", 1}};
+
+        CHECK_THROWS_WITH_AS(j.update(k["bla"].begin(), k["bla"].end()), "[json.exception.type_error.312] (/bla) cannot use update() with number", json::type_error);
+        CHECK_THROWS_WITH_AS(j.update(k["bla"]), "[json.exception.type_error.312] (/bla) cannot use update() with number", json::type_error);
+    }
+}
+
+TEST_CASE("Regression tests for extended diagnostics")
+{
     SECTION("Regression test for https://github.com/nlohmann/json/pull/2562#pullrequestreview-574858448")
     {
         CHECK_THROWS_WITH_AS(json({"0", "0"})[1].get<int>(), "[json.exception.type_error.302] (/1) type must be number, but is string", json::type_error);
@@ -110,7 +122,7 @@ TEST_CASE("Better diagnostics")
         CHECK_THROWS_WITH_AS(j.unflatten(), "[json.exception.type_error.315] (/~1foo) values in object must be primitive", json::type_error);
     }
 
-    SECTION("Regression test for https://github.com/nlohmann/json/issues/2838")
+    SECTION("Regression test for issue #2838 - Assertion failure when inserting into arrays with JSON_DIAGNOSTICS set")
     {
         // void push_back(basic_json&& val)
         {
@@ -235,7 +247,7 @@ TEST_CASE("Better diagnostics")
         }
     }
 
-    SECTION("Regression test for https://github.com/nlohmann/json/issues/3032")
+    SECTION("Regression test for issue #3032 - Yet another assertion failure when inserting into arrays with JSON_DIAGNOSTICS set")
     {
         // reference operator[](size_type idx)
         {

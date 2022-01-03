@@ -1,12 +1,12 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.10.4
+|  |  |__   |  |  | | | |  version 3.10.5
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 SPDX-License-Identifier: MIT
-Copyright (c) 2013-2019 Niels Lohmann <http://nlohmann.me>.
+Copyright (c) 2013-2022 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
 of this software and associated  documentation files (the "Software"), to deal
@@ -170,7 +170,7 @@ TEST_CASE("regression tests 1")
             json::number_float_t f1{j1};
             CHECK(std::isnan(f1));
 
-            json j2 = json::number_float_t(NAN);
+            json j2 = static_cast<json::number_float_t>(NAN);
             CHECK(j2.is_number_float());
             json::number_float_t f2{j2};
             CHECK(std::isnan(f2));
@@ -183,7 +183,7 @@ TEST_CASE("regression tests 1")
             json::number_float_t f1{j1};
             CHECK(!std::isfinite(f1));
 
-            json j2 = json::number_float_t(INFINITY);
+            json j2 = static_cast<json::number_float_t>(INFINITY);
             CHECK(j2.is_number_float());
             json::number_float_t f2{j2};
             CHECK(!std::isfinite(f2));
@@ -205,7 +205,7 @@ TEST_CASE("regression tests 1")
         // check if the actual value was stored
         CHECK(j2 == 102);
 
-        static_assert(std::is_same<decltype(anon_enum_value), decltype(u)>::value, "");
+        static_assert(std::is_same<decltype(anon_enum_value), decltype(u)>::value, "types must be the same");
 
         j.push_back(json::object(
         {
@@ -567,17 +567,17 @@ TEST_CASE("regression tests 1")
 
     SECTION("issue #378 - locale-independent num-to-str")
     {
-        setlocale(LC_NUMERIC, "de_DE.UTF-8");
+        static_cast<void>(setlocale(LC_NUMERIC, "de_DE.UTF-8"));
 
         // verify that dumped correctly with '.' and no grouping
         const json j1 = 12345.67;
         CHECK(json(12345.67).dump() == "12345.67");
-        setlocale(LC_NUMERIC, "C");
+        static_cast<void>(setlocale(LC_NUMERIC, "C"));
     }
 
     SECTION("issue #379 - locale-independent str-to-num")
     {
-        setlocale(LC_NUMERIC, "de_DE.UTF-8");
+        static_cast<void>(setlocale(LC_NUMERIC, "de_DE.UTF-8"));
 
         // verify that parsed correctly despite using strtod internally
         CHECK(json::parse("3.14").get<double>() == 3.14);
@@ -910,7 +910,7 @@ TEST_CASE("regression tests 1")
                 ++i;
             }
 
-            std::remove("test.json");
+            static_cast<void>(std::remove("test.json"));
         }
     }
 

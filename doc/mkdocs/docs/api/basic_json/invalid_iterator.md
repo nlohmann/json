@@ -1,4 +1,4 @@
-# basic_json::invalid_iterator
+# <small>nlohmann::basic_json::</small>invalid_iterator
 
 ```cpp
 class invalid_iterator : public exception;
@@ -6,7 +6,7 @@ class invalid_iterator : public exception;
 
 This exception is thrown if iterators passed to a library function do not match the expected semantics.
 
-Exceptions have ids 2xx.
+Exceptions have ids 2xx (see [list of iterator errors](../../home/exceptions.md#iterator-errors)).
 
 ```plantuml
 std::exception <|-- basic_json::exception
@@ -38,7 +38,7 @@ class basic_json::invalid_iterator #FFFF00 {}
 
 - **id** - the id of the exception
 
-## Example
+## Examples
 
 ??? example
 
@@ -53,6 +53,14 @@ class basic_json::invalid_iterator #FFFF00 {}
     ```json
     --8<-- "examples/invalid_iterator.output"
     ```
+
+## See also
+
+- [List of iterator errors](../../home/exceptions.md#iterator-errors)
+- [`parse_error`](parse_error.md) for exceptions indicating a parse error
+- [`type_error`](type_error.md) for exceptions indicating executing a member function with a wrong type
+- [`out_of_range`](out_of_range.md) for exceptions indicating access out of the defined range
+- [`other_error`](other_error.md) for exceptions indicating other library errors
 
 ## Version history
 

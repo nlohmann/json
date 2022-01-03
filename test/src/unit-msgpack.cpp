@@ -1,12 +1,12 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.10.4
+|  |  |__   |  |  | | | |  version 3.10.5
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 SPDX-License-Identifier: MIT
-Copyright (c) 2013-2019 Niels Lohmann <http://nlohmann.me>.
+Copyright (c) 2013-2022 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
 of this software and associated  documentation files (the "Software"), to deal
@@ -349,7 +349,7 @@ TEST_CASE("MessagePack")
                 {
                     for (uint64_t i :
                             {
-                                4294967296lu, 9223372036854775807lu
+                                4294967296LU, 9223372036854775807LU
                             })
                     {
                         CAPTURE(i)
@@ -446,7 +446,7 @@ TEST_CASE("MessagePack")
 
                 SECTION("-32768..-129 (int 16)")
                 {
-                    for (int16_t i = -32768; i <= int16_t(-129); ++i)
+                    for (int16_t i = -32768; i <= static_cast<std::int16_t>(-129); ++i)
                     {
                         CAPTURE(i)
 
@@ -719,7 +719,7 @@ TEST_CASE("MessagePack")
                 {
                     for (uint64_t i :
                             {
-                                4294967296lu, 18446744073709551615lu
+                                4294967296LU, 18446744073709551615LU
                             })
                     {
                         CAPTURE(i)

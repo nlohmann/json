@@ -1,7 +1,7 @@
-# basic_json::~basic_json
+# <small>nlohmann::basic_json::</small>~basic_json
 
 ```cpp
-~basic_json() noexcept
+~basic_json() noexcept;
 ```
 
 Destroys the JSON value and frees all allocated memory.

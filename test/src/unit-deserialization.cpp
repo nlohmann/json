@@ -1,12 +1,12 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.10.4
+|  |  |__   |  |  | | | |  version 3.10.5
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 SPDX-License-Identifier: MIT
-Copyright (c) 2013-2019 Niels Lohmann <http://nlohmann.me>.
+Copyright (c) 2013-2022 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
 of this software and associated  documentation files (the "Software"), to deal
@@ -93,7 +93,7 @@ struct SaxEventLogger : public nlohmann::json_sax<json>
 
     bool start_object(std::size_t elements) override
     {
-        if (elements == std::size_t(-1))
+        if (elements == static_cast<std::size_t>(-1))
         {
             events.emplace_back("start_object()");
         }
@@ -118,7 +118,7 @@ struct SaxEventLogger : public nlohmann::json_sax<json>
 
     bool start_array(std::size_t elements) override
     {
-        if (elements == std::size_t(-1))
+        if (elements == static_cast<std::size_t>(-1))
         {
             events.emplace_back("start_array()");
         }
@@ -148,7 +148,7 @@ struct SaxEventLoggerExitAfterStartObject : public SaxEventLogger
 {
     bool start_object(std::size_t elements) override
     {
-        if (elements == std::size_t(-1))
+        if (elements == static_cast<std::size_t>(-1))
         {
             events.emplace_back("start_object()");
         }
@@ -173,7 +173,7 @@ struct SaxEventLoggerExitAfterStartArray : public SaxEventLogger
 {
     bool start_array(std::size_t elements) override
     {
-        if (elements == std::size_t(-1))
+        if (elements == static_cast<std::size_t>(-1))
         {
             events.emplace_back("start_array()");
         }

@@ -1,4 +1,4 @@
-# basic_json::string_t
+# <small>nlohmann::basic_json::</small>string_t
 
 ```cpp
 using string_t = StringType;
@@ -44,6 +44,22 @@ This implementation is interoperable as it does compare strings code unit by cod
 
 String values are stored as pointers in a `basic_json` type. That is, for any access to string values, a pointer of type
 `string_t*` must be dereferenced.
+
+## Examples
+
+??? example
+
+    The following code shows that `string_t` is by default, a typedef to `#!cpp std::string`.
+     
+    ```cpp
+    --8<-- "examples/string_t.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/string_t.output"
+    ```
 
 ## Version history
 

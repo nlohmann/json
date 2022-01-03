@@ -1,4 +1,4 @@
-# basic_json::rend
+# <small>nlohmann::basic_json::</small>crend
 
 ```cpp
 const_reverse_iterator crend() const noexcept;
@@ -21,7 +21,7 @@ No-throw guarantee: this member function never throws exceptions.
 
 Constant.
 
-## Example
+## Examples
 
 ??? example
 

@@ -1,4 +1,4 @@
-# basic_json::clear
+# <small>nlohmann::basic_json::</small>clear
 
 ```cpp
 void clear() noexcept;
@@ -7,15 +7,15 @@ void clear() noexcept;
 Clears the content of a JSON value and resets it to the default value as if [`basic_json(value_t)`](basic_json.md) would
 have been called with the current value type from [`type()`](type.md):
 
-Value type  | initial value
------------ | -------------
-null        | `null`
-boolean     | `false`
-string      | `""`
-number      | `0`
-binary      | An empty byte vector
-object      | `{}`
-array       | `[]`
+| Value type | initial value        |
+|------------|----------------------|
+| null       | `null`               |
+| boolean    | `false`              |
+| string     | `""`                 |
+| number     | `0`                  |
+| binary     | An empty byte vector |
+| object     | `{}`                 |
+| array      | `[]`                 |
 
 Has the same effect as calling
 
@@ -35,7 +35,7 @@ Linear in the size of the JSON value.
 
 All iterators, pointers and references related to this container are invalidated.
 
-## Example
+## Examples
 
 ??? example
 

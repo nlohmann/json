@@ -23,10 +23,10 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
     using key_type = Key;
     using mapped_type = T;
     using Container = std::vector<std::pair<const Key, T>, Allocator>;
-    using typename Container::iterator;
-    using typename Container::const_iterator;
-    using typename Container::size_type;
-    using typename Container::value_type;
+    using iterator = typename Container::iterator;
+    using const_iterator = typename Container::const_iterator;
+    using size_type = typename Container::size_type;
+    using value_type = typename Container::value_type;
 
     // Explicit constructors instead of `using Container::Container`
     // otherwise older compilers choke on it (GCC <= 5.5, xcode <= 9.4)
@@ -107,16 +107,55 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
 
     iterator erase(iterator pos)
     {
-        auto it = pos;
+        return erase(pos, std::next(pos));
+    }
 
-        // Since we cannot move const Keys, re-construct them in place
-        for (auto next = it; ++next != this->end(); ++it)
+    iterator erase(iterator first, iterator last)
+    {
+        const auto elements_affected = std::distance(first, last);
+        const auto offset = std::distance(Container::begin(), first);
+
+        // This is the start situation. We need to delete elements_affected
+        // elements (3 in this example: e, f, g), and need to return an
+        // iterator past the last deleted element (h in this example).
+        // Note that offset is the distance from the start of the vector
+        // to first. We will need this later.
+
+        // [ a, b, c, d, e, f, g, h, i, j ]
+        //               ^        ^
+        //             first    last
+
+        // Since we cannot move const Keys, we re-construct them in place.
+        // We start at first and re-construct (viz. copy) the elements from
+        // the back of the vector. Example for first iteration:
+
+        //               ,--------.
+        //               v        |   destroy e and re-construct with h
+        // [ a, b, c, d, e, f, g, h, i, j ]
+        //               ^        ^
+        //               it       it + elements_affected
+
+        for (auto it = first; std::next(it, elements_affected) != Container::end(); ++it)
         {
-            it->~value_type(); // Destroy but keep allocation
-            new (&*it) value_type{std::move(*next)};
+            it->~value_type(); // destroy but keep allocation
+            new (&*it) value_type{std::move(*std::next(it, elements_affected))}; // "move" next element to it
         }
-        Container::pop_back();
-        return pos;
+
+        // [ a, b, c, d, h, i, j, h, i, j ]
+        //               ^        ^
+        //             first    last
+
+        // remove the unneeded elements at the end of the vector
+        Container::resize(this->size() - static_cast<size_type>(elements_affected));
+
+        // [ a, b, c, d, h, i, j ]
+        //               ^        ^
+        //             first    last
+
+        // first is now pointing past the last deleted element, but we cannot
+        // use this iterator, because it may have been invalidated by the
+        // resize call. Instead, we can return begin() + offset.
+        return Container::begin() + offset;
     }
 
     size_type count(const Key& key) const

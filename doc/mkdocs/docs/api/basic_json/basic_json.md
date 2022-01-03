@@ -1,53 +1,55 @@
-# basic_json::basic_json
+# <small>nlohmann::basic_json::</small>basic_json
 
 ```cpp
-// 1
+// (1)
 basic_json(const value_t v);
 
-// 2
+// (2)
 basic_json(std::nullptr_t = nullptr) noexcept;
 
-// 3
+// (3)
 template<typename CompatibleType>
 basic_json(CompatibleType&& val) noexcept(noexcept(
            JSONSerializer<U>::to_json(std::declval<basic_json_t&>(),
                                       std::forward<CompatibleType>(val))));
 
-// 4
+// (4)
 template<typename BasicJsonType>
 basic_json(const BasicJsonType& val);
 
-// 5
+// (5)
 basic_json(initializer_list_t init,
            bool type_deduction = true,
            value_t manual_type = value_t::array);
 
-// 6
+// (6)
 basic_json(size_type cnt, const basic_json& val);
 
-// 7
+// (7)
 basic_json(iterator first, iterator last);
 basic_json(const_iterator first, const_iterator last);
 
-// 8
+// (8)
 basic_json(const basic_json& other);
 
-// 9
+// (9)
 basic_json(basic_json&& other) noexcept;
 ```
 
 1. Create an empty JSON value with a given type. The value will be default initialized with an empty value which depends
    on the type:
    
-    Value type  | initial value
-    ----------- | -------------
-    null        | `#!json null`
-    boolean     | `#!json false`
-    string      | `#!json ""`
-    number      | `#!json 0`
-    object      | `#!json {}`
-    array       | `#!json []`
-    binary      | empty array
+    | Value type | initial value  |
+    |------------|----------------|
+    | null       | `#!json null`  |
+    | boolean    | `#!json false` |
+    | string     | `#!json ""`    |
+    | number     | `#!json 0`     |
+    | object     | `#!json {}`    |
+    | array      | `#!json []`    |
+    | binary     | empty array    |
+
+    The postcondition of this constructor can be restored by calling [`clear()`](clear.md).
 
 2. Create a `#!json null` JSON value. It either takes a null pointer as parameter (explicitly creating `#!json null`)
    or no parameter (implicitly creating `#!json null`). The passed null pointer itself is not read -- it is only used to
@@ -104,6 +106,9 @@ basic_json(basic_json&& other) noexcept;
     
     - the empty array (`#!json []`): use `array(initializer_list_t)` with an empty initializer list in this case
     - arrays whose elements satisfy rule 2: use `array(initializer_list_t)` with the same initializer list in this case
+   
+    Function [`array()`](array.md) and [`object()`](object.md) force array and object creation from initializer lists,
+    respectively.
         
 6. Constructs a JSON array value by creating `cnt` copies of a passed value. In case `cnt` is `0`, an empty array is
    created.
@@ -142,6 +147,9 @@ basic_json(basic_json&& other) noexcept;
     - `BasicJsonType` is a `basic_json` type.
     - `BasicJsonType` has different template arguments than `basic_json_t`.
 
+`U`:
+:   `uncvref_t<CompatibleType>`
+
 ## Parameters
 
 `v` (in)
@@ -175,6 +183,22 @@ basic_json(basic_json&& other) noexcept;
 `other` (in)
 :   the JSON value to copy/move
 
+## Exception safety
+
+1. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
+2. No-throw guarantee: this constructor never throws exceptions.
+3. Depends on the called constructor. For types directly supported by the library (i.e., all types for which no
+   `to_json()` function was provided), strong guarantee holds: if an exception is thrown, there are no changes to any
+   JSON value.
+4. Depends on the called constructor. For types directly supported by the library (i.e., all types for which no
+   `to_json()` function was provided), strong guarantee holds: if an exception is thrown, there are no changes to any
+   JSON value.
+5. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
+6. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
+7. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
+8. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
+9. No-throw guarantee: this constructor never throws exceptions.
+
 ## Exceptions
 
 1. /
@@ -193,27 +217,11 @@ basic_json(basic_json&& other) noexcept;
       `[first, last)` is undefined.
     - Throws [`invalid_iterator.204`](../../home/exceptions.md#jsonexceptioninvalid_iterator204) if iterators `first`
       and `last` belong to a primitive type (number, boolean, or string), but `first` does not point to the first
-      element any more. In this case, the range `[first, last)` is undefined. See example code below.
+      element anymore. In this case, the range `[first, last)` is undefined. See example code below.
     - Throws [`invalid_iterator.206`](../../home/exceptions.md#jsonexceptioninvalid_iterator206) if iterators `first`
       and `last` belong to a `#!json null` value. In this case, the range `[first, last)` is undefined.
 8. /
 9. The function does not throw exceptions.
-
-## Exception safety
-
-1. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
-2. No-throw guarantee: this constructor never throws exceptions.
-3. Depends on the called constructor. For types directly supported by the library (i.e., all types for which no
-   `to_json()` function was provided), strong guarantee holds: if an exception is thrown, there are no changes to any
-   JSON value.
-4. Depends on the called constructor. For types directly supported by the library (i.e., all types for which no
-   `to_json()` function was provided), strong guarantee holds: if an exception is thrown, there are no changes to any
-   JSON value.
-5. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
-6. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
-7. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
-8. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
-9. No-throw guarantee: this constructor never throws exceptions.
 
 ## Complexity
 
@@ -267,9 +275,9 @@ basic_json(basic_json&& other) noexcept;
         - `#!cpp `*this` has the same value as `other` before the call.
         - `other` is a JSON `#!json null` value
 
-## Example
+## Examples
 
-??? example
+??? example "Example: (1) create an empty value with a given type"
 
     The following code shows the constructor for different `value_t` values.
      
@@ -283,7 +291,7 @@ basic_json(basic_json&& other) noexcept;
     --8<-- "examples/basic_json__value_t.output"
     ```
 
-??? example
+??? example "Example: (2) create a `#!json null` object"
 
     The following code shows the constructor with and without a null pointer parameter.
      
@@ -297,7 +305,7 @@ basic_json(basic_json&& other) noexcept;
     --8<-- "examples/basic_json__nullptr_t.output"
     ```
 
-??? example
+??? example "Example: (3) create a JSON value from compatible types"
 
     The following code shows the constructor with several compatible types.
      
@@ -311,7 +319,7 @@ basic_json(basic_json&& other) noexcept;
     --8<-- "examples/basic_json__CompatibleType.output"
     ```
 
-??? example
+??? example "Example: (5) create a container (array or object) from an initializer list"
 
     The example below shows how JSON values are created from initializer lists.
      
@@ -325,7 +333,7 @@ basic_json(basic_json&& other) noexcept;
     --8<-- "examples/basic_json__list_init_t.output"
     ```
 
-??? example
+??? example "Example: (6) construct an array with count copies of given value"
 
     The following code shows examples for creating arrays with several copies of a given value.
      
@@ -339,7 +347,7 @@ basic_json(basic_json&& other) noexcept;
     --8<-- "examples/basic_json__size_type_basic_json.output"
     ```
 
-??? example
+??? example "Example: (7) construct a JSON container given an iterator range"
 
     The example below shows several ways to create JSON values by specifying a subrange with iterators.
      
@@ -353,7 +361,7 @@ basic_json(basic_json&& other) noexcept;
     --8<-- "examples/basic_json__InputIt_InputIt.output"
     ```
 
-??? example
+??? example "Example: (8) copy constructor"
 
     The following code shows an example for the copy constructor.
      
@@ -367,7 +375,7 @@ basic_json(basic_json&& other) noexcept;
     --8<-- "examples/basic_json__basic_json.output"
     ```
 
-??? example
+??? example "Example: (9) move constructor"
 
     The code below shows the move constructor explicitly called via `std::move`.
      

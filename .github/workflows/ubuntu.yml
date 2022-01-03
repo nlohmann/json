@@ -11,7 +11,7 @@ on:
 jobs:
   ci_test_clang:
     runs-on: ubuntu-latest
-    container: ghcr.io/nlohmann/json-ci:v1.0.0
+    container: ghcr.io/nlohmann/json-ci:v2.2.0
     steps:
       - uses: actions/checkout@v2
       - name: cmake
@@ -21,7 +21,7 @@ jobs:
 
   ci_test_gcc:
     runs-on: ubuntu-latest
-    container: ghcr.io/nlohmann/json-ci:v1.0.0
+    container: ghcr.io/nlohmann/json-ci:v2.2.0
     steps:
       - uses: actions/checkout@v2
       - name: cmake
@@ -31,7 +31,7 @@ jobs:
 
   ci_static_analysis:
     runs-on: ubuntu-latest
-    container: ghcr.io/nlohmann/json-ci:v1.0.0
+    container: ghcr.io/nlohmann/json-ci:v2.2.0
     strategy:
       matrix:
         target: [ci_clang_tidy, ci_cppcheck, ci_test_valgrind, ci_test_clang_sanitizer, ci_test_amalgamation, ci_clang_analyze, ci_cpplint, ci_cmake_flags, ci_single_binaries, ci_reproducible_tests, ci_non_git_tests, ci_offline_testdata, ci_infer]
@@ -44,7 +44,7 @@ jobs:
 
   ci_cmake_options:
     runs-on: ubuntu-latest
-    container: ghcr.io/nlohmann/json-ci:v1.0.0
+    container: ghcr.io/nlohmann/json-ci:v2.2.0
     strategy:
       matrix:
         target: [ci_test_diagnostics, ci_test_noexceptions, ci_test_noimplicitconversions]
@@ -57,7 +57,7 @@ jobs:
 
   ci_test_coverage:
     runs-on: ubuntu-latest
-    container: ghcr.io/nlohmann/json-ci:v1.0.0
+    container: ghcr.io/nlohmann/json-ci:v2.2.0
     steps:
       - uses: actions/checkout@v2
       - name: cmake
@@ -77,10 +77,10 @@ jobs:
 
   ci_test_compilers:
     runs-on: ubuntu-latest
-    container: ghcr.io/nlohmann/json-ci:v1.0.0
+    container: ghcr.io/nlohmann/json-ci:v2.2.0
     strategy:
       matrix:
-        compiler: [g++-4.8, g++-4.9, g++-5, g++-7, g++-8, g++-9, g++-10, clang++-3.5, clang++-3.6, clang++-3.7, clang++-3.8, clang++-3.9, clang++-4.0, clang++-5.0, clang++-6.0, clang++-7, clang++-8, clang++-9, clang++-10, clang++-11, clang++-12]
+        compiler: [g++-4.8, g++-4.9, g++-5, g++-6, g++-7, g++-8, g++-9, g++-10, clang++-3.5, clang++-3.6, clang++-3.7, clang++-3.8, clang++-3.9, clang++-4.0, clang++-5.0, clang++-6.0, clang++-7, clang++-8, clang++-9, clang++-10, clang++-11, clang++-12, clang++-13]
     steps:
       - uses: actions/checkout@v2
       - name: cmake
@@ -90,7 +90,7 @@ jobs:
 
   ci_test_standards:
     runs-on: ubuntu-latest
-    container: ghcr.io/nlohmann/json-ci:v1.0.0
+    container: ghcr.io/nlohmann/json-ci:v2.2.0
     strategy:
       matrix:
         standard: [11, 14, 17, 20]
@@ -101,3 +101,13 @@ jobs:
         run: cmake -S . -B build -DJSON_CI=On
       - name: build
         run: cmake --build build --target ci_test_${{ matrix.compiler }}_cxx${{ matrix.standard }}
+
+  ci_cuda_example:
+    runs-on: ubuntu-latest
+    container: ghcr.io/nlohmann/json-ci:v2.2.0
+    steps:
+      - uses: actions/checkout@v2
+      - name: cmake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: build
+        run: cmake --build build --target ci_cuda_example

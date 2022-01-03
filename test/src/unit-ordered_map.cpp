@@ -1,12 +1,12 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.10.4
+|  |  |__   |  |  | | | |  version 3.10.5
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 SPDX-License-Identifier: MIT
-Copyright (c) 2013-2019 Niels Lohmann <http://nlohmann.me>.
+Copyright (c) 2013-2022 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
 of this software and associated  documentation files (the "Software"), to deal
@@ -209,6 +209,45 @@ TEST_CASE("ordered_map")
             CHECK(it2->first == "drei");
             ++it2;
             CHECK(it2 == om.end());
+        }
+
+        SECTION("with iterator pair")
+        {
+            SECTION("range in the middle")
+            {
+                // need more elements
+                om["vier"] = "four";
+                om["fünf"] = "five";
+
+                // delete "zwei" and "drei"
+                auto it = om.erase(om.begin() + 1, om.begin() + 3);
+                CHECK(it->first == "vier");
+                CHECK(om.size() == 3);
+            }
+
+            SECTION("range at the beginning")
+            {
+                // need more elements
+                om["vier"] = "four";
+                om["fünf"] = "five";
+
+                // delete "eins" and "zwei"
+                auto it = om.erase(om.begin(), om.begin() + 2);
+                CHECK(it->first == "drei");
+                CHECK(om.size() == 3);
+            }
+
+            SECTION("range at the end")
+            {
+                // need more elements
+                om["vier"] = "four";
+                om["fünf"] = "five";
+
+                // delete "vier" and "fünf"
+                auto it = om.erase(om.begin() + 3, om.end());
+                CHECK(it == om.end());
+                CHECK(om.size() == 3);
+            }
         }
     }
 

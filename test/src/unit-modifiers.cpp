@@ -1,12 +1,12 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.10.4
+|  |  |__   |  |  | | | |  version 3.10.5
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 SPDX-License-Identifier: MIT
-Copyright (c) 2013-2019 Niels Lohmann <http://nlohmann.me>.
+Copyright (c) 2013-2022 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
 of this software and associated  documentation files (the "Software"), to deal
@@ -796,64 +796,89 @@ TEST_CASE("modifiers")
 
     SECTION("update()")
     {
-        json j_object1 = {{"one", "eins"}, {"two", "zwei"}};
-        json j_object2 = {{"three", "drei"}, {"two", "zwo"}};
-        json j_array = {1, 2, 3, 4};
-
-        SECTION("const reference")
+        SECTION("non-recursive (default)")
         {
-            SECTION("proper usage")
-            {
-                j_object1.update(j_object2);
-                CHECK(j_object1 == json({{"one", "eins"}, {"two", "zwo"}, {"three", "drei"}}));
+            json j_object1 = {{"one", "eins"}, {"two", "zwei"}};
+            json j_object2 = {{"three", "drei"}, {"two", "zwo"}};
+            json j_array = {1, 2, 3, 4};
 
-                json j_null;
-                j_null.update(j_object2);
-                CHECK(j_null == j_object2);
+            SECTION("const reference")
+            {
+                SECTION("proper usage")
+                {
+                    j_object1.update(j_object2);
+                    CHECK(j_object1 == json({{"one", "eins"}, {"two", "zwo"}, {"three", "drei"}}));
+
+                    json j_null;
+                    j_null.update(j_object2);
+                    CHECK(j_null == j_object2);
+                }
+
+                SECTION("wrong types")
+                {
+                    CHECK_THROWS_AS(j_array.update(j_object1), json::type_error&);
+                    CHECK_THROWS_WITH(j_array.update(j_object1), "[json.exception.type_error.312] cannot use update() with array");
+
+                    CHECK_THROWS_AS(j_object1.update(j_array), json::type_error&);
+                    CHECK_THROWS_WITH(j_object1.update(j_array), "[json.exception.type_error.312] cannot use update() with array");
+                }
             }
 
-            SECTION("wrong types")
+            SECTION("iterator range")
             {
-                CHECK_THROWS_AS(j_array.update(j_object1), json::type_error&);
-                CHECK_THROWS_WITH(j_array.update(j_object1), "[json.exception.type_error.312] cannot use update() with array");
+                SECTION("proper usage")
+                {
+                    j_object1.update(j_object2.begin(), j_object2.end());
+                    CHECK(j_object1 == json({{"one", "eins"}, {"two", "zwo"}, {"three", "drei"}}));
 
-                CHECK_THROWS_AS(j_object1.update(j_array), json::type_error&);
-                CHECK_THROWS_WITH(j_object1.update(j_array), "[json.exception.type_error.312] cannot use update() with array");
+                    json j_null;
+                    j_null.update(j_object2.begin(), j_object2.end());
+                    CHECK(j_null == j_object2);
+                }
+
+                SECTION("empty range")
+                {
+                    j_object1.update(j_object2.begin(), j_object2.begin());
+                    CHECK(j_object1 == json({{"one", "eins"}, {"two", "zwei"}}));
+                }
+
+                SECTION("invalid iterators")
+                {
+                    json j_other_array2 = {"first", "second"};
+
+                    CHECK_THROWS_AS(j_array.update(j_object2.begin(), j_object2.end()), json::type_error&);
+                    CHECK_THROWS_AS(j_object1.update(j_object1.begin(), j_object2.end()), json::invalid_iterator&);
+                    CHECK_THROWS_AS(j_object1.update(j_array.begin(), j_array.end()), json::type_error&);
+
+                    CHECK_THROWS_WITH(j_array.update(j_object2.begin(), j_object2.end()),
+                                      "[json.exception.type_error.312] cannot use update() with array");
+                    CHECK_THROWS_WITH(j_object1.update(j_object1.begin(), j_object2.end()),
+                                      "[json.exception.invalid_iterator.210] iterators do not fit");
+                    CHECK_THROWS_WITH(j_object1.update(j_array.begin(), j_array.end()),
+                                      "[json.exception.type_error.312] cannot use update() with array");
+                }
             }
         }
 
-        SECTION("iterator range")
+        SECTION("recursive")
         {
-            SECTION("proper usage")
+            SECTION("const reference")
             {
-                j_object1.update(j_object2.begin(), j_object2.end());
-                CHECK(j_object1 == json({{"one", "eins"}, {"two", "zwo"}, {"three", "drei"}}));
+                SECTION("extend object")
+                {
+                    json j1 = {{"string", "s"}, {"numbers", {{"one", 1}}}};
+                    json j2 = {{"string", "t"}, {"numbers", {{"two", 2}}}};
+                    j1.update(j2, true);
+                    CHECK(j1 == json({{"string", "t"}, {"numbers", {{"one", 1}, {"two", 2}}}}));
+                }
 
-                json j_null;
-                j_null.update(j_object2.begin(), j_object2.end());
-                CHECK(j_null == j_object2);
-            }
-
-            SECTION("empty range")
-            {
-                j_object1.update(j_object2.begin(), j_object2.begin());
-                CHECK(j_object1 == json({{"one", "eins"}, {"two", "zwei"}}));
-            }
-
-            SECTION("invalid iterators")
-            {
-                json j_other_array2 = {"first", "second"};
-
-                CHECK_THROWS_AS(j_array.update(j_object2.begin(), j_object2.end()), json::type_error&);
-                CHECK_THROWS_AS(j_object1.update(j_object1.begin(), j_object2.end()), json::invalid_iterator&);
-                CHECK_THROWS_AS(j_object1.update(j_array.begin(), j_array.end()), json::invalid_iterator&);
-
-                CHECK_THROWS_WITH(j_array.update(j_object2.begin(), j_object2.end()),
-                                  "[json.exception.type_error.312] cannot use update() with array");
-                CHECK_THROWS_WITH(j_object1.update(j_object1.begin(), j_object2.end()),
-                                  "[json.exception.invalid_iterator.210] iterators do not fit");
-                CHECK_THROWS_WITH(j_object1.update(j_array.begin(), j_array.end()),
-                                  "[json.exception.invalid_iterator.202] iterators first and last must point to objects");
+                SECTION("replace object")
+                {
+                    json j1 = {{"string", "s"}, {"numbers", {{"one", 1}}}};
+                    json j2 = {{"string", "t"}, {"numbers", 1}};
+                    j1.update(j2, true);
+                    CHECK(j1 == json({{"string", "t"}, {"numbers", 1}}));
+                }
             }
         }
     }

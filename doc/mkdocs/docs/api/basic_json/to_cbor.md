@@ -1,4 +1,4 @@
-# basic_json::to_cbor
+# <small>nlohmann::basic_json::</small>to_cbor
 
 ```cpp
 // (1)
@@ -15,6 +15,8 @@ parse.
 
 1. Returns a byte vector containing the CBOR serialization.
 2. Writes the CBOR serialization to an output adapter.
+
+The exact mapping and its limitations is described on a [dedicated page](../../features/binary_formats/cbor.md).
 
 ## Parameters
 
@@ -37,7 +39,7 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 
 Linear in the size of the JSON value `j`.
 
-## Example
+## Examples
 
 ??? example
 

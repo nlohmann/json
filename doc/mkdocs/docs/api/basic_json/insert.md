@@ -1,4 +1,4 @@
-# basic_json::insert
+# <small>nlohmann::basic_json::</small>insert
 
 ```cpp
 // (1)
@@ -18,11 +18,11 @@ iterator insert(const_iterator pos, initializer_list_t ilist);
 void insert(const_iterator first, const_iterator last);
 ```
 
-1. Inserts element `val` to array before iterator `pos`.
-2. Inserts `cnt` copies of `val` to array before iterator `pos`.
-3. Inserts elements from range `[first, last)` to array before iterator `pos`.
-4. Inserts elements from initializer list `ilist` to array before iterator `pos`.
-5. Inserts elements from range `[first, last)` to object.
+1. Inserts element `val` into array before iterator `pos`.
+2. Inserts `cnt` copies of `val` into array before iterator `pos`.
+3. Inserts elements from range `[first, last)` into array before iterator `pos`.
+4. Inserts elements from initializer list `ilist` into array before iterator `pos`.
+5. Inserts elements from range `[first, last)` into object.
 
 ## Parameters
 
@@ -52,6 +52,10 @@ void insert(const_iterator first, const_iterator last);
 4. iterator pointing to the first element inserted, or `pos` if `ilist` is empty
 5. /
 
+## Exception safety
+
+Strong exception safety: if an exception occurs, the original value stays intact.
+
 ## Exceptions
 
 1. The function can throw the following exceptions:
@@ -59,12 +63,12 @@ void insert(const_iterator first, const_iterator last);
       arrays; example: `"cannot use insert() with string"`
     - Throws [`invalid_iterator.202`](../../home/exceptions.md#jsonexceptioninvalid_iterator202) if called on an
       iterator which does not belong to the current JSON value; example: `"iterator does not fit current value"`
-2. The function can throw thw following exceptions:
+2. The function can throw the following exceptions:
     - Throws [`type_error.309`](../../home/exceptions.md#jsonexceptiontype_error309) if called on JSON values other than
       arrays; example: `"cannot use insert() with string"`
     - Throws [`invalid_iterator.202`](../../home/exceptions.md#jsonexceptioninvalid_iterator202) if called on an
       iterator which does not belong to the current JSON value; example: `"iterator does not fit current value"`
-3. The function can throw thw following exceptions:
+3. The function can throw the following exceptions:
     - Throws [`type_error.309`](../../home/exceptions.md#jsonexceptiontype_error309) if called on JSON values other than
       arrays; example: `"cannot use insert() with string"`
     - Throws [`invalid_iterator.202`](../../home/exceptions.md#jsonexceptioninvalid_iterator202) if called on an
@@ -73,22 +77,18 @@ void insert(const_iterator first, const_iterator last);
       do not belong to the same JSON value; example: `"iterators do not fit"`
     - Throws [`invalid_iterator.211`](../../home/exceptions.md#jsonexceptioninvalid_iterator211) if `first` or `last`
       are iterators into container for which insert is called; example: `"passed iterators may not belong to container"`
-4. The function can throw thw following exceptions:
+4. The function can throw the following exceptions:
     - Throws [`type_error.309`](../../home/exceptions.md#jsonexceptiontype_error309) if called on JSON values other than
       arrays; example: `"cannot use insert() with string"`
     - Throws [`invalid_iterator.202`](../../home/exceptions.md#jsonexceptioninvalid_iterator202) if called on an
       iterator which does not belong to the current JSON value; example: `"iterator does not fit current value"`
-5. The function can throw thw following exceptions:
+5. The function can throw the following exceptions:
     - Throws [`type_error.309`](../../home/exceptions.md#jsonexceptiontype_error309) if called on JSON values other than
       objects; example: `"cannot use insert() with string"`
     - Throws [`invalid_iterator.202`](../../home/exceptions.md#jsonexceptioninvalid_iterator202) if called on an
       iterator which does not belong to the current JSON value; example: `"iterator does not fit current value"`
     - Throws [`invalid_iterator.210`](../../home/exceptions.md#jsonexceptioninvalid_iterator210) if `first` and `last`
       do not belong to the same JSON value; example: `"iterators do not fit"`
-
-## Exception safety
-
-Strong exception safety: if an exception occurs, the original value stays intact.
 
 ## Complexity
 
@@ -98,9 +98,9 @@ Strong exception safety: if an exception occurs, the original value stays intact
 4. Linear in `ilist.size()` plus linear in the distance between `pos` and end of the container.
 5. Logarithmic: `O(N*log(size() + N))`, where `N` is the number of elements to insert.
 
-## Example
+## Examples
 
-??? example
+??? example "Example (1): insert element into array"
 
     The example shows how `insert()` is used.
     
@@ -114,7 +114,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
     --8<-- "examples/insert.output"
     ```
 
-??? example
+??? example "Example (2): insert copies of element into array"
 
     The example shows how `insert()` is used.
     
@@ -128,7 +128,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
     --8<-- "examples/insert__count.output"
     ```
 
-??? example
+??? example "Example (3): insert range of elements into array"
 
     The example shows how `insert()` is used.
     
@@ -142,7 +142,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
     --8<-- "examples/insert__range.output"
     ```
 
-??? example
+??? example "Example (4): insert elements from initializer list into array"
 
     The example shows how `insert()` is used.
     
@@ -156,7 +156,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
     --8<-- "examples/insert__ilist.output"
     ```
 
-??? example
+??? example "Example (5): insert range of elements into object"
 
     The example shows how `insert()` is used.
     

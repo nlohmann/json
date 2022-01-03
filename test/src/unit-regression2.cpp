@@ -1,12 +1,12 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.10.4
+|  |  |__   |  |  | | | |  version 3.10.5
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 SPDX-License-Identifier: MIT
-Copyright (c) 2013-2019 Niels Lohmann <http://nlohmann.me>.
+Copyright (c) 2013-2022 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
 of this software and associated  documentation files (the "Software"), to deal
@@ -47,9 +47,81 @@ using ordered_json = nlohmann::ordered_json;
 #endif
 
 #ifdef JSON_HAS_CPP_17
-    #include <filesystem>
     #include <variant>
+
+    #if !defined(JSON_HAS_FILESYSTEM) && !defined(JSON_HAS_EXPERIMENTAL_FILESYSTEM)
+        #if defined(__cpp_lib_filesystem)
+            #define JSON_HAS_FILESYSTEM 1
+        #elif defined(__cpp_lib_experimental_filesystem)
+            #define JSON_HAS_EXPERIMENTAL_FILESYSTEM 1
+        #elif !defined(__has_include)
+            #define JSON_HAS_EXPERIMENTAL_FILESYSTEM 1
+        #elif __has_include(<filesystem>)
+            #define JSON_HAS_FILESYSTEM 1
+        #elif __has_include(<experimental/filesystem>)
+            #define JSON_HAS_EXPERIMENTAL_FILESYSTEM 1
+        #endif
+
+        // std::filesystem does not work on MinGW GCC 8: https://sourceforge.net/p/mingw-w64/bugs/737/
+        #if defined(__MINGW32__) && defined(__GNUC__) && __GNUC__ == 8
+            #undef JSON_HAS_FILESYSTEM
+            #undef JSON_HAS_EXPERIMENTAL_FILESYSTEM
+        #endif
+
+        // no filesystem support before GCC 8: https://en.cppreference.com/w/cpp/compiler_support
+        #if defined(__GNUC__) && __GNUC__ < 8 && !defined(__clang__)
+            #undef JSON_HAS_FILESYSTEM
+            #undef JSON_HAS_EXPERIMENTAL_FILESYSTEM
+        #endif
+
+        // no filesystem support before Clang 7: https://en.cppreference.com/w/cpp/compiler_support
+        #if defined(__clang_major__) && __clang_major__ < 7
+            #undef JSON_HAS_FILESYSTEM
+            #undef JSON_HAS_EXPERIMENTAL_FILESYSTEM
+        #endif
+
+        // no filesystem support before MSVC 19.14: https://en.cppreference.com/w/cpp/compiler_support
+        #if defined(_MSC_VER) && _MSC_VER < 1940
+            #undef JSON_HAS_FILESYSTEM
+            #undef JSON_HAS_EXPERIMENTAL_FILESYSTEM
+        #endif
+
+        // no filesystem support before iOS 13
+        #if defined(__IPHONE_OS_VERSION_MIN_REQUIRED) && __IPHONE_OS_VERSION_MIN_REQUIRED < 130000
+            #undef JSON_HAS_FILESYSTEM
+            #undef JSON_HAS_EXPERIMENTAL_FILESYSTEM
+        #endif
+
+        // no filesystem support before macOS Catalina
+        #if defined(__MAC_OS_X_VERSION_MIN_REQUIRED) && __MAC_OS_X_VERSION_MIN_REQUIRED < 101500
+            #undef JSON_HAS_FILESYSTEM
+            #undef JSON_HAS_EXPERIMENTAL_FILESYSTEM
+        #endif
+    #endif
 #endif
+
+#ifndef JSON_HAS_EXPERIMENTAL_FILESYSTEM
+    #define JSON_HAS_EXPERIMENTAL_FILESYSTEM 0
+#endif
+
+#ifndef JSON_HAS_FILESYSTEM
+    #define JSON_HAS_FILESYSTEM 0
+#endif
+
+#if JSON_HAS_EXPERIMENTAL_FILESYSTEM
+#include <experimental/filesystem>
+namespace nlohmann::detail
+{
+namespace std_fs = std::experimental::filesystem;
+} // namespace nlohmann::detail
+#elif JSON_HAS_FILESYSTEM
+#include <filesystem>
+namespace nlohmann::detail
+{
+namespace std_fs = std::filesystem;
+} // namespace nlohmann::detail
+#endif
+
 
 #ifdef JSON_HAS_CPP_20
     #include <span>
@@ -351,9 +423,7 @@ TEST_CASE("regression tests 2")
 #ifdef JSON_HAS_CPP_17
     SECTION("issue #1292 - Serializing std::variant causes stack overflow")
     {
-        static_assert(
-            !std::is_constructible<json, std::variant<int, float>>::value,
-            "");
+        static_assert(!std::is_constructible<json, std::variant<int, float>>::value, "unexpected value");
     }
 #endif
 
@@ -492,15 +562,15 @@ TEST_CASE("regression tests 2")
 
     SECTION("issue #1805 - A pair<T1, T2> is json constructible only if T1 and T2 are json constructible")
     {
-        static_assert(!std::is_constructible<json, std::pair<std::string, NotSerializableData>>::value, "");
-        static_assert(!std::is_constructible<json, std::pair<NotSerializableData, std::string>>::value, "");
-        static_assert(std::is_constructible<json, std::pair<int, std::string>>::value, "");
+        static_assert(!std::is_constructible<json, std::pair<std::string, NotSerializableData>>::value, "unexpected result");
+        static_assert(!std::is_constructible<json, std::pair<NotSerializableData, std::string>>::value, "unexpected result");
+        static_assert(std::is_constructible<json, std::pair<int, std::string>>::value, "unexpected result");
     }
     SECTION("issue #1825 - A tuple<Args..> is json constructible only if all T in Args are json constructible")
     {
-        static_assert(!std::is_constructible<json, std::tuple<std::string, NotSerializableData>>::value, "");
-        static_assert(!std::is_constructible<json, std::tuple<NotSerializableData, std::string>>::value, "");
-        static_assert(std::is_constructible<json, std::tuple<int, std::string>>::value, "");
+        static_assert(!std::is_constructible<json, std::tuple<std::string, NotSerializableData>>::value, "unexpected result");
+        static_assert(!std::is_constructible<json, std::tuple<NotSerializableData, std::string>>::value, "unexpected result");
+        static_assert(std::is_constructible<json, std::tuple<int, std::string>>::value, "unexpected result");
     }
 
     SECTION("issue #1983 - JSON patch diff for op=add formation is not as per standard (RFC 6902)")
@@ -532,7 +602,7 @@ TEST_CASE("regression tests 2")
         auto val2 = j.value("y", defval);
     }
 
-    SECTION("issue #2293 - eof doesnt cause parsing to stop")
+    SECTION("issue #2293 - eof doesn't cause parsing to stop")
     {
         std::vector<uint8_t> data =
         {
@@ -697,7 +767,7 @@ TEST_CASE("regression tests 2")
 
     SECTION("issue #2825 - Properly constrain the basic_json conversion operator")
     {
-        static_assert(std::is_copy_assignable<nlohmann::ordered_json>::value, "");
+        static_assert(std::is_copy_assignable<nlohmann::ordered_json>::value, "ordered_json must be copy assignable");
     }
 
     SECTION("issue #2958 - Inserting in unordered json using a pointer retains the leading slash")
@@ -728,14 +798,16 @@ TEST_CASE("regression tests 2")
         CHECK(j == k);
     }
 
-#ifdef JSON_HAS_CPP_17
+#if JSON_HAS_FILESYSTEM || JSON_HAS_EXPERIMENTAL_FILESYSTEM
     SECTION("issue #3070 - Version 3.10.3 breaks backward-compatibility with 3.10.2 ")
     {
-        std::filesystem::path text_path("/tmp/text.txt");
+        nlohmann::detail::std_fs::path text_path("/tmp/text.txt");
         json j(text_path);
 
-        const auto j_path = j.get<std::filesystem::path>();
+        const auto j_path = j.get<nlohmann::detail::std_fs::path>();
         CHECK(j_path == text_path);
+
+        CHECK_THROWS_WITH_AS(nlohmann::detail::std_fs::path(json(1)), "[json.exception.type_error.302] type must be string, but is number", json::type_error);
     }
 #endif
 
@@ -745,6 +817,23 @@ TEST_CASE("regression tests 2")
         j[0]["value"] = true;
         std::vector<FooBar> foo;
         j.get_to(foo);
+    }
+
+    SECTION("issue #3108 - ordered_json doesn't support range based erase")
+    {
+        ordered_json j = {1, 2, 2, 4};
+
+        auto last = std::unique(j.begin(), j.end());
+        j.erase(last, j.end());
+
+        CHECK(j.dump() == "[1,2,4]");
+
+        j.erase(std::remove_if(j.begin(), j.end(), [](const ordered_json & val)
+        {
+            return val == 2;
+        }), j.end());
+
+        CHECK(j.dump() == "[1,4]");
     }
 }
 

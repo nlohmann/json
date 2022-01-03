@@ -1,4 +1,4 @@
-# basic_json::boolean_t
+# <small>nlohmann::basic_json::</small>boolean_t
 
 ```cpp
 using boolean_t = BooleanType;
@@ -20,6 +20,22 @@ With the default values for `BooleanType` (`#!cpp bool`), the default value for 
 #### Storage
 
 Boolean values are stored directly inside a `basic_json` type.
+
+## Examples
+
+??? example
+
+    The following code shows that `boolean_t` is by default, a typedef to `#!cpp bool`.
+     
+    ```cpp
+    --8<-- "examples/boolean_t.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/boolean_t.output"
+    ```
 
 ## Version history
 
