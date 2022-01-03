@@ -862,6 +862,7 @@ TEST_CASE("regression tests 2")
                 {"smth", f_3215(false)}
             };
             s = "initialized";
+            static_cast<void>(j);
         }
         catch (std::runtime_error& e)
         {
