@@ -1035,7 +1035,7 @@ auto cbor = json::to_msgpack(j); // 0xD5 (fixext2), 0x10, 0xCA, 0xFE
 
 ## Supported compilers
 
-Though it's 2021 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
+Though it's 2022 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
 
 - GCC 4.8 - 11.0 (and possibly later)
 - Clang 3.4 - 13.0 (and possibly later)
@@ -1304,7 +1304,7 @@ json = dependency('nlohmann_json', required: true)
 
 The class is licensed under the [MIT License](https://opensource.org/licenses/MIT):
 
-Copyright &copy; 2013-2021 [Niels Lohmann](https://nlohmann.me)
+Copyright &copy; 2013-2022 [Niels Lohmann](https://nlohmann.me)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
@@ -1598,6 +1598,13 @@ I deeply appreciate the help of the following people.
 - [Giovanni Cerretani](https://github.com/gcerretani) fixed `-Wunused` warnings on `JSON_DIAGNOSTICS`.
 - [Bogdan Popescu](https://github.com/Kapeli) hosts the [docset](https://github.com/Kapeli/Dash-User-Contributions/tree/master/docsets/JSON_for_Modern_C%2B%2B) for offline documentation viewers.
 - [Carl Smedstad](https://github.com/carlsmedstad) fixed an assertion error when using `JSON_DIAGNOSTICS`.
+- [miikka75](https://github.com/miikka75) provided an important fix to compile C++17 code with Clang 9.
+- [Maarten Becker](https://github.com/kernie) fixed a warning for shadowed variables.
+- [Cristi Vîjdea](https://github.com/axnsan12) fixed typos in the `operator[]` documentation.
+- [Alex Beregszaszi](https://github.com/axic) fixed spelling mistakes in comments.
+- [Dirk Stolle](https://github.com/striezel) fixed typos in documentation.
+- [Daniel Albuschat](https://github.com/daniel-kun) corrected the parameter name in the `parse` documentation.
+- [Prince Mendiratta](https://github.com/Prince-Mendiratta) fixed a link to the FAQ.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
