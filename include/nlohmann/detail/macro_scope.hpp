@@ -70,7 +70,7 @@
         #endif
 
         // no filesystem support before MSVC 19.14: https://en.cppreference.com/w/cpp/compiler_support
-        #if defined(_MSC_VER) && _MSC_VER < 1940
+        #if defined(_MSC_VER) && _MSC_VER < 1914
             #undef JSON_HAS_FILESYSTEM
             #undef JSON_HAS_EXPERIMENTAL_FILESYSTEM
         #endif
