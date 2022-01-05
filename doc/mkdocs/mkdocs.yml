@@ -60,6 +60,7 @@ nav:
     - features/object_order.md
     - Parsing:
         - features/parsing/index.md
+        - features/parsing/json_lines.md
         - features/parsing/parse_exceptions.md
         - features/parsing/parser_callbacks.md
         - features/parsing/sax_interface.md
