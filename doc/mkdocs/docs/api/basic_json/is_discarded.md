@@ -44,7 +44,7 @@ Constant.
 !!! note
 
     When a value is discarded by a callback function (see [`parser_callback_t`](parser_callback_t.md)) during parsing,
-    then it is removed when it is part of a structured value. For instance, if the second value of an array is discared,
+    then it is removed when it is part of a structured value. For instance, if the second value of an array is discarded,
     instead of `#!json [null, discarded, false]`, the array `#!json [null, false]` is returned. Only if the top-level
     value is discarded, the return value of the `parse` call is discarded.
 

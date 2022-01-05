@@ -31,6 +31,7 @@ static basic_json parse(IteratorType first, IteratorType last,
     - a `FILE` pointer
     - a C-style array of characters
     - a pointer to a null-terminated string of single byte characters
+    - a `std::string`
     - an object `obj` for which `begin(obj)` and `end(obj)` produces a valid pair of iterators.
 
 `IteratorType`
