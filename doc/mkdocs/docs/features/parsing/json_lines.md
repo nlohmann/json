@@ -17,7 +17,7 @@ The [JSON Lines](https://jsonlines.org) format is a text format of newline-delim
     ```
 
 JSON Lines input with more than one value is treated as invalid JSON by the [`parse`](../../api/basic_json/parse.md) or
-[`accept`](../../api/basic_json/accept.md) functions. The process it line by line, functions like
+[`accept`](../../api/basic_json/accept.md) functions. To process it line by line, functions like
 [`std::getline`](https://en.cppreference.com/w/cpp/string/basic_string/getline) can be used:
 
 !!! example "Example: Parse JSON Text input line by line"
