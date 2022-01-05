@@ -120,6 +120,7 @@ endif()
 CONFIGURE_FILE(
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/pkg-config.pc.in"
     "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc"
+    @ONLY
 )
 
 ##
