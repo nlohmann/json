@@ -16707,7 +16707,7 @@ class serializer
      * @param[in] byte byte to represent
      * @return representation ("00".."FF")
      */
-    inline std::string hex_bytes(std::uint8_t byte)
+    static std::string hex_bytes(std::uint8_t byte)
     {
         std::string result = "FF";
         constexpr const char* nibble_to_hex = "0123456789ABCDEF";
