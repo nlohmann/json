@@ -856,7 +856,7 @@ TEST_CASE("regression tests 2")
         try
         {
             // std::map<std::string, std::string> j // no leak
-            nlohmann::json::initializer_list_t j // leak
+            std::initializer_list<json> j // leak
             {
                 {"smth", f_3215(true)}, // exception thrown here
                 {"smth", f_3215(false)}
