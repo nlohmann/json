@@ -4,7 +4,7 @@ Some aspects of the library can be configured by defining preprocessor macros be
 
 ## `JSON_ASSERT(x)`
 
-This marco controls which code is executed for runtime assertions of the libraries.
+This macro controls which code is executed for runtime assertions of the libraries.
 
 !!! info "Default behavior"
 
