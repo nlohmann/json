@@ -1,12 +1,12 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.10.4
+|  |  |__   |  |  | | | |  version 3.10.5
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 SPDX-License-Identifier: MIT
-Copyright (c) 2013-2019 Niels Lohmann <http://nlohmann.me>.
+Copyright (c) 2013-2022 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
 of this software and associated  documentation files (the "Software"), to deal
@@ -39,14 +39,14 @@ TEST_CASE("version information")
         json j = json::meta();
 
         CHECK(j["name"] == "JSON for Modern C++");
-        CHECK(j["copyright"] == "(C) 2013-2021 Niels Lohmann");
+        CHECK(j["copyright"] == "(C) 2013-2022 Niels Lohmann");
         CHECK(j["url"] == "https://github.com/nlohmann/json");
         CHECK(j["version"] == json(
         {
-            {"string", "3.10.4"},
+            {"string", "3.10.5"},
             {"major", 3},
             {"minor", 10},
-            {"patch", 4}
+            {"patch", 5}
         }));
 
         CHECK(j.find("platform") != j.end());

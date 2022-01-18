@@ -13,7 +13,6 @@ JSON_for_Modern_C++.docset: Info.plist docSet.sql
 	# remove "JSON for Modern C++" from page titles
 	find JSON_for_Modern_C++.docset/Contents/Resources/Documents -type f -exec gsed -i 's| - JSON for Modern C++</title>|</title>|' {} +
 	# clean up
-	rm JSON_for_Modern_C++.docset/Contents/Resources/Documents/hooks.py
 	rm JSON_for_Modern_C++.docset/Contents/Resources/Documents/sitemap.*
 	# generate index
 	sqlite3 JSON_for_Modern_C++.docset/Contents/Resources/docSet.dsidx < docSet.sql
