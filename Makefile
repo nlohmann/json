@@ -215,8 +215,12 @@ release:
 	gpg --armor --detach-sig $(AMALGAMATED_FILE)
 	cp $(AMALGAMATED_FILE) release_files
 	mv $(AMALGAMATED_FILE).asc release_files
+	find LICENSE.MIT nlohmann_json.natvis CMakeLists.txt cmake/*.in include single_include -type f | tar --create --preserve-permissions --file - --files-from - | xz --compress -9e --threads=2 - > json.xz
+	gpg --armor --detach-sig json.xz
+	mv json.xz json.xz.asc release_files
 	cd release_files ; shasum -a 256 json.hpp > hashes.txt
 	cd release_files ; shasum -a 256 include.zip >> hashes.txt
+	cd release_files ; shasum -a 256 json.xz >> hashes.txt
 
 
 ##########################################################################
