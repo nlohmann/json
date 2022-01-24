@@ -205,6 +205,7 @@ ChangeLog.md:
 
 # Create the files for a release and add signatures and hashes. We use `-X` to make the resulting ZIP file
 # reproducible, see <https://content.pivotal.io/blog/barriers-to-deterministic-reproducible-zip-files>.
+# The xz files is created according to the advices of <https://reproducible-builds.org/docs/archives/>.
 
 release:
 	rm -fr release_files
@@ -215,7 +216,10 @@ release:
 	gpg --armor --detach-sig $(AMALGAMATED_FILE)
 	cp $(AMALGAMATED_FILE) release_files
 	mv $(AMALGAMATED_FILE).asc release_files
-	find LICENSE.MIT nlohmann_json.natvis CMakeLists.txt cmake/*.in include single_include -type f | tar --create --preserve-permissions --file - --files-from - | xz --compress -9e --threads=2 - > json.tar.xz
+	mkdir json
+	rsync -R $(shell find LICENSE.MIT nlohmann_json.natvis CMakeLists.txt cmake/*.in include single_include -type f) json
+	gtar --sort=name --mtime="@$(shell git log -1 --pretty=%ct)" --owner=0 --group=0 --numeric-owner --pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime --create --file - json | xz --compress -9e --threads=2 - > json.tar.xz
+	rm -fr json
 	gpg --armor --detach-sig json.tar.xz
 	mv json.tar.xz json.tar.xz.asc release_files
 	cd release_files ; shasum -a 256 json.hpp > hashes.txt
