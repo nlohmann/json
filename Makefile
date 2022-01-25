@@ -4,9 +4,6 @@
 # configuration
 ##########################################################################
 
-# directory to recent compiler binaries
-COMPILER_DIR=/usr/local/opt/llvm/bin
-
 # find GNU sed to use `-i` parameter
 SED:=$(shell command -v gsed || which sed)
 
@@ -61,6 +58,7 @@ run_benchmarks:
 	cd cmake-build-benchmarks ; cmake ../benchmarks -GNinja -DCMAKE_BUILD_TYPE=Release -DJSON_BuildTests=On
 	cd cmake-build-benchmarks ; ninja
 	cd cmake-build-benchmarks ; ./json_benchmarks
+
 
 ##########################################################################
 # fuzzing
@@ -135,6 +133,7 @@ pvs_studio:
 	cd cmake-build-pvs-studio ; plog-converter -a'GA:1,2;64:1;CS' -t fullhtml PVS-Studio.log -o pvs
 	open cmake-build-pvs-studio/pvs/index.html
 
+
 ##########################################################################
 # Code format and source amalgamation
 ##########################################################################
@@ -203,20 +202,29 @@ ChangeLog.md:
 # Release files
 ##########################################################################
 
-# Create the files for a release and add signatures and hashes. We use `-X` to make the resulting ZIP file
-# reproducible, see <https://content.pivotal.io/blog/barriers-to-deterministic-reproducible-zip-files>.
+# Create a tar.gz archive that contains sufficient files to be used as CMake project (e.g., using FetchContent). The
+# archive is created according to the advices of <https://reproducible-builds.org/docs/archives/>.
+json.tar.xz:
+	mkdir json
+	rsync -R $(shell find LICENSE.MIT nlohmann_json.natvis CMakeLists.txt cmake/*.in include single_include -type f) json
+	gtar --sort=name --mtime="@$(shell git log -1 --pretty=%ct)" --owner=0 --group=0 --numeric-owner --pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime --create --file - json | xz --compress -9e --threads=2 - > json.tar.xz
+	rm -fr json
 
-release:
+# We use `-X` to make the resulting ZIP file reproducible, see
+# <https://content.pivotal.io/blog/barriers-to-deterministic-reproducible-zip-files>.
+include.zip:
+	zip -9 --recurse-paths -X include.zip $(SRCS) $(AMALGAMATED_FILE) meson.build LICENSE.MIT
+
+# Create the files for a release and add signatures and hashes.
+release: include.zip json.tar.xz
 	rm -fr release_files
 	mkdir release_files
-	zip -9 --recurse-paths -X include.zip $(SRCS) $(AMALGAMATED_FILE) meson.build LICENSE.MIT
 	gpg --armor --detach-sig include.zip
-	mv include.zip include.zip.asc release_files
 	gpg --armor --detach-sig $(AMALGAMATED_FILE)
+	gpg --armor --detach-sig json.tar.xz
 	cp $(AMALGAMATED_FILE) release_files
-	mv $(AMALGAMATED_FILE).asc release_files
-	cd release_files ; shasum -a 256 json.hpp > hashes.txt
-	cd release_files ; shasum -a 256 include.zip >> hashes.txt
+	mv $(AMALGAMATED_FILE).asc json.tar.xz json.tar.xz.asc include.zip include.zip.asc release_files
+	cd release_files ; shasum -a 256 json.hpp include.zip json.tar.xz > hashes.txt
 
 
 ##########################################################################
@@ -225,11 +233,11 @@ release:
 
 # clean up
 clean:
-	rm -fr json_unit json_benchmarks fuzz fuzz-testing *.dSYM test/*.dSYM oclint_report.html
+	rm -fr fuzz fuzz-testing *.dSYM test/*.dSYM
 	rm -fr benchmarks/files/numbers/*.json
-	rm -fr cmake-3.1.0-Darwin64.tar.gz cmake-3.1.0-Darwin64
-	rm -fr cmake-build-benchmarks cmake-build-pedantic fuzz-testing cmake-build-clang-analyze cmake-build-pvs-studio cmake-build-infer cmake_build
+	rm -fr cmake-build-benchmarks fuzz-testing cmake-build-pvs-studio release_files
 	$(MAKE) clean -Cdoc
+
 
 ##########################################################################
 # Thirdparty code
