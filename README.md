@@ -1045,6 +1045,7 @@ Though it's 2022 already, the support for C++11 is still a bit sparse. Currently
 - Microsoft Visual C++ 2015 / Build Tools 14.0.25123.0 (and possibly later)
 - Microsoft Visual C++ 2017 / Build Tools 15.5.180.51428 (and possibly later)
 - Microsoft Visual C++ 2019 / Build Tools 16.3.1+1def00d3d (and possibly later)
+- Microsoft Visual C++ 2022 / Build Tools 19.30.30709.0 (and possibly later)
 
 I would be happy to learn about other compilers/versions.
 
@@ -1119,6 +1120,7 @@ The following compilers are currently used in continuous integration at [AppVeyo
 | Visual Studio 15 2017 MSVC 19.16.27045.0 (Build Engine version 15.9.21+g9802d43bc3 for .NET Framework) | Windows-10.0.14393 | GitHub Actions |
 | Visual Studio 16 2019 MSVC 19.28.29912.0 (Build Engine version 16.9.0+57a23d249 for .NET Framework)    | Windows-10.0.17763 | GitHub Actions |
 | Visual Studio 16 2019 MSVC 19.28.29912.0 (Build Engine version 16.9.0+57a23d249 for .NET Framework)    | Windows-10.0.17763 | AppVeyor       |
+| Visual Studio 17 2022 MSVC 19.30.30709.0 (Build Engine version 17.0.31804.368 for .NET Framework)      | Windows-10.0.20348 | GitHub Actions |
 
 
 ## Integration

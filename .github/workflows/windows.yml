@@ -95,6 +95,38 @@ jobs:
     - name: test
       run: cd build ; ctest -j 10 -C Release --output-on-failure
 
+  msvc2022:
+    runs-on: windows-2022
+    strategy:
+      matrix:
+        build_type: [Debug, Release]
+        architecture: [Win32, x64]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: cmake
+      run: cmake -S . -B build -G "Visual Studio 17 2022" -A ${{ matrix.architecture }} -DJSON_BuildTests=On -DCMAKE_CXX_FLAGS="/W4 /WX"
+      if: matrix.build_type == 'Release'
+    - name: cmake
+      run: cmake -S . -B build -G "Visual Studio 17 2022" -A ${{ matrix.architecture }} -DJSON_BuildTests=On -DJSON_FastTests=ON -DCMAKE_CXX_FLAGS="/W4 /WX"
+      if: matrix.build_type == 'Debug'
+    - name: build
+      run: cmake --build build --config ${{ matrix.build_type }} --parallel 10
+    - name: test
+      run: cd build ; ctest -j 10 -C ${{ matrix.build_type }} --output-on-failure
+
+  msvc2022_latest:
+    runs-on: windows-2022
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: cmake
+      run: cmake -S . -B build -G "Visual Studio 17 2022" -DJSON_BuildTests=On -DCMAKE_CXX_FLAGS="/permissive- /std:c++latest /utf-8 /W4 /WX"
+    - name: build
+      run: cmake --build build --config Release --parallel 10
+    - name: test
+      run: cd build ; ctest -j 10 -C Release --output-on-failure
+
   clang:
     runs-on: windows-latest
     strategy:
