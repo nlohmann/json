@@ -1185,15 +1185,15 @@ target_link_libraries(foo PRIVATE nlohmann_json::nlohmann_json)
 
 Since CMake v3.11,
 [FetchContent](https://cmake.org/cmake/help/v3.11/module/FetchContent.html) can
-be used to automatically download the repository as a dependency at configure time.
+be used to automatically download a release as a dependency at configure time.
 
 Example:
 ```cmake
 include(FetchContent)
 
 FetchContent_Declare(json
-  GIT_REPOSITORY https://github.com/nlohmann/json.git
-  GIT_TAG v3.7.3)
+  URL https://github.com/nlohmann/json/releases/download/v3.10.5/json.tar.xz
+)
 
 FetchContent_GetProperties(json)
 if(NOT json_POPULATED)
@@ -1204,10 +1204,8 @@ endif()
 target_link_libraries(foo PRIVATE nlohmann_json::nlohmann_json)
 ```
 
-**Note**: The repository https://github.com/nlohmann/json download size is huge.
-It contains all the dataset used for the benchmarks. You might want to depend on
-a smaller repository. For instance, you might want to replace the URL above by
-https://github.com/ArthurSonzogni/nlohmann_json_cmake_fetchcontent
+**Note**: It is recommended to use the URL approach described above which is supported as of version 3.10.0. See
+<https://json.nlohmann.me/integration/cmake/#fetchcontent> for more information.
 
 #### Supporting Both
 

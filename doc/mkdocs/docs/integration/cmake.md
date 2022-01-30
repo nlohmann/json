@@ -90,7 +90,7 @@ to the following.
 ### FetchContent
 
 Since CMake v3.11, [FetchContent](https://cmake.org/cmake/help/v3.11/module/FetchContent.html) can be used to
-automatically download the repository as a dependency at configure type.
+automatically download a release as a dependency at configure type.
 
 !!! example
 
@@ -101,8 +101,7 @@ automatically download the repository as a dependency at configure type.
     include(FetchContent)
     
     FetchContent_Declare(json
-        GIT_REPOSITORY https://github.com/nlohmann/json
-        GIT_TAG v3.10.5
+        URL https://github.com/nlohmann/json/releases/download/v3.10.5/json.tar.xz
     )
     
     FetchContent_GetProperties(json)
@@ -117,8 +116,18 @@ automatically download the repository as a dependency at configure type.
 
 !!! Note
 
-	The repository <https://github.com/nlohmann/json> download size is quite large. You might want to depend on a
-    smaller repository. For instance, you might want to replace the URL in the example by
+    It is recommended to use the URL approach described above which is supported as of version 3.10.0. It is also
+    possible to pass the Git repository like
+
+    ```cmake
+    FetchContent_Declare(json
+        GIT_REPOSITORY https://github.com/nlohmann/json
+        GIT_TAG v3.10.5
+    )
+    ```
+
+	However, the repository <https://github.com/nlohmann/json> download size is quite large. You might want to depend on
+    a smaller repository. For instance, you might want to replace the URL in the example by
     <https://github.com/ArthurSonzogni/nlohmann_json_cmake_fetchcontent>.
 
 ## CMake Options
