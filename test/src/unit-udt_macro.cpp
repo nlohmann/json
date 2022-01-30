@@ -59,6 +59,42 @@ class person_with_private_data
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(person_with_private_data, age, name, metadata)
 };
 
+class person_with_private_data_2
+{
+  private:
+    std::string name{};
+    int age = 0;
+    json metadata = nullptr;
+
+  public:
+    bool operator==(const person_with_private_data_2& rhs) const
+    {
+        return name == rhs.name && age == rhs.age && metadata == rhs.metadata;
+    }
+
+    person_with_private_data_2() = default;
+    person_with_private_data_2(std::string name_, int age_, json metadata_)
+        : name(std::move(name_))
+        , age(age_)
+        , metadata(std::move(metadata_))
+    {}
+
+    std::string getName() const
+    {
+        return name;
+    }
+    int getAge() const
+    {
+        return age;
+    }
+    json getMetadata() const
+    {
+        return metadata;
+    }
+
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(person_with_private_data_2, age, name, metadata)
+};
+
 class person_without_private_data_1
 {
   public:
@@ -102,6 +138,41 @@ class person_without_private_data_2
 };
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(person_without_private_data_2, age, name, metadata)
+
+class person_without_private_data_3
+{
+  public:
+    std::string name{};
+    int age = 0;
+    json metadata = nullptr;
+
+    bool operator==(const person_without_private_data_3& rhs) const
+    {
+        return name == rhs.name && age == rhs.age && metadata == rhs.metadata;
+    }
+
+    person_without_private_data_3() = default;
+    person_without_private_data_3(std::string name_, int age_, json metadata_)
+        : name(std::move(name_))
+        , age(age_)
+        , metadata(std::move(metadata_))
+    {}
+
+    std::string getName() const
+    {
+        return name;
+    }
+    int getAge() const
+    {
+        return age;
+    }
+    json getMetadata() const
+    {
+        return metadata;
+    }
+};
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(person_without_private_data_3, age, name, metadata)
 
 class person_with_private_alphabet
 {
@@ -231,7 +302,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(person_with_public_alphabet, a, b, c, d, e, f
 
 } // namespace persons
 
-TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRUSIVE", T,
+TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRUSIVE and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE", T,
                    persons::person_with_private_data,
                    persons::person_without_private_data_1,
                    persons::person_without_private_data_2)
@@ -254,6 +325,40 @@ TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRU
         json j = json(p1);
         j.erase("age");
         CHECK_THROWS_WITH_AS(j.get<T>(), "[json.exception.out_of_range.403] key 'age' not found", json::out_of_range);
+    }
+}
+
+TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT", T,
+                   persons::person_with_private_data_2,
+                   persons::person_without_private_data_3)
+{
+    SECTION("person with default values")
+    {
+        // serialization of default constructed object
+        T p0;
+        CHECK(json(p0).dump() == "{\"age\":0,\"metadata\":null,\"name\":\"\"}");
+
+        // serialization
+        T p1("Erik", 1, {{"haircuts", 2}});
+        CHECK(json(p1).dump() == "{\"age\":1,\"metadata\":{\"haircuts\":2},\"name\":\"Erik\"}");
+
+        // deserialization
+        auto p2 = json(p1).get<T>();
+        CHECK(p2 == p1);
+
+        // roundtrip
+        CHECK(T(json(p1)) == p1);
+        CHECK(json(T(json(p1))) == json(p1));
+
+        // check default value in case of missing field
+        json j = json(p1);
+        j.erase("name");
+        j.erase("age");
+        j.erase("metadata");
+        T p3 = j.get<T>();
+        CHECK(p3.getName() == "");
+        CHECK(p3.getAge() == 0);
+        CHECK(p3.getMetadata() == nullptr);
     }
 }
 

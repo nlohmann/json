@@ -85,29 +85,31 @@ Some important things:
 
 If you just want to serialize/deserialize some structs, the `to_json`/`from_json` functions can be a lot of boilerplate.
 
-There are two macros to make your life easier as long as you (1) want to use a JSON object as serialization and (2) want to use the member variable names as object keys in that object:
+There are four macros to make your life easier as long as you (1) want to use a JSON object as serialization and (2) want to use the member variable names as object keys in that object:
 
-- `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(name, member1, member2, ...)` is to be defined inside the namespace of the class/struct to create code for.
-- `NLOHMANN_DEFINE_TYPE_INTRUSIVE(name, member1, member2, ...)` is to be defined inside the class/struct to create code for. This macro can also access private members.
+- `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(name, member1, member2, ...)` is to be defined inside the namespace of the class/struct to create code for. It will throw an exception in `from_json()` due to a missing value in the JSON object.
+- `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(name, member1, member2, ...)` is to be defined inside the namespace of the class/struct to create code for. It will not throw an exception in `from_json()` due to a missing value in the JSON object, but fills in values from object which is default-constructed by the type.
+- `NLOHMANN_DEFINE_TYPE_INTRUSIVE(name, member1, member2, ...)` is to be defined inside the class/struct to create code for. This macro can also access private members. It will throw an exception in `from_json()` due to a missing value in the JSON object.
+- `NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(name, member1, member2, ...)` is to be defined inside the class/struct to create code for. This macro can also access private members. It will not throw an exception in `from_json()` due to a missing value in the JSON object, but fills in values from object which is default-constructed by the type.
 
-In both macros, the first parameter is the name of the class/struct, and all remaining parameters name the members.
+In all macros, the first parameter is the name of the class/struct, and all remaining parameters name the members. You can read more docs about them starting from [here](macros.md#nlohmann_define_type_intrusivetype-member).
 
 !!! note
 
-    At most 64 member variables can be passed to `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE` or `NLOHMANN_DEFINE_TYPE_INTRUSIVE`.
+    At most 64 member variables can be passed to these macros.
 
 ??? example
 
     The `to_json`/`from_json` functions for the `person` struct above can be created with:
-    
+
     ```cpp
     namespace ns {
         NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(person, name, address, age)
     }
     ```
-    
+
     Here is an example with private members, where `NLOHMANN_DEFINE_TYPE_INTRUSIVE` is needed:
-    
+
     ```cpp
     namespace ns {
         class address {
@@ -115,7 +117,7 @@ In both macros, the first parameter is the name of the class/struct, and all rem
             std::string street;
             int housenumber;
             int postcode;
-            
+
           public:
             NLOHMANN_DEFINE_TYPE_INTRUSIVE(address, street, housenumber, postcode)
         };
