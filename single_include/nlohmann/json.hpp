@@ -11308,7 +11308,7 @@ class primitive_iterator_t
         return *this;
     }
 
-    primitive_iterator_t const operator++(int) noexcept // NOLINT(readability-const-return-type)
+    primitive_iterator_t operator++(int)& noexcept // NOLINT(cert-dcl21-cpp)
     {
         auto result = *this;
         ++m_it;
@@ -11321,7 +11321,7 @@ class primitive_iterator_t
         return *this;
     }
 
-    primitive_iterator_t const operator--(int) noexcept // NOLINT(readability-const-return-type)
+    primitive_iterator_t operator--(int)& noexcept // NOLINT(cert-dcl21-cpp)
     {
         auto result = *this;
         --m_it;
@@ -11728,7 +11728,7 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
     @brief post-increment (it++)
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
-    iter_impl const operator++(int) // NOLINT(readability-const-return-type)
+    iter_impl operator++(int)& // NOLINT(cert-dcl21-cpp)
     {
         auto result = *this;
         ++(*this);
@@ -11779,7 +11779,7 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
     @brief post-decrement (it--)
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
-    iter_impl const operator--(int) // NOLINT(readability-const-return-type)
+    iter_impl operator--(int)& // NOLINT(cert-dcl21-cpp)
     {
         auto result = *this;
         --(*this);
@@ -12167,7 +12167,7 @@ class json_reverse_iterator : public std::reverse_iterator<Base>
     explicit json_reverse_iterator(const base_iterator& it) noexcept : base_iterator(it) {}
 
     /// post-increment (it++)
-    json_reverse_iterator const operator++(int) // NOLINT(readability-const-return-type)
+    json_reverse_iterator operator++(int)& // NOLINT(cert-dcl21-cpp)
     {
         return static_cast<json_reverse_iterator>(base_iterator::operator++(1));
     }
@@ -12179,7 +12179,7 @@ class json_reverse_iterator : public std::reverse_iterator<Base>
     }
 
     /// post-decrement (it--)
-    json_reverse_iterator const operator--(int) // NOLINT(readability-const-return-type)
+    json_reverse_iterator operator--(int)& // NOLINT(cert-dcl21-cpp)
     {
         return static_cast<json_reverse_iterator>(base_iterator::operator--(1));
     }
