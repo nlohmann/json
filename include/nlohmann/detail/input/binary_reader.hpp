@@ -1891,17 +1891,17 @@ class binary_reader
                         case 'u':
                         {
                             uint16_t len;
-                            return get_number(format, len) and get_string(format, len, result);
+                            return get_number(format, len) && get_string(format, len, result);
                         }
                         case 'm':
                         {
                             uint32_t len;
-                            return get_number(format, len) and get_string(format, len, result);
+                            return get_number(format, len) && get_string(format, len, result);
                         }
                         case 'M':
                         {
                             uint64_t len;
-                            return get_number(format, len) and get_string(format, len, result);
+                            return get_number(format, len) && get_string(format, len, result);
                         }
                     }
                 }
@@ -2256,17 +2256,17 @@ class binary_reader
                         case 'u':
                         {
                             uint16_t number;
-                            return get_number(format, number) and sax->number_integer(number);
+                            return get_number(format, number) && sax->number_integer(number);
                         }
                         case 'm':
                         {
                             uint32_t number;
-                            return get_number(format, number) and sax->number_integer(number);
+                            return get_number(format, number) && sax->number_integer(number);
                         }
                         case 'M':
                         {
                             uint64_t number;
-                            return get_number(format, number) and sax->number_integer(number);
+                            return get_number(format, number) && sax->number_integer(number);
                         }
                         case 'h':
                         {
@@ -2294,8 +2294,8 @@ class binary_reader
                             {
                                 const int exp = (half >> 10) & 0x1F;
                                 const int mant = half & 0x3FF;
-                                JSON_ASSERT(0 <= exp and exp <= 32);
-                                JSON_ASSERT(0 <= mant and mant <= 1024);
+                                JSON_ASSERT(0 <= exp&& exp <= 32);
+                                JSON_ASSERT(0 <= mant&& mant <= 1024);
                                 switch (exp)
                                 {
                                     case 0:
@@ -2586,8 +2586,8 @@ class binary_reader
             }
 
             // reverse byte order prior to conversion if necessary
-            if ((is_little_endian != InputIsLittleEndian and format != input_format_t::bjdata) or
-                    (is_little_endian == InputIsLittleEndian and format == input_format_t::bjdata))
+            if ((is_little_endian != InputIsLittleEndian && format != input_format_t::bjdata) or
+                    (is_little_endian == InputIsLittleEndian && format == input_format_t::bjdata))
             {
                 vec[sizeof(NumberType) - i - 1] = static_cast<std::uint8_t>(current);
             }
@@ -2700,13 +2700,13 @@ class binary_reader
     @param[in] context  further context information
     @return a message string to use in the parse_error exceptions
     */
-    std::string exception_message(const input_format_t format,
+    std::string exception_message(const input_format_t format_,
                                   const std::string& detail,
                                   const std::string& context) const
     {
         std::string error_msg = "syntax error while parsing ";
 
-        switch (format)
+        switch (format_)
         {
             case input_format_t::cbor:
                 error_msg += "CBOR";

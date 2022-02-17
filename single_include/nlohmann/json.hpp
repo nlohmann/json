@@ -10267,17 +10267,17 @@ class binary_reader
                         case 'u':
                         {
                             uint16_t len;
-                            return get_number(format, len) and get_string(format, len, result);
+                            return get_number(format, len) && get_string(format, len, result);
                         }
                         case 'm':
                         {
                             uint32_t len;
-                            return get_number(format, len) and get_string(format, len, result);
+                            return get_number(format, len) && get_string(format, len, result);
                         }
                         case 'M':
                         {
                             uint64_t len;
-                            return get_number(format, len) and get_string(format, len, result);
+                            return get_number(format, len) && get_string(format, len, result);
                         }
                     }
                 }
@@ -10632,17 +10632,17 @@ class binary_reader
                         case 'u':
                         {
                             uint16_t number;
-                            return get_number(format, number) and sax->number_integer(number);
+                            return get_number(format, number) && sax->number_integer(number);
                         }
                         case 'm':
                         {
                             uint32_t number;
-                            return get_number(format, number) and sax->number_integer(number);
+                            return get_number(format, number) && sax->number_integer(number);
                         }
                         case 'M':
                         {
                             uint64_t number;
-                            return get_number(format, number) and sax->number_integer(number);
+                            return get_number(format, number) && sax->number_integer(number);
                         }
                         case 'h':
                         {
@@ -10670,8 +10670,8 @@ class binary_reader
                             {
                                 const int exp = (half >> 10) & 0x1F;
                                 const int mant = half & 0x3FF;
-                                JSON_ASSERT(0 <= exp and exp <= 32);
-                                JSON_ASSERT(0 <= mant and mant <= 1024);
+                                JSON_ASSERT(0 <= exp&& exp <= 32);
+                                JSON_ASSERT(0 <= mant&& mant <= 1024);
                                 switch (exp)
                                 {
                                     case 0:
@@ -10962,8 +10962,8 @@ class binary_reader
             }
 
             // reverse byte order prior to conversion if necessary
-            if ((is_little_endian != InputIsLittleEndian and format != input_format_t::bjdata) or
-                    (is_little_endian == InputIsLittleEndian and format == input_format_t::bjdata))
+            if ((is_little_endian != InputIsLittleEndian && format != input_format_t::bjdata) or
+                    (is_little_endian == InputIsLittleEndian && format == input_format_t::bjdata))
             {
                 vec[sizeof(NumberType) - i - 1] = static_cast<std::uint8_t>(current);
             }
@@ -11076,13 +11076,13 @@ class binary_reader
     @param[in] context  further context information
     @return a message string to use in the parse_error exceptions
     */
-    std::string exception_message(const input_format_t format,
+    std::string exception_message(const input_format_t format_,
                                   const std::string& detail,
                                   const std::string& context) const
     {
         std::string error_msg = "syntax error while parsing ";
 
-        switch (format)
+        switch (format_)
         {
             case input_format_t::cbor:
                 error_msg += "CBOR";
@@ -15120,7 +15120,7 @@ class binary_writer
             }
             write_number(static_cast<std::int16_t>(n));
         }
-        else if (is_bjdata and n <= static_cast<uint64_t>((std::numeric_limits<uint16_t>::max)()))
+        else if (is_bjdata && n <= static_cast<uint64_t>((std::numeric_limits<uint16_t>::max)()))
         {
             if (add_prefix)
             {
@@ -15136,7 +15136,7 @@ class binary_writer
             }
             write_number(static_cast<std::int32_t>(n));
         }
-        else if (is_bjdata and n <= static_cast<uint64_t>((std::numeric_limits<uint32_t>::max)()))
+        else if (is_bjdata && n <= static_cast<uint64_t>((std::numeric_limits<uint32_t>::max)()))
         {
             if (add_prefix)
             {
@@ -15152,7 +15152,7 @@ class binary_writer
             }
             write_number(static_cast<std::int64_t>(n));
         }
-        else if (is_bjdata and n <= static_cast<uint64_t>((std::numeric_limits<uint64_t>::max)()))
+        else if (is_bjdata && n <= static_cast<uint64_t>((std::numeric_limits<uint64_t>::max)()))
         {
             if (add_prefix)
             {
@@ -15207,7 +15207,7 @@ class binary_writer
             }
             write_number(static_cast<std::int16_t>(n));
         }
-        else if (is_bjdata and (static_cast<std::int64_t>((std::numeric_limits<std::uint16_t>::min)()) <= n && n <= static_cast<std::int64_t>((std::numeric_limits<std::uint16_t>::max)())))
+        else if (is_bjdata && (static_cast<std::int64_t>((std::numeric_limits<std::uint16_t>::min)()) <= n && n <= static_cast<std::int64_t>((std::numeric_limits<std::uint16_t>::max)())))
         {
             if (add_prefix)
             {
@@ -15223,7 +15223,7 @@ class binary_writer
             }
             write_number(static_cast<std::int32_t>(n));
         }
-        else if (is_bjdata and (static_cast<std::int64_t>((std::numeric_limits<std::uint32_t>::min)()) <= n && n <= static_cast<std::int64_t>((std::numeric_limits<std::uint32_t>::max)())))
+        else if (is_bjdata && (static_cast<std::int64_t>((std::numeric_limits<std::uint32_t>::min)()) <= n && n <= static_cast<std::int64_t>((std::numeric_limits<std::uint32_t>::max)())))
         {
             if (add_prefix)
             {
@@ -15239,7 +15239,7 @@ class binary_writer
             }
             write_number(static_cast<std::int64_t>(n));
         }
-        else if (is_bjdata and (static_cast<std::uint64_t>((std::numeric_limits<std::uint64_t>::min)()) <= n && n <= static_cast<std::uint64_t>((std::numeric_limits<std::uint64_t>::max)())))
+        else if (is_bjdata && (static_cast<std::uint64_t>((std::numeric_limits<std::uint64_t>::min)()) <= n && n <= static_cast<std::uint64_t>((std::numeric_limits<std::uint64_t>::max)())))
         {
             if (add_prefix)
             {
@@ -15292,7 +15292,7 @@ class binary_writer
                 {
                     return 'I';
                 }
-                if (is_bjdata and ((std::numeric_limits<std::uint16_t>::min)() <= j.m_value.number_integer and j.m_value.number_integer <= (std::numeric_limits<std::uint16_t>::max)()))
+                if (is_bjdata && ((std::numeric_limits<std::uint16_t>::min)() <= j.m_value.number_integer && j.m_value.number_integer <= (std::numeric_limits<std::uint16_t>::max)()))
                 {
                     return 'u';
                 }
@@ -15300,7 +15300,7 @@ class binary_writer
                 {
                     return 'l';
                 }
-                if (is_bjdata and ((std::numeric_limits<std::uint32_t>::min)() <= j.m_value.number_integer and j.m_value.number_integer <= (std::numeric_limits<std::uint32_t>::max)()))
+                if (is_bjdata && ((std::numeric_limits<std::uint32_t>::min)() <= j.m_value.number_integer && j.m_value.number_integer <= (std::numeric_limits<std::uint32_t>::max)()))
                 {
                     return 'm';
                 }
@@ -15308,7 +15308,7 @@ class binary_writer
                 {
                     return 'L';
                 }
-                if (is_bjdata and ((std::numeric_limits<std::uint64_t>::min)() <= j.m_value.number_integer && j.m_value.number_integer <= (std::numeric_limits<std::uint64_t>::max)()))
+                if (is_bjdata && ((std::numeric_limits<std::uint64_t>::min)() <= j.m_value.number_integer && j.m_value.number_integer <= (std::numeric_limits<std::uint64_t>::max)()))
                 {
                     return 'M';
                 }
@@ -15330,7 +15330,7 @@ class binary_writer
                 {
                     return 'I';
                 }
-                if (is_bjdata and j.m_value.number_unsigned <= static_cast<std::uint64_t>((std::numeric_limits<std::uint16_t>::max)()))
+                if (is_bjdata && j.m_value.number_unsigned <= static_cast<std::uint64_t>((std::numeric_limits<std::uint16_t>::max)()))
                 {
                     return 'u';
                 }
@@ -15338,7 +15338,7 @@ class binary_writer
                 {
                     return 'l';
                 }
-                if (is_bjdata and j.m_value.number_unsigned <= static_cast<std::uint64_t>((std::numeric_limits<std::uint32_t>::max)()))
+                if (is_bjdata && j.m_value.number_unsigned <= static_cast<std::uint64_t>((std::numeric_limits<std::uint32_t>::max)()))
                 {
                     return 'm';
                 }
@@ -15346,7 +15346,7 @@ class binary_writer
                 {
                     return 'L';
                 }
-                if (is_bjdata and j.m_value.number_unsigned <= static_cast<std::uint64_t>((std::numeric_limits<std::uint64_t>::max)()))
+                if (is_bjdata && j.m_value.number_unsigned <= static_cast<std::uint64_t>((std::numeric_limits<std::uint64_t>::max)()))
                 {
                     return 'M';
                 }
@@ -15407,7 +15407,7 @@ class binary_writer
         std::memcpy(vec.data(), &n, sizeof(NumberType));
 
         // step 2: write array to output (with possible reordering)
-        if ((!is_bjdata and (is_little_endian != OutputIsLittleEndian)) or (is_bjdata and !is_little_endian))
+        if ((!is_bjdata && (is_little_endian != OutputIsLittleEndian)) or (is_bjdata && !is_little_endian))
         {
             // reverse byte order prior to conversion if necessary
             std::reverse(vec.begin(), vec.end());
