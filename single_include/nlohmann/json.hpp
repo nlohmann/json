@@ -10427,7 +10427,7 @@ class binary_reader
                         case 'u':
                         {
                             uint16_t number;
-                            if (JSON_HEDLEY_UNLIKELY(not get_number(format, number)))
+                            if (JSON_HEDLEY_UNLIKELY(!get_number(format, number)))
                             {
                                 return false;
                             }
@@ -10437,7 +10437,7 @@ class binary_reader
                         case 'm':
                         {
                             uint32_t number;
-                            if (JSON_HEDLEY_UNLIKELY(not get_number(format, number)))
+                            if (JSON_HEDLEY_UNLIKELY(!get_number(format, number)))
                             {
                                 return false;
                             }
@@ -10447,7 +10447,7 @@ class binary_reader
                         case 'M':
                         {
                             uint64_t number;
-                            if (JSON_HEDLEY_UNLIKELY(not get_number(format, number)))
+                            if (JSON_HEDLEY_UNLIKELY(!get_number(format, number)))
                             {
                                 return false;
                             }
@@ -10457,7 +10457,7 @@ class binary_reader
                         case '[':
                         {
                             std::vector<size_t> dim;
-                            if (JSON_HEDLEY_UNLIKELY(not get_ubjson_ndarray_size(dim)))
+                            if (JSON_HEDLEY_UNLIKELY(!get_ubjson_ndarray_size(dim)))
                             {
                                 return false;
                             }
@@ -11050,12 +11050,12 @@ class binary_reader
     @return whether the last read character is not EOF
     */
     JSON_HEDLEY_NON_NULL(3)
-    bool unexpect_eof(const input_format_t format, const char* context) const
+    bool unexpect_eof(const input_format_t format_, const char* context) const
     {
         if (JSON_HEDLEY_UNLIKELY(current == std::char_traits<char_type>::eof()))
         {
             return sax->parse_error(chars_read, "<end of file>",
-                                    parse_error::create(110, chars_read, exception_message(format, "unexpected end of input", context), nullptr));
+                                    parse_error::create(110, chars_read, exception_message(format_, "unexpected end of input", context), nullptr));
         }
         return true;
     }
@@ -15407,7 +15407,7 @@ class binary_writer
         std::memcpy(vec.data(), &n, sizeof(NumberType));
 
         // step 2: write array to output (with possible reordering)
-        if ((!is_bjdata && (is_little_endian != OutputIsLittleEndian)) or (is_bjdata && !is_little_endian))
+        if ((!is_bjdata && (is_little_endian != OutputIsLittleEndian)) || (is_bjdata && !is_little_endian))
         {
             // reverse byte order prior to conversion if necessary
             std::reverse(vec.begin(), vec.end());

@@ -1622,7 +1622,7 @@ class binary_writer
         std::memcpy(vec.data(), &n, sizeof(NumberType));
 
         // step 2: write array to output (with possible reordering)
-        if ((!is_bjdata && (is_little_endian != OutputIsLittleEndian)) or (is_bjdata && !is_little_endian))
+        if ((!is_bjdata && (is_little_endian != OutputIsLittleEndian)) || (is_bjdata && !is_little_endian))
         {
             // reverse byte order prior to conversion if necessary
             std::reverse(vec.begin(), vec.end());
