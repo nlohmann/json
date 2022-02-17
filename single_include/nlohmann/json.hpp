@@ -10306,7 +10306,7 @@ class binary_reader
                 {
                     for (std::size_t i = 0; i < size_and_type.first; ++i)
                     {
-                        if (JSON_HEDLEY_UNLIKELY(not get_ubjson_size_value(dimlen, size_and_type.second)))
+                        if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_value(dimlen, size_and_type.second)))
                         {
                             return false;
                         }
@@ -10321,7 +10321,7 @@ class binary_reader
             {
                 for (std::size_t i = 0; i < size_and_type.first; ++i)
                 {
-                    if (JSON_HEDLEY_UNLIKELY(not get_ubjson_size_value(dimlen)))
+                    if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_value(dimlen)))
                     {
                         return false;
                     }
@@ -10336,7 +10336,7 @@ class binary_reader
         {
             while (current != ']')
             {
-                if (JSON_HEDLEY_UNLIKELY(not get_ubjson_size_value(dimlen)))
+                if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_value(dimlen)))
                 {
                     return false;
                 }
