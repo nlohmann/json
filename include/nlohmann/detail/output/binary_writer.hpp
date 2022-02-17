@@ -1367,7 +1367,7 @@ class binary_writer
             }
             write_number(static_cast<std::int64_t>(n));
         }
-        else if (is_bjdata && n <= static_cast<uint64_t>((std::numeric_limits<uint64_t>::max)()))
+        else if (is_bjdata && n <= (std::numeric_limits<uint64_t>::max)())
         {
             if (add_prefix)
             {
@@ -1454,7 +1454,7 @@ class binary_writer
             }
             write_number(static_cast<std::int64_t>(n));
         }
-        else if (is_bjdata && (static_cast<std::uint64_t>((std::numeric_limits<std::uint64_t>::min)()) <= n && n <= static_cast<std::uint64_t>((std::numeric_limits<std::uint64_t>::max)())))
+        else if (is_bjdata && ((std::numeric_limits<std::uint64_t>::min)() <= static_cast<std::uint64_t>(n) && static_cast<std::uint64_t>(n) <= (std::numeric_limits<std::uint64_t>::max)()))
         {
             if (add_prefix)
             {
@@ -1523,7 +1523,7 @@ class binary_writer
                 {
                     return 'L';
                 }
-                if (is_bjdata && ((std::numeric_limits<std::uint64_t>::min)() <= j.m_value.number_integer && j.m_value.number_integer <= (std::numeric_limits<std::uint64_t>::max)()))
+                if (is_bjdata && ((std::numeric_limits<std::uint64_t>::min)() <= static_cast<std::uint64_t>(j.m_value.number_integer) && static_cast<std::uint64_t>(j.m_value.number_integer) <= (std::numeric_limits<std::uint64_t>::max)()))
                 {
                     return 'M';
                 }
@@ -1561,7 +1561,7 @@ class binary_writer
                 {
                     return 'L';
                 }
-                if (is_bjdata && j.m_value.number_unsigned <= static_cast<std::uint64_t>((std::numeric_limits<std::uint64_t>::max)()))
+                if (is_bjdata && j.m_value.number_unsigned <= (std::numeric_limits<std::uint64_t>::max)())
                 {
                     return 'M';
                 }
