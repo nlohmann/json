@@ -1922,7 +1922,7 @@ class binary_reader
 
         bool is_optimized = get_ubjson_size_type(size_and_type);
 
-        if (size_and_type.first != string_t::npos)
+        if (is_optimized && size_and_type.first != string_t::npos)
         {
             if (size_and_type.second != 0)
             {
