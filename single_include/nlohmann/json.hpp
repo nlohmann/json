@@ -10448,7 +10448,7 @@ class binary_reader
                             {
                                 return false;
                             }
-                            result = number;
+                            result = static_cast<std::size_t>(number);
                             return true;
                         }
                         case '[':
