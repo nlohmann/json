@@ -10279,6 +10279,9 @@ class binary_reader
                             uint64_t len{};
                             return get_number(input_format, len) && get_string(input_format, len, result);
                         }
+                        default:
+                        {
+                        }
                     }
                 }
                 auto last_token = get_token_string();
@@ -10296,9 +10299,12 @@ class binary_reader
         std::pair<std::size_t, char_int_type> size_and_type;
         size_t dimlen = 0;
 
-        bool is_optimized = get_ubjson_size_type(size_and_type);
+        if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_type(size_and_type)))
+        {
+            return false;
+        }
 
-        if (is_optimized && size_and_type.first != string_t::npos)
+        if (size_and_type.first != string_t::npos)
         {
             if (size_and_type.second != 0)
             {
@@ -10330,7 +10336,7 @@ class binary_reader
         {
             while (current != ']')
             {
-                if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_value(dimlen)))
+                if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_value(dimlen, current)))
                 {
                     return false;
                 }
@@ -10442,7 +10448,7 @@ class binary_reader
                             {
                                 return false;
                             }
-                            result = static_cast<std::size_t>(number);
+                            result = number;
                             return true;
                         }
                         case '[':
@@ -10459,12 +10465,14 @@ class binary_reader
                             }
                             return true;
                         }
+                        default:
+                        {
+                        }
                     }
                 }
-                auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read,
-                                        exception_message(input_format, concat("expected length type specification (U, i, I, l, L) after '#'; last byte: 0x", last_token), "size"), nullptr));
             }
+            auto last_token = get_token_string();
+            return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format, "expected length type specification (U, i, I, l, L) after '#'; last byte: 0x" + last_token, "size"), nullptr));
         }
     }
 
@@ -10619,27 +10627,27 @@ class binary_reader
                     {
                         case 'u':
                         {
-                            uint16_t number;
+                            uint16_t number{};
                             return get_number(input_format, number) && sax->number_unsigned(number);
                         }
                         case 'm':
                         {
-                            uint32_t number;
+                            uint32_t number{};
                             return get_number(input_format, number) && sax->number_unsigned(number);
                         }
                         case 'M':
                         {
-                            uint64_t number;
+                            uint64_t number{};
                             return get_number(input_format, number) && sax->number_unsigned(number);
                         }
                         case 'h':
                         {
-                            const int byte2 = get();
+                            unsigned int byte2 = get();
                             if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format, "half")))
                             {
                                 return false;
                             }
-                            const int byte1 = get();
+                            unsigned int byte1 = get();
                             if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format, "half")))
                             {
                                 return false;
@@ -10653,11 +10661,11 @@ class binary_reader
                             // without such support. An example of a small decoder for
                             // half-precision floating-point numbers in the C language
                             // is shown in Fig. 3.
-                            const int half = (byte1 << 8) + byte2;
+                            unsigned int half = (byte1 << 8) + byte2;
                             const double val = [&half]
                             {
-                                const int exp = (half >> 10) & 0x1F;
-                                const int mant = half & 0x3FF;
+                                unsigned int exp = (half >> 10) & 0x1F;
+                                unsigned int mant = half & 0x3FF;
                                 JSON_ASSERT(0 <= exp&& exp <= 32);
                                 JSON_ASSERT(0 <= mant&& mant <= 1024);
                                 switch (exp)
@@ -10675,6 +10683,9 @@ class binary_reader
                             return sax->number_float((half & 0x8000) != 0
                                                      ? static_cast<number_float_t>(-val)
                                                      : static_cast<number_float_t>(val), "");
+                        }
+                        default:
+                        {
                         }
                     }
                 }
@@ -11114,7 +11125,7 @@ class binary_reader
     const bool is_little_endian = little_endianness();
 
     /// input format
-    input_format_t input_format;
+    input_format_t input_format = input_format_t::json;
 
     /// the SAX parser
     json_sax_t* sax = nullptr;
