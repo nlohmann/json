@@ -636,6 +636,54 @@ TEST_CASE("BJData")
                         CHECK(json::from_bjdata(result, true, false) == j);
                     }
                 }
+
+                SECTION("9223372036854775808..18446744073709551615 (uint64)")
+                {
+                    std::vector<uint64_t> v = {9223372036854775808ull, 18446744073709551615ull};
+                    for (uint64_t i : v)
+                    {
+                        CAPTURE(i)
+
+                        // create JSON value with integer number
+                        json j = i;
+
+                        // check type
+                        CHECK(j.is_number_unsigned());
+
+                        // create expected byte vector
+                        std::vector<uint8_t> expected;
+                        expected.push_back('M');
+                        expected.push_back(static_cast<uint8_t>(i & 0xff));
+                        expected.push_back(static_cast<uint8_t>((i >> 010) & 0xff));
+                        expected.push_back(static_cast<uint8_t>((i >> 020) & 0xff));
+                        expected.push_back(static_cast<uint8_t>((i >> 030) & 0xff));
+                        expected.push_back(static_cast<uint8_t>((i >> 040) & 0xff));
+                        expected.push_back(static_cast<uint8_t>((i >> 050) & 0xff));
+                        expected.push_back(static_cast<uint8_t>((i >> 060) & 0xff));
+                        expected.push_back(static_cast<uint8_t>((i >> 070) & 0xff));
+
+                        // compare result + size
+                        const auto result = json::to_bjdata(j);
+                        CHECK(result == expected);
+                        CHECK(result.size() == 9);
+
+                        // check individual bytes
+                        CHECK(result[0] == 'M');
+                        uint64_t restored = (static_cast<uint64_t>(result[8]) << 070) +
+                                            (static_cast<uint64_t>(result[7]) << 060) +
+                                            (static_cast<uint64_t>(result[6]) << 050) +
+                                            (static_cast<uint64_t>(result[5]) << 040) +
+                                            (static_cast<uint64_t>(result[4]) << 030) +
+                                            (static_cast<uint64_t>(result[3]) << 020) +
+                                            (static_cast<uint64_t>(result[2]) << 010) +
+                                            static_cast<uint64_t>(result[1]);
+                        CHECK(restored == i);
+
+                        // roundtrip
+                        CHECK(json::from_bjdata(result) == j);
+                        CHECK(json::from_bjdata(result, true, false) == j);
+                    }
+                }
             }
 
             SECTION("unsigned")
@@ -2046,22 +2094,31 @@ TEST_CASE("BJData")
             std::vector<uint8_t> s_i = {'S', 'i', 1, 'a'};
             std::vector<uint8_t> s_U = {'S', 'U', 1, 'a'};
             std::vector<uint8_t> s_I = {'S', 'I', 1, 0, 'a'};
+            std::vector<uint8_t> s_u = {'S', 'u', 1, 0, 'a'};
             std::vector<uint8_t> s_l = {'S', 'l', 1, 0, 0, 0, 'a'};
+            std::vector<uint8_t> s_m = {'S', 'm', 1, 0, 0, 0, 'a'};
             std::vector<uint8_t> s_L = {'S', 'L', 1, 0, 0, 0, 0, 0, 0, 0, 'a'};
+            std::vector<uint8_t> s_M = {'S', 'M', 1, 0, 0, 0, 0, 0, 0, 0, 'a'};
 
             // check if string is parsed correctly to "a"
             CHECK(json::from_bjdata(s_i) == "a");
             CHECK(json::from_bjdata(s_U) == "a");
             CHECK(json::from_bjdata(s_I) == "a");
+            CHECK(json::from_bjdata(s_u) == "a");
             CHECK(json::from_bjdata(s_l) == "a");
+            CHECK(json::from_bjdata(s_m) == "a");
             CHECK(json::from_bjdata(s_L) == "a");
+            CHECK(json::from_bjdata(s_M) == "a");
 
             // roundtrip: output should be optimized
             CHECK(json::to_bjdata(json::from_bjdata(s_i)) == s_i);
             CHECK(json::to_bjdata(json::from_bjdata(s_U)) == s_i);
             CHECK(json::to_bjdata(json::from_bjdata(s_I)) == s_i);
+            CHECK(json::to_bjdata(json::from_bjdata(s_u)) == s_i);
             CHECK(json::to_bjdata(json::from_bjdata(s_l)) == s_i);
+            CHECK(json::to_bjdata(json::from_bjdata(s_m)) == s_i);
             CHECK(json::to_bjdata(json::from_bjdata(s_L)) == s_i);
+            CHECK(json::to_bjdata(json::from_bjdata(s_M)) == s_i);
         }
 
         SECTION("number")
@@ -2093,8 +2150,11 @@ TEST_CASE("BJData")
                 std::vector<uint8_t> v_i = {'[', '#', 'i', 2, 'i', 0x7F, 'i', 0x7F};
                 std::vector<uint8_t> v_U = {'[', '#', 'i', 2, 'U', 0xFF, 'U', 0xFF};
                 std::vector<uint8_t> v_I = {'[', '#', 'i', 2, 'I', 0xFF, 0x7F, 'I', 0xFF, 0x7F};
+                std::vector<uint8_t> v_u = {'[', '#', 'i', 2, 'u', 0x0F, 0xA7, 'u', 0x0F, 0xA7};
                 std::vector<uint8_t> v_l = {'[', '#', 'i', 2, 'l', 0xFF, 0xFF, 0xFF, 0x7F, 'l', 0xFF, 0xFF, 0xFF, 0x7F};
+                std::vector<uint8_t> v_m = {'[', '#', 'i', 2, 'm', 0xFF, 0xC9, 0x9A, 0xBB, 'm', 0xFF, 0xC9, 0x9A, 0xBB};
                 std::vector<uint8_t> v_L = {'[', '#', 'i', 2, 'L', 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F, 'L', 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F};
+                std::vector<uint8_t> v_M = {'[', '#', 'i', 2, 'M', 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D, 'M', 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D};
                 std::vector<uint8_t> v_D = {'[', '#', 'i', 2, 'D', 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40, 'D', 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40};
                 std::vector<uint8_t> v_S = {'[', '#', 'i', 2, 'S', 'i', 1, 'a', 'S', 'i', 1, 'a'};
                 std::vector<uint8_t> v_C = {'[', '#', 'i', 2, 'C', 'a', 'C', 'a'};
@@ -2107,8 +2167,11 @@ TEST_CASE("BJData")
                 CHECK(json::from_bjdata(v_i) == json({127, 127}));
                 CHECK(json::from_bjdata(v_U) == json({255, 255}));
                 CHECK(json::from_bjdata(v_I) == json({32767, 32767}));
+                CHECK(json::from_bjdata(v_u) == json({42767, 42767}));
                 CHECK(json::from_bjdata(v_l) == json({2147483647, 2147483647}));
+                CHECK(json::from_bjdata(v_m) == json({3147483647, 3147483647}));
                 CHECK(json::from_bjdata(v_L) == json({9223372036854775807, 9223372036854775807}));
+                CHECK(json::from_bjdata(v_M) == json({10223372036854775807ull, 10223372036854775807ull}));
                 CHECK(json::from_bjdata(v_D) == json({3.1415926, 3.1415926}));
                 CHECK(json::from_bjdata(v_S) == json({"a", "a"}));
                 CHECK(json::from_bjdata(v_C) == json({"a", "a"}));
@@ -2120,8 +2183,11 @@ TEST_CASE("BJData")
                 CHECK(json::to_bjdata(json::from_bjdata(v_i), true) == v_i);
                 CHECK(json::to_bjdata(json::from_bjdata(v_U), true) == v_U);
                 CHECK(json::to_bjdata(json::from_bjdata(v_I), true) == v_I);
+                CHECK(json::to_bjdata(json::from_bjdata(v_u), true) == v_u);
                 CHECK(json::to_bjdata(json::from_bjdata(v_l), true) == v_l);
+                CHECK(json::to_bjdata(json::from_bjdata(v_m), true) == v_m);
                 CHECK(json::to_bjdata(json::from_bjdata(v_L), true) == v_L);
+                CHECK(json::to_bjdata(json::from_bjdata(v_M), true) == v_M);
                 CHECK(json::to_bjdata(json::from_bjdata(v_D), true) == v_D);
                 CHECK(json::to_bjdata(json::from_bjdata(v_S), true) == v_S);
                 CHECK(json::to_bjdata(json::from_bjdata(v_C), true) == v_S); // char is serialized to string
@@ -2137,8 +2203,11 @@ TEST_CASE("BJData")
                 std::vector<uint8_t> v_i = {'[', '$', 'i', '#', 'i', 2, 0x7F, 0x7F};
                 std::vector<uint8_t> v_U = {'[', '$', 'U', '#', 'i', 2, 0xFF, 0xFF};
                 std::vector<uint8_t> v_I = {'[', '$', 'I', '#', 'i', 2, 0xFF, 0x7F, 0xFF, 0x7F};
+                std::vector<uint8_t> v_u = {'[', '$', 'u', '#', 'i', 2, 0x0F, 0xA7, 0x0F, 0xA7};
                 std::vector<uint8_t> v_l = {'[', '$', 'l', '#', 'i', 2, 0xFF, 0xFF, 0xFF, 0x7F, 0xFF, 0xFF, 0xFF, 0x7F};
+                std::vector<uint8_t> v_m = {'[', '$', 'm', '#', 'i', 2, 0xFF, 0xC9, 0x9A, 0xBB, 0xFF, 0xC9, 0x9A, 0xBB};
                 std::vector<uint8_t> v_L = {'[', '$', 'L', '#', 'i', 2, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F};
+                std::vector<uint8_t> v_M = {'[', '$', 'M', '#', 'i', 2, 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D, 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D};
                 std::vector<uint8_t> v_D = {'[', '$', 'D', '#', 'i', 2, 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40, 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40};
                 std::vector<uint8_t> v_S = {'[', '$', 'S', '#', 'i', 2, 'i', 1, 'a', 'i', 1, 'a'};
                 std::vector<uint8_t> v_C = {'[', '$', 'C', '#', 'i', 2, 'a', 'a'};
@@ -2151,8 +2220,11 @@ TEST_CASE("BJData")
                 CHECK(json::from_bjdata(v_i) == json({127, 127}));
                 CHECK(json::from_bjdata(v_U) == json({255, 255}));
                 CHECK(json::from_bjdata(v_I) == json({32767, 32767}));
+                CHECK(json::from_bjdata(v_u) == json({42767, 42767}));
                 CHECK(json::from_bjdata(v_l) == json({2147483647, 2147483647}));
+                CHECK(json::from_bjdata(v_m) == json({3147483647, 3147483647}));
                 CHECK(json::from_bjdata(v_L) == json({9223372036854775807, 9223372036854775807}));
+                CHECK(json::from_bjdata(v_M) == json({10223372036854775807ull, 10223372036854775807ull}));
                 CHECK(json::from_bjdata(v_D) == json({3.1415926, 3.1415926}));
                 CHECK(json::from_bjdata(v_S) == json({"a", "a"}));
                 CHECK(json::from_bjdata(v_C) == json({"a", "a"}));
@@ -2166,8 +2238,11 @@ TEST_CASE("BJData")
                 CHECK(json::to_bjdata(json::from_bjdata(v_i), true, true) == v_i);
                 CHECK(json::to_bjdata(json::from_bjdata(v_U), true, true) == v_U);
                 CHECK(json::to_bjdata(json::from_bjdata(v_I), true, true) == v_I);
+                CHECK(json::to_bjdata(json::from_bjdata(v_u), true, true) == v_u);
                 CHECK(json::to_bjdata(json::from_bjdata(v_l), true, true) == v_l);
+                CHECK(json::to_bjdata(json::from_bjdata(v_m), true, true) == v_m);
                 CHECK(json::to_bjdata(json::from_bjdata(v_L), true, true) == v_L);
+                CHECK(json::to_bjdata(json::from_bjdata(v_M), true, true) == v_M);
                 CHECK(json::to_bjdata(json::from_bjdata(v_D), true, true) == v_D);
                 CHECK(json::to_bjdata(json::from_bjdata(v_S), true, true) == v_S);
                 CHECK(json::to_bjdata(json::from_bjdata(v_C), true, true) == v_S); // char is serialized to string
@@ -2183,8 +2258,11 @@ TEST_CASE("BJData")
                 std::vector<uint8_t> v_i = {'[', '$', 'i', '#', '[', '$', 'i', '#', 'i', 2, 1, 2, 0x7F, 0x7F};
                 std::vector<uint8_t> v_U = {'[', '$', 'U', '#', '[', '$', 'i', '#', 'i', 2, 1, 2, 0xFF, 0xFF};
                 std::vector<uint8_t> v_I = {'[', '$', 'I', '#', '[', '$', 'i', '#', 'i', 2, 1, 2, 0xFF, 0x7F, 0xFF, 0x7F};
+                std::vector<uint8_t> v_u = {'[', '$', 'u', '#', '[', '$', 'i', '#', 'i', 2, 1, 2, 0x0F, 0xA7, 0x0F, 0xA7};
                 std::vector<uint8_t> v_l = {'[', '$', 'l', '#', '[', '$', 'i', '#', 'i', 2, 1, 2, 0xFF, 0xFF, 0xFF, 0x7F, 0xFF, 0xFF, 0xFF, 0x7F};
+                std::vector<uint8_t> v_m = {'[', '$', 'm', '#', '[', '$', 'i', '#', 'i', 2, 1, 2, 0xFF, 0xC9, 0x9A, 0xBB, 0xFF, 0xC9, 0x9A, 0xBB};
                 std::vector<uint8_t> v_L = {'[', '$', 'L', '#', '[', '$', 'i', '#', 'i', 2, 1, 2, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F};
+                std::vector<uint8_t> v_M = {'[', '$', 'M', '#', '[', '$', 'i', '#', 'i', 2, 1, 2, 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D, 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D};
                 std::vector<uint8_t> v_D = {'[', '$', 'D', '#', '[', '$', 'i', '#', 'i', 2, 1, 2, 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40, 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40};
                 std::vector<uint8_t> v_S = {'[', '$', 'S', '#', '[', '$', 'i', '#', 'i', 2, 1, 2, 'i', 1, 'a', 'i', 1, 'a'};
                 std::vector<uint8_t> v_C = {'[', '$', 'C', '#', '[', '$', 'i', '#', 'i', 2, 1, 2, 'a', 'a'};
@@ -2197,8 +2275,11 @@ TEST_CASE("BJData")
                 CHECK(json::from_bjdata(v_i) == json({127, 127}));
                 CHECK(json::from_bjdata(v_U) == json({255, 255}));
                 CHECK(json::from_bjdata(v_I) == json({32767, 32767}));
+                CHECK(json::from_bjdata(v_u) == json({42767, 42767}));
                 CHECK(json::from_bjdata(v_l) == json({2147483647, 2147483647}));
+                CHECK(json::from_bjdata(v_m) == json({3147483647, 3147483647}));
                 CHECK(json::from_bjdata(v_L) == json({9223372036854775807, 9223372036854775807}));
+                CHECK(json::from_bjdata(v_M) == json({10223372036854775807ull, 10223372036854775807ull}));
                 CHECK(json::from_bjdata(v_D) == json({3.1415926, 3.1415926}));
                 CHECK(json::from_bjdata(v_S) == json({"a", "a"}));
                 CHECK(json::from_bjdata(v_C) == json({"a", "a"}));
@@ -2213,8 +2294,11 @@ TEST_CASE("BJData")
                 CHECK(json::to_bjdata(json::from_bjdata(v_i), true, true) == v_i);
                 CHECK(json::to_bjdata(json::from_bjdata(v_U), true, true) == v_U);
                 CHECK(json::to_bjdata(json::from_bjdata(v_I), true, true) == v_I);
+                CHECK(json::to_bjdata(json::from_bjdata(v_u), true, true) == v_u);
                 CHECK(json::to_bjdata(json::from_bjdata(v_l), true, true) == v_l);
+                CHECK(json::to_bjdata(json::from_bjdata(v_m), true, true) == v_m);
                 CHECK(json::to_bjdata(json::from_bjdata(v_L), true, true) == v_L);
+                CHECK(json::to_bjdata(json::from_bjdata(v_M), true, true) == v_M);
                 CHECK(json::to_bjdata(json::from_bjdata(v_D), true, true) == v_D);
                 CHECK(json::to_bjdata(json::from_bjdata(v_S), true, true) == v_S);
                 CHECK(json::to_bjdata(json::from_bjdata(v_C), true, true) == v_S); // char is serialized to string
@@ -2320,15 +2404,30 @@ TEST_CASE("BJData")
             CHECK_THROWS_WITH(_ = json::from_bjdata(vI), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BJData number: unexpected end of input");
             CHECK(json::from_bjdata(vI, true, false).is_discarded());
 
+            std::vector<uint8_t> vu = {'[', '#', 'u'};
+            CHECK_THROWS_AS(_ = json::from_bjdata(vu), json::parse_error&);
+            CHECK_THROWS_WITH(_ = json::from_bjdata(vu), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BJData number: unexpected end of input");
+            CHECK(json::from_bjdata(vu, true, false).is_discarded());
+
             std::vector<uint8_t> vl = {'[', '#', 'l'};
             CHECK_THROWS_AS(_ = json::from_bjdata(vl), json::parse_error&);
             CHECK_THROWS_WITH(_ = json::from_bjdata(vl), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BJData number: unexpected end of input");
             CHECK(json::from_bjdata(vl, true, false).is_discarded());
 
+            std::vector<uint8_t> vm = {'[', '#', 'm'};
+            CHECK_THROWS_AS(_ = json::from_bjdata(vm), json::parse_error&);
+            CHECK_THROWS_WITH(_ = json::from_bjdata(vm), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BJData number: unexpected end of input");
+            CHECK(json::from_bjdata(vm, true, false).is_discarded());
+
             std::vector<uint8_t> vL = {'[', '#', 'L'};
             CHECK_THROWS_AS(_ = json::from_bjdata(vL), json::parse_error&);
             CHECK_THROWS_WITH(_ = json::from_bjdata(vL), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BJData number: unexpected end of input");
             CHECK(json::from_bjdata(vL, true, false).is_discarded());
+
+            std::vector<uint8_t> vM = {'[', '#', 'M'};
+            CHECK_THROWS_AS(_ = json::from_bjdata(vM), json::parse_error&);
+            CHECK_THROWS_WITH(_ = json::from_bjdata(vM), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BJData number: unexpected end of input");
+            CHECK(json::from_bjdata(vM, true, false).is_discarded());
 
             std::vector<uint8_t> v0 = {'[', '#', 'T', ']'};
             CHECK_THROWS_AS(_ = json::from_bjdata(v0), json::parse_error&);
@@ -2488,6 +2587,15 @@ TEST_CASE("BJData")
                 CHECK(json::to_bjdata(j, true) == expected_size);
             }
 
+            SECTION("array of u")
+            {
+                json j = {50000u, 50001u};
+                std::vector<uint8_t> expected = {'[', '$', 'u', '#', 'i', 2, 0x50, 0xC3, 0x51, 0xC3};
+                std::vector<uint8_t> expected_size = {'[', '#', 'i', 2, 'u', 0x50, 0xC3, 'u', 0x51, 0xC3};
+                CHECK(json::to_bjdata(j, true, true) == expected);
+                CHECK(json::to_bjdata(j, true) == expected_size);
+            }
+
             SECTION("array of l")
             {
                 json j = {70000u, 70001u};
@@ -2497,11 +2605,29 @@ TEST_CASE("BJData")
                 CHECK(json::to_bjdata(j, true) == expected_size);
             }
 
+            SECTION("array of m")
+            {
+                json j = {3147483647, 3147483648};
+                std::vector<uint8_t> expected = {'[', '$', 'm', '#', 'i', 2, 0xFF, 0xC9, 0x9A, 0xBB, 0x00, 0xCA, 0x9A, 0xBB};
+                std::vector<uint8_t> expected_size = {'[', '#', 'i', 2, 'm', 0xFF, 0xC9, 0x9A, 0xBB, 'm', 0x00, 0xCA, 0x9A, 0xBB};
+                CHECK(json::to_bjdata(j, true, true) == expected);
+                CHECK(json::to_bjdata(j, true) == expected_size);
+            }
+
             SECTION("array of L")
             {
                 json j = {5000000000u, 5000000001u};
                 std::vector<uint8_t> expected = {'[', '$', 'L', '#', 'i', 2, 0x00, 0xF2, 0x05, 0x2A, 0x01, 0x00, 0x00, 0x00, 0x01, 0xF2, 0x05, 0x2A, 0x01, 0x00, 0x00, 0x00};
                 std::vector<uint8_t> expected_size = {'[', '#', 'i', 2, 'L', 0x00, 0xF2, 0x05, 0x2A, 0x01, 0x00, 0x00, 0x00, 'L', 0x01, 0xF2, 0x05, 0x2A, 0x01, 0x00, 0x00, 0x00};
+                CHECK(json::to_bjdata(j, true, true) == expected);
+                CHECK(json::to_bjdata(j, true) == expected_size);
+            }
+
+            SECTION("array of M")
+            {
+                json j = {10223372036854775807ull, 10223372036854775808ull};
+                std::vector<uint8_t> expected = {'[', '$', 'M', '#', 'i', 2, 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D, 0x00, 0x00, 0x64, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D};
+                std::vector<uint8_t> expected_size = {'[', '#', 'i', 2, 'M', 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D, 'M', 0x00, 0x00, 0x64, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D};
                 CHECK(json::to_bjdata(j, true, true) == expected);
                 CHECK(json::to_bjdata(j, true) == expected_size);
             }
@@ -2559,8 +2685,11 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
             {"int8", 16},
             {"uint8", 255},
             {"int16", 32767},
+            {"uint16", 42767},
             {"int32", 2147483647},
+            {"uint32", 3147483647},
             {"int64", 9223372036854775807},
+            {"uint64", 10223372036854775807ull},
             {"float64", 113243.7863123}
         };
         std::vector<uint8_t> v = {'{',
@@ -2569,6 +2698,9 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
                                   'i', 5, 'i', 'n', 't', '3', '2', 'l', 0xff, 0xff, 0xff, 0x7f,
                                   'i', 5, 'i', 'n', 't', '6', '4', 'L', 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f,
                                   'i', 4, 'i', 'n', 't', '8', 'i', 16,
+                                  'i', 6, 'u', 'i', 'n', 't', '1', '6', 'u', 0x0F, 0xA7,
+                                  'i', 6, 'u', 'i', 'n', 't', '3', '2', 'm', 0xFF, 0xC9, 0x9A, 0xBB,
+                                  'i', 6, 'u', 'i', 'n', 't', '6', '4', 'M', 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D,
                                   'i', 5, 'u', 'i', 'n', 't', '8', 'U', 0xff,
                                   '}'
                                  };

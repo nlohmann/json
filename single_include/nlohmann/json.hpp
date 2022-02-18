@@ -10266,17 +10266,17 @@ class binary_reader
                     {
                         case 'u':
                         {
-                            uint16_t len;
+                            uint16_t len{};
                             return get_number(input_format, len) && get_string(input_format, len, result);
                         }
                         case 'm':
                         {
-                            uint32_t len;
+                            uint32_t len{};
                             return get_number(input_format, len) && get_string(input_format, len, result);
                         }
                         case 'M':
                         {
-                            uint64_t len;
+                            uint64_t len{};
                             return get_number(input_format, len) && get_string(input_format, len, result);
                         }
                     }
@@ -10294,7 +10294,7 @@ class binary_reader
     bool get_ubjson_ndarray_size(std::vector<size_t>& dim)
     {
         std::pair<std::size_t, char_int_type> size_and_type;
-        size_t dimlen;
+        size_t dimlen = 0;
 
         bool is_optimized = get_ubjson_size_type(size_and_type);
 
@@ -10310,10 +10310,7 @@ class binary_reader
                         {
                             return false;
                         }
-                        else
-                        {
-                            dim.push_back(dimlen);
-                        }
+                        dim.push_back(dimlen);
                     }
                 }
             }
@@ -10325,10 +10322,7 @@ class binary_reader
                     {
                         return false;
                     }
-                    else
-                    {
-                        dim.push_back(dimlen);
-                    }
+                    dim.push_back(dimlen);
                 }
             }
         }
@@ -10340,10 +10334,7 @@ class binary_reader
                 {
                     return false;
                 }
-                else
-                {
-                    dim.push_back(dimlen);
-                }
+                dim.push_back(dimlen);
                 get_ignore_noop();
             }
         }
@@ -10354,7 +10345,7 @@ class binary_reader
     @param[out] result  determined size
     @return whether size determination completed
     */
-    bool get_ubjson_size_value(std::size_t& result, int prefix = 0)
+    bool get_ubjson_size_value(std::size_t& result, char_int_type prefix = 0)
     {
         if (prefix == 0)
         {
@@ -10426,7 +10417,7 @@ class binary_reader
                     {
                         case 'u':
                         {
-                            uint16_t number;
+                            uint16_t number{};
                             if (JSON_HEDLEY_UNLIKELY(!get_number(input_format, number)))
                             {
                                 return false;
@@ -10436,7 +10427,7 @@ class binary_reader
                         }
                         case 'm':
                         {
-                            uint32_t number;
+                            uint32_t number{};
                             if (JSON_HEDLEY_UNLIKELY(!get_number(input_format, number)))
                             {
                                 return false;
@@ -10446,7 +10437,7 @@ class binary_reader
                         }
                         case 'M':
                         {
-                            uint64_t number;
+                            uint64_t number{};
                             if (JSON_HEDLEY_UNLIKELY(!get_number(input_format, number)))
                             {
                                 return false;
@@ -10461,13 +10452,10 @@ class binary_reader
                             {
                                 return false;
                             }
-                            else
+                            result = 1;
+                            for (auto i : dim)
                             {
-                                result = 1;
-                                for (std::size_t i = 0; i < dim.size(); ++i)
-                                {
-                                    result *= dim.at(i);
-                                }
+                                result *= i;
                             }
                             return true;
                         }
@@ -10632,17 +10620,17 @@ class binary_reader
                         case 'u':
                         {
                             uint16_t number;
-                            return get_number(input_format, number) && sax->number_integer(number);
+                            return get_number(input_format, number) && sax->number_unsigned(number);
                         }
                         case 'm':
                         {
                             uint32_t number;
-                            return get_number(input_format, number) && sax->number_integer(number);
+                            return get_number(input_format, number) && sax->number_unsigned(number);
                         }
                         case 'M':
                         {
                             uint64_t number;
-                            return get_number(input_format, number) && sax->number_integer(number);
+                            return get_number(input_format, number) && sax->number_unsigned(number);
                         }
                         case 'h':
                         {
