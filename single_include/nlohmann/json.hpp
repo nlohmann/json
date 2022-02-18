@@ -10664,8 +10664,8 @@ class binary_reader
                             unsigned int half = (byte1 << 8) + byte2;
                             const double val = [&half]
                             {
-                                unsigned int exp = (half >> 10) & 0x1F;
-                                unsigned int mant = half & 0x3FF;
+                                const int exp = (half >> 10) & 0x1F;
+                                const int mant = half & 0x3FF;
                                 JSON_ASSERT(0 <= exp&& exp <= 32);
                                 JSON_ASSERT(0 <= mant&& mant <= 1024);
                                 switch (exp)
