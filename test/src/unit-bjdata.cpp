@@ -1034,6 +1034,18 @@ TEST_CASE("BJData")
                     CHECK(json::parse("1.5") == json::from_bjdata(std::vector<uint8_t>({'h', 0x00, 0x3e})));
                     CHECK(json::parse("65504.0") == json::from_bjdata(std::vector<uint8_t>({'h', 0xff, 0x7b})));
                 }
+                
+                SECTION("errors")
+                {
+                    json _;
+                    // missing both bytes
+                    std::vector<uint8_t> vec0 = {'h'};
+                    CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vec0), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing BJData number: unexpected end of input", json::parse_error);
+
+                    // missing the 2nd byte
+                    std::vector<uint8_t> vec1 = {'h', 0};
+                    CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vec1), "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing BJData number: unexpected end of input", json::parse_error);
+                }
             }
 
             SECTION("half-precision float (edge cases)")
