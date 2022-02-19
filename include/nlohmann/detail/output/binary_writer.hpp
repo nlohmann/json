@@ -1454,14 +1454,6 @@ class binary_writer
             }
             write_number(static_cast<std::int64_t>(n));
         }
-        else if (is_bjdata && ((std::numeric_limits<std::uint64_t>::min)() <= static_cast<std::uint64_t>(n) && static_cast<std::uint64_t>(n) <= (std::numeric_limits<std::uint64_t>::max)()))
-        {
-            if (add_prefix)
-            {
-                oa->write_character(to_char_type('M'));  // uint64 - bjdata only
-            }
-            write_number(static_cast<std::uint64_t>(n));
-        }
         // LCOV_EXCL_START
         else
         {
@@ -1522,10 +1514,6 @@ class binary_writer
                 if ((std::numeric_limits<std::int64_t>::min)() <= j.m_value.number_integer && j.m_value.number_integer <= (std::numeric_limits<std::int64_t>::max)())
                 {
                     return 'L';
-                }
-                if (is_bjdata && ((std::numeric_limits<std::uint64_t>::min)() <= static_cast<std::uint64_t>(j.m_value.number_integer) && static_cast<std::uint64_t>(j.m_value.number_integer) <= (std::numeric_limits<std::uint64_t>::max)()))
-                {
-                    return 'M';
                 }
                 // anything else is treated as high-precision number
                 return 'H'; // LCOV_EXCL_LINE

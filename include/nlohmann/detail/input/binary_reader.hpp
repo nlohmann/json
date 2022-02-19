@@ -2072,7 +2072,7 @@ class binary_reader
                             {
                                 return false;
                             }
-                            result = static_cast<std::size_t>(number);
+                            result = detail::conditional_static_cast<std::size_t>(number);
                             return true;
                         }
                         case '[':
@@ -2266,16 +2266,19 @@ class binary_reader
                         }
                         case 'h':
                         {
-                            unsigned int byte2 = get();
-                            if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format, "half")))
+                            const auto byte1_raw = get();
+                            if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format, "number")))
                             {
                                 return false;
                             }
-                            unsigned int byte1 = get();
-                            if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format, "half")))
+                            const auto byte2_raw = get();
+                            if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format, "number")))
                             {
                                 return false;
                             }
+
+                            const auto byte1 = static_cast<unsigned char>(byte1_raw);
+                            const auto byte2 = static_cast<unsigned char>(byte2_raw);
 
                             // code from RFC 7049, Appendix D, Figure 3:
                             // As half-precision floating-point numbers were only added
@@ -2285,13 +2288,13 @@ class binary_reader
                             // without such support. An example of a small decoder for
                             // half-precision floating-point numbers in the C language
                             // is shown in Fig. 3.
-                            unsigned int half = (byte1 << 8) + byte2;
+                            const auto half = static_cast<unsigned int>((byte2 << 8u) + byte1);
                             const double val = [&half]
                             {
-                                const int exp = (half >> 10) & 0x1F;
-                                const int mant = half & 0x3FF;
+                                const int exp = (half >> 10u) & 0x1Fu;
+                                const unsigned int mant = half & 0x3FFu;
                                 JSON_ASSERT(0 <= exp&& exp <= 32);
-                                JSON_ASSERT(0 <= mant&& mant <= 1024);
+                                JSON_ASSERT(mant <= 1024);
                                 switch (exp)
                                 {
                                     case 0:
@@ -2304,7 +2307,7 @@ class binary_reader
                                         return std::ldexp(mant + 1024, exp - 25);
                                 }
                             }();
-                            return sax->number_float((half & 0x8000) != 0
+                            return sax->number_float((half & 0x8000u) != 0
                                                      ? static_cast<number_float_t>(-val)
                                                      : static_cast<number_float_t>(val), "");
                         }

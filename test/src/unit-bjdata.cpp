@@ -1810,7 +1810,7 @@ TEST_CASE("BJData")
                 }
             }
 
-            SECTION("array with uint32_t elements")
+            SECTION("array with int32_t elements")
             {
                 SECTION("size=false type=false")
                 {
@@ -2585,6 +2585,40 @@ TEST_CASE("BJData")
             std::vector<uint8_t> v = {'[', 'i', 2, 'i', 1};
             CHECK_THROWS_AS(_ = json::from_bjdata(v), json::parse_error&);
             CHECK_THROWS_WITH(_ = json::from_bjdata(v), "[json.exception.parse_error.110] parse error at byte 6: syntax error while parsing BJData value: unexpected end of input");
+            CHECK(json::from_bjdata(v, true, false).is_discarded());
+        }
+
+        SECTION("ndarrays")
+        {
+            std::vector<uint8_t> vST = {'[', '$', 'i', '#', '[', '$', 'i', '#'};
+            json _;
+            CHECK_THROWS_AS(_ = json::from_bjdata(vST), json::parse_error&);
+            CHECK_THROWS_WITH(_ = json::from_bjdata(vST), "[json.exception.parse_error.113] parse error at byte 9: syntax error while parsing BJData size: expected length type specification (U, i, I, l, L) after '#'; last byte: 0xFF");
+            CHECK(json::from_bjdata(vST, true, false).is_discarded());
+
+            std::vector<uint8_t> v = {'[', '$', 'i', '#', '[', '$', 'i', '#', 'i', 2, 1, 2};
+            CHECK_THROWS_AS(_ = json::from_bjdata(v), json::parse_error&);
+            CHECK_THROWS_WITH(_ = json::from_bjdata(v), "[json.exception.parse_error.110] parse error at byte 13: syntax error while parsing BJData number: unexpected end of input");
+            CHECK(json::from_bjdata(v, true, false).is_discarded());
+
+            std::vector<uint8_t> vS = {'[', '$', 'i', '#', '[', '#', 'i', 2, 1, 2, 1};
+            CHECK_THROWS_AS(_ = json::from_bjdata(vS), json::parse_error&);
+            CHECK_THROWS_WITH(_ = json::from_bjdata(vS), "[json.exception.parse_error.113] parse error at byte 9: syntax error while parsing BJData size: expected length type specification (U, i, I, l, L) after '#'; last byte: 0x01");
+            CHECK(json::from_bjdata(vS, true, false).is_discarded());
+
+            std::vector<uint8_t> vT = {'[', '$', 'i', '#', '[', 'i', 2, 'i'};
+            CHECK_THROWS_AS(_ = json::from_bjdata(v), json::parse_error&);
+            CHECK_THROWS_WITH(_ = json::from_bjdata(v), "[json.exception.parse_error.110] parse error at byte 13: syntax error while parsing BJData number: unexpected end of input");
+            CHECK(json::from_bjdata(v, true, false).is_discarded());
+
+            std::vector<uint8_t> vm = {'[', '$', 'i', '#', '[', '$', 'i', '#', 'm', 1, 0, 0, 0};
+            CHECK_THROWS_AS(_ = json::from_bjdata(v), json::parse_error&);
+            CHECK_THROWS_WITH(_ = json::from_bjdata(v), "[json.exception.parse_error.110] parse error at byte 13: syntax error while parsing BJData number: unexpected end of input");
+            CHECK(json::from_bjdata(v, true, false).is_discarded());
+
+            std::vector<uint8_t> vM = {'[', '$', 'i', '#', '[', '$', 'i', '#', 'M', 1, 0, 0, 0, 0, 0, 0, 0};
+            CHECK_THROWS_AS(_ = json::from_bjdata(v), json::parse_error&);
+            CHECK_THROWS_WITH(_ = json::from_bjdata(v), "[json.exception.parse_error.110] parse error at byte 13: syntax error while parsing BJData number: unexpected end of input");
             CHECK(json::from_bjdata(v, true, false).is_discarded());
         }
 
