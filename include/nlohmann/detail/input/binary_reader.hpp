@@ -2573,6 +2573,8 @@ class binary_reader
     @note This function needs to respect the system's endianness, because
           bytes in CBOR, MessagePack, and UBJSON are stored in network order
           (big endian) and therefore need reordering on little endian systems.
+          On the other hand, BSON and BJData use little endian and should reorder
+          on big endian systems.
     */
     template<typename NumberType, bool InputIsLittleEndian = false>
     bool get_number(const input_format_t format, NumberType& result)
@@ -2588,8 +2590,7 @@ class binary_reader
             }
 
             // reverse byte order prior to conversion if necessary
-            if ((is_little_endian != InputIsLittleEndian && format != input_format_t::bjdata) ||
-                    (is_little_endian == InputIsLittleEndian && format == input_format_t::bjdata))
+            if (is_little_endian != (InputIsLittleEndian || format == input_format_t::bjdata))
             {
                 vec[sizeof(NumberType) - i - 1] = static_cast<std::uint8_t>(current);
             }

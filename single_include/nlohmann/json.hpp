@@ -10949,6 +10949,8 @@ class binary_reader
     @note This function needs to respect the system's endianness, because
           bytes in CBOR, MessagePack, and UBJSON are stored in network order
           (big endian) and therefore need reordering on little endian systems.
+          On the other hand, BSON and BJData use little endian and should reorder
+          on big endian systems.
     */
     template<typename NumberType, bool InputIsLittleEndian = false>
     bool get_number(const input_format_t format, NumberType& result)
@@ -10964,8 +10966,7 @@ class binary_reader
             }
 
             // reverse byte order prior to conversion if necessary
-            if ((is_little_endian != InputIsLittleEndian && format != input_format_t::bjdata) ||
-                    (is_little_endian == InputIsLittleEndian && format == input_format_t::bjdata))
+            if (is_little_endian != (InputIsLittleEndian || format == input_format_t::bjdata))
             {
                 vec[sizeof(NumberType) - i - 1] = static_cast<std::uint8_t>(current);
             }
@@ -15387,7 +15388,8 @@ class binary_writer
     @note This function needs to respect the system's endianness, because bytes
           in CBOR, MessagePack, and UBJSON are stored in network order (big
           endian) and therefore need reordering on little endian systems.
-          BJData is similar to UBJSON but uses little endian by default.
+          On the other hand, BSON and BJData use little endian and should reorder
+          on big endian systems.
     */
     template<typename NumberType, bool OutputIsLittleEndian = false>
     void write_number(const NumberType n)
@@ -15397,7 +15399,7 @@ class binary_writer
         std::memcpy(vec.data(), &n, sizeof(NumberType));
 
         // step 2: write array to output (with possible reordering)
-        if ((!is_bjdata && (is_little_endian != OutputIsLittleEndian)) || (is_bjdata && !is_little_endian))
+        if (is_little_endian != (OutputIsLittleEndian || is_bjdata))
         {
             // reverse byte order prior to conversion if necessary
             std::reverse(vec.begin(), vec.end());
