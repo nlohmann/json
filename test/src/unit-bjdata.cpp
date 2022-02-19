@@ -1037,14 +1037,23 @@ TEST_CASE("BJData")
 
                 SECTION("errors")
                 {
-                    json _;
-                    // missing both bytes
-                    std::vector<uint8_t> vec0 = {'h'};
-                    CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vec0), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing BJData number: unexpected end of input", json::parse_error);
+                    SECTION("no byte follows")
+                    {
+                        json _;
+                        std::vector<uint8_t> vec0 = {'h'};
+                        CHECK_THROWS_AS(_ = json::from_bjdata(vec0), json::parse_error&);
+                        CHECK_THROWS_WITH(_ = json::from_bjdata(vec0), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing BJData number: unexpected end of input");
+                        CHECK(json::from_bjdata(vec0, true, false).is_discarded());
+                    }
 
-                    // missing the 2nd byte
-                    std::vector<uint8_t> vec1 = {'h', 0x00};
-                    CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vec1), "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing BJData number: unexpected end of input", json::parse_error);
+                    SECTION("only one byte follows")
+                    {
+                        json _;
+                        std::vector<uint8_t> vec1 = {'h', 0x00};
+                        CHECK_THROWS_AS(_ = json::from_bjdata(vec1), json::parse_error&);
+                        CHECK_THROWS_WITH(_ = json::from_bjdata(vec1), "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing BJData number: unexpected end of input");
+                        CHECK(json::from_bjdata(vec1, true, false).is_discarded());
+                    }
                 }
             }
 
@@ -2679,6 +2688,11 @@ TEST_CASE("BJData")
             CHECK_THROWS_WITH(_ = json::from_bjdata(vT0), "[json.exception.parse_error.110] parse error at byte 7: syntax error while parsing BJData number: unexpected end of input");
             CHECK(json::from_bjdata(vT0, true, false).is_discarded());
 
+            std::vector<uint8_t> vu = {'[', '$', 'i', '#', '[', '$', 'i', '#', 'u', 1, 0};
+            CHECK_THROWS_AS(_ = json::from_bjdata(vu), json::parse_error&);
+            CHECK_THROWS_WITH(_ = json::from_bjdata(vu), "[json.exception.parse_error.110] parse error at byte 12: syntax error while parsing BJData number: unexpected end of input");
+            CHECK(json::from_bjdata(vu, true, false).is_discarded());
+
             std::vector<uint8_t> vm = {'[', '$', 'i', '#', '[', '$', 'i', '#', 'm', 1, 0, 0, 0};
             CHECK_THROWS_AS(_ = json::from_bjdata(vm), json::parse_error&);
             CHECK_THROWS_WITH(_ = json::from_bjdata(vm), "[json.exception.parse_error.110] parse error at byte 14: syntax error while parsing BJData number: unexpected end of input");
@@ -2760,10 +2774,24 @@ TEST_CASE("BJData")
                 CHECK(json::to_bjdata(j, true, true) == expected);
             }
 
+            SECTION("array of u")
+            {
+                json j = {50000, 50001};
+                std::vector<uint8_t> expected = {'[', '$', 'u', '#', 'i', 2, 0x50, 0xC3, 0x51, 0xC3};
+                CHECK(json::to_bjdata(j, true, true) == expected);
+            }
+
             SECTION("array of l")
             {
                 json j = {70000, -70000};
                 std::vector<uint8_t> expected = {'[', '$', 'l', '#', 'i', 2, 0x70, 0x11, 0x01, 0x00, 0x90, 0xEE, 0xFE, 0xFF};
+                CHECK(json::to_bjdata(j, true, true) == expected);
+            }
+
+            SECTION("array of m")
+            {
+                json j = {3147483647, 3147483648};
+                std::vector<uint8_t> expected = {'[', '$', 'm', '#', 'i', 2, 0xFF, 0xC9, 0x9A, 0xBB, 0x00, 0xCA, 0x9A, 0xBB};
                 CHECK(json::to_bjdata(j, true, true) == expected);
             }
 
@@ -2824,7 +2852,7 @@ TEST_CASE("BJData")
 
             SECTION("array of m")
             {
-                json j = {3147483647, 3147483648};
+                json j = {3147483647u, 3147483648u};
                 std::vector<uint8_t> expected = {'[', '$', 'm', '#', 'i', 2, 0xFF, 0xC9, 0x9A, 0xBB, 0x00, 0xCA, 0x9A, 0xBB};
                 std::vector<uint8_t> expected_size = {'[', '#', 'i', 2, 'm', 0xFF, 0xC9, 0x9A, 0xBB, 'm', 0x00, 0xCA, 0x9A, 0xBB};
                 CHECK(json::to_bjdata(j, true, true) == expected);
