@@ -10259,34 +10259,48 @@ class binary_reader
                 return get_number(input_format, len) && get_string(input_format, len, result);
             }
 
-            default:
-                if (input_format == input_format_t::bjdata)
+            case 'u':
+            {
+                if (input_format != input_format_t::bjdata)
                 {
-                    switch (current)
-                    {
-                        case 'u':
-                        {
-                            uint16_t len{};
-                            return get_number(input_format, len) && get_string(input_format, len, result);
-                        }
-                        case 'm':
-                        {
-                            uint32_t len{};
-                            return get_number(input_format, len) && get_string(input_format, len, result);
-                        }
-                        case 'M':
-                        {
-                            uint64_t len{};
-                            return get_number(input_format, len) && get_string(input_format, len, result);
-                        }
-                        default:
-                        {
-                        }
-                    }
+                    break;
                 }
-                auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read,
-                                        exception_message(input_format, concat("expected length type specification (U, i, I, l, L); last byte: 0x", last_token), "string"), nullptr));
+                std::uint16_t len{};
+                return get_number(input_format, len) && get_string(input_format, len, result);
+            }
+
+            case 'm':
+            {
+                if (input_format != input_format_t::bjdata)
+                {
+                    break;
+                }
+                std::uint32_t len{};
+                return get_number(input_format, len) && get_string(input_format, len, result);
+            }
+
+            case 'M':
+            {
+                if (input_format != input_format_t::bjdata)
+                {
+                    break;
+                }
+                std::uint64_t len{};
+                return get_number(input_format, len) && get_string(input_format, len, result);
+            }
+
+            default:
+            {
+            }
+        }
+        auto last_token = get_token_string();
+        if (input_format != input_format_t::bjdata)
+        {
+            return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format, "expected length type specification (U, i, I, l, L); last byte: 0x" + last_token, "string"), nullptr));
+        }
+        else
+        {
+            return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format, "expected length type specification (U, i, I, u, l, m, L, M); last byte: 0x" + last_token, "string"), nullptr));
         }
     }
 
@@ -10415,64 +10429,82 @@ class binary_reader
                 return true;
             }
 
+            case 'u':
+            {
+                if (input_format != input_format_t::bjdata)
+                {
+                    break;
+                }
+                std::uint16_t number{};
+                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format, number)))
+                {
+                    return false;
+                }
+                result = static_cast<std::size_t>(number);
+                return true;
+            }
+
+            case 'm':
+            {
+                if (input_format != input_format_t::bjdata)
+                {
+                    break;
+                }
+                std::uint32_t number{};
+                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format, number)))
+                {
+                    return false;
+                }
+                result = static_cast<std::size_t>(number);
+                return true;
+            }
+
+            case 'M':
+            {
+                if (input_format != input_format_t::bjdata)
+                {
+                    break;
+                }
+                std::uint64_t number{};
+                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format, number)))
+                {
+                    return false;
+                }
+                result = detail::conditional_static_cast<std::size_t>(number);
+                return true;
+            }
+
+            case '[':
+            {
+                if (input_format != input_format_t::bjdata)
+                {
+                    break;
+                }
+                std::vector<size_t> dim;
+                if (JSON_HEDLEY_UNLIKELY(!get_ubjson_ndarray_size(dim)))
+                {
+                    return false;
+                }
+                result = 1;
+                for (auto i : dim)
+                {
+                    result *= i;
+                }
+                return true;
+            }
+
             default:
             {
-                if (input_format == input_format_t::bjdata)
-                {
-                    switch (prefix)
-                    {
-                        case 'u':
-                        {
-                            uint16_t number{};
-                            if (JSON_HEDLEY_UNLIKELY(!get_number(input_format, number)))
-                            {
-                                return false;
-                            }
-                            result = static_cast<std::size_t>(number);
-                            return true;
-                        }
-                        case 'm':
-                        {
-                            uint32_t number{};
-                            if (JSON_HEDLEY_UNLIKELY(!get_number(input_format, number)))
-                            {
-                                return false;
-                            }
-                            result = static_cast<std::size_t>(number);
-                            return true;
-                        }
-                        case 'M':
-                        {
-                            uint64_t number{};
-                            if (JSON_HEDLEY_UNLIKELY(!get_number(input_format, number)))
-                            {
-                                return false;
-                            }
-                            result = detail::conditional_static_cast<std::size_t>(number);
-                            return true;
-                        }
-                        case '[':
-                        {
-                            std::vector<size_t> dim;
-                            if (JSON_HEDLEY_UNLIKELY(!get_ubjson_ndarray_size(dim)))
-                            {
-                                return false;
-                            }
-                            result = 1;
-                            for (auto i : dim)
-                            {
-                                result *= i;
-                            }
-                            return true;
-                        }
-                        default:
-                        {
-                        }
-                    }
-                }
             }
-            auto last_token = get_token_string();
+        }
+        auto last_token = get_token_string();
+        if (input_format != input_format_t::bjdata)
+        {
             return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format, "expected length type specification (U, i, I, l, L) after '#'; last byte: 0x" + last_token, "size"), nullptr));
+        }
+        else
+        {
+            return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format, "expected length type specification (U, i, I, u, l, m, L, M) after '#'; last byte: 0x" + last_token, "size"), nullptr));
         }
     }
 
@@ -10573,6 +10605,88 @@ class binary_reader
                 return get_number(input_format, number) && sax->number_integer(number);
             }
 
+            case 'u':
+            {
+                if (input_format != input_format_t::bjdata)
+                {
+                    break;
+                }
+                std::uint16_t number{};
+                return get_number(input_format, number) && sax->number_unsigned(number);
+            }
+
+            case 'm':
+            {
+                if (input_format != input_format_t::bjdata)
+                {
+                    break;
+                }
+                std::uint32_t number{};
+                return get_number(input_format, number) && sax->number_unsigned(number);
+            }
+
+            case 'M':
+            {
+                if (input_format != input_format_t::bjdata)
+                {
+                    break;
+                }
+                std::uint64_t number{};
+                return get_number(input_format, number) && sax->number_unsigned(number);
+            }
+
+            case 'h':
+            {
+                if (input_format != input_format_t::bjdata)
+                {
+                    break;
+                }
+                const auto byte1_raw = get();
+                if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format, "number")))
+                {
+                    return false;
+                }
+                const auto byte2_raw = get();
+                if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format, "number")))
+                {
+                    return false;
+                }
+
+                const auto byte1 = static_cast<unsigned char>(byte1_raw);
+                const auto byte2 = static_cast<unsigned char>(byte2_raw);
+
+                // code from RFC 7049, Appendix D, Figure 3:
+                // As half-precision floating-point numbers were only added
+                // to IEEE 754 in 2008, today's programming platforms often
+                // still only have limited support for them. It is very
+                // easy to include at least decoding support for them even
+                // without such support. An example of a small decoder for
+                // half-precision floating-point numbers in the C language
+                // is shown in Fig. 3.
+                const auto half = static_cast<unsigned int>((byte2 << 8u) + byte1);
+                const double val = [&half]
+                {
+                    const int exp = (half >> 10u) & 0x1Fu;
+                    const unsigned int mant = half & 0x3FFu;
+                    JSON_ASSERT(0 <= exp&& exp <= 32);
+                    JSON_ASSERT(mant <= 1024);
+                    switch (exp)
+                    {
+                        case 0:
+                            return std::ldexp(mant, -24);
+                        case 31:
+                            return (mant == 0)
+                            ? std::numeric_limits<double>::infinity()
+                            : std::numeric_limits<double>::quiet_NaN();
+                        default:
+                            return std::ldexp(mant + 1024, exp - 25);
+                    }
+                }();
+                return sax->number_float((half & 0x8000u) != 0
+                                         ? static_cast<number_float_t>(-val)
+                                         : static_cast<number_float_t>(val), "");
+            }
+
             case 'd':
             {
                 float number{};
@@ -10621,82 +10735,10 @@ class binary_reader
 
             default: // anything else
             {
-                if (input_format == input_format_t::bjdata)
-                {
-                    switch (prefix)
-                    {
-                        case 'u':
-                        {
-                            uint16_t number{};
-                            return get_number(input_format, number) && sax->number_unsigned(number);
-                        }
-                        case 'm':
-                        {
-                            uint32_t number{};
-                            return get_number(input_format, number) && sax->number_unsigned(number);
-                        }
-                        case 'M':
-                        {
-                            uint64_t number{};
-                            return get_number(input_format, number) && sax->number_unsigned(number);
-                        }
-                        case 'h':
-                        {
-                            const auto byte1_raw = get();
-                            if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format, "number")))
-                            {
-                                return false;
-                            }
-                            const auto byte2_raw = get();
-                            if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format, "number")))
-                            {
-                                return false;
-                            }
-
-                            const auto byte1 = static_cast<unsigned char>(byte1_raw);
-                            const auto byte2 = static_cast<unsigned char>(byte2_raw);
-
-                            // code from RFC 7049, Appendix D, Figure 3:
-                            // As half-precision floating-point numbers were only added
-                            // to IEEE 754 in 2008, today's programming platforms often
-                            // still only have limited support for them. It is very
-                            // easy to include at least decoding support for them even
-                            // without such support. An example of a small decoder for
-                            // half-precision floating-point numbers in the C language
-                            // is shown in Fig. 3.
-                            const auto half = static_cast<unsigned int>((byte2 << 8u) + byte1);
-                            const double val = [&half]
-                            {
-                                const int exp = (half >> 10u) & 0x1Fu;
-                                const unsigned int mant = half & 0x3FFu;
-                                JSON_ASSERT(0 <= exp&& exp <= 32);
-                                JSON_ASSERT(mant <= 1024);
-                                switch (exp)
-                                {
-                                    case 0:
-                                        return std::ldexp(mant, -24);
-                                    case 31:
-                                        return (mant == 0)
-                                        ? std::numeric_limits<double>::infinity()
-                                        : std::numeric_limits<double>::quiet_NaN();
-                                    default:
-                                        return std::ldexp(mant + 1024, exp - 25);
-                                }
-                            }();
-                            return sax->number_float((half & 0x8000u) != 0
-                                                     ? static_cast<number_float_t>(-val)
-                                                     : static_cast<number_float_t>(val), "");
-                        }
-                        default:
-                        {
-                        }
-                    }
-                }
-                auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                        exception_message(input_format, concat("invalid byte: 0x", last_token), "value"), nullptr));
             }
         }
+        auto last_token = get_token_string();
+        return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message(input_format, "invalid byte: 0x" + last_token, "value"), BasicJsonType()));
     }
 
     /*!
