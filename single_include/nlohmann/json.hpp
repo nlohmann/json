@@ -14549,6 +14549,7 @@ class binary_writer
     @param[in] use_count   whether to use '#' prefixes (optimized format)
     @param[in] use_type    whether to use '$' prefixes (optimized format)
     @param[in] add_prefix  whether prefixes need to be used for this value
+    @param[in] use_bjdata  whether write in BJData format, default is false
     */
     void write_ubjson(const BasicJsonType& j, const bool use_count,
                       const bool use_type, const bool add_prefix = true,
@@ -14641,7 +14642,7 @@ class binary_writer
 
                 for (const auto& el : *j.m_value.array)
                 {
-                    write_ubjson(el, use_count, use_type, prefix_required);
+                    write_ubjson(el, use_count, use_type, prefix_required, use_bjdata);
                 }
 
                 if (!use_count)
@@ -14733,7 +14734,7 @@ class binary_writer
                     oa->write_characters(
                         reinterpret_cast<const CharType*>(el.first.c_str()),
                         el.first.size());
-                    write_ubjson(el.second, use_count, use_type, prefix_required);
+                    write_ubjson(el.second, use_count, use_type, prefix_required, use_bjdata);
                 }
 
                 if (!use_count)
@@ -15421,6 +15422,7 @@ class binary_writer
     /*
     @brief write a number to output input
     @param[in] n number of type @a NumberType
+    @param[in] use_bjdata  whether write in BJData format, default is false
     @tparam NumberType the type of the number
     @tparam OutputIsLittleEndian Set to true if output data is
                                  required to be little endian
@@ -21741,20 +21743,20 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             const bool use_type = false)
     {
         std::vector<std::uint8_t> result;
-        to_bjdata(j, result, use_size, use_type, true);
+        to_bjdata(j, result, use_size, use_type);
         return result;
     }
 
     static void to_bjdata(const basic_json& j, detail::output_adapter<std::uint8_t> o,
                           const bool use_size = false, const bool use_type = false)
     {
-        binary_writer<std::uint8_t>(o).write_ubjson(j, use_size, use_type, true);
+        binary_writer<std::uint8_t>(o).write_ubjson(j, use_size, use_type, true, true);
     }
 
     static void to_bjdata(const basic_json& j, detail::output_adapter<char> o,
                           const bool use_size = false, const bool use_type = false)
     {
-        binary_writer<char>(o).write_ubjson(j, use_size, use_type, true);
+        binary_writer<char>(o).write_ubjson(j, use_size, use_type, true, true);
     }
 
     /// @brief create a BSON serialization of a given JSON value

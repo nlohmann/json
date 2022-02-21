@@ -3970,20 +3970,20 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             const bool use_type = false)
     {
         std::vector<std::uint8_t> result;
-        to_bjdata(j, result, use_size, use_type, true);
+        to_bjdata(j, result, use_size, use_type);
         return result;
     }
 
     static void to_bjdata(const basic_json& j, detail::output_adapter<std::uint8_t> o,
                           const bool use_size = false, const bool use_type = false)
     {
-        binary_writer<std::uint8_t>(o).write_ubjson(j, use_size, use_type, true);
+        binary_writer<std::uint8_t>(o).write_ubjson(j, use_size, use_type, true, true);
     }
 
     static void to_bjdata(const basic_json& j, detail::output_adapter<char> o,
                           const bool use_size = false, const bool use_type = false)
     {
-        binary_writer<char>(o).write_ubjson(j, use_size, use_type, true);
+        binary_writer<char>(o).write_ubjson(j, use_size, use_type, true, true);
     }
 
     /// @brief create a BSON serialization of a given JSON value
