@@ -4177,8 +4177,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 
 
-    /// @brief create a JSON value from an input in UBJSON format
-    /// @sa https://json.nlohmann.me/api/basic_json/from_ubjson/
+    /// @brief create a JSON value from an input in BJData format
+    /// @sa https://github.com/NeuroJSON/bjdata/blob/master/Binary_JData_Specification.md
     template<typename InputType>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_bjdata(InputType&& i,
@@ -4209,7 +4209,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     template<typename T>
     JSON_HEDLEY_WARN_UNUSED_RESULT
-    JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_bjdata(ptr, ptr + len))
     static basic_json from_bjdata(const T* ptr, std::size_t len,
                                   const bool strict = true,
                                   const bool allow_exceptions = true)
@@ -4218,7 +4217,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 
     JSON_HEDLEY_WARN_UNUSED_RESULT
-    JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_bjdata(ptr, ptr + len))
     static basic_json from_bjdata(detail::span_input_adapter&& i,
                                   const bool strict = true,
                                   const bool allow_exceptions = true)

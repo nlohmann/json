@@ -2536,6 +2536,25 @@ TEST_CASE("BJData")
                 CHECK_THROWS_AS(_ = json::from_bjdata(v), json::parse_error&);
                 CHECK_THROWS_WITH(_ = json::from_bjdata(v), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing BJData string: expected length type specification (U, i, I, u, l, m, L, M); last byte: 0x31");
             }
+
+            SECTION("parse bjdata markers in ubjson")
+            {
+                // create a single-character string for all number types
+                std::vector<uint8_t> s_u = {'S', 'u', 1, 0, 'a'};
+                std::vector<uint8_t> s_m = {'S', 'm', 1, 0, 0, 0, 'a'};
+                std::vector<uint8_t> s_M = {'S', 'M', 1, 0, 0, 0, 0, 0, 0, 0, 'a'};
+
+                json _;
+                // check if string is parsed correctly to "a"
+                CHECK_THROWS_AS(_ = json::from_ubjson(s_u), json::parse_error&);
+                CHECK_THROWS_WITH(_ = json::from_ubjson(s_u), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing UBJSON string: expected length type specification (U, i, I, l, L); last byte: 0x75");
+
+                CHECK_THROWS_AS(_ = json::from_ubjson(s_m), json::parse_error&);
+                CHECK_THROWS_WITH(_ = json::from_ubjson(s_m), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing UBJSON string: expected length type specification (U, i, I, l, L); last byte: 0x6D");
+
+                CHECK_THROWS_AS(_ = json::from_ubjson(s_M), json::parse_error&);
+                CHECK_THROWS_WITH(_ = json::from_ubjson(s_M), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing UBJSON string: expected length type specification (U, i, I, l, L); last byte: 0x4D");
+            }
         }
 
         SECTION("array")
@@ -2615,6 +2634,30 @@ TEST_CASE("BJData")
             CHECK_THROWS_AS(_ = json::from_bjdata(v0), json::parse_error&);
             CHECK_THROWS_WITH(_ = json::from_bjdata(v0), "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing BJData size: expected length type specification (U, i, I, u, l, m, L, M) after '#'; last byte: 0x54");
             CHECK(json::from_bjdata(v0, true, false).is_discarded());
+        }
+
+        SECTION("parse bjdata markers as array size in ubjson")
+        {
+            json _;
+            std::vector<uint8_t> vu = {'[', '#', 'u'};
+            CHECK_THROWS_AS(_ = json::from_ubjson(vu), json::parse_error&);
+            CHECK_THROWS_WITH(_ = json::from_ubjson(vu), "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing UBJSON size: expected length type specification (U, i, I, l, L) after '#'; last byte: 0x75");
+            CHECK(json::from_ubjson(vu, true, false).is_discarded());
+
+            std::vector<uint8_t> vm = {'[', '#', 'm'};
+            CHECK_THROWS_AS(_ = json::from_ubjson(vm), json::parse_error&);
+            CHECK_THROWS_WITH(_ = json::from_ubjson(vm), "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing UBJSON size: expected length type specification (U, i, I, l, L) after '#'; last byte: 0x6D");
+            CHECK(json::from_ubjson(vm, true, false).is_discarded());
+
+            std::vector<uint8_t> vM = {'[', '#', 'M'};
+            CHECK_THROWS_AS(_ = json::from_ubjson(vM), json::parse_error&);
+            CHECK_THROWS_WITH(_ = json::from_ubjson(vM), "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing UBJSON size: expected length type specification (U, i, I, l, L) after '#'; last byte: 0x4D");
+            CHECK(json::from_ubjson(vM, true, false).is_discarded());
+
+            std::vector<uint8_t> v0 = {'[', '#', '['};
+            CHECK_THROWS_AS(_ = json::from_ubjson(v0), json::parse_error&);
+            CHECK_THROWS_WITH(_ = json::from_ubjson(v0), "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing UBJSON size: expected length type specification (U, i, I, l, L) after '#'; last byte: 0x5B");
+            CHECK(json::from_ubjson(v0, true, false).is_discarded());
         }
 
         SECTION("types")

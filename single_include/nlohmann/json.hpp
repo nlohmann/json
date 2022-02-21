@@ -10294,14 +10294,11 @@ class binary_reader
             }
         }
         auto last_token = get_token_string();
-        if (input_format != input_format_t::bjdata)
-        {
-            return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format, "expected length type specification (U, i, I, l, L); last byte: 0x" + last_token, "string"), nullptr));
-        }
-        else
+        if (input_format == input_format_t::bjdata)
         {
             return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format, "expected length type specification (U, i, I, u, l, m, L, M); last byte: 0x" + last_token, "string"), nullptr));
         }
+        return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format, "expected length type specification (U, i, I, l, L); last byte: 0x" + last_token, "string"), BasicJsonType()));
     }
 
     /*!
@@ -10498,14 +10495,11 @@ class binary_reader
             }
         }
         auto last_token = get_token_string();
-        if (input_format != input_format_t::bjdata)
-        {
-            return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format, "expected length type specification (U, i, I, l, L) after '#'; last byte: 0x" + last_token, "size"), nullptr));
-        }
-        else
+        if (input_format == input_format_t::bjdata)
         {
             return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format, "expected length type specification (U, i, I, u, l, m, L, M) after '#'; last byte: 0x" + last_token, "size"), nullptr));
         }
+        return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format, "expected length type specification (U, i, I, l, L) after '#'; last byte: 0x" + last_token, "size"), BasicJsonType()));
     }
 
     /*!
@@ -13867,11 +13861,12 @@ class binary_writer
     @brief create a binary writer
 
     @param[in] adapter  output adapter to write to
+    @param[in] is_bjdata_  a boolean, if true, output is BJData format, default is false
     */
-    explicit binary_writer(output_adapter_t<CharType> adapter, const bool is_bjdata_ = false) : oa(std::move(adapter))
+    explicit binary_writer(output_adapter_t<CharType> adapter, const bool is_bjdata_ = false) : oa(std::move(adapter)), is_bjdata(is_bjdata_)
     {
         JSON_ASSERT(oa);
-        is_bjdata = is_bjdata_;
+        JSON_ASSERT(is_bjdata);
     }
 
     /*!
@@ -21953,8 +21948,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 
 
-    /// @brief create a JSON value from an input in UBJSON format
-    /// @sa https://json.nlohmann.me/api/basic_json/from_ubjson/
+    /// @brief create a JSON value from an input in BJData format
+    /// @sa https://github.com/NeuroJSON/bjdata/blob/master/Binary_JData_Specification.md
     template<typename InputType>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_bjdata(InputType&& i,
@@ -21985,7 +21980,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     template<typename T>
     JSON_HEDLEY_WARN_UNUSED_RESULT
-    JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_bjdata(ptr, ptr + len))
     static basic_json from_bjdata(const T* ptr, std::size_t len,
                                   const bool strict = true,
                                   const bool allow_exceptions = true)
@@ -21994,7 +21988,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 
     JSON_HEDLEY_WARN_UNUSED_RESULT
-    JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_bjdata(ptr, ptr + len))
     static basic_json from_bjdata(detail::span_input_adapter&& i,
                                   const bool strict = true,
                                   const bool allow_exceptions = true)
