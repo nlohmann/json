@@ -1694,7 +1694,7 @@ class binary_writer
     const bool is_little_endian = little_endianness();
 
     /// whether to write in bjdata format
-    bool is_bjdata = false;
+    const bool is_bjdata = false;
 
     /// the output
     output_adapter_t<CharType> oa = nullptr;
