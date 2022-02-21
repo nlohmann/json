@@ -42,7 +42,6 @@ class binary_writer
     explicit binary_writer(output_adapter_t<CharType> adapter, const bool is_bjdata_ = false) : oa(std::move(adapter)), is_bjdata(is_bjdata_)
     {
         JSON_ASSERT(oa);
-        JSON_ASSERT(is_bjdata);
     }
 
     /*!
