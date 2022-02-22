@@ -1184,7 +1184,7 @@ TEST_CASE("BJData")
                     std::vector<uint8_t> vec3 = {'H', 'i', 2, '1', '.'};
                     CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vec3), "[json.exception.parse_error.115] parse error at byte 5: syntax error while parsing BJData high-precision number: invalid number text: 1.", json::parse_error);
                     std::vector<uint8_t> vec4 = {'H', 2, '1', '0'};
-                    CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vec4), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing BJData size: expected length type specification (U, i, I, u, l, m, L, M) after '#'; last byte: 0x02", json::parse_error);
+                    CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vec4), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing BJData size: expected length type specification (U, i, u, I, m, l, M, L) after '#'; last byte: 0x02", json::parse_error);
                 }
             }
         }
@@ -2534,7 +2534,7 @@ TEST_CASE("BJData")
                 std::vector<uint8_t> v = {'S', '1', 'a'};
                 json _;
                 CHECK_THROWS_AS(_ = json::from_bjdata(v), json::parse_error&);
-                CHECK_THROWS_WITH(_ = json::from_bjdata(v), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing BJData string: expected length type specification (U, i, I, u, l, m, L, M); last byte: 0x31");
+                CHECK_THROWS_WITH(_ = json::from_bjdata(v), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing BJData string: expected length type specification (U, i, u, I, m, l, M, L); last byte: 0x31");
             }
 
             SECTION("parse bjdata markers in ubjson")
@@ -2632,7 +2632,7 @@ TEST_CASE("BJData")
 
             std::vector<uint8_t> v0 = {'[', '#', 'T', ']'};
             CHECK_THROWS_AS(_ = json::from_bjdata(v0), json::parse_error&);
-            CHECK_THROWS_WITH(_ = json::from_bjdata(v0), "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing BJData size: expected length type specification (U, i, I, u, l, m, L, M) after '#'; last byte: 0x54");
+            CHECK_THROWS_WITH(_ = json::from_bjdata(v0), "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing BJData size: expected length type specification (U, i, u, I, m, l, M, L) after '#'; last byte: 0x54");
             CHECK(json::from_bjdata(v0, true, false).is_discarded());
         }
 
@@ -2703,7 +2703,7 @@ TEST_CASE("BJData")
             std::vector<uint8_t> vST = {'[', '$', 'i', '#', '[', '$', 'i', '#'};
             json _;
             CHECK_THROWS_AS(_ = json::from_bjdata(vST), json::parse_error&);
-            CHECK_THROWS_WITH(_ = json::from_bjdata(vST), "[json.exception.parse_error.113] parse error at byte 9: syntax error while parsing BJData size: expected length type specification (U, i, I, u, l, m, L, M) after '#'; last byte: 0xFF");
+            CHECK_THROWS_WITH(_ = json::from_bjdata(vST), "[json.exception.parse_error.113] parse error at byte 9: syntax error while parsing BJData size: expected length type specification (U, i, u, I, m, l, M, L) after '#'; last byte: 0xFF");
             CHECK(json::from_bjdata(vST, true, false).is_discarded());
 
             std::vector<uint8_t> v = {'[', '$', 'i', '#', '[', '$', 'i', '#', 'i', 2, 1, 2};
@@ -2718,7 +2718,7 @@ TEST_CASE("BJData")
 
             std::vector<uint8_t> vS = {'[', '$', 'i', '#', '[', '#', 'i', 2, 1, 2, 1};
             CHECK_THROWS_AS(_ = json::from_bjdata(vS), json::parse_error&);
-            CHECK_THROWS_WITH(_ = json::from_bjdata(vS), "[json.exception.parse_error.113] parse error at byte 9: syntax error while parsing BJData size: expected length type specification (U, i, I, u, l, m, L, M) after '#'; last byte: 0x01");
+            CHECK_THROWS_WITH(_ = json::from_bjdata(vS), "[json.exception.parse_error.113] parse error at byte 9: syntax error while parsing BJData size: expected length type specification (U, i, u, I, m, l, M, L) after '#'; last byte: 0x01");
             CHECK(json::from_bjdata(vS, true, false).is_discarded());
 
             std::vector<uint8_t> vT = {'[', '$', 'i', '#', '[', 'i', 2, 'i'};

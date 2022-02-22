@@ -10290,20 +10290,25 @@ class binary_reader
             }
 
             default:
-            {
-            }
+                break;
         }
         auto last_token = get_token_string();
-        if (input_format == input_format_t::bjdata)
+        std::string message;
+
+        if (input_format != input_format_t::bjdata)
         {
-            return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format, "expected length type specification (U, i, I, u, l, m, L, M); last byte: 0x" + last_token, "string"), nullptr));
+            message = "expected length type specification (U, i, I, l, L); last byte: 0x" + last_token;
         }
-        return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format, "expected length type specification (U, i, I, l, L); last byte: 0x" + last_token, "string"), BasicJsonType()));
+        else
+        {
+            message = "expected length type specification (U, i, u, I, m, l, M, L); last byte: 0x" + last_token;
+        }
+        return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format, message, "string"), BasicJsonType()));
     }
 
     /*!
     @param[out] dim  an integer vector storing the ND array dimensions
-    @return whether array creation completed
+    @return whether reading ND array size vector is successful
     */
     bool get_ubjson_ndarray_size(std::vector<size_t>& dim)
     {
@@ -10482,7 +10487,7 @@ class binary_reader
                 {
                     return false;
                 }
-                result = 1;
+                result = ( (dim.size() > 0) ? 1 : 0 );
                 for (auto i : dim)
                 {
                     result *= i;
@@ -10491,15 +10496,20 @@ class binary_reader
             }
 
             default:
-            {
-            }
+                break;
         }
         auto last_token = get_token_string();
-        if (input_format == input_format_t::bjdata)
+        std::string message;
+
+        if (input_format != input_format_t::bjdata)
         {
-            return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format, "expected length type specification (U, i, I, u, l, m, L, M) after '#'; last byte: 0x" + last_token, "size"), nullptr));
+            message = "expected length type specification (U, i, I, l, L) after '#'; last byte: 0x" + last_token;
         }
-        return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format, "expected length type specification (U, i, I, l, L) after '#'; last byte: 0x" + last_token, "size"), BasicJsonType()));
+        else
+        {
+            message = "expected length type specification (U, i, u, I, m, l, M, L) after '#'; last byte: 0x" + last_token;
+        }
+        return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format, message, "size"), BasicJsonType()));
     }
 
     /*!
@@ -10728,8 +10738,7 @@ class binary_reader
                 return get_ubjson_object();
 
             default: // anything else
-            {
-            }
+                break;
         }
         auto last_token = get_token_string();
         return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message(input_format, "invalid byte: 0x" + last_token, "value"), BasicJsonType()));
