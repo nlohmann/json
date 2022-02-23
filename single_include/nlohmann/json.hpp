@@ -10487,7 +10487,7 @@ class binary_reader
                 {
                     return false;
                 }
-                result = ( (dim.size() > 0) ? 1 : 0 );
+                result = ( (!dim.empty()) ? 1 : 0 );
                 for (auto i : dim)
                 {
                     result *= i;
@@ -13870,7 +13870,6 @@ class binary_writer
     @brief create a binary writer
 
     @param[in] adapter  output adapter to write to
-    @param[in] is_bjdata_  a boolean, if true, output is BJData format, default is false
     */
     explicit binary_writer(output_adapter_t<CharType> adapter) : oa(std::move(adapter))
     {

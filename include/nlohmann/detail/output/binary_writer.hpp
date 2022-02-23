@@ -37,7 +37,6 @@ class binary_writer
     @brief create a binary writer
 
     @param[in] adapter  output adapter to write to
-    @param[in] is_bjdata_  a boolean, if true, output is BJData format, default is false
     */
     explicit binary_writer(output_adapter_t<CharType> adapter) : oa(std::move(adapter))
     {
