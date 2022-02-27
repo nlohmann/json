@@ -2318,6 +2318,8 @@ TEST_CASE("BJData")
             SECTION("optimized ndarray (type and vector-size as optimized 1D array)")
             {
                 // create vector with two elements of the same type
+                std::vector<uint8_t> v_0 = {'[', '$', 'i', '#', '[', '$', 'i', '#', 'i', 1, 0};
+                std::vector<uint8_t> v_1 = {'[', '$', 'i', '#', '[', '$', 'i', '#', 'i', 1, 2, 0x7F, 0x7F};
                 std::vector<uint8_t> v_N = {'[', '$', 'N', '#', '[', '$', 'i', '#', 'i', 2, 1, 2};
                 std::vector<uint8_t> v_T = {'[', '$', 'T', '#', '[', '$', 'i', '#', 'i', 2, 1, 2};
                 std::vector<uint8_t> v_F = {'[', '$', 'F', '#', '[', '$', 'i', '#', 'i', 2, 1, 2};
@@ -2335,6 +2337,8 @@ TEST_CASE("BJData")
                 std::vector<uint8_t> v_C = {'[', '$', 'C', '#', '[', '$', 'i', '#', 'i', 2, 1, 2, 'a', 'a'};
 
                 // check if vector is parsed correctly
+                CHECK(json::from_bjdata(v_0) == json::array());
+                CHECK(json::from_bjdata(v_1) == json({127, 127}));
                 CHECK(json::from_bjdata(v_N) == json::array());
                 CHECK(json::from_bjdata(v_T) == json({true, true}));
                 CHECK(json::from_bjdata(v_F) == json({false, false}));
@@ -2350,26 +2354,52 @@ TEST_CASE("BJData")
                 CHECK(json::from_bjdata(v_D) == json({3.1415926, 3.1415926}));
                 CHECK(json::from_bjdata(v_S) == json({"a", "a"}));
                 CHECK(json::from_bjdata(v_C) == json({"a", "a"}));
+            }
 
-#ifdef BJDATA_TEST_ROUNDTRIP  // round-trip to vectorized size (ndarray) is not yet supported
+            SECTION("optimized ndarray (type and vector-size ndarray with JData annotations)")
+            {
+                // create vector with 0, 1, 2 elements of the same type
+                std::vector<uint8_t> v_e = {'[', '$', 'U', '#', '[', '$', 'i', '#', 'i', 2, 2, 1, 0xFE, 0xFF};
+                std::vector<uint8_t> v_U = {'[', '$', 'U', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
+                std::vector<uint8_t> v_i = {'[', '$', 'i', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
+                std::vector<uint8_t> v_u = {'[', '$', 'u', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x01, 0x00, 0x02, 0x00, 0x03, 0x00, 0x04, 0x00, 0x05, 0x00, 0x06, 0x00};
+                std::vector<uint8_t> v_I = {'[', '$', 'I', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x01, 0x00, 0x02, 0x00, 0x03, 0x00, 0x04, 0x00, 0x05, 0x00, 0x06, 0x00};
+                std::vector<uint8_t> v_m = {'[', '$', 'm', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x01, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00};
+                std::vector<uint8_t> v_l = {'[', '$', 'l', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x01, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00};
+                std::vector<uint8_t> v_M = {'[', '$', 'M', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+                std::vector<uint8_t> v_L = {'[', '$', 'L', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+                std::vector<uint8_t> v_d = {'[', '$', 'd', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x40, 0x40, 0x00, 0x00, 0x80, 0x40, 0x00, 0x00, 0xA0, 0x40, 0x00, 0x00, 0xC0, 0x40};
+                std::vector<uint8_t> v_D = {'[', '$', 'D', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xF0, 0x3F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x14, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x18, 0x40};
+                std::vector<uint8_t> v_C = {'[', '$', 'C', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 'a', 'b', 'c', 'd', 'e', 'f'};
+
+                // check if vector is parsed correctly
+                CHECK(json::from_bjdata(v_e) == json({{"_ArrayData_", {254, 255}}, {"_ArraySize_", {2, 1}}, {"_ArrayType_", "uint8"}}));
+                CHECK(json::from_bjdata(v_U) == json({{"_ArrayData_", {1, 2, 3, 4, 5, 6}}, {"_ArraySize_", {2, 3}}, {"_ArrayType_", "uint8"}}));
+                CHECK(json::from_bjdata(v_i) == json({{"_ArrayData_", {1, 2, 3, 4, 5, 6}}, {"_ArraySize_", {2, 3}}, {"_ArrayType_", "int8"}}));
+                CHECK(json::from_bjdata(v_i) == json({{"_ArrayData_", {1, 2, 3, 4, 5, 6}}, {"_ArraySize_", {2, 3}}, {"_ArrayType_", "int8"}}));
+                CHECK(json::from_bjdata(v_u) == json({{"_ArrayData_", {1, 2, 3, 4, 5, 6}}, {"_ArraySize_", {2, 3}}, {"_ArrayType_", "uint16"}}));
+                CHECK(json::from_bjdata(v_I) == json({{"_ArrayData_", {1, 2, 3, 4, 5, 6}}, {"_ArraySize_", {2, 3}}, {"_ArrayType_", "int16"}}));
+                CHECK(json::from_bjdata(v_m) == json({{"_ArrayData_", {1, 2, 3, 4, 5, 6}}, {"_ArraySize_", {2, 3}}, {"_ArrayType_", "uint32"}}));
+                CHECK(json::from_bjdata(v_l) == json({{"_ArrayData_", {1, 2, 3, 4, 5, 6}}, {"_ArraySize_", {2, 3}}, {"_ArrayType_", "int32"}}));
+                CHECK(json::from_bjdata(v_M) == json({{"_ArrayData_", {1, 2, 3, 4, 5, 6}}, {"_ArraySize_", {2, 3}}, {"_ArrayType_", "uint64"}}));
+                CHECK(json::from_bjdata(v_L) == json({{"_ArrayData_", {1, 2, 3, 4, 5, 6}}, {"_ArraySize_", {2, 3}}, {"_ArrayType_", "int64"}}));
+                CHECK(json::from_bjdata(v_d) == json({{"_ArrayData_", {1.f, 2.f, 3.f, 4.f, 5.f, 6.f}}, {"_ArraySize_", {2, 3}}, {"_ArrayType_", "single"}}));
+                CHECK(json::from_bjdata(v_D) == json({{"_ArrayData_", {1., 2., 3., 4., 5., 6.}}, {"_ArraySize_", {2, 3}}, {"_ArrayType_", "double"}}));
+                CHECK(json::from_bjdata(v_C) == json({{"_ArrayData_", {'a', 'b', 'c', 'd', 'e', 'f'}}, {"_ArraySize_", {2, 3}}, {"_ArrayType_", "char"}}));
+
                 // roundtrip: output should be optimized
-                std::vector<uint8_t> v_empty = {'[', '#', 'i', 0};
-                CHECK(json::to_bjdata(json::from_bjdata(v_N), true, true) == v_empty);
-                CHECK(json::to_bjdata(json::from_bjdata(v_T), true, true) == v_T);
-                CHECK(json::to_bjdata(json::from_bjdata(v_F), true, true) == v_F);
-                CHECK(json::to_bjdata(json::from_bjdata(v_Z), true, true) == v_Z);
-                CHECK(json::to_bjdata(json::from_bjdata(v_i), true, true) == v_i);
+                CHECK(json::to_bjdata(json::from_bjdata(v_e), true, true) == v_e);
                 CHECK(json::to_bjdata(json::from_bjdata(v_U), true, true) == v_U);
-                CHECK(json::to_bjdata(json::from_bjdata(v_I), true, true) == v_I);
+                CHECK(json::to_bjdata(json::from_bjdata(v_i), true, true) == v_i);
                 CHECK(json::to_bjdata(json::from_bjdata(v_u), true, true) == v_u);
-                CHECK(json::to_bjdata(json::from_bjdata(v_l), true, true) == v_l);
+                CHECK(json::to_bjdata(json::from_bjdata(v_I), true, true) == v_I);
                 CHECK(json::to_bjdata(json::from_bjdata(v_m), true, true) == v_m);
-                CHECK(json::to_bjdata(json::from_bjdata(v_L), true, true) == v_L);
+                CHECK(json::to_bjdata(json::from_bjdata(v_l), true, true) == v_l);
                 CHECK(json::to_bjdata(json::from_bjdata(v_M), true, true) == v_M);
+                CHECK(json::to_bjdata(json::from_bjdata(v_L), true, true) == v_L);
+                CHECK(json::to_bjdata(json::from_bjdata(v_d), true, true) == v_d);
                 CHECK(json::to_bjdata(json::from_bjdata(v_D), true, true) == v_D);
-                CHECK(json::to_bjdata(json::from_bjdata(v_S), true, true) == v_S);
-                CHECK(json::to_bjdata(json::from_bjdata(v_C), true, true) == v_S); // char is serialized to string
-#endif
+                CHECK(json::to_bjdata(json::from_bjdata(v_C), true, true) == v_C);
             }
 
             SECTION("optimized ndarray (type and vector-size as 1D array)")
@@ -2407,27 +2437,6 @@ TEST_CASE("BJData")
                 CHECK(json::from_bjdata(v_D) == json({3.1415926, 3.1415926}));
                 CHECK(json::from_bjdata(v_S) == json({"a", "a"}));
                 CHECK(json::from_bjdata(v_C) == json({"a", "a"}));
-
-#ifdef BJDATA_TEST_ROUNDTRIP  // round-trip to vectorized size (ndarray) is not yet supported
-                // roundtrip: output should be optimized
-                std::vector<uint8_t> v_empty = {'[', '#', 'i', 0};
-                CHECK(json::to_bjdata(json::from_bjdata(v_N), true, true) == v_empty);
-                CHECK(json::to_bjdata(json::from_bjdata(v_T), true, true) == v_T);
-                CHECK(json::to_bjdata(json::from_bjdata(v_F), true, true) == v_F);
-                CHECK(json::to_bjdata(json::from_bjdata(v_Z), true, true) == v_Z);
-                CHECK(json::to_bjdata(json::from_bjdata(v_i), true, true) == v_i);
-                CHECK(json::to_bjdata(json::from_bjdata(v_U), true, true) == v_U);
-                CHECK(json::to_bjdata(json::from_bjdata(v_I), true, true) == v_I);
-                CHECK(json::to_bjdata(json::from_bjdata(v_u), true, true) == v_u);
-                CHECK(json::to_bjdata(json::from_bjdata(v_l), true, true) == v_l);
-                CHECK(json::to_bjdata(json::from_bjdata(v_m), true, true) == v_m);
-                CHECK(json::to_bjdata(json::from_bjdata(v_L), true, true) == v_L);
-                CHECK(json::to_bjdata(json::from_bjdata(v_M), true, true) == v_M);
-                CHECK(json::to_bjdata(json::from_bjdata(v_D), true, true) == v_D);
-                CHECK(json::to_bjdata(json::from_bjdata(v_S), true, true) == v_S);
-                CHECK(json::to_bjdata(json::from_bjdata(v_C), true, true) == v_S); // char is serialized to string
-#endif
-
             }
 
             SECTION("optimized ndarray (type and vector-size as size-optimized array)")
@@ -2465,27 +2474,17 @@ TEST_CASE("BJData")
                 CHECK(json::from_bjdata(v_D) == json({3.1415926, 3.1415926}));
                 CHECK(json::from_bjdata(v_S) == json({"a", "a"}));
                 CHECK(json::from_bjdata(v_C) == json({"a", "a"}));
+            }
 
-#ifdef BJDATA_TEST_ROUNDTRIP  // round-trip to vectorized size (ndarray) is not yet supported
-                // roundtrip: output should be optimized
-                std::vector<uint8_t> v_empty = {'[', '#', 'i', 0};
-                CHECK(json::to_bjdata(json::from_bjdata(v_N), true, true) == v_empty);
-                CHECK(json::to_bjdata(json::from_bjdata(v_T), true, true) == v_T);
-                CHECK(json::to_bjdata(json::from_bjdata(v_F), true, true) == v_F);
-                CHECK(json::to_bjdata(json::from_bjdata(v_Z), true, true) == v_Z);
-                CHECK(json::to_bjdata(json::from_bjdata(v_i), true, true) == v_i);
-                CHECK(json::to_bjdata(json::from_bjdata(v_U), true, true) == v_U);
-                CHECK(json::to_bjdata(json::from_bjdata(v_I), true, true) == v_I);
-                CHECK(json::to_bjdata(json::from_bjdata(v_u), true, true) == v_u);
-                CHECK(json::to_bjdata(json::from_bjdata(v_l), true, true) == v_l);
-                CHECK(json::to_bjdata(json::from_bjdata(v_m), true, true) == v_m);
-                CHECK(json::to_bjdata(json::from_bjdata(v_L), true, true) == v_L);
-                CHECK(json::to_bjdata(json::from_bjdata(v_M), true, true) == v_M);
-                CHECK(json::to_bjdata(json::from_bjdata(v_D), true, true) == v_D);
-                CHECK(json::to_bjdata(json::from_bjdata(v_S), true, true) == v_S);
-                CHECK(json::to_bjdata(json::from_bjdata(v_C), true, true) == v_S); // char is serialized to string
-#endif
+            SECTION("invalid ndarray annotations remains as object")
+            {
+                // check if invalid ND array annotations stay as object
+                json j_type = json({{"_ArrayData_", {1, 2, 3, 4, 5, 6}}, {"_ArraySize_", {2, 3}}, {"_ArrayType_", "invalidtype"}});
+                json j_size = json({{"_ArrayData_", {1, 2, 3, 4, 5}}, {"_ArraySize_", {2, 3}}, {"_ArrayType_", "uint8"}});
 
+                // roundtrip: output should stay as object
+                CHECK(json::from_bjdata(json::to_bjdata(j_type), true, true) == j_type);
+                CHECK(json::from_bjdata(json::to_bjdata(j_size), true, true) == j_size);
             }
         }
     }

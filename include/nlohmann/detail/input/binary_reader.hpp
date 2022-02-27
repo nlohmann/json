@@ -2111,11 +2111,31 @@ class binary_reader
                 {
                     return false;
                 }
-                result = ( (!dim.empty()) ? 1 : 0 );
-                for (auto i : dim)
+                if (dim.size() == 1 || (dim.size() > 1 && dim.at(0) == 1)) // return normal array size if 1D vector
                 {
-                    result *= i;
+                    result = dim.at(dim.size() - 1);
+                    return true;
                 }
+                if (!dim.empty())  // if ndarray, convert to a object in JData annotated array format
+                {
+                    string_t key = "_ArraySize_";
+                    if (JSON_HEDLEY_UNLIKELY((!sax->start_object(static_cast<std::size_t>(-1)) || !sax->key(key) || !sax->start_array(dim.size()))))
+                    {
+                        return false;
+                    }
+                    result = 1;
+                    for (auto i : dim)
+                    {
+                        result *= i;
+                        if (JSON_HEDLEY_UNLIKELY(!sax->number_integer(i)))
+                        {
+                            return false;
+                        }
+                    }
+                    result |= 0x8000000000000000ull;   // low 63 bit of result stores the total element count, sign-bit indicates ndarray
+                    return sax->end_array();
+                }
+                result = 0;
                 return true;
             }
 
@@ -2377,6 +2397,48 @@ class binary_reader
         if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_type(size_and_type)))
         {
             return false;
+        }
+
+        // detect and encode bjdata ndarray as an object in JData annotated array format (https://github.com/NeuroJSON/jdata):
+        // {"_ArrayType_" : "typeid", "_ArraySize_" : [n1, n2, ...], "_ArrayData_" : [v1, v2, ...]}
+
+        if (input_format == input_format_t::bjdata && size_and_type.first != string_t::npos && size_and_type.first >= 0x8000000000000000ull)
+        {
+            std::map<char_int_type, string_t> bjdtype = {{'U', "uint8"},  {'i', "int8"},  {'u', "uint16"}, {'I', "int16"},
+                {'m', "uint32"}, {'l', "int32"}, {'M', "uint64"}, {'L', "int64"}, {'d', "single"}, {'D', "double"}, {'C', "char"}
+            };
+
+            string_t key = "_ArrayType_";
+            if (JSON_HEDLEY_UNLIKELY(bjdtype.find(size_and_type.second) == bjdtype.end() || !sax->key(key) || !sax->string(bjdtype[size_and_type.second]) ))
+            {
+                return false;
+            }
+
+            if (size_and_type.second == 'C')
+            {
+                size_and_type.second = 'U';
+            }
+
+            size_and_type.first -= 0x8000000000000000ull;
+            key = "_ArrayData_";
+            if (JSON_HEDLEY_UNLIKELY(!sax->key(key) || !sax->start_array(size_and_type.first) ))
+            {
+                return false;
+            }
+
+            for (std::size_t i = 0; i < size_and_type.first; ++i)
+            {
+                if (JSON_HEDLEY_UNLIKELY(!get_ubjson_value(size_and_type.second)))
+                {
+                    return false;
+                }
+            }
+
+            if (JSON_HEDLEY_UNLIKELY((!sax->end_array() || !sax->end_object())))
+            {
+                return false;
+            }
+            return true;
         }
 
         if (size_and_type.first != string_t::npos)

@@ -873,6 +873,14 @@ class binary_writer
 
             case value_t::object:
             {
+                if (use_bjdata && j.m_value.object->size() == 3 && j.m_value.object->find("_ArrayType_") != j.m_value.object->end() && j.m_value.object->find("_ArraySize_") != j.m_value.object->end() && j.m_value.object->find("_ArrayData_") != j.m_value.object->end())
+                {
+                    if (write_bjdata_ndarray(*j.m_value.object, use_count, use_type) == 0)  // decode bjdata ndarray in the JData format (https://github.com/NeuroJSON/jdata)
+                    {
+                        break;
+                    }
+                }
+
                 if (add_prefix)
                 {
                     oa->write_character(to_char_type('{'));
@@ -1588,6 +1596,117 @@ class binary_writer
     static constexpr CharType get_ubjson_float_prefix(double /*unused*/)
     {
         return 'D';  // float 64
+    }
+
+    /*!
+    @return 0 if the object is successfully converted to a bjdata ndarray, 1 if the type or size is invalid
+    */
+    int write_bjdata_ndarray(const typename BasicJsonType::object_t& value, const bool use_count, const bool use_type)
+    {
+        std::map<string_t, CharType> bjdtype = {{"uint8", 'U'},  {"int8", 'i'},  {"uint16", 'u'}, {"int16", 'I'},
+            {"uint32", 'm'}, {"int32", 'l'}, {"uint64", 'M'}, {"int64", 'L'}, {"single", 'd'}, {"double", 'D'}, {"char", 'C'}
+        };
+
+        string_t key = "_ArrayType_";
+        if (bjdtype.find(value.at(key)) == bjdtype.end())
+        {
+            return 1;
+        }
+        CharType dtype = bjdtype[value.at(key)];
+
+        key = "_ArraySize_";
+        std::size_t len = (value.at(key).empty() ? 0 : 1);
+        for (const auto& el : value.at(key))
+        {
+            len *= el.m_value.number_unsigned;
+        }
+
+        key = "_ArrayData_";
+        if (value.at(key).size() != len)
+        {
+            return 1;
+        }
+
+        oa->write_character('[');
+        oa->write_character('$');
+        oa->write_character(dtype);
+        oa->write_character('#');
+
+        key = "_ArraySize_";
+        write_ubjson(value.at(key), use_count, use_type, true,  true);
+
+        key = "_ArrayData_";
+        if (dtype == 'U' || dtype == 'C')
+        {
+            for (const auto& el : value.at(key))
+            {
+                write_number(static_cast<std::uint8_t>(el.m_value.number_unsigned), true);
+            }
+        }
+        else if (dtype == 'i')
+        {
+            for (const auto& el : value.at(key))
+            {
+                write_number(static_cast<std::int8_t>(el.m_value.number_integer), true);
+            }
+        }
+        else if (dtype == 'u')
+        {
+            for (const auto& el : value.at(key))
+            {
+                write_number(static_cast<std::uint16_t>(el.m_value.number_unsigned), true);
+            }
+        }
+        else if (dtype == 'I')
+        {
+            for (const auto& el : value.at(key))
+            {
+                write_number(static_cast<std::int16_t>(el.m_value.number_integer), true);
+            }
+        }
+        else if (dtype == 'm')
+        {
+            for (const auto& el : value.at(key))
+            {
+                write_number(static_cast<std::uint32_t>(el.m_value.number_unsigned), true);
+            }
+        }
+        else if (dtype == 'l')
+        {
+            for (const auto& el : value.at(key))
+            {
+                write_number(static_cast<std::int32_t>(el.m_value.number_integer), true);
+            }
+        }
+        else if (dtype == 'M')
+        {
+            for (const auto& el : value.at(key))
+            {
+                write_number(static_cast<std::uint64_t>(el.m_value.number_unsigned), true);
+            }
+        }
+        else if (dtype == 'L')
+        {
+            for (const auto& el : value.at(key))
+            {
+                write_number(static_cast<std::int64_t>(el.m_value.number_integer), true);
+            }
+        }
+        else if (dtype == 'd')
+        {
+            for (const auto& el : value.at(key))
+            {
+                write_number(static_cast<float>(el.m_value.number_float), true);
+            }
+        }
+        else if (dtype == 'D')
+        {
+            for (const auto& el : value.at(key))
+            {
+                write_number(static_cast<double>(el.m_value.number_float), true);
+            }
+        }
+        return 0;
     }
 
     ///////////////////////
