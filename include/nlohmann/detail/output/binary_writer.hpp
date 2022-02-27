@@ -2,6 +2,7 @@
 
 #include <algorithm> // reverse
 #include <array> // array
+#include <map> // map
 #include <cmath> // isnan, isinf
 #include <cstdint> // uint8_t, uint16_t, uint32_t, uint64_t
 #include <cstring> // memcpy
@@ -1618,7 +1619,7 @@ class binary_writer
         std::size_t len = (value.at(key).empty() ? 0 : 1);
         for (const auto& el : value.at(key))
         {
-            len *= el.m_value.number_unsigned;
+            len *= static_cast<std::size_t>(el.m_value.number_unsigned);
         }
 
         key = "_ArrayData_";

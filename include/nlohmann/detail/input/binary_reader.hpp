@@ -12,6 +12,7 @@
 #include <string> // char_traits, string
 #include <utility> // make_pair, move
 #include <vector> // vector
+#include <map> // map
 
 #include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/input/input_adapters.hpp>
@@ -2111,15 +2112,15 @@ class binary_reader
                 {
                     return false;
                 }
-                if (dim.size() == 1 || (dim.size() > 1 && dim.at(0) == 1)) // return normal array size if 1D vector
+                if (dim.size() == 1 || (dim.size() > 1 && dim.at(0) == 1)) // return normal array size if 1D row vector
                 {
                     result = dim.at(dim.size() - 1);
                     return true;
                 }
-                if (!dim.empty())  // if ndarray, convert to a object in JData annotated array format
+                if (!dim.empty())  // if ndarray, convert to an object in JData annotated array format
                 {
                     string_t key = "_ArraySize_";
-                    if (JSON_HEDLEY_UNLIKELY((!sax->start_object(static_cast<std::size_t>(-1)) || !sax->key(key) || !sax->start_array(dim.size()))))
+                    if (JSON_HEDLEY_UNLIKELY(!sax->start_object(3) || !sax->key(key) || !sax->start_array(dim.size())))
                     {
                         return false;
                     }
@@ -2127,12 +2128,12 @@ class binary_reader
                     for (auto i : dim)
                     {
                         result *= i;
-                        if (JSON_HEDLEY_UNLIKELY(!sax->number_integer(i)))
+                        if (JSON_HEDLEY_UNLIKELY(!sax->number_integer(static_cast<number_integer_t>(i))))
                         {
                             return false;
                         }
                     }
-                    result |= 0x8000000000000000ull;   // low 63 bit of result stores the total element count, sign-bit indicates ndarray
+                    result |= (1ull << (sizeof(result) * 8 - 1)); // low 63 bit of result stores the total element count, sign-bit indicates ndarray
                     return sax->end_array();
                 }
                 result = 0;
@@ -2402,14 +2403,14 @@ class binary_reader
         // detect and encode bjdata ndarray as an object in JData annotated array format (https://github.com/NeuroJSON/jdata):
         // {"_ArrayType_" : "typeid", "_ArraySize_" : [n1, n2, ...], "_ArrayData_" : [v1, v2, ...]}
 
-        if (input_format == input_format_t::bjdata && size_and_type.first != string_t::npos && size_and_type.first >= 0x8000000000000000ull)
+        if (input_format == input_format_t::bjdata && size_and_type.first != string_t::npos && size_and_type.first >= (1ull << (sizeof(std::size_t) * 8 - 1)))
         {
             std::map<char_int_type, string_t> bjdtype = {{'U', "uint8"},  {'i', "int8"},  {'u', "uint16"}, {'I', "int16"},
                 {'m', "uint32"}, {'l', "int32"}, {'M', "uint64"}, {'L', "int64"}, {'d', "single"}, {'D', "double"}, {'C', "char"}
             };
 
             string_t key = "_ArrayType_";
-            if (JSON_HEDLEY_UNLIKELY(bjdtype.find(size_and_type.second) == bjdtype.end() || !sax->key(key) || !sax->string(bjdtype[size_and_type.second]) ))
+            if (JSON_HEDLEY_UNLIKELY(bjdtype.count(size_and_type.second) == 0 || !sax->key(key) || !sax->string(bjdtype[size_and_type.second]) ))
             {
                 return false;
             }
@@ -2419,7 +2420,7 @@ class binary_reader
                 size_and_type.second = 'U';
             }
 
-            size_and_type.first -= 0x8000000000000000ull;
+            size_and_type.first &= ~(1ull << (sizeof(std::size_t) * 8 - 1));
             key = "_ArrayData_";
             if (JSON_HEDLEY_UNLIKELY(!sax->key(key) || !sax->start_array(size_and_type.first) ))
             {

@@ -2409,6 +2409,7 @@ TEST_CASE("BJData")
                 std::vector<uint8_t> v_T = {'[', '$', 'T', '#', '[', 'i', 1, 'i', 2, ']'};
                 std::vector<uint8_t> v_F = {'[', '$', 'F', '#', '[', 'i', 1, 'i', 2, ']'};
                 std::vector<uint8_t> v_Z = {'[', '$', 'Z', '#', '[', 'i', 1, 'i', 2, ']'};
+                std::vector<uint8_t> v_0 = {'[', '$', 'i', '#', '[', ']'};
                 std::vector<uint8_t> v_i = {'[', '$', 'i', '#', '[', 'i', 1, 'i', 2, ']', 0x7F, 0x7F};
                 std::vector<uint8_t> v_U = {'[', '$', 'U', '#', '[', 'i', 1, 'i', 2, ']', 0xFF, 0xFF};
                 std::vector<uint8_t> v_I = {'[', '$', 'I', '#', '[', 'i', 1, 'i', 2, ']', 0xFF, 0x7F, 0xFF, 0x7F};
@@ -2426,6 +2427,7 @@ TEST_CASE("BJData")
                 CHECK(json::from_bjdata(v_T) == json({true, true}));
                 CHECK(json::from_bjdata(v_F) == json({false, false}));
                 CHECK(json::from_bjdata(v_Z) == json({nullptr, nullptr}));
+                CHECK(json::from_bjdata(v_0) == json::array());
                 CHECK(json::from_bjdata(v_i) == json({127, 127}));
                 CHECK(json::from_bjdata(v_U) == json({255, 255}));
                 CHECK(json::from_bjdata(v_I) == json({32767, 32767}));
@@ -2744,6 +2746,11 @@ TEST_CASE("BJData")
             CHECK_THROWS_AS(_ = json::from_bjdata(vM), json::parse_error&);
             CHECK_THROWS_WITH(_ = json::from_bjdata(vM), "[json.exception.parse_error.110] parse error at byte 18: syntax error while parsing BJData number: unexpected end of input");
             CHECK(json::from_bjdata(vM, true, false).is_discarded());
+
+            std::vector<uint8_t> vU = {'[', '$', 'U', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 1, 2, 3, 4, 5};
+            CHECK_THROWS_AS(_ = json::from_bjdata(vU), json::parse_error&);
+            CHECK_THROWS_WITH(_ = json::from_bjdata(vU), "[json.exception.parse_error.110] parse error at byte 18: syntax error while parsing BJData number: unexpected end of input");
+            CHECK(json::from_bjdata(vU, true, false).is_discarded());
         }
 
         SECTION("objects")
