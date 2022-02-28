@@ -15501,11 +15501,11 @@ class binary_writer
         };
 
         string_t key = "_ArrayType_";
-        if (bjdtype.find(std::string(value.at(key))) == bjdtype.end())
+        if (bjdtype.find(static_cast<std::string>(value.at(key))) == bjdtype.end())
         {
             return 1;
         }
-        CharType dtype = bjdtype[std::string(value.at(key))];
+        CharType dtype = bjdtype[static_cast<std::string>(value.at(key))];
 
         key = "_ArraySize_";
         std::size_t len = (value.at(key).empty() ? 0 : 1);
