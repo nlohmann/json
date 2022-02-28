@@ -10811,11 +10811,7 @@ class binary_reader
                 }
             }
 
-            if (JSON_HEDLEY_UNLIKELY((!sax->end_array() || !sax->end_object())))
-            {
-                return false;
-            }
-            return true;
+            return (sax->end_array() && sax->end_object());
         }
 
         if (size_and_type.first != string_t::npos)
@@ -15505,11 +15501,11 @@ class binary_writer
         };
 
         string_t key = "_ArrayType_";
-        if (bjdtype.find(value.at(key)) == bjdtype.end())
+        if (bjdtype.find(std::string(value.at(key))) == bjdtype.end())
         {
             return 1;
         }
-        CharType dtype = bjdtype[value.at(key)];
+        CharType dtype = bjdtype[std::string(value.at(key))];
 
         key = "_ArraySize_";
         std::size_t len = (value.at(key).empty() ? 0 : 1);

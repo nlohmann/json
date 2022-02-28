@@ -2435,11 +2435,7 @@ class binary_reader
                 }
             }
 
-            if (JSON_HEDLEY_UNLIKELY((!sax->end_array() || !sax->end_object())))
-            {
-                return false;
-            }
-            return true;
+            return (sax->end_array() && sax->end_object());
         }
 
         if (size_and_type.first != string_t::npos)
