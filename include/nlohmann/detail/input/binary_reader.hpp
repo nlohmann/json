@@ -2176,8 +2176,10 @@ class binary_reader
 
         if (current == '$')
         {
+            std::vector<char_int_type> bjdx = {'[', '{', 'S', 'H', 'T', 'F', 'N', 'Z'}; // excluded markers in bjdata optimized type
+
             result.second = get();  // must not ignore 'N', because 'N' maybe the type
-            if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format, "type") || (input_format == input_format_t::bjdata && std::string("[{SHTFNZ").find(result.second) != std::string::npos)))
+            if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format, "type") || (input_format == input_format_t::bjdata && std::find(bjdx.begin(), bjdx.end(), result.second) != bjdx.end() )))
             {
                 return false;
             }

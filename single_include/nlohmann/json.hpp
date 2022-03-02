@@ -10552,8 +10552,10 @@ class binary_reader
 
         if (current == '$')
         {
+            std::vector<char_int_type> bjdx = {'[', '{', 'S', 'H', 'T', 'F', 'N', 'Z'}; // excluded markers in bjdata optimized type
+
             result.second = get();  // must not ignore 'N', because 'N' maybe the type
-            if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format, "type") || (input_format == input_format_t::bjdata && std::string("[{SHTFNZ").find(result.second) != std::string::npos)))
+            if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format, "type") || (input_format == input_format_t::bjdata && std::find(bjdx.begin(), bjdx.end(), result.second) != bjdx.end() )))
             {
                 return false;
             }
@@ -14699,7 +14701,9 @@ class binary_writer
                         return ubjson_prefix(v, use_bjdata) == first_prefix;
                     });
 
-                    if (same_prefix && !(use_bjdata && std::string("[{SHTFNZ").find(first_prefix) != std::string::npos))
+                    std::vector<CharType> bjdx = {'[', '{', 'S', 'H', 'T', 'F', 'N', 'Z'}; // excluded markers in bjdata optimized type
+
+                    if (same_prefix && !(use_bjdata && std::find(bjdx.begin(), bjdx.end(), first_prefix) != bjdx.end()))
                     {
                         prefix_required = false;
                         oa->write_character(to_char_type('$'));
