@@ -2830,6 +2830,9 @@ TEST_CASE("BJData")
             CHECK_THROWS_AS(_ = json::from_bjdata(vST2), json::parse_error&);
             CHECK_THROWS_WITH(_ = json::from_bjdata(vST2), "[json.exception.parse_error.110] parse error at byte 8: syntax error while parsing BJData value: unexpected end of input");
             CHECK(json::from_bjdata(vST2, true, false).is_discarded());
+
+            std::vector<uint8_t> vO = {'{', '#', '[', 'i', 2, 'i', 1, ']', 'i', 1, 'a', 'i', 1, 'i', 1, 'b', 'i', 2};
+            CHECK(json::from_bjdata(vO, true, false).is_discarded());
         }
     }
 

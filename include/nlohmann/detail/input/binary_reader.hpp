@@ -2500,6 +2500,11 @@ class binary_reader
             return false;
         }
 
+        if (input_format == input_format_t::bjdata && size_and_type.first != string_t::npos && size_and_type.first >= (1ull << (sizeof(std::size_t) * 8 - 1)))
+        {
+            return false;
+        }
+
         string_t key;
         if (size_and_type.first != string_t::npos)
         {
