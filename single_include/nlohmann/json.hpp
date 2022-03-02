@@ -10553,7 +10553,7 @@ class binary_reader
         if (current == '$')
         {
             result.second = get();  // must not ignore 'N', because 'N' maybe the type
-            if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format, "type")))
+            if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format, "type") || (input_format == input_format_t::bjdata && std::string("[{SHTFNZ").find(result.second) != std::string::npos)))
             {
                 return false;
             }
@@ -14699,7 +14699,7 @@ class binary_writer
                         return ubjson_prefix(v, use_bjdata) == first_prefix;
                     });
 
-                    if (same_prefix)
+                    if (same_prefix && !(use_bjdata && std::string("[{SHTFNZ").find(first_prefix) != std::string::npos))
                     {
                         prefix_required = false;
                         oa->write_character(to_char_type('$'));
@@ -14795,7 +14795,7 @@ class binary_writer
                         return ubjson_prefix(v, use_bjdata) == first_prefix;
                     });
 
-                    if (same_prefix)
+                    if (same_prefix && !(use_bjdata && std::string("[{SHTFNZ").find(first_prefix) != std::string::npos))
                     {
                         prefix_required = false;
                         oa->write_character(to_char_type('$'));

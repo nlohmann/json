@@ -1697,7 +1697,7 @@ TEST_CASE("BJData")
                 SECTION("size=true type=true")
                 {
                     json j = {nullptr};
-                    std::vector<uint8_t> expected = {'[', '$', 'Z', '#', 'i', 1};
+                    std::vector<uint8_t> expected = {'[', '#', 'i', 1, 'Z'};
                     const auto result = json::to_bjdata(j, true, true);
                     CHECK(result == expected);
 
@@ -1775,7 +1775,7 @@ TEST_CASE("BJData")
                 SECTION("size=true type=true")
                 {
                     json j = json::parse("[[[[]]]]");
-                    std::vector<uint8_t> expected = {'[', '$', '[', '#', 'i', 1, '$', '[', '#', 'i', 1, '$', '[', '#', 'i', 1, '#', 'i', 0};
+                    std::vector<uint8_t> expected = {'[', '#', 'i', 1, '[', '#', 'i', 1, '[', '#', 'i', 1, '[', '#', 'i', 0};
                     const auto result = json::to_bjdata(j, true, true);
                     CHECK(result == expected);
 
@@ -1817,18 +1817,6 @@ TEST_CASE("BJData")
                     CHECK(json::from_bjdata(result) == j);
                     CHECK(json::from_bjdata(result, true, false) == j);
                 }
-
-                SECTION("size=true type=true")
-                {
-                    json j(257, nullptr);
-                    std::vector<uint8_t> expected = {'[', '$', 'Z', '#', 'I', 0x01, 0x01};
-                    const auto result = json::to_bjdata(j, true, true);
-                    CHECK(result == expected);
-
-                    // roundtrip
-                    CHECK(json::from_bjdata(result) == j);
-                    CHECK(json::from_bjdata(result, true, false) == j);
-                }
             }
 
             SECTION("array with uint16_t elements")
@@ -1857,18 +1845,6 @@ TEST_CASE("BJData")
                     expected[3] = 0x00; // 0x0101, first byte
                     expected[4] = 0x80; // 0x0101, second byte
                     const auto result = json::to_bjdata(j, true);
-                    CHECK(result == expected);
-
-                    // roundtrip
-                    CHECK(json::from_bjdata(result) == j);
-                    CHECK(json::from_bjdata(result, true, false) == j);
-                }
-
-                SECTION("size=true type=true")
-                {
-                    json j(32768, nullptr);
-                    std::vector<uint8_t> expected = {'[', '$', 'Z', '#', 'u', 0x00, 0x80};
-                    const auto result = json::to_bjdata(j, true, true);
                     CHECK(result == expected);
 
                     // roundtrip
@@ -1905,18 +1881,6 @@ TEST_CASE("BJData")
                     expected[5] = 0x01; // 0x00010101, second byte
                     expected[6] = 0x00; // 0x00010101, first byte
                     const auto result = json::to_bjdata(j, true);
-                    CHECK(result == expected);
-
-                    // roundtrip
-                    CHECK(json::from_bjdata(result) == j);
-                    CHECK(json::from_bjdata(result, true, false) == j);
-                }
-
-                SECTION("size=true type=true")
-                {
-                    json j(65793, nullptr);
-                    std::vector<uint8_t> expected = {'[', '$', 'Z', '#', 'l', 0x01, 0x01, 0x01, 0x00};
-                    const auto result = json::to_bjdata(j, true, true);
                     CHECK(result == expected);
 
                     // roundtrip
@@ -1992,18 +1956,6 @@ TEST_CASE("BJData")
                     CHECK(json::from_bjdata(result) == j);
                     CHECK(json::from_bjdata(result, true, false) == j);
                 }
-
-                SECTION("size=true type=true")
-                {
-                    json j = {{"", nullptr}};
-                    std::vector<uint8_t> expected = {'{', '$', 'Z', '#', 'i', 1, 'i', 0};
-                    const auto result = json::to_bjdata(j, true, true);
-                    CHECK(result == expected);
-
-                    // roundtrip
-                    CHECK(json::from_bjdata(result) == j);
-                    CHECK(json::from_bjdata(result, true, false) == j);
-                }
             }
 
             SECTION("{\"a\": {\"b\": {\"c\": {}}}}")
@@ -2038,12 +1990,12 @@ TEST_CASE("BJData")
                     CHECK(json::from_bjdata(result, true, false) == j);
                 }
 
-                SECTION("size=true type=true")
+                SECTION("size=true type=true ignore object type marker")
                 {
                     json j = json::parse(R"({"a": {"b": {"c": {}}}})");
                     std::vector<uint8_t> expected =
                     {
-                        '{', '$', '{', '#', 'i', 1, 'i', 1, 'a', '$', '{', '#', 'i', 1, 'i', 1, 'b', '$', '{', '#', 'i', 1, 'i', 1, 'c', '#', 'i', 0
+                        '{', '#', 'i', 1, 'i', 1, 'a', '{', '#', 'i', 1, 'i', 1, 'b', '{', '#', 'i', 1, 'i', 1, 'c', '{', '#', 'i', 0
                     };
                     const auto result = json::to_bjdata(j, true, true);
                     CHECK(result == expected);
@@ -2073,37 +2025,6 @@ TEST_CASE("BJData")
                 CHECK_THROWS_AS(_ = json::from_bjdata(vec), json::parse_error&);
                 CHECK_THROWS_WITH(_ = json::from_bjdata(vec),
                                   "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing BJData value: expected end of input; last byte: 0x5A");
-            }
-        }
-
-        SECTION("excessive size")
-        {
-            SECTION("array")
-            {
-                std::vector<uint8_t> v_bjdata = {'[', '$', 'Z', '#', 'L', 0x78, 0x28, 0x00, 0x68, 0x28, 0x69, 0x69, 0x17};
-                json _;
-                CHECK_THROWS_AS(_ = json::from_bjdata(v_bjdata), json::out_of_range&);
-
-                json j;
-                nlohmann::detail::json_sax_dom_callback_parser<json> scp(j, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/)
-                {
-                    return true;
-                });
-                CHECK_THROWS_AS(_ = json::sax_parse(v_bjdata, &scp, json::input_format_t::bjdata), json::out_of_range&);
-            }
-
-            SECTION("object")
-            {
-                std::vector<uint8_t> v_bjdata = {'{', '$', 'Z', '#', 'L', 0x78, 0x28, 0x00, 0x68, 0x28, 0x69, 0x69, 0x17};
-                json _;
-                CHECK_THROWS_AS(_ = json::from_bjdata(v_bjdata), json::out_of_range&);
-
-                json j;
-                nlohmann::detail::json_sax_dom_callback_parser<json> scp(j, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/)
-                {
-                    return true;
-                });
-                CHECK_THROWS_AS(_ = json::sax_parse(v_bjdata, &scp, json::input_format_t::bjdata), json::out_of_range&);
             }
         }
     }
@@ -2298,10 +2219,6 @@ TEST_CASE("BJData")
             SECTION("optimized version (type and length)")
             {
                 // create vector with two elements of the same type
-                std::vector<uint8_t> v_N = {'[', '$', 'N', '#', 'i', 2};
-                std::vector<uint8_t> v_T = {'[', '$', 'T', '#', 'i', 2};
-                std::vector<uint8_t> v_F = {'[', '$', 'F', '#', 'i', 2};
-                std::vector<uint8_t> v_Z = {'[', '$', 'Z', '#', 'i', 2};
                 std::vector<uint8_t> v_i = {'[', '$', 'i', '#', 'i', 2, 0x7F, 0x7F};
                 std::vector<uint8_t> v_U = {'[', '$', 'U', '#', 'i', 2, 0xFF, 0xFF};
                 std::vector<uint8_t> v_I = {'[', '$', 'I', '#', 'i', 2, 0xFF, 0x7F, 0xFF, 0x7F};
@@ -2311,14 +2228,10 @@ TEST_CASE("BJData")
                 std::vector<uint8_t> v_L = {'[', '$', 'L', '#', 'i', 2, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F};
                 std::vector<uint8_t> v_M = {'[', '$', 'M', '#', 'i', 2, 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D, 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D};
                 std::vector<uint8_t> v_D = {'[', '$', 'D', '#', 'i', 2, 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40, 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40};
-                std::vector<uint8_t> v_S = {'[', '$', 'S', '#', 'i', 2, 'i', 1, 'a', 'i', 1, 'a'};
+                std::vector<uint8_t> v_S = {'[', '#', 'i', 2, 'S', 'i', 1, 'a', 'S', 'i', 1, 'a'};
                 std::vector<uint8_t> v_C = {'[', '$', 'C', '#', 'i', 2, 'a', 'a'};
 
                 // check if vector is parsed correctly
-                CHECK(json::from_bjdata(v_N) == json::array());
-                CHECK(json::from_bjdata(v_T) == json({true, true}));
-                CHECK(json::from_bjdata(v_F) == json({false, false}));
-                CHECK(json::from_bjdata(v_Z) == json({nullptr, nullptr}));
                 CHECK(json::from_bjdata(v_i) == json({127, 127}));
                 CHECK(json::from_bjdata(v_U) == json({255, 255}));
                 CHECK(json::from_bjdata(v_I) == json({32767, 32767}));
@@ -2333,10 +2246,6 @@ TEST_CASE("BJData")
 
                 // roundtrip: output should be optimized
                 std::vector<uint8_t> v_empty = {'[', '#', 'i', 0};
-                CHECK(json::to_bjdata(json::from_bjdata(v_N), true, true) == v_empty);
-                CHECK(json::to_bjdata(json::from_bjdata(v_T), true, true) == v_T);
-                CHECK(json::to_bjdata(json::from_bjdata(v_F), true, true) == v_F);
-                CHECK(json::to_bjdata(json::from_bjdata(v_Z), true, true) == v_Z);
                 CHECK(json::to_bjdata(json::from_bjdata(v_i), true, true) == v_i);
                 CHECK(json::to_bjdata(json::from_bjdata(v_U), true, true) == v_U);
                 CHECK(json::to_bjdata(json::from_bjdata(v_I), true, true) == v_I);
@@ -2355,10 +2264,6 @@ TEST_CASE("BJData")
                 // create vector with two elements of the same type
                 std::vector<uint8_t> v_0 = {'[', '$', 'i', '#', '[', '$', 'i', '#', 'i', 1, 0};
                 std::vector<uint8_t> v_1 = {'[', '$', 'i', '#', '[', '$', 'i', '#', 'i', 1, 2, 0x7F, 0x7F};
-                std::vector<uint8_t> v_N = {'[', '$', 'N', '#', '[', '$', 'i', '#', 'i', 2, 1, 2};
-                std::vector<uint8_t> v_T = {'[', '$', 'T', '#', '[', '$', 'i', '#', 'i', 2, 1, 2};
-                std::vector<uint8_t> v_F = {'[', '$', 'F', '#', '[', '$', 'i', '#', 'i', 2, 1, 2};
-                std::vector<uint8_t> v_Z = {'[', '$', 'Z', '#', '[', '$', 'i', '#', 'i', 2, 1, 2};
                 std::vector<uint8_t> v_i = {'[', '$', 'i', '#', '[', '$', 'i', '#', 'i', 2, 1, 2, 0x7F, 0x7F};
                 std::vector<uint8_t> v_U = {'[', '$', 'U', '#', '[', '$', 'i', '#', 'i', 2, 1, 2, 0xFF, 0xFF};
                 std::vector<uint8_t> v_I = {'[', '$', 'I', '#', '[', '$', 'i', '#', 'i', 2, 1, 2, 0xFF, 0x7F, 0xFF, 0x7F};
@@ -2368,16 +2273,12 @@ TEST_CASE("BJData")
                 std::vector<uint8_t> v_L = {'[', '$', 'L', '#', '[', '$', 'i', '#', 'i', 2, 1, 2, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F};
                 std::vector<uint8_t> v_M = {'[', '$', 'M', '#', '[', '$', 'i', '#', 'i', 2, 1, 2, 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D, 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D};
                 std::vector<uint8_t> v_D = {'[', '$', 'D', '#', '[', '$', 'i', '#', 'i', 2, 1, 2, 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40, 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40};
-                std::vector<uint8_t> v_S = {'[', '$', 'S', '#', '[', '$', 'i', '#', 'i', 2, 1, 2, 'i', 1, 'a', 'i', 1, 'a'};
+                std::vector<uint8_t> v_S = {'[', '#', '[', '$', 'i', '#', 'i', 2, 1, 2, 'S', 'i', 1, 'a', 'S', 'i', 1, 'a'};
                 std::vector<uint8_t> v_C = {'[', '$', 'C', '#', '[', '$', 'i', '#', 'i', 2, 1, 2, 'a', 'a'};
 
                 // check if vector is parsed correctly
                 CHECK(json::from_bjdata(v_0) == json::array());
                 CHECK(json::from_bjdata(v_1) == json({127, 127}));
-                CHECK(json::from_bjdata(v_N) == json::array());
-                CHECK(json::from_bjdata(v_T) == json({true, true}));
-                CHECK(json::from_bjdata(v_F) == json({false, false}));
-                CHECK(json::from_bjdata(v_Z) == json({nullptr, nullptr}));
                 CHECK(json::from_bjdata(v_i) == json({127, 127}));
                 CHECK(json::from_bjdata(v_U) == json({255, 255}));
                 CHECK(json::from_bjdata(v_I) == json({32767, 32767}));
@@ -2440,10 +2341,6 @@ TEST_CASE("BJData")
             SECTION("optimized ndarray (type and vector-size as 1D array)")
             {
                 // create vector with two elements of the same type
-                std::vector<uint8_t> v_N = {'[', '$', 'N', '#', '[', 'i', 1, 'i', 2, ']'};
-                std::vector<uint8_t> v_T = {'[', '$', 'T', '#', '[', 'i', 1, 'i', 2, ']'};
-                std::vector<uint8_t> v_F = {'[', '$', 'F', '#', '[', 'i', 1, 'i', 2, ']'};
-                std::vector<uint8_t> v_Z = {'[', '$', 'Z', '#', '[', 'i', 1, 'i', 2, ']'};
                 std::vector<uint8_t> v_0 = {'[', '$', 'i', '#', '[', ']'};
                 std::vector<uint8_t> v_i = {'[', '$', 'i', '#', '[', 'i', 1, 'i', 2, ']', 0x7F, 0x7F};
                 std::vector<uint8_t> v_U = {'[', '$', 'U', '#', '[', 'i', 1, 'i', 2, ']', 0xFF, 0xFF};
@@ -2454,14 +2351,10 @@ TEST_CASE("BJData")
                 std::vector<uint8_t> v_L = {'[', '$', 'L', '#', '[', 'i', 1, 'i', 2, ']', 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F};
                 std::vector<uint8_t> v_M = {'[', '$', 'M', '#', '[', 'i', 1, 'i', 2, ']', 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D, 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D};
                 std::vector<uint8_t> v_D = {'[', '$', 'D', '#', '[', 'i', 1, 'i', 2, ']', 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40, 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40};
-                std::vector<uint8_t> v_S = {'[', '$', 'S', '#', '[', 'i', 1, 'i', 2, ']', 'i', 1, 'a', 'i', 1, 'a'};
+                std::vector<uint8_t> v_S = {'[', '#', '[', 'i', 1, 'i', 2, ']', 'S', 'i', 1, 'a', 'S', 'i', 1, 'a'};
                 std::vector<uint8_t> v_C = {'[', '$', 'C', '#', '[', 'i', 1, 'i', 2, ']', 'a', 'a'};
 
                 // check if vector is parsed correctly
-                CHECK(json::from_bjdata(v_N) == json::array());
-                CHECK(json::from_bjdata(v_T) == json({true, true}));
-                CHECK(json::from_bjdata(v_F) == json({false, false}));
-                CHECK(json::from_bjdata(v_Z) == json({nullptr, nullptr}));
                 CHECK(json::from_bjdata(v_0) == json::array());
                 CHECK(json::from_bjdata(v_i) == json({127, 127}));
                 CHECK(json::from_bjdata(v_U) == json({255, 255}));
@@ -2479,10 +2372,6 @@ TEST_CASE("BJData")
             SECTION("optimized ndarray (type and vector-size as size-optimized array)")
             {
                 // create vector with two elements of the same type
-                std::vector<uint8_t> v_N = {'[', '$', 'N', '#', '[', '#', 'i', 2, 'i', 1, 'i', 2};
-                std::vector<uint8_t> v_T = {'[', '$', 'T', '#', '[', '#', 'i', 2, 'i', 1, 'i', 2};
-                std::vector<uint8_t> v_F = {'[', '$', 'F', '#', '[', '#', 'i', 2, 'i', 1, 'i', 2};
-                std::vector<uint8_t> v_Z = {'[', '$', 'Z', '#', '[', '#', 'i', 2, 'i', 1, 'i', 2};
                 std::vector<uint8_t> v_i = {'[', '$', 'i', '#', '[', '#', 'i', 2, 'i', 1, 'i', 2, 0x7F, 0x7F};
                 std::vector<uint8_t> v_U = {'[', '$', 'U', '#', '[', '#', 'i', 2, 'i', 1, 'i', 2, 0xFF, 0xFF};
                 std::vector<uint8_t> v_I = {'[', '$', 'I', '#', '[', '#', 'i', 2, 'i', 1, 'i', 2, 0xFF, 0x7F, 0xFF, 0x7F};
@@ -2492,14 +2381,10 @@ TEST_CASE("BJData")
                 std::vector<uint8_t> v_L = {'[', '$', 'L', '#', '[', '#', 'i', 2, 'i', 1, 'i', 2, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F};
                 std::vector<uint8_t> v_M = {'[', '$', 'M', '#', '[', '#', 'i', 2, 'i', 1, 'i', 2, 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D, 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D};
                 std::vector<uint8_t> v_D = {'[', '$', 'D', '#', '[', '#', 'i', 2, 'i', 1, 'i', 2, 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40, 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40};
-                std::vector<uint8_t> v_S = {'[', '$', 'S', '#', '[', '#', 'i', 2, 'i', 1, 'i', 2, 'i', 1, 'a', 'i', 1, 'a'};
+                std::vector<uint8_t> v_S = {'[', '#', '[', '#', 'i', 2, 'i', 1, 'i', 2, 'S', 'i', 1, 'a', 'S', 'i', 1, 'a'};
                 std::vector<uint8_t> v_C = {'[', '$', 'C', '#', '[', '#', 'i', 2, 'i', 1, 'i', 2, 'a', 'a'};
 
                 // check if vector is parsed correctly
-                CHECK(json::from_bjdata(v_N) == json::array());
-                CHECK(json::from_bjdata(v_T) == json({true, true}));
-                CHECK(json::from_bjdata(v_F) == json({false, false}));
-                CHECK(json::from_bjdata(v_Z) == json({nullptr, nullptr}));
                 CHECK(json::from_bjdata(v_i) == json({127, 127}));
                 CHECK(json::from_bjdata(v_U) == json({255, 255}));
                 CHECK(json::from_bjdata(v_I) == json({32767, 32767}));
@@ -2522,6 +2407,34 @@ TEST_CASE("BJData")
                 // roundtrip: output should stay as object
                 CHECK(json::from_bjdata(json::to_bjdata(j_type), true, true) == j_type);
                 CHECK(json::from_bjdata(json::to_bjdata(j_size), true, true) == j_size);
+            }
+
+            SECTION("do not accept NTFZ markers in ndarray optimized type")
+            {
+                json _;
+                std::vector<uint8_t> v_N = {'[', '$', 'N', '#', '[', '#', 'i', 2, 'i', 1, 'i', 2};
+                std::vector<uint8_t> v_T = {'[', '$', 'T', '#', '[', '#', 'i', 2, 'i', 1, 'i', 2};
+                std::vector<uint8_t> v_F = {'[', '$', 'F', '#', '[', '#', 'i', 2, 'i', 1, 'i', 2};
+                std::vector<uint8_t> v_Z = {'[', '$', 'Z', '#', '[', '#', 'i', 2, 'i', 1, 'i', 2};
+
+                CHECK(json::from_bjdata(v_N, true, true).is_discarded());
+                CHECK(json::from_bjdata(v_T, true, true).is_discarded());
+                CHECK(json::from_bjdata(v_F, true, true).is_discarded());
+                CHECK(json::from_bjdata(v_Z, true, true).is_discarded());
+            }
+
+            SECTION("do not accept NTFZ markers in ndarray optimized type")
+            {
+                json _;
+                std::vector<uint8_t> v_N = {'[', '$', 'N', '#', '[', 'i', 1, 'i', 2, ']'};
+                std::vector<uint8_t> v_T = {'[', '$', 'T', '#', '[', 'i', 1, 'i', 2, ']'};
+                std::vector<uint8_t> v_F = {'[', '$', 'F', '#', '[', 'i', 1, 'i', 2, ']'};
+                std::vector<uint8_t> v_Z = {'[', '$', 'Z', '#', '[', 'i', 1, 'i', 2, ']'};
+
+                CHECK(json::from_bjdata(v_N, true, true).is_discarded());
+                CHECK(json::from_bjdata(v_T, true, true).is_discarded());
+                CHECK(json::from_bjdata(v_F, true, true).is_discarded());
+                CHECK(json::from_bjdata(v_Z, true, true).is_discarded());
             }
         }
     }
@@ -2709,10 +2622,10 @@ TEST_CASE("BJData")
             CHECK_THROWS_WITH(_ = json::from_bjdata(vi), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BJData value: unexpected end of input");
             CHECK(json::from_bjdata(vi, true, false).is_discarded());
 
-            std::vector<uint8_t> vT = {'[', '$', 'T'};
-            CHECK_THROWS_AS(_ = json::from_bjdata(vT), json::parse_error&);
-            CHECK_THROWS_WITH(_ = json::from_bjdata(vT), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BJData value: unexpected end of input");
-            CHECK(json::from_bjdata(vT, true, false).is_discarded());
+            std::vector<uint8_t> vU = {'[', '$', 'U'};
+            CHECK_THROWS_AS(_ = json::from_bjdata(vU), json::parse_error&);
+            CHECK_THROWS_WITH(_ = json::from_bjdata(vU), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BJData value: unexpected end of input");
+            CHECK(json::from_bjdata(vU, true, false).is_discarded());
         }
 
         SECTION("arrays")
@@ -2970,13 +2883,6 @@ TEST_CASE("BJData")
                 CHECK(json::to_bjdata(j, true) == expected_size);
             }
         }
-
-        SECTION("discarded")
-        {
-            json j = {json::value_t::discarded, json::value_t::discarded};
-            std::vector<uint8_t> expected = {'[', '$', 'N', '#', 'i', 2};
-            CHECK(json::to_bjdata(j, true, true) == expected);
-        }
     }
 }
 
@@ -3173,7 +3079,7 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
                     }
                 }
             };
-            std::vector<uint8_t> v = {'{', '$', '{', '#', 'i', 1, 'i', 4, 'p', 'o', 's', 't', '#', 'i', 4,
+            std::vector<uint8_t> v = {'{', '#', 'i', 1, 'i', 4, 'p', 'o', 's', 't', '{', '#', 'i', 4,
                                       'i', 6, 'a', 'u', 't', 'h', 'o', 'r', 'S', 'i', 6, 'r', 'k', 'a', 'l', 'l', 'a',
                                       'i', 4, 'b', 'o', 'd', 'y', 'S', 'i', 16, 'I', ' ', 't', 'o', 't', 'a', 'l', 'l', 'y', ' ', 'a', 'g', 'r', 'e', 'e', '!',
                                       'i', 2, 'i', 'd', 'I', 0x71, 0x04,
@@ -3283,13 +3189,13 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
             SECTION("Array")
             {
                 std::vector<uint8_t> v = {'[', '$', 'N', '#', 'I', 0x00, 0x02};
-                CHECK(json::from_bjdata(v) == json::array());
+                CHECK(json::from_bjdata(v, true, true).is_discarded());
             }
 
             SECTION("Object")
             {
                 std::vector<uint8_t> v = {'{', '$', 'Z', '#', 'i', 3, 'i', 4, 'n', 'a', 'm', 'e', 'i', 8, 'p', 'a', 's', 's', 'w', 'o', 'r', 'd', 'i', 5, 'e', 'm', 'a', 'i', 'l'};
-                CHECK(json::from_bjdata(v) == json({ {"name", nullptr}, {"password", nullptr}, {"email", nullptr} }));
+                CHECK(json::from_bjdata(v, true, true).is_discarded());
             }
         }
     }
