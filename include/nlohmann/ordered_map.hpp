@@ -47,7 +47,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
-            if (it->first == key)
+            if (m_compare(it->first, key))
             {
                 return {it, false};
             }
@@ -70,7 +70,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
-            if (it->first == key)
+            if (m_compare(it->first, key))
             {
                 return it->second;
             }
@@ -83,7 +83,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
-            if (it->first == key)
+            if (m_compare(it->first, key))
             {
                 return it->second;
             }
@@ -96,7 +96,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
-            if (it->first == key)
+            if (m_compare(it->first, key))
             {
                 // Since we cannot move const Keys, re-construct them in place
                 for (auto next = it; ++next != this->end(); ++it)
@@ -168,7 +168,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
-            if (it->first == key)
+            if (m_compare(it->first, key))
             {
                 return 1;
             }
@@ -180,7 +180,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
-            if (it->first == key)
+            if (m_compare(it->first, key))
             {
                 return it;
             }
@@ -192,7 +192,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
-            if (it->first == key)
+            if (m_compare(it->first, key))
             {
                 return it;
             }
@@ -209,7 +209,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
-            if (it->first == value.first)
+            if (m_compare(it->first, value.first))
             {
                 return {it, false};
             }
@@ -230,6 +230,9 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
             insert(*it);
         }
     }
+
+private:
+    JSON_NO_UNIQUE_ADDRESS key_compare m_compare = key_compare();
 };
 
 }  // namespace nlohmann
