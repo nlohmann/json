@@ -160,6 +160,24 @@ struct has_to_json < BasicJsonType, T, enable_if_t < !is_basic_json<T>::value >>
         T>::value;
 };
 
+template<typename T>
+using detect_key_compare = typename T::key_compare;
+
+template<typename T>
+struct has_key_compare : std::integral_constant<bool, is_detected<detect_key_compare, T>::value> {};
+
+// obtains the actual object key comparator
+template<typename BasicJsonType>
+struct actual_object_comparator
+{
+    using object_t = typename BasicJsonType::object_t;
+    using object_comparator_t = typename BasicJsonType::default_object_comparator_t;
+    using type = typename std::conditional < has_key_compare<object_t>::value,
+          typename object_t::key_compare, object_comparator_t>::type;
+};
+
+template<typename BasicJsonType>
+using actual_object_comparator_t = typename actual_object_comparator<BasicJsonType>::type;
 
 ///////////////////
 // is_ functions //

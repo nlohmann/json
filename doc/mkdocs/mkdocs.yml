@@ -97,6 +97,7 @@ nav:
         - 'count': api/basic_json/count.md
         - 'crbegin': api/basic_json/crbegin.md
         - 'crend': api/basic_json/crend.md
+        - 'default_object_comparator_t': api/basic_json/default_object_comparator_t.md
         - 'diff': api/basic_json/diff.md
         - 'dump': api/basic_json/dump.md
         - 'emplace': api/basic_json/emplace.md

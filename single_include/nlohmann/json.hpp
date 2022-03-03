@@ -3295,6 +3295,24 @@ struct has_to_json < BasicJsonType, T, enable_if_t < !is_basic_json<T>::value >>
         T>::value;
 };
 
+template<typename T>
+using detect_key_compare = typename T::key_compare;
+
+template<typename T>
+struct has_key_compare : std::integral_constant<bool, is_detected<detect_key_compare, T>::value> {};
+
+// obtains the actual object key comparator
+template<typename BasicJsonType>
+struct actual_object_comparator
+{
+    using object_t = typename BasicJsonType::object_t;
+    using object_comparator_t = typename BasicJsonType::default_object_comparator_t;
+    using type = typename std::conditional < has_key_compare<object_t>::value,
+          typename object_t::key_compare, object_comparator_t>::type;
+};
+
+template<typename BasicJsonType>
+using actual_object_comparator_t = typename actual_object_comparator<BasicJsonType>::type;
 
 ///////////////////
 // is_ functions //
@@ -17812,21 +17830,23 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// the template arguments passed to class @ref basic_json.
     /// @{
 
-    /// @brief object key comparator type
-    /// @sa https://json.nlohmann.me/api/basic_json/object_comparator_t/
+    /// @brief default object key comparator type
+    /// The actual object key comparator type (@ref object_comparator_t) may be
+    /// different.
+    /// @sa https://json.nlohmann.me/api/basic_json/default_object_comparator_t/
 #if defined(JSON_HAS_CPP_14)
-    // Use transparent comparator if possible, combined with perfect forwarding
-    // on find() and count() calls prevents unnecessary string construction.
-    using object_comparator_t = std::less<>;
+    // use of transparent comparator avoids unnecessary repeated construction of temporaries
+    // in functions involving lookup by key with types other than object_t::key_type (aka. StringType)
+    using default_object_comparator_t = std::less<>;
 #else
-    using object_comparator_t = std::less<StringType>;
+    using default_object_comparator_t = std::less<StringType>;
 #endif
 
     /// @brief a type for an object
     /// @sa https://json.nlohmann.me/api/basic_json/object_t/
     using object_t = ObjectType<StringType,
           basic_json,
-          object_comparator_t,
+          default_object_comparator_t,
           AllocatorType<std::pair<const StringType,
           basic_json>>>;
 
@@ -17857,6 +17877,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @brief a type for a packed binary type
     /// @sa https://json.nlohmann.me/api/basic_json/binary_t/
     using binary_t = nlohmann::byte_container_with_subtype<BinaryType>;
+
+    /// @brief object key comparator type
+    /// @sa https://json.nlohmann.me/api/basic_json/object_comparator_t/
+    using object_comparator_t = detail::actual_object_comparator_t<basic_json>;
 
     /// @}
 
