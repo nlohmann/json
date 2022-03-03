@@ -50,7 +50,7 @@ void insert(const_iterator first, const_iterator last);
 2. iterator pointing to the first element inserted, or `pos` if `#!cpp cnt==0`
 3. iterator pointing to the first element inserted, or `pos` if `#!cpp first==last`
 4. iterator pointing to the first element inserted, or `pos` if `ilist` is empty
-5. /
+5. (none)
 
 ## Exception safety
 

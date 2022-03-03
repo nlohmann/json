@@ -201,16 +201,16 @@ basic_json(basic_json&& other) noexcept;
 
 ## Exceptions
 
-1. /
+1. (none)
 2. The function does not throw exceptions.
-3. /
-4. /
+3. (none)
+4. (none)
 5. The function can throw the following exceptions:
     - Throws [`type_error.301`](../../home/exceptions.md#jsonexceptiontype_error301) if `type_deduction` is
       `#!cpp false`, `manual_type` is `value_t::object`, but `init` contains an element which is not a pair whose first
       element is a string. In this case, the constructor could not create an object. If `type_deduction` would have been
       `#!cpp true`, an array would have been created. See `object(initializer_list_t)` for an example.
-6. /
+6. (none)
 7. The function can throw the following exceptions:
     - Throws [`invalid_iterator.201`](../../home/exceptions.md#jsonexceptioninvalid_iterator201) if iterators `first`
       and `last` are not compatible (i.e., do not belong to the same JSON value). In this case, the range
@@ -220,7 +220,7 @@ basic_json(basic_json&& other) noexcept;
       element anymore. In this case, the range `[first, last)` is undefined. See example code below.
     - Throws [`invalid_iterator.206`](../../home/exceptions.md#jsonexceptioninvalid_iterator206) if iterators `first`
       and `last` belong to a `#!json null` value. In this case, the range `[first, last)` is undefined.
-8. /
+8. (none)
 9. The function does not throw exceptions.
 
 ## Complexity
