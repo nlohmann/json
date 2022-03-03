@@ -835,6 +835,18 @@ TEST_CASE("regression tests 2")
 
         CHECK(j.dump() == "[1,4]");
     }
+
+    SECTION("issue #3343 - json and ordered_json are not interchangable")
+    {
+        json::object_t jobj({ { "product", "one" } });
+        ordered_json::object_t ojobj({{"product", "one"}});
+
+        auto jit = jobj.begin();
+        auto ojit = ojobj.begin();
+
+        CHECK(jit->first == ojit->first);
+        CHECK(jit->second.get<std::string>() == ojit->second.get<std::string>());
+    }
 }
 
 DOCTEST_CLANG_SUPPRESS_WARNING_POP
