@@ -124,21 +124,26 @@ class parse_error : public exception
     @param[in] what_arg  the explanatory string
     @return parse_error object
     */
+    static parse_error create(int id_, const position_t& pos, const std::string& what_arg)
+    {
+        return create(id_, pos, what_arg, {});
+    }
+
     template<typename BasicJsonType>
     static parse_error create(int id_, const position_t& pos, const std::string& what_arg, const BasicJsonType& context)
     {
-        std::string w = exception::name("parse_error", id_) + "parse error" +
-                        position_string(pos) + ": " + exception::diagnostics(context) + what_arg;
-        return {id_, pos.chars_read_total, w.c_str()};
+        return create(id_, pos, what_arg, exception::diagnostics(context));
+    }
+
+    static parse_error create(int id_, std::size_t byte_, const std::string& what_arg)
+    {
+        return create(id_, byte_, what_arg, {});
     }
 
     template<typename BasicJsonType>
     static parse_error create(int id_, std::size_t byte_, const std::string& what_arg, const BasicJsonType& context)
     {
-        std::string w = exception::name("parse_error", id_) + "parse error" +
-                        (byte_ != 0 ? (" at byte " + std::to_string(byte_)) : "") +
-                        ": " + exception::diagnostics(context) + what_arg;
-        return {id_, byte_, w.c_str()};
+        return create(id_, byte_, what_arg, exception::diagnostics(context));
     }
 
     /*!
@@ -156,6 +161,21 @@ class parse_error : public exception
     parse_error(int id_, std::size_t byte_, const char* what_arg)
         : exception(id_, what_arg), byte(byte_) {}
 
+    static parse_error create(int id_, const position_t& pos, const std::string& what_arg, const std::string& context)
+    {
+        std::string w = exception::name("parse_error", id_) + "parse error" +
+                        position_string(pos) + ": " + context + what_arg;
+        return {id_, pos.chars_read_total, w.c_str()};
+    }
+
+    static parse_error create(int id_, std::size_t byte_, const std::string& what_arg, const std::string& context)
+    {
+        std::string w = exception::name("parse_error", id_) + "parse error" +
+                        (byte_ != 0 ? (" at byte " + std::to_string(byte_)) : "") +
+                        ": " + context + what_arg;
+        return {id_, byte_, w.c_str()};
+    }
+
     static std::string position_string(const position_t& pos)
     {
         return " at line " + std::to_string(pos.lines_read + 1) +
@@ -168,6 +188,12 @@ class parse_error : public exception
 class invalid_iterator : public exception
 {
   public:
+    static invalid_iterator create(int id_, const std::string& what_arg)
+    {
+        std::string w = exception::name("invalid_iterator", id_) + what_arg;
+        return {id_, w.c_str()};
+    }
+
     template<typename BasicJsonType>
     static invalid_iterator create(int id_, const std::string& what_arg, const BasicJsonType& context)
     {
@@ -186,6 +212,12 @@ class invalid_iterator : public exception
 class type_error : public exception
 {
   public:
+    static type_error create(int id_, const std::string& what_arg)
+    {
+        std::string w = exception::name("type_error", id_) + what_arg;
+        return {id_, w.c_str()};
+    }
+
     template<typename BasicJsonType>
     static type_error create(int id_, const std::string& what_arg, const BasicJsonType& context)
     {
@@ -203,6 +235,12 @@ class type_error : public exception
 class out_of_range : public exception
 {
   public:
+    static out_of_range create(int id_, const std::string& what_arg)
+    {
+        std::string w = exception::name("out_of_range", id_) + what_arg;
+        return {id_, w.c_str()};
+    }
+
     template<typename BasicJsonType>
     static out_of_range create(int id_, const std::string& what_arg, const BasicJsonType& context)
     {
@@ -220,6 +258,12 @@ class out_of_range : public exception
 class other_error : public exception
 {
   public:
+    static other_error create(int id_, const std::string& what_arg)
+    {
+        std::string w = exception::name("other_error", id_) + what_arg;
+        return {id_, w.c_str()};
+    }
+
     template<typename BasicJsonType>
     static other_error create(int id_, const std::string& what_arg, const BasicJsonType& context)
     {

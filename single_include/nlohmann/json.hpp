@@ -2918,21 +2918,26 @@ class parse_error : public exception
     @param[in] what_arg  the explanatory string
     @return parse_error object
     */
+    static parse_error create(int id_, const position_t& pos, const std::string& what_arg)
+    {
+        return create(id_, pos, what_arg, {});
+    }
+
     template<typename BasicJsonType>
     static parse_error create(int id_, const position_t& pos, const std::string& what_arg, const BasicJsonType& context)
     {
-        std::string w = exception::name("parse_error", id_) + "parse error" +
-                        position_string(pos) + ": " + exception::diagnostics(context) + what_arg;
-        return {id_, pos.chars_read_total, w.c_str()};
+        return create(id_, pos, what_arg, exception::diagnostics(context));
+    }
+
+    static parse_error create(int id_, std::size_t byte_, const std::string& what_arg)
+    {
+        return create(id_, byte_, what_arg, {});
     }
 
     template<typename BasicJsonType>
     static parse_error create(int id_, std::size_t byte_, const std::string& what_arg, const BasicJsonType& context)
     {
-        std::string w = exception::name("parse_error", id_) + "parse error" +
-                        (byte_ != 0 ? (" at byte " + std::to_string(byte_)) : "") +
-                        ": " + exception::diagnostics(context) + what_arg;
-        return {id_, byte_, w.c_str()};
+        return create(id_, byte_, what_arg, exception::diagnostics(context));
     }
 
     /*!
@@ -2950,6 +2955,21 @@ class parse_error : public exception
     parse_error(int id_, std::size_t byte_, const char* what_arg)
         : exception(id_, what_arg), byte(byte_) {}
 
+    static parse_error create(int id_, const position_t& pos, const std::string& what_arg, const std::string& context)
+    {
+        std::string w = exception::name("parse_error", id_) + "parse error" +
+                        position_string(pos) + ": " + context + what_arg;
+        return {id_, pos.chars_read_total, w.c_str()};
+    }
+
+    static parse_error create(int id_, std::size_t byte_, const std::string& what_arg, const std::string& context)
+    {
+        std::string w = exception::name("parse_error", id_) + "parse error" +
+                        (byte_ != 0 ? (" at byte " + std::to_string(byte_)) : "") +
+                        ": " + context + what_arg;
+        return {id_, byte_, w.c_str()};
+    }
+
     static std::string position_string(const position_t& pos)
     {
         return " at line " + std::to_string(pos.lines_read + 1) +
@@ -2962,6 +2982,12 @@ class parse_error : public exception
 class invalid_iterator : public exception
 {
   public:
+    static invalid_iterator create(int id_, const std::string& what_arg)
+    {
+        std::string w = exception::name("invalid_iterator", id_) + what_arg;
+        return {id_, w.c_str()};
+    }
+
     template<typename BasicJsonType>
     static invalid_iterator create(int id_, const std::string& what_arg, const BasicJsonType& context)
     {
@@ -2980,6 +3006,12 @@ class invalid_iterator : public exception
 class type_error : public exception
 {
   public:
+    static type_error create(int id_, const std::string& what_arg)
+    {
+        std::string w = exception::name("type_error", id_) + what_arg;
+        return {id_, w.c_str()};
+    }
+
     template<typename BasicJsonType>
     static type_error create(int id_, const std::string& what_arg, const BasicJsonType& context)
     {
@@ -2997,6 +3029,12 @@ class type_error : public exception
 class out_of_range : public exception
 {
   public:
+    static out_of_range create(int id_, const std::string& what_arg)
+    {
+        std::string w = exception::name("out_of_range", id_) + what_arg;
+        return {id_, w.c_str()};
+    }
+
     template<typename BasicJsonType>
     static out_of_range create(int id_, const std::string& what_arg, const BasicJsonType& context)
     {
@@ -3014,6 +3052,12 @@ class out_of_range : public exception
 class other_error : public exception
 {
   public:
+    static other_error create(int id_, const std::string& what_arg)
+    {
+        std::string w = exception::name("other_error", id_) + what_arg;
+        return {id_, w.c_str()};
+    }
+
     template<typename BasicJsonType>
     static other_error create(int id_, const std::string& what_arg, const BasicJsonType& context)
     {
@@ -12364,7 +12408,7 @@ class json_pointer
     {
         if (JSON_HEDLEY_UNLIKELY(empty()))
         {
-            JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent", BasicJsonType()));
+            JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent"));
         }
 
         reference_tokens.pop_back();
@@ -12376,7 +12420,7 @@ class json_pointer
     {
         if (JSON_HEDLEY_UNLIKELY(empty()))
         {
-            JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent", BasicJsonType()));
+            JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent"));
         }
 
         return reference_tokens.back();
@@ -12421,13 +12465,13 @@ class json_pointer
         // error condition (cf. RFC 6901, Sect. 4)
         if (JSON_HEDLEY_UNLIKELY(s.size() > 1 && s[0] == '0'))
         {
-            JSON_THROW(detail::parse_error::create(106, 0, "array index '" + s + "' must not begin with '0'", BasicJsonType()));
+            JSON_THROW(detail::parse_error::create(106, 0, "array index '" + s + "' must not begin with '0'"));
         }
 
         // error condition (cf. RFC 6901, Sect. 4)
         if (JSON_HEDLEY_UNLIKELY(s.size() > 1 && !(s[0] >= '1' && s[0] <= '9')))
         {
-            JSON_THROW(detail::parse_error::create(109, 0, "array index '" + s + "' is not a number", BasicJsonType()));
+            JSON_THROW(detail::parse_error::create(109, 0, "array index '" + s + "' is not a number"));
         }
 
         std::size_t processed_chars = 0;
@@ -12438,20 +12482,20 @@ class json_pointer
         }
         JSON_CATCH(std::out_of_range&)
         {
-            JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + s + "'", BasicJsonType()));
+            JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + s + "'"));
         }
 
         // check if the string was completely read
         if (JSON_HEDLEY_UNLIKELY(processed_chars != s.size()))
         {
-            JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + s + "'", BasicJsonType()));
+            JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + s + "'"));
         }
 
         // only triggered on special platforms (like 32bit), see also
         // https://github.com/nlohmann/json/pull/2203
         if (res >= static_cast<unsigned long long>((std::numeric_limits<size_type>::max)()))  // NOLINT(runtime/int)
         {
-            JSON_THROW(detail::out_of_range::create(410, "array index " + s + " exceeds size_type", BasicJsonType())); // LCOV_EXCL_LINE
+            JSON_THROW(detail::out_of_range::create(410, "array index " + s + " exceeds size_type")); // LCOV_EXCL_LINE
         }
 
         return static_cast<size_type>(res);
@@ -12462,7 +12506,7 @@ class json_pointer
     {
         if (JSON_HEDLEY_UNLIKELY(empty()))
         {
-            JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent", BasicJsonType()));
+            JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent"));
         }
 
         json_pointer result = *this;
@@ -12879,7 +12923,7 @@ class json_pointer
         // check if nonempty reference string begins with slash
         if (JSON_HEDLEY_UNLIKELY(reference_string[0] != '/'))
         {
-            JSON_THROW(detail::parse_error::create(107, 1, "JSON pointer must be empty or begin with '/' - was: '" + reference_string + "'", BasicJsonType()));
+            JSON_THROW(detail::parse_error::create(107, 1, "JSON pointer must be empty or begin with '/' - was: '" + reference_string + "'"));
         }
 
         // extract the reference tokens:
@@ -12914,7 +12958,7 @@ class json_pointer
                                          (reference_token[pos + 1] != '0' &&
                                           reference_token[pos + 1] != '1')))
                 {
-                    JSON_THROW(detail::parse_error::create(108, 0, "escape character '~' must be followed with '0' or '1'", BasicJsonType()));
+                    JSON_THROW(detail::parse_error::create(108, 0, "escape character '~' must be followed with '0' or '1'"));
                 }
             }
 
@@ -16552,7 +16596,7 @@ class serializer
                     {
                         case error_handler_t::strict:
                         {
-                            JSON_THROW(type_error::create(316, "invalid UTF-8 byte at index " + std::to_string(i) + ": 0x" + hex_bytes(byte | 0), BasicJsonType()));
+                            JSON_THROW(type_error::create(316, "invalid UTF-8 byte at index " + std::to_string(i) + ": 0x" + hex_bytes(byte | 0)));
                         }
 
                         case error_handler_t::ignore:
@@ -16644,7 +16688,7 @@ class serializer
             {
                 case error_handler_t::strict:
                 {
-                    JSON_THROW(type_error::create(316, "incomplete UTF-8 string; last byte: 0x" + hex_bytes(static_cast<std::uint8_t>(s.back() | 0)), BasicJsonType()));
+                    JSON_THROW(type_error::create(316, "incomplete UTF-8 string; last byte: 0x" + hex_bytes(static_cast<std::uint8_t>(s.back() | 0))));
                 }
 
                 case error_handler_t::ignore:
