@@ -341,7 +341,7 @@ TEST_CASE("regression tests 2")
                ]
              })";
 
-        json::parser_callback_t cb = [&](int /*level*/, json::parse_event_t event, json & parsed)
+        json::parser_callback_t cb = [&](int /*level*/, json::parse_event_t event, json & parsed) noexcept
         {
             // skip uninteresting events
             if (event == json::parse_event_t::value && !parsed.is_primitive())
