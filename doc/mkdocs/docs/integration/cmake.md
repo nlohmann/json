@@ -100,15 +100,8 @@ automatically download a release as a dependency at configure type.
 
     include(FetchContent)
     
-    FetchContent_Declare(json
-        URL https://github.com/nlohmann/json/releases/download/v3.10.5/json.tar.xz
-    )
-    
-    FetchContent_GetProperties(json)
-    if(NOT json_POPULATED)
-        FetchContent_Populate(json)
-        add_subdirectory(${json_SOURCE_DIR} ${json_BINARY_DIR} EXCLUDE_FROM_ALL)
-    endif()
+    FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.10.5/json.tar.xz)
+    FetchContent_MakeAvailable(json)
     
     add_executable(example example.cpp)
     target_link_libraries(example PRIVATE nlohmann_json::nlohmann_json)

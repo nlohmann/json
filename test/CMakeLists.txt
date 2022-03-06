@@ -170,4 +170,5 @@ endif()
 
 add_subdirectory(cmake_add_subdirectory)
 add_subdirectory(cmake_fetch_content)
+add_subdirectory(cmake_fetch_content2)
 add_subdirectory(cmake_target_include_directories)
