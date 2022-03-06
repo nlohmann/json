@@ -7,6 +7,7 @@ on:
       - master
       - release/*
   pull_request:
+  workflow_dispatch:
 
 jobs:
   mingw:
@@ -64,7 +65,7 @@ jobs:
       run: cd build ; ctest -j 10 -C Release --output-on-failure
 
   msvc2019:
-    runs-on: windows-latest
+    runs-on: windows-2019
     strategy:
       matrix:
         build_type: [Debug, Release]
@@ -84,7 +85,7 @@ jobs:
       run: cd build ; ctest -j 10 -C ${{ matrix.build_type }} --output-on-failure
 
   msvc2019_latest:
-    runs-on: windows-latest
+    runs-on: windows-2019
 
     steps:
     - uses: actions/checkout@v2
@@ -128,7 +129,7 @@ jobs:
       run: cd build ; ctest -j 10 -C Release --output-on-failure
 
   clang:
-    runs-on: windows-latest
+    runs-on: windows-2019
     strategy:
       matrix:
         version: [11, 12]
@@ -145,7 +146,7 @@ jobs:
         run: cd build ; ctest -j 10 -C Debug --exclude-regex "test-unicode" --output-on-failure
 
   clang-cl-11:
-    runs-on: windows-latest
+    runs-on: windows-2019
     strategy:
       matrix:
         architecture: [Win32, x64]
