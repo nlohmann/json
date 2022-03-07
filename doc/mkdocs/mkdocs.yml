@@ -9,7 +9,7 @@ repo_url: https://github.com/nlohmann/json
 edit_uri: edit/develop/doc/mkdocs/docs
 
 # Copyright
-copyright: Copyright &copy; 2013 - 2021 Niels Lohmann
+copyright: Copyright &copy; 2013 - 2022 Niels Lohmann
 
 # Configuration
 theme:
@@ -60,6 +60,7 @@ nav:
     - features/object_order.md
     - Parsing:
         - features/parsing/index.md
+        - features/parsing/json_lines.md
         - features/parsing/parse_exceptions.md
         - features/parsing/parser_callbacks.md
         - features/parsing/sax_interface.md

@@ -30,7 +30,7 @@ execute_process(COMMAND ${CPPCHECK_TOOL} --version OUTPUT_VARIABLE CPPCHECK_TOOL
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" CPPCHECK_TOOL_VERSION "${CPPCHECK_TOOL_VERSION}")
 message(STATUS "🔖 Cppcheck ${CPPCHECK_TOOL_VERSION} (${CPPCHECK_TOOL})")
 
-find_program(GCC_TOOL NAMES g++-HEAD g++-11 g++-latest)
+find_program(GCC_TOOL NAMES g++-latest g++-HEAD g++-11)
 execute_process(COMMAND ${GCC_TOOL} --version OUTPUT_VARIABLE GCC_TOOL_VERSION ERROR_VARIABLE GCC_TOOL_VERSION)
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" GCC_TOOL_VERSION "${GCC_TOOL_VERSION}")
 message(STATUS "🔖 GCC ${GCC_TOOL_VERSION} (${GCC_TOOL})")
@@ -111,6 +111,7 @@ set(CLANG_CXXFLAGS "-std=c++11                        \
     -Wno-reserved-identifier                             \
 ")
 
+# Warning flags determined for GCC 12.0 (experimental) with https://github.com/nlohmann/gcc_flags:
 # Ignored GCC warnings:
 # -Wno-abi-tag                    We do not care about ABI tags.
 # -Wno-aggregate-return           The library uses aggregate returns.
@@ -150,16 +151,22 @@ set(GCC_CXXFLAGS "-std=c++11                          \
     -Wanalyzer-shift-count-negative                   \
     -Wanalyzer-shift-count-overflow                   \
     -Wanalyzer-stale-setjmp-buffer                    \
+    -Wanalyzer-tainted-allocation-size                \
     -Wanalyzer-tainted-array-index                    \
+    -Wanalyzer-tainted-divisor                        \
+    -Wanalyzer-tainted-offset                         \
+    -Wanalyzer-tainted-size                           \
     -Wanalyzer-too-complex                            \
     -Wanalyzer-unsafe-call-within-signal-handler      \
     -Wanalyzer-use-after-free                         \
     -Wanalyzer-use-of-pointer-in-stale-stack-frame    \
+    -Wanalyzer-use-of-uninitialized-value             \
     -Wanalyzer-write-to-const                         \
     -Wanalyzer-write-to-string-literal                \
     -Warith-conversion                                \
     -Warray-bounds                                    \
     -Warray-bounds=2                                  \
+    -Warray-compare                                   \
     -Warray-parameter=2                               \
     -Wattribute-alias=2                               \
     -Wattribute-warning                               \
@@ -170,10 +177,15 @@ set(GCC_CXXFLAGS "-std=c++11                          \
     -Wbuiltin-macro-redefined                         \
     -Wc++0x-compat                                    \
     -Wc++11-compat                                    \
+    -Wc++11-extensions                                \
     -Wc++14-compat                                    \
+    -Wc++14-extensions                                \
     -Wc++17-compat                                    \
+    -Wc++17-extensions                                \
     -Wc++1z-compat                                    \
     -Wc++20-compat                                    \
+    -Wc++20-extensions                                \
+    -Wc++23-extensions                                \
     -Wc++2a-compat                                    \
     -Wcannot-profile                                  \
     -Wcast-align                                      \
@@ -191,6 +203,7 @@ set(GCC_CXXFLAGS "-std=c++11                          \
     -Wconditionally-supported                         \
     -Wconversion                                      \
     -Wconversion-null                                 \
+    -Wcoverage-invalid-line-number                    \
     -Wcoverage-mismatch                               \
     -Wcpp                                             \
     -Wctad-maybe-unsupported                          \
@@ -215,21 +228,16 @@ set(GCC_CXXFLAGS "-std=c++11                          \
     -Wendif-labels                                    \
     -Wenum-compare                                    \
     -Wenum-conversion                                 \
+    -Wexceptions                                      \
     -Wexpansion-to-defined                            \
     -Wextra                                           \
     -Wextra-semi                                      \
     -Wfloat-conversion                                \
     -Wfloat-equal                                     \
-    -Wformat-contains-nul                             \
     -Wformat-diag                                     \
-    -Wformat-extra-args                               \
-    -Wformat-nonliteral                               \
     -Wformat-overflow=2                               \
-    -Wformat-security                                 \
     -Wformat-signedness                               \
     -Wformat-truncation=2                             \
-    -Wformat-y2k                                      \
-    -Wformat-zero-length                              \
     -Wformat=2                                        \
     -Wframe-address                                   \
     -Wfree-nonheap-object                             \
@@ -239,12 +247,15 @@ set(GCC_CXXFLAGS "-std=c++11                          \
     -Wignored-qualifiers                              \
     -Wimplicit-fallthrough=5                          \
     -Winaccessible-base                               \
+    -Winfinite-recursion                              \
     -Winherited-variadic-ctor                         \
     -Winit-list-lifetime                              \
     -Winit-self                                       \
     -Winline                                          \
     -Wint-in-bool-context                             \
     -Wint-to-pointer-cast                             \
+    -Winterference-size                               \
+    -Winvalid-imported-macros                         \
     -Winvalid-memory-model                            \
     -Winvalid-offsetof                                \
     -Winvalid-pch                                     \
@@ -267,6 +278,7 @@ set(GCC_CXXFLAGS "-std=c++11                          \
     -Wmissing-field-initializers                      \
     -Wmissing-include-dirs                            \
     -Wmissing-profile                                 \
+    -Wmissing-requires                                \
     -Wmultichar                                       \
     -Wmultiple-inheritance                            \
     -Wmultistatement-macros                           \
@@ -282,6 +294,7 @@ set(GCC_CXXFLAGS "-std=c++11                          \
     -Wnull-dereference                                \
     -Wodr                                             \
     -Wold-style-cast                                  \
+    -Wopenacc-parallelism                             \
     -Wopenmp-simd                                     \
     -Woverflow                                        \
     -Woverlength-strings                              \

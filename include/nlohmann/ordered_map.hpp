@@ -23,18 +23,19 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
     using key_type = Key;
     using mapped_type = T;
     using Container = std::vector<std::pair<const Key, T>, Allocator>;
-    using typename Container::iterator;
-    using typename Container::const_iterator;
-    using typename Container::size_type;
-    using typename Container::value_type;
+    using iterator = typename Container::iterator;
+    using const_iterator = typename Container::const_iterator;
+    using size_type = typename Container::size_type;
+    using value_type = typename Container::value_type;
 
     // Explicit constructors instead of `using Container::Container`
     // otherwise older compilers choke on it (GCC <= 5.5, xcode <= 9.4)
-    ordered_map(const Allocator& alloc = Allocator()) : Container{alloc} {}
+    ordered_map() noexcept(noexcept(Container())) : Container{} {}
+    explicit ordered_map(const Allocator& alloc) noexcept(noexcept(Container(alloc))) : Container{alloc} {}
     template <class It>
     ordered_map(It first, It last, const Allocator& alloc = Allocator())
         : Container{first, last, alloc} {}
-    ordered_map(std::initializer_list<T> init, const Allocator& alloc = Allocator() )
+    ordered_map(std::initializer_list<value_type> init, const Allocator& alloc = Allocator() )
         : Container{init, alloc} {}
 
     std::pair<iterator, bool> emplace(const key_type& key, T&& t)

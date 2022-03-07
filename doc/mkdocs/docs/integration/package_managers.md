@@ -6,6 +6,12 @@ Throughout this page, we will describe how to compile the example file `example.
 --8<-- "integration/example.cpp"
 ```
 
+When executed, this program should create output similar to
+
+```json
+--8<-- "../../examples/meta.output"
+```
+
 ## Homebrew
 
 If you are using OS X and [Homebrew](http://brew.sh), just type
@@ -26,11 +32,9 @@ instead. See [nlohmann-json](https://formulae.brew.sh/formula/nlohmann-json) for
 
 	1. Create the following file:
 
-		=== "example.cpp"
-
-			```cpp
-			--8<-- "integration/example.cpp"
-			```
+        ```cpp title="example.cpp"
+        --8<-- "integration/example.cpp"
+        ```
 
 	2. Install the package
 
@@ -50,6 +54,8 @@ instead. See [nlohmann-json](https://formulae.brew.sh/formula/nlohmann-json) for
 		clang++ example.cpp -I/usr/local/Cellar/nlohmann-json/3.7.3/include -std=c++11 -o example
 		```
 
+:material-update: The [formula](https://formulae.brew.sh/formula/nlohmann-json) is updated automatically.
+
 ## Meson
 
 If you are using the [Meson Build System](http://mesonbuild.com), add this source tree as a [meson subproject](https://mesonbuild.com/Subprojects.html#using-a-subproject). You may also use the `include.zip` published in this project's [Releases](https://github.com/nlohmann/json/releases) to reduce the size of the vendored source tree. Alternatively, you can get a wrap file by downloading it from [Meson WrapDB](https://wrapdb.mesonbuild.com/nlohmann_json), or simply use `meson wrap install nlohmann_json`. Please see the meson project for any issues regarding the packaging.
@@ -64,24 +70,17 @@ If you are using [Conan](https://www.conan.io/) to manage your dependencies, mer
 
 	1. Create the following files:
 
-		=== "Conanfile.txt"
-			
-			```ini
-			--8<-- "integration/conan/Conanfile.txt"
-			```
+        ```ini title="Conanfile.txt"
+        --8<-- "integration/conan/Conanfile.txt"
+        ```
 
-		=== "CMakeLists.txt"
+        ```cmake title="CMakeLists.txt"
+        --8<-- "integration/conan/CMakeLists.txt"
+        ```
 
-		    ```cmake
-			--8<-- "integration/conan/CMakeLists.txt"
-		    ```
-
-		=== "example.cpp"
-
-			```cpp
-			--8<-- "integration/conan/example.cpp"
-			```
-
+        ```cpp title="example.cpp"
+        --8<-- "integration/conan/example.cpp"
+        ```
 
 	2. Build:
 
@@ -92,6 +91,8 @@ If you are using [Conan](https://www.conan.io/) to manage your dependencies, mer
 		cmake ..
 		cmake --build .
 		```
+
+:material-update: The [package](https://conan.io/center/nlohmann_json) is updated automatically.
 
 ## Spack
 
@@ -113,17 +114,13 @@ If you are using [vcpkg](https://github.com/Microsoft/vcpkg/) on your project fo
 
 	1. Create the following files:
 
-		=== "CMakeLists.txt"
-
-		    ```cmake
-			--8<-- "integration/vcpkg/CMakeLists.txt"
-		    ```
-
-		=== "example.cpp"
-
-			```cpp
-			--8<-- "integration/vcpkg/example.cpp"
-			```
+        ```cmake title="CMakeLists.txt"
+        --8<-- "integration/vcpkg/CMakeLists.txt"
+        ```
+    
+        ```cpp title="example.cpp"
+        --8<-- "integration/vcpkg/example.cpp"
+        ```
 
     2. Install package:
 
@@ -146,6 +143,8 @@ If you are using [vcpkg](https://github.com/Microsoft/vcpkg/) on your project fo
 
 If you are using [cget](http://cget.readthedocs.io/en/latest/), you can install the latest development version with `cget install nlohmann/json`. A specific version can be installed with `cget install nlohmann/json@v3.1.0`. Also, the multiple header version can be installed by adding the `-DJSON_MultipleHeaders=ON` flag (i.e., `cget install nlohmann/json -DJSON_MultipleHeaders=ON`).
 
+:material-update: cget reads directly from the [GitHub repository](https://github.com/nlohmann/json) and is always up-to-date.
+
 ## CocoaPods
 
 If you are using [CocoaPods](https://cocoapods.org), you can use the library by adding pod `"nlohmann_json", '~>3.1.2'` to your podfile (see [an example](https://bitbucket.org/benman/nlohmann_json-cocoapod/src/master/)). Please file issues [here](https://bitbucket.org/benman/nlohmann_json-cocoapod/issues?status=new&status=open).
@@ -162,18 +161,26 @@ If you are using [conda](https://conda.io/), you can use the package [nlohmann_j
 
 If you are using [MSYS2](http://www.msys2.org/), you can use the [mingw-w64-nlohmann-json](https://packages.msys2.org/base/mingw-w64-nlohmann-json) package, just type `pacman -S mingw-w64-i686-nlohmann-json` or `pacman -S mingw-w64-x86_64-nlohmann-json` for installation. Please file issues [here](https://github.com/msys2/MINGW-packages/issues/new?title=%5Bnlohmann-json%5D) if you experience problems with the packages.
 
+:material-update: The [package](https://packages.msys2.org/base/mingw-w64-nlohmann-json) is updated automatically.
+
 ## MacPorts
 
 If you are using [MacPorts](https://ports.macports.org), execute `sudo port install nlohmann-json` to install the [nlohmann-json](https://ports.macports.org/port/nlohmann-json/) package.
 
+:material-update: The [package](https://ports.macports.org/port/nlohmann-json/) is updated automatically.
+
 ## build2
 
-If you are using [`build2`](https://build2.org), you can use the [`nlohmann-json`](https://cppget.org/nlohmann-json) package from the public repository http://cppget.org or directly from the [package's sources repository](https://github.com/build2-packaging/nlohmann-json). In your project's `manifest` file, just add `depends: nlohmann-json` (probably with some [version constraints](https://build2.org/build2-toolchain/doc/build2-toolchain-intro.xhtml#guide-add-remove-deps)). If you are not familiar with using dependencies in `build2`, [please read this introduction](https://build2.org/build2-toolchain/doc/build2-toolchain-intro.xhtml).
+If you are using [`build2`](https://build2.org), you can use the [`nlohmann-json`](https://cppget.org/nlohmann-json) package from the public repository <http://cppget.org> or directly from the [package's sources repository](https://github.com/build2-packaging/nlohmann-json). In your project's `manifest` file, just add `depends: nlohmann-json` (probably with some [version constraints](https://build2.org/build2-toolchain/doc/build2-toolchain-intro.xhtml#guide-add-remove-deps)). If you are not familiar with using dependencies in `build2`, [please read this introduction](https://build2.org/build2-toolchain/doc/build2-toolchain-intro.xhtml).
 Please file issues [here](https://github.com/build2-packaging/nlohmann-json) if you experience problems with the packages.
+
+:material-update: The [package](https://cppget.org/nlohmann-json) is updated automatically.
 
 ## wsjcpp
 
 If you are using [`wsjcpp`](http://wsjcpp.org), you can use the command `wsjcpp install "https://github.com/nlohmann/json:develop"` to get the latest version. Note you can change the branch ":develop" to an existing tag or another branch.
+
+:material-update: wsjcpp reads directly from the [GitHub repository](https://github.com/nlohmann/json) and is always up-to-date.
 
 ## CPM.cmake
 

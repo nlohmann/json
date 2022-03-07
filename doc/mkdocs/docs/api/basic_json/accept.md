@@ -32,10 +32,14 @@ Unlike the [`parse`](parse.md) function, this function neither throws an excepti
     - a `FILE` pointer
     - a C-style array of characters
     - a pointer to a null-terminated string of single byte characters
+    - a `std::string`
     - an object `obj` for which `begin(obj)` and `end(obj)` produces a valid pair of iterators.
 
 `IteratorType`
-:   a compatible iterator type
+:   a compatible iterator type, for instance.
+
+    - a pair of `std::string::iterator` or `std::vector<std::uint8_t>::iterator`
+    - a pair of pointers such as `ptr` and `ptr + len`
 
 ## Parameters
 

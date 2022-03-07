@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.10.4
+|  |  |__   |  |  | | | |  version 3.10.5
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -104,12 +104,12 @@ class alt_string
     }
 
     template <typename op_type>
-    bool operator<(const op_type& op) const
+    bool operator<(const op_type& op) const noexcept
     {
         return str_impl < op;
     }
 
-    bool operator<(const alt_string& op) const
+    bool operator<(const alt_string& op) const noexcept
     {
         return str_impl < op.str_impl;
     }

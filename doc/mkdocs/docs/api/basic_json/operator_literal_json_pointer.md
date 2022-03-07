@@ -43,6 +43,10 @@ Linear.
     --8<-- "examples/operator_literal_json_pointer.output"
     ```
 
+## See also
+
+- [json_pointer](../json_pointer/index.md) - type to represent JSON Pointers
+
 ## Version history
 
 - Added in version 2.0.0.

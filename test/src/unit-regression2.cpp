@@ -1,12 +1,12 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.10.4
+|  |  |__   |  |  | | | |  version 3.10.5
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 SPDX-License-Identifier: MIT
-Copyright (c) 2013-2019 Niels Lohmann <http://nlohmann.me>.
+Copyright (c) 2013-2022 Niels Lohmann <http://nlohmann.me>.
 
 Permission is hereby  granted, free of charge, to any  person obtaining a copy
 of this software and associated  documentation files (the "Software"), to deal
@@ -271,7 +271,10 @@ std::string* sax_no_exception::error_string = nullptr;
 
 template<class T>
 class my_allocator : public std::allocator<T>
-{};
+{
+  public:
+    using std::allocator<T>::allocator;
+};
 
 /////////////////////////////////////////////////////////////////////
 // for #3077
@@ -338,7 +341,7 @@ TEST_CASE("regression tests 2")
                ]
              })";
 
-        json::parser_callback_t cb = [&](int /*level*/, json::parse_event_t event, json & parsed)
+        json::parser_callback_t cb = [&](int /*level*/, json::parse_event_t event, json & parsed) noexcept
         {
             // skip uninteresting events
             if (event == json::parse_event_t::value && !parsed.is_primitive())
@@ -834,6 +837,18 @@ TEST_CASE("regression tests 2")
         }), j.end());
 
         CHECK(j.dump() == "[1,4]");
+    }
+
+    SECTION("issue #3343 - json and ordered_json are not interchangable")
+    {
+        json::object_t jobj({ { "product", "one" } });
+        ordered_json::object_t ojobj({{"product", "one"}});
+
+        auto jit = jobj.begin();
+        auto ojit = ojobj.begin();
+
+        CHECK(jit->first == ojit->first);
+        CHECK(jit->second.get<std::string>() == ojit->second.get<std::string>());
     }
 }
 
