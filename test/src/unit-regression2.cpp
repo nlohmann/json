@@ -271,7 +271,10 @@ std::string* sax_no_exception::error_string = nullptr;
 
 template<class T>
 class my_allocator : public std::allocator<T>
-{};
+{
+  public:
+    using std::allocator<T>::allocator;
+};
 
 /////////////////////////////////////////////////////////////////////
 // for #3077
@@ -338,7 +341,7 @@ TEST_CASE("regression tests 2")
                ]
              })";
 
-        json::parser_callback_t cb = [&](int /*level*/, json::parse_event_t event, json & parsed)
+        json::parser_callback_t cb = [&](int /*level*/, json::parse_event_t event, json & parsed) noexcept
         {
             // skip uninteresting events
             if (event == json::parse_event_t::value && !parsed.is_primitive())
