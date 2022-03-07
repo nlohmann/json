@@ -51,7 +51,11 @@ that enabling this macro increases the size of every JSON value by one pointer a
 The diagnostics messages can also be controlled with the CMake option `JSON_Diagnostics` (`OFF` by default) which sets
 `JSON_DIAGNOSTICS` accordingly.
 
-WARNING: As this macro changes the definition of the json object, it MUST be defined in the same way globally, even across different compilation units; do NOT link together code compiled with and without JSON_DIAGNOSTICS defined as this is a violation of the One Definition Rule and will cause undefined behaviour.
+!!! warning
+
+    As this macro changes the definition of the `basic_json` object, it MUST be defined in the same way globally, even
+    across different compilation units; DO NOT link together code compiled with different definitions of
+    `JSON_DIAGNOSTICS` as this is a violation of the One Definition Rule and will cause undefined behaviour.
 
 !!! info "Default behavior"
 
