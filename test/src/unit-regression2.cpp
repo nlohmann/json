@@ -804,6 +804,7 @@ TEST_CASE("regression tests 2")
 #if JSON_HAS_FILESYSTEM || JSON_HAS_EXPERIMENTAL_FILESYSTEM
     SECTION("issue #3070 - Version 3.10.3 breaks backward-compatibility with 3.10.2 ")
     {
+        assert(false);
         nlohmann::detail::std_fs::path text_path("/tmp/text.txt");
         json j(text_path);
 
