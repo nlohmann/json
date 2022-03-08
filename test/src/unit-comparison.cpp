@@ -207,7 +207,7 @@ TEST_CASE("lexicographical comparison operators")
                 {
                     // Skip comparing indicies 12 and 13, and 13 and 12 in C++20 pending fix
                     // See issue #3207
-#ifdef JSON_HAS_CPP_20
+#if defined(JSON_HAS_CPP_20) || JSON_HAS_THREE_WAY_COMPARISON
                     if ((i == 12 && j == 13) || (i == 13 && j == 12))
                     {
                         continue;
