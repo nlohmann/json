@@ -32,10 +32,6 @@ SOFTWARE.
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
-#if (defined(__cplusplus) && __cplusplus >= 202002L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 202002L)
-    #define JSON_HAS_CPP_20
-#endif
-
 namespace
 {
 // helper function to check std::less<json::value_t>

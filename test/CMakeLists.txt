@@ -41,6 +41,7 @@ endif()
 add_library(test_main OBJECT src/unit.cpp)
 target_compile_definitions(test_main PUBLIC
     DOCTEST_CONFIG_SUPER_FAST_ASSERTS
+    JSON_TEST_KEEP_MACROS
 )
 target_compile_features(test_main PRIVATE cxx_std_11)
 target_compile_options(test_main PUBLIC
