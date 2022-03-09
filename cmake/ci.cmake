@@ -99,7 +99,6 @@ file(GLOB_RECURSE SRC_FILES ${PROJECT_SOURCE_DIR}/include/nlohmann/*.hpp)
 # -Wreserved-identifier           See https://github.com/onqtam/doctest/issues/536.
 
 set(CLANG_CXXFLAGS
-    -std=c++11
     -Werror
     -Weverything
     -Wno-c++98-compat
@@ -123,7 +122,6 @@ set(CLANG_CXXFLAGS
 # -Wno-templates                  The library uses templates.
 
 set(GCC_CXXFLAGS
-    -std=c++11
     -pedantic
     -Werror
     --all-warnings
@@ -438,8 +436,8 @@ foreach(CXX_STANDARD 11 14 17 20)
     add_custom_target(ci_test_gcc_cxx${CXX_STANDARD}
         COMMAND CXX=${GCC_TOOL} ${CMAKE_COMMAND}
             -DCMAKE_BUILD_TYPE=Debug -GNinja
-            -DCMAKE_CXX_STANDARD=${CXX_STANDARD} -DCMAKE_CXX_STANDARD_REQUIRED=ON
             -DJSON_BuildTests=ON -DJSON_FastTests=ON
+            -DJSON_TestStandards=${CXX_STANDARD}
             -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_gcc_cxx${CXX_STANDARD}
         COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_gcc_cxx${CXX_STANDARD}
         COMMAND cd ${PROJECT_BINARY_DIR}/build_gcc_cxx${CXX_STANDARD} && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
@@ -449,8 +447,8 @@ foreach(CXX_STANDARD 11 14 17 20)
     add_custom_target(ci_test_clang_cxx${CXX_STANDARD}
         COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND}
             -DCMAKE_BUILD_TYPE=Debug -GNinja
-            -DCMAKE_CXX_STANDARD=${CXX_STANDARD} -DCMAKE_CXX_STANDARD_REQUIRED=ON
-            -DJSON_BuildTests=ON
+            -DJSON_BuildTests=ON -DJSON_FastTests=ON
+            -DJSON_TestStandards=${CXX_STANDARD}
             -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_clang_cxx${CXX_STANDARD}
         COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_clang_cxx${CXX_STANDARD}
         COMMAND cd ${PROJECT_BINARY_DIR}/build_clang_cxx${CXX_STANDARD} && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure

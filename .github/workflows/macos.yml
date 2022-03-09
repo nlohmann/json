@@ -38,7 +38,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: cmake
-        run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On -DCMAKE_CXX_STANDARD=${{ matrix.standard }} -DCMAKE_CXX_STANDARD_REQUIRED=ON
+        run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On -DJSON_TestStandards=${{ matrix.standard }}
       - name: build
         run: cmake --build build --parallel 10
       - name: test
