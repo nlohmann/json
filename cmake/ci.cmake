@@ -434,7 +434,7 @@ add_custom_target(ci_test_clang
 
 foreach(CXX_STANDARD 11 14 17 20)
     add_custom_target(ci_test_gcc_cxx${CXX_STANDARD}
-        COMMAND CXX=${GCC_TOOL} ${CMAKE_COMMAND}
+        COMMAND CXX=${GCC_TOOL} CXXFLAGS="${GCC_CXXFLAGS}" ${CMAKE_COMMAND}
             -DCMAKE_BUILD_TYPE=Debug -GNinja
             -DJSON_BuildTests=ON -DJSON_FastTests=ON
             -DJSON_TestStandards=${CXX_STANDARD}
@@ -445,7 +445,7 @@ foreach(CXX_STANDARD 11 14 17 20)
     )
 
     add_custom_target(ci_test_clang_cxx${CXX_STANDARD}
-        COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND}
+        COMMAND CXX=${CLANG_TOOL} CXXFLAGS="${CLANG_CXXFLAGS}" ${CMAKE_COMMAND}
             -DCMAKE_BUILD_TYPE=Debug -GNinja
             -DJSON_BuildTests=ON -DJSON_FastTests=ON
             -DJSON_TestStandards=${CXX_STANDARD}
