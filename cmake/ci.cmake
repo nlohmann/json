@@ -769,50 +769,67 @@ add_custom_target(ci_benchmarks
 # CMake flags
 ###############################################################################
 
-if (APPLE)
-    set(CMAKE_310_BINARY ${PROJECT_BINARY_DIR}/cmake-3.1.0-Darwin64/CMake.app/Contents/bin/cmake)
-    add_custom_command(
-        OUTPUT ${CMAKE_310_BINARY}
-        COMMAND wget https://github.com/Kitware/CMake/releases/download/v3.1.0/cmake-3.1.0-Darwin64.tar.gz
-        COMMAND tar xfz cmake-3.1.0-Darwin64.tar.gz
-        COMMAND rm cmake-3.1.0-Darwin64.tar.gz
-        WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-        COMMENT "Download CMake 3.1.0"
-    )
-else()
-    set(CMAKE_310_BINARY ${PROJECT_BINARY_DIR}/cmake-3.1.0-Linux-x86_64/bin/cmake)
-    add_custom_command(
-        OUTPUT ${CMAKE_310_BINARY}
-        COMMAND wget https://github.com/Kitware/CMake/releases/download/v3.1.0/cmake-3.1.0-Linux-x86_64.tar.gz
-        COMMAND tar xfz cmake-3.1.0-Linux-x86_64.tar.gz
-        COMMAND rm cmake-3.1.0-Linux-x86_64.tar.gz
-        WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-        COMMENT "Download CMake 3.1.0"
-    )
-endif()
+function(ci_get_cmake version var)
+    if (APPLE)
+        set(${var} ${PROJECT_BINARY_DIR}/cmake-${version}-Darwin64/CMake.app/Contents/bin/cmake)
+        add_custom_command(
+            OUTPUT ${${var}}
+            COMMAND wget -nc https://github.com/Kitware/CMake/releases/download/v${version}/cmake-${version}-Darwin64.tar.gz
+            COMMAND tar xfz cmake-${version}-Darwin64.tar.gz
+            COMMAND rm cmake-${version}-Darwin64.tar.gz
+            WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+            COMMENT "Download CMake ${version}"
+        )
+    else()
+        set(${var} ${PROJECT_BINARY_DIR}/cmake-${version}-Linux-x86_64/bin/cmake)
+        add_custom_command(
+            OUTPUT ${${var}}
+            COMMAND wget -nc https://github.com/Kitware/CMake/releases/download/v${version}/cmake-${version}-Linux-x86_64.tar.gz
+            COMMAND tar xfz cmake-${version}-Linux-x86_64.tar.gz
+            COMMAND rm cmake-${version}-Linux-x86_64.tar.gz
+            WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+            COMMENT "Download CMake ${version}"
+        )
+    endif()
+    set(${var} ${${var}} PARENT_SCOPE)
+endfunction()
 
-set(JSON_CMAKE_FLAGS "JSON_BuildTests;JSON_Install;JSON_MultipleHeaders;JSON_ImplicitConversions;JSON_Valgrind;JSON_Diagnostics;JSON_SystemInclude")
+ci_get_cmake(3.1.0 CMAKE_3_1_0_BINARY)
+ci_get_cmake(3.13.0 CMAKE_3_13_0_BINARY)
 
-foreach(JSON_CMAKE_FLAG ${JSON_CMAKE_FLAGS})
-    string(TOLOWER "ci_cmake_flag_${JSON_CMAKE_FLAG}" JSON_CMAKE_FLAG_TARGET)
-    add_custom_target("${JSON_CMAKE_FLAG_TARGET}"
-        COMMENT "Check CMake flag ${JSON_CMAKE_FLAG} (CMake ${CMAKE_VERSION})"
+set(JSON_CMAKE_FLAGS_3_1_0 "JSON_Install;JSON_MultipleHeaders;JSON_ImplicitConversions;JSON_Valgrind;JSON_Diagnostics;JSON_SystemInclude")
+set(JSON_CMAKE_FLAGS_3_13_0 "JSON_BuildTests")
+
+function(ci_add_cmake_flags_targets flag min_version)
+    string(TOLOWER "ci_cmake_flag_${flag}" flag_target)
+    string(REPLACE . _ min_version_var ${min_version})
+    set(cmake_binary ${CMAKE_${min_version_var}_BINARY})
+    add_custom_target(${flag_target}
+        COMMENT "Check CMake flag ${flag} (CMake ${CMAKE_VERSION})"
         COMMAND ${CMAKE_COMMAND}
             -Werror=dev
-            -D${JSON_CMAKE_FLAG}=ON
-            -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_${JSON_CMAKE_FLAG_TARGET}
+            -D${flag}=ON
+            -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_${flag_target}
     )
-    add_custom_target("${JSON_CMAKE_FLAG_TARGET}_31"
-        COMMENT "Check CMake flag ${JSON_CMAKE_FLAG} (CMake 3.1)"
-        COMMAND mkdir ${PROJECT_BINARY_DIR}/build_${JSON_CMAKE_FLAG_TARGET}_31
-        COMMAND cd ${PROJECT_BINARY_DIR}/build_${JSON_CMAKE_FLAG_TARGET}_31 && ${CMAKE_310_BINARY}
-            -Werror=dev ${PROJECT_SOURCE_DIR}
-            -D${JSON_CMAKE_FLAG}=ON
-            -DCMAKE_CXX_COMPILE_FEATURES="cxx_range_for" -DCMAKE_CXX_FLAGS="-std=gnu++11"
-        DEPENDS ${CMAKE_310_BINARY}
+    add_custom_target(${flag_target}_${min_version_var}
+        COMMENT "Check CMake flag ${JSON_CMAKE_FLAG} (CMake ${min_version})"
+        COMMAND mkdir -pv ${PROJECT_BINARY_DIR}/build_${flag_target}_${min_version_var}
+        COMMAND cd ${PROJECT_BINARY_DIR}/build_${flag_target}_${min_version_var}
+            && ${cmake_binary} -Werror=dev ${PROJECT_SOURCE_DIR} -D${flag}=ON
+        DEPENDS ${cmake_binary}
     )
-    list(APPEND JSON_CMAKE_FLAG_TARGETS ${JSON_CMAKE_FLAG_TARGET} ${JSON_CMAKE_FLAG_TARGET}_31)
-    list(APPEND JSON_CMAKE_FLAG_BUILD_DIRS ${PROJECT_BINARY_DIR}/build_${JSON_CMAKE_FLAG_TARGET} ${PROJECT_BINARY_DIR}/build_${JSON_CMAKE_FLAG_TARGET}_31)
+    list(APPEND JSON_CMAKE_FLAG_TARGETS ${JSON_CMAKE_FLAG_TARGET} ${flag_target}_${min_version_var})
+    list(APPEND JSON_CMAKE_FLAG_BUILD_DIRS ${PROJECT_BINARY_DIR}/build_${flag_target} ${PROJECT_BINARY_DIR}/build_${flag_target}_${min_version_var})
+    set(JSON_CMAKE_FLAG_TARGETS ${JSON_CMAKE_FLAG_TARGETS} PARENT_SCOPE)
+    set(JSON_CMAKE_FLAG_BUILD_DIRS ${JSON_CMAKE_FLAG_BUILD_DIRS} PARENT_SCOPE)
+endfunction()
+
+foreach(JSON_CMAKE_FLAG ${JSON_CMAKE_FLAGS_3_1_0})
+    ci_add_cmake_flags_targets(${JSON_CMAKE_FLAG} 3.1.0)
+endforeach()
+
+foreach(JSON_CMAKE_FLAG ${JSON_CMAKE_FLAGS_3_13_0})
+    ci_add_cmake_flags_targets(${JSON_CMAKE_FLAG} 3.13.0)
 endforeach()
 
 add_custom_target(ci_cmake_flags
