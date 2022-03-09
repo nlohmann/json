@@ -24,6 +24,7 @@
     #undef JSON_HAS_CPP_20
     #undef JSON_HAS_FILESYSTEM
     #undef JSON_HAS_EXPERIMENTAL_FILESYSTEM
+    #undef JSON_HAS_THREE_WAY_COMPARISON
 #endif
 
 #include <nlohmann/thirdparty/hedley/hedley_undef.hpp>
