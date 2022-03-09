@@ -1609,7 +1609,7 @@ TEST_CASE("CBOR")
 
                 // callback to set binary_seen to true if a binary value was seen
                 bool binary_seen = false;
-                auto callback = [&binary_seen](int /*depth*/, json::parse_event_t /*event*/, json & parsed)
+                auto callback = [&binary_seen](int /*depth*/, json::parse_event_t /*event*/, json & parsed) noexcept
                 {
                     if (parsed.is_binary())
                     {
