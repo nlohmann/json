@@ -14886,7 +14886,7 @@ class binary_writer
                            const double value)
     {
         write_bson_entry_header(name, 0x01);
-        write_number<double, true>(value);
+        write_number<double>(value, true);
     }
 
     /*!
@@ -14905,7 +14905,7 @@ class binary_writer
     {
         write_bson_entry_header(name, 0x02);
 
-        write_number<std::int32_t, true>(static_cast<std::int32_t>(value.size() + 1ul));
+        write_number<std::int32_t>(static_cast<std::int32_t>(value.size() + 1ul), true);
         oa->write_characters(
             reinterpret_cast<const CharType*>(value.c_str()),
             value.size() + 1);
@@ -14938,12 +14938,12 @@ class binary_writer
         if ((std::numeric_limits<std::int32_t>::min)() <= value && value <= (std::numeric_limits<std::int32_t>::max)())
         {
             write_bson_entry_header(name, 0x10); // int32
-            write_number<std::int32_t, true>(static_cast<std::int32_t>(value));
+            write_number<std::int32_t>(static_cast<std::int32_t>(value), true);
         }
         else
         {
             write_bson_entry_header(name, 0x12); // int64
-            write_number<std::int64_t, true>(static_cast<std::int64_t>(value));
+            write_number<std::int64_t>(static_cast<std::int64_t>(value), true);
         }
     }
 
@@ -14966,12 +14966,12 @@ class binary_writer
         if (j.m_value.number_unsigned <= static_cast<std::uint64_t>((std::numeric_limits<std::int32_t>::max)()))
         {
             write_bson_entry_header(name, 0x10 /* int32 */);
-            write_number<std::int32_t, true>(static_cast<std::int32_t>(j.m_value.number_unsigned));
+            write_number<std::int32_t>(static_cast<std::int32_t>(j.m_value.number_unsigned), true);
         }
         else if (j.m_value.number_unsigned <= static_cast<std::uint64_t>((std::numeric_limits<std::int64_t>::max)()))
         {
             write_bson_entry_header(name, 0x12 /* int64 */);
-            write_number<std::int64_t, true>(static_cast<std::int64_t>(j.m_value.number_unsigned));
+            write_number<std::int64_t>(static_cast<std::int64_t>(j.m_value.number_unsigned), true);
         }
         else
         {
@@ -15019,7 +15019,7 @@ class binary_writer
                           const typename BasicJsonType::array_t& value)
     {
         write_bson_entry_header(name, 0x04); // array
-        write_number<std::int32_t, true>(static_cast<std::int32_t>(calc_bson_array_size(value)));
+        write_number<std::int32_t>(static_cast<std::int32_t>(calc_bson_array_size(value)), true);
 
         std::size_t array_index = 0ul;
 
@@ -15039,7 +15039,7 @@ class binary_writer
     {
         write_bson_entry_header(name, 0x05);
 
-        write_number<std::int32_t, true>(static_cast<std::int32_t>(value.size()));
+        write_number<std::int32_t>(static_cast<std::int32_t>(value.size()), true);
         write_number(value.has_subtype() ? static_cast<std::uint8_t>(value.subtype()) : static_cast<std::uint8_t>(0x00));
 
         oa->write_characters(reinterpret_cast<const CharType*>(value.data()), value.size());
@@ -15161,7 +15161,7 @@ class binary_writer
     */
     void write_bson_object(const typename BasicJsonType::object_t& value)
     {
-        write_number<std::int32_t, true>(static_cast<std::int32_t>(calc_bson_object_size(value)));
+        write_number<std::int32_t>(static_cast<std::int32_t>(calc_bson_object_size(value)), true);
 
         for (const auto& el : value)
         {
@@ -15618,10 +15618,9 @@ class binary_writer
     /*
     @brief write a number to output input
     @param[in] n number of type @a NumberType
-    @param[in] use_bjdata  whether write in BJData format, default is false
-    @tparam NumberType the type of the number
-    @tparam OutputIsLittleEndian Set to true if output data is
+    @param[in] OutputIsLittleEndian Set to true if output data is
                                  required to be little endian
+    @tparam NumberType the type of the number
 
     @note This function needs to respect the system's endianness, because bytes
           in CBOR, MessagePack, and UBJSON are stored in network order (big
@@ -15629,15 +15628,15 @@ class binary_writer
           On the other hand, BSON and BJData use little endian and should reorder
           on big endian systems.
     */
-    template<typename NumberType, bool OutputIsLittleEndian = false>
-    void write_number(const NumberType n, const bool use_bjdata = false)
+    template<typename NumberType>
+    void write_number(const NumberType n, const bool OutputIsLittleEndian = false)
     {
         // step 1: write number to array of length NumberType
         std::array<CharType, sizeof(NumberType)> vec{};
         std::memcpy(vec.data(), &n, sizeof(NumberType));
 
         // step 2: write array to output (with possible reordering)
-        if (is_little_endian != (use_bjdata || OutputIsLittleEndian))
+        if (is_little_endian != OutputIsLittleEndian)
         {
             // reverse byte order prior to conversion if necessary
             std::reverse(vec.begin(), vec.end());
