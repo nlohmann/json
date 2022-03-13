@@ -19,6 +19,7 @@ endif()
 ## INCLUDE
 ##
 ##
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 include(ExternalProject)
 
 ##
@@ -45,7 +46,7 @@ option(JSON_MultipleHeaders     "Use non-amalgamated version of the library." OF
 option(JSON_SystemInclude       "Include as system headers (skip for clang-tidy)." OFF)
 
 if (JSON_CI)
-    include(cmake/ci.cmake)
+    include(ci)
 endif ()
 
 ##

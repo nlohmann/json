@@ -5,7 +5,7 @@ option(JSON_FastTests   "Skip expensive/slow tests." OFF)
 
 set(JSON_TestStandards "" CACHE STRING "The list of standards to test explicitly.")
 
-include(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/test.cmake)
+include(test)
 
 #############################################################################
 # override standard support

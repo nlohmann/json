@@ -23,7 +23,7 @@ if(NOT benchmark_POPULATED)
 endif()
 
 # download test data
-include(${CMAKE_SOURCE_DIR}/../cmake/download_test_data.cmake)
+include(download_test_data)
 
 # benchmark binary
 add_executable(json_benchmarks src/benchmarks.cpp)

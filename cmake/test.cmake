@@ -4,7 +4,7 @@ set(_json_test_cmake_list_file ${CMAKE_CURRENT_LIST_FILE})
 # download test data
 #############################################################################
 
-include(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/download_test_data.cmake)
+include(download_test_data)
 
 # test fixture to download test data
 add_test(NAME "download_test_data" COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR}
