@@ -649,6 +649,7 @@ TEST_CASE("parser class")
             SECTION("invalid numbers")
             {
                 CHECK_THROWS_AS(parser_helper("01"),      json::parse_error&);
+                CHECK_THROWS_AS(parser_helper("-01"),     json::parse_error&);
                 CHECK_THROWS_AS(parser_helper("--1"),     json::parse_error&);
                 CHECK_THROWS_AS(parser_helper("1."),      json::parse_error&);
                 CHECK_THROWS_AS(parser_helper("1E"),      json::parse_error&);
