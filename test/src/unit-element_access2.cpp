@@ -408,13 +408,13 @@ TEST_CASE("element access 2")
                     json j_nonobject(json::value_t::boolean);
                     const json j_const_nonobject(j_nonobject);
                     CHECK_THROWS_WITH_AS(j_nonobject["foo"],
-                                      "[json.exception.type_error.305] cannot use operator[] with a string argument with boolean", json::type_error&);
+                                         "[json.exception.type_error.305] cannot use operator[] with a string argument with boolean", json::type_error&);
                     CHECK_THROWS_WITH_AS(j_nonobject[json::object_t::key_type("foo")],
-                                      "[json.exception.type_error.305] cannot use operator[] with a string argument with boolean", json::type_error&);
+                                         "[json.exception.type_error.305] cannot use operator[] with a string argument with boolean", json::type_error&);
                     CHECK_THROWS_WITH_AS(j_const_nonobject["foo"],
-                                      "[json.exception.type_error.305] cannot use operator[] with a string argument with boolean", json::type_error&);
+                                         "[json.exception.type_error.305] cannot use operator[] with a string argument with boolean", json::type_error&);
                     CHECK_THROWS_WITH_AS(j_const_nonobject[json::object_t::key_type("foo")],
-                                      "[json.exception.type_error.305] cannot use operator[] with a string argument with boolean", json::type_error&);
+                                         "[json.exception.type_error.305] cannot use operator[] with a string argument with boolean", json::type_error&);
                 }
 
                 SECTION("string")
@@ -422,13 +422,13 @@ TEST_CASE("element access 2")
                     json j_nonobject(json::value_t::string);
                     const json j_const_nonobject(j_nonobject);
                     CHECK_THROWS_WITH_AS(j_nonobject["foo"],
-                                      "[json.exception.type_error.305] cannot use operator[] with a string argument with string", json::type_error&);
+                                         "[json.exception.type_error.305] cannot use operator[] with a string argument with string", json::type_error&);
                     CHECK_THROWS_WITH_AS(j_nonobject[json::object_t::key_type("foo")],
-                                      "[json.exception.type_error.305] cannot use operator[] with a string argument with string", json::type_error&);
+                                         "[json.exception.type_error.305] cannot use operator[] with a string argument with string", json::type_error&);
                     CHECK_THROWS_WITH_AS(j_const_nonobject["foo"],
-                                      "[json.exception.type_error.305] cannot use operator[] with a string argument with string", json::type_error&);
+                                         "[json.exception.type_error.305] cannot use operator[] with a string argument with string", json::type_error&);
                     CHECK_THROWS_WITH_AS(j_const_nonobject[json::object_t::key_type("foo")],
-                                      "[json.exception.type_error.305] cannot use operator[] with a string argument with string", json::type_error&);
+                                         "[json.exception.type_error.305] cannot use operator[] with a string argument with string", json::type_error&);
                 }
 
                 SECTION("array")
@@ -436,12 +436,12 @@ TEST_CASE("element access 2")
                     json j_nonobject(json::value_t::array);
                     const json j_const_nonobject(j_nonobject);
                     CHECK_THROWS_WITH_AS(j_nonobject["foo"],
-                                      "[json.exception.type_error.305] cannot use operator[] with a string argument with array", json::type_error&);
+                                         "[json.exception.type_error.305] cannot use operator[] with a string argument with array", json::type_error&);
                     CHECK_THROWS_WITH_AS(j_nonobject[json::object_t::key_type("foo")], "[json.exception.type_error.305] cannot use operator[] with a string argument with array", json::type_error&);
                     CHECK_THROWS_WITH_AS(j_const_nonobject["foo"],
-                                      "[json.exception.type_error.305] cannot use operator[] with a string argument with array", json::type_error&);
+                                         "[json.exception.type_error.305] cannot use operator[] with a string argument with array", json::type_error&);
                     CHECK_THROWS_WITH_AS(j_const_nonobject[json::object_t::key_type("foo")],
-                                      "[json.exception.type_error.305] cannot use operator[] with a string argument with array", json::type_error&);
+                                         "[json.exception.type_error.305] cannot use operator[] with a string argument with array", json::type_error&);
                 }
 
                 SECTION("number (integer)")
@@ -449,13 +449,13 @@ TEST_CASE("element access 2")
                     json j_nonobject(json::value_t::number_integer);
                     const json j_const_nonobject(j_nonobject);
                     CHECK_THROWS_WITH_AS(j_nonobject["foo"],
-                                      "[json.exception.type_error.305] cannot use operator[] with a string argument with number", json::type_error&);
+                                         "[json.exception.type_error.305] cannot use operator[] with a string argument with number", json::type_error&);
                     CHECK_THROWS_WITH_AS(j_nonobject[json::object_t::key_type("foo")],
-                                      "[json.exception.type_error.305] cannot use operator[] with a string argument with number", json::type_error&);
+                                         "[json.exception.type_error.305] cannot use operator[] with a string argument with number", json::type_error&);
                     CHECK_THROWS_WITH_AS(j_const_nonobject["foo"],
-                                      "[json.exception.type_error.305] cannot use operator[] with a string argument with number", json::type_error&);
+                                         "[json.exception.type_error.305] cannot use operator[] with a string argument with number", json::type_error&);
                     CHECK_THROWS_WITH_AS(j_const_nonobject[json::object_t::key_type("foo")],
-                                      "[json.exception.type_error.305] cannot use operator[] with a string argument with number", json::type_error&);
+                                         "[json.exception.type_error.305] cannot use operator[] with a string argument with number", json::type_error&);
                 }
 
                 SECTION("number (unsigned)")
@@ -463,13 +463,13 @@ TEST_CASE("element access 2")
                     json j_nonobject(json::value_t::number_unsigned);
                     const json j_const_nonobject(j_nonobject);
                     CHECK_THROWS_WITH_AS(j_nonobject["foo"],
-                                      "[json.exception.type_error.305] cannot use operator[] with a string argument with number", json::type_error&);
+                                         "[json.exception.type_error.305] cannot use operator[] with a string argument with number", json::type_error&);
                     CHECK_THROWS_WITH_AS(j_nonobject[json::object_t::key_type("foo")],
-                                      "[json.exception.type_error.305] cannot use operator[] with a string argument with number", json::type_error&);
+                                         "[json.exception.type_error.305] cannot use operator[] with a string argument with number", json::type_error&);
                     CHECK_THROWS_WITH_AS(j_const_nonobject["foo"],
-                                      "[json.exception.type_error.305] cannot use operator[] with a string argument with number", json::type_error&);
+                                         "[json.exception.type_error.305] cannot use operator[] with a string argument with number", json::type_error&);
                     CHECK_THROWS_WITH_AS(j_const_nonobject[json::object_t::key_type("foo")],
-                                      "[json.exception.type_error.305] cannot use operator[] with a string argument with number", json::type_error&);
+                                         "[json.exception.type_error.305] cannot use operator[] with a string argument with number", json::type_error&);
                 }
 
                 SECTION("number (floating-point)")
@@ -477,13 +477,13 @@ TEST_CASE("element access 2")
                     json j_nonobject(json::value_t::number_float);
                     const json j_const_nonobject(j_nonobject);
                     CHECK_THROWS_WITH_AS(j_nonobject["foo"],
-                                      "[json.exception.type_error.305] cannot use operator[] with a string argument with number", json::type_error&);
+                                         "[json.exception.type_error.305] cannot use operator[] with a string argument with number", json::type_error&);
                     CHECK_THROWS_WITH_AS(j_nonobject[json::object_t::key_type("foo")],
-                                      "[json.exception.type_error.305] cannot use operator[] with a string argument with number", json::type_error&);
+                                         "[json.exception.type_error.305] cannot use operator[] with a string argument with number", json::type_error&);
                     CHECK_THROWS_WITH_AS(j_const_nonobject["foo"],
-                                      "[json.exception.type_error.305] cannot use operator[] with a string argument with number", json::type_error&);
+                                         "[json.exception.type_error.305] cannot use operator[] with a string argument with number", json::type_error&);
                     CHECK_THROWS_WITH_AS(j_const_nonobject[json::object_t::key_type("foo")],
-                                      "[json.exception.type_error.305] cannot use operator[] with a string argument with number", json::type_error&);
+                                         "[json.exception.type_error.305] cannot use operator[] with a string argument with number", json::type_error&);
                 }
             }
         }
@@ -623,25 +623,25 @@ TEST_CASE("element access 2")
                         json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}, {"d", false}, {"e", true}};
                         json jobject2 = {{"a", "a"}, {"b", 1}, {"c", 17u}};
                         CHECK_THROWS_WITH_AS(jobject.erase(jobject2.begin()),
-                                          "[json.exception.invalid_iterator.202] iterator does not fit current value", json::invalid_iterator&);
+                                             "[json.exception.invalid_iterator.202] iterator does not fit current value", json::invalid_iterator&);
                         CHECK_THROWS_WITH_AS(jobject.erase(jobject.begin(), jobject2.end()),
-                                          "[json.exception.invalid_iterator.203] iterators do not fit current value", json::invalid_iterator&);
+                                             "[json.exception.invalid_iterator.203] iterators do not fit current value", json::invalid_iterator&);
                         CHECK_THROWS_WITH_AS(jobject.erase(jobject2.begin(), jobject.end()),
-                                          "[json.exception.invalid_iterator.203] iterators do not fit current value", json::invalid_iterator&);
+                                             "[json.exception.invalid_iterator.203] iterators do not fit current value", json::invalid_iterator&);
                         CHECK_THROWS_WITH_AS(jobject.erase(jobject2.begin(), jobject2.end()),
-                                          "[json.exception.invalid_iterator.203] iterators do not fit current value", json::invalid_iterator&);
+                                             "[json.exception.invalid_iterator.203] iterators do not fit current value", json::invalid_iterator&);
                     }
                     {
                         json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}, {"d", false}, {"e", true}};
                         json jobject2 = {{"a", "a"}, {"b", 1}, {"c", 17u}};
                         CHECK_THROWS_WITH_AS(jobject.erase(jobject2.cbegin()),
-                                          "[json.exception.invalid_iterator.202] iterator does not fit current value", json::invalid_iterator&);
+                                             "[json.exception.invalid_iterator.202] iterator does not fit current value", json::invalid_iterator&);
                         CHECK_THROWS_WITH_AS(jobject.erase(jobject.cbegin(), jobject2.cend()),
-                                          "[json.exception.invalid_iterator.203] iterators do not fit current value", json::invalid_iterator&);
+                                             "[json.exception.invalid_iterator.203] iterators do not fit current value", json::invalid_iterator&);
                         CHECK_THROWS_WITH_AS(jobject.erase(jobject2.cbegin(), jobject.cend()),
-                                          "[json.exception.invalid_iterator.203] iterators do not fit current value", json::invalid_iterator&);
+                                             "[json.exception.invalid_iterator.203] iterators do not fit current value", json::invalid_iterator&);
                         CHECK_THROWS_WITH_AS(jobject.erase(jobject2.cbegin(), jobject2.cend()),
-                                          "[json.exception.invalid_iterator.203] iterators do not fit current value", json::invalid_iterator&);
+                                             "[json.exception.invalid_iterator.203] iterators do not fit current value", json::invalid_iterator&);
                     }
                 }
             }

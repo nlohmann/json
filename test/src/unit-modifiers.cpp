@@ -658,9 +658,9 @@ TEST_CASE("modifiers")
                 json j_other_array2 = {"first", "second"};
 
                 CHECK_THROWS_WITH_AS(j_array.insert(j_array.end(), j_array.begin(), j_array.end()), "[json.exception.invalid_iterator.211] passed iterators may not belong to container",
-                                json::invalid_iterator&);
+                                     json::invalid_iterator&);
                 CHECK_THROWS_WITH_AS(j_array.insert(j_array.end(), j_other_array.begin(), j_other_array2.end()), "[json.exception.invalid_iterator.210] iterators do not fit",
-                                json::invalid_iterator&);
+                                     json::invalid_iterator&);
             }
         }
 

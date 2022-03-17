@@ -38,26 +38,26 @@ TEST_CASE("JSON pointers")
     SECTION("errors")
     {
         CHECK_THROWS_WITH_AS(json::json_pointer("foo"),
-                          "[json.exception.parse_error.107] parse error at byte 1: JSON pointer must be empty or begin with '/' - was: 'foo'", json::parse_error&);
+                             "[json.exception.parse_error.107] parse error at byte 1: JSON pointer must be empty or begin with '/' - was: 'foo'", json::parse_error&);
 
         CHECK_THROWS_WITH_AS(json::json_pointer("/~~"),
-                          "[json.exception.parse_error.108] parse error: escape character '~' must be followed with '0' or '1'", json::parse_error&);
+                             "[json.exception.parse_error.108] parse error: escape character '~' must be followed with '0' or '1'", json::parse_error&);
 
         CHECK_THROWS_WITH_AS(json::json_pointer("/~"),
-                          "[json.exception.parse_error.108] parse error: escape character '~' must be followed with '0' or '1'", json::parse_error&);
+                             "[json.exception.parse_error.108] parse error: escape character '~' must be followed with '0' or '1'", json::parse_error&);
 
         json::json_pointer p;
         CHECK_THROWS_WITH_AS(p.top(),
-                          "[json.exception.out_of_range.405] JSON pointer has no parent", json::out_of_range&);
+                             "[json.exception.out_of_range.405] JSON pointer has no parent", json::out_of_range&);
         CHECK_THROWS_WITH_AS(p.pop_back(),
-                          "[json.exception.out_of_range.405] JSON pointer has no parent", json::out_of_range&);
+                             "[json.exception.out_of_range.405] JSON pointer has no parent", json::out_of_range&);
 
         SECTION("array index error")
         {
             json v = {1, 2, 3, 4};
             json::json_pointer ptr("/10e");
             CHECK_THROWS_WITH_AS(v[ptr],
-                              "[json.exception.out_of_range.404] unresolved reference token '10e'", json::out_of_range&);
+                                 "[json.exception.out_of_range.404] unresolved reference token '10e'", json::out_of_range&);
         }
     }
 
@@ -160,9 +160,9 @@ TEST_CASE("JSON pointers")
             // unresolved access
             json j_primitive = 1;
             CHECK_THROWS_WITH_AS(j_primitive["/foo"_json_pointer],
-                              "[json.exception.out_of_range.404] unresolved reference token 'foo'", json::out_of_range&);
+                                 "[json.exception.out_of_range.404] unresolved reference token 'foo'", json::out_of_range&);
             CHECK_THROWS_WITH_AS(j_primitive.at("/foo"_json_pointer),
-                              "[json.exception.out_of_range.404] unresolved reference token 'foo'", json::out_of_range&);
+                                 "[json.exception.out_of_range.404] unresolved reference token 'foo'", json::out_of_range&);
             CHECK(!j_primitive.contains(json::json_pointer("/foo")));
         }
 
@@ -222,14 +222,14 @@ TEST_CASE("JSON pointers")
 
             // unescaped access
             CHECK_THROWS_WITH_AS(j.at(json::json_pointer("/a/b")),
-                              "[json.exception.out_of_range.403] key 'a' not found", json::out_of_range&);
+                                 "[json.exception.out_of_range.403] key 'a' not found", json::out_of_range&);
 
             // unresolved access
             const json j_primitive = 1;
             CHECK_THROWS_WITH_AS(j_primitive["/foo"_json_pointer],
-                              "[json.exception.out_of_range.404] unresolved reference token 'foo'", json::out_of_range&);
+                                 "[json.exception.out_of_range.404] unresolved reference token 'foo'", json::out_of_range&);
             CHECK_THROWS_WITH_AS(j_primitive.at("/foo"_json_pointer),
-                              "[json.exception.out_of_range.404] unresolved reference token 'foo'", json::out_of_range&);
+                                 "[json.exception.out_of_range.404] unresolved reference token 'foo'", json::out_of_range&);
         }
 
         SECTION("user-defined string literal")
@@ -290,13 +290,13 @@ TEST_CASE("JSON pointers")
 
             // error with leading 0
             CHECK_THROWS_WITH_AS(j["/01"_json_pointer],
-                              "[json.exception.parse_error.106] parse error: array index '01' must not begin with '0'", json::parse_error&);
+                                 "[json.exception.parse_error.106] parse error: array index '01' must not begin with '0'", json::parse_error&);
             CHECK_THROWS_WITH_AS(j_const["/01"_json_pointer],
-                              "[json.exception.parse_error.106] parse error: array index '01' must not begin with '0'", json::parse_error&);
+                                 "[json.exception.parse_error.106] parse error: array index '01' must not begin with '0'", json::parse_error&);
             CHECK_THROWS_WITH_AS(j.at("/01"_json_pointer),
-                              "[json.exception.parse_error.106] parse error: array index '01' must not begin with '0'", json::parse_error&);
+                                 "[json.exception.parse_error.106] parse error: array index '01' must not begin with '0'", json::parse_error&);
             CHECK_THROWS_WITH_AS(j_const.at("/01"_json_pointer),
-                              "[json.exception.parse_error.106] parse error: array index '01' must not begin with '0'", json::parse_error&);
+                                 "[json.exception.parse_error.106] parse error: array index '01' must not begin with '0'", json::parse_error&);
 
             CHECK(!j.contains("/01"_json_pointer));
             CHECK(!j.contains("/01"_json_pointer));
@@ -305,24 +305,24 @@ TEST_CASE("JSON pointers")
 
             // error with incorrect numbers
             CHECK_THROWS_WITH_AS(j["/one"_json_pointer] = 1,
-                              "[json.exception.parse_error.109] parse error: array index 'one' is not a number", json::parse_error&);
+                                 "[json.exception.parse_error.109] parse error: array index 'one' is not a number", json::parse_error&);
             CHECK_THROWS_WITH_AS(j_const["/one"_json_pointer] == 1,
-                              "[json.exception.parse_error.109] parse error: array index 'one' is not a number", json::parse_error&);
+                                 "[json.exception.parse_error.109] parse error: array index 'one' is not a number", json::parse_error&);
 
             CHECK_THROWS_WITH_AS(j.at("/one"_json_pointer) = 1,
-                              "[json.exception.parse_error.109] parse error: array index 'one' is not a number", json::parse_error&);
+                                 "[json.exception.parse_error.109] parse error: array index 'one' is not a number", json::parse_error&);
             CHECK_THROWS_WITH_AS(j_const.at("/one"_json_pointer) == 1,
-                              "[json.exception.parse_error.109] parse error: array index 'one' is not a number", json::parse_error&);
+                                 "[json.exception.parse_error.109] parse error: array index 'one' is not a number", json::parse_error&);
 
             CHECK_THROWS_WITH_AS(j["/+1"_json_pointer] = 1,
-                              "[json.exception.parse_error.109] parse error: array index '+1' is not a number", json::parse_error&);
+                                 "[json.exception.parse_error.109] parse error: array index '+1' is not a number", json::parse_error&);
             CHECK_THROWS_WITH_AS(j_const["/+1"_json_pointer] == 1,
-                              "[json.exception.parse_error.109] parse error: array index '+1' is not a number", json::parse_error&);
+                                 "[json.exception.parse_error.109] parse error: array index '+1' is not a number", json::parse_error&);
 
             CHECK_THROWS_WITH_AS(j["/1+1"_json_pointer] = 1,
-                              "[json.exception.out_of_range.404] unresolved reference token '1+1'", json::out_of_range&);
+                                 "[json.exception.out_of_range.404] unresolved reference token '1+1'", json::out_of_range&);
             CHECK_THROWS_WITH_AS(j_const["/1+1"_json_pointer] == 1,
-                              "[json.exception.out_of_range.404] unresolved reference token '1+1'", json::out_of_range&);
+                                 "[json.exception.out_of_range.404] unresolved reference token '1+1'", json::out_of_range&);
 
             {
                 auto too_large_index = std::to_string((std::numeric_limits<unsigned long long>::max)()) + "1";
@@ -351,9 +351,9 @@ TEST_CASE("JSON pointers")
             DOCTEST_MSVC_SUPPRESS_WARNING_POP
 
             CHECK_THROWS_WITH_AS(j.at("/one"_json_pointer) = 1,
-                              "[json.exception.parse_error.109] parse error: array index 'one' is not a number", json::parse_error&);
+                                 "[json.exception.parse_error.109] parse error: array index 'one' is not a number", json::parse_error&);
             CHECK_THROWS_WITH_AS(j_const.at("/one"_json_pointer) == 1,
-                              "[json.exception.parse_error.109] parse error: array index 'one' is not a number", json::parse_error&);
+                                 "[json.exception.parse_error.109] parse error: array index 'one' is not a number", json::parse_error&);
 
             CHECK(!j.contains("/one"_json_pointer));
             CHECK(!j.contains("/one"_json_pointer));
@@ -369,14 +369,14 @@ TEST_CASE("JSON pointers")
 
             // error when using "-" in const object
             CHECK_THROWS_WITH_AS(j_const["/-"_json_pointer],
-                              "[json.exception.out_of_range.402] array index '-' (3) is out of range", json::out_of_range&);
+                                 "[json.exception.out_of_range.402] array index '-' (3) is out of range", json::out_of_range&);
             CHECK(!j_const.contains("/-"_json_pointer));
 
             // error when using "-" with at
             CHECK_THROWS_WITH_AS(j.at("/-"_json_pointer),
-                              "[json.exception.out_of_range.402] array index '-' (7) is out of range", json::out_of_range&);
+                                 "[json.exception.out_of_range.402] array index '-' (7) is out of range", json::out_of_range&);
             CHECK_THROWS_WITH_AS(j_const.at("/-"_json_pointer),
-                              "[json.exception.out_of_range.402] array index '-' (3) is out of range", json::out_of_range&);
+                                 "[json.exception.out_of_range.402] array index '-' (3) is out of range", json::out_of_range&);
             CHECK(!j_const.contains("/-"_json_pointer));
         }
 
@@ -391,19 +391,19 @@ TEST_CASE("JSON pointers")
 
             // assign to nonexisting index
             CHECK_THROWS_WITH_AS(j.at("/3"_json_pointer),
-                              "[json.exception.out_of_range.401] array index 3 is out of range", json::out_of_range&);
+                                 "[json.exception.out_of_range.401] array index 3 is out of range", json::out_of_range&);
             CHECK(!j.contains("/3"_json_pointer));
 
             // assign to nonexisting index (with gap)
             CHECK_THROWS_WITH_AS(j.at("/5"_json_pointer),
-                              "[json.exception.out_of_range.401] array index 5 is out of range", json::out_of_range&);
+                                 "[json.exception.out_of_range.401] array index 5 is out of range", json::out_of_range&);
             CHECK(!j.contains("/5"_json_pointer));
 
             // assign to "-"
             CHECK_THROWS_WITH_AS(j["/-"_json_pointer],
-                              "[json.exception.out_of_range.402] array index '-' (3) is out of range", json::out_of_range&);
+                                 "[json.exception.out_of_range.402] array index '-' (3) is out of range", json::out_of_range&);
             CHECK_THROWS_WITH_AS(j.at("/-"_json_pointer),
-                              "[json.exception.out_of_range.402] array index '-' (3) is out of range", json::out_of_range&);
+                                 "[json.exception.out_of_range.402] array index '-' (3) is out of range", json::out_of_range&);
             CHECK(!j.contains("/-"_json_pointer));
         }
     }
@@ -460,7 +460,7 @@ TEST_CASE("JSON pointers")
 
         // error for nonobjects
         CHECK_THROWS_WITH_AS(json(1).unflatten(),
-                          "[json.exception.type_error.314] only objects can be unflattened", json::type_error&);
+                             "[json.exception.type_error.314] only objects can be unflattened", json::type_error&);
 
         // error for nonprimitve values
 #if JSON_DIAGNOSTICS
@@ -472,7 +472,7 @@ TEST_CASE("JSON pointers")
         // error for conflicting values
         json j_error = {{"", 42}, {"/foo", 17}};
         CHECK_THROWS_WITH_AS(j_error.unflatten(),
-                          "[json.exception.type_error.313] invalid value to unflatten", json::type_error&);
+                             "[json.exception.type_error.313] invalid value to unflatten", json::type_error&);
 
         // explicit roundtrip check
         CHECK(j.flatten().unflatten() == j);
