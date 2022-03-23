@@ -267,6 +267,7 @@ TEST_CASE("constructors")
             CHECK(j[1] == std::get<1>(p));
         }
 
+#if !(JSON_USE_STRICT_CONTAINER_SIZE)
         SECTION("std::pair with discarded values")
         {
             json j{1, 2.0, "string"};
@@ -275,6 +276,7 @@ TEST_CASE("constructors")
             CHECK(p.first == j[0]);
             CHECK(p.second == j[1]);
         }
+#endif
 
         SECTION("std::tuple")
         {
@@ -291,6 +293,7 @@ TEST_CASE("constructors")
             CHECK(j[3][1] == 1);
         }
 
+#if !(JSON_USE_STRICT_CONTAINER_SIZE)
         SECTION("std::tuple with discarded values")
         {
             json j{1, 2.0, "string", 42};
@@ -300,9 +303,27 @@ TEST_CASE("constructors")
             CHECK(std::get<1>(t) == j[1]);
             CHECK(std::get<2>(t) == j[2]);
         }
+#endif
 
         SECTION("std::pair/tuple/array failures")
         {
+#if JSON_USE_STRICT_CONTAINER_SIZE
+            json j1{1};
+            json j2{1, 2, 3};
+
+            CHECK_THROWS_AS((j1.get<std::pair<int, int>>()), json::type_error&);
+            CHECK_THROWS_WITH((j1.get<std::pair<int, int>>()), "[json.exception.type_error.302] array size must be 2, but is 1");
+            CHECK_THROWS_AS((j2.get<std::pair<int, int>>()), json::type_error&);
+            CHECK_THROWS_WITH((j2.get<std::pair<int, int>>()), "[json.exception.type_error.302] array size must be 2, but is 3");
+            CHECK_THROWS_AS((j1.get<std::tuple<int, int>>()), json::type_error&);
+            CHECK_THROWS_WITH((j1.get<std::tuple<int, int>>()), "[json.exception.type_error.302] array size must be 2, but is 1");
+            CHECK_THROWS_AS((j2.get<std::tuple<int, int>>()), json::type_error&);
+            CHECK_THROWS_WITH((j2.get<std::tuple<int, int>>()), "[json.exception.type_error.302] array size must be 2, but is 3");
+            CHECK_THROWS_AS((j1.get<std::array<int, 3>>()), json::type_error&);
+            CHECK_THROWS_WITH((j1.get<std::array<int, 3>>()), "[json.exception.type_error.302] array size must be 3, but is 1");
+            CHECK_THROWS_AS((j2.get<std::array<int, 1>>()), json::type_error&);
+            CHECK_THROWS_WITH((j2.get<std::array<int, 1>>()), "[json.exception.type_error.302] array size must be 1, but is 3");
+#else
             json j{1};
 
             CHECK_THROWS_AS((j.get<std::pair<int, int>>()), json::out_of_range&);
@@ -311,6 +332,7 @@ TEST_CASE("constructors")
             CHECK_THROWS_WITH((j.get<std::tuple<int, int>>()), "[json.exception.out_of_range.401] array index 1 is out of range");
             CHECK_THROWS_AS((j.get<std::array<int, 3>>()), json::out_of_range&);
             CHECK_THROWS_WITH((j.get<std::array<int, 3>>()), "[json.exception.out_of_range.401] array index 1 is out of range");
+#endif
         }
 
         SECTION("std::forward_list<json>")

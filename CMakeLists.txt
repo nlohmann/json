@@ -34,6 +34,7 @@ option(JSON_BuildTests          "Build the unit tests when BUILD_TESTING is enab
 option(JSON_CI                  "Enable CI build targets." OFF)
 option(JSON_Diagnostics         "Use extended diagnostic messages." OFF)
 option(JSON_ImplicitConversions "Enable implicit conversions." ON)
+option(JSON_StrictContainerSize "Enable strict size checks for container conversions." OFF)
 option(JSON_Install             "Install CMake targets during install step." ${MAIN_PROJECT})
 option(JSON_MultipleHeaders     "Use non-amalgamated version of the library." OFF)
 option(JSON_SystemInclude       "Include as system headers (skip for clang-tidy)." OFF)
@@ -94,6 +95,7 @@ target_compile_definitions(
     ${NLOHMANN_JSON_TARGET_NAME}
     INTERFACE
     JSON_USE_IMPLICIT_CONVERSIONS=$<BOOL:${JSON_ImplicitConversions}>
+    JSON_USE_STRICT_CONTAINER_SIZE=$<BOOL:${JSON_StrictContainerSize}>
     JSON_DIAGNOSTICS=$<BOOL:${JSON_Diagnostics}>
 )
 

@@ -40,6 +40,8 @@ using nlohmann::json;
 #include <unordered_map>
 #include <unordered_set>
 #include <valarray>
+#include <utility>
+#include <tuple>
 
 #if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_HAS_CXX17) && _HAS_CXX17 == 1) // fix for issue #464
     #define JSON_HAS_CPP_17
@@ -397,6 +399,50 @@ TEST_CASE("value conversion")
             json j2 = nbs;
             j2.get_to(nbs2);
             CHECK(std::equal(std::begin(nbs), std::end(nbs), std::begin(nbs2)));
+
+            SECTION("built-in array is larger than JSON")
+            {
+                json j1 = {1, 2, 3, 4};
+                int arr6[] = {1, 2, 3, 4, 5, 6};
+#if JSON_USE_STRICT_CONTAINER_SIZE
+                CHECK_THROWS_AS(j1.get_to(arr6), json::type_error&);
+                CHECK_THROWS_WITH(j1.get_to(arr6), "[json.exception.type_error.302] "
+                                  "array size must be 6, but is 4");
+#else
+                CHECK_THROWS_AS(j1.get_to(arr6), json::out_of_range&);
+                CHECK_THROWS_WITH(j1.get_to(arr6), "[json.exception.out_of_range.401] "
+                                  "array index 4 is out of range");
+#endif
+            }
+
+            SECTION("built-in array is smaller than JSON")
+            {
+                json j1 = {1, 2, 3, 4};
+                int arr2[] = {8, 9};
+#if JSON_USE_STRICT_CONTAINER_SIZE
+                CHECK_THROWS_AS(j1.get_to(arr2), json::type_error&);
+                CHECK_THROWS_WITH(j1.get_to(arr2), "[json.exception.type_error.302] "
+                                  "array size must be 2, but is 4");
+#else
+                j1.get_to(arr2);
+                CHECK(arr2[0] == 1);
+                CHECK(arr2[1] == 2);
+#endif
+            }
+
+            SECTION("built-in array from non-array type")
+            {
+                json j1;
+                int arr2[] = {8, 9};
+                CHECK_THROWS_AS(j1.get_to(arr2), json::type_error&);
+#if JSON_USE_STRICT_CONTAINER_SIZE
+                CHECK_THROWS_WITH(j1.get_to(arr2), "[json.exception.type_error.302] "
+                                  "type must be array, but is null");
+#else
+                CHECK_THROWS_WITH(j1.get_to(arr2), "[json.exception.type_error.304] "
+                                  "cannot use at() with null");
+#endif
+            }
         }
 
         SECTION("std::deque<json>")
@@ -1487,7 +1533,7 @@ TEST_CASE("value conversion")
             SECTION("std::array")
             {
                 j1.get<std::array<int, 4>>();
-                j2.get<std::array<unsigned int, 3>>();
+                j2.get<std::array<unsigned int, 4>>();
                 j3.get<std::array<double, 4>>();
                 j4.get<std::array<bool, 3>>();
                 j5.get<std::array<std::string, 3>>();
@@ -1495,17 +1541,29 @@ TEST_CASE("value conversion")
                 SECTION("std::array is larger than JSON")
                 {
                     std::array<int, 6> arr6 = {{1, 2, 3, 4, 5, 6}};
+#if JSON_USE_STRICT_CONTAINER_SIZE
+                    CHECK_THROWS_AS(j1.get_to(arr6), json::type_error&);
+                    CHECK_THROWS_WITH(j1.get_to(arr6), "[json.exception.type_error.302] "
+                                      "array size must be 6, but is 4");
+#else
                     CHECK_THROWS_AS(j1.get_to(arr6), json::out_of_range&);
                     CHECK_THROWS_WITH(j1.get_to(arr6), "[json.exception.out_of_range.401] "
                                       "array index 4 is out of range");
+#endif
                 }
 
                 SECTION("std::array is smaller than JSON")
                 {
                     std::array<int, 2> arr2 = {{8, 9}};
+#if JSON_USE_STRICT_CONTAINER_SIZE
+                    CHECK_THROWS_AS(j1.get_to(arr2), json::type_error&);
+                    CHECK_THROWS_WITH(j1.get_to(arr2), "[json.exception.type_error.302] "
+                                      "array size must be 2, but is 4");
+#else
                     j1.get_to(arr2);
                     CHECK(arr2[0] == 1);
                     CHECK(arr2[1] == 2);
+#endif
                 }
             }
 
@@ -1612,8 +1670,10 @@ TEST_CASE("value conversion")
             {
                 CHECK_THROWS_AS((json().get<std::list<int>>()), json::type_error&);
                 CHECK_THROWS_AS((json().get<std::vector<int>>()), json::type_error&);
+                CHECK_THROWS_AS((json().get<std::array<int, 2>>()), json::type_error&);
                 CHECK_THROWS_AS((json().get<std::vector<json>>()), json::type_error&);
                 CHECK_THROWS_AS((json().get<std::list<json>>()), json::type_error&);
+                CHECK_THROWS_AS((json().get<std::array<json, 2>>()), json::type_error&);
                 CHECK_THROWS_AS((json().get<std::valarray<int>>()), json::type_error&);
 
                 // does type really must be an array? or it rather must not be null?
@@ -1625,16 +1685,131 @@ TEST_CASE("value conversion")
                     (json().get<std::vector<int>>()),
                     "[json.exception.type_error.302] type must be array, but is null");
                 CHECK_THROWS_WITH(
+                    (json().get<std::array<int, 2>>()),
+                    "[json.exception.type_error.302] type must be array, but is null");
+                CHECK_THROWS_WITH(
                     (json().get<std::vector<json>>()),
                     "[json.exception.type_error.302] type must be array, but is null");
                 CHECK_THROWS_WITH(
                     (json().get<std::list<json>>()),
                     "[json.exception.type_error.302] type must be array, but is null");
                 CHECK_THROWS_WITH(
+                    (json().get<std::array<json, 2>>()),
+                    "[json.exception.type_error.302] type must be array, but is null");
+                CHECK_THROWS_WITH(
                     (json().get<std::valarray<int>>()),
                     "[json.exception.type_error.302] type must be array, but is null");
                 CHECK_THROWS_WITH(
                     (json().get<std::map<int, int>>()),
+                    "[json.exception.type_error.302] type must be array, but is null");
+            }
+        }
+
+        SECTION("other STL containers")
+        {
+            json j1 = {1, 2};
+            json j2 = {1u, 2u};
+            json j3 = {1.2, 2.3};
+            json j4 = {true, false};
+            json j5 = {"one", "two"};
+            json j6 = {1, "2"};
+            json j7 = {1, 2.3};
+            json j8 = {1, false};
+            json j9 = {1, 2, 3};
+            json j10 = {1};
+
+            SECTION("std::pair")
+            {
+                j1.get<std::pair<int, int>>();
+                j2.get<std::pair<unsigned int, unsigned int>>();
+                j3.get<std::pair<double, double>>();
+                j4.get<std::pair<bool, bool>>();
+                j5.get<std::pair<std::string, std::string>>();
+                j6.get<std::pair<int, std::string>>();
+                j7.get<std::pair<int, double>>();
+                j8.get<std::pair<int, bool>>();
+
+                SECTION("std::pair is larger than JSON")
+                {
+                    std::pair<int, int> p(8, 9);
+#if JSON_USE_STRICT_CONTAINER_SIZE
+                    CHECK_THROWS_AS(j10.get_to(p), json::type_error&);
+                    CHECK_THROWS_WITH(j10.get_to(p), "[json.exception.type_error.302] "
+                                      "array size must be 2, but is 1");
+#else
+                    CHECK_THROWS_AS(j10.get_to(p), json::out_of_range&);
+                    CHECK_THROWS_WITH(j10.get_to(p), "[json.exception.out_of_range.401] "
+                                      "array index 1 is out of range");
+#endif
+                }
+
+                SECTION("std::pair is smaller than JSON")
+                {
+                    std::pair<int, int> p(8, 9);
+#if JSON_USE_STRICT_CONTAINER_SIZE
+                    CHECK_THROWS_AS(j9.get_to(p), json::type_error&);
+                    CHECK_THROWS_WITH(j9.get_to(p), "[json.exception.type_error.302] "
+                                      "array size must be 2, but is 3");
+#else
+                    j9.get_to(p);
+                    CHECK(p.first == 1);
+                    CHECK(p.second == 2);
+#endif
+                }
+            }
+
+            SECTION("std::tuple")
+            {
+                j1.get<std::tuple<int, int>>();
+                j2.get<std::tuple<unsigned int, unsigned int>>();
+                j3.get<std::tuple<double, double>>();
+                j4.get<std::tuple<bool, bool>>();
+                j5.get<std::tuple<std::string, std::string>>();
+                j6.get<std::tuple<int, std::string>>();
+                j7.get<std::tuple<int, double>>();
+                j8.get<std::tuple<int, bool>>();
+                j9.get<std::tuple<int, int, int>>();
+                j10.get<std::tuple<int>>();
+
+                SECTION("std::tuple is larger than JSON")
+                {
+                    std::tuple<int, int> t(8, 9);
+#if JSON_USE_STRICT_CONTAINER_SIZE
+                    CHECK_THROWS_AS(j10.get_to(t), json::type_error&);
+                    CHECK_THROWS_WITH(j10.get_to(t), "[json.exception.type_error.302] "
+                                      "array size must be 2, but is 1");
+#else
+                    CHECK_THROWS_AS(j10.get_to(t), json::out_of_range&);
+                    CHECK_THROWS_WITH(j10.get_to(t), "[json.exception.out_of_range.401] "
+                                      "array index 1 is out of range");
+#endif
+                }
+
+                SECTION("std::tuple is smaller than JSON")
+                {
+                    std::tuple<int, int> t(8, 9);
+#if JSON_USE_STRICT_CONTAINER_SIZE
+                    CHECK_THROWS_AS(j9.get_to(t), json::type_error&);
+                    CHECK_THROWS_WITH(j9.get_to(t), "[json.exception.type_error.302] "
+                                      "array size must be 2, but is 3");
+#else
+                    j9.get_to(t);
+                    CHECK(std::get<0>(t) == 1);
+                    CHECK(std::get<1>(t) == 2);
+#endif
+                }
+            }
+
+            SECTION("exception in case of a non-object type")
+            {
+                CHECK_THROWS_AS((json().get<std::pair<int, int>>()), json::type_error&);
+                CHECK_THROWS_AS((json().get<std::tuple<int, int>>()), json::type_error&);
+
+                CHECK_THROWS_WITH(
+                    (json().get<std::pair<int, int>>()),
+                    "[json.exception.type_error.302] type must be array, but is null");
+                CHECK_THROWS_WITH(
+                    (json().get<std::tuple<int, int>>()),
                     "[json.exception.type_error.302] type must be array, but is null");
             }
         }
