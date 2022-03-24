@@ -39,6 +39,8 @@ namespace
 template<class T>
 struct bad_allocator : std::allocator<T>
 {
+    using std::allocator<T>::allocator;
+
     template<class... Args>
     void construct(T* /*unused*/, Args&& ... /*unused*/)
     {

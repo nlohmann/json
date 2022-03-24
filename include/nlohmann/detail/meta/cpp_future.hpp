@@ -147,8 +147,12 @@ struct static_const
     static constexpr T value{};
 };
 
-template<typename T>
-constexpr T static_const<T>::value; // NOLINT(readability-redundant-declaration)
+#ifndef JSON_HAS_CPP_17
+
+    template<typename T>
+    constexpr T static_const<T>::value; // NOLINT(readability-redundant-declaration)
+
+#endif
 
 }  // namespace detail
 }  // namespace nlohmann

@@ -37,7 +37,7 @@ SOFTWARE.
 
 /* forward declarations */
 class alt_string;
-bool operator<(const char* op1, const alt_string& op2);
+bool operator<(const char* op1, const alt_string& op2) noexcept;
 void int_to_string(alt_string& target, std::size_t value);
 
 /*
@@ -104,12 +104,12 @@ class alt_string
     }
 
     template <typename op_type>
-    bool operator<(const op_type& op) const
+    bool operator<(const op_type& op) const noexcept
     {
         return str_impl < op;
     }
 
-    bool operator<(const alt_string& op) const
+    bool operator<(const alt_string& op) const noexcept
     {
         return str_impl < op.str_impl;
     }
@@ -152,7 +152,7 @@ class alt_string
   private:
     std::string str_impl {};
 
-    friend bool ::operator<(const char* /*op1*/, const alt_string& /*op2*/);
+    friend bool ::operator<(const char* /*op1*/, const alt_string& /*op2*/) noexcept;
 };
 
 void int_to_string(alt_string& target, std::size_t value)
@@ -172,7 +172,7 @@ using alt_json = nlohmann::basic_json <
                  nlohmann::adl_serializer >;
 
 
-bool operator<(const char* op1, const alt_string& op2)
+bool operator<(const char* op1, const alt_string& op2) noexcept
 {
     return op1 < op2.str_impl;
 }

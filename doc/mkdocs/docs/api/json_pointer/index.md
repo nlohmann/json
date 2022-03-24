@@ -29,6 +29,7 @@ are the base for JSON patches.
 
 ## See also
 
+- [operator""_json_pointer](../basic_json/operator_literal_json_pointer.md) - user-defined string literal for JSON pointers
 - [RFC 6901](https://datatracker.ietf.org/doc/html/rfc6901)
 
 ## Version history
