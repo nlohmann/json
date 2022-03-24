@@ -19,6 +19,7 @@ endif()
 ## INCLUDE
 ##
 ##
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 include(ExternalProject)
 
 ##
@@ -30,7 +31,13 @@ if (POLICY CMP0077)
     cmake_policy(SET CMP0077 NEW)
 endif ()
 
-option(JSON_BuildTests          "Build the unit tests when BUILD_TESTING is enabled." ${MAIN_PROJECT})
+# VERSION_GREATER_EQUAL is not available in CMake 3.1
+if(${MAIN_PROJECT} AND (${CMAKE_VERSION} VERSION_EQUAL 3.13 OR ${CMAKE_VERSION} VERSION_GREATER 3.13))
+    set(JSON_BuildTests_INIT ON)
+else()
+    set(JSON_BuildTests_INIT OFF)
+endif()
+option(JSON_BuildTests          "Build the unit tests when BUILD_TESTING is enabled." ${JSON_BuildTests_INIT})
 option(JSON_CI                  "Enable CI build targets." OFF)
 option(JSON_Diagnostics         "Use extended diagnostic messages." OFF)
 option(JSON_ImplicitConversions "Enable implicit conversions." ON)
@@ -39,7 +46,7 @@ option(JSON_MultipleHeaders     "Use non-amalgamated version of the library." OF
 option(JSON_SystemInclude       "Include as system headers (skip for clang-tidy)." OFF)
 
 if (JSON_CI)
-    include(cmake/ci.cmake)
+    include(ci)
 endif ()
 
 ##
