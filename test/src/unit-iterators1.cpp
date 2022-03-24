@@ -338,23 +338,17 @@ TEST_CASE("iterators 1")
             {
                 auto it = j.begin();
                 auto cit = j_const.cbegin();
-                CHECK_THROWS_AS(it.key(), json::invalid_iterator&);
-                CHECK_THROWS_WITH(it.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators");
+                CHECK_THROWS_WITH_AS(it.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators", json::invalid_iterator&);
                 CHECK(it.value() == json(true));
-                CHECK_THROWS_AS(cit.key(), json::invalid_iterator&);
-                CHECK_THROWS_WITH(cit.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators");
+                CHECK_THROWS_WITH_AS(cit.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators", json::invalid_iterator&);
                 CHECK(cit.value() == json(true));
 
                 auto rit = j.rend();
                 auto crit = j.crend();
-                CHECK_THROWS_AS(rit.key(), json::invalid_iterator&);
-                CHECK_THROWS_AS(rit.value(), json::invalid_iterator&);
-                CHECK_THROWS_AS(crit.key(), json::invalid_iterator&);
-                CHECK_THROWS_AS(crit.value(), json::invalid_iterator&);
-                CHECK_THROWS_WITH(rit.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators");
-                CHECK_THROWS_WITH(rit.value(), "[json.exception.invalid_iterator.214] cannot get value");
-                CHECK_THROWS_WITH(crit.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators");
-                CHECK_THROWS_WITH(crit.value(), "[json.exception.invalid_iterator.214] cannot get value");
+                CHECK_THROWS_WITH_AS(rit.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators", json::invalid_iterator&);
+                CHECK_THROWS_WITH_AS(rit.value(), "[json.exception.invalid_iterator.214] cannot get value", json::invalid_iterator&);
+                CHECK_THROWS_WITH_AS(crit.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators", json::invalid_iterator&);
+                CHECK_THROWS_WITH_AS(crit.value(), "[json.exception.invalid_iterator.214] cannot get value", json::invalid_iterator&);
             }
         }
 
@@ -542,23 +536,17 @@ TEST_CASE("iterators 1")
             {
                 auto it = j.begin();
                 auto cit = j_const.cbegin();
-                CHECK_THROWS_AS(it.key(), json::invalid_iterator&);
-                CHECK_THROWS_WITH(it.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators");
+                CHECK_THROWS_WITH_AS(it.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators", json::invalid_iterator&);
                 CHECK(it.value() == json("hello world"));
-                CHECK_THROWS_AS(cit.key(), json::invalid_iterator&);
-                CHECK_THROWS_WITH(cit.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators");
+                CHECK_THROWS_WITH_AS(cit.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators", json::invalid_iterator&);
                 CHECK(cit.value() == json("hello world"));
 
                 auto rit = j.rend();
                 auto crit = j.crend();
-                CHECK_THROWS_AS(rit.key(), json::invalid_iterator&);
-                CHECK_THROWS_AS(rit.value(), json::invalid_iterator&);
-                CHECK_THROWS_AS(crit.key(), json::invalid_iterator&);
-                CHECK_THROWS_AS(crit.value(), json::invalid_iterator&);
-                CHECK_THROWS_WITH(rit.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators");
-                CHECK_THROWS_WITH(rit.value(), "[json.exception.invalid_iterator.214] cannot get value");
-                CHECK_THROWS_WITH(crit.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators");
-                CHECK_THROWS_WITH(crit.value(), "[json.exception.invalid_iterator.214] cannot get value");
+                CHECK_THROWS_WITH_AS(rit.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators", json::invalid_iterator&);
+                CHECK_THROWS_WITH_AS(rit.value(), "[json.exception.invalid_iterator.214] cannot get value", json::invalid_iterator&);
+                CHECK_THROWS_WITH_AS(crit.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators", json::invalid_iterator&);
+                CHECK_THROWS_WITH_AS(crit.value(), "[json.exception.invalid_iterator.214] cannot get value", json::invalid_iterator&);
             }
         }
 
@@ -739,11 +727,9 @@ TEST_CASE("iterators 1")
             {
                 auto it = j.begin();
                 auto cit = j_const.cbegin();
-                CHECK_THROWS_AS(it.key(), json::invalid_iterator&);
-                CHECK_THROWS_WITH(it.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators");
+                CHECK_THROWS_WITH_AS(it.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators", json::invalid_iterator&);
                 CHECK(it.value() == json(1));
-                CHECK_THROWS_AS(cit.key(), json::invalid_iterator&);
-                CHECK_THROWS_WITH(cit.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators");
+                CHECK_THROWS_WITH_AS(cit.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators", json::invalid_iterator&);
                 CHECK(cit.value() == json(1));
             }
         }
@@ -1116,23 +1102,17 @@ TEST_CASE("iterators 1")
             {
                 auto it = j.begin();
                 auto cit = j_const.cbegin();
-                CHECK_THROWS_AS(it.key(), json::invalid_iterator&);
-                CHECK_THROWS_WITH(it.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators");
+                CHECK_THROWS_WITH_AS(it.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators", json::invalid_iterator&);
                 CHECK(it.value() == json(23));
-                CHECK_THROWS_AS(cit.key(), json::invalid_iterator&);
-                CHECK_THROWS_WITH(cit.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators");
+                CHECK_THROWS_WITH_AS(cit.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators", json::invalid_iterator&);
                 CHECK(cit.value() == json(23));
 
                 auto rit = j.rend();
                 auto crit = j.crend();
-                CHECK_THROWS_AS(rit.key(), json::invalid_iterator&);
-                CHECK_THROWS_AS(rit.value(), json::invalid_iterator&);
-                CHECK_THROWS_AS(crit.key(), json::invalid_iterator&);
-                CHECK_THROWS_AS(crit.value(), json::invalid_iterator&);
-                CHECK_THROWS_WITH(rit.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators");
-                CHECK_THROWS_WITH(rit.value(), "[json.exception.invalid_iterator.214] cannot get value");
-                CHECK_THROWS_WITH(crit.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators");
-                CHECK_THROWS_WITH(crit.value(), "[json.exception.invalid_iterator.214] cannot get value");
+                CHECK_THROWS_WITH_AS(rit.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators", json::invalid_iterator&);
+                CHECK_THROWS_WITH_AS(rit.value(), "[json.exception.invalid_iterator.214] cannot get value", json::invalid_iterator&);
+                CHECK_THROWS_WITH_AS(crit.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators", json::invalid_iterator&);
+                CHECK_THROWS_WITH_AS(crit.value(), "[json.exception.invalid_iterator.214] cannot get value", json::invalid_iterator&);
             }
         }
 
@@ -1320,23 +1300,17 @@ TEST_CASE("iterators 1")
             {
                 auto it = j.begin();
                 auto cit = j_const.cbegin();
-                CHECK_THROWS_AS(it.key(), json::invalid_iterator&);
-                CHECK_THROWS_WITH(it.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators");
+                CHECK_THROWS_WITH_AS(it.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators", json::invalid_iterator&);
                 CHECK(it.value() == json(23));
-                CHECK_THROWS_AS(cit.key(), json::invalid_iterator&);
-                CHECK_THROWS_WITH(cit.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators");
+                CHECK_THROWS_WITH_AS(cit.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators", json::invalid_iterator&);
                 CHECK(cit.value() == json(23));
 
                 auto rit = j.rend();
                 auto crit = j.crend();
-                CHECK_THROWS_AS(rit.key(), json::invalid_iterator&);
-                CHECK_THROWS_AS(rit.value(), json::invalid_iterator&);
-                CHECK_THROWS_AS(crit.key(), json::invalid_iterator&);
-                CHECK_THROWS_AS(crit.value(), json::invalid_iterator&);
-                CHECK_THROWS_WITH(rit.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators");
-                CHECK_THROWS_WITH(rit.value(), "[json.exception.invalid_iterator.214] cannot get value");
-                CHECK_THROWS_WITH(crit.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators");
-                CHECK_THROWS_WITH(crit.value(), "[json.exception.invalid_iterator.214] cannot get value");
+                CHECK_THROWS_WITH_AS(rit.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators", json::invalid_iterator&);
+                CHECK_THROWS_WITH_AS(rit.value(), "[json.exception.invalid_iterator.214] cannot get value", json::invalid_iterator&);
+                CHECK_THROWS_WITH_AS(crit.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators", json::invalid_iterator&);
+                CHECK_THROWS_WITH_AS(crit.value(), "[json.exception.invalid_iterator.214] cannot get value", json::invalid_iterator&);
             }
         }
 
@@ -1524,23 +1498,17 @@ TEST_CASE("iterators 1")
             {
                 auto it = j.begin();
                 auto cit = j_const.cbegin();
-                CHECK_THROWS_AS(it.key(), json::invalid_iterator&);
-                CHECK_THROWS_WITH(it.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators");
+                CHECK_THROWS_WITH_AS(it.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators", json::invalid_iterator&);
                 CHECK(it.value() == json(23.42));
-                CHECK_THROWS_AS(cit.key(), json::invalid_iterator&);
-                CHECK_THROWS_WITH(cit.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators");
+                CHECK_THROWS_WITH_AS(cit.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators", json::invalid_iterator&);
                 CHECK(cit.value() == json(23.42));
 
                 auto rit = j.rend();
                 auto crit = j.crend();
-                CHECK_THROWS_AS(rit.key(), json::invalid_iterator&);
-                CHECK_THROWS_AS(rit.value(), json::invalid_iterator&);
-                CHECK_THROWS_AS(crit.key(), json::invalid_iterator&);
-                CHECK_THROWS_AS(crit.value(), json::invalid_iterator&);
-                CHECK_THROWS_WITH(rit.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators");
-                CHECK_THROWS_WITH(rit.value(), "[json.exception.invalid_iterator.214] cannot get value");
-                CHECK_THROWS_WITH(crit.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators");
-                CHECK_THROWS_WITH(crit.value(), "[json.exception.invalid_iterator.214] cannot get value");
+                CHECK_THROWS_WITH_AS(rit.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators", json::invalid_iterator&);
+                CHECK_THROWS_WITH_AS(rit.value(), "[json.exception.invalid_iterator.214] cannot get value", json::invalid_iterator&);
+                CHECK_THROWS_WITH_AS(crit.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators", json::invalid_iterator&);
+                CHECK_THROWS_WITH_AS(crit.value(), "[json.exception.invalid_iterator.214] cannot get value", json::invalid_iterator&);
             }
         }
 
@@ -1598,25 +1566,17 @@ TEST_CASE("iterators 1")
             {
                 auto it = j.begin();
                 auto cit = j_const.cbegin();
-                CHECK_THROWS_AS(it.key(), json::invalid_iterator&);
-                CHECK_THROWS_AS(it.value(), json::invalid_iterator&);
-                CHECK_THROWS_AS(cit.key(), json::invalid_iterator&);
-                CHECK_THROWS_AS(cit.value(), json::invalid_iterator&);
-                CHECK_THROWS_WITH(it.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators");
-                CHECK_THROWS_WITH(it.value(), "[json.exception.invalid_iterator.214] cannot get value");
-                CHECK_THROWS_WITH(cit.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators");
-                CHECK_THROWS_WITH(cit.value(), "[json.exception.invalid_iterator.214] cannot get value");
+                CHECK_THROWS_WITH_AS(it.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators", json::invalid_iterator&);
+                CHECK_THROWS_WITH_AS(it.value(), "[json.exception.invalid_iterator.214] cannot get value", json::invalid_iterator&);
+                CHECK_THROWS_WITH_AS(cit.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators", json::invalid_iterator&);
+                CHECK_THROWS_WITH_AS(cit.value(), "[json.exception.invalid_iterator.214] cannot get value", json::invalid_iterator&);
 
                 auto rit = j.rend();
                 auto crit = j.crend();
-                CHECK_THROWS_AS(rit.key(), json::invalid_iterator&);
-                CHECK_THROWS_AS(rit.value(), json::invalid_iterator&);
-                CHECK_THROWS_AS(crit.key(), json::invalid_iterator&);
-                CHECK_THROWS_AS(crit.value(), json::invalid_iterator&);
-                CHECK_THROWS_WITH(rit.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators");
-                CHECK_THROWS_WITH(rit.value(), "[json.exception.invalid_iterator.214] cannot get value");
-                CHECK_THROWS_WITH(crit.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators");
-                CHECK_THROWS_WITH(crit.value(), "[json.exception.invalid_iterator.214] cannot get value");
+                CHECK_THROWS_WITH_AS(rit.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators", json::invalid_iterator&);
+                CHECK_THROWS_WITH_AS(rit.value(), "[json.exception.invalid_iterator.214] cannot get value", json::invalid_iterator&);
+                CHECK_THROWS_WITH_AS(crit.key(), "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators", json::invalid_iterator&);
+                CHECK_THROWS_WITH_AS(crit.value(), "[json.exception.invalid_iterator.214] cannot get value", json::invalid_iterator&);
             }
         }
     }

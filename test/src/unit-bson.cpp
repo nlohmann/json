@@ -44,8 +44,7 @@ TEST_CASE("BSON")
         SECTION("null")
         {
             json j = nullptr;
-            CHECK_THROWS_AS(json::to_bson(j), json::type_error&);
-            CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is null");
+            CHECK_THROWS_WITH_AS(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is null", json::type_error&);
         }
 
         SECTION("boolean")
@@ -53,44 +52,38 @@ TEST_CASE("BSON")
             SECTION("true")
             {
                 json j = true;
-                CHECK_THROWS_AS(json::to_bson(j), json::type_error&);
-                CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is boolean");
+                CHECK_THROWS_WITH_AS(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is boolean", json::type_error&);
             }
 
             SECTION("false")
             {
                 json j = false;
-                CHECK_THROWS_AS(json::to_bson(j), json::type_error&);
-                CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is boolean");
+                CHECK_THROWS_WITH_AS(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is boolean", json::type_error&);
             }
         }
 
         SECTION("number")
         {
             json j = 42;
-            CHECK_THROWS_AS(json::to_bson(j), json::type_error&);
-            CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is number");
+            CHECK_THROWS_WITH_AS(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is number", json::type_error&);
         }
 
         SECTION("float")
         {
             json j = 4.2;
-            CHECK_THROWS_AS(json::to_bson(j), json::type_error&);
-            CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is number");
+            CHECK_THROWS_WITH_AS(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is number", json::type_error&);
         }
 
         SECTION("string")
         {
             json j = "not supported";
-            CHECK_THROWS_AS(json::to_bson(j), json::type_error&);
-            CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is string");
+            CHECK_THROWS_WITH_AS(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is string", json::type_error&);
         }
 
         SECTION("array")
         {
             json j = std::vector<int> {1, 2, 3, 4, 5, 6, 7};
-            CHECK_THROWS_AS(json::to_bson(j), json::type_error&);
-            CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is array");
+            CHECK_THROWS_WITH_AS(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is array", json::type_error&);
         }
     }
 
@@ -100,11 +93,10 @@ TEST_CASE("BSON")
         {
             { std::string("en\0try", 6), true }
         };
-        CHECK_THROWS_AS(json::to_bson(j), json::out_of_range&);
 #if JSON_DIAGNOSTICS
-        CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.out_of_range.409] (/en) BSON key cannot contain code point U+0000 (at byte 2)");
+        CHECK_THROWS_WITH_AS(json::to_bson(j), "[json.exception.out_of_range.409] (/en) BSON key cannot contain code point U+0000 (at byte 2)", json::out_of_range&);
 #else
-        CHECK_THROWS_WITH(json::to_bson(j), "[json.exception.out_of_range.409] BSON key cannot contain code point U+0000 (at byte 2)");
+        CHECK_THROWS_WITH_AS(json::to_bson(j), "[json.exception.out_of_range.409] BSON key cannot contain code point U+0000 (at byte 2)", json::out_of_range&);
 #endif
     }
 
@@ -119,8 +111,7 @@ TEST_CASE("BSON")
             0x00, 0x00, 0x00, 0x80
         };
         json _;
-        CHECK_THROWS_AS(_ = json::from_bson(v), json::parse_error&);
-        CHECK_THROWS_WITH(_ = json::from_bson(v), "[json.exception.parse_error.112] parse error at byte 10: syntax error while parsing BSON string: string length must be at least 1, is -2147483648");
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(v), "[json.exception.parse_error.112] parse error at byte 10: syntax error while parsing BSON string: string length must be at least 1, is -2147483648", json::parse_error&);
     }
 
     SECTION("objects")
@@ -764,9 +755,7 @@ TEST_CASE("Incomplete BSON Input")
         };
 
         json _;
-        CHECK_THROWS_AS(_ = json::from_bson(incomplete_bson), json::parse_error&);
-        CHECK_THROWS_WITH(_ = json::from_bson(incomplete_bson),
-                          "[json.exception.parse_error.110] parse error at byte 9: syntax error while parsing BSON cstring: unexpected end of input");
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(incomplete_bson), "[json.exception.parse_error.110] parse error at byte 9: syntax error while parsing BSON cstring: unexpected end of input", json::parse_error&);
 
         CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
 
@@ -783,9 +772,7 @@ TEST_CASE("Incomplete BSON Input")
         };
 
         json _;
-        CHECK_THROWS_AS(_ = json::from_bson(incomplete_bson), json::parse_error&);
-        CHECK_THROWS_WITH(_ = json::from_bson(incomplete_bson),
-                          "[json.exception.parse_error.110] parse error at byte 6: syntax error while parsing BSON cstring: unexpected end of input");
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(incomplete_bson), "[json.exception.parse_error.110] parse error at byte 6: syntax error while parsing BSON cstring: unexpected end of input", json::parse_error&);
         CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
 
         SaxCountdown scp(0);
@@ -807,9 +794,7 @@ TEST_CASE("Incomplete BSON Input")
         };
 
         json _;
-        CHECK_THROWS_AS(_ = json::from_bson(incomplete_bson), json::parse_error&);
-        CHECK_THROWS_WITH(_ = json::from_bson(incomplete_bson),
-                          "[json.exception.parse_error.110] parse error at byte 28: syntax error while parsing BSON element list: unexpected end of input");
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(incomplete_bson), "[json.exception.parse_error.110] parse error at byte 28: syntax error while parsing BSON element list: unexpected end of input", json::parse_error&);
         CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
 
         SaxCountdown scp(1);
@@ -824,9 +809,7 @@ TEST_CASE("Incomplete BSON Input")
         };
 
         json _;
-        CHECK_THROWS_AS(_ = json::from_bson(incomplete_bson), json::parse_error&);
-        CHECK_THROWS_WITH(_ = json::from_bson(incomplete_bson),
-                          "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing BSON number: unexpected end of input");
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(incomplete_bson), "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing BSON number: unexpected end of input", json::parse_error&);
         CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
 
         SaxCountdown scp(0);
@@ -872,8 +855,7 @@ TEST_CASE("Negative size of binary value")
         0x00 // end marker
     };
     json _;
-    CHECK_THROWS_AS(_ = json::from_bson(input), json::parse_error);
-    CHECK_THROWS_WITH(_ = json::from_bson(input), "[json.exception.parse_error.112] parse error at byte 15: syntax error while parsing BSON binary: byte array length cannot be negative, is -1");
+    CHECK_THROWS_WITH_AS(_ = json::from_bson(input), "[json.exception.parse_error.112] parse error at byte 15: syntax error while parsing BSON binary: byte array length cannot be negative, is -1", json::parse_error);
 }
 
 TEST_CASE("Unsupported BSON input")
@@ -887,9 +869,7 @@ TEST_CASE("Unsupported BSON input")
     };
 
     json _;
-    CHECK_THROWS_AS(_ = json::from_bson(bson), json::parse_error&);
-    CHECK_THROWS_WITH(_ = json::from_bson(bson),
-                      "[json.exception.parse_error.114] parse error at byte 5: Unsupported BSON record type 0xFF");
+    CHECK_THROWS_WITH_AS(_ = json::from_bson(bson), "[json.exception.parse_error.114] parse error at byte 5: Unsupported BSON record type 0xFF", json::parse_error&);
     CHECK(json::from_bson(bson, true, false).is_discarded());
 
     SaxCountdown scp(0);

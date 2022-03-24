@@ -65,24 +65,18 @@ TEST_CASE("reference access")
 
         // check if mismatching references throw correctly
         CHECK_NOTHROW(value.get_ref<json::object_t&>());
-        CHECK_THROWS_AS(value.get_ref<json::array_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::array_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is object");
-        CHECK_THROWS_AS(value.get_ref<json::string_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::string_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is object");
-        CHECK_THROWS_AS(value.get_ref<json::boolean_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::boolean_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is object");
-        CHECK_THROWS_AS(value.get_ref<json::number_integer_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::number_integer_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is object");
-        CHECK_THROWS_AS(value.get_ref<json::number_unsigned_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::number_unsigned_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is object");
-        CHECK_THROWS_AS(value.get_ref<json::number_float_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::number_float_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is object");
+        CHECK_THROWS_WITH_AS(value.get_ref<json::array_t&>(),
+                             "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is object", json::type_error&);
+        CHECK_THROWS_WITH_AS(value.get_ref<json::string_t&>(),
+                             "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is object", json::type_error&);
+        CHECK_THROWS_WITH_AS(value.get_ref<json::boolean_t&>(),
+                             "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is object", json::type_error&);
+        CHECK_THROWS_WITH_AS(value.get_ref<json::number_integer_t&>(),
+                             "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is object", json::type_error&);
+        CHECK_THROWS_WITH_AS(value.get_ref<json::number_unsigned_t&>(),
+                             "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is object", json::type_error&);
+        CHECK_THROWS_WITH_AS(value.get_ref<json::number_float_t&>(),
+                             "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is object", json::type_error&);
     }
 
     SECTION("const reference access to const object_t")
@@ -114,25 +108,19 @@ TEST_CASE("reference access")
         CHECK(p2 == value.get<test_type>());
 
         // check if mismatching references throw correctly
-        CHECK_THROWS_AS(value.get_ref<json::object_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::object_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is array");
+        CHECK_THROWS_WITH_AS(value.get_ref<json::object_t&>(),
+                             "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is array", json::type_error&);
         CHECK_NOTHROW(value.get_ref<json::array_t&>());
-        CHECK_THROWS_AS(value.get_ref<json::string_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::string_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is array");
-        CHECK_THROWS_AS(value.get_ref<json::boolean_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::boolean_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is array");
-        CHECK_THROWS_AS(value.get_ref<json::number_integer_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::number_integer_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is array");
-        CHECK_THROWS_AS(value.get_ref<json::number_unsigned_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::number_unsigned_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is array");
-        CHECK_THROWS_AS(value.get_ref<json::number_float_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::number_float_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is array");
+        CHECK_THROWS_WITH_AS(value.get_ref<json::string_t&>(),
+                             "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is array", json::type_error&);
+        CHECK_THROWS_WITH_AS(value.get_ref<json::boolean_t&>(),
+                             "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is array", json::type_error&);
+        CHECK_THROWS_WITH_AS(value.get_ref<json::number_integer_t&>(),
+                             "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is array", json::type_error&);
+        CHECK_THROWS_WITH_AS(value.get_ref<json::number_unsigned_t&>(),
+                             "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is array", json::type_error&);
+        CHECK_THROWS_WITH_AS(value.get_ref<json::number_float_t&>(),
+                             "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is array", json::type_error&);
     }
 
     SECTION("reference access to string_t")
@@ -150,25 +138,19 @@ TEST_CASE("reference access")
         CHECK(p2 == value.get<test_type>());
 
         // check if mismatching references throw correctly
-        CHECK_THROWS_AS(value.get_ref<json::object_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::object_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is string");
-        CHECK_THROWS_AS(value.get_ref<json::array_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::array_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is string");
+        CHECK_THROWS_WITH_AS(value.get_ref<json::object_t&>(),
+                             "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is string", json::type_error&);
+        CHECK_THROWS_WITH_AS(value.get_ref<json::array_t&>(),
+                             "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is string", json::type_error&);
         CHECK_NOTHROW(value.get_ref<json::string_t&>());
-        CHECK_THROWS_AS(value.get_ref<json::boolean_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::boolean_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is string");
-        CHECK_THROWS_AS(value.get_ref<json::number_integer_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::number_integer_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is string");
-        CHECK_THROWS_AS(value.get_ref<json::number_unsigned_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::number_unsigned_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is string");
-        CHECK_THROWS_AS(value.get_ref<json::number_float_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::number_float_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is string");
+        CHECK_THROWS_WITH_AS(value.get_ref<json::boolean_t&>(),
+                             "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is string", json::type_error&);
+        CHECK_THROWS_WITH_AS(value.get_ref<json::number_integer_t&>(),
+                             "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is string", json::type_error&);
+        CHECK_THROWS_WITH_AS(value.get_ref<json::number_unsigned_t&>(),
+                             "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is string", json::type_error&);
+        CHECK_THROWS_WITH_AS(value.get_ref<json::number_float_t&>(),
+                             "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is string", json::type_error&);
     }
 
     SECTION("reference access to boolean_t")
@@ -186,25 +168,19 @@ TEST_CASE("reference access")
         CHECK(p2 == value.get<test_type>());
 
         // check if mismatching references throw correctly
-        CHECK_THROWS_AS(value.get_ref<json::object_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::object_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is boolean");
-        CHECK_THROWS_AS(value.get_ref<json::array_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::array_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is boolean");
-        CHECK_THROWS_AS(value.get_ref<json::string_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::string_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is boolean");
+        CHECK_THROWS_WITH_AS(value.get_ref<json::object_t&>(),
+                             "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is boolean", json::type_error&);
+        CHECK_THROWS_WITH_AS(value.get_ref<json::array_t&>(),
+                             "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is boolean", json::type_error&);
+        CHECK_THROWS_WITH_AS(value.get_ref<json::string_t&>(),
+                             "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is boolean", json::type_error&);
         CHECK_NOTHROW(value.get_ref<json::boolean_t&>());
-        CHECK_THROWS_AS(value.get_ref<json::number_integer_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::number_integer_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is boolean");
-        CHECK_THROWS_AS(value.get_ref<json::number_unsigned_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::number_unsigned_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is boolean");
-        CHECK_THROWS_AS(value.get_ref<json::number_float_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::number_float_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is boolean");
+        CHECK_THROWS_WITH_AS(value.get_ref<json::number_integer_t&>(),
+                             "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is boolean", json::type_error&);
+        CHECK_THROWS_WITH_AS(value.get_ref<json::number_unsigned_t&>(),
+                             "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is boolean", json::type_error&);
+        CHECK_THROWS_WITH_AS(value.get_ref<json::number_float_t&>(),
+                             "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is boolean", json::type_error&);
     }
 
     SECTION("reference access to number_integer_t")
@@ -222,25 +198,19 @@ TEST_CASE("reference access")
         CHECK(p2 == value.get<test_type>());
 
         // check if mismatching references throw correctly
-        CHECK_THROWS_AS(value.get_ref<json::object_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::object_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number");
-        CHECK_THROWS_AS(value.get_ref<json::array_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::array_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number");
-        CHECK_THROWS_AS(value.get_ref<json::string_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::string_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number");
-        CHECK_THROWS_AS(value.get_ref<json::boolean_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::boolean_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number");
+        CHECK_THROWS_WITH_AS(value.get_ref<json::object_t&>(),
+                             "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number", json::type_error&);
+        CHECK_THROWS_WITH_AS(value.get_ref<json::array_t&>(),
+                             "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number", json::type_error&);
+        CHECK_THROWS_WITH_AS(value.get_ref<json::string_t&>(),
+                             "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number", json::type_error&);
+        CHECK_THROWS_WITH_AS(value.get_ref<json::boolean_t&>(),
+                             "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number", json::type_error&);
         CHECK_NOTHROW(value.get_ref<json::number_integer_t&>());
-        CHECK_THROWS_AS(value.get_ref<json::number_unsigned_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::number_unsigned_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number");
-        CHECK_THROWS_AS(value.get_ref<json::number_float_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::number_float_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number");
+        CHECK_THROWS_WITH_AS(value.get_ref<json::number_unsigned_t&>(),
+                             "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number", json::type_error&);
+        CHECK_THROWS_WITH_AS(value.get_ref<json::number_float_t&>(),
+                             "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number", json::type_error&);
     }
 
     SECTION("reference access to number_unsigned_t")
@@ -258,25 +228,18 @@ TEST_CASE("reference access")
         CHECK(p2 == value.get<test_type>());
 
         // check if mismatching references throw correctly
-        CHECK_THROWS_AS(value.get_ref<json::object_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::object_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number");
-        CHECK_THROWS_AS(value.get_ref<json::array_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::array_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number");
-        CHECK_THROWS_AS(value.get_ref<json::string_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::string_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number");
-        CHECK_THROWS_AS(value.get_ref<json::boolean_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::boolean_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number");
-        //CHECK_THROWS_AS(value.get_ref<json::number_integer_t&>(), json::type_error&);
-        //CHECK_THROWS_WITH(value.get_ref<json::number_integer_t&>(),
-        //    "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number");
+        CHECK_THROWS_WITH_AS(value.get_ref<json::object_t&>(),
+                             "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number", json::type_error&);
+        CHECK_THROWS_WITH_AS(value.get_ref<json::array_t&>(),
+                             "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number", json::type_error&);
+        CHECK_THROWS_WITH_AS(value.get_ref<json::string_t&>(),
+                             "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number", json::type_error&);
+        CHECK_THROWS_WITH_AS(value.get_ref<json::boolean_t&>(),
+                             "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number", json::type_error&);
+        //CHECK_THROWS_WITH_AS(value.get_ref<json::number_integer_t&>(),
+        //    "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number", json::type_error&);
         CHECK_NOTHROW(value.get_ref<json::number_unsigned_t&>());
-        CHECK_THROWS_AS(value.get_ref<json::number_float_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::number_float_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number");
+        CHECK_THROWS_WITH_AS(value.get_ref<json::number_float_t&>(), "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number", json::type_error&);
     }
 
     SECTION("reference access to number_float_t")
@@ -294,24 +257,12 @@ TEST_CASE("reference access")
         CHECK(p2 == value.get<test_type>());
 
         // check if mismatching references throw correctly
-        CHECK_THROWS_AS(value.get_ref<json::object_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::object_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number");
-        CHECK_THROWS_AS(value.get_ref<json::array_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::array_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number");
-        CHECK_THROWS_AS(value.get_ref<json::string_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::string_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number");
-        CHECK_THROWS_AS(value.get_ref<json::boolean_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::boolean_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number");
-        CHECK_THROWS_AS(value.get_ref<json::number_integer_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::number_integer_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number");
-        CHECK_THROWS_AS(value.get_ref<json::number_unsigned_t&>(), json::type_error&);
-        CHECK_THROWS_WITH(value.get_ref<json::number_unsigned_t&>(),
-                          "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number");
+        CHECK_THROWS_WITH_AS(value.get_ref<json::object_t&>(), "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number", json::type_error&);
+        CHECK_THROWS_WITH_AS(value.get_ref<json::array_t&>(), "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number", json::type_error&);
+        CHECK_THROWS_WITH_AS(value.get_ref<json::string_t&>(), "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number", json::type_error&);
+        CHECK_THROWS_WITH_AS(value.get_ref<json::boolean_t&>(), "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number", json::type_error&);
+        CHECK_THROWS_WITH_AS(value.get_ref<json::number_integer_t&>(), "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number", json::type_error&);
+        CHECK_THROWS_WITH_AS(value.get_ref<json::number_unsigned_t&>(), "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number", json::type_error&);
         CHECK_NOTHROW(value.get_ref<json::number_float_t&>());
     }
 }
