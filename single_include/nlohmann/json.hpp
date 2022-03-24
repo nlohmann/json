@@ -2394,6 +2394,15 @@ using is_detected_convertible =
     #define JSON_HAS_FILESYSTEM 0
 #endif
 
+#ifndef JSON_HAS_THREE_WAY_COMPARISON
+    #if defined(__cpp_lib_three_way_comparison) && __cpp_lib_three_way_comparison >= 201907L \
+        && defined(__cpp_impl_three_way_comparison)&& __cpp_impl_three_way_comparison >= 201907L
+        #define JSON_HAS_THREE_WAY_COMPARISON 1
+    #else
+        #define JSON_HAS_THREE_WAY_COMPARISON 0
+    #endif
+#endif
+
 // disable documentation warnings on clang
 #if defined(__clang__)
     #pragma clang diagnostic push
@@ -3182,8 +3191,12 @@ struct static_const
     static constexpr T value{};
 };
 
-template<typename T>
-constexpr T static_const<T>::value; // NOLINT(readability-redundant-declaration)
+#ifndef JSON_HAS_CPP_17
+
+    template<typename T>
+    constexpr T static_const<T>::value; // NOLINT(readability-redundant-declaration)
+
+#endif
 
 }  // namespace detail
 }  // namespace nlohmann
@@ -4266,7 +4279,8 @@ void from_json(const BasicJsonType& j, std_fs::path& p)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_string()))
     {
-        JSON_THROW(type_error::create(302, "type must be string, but is " + std::string(j.type_name()), j));
+        // Not tested because of #3377 (related #3070)
+        JSON_THROW(type_error::create(302, "type must be string, but is " + std::string(j.type_name()), j)); // LCOV_EXCL_LINE
     }
     p = *j.template get_ptr<const typename BasicJsonType::string_t*>();
 }
@@ -21939,20 +21953,24 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 // clean up
 #undef JSON_ASSERT
 #undef JSON_INTERNAL_CATCH
-#undef JSON_CATCH
 #undef JSON_THROW
-#undef JSON_TRY
 #undef JSON_PRIVATE_UNLESS_TESTED
-#undef JSON_HAS_CPP_11
-#undef JSON_HAS_CPP_14
-#undef JSON_HAS_CPP_17
-#undef JSON_HAS_CPP_20
-#undef JSON_HAS_FILESYSTEM
-#undef JSON_HAS_EXPERIMENTAL_FILESYSTEM
 #undef NLOHMANN_BASIC_JSON_TPL_DECLARATION
 #undef NLOHMANN_BASIC_JSON_TPL
 #undef JSON_EXPLICIT
 #undef NLOHMANN_CAN_CALL_STD_FUNC_IMPL
+
+#ifndef JSON_TEST_KEEP_MACROS
+    #undef JSON_CATCH
+    #undef JSON_TRY
+    #undef JSON_HAS_CPP_11
+    #undef JSON_HAS_CPP_14
+    #undef JSON_HAS_CPP_17
+    #undef JSON_HAS_CPP_20
+    #undef JSON_HAS_FILESYSTEM
+    #undef JSON_HAS_EXPERIMENTAL_FILESYSTEM
+    #undef JSON_HAS_THREE_WAY_COMPARISON
+#endif
 
 // #include <nlohmann/thirdparty/hedley/hedley_undef.hpp>
 
