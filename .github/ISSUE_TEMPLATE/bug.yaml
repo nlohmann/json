@@ -1,5 +1,5 @@
 name: Bug Report
-description: File a bug report
+description: Create a bug report
 labels:
   - 'kind: bug'
 body:
@@ -31,11 +31,6 @@ body:
       description: >
         How do you trigger the bug? Please walk us through step by step. Be as
         specific as possible.
-      placeholder: >
-        1.
-        2.
-        3.
-        ...
     validations:
       required: true
   - type: textarea
@@ -45,10 +40,6 @@ body:
       description: >
         Please describe what you expected to happen after the steps above and
         what actually happened.
-      placeholder: >
-        Expected behavior:
-        
-        Actual behavior:
     validations:
       required: true
   - type: textarea
@@ -77,8 +68,6 @@ body:
         Include as many relevant details about the environment you experienced
         the bug in. Make sure you use a
         [supported compiler](https://github.com/nlohmann/json#supported-compilers).
-      placeholder: >
-        macOS 12.3 using g++ 11.2.0 and Apple Clang 13.1.6
     validations:
       required: true
   - type: input
@@ -91,8 +80,6 @@ body:
         the commit hash. If you got the library from another source as the
         GitHub repository (e.g., via a package manager), please also state
         this.
-      placeholder: >
-        release version 3.10.5
     validations:
       required: true
   - type: checkboxes
@@ -103,4 +90,4 @@ body:
         Please check these additional steps:
       options:
         - label: The bug also occurs if the latest version from the [`develop`](https://github.com/nlohmann/json/tree/develop) branch is used.
-        - label: I can successfully [compile and run the unit tests](https://github.com/nlohmann/json#execute-unit-tests)
+        - label: I can successfully [compile and run the unit tests](https://github.com/nlohmann/json#execute-unit-tests).
