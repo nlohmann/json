@@ -5,7 +5,7 @@ labels:
 body:
   - type: markdown
     attributes:
-      value: |
+      value: >
         Thanks for taking the time to fill out this bug report!
         
         Make sure you give it a short and specific **title** so that the report
@@ -18,7 +18,7 @@ body:
     id: summary
     attributes:
       label: Description
-      description: |
+      description: >
         Please provide an abstract description of the issue to the developers,
         and why you consider it to be a bug. Please include any specific links
         to the documentation, JSON specification, or code.
@@ -28,10 +28,10 @@ body:
     id: reproduce
     attributes:
       label: Reproduction steps
-      description: |
+      description: >
         How do you trigger the bug? Please walk us through step by step. Be as
         specific as possible.
-      placeholder: |
+      placeholder: >
         1.
         2.
         3.
@@ -42,10 +42,10 @@ body:
     id: results
     attributes:
       label: Expected vs. actual results
-      description: |
+      description: >
         Please describe what you expected to happen after the steps above and
         what actually happened.
-      placeholder: |
+      placeholder: >
         Expected behavior:
         
         Actual behavior:
@@ -55,7 +55,7 @@ body:
     id: code
     attributes:
       label: Minimal code example
-      description: |
+      description: >
         If possible, provide a small and self-contained example that triggers
         the bug. Please understand that we cannot analyze and debug large code
         bases. Please do not paste screenshots here.
@@ -64,7 +64,7 @@ body:
     id: output
     attributes:
       label: Error messages
-      description: |
+      description: >
         Please provide any kind of error output (compilation errors, exception
         messages, stack traces, etc.) which can help to diagnose the error.
       render: Shell
@@ -72,12 +72,12 @@ body:
     id: compiler
     attributes:
       label: Compiler and operating system
-      description: |
+      description: >
         On which operating systems and compilers have you observed the issue?
         Include as many relevant details about the environment you experienced
         the bug in. Make sure you use a
         [supported compiler](https://github.com/nlohmann/json#supported-compilers).
-      placeholder: |
+      placeholder: >
         macOS 12.3 using g++ 11.2.0 and Apple Clang 13.1.6
     validations:
       required: true
@@ -85,13 +85,13 @@ body:
     id: version
     attributes:
       label: Library version
-      description: |
+      description: >
         Which version of the library did you use? If it is a released version,
         please enter the version number (e.g., 3.10.5). Otherwise, please enter
         the commit hash. If you got the library from another source as the
         GitHub repository (e.g., via a package manager), please also state
         this.
-      placeholder: |
+      placeholder: >
         release version 3.10.5
     validations:
       required: true
@@ -99,7 +99,7 @@ body:
     id: validation
     attributes:
       label: Validation
-      description: |
+      description: >
         Please check these additional steps:
       options:
         - label: The bug also occurs if the latest version from the [`develop`](https://github.com/nlohmann/json/tree/develop) branch is used.
