@@ -1417,13 +1417,8 @@ TEST_CASE("regression tests 1")
         auto p3 = R"([{"op": "copy",
                        "from": "/one/two/three",
                        "path": "/a/b/c"}])"_json;
-        CHECK_THROWS_AS(model.patch(p3), json::out_of_range&);
-
-        auto p4 = R"([{"op": "copy",
-                                 "from": "/one/two/three",
-                                 "path": "/a/b/c"}])"_json;
-        CHECK_THROWS_WITH(model.patch(p4),
-                          "[json.exception.out_of_range.403] key 'a' not found");
+        CHECK_THROWS_WITH_AS(model.patch(p3),
+                          "[json.exception.out_of_range.403] key 'a' not found", json::out_of_range&);
     }
 
     SECTION("issue #961 - incorrect parsing of indefinite length CBOR strings")
