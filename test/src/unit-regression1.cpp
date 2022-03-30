@@ -1414,10 +1414,10 @@ TEST_CASE("regression tests 1")
         CHECK_THROWS_WITH_AS(model.patch(p1),
                           "[json.exception.out_of_range.403] key 'a' not found", json::out_of_range&);
 
-        auto p3 = R"([{"op": "copy",
+        auto p2 = R"([{"op": "copy",
                        "from": "/one/two/three",
                        "path": "/a/b/c"}])"_json;
-        CHECK_THROWS_WITH_AS(model.patch(p3),
+        CHECK_THROWS_WITH_AS(model.patch(p2),
                           "[json.exception.out_of_range.403] key 'a' not found", json::out_of_range&);
     }
 
