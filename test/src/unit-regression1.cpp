@@ -770,9 +770,8 @@ TEST_CASE("regression tests 1")
             std::stringstream ss;
             ss << "   ";
             json j;
-            CHECK_THROWS_AS(ss >> j, json::parse_error&);
-            CHECK_THROWS_WITH(ss >> j,
-                              "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal");
+            CHECK_THROWS_WITH_AS(ss >> j,
+                              "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal", json::parse_error&);
         }
 
         SECTION("one value")
