@@ -129,7 +129,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 {
   private:
     template<detail::value_t> friend struct detail::external_constructor;
-    friend ::nlohmann::json_pointer<basic_json>;
+    friend ::nlohmann::json_pointer<StringType>;
 
     template<typename BasicJsonType, typename InputType>
     friend class ::nlohmann::detail::parser;
@@ -188,7 +188,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
   public:
     using value_t = detail::value_t;
     /// JSON Pointer, see @ref nlohmann::json_pointer
-    using json_pointer = ::nlohmann::json_pointer<basic_json>;
+    using json_pointer = ::nlohmann::json_pointer<StringType>;
     template<typename T, typename SFINAE>
     using json_serializer = JSONSerializer<T, SFINAE>;
     /// how to treat decoding errors
@@ -4320,7 +4320,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     }
                     else
                     {
-                        const auto idx = json_pointer::array_index(last_path);
+                        const auto idx = json_pointer::template array_index<basic_json_t>(last_path);
                         if (JSON_HEDLEY_UNLIKELY(idx > parent.size()))
                         {
                             // avoid undefined behavior
@@ -4371,7 +4371,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             else if (parent.is_array())
             {
                 // note erase performs range check
-                parent.erase(json_pointer::array_index(last_path));
+                parent.erase(json_pointer::template array_index<basic_json_t>(last_path));
             }
         };
 
