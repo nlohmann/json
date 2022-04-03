@@ -3237,7 +3237,6 @@ TEST_CASE("all BJData first bytes")
 }
 #endif
 
-#if defined(BJDATA_TEST_ROUNDTRIP)
 TEST_CASE("BJData roundtrips" * doctest::skip())
 {
     SECTION("input from self-generated BJData files")
@@ -3354,4 +3353,3 @@ TEST_CASE("BJData roundtrips" * doctest::skip())
         }
     }
 }
-#endif
