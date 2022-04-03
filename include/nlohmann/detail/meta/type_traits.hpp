@@ -44,6 +44,16 @@ template<typename> struct is_basic_json : std::false_type {};
 NLOHMANN_BASIC_JSON_TPL_DECLARATION
 struct is_basic_json<NLOHMANN_BASIC_JSON_TPL> : std::true_type {};
 
+// used by exceptions create() member functions
+// true_type for pointer to possibly cv-qualified basic_json or std::nullptr_t
+// false_type otherwise
+template<typename BasicJsonContext>
+struct is_basic_json_context :
+    std::integral_constant < bool,
+    is_basic_json<typename std::remove_cv<typename std::remove_pointer<BasicJsonContext>::type>::type>::value
+    || std::is_same<BasicJsonContext, std::nullptr_t>::value >
+{};
+
 //////////////////////
 // json_ref helpers //
 //////////////////////
