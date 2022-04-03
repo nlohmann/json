@@ -12,6 +12,8 @@
 #include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/cpp_future.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
+#include <nlohmann/detail/string_concat.hpp>
+
 
 namespace nlohmann
 {
@@ -41,7 +43,7 @@ class exception : public std::exception
 
     static std::string name(const std::string& ename, int id_)
     {
-        return "[json.exception." + ename + "." + std::to_string(id_) + "] ";
+        return concat("[json.exception.", ename, '.', std::to_string(id_), "] ");
     }
 
     static std::string diagnostics(std::nullptr_t /*leaf_element*/)
@@ -102,11 +104,12 @@ class exception : public std::exception
             return "";
         }
 
-        return "(" + std::accumulate(tokens.rbegin(), tokens.rend(), std::string{},
-                                     [](const std::string & a, const std::string & b)
+        auto str = std::accumulate(tokens.rbegin(), tokens.rend(), std::string{},
+                                   [](const std::string & a, const std::string & b)
         {
-            return a + "/" + detail::escape(b);
-        }) + ") ";
+            return concat(a, '/', detail::escape(b));
+        });
+        return concat('(', str, ") ");
 #else
         static_cast<void>(leaf_element);
         return "";
@@ -135,17 +138,17 @@ class parse_error : public exception
     template<typename BasicJsonContext, enable_if_t<is_basic_json_context<BasicJsonContext>::value, int> = 0>
     static parse_error create(int id_, const position_t& pos, const std::string& what_arg, BasicJsonContext context)
     {
-        std::string w = exception::name("parse_error", id_) + "parse error" +
-                        position_string(pos) + ": " + exception::diagnostics(context) + what_arg;
+        std::string w = concat(exception::name("parse_error", id_), "parse error",
+                               position_string(pos), ": ", exception::diagnostics(context), what_arg);
         return {id_, pos.chars_read_total, w.c_str()};
     }
 
     template<typename BasicJsonContext, enable_if_t<is_basic_json_context<BasicJsonContext>::value, int> = 0>
     static parse_error create(int id_, std::size_t byte_, const std::string& what_arg, BasicJsonContext context)
     {
-        std::string w = exception::name("parse_error", id_) + "parse error" +
-                        (byte_ != 0 ? (" at byte " + std::to_string(byte_)) : "") +
-                        ": " + exception::diagnostics(context) + what_arg;
+        std::string w = concat(exception::name("parse_error", id_), "parse error",
+                               (byte_ != 0 ? (concat(" at byte ", std::to_string(byte_))) : ""),
+                               ": ", exception::diagnostics(context), what_arg);
         return {id_, byte_, w.c_str()};
     }
 
@@ -166,8 +169,8 @@ class parse_error : public exception
 
     static std::string position_string(const position_t& pos)
     {
-        return " at line " + std::to_string(pos.lines_read + 1) +
-               ", column " + std::to_string(pos.chars_read_current_line);
+        return concat(" at line ", std::to_string(pos.lines_read + 1),
+                      ", column ", std::to_string(pos.chars_read_current_line));
     }
 };
 
@@ -179,7 +182,7 @@ class invalid_iterator : public exception
     template<typename BasicJsonContext, enable_if_t<is_basic_json_context<BasicJsonContext>::value, int> = 0>
     static invalid_iterator create(int id_, const std::string& what_arg, BasicJsonContext context)
     {
-        std::string w = exception::name("invalid_iterator", id_) + exception::diagnostics(context) + what_arg;
+        std::string w = concat(exception::name("invalid_iterator", id_), exception::diagnostics(context), what_arg);
         return {id_, w.c_str()};
     }
 
@@ -197,7 +200,7 @@ class type_error : public exception
     template<typename BasicJsonContext, enable_if_t<is_basic_json_context<BasicJsonContext>::value, int> = 0>
     static type_error create(int id_, const std::string& what_arg, BasicJsonContext context)
     {
-        std::string w = exception::name("type_error", id_) + exception::diagnostics(context) + what_arg;
+        std::string w = concat(exception::name("type_error", id_), exception::diagnostics(context), what_arg);
         return {id_, w.c_str()};
     }
 
@@ -214,7 +217,7 @@ class out_of_range : public exception
     template<typename BasicJsonContext, enable_if_t<is_basic_json_context<BasicJsonContext>::value, int> = 0>
     static out_of_range create(int id_, const std::string& what_arg, BasicJsonContext context)
     {
-        std::string w = exception::name("out_of_range", id_) + exception::diagnostics(context) + what_arg;
+        std::string w = concat(exception::name("out_of_range", id_), exception::diagnostics(context), what_arg);
         return {id_, w.c_str()};
     }
 
@@ -231,7 +234,7 @@ class other_error : public exception
     template<typename BasicJsonContext, enable_if_t<is_basic_json_context<BasicJsonContext>::value, int> = 0>
     static other_error create(int id_, const std::string& what_arg, BasicJsonContext context)
     {
-        std::string w = exception::name("other_error", id_) + exception::diagnostics(context) + what_arg;
+        std::string w = concat(exception::name("other_error", id_), exception::diagnostics(context), what_arg);
         return {id_, w.c_str()};
     }
 
