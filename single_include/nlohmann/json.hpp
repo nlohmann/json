@@ -181,7 +181,6 @@ inline bool operator<(const value_t lhs, const value_t rhs) noexcept
 // #include <nlohmann/detail/string_escape.hpp>
 
 
-#include <string>
 // #include <nlohmann/detail/macro_scope.hpp>
 
 
@@ -2749,12 +2748,13 @@ enforced with an assertion.**
 
 @since version 2.0.0
 */
-inline void replace_substring(std::string& s, const std::string& f,
-                              const std::string& t)
+template<typename StringType>
+inline void replace_substring(StringType& s, const StringType& f,
+                              const StringType& t)
 {
     JSON_ASSERT(!f.empty());
     for (auto pos = s.find(f);                // find first occurrence of f
-            pos != std::string::npos;         // make sure f was found
+            pos != StringType::npos;          // make sure f was found
             s.replace(pos, f.size(), t),      // replace with t, and
             pos = s.find(f, pos + t.size()))  // find next occurrence of f
     {}
@@ -2767,10 +2767,11 @@ inline void replace_substring(std::string& s, const std::string& f,
  *
  * Note the order of escaping "~" to "~0" and "/" to "~1" is important.
  */
-inline std::string escape(std::string s)
+template<typename StringType>
+inline StringType escape(StringType s)
 {
-    replace_substring(s, "~", "~0");
-    replace_substring(s, "/", "~1");
+    replace_substring(s, StringType{"~"}, StringType{"~0"});
+    replace_substring(s, StringType{"/"}, StringType{"~1"});
     return s;
 }
 
@@ -2781,10 +2782,11 @@ inline std::string escape(std::string s)
  *
  * Note the order of escaping "~1" to "/" and "~0" to "~" is important.
  */
-static void unescape(std::string& s)
+template<typename StringType>
+static void unescape(StringType& s)
 {
-    replace_substring(s, "~1", "/");
-    replace_substring(s, "~0", "~");
+    replace_substring(s, StringType{"~1"}, StringType{"/"});
+    replace_substring(s, StringType{"~0"}, StringType{"~"});
 }
 
 } // namespace detail
