@@ -129,7 +129,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 {
   private:
     template<detail::value_t> friend struct detail::external_constructor;
-    friend ::nlohmann::json_pointer<StringType>;
+
+    template<typename>
+    friend class ::nlohmann::json_pointer;
+    // can be restored when json_pointer backwards compatibility is removed
+    // friend ::nlohmann::json_pointer<StringType>;
 
     template<typename BasicJsonType, typename InputType>
     friend class ::nlohmann::detail::parser;
@@ -2221,6 +2225,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         JSON_THROW(type_error::create(306, detail::concat("cannot use value() with ", type_name()), this));
     }
 
+    template<class ValueType, class BasicJsonType, typename std::enable_if<
+                 detail::is_getable<basic_json_t, ValueType>::value, int>::type = 0>
+    JSON_HEDLEY_DEPRECATED_FOR(3.10.6, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
+    ValueType value(const ::nlohmann::json_pointer<BasicJsonType>& ptr, const ValueType& default_value) const
+    {
+        return value(ptr.convert(), default_value);
+    }
+
     /// @brief access specified object element via JSON Pointer with default value
     /// @sa https://json.nlohmann.me/api/basic_json/value/
     /// overload for a default value of type const char*
@@ -2228,6 +2240,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     string_t value(const json_pointer& ptr, const char* default_value) const
     {
         return value(ptr, string_t(default_value));
+    }
+
+    template<typename BasicJsonType>
+    JSON_HEDLEY_DEPRECATED_FOR(3.10.6, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
+    JSON_HEDLEY_NON_NULL(3)
+    string_t value(const typename ::nlohmann::json_pointer<BasicJsonType>& ptr, const char* default_value) const
+    {
+        return value(ptr.convert(), default_value);
     }
 
     /// @brief access the first element
@@ -2492,7 +2512,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @brief check the existence of an element in a JSON object
     /// @sa https://json.nlohmann.me/api/basic_json/contains/
     template < typename KeyT, typename std::enable_if <
-                   !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value, int >::type = 0 >
+                   !detail::is_json_pointer<typename std::decay<KeyT>::type>::value, int >::type = 0 >
     bool contains(KeyT && key) const
     {
         return is_object() && m_value.object->find(std::forward<KeyT>(key)) != m_value.object->end();
@@ -2501,6 +2521,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @brief check the existence of an element in a JSON object given a JSON pointer
     /// @sa https://json.nlohmann.me/api/basic_json/contains/
     bool contains(const json_pointer& ptr) const
+    {
+        return ptr.contains(this);
+    }
+
+    template<typename BasicJsonType>
+    JSON_HEDLEY_DEPRECATED_FOR(3.10.6, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
+    bool contains(const typename ::nlohmann::json_pointer<BasicJsonType> ptr) const
     {
         return ptr.contains(this);
     }
@@ -4193,9 +4220,23 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return ptr.get_unchecked(this);
     }
 
+    template<typename BasicJsonType>
+    JSON_HEDLEY_DEPRECATED_FOR(3.10.6, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
+    reference operator[](const ::nlohmann::json_pointer<BasicJsonType>& ptr)
+    {
+        return ptr.get_unchecked(this);
+    }
+
     /// @brief access specified element via JSON Pointer
     /// @sa https://json.nlohmann.me/api/basic_json/operator%5B%5D/
     const_reference operator[](const json_pointer& ptr) const
+    {
+        return ptr.get_unchecked(this);
+    }
+
+    template<typename BasicJsonType>
+    JSON_HEDLEY_DEPRECATED_FOR(3.10.6, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
+    const_reference operator[](const ::nlohmann::json_pointer<BasicJsonType>& ptr) const
     {
         return ptr.get_unchecked(this);
     }
@@ -4207,9 +4248,23 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return ptr.get_checked(this);
     }
 
+    template<typename BasicJsonType>
+    JSON_HEDLEY_DEPRECATED_FOR(3.10.6, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
+    reference at(const ::nlohmann::json_pointer<BasicJsonType>& ptr)
+    {
+        return ptr.get_checked(this);
+    }
+
     /// @brief access specified element via JSON Pointer
     /// @sa https://json.nlohmann.me/api/basic_json/at/
     const_reference at(const json_pointer& ptr) const
+    {
+        return ptr.get_checked(this);
+    }
+
+    template<typename BasicJsonType>
+    JSON_HEDLEY_DEPRECATED_FOR(3.10.6, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
+    const_reference at(const ::nlohmann::json_pointer<BasicJsonType>& ptr) const
     {
         return ptr.get_checked(this);
     }

@@ -54,6 +54,11 @@ struct is_basic_json_context :
     || std::is_same<BasicJsonContext, std::nullptr_t>::value >
 {};
 
+template<typename> struct is_json_pointer : std::false_type {};
+
+template<typename RefStringType>
+struct is_json_pointer<json_pointer<RefStringType>> : std::true_type {};
+
 //////////////////////
 // json_ref helpers //
 //////////////////////

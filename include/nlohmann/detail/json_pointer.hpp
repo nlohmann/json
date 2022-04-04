@@ -28,8 +28,24 @@ class json_pointer
     NLOHMANN_BASIC_JSON_TPL_DECLARATION
     friend class basic_json;
 
+    template<typename>
+    friend class json_pointer;
+
+    template<typename T>
+    struct string_t_helper
+    {
+        using type = T;
+    };
+
+    NLOHMANN_BASIC_JSON_TPL_DECLARATION
+    struct string_t_helper<NLOHMANN_BASIC_JSON_TPL>
+    {
+        using type = StringType;
+    };
+
   public:
-    using string_t = RefStringType;
+    // for backwards compatibility accept BasicJsonType
+    using string_t = typename string_t_helper<RefStringType>::type;
 
     /// @brief create JSON pointer
     /// @sa https://json.nlohmann.me/api/json_pointer/json_pointer/
@@ -791,6 +807,21 @@ class json_pointer
             json_pointer(element.first).get_and_create(result) = element.second;
         }
 
+        return result;
+    }
+
+    // can't use conversion operator because of ambiguity
+    json_pointer<string_t> convert() const&
+    {
+        json_pointer<string_t> result;
+        result.reference_tokens = reference_tokens;
+        return result;
+    }
+
+    json_pointer<string_t> convert()&&
+    {
+        json_pointer<string_t> result;
+        result.reference_tokens = std::move(reference_tokens);
         return result;
     }
 
