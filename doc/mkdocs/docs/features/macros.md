@@ -125,6 +125,19 @@ security reasons (e.g., Intel Software Guard Extensions (SGX)).
     #undef JSON_NO_IO
     ```
 
+## `JSON_SKIP_LIBRARY_VERSION_CHECK`
+
+When defined, the library will not create a compiler warning when a different version of the library was already
+included.
+
+!!! info "Default behavior"
+
+    By default, the macro is not defined.
+
+    ```cpp
+    #undef JSON_SKIP_LIBRARY_VERSION_CHECK
+    ```
+
 ## `JSON_SKIP_UNSUPPORTED_COMPILER_CHECK`
 
 When defined, the library will not create a compile error when a known unsupported compiler is detected. This allows to
