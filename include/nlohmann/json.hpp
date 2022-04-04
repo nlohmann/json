@@ -310,7 +310,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         result["compiler"] = {{"family", "unknown"}, {"version", "unknown"}};
 #endif
 
-        
+
 #if defined(_MSVC_LANG)
         result["compiler"]["c++"] = std::to_string(_MSVC_LANG);
 #elif defined(__cplusplus)
