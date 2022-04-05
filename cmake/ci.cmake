@@ -13,12 +13,12 @@ execute_process(COMMAND ${ASTYLE_TOOL} --version OUTPUT_VARIABLE ASTYLE_TOOL_VER
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" ASTYLE_TOOL_VERSION "${ASTYLE_TOOL_VERSION}")
 message(STATUS "🔖 Artistic Style ${ASTYLE_TOOL_VERSION} (${ASTYLE_TOOL})")
 
-find_program(CLANG_TOOL NAMES clang++-HEAD clang++-14 clang++-13 clang++-12 clang++-11 clang++)
+find_program(CLANG_TOOL NAMES clang++-HEAD clang++-15 clang++-14 clang++-13 clang++-12 clang++-11 clang++)
 execute_process(COMMAND ${CLANG_TOOL} --version OUTPUT_VARIABLE CLANG_TOOL_VERSION ERROR_VARIABLE CLANG_TOOL_VERSION)
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" CLANG_TOOL_VERSION "${CLANG_TOOL_VERSION}")
 message(STATUS "🔖 Clang ${CLANG_TOOL_VERSION} (${CLANG_TOOL})")
 
-find_program(CLANG_TIDY_TOOL NAMES clang-tidy-14 clang-tidy-13 clang-tidy-12 clang-tidy-11 clang-tidy)
+find_program(CLANG_TIDY_TOOL NAMES clang-tidy-15 clang-tidy-14 clang-tidy-13 clang-tidy-12 clang-tidy-11 clang-tidy)
 execute_process(COMMAND ${CLANG_TIDY_TOOL} --version OUTPUT_VARIABLE CLANG_TIDY_TOOL_VERSION ERROR_VARIABLE CLANG_TIDY_TOOL_VERSION)
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" CLANG_TIDY_TOOL_VERSION "${CLANG_TIDY_TOOL_VERSION}")
 message(STATUS "🔖 Clang-Tidy ${CLANG_TIDY_TOOL_VERSION} (${CLANG_TIDY_TOOL})")
