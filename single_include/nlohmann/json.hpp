@@ -13301,11 +13301,10 @@ class json_pointer
 
     @exceptionsafety No-throw guarantee: this function never throws exceptions.
     */
-    friend bool operator==(json_pointer const& lhs,
-                           json_pointer const& rhs) noexcept
-    {
-        return lhs.reference_tokens == rhs.reference_tokens;
-    }
+    template<typename RefStringTypeLhs, typename RefStringTypeRhs>
+    // NOLINTNEXTLINE(readability-redundant-declaration)
+    friend bool operator==(json_pointer<RefStringTypeLhs> const& lhs,
+                           json_pointer<RefStringTypeRhs> const& rhs) noexcept;
 
     /*!
     @brief compares two JSON pointers for inequality
@@ -13318,15 +13317,29 @@ class json_pointer
 
     @exceptionsafety No-throw guarantee: this function never throws exceptions.
     */
-    friend bool operator!=(json_pointer const& lhs,
-                           json_pointer const& rhs) noexcept
-    {
-        return !(lhs == rhs);
-    }
+    template<typename RefStringTypeLhs, typename RefStringTypeRhs>
+    // NOLINTNEXTLINE(readability-redundant-declaration)
+    friend bool operator!=(json_pointer<RefStringTypeLhs> const& lhs,
+                           json_pointer<RefStringTypeRhs> const& rhs) noexcept;
 
     /// the reference tokens
     std::vector<string_t> reference_tokens;
 };
+
+// functions cannot be defined inside class due to ODR violations
+template<typename RefStringTypeLhs, typename RefStringTypeRhs>
+inline bool operator==(json_pointer<RefStringTypeLhs> const& lhs,
+                       json_pointer<RefStringTypeRhs> const& rhs) noexcept
+{
+    return lhs.reference_tokens == rhs.reference_tokens;
+}
+
+template<typename RefStringTypeLhs, typename RefStringTypeRhs>
+inline bool operator!=(json_pointer<RefStringTypeLhs> const& lhs,
+                       json_pointer<RefStringTypeRhs> const& rhs) noexcept
+{
+    return !(lhs == rhs);
+}
 }  // namespace nlohmann
 
 // #include <nlohmann/detail/json_ref.hpp>

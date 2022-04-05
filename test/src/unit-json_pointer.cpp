@@ -661,6 +661,15 @@ TEST_CASE("JSON pointers")
         CHECK(ptr.to_string() == "/object/~1");
     }
 
+    SECTION("equality comparison")
+    {
+        auto ptr1 = json::json_pointer("/foo/bar");
+        auto ptr2 = json::json_pointer("/foo/bar");
+
+        CHECK(ptr1 == ptr2);
+        CHECK_FALSE(ptr1 != ptr2);
+    }
+
     SECTION("backwards compatibility and mixing")
     {
         json j = R"(
@@ -695,5 +704,10 @@ TEST_CASE("JSON pointers")
 
         CHECK(j.value(ptr, "x") == j.value(ptr_j, "x"));
         CHECK(j.value(ptr, "x") == j.value(ptr_oj, "x"));
+
+        CHECK(ptr == ptr_j);
+        CHECK(ptr == ptr_oj);
+        CHECK_FALSE(ptr != ptr_j);
+        CHECK_FALSE(ptr != ptr_oj);
     }
 }
