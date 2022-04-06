@@ -1037,9 +1037,9 @@ auto cbor = json::to_msgpack(j); // 0xD5 (fixext2), 0x10, 0xCA, 0xFE
 
 Though it's 2022 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
 
-- GCC 4.8 - 11.0 (and possibly later)
-- Clang 3.4 - 13.0 (and possibly later)
-- Apple Clang 9.1 - 13.0 (and possibly later)
+- GCC 4.8 - 12.0 (and possibly later)
+- Clang 3.4 - 15.0 (and possibly later)
+- Apple Clang 9.1 - 13.1 (and possibly later)
 - Intel C++ Compiler 17.0.2 (and possibly later)
 - Nvidia CUDA Compiler 11.0.221 (and possibly later)
 - Microsoft Visual C++ 2015 / Build Tools 14.0.25123.0 (and possibly later)
@@ -1093,8 +1093,8 @@ The following compilers are currently used in continuous integration at [AppVeyo
 | GCC 8.4.0 (Ubuntu 8.4.0-3ubuntu2)                                                                      | Ubuntu 20.04.3 LTS | GitHub Actions |
 | GCC 9.3.0 (Ubuntu 9.3.0-17ubuntu1~20.04)                                                               | Ubuntu 20.04.3 LTS | GitHub Actions |
 | GCC 10.2.0 (Ubuntu 10.2.0-5ubuntu1~20.04)                                                              | Ubuntu 20.04.3 LTS | GitHub Actions |
-| GCC 11.0.1 20210321 (experimental)                                                                     | Ubuntu 20.04.3 LTS | GitHub Actions |
 | GCC 11.1.0                                                                                             | Ubuntu (aarch64)   | Drone CI       |
+| GCC 12.0.0 20211219 (experimental)                                                                     | Ubuntu 20.04.3 LTS | GitHub Actions |
 | Clang 3.5.2 (3.5.2-3ubuntu1)                                                                           | Ubuntu 20.04.3 LTS | GitHub Actions |
 | Clang 3.6.2 (3.6.2-3ubuntu2)                                                                           | Ubuntu 20.04.3 LTS | GitHub Actions |
 | Clang 3.7.1 (3.7.1-2ubuntu2)                                                                           | Ubuntu 20.04.3 LTS | GitHub Actions |
@@ -1114,6 +1114,7 @@ The following compilers are currently used in continuous integration at [AppVeyo
 | Clang 12.0.0 (12.0.0-3ubuntu1~20.04.3)                                                                 | Ubuntu 20.04.3 LTS | GitHub Actions |
 | Clang 13.0.1 (13.0.1-++20211015123032+cf15ccdeb6d5-1exp120211015003613.5)                              | Ubuntu 20.04.3 LTS | GitHub Actions |
 | Clang 14.0.0 (14.0.0-++20211221052852+55c71c9eac9b-1exp120211221172954.95)                             | Ubuntu 20.04.3 LTS | GitHub Actions |
+| Clang 15.0.0 (15.0.0-++20220403052648+896770c9a92e-1~exp1~20220403172744.209)                          | Ubuntu 20.04.3 LTS | GitHub Actions |
 | NVCC 11.0.221                                                                                          | Ubuntu 20.04.3 LTS | GitHub Actions |
 | Visual Studio 14 2015 MSVC 19.0.24241.7 (Build Engine version 14.0.25420.1)                            | Windows-6.3.9600   | AppVeyor       |
 | Visual Studio 15 2017 MSVC 19.16.27035.0 (Build Engine version 15.9.21+g9802d43bc3 for .NET Framework) | Windows-10.0.14393 | AppVeyor       |
