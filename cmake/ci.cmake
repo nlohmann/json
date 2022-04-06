@@ -79,7 +79,7 @@ message(STATUS "🔖 Valgrind ${VALGRIND_TOOL_VERSION} (${VALGRIND_TOOL})")
 find_program(GENHTML_TOOL NAMES genhtml)
 find_program(PLOG_CONVERTER_TOOL NAMES plog-converter)
 find_program(PVS_STUDIO_ANALYZER_TOOL NAMES pvs-studio-analyzer)
-find_program(SCAN_BUILD_TOOL NAMES scan-build-14 scan-build-13 scan-build-12 scan-build-11 scan-build)
+find_program(SCAN_BUILD_TOOL NAMES scan-build-15 scan-build-14 scan-build-13 scan-build-12 scan-build-11 scan-build)
 
 # the individual source files
 file(GLOB_RECURSE SRC_FILES ${PROJECT_SOURCE_DIR}/include/nlohmann/*.hpp)
