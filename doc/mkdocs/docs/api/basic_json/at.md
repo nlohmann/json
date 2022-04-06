@@ -24,7 +24,7 @@ const_reference at(const json_pointer& ptr) const;
 :   index of the element to access
 
 `key` (in)
-:   object key of the elements to remove
+:   object key of the elements to access
     
 `ptr` (in)
 :   JSON pointer to the desired element
