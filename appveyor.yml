@@ -66,15 +66,15 @@ before_build:
   - cmake . -G "%GENERATOR%" -A "%GENERATOR_PLATFORM%" -DCMAKE_CXX_FLAGS="%CXX_FLAGS%" -DCMAKE_IGNORE_PATH="C:/Program Files/Git/usr/bin" -DJSON_BuildTests=On "%CMAKE_OPTIONS%"
 
 build_script:
-  - cmake --build . --config "%configuration%"
+  - cmake --build . --config "%configuration%" --parallel 2
 
 test_script:
-  - if "%configuration%"=="Release" ctest -C "%configuration%" -V -j
+  - if "%configuration%"=="Release" ctest -C "%configuration%" --parallel 2 --output-on-failure
   # On Debug builds, skip test-unicode_all
   # as it is extremely slow to run and cause
   # occasional timeouts on AppVeyor.
   # More info: https://github.com/nlohmann/json/pull/1570
-  - if "%configuration%"=="Debug" ctest --exclude-regex "test-unicode" -C "%configuration%" -V -j
+  - if "%configuration%"=="Debug" ctest --exclude-regex "test-unicode" -C "%configuration%" --parallel 2 --output-on-failure
 
 # only build PRs and commits to develop branch
 # (see https://help.appveyor.com/discussions/questions/55079-two-builds-per-commit-to-pull-request)
