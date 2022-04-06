@@ -49,7 +49,7 @@ struct bad_allocator : std::allocator<T>
 };
 } // namespace
 
-TEST_CASE("bad_alloc")
+TEST_CASE("bad_alloc") // NOLINT(cert-err58-cpp)
 {
     SECTION("bad_alloc")
     {
@@ -132,7 +132,7 @@ void my_allocator_clean_up(T* p)
 }
 } // namespace
 
-TEST_CASE("controlled bad_alloc")
+TEST_CASE("controlled bad_alloc") // NOLINT(cert-err58-cpp)
 {
     // create JSON type using the throwing allocator
     using my_json = nlohmann::basic_json<std::map,
@@ -255,7 +255,7 @@ struct allocator_no_forward : std::allocator<T>
 };
 } // namespace
 
-TEST_CASE("bad my_allocator::construct")
+TEST_CASE("bad my_allocator::construct") // NOLINT(cert-err58-cpp)
 {
     SECTION("my_allocator::construct doesn't forward")
     {
