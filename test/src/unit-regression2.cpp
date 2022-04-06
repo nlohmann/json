@@ -240,6 +240,50 @@ inline void from_json(const nlohmann::json& j, FooBar& fb)
     j.at("value").get_to(fb.foo.value);
 }
 
+/////////////////////////////////////////////////////////////////////
+// for #3171
+/////////////////////////////////////////////////////////////////////
+
+struct for_3171_base // NOLINT(cppcoreguidelines-special-member-functions)
+{
+    for_3171_base(const std::string& /*unused*/ = {}) {}
+    virtual ~for_3171_base() = default;
+
+    virtual void _from_json(const json& j)
+    {
+        j.at("str").get_to(str);
+    }
+
+    std::string str{};
+};
+
+struct for_3171_derived : public for_3171_base
+{
+    for_3171_derived() = default;
+    explicit for_3171_derived(const std::string& /*unused*/) { }
+};
+
+inline void from_json(const json& j, for_3171_base& tb)
+{
+    tb._from_json(j);
+}
+
+/////////////////////////////////////////////////////////////////////
+// for #3312
+/////////////////////////////////////////////////////////////////////
+
+#ifdef JSON_HAS_CPP_20
+struct for_3312
+{
+    std::string name;
+};
+
+inline void from_json(const json& j, for_3312& obj)
+{
+    j.at("name").get_to(obj.name);
+}
+#endif
+
 TEST_CASE("regression tests 2")
 {
     SECTION("issue #1001 - Fix memory leak during parser callback")
@@ -791,6 +835,31 @@ TEST_CASE("regression tests 2")
         CHECK(jit->first == ojit->first);
         CHECK(jit->second.get<std::string>() == ojit->second.get<std::string>());
     }
+
+    SECTION("issue #3171 - if class is_constructible from std::string wrong from_json overload is being selected, compilation failed")
+    {
+        json j{{ "str", "value"}};
+
+        // failed with: error: no match for ‘operator=’ (operand types are ‘for_3171_derived’ and ‘const nlohmann::basic_json<>::string_t’
+        //                                               {aka ‘const std::__cxx11::basic_string<char>’})
+        //                  s = *j.template get_ptr<const typename BasicJsonType::string_t*>();
+        auto td = j.get<for_3171_derived>();
+
+        CHECK(td.str == "value");
+    }
+
+#ifdef JSON_HAS_CPP_20
+    SECTION("issue #3312 - Parse to custom class from unordered_json breaks on G++11.2.0 with C++20")
+    {
+        // see test for #3171
+        ordered_json j = {{"name", "class"}};
+        for_3312 obj{};
+
+        j.get_to(obj);
+
+        CHECK(obj.name == "class");
+    }
+#endif
 }
 
 DOCTEST_CLANG_SUPPRESS_WARNING_POP

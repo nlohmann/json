@@ -11,11 +11,6 @@ include(test)
 # override standard support
 #############################################################################
 
-# compiling json.hpp in C++14 mode fails with Clang <4.0
-if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.0)
-    unset(compiler_supports_cpp_14)
-endif()
-
 # Clang only supports C++17 starting from Clang 5.0
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 5.0)
     unset(compiler_supports_cpp_17)
