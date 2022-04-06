@@ -464,8 +464,7 @@ void from_json(const BasicJsonType& j, std_fs::path& p)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_string()))
     {
-        // Not tested because of #3377 (related #3070)
-        JSON_THROW(type_error::create(302, "type must be string, but is " + std::string(j.type_name()), j)); // LCOV_EXCL_LINE
+        JSON_THROW(type_error::create(302, "type must be string, but is " + std::string(j.type_name()), j));
     }
     p = *j.template get_ptr<const typename BasicJsonType::string_t*>();
 }
