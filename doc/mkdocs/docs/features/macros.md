@@ -14,6 +14,8 @@ This macro controls which code is executed for runtime assertions of the librari
     #define JSON_ASSERT(x) assert(x)
     ```
 
+The macro was introduced in version 3.9.0.
+
 ## `JSON_CATCH_USER(exception)`
 
 This macro overrides [`#!cpp catch`](https://en.cppreference.com/w/cpp/language/try_catch) calls inside the library.
@@ -39,6 +41,8 @@ See [Switch off exceptions](../home/exceptions.md#switch-off-exceptions) for an 
     #define JSON_CATCH_USER(exception) if (false)
     ```
 
+The macro was introduced in version 3.1.0.
+
 ## `JSON_DIAGNOSTICS`
 
 This macro enables extended diagnostics for exception messages. Possible values are `1` to enable or `0` to disable
@@ -63,6 +67,8 @@ The diagnostics messages can also be controlled with the CMake option `JSON_Diag
     #define JSON_DIAGNOSTICS 0
     ```
 
+The macro was introduced in version 3.10.0.
+
 ## `JSON_HAS_CPP_11`, `JSON_HAS_CPP_14`, `JSON_HAS_CPP_17`, `JSON_HAS_CPP_20`
 
 The library targets C++11, but also supports some features introduced in later C++ versions (e.g., `std::string_view`
@@ -75,6 +81,8 @@ detected incorrectly.
 
     The default value is detected based on the preprocessor macros `#!cpp __cplusplus`, `#!cpp _HAS_CXX17`, or
     `#!cpp _MSVC_LANG`.
+
+The macros were introduced in version 3.10.5.
 
 ## `JSON_HAS_FILESYSTEM`, `JSON_HAS_EXPERIMENTAL_FILESYSTEM`
 
@@ -91,6 +99,8 @@ To override the built-in check, define `JSON_HAS_FILESYSTEM` or `JSON_HAS_EXPERI
 
 Note that older compilers or older versions of libstd++ also require the library `stdc++fs` to be linked to for
 filesystem support.
+
+The macros were introduced in version 3.10.5.
 
 ## `JSON_NOEXCEPTION`
 
@@ -111,6 +121,8 @@ The same effect is achieved by setting the compiler flag `-fno-exceptions`.
 Note the explanatory [`what()`](https://en.cppreference.com/w/cpp/error/exception/what) string of exceptions is not
 available for MSVC if exceptions are disabled, see [#2824](https://github.com/nlohmann/json/discussions/2824).
 
+The macro was introduced in version 2.1.0.
+
 ## `JSON_NO_IO`
 
 When defined, headers `<cstdio>`, `<ios>`, `<iosfwd>`, `<istream>`, and `<ostream>` are not included and parse functions
@@ -125,6 +137,8 @@ security reasons (e.g., Intel Software Guard Extensions (SGX)).
     #undef JSON_NO_IO
     ```
 
+The macro was introduced in version 3.10.0.
+
 ## `JSON_SKIP_LIBRARY_VERSION_CHECK`
 
 When defined, the library will not create a compiler warning when a different version of the library was already
@@ -138,6 +152,8 @@ included.
     #undef JSON_SKIP_LIBRARY_VERSION_CHECK
     ```
 
+The macro was introduced in version 3.11.0.
+
 ## `JSON_SKIP_UNSUPPORTED_COMPILER_CHECK`
 
 When defined, the library will not create a compile error when a known unsupported compiler is detected. This allows to
@@ -150,6 +166,8 @@ use the library with compilers that do not fully support C++11 and may only work
     ```cpp
     #undef JSON_SKIP_UNSUPPORTED_COMPILER_CHECK
     ```
+
+The macro was introduced in version 3.2.0.
 
 ## `JSON_THROW_USER(exception)`
 
@@ -176,6 +194,8 @@ undefined behavior.
 
 See [Switch off exceptions](../home/exceptions.md#switch-off-exceptions) for an example.
 
+The macro was introduced in version 3.1.0.
+
 ## `JSON_TRY_USER`
 
 This macro overrides `#!cpp try` calls inside the library. It has no arguments and is always followed by a scope.
@@ -197,6 +217,8 @@ This macro overrides `#!cpp try` calls inside the library. It has no arguments a
     ```
 
 See [Switch off exceptions](../home/exceptions.md#switch-off-exceptions) for an example.
+
+The macro was introduced in version 3.1.0.
 
 ## `JSON_USE_IMPLICIT_CONVERSIONS`
 
@@ -228,6 +250,8 @@ sets `JSON_USE_IMPLICIT_CONVERSIONS` accordingly.
     #define JSON_USE_IMPLICIT_CONVERSIONS 1
     ```
 
+The macro was introduced in version 3.9.0.
+
 ## `NLOHMANN_DEFINE_TYPE_INTRUSIVE(type, member...)`
 
 This macro can be used to simplify the serialization/deserialization of types if (1) want to use a JSON object as
@@ -239,9 +263,16 @@ The first parameter is the name of the class/struct, and all remaining parameter
 
 See [Simplify your life with macros](arbitrary_types.md#simplify-your-life-with-macros) for an example.
 
+The macro was introduced in version 3.9.0.
+
 ## `NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(type, member...)`
 
-This macro is similar to `NLOHMANN_DEFINE_TYPE_INTRUSIVE`. It will not throw an exception in `from_json()` due to a missing value in the JSON object, but can throw due to a mismatched type. In order to support that it requires that the type be default constructible. The `from_json()` function default constructs an object and uses its values as the defaults when calling the `value()` function.
+This macro is similar to `NLOHMANN_DEFINE_TYPE_INTRUSIVE`. It will not throw an exception in `from_json()` due to a
+missing value in the JSON object, but can throw due to a mismatched type. In order to support that it requires that the
+type be default constructible. The `from_json()` function default constructs an object and uses its values as the
+defaults when calling the `value()` function.
+
+The macro was introduced in version 3.11.0.
 
 ## `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(type, member...)`
 
@@ -254,16 +285,27 @@ first parameter is the name of the class/struct, and all remaining parameters na
 
 See [Simplify your life with macros](arbitrary_types.md#simplify-your-life-with-macros) for an example.
 
+The macro was introduced in version 3.9.0.
+
 ## `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(type, member...)`
 
-This macro is similar to `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE`. It will not throw an exception in `from_json()` due to a missing value in the JSON object, but can throw due to a mismatched type. In order to support that it requires that the type be default constructible. The `from_json()` function default constructs an object and uses its values as the defaults when calling the `value()` function.
+This macro is similar to `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE`. It will not throw an exception in `from_json()` due to a
+missing value in the JSON object, but can throw due to a mismatched type. In order to support that it requires that the
+type be default constructible. The `from_json()` function default constructs an object and uses its values as the
+defaults when calling the `value()` function.
+
+The macro was introduced in version 3.11.0.
 
 ## `NLOHMANN_JSON_SERIALIZE_ENUM(type, ...)`
 
 This macro simplifies the serialization/deserialization of enum types. See
 [Specializing enum conversion](enum_conversion.md) for more information.
 
+The macro was introduced in version 3.4.0.
+
 ## `NLOHMANN_JSON_VERSION_MAJOR`, `NLOHMANN_JSON_VERSION_MINOR`, `NLOHMANN_JSON_VERSION_PATCH`
 
 These macros are defined by the library and contain the version numbers according to
 [Semantic Versioning 2.0.0](https://semver.org).
+
+The macros were introduced in version 3.1.0.

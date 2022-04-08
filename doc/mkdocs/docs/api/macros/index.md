@@ -1,5 +1,9 @@
 # Macros
 
+!!! note
+
+    This page is under construction. See the [macro overview page](../../features/macros.md) until then.
+
 Some aspects of the library can be configured by defining preprocessor macros before including the `json.hpp` header.
 
 - [`JSON_ASSERT(x)`](json_assert.md)
