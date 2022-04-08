@@ -2227,7 +2227,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     template<class ValueType, class BasicJsonType, typename std::enable_if<
                  detail::is_getable<basic_json_t, ValueType>::value, int>::type = 0>
-    JSON_HEDLEY_DEPRECATED_FOR(3.10.6, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
+    JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
     ValueType value(const ::nlohmann::json_pointer<BasicJsonType>& ptr, const ValueType& default_value) const
     {
         return value(ptr.convert(), default_value);
@@ -2243,7 +2243,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 
     template<typename BasicJsonType>
-    JSON_HEDLEY_DEPRECATED_FOR(3.10.6, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
+    JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
     JSON_HEDLEY_NON_NULL(3)
     string_t value(const typename ::nlohmann::json_pointer<BasicJsonType>& ptr, const char* default_value) const
     {
@@ -2526,7 +2526,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 
     template<typename BasicJsonType>
-    JSON_HEDLEY_DEPRECATED_FOR(3.10.6, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
+    JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
     bool contains(const typename ::nlohmann::json_pointer<BasicJsonType> ptr) const
     {
         return ptr.contains(this);
@@ -4221,7 +4221,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 
     template<typename BasicJsonType>
-    JSON_HEDLEY_DEPRECATED_FOR(3.10.6, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
+    JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
     reference operator[](const ::nlohmann::json_pointer<BasicJsonType>& ptr)
     {
         return ptr.get_unchecked(this);
@@ -4235,7 +4235,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 
     template<typename BasicJsonType>
-    JSON_HEDLEY_DEPRECATED_FOR(3.10.6, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
+    JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
     const_reference operator[](const ::nlohmann::json_pointer<BasicJsonType>& ptr) const
     {
         return ptr.get_unchecked(this);
@@ -4249,7 +4249,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 
     template<typename BasicJsonType>
-    JSON_HEDLEY_DEPRECATED_FOR(3.10.6, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
+    JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
     reference at(const ::nlohmann::json_pointer<BasicJsonType>& ptr)
     {
         return ptr.get_checked(this);
@@ -4263,7 +4263,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 
     template<typename BasicJsonType>
-    JSON_HEDLEY_DEPRECATED_FOR(3.10.6, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
+    JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
     const_reference at(const ::nlohmann::json_pointer<BasicJsonType>& ptr) const
     {
         return ptr.get_checked(this);

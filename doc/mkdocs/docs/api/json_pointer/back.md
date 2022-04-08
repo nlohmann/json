@@ -37,4 +37,4 @@ Constant.
 ## Version history
 
 - Added in version 3.6.0.
-- Changed return type to `string_t` in version 3.10.6.
+- Changed return type to `string_t` in version 3.11.0.

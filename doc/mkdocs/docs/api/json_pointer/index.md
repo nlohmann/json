@@ -43,4 +43,4 @@ For backwards compatibility `RefStringType` may also be a specialization of [`ba
 ## Version history
 
 - Added in version 2.0.0.
-- Changed template parameter from `basic_json` to string type in version 3.10.6.
+- Changed template parameter from `basic_json` to string type in version 3.11.0.

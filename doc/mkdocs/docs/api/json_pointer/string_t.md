@@ -9,4 +9,4 @@ See [`basic_json::string_t`](../basic_json/string_t.md) for more information.
 
 ## Version history
 
-- Added in version 3.10.6.
+- Added in version 3.11.0.

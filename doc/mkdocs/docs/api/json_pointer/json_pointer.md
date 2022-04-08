@@ -38,4 +38,4 @@ Create a JSON pointer according to the syntax described in
 ## Version history
 
 - Added in version 2.0.0.
-- Changed type of `s` to `string_t` in version 3.10.6.
+- Changed type of `s` to `string_t` in version 3.11.0.

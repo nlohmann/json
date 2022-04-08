@@ -36,4 +36,4 @@ Amortized constant.
 ## Version history
 
 - Added in version 3.6.0.
-- Changed type of `token` to `string_t` in version 3.10.6.
+- Changed type of `token` to `string_t` in version 3.11.0.
