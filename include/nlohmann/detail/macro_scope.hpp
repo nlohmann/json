@@ -37,6 +37,12 @@
     #define JSON_HAS_CPP_11
 #endif
 
+#ifdef __has_include
+    #if __has_include(<version>)
+        #include <version>
+    #endif
+#endif
+
 #if !defined(JSON_HAS_FILESYSTEM) && !defined(JSON_HAS_EXPERIMENTAL_FILESYSTEM)
     #ifdef JSON_HAS_CPP_17
         #if defined(__cpp_lib_filesystem)
@@ -98,12 +104,14 @@
 #endif
 
 #ifndef JSON_HAS_THREE_WAY_COMPARISON
-    #if defined(__cpp_lib_three_way_comparison) && __cpp_lib_three_way_comparison >= 201907L \
-        && defined(__cpp_impl_three_way_comparison)&& __cpp_impl_three_way_comparison >= 201907L
+    #if defined(__cpp_impl_three_way_comparison) && __cpp_impl_three_way_comparison >= 201907L \
+        && defined(__cpp_lib_three_way_comparison) && __cpp_lib_three_way_comparison >= 201907L
         #define JSON_HAS_THREE_WAY_COMPARISON 1
-    #else
-        #define JSON_HAS_THREE_WAY_COMPARISON 0
     #endif
+#endif
+
+#ifndef JSON_HAS_THREE_WAY_COMPARISON
+    #define JSON_HAS_THREE_WAY_COMPARISON 0
 #endif
 
 #if JSON_HEDLEY_HAS_ATTRIBUTE(no_unique_address)
@@ -428,4 +436,8 @@
 
 #ifndef JSON_DIAGNOSTICS
     #define JSON_DIAGNOSTICS 0
+#endif
+
+#ifndef JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
+    #define JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON 0
 #endif

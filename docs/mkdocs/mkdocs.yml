@@ -152,6 +152,7 @@ nav:
         - 'operator value_t': api/basic_json/operator_value_t.md
         - 'operator[]': api/basic_json/operator[].md
         - 'operator=': api/basic_json/operator=.md
+        - 'operator<=>': api/basic_json/operator_spaceship.md
         - 'operator==': api/basic_json/operator_eq.md
         - 'operator!=': api/basic_json/operator_ne.md
         - 'operator<': api/basic_json/operator_lt.md
