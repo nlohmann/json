@@ -5919,8 +5919,9 @@ boolean return value informs the parser whether to continue processing the
 input.
 */
 template<typename BasicJsonType>
-struct json_sax
+class sax_interface
 {
+  public:
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
@@ -5995,6 +5996,36 @@ struct json_sax
     virtual bool key(string_t& val) = 0;
 
     /*!
+    @brief an object key of null value was read
+    @return whether parsing should proceed
+    */
+    virtual bool key_null() = 0;
+
+    /*!
+    @brief an object key of type bool was read
+    @return whether parsing should proceed
+    */
+    virtual bool key_boolean(bool val) = 0;
+
+    /*!
+    @brief an object key of type integer number was read
+    @return whether parsing should proceed
+    */
+    virtual bool key_integer(number_integer_t val) = 0;
+
+    /*!
+    @brief an object key of type unsigned was read
+    @return whether parsing should proceed
+    */
+    virtual bool key_unsigned(number_unsigned_t val) = 0;
+
+    /*!
+    @brief an object key of type float was read
+    @return whether parsing should proceed
+    */
+    virtual bool key_float(number_float_t val, const string_t& s) = 0;
+
+    /*!
     @brief the end of an object was read
     @return whether parsing should proceed
     */
@@ -6025,12 +6056,49 @@ struct json_sax
                              const std::string& last_token,
                              const detail::exception& ex) = 0;
 
-    json_sax() = default;
-    json_sax(const json_sax&) = default;
-    json_sax(json_sax&&) noexcept = default;
-    json_sax& operator=(const json_sax&) = default;
-    json_sax& operator=(json_sax&&) noexcept = default;
-    virtual ~json_sax() = default;
+    sax_interface() = default;
+    sax_interface(const sax_interface&) = default;
+    sax_interface(sax_interface&&) noexcept = default;
+    sax_interface& operator=(const sax_interface&) = default;
+    sax_interface& operator=(sax_interface&&) noexcept = default;
+    virtual ~sax_interface() = default;
+};
+
+template<typename BasicJsonType>
+class json_sax : public sax_interface<BasicJsonType>
+{
+  public:
+
+    using number_integer_t = typename BasicJsonType::number_integer_t;
+    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+    using number_float_t = typename BasicJsonType::number_float_t;
+    using string_t = typename BasicJsonType::string_t;
+    using binary_t = typename BasicJsonType::binary_t;
+
+    bool key_null() override
+    {
+        return false;
+    }
+
+    bool key_boolean(bool val)  override
+    {
+        return false;
+    }
+
+    bool key_integer(number_integer_t val) override
+    {
+        return false;
+    }
+
+    bool key_unsigned(number_unsigned_t val) override
+    {
+        return false;
+    }
+
+    bool key_float(number_float_t val, const string_t& s) override
+    {
+        return false;
+    }
 };
 
 
@@ -6049,8 +6117,59 @@ constructor contains the parsed value.
 
 @tparam BasicJsonType  the JSON type
 */
+
 template<typename BasicJsonType>
-class json_sax_dom_parser
+class json_sax_exception_handler : public json_sax<BasicJsonType>
+{
+  protected:
+    /// whether a syntax error occurred
+    bool errored = false;
+    /// whether to throw exceptions in case of errors
+    const bool allow_exceptions = true;
+
+  public:
+    using number_integer_t = typename BasicJsonType::number_integer_t;
+    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+    using number_float_t = typename BasicJsonType::number_float_t;
+    using string_t = typename BasicJsonType::string_t;
+    using binary_t = typename BasicJsonType::binary_t;
+
+    explicit json_sax_exception_handler(const bool allow_exceptions_)
+        : errored{false}, allow_exceptions{allow_exceptions_}
+    {}
+
+
+    template<class Exception>
+    bool handle_exception(const Exception& ex)
+    {
+        errored = true;
+        static_cast<void>(ex);
+        if (allow_exceptions)
+        {
+            JSON_THROW(ex);
+        }
+        return false;
+    }
+
+    virtual bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const detail::exception& ex) override
+    {
+        return handle_exception(ex);
+    }
+
+    template<class Exception>
+    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const Exception& ex)
+    {
+        return handle_exception(ex);
+    }
+
+    constexpr bool is_errored() const
+    {
+        return errored;
+    }
+};
+
+template<typename BasicJsonType>
+class json_sax_dom_parser : public json_sax_exception_handler<BasicJsonType>
 {
   public:
     using number_integer_t = typename BasicJsonType::number_integer_t;
@@ -6065,7 +6184,7 @@ class json_sax_dom_parser
     @param[in] allow_exceptions_  whether parse errors yield exceptions
     */
     explicit json_sax_dom_parser(BasicJsonType& r, const bool allow_exceptions_ = true)
-        : root(r), allow_exceptions(allow_exceptions_)
+        : root(r), json_sax_exception_handler<BasicJsonType>(allow_exceptions_)
     {}
 
     // make class move-only
@@ -6075,49 +6194,49 @@ class json_sax_dom_parser
     json_sax_dom_parser& operator=(json_sax_dom_parser&&) = default; // NOLINT(hicpp-noexcept-move,performance-noexcept-move-constructor)
     ~json_sax_dom_parser() = default;
 
-    bool null()
+    bool null() override
     {
         handle_value(nullptr);
         return true;
     }
 
-    bool boolean(bool val)
+    bool boolean(bool val) override
     {
         handle_value(val);
         return true;
     }
 
-    bool number_integer(number_integer_t val)
+    bool number_integer(number_integer_t val) override
     {
         handle_value(val);
         return true;
     }
 
-    bool number_unsigned(number_unsigned_t val)
+    bool number_unsigned(number_unsigned_t val) override
     {
         handle_value(val);
         return true;
     }
 
-    bool number_float(number_float_t val, const string_t& /*unused*/)
+    bool number_float(number_float_t val, const string_t& /*unused*/) override
     {
         handle_value(val);
         return true;
     }
 
-    bool string(string_t& val)
+    bool string(string_t& val) override
     {
         handle_value(val);
         return true;
     }
 
-    bool binary(binary_t& val)
+    bool binary(binary_t& val) override
     {
         handle_value(std::move(val));
         return true;
     }
 
-    bool start_object(std::size_t len)
+    bool start_object(std::size_t len) override
     {
         ref_stack.push_back(handle_value(BasicJsonType::value_t::object));
 
@@ -6129,21 +6248,21 @@ class json_sax_dom_parser
         return true;
     }
 
-    bool key(string_t& val)
+    bool key(string_t& val) override
     {
         // add null at given key and store the reference for later
         object_element = &(ref_stack.back()->m_value.object->operator[](val));
         return true;
     }
 
-    bool end_object()
+    bool end_object() override
     {
         ref_stack.back()->set_parents();
         ref_stack.pop_back();
         return true;
     }
 
-    bool start_array(std::size_t len)
+    bool start_array(std::size_t len) override
     {
         ref_stack.push_back(handle_value(BasicJsonType::value_t::array));
 
@@ -6155,30 +6274,13 @@ class json_sax_dom_parser
         return true;
     }
 
-    bool end_array()
+    bool end_array() override
     {
         ref_stack.back()->set_parents();
         ref_stack.pop_back();
         return true;
     }
 
-    template<class Exception>
-    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/,
-                     const Exception& ex)
-    {
-        errored = true;
-        static_cast<void>(ex);
-        if (allow_exceptions)
-        {
-            JSON_THROW(ex);
-        }
-        return false;
-    }
-
-    constexpr bool is_errored() const
-    {
-        return errored;
-    }
 
   private:
     /*!
@@ -6217,14 +6319,11 @@ class json_sax_dom_parser
     std::vector<BasicJsonType*> ref_stack {};
     /// helper to hold the reference for the next object element
     BasicJsonType* object_element = nullptr;
-    /// whether a syntax error occurred
-    bool errored = false;
-    /// whether to throw exceptions in case of errors
-    const bool allow_exceptions = true;
+
 };
 
 template<typename BasicJsonType>
-class json_sax_dom_callback_parser
+class json_sax_dom_callback_parser : public json_sax_exception_handler<BasicJsonType>
 {
   public:
     using number_integer_t = typename BasicJsonType::number_integer_t;
@@ -6238,7 +6337,10 @@ class json_sax_dom_callback_parser
     json_sax_dom_callback_parser(BasicJsonType& r,
                                  const parser_callback_t cb,
                                  const bool allow_exceptions_ = true)
-        : root(r), callback(cb), allow_exceptions(allow_exceptions_)
+        : root(r), callback(cb), json_sax_exception_handler<BasicJsonType>
+    {
+        allow_exceptions_
+    }
     {
         keep_stack.push_back(true);
     }
@@ -6250,49 +6352,49 @@ class json_sax_dom_callback_parser
     json_sax_dom_callback_parser& operator=(json_sax_dom_callback_parser&&) = default; // NOLINT(hicpp-noexcept-move,performance-noexcept-move-constructor)
     ~json_sax_dom_callback_parser() = default;
 
-    bool null()
+    bool null() override
     {
         handle_value(nullptr);
         return true;
     }
 
-    bool boolean(bool val)
+    bool boolean(bool val) override
     {
         handle_value(val);
         return true;
     }
 
-    bool number_integer(number_integer_t val)
+    bool number_integer(number_integer_t val) override
     {
         handle_value(val);
         return true;
     }
 
-    bool number_unsigned(number_unsigned_t val)
+    bool number_unsigned(number_unsigned_t val) override
     {
         handle_value(val);
         return true;
     }
 
-    bool number_float(number_float_t val, const string_t& /*unused*/)
+    bool number_float(number_float_t val, const string_t& /*unused*/) override
     {
         handle_value(val);
         return true;
     }
 
-    bool string(string_t& val)
+    bool string(string_t& val) override
     {
         handle_value(val);
         return true;
     }
 
-    bool binary(binary_t& val)
+    bool binary(binary_t& val) override
     {
         handle_value(std::move(val));
         return true;
     }
 
-    bool start_object(std::size_t len)
+    bool start_object(std::size_t len) override
     {
         // check callback for object start
         const bool keep = callback(static_cast<int>(ref_stack.size()), parse_event_t::object_start, discarded);
@@ -6310,7 +6412,7 @@ class json_sax_dom_callback_parser
         return true;
     }
 
-    bool key(string_t& val)
+    bool key(string_t& val) override
     {
         BasicJsonType k = BasicJsonType(val);
 
@@ -6327,7 +6429,7 @@ class json_sax_dom_callback_parser
         return true;
     }
 
-    bool end_object()
+    bool end_object() override
     {
         if (ref_stack.back())
         {
@@ -6363,7 +6465,7 @@ class json_sax_dom_callback_parser
         return true;
     }
 
-    bool start_array(std::size_t len)
+    bool start_array(std::size_t len) override
     {
         const bool keep = callback(static_cast<int>(ref_stack.size()), parse_event_t::array_start, discarded);
         keep_stack.push_back(keep);
@@ -6380,7 +6482,7 @@ class json_sax_dom_callback_parser
         return true;
     }
 
-    bool end_array()
+    bool end_array() override
     {
         bool keep = true;
 
@@ -6412,23 +6514,6 @@ class json_sax_dom_callback_parser
         return true;
     }
 
-    template<class Exception>
-    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/,
-                     const Exception& ex)
-    {
-        errored = true;
-        static_cast<void>(ex);
-        if (allow_exceptions)
-        {
-            JSON_THROW(ex);
-        }
-        return false;
-    }
-
-    constexpr bool is_errored() const
-    {
-        return errored;
-    }
 
   private:
     /*!
@@ -6520,18 +6605,14 @@ class json_sax_dom_callback_parser
     std::vector<bool> key_keep_stack {};
     /// helper to hold the reference for the next object element
     BasicJsonType* object_element = nullptr;
-    /// whether a syntax error occurred
-    bool errored = false;
     /// callback function
     const parser_callback_t callback = nullptr;
-    /// whether to throw exceptions in case of errors
-    const bool allow_exceptions = true;
     /// a discarded value for the callback
     BasicJsonType discarded = BasicJsonType::value_t::discarded;
 };
 
 template<typename BasicJsonType>
-class json_sax_acceptor
+class json_sax_acceptor : public sax_interface<BasicJsonType>
 {
   public:
     using number_integer_t = typename BasicJsonType::number_integer_t;
@@ -6540,67 +6621,92 @@ class json_sax_acceptor
     using string_t = typename BasicJsonType::string_t;
     using binary_t = typename BasicJsonType::binary_t;
 
-    bool null()
+    bool null() override
     {
         return true;
     }
 
-    bool boolean(bool /*unused*/)
+    bool boolean(bool /*unused*/) override
     {
         return true;
     }
 
-    bool number_integer(number_integer_t /*unused*/)
+    bool number_integer(number_integer_t /*unused*/) override
     {
         return true;
     }
 
-    bool number_unsigned(number_unsigned_t /*unused*/)
+    bool number_unsigned(number_unsigned_t /*unused*/) override
     {
         return true;
     }
 
-    bool number_float(number_float_t /*unused*/, const string_t& /*unused*/)
+    bool number_float(number_float_t /*unused*/, const string_t& /*unused*/) override
     {
         return true;
     }
 
-    bool string(string_t& /*unused*/)
+    bool string(string_t& /*unused*/) override
     {
         return true;
     }
 
-    bool binary(binary_t& /*unused*/)
+    bool binary(binary_t& /*unused*/) override
     {
         return true;
     }
 
-    bool start_object(std::size_t /*unused*/ = static_cast<std::size_t>(-1))
+    bool start_object(std::size_t /*unused*/ = static_cast<std::size_t>(-1)) override
     {
         return true;
     }
 
-    bool key(string_t& /*unused*/)
+    bool key(string_t& /*unused*/) override
     {
         return true;
     }
 
-    bool end_object()
+    bool key_null() override
     {
         return true;
     }
 
-    bool start_array(std::size_t /*unused*/ = static_cast<std::size_t>(-1))
+    bool key_boolean(bool /*unused*/)  override
     {
         return true;
     }
 
-    bool end_array()
+    bool key_integer(number_integer_t /*unused*/) override
     {
         return true;
     }
 
-    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const detail::exception& /*unused*/)
+    bool key_unsigned(number_unsigned_t /*unused*/) override
+    {
+        return true;
+    }
+
+    bool key_float(number_float_t /*unused*/, const string_t& /*unused*/) override
+    {
+        return true;
+    }
+
+    bool end_object() override
+    {
+        return true;
+    }
+
+    bool start_array(std::size_t /*unused*/ = static_cast<std::size_t>(-1)) override
+    {
+        return true;
+    }
+
+    bool end_array() override
+    {
+        return true;
+    }
+
+    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const detail::exception& /*unused*/) override
     {
         return false;
     }
@@ -10164,20 +10270,379 @@ class binary_reader
             return false;
         }
 
-        string_t key;
         for (std::size_t i = 0; i < len; ++i)
         {
-            get();
-            if (JSON_HEDLEY_UNLIKELY(!get_msgpack_string(key) || !sax->key(key)))
+            switch (get())
             {
-                return false;
+                // EOF
+                case std::char_traits<char_type>::eof():
+                {
+                    return unexpect_eof(input_format_t::msgpack, "key");
+                }
+
+                // positive fixint
+                case 0x00:
+                case 0x01:
+                case 0x02:
+                case 0x03:
+                case 0x04:
+                case 0x05:
+                case 0x06:
+                case 0x07:
+                case 0x08:
+                case 0x09:
+                case 0x0A:
+                case 0x0B:
+                case 0x0C:
+                case 0x0D:
+                case 0x0E:
+                case 0x0F:
+                case 0x10:
+                case 0x11:
+                case 0x12:
+                case 0x13:
+                case 0x14:
+                case 0x15:
+                case 0x16:
+                case 0x17:
+                case 0x18:
+                case 0x19:
+                case 0x1A:
+                case 0x1B:
+                case 0x1C:
+                case 0x1D:
+                case 0x1E:
+                case 0x1F:
+                case 0x20:
+                case 0x21:
+                case 0x22:
+                case 0x23:
+                case 0x24:
+                case 0x25:
+                case 0x26:
+                case 0x27:
+                case 0x28:
+                case 0x29:
+                case 0x2A:
+                case 0x2B:
+                case 0x2C:
+                case 0x2D:
+                case 0x2E:
+                case 0x2F:
+                case 0x30:
+                case 0x31:
+                case 0x32:
+                case 0x33:
+                case 0x34:
+                case 0x35:
+                case 0x36:
+                case 0x37:
+                case 0x38:
+                case 0x39:
+                case 0x3A:
+                case 0x3B:
+                case 0x3C:
+                case 0x3D:
+                case 0x3E:
+                case 0x3F:
+                case 0x40:
+                case 0x41:
+                case 0x42:
+                case 0x43:
+                case 0x44:
+                case 0x45:
+                case 0x46:
+                case 0x47:
+                case 0x48:
+                case 0x49:
+                case 0x4A:
+                case 0x4B:
+                case 0x4C:
+                case 0x4D:
+                case 0x4E:
+                case 0x4F:
+                case 0x50:
+                case 0x51:
+                case 0x52:
+                case 0x53:
+                case 0x54:
+                case 0x55:
+                case 0x56:
+                case 0x57:
+                case 0x58:
+                case 0x59:
+                case 0x5A:
+                case 0x5B:
+                case 0x5C:
+                case 0x5D:
+                case 0x5E:
+                case 0x5F:
+                case 0x60:
+                case 0x61:
+                case 0x62:
+                case 0x63:
+                case 0x64:
+                case 0x65:
+                case 0x66:
+                case 0x67:
+                case 0x68:
+                case 0x69:
+                case 0x6A:
+                case 0x6B:
+                case 0x6C:
+                case 0x6D:
+                case 0x6E:
+                case 0x6F:
+                case 0x70:
+                case 0x71:
+                case 0x72:
+                case 0x73:
+                case 0x74:
+                case 0x75:
+                case 0x76:
+                case 0x77:
+                case 0x78:
+                case 0x79:
+                case 0x7A:
+                case 0x7B:
+                case 0x7C:
+                case 0x7D:
+                case 0x7E:
+                case 0x7F:
+                {
+                    if ( JSON_HEDLEY_UNLIKELY( ! sax->key_unsigned(static_cast<number_unsigned_t>(current) ) ) )
+                    {
+                        return false;
+                    }
+                    break;
+                }
+
+                // fixstr
+                case 0xA0:
+                case 0xA1:
+                case 0xA2:
+                case 0xA3:
+                case 0xA4:
+                case 0xA5:
+                case 0xA6:
+                case 0xA7:
+                case 0xA8:
+                case 0xA9:
+                case 0xAA:
+                case 0xAB:
+                case 0xAC:
+                case 0xAD:
+                case 0xAE:
+                case 0xAF:
+                case 0xB0:
+                case 0xB1:
+                case 0xB2:
+                case 0xB3:
+                case 0xB4:
+                case 0xB5:
+                case 0xB6:
+                case 0xB7:
+                case 0xB8:
+                case 0xB9:
+                case 0xBA:
+                case 0xBB:
+                case 0xBC:
+                case 0xBD:
+                case 0xBE:
+                case 0xBF:
+                case 0xD9: // str 8
+                case 0xDA: // str 16
+                case 0xDB: // str 32
+                {
+                    string_t s;
+                    if ( JSON_HEDLEY_UNLIKELY( ! ( get_msgpack_string(s) && sax->key(s) ) ) )
+                    {
+                        return false;
+                    }
+                    break;
+                }
+
+                case 0xC0: // nil
+                {
+                    if ( JSON_HEDLEY_UNLIKELY( ! sax->key_null() ) )
+                    {
+                        return false;
+                    }
+                    break;
+                }
+
+                case 0xC2: // false
+                {
+                    if ( JSON_HEDLEY_UNLIKELY( ! sax->key_boolean(false) ) )
+                    {
+                        return false;
+                    }
+                    break;
+                }
+
+                case 0xC3: // true
+                {
+                    if ( JSON_HEDLEY_UNLIKELY( ! sax->key_boolean(true) ) )
+                    {
+                        return false;
+                    }
+                    break;
+                }
+
+                case 0xCA: // float 32
+                {
+                    float number{};
+                    if ( JSON_HEDLEY_UNLIKELY( ! ( get_number(input_format_t::msgpack, number) && sax->key_float(static_cast<number_float_t>(number), "") ) ) )
+                    {
+                        return false;
+                    }
+                    break;
+                }
+
+                case 0xCB: // float 64
+                {
+                    double number{};
+                    if ( JSON_HEDLEY_UNLIKELY( ! ( get_number(input_format_t::msgpack, number) && sax->key_float(static_cast<number_float_t>(number), "") ) ) )
+                    {
+                        return false;
+                    }
+                    break;
+                }
+
+                case 0xCC: // uint 8
+                {
+                    std::uint8_t number{};
+                    if ( JSON_HEDLEY_UNLIKELY( ! ( get_number(input_format_t::msgpack, number) && sax->key_unsigned(number) ) ) )
+                    {
+                        return false;
+                    }
+                    break;
+                }
+
+                case 0xCD: // uint 16
+                {
+                    std::uint16_t number{};
+                    if ( JSON_HEDLEY_UNLIKELY( ! ( get_number(input_format_t::msgpack, number) && sax->key_unsigned(number) ) ) )
+                    {
+                        return false;
+                    }
+                    break;
+                }
+
+                case 0xCE: // uint 32
+                {
+                    std::uint32_t number{};
+                    if ( JSON_HEDLEY_UNLIKELY( ! ( get_number(input_format_t::msgpack, number) && sax->key_unsigned(number) ) ) )
+                    {
+                        return false;
+                    }
+                    break;
+                }
+
+                case 0xCF: // uint 64
+                {
+                    std::uint64_t number{};
+                    if ( JSON_HEDLEY_UNLIKELY( ! ( get_number(input_format_t::msgpack, number) && sax->key_unsigned(number) ) ) )
+                    {
+                        return false;
+                    }
+                    break;
+                }
+
+                case 0xD0: // int 8
+                {
+                    std::int8_t number{};
+                    if ( JSON_HEDLEY_UNLIKELY( ! ( get_number(input_format_t::msgpack, number) && sax->key_integer(number) ) ) )
+                    {
+                        return false;
+                    }
+                    break;
+                }
+
+                case 0xD1: // int 16
+                {
+                    std::int16_t number{};
+                    if ( JSON_HEDLEY_UNLIKELY( ! ( get_number(input_format_t::msgpack, number) && sax->key_integer(number) ) ) )
+                    {
+                        return false;
+                    }
+                    break;
+                }
+
+                case 0xD2: // int 32
+                {
+                    std::int32_t number{};
+                    if ( JSON_HEDLEY_UNLIKELY( ! ( get_number(input_format_t::msgpack, number) && sax->key_integer(number) ) ) )
+                    {
+                        return false;
+                    }
+                    break;
+                }
+
+                case 0xD3: // int 64
+                {
+                    std::int64_t number{};
+                    if ( JSON_HEDLEY_UNLIKELY( ! ( get_number(input_format_t::msgpack, number) && sax->key_integer(number) ) ) )
+                    {
+                        return false;
+                    }
+                    break;
+                }
+
+                // negative fixint
+                case 0xE0:
+                case 0xE1:
+                case 0xE2:
+                case 0xE3:
+                case 0xE4:
+                case 0xE5:
+                case 0xE6:
+                case 0xE7:
+                case 0xE8:
+                case 0xE9:
+                case 0xEA:
+                case 0xEB:
+                case 0xEC:
+                case 0xED:
+                case 0xEE:
+                case 0xEF:
+                case 0xF0:
+                case 0xF1:
+                case 0xF2:
+                case 0xF3:
+                case 0xF4:
+                case 0xF5:
+                case 0xF6:
+                case 0xF7:
+                case 0xF8:
+                case 0xF9:
+                case 0xFA:
+                case 0xFB:
+                case 0xFC:
+                case 0xFD:
+                case 0xFE:
+                case 0xFF:
+                {
+                    if ( JSON_HEDLEY_UNLIKELY( ! sax->key_integer(static_cast<std::int8_t>(current)) ) )
+                    {
+                        return false;
+                    }
+                    break;
+                }
+
+                default: // anything else
+                {
+                    auto last_token = get_token_string();
+                    return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                            exception_message(input_format_t::msgpack, concat("unsupported byte: 0x", last_token), "key"), nullptr));
+                }
             }
 
             if (JSON_HEDLEY_UNLIKELY(!parse_msgpack_internal()))
             {
                 return false;
             }
-            key.clear();
+
         }
 
         return sax->end_object();
