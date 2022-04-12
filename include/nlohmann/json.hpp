@@ -94,6 +94,7 @@ SOFTWARE.
 #include <nlohmann/ordered_map.hpp>
 
 #if defined(JSON_HAS_CPP_17)
+    #include <any>
     #include <string_view>
 #endif
 
@@ -1891,6 +1892,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
 #if defined(JSON_HAS_CPP_17) && (defined(__GNUC__) || (defined(_MSC_VER) && _MSC_VER >= 1910 && _MSC_VER <= 1914))
                                                 detail::negation<std::is_same<ValueType, std::string_view>>,
+#endif
+#if defined(JSON_HAS_CPP_17)
+                                                detail::negation<std::is_same<ValueType, std::any>>,
 #endif
                                                 detail::is_detected_lazy<detail::get_template_function, const basic_json_t&, ValueType>
                                                 >::value, int >::type = 0 >
