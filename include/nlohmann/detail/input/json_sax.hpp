@@ -97,6 +97,46 @@ struct json_sax
     virtual bool key(string_t& val) = 0;
 
     /*!
+    @brief an object key of null value was read
+    @return whether parsing should proceed
+    */
+    virtual bool key_null() {
+        return false;
+    }
+
+    /*!
+    @brief an object key of type bool was read
+    @return whether parsing should proceed
+    */
+    virtual bool key_boolean(bool val) {
+        return false;
+    }
+
+    /*!
+    @brief an object key of type integer number was read
+    @return whether parsing should proceed
+    */
+    virtual bool key_integer(number_integer_t val) {
+        return false;
+    }
+
+    /*!
+    @brief an object key of type unsigned was read
+    @return whether parsing should proceed
+    */
+    virtual bool key_unsigned(number_unsigned_t val) {
+        return false;
+    }
+
+    /*!
+    @brief an object key of type float was read
+    @return whether parsing should proceed
+    */
+    virtual bool key_float(number_float_t val, const string_t& s) {
+        return false;
+    }
+
+    /*!
     @brief the end of an object was read
     @return whether parsing should proceed
     */
