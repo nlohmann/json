@@ -54,7 +54,7 @@ The class satisfies the following concept requirements:
   from an rvalue argument.
 - [CopyConstructible](https://en.cppreference.com/w/cpp/named_req/CopyConstructible): A JSON value can be
   copy-constructed from an lvalue expression.
-- [MoveAssignable](https://en.cppreference.com/w/cpp/named_req/MoveAssignable): A JSON value van be assigned from an
+- [MoveAssignable](https://en.cppreference.com/w/cpp/named_req/MoveAssignable): A JSON value can be assigned from an
   rvalue argument.
 - [CopyAssignable](https://en.cppreference.com/w/cpp/named_req/CopyAssignable): A JSON value can be copy-assigned from
   an lvalue expression.
