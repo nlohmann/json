@@ -43,6 +43,7 @@ using ordered_json = nlohmann::ordered_json;
 #include <utility>
 
 #ifdef JSON_HAS_CPP_17
+    #include <any>
     #include <variant>
 #endif
 
@@ -858,6 +859,18 @@ TEST_CASE("regression tests 2")
         j.get_to(obj);
 
         CHECK(obj.name == "class");
+    }
+#endif
+
+#if defined(JSON_HAS_CPP_17) && JSON_USE_IMPLICIT_CONVERSIONS
+    SECTION("issue #3428 - Error occurred when converting nlohmann::json to std::any")
+    {
+        json j;
+        std::any a1 = j;
+        std::any&& a2 = j;
+
+        CHECK(a1.type() == typeid(j));
+        CHECK(a2.type() == typeid(j));
     }
 #endif
 }
