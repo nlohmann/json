@@ -5,7 +5,7 @@
 json_pointer& operator/=(const json_pointer& ptr);
 
 // (2)
-json_pointer& operator/=(std::string token);
+json_pointer& operator/=(string_t token);
 
 // (3)
 json_pointer& operator/=(std::size_t array_idx)
@@ -57,5 +57,5 @@ json_pointer& operator/=(std::size_t array_idx)
 ## Version history
 
 1. Added in version 3.6.0.
-2. Added in version 3.6.0.
+2. Added in version 3.6.0. Changed type of `token` to `string_t` in version 3.11.0.
 3. Added in version 3.6.0.

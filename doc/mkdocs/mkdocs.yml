@@ -211,6 +211,7 @@ nav:
         - 'parent_pointer': api/json_pointer/parent_pointer.md
         - 'pop_back': api/json_pointer/pop_back.md
         - 'push_back': api/json_pointer/push_back.md
+        - 'string_t': api/json_pointer/string_t.md
         - 'to_string': api/json_pointer/to_string.md
       - json_sax:
         - 'Overview': api/json_sax/index.md

@@ -660,4 +660,54 @@ TEST_CASE("JSON pointers")
         CHECK(j[ptr] == j["object"]["/"]);
         CHECK(ptr.to_string() == "/object/~1");
     }
+
+    SECTION("equality comparison")
+    {
+        auto ptr1 = json::json_pointer("/foo/bar");
+        auto ptr2 = json::json_pointer("/foo/bar");
+
+        CHECK(ptr1 == ptr2);
+        CHECK_FALSE(ptr1 != ptr2);
+    }
+
+    SECTION("backwards compatibility and mixing")
+    {
+        json j = R"(
+        {
+            "foo": ["bar", "baz"]
+        }
+        )"_json;
+
+        using nlohmann::ordered_json;
+        using json_ptr_str = nlohmann::json_pointer<std::string>;
+        using json_ptr_j = nlohmann::json_pointer<json>;
+        using json_ptr_oj = nlohmann::json_pointer<ordered_json>;
+
+        CHECK(std::is_same<json_ptr_str::string_t, json::json_pointer::string_t>::value);
+        CHECK(std::is_same<json_ptr_str::string_t, ordered_json::json_pointer::string_t>::value);
+        CHECK(std::is_same<json_ptr_str::string_t, json_ptr_j::string_t>::value);
+        CHECK(std::is_same<json_ptr_str::string_t, json_ptr_oj::string_t>::value);
+
+        json_ptr_str ptr{"/foo/0"};
+        json_ptr_j ptr_j{"/foo/0"};
+        json_ptr_oj ptr_oj{"/foo/0"};
+
+        CHECK(j.contains(ptr));
+        CHECK(j.contains(ptr_j));
+        CHECK(j.contains(ptr_oj));
+
+        CHECK(j.at(ptr) == j.at(ptr_j));
+        CHECK(j.at(ptr) == j.at(ptr_oj));
+
+        CHECK(j[ptr] == j[ptr_j]);
+        CHECK(j[ptr] == j[ptr_oj]);
+
+        CHECK(j.value(ptr, "x") == j.value(ptr_j, "x"));
+        CHECK(j.value(ptr, "x") == j.value(ptr_oj, "x"));
+
+        CHECK(ptr == ptr_j);
+        CHECK(ptr == ptr_oj);
+        CHECK_FALSE(ptr != ptr_j);
+        CHECK_FALSE(ptr != ptr_oj);
+    }
 }

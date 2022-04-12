@@ -1,7 +1,7 @@
-# <small>nlohmann::json_pointer::</small>operator std::string
+# <small>nlohmann::json_pointer::</small>operator string_t
 
 ```cpp
-operator std::string() const
+operator string_t() const
 ```
 
 Return a string representation of the JSON pointer.
@@ -13,7 +13,7 @@ A string representation of the JSON pointer
 ## Possible implementation
 
 ```cpp
-operator std::string() const
+operator string_t() const
 {
     return to_string();
 }
@@ -21,4 +21,5 @@ operator std::string() const
 
 ## Version history
 
-Since version 2.0.0.
+- Since version 2.0.0.
+- Changed type to `string_t` in version 3.11.0.
