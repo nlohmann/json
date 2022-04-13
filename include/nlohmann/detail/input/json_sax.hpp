@@ -242,7 +242,7 @@ class json_sax_exception_handler : public json_sax<BasicJsonType>
 
 
     template<class Exception>
-    bool handle_exception(const Exception& ex)
+    bool handle_throw_exception(const Exception& ex)
     {
         errored = true;
         static_cast<void>(ex);
@@ -255,13 +255,13 @@ class json_sax_exception_handler : public json_sax<BasicJsonType>
 
     virtual bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const detail::exception& ex) override
     {
-        return handle_exception(ex);
+        return handle_throw_exception(ex);
     }
 
     template<class Exception>
     bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const Exception& ex)
     {
-        return handle_exception(ex);
+        return handle_throw_exception(ex);
     }
 
     constexpr bool is_errored() const
@@ -439,10 +439,7 @@ class json_sax_dom_callback_parser : public json_sax_exception_handler<BasicJson
     json_sax_dom_callback_parser(BasicJsonType& r,
                                  const parser_callback_t cb,
                                  const bool allow_exceptions_ = true)
-        : root(r), callback(cb), json_sax_exception_handler<BasicJsonType>
-    {
-        allow_exceptions_
-    }
+        : root(r), callback(cb), json_sax_exception_handler<BasicJsonType>(allow_exceptions_)
     {
         keep_stack.push_back(true);
     }
