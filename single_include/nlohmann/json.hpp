@@ -5869,14 +5869,14 @@ class iterator_input_adapter
     }
 
   private:
-    IteratorType current;
-    IteratorType end;
-    bool current_has_been_consumed = false;
+    mutable IteratorType current;
+    const IteratorType end;
+    mutable bool current_has_been_consumed;
 
     template<typename BaseInputAdapter, size_t T>
     friend struct wide_string_input_helper;
 
-    bool empty()
+    bool empty() const
     {
         if (JSON_HEDLEY_LIKELY(current_has_been_consumed))
         {
