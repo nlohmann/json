@@ -123,6 +123,7 @@ class input_stream_adapter
 };
 #endif  // JSON_NO_IO
 
+
 // General-purpose iterator-based adapter. It might not be as fast as
 // theoretically possible for some containers, but it is extremely versatile.
 template<typename IteratorType>
@@ -132,30 +133,46 @@ class iterator_input_adapter
     using char_type = typename std::iterator_traits<IteratorType>::value_type;
 
     iterator_input_adapter(IteratorType first, IteratorType last)
-        : current(std::move(first)), end(std::move(last))
+        : current(std::move(first)), end(std::move(last)), current_has_been_consumed(false)
     {}
 
     typename std::char_traits<char_type>::int_type get_character()
     {
-        if (JSON_HEDLEY_LIKELY(current != end))
+
+        if (JSON_HEDLEY_LIKELY(current_has_been_consumed))
         {
-            auto result = std::char_traits<char_type>::to_int_type(*current);
             std::advance(current, 1);
-            return result;
         }
 
-        return std::char_traits<char_type>::eof();
+        if (JSON_HEDLEY_LIKELY(current != end))
+        {
+            current_has_been_consumed = true;
+            return std::char_traits<char_type>::to_int_type(*current);
+        }
+        else
+        {
+            current_has_been_consumed = false;
+            return std::char_traits<char_type>::eof();
+        }
+
     }
 
   private:
     IteratorType current;
     IteratorType end;
+    bool current_has_been_consumed = false;
 
     template<typename BaseInputAdapter, size_t T>
     friend struct wide_string_input_helper;
 
-    bool empty() const
+    bool empty()
     {
+        if (JSON_HEDLEY_LIKELY(current_has_been_consumed))
+        {
+            std::advance(current, 1);
+            current_has_been_consumed = false;
+        }
+
         return current == end;
     }
 };
