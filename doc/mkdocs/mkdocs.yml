@@ -64,6 +64,7 @@ nav:
         - features/parsing/parse_exceptions.md
         - features/parsing/parser_callbacks.md
         - features/parsing/sax_interface.md
+    - features/assertions.md
     - features/enum_conversion.md
     - features/macros.md
     - Types:
@@ -232,6 +233,10 @@ nav:
       - macros:
         - 'Overview': api/macros/index.md
         - 'JSON_ASSERT(x)': api/macros/json_assert.md
+        - 'JSON_DIAGNOSTICS': api/macros/json_diagnostics.md
+        - 'JSON_HAS_EXPERIMENTAL_FILESYSTEM': api/macros/json_has_filesystem.md
+        - 'JSON_HAS_FILESYSTEM': api/macros/json_has_filesystem.md
+        - 'JSON_SKIP_UNSUPPORTED_COMPILER_CHECK': api/macros/json_skip_unsupported_compiler_check.md
 
 # Extras
 extra:

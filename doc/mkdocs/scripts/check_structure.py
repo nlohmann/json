@@ -23,6 +23,7 @@ def check_structure():
         'Exceptions',
         'Complexity',
         'Possible implementation',
+        'Default definition',
         'Notes',
         'Examples',
         'See also',

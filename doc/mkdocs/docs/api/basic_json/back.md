@@ -33,12 +33,6 @@ If the JSON value is `#!json null`, exception
 
 Constant.
 
-## Notes
-
-!!! danger
-
-    Calling `back` on an empty array or object is undefined behavior and is **guarded by an assertion**!
-
 ## Examples
 
 ??? example

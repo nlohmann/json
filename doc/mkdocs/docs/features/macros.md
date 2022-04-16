@@ -4,17 +4,9 @@ Some aspects of the library can be configured by defining preprocessor macros be
 
 ## `JSON_ASSERT(x)`
 
-This macro controls which code is executed for runtime assertions of the libraries.
+This macro controls which code is executed for [runtime assertions](assertions.md) of the library.
 
-!!! info "Default behavior"
-
-    The default value is [`#!cpp assert(x)`](https://en.cppreference.com/w/cpp/error/assert).
-
-    ```cpp
-    #define JSON_ASSERT(x) assert(x)
-    ```
-
-The macro was introduced in version 3.9.0.
+See [full documentation of `JSON_ASSERT(x)`](../api/macros/json_assert.md).
 
 ## `JSON_CATCH_USER(exception)`
 
@@ -55,19 +47,7 @@ that enabling this macro increases the size of every JSON value by one pointer a
 The diagnostics messages can also be controlled with the CMake option `JSON_Diagnostics` (`OFF` by default) which sets
 `JSON_DIAGNOSTICS` accordingly.
 
-!!! warning
-
-    As this macro changes the definition of the `basic_json` object, it MUST be defined in the same way globally, even
-    across different compilation units; DO NOT link together code compiled with different definitions of
-    `JSON_DIAGNOSTICS` as this is a violation of the One Definition Rule and will cause undefined behaviour.
-
-!!! info "Default behavior"
-
-    ```cpp
-    #define JSON_DIAGNOSTICS 0
-    ```
-
-The macro was introduced in version 3.10.0.
+See [full documentation of `JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md).
 
 ## `JSON_HAS_CPP_11`, `JSON_HAS_CPP_14`, `JSON_HAS_CPP_17`, `JSON_HAS_CPP_20`
 
@@ -91,16 +71,7 @@ for filesystem is limited, the library tries to detect whether `<filesystem>`/`s
 or `<experimental/filesystem>`/`std::experimental::filesystem` (`JSON_HAS_EXPERIMENTAL_FILESYSTEM`) should be used.
 To override the built-in check, define `JSON_HAS_FILESYSTEM` or `JSON_HAS_EXPERIMENTAL_FILESYSTEM` to `1`.
 
-!!! info "Default behavior"
-
-    The default value is detected based on the preprocessor macros `#!cpp __cpp_lib_filesystem`,
-    `#!cpp __cpp_lib_experimental_filesystem`, `#!cpp __has_include(<filesystem>)`, or
-    `#!cpp __has_include(<experimental/filesystem>)`.
-
-Note that older compilers or older versions of libstd++ also require the library `stdc++fs` to be linked to for
-filesystem support.
-
-The macros were introduced in version 3.10.5.
+See [full documentation of `JSON_HAS_FILESYSTEM` and `JSON_HAS_EXPERIMENTAL_FILESYSTEM`](../api/macros/json_has_filesystem.md).
 
 ## `JSON_NOEXCEPTION`
 
@@ -159,15 +130,7 @@ The macro was introduced in version 3.11.0.
 When defined, the library will not create a compile error when a known unsupported compiler is detected. This allows to
 use the library with compilers that do not fully support C++11 and may only work if unsupported features are not used.
 
-!!! info "Default behavior"
-
-    By default, the macro is not defined.
-
-    ```cpp
-    #undef JSON_SKIP_UNSUPPORTED_COMPILER_CHECK
-    ```
-
-The macro was introduced in version 3.2.0.
+See [full documentation of `JSON_SKIP_UNSUPPORTED_COMPILER_CHECK`](../api/macros/json_skip_unsupported_compiler_check.md).
 
 ## `JSON_THROW_USER(exception)`
 
