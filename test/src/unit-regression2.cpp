@@ -43,6 +43,7 @@ using ordered_json = nlohmann::ordered_json;
 #include <utility>
 
 #ifdef JSON_HAS_CPP_17
+    #include <any>
     #include <variant>
 #endif
 
@@ -759,7 +760,6 @@ TEST_CASE("regression tests 2")
     {
         std::string p = "/root";
 
-        // matching types
         json test1;
         test1[json::json_pointer(p)] = json::object();
         CHECK(test1.dump() == "{\"root\":{}}");
@@ -768,10 +768,11 @@ TEST_CASE("regression tests 2")
         test2[ordered_json::json_pointer(p)] = json::object();
         CHECK(test2.dump() == "{\"root\":{}}");
 
-        // mixed type - the JSON Pointer is implicitly converted into a string "/root"
+        // json::json_pointer and ordered_json::json_pointer are the same type; behave as above
         ordered_json test3;
         test3[json::json_pointer(p)] = json::object();
-        CHECK(test3.dump() == "{\"/root\":{}}");
+        CHECK(std::is_same<json::json_pointer::string_t, ordered_json::json_pointer::string_t>::value);
+        CHECK(test3.dump() == "{\"root\":{}}");
     }
 
     SECTION("issue #2982 - to_{binary format} does not provide a mechanism for specifying a custom allocator for the returned type")
@@ -858,6 +859,18 @@ TEST_CASE("regression tests 2")
         j.get_to(obj);
 
         CHECK(obj.name == "class");
+    }
+#endif
+
+#if defined(JSON_HAS_CPP_17) && JSON_USE_IMPLICIT_CONVERSIONS
+    SECTION("issue #3428 - Error occurred when converting nlohmann::json to std::any")
+    {
+        json j;
+        std::any a1 = j;
+        std::any&& a2 = j;
+
+        CHECK(a1.type() == typeid(j));
+        CHECK(a2.type() == typeid(j));
     }
 #endif
 }

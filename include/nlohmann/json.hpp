@@ -83,6 +83,7 @@ SOFTWARE.
 #include <nlohmann/detail/json_pointer.hpp>
 #include <nlohmann/detail/json_ref.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
+#include <nlohmann/detail/string_concat.hpp>
 #include <nlohmann/detail/string_escape.hpp>
 #include <nlohmann/detail/meta/cpp_future.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
@@ -94,6 +95,7 @@ SOFTWARE.
 #include <nlohmann/ordered_map.hpp>
 
 #if defined(JSON_HAS_CPP_17)
+    #include <any>
     #include <string_view>
 #endif
 
@@ -128,7 +130,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 {
   private:
     template<detail::value_t> friend struct detail::external_constructor;
-    friend ::nlohmann::json_pointer<basic_json>;
+
+    template<typename>
+    friend class ::nlohmann::json_pointer;
+    // can be restored when json_pointer backwards compatibility is removed
+    // friend ::nlohmann::json_pointer<StringType>;
 
     template<typename BasicJsonType, typename InputType>
     friend class ::nlohmann::detail::parser;
@@ -187,7 +193,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
   public:
     using value_t = detail::value_t;
     /// JSON Pointer, see @ref nlohmann::json_pointer
-    using json_pointer = ::nlohmann::json_pointer<basic_json>;
+    using json_pointer = ::nlohmann::json_pointer<StringType>;
     template<typename T, typename SFINAE>
     using json_serializer = JSONSerializer<T, SFINAE>;
     /// how to treat decoding errors
@@ -279,9 +285,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         result["name"] = "JSON for Modern C++";
         result["url"] = "https://github.com/nlohmann/json";
         result["version"]["string"] =
-            std::to_string(NLOHMANN_JSON_VERSION_MAJOR) + "." +
-            std::to_string(NLOHMANN_JSON_VERSION_MINOR) + "." +
-            std::to_string(NLOHMANN_JSON_VERSION_PATCH);
+            detail::concat(std::to_string(NLOHMANN_JSON_VERSION_MAJOR), '.',
+                           std::to_string(NLOHMANN_JSON_VERSION_MINOR), '.',
+                           std::to_string(NLOHMANN_JSON_VERSION_PATCH));
         result["version"]["major"] = NLOHMANN_JSON_VERSION_MAJOR;
         result["version"]["minor"] = NLOHMANN_JSON_VERSION_MINOR;
         result["version"]["patch"] = NLOHMANN_JSON_VERSION_PATCH;
@@ -303,7 +309,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 #elif defined(__clang__)
         result["compiler"] = {{"family", "clang"}, {"version", __clang_version__}};
 #elif defined(__GNUC__) || defined(__GNUG__)
-        result["compiler"] = {{"family", "gcc"}, {"version", std::to_string(__GNUC__) + "." + std::to_string(__GNUC_MINOR__) + "." + std::to_string(__GNUC_PATCHLEVEL__)}};
+        result["compiler"] = {{"family", "gcc"}, {"version", detail::concat(
+                    std::to_string(__GNUC__), '.',
+                    std::to_string(__GNUC_MINOR__), '.',
+                    std::to_string(__GNUC_PATCHLEVEL__))
+            }
+        };
 #elif defined(__HP_cc) || defined(__HP_aCC)
         result["compiler"] = "hp"
 #elif defined(__IBMCPP__)
@@ -531,7 +542,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     object = nullptr;  // silence warning, see #821
                     if (JSON_HEDLEY_UNLIKELY(t == value_t::null))
                     {
-                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.10.5", basic_json())); // LCOV_EXCL_LINE
+                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.10.5", nullptr)); // LCOV_EXCL_LINE
                     }
                     break;
                 }
@@ -929,7 +940,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             // if object is wanted but impossible, throw an exception
             if (JSON_HEDLEY_UNLIKELY(manual_type == value_t::object && !is_an_object))
             {
-                JSON_THROW(type_error::create(301, "cannot create object from initializer list", basic_json()));
+                JSON_THROW(type_error::create(301, "cannot create object from initializer list", nullptr));
             }
         }
 
@@ -1041,7 +1052,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // make sure iterator fits the current value
         if (JSON_HEDLEY_UNLIKELY(first.m_object != last.m_object))
         {
-            JSON_THROW(invalid_iterator::create(201, "iterators are not compatible", basic_json()));
+            JSON_THROW(invalid_iterator::create(201, "iterators are not compatible", nullptr));
         }
 
         // copy type from first iterator
@@ -1059,7 +1070,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 if (JSON_HEDLEY_UNLIKELY(!first.m_it.primitive_iterator.is_begin()
                                          || !last.m_it.primitive_iterator.is_end()))
                 {
-                    JSON_THROW(invalid_iterator::create(204, "iterators out of range", *first.m_object));
+                    JSON_THROW(invalid_iterator::create(204, "iterators out of range", first.m_object));
                 }
                 break;
             }
@@ -1128,7 +1139,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             case value_t::null:
             case value_t::discarded:
             default:
-                JSON_THROW(invalid_iterator::create(206, "cannot construct with iterators from " + std::string(first.m_object->type_name()), *first.m_object));
+                JSON_THROW(invalid_iterator::create(206, detail::concat("cannot construct with iterators from ", first.m_object->type_name()), first.m_object));
         }
 
         set_parents();
@@ -1412,7 +1423,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             return m_value.boolean;
         }
 
-        JSON_THROW(type_error::create(302, "type must be boolean, but is " + std::string(type_name()), *this));
+        JSON_THROW(type_error::create(302, detail::concat("type must be boolean, but is ", type_name()), this));
     }
 
     /// get a pointer to the value (object)
@@ -1533,7 +1544,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             return *ptr;
         }
 
-        JSON_THROW(type_error::create(303, "incompatible ReferenceType for get_ref, actual type is " + std::string(obj.type_name()), obj));
+        JSON_THROW(type_error::create(303, detail::concat("incompatible ReferenceType for get_ref, actual type is ", obj.type_name()), &obj));
     }
 
   public:
@@ -1892,6 +1903,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 #if defined(JSON_HAS_CPP_17) && (defined(__GNUC__) || (defined(_MSC_VER) && _MSC_VER >= 1910 && _MSC_VER <= 1914))
                                                 detail::negation<std::is_same<ValueType, std::string_view>>,
 #endif
+#if defined(JSON_HAS_CPP_17)
+                                                detail::negation<std::is_same<ValueType, std::any>>,
+#endif
                                                 detail::is_detected_lazy<detail::get_template_function, const basic_json_t&, ValueType>
                                                 >::value, int >::type = 0 >
                                         JSON_EXPLICIT operator ValueType() const
@@ -1906,7 +1920,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     {
         if (!is_binary())
         {
-            JSON_THROW(type_error::create(302, "type must be binary, but is " + std::string(type_name()), *this));
+            JSON_THROW(type_error::create(302, detail::concat("type must be binary, but is ", type_name()), this));
         }
 
         return *get_ptr<binary_t*>();
@@ -1918,7 +1932,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     {
         if (!is_binary())
         {
-            JSON_THROW(type_error::create(302, "type must be binary, but is " + std::string(type_name()), *this));
+            JSON_THROW(type_error::create(302, detail::concat("type must be binary, but is ", type_name()), this));
         }
 
         return *get_ptr<const binary_t*>();
@@ -1949,12 +1963,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             JSON_CATCH (std::out_of_range&)
             {
                 // create better exception explanation
-                JSON_THROW(out_of_range::create(401, "array index " + std::to_string(idx) + " is out of range", *this));
+                JSON_THROW(out_of_range::create(401, detail::concat("array index ", std::to_string(idx), " is out of range"), this));
             }
         }
         else
         {
-            JSON_THROW(type_error::create(304, "cannot use at() with " + std::string(type_name()), *this));
+            JSON_THROW(type_error::create(304, detail::concat("cannot use at() with ", type_name()), this));
         }
     }
 
@@ -1972,12 +1986,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             JSON_CATCH (std::out_of_range&)
             {
                 // create better exception explanation
-                JSON_THROW(out_of_range::create(401, "array index " + std::to_string(idx) + " is out of range", *this));
+                JSON_THROW(out_of_range::create(401, detail::concat("array index ", std::to_string(idx), " is out of range"), this));
             }
         }
         else
         {
-            JSON_THROW(type_error::create(304, "cannot use at() with " + std::string(type_name()), *this));
+            JSON_THROW(type_error::create(304, detail::concat("cannot use at() with ", type_name()), this));
         }
     }
 
@@ -1995,12 +2009,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             JSON_CATCH (std::out_of_range&)
             {
                 // create better exception explanation
-                JSON_THROW(out_of_range::create(403, "key '" + key + "' not found", *this));
+                JSON_THROW(out_of_range::create(403, detail::concat("key '", key, "' not found"), this));
             }
         }
         else
         {
-            JSON_THROW(type_error::create(304, "cannot use at() with " + std::string(type_name()), *this));
+            JSON_THROW(type_error::create(304, detail::concat("cannot use at() with ", type_name()), this));
         }
     }
 
@@ -2018,12 +2032,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             JSON_CATCH (std::out_of_range&)
             {
                 // create better exception explanation
-                JSON_THROW(out_of_range::create(403, "key '" + key + "' not found", *this));
+                JSON_THROW(out_of_range::create(403, detail::concat("key '", key, "' not found"), this));
             }
         }
         else
         {
-            JSON_THROW(type_error::create(304, "cannot use at() with " + std::string(type_name()), *this));
+            JSON_THROW(type_error::create(304, detail::concat("cannot use at() with ", type_name()), this));
         }
     }
 
@@ -2070,7 +2084,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             return m_value.array->operator[](idx);
         }
 
-        JSON_THROW(type_error::create(305, "cannot use operator[] with a numeric argument with " + std::string(type_name()), *this));
+        JSON_THROW(type_error::create(305, detail::concat("cannot use operator[] with a numeric argument with ", type_name()), this));
     }
 
     /// @brief access specified array element
@@ -2083,7 +2097,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             return m_value.array->operator[](idx);
         }
 
-        JSON_THROW(type_error::create(305, "cannot use operator[] with a numeric argument with " + std::string(type_name()), *this));
+        JSON_THROW(type_error::create(305, detail::concat("cannot use operator[] with a numeric argument with ", type_name()), this));
     }
 
     /// @brief access specified object element
@@ -2104,7 +2118,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             return set_parent(m_value.object->operator[](key));
         }
 
-        JSON_THROW(type_error::create(305, "cannot use operator[] with a string argument with " + std::string(type_name()), *this));
+        JSON_THROW(type_error::create(305, detail::concat("cannot use operator[] with a string argument with ", type_name()), this));
     }
 
     /// @brief access specified object element
@@ -2118,7 +2132,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             return m_value.object->find(key)->second;
         }
 
-        JSON_THROW(type_error::create(305, "cannot use operator[] with a string argument with " + std::string(type_name()), *this));
+        JSON_THROW(type_error::create(305, detail::concat("cannot use operator[] with a string argument with ", type_name()), this));
     }
 
     /// @brief access specified object element
@@ -2141,7 +2155,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             return set_parent(m_value.object->operator[](key));
         }
 
-        JSON_THROW(type_error::create(305, "cannot use operator[] with a string argument with " + std::string(type_name()), *this));
+        JSON_THROW(type_error::create(305, detail::concat("cannot use operator[] with a string argument with ", type_name()), this));
     }
 
     /// @brief access specified object element
@@ -2157,7 +2171,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             return m_value.object->find(key)->second;
         }
 
-        JSON_THROW(type_error::create(305, "cannot use operator[] with a string argument with " + std::string(type_name()), *this));
+        JSON_THROW(type_error::create(305, detail::concat("cannot use operator[] with a string argument with ", type_name()), this));
     }
 
     /// @brief access specified object element with default value
@@ -2181,7 +2195,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             return default_value;
         }
 
-        JSON_THROW(type_error::create(306, "cannot use value() with " + std::string(type_name()), *this));
+        JSON_THROW(type_error::create(306, detail::concat("cannot use value() with ", type_name()), this));
     }
 
     /// @brief access specified object element with default value
@@ -2212,7 +2226,15 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             }
         }
 
-        JSON_THROW(type_error::create(306, "cannot use value() with " + std::string(type_name()), *this));
+        JSON_THROW(type_error::create(306, detail::concat("cannot use value() with ", type_name()), this));
+    }
+
+    template<class ValueType, class BasicJsonType, typename std::enable_if<
+                 detail::is_getable<basic_json_t, ValueType>::value, int>::type = 0>
+    JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
+    ValueType value(const ::nlohmann::json_pointer<BasicJsonType>& ptr, const ValueType& default_value) const
+    {
+        return value(ptr.convert(), default_value);
     }
 
     /// @brief access specified object element via JSON Pointer with default value
@@ -2222,6 +2244,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     string_t value(const json_pointer& ptr, const char* default_value) const
     {
         return value(ptr, string_t(default_value));
+    }
+
+    template<typename BasicJsonType>
+    JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
+    JSON_HEDLEY_NON_NULL(3)
+    string_t value(const typename ::nlohmann::json_pointer<BasicJsonType>& ptr, const char* default_value) const
+    {
+        return value(ptr.convert(), default_value);
     }
 
     /// @brief access the first element
@@ -2267,7 +2297,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // make sure iterator fits the current value
         if (JSON_HEDLEY_UNLIKELY(this != pos.m_object))
         {
-            JSON_THROW(invalid_iterator::create(202, "iterator does not fit current value", *this));
+            JSON_THROW(invalid_iterator::create(202, "iterator does not fit current value", this));
         }
 
         IteratorType result = end();
@@ -2283,7 +2313,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             {
                 if (JSON_HEDLEY_UNLIKELY(!pos.m_it.primitive_iterator.is_begin()))
                 {
-                    JSON_THROW(invalid_iterator::create(205, "iterator out of range", *this));
+                    JSON_THROW(invalid_iterator::create(205, "iterator out of range", this));
                 }
 
                 if (is_string())
@@ -2321,7 +2351,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             case value_t::null:
             case value_t::discarded:
             default:
-                JSON_THROW(type_error::create(307, "cannot use erase() with " + std::string(type_name()), *this));
+                JSON_THROW(type_error::create(307, detail::concat("cannot use erase() with ", type_name()), this));
         }
 
         return result;
@@ -2338,7 +2368,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // make sure iterator fits the current value
         if (JSON_HEDLEY_UNLIKELY(this != first.m_object || this != last.m_object))
         {
-            JSON_THROW(invalid_iterator::create(203, "iterators do not fit current value", *this));
+            JSON_THROW(invalid_iterator::create(203, "iterators do not fit current value", this));
         }
 
         IteratorType result = end();
@@ -2355,7 +2385,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 if (JSON_HEDLEY_LIKELY(!first.m_it.primitive_iterator.is_begin()
                                        || !last.m_it.primitive_iterator.is_end()))
                 {
-                    JSON_THROW(invalid_iterator::create(204, "iterators out of range", *this));
+                    JSON_THROW(invalid_iterator::create(204, "iterators out of range", this));
                 }
 
                 if (is_string())
@@ -2395,7 +2425,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             case value_t::null:
             case value_t::discarded:
             default:
-                JSON_THROW(type_error::create(307, "cannot use erase() with " + std::string(type_name()), *this));
+                JSON_THROW(type_error::create(307, detail::concat("cannot use erase() with ", type_name()), this));
         }
 
         return result;
@@ -2411,7 +2441,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             return m_value.object->erase(key);
         }
 
-        JSON_THROW(type_error::create(307, "cannot use erase() with " + std::string(type_name()), *this));
+        JSON_THROW(type_error::create(307, detail::concat("cannot use erase() with ", type_name()), this));
     }
 
     /// @brief remove element from a JSON array given an index
@@ -2423,14 +2453,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         {
             if (JSON_HEDLEY_UNLIKELY(idx >= size()))
             {
-                JSON_THROW(out_of_range::create(401, "array index " + std::to_string(idx) + " is out of range", *this));
+                JSON_THROW(out_of_range::create(401, detail::concat("array index ", std::to_string(idx), " is out of range"), this));
             }
 
             m_value.array->erase(m_value.array->begin() + static_cast<difference_type>(idx));
         }
         else
         {
-            JSON_THROW(type_error::create(307, "cannot use erase() with " + std::string(type_name()), *this));
+            JSON_THROW(type_error::create(307, detail::concat("cannot use erase() with ", type_name()), this));
         }
     }
 
@@ -2486,7 +2516,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @brief check the existence of an element in a JSON object
     /// @sa https://json.nlohmann.me/api/basic_json/contains/
     template < typename KeyT, typename std::enable_if <
-                   !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value, int >::type = 0 >
+                   !detail::is_json_pointer<typename std::decay<KeyT>::type>::value, int >::type = 0 >
     bool contains(KeyT && key) const
     {
         return is_object() && m_value.object->find(std::forward<KeyT>(key)) != m_value.object->end();
@@ -2495,6 +2525,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @brief check the existence of an element in a JSON object given a JSON pointer
     /// @sa https://json.nlohmann.me/api/basic_json/contains/
     bool contains(const json_pointer& ptr) const
+    {
+        return ptr.contains(this);
+    }
+
+    template<typename BasicJsonType>
+    JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
+    bool contains(const typename ::nlohmann::json_pointer<BasicJsonType> ptr) const
     {
         return ptr.contains(this);
     }
@@ -2838,7 +2875,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // push_back only works for null objects or arrays
         if (JSON_HEDLEY_UNLIKELY(!(is_null() || is_array())))
         {
-            JSON_THROW(type_error::create(308, "cannot use push_back() with " + std::string(type_name()), *this));
+            JSON_THROW(type_error::create(308, detail::concat("cannot use push_back() with ", type_name()), this));
         }
 
         // transform null object into an array
@@ -2871,7 +2908,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // push_back only works for null objects or arrays
         if (JSON_HEDLEY_UNLIKELY(!(is_null() || is_array())))
         {
-            JSON_THROW(type_error::create(308, "cannot use push_back() with " + std::string(type_name()), *this));
+            JSON_THROW(type_error::create(308, detail::concat("cannot use push_back() with ", type_name()), this));
         }
 
         // transform null object into an array
@@ -2903,7 +2940,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // push_back only works for null objects or objects
         if (JSON_HEDLEY_UNLIKELY(!(is_null() || is_object())))
         {
-            JSON_THROW(type_error::create(308, "cannot use push_back() with " + std::string(type_name()), *this));
+            JSON_THROW(type_error::create(308, detail::concat("cannot use push_back() with ", type_name()), this));
         }
 
         // transform null object into an object
@@ -2959,7 +2996,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // emplace_back only works for null objects or arrays
         if (JSON_HEDLEY_UNLIKELY(!(is_null() || is_array())))
         {
-            JSON_THROW(type_error::create(311, "cannot use emplace_back() with " + std::string(type_name()), *this));
+            JSON_THROW(type_error::create(311, detail::concat("cannot use emplace_back() with ", type_name()), this));
         }
 
         // transform null object into an array
@@ -2984,7 +3021,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // emplace only works for null objects or arrays
         if (JSON_HEDLEY_UNLIKELY(!(is_null() || is_object())))
         {
-            JSON_THROW(type_error::create(311, "cannot use emplace() with " + std::string(type_name()), *this));
+            JSON_THROW(type_error::create(311, detail::concat("cannot use emplace() with ", type_name()), this));
         }
 
         // transform null object into an object
@@ -3038,14 +3075,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             // check if iterator pos fits to this JSON value
             if (JSON_HEDLEY_UNLIKELY(pos.m_object != this))
             {
-                JSON_THROW(invalid_iterator::create(202, "iterator does not fit current value", *this));
+                JSON_THROW(invalid_iterator::create(202, "iterator does not fit current value", this));
             }
 
             // insert to array and return iterator
             return insert_iterator(pos, val);
         }
 
-        JSON_THROW(type_error::create(309, "cannot use insert() with " + std::string(type_name()), *this));
+        JSON_THROW(type_error::create(309, detail::concat("cannot use insert() with ", type_name()), this));
     }
 
     /// @brief inserts element into array
@@ -3065,14 +3102,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             // check if iterator pos fits to this JSON value
             if (JSON_HEDLEY_UNLIKELY(pos.m_object != this))
             {
-                JSON_THROW(invalid_iterator::create(202, "iterator does not fit current value", *this));
+                JSON_THROW(invalid_iterator::create(202, "iterator does not fit current value", this));
             }
 
             // insert to array and return iterator
             return insert_iterator(pos, cnt, val);
         }
 
-        JSON_THROW(type_error::create(309, "cannot use insert() with " + std::string(type_name()), *this));
+        JSON_THROW(type_error::create(309, detail::concat("cannot use insert() with ", type_name()), this));
     }
 
     /// @brief inserts range of elements into array
@@ -3082,24 +3119,24 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // insert only works for arrays
         if (JSON_HEDLEY_UNLIKELY(!is_array()))
         {
-            JSON_THROW(type_error::create(309, "cannot use insert() with " + std::string(type_name()), *this));
+            JSON_THROW(type_error::create(309, detail::concat("cannot use insert() with ", type_name()), this));
         }
 
         // check if iterator pos fits to this JSON value
         if (JSON_HEDLEY_UNLIKELY(pos.m_object != this))
         {
-            JSON_THROW(invalid_iterator::create(202, "iterator does not fit current value", *this));
+            JSON_THROW(invalid_iterator::create(202, "iterator does not fit current value", this));
         }
 
         // check if range iterators belong to the same JSON object
         if (JSON_HEDLEY_UNLIKELY(first.m_object != last.m_object))
         {
-            JSON_THROW(invalid_iterator::create(210, "iterators do not fit", *this));
+            JSON_THROW(invalid_iterator::create(210, "iterators do not fit", this));
         }
 
         if (JSON_HEDLEY_UNLIKELY(first.m_object == this))
         {
-            JSON_THROW(invalid_iterator::create(211, "passed iterators may not belong to container", *this));
+            JSON_THROW(invalid_iterator::create(211, "passed iterators may not belong to container", this));
         }
 
         // insert to array and return iterator
@@ -3113,13 +3150,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // insert only works for arrays
         if (JSON_HEDLEY_UNLIKELY(!is_array()))
         {
-            JSON_THROW(type_error::create(309, "cannot use insert() with " + std::string(type_name()), *this));
+            JSON_THROW(type_error::create(309, detail::concat("cannot use insert() with ", type_name()), this));
         }
 
         // check if iterator pos fits to this JSON value
         if (JSON_HEDLEY_UNLIKELY(pos.m_object != this))
         {
-            JSON_THROW(invalid_iterator::create(202, "iterator does not fit current value", *this));
+            JSON_THROW(invalid_iterator::create(202, "iterator does not fit current value", this));
         }
 
         // insert to array and return iterator
@@ -3133,19 +3170,19 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // insert only works for objects
         if (JSON_HEDLEY_UNLIKELY(!is_object()))
         {
-            JSON_THROW(type_error::create(309, "cannot use insert() with " + std::string(type_name()), *this));
+            JSON_THROW(type_error::create(309, detail::concat("cannot use insert() with ", type_name()), this));
         }
 
         // check if range iterators belong to the same JSON object
         if (JSON_HEDLEY_UNLIKELY(first.m_object != last.m_object))
         {
-            JSON_THROW(invalid_iterator::create(210, "iterators do not fit", *this));
+            JSON_THROW(invalid_iterator::create(210, "iterators do not fit", this));
         }
 
         // passed iterators must belong to objects
         if (JSON_HEDLEY_UNLIKELY(!first.m_object->is_object()))
         {
-            JSON_THROW(invalid_iterator::create(202, "iterators first and last must point to objects", *this));
+            JSON_THROW(invalid_iterator::create(202, "iterators first and last must point to objects", this));
         }
 
         m_value.object->insert(first.m_it.object_iterator, last.m_it.object_iterator);
@@ -3172,19 +3209,19 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
         if (JSON_HEDLEY_UNLIKELY(!is_object()))
         {
-            JSON_THROW(type_error::create(312, "cannot use update() with " + std::string(type_name()), *this));
+            JSON_THROW(type_error::create(312, detail::concat("cannot use update() with ", type_name()), this));
         }
 
         // check if range iterators belong to the same JSON object
         if (JSON_HEDLEY_UNLIKELY(first.m_object != last.m_object))
         {
-            JSON_THROW(invalid_iterator::create(210, "iterators do not fit", *this));
+            JSON_THROW(invalid_iterator::create(210, "iterators do not fit", this));
         }
 
         // passed iterators must belong to objects
         if (JSON_HEDLEY_UNLIKELY(!first.m_object->is_object()))
         {
-            JSON_THROW(type_error::create(312, "cannot use update() with " + std::string(first.m_object->type_name()), *first.m_object));
+            JSON_THROW(type_error::create(312, detail::concat("cannot use update() with ", first.m_object->type_name()), first.m_object));
         }
 
         for (auto it = first; it != last; ++it)
@@ -3245,7 +3282,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
         else
         {
-            JSON_THROW(type_error::create(310, "cannot use swap() with " + std::string(type_name()), *this));
+            JSON_THROW(type_error::create(310, detail::concat("cannot use swap() with ", type_name()), this));
         }
     }
 
@@ -3260,7 +3297,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
         else
         {
-            JSON_THROW(type_error::create(310, "cannot use swap() with " + std::string(type_name()), *this));
+            JSON_THROW(type_error::create(310, detail::concat("cannot use swap() with ", type_name()), this));
         }
     }
 
@@ -3275,7 +3312,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
         else
         {
-            JSON_THROW(type_error::create(310, "cannot use swap() with " + std::string(type_name()), *this));
+            JSON_THROW(type_error::create(310, detail::concat("cannot use swap() with ", type_name()), this));
         }
     }
 
@@ -3290,7 +3327,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
         else
         {
-            JSON_THROW(type_error::create(310, "cannot use swap() with " + std::string(type_name()), *this));
+            JSON_THROW(type_error::create(310, detail::concat("cannot use swap() with ", type_name()), this));
         }
     }
 
@@ -3305,7 +3342,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
         else
         {
-            JSON_THROW(type_error::create(310, "cannot use swap() with " + std::string(type_name()), *this));
+            JSON_THROW(type_error::create(310, detail::concat("cannot use swap() with ", type_name()), this));
         }
     }
 
@@ -4187,9 +4224,23 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return ptr.get_unchecked(this);
     }
 
+    template<typename BasicJsonType>
+    JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
+    reference operator[](const ::nlohmann::json_pointer<BasicJsonType>& ptr)
+    {
+        return ptr.get_unchecked(this);
+    }
+
     /// @brief access specified element via JSON Pointer
     /// @sa https://json.nlohmann.me/api/basic_json/operator%5B%5D/
     const_reference operator[](const json_pointer& ptr) const
+    {
+        return ptr.get_unchecked(this);
+    }
+
+    template<typename BasicJsonType>
+    JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
+    const_reference operator[](const ::nlohmann::json_pointer<BasicJsonType>& ptr) const
     {
         return ptr.get_unchecked(this);
     }
@@ -4201,9 +4252,23 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return ptr.get_checked(this);
     }
 
+    template<typename BasicJsonType>
+    JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
+    reference at(const ::nlohmann::json_pointer<BasicJsonType>& ptr)
+    {
+        return ptr.get_checked(this);
+    }
+
     /// @brief access specified element via JSON Pointer
     /// @sa https://json.nlohmann.me/api/basic_json/at/
     const_reference at(const json_pointer& ptr) const
+    {
+        return ptr.get_checked(this);
+    }
+
+    template<typename BasicJsonType>
+    JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
+    const_reference at(const ::nlohmann::json_pointer<BasicJsonType>& ptr) const
     {
         return ptr.get_checked(this);
     }
@@ -4314,11 +4379,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     }
                     else
                     {
-                        const auto idx = json_pointer::array_index(last_path);
+                        const auto idx = json_pointer::template array_index<basic_json_t>(last_path);
                         if (JSON_HEDLEY_UNLIKELY(idx > parent.size()))
                         {
                             // avoid undefined behavior
-                            JSON_THROW(out_of_range::create(401, "array index " + std::to_string(idx) + " is out of range", parent));
+                            JSON_THROW(out_of_range::create(401, detail::concat("array index ", std::to_string(idx), " is out of range"), &parent));
                         }
 
                         // default case: insert add offset
@@ -4359,20 +4424,20 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 }
                 else
                 {
-                    JSON_THROW(out_of_range::create(403, "key '" + last_path + "' not found", *this));
+                    JSON_THROW(out_of_range::create(403, detail::concat("key '", last_path, "' not found"), this));
                 }
             }
             else if (parent.is_array())
             {
                 // note erase performs range check
-                parent.erase(json_pointer::array_index(last_path));
+                parent.erase(json_pointer::template array_index<basic_json_t>(last_path));
             }
         };
 
         // type check: top level value must be an array
         if (JSON_HEDLEY_UNLIKELY(!json_patch.is_array()))
         {
-            JSON_THROW(parse_error::create(104, 0, "JSON patch must be an array of objects", json_patch));
+            JSON_THROW(parse_error::create(104, 0, "JSON patch must be an array of objects", &json_patch));
         }
 
         // iterate and apply the operations
@@ -4387,20 +4452,20 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 auto it = val.m_value.object->find(member);
 
                 // context-sensitive error message
-                const auto error_msg = (op == "op") ? "operation" : "operation '" + op + "'";
+                const auto error_msg = (op == "op") ? "operation" : detail::concat("operation '", op, '\'');
 
                 // check if desired value is present
                 if (JSON_HEDLEY_UNLIKELY(it == val.m_value.object->end()))
                 {
                     // NOLINTNEXTLINE(performance-inefficient-string-concatenation)
-                    JSON_THROW(parse_error::create(105, 0, error_msg + " must have member '" + member + "'", val));
+                    JSON_THROW(parse_error::create(105, 0, detail::concat(error_msg, " must have member '", member, "'"), &val));
                 }
 
                 // check if result is of type string
                 if (JSON_HEDLEY_UNLIKELY(string_type && !it->second.is_string()))
                 {
                     // NOLINTNEXTLINE(performance-inefficient-string-concatenation)
-                    JSON_THROW(parse_error::create(105, 0, error_msg + " must have string member '" + member + "'", val));
+                    JSON_THROW(parse_error::create(105, 0, detail::concat(error_msg, " must have string member '", member, "'"), &val));
                 }
 
                 // no error: return value
@@ -4410,7 +4475,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             // type check: every element of the array must be an object
             if (JSON_HEDLEY_UNLIKELY(!val.is_object()))
             {
-                JSON_THROW(parse_error::create(104, 0, "JSON patch must be an array of objects", val));
+                JSON_THROW(parse_error::create(104, 0, "JSON patch must be an array of objects", &val));
             }
 
             // collect mandatory members
@@ -4488,7 +4553,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     // throw an exception if test fails
                     if (JSON_HEDLEY_UNLIKELY(!success))
                     {
-                        JSON_THROW(other_error::create(501, "unsuccessful: " + val.dump(), val));
+                        JSON_THROW(other_error::create(501, detail::concat("unsuccessful: ", val.dump()), &val));
                     }
 
                     break;
@@ -4499,7 +4564,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 {
                     // op must be "add", "remove", "replace", "move", "copy", or
                     // "test"
-                    JSON_THROW(parse_error::create(105, 0, "operation value '" + op + "' is invalid", val));
+                    JSON_THROW(parse_error::create(105, 0, detail::concat("operation value '", op, "' is invalid"), &val));
                 }
             }
         }
@@ -4541,7 +4606,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 while (i < source.size() && i < target.size())
                 {
                     // recursive call to compare array values at index i
-                    auto temp_diff = diff(source[i], target[i], path + "/" + std::to_string(i));
+                    auto temp_diff = diff(source[i], target[i], detail::concat(path, '/', std::to_string(i)));
                     result.insert(result.end(), temp_diff.begin(), temp_diff.end());
                     ++i;
                 }
@@ -4558,7 +4623,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     result.insert(result.begin() + end_index, object(
                     {
                         {"op", "remove"},
-                        {"path", path + "/" + std::to_string(i)}
+                        {"path", detail::concat(path, '/', std::to_string(i))}
                     }));
                     ++i;
                 }
@@ -4569,7 +4634,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     result.push_back(
                     {
                         {"op", "add"},
-                        {"path", path + "/-"},
+                        {"path", detail::concat(path, "/-")},
                         {"value", target[i]}
                     });
                     ++i;
@@ -4584,7 +4649,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 for (auto it = source.cbegin(); it != source.cend(); ++it)
                 {
                     // escape the key name to be used in a JSON patch
-                    const auto path_key = path + "/" + detail::escape(it.key());
+                    const auto path_key = detail::concat(path, '/', detail::escape(it.key()));
 
                     if (target.find(it.key()) != target.end())
                     {
@@ -4608,7 +4673,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     if (source.find(it.key()) == source.end())
                     {
                         // found a key that is not in this -> add it
-                        const auto path_key = path + "/" + detail::escape(it.key());
+                        const auto path_key = detail::concat(path, '/', detail::escape(it.key()));
                         result.push_back(
                         {
                             {"op", "add"}, {"path", path_key},
