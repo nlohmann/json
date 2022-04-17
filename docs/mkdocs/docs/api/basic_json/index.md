@@ -233,9 +233,10 @@ Access to the JSON value
 - [**operator==**](operator_eq.md) - comparison: equal
 - [**operator!=**](operator_ne.md) - comparison: not equal
 - [**operator<**](operator_lt.md) - comparison: less than
-- [**operator<=**](operator_le.md) - comparison: less than or equal
 - [**operator>**](operator_gt.md) - comparison: greater than
+- [**operator<=**](operator_le.md) - comparison: less than or equal
 - [**operator>=**](operator_ge.md) - comparison: greater than or equal
+- [**operator<=>**](operator_spaceship.md) - comparison: 3-way
 
 ### Serialization / Dumping
 
