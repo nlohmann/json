@@ -24,10 +24,41 @@ functions [`is_null`](is_null.md), [`is_object`](is_object.md), [`is_array`](is_
 
 ## Notes
 
-There are three enumeration entries (number_integer, number_unsigned, and number_float), because the library
-distinguishes these three types for numbers: [`number_unsigned_t`](number_unsigned_t.md) is used for unsigned integers,
-[`number_integer_t`](number_integer_t.md) is used for signed integers, and [`number_float_t`](number_float_t.md) is used
-for floating-point numbers or to approximate integers which do not fit in the limits of their respective type.
+!!! note "Ordering"
+
+    The order of types is as follows:
+
+    1. `null`
+    2. `boolean`
+    3. `number_integer`, `number_unsigned`, `number_float`
+    4. `object`
+    5. `array`
+    6. `string`
+    7. `binary`
+
+    `discarded` is unordered.
+
+!!! note "Types of numbers"
+
+    There are three enumerators for numbers (`number_integer`, `number_unsigned`, and `number_float`) to distinguish
+    between different types of numbers:
+
+      - [`number_unsigned_t`](number_unsigned_t.md) for unsigned integers
+      - [`number_integer_t`](number_integer_t.md) for signed integers
+      - [`number_float_t`](number_float_t.md) for floating-point numbers or to approximate integers which do not fit
+        into the limits of their respective type
+
+!!! warning "Comparison operators"
+
+    `operator<` and `operator<=>` (since C++20) are overloaded and compare according to the ordering described above.
+    Until C++20 all other relational and equality operators yield results according to the integer value of each
+    enumerator.
+    Since C++20 some compilers consider the _rewritten candidates_ generated from `operator<=>` during overload
+    resolution, while others do not.
+    For predictable and portable behavior use:
+
+      - `operator<` or `operator<=>` when wanting to compare according to the order described above
+      - `operator==` or `operator!=` when wanting to compare according to each enumerators integer value
 
 ## Examples
 
