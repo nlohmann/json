@@ -4,7 +4,8 @@
 #define JSON_ASSERT(x) /* value */
 ```
 
-This macro controls which code is executed for [runtime assertions](../../features/assertions.md) of the libraries.
+This macro controls which code is executed for [runtime assertions](../../features/assertions.md) of the libraries. It
+is set by the library, but can be overridden by defining it before including the library.
 
 ## Parameters
 

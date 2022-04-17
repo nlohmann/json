@@ -1,7 +1,7 @@
 # JSON_SKIP_UNSUPPORTED_COMPILER_CHECK
 
 ```cpp
-#undef JSON_SKIP_UNSUPPORTED_COMPILER_CHECK
+#define JSON_SKIP_UNSUPPORTED_COMPILER_CHECK
 ```
 
 When defined, the library will not create a compile error when a known unsupported compiler is detected. This allows to

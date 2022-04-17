@@ -236,8 +236,18 @@ nav:
         - 'JSON_ASSERT(x)': api/macros/json_assert.md
         - 'JSON_DIAGNOSTICS': api/macros/json_diagnostics.md
         - 'JSON_HAS_EXPERIMENTAL_FILESYSTEM': api/macros/json_has_filesystem.md
+        - 'JSON_HAS_CPP_11': api/macros/json_has_cpp_11.md
+        - 'JSON_HAS_CPP_14': api/macros/json_has_cpp_11.md
+        - 'JSON_HAS_CPP_17': api/macros/json_has_cpp_11.md
+        - 'JSON_HAS_CPP_20': api/macros/json_has_cpp_11.md
         - 'JSON_HAS_FILESYSTEM': api/macros/json_has_filesystem.md
+        - 'JSON_USE_IMPLICIT_CONVERSIONS': api/macros/json_use_implicit_conversions.md
+        - 'JSON_NO_IO': api/macros/json_no_io.md
+        - 'JSON_SKIP_LIBRARY_VERSION_CHECK': api/macros/json_skip_library_version_check.md
         - 'JSON_SKIP_UNSUPPORTED_COMPILER_CHECK': api/macros/json_skip_unsupported_compiler_check.md
+        - 'NLOHMANN_JSON_VERSION_MAJOR': api/macros/nlohmann_json_version_major.md
+        - 'NLOHMANN_JSON_VERSION_MINOR': api/macros/nlohmann_json_version_major.md
+        - 'NLOHMANN_JSON_VERSION_PATCH': api/macros/nlohmann_json_version_major.md
 
 # Extras
 extra:

@@ -57,12 +57,7 @@ standard. By defining any of these symbols, the internal check is overridden and
 unconditionally assumed. This can be helpful for compilers that only implement parts of the standard and would be
 detected incorrectly.
 
-!!! info "Default behavior"
-
-    The default value is detected based on the preprocessor macros `#!cpp __cplusplus`, `#!cpp _HAS_CXX17`, or
-    `#!cpp _MSVC_LANG`.
-
-The macros were introduced in version 3.10.5.
+See [full documentation of `JSON_HAS_CPP_11`, `JSON_HAS_CPP_14`, `JSON_HAS_CPP_17`, and `JSON_HAS_CPP_20`](../api/macros/json_has_cpp_11.md).
 
 ## `JSON_HAS_FILESYSTEM`, `JSON_HAS_EXPERIMENTAL_FILESYSTEM`
 
@@ -100,30 +95,14 @@ When defined, headers `<cstdio>`, `<ios>`, `<iosfwd>`, `<istream>`, and `<ostrea
 relying on these headers are excluded. This is relevant for environment where these I/O functions are disallowed for
 security reasons (e.g., Intel Software Guard Extensions (SGX)).
 
-!!! info "Default behavior"
-
-    By default, the macro is not defined.
-
-    ```cpp
-    #undef JSON_NO_IO
-    ```
-
-The macro was introduced in version 3.10.0.
+See [full documentation of `JSON_NO_IO`](../api/macros/json_no_io.md).
 
 ## `JSON_SKIP_LIBRARY_VERSION_CHECK`
 
 When defined, the library will not create a compiler warning when a different version of the library was already
 included.
 
-!!! info "Default behavior"
-
-    By default, the macro is not defined.
-
-    ```cpp
-    #undef JSON_SKIP_LIBRARY_VERSION_CHECK
-    ```
-
-The macro was introduced in version 3.11.0.
+See [full documentation of `JSON_SKIP_LIBRARY_VERSION_CHECK`](../api/macros/json_skip_library_version_check.md).
 
 ## `JSON_SKIP_UNSUPPORTED_COMPILER_CHECK`
 
@@ -187,33 +166,7 @@ The macro was introduced in version 3.1.0.
 
 When defined to `0`, implicit conversions are switched off. By default, implicit conversions are switched on.
 
-??? example
-
-    This is an example for an implicit conversion:
-
-    ```cpp
-    json j = "Hello, world!";
-    std::string s = j;
-    ```
-
-    When `JSON_USE_IMPLICIT_CONVERSIONS` is defined to `0`, the code above does no longer compile. Instead, it must be
-    written like this:
-
-    ```cpp
-    json j = "Hello, world!";
-    auto s = j.get<std::string>();
-    ```
-
-Implicit conversions can also be controlled with the CMake option `JSON_ImplicitConversions` (`ON` by default) which
-sets `JSON_USE_IMPLICIT_CONVERSIONS` accordingly.
-
-!!! info "Default behavior"
-
-    ```cpp
-    #define JSON_USE_IMPLICIT_CONVERSIONS 1
-    ```
-
-The macro was introduced in version 3.9.0.
+See [full documentation of `JSON_USE_IMPLICIT_CONVERSIONS`](../api/macros/json_use_implicit_conversions.md).
 
 ## `NLOHMANN_DEFINE_TYPE_INTRUSIVE(type, member...)`
 
@@ -269,6 +222,6 @@ The macro was introduced in version 3.4.0.
 ## `NLOHMANN_JSON_VERSION_MAJOR`, `NLOHMANN_JSON_VERSION_MINOR`, `NLOHMANN_JSON_VERSION_PATCH`
 
 These macros are defined by the library and contain the version numbers according to
-[Semantic Versioning 2.0.0](https://semver.org).
+[Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html).
 
-The macros were introduced in version 3.1.0.
+See [full documentation of `NLOHMANN_JSON_VERSION_MAJOR`, `NLOHMANN_JSON_VERSION_MINOR`, and `NLOHMANN_JSON_VERSION_PATCH`](../api/macros/nlohmann_json_version_major.md).
