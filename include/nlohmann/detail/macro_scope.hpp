@@ -118,11 +118,9 @@
         #define JSON_HAS_RANGES 0
     #elif defined(__cpp_lib_ranges)
         #define JSON_HAS_RANGES 1
+    #else
+        #define JSON_HAS_RANGES 0
     #endif
-#endif
-
-#ifndef JSON_HAS_RANGES
-    #define JSON_HAS_RANGES 0
 #endif
 
 #if JSON_HEDLEY_HAS_ATTRIBUTE(no_unique_address)
