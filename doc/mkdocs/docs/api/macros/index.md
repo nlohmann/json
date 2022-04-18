@@ -13,11 +13,9 @@ header.
 
 ## Exceptions
 
-- `JSON_CATCH_USER(exception)`
+- [**JSON_CATCH_USER(exception)**<br>**JSON_THROW_USER(exception)**<br>**JSON_TRY_USER**](json_throw_user.md) - control exceptions
 - [**JSON_DIAGNOSTICS**](json_diagnostics.md) - control extended diagnostics
-- `JSON_NOEXCEPTION`
-- `JSON_THROW_USER(exception)`
-- `JSON_TRY_USER`
+- [**JSON_NOEXCEPTION**](json_noexception.md) - switch off exceptions
 
 ## Language support
 

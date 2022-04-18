@@ -11,29 +11,8 @@ See [full documentation of `JSON_ASSERT(x)`](../api/macros/json_assert.md).
 ## `JSON_CATCH_USER(exception)`
 
 This macro overrides [`#!cpp catch`](https://en.cppreference.com/w/cpp/language/try_catch) calls inside the library.
-The argument is the type of the exception to catch. As of version 3.8.0, the library only catches `std::out_of_range`
-exceptions internally to rethrow them as [`json::out_of_range`](../home/exceptions.md#out-of-range) exceptions. The
-macro is always followed by a scope.
 
-See [Switch off exceptions](../home/exceptions.md#switch-off-exceptions) for an example.
-
-!!! info "Default behavior"
-
-    When exceptions are enabled, the default value is
-    [`#!cpp catch(exception)`](https://en.cppreference.com/w/cpp/language/try_catch).
-
-    ```cpp
-    #define JSON_CATCH_USER(exception) catch(exception)
-    ```
-
-    When exceptions are switched off by the compiler, the default value is `#!cpp if (false)` to make the catch block
-    unreachable.
-
-    ```cpp
-    #define JSON_CATCH_USER(exception) if (false)
-    ```
-
-The macro was introduced in version 3.1.0.
+See [full documentation of `JSON_CATCH_USER(exception)`](../api/macros/json_throw_user.md).
 
 ## `JSON_DIAGNOSTICS`
 
@@ -70,24 +49,9 @@ See [full documentation of `JSON_HAS_FILESYSTEM` and `JSON_HAS_EXPERIMENTAL_FILE
 
 ## `JSON_NOEXCEPTION`
 
-Exceptions can be switched off by defining the symbol `JSON_NOEXCEPTION`. When defining `JSON_NOEXCEPTION`, `#!cpp try`
-is replaced by `#!cpp if (true)`, `#!cpp catch` is replaced by `#!cpp if (false)`, and `#!cpp throw` is replaced by
-`#!cpp std::abort()`.
+Exceptions can be switched off by defining the symbol `JSON_NOEXCEPTION`.
 
-!!! info "Default behavior"
-
-    By default, the macro is not defined.
-
-    ```cpp
-    #undef JSON_NOEXCEPTION
-    ```
-
-The same effect is achieved by setting the compiler flag `-fno-exceptions`.
-
-Note the explanatory [`what()`](https://en.cppreference.com/w/cpp/error/exception/what) string of exceptions is not
-available for MSVC if exceptions are disabled, see [#2824](https://github.com/nlohmann/json/discussions/2824).
-
-The macro was introduced in version 2.1.0.
+See [full documentation of `JSON_NOEXCEPTION`](../api/macros/json_noexception.md).
 
 ## `JSON_NO_IO`
 
@@ -113,54 +77,15 @@ See [full documentation of `JSON_SKIP_UNSUPPORTED_COMPILER_CHECK`](../api/macros
 
 ## `JSON_THROW_USER(exception)`
 
-This macro overrides `#!cpp throw` calls inside the library. The argument is the exception to be thrown. Note that
-`JSON_THROW_USER` should leave the current scope (e.g., by throwing or aborting), as continuing after it may yield
-undefined behavior.
+This macro overrides `#!cpp throw` calls inside the library. The argument is the exception to be thrown.
 
-!!! info "Default behavior"
-
-    When exceptions are enabled, the default value is
-    [`#!cpp throw exception`](https://en.cppreference.com/w/cpp/language/throw).
-
-    ```cpp
-    #define JSON_THROW_USER(exception) throw exception
-    ```
-
-    When exceptions are switched off by the compiler, the default value is
-    [`#!cpp std::abort()`](https://en.cppreference.com/w/cpp/utility/program/abort) to make reaching the throw branch
-    abort the process.
-
-    ```cpp
-    #define JSON_THROW_USER(exception) std::abort()
-    ```
-
-See [Switch off exceptions](../home/exceptions.md#switch-off-exceptions) for an example.
-
-The macro was introduced in version 3.1.0.
+See [full documentation of `JSON_THROW_USER(exception)`](../api/macros/json_throw_user.md).
 
 ## `JSON_TRY_USER`
 
-This macro overrides `#!cpp try` calls inside the library. It has no arguments and is always followed by a scope.
+This macro overrides `#!cpp try` calls inside the library.
 
-!!! info "Default behavior"
-
-    When exceptions are enabled, the default value is
-    [`#!cpp try`](https://en.cppreference.com/w/cpp/language/try_catch).
-
-    ```cpp
-    #define JSON_TRY_USER try
-    ```
-
-    When exceptions are switched off by the compiler, the default value is `#!cpp if (true)` to unconditionally execute
-    the following code block.
-
-    ```cpp
-    #define JSON_TRY_USER if (true)
-    ```
-
-See [Switch off exceptions](../home/exceptions.md#switch-off-exceptions) for an example.
-
-The macro was introduced in version 3.1.0.
+See [full documentation of `JSON_TRY_USER`](../api/macros/json_throw_user.md).
 
 ## `JSON_USE_IMPLICIT_CONVERSIONS`
 
