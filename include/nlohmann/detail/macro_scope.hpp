@@ -114,11 +114,25 @@
     #define JSON_HAS_THREE_WAY_COMPARISON 0
 #endif
 
+#ifndef JSON_HAS_RANGES
+    // ranges header shipping in GCC 11.1.0 (released 2021-04-27) has syntax error
+    #if defined(__GLIBCXX__) && __GLIBCXX__ == 20210427
+        #define JSON_HAS_RANGES 0
+    #elif defined(__cpp_lib_ranges)
+        #define JSON_HAS_RANGES 1
+    #endif
+#endif
+
+#ifndef JSON_HAS_RANGES
+    #define JSON_HAS_RANGES 0
+#endif
+
 #if JSON_HEDLEY_HAS_ATTRIBUTE(no_unique_address)
     #define JSON_NO_UNIQUE_ADDRESS [[no_unique_address]]
 #else
     #define JSON_NO_UNIQUE_ADDRESS
 #endif
+
 
 // disable documentation warnings on clang
 #if defined(__clang__)
