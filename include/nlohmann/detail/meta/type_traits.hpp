@@ -12,6 +12,7 @@
 #include <nlohmann/detail/meta/call_std/end.hpp>
 #include <nlohmann/detail/meta/cpp_future.hpp>
 #include <nlohmann/detail/meta/detected.hpp>
+#include <nlohmann/detail/placeholders.hpp>
 #include <nlohmann/json_fwd.hpp>
 
 namespace nlohmann
@@ -177,16 +178,6 @@ using actual_object_comparator_t = typename actual_object_comparator<BasicJsonTy
 ///////////////////
 // is_ functions //
 ///////////////////
-
-// https://en.cppreference.com/w/cpp/types/conjunction
-template<class...> struct conjunction : std::true_type { };
-template<class B> struct conjunction<B> : B { };
-template<class B, class... Bn>
-struct conjunction<B, Bn...>
-: std::conditional<bool(B::value), conjunction<Bn...>, B>::type {};
-
-// https://en.cppreference.com/w/cpp/types/negation
-template<class B> struct negation : std::integral_constant < bool, !B::value > { };
 
 // Reimplementation of is_constructible and is_default_constructible, due to them being broken for
 // std::pair and std::tuple until LWG 2367 fix (see https://cplusplus.github.io/LWG/lwg-defects.html#2367).
@@ -564,6 +555,11 @@ struct is_ordered_map
     enum { value = sizeof(test<T>(nullptr)) == sizeof(char) }; // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
 };
 
+// checks if a type is a basic_json_value placeholder
+template<typename T>
+using is_basic_json_value_placeholder = typename std::is_same <
+                                        uncvref_t<T>, uncvref_t<decltype(::nlohmann::placeholders::basic_json_value) >>::type;
+
 // to avoid useless casts (see https://github.com/nlohmann/json/issues/2893#issuecomment-889152324)
 template < typename T, typename U, enable_if_t < !std::is_same<T, U>::value, int > = 0 >
 T conditional_static_cast(U value)
@@ -576,6 +572,18 @@ T conditional_static_cast(U value)
 {
     return value;
 }
+
+// non-standard conditional version of as_const
+template <bool AsConst, typename T>
+constexpr typename std::conditional<AsConst,
+          typename std::add_const<T>::type, T>::type&
+          conditional_as_const(T& t) noexcept
+{
+    return t;
+}
+
+template <bool AsConst, typename T>
+void conditional_as_const(const T&&) = delete;
 
 }  // namespace detail
 }  // namespace nlohmann

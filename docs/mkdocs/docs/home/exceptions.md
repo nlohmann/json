@@ -733,6 +733,28 @@ The dynamic type of the object cannot be represented in the requested serializat
 
     Encapsulate the JSON value in an object. That is, instead of serializing `#!json true`, serialize `#!json {"value": true}`
 
+### json.exception.type_error.318
+
+The given callable cannot be invoked with the stored JSON value and the arguments provided.
+
+!!! failure "Example message"
+
+    Calling `apply()` on a numeric JSON value with an unary non-member function accepting a string:
+    ```
+    [json.exception.type_error.318] cannot invoke callable with JSON value of type number
+    ```
+
+### json.exception.type_error.319
+
+The result callback cannot be invoked with the callback argument, in case of a non-static member function pointer callback, and the result of the invocation of the callable.
+
+!!! failure "Example message"
+
+    Calling `apply_cb()` with an unary non-member function result callback when the result of the invocation of the callable is not convertible to the argument type of the result callback:
+    ```
+    [json.exception.type_error.319] cannot invoke callback
+    ```
+
 ## Out of range
 
 This exception is thrown in case a library function is called on an input parameter that exceeds the expected range, for instance in case of array indices or nonexisting object keys.

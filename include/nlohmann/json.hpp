@@ -62,6 +62,7 @@ SOFTWARE.
 #include <memory> // unique_ptr
 #include <numeric> // accumulate
 #include <string> // string, stoi, to_string
+#include <tuple> // forward_as_tuple, tuple
 #include <utility> // declval, forward, move, pair, swap
 #include <vector> // vector
 
@@ -86,10 +87,12 @@ SOFTWARE.
 #include <nlohmann/detail/string_concat.hpp>
 #include <nlohmann/detail/string_escape.hpp>
 #include <nlohmann/detail/meta/cpp_future.hpp>
+#include <nlohmann/detail/meta/invoke.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
 #include <nlohmann/detail/output/binary_writer.hpp>
 #include <nlohmann/detail/output/output_adapters.hpp>
 #include <nlohmann/detail/output/serializer.hpp>
+#include <nlohmann/detail/placeholders.hpp>
 #include <nlohmann/detail/value_t.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include <nlohmann/ordered_map.hpp>
@@ -206,6 +209,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     using input_format_t = detail::input_format_t;
     /// SAX interface type, see @ref nlohmann::json_sax
     using json_sax_t = json_sax<basic_json>;
+
+    // placeholder for the stored JSON value used in apply*() functions
+    static constexpr decltype(::nlohmann::placeholders::basic_json_value) value_placeholder
+        = ::nlohmann::placeholders::basic_json_value;
 
     ////////////////
     // exceptions //
@@ -5120,7 +5127,266 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 
     /// @}
+
+  private:
+    template<typename Arg, typename Value,
+             detail::enable_if_t<detail::is_basic_json_value_placeholder<Arg>::value, int> = 0>
+    static auto apply_resolve_placeholder(Arg &&  /*arg*/, Value && val) -> decltype(std::forward<Value>(val))
+    {
+        return std::forward<Value>(val);
+    }
+
+    template < typename Arg, typename Value,
+               detail::enable_if_t < !detail::is_basic_json_value_placeholder<Arg>::value, int > = 0 >
+    static auto apply_resolve_placeholder(Arg && arg, Value&&   /*val*/) -> decltype(std::forward<Arg>(arg))
+    {
+        return std::forward<Arg>(arg);
+    }
+
+    // invoke the result callback
+    template < typename ResultCallback, typename CallbackArg, typename R,
+               detail::enable_if_t <
+                   detail::is_null_arg<ResultCallback>::value
+                   && detail::is_null_arg<CallbackArg>::value, int > = 0 >
+    void apply_invoke_cb(ResultCallback && /*cb*/, CallbackArg && /*cb_arg*/, R&& /*r*/) const
+    {}
+
+    template < typename ResultCallback, typename CallbackArg, typename R,
+               detail::enable_if_t <
+                   !detail::is_null_arg<ResultCallback>::value
+                   && detail::is_null_arg<CallbackArg>::value
+                   && detail::is_invocable<ResultCallback, R>::value, int > = 0 >
+    void apply_invoke_cb(ResultCallback && cb, CallbackArg && /*cb_arg*/, R && r) const
+    {
+        detail::invoke(std::forward<ResultCallback>(cb), std::forward<R>(r));
+    }
+
+    template < typename ResultCallback, typename CallbackArg, typename R,
+               detail::enable_if_t <
+                   !detail::is_null_arg<ResultCallback>::value
+                   && !detail::is_null_arg<CallbackArg>::value
+                   && detail::is_invocable<ResultCallback, CallbackArg, R>::value, int > = 0 >
+    void apply_invoke_cb(ResultCallback && cb, CallbackArg && cb_arg, R && r) const
+    {
+        detail::invoke(std::forward<ResultCallback>(cb), std::forward<CallbackArg>(cb_arg), std::forward<R>(r));
+    }
+
+    template < typename ResultCallback, typename CallbackArg, typename R,
+               detail::enable_if_t <
+                   (!detail::is_null_arg<ResultCallback>::value
+                    && !detail::is_null_arg<CallbackArg>::value
+                    && !detail::is_invocable<ResultCallback, CallbackArg, R>::value)
+                   || (!detail::is_null_arg<ResultCallback>::value
+                       && detail::is_null_arg<CallbackArg>::value
+                       && !detail::is_invocable<ResultCallback, R>::value), int > = 0 >
+    void apply_invoke_cb(ResultCallback &&  /*cb*/, CallbackArg &&  /*cb_arg*/, R&&   /*r*/) const
+    {
+        JSON_THROW(type_error::create(319, detail::concat("cannot invoke callback"), this));
+    }
+
+    template<bool ConstThis>
+    void apply_error() const
+    {
+        if (ConstThis)
+        {
+            JSON_THROW(type_error::create(318, detail::concat("cannot invoke callable with const JSON value of type ", type_name()), this));
+        }
+        JSON_THROW(type_error::create(318, detail::concat("cannot invoke callable with JSON value of type ", type_name()), this));
+    }
+
+    // invoke function and possibly delegate result
+    template < bool ConstThis, typename Value, typename ResultCallback, typename CallbackArg, typename Fn, typename Tuple, std::size_t... I,
+               detail::enable_if_t < detail::apply_is_invocable<Value, Fn, Tuple, I...>::value
+                                     && std::is_same<detail::apply_invoke_result_t<Value, Fn, Tuple, I...>, void>::value, int > = 0 >
+    void apply_invoke(Value && val, ResultCallback && /*cb*/, CallbackArg && /*cb_arg*/, Fn && f, Tuple && t, detail::index_sequence<I...> /*unused*/) const
+    {
+        detail::invoke(std::forward<Fn>(f), apply_resolve_placeholder(std::get<I>(t), std::forward<Value>(val))...);
+    }
+
+    template < bool ConstThis, typename Value, typename ResultCallback, typename CallbackArg, typename Fn, typename Tuple, std::size_t... I,
+               detail::enable_if_t < detail::apply_is_invocable<Value, Fn, Tuple, I...>::value
+                                     && !std::is_same<detail::apply_invoke_result_t<Value, Fn, Tuple, I...>, void>::value, int > = 0 >
+    void apply_invoke(Value && val, ResultCallback && cb, CallbackArg && cb_arg, Fn && f, Tuple && t, detail::index_sequence<I...> /*unused*/) const
+    {
+        auto&& r = detail::invoke(std::forward<Fn>(f), apply_resolve_placeholder(std::get<I>(t), std::forward<Value>(val))...);
+        apply_invoke_cb(std::forward<ResultCallback>(cb), std::forward<CallbackArg>(cb_arg), std::forward<decltype(r)>(r));
+    }
+
+    template < bool ConstThis, typename Value, typename ResultCallback, typename CallbackArg, typename Fn, typename Tuple, std::size_t... I,
+               detail::enable_if_t < !detail::apply_is_invocable<Value, Fn, Tuple, I...>::value, int > = 0 >
+    void apply_invoke(Value && /*val*/, ResultCallback && /*cb*/, CallbackArg && /*cb_arg*/, Fn && /*f*/, Tuple && /*t*/, detail::index_sequence<I...> /*unused*/) const
+    {
+        apply_error<ConstThis>();
+    }
+
+    // convert arguments to tuple; insert basic_json_value placeholder if missing
+    template < bool ConstThis, typename Value, typename ResultCallback, typename CallbackArg, typename Fn, typename FnArg, typename... Args,
+               detail::enable_if_t < std::is_member_pointer<Fn>::value
+                                     && !detail::is_basic_json_value_placeholder<FnArg>::value
+                                     && !detail::disjunction<detail::is_basic_json_value_placeholder<Args>...>::value, int > = 0 >
+    void apply_make_tuple(Value && val, ResultCallback && cb, CallbackArg && cb_arg, Fn && f, FnArg && f_arg, Args && ... args) const
+    {
+        apply_invoke<ConstThis>(
+            std::forward<Value>(val),
+            std::forward<ResultCallback>(cb), std::forward<CallbackArg>(cb_arg),
+            std::forward<Fn>(f), std::forward_as_tuple(f_arg, ::nlohmann::placeholders::basic_json_value, args...),
+            detail::make_index_sequence < 2 + sizeof...(args) > ());
+    }
+
+    template < bool ConstThis, typename Value, typename ResultCallback, typename CallbackArg, typename Fn, typename... Args,
+               detail::enable_if_t < !std::is_member_pointer<Fn>::value
+                                     && !detail::disjunction<detail::is_basic_json_value_placeholder<Args>...>::value, int > = 0 >
+    void apply_make_tuple(Value && val, ResultCallback && cb, CallbackArg && cb_arg, Fn && f, Args && ... args) const
+    {
+        apply_invoke<ConstThis>(
+            std::forward<Value>(val),
+            std::forward<ResultCallback>(cb), std::forward<CallbackArg>(cb_arg),
+            std::forward<Fn>(f), std::forward_as_tuple(::nlohmann::placeholders::basic_json_value, args...),
+            detail::make_index_sequence < 1 + sizeof...(args) > ());
+    }
+
+    template<bool ConstThis, typename Value, typename ResultCallback, typename CallbackArg, typename Fn, typename... Args,
+             detail::enable_if_t<detail::disjunction<detail::is_basic_json_value_placeholder<Args>...>::value, int> = 0>
+    void apply_make_tuple(Value && val, ResultCallback && cb, CallbackArg && cb_arg, Fn && f, Args && ... args) const
+    {
+        apply_invoke<ConstThis>(
+            std::forward<Value>(val),
+            std::forward<ResultCallback>(cb), std::forward<CallbackArg>(cb_arg),
+            std::forward<Fn>(f), std::forward_as_tuple(args...),
+            detail::make_index_sequence<sizeof...(args)>());
+    }
+
+    // dispatch based on stored value type
+    template<bool ConstThis, typename ResultCallback, typename CallbackArg, typename Fn, typename... Args>
+    void apply_dispatch(ResultCallback&& cb, CallbackArg&& cb_arg, Fn&& f, Args&& ... args) const
+    {
+        switch (m_type)
+        {
+            case value_t::null:
+                return apply_make_tuple<ConstThis>(nullptr,
+                                                   std::forward<ResultCallback>(cb), std::forward<CallbackArg>(cb_arg),
+                                                   std::forward<Fn>(f), std::forward<Args>(args)...);
+            case value_t::object:
+                return apply_make_tuple<ConstThis>(detail::conditional_as_const<ConstThis>(*m_value.object),
+                                                   std::forward<ResultCallback>(cb), std::forward<CallbackArg>(cb_arg),
+                                                   std::forward<Fn>(f), std::forward<Args>(args)...);
+            case value_t::array:
+                return apply_make_tuple<ConstThis>(detail::conditional_as_const<ConstThis>(*m_value.array),
+                                                   std::forward<ResultCallback>(cb), std::forward<CallbackArg>(cb_arg),
+                                                   std::forward<Fn>(f), std::forward<Args>(args)...);
+            case value_t::string:
+                return apply_make_tuple<ConstThis>(detail::conditional_as_const<ConstThis>(*m_value.string),
+                                                   std::forward<ResultCallback>(cb), std::forward<CallbackArg>(cb_arg),
+                                                   std::forward<Fn>(f), std::forward<Args>(args)...);
+            case value_t::boolean:
+                return apply_make_tuple<ConstThis>(detail::conditional_as_const<ConstThis>(m_value.boolean),
+                                                   std::forward<ResultCallback>(cb), std::forward<CallbackArg>(cb_arg),
+                                                   std::forward<Fn>(f), std::forward<Args>(args)...);
+            case value_t::number_integer:
+                return apply_make_tuple<ConstThis>(detail::conditional_as_const<ConstThis>(m_value.number_integer),
+                                                   std::forward<ResultCallback>(cb), std::forward<CallbackArg>(cb_arg),
+                                                   std::forward<Fn>(f), std::forward<Args>(args)...);
+            case value_t::number_unsigned:
+                return apply_make_tuple<ConstThis>(detail::conditional_as_const<ConstThis>(m_value.number_unsigned),
+                                                   std::forward<ResultCallback>(cb), std::forward<CallbackArg>(cb_arg),
+                                                   std::forward<Fn>(f), std::forward<Args>(args)...);
+            case value_t::number_float:
+                return apply_make_tuple<ConstThis>(detail::conditional_as_const<ConstThis>(m_value.number_float),
+                                                   std::forward<ResultCallback>(cb), std::forward<CallbackArg>(cb_arg),
+                                                   std::forward<Fn>(f), std::forward<Args>(args)...);
+            case value_t::binary:
+                return apply_make_tuple<ConstThis>(detail::conditional_as_const<ConstThis>(*m_value.binary),
+                                                   std::forward<ResultCallback>(cb), std::forward<CallbackArg>(cb_arg),
+                                                   std::forward<Fn>(f), std::forward<Args>(args)...);
+            case value_t::discarded:
+                return apply_error<ConstThis>();
+            default: // LCOV_EXCL_LINE
+                JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
+        }
+    }
+
+  public:
+    template<typename Fn, typename... Args>
+    void apply(Fn&& f, Args&& ... args)
+    {
+        apply_dispatch<false>(
+            detail::null_arg, detail::null_arg,
+            std::forward<Fn>(f), std::forward<Args>(args)...);
+    }
+
+    template<typename Fn, typename... Args>
+    void apply(Fn&& f, Args&& ... args) const
+    {
+        apply_dispatch<true>(
+            detail::null_arg, detail::null_arg,
+            std::forward<Fn>(f), std::forward<Args>(args)...);
+    }
+
+    template<typename ResultCallback, typename CallbackArg, typename Fn, typename... Args, detail::enable_if_t<
+                 std::is_member_pointer<ResultCallback>::value, int> = 0>
+    void apply_cb(ResultCallback && cb, CallbackArg && cb_arg, Fn && f, Args && ... args)
+    {
+        apply_dispatch<false>(
+            std::forward<ResultCallback>(cb), std::forward<CallbackArg>(cb_arg),
+            std::forward<Fn>(f), std::forward<Args>(args)...);
+    }
+
+    template<typename ResultCallback, typename CallbackArg, typename Fn, typename... Args, detail::enable_if_t<
+                 std::is_member_pointer<ResultCallback>::value, int> = 0>
+    void apply_cb(ResultCallback && cb, CallbackArg && cb_arg, Fn && f, Args && ... args) const
+    {
+        apply_dispatch<true>(
+            std::forward<ResultCallback>(cb), std::forward<CallbackArg>(cb_arg),
+            std::forward<Fn>(f), std::forward<Args>(args)...);
+    }
+
+    template < typename ResultCallback, typename Fn, typename... Args, detail::enable_if_t <
+                   !std::is_member_pointer<ResultCallback>::value, int > = 0 >
+    void apply_cb(ResultCallback && cb, Fn && f, Args && ... args)
+    {
+        apply_dispatch<false>(
+            std::forward<ResultCallback>(cb), detail::null_arg,
+            std::forward<Fn>(f), std::forward<Args>(args)...);
+    }
+
+    template < typename ResultCallback, typename Fn, typename... Args, detail::enable_if_t <
+                   !std::is_member_pointer<ResultCallback>::value, int > = 0 >
+    void apply_cb(ResultCallback && cb, Fn && f, Args && ... args) const
+    {
+        apply_dispatch<true>(
+            std::forward<ResultCallback>(cb), detail::null_arg,
+            std::forward<Fn>(f), std::forward<Args>(args)...);
+    }
+
+    template<typename R, typename Fn, typename... Args>
+    R apply_r(Fn&& f, Args&& ... args)
+    {
+        R out;
+        apply_cb([&out](R && r) noexcept(noexcept(out = std::forward<decltype(r)>(r)))
+        {
+            out = std::forward<decltype(r)>(r);
+        }, std::forward<Fn>(f), std::forward<Args>(args)...);
+        return out;
+    }
+
+    template<typename R, typename Fn, typename... Args>
+    R apply_r(Fn&& f, Args&& ... args) const
+    {
+        R out;
+        apply_cb([&out](R && r) noexcept(noexcept(out = std::forward<decltype(r)>(r)))
+        {
+            out = std::forward<decltype(r)>(r);
+        }, std::forward<Fn>(f), std::forward<Args>(args)...);
+        return out;
+    }
 };
+
+#ifndef JSON_HAS_CPP_17
+
+    NLOHMANN_BASIC_JSON_TPL_DECLARATION
+    constexpr decltype(::nlohmann::placeholders::basic_json_value) NLOHMANN_BASIC_JSON_TPL::value_placeholder; // NOLINT(readability-redundant-declaration)
+
+#endif
 
 /// @brief user-defined to_string function for JSON values
 /// @sa https://json.nlohmann.me/api/basic_json/to_string/

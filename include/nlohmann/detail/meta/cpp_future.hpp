@@ -136,6 +136,46 @@ using index_sequence_for = make_index_sequence<sizeof...(Ts)>;
 
 #endif
 
+#ifdef JSON_HAS_CPP_17
+
+// the following utilities are natively available in C++17
+using std::conjunction;
+using std::disjunction;
+using std::negation;
+
+using std::as_const;
+
+#else
+
+// https://en.cppreference.com/w/cpp/types/conjunction
+template<class...> struct conjunction : std::true_type {};
+template<class B> struct conjunction<B> : B {};
+template<class B, class... Bn>
+struct conjunction<B, Bn...>
+: std::conditional<bool(B::value), conjunction<Bn...>, B>::type {};
+
+// https://en.cppreference.com/w/cpp/types/disjunction
+template<class...> struct disjunction : std::false_type {};
+template<class B> struct disjunction<B> : B {};
+template<class B, class... Bn>
+struct disjunction<B, Bn...>
+: std::conditional<bool(B::value), B, disjunction<Bn...>>::type {};
+
+// https://en.cppreference.com/w/cpp/types/negation
+template<class B> struct negation : std::integral_constant < bool, !B::value > {};
+
+// https://en.cppreference.com/w/cpp/utility/as_const
+template <typename T>
+constexpr typename std::add_const<T>::type& as_const(T& t) noexcept
+{
+    return t;
+}
+
+template <typename T>
+void as_const(const T&&) = delete;
+
+#endif
+
 // dispatch utility (taken from ranges-v3)
 template<unsigned N> struct priority_tag : priority_tag < N - 1 > {};
 template<> struct priority_tag<0> {};
