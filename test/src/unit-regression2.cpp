@@ -48,6 +48,7 @@ using ordered_json = nlohmann::ordered_json;
 #endif
 
 #if JSON_HAS_EXPERIMENTAL_FILESYSTEM
+// JSON_HAS_CPP_17 (magic keyword; do not remove)
 #include <experimental/filesystem>
 namespace nlohmann::detail
 {
@@ -60,7 +61,6 @@ namespace nlohmann::detail
 namespace std_fs = std::filesystem;
 } // namespace nlohmann::detail
 #endif
-
 
 #ifdef JSON_HAS_CPP_20
     #include <span>
@@ -793,8 +793,8 @@ TEST_CASE("regression tests 2")
         const auto j_path = j.get<nlohmann::detail::std_fs::path>();
         CHECK(j_path == text_path);
 
-#ifndef _MSC_VER
-        // works everywhere but on MSVC
+#if !defined(_MSC_VER) && !(defined(__GNUC__) && __GNUC__ == 8 && __GNUC_MINOR__ < 4)
+        // works everywhere but on MSVC and GCC <8.4
         CHECK_THROWS_WITH_AS(nlohmann::detail::std_fs::path(json(1)), "[json.exception.type_error.302] type must be string, but is number", json::type_error);
 #endif
     }
