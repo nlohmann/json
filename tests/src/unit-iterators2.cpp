@@ -27,13 +27,19 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+// cmake/test.cmake selects the C++ standard versions with which to build a
+// unit test based on the presence of JSON_HAS_CPP_<VERSION> macros.
+// When using macros that are only defined for particular versions of the standard
+// (e.g., JSON_HAS_FILESYSTEM for C++17 and up), please mention the corresponding
+// version macro in a comment close by, like this:
+// JSON_HAS_CPP_<VERSION> (do not remove; see note at top of file)
+
 #include "doctest_compatibility.h"
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
 #if JSON_HAS_RANGES
-    // JSON_HAS_CPP_20 (magic keyword; do not remove)
     #include <algorithm>
     #include <ranges>
 #endif
@@ -890,6 +896,7 @@ TEST_CASE("iterators 2")
 
 
 #if JSON_HAS_RANGES
+    // JSON_HAS_CPP_20 (do not remove; see note at top of file)
     SECTION("ranges")
     {
         SECTION("concepts")

@@ -27,6 +27,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+// cmake/test.cmake selects the C++ standard versions with which to build a
+// unit test based on the presence of JSON_HAS_CPP_<VERSION> macros.
+// When using macros that are only defined for particular versions of the standard
+// (e.g., JSON_HAS_FILESYSTEM for C++17 and up), please mention the corresponding
+// version macro in a comment close by, like this:
+// JSON_HAS_CPP_<VERSION> (do not remove; see note at top of file)
+
 #include "doctest_compatibility.h"
 
 // for some reason including this after the json header leads to linker errors with VS 2017...
@@ -48,7 +55,6 @@ using ordered_json = nlohmann::ordered_json;
 #endif
 
 #if JSON_HAS_EXPERIMENTAL_FILESYSTEM
-// JSON_HAS_CPP_17 (magic keyword; do not remove)
 #include <experimental/filesystem>
 namespace nlohmann::detail
 {
@@ -788,6 +794,7 @@ TEST_CASE("regression tests 2")
     }
 
 #if JSON_HAS_FILESYSTEM || JSON_HAS_EXPERIMENTAL_FILESYSTEM
+    // JSON_HAS_CPP_17 (do not remove; see note at top of file)
     SECTION("issue #3070 - Version 3.10.3 breaks backward-compatibility with 3.10.2 ")
     {
         nlohmann::detail::std_fs::path text_path("/tmp/text.txt");

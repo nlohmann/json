@@ -27,6 +27,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+// cmake/test.cmake selects the C++ standard versions with which to build a
+// unit test based on the presence of JSON_HAS_CPP_<VERSION> macros.
+// When using macros that are only defined for particular versions of the standard
+// (e.g., JSON_HAS_FILESYSTEM for C++17 and up), please mention the corresponding
+// version macro in a comment close by, like this:
+// JSON_HAS_CPP_<VERSION> (do not remove; see note at top of file)
+
 #include "doctest_compatibility.h"
 
 #define JSON_TESTS_PRIVATE
@@ -1581,13 +1588,5 @@ TEST_CASE("JSON to enum mapping")
         CHECK(TS_INVALID == json("what?").get<TaskState>());
     }
 }
-
-#ifdef JSON_HAS_CPP_17
-    #undef JSON_HAS_CPP_17
-#endif
-
-#ifdef JSON_HAS_CPP_14
-    #undef JSON_HAS_CPP_14
-#endif
 
 DOCTEST_CLANG_SUPPRESS_WARNING_POP
