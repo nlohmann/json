@@ -27,15 +27,18 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+// cmake/test.cmake selects the C++ standard versions with which to build a
+// unit test based on the presence of JSON_HAS_CPP_<VERSION> macros.
+// When using macros that are only defined for particular versions of the standard
+// (e.g., JSON_HAS_FILESYSTEM for C++17 and up), please mention the corresponding
+// version macro in a comment close by, like this:
+// JSON_HAS_CPP_<VERSION> (do not remove; see note at top of file)
+
 #include "doctest_compatibility.h"
 
 #define JSON_TESTS_PRIVATE
 #include <nlohmann/json.hpp>
 using nlohmann::json;
-
-
-// build this testcase in C++20-mode (CMake code detects macro use)
-// JSON_HAS_CPP_20
 
 #if JSON_HAS_THREE_WAY_COMPARISON
 // this can be replaced with the doctest stl extension header in version 2.5
@@ -144,6 +147,7 @@ TEST_CASE("lexicographical comparison operators")
                     CAPTURE(j)
                     // check precomputed values
 #if JSON_HAS_THREE_WAY_COMPARISON
+                    // JSON_HAS_CPP_20 (do not remove; see note at top of file)
                     CHECK((j_types[i] < j_types[j]) == expected_lt[i][j]);
 #else
                     CHECK(operator<(j_types[i], j_types[j]) == expected_lt[i][j]);
@@ -153,6 +157,7 @@ TEST_CASE("lexicographical comparison operators")
             }
         }
 #if JSON_HAS_THREE_WAY_COMPARISON
+        // JSON_HAS_CPP_20 (do not remove; see note at top of file)
         SECTION("comparison: 3-way")
         {
             std::vector<std::vector<std::partial_ordering>> expected =
@@ -508,6 +513,7 @@ TEST_CASE("lexicographical comparison operators")
         }
 
 #if JSON_HAS_THREE_WAY_COMPARISON
+        // JSON_HAS_CPP_20 (do not remove; see note at top of file)
         SECTION("comparison: 3-way")
         {
             std::vector<std::vector<std::partial_ordering>> expected =
