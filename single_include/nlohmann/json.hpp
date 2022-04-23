@@ -15503,20 +15503,21 @@ class binary_writer
     }
 
     /*!
-    @return 0 if the object is successfully converted to a bjdata ndarray, 1 if the type or size is invalid
+    @return false if the object is successfully converted to a bjdata ndarray, true if the type or size is invalid
     */
-    int write_bjdata_ndarray(const typename BasicJsonType::object_t& value, const bool use_count, const bool use_type)
+    bool write_bjdata_ndarray(const typename BasicJsonType::object_t& value, const bool use_count, const bool use_type)
     {
         std::map<string_t, CharType> bjdtype = {{"uint8", 'U'},  {"int8", 'i'},  {"uint16", 'u'}, {"int16", 'I'},
             {"uint32", 'm'}, {"int32", 'l'}, {"uint64", 'M'}, {"int64", 'L'}, {"single", 'd'}, {"double", 'D'}, {"char", 'C'}
         };
 
         string_t key = "_ArrayType_";
-        if (bjdtype.find(static_cast<std::string>(value.at(key))) == bjdtype.end())
+        auto it = bjdtype.find(value.at(key));
+        if (it == bjdtype.end())
         {
-            return 1;
+            return true;
         }
-        CharType dtype = bjdtype[static_cast<std::string>(value.at(key))];
+        CharType dtype = it->second;
 
         key = "_ArraySize_";
         std::size_t len = (value.at(key).empty() ? 0 : 1);
@@ -15528,7 +15529,7 @@ class binary_writer
         key = "_ArrayData_";
         if (value.at(key).size() != len)
         {
-            return 1;
+            return true;
         }
 
         oa->write_character('[');
@@ -15610,7 +15611,7 @@ class binary_writer
                 write_number(static_cast<double>(el.m_value.number_float), true);
             }
         }
-        return 0;
+        return false;
     }
 
     ///////////////////////
