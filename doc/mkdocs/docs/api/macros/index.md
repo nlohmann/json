@@ -1,11 +1,7 @@
 # Macros
 
-!!! note
-
-    This page is under construction. See the [macro overview page](../../features/macros.md) until then.
-
 Some aspects of the library can be configured by defining preprocessor macros **before** including the `json.hpp`
-header.
+header. See also the [macro overview page](../../features/macros.md).
 
 ## Runtime assertions
 
@@ -35,6 +31,7 @@ header.
 
 ## Serialization/deserialization macros
 
-- `NLOHMANN_DEFINE_TYPE_INTRUSIVE(type, member...)`
-- `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(type, member...)`
-- `NLOHMANN_JSON_SERIALIZE_ENUM(type, ...)`
+- [**NLOHMANN_DEFINE_TYPE_INTRUSIVE(type, member...)**<br>**NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(type, member...)**](nlohmann_define_type_intrusive.md) - serialization/deserialization of types _with_ access to private variables
+- [**NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(type, member...)**<br>**NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(type, member...)**](nlohmann_define_type_non_intrusive.md) - serialization/deserialization of types _without_ access to private variables
+- [**NLOHMANN_JSON_SERIALIZE_ENUM(type, ...)**](nlohmann_json_serialize_enum.md) - serialization/deserialization of enum
+  types

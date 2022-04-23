@@ -2,6 +2,9 @@
 serve: prepare_files
 	venv/bin/mkdocs serve
 
+serve_dirty: prepare_files
+	venv/bin/mkdocs serve --dirtyreload
+
 build: prepare_files
 	venv/bin/mkdocs build
 

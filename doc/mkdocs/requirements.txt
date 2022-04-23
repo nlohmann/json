@@ -16,6 +16,7 @@ mkdocs-material>=5.2.1
 mkdocs-material-extensions>=1.0
 mkdocs-minify-plugin>=0.3.0
 mkdocs-simple-hooks>=0.1.1
+mkdocs-git-revision-date-localized-plugin>=1.0.1
 nltk>=3.5
 plantuml>=0.3.0
 plantuml-markdown>=3.2.2

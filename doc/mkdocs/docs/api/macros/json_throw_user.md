@@ -1,4 +1,4 @@
-# JSON_CATCH_USER(exception), JSON_THROW_USER(exception), JSON_TRY_USER
+# JSON_CATCH_USER, JSON_THROW_USER, JSON_TRY_USER
 
 ```cpp
 // (1)
@@ -19,6 +19,11 @@ Controls how exceptions are handled by the library.
    `JSON_THROW_USER` should leave the current scope (e.g., by throwing or aborting), as continuing after it may yield
    undefined behavior.
 3. This macro overrides `#!cpp try` calls inside the library. It has no arguments and is always followed by a scope.
+
+## Parameters
+
+`exception` (in)
+:   an exception type
 
 ## Default definition
 

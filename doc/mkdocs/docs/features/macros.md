@@ -1,6 +1,7 @@
 # Supported Macros
 
 Some aspects of the library can be configured by defining preprocessor macros before including the `json.hpp` header.
+See also the [API documentation for macros](../api/macros/index.md) for examples and more information.
 
 ## `JSON_ASSERT(x)`
 
@@ -102,18 +103,15 @@ The macro is to be defined inside the class/struct to create code for. Unlike
 [`NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE`](#nlohmann_define_type_non_intrusivetype-member), it can access private members.
 The first parameter is the name of the class/struct, and all remaining parameters name the members.
 
-See [Simplify your life with macros](arbitrary_types.md#simplify-your-life-with-macros) for an example.
-
-The macro was introduced in version 3.9.0.
+See [full documentation of `NLOHMANN_DEFINE_TYPE_INTRUSIVE`](../api/macros/nlohmann_define_type_intrusive.md).
 
 ## `NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(type, member...)`
 
 This macro is similar to `NLOHMANN_DEFINE_TYPE_INTRUSIVE`. It will not throw an exception in `from_json()` due to a
-missing value in the JSON object, but can throw due to a mismatched type. In order to support that it requires that the
-type be default constructible. The `from_json()` function default constructs an object and uses its values as the
-defaults when calling the `value()` function.
+missing value in the JSON object, but can throw due to a mismatched type. The `from_json()` function default constructs
+an object and uses its values as the defaults when calling the [`value`](../api/basic_json/value.md) function.
 
-The macro was introduced in version 3.11.0.
+See [full documentation of `NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT`](../api/macros/nlohmann_define_type_intrusive.md).
 
 ## `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(type, member...)`
 
@@ -124,25 +122,22 @@ The macro is to be defined inside the namespace of the class/struct to create co
 accessed. Use [`NLOHMANN_DEFINE_TYPE_INTRUSIVE`](#nlohmann_define_type_intrusivetype-member) in these scenarios. The
 first parameter is the name of the class/struct, and all remaining parameters name the members.
 
-See [Simplify your life with macros](arbitrary_types.md#simplify-your-life-with-macros) for an example.
-
-The macro was introduced in version 3.9.0.
+See [full documentation of `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE`](../api/macros/nlohmann_define_type_non_intrusive.md).
 
 ## `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(type, member...)`
 
 This macro is similar to `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE`. It will not throw an exception in `from_json()` due to a
-missing value in the JSON object, but can throw due to a mismatched type. In order to support that it requires that the
-type be default constructible. The `from_json()` function default constructs an object and uses its values as the
-defaults when calling the `value()` function.
+missing value in the JSON object, but can throw due to a mismatched type. The `from_json()` function default constructs
+an object and uses its values as the defaults when calling the [`value`](../api/basic_json/value.md) function.
 
-The macro was introduced in version 3.11.0.
+See [full documentation of `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT`](../api/macros/nlohmann_define_type_non_intrusive.md).
 
 ## `NLOHMANN_JSON_SERIALIZE_ENUM(type, ...)`
 
 This macro simplifies the serialization/deserialization of enum types. See
 [Specializing enum conversion](enum_conversion.md) for more information.
 
-The macro was introduced in version 3.4.0.
+See [full documentation of `NLOHMANN_JSON_SERIALIZE_ENUM`](../api/macros/nlohmann_json_serialize_enum.md).
 
 ## `NLOHMANN_JSON_VERSION_MAJOR`, `NLOHMANN_JSON_VERSION_MINOR`, `NLOHMANN_JSON_VERSION_PATCH`
 

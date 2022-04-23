@@ -1,4 +1,4 @@
-# JSON_ASSERT(x)
+# JSON_ASSERT
 
 ```cpp
 #define JSON_ASSERT(x) /* value */
