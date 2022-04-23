@@ -14777,7 +14777,7 @@ class binary_writer
             {
                 if (use_bjdata && j.m_value.object->size() == 3 && j.m_value.object->find("_ArrayType_") != j.m_value.object->end() && j.m_value.object->find("_ArraySize_") != j.m_value.object->end() && j.m_value.object->find("_ArrayData_") != j.m_value.object->end())
                 {
-                    if (write_bjdata_ndarray(*j.m_value.object, use_count, use_type) == 0)  // decode bjdata ndarray in the JData format (https://github.com/NeuroJSON/jdata)
+                    if (!write_bjdata_ndarray(*j.m_value.object, use_count, use_type))  // decode bjdata ndarray in the JData format (https://github.com/NeuroJSON/jdata)
                     {
                         break;
                     }
