@@ -37,7 +37,7 @@ By default, the macros map to their respective C++ keywords:
 
 When exceptions are switched off, the `#!cpp try` block is executed unconditionally, and throwing exceptions is
 replaced by calling [`std::abort`](https://en.cppreference.com/w/cpp/utility/program/abort) to make reaching the
-`cpp throw` branch abort the process.
+`#!cpp throw` branch abort the process.
 
 ```cpp
 #define JSON_THROW_USER(exception) std::abort()

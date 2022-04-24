@@ -15,7 +15,7 @@ detected incorrectly.
 
 ## Default definition
 
-The default value is detected based on the preprocessor macros `#!cpp __cplusplus`, `#!cpp _HAS_CXX17`, or
+The default value is detected based on preprocessor macros such as `#!cpp __cplusplus`, `#!cpp _HAS_CXX17`, or
 `#!cpp _MSVC_LANG`.
 
 ## Notes

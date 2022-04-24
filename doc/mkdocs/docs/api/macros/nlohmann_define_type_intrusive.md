@@ -6,7 +6,7 @@
 ```
 
 These macros can be used to simplify the serialization/deserialization of types if you want to use a JSON object as
-serialization and want to user the member variable names as object keys in that object. The macro is to be defined
+serialization and want to use the member variable names as object keys in that object. The macro is to be defined
 **inside** the class/struct to create code for.
 Unlike [`NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE`](nlohmann_define_type_non_intrusive.md), it can access private members.
 The first parameter is the name of the class/struct, and all remaining parameters name the members.

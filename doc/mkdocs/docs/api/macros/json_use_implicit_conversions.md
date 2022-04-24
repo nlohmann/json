@@ -11,7 +11,7 @@ sets `JSON_USE_IMPLICIT_CONVERSIONS` accordingly.
 
 ## Default definition
 
-By default, implicit conversions are enabled
+By default, implicit conversions are enabled.
 
 ```cpp
 #define JSON_USE_IMPLICIT_CONVERSIONS 1

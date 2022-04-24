@@ -6,7 +6,7 @@
 ```
 
 These macros can be used to simplify the serialization/deserialization of types if you want to use a JSON object as
-serialization and want to user the member variable names as object keys in that object. The macro is to be defined
+serialization and want to use the member variable names as object keys in that object. The macro is to be defined
 **outside** the class/struct to create code for, but **inside** its namespace.
 Unlike [`NLOHMANN_DEFINE_TYPE_INTRUSIVE`](nlohmann_define_type_intrusive.md), it **cannot** access private members.
 The first parameter is the name of the class/struct, and all remaining parameters name the members.
@@ -45,7 +45,7 @@ See examples below for the concrete generated code.
     2. The macro must be used outside the type (class/struct).
     3. The passed members must be public.
 
-!!! warning "Implementation limit"
+!!! warning "Implementation limits"
 
     - The current implementation is limited to at most 64 member variables. If you want to serialize/deserialize types
       with more than 64 member variables, you need to define the `to_json`/`from_json` functions manually.

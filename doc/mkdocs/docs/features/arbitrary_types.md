@@ -94,9 +94,12 @@ There are four macros to make your life easier as long as you (1) want to use a 
 
 In all macros, the first parameter is the name of the class/struct, and all remaining parameters name the members. You can read more docs about them starting from [here](macros.md#nlohmann_define_type_intrusivetype-member).
 
-!!! info "Implementation limit"
+!!! info "Implementation limits"
 
-    At most 64 member variables can be passed to these macros.
+    - The current macro implementations are limited to at most 64 member variables. If you want to serialize/deserialize
+      types with more than 64 member variables, you need to define the `to_json`/`from_json` functions manually.
+    - The macros only work for the [`nlohmann::json`](../api/json.md) type; other specializations such as
+      [`nlohmann::ordered_json`](../api/ordered_json.md) are currently unsupported.
 
 ??? example
 
