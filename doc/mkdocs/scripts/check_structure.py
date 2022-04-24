@@ -10,7 +10,7 @@ warnings = 0
 def report(rule, location, description):
     global warnings
     warnings += 1
-    print(f'{warnings:3}. [{rule}] {location}: Error: {description}!')
+    print(f'{warnings:3}. {location}:  {description} [{rule}]')
 
 
 def check_structure():
