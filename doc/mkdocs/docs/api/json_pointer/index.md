@@ -16,7 +16,13 @@ are the base for JSON patches.
 
 ## Notes
 
-For backwards compatibility `RefStringType` may also be a specialization of [`basic_json`](../basic_json/index.md) in which case `string_t` will be deduced as [`basic_json::string_t`](../basic_json/string_t.md). This feature is deprecated and may be removed in a future major version.
+For backwards compatibility `RefStringType` may also be a specialization of [`basic_json`](../basic_json/index.md) in
+which case `string_t` will be deduced as [`basic_json::string_t`](../basic_json/string_t.md). This feature is deprecated
+and may be removed in a future major version.
+
+## Member types
+
+- [**string_t**](string_t.md) - the string type used for the reference tokens
 
 ## Member functions
 
@@ -30,10 +36,6 @@ For backwards compatibility `RefStringType` may also be a specialization of [`ba
 - [**back**](back.md) - return last reference token
 - [**push_back**](push_back.md) - append an unescaped token at the end of the pointer
 - [**empty**](empty.md) - return whether pointer points to the root document
-
-## Member types
-
-- [**string_t**](string_t.md) - the string type used for the reference tokens
 
 ## See also
 
