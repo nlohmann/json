@@ -1,9 +1,6 @@
 cpplint - static code checker for C++
 =====================================
 
-.. image:: https://travis-ci.org/cpplint/cpplint.svg?branch=master
-    :target: https://travis-ci.org/cpplint/cpplint
-
 .. image:: https://img.shields.io/pypi/v/cpplint.svg
     :target: https://pypi.python.org/pypi/cpplint
 
@@ -62,7 +59,7 @@ The modifications in this fork are minor fixes and cosmetic changes, such as:
 * python 3 compatibility
 * more default file extensions
 * customizable file extensions with the --extensions argument
-* continuous integration on travis
+* continuous integration on github
 * support for recursive file discovery via the --recursive argument
 * support for excluding files via --exclude
 * JUnit XML output format
