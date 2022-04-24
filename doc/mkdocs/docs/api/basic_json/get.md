@@ -90,7 +90,7 @@ Depends on what `json_serializer<ValueType>` `from_json()` method throws
 
 ## Notes
 
-!!! warning
+!!! danger "Undefined behavior"
 
     Writing data to the pointee (overload 3) of the result yields an undefined state.
 

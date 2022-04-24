@@ -38,7 +38,7 @@ Constant.
 
 ## Notes
 
-!!! warning
+!!! danger "Undefined behavior"
 
     Writing data to the referee of the result yields an undefined state.
 

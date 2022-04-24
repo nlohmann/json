@@ -17,7 +17,7 @@ By default, the macro is not defined.
 
 ## Notes
 
-!!! warning
+!!! danger "ABI compatibility"
 
     Mixing different library versions in the same code can be a problem as the different versions may not be ABI
     compatible.

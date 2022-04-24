@@ -100,9 +100,9 @@ def check_structure():
                 if line == '' and previous_line == '':
                     report('whitespace/blank_lines', f'{file}:{lineno}-{lineno+1}', 'consecutive blank lines')
 
-                # check that admonitions have titles
-                untitled_admonition = re.match(r'^(\?\?\?|!!!) (note|info)$', line)
-                if untitled_admonition:
+                # check that non-example admonitions have titles
+                untitled_admonition = re.match(r'^(\?\?\?|!!!) ([^ ]+)$', line)
+                if untitled_admonition and untitled_admonition.group(2) != 'example':
                     report('style/admonition_title', f'{file}:{lineno}', f'"{untitled_admonition.group(2)}" admonitions should have a title')
 
                 previous_line = line

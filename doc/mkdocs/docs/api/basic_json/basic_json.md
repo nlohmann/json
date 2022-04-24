@@ -256,7 +256,7 @@ basic_json(basic_json&& other) noexcept;
           cases are detected; see the description of the exceptions above. A violation of this precondition yields
           undefined behavior.
     
-    !!! danger
+    !!! danger "Runtime assertion"
 
         A precondition is enforced with a [runtime assertion](../../features/assertions.md).
     

@@ -36,7 +36,7 @@ ValueType value(const json_pointer& ptr,
     }
     ```
 
-!!! note
+!!! note "Differences to `at` and `operator[]`"
 
     - Unlike [`at`](at.md), this function does not throw if the given `key`/`ptr` was not found.
     - Unlike [`operator[]`](operator[].md), this function does not implicitly add an element to the position defined by

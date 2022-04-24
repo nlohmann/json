@@ -26,7 +26,7 @@ When the macro is not defined, the library will define it to its default value.
 
 ## Notes
 
-!!! warning
+!!! danger "ODR violation"
 
     As this macro changes the definition of the `basic_json` object, it MUST be defined in the same way globally, even
     across different compilation units; DO NOT link together code compiled with different definitions of
