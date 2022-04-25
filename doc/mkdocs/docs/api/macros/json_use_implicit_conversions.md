@@ -5,7 +5,7 @@
 ```
 
 When defined to `0`, implicit conversions are switched off. By default, implicit conversions are switched on. The
-value is directly affecting [`operator ValueType`](../basic_json/operator_ValueType.md).
+value directly affects [`operator ValueType`](../basic_json/operator_ValueType.md).
 
 Implicit conversions can also be controlled with the CMake option `JSON_ImplicitConversions` (`ON` by default) which
 sets `JSON_USE_IMPLICIT_CONVERSIONS` accordingly.
