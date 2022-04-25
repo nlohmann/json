@@ -26,11 +26,11 @@ When the macro is not defined, the library will define it to its default value.
 
 ## Notes
 
-!!! danger "ODR violation"
+!!! danger "ABI incompatibility"
 
     As this macro changes the definition of the `basic_json` object, it MUST be defined in the same way globally, even
-    across different compilation units; DO NOT link together code compiled with different definitions of
-    `JSON_DIAGNOSTICS` as this is a violation of the One Definition Rule and will cause undefined behaviour.
+    across different compilation units: `basic_json` objects with differently defined `JSON_DIAGNOSTICS` macros are
+    not compatible!
 
 ## Examples
 

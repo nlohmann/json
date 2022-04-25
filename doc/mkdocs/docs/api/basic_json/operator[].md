@@ -74,7 +74,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
 
 ## Notes
 
-!!! danger "Undefined behavior"
+!!! danger "Undefined behavior and runtime assertions"
 
     1. If the element with key `idx` does not exist, the behavior is undefined.
     2. If the element with key `key` does not exist, the behavior is undefined and is **guarded by a
