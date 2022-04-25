@@ -33,7 +33,7 @@ Constant.
 
 ## Notes
 
-!!! warning
+!!! danger "Undefined behavior"
 
     Writing data to the pointee of the result yields an undefined state.
 

@@ -2,10 +2,19 @@
 
 import glob
 import os.path
+import re
+
+warnings = 0
+
+
+def report(rule, location, description):
+    global warnings
+    warnings += 1
+    print(f'{warnings:3}. {location}:  {description} [{rule}]')
 
 
 def check_structure():
-    expected_headers = [
+    expected_sections = [
         'Template parameters',
         'Specializations',
         'Iterator invalidation',
@@ -23,13 +32,14 @@ def check_structure():
         'Exceptions',
         'Complexity',
         'Possible implementation',
+        'Default definition',
         'Notes',
         'Examples',
         'See also',
         'Version history'
     ]
 
-    required_headers = [
+    required_sections = [
         'Examples',
         'Version history'
     ]
@@ -37,8 +47,8 @@ def check_structure():
     files = sorted(glob.glob('api/**/*.md', recursive=True))
     for file in files:
         with open(file) as file_content:
-            header_idx = -1
-            existing_headers = []
+            section_idx = -1
+            existing_sections = []
             in_initial_code_example = False
             previous_line = None
             h1sections = 0
@@ -51,50 +61,55 @@ def check_structure():
 
                 # there should only be one top-level title
                 if h1sections > 1:
-                    print(f'{file}:{lineno+1}: Error: unexpected top-level title "{line}"!')
+                    report('structure/unexpected_section', f'{file}:{lineno+1}', f'unexpected top-level title "{line}"')
                     h1sections = 1
 
                 # Overview pages should have a better title
                 if line == '# Overview':
-                    print(f'{file}:{lineno+1}: Error: overview pages should have a better title!')
+                    report('style/title', f'{file}:{lineno+1}', 'overview pages should have a better title than "Overview"')
 
                 # lines longer than 160 characters are bad (unless they are tables)
                 if len(line) > 160 and '|' not in line:
-                    print(f'{file}:{lineno+1}: Error: line is too long ({len(line)} vs. 160 chars)!')
+                    report('whitespace/line_length', f'{file}:{lineno+1}', f'line is too long ({len(line)} vs. 160 chars)')
 
-                # check if headers are correct
+                # check if sections are correct
                 if line.startswith('## '):
-                    header = line.strip('## ')
-                    existing_headers.append(header)
+                    current_section = line.strip('## ')
+                    existing_sections.append(current_section)
 
-                    if header in expected_headers:
-                        idx = expected_headers.index(header)
-                        if idx <= header_idx:
-                            print(f'{file}:{lineno+1}: Error: header "{header}" is in an unexpected order (should be before "{expected_headers[header_idx]}")!')
-                        header_idx = idx
+                    if current_section in expected_sections:
+                        idx = expected_sections.index(current_section)
+                        if idx <= section_idx:
+                            report('structure/section_order', f'{file}:{lineno+1}', f'section "{current_section}" is in an unexpected order (should be before "{expected_sections[section_idx]}")')
+                        section_idx = idx
                     else:
-                        print(f'{file}:{lineno+1}: Error: header "{header}" is not part of the expected headers!')
+                        report('structure/unknown_section', f'{file}:{lineno+1}', f'section "{current_section}" is not part of the expected sections')
 
                 # code example
-                if line == '```cpp' and header_idx == -1:
+                if line == '```cpp' and section_idx == -1:
                     in_initial_code_example = True
 
                 if in_initial_code_example and line.startswith('//'):
                     if any(map(str.isdigit, line)) and '(' not in line:
-                        print(f'{file}:{lineno+1}: Number should be in parentheses: {line}')
+                        report('style/numbering', f'{file}:{lineno+1}', 'number should be in parentheses: {line}')
 
                 if line == '```' and in_initial_code_example:
                     in_initial_code_example = False
 
                 # consecutive blank lines are bad
                 if line == '' and previous_line == '':
-                    print(f'{file}:{lineno}-{lineno+1}: Error: Consecutive blank lines!')
+                    report('whitespace/blank_lines', f'{file}:{lineno}-{lineno+1}', 'consecutive blank lines')
+
+                # check that non-example admonitions have titles
+                untitled_admonition = re.match(r'^(\?\?\?|!!!) ([^ ]+)$', line)
+                if untitled_admonition and untitled_admonition.group(2) != 'example':
+                    report('style/admonition_title', f'{file}:{lineno}', f'"{untitled_admonition.group(2)}" admonitions should have a title')
 
                 previous_line = line
 
-            for required_header in required_headers:
-                if required_header not in existing_headers:
-                    print(f'{file}:{lineno+1}: Error: required header "{required_header}" was not found!')
+            for required_section in required_sections:
+                if required_section not in existing_sections:
+                    report('structure/missing_section', f'{file}:{lineno+1}', f'required section "{required_section}" was not found')
 
 
 def check_examples():
@@ -113,9 +128,11 @@ def check_examples():
                 break
 
         if not found:
-            print(f'{example_file}: Error: example file is not used in any documentation file!')
+            report('examples/missing', f'{example_file}', 'example file is not used in any documentation file')
 
 
 if __name__ == '__main__':
+    print(120 * '-')
     check_structure()
     check_examples()
+    print(120 * '-')

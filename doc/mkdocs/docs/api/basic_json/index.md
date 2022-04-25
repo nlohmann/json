@@ -292,7 +292,7 @@ Access to the JSON value
 - [**std::hash&lt;basic_json&gt;**](std_hash.md) - return a hash value for a JSON object
 - [**std::swap&lt;basic_json&gt;**](std_swap.md) - exchanges the values of two JSON objects
 
-## Example
+## Examples
 
 ??? example
 

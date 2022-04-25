@@ -275,7 +275,7 @@ The rationale is twofold:
 
 ### Determine number types
 
-As the example in [Number conversion](#number_conversion) shows, there are different functions to determine the type of
+As the example in [Number conversion](#number-conversion) shows, there are different functions to determine the type of
 the stored number:
 
 - [`is_number()`](../../api/basic_json/is_number.md) returns `#!c true` for any number type

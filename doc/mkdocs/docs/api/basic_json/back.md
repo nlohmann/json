@@ -35,9 +35,9 @@ Constant.
 
 ## Notes
 
-!!! danger
+!!! info "Precondition"
 
-    Calling `back` on an empty array or object is undefined behavior and is **guarded by an assertion**!
+    The array or object must not be empty. Calling `back` on an empty array or object yields undefined behavior.
 
 ## Examples
 

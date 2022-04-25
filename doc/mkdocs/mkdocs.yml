@@ -64,6 +64,7 @@ nav:
         - features/parsing/parse_exceptions.md
         - features/parsing/parser_callbacks.md
         - features/parsing/sax_interface.md
+    - features/assertions.md
     - features/enum_conversion.md
     - features/macros.md
     - Types:
@@ -232,7 +233,30 @@ nav:
       - 'ordered_map': api/ordered_map.md
       - macros:
         - 'Overview': api/macros/index.md
-        - 'JSON_ASSERT(x)': api/macros/json_assert.md
+        - 'JSON_ASSERT': api/macros/json_assert.md
+        - 'JSON_CATCH_USER': api/macros/json_throw_user.md
+        - 'JSON_DIAGNOSTICS': api/macros/json_diagnostics.md
+        - 'JSON_HAS_CPP_11': api/macros/json_has_cpp_11.md
+        - 'JSON_HAS_CPP_14': api/macros/json_has_cpp_11.md
+        - 'JSON_HAS_CPP_17': api/macros/json_has_cpp_11.md
+        - 'JSON_HAS_CPP_20': api/macros/json_has_cpp_11.md
+        - 'JSON_HAS_EXPERIMENTAL_FILESYSTEM': api/macros/json_has_filesystem.md
+        - 'JSON_HAS_FILESYSTEM': api/macros/json_has_filesystem.md
+        - 'JSON_NOEXCEPTION': api/macros/json_noexception.md
+        - 'JSON_NO_IO': api/macros/json_no_io.md
+        - 'JSON_SKIP_LIBRARY_VERSION_CHECK': api/macros/json_skip_library_version_check.md
+        - 'JSON_SKIP_UNSUPPORTED_COMPILER_CHECK': api/macros/json_skip_unsupported_compiler_check.md
+        - 'JSON_THROW_USER': api/macros/json_throw_user.md
+        - 'JSON_TRY_USER': api/macros/json_throw_user.md
+        - 'JSON_USE_IMPLICIT_CONVERSIONS': api/macros/json_use_implicit_conversions.md
+        - 'NLOHMANN_DEFINE_TYPE_INTRUSIVE': api/macros/nlohmann_define_type_intrusive.md
+        - 'NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT': api/macros/nlohmann_define_type_intrusive.md
+        - 'NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE': api/macros/nlohmann_define_type_non_intrusive.md
+        - 'NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT': api/macros/nlohmann_define_type_non_intrusive.md
+        - 'NLOHMANN_JSON_SERIALIZE_ENUM': api/macros/nlohmann_json_serialize_enum.md
+        - 'NLOHMANN_JSON_VERSION_MAJOR': api/macros/nlohmann_json_version_major.md
+        - 'NLOHMANN_JSON_VERSION_MINOR': api/macros/nlohmann_json_version_major.md
+        - 'NLOHMANN_JSON_VERSION_PATCH': api/macros/nlohmann_json_version_major.md
 
 # Extras
 extra:
@@ -289,6 +313,7 @@ plugins:
         lang: en
     - minify:
         minify_html: true
+    - git-revision-date-localized
 
 extra_javascript:
   - https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML

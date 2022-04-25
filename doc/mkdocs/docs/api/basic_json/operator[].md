@@ -74,10 +74,11 @@ Strong exception safety: if an exception occurs, the original value stays intact
 
 ## Notes
 
-!!! danger
+!!! danger "Undefined behavior and runtime assertions"
 
     1. If the element with key `idx` does not exist, the behavior is undefined.
-    2. If the element with key `key` does not exist, the behavior is undefined and is **guarded by an assertion**!
+    2. If the element with key `key` does not exist, the behavior is undefined and is **guarded by a
+       [runtime assertion](../../features/assertions.md)**!
 
 1. The non-const version may add values: If `idx` is beyond the range of the array (i.e., `idx >= size()`), then the
    array is silently filled up with `#!json null` values to make `idx` a valid reference to the last stored element. In

@@ -250,17 +250,15 @@ basic_json(basic_json&& other) noexcept;
 
     !!! info "Preconditions"
 
-        - Iterators `first` and `last` must be initialized. **This precondition is enforced with an assertion (see
-          warning).** If assertions are switched off, a violation of this precondition yields undefined behavior.
+        - Iterators `first` and `last` must be initialized. **This precondition is enforced with a
+          [runtime assertion](../../features/assertions.md).
         - Range `[first, last)` is valid. Usually, this precondition cannot be checked efficiently. Only certain edge
           cases are detected; see the description of the exceptions above. A violation of this precondition yields
           undefined behavior.
     
-    !!! warning
+    !!! danger "Runtime assertion"
 
-        A precondition is enforced with a runtime assertion that will result in calling `std::abort` if this
-        precondition is not met. Assertions can be disabled by defining `NDEBUG` at compile time. See
-        <https://en.cppreference.com/w/cpp/error/assert> for more information.
+        A precondition is enforced with a [runtime assertion](../../features/assertions.md).
     
 - Overload 8:
 
