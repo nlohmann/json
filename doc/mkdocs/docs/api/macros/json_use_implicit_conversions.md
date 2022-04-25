@@ -24,8 +24,8 @@ By default, implicit conversions are enabled.
 
     Implicit conversions will be switched off by default in the next major release of the library.
 
-    You can prepare existing code by already defining `JSON_USE_IMPLICIT_CONVERSIONS` to `0` and adjust any implicit
-    conversions by calls to [`get`](../basic_json/get.md).
+    You can prepare existing code by already defining `JSON_USE_IMPLICIT_CONVERSIONS` to `0` and replace any implicit
+    conversions with calls to [`get`](../basic_json/get.md).
 
 ## Examples
 

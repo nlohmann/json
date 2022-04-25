@@ -29,7 +29,7 @@ Linear in the size of the JSON value.
 
 !!! note "Definition of `JSON_EXPLICIT`"
 
-    By default `JSON_EXPLICIT` defined to the empty string, so the signature is:
+    By default `JSON_EXPLICIT` is defined to the empty string, so the signature is:
     
     ```cpp
     template<typename ValueType>
@@ -53,15 +53,15 @@ Linear in the size of the JSON value.
     `JSON_EXPLICIT` will be set to `#!cpp explicit` by default.
 
     You can prepare existing code by already defining
-    [`JSON_USE_IMPLICIT_CONVERSIONS`](../macros/json_use_implicit_conversions.md) to `0` and adjust any implicit
-    conversions by calls to [`get`](../basic_json/get.md).
+    [`JSON_USE_IMPLICIT_CONVERSIONS`](../macros/json_use_implicit_conversions.md) to `0` and replace any implicit
+    conversions with calls to [`get`](../basic_json/get.md).
 
 
 ## Examples
 
 ??? example
 
-    The example below shows several conversions from JSON values to other types. There a few things to note: (1)
+    The example below shows several conversions from JSON values to other types. There are a few things to note: (1)
     Floating-point numbers can be converted to integers, (2) A JSON array can be converted to a standard
     `std::vector<short>`, (3) A JSON object can be converted to C++ associative containers such as
     `std::unordered_map<std::string, json>`.
