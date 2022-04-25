@@ -5,7 +5,7 @@
 ```
 
 When defined, headers `<cstdio>`, `<ios>`, `<iosfwd>`, `<istream>`, and `<ostream>` are not included and parse functions
-relying on these headers are excluded. This is relevant for environment where these I/O functions are disallowed for
+relying on these headers are excluded. This is relevant for environments where these I/O functions are disallowed for
 security reasons (e.g., Intel Software Guard Extensions (SGX)).
 
 ## Default definition

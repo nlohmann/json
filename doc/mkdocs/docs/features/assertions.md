@@ -20,7 +20,7 @@ before including the `json.hpp` header.
 
 Function [`operator[]`](../api/basic_json/operator%5B%5D.md) implements unchecked access for objects. Whereas a missing
 key is added in case of non-const objects, accessing a const object with a missing key is undefined behavior (think of a
-dereferenced null pointer) and yields an runtime assertion.
+dereferenced null pointer) and yields a runtime assertion.
 
 If you are not sure whether an element in an object exists, use checked access with the
 [`at` function](../api/basic_json/at.md) or call the [`contains` function](../api/basic_json/contains.md) before.

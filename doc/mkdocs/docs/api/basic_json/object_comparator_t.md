@@ -8,7 +8,7 @@ using object_comparator_t = std::less<>;            // since C++14
 
 The comparator used in [`object_t`](object_t.md).
 
-When C++14 is detected, a transparent com parator is used which, when combined with perfect forwarding on find() and
+When C++14 is detected, a transparent comparator is used which, when combined with perfect forwarding on find() and
 count() calls, prevents unnecessary string construction.
 
 ## Version history

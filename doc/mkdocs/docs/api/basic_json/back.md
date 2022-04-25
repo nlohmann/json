@@ -33,6 +33,12 @@ If the JSON value is `#!json null`, exception
 
 Constant.
 
+## Notes
+
+!!! info "Precondition"
+
+    The array or object must not be empty. Calling `back` on an empty array or object yields undefined behavior.
+
 ## Examples
 
 ??? example
