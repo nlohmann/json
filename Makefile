@@ -251,3 +251,10 @@ update_hedley:
 	$(SED) -i '1s/^/#pragma once\n\n/' include/nlohmann/thirdparty/hedley/hedley.hpp
 	$(SED) -i '1s/^/#pragma once\n\n/' include/nlohmann/thirdparty/hedley/hedley_undef.hpp
 	$(MAKE) amalgamate
+
+##########################################################################
+# serve_header.py
+##########################################################################
+
+serve_header:
+	./tools/serve_header/serve_header.py --make $(MAKE)
