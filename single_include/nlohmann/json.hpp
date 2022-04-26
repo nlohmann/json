@@ -8451,7 +8451,7 @@ class binary_reader
 
     @param[in] adapter  input adapter to read from
     */
-    explicit binary_reader(InputAdapterType&& adapter, const input_format_t format = input_format_t::json) noexcept : input_format(format), ia(std::move(adapter))
+    explicit binary_reader(InputAdapterType&& adapter, const input_format_t format = input_format_t::json) noexcept : ia(std::move(adapter)), input_format(format)
     {
         (void)detail::is_sax_static_asserts<SAX, BasicJsonType> {};
     }
@@ -15512,7 +15512,7 @@ class binary_writer
         };
 
         string_t key = "_ArrayType_";
-        auto it = bjdtype.find(value.at(key));
+        auto it = bjdtype.find(static_cast<string_t>(value.at(key)));
         if (it == bjdtype.end())
         {
             return true;

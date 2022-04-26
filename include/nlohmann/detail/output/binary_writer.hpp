@@ -1614,7 +1614,7 @@ class binary_writer
         };
 
         string_t key = "_ArrayType_";
-        auto it = bjdtype.find(value.at(key));
+        auto it = bjdtype.find(static_cast<string_t>(value.at(key)));
         if (it == bjdtype.end())
         {
             return true;
