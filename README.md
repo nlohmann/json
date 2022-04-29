@@ -32,7 +32,7 @@
   - [Implicit conversions](#implicit-conversions)
   - [Conversions to/from arbitrary types](#arbitrary-types-conversions)
   - [Specializing enum conversion](#specializing-enum-conversion)
-  - [Binary formats (BSON, CBOR, MessagePack, and UBJSON)](#binary-formats-bson-cbor-messagepack-and-ubjson)
+  - [Binary formats (BSON, CBOR, MessagePack, UBJSON, and BJData)](#binary-formats-bson-cbor-messagepack-ubjson-and-bjdata)
 - [Supported compilers](#supported-compilers)
 - [Integration](#integration)
   - [CMake](#cmake)
@@ -961,9 +961,9 @@ Other Important points:
 - When using `get<ENUM_TYPE>()`, undefined JSON values will default to the first pair specified in your map. Select this default pair carefully.
 - If an enum or JSON value is specified more than once in your map, the first matching occurrence from the top of the map will be returned when converting to or from JSON.
 
-### Binary formats (BSON, CBOR, MessagePack, and UBJSON)
+### Binary formats (BSON, CBOR, MessagePack, UBJSON, and BJData)
 
-Though JSON is a ubiquitous data format, it is not a very compact format suitable for data exchange, for instance over a network. Hence, the library supports [BSON](https://bsonspec.org) (Binary JSON), [CBOR](https://cbor.io) (Concise Binary Object Representation), [MessagePack](https://msgpack.org), and [UBJSON](https://ubjson.org) (Universal Binary JSON Specification) to efficiently encode JSON values to byte vectors and to decode such vectors.
+Though JSON is a ubiquitous data format, it is not a very compact format suitable for data exchange, for instance over a network. Hence, the library supports [BSON](https://bsonspec.org) (Binary JSON), [CBOR](https://cbor.io) (Concise Binary Object Representation), [MessagePack](https://msgpack.org), [UBJSON](https://ubjson.org) (Universal Binary JSON Specification) and [BJData](https://neurojson.org/bjdata) (Binary JData) to efficiently encode JSON values to byte vectors and to decode such vectors.
 
 ```cpp
 // create a JSON value

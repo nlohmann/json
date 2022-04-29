@@ -683,7 +683,7 @@ add_custom_target(ci_infer
 
 add_custom_target(ci_offline_testdata
     COMMAND mkdir -p ${PROJECT_BINARY_DIR}/build_offline_testdata/test_data
-    COMMAND cd ${PROJECT_BINARY_DIR}/build_offline_testdata/test_data && ${GIT_TOOL} clone -c advice.detachedHead=false --branch v3.0.0 https://github.com/nlohmann/json_test_data.git --quiet --depth 1
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_offline_testdata/test_data && ${GIT_TOOL} clone -c advice.detachedHead=false --branch v3.1.0 https://github.com/nlohmann/json_test_data.git --quiet --depth 1
     COMMAND ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=Debug -GNinja
         -DJSON_BuildTests=ON -DJSON_FastTests=ON -DJSON_TestDataDirectory=${PROJECT_BINARY_DIR}/build_offline_testdata/test_data/json_test_data
