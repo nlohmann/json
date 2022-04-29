@@ -28,9 +28,9 @@ class json::parse_error {
 
 ### Switch off exceptions
 
-Exceptions are used widely within the library. They can, however, be switched off with either using the compiler flag `-fno-exceptions` or by defining the symbol `JSON_NOEXCEPTION`. In this case, exceptions are replaced by `abort()` calls. You can further control this behavior by defining `JSON_THROW_USER` (overriding `#!cpp throw`), `JSON_TRY_USER` (overriding `#!cpp try`), and `JSON_CATCH_USER` (overriding `#!cpp catch`).
+Exceptions are used widely within the library. They can, however, be switched off with either using the compiler flag `-fno-exceptions` or by defining the symbol [`JSON_NOEXCEPTION`](../api/macros/json_noexception.md). In this case, exceptions are replaced by `abort()` calls. You can further control this behavior by defining `JSON_THROW_USER` (overriding `#!cpp throw`), `JSON_TRY_USER` (overriding `#!cpp try`), and `JSON_CATCH_USER` (overriding `#!cpp catch`).
 
-Note that `JSON_THROW_USER` should leave the current scope (e.g., by throwing or aborting), as continuing after it may yield undefined behavior.
+Note that [`JSON_THROW_USER`](../api/macros/json_throw_user.md) should leave the current scope (e.g., by throwing or aborting), as continuing after it may yield undefined behavior.
 
 ??? example
 
@@ -51,6 +51,8 @@ Note that `JSON_THROW_USER` should leave the current scope (e.g., by throwing or
     ```
 
 Note the explanatory [`what()`](https://en.cppreference.com/w/cpp/error/exception/what) string of exceptions is not available for MSVC if exceptions are disabled, see [#2824](https://github.com/nlohmann/json/discussions/2824).
+
+See [documentation of `JSON_TRY_USER`, `JSON_CATCH_USER` and `JSON_THROW_USER`](../api/macros/json_throw_user.md) for more information.
 
 ### Extended diagnostic messages
 
@@ -88,6 +90,7 @@ As this global context comes at the price of storing one additional pointer per 
 
     Now the exception message contains a JSON Pointer `/address/housenumber` that indicates which value has the wrong type.
 
+See [documentation of `JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md) for more information.
 
 ## Parse errors
 

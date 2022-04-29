@@ -28,9 +28,9 @@ Constant.
 
 ## Notes
 
-!!! danger
+!!! info "Precondition"
 
-    Calling `front` on an empty array or object is undefined behavior and is **guarded by an assertion**!
+    The array or object must not be empty. Calling `front` on an empty array or object yields undefined behavior.
 
 ## Examples
 

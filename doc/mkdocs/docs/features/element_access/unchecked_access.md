@@ -94,9 +94,9 @@ When accessing an invalid index (i.e., an index greater than or equal to the arr
 
 ## Summary
 
-| scenario                          | non-const value                                                                                                                                      | const value                                     |
-|-----------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------|
-| access to existing object key     | reference to existing value is returned                                                                                                              | const reference to existing value is returned   |
-| access to valid array index       | reference to existing value is returned                                                                                                              | const reference to existing value is returned   |
-| access to non-existing object key | reference to newly inserted `#!json null` value is returned                                                                                          | **undefined behavior**; assertion in debug mode |
-| access to invalid array index     | reference to newly inserted `#!json null` value is returned; any index between previous maximal index and passed index are filled with `#!json null` | **undefined behavior**; assertion in debug mode |
+| scenario                          | non-const value                                                                                                                                      | const value                                                                 |
+|-----------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|
+| access to existing object key     | reference to existing value is returned                                                                                                              | const reference to existing value is returned                               |
+| access to valid array index       | reference to existing value is returned                                                                                                              | const reference to existing value is returned                               |
+| access to non-existing object key | reference to newly inserted `#!json null` value is returned                                                                                          | **undefined behavior**; [runtime assertion](../assertions.md) in debug mode |
+| access to invalid array index     | reference to newly inserted `#!json null` value is returned; any index between previous maximal index and passed index are filled with `#!json null` | **undefined behavior**; [runtime assertion](../assertions.md) in debug mode |

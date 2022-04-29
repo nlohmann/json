@@ -45,6 +45,10 @@ Constant.
     --8<-- "examples/meta.output"
     ```
 
+## See also
+
+- [**NLOHMANN_JSON_VERSION_MAJOR**/**NLOHMANN_JSON_VERSION_MINOR**/**NLOHMANN_JSON_VERSION_PATCH**](../macros/nlohmann_json_version_major.md) - library version information
+
 ## Version history
 
 - Added in version 2.1.0.

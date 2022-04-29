@@ -24,7 +24,7 @@ Constant.
 
 ## Notes
 
-!!! note
+!!! note "Comparisons"
 
     Discarded values are never compared equal with [`operator==`](operator_eq.md). That is, checking whether a JSON
     value `j` is discarded will only work via:
@@ -41,7 +41,7 @@ Constant.
     
     will always be `#!cpp false`.
 
-!!! note
+!!! note "Removal during parsing with callback functions"
 
     When a value is discarded by a callback function (see [`parser_callback_t`](parser_callback_t.md)) during parsing,
     then it is removed when it is part of a structured value. For instance, if the second value of an array is discarded,

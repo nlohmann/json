@@ -1,9 +1,9 @@
 # <small>nlohmann::json_pointer::</small>push_back
 
 ```cpp
-void push_back(const std::string& token);
+void push_back(const string_t& token);
 
-void push_back(std::string&& token);
+void push_back(string_t&& token);
 ```
 
 Append an unescaped token at the end of the reference pointer.
@@ -35,4 +35,5 @@ Amortized constant.
 
 ## Version history
 
-Added in version 3.6.0.
+- Added in version 3.6.0.
+- Changed type of `token` to `string_t` in version 3.11.0.

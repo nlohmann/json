@@ -77,7 +77,7 @@ Some important things:
 * Those methods **MUST** be in your type's namespace (which can be the global namespace), or the library will not be able to locate them (in this example, they are in namespace `ns`, where `person` is defined).
 * Those methods **MUST** be available (e.g., proper headers must be included) everywhere you use these conversions. Look at [issue 1108](https://github.com/nlohmann/json/issues/1108) for errors that may occur otherwise.
 * When using `get<your_type>()`, `your_type` **MUST** be [DefaultConstructible](https://en.cppreference.com/w/cpp/named_req/DefaultConstructible). (There is a way to bypass this requirement described later.)
-* In function `from_json`, use function [`at()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a93403e803947b86f4da2d1fb3345cf2c.html#a93403e803947b86f4da2d1fb3345cf2c) to access the object values rather than `operator[]`. In case a key does not exist, `at` throws an exception that you can handle, whereas `operator[]` exhibits undefined behavior.
+* In function `from_json`, use function [`at()`](../api/basic_json/at.md) to access the object values rather than `operator[]`. In case a key does not exist, `at` throws an exception that you can handle, whereas `operator[]` exhibits undefined behavior.
 * You do not need to add serializers or deserializers for STL types like `std::vector`: the library already implements these.
 
 
@@ -87,16 +87,19 @@ If you just want to serialize/deserialize some structs, the `to_json`/`from_json
 
 There are four macros to make your life easier as long as you (1) want to use a JSON object as serialization and (2) want to use the member variable names as object keys in that object:
 
-- `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(name, member1, member2, ...)` is to be defined inside the namespace of the class/struct to create code for. It will throw an exception in `from_json()` due to a missing value in the JSON object.
-- `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(name, member1, member2, ...)` is to be defined inside the namespace of the class/struct to create code for. It will not throw an exception in `from_json()` due to a missing value in the JSON object, but fills in values from object which is default-constructed by the type.
-- `NLOHMANN_DEFINE_TYPE_INTRUSIVE(name, member1, member2, ...)` is to be defined inside the class/struct to create code for. This macro can also access private members. It will throw an exception in `from_json()` due to a missing value in the JSON object.
-- `NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(name, member1, member2, ...)` is to be defined inside the class/struct to create code for. This macro can also access private members. It will not throw an exception in `from_json()` due to a missing value in the JSON object, but fills in values from object which is default-constructed by the type.
+- [`NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(name, member1, member2, ...)`](../api/macros/nlohmann_define_type_non_intrusive.md) is to be defined inside the namespace of the class/struct to create code for. It will throw an exception in `from_json()` due to a missing value in the JSON object.
+- [`NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(name, member1, member2, ...)`](../api/macros/nlohmann_define_type_non_intrusive.md) is to be defined inside the namespace of the class/struct to create code for. It will not throw an exception in `from_json()` due to a missing value in the JSON object, but fills in values from object which is default-constructed by the type.
+- [`NLOHMANN_DEFINE_TYPE_INTRUSIVE(name, member1, member2, ...)`](../api/macros/nlohmann_define_type_intrusive.md) is to be defined inside the class/struct to create code for. This macro can also access private members. It will throw an exception in `from_json()` due to a missing value in the JSON object.
+- [`NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(name, member1, member2, ...)`](../api/macros/nlohmann_define_type_intrusive.md) is to be defined inside the class/struct to create code for. This macro can also access private members. It will not throw an exception in `from_json()` due to a missing value in the JSON object, but fills in values from object which is default-constructed by the type.
 
 In all macros, the first parameter is the name of the class/struct, and all remaining parameters name the members. You can read more docs about them starting from [here](macros.md#nlohmann_define_type_intrusivetype-member).
 
-!!! note
+!!! info "Implementation limits"
 
-    At most 64 member variables can be passed to these macros.
+    - The current macro implementations are limited to at most 64 member variables. If you want to serialize/deserialize
+      types with more than 64 member variables, you need to define the `to_json`/`from_json` functions manually.
+    - The macros only work for the [`nlohmann::json`](../api/json.md) type; other specializations such as
+      [`nlohmann::ordered_json`](../api/ordered_json.md) are currently unsupported.
 
 ??? example
 

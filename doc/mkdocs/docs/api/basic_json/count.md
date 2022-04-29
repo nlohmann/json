@@ -1,17 +1,25 @@
 # <small>nlohmann::basic_json::</small>count
 
 ```cpp
-template<typename KeyT>
-size_type count(KeyT&& key) const;
+// (1)
+size_type count(const typename object_t::key_type& key) const;
+
+// (2)
+template<typename KeyType>
+size_type count(KeyType&& key) const;
 ```
 
-Returns the number of elements with key `key`. If `ObjectType` is the default `std::map` type, the return value will
-always be `0` (`key` was not found) or `1` (`key` was found).
+1. Returns the number of elements with key `key`. If `ObjectType` is the default `std::map` type, the return value will
+   always be `0` (`key` was not found) or `1` (`key` was found).
+2. See 1. This overload is only available if `KeyType` is comparable with `#!cpp typename object_t::key_type` and
+   `#!cpp typename object_comparator_t::is_transparent` denotes a type.
 
 ## Template parameters
 
-`KeyT`
-:   A type for an object key.
+`KeyType`
+:   A type for an object key other than [`json_pointer`](../json_pointer/index.md) that is comparable with
+    [`string_t`](string_t.md) using  [`object_comparator_t`](object_comparator_t.md).
+    This can also be a string view (C++17).
 
 ## Parameters
 
@@ -52,4 +60,5 @@ This method always returns `0` when executed on a JSON type that is not an objec
 
 ## Version history
 
-- Added in version 1.0.0.
+1. Added in version 3.11.0.
+2. Added in version 1.0.0. Changed parameter `key` type to `KeyType&&` in version 3.11.0.

@@ -27,33 +27,44 @@ Linear in the size of the JSON value.
 
 ## Notes
 
-By default `JSON_EXPLICIT` defined to the empty string, so the signature is:
+!!! note "Definition of `JSON_EXPLICIT`"
 
-```cpp
-template<typename ValueType>
-operator ValueType() const;
-```
+    By default `JSON_EXPLICIT` is defined to the empty string, so the signature is:
+    
+    ```cpp
+    template<typename ValueType>
+    operator ValueType() const;
+    ```
+    
+    If [`JSON_USE_IMPLICIT_CONVERSIONS`](../macros/json_use_implicit_conversions.md) is set to `0`,
+    `JSON_EXPLICIT` is defined to `#!cpp explicit`:
 
-If [`JSON_USE_IMPLICIT_CONVERSIONS`](../../features/macros.md#json_use_implicit_conversions) is set to `0`,
-`JSON_EXPLICIT` is defined to `#!cpp explicit`:
+    ```cpp
+    template<typename ValueType>
+    explicit operator ValueType() const;
+    ```
+    
+    That is, implicit conversions can be switched off by defining
+    [`JSON_USE_IMPLICIT_CONVERSIONS`](../macros/json_use_implicit_conversions.md) to `0`.
 
-```cpp
-template<typename ValueType>
-explicit operator ValueType() const;
-```
+!!! info "Future behavior change"
 
-That is, implicit conversions can be switched off by defining
-[`JSON_USE_IMPLICIT_CONVERSIONS`](../../features/macros.md#json_use_implicit_conversions) to `0`.
+    Implicit conversions will be switched off by default in the next major release of the library. That is,
+    `JSON_EXPLICIT` will be set to `#!cpp explicit` by default.
+
+    You can prepare existing code by already defining
+    [`JSON_USE_IMPLICIT_CONVERSIONS`](../macros/json_use_implicit_conversions.md) to `0` and replace any implicit
+    conversions with calls to [`get`](../basic_json/get.md).
+
 
 ## Examples
 
 ??? example
 
-    The example below shows several conversions from JSON values
-    to other types. There a few things to note: (1) Floating-point numbers can
-    be converted to integers, (2) A JSON array can be converted to a standard
-    `std::vector<short>`, (3) A JSON object can be converted to C++
-    associative containers such as `std::unordered_map<std::string, json>`.
+    The example below shows several conversions from JSON values to other types. There are a few things to note: (1)
+    Floating-point numbers can be converted to integers, (2) A JSON array can be converted to a standard
+    `std::vector<short>`, (3) A JSON object can be converted to C++ associative containers such as
+    `std::unordered_map<std::string, json>`.
         
     ```cpp
     --8<-- "examples/operator__ValueType.cpp"

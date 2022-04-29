@@ -1595,9 +1595,7 @@ TEST_CASE("UBJSON")
             SECTION("strict mode")
             {
                 json _;
-                CHECK_THROWS_AS(_ = json::from_ubjson(vec), json::parse_error&);
-                CHECK_THROWS_WITH(_ = json::from_ubjson(vec),
-                                  "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing UBJSON value: expected end of input; last byte: 0x5A");
+                CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vec), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing UBJSON value: expected end of input; last byte: 0x5A", json::parse_error&);
             }
         }
 
@@ -1610,7 +1608,7 @@ TEST_CASE("UBJSON")
                 CHECK_THROWS_AS(_ = json::from_ubjson(v_ubjson), json::out_of_range&);
 
                 json j;
-                nlohmann::detail::json_sax_dom_callback_parser<json> scp(j, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/)
+                nlohmann::detail::json_sax_dom_callback_parser<json> scp(j, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/) noexcept
                 {
                     return true;
                 });
@@ -1624,7 +1622,7 @@ TEST_CASE("UBJSON")
                 CHECK_THROWS_AS(_ = json::from_ubjson(v_ubjson), json::out_of_range&);
 
                 json j;
-                nlohmann::detail::json_sax_dom_callback_parser<json> scp(j, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/)
+                nlohmann::detail::json_sax_dom_callback_parser<json> scp(j, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/) noexcept
                 {
                     return true;
                 });
@@ -1820,9 +1818,7 @@ TEST_CASE("UBJSON")
         SECTION("empty byte vector")
         {
             json _;
-            CHECK_THROWS_AS(_ = json::from_ubjson(std::vector<uint8_t>()), json::parse_error&);
-            CHECK_THROWS_WITH(_ = json::from_ubjson(std::vector<uint8_t>()),
-                              "[json.exception.parse_error.110] parse error at byte 1: syntax error while parsing UBJSON value: unexpected end of input");
+            CHECK_THROWS_WITH_AS(_ = json::from_ubjson(std::vector<uint8_t>()), "[json.exception.parse_error.110] parse error at byte 1: syntax error while parsing UBJSON value: unexpected end of input", json::parse_error&);
         }
 
         SECTION("char")
@@ -1831,16 +1827,14 @@ TEST_CASE("UBJSON")
             {
                 std::vector<uint8_t> v = {'C'};
                 json _;
-                CHECK_THROWS_AS(_ = json::from_ubjson(v), json::parse_error&);
-                CHECK_THROWS_WITH(_ = json::from_ubjson(v), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing UBJSON char: unexpected end of input");
+                CHECK_THROWS_WITH_AS(_ = json::from_ubjson(v), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing UBJSON char: unexpected end of input", json::parse_error&);
             }
 
             SECTION("byte out of range")
             {
                 std::vector<uint8_t> v = {'C', 130};
                 json _;
-                CHECK_THROWS_AS(_ = json::from_ubjson(v), json::parse_error&);
-                CHECK_THROWS_WITH(_ = json::from_ubjson(v), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing UBJSON char: byte after 'C' must be in range 0x00..0x7F; last byte: 0x82");
+                CHECK_THROWS_WITH_AS(_ = json::from_ubjson(v), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing UBJSON char: byte after 'C' must be in range 0x00..0x7F; last byte: 0x82", json::parse_error&);
             }
         }
 
@@ -1850,16 +1844,14 @@ TEST_CASE("UBJSON")
             {
                 std::vector<uint8_t> v = {'S'};
                 json _;
-                CHECK_THROWS_AS(_ = json::from_ubjson(v), json::parse_error&);
-                CHECK_THROWS_WITH(_ = json::from_ubjson(v), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing UBJSON value: unexpected end of input");
+                CHECK_THROWS_WITH_AS(_ = json::from_ubjson(v), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing UBJSON value: unexpected end of input", json::parse_error&);
             }
 
             SECTION("invalid byte")
             {
                 std::vector<uint8_t> v = {'S', '1', 'a'};
                 json _;
-                CHECK_THROWS_AS(_ = json::from_ubjson(v), json::parse_error&);
-                CHECK_THROWS_WITH(_ = json::from_ubjson(v), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing UBJSON string: expected length type specification (U, i, I, l, L); last byte: 0x31");
+                CHECK_THROWS_WITH_AS(_ = json::from_ubjson(v), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing UBJSON string: expected length type specification (U, i, I, l, L); last byte: 0x31", json::parse_error&);
             }
         }
 
@@ -1869,8 +1861,7 @@ TEST_CASE("UBJSON")
             {
                 std::vector<uint8_t> v = {'[', '$', 'i', 2};
                 json _;
-                CHECK_THROWS_AS(_ = json::from_ubjson(v), json::parse_error&);
-                CHECK_THROWS_WITH(_ = json::from_ubjson(v), "[json.exception.parse_error.112] parse error at byte 4: syntax error while parsing UBJSON size: expected '#' after type information; last byte: 0x02");
+                CHECK_THROWS_WITH_AS(_ = json::from_ubjson(v), "[json.exception.parse_error.112] parse error at byte 4: syntax error while parsing UBJSON size: expected '#' after type information; last byte: 0x02", json::parse_error&);
             }
         }
 
@@ -1878,18 +1869,15 @@ TEST_CASE("UBJSON")
         {
             std::vector<uint8_t> vS = {'S'};
             json _;
-            CHECK_THROWS_AS(_ = json::from_ubjson(vS), json::parse_error&);
-            CHECK_THROWS_WITH(_ = json::from_ubjson(vS), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing UBJSON value: unexpected end of input");
+            CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vS), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing UBJSON value: unexpected end of input", json::parse_error&);
             CHECK(json::from_ubjson(vS, true, false).is_discarded());
 
             std::vector<uint8_t> v = {'S', 'i', '2', 'a'};
-            CHECK_THROWS_AS(_ = json::from_ubjson(v), json::parse_error&);
-            CHECK_THROWS_WITH(_ = json::from_ubjson(v), "[json.exception.parse_error.110] parse error at byte 5: syntax error while parsing UBJSON string: unexpected end of input");
+            CHECK_THROWS_WITH_AS(_ = json::from_ubjson(v), "[json.exception.parse_error.110] parse error at byte 5: syntax error while parsing UBJSON string: unexpected end of input", json::parse_error&);
             CHECK(json::from_ubjson(v, true, false).is_discarded());
 
             std::vector<uint8_t> vC = {'C'};
-            CHECK_THROWS_AS(_ = json::from_ubjson(vC), json::parse_error&);
-            CHECK_THROWS_WITH(_ = json::from_ubjson(vC), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing UBJSON char: unexpected end of input");
+            CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vC), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing UBJSON char: unexpected end of input", json::parse_error&);
             CHECK(json::from_ubjson(vC, true, false).is_discarded());
         }
 
@@ -1897,33 +1885,27 @@ TEST_CASE("UBJSON")
         {
             std::vector<uint8_t> vU = {'[', '#', 'U'};
             json _;
-            CHECK_THROWS_AS(_ = json::from_ubjson(vU), json::parse_error&);
-            CHECK_THROWS_WITH(_ = json::from_ubjson(vU), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing UBJSON number: unexpected end of input");
+            CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vU), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing UBJSON number: unexpected end of input", json::parse_error&);
             CHECK(json::from_ubjson(vU, true, false).is_discarded());
 
             std::vector<uint8_t> vi = {'[', '#', 'i'};
-            CHECK_THROWS_AS(_ = json::from_ubjson(vi), json::parse_error&);
-            CHECK_THROWS_WITH(_ = json::from_ubjson(vi), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing UBJSON number: unexpected end of input");
+            CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vi), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing UBJSON number: unexpected end of input", json::parse_error&);
             CHECK(json::from_ubjson(vi, true, false).is_discarded());
 
             std::vector<uint8_t> vI = {'[', '#', 'I'};
-            CHECK_THROWS_AS(_ = json::from_ubjson(vI), json::parse_error&);
-            CHECK_THROWS_WITH(_ = json::from_ubjson(vI), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing UBJSON number: unexpected end of input");
+            CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vI), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing UBJSON number: unexpected end of input", json::parse_error&);
             CHECK(json::from_ubjson(vI, true, false).is_discarded());
 
             std::vector<uint8_t> vl = {'[', '#', 'l'};
-            CHECK_THROWS_AS(_ = json::from_ubjson(vl), json::parse_error&);
-            CHECK_THROWS_WITH(_ = json::from_ubjson(vl), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing UBJSON number: unexpected end of input");
+            CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vl), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing UBJSON number: unexpected end of input", json::parse_error&);
             CHECK(json::from_ubjson(vl, true, false).is_discarded());
 
             std::vector<uint8_t> vL = {'[', '#', 'L'};
-            CHECK_THROWS_AS(_ = json::from_ubjson(vL), json::parse_error&);
-            CHECK_THROWS_WITH(_ = json::from_ubjson(vL), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing UBJSON number: unexpected end of input");
+            CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vL), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing UBJSON number: unexpected end of input", json::parse_error&);
             CHECK(json::from_ubjson(vL, true, false).is_discarded());
 
             std::vector<uint8_t> v0 = {'[', '#', 'T', ']'};
-            CHECK_THROWS_AS(_ = json::from_ubjson(v0), json::parse_error&);
-            CHECK_THROWS_WITH(_ = json::from_ubjson(v0), "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing UBJSON size: expected length type specification (U, i, I, l, L) after '#'; last byte: 0x54");
+            CHECK_THROWS_WITH_AS(_ = json::from_ubjson(v0), "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing UBJSON size: expected length type specification (U, i, I, l, L) after '#'; last byte: 0x54", json::parse_error&);
             CHECK(json::from_ubjson(v0, true, false).is_discarded());
         }
 
@@ -1931,18 +1913,15 @@ TEST_CASE("UBJSON")
         {
             std::vector<uint8_t> v0 = {'[', '$'};
             json _;
-            CHECK_THROWS_AS(_ = json::from_ubjson(v0), json::parse_error&);
-            CHECK_THROWS_WITH(_ = json::from_ubjson(v0), "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing UBJSON type: unexpected end of input");
+            CHECK_THROWS_WITH_AS(_ = json::from_ubjson(v0), "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing UBJSON type: unexpected end of input", json::parse_error&);
             CHECK(json::from_ubjson(v0, true, false).is_discarded());
 
             std::vector<uint8_t> vi = {'[', '$', '#'};
-            CHECK_THROWS_AS(_ = json::from_ubjson(vi), json::parse_error&);
-            CHECK_THROWS_WITH(_ = json::from_ubjson(vi), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing UBJSON value: unexpected end of input");
+            CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vi), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing UBJSON value: unexpected end of input", json::parse_error&);
             CHECK(json::from_ubjson(vi, true, false).is_discarded());
 
             std::vector<uint8_t> vT = {'[', '$', 'T'};
-            CHECK_THROWS_AS(_ = json::from_ubjson(vT), json::parse_error&);
-            CHECK_THROWS_WITH(_ = json::from_ubjson(vT), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing UBJSON value: unexpected end of input");
+            CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vT), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing UBJSON value: unexpected end of input", json::parse_error&);
             CHECK(json::from_ubjson(vT, true, false).is_discarded());
         }
 
@@ -1950,18 +1929,15 @@ TEST_CASE("UBJSON")
         {
             std::vector<uint8_t> vST = {'[', '$', 'i', '#', 'i', 2, 1};
             json _;
-            CHECK_THROWS_AS(_ = json::from_ubjson(vST), json::parse_error&);
-            CHECK_THROWS_WITH(_ = json::from_ubjson(vST), "[json.exception.parse_error.110] parse error at byte 8: syntax error while parsing UBJSON number: unexpected end of input");
+            CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vST), "[json.exception.parse_error.110] parse error at byte 8: syntax error while parsing UBJSON number: unexpected end of input", json::parse_error&);
             CHECK(json::from_ubjson(vST, true, false).is_discarded());
 
             std::vector<uint8_t> vS = {'[', '#', 'i', 2, 'i', 1};
-            CHECK_THROWS_AS(_ = json::from_ubjson(vS), json::parse_error&);
-            CHECK_THROWS_WITH(_ = json::from_ubjson(vS), "[json.exception.parse_error.110] parse error at byte 7: syntax error while parsing UBJSON value: unexpected end of input");
+            CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vS), "[json.exception.parse_error.110] parse error at byte 7: syntax error while parsing UBJSON value: unexpected end of input", json::parse_error&);
             CHECK(json::from_ubjson(vS, true, false).is_discarded());
 
             std::vector<uint8_t> v = {'[', 'i', 2, 'i', 1};
-            CHECK_THROWS_AS(_ = json::from_ubjson(v), json::parse_error&);
-            CHECK_THROWS_WITH(_ = json::from_ubjson(v), "[json.exception.parse_error.110] parse error at byte 6: syntax error while parsing UBJSON value: unexpected end of input");
+            CHECK_THROWS_WITH_AS(_ = json::from_ubjson(v), "[json.exception.parse_error.110] parse error at byte 6: syntax error while parsing UBJSON value: unexpected end of input", json::parse_error&);
             CHECK(json::from_ubjson(v, true, false).is_discarded());
         }
 
@@ -1969,43 +1945,35 @@ TEST_CASE("UBJSON")
         {
             std::vector<uint8_t> vST = {'{', '$', 'i', '#', 'i', 2, 'i', 1, 'a', 1};
             json _;
-            CHECK_THROWS_AS(_ = json::from_ubjson(vST), json::parse_error&);
-            CHECK_THROWS_WITH(_ = json::from_ubjson(vST), "[json.exception.parse_error.110] parse error at byte 11: syntax error while parsing UBJSON value: unexpected end of input");
+            CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vST), "[json.exception.parse_error.110] parse error at byte 11: syntax error while parsing UBJSON value: unexpected end of input", json::parse_error&);
             CHECK(json::from_ubjson(vST, true, false).is_discarded());
 
             std::vector<uint8_t> vT = {'{', '$', 'i', 'i', 1, 'a', 1};
-            CHECK_THROWS_AS(_ = json::from_ubjson(vT), json::parse_error&);
-            CHECK_THROWS_WITH(_ = json::from_ubjson(vT), "[json.exception.parse_error.112] parse error at byte 4: syntax error while parsing UBJSON size: expected '#' after type information; last byte: 0x69");
+            CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vT), "[json.exception.parse_error.112] parse error at byte 4: syntax error while parsing UBJSON size: expected '#' after type information; last byte: 0x69", json::parse_error&);
             CHECK(json::from_ubjson(vT, true, false).is_discarded());
 
             std::vector<uint8_t> vS = {'{', '#', 'i', 2, 'i', 1, 'a', 'i', 1};
-            CHECK_THROWS_AS(_ = json::from_ubjson(vS), json::parse_error&);
-            CHECK_THROWS_WITH(_ = json::from_ubjson(vS), "[json.exception.parse_error.110] parse error at byte 10: syntax error while parsing UBJSON value: unexpected end of input");
+            CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vS), "[json.exception.parse_error.110] parse error at byte 10: syntax error while parsing UBJSON value: unexpected end of input", json::parse_error&);
             CHECK(json::from_ubjson(vS, true, false).is_discarded());
 
             std::vector<uint8_t> v = {'{', 'i', 1, 'a', 'i', 1};
-            CHECK_THROWS_AS(_ = json::from_ubjson(v), json::parse_error&);
-            CHECK_THROWS_WITH(_ = json::from_ubjson(v), "[json.exception.parse_error.110] parse error at byte 7: syntax error while parsing UBJSON value: unexpected end of input");
+            CHECK_THROWS_WITH_AS(_ = json::from_ubjson(v), "[json.exception.parse_error.110] parse error at byte 7: syntax error while parsing UBJSON value: unexpected end of input", json::parse_error&);
             CHECK(json::from_ubjson(v, true, false).is_discarded());
 
             std::vector<uint8_t> v2 = {'{', 'i', 1, 'a', 'i', 1, 'i'};
-            CHECK_THROWS_AS(_ = json::from_ubjson(v2), json::parse_error&);
-            CHECK_THROWS_WITH(_ = json::from_ubjson(v2), "[json.exception.parse_error.110] parse error at byte 8: syntax error while parsing UBJSON number: unexpected end of input");
+            CHECK_THROWS_WITH_AS(_ = json::from_ubjson(v2), "[json.exception.parse_error.110] parse error at byte 8: syntax error while parsing UBJSON number: unexpected end of input", json::parse_error&);
             CHECK(json::from_ubjson(v2, true, false).is_discarded());
 
             std::vector<uint8_t> v3 = {'{', 'i', 1, 'a'};
-            CHECK_THROWS_AS(_ = json::from_ubjson(v3), json::parse_error&);
-            CHECK_THROWS_WITH(_ = json::from_ubjson(v3), "[json.exception.parse_error.110] parse error at byte 5: syntax error while parsing UBJSON value: unexpected end of input");
+            CHECK_THROWS_WITH_AS(_ = json::from_ubjson(v3), "[json.exception.parse_error.110] parse error at byte 5: syntax error while parsing UBJSON value: unexpected end of input", json::parse_error&);
             CHECK(json::from_ubjson(v3, true, false).is_discarded());
 
             std::vector<uint8_t> vST1 = {'{', '$', 'd', '#', 'i', 2, 'i', 1, 'a'};
-            CHECK_THROWS_AS(_ = json::from_ubjson(vST1), json::parse_error&);
-            CHECK_THROWS_WITH(_ = json::from_ubjson(vST1), "[json.exception.parse_error.110] parse error at byte 10: syntax error while parsing UBJSON number: unexpected end of input");
+            CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vST1), "[json.exception.parse_error.110] parse error at byte 10: syntax error while parsing UBJSON number: unexpected end of input", json::parse_error&);
             CHECK(json::from_ubjson(vST1, true, false).is_discarded());
 
             std::vector<uint8_t> vST2 = {'{', '#', 'i', 2, 'i', 1, 'a'};
-            CHECK_THROWS_AS(_ = json::from_ubjson(vST2), json::parse_error&);
-            CHECK_THROWS_WITH(_ = json::from_ubjson(vST2), "[json.exception.parse_error.110] parse error at byte 8: syntax error while parsing UBJSON value: unexpected end of input");
+            CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vST2), "[json.exception.parse_error.110] parse error at byte 8: syntax error while parsing UBJSON value: unexpected end of input", json::parse_error&);
             CHECK(json::from_ubjson(vST2, true, false).is_discarded());
         }
     }

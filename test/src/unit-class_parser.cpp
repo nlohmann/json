@@ -267,7 +267,7 @@ bool accept_helper(const std::string& s)
     CHECK(json::parser(nlohmann::detail::input_adapter(s)).accept(false) == !el.errored);
 
     // 5. parse with simple callback
-    json::parser_callback_t cb = [](int /*unused*/, json::parse_event_t /*unused*/, json& /*unused*/)
+    json::parser_callback_t cb = [](int /*unused*/, json::parse_event_t /*unused*/, json& /*unused*/) noexcept
     {
         return true;
     };
@@ -377,88 +377,48 @@ TEST_CASE("parser class")
             SECTION("errors")
             {
                 // error: tab in string
-                CHECK_THROWS_AS(parser_helper("\"\t\""), json::parse_error&);
-                CHECK_THROWS_WITH(parser_helper("\"\t\""),
-                                  "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0009 (HT) must be escaped to \\u0009 or \\t; last read: '\"<U+0009>'");
+                CHECK_THROWS_WITH_AS(parser_helper("\"\t\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0009 (HT) must be escaped to \\u0009 or \\t; last read: '\"<U+0009>'", json::parse_error&);
                 // error: newline in string
-                CHECK_THROWS_AS(parser_helper("\"\n\""), json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("\"\r\""), json::parse_error&);
-                CHECK_THROWS_WITH(parser_helper("\"\n\""),
-                                  "[json.exception.parse_error.101] parse error at line 2, column 0: syntax error while parsing value - invalid string: control character U+000A (LF) must be escaped to \\u000A or \\n; last read: '\"<U+000A>'");
-                CHECK_THROWS_WITH(parser_helper("\"\r\""),
-                                  "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+000D (CR) must be escaped to \\u000D or \\r; last read: '\"<U+000D>'");
+                CHECK_THROWS_WITH_AS(parser_helper("\"\n\""), "[json.exception.parse_error.101] parse error at line 2, column 0: syntax error while parsing value - invalid string: control character U+000A (LF) must be escaped to \\u000A or \\n; last read: '\"<U+000A>'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("\"\r\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+000D (CR) must be escaped to \\u000D or \\r; last read: '\"<U+000D>'", json::parse_error&);
                 // error: backspace in string
-                CHECK_THROWS_AS(parser_helper("\"\b\""), json::parse_error&);
-                CHECK_THROWS_WITH(parser_helper("\"\b\""),
-                                  "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0008 (BS) must be escaped to \\u0008 or \\b; last read: '\"<U+0008>'");
+                CHECK_THROWS_WITH_AS(parser_helper("\"\b\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0008 (BS) must be escaped to \\u0008 or \\b; last read: '\"<U+0008>'", json::parse_error&);
                 // improve code coverage
                 CHECK_THROWS_AS(parser_helper("\uFF01"), json::parse_error&);
                 CHECK_THROWS_AS(parser_helper("[-4:1,]"), json::parse_error&);
                 // unescaped control characters
-                CHECK_THROWS_AS(parser_helper("\"\x00\""), json::parse_error&); // NOLINT(bugprone-string-literal-with-embedded-nul)
-                CHECK_THROWS_AS(parser_helper("\"\x01\""), json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("\"\x02\""), json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("\"\x03\""), json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("\"\x04\""), json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("\"\x05\""), json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("\"\x06\""), json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("\"\x07\""), json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("\"\x08\""), json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("\"\x09\""), json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("\"\x0a\""), json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("\"\x0b\""), json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("\"\x0c\""), json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("\"\x0d\""), json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("\"\x0e\""), json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("\"\x0f\""), json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("\"\x10\""), json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("\"\x11\""), json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("\"\x12\""), json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("\"\x13\""), json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("\"\x14\""), json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("\"\x15\""), json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("\"\x16\""), json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("\"\x17\""), json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("\"\x18\""), json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("\"\x19\""), json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("\"\x1a\""), json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("\"\x1b\""), json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("\"\x1c\""), json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("\"\x1d\""), json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("\"\x1e\""), json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("\"\x1f\""), json::parse_error&);
-                CHECK_THROWS_WITH(parser_helper("\"\x00\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: missing closing quote; last read: '\"'"); // NOLINT(bugprone-string-literal-with-embedded-nul)
-                CHECK_THROWS_WITH(parser_helper("\"\x01\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0001 (SOH) must be escaped to \\u0001; last read: '\"<U+0001>'");
-                CHECK_THROWS_WITH(parser_helper("\"\x02\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0002 (STX) must be escaped to \\u0002; last read: '\"<U+0002>'");
-                CHECK_THROWS_WITH(parser_helper("\"\x03\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0003 (ETX) must be escaped to \\u0003; last read: '\"<U+0003>'");
-                CHECK_THROWS_WITH(parser_helper("\"\x04\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0004 (EOT) must be escaped to \\u0004; last read: '\"<U+0004>'");
-                CHECK_THROWS_WITH(parser_helper("\"\x05\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0005 (ENQ) must be escaped to \\u0005; last read: '\"<U+0005>'");
-                CHECK_THROWS_WITH(parser_helper("\"\x06\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0006 (ACK) must be escaped to \\u0006; last read: '\"<U+0006>'");
-                CHECK_THROWS_WITH(parser_helper("\"\x07\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0007 (BEL) must be escaped to \\u0007; last read: '\"<U+0007>'");
-                CHECK_THROWS_WITH(parser_helper("\"\x08\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0008 (BS) must be escaped to \\u0008 or \\b; last read: '\"<U+0008>'");
-                CHECK_THROWS_WITH(parser_helper("\"\x09\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0009 (HT) must be escaped to \\u0009 or \\t; last read: '\"<U+0009>'");
-                CHECK_THROWS_WITH(parser_helper("\"\x0a\""), "[json.exception.parse_error.101] parse error at line 2, column 0: syntax error while parsing value - invalid string: control character U+000A (LF) must be escaped to \\u000A or \\n; last read: '\"<U+000A>'");
-                CHECK_THROWS_WITH(parser_helper("\"\x0b\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+000B (VT) must be escaped to \\u000B; last read: '\"<U+000B>'");
-                CHECK_THROWS_WITH(parser_helper("\"\x0c\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+000C (FF) must be escaped to \\u000C or \\f; last read: '\"<U+000C>'");
-                CHECK_THROWS_WITH(parser_helper("\"\x0d\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+000D (CR) must be escaped to \\u000D or \\r; last read: '\"<U+000D>'");
-                CHECK_THROWS_WITH(parser_helper("\"\x0e\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+000E (SO) must be escaped to \\u000E; last read: '\"<U+000E>'");
-                CHECK_THROWS_WITH(parser_helper("\"\x0f\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+000F (SI) must be escaped to \\u000F; last read: '\"<U+000F>'");
-                CHECK_THROWS_WITH(parser_helper("\"\x10\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0010 (DLE) must be escaped to \\u0010; last read: '\"<U+0010>'");
-                CHECK_THROWS_WITH(parser_helper("\"\x11\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0011 (DC1) must be escaped to \\u0011; last read: '\"<U+0011>'");
-                CHECK_THROWS_WITH(parser_helper("\"\x12\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0012 (DC2) must be escaped to \\u0012; last read: '\"<U+0012>'");
-                CHECK_THROWS_WITH(parser_helper("\"\x13\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0013 (DC3) must be escaped to \\u0013; last read: '\"<U+0013>'");
-                CHECK_THROWS_WITH(parser_helper("\"\x14\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0014 (DC4) must be escaped to \\u0014; last read: '\"<U+0014>'");
-                CHECK_THROWS_WITH(parser_helper("\"\x15\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0015 (NAK) must be escaped to \\u0015; last read: '\"<U+0015>'");
-                CHECK_THROWS_WITH(parser_helper("\"\x16\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0016 (SYN) must be escaped to \\u0016; last read: '\"<U+0016>'");
-                CHECK_THROWS_WITH(parser_helper("\"\x17\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0017 (ETB) must be escaped to \\u0017; last read: '\"<U+0017>'");
-                CHECK_THROWS_WITH(parser_helper("\"\x18\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0018 (CAN) must be escaped to \\u0018; last read: '\"<U+0018>'");
-                CHECK_THROWS_WITH(parser_helper("\"\x19\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0019 (EM) must be escaped to \\u0019; last read: '\"<U+0019>'");
-                CHECK_THROWS_WITH(parser_helper("\"\x1a\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+001A (SUB) must be escaped to \\u001A; last read: '\"<U+001A>'");
-                CHECK_THROWS_WITH(parser_helper("\"\x1b\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+001B (ESC) must be escaped to \\u001B; last read: '\"<U+001B>'");
-                CHECK_THROWS_WITH(parser_helper("\"\x1c\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+001C (FS) must be escaped to \\u001C; last read: '\"<U+001C>'");
-                CHECK_THROWS_WITH(parser_helper("\"\x1d\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+001D (GS) must be escaped to \\u001D; last read: '\"<U+001D>'");
-                CHECK_THROWS_WITH(parser_helper("\"\x1e\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+001E (RS) must be escaped to \\u001E; last read: '\"<U+001E>'");
-                CHECK_THROWS_WITH(parser_helper("\"\x1f\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+001F (US) must be escaped to \\u001F; last read: '\"<U+001F>'");
+                CHECK_THROWS_WITH_AS(parser_helper("\"\x00\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: missing closing quote; last read: '\"'", json::parse_error&); // NOLINT(bugprone-string-literal-with-embedded-nul)
+                CHECK_THROWS_WITH_AS(parser_helper("\"\x01\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0001 (SOH) must be escaped to \\u0001; last read: '\"<U+0001>'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("\"\x02\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0002 (STX) must be escaped to \\u0002; last read: '\"<U+0002>'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("\"\x03\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0003 (ETX) must be escaped to \\u0003; last read: '\"<U+0003>'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("\"\x04\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0004 (EOT) must be escaped to \\u0004; last read: '\"<U+0004>'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("\"\x05\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0005 (ENQ) must be escaped to \\u0005; last read: '\"<U+0005>'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("\"\x06\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0006 (ACK) must be escaped to \\u0006; last read: '\"<U+0006>'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("\"\x07\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0007 (BEL) must be escaped to \\u0007; last read: '\"<U+0007>'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("\"\x08\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0008 (BS) must be escaped to \\u0008 or \\b; last read: '\"<U+0008>'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("\"\x09\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0009 (HT) must be escaped to \\u0009 or \\t; last read: '\"<U+0009>'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("\"\x0a\""), "[json.exception.parse_error.101] parse error at line 2, column 0: syntax error while parsing value - invalid string: control character U+000A (LF) must be escaped to \\u000A or \\n; last read: '\"<U+000A>'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("\"\x0b\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+000B (VT) must be escaped to \\u000B; last read: '\"<U+000B>'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("\"\x0c\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+000C (FF) must be escaped to \\u000C or \\f; last read: '\"<U+000C>'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("\"\x0d\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+000D (CR) must be escaped to \\u000D or \\r; last read: '\"<U+000D>'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("\"\x0e\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+000E (SO) must be escaped to \\u000E; last read: '\"<U+000E>'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("\"\x0f\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+000F (SI) must be escaped to \\u000F; last read: '\"<U+000F>'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("\"\x10\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0010 (DLE) must be escaped to \\u0010; last read: '\"<U+0010>'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("\"\x11\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0011 (DC1) must be escaped to \\u0011; last read: '\"<U+0011>'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("\"\x12\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0012 (DC2) must be escaped to \\u0012; last read: '\"<U+0012>'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("\"\x13\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0013 (DC3) must be escaped to \\u0013; last read: '\"<U+0013>'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("\"\x14\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0014 (DC4) must be escaped to \\u0014; last read: '\"<U+0014>'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("\"\x15\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0015 (NAK) must be escaped to \\u0015; last read: '\"<U+0015>'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("\"\x16\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0016 (SYN) must be escaped to \\u0016; last read: '\"<U+0016>'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("\"\x17\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0017 (ETB) must be escaped to \\u0017; last read: '\"<U+0017>'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("\"\x18\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0018 (CAN) must be escaped to \\u0018; last read: '\"<U+0018>'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("\"\x19\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0019 (EM) must be escaped to \\u0019; last read: '\"<U+0019>'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("\"\x1a\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+001A (SUB) must be escaped to \\u001A; last read: '\"<U+001A>'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("\"\x1b\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+001B (ESC) must be escaped to \\u001B; last read: '\"<U+001B>'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("\"\x1c\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+001C (FS) must be escaped to \\u001C; last read: '\"<U+001C>'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("\"\x1d\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+001D (GS) must be escaped to \\u001D; last read: '\"<U+001D>'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("\"\x1e\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+001E (RS) must be escaped to \\u001E; last read: '\"<U+001E>'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("\"\x1f\""), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+001F (US) must be escaped to \\u001F; last read: '\"<U+001F>'", json::parse_error&);
 
                 SECTION("additional test for null byte")
                 {
@@ -469,8 +429,7 @@ TEST_CASE("parser class")
                     std::string s = "\"1\"";
                     s[1] = '\0';
                     json _;
-                    CHECK_THROWS_AS(_ = json::parse(s.begin(), s.end()), json::parse_error&);
-                    CHECK_THROWS_WITH(_ = json::parse(s.begin(), s.end()), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0000 (NUL) must be escaped to \\u0000; last read: '\"<U+0000>'");
+                    CHECK_THROWS_WITH_AS(_ = json::parse(s.begin(), s.end()), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0000 (NUL) must be escaped to \\u0000; last read: '\"<U+0000>'", json::parse_error&);
                 }
             }
 
@@ -641,68 +600,49 @@ TEST_CASE("parser class")
             SECTION("overflow")
             {
                 // overflows during parsing yield an exception
-                CHECK_THROWS_AS(parser_helper("1.18973e+4932").empty(), json::out_of_range&);
-                CHECK_THROWS_WITH(parser_helper("1.18973e+4932").empty(),
-                                  "[json.exception.out_of_range.406] number overflow parsing '1.18973e+4932'");
+                CHECK_THROWS_WITH_AS(parser_helper("1.18973e+4932").empty(), "[json.exception.out_of_range.406] number overflow parsing '1.18973e+4932'", json::out_of_range&);
             }
 
             SECTION("invalid numbers")
             {
-                CHECK_THROWS_AS(parser_helper("01"),      json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("--1"),     json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("1."),      json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("1E"),      json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("1E-"),     json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("1.E1"),    json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("-1E"),     json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("-0E#"),    json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("-0E-#"),   json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("-0#"),     json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("-0.0:"),   json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("-0.0Z"),   json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("-0E123:"), json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("-0e0-:"),  json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("-0e-:"),   json::parse_error&);
-                CHECK_THROWS_AS(parser_helper("-0f"),     json::parse_error&);
-
                 // numbers must not begin with "+"
                 CHECK_THROWS_AS(parser_helper("+1"), json::parse_error&);
                 CHECK_THROWS_AS(parser_helper("+0"), json::parse_error&);
 
-                CHECK_THROWS_WITH(parser_helper("01"),
-                                  "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - unexpected number literal; expected end of input");
-                CHECK_THROWS_WITH(parser_helper("-01"),
-                                  "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - unexpected number literal; expected end of input");
-                CHECK_THROWS_WITH(parser_helper("--1"),
-                                  "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid number; expected digit after '-'; last read: '--'");
-                CHECK_THROWS_WITH(parser_helper("1."),
-                                  "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid number; expected digit after '.'; last read: '1.'");
-                CHECK_THROWS_WITH(parser_helper("1E"),
-                                  "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid number; expected '+', '-', or digit after exponent; last read: '1E'");
-                CHECK_THROWS_WITH(parser_helper("1E-"),
-                                  "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid number; expected digit after exponent sign; last read: '1E-'");
-                CHECK_THROWS_WITH(parser_helper("1.E1"),
-                                  "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid number; expected digit after '.'; last read: '1.E'");
-                CHECK_THROWS_WITH(parser_helper("-1E"),
-                                  "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid number; expected '+', '-', or digit after exponent; last read: '-1E'");
-                CHECK_THROWS_WITH(parser_helper("-0E#"),
-                                  "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid number; expected '+', '-', or digit after exponent; last read: '-0E#'");
-                CHECK_THROWS_WITH(parser_helper("-0E-#"),
-                                  "[json.exception.parse_error.101] parse error at line 1, column 5: syntax error while parsing value - invalid number; expected digit after exponent sign; last read: '-0E-#'");
-                CHECK_THROWS_WITH(parser_helper("-0#"),
-                                  "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid literal; last read: '-0#'; expected end of input");
-                CHECK_THROWS_WITH(parser_helper("-0.0:"),
-                                  "[json.exception.parse_error.101] parse error at line 1, column 5: syntax error while parsing value - unexpected ':'; expected end of input");
-                CHECK_THROWS_WITH(parser_helper("-0.0Z"),
-                                  "[json.exception.parse_error.101] parse error at line 1, column 5: syntax error while parsing value - invalid literal; last read: '-0.0Z'; expected end of input");
-                CHECK_THROWS_WITH(parser_helper("-0E123:"),
-                                  "[json.exception.parse_error.101] parse error at line 1, column 7: syntax error while parsing value - unexpected ':'; expected end of input");
-                CHECK_THROWS_WITH(parser_helper("-0e0-:"),
-                                  "[json.exception.parse_error.101] parse error at line 1, column 6: syntax error while parsing value - invalid number; expected digit after '-'; last read: '-:'; expected end of input");
-                CHECK_THROWS_WITH(parser_helper("-0e-:"),
-                                  "[json.exception.parse_error.101] parse error at line 1, column 5: syntax error while parsing value - invalid number; expected digit after exponent sign; last read: '-0e-:'");
-                CHECK_THROWS_WITH(parser_helper("-0f"),
-                                  "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid literal; last read: '-0f'; expected end of input");
+                CHECK_THROWS_WITH_AS(parser_helper("01"),
+                                     "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - unexpected number literal; expected end of input", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("-01"),
+                                     "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - unexpected number literal; expected end of input", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("--1"),
+                                     "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid number; expected digit after '-'; last read: '--'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("1."),
+                                     "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid number; expected digit after '.'; last read: '1.'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("1E"),
+                                     "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid number; expected '+', '-', or digit after exponent; last read: '1E'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("1E-"),
+                                     "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid number; expected digit after exponent sign; last read: '1E-'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("1.E1"),
+                                     "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid number; expected digit after '.'; last read: '1.E'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("-1E"),
+                                     "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid number; expected '+', '-', or digit after exponent; last read: '-1E'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("-0E#"),
+                                     "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid number; expected '+', '-', or digit after exponent; last read: '-0E#'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("-0E-#"),
+                                     "[json.exception.parse_error.101] parse error at line 1, column 5: syntax error while parsing value - invalid number; expected digit after exponent sign; last read: '-0E-#'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("-0#"),
+                                     "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid literal; last read: '-0#'; expected end of input", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("-0.0:"),
+                                     "[json.exception.parse_error.101] parse error at line 1, column 5: syntax error while parsing value - unexpected ':'; expected end of input", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("-0.0Z"),
+                                     "[json.exception.parse_error.101] parse error at line 1, column 5: syntax error while parsing value - invalid literal; last read: '-0.0Z'; expected end of input", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("-0E123:"),
+                                     "[json.exception.parse_error.101] parse error at line 1, column 7: syntax error while parsing value - unexpected ':'; expected end of input", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("-0e0-:"),
+                                     "[json.exception.parse_error.101] parse error at line 1, column 6: syntax error while parsing value - invalid number; expected digit after '-'; last read: '-:'; expected end of input", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("-0e-:"),
+                                     "[json.exception.parse_error.101] parse error at line 1, column 5: syntax error while parsing value - invalid number; expected digit after exponent sign; last read: '-0e-:'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(parser_helper("-0f"),
+                                     "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid literal; last read: '-0f'; expected end of input", json::parse_error&);
             }
         }
     }
@@ -972,171 +912,120 @@ TEST_CASE("parser class")
     SECTION("parse errors")
     {
         // unexpected end of number
-        CHECK_THROWS_AS(parser_helper("0."),  json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("-"),   json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("--"),  json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("-0."), json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("-."),  json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("-:"),  json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("0.:"), json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("e."),  json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("1e."), json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("1e/"), json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("1e:"), json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("1E."), json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("1E/"), json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("1E:"), json::parse_error&);
-        CHECK_THROWS_WITH(parser_helper("0."),
-                          "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid number; expected digit after '.'; last read: '0.'");
-        CHECK_THROWS_WITH(parser_helper("-"),
-                          "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid number; expected digit after '-'; last read: '-'");
-        CHECK_THROWS_WITH(parser_helper("--"),
-                          "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid number; expected digit after '-'; last read: '--'");
-        CHECK_THROWS_WITH(parser_helper("-0."),
-                          "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid number; expected digit after '.'; last read: '-0.'");
-        CHECK_THROWS_WITH(parser_helper("-."),
-                          "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid number; expected digit after '-'; last read: '-.'");
-        CHECK_THROWS_WITH(parser_helper("-:"),
-                          "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid number; expected digit after '-'; last read: '-:'");
-        CHECK_THROWS_WITH(parser_helper("0.:"),
-                          "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid number; expected digit after '.'; last read: '0.:'");
-        CHECK_THROWS_WITH(parser_helper("e."),
-                          "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - invalid literal; last read: 'e'");
-        CHECK_THROWS_WITH(parser_helper("1e."),
-                          "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid number; expected '+', '-', or digit after exponent; last read: '1e.'");
-        CHECK_THROWS_WITH(parser_helper("1e/"),
-                          "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid number; expected '+', '-', or digit after exponent; last read: '1e/'");
-        CHECK_THROWS_WITH(parser_helper("1e:"),
-                          "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid number; expected '+', '-', or digit after exponent; last read: '1e:'");
-        CHECK_THROWS_WITH(parser_helper("1E."),
-                          "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid number; expected '+', '-', or digit after exponent; last read: '1E.'");
-        CHECK_THROWS_WITH(parser_helper("1E/"),
-                          "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid number; expected '+', '-', or digit after exponent; last read: '1E/'");
-        CHECK_THROWS_WITH(parser_helper("1E:"),
-                          "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid number; expected '+', '-', or digit after exponent; last read: '1E:'");
+        CHECK_THROWS_WITH_AS(parser_helper("0."),
+                             "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid number; expected digit after '.'; last read: '0.'", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("-"),
+                             "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid number; expected digit after '-'; last read: '-'", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("--"),
+                             "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid number; expected digit after '-'; last read: '--'", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("-0."),
+                             "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid number; expected digit after '.'; last read: '-0.'", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("-."),
+                             "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid number; expected digit after '-'; last read: '-.'", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("-:"),
+                             "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid number; expected digit after '-'; last read: '-:'", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("0.:"),
+                             "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid number; expected digit after '.'; last read: '0.:'", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("e."),
+                             "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - invalid literal; last read: 'e'", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("1e."),
+                             "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid number; expected '+', '-', or digit after exponent; last read: '1e.'", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("1e/"),
+                             "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid number; expected '+', '-', or digit after exponent; last read: '1e/'", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("1e:"),
+                             "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid number; expected '+', '-', or digit after exponent; last read: '1e:'", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("1E."),
+                             "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid number; expected '+', '-', or digit after exponent; last read: '1E.'", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("1E/"),
+                             "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid number; expected '+', '-', or digit after exponent; last read: '1E/'", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("1E:"),
+                             "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid number; expected '+', '-', or digit after exponent; last read: '1E:'", json::parse_error&);
 
         // unexpected end of null
-        CHECK_THROWS_AS(parser_helper("n"), json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("nu"), json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("nul"), json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("nulk"), json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("nulm"), json::parse_error&);
-        CHECK_THROWS_WITH(parser_helper("n"),
-                          "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid literal; last read: 'n'");
-        CHECK_THROWS_WITH(parser_helper("nu"),
-                          "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid literal; last read: 'nu'");
-        CHECK_THROWS_WITH(parser_helper("nul"),
-                          "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid literal; last read: 'nul'");
-        CHECK_THROWS_WITH(parser_helper("nulk"),
-                          "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid literal; last read: 'nulk'");
-        CHECK_THROWS_WITH(parser_helper("nulm"),
-                          "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid literal; last read: 'nulm'");
+        CHECK_THROWS_WITH_AS(parser_helper("n"),
+                             "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid literal; last read: 'n'", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("nu"),
+                             "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid literal; last read: 'nu'", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("nul"),
+                             "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid literal; last read: 'nul'", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("nulk"),
+                             "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid literal; last read: 'nulk'", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("nulm"),
+                             "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid literal; last read: 'nulm'", json::parse_error&);
 
         // unexpected end of true
-        CHECK_THROWS_AS(parser_helper("t"), json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("tr"), json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("tru"), json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("trud"), json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("truf"), json::parse_error&);
-        CHECK_THROWS_WITH(parser_helper("t"),
-                          "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid literal; last read: 't'");
-        CHECK_THROWS_WITH(parser_helper("tr"),
-                          "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid literal; last read: 'tr'");
-        CHECK_THROWS_WITH(parser_helper("tru"),
-                          "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid literal; last read: 'tru'");
-        CHECK_THROWS_WITH(parser_helper("trud"),
-                          "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid literal; last read: 'trud'");
-        CHECK_THROWS_WITH(parser_helper("truf"),
-                          "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid literal; last read: 'truf'");
+        CHECK_THROWS_WITH_AS(parser_helper("t"),
+                             "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid literal; last read: 't'", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("tr"),
+                             "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid literal; last read: 'tr'", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("tru"),
+                             "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid literal; last read: 'tru'", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("trud"),
+                             "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid literal; last read: 'trud'", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("truf"),
+                             "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid literal; last read: 'truf'", json::parse_error&);
 
         // unexpected end of false
-        CHECK_THROWS_AS(parser_helper("f"), json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("fa"), json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("fal"), json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("fals"), json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("falsd"), json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("falsf"), json::parse_error&);
-        CHECK_THROWS_WITH(parser_helper("f"),
-                          "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid literal; last read: 'f'");
-        CHECK_THROWS_WITH(parser_helper("fa"),
-                          "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid literal; last read: 'fa'");
-        CHECK_THROWS_WITH(parser_helper("fal"),
-                          "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid literal; last read: 'fal'");
-        CHECK_THROWS_WITH(parser_helper("fals"),
-                          "[json.exception.parse_error.101] parse error at line 1, column 5: syntax error while parsing value - invalid literal; last read: 'fals'");
-        CHECK_THROWS_WITH(parser_helper("falsd"),
-                          "[json.exception.parse_error.101] parse error at line 1, column 5: syntax error while parsing value - invalid literal; last read: 'falsd'");
-        CHECK_THROWS_WITH(parser_helper("falsf"),
-                          "[json.exception.parse_error.101] parse error at line 1, column 5: syntax error while parsing value - invalid literal; last read: 'falsf'");
+        CHECK_THROWS_WITH_AS(parser_helper("f"),
+                             "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid literal; last read: 'f'", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("fa"),
+                             "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid literal; last read: 'fa'", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("fal"),
+                             "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid literal; last read: 'fal'", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("fals"),
+                             "[json.exception.parse_error.101] parse error at line 1, column 5: syntax error while parsing value - invalid literal; last read: 'fals'", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("falsd"),
+                             "[json.exception.parse_error.101] parse error at line 1, column 5: syntax error while parsing value - invalid literal; last read: 'falsd'", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("falsf"),
+                             "[json.exception.parse_error.101] parse error at line 1, column 5: syntax error while parsing value - invalid literal; last read: 'falsf'", json::parse_error&);
 
         // missing/unexpected end of array
-        CHECK_THROWS_AS(parser_helper("["), json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("[1"), json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("[1,"), json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("[1,]"), json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("]"), json::parse_error&);
-        CHECK_THROWS_WITH(parser_helper("["),
-                          "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal");
-        CHECK_THROWS_WITH(parser_helper("[1"),
-                          "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing array - unexpected end of input; expected ']'");
-        CHECK_THROWS_WITH(parser_helper("[1,"),
-                          "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal");
-        CHECK_THROWS_WITH(parser_helper("[1,]"),
-                          "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - unexpected ']'; expected '[', '{', or a literal");
-        CHECK_THROWS_WITH(parser_helper("]"),
-                          "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - unexpected ']'; expected '[', '{', or a literal");
+        CHECK_THROWS_WITH_AS(parser_helper("["),
+                             "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("[1"),
+                             "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing array - unexpected end of input; expected ']'", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("[1,"),
+                             "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("[1,]"),
+                             "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - unexpected ']'; expected '[', '{', or a literal", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("]"),
+                             "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - unexpected ']'; expected '[', '{', or a literal", json::parse_error&);
 
         // missing/unexpected end of object
-        CHECK_THROWS_AS(parser_helper("{"), json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("{\"foo\""), json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("{\"foo\":"), json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("{\"foo\":}"), json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("{\"foo\":1,}"), json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("}"), json::parse_error&);
-        CHECK_THROWS_WITH(parser_helper("{"),
-                          "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing object key - unexpected end of input; expected string literal");
-        CHECK_THROWS_WITH(parser_helper("{\"foo\""),
-                          "[json.exception.parse_error.101] parse error at line 1, column 7: syntax error while parsing object separator - unexpected end of input; expected ':'");
-        CHECK_THROWS_WITH(parser_helper("{\"foo\":"),
-                          "[json.exception.parse_error.101] parse error at line 1, column 8: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal");
-        CHECK_THROWS_WITH(parser_helper("{\"foo\":}"),
-                          "[json.exception.parse_error.101] parse error at line 1, column 8: syntax error while parsing value - unexpected '}'; expected '[', '{', or a literal");
-        CHECK_THROWS_WITH(parser_helper("{\"foo\":1,}"),
-                          "[json.exception.parse_error.101] parse error at line 1, column 10: syntax error while parsing object key - unexpected '}'; expected string literal");
-        CHECK_THROWS_WITH(parser_helper("}"),
-                          "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - unexpected '}'; expected '[', '{', or a literal");
+        CHECK_THROWS_WITH_AS(parser_helper("{"),
+                             "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing object key - unexpected end of input; expected string literal", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("{\"foo\""),
+                             "[json.exception.parse_error.101] parse error at line 1, column 7: syntax error while parsing object separator - unexpected end of input; expected ':'", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("{\"foo\":"),
+                             "[json.exception.parse_error.101] parse error at line 1, column 8: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("{\"foo\":}"),
+                             "[json.exception.parse_error.101] parse error at line 1, column 8: syntax error while parsing value - unexpected '}'; expected '[', '{', or a literal", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("{\"foo\":1,}"),
+                             "[json.exception.parse_error.101] parse error at line 1, column 10: syntax error while parsing object key - unexpected '}'; expected string literal", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("}"),
+                             "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - unexpected '}'; expected '[', '{', or a literal", json::parse_error&);
 
         // missing/unexpected end of string
-        CHECK_THROWS_AS(parser_helper("\""), json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("\"\\\""), json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("\"\\u\""), json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("\"\\u0\""), json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("\"\\u01\""), json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("\"\\u012\""), json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("\"\\u"), json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("\"\\u0"), json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("\"\\u01"), json::parse_error&);
-        CHECK_THROWS_AS(parser_helper("\"\\u012"), json::parse_error&);
-        CHECK_THROWS_WITH(parser_helper("\""),
-                          "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: missing closing quote; last read: '\"'");
-        CHECK_THROWS_WITH(parser_helper("\"\\\""),
-                          "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid string: missing closing quote; last read: '\"\\\"'");
-        CHECK_THROWS_WITH(parser_helper("\"\\u\""),
-                          "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '\"\\u\"'");
-        CHECK_THROWS_WITH(parser_helper("\"\\u0\""),
-                          "[json.exception.parse_error.101] parse error at line 1, column 5: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '\"\\u0\"'");
-        CHECK_THROWS_WITH(parser_helper("\"\\u01\""),
-                          "[json.exception.parse_error.101] parse error at line 1, column 6: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '\"\\u01\"'");
-        CHECK_THROWS_WITH(parser_helper("\"\\u012\""),
-                          "[json.exception.parse_error.101] parse error at line 1, column 7: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '\"\\u012\"'");
-        CHECK_THROWS_WITH(parser_helper("\"\\u"),
-                          "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '\"\\u'");
-        CHECK_THROWS_WITH(parser_helper("\"\\u0"),
-                          "[json.exception.parse_error.101] parse error at line 1, column 5: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '\"\\u0'");
-        CHECK_THROWS_WITH(parser_helper("\"\\u01"),
-                          "[json.exception.parse_error.101] parse error at line 1, column 6: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '\"\\u01'");
-        CHECK_THROWS_WITH(parser_helper("\"\\u012"),
-                          "[json.exception.parse_error.101] parse error at line 1, column 7: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '\"\\u012'");
+        CHECK_THROWS_WITH_AS(parser_helper("\""),
+                             "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: missing closing quote; last read: '\"'", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("\"\\\""),
+                             "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid string: missing closing quote; last read: '\"\\\"'", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("\"\\u\""),
+                             "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '\"\\u\"'", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("\"\\u0\""),
+                             "[json.exception.parse_error.101] parse error at line 1, column 5: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '\"\\u0\"'", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("\"\\u01\""),
+                             "[json.exception.parse_error.101] parse error at line 1, column 6: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '\"\\u01\"'", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("\"\\u012\""),
+                             "[json.exception.parse_error.101] parse error at line 1, column 7: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '\"\\u012\"'", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("\"\\u"),
+                             "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '\"\\u'", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("\"\\u0"),
+                             "[json.exception.parse_error.101] parse error at line 1, column 5: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '\"\\u0'", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("\"\\u01"),
+                             "[json.exception.parse_error.101] parse error at line 1, column 6: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '\"\\u01'", json::parse_error&);
+        CHECK_THROWS_WITH_AS(parser_helper("\"\\u012"),
+                             "[json.exception.parse_error.101] parse error at line 1, column 7: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '\"\\u012'", json::parse_error&);
 
         // invalid escapes
         for (int c = 1; c < 128; ++c)
@@ -1285,19 +1174,14 @@ TEST_CASE("parser class")
         json _;
 
         // missing part of a surrogate pair
-        CHECK_THROWS_AS(_ = json::parse("\"\\uD80C\""), json::parse_error&);
-        CHECK_THROWS_WITH(_ = json::parse("\"\\uD80C\""),
-                          "[json.exception.parse_error.101] parse error at line 1, column 8: syntax error while parsing value - invalid string: surrogate U+D800..U+DBFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD80C\"'");
+        CHECK_THROWS_WITH_AS(_ = json::parse("\"\\uD80C\""), "[json.exception.parse_error.101] parse error at line 1, column 8: syntax error while parsing value - invalid string: surrogate U+D800..U+DBFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD80C\"'", json::parse_error&);
         // invalid surrogate pair
-        CHECK_THROWS_AS(_ = json::parse("\"\\uD80C\\uD80C\""), json::parse_error&);
-        CHECK_THROWS_AS(_ = json::parse("\"\\uD80C\\u0000\""), json::parse_error&);
-        CHECK_THROWS_AS(_ = json::parse("\"\\uD80C\\uFFFF\""), json::parse_error&);
-        CHECK_THROWS_WITH(_ = json::parse("\"\\uD80C\\uD80C\""),
-                          "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing value - invalid string: surrogate U+D800..U+DBFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD80C\\uD80C'");
-        CHECK_THROWS_WITH(_ = json::parse("\"\\uD80C\\u0000\""),
-                          "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing value - invalid string: surrogate U+D800..U+DBFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD80C\\u0000'");
-        CHECK_THROWS_WITH(_ = json::parse("\"\\uD80C\\uFFFF\""),
-                          "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing value - invalid string: surrogate U+D800..U+DBFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD80C\\uFFFF'");
+        CHECK_THROWS_WITH_AS(_ = json::parse("\"\\uD80C\\uD80C\""),
+                             "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing value - invalid string: surrogate U+D800..U+DBFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD80C\\uD80C'", json::parse_error&);
+        CHECK_THROWS_WITH_AS(_ = json::parse("\"\\uD80C\\u0000\""),
+                             "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing value - invalid string: surrogate U+D800..U+DBFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD80C\\u0000'", json::parse_error&);
+        CHECK_THROWS_WITH_AS(_ = json::parse("\"\\uD80C\\uFFFF\""),
+                             "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing value - invalid string: surrogate U+D800..U+DBFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD80C\\uFFFF'", json::parse_error&);
     }
 
     SECTION("parse errors (accept)")
@@ -1489,17 +1373,13 @@ TEST_CASE("parser class")
     SECTION("tests found by mutate++")
     {
         // test case to make sure no comma precedes the first key
-        CHECK_THROWS_AS(parser_helper("{,\"key\": false}"), json::parse_error&);
-        CHECK_THROWS_WITH(parser_helper("{,\"key\": false}"),
-                          "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing object key - unexpected ','; expected string literal");
+        CHECK_THROWS_WITH_AS(parser_helper("{,\"key\": false}"), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing object key - unexpected ','; expected string literal", json::parse_error&);
         // test case to make sure an object is properly closed
-        CHECK_THROWS_AS(parser_helper("[{\"key\": false true]"), json::parse_error&);
-        CHECK_THROWS_WITH(parser_helper("[{\"key\": false true]"),
-                          "[json.exception.parse_error.101] parse error at line 1, column 19: syntax error while parsing object - unexpected true literal; expected '}'");
+        CHECK_THROWS_WITH_AS(parser_helper("[{\"key\": false true]"), "[json.exception.parse_error.101] parse error at line 1, column 19: syntax error while parsing object - unexpected true literal; expected '}'", json::parse_error&);
 
         // test case to make sure the callback is properly evaluated after reading a key
         {
-            json::parser_callback_t cb = [](int /*unused*/, json::parse_event_t event, json& /*unused*/)
+            json::parser_callback_t cb = [](int /*unused*/, json::parse_event_t event, json& /*unused*/) noexcept
             {
                 return event != json::parse_event_t::key;
             };
@@ -1538,14 +1418,14 @@ TEST_CASE("parser class")
 
         SECTION("filter nothing")
         {
-            json j_object = json::parse(s_object, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/)
+            json j_object = json::parse(s_object, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/) noexcept
             {
                 return true;
             });
 
             CHECK (j_object == json({{"foo", 2}, {"bar", {{"baz", 1}}}}));
 
-            json j_array = json::parse(s_array, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/)
+            json j_array = json::parse(s_array, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/) noexcept
             {
                 return true;
             });
@@ -1555,7 +1435,7 @@ TEST_CASE("parser class")
 
         SECTION("filter everything")
         {
-            json j_object = json::parse(s_object, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/)
+            json j_object = json::parse(s_object, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/) noexcept
             {
                 return false;
             });
@@ -1563,7 +1443,7 @@ TEST_CASE("parser class")
             // the top-level object will be discarded, leaving a null
             CHECK (j_object.is_null());
 
-            json j_array = json::parse(s_array, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/)
+            json j_array = json::parse(s_array, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/) noexcept
             {
                 return false;
             });
@@ -1574,7 +1454,7 @@ TEST_CASE("parser class")
 
         SECTION("filter specific element")
         {
-            json j_object = json::parse(s_object, [](int /*unused*/, json::parse_event_t /*unused*/, const json & j)
+            json j_object = json::parse(s_object, [](int /*unused*/, json::parse_event_t /*unused*/, const json & j) noexcept
             {
                 // filter all number(2) elements
                 return j != json(2);
@@ -1582,7 +1462,7 @@ TEST_CASE("parser class")
 
             CHECK (j_object == json({{"bar", {{"baz", 1}}}}));
 
-            json j_array = json::parse(s_array, [](int /*unused*/, json::parse_event_t /*unused*/, const json & j)
+            json j_array = json::parse(s_array, [](int /*unused*/, json::parse_event_t /*unused*/, const json & j) noexcept
             {
                 return j != json(2);
             });
@@ -1601,7 +1481,7 @@ TEST_CASE("parser class")
             CHECK (j_filtered1.size() == 2);
             CHECK (j_filtered1 == json({1, {{"qux", "baz"}}}));
 
-            json j_filtered2 = json::parse(structured_array, [](int /*unused*/, json::parse_event_t e, const json& /*parsed*/)
+            json j_filtered2 = json::parse(structured_array, [](int /*unused*/, json::parse_event_t e, const json& /*parsed*/) noexcept
             {
                 return e != json::parse_event_t::object_end;
             });
@@ -1616,7 +1496,7 @@ TEST_CASE("parser class")
             SECTION("first closing event")
             {
                 {
-                    json j_object = json::parse(s_object, [](int /*unused*/, json::parse_event_t e, const json& /*unused*/)
+                    json j_object = json::parse(s_object, [](int /*unused*/, json::parse_event_t e, const json& /*unused*/) noexcept
                     {
                         static bool first = true;
                         if (e == json::parse_event_t::object_end && first)
@@ -1633,7 +1513,7 @@ TEST_CASE("parser class")
                 }
 
                 {
-                    json j_array = json::parse(s_array, [](int /*unused*/, json::parse_event_t e, const json& /*unused*/)
+                    json j_array = json::parse(s_array, [](int /*unused*/, json::parse_event_t e, const json& /*unused*/) noexcept
                     {
                         static bool first = true;
                         if (e == json::parse_event_t::array_end && first)
@@ -1657,13 +1537,13 @@ TEST_CASE("parser class")
             // object and array is discarded only after the closing character
             // has been read
 
-            json j_empty_object = json::parse("{}", [](int /*unused*/, json::parse_event_t e, const json& /*unused*/)
+            json j_empty_object = json::parse("{}", [](int /*unused*/, json::parse_event_t e, const json& /*unused*/) noexcept
             {
                 return e != json::parse_event_t::object_end;
             });
             CHECK(j_empty_object == json());
 
-            json j_empty_array = json::parse("[]", [](int /*unused*/, json::parse_event_t e, const json& /*unused*/)
+            json j_empty_array = json::parse("[]", [](int /*unused*/, json::parse_event_t e, const json& /*unused*/) noexcept
             {
                 return e != json::parse_event_t::array_end;
             });
@@ -1731,7 +1611,7 @@ TEST_CASE("parser class")
     {
         SECTION("parser with callback")
         {
-            json::parser_callback_t cb = [](int /*unused*/, json::parse_event_t /*unused*/, json& /*unused*/)
+            json::parser_callback_t cb = [](int /*unused*/, json::parse_event_t /*unused*/, json& /*unused*/) noexcept
             {
                 return true;
             };
@@ -1739,13 +1619,9 @@ TEST_CASE("parser class")
             CHECK(json::parse("{\"foo\": true:", cb, false).is_discarded());
 
             json _;
-            CHECK_THROWS_AS(_ = json::parse("{\"foo\": true:", cb), json::parse_error&);
-            CHECK_THROWS_WITH(_ = json::parse("{\"foo\": true:", cb),
-                              "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing object - unexpected ':'; expected '}'");
+            CHECK_THROWS_WITH_AS(_ = json::parse("{\"foo\": true:", cb), "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing object - unexpected ':'; expected '}'", json::parse_error&);
 
-            CHECK_THROWS_AS(_ = json::parse("1.18973e+4932", cb), json::out_of_range&);
-            CHECK_THROWS_WITH(_ = json::parse("1.18973e+4932", cb),
-                              "[json.exception.out_of_range.406] number overflow parsing '1.18973e+4932'");
+            CHECK_THROWS_WITH_AS(_ = json::parse("1.18973e+4932", cb), "[json.exception.out_of_range.406] number overflow parsing '1.18973e+4932'", json::out_of_range&);
         }
 
         SECTION("SAX parser")

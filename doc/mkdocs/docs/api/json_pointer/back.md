@@ -1,7 +1,7 @@
 # <small>nlohmann::json_pointer::</small>back
 
 ```cpp
-const std::string& back() const;
+const string_t& back() const;
 ```
 
 Return last reference token.
@@ -36,4 +36,5 @@ Constant.
 
 ## Version history
 
-Added in version 3.6.0.
+- Added in version 3.6.0.
+- Changed return type to `string_t` in version 3.11.0.

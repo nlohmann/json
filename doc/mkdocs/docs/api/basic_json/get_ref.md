@@ -16,7 +16,7 @@ Implicit reference access to the internally stored JSON value. No copies are mad
 :   reference type; must be a reference to [`array_t`](array_t.md), [`object_t`](object_t.md),
     [`string_t`](string_t.md), [`boolean_t`](boolean_t.md), [`number_integer_t`](number_integer_t.md), or
     [`number_unsigned_t`](number_unsigned_t.md), [`number_float_t`](number_float_t.md), or [`binary_t`](binary_t.md).
-    Enforced by static assertion.
+    Enforced by a static assertion.
 
 ## Return value
 
@@ -38,7 +38,7 @@ Constant.
 
 ## Notes
 
-!!! warning
+!!! danger "Undefined behavior"
 
     Writing data to the referee of the result yields an undefined state.
 

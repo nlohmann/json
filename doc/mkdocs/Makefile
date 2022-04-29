@@ -1,18 +1,21 @@
 # serve the site locally
-serve: prepare_files
+serve: prepare_files style_check
 	venv/bin/mkdocs serve
 
-build: prepare_files
+serve_dirty: prepare_files style_check
+	venv/bin/mkdocs serve --dirtyreload
+
+build: prepare_files style_check
 	venv/bin/mkdocs build
 
-# create files that are not versioned inside the mkdocs folder
+# create files that are not versioned inside the mkdocs folder (images, examples)
 prepare_files: clean
-	# create subfolders
 	mkdir docs/examples
-	# copy images
-	cp -vr ../json.gif docs/images
-	# copy examples
-	cp -vr ../examples/*.cpp ../examples/*.output docs/examples
+	cp -r ../json.gif docs/images
+	cp -r ../examples/*.cpp ../examples/*.output docs/examples
+
+style_check:
+	@cd docs ; python3 ../scripts/check_structure.py
 
 # clean subfolders
 clean:

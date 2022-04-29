@@ -37,7 +37,7 @@ SOFTWARE.
 
 /* forward declarations */
 class alt_string;
-bool operator<(const char* op1, const alt_string& op2);
+bool operator<(const char* op1, const alt_string& op2) noexcept;
 void int_to_string(alt_string& target, std::size_t value);
 
 /*
@@ -48,6 +48,8 @@ class alt_string
 {
   public:
     using value_type = std::string::value_type;
+
+    static constexpr auto npos = static_cast<std::size_t>(-1);
 
     alt_string(const char* str): str_impl(str) {}
     alt_string(const char* str, std::size_t count): str_impl(str, count) {}
@@ -144,15 +146,42 @@ class alt_string
         str_impl.clear();
     }
 
-    const value_type* data()
+    const value_type* data() const
     {
         return str_impl.data();
+    }
+
+    bool empty() const
+    {
+        return str_impl.empty();
+    }
+
+    std::size_t find(const alt_string& str, std::size_t pos = 0) const
+    {
+        return str_impl.find(str.str_impl, pos);
+    }
+
+    std::size_t find_first_of(char c, std::size_t pos = 0) const
+    {
+        return str_impl.find_first_of(c, pos);
+    }
+
+    alt_string substr(std::size_t pos = 0, std::size_t count = npos) const
+    {
+        std::string s = str_impl.substr(pos, count);
+        return {s.data(), s.size()};
+    }
+
+    alt_string& replace(std::size_t pos, std::size_t count, const alt_string& str)
+    {
+        str_impl.replace(pos, count, str.str_impl);
+        return *this;
     }
 
   private:
     std::string str_impl {};
 
-    friend bool ::operator<(const char* /*op1*/, const alt_string& /*op2*/);
+    friend bool ::operator<(const char* /*op1*/, const alt_string& /*op2*/) noexcept;
 };
 
 void int_to_string(alt_string& target, std::size_t value)
@@ -172,7 +201,7 @@ using alt_json = nlohmann::basic_json <
                  nlohmann::adl_serializer >;
 
 
-bool operator<(const char* op1, const alt_string& op2)
+bool operator<(const char* op1, const alt_string& op2) noexcept
 {
     return op1 < op2.str_impl;
 }
@@ -295,5 +324,21 @@ TEST_CASE("alternative string type")
             CHECK_FALSE("I'm Bruce Wayne" == const_doc["Who are you?"]);
             CHECK_FALSE(const_doc["Who are you?"] == "I'm Bruce Wayne");
         }
+    }
+
+    SECTION("JSON pointer")
+    {
+        // conversion from json to alt_json fails to compile (see #3425);
+        // attempted fix(*) produces: [[['b','a','r'],['b','a','z']]] (with each char being an integer)
+        // (*) disable implicit conversion for json_refs of any basic_json type
+        // alt_json j = R"(
+        // {
+        //     "foo": ["bar", "baz"]
+        // }
+        // )"_json;
+        auto j = alt_json::parse(R"({"foo": ["bar", "baz"]})");
+
+        CHECK(j.at(alt_json::json_pointer("/foo/0")) == j["foo"][0]);
+        CHECK(j.at(alt_json::json_pointer("/foo/1")) == j["foo"][1]);
     }
 }

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <functional> // less
+#include <functional> // equal_to, less
 #include <initializer_list> // initializer_list
 #include <iterator> // input_iterator_tag, iterator_traits
 #include <memory> // allocator
@@ -27,6 +27,11 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
     using const_iterator = typename Container::const_iterator;
     using size_type = typename Container::size_type;
     using value_type = typename Container::value_type;
+#ifdef JSON_HAS_CPP_14
+    using key_compare = std::equal_to<>;
+#else
+    using key_compare = std::equal_to<Key>;
+#endif
 
     // Explicit constructors instead of `using Container::Container`
     // otherwise older compilers choke on it (GCC <= 5.5, xcode <= 9.4)
@@ -42,7 +47,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
-            if (it->first == key)
+            if (m_compare(it->first, key))
             {
                 return {it, false};
             }
@@ -65,7 +70,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
-            if (it->first == key)
+            if (m_compare(it->first, key))
             {
                 return it->second;
             }
@@ -78,7 +83,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
-            if (it->first == key)
+            if (m_compare(it->first, key))
             {
                 return it->second;
             }
@@ -91,7 +96,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
-            if (it->first == key)
+            if (m_compare(it->first, key))
             {
                 // Since we cannot move const Keys, re-construct them in place
                 for (auto next = it; ++next != this->end(); ++it)
@@ -163,7 +168,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
-            if (it->first == key)
+            if (m_compare(it->first, key))
             {
                 return 1;
             }
@@ -175,7 +180,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
-            if (it->first == key)
+            if (m_compare(it->first, key))
             {
                 return it;
             }
@@ -187,7 +192,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
-            if (it->first == key)
+            if (m_compare(it->first, key))
             {
                 return it;
             }
@@ -204,7 +209,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
-            if (it->first == value.first)
+            if (m_compare(it->first, value.first))
             {
                 return {it, false};
             }
@@ -225,6 +230,9 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
             insert(*it);
         }
     }
+
+private:
+    JSON_NO_UNIQUE_ADDRESS key_compare m_compare = key_compare();
 };
 
 }  // namespace nlohmann

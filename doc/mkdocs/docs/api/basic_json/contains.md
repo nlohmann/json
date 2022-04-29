@@ -2,21 +2,28 @@
 
 ```cpp
 // (1)
-template<typename KeyT>
-bool contains(KeyT && key) const;
+bool contains(const typename object_t::key_type& key) const;
 
 // (2)
+template<typename KeyType>
+bool contains(KeyType&& key) const;
+
+// (3)
 bool contains(const json_pointer& ptr) const;
 ```
 
-1. Check whether an element exists in a JSON object with key equivalent to `key`. If the element is not found or the 
+1. Check whether an element exists in a JSON object with a key equivalent to `key`. If the element is not found or the 
    JSON value is not an object, `#!cpp false` is returned.
-2. Check whether the given JSON pointer `ptr` can be resolved in the current JSON value.
+2. See 1. This overload is only available if `KeyType` is comparable with `#!cpp typename object_t::key_type` and
+   `#!cpp typename object_comparator_t::is_transparent` denotes a type.
+3. Check whether the given JSON pointer `ptr` can be resolved in the current JSON value.
 
 ## Template parameters
 
-`KeyT`
-:   A type for an object key other than `basic_json::json_pointer`.
+`KeyType`
+:   A type for an object key other than [`json_pointer`](../json_pointer/index.md) that is comparable with
+    [`string_t`](string_t.md) using  [`object_comparator_t`](object_comparator_t.md).
+    This can also be a string view (C++17).
 
 ## Parameters
 
@@ -30,7 +37,8 @@ bool contains(const json_pointer& ptr) const;
 
 1. `#!cpp true` if an element with specified `key` exists. If no such element with such key is found or the JSON value
    is not an object, `#!cpp false` is returned.
-2. `#!cpp true` if the JSON pointer can be resolved to a stored value, `#!cpp false` otherwise.
+2. See 1.
+3. `#!cpp true` if the JSON pointer can be resolved to a stored value, `#!cpp false` otherwise.
 
 ## Exception safety
 
@@ -39,7 +47,8 @@ Strong exception safety: if an exception occurs, the original value stays intact
 ## Exceptions
 
 1. The function does not throw exceptions.
-2. The function can throw the following exceptions:
+2. The function does not throw exceptions.
+3. The function can throw the following exceptions:
     - Throws [`parse_error.106`](../../home/exceptions.md#jsonexceptionparse_error106) if an array index begins with
       `0`.
     - Throws [`parse_error.109`](../../home/exceptions.md#jsonexceptionparse_error109) if an array index was not a
@@ -74,7 +83,7 @@ Logarithmic in the size of the JSON object.
     --8<-- "examples/contains.output"
     ```
 
-??? example "Example (1) check with JSON pointer"
+??? example "Example (3) check with JSON pointer"
 
     The example shows how `contains()` is used.
     
@@ -90,5 +99,6 @@ Logarithmic in the size of the JSON object.
 
 ## Version history
 
-1. Added in version 3.6.0.
-2. Added in version 3.7.0.
+1. Added in version 3.11.0.
+2. Added in version 3.6.0. Extended template `KeyType` to support comparable types in version 3.11.0.
+3. Added in version 3.7.0.

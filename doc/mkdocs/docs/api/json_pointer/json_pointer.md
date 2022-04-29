@@ -1,7 +1,7 @@
 # <small>nlohmann::json_pointer::</small>json_pointer
 
 ```cpp
-explicit json_pointer(const std::string& s = "");
+explicit json_pointer(const string_t& s = "");
 ```
 
 Create a JSON pointer according to the syntax described in
@@ -37,4 +37,5 @@ Create a JSON pointer according to the syntax described in
 
 ## Version history
 
-Added in version 2.0.0.
+- Added in version 2.0.0.
+- Changed type of `s` to `string_t` in version 3.11.0.

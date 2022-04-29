@@ -1,32 +1,21 @@
-json_unit
-json_benchmarks
-json_benchmarks_simple
-fuzz-testing
-
 *.dSYM
 *.o
 *.gcno
 *.gcda
-
-build
-build_coverage
-clang_analyze_build
-
-benchmarks/files/numbers/*.json
+.DS_Store
 
 .wsjcpp-logs/*
 .wsjcpp/*
 
-.idea
+/.idea
 /cmake-build-*
 
-test/test-*
 /.vs
 
-doc/html
-doc/mkdocs/venv/
-doc/mkdocs/docs/examples
-doc/mkdocs/site
-doc/mkdocs/docs/__pycache__/
+/doc/mkdocs/docs/examples/
+/doc/mkdocs/docs/__pycache__/
+/doc/mkdocs/site/
+/doc/mkdocs/venv/
 /doc/docset/JSON_for_Modern_C++.docset/
 /doc/docset/JSON_for_Modern_C++.tgz
+/doc/mkdocs/docs/images/json.gif
