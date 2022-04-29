@@ -13,6 +13,10 @@ const_iterator erase(const_iterator first, const_iterator last);
 size_type erase(const typename object_t::key_type& key);
 
 // (4)
+template<typename KeyType>
+size_type erase(KeyType&& key);
+
+// (5)
 void erase(const size_type idx);
 ```
 
@@ -29,7 +33,17 @@ void erase(const size_type idx);
 
 3. Removes an element from a JSON object by key.
 
-4. Removes an element from a JSON array by index.
+4. See 3. This overload is only available if `KeyType` is comparable with `#!cpp typename object_t::key_type` and
+   `#!cpp typename object_comparator_t::is_transparent` denotes a type.
+
+5. Removes an element from a JSON array by index.
+
+## Template parameters
+
+`KeyType`
+:   A type for an object key other than [`json_pointer`](../json_pointer/index.md) that is comparable with
+    [`string_t`](string_t.md) using  [`object_comparator_t`](object_comparator_t.md).
+    This can also be a string view (C++17).
 
 ## Parameters
 
@@ -56,7 +70,8 @@ void erase(const size_type idx);
    is returned.
 3. Number of elements removed. If `ObjectType` is the default `std::map` type, the return value will always be `0`
    (`key` was not found) or `1` (`key` was found).
-4. /
+4. See 3.
+5. (none)
 
 ## Exception safety
 
@@ -83,7 +98,8 @@ Strong exception safety: if an exception occurs, the original value stays intact
 3. The function can throw the following exceptions:
     - Throws [`type_error.307`](../../home/exceptions.md#jsonexceptiontype_error307) when called on a type other than
       JSON object; example: `"cannot use erase() with null"`
-4. The function can throw the following exceptions:
+4. See 3.
+5. The function can throw the following exceptions:
     - Throws [`type_error.307`](../../home/exceptions.md#jsonexceptiontype_error307) when called on a type other than
       JSON object; example: `"cannot use erase() with null"`
     - Throws [`out_of_range.401`](../../home/exceptions.md#jsonexceptionout_of_range401) when `idx >= size()`; example:
@@ -103,14 +119,16 @@ Strong exception safety: if an exception occurs, the original value stays intact
        - strings and binary: linear in the length of the member
        - other types: constant
 3. `log(size()) + count(key)`
-4. Linear in distance between `idx` and the end of the container.
+4. `log(size()) + count(key)`
+5. Linear in distance between `idx` and the end of the container.
 
 ## Notes
 
 1. Invalidates iterators and references at or after the point of the `erase`, including the `end()` iterator.
-2. /
+2. (none)
 3. References and iterators to the erased elements are invalidated. Other references and iterators are not affected.
-4. /
+4. See 3.
+5. (none)
 
 ## Examples
 
@@ -156,7 +174,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
     --8<-- "examples/erase__key_type.output"
     ```
 
-??? example "Example: (4) remove element from a JSON array given an index"
+??? example "Example: (5) remove element from a JSON array given an index"
 
     The example shows the effect of `erase()` using an array index.
     
@@ -172,5 +190,8 @@ Strong exception safety: if an exception occurs, the original value stays intact
 
 ## Version history
 
-- Added in version 1.0.0.
-- Added support for binary types in version 3.8.0.
+1. Added in version 1.0.0. Added support for binary types in version 3.8.0.
+2. Added in version 1.0.0. Added support for binary types in version 3.8.0.
+3. Added in version 1.0.0.
+4. Added in version 3.11.0.
+5. Added in version 1.0.0.

@@ -32,6 +32,12 @@ A minimal map-like container that preserves insertion order for use within [`nlo
 - **const_iterator**
 - **size_type**
 - **value_type**
+- **key_compare** - key comparison function
+```cpp
+std::equal_to<Key>  // until C++14
+
+std::equal_to<>     // since C++14
+```
 
 ## Member functions
 
@@ -68,3 +74,4 @@ A minimal map-like container that preserves insertion order for use within [`nlo
 ## Version history
 
 - Added in version 3.9.0 to implement [`nlohmann::ordered_json`](ordered_json.md).
+- Added **key_compare** member in version 3.11.0.

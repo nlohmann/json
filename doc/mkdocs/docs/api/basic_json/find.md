@@ -1,20 +1,28 @@
 # <small>nlohmann::basic_json::</small>find
 
 ```cpp
-template<typename KeyT>
-iterator find(KeyT&& key);
+// (1)
+iterator find(const typename object_t::key_type& key);
+const_iterator find(const typename object_t::key_type& key) const;
 
-template<typename KeyT>
-const_iterator find(KeyT&& key) const;
+// (2)
+template<typename KeyType>
+iterator find(KeyType&& key);
+template<typename KeyType>
+const_iterator find(KeyType&& key) const;
 ```
 
-Finds an element in a JSON object with key equivalent to `key`. If the element is not found or the JSON value is not an
-object, `end()` is returned.
+1. Finds an element in a JSON object with a key equivalent to `key`. If the element is not found or the
+   JSON value is not an object, `end()` is returned.
+2. See 1. This overload is only available if `KeyType` is comparable with `#!cpp typename object_t::key_type` and
+   `#!cpp typename object_comparator_t::is_transparent` denotes a type.
 
 ## Template parameters
 
-`KeyT`
-:   A type for an object key.
+`KeyType`
+:   A type for an object key other than [`json_pointer`](../json_pointer/index.md) that is comparable with
+    [`string_t`](string_t.md) using  [`object_comparator_t`](object_comparator_t.md).
+    This can also be a string view (C++17).
 
 ## Parameters
 
@@ -23,8 +31,8 @@ object, `end()` is returned.
     
 ## Return value
 
-Iterator to an element with key equivalent to `key`. If no such element is found or the JSON value is not an object,
-past-the-end (see `end()`) iterator is returned.
+Iterator to an element with a key equivalent to `key`. If no such element is found or the JSON value is not an object,
+a past-the-end iterator (see `end()`) is returned.
 
 ## Exception safety
 
@@ -60,4 +68,5 @@ This method always returns `end()` when executed on a JSON type that is not an o
 
 ## Version history
 
-- Added in version 1.0.0.
+1. Added in version 3.11.0.
+2. Added in version 1.0.0. Changed to support comparable types in version 3.11.0.

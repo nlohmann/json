@@ -3,7 +3,7 @@
 ```cpp
 using object_t = ObjectType<StringType,
                             basic_json,
-                            object_comparator_t,
+                            default_object_comparator_t,
                             AllocatorType<std::pair<const StringType, basic_json>>>;
 ```
 
@@ -52,7 +52,7 @@ std::map<
 >
 ```
 
-See [`object_comparator_t`](object_comparator_t.md) for more information.
+See [`default_object_comparator_t`](default_object_comparator_t.md) for more information.
 
 #### Behavior
 

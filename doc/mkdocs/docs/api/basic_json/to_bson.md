@@ -28,7 +28,7 @@ The exact mapping and its limitations is described on a [dedicated page](../../f
 ## Return value
 
 1. BSON serialization as byte vector
-2. /
+2. (none)
 
 ## Exception safety
 

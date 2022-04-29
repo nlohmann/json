@@ -128,6 +128,7 @@ The class satisfies the following concept requirements:
 - [**array_t**](array_t.md) - type for arrays
 - [**binary_t**](binary_t.md) - type for binary arrays
 - [**boolean_t**](boolean_t.md) - type for booleans
+- [**default_object_comparator_t**](default_object_comparator_t.md) - default comparator for objects
 - [**number_float_t**](number_float_t.md) - type for numbers (floating-point)
 - [**number_integer_t**](number_integer_t.md) - type for numbers (integer)
 - [**number_unsigned_t**](number_unsigned_t.md) - type for numbers (unsigned)

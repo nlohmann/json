@@ -1,16 +1,16 @@
 # <small>nlohmann::basic_json::</small>object_comparator_t
 
-```cpp
-using object_comparator_t = std::less<StringType>;  // until C++14
 
-using object_comparator_t = std::less<>;            // since C++14
+```cpp
+using object_comparator_t = typename object_t::key_compare;
+// or
+using object_comparator_t = default_object_comparator_t;
 ```
 
-The comparator used in [`object_t`](object_t.md).
-
-When C++14 is detected, a transparent comparator is used which, when combined with perfect forwarding on find() and
-count() calls, prevents unnecessary string construction.
+The comparator used by [`object_t`](object_t.md). Defined as `#!cpp typename object_t::key_compare` if available,
+and [`default_object_comparator_t`](default_object_comparator_t.md) otherwise.
 
 ## Version history
 
-- Unknown.
+- Added in version 3.0.0.
+- Changed to be conditionally defined as `#!cpp typename object_t::key_compare` or `default_object_comparator_t` in version 3.11.0.

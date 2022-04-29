@@ -4,9 +4,14 @@
 // (1)
 template<class ValueType>
 ValueType value(const typename object_t::key_type& key,
-                const ValueType& default_value) const;
+                ValueType&& default_value) const;
 
 // (2)
+template<class KeyType, class ValueType>
+ValueType value(KeyType&& key,
+                ValueType&& default_value) const;
+
+// (3)
 template<class ValueType>
 ValueType value(const json_pointer& ptr,
                 const ValueType& default_value) const;
@@ -24,7 +29,10 @@ ValueType value(const json_pointer& ptr,
     }
     ```
 
-2. Returns either a copy of an object's element at the specified JSON pointer `ptr` or a given default value if no value
+2. See 1. This overload is only available if `KeyType` is comparable with `#!cpp typename object_t::key_type` and
+   `#!cpp typename object_comparator_t::is_transparent` denotes a type.
+
+3. Returns either a copy of an object's element at the specified JSON pointer `ptr` or a given default value if no value
    at `ptr` exists.
    
     The function is basically equivalent to executing
@@ -44,6 +52,10 @@ ValueType value(const json_pointer& ptr,
 
 ## Template parameters
 
+`KeyType`
+:   A type for an object key other than [`json_pointer`](../json_pointer/index.md) that is comparable with
+    [`string_t`](string_t.md) using  [`object_comparator_t`](object_comparator_t.md).
+    This can also be a string view (C++17).
 `ValueType` 
 :   type compatible to JSON values, for instance `#!cpp int` for JSON integer numbers, `#!cpp bool` for JSON booleans,
     or `#!cpp std::vector` types for JSON arrays. Note the type of the expected value at `key`/`ptr` and the default
@@ -55,7 +67,7 @@ ValueType value(const json_pointer& ptr,
 :   key of the element to access
 
 `default_value` (in)
-:   the value to return if key/ptr found no value
+:   the value to return if `key`/`ptr` found no value
 
 `ptr` (in)
 :   a JSON pointer to the element to access
@@ -63,7 +75,8 @@ ValueType value(const json_pointer& ptr,
 ## Return value
 
 1. copy of the element at key `key` or `default_value` if `key` is not found
-1. copy of the element at JSON Pointer `ptr` or `default_value` if no value for `ptr` is found
+2. copy of the element at key `key` or `default_value` if `key` is not found
+3. copy of the element at JSON Pointer `ptr` or `default_value` if no value for `ptr` is found
 
 ## Exception safety
 
@@ -77,7 +90,8 @@ changes to any JSON value.
       the type of the value at `key`
     - Throws [`type_error.306`](../../home/exceptions.md#jsonexceptiontype_error306) if the JSON value is not an object;
       in that case, using `value()` with a key makes no sense.
-2. The function can throw the following exceptions:
+2. See 1.
+3. The function can throw the following exceptions:
     - Throws [`type_error.302`](../../home/exceptions.md#jsonexceptiontype_error302) if `default_value` does not match
       the type of the value at `ptr`
     - Throws [`type_error.306`](../../home/exceptions.md#jsonexceptiontype_error306) if the JSON value is not an object;
@@ -87,6 +101,7 @@ changes to any JSON value.
 
 1. Logarithmic in the size of the container.
 2. Logarithmic in the size of the container.
+3. Logarithmic in the size of the container.
 
 ## Examples
 
@@ -104,7 +119,7 @@ changes to any JSON value.
     --8<-- "examples/basic_json__value.output"
     ```
 
-??? example "Example (2): access specified object element via JSON Pointer with default value"
+??? example "Example (3): access specified object element via JSON Pointer with default value"
 
     The example below shows how object elements can be queried with a default value.
     
@@ -125,5 +140,6 @@ changes to any JSON value.
 
 ## Version history
 
-1. Added in version 1.0.0.
-2. Added in version 2.0.2.
+1. Added in version 1.0.0. Changed parameter `default_value` type from `const ValueType&` to `ValueType&&` in version 3.11.0.
+2. Added in version 3.11.0.
+3. Added in version 2.0.2.

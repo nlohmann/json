@@ -54,11 +54,6 @@ struct is_basic_json_context :
     || std::is_same<BasicJsonContext, std::nullptr_t>::value >
 {};
 
-template<typename> struct is_json_pointer : std::false_type {};
-
-template<typename RefStringType>
-struct is_json_pointer<json_pointer<RefStringType>> : std::true_type {};
-
 //////////////////////
 // json_ref helpers //
 //////////////////////
@@ -160,6 +155,24 @@ struct has_to_json < BasicJsonType, T, enable_if_t < !is_basic_json<T>::value >>
         T>::value;
 };
 
+template<typename T>
+using detect_key_compare = typename T::key_compare;
+
+template<typename T>
+struct has_key_compare : std::integral_constant<bool, is_detected<detect_key_compare, T>::value> {};
+
+// obtains the actual object key comparator
+template<typename BasicJsonType>
+struct actual_object_comparator
+{
+    using object_t = typename BasicJsonType::object_t;
+    using object_comparator_t = typename BasicJsonType::default_object_comparator_t;
+    using type = typename std::conditional < has_key_compare<object_t>::value,
+          typename object_t::key_compare, object_comparator_t>::type;
+};
+
+template<typename BasicJsonType>
+using actual_object_comparator_t = typename actual_object_comparator<BasicJsonType>::type;
 
 ///////////////////
 // is_ functions //
@@ -453,6 +466,78 @@ struct is_constructible_tuple : std::false_type {};
 
 template<typename T1, typename... Args>
 struct is_constructible_tuple<T1, std::tuple<Args...>> : conjunction<is_constructible<T1, Args>...> {};
+
+template<typename BasicJsonType, typename T>
+struct is_json_iterator_of : std::false_type {};
+
+template<typename BasicJsonType>
+struct is_json_iterator_of<BasicJsonType, typename BasicJsonType::iterator> : std::true_type {};
+
+template<typename BasicJsonType>
+struct is_json_iterator_of<BasicJsonType, typename BasicJsonType::const_iterator> : std::true_type
+{};
+
+// checks if a given type T is a template specialization of Primary
+template<template <typename...> class Primary, typename T>
+struct is_specialization_of : std::false_type {};
+
+template<template <typename...> class Primary, typename... Args>
+struct is_specialization_of<Primary, Primary<Args...>> : std::true_type {};
+
+template<typename T>
+using is_json_pointer = is_specialization_of<::nlohmann::json_pointer, uncvref_t<T>>;
+
+// checks if A and B are comparable using Compare functor
+template<typename Compare, typename A, typename B, typename = void>
+struct is_comparable : std::false_type {};
+
+template<typename Compare, typename A, typename B>
+struct is_comparable<Compare, A, B, void_t<
+decltype(std::declval<Compare>()(std::declval<A>(), std::declval<B>())),
+decltype(std::declval<Compare>()(std::declval<B>(), std::declval<A>()))
+>> : std::true_type {};
+
+// checks if BasicJsonType::object_t::key_type and KeyType are comparable using Compare functor
+template<typename BasicJsonType, typename KeyType>
+using is_key_type_comparable = typename is_comparable <
+                               typename BasicJsonType::object_comparator_t,
+                               const key_type_t<typename BasicJsonType::object_t>&,
+                               KeyType >::type;
+
+template<typename T>
+using detect_is_transparent = typename T::is_transparent;
+
+// type trait to check if KeyType can be used as object key
+// true if:
+//   - KeyType is comparable with BasicJsonType::object_t::key_type
+//   - if ExcludeObjectKeyType is true, KeyType is not BasicJsonType::object_t::key_type
+//   - the comparator is transparent or RequireTransparentComparator is false
+//   - KeyType is not a JSON iterator or json_pointer
+template<typename BasicJsonType, typename KeyTypeCVRef, bool RequireTransparentComparator = true,
+         bool ExcludeObjectKeyType = RequireTransparentComparator, typename KeyType = uncvref_t<KeyTypeCVRef>>
+using is_usable_as_key_type = typename std::conditional <
+                              is_key_type_comparable<BasicJsonType, KeyTypeCVRef>::value
+                              && !(ExcludeObjectKeyType && std::is_same<KeyType,
+                                   typename BasicJsonType::object_t::key_type>::value)
+                              && (!RequireTransparentComparator || is_detected <
+                                  detect_is_transparent,
+                                  typename BasicJsonType::object_comparator_t >::value)
+                              && !is_json_iterator_of<BasicJsonType, KeyType>::value
+                              && !is_json_pointer<KeyType>::value,
+                              std::true_type,
+                              std::false_type >::type;
+
+template<typename ObjectType, typename KeyType>
+using detect_erase_with_key_type = decltype(std::declval<ObjectType&>().erase(std::declval<KeyType>()));
+
+// type trait to check if object_t has an erase() member functions accepting KeyType
+template<typename BasicJsonType, typename KeyType>
+using has_erase_with_key_type = typename std::conditional <
+                                is_detected <
+                                detect_erase_with_key_type,
+                                typename BasicJsonType::object_t, KeyType >::value,
+                                std::true_type,
+                                std::false_type >::type;
 
 // a naive helper to check if a type is an ordered_map (exploits the fact that
 // ordered_map inherits capacity() from std::vector)
