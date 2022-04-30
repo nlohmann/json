@@ -551,7 +551,7 @@ file(GLOB_RECURSE INDENT_FILES
 add_custom_target(ci_test_amalgamation
     COMMAND rm -fr ${PROJECT_SOURCE_DIR}/single_include/nlohmann/json.hpp~
     COMMAND cp ${PROJECT_SOURCE_DIR}/single_include/nlohmann/json.hpp ${PROJECT_SOURCE_DIR}/single_include/nlohmann/json.hpp~
-    COMMAND ${Python3_EXECUTABLE} ../tools/amalgamate/amalgamate.py -c ../tools/amalgamate/config.json -s .
+    COMMAND ${Python3_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tools/amalgamate/amalgamate.py -c ${PROJECT_SOURCE_DIR}/tools/amalgamate/config.json -s .
     COMMAND ${ASTYLE_TOOL} ${ASTYLE_FLAGS} --suffix=none --quiet ${PROJECT_SOURCE_DIR}/single_include/nlohmann/json.hpp
     COMMAND diff ${PROJECT_SOURCE_DIR}/single_include/nlohmann/json.hpp~ ${PROJECT_SOURCE_DIR}/single_include/nlohmann/json.hpp
 
