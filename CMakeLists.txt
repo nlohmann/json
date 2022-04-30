@@ -136,7 +136,7 @@ CONFIGURE_FILE(
 if (JSON_BuildTests)
     include(CTest)
     enable_testing()
-    add_subdirectory(test)
+    add_subdirectory(tests)
 endif()
 
 ##

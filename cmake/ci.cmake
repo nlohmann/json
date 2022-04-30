@@ -542,9 +542,9 @@ set(ASTYLE_FLAGS --style=allman --indent=spaces=4 --indent-modifiers --indent-sw
 
 file(GLOB_RECURSE INDENT_FILES
     ${PROJECT_SOURCE_DIR}/include/nlohmann/*.hpp
-    ${PROJECT_SOURCE_DIR}/test/src/*.cpp
-    ${PROJECT_SOURCE_DIR}/test/src/*.hpp
-    ${PROJECT_SOURCE_DIR}/test/benchmarks/src/benchmarks.cpp
+        ${PROJECT_SOURCE_DIR}/tests/src/*.cpp
+        ${PROJECT_SOURCE_DIR}/tests/src/*.hpp
+        ${PROJECT_SOURCE_DIR}/tests/benchmarks/src/benchmarks.cpp
     ${PROJECT_SOURCE_DIR}/docs/examples/*.cpp
 )
 
