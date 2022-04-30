@@ -544,14 +544,14 @@ file(GLOB_RECURSE INDENT_FILES
     ${PROJECT_SOURCE_DIR}/include/nlohmann/*.hpp
     ${PROJECT_SOURCE_DIR}/test/src/*.cpp
     ${PROJECT_SOURCE_DIR}/test/src/*.hpp
-    ${PROJECT_SOURCE_DIR}/benchmarks/src/benchmarks.cpp
+    ${PROJECT_SOURCE_DIR}/test/benchmarks/src/benchmarks.cpp
     ${PROJECT_SOURCE_DIR}/doc/examples/*.cpp
 )
 
 add_custom_target(ci_test_amalgamation
     COMMAND rm -fr ${PROJECT_SOURCE_DIR}/single_include/nlohmann/json.hpp~
     COMMAND cp ${PROJECT_SOURCE_DIR}/single_include/nlohmann/json.hpp ${PROJECT_SOURCE_DIR}/single_include/nlohmann/json.hpp~
-    COMMAND ${Python3_EXECUTABLE} ${PROJECT_SOURCE_DIR}/third_party/amalgamate/amalgamate.py -c ${PROJECT_SOURCE_DIR}/third_party/amalgamate/config.json -s .
+    COMMAND ${Python3_EXECUTABLE} ../tools/amalgamate/amalgamate.py -c ../tools/amalgamate/config.json -s .
     COMMAND ${ASTYLE_TOOL} ${ASTYLE_FLAGS} --suffix=none --quiet ${PROJECT_SOURCE_DIR}/single_include/nlohmann/json.hpp
     COMMAND diff ${PROJECT_SOURCE_DIR}/single_include/nlohmann/json.hpp~ ${PROJECT_SOURCE_DIR}/single_include/nlohmann/json.hpp
 
@@ -559,7 +559,7 @@ add_custom_target(ci_test_amalgamation
     COMMAND cd ${PROJECT_SOURCE_DIR} && for FILE in `find . -name '*.orig'`\; do false \; done
 
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-    COMMENT "Check amalagamation and indentation"
+    COMMENT "Check amalgamation and indentation"
 )
 
 ###############################################################################
@@ -605,7 +605,7 @@ add_custom_target(ci_cppcheck
 ###############################################################################
 
 add_custom_target(ci_cpplint
-    COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/third_party/cpplint/cpplint.py --filter=-whitespace,-legal,-runtime/references,-runtime/explicit,-runtime/indentation_namespace,-readability/casting,-readability/nolint --quiet --recursive ${SRC_FILES}
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/cpplint/cpplint.py --filter=-whitespace,-legal,-runtime/references,-runtime/explicit,-runtime/indentation_namespace,-readability/casting,-readability/nolint --quiet --recursive ${SRC_FILES}
     COMMENT "Check code with cpplint"
 )
 

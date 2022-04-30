@@ -55,7 +55,7 @@ doctest:
 run_benchmarks:
 	rm -fr cmake-build-benchmarks
 	mkdir cmake-build-benchmarks
-	cd cmake-build-benchmarks ; cmake ../benchmarks -GNinja -DCMAKE_BUILD_TYPE=Release -DJSON_BuildTests=On
+	cd cmake-build-benchmarks ; cmake ../test/benchmarks -GNinja -DCMAKE_BUILD_TYPE=Release
 	cd cmake-build-benchmarks ; ninja
 	cd cmake-build-benchmarks ; ./json_benchmarks
 
@@ -170,7 +170,7 @@ amalgamate: $(AMALGAMATED_FILE)
 
 # call the amalgamation tool and pretty print
 $(AMALGAMATED_FILE): $(SRCS)
-	third_party/amalgamate/amalgamate.py -c third_party/amalgamate/config.json -s . --verbose=yes
+	tools/amalgamate/amalgamate.py -c tools/amalgamate/config.json -s . --verbose=yes
 	$(MAKE) pretty
 
 # check if file single_include/nlohmann/json.hpp has been amalgamated from the nlohmann sources

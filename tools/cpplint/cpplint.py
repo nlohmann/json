@@ -3629,7 +3629,7 @@ def CheckComment(line, filename, linenum, next_line_start, error):
   commentpos = line.find('//')
   if commentpos != -1:
     # Check if the // may be in quotes.  If so, ignore it
-    if re.sub(r'\\.', '', line[0:commentpos]).count('"') % 2 == 0:
+    if re.sub(r'', '', line[0:commentpos]).count('"') % 2 == 0:
       # Allow one space for new scopes, two spaces otherwise:
       if (not (Match(r'^.*{ *//', line) and next_line_start == commentpos) and
           ((commentpos >= 1 and
