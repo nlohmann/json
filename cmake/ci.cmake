@@ -512,7 +512,7 @@ add_custom_target(ci_test_coverage
 
     COMMAND ${LCOV_TOOL} --directory . --capture --output-file json.info --rc lcov_branch_coverage=1
     COMMAND ${LCOV_TOOL} -e json.info ${SRC_FILES} --output-file json.info.filtered --rc lcov_branch_coverage=1
-    COMMAND ${CMAKE_SOURCE_DIR}/test/thirdparty/imapdl/filterbr.py json.info.filtered > json.info.filtered.noexcept
+    COMMAND ${CMAKE_SOURCE_DIR}/tests/thirdparty/imapdl/filterbr.py json.info.filtered > json.info.filtered.noexcept
     COMMAND genhtml --title "JSON for Modern C++" --legend --demangle-cpp --output-directory html --show-details --branch-coverage json.info.filtered.noexcept
 
     COMMENT "Compile and test with coverage"
@@ -873,7 +873,7 @@ add_custom_target(ci_cuda_example
     COMMAND ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=Debug -GNinja
         -DCMAKE_CUDA_HOST_COMPILER=g++-8
-        -S${PROJECT_SOURCE_DIR}/test/cuda_example -B${PROJECT_BINARY_DIR}/build_cuda_example
+        -S${PROJECT_SOURCE_DIR}/tests/cuda_example -B${PROJECT_BINARY_DIR}/build_cuda_example
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_cuda_example
 )
 
