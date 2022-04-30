@@ -545,7 +545,7 @@ file(GLOB_RECURSE INDENT_FILES
     ${PROJECT_SOURCE_DIR}/test/src/*.cpp
     ${PROJECT_SOURCE_DIR}/test/src/*.hpp
     ${PROJECT_SOURCE_DIR}/test/benchmarks/src/benchmarks.cpp
-    ${PROJECT_SOURCE_DIR}/doc/examples/*.cpp
+    ${PROJECT_SOURCE_DIR}/docs/examples/*.cpp
 )
 
 add_custom_target(ci_test_amalgamation

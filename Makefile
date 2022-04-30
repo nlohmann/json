@@ -45,7 +45,7 @@ all:
 
 # compile example files and check output
 doctest:
-	$(MAKE) check_output -C doc
+	$(MAKE) check_output -C docs
 
 
 ##########################################################################
@@ -159,11 +159,11 @@ pretty:
 	    --preserve-date \
 	    --suffix=none \
 	    --formatted \
-	   $(SRCS) $(AMALGAMATED_FILE) test/src/*.cpp test/src/*.hpp benchmarks/src/benchmarks.cpp doc/examples/*.cpp
+	   $(SRCS) $(AMALGAMATED_FILE) test/src/*.cpp test/src/*.hpp test/benchmarks/src/benchmarks.cpp docs/examples/*.cpp
 
 # call the Clang-Format on all source files
 pretty_format:
-	for FILE in $(SRCS) $(AMALGAMATED_FILE) test/src/*.cpp test/src/*.hpp benchmarks/src/benchmarks.cpp doc/examples/*.cpp; do echo $$FILE; clang-format -i $$FILE; done
+	for FILE in $(SRCS) $(AMALGAMATED_FILE) test/src/*.cpp test/src/*.hpp benchmarks/src/benchmarks.cpp docs/examples/*.cpp; do echo $$FILE; clang-format -i $$FILE; done
 
 # create single header file
 amalgamate: $(AMALGAMATED_FILE)
@@ -236,7 +236,7 @@ clean:
 	rm -fr fuzz fuzz-testing *.dSYM test/*.dSYM
 	rm -fr benchmarks/files/numbers/*.json
 	rm -fr cmake-build-benchmarks fuzz-testing cmake-build-pvs-studio release_files
-	$(MAKE) clean -Cdoc
+	$(MAKE) clean -Cdocs
 
 
 ##########################################################################
