@@ -42,6 +42,7 @@ nav:
     - features/arbitrary_types.md
     - Binary Formats:
       - features/binary_formats/index.md
+      - features/binary_formats/bjdata.md
       - features/binary_formats/bson.md
       - features/binary_formats/cbor.md
       - features/binary_formats/messagepack.md
@@ -109,6 +110,7 @@ nav:
         - 'exception': api/basic_json/exception.md
         - 'find': api/basic_json/find.md
         - 'flatten': api/basic_json/flatten.md
+        - 'from_bjdata': api/basic_json/from_bjdata.md
         - 'from_bson': api/basic_json/from_bson.md
         - 'from_cbor': api/basic_json/from_cbor.md
         - 'from_msgpack': api/basic_json/from_msgpack.md
@@ -178,6 +180,7 @@ nav:
         - 'string_t': api/basic_json/string_t.md
         - 'swap': api/basic_json/swap.md
         - 'std::swap&lt;basic_json&gt;': api/basic_json/std_swap.md
+        - 'to_bjdata': api/basic_json/to_bjdata.md
         - 'to_bson': api/basic_json/to_bson.md
         - 'to_cbor': api/basic_json/to_cbor.md
         - 'to_msgpack': api/basic_json/to_msgpack.md
