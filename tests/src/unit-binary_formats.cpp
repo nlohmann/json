@@ -49,6 +49,9 @@ TEST_CASE("Binary Formats" * doctest::skip())
         const auto ubjson_1_size = json::to_ubjson(j).size();
         const auto ubjson_2_size = json::to_ubjson(j, true).size();
         const auto ubjson_3_size = json::to_ubjson(j, true, true).size();
+        const auto bjdata_1_size = json::to_bjdata(j).size();
+        const auto bjdata_2_size = json::to_bjdata(j, true).size();
+        const auto bjdata_3_size = json::to_bjdata(j, true, true).size();
         const auto bon8_size = json::to_bon8(j).size();
 
         CHECK(json_size == 2090303);
@@ -58,6 +61,9 @@ TEST_CASE("Binary Formats" * doctest::skip())
         CHECK(ubjson_1_size == 1112030);
         CHECK(ubjson_2_size == 1224148);
         CHECK(ubjson_3_size == 1169069);
+        CHECK(bjdata_1_size == 1112030);
+        CHECK(bjdata_2_size == 1224148);
+        CHECK(bjdata_3_size == 1224148);
         CHECK(bon8_size == 1055789);
 
         CHECK((100.0 * double(json_size) / double(json_size)) == Approx(100.0));
@@ -67,6 +73,9 @@ TEST_CASE("Binary Formats" * doctest::skip())
         CHECK((100.0 * double(ubjson_1_size) / double(json_size)) == Approx(53.199));
         CHECK((100.0 * double(ubjson_2_size) / double(json_size)) == Approx(58.563));
         CHECK((100.0 * double(ubjson_3_size) / double(json_size)) == Approx(55.928));
+        CHECK((100.0 * double(bjdata_1_size) / double(json_size)) == Approx(53.199));
+        CHECK((100.0 * double(bjdata_2_size) / double(json_size)) == Approx(58.563));
+        CHECK((100.0 * double(bjdata_3_size) / double(json_size)) == Approx(58.563));
         CHECK((100.0 * double(bon8_size) / double(json_size)) == Approx(50.509));
     }
 
@@ -82,6 +91,9 @@ TEST_CASE("Binary Formats" * doctest::skip())
         const auto ubjson_1_size = json::to_ubjson(j).size();
         const auto ubjson_2_size = json::to_ubjson(j, true).size();
         const auto ubjson_3_size = json::to_ubjson(j, true, true).size();
+        const auto bjdata_1_size = json::to_bjdata(j).size();
+        const auto bjdata_2_size = json::to_bjdata(j, true).size();
+        const auto bjdata_3_size = json::to_bjdata(j, true, true).size();
         const auto bon8_size = json::to_bon8(j).size();
 
         CHECK(json_size == 466906);
@@ -91,6 +103,9 @@ TEST_CASE("Binary Formats" * doctest::skip())
         CHECK(ubjson_1_size == 426160);
         CHECK(ubjson_2_size == 430788);
         CHECK(ubjson_3_size == 430798);
+        CHECK(bjdata_1_size == 425342);
+        CHECK(bjdata_2_size == 429970);
+        CHECK(bjdata_3_size == 429970);
         CHECK(bon8_size == 391172);
 
         CHECK((100.0 * double(json_size) / double(json_size)) == Approx(100.0));
@@ -100,6 +115,9 @@ TEST_CASE("Binary Formats" * doctest::skip())
         CHECK((100.0 * double(ubjson_1_size) / double(json_size)) == Approx(91.273));
         CHECK((100.0 * double(ubjson_2_size) / double(json_size)) == Approx(92.264));
         CHECK((100.0 * double(ubjson_3_size) / double(json_size)) == Approx(92.266));
+        CHECK((100.0 * double(bjdata_1_size) / double(json_size)) == Approx(91.097));
+        CHECK((100.0 * double(bjdata_2_size) / double(json_size)) == Approx(92.089));
+        CHECK((100.0 * double(bjdata_3_size) / double(json_size)) == Approx(92.089));
         CHECK((100.0 * double(bon8_size) / double(json_size)) == Approx(83.779));
     }
 
@@ -115,6 +133,9 @@ TEST_CASE("Binary Formats" * doctest::skip())
         const auto ubjson_1_size = json::to_ubjson(j).size();
         const auto ubjson_2_size = json::to_ubjson(j, true).size();
         const auto ubjson_3_size = json::to_ubjson(j, true, true).size();
+        const auto bjdata_1_size = json::to_bjdata(j).size();
+        const auto bjdata_2_size = json::to_bjdata(j, true).size();
+        const auto bjdata_3_size = json::to_bjdata(j, true, true).size();
         const auto bon8_size = json::to_bon8(j).size();
 
         CHECK(json_size == 500299);
@@ -124,6 +145,9 @@ TEST_CASE("Binary Formats" * doctest::skip())
         CHECK(ubjson_1_size == 391463);
         CHECK(ubjson_2_size == 434239);
         CHECK(ubjson_3_size == 425073);
+        CHECK(bjdata_1_size == 390781);
+        CHECK(bjdata_2_size == 433557);
+        CHECK(bjdata_3_size == 432964);
         CHECK(bon8_size == 317877);
 
         CHECK((100.0 * double(json_size) / double(json_size)) == Approx(100.0));
@@ -133,6 +157,9 @@ TEST_CASE("Binary Formats" * doctest::skip())
         CHECK((100.0 * double(ubjson_1_size) / double(json_size)) == Approx(78.245));
         CHECK((100.0 * double(ubjson_2_size) / double(json_size)) == Approx(86.795));
         CHECK((100.0 * double(ubjson_3_size) / double(json_size)) == Approx(84.963));
+        CHECK((100.0 * double(bjdata_1_size) / double(json_size)) == Approx(78.109));
+        CHECK((100.0 * double(bjdata_2_size) / double(json_size)) == Approx(86.659));
+        CHECK((100.0 * double(bjdata_3_size) / double(json_size)) == Approx(86.541));
         CHECK((100.0 * double(bon8_size) / double(json_size)) == Approx(63.537));
     }
 
@@ -148,6 +175,9 @@ TEST_CASE("Binary Formats" * doctest::skip())
         const auto ubjson_1_size = json::to_ubjson(j).size();
         const auto ubjson_2_size = json::to_ubjson(j, true).size();
         const auto ubjson_3_size = json::to_ubjson(j, true, true).size();
+        const auto bjdata_1_size = json::to_bjdata(j).size();
+        const auto bjdata_2_size = json::to_bjdata(j, true).size();
+        const auto bjdata_3_size = json::to_bjdata(j, true, true).size();
         const auto bon8_size = json::to_bon8(j).size();
 
         CHECK(json_size == 52508728);
@@ -157,6 +187,9 @@ TEST_CASE("Binary Formats" * doctest::skip())
         CHECK(ubjson_1_size == 50710965);
         CHECK(ubjson_2_size == 51144830);
         CHECK(ubjson_3_size == 49861422);
+        CHECK(bjdata_1_size == 50710965);
+        CHECK(bjdata_2_size == 51144830);
+        CHECK(bjdata_3_size == 51144830);
         CHECK(bon8_size == 45942080);
 
         CHECK((100.0 * double(json_size) / double(json_size)) == Approx(100.0));
@@ -166,6 +199,9 @@ TEST_CASE("Binary Formats" * doctest::skip())
         CHECK((100.0 * double(ubjson_1_size) / double(json_size)) == Approx(96.576));
         CHECK((100.0 * double(ubjson_2_size) / double(json_size)) == Approx(97.402));
         CHECK((100.0 * double(ubjson_3_size) / double(json_size)) == Approx(94.958));
+        CHECK((100.0 * double(bjdata_1_size) / double(json_size)) == Approx(96.576));
+        CHECK((100.0 * double(bjdata_2_size) / double(json_size)) == Approx(97.402));
+        CHECK((100.0 * double(bjdata_3_size) / double(json_size)) == Approx(97.402));
         CHECK((100.0 * double(bon8_size) / double(json_size)) == Approx(87.494));
     }
 
@@ -181,6 +217,9 @@ TEST_CASE("Binary Formats" * doctest::skip())
         const auto ubjson_1_size = json::to_ubjson(j).size();
         const auto ubjson_2_size = json::to_ubjson(j, true).size();
         const auto ubjson_3_size = json::to_ubjson(j, true, true).size();
+        const auto bjdata_1_size = json::to_bjdata(j).size();
+        const auto bjdata_2_size = json::to_bjdata(j, true).size();
+        const auto bjdata_3_size = json::to_bjdata(j, true, true).size();
         const auto bon8_size = json::to_bon8(j).size();
 
         CHECK(json_size == 168677);
@@ -189,6 +228,9 @@ TEST_CASE("Binary Formats" * doctest::skip())
         CHECK(ubjson_1_size == 148695);
         CHECK(ubjson_2_size == 150569);
         CHECK(ubjson_3_size == 150883);
+        CHECK(bjdata_1_size == 148695);
+        CHECK(bjdata_2_size == 150569);
+        CHECK(bjdata_3_size == 150569);
         CHECK(bon8_size == 144463);
 
         CHECK((100.0 * double(json_size) / double(json_size)) == Approx(100.0));
@@ -197,6 +239,9 @@ TEST_CASE("Binary Formats" * doctest::skip())
         CHECK((100.0 * double(ubjson_1_size) / double(json_size)) == Approx(88.153));
         CHECK((100.0 * double(ubjson_2_size) / double(json_size)) == Approx(89.264));
         CHECK((100.0 * double(ubjson_3_size) / double(json_size)) == Approx(89.450));
+        CHECK((100.0 * double(bjdata_1_size) / double(json_size)) == Approx(88.153));
+        CHECK((100.0 * double(bjdata_2_size) / double(json_size)) == Approx(89.264));
+        CHECK((100.0 * double(bjdata_3_size) / double(json_size)) == Approx(89.264));
         CHECK((100.0 * double(bon8_size) / double(json_size)) == Approx(85.644));
     }
 }
