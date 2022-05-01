@@ -2408,34 +2408,6 @@ TEST_CASE("BJData")
                 CHECK(json::from_bjdata(json::to_bjdata(j_type), true, true) == j_type);
                 CHECK(json::from_bjdata(json::to_bjdata(j_size), true, true) == j_size);
             }
-
-            SECTION("do not accept NTFZ markers in ndarray optimized type")
-            {
-                json _;
-                std::vector<uint8_t> v_N = {'[', '$', 'N', '#', '[', '#', 'i', 2, 'i', 1, 'i', 2};
-                std::vector<uint8_t> v_T = {'[', '$', 'T', '#', '[', '#', 'i', 2, 'i', 1, 'i', 2};
-                std::vector<uint8_t> v_F = {'[', '$', 'F', '#', '[', '#', 'i', 2, 'i', 1, 'i', 2};
-                std::vector<uint8_t> v_Z = {'[', '$', 'Z', '#', '[', '#', 'i', 2, 'i', 1, 'i', 2};
-
-                CHECK(json::from_bjdata(v_N, true, true).is_discarded());
-                CHECK(json::from_bjdata(v_T, true, true).is_discarded());
-                CHECK(json::from_bjdata(v_F, true, true).is_discarded());
-                CHECK(json::from_bjdata(v_Z, true, true).is_discarded());
-            }
-
-            SECTION("do not accept NTFZ markers in ndarray optimized type")
-            {
-                json _;
-                std::vector<uint8_t> v_N = {'[', '$', 'N', '#', '[', 'i', 1, 'i', 2, ']'};
-                std::vector<uint8_t> v_T = {'[', '$', 'T', '#', '[', 'i', 1, 'i', 2, ']'};
-                std::vector<uint8_t> v_F = {'[', '$', 'F', '#', '[', 'i', 1, 'i', 2, ']'};
-                std::vector<uint8_t> v_Z = {'[', '$', 'Z', '#', '[', 'i', 1, 'i', 2, ']'};
-
-                CHECK(json::from_bjdata(v_N, true, true).is_discarded());
-                CHECK(json::from_bjdata(v_T, true, true).is_discarded());
-                CHECK(json::from_bjdata(v_F, true, true).is_discarded());
-                CHECK(json::from_bjdata(v_Z, true, true).is_discarded());
-            }
         }
     }
 
@@ -2514,6 +2486,56 @@ TEST_CASE("BJData")
                 json _;
                 CHECK_THROWS_AS(_ = json::from_bjdata(v), json::parse_error&);
                 CHECK_THROWS_WITH(_ = json::from_bjdata(v), "[json.exception.parse_error.112] parse error at byte 4: syntax error while parsing BJData size: expected '#' after type information; last byte: 0x02");
+            }
+
+            SECTION("do not accept NTFZ markers in ndarray optimized type")
+            {
+                json _;
+                std::vector<uint8_t> v_N = {'[', '$', 'N', '#', '[', '#', 'i', 2, 'i', 1, 'i', 2};
+                std::vector<uint8_t> v_T = {'[', '$', 'T', '#', '[', '#', 'i', 2, 'i', 1, 'i', 2};
+                std::vector<uint8_t> v_F = {'[', '$', 'F', '#', '[', '#', 'i', 2, 'i', 1, 'i', 2};
+                std::vector<uint8_t> v_Z = {'[', '$', 'Z', '#', '[', '#', 'i', 2, 'i', 1, 'i', 2};
+
+                CHECK_THROWS_AS(_ = json::from_bjdata(v_N), json::parse_error&);
+                CHECK_THROWS_WITH(_ = json::from_bjdata(v_N), "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing BJData type: marker 0x4E is not a permitted optimized array type");
+                CHECK(json::from_bjdata(v_N, true, false).is_discarded());
+
+                CHECK_THROWS_AS(_ = json::from_bjdata(v_T), json::parse_error&);
+                CHECK_THROWS_WITH(_ = json::from_bjdata(v_T), "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing BJData type: marker 0x54 is not a permitted optimized array type");
+                CHECK(json::from_bjdata(v_T, true, false).is_discarded());
+
+                CHECK_THROWS_AS(_ = json::from_bjdata(v_F), json::parse_error&);
+                CHECK_THROWS_WITH(_ = json::from_bjdata(v_F), "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing BJData type: marker 0x46 is not a permitted optimized array type");
+                CHECK(json::from_bjdata(v_F, true, false).is_discarded());
+
+                CHECK_THROWS_AS(_ = json::from_bjdata(v_Z), json::parse_error&);
+                CHECK_THROWS_WITH(_ = json::from_bjdata(v_Z), "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing BJData type: marker 0x5A is not a permitted optimized array type");
+                CHECK(json::from_bjdata(v_Z, true, false).is_discarded());
+            }
+
+            SECTION("do not accept NTFZ markers in ndarray optimized type")
+            {
+                json _;
+                std::vector<uint8_t> v_N = {'[', '$', 'N', '#', '[', 'i', 1, 'i', 2, ']'};
+                std::vector<uint8_t> v_T = {'[', '$', 'T', '#', '[', 'i', 1, 'i', 2, ']'};
+                std::vector<uint8_t> v_F = {'[', '$', 'F', '#', '[', 'i', 1, 'i', 2, ']'};
+                std::vector<uint8_t> v_Z = {'[', '$', 'Z', '#', '[', 'i', 1, 'i', 2, ']'};
+
+                CHECK_THROWS_AS(_ = json::from_bjdata(v_N), json::parse_error&);
+                CHECK_THROWS_WITH(_ = json::from_bjdata(v_N), "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing BJData type: marker 0x4E is not a permitted optimized array type");
+                CHECK(json::from_bjdata(v_N, true, false).is_discarded());
+
+                CHECK_THROWS_AS(_ = json::from_bjdata(v_T), json::parse_error&);
+                CHECK_THROWS_WITH(_ = json::from_bjdata(v_T), "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing BJData type: marker 0x54 is not a permitted optimized array type");
+                CHECK(json::from_bjdata(v_T, true, false).is_discarded());
+
+                CHECK_THROWS_AS(_ = json::from_bjdata(v_F), json::parse_error&);
+                CHECK_THROWS_WITH(_ = json::from_bjdata(v_F), "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing BJData type: marker 0x46 is not a permitted optimized array type");
+                CHECK(json::from_bjdata(v_F, true, false).is_discarded());
+
+                CHECK_THROWS_AS(_ = json::from_bjdata(v_Z), json::parse_error&);
+                CHECK_THROWS_WITH(_ = json::from_bjdata(v_Z), "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing BJData type: marker 0x5A is not a permitted optimized array type");
+                CHECK(json::from_bjdata(v_Z, true, false).is_discarded());
             }
         }
 
@@ -2626,6 +2648,11 @@ TEST_CASE("BJData")
             CHECK_THROWS_AS(_ = json::from_bjdata(vU), json::parse_error&);
             CHECK_THROWS_WITH(_ = json::from_bjdata(vU), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BJData value: unexpected end of input");
             CHECK(json::from_bjdata(vU, true, false).is_discarded());
+
+            std::vector<uint8_t> v1 = {'[', '$', '['};
+            CHECK_THROWS_AS(_ = json::from_bjdata(v1), json::parse_error&);
+            CHECK_THROWS_WITH(_ = json::from_bjdata(v1), "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing BJData type: marker 0x5B is not a permitted optimized array type");
+            CHECK(json::from_bjdata(v1, true, false).is_discarded());
         }
 
         SECTION("arrays")
@@ -3188,14 +3215,20 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
         {
             SECTION("Array")
             {
+                json _;
                 std::vector<uint8_t> v = {'[', '$', 'N', '#', 'I', 0x00, 0x02};
-                CHECK(json::from_bjdata(v, true, true).is_discarded());
+                CHECK_THROWS_AS(_ = json::from_bjdata(v), json::parse_error&);
+                CHECK_THROWS_WITH(_ = json::from_bjdata(v), "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing BJData type: marker 0x4E is not a permitted optimized array type");
+                CHECK(json::from_bjdata(v, true, false).is_discarded());
             }
 
             SECTION("Object")
             {
+                json _;
                 std::vector<uint8_t> v = {'{', '$', 'Z', '#', 'i', 3, 'i', 4, 'n', 'a', 'm', 'e', 'i', 8, 'p', 'a', 's', 's', 'w', 'o', 'r', 'd', 'i', 5, 'e', 'm', 'a', 'i', 'l'};
-                CHECK(json::from_bjdata(v, true, true).is_discarded());
+                CHECK_THROWS_AS(_ = json::from_bjdata(v), json::parse_error&);
+                CHECK_THROWS_WITH(_ = json::from_bjdata(v), "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing BJData type: marker 0x5A is not a permitted optimized array type");
+                CHECK(json::from_bjdata(v, true, false).is_discarded());
             }
         }
     }

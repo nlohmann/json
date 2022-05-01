@@ -2178,6 +2178,13 @@ class binary_reader
             std::vector<char_int_type> bjdx = {'[', '{', 'S', 'H', 'T', 'F', 'N', 'Z'}; // excluded markers in bjdata optimized type
 
             result.second = get();  // must not ignore 'N', because 'N' maybe the type
+            if (JSON_HEDLEY_UNLIKELY( input_format == input_format_t::bjdata && std::find(bjdx.begin(), bjdx.end(), result.second) != bjdx.end() ))
+            {
+                auto last_token = get_token_string();
+                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                        exception_message(input_format, concat("marker 0x", last_token, " is not a permitted optimized array type"), "type"), nullptr));
+            }
+
             if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format, "type") || (input_format == input_format_t::bjdata && std::find(bjdx.begin(), bjdx.end(), result.second) != bjdx.end() )))
             {
                 return false;
