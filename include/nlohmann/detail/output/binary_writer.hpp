@@ -1758,7 +1758,7 @@ class binary_writer
             {
                 if (j.m_value.number_unsigned > static_cast<typename BasicJsonType::number_unsigned_t>((std::numeric_limits<std::int64_t>::max)()))
                 {
-                    JSON_THROW(out_of_range::create(407, "integer number " + std::to_string(j.m_value.number_unsigned) + " cannot be represented by BON8 as it does not fit int64", j));
+                    JSON_THROW(out_of_range::create(407, "integer number " + std::to_string(j.m_value.number_unsigned) + " cannot be represented by BON8 as it does not fit int64", &j));
                 }
                 write_bon8_integer(static_cast<typename BasicJsonType::number_integer_t>(j.m_value.number_unsigned));
                 return false;

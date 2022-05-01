@@ -2776,7 +2776,7 @@ class binary_reader
             case 0xFE:
             {
                 auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message(input_format_t::bon8, "invalid byte: 0x" + last_token, "value"), BasicJsonType()));
+                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message(input_format_t::bon8, "invalid byte: 0x" + last_token, "value"), nullptr));
             }
 
             default:
