@@ -512,12 +512,15 @@ TEST_CASE("regression tests 2")
 
     SECTION("issue #1647 - compile error when deserializing enum if both non-default from_json and non-member operator== exists for other type")
     {
+        // does not compile on ICPC when targeting C++20
+#if !(defined(__INTEL_COMPILER) && __cplusplus >= 202000)
         {
             json j;
             NonDefaultFromJsonStruct x(j);
             NonDefaultFromJsonStruct y;
             CHECK(x == y);
         }
+#endif
 
         auto val = nlohmann::json("one").get<for_1647>();
         CHECK(val == for_1647::one);
