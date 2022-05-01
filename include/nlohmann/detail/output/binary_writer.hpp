@@ -2060,6 +2060,7 @@ class binary_writer
                 case input_format_t::bson:
                 case input_format_t::json:
                 case input_format_t::ubjson:
+                case input_format_t::bjdata:
                 default:
                     break;
                     // LCOV_EXCL_STOP

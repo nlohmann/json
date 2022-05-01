@@ -11261,7 +11261,7 @@ class binary_reader
             return false;
         }
 
-        if (len != std::size_t(-1))
+        if (len != static_cast<std::size_t>(-1))
         {
             for (std::size_t i = 0; i < len; ++i)
             {
@@ -11295,7 +11295,7 @@ class binary_reader
         if (len != 0)
         {
             string_t key;
-            if (len != std::size_t(-1))
+            if (len != static_cast<std::size_t>(-1))
             {
                 for (std::size_t i = 0; i < len; ++i)
                 {
@@ -16352,6 +16352,7 @@ class binary_writer
                 case input_format_t::bson:
                 case input_format_t::json:
                 case input_format_t::ubjson:
+                case input_format_t::bjdata:
                 default:
                     break;
                     // LCOV_EXCL_STOP
