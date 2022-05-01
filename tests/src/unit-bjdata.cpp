@@ -2626,6 +2626,11 @@ TEST_CASE("BJData")
             CHECK_THROWS_AS(_ = json::from_bjdata(vU), json::parse_error&);
             CHECK_THROWS_WITH(_ = json::from_bjdata(vU), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BJData value: unexpected end of input");
             CHECK(json::from_bjdata(vU, true, false).is_discarded());
+
+            std::vector<uint8_t> v1 = {'[', '$', '['};
+            CHECK_THROWS_AS(_ = json::from_bjdata(v1), json::parse_error&);
+            CHECK_THROWS_WITH(_ = json::from_bjdata(v1), "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing BJData type: marker 0x5B is not a permitted optimized array type");
+            CHECK(json::from_bjdata(v1, true, false).is_discarded());
         }
 
         SECTION("arrays")
