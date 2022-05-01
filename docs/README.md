@@ -13,7 +13,7 @@ If you want to see the documentation for a specific tag or commit hash, you can 
 git clone https://github.com/nlohmann/json.git
 cd json
 git checkout v3.10.2
-make install_venv serve -C doc/mkdocs
+make install_venv serve -C docs/mkdocs
 ```
 
 Open URL <http://127.0.0.1:8000/> in your browser. Replace from any URL from the source code `https://json.nlohmann.me`
