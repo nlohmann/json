@@ -347,8 +347,15 @@ struct is_compatible_string_type
 template<typename BasicJsonType, typename ConstructibleStringType>
 struct is_constructible_string_type
 {
+    // launder type through decltype() to fix compilation failure on ICPC
+#ifdef __INTEL_COMPILER
+    using laundered_type = decltype(std::declval<ConstructibleStringType>());
+#else
+    using laundered_type = ConstructibleStringType;
+#endif
+
     static constexpr auto value =
-        is_constructible<ConstructibleStringType,
+        is_constructible<laundered_type,
         typename BasicJsonType::string_t>::value;
 };
 

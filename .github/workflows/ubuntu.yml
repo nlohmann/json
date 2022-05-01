@@ -112,3 +112,15 @@ jobs:
         run: cmake -S . -B build -DJSON_CI=On
       - name: build
         run: cmake --build build --target ci_cuda_example
+
+  ci_icpc:
+    runs-on: ubuntu-latest
+    container: ghcr.io/nlohmann/json-ci:v2.2.0
+    steps:
+      - uses: actions/checkout@v2
+      - name: cmake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: build
+        run: |
+          . /opt/intel/oneapi/setvars.sh
+          cmake --build build --target ci_icpc

@@ -49,8 +49,12 @@ target_compile_options(test_main PUBLIC
     # https://github.com/nlohmann/json/issues/1114
     $<$<CXX_COMPILER_ID:MSVC>:/bigobj> $<$<BOOL:${MINGW}>:-Wa,-mbig-obj>
 
+    # https://github.com/nlohmann/json/pull/3229
+    $<$<CXX_COMPILER_ID:Intel>:-diag-disable=2196>
+
     $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wno-deprecated;-Wno-float-equal>
     $<$<CXX_COMPILER_ID:GNU>:-Wno-deprecated-declarations>
+    $<$<CXX_COMPILER_ID:Intel>:-diag-disable=1786>
 )
 target_include_directories(test_main PUBLIC
     thirdparty/doctest
