@@ -121,6 +121,6 @@ jobs:
       - name: cmake
         run: cmake -S . -B build -DJSON_CI=On
       - name: build
-        run: >
-          . /opt/intel/oneapi/setvars.sh ;
+        run: |
+          . /opt/intel/oneapi/setvars.sh
           cmake --build build --target ci_icpc
