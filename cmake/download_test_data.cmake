@@ -1,5 +1,5 @@
 set(JSON_TEST_DATA_URL     https://github.com/nlohmann/json_test_data)
-set(JSON_TEST_DATA_VERSION 3.0.0)
+set(JSON_TEST_DATA_VERSION 3.1.0)
 
 # if variable is set, use test data from given directory rather than downloading them
 if(JSON_TestDataDirectory)
