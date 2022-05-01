@@ -12,10 +12,10 @@
 
 /.vs
 
-/doc/mkdocs/docs/examples/
-/doc/mkdocs/docs/__pycache__/
-/doc/mkdocs/site/
-/doc/mkdocs/venv/
-/doc/docset/JSON_for_Modern_C++.docset/
-/doc/docset/JSON_for_Modern_C++.tgz
-/doc/mkdocs/docs/images/json.gif
+/docs/mkdocs/docs/examples/
+/docs/mkdocs/docs/__pycache__/
+/docs/mkdocs/site/
+/docs/mkdocs/venv/
+/docs/docset/JSON_for_Modern_C++.docset/
+/docs/docset/JSON_for_Modern_C++.tgz
+/docs/mkdocs/docs/images/json.gif

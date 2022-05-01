@@ -23,6 +23,7 @@ if(NOT benchmark_POPULATED)
 endif()
 
 # download test data
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake ${CMAKE_MODULE_PATH})
 include(download_test_data)
 
 # benchmark binary
@@ -30,4 +31,4 @@ add_executable(json_benchmarks src/benchmarks.cpp)
 target_compile_features(json_benchmarks PRIVATE cxx_std_11)
 target_link_libraries(json_benchmarks benchmark ${CMAKE_THREAD_LIBS_INIT})
 add_dependencies(json_benchmarks download_test_data)
-target_include_directories(json_benchmarks PRIVATE ${CMAKE_SOURCE_DIR}/../single_include ${CMAKE_BINARY_DIR}/include)
+target_include_directories(json_benchmarks PRIVATE ${CMAKE_SOURCE_DIR}/../../single_include ${CMAKE_BINARY_DIR}/include)

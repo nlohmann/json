@@ -18,5 +18,5 @@ steps:
   - cd build
   - ../cmake-3.20.2/bin/cmake .. -DJSON_FastTests=ON
   - make -j10
-  - cd test
+  - cd tests
   - ../../cmake-3.20.2/bin/ctest -j10
