@@ -303,7 +303,7 @@ TEST_CASE("BON8")
                 SECTION("-2147483649")
                 {
                     // cannot use -2147483649 directly, see https://developercommunity.visualstudio.com/t/-2147483648-c4146-error/141813#T-N229960
-                    json j = std::int64_t(-2147483647) - 2;
+                    json j = static_cast<std::int64_t>(-2147483647) - 2;
                     std::vector<uint8_t> expected = {0x8D, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F, 0xFF, 0xFF, 0xFF};
                     const auto result = json::to_bon8(j);
                     CHECK(result == expected);
