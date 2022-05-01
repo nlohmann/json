@@ -54,6 +54,7 @@ target_compile_options(test_main PUBLIC
 
     $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wno-deprecated;-Wno-float-equal>
     $<$<CXX_COMPILER_ID:GNU>:-Wno-deprecated-declarations>
+    $<$<CXX_COMPILER_ID:Intel>:-diag-disable=1786>
 )
 target_include_directories(test_main PUBLIC
     thirdparty/doctest
