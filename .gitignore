@@ -10,7 +10,14 @@
 /.idea
 /cmake-build-*
 
-/.vs
+/.vs/
+/.vscode/
+
+# clangd cache
+/.cache/
+
+# build directories (vscode-cmake-tools, user-defined, ...)
+/build*/
 
 /docs/mkdocs/docs/examples/
 /docs/mkdocs/docs/__pycache__/
@@ -19,3 +26,8 @@
 /docs/docset/JSON_for_Modern_C++.docset/
 /docs/docset/JSON_for_Modern_C++.tgz
 /docs/mkdocs/docs/images/json.gif
+
+# serve_header
+/serve_header.yml
+/localhost.pem
+/localhost-key.pem
