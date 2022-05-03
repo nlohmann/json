@@ -336,10 +336,6 @@ TEST_CASE("apply*() functions")
         }
     }
 
-    // apply_cb() (which apply_r() is based on) fails on Clang
-    // due to is_invocable not yielding true as expected
-    // while testing the invocable implementation Clang 3.5 crashed
-#if !defined(__clang__) || (defined(__clang__) && __clang_major__ == 3 && __clang_minor__ < 6)
     SECTION("apply_r()")
     {
         SECTION("value types")
@@ -653,6 +649,8 @@ TEST_CASE("apply*() functions")
                 CHECK(f.bar == 42);
             }
         }
+
+        // add functor
     }
 }
 

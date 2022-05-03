@@ -23777,7 +23777,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     R apply_r(Fn&& f, Args&& ... args)
     {
         R out;
-        apply_cb([&out](R && r) noexcept(noexcept(out = std::forward<decltype(r)>(r)))
+        // dynamic noexcept specifier fails to compile on Clang <3.6
+        apply_cb([&out](R && r)
+#if !defined(__clang__) || (defined(__clang__) && __clang_major__ == 3 && __clang_minor__ > 5)
+                 noexcept(noexcept(out = std::forward<decltype(r)>(r)))
+#endif
         {
             out = std::forward<decltype(r)>(r);
         }, std::forward<Fn>(f), std::forward<Args>(args)...);
@@ -23788,7 +23792,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     R apply_r(Fn&& f, Args&& ... args) const
     {
         R out;
-        apply_cb([&out](R && r) noexcept(noexcept(out = std::forward<decltype(r)>(r)))
+        // dynamic noexcept specifier fails to compile on Clang <3.6
+        apply_cb([&out](R && r)
+#if !defined(__clang__) || (defined(__clang__) && __clang_major__ == 3 && __clang_minor__ > 5)
+                 noexcept(noexcept(out = std::forward<decltype(r)>(r)))
+#endif
         {
             out = std::forward<decltype(r)>(r);
         }, std::forward<Fn>(f), std::forward<Args>(args)...);
