@@ -23599,6 +23599,41 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         apply_error<ConstThis>();
     }
 
+    // workaround Clang <4 and GCC <5.2 not being able to construct tuples
+    // of basic_json by wrapping it using std::reference_wrapper
+#if (defined(__clang__) && __clang_major__ < 4) || \
+    (defined(__GNUC__) && !JSON_HEDLEY_GCC_VERSION_CHECK(5, 2, 0))
+    using apply_basic_json_needs_to_be_wrapped = std::true_type;
+#else
+    using apply_basic_json_needs_to_be_wrapped = std::false_type;
+#endif
+
+    template<typename Arg>
+    using apply_arg_needs_to_be_wrapped = std::integral_constant < bool,
+            (apply_basic_json_needs_to_be_wrapped::value
+             && detail::is_basic_json<detail::uncvref_t<Arg>>::value) >;
+
+    template < typename Arg,
+               detail::enable_if_t < apply_arg_needs_to_be_wrapped<Arg>::value&& std::is_const<Arg>::value, int > = 0 >
+    static auto apply_maybe_wrap_arg(Arg && arg) -> decltype(std::cref(std::forward<Arg>(arg)))
+    {
+        return std::cref(std::forward<Arg>(arg)); // LCOV_EXCL_LINE
+    }
+
+    template < typename Arg,
+               detail::enable_if_t < apply_arg_needs_to_be_wrapped<Arg>::value&& !std::is_const<Arg>::value, int > = 0 >
+    static auto apply_maybe_wrap_arg(Arg && arg) -> decltype(std::ref(std::forward<Arg>(arg)))
+    {
+        return std::ref(std::forward<Arg>(arg)); // LCOV_EXCL_LINE
+    }
+
+    template < typename Arg,
+               detail::enable_if_t < !apply_arg_needs_to_be_wrapped<Arg>::value, int > = 0 >
+    static auto apply_maybe_wrap_arg(Arg && arg) -> decltype(std::forward<Arg>(arg))
+    {
+        return std::forward<Arg>(arg);
+    }
+
     // convert arguments to tuple; insert basic_json_value placeholder if missing
     template < bool ConstThis, typename Value, typename ResultCallback, typename CallbackArg, typename Fn, typename FnArg, typename... Args,
                detail::enable_if_t < std::is_member_pointer<Fn>::value
@@ -23609,7 +23644,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         apply_invoke<ConstThis>(
             std::forward<Value>(val),
             std::forward<ResultCallback>(cb), std::forward<CallbackArg>(cb_arg),
-            std::forward<Fn>(f), std::forward_as_tuple(f_arg, ::nlohmann::placeholders::basic_json_value, args...),
+            std::forward<Fn>(f), std::forward_as_tuple(f_arg, ::nlohmann::placeholders::basic_json_value, apply_maybe_wrap_arg(args)...),
             detail::make_index_sequence < 2 + sizeof...(args) > ());
     }
 
@@ -23621,7 +23656,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         apply_invoke<ConstThis>(
             std::forward<Value>(val),
             std::forward<ResultCallback>(cb), std::forward<CallbackArg>(cb_arg),
-            std::forward<Fn>(f), std::forward_as_tuple(::nlohmann::placeholders::basic_json_value, args...),
+            std::forward<Fn>(f), std::forward_as_tuple(::nlohmann::placeholders::basic_json_value, apply_maybe_wrap_arg(args)...),
             detail::make_index_sequence < 1 + sizeof...(args) > ());
     }
 
@@ -23632,7 +23667,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         apply_invoke<ConstThis>(
             std::forward<Value>(val),
             std::forward<ResultCallback>(cb), std::forward<CallbackArg>(cb_arg),
-            std::forward<Fn>(f), std::forward_as_tuple(args...),
+            std::forward<Fn>(f), std::forward_as_tuple(apply_maybe_wrap_arg(args)...),
             detail::make_index_sequence<sizeof...(args)>());
     }
 
