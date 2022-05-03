@@ -1,3 +1,6 @@
+// invoke implementation fails to compile on GCC 8.1 (MinGW); exclude the whole test
+#if !defined(__GNUC__) || (defined (__GNUC__) && !(__GNUC__ == 8 && __GNUC_MINOR__ == 1))
+
 #include "doctest_compatibility.h"
 
 DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
@@ -657,3 +660,5 @@ TEST_CASE("apply*() functions")
 DOCTEST_CLANG_SUPPRESS_WARNING_POP
 DOCTEST_GCC_SUPPRESS_WARNING_POP
 DOCTEST_MSVC_SUPPRESS_WARNING_POP
+
+#endif
