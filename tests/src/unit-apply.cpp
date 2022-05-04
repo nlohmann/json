@@ -1,5 +1,7 @@
-// invoke implementation fails to compile on GCC 8.1 (MinGW); exclude the whole test
-#if !defined(__GNUC__) || (defined (__GNUC__) && !(__GNUC__ == 8 && __GNUC_MINOR__ == 1))
+// invoke implementation fails to compile on GCC 8.1 (MinGW)
+// apply_invoke overload resolution fails for unknown reason on MSVC 2015
+#if !(defined(__GNUC__) || defined(_MSC_VER)) || (defined (__GNUC__) && !(__GNUC__ == 8 && __GNUC_MINOR__ == 1)) \
+    || (defined(_MSC_VER) && _MSC_VER > 1900)
 
 #include "doctest_compatibility.h"
 
@@ -17,6 +19,7 @@ DOCTEST_GCC_SUPPRESS_WARNING("-Wsign-conversion")
 DOCTEST_MSVC_SUPPRESS_WARNING_PUSH
 DOCTEST_MSVC_SUPPRESS_WARNING(4244) // 'conversion' conversion from 'type1' to 'type2', possible loss of data
 DOCTEST_MSVC_SUPPRESS_WARNING(4267) // 'var' : conversion from 'size_t' to 'type', possible loss of data
+
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
