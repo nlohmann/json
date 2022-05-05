@@ -3064,6 +3064,21 @@ void as_const(const T&&) = delete;
 
 #endif
 
+#ifdef JSON_HAS_CPP_20
+
+// the following utilities are natively available in C++20
+using std::type_identity;
+
+#else
+
+template<typename T>
+struct type_identity
+{
+    using type = T;
+};
+
+#endif
+
 // dispatch utility (taken from ranges-v3)
 template<unsigned N> struct priority_tag : priority_tag < N - 1 > {};
 template<> struct priority_tag<0> {};
@@ -3182,23 +3197,28 @@ NLOHMANN_CAN_CALL_STD_FUNC_IMPL(end);
 
 namespace nlohmann
 {
-namespace detail
-{
-
-template<int I>
-struct placeholder_t
-{
-    static constexpr int value = I;
-
-    explicit placeholder_t() = default;
-};
-
-} // namespace detail
-
 namespace placeholders
 {
 
-static constexpr detail::placeholder_t < -1 > basic_json_value{};
+struct basic_json_value_placeholder_t
+{
+    explicit basic_json_value_placeholder_t() = default;
+};
+
+static constexpr basic_json_value_placeholder_t basic_json_value{};
+
+template<typename T>
+struct basic_json_value_as_placeholder_t
+{
+    using type = T;
+    explicit basic_json_value_as_placeholder_t() = default;
+};
+
+template<typename T>
+inline constexpr basic_json_value_as_placeholder_t<T> basic_json_value_as() noexcept
+{
+    return basic_json_value_as_placeholder_t<T> {};
+}
 
 } // namespace placeholders
 } // namespace nlohmann
@@ -3812,8 +3832,22 @@ struct is_ordered_map
 
 // checks if a type is a basic_json_value placeholder
 template<typename T>
-using is_basic_json_value_placeholder = typename std::is_same <
-                                        uncvref_t<T>, uncvref_t<decltype(::nlohmann::placeholders::basic_json_value) >>::type;
+using is_basic_json_value_placeholder =
+    typename std::is_same<uncvref_t<T>, ::nlohmann::placeholders::basic_json_value_placeholder_t>::type;
+
+template<typename T>
+using is_basic_json_value_as_placeholder =
+    typename is_specialization_of<::nlohmann::placeholders::basic_json_value_as_placeholder_t, uncvref_t<T>>::type;
+
+template<typename T>
+using is_any_basic_json_value_placeholder =
+    typename disjunction<is_basic_json_value_placeholder<T>, is_basic_json_value_as_placeholder<T>>::type;
+
+template<typename From, typename To>
+using detect_is_static_castable = decltype(static_cast<To>(std::declval<From>()));
+
+template<typename From, typename To>
+using is_static_castable = is_detected<detect_is_static_castable, From, To>;
 
 // to avoid useless casts (see https://github.com/nlohmann/json/issues/2893#issuecomment-889152324)
 template < typename T, typename U, enable_if_t < !std::is_same<T, U>::value, int > = 0 >
@@ -14030,10 +14064,12 @@ class json_ref
 // #include <nlohmann/detail/meta/invoke.hpp>
 
 
+// #include "nlohmann/detail/meta/cpp_future.hpp"
+
 #ifdef JSON_HAS_CPP_17
     #include <functional> // invoke
 #endif
-#include <type_traits> // invoke_result, is_base_of, is_function, is_invocable, is_object, is_same, remove_reference
+#include <type_traits> // is_base_of, is_function, is_object, is_same, remove_reference
 #include <utility> // declval, forward
 
 // #include <nlohmann/detail/macro_scope.hpp>
@@ -14047,15 +14083,6 @@ namespace nlohmann
 {
 namespace detail
 {
-
-#ifdef JSON_HAS_CPP_17
-
-// the following utilities are natively available in C++17
-using std::invoke;
-using std::invoke_result;
-using std::is_invocable;
-
-#else
 
 // invoke_impl derived from the C++ standard draft [func.require] for qslib (proprietary)
 // modified to use standard library type traits and utilities where possible
@@ -14094,6 +14121,14 @@ auto invoke_impl(T U::*f, V && v, Args && ... /*unused*/) -> decltype((*v).*f)
     return (*v).*f;
 }
 
+// allow setting values by "invoking" data member pointers with one argument
+template < typename T, typename U, typename V, typename Arg, enable_if_t<
+               std::is_object<T>::value, int> = 0>
+auto invoke_impl(T U::*f, V && v, Arg && arg) -> decltype((*v).*f = std::forward<Arg>(arg))
+{
+    return (*v).*f = std::forward<Arg>(arg);
+}
+
 template <typename Fn, typename... Args>
 using detect_invocable = decltype(invoke_impl(std::declval<Fn>(), std::declval<Args>()...));
 
@@ -14121,8 +14156,6 @@ using invoke_result = internal::invoke_result<void, Fn, Args...>;
 template <typename Fn, typename... Args>
 using is_invocable = typename is_detected<internal::detect_invocable, Fn, Args...>::type;
 
-#endif
-
 // used as a dummy argument
 struct null_arg_t
 {
@@ -14134,11 +14167,38 @@ static constexpr null_arg_t null_arg{};
 template<typename T>
 using is_null_arg = typename std::is_same<uncvref_t<T>, null_arg_t>::type;
 
+template<typename T>
+using detect_type = typename T::type;
+
+template<typename Value, typename Arg, bool HasType = is_detected<detect_type, Arg>::value>
+struct apply_value_or_value_as_if_castable
+{
+    using type = Value;
+};
+
+template<typename Value, typename Arg>
+struct apply_value_or_value_as_if_castable<Value, Arg, true>
+{
+    using as_type = typename Arg::type;
+    using type = typename std::conditional <
+                 detail::is_static_castable<Value, as_type>::value,
+                 as_type, Value >::type;
+};
+
+template<typename Value, typename Arg>
+using apply_value_or_value_as_t = typename std::conditional <
+                                  is_basic_json_value_as_placeholder<Arg>::value,
+                                  typename apply_value_or_value_as_if_castable<Value, uncvref_t<Arg>>::type,
+                                  Value >::type;
+
 template<typename Value, typename Tuple, std::size_t I>
 struct apply_value_or_arg
 {
     using element_type = typename std::tuple_element<I, Tuple>::type;
-    using type = typename std::conditional<detail::is_basic_json_value_placeholder<element_type>::value, Value, element_type>::type;
+    using type = typename std::conditional <
+                 is_any_basic_json_value_placeholder<element_type>::value,
+                 apply_value_or_value_as_t<Value, element_type>,
+                 element_type >::type;
 };
 
 template<typename Value, typename Fn, typename Tuple, std::size_t... I>
@@ -18593,6 +18653,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     // placeholder for the stored JSON value used in apply*() functions
     static constexpr decltype(::nlohmann::placeholders::basic_json_value) value_placeholder
         = ::nlohmann::placeholders::basic_json_value;
+
+    template<typename T>
+    static constexpr auto value_as_placeholder()
+    noexcept -> decltype(::nlohmann::placeholders::basic_json_value_as<T>())
+    {
+        return ::nlohmann::placeholders::basic_json_value_as<T>();
+    }
 
     ////////////////
     // exceptions //
@@ -23511,14 +23578,32 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
   private:
     template<typename Arg, typename Value,
              detail::enable_if_t<detail::is_basic_json_value_placeholder<Arg>::value, int> = 0>
-    static auto apply_resolve_placeholder(Arg &&  /*arg*/, Value && val) -> decltype(std::forward<Value>(val))
+    auto apply_resolve_placeholder(Arg &&  /*arg*/, Value && val) const -> decltype(std::forward<Value>(val))
     {
         return std::forward<Value>(val);
     }
 
+    template < typename Arg, typename Value, typename AsType = typename detail::uncvref_t<Arg>::type,
+               detail::enable_if_t < detail::is_basic_json_value_as_placeholder<Arg>::value
+                                     && detail::is_static_castable<Value, AsType>::value, int > = 0 >
+    auto apply_resolve_placeholder(Arg &&  /*arg*/, Value && val) const -> decltype(static_cast<AsType>(std::forward<Value>(val)))
+    {
+        return static_cast<AsType>(std::forward<Value>(val));
+    }
+
+    template < typename Arg, typename Value, typename AsType = typename detail::uncvref_t<Arg>::type,
+               detail::enable_if_t < detail::is_basic_json_value_as_placeholder<Arg>::value
+                                     && !detail::is_static_castable<Value, AsType>::value, int > = 0 >
+    //static auto apply_resolve_placeholder(Arg &&  /*arg*/, Value && val) -> decltype(std::forward<Value>(val))
+    auto apply_resolve_placeholder(Arg &&  /*arg*/, Value && val) const -> decltype(std::forward<Value>(val))
+    {
+        JSON_THROW(type_error::create(399, detail::concat("cannot cast to requested type"), this));
+        return std::forward<Value>(val);
+    }
+
     template < typename Arg, typename Value,
-               detail::enable_if_t < !detail::is_basic_json_value_placeholder<Arg>::value, int > = 0 >
-    static auto apply_resolve_placeholder(Arg && arg, Value&&   /*val*/) -> decltype(std::forward<Arg>(arg))
+               detail::enable_if_t < !detail::is_any_basic_json_value_placeholder<Arg>::value, int > = 0 >
+    auto apply_resolve_placeholder(Arg && arg, Value&&   /*val*/) const -> decltype(std::forward<Arg>(arg))
     {
         return std::forward<Arg>(arg);
     }
@@ -23637,31 +23722,31 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     // convert arguments to tuple; insert basic_json_value placeholder if missing
     template < bool ConstThis, typename Value, typename ResultCallback, typename CallbackArg, typename Fn, typename FnArg, typename... Args,
                detail::enable_if_t < std::is_member_pointer<Fn>::value
-                                     && !detail::is_basic_json_value_placeholder<FnArg>::value
-                                     && !detail::disjunction<detail::is_basic_json_value_placeholder<Args>...>::value, int > = 0 >
+                                     && !detail::is_any_basic_json_value_placeholder<FnArg>::value
+                                     && !detail::disjunction<detail::is_any_basic_json_value_placeholder<Args>...>::value, int > = 0 >
     void apply_make_tuple(Value && val, ResultCallback && cb, CallbackArg && cb_arg, Fn && f, FnArg && f_arg, Args && ... args) const
     {
         apply_invoke<ConstThis>(
             std::forward<Value>(val),
             std::forward<ResultCallback>(cb), std::forward<CallbackArg>(cb_arg),
-            std::forward<Fn>(f), std::forward_as_tuple(f_arg, ::nlohmann::placeholders::basic_json_value, apply_maybe_wrap_arg(args)...),
+            std::forward<Fn>(f), std::forward_as_tuple(f_arg, value_placeholder, apply_maybe_wrap_arg(args)...),
             detail::make_index_sequence < 2 + sizeof...(args) > ());
     }
 
     template < bool ConstThis, typename Value, typename ResultCallback, typename CallbackArg, typename Fn, typename... Args,
                detail::enable_if_t < !std::is_member_pointer<Fn>::value
-                                     && !detail::disjunction<detail::is_basic_json_value_placeholder<Args>...>::value, int > = 0 >
+                                     && !detail::disjunction<detail::is_any_basic_json_value_placeholder<Args>...>::value, int > = 0 >
     void apply_make_tuple(Value && val, ResultCallback && cb, CallbackArg && cb_arg, Fn && f, Args && ... args) const
     {
         apply_invoke<ConstThis>(
             std::forward<Value>(val),
             std::forward<ResultCallback>(cb), std::forward<CallbackArg>(cb_arg),
-            std::forward<Fn>(f), std::forward_as_tuple(::nlohmann::placeholders::basic_json_value, apply_maybe_wrap_arg(args)...),
+            std::forward<Fn>(f), std::forward_as_tuple(value_placeholder, apply_maybe_wrap_arg(args)...),
             detail::make_index_sequence < 1 + sizeof...(args) > ());
     }
 
     template<bool ConstThis, typename Value, typename ResultCallback, typename CallbackArg, typename Fn, typename... Args,
-             detail::enable_if_t<detail::disjunction<detail::is_basic_json_value_placeholder<Args>...>::value, int> = 0>
+             detail::enable_if_t<detail::disjunction<detail::is_any_basic_json_value_placeholder<Args>...>::value, int> = 0>
     void apply_make_tuple(Value && val, ResultCallback && cb, CallbackArg && cb_arg, Fn && f, Args && ... args) const
     {
         apply_invoke<ConstThis>(

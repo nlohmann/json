@@ -176,6 +176,21 @@ void as_const(const T&&) = delete;
 
 #endif
 
+#ifdef JSON_HAS_CPP_20
+
+// the following utilities are natively available in C++20
+using std::type_identity;
+
+#else
+
+template<typename T>
+struct type_identity
+{
+    using type = T;
+};
+
+#endif
+
 // dispatch utility (taken from ranges-v3)
 template<unsigned N> struct priority_tag : priority_tag < N - 1 > {};
 template<> struct priority_tag<0> {};

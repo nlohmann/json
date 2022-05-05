@@ -557,8 +557,22 @@ struct is_ordered_map
 
 // checks if a type is a basic_json_value placeholder
 template<typename T>
-using is_basic_json_value_placeholder = typename std::is_same <
-                                        uncvref_t<T>, uncvref_t<decltype(::nlohmann::placeholders::basic_json_value) >>::type;
+using is_basic_json_value_placeholder =
+    typename std::is_same<uncvref_t<T>, ::nlohmann::placeholders::basic_json_value_placeholder_t>::type;
+
+template<typename T>
+using is_basic_json_value_as_placeholder =
+    typename is_specialization_of<::nlohmann::placeholders::basic_json_value_as_placeholder_t, uncvref_t<T>>::type;
+
+template<typename T>
+using is_any_basic_json_value_placeholder =
+    typename disjunction<is_basic_json_value_placeholder<T>, is_basic_json_value_as_placeholder<T>>::type;
+
+template<typename From, typename To>
+using detect_is_static_castable = decltype(static_cast<To>(std::declval<From>()));
+
+template<typename From, typename To>
+using is_static_castable = is_detected<detect_is_static_castable, From, To>;
 
 // to avoid useless casts (see https://github.com/nlohmann/json/issues/2893#issuecomment-889152324)
 template < typename T, typename U, enable_if_t < !std::is_same<T, U>::value, int > = 0 >

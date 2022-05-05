@@ -2,23 +2,28 @@
 
 namespace nlohmann
 {
-namespace detail
-{
-
-template<int I>
-struct placeholder_t
-{
-    static constexpr int value = I;
-
-    explicit placeholder_t() = default;
-};
-
-} // namespace detail
-
 namespace placeholders
 {
 
-static constexpr detail::placeholder_t < -1 > basic_json_value{};
+struct basic_json_value_placeholder_t
+{
+    explicit basic_json_value_placeholder_t() = default;
+};
+
+static constexpr basic_json_value_placeholder_t basic_json_value{};
+
+template<typename T>
+struct basic_json_value_as_placeholder_t
+{
+    using type = T;
+    explicit basic_json_value_as_placeholder_t() = default;
+};
+
+template<typename T>
+inline constexpr basic_json_value_as_placeholder_t<T> basic_json_value_as() noexcept
+{
+    return basic_json_value_as_placeholder_t<T> {};
+}
 
 } // namespace placeholders
 } // namespace nlohmann

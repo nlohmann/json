@@ -1,9 +1,10 @@
 #pragma once
 
+#include "nlohmann/detail/meta/cpp_future.hpp"
 #ifdef JSON_HAS_CPP_17
     #include <functional> // invoke
 #endif
-#include <type_traits> // invoke_result, is_base_of, is_function, is_invocable, is_object, is_same, remove_reference
+#include <type_traits> // is_base_of, is_function, is_object, is_same, remove_reference
 #include <utility> // declval, forward
 
 #include <nlohmann/detail/macro_scope.hpp>
@@ -14,15 +15,6 @@ namespace nlohmann
 {
 namespace detail
 {
-
-#ifdef JSON_HAS_CPP_17
-
-// the following utilities are natively available in C++17
-using std::invoke;
-using std::invoke_result;
-using std::is_invocable;
-
-#else
 
 // invoke_impl derived from the C++ standard draft [func.require] for qslib (proprietary)
 // modified to use standard library type traits and utilities where possible
@@ -61,6 +53,14 @@ auto invoke_impl(T U::*f, V && v, Args && ... /*unused*/) -> decltype((*v).*f)
     return (*v).*f;
 }
 
+// allow setting values by "invoking" data member pointers with one argument
+template < typename T, typename U, typename V, typename Arg, enable_if_t<
+               std::is_object<T>::value, int> = 0>
+auto invoke_impl(T U::*f, V && v, Arg && arg) -> decltype((*v).*f = std::forward<Arg>(arg))
+{
+    return (*v).*f = std::forward<Arg>(arg);
+}
+
 template <typename Fn, typename... Args>
 using detect_invocable = decltype(invoke_impl(std::declval<Fn>(), std::declval<Args>()...));
 
@@ -88,8 +88,6 @@ using invoke_result = internal::invoke_result<void, Fn, Args...>;
 template <typename Fn, typename... Args>
 using is_invocable = typename is_detected<internal::detect_invocable, Fn, Args...>::type;
 
-#endif
-
 // used as a dummy argument
 struct null_arg_t
 {
@@ -101,11 +99,38 @@ static constexpr null_arg_t null_arg{};
 template<typename T>
 using is_null_arg = typename std::is_same<uncvref_t<T>, null_arg_t>::type;
 
+template<typename T>
+using detect_type = typename T::type;
+
+template<typename Value, typename Arg, bool HasType = is_detected<detect_type, Arg>::value>
+struct apply_value_or_value_as_if_castable
+{
+    using type = Value;
+};
+
+template<typename Value, typename Arg>
+struct apply_value_or_value_as_if_castable<Value, Arg, true>
+{
+    using as_type = typename Arg::type;
+    using type = typename std::conditional <
+                 detail::is_static_castable<Value, as_type>::value,
+                 as_type, Value >::type;
+};
+
+template<typename Value, typename Arg>
+using apply_value_or_value_as_t = typename std::conditional <
+                                  is_basic_json_value_as_placeholder<Arg>::value,
+                                  typename apply_value_or_value_as_if_castable<Value, uncvref_t<Arg>>::type,
+                                  Value >::type;
+
 template<typename Value, typename Tuple, std::size_t I>
 struct apply_value_or_arg
 {
     using element_type = typename std::tuple_element<I, Tuple>::type;
-    using type = typename std::conditional<detail::is_basic_json_value_placeholder<element_type>::value, Value, element_type>::type;
+    using type = typename std::conditional <
+                 is_any_basic_json_value_placeholder<element_type>::value,
+                 apply_value_or_value_as_t<Value, element_type>,
+                 element_type >::type;
 };
 
 template<typename Value, typename Fn, typename Tuple, std::size_t... I>
