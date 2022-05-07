@@ -123,6 +123,12 @@
     #endif
 #endif
 
+#ifdef JSON_HAS_CPP_17
+    #define JSON_INLINE_VARIABLE inline
+#else
+    #define JSON_INLINE_VARIABLE
+#endif
+
 #if JSON_HEDLEY_HAS_ATTRIBUTE(no_unique_address)
     #define JSON_NO_UNIQUE_ADDRESS [[no_unique_address]]
 #else
