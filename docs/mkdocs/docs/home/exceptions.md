@@ -295,12 +295,27 @@ When parsing CBOR or MessagePack, the byte vector ends before the complete value
 
 ### json.exception.parse_error.112
 
-Not all types of CBOR or MessagePack are supported. This exception occurs if an unsupported byte was read.
+An unexpected byte was read in a [binary format](../features/binary_formats/index.md) or length information is invalid ([BSON](../features/binary_formats/bson.md)).
 
 !!! failure "Example message"
 
     ```
     [json.exception.parse_error.112] parse error at byte 1: syntax error while parsing CBOR value: invalid byte: 0x1C
+    ```
+    ```
+    [json.exception.parse_error.112] parse error at byte 1: syntax error while parsing MessagePack value: invalid byte: 0xC1
+    ```
+    ```
+    [json.exception.parse_error.112] parse error at byte 4: syntax error while parsing BJData size: expected '#' after type information; last byte: 0x02
+    ```
+    ```
+    [json.exception.parse_error.112] parse error at byte 4: syntax error while parsing UBJSON size: expected '#' after type information; last byte: 0x02
+    ```
+    ```
+    [json.exception.parse_error.112] parse error at byte 10: syntax error while parsing BSON string: string length must be at least 1, is -2147483648
+    ```
+    ```
+    [json.exception.parse_error.112] parse error at byte 15: syntax error while parsing BSON binary: byte array length cannot be negative, is -1
     ```
 
 ### json.exception.parse_error.113
