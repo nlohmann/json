@@ -94,31 +94,14 @@ class sax_event_consumer : public json::json_sax_t
 
 int main()
 {
-    // a JSON text
-    auto text = R"(
-    {
-        "Image": {
-            "Width":  800,
-            "Height": 600,
-            "Title":  "View from 15th Floor",
-            "Thumbnail": {
-                "Url":    "http://www.example.com/image/481989943",
-                "Height": 125,
-                "Width":  100
-            },
-            "Animated" : false,
-            "IDs": [116, 943, 234, -38793],
-            "DeletionDate": null,
-            "Distance": 12.723374634
-        }
-    }]
-    )";
+    // CBOR byte string
+    std::vector<std::uint8_t> vec = {{0x44, 0xcA, 0xfe, 0xba, 0xbe}};
 
     // create a SAX event consumer object
     sax_event_consumer sec;
 
-    // parse JSON
-    bool result = json::sax_parse(text, &sec);
+    // parse CBOR
+    bool result = json::sax_parse(vec, &sec, json::input_format_t::cbor);
 
     // output the recorded events
     for (auto& event : sec.events)

@@ -31,6 +31,22 @@ bson
 bjdata
 :   BJData (Binary JData)
 
+## Examples
+
+??? example
+
+    The example below shows how an `input_format_t` enum value is passed to `sax_parse` to set the input format to CBOR.
+
+    ```cpp
+    --8<-- "examples/sax_parse__binary.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/sax_parse__binary.output"
+    ```
+
 ## Version history
 
 - Added in version 3.2.0.
