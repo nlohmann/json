@@ -83,7 +83,8 @@ def check_structure():
                             report('structure/section_order', f'{file}:{lineno+1}', f'section "{current_section}" is in an unexpected order (should be before "{expected_sections[section_idx]}")')
                         section_idx = idx
                     else:
-                        report('structure/unknown_section', f'{file}:{lineno+1}', f'section "{current_section}" is not part of the expected sections')
+                        if 'index.md' not in file:  # index.md files may have a different structure
+                            report('structure/unknown_section', f'{file}:{lineno+1}', f'section "{current_section}" is not part of the expected sections')
 
                 # code example
                 if line == '```cpp' and section_idx == -1:
@@ -107,9 +108,10 @@ def check_structure():
 
                 previous_line = line
 
-            for required_section in required_sections:
-                if required_section not in existing_sections:
-                    report('structure/missing_section', f'{file}:{lineno+1}', f'required section "{required_section}" was not found')
+            if 'index.md' not in file:  # index.md files may have a different structure
+                for required_section in required_sections:
+                    if required_section not in existing_sections:
+                        report('structure/missing_section', f'{file}:{lineno+1}', f'required section "{required_section}" was not found')
 
 
 def check_examples():
