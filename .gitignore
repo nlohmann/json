@@ -19,6 +19,10 @@
 # build directories (vscode-cmake-tools, user-defined, ...)
 /build*/
 
+# fuzzers
+/tests/parse_*_fuzzer
+/tests/corpus_*
+
 /docs/mkdocs/docs/examples/
 /docs/mkdocs/docs/__pycache__/
 /docs/mkdocs/site/
