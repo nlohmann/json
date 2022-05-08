@@ -44,13 +44,13 @@ Linear.
 
 ## Notes
 
-!!! note
+!!! note "Comparing special values"
 
     - NaN values never compare equal to themselves or to other NaN values.
     - JSON `#!cpp null` values are all equal.
     - Discarded values never compare equal to themselves.
 
-!!! note
+!!! note "Comparing floating-point numbers"
 
     Floating-point numbers inside JSON values numbers are compared with `json::number_float_t::operator==` which is
     `double::operator==` by default. To compare floating-point while respecting an epsilon, an alternative

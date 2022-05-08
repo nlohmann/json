@@ -1,6 +1,5 @@
 # <small>nlohmann::basic_json::</small>object_comparator_t
 
-
 ```cpp
 using object_comparator_t = typename object_t::key_compare;
 // or

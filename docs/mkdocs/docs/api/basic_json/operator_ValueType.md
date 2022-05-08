@@ -56,7 +56,6 @@ Linear in the size of the JSON value.
     [`JSON_USE_IMPLICIT_CONVERSIONS`](../macros/json_use_implicit_conversions.md) to `0` and replace any implicit
     conversions with calls to [`get`](../basic_json/get.md).
 
-
 ## Examples
 
 ??? example

@@ -23,6 +23,19 @@ The default value is detected based on preprocessor macros such as `#!cpp __cplu
 - `#!cpp JSON_HAS_CPP_11` is always defined.
 - All macros are undefined outside the library.
 
+## Examples
+
+??? example
+
+    The code below forces the library to use the C++14 standard:
+
+    ```cpp
+    #define JSON_HAS_CPP_14 1
+    #include <nlohmann/json.hpp>
+
+    ...
+    ```
+
 ## Version history
 
 - Added in version 3.10.5.

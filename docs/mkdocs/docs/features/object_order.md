@@ -42,30 +42,13 @@ If you do want to preserve the **insertion order**, you can try the type [`nlohm
 ??? example
 
     ```cpp
-    #include <iostream>
-    #include <nlohmann/json.hpp>
-    
-    using ordered_json = nlohmann::ordered_json;
-    
-    int main()
-    {
-        ordered_json j;
-        j["one"] = 1;
-        j["two"] = 2;
-        j["three"] = 3;
-        
-        std::cout << j.dump(2) << '\n';
-    }
+    --8<-- "examples/ordered_json.cpp"
     ```
     
     Output:
     
     ```json
-    {
-      "one": 1,
-      "two": 2,
-      "three": 3
-    }
+    --8<-- "examples/ordered_json.output"
     ```
 
 Alternatively, you can use a more sophisticated ordered map like [`tsl::ordered_map`](https://github.com/Tessil/ordered-map) ([integration](https://github.com/nlohmann/json/issues/546#issuecomment-304447518)) or [`nlohmann::fifo_map`](https://github.com/nlohmann/fifo_map) ([integration](https://github.com/nlohmann/json/issues/485#issuecomment-333652309)).
