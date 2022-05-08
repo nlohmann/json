@@ -6,7 +6,8 @@ enum class input_format_t {
     cbor,
     msgpack,
     ubjson,
-    bson
+    bson,
+    bjdata
 };
 ```
 
@@ -26,6 +27,9 @@ ubjson
 
 bson
 :   BSON (Binary JSON)
+
+bjdata
+:   BJData (Binary JData)
 
 ## Version history
 
