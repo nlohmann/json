@@ -20,6 +20,23 @@ replace
 ignore
 :   ignore invalid UTF-8 sequences; all bytes are copied to the output unchanged
 
+## Examples
+
+??? example
+
+    The example below shows how the different values of the `error_handler_t` influence the behavior of
+    [`dump`](dump.md) when reading serializing an invalid UTF-8 sequence.
+
+    ```cpp
+    --8<-- "examples/error_handler_t.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/error_handler_t.output"
+    ```
+
 ## Version history
 
 - Added in version 3.4.0.
