@@ -2430,7 +2430,7 @@ class binary_reader
                 {'m', "uint32"}, {'l', "int32"}, {'M', "uint64"}, {'L', "int64"}, {'d', "single"}, {'D', "double"}, {'C', "char"}
             };
 
-            size_and_type.second &= ~(256);
+            size_and_type.second -= 256;
 
             string_t key = "_ArrayType_";
             if (JSON_HEDLEY_UNLIKELY(bjdtype.count(size_and_type.second) == 0 || !sax->key(key) || !sax->string(bjdtype[size_and_type.second]) ))
