@@ -19258,9 +19258,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     {
         basic_json result;
 
-        result["copyright"] = "(C) 2013-2022 Niels Lohmann";
         result["name"] = "JSON for Modern C++";
-        result["url"] = "https://github.com/nlohmann/json";
         result["version"]["string"] =
             detail::concat(std::to_string(NLOHMANN_JSON_VERSION_MAJOR), '.',
                            std::to_string(NLOHMANN_JSON_VERSION_MINOR), '.',
@@ -19268,6 +19266,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         result["version"]["major"] = NLOHMANN_JSON_VERSION_MAJOR;
         result["version"]["minor"] = NLOHMANN_JSON_VERSION_MINOR;
         result["version"]["patch"] = NLOHMANN_JSON_VERSION_PATCH;
+        result["url"] = "https://github.com/nlohmann/json";
+        result["copyright"] = "(C) 2013-2022 Niels Lohmann";
 
 #ifdef _WIN32
         result["platform"] = "win32";
