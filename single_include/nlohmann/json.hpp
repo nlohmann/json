@@ -10895,16 +10895,16 @@ class binary_reader
             return false;
         }
 
-        // detect and encode bjdata ndarray as an object in JData annotated array format (https://github.com/NeuroJSON/jdata):
+        // if bit-8 of size_and_type.second is set to 1, encode bjdata ndarray as an object in JData annotated array format (https://github.com/NeuroJSON/jdata):
         // {"_ArrayType_" : "typeid", "_ArraySize_" : [n1, n2, ...], "_ArrayData_" : [v1, v2, ...]}
 
-        if (input_format == input_format_t::bjdata && size_and_type.first != string_t::npos && size_and_type.second >= (1 << 8))
+        if (input_format == input_format_t::bjdata && size_and_type.first != string_t::npos && (size_and_type.second & (1 << 8)) != 0)
         {
             std::map<char_int_type, string_t> bjdtype = {{'U', "uint8"},  {'i', "int8"},  {'u', "uint16"}, {'I', "int16"},
                 {'m', "uint32"}, {'l', "int32"}, {'M', "uint64"}, {'L', "int64"}, {'d', "single"}, {'D', "double"}, {'C', "char"}
             };
 
-            size_and_type.second &= ~(1 << 8);  // use bit 8 to indicate ndarray, here we remove the bit to restore the type marker
+            size_and_type.second &= ~(static_cast<char_int_type>(1) << 8);  // use bit 8 to indicate ndarray, here we remove the bit to restore the type marker
 
             string_t key = "_ArrayType_";
             if (JSON_HEDLEY_UNLIKELY(bjdtype.count(size_and_type.second) == 0))
@@ -11003,7 +11003,8 @@ class binary_reader
             return false;
         }
 
-        if (input_format == input_format_t::bjdata && size_and_type.first != string_t::npos && size_and_type.second >= (1 << 8))
+        // do not accept ND-array size in objects in BJData
+        if (input_format == input_format_t::bjdata && size_and_type.first != string_t::npos && (size_and_type.second & (1 << 8)) != 0)
         {
             auto last_token = get_token_string();
             return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
