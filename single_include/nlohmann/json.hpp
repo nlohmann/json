@@ -19315,6 +19315,84 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 #else
         result["compiler"]["c++"] = "unknown";
 #endif
+
+        // NOLINTBEGIN(modernize-use-bool-literals)
+
+        result["config"]["JSON_DIAGNOSTICS"] =
+            static_cast<bool>(JSON_DIAGNOSTICS); // NOLINT(modernize-use-bool-literals)
+
+        result["config"]["JSON_DISABLE_ENUM_SERIALIZATION"] =
+            static_cast<bool>(JSON_DISABLE_ENUM_SERIALIZATION);
+
+        result["config"]["JSON_HAS_CPP_11"] =
+#ifdef JSON_HAS_CPP_11
+            true;
+#else
+            false;
+#endif
+
+        result["config"]["JSON_HAS_CPP_14"] =
+#ifdef JSON_HAS_CPP_14
+            true;
+#else
+            false;
+#endif
+
+        result["config"]["JSON_HAS_CPP_17"] =
+#ifdef JSON_HAS_CPP_17
+            true;
+#else
+            false;
+#endif
+
+        result["config"]["JSON_HAS_CPP_20"] =
+#ifdef JSON_HAS_CPP_20
+            true;
+#else
+            false;
+#endif
+
+        result["config"]["JSON_HAS_CPP_23"] =
+#ifdef JSON_HAS_CPP_23
+            true;
+#else
+            false;
+#endif
+
+        result["config"]["JSON_HAS_EXPERIMENTAL_FILESYSTEM"] =
+            static_cast<bool>(JSON_HAS_EXPERIMENTAL_FILESYSTEM);
+
+        result["config"]["JSON_HAS_FILESYSTEM"] =
+            static_cast<bool>(JSON_HAS_FILESYSTEM);
+
+        result["config"]["JSON_HAS_THREE_WAY_COMPARISON"] =
+            static_cast<bool>(JSON_HAS_THREE_WAY_COMPARISON);
+
+        result["config"]["JSON_NOEXCEPTION"] =
+#ifdef JSON_NOEXCEPTION
+            true;
+#else
+            false;
+#endif
+
+        result["config"]["JSON_NO_IO"] =
+#ifdef JSON_NO_IO
+            true;
+#else
+            false;
+#endif
+
+        result["config"]["JSON_USE_IMPLICIT_CONVERSIONS"] =
+            static_cast<bool>(JSON_USE_IMPLICIT_CONVERSIONS);
+
+        result["config"]["JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON"] =
+            static_cast<bool>(JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON);
+
+        result["config"]["NLOHMANN_JSON_ABI_STRING"] =
+            JSON_HEDLEY_STRINGIFY(NLOHMANN_JSON_ABI_STRING);
+
+        // NOLINTEND(modernize-use-bool-literals)
+
         return result;
     }
 
