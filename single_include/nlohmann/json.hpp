@@ -2379,7 +2379,11 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 #ifdef __has_include
     #if __has_include(<version>)
         #include <version>
+    #elif __has_include(<ciso646>)
+        #include <ciso646>
     #endif
+#else
+    #include <ciso646>
 #endif
 
 #if !defined(JSON_HAS_FILESYSTEM) && !defined(JSON_HAS_EXPERIMENTAL_FILESYSTEM)
@@ -19314,6 +19318,17 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         result["compiler"]["c++"] = std::to_string(__cplusplus);
 #else
         result["compiler"]["c++"] = "unknown";
+#endif
+
+        // see https://en.cppreference.com/w/cpp/header/ciso646
+#ifdef _LIBCPP_VERSION
+        result["compiler"]["libc++"] = {{"family", "LLVM libc++"}, {"version", _LIBCPP_VERSION}};
+#elif __GLIBCXX__ // Note: only version 6.1 or newer define this in ciso646
+        result["compiler"]["libc++"] = {{"family", "GNU libstdc++"}, {"version", __GLIBCXX__}};
+#elif _CPPLIB_VER
+        result["compiler"]["libc++"] = {{"family", "Microsoft STL"}, {"version", _CPPLIB_VER}};
+#else
+        result["compiler"]["libc++"] = {{"family", "unknown"}, {"version", "unknown"}};
 #endif
 
         // NOLINTBEGIN(modernize-use-bool-literals)
