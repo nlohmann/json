@@ -75,3 +75,5 @@ TEST_CASE("byte_container_with_subtype")
         CHECK(container2 == container4);
     }
 }
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

@@ -111,3 +111,5 @@ TEST_CASE("hash<nlohmann::ordered_json>")
 
     CHECK(hashes.size() == 21);
 }
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

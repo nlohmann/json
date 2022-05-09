@@ -245,3 +245,5 @@ TEST_CASE("reference access")
         CHECK_NOTHROW(value.get_ref<json::number_float_t&>());
     }
 }
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

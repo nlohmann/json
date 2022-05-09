@@ -608,3 +608,5 @@ TEST_CASE("Unicode (2/5)" * doctest::skip())
 }
 
 DOCTEST_CLANG_SUPPRESS_WARNING_POP
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

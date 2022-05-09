@@ -70,3 +70,5 @@ TEST_CASE("ordered_json")
     CHECK(oj1.size() == 4);
     CHECK(oj1.dump() == "{\"c\":1,\"b\":2,\"a\":3,\"d\":42}");
 }
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

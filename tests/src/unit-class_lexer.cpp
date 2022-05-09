@@ -224,3 +224,5 @@ TEST_CASE("lexer class")
         CHECK((scan_string("/**//**//**/", true) == json::lexer::token_type::end_of_input));
     }
 }
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

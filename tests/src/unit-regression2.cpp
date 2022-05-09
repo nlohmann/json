@@ -926,3 +926,5 @@ TEST_CASE("regression tests 2")
 }
 
 DOCTEST_CLANG_SUPPRESS_WARNING_POP
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

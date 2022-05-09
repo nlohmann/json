@@ -541,3 +541,5 @@ TEST_CASE("capacity")
         }
     }
 }
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

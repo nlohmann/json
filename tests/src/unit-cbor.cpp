@@ -2665,3 +2665,5 @@ TEST_CASE("Tagged values")
         CHECK(!jb["binary"].get_binary().has_subtype());
     }
 }
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

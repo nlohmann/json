@@ -242,3 +242,5 @@ TEST_CASE("JSON Merge Patch")
         }
     }
 }
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

@@ -203,3 +203,5 @@ TEST_CASE("convenience functions")
         }
     }
 }
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

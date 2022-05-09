@@ -34,3 +34,5 @@ TEST_CASE("version information")
         CHECK(j.at("compiler").find("c++") != j.at("compiler").end());
     }
 }
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

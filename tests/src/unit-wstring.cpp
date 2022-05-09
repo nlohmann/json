@@ -97,3 +97,5 @@ TEST_CASE("wide strings")
     }
 }
 #endif
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

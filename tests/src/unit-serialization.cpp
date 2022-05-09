@@ -295,3 +295,5 @@ TEST_CASE("dump with binary values")
               "]");
     }
 }
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

@@ -252,3 +252,5 @@ TEST_CASE("bad my_allocator::construct")
         j["test"].push_back("should not leak");
     }
 }
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

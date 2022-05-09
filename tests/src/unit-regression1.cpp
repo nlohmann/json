@@ -1511,3 +1511,5 @@ template <typename T> class number_integer {};
 template <typename T> class number_unsigned {};
 template <typename T> class number_float {};
 #endif
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

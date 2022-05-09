@@ -322,3 +322,5 @@ TEST_CASE("alternative string type")
         CHECK(j.at(alt_json::json_pointer("/foo/1")) == j["foo"][1]);
     }
 }
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

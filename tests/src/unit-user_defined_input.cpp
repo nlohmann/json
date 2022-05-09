@@ -128,3 +128,5 @@ TEST_CASE("Custom iterator")
 }
 
 } // namespace
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

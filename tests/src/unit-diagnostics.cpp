@@ -244,3 +244,5 @@ TEST_CASE("Regression tests for extended diagnostics")
         }
     }
 }
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

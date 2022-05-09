@@ -970,3 +970,5 @@ TEST_CASE("iterators 2")
     }
 #endif
 }
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

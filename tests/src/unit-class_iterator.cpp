@@ -466,3 +466,5 @@ TEST_CASE("iterator class")
         }
     }
 }
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

@@ -80,3 +80,5 @@ TEST_CASE("runtime checks")
 }
 
 DOCTEST_GCC_SUPPRESS_WARNING_POP
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

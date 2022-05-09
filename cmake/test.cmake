@@ -148,7 +148,18 @@ function(_json_test_add_test test_name file main cxx_standard)
         message(FATAL_ERROR "Target ${test_target} has already been added.")
     endif()
 
+    file(READ ${file} file_content)
+    string(REGEX MATCH "[\n\r \t]+#[ \t]*include[ \t]+\"print_meta.cpp\"" match_result "${file_content}")
+    if(NOT match_result)
+        message(FATAL_ERROR "Please append\n"
+            "#include \"print_meta.cpp\" // NOLINT(bugprone-suspicious-include)\n"
+            "to the end of file: ${file}")
+    endif()
+
+    # add test executable
     add_executable(${test_target} ${file})
+    # add parentheses to silence clang-tidy warning
+    target_compile_definitions(${test_target} PRIVATE "JSON_TEST_NAME=(${test_target})")
     target_link_libraries(${test_target} PRIVATE ${main})
 
     # set and require C++ standard

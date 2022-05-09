@@ -19,3 +19,5 @@ TEST_CASE("include windows.h")
 {
     CHECK(true);
 }
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

@@ -184,3 +184,5 @@ TEST_CASE("other constructors and destructor")
         }
     }
 }
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

@@ -309,3 +309,5 @@ TEST_CASE("ordered_map")
         }
     }
 }
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)
