@@ -43,6 +43,37 @@ endforeach()
 #############################################################################
 
 #############################################################################
+# json_test_add_standard_keyphrases(
+#     PHRASES <args>...
+#     CXX_STANDARDS <args>...)
+#
+# Create a mapping between C++ standard versions and key phrases.
+#
+# json_test_add_test_for() will search for these key phrases and build tests
+# for associated C++ standard versions.
+#############################################################################
+
+function(json_test_add_standard_keyphrases)
+    cmake_parse_arguments(args "" ""
+        "CXX_STANDARDS;PHRASES"
+        ${ARGN})
+
+    if(NOT args_PHRASES)
+        message(FATAL_ERROR "At least one key phrase is required.")
+    endif()
+
+    if(NOT args_CXX_STANDARDS)
+        message(FATAL_ERROR "At least one C++ standard version is required.")
+    endif()
+
+    foreach(cxx_standard ${args_CXX_STANDARDS})
+        set(var _JSON_TEST_STANDARD_KEYPHRASES_CPP_${cxx_standard})
+        list(APPEND ${var} ${args_PHRASES})
+        set(${var} CACHE INTERNAL "Mapping of key phrases to C++ standard version ${cxx_standard}")
+    endforeach()
+endfunction()
+
+#############################################################################
 # json_test_set_test_options(
 #     all|<tests>
 #     [CXX_STANDARDS all|<args>...]
@@ -233,8 +264,15 @@ function(json_test_add_test_for file)
 
         # add unconditionally if C++11 (default) or forced
         if(NOT ("${cxx_standard}" STREQUAL 11 OR args_FORCE))
-            string(FIND "${file_content}" JSON_HAS_CPP_${cxx_standard} has_cpp_found)
-            if(${has_cpp_found} EQUAL -1)
+            set(build FALSE)
+            foreach(phrase JSON_HAS_CPP_${cxx_standard} ${_JSON_TEST_STANDARD_KEYPHRASES_CPP_${cxx_standard}})
+                string(FIND "${file_content}" ${phrase} phrase_found)
+                if(NOT ${phrase_found} EQUAL -1)
+                    set(build TRUE)
+                    break()
+                endif()
+            endforeach()
+            if(NOT build)
                 continue()
             endif()
         endif()

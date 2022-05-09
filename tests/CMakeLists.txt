@@ -95,6 +95,22 @@ json_test_set_test_options(test-disabled_exceptions
 json_test_set_test_options(test-unicode4 TEST_PROPERTIES TIMEOUT 3000)
 
 #############################################################################
+# define additional macro to C++ standard version mappings
+#############################################################################
+
+json_test_add_standard_keyphrases(
+    PHRASES
+        JSON_HAS_EXPERIMENTAL_FILESYSTEM
+        JSON_HAS_FILESYSTEM
+    CXX_STANDARDS 17)
+
+json_test_add_standard_keyphrases(
+    PHRASES
+        JSON_HAS_RANGES
+        JSON_HAS_THREE_WAY_COMPARISON
+    CXX_STANDARDS 20)
+
+#############################################################################
 # add unit tests
 #############################################################################
 
