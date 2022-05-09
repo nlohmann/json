@@ -2498,13 +2498,23 @@ TEST_CASE("BJData")
                 std::vector<uint8_t> v6 = {'[', '#', '[', 'i', 0xF3, 'i', 0x02, ']'};
 
                 json _;
-                CHECK_THROWS_AS(_ = json::from_bjdata(v1), json::out_of_range&);
-                CHECK_THROWS_AS(_ = json::from_bjdata(v2), json::out_of_range&);
-                CHECK_THROWS_AS(_ = json::from_bjdata(v3), json::out_of_range&);
-                CHECK_THROWS_AS(_ = json::from_bjdata(v4), json::out_of_range&);
+                static bool is_64bit = (sizeof(size_t) == 8);
 
-                CHECK_THROWS_AS(_ = json::from_bjdata(v5), json::parse_error&);
-                CHECK_THROWS_WITH(_ = json::from_bjdata(v5), "[json.exception.parse_error.110] parse error at byte 11: syntax error while parsing BJData number: unexpected end of input");
+                if (is_64bit)
+                {
+                    CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v1), "[json.exception.out_of_range.408] excessive array size: 18446744073709551601", json::out_of_range&);
+                    CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v2), "[json.exception.out_of_range.408] excessive array size: 18446744073709551602", json::out_of_range&);
+                    CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v3), "[json.exception.out_of_range.408] excessive array size: 18446744073709551592", json::out_of_range&);
+                    CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v4), "[json.exception.out_of_range.408] excessive array size: 18446744073709551607", json::out_of_range&);
+                }
+                else
+                {
+                    CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v1), "[json.exception.out_of_range.408] excessive array size: 4294967281", json::out_of_range&);
+                    CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v2), "[json.exception.out_of_range.408] excessive array size: 4294967282", json::out_of_range&);
+                    CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v3), "[json.exception.out_of_range.408] excessive array size: 4294967272", json::out_of_range&);
+                    CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v4), "[json.exception.out_of_range.408] excessive array size: 4294967287", json::out_of_range&);
+                }
+                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v5), "[json.exception.parse_error.110] parse error at byte 11: syntax error while parsing BJData number: unexpected end of input", json::parse_error&);
 
                 CHECK(json::from_bjdata(v6, true, false).is_discarded());
             }
