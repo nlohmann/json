@@ -2492,36 +2492,21 @@ TEST_CASE("BJData")
             {
                 std::vector<uint8_t> v1 = {'[', '#', 'i', 0xF1};
                 std::vector<uint8_t> v2 = {'[', '$', 'I', '#', 'i', 0xF2};
-                std::vector<uint8_t> v3 = {'[', '#', '[', 'i', 0xF3, 'i', 0x02, ']'};
-                std::vector<uint8_t> v4 = {'[', '$', 'I', '#', '[', 'i', 0xF4, 'i', 0x02, ']'};
+                std::vector<uint8_t> v3 = {'[', '$', 'I', '#', '[', 'i', 0xF4, 'i', 0x02, ']'};
+                std::vector<uint8_t> v4 = {'[', '$', 0xF6, '#', 'i', 0xF7};
                 std::vector<uint8_t> v5 = {'[', '$', 'I', '#', '[', 'i', 0xF5, 'i', 0xF1, ']'};
-                std::vector<uint8_t> v6 = {'[', '$', 0xF6, '#', 'i', 0xF7};
+                std::vector<uint8_t> v6 = {'[', '#', '[', 'i', 0xF3, 'i', 0x02, ']'};
 
                 json _;
                 CHECK_THROWS_AS(_ = json::from_bjdata(v1), json::out_of_range&);
                 CHECK_THROWS_AS(_ = json::from_bjdata(v2), json::out_of_range&);
+                CHECK_THROWS_AS(_ = json::from_bjdata(v3), json::out_of_range&);
                 CHECK_THROWS_AS(_ = json::from_bjdata(v4), json::out_of_range&);
-                CHECK_THROWS_AS(_ = json::from_bjdata(v6), json::out_of_range&);
-
-                if (sizeof(size_t) == 8)
-                {
-                    CHECK_THROWS_WITH(_ = json::from_bjdata(v1), "[json.exception.out_of_range.408] excessive array size: 18446744073709551601");
-                    CHECK_THROWS_WITH(_ = json::from_bjdata(v2), "[json.exception.out_of_range.408] excessive array size: 18446744073709551602");
-                    CHECK_THROWS_WITH(_ = json::from_bjdata(v4), "[json.exception.out_of_range.408] excessive array size: 18446744073709551592");
-                    CHECK_THROWS_WITH(_ = json::from_bjdata(v6), "[json.exception.out_of_range.408] excessive array size: 18446744073709551607");
-                }
-                else
-                {
-                    CHECK_THROWS_WITH(_ = json::from_bjdata(v1), "[json.exception.out_of_range.408] excessive array size: 4294967281");
-                    CHECK_THROWS_WITH(_ = json::from_bjdata(v2), "[json.exception.out_of_range.408] excessive array size: 4294967282");
-                    CHECK_THROWS_WITH(_ = json::from_bjdata(v4), "[json.exception.out_of_range.408] excessive array size: 4294967272");
-                    CHECK_THROWS_WITH(_ = json::from_bjdata(v6), "[json.exception.out_of_range.408] excessive array size: 4294967287");
-                }
-
-                CHECK(json::from_bjdata(v3, true, false).is_discarded());
 
                 CHECK_THROWS_AS(_ = json::from_bjdata(v5), json::parse_error&);
                 CHECK_THROWS_WITH(_ = json::from_bjdata(v5), "[json.exception.parse_error.110] parse error at byte 11: syntax error while parsing BJData number: unexpected end of input");
+
+                CHECK(json::from_bjdata(v6, true, false).is_discarded());
             }
 
             SECTION("do not accept NTFZ markers in ndarray optimized type")
