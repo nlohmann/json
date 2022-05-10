@@ -37,12 +37,9 @@ void push_back(initializer_list_t init);
 
 ## Exceptions
 
-1. The function can throw the following exceptions:
-    - Throws [`type_error.308`](../../home/exceptions.md#jsonexceptiontype_error308) when called on a type other than
-      JSON array or null; example: `"cannot use push_back() with number"`
-2. The function can throw the following exceptions:
-    - Throws [`type_error.308`](../../home/exceptions.md#jsonexceptiontype_error308) when called on a type other than
-      JSON object or null; example: `"cannot use push_back() with number"`
+All functions can throw the following exception:
+  - Throws [`type_error.308`](../../home/exceptions.md#jsonexceptiontype_error308) when called on a type other than
+    JSON array or null; example: `"cannot use push_back() with number"`
 
 ## Complexity
 
