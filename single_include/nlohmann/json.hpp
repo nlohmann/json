@@ -10412,6 +10412,7 @@ class binary_reader
     {
         std::pair<std::size_t, char_int_type> size_and_type;
         size_t dimlen = 0;
+        bool is_ndarray = false;
 
         if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_type(size_and_type)))
         {
@@ -10426,7 +10427,7 @@ class binary_reader
                 {
                     for (std::size_t i = 0; i < size_and_type.first; ++i)
                     {
-                        if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_value(dimlen, size_and_type.second)))
+                        if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_value(dimlen, is_ndarray, size_and_type.second)))
                         {
                             return false;
                         }
@@ -10438,7 +10439,7 @@ class binary_reader
             {
                 for (std::size_t i = 0; i < size_and_type.first; ++i)
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_value(dimlen)))
+                    if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_value(dimlen, is_ndarray)))
                     {
                         return false;
                     }
@@ -10450,7 +10451,7 @@ class binary_reader
         {
             while (current != ']')
             {
-                if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_value(dimlen, current)))
+                if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_value(dimlen, is_ndarray, current)))
                 {
                     return false;
                 }
@@ -10465,8 +10466,9 @@ class binary_reader
     @param[out] result  determined size
     @return whether size determination completed
     */
-    bool get_ubjson_size_value(std::size_t& result, char_int_type prefix = 0)
+    bool get_ubjson_size_value(std::size_t& result, bool& is_ndarray, char_int_type prefix = 0)
     {
+        is_ndarray = false;
         if (prefix == 0)
         {
             prefix = get_ignore_noop();
@@ -10606,7 +10608,7 @@ class binary_reader
                             return false;
                         }
                     }
-                    result |= (1ull << (sizeof(result) * 8 - 1)); // low 63 bit of result stores the total element count, sign-bit indicates ndarray
+                    is_ndarray = true;
                     return sax->end_array();
                 }
                 result = 0;
@@ -10642,6 +10644,7 @@ class binary_reader
     */
     bool get_ubjson_size_type(std::pair<std::size_t, char_int_type>& result)
     {
+        bool is_ndarray = false;
         result.first = string_t::npos; // size
         result.second = 0; // type
 
@@ -10659,7 +10662,7 @@ class binary_reader
                                         exception_message(input_format, concat("marker 0x", last_token, " is not a permitted optimized array type"), "type"), nullptr));
             }
 
-            if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format, "type") || (input_format == input_format_t::bjdata && std::find(bjdx.begin(), bjdx.end(), result.second) != bjdx.end() )))
+            if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format, "type")))
             {
                 return false;
             }
@@ -10676,12 +10679,22 @@ class binary_reader
                                         exception_message(input_format, concat("expected '#' after type information; last byte: 0x", last_token), "size"), nullptr));
             }
 
-            return get_ubjson_size_value(result.first);
+            bool is_error = get_ubjson_size_value(result.first, is_ndarray);
+            if (input_format == input_format_t::bjdata && is_ndarray)
+            {
+                result.second |= (1 << 8); // use bit 8 to indicate ndarray, all UBJSON and BJData markers should be ASCII letters
+            }
+            return is_error;
         }
 
         if (current == '#')
         {
-            return get_ubjson_size_value(result.first);
+            bool is_error = get_ubjson_size_value(result.first, is_ndarray);
+            if (input_format == input_format_t::bjdata && is_ndarray)
+            {
+                result.second |= (1 << 8); // use bit 8 to indicate ndarray, all UBJSON and BJData markers should be ASCII letters
+            }
+            return is_error;
         }
 
         return true;
@@ -10882,17 +10895,26 @@ class binary_reader
             return false;
         }
 
-        // detect and encode bjdata ndarray as an object in JData annotated array format (https://github.com/NeuroJSON/jdata):
+        // if bit-8 of size_and_type.second is set to 1, encode bjdata ndarray as an object in JData annotated array format (https://github.com/NeuroJSON/jdata):
         // {"_ArrayType_" : "typeid", "_ArraySize_" : [n1, n2, ...], "_ArrayData_" : [v1, v2, ...]}
 
-        if (input_format == input_format_t::bjdata && size_and_type.first != string_t::npos && size_and_type.first >= (1ull << (sizeof(std::size_t) * 8 - 1)))
+        if (input_format == input_format_t::bjdata && size_and_type.first != string_t::npos && (size_and_type.second & (1 << 8)) != 0)
         {
             std::map<char_int_type, string_t> bjdtype = {{'U', "uint8"},  {'i', "int8"},  {'u', "uint16"}, {'I', "int16"},
                 {'m', "uint32"}, {'l', "int32"}, {'M', "uint64"}, {'L', "int64"}, {'d', "single"}, {'D', "double"}, {'C', "char"}
             };
 
+            size_and_type.second &= ~(static_cast<char_int_type>(1) << 8);  // use bit 8 to indicate ndarray, here we remove the bit to restore the type marker
+
             string_t key = "_ArrayType_";
-            if (JSON_HEDLEY_UNLIKELY(bjdtype.count(size_and_type.second) == 0 || !sax->key(key) || !sax->string(bjdtype[size_and_type.second]) ))
+            if (JSON_HEDLEY_UNLIKELY(bjdtype.count(size_and_type.second) == 0))
+            {
+                auto last_token = get_token_string();
+                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                        exception_message(input_format, "invalid byte: 0x" + last_token, "type"), nullptr));
+            }
+
+            if (JSON_HEDLEY_UNLIKELY(!sax->key(key) || !sax->string(bjdtype[size_and_type.second]) ))
             {
                 return false;
             }
@@ -10902,7 +10924,6 @@ class binary_reader
                 size_and_type.second = 'U';
             }
 
-            size_and_type.first &= ~(1ull << (sizeof(std::size_t) * 8 - 1));
             key = "_ArrayData_";
             if (JSON_HEDLEY_UNLIKELY(!sax->key(key) || !sax->start_array(size_and_type.first) ))
             {
@@ -10982,9 +11003,12 @@ class binary_reader
             return false;
         }
 
-        if (input_format == input_format_t::bjdata && size_and_type.first != string_t::npos && size_and_type.first >= (1ull << (sizeof(std::size_t) * 8 - 1)))
+        // do not accept ND-array size in objects in BJData
+        if (input_format == input_format_t::bjdata && size_and_type.first != string_t::npos && (size_and_type.second & (1 << 8)) != 0)
         {
-            return false;
+            auto last_token = get_token_string();
+            return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                    exception_message(input_format, "BJData object does not support ND-array size in optimized format", "object"), nullptr));
         }
 
         string_t key;
@@ -11058,7 +11082,8 @@ class binary_reader
     {
         // get size of following number string
         std::size_t size{};
-        auto res = get_ubjson_size_value(size);
+        bool is_ndarray = false;
+        auto res = get_ubjson_size_value(size, is_ndarray);
         if (JSON_HEDLEY_UNLIKELY(!res))
         {
             return res;
