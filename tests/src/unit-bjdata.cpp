@@ -2094,10 +2094,24 @@ TEST_CASE("BJData")
             CHECK_FALSE(json::sax_parse(v, &scp, json::input_format_t::bjdata));
         }
 
-        SECTION("key() in ndarray _ArrayType_")
+        SECTION("string() in ndarray _ArrayType_")
         {
             std::vector<uint8_t> v = {'[', '$', 'U', '#', '[', '$', 'U', '#', 'i', 2, 2, 2, 1, 2, 3, 4};
             SaxCountdown scp(7);
+            CHECK_FALSE(json::sax_parse(v, &scp, json::input_format_t::bjdata));
+        }
+
+        SECTION("key() in ndarray _ArrayData_")
+        {
+            std::vector<uint8_t> v = {'[', '$', 'U', '#', '[', '$', 'U', '#', 'i', 2, 2, 2, 1, 2, 3, 4};
+            SaxCountdown scp(8);
+            CHECK_FALSE(json::sax_parse(v, &scp, json::input_format_t::bjdata));
+        }
+
+        SECTION("string() in ndarray _ArrayData_")
+        {
+            std::vector<uint8_t> v = {'[', '$', 'U', '#', '[', '$', 'U', '#', 'i', 2, 2, 2, 1, 2, 3, 4};
+            SaxCountdown scp(9);
             CHECK_FALSE(json::sax_parse(v, &scp, json::input_format_t::bjdata));
         }
 
