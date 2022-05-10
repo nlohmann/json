@@ -1615,6 +1615,7 @@ I deeply appreciate the help of the following people.
 - [Faruk D.](https://github.com/fdiblen) fixed the CITATION.CFF file.
 - [Andrea Cocito](https://github.com/puffetto) added a clarification on macro usage to the documentation.
 - [Krzysiek Karbowiak](https://github.com/kkarbowiak) refactored the tests to use `CHECK_THROWS_WITH_AS`.
+- [Chaoqi Zhang](https://github.com/prncoprs) fixed a typo.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
