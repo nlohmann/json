@@ -113,7 +113,7 @@ for (auto& [key, val] : j_object.items())
     ```cpp
     json j = {1, 2, 3, 4};
 
-    for (auto it = j.begin(); it != j.end(); ++it)
+    for (auto it = j.rbegin(); it != j.rend(); ++it)
     {
         std::cout << *it << std::endl;
     }
