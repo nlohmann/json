@@ -14,6 +14,22 @@ No-throw guarantee: this member function never throws exceptions.
 
 Linear.
 
+## Examples
+
+??? example
+
+    The following code shows an example for the destructor.
+     
+    ```cpp
+    --8<-- "examples/~basic_json.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/~basic_json.output"
+    ```
+
 ## Version history
 
 - Added in version 1.0.0.
