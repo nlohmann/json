@@ -1130,7 +1130,7 @@ TEST_CASE("BJData")
                 {
                     json j = json::from_bjdata(std::vector<uint8_t>({'h', 0x00, 0x7c}));
                     json::number_float_t d{j};
-                    CHECK(!std::isfinite(d));
+                    CHECK_FALSE(std::isfinite(d));
                     CHECK(j.dump() == "null");
                 }
 
@@ -2035,91 +2035,84 @@ TEST_CASE("BJData")
         {
             std::vector<uint8_t> v = {'[', 'T', 'F', ']'};
             SaxCountdown scp(0);
-            CHECK(!json::sax_parse(v, &scp, json::input_format_t::bjdata));
+            CHECK_FALSE(json::sax_parse(v, &scp, json::input_format_t::bjdata));
         }
 
         SECTION("start_object()")
         {
             std::vector<uint8_t> v = {'{', 'i', 3, 'f', 'o', 'o', 'F', '}'};
             SaxCountdown scp(0);
-            CHECK(!json::sax_parse(v, &scp, json::input_format_t::bjdata));
+            CHECK_FALSE(json::sax_parse(v, &scp, json::input_format_t::bjdata));
         }
 
         SECTION("key() in object")
         {
             std::vector<uint8_t> v = {'{', 'i', 3, 'f', 'o', 'o', 'F', '}'};
             SaxCountdown scp(1);
-            CHECK(!json::sax_parse(v, &scp, json::input_format_t::bjdata));
+            CHECK_FALSE(json::sax_parse(v, &scp, json::input_format_t::bjdata));
         }
 
         SECTION("start_array(len)")
         {
             std::vector<uint8_t> v = {'[', '#', 'i', '2', 'T', 'F'};
             SaxCountdown scp(0);
-            CHECK(!json::sax_parse(v, &scp, json::input_format_t::bjdata));
+            CHECK_FALSE(json::sax_parse(v, &scp, json::input_format_t::bjdata));
         }
 
         SECTION("start_object(len)")
         {
             std::vector<uint8_t> v = {'{', '#', 'i', '1', 3, 'f', 'o', 'o', 'F'};
             SaxCountdown scp(0);
-            CHECK(!json::sax_parse(v, &scp, json::input_format_t::bjdata));
+            CHECK_FALSE(json::sax_parse(v, &scp, json::input_format_t::bjdata));
         }
 
         SECTION("key() in object with length")
         {
             std::vector<uint8_t> v = {'{', 'i', 3, 'f', 'o', 'o', 'F', '}'};
             SaxCountdown scp(1);
-            CHECK(!json::sax_parse(v, &scp, json::input_format_t::bjdata));
+            CHECK_FALSE(json::sax_parse(v, &scp, json::input_format_t::bjdata));
         }
 
         SECTION("start_array() in ndarray _ArraySize_")
         {
             std::vector<uint8_t> v = {'[', '$', 'i', '#', '[', '$', 'i', '#', 'i', 2, 2, 1, 1, 2};
             SaxCountdown scp(2);
-            CHECK(!json::sax_parse(v, &scp, json::input_format_t::bjdata));
+            CHECK_FALSE(json::sax_parse(v, &scp, json::input_format_t::bjdata));
         }
 
         SECTION("number_integer() in ndarray _ArraySize_")
         {
             std::vector<uint8_t> v = {'[', '$', 'U', '#', '[', '$', 'i', '#', 'i', 2, 2, 1, 1, 2};
             SaxCountdown scp(3);
-            CHECK(!json::sax_parse(v, &scp, json::input_format_t::bjdata));
+            CHECK_FALSE(json::sax_parse(v, &scp, json::input_format_t::bjdata));
         }
 
         SECTION("key() in ndarray _ArrayType_")
         {
             std::vector<uint8_t> v = {'[', '$', 'U', '#', '[', '$', 'U', '#', 'i', 2, 2, 2, 1, 2, 3, 4};
-            SaxCountdown scp(8);
-            CHECK(!json::sax_parse(v, &scp, json::input_format_t::bjdata));
+            SaxCountdown scp(6);
+            CHECK_FALSE(json::sax_parse(v, &scp, json::input_format_t::bjdata));
         }
 
         SECTION("key() in ndarray _ArrayType_")
         {
             std::vector<uint8_t> v = {'[', '$', 'U', '#', '[', '$', 'U', '#', 'i', 2, 2, 2, 1, 2, 3, 4};
-            SaxCountdown scp(9);
-            CHECK(!json::sax_parse(v, &scp, json::input_format_t::bjdata));
-        }
-
-        SECTION("key() in ndarray _ArrayType_")
-        {
-            std::vector<uint8_t> v = {'[', '$', 'U', '#', '[', '$', 'U', '#', 'i', 2, 2, 2, 1, 2, 3, 4};
-            SaxCountdown scp(10);
-            CHECK(!json::sax_parse(v, &scp, json::input_format_t::bjdata));
+            SaxCountdown scp(7);
+            CHECK_FALSE(json::sax_parse(v, &scp, json::input_format_t::bjdata));
         }
 
         SECTION("string() in ndarray _ArrayType_")
         {
             std::vector<uint8_t> v = {'[', '$', 'U', '#', '[', '$', 'i', '#', 'i', 2, 3, 2, 6, 5, 4, 3, 2, 1};
             SaxCountdown scp(11);
-            CHECK(!json::sax_parse(v, &scp, json::input_format_t::bjdata));
+            CHECK_FALSE(json::sax_parse(v, &scp, json::input_format_t::bjdata));
         }
 
         SECTION("start_array() in ndarray _ArrayData_")
         {
             std::vector<uint8_t> v = {'[', '$', 'U', '#', '[', 'i', 2, 'i', 3, ']', 6, 5, 4, 3, 2, 1};
             SaxCountdown scp(13);
-            CHECK(!json::sax_parse(v, &scp, json::input_format_t::bjdata));
+            CHECK_FALSE(json::sax_parse(v, &scp, json::input_format_t::bjdata));
         }
     }
 
