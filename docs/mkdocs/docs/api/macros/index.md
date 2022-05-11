@@ -17,6 +17,8 @@ header. See also the [macro overview page](../../features/macros.md).
 
 - [**JSON_HAS_CPP_11**<br>**JSON_HAS_CPP_14**<br>**JSON_HAS_CPP_17**<br>**JSON_HAS_CPP_20**](json_has_cpp_11.md) - set supported C++ standard
 - [**JSON_HAS_FILESYSTEM**<br>**JSON_HAS_EXPERIMENTAL_FILESYSTEM**](json_has_filesystem.md) - control `std::filesystem` support
+- [**JSON_HAS_RANGES**](json_has_ranges.md) - control `std::ranges` support
+- [**JSON_HAS_THREE_WAY_COMPARISON**](json_has_three_way_comparison.md) - control 3-way comparison support
 - [**JSON_NO_IO**](json_no_io.md) - switch off functions relying on certain C++ I/O headers
 - [**JSON_SKIP_UNSUPPORTED_COMPILER_CHECK**](json_skip_unsupported_compiler_check.md) - do not warn about unsupported compilers
 
@@ -28,6 +30,12 @@ header. See also the [macro overview page](../../features/macros.md).
 ## Type conversions
 
 - [**JSON_USE_IMPLICIT_CONVERSIONS**](json_use_implicit_conversions.md) - control implicit conversions
+
+<!-- comment-->
+## Comparison behavior
+
+- [**JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON**](json_use_legacy_discarded_value_comparison.md) -
+  control comparison of discarded values
 
 ## Serialization/deserialization macros
 

@@ -26,6 +26,8 @@
     #undef JSON_HAS_FILESYSTEM
     #undef JSON_HAS_EXPERIMENTAL_FILESYSTEM
     #undef JSON_HAS_THREE_WAY_COMPARISON
+    #undef JSON_HAS_RANGES
+    #undef JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
 #endif
 
 #include <nlohmann/thirdparty/hedley/hedley_undef.hpp>

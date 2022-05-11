@@ -62,6 +62,7 @@ SOFTWARE.
 #include <memory> // unique_ptr
 #include <numeric> // accumulate
 #include <string> // string, stoi, to_string
+#include <tuple> // forward_as_tuple, tuple
 #include <utility> // declval, forward, move, pair, swap
 #include <vector> // vector
 
@@ -86,10 +87,12 @@ SOFTWARE.
 #include <nlohmann/detail/string_concat.hpp>
 #include <nlohmann/detail/string_escape.hpp>
 #include <nlohmann/detail/meta/cpp_future.hpp>
+#include <nlohmann/detail/meta/invoke.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
 #include <nlohmann/detail/output/binary_writer.hpp>
 #include <nlohmann/detail/output/output_adapters.hpp>
 #include <nlohmann/detail/output/serializer.hpp>
+#include <nlohmann/detail/placeholders.hpp>
 #include <nlohmann/detail/value_t.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include <nlohmann/ordered_map.hpp>
@@ -206,6 +209,17 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     using input_format_t = detail::input_format_t;
     /// SAX interface type, see @ref nlohmann::json_sax
     using json_sax_t = json_sax<basic_json>;
+
+    // placeholder for the stored JSON value used in apply*() functions
+    static constexpr decltype(::nlohmann::placeholders::basic_json_value) value_placeholder
+        = ::nlohmann::placeholders::basic_json_value;
+
+    template<typename T>
+    static constexpr auto value_as_placeholder()
+    noexcept -> decltype(::nlohmann::placeholders::basic_json_value_as<T>())
+    {
+        return ::nlohmann::placeholders::basic_json_value_as<T>();
+    }
 
     ////////////////
     // exceptions //
@@ -1905,7 +1919,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                                         detail::negation<std::is_same<ValueType, typename string_t::value_type>>,
                                         detail::negation<detail::is_basic_json<ValueType>>,
                                         detail::negation<std::is_same<ValueType, std::initializer_list<typename string_t::value_type>>>,
-
 #if defined(JSON_HAS_CPP_17) && (defined(__GNUC__) || (defined(_MSC_VER) && _MSC_VER >= 1910 && _MSC_VER <= 1914))
                                                 detail::negation<std::is_same<ValueType, std::string_view>>,
 #endif
@@ -3538,7 +3551,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     /// @}
 
-  public:
     //////////////////////////////////////////
     // lexicographical comparison operators //
     //////////////////////////////////////////
@@ -3546,6 +3558,222 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @name lexicographical comparison operators
     /// @{
 
+    // note parentheses around operands are necessary; see
+    // https://github.com/nlohmann/json/issues/1530
+#define JSON_IMPLEMENT_OPERATOR(op, null_result, unordered_result, default_result)                       \
+    const auto lhs_type = lhs.type();                                                                    \
+    const auto rhs_type = rhs.type();                                                                    \
+    \
+    if (lhs_type == rhs_type) /* NOLINT(readability/braces) */                                           \
+    {                                                                                                    \
+        switch (lhs_type)                                                                                \
+        {                                                                                                \
+            case value_t::array:                                                                         \
+                return (*lhs.m_value.array) op (*rhs.m_value.array);                                     \
+                \
+            case value_t::object:                                                                        \
+                return (*lhs.m_value.object) op (*rhs.m_value.object);                                   \
+                \
+            case value_t::null:                                                                          \
+                return (null_result);                                                                    \
+                \
+            case value_t::string:                                                                        \
+                return (*lhs.m_value.string) op (*rhs.m_value.string);                                   \
+                \
+            case value_t::boolean:                                                                       \
+                return (lhs.m_value.boolean) op (rhs.m_value.boolean);                                   \
+                \
+            case value_t::number_integer:                                                                \
+                return (lhs.m_value.number_integer) op (rhs.m_value.number_integer);                     \
+                \
+            case value_t::number_unsigned:                                                               \
+                return (lhs.m_value.number_unsigned) op (rhs.m_value.number_unsigned);                   \
+                \
+            case value_t::number_float:                                                                  \
+                return (lhs.m_value.number_float) op (rhs.m_value.number_float);                         \
+                \
+            case value_t::binary:                                                                        \
+                return (*lhs.m_value.binary) op (*rhs.m_value.binary);                                   \
+                \
+            case value_t::discarded:                                                                     \
+            default:                                                                                     \
+                return (unordered_result);                                                               \
+        }                                                                                                \
+    }                                                                                                    \
+    else if (lhs_type == value_t::number_integer && rhs_type == value_t::number_float)                   \
+    {                                                                                                    \
+        return static_cast<number_float_t>(lhs.m_value.number_integer) op rhs.m_value.number_float;      \
+    }                                                                                                    \
+    else if (lhs_type == value_t::number_float && rhs_type == value_t::number_integer)                   \
+    {                                                                                                    \
+        return lhs.m_value.number_float op static_cast<number_float_t>(rhs.m_value.number_integer);      \
+    }                                                                                                    \
+    else if (lhs_type == value_t::number_unsigned && rhs_type == value_t::number_float)                  \
+    {                                                                                                    \
+        return static_cast<number_float_t>(lhs.m_value.number_unsigned) op rhs.m_value.number_float;     \
+    }                                                                                                    \
+    else if (lhs_type == value_t::number_float && rhs_type == value_t::number_unsigned)                  \
+    {                                                                                                    \
+        return lhs.m_value.number_float op static_cast<number_float_t>(rhs.m_value.number_unsigned);     \
+    }                                                                                                    \
+    else if (lhs_type == value_t::number_unsigned && rhs_type == value_t::number_integer)                \
+    {                                                                                                    \
+        return static_cast<number_integer_t>(lhs.m_value.number_unsigned) op rhs.m_value.number_integer; \
+    }                                                                                                    \
+    else if (lhs_type == value_t::number_integer && rhs_type == value_t::number_unsigned)                \
+    {                                                                                                    \
+        return lhs.m_value.number_integer op static_cast<number_integer_t>(rhs.m_value.number_unsigned); \
+    }                                                                                                    \
+    else if(compares_unordered(lhs, rhs))\
+    {\
+        return (unordered_result);\
+    }\
+    \
+    return (default_result);
+
+  JSON_PRIVATE_UNLESS_TESTED:
+    // returns true if:
+    // - any operand is NaN and the other operand is of number type
+    // - any operand is discarded
+    // in legacy mode, discarded values are considered ordered if
+    // an operation is computed as an odd number of inverses of others
+    static bool compares_unordered(const_reference lhs, const_reference rhs, bool inverse = false) noexcept
+    {
+        if ((lhs.is_number_float() && std::isnan(lhs.m_value.number_float) && rhs.is_number())
+                || (rhs.is_number_float() && std::isnan(rhs.m_value.number_float) && lhs.is_number()))
+        {
+            return true;
+        }
+#if JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
+        return (lhs.is_discarded() || rhs.is_discarded()) && !inverse;
+#else
+        static_cast<void>(inverse);
+        return lhs.is_discarded() || rhs.is_discarded();
+#endif
+    }
+
+  private:
+    bool compares_unordered(const_reference rhs, bool inverse = false) const noexcept
+    {
+        return compares_unordered(*this, rhs, inverse);
+    }
+
+  public:
+#if JSON_HAS_THREE_WAY_COMPARISON
+    /// @brief comparison: equal
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_eq/
+    bool operator==(const_reference rhs) const noexcept
+    {
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-equal"
+#endif
+        const_reference lhs = *this;
+        JSON_IMPLEMENT_OPERATOR( ==, true, false, false)
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
+    }
+
+    /// @brief comparison: equal
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_eq/
+    template<typename ScalarType>
+    requires std::is_scalar_v<ScalarType>
+    bool operator==(ScalarType rhs) const noexcept
+    {
+        return *this == basic_json(rhs);
+    }
+
+    /// @brief comparison: not equal
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_ne/
+    bool operator!=(const_reference rhs) const noexcept
+    {
+        if (compares_unordered(rhs, true))
+        {
+            return false;
+        }
+        return !operator==(rhs);
+    }
+
+    /// @brief comparison: not equal
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_ne/
+    template<typename ScalarType>
+    requires std::is_scalar_v<ScalarType>
+    bool operator!=(ScalarType rhs) const noexcept
+    {
+        return *this != basic_json(rhs);
+    }
+
+    /// @brief comparison: 3-way
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_spaceship/
+    std::partial_ordering operator<=>(const_reference rhs) const noexcept // *NOPAD*
+    {
+        const_reference lhs = *this;
+        // default_result is used if we cannot compare values. In that case,
+        // we compare types.
+        JSON_IMPLEMENT_OPERATOR(<=>, // *NOPAD*
+                                std::partial_ordering::equivalent,
+                                std::partial_ordering::unordered,
+                                lhs_type <=> rhs_type) // *NOPAD*
+    }
+
+    /// @brief comparison: 3-way
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_spaceship/
+    template<typename ScalarType>
+    requires std::is_scalar_v<ScalarType>
+    std::partial_ordering operator<=>(ScalarType rhs) const noexcept // *NOPAD*
+    {
+        return *this <=> basic_json(rhs); // *NOPAD*
+    }
+
+#if JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
+    // all operators that are computed as the inverse of another operation, unless
+    // that operation is itself computed as the inverse of yet another operation,
+    // need to be overloaded to emulate the legacy comparison behavior
+
+    /// @brief comparison: less than or equal
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_le/
+    JSON_HEDLEY_DEPRECATED_FOR(3.11.0, undef JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON)
+    bool operator<=(const_reference rhs) const noexcept
+    {
+        if (compares_unordered(rhs, true))
+        {
+            return false;
+        }
+        return !(rhs < *this);
+    }
+
+    /// @brief comparison: less than or equal
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_le/
+    template<typename ScalarType>
+    requires std::is_scalar_v<ScalarType>
+    bool operator<=(ScalarType rhs) const noexcept
+    {
+        return *this <= basic_json(rhs);
+    }
+
+    /// @brief comparison: greater than or equal
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_ge/
+    JSON_HEDLEY_DEPRECATED_FOR(3.11.0, undef JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON)
+    bool operator>=(const_reference rhs) const noexcept
+    {
+        if (compares_unordered(rhs, true))
+        {
+            return false;
+        }
+        return !(*this < rhs);
+    }
+
+    /// @brief comparison: greater than or equal
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_ge/
+    template<typename ScalarType>
+    requires std::is_scalar_v<ScalarType>
+    bool operator>=(ScalarType rhs) const noexcept
+    {
+        return *this >= basic_json(rhs);
+    }
+#endif
+#else
     /// @brief comparison: equal
     /// @sa https://json.nlohmann.me/api/basic_json/operator_eq/
     friend bool operator==(const_reference lhs, const_reference rhs) noexcept
@@ -3554,71 +3782,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
 #endif
-        const auto lhs_type = lhs.type();
-        const auto rhs_type = rhs.type();
-
-        if (lhs_type == rhs_type)
-        {
-            switch (lhs_type)
-            {
-                case value_t::array:
-                    return *lhs.m_value.array == *rhs.m_value.array;
-
-                case value_t::object:
-                    return *lhs.m_value.object == *rhs.m_value.object;
-
-                case value_t::null:
-                    return true;
-
-                case value_t::string:
-                    return *lhs.m_value.string == *rhs.m_value.string;
-
-                case value_t::boolean:
-                    return lhs.m_value.boolean == rhs.m_value.boolean;
-
-                case value_t::number_integer:
-                    return lhs.m_value.number_integer == rhs.m_value.number_integer;
-
-                case value_t::number_unsigned:
-                    return lhs.m_value.number_unsigned == rhs.m_value.number_unsigned;
-
-                case value_t::number_float:
-                    return lhs.m_value.number_float == rhs.m_value.number_float;
-
-                case value_t::binary:
-                    return *lhs.m_value.binary == *rhs.m_value.binary;
-
-                case value_t::discarded:
-                default:
-                    return false;
-            }
-        }
-        else if (lhs_type == value_t::number_integer && rhs_type == value_t::number_float)
-        {
-            return static_cast<number_float_t>(lhs.m_value.number_integer) == rhs.m_value.number_float;
-        }
-        else if (lhs_type == value_t::number_float && rhs_type == value_t::number_integer)
-        {
-            return lhs.m_value.number_float == static_cast<number_float_t>(rhs.m_value.number_integer);
-        }
-        else if (lhs_type == value_t::number_unsigned && rhs_type == value_t::number_float)
-        {
-            return static_cast<number_float_t>(lhs.m_value.number_unsigned) == rhs.m_value.number_float;
-        }
-        else if (lhs_type == value_t::number_float && rhs_type == value_t::number_unsigned)
-        {
-            return lhs.m_value.number_float == static_cast<number_float_t>(rhs.m_value.number_unsigned);
-        }
-        else if (lhs_type == value_t::number_unsigned && rhs_type == value_t::number_integer)
-        {
-            return static_cast<number_integer_t>(lhs.m_value.number_unsigned) == rhs.m_value.number_integer;
-        }
-        else if (lhs_type == value_t::number_integer && rhs_type == value_t::number_unsigned)
-        {
-            return lhs.m_value.number_integer == static_cast<number_integer_t>(rhs.m_value.number_unsigned);
-        }
-
-        return false;
+        JSON_IMPLEMENT_OPERATOR( ==, true, false, false)
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
 #endif
@@ -3646,6 +3810,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/operator_ne/
     friend bool operator!=(const_reference lhs, const_reference rhs) noexcept
     {
+        if (compares_unordered(lhs, rhs, true))
+        {
+            return false;
+        }
         return !(lhs == rhs);
     }
 
@@ -3671,76 +3839,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/operator_lt/
     friend bool operator<(const_reference lhs, const_reference rhs) noexcept
     {
-        const auto lhs_type = lhs.type();
-        const auto rhs_type = rhs.type();
-
-        if (lhs_type == rhs_type)
-        {
-            switch (lhs_type)
-            {
-                case value_t::array:
-                    // note parentheses are necessary, see
-                    // https://github.com/nlohmann/json/issues/1530
-                    return (*lhs.m_value.array) < (*rhs.m_value.array);
-
-                case value_t::object:
-                    return (*lhs.m_value.object) < (*rhs.m_value.object);
-
-                case value_t::null:
-                    return false;
-
-                case value_t::string:
-                    return (*lhs.m_value.string) < (*rhs.m_value.string);
-
-                case value_t::boolean:
-                    return (lhs.m_value.boolean) < (rhs.m_value.boolean);
-
-                case value_t::number_integer:
-                    return (lhs.m_value.number_integer) < (rhs.m_value.number_integer);
-
-                case value_t::number_unsigned:
-                    return (lhs.m_value.number_unsigned) < (rhs.m_value.number_unsigned);
-
-                case value_t::number_float:
-                    return (lhs.m_value.number_float) < (rhs.m_value.number_float);
-
-                case value_t::binary:
-                    return (*lhs.m_value.binary) < (*rhs.m_value.binary);
-
-                case value_t::discarded:
-                default:
-                    return false;
-            }
-        }
-        else if (lhs_type == value_t::number_integer && rhs_type == value_t::number_float)
-        {
-            return static_cast<number_float_t>(lhs.m_value.number_integer) < rhs.m_value.number_float;
-        }
-        else if (lhs_type == value_t::number_float && rhs_type == value_t::number_integer)
-        {
-            return lhs.m_value.number_float < static_cast<number_float_t>(rhs.m_value.number_integer);
-        }
-        else if (lhs_type == value_t::number_unsigned && rhs_type == value_t::number_float)
-        {
-            return static_cast<number_float_t>(lhs.m_value.number_unsigned) < rhs.m_value.number_float;
-        }
-        else if (lhs_type == value_t::number_float && rhs_type == value_t::number_unsigned)
-        {
-            return lhs.m_value.number_float < static_cast<number_float_t>(rhs.m_value.number_unsigned);
-        }
-        else if (lhs_type == value_t::number_integer && rhs_type == value_t::number_unsigned)
-        {
-            return lhs.m_value.number_integer < static_cast<number_integer_t>(rhs.m_value.number_unsigned);
-        }
-        else if (lhs_type == value_t::number_unsigned && rhs_type == value_t::number_integer)
-        {
-            return static_cast<number_integer_t>(lhs.m_value.number_unsigned) < rhs.m_value.number_integer;
-        }
-
-        // We only reach this line if we cannot compare values. In that case,
+        // default_result is used if we cannot compare values. In that case,
         // we compare types. Note we have to call the operator explicitly,
         // because MSVC has problems otherwise.
-        return operator<(lhs_type, rhs_type);
+        JSON_IMPLEMENT_OPERATOR( <, false, false, operator<(lhs_type, rhs_type))
     }
 
     /// @brief comparison: less than
@@ -3765,6 +3867,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/operator_le/
     friend bool operator<=(const_reference lhs, const_reference rhs) noexcept
     {
+        if (compares_unordered(lhs, rhs, true))
+        {
+            return false;
+        }
         return !(rhs < lhs);
     }
 
@@ -3790,6 +3896,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/operator_gt/
     friend bool operator>(const_reference lhs, const_reference rhs) noexcept
     {
+        // double inverse
+        if (compares_unordered(lhs, rhs))
+        {
+            return false;
+        }
         return !(lhs <= rhs);
     }
 
@@ -3815,6 +3926,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/operator_ge/
     friend bool operator>=(const_reference lhs, const_reference rhs) noexcept
     {
+        if (compares_unordered(lhs, rhs, true))
+        {
+            return false;
+        }
         return !(lhs < rhs);
     }
 
@@ -3835,6 +3950,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     {
         return basic_json(lhs) >= rhs;
     }
+#endif
+
+#undef JSON_IMPLEMENT_OPERATOR
 
     /// @}
 
@@ -5016,7 +5134,327 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 
     /// @}
+
+  private:
+    template<typename Arg, typename Value,
+             detail::enable_if_t<detail::is_basic_json_value_placeholder<Arg>::value, int> = 0>
+    auto apply_resolve_placeholder(Arg &&  /*arg*/, Value && val) const -> decltype(std::forward<Value>(val))
+    {
+        return std::forward<Value>(val);
+    }
+
+    template < typename Arg, typename Value, typename AsType = typename detail::uncvref_t<Arg>::type,
+               detail::enable_if_t < detail::is_basic_json_value_as_placeholder<Arg>::value
+                                     && detail::is_static_castable<Value, AsType>::value, int > = 0 >
+    auto apply_resolve_placeholder(Arg &&  /*arg*/, Value && val) const -> decltype(static_cast<AsType>(std::forward<Value>(val)))
+    {
+        return static_cast<AsType>(std::forward<Value>(val));
+    }
+
+    template < typename Arg, typename Value, typename AsType = typename detail::uncvref_t<Arg>::type,
+               detail::enable_if_t < detail::is_basic_json_value_as_placeholder<Arg>::value
+                                     && !detail::is_static_castable<Value, AsType>::value, int > = 0 >
+    //static auto apply_resolve_placeholder(Arg &&  /*arg*/, Value && val) -> decltype(std::forward<Value>(val))
+    auto apply_resolve_placeholder(Arg &&  /*arg*/, Value && val) const -> decltype(std::forward<Value>(val))
+    {
+        JSON_THROW(type_error::create(399, detail::concat("cannot cast to requested type"), this));
+        return std::forward<Value>(val);
+    }
+
+    template < typename Arg, typename Value,
+               detail::enable_if_t < !detail::is_any_basic_json_value_placeholder<Arg>::value, int > = 0 >
+    auto apply_resolve_placeholder(Arg && arg, Value&&   /*val*/) const -> decltype(std::forward<Arg>(arg))
+    {
+        return std::forward<Arg>(arg);
+    }
+
+    // invoke the result callback
+    template < typename ResultCallback, typename CallbackArg, typename R,
+               detail::enable_if_t <
+                   detail::is_null_arg<ResultCallback>::value
+                   && detail::is_null_arg<CallbackArg>::value, int > = 0 >
+    void apply_invoke_cb(ResultCallback && /*cb*/, CallbackArg && /*cb_arg*/, R&& /*r*/) const
+    {}
+
+    template < typename ResultCallback, typename CallbackArg, typename R,
+               detail::enable_if_t <
+                   !detail::is_null_arg<ResultCallback>::value
+                   && detail::is_null_arg<CallbackArg>::value
+                   && detail::is_invocable<ResultCallback, R>::value, int > = 0 >
+    void apply_invoke_cb(ResultCallback && cb, CallbackArg && /*cb_arg*/, R && r) const
+    {
+        detail::invoke(std::forward<ResultCallback>(cb), std::forward<R>(r));
+    }
+
+    template < typename ResultCallback, typename CallbackArg, typename R,
+               detail::enable_if_t <
+                   !detail::is_null_arg<ResultCallback>::value
+                   && !detail::is_null_arg<CallbackArg>::value
+                   && detail::is_invocable<ResultCallback, CallbackArg, R>::value, int > = 0 >
+    void apply_invoke_cb(ResultCallback && cb, CallbackArg && cb_arg, R && r) const
+    {
+        detail::invoke(std::forward<ResultCallback>(cb), std::forward<CallbackArg>(cb_arg), std::forward<R>(r));
+    }
+
+    template < typename ResultCallback, typename CallbackArg, typename R,
+               detail::enable_if_t <
+                   (!detail::is_null_arg<ResultCallback>::value
+                    && !detail::is_null_arg<CallbackArg>::value
+                    && !detail::is_invocable<ResultCallback, CallbackArg, R>::value)
+                   || (!detail::is_null_arg<ResultCallback>::value
+                       && detail::is_null_arg<CallbackArg>::value
+                       && !detail::is_invocable<ResultCallback, R>::value), int > = 0 >
+    void apply_invoke_cb(ResultCallback &&  /*cb*/, CallbackArg &&  /*cb_arg*/, R&&   /*r*/) const
+    {
+        JSON_THROW(type_error::create(319, detail::concat("cannot invoke callback"), this));
+    }
+
+    template<bool ConstThis>
+    void apply_error() const
+    {
+        if (ConstThis)
+        {
+            JSON_THROW(type_error::create(318, detail::concat("cannot invoke callable with const JSON value of type ", type_name()), this));
+        }
+        JSON_THROW(type_error::create(318, detail::concat("cannot invoke callable with JSON value of type ", type_name()), this));
+    }
+
+    // invoke function and possibly delegate result
+    template < bool ConstThis, typename Value, typename ResultCallback, typename CallbackArg, typename Fn, typename Tuple, std::size_t... I,
+               detail::enable_if_t < detail::apply_is_invocable<Value, Fn, Tuple, I...>::value
+                                     && std::is_same<detail::apply_invoke_result_t<Value, Fn, Tuple, I...>, void>::value, int > = 0 >
+    void apply_invoke(Value && val, ResultCallback && /*cb*/, CallbackArg && /*cb_arg*/, Fn && f, Tuple && t, detail::index_sequence<I...> /*unused*/) const
+    {
+        detail::invoke(std::forward<Fn>(f), apply_resolve_placeholder(std::get<I>(t), std::forward<Value>(val))...);
+    }
+
+    template < bool ConstThis, typename Value, typename ResultCallback, typename CallbackArg, typename Fn, typename Tuple, std::size_t... I,
+               detail::enable_if_t < detail::apply_is_invocable<Value, Fn, Tuple, I...>::value
+                                     && !std::is_same<detail::apply_invoke_result_t<Value, Fn, Tuple, I...>, void>::value, int > = 0 >
+    void apply_invoke(Value && val, ResultCallback && cb, CallbackArg && cb_arg, Fn && f, Tuple && t, detail::index_sequence<I...> /*unused*/) const
+    {
+        auto&& r = detail::invoke(std::forward<Fn>(f), apply_resolve_placeholder(std::get<I>(t), std::forward<Value>(val))...);
+        apply_invoke_cb(std::forward<ResultCallback>(cb), std::forward<CallbackArg>(cb_arg), std::forward<decltype(r)>(r));
+    }
+
+    template < bool ConstThis, typename Value, typename ResultCallback, typename CallbackArg, typename Fn, typename Tuple, std::size_t... I,
+               detail::enable_if_t < !detail::apply_is_invocable<Value, Fn, Tuple, I...>::value, int > = 0 >
+    void apply_invoke(Value && /*val*/, ResultCallback && /*cb*/, CallbackArg && /*cb_arg*/, Fn && /*f*/, Tuple && /*t*/, detail::index_sequence<I...> /*unused*/) const
+    {
+        apply_error<ConstThis>();
+    }
+
+    // workaround Clang <4 and GCC <5.2 not being able to construct tuples
+    // of basic_json by wrapping it using std::reference_wrapper
+#if (defined(__clang__) && __clang_major__ < 4) || \
+    (defined(__GNUC__) && !JSON_HEDLEY_GCC_VERSION_CHECK(5, 2, 0))
+    using apply_basic_json_needs_to_be_wrapped = std::true_type;
+#else
+    using apply_basic_json_needs_to_be_wrapped = std::false_type;
+#endif
+
+    template<typename Arg>
+    using apply_arg_needs_to_be_wrapped = std::integral_constant < bool,
+            (apply_basic_json_needs_to_be_wrapped::value
+             && detail::is_basic_json<detail::uncvref_t<Arg>>::value) >;
+
+    template < typename Arg,
+               detail::enable_if_t < apply_arg_needs_to_be_wrapped<Arg>::value&& std::is_const<Arg>::value, int > = 0 >
+    static auto apply_maybe_wrap_arg(Arg && arg) -> decltype(std::cref(std::forward<Arg>(arg)))
+    {
+        return std::cref(std::forward<Arg>(arg)); // LCOV_EXCL_LINE
+    }
+
+    template < typename Arg,
+               detail::enable_if_t < apply_arg_needs_to_be_wrapped<Arg>::value&& !std::is_const<Arg>::value, int > = 0 >
+    static auto apply_maybe_wrap_arg(Arg && arg) -> decltype(std::ref(std::forward<Arg>(arg)))
+    {
+        return std::ref(std::forward<Arg>(arg)); // LCOV_EXCL_LINE
+    }
+
+    template < typename Arg,
+               detail::enable_if_t < !apply_arg_needs_to_be_wrapped<Arg>::value, int > = 0 >
+    static auto apply_maybe_wrap_arg(Arg && arg) -> decltype(std::forward<Arg>(arg))
+    {
+        return std::forward<Arg>(arg);
+    }
+
+    // convert arguments to tuple; insert basic_json_value placeholder if missing
+    template < bool ConstThis, typename Value, typename ResultCallback, typename CallbackArg, typename Fn, typename FnArg, typename... Args,
+               detail::enable_if_t < std::is_member_pointer<Fn>::value
+                                     && !detail::is_any_basic_json_value_placeholder<FnArg>::value
+                                     && !detail::disjunction<detail::is_any_basic_json_value_placeholder<Args>...>::value, int > = 0 >
+    void apply_make_tuple(Value && val, ResultCallback && cb, CallbackArg && cb_arg, Fn && f, FnArg && f_arg, Args && ... args) const
+    {
+        apply_invoke<ConstThis>(
+            std::forward<Value>(val),
+            std::forward<ResultCallback>(cb), std::forward<CallbackArg>(cb_arg),
+            std::forward<Fn>(f), std::forward_as_tuple(f_arg, value_placeholder, apply_maybe_wrap_arg(args)...),
+            detail::make_index_sequence < 2 + sizeof...(args) > ());
+    }
+
+    template < bool ConstThis, typename Value, typename ResultCallback, typename CallbackArg, typename Fn, typename... Args,
+               detail::enable_if_t < !std::is_member_pointer<Fn>::value
+                                     && !detail::disjunction<detail::is_any_basic_json_value_placeholder<Args>...>::value, int > = 0 >
+    void apply_make_tuple(Value && val, ResultCallback && cb, CallbackArg && cb_arg, Fn && f, Args && ... args) const
+    {
+        apply_invoke<ConstThis>(
+            std::forward<Value>(val),
+            std::forward<ResultCallback>(cb), std::forward<CallbackArg>(cb_arg),
+            std::forward<Fn>(f), std::forward_as_tuple(value_placeholder, apply_maybe_wrap_arg(args)...),
+            detail::make_index_sequence < 1 + sizeof...(args) > ());
+    }
+
+    template<bool ConstThis, typename Value, typename ResultCallback, typename CallbackArg, typename Fn, typename... Args,
+             detail::enable_if_t<detail::disjunction<detail::is_any_basic_json_value_placeholder<Args>...>::value, int> = 0>
+    void apply_make_tuple(Value && val, ResultCallback && cb, CallbackArg && cb_arg, Fn && f, Args && ... args) const
+    {
+        apply_invoke<ConstThis>(
+            std::forward<Value>(val),
+            std::forward<ResultCallback>(cb), std::forward<CallbackArg>(cb_arg),
+            std::forward<Fn>(f), std::forward_as_tuple(apply_maybe_wrap_arg(args)...),
+            detail::make_index_sequence<sizeof...(args)>());
+    }
+
+    // dispatch based on stored value type
+    template<bool ConstThis, typename ResultCallback, typename CallbackArg, typename Fn, typename... Args>
+    void apply_dispatch(ResultCallback&& cb, CallbackArg&& cb_arg, Fn&& f, Args&& ... args) const
+    {
+        switch (m_type)
+        {
+            case value_t::null:
+                return apply_make_tuple<ConstThis>(nullptr,
+                                                   std::forward<ResultCallback>(cb), std::forward<CallbackArg>(cb_arg),
+                                                   std::forward<Fn>(f), std::forward<Args>(args)...);
+            case value_t::object:
+                return apply_make_tuple<ConstThis>(detail::conditional_as_const<ConstThis>(*m_value.object),
+                                                   std::forward<ResultCallback>(cb), std::forward<CallbackArg>(cb_arg),
+                                                   std::forward<Fn>(f), std::forward<Args>(args)...);
+            case value_t::array:
+                return apply_make_tuple<ConstThis>(detail::conditional_as_const<ConstThis>(*m_value.array),
+                                                   std::forward<ResultCallback>(cb), std::forward<CallbackArg>(cb_arg),
+                                                   std::forward<Fn>(f), std::forward<Args>(args)...);
+            case value_t::string:
+                return apply_make_tuple<ConstThis>(detail::conditional_as_const<ConstThis>(*m_value.string),
+                                                   std::forward<ResultCallback>(cb), std::forward<CallbackArg>(cb_arg),
+                                                   std::forward<Fn>(f), std::forward<Args>(args)...);
+            case value_t::boolean:
+                return apply_make_tuple<ConstThis>(detail::conditional_as_const<ConstThis>(m_value.boolean),
+                                                   std::forward<ResultCallback>(cb), std::forward<CallbackArg>(cb_arg),
+                                                   std::forward<Fn>(f), std::forward<Args>(args)...);
+            case value_t::number_integer:
+                return apply_make_tuple<ConstThis>(detail::conditional_as_const<ConstThis>(m_value.number_integer),
+                                                   std::forward<ResultCallback>(cb), std::forward<CallbackArg>(cb_arg),
+                                                   std::forward<Fn>(f), std::forward<Args>(args)...);
+            case value_t::number_unsigned:
+                return apply_make_tuple<ConstThis>(detail::conditional_as_const<ConstThis>(m_value.number_unsigned),
+                                                   std::forward<ResultCallback>(cb), std::forward<CallbackArg>(cb_arg),
+                                                   std::forward<Fn>(f), std::forward<Args>(args)...);
+            case value_t::number_float:
+                return apply_make_tuple<ConstThis>(detail::conditional_as_const<ConstThis>(m_value.number_float),
+                                                   std::forward<ResultCallback>(cb), std::forward<CallbackArg>(cb_arg),
+                                                   std::forward<Fn>(f), std::forward<Args>(args)...);
+            case value_t::binary:
+                return apply_make_tuple<ConstThis>(detail::conditional_as_const<ConstThis>(*m_value.binary),
+                                                   std::forward<ResultCallback>(cb), std::forward<CallbackArg>(cb_arg),
+                                                   std::forward<Fn>(f), std::forward<Args>(args)...);
+            case value_t::discarded:
+                return apply_error<ConstThis>();
+            default: // LCOV_EXCL_LINE
+                JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
+        }
+    }
+
+  public:
+    template<typename Fn, typename... Args>
+    void apply(Fn&& f, Args&& ... args)
+    {
+        apply_dispatch<false>(
+            detail::null_arg, detail::null_arg,
+            std::forward<Fn>(f), std::forward<Args>(args)...);
+    }
+
+    template<typename Fn, typename... Args>
+    void apply(Fn&& f, Args&& ... args) const
+    {
+        apply_dispatch<true>(
+            detail::null_arg, detail::null_arg,
+            std::forward<Fn>(f), std::forward<Args>(args)...);
+    }
+
+    template<typename ResultCallback, typename CallbackArg, typename Fn, typename... Args, detail::enable_if_t<
+                 std::is_member_pointer<ResultCallback>::value, int> = 0>
+    void apply_cb(ResultCallback && cb, CallbackArg && cb_arg, Fn && f, Args && ... args)
+    {
+        apply_dispatch<false>(
+            std::forward<ResultCallback>(cb), std::forward<CallbackArg>(cb_arg),
+            std::forward<Fn>(f), std::forward<Args>(args)...);
+    }
+
+    template<typename ResultCallback, typename CallbackArg, typename Fn, typename... Args, detail::enable_if_t<
+                 std::is_member_pointer<ResultCallback>::value, int> = 0>
+    void apply_cb(ResultCallback && cb, CallbackArg && cb_arg, Fn && f, Args && ... args) const
+    {
+        apply_dispatch<true>(
+            std::forward<ResultCallback>(cb), std::forward<CallbackArg>(cb_arg),
+            std::forward<Fn>(f), std::forward<Args>(args)...);
+    }
+
+    template < typename ResultCallback, typename Fn, typename... Args, detail::enable_if_t <
+                   !std::is_member_pointer<ResultCallback>::value, int > = 0 >
+    void apply_cb(ResultCallback && cb, Fn && f, Args && ... args)
+    {
+        apply_dispatch<false>(
+            std::forward<ResultCallback>(cb), detail::null_arg,
+            std::forward<Fn>(f), std::forward<Args>(args)...);
+    }
+
+    template < typename ResultCallback, typename Fn, typename... Args, detail::enable_if_t <
+                   !std::is_member_pointer<ResultCallback>::value, int > = 0 >
+    void apply_cb(ResultCallback && cb, Fn && f, Args && ... args) const
+    {
+        apply_dispatch<true>(
+            std::forward<ResultCallback>(cb), detail::null_arg,
+            std::forward<Fn>(f), std::forward<Args>(args)...);
+    }
+
+    template<typename R, typename Fn, typename... Args>
+    R apply_r(Fn&& f, Args&& ... args)
+    {
+        R out;
+        // dynamic noexcept specifier fails to compile on Clang <3.6
+        apply_cb([&out](R && r)
+#if !defined(__clang__) || (defined(__clang__) && __clang_major__ == 3 && __clang_minor__ > 5)
+                 noexcept(noexcept(out = std::forward<decltype(r)>(r)))
+#endif
+        {
+            out = std::forward<decltype(r)>(r);
+        }, std::forward<Fn>(f), std::forward<Args>(args)...);
+        return out;
+    }
+
+    template<typename R, typename Fn, typename... Args>
+    R apply_r(Fn&& f, Args&& ... args) const
+    {
+        R out;
+        // dynamic noexcept specifier fails to compile on Clang <3.6
+        apply_cb([&out](R && r)
+#if !defined(__clang__) || (defined(__clang__) && __clang_major__ == 3 && __clang_minor__ > 5)
+                 noexcept(noexcept(out = std::forward<decltype(r)>(r)))
+#endif
+        {
+            out = std::forward<decltype(r)>(r);
+        }, std::forward<Fn>(f), std::forward<Args>(args)...);
+        return out;
+    }
 };
+
+#ifndef JSON_HAS_CPP_17
+
+    NLOHMANN_BASIC_JSON_TPL_DECLARATION
+    constexpr decltype(::nlohmann::placeholders::basic_json_value) NLOHMANN_BASIC_JSON_TPL::value_placeholder; // NOLINT(readability-redundant-declaration)
+
+#endif
 
 /// @brief user-defined to_string function for JSON values
 /// @sa https://json.nlohmann.me/api/basic_json/to_string/
@@ -5054,10 +5492,14 @@ struct less< ::nlohmann::detail::value_t> // do not remove the space after '<', 
     @brief compare two value_t enum values
     @since version 3.0.0
     */
-    bool operator()(nlohmann::detail::value_t lhs,
-                    nlohmann::detail::value_t rhs) const noexcept
+    bool operator()(::nlohmann::detail::value_t lhs,
+                    ::nlohmann::detail::value_t rhs) const noexcept
     {
-        return nlohmann::detail::operator<(lhs, rhs);
+#if JSON_HAS_THREE_WAY_COMPARISON
+        return std::is_lt(lhs <=> rhs); // *NOPAD*
+#else
+        return ::nlohmann::detail::operator<(lhs, rhs);
+#endif
     }
 };
 
