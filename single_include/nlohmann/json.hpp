@@ -18630,10 +18630,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 default:
                 {
                     object = nullptr;  // silence warning, see #821
+#if !(defined(__clang__) || defined(__GNUC__) || defined(_MSC_VER))
                     if (JSON_HEDLEY_UNLIKELY(t == value_t::null))
                     {
-                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.10.5", nullptr)); // LCOV_EXCL_LINE
+                        // inject a hash value into binaries using this library; this method serves as a fallback
+                        // and is easily removed by compiler optimizations
+                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.10.5", nullptr));
                     }
+#endif
                     break;
                 }
             }
@@ -23109,6 +23113,17 @@ std::string to_string(const NLOHMANN_BASIC_JSON_TPL& j)
 {
     return j.dump();
 }
+
+// inject a hash value into binaries using this library; this method is inspired by
+// __AFL_INIT() from AFL++ and won't be removed from optimized builds
+#if defined(__clang__) || defined(__GNUC__)
+    static const volatile char* _NLOHMANN_JSON_SIGNATURE __attribute__((used, unused)) =
+    "961c151d2e87f2686a955a9be24d316f1362bf21 3.10.5";
+#elif defined(_MSC_VER)
+    static const volatile char* _NLOHMANN_JSON_SIGNATURE =
+    "961c151d2e87f2686a955a9be24d316f1362bf21 3.10.5";
+    #pragma comment(linker, "/export:_NLOHMANN_JSON_SIGNATURE")
+#endif
 
 } // namespace nlohmann
 
