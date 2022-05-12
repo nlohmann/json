@@ -113,7 +113,7 @@ The library uses the following mapping from JSON values types to BJData types ac
     In order to maintain the type and dimension information of an ND-array,
     when this library parses a BJData ND-array via `from_bjdata`, it converts the
     data into a JSON object, following the **annotated array format** as defined in the
-    [JData specification (Draft 3)](hhttps://github.com/NeuroJSON/jdata/blob/master/JData_specification.md#annotated-storage-of-n-d-arrays).
+    [JData specification (Draft 3)](https://github.com/NeuroJSON/jdata/blob/master/JData_specification.md#annotated-storage-of-n-d-arrays).
     For example, the above 2-D `uint8` array can be parsed and accessed as
 
     ```json
