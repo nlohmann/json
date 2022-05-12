@@ -84,7 +84,7 @@ The library uses the following mapping from JSON values types to BJData types ac
 	A breaking difference between BJData and UBJSON is the endianness
     of numerical values. In BJData, all numerical data types (integers
     `UiuImlML` and floating-point values `hdD`) are stored in the little-endian (LE)
-    byte order as opposed to the big-endian as used by UBJSON. To adopt LE
+    byte order as opposed to big-endian as used by UBJSON. To adopt LE
     to store numeric records avoids unnecessary byte swapping on most modern
     computers where LE is used as the default byte order.
 
