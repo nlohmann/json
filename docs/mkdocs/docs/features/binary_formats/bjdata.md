@@ -126,7 +126,9 @@ The library uses the following mapping from JSON values types to BJData types ac
 
     In the reversed direction, when `to_bjdata` detects a JSON object in the
     above form, it automatically converts such object into a BJData ND-array
-    to generate compact output.
+    to generate compact output. The only exception is that when the 1-D dimensional
+    vector stored in `"_ArraySize_"` contains a single integer, or two integers with
+    one being 1, a regular 1-D optimized array is generated.
 
     The current version of this library has not yet supported automatic
     recognition and conversion from a nested JSON array input to a BJData ND-array.
