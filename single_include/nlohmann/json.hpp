@@ -10490,7 +10490,7 @@ class binary_reader
             case 'i':
             {
                 std::int8_t number{};
-                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format, number)))
+                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format, number) || number < 0))
                 {
                     return false;
                 }
@@ -10501,7 +10501,7 @@ class binary_reader
             case 'I':
             {
                 std::int16_t number{};
-                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format, number)))
+                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format, number) || number < 0))
                 {
                     return false;
                 }
@@ -10512,7 +10512,7 @@ class binary_reader
             case 'l':
             {
                 std::int32_t number{};
-                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format, number)))
+                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format, number) || number < 0))
                 {
                     return false;
                 }
@@ -10523,7 +10523,7 @@ class binary_reader
             case 'L':
             {
                 std::int64_t number{};
-                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format, number)))
+                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format, number) || number < 0))
                 {
                     return false;
                 }
@@ -10587,7 +10587,7 @@ class binary_reader
                 {
                     return false;
                 }
-                if (dim.size() == 1 || (dim.size() == 2 && dim.at(0) == 1)) // return normal array size if 1D row vector
+                if (dim.size() == 1 || (dim.size() == 2 && dim.at(0) == 1) || std::count(dim.begin(), dim.end(), 0)) // return normal array size if 1D row vector or total length is 0
                 {
                     result = dim.at(dim.size() - 1);
                     return true;
