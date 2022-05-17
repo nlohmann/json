@@ -233,6 +233,9 @@ class json_sax_dom_parser
 
     bool key(string_t& val)
     {
+        JSON_ASSERT(!ref_stack.empty());
+        JSON_ASSERT(ref_stack.back()->is_object());
+
         // add null at given key and store the reference for later
         object_element = &(ref_stack.back()->m_value.object->operator[](val));
         return true;
@@ -240,6 +243,9 @@ class json_sax_dom_parser
 
     bool end_object()
     {
+        JSON_ASSERT(!ref_stack.empty());
+        JSON_ASSERT(ref_stack.back()->is_object());
+
         ref_stack.back()->set_parents();
         ref_stack.pop_back();
         return true;
@@ -259,6 +265,9 @@ class json_sax_dom_parser
 
     bool end_array()
     {
+        JSON_ASSERT(!ref_stack.empty());
+        JSON_ASSERT(ref_stack.back()->is_array());
+
         ref_stack.back()->set_parents();
         ref_stack.pop_back();
         return true;
