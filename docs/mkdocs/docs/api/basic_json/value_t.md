@@ -29,6 +29,22 @@ distinguishes these three types for numbers: [`number_unsigned_t`](number_unsign
 [`number_integer_t`](number_integer_t.md) is used for signed integers, and [`number_float_t`](number_float_t.md) is used
 for floating-point numbers or to approximate integers which do not fit in the limits of their respective type.
 
+## Examples
+
+??? example
+
+    The following code how `type()` queries the `value_t` for all JSON types.
+    
+    ```cpp
+    --8<-- "examples/type.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/type.output"
+    ```
+
 ## Version history
 
 - Added in version 1.0.0.

@@ -22512,29 +22512,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return res ? result : basic_json(value_t::discarded);
     }
 
-    template<typename T>
-    JSON_HEDLEY_WARN_UNUSED_RESULT
-    static basic_json from_bjdata(const T* ptr, std::size_t len,
-                                  const bool strict = true,
-                                  const bool allow_exceptions = true)
-    {
-        return from_bjdata(ptr, ptr + len, strict, allow_exceptions);
-    }
-
-    JSON_HEDLEY_WARN_UNUSED_RESULT
-    static basic_json from_bjdata(detail::span_input_adapter&& i,
-                                  const bool strict = true,
-                                  const bool allow_exceptions = true)
-    {
-        basic_json result;
-        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
-        auto ia = i.get();
-        // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
-        const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::bjdata).sax_parse(input_format_t::bjdata, &sdp, strict);
-        return res ? result : basic_json(value_t::discarded);
-    }
-
-
     /// @brief create a JSON value from an input in BSON format
     /// @sa https://json.nlohmann.me/api/basic_json/from_bson/
     template<typename InputType>

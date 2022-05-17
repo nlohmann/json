@@ -25,6 +25,19 @@ The default value is detected based on the preprocessor macros `#!cpp __cpp_lib_
   filesystem support.
 - Both macros are undefined outside the library.
 
+## Examples
+
+??? example
+
+    The code below forces the library to use the header `<experimental/filesystem>`.
+
+    ```cpp
+    #define JSON_HAS_EXPERIMENTAL_FILESYSTEM 1
+    #include <nlohmann/json.hpp>
+
+    ...
+    ```
+
 ## Version history
 
 - Added in version 3.10.5.

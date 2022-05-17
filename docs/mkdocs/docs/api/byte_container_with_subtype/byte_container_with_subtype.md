@@ -25,6 +25,22 @@ byte_container_with_subtype(container_type&& container, subtype_type subtype);
 `subtype` (in)
 :   subtype
 
+## Examples
+
+??? example
+
+    The example below demonstrates how byte containers can be created.
+
+    ```cpp
+    --8<-- "examples/byte_container_with_subtype__byte_container_with_subtype.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/byte_container_with_subtype__byte_container_with_subtype.output"
+    ```
+
 ## Version history
 
 Since version 3.8.0.

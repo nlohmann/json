@@ -19,7 +19,6 @@ int main()
     json::json_pointer ptr11("/ ");
     json::json_pointer ptr12("/m~0n");
 
-
     std::cout << ptr1.to_string() << '\n'
               << ptr2.to_string() << '\n'
               << ptr3.to_string() << '\n'

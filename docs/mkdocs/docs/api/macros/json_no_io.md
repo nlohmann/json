@@ -16,6 +16,20 @@ By default, `#!cpp JSON_NO_IO` is not defined.
 #undef JSON_NO_IO
 ```
 
+## Examples
+
+??? example
+
+    The code below forces the library not to use the headers `<cstdio>`, `<ios>`, `<iosfwd>`, `<istream>`, and
+    `<ostream>`.
+
+    ```cpp
+    #define JSON_NO_IO 1
+    #include <nlohmann/json.hpp>
+
+    ...
+    ```
+
 ## Version history
 
 - Added in version 3.10.0.

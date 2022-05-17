@@ -3405,21 +3405,6 @@ TEST_CASE("BJData roundtrips" * doctest::skip())
             }
 
             {
-                INFO_WITH_TEMP(filename + ": uint8_t* and size");
-                // parse JSON file
-                std::ifstream f_json(filename);
-                json j1 = json::parse(f_json);
-
-                // parse BJData file
-                auto packed = utils::read_binary_file(filename + ".bjdata");
-                json j2;
-                CHECK_NOTHROW(j2 = json::from_bjdata({packed.data(), packed.size()}));
-
-                // compare parsed JSON values
-                CHECK(j1 == j2);
-            }
-
-            {
                 INFO_WITH_TEMP(filename + ": output to output adapters");
                 // parse JSON file
                 std::ifstream f_json(filename);

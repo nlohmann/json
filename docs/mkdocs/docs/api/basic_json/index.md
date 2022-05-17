@@ -268,10 +268,12 @@ Access to the JSON value
 
 ### Binary formats
 
+- [**from_bjdata**](from_bjdata.md) (_static_) - create a JSON value from an input in BJData format
 - [**from_bson**](from_bson.md) (_static_) - create a JSON value from an input in BSON format
 - [**from_cbor**](from_cbor.md) (_static_) - create a JSON value from an input in CBOR format
 - [**from_msgpack**](from_msgpack.md) (_static_) - create a JSON value from an input in MessagePack format
 - [**from_ubjson**](from_ubjson.md) (_static_) - create a JSON value from an input in UBJSON format
+- [**to_bjdata**](to_bjdata.md) (_static_) - create a BJData serialization of a given JSON value
 - [**to_bson**](to_bson.md) (_static_) - create a BSON serialization of a given JSON value
 - [**to_cbor**](to_cbor.md) (_static_) - create a CBOR serialization of a given JSON value
 - [**to_msgpack**](to_msgpack.md) (_static_) - create a MessagePack serialization of a given JSON value

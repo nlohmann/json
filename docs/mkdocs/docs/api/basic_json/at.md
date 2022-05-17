@@ -184,6 +184,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
 
 ## See also
 
+- documentation on [checked access](../../features/element_access/checked_access.md)
 - see [`operator[]`](operator%5B%5D.md) for unchecked access by reference
 - see [`value`](value.md) for access with default value
 

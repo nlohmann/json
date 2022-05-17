@@ -54,7 +54,7 @@ There are myriads of [JSON](https://json.org) libraries out there, and each may 
 
 - **Trivial integration**. Our whole code consists of a single header file [`json.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json.hpp). That's it. No library, no subproject, no dependencies, no complex build system. The class is written in vanilla C++11. All in all, everything should require no adjustment of your compiler flags or project settings.
 
-- **Serious testing**. Our class is heavily [unit-tested](https://github.com/nlohmann/json/tree/develop/tests/src) and covers [100%](https://coveralls.io/r/nlohmann/json) of the code, including all exceptional behavior. Furthermore, we checked with [Valgrind](https://valgrind.org) and the [Clang Sanitizers](https://clang.llvm.org/docs/index.html) that there are no memory leaks. [Google OSS-Fuzz](https://github.com/google/oss-fuzz/tree/master/projects/json) additionally runs fuzz tests against all parsers 24/7, effectively executing billions of tests so far. To maintain high quality, the project is following the [Core Infrastructure Initiative (CII) best practices](https://bestpractices.coreinfrastructure.org/projects/289).
+- **Serious testing**. Our code is heavily [unit-tested](https://github.com/nlohmann/json/tree/develop/tests/src) and covers [100%](https://coveralls.io/r/nlohmann/json) of the code, including all exceptional behavior. Furthermore, we checked with [Valgrind](https://valgrind.org) and the [Clang Sanitizers](https://clang.llvm.org/docs/index.html) that there are no memory leaks. [Google OSS-Fuzz](https://github.com/google/oss-fuzz/tree/master/projects/json) additionally runs fuzz tests against all parsers 24/7, effectively executing billions of tests so far. To maintain high quality, the project is following the [Core Infrastructure Initiative (CII) best practices](https://bestpractices.coreinfrastructure.org/projects/289).
 
 Other aspects were not so important to us:
 
@@ -68,6 +68,10 @@ See the [contribution guidelines](https://github.com/nlohmann/json/blob/master/.
 ## Sponsors
 
 You can sponsor this library at [GitHub Sponsors](https://github.com/sponsors/nlohmann).
+
+### :office: Corporate Sponsor
+
+[![](https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Codacy-logo-black.svg/320px-Codacy-logo-black.svg.png)](https://github.com/codacy)
 
 ### :label: Named Sponsors
 
@@ -1599,6 +1603,20 @@ I deeply appreciate the help of the following people.
 - [Dirk Stolle](https://github.com/striezel) fixed typos in documentation.
 - [Daniel Albuschat](https://github.com/daniel-kun) corrected the parameter name in the `parse` documentation.
 - [Prince Mendiratta](https://github.com/Prince-Mendiratta) fixed a link to the FAQ.
+- [Florian Albrechtskirchinger](https://github.com/falbrechtskirchinger) implemented `std::string_view` support for object keys and made dozens of other improvements.
+- [Qianqian Fang](https://github.com/fangq) implemented the Binary JData (BJData) format.
+- [pketelsen](https://github.com/pketelsen) added macros `NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT` and `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT`.
+- [DarkZeros](https://github.com/DarkZeros) adjusted to code to not clash with Arduino defines.
+- [flagarde](https://github.com/flagarde) fixed the output of `meta()` for MSVC.
+- [Giovanni Cerretani](https://github.com/gcerretani) fixed a check for `std::filesystem`.
+- [Dimitris Apostolou](https://github.com/rex4539) fixed a typo.
+- [Ferry Huberts](https://github.com/fhuberts) fixed a typo.
+- [Michael Nosthoff](https://github.com/heinemml) fixed a typo.
+- [JungHoon Lee](https://github.com/jhnlee) fixed a typo.
+- [Faruk D.](https://github.com/fdiblen) fixed the CITATION.CFF file.
+- [Andrea Cocito](https://github.com/puffetto) added a clarification on macro usage to the documentation.
+- [Krzysiek Karbowiak](https://github.com/kkarbowiak) refactored the tests to use `CHECK_THROWS_WITH_AS`.
+- [Chaoqi Zhang](https://github.com/prncoprs) fixed a typo.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
@@ -1613,7 +1631,7 @@ The library itself consists of a single header file licensed under the MIT licen
 - [**Artistic Style**](http://astyle.sourceforge.net) for automatic source code indentation
 - [**Clang**](https://clang.llvm.org) for compilation with code sanitizers
 - [**CMake**](https://cmake.org) for build automation
-- [**Codacity**](https://www.codacy.com) for further [code analysis](https://www.codacy.com/app/nlohmann/json)
+- [**Codacy**](https://www.codacy.com) for further [code analysis](https://www.codacy.com/app/nlohmann/json)
 - [**Coveralls**](https://coveralls.io) to measure [code coverage](https://coveralls.io/github/nlohmann/json)
 - [**Coverity Scan**](https://scan.coverity.com) for [static analysis](https://scan.coverity.com/projects/nlohmann-json)
 - [**cppcheck**](http://cppcheck.sourceforge.net) for static analysis

@@ -15,6 +15,22 @@ No-throw guarantee: this function never throws exceptions.
 
 Constant.
 
+## Examples
+
+??? example
+
+    The example below demonstrates how `clear_subtype` can remove subtypes.
+
+    ```cpp
+    --8<-- "examples/byte_container_with_subtype__clear_subtype.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/byte_container_with_subtype__clear_subtype.output"
+    ```
+
 ## Version history
 
 Since version 3.8.0.
