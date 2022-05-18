@@ -2016,9 +2016,14 @@ class binary_reader
             case 'i':
             {
                 std::int8_t number{};
-                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format, number) || number < 0))
+                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format, number)))
                 {
                     return false;
+                }
+                if (number < 0)
+                {
+                    return sax->parse_error(chars_read, get_token_string(), parse_error::create(113, chars_read,
+                                            exception_message(input_format, "count in an optimized container must be positive", "size"), nullptr));
                 }
                 result = static_cast<std::size_t>(number); // NOLINT(bugprone-signed-char-misuse,cert-str34-c): number is not a char
                 return true;
@@ -2027,9 +2032,14 @@ class binary_reader
             case 'I':
             {
                 std::int16_t number{};
-                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format, number) || number < 0))
+                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format, number)))
                 {
                     return false;
+                }
+                if (number < 0)
+                {
+                    return sax->parse_error(chars_read, get_token_string(), parse_error::create(113, chars_read,
+                                            exception_message(input_format, "count in an optimized container must be positive", "size"), nullptr));
                 }
                 result = static_cast<std::size_t>(number);
                 return true;
@@ -2038,9 +2048,14 @@ class binary_reader
             case 'l':
             {
                 std::int32_t number{};
-                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format, number) || number < 0))
+                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format, number)))
                 {
                     return false;
+                }
+                if (number < 0)
+                {
+                    return sax->parse_error(chars_read, get_token_string(), parse_error::create(113, chars_read,
+                                            exception_message(input_format, "count in an optimized container must be positive", "size"), nullptr));
                 }
                 result = static_cast<std::size_t>(number);
                 return true;
@@ -2049,9 +2064,14 @@ class binary_reader
             case 'L':
             {
                 std::int64_t number{};
-                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format, number) || number < 0))
+                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format, number)))
                 {
                     return false;
+                }
+                if (number < 0)
+                {
+                    return sax->parse_error(chars_read, get_token_string(), parse_error::create(113, chars_read,
+                                            exception_message(input_format, "count in an optimized container must be positive", "size"), nullptr));
                 }
                 result = static_cast<std::size_t>(number);
                 return true;
@@ -2120,7 +2140,7 @@ class binary_reader
                 }
                 if (!dim.empty())  // if ndarray, convert to an object in JData annotated array format
                 {
-                    for (auto i : dim)
+                    for (auto i : dim) // test if any dimension in an ndarray is 0, if so, return a 1D empty container
                     {
                         if ( i == 0 )
                         {
