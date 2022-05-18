@@ -2113,13 +2113,22 @@ class binary_reader
                 {
                     return false;
                 }
-                if (dim.size() == 1 || (dim.size() == 2 && dim.at(0) == 1) || std::count(dim.begin(), dim.end(), 0) > 0) // return normal array size if 1D row vector or total length is 0
+                if (dim.size() == 1 || (dim.size() == 2 && dim.at(0) == 1)) // return normal array size if 1D row vector
                 {
                     result = dim.at(dim.size() - 1);
                     return true;
                 }
                 if (!dim.empty())  // if ndarray, convert to an object in JData annotated array format
                 {
+                    for (auto i : dim)
+                    {
+                        if ( i == 0 )
+                        {
+                            result = 0;
+                            return true;
+                        }
+                    }
+
                     string_t key = "_ArraySize_";
                     if (JSON_HEDLEY_UNLIKELY(!sax->start_object(3) || !sax->key(key) || !sax->start_array(dim.size())))
                     {

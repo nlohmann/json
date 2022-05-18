@@ -2363,6 +2363,7 @@ TEST_CASE("BJData")
             {
                 // create vector with two elements of the same type
                 std::vector<uint8_t> v_0 = {'[', '$', 'i', '#', '[', ']'};
+                std::vector<uint8_t> v_E = {'[', '$', 'i', '#', '[', 'i', 2, 'i', 0, ']'};
                 std::vector<uint8_t> v_i = {'[', '$', 'i', '#', '[', 'i', 1, 'i', 2, ']', 0x7F, 0x7F};
                 std::vector<uint8_t> v_U = {'[', '$', 'U', '#', '[', 'i', 1, 'i', 2, ']', 0xFF, 0xFF};
                 std::vector<uint8_t> v_I = {'[', '$', 'I', '#', '[', 'i', 1, 'i', 2, ']', 0xFF, 0x7F, 0xFF, 0x7F};
@@ -2377,6 +2378,7 @@ TEST_CASE("BJData")
 
                 // check if vector is parsed correctly
                 CHECK(json::from_bjdata(v_0) == json::array());
+                CHECK(json::from_bjdata(v_E) == json::array());
                 CHECK(json::from_bjdata(v_i) == json({127, 127}));
                 CHECK(json::from_bjdata(v_U) == json({255, 255}));
                 CHECK(json::from_bjdata(v_I) == json({32767, 32767}));
