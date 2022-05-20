@@ -2742,6 +2742,14 @@ TEST_CASE("BJData")
 
             std::vector<uint8_t> vh = {'[', '$', 'h', '#', '[', '$', 'i', '#', 'i', 2, 2, 3};
             CHECK(json::from_bjdata(vh, true, false).is_discarded());
+
+            std::vector<uint8_t> vR = {'[', '$', 'i', '#', '[', 'i', 1, '[', ']', ']', 1};
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vR), "[json.exception.parse_error.113] parse error at byte 8: syntax error while parsing BJData size: ndarray dimention vector can only contain integers", json::parse_error&);
+            CHECK(json::from_bjdata(vR, true, false).is_discarded());
+
+            std::vector<uint8_t> vRo = {'[', '$', 'i', '#', '[', 'i', 0, '{', '}', ']', 1};
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vRo), "[json.exception.parse_error.113] parse error at byte 8: syntax error while parsing BJData size: expected length type specification (U, i, u, I, m, l, M, L) after '#'; last byte: 0x7B", json::parse_error&);
+            CHECK(json::from_bjdata(vRo, true, false).is_discarded());
         }
 
         SECTION("objects")

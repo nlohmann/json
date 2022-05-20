@@ -1938,7 +1938,7 @@ class binary_reader
     {
         std::pair<std::size_t, char_int_type> size_and_type;
         size_t dimlen = 0;
-        bool is_ndarray = false;
+        bool is_ndarray = true;
 
         if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_type(size_and_type)))
         {
@@ -1994,7 +1994,6 @@ class binary_reader
     */
     bool get_ubjson_size_value(std::size_t& result, bool& is_ndarray, char_int_type prefix = 0)
     {
-        is_ndarray = false;
         if (prefix == 0)
         {
             prefix = get_ignore_noop();
@@ -2127,6 +2126,10 @@ class binary_reader
                 if (input_format != input_format_t::bjdata)
                 {
                     break;
+                }
+                if (is_ndarray) // ndarray dimensional vector can only contain integers, and can not embed another array
+                {
+                    return sax->parse_error(chars_read, get_token_string(), parse_error::create(113, chars_read, exception_message(input_format, "ndarray dimention vector can only contain integers", "size"), nullptr));
                 }
                 std::vector<size_t> dim;
                 if (JSON_HEDLEY_UNLIKELY(!get_ubjson_ndarray_size(dim)))
