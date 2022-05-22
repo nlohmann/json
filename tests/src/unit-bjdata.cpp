@@ -2817,7 +2817,7 @@ TEST_CASE("BJData")
             CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vO), "[json.exception.parse_error.112] parse error at byte 8: syntax error while parsing BJData size: ndarray requires both type and size", json::parse_error&);
             CHECK(json::from_bjdata(vO, true, false).is_discarded());
 
-            std::vector<uint8_t> vO2 = {'{','$', 'i', '#', '[', 'i', 2, 'i', 1, ']', 'i', 1, 'a', 1, 'i', 1, 'b', 2};
+            std::vector<uint8_t> vO2 = {'{', '$', 'i', '#', '[', 'i', 2, 'i', 1, ']', 'i', 1, 'a', 1, 'i', 1, 'b', 2};
             CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vO2), "[json.exception.parse_error.112] parse error at byte 10: syntax error while parsing BJData object: BJData object does not support ND-array size in optimized format", json::parse_error&);
             CHECK(json::from_bjdata(vO2, true, false).is_discarded());
         }
