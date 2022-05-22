@@ -2249,10 +2249,7 @@ class binary_reader
                     return sax->parse_error(chars_read, get_token_string(), parse_error::create(112, chars_read,
                                             exception_message(input_format, "ndarray can not be recursive", "size"), nullptr));
                 }
-                else
-                {
-                    result.second |= (1 << 8); // use bit 8 to indicate ndarray, all UBJSON and BJData markers should be ASCII letters
-                }
+                result.second |= (1 << 8); // use bit 8 to indicate ndarray, all UBJSON and BJData markers should be ASCII letters
             }
             return is_error;
         }
