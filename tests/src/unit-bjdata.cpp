@@ -2772,6 +2772,10 @@ TEST_CASE("BJData")
             std::vector<uint8_t> vR5 = {'[', '$', 'i', '#', '[', '[', '[', ']', ']', ']'};
             CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vR5), "[json.exception.parse_error.113] parse error at byte 6: syntax error while parsing BJData size: ndarray dimention vector can only contain integers", json::parse_error&);
             CHECK(json::from_bjdata(vR5, true, false).is_discarded());
+
+            std::vector<uint8_t> vR6 = {'[', '$', 'i', '#', '[', '$', 'i', '#', '[', 'i', '2', 'i', 2, ']'};
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vR6), "[json.exception.parse_error.112] parse error at byte 14: syntax error while parsing BJData size: ndarray can not be recursive", json::parse_error&);
+            CHECK(json::from_bjdata(vR6, true, false).is_discarded());
         }
 
         SECTION("objects")
