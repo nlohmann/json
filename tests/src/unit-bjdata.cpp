@@ -2372,6 +2372,7 @@ TEST_CASE("BJData")
                 std::vector<uint8_t> v_D = {'[', '$', 'D', '#', '[', 'i', 1, 'i', 2, ']', 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40, 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40};
                 std::vector<uint8_t> v_S = {'[', '#', '[', 'i', 1, 'i', 2, ']', 'S', 'i', 1, 'a', 'S', 'i', 1, 'a'};
                 std::vector<uint8_t> v_C = {'[', '$', 'C', '#', '[', 'i', 1, 'i', 2, ']', 'a', 'a'};
+                std::vector<uint8_t> v_R = {'[', '#', '[', 'i', 2, ']', 'i', 6, 'U', 7};
 
                 // check if vector is parsed correctly
                 CHECK(json::from_bjdata(v_0) == json::array());
@@ -2387,6 +2388,7 @@ TEST_CASE("BJData")
                 CHECK(json::from_bjdata(v_D) == json({3.1415926, 3.1415926}));
                 CHECK(json::from_bjdata(v_S) == json({"a", "a"}));
                 CHECK(json::from_bjdata(v_C) == json({"a", "a"}));
+                CHECK(json::from_bjdata(v_R) == json({6, 7}));
             }
 
             SECTION("optimized ndarray (type and vector-size as size-optimized array)")
@@ -2750,6 +2752,30 @@ TEST_CASE("BJData")
             std::vector<uint8_t> vRo = {'[', '$', 'i', '#', '[', 'i', 0, '{', '}', ']', 1};
             CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vRo), "[json.exception.parse_error.113] parse error at byte 8: syntax error while parsing BJData size: expected length type specification (U, i, u, I, m, l, M, L) after '#'; last byte: 0x7B", json::parse_error&);
             CHECK(json::from_bjdata(vRo, true, false).is_discarded());
+
+            std::vector<uint8_t> vR1 = {'[', '$', 'i', '#', '[', '[', 'i', 1, ']', ']', 1};
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vR1), "[json.exception.parse_error.113] parse error at byte 6: syntax error while parsing BJData size: ndarray dimention vector can only contain integers", json::parse_error&);
+            CHECK(json::from_bjdata(vR1, true, false).is_discarded());
+
+            std::vector<uint8_t> vR2 = {'[', '$', 'i', '#', '[', '#', '[', 'i', 1, ']', ']', 1};
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vR2), "[json.exception.parse_error.113] parse error at byte 11: syntax error while parsing BJData size: expected length type specification (U, i, u, I, m, l, M, L) after '#'; last byte: 0x5D", json::parse_error&);
+            CHECK(json::from_bjdata(vR2, true, false).is_discarded());
+
+            std::vector<uint8_t> vR3 = {'[', '#', '[', 'i', '2', 'i', 2, ']'};
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vR3), "[json.exception.parse_error.112] parse error at byte 8: syntax error while parsing BJData size: ndarray requires both type and size", json::parse_error&);
+            CHECK(json::from_bjdata(vR3, true, false).is_discarded());
+
+            std::vector<uint8_t> vR4 = {'[', '$', 'i', '#', '[', '$', 'i', '#', '[', 'i', 1, ']', 1};
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vR4), "[json.exception.parse_error.110] parse error at byte 14: syntax error while parsing BJData number: unexpected end of input", json::parse_error&);
+            CHECK(json::from_bjdata(vR4, true, false).is_discarded());
+
+            std::vector<uint8_t> vR5 = {'[', '$', 'i', '#', '[', '[', '[', ']', ']', ']'};
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vR5), "[json.exception.parse_error.113] parse error at byte 6: syntax error while parsing BJData size: ndarray dimention vector can only contain integers", json::parse_error&);
+            CHECK(json::from_bjdata(vR5, true, false).is_discarded());
+
+            std::vector<uint8_t> vR6 = {'[', '$', 'i', '#', '[', '$', 'i', '#', '[', 'i', '2', 'i', 2, ']'};
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vR6), "[json.exception.parse_error.112] parse error at byte 14: syntax error while parsing BJData size: ndarray can not be recursive", json::parse_error&);
+            CHECK(json::from_bjdata(vR6, true, false).is_discarded());
         }
 
         SECTION("objects")
@@ -2788,7 +2814,12 @@ TEST_CASE("BJData")
             CHECK(json::from_bjdata(vST2, true, false).is_discarded());
 
             std::vector<uint8_t> vO = {'{', '#', '[', 'i', 2, 'i', 1, ']', 'i', 1, 'a', 'i', 1, 'i', 1, 'b', 'i', 2};
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vO), "[json.exception.parse_error.112] parse error at byte 8: syntax error while parsing BJData size: ndarray requires both type and size", json::parse_error&);
             CHECK(json::from_bjdata(vO, true, false).is_discarded());
+
+            std::vector<uint8_t> vO2 = {'{', '$', 'i', '#', '[', 'i', 2, 'i', 1, ']', 'i', 1, 'a', 1, 'i', 1, 'b', 2};
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vO2), "[json.exception.parse_error.112] parse error at byte 10: syntax error while parsing BJData object: BJData object does not support ND-array size in optimized format", json::parse_error&);
+            CHECK(json::from_bjdata(vO2, true, false).is_discarded());
         }
     }
 

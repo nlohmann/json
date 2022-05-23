@@ -10421,9 +10421,9 @@ class binary_reader
     {
         std::pair<std::size_t, char_int_type> size_and_type;
         size_t dimlen = 0;
-        bool is_ndarray = true;
+        bool inside_ndarray = true;
 
-        if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_type(size_and_type)))
+        if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_type(size_and_type, inside_ndarray)))
         {
             return false;
         }
@@ -10436,7 +10436,7 @@ class binary_reader
                 {
                     for (std::size_t i = 0; i < size_and_type.first; ++i)
                     {
-                        if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_value(dimlen, is_ndarray, size_and_type.second)))
+                        if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_value(dimlen, inside_ndarray, size_and_type.second)))
                         {
                             return false;
                         }
@@ -10448,7 +10448,7 @@ class binary_reader
             {
                 for (std::size_t i = 0; i < size_and_type.first; ++i)
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_value(dimlen, is_ndarray)))
+                    if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_value(dimlen, inside_ndarray)))
                     {
                         return false;
                     }
@@ -10460,7 +10460,7 @@ class binary_reader
         {
             while (current != ']')
             {
-                if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_value(dimlen, is_ndarray, current)))
+                if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_value(dimlen, inside_ndarray, current)))
                 {
                     return false;
                 }
@@ -10473,9 +10473,12 @@ class binary_reader
 
     /*!
     @param[out] result  determined size
+    @param[in,out] inside_ndarray  whether the parser is parsing an ND array dimensional vector
+    @param[in] prefix  type marker if already read, otherwise set to 0
+
     @return whether size determination completed
     */
-    bool get_ubjson_size_value(std::size_t& result, bool& is_ndarray, char_int_type prefix = 0)
+    bool get_ubjson_size_value(std::size_t& result, bool& inside_ndarray, char_int_type prefix = 0)
     {
         if (prefix == 0)
         {
@@ -10610,7 +10613,7 @@ class binary_reader
                 {
                     break;
                 }
-                if (is_ndarray) // ndarray dimensional vector can only contain integers, and can not embed another array
+                if (inside_ndarray) // ndarray dimensional vector can only contain integers, and can not embed another array
                 {
                     return sax->parse_error(chars_read, get_token_string(), parse_error::create(113, chars_read, exception_message(input_format, "ndarray dimention vector can only contain integers", "size"), nullptr));
                 }
@@ -10649,7 +10652,7 @@ class binary_reader
                             return false;
                         }
                     }
-                    is_ndarray = true;
+                    inside_ndarray = true;
                     return sax->end_array();
                 }
                 result = 0;
@@ -10680,14 +10683,15 @@ class binary_reader
     for a more compact representation.
 
     @param[out] result  pair of the size and the type
+    @param[in] inside_ndarray  whether the parser is parsing an ND array dimensional vector
 
     @return whether pair creation completed
     */
-    bool get_ubjson_size_type(std::pair<std::size_t, char_int_type>& result)
+    bool get_ubjson_size_type(std::pair<std::size_t, char_int_type>& result, bool inside_ndarray = false)
     {
-        bool is_ndarray = false;
         result.first = string_t::npos; // size
         result.second = 0; // type
+        bool is_ndarray = false;
 
         get_ignore_noop();
 
@@ -10723,6 +10727,11 @@ class binary_reader
             bool is_error = get_ubjson_size_value(result.first, is_ndarray);
             if (input_format == input_format_t::bjdata && is_ndarray)
             {
+                if (inside_ndarray)
+                {
+                    return sax->parse_error(chars_read, get_token_string(), parse_error::create(112, chars_read,
+                                            exception_message(input_format, "ndarray can not be recursive", "size"), nullptr));
+                }
                 result.second |= (1 << 8); // use bit 8 to indicate ndarray, all UBJSON and BJData markers should be ASCII letters
             }
             return is_error;
@@ -10733,7 +10742,8 @@ class binary_reader
             bool is_error = get_ubjson_size_value(result.first, is_ndarray);
             if (input_format == input_format_t::bjdata && is_ndarray)
             {
-                result.second |= (1 << 8); // use bit 8 to indicate ndarray, all UBJSON and BJData markers should be ASCII letters
+                return sax->parse_error(chars_read, get_token_string(), parse_error::create(112, chars_read,
+                                        exception_message(input_format, "ndarray requires both type and size", "size"), nullptr));
             }
             return is_error;
         }
@@ -11123,8 +11133,8 @@ class binary_reader
     {
         // get size of following number string
         std::size_t size{};
-        bool is_ndarray = false;
-        auto res = get_ubjson_size_value(size, is_ndarray);
+        bool inside_ndarray = false;
+        auto res = get_ubjson_size_value(size, inside_ndarray);
         if (JSON_HEDLEY_UNLIKELY(!res))
         {
             return res;
