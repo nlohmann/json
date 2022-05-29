@@ -1,21 +1,31 @@
 # <small>nlohmann::basic_json::</small>operator==
 
 ```cpp
-bool operator==(const_reference lhs, const_reference rhs) noexcept;
+// until C++20
+bool operator==(const_reference lhs, const_reference rhs) noexcept;   // (1)
 
 template<typename ScalarType>
-bool operator==(const_reference lhs, const ScalarType rhs) noexcept;
+bool operator==(const_reference lhs, const ScalarType rhs) noexcept;  // (2)
 
 template<typename ScalarType>
-bool operator==(ScalarType lhs, const const_reference rhs) noexcept;
+bool operator==(ScalarType lhs, const const_reference rhs) noexcept;  // (2)
+
+// since C++20
+class basic_json {
+    bool operator==(const_reference rhs) const noexcept;              // (1)
+
+    template<typename ScalarType>
+    bool operator==(ScalarType rhs) const noexcept;                   // (2)
+};
 ```
 
-Compares two JSON values for equality according to the following rules:
+1. Compares two JSON values for equality according to the following rules:
+    - Two JSON values are equal if (1) neither value is discarded, or (2) they are of the same
+      type and their stored values are the same according to their respective `operator==`.
+    - Integer and floating-point numbers are automatically converted before comparison.
 
-- Two JSON values are equal if (1) they are not discarded, (2) they are from the same type, and (3) their stored values
-  are the same according to their respective `operator==`.
-- Integer and floating-point numbers are automatically converted before comparison. Note that two NaN values are always
-  treated as unequal.
+2. Compares a JSON value and a scalar or a scalar and a JSON value for equality by converting the
+   scalar to a JSON value and comparing both JSON values according to 1.
 
 ## Template parameters
 
@@ -32,7 +42,7 @@ Compares two JSON values for equality according to the following rules:
 
 ## Return value
 
-whether the values `lhs` and `rhs` are equal
+whether the values `lhs`/`*this` and `rhs` are equal
 
 ## Exception safety
 
@@ -46,7 +56,11 @@ Linear.
 
 !!! note "Comparing special values"
 
-    - NaN values never compare equal to themselves or to other NaN values.
+    - `NaN` values are unordered within the domain of numbers.
+      The following comparisons all yield `#!cpp false`:
+        1. Comparing a `NaN` with itself.
+        2. Comparing a `NaN` with another `NaN`.
+        3. Comparing a `NaN` and any other number.
     - JSON `#!cpp null` values are all equal.
     - Discarded values never compare equal to themselves.
 
@@ -117,4 +131,5 @@ Linear.
 
 ## Version history
 
-- Added in version 1.0.0.
+1. Added in version 1.0.0. Added C++20 member functions in version 3.11.0.
+2. Added in version 1.0.0. Added C++20 member functions in version 3.11.0.

@@ -103,84 +103,6 @@ SOFTWARE.
 #include <cstdint> // uint8_t
 #include <string> // string
 
-namespace nlohmann
-{
-namespace detail
-{
-///////////////////////////
-// JSON type enumeration //
-///////////////////////////
-
-/*!
-@brief the JSON type enumeration
-
-This enumeration collects the different JSON types. It is internally used to
-distinguish the stored values, and the functions @ref basic_json::is_null(),
-@ref basic_json::is_object(), @ref basic_json::is_array(),
-@ref basic_json::is_string(), @ref basic_json::is_boolean(),
-@ref basic_json::is_number() (with @ref basic_json::is_number_integer(),
-@ref basic_json::is_number_unsigned(), and @ref basic_json::is_number_float()),
-@ref basic_json::is_discarded(), @ref basic_json::is_primitive(), and
-@ref basic_json::is_structured() rely on it.
-
-@note There are three enumeration entries (number_integer, number_unsigned, and
-number_float), because the library distinguishes these three types for numbers:
-@ref basic_json::number_unsigned_t is used for unsigned integers,
-@ref basic_json::number_integer_t is used for signed integers, and
-@ref basic_json::number_float_t is used for floating-point numbers or to
-approximate integers which do not fit in the limits of their respective type.
-
-@sa see @ref basic_json::basic_json(const value_t value_type) -- create a JSON
-value with the default value for a given type
-
-@since version 1.0.0
-*/
-enum class value_t : std::uint8_t
-{
-    null,             ///< null value
-    object,           ///< object (unordered set of name/value pairs)
-    array,            ///< array (ordered collection of values)
-    string,           ///< string value
-    boolean,          ///< boolean value
-    number_integer,   ///< number value (signed integer)
-    number_unsigned,  ///< number value (unsigned integer)
-    number_float,     ///< number value (floating-point)
-    binary,           ///< binary array (ordered collection of bytes)
-    discarded         ///< discarded by the parser callback function
-};
-
-/*!
-@brief comparison operator for JSON types
-
-Returns an ordering that is similar to Python:
-- order: null < boolean < number < object < array < string < binary
-- furthermore, each type is not smaller than itself
-- discarded values are not comparable
-- binary is represented as a b"" string in python and directly comparable to a
-  string; however, making a binary array directly comparable with a string would
-  be surprising behavior in a JSON file.
-
-@since version 1.0.0
-*/
-inline bool operator<(const value_t lhs, const value_t rhs) noexcept
-{
-    static constexpr std::array<std::uint8_t, 9> order = {{
-            0 /* null */, 3 /* object */, 4 /* array */, 5 /* string */,
-            1 /* boolean */, 2 /* integer */, 2 /* unsigned */, 2 /* float */,
-            6 /* binary */
-        }
-    };
-
-    const auto l_index = static_cast<std::size_t>(lhs);
-    const auto r_index = static_cast<std::size_t>(rhs);
-    return l_index < order.size() && r_index < order.size() && order[l_index] < order[r_index];
-}
-}  // namespace detail
-}  // namespace nlohmann
-
-// #include <nlohmann/detail/string_escape.hpp>
-
-
 // #include <nlohmann/detail/macro_scope.hpp>
 
 
@@ -2342,6 +2264,12 @@ using is_detected_convertible =
     #define JSON_HAS_CPP_11
 #endif
 
+#ifdef __has_include
+    #if __has_include(<version>)
+        #include <version>
+    #endif
+#endif
+
 #if !defined(JSON_HAS_FILESYSTEM) && !defined(JSON_HAS_EXPERIMENTAL_FILESYSTEM)
     #ifdef JSON_HAS_CPP_17
         #if defined(__cpp_lib_filesystem)
@@ -2403,12 +2331,29 @@ using is_detected_convertible =
 #endif
 
 #ifndef JSON_HAS_THREE_WAY_COMPARISON
-    #if defined(__cpp_lib_three_way_comparison) && __cpp_lib_three_way_comparison >= 201907L \
-        && defined(__cpp_impl_three_way_comparison)&& __cpp_impl_three_way_comparison >= 201907L
+    #if defined(__cpp_impl_three_way_comparison) && __cpp_impl_three_way_comparison >= 201907L \
+        && defined(__cpp_lib_three_way_comparison) && __cpp_lib_three_way_comparison >= 201907L
         #define JSON_HAS_THREE_WAY_COMPARISON 1
     #else
         #define JSON_HAS_THREE_WAY_COMPARISON 0
     #endif
+#endif
+
+#ifndef JSON_HAS_RANGES
+    // ranges header shipping in GCC 11.1.0 (released 2021-04-27) has syntax error
+    #if defined(__GLIBCXX__) && __GLIBCXX__ == 20210427
+        #define JSON_HAS_RANGES 0
+    #elif defined(__cpp_lib_ranges)
+        #define JSON_HAS_RANGES 1
+    #else
+        #define JSON_HAS_RANGES 0
+    #endif
+#endif
+
+#ifdef JSON_HAS_CPP_17
+    #define JSON_INLINE_VARIABLE inline
+#else
+    #define JSON_INLINE_VARIABLE
 #endif
 
 #if JSON_HEDLEY_HAS_ATTRIBUTE(no_unique_address)
@@ -2734,6 +2679,117 @@ using is_detected_convertible =
 #ifndef JSON_DIAGNOSTICS
     #define JSON_DIAGNOSTICS 0
 #endif
+
+#ifndef JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
+    #define JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON 0
+#endif
+
+#if JSON_HAS_THREE_WAY_COMPARISON
+    #include <compare> // partial_ordering
+#endif
+
+namespace nlohmann
+{
+namespace detail
+{
+///////////////////////////
+// JSON type enumeration //
+///////////////////////////
+
+/*!
+@brief the JSON type enumeration
+
+This enumeration collects the different JSON types. It is internally used to
+distinguish the stored values, and the functions @ref basic_json::is_null(),
+@ref basic_json::is_object(), @ref basic_json::is_array(),
+@ref basic_json::is_string(), @ref basic_json::is_boolean(),
+@ref basic_json::is_number() (with @ref basic_json::is_number_integer(),
+@ref basic_json::is_number_unsigned(), and @ref basic_json::is_number_float()),
+@ref basic_json::is_discarded(), @ref basic_json::is_primitive(), and
+@ref basic_json::is_structured() rely on it.
+
+@note There are three enumeration entries (number_integer, number_unsigned, and
+number_float), because the library distinguishes these three types for numbers:
+@ref basic_json::number_unsigned_t is used for unsigned integers,
+@ref basic_json::number_integer_t is used for signed integers, and
+@ref basic_json::number_float_t is used for floating-point numbers or to
+approximate integers which do not fit in the limits of their respective type.
+
+@sa see @ref basic_json::basic_json(const value_t value_type) -- create a JSON
+value with the default value for a given type
+
+@since version 1.0.0
+*/
+enum class value_t : std::uint8_t
+{
+    null,             ///< null value
+    object,           ///< object (unordered set of name/value pairs)
+    array,            ///< array (ordered collection of values)
+    string,           ///< string value
+    boolean,          ///< boolean value
+    number_integer,   ///< number value (signed integer)
+    number_unsigned,  ///< number value (unsigned integer)
+    number_float,     ///< number value (floating-point)
+    binary,           ///< binary array (ordered collection of bytes)
+    discarded         ///< discarded by the parser callback function
+};
+
+/*!
+@brief comparison operator for JSON types
+
+Returns an ordering that is similar to Python:
+- order: null < boolean < number < object < array < string < binary
+- furthermore, each type is not smaller than itself
+- discarded values are not comparable
+- binary is represented as a b"" string in python and directly comparable to a
+  string; however, making a binary array directly comparable with a string would
+  be surprising behavior in a JSON file.
+
+@since version 1.0.0
+*/
+#if JSON_HAS_THREE_WAY_COMPARISON
+    inline std::partial_ordering operator<=>(const value_t lhs, const value_t rhs) noexcept // *NOPAD*
+#else
+    inline bool operator<(const value_t lhs, const value_t rhs) noexcept
+#endif
+{
+    static constexpr std::array<std::uint8_t, 9> order = {{
+            0 /* null */, 3 /* object */, 4 /* array */, 5 /* string */,
+            1 /* boolean */, 2 /* integer */, 2 /* unsigned */, 2 /* float */,
+            6 /* binary */
+        }
+    };
+
+    const auto l_index = static_cast<std::size_t>(lhs);
+    const auto r_index = static_cast<std::size_t>(rhs);
+#if JSON_HAS_THREE_WAY_COMPARISON
+    if (l_index < order.size() && r_index < order.size())
+    {
+        return order[l_index] <=> order[r_index]; // *NOPAD*
+    }
+    return std::partial_ordering::unordered;
+#else
+    return l_index < order.size() && r_index < order.size() && order[l_index] < order[r_index];
+#endif
+}
+
+// GCC selects the built-in operator< over an operator rewritten from
+// a user-defined spaceship operator
+// Clang, MSVC, and ICC select the rewritten candidate
+// (see GCC bug https://gcc.gnu.org/bugzilla/show_bug.cgi?id=105200)
+#if JSON_HAS_THREE_WAY_COMPARISON && defined(__GNUC__)
+inline bool operator<(const value_t lhs, const value_t rhs) noexcept
+{
+    return std::is_lt(lhs <=> rhs); // *NOPAD*
+}
+#endif
+}  // namespace detail
+}  // namespace nlohmann
+
+// #include <nlohmann/detail/string_escape.hpp>
+
+
+// #include <nlohmann/detail/macro_scope.hpp>
 
 
 namespace nlohmann
@@ -4133,7 +4189,7 @@ namespace nlohmann
 namespace detail
 {
 template<typename BasicJsonType>
-void from_json(const BasicJsonType& j, typename std::nullptr_t& n)
+inline void from_json(const BasicJsonType& j, typename std::nullptr_t& n)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_null()))
     {
@@ -4180,7 +4236,7 @@ void get_arithmetic_value(const BasicJsonType& j, ArithmeticType& val)
 }
 
 template<typename BasicJsonType>
-void from_json(const BasicJsonType& j, typename BasicJsonType::boolean_t& b)
+inline void from_json(const BasicJsonType& j, typename BasicJsonType::boolean_t& b)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_boolean()))
     {
@@ -4190,7 +4246,7 @@ void from_json(const BasicJsonType& j, typename BasicJsonType::boolean_t& b)
 }
 
 template<typename BasicJsonType>
-void from_json(const BasicJsonType& j, typename BasicJsonType::string_t& s)
+inline void from_json(const BasicJsonType& j, typename BasicJsonType::string_t& s)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_string()))
     {
@@ -4205,7 +4261,7 @@ template <
         std::is_assignable<StringType&, const typename BasicJsonType::string_t>::value
         && !std::is_same<typename BasicJsonType::string_t, StringType>::value
         && !is_json_ref<StringType>::value, int > = 0 >
-void from_json(const BasicJsonType& j, StringType& s)
+inline void from_json(const BasicJsonType& j, StringType& s)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_string()))
     {
@@ -4216,26 +4272,26 @@ void from_json(const BasicJsonType& j, StringType& s)
 }
 
 template<typename BasicJsonType>
-void from_json(const BasicJsonType& j, typename BasicJsonType::number_float_t& val)
+inline void from_json(const BasicJsonType& j, typename BasicJsonType::number_float_t& val)
 {
     get_arithmetic_value(j, val);
 }
 
 template<typename BasicJsonType>
-void from_json(const BasicJsonType& j, typename BasicJsonType::number_unsigned_t& val)
+inline void from_json(const BasicJsonType& j, typename BasicJsonType::number_unsigned_t& val)
 {
     get_arithmetic_value(j, val);
 }
 
 template<typename BasicJsonType>
-void from_json(const BasicJsonType& j, typename BasicJsonType::number_integer_t& val)
+inline void from_json(const BasicJsonType& j, typename BasicJsonType::number_integer_t& val)
 {
     get_arithmetic_value(j, val);
 }
 
 template<typename BasicJsonType, typename EnumType,
          enable_if_t<std::is_enum<EnumType>::value, int> = 0>
-void from_json(const BasicJsonType& j, EnumType& e)
+inline void from_json(const BasicJsonType& j, EnumType& e)
 {
     typename std::underlying_type<EnumType>::type val;
     get_arithmetic_value(j, val);
@@ -4245,7 +4301,7 @@ void from_json(const BasicJsonType& j, EnumType& e)
 // forward_list doesn't have an insert method
 template<typename BasicJsonType, typename T, typename Allocator,
          enable_if_t<is_getable<BasicJsonType, T>::value, int> = 0>
-void from_json(const BasicJsonType& j, std::forward_list<T, Allocator>& l)
+inline void from_json(const BasicJsonType& j, std::forward_list<T, Allocator>& l)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
@@ -4262,7 +4318,7 @@ void from_json(const BasicJsonType& j, std::forward_list<T, Allocator>& l)
 // valarray doesn't have an insert method
 template<typename BasicJsonType, typename T,
          enable_if_t<is_getable<BasicJsonType, T>::value, int> = 0>
-void from_json(const BasicJsonType& j, std::valarray<T>& l)
+inline void from_json(const BasicJsonType& j, std::valarray<T>& l)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
@@ -4287,7 +4343,7 @@ auto from_json(const BasicJsonType& j, T (&arr)[N])  // NOLINT(cppcoreguidelines
 }
 
 template<typename BasicJsonType>
-void from_json_array_impl(const BasicJsonType& j, typename BasicJsonType::array_t& arr, priority_tag<3> /*unused*/)
+inline void from_json_array_impl(const BasicJsonType& j, typename BasicJsonType::array_t& arr, priority_tag<3> /*unused*/)
 {
     arr = *j.template get_ptr<const typename BasicJsonType::array_t*>();
 }
@@ -4331,8 +4387,8 @@ template<typename BasicJsonType, typename ConstructibleArrayType,
          enable_if_t<
              std::is_assignable<ConstructibleArrayType&, ConstructibleArrayType>::value,
              int> = 0>
-void from_json_array_impl(const BasicJsonType& j, ConstructibleArrayType& arr,
-                          priority_tag<0> /*unused*/)
+inline void from_json_array_impl(const BasicJsonType& j, ConstructibleArrayType& arr,
+                                 priority_tag<0> /*unused*/)
 {
     using std::end;
 
@@ -4389,7 +4445,7 @@ auto from_json(BasicJsonType&& j, identity_tag<std::array<T, N>> tag)
 }
 
 template<typename BasicJsonType>
-void from_json(const BasicJsonType& j, typename BasicJsonType::binary_t& bin)
+inline void from_json(const BasicJsonType& j, typename BasicJsonType::binary_t& bin)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_binary()))
     {
@@ -4401,7 +4457,7 @@ void from_json(const BasicJsonType& j, typename BasicJsonType::binary_t& bin)
 
 template<typename BasicJsonType, typename ConstructibleObjectType,
          enable_if_t<is_constructible_object_type<BasicJsonType, ConstructibleObjectType>::value, int> = 0>
-void from_json(const BasicJsonType& j, ConstructibleObjectType& obj)
+inline void from_json(const BasicJsonType& j, ConstructibleObjectType& obj)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_object()))
     {
@@ -4433,7 +4489,7 @@ template < typename BasicJsonType, typename ArithmeticType,
                !std::is_same<ArithmeticType, typename BasicJsonType::number_float_t>::value&&
                !std::is_same<ArithmeticType, typename BasicJsonType::boolean_t>::value,
                int > = 0 >
-void from_json(const BasicJsonType& j, ArithmeticType& val)
+inline void from_json(const BasicJsonType& j, ArithmeticType& val)
 {
     switch (static_cast<value_t>(j))
     {
@@ -4483,7 +4539,7 @@ std::pair<A1, A2> from_json_tuple_impl(BasicJsonType&& j, identity_tag<std::pair
 }
 
 template<typename BasicJsonType, typename A1, typename A2>
-void from_json_tuple_impl(BasicJsonType&& j, std::pair<A1, A2>& p, priority_tag<1> /*unused*/)
+inline void from_json_tuple_impl(BasicJsonType&& j, std::pair<A1, A2>& p, priority_tag<1> /*unused*/)
 {
     p = from_json_tuple_impl(std::forward<BasicJsonType>(j), identity_tag<std::pair<A1, A2>> {}, priority_tag<0> {});
 }
@@ -4495,7 +4551,7 @@ std::tuple<Args...> from_json_tuple_impl(BasicJsonType&& j, identity_tag<std::tu
 }
 
 template<typename BasicJsonType, typename... Args>
-void from_json_tuple_impl(BasicJsonType&& j, std::tuple<Args...>& t, priority_tag<3> /*unused*/)
+inline void from_json_tuple_impl(BasicJsonType&& j, std::tuple<Args...>& t, priority_tag<3> /*unused*/)
 {
     t = from_json_tuple_impl_base<BasicJsonType, Args...>(std::forward<BasicJsonType>(j), index_sequence_for<Args...> {});
 }
@@ -4515,7 +4571,7 @@ auto from_json(BasicJsonType&& j, TupleRelated&& t)
 template < typename BasicJsonType, typename Key, typename Value, typename Compare, typename Allocator,
            typename = enable_if_t < !std::is_constructible <
                                         typename BasicJsonType::string_t, Key >::value >>
-void from_json(const BasicJsonType& j, std::map<Key, Value, Compare, Allocator>& m)
+inline void from_json(const BasicJsonType& j, std::map<Key, Value, Compare, Allocator>& m)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
@@ -4535,7 +4591,7 @@ void from_json(const BasicJsonType& j, std::map<Key, Value, Compare, Allocator>&
 template < typename BasicJsonType, typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator,
            typename = enable_if_t < !std::is_constructible <
                                         typename BasicJsonType::string_t, Key >::value >>
-void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Hash, KeyEqual, Allocator>& m)
+inline void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Hash, KeyEqual, Allocator>& m)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
@@ -4554,7 +4610,7 @@ void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Hash, KeyE
 
 #if JSON_HAS_FILESYSTEM || JSON_HAS_EXPERIMENTAL_FILESYSTEM
 template<typename BasicJsonType>
-void from_json(const BasicJsonType& j, std_fs::path& p)
+inline void from_json(const BasicJsonType& j, std_fs::path& p)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_string()))
     {
@@ -4576,13 +4632,18 @@ struct from_json_fn
 };
 }  // namespace detail
 
+#ifndef JSON_HAS_CPP_17
 /// namespace to hold default `from_json` function
 /// to see why this is required:
 /// http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4381.html
 namespace // NOLINT(cert-dcl59-cpp,fuchsia-header-anon-namespaces,google-build-namespaces)
 {
-constexpr const auto& from_json = detail::static_const<detail::from_json_fn>::value; // NOLINT(misc-definitions-in-headers)
+#endif
+JSON_INLINE_VARIABLE constexpr const auto& from_json = // NOLINT(misc-definitions-in-headers)
+    detail::static_const<detail::from_json_fn>::value;
+#ifndef JSON_HAS_CPP_17
 } // namespace
+#endif
 } // namespace nlohmann
 
 // #include <nlohmann/detail/conversions/to_json.hpp>
@@ -4608,6 +4669,10 @@ constexpr const auto& from_json = detail::static_const<detail::from_json_fn>::va
 #include <tuple> // tuple_size, get, tuple_element
 #include <utility> // move
 
+#if JSON_HAS_RANGES
+    #include <ranges> // enable_borrowed_range
+#endif
+
 // #include <nlohmann/detail/meta/type_traits.hpp>
 
 // #include <nlohmann/detail/value_t.hpp>
@@ -4629,14 +4694,14 @@ template<typename IteratorType> class iteration_proxy_value
   public:
     using difference_type = std::ptrdiff_t;
     using value_type = iteration_proxy_value;
-    using pointer = value_type * ;
-    using reference = value_type & ;
+    using pointer = value_type *;
+    using reference = value_type &;
     using iterator_category = std::input_iterator_tag;
     using string_type = typename std::remove_cv< typename std::remove_reference<decltype( std::declval<IteratorType>().key() ) >::type >::type;
 
   private:
     /// the iterator
-    IteratorType anchor;
+    IteratorType anchor{};
     /// an index for arrays (used to create key names)
     std::size_t array_index = 0;
     /// last stringified array index
@@ -4644,15 +4709,30 @@ template<typename IteratorType> class iteration_proxy_value
     /// a string representation of the array index
     mutable string_type array_index_str = "0";
     /// an empty string (to return a reference for primitive values)
-    const string_type empty_str{};
+    string_type empty_str{};
 
   public:
-    explicit iteration_proxy_value(IteratorType it) noexcept
+    explicit iteration_proxy_value() = default;
+    explicit iteration_proxy_value(IteratorType it, std::size_t array_index_ = 0)
+    noexcept(std::is_nothrow_move_constructible<IteratorType>::value
+             && std::is_nothrow_default_constructible<string_type>::value)
         : anchor(std::move(it))
+        , array_index(array_index_)
     {}
 
+    iteration_proxy_value(iteration_proxy_value const&) = default;
+    iteration_proxy_value& operator=(iteration_proxy_value const&) = default;
+    // older GCCs are a bit fussy and require explicit noexcept specifiers on defaulted functions
+    iteration_proxy_value(iteration_proxy_value&&)
+    noexcept(std::is_nothrow_move_constructible<IteratorType>::value
+             && std::is_nothrow_move_constructible<string_type>::value) = default;
+    iteration_proxy_value& operator=(iteration_proxy_value&&)
+    noexcept(std::is_nothrow_move_assignable<IteratorType>::value
+             && std::is_nothrow_move_assignable<string_type>::value) = default;
+    ~iteration_proxy_value() = default;
+
     /// dereference operator (needed for range-based for)
-    iteration_proxy_value& operator*()
+    const iteration_proxy_value& operator*() const
     {
         return *this;
     }
@@ -4664,6 +4744,14 @@ template<typename IteratorType> class iteration_proxy_value
         ++array_index;
 
         return *this;
+    }
+
+    iteration_proxy_value operator++(int)& // NOLINT(cert-dcl21-cpp)
+    {
+        auto tmp = iteration_proxy_value(anchor, array_index);
+        ++anchor;
+        ++array_index;
+        return tmp;
     }
 
     /// equality operator (needed for InputIterator)
@@ -4726,25 +4814,34 @@ template<typename IteratorType> class iteration_proxy
 {
   private:
     /// the container to iterate
-    typename IteratorType::reference container;
+    typename IteratorType::pointer container = nullptr;
 
   public:
+    explicit iteration_proxy() = default;
+
     /// construct iteration proxy from a container
     explicit iteration_proxy(typename IteratorType::reference cont) noexcept
-        : container(cont) {}
+        : container(&cont) {}
+
+    iteration_proxy(iteration_proxy const&) = default;
+    iteration_proxy& operator=(iteration_proxy const&) = default;
+    iteration_proxy(iteration_proxy&&) noexcept = default;
+    iteration_proxy& operator=(iteration_proxy&&) noexcept = default;
+    ~iteration_proxy() = default;
 
     /// return iterator begin (needed for range-based for)
-    iteration_proxy_value<IteratorType> begin() noexcept
+    iteration_proxy_value<IteratorType> begin() const noexcept
     {
-        return iteration_proxy_value<IteratorType>(container.begin());
+        return iteration_proxy_value<IteratorType>(container->begin());
     }
 
     /// return iterator end (needed for range-based for)
-    iteration_proxy_value<IteratorType> end() noexcept
+    iteration_proxy_value<IteratorType> end() const noexcept
     {
-        return iteration_proxy_value<IteratorType>(container.end());
+        return iteration_proxy_value<IteratorType>(container->end());
     }
 };
+
 // Structured Bindings Support
 // For further reference see https://blog.tartanllama.xyz/structured-bindings/
 // And see https://github.com/nlohmann/json/pull/1391
@@ -4791,6 +4888,11 @@ class tuple_element<N, ::nlohmann::detail::iteration_proxy_value<IteratorType >>
     #pragma clang diagnostic pop
 #endif
 } // namespace std
+
+#if JSON_HAS_RANGES
+    template <typename IteratorType>
+    inline constexpr bool ::std::ranges::enable_borrowed_range<::nlohmann::detail::iteration_proxy<IteratorType>> = true;
+#endif
 
 // #include <nlohmann/detail/meta/cpp_future.hpp>
 
@@ -5051,55 +5153,55 @@ struct external_constructor<value_t::object>
 
 template<typename BasicJsonType, typename T,
          enable_if_t<std::is_same<T, typename BasicJsonType::boolean_t>::value, int> = 0>
-void to_json(BasicJsonType& j, T b) noexcept
+inline void to_json(BasicJsonType& j, T b) noexcept
 {
     external_constructor<value_t::boolean>::construct(j, b);
 }
 
 template<typename BasicJsonType, typename CompatibleString,
          enable_if_t<std::is_constructible<typename BasicJsonType::string_t, CompatibleString>::value, int> = 0>
-void to_json(BasicJsonType& j, const CompatibleString& s)
+inline void to_json(BasicJsonType& j, const CompatibleString& s)
 {
     external_constructor<value_t::string>::construct(j, s);
 }
 
 template<typename BasicJsonType>
-void to_json(BasicJsonType& j, typename BasicJsonType::string_t&& s)
+inline void to_json(BasicJsonType& j, typename BasicJsonType::string_t&& s)
 {
     external_constructor<value_t::string>::construct(j, std::move(s));
 }
 
 template<typename BasicJsonType, typename FloatType,
          enable_if_t<std::is_floating_point<FloatType>::value, int> = 0>
-void to_json(BasicJsonType& j, FloatType val) noexcept
+inline void to_json(BasicJsonType& j, FloatType val) noexcept
 {
     external_constructor<value_t::number_float>::construct(j, static_cast<typename BasicJsonType::number_float_t>(val));
 }
 
 template<typename BasicJsonType, typename CompatibleNumberUnsignedType,
          enable_if_t<is_compatible_integer_type<typename BasicJsonType::number_unsigned_t, CompatibleNumberUnsignedType>::value, int> = 0>
-void to_json(BasicJsonType& j, CompatibleNumberUnsignedType val) noexcept
+inline void to_json(BasicJsonType& j, CompatibleNumberUnsignedType val) noexcept
 {
     external_constructor<value_t::number_unsigned>::construct(j, static_cast<typename BasicJsonType::number_unsigned_t>(val));
 }
 
 template<typename BasicJsonType, typename CompatibleNumberIntegerType,
          enable_if_t<is_compatible_integer_type<typename BasicJsonType::number_integer_t, CompatibleNumberIntegerType>::value, int> = 0>
-void to_json(BasicJsonType& j, CompatibleNumberIntegerType val) noexcept
+inline void to_json(BasicJsonType& j, CompatibleNumberIntegerType val) noexcept
 {
     external_constructor<value_t::number_integer>::construct(j, static_cast<typename BasicJsonType::number_integer_t>(val));
 }
 
 template<typename BasicJsonType, typename EnumType,
          enable_if_t<std::is_enum<EnumType>::value, int> = 0>
-void to_json(BasicJsonType& j, EnumType e) noexcept
+inline void to_json(BasicJsonType& j, EnumType e) noexcept
 {
     using underlying_type = typename std::underlying_type<EnumType>::type;
     external_constructor<value_t::number_integer>::construct(j, static_cast<underlying_type>(e));
 }
 
 template<typename BasicJsonType>
-void to_json(BasicJsonType& j, const std::vector<bool>& e)
+inline void to_json(BasicJsonType& j, const std::vector<bool>& e)
 {
     external_constructor<value_t::array>::construct(j, e);
 }
@@ -5112,39 +5214,39 @@ template < typename BasicJsonType, typename CompatibleArrayType,
                          !std::is_same<typename BasicJsonType::binary_t, CompatibleArrayType>::value&&
                          !is_basic_json<CompatibleArrayType>::value,
                          int > = 0 >
-void to_json(BasicJsonType& j, const CompatibleArrayType& arr)
+inline void to_json(BasicJsonType& j, const CompatibleArrayType& arr)
 {
     external_constructor<value_t::array>::construct(j, arr);
 }
 
 template<typename BasicJsonType>
-void to_json(BasicJsonType& j, const typename BasicJsonType::binary_t& bin)
+inline void to_json(BasicJsonType& j, const typename BasicJsonType::binary_t& bin)
 {
     external_constructor<value_t::binary>::construct(j, bin);
 }
 
 template<typename BasicJsonType, typename T,
          enable_if_t<std::is_convertible<T, BasicJsonType>::value, int> = 0>
-void to_json(BasicJsonType& j, const std::valarray<T>& arr)
+inline void to_json(BasicJsonType& j, const std::valarray<T>& arr)
 {
     external_constructor<value_t::array>::construct(j, std::move(arr));
 }
 
 template<typename BasicJsonType>
-void to_json(BasicJsonType& j, typename BasicJsonType::array_t&& arr)
+inline void to_json(BasicJsonType& j, typename BasicJsonType::array_t&& arr)
 {
     external_constructor<value_t::array>::construct(j, std::move(arr));
 }
 
 template < typename BasicJsonType, typename CompatibleObjectType,
            enable_if_t < is_compatible_object_type<BasicJsonType, CompatibleObjectType>::value&& !is_basic_json<CompatibleObjectType>::value, int > = 0 >
-void to_json(BasicJsonType& j, const CompatibleObjectType& obj)
+inline void to_json(BasicJsonType& j, const CompatibleObjectType& obj)
 {
     external_constructor<value_t::object>::construct(j, obj);
 }
 
 template<typename BasicJsonType>
-void to_json(BasicJsonType& j, typename BasicJsonType::object_t&& obj)
+inline void to_json(BasicJsonType& j, typename BasicJsonType::object_t&& obj)
 {
     external_constructor<value_t::object>::construct(j, std::move(obj));
 }
@@ -5154,13 +5256,13 @@ template <
     enable_if_t < !std::is_constructible<typename BasicJsonType::string_t,
                   const T(&)[N]>::value, // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
                   int > = 0 >
-void to_json(BasicJsonType& j, const T(&arr)[N]) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+inline void to_json(BasicJsonType& j, const T(&arr)[N]) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
 {
     external_constructor<value_t::array>::construct(j, arr);
 }
 
 template < typename BasicJsonType, typename T1, typename T2, enable_if_t < std::is_constructible<BasicJsonType, T1>::value&& std::is_constructible<BasicJsonType, T2>::value, int > = 0 >
-void to_json(BasicJsonType& j, const std::pair<T1, T2>& p)
+inline void to_json(BasicJsonType& j, const std::pair<T1, T2>& p)
 {
     j = { p.first, p.second };
 }
@@ -5168,26 +5270,26 @@ void to_json(BasicJsonType& j, const std::pair<T1, T2>& p)
 // for https://github.com/nlohmann/json/pull/1134
 template<typename BasicJsonType, typename T,
          enable_if_t<std::is_same<T, iteration_proxy_value<typename BasicJsonType::iterator>>::value, int> = 0>
-void to_json(BasicJsonType& j, const T& b)
+inline void to_json(BasicJsonType& j, const T& b)
 {
     j = { {b.key(), b.value()} };
 }
 
 template<typename BasicJsonType, typename Tuple, std::size_t... Idx>
-void to_json_tuple_impl(BasicJsonType& j, const Tuple& t, index_sequence<Idx...> /*unused*/)
+inline void to_json_tuple_impl(BasicJsonType& j, const Tuple& t, index_sequence<Idx...> /*unused*/)
 {
     j = { std::get<Idx>(t)... };
 }
 
 template<typename BasicJsonType, typename T, enable_if_t<is_constructible_tuple<BasicJsonType, T>::value, int > = 0>
-void to_json(BasicJsonType& j, const T& t)
+inline void to_json(BasicJsonType& j, const T& t)
 {
     to_json_tuple_impl(j, t, make_index_sequence<std::tuple_size<T>::value> {});
 }
 
 #if JSON_HAS_FILESYSTEM || JSON_HAS_EXPERIMENTAL_FILESYSTEM
 template<typename BasicJsonType>
-void to_json(BasicJsonType& j, const std_fs::path& p)
+inline void to_json(BasicJsonType& j, const std_fs::path& p)
 {
     j = p.string();
 }
@@ -5204,13 +5306,18 @@ struct to_json_fn
 };
 }  // namespace detail
 
+#ifndef JSON_HAS_CPP_17
 /// namespace to hold default `to_json` function
 /// to see why this is required:
 /// http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4381.html
 namespace // NOLINT(cert-dcl59-cpp,fuchsia-header-anon-namespaces,google-build-namespaces)
 {
-constexpr const auto& to_json = detail::static_const<detail::to_json_fn>::value; // NOLINT(misc-definitions-in-headers)
+#endif
+JSON_INLINE_VARIABLE constexpr const auto& to_json = // NOLINT(misc-definitions-in-headers)
+    detail::static_const<detail::to_json_fn>::value;
+#ifndef JSON_HAS_CPP_17
 } // namespace
+#endif
 } // namespace nlohmann
 
 // #include <nlohmann/detail/meta/identity_tag.hpp>
@@ -12155,9 +12262,12 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
     // make sure BasicJsonType is basic_json or const basic_json
     static_assert(is_basic_json<typename std::remove_const<BasicJsonType>::type>::value,
                   "iter_impl only accepts (const) basic_json");
+    // superficial check for the LegacyBidirectionalIterator named requirement
+    static_assert(std::is_base_of<std::bidirectional_iterator_tag, std::bidirectional_iterator_tag>::value
+                  &&  std::is_base_of<std::bidirectional_iterator_tag, typename array_t::iterator::iterator_category>::value,
+                  "basic_json iterator assumes array and object type iterators satisfy the LegacyBidirectionalIterator named requirement.");
 
   public:
-
     /// The std::iterator class template (used as a base class to provide typedefs) is deprecated in C++17.
     /// The C++ Standard has never required user-defined iterators to derive from std::iterator.
     /// A user-defined iterator should provide publicly accessible typedefs named
@@ -20065,7 +20175,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                                         detail::negation<std::is_same<ValueType, typename string_t::value_type>>,
                                         detail::negation<detail::is_basic_json<ValueType>>,
                                         detail::negation<std::is_same<ValueType, std::initializer_list<typename string_t::value_type>>>,
-
 #if defined(JSON_HAS_CPP_17) && (defined(__GNUC__) || (defined(_MSC_VER) && _MSC_VER >= 1910 && _MSC_VER <= 1914))
                                                 detail::negation<std::is_same<ValueType, std::string_view>>,
 #endif
@@ -21698,7 +21807,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     /// @}
 
-  public:
     //////////////////////////////////////////
     // lexicographical comparison operators //
     //////////////////////////////////////////
@@ -21706,6 +21814,212 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @name lexicographical comparison operators
     /// @{
 
+    // note parentheses around operands are necessary; see
+    // https://github.com/nlohmann/json/issues/1530
+#define JSON_IMPLEMENT_OPERATOR(op, null_result, unordered_result, default_result)                       \
+    const auto lhs_type = lhs.type();                                                                    \
+    const auto rhs_type = rhs.type();                                                                    \
+    \
+    if (lhs_type == rhs_type) /* NOLINT(readability/braces) */                                           \
+    {                                                                                                    \
+        switch (lhs_type)                                                                                \
+        {                                                                                                \
+            case value_t::array:                                                                         \
+                return (*lhs.m_value.array) op (*rhs.m_value.array);                                     \
+                \
+            case value_t::object:                                                                        \
+                return (*lhs.m_value.object) op (*rhs.m_value.object);                                   \
+                \
+            case value_t::null:                                                                          \
+                return (null_result);                                                                    \
+                \
+            case value_t::string:                                                                        \
+                return (*lhs.m_value.string) op (*rhs.m_value.string);                                   \
+                \
+            case value_t::boolean:                                                                       \
+                return (lhs.m_value.boolean) op (rhs.m_value.boolean);                                   \
+                \
+            case value_t::number_integer:                                                                \
+                return (lhs.m_value.number_integer) op (rhs.m_value.number_integer);                     \
+                \
+            case value_t::number_unsigned:                                                               \
+                return (lhs.m_value.number_unsigned) op (rhs.m_value.number_unsigned);                   \
+                \
+            case value_t::number_float:                                                                  \
+                return (lhs.m_value.number_float) op (rhs.m_value.number_float);                         \
+                \
+            case value_t::binary:                                                                        \
+                return (*lhs.m_value.binary) op (*rhs.m_value.binary);                                   \
+                \
+            case value_t::discarded:                                                                     \
+            default:                                                                                     \
+                return (unordered_result);                                                               \
+        }                                                                                                \
+    }                                                                                                    \
+    else if (lhs_type == value_t::number_integer && rhs_type == value_t::number_float)                   \
+    {                                                                                                    \
+        return static_cast<number_float_t>(lhs.m_value.number_integer) op rhs.m_value.number_float;      \
+    }                                                                                                    \
+    else if (lhs_type == value_t::number_float && rhs_type == value_t::number_integer)                   \
+    {                                                                                                    \
+        return lhs.m_value.number_float op static_cast<number_float_t>(rhs.m_value.number_integer);      \
+    }                                                                                                    \
+    else if (lhs_type == value_t::number_unsigned && rhs_type == value_t::number_float)                  \
+    {                                                                                                    \
+        return static_cast<number_float_t>(lhs.m_value.number_unsigned) op rhs.m_value.number_float;     \
+    }                                                                                                    \
+    else if (lhs_type == value_t::number_float && rhs_type == value_t::number_unsigned)                  \
+    {                                                                                                    \
+        return lhs.m_value.number_float op static_cast<number_float_t>(rhs.m_value.number_unsigned);     \
+    }                                                                                                    \
+    else if (lhs_type == value_t::number_unsigned && rhs_type == value_t::number_integer)                \
+    {                                                                                                    \
+        return static_cast<number_integer_t>(lhs.m_value.number_unsigned) op rhs.m_value.number_integer; \
+    }                                                                                                    \
+    else if (lhs_type == value_t::number_integer && rhs_type == value_t::number_unsigned)                \
+    {                                                                                                    \
+        return lhs.m_value.number_integer op static_cast<number_integer_t>(rhs.m_value.number_unsigned); \
+    }                                                                                                    \
+    else if(compares_unordered(lhs, rhs))\
+    {\
+        return (unordered_result);\
+    }\
+    \
+    return (default_result);
+
+  JSON_PRIVATE_UNLESS_TESTED:
+    // returns true if:
+    // - any operand is NaN and the other operand is of number type
+    // - any operand is discarded
+    // in legacy mode, discarded values are considered ordered if
+    // an operation is computed as an odd number of inverses of others
+    static bool compares_unordered(const_reference lhs, const_reference rhs, bool inverse = false) noexcept
+    {
+        if ((lhs.is_number_float() && std::isnan(lhs.m_value.number_float) && rhs.is_number())
+                || (rhs.is_number_float() && std::isnan(rhs.m_value.number_float) && lhs.is_number()))
+        {
+            return true;
+        }
+#if JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
+        return (lhs.is_discarded() || rhs.is_discarded()) && !inverse;
+#else
+        static_cast<void>(inverse);
+        return lhs.is_discarded() || rhs.is_discarded();
+#endif
+    }
+
+  private:
+    bool compares_unordered(const_reference rhs, bool inverse = false) const noexcept
+    {
+        return compares_unordered(*this, rhs, inverse);
+    }
+
+  public:
+#if JSON_HAS_THREE_WAY_COMPARISON
+    /// @brief comparison: equal
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_eq/
+    bool operator==(const_reference rhs) const noexcept
+    {
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-equal"
+#endif
+        const_reference lhs = *this;
+        JSON_IMPLEMENT_OPERATOR( ==, true, false, false)
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
+    }
+
+    /// @brief comparison: equal
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_eq/
+    template<typename ScalarType>
+    requires std::is_scalar_v<ScalarType>
+    bool operator==(ScalarType rhs) const noexcept
+    {
+        return *this == basic_json(rhs);
+    }
+
+    /// @brief comparison: not equal
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_ne/
+    bool operator!=(const_reference rhs) const noexcept
+    {
+        if (compares_unordered(rhs, true))
+        {
+            return false;
+        }
+        return !operator==(rhs);
+    }
+
+    /// @brief comparison: 3-way
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_spaceship/
+    std::partial_ordering operator<=>(const_reference rhs) const noexcept // *NOPAD*
+    {
+        const_reference lhs = *this;
+        // default_result is used if we cannot compare values. In that case,
+        // we compare types.
+        JSON_IMPLEMENT_OPERATOR(<=>, // *NOPAD*
+                                std::partial_ordering::equivalent,
+                                std::partial_ordering::unordered,
+                                lhs_type <=> rhs_type) // *NOPAD*
+    }
+
+    /// @brief comparison: 3-way
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_spaceship/
+    template<typename ScalarType>
+    requires std::is_scalar_v<ScalarType>
+    std::partial_ordering operator<=>(ScalarType rhs) const noexcept // *NOPAD*
+    {
+        return *this <=> basic_json(rhs); // *NOPAD*
+    }
+
+#if JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
+    // all operators that are computed as an odd number of inverses of others
+    // need to be overloaded to emulate the legacy comparison behavior
+
+    /// @brief comparison: less than or equal
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_le/
+    JSON_HEDLEY_DEPRECATED_FOR(3.11.0, undef JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON)
+    bool operator<=(const_reference rhs) const noexcept
+    {
+        if (compares_unordered(rhs, true))
+        {
+            return false;
+        }
+        return !(rhs < *this);
+    }
+
+    /// @brief comparison: less than or equal
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_le/
+    template<typename ScalarType>
+    requires std::is_scalar_v<ScalarType>
+    bool operator<=(ScalarType rhs) const noexcept
+    {
+        return *this <= basic_json(rhs);
+    }
+
+    /// @brief comparison: greater than or equal
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_ge/
+    JSON_HEDLEY_DEPRECATED_FOR(3.11.0, undef JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON)
+    bool operator>=(const_reference rhs) const noexcept
+    {
+        if (compares_unordered(rhs, true))
+        {
+            return false;
+        }
+        return !(*this < rhs);
+    }
+
+    /// @brief comparison: greater than or equal
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_ge/
+    template<typename ScalarType>
+    requires std::is_scalar_v<ScalarType>
+    bool operator>=(ScalarType rhs) const noexcept
+    {
+        return *this >= basic_json(rhs);
+    }
+#endif
+#else
     /// @brief comparison: equal
     /// @sa https://json.nlohmann.me/api/basic_json/operator_eq/
     friend bool operator==(const_reference lhs, const_reference rhs) noexcept
@@ -21714,71 +22028,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
 #endif
-        const auto lhs_type = lhs.type();
-        const auto rhs_type = rhs.type();
-
-        if (lhs_type == rhs_type)
-        {
-            switch (lhs_type)
-            {
-                case value_t::array:
-                    return *lhs.m_value.array == *rhs.m_value.array;
-
-                case value_t::object:
-                    return *lhs.m_value.object == *rhs.m_value.object;
-
-                case value_t::null:
-                    return true;
-
-                case value_t::string:
-                    return *lhs.m_value.string == *rhs.m_value.string;
-
-                case value_t::boolean:
-                    return lhs.m_value.boolean == rhs.m_value.boolean;
-
-                case value_t::number_integer:
-                    return lhs.m_value.number_integer == rhs.m_value.number_integer;
-
-                case value_t::number_unsigned:
-                    return lhs.m_value.number_unsigned == rhs.m_value.number_unsigned;
-
-                case value_t::number_float:
-                    return lhs.m_value.number_float == rhs.m_value.number_float;
-
-                case value_t::binary:
-                    return *lhs.m_value.binary == *rhs.m_value.binary;
-
-                case value_t::discarded:
-                default:
-                    return false;
-            }
-        }
-        else if (lhs_type == value_t::number_integer && rhs_type == value_t::number_float)
-        {
-            return static_cast<number_float_t>(lhs.m_value.number_integer) == rhs.m_value.number_float;
-        }
-        else if (lhs_type == value_t::number_float && rhs_type == value_t::number_integer)
-        {
-            return lhs.m_value.number_float == static_cast<number_float_t>(rhs.m_value.number_integer);
-        }
-        else if (lhs_type == value_t::number_unsigned && rhs_type == value_t::number_float)
-        {
-            return static_cast<number_float_t>(lhs.m_value.number_unsigned) == rhs.m_value.number_float;
-        }
-        else if (lhs_type == value_t::number_float && rhs_type == value_t::number_unsigned)
-        {
-            return lhs.m_value.number_float == static_cast<number_float_t>(rhs.m_value.number_unsigned);
-        }
-        else if (lhs_type == value_t::number_unsigned && rhs_type == value_t::number_integer)
-        {
-            return static_cast<number_integer_t>(lhs.m_value.number_unsigned) == rhs.m_value.number_integer;
-        }
-        else if (lhs_type == value_t::number_integer && rhs_type == value_t::number_unsigned)
-        {
-            return lhs.m_value.number_integer == static_cast<number_integer_t>(rhs.m_value.number_unsigned);
-        }
-
-        return false;
+        JSON_IMPLEMENT_OPERATOR( ==, true, false, false)
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
 #endif
@@ -21806,6 +22056,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/operator_ne/
     friend bool operator!=(const_reference lhs, const_reference rhs) noexcept
     {
+        if (compares_unordered(lhs, rhs, true))
+        {
+            return false;
+        }
         return !(lhs == rhs);
     }
 
@@ -21831,76 +22085,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/operator_lt/
     friend bool operator<(const_reference lhs, const_reference rhs) noexcept
     {
-        const auto lhs_type = lhs.type();
-        const auto rhs_type = rhs.type();
-
-        if (lhs_type == rhs_type)
-        {
-            switch (lhs_type)
-            {
-                case value_t::array:
-                    // note parentheses are necessary, see
-                    // https://github.com/nlohmann/json/issues/1530
-                    return (*lhs.m_value.array) < (*rhs.m_value.array);
-
-                case value_t::object:
-                    return (*lhs.m_value.object) < (*rhs.m_value.object);
-
-                case value_t::null:
-                    return false;
-
-                case value_t::string:
-                    return (*lhs.m_value.string) < (*rhs.m_value.string);
-
-                case value_t::boolean:
-                    return (lhs.m_value.boolean) < (rhs.m_value.boolean);
-
-                case value_t::number_integer:
-                    return (lhs.m_value.number_integer) < (rhs.m_value.number_integer);
-
-                case value_t::number_unsigned:
-                    return (lhs.m_value.number_unsigned) < (rhs.m_value.number_unsigned);
-
-                case value_t::number_float:
-                    return (lhs.m_value.number_float) < (rhs.m_value.number_float);
-
-                case value_t::binary:
-                    return (*lhs.m_value.binary) < (*rhs.m_value.binary);
-
-                case value_t::discarded:
-                default:
-                    return false;
-            }
-        }
-        else if (lhs_type == value_t::number_integer && rhs_type == value_t::number_float)
-        {
-            return static_cast<number_float_t>(lhs.m_value.number_integer) < rhs.m_value.number_float;
-        }
-        else if (lhs_type == value_t::number_float && rhs_type == value_t::number_integer)
-        {
-            return lhs.m_value.number_float < static_cast<number_float_t>(rhs.m_value.number_integer);
-        }
-        else if (lhs_type == value_t::number_unsigned && rhs_type == value_t::number_float)
-        {
-            return static_cast<number_float_t>(lhs.m_value.number_unsigned) < rhs.m_value.number_float;
-        }
-        else if (lhs_type == value_t::number_float && rhs_type == value_t::number_unsigned)
-        {
-            return lhs.m_value.number_float < static_cast<number_float_t>(rhs.m_value.number_unsigned);
-        }
-        else if (lhs_type == value_t::number_integer && rhs_type == value_t::number_unsigned)
-        {
-            return lhs.m_value.number_integer < static_cast<number_integer_t>(rhs.m_value.number_unsigned);
-        }
-        else if (lhs_type == value_t::number_unsigned && rhs_type == value_t::number_integer)
-        {
-            return static_cast<number_integer_t>(lhs.m_value.number_unsigned) < rhs.m_value.number_integer;
-        }
-
-        // We only reach this line if we cannot compare values. In that case,
+        // default_result is used if we cannot compare values. In that case,
         // we compare types. Note we have to call the operator explicitly,
         // because MSVC has problems otherwise.
-        return operator<(lhs_type, rhs_type);
+        JSON_IMPLEMENT_OPERATOR( <, false, false, operator<(lhs_type, rhs_type))
     }
 
     /// @brief comparison: less than
@@ -21925,6 +22113,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/operator_le/
     friend bool operator<=(const_reference lhs, const_reference rhs) noexcept
     {
+        if (compares_unordered(lhs, rhs, true))
+        {
+            return false;
+        }
         return !(rhs < lhs);
     }
 
@@ -21950,6 +22142,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/operator_gt/
     friend bool operator>(const_reference lhs, const_reference rhs) noexcept
     {
+        // double inverse
+        if (compares_unordered(lhs, rhs))
+        {
+            return false;
+        }
         return !(lhs <= rhs);
     }
 
@@ -21975,6 +22172,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/operator_ge/
     friend bool operator>=(const_reference lhs, const_reference rhs) noexcept
     {
+        if (compares_unordered(lhs, rhs, true))
+        {
+            return false;
+        }
         return !(lhs < rhs);
     }
 
@@ -21995,6 +22196,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     {
         return basic_json(lhs) >= rhs;
     }
+#endif
+
+#undef JSON_IMPLEMENT_OPERATOR
 
     /// @}
 
@@ -23191,10 +23395,14 @@ struct less< ::nlohmann::detail::value_t> // do not remove the space after '<', 
     @brief compare two value_t enum values
     @since version 3.0.0
     */
-    bool operator()(nlohmann::detail::value_t lhs,
-                    nlohmann::detail::value_t rhs) const noexcept
+    bool operator()(::nlohmann::detail::value_t lhs,
+                    ::nlohmann::detail::value_t rhs) const noexcept
     {
-        return nlohmann::detail::operator<(lhs, rhs);
+#if JSON_HAS_THREE_WAY_COMPARISON
+        return std::is_lt(lhs <=> rhs); // *NOPAD*
+#else
+        return ::nlohmann::detail::operator<(lhs, rhs);
+#endif
     }
 };
 
@@ -23248,6 +23456,7 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 #undef NLOHMANN_BASIC_JSON_TPL
 #undef JSON_EXPLICIT
 #undef NLOHMANN_CAN_CALL_STD_FUNC_IMPL
+#undef JSON_INLINE_VARIABLE
 #undef JSON_NO_UNIQUE_ADDRESS
 
 #ifndef JSON_TEST_KEEP_MACROS
@@ -23260,6 +23469,8 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
     #undef JSON_HAS_FILESYSTEM
     #undef JSON_HAS_EXPERIMENTAL_FILESYSTEM
     #undef JSON_HAS_THREE_WAY_COMPARISON
+    #undef JSON_HAS_RANGES
+    #undef JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
 #endif
 
 // #include <nlohmann/thirdparty/hedley/hedley_undef.hpp>

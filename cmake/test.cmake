@@ -156,6 +156,7 @@ endfunction()
 #############################################################################
 # json_test_add_test_for(
 #     <file>
+#     [NAME <name>]
 #     MAIN <main>
 #     [CXX_STANDARDS <version_number>...] [FORCE])
 #
@@ -165,6 +166,7 @@ endfunction()
 #
 # if C++ standard <version_number> is supported by the compiler and the
 # source file contains JSON_HAS_CPP_<version_number>.
+# Use NAME <name> to override the filename-derived test name.
 # Use FORCE to create the test regardless of the file containing
 # JSON_HAS_CPP_<version_number>.
 # Test targets are linked against <main>.
@@ -172,13 +174,20 @@ endfunction()
 #############################################################################
 
 function(json_test_add_test_for file)
-    cmake_parse_arguments(args "FORCE" "MAIN" "CXX_STANDARDS" ${ARGN})
-
-    get_filename_component(file_basename ${file} NAME_WE)
-    string(REGEX REPLACE "unit-([^$]+)" "test-\\1" test_name ${file_basename})
+    cmake_parse_arguments(args "FORCE" "MAIN;NAME" "CXX_STANDARDS" ${ARGN})
 
     if("${args_MAIN}" STREQUAL "")
         message(FATAL_ERROR "Required argument MAIN <main> missing.")
+    endif()
+
+    if("${args_NAME}" STREQUAL "")
+        get_filename_component(file_basename ${file} NAME_WE)
+        string(REGEX REPLACE "unit-([^$]+)" "test-\\1" test_name ${file_basename})
+    else()
+        set(test_name ${args_NAME})
+        if(NOT test_name MATCHES "test-[^$]+")
+            message(FATAL_ERROR "Test name must start with 'test-'.")
+        endif()
     endif()
 
     if("${args_CXX_STANDARDS}" STREQUAL "")
