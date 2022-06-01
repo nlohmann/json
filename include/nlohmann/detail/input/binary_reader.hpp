@@ -1938,9 +1938,9 @@ class binary_reader
     {
         std::pair<std::size_t, char_int_type> size_and_type;
         size_t dimlen = 0;
-        bool inside_ndarray = true;
+        bool no_ndarray = true;
 
-        if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_type(size_and_type, inside_ndarray)))
+        if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_type(size_and_type, no_ndarray)))
         {
             return false;
         }
@@ -1953,7 +1953,7 @@ class binary_reader
                 {
                     for (std::size_t i = 0; i < size_and_type.first; ++i)
                     {
-                        if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_value(dimlen, inside_ndarray, size_and_type.second)))
+                        if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_value(dimlen, no_ndarray, size_and_type.second)))
                         {
                             return false;
                         }
@@ -1965,7 +1965,7 @@ class binary_reader
             {
                 for (std::size_t i = 0; i < size_and_type.first; ++i)
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_value(dimlen, inside_ndarray)))
+                    if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_value(dimlen, no_ndarray)))
                     {
                         return false;
                     }
@@ -1977,7 +1977,7 @@ class binary_reader
         {
             while (current != ']')
             {
-                if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_value(dimlen, inside_ndarray, current)))
+                if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_value(dimlen, no_ndarray, current)))
                 {
                     return false;
                 }
@@ -1990,12 +1990,16 @@ class binary_reader
 
     /*!
     @param[out] result  determined size
-    @param[in,out] inside_ndarray  whether the parser is parsing an ND array dimensional vector
+    @param[in,out] is_ndarray  for input, `true` means already inside an ndarray vector
+                               or ndarray dimension is not allowed; `false` means ndarray
+                               is allowed; for output, `true` means an ndarray is found;
+                               is_ndarray can only return `true` when its initial value
+                               is `false`
     @param[in] prefix  type marker if already read, otherwise set to 0
 
     @return whether size determination completed
     */
-    bool get_ubjson_size_value(std::size_t& result, bool& inside_ndarray, char_int_type prefix = 0)
+    bool get_ubjson_size_value(std::size_t& result, bool& is_ndarray, char_int_type prefix = 0)
     {
         if (prefix == 0)
         {
@@ -2130,9 +2134,9 @@ class binary_reader
                 {
                     break;
                 }
-                if (inside_ndarray) // ndarray dimensional vector can only contain integers, and can not embed another array
+                if (is_ndarray) // ndarray dimensional vector can only contain integers, and can not embed another array
                 {
-                    return sax->parse_error(chars_read, get_token_string(), parse_error::create(113, chars_read, exception_message(input_format, "ndarray dimention vector can only contain integers", "size"), nullptr));
+                    return sax->parse_error(chars_read, get_token_string(), parse_error::create(113, chars_read, exception_message(input_format, "ndarray dimentional vector is not allowed", "size"), nullptr));
                 }
                 std::vector<size_t> dim;
                 if (JSON_HEDLEY_UNLIKELY(!get_ubjson_ndarray_size(dim)))
@@ -2169,7 +2173,7 @@ class binary_reader
                             return false;
                         }
                     }
-                    inside_ndarray = true;
+                    is_ndarray = true;
                     return sax->end_array();
                 }
                 result = 0;
@@ -2650,8 +2654,8 @@ class binary_reader
     {
         // get size of following number string
         std::size_t size{};
-        bool inside_ndarray = false;
-        auto res = get_ubjson_size_value(size, inside_ndarray);
+        bool no_ndarray = true;
+        auto res = get_ubjson_size_value(size, no_ndarray);
         if (JSON_HEDLEY_UNLIKELY(!res))
         {
             return res;
