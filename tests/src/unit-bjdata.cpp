@@ -2541,7 +2541,7 @@ TEST_CASE("BJData")
                 CHECK(json::from_bjdata(vI, true, false).is_discarded());
             }
 
-            SECTION("do not accept NTFZ markers in ndarray optimized type")
+            SECTION("do not accept NTFZ markers in ndarray optimized type (with count)")
             {
                 json _;
                 std::vector<uint8_t> v_N = {'[', '$', 'N', '#', '[', '#', 'i', 2, 'i', 1, 'i', 2};
@@ -2562,7 +2562,7 @@ TEST_CASE("BJData")
                 CHECK(json::from_bjdata(v_Z, true, false).is_discarded());
             }
 
-            SECTION("do not accept NTFZ markers in ndarray optimized type")
+            SECTION("do not accept NTFZ markers in ndarray optimized type (without count)")
             {
                 json _;
                 std::vector<uint8_t> v_N = {'[', '$', 'N', '#', '[', 'i', 1, 'i', 2, ']'};
@@ -2776,6 +2776,10 @@ TEST_CASE("BJData")
             std::vector<uint8_t> vR6 = {'[', '$', 'i', '#', '[', '$', 'i', '#', '[', 'i', '2', 'i', 2, ']'};
             CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vR6), "[json.exception.parse_error.112] parse error at byte 14: syntax error while parsing BJData size: ndarray can not be recursive", json::parse_error&);
             CHECK(json::from_bjdata(vR6, true, false).is_discarded());
+
+            std::vector<uint8_t> vH = {'[', 'H', '[', '#', '[', '$', 'i', '#', '[', 'i', '2', 'i', 2, ']'};
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vH), "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing BJData size: ndarray dimentional vector is not allowed", json::parse_error&);
+            CHECK(json::from_bjdata(vH, true, false).is_discarded());
         }
 
         SECTION("objects")
