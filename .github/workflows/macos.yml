@@ -45,7 +45,7 @@ jobs:
         run: cd build ; ctest -j 10 --output-on-failure
 
   xcode_standards:
-    runs-on: macos-12
+    runs-on: macos-latest
     strategy:
       matrix:
         standard: [11, 14, 17, 20]
