@@ -1087,6 +1087,11 @@ The following compilers are currently used in continuous integration at [AppVeyo
 | Apple Clang 12.0.0 (clang-1200.0.32.27); Xcode 12.2                                                    | macOS 10.15.7      | GitHub Actions |
 | Apple Clang 12.0.0 (clang-1200.0.32.28); Xcode 12.3                                                    | macOS 10.15.7      | GitHub Actions |
 | Apple Clang 12.0.0 (clang-1200.0.32.29); Xcode 12.4                                                    | macOS 10.15.7      | GitHub Actions |
+| Apple Clang 13.0.0 (clang-1300.0.29.3); Xcode 13.1                                                     | macOS 12.3.1       | GitHub Actions |
+| Apple Clang 13.0.0 (clang-1300.0.29.30); Xcode 13.2                                                    | macOS 12.3.1       | GitHub Actions |
+| Apple Clang 13.0.0 (clang-1300.0.29.30); Xcode 13.2.1                                                  | macOS 12.3.1       | GitHub Actions |
+| Apple Clang 13.1.6 (clang-1316.0.21.2); Xcode 13.3                                                     | macOS 12.3.1       | GitHub Actions |
+| Apple Clang 13.1.6 (clang-1316.0.21.2.3); Xcode 13.3.1                                                 | macOS 12.3.1       | GitHub Actions |
 | Clang 3.5.2 (3.5.2-3ubuntu1)                                                                           | Ubuntu 20.04.3 LTS | GitHub Actions |
 | Clang 3.6.2 (3.6.2-3ubuntu2)                                                                           | Ubuntu 20.04.3 LTS | GitHub Actions |
 | Clang 3.7.1 (3.7.1-2ubuntu2)                                                                           | Ubuntu 20.04.3 LTS | GitHub Actions |
