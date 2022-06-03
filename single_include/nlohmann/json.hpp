@@ -5113,6 +5113,16 @@ template<>
 struct external_constructor<value_t::object>
 {
     template<typename BasicJsonType>
+    static void construct(BasicJsonType& j)
+    {
+        j.m_value.destroy(j.m_type);
+        j.m_type = value_t::object;
+        j.m_value.object = j.template create<typename BasicJsonType::object_t>();
+        j.set_parents();
+        j.assert_invariant();
+    }
+
+    template<typename BasicJsonType>
     static void construct(BasicJsonType& j, const typename BasicJsonType::object_t& obj)
     {
         j.m_value.destroy(j.m_type);
@@ -5147,6 +5157,28 @@ struct external_constructor<value_t::object>
     }
 };
 
+//////////////
+// wrappers //
+//////////////
+
+template<typename ArrayType>
+struct array_type_wrapper
+{
+    const ArrayType& array;
+};
+
+template<typename ObjectType>
+struct object_type_wrapper
+{
+    const ObjectType& object;
+};
+
+template<typename StringType>
+struct string_type_wrapper
+{
+    const StringType& string;
+};
+
 /////////////
 // to_json //
 /////////////
@@ -5169,6 +5201,17 @@ template<typename BasicJsonType>
 inline void to_json(BasicJsonType& j, typename BasicJsonType::string_t&& s)
 {
     external_constructor<value_t::string>::construct(j, std::move(s));
+}
+
+template<typename BasicJsonType, typename StringType>
+using string_type_constructible_from_data_and_size = decltype(typename BasicJsonType::string_t(
+            std::declval<const StringType&>().data(), std::declval<const StringType&>().size()));
+
+template<typename BasicJsonType, typename StringType, detail::enable_if_t<
+             detail::is_detected<string_type_constructible_from_data_and_size, BasicJsonType, StringType>::value, int> = 0>
+void to_json(BasicJsonType& j, detail::string_type_wrapper<StringType> s)
+{
+    external_constructor<value_t::string>::construct(j, typename BasicJsonType::string_t(s.string.data(), s.string.size()));
 }
 
 template<typename BasicJsonType, typename FloatType,
@@ -5219,6 +5262,18 @@ inline void to_json(BasicJsonType& j, const CompatibleArrayType& arr)
     external_constructor<value_t::array>::construct(j, arr);
 }
 
+template<typename BasicJsonType, typename ArrayType>
+using array_type_constructible_from_iter = decltype(typename BasicJsonType::array_t(
+            std::declval<result_of_begin<const ArrayType&>>(), std::declval<result_of_end<const ArrayType&>>()));
+
+template<typename BasicJsonType, typename ArrayType, detail::enable_if_t<
+             detail::is_detected<array_type_constructible_from_iter, BasicJsonType, ArrayType>::value, int> = 0>
+void to_json(BasicJsonType& j, detail::array_type_wrapper<ArrayType> a)
+{
+    external_constructor<value_t::array>::construct(j,
+            typename BasicJsonType::array_t(a.array.begin(), a.array.end()));
+}
+
 template<typename BasicJsonType>
 inline void to_json(BasicJsonType& j, const typename BasicJsonType::binary_t& bin)
 {
@@ -5249,6 +5304,43 @@ template<typename BasicJsonType>
 inline void to_json(BasicJsonType& j, typename BasicJsonType::object_t&& obj)
 {
     external_constructor<value_t::object>::construct(j, std::move(obj));
+}
+
+template < typename BasicJsonType, typename ObjectType,
+           enable_if_t < is_compatible_object_type<BasicJsonType, ObjectType>::value
+                         || is_basic_json<ObjectType>::value, int > = 0 >
+void to_json(BasicJsonType& j, const object_type_wrapper<ObjectType>& obj)
+{
+    external_constructor<value_t::object>::construct(j, obj.object);
+}
+
+template<typename BasicJsonType, typename ObjectType>
+using object_type_key_constructible_from_data_and_size = decltype(
+            typename BasicJsonType::object_t::key_type(
+                std::declval<const typename ObjectType::key_type&>().data(),
+                std::declval<const typename ObjectType::key_type&>().size()));
+
+template < typename BasicJsonType, typename ObjectType,
+           enable_if_t < !is_compatible_object_type<BasicJsonType, ObjectType>::value
+                         && !is_basic_json<ObjectType>::value
+                         && detail::is_detected<object_type_key_constructible_from_data_and_size,
+                                 BasicJsonType, ObjectType>::value, int > = 0 >
+void to_json(BasicJsonType& j, const object_type_wrapper<ObjectType>& o)
+{
+    using std::begin;
+    using std::end;
+
+    external_constructor<value_t::object>::construct(j);
+
+    auto& obj = j.template get_ref<typename BasicJsonType::object_t&>();
+    std::transform(begin(o.object), end(o.object), std::inserter(obj, obj.end()),
+                   [](const typename ObjectType::value_type & val)
+    {
+        return typename BasicJsonType::object_t::value_type
+        {
+            typename BasicJsonType::object_t::key_type(val.first.data(), val.first.size()),
+            BasicJsonType(val.second)};
+    });
 }
 
 template <
@@ -19139,6 +19231,73 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         assert_invariant();
     }
 
+  private:
+    template<typename BasicJsonType, class Serializer, typename SerializedType,
+             class WrapperType>
+    using serializer_has_to_json_with_type_wrapper = decltype(Serializer::to_json(
+                std::declval<BasicJsonType&>(), std::declval<const WrapperType&>()));
+
+    template <typename OtherStringType,
+              detail::enable_if_t <
+                  detail::is_detected<serializer_has_to_json_with_type_wrapper,
+                                      basic_json_t, JSONSerializer<OtherStringType>, OtherStringType,
+                                      detail::string_type_wrapper<OtherStringType>>::value, int > = 0 >
+    void other_string_to_json(const OtherStringType& str)
+    {
+        JSONSerializer<OtherStringType>::to_json(*this, detail::string_type_wrapper<OtherStringType> {str});
+    }
+
+    template < typename OtherStringType,
+               detail::enable_if_t <
+                   !detail::is_detected<serializer_has_to_json_with_type_wrapper,
+                                        basic_json_t, JSONSerializer<OtherStringType>, OtherStringType,
+                                        detail::string_type_wrapper<OtherStringType>>::value, int > = 0 >
+    void other_string_to_json(const OtherStringType& str)
+    {
+        JSONSerializer<OtherStringType>::to_json(*this, str);
+    }
+
+    template <typename OtherObjectType,
+              detail::enable_if_t <
+                  detail::is_detected<serializer_has_to_json_with_type_wrapper,
+                                      basic_json_t, JSONSerializer<OtherObjectType>, OtherObjectType,
+                                      detail::object_type_wrapper<OtherObjectType>>::value, int > = 0 >
+    void other_object_to_json(const OtherObjectType& obj)
+    {
+        JSONSerializer<OtherObjectType>::to_json(*this, detail::object_type_wrapper<OtherObjectType> {obj});
+    }
+
+    template < typename OtherObjectType,
+               detail::enable_if_t <
+                   !detail::is_detected<serializer_has_to_json_with_type_wrapper,
+                                        basic_json_t, JSONSerializer<OtherObjectType>, OtherObjectType,
+                                        detail::object_type_wrapper<OtherObjectType>>::value, int > = 0 >
+    void other_object_to_json(const OtherObjectType& obj)
+    {
+        JSONSerializer<OtherObjectType>::to_json(*this, obj);
+    }
+
+    template <typename OtherArrayType,
+              detail::enable_if_t <
+                  detail::is_detected<serializer_has_to_json_with_type_wrapper,
+                                      basic_json_t, JSONSerializer<OtherArrayType>, OtherArrayType,
+                                      detail::array_type_wrapper<OtherArrayType>>::value, int > = 0 >
+    void other_array_to_json(const OtherArrayType& arr)
+    {
+        JSONSerializer<OtherArrayType>::to_json(*this, detail::array_type_wrapper<OtherArrayType> {arr});
+    }
+
+    template < typename OtherArrayType,
+               detail::enable_if_t <
+                   !detail::is_detected<serializer_has_to_json_with_type_wrapper,
+                                        basic_json_t, JSONSerializer<OtherArrayType>, OtherArrayType,
+                                        detail::array_type_wrapper<OtherArrayType>>::value, int > = 0 >
+    void other_array_to_json(const OtherArrayType& arr)
+    {
+        JSONSerializer<OtherArrayType>::to_json(*this, arr);
+    }
+
+  public:
     /// @brief create a JSON value from an existing one
     /// @sa https://json.nlohmann.me/api/basic_json/basic_json/
     template < typename BasicJsonType,
@@ -19170,13 +19329,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 JSONSerializer<other_number_unsigned_t>::to_json(*this, val.template get<other_number_unsigned_t>());
                 break;
             case value_t::string:
-                JSONSerializer<other_string_t>::to_json(*this, val.template get_ref<const other_string_t&>());
+                other_string_to_json(val.template get_ref<const other_string_t&>());
                 break;
             case value_t::object:
-                JSONSerializer<other_object_t>::to_json(*this, val.template get_ref<const other_object_t&>());
+                other_object_to_json(val.template get_ref<const other_object_t&>());
                 break;
             case value_t::array:
-                JSONSerializer<other_array_t>::to_json(*this, val.template get_ref<const other_array_t&>());
+                other_array_to_json(val.template get_ref<const other_array_t&>());
                 break;
             case value_t::binary:
                 JSONSerializer<other_binary_t>::to_json(*this, val.template get_ref<const other_binary_t&>());

@@ -865,6 +865,73 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         assert_invariant();
     }
 
+  private:
+    template<typename BasicJsonType, class Serializer, typename SerializedType,
+             class WrapperType>
+    using serializer_has_to_json_with_type_wrapper = decltype(Serializer::to_json(
+                std::declval<BasicJsonType&>(), std::declval<const WrapperType&>()));
+
+    template <typename OtherStringType,
+              detail::enable_if_t <
+                  detail::is_detected<serializer_has_to_json_with_type_wrapper,
+                                      basic_json_t, JSONSerializer<OtherStringType>, OtherStringType,
+                                      detail::string_type_wrapper<OtherStringType>>::value, int > = 0 >
+    void other_string_to_json(const OtherStringType& str)
+    {
+        JSONSerializer<OtherStringType>::to_json(*this, detail::string_type_wrapper<OtherStringType> {str});
+    }
+
+    template < typename OtherStringType,
+               detail::enable_if_t <
+                   !detail::is_detected<serializer_has_to_json_with_type_wrapper,
+                                        basic_json_t, JSONSerializer<OtherStringType>, OtherStringType,
+                                        detail::string_type_wrapper<OtherStringType>>::value, int > = 0 >
+    void other_string_to_json(const OtherStringType& str)
+    {
+        JSONSerializer<OtherStringType>::to_json(*this, str);
+    }
+
+    template <typename OtherObjectType,
+              detail::enable_if_t <
+                  detail::is_detected<serializer_has_to_json_with_type_wrapper,
+                                      basic_json_t, JSONSerializer<OtherObjectType>, OtherObjectType,
+                                      detail::object_type_wrapper<OtherObjectType>>::value, int > = 0 >
+    void other_object_to_json(const OtherObjectType& obj)
+    {
+        JSONSerializer<OtherObjectType>::to_json(*this, detail::object_type_wrapper<OtherObjectType> {obj});
+    }
+
+    template < typename OtherObjectType,
+               detail::enable_if_t <
+                   !detail::is_detected<serializer_has_to_json_with_type_wrapper,
+                                        basic_json_t, JSONSerializer<OtherObjectType>, OtherObjectType,
+                                        detail::object_type_wrapper<OtherObjectType>>::value, int > = 0 >
+    void other_object_to_json(const OtherObjectType& obj)
+    {
+        JSONSerializer<OtherObjectType>::to_json(*this, obj);
+    }
+
+    template <typename OtherArrayType,
+              detail::enable_if_t <
+                  detail::is_detected<serializer_has_to_json_with_type_wrapper,
+                                      basic_json_t, JSONSerializer<OtherArrayType>, OtherArrayType,
+                                      detail::array_type_wrapper<OtherArrayType>>::value, int > = 0 >
+    void other_array_to_json(const OtherArrayType& arr)
+    {
+        JSONSerializer<OtherArrayType>::to_json(*this, detail::array_type_wrapper<OtherArrayType> {arr});
+    }
+
+    template < typename OtherArrayType,
+               detail::enable_if_t <
+                   !detail::is_detected<serializer_has_to_json_with_type_wrapper,
+                                        basic_json_t, JSONSerializer<OtherArrayType>, OtherArrayType,
+                                        detail::array_type_wrapper<OtherArrayType>>::value, int > = 0 >
+    void other_array_to_json(const OtherArrayType& arr)
+    {
+        JSONSerializer<OtherArrayType>::to_json(*this, arr);
+    }
+
+  public:
     /// @brief create a JSON value from an existing one
     /// @sa https://json.nlohmann.me/api/basic_json/basic_json/
     template < typename BasicJsonType,
@@ -896,13 +963,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 JSONSerializer<other_number_unsigned_t>::to_json(*this, val.template get<other_number_unsigned_t>());
                 break;
             case value_t::string:
-                JSONSerializer<other_string_t>::to_json(*this, val.template get_ref<const other_string_t&>());
+                other_string_to_json(val.template get_ref<const other_string_t&>());
                 break;
             case value_t::object:
-                JSONSerializer<other_object_t>::to_json(*this, val.template get_ref<const other_object_t&>());
+                other_object_to_json(val.template get_ref<const other_object_t&>());
                 break;
             case value_t::array:
-                JSONSerializer<other_array_t>::to_json(*this, val.template get_ref<const other_array_t&>());
+                other_array_to_json(val.template get_ref<const other_array_t&>());
                 break;
             case value_t::binary:
                 JSONSerializer<other_binary_t>::to_json(*this, val.template get_ref<const other_binary_t&>());
