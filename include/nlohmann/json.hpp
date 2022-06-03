@@ -916,6 +916,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             default:            // LCOV_EXCL_LINE
                 JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
         }
+        JSON_ASSERT(m_type == val.type());
         set_parents();
         assert_invariant();
     }
