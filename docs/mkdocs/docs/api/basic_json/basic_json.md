@@ -241,7 +241,7 @@ basic_json(basic_json&& other) noexcept;
 
 - Overload 5:
 
-    !!! note
+    !!! note "Empty initializer list"
 
         When used without parentheses around an empty initializer list, `basic_json()` is called instead of this
         function, yielding the JSON `#!json null` value.

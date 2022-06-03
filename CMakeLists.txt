@@ -37,13 +37,14 @@ if(${MAIN_PROJECT} AND (${CMAKE_VERSION} VERSION_EQUAL 3.13 OR ${CMAKE_VERSION} 
 else()
     set(JSON_BuildTests_INIT OFF)
 endif()
-option(JSON_BuildTests          "Build the unit tests when BUILD_TESTING is enabled." ${JSON_BuildTests_INIT})
-option(JSON_CI                  "Enable CI build targets." OFF)
-option(JSON_Diagnostics         "Use extended diagnostic messages." OFF)
-option(JSON_ImplicitConversions "Enable implicit conversions." ON)
-option(JSON_Install             "Install CMake targets during install step." ${MAIN_PROJECT})
-option(JSON_MultipleHeaders     "Use non-amalgamated version of the library." OFF)
-option(JSON_SystemInclude       "Include as system headers (skip for clang-tidy)." OFF)
+option(JSON_BuildTests                     "Build the unit tests when BUILD_TESTING is enabled." ${JSON_BuildTests_INIT})
+option(JSON_CI                             "Enable CI build targets." OFF)
+option(JSON_Diagnostics                    "Use extended diagnostic messages." OFF)
+option(JSON_ImplicitConversions            "Enable implicit conversions." ON)
+option(JSON_LegacyDiscardedValueComparison "Enable legacy discarded value comparison." OFF)           
+option(JSON_Install                        "Install CMake targets during install step." ${MAIN_PROJECT})
+option(JSON_MultipleHeaders                "Use non-amalgamated version of the library." OFF)
+option(JSON_SystemInclude                  "Include as system headers (skip for clang-tidy)." OFF)
 
 if (JSON_CI)
     include(ci)
@@ -77,6 +78,10 @@ if (NOT JSON_ImplicitConversions)
     message(STATUS "Implicit conversions are disabled")
 endif()
 
+if (JSON_LegacyDiscardedValueComparison)
+    message(STATUS "Legacy discarded value comparison enabled")
+endif()
+
 if (JSON_Diagnostics)
     message(STATUS "Diagnostics enabled")
 endif()
@@ -100,8 +105,9 @@ endif()
 target_compile_definitions(
     ${NLOHMANN_JSON_TARGET_NAME}
     INTERFACE
-    JSON_USE_IMPLICIT_CONVERSIONS=$<BOOL:${JSON_ImplicitConversions}>
-    JSON_DIAGNOSTICS=$<BOOL:${JSON_Diagnostics}>
+    $<$<NOT:$<BOOL:${JSON_ImplicitConversions}>>:JSON_USE_IMPLICIT_CONVERSIONS=0>
+    $<$<BOOL:${JSON_Diagnostics}>:JSON_DIAGNOSTICS=1>
+    $<$<BOOL:${JSON_LegacyDiscardedValueComparison}>:JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=1>
 )
 
 target_include_directories(

@@ -76,7 +76,7 @@ endif()
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     # avoid stack overflow, see https://github.com/nlohmann/json/issues/2955
-    json_test_set_test_options("test-cbor;test-msgpack;test-ubjson;test-bjdata" LINK_OPTIONS /STACK:4000000)
+    json_test_set_test_options("test-cbor;test-msgpack;test-ubjson;test-bjdata;test-binary_formats" LINK_OPTIONS /STACK:4000000)
 endif()
 
 # disable exceptions for test-disabled_exceptions
@@ -122,6 +122,15 @@ file(GLOB files src/unit-*.cpp)
 foreach(file ${files})
     json_test_add_test_for(${file} MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force})
 endforeach()
+
+# test legacy comparison of discarded values
+json_test_set_test_options(test-comparison_legacy
+    COMPILE_DEFINITIONS JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=1
+)
+json_test_add_test_for(src/unit-comparison.cpp
+    NAME test-comparison_legacy
+    MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force}
+)
 
 # *DO NOT* use json_test_set_test_options() below this line
 

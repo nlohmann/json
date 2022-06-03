@@ -60,8 +60,8 @@ Logarithmic in the size of the JSON object.
 
 ## Notes
 
-1. This method always returns `#!cpp false` when executed on a JSON type that is not an object.
-2. This method can be executed on any JSON value type.
+- This method always returns `#!cpp false` when executed on a JSON type that is not an object.
+- This method can be executed on any JSON value type.
 
 !!! info "Postconditions"
 

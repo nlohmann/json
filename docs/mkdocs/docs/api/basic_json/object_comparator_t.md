@@ -1,6 +1,5 @@
 # <small>nlohmann::basic_json::</small>object_comparator_t
 
-
 ```cpp
 using object_comparator_t = typename object_t::key_compare;
 // or
@@ -9,6 +8,22 @@ using object_comparator_t = default_object_comparator_t;
 
 The comparator used by [`object_t`](object_t.md). Defined as `#!cpp typename object_t::key_compare` if available,
 and [`default_object_comparator_t`](default_object_comparator_t.md) otherwise.
+
+## Examples
+
+??? example
+
+    The example below demonstrates the used object comparator.
+
+    ```cpp
+    --8<-- "examples/object_comparator_t.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/object_comparator_t.output"
+    ```
 
 ## Version history
 

@@ -39,7 +39,7 @@ namespace nlohmann
 namespace detail
 {
 template<typename BasicJsonType>
-void from_json(const BasicJsonType& j, typename std::nullptr_t& n)
+inline void from_json(const BasicJsonType& j, typename std::nullptr_t& n)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_null()))
     {
@@ -86,7 +86,7 @@ void get_arithmetic_value(const BasicJsonType& j, ArithmeticType& val)
 }
 
 template<typename BasicJsonType>
-void from_json(const BasicJsonType& j, typename BasicJsonType::boolean_t& b)
+inline void from_json(const BasicJsonType& j, typename BasicJsonType::boolean_t& b)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_boolean()))
     {
@@ -96,7 +96,7 @@ void from_json(const BasicJsonType& j, typename BasicJsonType::boolean_t& b)
 }
 
 template<typename BasicJsonType>
-void from_json(const BasicJsonType& j, typename BasicJsonType::string_t& s)
+inline void from_json(const BasicJsonType& j, typename BasicJsonType::string_t& s)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_string()))
     {
@@ -111,7 +111,7 @@ template <
         std::is_assignable<StringType&, const typename BasicJsonType::string_t>::value
         && !std::is_same<typename BasicJsonType::string_t, StringType>::value
         && !is_json_ref<StringType>::value, int > = 0 >
-void from_json(const BasicJsonType& j, StringType& s)
+inline void from_json(const BasicJsonType& j, StringType& s)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_string()))
     {
@@ -122,26 +122,26 @@ void from_json(const BasicJsonType& j, StringType& s)
 }
 
 template<typename BasicJsonType>
-void from_json(const BasicJsonType& j, typename BasicJsonType::number_float_t& val)
+inline void from_json(const BasicJsonType& j, typename BasicJsonType::number_float_t& val)
 {
     get_arithmetic_value(j, val);
 }
 
 template<typename BasicJsonType>
-void from_json(const BasicJsonType& j, typename BasicJsonType::number_unsigned_t& val)
+inline void from_json(const BasicJsonType& j, typename BasicJsonType::number_unsigned_t& val)
 {
     get_arithmetic_value(j, val);
 }
 
 template<typename BasicJsonType>
-void from_json(const BasicJsonType& j, typename BasicJsonType::number_integer_t& val)
+inline void from_json(const BasicJsonType& j, typename BasicJsonType::number_integer_t& val)
 {
     get_arithmetic_value(j, val);
 }
 
 template<typename BasicJsonType, typename EnumType,
          enable_if_t<std::is_enum<EnumType>::value, int> = 0>
-void from_json(const BasicJsonType& j, EnumType& e)
+inline void from_json(const BasicJsonType& j, EnumType& e)
 {
     typename std::underlying_type<EnumType>::type val;
     get_arithmetic_value(j, val);
@@ -151,7 +151,7 @@ void from_json(const BasicJsonType& j, EnumType& e)
 // forward_list doesn't have an insert method
 template<typename BasicJsonType, typename T, typename Allocator,
          enable_if_t<is_getable<BasicJsonType, T>::value, int> = 0>
-void from_json(const BasicJsonType& j, std::forward_list<T, Allocator>& l)
+inline void from_json(const BasicJsonType& j, std::forward_list<T, Allocator>& l)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
@@ -168,7 +168,7 @@ void from_json(const BasicJsonType& j, std::forward_list<T, Allocator>& l)
 // valarray doesn't have an insert method
 template<typename BasicJsonType, typename T,
          enable_if_t<is_getable<BasicJsonType, T>::value, int> = 0>
-void from_json(const BasicJsonType& j, std::valarray<T>& l)
+inline void from_json(const BasicJsonType& j, std::valarray<T>& l)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
@@ -193,7 +193,7 @@ auto from_json(const BasicJsonType& j, T (&arr)[N])  // NOLINT(cppcoreguidelines
 }
 
 template<typename BasicJsonType>
-void from_json_array_impl(const BasicJsonType& j, typename BasicJsonType::array_t& arr, priority_tag<3> /*unused*/)
+inline void from_json_array_impl(const BasicJsonType& j, typename BasicJsonType::array_t& arr, priority_tag<3> /*unused*/)
 {
     arr = *j.template get_ptr<const typename BasicJsonType::array_t*>();
 }
@@ -237,8 +237,8 @@ template<typename BasicJsonType, typename ConstructibleArrayType,
          enable_if_t<
              std::is_assignable<ConstructibleArrayType&, ConstructibleArrayType>::value,
              int> = 0>
-void from_json_array_impl(const BasicJsonType& j, ConstructibleArrayType& arr,
-                          priority_tag<0> /*unused*/)
+inline void from_json_array_impl(const BasicJsonType& j, ConstructibleArrayType& arr,
+                                 priority_tag<0> /*unused*/)
 {
     using std::end;
 
@@ -295,7 +295,7 @@ auto from_json(BasicJsonType&& j, identity_tag<std::array<T, N>> tag)
 }
 
 template<typename BasicJsonType>
-void from_json(const BasicJsonType& j, typename BasicJsonType::binary_t& bin)
+inline void from_json(const BasicJsonType& j, typename BasicJsonType::binary_t& bin)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_binary()))
     {
@@ -307,7 +307,7 @@ void from_json(const BasicJsonType& j, typename BasicJsonType::binary_t& bin)
 
 template<typename BasicJsonType, typename ConstructibleObjectType,
          enable_if_t<is_constructible_object_type<BasicJsonType, ConstructibleObjectType>::value, int> = 0>
-void from_json(const BasicJsonType& j, ConstructibleObjectType& obj)
+inline void from_json(const BasicJsonType& j, ConstructibleObjectType& obj)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_object()))
     {
@@ -339,7 +339,7 @@ template < typename BasicJsonType, typename ArithmeticType,
                !std::is_same<ArithmeticType, typename BasicJsonType::number_float_t>::value&&
                !std::is_same<ArithmeticType, typename BasicJsonType::boolean_t>::value,
                int > = 0 >
-void from_json(const BasicJsonType& j, ArithmeticType& val)
+inline void from_json(const BasicJsonType& j, ArithmeticType& val)
 {
     switch (static_cast<value_t>(j))
     {
@@ -389,7 +389,7 @@ std::pair<A1, A2> from_json_tuple_impl(BasicJsonType&& j, identity_tag<std::pair
 }
 
 template<typename BasicJsonType, typename A1, typename A2>
-void from_json_tuple_impl(BasicJsonType&& j, std::pair<A1, A2>& p, priority_tag<1> /*unused*/)
+inline void from_json_tuple_impl(BasicJsonType&& j, std::pair<A1, A2>& p, priority_tag<1> /*unused*/)
 {
     p = from_json_tuple_impl(std::forward<BasicJsonType>(j), identity_tag<std::pair<A1, A2>> {}, priority_tag<0> {});
 }
@@ -401,7 +401,7 @@ std::tuple<Args...> from_json_tuple_impl(BasicJsonType&& j, identity_tag<std::tu
 }
 
 template<typename BasicJsonType, typename... Args>
-void from_json_tuple_impl(BasicJsonType&& j, std::tuple<Args...>& t, priority_tag<3> /*unused*/)
+inline void from_json_tuple_impl(BasicJsonType&& j, std::tuple<Args...>& t, priority_tag<3> /*unused*/)
 {
     t = from_json_tuple_impl_base<BasicJsonType, Args...>(std::forward<BasicJsonType>(j), index_sequence_for<Args...> {});
 }
@@ -421,7 +421,7 @@ auto from_json(BasicJsonType&& j, TupleRelated&& t)
 template < typename BasicJsonType, typename Key, typename Value, typename Compare, typename Allocator,
            typename = enable_if_t < !std::is_constructible <
                                         typename BasicJsonType::string_t, Key >::value >>
-void from_json(const BasicJsonType& j, std::map<Key, Value, Compare, Allocator>& m)
+inline void from_json(const BasicJsonType& j, std::map<Key, Value, Compare, Allocator>& m)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
@@ -441,7 +441,7 @@ void from_json(const BasicJsonType& j, std::map<Key, Value, Compare, Allocator>&
 template < typename BasicJsonType, typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator,
            typename = enable_if_t < !std::is_constructible <
                                         typename BasicJsonType::string_t, Key >::value >>
-void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Hash, KeyEqual, Allocator>& m)
+inline void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Hash, KeyEqual, Allocator>& m)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
@@ -460,7 +460,7 @@ void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Hash, KeyE
 
 #if JSON_HAS_FILESYSTEM || JSON_HAS_EXPERIMENTAL_FILESYSTEM
 template<typename BasicJsonType>
-void from_json(const BasicJsonType& j, std_fs::path& p)
+inline void from_json(const BasicJsonType& j, std_fs::path& p)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_string()))
     {
@@ -482,11 +482,16 @@ struct from_json_fn
 };
 }  // namespace detail
 
+#ifndef JSON_HAS_CPP_17
 /// namespace to hold default `from_json` function
 /// to see why this is required:
 /// http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4381.html
 namespace // NOLINT(cert-dcl59-cpp,fuchsia-header-anon-namespaces,google-build-namespaces)
 {
-constexpr const auto& from_json = detail::static_const<detail::from_json_fn>::value; // NOLINT(misc-definitions-in-headers)
+#endif
+JSON_INLINE_VARIABLE constexpr const auto& from_json = // NOLINT(misc-definitions-in-headers)
+    detail::static_const<detail::from_json_fn>::value;
+#ifndef JSON_HAS_CPP_17
 } // namespace
+#endif
 } // namespace nlohmann

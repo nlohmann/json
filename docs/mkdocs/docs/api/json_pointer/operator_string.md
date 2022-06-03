@@ -19,6 +19,22 @@ operator string_t() const
 }
 ```
 
+## Examples
+
+??? example
+
+    The example shows how JSON Pointers can be implicitly converted to strings.
+     
+    ```cpp
+    --8<-- "examples/json_pointer__operator_string.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/json_pointer__operator_string.output"
+    ```
+
 ## Version history
 
 - Since version 2.0.0.

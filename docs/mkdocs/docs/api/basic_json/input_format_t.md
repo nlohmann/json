@@ -6,7 +6,8 @@ enum class input_format_t {
     cbor,
     msgpack,
     ubjson,
-    bson
+    bson,
+    bjdata
 };
 ```
 
@@ -26,6 +27,25 @@ ubjson
 
 bson
 :   BSON (Binary JSON)
+
+bjdata
+:   BJData (Binary JData)
+
+## Examples
+
+??? example
+
+    The example below shows how an `input_format_t` enum value is passed to `sax_parse` to set the input format to CBOR.
+
+    ```cpp
+    --8<-- "examples/sax_parse__binary.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/sax_parse__binary.output"
+    ```
 
 ## Version history
 

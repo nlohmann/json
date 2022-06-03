@@ -14,11 +14,11 @@ are the base for JSON patches.
 `RefStringType`
 :   the string type used for the reference tokens making up the JSON pointer
 
-## Notes
+!!! warning "Deprecation"
 
-For backwards compatibility `RefStringType` may also be a specialization of [`basic_json`](../basic_json/index.md) in
-which case `string_t` will be deduced as [`basic_json::string_t`](../basic_json/string_t.md). This feature is deprecated
-and may be removed in a future major version.
+    For backwards compatibility `RefStringType` may also be a specialization of [`basic_json`](../basic_json/index.md)
+    in which case `string_t` will be deduced as [`basic_json::string_t`](../basic_json/string_t.md). This feature is
+    deprecated and may be removed in a future major version.
 
 ## Member types
 

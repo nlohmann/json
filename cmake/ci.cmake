@@ -499,6 +499,20 @@ add_custom_target(ci_test_diagnostics
 )
 
 ###############################################################################
+# Enable legacy discarded value comparison.
+###############################################################################
+
+add_custom_target(ci_test_legacycomparison
+    COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND}
+    -DCMAKE_BUILD_TYPE=Debug -GNinja
+    -DJSON_BuildTests=ON -DJSON_MultipleHeaders=ON -DJSON_LegacyDiscardedValueComparison=ON
+    -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_legacycomparison
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_legacycomparison
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_legacycomparison && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+    COMMENT "Compile and test with legacy discarded value comparison enabled"
+)
+
+###############################################################################
 # Coverage.
 ###############################################################################
 
@@ -797,8 +811,9 @@ endfunction()
 ci_get_cmake(3.1.0 CMAKE_3_1_0_BINARY)
 ci_get_cmake(3.13.0 CMAKE_3_13_0_BINARY)
 
-set(JSON_CMAKE_FLAGS_3_1_0 "JSON_Install;JSON_MultipleHeaders;JSON_ImplicitConversions;JSON_Valgrind;JSON_Diagnostics;JSON_SystemInclude")
-set(JSON_CMAKE_FLAGS_3_13_0 "JSON_BuildTests")
+set(JSON_CMAKE_FLAGS_3_1_0 JSON_Diagnostics JSON_ImplicitConversions JSON_LegacyDiscardedValueComparison 
+    JSON_Install JSON_MultipleHeaders JSON_SystemInclude JSON_Valgrind)
+set(JSON_CMAKE_FLAGS_3_13_0 JSON_BuildTests)
 
 function(ci_add_cmake_flags_targets flag min_version)
     string(TOLOWER "ci_cmake_flag_${flag}" flag_target)
