@@ -1485,7 +1485,11 @@ TEST_CASE("regression tests 1")
 
     SECTION("issue #972 - Segmentation fault on G++ when trying to assign json string literal to custom json type")
     {
+#if JSON_USE_IMPLICIT_CONVERSIONS
         my_json foo = R"([1, 2, 3])"_json;
+#else
+        my_json foo = my_json(R"([1, 2, 3])"_json);
+#endif
     }
 
     SECTION("issue #977 - Assigning between different json types")
@@ -1496,7 +1500,11 @@ TEST_CASE("regression tests 1")
         CHECK(lj.size() == 1);
         CHECK(lj["x"] == 3);
         CHECK(ff.x == 3);
+#if JSON_USE_IMPLICIT_CONVERSIONS
         nlohmann::json nj = lj;                // This line works as expected
+#else
+        nlohmann::json nj = nlohmann::json(lj);                // This line works as expected
+#endif
     }
 }
 

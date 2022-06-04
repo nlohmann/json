@@ -343,7 +343,11 @@ TEST_CASE("alternative string type")
             SECTION("json to alt_json")
             {
                 json j("foo");
+#if JSON_USE_IMPLICIT_CONVERSIONS
                 alt_json aj = j;
+#else
+                alt_json aj = alt_json(j);
+#endif
 
                 alt_string as = aj.dump();
                 CHECK(j.is_string());
@@ -354,7 +358,11 @@ TEST_CASE("alternative string type")
             SECTION("alt_json to json")
             {
                 alt_json aj("foo");
+#if JSON_USE_IMPLICIT_CONVERSIONS
                 json j = aj;
+#else
+                json j = json(aj);
+#endif
 
                 alt_string as = aj.dump();
                 CHECK(aj.is_string());
@@ -368,7 +376,11 @@ TEST_CASE("alternative string type")
             SECTION("json to alt_json")
             {
                 json j{"foo"};
+#if JSON_USE_IMPLICIT_CONVERSIONS
                 alt_json aj = j;
+#else
+                alt_json aj = alt_json(j);
+#endif
 
                 alt_string as = aj.dump();
                 CHECK(j.is_array());
@@ -379,7 +391,11 @@ TEST_CASE("alternative string type")
             SECTION("alt_json to json")
             {
                 alt_json aj{"foo"};
+#if JSON_USE_IMPLICIT_CONVERSIONS
                 json j = aj;
+#else
+                json j = json(aj);
+#endif
 
                 alt_string as = aj.dump();
                 CHECK(aj.is_array());
@@ -393,7 +409,11 @@ TEST_CASE("alternative string type")
             SECTION("json to alt_json")
             {
                 json j{{"foo", {"bar", "baz"}}};
+#if JSON_USE_IMPLICIT_CONVERSIONS
                 alt_json aj = j;
+#else
+                alt_json aj = alt_json(j);
+#endif
 
                 alt_string as = aj.dump();
                 CHECK(j.is_object());
@@ -404,7 +424,11 @@ TEST_CASE("alternative string type")
             SECTION("alt_json to json")
             {
                 alt_json aj{{"foo", {"bar", "baz"}}};
+#if JSON_USE_IMPLICIT_CONVERSIONS
                 json j = aj;
+#else
+                json j = json(aj);
+#endif
 
                 alt_string as = aj.dump();
                 CHECK(aj.is_object());
@@ -418,7 +442,11 @@ TEST_CASE("alternative string type")
             SECTION("json to alt_json")
             {
                 auto j = json::binary({1, 2, 3, 4}, 128);
+#if JSON_USE_IMPLICIT_CONVERSIONS
                 alt_json aj = j;
+#else
+                alt_json aj = alt_json(j);
+#endif
 
                 alt_string as = aj.dump();
                 CHECK(j.is_binary());
@@ -429,7 +457,11 @@ TEST_CASE("alternative string type")
             SECTION("alt_json to json")
             {
                 auto aj = alt_json::binary({1, 2, 3, 4}, 128);
+#if JSON_USE_IMPLICIT_CONVERSIONS
                 json j = aj;
+#else
+                json j = json(aj);
+#endif
 
                 alt_string as = aj.dump();
                 CHECK(aj.is_binary());

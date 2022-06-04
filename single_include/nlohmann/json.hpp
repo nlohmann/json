@@ -19303,7 +19303,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     template < typename BasicJsonType,
                detail::enable_if_t <
                    detail::is_basic_json<BasicJsonType>::value&& !std::is_same<basic_json, BasicJsonType>::value, int > = 0 >
-    basic_json(const BasicJsonType& val)
+    JSON_EXPLICIT basic_json(const BasicJsonType& val)
     {
         using other_boolean_t = typename BasicJsonType::boolean_t;
         using other_number_float_t = typename BasicJsonType::number_float_t;
@@ -20126,7 +20126,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                    int > = 0 >
     BasicJsonType get_impl(detail::priority_tag<2> /*unused*/) const
     {
-        return *this;
+        return BasicJsonType(*this);
     }
 
     /*!
