@@ -2511,6 +2511,7 @@ TEST_CASE("BJData")
                 std::vector<uint8_t> vI = {'[', '#', 'I', 0x00, 0xF1};
                 std::vector<uint8_t> vl = {'[', '#', 'l', 0x00, 0x00, 0x00, 0xF2};
                 std::vector<uint8_t> vL = {'[', '#', 'L', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xF3};
+                std::vector<uint8_t> vM = {'[', '$', 'M', '#', '[', 'I', 0x00, 0x20, 'M', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0xFF, ']'};
 
                 json _;
                 CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v1), "[json.exception.parse_error.113] parse error at byte 4: syntax error while parsing BJData size: count in an optimized container must be positive", json::parse_error&);
@@ -2535,10 +2536,13 @@ TEST_CASE("BJData")
                 CHECK(json::from_bjdata(vI, true, false).is_discarded());
 
                 CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vl), "[json.exception.parse_error.113] parse error at byte 7: syntax error while parsing BJData size: count in an optimized container must be positive", json::parse_error&);
-                CHECK(json::from_bjdata(vI, true, false).is_discarded());
+                CHECK(json::from_bjdata(vl, true, false).is_discarded());
 
                 CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vL), "[json.exception.parse_error.113] parse error at byte 11: syntax error while parsing BJData size: count in an optimized container must be positive", json::parse_error&);
-                CHECK(json::from_bjdata(vI, true, false).is_discarded());
+                CHECK(json::from_bjdata(vL, true, false).is_discarded());
+
+                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vM), "[json.exception.parse_error.113] parse error at byte 18: syntax error while parsing BJData size: excessive ndarray size caused overflow", json::parse_error&);
+                CHECK(json::from_bjdata(vM, true, false).is_discarded());
             }
 
             SECTION("do not accept NTFZ markers in ndarray optimized type (with count)")
