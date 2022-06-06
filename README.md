@@ -1622,6 +1622,7 @@ I deeply appreciate the help of the following people.
 - [Andrea Cocito](https://github.com/puffetto) added a clarification on macro usage to the documentation.
 - [Krzysiek Karbowiak](https://github.com/kkarbowiak) refactored the tests to use `CHECK_THROWS_WITH_AS`.
 - [Chaoqi Zhang](https://github.com/prncoprs) fixed a typo.
+- [ivanovmp](https://github.com/ivanovmp) fixed a whitespace error.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
@@ -1656,7 +1657,7 @@ The library itself consists of a single header file licensed under the MIT licen
 
 ## Projects using JSON for Modern C++
 
-The library is currently used in Apple macOS Sierra and iOS 10. I am not sure what they are using the library for, but I am happy that it runs on so many devices.
+The library is currently used in Apple macOS Sierra-Monterey and iOS 10-15. I am not sure what they are using the library for, but I am happy that it runs on so many devices.
 
 
 ## Notes
