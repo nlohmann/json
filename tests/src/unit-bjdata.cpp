@@ -2541,7 +2541,14 @@ TEST_CASE("BJData")
                 CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vL), "[json.exception.parse_error.113] parse error at byte 11: syntax error while parsing BJData size: count in an optimized container must be positive", json::parse_error&);
                 CHECK(json::from_bjdata(vL, true, false).is_discarded());
 
-                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vM), "[json.exception.parse_error.113] parse error at byte 18: syntax error while parsing BJData size: excessive ndarray size caused overflow", json::parse_error&);
+                if(sizeof(size_t)==4)
+                {
+                     CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vM), "[json.exception.parse_error.408] parse error at byte 17: syntax error while parsing BJData size: integer value overflow", json::parse_error&);
+                }
+                else
+                {
+                     CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vM), "[json.exception.parse_error.408] parse error at byte 18: syntax error while parsing BJData size: excessive ndarray size caused overflow", json::parse_error&);
+                }
                 CHECK(json::from_bjdata(vM, true, false).is_discarded());
             }
 
