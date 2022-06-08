@@ -2079,7 +2079,7 @@ class binary_reader
                     return sax->parse_error(chars_read, get_token_string(), parse_error::create(113, chars_read,
                                             exception_message(input_format, "count in an optimized container must be positive", "size"), nullptr));
                 }
-                if (number > std::numeric_limits<std::size_t>::max())
+                if (!value_in_range_of<std::size_t>(number))
                 {
                     return sax->parse_error(chars_read, get_token_string(), parse_error::create(408, chars_read,
                                             exception_message(input_format, "integer value overflow", "size"), nullptr));
@@ -2129,7 +2129,7 @@ class binary_reader
                 {
                     return false;
                 }
-                if (number > std::numeric_limits<std::size_t>::max())
+                if (!value_in_range_of<std::size_t>(number))
                 {
                     return sax->parse_error(chars_read, get_token_string(), parse_error::create(408, chars_read,
                                             exception_message(input_format, "integer value overflow", "size"), nullptr));
