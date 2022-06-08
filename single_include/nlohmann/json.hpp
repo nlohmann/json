@@ -10766,8 +10766,9 @@ class binary_reader
                 }
                 if (!value_in_range_of<std::size_t>(number))
                 {
-                    return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408,
-                                            exception_message(input_format, "integer value overflow", "size"), nullptr));
+                    // undo coverage exclusion once the 32bit test is run as part of CI (#3524)
+                    return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408, // LCOV_EXCL_LINE
+                                            exception_message(input_format, "integer value overflow", "size"), nullptr)); // LCOV_EXCL_LINE
                 }
                 result = static_cast<std::size_t>(number);
                 return true;
@@ -10816,8 +10817,9 @@ class binary_reader
                 }
                 if (!value_in_range_of<std::size_t>(number))
                 {
-                    return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408,
-                                            exception_message(input_format, "integer value overflow", "size"), nullptr));
+                    // undo coverage exclusion once the 32bit test is run as part of CI (#3524)
+                    return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408, // LCOV_EXCL_LINE
+                                            exception_message(input_format, "integer value overflow", "size"), nullptr)); // LCOV_EXCL_LINE
                 }
                 result = detail::conditional_static_cast<std::size_t>(number);
                 return true;
