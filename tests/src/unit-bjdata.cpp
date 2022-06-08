@@ -2650,9 +2650,9 @@ TEST_CASE("BJData")
                 CHECK(json::from_bjdata(vL, true, false).is_discarded());
 
 #if SIZE_MAX == 0xffffffff
-                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vM), "[json.exception.parse_error.408] parse error at byte 17: syntax error while parsing BJData size: integer value overflow", json::parse_error&);
+                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vM), "[json.exception.out_of_range.408] syntax error while parsing BJData size: integer value overflow", json::out_of_range&);
 #else
-                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vM), "[json.exception.parse_error.408] parse error at byte 18: syntax error while parsing BJData size: excessive ndarray size caused overflow", json::parse_error&);
+                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vM), "[json.exception.out_of_range.408] syntax error while parsing BJData size: excessive ndarray size caused overflow", json::out_of_range&);
 #endif
                 CHECK(json::from_bjdata(vM, true, false).is_discarded());
             }

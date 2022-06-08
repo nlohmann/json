@@ -10766,7 +10766,7 @@ class binary_reader
                 }
                 if (!value_in_range_of<std::size_t>(number))
                 {
-                    return sax->parse_error(chars_read, get_token_string(), parse_error::create(408, chars_read,
+                    return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408,
                                             exception_message(input_format, "integer value overflow", "size"), nullptr));
                 }
                 result = static_cast<std::size_t>(number);
@@ -10816,7 +10816,7 @@ class binary_reader
                 }
                 if (!value_in_range_of<std::size_t>(number))
                 {
-                    return sax->parse_error(chars_read, get_token_string(), parse_error::create(408, chars_read,
+                    return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408,
                                             exception_message(input_format, "integer value overflow", "size"), nullptr));
                 }
                 result = detail::conditional_static_cast<std::size_t>(number);
@@ -10865,7 +10865,7 @@ class binary_reader
                         result *= i;
                         if (result == 0) // because dim elements shall not have zeros, result = 0 means overflow happened
                         {
-                            return sax->parse_error(chars_read, get_token_string(), parse_error::create(408, chars_read, exception_message(input_format, "excessive ndarray size caused overflow", "size"), nullptr));
+                            return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408, exception_message(input_format, "excessive ndarray size caused overflow", "size"), nullptr));
                         }
                         if (JSON_HEDLEY_UNLIKELY(!sax->number_unsigned(static_cast<number_unsigned_t>(i))))
                         {
