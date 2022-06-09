@@ -3768,6 +3768,101 @@ T conditional_static_cast(U value)
     return value;
 }
 
+template<typename... Types>
+using all_integral = conjunction<std::is_integral<Types>...>;
+
+template<typename... Types>
+using all_signed = conjunction<std::is_signed<Types>...>;
+
+template<typename... Types>
+using all_unsigned = conjunction<std::is_unsigned<Types>...>;
+
+// there's a disjunction trait in another PR; replace when merged
+template<typename... Types>
+using same_sign = std::integral_constant < bool,
+      all_signed<Types...>::value || all_unsigned<Types...>::value >;
+
+template<typename OfType, typename T>
+using never_out_of_range = std::integral_constant < bool,
+      (std::is_signed<OfType>::value && (sizeof(T) < sizeof(OfType)))
+      || (same_sign<OfType, T>::value && sizeof(OfType) == sizeof(T)) >;
+
+template<typename OfType, typename T,
+         bool OfTypeSigned = std::is_signed<OfType>::value,
+         bool TSigned = std::is_signed<T>::value>
+struct value_in_range_of_impl2;
+
+template<typename OfType, typename T>
+struct value_in_range_of_impl2<OfType, T, false, false>
+{
+    static constexpr bool test(T val)
+    {
+        using CommonType = typename std::common_type<OfType, T>::type;
+        return static_cast<CommonType>(val) <= static_cast<CommonType>(std::numeric_limits<OfType>::max());
+    }
+};
+
+template<typename OfType, typename T>
+struct value_in_range_of_impl2<OfType, T, true, false>
+{
+    static constexpr bool test(T val)
+    {
+        using CommonType = typename std::common_type<OfType, T>::type;
+        return static_cast<CommonType>(val) <= static_cast<CommonType>(std::numeric_limits<OfType>::max());
+    }
+};
+
+template<typename OfType, typename T>
+struct value_in_range_of_impl2<OfType, T, false, true>
+{
+    static constexpr bool test(T val)
+    {
+        using CommonType = typename std::common_type<OfType, T>::type;
+        return val >= 0 && static_cast<CommonType>(val) <= static_cast<CommonType>(std::numeric_limits<OfType>::max());
+    }
+};
+
+
+template<typename OfType, typename T>
+struct value_in_range_of_impl2<OfType, T, true, true>
+{
+    static constexpr bool test(T val)
+    {
+        using CommonType = typename std::common_type<OfType, T>::type;
+        return static_cast<CommonType>(val) >= static_cast<CommonType>(std::numeric_limits<OfType>::min())
+               && static_cast<CommonType>(val) <= static_cast<CommonType>(std::numeric_limits<OfType>::max());
+    }
+};
+
+template<typename OfType, typename T,
+         bool NeverOutOfRange = never_out_of_range<OfType, T>::value,
+         typename = detail::enable_if_t<all_integral<OfType, T>::value>>
+struct value_in_range_of_impl1;
+
+template<typename OfType, typename T>
+struct value_in_range_of_impl1<OfType, T, false>
+{
+    static constexpr bool test(T val)
+    {
+        return value_in_range_of_impl2<OfType, T>::test(val);
+    }
+};
+
+template<typename OfType, typename T>
+struct value_in_range_of_impl1<OfType, T, true>
+{
+    static constexpr bool test(T /*val*/)
+    {
+        return true;
+    }
+};
+
+template<typename OfType, typename T>
+inline constexpr bool value_in_range_of(T val)
+{
+    return value_in_range_of_impl1<OfType, T>::test(val);
+}
+
 }  // namespace detail
 }  // namespace nlohmann
 
@@ -10669,6 +10764,12 @@ class binary_reader
                     return sax->parse_error(chars_read, get_token_string(), parse_error::create(113, chars_read,
                                             exception_message(input_format, "count in an optimized container must be positive", "size"), nullptr));
                 }
+                if (!value_in_range_of<std::size_t>(number))
+                {
+                    // undo coverage exclusion once the 32bit test is run as part of CI (#3524)
+                    return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408, // LCOV_EXCL_LINE
+                                            exception_message(input_format, "integer value overflow", "size"), nullptr)); // LCOV_EXCL_LINE
+                }
                 result = static_cast<std::size_t>(number);
                 return true;
             }
@@ -10714,6 +10815,12 @@ class binary_reader
                 {
                     return false;
                 }
+                if (!value_in_range_of<std::size_t>(number))
+                {
+                    // undo coverage exclusion once the 32bit test is run as part of CI (#3524)
+                    return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408, // LCOV_EXCL_LINE
+                                            exception_message(input_format, "integer value overflow", "size"), nullptr)); // LCOV_EXCL_LINE
+                }
                 result = detail::conditional_static_cast<std::size_t>(number);
                 return true;
             }
@@ -10758,7 +10865,11 @@ class binary_reader
                     for (auto i : dim)
                     {
                         result *= i;
-                        if (JSON_HEDLEY_UNLIKELY(!sax->number_integer(static_cast<number_integer_t>(i))))
+                        if (result == 0) // because dim elements shall not have zeros, result = 0 means overflow happened
+                        {
+                            return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408, exception_message(input_format, "excessive ndarray size caused overflow", "size"), nullptr));
+                        }
+                        if (JSON_HEDLEY_UNLIKELY(!sax->number_unsigned(static_cast<number_unsigned_t>(i))))
                         {
                             return false;
                         }

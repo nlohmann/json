@@ -2079,6 +2079,12 @@ class binary_reader
                     return sax->parse_error(chars_read, get_token_string(), parse_error::create(113, chars_read,
                                             exception_message(input_format, "count in an optimized container must be positive", "size"), nullptr));
                 }
+                if (!value_in_range_of<std::size_t>(number))
+                {
+                    // undo coverage exclusion once the 32bit test is run as part of CI (#3524)
+                    return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408, // LCOV_EXCL_LINE
+                                            exception_message(input_format, "integer value overflow", "size"), nullptr)); // LCOV_EXCL_LINE
+                }
                 result = static_cast<std::size_t>(number);
                 return true;
             }
@@ -2124,6 +2130,12 @@ class binary_reader
                 {
                     return false;
                 }
+                if (!value_in_range_of<std::size_t>(number))
+                {
+                    // undo coverage exclusion once the 32bit test is run as part of CI (#3524)
+                    return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408, // LCOV_EXCL_LINE
+                                            exception_message(input_format, "integer value overflow", "size"), nullptr)); // LCOV_EXCL_LINE
+                }
                 result = detail::conditional_static_cast<std::size_t>(number);
                 return true;
             }
@@ -2168,7 +2180,11 @@ class binary_reader
                     for (auto i : dim)
                     {
                         result *= i;
-                        if (JSON_HEDLEY_UNLIKELY(!sax->number_integer(static_cast<number_integer_t>(i))))
+                        if (result == 0) // because dim elements shall not have zeros, result = 0 means overflow happened
+                        {
+                            return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408, exception_message(input_format, "excessive ndarray size caused overflow", "size"), nullptr));
+                        }
+                        if (JSON_HEDLEY_UNLIKELY(!sax->number_unsigned(static_cast<number_unsigned_t>(i))))
                         {
                             return false;
                         }
