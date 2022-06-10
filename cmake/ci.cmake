@@ -168,7 +168,6 @@ set(GCC_CXXFLAGS
     -Wanalyzer-write-to-const
     -Wanalyzer-write-to-string-literal
     -Warith-conversion
-    -Warray-bounds
     -Warray-bounds=2
     -Warray-compare
     -Warray-parameter=2
@@ -346,7 +345,6 @@ set(GCC_CXXFLAGS
     -Wsizeof-pointer-div
     -Wsizeof-pointer-memaccess
     -Wstack-protector
-    -Wstrict-aliasing
     -Wstrict-aliasing=3
     -Wstrict-null-sentinel
     -Wno-strict-overflow
@@ -398,7 +396,6 @@ set(GCC_CXXFLAGS
     -Wunused-result
     -Wunused-value
     -Wunused-variable
-    -Wuse-after-free
     -Wuse-after-free=3
     -Wuseless-cast
     -Wvarargs
