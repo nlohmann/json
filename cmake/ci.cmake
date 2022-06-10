@@ -111,7 +111,7 @@ set(CLANG_CXXFLAGS
     -Wno-reserved-identifier
 )
 
-# Warning flags determined for GCC 12.0 (experimental) with https://github.com/nlohmann/gcc_flags:
+# Warning flags determined for GCC 13.0 (experimental) with https://github.com/nlohmann/gcc_flags:
 # Ignored GCC warnings:
 # -Wno-abi-tag                    We do not care about ABI tags.
 # -Wno-aggregate-return           The library uses aggregate returns.
@@ -161,6 +161,10 @@ set(GCC_CXXFLAGS
     -Wanalyzer-use-after-free
     -Wanalyzer-use-of-pointer-in-stale-stack-frame
     -Wanalyzer-use-of-uninitialized-value
+    -Wanalyzer-va-arg-type-mismatch
+    -Wanalyzer-va-list-exhausted
+    -Wanalyzer-va-list-leak
+    -Wanalyzer-va-list-use-after-va-end
     -Wanalyzer-write-to-const
     -Wanalyzer-write-to-string-literal
     -Warith-conversion
@@ -209,6 +213,7 @@ set(GCC_CXXFLAGS
     -Wctad-maybe-unsupported
     -Wctor-dtor-privacy
     -Wdangling-else
+    -Wdangling-pointer=2
     -Wdate-time
     -Wdelete-incomplete
     -Wdelete-non-virtual-dtor
@@ -279,6 +284,7 @@ set(GCC_CXXFLAGS
     -Wmissing-include-dirs
     -Wmissing-profile
     -Wmissing-requires
+    -Wmissing-template-keyword
     -Wmultichar
     -Wmultiple-inheritance
     -Wmultistatement-macros
@@ -343,6 +349,8 @@ set(GCC_CXXFLAGS
     -Wstrict-aliasing
     -Wstrict-aliasing=3
     -Wstrict-null-sentinel
+    -Wstrict-overflow
+    -Wstrict-overflow=5
     -Wstring-compare
     -Wstringop-overflow=4
     -Wstringop-overread
@@ -371,6 +379,7 @@ set(GCC_CXXFLAGS
     -Wterminate
     -Wtrampolines
     -Wtrigraphs
+    -Wtrivial-auto-var-init
     -Wtsan
     -Wtype-limits
     -Wundef
@@ -390,6 +399,8 @@ set(GCC_CXXFLAGS
     -Wunused-result
     -Wunused-value
     -Wunused-variable
+    -Wuse-after-free
+    -Wuse-after-free=3
     -Wuseless-cast
     -Wvarargs
     -Wvariadic-macros
