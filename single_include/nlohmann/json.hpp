@@ -3374,7 +3374,7 @@ template<class...> struct conjunction : std::true_type { };
 template<class B> struct conjunction<B> : B { };
 template<class B, class... Bn>
 struct conjunction<B, Bn...>
-: std::conditional<bool(B::value), conjunction<Bn...>, B>::type {};
+: std::conditional<static_cast<bool>(B::value), conjunction<Bn...>, B>::type {};
 
 // https://en.cppreference.com/w/cpp/types/negation
 template<class B> struct negation : std::integral_constant < bool, !B::value > { };
