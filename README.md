@@ -1110,8 +1110,8 @@ The following compilers are currently used in continuous integration at [AppVeyo
 | Clang 11.0.0 (11.0.0-2~ubuntu20.04.1)                                                                  | Ubuntu 20.04.3 LTS | GitHub Actions |
 | Clang 12.0.0 (12.0.0-3ubuntu1~20.04.3)                                                                 | Ubuntu 20.04.3 LTS | GitHub Actions |
 | Clang 13.0.1 (13.0.1-++20211015123032+cf15ccdeb6d5-1exp120211015003613.5)                              | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 14.0.0 (14.0.0-++20211221052852+55c71c9eac9b-1exp120211221172954.95)                             | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 15.0.0 (15.0.0-++20220403052648+896770c9a92e-1~exp1~20220403172744.209)                          | Ubuntu 20.04.3 LTS | GitHub Actions |
+| Clang 14.0.5-++20220603124341+2f0a69c32a4c-1~exp1~20220603124352.149                                   | Ubuntu 20.04.3 LTS | GitHub Actions |
+| Clang 15.0.0 (15.0.0-++20220530052901+b7d2b160c3ba-1~exp1~20220530172952.268)                          | Ubuntu 20.04.3 LTS | GitHub Actions |
 | GCC 4.8.5 (Ubuntu 4.8.5-4ubuntu2)                                                                      | Ubuntu 20.04.3 LTS | GitHub Actions |
 | GCC 4.9.3 (Ubuntu 4.9.3-13ubuntu2)                                                                     | Ubuntu 20.04.3 LTS | GitHub Actions |
 | GCC 5.4.0 (Ubuntu 5.4.0-6ubuntu1~16.04.12)                                                             | Ubuntu 20.04.3 LTS | GitHub Actions |
@@ -1123,7 +1123,8 @@ The following compilers are currently used in continuous integration at [AppVeyo
 | GCC 9.3.0 (Ubuntu 9.3.0-17ubuntu1~20.04)                                                               | Ubuntu 20.04.3 LTS | GitHub Actions |
 | GCC 10.2.0 (Ubuntu 10.2.0-5ubuntu1~20.04)                                                              | Ubuntu 20.04.3 LTS | GitHub Actions |
 | GCC 11.1.0                                                                                             | Ubuntu (aarch64)   | Drone CI       |
-| GCC 12.0.0 20211219 (experimental)                                                                     | Ubuntu 20.04.3 LTS | GitHub Actions |
+| GCC 11.1.0 (Ubuntu 11.1.0-1ubuntu1~20.04)                                                              | Ubuntu 20.04.3 LTS | GitHub Actions |
+| GCC 13.0.0 13.0.0 20220605 (experimental)                                                              | Ubuntu 20.04.3 LTS | GitHub Actions |
 | Intel C++ Compiler 2021.5.0.20211109                                                                   | Ubuntu 20.04.3 LTS | GitHub Actions |
 | NVCC 11.0.221                                                                                          | Ubuntu 20.04.3 LTS | GitHub Actions |
 | Visual Studio 14 2015 MSVC 19.0.24241.7 (Build Engine version 14.0.25420.1)                            | Windows-6.3.9600   | AppVeyor       |
