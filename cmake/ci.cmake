@@ -717,6 +717,7 @@ add_custom_target(ci_offline_testdata
 ###############################################################################
 
 add_custom_target(ci_non_git_tests
+    COMMAND git config --global --add safe.directory ${PROJECT_SOURCE_DIR}
     COMMAND mkdir -p ${PROJECT_BINARY_DIR}/build_non_git_tests/sources
     COMMAND cd ${PROJECT_SOURCE_DIR} && for FILE in `${GIT_TOOL} ls-tree --name-only HEAD`\; do cp -r $$FILE ${PROJECT_BINARY_DIR}/build_non_git_tests/sources \; done
     COMMAND ${CMAKE_COMMAND}
