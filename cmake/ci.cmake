@@ -582,6 +582,20 @@ add_custom_target(ci_test_amalgamation
 )
 
 ###############################################################################
+# Build and test using the amalgamated header
+###############################################################################
+
+add_custom_target(ci_test_single_header
+    COMMAND CXX=${GCC_TOOL} CXXFLAGS="${GCC_CXXFLAGS}" ${CMAKE_COMMAND}
+        -DCMAKE_BUILD_TYPE=Debug -GNinja
+        -DJSON_BuildTests=ON -DJSON_MultipleHeader=OFF -DJSON_FastTests=ON
+        -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_single_header
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_single_header
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_single_header && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+    COMMENT "Compile and test single-header version"
+)
+
+###############################################################################
 # Valgrind.
 ###############################################################################
 
