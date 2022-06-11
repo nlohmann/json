@@ -211,3 +211,32 @@ function(json_test_add_test_for file)
         _json_test_add_test(${test_name} ${file} ${args_MAIN} ${cxx_standard})
     endforeach()
 endfunction()
+
+#############################################################################
+# json_test_should_build_32bit_test(
+#     <build_32bit_var> <build_32bit_only_var> <input>)
+#
+# Check if the 32bit unit test should be built based on the value of <input>
+# and store the result in the variables <build_32bit_var> and
+# <build_32bit_only_var>.
+#############################################################################
+
+function(json_test_should_build_32bit_test build_32bit_var build_32bit_only_var input)
+    set(${build_32bit_only_var} OFF PARENT_SCOPE)
+    string(TOUPPER "${input}" ${build_32bit_var})
+    if("${${build_32bit_var}}" STREQUAL AUTO)
+        # check if compiler is targeting 32bit by default
+        include(CheckTypeSize)
+        check_type_size("size_t" sizeof_size_t LANGUAGE CXX)
+        if(sizeof_size_t AND ${sizeof_size_t} EQUAL 4)
+            message(STATUS "Auto-enabling 32bit unit test.")
+            set(${build_32bit_var} ON)
+        else()
+            set(${build_32bit_var} OFF)
+        endif()
+    elseif("${${build_32bit_var}}" STREQUAL ONLY)
+        set(${build_32bit_only_var} ON PARENT_SCOPE)
+    endif()
+
+    set(${build_32bit_var} "${${build_32bit_var}}" PARENT_SCOPE)
+endfunction()
