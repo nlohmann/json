@@ -577,6 +577,13 @@ add_custom_target(ci_test_amalgamation
     COMMAND ${ASTYLE_TOOL} ${ASTYLE_FLAGS} ${INDENT_FILES}
     COMMAND cd ${PROJECT_SOURCE_DIR} && for FILE in `find . -name '*.orig'`\; do false \; done
 
+    COMMAND CXX=${GCC_TOOL} CXXFLAGS="${GCC_CXXFLAGS}" ${CMAKE_COMMAND}
+        -DCMAKE_BUILD_TYPE=Debug -GNinja
+        -DJSON_BuildTests=ON -DJSON_MultipleHeader=OFF -DJSON_FastTests=ON -DJSON_32bitTest=ON
+        -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_single_header
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_single_header
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_single_header && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
     COMMENT "Check amalgamation and indentation"
 )
