@@ -6,6 +6,9 @@ option(JSON_32bitTest   "Enable the 32bit unit test." OFF)
 
 set(JSON_TestStandards "" CACHE STRING "The list of standards to test explicitly.")
 
+set(JSON_32BIT_TEST_CXXFLAGS "-m32" CACHE STRING "Compiler flags used to enable 32bit test.")
+set(JSON_32BIT_TEST_LINKFLAGS "-m32" CACHE STRING "Linker flags used to enable 32bit test.")
+
 include(test)
 
 #############################################################################
@@ -130,14 +133,26 @@ foreach(file ${files})
     json_test_add_test_for(${file} MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force})
 endforeach()
 
+if(NOT JSON_32bitTest)
+    include(CheckTypeSize)
+    check_type_size("size_t" sizeof_size_t LANGUAGE CXX)
+    if(sizeof_size_t AND ${sizeof_size_t} EQUAL 4)
+        message(STATUS "Auto-enabling 32bit unit test.")
+        set(JSON_32bitTest ON CACHE BOOL "" FORCE)
+        set(JSON_32BIT_TEST_CXXFLAGS "" CACHE STRING "" FORCE)
+        set(JSON_32BIT_TEST_LINKFLAGS "" CACHE STRING "" FORCE)
+    endif()
+endif()
+
 if(JSON_32bitTest)
+    message(STATUS "Building 32bit unit test.")
     add_library(test_main32 OBJECT ${test_main_SOURCES})
     target_compile_definitions(test_main32 ${test_main_COMPILE_DEFINITIONS})
     target_compile_features(test_main32 ${test_main_COMPILE_FEATURES})
-    target_compile_options(test_main32 ${test_main_COMPILE_OPTIONS} -m32)
+    target_compile_options(test_main32 ${test_main_COMPILE_OPTIONS} ${JSON_32BIT_TEST_CXXFLAGS})
     target_include_directories(test_main32 ${test_main_INCLUDE_DIRECTORIES})
     target_link_libraries(test_main32 ${test_main_LINK_LIBRARIES})
-    target_link_options(test_main32 PUBLIC -m32)
+    target_link_options(test_main32 PUBLIC ${JSON_32BIT_TEST_LINKFLAGS})
 
     json_test_add_test_for("src/unit-32bit.cpp" MAIN test_main32
         CXX_STANDARDS ${test_cxx_standards} ${test_force})
