@@ -416,7 +416,7 @@ set(GCC_CXXFLAGS
 add_custom_target(ci_test_gcc
     COMMAND CXX=${GCC_TOOL} CXXFLAGS="${GCC_CXXFLAGS}" ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=Debug -GNinja
-        -DJSON_BuildTests=ON
+        -DJSON_BuildTests=ON -DJSON_32bitTest=AUTO
         -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_gcc
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_gcc
     COMMAND cd ${PROJECT_BINARY_DIR}/build_gcc && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
@@ -426,7 +426,7 @@ add_custom_target(ci_test_gcc
 add_custom_target(ci_test_clang
     COMMAND CXX=${CLANG_TOOL} CXXFLAGS="${CLANG_CXXFLAGS}" ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=Debug -GNinja
-        -DJSON_BuildTests=ON -DJSON_32bitTest=ON
+        -DJSON_BuildTests=ON -DJSON_32bitTest=AUTO
         -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_clang
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_clang
     COMMAND cd ${PROJECT_BINARY_DIR}/build_clang && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
@@ -441,7 +441,7 @@ foreach(CXX_STANDARD 11 14 17 20)
     add_custom_target(ci_test_gcc_cxx${CXX_STANDARD}
         COMMAND CXX=${GCC_TOOL} CXXFLAGS="${GCC_CXXFLAGS}" ${CMAKE_COMMAND}
             -DCMAKE_BUILD_TYPE=Debug -GNinja
-            -DJSON_BuildTests=ON -DJSON_FastTests=ON
+            -DJSON_BuildTests=ON -DJSON_FastTests=ON -DJSON_32bitTest=AUTO
             -DJSON_TestStandards=${CXX_STANDARD}
             -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_gcc_cxx${CXX_STANDARD}
         COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_gcc_cxx${CXX_STANDARD}
@@ -452,7 +452,7 @@ foreach(CXX_STANDARD 11 14 17 20)
     add_custom_target(ci_test_clang_cxx${CXX_STANDARD}
         COMMAND CXX=${CLANG_TOOL} CXXFLAGS="${CLANG_CXXFLAGS}" ${CMAKE_COMMAND}
             -DCMAKE_BUILD_TYPE=Debug -GNinja
-            -DJSON_BuildTests=ON -DJSON_FastTests=ON -DJSON_32bitTest=ON
+            -DJSON_BuildTests=ON -DJSON_FastTests=ON -DJSON_32bitTest=AUTO
             -DJSON_TestStandards=${CXX_STANDARD}
             -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_clang_cxx${CXX_STANDARD}
         COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_clang_cxx${CXX_STANDARD}
@@ -468,7 +468,7 @@ endforeach()
 add_custom_target(ci_test_noexceptions
     COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND}
     -DCMAKE_BUILD_TYPE=Debug -GNinja
-    -DJSON_BuildTests=ON -DJSON_32bitTest=ON -DCMAKE_CXX_FLAGS=-DJSON_NOEXCEPTION -DDOCTEST_TEST_FILTER=--no-throw
+    -DJSON_BuildTests=ON -DJSON_32bitTest=AUTO -DCMAKE_CXX_FLAGS=-DJSON_NOEXCEPTION -DDOCTEST_TEST_FILTER=--no-throw
     -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_noexceptions
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_noexceptions
     COMMAND cd ${PROJECT_BINARY_DIR}/build_noexceptions && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
@@ -482,7 +482,7 @@ add_custom_target(ci_test_noexceptions
 add_custom_target(ci_test_noimplicitconversions
     COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND}
     -DCMAKE_BUILD_TYPE=Debug -GNinja
-    -DJSON_BuildTests=ON -DJSON_ImplicitConversions=OFF -DJSON_32bitTest=ON
+    -DJSON_BuildTests=ON -DJSON_ImplicitConversions=OFF -DJSON_32bitTest=AUTO
     -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_noimplicitconversions
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_noimplicitconversions
     COMMAND cd ${PROJECT_BINARY_DIR}/build_noimplicitconversions && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
@@ -496,7 +496,7 @@ add_custom_target(ci_test_noimplicitconversions
 add_custom_target(ci_test_diagnostics
     COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND}
     -DCMAKE_BUILD_TYPE=Debug -GNinja
-    -DJSON_BuildTests=ON -DJSON_Diagnostics=ON -DJSON_32bitTest=ON
+    -DJSON_BuildTests=ON -DJSON_Diagnostics=ON -DJSON_32bitTest=AUTO
     -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_diagnostics
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_diagnostics
     COMMAND cd ${PROJECT_BINARY_DIR}/build_diagnostics && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
@@ -510,7 +510,7 @@ add_custom_target(ci_test_diagnostics
 add_custom_target(ci_test_legacycomparison
     COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND}
     -DCMAKE_BUILD_TYPE=Debug -GNinja
-    -DJSON_BuildTests=ON -DJSON_LegacyDiscardedValueComparison=ON -DJSON_32bitTest=ON
+    -DJSON_BuildTests=ON -DJSON_LegacyDiscardedValueComparison=ON -DJSON_32bitTest=AUTO
     -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_legacycomparison
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_legacycomparison
     COMMAND cd ${PROJECT_BINARY_DIR}/build_legacycomparison && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
@@ -579,7 +579,7 @@ add_custom_target(ci_test_amalgamation
 
     COMMAND CXX=${GCC_TOOL} CXXFLAGS="${GCC_CXXFLAGS}" ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=Debug -GNinja
-        -DJSON_BuildTests=ON -DJSON_MultipleHeader=OFF -DJSON_FastTests=ON -DJSON_32bitTest=ON
+        -DJSON_BuildTests=ON -DJSON_MultipleHeader=OFF -DJSON_FastTests=ON -DJSON_32bitTest=AUTO
         -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_single_header
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_single_header
     COMMAND cd ${PROJECT_BINARY_DIR}/build_single_header && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
@@ -595,7 +595,7 @@ add_custom_target(ci_test_amalgamation
 add_custom_target(ci_test_valgrind
     COMMAND CXX=${GCC_TOOL} ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=Debug -GNinja
-        -DJSON_BuildTests=ON -DJSON_Valgrind=ON
+        -DJSON_BuildTests=ON -DJSON_Valgrind=ON -DJSON_32bitTest=AUTO
         -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_valgrind
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_valgrind
     COMMAND cd ${PROJECT_BINARY_DIR}/build_valgrind && ${CMAKE_CTEST_COMMAND} -L valgrind --parallel ${N} --output-on-failure
@@ -611,7 +611,7 @@ set(CLANG_ANALYZER_CHECKS "fuchsia.HandleChecker,nullability.NullableDereference
 add_custom_target(ci_clang_analyze
     COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=Debug -GNinja
-        -DJSON_BuildTests=ON -DJSON_32bitTest=ON
+        -DJSON_BuildTests=ON -DJSON_32bitTest=AUTO
         -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_clang_analyze
     COMMAND cd ${PROJECT_BINARY_DIR}/build_clang_analyze && ${SCAN_BUILD_TOOL} -enable-checker ${CLANG_ANALYZER_CHECKS} --use-c++=${CLANG_TOOL} -analyze-headers -o ${PROJECT_BINARY_DIR}/report ninja
     COMMENT "Check code with Clang Analyzer"
@@ -743,7 +743,7 @@ add_custom_target(ci_non_git_tests
 add_custom_target(ci_reproducible_tests
     COMMAND ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=Debug -GNinja
-        -DJSON_BuildTests=ON -DJSON_FastTests=ON
+        -DJSON_BuildTests=ON -DJSON_FastTests=ON -DJSON_32bitTest=AUTO
         -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_reproducible_tests
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_reproducible_tests
     COMMAND cd ${PROJECT_BINARY_DIR}/build_reproducible_tests && ${CMAKE_CTEST_COMMAND} --parallel ${N} -LE not_reproducible --output-on-failure
@@ -882,7 +882,7 @@ foreach(COMPILER g++-4.8 g++-4.9 g++-5 g++-6 g++-7 g++-8 g++-9 g++-10 g++-11 cla
         add_custom_target(ci_test_compiler_${COMPILER}
             COMMAND CXX=${COMPILER} ${CMAKE_COMMAND}
                 -DCMAKE_BUILD_TYPE=Debug -GNinja
-                -DJSON_BuildTests=ON -DJSON_FastTests=ON -DJSON_32bitTest=ON
+                -DJSON_BuildTests=ON -DJSON_FastTests=ON -DJSON_32bitTest=AUTO
                 -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_compiler_${COMPILER}
                 ${ADDITIONAL_FLAGS}
             COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_compiler_${COMPILER}

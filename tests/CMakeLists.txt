@@ -2,9 +2,9 @@ cmake_minimum_required(VERSION 3.13)
 
 option(JSON_Valgrind    "Execute test suite with Valgrind." OFF)
 option(JSON_FastTests   "Skip expensive/slow tests." OFF)
-option(JSON_32bitTest   "Enable the 32bit unit test." OFF)
 
-set(JSON_TestStandards "" CACHE STRING "The list of standards to test explicitly.")
+set(JSON_32bitTest     SAFE_AUTO CACHE STRING "Enable the 32bit unit test (ON/OFF/AUTO/SAFE_AUTO).")
+set(JSON_TestStandards ""        CACHE STRING "The list of standards to test explicitly.")
 
 set(JSON_32BIT_TEST_CXXFLAGS "-m32" CACHE STRING "Compiler flags used to enable 32bit test.")
 set(JSON_32BIT_TEST_LINKFLAGS "-m32" CACHE STRING "Linker flags used to enable 32bit test.")
@@ -133,18 +133,53 @@ foreach(file ${files})
     json_test_add_test_for(${file} MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force})
 endforeach()
 
-if(NOT JSON_32bitTest)
+string(TOUPPER "${JSON_32bitTest}" json_32bit_test)
+if("${json_32bit_test}" STREQUAL AUTO)
+    # check if compiler supports -m32
+    if(${CMAKE_CXX_COMPILER_ID} STREQUAL GNU)
+        execute_process(
+            COMMAND ${CMAKE_CXX_COMPILER} -v --version
+            OUTPUT_VARIABLE gcc_version_output
+            ERROR_VARIABLE gcc_version_output)
+        string(REGEX MATCH "--with-multilib-list=([^ ]*)" multilib_match
+            "${gcc_version_output}")
+        if(multilib_match)
+            string(REPLACE "," ";" multilib_archs "${CMAKE_MATCH_1}")
+            list(FIND multilib_archs m32 has_multilib_m32)
+            if(NOT ${has_multilib_m32} EQUAL -1)
+                message(STATUS "Auto-enabling 32bit unit test.")
+                set(json_32bit_test ON)
+                set(JSON_32BIT_TEST_CXXFLAGS "-m32" CACHE STRING "" FORCE)
+                set(JSON_32BIT_TEST_LINKFLAGS "-m32" CACHE STRING "" FORCE)
+            endif()
+        endif()
+    elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL Clang)
+        execute_process(
+            COMMAND ${CMAKE_CXX_COMPILER} -m32 --version
+            RESULT_VARIABLE clang_version_result
+            OUTPUT_QUIET ERROR_QUIET)
+        if(${clang_version_result} EQUAL 0)
+            message(STATUS "Auto-enabling 32bit unit test.")
+            set(json_32bit_test ON)
+            set(JSON_32BIT_TEST_CXXFLAGS "-m32" CACHE STRING "" FORCE)
+            set(JSON_32BIT_TEST_LINKFLAGS "-m32" CACHE STRING "" FORCE)
+        endif()
+    endif()
+endif()
+
+if("${json_32bit_test}" STREQUAL SAFE_AUTO)
+    # check if compiler is targeting 32bit by default
     include(CheckTypeSize)
     check_type_size("size_t" sizeof_size_t LANGUAGE CXX)
     if(sizeof_size_t AND ${sizeof_size_t} EQUAL 4)
         message(STATUS "Auto-enabling 32bit unit test.")
-        set(JSON_32bitTest ON CACHE BOOL "" FORCE)
+        set(json_32bit_test ON)
         set(JSON_32BIT_TEST_CXXFLAGS "" CACHE STRING "" FORCE)
         set(JSON_32BIT_TEST_LINKFLAGS "" CACHE STRING "" FORCE)
     endif()
 endif()
 
-if(JSON_32bitTest)
+if(${json_32bit_test} STREQUAL ON)
     message(STATUS "Building 32bit unit test.")
     add_library(test_main32 OBJECT ${test_main_SOURCES})
     target_compile_definitions(test_main32 ${test_main_COMPILE_DEFINITIONS})
