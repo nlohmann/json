@@ -879,10 +879,17 @@ foreach(COMPILER g++-4.8 g++-4.9 g++-5 g++-6 g++-7 g++-8 g++-9 g++-10 g++-11 cla
             unset(ADDITIONAL_FLAGS)
         endif()
 
+        set(json_32bit_test AUTO)
+        set(blacklist_32bit clang++-3.5 clang++-3.6 clang++-3.7 clang++-3.8 clang++-3.9 g++-4.8 g++-4.9 g++-5 g++-6 g++-7 g++-8 g++-9 g++-10 g++-11)
+        list(FIND blacklist_32bit "${COMPILER}" compiler_blacklisted)
+        if(NOT ${compiler_blacklisted} EQUAL -1)
+            set(json_32bit_test SAFE_AUTO)
+        endif()
+
         add_custom_target(ci_test_compiler_${COMPILER}
             COMMAND CXX=${COMPILER} ${CMAKE_COMMAND}
                 -DCMAKE_BUILD_TYPE=Debug -GNinja
-                -DJSON_BuildTests=ON -DJSON_FastTests=ON -DJSON_32bitTest=AUTO
+                -DJSON_BuildTests=ON -DJSON_FastTests=ON -DJSON_32bitTest=${json_32bit_test}
                 -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_compiler_${COMPILER}
                 ${ADDITIONAL_FLAGS}
             COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_compiler_${COMPILER}
