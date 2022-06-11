@@ -123,7 +123,6 @@ class input_stream_adapter
 };
 #endif  // JSON_NO_IO
 
-
 // General-purpose iterator-based adapter. It might not be as fast as
 // theoretically possible for some containers, but it is extremely versatile.
 template<typename IteratorType>
@@ -133,12 +132,11 @@ class iterator_input_adapter
     using char_type = typename std::iterator_traits<IteratorType>::value_type;
 
     iterator_input_adapter(IteratorType first, IteratorType last)
-        : current(std::move(first)), end(std::move(last)), current_has_been_consumed(false)
+        : current(std::move(first)), end(std::move(last))
     {}
 
     typename std::char_traits<char_type>::int_type get_character()
     {
-
         if (JSON_HEDLEY_LIKELY(current_has_been_consumed))
         {
             std::advance(current, 1);
@@ -149,18 +147,15 @@ class iterator_input_adapter
             current_has_been_consumed = true;
             return std::char_traits<char_type>::to_int_type(*current);
         }
-        else
-        {
-            current_has_been_consumed = false;
-            return std::char_traits<char_type>::eof();
-        }
 
+        current_has_been_consumed = false;
+        return std::char_traits<char_type>::eof();
     }
 
   private:
     mutable IteratorType current;
     const IteratorType end;
-    mutable bool current_has_been_consumed;
+    mutable bool current_has_been_consumed = false;
 
     template<typename BaseInputAdapter, size_t T>
     friend struct wide_string_input_helper;
@@ -309,7 +304,7 @@ class wide_string_input_adapter
     using char_type = char;
 
     wide_string_input_adapter(BaseInputAdapter base)
-        : base_adapter(base) {}
+        : base_adapter(std::move(base)) {}
 
     typename std::char_traits<char>::int_type get_character() noexcept
     {
