@@ -474,6 +474,13 @@ TEST_CASE("constructors")
             json j(false);
             CHECK(j.type() == json::value_t::boolean);
         }
+
+        SECTION("from std::vector<bool>::refrence")
+        {
+            std::vector<bool> v{true};
+            json j(v[0]);
+            CHECK(j.type() == json::value_t::boolean);
+        }
     }
 
     SECTION("create a binary (explicit)")
