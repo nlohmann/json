@@ -241,6 +241,7 @@ nav:
         - 'JSON_ASSERT': api/macros/json_assert.md
         - 'JSON_CATCH_USER': api/macros/json_throw_user.md
         - 'JSON_DIAGNOSTICS': api/macros/json_diagnostics.md
+        - 'JSON_DISABLE_ENUM_SERIALIZATION': api/macros/json_disable_enum_serialization.md
         - 'JSON_HAS_CPP_11': api/macros/json_has_cpp_11.md
         - 'JSON_HAS_CPP_14': api/macros/json_has_cpp_11.md
         - 'JSON_HAS_CPP_17': api/macros/json_has_cpp_11.md

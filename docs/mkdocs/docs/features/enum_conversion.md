@@ -58,3 +58,4 @@ Other Important points:
   default pair carefully.
 - If an enum or JSON value is specified more than once in your map, the first matching occurrence from the top of the
   map will be returned when converting to or from JSON.
+- To disable the default serialization of enumerators as integers and force a compiler error instead, see [`JSON_DISABLE_ENUM_SERIALIZATION`](../api/macros/json_disable_enum_serialization.md).
