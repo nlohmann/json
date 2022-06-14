@@ -43,6 +43,16 @@ jobs:
       - name: build
         run: cmake --build build --target ${{ matrix.target }}
 
+  ci_test_single_header:
+    runs-on: ubuntu-latest
+    container: ghcr.io/nlohmann/json-ci:v2.4.0
+    steps:
+      - uses: actions/checkout@v3
+      - name: cmake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: build
+        run: cmake --build build --target ci_test_single_header
+
   ci_cmake_options:
     runs-on: ubuntu-latest
     container: ghcr.io/nlohmann/json-ci:v2.4.0

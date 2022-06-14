@@ -416,7 +416,7 @@ set(GCC_CXXFLAGS
 add_custom_target(ci_test_gcc
     COMMAND CXX=${GCC_TOOL} CXXFLAGS="${GCC_CXXFLAGS}" ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=Debug -GNinja
-        -DJSON_BuildTests=ON -DJSON_MultipleHeaders=ON
+        -DJSON_BuildTests=ON
         -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_gcc
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_gcc
     COMMAND cd ${PROJECT_BINARY_DIR}/build_gcc && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
@@ -426,7 +426,7 @@ add_custom_target(ci_test_gcc
 add_custom_target(ci_test_clang
     COMMAND CXX=${CLANG_TOOL} CXXFLAGS="${CLANG_CXXFLAGS}" ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=Debug -GNinja
-        -DJSON_BuildTests=ON -DJSON_MultipleHeaders=ON
+        -DJSON_BuildTests=ON
         -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_clang
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_clang
     COMMAND cd ${PROJECT_BINARY_DIR}/build_clang && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
@@ -468,7 +468,7 @@ endforeach()
 add_custom_target(ci_test_noexceptions
     COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND}
     -DCMAKE_BUILD_TYPE=Debug -GNinja
-    -DJSON_BuildTests=ON -DJSON_MultipleHeaders=ON -DCMAKE_CXX_FLAGS=-DJSON_NOEXCEPTION -DDOCTEST_TEST_FILTER=--no-throw
+    -DJSON_BuildTests=ON -DCMAKE_CXX_FLAGS=-DJSON_NOEXCEPTION -DDOCTEST_TEST_FILTER=--no-throw
     -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_noexceptions
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_noexceptions
     COMMAND cd ${PROJECT_BINARY_DIR}/build_noexceptions && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
@@ -482,7 +482,7 @@ add_custom_target(ci_test_noexceptions
 add_custom_target(ci_test_noimplicitconversions
     COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND}
     -DCMAKE_BUILD_TYPE=Debug -GNinja
-    -DJSON_BuildTests=ON -DJSON_MultipleHeaders=ON -DJSON_ImplicitConversions=OFF
+    -DJSON_BuildTests=ON -DJSON_ImplicitConversions=OFF
     -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_noimplicitconversions
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_noimplicitconversions
     COMMAND cd ${PROJECT_BINARY_DIR}/build_noimplicitconversions && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
@@ -496,7 +496,7 @@ add_custom_target(ci_test_noimplicitconversions
 add_custom_target(ci_test_diagnostics
     COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND}
     -DCMAKE_BUILD_TYPE=Debug -GNinja
-    -DJSON_BuildTests=ON -DJSON_MultipleHeaders=ON -DJSON_Diagnostics=ON
+    -DJSON_BuildTests=ON -DJSON_Diagnostics=ON
     -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_diagnostics
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_diagnostics
     COMMAND cd ${PROJECT_BINARY_DIR}/build_diagnostics && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
@@ -510,7 +510,7 @@ add_custom_target(ci_test_diagnostics
 add_custom_target(ci_test_legacycomparison
     COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND}
     -DCMAKE_BUILD_TYPE=Debug -GNinja
-    -DJSON_BuildTests=ON -DJSON_MultipleHeaders=ON -DJSON_LegacyDiscardedValueComparison=ON
+    -DJSON_BuildTests=ON -DJSON_LegacyDiscardedValueComparison=ON
     -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_legacycomparison
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_legacycomparison
     COMMAND cd ${PROJECT_BINARY_DIR}/build_legacycomparison && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
@@ -524,10 +524,17 @@ add_custom_target(ci_test_legacycomparison
 add_custom_target(ci_test_coverage
     COMMAND CXX=g++ ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=Debug -GNinja -DCMAKE_CXX_FLAGS="--coverage;-fprofile-arcs;-ftest-coverage"
-        -DJSON_BuildTests=ON -DJSON_MultipleHeaders=ON
+        -DJSON_BuildTests=ON
         -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_coverage
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_coverage
     COMMAND cd ${PROJECT_BINARY_DIR}/build_coverage && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+
+    COMMAND CXX=g++ ${CMAKE_COMMAND}
+        -DCMAKE_BUILD_TYPE=Debug -GNinja -DCMAKE_CXX_FLAGS="-m32;--coverage;-fprofile-arcs;-ftest-coverage"
+        -DJSON_BuildTests=ON -DJSON_32bitTest=ONLY
+        -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_coverage32
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_coverage32
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_coverage32 && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
 
     COMMAND ${LCOV_TOOL} --directory . --capture --output-file json.info --rc lcov_branch_coverage=1
     COMMAND ${LCOV_TOOL} -e json.info ${SRC_FILES} --output-file json.info.filtered --rc lcov_branch_coverage=1
@@ -579,6 +586,20 @@ add_custom_target(ci_test_amalgamation
 
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
     COMMENT "Check amalgamation and indentation"
+)
+
+###############################################################################
+# Build and test using the amalgamated header
+###############################################################################
+
+add_custom_target(ci_test_single_header
+    COMMAND CXX=${GCC_TOOL} CXXFLAGS="${GCC_CXXFLAGS}" ${CMAKE_COMMAND}
+        -DCMAKE_BUILD_TYPE=Debug -GNinja
+        -DJSON_BuildTests=ON -DJSON_MultipleHeader=OFF -DJSON_FastTests=ON
+        -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_single_header
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_single_header
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_single_header && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+    COMMENT "Compile and test single-header version"
 )
 
 ###############################################################################
@@ -664,7 +685,7 @@ add_custom_target(ci_clang_tidy
     COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=Debug -GNinja
         -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_CXX_CLANG_TIDY=${CLANG_TIDY_TOOL}
-        -DJSON_BuildTests=ON -DJSON_MultipleHeaders=ON
+        -DJSON_BuildTests=ON
         -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_clang_tidy
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_clang_tidy
     COMMENT "Check code with Clang-Tidy"
@@ -691,7 +712,7 @@ add_custom_target(ci_pvs_studio
 
 add_custom_target(ci_infer
     COMMAND mkdir -p ${PROJECT_BINARY_DIR}/build_infer
-    COMMAND cd ${PROJECT_BINARY_DIR}/build_infer && ${INFER_TOOL} compile -- ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug ${PROJECT_SOURCE_DIR} -DJSON_BuildTests=ON -DJSON_MultipleHeaders=ON
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_infer && ${INFER_TOOL} compile -- ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug ${PROJECT_SOURCE_DIR} -DJSON_BuildTests=ON
     COMMAND cd ${PROJECT_BINARY_DIR}/build_infer && ${INFER_TOOL} run -- make
     COMMENT "Check code with Infer"
 )

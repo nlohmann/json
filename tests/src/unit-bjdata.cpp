@@ -2649,12 +2649,25 @@ TEST_CASE("BJData")
                 CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vL), "[json.exception.parse_error.113] parse error at byte 11: syntax error while parsing BJData size: count in an optimized container must be positive", json::parse_error&);
                 CHECK(json::from_bjdata(vL, true, false).is_discarded());
 
-#if SIZE_MAX == 0xffffffff
-                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vM), "[json.exception.out_of_range.408] syntax error while parsing BJData size: integer value overflow", json::out_of_range&);
-#else
+#if SIZE_MAX != 0xffffffff
                 CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vM), "[json.exception.out_of_range.408] syntax error while parsing BJData size: excessive ndarray size caused overflow", json::out_of_range&);
 #endif
                 CHECK(json::from_bjdata(vM, true, false).is_discarded());
+            }
+
+            SECTION("optimized array: integer value overflow")
+            {
+                std::vector<uint8_t> vL = {'[', '#', 'L', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7F};
+                std::vector<uint8_t> vM = {'[', '$', 'M', '#', '[', 'I', 0x00, 0x20, 'M', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0xFF, ']'};
+
+                json _;
+#if SIZE_MAX == 0xffffffff
+                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vL), "[json.exception.out_of_range.408] syntax error while parsing BJData size: integer value overflow", json::out_of_range&);
+#endif
+
+#if SIZE_MAX == 0xffffffff
+                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vM), "[json.exception.out_of_range.408] syntax error while parsing BJData size: integer value overflow", json::out_of_range&);
+#endif
             }
 
             SECTION("do not accept NTFZ markers in ndarray optimized type (with count)")

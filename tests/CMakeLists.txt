@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.13)
 
 option(JSON_Valgrind    "Execute test suite with Valgrind." OFF)
 option(JSON_FastTests   "Skip expensive/slow tests." OFF)
-option(JSON_32bitTest   "Enable the 32bit unit test." OFF)
 
+set(JSON_32bitTest     AUTO CACHE STRING "Enable the 32bit unit test (ON/OFF/AUTO/ONLY).")
 set(JSON_TestStandards "" CACHE STRING "The list of standards to test explicitly.")
 
 include(test)
@@ -34,40 +34,32 @@ endif()
 # test_main library with shared code to speed up build and common settings
 #############################################################################
 
-set(test_main_SOURCES src/unit.cpp)
-set(test_main_COMPILE_DEFINITIONS PUBLIC
+add_library(test_main OBJECT src/unit.cpp)
+target_compile_definitions(test_main PUBLIC
     DOCTEST_CONFIG_SUPER_FAST_ASSERTS
     JSON_TEST_KEEP_MACROS)
-set(test_main_COMPILE_FEATURES PRIVATE cxx_std_11)
-set(test_main_COMPILE_OPTIONS
-    PUBLIC
-        $<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>
-        # MSVC: Force to always compile with W4
-        #       Disable warning C4566: character represented by universal-character-name '\uFF01'
-        #                              cannot be represented in the current code page (1252)
-        #       Disable warning C4996: 'nlohmann::basic_json<...>::operator <<': was declared deprecated
-        $<$<CXX_COMPILER_ID:MSVC>:/W4 /wd4566 /wd4996>
-        # https://github.com/nlohmann/json/issues/1114
-        $<$<CXX_COMPILER_ID:MSVC>:/bigobj> $<$<BOOL:${MINGW}>:-Wa,-mbig-obj>
+target_compile_features(test_main PRIVATE cxx_std_11)
+target_compile_options(test_main PUBLIC
+    $<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>
+    # MSVC: Force to always compile with W4
+    #       Disable warning C4566: character represented by universal-character-name '\uFF01'
+    #                              cannot be represented in the current code page (1252)
+    #       Disable warning C4996: 'nlohmann::basic_json<...>::operator <<': was declared deprecated
+    $<$<CXX_COMPILER_ID:MSVC>:/W4 /wd4566 /wd4996>
+    # https://github.com/nlohmann/json/issues/1114
+    $<$<CXX_COMPILER_ID:MSVC>:/bigobj> $<$<BOOL:${MINGW}>:-Wa,-mbig-obj>
 
-        # https://github.com/nlohmann/json/pull/3229
-        $<$<CXX_COMPILER_ID:Intel>:-diag-disable=2196>
+    # https://github.com/nlohmann/json/pull/3229
+    $<$<CXX_COMPILER_ID:Intel>:-diag-disable=2196>
 
-        $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wno-deprecated;-Wno-float-equal>
-        $<$<CXX_COMPILER_ID:GNU>:-Wno-deprecated-declarations>
-        $<$<CXX_COMPILER_ID:Intel>:-diag-disable=1786>)
-set(test_main_INCLUDE_DIRECTORIES PUBLIC
+    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wno-deprecated;-Wno-float-equal>
+    $<$<CXX_COMPILER_ID:GNU>:-Wno-deprecated-declarations>
+    $<$<CXX_COMPILER_ID:Intel>:-diag-disable=1786>)
+target_include_directories(test_main PUBLIC
     thirdparty/doctest
     thirdparty/fifo_map
     ${PROJECT_BINARY_DIR}/include)
-set(test_main_LINK_LIBRARIES PUBLIC ${NLOHMANN_JSON_TARGET_NAME})
-
-add_library(test_main OBJECT ${test_main_SOURCES})
-target_compile_definitions(test_main ${test_main_COMPILE_DEFINITIONS})
-target_compile_features(test_main ${test_main_COMPILE_FEATURES})
-target_compile_options(test_main ${test_main_COMPILE_OPTIONS})
-target_include_directories(test_main ${test_main_INCLUDE_DIRECTORIES})
-target_link_libraries(test_main ${test_main_LINK_LIBRARIES})
+target_link_libraries(test_main PUBLIC ${NLOHMANN_JSON_TARGET_NAME})
 
 #############################################################################
 # define test- and standard-specific build settings
@@ -124,23 +116,21 @@ message(STATUS "${msg}")
 
 # *DO* use json_test_set_test_options() above this line
 
+json_test_should_build_32bit_test(json_32bit_test json_32bit_test_only "${JSON_32bitTest}")
 file(GLOB files src/unit-*.cpp)
-list(FILTER files EXCLUDE REGEX "src/unit-32bit.cpp")
+if(json_32bit_test_only)
+    set(files src/unit-32bit.cpp)    
+elseif(NOT json_32bit_test)
+    list(FILTER files EXCLUDE REGEX src/unit-32bit.cpp)
+endif()
+
 foreach(file ${files})
     json_test_add_test_for(${file} MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force})
 endforeach()
 
-if(JSON_32bitTest)
-    add_library(test_main32 OBJECT ${test_main_SOURCES})
-    target_compile_definitions(test_main32 ${test_main_COMPILE_DEFINITIONS})
-    target_compile_features(test_main32 ${test_main_COMPILE_FEATURES})
-    target_compile_options(test_main32 ${test_main_COMPILE_OPTIONS} -m32)
-    target_include_directories(test_main32 ${test_main_INCLUDE_DIRECTORIES})
-    target_link_libraries(test_main32 ${test_main_LINK_LIBRARIES})
-    target_link_options(test_main32 PUBLIC -m32)
-
-    json_test_add_test_for("src/unit-32bit.cpp" MAIN test_main32
-        CXX_STANDARDS ${test_cxx_standards} ${test_force})
+if(json_32bit_test_only)
+    # Skip all other tests in this file
+    return()
 endif()
 
 # test legacy comparison of discarded values
