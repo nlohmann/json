@@ -29,6 +29,7 @@ header. See also the [macro overview page](../../features/macros.md).
 
 ## Type conversions
 
+- [**JSON_DISABLE_ENUM_SERIALIZATION**](json_disable_enum_serialization.md) - switch off default serialization/deserialization functions for enums
 - [**JSON_USE_IMPLICIT_CONVERSIONS**](json_use_implicit_conversions.md) - control implicit conversions
 
 <!-- comment-->
