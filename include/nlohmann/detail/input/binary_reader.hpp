@@ -2179,7 +2179,7 @@ class binary_reader
                     for (auto i : dim)
                     {
                         result *= i;
-                        if (result == 0) // because dim elements shall not have zeros, result = 0 means overflow happened
+                        if (result == 0 || result == string_t::npos) // because dim elements shall not have zeros, result = 0 means overflow happened; it also can't be string_t::npos as it is used to initialize size in get_ubjson_size_type()
                         {
                             return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408, exception_message(input_format, "excessive ndarray size caused overflow", "size"), nullptr));
                         }

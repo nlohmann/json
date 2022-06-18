@@ -53,7 +53,7 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
                   "iter_impl only accepts (const) basic_json");
     // superficial check for the LegacyBidirectionalIterator named requirement
     static_assert(std::is_base_of<std::bidirectional_iterator_tag, std::bidirectional_iterator_tag>::value
-                  &&  std::is_base_of<std::bidirectional_iterator_tag, typename array_t::iterator::iterator_category>::value,
+                  &&  std::is_base_of<std::bidirectional_iterator_tag, typename std::iterator_traits<typename array_t::iterator>::iterator_category>::value,
                   "basic_json iterator assumes array and object type iterators satisfy the LegacyBidirectionalIterator named requirement.");
 
   public:
