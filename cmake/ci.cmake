@@ -940,6 +940,8 @@ add_custom_target(ci_icpc
 ###############################################################################
 
 add_custom_target(ci_reuse_compliance
+    COMMAND apt-get update
+    COMMAND apt-get install -y python3.8-venv
     COMMAND ${Python3_EXECUTABLE} -mvenv venv
     COMMAND venv/bin/pip3 install reuse
     COMMAND venv/bin/reuse lint
