@@ -35,7 +35,7 @@ jobs:
     container: ghcr.io/nlohmann/json-ci:v2.4.0
     strategy:
       matrix:
-        target: [ci_clang_tidy, ci_cppcheck, ci_test_valgrind, ci_test_clang_sanitizer, ci_test_amalgamation, ci_clang_analyze, ci_cpplint, ci_cmake_flags, ci_single_binaries, ci_reproducible_tests, ci_non_git_tests, ci_offline_testdata, ci_infer, ci_reuse_compliance]
+        target: [ci_clang_tidy, ci_cppcheck, ci_test_valgrind, ci_test_clang_sanitizer, ci_test_amalgamation, ci_clang_analyze, ci_cpplint, ci_cmake_flags, ci_single_binaries, ci_reproducible_tests, ci_non_git_tests, ci_offline_testdata, ci_infer]
     steps:
       - uses: actions/checkout@v3
       - name: cmake
@@ -134,3 +134,15 @@ jobs:
         run: |
           . /opt/intel/oneapi/setvars.sh
           cmake --build build --target ci_icpc
+
+
+  ci_reuse_compliance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: venv
+        run: python3 -mvenv venv
+      - name: install REUSE tool
+        run: venv/bin/pip3 install reuse
+      - name: REUSE lint
+        run: venv/bin/reuse lint
