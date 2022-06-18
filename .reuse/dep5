@@ -4,16 +4,8 @@ Upstream-Contact: Niels Lohmann <mail@nlohmann.me>
 Source: https://github.com/nlohmann/json
 
 Files: *
-Copyright: 2013-2022 Niels Lohmann <mail@nlohmann.me>
+Copyright: 2013-2022 Niels Lohmann <https://nlohmann.me>
 License: MIT
-
-Files: include/nlohmann/detail/conversions/to_chars.hpp
-Copyright: 2009 Florian Loitsch
-License: MIT
-
-Files: include/nlohmann/thirdparty/hedley/hedley.hpp
-Copyright: 2016-2021 Evan Nemerson <evan@nemerson.com>
-License: CC0-1.0
 
 Files: tests/thirdparty/doctest/*
 Copyright: 2016-2021 Viktor Kirilov
@@ -38,3 +30,7 @@ License: BSD-3-Clause
 Files: tools/cpplint/*
 Copyright: 2009 Google Inc. All rights reserved.
 License: BSD-3-Clause
+
+Files: tools/gdb_pretty_printer
+Copyright: 2020 Hannes Domani <https://github.com/ssbssa>
+License: MIT

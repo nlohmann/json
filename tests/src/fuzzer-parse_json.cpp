@@ -1,9 +1,12 @@
-/*
-    __ _____ _____ _____
- __|  |   __|     |   | |  JSON for Modern C++ (fuzz test support)
-|  |  |__   |  |  | | | |  version 3.10.5
-|_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
+// |  |  |__   |  |  | | | |  version 3.10.5
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
 
+/*
 This file implements a parser test suitable for fuzz testing. Given a byte
 array data, it performs the following steps:
 
@@ -15,8 +18,6 @@ array data, it performs the following steps:
 
 The provided function `LLVMFuzzerTestOneInput` can be used in different fuzzer
 drivers.
-
-Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 */
 
 #include <iostream>
