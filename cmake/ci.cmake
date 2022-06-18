@@ -934,6 +934,18 @@ add_custom_target(ci_icpc
     COMMENT "Compile and test with ICPC"
 )
 
+
+###############################################################################
+# REUSE Compliance check
+###############################################################################
+
+add_custom_target(ci_reuse_compliance
+    COMMAND ${Python3_EXECUTABLE} -mvenv venv
+    COMMAND venv/bin/pip3 install reuse
+    COMMAND venv/bin/reuse lint
+    COMMENT "Check REUSE compliance"
+)
+
 ###############################################################################
 # Clean up all generated files.
 ###############################################################################
