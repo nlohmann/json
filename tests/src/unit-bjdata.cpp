@@ -2673,10 +2673,12 @@ TEST_CASE("BJData")
                 json _;
 #if SIZE_MAX == 0xffffffff
                 CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vL), "[json.exception.out_of_range.408] syntax error while parsing BJData size: integer value overflow", json::out_of_range&);
+                CHECK(json::from_bjdata(vL, true, false).is_discarded());
 #endif
 
 #if SIZE_MAX == 0xffffffff
                 CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vM), "[json.exception.out_of_range.408] syntax error while parsing BJData size: integer value overflow", json::out_of_range&);
+                CHECK(json::from_bjdata(vM, true, false).is_discarded());
 #endif
             }
 
