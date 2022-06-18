@@ -54,6 +54,12 @@ Exceptions can be switched off by defining the symbol `JSON_NOEXCEPTION`.
 
 See [full documentation of `JSON_NOEXCEPTION`](../api/macros/json_noexception.md).
 
+## `JSON_DISABLE_ENUM_SERIALIZATION`
+
+When defined, default parse and serialize functions for enums are excluded and have to be provided by the user, for example, using [`NLOHMANN_JSON_SERIALIZE_ENUM`](../api/macros/nlohmann_json_serialize_enum.md).
+
+See [full documentation of `JSON_DISABLE_ENUM_SERIALIZATION`](../api/macros/json_disable_enum_serialization.md).
+
 ## `JSON_NO_IO`
 
 When defined, headers `<cstdio>`, `<ios>`, `<iosfwd>`, `<istream>`, and `<ostream>` are not included and parse functions

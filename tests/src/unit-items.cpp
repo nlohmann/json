@@ -80,7 +80,7 @@ TEST_CASE("iterator_wrapper")
             json j = { {"A", 1}, {"B", 2} };
             int counter = 1;
 
-            for (auto& i : json::iterator_wrapper(j))
+            for (auto& i : json::iterator_wrapper(j)) // NOLINT(readability-qualified-auto)
             {
                 switch (counter++)
                 {
@@ -226,7 +226,7 @@ TEST_CASE("iterator_wrapper")
             const json j = { {"A", 1}, {"B", 2} };
             int counter = 1;
 
-            for (auto& i : json::iterator_wrapper(j))
+            for (auto& i : json::iterator_wrapper(j)) // NOLINT(readability-qualified-auto)
             {
                 switch (counter++)
                 {
@@ -361,7 +361,7 @@ TEST_CASE("iterator_wrapper")
             json j = { "A", "B" };
             int counter = 1;
 
-            for (auto& i : json::iterator_wrapper(j))
+            for (auto& i : json::iterator_wrapper(j)) // NOLINT(readability-qualified-auto)
             {
                 switch (counter++)
                 {
@@ -507,7 +507,7 @@ TEST_CASE("iterator_wrapper")
             const json j = { "A", "B" };
             int counter = 1;
 
-            for (auto& i : json::iterator_wrapper(j))
+            for (auto& i : json::iterator_wrapper(j)) // NOLINT(readability-qualified-auto)
             {
                 switch (counter++)
                 {
@@ -624,7 +624,7 @@ TEST_CASE("iterator_wrapper")
             json j = 1;
             int counter = 1;
 
-            for (auto& i : json::iterator_wrapper(j))
+            for (auto& i : json::iterator_wrapper(j)) // NOLINT(readability-qualified-auto)
             {
                 ++counter;
                 CHECK(i.key() == "");
@@ -693,7 +693,7 @@ TEST_CASE("iterator_wrapper")
             const json j = 1;
             int counter = 1;
 
-            for (auto& i : json::iterator_wrapper(j))
+            for (auto& i : json::iterator_wrapper(j)) // NOLINT(readability-qualified-auto)
             {
                 ++counter;
                 CHECK(i.key() == "");
@@ -777,7 +777,7 @@ TEST_CASE("items()")
             json j = { {"A", 1}, {"B", 2} };
             int counter = 1;
 
-            for (auto& i : j.items())
+            for (auto& i : j.items()) // NOLINT(readability-qualified-auto)
             {
                 switch (counter++)
                 {
@@ -939,7 +939,7 @@ TEST_CASE("items()")
             const json j = { {"A", 1}, {"B", 2} };
             int counter = 1;
 
-            for (auto& i : j.items())
+            for (auto& i : j.items()) // NOLINT(readability-qualified-auto)
             {
                 switch (counter++)
                 {
@@ -1074,7 +1074,7 @@ TEST_CASE("items()")
             json j = { "A", "B" };
             int counter = 1;
 
-            for (auto& i : j.items())
+            for (auto& i : j.items()) // NOLINT(readability-qualified-auto)
             {
                 switch (counter++)
                 {
@@ -1220,7 +1220,7 @@ TEST_CASE("items()")
             const json j = { "A", "B" };
             int counter = 1;
 
-            for (auto& i : j.items())
+            for (auto& i : j.items()) // NOLINT(readability-qualified-auto)
             {
                 switch (counter++)
                 {
@@ -1337,7 +1337,7 @@ TEST_CASE("items()")
             json j = 1;
             int counter = 1;
 
-            for (auto& i : j.items())
+            for (auto& i : j.items()) // NOLINT(readability-qualified-auto)
             {
                 ++counter;
                 CHECK(i.key() == "");
@@ -1406,7 +1406,7 @@ TEST_CASE("items()")
             const json j = 1;
             int counter = 1;
 
-            for (auto& i : j.items())
+            for (auto& i : j.items()) // NOLINT(readability-qualified-auto)
             {
                 ++counter;
                 CHECK(i.key() == "");
@@ -1447,14 +1447,6 @@ TEST_CASE("items()")
         }
     }
 }
-
-#ifdef JSON_HAS_CPP_17
-    #undef JSON_HAS_CPP_17
-#endif
-
-#ifdef JSON_HAS_CPP_14
-    #undef JSON_HAS_CPP_14
-#endif
 
 DOCTEST_GCC_SUPPRESS_WARNING_POP
 DOCTEST_CLANG_SUPPRESS_WARNING_POP

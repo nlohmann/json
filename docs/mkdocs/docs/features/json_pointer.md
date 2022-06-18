@@ -18,11 +18,11 @@ Consider the following JSON document
 }
 ```
 
-Then every value inside the JSON document can be idientified as follows:
+Then every value inside the JSON document can be identified as follows:
 
 | JSON Pointer      | JSON value                                                                       |
 |-------------------|----------------------------------------------------------------------------------|
-| `/`               | `#!json {"array":["A","B","C"],"nested":{"one":1,"two":2,"three":[true,false]}}` |
+| ``                | `#!json {"array":["A","B","C"],"nested":{"one":1,"two":2,"three":[true,false]}}` |
 | `/array`          | `#!json ["A","B","C"]`                                                           |
 | `/array/0`        | `#!json A`                                                                       |
 | `/array/1`        | `#!json B`                                                                       |
@@ -33,6 +33,9 @@ Then every value inside the JSON document can be idientified as follows:
 | `/nested/three`   | `#!json [true,false]`                                                            |
 | `/nested/three/0` | `#!json true`                                                                    |
 | `/nested/three/1` | `#!json false`                                                                   |
+
+Note `/` does not identify the root (i.e., the whole document), but an object entry with empty key `""`. See
+[RFC 6901](https://tools.ietf.org/html/rfc6901) for more information.
 
 ## JSON Pointer creation
 

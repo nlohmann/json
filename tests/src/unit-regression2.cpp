@@ -27,6 +27,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+// cmake/test.cmake selects the C++ standard versions with which to build a
+// unit test based on the presence of JSON_HAS_CPP_<VERSION> macros.
+// When using macros that are only defined for particular versions of the standard
+// (e.g., JSON_HAS_FILESYSTEM for C++17 and up), please mention the corresponding
+// version macro in a comment close by, like this:
+// JSON_HAS_CPP_<VERSION> (do not remove; see note at top of file)
+
 #include "doctest_compatibility.h"
 
 // for some reason including this after the json header leads to linker errors with VS 2017...
@@ -48,7 +55,6 @@ using ordered_json = nlohmann::ordered_json;
 #endif
 
 #if JSON_HAS_EXPERIMENTAL_FILESYSTEM
-// JSON_HAS_CPP_17 (magic keyword; do not remove)
 #include <experimental/filesystem>
 namespace nlohmann::detail
 {
@@ -512,12 +518,15 @@ TEST_CASE("regression tests 2")
 
     SECTION("issue #1647 - compile error when deserializing enum if both non-default from_json and non-member operator== exists for other type")
     {
+        // does not compile on ICPC when targeting C++20
+#if !(defined(__INTEL_COMPILER) && __cplusplus >= 202000)
         {
             json j;
             NonDefaultFromJsonStruct x(j);
             NonDefaultFromJsonStruct y;
             CHECK(x == y);
         }
+#endif
 
         auto val = nlohmann::json("one").get<for_1647>();
         CHECK(val == for_1647::one);
@@ -785,6 +794,7 @@ TEST_CASE("regression tests 2")
     }
 
 #if JSON_HAS_FILESYSTEM || JSON_HAS_EXPERIMENTAL_FILESYSTEM
+    // JSON_HAS_CPP_17 (do not remove; see note at top of file)
     SECTION("issue #3070 - Version 3.10.3 breaks backward-compatibility with 3.10.2 ")
     {
         nlohmann::detail::std_fs::path text_path("/tmp/text.txt");
@@ -793,8 +803,8 @@ TEST_CASE("regression tests 2")
         const auto j_path = j.get<nlohmann::detail::std_fs::path>();
         CHECK(j_path == text_path);
 
-#if !defined(_MSC_VER) && !(defined(__GNUC__) && __GNUC__ == 8 && __GNUC_MINOR__ < 4)
-        // works everywhere but on MSVC and GCC <8.4
+#if defined(__clang__) || ((defined(__GNUC__) && !defined(__INTEL_COMPILER)) && (__GNUC__ > 8 || (__GNUC__ == 8 && __GNUC_MINOR__ >= 4)))
+        // only known to work on Clang and GCC >=8.4
         CHECK_THROWS_WITH_AS(nlohmann::detail::std_fs::path(json(1)), "[json.exception.type_error.302] type must be string, but is number", json::type_error);
 #endif
     }

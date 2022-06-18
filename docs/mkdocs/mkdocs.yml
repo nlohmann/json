@@ -42,6 +42,7 @@ nav:
     - features/arbitrary_types.md
     - Binary Formats:
       - features/binary_formats/index.md
+      - features/binary_formats/bjdata.md
       - features/binary_formats/bson.md
       - features/binary_formats/cbor.md
       - features/binary_formats/messagepack.md
@@ -109,6 +110,7 @@ nav:
         - 'exception': api/basic_json/exception.md
         - 'find': api/basic_json/find.md
         - 'flatten': api/basic_json/flatten.md
+        - 'from_bjdata': api/basic_json/from_bjdata.md
         - 'from_bson': api/basic_json/from_bson.md
         - 'from_cbor': api/basic_json/from_cbor.md
         - 'from_msgpack': api/basic_json/from_msgpack.md
@@ -152,15 +154,16 @@ nav:
         - 'operator value_t': api/basic_json/operator_value_t.md
         - 'operator[]': api/basic_json/operator[].md
         - 'operator=': api/basic_json/operator=.md
+        - 'operator+=': api/basic_json/operator+=.md
         - 'operator==': api/basic_json/operator_eq.md
         - 'operator!=': api/basic_json/operator_ne.md
         - 'operator<': api/basic_json/operator_lt.md
-        - 'operator<<': api/basic_json/operator_ltlt.md
-        - 'operator<=': api/basic_json/operator_le.md
         - 'operator>': api/basic_json/operator_gt.md
-        - 'operator>>': api/basic_json/operator_gtgt.md
+        - 'operator<=': api/basic_json/operator_le.md
         - 'operator>=': api/basic_json/operator_ge.md
-        - 'operator+=': api/basic_json/operator+=.md
+        - 'operator<=>': api/basic_json/operator_spaceship.md
+        - 'operator<<': api/basic_json/operator_ltlt.md
+        - 'operator>>': api/basic_json/operator_gtgt.md
         - 'operator""_json': api/basic_json/operator_literal_json.md
         - 'operator""_json_pointer': api/basic_json/operator_literal_json_pointer.md
         - 'out_of_range': api/basic_json/out_of_range.md
@@ -178,6 +181,7 @@ nav:
         - 'string_t': api/basic_json/string_t.md
         - 'swap': api/basic_json/swap.md
         - 'std::swap&lt;basic_json&gt;': api/basic_json/std_swap.md
+        - 'to_bjdata': api/basic_json/to_bjdata.md
         - 'to_bon8': api/basic_json/to_bon8.md
         - 'to_bson': api/basic_json/to_bson.md
         - 'to_cbor': api/basic_json/to_cbor.md
@@ -238,12 +242,15 @@ nav:
         - 'JSON_ASSERT': api/macros/json_assert.md
         - 'JSON_CATCH_USER': api/macros/json_throw_user.md
         - 'JSON_DIAGNOSTICS': api/macros/json_diagnostics.md
+        - 'JSON_DISABLE_ENUM_SERIALIZATION': api/macros/json_disable_enum_serialization.md
         - 'JSON_HAS_CPP_11': api/macros/json_has_cpp_11.md
         - 'JSON_HAS_CPP_14': api/macros/json_has_cpp_11.md
         - 'JSON_HAS_CPP_17': api/macros/json_has_cpp_11.md
         - 'JSON_HAS_CPP_20': api/macros/json_has_cpp_11.md
         - 'JSON_HAS_EXPERIMENTAL_FILESYSTEM': api/macros/json_has_filesystem.md
         - 'JSON_HAS_FILESYSTEM': api/macros/json_has_filesystem.md
+        - 'JSON_HAS_RANGES': api/macros/json_has_ranges.md
+        - 'JSON_HAS_THREE_WAY_COMPARISON': api/macros/json_has_three_way_comparison.md
         - 'JSON_NOEXCEPTION': api/macros/json_noexception.md
         - 'JSON_NO_IO': api/macros/json_no_io.md
         - 'JSON_SKIP_LIBRARY_VERSION_CHECK': api/macros/json_skip_library_version_check.md
@@ -251,6 +258,7 @@ nav:
         - 'JSON_THROW_USER': api/macros/json_throw_user.md
         - 'JSON_TRY_USER': api/macros/json_throw_user.md
         - 'JSON_USE_IMPLICIT_CONVERSIONS': api/macros/json_use_implicit_conversions.md
+        - 'JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON': api/macros/json_use_legacy_discarded_value_comparison.md
         - 'NLOHMANN_DEFINE_TYPE_INTRUSIVE': api/macros/nlohmann_define_type_intrusive.md
         - 'NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT': api/macros/nlohmann_define_type_intrusive.md
         - 'NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE': api/macros/nlohmann_define_type_non_intrusive.md
@@ -316,6 +324,9 @@ plugins:
     - minify:
         minify_html: true
     - git-revision-date-localized
+
+extra_css:
+    - css/custom.css
 
 extra_javascript:
   - https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML

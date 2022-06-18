@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.13)
 option(JSON_Valgrind    "Execute test suite with Valgrind." OFF)
 option(JSON_FastTests   "Skip expensive/slow tests." OFF)
 
+set(JSON_32bitTest     AUTO CACHE STRING "Enable the 32bit unit test (ON/OFF/AUTO/ONLY).")
 set(JSON_TestStandards "" CACHE STRING "The list of standards to test explicitly.")
 
 include(test)
@@ -36,8 +37,7 @@ endif()
 add_library(test_main OBJECT src/unit.cpp)
 target_compile_definitions(test_main PUBLIC
     DOCTEST_CONFIG_SUPER_FAST_ASSERTS
-    JSON_TEST_KEEP_MACROS
-)
+    JSON_TEST_KEEP_MACROS)
 target_compile_features(test_main PRIVATE cxx_std_11)
 target_compile_options(test_main PUBLIC
     $<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>
@@ -49,14 +49,16 @@ target_compile_options(test_main PUBLIC
     # https://github.com/nlohmann/json/issues/1114
     $<$<CXX_COMPILER_ID:MSVC>:/bigobj> $<$<BOOL:${MINGW}>:-Wa,-mbig-obj>
 
+    # https://github.com/nlohmann/json/pull/3229
+    $<$<CXX_COMPILER_ID:Intel>:-diag-disable=2196>
+
     $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wno-deprecated;-Wno-float-equal>
     $<$<CXX_COMPILER_ID:GNU>:-Wno-deprecated-declarations>
-)
+    $<$<CXX_COMPILER_ID:Intel>:-diag-disable=1786>)
 target_include_directories(test_main PUBLIC
     thirdparty/doctest
     thirdparty/fifo_map
-    ${PROJECT_BINARY_DIR}/include
-)
+    ${PROJECT_BINARY_DIR}/include)
 target_link_libraries(test_main PUBLIC ${NLOHMANN_JSON_TARGET_NAME})
 
 #############################################################################
@@ -114,10 +116,31 @@ message(STATUS "${msg}")
 
 # *DO* use json_test_set_test_options() above this line
 
+json_test_should_build_32bit_test(json_32bit_test json_32bit_test_only "${JSON_32bitTest}")
 file(GLOB files src/unit-*.cpp)
+if(json_32bit_test_only)
+    set(files src/unit-32bit.cpp)    
+elseif(NOT json_32bit_test)
+    list(FILTER files EXCLUDE REGEX src/unit-32bit.cpp)
+endif()
+
 foreach(file ${files})
     json_test_add_test_for(${file} MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force})
 endforeach()
+
+if(json_32bit_test_only)
+    # Skip all other tests in this file
+    return()
+endif()
+
+# test legacy comparison of discarded values
+json_test_set_test_options(test-comparison_legacy
+    COMPILE_DEFINITIONS JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=1
+)
+json_test_add_test_for(src/unit-comparison.cpp
+    NAME test-comparison_legacy
+    MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force}
+)
 
 # *DO NOT* use json_test_set_test_options() below this line
 

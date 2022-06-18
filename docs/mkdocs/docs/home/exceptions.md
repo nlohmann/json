@@ -271,7 +271,7 @@ In a JSON Pointer, only `~0` and `~1` are valid escape sequences.
 
 A JSON Pointer array index must be a number.
 
-!!! failure "Example message"
+!!! failure "Example messages"
 
     ```
     [json.exception.parse_error.109] parse error: array index 'one' is not a number
@@ -295,19 +295,34 @@ When parsing CBOR or MessagePack, the byte vector ends before the complete value
 
 ### json.exception.parse_error.112
 
-Not all types of CBOR or MessagePack are supported. This exception occurs if an unsupported byte was read.
+An unexpected byte was read in a [binary format](../features/binary_formats/index.md) or length information is invalid ([BSON](../features/binary_formats/bson.md)).
 
-!!! failure "Example message"
+!!! failure "Example messages"
 
     ```
     [json.exception.parse_error.112] parse error at byte 1: syntax error while parsing CBOR value: invalid byte: 0x1C
+    ```
+    ```
+    [json.exception.parse_error.112] parse error at byte 1: syntax error while parsing MessagePack value: invalid byte: 0xC1
+    ```
+    ```
+    [json.exception.parse_error.112] parse error at byte 4: syntax error while parsing BJData size: expected '#' after type information; last byte: 0x02
+    ```
+    ```
+    [json.exception.parse_error.112] parse error at byte 4: syntax error while parsing UBJSON size: expected '#' after type information; last byte: 0x02
+    ```
+    ```
+    [json.exception.parse_error.112] parse error at byte 10: syntax error while parsing BSON string: string length must be at least 1, is -2147483648
+    ```
+    ```
+    [json.exception.parse_error.112] parse error at byte 15: syntax error while parsing BSON binary: byte array length cannot be negative, is -1
     ```
 
 ### json.exception.parse_error.113
 
 While parsing a map key, a value that is not a string has been read.
 
-!!! failure "Example message"
+!!! failure "Example messages"
 
     ```
     [json.exception.parse_error.113] parse error at byte 2: syntax error while parsing CBOR string: expected length specification (0x60-0x7B) or indefinite string type (0x7F); last byte: 0xFF
@@ -374,7 +389,7 @@ The iterators passed to constructor `basic_json(InputIT first, InputIT last)` ar
 
 In the [erase](../api/basic_json/erase.md) or insert function, the passed iterator `pos` does not belong to the JSON value for which the function was called. It hence does not define a valid position for the deletion/insertion.
 
-!!! failure "Example message"
+!!! failure "Example messages"
 
     ```
     [json.exception.invalid_iterator.202] iterator does not fit current value
@@ -538,7 +553,7 @@ To create an object from an initializer list, the initializer list must consist 
 
 During implicit or explicit value conversion, the JSON type must be compatible to the target type. For instance, a JSON string can only be converted into string types, but not into numbers or boolean types.
 
-!!! failure "Example message"
+!!! failure "Example messages"
 
     ```
     [json.exception.type_error.302] type must be object, but is null
@@ -551,7 +566,7 @@ During implicit or explicit value conversion, the JSON type must be compatible t
 
 To retrieve a reference to a value stored in a `basic_json` object with `get_ref`, the type of the reference must match the value type. For instance, for a JSON array, the `ReferenceType` must be `array_t &`.
 
-!!! failure "Example message"
+!!! failure "Example messages"
 
     ```
     [json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is object
@@ -564,7 +579,7 @@ To retrieve a reference to a value stored in a `basic_json` object with `get_ref
 
 The `at()` member functions can only be executed for certain JSON types.
 
-!!! failure "Example message"
+!!! failure "Example messages"
 
     ```
     [json.exception.type_error.304] cannot use at() with string
@@ -577,7 +592,7 @@ The `at()` member functions can only be executed for certain JSON types.
 
 The `operator[]` member functions can only be executed for certain JSON types.
 
-!!! failure "Example message"
+!!! failure "Example messages"
 
     ```
     [json.exception.type_error.305] cannot use operator[] with a string argument with array
@@ -620,7 +635,7 @@ The `push_back()` and `operator+=` member functions can only be executed for cer
 
 The `insert()` member functions can only be executed for certain JSON types.
 
-!!! failure "Example message"
+!!! failure "Example messages"
 
     ```
     [json.exception.type_error.309] cannot use insert() with array
@@ -643,7 +658,7 @@ The `swap()` member functions can only be executed for certain JSON types.
 
 The `emplace()` and `emplace_back()` member functions can only be executed for certain JSON types.
 
-!!! failure "Example message"
+!!! failure "Example messages"
 
     ```
     [json.exception.type_error.311] cannot use emplace() with number
@@ -718,7 +733,7 @@ The `dump()` function only works with UTF-8 encoded strings; that is, if you ass
 
 The dynamic type of the object cannot be represented in the requested serialization format (e.g. a raw `true` or `null` JSON object cannot be serialized to BSON)
 
-!!! failure "Example message"
+!!! failure "Example messages"
 
     Serializing `#!json null` to BSON:
     ```

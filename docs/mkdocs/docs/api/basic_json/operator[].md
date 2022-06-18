@@ -198,6 +198,8 @@ Strong exception safety: if an exception occurs, the original value stays intact
 
 ## See also
 
+- documentation on [unchecked access](../../features/element_access/unchecked_access.md)
+- documentation on [runtime assertions](../../features/assertions.md)
 - see [`at`](at.md) for access by reference with range checking
 - see [`value`](value.md) for access with default value
 

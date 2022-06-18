@@ -10,10 +10,22 @@ Returns the allocator associated with the container.
 
 associated allocator
 
+## Examples
+
+??? example
+
+    The example shows how `get_allocator()` is used to created `json` values.
+    
+    ```cpp
+    --8<-- "examples/get_allocator.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/get_allocator.output"
+    ```
+
 ## Version history
 
-- Unknown.
-
-!!! note
-
-    This documentation page is a stub.
+- Added in version 1.0.0.

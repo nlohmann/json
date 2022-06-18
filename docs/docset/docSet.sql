@@ -140,6 +140,7 @@ INSERT INTO searchIndex(name, type, path) VALUES ('SAX Interface', 'Guide', 'fea
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_ASSERT', 'Macro', 'features/macros/index.html#json_assertx');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_CATCH_USER', 'Macro', 'features/macros/index.html#json_catch_userexception');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_DIAGNOSTICS', 'Macro', 'features/macros/index.html#json_diagnostics');
+INSERT INTO searchIndex(name, type, path) VALUES ('JSON_DISABLE_ENUM_SERIALIZATION', 'Macro', 'features/macros/index.html#json_disable_enum_serialization');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_HAS_CPP_11', 'Macro', 'features/macros/index.html#json_has_cpp_11-json_has_cpp_14-json_has_cpp_17-json_has_cpp_20');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_HAS_CPP_14', 'Macro', 'features/macros/index.html#json_has_cpp_11-json_has_cpp_14-json_has_cpp_17-json_has_cpp_20');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_HAS_CPP_17', 'Macro', 'features/macros/index.html#json_has_cpp_11-json_has_cpp_14-json_has_cpp_17-json_has_cpp_20');

@@ -32,6 +32,8 @@ SOFTWARE.
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+// ICPC errors out on multibyte character sequences in source files
+#ifndef __INTEL_COMPILER
 namespace
 {
 bool wstring_is_utf16();
@@ -115,3 +117,4 @@ TEST_CASE("wide strings")
         }
     }
 }
+#endif

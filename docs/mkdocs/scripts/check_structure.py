@@ -47,14 +47,17 @@ def check_structure():
     files = sorted(glob.glob('api/**/*.md', recursive=True))
     for file in files:
         with open(file) as file_content:
-            section_idx = -1
-            existing_sections = []
-            in_initial_code_example = False
-            previous_line = None
-            h1sections = 0
+            section_idx = -1                 # the index of the current h2 section
+            existing_sections = []           # the list of h2 sections in the file
+            in_initial_code_example = False  # whether we are inside the first code example block
+            previous_line = None             # the previous read line
+            h1sections = 0                   # the number of h1 sections in the file
+            last_overload = 0                # the last seen overload number in the code example
+            documented_overloads = {}        # the overloads that have been documented in the current block
+            current_section = None           # the name of the current section
 
-            for lineno, line in enumerate(file_content.readlines()):
-                line = line.strip()
+            for lineno, original_line in enumerate(file_content.readlines()):
+                line = original_line.strip()
 
                 if line.startswith('# '):
                     h1sections += 1
@@ -70,10 +73,21 @@ def check_structure():
 
                 # lines longer than 160 characters are bad (unless they are tables)
                 if len(line) > 160 and '|' not in line:
-                    report('whitespace/line_length', f'{file}:{lineno+1}', f'line is too long ({len(line)} vs. 160 chars)')
+                    report('whitespace/line_length', f'{file}:{lineno+1} ({current_section})', f'line is too long ({len(line)} vs. 160 chars)')
 
                 # check if sections are correct
                 if line.startswith('## '):
+                    # before starting a new section, check if the previous one documented all overloads
+                    if current_section in documented_overloads and last_overload != 0:
+                        if len(documented_overloads[current_section]) > 0 and len(documented_overloads[current_section]) != last_overload:
+                            expected = list(range(1, last_overload+1))
+                            undocumented = [x for x in expected if x not in documented_overloads[current_section]]
+                            unexpected = [x for x in documented_overloads[current_section] if x not in expected]
+                            if len(undocumented):
+                                report('style/numbering', f'{file}:{lineno} ({current_section})', f'undocumented overloads: {", ".join([f"({x})" for x in undocumented])}')
+                            if len(unexpected):
+                                report('style/numbering', f'{file}:{lineno} ({current_section})', f'unexpected overloads: {", ".join([f"({x})" for x in unexpected])}')
+
                     current_section = line.strip('## ')
                     existing_sections.append(current_section)
 
@@ -83,13 +97,29 @@ def check_structure():
                             report('structure/section_order', f'{file}:{lineno+1}', f'section "{current_section}" is in an unexpected order (should be before "{expected_sections[section_idx]}")')
                         section_idx = idx
                     else:
-                        report('structure/unknown_section', f'{file}:{lineno+1}', f'section "{current_section}" is not part of the expected sections')
+                        if 'index.md' not in file:  # index.md files may have a different structure
+                            report('structure/unknown_section', f'{file}:{lineno+1}', f'section "{current_section}" is not part of the expected sections')
+
+                # collect the numbered items of the current section to later check if they match the number of overloads
+                if last_overload != 0 and not in_initial_code_example:
+                    if len(original_line) and original_line[0].isdigit():
+                        number = int(re.findall(r"^(\d+).", original_line)[0])
+                        if current_section not in documented_overloads:
+                            documented_overloads[current_section] = []
+                        documented_overloads[current_section].append(number)
 
                 # code example
                 if line == '```cpp' and section_idx == -1:
                     in_initial_code_example = True
 
                 if in_initial_code_example and line.startswith('//'):
+                    # check numbering of overloads
+                    if any(map(str.isdigit, line)):
+                        number = int(re.findall(r'\d+', line)[0])
+                        if number != last_overload + 1:
+                            report('style/numbering', f'{file}:{lineno+1}', f'expected number ({number}) to be ({last_overload +1 })')
+                        last_overload = number
+
                     if any(map(str.isdigit, line)) and '(' not in line:
                         report('style/numbering', f'{file}:{lineno+1}', 'number should be in parentheses: {line}')
 
@@ -98,18 +128,19 @@ def check_structure():
 
                 # consecutive blank lines are bad
                 if line == '' and previous_line == '':
-                    report('whitespace/blank_lines', f'{file}:{lineno}-{lineno+1}', 'consecutive blank lines')
+                    report('whitespace/blank_lines', f'{file}:{lineno}-{lineno+1} ({current_section})', 'consecutive blank lines')
 
                 # check that non-example admonitions have titles
                 untitled_admonition = re.match(r'^(\?\?\?|!!!) ([^ ]+)$', line)
                 if untitled_admonition and untitled_admonition.group(2) != 'example':
-                    report('style/admonition_title', f'{file}:{lineno}', f'"{untitled_admonition.group(2)}" admonitions should have a title')
+                    report('style/admonition_title', f'{file}:{lineno} ({current_section})', f'"{untitled_admonition.group(2)}" admonitions should have a title')
 
                 previous_line = line
 
-            for required_section in required_sections:
-                if required_section not in existing_sections:
-                    report('structure/missing_section', f'{file}:{lineno+1}', f'required section "{required_section}" was not found')
+            if 'index.md' not in file:  # index.md files may have a different structure
+                for required_section in required_sections:
+                    if required_section not in existing_sections:
+                        report('structure/missing_section', f'{file}:{lineno+1}', f'required section "{required_section}" was not found')
 
 
 def check_examples():

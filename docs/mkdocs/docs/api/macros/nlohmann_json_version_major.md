@@ -13,6 +13,23 @@ These macros are defined by the library and contain the version numbers accordin
 
 The macros are defined according to the current library version.
 
+## Examples
+
+??? example
+
+    The example below shows how `NLOHMANN_JSON_VERSION_MAJOR`, `NLOHMANN_JSON_VERSION_MINOR`, and
+    `NLOHMANN_JSON_VERSION_PATCH` are defined by the library.
+
+    ```cpp
+    --8<-- "examples/nlohmann_json_version.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/nlohmann_json_version.output"
+    ```
+
 ## See also
 
 - [meta](../basic_json/meta.md) - returns version information on the library

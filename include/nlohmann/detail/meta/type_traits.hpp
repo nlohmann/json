@@ -183,7 +183,7 @@ template<class...> struct conjunction : std::true_type { };
 template<class B> struct conjunction<B> : B { };
 template<class B, class... Bn>
 struct conjunction<B, Bn...>
-: std::conditional<bool(B::value), conjunction<Bn...>, B>::type {};
+: std::conditional<static_cast<bool>(B::value), conjunction<Bn...>, B>::type {};
 
 // https://en.cppreference.com/w/cpp/types/negation
 template<class B> struct negation : std::integral_constant < bool, !B::value > { };
@@ -347,8 +347,15 @@ struct is_compatible_string_type
 template<typename BasicJsonType, typename ConstructibleStringType>
 struct is_constructible_string_type
 {
+    // launder type through decltype() to fix compilation failure on ICPC
+#ifdef __INTEL_COMPILER
+    using laundered_type = decltype(std::declval<ConstructibleStringType>());
+#else
+    using laundered_type = ConstructibleStringType;
+#endif
+
     static constexpr auto value =
-        is_constructible<ConstructibleStringType,
+        is_constructible<laundered_type,
         typename BasicJsonType::string_t>::value;
 };
 
@@ -568,6 +575,101 @@ template<typename T, typename U, enable_if_t<std::is_same<T, U>::value, int> = 0
 T conditional_static_cast(U value)
 {
     return value;
+}
+
+template<typename... Types>
+using all_integral = conjunction<std::is_integral<Types>...>;
+
+template<typename... Types>
+using all_signed = conjunction<std::is_signed<Types>...>;
+
+template<typename... Types>
+using all_unsigned = conjunction<std::is_unsigned<Types>...>;
+
+// there's a disjunction trait in another PR; replace when merged
+template<typename... Types>
+using same_sign = std::integral_constant < bool,
+      all_signed<Types...>::value || all_unsigned<Types...>::value >;
+
+template<typename OfType, typename T>
+using never_out_of_range = std::integral_constant < bool,
+      (std::is_signed<OfType>::value && (sizeof(T) < sizeof(OfType)))
+      || (same_sign<OfType, T>::value && sizeof(OfType) == sizeof(T)) >;
+
+template<typename OfType, typename T,
+         bool OfTypeSigned = std::is_signed<OfType>::value,
+         bool TSigned = std::is_signed<T>::value>
+struct value_in_range_of_impl2;
+
+template<typename OfType, typename T>
+struct value_in_range_of_impl2<OfType, T, false, false>
+{
+    static constexpr bool test(T val)
+    {
+        using CommonType = typename std::common_type<OfType, T>::type;
+        return static_cast<CommonType>(val) <= static_cast<CommonType>(std::numeric_limits<OfType>::max());
+    }
+};
+
+template<typename OfType, typename T>
+struct value_in_range_of_impl2<OfType, T, true, false>
+{
+    static constexpr bool test(T val)
+    {
+        using CommonType = typename std::common_type<OfType, T>::type;
+        return static_cast<CommonType>(val) <= static_cast<CommonType>(std::numeric_limits<OfType>::max());
+    }
+};
+
+template<typename OfType, typename T>
+struct value_in_range_of_impl2<OfType, T, false, true>
+{
+    static constexpr bool test(T val)
+    {
+        using CommonType = typename std::common_type<OfType, T>::type;
+        return val >= 0 && static_cast<CommonType>(val) <= static_cast<CommonType>(std::numeric_limits<OfType>::max());
+    }
+};
+
+
+template<typename OfType, typename T>
+struct value_in_range_of_impl2<OfType, T, true, true>
+{
+    static constexpr bool test(T val)
+    {
+        using CommonType = typename std::common_type<OfType, T>::type;
+        return static_cast<CommonType>(val) >= static_cast<CommonType>(std::numeric_limits<OfType>::min())
+               && static_cast<CommonType>(val) <= static_cast<CommonType>(std::numeric_limits<OfType>::max());
+    }
+};
+
+template<typename OfType, typename T,
+         bool NeverOutOfRange = never_out_of_range<OfType, T>::value,
+         typename = detail::enable_if_t<all_integral<OfType, T>::value>>
+struct value_in_range_of_impl1;
+
+template<typename OfType, typename T>
+struct value_in_range_of_impl1<OfType, T, false>
+{
+    static constexpr bool test(T val)
+    {
+        return value_in_range_of_impl2<OfType, T>::test(val);
+    }
+};
+
+template<typename OfType, typename T>
+struct value_in_range_of_impl1<OfType, T, true>
+{
+    static constexpr bool test(T /*val*/)
+    {
+        return true;
+    }
+};
+
+template<typename OfType, typename T>
+inline constexpr bool value_in_range_of(T val)
+{
+    return value_in_range_of_impl1<OfType, T>::test(val);
 }
 
 }  // namespace detail
