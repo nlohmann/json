@@ -184,6 +184,60 @@ struct SaxEventLoggerExitAfterStartArray : public SaxEventLogger
         return false;
     }
 };
+
+template <typename T>
+class proxy_iterator
+{
+  public:
+    using iterator = typename T::iterator;
+    using value_type = typename std::iterator_traits<iterator>::value_type;
+    using reference = typename std::iterator_traits<iterator>::reference;
+    using pointer = typename std::iterator_traits<iterator>::pointer;
+    using difference_type =
+        typename std::iterator_traits<iterator>::difference_type;
+    //
+    using iterator_category =
+        typename std::iterator_traits<iterator>::iterator_category;
+
+    proxy_iterator() = default;
+    proxy_iterator(iterator& it) : m_it(std::addressof(it)) {}
+
+    proxy_iterator& operator++()
+    {
+        *m_it++;
+        return *this;
+    }
+
+    proxy_iterator& operator+=(std::size_t n)
+    {
+        *m_it += n;
+        return *this;
+    }
+
+    proxy_iterator& operator--()
+    {
+        *m_it--;
+        return *this;
+    }
+
+    bool operator==(const proxy_iterator& rhs) const
+    {
+        return (m_it && rhs.m_it) ? (*m_it == *rhs.m_it) : (m_it == rhs.m_it);
+    }
+
+    bool operator!=(const proxy_iterator& rhs) const
+    {
+        return !(*this == rhs);
+    }
+
+    reference operator*() const
+    {
+        return **m_it;
+    }
+
+  private:
+    iterator* m_it = nullptr;
+};
 } // namespace
 
 TEST_CASE("deserialization")
@@ -537,6 +591,28 @@ TEST_CASE("deserialization")
                 CHECK(!json::sax_parse(std::begin(v), std::end(v), &l));
                 CHECK(l.events.size() == 1);
                 CHECK(l.events == std::vector<std::string>({"parse_error(1)"}));
+            }
+
+            SECTION("verify iterator_input_adapter doesn't over-consume")
+            {
+                using nlohmann::json;
+                using nlohmann::detail::input_format_t;
+                using nlohmann::detail::json_sax_dom_parser;
+                using proxy = proxy_iterator<std::string>;
+
+                std::string str1 = "[1]";
+                std::string str2 = "[2]";
+                std::string str = str1 + str2;
+
+                auto first = str.begin();
+                auto last = str.end();
+                json j;
+                json_sax_dom_parser<json> sax(j, true);
+
+                CHECK(json::sax_parse(proxy(first), proxy(last), &sax,
+                                      input_format_t::json, false));
+                CHECK(j.dump() == str1);
+                CHECK(std::string(first, last) == str2);
             }
         }
 
