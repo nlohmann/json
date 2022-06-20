@@ -23,7 +23,7 @@ namespace nlohmann
 namespace detail
 {
 /// the supported input formats
-enum class input_format_t { json, cbor, msgpack, ubjson, bson };
+enum class input_format_t { json, cbor, msgpack, ubjson, bson, bjdata };
 
 ////////////////////
 // input adapters //

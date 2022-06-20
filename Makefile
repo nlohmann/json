@@ -45,7 +45,7 @@ all:
 
 # compile example files and check output
 doctest:
-	$(MAKE) check_output -C doc
+	$(MAKE) check_output -C docs
 
 
 ##########################################################################
@@ -55,7 +55,7 @@ doctest:
 run_benchmarks:
 	rm -fr cmake-build-benchmarks
 	mkdir cmake-build-benchmarks
-	cd cmake-build-benchmarks ; cmake ../benchmarks -GNinja -DCMAKE_BUILD_TYPE=Release -DJSON_BuildTests=On
+	cd cmake-build-benchmarks ; cmake ../tests/benchmarks -GNinja -DCMAKE_BUILD_TYPE=Release
 	cd cmake-build-benchmarks ; ninja
 	cd cmake-build-benchmarks ; ./json_benchmarks
 
@@ -68,41 +68,41 @@ run_benchmarks:
 fuzz_testing:
 	rm -fr fuzz-testing
 	mkdir -p fuzz-testing fuzz-testing/testcases fuzz-testing/out
-	$(MAKE) parse_afl_fuzzer -C test CXX=afl-clang++
-	mv test/parse_afl_fuzzer fuzz-testing/fuzzer
-	find test/data/json_tests -size -5k -name *json | xargs -I{} cp "{}" fuzz-testing/testcases
+	$(MAKE) parse_afl_fuzzer -C tests CXX=afl-clang++
+	mv tests/parse_afl_fuzzer fuzz-testing/fuzzer
+	find tests/data/json_tests -size -5k -name *json | xargs -I{} cp "{}" fuzz-testing/testcases
 	@echo "Execute: afl-fuzz -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer"
 
 fuzz_testing_bson:
 	rm -fr fuzz-testing
 	mkdir -p fuzz-testing fuzz-testing/testcases fuzz-testing/out
-	$(MAKE) parse_bson_fuzzer -C test CXX=afl-clang++
-	mv test/parse_bson_fuzzer fuzz-testing/fuzzer
-	find test/data -size -5k -name *.bson | xargs -I{} cp "{}" fuzz-testing/testcases
+	$(MAKE) parse_bson_fuzzer -C tests CXX=afl-clang++
+	mv tests/parse_bson_fuzzer fuzz-testing/fuzzer
+	find tests/data -size -5k -name *.bson | xargs -I{} cp "{}" fuzz-testing/testcases
 	@echo "Execute: afl-fuzz -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer"
 
 fuzz_testing_cbor:
 	rm -fr fuzz-testing
 	mkdir -p fuzz-testing fuzz-testing/testcases fuzz-testing/out
-	$(MAKE) parse_cbor_fuzzer -C test CXX=afl-clang++
-	mv test/parse_cbor_fuzzer fuzz-testing/fuzzer
-	find test/data -size -5k -name *.cbor | xargs -I{} cp "{}" fuzz-testing/testcases
+	$(MAKE) parse_cbor_fuzzer -C tests CXX=afl-clang++
+	mv tests/parse_cbor_fuzzer fuzz-testing/fuzzer
+	find tests/data -size -5k -name *.cbor | xargs -I{} cp "{}" fuzz-testing/testcases
 	@echo "Execute: afl-fuzz -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer"
 
 fuzz_testing_msgpack:
 	rm -fr fuzz-testing
 	mkdir -p fuzz-testing fuzz-testing/testcases fuzz-testing/out
-	$(MAKE) parse_msgpack_fuzzer -C test CXX=afl-clang++
-	mv test/parse_msgpack_fuzzer fuzz-testing/fuzzer
-	find test/data -size -5k -name *.msgpack | xargs -I{} cp "{}" fuzz-testing/testcases
+	$(MAKE) parse_msgpack_fuzzer -C tests CXX=afl-clang++
+	mv tests/parse_msgpack_fuzzer fuzz-testing/fuzzer
+	find tests/data -size -5k -name *.msgpack | xargs -I{} cp "{}" fuzz-testing/testcases
 	@echo "Execute: afl-fuzz -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer"
 
 fuzz_testing_ubjson:
 	rm -fr fuzz-testing
 	mkdir -p fuzz-testing fuzz-testing/testcases fuzz-testing/out
-	$(MAKE) parse_ubjson_fuzzer -C test CXX=afl-clang++
-	mv test/parse_ubjson_fuzzer fuzz-testing/fuzzer
-	find test/data -size -5k -name *.ubjson | xargs -I{} cp "{}" fuzz-testing/testcases
+	$(MAKE) parse_ubjson_fuzzer -C tests CXX=afl-clang++
+	mv tests/parse_ubjson_fuzzer fuzz-testing/fuzzer
+	find tests/data -size -5k -name *.ubjson | xargs -I{} cp "{}" fuzz-testing/testcases
 	@echo "Execute: afl-fuzz -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer"
 
 fuzzing-start:
@@ -159,18 +159,18 @@ pretty:
 	    --preserve-date \
 	    --suffix=none \
 	    --formatted \
-	   $(SRCS) $(AMALGAMATED_FILE) test/src/*.cpp test/src/*.hpp benchmarks/src/benchmarks.cpp doc/examples/*.cpp
+	   $(SRCS) $(AMALGAMATED_FILE) tests/src/*.cpp tests/src/*.hpp tests/benchmarks/src/benchmarks.cpp docs/examples/*.cpp
 
 # call the Clang-Format on all source files
 pretty_format:
-	for FILE in $(SRCS) $(AMALGAMATED_FILE) test/src/*.cpp test/src/*.hpp benchmarks/src/benchmarks.cpp doc/examples/*.cpp; do echo $$FILE; clang-format -i $$FILE; done
+	for FILE in $(SRCS) $(AMALGAMATED_FILE) tests/src/*.cpp tests/src/*.hpp benchmarks/src/benchmarks.cpp docs/examples/*.cpp; do echo $$FILE; clang-format -i $$FILE; done
 
 # create single header file
 amalgamate: $(AMALGAMATED_FILE)
 
 # call the amalgamation tool and pretty print
 $(AMALGAMATED_FILE): $(SRCS)
-	third_party/amalgamate/amalgamate.py -c third_party/amalgamate/config.json -s . --verbose=yes
+	tools/amalgamate/amalgamate.py -c tools/amalgamate/config.json -s . --verbose=yes
 	$(MAKE) pretty
 
 # check if file single_include/nlohmann/json.hpp has been amalgamated from the nlohmann sources
@@ -233,10 +233,10 @@ release: include.zip json.tar.xz
 
 # clean up
 clean:
-	rm -fr fuzz fuzz-testing *.dSYM test/*.dSYM
+	rm -fr fuzz fuzz-testing *.dSYM tests/*.dSYM
 	rm -fr benchmarks/files/numbers/*.json
 	rm -fr cmake-build-benchmarks fuzz-testing cmake-build-pvs-studio release_files
-	$(MAKE) clean -Cdoc
+	$(MAKE) clean -Cdocs
 
 
 ##########################################################################
@@ -251,3 +251,10 @@ update_hedley:
 	$(SED) -i '1s/^/#pragma once\n\n/' include/nlohmann/thirdparty/hedley/hedley.hpp
 	$(SED) -i '1s/^/#pragma once\n\n/' include/nlohmann/thirdparty/hedley/hedley_undef.hpp
 	$(MAKE) amalgamate
+
+##########################################################################
+# serve_header.py
+##########################################################################
+
+serve_header:
+	./tools/serve_header/serve_header.py --make $(MAKE)
