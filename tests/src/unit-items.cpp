@@ -34,7 +34,9 @@ using nlohmann::json;
 
 // This test suite uses range for loops where values are copied. This is inefficient in usual code, but required to achieve 100% coverage.
 DOCTEST_GCC_SUPPRESS_WARNING_PUSH
-DOCTEST_GCC_SUPPRESS_WARNING("-Wrange-loop-construct")
+#if DOCTEST_GCC >= DOCTEST_COMPILER(11, 0, 0)
+    DOCTEST_GCC_SUPPRESS_WARNING("-Wrange-loop-construct")
+#endif
 DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
 DOCTEST_CLANG_SUPPRESS_WARNING("-Wrange-loop-construct")
 

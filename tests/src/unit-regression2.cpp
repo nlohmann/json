@@ -803,7 +803,7 @@ TEST_CASE("regression tests 2")
         const auto j_path = j.get<nlohmann::detail::std_fs::path>();
         CHECK(j_path == text_path);
 
-#if defined(__clang__) || ((defined(__GNUC__) && !defined(__INTEL_COMPILER)) && (__GNUC__ > 8 || (__GNUC__ == 8 && __GNUC_MINOR__ >= 4)))
+#if DOCTEST_CLANG || DOCTEST_GCC >= DOCTEST_COMPILER(8, 4, 0)
         // only known to work on Clang and GCC >=8.4
         CHECK_THROWS_WITH_AS(nlohmann::detail::std_fs::path(json(1)), "[json.exception.type_error.302] type must be string, but is number", json::type_error);
 #endif
