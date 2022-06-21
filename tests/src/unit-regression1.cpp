@@ -1520,7 +1520,7 @@ TEST_CASE("regression tests, exceptions dependent")
 /////////////////////////////////////////////////////////////////////
 
 // the code below fails with Clang on Windows, so we need to exclude it there
-#if defined(__clang__) && (defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__))
+#if DOCTEST_CLANG && (defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__))
 #else
 template <typename T> class array {};
 template <typename T> class object {};

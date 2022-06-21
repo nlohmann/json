@@ -916,7 +916,7 @@ TEST_CASE("iterators 2")
         }
 
         // libstdc++ algorithms don't work with Clang 15 (04/2022)
-#if !defined(__clang__) || (defined(__clang__) && defined(__GLIBCXX__))
+#if !DOCTEST_CLANG || (DOCTEST_CLANG && defined(__GLIBCXX__))
         SECTION("algorithms")
         {
             SECTION("copy")
@@ -955,7 +955,7 @@ TEST_CASE("iterators 2")
 
         // libstdc++ views don't work with Clang 15 (04/2022)
         // libc++ hides limited ranges implementation behind guard macro
-#if !(defined(__clang__) && (defined(__GLIBCXX__) || defined(_LIBCPP_HAS_NO_INCOMPLETE_RANGES)))
+#if !(DOCTEST_CLANG && (defined(__GLIBCXX__) || defined(_LIBCPP_HAS_NO_INCOMPLETE_RANGES)))
         SECTION("views")
         {
             SECTION("reverse")
