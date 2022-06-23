@@ -1,3 +1,5 @@
+SED ?= $(shell which gsed 2>/dev/null || which sed)
+
 JSON_for_Modern_C++.docset: Info.plist docSet.sql
 	$(MAKE) clean
 	mkdir -p JSON_for_Modern_C++.docset/Contents/Resources/Documents/
@@ -11,7 +13,7 @@ JSON_for_Modern_C++.docset: Info.plist docSet.sql
 	# fix spacing
 	echo "\n\ndiv.md-sidebar div.md-sidebar--secondary, div.md-main__inner { top: 0; margin-top: 0 }" >> "$$(ls JSON_for_Modern_C++.docset/Contents/Resources/Documents/assets/stylesheets/main.*.min.css)"
 	# remove "JSON for Modern C++" from page titles
-	find JSON_for_Modern_C++.docset/Contents/Resources/Documents -type f -exec gsed -i 's| - JSON for Modern C++</title>|</title>|' {} +
+	find JSON_for_Modern_C++.docset/Contents/Resources/Documents -type f -exec $(SED) -i 's| - JSON for Modern C++</title>|</title>|' {} +
 	# clean up
 	rm JSON_for_Modern_C++.docset/Contents/Resources/Documents/sitemap.*
 	# generate index
