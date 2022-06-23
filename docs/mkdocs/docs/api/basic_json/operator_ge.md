@@ -15,7 +15,7 @@ bool operator>=(ScalarType lhs, const const_reference rhs) noexcept;  // (2)
    according to the following rules:
     - The comparison always yields `#!cpp false` if (1) either operand is discarded, or (2) either
       operand is `NaN` and the other operand is either `NaN` or any other number.
-    - Otherwise, returns the result of `#!cpp !(lhs < rhs)`.
+    - Otherwise, returns the result of `#!cpp !(lhs < rhs)` (see [**operator<**](operator_lt.md)).
 
 2. Compares wether a JSON value is greater than or equal to a scalar or a scalar is greater than or
    equal to a JSON value by converting the scalar to a JSON value and comparing both JSON values
