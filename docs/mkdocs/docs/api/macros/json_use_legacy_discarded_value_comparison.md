@@ -56,6 +56,19 @@ When the macro is not defined, the library will define it to its default value.
     New code should not depend on it and existing code should try to remove or rewrite
     expressions relying on it.
 
+## Examples
+
+??? example
+
+    The code below switches on the legacy discarded value comparison behavior in the library.
+
+    ```cpp
+    #define JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON 1
+    #include <nlohmann/json.hpp>
+
+    ...
+    ```
+
 ## Version history
 
 - Added in version 3.11.0.

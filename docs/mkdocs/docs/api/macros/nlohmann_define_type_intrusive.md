@@ -40,9 +40,11 @@ See examples below for the concrete generated code.
 
 !!! info "Prerequisites"
 
-    1. The type `type` must be default constructible. See [How can I use `get()` for non-default constructible/non-copyable types?](../../features/arbitrary_types.md#how-can-i-use-get-for-non-default-constructiblenon-copyable-types)
+    1. The type `type` must be default constructible. See [How can I use `get()` for non-default constructible/non-copyable types?][GetNonDefNonCopy]
        for how to overcome this limitation.
     2. The macro must be used inside the type (class/struct).
+
+[GetNonDefNonCopy]: ../../features/arbitrary_types.md#how-can-i-use-get-for-non-default-constructiblenon-copyable-types
 
 !!! warning "Implementation limits"
 
