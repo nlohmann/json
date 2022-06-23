@@ -1,0 +1,114 @@
+{
+    "version": 4,
+    "configurePresets": [
+        {
+            "name": "common",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_PROJECT_nlohmann_json_INCLUDE": "${sourceDir}/cmake/preset-wflags.cmake",
+                "JSON_TestDataDirectory": "$env{JSON_TEST_DATA_DIR}"
+            }
+        },
+        {
+            "name": "default",
+            "displayName": "Default config",
+            "binaryDir": "${sourceDir}/build",
+            "inherits": "common"
+        },
+        {
+            "name": "gcc",
+            "displayName": "GCC config",
+            "binaryDir": "${sourceDir}/build-gcc",
+            "inherits": "common",
+            "cacheVariables": {
+                "CMAKE_CXX_COMPILER": "g++"
+            }
+        },
+        {
+            "name": "clang",
+            "displayName": "Clang config",
+            "binaryDir": "${sourceDir}/build-clang",
+            "inherits": "common",
+            "cacheVariables": {
+                "CMAKE_CXX_COMPILER": "clang++"
+            }
+        },
+        {
+            "name": "gcc-tidy",
+            "displayName": "GCC config (with clang-tidy)",
+            "inherits": "gcc",
+            "cacheVariables": {
+                "CMAKE_CXX_CLANG_TIDY": "clang-tidy"
+            }
+        },
+        {
+            "name": "clang-tidy",
+            "displayName": "Clang config (with clang-tidy)",
+            "inherits": "clang",
+            "cacheVariables": {
+                "CMAKE_CXX_CLANG_TIDY": "clang-tidy"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "common",
+            "hidden": true,
+            "jobs": 8
+        },
+        {
+            "name": "default",
+            "inherits": "common",
+            "configurePreset": "default"
+        },
+        {
+            "name": "gcc",
+            "inherits": "common",
+            "configurePreset": "gcc"
+        },
+        {
+            "name": "clang",
+            "inherits": "common",
+            "configurePreset": "clang"
+        },
+        {
+            "name": "gcc-tidy",
+            "inherits": "common",
+            "configurePreset": "gcc-tidy"
+        },
+        {
+            "name": "clang-tidy",
+            "inherits": "common",
+            "configurePreset": "clang-tidy"
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "common",
+            "hidden": true,
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "jobs": 8,
+                "noTestsAction": "error",
+                "stopOnFailure": true
+            }
+        },
+        {
+            "name": "default",
+            "inherits": "common",
+            "configurePreset": "default"
+        },
+        {
+            "name": "gcc",
+            "inherits": "common",
+            "configurePreset": "gcc"
+        },
+        {
+            "name": "clang",
+            "inherits": "common",
+            "configurePreset": "clang"
+        }
+    ]
+}
