@@ -41,7 +41,6 @@ namespace persons
     std::string name = "";                                                     \
     int age = 0;                                                               \
     json metadata = nullptr;                                                   \
-                                                                               \
     public:                                                                    \
     bool operator==(const ClassName& rhs) const                                \
     {                                                                          \
