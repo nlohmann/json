@@ -37,7 +37,7 @@ using nlohmann::json;
 namespace persons {
 #define PERSON_CLASS_BODY(ClassName, Visibility)                               \
 Visibility:                                                                    \
-    std::string name;                                                          \
+    std::string name = "";                                                     \
     int age = 0;                                                               \
     json metadata = nullptr;                                                   \
                                                                                \
