@@ -34,23 +34,24 @@ SOFTWARE.
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
-namespace persons {
+namespace persons
+{
 #define PERSON_CLASS_BODY(ClassName, Visibility)                               \
-Visibility:                                                                    \
+    Visibility:                                                                \
     std::string name = "";                                                     \
     int age = 0;                                                               \
     json metadata = nullptr;                                                   \
                                                                                \
-  public:                                                                      \
+    public:                                                                    \
     bool operator==(const ClassName& rhs) const                                \
     {                                                                          \
         return name == rhs.name && age == rhs.age && metadata == rhs.metadata; \
     }                                                                          \
     ClassName() = default;                                                     \
     ClassName(std::string name_, int age_, json metadata_)                     \
-      : name(std::move(name_))                                                 \
-      , age(age_)                                                              \
-      , metadata(std::move(metadata_))                                         \
+        : name(std::move(name_))                                               \
+        , age(age_)                                                            \
+        , metadata(std::move(metadata_))                                       \
     {}                                                                         \
     std::string getName() const                                                \
     {                                                                          \
@@ -66,7 +67,7 @@ Visibility:                                                                    \
     }
 
 #define ALPHABET_CLASS_BODY(ClassName, Visibility) \
-  public:                                          \
+    public:                                        \
     bool operator==(const ClassName& other) const  \
     {                                              \
         return a == other.a &&                     \
@@ -96,7 +97,7 @@ Visibility:                                                                    \
                y == other.y &&                     \
                z == other.z;                       \
     }                                              \
-Visibility:                                        \
+    Visibility:                                    \
     int a = 0;                                     \
     int b = 0;                                     \
     int c = 0;                                     \
@@ -220,14 +221,14 @@ struct TestTypePair
 
 #define PERSON_TYPES_TO_TEST                                                            \
     TestTypePair<persons::person_with_private_data>,                                    \
-        TestTypePair<persons::person_without_private_data_1>,                           \
-        TestTypePair<persons::person_without_private_data_2>,                           \
-        TestTypePair<persons::person_t_with_private_data>,                              \
-        TestTypePair<persons::person_t_without_private_data_1>,                         \
-        TestTypePair<persons::person_t_without_private_data_2>,                         \
-        TestTypePair<persons::person_t_with_private_data, nlohmann::ordered_json>,      \
-        TestTypePair<persons::person_t_without_private_data_1, nlohmann::ordered_json>, \
-        TestTypePair<persons::person_t_without_private_data_2, nlohmann::ordered_json>
+    TestTypePair<persons::person_without_private_data_1>,                           \
+    TestTypePair<persons::person_without_private_data_2>,                           \
+    TestTypePair<persons::person_t_with_private_data>,                              \
+    TestTypePair<persons::person_t_without_private_data_1>,                         \
+    TestTypePair<persons::person_t_without_private_data_2>,                         \
+    TestTypePair<persons::person_t_with_private_data, nlohmann::ordered_json>,      \
+    TestTypePair<persons::person_t_without_private_data_1, nlohmann::ordered_json>, \
+    TestTypePair<persons::person_t_without_private_data_2, nlohmann::ordered_json>
 
 TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRUSIVE and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE", PairT, PERSON_TYPES_TO_TEST)
 #undef PERSON_TYPES_TO_TEST
@@ -265,13 +266,13 @@ TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRU
     }
 }
 
-#define PERSON_TYPES_TO_TEST                                                         \
-    TestTypePair<persons::person_with_private_data_2>,                               \
-        TestTypePair<persons::person_without_private_data_3>,                        \
-        TestTypePair<persons::person_t_with_private_data_2>,                         \
-        TestTypePair<persons::person_t_without_private_data_3>,                      \
-        TestTypePair<persons::person_t_with_private_data_2, nlohmann::ordered_json>, \
-        TestTypePair<persons::person_t_without_private_data_3, nlohmann::ordered_json>
+#define PERSON_TYPES_TO_TEST                                                     \
+    TestTypePair<persons::person_with_private_data_2>,                           \
+    TestTypePair<persons::person_without_private_data_3>,                        \
+    TestTypePair<persons::person_t_with_private_data_2>,                         \
+    TestTypePair<persons::person_t_without_private_data_3>,                      \
+    TestTypePair<persons::person_t_with_private_data_2, nlohmann::ordered_json>, \
+    TestTypePair<persons::person_t_without_private_data_3, nlohmann::ordered_json>
 
 TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT", PairT, PERSON_TYPES_TO_TEST)
 #undef PERSON_TYPES_TO_TEST
@@ -326,13 +327,13 @@ TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRU
     }
 }
 
-#define ALPHABET_PAIRS                                                                 \
-    TestTypePair<persons::person_with_private_alphabet>,                               \
-        TestTypePair<persons::person_with_public_alphabet>,                            \
-        TestTypePair<persons::person_t_with_private_alphabet, nlohmann::json>,         \
-        TestTypePair<persons::person_t_with_public_alphabet, nlohmann::json>,          \
-        TestTypePair<persons::person_t_with_private_alphabet, nlohmann::ordered_json>, \
-        TestTypePair<persons::person_t_with_public_alphabet, nlohmann::ordered_json>
+#define ALPHABET_PAIRS                                                             \
+    TestTypePair<persons::person_with_private_alphabet>,                           \
+    TestTypePair<persons::person_with_public_alphabet>,                            \
+    TestTypePair<persons::person_t_with_private_alphabet, nlohmann::json>,         \
+    TestTypePair<persons::person_t_with_public_alphabet, nlohmann::json>,          \
+    TestTypePair<persons::person_t_with_private_alphabet, nlohmann::ordered_json>, \
+    TestTypePair<persons::person_t_with_public_alphabet, nlohmann::ordered_json>
 
 TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/private member variables via NLOHMANN_DEFINE_TYPE_INTRUSIVE and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE", PairT, ALPHABET_PAIRS)
 #undef ALPHABET_PAIRS
