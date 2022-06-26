@@ -36,92 +36,95 @@ using nlohmann::json;
 
 namespace persons
 {
-#define PERSON_CLASS_BODY(ClassName, Visibility)                               \
-    Visibility:                                                                \
-    std::string name = "";                                                     \
-    int age = 0;                                                               \
-    json metadata = nullptr;                                                   \
-    public:                                                                    \
-    bool operator==(const ClassName& rhs) const                                \
-    {                                                                          \
-        return name == rhs.name && age == rhs.age && metadata == rhs.metadata; \
-    }                                                                          \
-    ClassName() = default;                                                     \
-    ClassName(std::string name_, int age_, json metadata_)                     \
-        : name(std::move(name_))                                               \
-        , age(age_)                                                            \
-        , metadata(std::move(metadata_))                                       \
-    {}                                                                         \
-    std::string getName() const                                                \
-    {                                                                          \
-        return name;                                                           \
-    }                                                                          \
-    int getAge() const                                                         \
-    {                                                                          \
-        return age;                                                            \
-    }                                                                          \
-    json getMetadata() const                                                   \
-    {                                                                          \
-        return metadata;                                                       \
+#define PERSON_CLASS_BODY(ClassName, Visibility)                                    \
+    /* NOLINTNEXTLINE(bugprone-macro-parentheses) */                                \
+    Visibility:                                                                     \
+    /* NOLINTNEXTLINE(readability-redundant-string-init): collides with -Weffc++ */ \
+    std::string name = "";                                                          \
+    int age = 0;                                                                    \
+    json metadata = nullptr;                                                        \
+    public:                                                                         \
+    bool operator==(const ClassName& rhs) const                                     \
+    {                                                                               \
+        return name == rhs.name && age == rhs.age && metadata == rhs.metadata;      \
+    }                                                                               \
+    ClassName() = default;                                                          \
+    ClassName(std::string name_, int age_, json metadata_)                          \
+        : name(std::move(name_))                                                    \
+        , age(age_)                                                                 \
+        , metadata(std::move(metadata_))                                            \
+    {}                                                                              \
+    std::string getName() const                                                     \
+    {                                                                               \
+        return name;                                                                \
+    }                                                                               \
+    int getAge() const                                                              \
+    {                                                                               \
+        return age;                                                                 \
+    }                                                                               \
+    json getMetadata() const                                                        \
+    {                                                                               \
+        return metadata;                                                            \
     }
 
-#define ALPHABET_CLASS_BODY(ClassName, Visibility) \
-    public:                                        \
-    bool operator==(const ClassName& other) const  \
-    {                                              \
-        return a == other.a &&                     \
-               b == other.b &&                     \
-               c == other.c &&                     \
-               d == other.d &&                     \
-               e == other.e &&                     \
-               f == other.f &&                     \
-               g == other.g &&                     \
-               h == other.h &&                     \
-               i == other.i &&                     \
-               j == other.j &&                     \
-               k == other.k &&                     \
-               l == other.l &&                     \
-               m == other.m &&                     \
-               n == other.n &&                     \
-               o == other.o &&                     \
-               p == other.p &&                     \
-               q == other.q &&                     \
-               r == other.r &&                     \
-               s == other.s &&                     \
-               t == other.t &&                     \
-               u == other.u &&                     \
-               v == other.v &&                     \
-               w == other.w &&                     \
-               x == other.x &&                     \
-               y == other.y &&                     \
-               z == other.z;                       \
-    }                                              \
-    Visibility:                                    \
-    int a = 0;                                     \
-    int b = 0;                                     \
-    int c = 0;                                     \
-    int d = 0;                                     \
-    int e = 0;                                     \
-    int f = 0;                                     \
-    int g = 0;                                     \
-    int h = 0;                                     \
-    int i = 0;                                     \
-    int j = 0;                                     \
-    int k = 0;                                     \
-    int l = 0;                                     \
-    int m = 0;                                     \
-    int n = 0;                                     \
-    int o = 0;                                     \
-    int p = 0;                                     \
-    int q = 0;                                     \
-    int r = 0;                                     \
-    int s = 0;                                     \
-    int t = 0;                                     \
-    int u = 0;                                     \
-    int v = 0;                                     \
-    int w = 0;                                     \
-    int x = 0;                                     \
-    int y = 0;                                     \
+#define ALPHABET_CLASS_BODY(ClassName, Visibility)   \
+    public:                                          \
+    bool operator==(const ClassName& other) const    \
+    {                                                \
+        return a == other.a &&                       \
+               b == other.b &&                       \
+               c == other.c &&                       \
+               d == other.d &&                       \
+               e == other.e &&                       \
+               f == other.f &&                       \
+               g == other.g &&                       \
+               h == other.h &&                       \
+               i == other.i &&                       \
+               j == other.j &&                       \
+               k == other.k &&                       \
+               l == other.l &&                       \
+               m == other.m &&                       \
+               n == other.n &&                       \
+               o == other.o &&                       \
+               p == other.p &&                       \
+               q == other.q &&                       \
+               r == other.r &&                       \
+               s == other.s &&                       \
+               t == other.t &&                       \
+               u == other.u &&                       \
+               v == other.v &&                       \
+               w == other.w &&                       \
+               x == other.x &&                       \
+               y == other.y &&                       \
+               z == other.z;                         \
+    }                                                \
+    /* NOLINTNEXTLINE(bugprone-macro-parentheses) */ \
+    Visibility:                                      \
+    int a = 0;                                       \
+    int b = 0;                                       \
+    int c = 0;                                       \
+    int d = 0;                                       \
+    int e = 0;                                       \
+    int f = 0;                                       \
+    int g = 0;                                       \
+    int h = 0;                                       \
+    int i = 0;                                       \
+    int j = 0;                                       \
+    int k = 0;                                       \
+    int l = 0;                                       \
+    int m = 0;                                       \
+    int n = 0;                                       \
+    int o = 0;                                       \
+    int p = 0;                                       \
+    int q = 0;                                       \
+    int r = 0;                                       \
+    int s = 0;                                       \
+    int t = 0;                                       \
+    int u = 0;                                       \
+    int v = 0;                                       \
+    int w = 0;                                       \
+    int x = 0;                                       \
+    int y = 0;                                       \
     int z = 0;
 
 class person_with_private_data
@@ -218,8 +221,8 @@ struct TestTypePair
     using BasicJsonType = BasicJsonType_;
 };
 
-#define PERSON_TYPES_TO_TEST                                                            \
-    TestTypePair<persons::person_with_private_data>,                                    \
+#define PERSON_TYPES_TO_TEST                                                        \
+    TestTypePair<persons::person_with_private_data>,                                \
     TestTypePair<persons::person_without_private_data_1>,                           \
     TestTypePair<persons::person_without_private_data_2>,                           \
     TestTypePair<persons::person_t_with_private_data>,                              \
@@ -242,11 +245,11 @@ TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRU
         std::string json_string;
         if (std::is_same<json_t, nlohmann::ordered_json>::value)
         {
-            json_string = "{\"age\":1,\"name\":\"Erik\",\"metadata\":{\"haircuts\":2}}";
+            json_string = R"str({"age":1,"name":"Erik","metadata":{"haircuts":2}})str";
         }
         else
         {
-            json_string = "{\"age\":1,\"metadata\":{\"haircuts\":2},\"name\":\"Erik\"}";
+            json_string = R"str({"age":1,"metadata":{"haircuts":2},"name":"Erik"})str";
         }
         CHECK(json_t(p1).dump() == json_string);
 
@@ -286,11 +289,11 @@ TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRU
         std::string json_string;
         if (std::is_same<json_t, nlohmann::ordered_json>::value)
         {
-            json_string = "{\"age\":0,\"name\":\"\",\"metadata\":null}";
+            json_string = R"str({"age":0,"name":"","metadata":null})str";
         }
         else
         {
-            json_string = "{\"age\":0,\"metadata\":null,\"name\":\"\"}";
+            json_string = R"str({"age":0,"metadata":null,"name":""})str";
         }
         CHECK(json_t(p0).dump() == json_string);
 
@@ -298,11 +301,11 @@ TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRU
         T p1("Erik", 1, {{"haircuts", 2}});
         if (std::is_same<json_t, nlohmann::ordered_json>::value)
         {
-            json_string = "{\"age\":1,\"name\":\"Erik\",\"metadata\":{\"haircuts\":2}}";
+            json_string = R"str({"age":1,"name":"Erik","metadata":{"haircuts":2}})str";
         }
         else
         {
-            json_string = "{\"age\":1,\"metadata\":{\"haircuts\":2},\"name\":\"Erik\"}";
+            json_string = R"str({"age":1,"metadata":{"haircuts":2},"name":"Erik"})str";
         }
         CHECK(json_t(p1).dump() == json_string);
 
