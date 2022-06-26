@@ -56,6 +56,12 @@ When the macro is not defined, the library will define it to its default value.
     New code should not depend on it and existing code should try to remove or rewrite
     expressions relying on it.
 
+!!! hint "CMake option"
+
+    Legacy comparison can also be controlled with the CMake option
+    [`JSON_LegacyDiscardedValueComparison`](../../integration/cmake.md#json_legacydiscardedvaluecomparison)
+    (`OFF` by default) which defines `JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON` accordingly.
+
 ## Examples
 
 ??? example

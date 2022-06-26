@@ -19,6 +19,14 @@ By default, `#!cpp JSON_DISABLE_ENUM_SERIALIZATION` is not defined.
 #undef JSON_DISABLE_ENUM_SERIALIZATION
 ```
 
+## Notes
+
+!!! hint "CMake option"
+
+    Enum serialization can also be controlled with the CMake option
+    [`JSON_DisableEnumSerialization`](../../integration/cmake.md#json_disableenumserialization)
+    (`OFF` by default) which defines `JSON_DISABLE_ENUM_SERIALIZATION` accordingly.
+
 ## Examples
 
 ??? example "Example 1: Disabled behavior"

@@ -11,9 +11,6 @@ When enabled, exception messages contain a [JSON Pointer](../json_pointer/json_p
 triggered the exception. Note that enabling this macro increases the size of every JSON value by one pointer and adds
 some  runtime overhead.
 
-The diagnostics messages can also be controlled with the CMake option `JSON_Diagnostics` (`OFF` by default) which sets
-`JSON_DIAGNOSTICS` accordingly.
-
 ## Default definition
 
 The default value is `0` (extended diagnostics are switched off).
@@ -36,6 +33,12 @@ When the macro is not defined, the library will define it to its default value.
     causing improper behavior.
     
     Where possible, it is still recommended that all code define this the same way for maximum interoperability.
+
+!!! hint "CMake option"
+
+    Diagnostic messages can also be controlled with the CMake option
+    [`JSON_Diagnostics`](../../integration/cmake.md#json_diagnostics) (`OFF` by default)
+    which defines `JSON_DIAGNOSTICS` accordingly.
 
 ## Examples
 
