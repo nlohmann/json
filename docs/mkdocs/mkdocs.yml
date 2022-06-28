@@ -141,6 +141,7 @@ nav:
         - 'is_string': api/basic_json/is_string.md
         - 'is_structured': api/basic_json/is_structured.md
         - 'items': api/basic_json/items.md
+        - 'json_base_class_t': api/basic_json/json_base_class_t.md
         - 'json_serializer': api/basic_json/json_serializer.md
         - 'max_size': api/basic_json/max_size.md
         - 'meta': api/basic_json/meta.md
