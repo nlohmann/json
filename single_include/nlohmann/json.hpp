@@ -3795,7 +3795,8 @@ template<typename OfType, typename T,
          bool OfTypeSigned = std::is_signed<OfType>::value,
          bool TSigned = std::is_signed<T>::value>
 struct value_in_range_of_impl2;
-
+#undef min
+#undef max
 template<typename OfType, typename T>
 struct value_in_range_of_impl2<OfType, T, false, false>
 {
