@@ -4599,15 +4599,15 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <optional>
 #include <utility>
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 
 template <typename T>
-class optional : public std::optional<T>
+class optional
 {
     // *INDENT-OFF*
 
     using base_type = std::optional<T>;
+    using value_type = T;
 
     template <typename U, typename = optional>
     struct has_conversion_operator : std::false_type { };
@@ -4659,17 +4659,29 @@ class optional : public std::optional<T>
 
     struct noexcept_fix_t {};
 
+    base_type base_value;
+
   public:
 
-    const base_type& base() const
+    base_type& base() &
     {
-        return *this;
+        return base_value;
+    }
+
+    const base_type& base() const &
+    {
+        return base_value;
+    }
+
+    base_type&& base() &&
+    {
+        return std::move(base_value);
     }
 
     constexpr optional() noexcept(noexcept(std::optional<noexcept_fix_t>())) = default;
 
     constexpr optional(std::nullopt_t /* unused */) noexcept
-        : base_type(std::nullopt)
+        : base_value(std::nullopt)
     {
     }
 
@@ -4678,7 +4690,7 @@ class optional : public std::optional<T>
         noexcept(noexcept(
             base_type(std::forward<U>(value).operator optional())
          )) :
-            base_type(std::forward<U>(value).operator optional())
+            base_value(std::forward<U>(value).operator optional())
     {
     }
 
@@ -4687,7 +4699,7 @@ class optional : public std::optional<T>
         noexcept(noexcept(
             base_type(std::forward<U>(value))
         )) :
-            base_type(std::forward<U>(value))
+            base_value(std::forward<U>(value))
     {
     }
 
@@ -4697,7 +4709,7 @@ class optional : public std::optional<T>
         noexcept(noexcept(
             base_type(std::forward<U>(value))
         )) :
-            base_type(std::forward<U>(value))
+            base_value(std::forward<U>(value))
     {
     }
 
@@ -4707,7 +4719,7 @@ class optional : public std::optional<T>
         noexcept(noexcept(
             base_type(std::in_place, std::forward<U>(u), std::forward<Args>(args)...)
         )) :
-            base_type(std::in_place, std::forward<U>(u), std::forward<Args>(args)...)
+            base_value(std::in_place, std::forward<U>(u), std::forward<Args>(args)...)
     {
     }
 
@@ -4717,50 +4729,191 @@ class optional : public std::optional<T>
         noexcept(noexcept(
             base_type(std::in_place, u, std::forward<Args>(args)...)
         )) :
-            base_type(std::in_place, u, std::forward<Args>(args)...)
+            base_value(std::in_place, u, std::forward<Args>(args)...)
     {
     }
+
+    constexpr T& operator *() & noexcept { return *base_value; }
+    constexpr const T& operator *() const& noexcept { return *base_value; }
+
+    constexpr T&& operator *() && noexcept { return static_cast<T&&>(*base_value); }
+    constexpr const T&& operator *() const&& noexcept { return static_cast<const T&&>(*base_value); }
+
+    constexpr T* operator ->() noexcept { return base_value.operator ->(); }
+    constexpr const T* operator ->() const noexcept { return base_value.operator ->(); }
+
+    operator base_type& () & { return base_value; }
+    operator base_type&& () && { return std::move(base_value); }
 
     // *INDENT-ON*
 };
 
-template<class T, class U>
-constexpr bool operator == (const optional<T>& lhs, const optional<U>& rhs)
+namespace detail::opt
 {
-    return lhs.base() == rhs.base();
+
+template <typename T> const T& cmp_val(const T& v)
+{
+    return v;
+}
+template <typename T> const std::optional<T>& cmp_val(const optional<T>& v)
+{
+    return v.base();
+}
+template <typename T> void cmp_val(const std::optional<T>& v) = delete;
+
+}  // namespace detail::opt
+
+#ifdef JSON_HAS_CPP_20
+
+template <typename T, typename U>
+auto operator == (const optional<T>& lhs, const U& rhs) ->
+decltype(detail::opt::cmp_val(lhs) == detail::opt::cmp_val(rhs))
+{
+    return detail::opt::cmp_val(lhs) == detail::opt::cmp_val(rhs);
+}
+
+// *INDENT-OFF*
+
+template <typename T, typename U>
+auto operator <=> (const optional<T>& lhs, const U& rhs) ->
+decltype(detail::opt::cmp_val(lhs) <=> detail::opt::cmp_val(rhs))
+{
+    return detail::opt::cmp_val(lhs) <=> detail::opt::cmp_val(rhs);
+}
+
+// *INDENT-ON*
+
+#else // JSON_HAS_CPP_20
+
+template<class T, class U>
+constexpr auto operator == (const optional<T>& lhs, const optional<U>& rhs) ->
+decltype(detail::opt::cmp_val(lhs) == detail::opt::cmp_val(rhs))
+{
+    return detail::opt::cmp_val(lhs) == detail::opt::cmp_val(rhs);
+}
+
+template <class T, class U>
+constexpr auto operator == (const optional<T>& lhs, const U& rhs) ->
+decltype(detail::opt::cmp_val(lhs) == detail::opt::cmp_val(rhs))
+{
+    return detail::opt::cmp_val(lhs) == detail::opt::cmp_val(rhs);
+}
+
+template <class T, class U>
+constexpr auto operator == (const T& lhs, const optional<U>& rhs) ->
+decltype(detail::opt::cmp_val(lhs) == detail::opt::cmp_val(rhs))
+{
+    return detail::opt::cmp_val(lhs) == detail::opt::cmp_val(rhs);
 }
 
 template<class T, class U>
-constexpr bool operator != (const optional<T>& lhs, const optional<U>& rhs)
+constexpr auto operator != (const optional<T>& lhs, const optional<U>& rhs) ->
+decltype(detail::opt::cmp_val(lhs) != detail::opt::cmp_val(rhs))
 {
-    return lhs.base() != rhs.base();
+    return detail::opt::cmp_val(lhs) != detail::opt::cmp_val(rhs);
+}
+
+template <class T, class U>
+constexpr auto operator != (const optional<T>& lhs, const U& rhs) ->
+decltype(detail::opt::cmp_val(lhs) != detail::opt::cmp_val(rhs))
+{
+    return detail::opt::cmp_val(lhs) != detail::opt::cmp_val(rhs);
+}
+
+template <class T, class U>
+constexpr auto operator != (const T& lhs, const optional<U>& rhs) ->
+decltype(detail::opt::cmp_val(lhs) != detail::opt::cmp_val(rhs))
+{
+    return detail::opt::cmp_val(lhs) != detail::opt::cmp_val(rhs);
 }
 
 template<class T, class U>
-constexpr bool operator < (const optional<T>& lhs, const optional<U>& rhs)
+constexpr auto operator < (const optional<T>& lhs, const optional<U>& rhs) ->
+decltype(detail::opt::cmp_val(lhs) < detail::opt::cmp_val(rhs))
 {
-    return lhs.base() < rhs.base();
+    return detail::opt::cmp_val(lhs) < detail::opt::cmp_val(rhs);
+}
+
+template <class T, class U>
+constexpr auto operator < (const optional<T>& lhs, const U& rhs) ->
+decltype(detail::opt::cmp_val(lhs) < detail::opt::cmp_val(rhs))
+{
+    return detail::opt::cmp_val(lhs) < detail::opt::cmp_val(rhs);
+}
+
+template <class T, class U>
+constexpr auto operator < (const T& lhs, const optional<U>& rhs) ->
+decltype(detail::opt::cmp_val(lhs) < detail::opt::cmp_val(rhs))
+{
+    return detail::opt::cmp_val(lhs) < detail::opt::cmp_val(rhs);
 }
 
 template<class T, class U>
-constexpr bool operator <= (const optional<T>& lhs, const optional<U>& rhs)
+constexpr auto operator <= (const optional<T>& lhs, const optional<U>& rhs) ->
+decltype(detail::opt::cmp_val(lhs) <= detail::opt::cmp_val(rhs))
 {
-    return lhs.base() <= rhs.base();
+    return detail::opt::cmp_val(lhs) <= detail::opt::cmp_val(rhs);
+}
+
+template <class T, class U>
+constexpr auto operator <= (const optional<T>& lhs, const U& rhs) ->
+decltype(detail::opt::cmp_val(lhs) <= detail::opt::cmp_val(rhs))
+{
+    return detail::opt::cmp_val(lhs) <= detail::opt::cmp_val(rhs);
+}
+
+template <class T, class U>
+constexpr auto operator <= (const T& lhs, const optional<U>& rhs) ->
+decltype(detail::opt::cmp_val(lhs) <= detail::opt::cmp_val(rhs))
+{
+    return detail::opt::cmp_val(lhs) <= detail::opt::cmp_val(rhs);
 }
 
 template<class T, class U>
-constexpr bool operator > (const optional<T>& lhs, const optional<U>& rhs)
+constexpr auto operator > (const optional<T>& lhs, const optional<U>& rhs) ->
+decltype(detail::opt::cmp_val(lhs) > detail::opt::cmp_val(rhs))
 {
-    return lhs.base() > rhs.base();
+    return detail::opt::cmp_val(lhs) > detail::opt::cmp_val(rhs);
+}
+
+template <class T, class U>
+constexpr auto operator > (const optional<T>& lhs, const U& rhs) ->
+decltype(detail::opt::cmp_val(lhs) > detail::opt::cmp_val(rhs))
+{
+    return detail::opt::cmp_val(lhs) > detail::opt::cmp_val(rhs);
+}
+
+template <class T, class U>
+constexpr auto operator > (const T& lhs, const optional<U>& rhs) ->
+decltype(detail::opt::cmp_val(lhs) > detail::opt::cmp_val(rhs))
+{
+    return detail::opt::cmp_val(lhs) > detail::opt::cmp_val(rhs);
 }
 
 template<class T, class U>
-constexpr bool operator >= (const optional<T>& lhs, const optional<U>& rhs)
+constexpr auto operator >= (const optional<T>& lhs, const optional<U>& rhs) ->
+decltype(detail::opt::cmp_val(lhs) >= detail::opt::cmp_val(rhs))
 {
-    return lhs.base() >= rhs.base();
+    return detail::opt::cmp_val(lhs) >= detail::opt::cmp_val(rhs);
 }
 
-}  // namespace nlohmann
+template <class T, class U>
+constexpr auto operator >= (const optional<T>& lhs, const U& rhs) ->
+decltype(detail::opt::cmp_val(lhs) >= detail::opt::cmp_val(rhs))
+{
+    return detail::opt::cmp_val(lhs) >= detail::opt::cmp_val(rhs);
+}
+
+template <class T, class U>
+constexpr auto operator >= (const T& lhs, const optional<U>& rhs) ->
+decltype(detail::opt::cmp_val(lhs) >= detail::opt::cmp_val(rhs))
+{
+    return detail::opt::cmp_val(lhs) >= detail::opt::cmp_val(rhs);
+}
+
+#endif // JSON_HAS_CPP_20
+
+NLOHMANN_JSON_NAMESPACE_END
 
 #endif // JSON_HAS_CPP_17
 
@@ -4794,7 +4947,7 @@ void from_json(const BasicJsonType& j, std::optional<T>& opt)
 }
 
 template<typename BasicJsonType, typename T>
-void from_json(const BasicJsonType& j, nlohmann::optional<T>& opt)
+void from_json(const BasicJsonType& j, optional<T>& opt)
 {
     if (j.is_null())
     {
@@ -5789,6 +5942,13 @@ void to_json(BasicJsonType& j, const std::optional<T>& opt) noexcept
     {
         j = nullptr;
     }
+}
+
+template<typename BasicJsonType, typename T,
+         enable_if_t<std::is_constructible<BasicJsonType, T>::value, int> = 0>
+void to_json(BasicJsonType& j, const optional<T>& opt) noexcept
+{
+    to_json(j, opt.base());
 }
 #endif
 

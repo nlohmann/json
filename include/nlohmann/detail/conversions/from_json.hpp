@@ -59,7 +59,7 @@ void from_json(const BasicJsonType& j, std::optional<T>& opt)
 }
 
 template<typename BasicJsonType, typename T>
-void from_json(const BasicJsonType& j, nlohmann::optional<T>& opt)
+void from_json(const BasicJsonType& j, optional<T>& opt)
 {
     if (j.is_null())
     {

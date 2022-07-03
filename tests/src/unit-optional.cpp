@@ -113,12 +113,12 @@ TEST_CASE("nlohmann::optional copy")
     {
         opt1 = std::as_const(opt2);
         CHECK(*opt1 == 222);
-        CHECK(*opt_int(std::as_const(opt1)) == 222);
+        CHECK(*opt_int(std::as_const(opt1).base()) == 222);
     }
 
     SECTION("2")
     {
-        opt2 = std::as_const(opt1);
+        opt2 = std::as_const(opt1).base();
         CHECK(*opt2 == 111);
         CHECK(*opt_int(std::as_const(opt2)) == 111);
     }
