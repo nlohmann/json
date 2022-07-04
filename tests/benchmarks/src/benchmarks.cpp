@@ -1,6 +1,8 @@
 #include "benchmark/benchmark.h"
 #include <nlohmann/json.hpp>
 #include <fstream>
+#include <numeric>
+#include <vector>
 #include <test_data.hpp>
 
 using json = nlohmann::json;
@@ -106,5 +108,64 @@ BENCHMARK_CAPTURE(Dump, unsigned_ints / 4,     TEST_DATA_DIRECTORY "/regression/
 BENCHMARK_CAPTURE(Dump, small_signed_ints / -, TEST_DATA_DIRECTORY "/regression/small_signed_ints.json",      -1);
 BENCHMARK_CAPTURE(Dump, small_signed_ints / 4, TEST_DATA_DIRECTORY "/regression/small_signed_ints.json",      4);
 
+
+//////////////////////////////////////////////////////////////////////////////
+// serialize CBOR
+//////////////////////////////////////////////////////////////////////////////
+static void ToCbor(benchmark::State& state, const char* filename)
+{
+    std::ifstream f(filename);
+    std::string str((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
+    json j = json::parse(str);
+
+    while (state.KeepRunning())
+    {
+        json::to_cbor(j);
+    }
+
+    state.SetBytesProcessed(state.iterations() * json::to_cbor(j).size());
+}
+BENCHMARK_CAPTURE(ToCbor, jeopardy,          TEST_DATA_DIRECTORY "/jeopardy/jeopardy.json");
+BENCHMARK_CAPTURE(ToCbor, canada,            TEST_DATA_DIRECTORY "/nativejson-benchmark/canada.json");
+BENCHMARK_CAPTURE(ToCbor, citm_catalog,      TEST_DATA_DIRECTORY "/nativejson-benchmark/citm_catalog.json");
+BENCHMARK_CAPTURE(ToCbor, twitter,           TEST_DATA_DIRECTORY "/nativejson-benchmark/twitter.json");
+BENCHMARK_CAPTURE(ToCbor, floats,            TEST_DATA_DIRECTORY "/regression/floats.json");
+BENCHMARK_CAPTURE(ToCbor, signed_ints,       TEST_DATA_DIRECTORY "/regression/signed_ints.json");
+BENCHMARK_CAPTURE(ToCbor, unsigned_ints,     TEST_DATA_DIRECTORY "/regression/unsigned_ints.json");
+BENCHMARK_CAPTURE(ToCbor, small_signed_ints, TEST_DATA_DIRECTORY "/regression/small_signed_ints.json");
+
+//////////////////////////////////////////////////////////////////////////////
+// serialize binary CBOR
+//////////////////////////////////////////////////////////////////////////////
+static void BinaryToCbor(benchmark::State& state)
+{
+    std::vector<uint8_t> data(256);
+    std::iota(data.begin(), data.end(), 0);
+
+    auto it = data.begin();
+    std::vector<uint8_t> in;
+    in.reserve(state.range(0));
+    for (int i = 0; i < state.range(0); ++i)
+    {
+        if (it == data.end())
+        {
+            it = data.begin();
+        }
+
+        in.push_back(*it);
+        ++it;
+    }
+
+    json::binary_t bin{in};
+    json j{{"type", "binary"}, {"data", bin}};
+
+    while (state.KeepRunning())
+    {
+        json::to_cbor(j);
+    }
+
+    state.SetBytesProcessed(state.iterations() * json::to_cbor(j).size());
+}
+BENCHMARK(BinaryToCbor)->RangeMultiplier(2)->Range(8, 8 << 12);
 
 BENCHMARK_MAIN();
