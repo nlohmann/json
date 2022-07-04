@@ -10,6 +10,7 @@
 #include <vector> // vector
 
 #include <nlohmann/detail/macro_scope.hpp>
+#include <nlohmann/detail/meta/type_traits.hpp>
 
 namespace nlohmann
 {
@@ -52,21 +53,50 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
                 return {it, false};
             }
         }
-        Container::emplace_back(key, t);
-        return {--this->end(), true};
+        Container::emplace_back(key, std::forward<T>(t));
+        return {std::prev(this->end()), true};
     }
 
-    T& operator[](const Key& key)
+    template<class KeyType, detail::enable_if_t<
+                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+    std::pair<iterator, bool> emplace(KeyType && key, T && t)
+    {
+        for (auto it = this->begin(); it != this->end(); ++it)
+        {
+            if (m_compare(it->first, key))
+            {
+                return {it, false};
+            }
+        }
+        Container::emplace_back(std::forward<KeyType>(key), std::forward<T>(t));
+        return {std::prev(this->end()), true};
+    }
+
+    T& operator[](const key_type& key)
     {
         return emplace(key, T{}).first->second;
     }
 
-    const T& operator[](const Key& key) const
+    template<class KeyType, detail::enable_if_t<
+                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+    T & operator[](KeyType && key)
+    {
+        return emplace(std::forward<KeyType>(key), T{}).first->second;
+    }
+
+    const T& operator[](const key_type& key) const
     {
         return at(key);
     }
 
-    T& at(const Key& key)
+    template<class KeyType, detail::enable_if_t<
+                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+    const T & operator[](KeyType && key) const
+    {
+        return at(std::forward<KeyType>(key));
+    }
+
+    T& at(const key_type& key)
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
@@ -79,7 +109,9 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
         JSON_THROW(std::out_of_range("key not found"));
     }
 
-    const T& at(const Key& key) const
+    template<class KeyType, detail::enable_if_t<
+                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+    T & at(KeyType && key)
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
@@ -92,7 +124,56 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
         JSON_THROW(std::out_of_range("key not found"));
     }
 
-    size_type erase(const Key& key)
+    const T& at(const key_type& key) const
+    {
+        for (auto it = this->begin(); it != this->end(); ++it)
+        {
+            if (m_compare(it->first, key))
+            {
+                return it->second;
+            }
+        }
+
+        JSON_THROW(std::out_of_range("key not found"));
+    }
+
+    template<class KeyType, detail::enable_if_t<
+                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+    const T & at(KeyType && key) const
+    {
+        for (auto it = this->begin(); it != this->end(); ++it)
+        {
+            if (m_compare(it->first, key))
+            {
+                return it->second;
+            }
+        }
+
+        JSON_THROW(std::out_of_range("key not found"));
+    }
+
+    size_type erase(const key_type& key)
+    {
+        for (auto it = this->begin(); it != this->end(); ++it)
+        {
+            if (m_compare(it->first, key))
+            {
+                // Since we cannot move const Keys, re-construct them in place
+                for (auto next = it; ++next != this->end(); ++it)
+                {
+                    it->~value_type(); // Destroy but keep allocation
+                    new (&*it) value_type{std::move(*next)};
+                }
+                Container::pop_back();
+                return 1;
+            }
+        }
+        return 0;
+    }
+
+    template<class KeyType, detail::enable_if_t<
+                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+    size_type erase(KeyType && key)
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
@@ -118,6 +199,11 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
 
     iterator erase(iterator first, iterator last)
     {
+        if (first == last)
+        {
+            return first;
+        }
+
         const auto elements_affected = std::distance(first, last);
         const auto offset = std::distance(Container::begin(), first);
 
@@ -164,7 +250,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
         return Container::begin() + offset;
     }
 
-    size_type count(const Key& key) const
+    size_type count(const key_type& key) const
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
@@ -176,7 +262,21 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
         return 0;
     }
 
-    iterator find(const Key& key)
+    template<class KeyType, detail::enable_if_t<
+                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+    size_type count(KeyType && key) const
+    {
+        for (auto it = this->begin(); it != this->end(); ++it)
+        {
+            if (m_compare(it->first, key))
+            {
+                return 1;
+            }
+        }
+        return 0;
+    }
+
+    iterator find(const key_type& key)
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
@@ -188,7 +288,21 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
         return Container::end();
     }
 
-    const_iterator find(const Key& key) const
+    template<class KeyType, detail::enable_if_t<
+                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+    iterator find(KeyType && key)
+    {
+        for (auto it = this->begin(); it != this->end(); ++it)
+        {
+            if (m_compare(it->first, key))
+            {
+                return it;
+            }
+        }
+        return Container::end();
+    }
+
+    const_iterator find(const key_type& key) const
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
