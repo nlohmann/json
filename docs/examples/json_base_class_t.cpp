@@ -54,8 +54,6 @@ void visitor_adaptor_with_metadata::do_visit(const Ptr& ptr, const Fnc& fnc) con
                 j.at(i).do_visit(ptr / std::to_string(i), fnc);
             }
             break;
-        case value_t::discarded:
-            break;
         case value_t::null:
         case value_t::string:
         case value_t::boolean:
@@ -63,8 +61,11 @@ void visitor_adaptor_with_metadata::do_visit(const Ptr& ptr, const Fnc& fnc) con
         case value_t::number_unsigned:
         case value_t::number_float:
         case value_t::binary:
-        default:
             fnc(ptr, j);
+            break;
+        case value_t::discarded:
+        default:
+            break;
     }
 }
 

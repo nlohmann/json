@@ -1204,12 +1204,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @brief move constructor
     /// @sa https://json.nlohmann.me/api/basic_json/basic_json/
     basic_json(basic_json&& other) noexcept
-        : json_base_class_t(static_cast < json_base_class_t&& > (other)),
+        : json_base_class_t(std::move(other)),
           m_type(std::move(other.m_type)),
           m_value(std::move(other.m_value))
     {
         // check that passed value is valid
-        other.assert_invariant(false);
+        other.assert_invariant(false); // NOLINT(bugprone-use-after-move,hicpp-invalid-access-moved)
 
         // invalidate payload
         other.m_type = value_t::null;
