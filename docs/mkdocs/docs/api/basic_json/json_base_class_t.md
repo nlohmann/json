@@ -18,7 +18,7 @@ Examples for such functionality might be metadata, additional member functions (
 
 The default value for `CustomBaseClass` is `void`. In this case an empty base class is used and no additional functionality is injected.
 
-#### Limits
+#### Limitations
 
 The type `CustomBaseClass` has to be a default constructible class.
 `basic_json` only supports  copy/move construction/assignement if `CustomBaseClass` does so as well.
