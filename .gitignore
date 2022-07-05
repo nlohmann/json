@@ -23,6 +23,8 @@
 /tests/parse_*_fuzzer
 /tests/corpus_*
 
+CMakeUserPresets.json
+
 /docs/mkdocs/docs/examples/
 /docs/mkdocs/docs/__pycache__/
 /docs/mkdocs/site/
