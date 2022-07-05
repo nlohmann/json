@@ -21,7 +21,7 @@ The default value for `CustomBaseClass` is `void`. In this case an empty base cl
 #### Limits
 
 The type `CustomBaseClass` has to be a default constructible class.
-`basic_json` only supports  copy/move constructor/assignement if `CustomBaseClass` does so as well.
+`basic_json` only supports  copy/move construction/assignement if `CustomBaseClass` does so as well.
 
 ## Examples
 
