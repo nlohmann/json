@@ -5,7 +5,7 @@ using json_base_class_t = detail::json_base_class<CustomBaseClass>;
 ```
 
 The base class used to inject custom functionality into each instance of `basic_json`.
-Examples for such functionality might be metadata, additional member functions (e.g. visitors) or other application specific code.
+Examples of such functionality might be metadata, additional member functions (e.g. visitors), or other application-specific code.
 
 ## Template parameters
 
