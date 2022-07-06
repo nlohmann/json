@@ -12,6 +12,7 @@
 
 /.vs/
 /.vscode/
+/out/
 
 # clangd cache
 /.cache/
