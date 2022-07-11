@@ -678,7 +678,7 @@ class serializer
     template <typename NumberType, enable_if_t<std::numeric_limits<NumberType>::is_signed, int> = 0>
     bool is_negative_number(NumberType x)
     {
-        return x < NumberType(0);
+        return x < 0;
     }
 
     template < typename NumberType, enable_if_t < !std::numeric_limits<NumberType>::is_signed, int > = 0 >
@@ -721,7 +721,7 @@ class serializer
         };
 
         // special case for "0"
-        if (x == NumberType(0))
+        if (x == 0)
         {
             o->write_character('0');
             return;
@@ -757,16 +757,15 @@ class serializer
 
         // Fast int2ascii implementation inspired by "Fastware" talk by Andrei Alexandrescu
         // See: https://www.youtube.com/watch?v=o4-CwDo2zpg
-        const NumberType hundred = 100;
-        while (abs_value >= hundred)
+        while (abs_value >= 100)
         {
-            const auto digits_index = static_cast<unsigned>((abs_value % hundred));
-            abs_value /= hundred;
+            const auto digits_index = static_cast<unsigned>((abs_value % 100));
+            abs_value /= 100;
             *(--buffer_ptr) = digits_to_99[digits_index][1];
             *(--buffer_ptr) = digits_to_99[digits_index][0];
         }
 
-        if (abs_value >= NumberType(10))
+        if (abs_value >= 10)
         {
             const auto digits_index = static_cast<unsigned>(abs_value);
             *(--buffer_ptr) = digits_to_99[digits_index][1];

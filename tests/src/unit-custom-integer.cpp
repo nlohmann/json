@@ -43,7 +43,7 @@ class wrapped_int
         return val;
     }
     wrapped_int() = default;
-    wrapped_int(T val) : val(val) {}
+    /* implicit */ wrapped_int(T val) : val(val) {}
 
     bool operator==(const wrapped_int& other) const
     {
@@ -59,37 +59,29 @@ class wrapped_int
     }
     bool operator%(const wrapped_int& other) const
     {
-        return static_cast<T>(*this) % static_cast<T>(other.val);
+        return static_cast<T>(*this) % static_cast<T>(other);
     }
     wrapped_int& operator/=(const wrapped_int& other)
     {
-        if (val != nullptr)
-        {
-            *val /= static_cast<T>(other.val);
-        }
+        val /= static_cast<T>(other);
         return *this;
     }
     bool operator<(const wrapped_int& other) const
     {
-        return static_cast<T>(*this) <  static_cast<T>(other.val);
+        return static_cast<T>(*this) < static_cast<T>(other);
     }
     bool operator<=(const wrapped_int& other) const
     {
-        return static_cast<T>(*this) <=  static_cast<T>(other.val);
-    }
-
-    friend void swap(wrapped_int& self, wrapped_int& other)
-    {
-        swap(self.val, other.val);
+        return static_cast<T>(*this) <= static_cast<T>(other);
     }
 };
 
 template<typename T> class std::numeric_limits<wrapped_int<T>>
 {
   public:
+    static constexpr bool is_specialized = std::numeric_limits<T>::is_specialized;
     static constexpr bool is_signed = std::numeric_limits<T>::is_signed;
     static constexpr bool is_integer = std::numeric_limits<T>::is_integer;
-    static constexpr bool is_specialized = std::numeric_limits<T>::is_specialized;
 };
 
 TEST_CASE("custom integer types")
