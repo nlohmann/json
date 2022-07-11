@@ -86,11 +86,11 @@ template<typename T> class std::numeric_limits<wrapped_int<T>>
 
 TEST_CASE("custom integer types")
 {
-    using json = nlohmann::basic_json <
-                 std::map, std::vector, std::string, bool,
-                 wrapped_int<std::int64_t>, wrapped_int<std::uint64_t>, double, std::allocator >;
+    using my_json = nlohmann::basic_json <
+                    std::map, std::vector, std::string, bool,
+                    wrapped_int<std::int64_t>, wrapped_int<std::uint64_t>, double, std::allocator >;
     std::string data = "[1,2,-3,-4]";
-    json as_json = json::parse(data.begin(), data.end());
+    my_json as_json = my_json::parse(data.begin(), data.end());
     wrapped_int<std::uint64_t> i1 = as_json[1];
     wrapped_int<std::int64_t> i2 = as_json[2];
     CHECK(i1 == wrapped_int<std::uint64_t>(2));
