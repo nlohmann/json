@@ -54,7 +54,7 @@ struct external_constructor<value_t::boolean>
     {
         j.m_value.destroy(j.m_type);
         j.m_type = value_t::boolean;
-        j.m_value = b;
+        new (&j.m_value) typename BasicJsonType::json_value(b);
         j.assert_invariant();
     }
 };
@@ -67,7 +67,7 @@ struct external_constructor<value_t::string>
     {
         j.m_value.destroy(j.m_type);
         j.m_type = value_t::string;
-        j.m_value = s;
+        new (&j.m_value) typename BasicJsonType::json_value(s);
         j.assert_invariant();
     }
 
@@ -76,7 +76,7 @@ struct external_constructor<value_t::string>
     {
         j.m_value.destroy(j.m_type);
         j.m_type = value_t::string;
-        j.m_value = std::move(s);
+        new (&j.m_value) typename BasicJsonType::json_value(std::move(s));
         j.assert_invariant();
     }
 
@@ -100,7 +100,7 @@ struct external_constructor<value_t::binary>
     {
         j.m_value.destroy(j.m_type);
         j.m_type = value_t::binary;
-        j.m_value = typename BasicJsonType::binary_t(b);
+        new (&j.m_value) typename BasicJsonType::json_value(typename BasicJsonType::binary_t(b));
         j.assert_invariant();
     }
 
@@ -109,7 +109,7 @@ struct external_constructor<value_t::binary>
     {
         j.m_value.destroy(j.m_type);
         j.m_type = value_t::binary;
-        j.m_value = typename BasicJsonType::binary_t(std::move(b));
+        new (&j.m_value) typename BasicJsonType::json_value(typename BasicJsonType::binary_t(std::move(b)));
         j.assert_invariant();
     }
 };
@@ -122,7 +122,7 @@ struct external_constructor<value_t::number_float>
     {
         j.m_value.destroy(j.m_type);
         j.m_type = value_t::number_float;
-        j.m_value = val;
+        new (&j.m_value) typename BasicJsonType::json_value(val);
         j.assert_invariant();
     }
 };
@@ -135,7 +135,7 @@ struct external_constructor<value_t::number_unsigned>
     {
         j.m_value.destroy(j.m_type);
         j.m_type = value_t::number_unsigned;
-        j.m_value = val;
+        new (&j.m_value) typename BasicJsonType::json_value(val);
         j.assert_invariant();
     }
 };
@@ -148,7 +148,7 @@ struct external_constructor<value_t::number_integer>
     {
         j.m_value.destroy(j.m_type);
         j.m_type = value_t::number_integer;
-        j.m_value = val;
+        new (&j.m_value) typename BasicJsonType::json_value(val);
         j.assert_invariant();
     }
 };
@@ -161,7 +161,7 @@ struct external_constructor<value_t::array>
     {
         j.m_value.destroy(j.m_type);
         j.m_type = value_t::array;
-        j.m_value = arr;
+        new (&j.m_value) typename BasicJsonType::json_value(arr);
         j.set_parents();
         j.assert_invariant();
     }
@@ -171,7 +171,7 @@ struct external_constructor<value_t::array>
     {
         j.m_value.destroy(j.m_type);
         j.m_type = value_t::array;
-        j.m_value = std::move(arr);
+        new (&j.m_value) typename BasicJsonType::json_value(std::move(arr));
         j.set_parents();
         j.assert_invariant();
     }
@@ -196,7 +196,7 @@ struct external_constructor<value_t::array>
     {
         j.m_value.destroy(j.m_type);
         j.m_type = value_t::array;
-        j.m_value = value_t::array;
+        new (&j.m_value) typename BasicJsonType::json_value(value_t::array);
         j.m_value.array->reserve(arr.size());
         for (const bool x : arr)
         {
@@ -212,7 +212,7 @@ struct external_constructor<value_t::array>
     {
         j.m_value.destroy(j.m_type);
         j.m_type = value_t::array;
-        j.m_value = value_t::array;
+        new (&j.m_value) typename BasicJsonType::json_value(value_t::array);
         j.m_value.array->resize(arr.size());
         if (arr.size() > 0)
         {
@@ -231,7 +231,7 @@ struct external_constructor<value_t::object>
     {
         j.m_value.destroy(j.m_type);
         j.m_type = value_t::object;
-        j.m_value = obj;
+        new (&j.m_value) typename BasicJsonType::json_value(obj);
         j.set_parents();
         j.assert_invariant();
     }
@@ -241,7 +241,7 @@ struct external_constructor<value_t::object>
     {
         j.m_value.destroy(j.m_type);
         j.m_type = value_t::object;
-        j.m_value = std::move(obj);
+        new (&j.m_value) typename BasicJsonType:: json_value(std::move(obj));
         j.set_parents();
         j.assert_invariant();
     }
