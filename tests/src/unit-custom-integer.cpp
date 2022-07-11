@@ -43,7 +43,11 @@ class wrapped_int
         return val;
     }
     wrapped_int() = default;
-    /* implicit */ wrapped_int(T val) : val(val) {}
+    explicit wrapped_int(T val) : val(val) {}
+
+    // allow implicit conversions from anything that `T` allows conversions from
+    template<typename T2, typename = typename std::enable_if<std::is_convertible<T2, T>::value>::type>
+    wrapped_int(T2 val) : val(val) {}
 
     bool operator==(const wrapped_int& other) const
     {
