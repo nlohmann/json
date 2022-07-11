@@ -311,6 +311,9 @@ The number types can be changed with template parameters.
       in case of overflow.
     - The type for unsigned integers must be convertible from `#!c unsigned long long`.  The type for floating-point
       numbers is used in case of overflow.
+    - Custom `struct`s and `class`es are supported for signed and unsigned integers, providing they are trivially
+      default-constructible, move-constructible, and destructible. This enables extended- but not dynamic-length
+      integers.
     - The types for signed and unsigned integers must be distinct, see
       [#2573](https://github.com/nlohmann/json/issues/2573).
     - Only `#!c double`, `#!c float`, and `#!c long double` are supported for floating-point numbers.
