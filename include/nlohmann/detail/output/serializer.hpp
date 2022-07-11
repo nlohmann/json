@@ -675,13 +675,13 @@ class serializer
     }
 
     // templates to avoid warnings about useless casts
-    template <typename NumberType, enable_if_t<std::is_signed<NumberType>::value, int> = 0>
+    template <typename NumberType, enable_if_t<std::numeric_limits<NumberType>::is_signed, int> = 0>
     bool is_negative_number(NumberType x)
     {
-        return x < 0;
+        return x < NumberType(0);
     }
 
-    template < typename NumberType, enable_if_t <std::is_unsigned<NumberType>::value, int > = 0 >
+    template < typename NumberType, enable_if_t < !std::numeric_limits<NumberType>::is_signed, int > = 0 >
     bool is_negative_number(NumberType /*unused*/)
     {
         return false;
@@ -697,7 +697,7 @@ class serializer
     @tparam NumberType either @a number_integer_t or @a number_unsigned_t
     */
     template < typename NumberType, detail::enable_if_t <
-                   std::is_integral<NumberType>::value ||
+                   std::numeric_limits<NumberType>::is_integer ||
                    std::is_same<NumberType, number_unsigned_t>::value ||
                    std::is_same<NumberType, number_integer_t>::value ||
                    std::is_same<NumberType, binary_char_t>::value,
@@ -721,7 +721,7 @@ class serializer
         };
 
         // special case for "0"
-        if (x == 0)
+        if (x == NumberType(0))
         {
             o->write_character('0');
             return;
@@ -757,15 +757,16 @@ class serializer
 
         // Fast int2ascii implementation inspired by "Fastware" talk by Andrei Alexandrescu
         // See: https://www.youtube.com/watch?v=o4-CwDo2zpg
-        while (abs_value >= 100)
+        const NumberType hundred = 100;
+        while (abs_value >= hundred)
         {
-            const auto digits_index = static_cast<unsigned>((abs_value % 100));
-            abs_value /= 100;
+            const auto digits_index = static_cast<unsigned>((abs_value % hundred));
+            abs_value /= hundred;
             *(--buffer_ptr) = digits_to_99[digits_index][1];
             *(--buffer_ptr) = digits_to_99[digits_index][0];
         }
 
-        if (abs_value >= 10)
+        if (abs_value >= NumberType(10))
         {
             const auto digits_index = static_cast<unsigned>(abs_value);
             *(--buffer_ptr) = digits_to_99[digits_index][1];
