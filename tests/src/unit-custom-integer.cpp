@@ -48,7 +48,7 @@ class wrapped_int
     // allow implicit conversions from any builtin types that `T` allows conversions from
     template<typename T2,
              typename = typename std::enable_if<std::is_convertible<T2, T>::value && std::is_arithmetic<T2>::value>::type>
-    wrapped_int(T2 val) : m_val(val) {}
+    wrapped_int(T2 val) : m_val(static_cast<T>(val)) {}
 
     bool operator==(const wrapped_int& other) const
     {
