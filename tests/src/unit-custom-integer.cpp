@@ -36,14 +36,14 @@ using nlohmann::json;
 template<typename T>
 class wrapped_int
 {
+    T m_val;
   public:
-    T val;
     operator T() const
     {
-        return val;
+        return m_val;
     }
     wrapped_int() = default;
-    explicit wrapped_int(T val) : val(val) {}
+    explicit wrapped_int(T val) : m_val(val) {}
 
     // allow implicit conversions from anything that `T` allows conversions from
     template<typename T2, typename = typename std::enable_if<std::is_convertible<T2, T>::value>::type>
