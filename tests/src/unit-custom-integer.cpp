@@ -97,6 +97,6 @@ TEST_CASE("custom integer types")
     my_json as_json = my_json::parse(data.begin(), data.end());
     wrapped_int<std::uint64_t> i1 = as_json[1];
     wrapped_int<std::int64_t> i2 = as_json[2];
-    CHECK(i1 == wrapped_int<std::uint64_t>(2));
+    CHECK(i1 == wrapped_int<std::uint64_t>(2u));
     CHECK(i2 == wrapped_int<std::int64_t>(-3));
 }
