@@ -1,12 +1,19 @@
 # <small>nlohmann::basic_json::</small>patch
 
 ```cpp
+// (1)
 basic_json patch(const basic_json& json_patch) const;
+
+// (2)
+void patch_inplace(const basic_json& json_patch) const;
 ```
 
 [JSON Patch](http://jsonpatch.com) defines a JSON document structure for expressing a sequence of operations to apply to
 a JSON document. With this function, a JSON Patch is applied to the current JSON value by executing all operations from
 the patch.
+
+1. applies a JSON patch to a copy of the current object and returns the copy
+2. applies a JSON patch in place and returns void
 
 ## Parameters
 
@@ -15,11 +22,13 @@ the patch.
 
 ## Return value
 
-patched document
+1. patched document
+2. void
 
 ## Exception safety
 
-Strong guarantee: if an exception is thrown, there are no changes in the JSON value.
+1. Strong guarantee: if an exception is thrown, there are no changes in the JSON value.
+2. No guarantees, value may be corruted.
 
 ## Exceptions
 
