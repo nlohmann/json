@@ -32,8 +32,9 @@ SOFTWARE.
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+#include "make_test_data_available.hpp"
 #include <fstream>
-#include <test_data.hpp>
+#include "make_test_data_available.hpp"
 
 TEST_CASE("compliance tests from json.org")
 {

@@ -35,7 +35,7 @@ using nlohmann::json;
 #include <iostream>
 #include <fstream>
 #include <set>
-#include <test_data.hpp>
+#include "make_test_data_available.hpp"
 #include "test_utils.hpp"
 
 namespace

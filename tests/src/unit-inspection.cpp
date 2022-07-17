@@ -34,7 +34,7 @@ using nlohmann::json;
 
 #include <fstream>
 #include <sstream>
-#include <test_data.hpp>
+#include "make_test_data_available.hpp"
 
 TEST_CASE("object inspection")
 {
