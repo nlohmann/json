@@ -80,11 +80,16 @@ endif()
 # disable exceptions for test-disabled_exceptions
 json_test_set_test_options(test-disabled_exceptions COMPILE_DEFINITIONS JSON_NOEXCEPTION)
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-json_test_set_test_options(test-disabled_exceptions COMPILE_OPTIONS -fno-exceptions)
+    json_test_set_test_options(test-disabled_exceptions COMPILE_OPTIONS -fno-exceptions)
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     # disabled due to https://github.com/nlohmann/json/discussions/2824
     #json_test_set_test_options(test-disabled_exceptions COMPILE_DEFINITIONS _HAS_EXCEPTIONS=0 COMPILE_OPTIONS /EH)
 endif()
+
+# set timeouts for Unicode tests
+json_test_set_test_options("test-unicode2;test-unicode3;test-unicode4;test-unicode5"
+    TEST_PROPERTIES "TIMEOUT_AFTER_MATCH;1500$<SEMICOLON>UTF-8 strings checked"
+)
 
 #############################################################################
 # add unit tests

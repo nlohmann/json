@@ -50,9 +50,10 @@ endforeach()
 #     [COMPILE_FEATURES <args>...]
 #     [COMPILE_OPTIONS <args>...]
 #     [LINK_LIBRARIES <args>...]
-#     [LINK_OPTIONS <args>...])
+#     [LINK_OPTIONS <args>...]
+#     [TEST_PROPERTIES <args>...])
 #
-# Supply test- and standard-specific build settings.
+# Supply test- and standard-specific build settings and/or test properties.
 # Specify multiple tests using a list e.g., "test-foo;test-bar".
 #
 # Must be called BEFORE the test is created.
@@ -60,7 +61,7 @@ endforeach()
 
 function(json_test_set_test_options tests)
     cmake_parse_arguments(args "" ""
-        "CXX_STANDARDS;COMPILE_DEFINITIONS;COMPILE_FEATURES;COMPILE_OPTIONS;LINK_LIBRARIES;LINK_OPTIONS"
+        "CXX_STANDARDS;COMPILE_DEFINITIONS;COMPILE_FEATURES;COMPILE_OPTIONS;LINK_LIBRARIES;LINK_OPTIONS;TEST_PROPERTIES"
         ${ARGN})
 
     if(NOT args_CXX_STANDARDS)
@@ -91,8 +92,21 @@ function(json_test_set_test_options tests)
             target_compile_options(${test_interface} INTERFACE ${args_COMPILE_OPTIONS})
             target_link_libraries (${test_interface} INTERFACE ${args_LINK_LIBRARIES})
             target_link_options(${test_interface} INTERFACE ${args_LINK_OPTIONS})
+            #set_target_properties(${test_interface} PROPERTIES JSON_TEST_PROPERTIES "${args_TEST_PROPERTIES}")
+            set_property(DIRECTORY PROPERTY
+                ${test_interface}_TEST_PROPERTIES "${args_TEST_PROPERTIES}"
+            )
         endforeach()
     endforeach()
+endfunction()
+
+# for internal use by _json_test_add_test()
+function(_json_test_apply_test_properties test_target properties_target)
+    #get_target_property(test_properties ${properties_target} JSON_TEST_PROPERTIES)
+    get_property(test_properties DIRECTORY PROPERTY ${properties_target}_TEST_PROPERTIES)
+    if(test_properties)
+        set_tests_properties(${test_target} PROPERTIES ${test_properties})
+    endif()
 endfunction()
 
 # for internal use by json_test_add_test_for()
@@ -141,6 +155,23 @@ function(_json_test_add_test test_name file main cxx_standard)
         )
     endif()
     set_tests_properties(${test_target} PROPERTIES LABELS "all" FIXTURES_REQUIRED TEST_DATA)
+
+    # apply standard-specific test properties
+    if(TARGET _json_test_interface__cpp_${cxx_standard})
+        _json_test_apply_test_properties(${test_target} _json_test_interface__cpp_${cxx_standard})
+    endif()
+
+    # apply test-specific test properties
+    if(TARGET _json_test_interface_${test_name})
+        _json_test_apply_test_properties(${test_target} _json_test_interface_${test_name})
+    endif()
+
+    # apply test- and standard-specific test properties
+    if(TARGET _json_test_interface_${test_name}_cpp_${cxx_standard})
+        _json_test_apply_test_properties(${test_target}
+            _json_test_interface_${test_name}_cpp_${cxx_standard}
+        )
+    endif()
 
     if(JSON_Valgrind)
         add_test(NAME ${test_target}_valgrind
