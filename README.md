@@ -25,7 +25,7 @@
 - [Examples](#examples)
   - [Read JSON from a file](#read-json-from-a-file)
   - [Creating `json` objects from JSON literals](#creating-json-objects-from-json-literals)
-  - [Reading and writing individual object keys](#reading-and-writing-individual-object-keys)
+  - [JSON as first-class data type](#json-as-first-class-data-type)
   - [Serialization / Deserialization](#serialization--deserialization)
   - [STL-like access](#stl-like-access)
   - [Conversion from STL containers](#conversion-from-stl-containers)
@@ -160,7 +160,7 @@ json ex3 = {
 };
 ```
 
-### Reading and writing individual object keys
+### JSON as first-class data type
 
 Assume you want to create this JSON object by individually setting each key-value pair:
 
