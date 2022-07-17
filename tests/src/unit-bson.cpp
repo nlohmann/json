@@ -34,7 +34,7 @@ using nlohmann::json;
 
 #include <fstream>
 #include <sstream>
-#include <test_data.hpp>
+#include "make_test_data_available.hpp"
 #include "test_utils.hpp"
 
 TEST_CASE("BSON")

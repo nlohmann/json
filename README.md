@@ -1727,6 +1727,22 @@ $ ctest --output-on-failure
 
 Note that during the `ctest` stage, several JSON test files are downloaded from an [external repository](https://github.com/nlohmann/json_test_data). If policies forbid downloading artifacts during testing, you can download the files yourself and pass the directory with the test files via `-DJSON_TestDataDirectory=path` to CMake. Then, no Internet connectivity is required. See [issue #2189](https://github.com/nlohmann/json/issues/2189) for more information.
 
+If the test suite is not found, several test suites will fail like this:
+
+```
+===============================================================================
+json/tests/src/make_test_data_available.hpp:21:
+TEST CASE:  check test suite is downloaded
+
+json/tests/src/make_test_data_available.hpp:23: FATAL ERROR: REQUIRE( utils::check_testsuite_downloaded() ) is NOT correct!
+  values: REQUIRE( false )
+  logged: Test data not found in 'json/cmake-build-debug/json_test_data'.
+          Please execute target 'download_test_data' before running this test suite.
+          See <https://github.com/nlohmann/json#execute-unit-tests> for more information.
+
+===============================================================================
+```
+
 In case you have downloaded the library rather than checked out the code via Git, test `cmake_fetch_content_configure` will fail. Please execute `ctest -LE git_required` to skip these tests. See [issue #2189](https://github.com/nlohmann/json/issues/2189) for more information.
 
 Some tests change the installed files and hence make the whole process not reproducible. Please execute `ctest -LE not_reproducible` to skip these tests. See [issue #2324](https://github.com/nlohmann/json/issues/2324) for more information.

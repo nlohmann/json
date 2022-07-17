@@ -39,7 +39,7 @@ using nlohmann::json;
 #include <sstream>
 #include <iostream>
 #include <iomanip>
-#include <test_data.hpp>
+#include "make_test_data_available.hpp"
 
 // this test suite uses static variables with non-trivial destructors
 DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
