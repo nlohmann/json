@@ -32,6 +32,7 @@ SOFTWARE.
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+#include "make_test_data_available.hpp"
 #include <fstream>
 #include "make_test_data_available.hpp"
 
