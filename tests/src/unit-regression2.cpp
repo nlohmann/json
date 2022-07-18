@@ -33,20 +33,6 @@ using ordered_json = nlohmann::ordered_json;
     #include <variant>
 #endif
 
-#if JSON_HAS_EXPERIMENTAL_FILESYSTEM
-#include <experimental/filesystem>
-namespace nlohmann::detail
-{
-namespace std_fs = std::experimental::filesystem;
-} // namespace nlohmann::detail
-#elif JSON_HAS_FILESYSTEM
-#include <filesystem>
-namespace nlohmann::detail
-{
-namespace std_fs = std::filesystem;
-} // namespace nlohmann::detail
-#endif
-
 #ifdef JSON_HAS_CPP_20
     #include <span>
 #endif
