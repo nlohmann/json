@@ -14,6 +14,8 @@
 
 namespace nlohmann
 {
+inline namespace json_v3_10_5
+{
 namespace detail
 {
 //////////////////////
@@ -124,4 +126,5 @@ class json_reverse_iterator : public std::reverse_iterator<Base>
     }
 };
 }  // namespace detail
+}  // namespace json_v3_10_5
 }  // namespace nlohmann

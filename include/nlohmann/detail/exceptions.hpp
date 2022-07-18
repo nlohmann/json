@@ -25,8 +25,11 @@
 
 namespace nlohmann
 {
+inline namespace json_v3_10_5
+{
 namespace detail
 {
+
 ////////////////
 // exceptions //
 ////////////////
@@ -252,4 +255,5 @@ class other_error : public exception
 };
 
 }  // namespace detail
+}  // namespace json_v3_10_5
 }  // namespace nlohmann

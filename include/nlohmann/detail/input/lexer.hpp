@@ -24,6 +24,8 @@
 
 namespace nlohmann
 {
+inline namespace json_v3_10_5
+{
 namespace detail
 {
 ///////////
@@ -1628,4 +1630,5 @@ scan_number_done:
     const char_int_type decimal_point_char = '.';
 };
 }  // namespace detail
+}  // namespace json_v3_10_5
 }  // namespace nlohmann

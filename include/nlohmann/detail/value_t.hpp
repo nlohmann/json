@@ -20,6 +20,8 @@
 
 namespace nlohmann
 {
+inline namespace json_v3_10_5
+{
 namespace detail
 {
 ///////////////////////////
@@ -114,4 +116,5 @@ inline bool operator<(const value_t lhs, const value_t rhs) noexcept
 }
 #endif
 }  // namespace detail
+}  // namespace json_v3_10_5
 }  // namespace nlohmann

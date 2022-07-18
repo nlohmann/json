@@ -12,6 +12,8 @@
 
 namespace nlohmann
 {
+inline namespace json_v3_10_5
+{
 namespace detail
 {
 /*!
@@ -30,4 +32,5 @@ template<typename BasicJsonType> struct internal_iterator
     primitive_iterator_t primitive_iterator {};
 };
 }  // namespace detail
+}  // namespace json_v3_10_5
 }  // namespace nlohmann

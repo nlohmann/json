@@ -18,6 +18,8 @@
 
 namespace nlohmann
 {
+inline namespace json_v3_10_5
+{
 
 /// @sa https://json.nlohmann.me/api/adl_serializer/
 template<typename ValueType, typename>
@@ -53,4 +55,5 @@ struct adl_serializer
         ::nlohmann::to_json(j, std::forward<TargetType>(val));
     }
 };
+}  // namespace json_v3_10_5
 }  // namespace nlohmann

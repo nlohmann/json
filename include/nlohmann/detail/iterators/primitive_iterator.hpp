@@ -15,6 +15,8 @@
 
 namespace nlohmann
 {
+inline namespace json_v3_10_5
+{
 namespace detail
 {
 /*
@@ -128,4 +130,5 @@ class primitive_iterator_t
     }
 };
 }  // namespace detail
+}  // namespace json_v3_10_5
 }  // namespace nlohmann

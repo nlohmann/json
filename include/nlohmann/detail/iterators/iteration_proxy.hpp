@@ -23,6 +23,8 @@
 
 namespace nlohmann
 {
+inline namespace json_v3_10_5
+{
 namespace detail
 {
 template<typename string_type>
@@ -202,6 +204,7 @@ auto get(const nlohmann::detail::iteration_proxy_value<IteratorType>& i) -> decl
     return i.value();
 }
 }  // namespace detail
+}  // namespace json_v3_10_5
 }  // namespace nlohmann
 
 // The Addition to the STD Namespace is required to add
@@ -230,7 +233,7 @@ class tuple_element<N, ::nlohmann::detail::iteration_proxy_value<IteratorType >>
 #if defined(__clang__)
     #pragma clang diagnostic pop
 #endif
-} // namespace std
+}  // namespace std
 
 #if JSON_HAS_RANGES
     template <typename IteratorType>

@@ -33,6 +33,8 @@
 
 namespace nlohmann
 {
+inline namespace json_v3_10_5
+{
 namespace detail
 {
 ///////////////////
@@ -984,4 +986,5 @@ class serializer
     const error_handler_t error_handler;
 };
 }  // namespace detail
+}  // namespace json_v3_10_5
 }  // namespace nlohmann

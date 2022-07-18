@@ -22,6 +22,8 @@
 */
 namespace nlohmann
 {
+inline namespace json_v3_10_5
+{
 /*!
 @brief default JSONSerializer template argument
 
@@ -67,6 +69,7 @@ struct ordered_map;
 /// @sa https://json.nlohmann.me/api/ordered_json/
 using ordered_json = basic_json<nlohmann::ordered_map>;
 
+}  // namespace json_v3_10_5
 }  // namespace nlohmann
 
 #endif  // INCLUDE_NLOHMANN_JSON_FWD_HPP_

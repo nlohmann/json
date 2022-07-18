@@ -26,6 +26,8 @@
 
 namespace nlohmann
 {
+inline namespace json_v3_10_5
+{
 namespace detail
 {
 ////////////
@@ -505,4 +507,5 @@ class parser
 };
 
 }  // namespace detail
+}  // namespace json_v3_10_5
 }  // namespace nlohmann

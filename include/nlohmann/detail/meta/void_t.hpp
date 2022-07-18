@@ -10,6 +10,8 @@
 
 namespace nlohmann
 {
+inline namespace json_v3_10_5
+{
 namespace detail
 {
 template<typename ...Ts> struct make_void
@@ -17,5 +19,6 @@ template<typename ...Ts> struct make_void
     using type = void;
 };
 template<typename ...Ts> using void_t = typename make_void<Ts...>::type;
-} // namespace detail
+}  // namespace detail
+}  // namespace json_v3_10_5
 }  // namespace nlohmann

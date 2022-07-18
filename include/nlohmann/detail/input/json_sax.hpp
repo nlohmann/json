@@ -19,6 +19,8 @@
 
 namespace nlohmann
 {
+inline namespace json_v3_10_5
+{
 
 /*!
 @brief SAX interface
@@ -726,4 +728,5 @@ class json_sax_acceptor
 };
 }  // namespace detail
 
+}  // namespace json_v3_10_5
 }  // namespace nlohmann

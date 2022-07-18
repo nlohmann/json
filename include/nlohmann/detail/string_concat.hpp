@@ -17,6 +17,8 @@
 
 namespace nlohmann
 {
+inline namespace json_v3_10_5
+{
 namespace detail
 {
 
@@ -143,5 +145,6 @@ inline OutStringType concat(Args && ... args)
     return str;
 }
 
-} // namespace detail
-} // namespace nlohmann
+}  // namespace detail
+}  // namespace json_v3_10_5
+}  // namespace nlohmann

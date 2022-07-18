@@ -17,6 +17,8 @@
 
 namespace nlohmann
 {
+inline namespace json_v3_10_5
+{
 namespace detail
 {
 template<typename T>
@@ -154,4 +156,5 @@ struct is_sax_static_asserts
         "std::string&, const exception&)");
 };
 }  // namespace detail
+}  // namespace json_v3_10_5
 }  // namespace nlohmann

@@ -24,6 +24,8 @@
 
 namespace nlohmann
 {
+inline namespace json_v3_10_5
+{
 /*!
 @brief detail namespace with internal helper functions
 
@@ -686,4 +688,5 @@ inline constexpr bool value_in_range_of(T val)
 }
 
 }  // namespace detail
+}  // namespace json_v3_10_5
 }  // namespace nlohmann

@@ -17,6 +17,8 @@
 
 namespace nlohmann
 {
+inline namespace json_v3_10_5
+{
 namespace detail
 {
 
@@ -127,4 +129,5 @@ std::size_t hash(const BasicJsonType& j)
 }
 
 }  // namespace detail
+}  // namespace json_v3_10_5
 }  // namespace nlohmann

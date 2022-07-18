@@ -26,6 +26,8 @@
 
 namespace nlohmann
 {
+inline namespace json_v3_10_5
+{
 namespace detail
 {
 ///////////////////
@@ -1834,4 +1836,5 @@ class binary_writer
     output_adapter_t<CharType> oa = nullptr;
 };
 }  // namespace detail
+}  // namespace json_v3_10_5
 }  // namespace nlohmann

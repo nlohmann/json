@@ -10,9 +10,12 @@
 
 namespace nlohmann
 {
+inline namespace json_v3_10_5
+{
 namespace detail
 {
 // dispatching helper struct
 template <class T> struct identity_tag {};
 }  // namespace detail
+}  // namespace json_v3_10_5
 }  // namespace nlohmann

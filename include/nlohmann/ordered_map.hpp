@@ -22,6 +22,8 @@
 
 namespace nlohmann
 {
+inline namespace json_v3_10_5
+{
 
 /// ordered_map: a minimal map-like container that preserves insertion order
 /// for use within nlohmann::basic_json<ordered_map>
@@ -357,4 +359,5 @@ private:
     JSON_NO_UNIQUE_ADDRESS key_compare m_compare = key_compare();
 };
 
+}  // namespace json_v3_10_5
 }  // namespace nlohmann

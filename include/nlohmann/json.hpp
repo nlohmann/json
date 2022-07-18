@@ -85,6 +85,8 @@
 */
 namespace nlohmann
 {
+inline namespace json_v3_10_5
+{
 
 /*!
 @brief a class to store JSON values
@@ -5086,7 +5088,8 @@ std::string to_string(const NLOHMANN_BASIC_JSON_TPL& j)
     return j.dump();
 }
 
-} // namespace nlohmann
+}  // namespace json_v3_10_5
+}  // namespace nlohmann
 
 ///////////////////////
 // nonmember support //
@@ -5140,7 +5143,7 @@ inline void swap(nlohmann::NLOHMANN_BASIC_JSON_TPL& j1, nlohmann::NLOHMANN_BASIC
 
 #endif
 
-} // namespace std
+}  // namespace std
 
 /// @brief user-defined string literal for JSON values
 /// @sa https://json.nlohmann.me/api/basic_json/operator_literal_json/

@@ -12,5 +12,8 @@
 
 namespace nlohmann
 {
+inline namespace json_v3_10_5
+{
 NLOHMANN_CAN_CALL_STD_FUNC_IMPL(end);
+}  // namespace json_v3_10_5
 }  // namespace nlohmann

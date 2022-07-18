@@ -12,6 +12,8 @@
 
 namespace nlohmann
 {
+inline namespace json_v3_10_5
+{
 namespace detail
 {
 /// struct to capture the start position of the current token
@@ -31,5 +33,6 @@ struct position_t
     }
 };
 
-} // namespace detail
-} // namespace nlohmann
+}  // namespace detail
+}  // namespace json_v3_10_5
+}  // namespace nlohmann

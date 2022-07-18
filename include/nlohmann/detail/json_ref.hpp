@@ -15,6 +15,8 @@
 
 namespace nlohmann
 {
+inline namespace json_v3_10_5
+{
 namespace detail
 {
 template<typename BasicJsonType>
@@ -73,4 +75,5 @@ class json_ref
     value_type const* value_ref = nullptr;
 };
 }  // namespace detail
+}  // namespace json_v3_10_5
 }  // namespace nlohmann

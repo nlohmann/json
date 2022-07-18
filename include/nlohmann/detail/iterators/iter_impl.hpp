@@ -21,6 +21,8 @@
 
 namespace nlohmann
 {
+inline namespace json_v3_10_5
+{
 namespace detail
 {
 // forward declare, to be able to friend it later on
@@ -746,5 +748,6 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
     /// the actual iterator of the associated instance
     internal_iterator<typename std::remove_const<BasicJsonType>::type> m_it {};
 };
-} // namespace detail
-} // namespace nlohmann
+}  // namespace detail
+}  // namespace json_v3_10_5
+}  // namespace nlohmann

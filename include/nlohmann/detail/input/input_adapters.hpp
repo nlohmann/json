@@ -28,6 +28,8 @@
 
 namespace nlohmann
 {
+inline namespace json_v3_10_5
+{
 namespace detail
 {
 /// the supported input formats
@@ -410,7 +412,7 @@ struct container_input_adapter_factory< ContainerType,
 }
        };
 
-} // namespace container_input_adapter_factory_impl
+}  // namespace container_input_adapter_factory_impl
 
 template<typename ContainerType>
 typename container_input_adapter_factory_impl::container_input_adapter_factory<ContainerType>::adapter_type input_adapter(const ContainerType& container)
@@ -490,4 +492,5 @@ class span_input_adapter
     contiguous_bytes_input_adapter ia;
 };
 }  // namespace detail
+}  // namespace json_v3_10_5
 }  // namespace nlohmann

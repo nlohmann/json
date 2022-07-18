@@ -25,19 +25,33 @@
 
 #if JSON_HAS_EXPERIMENTAL_FILESYSTEM
 #include <experimental/filesystem>
-namespace nlohmann::detail
+namespace nlohmann
+{
+inline namespace json_v3_10_5
+{
+namespace detail
 {
 namespace std_fs = std::experimental::filesystem;
-} // namespace nlohmann::detail
+}  // namespace detail
+}  // namespace json_v3_10_5
+}  // namespace nlohmann
 #elif JSON_HAS_FILESYSTEM
 #include <filesystem>
-namespace nlohmann::detail
+namespace nlohmann
+{
+inline namespace json_v3_10_5
+{
+namespace detail
 {
 namespace std_fs = std::filesystem;
-} // namespace nlohmann::detail
+}  // namespace detail
+}  // namespace json_v3_10_5
+}  // namespace nlohmann
 #endif
 
 namespace nlohmann
+{
+inline namespace json_v3_10_5
 {
 namespace detail
 {
@@ -447,6 +461,7 @@ namespace // NOLINT(cert-dcl59-cpp,fuchsia-header-anon-namespaces,google-build-n
 JSON_INLINE_VARIABLE constexpr const auto& to_json = // NOLINT(misc-definitions-in-headers)
     detail::static_const<detail::to_json_fn>::value;
 #ifndef JSON_HAS_CPP_17
-} // namespace
+}  // namespace
 #endif
-} // namespace nlohmann
+}  // namespace json_v3_10_5
+}  // namespace nlohmann

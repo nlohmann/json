@@ -29,6 +29,8 @@
 
 namespace nlohmann
 {
+inline namespace json_v3_10_5
+{
 
 /// @brief JSON Pointer defines a string syntax for identifying a specific value within a JSON document
 /// @sa https://json.nlohmann.me/api/json_pointer/
@@ -897,4 +899,5 @@ inline bool operator!=(json_pointer<RefStringTypeLhs> const& lhs,
 {
     return !(lhs == rhs);
 }
+}  // namespace json_v3_10_5
 }  // namespace nlohmann

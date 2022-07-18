@@ -15,6 +15,8 @@
 // https://en.cppreference.com/w/cpp/experimental/is_detected
 namespace nlohmann
 {
+inline namespace json_v3_10_5
+{
 namespace detail
 {
 struct nonesuch
@@ -66,4 +68,5 @@ template<class To, template<class...> class Op, class... Args>
 using is_detected_convertible =
     std::is_convertible<detected_t<Op, Args...>, To>;
 }  // namespace detail
+}  // namespace json_v3_10_5
 }  // namespace nlohmann
