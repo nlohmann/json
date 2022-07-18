@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdio>   // fopen, fclose, FILE
+#include <memory> // unique_ptr
 #include <test_data.hpp>
 #include <doctest.h>
 
@@ -9,12 +10,11 @@ namespace utils
 
 inline bool check_testsuite_downloaded()
 {
-    std::FILE* file = std::fopen(TEST_DATA_DIRECTORY "/README.md", "r");
-    if (!file)
+    std::unique_ptr<std::FILE, decltype(&std::fclose)> file(std::fopen(TEST_DATA_DIRECTORY "/README.md", "r"), &std::fclose);
+    if (file)
     {
         return false;
     }
-    std::fclose(file);
     return true;
 }
 
