@@ -11,11 +11,7 @@ namespace utils
 inline bool check_testsuite_downloaded()
 {
     std::unique_ptr<std::FILE, decltype(&std::fclose)> file(std::fopen(TEST_DATA_DIRECTORY "/README.md", "r"), &std::fclose);
-    if (file)
-    {
-        return false;
-    }
-    return true;
+    return file.operator bool();
 }
 
 TEST_CASE("check test suite is downloaded")
