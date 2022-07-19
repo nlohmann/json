@@ -27,6 +27,11 @@ header. See also the [macro overview page](../../features/macros.md).
 - [**JSON_SKIP_LIBRARY_VERSION_CHECK**](json_skip_library_version_check.md) - skip library version check
 - [**NLOHMANN_JSON_VERSION_MAJOR**<br>**NLOHMANN_JSON_VERSION_MINOR**<br>**NLOHMANN_JSON_VERSION_PATCH**](nlohmann_json_version_major.md) - library version information
 
+## Library namespace
+
+- [**NLOHMANN_JSON_NAMESPACE**](nlohmann_json_namespace.md) - full name of the `nlohmann` namespace
+- [**NLOHMANN_JSON_NAMESPACE_BEGIN**<br>**NLOHMANN_JSON_NAMESPACE_END**](nlohmann_json_namespace_begin.md) - open and close the library namespace
+
 ## Type conversions
 
 - [**JSON_DISABLE_ENUM_SERIALIZATION**](json_disable_enum_serialization.md) - switch off default serialization/deserialization functions for enums

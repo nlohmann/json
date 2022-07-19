@@ -264,6 +264,9 @@ nav:
         - 'NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT': api/macros/nlohmann_define_type_intrusive.md
         - 'NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE': api/macros/nlohmann_define_type_non_intrusive.md
         - 'NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT': api/macros/nlohmann_define_type_non_intrusive.md
+        - 'NLOHMANN_JSON_NAMESPACE': api/macros/nlohmann_json_namespace.md
+        - 'NLOHMANN_JSON_NAMESPACE_BEGIN': api/macros/nlohmann_json_namespace_begin.md
+        - 'NLOHMANN_JSON_NAMESPACE_END': api/macros/nlohmann_json_namespace_begin.md
         - 'NLOHMANN_JSON_SERIALIZE_ENUM': api/macros/nlohmann_json_serialize_enum.md
         - 'NLOHMANN_JSON_VERSION_MAJOR': api/macros/nlohmann_json_version_major.md
         - 'NLOHMANN_JSON_VERSION_MINOR': api/macros/nlohmann_json_version_major.md
