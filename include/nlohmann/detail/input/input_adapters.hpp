@@ -26,12 +26,10 @@
 #include <nlohmann/detail/iterators/iterator_traits.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 
-namespace nlohmann
-{
-inline namespace json_v3_10_5
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 /// the supported input formats
 enum class input_format_t { json, cbor, msgpack, ubjson, bson, bjdata };
 
@@ -491,6 +489,6 @@ class span_input_adapter
   private:
     contiguous_bytes_input_adapter ia;
 };
+
 }  // namespace detail
-}  // namespace json_v3_10_5
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END

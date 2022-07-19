@@ -13,19 +13,15 @@
 #include <utility> // declval
 #include <tuple> // tuple
 
-#include <nlohmann/detail/macro_scope.hpp>
-
 #include <nlohmann/detail/iterators/iterator_traits.hpp>
+#include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/call_std/begin.hpp>
 #include <nlohmann/detail/meta/call_std/end.hpp>
 #include <nlohmann/detail/meta/cpp_future.hpp>
 #include <nlohmann/detail/meta/detected.hpp>
 #include <nlohmann/json_fwd.hpp>
 
-namespace nlohmann
-{
-inline namespace json_v3_10_5
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 /*!
 @brief detail namespace with internal helper functions
 
@@ -36,6 +32,7 @@ implementations of some @ref basic_json methods, and meta-programming helpers.
 */
 namespace detail
 {
+
 /////////////
 // helpers //
 /////////////
@@ -688,5 +685,4 @@ inline constexpr bool value_in_range_of(T val)
 }
 
 }  // namespace detail
-}  // namespace json_v3_10_5
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END

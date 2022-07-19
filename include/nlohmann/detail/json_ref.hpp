@@ -11,14 +11,13 @@
 #include <initializer_list>
 #include <utility>
 
+#include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
 
-namespace nlohmann
-{
-inline namespace json_v3_10_5
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 template<typename BasicJsonType>
 class json_ref
 {
@@ -74,6 +73,6 @@ class json_ref
     mutable value_type owned_value = nullptr;
     value_type const* value_ref = nullptr;
 };
+
 }  // namespace detail
-}  // namespace json_v3_10_5
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END

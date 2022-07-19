@@ -10,15 +10,14 @@
 
 #include <iterator> // random_access_iterator_tag
 
+#include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/void_t.hpp>
 #include <nlohmann/detail/meta/cpp_future.hpp>
 
-namespace nlohmann
-{
-inline namespace json_v3_10_5
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 template<typename It, typename = void>
 struct iterator_types {};
 
@@ -57,6 +56,6 @@ struct iterator_traits<T*, enable_if_t<std::is_object<T>::value>>
     using pointer = T*;
     using reference = T&;
 };
+
 }  // namespace detail
-}  // namespace json_v3_10_5
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END

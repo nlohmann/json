@@ -9,8 +9,8 @@
 #pragma once
 
 #include <utility> // declval, pair
-#include <nlohmann/thirdparty/hedley/hedley.hpp>
 #include <nlohmann/detail/meta/detected.hpp>
+#include <nlohmann/thirdparty/hedley/hedley.hpp>
 
 // This file contains all internal macro definitions
 // You MUST include macro_unscope.hpp at the end of json.hpp to undef all of them
@@ -227,6 +227,54 @@
         });                                                                                     \
         e = ((it != std::end(m)) ? it : std::begin(m))->first;                                  \
     }
+
+#ifndef JSON_USE_IMPLICIT_CONVERSIONS
+    #define JSON_USE_IMPLICIT_CONVERSIONS 1
+#endif
+
+#if JSON_USE_IMPLICIT_CONVERSIONS
+    #define JSON_EXPLICIT
+#else
+    #define JSON_EXPLICIT explicit
+#endif
+
+#ifndef JSON_DIAGNOSTICS
+    #define JSON_DIAGNOSTICS 0
+#endif
+
+#ifndef JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
+    #define JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON 0
+#endif
+
+#ifndef JSON_DISABLE_ENUM_SERIALIZATION
+    #define JSON_DISABLE_ENUM_SERIALIZATION 0
+#endif
+
+#if JSON_DIAGNOSTICS
+    #define NLOHMANN_JSON_ABI_TAG_DIAGNOSTICS _diag
+#else
+    #define NLOHMANN_JSON_ABI_TAG_DIAGNOSTICS
+#endif
+
+#define NLOHMANN_JSON_ABI_PREFIX json_v3_10_5
+#define NLOHMANN_JSON_ABI_CONCAT_EX(a, b) a ## b
+#define NLOHMANN_JSON_ABI_CONCAT(a, b) NLOHMANN_JSON_ABI_CONCAT_EX(a, b)
+#define NLOHMANN_JSON_ABI_STRING              \
+    NLOHMANN_JSON_ABI_CONCAT(                 \
+            NLOHMANN_JSON_ABI_PREFIX,         \
+            NLOHMANN_JSON_ABI_TAG_DIAGNOSTICS \
+                            )
+#define NLOHMANN_JSON_NAMESPACE nlohmann::NLOHMANN_JSON_ABI_STRING
+
+#define NLOHMANN_JSON_NAMESPACE_BEGIN         \
+    namespace nlohmann                        \
+    {                                         \
+    inline namespace NLOHMANN_JSON_ABI_STRING \
+    {
+
+#define NLOHMANN_JSON_NAMESPACE_END \
+    }  /* namespace (abi_string) */ \
+    }  /* namespace nlohmann */
 
 // Ugly macros to avoid uglier copy-paste when specializing basic_json. They
 // may be removed in the future once the class is split.
@@ -446,25 +494,3 @@
     struct would_call_std_##std_name : detail2::would_call_std_##std_name<T...>   \
     {                                                                             \
     }
-
-#ifndef JSON_USE_IMPLICIT_CONVERSIONS
-    #define JSON_USE_IMPLICIT_CONVERSIONS 1
-#endif
-
-#if JSON_USE_IMPLICIT_CONVERSIONS
-    #define JSON_EXPLICIT
-#else
-    #define JSON_EXPLICIT explicit
-#endif
-
-#ifndef JSON_DIAGNOSTICS
-    #define JSON_DIAGNOSTICS 0
-#endif
-
-#ifndef JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
-    #define JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON 0
-#endif
-
-#ifndef JSON_DISABLE_ENUM_SERIALIZATION
-    #define JSON_DISABLE_ENUM_SERIALIZATION 0
-#endif

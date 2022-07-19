@@ -27,10 +27,7 @@
 #include <nlohmann/detail/string_escape.hpp>
 #include <nlohmann/detail/value_t.hpp>
 
-namespace nlohmann
-{
-inline namespace json_v3_10_5
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 
 /// @brief JSON Pointer defines a string syntax for identifying a specific value within a JSON document
 /// @sa https://json.nlohmann.me/api/json_pointer/
@@ -899,5 +896,5 @@ inline bool operator!=(json_pointer<RefStringTypeLhs> const& lhs,
 {
     return !(lhs == rhs);
 }
-}  // namespace json_v3_10_5
-}  // namespace nlohmann
+
+NLOHMANN_JSON_NAMESPACE_END

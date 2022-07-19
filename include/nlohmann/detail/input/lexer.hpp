@@ -22,12 +22,10 @@
 #include <nlohmann/detail/input/position_t.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 
-namespace nlohmann
-{
-inline namespace json_v3_10_5
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 ///////////
 // lexer //
 ///////////
@@ -1629,6 +1627,6 @@ scan_number_done:
     /// the decimal point
     const char_int_type decimal_point_char = '.';
 };
+
 }  // namespace detail
-}  // namespace json_v3_10_5
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END

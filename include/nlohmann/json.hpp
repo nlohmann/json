@@ -83,10 +83,7 @@
 @see https://github.com/nlohmann
 @since version 1.0.0
 */
-namespace nlohmann
-{
-inline namespace json_v3_10_5
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 
 /*!
 @brief a class to store JSON values
@@ -5088,8 +5085,7 @@ std::string to_string(const NLOHMANN_BASIC_JSON_TPL& j)
     return j.dump();
 }
 
-}  // namespace json_v3_10_5
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END
 
 ///////////////////////
 // nonmember support //

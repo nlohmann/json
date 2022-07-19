@@ -8,14 +8,14 @@
 
 #pragma once
 
-namespace nlohmann
-{
-inline namespace json_v3_10_5
-{
+#include <nlohmann/detail/macro_scope.hpp>
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 // dispatching helper struct
 template <class T> struct identity_tag {};
+
 }  // namespace detail
-}  // namespace json_v3_10_5
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END

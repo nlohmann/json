@@ -13,13 +13,11 @@
 
 #include <nlohmann/detail/conversions/from_json.hpp>
 #include <nlohmann/detail/conversions/to_json.hpp>
+#include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/identity_tag.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
 
-namespace nlohmann
-{
-inline namespace json_v3_10_5
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 
 /// @sa https://json.nlohmann.me/api/adl_serializer/
 template<typename ValueType, typename>
@@ -55,5 +53,5 @@ struct adl_serializer
         ::nlohmann::to_json(j, std::forward<TargetType>(val));
     }
 };
-}  // namespace json_v3_10_5
-}  // namespace nlohmann
+
+NLOHMANN_JSON_NAMESPACE_END

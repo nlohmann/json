@@ -15,15 +15,15 @@
 #include <string> // string
 #include <vector> // vector
 
+#include <nlohmann/detail/macro_scope.hpp>
+
 /*!
 @brief namespace for Niels Lohmann
 @see https://github.com/nlohmann
 @since version 1.0.0
 */
-namespace nlohmann
-{
-inline namespace json_v3_10_5
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
+
 /*!
 @brief default JSONSerializer template argument
 
@@ -69,7 +69,6 @@ struct ordered_map;
 /// @sa https://json.nlohmann.me/api/ordered_json/
 using ordered_json = basic_json<nlohmann::ordered_map>;
 
-}  // namespace json_v3_10_5
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END
 
 #endif  // INCLUDE_NLOHMANN_JSON_FWD_HPP_

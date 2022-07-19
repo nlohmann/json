@@ -17,44 +17,34 @@
 #include <valarray> // valarray
 #include <vector> // vector
 
-#include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/iterators/iteration_proxy.hpp>
+#include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/cpp_future.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
 #include <nlohmann/detail/value_t.hpp>
 
 #if JSON_HAS_EXPERIMENTAL_FILESYSTEM
 #include <experimental/filesystem>
-namespace nlohmann
-{
-inline namespace json_v3_10_5
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
 namespace std_fs = std::experimental::filesystem;
 }  // namespace detail
-}  // namespace json_v3_10_5
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END
 #elif JSON_HAS_FILESYSTEM
 #include <filesystem>
-namespace nlohmann
-{
-inline namespace json_v3_10_5
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
 namespace std_fs = std::filesystem;
 }  // namespace detail
-}  // namespace json_v3_10_5
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END
 #endif
 
-namespace nlohmann
-{
-inline namespace json_v3_10_5
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 //////////////////
 // constructors //
 //////////////////
@@ -463,5 +453,5 @@ JSON_INLINE_VARIABLE constexpr const auto& to_json = // NOLINT(misc-definitions-
 #ifndef JSON_HAS_CPP_17
 }  // namespace
 #endif
-}  // namespace json_v3_10_5
-}  // namespace nlohmann
+
+NLOHMANN_JSON_NAMESPACE_END

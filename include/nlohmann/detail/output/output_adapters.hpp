@@ -22,12 +22,10 @@
 
 #include <nlohmann/detail/macro_scope.hpp>
 
-namespace nlohmann
-{
-inline namespace json_v3_10_5
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 /// abstract output adapter interface
 template<typename CharType> struct output_adapter_protocol
 {
@@ -144,6 +142,6 @@ class output_adapter
   private:
     output_adapter_t<CharType> oa = nullptr;
 };
+
 }  // namespace detail
-}  // namespace json_v3_10_5
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END

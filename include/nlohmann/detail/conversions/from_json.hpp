@@ -30,36 +30,26 @@
 
 #if JSON_HAS_EXPERIMENTAL_FILESYSTEM
 #include <experimental/filesystem>
-namespace nlohmann
-{
-inline namespace json_v3_10_5
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
 namespace std_fs = std::experimental::filesystem;
 }  // namespace detail
-}  // namespace json_v3_10_5
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END
 #elif JSON_HAS_FILESYSTEM
 #include <filesystem>
-namespace nlohmann
-{
-inline namespace json_v3_10_5
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
 namespace std_fs = std::filesystem;
 }  // namespace detail
-}  // namespace json_v3_10_5
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END
 #endif
 
-namespace nlohmann
-{
-inline namespace json_v3_10_5
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 template<typename BasicJsonType>
 inline void from_json(const BasicJsonType& j, typename std::nullptr_t& n)
 {
@@ -505,6 +495,7 @@ struct from_json_fn
         return from_json(j, std::forward<T>(val));
     }
 };
+
 }  // namespace detail
 
 #ifndef JSON_HAS_CPP_17
@@ -519,5 +510,5 @@ JSON_INLINE_VARIABLE constexpr const auto& from_json = // NOLINT(misc-definition
 #ifndef JSON_HAS_CPP_17
 }  // namespace
 #endif
-}  // namespace json_v3_10_5
-}  // namespace nlohmann
+
+NLOHMANN_JSON_NAMESPACE_END

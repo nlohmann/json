@@ -12,12 +12,12 @@
 #include <iterator> // reverse_iterator
 #include <utility> // declval
 
-namespace nlohmann
-{
-inline namespace json_v3_10_5
-{
+#include <nlohmann/detail/macro_scope.hpp>
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 //////////////////////
 // reverse_iterator //
 //////////////////////
@@ -125,6 +125,6 @@ class json_reverse_iterator : public std::reverse_iterator<Base>
         return it.operator * ();
     }
 };
+
 }  // namespace detail
-}  // namespace json_v3_10_5
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END
