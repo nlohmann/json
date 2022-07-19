@@ -12,7 +12,7 @@
 #include <iterator> // reverse_iterator
 #include <utility> // declval
 
-#include <nlohmann/detail/macro_scope.hpp>
+#include <nlohmann/detail/abi_macros.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail

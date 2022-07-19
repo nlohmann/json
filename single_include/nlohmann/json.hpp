@@ -55,8 +55,60 @@
 
 
 
-#include <type_traits>
 #include <utility>
+
+// #include <nlohmann/detail/abi_macros.hpp>
+
+
+// This file contains all macro definitions affecting ABI
+
+#ifndef JSON_DIAGNOSTICS
+    #define JSON_DIAGNOSTICS 0
+#endif
+
+#ifndef JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
+    #define JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON 0
+#endif
+
+#if JSON_DIAGNOSTICS
+    #define NLOHMANN_JSON_ABI_TAG_DIAGNOSTICS _diag
+#else
+    #define NLOHMANN_JSON_ABI_TAG_DIAGNOSTICS
+#endif
+
+#if JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
+    #define NLOHMANN_JSON_ABI_TAG_LEGACY_DISCARDED_VALUE_COMPARISON _ldvcmp
+#else
+    #define NLOHMANN_JSON_ABI_TAG_LEGACY_DISCARDED_VALUE_COMPARISON
+#endif
+
+#define NLOHMANN_JSON_ABI_PREFIX json_v3_10_5
+#define NLOHMANN_JSON_ABI_CONCAT_EX(a, b, c) a ## b ## c
+#define NLOHMANN_JSON_ABI_CONCAT(a, b, c) NLOHMANN_JSON_ABI_CONCAT_EX(a, b, c)
+#define NLOHMANN_JSON_ABI_STRING                                    \
+    NLOHMANN_JSON_ABI_CONCAT(                                       \
+            NLOHMANN_JSON_ABI_PREFIX,                               \
+            NLOHMANN_JSON_ABI_TAG_DIAGNOSTICS,                      \
+            NLOHMANN_JSON_ABI_TAG_LEGACY_DISCARDED_VALUE_COMPARISON \
+                            )
+
+#ifndef NLOHMANN_JSON_NAMESPACE
+    #define NLOHMANN_JSON_NAMESPACE nlohmann::NLOHMANN_JSON_ABI_STRING
+#endif
+
+#ifndef NLOHMANN_JSON_NAMESPACE_BEGIN
+#define NLOHMANN_JSON_NAMESPACE_BEGIN         \
+    namespace nlohmann                        \
+    {                                         \
+    inline namespace NLOHMANN_JSON_ABI_STRING \
+    {
+#endif
+
+#ifndef NLOHMANN_JSON_NAMESPACE_END
+#define NLOHMANN_JSON_NAMESPACE_END \
+    }  /* namespace (abi_string) */ \
+    }  /* namespace nlohmann */
+#endif
 
 // #include <nlohmann/detail/conversions/from_json.hpp>
 //     __ _____ _____ _____
@@ -150,7 +202,7 @@
 
 
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <nlohmann/detail/abi_macros.hpp>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -2273,8 +2325,11 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 #endif /* !defined(JSON_HEDLEY_VERSION) || (JSON_HEDLEY_VERSION < X) */
 
 
-// This file contains all internal macro definitions
+// This file contains all internal macro definitions (except those affecting ABI)
 // You MUST include macro_unscope.hpp at the end of json.hpp to undef all of them
+
+// #include <nlohmann/detail/abi_macros.hpp>
+
 
 // exclude unsupported compilers
 #if !defined(JSON_SKIP_UNSUPPORTED_COMPILER_CHECK)
@@ -2488,61 +2543,6 @@ JSON_HEDLEY_DIAGNOSTIC_POP
         });                                                                                     \
         e = ((it != std::end(m)) ? it : std::begin(m))->first;                                  \
     }
-
-#ifndef JSON_USE_IMPLICIT_CONVERSIONS
-    #define JSON_USE_IMPLICIT_CONVERSIONS 1
-#endif
-
-#if JSON_USE_IMPLICIT_CONVERSIONS
-    #define JSON_EXPLICIT
-#else
-    #define JSON_EXPLICIT explicit
-#endif
-
-#ifndef JSON_DIAGNOSTICS
-    #define JSON_DIAGNOSTICS 0
-#endif
-
-#ifndef JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
-    #define JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON 0
-#endif
-
-#ifndef JSON_DISABLE_ENUM_SERIALIZATION
-    #define JSON_DISABLE_ENUM_SERIALIZATION 0
-#endif
-
-#if JSON_DIAGNOSTICS
-    #define NLOHMANN_JSON_ABI_TAG_DIAGNOSTICS _diag
-#else
-    #define NLOHMANN_JSON_ABI_TAG_DIAGNOSTICS
-#endif
-
-#if JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
-    #define NLOHMANN_JSON_ABI_TAG_LEGACY_DISCARDED_VALUE_COMPARISON _ldvcmp
-#else
-    #define NLOHMANN_JSON_ABI_TAG_LEGACY_DISCARDED_VALUE_COMPARISON
-#endif
-
-#define NLOHMANN_JSON_ABI_PREFIX json_v3_10_5
-#define NLOHMANN_JSON_ABI_CONCAT_EX(a, b, c) a ## b ## c
-#define NLOHMANN_JSON_ABI_CONCAT(a, b, c) NLOHMANN_JSON_ABI_CONCAT_EX(a, b, c)
-#define NLOHMANN_JSON_ABI_STRING                                    \
-    NLOHMANN_JSON_ABI_CONCAT(                                       \
-            NLOHMANN_JSON_ABI_PREFIX,                               \
-            NLOHMANN_JSON_ABI_TAG_DIAGNOSTICS,                      \
-            NLOHMANN_JSON_ABI_TAG_LEGACY_DISCARDED_VALUE_COMPARISON \
-                            )
-#define NLOHMANN_JSON_NAMESPACE nlohmann::NLOHMANN_JSON_ABI_STRING
-
-#define NLOHMANN_JSON_NAMESPACE_BEGIN         \
-    namespace nlohmann                        \
-    {                                         \
-    inline namespace NLOHMANN_JSON_ABI_STRING \
-    {
-
-#define NLOHMANN_JSON_NAMESPACE_END \
-    }  /* namespace (abi_string) */ \
-    }  /* namespace nlohmann */
 
 // Ugly macros to avoid uglier copy-paste when specializing basic_json. They
 // may be removed in the future once the class is split.
@@ -2763,6 +2763,20 @@ JSON_HEDLEY_DIAGNOSTIC_POP
     {                                                                             \
     }
 
+#ifndef JSON_USE_IMPLICIT_CONVERSIONS
+    #define JSON_USE_IMPLICIT_CONVERSIONS 1
+#endif
+
+#if JSON_USE_IMPLICIT_CONVERSIONS
+    #define JSON_EXPLICIT
+#else
+    #define JSON_EXPLICIT explicit
+#endif
+
+#ifndef JSON_DISABLE_ENUM_SERIALIZATION
+    #define JSON_DISABLE_ENUM_SERIALIZATION 0
+#endif
+
 #if JSON_HAS_THREE_WAY_COMPARISON
     #include <compare> // partial_ordering
 #endif
@@ -2877,7 +2891,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <nlohmann/detail/abi_macros.hpp>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -2954,7 +2968,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 #include <cstddef> // size_t
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <nlohmann/detail/abi_macros.hpp>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -3181,7 +3195,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 #include <iterator> // random_access_iterator_tag
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <nlohmann/detail/abi_macros.hpp>
 
 // #include <nlohmann/detail/meta/void_t.hpp>
 
@@ -3298,7 +3312,7 @@ NLOHMANN_JSON_NAMESPACE_END
     #include <string> // string
     #include <vector> // vector
 
-    // #include <nlohmann/detail/macro_scope.hpp>
+    // #include <nlohmann/detail/abi_macros.hpp>
 
 
     /*!
@@ -4039,8 +4053,6 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <string> // string
 #include <utility> // forward
 
-// #include <nlohmann/detail/macro_scope.hpp>
-
 // #include <nlohmann/detail/meta/cpp_future.hpp>
 
 // #include <nlohmann/detail/meta/detected.hpp>
@@ -4424,7 +4436,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <nlohmann/detail/abi_macros.hpp>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -4970,7 +4982,7 @@ NLOHMANN_JSON_NAMESPACE_END
     #include <ranges> // enable_borrowed_range
 #endif
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <nlohmann/detail/abi_macros.hpp>
 
 // #include <nlohmann/detail/meta/type_traits.hpp>
 
@@ -5638,11 +5650,7 @@ JSON_INLINE_VARIABLE constexpr const auto& to_json = // NOLINT(misc-definitions-
 
 NLOHMANN_JSON_NAMESPACE_END
 
-// #include <nlohmann/detail/macro_scope.hpp>
-
 // #include <nlohmann/detail/meta/identity_tag.hpp>
-
-// #include <nlohmann/detail/meta/type_traits.hpp>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -5699,7 +5707,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <tuple> // tie
 #include <utility> // move
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <nlohmann/detail/abi_macros.hpp>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -5811,7 +5819,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <cstddef> // size_t
 #include <functional> // hash
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <nlohmann/detail/abi_macros.hpp>
 
 // #include <nlohmann/detail/value_t.hpp>
 
@@ -8841,7 +8849,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <utility> // declval
 #include <string> // string
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <nlohmann/detail/abi_macros.hpp>
 
 // #include <nlohmann/detail/meta/detected.hpp>
 
@@ -12469,6 +12477,8 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 
+// #include <nlohmann/detail/abi_macros.hpp>
+
 // #include <nlohmann/detail/iterators/primitive_iterator.hpp>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
@@ -12603,8 +12613,6 @@ class primitive_iterator_t
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
-
-// #include <nlohmann/detail/macro_scope.hpp>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -13407,7 +13415,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <iterator> // reverse_iterator
 #include <utility> // declval
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <nlohmann/detail/abi_macros.hpp>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -14448,7 +14456,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <initializer_list>
 #include <utility>
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <nlohmann/detail/abi_macros.hpp>
 
 // #include <nlohmann/detail/meta/type_traits.hpp>
 

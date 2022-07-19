@@ -12,7 +12,6 @@
 #include <string> // string
 #include <utility> // forward
 
-#include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/cpp_future.hpp>
 #include <nlohmann/detail/meta/detected.hpp>
 

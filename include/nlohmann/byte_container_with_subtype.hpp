@@ -12,7 +12,7 @@
 #include <tuple> // tie
 #include <utility> // move
 
-#include <nlohmann/detail/macro_scope.hpp>
+#include <nlohmann/detail/abi_macros.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 

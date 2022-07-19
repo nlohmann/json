@@ -8,14 +8,12 @@
 
 #pragma once
 
-#include <type_traits>
 #include <utility>
 
+#include <nlohmann/detail/abi_macros.hpp>
 #include <nlohmann/detail/conversions/from_json.hpp>
 #include <nlohmann/detail/conversions/to_json.hpp>
-#include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/identity_tag.hpp>
-#include <nlohmann/detail/meta/type_traits.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 
