@@ -24,27 +24,10 @@
 #include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/cpp_future.hpp>
 #include <nlohmann/detail/meta/identity_tag.hpp>
+#include <nlohmann/detail/meta/std_fs.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
 #include <nlohmann/detail/string_concat.hpp>
 #include <nlohmann/detail/value_t.hpp>
-
-#if JSON_HAS_EXPERIMENTAL_FILESYSTEM
-#include <experimental/filesystem>
-NLOHMANN_JSON_NAMESPACE_BEGIN
-namespace detail
-{
-namespace std_fs = std::experimental::filesystem;
-}  // namespace detail
-NLOHMANN_JSON_NAMESPACE_END
-#elif JSON_HAS_FILESYSTEM
-#include <filesystem>
-NLOHMANN_JSON_NAMESPACE_BEGIN
-namespace detail
-{
-namespace std_fs = std::filesystem;
-}  // namespace detail
-NLOHMANN_JSON_NAMESPACE_END
-#endif
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
