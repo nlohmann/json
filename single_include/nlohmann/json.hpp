@@ -5910,6 +5910,8 @@ std::size_t hash(const BasicJsonType& j)
 
 // #include <nlohmann/detail/iterators/iterator_traits.hpp>
 
+// #include <nlohmann/detail/exceptions.hpp>
+
 // #include <nlohmann/detail/macro_scope.hpp>
 
 

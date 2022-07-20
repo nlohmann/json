@@ -25,6 +25,7 @@
 #endif                  // JSON_NO_IO
 
 #include <nlohmann/detail/iterators/iterator_traits.hpp>
+#include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 
 namespace nlohmann
