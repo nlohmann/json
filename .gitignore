@@ -9,9 +9,10 @@
 
 /.idea
 /cmake-build-*
-
+# Visual Studio Code
 /.vs/
 /.vscode/
+/out/
 
 # clangd cache
 /.cache/

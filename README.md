@@ -13,6 +13,7 @@
 [![Documentation](https://img.shields.io/badge/docs-mkdocs-blue.svg)](https://json.nlohmann.me)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/nlohmann/json/master/LICENSE.MIT)
 [![GitHub Releases](https://img.shields.io/github/release/nlohmann/json.svg)](https://github.com/nlohmann/json/releases)
+[![Packaging status](https://repology.org/badge/tiny-repos/nlohmann-json.svg)](https://repology.org/project/nlohmann-json/versions)
 [![GitHub Downloads](https://img.shields.io/github/downloads/nlohmann/json/total)](https://github.com/nlohmann/json/releases)
 [![GitHub Issues](https://img.shields.io/github/issues/nlohmann/json.svg)](https://github.com/nlohmann/json/issues)
 [![Average time to resolve an issue](https://isitmaintained.com/badge/resolution/nlohmann/json.svg)](https://isitmaintained.com/project/nlohmann/json "Average time to resolve an issue")
@@ -24,6 +25,8 @@
 - [Sponsors](#sponsors)
 - [Support](#support) ([documentation](https://json.nlohmann.me), [FAQ](https://json.nlohmann.me/home/faq/), [discussions](https://github.com/nlohmann/json/discussions), [API](https://json.nlohmann.me/api/basic_json/), [bug issues](https://github.com/nlohmann/json/issues))
 - [Examples](#examples)
+  - [Read JSON from a file](#read-json-from-a-file)
+  - [Creating `json` objects from JSON literals](#creating-json-objects-from-json-literals)
   - [JSON as first-class data type](#json-as-first-class-data-type)
   - [Serialization / Deserialization](#serialization--deserialization)
   - [STL-like access](#stl-like-access)
@@ -98,7 +101,66 @@ There is also a [**docset**](https://github.com/Kapeli/Dash-User-Contributions/t
 
 ## Examples
 
-Beside the examples below, you may want to check the [documentation](https://json.nlohmann.me/) where each function contains a separate code example (e.g., check out [`emplace()`](https://json.nlohmann.me/api/basic_json/emplace/)). All [example files](https://github.com/nlohmann/json/tree/develop/docs/examples) can be compiled and executed on their own (e.g., file [emplace.cpp](https://github.com/nlohmann/json/blob/develop/docs/examples/emplace.cpp)).
+Here are some examples to give you an idea how to use the class.
+
+Beside the examples below, you may want to:
+
+→ Check the [documentation](https://json.nlohmann.me/)\
+→ Browse the [standalone example files](https://github.com/nlohmann/json/tree/develop/docs/examples)
+
+Every API function (documented in the [API Documentation](https://json.nlohmann.me/api/basic_json/)) has a corresponding standalone example file. For example, the [`emplace()`](https://json.nlohmann.me/api/basic_json/emplace/) function has a matching [emplace.cpp](https://github.com/nlohmann/json/blob/develop/docs/examples/emplace.cpp) example file.
+
+### Read JSON from a file
+
+The `json` class provides an API for manipulating a JSON value. To create a `json` object by reading a JSON file:
+
+```cpp
+#include <fstream>
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
+
+// ...
+
+std::ifstream f("example.json");
+json data = json::parse(f);
+```
+
+### Creating `json` objects from JSON literals
+
+Assume you want to create hard-code this literal JSON value in a file, as a `json` object:
+
+```json
+{
+  "pi": 3.141,
+  "happy": true
+}
+```
+
+There are various options:
+
+```cpp
+// Using (raw) string literals and json::parse
+json ex1 = json::parse(R"(
+  {
+    "pi": 3.141,
+    "happy": true
+  }
+)");
+
+// Using user-defined (raw) string literals
+json ex2 = R"(
+  {
+    "pi": 3.141,
+    "happy": true
+  }
+)"_json;
+
+// Using initializer lists
+json ex3 = {
+  {"happy", true},
+  {"pi", 3.141},
+};
+```
 
 ### JSON as first-class data type
 

@@ -3800,15 +3800,22 @@ decltype(std::declval<Compare>()(std::declval<A>(), std::declval<B>())),
 decltype(std::declval<Compare>()(std::declval<B>(), std::declval<A>()))
 >> : std::true_type {};
 
-// checks if BasicJsonType::object_t::key_type and KeyType are comparable using Compare functor
-template<typename BasicJsonType, typename KeyType>
-using is_key_type_comparable = typename is_comparable <
-                               typename BasicJsonType::object_comparator_t,
-                               const key_type_t<typename BasicJsonType::object_t>&,
-                               KeyType >::type;
-
 template<typename T>
 using detect_is_transparent = typename T::is_transparent;
+
+// type trait to check if KeyType can be used as object key (without a BasicJsonType)
+// see is_usable_as_basic_json_key_type below
+template<typename Comparator, typename ObjectKeyType, typename KeyTypeCVRef, bool RequireTransparentComparator = true,
+         bool ExcludeObjectKeyType = RequireTransparentComparator, typename KeyType = uncvref_t<KeyTypeCVRef>>
+using is_usable_as_key_type = typename std::conditional <
+                              is_comparable<Comparator, ObjectKeyType, KeyTypeCVRef>::value
+                              && !(ExcludeObjectKeyType && std::is_same<KeyType,
+                                   ObjectKeyType>::value)
+                              && (!RequireTransparentComparator
+                                  || is_detected <detect_is_transparent, Comparator>::value)
+                              && !is_json_pointer<KeyType>::value,
+                              std::true_type,
+                              std::false_type >::type;
 
 // type trait to check if KeyType can be used as object key
 // true if:
@@ -3818,17 +3825,13 @@ using detect_is_transparent = typename T::is_transparent;
 //   - KeyType is not a JSON iterator or json_pointer
 template<typename BasicJsonType, typename KeyTypeCVRef, bool RequireTransparentComparator = true,
          bool ExcludeObjectKeyType = RequireTransparentComparator, typename KeyType = uncvref_t<KeyTypeCVRef>>
-using is_usable_as_key_type = typename std::conditional <
-                              is_key_type_comparable<BasicJsonType, KeyTypeCVRef>::value
-                              && !(ExcludeObjectKeyType && std::is_same<KeyType,
-                                   typename BasicJsonType::object_t::key_type>::value)
-                              && (!RequireTransparentComparator || is_detected <
-                                  detect_is_transparent,
-                                  typename BasicJsonType::object_comparator_t >::value)
-                              && !is_json_iterator_of<BasicJsonType, KeyType>::value
-                              && !is_json_pointer<KeyType>::value,
-                              std::true_type,
-                              std::false_type >::type;
+using is_usable_as_basic_json_key_type = typename std::conditional <
+        is_usable_as_key_type<typename BasicJsonType::object_comparator_t,
+        typename BasicJsonType::object_t::key_type, KeyTypeCVRef,
+        RequireTransparentComparator, ExcludeObjectKeyType>::value
+        && !is_json_iterator_of<BasicJsonType, KeyType>::value,
+        std::true_type,
+        std::false_type >::type;
 
 template<typename ObjectType, typename KeyType>
 using detect_erase_with_key_type = decltype(std::declval<ObjectType&>().erase(std::declval<KeyType>()));
@@ -14508,7 +14511,7 @@ class output_vector_adapter : public output_adapter_protocol<CharType>
     JSON_HEDLEY_NON_NULL(2)
     void write_characters(const CharType* s, std::size_t length) override
     {
-        std::copy(s, s + length, std::back_inserter(v));
+        v.insert(v.end(), s, s + length);
     }
 
   private:
@@ -18552,6 +18555,8 @@ class serializer
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
+// #include <nlohmann/detail/meta/type_traits.hpp>
+
 
 namespace nlohmann
 {
@@ -18594,21 +18599,50 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
                 return {it, false};
             }
         }
-        Container::emplace_back(key, t);
-        return {--this->end(), true};
+        Container::emplace_back(key, std::forward<T>(t));
+        return {std::prev(this->end()), true};
     }
 
-    T& operator[](const Key& key)
+    template<class KeyType, detail::enable_if_t<
+                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+    std::pair<iterator, bool> emplace(KeyType && key, T && t)
+    {
+        for (auto it = this->begin(); it != this->end(); ++it)
+        {
+            if (m_compare(it->first, key))
+            {
+                return {it, false};
+            }
+        }
+        Container::emplace_back(std::forward<KeyType>(key), std::forward<T>(t));
+        return {std::prev(this->end()), true};
+    }
+
+    T& operator[](const key_type& key)
     {
         return emplace(key, T{}).first->second;
     }
 
-    const T& operator[](const Key& key) const
+    template<class KeyType, detail::enable_if_t<
+                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+    T & operator[](KeyType && key)
+    {
+        return emplace(std::forward<KeyType>(key), T{}).first->second;
+    }
+
+    const T& operator[](const key_type& key) const
     {
         return at(key);
     }
 
-    T& at(const Key& key)
+    template<class KeyType, detail::enable_if_t<
+                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+    const T & operator[](KeyType && key) const
+    {
+        return at(std::forward<KeyType>(key));
+    }
+
+    T& at(const key_type& key)
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
@@ -18621,7 +18655,9 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
         JSON_THROW(std::out_of_range("key not found"));
     }
 
-    const T& at(const Key& key) const
+    template<class KeyType, detail::enable_if_t<
+                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+    T & at(KeyType && key)
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
@@ -18634,7 +18670,56 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
         JSON_THROW(std::out_of_range("key not found"));
     }
 
-    size_type erase(const Key& key)
+    const T& at(const key_type& key) const
+    {
+        for (auto it = this->begin(); it != this->end(); ++it)
+        {
+            if (m_compare(it->first, key))
+            {
+                return it->second;
+            }
+        }
+
+        JSON_THROW(std::out_of_range("key not found"));
+    }
+
+    template<class KeyType, detail::enable_if_t<
+                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+    const T & at(KeyType && key) const
+    {
+        for (auto it = this->begin(); it != this->end(); ++it)
+        {
+            if (m_compare(it->first, key))
+            {
+                return it->second;
+            }
+        }
+
+        JSON_THROW(std::out_of_range("key not found"));
+    }
+
+    size_type erase(const key_type& key)
+    {
+        for (auto it = this->begin(); it != this->end(); ++it)
+        {
+            if (m_compare(it->first, key))
+            {
+                // Since we cannot move const Keys, re-construct them in place
+                for (auto next = it; ++next != this->end(); ++it)
+                {
+                    it->~value_type(); // Destroy but keep allocation
+                    new (&*it) value_type{std::move(*next)};
+                }
+                Container::pop_back();
+                return 1;
+            }
+        }
+        return 0;
+    }
+
+    template<class KeyType, detail::enable_if_t<
+                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+    size_type erase(KeyType && key)
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
@@ -18660,6 +18745,11 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
 
     iterator erase(iterator first, iterator last)
     {
+        if (first == last)
+        {
+            return first;
+        }
+
         const auto elements_affected = std::distance(first, last);
         const auto offset = std::distance(Container::begin(), first);
 
@@ -18706,7 +18796,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
         return Container::begin() + offset;
     }
 
-    size_type count(const Key& key) const
+    size_type count(const key_type& key) const
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
@@ -18718,7 +18808,21 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
         return 0;
     }
 
-    iterator find(const Key& key)
+    template<class KeyType, detail::enable_if_t<
+                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+    size_type count(KeyType && key) const
+    {
+        for (auto it = this->begin(); it != this->end(); ++it)
+        {
+            if (m_compare(it->first, key))
+            {
+                return 1;
+            }
+        }
+        return 0;
+    }
+
+    iterator find(const key_type& key)
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
@@ -18730,7 +18834,21 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
         return Container::end();
     }
 
-    const_iterator find(const Key& key) const
+    template<class KeyType, detail::enable_if_t<
+                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+    iterator find(KeyType && key)
+    {
+        for (auto it = this->begin(); it != this->end(); ++it)
+        {
+            if (m_compare(it->first, key))
+            {
+                return it;
+            }
+        }
+        return Container::end();
+    }
+
+    const_iterator find(const key_type& key) const
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
@@ -20708,7 +20826,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @brief access specified object element with bounds checking
     /// @sa https://json.nlohmann.me/api/basic_json/at/
     template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int> = 0>
+                 detail::is_usable_as_basic_json_key_type<basic_json_t, KeyType>::value, int> = 0>
     reference at(KeyType && key)
     {
         // at only works for objects
@@ -20746,7 +20864,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @brief access specified object element with bounds checking
     /// @sa https://json.nlohmann.me/api/basic_json/at/
     template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int> = 0>
+                 detail::is_usable_as_basic_json_key_type<basic_json_t, KeyType>::value, int> = 0>
     const_reference at(KeyType && key) const
     {
         // at only works for objects
@@ -20876,7 +20994,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @brief access specified object element
     /// @sa https://json.nlohmann.me/api/basic_json/operator%5B%5D/
     template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int > = 0 >
+                 detail::is_usable_as_basic_json_key_type<basic_json_t, KeyType>::value, int > = 0 >
     reference operator[](KeyType && key)
     {
         // implicitly convert null value to an empty object
@@ -20900,7 +21018,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @brief access specified object element
     /// @sa https://json.nlohmann.me/api/basic_json/operator%5B%5D/
     template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int > = 0 >
+                 detail::is_usable_as_basic_json_key_type<basic_json_t, KeyType>::value, int > = 0 >
     const_reference operator[](KeyType && key) const
     {
         // const operator[] only works for objects
@@ -20969,7 +21087,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     template < class KeyType, class ValueType, detail::enable_if_t <
                    detail::is_getable<basic_json_t, ValueType>::value
                    && !std::is_same<value_t, ValueType>::value
-                   && detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int > = 0 >
+                   && detail::is_usable_as_basic_json_key_type<basic_json_t, KeyType>::value, int > = 0 >
     typename std::decay<ValueType>::type value(KeyType && key, ValueType && default_value) const
     {
         // value only works for objects
@@ -21268,7 +21386,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @brief remove element from a JSON object given a key
     /// @sa https://json.nlohmann.me/api/basic_json/erase/
     template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int> = 0>
+                 detail::is_usable_as_basic_json_key_type<basic_json_t, KeyType>::value, int> = 0>
     size_type erase(KeyType && key)
     {
         return erase_internal(std::forward<KeyType>(key));
@@ -21335,7 +21453,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @brief find an element in a JSON object
     /// @sa https://json.nlohmann.me/api/basic_json/find/
     template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int> = 0>
+                 detail::is_usable_as_basic_json_key_type<basic_json_t, KeyType>::value, int> = 0>
     iterator find(KeyType && key)
     {
         auto result = end();
@@ -21351,7 +21469,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @brief find an element in a JSON object
     /// @sa https://json.nlohmann.me/api/basic_json/find/
     template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int> = 0>
+                 detail::is_usable_as_basic_json_key_type<basic_json_t, KeyType>::value, int> = 0>
     const_iterator find(KeyType && key) const
     {
         auto result = cend();
@@ -21375,7 +21493,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @brief returns the number of occurrences of a key in a JSON object
     /// @sa https://json.nlohmann.me/api/basic_json/count/
     template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int> = 0>
+                 detail::is_usable_as_basic_json_key_type<basic_json_t, KeyType>::value, int> = 0>
     size_type count(KeyType && key) const
     {
         // return 0 for all nonobject types
@@ -21392,7 +21510,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @brief check the existence of an element in a JSON object
     /// @sa https://json.nlohmann.me/api/basic_json/contains/
     template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int> = 0>
+                 detail::is_usable_as_basic_json_key_type<basic_json_t, KeyType>::value, int> = 0>
     bool contains(KeyType && key) const
     {
         return is_object() && m_value.object->find(std::forward<KeyType>(key)) != m_value.object->end();

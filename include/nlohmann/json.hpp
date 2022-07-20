@@ -2001,7 +2001,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @brief access specified object element with bounds checking
     /// @sa https://json.nlohmann.me/api/basic_json/at/
     template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int> = 0>
+                 detail::is_usable_as_basic_json_key_type<basic_json_t, KeyType>::value, int> = 0>
     reference at(KeyType && key)
     {
         // at only works for objects
@@ -2039,7 +2039,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @brief access specified object element with bounds checking
     /// @sa https://json.nlohmann.me/api/basic_json/at/
     template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int> = 0>
+                 detail::is_usable_as_basic_json_key_type<basic_json_t, KeyType>::value, int> = 0>
     const_reference at(KeyType && key) const
     {
         // at only works for objects
@@ -2169,7 +2169,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @brief access specified object element
     /// @sa https://json.nlohmann.me/api/basic_json/operator%5B%5D/
     template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int > = 0 >
+                 detail::is_usable_as_basic_json_key_type<basic_json_t, KeyType>::value, int > = 0 >
     reference operator[](KeyType && key)
     {
         // implicitly convert null value to an empty object
@@ -2193,7 +2193,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @brief access specified object element
     /// @sa https://json.nlohmann.me/api/basic_json/operator%5B%5D/
     template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int > = 0 >
+                 detail::is_usable_as_basic_json_key_type<basic_json_t, KeyType>::value, int > = 0 >
     const_reference operator[](KeyType && key) const
     {
         // const operator[] only works for objects
@@ -2262,7 +2262,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     template < class KeyType, class ValueType, detail::enable_if_t <
                    detail::is_getable<basic_json_t, ValueType>::value
                    && !std::is_same<value_t, ValueType>::value
-                   && detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int > = 0 >
+                   && detail::is_usable_as_basic_json_key_type<basic_json_t, KeyType>::value, int > = 0 >
     typename std::decay<ValueType>::type value(KeyType && key, ValueType && default_value) const
     {
         // value only works for objects
@@ -2561,7 +2561,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @brief remove element from a JSON object given a key
     /// @sa https://json.nlohmann.me/api/basic_json/erase/
     template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int> = 0>
+                 detail::is_usable_as_basic_json_key_type<basic_json_t, KeyType>::value, int> = 0>
     size_type erase(KeyType && key)
     {
         return erase_internal(std::forward<KeyType>(key));
@@ -2628,7 +2628,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @brief find an element in a JSON object
     /// @sa https://json.nlohmann.me/api/basic_json/find/
     template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int> = 0>
+                 detail::is_usable_as_basic_json_key_type<basic_json_t, KeyType>::value, int> = 0>
     iterator find(KeyType && key)
     {
         auto result = end();
@@ -2644,7 +2644,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @brief find an element in a JSON object
     /// @sa https://json.nlohmann.me/api/basic_json/find/
     template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int> = 0>
+                 detail::is_usable_as_basic_json_key_type<basic_json_t, KeyType>::value, int> = 0>
     const_iterator find(KeyType && key) const
     {
         auto result = cend();
@@ -2668,7 +2668,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @brief returns the number of occurrences of a key in a JSON object
     /// @sa https://json.nlohmann.me/api/basic_json/count/
     template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int> = 0>
+                 detail::is_usable_as_basic_json_key_type<basic_json_t, KeyType>::value, int> = 0>
     size_type count(KeyType && key) const
     {
         // return 0 for all nonobject types
@@ -2685,7 +2685,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @brief check the existence of an element in a JSON object
     /// @sa https://json.nlohmann.me/api/basic_json/contains/
     template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int> = 0>
+                 detail::is_usable_as_basic_json_key_type<basic_json_t, KeyType>::value, int> = 0>
     bool contains(KeyType && key) const
     {
         return is_object() && m_value.object->find(std::forward<KeyType>(key)) != m_value.object->end();
