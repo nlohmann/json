@@ -133,3 +133,7 @@ By default, `#!cpp JSON_DISABLE_ENUM_SERIALIZATION` is not defined.
 ## See also
 
 - [`NLOHMANN_JSON_SERIALIZE_ENUM`](nlohmann_json_serialize_enum.md)
+
+## Version history
+
+- Added in version 3.11.0.

@@ -112,7 +112,7 @@ def check_structure():
                 if line == '```cpp' and section_idx == -1:
                     in_initial_code_example = True
 
-                if in_initial_code_example and line.startswith('//'):
+                if in_initial_code_example and line.startswith('//') and line not in ['// since C++20', '// until C++20']:
                     # check numbering of overloads
                     if any(map(str.isdigit, line)):
                         number = int(re.findall(r'\d+', line)[0])
@@ -121,7 +121,7 @@ def check_structure():
                         last_overload = number
 
                     if any(map(str.isdigit, line)) and '(' not in line:
-                        report('style/numbering', f'{file}:{lineno+1}', 'number should be in parentheses: {line}')
+                        report('style/numbering', f'{file}:{lineno+1}', f'number should be in parentheses: {line}')
 
                 if line == '```' and in_initial_code_example:
                     in_initial_code_example = False
