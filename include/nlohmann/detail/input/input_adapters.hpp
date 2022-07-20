@@ -9,8 +9,9 @@
 #pragma once
 
 #include <array> // array
+#include <cerrno> // errno
 #include <cstddef> // size_t
-#include <cstring> // strlen
+#include <cstring> // strlen, strerror
 #include <iterator> // begin, end, iterator_traits, random_access_iterator_tag, distance, next
 #include <memory> // shared_ptr, make_shared, addressof
 #include <numeric> // accumulate
@@ -48,9 +49,14 @@ class file_input_adapter
     using char_type = char;
 
     JSON_HEDLEY_NON_NULL(2)
-    explicit file_input_adapter(std::FILE* f) noexcept
+    explicit file_input_adapter(std::FILE* f)
         : m_file(f)
-    {}
+    {
+        if (m_file == nullptr)
+        {
+            JSON_THROW(parse_error::create(116, 0, detail::concat("input file is invalid: ", reinterpret_cast<const char*>(std::strerror(errno))), nullptr));
+        }
+    }
 
     // make class move-only
     file_input_adapter(const file_input_adapter&) = delete;

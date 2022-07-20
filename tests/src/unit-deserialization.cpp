@@ -332,6 +332,12 @@ TEST_CASE("deserialization")
         {
             CHECK_THROWS_WITH_AS("[\"foo\",1,2,3,false,{\"one\":1}"_json, "[json.exception.parse_error.101] parse error at line 1, column 29: syntax error while parsing array - unexpected end of input; expected ']'", json::parse_error&);
         }
+
+        SECTION("FILE*")
+        {
+            std::FILE* f = std::fopen("nonexisting_file", "r"); // NOTLINT(cppcoreguidelines-owning-memory)
+            CHECK_THROWS_WITH_AS(json::parse(f), "[json.exception.parse_error.116] parse error: input file is invalid: No such file or directory", json::parse_error&);
+        }
     }
 
     SECTION("contiguous containers")
