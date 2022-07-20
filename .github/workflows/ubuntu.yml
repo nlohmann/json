@@ -134,3 +134,12 @@ jobs:
         run: |
           . /opt/intel/oneapi/setvars.sh
           cmake --build build --target ci_icpc
+  ci_reuse_compliance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+      - name: install REUSE tool
+        run:  python -m pip install reuse
+      - name: REUSE lint
+        run: reuse lint

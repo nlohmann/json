@@ -24,6 +24,7 @@
 /tests/parse_*_fuzzer
 /tests/corpus_*
 
+/venv/
 /docs/mkdocs/docs/examples/
 /docs/mkdocs/docs/__pycache__/
 /docs/mkdocs/site/

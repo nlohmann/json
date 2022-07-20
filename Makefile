@@ -258,3 +258,12 @@ update_hedley:
 
 serve_header:
 	./tools/serve_header/serve_header.py --make $(MAKE)
+
+##########################################################################
+# REUSE
+##########################################################################
+
+reuse:
+	pipx run reuse addheader --recursive single_include include -tjson --license MIT --copyright "Niels Lohmann <https://nlohmann.me>" --year "2013-2022"
+	pipx run reuse addheader tests/benchmarks/src/benchmarks.cpp tests/src/* -tjson_support --license MIT --copyright "Niels Lohmann <https://nlohmann.me>" --year "2013-2022"
+	pipx run reuse lint
