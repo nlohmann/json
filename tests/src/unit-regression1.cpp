@@ -19,7 +19,7 @@ using nlohmann::json;
 #include <sstream>
 #include <list>
 #include <cstdio>
-#include <test_data.hpp>
+#include "make_test_data_available.hpp"
 
 #ifdef JSON_HAS_CPP_17
     #include <variant>

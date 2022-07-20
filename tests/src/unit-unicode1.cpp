@@ -16,7 +16,7 @@ using nlohmann::json;
 #include <fstream>
 #include <sstream>
 #include <iomanip>
-#include <test_data.hpp>
+#include "make_test_data_available.hpp"
 
 TEST_CASE("Unicode (1/5)" * doctest::skip())
 {

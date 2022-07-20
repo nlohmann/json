@@ -16,7 +16,7 @@ using nlohmann::json;
 #include <iomanip>
 #include <iostream>
 #include <set>
-#include <test_data.hpp>
+#include "make_test_data_available.hpp"
 #include "test_utils.hpp"
 
 namespace
