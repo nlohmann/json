@@ -64,6 +64,10 @@ Whether the input is valid JSON.
 
 Strong guarantee: if an exception is thrown, there are no changes in the JSON value.
 
+## Exceptions
+
+Throws [`parse_error.116`](../../home/exceptions.md#jsonexceptionparse_error116) if passed `#!cpp FILE` pointer is `#!cpp nullptr`.
+
 ## Complexity
 
 Linear in the length of the input. The parser is a predictive LL(1) parser.

@@ -361,7 +361,7 @@ A `#!cpp FILE*` pointer passed to the [parse](../api/basic_json/parse.md) functi
 !!! failure "Example message"
 
     ```
-    [json.exception.parse_error.116] parse error: input file is invalid: No such file or directory
+    [json.exception.parse_error.116] parse error: input file is invalid
     ```
 
 ## Iterator errors

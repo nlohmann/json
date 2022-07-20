@@ -335,9 +335,10 @@ TEST_CASE("deserialization")
 
         SECTION("FILE*")
         {
-            std::FILE* f = std::fopen("nonexisting_file", "r"); // NOTLINT(cppcoreguidelines-owning-memory)
+            std::FILE* f = std::fopen("nonexisting_file", "r"); // NOLINT(cppcoreguidelines-owning-memory)
             json _;
-            CHECK_THROWS_WITH_AS(_ = json::parse(f), "[json.exception.parse_error.116] parse error: input file is invalid: No such file or directory", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::parse(f), "[json.exception.parse_error.116] parse error: input file is invalid", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::accept(f), "[json.exception.parse_error.116] parse error: input file is invalid", json::parse_error&);
         }
     }
 
