@@ -1,12 +1,11 @@
 # <small>nlohmann::basic_json::</small>patch
 
 ```cpp
-basic_json patch(const basic_json& json_patch) const;
+void patch_inplace(const basic_json& json_patch) const;
 ```
 
 [JSON Patch](http://jsonpatch.com) defines a JSON document structure for expressing a sequence of operations to apply to
-a JSON document. With this function, a JSON Patch is applied to the current JSON value by executing all operations from
-the patch.
+a JSON document. With this function, a JSON Patch is applied to the current JSON value by executing all operations from the patch. This function applies a JSON patch in place and returns void.
 
 ## Parameters
 
@@ -15,11 +14,11 @@ the patch.
 
 ## Return value
 
-patched document
+void
 
 ## Exception safety
 
-Strong guarantee: if an exception is thrown, there are no changes in the JSON value.
+No guarantees, value may be corrupted by an unsuccessful patch operation.
 
 ## Exceptions
 
@@ -42,8 +41,7 @@ affected by the patch, the complexity can usually be neglected.
 
 ## Notes
 
-The application of a patch is atomic: Either all operations succeed and the patched document is returned or an exception
-is thrown. In any case, the original value is not changed: the patch is applied to a copy of the value.
+Unlike `patch`, `patch_inplace` applies the operation "in place" and no copy of the json document is created. That makes it faster for large documents by avoiding the copy. However, the value of the json document might be corrupted if the function throws an exception.
 
 ## Examples
 
@@ -52,13 +50,13 @@ is thrown. In any case, the original value is not changed: the patch is applied 
     The following code shows how a JSON patch is applied to a value.
      
     ```cpp
-    --8<-- "examples/patch.cpp"
+    --8<-- "examples/patch_inplace.cpp"
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/patch.output"
+    --8<-- "examples/patch_inplace.output"
     ```
 
 ## See also
@@ -66,7 +64,3 @@ is thrown. In any case, the original value is not changed: the patch is applied 
 - [RFC 6902 (JSON Patch)](https://tools.ietf.org/html/rfc6902)
 - [RFC 6901 (JSON Pointer)](https://tools.ietf.org/html/rfc6901)
 - [merge_patch](merge_patch.md) applies a JSON Merge Patch
-
-## Version history
-
-- Added in version 2.0.0.
