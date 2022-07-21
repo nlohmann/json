@@ -356,7 +356,7 @@ A UBJSON high-precision number could not be parsed.
 
 ### json.exception.parse_error.116
 
-A `#!cpp FILE*` pointer passed to the [parse](../api/basic_json/parse.md) function is `#!cpp nullptr`; that is, a previous call to `#!cpp std::fopen` failed.
+A `#!cpp FILE` pointer passed to the [parse](../api/basic_json/parse.md) function is `#!cpp nullptr`; that is, a previous call to `#!cpp std::fopen` failed.
 
 !!! failure "Example message"
 
