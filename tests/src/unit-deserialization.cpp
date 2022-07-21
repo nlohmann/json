@@ -173,6 +173,11 @@ struct SaxEventLoggerExitAfterStartArray : public SaxEventLogger
 #if defined(__clang__)
     __attribute__((no_sanitize("undefined")))
 #endif
+void test_file_exception();
+
+#if defined(__clang__)
+    __attribute__((no_sanitize("undefined")))
+#endif
 void test_file_exception()
 {
     std::FILE* f = std::fopen("nonexisting_file", "r"); // NOLINT(cppcoreguidelines-owning-memory)
