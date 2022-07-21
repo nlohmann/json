@@ -166,6 +166,21 @@ struct SaxEventLoggerExitAfterStartArray : public SaxEventLogger
 };
 } // namespace
 
+// Passing a NULL pointer to the input adapter violates its NON_NULL attribute which is detected by UBSAN.
+// To still test whether exceptions are thrown, we need to exclude these tests from UBSAN which can only
+// be done with a function attribute. See
+// https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html#disabling-instrumentation-with-attribute-no-sanitize-undefined
+#if defined(__clang__)
+__attribute__((no_sanitize("undefined")))
+#endif
+void test_file_exception()
+{
+    std::FILE* f = std::fopen("nonexisting_file", "r"); // NOLINT(cppcoreguidelines-owning-memory)
+    json _;
+    CHECK_THROWS_WITH_AS(_ = json::parse(f), "[json.exception.parse_error.116] parse error: input file is invalid", json::parse_error&);
+    CHECK_THROWS_WITH_AS(_ = json::accept(f), "[json.exception.parse_error.116] parse error: input file is invalid", json::parse_error&);
+}
+
 TEST_CASE("deserialization")
 {
     SECTION("successful deserialization")
@@ -335,10 +350,7 @@ TEST_CASE("deserialization")
 
         SECTION("FILE*")
         {
-            std::FILE* f = std::fopen("nonexisting_file", "r"); // NOLINT(cppcoreguidelines-owning-memory)
-            json _;
-            CHECK_THROWS_WITH_AS(_ = json::parse(f), "[json.exception.parse_error.116] parse error: input file is invalid", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::accept(f), "[json.exception.parse_error.116] parse error: input file is invalid", json::parse_error&);
+            test_file_exception();
         }
     }
 
