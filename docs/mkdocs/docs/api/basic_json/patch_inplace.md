@@ -5,7 +5,8 @@ void patch_inplace(const basic_json& json_patch) const;
 ```
 
 [JSON Patch](http://jsonpatch.com) defines a JSON document structure for expressing a sequence of operations to apply to
-a JSON document. With this function, a JSON Patch is applied to the current JSON value by executing all operations from the patch. This function applies a JSON patch in place and returns void.
+a JSON document. With this function, a JSON Patch is applied to the current JSON value by executing all operations from
+the patch. This function applies a JSON patch in place and returns void.
 
 ## Parameters
 
@@ -37,7 +38,9 @@ affected by the patch, the complexity can usually be neglected.
 
 ## Notes
 
-Unlike [`patch`](patch.md), `patch_inplace` applies the operation "in place" and no copy of the JSON value is created. That makes it faster for large documents by avoiding the copy. However, the JSON value might be corrupted if the function throws an exception.
+Unlike [`patch`](patch.md), `patch_inplace` applies the operation "in place" and no copy of the JSON value is created.
+That makes it faster for large documents by avoiding the copy. However, the JSON value might be corrupted if the
+function throws an exception.
 
 ## Examples
 
@@ -61,3 +64,7 @@ Unlike [`patch`](patch.md), `patch_inplace` applies the operation "in place" and
 - [RFC 6901 (JSON Pointer)](https://tools.ietf.org/html/rfc6901)
 - [patch](patch.md) applies a JSON Merge Patch
 - [merge_patch](merge_patch.md) applies a JSON Merge Patch
+
+## Version history
+
+- Added in version 3.11.0.

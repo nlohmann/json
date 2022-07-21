@@ -96,6 +96,7 @@ INSERT INTO searchIndex(name, type, path) VALUES ('parse_error', 'Class', 'api/b
 INSERT INTO searchIndex(name, type, path) VALUES ('parse_event_t', 'Enum', 'api/basic_json/parse_event_t/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('parser_callback_t', 'Type', 'api/basic_json/parser_callback_t/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('patch', 'Method', 'api/basic_json/patch/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('patch_inplace', 'Method', 'api/basic_json/patch_inplace/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('push_back', 'Method', 'api/basic_json/push_back/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('rbegin', 'Method', 'api/basic_json/rbegin/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('rend', 'Method', 'api/basic_json/rend/index.html');
