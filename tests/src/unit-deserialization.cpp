@@ -171,7 +171,7 @@ struct SaxEventLoggerExitAfterStartArray : public SaxEventLogger
 // be done with a function attribute. See
 // https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html#disabling-instrumentation-with-attribute-no-sanitize-undefined
 #if defined(__clang__)
-__attribute__((no_sanitize("undefined")))
+    __attribute__((no_sanitize("undefined")))
 #endif
 void test_file_exception()
 {
