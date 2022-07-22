@@ -5951,11 +5951,7 @@ class file_input_adapter
 
     std::char_traits<char>::int_type get_character() noexcept
     {
-        if (JSON_HEDLEY_LIKELY(m_file != nullptr))
-        {
-            return std::fgetc(m_file);
-        }
-        return std::char_traits<char>::eof(); // LCOV_EXCL_LINE
+        return std::fgetc(m_file);
     }
 
   private:
