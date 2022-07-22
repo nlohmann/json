@@ -256,6 +256,7 @@ Access to the JSON value
 ### JSON Patch functions
 
 - [**patch**](patch.md) - applies a JSON patch
+- [**patch_inplace**](patch_inplace.md) - applies a JSON patch in place
 - [**diff**](diff.md) (_static_) - creates a diff as a JSON patch
 
 ### JSON Merge Patch functions
