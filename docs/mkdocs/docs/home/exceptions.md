@@ -354,16 +354,6 @@ A UBJSON high-precision number could not be parsed.
     [json.exception.parse_error.115] parse error at byte 5: syntax error while parsing UBJSON high-precision number: invalid number text: 1A
     ```
 
-### json.exception.parse_error.116
-
-A `#!cpp FILE` pointer passed to the [parse](../api/basic_json/parse.md) function is `#!cpp nullptr`; that is, a previous call to `#!cpp std::fopen` failed.
-
-!!! failure "Example message"
-
-    ```
-    [json.exception.parse_error.116] parse error: input file is invalid
-    ```
-
 ## Iterator errors
 
 This exception is thrown if iterators passed to a library function do not match

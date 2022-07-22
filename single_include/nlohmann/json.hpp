@@ -5936,13 +5936,10 @@ class file_input_adapter
     using char_type = char;
 
     JSON_HEDLEY_NON_NULL(2)
-    explicit file_input_adapter(std::FILE* f)
+    explicit file_input_adapter(std::FILE* f) noexcept
         : m_file(f)
     {
-        if (m_file == nullptr)
-        {
-            JSON_THROW(parse_error::create(116, 0, "input file is invalid", nullptr));
-        }
+        JSON_ASSERT(m_file != nullptr);
     }
 
     // make class move-only
@@ -5954,7 +5951,11 @@ class file_input_adapter
 
     std::char_traits<char>::int_type get_character() noexcept
     {
-        return std::fgetc(m_file);
+        if (JSON_HEDLEY_LIKELY(m_file != nullptr))
+        {
+            return std::fgetc(m_file);
+        }
+        return std::char_traits<char>::eof(); // LCOV_EXCL_LINE
     }
 
   private:
