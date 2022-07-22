@@ -50,7 +50,9 @@ class file_input_adapter
     JSON_HEDLEY_NON_NULL(2)
     explicit file_input_adapter(std::FILE* f) noexcept
         : m_file(f)
-    {}
+    {
+        JSON_ASSERT(m_file != nullptr);
+    }
 
     // make class move-only
     file_input_adapter(const file_input_adapter&) = delete;

@@ -29,7 +29,7 @@ Unlike the [`parse`](parse.md) function, this function neither throws an excepti
 :   A compatible input, for instance:
     
     - an `std::istream` object
-    - a `FILE` pointer
+    - a `FILE` pointer (must not be null)
     - a C-style array of characters
     - a pointer to a null-terminated string of single byte characters
     - a `std::string`
@@ -71,6 +71,11 @@ Linear in the length of the input. The parser is a predictive LL(1) parser.
 ## Notes
 
 (1) A UTF-8 byte order mark is silently ignored.
+
+!!! danger "Runtime assertion"
+
+    The precondition that a passed `#!cpp FILE` pointer must not be null is enforced with a
+    [runtime assertion](../../features/assertions.md).
 
 ## Examples
 

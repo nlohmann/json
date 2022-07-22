@@ -28,7 +28,7 @@ static basic_json parse(IteratorType first, IteratorType last,
 :   A compatible input, for instance:
     
     - an `std::istream` object
-    - a `FILE` pointer
+    - a `FILE` pointer (must not be null)
     - a C-style array of characters
     - a pointer to a null-terminated string of single byte characters
     - a `std::string`
@@ -71,6 +71,13 @@ Deserialized JSON value; in case of a parse error and `allow_exceptions` set to 
 
 Strong guarantee: if an exception is thrown, there are no changes in the JSON value.
 
+## Exceptions
+
+- Throws [`parse_error.101`](../../home/exceptions.md#jsonexceptionparse_error101) in case of an unexpected token.
+- Throws [`parse_error.102`](../../home/exceptions.md#jsonexceptionparse_error102) if to_unicode fails or surrogate
+  error.
+- Throws [`parse_error.103`](../../home/exceptions.md#jsonexceptionparse_error103) if to_unicode fails.
+
 ## Complexity
 
 Linear in the length of the input. The parser is a predictive LL(1) parser. The complexity can be higher if the parser
@@ -80,6 +87,11 @@ super-linear complexity.
 ## Notes
 
 (1) A UTF-8 byte order mark is silently ignored.
+
+!!! danger "Runtime assertion"
+
+    The precondition that a passed `#!cpp FILE` pointer must not be null is enforced with a
+    [runtime assertion](../../features/assertions.md).
 
 ## Examples
 
