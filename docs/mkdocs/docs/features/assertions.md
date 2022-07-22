@@ -106,7 +106,7 @@ behavior and yields a runtime assertion.
 ### Reading from a null `FILE` pointer
 
 Reading from a null `#!cpp FILE` pointer is undefined behavior and yields a runtime assertion. This can happen when
-calling `#!cpp std::fopen` on a nonexisting file.
+calling `#!cpp std::fopen` on a nonexistent file.
 
 ??? example "Example 4: Uninitialized iterator"
 
@@ -119,7 +119,7 @@ calling `#!cpp std::fopen` on a nonexisting file.
     
     int main()
     {
-      std::FILE* f = std::fopen("nonexisting_file.json", "r");
+      std::FILE* f = std::fopen("nonexistent_file.json", "r");
       json j = json::parse(f);
     }
     ```
