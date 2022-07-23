@@ -101,8 +101,8 @@ Linear.
 
 !!! note "Comparing different `basic_json` specializations"
 
-    Comparing different `basic_json` specializations can have surprising results. For instance, comparing the JSON
-    objects
+    Comparing different `basic_json` specializations can have surprising effects. For instance, the result of comparing
+    the JSON objects
 
     ```json
     {
@@ -120,7 +120,7 @@ Linear.
     }
     ```
 
-    depends on whether [`nlohmann::json`](../json.md) order [`nlohmann::ordered_json`](../ordered_json.md) is used:
+    depends on whether [`nlohmann::json`](../json.md) or [`nlohmann::ordered_json`](../ordered_json.md) is used:
 
      ```cpp
      --8<-- "examples/operator__equal__specializations.cpp"
