@@ -57,13 +57,13 @@ Linear.
     The example below shows the serialization with different parameters to `width` to adjust the indentation level.
         
     ```cpp
-    --8<-- "examples/operator_serialize.cpp"
+    --8<-- "examples/operator_ltlt__basic_json.cpp"
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/operator_serialize.output"
+    --8<-- "examples/operator_ltlt__basic_json.output"
     ```
 
 ## Version history
