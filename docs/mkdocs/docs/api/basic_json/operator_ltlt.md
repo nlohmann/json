@@ -55,7 +55,7 @@ Linear.
 ??? example "Example: (1) serialize JSON value to stream"
 
     The example below shows the serialization with different parameters to `width` to adjust the indentation level.
-        
+    
     ```cpp
     --8<-- "examples/operator_ltlt__basic_json.cpp"
     ```
@@ -66,6 +66,19 @@ Linear.
     --8<-- "examples/operator_ltlt__basic_json.output"
     ```
 
+??? example "Example: (2) write JSON pointer to stream"
+
+    The example below shows how to write a JSON pointer to a stream.
+    
+    ```cpp
+    --8<-- "examples/operator_ltlt__json_pointer.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/operator_ltlt__json_pointer.output"
+    ```
 ## Version history
 
 1. Added in version 1.0.0. Added support for indentation character and deprecated
