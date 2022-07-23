@@ -13455,6 +13455,9 @@ class json_reverse_iterator : public std::reverse_iterator<Base>
 #include <cctype> // isdigit
 #include <cerrno> // errno, ERANGE
 #include <cstdlib> // strtoull
+#ifndef JSON_NO_IO
+    #include <iosfwd> // ostream
+#endif  // JSON_NO_IO
 #include <limits> // max
 #include <numeric> // accumulate
 #include <string> // string
@@ -13527,6 +13530,16 @@ class json_pointer
     {
         return to_string();
     }
+
+#ifndef JSON_NO_IO
+    /// @brief write string representation of the JSON pointer to stream
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_ltlt/
+    friend std::ostream& operator<<(std::ostream& o, const json_pointer& ptr)
+    {
+        o << ptr.to_string();
+        return o;
+    }
+#endif
 
     /// @brief append another JSON pointer at the end of this JSON pointer
     /// @sa https://json.nlohmann.me/api/json_pointer/operator_slasheq/
