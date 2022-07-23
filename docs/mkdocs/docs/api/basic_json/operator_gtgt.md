@@ -1,4 +1,4 @@
-# operator>>(basic_json)
+# <small>nlohmann::</small>operator>>(basic_json)
 
 ```cpp
 std::istream& operator>>(std::istream& i, basic_json& j);
@@ -33,6 +33,12 @@ Linear in the length of the input. The parser is a predictive LL(1) parser.
 
 A UTF-8 byte order mark is silently ignored.
 
+!!! warning "Deprecation"
+
+    This function replaces function `#!cpp std::istream& operator<<(basic_json& j, std::istream& i)` which has
+    been deprecated in version 3.0.0. It will be removed in version 4.0.0. Please replace calls like `#!cpp j << i;`
+    with `#!cpp i >> j;`.
+
 ## Examples
 
 ??? example
@@ -56,10 +62,4 @@ A UTF-8 byte order mark is silently ignored.
 
 ## Version history
 
-- Added in version 1.0.0
-
-!!! warning "Deprecation"
-
-    This function replaces function `#!cpp std::istream& operator<<(basic_json& j, std::istream& i)` which has
-    been deprecated in version 3.0.0. It will be removed in version 4.0.0. Please replace calls like `#!cpp j << i;`
-    with `#!cpp i >> j;`.
+- Added in version 1.0.0. Deprecated in version 3.0.0.

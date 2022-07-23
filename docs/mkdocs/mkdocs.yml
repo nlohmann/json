@@ -212,7 +212,7 @@ nav:
         - '(Constructor)': api/json_pointer/json_pointer.md
         - 'back': api/json_pointer/back.md
         - 'empty': api/json_pointer/empty.md
-        - 'operator std::string': api/json_pointer/operator_string.md
+        - 'operator string_t': api/json_pointer/operator_string.md
         - 'operator/': api/json_pointer/operator_slash.md
         - 'operator/=': api/json_pointer/operator_slasheq.md
         - 'parent_pointer': api/json_pointer/parent_pointer.md

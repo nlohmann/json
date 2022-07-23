@@ -19,6 +19,13 @@ operator string_t() const
 }
 ```
 
+## Notes
+
+!!! warning "Deprecation"
+
+    This function is deprecated in favor of [`to_string`](to_string.md) and will be removed in a future major version
+    release.
+
 ## Examples
 
 ??? example
@@ -38,4 +45,4 @@ operator string_t() const
 ## Version history
 
 - Since version 2.0.0.
-- Changed type to `string_t` in version 3.11.0.
+- Changed type to `string_t` and deprecated in version 3.11.0.
