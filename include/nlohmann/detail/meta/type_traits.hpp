@@ -363,8 +363,10 @@ struct is_constructible_string_type
 #endif
 
     static constexpr auto value =
-        is_constructible<laundered_type,
-        typename BasicJsonType::string_t>::value;
+        conjunction <
+        is_constructible<laundered_type, typename BasicJsonType::string_t>,
+        is_detected_exact<typename BasicJsonType::string_t::value_type,
+        value_type_t, laundered_type >>::value;
 };
 
 template<typename BasicJsonType, typename CompatibleArrayType, typename = void>
