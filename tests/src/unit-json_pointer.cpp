@@ -12,6 +12,8 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+#include <sstream>
+
 TEST_CASE("JSON pointers")
 {
     SECTION("errors")
@@ -475,12 +477,16 @@ TEST_CASE("JSON pointers")
 
     SECTION("string representation")
     {
-        for (const auto* ptr :
+        for (const auto* ptr_str :
                 {"", "/foo", "/foo/0", "/", "/a~1b", "/c%d", "/e^f", "/g|h", "/i\\j", "/k\"l", "/ ", "/m~0n"
                 })
         {
-            CHECK(json::json_pointer(ptr).to_string() == ptr);
-            CHECK(std::string(json::json_pointer(ptr)) == ptr);
+            json::json_pointer ptr(ptr_str);
+            std::stringstream ss;
+            ss << ptr;
+            CHECK(ptr.to_string() == ptr_str);
+            CHECK(std::string(ptr) == ptr_str);
+            CHECK(ss.str() == ptr_str);
         }
     }
 
