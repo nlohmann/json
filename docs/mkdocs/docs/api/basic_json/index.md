@@ -283,8 +283,8 @@ Access to the JSON value
 
 ## Non-member functions
 
-- [**operator<<(std::ostream&)**](operator_ltlt.md) - serialize to stream
-- [**operator>>(std::istream&)**](operator_gtgt.md) - deserialize from stream
+- [**operator<<(std::ostream&)**](../operator_ltlt.md) - serialize to stream
+- [**operator>>(std::istream&)**](../operator_gtgt.md) - deserialize from stream
 - [**to_string**](to_string.md) - user-defined `to_string` function for JSON values
 
 ## Literals

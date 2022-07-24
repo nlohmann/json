@@ -36,7 +36,7 @@ JSON Lines input with more than one value is treated as invalid JSON by the [`pa
 
 !!! warning "Note"
 
-    Using [`operator>>`](../../api/basic_json/operator_gtgt.md) like
+    Using [`operator>>`](../../api/operator_gtgt.md) like
     
     ```cpp
     json j;

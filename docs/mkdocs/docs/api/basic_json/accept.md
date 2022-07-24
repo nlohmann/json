@@ -96,7 +96,7 @@ Linear in the length of the input. The parser is a predictive LL(1) parser.
 ## See also
 
 - [parse](parse.md) - deserialize from a compatible input
-- [operator>>](operator_gtgt.md) - deserialize from stream
+- [operator>>](../operator_gtgt.md) - deserialize from stream
 
 ## Version history
 
