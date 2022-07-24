@@ -28,7 +28,7 @@ are the base for JSON patches.
 
 - [(constructor)](json_pointer.md)
 - [**to_string**](to_string.md) - return a string representation of the JSON pointer
-- [**operator string_t**](operator_string.md) - return a string representation of the JSON pointer
+- [**operator string_t**](operator_string_t.md) - return a string representation of the JSON pointer
 - [**operator/=**](operator_slasheq.md) - append to the end of the JSON pointer
 - [**operator/**](operator_slash.md) - create JSON Pointer by appending
 - [**parent_pointer**](parent_pointer.md) - returns the parent of this JSON pointer
