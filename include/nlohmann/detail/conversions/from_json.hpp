@@ -117,6 +117,7 @@ template <
     typename BasicJsonType, typename StringType,
     enable_if_t <
         std::is_assignable<StringType&, const typename BasicJsonType::string_t>::value
+        && is_detected_exact<typename BasicJsonType::string_t::value_type, value_type_t, StringType>::value
         && !std::is_same<typename BasicJsonType::string_t, StringType>::value
         && !is_json_ref<StringType>::value, int > = 0 >
 inline void from_json(const BasicJsonType& j, StringType& s)
