@@ -1,11 +1,12 @@
 # JSON_DISABLE_ENUM_SERIALIZATION
 
 ```cpp
-#define JSON_DISABLE_ENUM_SERIALIZATION
+#define JSON_DISABLE_ENUM_SERIALIZATION /* value */
 ```
 
-When defined, default serialization and deserialization functions for enums are excluded and have to be provided by the user, for example, using
-[`NLOHMANN_JSON_SERIALIZE_ENUM`](nlohmann_json_serialize_enum.md) (see [arbitrary type conversions](../../features/arbitrary_types.md) for more details).
+When defined to `1`, default serialization and deserialization functions for enums are excluded and have to be provided
+by the user, for example, using [`NLOHMANN_JSON_SERIALIZE_ENUM`](nlohmann_json_serialize_enum.md) (see
+[arbitrary type conversions](../../features/arbitrary_types.md) for more details).
 
 Parsing or serializing an enum will result in a compiler error.
 
@@ -13,10 +14,10 @@ This works for both unscoped and scoped enums.
 
 ## Default definition
 
-By default, `#!cpp JSON_DISABLE_ENUM_SERIALIZATION` is not defined.
+The default value is `0`.
 
 ```cpp
-#undef JSON_DISABLE_ENUM_SERIALIZATION
+#define JSON_DISABLE_ENUM_SERIALIZATION 0
 ```
 
 ## Notes
