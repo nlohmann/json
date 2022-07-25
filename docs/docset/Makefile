@@ -1,7 +1,16 @@
 SED ?= $(shell which gsed 2>/dev/null || which sed)
 
-JSON_for_Modern_C++.docset: Info.plist docSet.sql
-	$(MAKE) clean
+MKDOCS_PAGES=$(shell cd ../mkdocs/docs/ && find * -type f -name '*.md' | sort)
+
+.PHONY: all
+all: JSON_for_Modern_C++.tgz
+
+docSet.dsidx: docSet.sql
+	# generate index
+	sqlite3 docSet.dsidx <docSet.sql
+
+JSON_for_Modern_C++.docset: Info.plist docSet.dsidx
+	rm -fr JSON_for_Modern_C++.docset JSON_for_Modern_C++.tgz
 	mkdir -p JSON_for_Modern_C++.docset/Contents/Resources/Documents/
 	cp icon*.png JSON_for_Modern_C++.docset
 	cp Info.plist JSON_for_Modern_C++.docset/Contents
@@ -16,11 +25,26 @@ JSON_for_Modern_C++.docset: Info.plist docSet.sql
 	find JSON_for_Modern_C++.docset/Contents/Resources/Documents -type f -exec $(SED) -i 's| - JSON for Modern C++</title>|</title>|' {} +
 	# clean up
 	rm JSON_for_Modern_C++.docset/Contents/Resources/Documents/sitemap.*
-	# generate index
-	sqlite3 JSON_for_Modern_C++.docset/Contents/Resources/docSet.dsidx < docSet.sql
+	# copy index
+	cp docSet.dsidx JSON_for_Modern_C++.docset/Contents/Resources/
 
 JSON_for_Modern_C++.tgz: JSON_for_Modern_C++.docset
 	tar --exclude='.DS_Store' -cvzf JSON_for_Modern_C++.tgz JSON_for_Modern_C++.docset
 
+# list mkdocs pages missing from the docset index
+.PHONY: list_missing_pages
+list_missing_pages: docSet.dsidx
+	@for page in $(MKDOCS_PAGES); do \
+		case "$$page" in \
+			*/index.md) path=$${page/\/index.md/} ;; \
+			*)          path=$${page/.md/}        ;; \
+		esac; \
+		if [ "x$$page" != "xindex.md" -a "x$$(sqlite3 docSet.dsidx "SELECT COUNT(*) FROM searchIndex WHERE path='$$path/index.html'")" = "x0" ]; then \
+			echo $$page; \
+		fi \
+	done
+
+.PHONY: clean
 clean:
+	rm -f docSet.dsidx
 	rm -fr JSON_for_Modern_C++.docset JSON_for_Modern_C++.tgz

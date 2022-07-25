@@ -9,7 +9,8 @@
 
 /.idea
 /cmake-build-*
-# Visual Studio Code
+
+# Visual Studio / Visual Studio Code
 /.vs/
 /.vscode/
 /out/
@@ -21,19 +22,20 @@
 /build*/
 
 # fuzzers
-/tests/parse_*_fuzzer
 /tests/corpus_*
+/tests/parse_*_fuzzer
 
-/venv/
-/docs/mkdocs/docs/examples/
-/docs/mkdocs/docs/__pycache__/
-/docs/mkdocs/site/
-/docs/mkdocs/venv/
+# documentation
+/docs/docset/docSet.dsidx
 /docs/docset/JSON_for_Modern_C++.docset/
 /docs/docset/JSON_for_Modern_C++.tgz
+/docs/mkdocs/docs/__pycache__/
+/docs/mkdocs/docs/examples/
 /docs/mkdocs/docs/images/json.gif
+/docs/mkdocs/site/
+/docs/mkdocs/venv/
 
 # serve_header
-/serve_header.yml
 /localhost.pem
 /localhost-key.pem
+/serve_header.yml
