@@ -9,9 +9,9 @@ JSON_for_Modern_C++.docset: Info.plist docSet.sql
 	$(MAKE) build -C ../mkdocs
 	cp -r ../mkdocs/site/* JSON_for_Modern_C++.docset/Contents/Resources/Documents
 	# patch CSS to hide navigation items
-	echo "\n\nheader, footer, navi, div.md-sidebar--primary, nav.md-tabs--active, a.md-content__button { display: none; }" >> "$$(ls JSON_for_Modern_C++.docset/Contents/Resources/Documents/assets/stylesheets/main.*.min.css)"
+	echo -e "\n\nheader, footer, nav.md-tabs, nav.md-tabs--active, div.md-sidebar--primary, a.md-content__button { display: none; }" >> "$$(ls JSON_for_Modern_C++.docset/Contents/Resources/Documents/assets/stylesheets/main.*.min.css)"
 	# fix spacing
-	echo "\n\ndiv.md-sidebar div.md-sidebar--secondary, div.md-main__inner { top: 0; margin-top: 0 }" >> "$$(ls JSON_for_Modern_C++.docset/Contents/Resources/Documents/assets/stylesheets/main.*.min.css)"
+	echo -e "\n\ndiv.md-sidebar div.md-sidebar--secondary, div.md-main__inner { top: 0; margin-top: 0 }" >> "$$(ls JSON_for_Modern_C++.docset/Contents/Resources/Documents/assets/stylesheets/main.*.min.css)"
 	# remove "JSON for Modern C++" from page titles
 	find JSON_for_Modern_C++.docset/Contents/Resources/Documents -type f -exec $(SED) -i 's| - JSON for Modern C++</title>|</title>|' {} +
 	# clean up
