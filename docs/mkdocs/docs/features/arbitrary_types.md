@@ -1,4 +1,4 @@
-# Arbitrary Types Conversions
+# Arbitrary Type Conversions
 
 Every type can be serialized in JSON, not just STL containers and scalar types. Usually, you would do something along those lines:
 

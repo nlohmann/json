@@ -118,7 +118,7 @@ See examples below for the concrete generated code.
 
 - [NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE / NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT](nlohmann_define_type_non_intrusive.md)
   for a similar macro that can be defined _outside_ the type.
-- [Arbitrary Types Conversions](../../features/arbitrary_types.md) for an overview.
+- [Arbitrary Type Conversions](../../features/arbitrary_types.md) for an overview.
 
 ## Version history
 
