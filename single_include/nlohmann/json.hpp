@@ -22274,7 +22274,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // swap only works for arrays
         if (JSON_HEDLEY_LIKELY(is_array()))
         {
-            std::swap(*(m_value.array), other);
+            using std::swap;
+            swap(*(m_value.array), other);
         }
         else
         {
@@ -22289,7 +22290,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // swap only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
         {
-            std::swap(*(m_value.object), other);
+            using std::swap;
+            swap(*(m_value.object), other);
         }
         else
         {
@@ -22304,7 +22306,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // swap only works for strings
         if (JSON_HEDLEY_LIKELY(is_string()))
         {
-            std::swap(*(m_value.string), other);
+            using std::swap;
+            swap(*(m_value.string), other);
         }
         else
         {
@@ -22319,7 +22322,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // swap only works for strings
         if (JSON_HEDLEY_LIKELY(is_binary()))
         {
-            std::swap(*(m_value.binary), other);
+            using std::swap;
+            swap(*(m_value.binary), other);
         }
         else
         {
@@ -22334,7 +22338,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // swap only works for strings
         if (JSON_HEDLEY_LIKELY(is_binary()))
         {
-            std::swap(*(m_value.binary), other);
+            using std::swap;
+            swap(*(m_value.binary), other);
         }
         else
         {
