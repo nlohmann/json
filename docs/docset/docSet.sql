@@ -150,8 +150,8 @@ INSERT INTO searchIndex(name, type, path) VALUES ('json_sax::parse_error', 'Meth
 INSERT INTO searchIndex(name, type, path) VALUES ('json_sax::start_array', 'Method', 'api/json_sax/start_array/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('json_sax::start_object', 'Method', 'api/json_sax/start_object/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('json_sax::string', 'Method', 'api/json_sax/string/index.html');
-INSERT INTO searchIndex(name, type, path) VALUES ('operator""_json', 'Literal', 'api/basic_json/operator_literal_json/index.html');
-INSERT INTO searchIndex(name, type, path) VALUES ('operator""_json_pointer', 'Literal', 'api/basic_json/operator_literal_json_pointer/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('operator""_json', 'Literal', 'api/operator_literal_json/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('operator""_json_pointer', 'Literal', 'api/operator_literal_json_pointer/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('operator<<', 'Operator', 'api/operator_ltlt/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('operator>>', 'Operator', 'api/operator_gtgt/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('ordered_json', 'Class', 'api/ordered_json/index.html');
@@ -212,6 +212,7 @@ INSERT INTO searchIndex(name, type, path) VALUES ('JSON_SKIP_LIBRARY_VERSION_CHE
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_SKIP_UNSUPPORTED_COMPILER_CHECK', 'Macro', 'api/macros/json_skip_unsupported_compiler_check/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_THROW_USER', 'Macro', 'api/macros/json_throw_user/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_TRY_USER', 'Macro', 'api/macros/json_throw_user/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('JSON_USE_GLOBAL_UDLS', 'Macro', 'api/macros/json_use_global_udls/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_USE_IMPLICIT_CONVERSIONS', 'Macro', 'api/macros/json_use_implicit_conversions/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON', 'Macro', 'api/macros/json_use_legacy_discarded_value_comparison/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('Macros', 'Macro', 'api/macros/index.html');
