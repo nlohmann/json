@@ -10,6 +10,7 @@
 #include "doctest_compatibility.h"
 
 #include <nlohmann/json.hpp>
+using namespace nlohmann::literals; // NOLINT(google-build-using-namespace)
 
 TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_json)
 {

@@ -11,6 +11,7 @@
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;
+using namespace nlohmann::literals; // NOLINT(google-build-using-namespace)
 
 #include <iostream>
 #include <iterator>
