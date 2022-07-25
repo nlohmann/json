@@ -4,6 +4,7 @@
 
 using namespace std::string_view_literals;
 using json = nlohmann::json;
+using namespace nlohmann::literals;
 
 int main()
 {
