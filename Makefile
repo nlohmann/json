@@ -15,6 +15,9 @@ SED:=$(shell command -v gsed || which sed)
 # the list of sources in the include folder
 SRCS=$(shell find include -type f | sort)
 
+# the list of sources in the tests folder
+TESTS_SRCS=$(shell find tests -type f \( -name '*.hpp' -o -name '*.cpp' -o -name '*.cu' \) -not -path 'tests/thirdparty/*' | sort)
+
 # the single header (amalgamated from the source files)
 AMALGAMATED_FILE=single_include/nlohmann/json.hpp
 
