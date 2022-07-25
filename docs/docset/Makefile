@@ -21,8 +21,19 @@ JSON_for_Modern_C++.docset: Info.plist docSet.dsidx
 	echo -e "\n\nheader, footer, nav.md-tabs, nav.md-tabs--active, div.md-sidebar--primary, a.md-content__button { display: none; }" >> "$$(ls JSON_for_Modern_C++.docset/Contents/Resources/Documents/assets/stylesheets/main.*.min.css)"
 	# fix spacing
 	echo -e "\n\ndiv.md-sidebar div.md-sidebar--secondary, div.md-main__inner { top: 0; margin-top: 0 }" >> "$$(ls JSON_for_Modern_C++.docset/Contents/Resources/Documents/assets/stylesheets/main.*.min.css)"
-	# remove "JSON for Modern C++" from page titles
+	# remove "JSON for Modern C++" from page titles (fallback)
 	find JSON_for_Modern_C++.docset/Contents/Resources/Documents -type f -exec $(SED) -i 's| - JSON for Modern C++</title>|</title>|' {} +
+	# replace page titles with name from index, if available
+	for page in $(MKDOCS_PAGES); do \
+		case "$$page" in \
+			*/index.md) path=$${page/\/index.md/} ;; \
+			*)          path=$${page/.md/}        ;; \
+		esac; \
+		title=$$(sqlite3 docSet.dsidx "SELECT name FROM searchIndex WHERE path='$$path/index.html'" | tr '\n' ',' | $(SED) -e 's/,/, /g' -e 's/, $$/\n/'); \
+		if [ "x$$title" != "x" ]; then \
+			$(SED) -i "s%<title>.*</title>%<title>$$title</title>%" "JSON_for_Modern_C++.docset/Contents/Resources/Documents/$$path/index.html"; \
+		fi \
+	done
 	# clean up
 	rm JSON_for_Modern_C++.docset/Contents/Resources/Documents/sitemap.*
 	# copy index
