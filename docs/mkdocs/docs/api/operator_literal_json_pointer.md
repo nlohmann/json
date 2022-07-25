@@ -1,12 +1,22 @@
-# <small>nlohmann::basic_json::</small>operator""_json_pointer
+# <small>nlohmann::</small>operator""_json_pointer
 
 ```cpp
 json_pointer operator "" _json_pointer(const char* s, std::size_t n);
 ```
 
 This operator implements a user-defined string literal for JSON Pointers. It can be used by adding `#!cpp _json_pointer`
-to a string literal and returns a [`json_pointer`](../json_pointer/index.md) object if no parse error occurred.
+to a string literal and returns a [`json_pointer`](json_pointer/index.md) object if no parse error occurred.
 
+Use any of the following lines to bring the operator into scope:
+```cpp
+using namespace nlohmann::literals;
+using namespace nlohmann::json_literals;
+using namespace nlohmann::literals::json_literals;
+using namespace nlohmann;
+```
+
+Alternatively, define [`JSON_USE_GLOBAL_UDLS`](macros/json_use_global_udls.md) to make them available in the global
+namespace.
 ## Parameters
 
 `s` (in)
@@ -17,11 +27,11 @@ to a string literal and returns a [`json_pointer`](../json_pointer/index.md) obj
 
 ## Return value
 
-[`json_pointer`](../json_pointer/index.md) value parsed from `s`
+[`json_pointer`](json_pointer/index.md) value parsed from `s`
 
 ## Exceptions
 
-The function can throw anything that [`json_pointer::json_pointer`](../json_pointer/index.md) would throw.
+The function can throw anything that [`json_pointer::json_pointer`](json_pointer/index.md) would throw.
 
 ## Complexity
 
@@ -45,8 +55,9 @@ Linear.
 
 ## See also
 
-- [json_pointer](../json_pointer/index.md) - type to represent JSON Pointers
+- [json_pointer](json_pointer/index.md) - type to represent JSON Pointers
 
 ## Version history
 
 - Added in version 2.0.0.
+- Moved to namespace `nlohmann::literals::json_literals` in 3.11.0.
