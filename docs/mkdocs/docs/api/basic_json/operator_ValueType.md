@@ -78,5 +78,5 @@ Linear in the size of the JSON value.
 ## Version history
 
 - Since version 1.0.0.
-- Macros `JSON_EXPLICIT`/[`JSON_USE_IMPLICIT_CONVERSIONS`](../../features/macros.md#json_use_implicit_conversions) added
+- Macros `JSON_EXPLICIT`/[`JSON_USE_IMPLICIT_CONVERSIONS`](../macros/json_use_implicit_conversions.md) added
   in version 3.9.0.

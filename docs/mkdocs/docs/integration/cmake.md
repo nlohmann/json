@@ -135,7 +135,7 @@ Enable CI build targets. The exact targets are used during the several CI steps 
 
 ### `JSON_Diagnostics`
 
-Enable [extended diagnostic messages](../home/exceptions.md#extended-diagnostic-messages) by defining macro [`JSON_DIAGNOSTICS`](../features/macros.md#json_diagnostics). This option is `OFF` by default.
+Enable [extended diagnostic messages](../home/exceptions.md#extended-diagnostic-messages) by defining macro [`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md). This option is `OFF` by default.
 
 ### `JSON_FastTests`
 
@@ -143,7 +143,7 @@ Skip expensive/slow test suites. This option is `OFF` by default. Depends on `JS
 
 ### `JSON_ImplicitConversions`
 
-Enable implicit conversions by defining macro [`JSON_USE_IMPLICIT_CONVERSIONS`](../features/macros.md#json_use_implicit_conversions). This option is `ON` by default.
+Enable implicit conversions by defining macro [`JSON_USE_IMPLICIT_CONVERSIONS`](../api/macros/json_use_implicit_conversions.md). This option is `ON` by default.
 
 ### `JSON_Install`
 
