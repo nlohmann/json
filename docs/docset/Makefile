@@ -42,6 +42,14 @@ JSON_for_Modern_C++.docset: Info.plist docSet.dsidx
 JSON_for_Modern_C++.tgz: JSON_for_Modern_C++.docset
 	tar --exclude='.DS_Store' -cvzf JSON_for_Modern_C++.tgz JSON_for_Modern_C++.docset
 
+# install docset for Zeal documentation browser (https://zealdocs.org/)
+.PHONY: install_docset_zeal
+install_docset_zeal: JSON_for_Modern_C++.docset
+	docset_root=$${XDG_DATA_HOME:-$$HOME/.local/share}/Zeal/Zeal/docsets; \
+	rm -rf $$docset_root/JSON_for_Modern_C++.docset; \
+	mkdir -p $$docset_root; \
+	cp -r JSON_for_Modern_C++.docset $$docset_root/
+
 # list mkdocs pages missing from the docset index
 .PHONY: list_missing_pages
 list_missing_pages: docSet.dsidx
