@@ -3452,7 +3452,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
         else
         {
-            JSON_THROW(type_error::create(310, detail::concat("cannot use swap() with ", type_name()), this));
+            JSON_THROW(type_error::create(310, detail::concat("cannot use swap(array_t&) with ", type_name()), this));
         }
     }
 
@@ -3468,7 +3468,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
         else
         {
-            JSON_THROW(type_error::create(310, detail::concat("cannot use swap() with ", type_name()), this));
+            JSON_THROW(type_error::create(310, detail::concat("cannot use swap(object_t&) with ", type_name()), this));
         }
     }
 
@@ -3484,7 +3484,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
         else
         {
-            JSON_THROW(type_error::create(310, detail::concat("cannot use swap() with ", type_name()), this));
+            JSON_THROW(type_error::create(310, detail::concat("cannot use swap(string_t&) with ", type_name()), this));
         }
     }
 
@@ -3500,7 +3500,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
         else
         {
-            JSON_THROW(type_error::create(310, detail::concat("cannot use swap() with ", type_name()), this));
+            JSON_THROW(type_error::create(310, detail::concat("cannot use swap(binary_t&) with ", type_name()), this));
         }
     }
 
@@ -3516,7 +3516,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
         else
         {
-            JSON_THROW(type_error::create(310, detail::concat("cannot use swap() with ", type_name()), this));
+            JSON_THROW(type_error::create(310, detail::concat("cannot use swap(binary_t::container_type&) with ", type_name()), this));
         }
     }
 
