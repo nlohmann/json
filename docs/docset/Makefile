@@ -44,6 +44,23 @@ list_missing_pages: docSet.dsidx
 		fi \
 	done
 
+# list paths in the docset index without a corresponding mkdocs page
+.PHONY: list_removed_paths
+list_removed_paths: docSet.dsidx
+	@for path in $$(sqlite3 docSet.dsidx "SELECT path FROM searchIndex"); do \
+		page=$${path/\/index.html/.md}; \
+		page_index=$${path/index.html/index.md}; \
+		page_found=0; \
+		for p in $(MKDOCS_PAGES); do \
+			if [ "x$$p" = "x$$page" -o "x$$p" = "x$$page_index" ]; then \
+				page_found=1; \
+			fi \
+		done; \
+		if [ "x$$page_found" = "x0" ]; then \
+			echo $$path; \
+		fi \
+	done
+
 .PHONY: clean
 clean:
 	rm -f docSet.dsidx
