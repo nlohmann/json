@@ -1,5 +1,7 @@
 import gdb
+import re
 
+ns_pattern = re.compile(r'nlohmann::json_v(?P<v_major>\d+)_(?P<v_minor>\d+)_(?P<v_patch>\d+)(?P<tags>\w*)::(?P<name>.+)')
 class JsonValuePrinter:
     "Print a json-value"
 
@@ -12,12 +14,14 @@ class JsonValuePrinter:
         return self.val
 
 def json_lookup_function(val):
-    name = val.type.strip_typedefs().name
-    if name and name.startswith("nlohmann::basic_json<") and name.endswith(">"):
-        t = str(val['m_type'])
-        if t.startswith("nlohmann::detail::value_t::"):
+    m = ns_pattern.fullmatch(val.type.strip_typedefs().name)
+    name = m.group('name')
+    if name and name.startswith('basic_json<') and name.endswith('>'):
+        m = ns_pattern.fullmatch(str(val['m_type']))
+        t = m.group('name')
+        if t and t.startswith('detail::value_t::'):
             try:
-                union_val = val['m_value'][t[27:]]
+                union_val = val['m_value'][t.removeprefix('detail::value_t::')]
                 if union_val.type.code == gdb.TYPE_CODE_PTR:
                     return gdb.default_visualizer(union_val.dereference())
                 else:
