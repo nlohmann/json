@@ -27,6 +27,12 @@ When the macro is not defined, the library will define it to its default value.
     To prepare existing code, define `JSON_USE_GLOBAL_UDLS` to `0` and bring the string literals into scope where
     needed. Refer to any of the [string literals](#see-also) for details.
 
+!!! hint "CMake option"
+
+    The placement of user-defined string literals can also be controlled with the CMake option
+    [`JSON_GlobalUDLs`](../../integration/cmake.md#json_globaludls) (`OFF` by default)
+    which defines `JSON_USE_GLOBAL_UDLS` accordingly.
+
 ## Examples
 
 ??? example "Example 1: Default behavior"
