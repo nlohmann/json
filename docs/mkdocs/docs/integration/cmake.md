@@ -137,6 +137,11 @@ Enable CI build targets. The exact targets are used during the several CI steps 
 
 Enable [extended diagnostic messages](../home/exceptions.md#extended-diagnostic-messages) by defining macro [`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md). This option is `OFF` by default.
 
+### `JSON_DisableEnumSerialization`
+
+Disable default `enum` serialization by defining the macro
+[`JSON_DISABLE_ENUM_SERIALIZATION`](../api/macros/json_disable_enum_serialization.md). This option is `OFF` by default.
+
 ### `JSON_FastTests`
 
 Skip expensive/slow test suites. This option is `OFF` by default. Depends on `JSON_BuildTests`.
