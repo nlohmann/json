@@ -1137,24 +1137,14 @@ The following compilers are currently used in continuous integration at [AppVeyo
 
 | Compiler                                                                                               | Operating System   | CI Provider    |
 |--------------------------------------------------------------------------------------------------------|--------------------|----------------|
-| Apple Clang 10.0.1 (clang-1001.0.46.4); Xcode 10.3                                                     | macOS 10.15.7      | GitHub Actions |
-| Apple Clang 11.0.0 (clang-1100.0.33.12); Xcode 11.2.1                                                  | macOS 10.15.7      | GitHub Actions |
-| Apple Clang 11.0.0 (clang-1100.0.33.17); Xcode 11.3.1                                                  | macOS 10.15.7      | GitHub Actions |
-| Apple Clang 11.0.3 (clang-1103.0.32.59); Xcode 11.4.1                                                  | macOS 10.15.7      | GitHub Actions |
-| Apple Clang 11.0.3 (clang-1103.0.32.62); Xcode 11.5                                                    | macOS 10.15.7      | GitHub Actions |
-| Apple Clang 11.0.3 (clang-1103.0.32.62); Xcode 11.6                                                    | macOS 10.15.7      | GitHub Actions |
-| Apple Clang 11.0.3 (clang-1103.0.32.62); Xcode 11.7                                                    | macOS 10.15.7      | GitHub Actions |
-| Apple Clang 12.0.0 (clang-1200.0.32.2); Xcode 12                                                       | macOS 10.15.7      | GitHub Actions |
-| Apple Clang 12.0.0 (clang-1200.0.32.21); Xcode 12.1                                                    | macOS 10.15.7      | GitHub Actions |
-| Apple Clang 12.0.0 (clang-1200.0.32.21); Xcode 12.1.1                                                  | macOS 10.15.7      | GitHub Actions |
-| Apple Clang 12.0.0 (clang-1200.0.32.27); Xcode 12.2                                                    | macOS 10.15.7      | GitHub Actions |
-| Apple Clang 12.0.0 (clang-1200.0.32.28); Xcode 12.3                                                    | macOS 10.15.7      | GitHub Actions |
-| Apple Clang 12.0.0 (clang-1200.0.32.29); Xcode 12.4                                                    | macOS 10.15.7      | GitHub Actions |
-| Apple Clang 13.0.0 (clang-1300.0.29.3); Xcode 13.1                                                     | macOS 12.3.1       | GitHub Actions |
-| Apple Clang 13.0.0 (clang-1300.0.29.30); Xcode 13.2                                                    | macOS 12.3.1       | GitHub Actions |
-| Apple Clang 13.0.0 (clang-1300.0.29.30); Xcode 13.2.1                                                  | macOS 12.3.1       | GitHub Actions |
-| Apple Clang 13.1.6 (clang-1316.0.21.2); Xcode 13.3                                                     | macOS 12.3.1       | GitHub Actions |
-| Apple Clang 13.1.6 (clang-1316.0.21.2.3); Xcode 13.3.1                                                 | macOS 12.3.1       | GitHub Actions |
+| Apple Clang 11.0.3 (clang-1103.0.32.62);  Xcode 11.7                                                   | macOS 11.6.8       | GitHub Actions |
+| Apple Clang 12.0.0 (clang-1200.0.32.29);  Xcode 12.4                                                   | macOS 11.6.8       | GitHub Actions |
+| Apple Clang 12.0.5 (clang-1205.0.22.11);  Xcode 12.5.1                                                 | macOS 11.6.8       | GitHub Actions |
+| Apple Clang 13.0.0 (clang-1300.0.29.3);   Xcode 13.0                                                   | macOS 11.6.8       | GitHub Actions |
+| Apple Clang 13.0.0 (clang-1300.0.29.3);   Xcode 13.1                                                   | macOS 12.4         | GitHub Actions |
+| Apple Clang 13.0.0 (clang-1300.0.29.30);  Xcode 13.2.1                                                 | macOS 12.4         | GitHub Actions |
+| Apple Clang 13.1.6 (clang-1316.0.21.2.3); Xcode 13.3.1                                                 | macOS 12.4         | GitHub Actions |
+| Apple Clang 13.1.6 (clang-1316.0.21.2.5); Xcode 13.4.1                                                 | macOS 12.4         | GitHub Actions |
 | Clang 3.5.2 (3.5.2-3ubuntu1)                                                                           | Ubuntu 20.04.3 LTS | GitHub Actions |
 | Clang 3.6.2 (3.6.2-3ubuntu2)                                                                           | Ubuntu 20.04.3 LTS | GitHub Actions |
 | Clang 3.7.1 (3.7.1-2ubuntu2)                                                                           | Ubuntu 20.04.3 LTS | GitHub Actions |
