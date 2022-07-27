@@ -86,10 +86,8 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     #json_test_set_test_options(test-disabled_exceptions COMPILE_DEFINITIONS _HAS_EXCEPTIONS=0 COMPILE_OPTIONS /EH)
 endif()
 
-# set timeouts for Unicode tests
-json_test_set_test_options("test-unicode2;test-unicode3;test-unicode4;test-unicode5"
-    TEST_PROPERTIES "TIMEOUT_AFTER_MATCH;1500$<SEMICOLON>UTF-8 strings checked"
-)
+# raise timeout of expensive Unicode test
+json_test_set_test_options(test-unicode4 TEST_PROPERTIES TIMEOUT 3000)
 
 #############################################################################
 # add unit tests
