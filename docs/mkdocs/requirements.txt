@@ -25,6 +25,7 @@ mkdocs-git-revision-date-localized-plugin==1.0.1
 mkdocs-material==8.2.10
 mkdocs-material-extensions==1.0.3
 mkdocs-minify-plugin==0.5.0
+mkdocs-redirects==1.0.4
 mkdocs-simple-hooks==0.1.5
 nltk==3.7
 packaging==21.3

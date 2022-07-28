@@ -162,8 +162,6 @@ nav:
         - 'operator<=': api/basic_json/operator_le.md
         - 'operator>=': api/basic_json/operator_ge.md
         - 'operator<=>': api/basic_json/operator_spaceship.md
-        - 'operator<<': api/basic_json/operator_ltlt.md
-        - 'operator>>': api/basic_json/operator_gtgt.md
         - 'operator""_json': api/basic_json/operator_literal_json.md
         - 'operator""_json_pointer': api/basic_json/operator_literal_json_pointer.md
         - 'out_of_range': api/basic_json/out_of_range.md
@@ -212,7 +210,7 @@ nav:
         - '(Constructor)': api/json_pointer/json_pointer.md
         - 'back': api/json_pointer/back.md
         - 'empty': api/json_pointer/empty.md
-        - 'operator std::string': api/json_pointer/operator_string.md
+        - 'operator string_t': api/json_pointer/operator_string_t.md
         - 'operator/': api/json_pointer/operator_slash.md
         - 'operator/=': api/json_pointer/operator_slasheq.md
         - 'parent_pointer': api/json_pointer/parent_pointer.md
@@ -235,6 +233,9 @@ nav:
         - 'start_array': api/json_sax/start_array.md
         - 'start_object': api/json_sax/start_object.md
         - 'string': api/json_sax/string.md
+      - 'operator<<(basic_json)': api/operator_ltlt.md
+      - 'operator<<(json_pointer)': api/operator_ltlt.md
+      - 'operator>>(basic_json)': api/operator_gtgt.md
       - 'ordered_json': api/ordered_json.md
       - 'ordered_map': api/ordered_map.md
       - macros:
@@ -324,6 +325,11 @@ plugins:
     - minify:
         minify_html: true
     - git-revision-date-localized
+    - redirects:
+        redirect_maps:
+            'api/basic_json/operator_gtgt.md': api/operator_gtgt.md
+            'api/basic_json/operator_ltlt.md': api/operator_ltlt.md
+            'api/json_pointer/operator_string.md': api/json_pointer/operator_string_t.md
 
 extra_css:
     - css/custom.css

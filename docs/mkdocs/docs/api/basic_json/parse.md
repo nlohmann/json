@@ -196,7 +196,7 @@ super-linear complexity.
 ## See also
 
 - [accept](accept.md) - check if the input is valid JSON
-- [operator>>](operator_gtgt.md) - deserialize from stream
+- [operator>>](../operator_gtgt.md) - deserialize from stream
 
 ## Version history
 

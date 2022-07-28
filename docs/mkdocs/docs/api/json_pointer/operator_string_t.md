@@ -19,6 +19,13 @@ operator string_t() const
 }
 ```
 
+## Notes
+
+!!! warning "Deprecation"
+
+    This function is deprecated in favor of [`to_string`](to_string.md) and will be removed in a future major version
+    release.
+
 ## Examples
 
 ??? example
@@ -26,16 +33,16 @@ operator string_t() const
     The example shows how JSON Pointers can be implicitly converted to strings.
      
     ```cpp
-    --8<-- "examples/json_pointer__operator_string.cpp"
+    --8<-- "examples/json_pointer__operator_string_t.cpp"
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/json_pointer__operator_string.output"
+    --8<-- "examples/json_pointer__operator_string_t.output"
     ```
 
 ## Version history
 
 - Since version 2.0.0.
-- Changed type to `string_t` in version 3.11.0.
+- Changed type to `string_t` and deprecated in version 3.11.0.
