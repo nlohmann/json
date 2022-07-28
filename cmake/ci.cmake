@@ -935,6 +935,16 @@ add_custom_target(ci_icpc
 )
 
 ###############################################################################
+# test documentation
+###############################################################################
+
+add_custom_target(ci_test_documentation
+    COMMAND make check_output_portable -j8
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/docs
+    COMMENT "Check that all examples compile and create the desired output"
+)
+
+###############################################################################
 # Clean up all generated files.
 ###############################################################################
 

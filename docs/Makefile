@@ -28,6 +28,9 @@ create_output: $(EXAMPLES:.cpp=.output)
 # check output of all stand-alone example files
 check_output: $(EXAMPLES:.cpp=.test)
 
+# check output of all stand-alone example files (exclude meta which is dependent on the current compiler)
+check_output_portable: $(filter-out meta.test,$(EXAMPLES:.cpp=.test))
+
 clean:
 	rm -fr $(EXAMPLES:.cpp=)
 	$(MAKE) clean -C docset
