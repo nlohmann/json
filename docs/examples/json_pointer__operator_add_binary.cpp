@@ -9,11 +9,11 @@ int main()
     json::json_pointer ptr("/foo");
 
     // append a JSON Pointer
-    std::cout << ptr / json::json_pointer("/bar/baz") << '\n';
+    std::cout << "\"" << ptr / json::json_pointer("/bar/baz") << "\"\n";
 
     // append a string
-    std::cout << ptr / "fob" << '\n';
+    std::cout << "\"" << ptr / "fob" << "\"\n";
 
     // append an array index
-    std::cout << ptr / 42 << std::endl;
+    std::cout << "\"" << ptr / 42 << "\"" << std::endl;
 }
