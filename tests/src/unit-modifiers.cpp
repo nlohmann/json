@@ -855,7 +855,7 @@ TEST_CASE("modifiers")
                 json j = 17;
                 json::array_t a = {"foo", "bar", "baz"};
 
-                CHECK_THROWS_WITH_AS(j.swap(a), "[json.exception.type_error.310] cannot use swap() with number", json::type_error&);
+                CHECK_THROWS_WITH_AS(j.swap(a), "[json.exception.type_error.310] cannot use swap(array_t&) with number", json::type_error&);
             }
         }
 
@@ -880,7 +880,7 @@ TEST_CASE("modifiers")
                 json j = 17;
                 json::object_t o = {{"cow", "Kuh"}, {"chicken", "Huhn"}};
 
-                CHECK_THROWS_WITH_AS(j.swap(o), "[json.exception.type_error.310] cannot use swap() with number", json::type_error&);
+                CHECK_THROWS_WITH_AS(j.swap(o), "[json.exception.type_error.310] cannot use swap(object_t&) with number", json::type_error&);
             }
         }
 
@@ -905,7 +905,7 @@ TEST_CASE("modifiers")
                 json j = 17;
                 json::string_t s = "Hallo Welt";
 
-                CHECK_THROWS_WITH_AS(j.swap(s), "[json.exception.type_error.310] cannot use swap() with number", json::type_error&);
+                CHECK_THROWS_WITH_AS(j.swap(s), "[json.exception.type_error.310] cannot use swap(string_t&) with number", json::type_error&);
             }
         }
 
@@ -945,8 +945,8 @@ TEST_CASE("modifiers")
                 json::binary_t s1 = {{1, 2, 3, 4}};
                 std::vector<std::uint8_t> s2 = {{5, 6, 7, 8}};
 
-                CHECK_THROWS_WITH_AS(j.swap(s1), "[json.exception.type_error.310] cannot use swap() with number", json::type_error);
-                CHECK_THROWS_WITH_AS(j.swap(s2), "[json.exception.type_error.310] cannot use swap() with number", json::type_error);
+                CHECK_THROWS_WITH_AS(j.swap(s1), "[json.exception.type_error.310] cannot use swap(binary_t&) with number", json::type_error);
+                CHECK_THROWS_WITH_AS(j.swap(s2), "[json.exception.type_error.310] cannot use swap(binary_t::container_type&) with number", json::type_error);
             }
         }
     }
