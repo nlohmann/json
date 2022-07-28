@@ -29,7 +29,7 @@ create_output: $(EXAMPLES:.cpp=.output)
 check_output: $(EXAMPLES:.cpp=.test)
 
 # check output of all stand-alone example files (exclude meta which is dependent on the current compiler)
-check_output_portable: $(filter-out meta.test,$(EXAMPLES:.cpp=.test))
+check_output_portable: $(filter-out examples/meta.test,$(EXAMPLES:.cpp=.test))
 
 clean:
 	rm -fr $(EXAMPLES:.cpp=)
