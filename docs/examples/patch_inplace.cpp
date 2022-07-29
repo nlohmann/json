@@ -30,5 +30,5 @@ int main()
     doc.patch_inplace(patch);
 
     // output patched document
-    std::cout << "After\n" << std::setw(4) << doc << std::endl;
+    std::cout << "\nAfter\n" << std::setw(4) << doc << std::endl;
 }

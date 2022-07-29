@@ -11,13 +11,13 @@ EXAMPLES = $(wildcard examples/*.cpp)
 
 # create output from a stand-alone example file
 %.output: %.cpp
-	make $(<:.cpp=) CPPFLAGS="-I $(SRCDIR)" CXXFLAGS="-std=c++11"
+	$(MAKE) $(<:.cpp=) CPPFLAGS="-I $(SRCDIR)" CXXFLAGS="-std=c++11"
 	./$(<:.cpp=) > $@
 	rm $(<:.cpp=)
 
 # compare created output with current output of the example files
 %.test: %.cpp
-	make $(<:.cpp=) CPPFLAGS="-I $(SRCDIR)" CXXFLAGS="-std=c++11"
+	$(MAKE) $(<:.cpp=) CPPFLAGS="-I $(SRCDIR)" CXXFLAGS="-std=c++11"
 	./$(<:.cpp=) > $@
 	diff $@ $(<:.cpp=.output)
 	rm $(<:.cpp=) $@
@@ -29,7 +29,7 @@ create_output: $(EXAMPLES:.cpp=.output)
 check_output: $(EXAMPLES:.cpp=.test)
 
 # check output of all stand-alone example files (exclude meta which is dependent on the current compiler)
-check_output_portable: $(filter-out examples/meta.test,$(EXAMPLES:.cpp=.test))
+check_output_portable: $(filter-out examples/meta.test examples/max_size.test examples/std_hash.test,$(EXAMPLES:.cpp=.test))
 
 clean:
 	rm -fr $(EXAMPLES:.cpp=)
