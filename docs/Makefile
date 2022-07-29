@@ -28,8 +28,9 @@ create_output: $(EXAMPLES:.cpp=.output)
 # check output of all stand-alone example files
 check_output: $(EXAMPLES:.cpp=.test)
 
-# check output of all stand-alone example files (exclude meta which is dependent on the current compiler)
-check_output_portable: $(filter-out examples/meta.test examples/max_size.test examples/std_hash.test,$(EXAMPLES:.cpp=.test))
+# check output of all stand-alone example files (exclude files with platform-dependent output.)
+# This target is used in the CI (ci_test_documentation).
+check_output_portable: $(filter-out examples/meta.test examples/max_size.test examples/std_hash.test exaples/basic_json__CompatibleType.test,$(EXAMPLES:.cpp=.test))
 
 clean:
 	rm -fr $(EXAMPLES:.cpp=)

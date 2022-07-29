@@ -26,6 +26,8 @@ type of the JSON value is taken into account to have different hash values for `
     --8<-- "examples/std_hash.output"
     ```
 
+    Note the output is platform-dependent.
+
 ## Version history
 
 - Added in version 1.0.0.

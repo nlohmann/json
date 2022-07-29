@@ -40,7 +40,7 @@ string elements the JSON value can store which is `1`.
 
 ??? example
 
-    The following code calls `max_size()` on the different value types. Note the output is implementation specific.
+    The following code calls `max_size()` on the different value types.
         
     ```cpp
     --8<-- "examples/max_size.cpp"
@@ -51,6 +51,8 @@ string elements the JSON value can store which is `1`.
     ```json
     --8<-- "examples/max_size.output"
     ```
+
+    Note the output is platform-dependent.
 
 ## Version history
 
