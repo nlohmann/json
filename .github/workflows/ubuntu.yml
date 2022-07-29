@@ -147,3 +147,12 @@ jobs:
         run:  python -m pip install reuse
       - name: REUSE lint
         run: reuse lint
+
+  ci_test_documentation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: cmake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: build
+        run: cmake --build build --target ci_test_documentation

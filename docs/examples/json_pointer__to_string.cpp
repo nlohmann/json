@@ -19,16 +19,16 @@ int main()
     json::json_pointer ptr11("/ ");
     json::json_pointer ptr12("/m~0n");
 
-    std::cout << ptr1.to_string() << '\n'
-              << ptr2.to_string() << '\n'
-              << ptr3.to_string() << '\n'
-              << ptr4.to_string() << '\n'
-              << ptr5.to_string() << '\n'
-              << ptr6.to_string() << '\n'
-              << ptr7.to_string() << '\n'
-              << ptr8.to_string() << '\n'
-              << ptr9.to_string() << '\n'
-              << ptr10.to_string() << '\n'
-              << ptr11.to_string() << '\n'
-              << ptr12.to_string() << std::endl;
+    std::cout << "\"" << ptr1.to_string() << "\"\n"
+              << "\"" << ptr2.to_string() << "\"\n"
+              << "\"" << ptr3.to_string() << "\"\n"
+              << "\"" << ptr4.to_string() << "\"\n"
+              << "\"" << ptr5.to_string() << "\"\n"
+              << "\"" << ptr6.to_string() << "\"\n"
+              << "\"" << ptr7.to_string() << "\"\n"
+              << "\"" << ptr8.to_string() << "\"\n"
+              << "\"" << ptr9.to_string() << "\"\n"
+              << "\"" << ptr10.to_string() << "\"\n"
+              << "\"" << ptr11.to_string() << "\"\n"
+              << "\"" << ptr12.to_string() << "\"" << std::endl;
 }
