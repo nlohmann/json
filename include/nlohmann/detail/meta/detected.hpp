@@ -17,7 +17,6 @@ namespace detail
 {
 
 // https://en.cppreference.com/w/cpp/experimental/is_detected
-
 struct nonesuch
 {
     nonesuch() = delete;
