@@ -277,7 +277,7 @@ inline void from_json(const json& j, for_3312& obj)
 struct for_3204_foo
 {
     for_3204_foo() = default;
-    for_3204_foo(std::string /*unused*/) {}
+    explicit for_3204_foo(std::string /*unused*/) {} // NOLINT(performance-unnecessary-value-param)
 };
 
 struct for_3204_bar
@@ -289,9 +289,9 @@ struct for_3204_bar
         constructed_from_json = 2
     };
 
-    for_3204_bar(std::function<void(for_3204_foo)> /*unused*/) // NOLINT(performance-unnecessary-value-param)
+    explicit for_3204_bar(std::function<void(for_3204_foo)> /*unused*/) noexcept // NOLINT(performance-unnecessary-value-param)
         : constructed_from(constructed_from_foo) {}
-    for_3204_bar(std::function<void(json)> /*unused*/) // NOLINT(performance-unnecessary-value-param)
+    explicit for_3204_bar(std::function<void(json)> /*unused*/) noexcept // NOLINT(performance-unnecessary-value-param)
         : constructed_from(constructed_from_json) {}
 
     constructed_from_t constructed_from = constructed_from_none;
@@ -316,8 +316,8 @@ struct for_3333 final
 };
 
 template <>
-inline for_3333::for_3333(const json& json)
-    : for_3333(json.value("x", 0), json.value("y", 0))
+inline for_3333::for_3333(const json& j)
+    : for_3333(j.value("x", 0), j.value("y", 0))
 {}
 
 TEST_CASE("regression tests 2")
@@ -915,8 +915,8 @@ TEST_CASE("regression tests 2")
 
     SECTION("issue #3204 - ambiguous regression")
     {
-        for_3204_bar bar_from_foo([](for_3204_foo) {});
-        for_3204_bar bar_from_json([](json) {});
+        for_3204_bar bar_from_foo([](for_3204_foo) noexcept {}); // NOLINT(performance-unnecessary-value-param)
+        for_3204_bar bar_from_json([](json) noexcept {}); // NOLINT(performance-unnecessary-value-param)
 
         CHECK(bar_from_foo.constructed_from == for_3204_bar::constructed_from_foo);
         CHECK(bar_from_json.constructed_from == for_3204_bar::constructed_from_json);
