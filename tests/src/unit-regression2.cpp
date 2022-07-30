@@ -270,6 +270,56 @@ inline void from_json(const json& j, for_3312& obj)
 }
 #endif
 
+/////////////////////////////////////////////////////////////////////
+// for #3204
+/////////////////////////////////////////////////////////////////////
+
+struct for_3204_foo
+{
+    for_3204_foo() = default;
+    for_3204_foo(std::string /*unused*/) {}
+};
+
+struct for_3204_bar
+{
+    enum constructed_from_t
+    {
+        constructed_from_none = 0,
+        constructed_from_foo = 1,
+        constructed_from_json = 2
+    };
+
+    for_3204_bar(std::function<void(for_3204_foo)> /*unused*/) // NOLINT(performance-unnecessary-value-param)
+        : constructed_from(constructed_from_foo) {}
+    for_3204_bar(std::function<void(json)> /*unused*/) // NOLINT(performance-unnecessary-value-param)
+        : constructed_from(constructed_from_json) {}
+
+    constructed_from_t constructed_from = constructed_from_none;
+};
+
+/////////////////////////////////////////////////////////////////////
+// for #3333
+/////////////////////////////////////////////////////////////////////
+
+struct for_3333 final
+{
+    for_3333(int x_ = 0, int y_ = 0) : x(x_), y(y_) {}
+
+    template <class T>
+    for_3333(const T& /*unused*/)
+    {
+        CHECK(false);
+    }
+
+    int x = 0;
+    int y = 0;
+};
+
+template <>
+inline for_3333::for_3333(const json& json)
+    : for_3333(json.value("x", 0), json.value("y", 0))
+{}
+
 TEST_CASE("regression tests 2")
 {
     SECTION("issue #1001 - Fix memory leak during parser callback")
@@ -862,6 +912,28 @@ TEST_CASE("regression tests 2")
         CHECK(a2.type() == typeid(j));
     }
 #endif
+
+    SECTION("issue #3204 - ambiguous regression")
+    {
+        for_3204_bar bar_from_foo([](for_3204_foo) {});
+        for_3204_bar bar_from_json([](json) {});
+
+        CHECK(bar_from_foo.constructed_from == for_3204_bar::constructed_from_foo);
+        CHECK(bar_from_json.constructed_from == for_3204_bar::constructed_from_json);
+    }
+
+    SECTION("issue #3333 - Ambiguous conversion from nlohmann::basic_json<> to custom class")
+    {
+        const json j
+        {
+            {"x", 1},
+            {"y", 2}
+        };
+        for_3333 p = j;
+
+        CHECK(p.x == 1);
+        CHECK(p.y == 2);
+    }
 }
 
 DOCTEST_CLANG_SUPPRESS_WARNING_POP
