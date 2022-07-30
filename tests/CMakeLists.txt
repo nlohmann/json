@@ -78,13 +78,18 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 endif()
 
 # disable exceptions for test-disabled_exceptions
-json_test_set_test_options(test-disabled_exceptions COMPILE_DEFINITIONS JSON_NOEXCEPTION)
-if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    json_test_set_test_options(test-disabled_exceptions COMPILE_OPTIONS -fno-exceptions)
-elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    # disabled due to https://github.com/nlohmann/json/discussions/2824
-    #json_test_set_test_options(test-disabled_exceptions COMPILE_DEFINITIONS _HAS_EXCEPTIONS=0 COMPILE_OPTIONS /EH)
-endif()
+json_test_set_test_options(test-disabled_exceptions
+    COMPILE_DEFINITIONS
+        JSON_NOEXCEPTION
+        # disabled due to https://github.com/nlohmann/json/discussions/2824
+        #$<$<CXX_COMPILER_ID:MSVC>:_HAS_EXCEPTIONS=0>
+    COMPILE_OPTIONS
+        $<$<CXX_COMPILER_ID:AppleClang>:-fno-exceptions> $<$<CXX_COMPILER_ID:Clang>:-fno-exceptions>
+        $<$<CXX_COMPILER_ID:GNU>:-fno-exceptions>
+        $<$<CXX_COMPILER_ID:Intel>:-fno-exceptions> $<$<CXX_COMPILER_ID:IntelLLVM>:-fno-exceptions>
+        # disabled due to https://github.com/nlohmann/json/discussions/2824
+        #$<$<CXX_COMPILER_ID:MSVC>:/EH>
+)
 
 # raise timeout of expensive Unicode test
 json_test_set_test_options(test-unicode4 TEST_PROPERTIES TIMEOUT 3000)
