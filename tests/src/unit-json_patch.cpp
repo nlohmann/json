@@ -32,7 +32,7 @@ TEST_CASE("JSON patch")
 
         SECTION("4.1 add")
         {
-            json patch = R"([{ "op": "add", "path": "/a/b/c", "value": [ "foo", "bar" ] }])"_json;
+            json patch1 = R"([{ "op": "add", "path": "/a/b", "value": [ "foo", "bar" ] }])"_json;
 
             // However, the object itself or an array containing it does need
             // to exist, and it remains an error for that not to be the case.
@@ -42,24 +42,32 @@ TEST_CASE("JSON patch")
 
             // is not an error, because "a" exists, and "b" will be added to
             // its value.
-            CHECK_NOTHROW(doc1.patch(patch));
+            CHECK_NOTHROW(doc1.patch(patch1));
             auto doc1_ans = R"(
                 {
                     "a": {
                         "foo": 1,
-                        "b": {
-                            "c": [ "foo", "bar" ]
-                        }
+                        "b": [ "foo", "bar" ]
                     }
                 }
             )"_json;
-            CHECK(doc1.patch(patch) == doc1_ans);
+            CHECK(doc1.patch(patch1) == doc1_ans);
 
             // It is an error in this document:
             json doc2 = R"({ "q": { "bar": 2 } })"_json;
 
             // because "a" does not exist.
-            CHECK_THROWS_WITH_AS(doc2.patch(patch), "[json.exception.out_of_range.403] key 'a' not found", json::out_of_range&);
+            CHECK_THROWS_WITH_AS(doc2.patch(patch1), "[json.exception.out_of_range.403] key 'a' not found", json::out_of_range&);
+
+            json doc3 = R"({ "a": {} })"_json;
+            json patch2 = R"([{ "op": "add", "path": "/a/b/c", "value": 1 }])"_json;
+
+            // should cause an error because "b" does not exist in doc3
+#if JSON_DIAGNOSTICS
+            CHECK_THROWS_WITH_AS(doc3.patch(patch2), "[json.exception.out_of_range.403] (/a) key 'b' not found", json::out_of_range&);
+#else
+            CHECK_THROWS_WITH_AS(doc3.patch(patch2), "[json.exception.out_of_range.403] key 'b' not found", json::out_of_range&);
+#endif
         }
 
         SECTION("4.2 remove")
