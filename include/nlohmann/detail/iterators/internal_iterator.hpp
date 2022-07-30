@@ -8,12 +8,13 @@
 
 #pragma once
 
+#include <nlohmann/detail/abi_macros.hpp>
 #include <nlohmann/detail/iterators/primitive_iterator.hpp>
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 /*!
 @brief an iterator value
 
@@ -29,5 +30,6 @@ template<typename BasicJsonType> struct internal_iterator
     /// generic iterator for all other types
     primitive_iterator_t primitive_iterator {};
 };
+
 }  // namespace detail
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END

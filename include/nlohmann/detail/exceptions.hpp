@@ -23,10 +23,10 @@
 #include <nlohmann/detail/string_concat.hpp>
 
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 ////////////////
 // exceptions //
 ////////////////
@@ -252,4 +252,4 @@ class other_error : public exception
 };
 
 }  // namespace detail
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END

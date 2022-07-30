@@ -24,10 +24,10 @@
 #include <nlohmann/detail/output/output_adapters.hpp>
 #include <nlohmann/detail/string_concat.hpp>
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 ///////////////////
 // binary writer //
 ///////////////////
@@ -1833,5 +1833,6 @@ class binary_writer
     /// the output
     output_adapter_t<CharType> oa = nullptr;
 };
+
 }  // namespace detail
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END

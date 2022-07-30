@@ -12,11 +12,10 @@
 #include <cstddef> // size_t
 #include <functional> // hash
 
-#include <nlohmann/detail/macro_scope.hpp>
+#include <nlohmann/detail/abi_macros.hpp>
 #include <nlohmann/detail/value_t.hpp>
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
 
@@ -127,4 +126,4 @@ std::size_t hash(const BasicJsonType& j)
 }
 
 }  // namespace detail
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END

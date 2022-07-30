@@ -17,8 +17,7 @@
 #include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/string_concat.hpp>
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 
 /*!
 @brief SAX interface
@@ -724,6 +723,6 @@ class json_sax_acceptor
         return false;
     }
 };
-}  // namespace detail
 
-}  // namespace nlohmann
+}  // namespace detail
+NLOHMANN_JSON_NAMESPACE_END

@@ -17,30 +17,17 @@
 #include <valarray> // valarray
 #include <vector> // vector
 
-#include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/iterators/iteration_proxy.hpp>
+#include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/cpp_future.hpp>
+#include <nlohmann/detail/meta/std_fs.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
 #include <nlohmann/detail/value_t.hpp>
 
-#if JSON_HAS_EXPERIMENTAL_FILESYSTEM
-#include <experimental/filesystem>
-namespace nlohmann::detail
-{
-namespace std_fs = std::experimental::filesystem;
-} // namespace nlohmann::detail
-#elif JSON_HAS_FILESYSTEM
-#include <filesystem>
-namespace nlohmann::detail
-{
-namespace std_fs = std::filesystem;
-} // namespace nlohmann::detail
-#endif
-
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 //////////////////
 // constructors //
 //////////////////
@@ -447,6 +434,7 @@ namespace // NOLINT(cert-dcl59-cpp,fuchsia-header-anon-namespaces,google-build-n
 JSON_INLINE_VARIABLE constexpr const auto& to_json = // NOLINT(misc-definitions-in-headers)
     detail::static_const<detail::to_json_fn>::value;
 #ifndef JSON_HAS_CPP_17
-} // namespace
+}  // namespace
 #endif
-} // namespace nlohmann
+
+NLOHMANN_JSON_NAMESPACE_END

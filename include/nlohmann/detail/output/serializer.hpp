@@ -31,10 +31,10 @@
 #include <nlohmann/detail/string_concat.hpp>
 #include <nlohmann/detail/value_t.hpp>
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 ///////////////////
 // serialization //
 ///////////////////
@@ -983,5 +983,6 @@ class serializer
     /// error_handler how to react on decoding errors
     const error_handler_t error_handler;
 };
+
 }  // namespace detail
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END

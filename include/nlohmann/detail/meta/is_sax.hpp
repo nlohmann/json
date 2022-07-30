@@ -12,13 +12,14 @@
 #include <utility> // declval
 #include <string> // string
 
+#include <nlohmann/detail/abi_macros.hpp>
 #include <nlohmann/detail/meta/detected.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 template<typename T>
 using null_function_t = decltype(std::declval<T&>().null());
 
@@ -153,5 +154,6 @@ struct is_sax_static_asserts
         "Missing/invalid function: bool parse_error(std::size_t, const "
         "std::string&, const exception&)");
 };
+
 }  // namespace detail
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END

@@ -13,10 +13,10 @@
 
 #include <nlohmann/detail/macro_scope.hpp>
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 /*
 @brief an iterator for primitive JSON types
 
@@ -127,5 +127,6 @@ class primitive_iterator_t
         return *this;
     }
 };
+
 }  // namespace detail
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END

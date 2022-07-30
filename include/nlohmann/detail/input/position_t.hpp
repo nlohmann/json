@@ -10,10 +10,12 @@
 
 #include <cstddef> // size_t
 
-namespace nlohmann
-{
+#include <nlohmann/detail/abi_macros.hpp>
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 /// struct to capture the start position of the current token
 struct position_t
 {
@@ -31,5 +33,5 @@ struct position_t
     }
 };
 
-} // namespace detail
-} // namespace nlohmann
+}  // namespace detail
+NLOHMANN_JSON_NAMESPACE_END

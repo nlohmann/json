@@ -18,13 +18,14 @@
     #include <ranges> // enable_borrowed_range
 #endif
 
+#include <nlohmann/detail/abi_macros.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
 #include <nlohmann/detail/value_t.hpp>
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 template<typename string_type>
 void int_to_string( string_type& target, std::size_t value )
 {
@@ -201,8 +202,9 @@ auto get(const nlohmann::detail::iteration_proxy_value<IteratorType>& i) -> decl
 {
     return i.value();
 }
+
 }  // namespace detail
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END
 
 // The Addition to the STD Namespace is required to add
 // Structured Bindings Support to the iteration_proxy_value class
@@ -210,6 +212,7 @@ auto get(const nlohmann::detail::iteration_proxy_value<IteratorType>& i) -> decl
 // And see https://github.com/nlohmann/json/pull/1391
 namespace std
 {
+
 #if defined(__clang__)
     // Fix: https://github.com/nlohmann/json/issues/1401
     #pragma clang diagnostic push
@@ -230,7 +233,8 @@ class tuple_element<N, ::nlohmann::detail::iteration_proxy_value<IteratorType >>
 #if defined(__clang__)
     #pragma clang diagnostic pop
 #endif
-} // namespace std
+
+}  // namespace std
 
 #if JSON_HAS_RANGES
     template <typename IteratorType>

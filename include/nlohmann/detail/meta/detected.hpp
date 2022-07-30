@@ -12,11 +12,11 @@
 
 #include <nlohmann/detail/meta/void_t.hpp>
 
-// https://en.cppreference.com/w/cpp/experimental/is_detected
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
+// https://en.cppreference.com/w/cpp/experimental/is_detected
 struct nonesuch
 {
     nonesuch() = delete;
@@ -65,5 +65,6 @@ using is_detected_exact = std::is_same<Expected, detected_t<Op, Args...>>;
 template<class To, template<class...> class Op, class... Args>
 using is_detected_convertible =
     std::is_convertible<detected_t<Op, Args...>, To>;
+
 }  // namespace detail
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END

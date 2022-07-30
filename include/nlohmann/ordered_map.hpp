@@ -20,8 +20,7 @@
 #include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 
 /// ordered_map: a minimal map-like container that preserves insertion order
 /// for use within nlohmann::basic_json<ordered_map>
@@ -357,4 +356,4 @@ private:
     JSON_NO_UNIQUE_ADDRESS key_compare m_compare = key_compare();
 };
 
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END

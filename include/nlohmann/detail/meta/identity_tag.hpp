@@ -8,11 +8,14 @@
 
 #pragma once
 
-namespace nlohmann
-{
+#include <nlohmann/detail/abi_macros.hpp>
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 // dispatching helper struct
 template <class T> struct identity_tag {};
+
 }  // namespace detail
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END

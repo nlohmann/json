@@ -18,10 +18,10 @@
     #include <compare> // partial_ordering
 #endif
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 ///////////////////////////
 // JSON type enumeration //
 ///////////////////////////
@@ -113,5 +113,6 @@ inline bool operator<(const value_t lhs, const value_t rhs) noexcept
     return std::is_lt(lhs <=> rhs); // *NOPAD*
 }
 #endif
+
 }  // namespace detail
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END

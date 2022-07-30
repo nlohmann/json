@@ -8,10 +8,9 @@
 
 #pragma once
 
-#include <nlohmann/detail/macro_scope.hpp>
+#include <nlohmann/detail/abi_macros.hpp>
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
 
@@ -69,5 +68,5 @@ static void unescape(StringType& s)
     replace_substring(s, StringType{"~0"}, StringType{"~"});
 }
 
-} // namespace detail
-} // namespace nlohmann
+}  // namespace detail
+NLOHMANN_JSON_NAMESPACE_END

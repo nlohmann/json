@@ -1,4 +1,4 @@
 #include <nlohmann/json.hpp>
 #include "Foo.hpp"
 
-class Bar : public Foo{};
+class Bar : public Foo {};
