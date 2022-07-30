@@ -161,7 +161,7 @@ class alt_string
   private:
     std::string str_impl {};
 
-    friend bool ::operator<(const char* /*op1*/, const alt_string& /*op2*/) noexcept;
+    friend bool operator<(const char* /*op1*/, const alt_string& /*op2*/) noexcept;
 };
 
 void int_to_string(alt_string& target, std::size_t value)
