@@ -2,7 +2,7 @@
 {"one":1,"three":3,"two":2}
 {"one":1.2,"three":3.4,"two":2.3}
 {"one":true,"three":false,"two":true}
-{"one":true,"three":false,"two":true}
+{"one":true,"three":true,"two":true}
 
 ["one","two",3,4.5,false]
 [1,2,3,4]
