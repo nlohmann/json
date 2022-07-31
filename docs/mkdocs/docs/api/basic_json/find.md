@@ -67,13 +67,13 @@ This method always returns `end()` when executed on a JSON type that is not an o
     The example shows how `find()` is used.
     
     ```cpp
-    --8<-- "examples/find__keytype.cpp"
+    --8<-- "examples/find__keytype.c++17.cpp"
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/find__keytype.output"
+    --8<-- "examples/find__keytype.c++17.output"
     ```
 
 ## See also

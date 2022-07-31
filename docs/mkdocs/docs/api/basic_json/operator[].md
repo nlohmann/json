@@ -173,13 +173,13 @@ Strong exception safety: if an exception occurs, the original value stays intact
     The example below shows how object elements can be read using the `[]` operator.
     
     ```cpp
-    --8<-- "examples/operator_array__keytype.cpp"
+    --8<-- "examples/operator_array__keytype.c++17.cpp"
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/operator_array__keytype.output"
+    --8<-- "examples/operator_array__keytype.c++17.output"
     ```
 
 ??? example "Example: (3) access specified object element using string_view (const)"
@@ -187,13 +187,13 @@ Strong exception safety: if an exception occurs, the original value stays intact
     The example below shows how object elements can be read using the `[]` operator.
     
     ```cpp
-    --8<-- "examples/operator_array__keytype_const.cpp"
+    --8<-- "examples/operator_array__keytype_const.c++17.cpp"
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/operator_array__keytype_const.output"
+    --8<-- "examples/operator_array__keytype_const.c++17.output"
     ```
 
 ??? example "Example: (4) access specified element via JSON Pointer"

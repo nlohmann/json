@@ -62,13 +62,13 @@ Linear.
     The example demonstrates comparing several JSON values.
     
     ```cpp
-    --8<-- "examples/operator_spaceship__const_reference.cpp"
+    --8<-- "examples/operator_spaceship__const_reference.c++20.cpp"
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/operator_spaceship__const_reference.output"
+    --8<-- "examples/operator_spaceship__const_reference.c++20.output"
     ```
 
 ??? example "Example: (2) comparing JSON values and scalars"
@@ -76,13 +76,13 @@ Linear.
     The example demonstrates comparing several JSON values and scalars.
     
     ```cpp
-    --8<-- "examples/operator_spaceship__scalartype.cpp"
+    --8<-- "examples/operator_spaceship__scalartype.c++20.cpp"
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/operator_spaceship__scalartype.output"
+    --8<-- "examples/operator_spaceship__scalartype.c++20.output"
     ```
 
 ## See also

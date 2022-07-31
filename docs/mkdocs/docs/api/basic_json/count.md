@@ -63,13 +63,13 @@ This method always returns `0` when executed on a JSON type that is not an objec
     The example shows how `count()` is used.
     
     ```cpp
-    --8<-- "examples/count__keytype.cpp"
+    --8<-- "examples/count__keytype.c++17.cpp"
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/count__keytype.output"
+    --8<-- "examples/count__keytype.c++17.output"
     ```
 
 ## Version history

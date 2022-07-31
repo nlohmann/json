@@ -124,13 +124,13 @@ changes to any JSON value.
     The example below shows how object elements can be queried with a default value.
     
     ```cpp
-    --8<-- "examples/value__keytype.cpp"
+    --8<-- "examples/value__keytype.c++17.cpp"
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/value__keytype.output"
+    --8<-- "examples/value__keytype.c++17.output"
     ```
 
 ??? example "Example: (3) access specified object element via JSON Pointer with default value"

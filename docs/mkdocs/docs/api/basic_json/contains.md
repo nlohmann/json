@@ -88,13 +88,13 @@ Logarithmic in the size of the JSON object.
     The example shows how `contains()` is used.
     
     ```cpp
-    --8<-- "examples/contains__keytype.cpp"
+    --8<-- "examples/contains__keytype.c++17.cpp"
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/contains__keytype.output"
+    --8<-- "examples/contains__keytype.c++17.output"
     ```
 
 ??? example "Example: (3) check with JSON pointer"

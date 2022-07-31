@@ -158,13 +158,13 @@ Strong exception safety: if an exception occurs, the original value stays intact
     exceptions that can be thrown.
     
     ```cpp
-    --8<-- "examples/at__keytype.cpp"
+    --8<-- "examples/at__keytype.c++17.cpp"
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/at__keytype.output"
+    --8<-- "examples/at__keytype.c++17.output"
     ```
 
 ??? example "Example: (3) access specified object element using string_view with bounds checking"
@@ -173,13 +173,13 @@ Strong exception safety: if an exception occurs, the original value stays intact
     that can be thrown.
     
     ```cpp
-    --8<-- "examples/at__keytype_const.cpp"
+    --8<-- "examples/at__keytype_const.c++17.cpp"
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/at__keytype_const.output"
+    --8<-- "examples/at__keytype_const.c++17.output"
     ```
 
 ??? example "Example: (4) access specified element via JSON Pointer"
