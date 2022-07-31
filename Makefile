@@ -268,5 +268,5 @@ serve_header:
 
 reuse:
 	pipx run reuse addheader --recursive single_include include -tjson --license MIT --copyright "Niels Lohmann <https://nlohmann.me>" --year "2013-2022"
-	pipx run reuse addheader tests/benchmarks/src/benchmarks.cpp tests/src/* -tjson_support --license MIT --copyright "Niels Lohmann <https://nlohmann.me>" --year "2013-2022"
+	pipx run reuse addheader tests/benchmarks/src/benchmarks.cpp tests/src/*.cpp tests/src/*.hpp tests/abi/**/*.cpp tests/abi/**/*.hpp -tjson_support --license MIT --copyright "Niels Lohmann <https://nlohmann.me>" --year "2013-2022"
 	pipx run reuse lint
