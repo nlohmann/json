@@ -16,7 +16,7 @@ SED:=$(shell command -v gsed || which sed)
 SRCS=$(shell find include -type f | sort)
 
 # the list of sources in the tests folder
-TESTS_SRCS=$(shell find tests -type f \( -name '*.hpp' -o -name '*.cpp' -o -name '*.cu' \) -not -path 'tests/thirdparty/*' | sort)
+TESTS_SRCS=$(shell find tests -type f \( -name '*.hpp' -o -name '*.cpp' -o -name '*.cu' \) -not -path 'tests/thirdparty/*' -not -path 'tests/abi/include/nlohmann/*' | sort)
 
 # the single header (amalgamated from the source files)
 AMALGAMATED_FILE=single_include/nlohmann/json.hpp
@@ -268,5 +268,5 @@ serve_header:
 
 reuse:
 	pipx run reuse addheader --recursive single_include include -tjson --license MIT --copyright "Niels Lohmann <https://nlohmann.me>" --year "2013-2022"
-	pipx run reuse addheader tests/benchmarks/src/benchmarks.cpp tests/src/*.cpp tests/src/*.hpp tests/abi/**/*.cpp tests/abi/**/*.hpp -tjson_support --license MIT --copyright "Niels Lohmann <https://nlohmann.me>" --year "2013-2022"
+	pipx run reuse addheader $(TESTS_SRCS) --style=c -tjson_support --license MIT --copyright "Niels Lohmann <https://nlohmann.me>" --year "2013-2022"
 	pipx run reuse lint
