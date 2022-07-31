@@ -518,6 +518,20 @@ add_custom_target(ci_test_legacycomparison
 )
 
 ###############################################################################
+# Disable global UDLs.
+###############################################################################
+
+add_custom_target(ci_test_noglobaludls
+    COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND}
+    -DCMAKE_BUILD_TYPE=Debug -GNinja
+    -DJSON_BuildTests=ON -DJSON_FastTests=ON -DJSON_UseGlobalUDLs=OFF
+    -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_noglobaludls
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_noglobaludls
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_noglobaludls && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+    COMMENT "Compile and test with global UDLs disabled"
+)
+
+###############################################################################
 # Coverage.
 ###############################################################################
 
