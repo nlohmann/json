@@ -16,7 +16,7 @@ SED:=$(shell command -v gsed || which sed)
 SRCS=$(shell find include -type f | sort)
 
 # the list of sources in the tests folder
-TESTS_SRCS=$(shell find tests -type f \( -name '*.hpp' -o -name '*.cpp' -o -name '*.cu' \) -not -path 'tests/thirdparty/*' -not -path 'tests/abi/include/nlohmann/json_v3_10_5.hpp' | sort)
+TESTS_SRCS=$(shell find tests -type f \( -name '*.hpp' -o -name '*.cpp' -o -name '*.cu' \) -not -path 'tests/thirdparty/*' -not -path 'tests/abi/include/nlohmann/*' | sort)
 
 # the single header (amalgamated from the source files)
 AMALGAMATED_FILE=single_include/nlohmann/json.hpp
