@@ -146,6 +146,11 @@ Disable default `enum` serialization by defining the macro
 
 Skip expensive/slow test suites. This option is `OFF` by default. Depends on `JSON_BuildTests`.
 
+### `JSON_GlobalUDLs`
+
+Place user-defined string literals in the global namespace by defining the macro
+[`JSON_USE_GLOBAL_UDLS`](../api/macros/json_use_global_udls.md). This option is `OFF` by default.
+
 ### `JSON_ImplicitConversions`
 
 Enable implicit conversions by defining macro [`JSON_USE_IMPLICIT_CONVERSIONS`](../api/macros/json_use_implicit_conversions.md). This option is `ON` by default.

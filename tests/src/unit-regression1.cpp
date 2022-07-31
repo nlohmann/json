@@ -14,6 +14,7 @@
 #define JSON_TESTS_PRIVATE
 #include <nlohmann/json.hpp>
 using nlohmann::json;
+using namespace nlohmann::literals; // NOLINT(google-build-using-namespace)
 
 #include <fstream>
 #include <sstream>

@@ -2,6 +2,7 @@
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
+using namespace nlohmann::literals;
 
 int main()
 {

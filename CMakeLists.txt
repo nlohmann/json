@@ -40,6 +40,7 @@ endif()
 option(JSON_BuildTests                     "Build the unit tests when BUILD_TESTING is enabled." ${JSON_BuildTests_INIT})
 option(JSON_CI                             "Enable CI build targets." OFF)
 option(JSON_Diagnostics                    "Use extended diagnostic messages." OFF)
+option(JSON_GlobalUDLs                     "Place use-defined string literals in the global namespace." ON)
 option(JSON_ImplicitConversions            "Enable implicit conversions." ON)
 option(JSON_DisableEnumSerialization       "Disable default integer enum serialization." OFF)
 option(JSON_LegacyDiscardedValueComparison "Enable legacy discarded value comparison." OFF)           
@@ -110,6 +111,7 @@ endif()
 target_compile_definitions(
     ${NLOHMANN_JSON_TARGET_NAME}
     INTERFACE
+    $<$<NOT:$<BOOL:${JSON_GlobalUDLs}>>:JSON_USE_GLOBAL_UDLS=0>
     $<$<NOT:$<BOOL:${JSON_ImplicitConversions}>>:JSON_USE_IMPLICIT_CONVERSIONS=0>
     $<$<BOOL:${JSON_DisableEnumSerialization}>:JSON_DISABLE_ENUM_SERIALIZATION=1>
     $<$<BOOL:${JSON_Diagnostics}>:JSON_DIAGNOSTICS=1>

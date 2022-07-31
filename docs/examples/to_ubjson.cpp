@@ -3,6 +3,7 @@
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
+using namespace nlohmann::literals;
 
 // function to print UBJSON's diagnostic format
 void print_byte(uint8_t byte)

@@ -10,6 +10,7 @@
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;
+using namespace nlohmann::literals; // NOLINT(google-build-using-namespace)
 
 #include <fstream>
 #include "make_test_data_available.hpp"

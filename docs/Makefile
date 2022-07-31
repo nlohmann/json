@@ -14,13 +14,17 @@ cxx_standard = $(lastword c++11 $(filter c++%, $(subst ., ,$1)))
 # create output from a stand-alone example file
 %.output: %.cpp
 	@echo "standard $(call cxx_standard $(<:.cpp=))"
-	$(MAKE) $(<:.cpp=) CPPFLAGS="-I $(SRCDIR)" CXXFLAGS="-std=$(call cxx_standard,$(<:.cpp=)) -Wno-deprecated-declarations"
+	$(MAKE) $(<:.cpp=) \
+		CPPFLAGS="-I $(SRCDIR) -DJSON_USE_GLOBAL_UDLS=0" \
+		CXXFLAGS="-std=$(call cxx_standard,$(<:.cpp=)) -Wno-deprecated-declarations"
 	./$(<:.cpp=) > $@
 	rm $(<:.cpp=)
 
 # compare created output with current output of the example files
 %.test: %.cpp
-	$(MAKE) $(<:.cpp=) CPPFLAGS="-I $(SRCDIR)" CXXFLAGS="-std=$(call cxx_standard,$(<:.cpp=)) -Wno-deprecated-declarations"
+	$(MAKE) $(<:.cpp=) \
+		CPPFLAGS="-I $(SRCDIR) -DJSON_USE_GLOBAL_UDLS=0" \
+		CXXFLAGS="-std=$(call cxx_standard,$(<:.cpp=)) -Wno-deprecated-declarations"
 	./$(<:.cpp=) > $@
 	diff $@ $(<:.cpp=.output)
 	rm $(<:.cpp=) $@

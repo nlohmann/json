@@ -148,6 +148,7 @@ json ex1 = json::parse(R"(
 )");
 
 // Using user-defined (raw) string literals
+using namespace nlohmann::literals;
 json ex2 = R"(
   {
     "pi": 3.141,
@@ -262,7 +263,12 @@ auto j2 = R"(
 )"_json;
 ```
 
-Note that without appending the `_json` suffix, the passed string literal is not parsed, but just used as JSON string value. That is, `json j = "{ \"happy\": true, \"pi\": 3.141 }"` would just store the string `"{ "happy": true, "pi": 3.141 }"` rather than parsing the actual object.
+Note that without appending the `_json` suffix, the passed string literal is not parsed, but just used as JSON string
+value. That is, `json j = "{ \"happy\": true, \"pi\": 3.141 }"` would just store the string
+`"{ "happy": true, "pi": 3.141 }"` rather than parsing the actual object.
+
+The string literal should be brought into scope with with `using namespace nlohmann::literals;`
+(see [`json::parse()`](https://json.nlohmann.me/api/operator_literal_json/)).
 
 The above example can also be expressed explicitly using [`json::parse()`](https://json.nlohmann.me/api/basic_json/parse/):
 

@@ -37,9 +37,11 @@ are the base for JSON patches.
 - [**push_back**](push_back.md) - append an unescaped token at the end of the pointer
 - [**empty**](empty.md) - return whether pointer points to the root document
 
+## Literals
+
+- [**operator""_json_pointer**](../operator_literal_json_pointer.md) - user-defined string literal for JSON pointers
 ## See also
 
-- [operator""_json_pointer](../basic_json/operator_literal_json_pointer.md) - user-defined string literal for JSON pointers
 - [RFC 6901](https://datatracker.ietf.org/doc/html/rfc6901)
 
 ## Version history
