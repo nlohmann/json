@@ -14,6 +14,19 @@ and `#!cpp __cpp_lib_three_way_comparison`.
 
 When the macro is not defined, the library will define it to its default value.
 
+## Examples
+
+??? example
+
+    The code below forces the library to use 3-way comparison:
+
+    ```cpp
+    #define JSON_HAS_THREE_WAY_COMPARISON 1
+    #include <nlohmann/json.hpp>
+
+    ...
+    ```
+
 ## Version history
 
 - Added in version 3.11.0.

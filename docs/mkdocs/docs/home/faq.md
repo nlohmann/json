@@ -126,7 +126,7 @@ Yes, see [Parsing and exceptions](../features/parsing/parse_exceptions.md).
 
 	Can I get the key of the object item that caused an exception?
 
-Yes, you can. Please define the symbol [`JSON_DIAGNOSTICS`](../features/macros.md#json_diagnostics) to get [extended diagnostics messages](exceptions.md#extended-diagnostic-messages).
+Yes, you can. Please define the symbol [`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md) to get [extended diagnostics messages](exceptions.md#extended-diagnostic-messages).
 
 
 ## Serialization issues

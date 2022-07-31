@@ -25,7 +25,8 @@ header. See also the [macro overview page](../../features/macros.md).
 ## Library version
 
 - [**JSON_SKIP_LIBRARY_VERSION_CHECK**](json_skip_library_version_check.md) - skip library version check
-- [**NLOHMANN_JSON_VERSION_MAJOR**<br>**NLOHMANN_JSON_VERSION_MINOR**<br>**NLOHMANN_JSON_VERSION_PATCH**](nlohmann_json_version_major.md) - library version information
+- [**NLOHMANN_JSON_VERSION_MAJOR**<br>**NLOHMANN_JSON_VERSION_MINOR**<br>**NLOHMANN_JSON_VERSION_PATCH**](nlohmann_json_version_major.md)
+  \- library version information
 
 ## Library namespace
 
@@ -45,7 +46,11 @@ header. See also the [macro overview page](../../features/macros.md).
 
 ## Serialization/deserialization macros
 
-- [**NLOHMANN_DEFINE_TYPE_INTRUSIVE(type, member...)**<br>**NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(type, member...)**](nlohmann_define_type_intrusive.md) - serialization/deserialization of types _with_ access to private variables
-- [**NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(type, member...)**<br>**NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(type, member...)**](nlohmann_define_type_non_intrusive.md) - serialization/deserialization of types _without_ access to private variables
-- [**NLOHMANN_JSON_SERIALIZE_ENUM(type, ...)**](nlohmann_json_serialize_enum.md) - serialization/deserialization of enum
-  types
+- [**NLOHMANN_DEFINE_TYPE_INTRUSIVE(type, member...)**<br>**NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(type, member...)**][DefInt]
+  \- serialization/deserialization of types _with_ access to private variables
+- [**NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(type, member...)**<br>**NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(type, member...)**][DefNonInt]
+  \- serialization/deserialization of types _without_ access to private variables
+- [**NLOHMANN_JSON_SERIALIZE_ENUM(type, ...)**](nlohmann_json_serialize_enum.md) - serialization/deserialization of enum types
+
+[DefInt]: nlohmann_define_type_intrusive.md
+[DefNonInt]: nlohmann_define_type_non_intrusive.md

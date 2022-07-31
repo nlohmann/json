@@ -55,6 +55,36 @@ Linear.
         2. Comparing a `NaN` with another `NaN`.
         3. Comparing a `NaN` and any other number.
 
+## Examples
+
+??? example "Example: (1) comparing JSON values"
+
+    The example demonstrates comparing several JSON values.
+    
+    ```cpp
+    --8<-- "examples/operator_spaceship__const_reference.c++20.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/operator_spaceship__const_reference.c++20.output"
+    ```
+
+??? example "Example: (2) comparing JSON values and scalars"
+
+    The example demonstrates comparing several JSON values and scalars.
+    
+    ```cpp
+    --8<-- "examples/operator_spaceship__scalartype.c++20.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/operator_spaceship__scalartype.c++20.output"
+    ```
+
 ## See also
 
 - [**operator==**](operator_eq.md) - comparison: equal

@@ -40,10 +40,12 @@ See examples below for the concrete generated code.
 
 !!! info "Prerequisites"
 
-    1. The type `type` must be default constructible. See [How can I use `get()` for non-default constructible/non-copyable types?](../../features/arbitrary_types.md#how-can-i-use-get-for-non-default-constructiblenon-copyable-types)
+    1. The type `type` must be default constructible. See [How can I use `get()` for non-default constructible/non-copyable types?][GetNonDefNonCopy]
        for how to overcome this limitation.
     2. The macro must be used outside the type (class/struct).
     3. The passed members must be public.
+
+[GetNonDefNonCopy]: ../../features/arbitrary_types.md#how-can-i-use-get-for-non-default-constructiblenon-copyable-types
 
 !!! warning "Implementation limits"
 
@@ -116,7 +118,7 @@ See examples below for the concrete generated code.
 
 - [NLOHMANN_DEFINE_TYPE_INTRUSIVE / NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT](nlohmann_define_type_intrusive.md)
   for a similar macro that can be defined _inside_ the type.
-- [Arbitrary Types Conversions](../../features/arbitrary_types.md) for an overview.
+- [Arbitrary Type Conversions](../../features/arbitrary_types.md) for an overview.
 
 ## Version history
 

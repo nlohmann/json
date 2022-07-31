@@ -30,7 +30,7 @@ execute_process(COMMAND ${CPPCHECK_TOOL} --version OUTPUT_VARIABLE CPPCHECK_TOOL
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" CPPCHECK_TOOL_VERSION "${CPPCHECK_TOOL_VERSION}")
 message(STATUS "🔖 Cppcheck ${CPPCHECK_TOOL_VERSION} (${CPPCHECK_TOOL})")
 
-find_program(GCC_TOOL NAMES g++-latest g++-HEAD g++-11)
+find_program(GCC_TOOL NAMES g++-latest g++-HEAD g++-11 g++-10)
 execute_process(COMMAND ${GCC_TOOL} --version OUTPUT_VARIABLE GCC_TOOL_VERSION ERROR_VARIABLE GCC_TOOL_VERSION)
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" GCC_TOOL_VERSION "${GCC_TOOL_VERSION}")
 message(STATUS "🔖 GCC ${GCC_TOOL_VERSION} (${GCC_TOOL})")
@@ -939,7 +939,7 @@ add_custom_target(ci_icpc
 ###############################################################################
 
 add_custom_target(ci_test_documentation
-    COMMAND make check_output_portable -j8
+    COMMAND make CXX="${GCC_TOOL}" check_output_portable -j8
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/docs
     COMMENT "Check that all examples compile and create the desired output"
 )

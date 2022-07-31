@@ -105,32 +105,46 @@ changes to any JSON value.
 
 ## Examples
 
-??? example "Example (1): access specified object element with default value"
+??? example "Example: (1) access specified object element with default value"
 
     The example below shows how object elements can be queried with a default value.
     
     ```cpp
-    --8<-- "examples/basic_json__value.cpp"
+    --8<-- "examples/value__object_t_key_type.cpp"
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/basic_json__value.output"
+    --8<-- "examples/value__object_t_key_type.output"
     ```
 
-??? example "Example (3): access specified object element via JSON Pointer with default value"
+??? example "Example: (2) access specified object element using string_view with default value"
 
     The example below shows how object elements can be queried with a default value.
     
     ```cpp
-    --8<-- "examples/basic_json__value_ptr.cpp"
+    --8<-- "examples/value__keytype.c++17.cpp"
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/basic_json__value_ptr.output"
+    --8<-- "examples/value__keytype.c++17.output"
+    ```
+
+??? example "Example: (3) access specified object element via JSON Pointer with default value"
+
+    The example below shows how object elements can be queried with a default value.
+    
+    ```cpp
+    --8<-- "examples/value__json_ptr.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/value__json_ptr.output"
     ```
 
 ## See also

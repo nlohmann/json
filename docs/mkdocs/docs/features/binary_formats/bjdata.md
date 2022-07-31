@@ -9,7 +9,7 @@ unambigiously map common binary numeric types; furthermore, it uses little-endia
 (LE) to store all numerics instead of big-endian (BE) as in UBJSON to avoid
 unnecessary conversions on commonly available platforms.
 
-Compared to other binary-JSON-like formats such as MessagePack and CBOR, both BJData and
+Compared to other binary JSON-like formats such as MessagePack and CBOR, both BJData and
 UBJSON demonstrate a rare combination of being both binary and **quasi-human-readable**. This
 is because all semantic elements in BJData and UBJSON, including the data-type markers
 and name/string types are directly human-readable. Data stored in the BJData/UBJSON format
@@ -63,7 +63,7 @@ The library uses the following mapping from JSON values types to BJData types ac
 
 	The following values can **not** be converted to a BJData value:
 
-      - strings with more than 18446744073709551615 bytes (theoretical)
+      - strings with more than 18446744073709551615 bytes, i.e., $2^{64}-1$ bytes (theoretical)
 
 !!! info "Unused BJData markers"
 
@@ -84,36 +84,37 @@ The library uses the following mapping from JSON values types to BJData types ac
 	A breaking difference between BJData and UBJSON is the endianness
     of numerical values. In BJData, all numerical data types (integers
     `UiuImlML` and floating-point values `hdD`) are stored in the little-endian (LE)
-    byte order as opposed to big-endian as used by UBJSON. To adopt LE
+    byte order as opposed to big-endian as used by UBJSON. Adopting LE
     to store numeric records avoids unnecessary byte swapping on most modern
     computers where LE is used as the default byte order.
 
 !!! info "Optimized formats"
 
-	The optimized formats for containers are supported: Parameter
-    `use_size` adds size information to the beginning of a container and
-    removes the closing marker. Parameter `use_type` further checks
-    whether all elements of a container have the same type and adds the
-    type marker to the beginning of the container. The `use_type`
-    parameter must only be used together with `use_size = true`.
+	Optimized formats for containers are supported via two parameters of
+    [`to_bjdata`](../../api/basic_json/to_bjdata.md):
+
+    - Parameter `use_size` adds size information to the beginning of a container and
+      removes the closing marker.
+    - Parameter `use_type` further checks whether all elements of a container have the
+      same type and adds the type marker to the beginning of the container.
+      The `use_type` parameter must only be used together with `use_size = true`.
 
     Note that `use_size = true` alone may result in larger representations -
     the benefit of this parameter is that the receiving side is
-    immediately informed on the number of elements of the container.
+    immediately informed of the number of elements in the container.
 
 !!! info "ND-array optimized format"
 
-	BJData extends UBJSON's optimized array **size** marker to support
-    ND-array of uniform numerical data types (referred to as the *packed array*).
-    For example, 2-D `uint8` integer array `[[1,2],[3,4],[5,6]]` that can be stored
+	BJData extends UBJSON's optimized array **size** marker to support ND-arrays of
+    uniform numerical data types (referred to as *packed arrays*).
+    For example, the 2-D `uint8` integer array `[[1,2],[3,4],[5,6]]`, stored
     as nested optimized array in UBJSON `[ [$U#i2 1 2 [$U#i2 3 4 [$U#i2 5 6 ]`,
-    can be further compressed in BJData and stored as `[$U#[$i#i2 2 3 1 2 3 4 5 6`
+    can be further compressed in BJData to `[$U#[$i#i2 2 3 1 2 3 4 5 6`
     or `[$U#[i2 i3] 1 2 3 4 5 6`.
 
-    In order to maintain the type and dimension information of an ND-array,
-    when this library parses a BJData ND-array via `from_bjdata`, it converts the
-    data into a JSON object, following the **annotated array format** as defined in the
-    [JData specification (Draft 3)](https://github.com/NeuroJSON/jdata/blob/master/JData_specification.md#annotated-storage-of-n-d-arrays).
+    To maintina type and size information, ND-arrays are converted to JSON objects following the
+    **annotated array format** (defined in the [JData specification (Draft 3)][JDataAAFmt]),
+    when parsed using [`from_bjdata`](../../api/basic_json/from_bjdata.md).
     For example, the above 2-D `uint8` array can be parsed and accessed as
 
     ```json
@@ -124,14 +125,16 @@ The library uses the following mapping from JSON values types to BJData types ac
     }
     ```
 
-    In the reversed direction, when `to_bjdata` detects a JSON object in the
-    above form, it automatically converts such object into a BJData ND-array
-    to generate compact output. The only exception is that when the 1-D dimensional
-    vector stored in `"_ArraySize_"` contains a single integer, or two integers with
-    one being 1, a regular 1-D optimized array is generated.
+    Likewise, when a JSON object in the above form is serialzed using
+    [`to_bjdata`](../../api/basic_json/to_bjdata.md), it is automatically converted
+    into a compact BJData ND-array. The only exception is, that when the 1-dimensional
+    vector stored in `"_ArraySize_"` contains a single integer or two integers with one
+    being 1, a regular 1-D optimized array is generated.
 
-    The current version of this library has not yet supported automatic
-    recognition and conversion from a nested JSON array input to a BJData ND-array.
+    The current version of this library does not yet support automatic detection of and
+    conversion from a nested JSON array input to a BJData ND-array.
+
+    [JDataAAFmt]: https://github.com/NeuroJSON/jdata/blob/master/JData_specification.md#annotated-storage-of-n-d-arrays)
 
 !!! info "Restrictions in optimized data types for arrays and objects"
 
@@ -147,7 +150,7 @@ The library uses the following mapping from JSON values types to BJData types ac
 
 	If the JSON data contains the binary type, the value stored is a list
     of integers, as suggested by the BJData documentation.  In particular,
-    this means that serialization and the deserialization of a JSON
+    this means that the serialization and the deserialization of JSON
     containing binary values into BJData and back will result in a
     different JSON object.
 

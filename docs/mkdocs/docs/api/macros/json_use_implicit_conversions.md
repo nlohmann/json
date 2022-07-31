@@ -7,9 +7,6 @@
 When defined to `0`, implicit conversions are switched off. By default, implicit conversions are switched on. The
 value directly affects [`operator ValueType`](../basic_json/operator_ValueType.md).
 
-Implicit conversions can also be controlled with the CMake option `JSON_ImplicitConversions` (`ON` by default) which
-sets `JSON_USE_IMPLICIT_CONVERSIONS` accordingly.
-
 ## Default definition
 
 By default, implicit conversions are enabled.
@@ -26,6 +23,12 @@ By default, implicit conversions are enabled.
 
     You can prepare existing code by already defining `JSON_USE_IMPLICIT_CONVERSIONS` to `0` and replace any implicit
     conversions with calls to [`get`](../basic_json/get.md).
+
+!!! hint "CMake option"
+
+    Implicit conversions can also be controlled with the CMake option
+    [`JSON_ImplicitConversions`](../../integration/cmake.md#json_legacydiscardedvaluecomparison)
+    (`ON` by default) which defines `JSON_USE_IMPLICIT_CONVERSIONS` accordingly.
 
 ## Examples
 

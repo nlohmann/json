@@ -1,10 +1,12 @@
 # JSON_DISABLE_ENUM_SERIALIZATION
 
 ```cpp
-#define JSON_DISABLE_ENUM_SERIALIZATION
+#define JSON_DISABLE_ENUM_SERIALIZATION /* value */
 ```
 
-When defined, default serialization and deserialization functions for enums are excluded and have to be provided by the user, for example, using [`NLOHMANN_JSON_SERIALIZE_ENUM`](nlohmann_json_serialize_enum.md) (see [arbitrary type conversions](../../features/arbitrary_types.md) for more details).
+When defined to `1`, default serialization and deserialization functions for enums are excluded and have to be provided
+by the user, for example, using [`NLOHMANN_JSON_SERIALIZE_ENUM`](nlohmann_json_serialize_enum.md) (see
+[arbitrary type conversions](../../features/arbitrary_types.md) for more details).
 
 Parsing or serializing an enum will result in a compiler error.
 
@@ -12,17 +14,26 @@ This works for both unscoped and scoped enums.
 
 ## Default definition
 
-By default, `#!cpp JSON_DISABLE_ENUM_SERIALIZATION` is not defined.
+The default value is `0`.
 
 ```cpp
-#undef JSON_DISABLE_ENUM_SERIALIZATION
+#define JSON_DISABLE_ENUM_SERIALIZATION 0
 ```
+
+## Notes
+
+!!! hint "CMake option"
+
+    Enum serialization can also be controlled with the CMake option
+    [`JSON_DisableEnumSerialization`](../../integration/cmake.md#json_disableenumserialization)
+    (`OFF` by default) which defines `JSON_DISABLE_ENUM_SERIALIZATION` accordingly.
 
 ## Examples
 
 ??? example "Example 1: Disabled behavior"
 
-    The code below forces the library **not** to create default serialization/deserialization functions `from_json` and `to_json`, meaning the code below **does not** compile.
+    The code below forces the library **not** to create default serialization/deserialization functions `from_json` and `to_json`, meaning the code below
+    **does not** compile.
 
     ```cpp
     #define JSON_DISABLE_ENUM_SERIALIZATION 1
@@ -48,7 +59,8 @@ By default, `#!cpp JSON_DISABLE_ENUM_SERIALIZATION` is not defined.
 
 ??? example "Example 2: Serialize enum macro"
 
-    The code below forces the library **not** to create default serialization/deserialization functions `from_json` and `to_json`, but uses [`NLOHMANN_JSON_SERIALIZE_ENUM`](nlohmann_json_serialize_enum.md) to parse and serialize the enum.
+    The code below forces the library **not** to create default serialization/deserialization functions `from_json` and `to_json`, but uses
+    [`NLOHMANN_JSON_SERIALIZE_ENUM`](nlohmann_json_serialize_enum.md) to parse and serialize the enum.
 
     ```cpp
     #define JSON_DISABLE_ENUM_SERIALIZATION 1
@@ -80,7 +92,8 @@ By default, `#!cpp JSON_DISABLE_ENUM_SERIALIZATION` is not defined.
 
 ??? example "Example 3: User-defined serialization/deserialization functions"
 
-    The code below forces the library **not** to create default serialization/deserialization functions `from_json` and `to_json`, but uses user-defined functions to parse and serialize the enum.
+    The code below forces the library **not** to create default serialization/deserialization functions `from_json` and `to_json`, but uses user-defined
+    functions to parse and serialize the enum.
 
     ```cpp
     #define JSON_DISABLE_ENUM_SERIALIZATION 1

@@ -44,18 +44,32 @@ This method always returns `0` when executed on a JSON type that is not an objec
 
 ## Examples
 
-??? example
+??? example "Example: (1) count number of elements"
 
     The example shows how `count()` is used.
     
     ```cpp
-    --8<-- "examples/count.cpp"
+    --8<-- "examples/count__object_t_key_type.cpp"
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/count.output"
+    --8<-- "examples/count__object_t_key_type.output"
+    ```
+
+??? example "Example: (2) count number of elements using string_view"
+
+    The example shows how `count()` is used.
+    
+    ```cpp
+    --8<-- "examples/count__keytype.c++17.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/count__keytype.c++17.output"
     ```
 
 ## Version history
