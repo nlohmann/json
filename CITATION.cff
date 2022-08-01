@@ -7,7 +7,7 @@ authors:
     email: mail@nlohmann.me
     website: https://nlohmann.me
 title: "JSON for Modern C++"
-version: 3.11.0
+version: 3.11.1
 date-released: 2022-01-03
 license: MIT
 repository-code: "https://github.com/nlohmann"

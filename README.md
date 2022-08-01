@@ -1271,7 +1271,7 @@ Example:
 ```cmake
 include(FetchContent)
 
-FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.0/json.tar.xz)
+FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.1/json.tar.xz)
 FetchContent_MakeAvailable(json)
 
 target_link_libraries(foo PRIVATE nlohmann_json::nlohmann_json)
