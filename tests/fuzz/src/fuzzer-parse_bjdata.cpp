@@ -10,26 +10,30 @@
 This file implements a parser test suitable for fuzz testing. Given a byte
 array data, it performs the following steps:
 
-- j1 = from_ubjson(data)
-- vec = to_ubjson(j1)
-- j2 = from_ubjson(vec)
+- j1 = from_bjdata(data)
+- vec = to_bjdata(j1)
+- j2 = from_bjdata(vec)
 - assert(j1 == j2)
-- vec2 = to_ubjson(j1, use_size = true, use_type = false)
-- j3 = from_ubjson(vec2)
+- vec2 = to_bjdata(j1, use_size = true, use_type = false)
+- j3 = from_bjdata(vec2)
 - assert(j1 == j3)
-- vec3 = to_ubjson(j1, use_size = true, use_type = true)
-- j4 = from_ubjson(vec3)
+- vec3 = to_bjdata(j1, use_size = true, use_type = true)
+- j4 = from_bjdata(vec3)
 - assert(j1 == j4)
 
 The provided function `LLVMFuzzerTestOneInput` can be used in different fuzzer
 drivers.
 */
 
-#include <iostream>
-#include <sstream>
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
+
+#ifdef __AFL_LEAK_CHECK
+    extern "C" void _exit(int);
+#else
+    #define __AFL_LEAK_CHECK() do {} while(false) // NOLINT(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
+#endif
 
 // see http://llvm.org/docs/LibFuzzer.html
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
@@ -38,33 +42,36 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     {
         // step 1: parse input
         std::vector<uint8_t> vec1(data, data + size);
-        json j1 = json::from_ubjson(vec1);
+        json j1 = json::from_bjdata(vec1);
+
+        // parse errors must raise an exception and not silently result in discarded values
+        assert(!j1.is_discarded());
 
         try
         {
             // step 2.1: round trip without adding size annotations to container types
-            std::vector<uint8_t> vec2 = json::to_ubjson(j1, false, false);
+            std::vector<uint8_t> vec2 = json::to_bjdata(j1, false, false);
 
             // step 2.2: round trip with adding size annotations but without adding type annonations to container types
-            std::vector<uint8_t> vec3 = json::to_ubjson(j1, true, false);
+            std::vector<uint8_t> vec3 = json::to_bjdata(j1, true, false);
 
             // step 2.3: round trip with adding size as well as type annotations to container types
-            std::vector<uint8_t> vec4 = json::to_ubjson(j1, true, true);
+            std::vector<uint8_t> vec4 = json::to_bjdata(j1, true, true);
 
             // parse serialization
-            json j2 = json::from_ubjson(vec2);
-            json j3 = json::from_ubjson(vec3);
-            json j4 = json::from_ubjson(vec4);
+            json j2 = json::from_bjdata(vec2);
+            json j3 = json::from_bjdata(vec3);
+            json j4 = json::from_bjdata(vec4);
 
             // serializations must match
-            assert(json::to_ubjson(j2, false, false) == vec2);
-            assert(json::to_ubjson(j3, true, false) == vec3);
-            assert(json::to_ubjson(j4, true, true) == vec4);
+            assert(json::to_bjdata(j2, false, false) == vec2);
+            assert(json::to_bjdata(j3, true, false) == vec3);
+            assert(json::to_bjdata(j4, true, true) == vec4);
         }
         catch (const json::parse_error&)
         {
-            // parsing a UBJSON serialization must not fail
-            assert(false);
+            // parsing a BJData serialization must not fail
+            __builtin_trap();
         }
     }
     catch (const json::parse_error&)
@@ -79,6 +86,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     {
         // out of range errors may happen if provided sizes are excessive
     }
+
+    // do a leak check if fuzzing with AFL++ and LSAN
+    __AFL_LEAK_CHECK();
 
     // return 0 - non-zero return values are reserved for future use
     return 0;

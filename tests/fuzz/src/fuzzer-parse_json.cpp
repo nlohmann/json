@@ -10,20 +10,25 @@
 This file implements a parser test suitable for fuzz testing. Given a byte
 array data, it performs the following steps:
 
-- j1 = from_bson(data)
-- vec = to_bson(j1)
-- j2 = from_bson(vec)
-- assert(j1 == j2)
+- j1 = parse(data)
+- s1 = serialize(j1)
+- j2 = parse(s1)
+- s2 = serialize(j2)
+- assert(s1 == s2)
 
 The provided function `LLVMFuzzerTestOneInput` can be used in different fuzzer
 drivers.
 */
 
-#include <iostream>
-#include <sstream>
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
+
+#ifdef __AFL_LEAK_CHECK
+    extern "C" void _exit(int);
+#else
+    #define __AFL_LEAK_CHECK() do {} while(false) // NOLINT(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
+#endif
 
 // see http://llvm.org/docs/LibFuzzer.html
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
@@ -31,43 +36,44 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     try
     {
         // step 1: parse input
-        std::vector<uint8_t> vec1(data, data + size);
-        json j1 = json::from_bson(vec1);
+        json j1 = json::parse(data, data + size);
 
-        if (j1.is_discarded())
-        {
-            return 0;
-        }
+        // parse errors must raise an exception and not silently result in discarded values
+        assert(!j1.is_discarded());
 
         try
         {
             // step 2: round trip
-            std::vector<uint8_t> vec2 = json::to_bson(j1);
+
+            // first serialization
+            std::string s1 = j1.dump();
 
             // parse serialization
-            json j2 = json::from_bson(vec2);
+            json j2 = json::parse(s1);
+
+            // second serialization
+            std::string s2 = j2.dump();
 
             // serializations must match
-            assert(json::to_bson(j2) == vec2);
+            assert(s1 == s2);
         }
         catch (const json::parse_error&)
         {
-            // parsing a BSON serialization must not fail
-            assert(false);
+            // parsing a JSON serialization must not fail
+            __builtin_trap();
         }
     }
     catch (const json::parse_error&)
     {
         // parse errors are ok, because input may be random bytes
     }
-    catch (const json::type_error&)
-    {
-        // type errors can occur during parsing, too
-    }
     catch (const json::out_of_range&)
     {
-        // out of range errors can occur during parsing, too
+        // out of range errors may happen if provided sizes are excessive
     }
+
+    // do a leak check if fuzzing with AFL++ and LSAN
+    __AFL_LEAK_CHECK();
 
     // return 0 - non-zero return values are reserved for future use
     return 0;
