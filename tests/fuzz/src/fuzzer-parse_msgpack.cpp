@@ -19,11 +19,15 @@ The provided function `LLVMFuzzerTestOneInput` can be used in different fuzzer
 drivers.
 */
 
-#include <iostream>
-#include <sstream>
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
+
+#ifdef __AFL_LEAK_CHECK
+    extern "C" void _exit(int);
+#else
+    #define __AFL_LEAK_CHECK() do {} while(false) // NOLINT(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
+#endif
 
 // see http://llvm.org/docs/LibFuzzer.html
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
@@ -33,6 +37,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
         // step 1: parse input
         std::vector<uint8_t> vec1(data, data + size);
         json j1 = json::from_msgpack(vec1);
+
+        // parse errors must raise an exception and not silently result in discarded values
+        assert(!j1.is_discarded());
 
         try
         {
@@ -48,7 +55,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
         catch (const json::parse_error&)
         {
             // parsing a MessagePack serialization must not fail
-            assert(false);
+            __builtin_trap();
         }
     }
     catch (const json::parse_error&)
@@ -63,6 +70,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     {
         // out of range errors may happen if provided sizes are excessive
     }
+
+    // do a leak check if fuzzing with AFL++ and LSAN
+    __AFL_LEAK_CHECK();
 
     // return 0 - non-zero return values are reserved for future use
     return 0;
