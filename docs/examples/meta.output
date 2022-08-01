@@ -2,11 +2,32 @@
     "compiler": {
         "c++": "201103",
         "family": "gcc",
-        "version": "11.3.0"
+        "libc++": {
+            "family": "GNU libstdc++",
+            "version": 20220730
+        },
+        "version": "12.1.1"
+    },
+    "config": {
+        "JSON_DIAGNOSTICS": false,
+        "JSON_DISABLE_ENUM_SERIALIZATION": false,
+        "JSON_HAS_CPP_11": true,
+        "JSON_HAS_CPP_14": false,
+        "JSON_HAS_CPP_17": false,
+        "JSON_HAS_CPP_20": false,
+        "JSON_HAS_CPP_23": false,
+        "JSON_HAS_EXPERIMENTAL_FILESYSTEM": false,
+        "JSON_HAS_FILESYSTEM": false,
+        "JSON_HAS_THREE_WAY_COMPARISON": false,
+        "JSON_NOEXCEPTION": false,
+        "JSON_NO_IO": false,
+        "JSON_USE_IMPLICIT_CONVERSIONS": true,
+        "JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON": false,
+        "NLOHMANN_JSON_ABI_STRING": "json_v3_11_0"
     },
     "copyright": "(C) 2013-2022 Niels Lohmann",
     "name": "JSON for Modern C++",
-    "platform": "apple",
+    "platform": "linux",
     "url": "https://github.com/nlohmann/json",
     "version": {
         "major": 3,
