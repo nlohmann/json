@@ -48,6 +48,8 @@ option(JSON_Install                        "Install CMake targets during install
 option(JSON_MultipleHeaders                "Use non-amalgamated version of the library." ON)
 option(JSON_SystemInclude                  "Include as system headers (skip for clang-tidy)." OFF)
 
+option(JSON_BuildFuzzers        "Build fuzz testing binaries. Requires JSON_BuildTests=ON." OFF)
+
 if (JSON_CI)
     include(ci)
 endif ()
@@ -145,7 +147,7 @@ CONFIGURE_FILE(
 
 ##
 ## TESTS
-## create and configure the unit test target
+## create and configure the unit test target; build fuzzers, if enabled
 ##
 if (JSON_BuildTests)
     include(CTest)
