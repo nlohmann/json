@@ -7,9 +7,14 @@ on:
       - master
       - release/*
   pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
-  xcode:
+  xcode_1:
     runs-on: macos-10.15
     strategy:
       matrix:
@@ -18,7 +23,24 @@ jobs:
       DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode }}.app/Contents/Developer
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+      - name: cmake
+        run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On -DJSON_FastTests=ON
+      - name: build
+        run: cmake --build build --parallel 10
+      - name: test
+        run: cd build ; ctest -j 10 --output-on-failure
+
+  xcode_2:
+    runs-on: macos-12
+    strategy:
+      matrix:
+        xcode: [13.3.1, 13.3, 13.2.1, 13.2, 13.1]
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode }}.app/Contents/Developer
+
+    steps:
+      - uses: actions/checkout@v3
       - name: cmake
         run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On -DJSON_FastTests=ON
       - name: build
@@ -27,7 +49,7 @@ jobs:
         run: cd build ; ctest -j 10 --output-on-failure
 
   xcode_standards:
-    runs-on: macos-10.15
+    runs-on: macos-latest
     strategy:
       matrix:
         standard: [11, 14, 17, 20]
@@ -35,9 +57,9 @@ jobs:
       DEVELOPER_DIR: /Applications/Xcode_12.4.app/Contents/Developer
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: cmake
-        run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On -DCMAKE_CXX_STANDARD=${{ matrix.standard }} -DCMAKE_CXX_STANDARD_REQUIRED=ON
+        run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On -DJSON_TestStandards=${{ matrix.standard }}
       - name: build
         run: cmake --build build --parallel 10
       - name: test

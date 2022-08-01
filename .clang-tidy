@@ -4,6 +4,7 @@ Checks: '*,
          -altera-unroll-loops,
          -android-cloexec-fopen,
          -bugprone-easily-swappable-parameters,
+         -cert-err58-cpp,
          -concurrency-mt-unsafe,
          -cppcoreguidelines-avoid-goto,
          -cppcoreguidelines-avoid-magic-numbers,
@@ -42,6 +43,7 @@ Checks: '*,
          -readability-identifier-length,
          -readability-magic-numbers,
          -readability-redundant-access-specifiers,
+         -readability-simplify-boolean-expr,
          -readability-uppercase-literal-suffix'
 
 CheckOptions:

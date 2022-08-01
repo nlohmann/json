@@ -1,3 +1,12 @@
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.0
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2018 The Abseil Authors
+// SPDX-License-Identifier: MIT
+
 #pragma once
 
 #include <cstddef> // size_t
@@ -6,8 +15,7 @@
 
 #include <nlohmann/detail/macro_scope.hpp>
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
 
@@ -147,8 +155,12 @@ struct static_const
     static constexpr T value{};
 };
 
-template<typename T>
-constexpr T static_const<T>::value; // NOLINT(readability-redundant-declaration)
+#ifndef JSON_HAS_CPP_17
+
+    template<typename T>
+    constexpr T static_const<T>::value; // NOLINT(readability-redundant-declaration)
+
+#endif
 
 }  // namespace detail
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END

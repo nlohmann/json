@@ -1,0 +1,36 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: json
+Upstream-Contact: Niels Lohmann <mail@nlohmann.me>
+Source: https://github.com/nlohmann/json
+
+Files: *
+Copyright: 2013-2022 Niels Lohmann <https://nlohmann.me>
+License: MIT
+
+Files: tests/thirdparty/doctest/*
+Copyright: 2016-2021 Viktor Kirilov
+License: MIT
+
+Files: tests/thirdparty/fifo_map/*
+Copyright: 2015-2017 Niels Lohmann
+License: MIT
+
+Files: tests/thirdparty/Fuzzer/*
+Copyright: 2003-2022, LLVM Project.
+License: Apache-2.0
+
+Files: tests/thirdparty/imapdl/*
+Copyright: 2017 Georg Sauthoff <mail@gms.tf>
+License: GPL-3.0-only
+
+Files: tools/amalgamate/*
+Copyright: 2012 Erik Edlund <erik.edlund@32767.se>
+License: BSD-3-Clause
+
+Files: tools/cpplint/*
+Copyright: 2009 Google Inc. All rights reserved.
+License: BSD-3-Clause
+
+Files: tools/gdb_pretty_printer
+Copyright: 2020 Hannes Domani <https://github.com/ssbssa>
+License: MIT

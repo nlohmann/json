@@ -4,9 +4,6 @@
 # configuration
 ##########################################################################
 
-# directory to recent compiler binaries
-COMPILER_DIR=/usr/local/opt/llvm/bin
-
 # find GNU sed to use `-i` parameter
 SED:=$(shell command -v gsed || which sed)
 
@@ -17,6 +14,9 @@ SED:=$(shell command -v gsed || which sed)
 
 # the list of sources in the include folder
 SRCS=$(shell find include -type f | sort)
+
+# the list of sources in the tests folder
+TESTS_SRCS=$(shell find tests -type f \( -name '*.hpp' -o -name '*.cpp' -o -name '*.cu' \) -not -path 'tests/thirdparty/*' -not -path 'tests/abi/include/nlohmann/*' | sort)
 
 # the single header (amalgamated from the source files)
 AMALGAMATED_FILE=single_include/nlohmann/json.hpp
@@ -48,7 +48,7 @@ all:
 
 # compile example files and check output
 doctest:
-	$(MAKE) check_output -C doc
+	$(MAKE) check_output -C docs
 
 
 ##########################################################################
@@ -58,9 +58,10 @@ doctest:
 run_benchmarks:
 	rm -fr cmake-build-benchmarks
 	mkdir cmake-build-benchmarks
-	cd cmake-build-benchmarks ; cmake ../benchmarks -GNinja -DCMAKE_BUILD_TYPE=Release -DJSON_BuildTests=On
+	cd cmake-build-benchmarks ; cmake ../tests/benchmarks -GNinja -DCMAKE_BUILD_TYPE=Release
 	cd cmake-build-benchmarks ; ninja
 	cd cmake-build-benchmarks ; ./json_benchmarks
+
 
 ##########################################################################
 # fuzzing
@@ -70,41 +71,41 @@ run_benchmarks:
 fuzz_testing:
 	rm -fr fuzz-testing
 	mkdir -p fuzz-testing fuzz-testing/testcases fuzz-testing/out
-	$(MAKE) parse_afl_fuzzer -C test CXX=afl-clang++
-	mv test/parse_afl_fuzzer fuzz-testing/fuzzer
-	find test/data/json_tests -size -5k -name *json | xargs -I{} cp "{}" fuzz-testing/testcases
+	$(MAKE) parse_afl_fuzzer -C tests CXX=afl-clang++
+	mv tests/parse_afl_fuzzer fuzz-testing/fuzzer
+	find tests/data/json_tests -size -5k -name *json | xargs -I{} cp "{}" fuzz-testing/testcases
 	@echo "Execute: afl-fuzz -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer"
 
 fuzz_testing_bson:
 	rm -fr fuzz-testing
 	mkdir -p fuzz-testing fuzz-testing/testcases fuzz-testing/out
-	$(MAKE) parse_bson_fuzzer -C test CXX=afl-clang++
-	mv test/parse_bson_fuzzer fuzz-testing/fuzzer
-	find test/data -size -5k -name *.bson | xargs -I{} cp "{}" fuzz-testing/testcases
+	$(MAKE) parse_bson_fuzzer -C tests CXX=afl-clang++
+	mv tests/parse_bson_fuzzer fuzz-testing/fuzzer
+	find tests/data -size -5k -name *.bson | xargs -I{} cp "{}" fuzz-testing/testcases
 	@echo "Execute: afl-fuzz -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer"
 
 fuzz_testing_cbor:
 	rm -fr fuzz-testing
 	mkdir -p fuzz-testing fuzz-testing/testcases fuzz-testing/out
-	$(MAKE) parse_cbor_fuzzer -C test CXX=afl-clang++
-	mv test/parse_cbor_fuzzer fuzz-testing/fuzzer
-	find test/data -size -5k -name *.cbor | xargs -I{} cp "{}" fuzz-testing/testcases
+	$(MAKE) parse_cbor_fuzzer -C tests CXX=afl-clang++
+	mv tests/parse_cbor_fuzzer fuzz-testing/fuzzer
+	find tests/data -size -5k -name *.cbor | xargs -I{} cp "{}" fuzz-testing/testcases
 	@echo "Execute: afl-fuzz -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer"
 
 fuzz_testing_msgpack:
 	rm -fr fuzz-testing
 	mkdir -p fuzz-testing fuzz-testing/testcases fuzz-testing/out
-	$(MAKE) parse_msgpack_fuzzer -C test CXX=afl-clang++
-	mv test/parse_msgpack_fuzzer fuzz-testing/fuzzer
-	find test/data -size -5k -name *.msgpack | xargs -I{} cp "{}" fuzz-testing/testcases
+	$(MAKE) parse_msgpack_fuzzer -C tests CXX=afl-clang++
+	mv tests/parse_msgpack_fuzzer fuzz-testing/fuzzer
+	find tests/data -size -5k -name *.msgpack | xargs -I{} cp "{}" fuzz-testing/testcases
 	@echo "Execute: afl-fuzz -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer"
 
 fuzz_testing_ubjson:
 	rm -fr fuzz-testing
 	mkdir -p fuzz-testing fuzz-testing/testcases fuzz-testing/out
-	$(MAKE) parse_ubjson_fuzzer -C test CXX=afl-clang++
-	mv test/parse_ubjson_fuzzer fuzz-testing/fuzzer
-	find test/data -size -5k -name *.ubjson | xargs -I{} cp "{}" fuzz-testing/testcases
+	$(MAKE) parse_ubjson_fuzzer -C tests CXX=afl-clang++
+	mv tests/parse_ubjson_fuzzer fuzz-testing/fuzzer
+	find tests/data -size -5k -name *.ubjson | xargs -I{} cp "{}" fuzz-testing/testcases
 	@echo "Execute: afl-fuzz -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer"
 
 fuzzing-start:
@@ -135,6 +136,7 @@ pvs_studio:
 	cd cmake-build-pvs-studio ; plog-converter -a'GA:1,2;64:1;CS' -t fullhtml PVS-Studio.log -o pvs
 	open cmake-build-pvs-studio/pvs/index.html
 
+
 ##########################################################################
 # Code format and source amalgamation
 ##########################################################################
@@ -160,18 +162,18 @@ pretty:
 	    --preserve-date \
 	    --suffix=none \
 	    --formatted \
-	   $(SRCS) $(AMALGAMATED_FILE) test/src/*.cpp test/src/*.hpp benchmarks/src/benchmarks.cpp doc/examples/*.cpp
+	   $(SRCS) $(TESTS_SRCS) $(AMALGAMATED_FILE) docs/examples/*.cpp
 
 # call the Clang-Format on all source files
 pretty_format:
-	for FILE in $(SRCS) $(AMALGAMATED_FILE) test/src/*.cpp test/src/*.hpp benchmarks/src/benchmarks.cpp doc/examples/*.cpp; do echo $$FILE; clang-format -i $$FILE; done
+	for FILE in $(SRCS) $(TESTS_SRCS) $(AMALGAMATED_FILE) docs/examples/*.cpp; do echo $$FILE; clang-format -i $$FILE; done
 
 # create single header file
 amalgamate: $(AMALGAMATED_FILE)
 
 # call the amalgamation tool and pretty print
 $(AMALGAMATED_FILE): $(SRCS)
-	third_party/amalgamate/amalgamate.py -c third_party/amalgamate/config.json -s . --verbose=yes
+	tools/amalgamate/amalgamate.py -c tools/amalgamate/config.json -s . --verbose=yes
 	$(MAKE) pretty
 
 # check if file single_include/nlohmann/json.hpp has been amalgamated from the nlohmann sources
@@ -203,20 +205,29 @@ ChangeLog.md:
 # Release files
 ##########################################################################
 
-# Create the files for a release and add signatures and hashes. We use `-X` to make the resulting ZIP file
-# reproducible, see <https://content.pivotal.io/blog/barriers-to-deterministic-reproducible-zip-files>.
+# Create a tar.gz archive that contains sufficient files to be used as CMake project (e.g., using FetchContent). The
+# archive is created according to the advices of <https://reproducible-builds.org/docs/archives/>.
+json.tar.xz:
+	mkdir json
+	rsync -R $(shell find LICENSE.MIT nlohmann_json.natvis CMakeLists.txt cmake/*.in include single_include -type f) json
+	gtar --sort=name --mtime="@$(shell git log -1 --pretty=%ct)" --owner=0 --group=0 --numeric-owner --pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime --create --file - json | xz --compress -9e --threads=2 - > json.tar.xz
+	rm -fr json
 
-release:
+# We use `-X` to make the resulting ZIP file reproducible, see
+# <https://content.pivotal.io/blog/barriers-to-deterministic-reproducible-zip-files>.
+include.zip:
+	zip -9 --recurse-paths -X include.zip $(SRCS) $(AMALGAMATED_FILE) meson.build LICENSE.MIT
+
+# Create the files for a release and add signatures and hashes.
+release: include.zip json.tar.xz
 	rm -fr release_files
 	mkdir release_files
-	zip -9 --recurse-paths -X include.zip $(SRCS) $(AMALGAMATED_FILE) meson.build LICENSE.MIT
 	gpg --armor --detach-sig include.zip
-	mv include.zip include.zip.asc release_files
 	gpg --armor --detach-sig $(AMALGAMATED_FILE)
+	gpg --armor --detach-sig json.tar.xz
 	cp $(AMALGAMATED_FILE) release_files
-	mv $(AMALGAMATED_FILE).asc release_files
-	cd release_files ; shasum -a 256 json.hpp > hashes.txt
-	cd release_files ; shasum -a 256 include.zip >> hashes.txt
+	mv $(AMALGAMATED_FILE).asc json.tar.xz json.tar.xz.asc include.zip include.zip.asc release_files
+	cd release_files ; shasum -a 256 json.hpp include.zip json.tar.xz > hashes.txt
 
 
 ##########################################################################
@@ -225,11 +236,11 @@ release:
 
 # clean up
 clean:
-	rm -fr json_unit json_benchmarks fuzz fuzz-testing *.dSYM test/*.dSYM oclint_report.html
+	rm -fr fuzz fuzz-testing *.dSYM tests/*.dSYM
 	rm -fr benchmarks/files/numbers/*.json
-	rm -fr cmake-3.1.0-Darwin64.tar.gz cmake-3.1.0-Darwin64
-	rm -fr cmake-build-benchmarks cmake-build-pedantic fuzz-testing cmake-build-clang-analyze cmake-build-pvs-studio cmake-build-infer cmake_build
-	$(MAKE) clean -Cdoc
+	rm -fr cmake-build-benchmarks fuzz-testing cmake-build-pvs-studio release_files
+	$(MAKE) clean -Cdocs
+
 
 ##########################################################################
 # Thirdparty code
@@ -243,3 +254,19 @@ update_hedley:
 	$(SED) -i '1s/^/#pragma once\n\n/' include/nlohmann/thirdparty/hedley/hedley.hpp
 	$(SED) -i '1s/^/#pragma once\n\n/' include/nlohmann/thirdparty/hedley/hedley_undef.hpp
 	$(MAKE) amalgamate
+
+##########################################################################
+# serve_header.py
+##########################################################################
+
+serve_header:
+	./tools/serve_header/serve_header.py --make $(MAKE)
+
+##########################################################################
+# REUSE
+##########################################################################
+
+reuse:
+	pipx run reuse addheader --recursive single_include include -tjson --license MIT --copyright "Niels Lohmann <https://nlohmann.me>" --year "2013-2022"
+	pipx run reuse addheader $(TESTS_SRCS) --style=c -tjson_support --license MIT --copyright "Niels Lohmann <https://nlohmann.me>" --year "2013-2022"
+	pipx run reuse lint

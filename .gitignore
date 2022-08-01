@@ -1,32 +1,41 @@
-json_unit
-json_benchmarks
-json_benchmarks_simple
-fuzz-testing
-
 *.dSYM
 *.o
 *.gcno
 *.gcda
-
-build
-build_coverage
-clang_analyze_build
-
-benchmarks/files/numbers/*.json
+.DS_Store
 
 .wsjcpp-logs/*
 .wsjcpp/*
 
-.idea
+/.idea
 /cmake-build-*
 
-test/test-*
-/.vs
+# Visual Studio / Visual Studio Code
+/.vs/
+/.vscode/
+/out/
 
-doc/html
-doc/mkdocs/venv/
-doc/mkdocs/docs/examples
-doc/mkdocs/site
-doc/mkdocs/docs/__pycache__/
-/doc/docset/JSON_for_Modern_C++.docset/
-/doc/docset/JSON_for_Modern_C++.tgz
+# clangd cache
+/.cache/
+
+# build directories (vscode-cmake-tools, user-defined, ...)
+/build*/
+
+# fuzzers
+/tests/corpus_*
+/tests/parse_*_fuzzer
+
+# documentation
+/docs/docset/docSet.dsidx
+/docs/docset/JSON_for_Modern_C++.docset/
+/docs/docset/JSON_for_Modern_C++.tgz
+/docs/mkdocs/docs/__pycache__/
+/docs/mkdocs/docs/examples/
+/docs/mkdocs/docs/images/json.gif
+/docs/mkdocs/site/
+/docs/mkdocs/venv/
+
+# serve_header
+/localhost.pem
+/localhost-key.pem
+/serve_header.yml
