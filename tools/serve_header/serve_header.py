@@ -402,8 +402,8 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         log.info('exiting')
     except Exception:
-        log.exception('an error occurred:')
         ec = 1
+        log.exception('an error occurred:')
     finally:
         if worktrees is not None:
             worktrees.stop()
