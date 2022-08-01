@@ -62,7 +62,7 @@ jobs:
     container: ghcr.io/nlohmann/json-ci:v2.4.0
     strategy:
       matrix:
-        target: [ci_test_diagnostics, ci_test_noexceptions, ci_test_noimplicitconversions, ci_test_legacycomparison]
+        target: [ci_test_diagnostics, ci_test_noexceptions, ci_test_noimplicitconversions, ci_test_legacycomparison, ci_test_noglobaludls]
     steps:
       - uses: actions/checkout@v3
       - name: cmake
