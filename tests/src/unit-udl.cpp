@@ -8,8 +8,6 @@
 
 #include "doctest_compatibility.h"
 
-#undef JSON_USE_GLOBAL_UDLS
-#define JSON_USE_GLOBAL_UDLS 0
 #include <nlohmann/json.hpp>
 
 TEST_CASE("user-defined string literals")
@@ -48,4 +46,12 @@ TEST_CASE("user-defined string literals")
         CHECK(R"({"foo": "bar", "baz": 42})"_json == j_expected);
         CHECK("/foo/bar"_json_pointer == ptr_expected);
     }
+
+#ifndef JSON_TEST_NO_GLOBAL_UDLS
+    SECTION("global namespace")
+    {
+        CHECK(R"({"foo": "bar", "baz": 42})"_json == j_expected);
+        CHECK("/foo/bar"_json_pointer == ptr_expected);
+    }
+#endif
 }
