@@ -83,12 +83,12 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: code-coverage-report
-          path: /__w/json/json/build/html
+          path: ${{ github.workspace }}/build/html
       - name: Coveralls
         uses: coverallsapp/github-action@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          path-to-lcov: /__w/json/json/build/json.info.filtered.noexcept
+          path-to-lcov: ${{ github.workspace }}/build/json.info.filtered.noexcept
 
   ci_test_compilers:
     runs-on: ubuntu-latest
