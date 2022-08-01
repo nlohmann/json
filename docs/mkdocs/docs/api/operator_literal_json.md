@@ -7,16 +7,17 @@ json operator "" _json(const char* s, std::size_t n);
 This operator implements a user-defined string literal for JSON objects. It can be used by adding `#!cpp _json` to a
 string literal and returns a [`json`](json.md) object if no parse error occurred.
 
-Use any of the following lines to bring the operator into scope:
+It is recommended to bring the operator into scope using any of the following lines:
 ```cpp
+using nlohmann::literals::operator "" _json;
 using namespace nlohmann::literals;
 using namespace nlohmann::json_literals;
 using namespace nlohmann::literals::json_literals;
 using namespace nlohmann;
 ```
+This is suggested to ease migration to the next major version release of the library.
+See ['JSON_USE_GLOBAL_UDLS`](macros/json_use_global_udls.md#notes) for details.
 
-Alternatively, define [`JSON_USE_GLOBAL_UDLS`](macros/json_use_global_udls.md) to make them available in the global
-namespace.
 ## Parameters
 
 `s` (in)
