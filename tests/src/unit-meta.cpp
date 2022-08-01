@@ -28,10 +28,19 @@ TEST_CASE("version information")
             {"patch", 1}
         }));
 
-        CHECK(j.find("platform") != j.end());
-        CHECK(j.at("compiler").find("family") != j.at("compiler").end());
-        CHECK(j.at("compiler").find("version") != j.at("compiler").end());
-        CHECK(j.at("compiler").find("c++") != j.at("compiler").end());
+        CHECK(j.contains("platform"));
+        CHECK(j.contains("compiler"));
+        CHECK(j.contains("config"));
+
+        const auto& j_cxx = j["compiler"];
+        CHECK(j_cxx.contains("family"));
+        CHECK(j_cxx.contains("version"));
+        CHECK(j_cxx.contains("c++"));
+        CHECK(j_cxx.contains("libc++"));
+
+        const auto& j_lib = j_cxx["libc++"];
+        CHECK(j_lib.contains("family"));
+        CHECK(j_lib.contains("version"));
     }
 }
 
