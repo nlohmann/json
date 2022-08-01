@@ -34,20 +34,18 @@ void to_json(json& /*unused*/, pod_bis /*unused*/) {}
 void from_json(const json& /*unused*/, pod /*unused*/) noexcept {}
 void from_json(const json& /*unused*/, pod_bis /*unused*/) {}
 
-json* j = nullptr;
-
 static_assert(noexcept(json{}), "");
-static_assert(noexcept(nlohmann::to_json(*j, 2)), "");
-static_assert(noexcept(nlohmann::to_json(*j, 2.5)), "");
-static_assert(noexcept(nlohmann::to_json(*j, true)), "");
-static_assert(noexcept(nlohmann::to_json(*j, test{})), "");
-static_assert(noexcept(nlohmann::to_json(*j, pod{})), "");
-static_assert(!noexcept(nlohmann::to_json(*j, pod_bis{})), "");
+static_assert(noexcept(nlohmann::to_json(std::declval<json&>(), 2)), "");
+static_assert(noexcept(nlohmann::to_json(std::declval<json&>(), 2.5)), "");
+static_assert(noexcept(nlohmann::to_json(std::declval<json&>(), true)), "");
+static_assert(noexcept(nlohmann::to_json(std::declval<json&>(), test{})), "");
+static_assert(noexcept(nlohmann::to_json(std::declval<json&>(), pod{})), "");
+static_assert(!noexcept(nlohmann::to_json(std::declval<json&>(), pod_bis{})), "");
 static_assert(noexcept(json(2)), "");
 static_assert(noexcept(json(test{})), "");
 static_assert(noexcept(json(pod{})), "");
-static_assert(noexcept(j->get<pod>()), "");
-static_assert(!noexcept(j->get<pod_bis>()), "");
+static_assert(noexcept(std::declval<json&>().get<pod>()), "");
+static_assert(!noexcept(std::declval<json&>().get<pod_bis>()), "");
 static_assert(noexcept(json(pod{})), "");
 } // namespace
 
@@ -70,7 +68,6 @@ TEST_CASE("runtime checks")
 
     SECTION("silence -Wunneeded-internal-declaration errors")
     {
-        j = nullptr;
         json j2;
         to_json(j2, pod());
         to_json(j2, pod_bis());
