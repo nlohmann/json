@@ -2793,7 +2793,7 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 #endif
 
 #ifndef JSON_USE_GLOBAL_UDLS
-    #define JSON_USE_GLOBAL_UDLS 0
+    #define JSON_USE_GLOBAL_UDLS 1
 #endif
 
 #if JSON_HAS_THREE_WAY_COMPARISON
@@ -24123,7 +24123,8 @@ inline void swap(nlohmann::NLOHMANN_BASIC_JSON_TPL& j1, nlohmann::NLOHMANN_BASIC
 }  // namespace std
 
 #if JSON_USE_GLOBAL_UDLS
-    using namespace nlohmann::literals::json_literals; // NOLINT(build/namespaces_literals)
+    using nlohmann::literals::json_literals::operator "" _json; // NOLINT(misc-unused-using-decls,google-global-names-in-headers)
+    using nlohmann::literals::json_literals::operator "" _json_pointer; //NOLINT(misc-unused-using-decls,google-global-names-in-headers)
 #endif
 
 // #include <nlohmann/detail/macro_unscope.hpp>

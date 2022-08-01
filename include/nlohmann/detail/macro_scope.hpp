@@ -464,5 +464,5 @@
 #endif
 
 #ifndef JSON_USE_GLOBAL_UDLS
-    #define JSON_USE_GLOBAL_UDLS 0
+    #define JSON_USE_GLOBAL_UDLS 1
 #endif
