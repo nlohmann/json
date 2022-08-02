@@ -20,6 +20,7 @@
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/289/badge)](https://bestpractices.coreinfrastructure.org/projects/289)
 [![GitHub Sponsors](https://img.shields.io/badge/GitHub-Sponsors-ff69b4)](https://github.com/sponsors/nlohmann)
 [![REUSE status](https://api.reuse.software/badge/github.com/nlohmann/json)](https://api.reuse.software/info/github.com/nlohmann/json)
+[![Discord](https://img.shields.io/discord/1003743314341793913)](https://discord.gg/6mrGXKvX7y)
 
 - [Design goals](#design-goals)
 - [Sponsors](#sponsors)
