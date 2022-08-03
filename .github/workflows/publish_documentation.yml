@@ -17,7 +17,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: install PlantUML
+        run: sudo apt-get install -y plantuml
+      - name: install virtual environment
+        run: make install_venv -C docs/mkdocs
       - name: build documentation
-        run: make install_venv build -C docs/mkdocs
+        run: make build -C docs/mkdocs
       - name: publish documentation
         run: make publish -C docs/mkdocs
