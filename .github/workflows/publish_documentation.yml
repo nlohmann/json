@@ -31,12 +31,3 @@ jobs:
 
       - name: Publish documentation
         run: make publish -C docs/mkdocs
-
-      - name: Create docset
-        run: make -C docs/docset
-
-      - name: Archive docset
-        uses: actions/upload-artifact@v3
-        with:
-          name: docset
-          path: docs/docset/JSON_for_Modern_C++.tgz
