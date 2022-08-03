@@ -30,7 +30,7 @@ mkdocs-simple-hooks==0.1.5
 nltk==3.7
 packaging==21.3
 plantuml==0.3.0
-plantuml-markdown==3.5.2
+plantuml-markdown==3.6.3
 Pygments==2.11.0
 pymdown-extensions==9.3
 pyparsing==3.0.8
