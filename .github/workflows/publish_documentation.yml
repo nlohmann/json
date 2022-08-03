@@ -1,0 +1,23 @@
+name: Publish documentation
+
+# publish the documentation on every merge to develop
+on:
+  push:
+    branches:
+      - develop
+      - documentation_update # TODO: remove before merging
+
+# we don't want to have concurrent jobs, and we don't want to cancel running jobs to avoid broken publications
+concurrency:
+  group: documentation
+  cancel-in-progress: false
+
+jobs:
+  publish_documentation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: build documentation
+        run: make install_venv build -C docs/mkdocs
+      - name: publish documentation
+        run: make publish -C docs/mkdocs
