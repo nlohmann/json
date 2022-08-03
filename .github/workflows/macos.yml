@@ -24,11 +24,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - name: cmake
+      - name: Run CMake
         run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On -DJSON_FastTests=ON
-      - name: build
+      - name: Build
         run: cmake --build build --parallel 10
-      - name: test
+      - name: Test
         run: cd build ; ctest -j 10 --output-on-failure
 
   xcode_2:
@@ -41,11 +41,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - name: cmake
+      - name: Run CMake
         run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On -DJSON_FastTests=ON
-      - name: build
+      - name: Build
         run: cmake --build build --parallel 10
-      - name: test
+      - name: Test
         run: cd build ; ctest -j 10 --output-on-failure
 
   xcode_standards:
@@ -58,9 +58,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - name: cmake
+      - name: Run CMake
         run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On -DJSON_TestStandards=${{ matrix.standard }}
-      - name: build
+      - name: Build
         run: cmake --build build --parallel 10
-      - name: test
+      - name: Test
         run: cd build ; ctest -j 10 --output-on-failure
