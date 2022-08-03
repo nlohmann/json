@@ -1,3 +1,4 @@
+SHELL=/usr/bin/env bash
 SED ?= $(shell which gsed 2>/dev/null || which sed)
 
 MKDOCS_PAGES=$(shell cd ../mkdocs/docs/ && find * -type f -name '*.md' | sort)
