@@ -5,7 +5,6 @@ on:
   push:
     branches:
       - develop
-      - documentation_update # TODO: remove before merging
 
 # we don't want to have concurrent jobs, and we don't want to cancel running jobs to avoid broken publications
 concurrency:
@@ -40,4 +39,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: docset
-          path: docs/docset/JSON_for_Modern_C++.docset
+          path: docs/docset/JSON_for_Modern_C++.tgz
