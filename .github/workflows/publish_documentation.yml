@@ -20,7 +20,7 @@ jobs:
       - name: Install PlantUML
         run: sudo apt-get install -y plantuml
       - name: Patch PlantUML
-        run: wget https://github.com/plantuml/plantuml/releases/download/v1.2022.6/plantuml-1.2022.6.jar ; mv plantuml-1.2022.6.jar /usr/share/plantuml/plantuml.jar ; plantuml -version
+        run: wget https://github.com/plantuml/plantuml/releases/download/v1.2022.6/plantuml-1.2022.6.jar ; sudo mv plantuml-1.2022.6.jar /usr/share/plantuml/plantuml.jar ; plantuml -version
       - name: Install virtual environment
         run: make install_venv -C docs/mkdocs
       - name: Build documentation
