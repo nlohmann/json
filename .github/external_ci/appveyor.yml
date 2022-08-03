@@ -1,5 +1,19 @@
 version: '{build}'
 
+# only build PRs and commits to develop branch
+# (see https://help.appveyor.com/discussions/questions/55079-two-builds-per-commit-to-pull-request)
+branches:
+  only:
+    - develop
+
+only_commits:
+  files:
+    - .github/external_ci/appveyor.yml
+    - cmake/
+    - include/
+    - tests/
+    - CMakeLists.txt
+
 environment:
   matrix:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
@@ -75,9 +89,3 @@ test_script:
   # occasional timeouts on AppVeyor.
   # More info: https://github.com/nlohmann/json/pull/1570
   - if "%configuration%"=="Debug" ctest --exclude-regex "test-unicode" -C "%configuration%" --parallel 2 --output-on-failure
-
-# only build PRs and commits to develop branch
-# (see https://help.appveyor.com/discussions/questions/55079-two-builds-per-commit-to-pull-request)
-branches:
-  only:
-    - develop
