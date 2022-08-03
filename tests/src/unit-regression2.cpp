@@ -923,6 +923,11 @@ TEST_CASE("regression tests 2")
         CHECK(p.x == 1);
         CHECK(p.y == 2);
     }
+
+    SECTION("issue #3655 - json().value<size_t> leads to ambiguity in json_pointer")
+    {
+        CHECK_THROWS(json().value<size_t>("key", 0));
+    }
 }
 
 DOCTEST_CLANG_SUPPRESS_WARNING_POP
