@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include <array> // array
 #include <cstddef> // size_t
 #include <type_traits> // conditional, enable_if, false_type, integral_constant, is_constructible, is_integral, is_same, remove_cv, remove_reference, true_type
 #include <utility> // index_sequence, make_index_sequence, index_sequence_for
@@ -152,15 +153,19 @@ template<> struct priority_tag<0> {};
 template<typename T>
 struct static_const
 {
-    static constexpr T value{};
+    static JSON_INLINE_VARIABLE constexpr T value{};
 };
 
 #ifndef JSON_HAS_CPP_17
-
     template<typename T>
-    constexpr T static_const<T>::value; // NOLINT(readability-redundant-declaration)
-
+    constexpr T static_const<T>::value;
 #endif
+
+template<typename T, typename... Args>
+inline constexpr std::array<T, sizeof...(Args)> make_array(Args&& ... args)
+{
+    return std::array<T, sizeof...(Args)> {{static_cast<T>(std::forward<Args>(args))...}};
+}
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
