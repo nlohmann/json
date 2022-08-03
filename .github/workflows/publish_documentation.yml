@@ -1,6 +1,6 @@
 name: Publish documentation
 
-# publish the documentation on every merge to develop
+# publish the documentation on every merge to develop branch
 on:
   push:
     branches:
@@ -17,13 +17,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Install PlantUML
-        run: sudo apt-get install -y plantuml
-      - name: Patch PlantUML
-        run: wget https://github.com/plantuml/plantuml/releases/download/v1.2022.6/plantuml-1.2022.6.jar ; sudo mv plantuml-1.2022.6.jar /usr/share/plantuml/plantuml.jar ; plantuml -version
+
+      # We need a recent PlantUML version to generate UML diagrams. The version from Ubuntu is outdated, so we
+      # need to replace the JAR file with a release from PlantUML's GitHub page.
+      - name: Install and update PlantUML
+        run: |
+          sudo apt-get install -y plantuml
+          wget https://github.com/plantuml/plantuml/releases/download/v1.2022.6/plantuml-1.2022.6.jar
+          sudo mv plantuml-1.2022.6.jar /usr/share/plantuml/plantuml.jar
+          plantuml -version
+
       - name: Install virtual environment
         run: make install_venv -C docs/mkdocs
-      - name: Build documentation
-        run: make build -C docs/mkdocs
+
       - name: Publish documentation
         run: make publish -C docs/mkdocs
+
+      - name: Create docset
+        run: make -C docs/docset
+
+      - name: Archive docset
+        uses: actions/upload-artifact@v3
+        with:
+          name: docset
+          path: docs/docset/JSON_for_Modern_C++.tgz
