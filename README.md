@@ -1684,6 +1684,15 @@ I deeply appreciate the help of the following people.
 - [Krzysiek Karbowiak](https://github.com/kkarbowiak) refactored the tests to use `CHECK_THROWS_WITH_AS`.
 - [Chaoqi Zhang](https://github.com/prncoprs) fixed a typo.
 - [ivanovmp](https://github.com/ivanovmp) fixed a whitespace error.
+- [KsaNL](https://github.com/KsaNL) fixed a build error when including `<windows.h>`.
+- [Andrea Pappacoda](https://github.com/Tachi107) moved `.pc` and `.cmake` files to `share` directory.
+- [Wolf Vollprecht](https://github.com/wolfv) added the `patch_inplace` function.
+- [Jake Zimmerman](https://github.com/jez) highlighted common usage patterns in the README file.
+- [NN](https://github.com/NN---) added some VS Code files to `.gitignore`.
+- [Romain Reignier](https://github.com/romainreignier) improved the performance the vector output adapter.
+- [Mike](https://github.com/Mike-Leo-Smith) fixed the `std::iterator_traits`.
+- [Richard Hozák](https://github.com/zxey) added macro `JSON_NO_ENUM` to disable default enum conversions.
+- [vakokako](https://github.com/vakokako) fixed tests when compiling with C++20.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
