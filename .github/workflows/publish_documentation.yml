@@ -40,4 +40,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: docset
-          path: docs/docset/JSON_for_Modern_C++.tgz
+          path: docs/docset/JSON_for_Modern_C++.docset
