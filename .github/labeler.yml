@@ -1,0 +1,8 @@
+documentation:
+  - 'README.md'
+  - 'docs/*'
+  - 'docs/**/*'
+
+ci:
+  - '.github/workflows/*'
+  - '.github/external_ci/*'
