@@ -19,8 +19,8 @@ When the macro is not defined, the library will define it to its default value.
 
 ??? example
 
-    The example shows an example how to use `NLOHMANN_JSON_NAMESPACE` instead of just `nlohmann`, as well as shows
-    the value of `NLOHMANN_JSON_NAMESPACE`.
+    The example shows how to use `NLOHMANN_JSON_NAMESPACE` instead of just `nlohmann`, as well as how to output the value
+    of `NLOHMANN_JSON_NAMESPACE`.
 
     ```cpp
     --8<-- "examples/nlohmann_json_namespace.cpp"
