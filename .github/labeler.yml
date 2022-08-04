@@ -9,6 +9,18 @@ labels:
   files:
     - "docs/.*"
 
+- label: "tests"
+  files:
+    - "tests/.*"
+
+- label: "CMake"
+  files:
+    - ".*CMakeLists.txt"
+
+- label: "CMake"
+  files:
+    - "cmake/.*"
+
 - label: "ci"
   files:
     - "github/workflows/.*"
