@@ -21,11 +21,11 @@ labels:
   files:
     - "cmake/.*"
 
-- label: "ci"
+- label: "CI"
   files:
     - "github/workflows/.*"
 
-- label: "ci"
+- label: "CI"
   files:
     - "github/external_ci/.*"
 
