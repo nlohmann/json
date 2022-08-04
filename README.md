@@ -1688,7 +1688,7 @@ I deeply appreciate the help of the following people.
 284. [Andrea Pappacoda](https://github.com/Tachi107) moved `.pc` and `.cmake` files to `share` directory.
 285. [Wolf Vollprecht](https://github.com/wolfv) added the `patch_inplace` function.
 286. [Jake Zimmerman](https://github.com/jez) highlighted common usage patterns in the README file.
-287. [NN](https://github.com/NN---) added some VS Code files to `.gitignore`.
+287. [NN](https://github.com/NN---) added the Visual Studio output directory to `.gitignore`.
 288. [Romain Reignier](https://github.com/romainreignier) improved the performance the vector output adapter.
 289. [Mike](https://github.com/Mike-Leo-Smith) fixed the `std::iterator_traits`.
 290. [Richard Hozák](https://github.com/zxey) added macro `JSON_NO_ENUM` to disable default enum conversions.
