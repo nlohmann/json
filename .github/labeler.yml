@@ -2,16 +2,20 @@ version: 1
 
 labels:
 - label: "documentation"
-  files: "README.md"
+  files:
+    - "README.md"
 
 - label: "documentation"
-  files: "docs/.*"
+  files:
+    - "docs/.*"
 
 - label: "ci"
-  files: "github/workflows/.*"
+  files:
+    - "github/workflows/.*"
 
 - label: "ci"
-  files: "github/external_ci/.*"
+  files:
+    - "github/external_ci/.*"
 
 - label: "S"
   size-below: 10
