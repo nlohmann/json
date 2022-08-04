@@ -10,7 +10,7 @@ namespace ns {
         std::string address;
         int age;
     };
-}
+} // namespace ns
 
 ns::person p = {"Ned Flanders", "744 Evergreen Terrace", 60};
 
