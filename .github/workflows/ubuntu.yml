@@ -138,6 +138,7 @@ jobs:
         run: |
           . /opt/intel/oneapi/setvars.sh
           cmake --build build --target ci_icpc
+
   ci_reuse_compliance:
     runs-on: ubuntu-latest
     steps:
