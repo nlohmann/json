@@ -23,7 +23,7 @@ It is safe to move the passed binary value.
 
 ??? example
 
-    .The example below shows how the SAX interface is used.
+    The example below shows how the SAX interface is used.
 
     ```cpp
     --8<-- "examples/sax_parse__binary.cpp"
