@@ -1,8 +1,22 @@
-documentation:
-  - 'README.md'
-  - 'docs/*'
-  - 'docs/**/*'
+version: 1
 
-ci:
-  - '.github/workflows/*'
-  - '.github/external_ci/*'
+labels:
+- label: "documentation"
+  files: "README.md"
+
+- label: "documentation"
+  files: "docs/.*"
+
+- label: "ci"
+  files: "github/workflows/.*"
+
+- label: "ci"
+  files: "github/external_ci/.*"
+
+- label: "S"
+  size-below: 10
+- label: "M"
+  size-above: 9
+  size-below: 100
+- label: "L"
+  size-above: 100
