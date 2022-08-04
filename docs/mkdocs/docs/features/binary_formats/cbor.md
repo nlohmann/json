@@ -11,7 +11,8 @@ small code size, fairly small message size, and extensibility without the need f
 
 ## Serialization
 
-The library uses the following mapping from JSON values types to CBOR types according to the CBOR specification (RFC 7049):
+The library uses the following mapping from JSON values types to CBOR types according to the CBOR specification
+([RFC 7049](https://www.rfc-editor.org/rfc/rfc7049.html)):
 
 | JSON value type | value/range                                | CBOR type                         | first byte |
 |-----------------|--------------------------------------------|-----------------------------------|------------|

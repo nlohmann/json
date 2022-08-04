@@ -12,16 +12,16 @@ class basic_json {
 
 1. 3-way compares two JSON values producing a result of type `std::partial_ordering` according to the following rules:
     - Two JSON values compare with a result of `std::partial_ordering::unordered` if either value is discarded.
-    - If both JSON values are of the same type, the result is produced by 3-way comparing their stored values using their
+    - If both JSON values are of the same type, the result is produced by 3-way comparing their stored values using
+      their respective `operator<=>`.
+    - Integer and floating-point numbers are converted to their common type and then 3-way compared using their
       respective `operator<=>`.
-    - Integer and floating-point numbers are converted to their common type and then 3-way compared using their respective
-      `operator<=>`.
-      For instance, comparing an integer and a floating-point value will 3-way compare the first value convertered to
+      For instance, comparing an integer and a floating-point value will 3-way compare the first value converted to
       floating-point with the second value.
     - Otherwise, yields a result by comparing the type (see [`value_t`](value_t.md)).
   
-2. 3-way compares a JSON value and a scalar or a scalar and a JSON value by converting the scalar to a JSON value and 3-way
-   comparing both JSON values (see 1).
+2. 3-way compares a JSON value and a scalar or a scalar and a JSON value by converting the scalar to a JSON value and
+   3-way comparing both JSON values (see 1).
 
 ## Template parameters
 

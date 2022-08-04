@@ -21,7 +21,8 @@ const_reference operator[](const json_pointer& ptr) const;
 ```
 
 1. Returns a reference to the array element at specified location `idx`.
-2. Returns a reference to the object element with specified key `key`. The non-const qualified overload takes the key by value.
+2. Returns a reference to the object element with specified key `key`. The non-const qualified overload takes the key by
+   value.
 3. See 2. This overload is only available if `KeyType` is comparable with `#!cpp typename object_t::key_type` and
    `#!cpp typename object_comparator_t::is_transparent` denotes a type.
 4. Returns a reference to the element with specified JSON pointer `ptr`.
@@ -234,6 +235,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
 ## Version history
 
 1. Added in version 1.0.0.
-2. Added in version 1.0.0. Added overloads for `T* key` in version 1.1.0. Removed overloads for `T* key` (replaced by 3) in version 3.11.0.
+2. Added in version 1.0.0. Added overloads for `T* key` in version 1.1.0. Removed overloads for `T* key` (replaced by 3)
+   in version 3.11.0.
 3. Added in version 3.11.0.
 4. Added in version 2.0.0.

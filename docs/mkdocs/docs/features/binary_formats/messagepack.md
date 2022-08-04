@@ -1,6 +1,8 @@
 # MessagePack
 
-MessagePack is an efficient binary serialization format. It lets you exchange data among multiple languages like JSON. But it's faster and smaller. Small integers are encoded into a single byte, and typical short strings require only one extra byte in addition to the strings themselves.
+MessagePack is an efficient binary serialization format. It lets you exchange data among multiple languages like JSON.
+But it's faster and smaller. Small integers are encoded into a single byte, and typical short strings require only one
+extra byte in addition to the strings themselves.
 
 !!! abstract "References"
 
@@ -9,7 +11,8 @@ MessagePack is an efficient binary serialization format. It lets you exchange da
 
 ## Serialization
 
-The library uses the following mapping from JSON values types to MessagePack types according to the MessagePack specification:
+The library uses the following mapping from JSON values types to MessagePack types according to the MessagePack
+specification:
 
 | JSON value type | value/range                              | MessagePack type | first byte |
 |-----------------|------------------------------------------|------------------|------------|
@@ -64,7 +67,8 @@ The library uses the following mapping from JSON values types to MessagePack typ
 
 !!! info "NaN/infinity handling"
 
-	If NaN or Infinity are stored inside a JSON number, they are serialized properly. function which serializes NaN or Infinity to `null`.
+	If NaN or Infinity are stored inside a JSON number, they are serialized properly. function which serializes NaN or
+    Infinity to `null`.
 
 ??? example
 
