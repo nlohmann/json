@@ -67,8 +67,8 @@ specification:
 
 !!! info "NaN/infinity handling"
 
-	If NaN or Infinity are stored inside a JSON number, they are serialized properly. function which serializes NaN or
-    Infinity to `null`.
+    If NaN or Infinity are stored inside a JSON number, they are serialized properly in contrast to the
+    [dump](../../api/basic_json/dump.md) function which serializes NaN or Infinity to `null`.
 
 ??? example
 
