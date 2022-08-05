@@ -101,7 +101,7 @@ The library uses the following mapping from JSON values types to BJData types ac
     optimized array in UBJSON `[ [$U#i2 1 2 [$U#i2 3 4 [$U#i2 5 6 ]`, can be further compressed in BJData to
     `[$U#[$i#i2 2 3 1 2 3 4 5 6` or `[$U#[i2 i3] 1 2 3 4 5 6`.
 
-    To maintina type and size information, ND-arrays are converted to JSON objects following the **annotated array
+    To maintain type and size information, ND-arrays are converted to JSON objects following the **annotated array
     format** (defined in the [JData specification (Draft 3)][JDataAAFmt]), when parsed using
     [`from_bjdata`](../../api/basic_json/from_bjdata.md). For example, the above 2-D `uint8` array can be parsed and
     accessed as

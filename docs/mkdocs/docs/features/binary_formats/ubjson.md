@@ -56,12 +56,12 @@ The library uses the following mapping from JSON values types to UBJSON types ac
 
 !!! info "NaN/infinity handling"
 
-	If NaN or Infinity are stored inside a JSON number, they are serialized properly. This behavior differs from the
+    If NaN or Infinity are stored inside a JSON number, they are serialized properly. This behavior differs from the
     `dump()` function which serializes NaN or Infinity to `null`.
 
 !!! info "Optimized formats"
 
-	The optimized formats for containers are supported: Parameter `use_size` adds size information to the beginning of a
+    The optimized formats for containers are supported: Parameter `use_size` adds size information to the beginning of a
     container and removes the closing marker. Parameter `use_type` further checks whether all elements of a container
     have the same type and adds the type marker to the beginning of the container. The `use_type` parameter must only be
     used together with `use_size = true`.
@@ -71,7 +71,7 @@ The library uses the following mapping from JSON values types to UBJSON types ac
 
 !!! info "Binary values"
 
-	If the JSON data contains the binary type, the value stored is a list of integers, as suggested by the UBJSON
+    If the JSON data contains the binary type, the value stored is a list of integers, as suggested by the UBJSON
     documentation.  In particular, this means that serialization and the deserialization of a JSON containing binary
     values into UBJSON and back will result in a different JSON object.
 

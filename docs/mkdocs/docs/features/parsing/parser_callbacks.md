@@ -60,8 +60,8 @@ table describes the values of the parameters `depth`, `event`, and `parsed`.
 
 ## Return value
 
-Discarding a value (i.e., returning `#!c false`) has different effects depending on the context in which function was
-called:
+Discarding a value (i.e., returning `#!c false`) has different effects depending on the context in which the function
+was called:
 
 - Discarded values in structured types are skipped. That is, the parser will behave as if the discarded value was never
   read.

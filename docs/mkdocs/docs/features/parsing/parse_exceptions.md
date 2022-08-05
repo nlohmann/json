@@ -23,8 +23,8 @@ In case exceptions are undesired or not supported by the environment, there are 
 
 ## Switch off exceptions
 
-The `parse()` function accepts as last parameter a `#!cpp bool` variable `allow_exceptions` which controls whether an
-exception is thrown when a parse error occurs (`#!cpp true`, default) or whether a discarded value should be returned
+The `parse()` function accepts a `#!cpp bool` parameter `allow_exceptions` which controls whether an exception is
+thrown when a parse error occurs (`#!cpp true`, default) or whether a discarded value should be returned
 (`#!cpp false`).
 
 ```cpp

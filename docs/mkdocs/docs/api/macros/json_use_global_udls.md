@@ -29,7 +29,7 @@ When the macro is not defined, the library will define it to its default value.
 !!! hint "CMake option"
 
     The placement of user-defined string literals can also be controlled with the CMake option
-    [`JSON_GlobalUDLs`](../../integration/cmake.md#json_globaludls) (`OFF` by default) which defines
+    [`JSON_GlobalUDLs`](../../integration/cmake.md#json_globaludls) (`ON` by default) which defines
     `JSON_USE_GLOBAL_UDLS` accordingly.
 
 ## Examples
