@@ -2515,3 +2515,5 @@ TEST_CASE("UBJSON roundtrips" * doctest::skip())
         }
     }
 }
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

@@ -26,6 +26,8 @@ jobs:
       - uses: actions/checkout@v3
       - name: Run CMake
         run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On -DJSON_FastTests=ON
+      - name: Print JSON meta
+        run: cmake --build build --target print_meta --parallel 10
       - name: Build
         run: cmake --build build --parallel 10
       - name: Test
@@ -43,6 +45,8 @@ jobs:
       - uses: actions/checkout@v3
       - name: Run CMake
         run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On -DJSON_FastTests=ON
+      - name: Print JSON meta
+        run: cmake --build build --target print_meta --parallel 10
       - name: Build
         run: cmake --build build --parallel 10
       - name: Test
@@ -60,6 +64,8 @@ jobs:
       - uses: actions/checkout@v3
       - name: Run CMake
         run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On -DJSON_TestStandards=${{ matrix.standard }}
+      - name: Print JSON meta
+        run: cmake --build build --target print_meta --parallel 10
       - name: Build
         run: cmake --build build --parallel 10
       - name: Test

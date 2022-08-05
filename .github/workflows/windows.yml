@@ -49,6 +49,8 @@ jobs:
       #    platform: ${{ matrix.architecture }}
       - name: Run CMake
         run: cmake -S . -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On
+      - name: Print JSON meta
+        run: cmake --build build --target print_meta --parallel 10
       - name: Build
         run: cmake --build build --parallel 10
       - name: Test
@@ -69,6 +71,8 @@ jobs:
     - name: Run CMake
       run: cmake -S . -B build -G "Visual Studio 16 2019" -A ${{ matrix.architecture }} -DJSON_BuildTests=On -DJSON_FastTests=ON -DCMAKE_CXX_FLAGS="/W4 /WX"
       if: matrix.build_type == 'Debug'
+    - name: Print JSON meta
+      run: cmake --build build --config ${{ matrix.build_type }} --target print_meta --parallel 10
     - name: Build
       run: cmake --build build --config ${{ matrix.build_type }} --parallel 10
     - name: Test
@@ -81,6 +85,8 @@ jobs:
     - uses: actions/checkout@v3
     - name: Run CMake
       run: cmake -S . -B build -G "Visual Studio 16 2019" -DJSON_BuildTests=On -DCMAKE_CXX_FLAGS="/permissive- /std:c++latest /utf-8 /W4 /WX"
+    - name: Print JSON meta
+      run: cmake --build build --config Release --target print_meta --parallel 10
     - name: Build
       run: cmake --build build --config Release --parallel 10
     - name: Test
@@ -101,6 +107,8 @@ jobs:
     - name: Run CMake
       run: cmake -S . -B build -G "Visual Studio 17 2022" -A ${{ matrix.architecture }} -DJSON_BuildTests=On -DJSON_FastTests=ON -DCMAKE_CXX_FLAGS="/W4 /WX"
       if: matrix.build_type == 'Debug'
+    - name: Print JSON meta
+      run: cmake --build build --config ${{ matrix.build_type }} --target print_meta --parallel 10
     - name: Build
       run: cmake --build build --config ${{ matrix.build_type }} --parallel 10
     - name: Test
@@ -113,6 +121,8 @@ jobs:
     - uses: actions/checkout@v3
     - name: Run CMake
       run: cmake -S . -B build -G "Visual Studio 17 2022" -DJSON_BuildTests=On -DCMAKE_CXX_FLAGS="/permissive- /std:c++latest /utf-8 /W4 /WX"
+    - name: Print JSON meta
+      run: cmake --build build --config Release --target print_meta --parallel 10
     - name: Build
       run: cmake --build build --config Release --parallel 10
     - name: Test
@@ -130,6 +140,8 @@ jobs:
         run: curl -fsSL -o LLVM${{ matrix.version }}.exe https://github.com/llvm/llvm-project/releases/download/llvmorg-${{ matrix.version }}.0.0/LLVM-${{ matrix.version }}.0.0-win64.exe ; 7z x LLVM${{ matrix.version }}.exe -y -o"C:/Program Files/LLVM"
       - name: Run CMake
         run: cmake -S . -B build -DCMAKE_CXX_COMPILER="C:/Program Files/LLVM/bin/clang++.exe" -G"MinGW Makefiles" -DCMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On
+      - name: Print JSON meta
+        run: cmake --build build --target print_meta --parallel 10
       - name: Build
         run: cmake --build build --parallel 10
       - name: Test
@@ -145,6 +157,8 @@ jobs:
       - uses: actions/checkout@v3
       - name: Run CMake
         run: cmake -S . -B build -G "Visual Studio 16 2019" -A ${{ matrix.architecture }} -T ClangCL -DJSON_BuildTests=On
+      - name: Print JSON meta
+        run: cmake --build build --target print_meta --parallel 10
       - name: Build
         run: cmake --build build --config Debug --parallel 10
       - name: Test

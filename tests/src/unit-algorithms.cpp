@@ -295,3 +295,5 @@ TEST_CASE("algorithms")
         CHECK(j_array == json({false, true, 3, 13, 29, {{"one", 1}, {"two", 2}}, {1, 2, 3}, "baz", "foo"}));
     }
 }
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

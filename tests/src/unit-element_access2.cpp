@@ -1488,3 +1488,5 @@ TEST_CASE_TEMPLATE("element access 2 (throwing tests)", Json, nlohmann::json, nl
     }
 }
 #endif
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

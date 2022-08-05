@@ -618,3 +618,5 @@ TEST_CASE("Markus Kuhn's UTF-8 decoder capability and stress test")
         }
     }
 }
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

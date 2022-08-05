@@ -457,3 +457,5 @@ TEST_CASE("object inspection")
         }
     }
 }
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

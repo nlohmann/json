@@ -391,3 +391,5 @@ TEST_CASE("const_iterator class")
         }
     }
 }
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

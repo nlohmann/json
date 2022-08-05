@@ -1431,3 +1431,5 @@ TEST_CASE("items()")
 
 DOCTEST_GCC_SUPPRESS_WARNING_POP
 DOCTEST_CLANG_SUPPRESS_WARNING_POP
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

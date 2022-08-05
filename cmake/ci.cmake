@@ -413,23 +413,27 @@ set(GCC_CXXFLAGS
     -Wzero-length-bounds
 )
 
+set(binary_dir ${PROJECT_BINARY_DIR}/build_gcc)
 add_custom_target(ci_test_gcc
     COMMAND CXX=${GCC_TOOL} CXXFLAGS="${GCC_CXXFLAGS}" ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=Debug -GNinja
         -DJSON_BuildTests=ON
-        -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_gcc
-    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_gcc
-    COMMAND cd ${PROJECT_BINARY_DIR}/build_gcc && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+        -S${PROJECT_SOURCE_DIR} -B${binary_dir}
+    COMMAND ${CMAKE_COMMAND} --build ${binary_dir} -t print_meta
+    COMMAND ${CMAKE_COMMAND} --build ${binary_dir}
+    COMMAND cd ${binary_dir} && ${CMAKE_CTEST_COMMAND} -j${N} --output-on-failure
     COMMENT "Compile and test with GCC using maximal warning flags"
 )
 
+set(binary_dir ${PROJECT_BINARY_DIR}/build_clang)
 add_custom_target(ci_test_clang
     COMMAND CXX=${CLANG_TOOL} CXXFLAGS="${CLANG_CXXFLAGS}" ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=Debug -GNinja
         -DJSON_BuildTests=ON
-        -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_clang
-    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_clang
-    COMMAND cd ${PROJECT_BINARY_DIR}/build_clang && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+        -S${PROJECT_SOURCE_DIR} -B${binary_dir}
+    COMMAND ${CMAKE_COMMAND} --build ${binary_dir} -t print_meta
+    COMMAND ${CMAKE_COMMAND} --build ${binary_dir}
+    COMMAND cd ${binary_dir} && ${CMAKE_CTEST_COMMAND} -j${N} --output-on-failure
     COMMENT "Compile and test with Clang using maximal warning flags"
 )
 
@@ -438,25 +442,29 @@ add_custom_target(ci_test_clang
 ###############################################################################
 
 foreach(CXX_STANDARD 11 14 17 20)
+    set(binary_dir ${PROJECT_BINARY_DIR}/build_gcc_cxx${CXX_STANDARD})
     add_custom_target(ci_test_gcc_cxx${CXX_STANDARD}
         COMMAND CXX=${GCC_TOOL} CXXFLAGS="${GCC_CXXFLAGS}" ${CMAKE_COMMAND}
             -DCMAKE_BUILD_TYPE=Debug -GNinja
             -DJSON_BuildTests=ON -DJSON_FastTests=ON
             -DJSON_TestStandards=${CXX_STANDARD}
-            -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_gcc_cxx${CXX_STANDARD}
-        COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_gcc_cxx${CXX_STANDARD}
-        COMMAND cd ${PROJECT_BINARY_DIR}/build_gcc_cxx${CXX_STANDARD} && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+            -S${PROJECT_SOURCE_DIR} -B${binary_dir}
+        COMMAND ${CMAKE_COMMAND} --build ${binary_dir} -t print_meta
+        COMMAND ${CMAKE_COMMAND} --build ${binary_dir}
+        COMMAND cd ${binary_dir} && ${CMAKE_CTEST_COMMAND} -j${N} --output-on-failure
         COMMENT "Compile and test with GCC for C++${CXX_STANDARD}"
     )
 
+    set(binary_dir ${PROJECT_BINARY_DIR}/build_clang_cxx${CXX_STANDARD})
     add_custom_target(ci_test_clang_cxx${CXX_STANDARD}
         COMMAND CXX=${CLANG_TOOL} CXXFLAGS="${CLANG_CXXFLAGS}" ${CMAKE_COMMAND}
             -DCMAKE_BUILD_TYPE=Debug -GNinja
             -DJSON_BuildTests=ON -DJSON_FastTests=ON
             -DJSON_TestStandards=${CXX_STANDARD}
-            -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_clang_cxx${CXX_STANDARD}
-        COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_clang_cxx${CXX_STANDARD}
-        COMMAND cd ${PROJECT_BINARY_DIR}/build_clang_cxx${CXX_STANDARD} && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+            -S${PROJECT_SOURCE_DIR} -B${binary_dir}
+        COMMAND ${CMAKE_COMMAND} --build ${binary_dir} -t print_meta
+        COMMAND ${CMAKE_COMMAND} --build ${binary_dir}
+        COMMAND cd ${binary_dir} && ${CMAKE_CTEST_COMMAND} -j${N} --output-on-failure
         COMMENT "Compile and test with Clang for C++${CXX_STANDARD}"
     )
 endforeach()
@@ -465,13 +473,15 @@ endforeach()
 # Disable exceptions.
 ###############################################################################
 
+set(binary_dir ${PROJECT_BINARY_DIR}/build_noexceptions)
 add_custom_target(ci_test_noexceptions
     COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND}
-    -DCMAKE_BUILD_TYPE=Debug -GNinja
-    -DJSON_BuildTests=ON -DCMAKE_CXX_FLAGS=-DJSON_NOEXCEPTION -DDOCTEST_TEST_FILTER=--no-throw
-    -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_noexceptions
-    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_noexceptions
-    COMMAND cd ${PROJECT_BINARY_DIR}/build_noexceptions && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+        -DCMAKE_BUILD_TYPE=Debug -GNinja
+        -DJSON_BuildTests=ON -DCMAKE_CXX_FLAGS=-DJSON_NOEXCEPTION -DDOCTEST_TEST_FILTER=--no-throw
+        -S${PROJECT_SOURCE_DIR} -B${binary_dir}
+    COMMAND ${CMAKE_COMMAND} --build ${binary_dir} -t print_meta
+    COMMAND ${CMAKE_COMMAND} --build ${binary_dir}
+    COMMAND cd ${binary_dir} && ${CMAKE_CTEST_COMMAND} -j${N} --output-on-failure
     COMMENT "Compile and test with exceptions switched off"
 )
 
@@ -479,13 +489,15 @@ add_custom_target(ci_test_noexceptions
 # Disable implicit conversions.
 ###############################################################################
 
+set(binary_dir ${PROJECT_BINARY_DIR}/build_noimplicitconversions)
 add_custom_target(ci_test_noimplicitconversions
     COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND}
-    -DCMAKE_BUILD_TYPE=Debug -GNinja
-    -DJSON_BuildTests=ON -DJSON_ImplicitConversions=OFF
-    -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_noimplicitconversions
-    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_noimplicitconversions
-    COMMAND cd ${PROJECT_BINARY_DIR}/build_noimplicitconversions && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+        -DCMAKE_BUILD_TYPE=Debug -GNinja
+        -DJSON_BuildTests=ON -DJSON_ImplicitConversions=OFF
+        -S${PROJECT_SOURCE_DIR} -B${binary_dir}
+    COMMAND ${CMAKE_COMMAND} --build ${binary_dir} -t print_meta
+    COMMAND ${CMAKE_COMMAND} --build ${binary_dir}
+    COMMAND cd ${binary_dir} && ${CMAKE_CTEST_COMMAND} -j${N} --output-on-failure
     COMMENT "Compile and test with implicit conversions switched off"
 )
 
@@ -493,13 +505,15 @@ add_custom_target(ci_test_noimplicitconversions
 # Enable improved diagnostics.
 ###############################################################################
 
+set(binary_dir ${PROJECT_BINARY_DIR}/build_diagnostics)
 add_custom_target(ci_test_diagnostics
     COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND}
-    -DCMAKE_BUILD_TYPE=Debug -GNinja
-    -DJSON_BuildTests=ON -DJSON_Diagnostics=ON
-    -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_diagnostics
-    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_diagnostics
-    COMMAND cd ${PROJECT_BINARY_DIR}/build_diagnostics && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+        -DCMAKE_BUILD_TYPE=Debug -GNinja
+        -DJSON_BuildTests=ON -DJSON_Diagnostics=ON
+        -S${PROJECT_SOURCE_DIR} -B${binary_dir}
+    COMMAND ${CMAKE_COMMAND} --build ${binary_dir} -t print_meta
+    COMMAND ${CMAKE_COMMAND} --build ${binary_dir}
+    COMMAND cd ${binary_dir} && ${CMAKE_CTEST_COMMAND} -j${N} --output-on-failure
     COMMENT "Compile and test with improved diagnostics enabled"
 )
 
@@ -507,13 +521,15 @@ add_custom_target(ci_test_diagnostics
 # Enable legacy discarded value comparison.
 ###############################################################################
 
+set(binary_dir ${PROJECT_BINARY_DIR}/build_legacycomparison)
 add_custom_target(ci_test_legacycomparison
     COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND}
-    -DCMAKE_BUILD_TYPE=Debug -GNinja
-    -DJSON_BuildTests=ON -DJSON_LegacyDiscardedValueComparison=ON
-    -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_legacycomparison
-    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_legacycomparison
-    COMMAND cd ${PROJECT_BINARY_DIR}/build_legacycomparison && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+        -DCMAKE_BUILD_TYPE=Debug -GNinja
+        -DJSON_BuildTests=ON -DJSON_LegacyDiscardedValueComparison=ON
+        -S${PROJECT_SOURCE_DIR} -B${binary_dir}
+    COMMAND ${CMAKE_COMMAND} --build ${binary_dir} -t print_meta
+    COMMAND ${CMAKE_COMMAND} --build ${binary_dir}
+    COMMAND cd ${binary_dir} && ${CMAKE_CTEST_COMMAND} -j${N} --output-on-failure
     COMMENT "Compile and test with legacy discarded value comparison enabled"
 )
 
@@ -536,24 +552,26 @@ add_custom_target(ci_test_noglobaludls
 # Coverage.
 ###############################################################################
 
+set(binary_dir ${PROJECT_BINARY_DIR}/build_coverage)
+set(binary_dir32 ${PROJECT_BINARY_DIR}/build_coverage32)
 add_custom_target(ci_test_coverage
     COMMAND CXX=g++ ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=Debug -GNinja -DCMAKE_CXX_FLAGS="--coverage;-fprofile-arcs;-ftest-coverage"
         -DJSON_BuildTests=ON
-        -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_coverage
-    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_coverage
-    COMMAND cd ${PROJECT_BINARY_DIR}/build_coverage && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+        -S${PROJECT_SOURCE_DIR} -B${binary_dir}
+    COMMAND ${CMAKE_COMMAND} --build ${binary_dir}
+    COMMAND cd ${binary_dir} && ${CMAKE_CTEST_COMMAND} -j${N} --output-on-failure
 
     COMMAND CXX=g++ ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=Debug -GNinja -DCMAKE_CXX_FLAGS="-m32;--coverage;-fprofile-arcs;-ftest-coverage"
         -DJSON_BuildTests=ON -DJSON_32bitTest=ONLY
-        -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_coverage32
-    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_coverage32
-    COMMAND cd ${PROJECT_BINARY_DIR}/build_coverage32 && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+        -S${PROJECT_SOURCE_DIR} -B${binary_dir32}
+    COMMAND ${CMAKE_COMMAND} --build ${binary_dir32}
+    COMMAND cd ${binary_dir32} && ${CMAKE_CTEST_COMMAND} -j${N} --output-on-failure
 
     COMMAND ${LCOV_TOOL} --directory . --capture --output-file json.info --rc lcov_branch_coverage=1
     COMMAND ${LCOV_TOOL} -e json.info ${SRC_FILES} --output-file json.info.filtered --rc lcov_branch_coverage=1
-    COMMAND ${CMAKE_SOURCE_DIR}/tests/thirdparty/imapdl/filterbr.py json.info.filtered > json.info.filtered.noexcept
+    COMMAND ${PROJECT_SOURCE_DIR}/tests/thirdparty/imapdl/filterbr.py json.info.filtered > json.info.filtered.noexcept
     COMMAND genhtml --title "JSON for Modern C++" --legend --demangle-cpp --output-directory html --show-details --branch-coverage json.info.filtered.noexcept
 
     COMMENT "Compile and test with coverage"
@@ -565,13 +583,14 @@ add_custom_target(ci_test_coverage
 
 set(CLANG_CXX_FLAGS_SANITIZER "-g -O1 -fsanitize=address -fsanitize=undefined -fsanitize=integer -fsanitize=nullability -fno-omit-frame-pointer -fno-sanitize-recover=all -fno-sanitize=unsigned-integer-overflow -fno-sanitize=unsigned-shift-base")
 
+set(binary_dir ${PROJECT_BINARY_DIR}/build_clang_sanitizer)
 add_custom_target(ci_test_clang_sanitizer
     COMMAND CXX=${CLANG_TOOL} CXXFLAGS=${CLANG_CXX_FLAGS_SANITIZER} ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=Debug -GNinja
         -DJSON_BuildTests=ON
-        -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_clang_sanitizer
-    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_clang_sanitizer
-    COMMAND cd ${PROJECT_BINARY_DIR}/build_clang_sanitizer && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+        -S${PROJECT_SOURCE_DIR} -B${binary_dir}
+    COMMAND ${CMAKE_COMMAND} --build ${binary_dir}
+    COMMAND cd ${binary_dir} && ${CMAKE_CTEST_COMMAND} -j${N} --output-on-failure
     COMMENT "Compile and test with sanitizers"
 )
 
@@ -607,13 +626,14 @@ add_custom_target(ci_test_amalgamation
 # Build and test using the amalgamated header
 ###############################################################################
 
+set(binary_dir ${PROJECT_BINARY_DIR}/build_single_header)
 add_custom_target(ci_test_single_header
     COMMAND CXX=${GCC_TOOL} CXXFLAGS="${GCC_CXXFLAGS}" ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=Debug -GNinja
         -DJSON_BuildTests=ON -DJSON_MultipleHeaders=OFF -DJSON_FastTests=ON
-        -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_single_header
-    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_single_header
-    COMMAND cd ${PROJECT_BINARY_DIR}/build_single_header && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+        -S${PROJECT_SOURCE_DIR} -B${binary_dir}
+    COMMAND ${CMAKE_COMMAND} --build ${binary_dir}
+    COMMAND cd ${binary_dir} && ${CMAKE_CTEST_COMMAND} -j${N} --output-on-failure
     COMMENT "Compile and test single-header version"
 )
 
@@ -621,13 +641,14 @@ add_custom_target(ci_test_single_header
 # Valgrind.
 ###############################################################################
 
+set(binary_dir ${PROJECT_BINARY_DIR}/build_valgrind)
 add_custom_target(ci_test_valgrind
     COMMAND CXX=${GCC_TOOL} ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=Debug -GNinja
         -DJSON_BuildTests=ON -DJSON_Valgrind=ON
-        -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_valgrind
-    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_valgrind
-    COMMAND cd ${PROJECT_BINARY_DIR}/build_valgrind && ${CMAKE_CTEST_COMMAND} -L valgrind --parallel ${N} --output-on-failure
+        -S${PROJECT_SOURCE_DIR} -B${binary_dir}
+    COMMAND ${CMAKE_COMMAND} --build ${binary_dir}
+    COMMAND cd ${binary_dir} && ${CMAKE_CTEST_COMMAND} -L valgrind -j${N} --output-on-failure
     COMMENT "Compile and test with Valgrind"
 )
 
@@ -637,12 +658,13 @@ add_custom_target(ci_test_valgrind
 
 set(CLANG_ANALYZER_CHECKS "fuchsia.HandleChecker,nullability.NullableDereferenced,nullability.NullablePassedToNonnull,nullability.NullableReturnedFromNonnull,optin.cplusplus.UninitializedObject,optin.cplusplus.VirtualCall,optin.mpi.MPI-Checker,optin.osx.OSObjectCStyleCast,optin.osx.cocoa.localizability.EmptyLocalizationContextChecker,optin.osx.cocoa.localizability.NonLocalizedStringChecker,optin.performance.GCDAntipattern,optin.performance.Padding,optin.portability.UnixAPI,security.FloatLoopCounter,security.insecureAPI.DeprecatedOrUnsafeBufferHandling,security.insecureAPI.bcmp,security.insecureAPI.bcopy,security.insecureAPI.bzero,security.insecureAPI.rand,security.insecureAPI.strcpy,valist.CopyToSelf,valist.Uninitialized,valist.Unterminated,webkit.NoUncountedMemberChecker,webkit.RefCntblBaseVirtualDtor,core.CallAndMessage,core.DivideZero,core.NonNullParamChecker,core.NullDereference,core.StackAddressEscape,core.UndefinedBinaryOperatorResult,core.VLASize,core.uninitialized.ArraySubscript,core.uninitialized.Assign,core.uninitialized.Branch,core.uninitialized.CapturedBlockVariable,core.uninitialized.UndefReturn,cplusplus.InnerPointer,cplusplus.Move,cplusplus.NewDelete,cplusplus.NewDeleteLeaks,cplusplus.PlacementNew,cplusplus.PureVirtualCall,deadcode.DeadStores,nullability.NullPassedToNonnull,nullability.NullReturnedFromNonnull,osx.API,osx.MIG,osx.NumberObjectConversion,osx.OSObjectRetainCount,osx.ObjCProperty,osx.SecKeychainAPI,osx.cocoa.AtSync,osx.cocoa.AutoreleaseWrite,osx.cocoa.ClassRelease,osx.cocoa.Dealloc,osx.cocoa.IncompatibleMethodTypes,osx.cocoa.Loops,osx.cocoa.MissingSuperCall,osx.cocoa.NSAutoreleasePool,osx.cocoa.NSError,osx.cocoa.NilArg,osx.cocoa.NonNilReturnValue,osx.cocoa.ObjCGenerics,osx.cocoa.RetainCount,osx.cocoa.RunLoopAutoreleaseLeak,osx.cocoa.SelfInit,osx.cocoa.SuperDealloc,osx.cocoa.UnusedIvars,osx.cocoa.VariadicMethodTypes,osx.coreFoundation.CFError,osx.coreFoundation.CFNumber,osx.coreFoundation.CFRetainRelease,osx.coreFoundation.containers.OutOfBounds,osx.coreFoundation.containers.PointerSizedValues,security.insecureAPI.UncheckedReturn,security.insecureAPI.decodeValueOfObjCType,security.insecureAPI.getpw,security.insecureAPI.gets,security.insecureAPI.mkstemp,security.insecureAPI.mktemp,security.insecureAPI.vfork,unix.API,unix.Malloc,unix.MallocSizeof,unix.MismatchedDeallocator,unix.Vfork,unix.cstring.BadSizeArg,unix.cstring.NullArg")
 
+set(binary_dir ${PROJECT_BINARY_DIR}/build_clang_analyze)
 add_custom_target(ci_clang_analyze
     COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=Debug -GNinja
         -DJSON_BuildTests=ON
-        -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_clang_analyze
-    COMMAND cd ${PROJECT_BINARY_DIR}/build_clang_analyze && ${SCAN_BUILD_TOOL} -enable-checker ${CLANG_ANALYZER_CHECKS} --use-c++=${CLANG_TOOL} -analyze-headers -o ${PROJECT_BINARY_DIR}/report ninja
+        -S${PROJECT_SOURCE_DIR} -B${binary_dir}
+    COMMAND cd ${binary_dir} && ${SCAN_BUILD_TOOL} -enable-checker ${CLANG_ANALYZER_CHECKS} --use-c++=${CLANG_TOOL} -analyze-headers -o ${PROJECT_BINARY_DIR}/report ninja
     COMMENT "Check code with Clang Analyzer"
 )
 
@@ -668,11 +690,12 @@ add_custom_target(ci_cpplint
 # Check code with OCLint.
 ###############################################################################
 
-file(COPY ${PROJECT_SOURCE_DIR}/single_include/nlohmann/json.hpp DESTINATION ${PROJECT_BINARY_DIR}/src_single)
-file(RENAME ${PROJECT_BINARY_DIR}/src_single/json.hpp ${PROJECT_BINARY_DIR}/src_single/all.cpp)
-file(APPEND "${PROJECT_BINARY_DIR}/src_single/all.cpp" "\n\nint main()\n{}\n")
+set(binary_dir ${PROJECT_BINARY_DIR}/build_oclint)
+file(COPY ${PROJECT_SOURCE_DIR}/single_include/nlohmann/json.hpp DESTINATION ${binary_dir}/src_single/)
+file(RENAME ${binary_dir}/src_single/json.hpp ${binary_dir}/src_single/all.cpp)
+file(APPEND "${binary_dir}/src_single/all.cpp" "\n\nint main()\n{}\n")
 
-add_executable(single_all ${PROJECT_BINARY_DIR}/src_single/all.cpp)
+add_executable(single_all ${binary_dir}/src_single/all.cpp)
 target_compile_features(single_all PRIVATE cxx_std_11)
 
 add_custom_target(ci_oclint
@@ -680,15 +703,15 @@ add_custom_target(ci_oclint
         -DCMAKE_BUILD_TYPE=Debug
         -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
         -DJSON_BuildTests=OFF -DJSON_CI=ON
-        -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_oclint
-    COMMAND ${OCLINT_TOOL} -i ${PROJECT_BINARY_DIR}/build_oclint/src_single/all.cpp -p ${PROJECT_BINARY_DIR}/build_oclint --
+        -S${PROJECT_SOURCE_DIR} -B${binary_dir}
+    COMMAND ${OCLINT_TOOL} -i ${binary_dir}/src_single/all.cpp -p ${binary_dir} --
         -report-type html -enable-global-analysis --max-priority-1=0 --max-priority-2=1000 --max-priority-3=2000
         --disable-rule=MultipleUnaryOperator
         --disable-rule=DoubleNegative
         --disable-rule=ShortVariableName
         --disable-rule=GotoStatement
         --disable-rule=LongLine
-        -o ${PROJECT_BINARY_DIR}/build_oclint/oclint_report.html
+        -o ${binary_dir}/oclint_report.html
     COMMENT "Check code with OCLint"
 )
 
@@ -696,13 +719,14 @@ add_custom_target(ci_oclint
 # Check code with Clang-Tidy.
 ###############################################################################
 
+set(binary_dir ${PROJECT_BINARY_DIR}/build_clang_tidy)
 add_custom_target(ci_clang_tidy
     COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=Debug -GNinja
         -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_CXX_CLANG_TIDY=${CLANG_TIDY_TOOL}
         -DJSON_BuildTests=ON
-        -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_clang_tidy
-    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_clang_tidy
+        -S${PROJECT_SOURCE_DIR} -B${binary_dir}
+    COMMAND ${CMAKE_COMMAND} --build ${binary_dir}
     COMMENT "Check code with Clang-Tidy"
 )
 
@@ -710,14 +734,15 @@ add_custom_target(ci_clang_tidy
 # Check code with PVS-Studio Analyzer <https://www.viva64.com/en/pvs-studio/>.
 ###############################################################################
 
+set(binary_dir ${PROJECT_BINARY_DIR}/build_pvs_studio)
 add_custom_target(ci_pvs_studio
     COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=Debug
         -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
         -DJSON_BuildTests=ON
-        -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_pvs_studio
-    COMMAND cd ${PROJECT_BINARY_DIR}/build_pvs_studio && ${PVS_STUDIO_ANALYZER_TOOL} analyze -j 10
-    COMMAND cd ${PROJECT_BINARY_DIR}/build_pvs_studio && ${PLOG_CONVERTER_TOOL} -a'GA:1,2;64:1;CS' -t fullhtml PVS-Studio.log -o pvs
+        -S${PROJECT_SOURCE_DIR} -B${binary_dir}
+    COMMAND cd ${binary_dir} && ${PVS_STUDIO_ANALYZER_TOOL} analyze
+    COMMAND cd ${binary_dir} && ${PLOG_CONVERTER_TOOL} -a'GA:1,2;64:1;CS' -t fullhtml PVS-Studio.log -o pvs
     COMMENT "Check code with PVS Studio"
 )
 
@@ -725,10 +750,11 @@ add_custom_target(ci_pvs_studio
 # Check code with Infer <https://fbinfer.com> static analyzer.
 ###############################################################################
 
+set(binary_dir ${PROJECT_BINARY_DIR}/build_infer)
 add_custom_target(ci_infer
-    COMMAND mkdir -p ${PROJECT_BINARY_DIR}/build_infer
-    COMMAND cd ${PROJECT_BINARY_DIR}/build_infer && ${INFER_TOOL} compile -- ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug ${PROJECT_SOURCE_DIR} -DJSON_BuildTests=ON
-    COMMAND cd ${PROJECT_BINARY_DIR}/build_infer && ${INFER_TOOL} run -- make
+    COMMAND mkdir -p ${binary_dir}
+    COMMAND cd ${binary_dir} && ${INFER_TOOL} compile -- ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug ${PROJECT_SOURCE_DIR} -DJSON_BuildTests=ON
+    COMMAND cd ${binary_dir} && ${INFER_TOOL} run -- make
     COMMENT "Check code with Infer"
 )
 
@@ -736,15 +762,16 @@ add_custom_target(ci_infer
 # Run test suite with previously downloaded test data.
 ###############################################################################
 
+set(binary_dir ${PROJECT_BINARY_DIR}/build_offline_testdata)
 add_custom_target(ci_offline_testdata
-    COMMAND mkdir -p ${PROJECT_BINARY_DIR}/build_offline_testdata/test_data
-    COMMAND cd ${PROJECT_BINARY_DIR}/build_offline_testdata/test_data && ${GIT_TOOL} clone -c advice.detachedHead=false --branch v3.1.0 https://github.com/nlohmann/json_test_data.git --quiet --depth 1
+    COMMAND mkdir -p ${binary_dir}/test_data
+    COMMAND cd ${binary_dir}/test_data && ${GIT_TOOL} clone -c advice.detachedHead=false --branch v3.1.0 https://github.com/nlohmann/json_test_data.git --quiet --depth 1
     COMMAND ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=Debug -GNinja
-        -DJSON_BuildTests=ON -DJSON_FastTests=ON -DJSON_TestDataDirectory=${PROJECT_BINARY_DIR}/build_offline_testdata/test_data/json_test_data
-        -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_offline_testdata
-    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_offline_testdata
-    COMMAND cd ${PROJECT_BINARY_DIR}/build_offline_testdata && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+        -DJSON_BuildTests=ON -DJSON_FastTests=ON -DJSON_TestDataDirectory=${binary_dir}/test_data/json_test_data
+        -S${PROJECT_SOURCE_DIR} -B${binary_dir}
+    COMMAND ${CMAKE_COMMAND} --build ${binary_dir}
+    COMMAND cd ${binary_dir} && ${CMAKE_CTEST_COMMAND} -j${N} --output-on-failure
     COMMENT "Check code with previously downloaded test data"
 )
 
@@ -752,16 +779,17 @@ add_custom_target(ci_offline_testdata
 # Run test suite when project was not checked out from Git
 ###############################################################################
 
+set(binary_dir ${PROJECT_BINARY_DIR}/build_non_git_tests)
 add_custom_target(ci_non_git_tests
     COMMAND git config --global --add safe.directory ${PROJECT_SOURCE_DIR}
-    COMMAND mkdir -p ${PROJECT_BINARY_DIR}/build_non_git_tests/sources
+    COMMAND mkdir -p ${binary_dir}/sources
     COMMAND cd ${PROJECT_SOURCE_DIR} && for FILE in `${GIT_TOOL} ls-tree --name-only HEAD`\; do cp -r $$FILE ${PROJECT_BINARY_DIR}/build_non_git_tests/sources \; done
     COMMAND ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=Debug -GNinja
         -DJSON_BuildTests=ON -DJSON_FastTests=ON
-        -S${PROJECT_BINARY_DIR}/build_non_git_tests/sources -B${PROJECT_BINARY_DIR}/build_non_git_tests
-    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_non_git_tests
-    COMMAND cd ${PROJECT_BINARY_DIR}/build_non_git_tests && ${CMAKE_CTEST_COMMAND} --parallel ${N} -LE git_required --output-on-failure
+        -S${binary_dir}/sources -B${binary_dir}
+    COMMAND ${CMAKE_COMMAND} --build ${binary_dir}
+    COMMAND cd ${binary_dir} && ${CMAKE_CTEST_COMMAND} -j${N} -LE git_required --output-on-failure
     COMMENT "Check code when project was not checked out from Git"
 )
 
@@ -769,13 +797,14 @@ add_custom_target(ci_non_git_tests
 # Run test suite and exclude tests that change installed files
 ###############################################################################
 
+set(binary_dir ${PROJECT_BINARY_DIR}/build_reproducible_tests)
 add_custom_target(ci_reproducible_tests
     COMMAND ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=Debug -GNinja
         -DJSON_BuildTests=ON -DJSON_FastTests=ON
-        -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_reproducible_tests
-    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_reproducible_tests
-    COMMAND cd ${PROJECT_BINARY_DIR}/build_reproducible_tests && ${CMAKE_CTEST_COMMAND} --parallel ${N} -LE not_reproducible --output-on-failure
+        -S${PROJECT_SOURCE_DIR} -B${binary_dir}
+    COMMAND ${CMAKE_COMMAND} --build ${binary_dir}
+    COMMAND cd ${binary_dir} && ${CMAKE_CTEST_COMMAND} -j${N} -LE not_reproducible --output-on-failure
     COMMENT "Check code and exclude tests that change installed files"
 )
 
@@ -812,12 +841,13 @@ add_custom_target(ci_single_binaries
 # Benchmarks
 ###############################################################################
 
+set(binary_dir ${PROJECT_BINARY_DIR}/build_benchmarks)
 add_custom_target(ci_benchmarks
     COMMAND ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=Release -GNinja
-        -S${PROJECT_SOURCE_DIR}/benchmarks -B${PROJECT_BINARY_DIR}/build_benchmarks
-    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_benchmarks --target json_benchmarks
-    COMMAND cd ${PROJECT_BINARY_DIR}/build_benchmarks && ./json_benchmarks
+        -S${PROJECT_SOURCE_DIR}/benchmarks -B${binary_dir}
+    COMMAND ${CMAKE_COMMAND} --build ${binary_dir} --target json_benchmarks
+    COMMAND ${binary_dir}/json_benchmarks
     COMMENT "Run benchmarks"
 )
 
@@ -861,22 +891,24 @@ function(ci_add_cmake_flags_targets flag min_version)
     string(TOLOWER "ci_cmake_flag_${flag}" flag_target)
     string(REPLACE . _ min_version_var ${min_version})
     set(cmake_binary ${CMAKE_${min_version_var}_BINARY})
+    set(binary_dir ${PROJECT_BINARY_DIR}/build_${flag_target})
     add_custom_target(${flag_target}
         COMMENT "Check CMake flag ${flag} (CMake ${CMAKE_VERSION})"
         COMMAND ${CMAKE_COMMAND}
-            -Werror=dev
-            -D${flag}=ON
-            -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_${flag_target}
+            -Werror=dev -D${flag}=ON
+            -S${PROJECT_SOURCE_DIR} -B${binary_dir}
     )
+    set(binary_dir_min_version ${PROJECT_BINARY_DIR}/build_${flag_target}_${min_version_var})
     add_custom_target(${flag_target}_${min_version_var}
-        COMMENT "Check CMake flag ${JSON_CMAKE_FLAG} (CMake ${min_version})"
-        COMMAND mkdir -pv ${PROJECT_BINARY_DIR}/build_${flag_target}_${min_version_var}
-        COMMAND cd ${PROJECT_BINARY_DIR}/build_${flag_target}_${min_version_var}
-            && ${cmake_binary} -Werror=dev ${PROJECT_SOURCE_DIR} -D${flag}=ON
+        COMMENT "Check CMake flag ${flag} (CMake ${min_version})"
+        COMMAND mkdir -pv ${binary_dir_min_version}
+        COMMAND cd ${binary_dir_min_version} && ${cmake_binary}
+            -Werror=dev -D${flag}=ON
+            ${PROJECT_SOURCE_DIR}
         DEPENDS ${cmake_binary}
     )
     list(APPEND JSON_CMAKE_FLAG_TARGETS ${JSON_CMAKE_FLAG_TARGET} ${flag_target}_${min_version_var})
-    list(APPEND JSON_CMAKE_FLAG_BUILD_DIRS ${PROJECT_BINARY_DIR}/build_${flag_target} ${PROJECT_BINARY_DIR}/build_${flag_target}_${min_version_var})
+    list(APPEND JSON_CMAKE_FLAG_BUILD_DIRS ${binary_dir} ${binary_dir_min_version})
     set(JSON_CMAKE_FLAG_TARGETS ${JSON_CMAKE_FLAG_TARGETS} PARENT_SCOPE)
     set(JSON_CMAKE_FLAG_BUILD_DIRS ${JSON_CMAKE_FLAG_BUILD_DIRS} PARENT_SCOPE)
 endfunction()
@@ -908,14 +940,16 @@ foreach(COMPILER g++-4.8 g++-4.9 g++-5 g++-6 g++-7 g++-8 g++-9 g++-10 g++-11 cla
             unset(ADDITIONAL_FLAGS)
         endif()
 
+        set(binary_dir ${PROJECT_BINARY_DIR}/build_compiler_${COMPILER})
         add_custom_target(ci_test_compiler_${COMPILER}
             COMMAND CXX=${COMPILER} ${CMAKE_COMMAND}
                 -DCMAKE_BUILD_TYPE=Debug -GNinja
                 -DJSON_BuildTests=ON -DJSON_FastTests=ON
-                -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_compiler_${COMPILER}
+                -S${PROJECT_SOURCE_DIR} -B${binary_dir}
                 ${ADDITIONAL_FLAGS}
-            COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_compiler_${COMPILER}
-            COMMAND cd ${PROJECT_BINARY_DIR}/build_compiler_${COMPILER} && ${CMAKE_CTEST_COMMAND} --parallel ${N} --exclude-regex "test-unicode" --output-on-failure
+            COMMAND ${CMAKE_COMMAND} --build ${binary_dir} -t print_meta
+            COMMAND ${CMAKE_COMMAND} --build ${binary_dir}
+            COMMAND cd ${binary_dir} && ${CMAKE_CTEST_COMMAND} -j${N} -E "test-unicode" --output-on-failure
             COMMENT "Compile and test with ${COMPILER}"
         )
     endif()
@@ -926,26 +960,29 @@ endforeach()
 # CUDA example
 ###############################################################################
 
+set(binary_dir ${PROJECT_BINARY_DIR}/build_cuda_example)
 add_custom_target(ci_cuda_example
     COMMAND ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=Debug -GNinja
         -DCMAKE_CUDA_HOST_COMPILER=g++-8
-        -S${PROJECT_SOURCE_DIR}/tests/cuda_example -B${PROJECT_BINARY_DIR}/build_cuda_example
-    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_cuda_example
+        -S${PROJECT_SOURCE_DIR}/tests/cuda_example -B${binary_dir}
+    COMMAND ${CMAKE_COMMAND} --build ${binary_dir}
 )
 
 ###############################################################################
 # Intel C++ Compiler
 ###############################################################################
 
+set(binary_dir ${PROJECT_BINARY_DIR}/build_icpc)
 add_custom_target(ci_icpc
     COMMAND ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=Debug -GNinja
         -DCMAKE_C_COMPILER=icc -DCMAKE_CXX_COMPILER=icpc
         -DJSON_BuildTests=ON -DJSON_FastTests=ON
-        -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_icpc
-    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_icpc
-    COMMAND cd ${PROJECT_BINARY_DIR}/build_icpc && ${CMAKE_CTEST_COMMAND} --parallel ${N} --exclude-regex "test-unicode" --output-on-failure
+        -S${PROJECT_SOURCE_DIR} -B${binary_dir}
+    COMMAND ${CMAKE_COMMAND} --build ${binary_dir} -t print_meta
+    COMMAND ${CMAKE_COMMAND} --build ${binary_dir}
+    COMMAND cd ${binary_dir} && ${CMAKE_CTEST_COMMAND} -j${N} -E "test-unicode" --output-on-failure
     COMMENT "Compile and test with ICPC"
 )
 
@@ -954,7 +991,7 @@ add_custom_target(ci_icpc
 ###############################################################################
 
 add_custom_target(ci_test_documentation
-    COMMAND make CXX="${GCC_TOOL}" check_output_portable -j8
+    COMMAND make CXX="${GCC_TOOL}" check_output_portable
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/docs
     COMMENT "Check that all examples compile and create the desired output"
 )

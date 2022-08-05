@@ -1296,3 +1296,5 @@ TEST_CASE("BSON roundtrips" * doctest::skip())
         }
     }
 }
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

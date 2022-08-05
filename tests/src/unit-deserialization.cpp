@@ -1187,3 +1187,5 @@ TEST_CASE_TEMPLATE("deserialization of different character types (UTF-32)", T,
     CHECK(json::sax_parse(v, &l));
     CHECK(l.events.size() == 1);
 }
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

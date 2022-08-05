@@ -303,3 +303,5 @@ TEST_CASE("README" * doctest::skip())
 }
 
 DOCTEST_MSVC_SUPPRESS_WARNING_POP
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

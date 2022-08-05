@@ -2379,7 +2379,11 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 #ifdef __has_include
     #if __has_include(<version>)
         #include <version>
+    #elif __has_include(<ciso646>)
+        #include <ciso646>
     #endif
+#else
+    #include <ciso646>
 #endif
 
 #if !defined(JSON_HAS_FILESYSTEM) && !defined(JSON_HAS_EXPERIMENTAL_FILESYSTEM)
@@ -19321,9 +19325,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     {
         basic_json result;
 
-        result["copyright"] = "(C) 2013-2022 Niels Lohmann";
         result["name"] = "JSON for Modern C++";
-        result["url"] = "https://github.com/nlohmann/json";
         result["version"]["string"] =
             detail::concat(std::to_string(NLOHMANN_JSON_VERSION_MAJOR), '.',
                            std::to_string(NLOHMANN_JSON_VERSION_MINOR), '.',
@@ -19331,6 +19333,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         result["version"]["major"] = NLOHMANN_JSON_VERSION_MAJOR;
         result["version"]["minor"] = NLOHMANN_JSON_VERSION_MINOR;
         result["version"]["patch"] = NLOHMANN_JSON_VERSION_PATCH;
+        result["url"] = "https://github.com/nlohmann/json";
+        result["copyright"] = "(C) 2013-2022 Niels Lohmann";
 
 #ifdef _WIN32
         result["platform"] = "win32";
@@ -19355,12 +19359,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     std::to_string(__GNUC_PATCHLEVEL__))
             }
         };
-#elif defined(__HP_cc) || defined(__HP_aCC)
-        result["compiler"] = "hp"
+#elif defined(__HP_aCC)
+        result["compiler"] = {{"family", "hp"}, {"version", __HP_aCC}};
+#elif defined(__HP_cc)
+        result["compiler"] = {{"family", "hp"}, {"version", __HP_cc}};
 #elif defined(__IBMCPP__)
         result["compiler"] = {{"family", "ilecpp"}, {"version", __IBMCPP__}};
 #elif defined(_MSC_VER)
-        result["compiler"] = {{"family", "msvc"}, {"version", _MSC_VER}};
+        result["compiler"] = {{"family", "msvc"}, {"version", _MSC_VER}, {"version_full", _MSC_FULL_VER}};
 #elif defined(__PGI)
         result["compiler"] = {{"family", "pgcpp"}, {"version", __PGI}};
 #elif defined(__SUNPRO_CC)
@@ -19369,7 +19375,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         result["compiler"] = {{"family", "unknown"}, {"version", "unknown"}};
 #endif
 
-
 #if defined(_MSVC_LANG)
         result["compiler"]["c++"] = std::to_string(_MSVC_LANG);
 #elif defined(__cplusplus)
@@ -19377,6 +19382,95 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 #else
         result["compiler"]["c++"] = "unknown";
 #endif
+
+        // see https://en.cppreference.com/w/cpp/header/ciso646
+#ifdef _LIBCPP_VERSION
+        result["compiler"]["libc++"] = {{"family", "LLVM libc++"}, {"version", _LIBCPP_VERSION}};
+#elif __GLIBCXX__ // Note: only version 6.1 or newer define this in ciso646
+        result["compiler"]["libc++"] = {{"family", "GNU libstdc++"}, {"version", __GLIBCXX__}};
+#elif _CPPLIB_VER
+        result["compiler"]["libc++"] = {{"family", "Microsoft STL"}, {"version", _CPPLIB_VER}};
+#else
+        result["compiler"]["libc++"] = {{"family", "unknown"}, {"version", "unknown"}};
+#endif
+
+        // NOLINTBEGIN(modernize-use-bool-literals)
+
+        result["config"]["JSON_DIAGNOSTICS"] =
+            static_cast<bool>(JSON_DIAGNOSTICS); // NOLINT(modernize-use-bool-literals)
+
+        result["config"]["JSON_DISABLE_ENUM_SERIALIZATION"] =
+            static_cast<bool>(JSON_DISABLE_ENUM_SERIALIZATION);
+
+        result["config"]["JSON_HAS_CPP_11"] =
+#ifdef JSON_HAS_CPP_11
+            true;
+#else
+            false;
+#endif
+
+        result["config"]["JSON_HAS_CPP_14"] =
+#ifdef JSON_HAS_CPP_14
+            true;
+#else
+            false;
+#endif
+
+        result["config"]["JSON_HAS_CPP_17"] =
+#ifdef JSON_HAS_CPP_17
+            true;
+#else
+            false;
+#endif
+
+        result["config"]["JSON_HAS_CPP_20"] =
+#ifdef JSON_HAS_CPP_20
+            true;
+#else
+            false;
+#endif
+
+        result["config"]["JSON_HAS_CPP_23"] =
+#ifdef JSON_HAS_CPP_23
+            true;
+#else
+            false;
+#endif
+
+        result["config"]["JSON_HAS_EXPERIMENTAL_FILESYSTEM"] =
+            static_cast<bool>(JSON_HAS_EXPERIMENTAL_FILESYSTEM);
+
+        result["config"]["JSON_HAS_FILESYSTEM"] =
+            static_cast<bool>(JSON_HAS_FILESYSTEM);
+
+        result["config"]["JSON_HAS_THREE_WAY_COMPARISON"] =
+            static_cast<bool>(JSON_HAS_THREE_WAY_COMPARISON);
+
+        result["config"]["JSON_NOEXCEPTION"] =
+#ifdef JSON_NOEXCEPTION
+            true;
+#else
+            false;
+#endif
+
+        result["config"]["JSON_NO_IO"] =
+#ifdef JSON_NO_IO
+            true;
+#else
+            false;
+#endif
+
+        result["config"]["JSON_USE_IMPLICIT_CONVERSIONS"] =
+            static_cast<bool>(JSON_USE_IMPLICIT_CONVERSIONS);
+
+        result["config"]["JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON"] =
+            static_cast<bool>(JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON);
+
+        result["config"]["NLOHMANN_JSON_ABI_STRING"] =
+            JSON_HEDLEY_STRINGIFY(NLOHMANN_JSON_ABI_STRING);
+
+        // NOLINTEND(modernize-use-bool-literals)
+
         return result;
     }
 

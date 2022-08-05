@@ -50,7 +50,11 @@
 #ifdef __has_include
     #if __has_include(<version>)
         #include <version>
+    #elif __has_include(<ciso646>)
+        #include <ciso646>
     #endif
+#else
+    #include <ciso646>
 #endif
 
 #if !defined(JSON_HAS_FILESYSTEM) && !defined(JSON_HAS_EXPERIMENTAL_FILESYSTEM)

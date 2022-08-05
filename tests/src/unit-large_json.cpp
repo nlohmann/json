@@ -27,3 +27,5 @@ TEST_CASE("tests on very large JSONs")
     }
 }
 
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

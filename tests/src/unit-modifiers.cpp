@@ -951,3 +951,5 @@ TEST_CASE("modifiers")
         }
     }
 }
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

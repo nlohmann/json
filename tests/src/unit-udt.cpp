@@ -862,3 +862,5 @@ TEST_CASE("compatible array type, without iterator type alias")
 }
 
 DOCTEST_GCC_SUPPRESS_WARNING_POP
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

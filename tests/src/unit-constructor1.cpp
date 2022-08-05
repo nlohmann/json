@@ -1569,3 +1569,5 @@ TEST_CASE("constructors")
         }
     }
 }
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

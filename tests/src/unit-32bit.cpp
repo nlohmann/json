@@ -134,3 +134,5 @@ TEST_CASE("BJData")
         }
     }
 }
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

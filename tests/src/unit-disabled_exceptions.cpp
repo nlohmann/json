@@ -50,3 +50,5 @@ TEST_CASE("Tests with disabled exceptions")
 }
 
 DOCTEST_GCC_SUPPRESS_WARNING_POP
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

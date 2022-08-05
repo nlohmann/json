@@ -209,3 +209,5 @@ TEST_CASE("Binary Formats" * doctest::skip())
         CHECK((100.0 * double(ubjson_3_size) / double(json_size)) == Approx(89.450));
     }
 }
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

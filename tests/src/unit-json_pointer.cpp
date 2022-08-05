@@ -759,3 +759,5 @@ TEST_CASE("JSON pointers")
         }
     }
 }
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

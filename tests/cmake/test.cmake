@@ -43,6 +43,37 @@ endforeach()
 #############################################################################
 
 #############################################################################
+# json_test_add_standard_keyphrases(
+#     PHRASES <args>...
+#     CXX_STANDARDS <args>...)
+#
+# Create a mapping between C++ standard versions and key phrases.
+#
+# json_test_add_test_for() will search for these key phrases and build tests
+# for associated C++ standard versions.
+#############################################################################
+
+function(json_test_add_standard_keyphrases)
+    cmake_parse_arguments(args "" ""
+        "CXX_STANDARDS;PHRASES"
+        ${ARGN})
+
+    if(NOT args_PHRASES)
+        message(FATAL_ERROR "At least one key phrase is required.")
+    endif()
+
+    if(NOT args_CXX_STANDARDS)
+        message(FATAL_ERROR "At least one C++ standard version is required.")
+    endif()
+
+    foreach(cxx_standard ${args_CXX_STANDARDS})
+        set(var _JSON_TEST_STANDARD_KEYPHRASES_CPP_${cxx_standard})
+        list(APPEND ${var} ${args_PHRASES})
+        set(${var} CACHE INTERNAL "Mapping of key phrases to C++ standard version ${cxx_standard}")
+    endforeach()
+endfunction()
+
+#############################################################################
 # json_test_set_test_options(
 #     all|<tests>
 #     [CXX_STANDARDS all|<args>...]
@@ -117,7 +148,18 @@ function(_json_test_add_test test_name file main cxx_standard)
         message(FATAL_ERROR "Target ${test_target} has already been added.")
     endif()
 
+    file(READ ${file} file_content)
+    string(REGEX MATCH "[\n\r \t]+#[ \t]*include[ \t]+\"print_meta.cpp\"" match_result "${file_content}")
+    if(NOT match_result)
+        message(FATAL_ERROR "Please append\n"
+            "#include \"print_meta.cpp\" // NOLINT(bugprone-suspicious-include)\n"
+            "to the end of file: ${file}")
+    endif()
+
+    # add test executable
     add_executable(${test_target} ${file})
+    # add parentheses to silence clang-tidy warning
+    target_compile_definitions(${test_target} PRIVATE "JSON_TEST_NAME=(${test_target})")
     target_link_libraries(${test_target} PRIVATE ${main})
 
     # set and require C++ standard
@@ -233,8 +275,15 @@ function(json_test_add_test_for file)
 
         # add unconditionally if C++11 (default) or forced
         if(NOT ("${cxx_standard}" STREQUAL 11 OR args_FORCE))
-            string(FIND "${file_content}" JSON_HAS_CPP_${cxx_standard} has_cpp_found)
-            if(${has_cpp_found} EQUAL -1)
+            set(build FALSE)
+            foreach(phrase JSON_HAS_CPP_${cxx_standard} ${_JSON_TEST_STANDARD_KEYPHRASES_CPP_${cxx_standard}})
+                string(FIND "${file_content}" ${phrase} phrase_found)
+                if(NOT ${phrase_found} EQUAL -1)
+                    set(build TRUE)
+                    break()
+                endif()
+            endforeach()
+            if(NOT build)
                 continue()
             endif()
         endif()

@@ -6,6 +6,8 @@ option(JSON_FastTests   "Skip expensive/slow tests." OFF)
 set(JSON_32bitTest     AUTO CACHE STRING "Enable the 32bit unit test (ON/OFF/AUTO/ONLY).")
 set(JSON_TestStandards "" CACHE STRING "The list of standards to test explicitly.")
 
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
+
 include(test)
 
 #############################################################################
@@ -95,6 +97,22 @@ json_test_set_test_options(test-disabled_exceptions
 json_test_set_test_options(test-unicode4 TEST_PROPERTIES TIMEOUT 3000)
 
 #############################################################################
+# define additional macro to C++ standard version mappings
+#############################################################################
+
+json_test_add_standard_keyphrases(
+    PHRASES
+        JSON_HAS_EXPERIMENTAL_FILESYSTEM
+        JSON_HAS_FILESYSTEM
+    CXX_STANDARDS 17)
+
+json_test_add_standard_keyphrases(
+    PHRASES
+        JSON_HAS_RANGES
+        JSON_HAS_THREE_WAY_COMPARISON
+    CXX_STANDARDS 20)
+
+#############################################################################
 # add unit tests
 #############################################################################
 
@@ -172,3 +190,39 @@ add_subdirectory(cmake_add_subdirectory)
 add_subdirectory(cmake_fetch_content)
 add_subdirectory(cmake_fetch_content2)
 add_subdirectory(cmake_target_include_directories)
+
+#############################################################################
+# print JSON meta for tested C++ standard versions
+#############################################################################
+
+set(print_meta_targets)
+set(print_meta_commands)
+foreach(cxx_standard ${test_cxx_standards})
+    if(NOT compiler_supports_cpp_${cxx_standard})
+        continue()
+    endif()
+
+    set(print_meta_target print_meta_cpp${cxx_standard})
+    add_executable(${print_meta_target} EXCLUDE_FROM_ALL src/print_meta.cpp)
+    target_compile_definitions(${print_meta_target} PRIVATE JSON_TEST_PRINT_META_WITH_MAIN JSON_TEST_NAME=${print_meta_target})
+    target_compile_options(${print_meta_target} PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>)
+    target_link_libraries(${print_meta_target} PRIVATE ${NLOHMANN_JSON_TARGET_NAME})
+
+    # set and require C++ standard
+    set_target_properties(${print_meta_target} PROPERTIES
+        CXX_STANDARD ${cxx_standard}
+        CXX_STANDARD_REQUIRED ON
+    )
+
+    # apply standard-specific build settings
+    if(TARGET _json_test_interface__cpp_${cxx_standard})
+        target_link_libraries(${print_meta_target} PRIVATE _json_test_interface__cpp_${cxx_standard})
+    endif()
+
+    list(APPEND print_meta_targets ${print_meta_target})
+    list(APPEND print_meta_commands COMMAND ${print_meta_target})
+endforeach()
+
+add_custom_target(print_meta
+    ${print_meta_commands}
+    USES_TERMINAL)

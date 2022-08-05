@@ -1628,3 +1628,5 @@ TEST_CASE("iterators 1")
         }
     }
 }
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)

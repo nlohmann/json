@@ -1835,3 +1835,5 @@ TEST_CASE("MessagePack roundtrips" * doctest::skip())
         }
     }
 }
+
+#include "print_meta.cpp" // NOLINT(bugprone-suspicious-include)
