@@ -454,10 +454,19 @@ TEST_CASE("constructors")
             CHECK(j.type() == json::value_t::boolean);
         }
 
-        SECTION("from std::vector<bool>::refrence")
+        SECTION("from std::vector<bool>::reference")
         {
             std::vector<bool> v{true};
             json j(v[0]);
+            CHECK(std::is_same<decltype(v[0]), std::vector<bool>::reference>::value);
+            CHECK(j.type() == json::value_t::boolean);
+        }
+
+        SECTION("from std::vector<bool>::const_reference")
+        {
+            const std::vector<bool> v{true};
+            json j(v[0]);
+            CHECK(std::is_same<decltype(v[0]), std::vector<bool>::const_reference>::value);
             CHECK(j.type() == json::value_t::boolean);
         }
     }
