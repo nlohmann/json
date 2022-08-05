@@ -51,7 +51,7 @@ class basic_json;
 
 /// @brief JSON Pointer defines a string syntax for identifying a specific value within a JSON document
 /// @sa https://json.nlohmann.me/api/json_pointer/
-template<typename BasicJsonType>
+template<typename RefStringType>
 class json_pointer;
 
 /*!
