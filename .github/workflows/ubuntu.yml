@@ -151,9 +151,12 @@ jobs:
 
   ci_test_documentation:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [ci_test_examples, ci_test_api_documentation]
     steps:
       - uses: actions/checkout@v3
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
-        run: cmake --build build --target ci_test_documentation
+        run: cmake --build build --target ${{ matrix.target }}

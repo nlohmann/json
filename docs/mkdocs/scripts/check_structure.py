@@ -3,6 +3,7 @@
 import glob
 import os.path
 import re
+import sys
 
 warnings = 0
 
@@ -173,3 +174,6 @@ if __name__ == '__main__':
     check_structure()
     check_examples()
     print(120 * '-')
+
+    if warnings > 0:
+        sys.exit(1)
