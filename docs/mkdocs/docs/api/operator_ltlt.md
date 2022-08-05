@@ -35,7 +35,8 @@ the stream `o`
 ## Exceptions
 
 1. Throws [`type_error.316`](../home/exceptions.md#jsonexceptiontype_error316) if a string stored inside the JSON
-   value is not UTF-8 encoded. Note that unlike the [`dump`](basic_json/dump.md) member functions, no `error_handler` can be set.
+   value is not UTF-8 encoded. Note that unlike the [`dump`](basic_json/dump.md) member functions, no `error_handler`
+   can be set.
 2. None.
 
 ## Complexity

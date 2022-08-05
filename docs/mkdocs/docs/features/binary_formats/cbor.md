@@ -5,13 +5,14 @@ small code size, fairly small message size, and extensibility without the need f
 
 !!! abstract "References"
 
-  	- [CBOR Website](http://cbor.io) - the main source on CBOR
+      - [CBOR Website](http://cbor.io) - the main source on CBOR
     - [CBOR Playground](http://cbor.me) - an interactive webpage to translate between JSON and CBOR
     - [RFC 7049](https://tools.ietf.org/html/rfc7049) - the CBOR specification
 
 ## Serialization
 
-The library uses the following mapping from JSON values types to CBOR types according to the CBOR specification (RFC 7049):
+The library uses the following mapping from JSON values types to CBOR types according to the CBOR specification
+([RFC 7049](https://www.rfc-editor.org/rfc/rfc7049.html)):
 
 | JSON value type | value/range                                | CBOR type                         | first byte |
 |-----------------|--------------------------------------------|-----------------------------------|------------|
@@ -61,15 +62,15 @@ see "binary" cells in the table above.
 
 !!! success "Complete mapping"
 
-	The mapping is **complete** in the sense that any JSON value type can be converted to a CBOR value.
+    The mapping is **complete** in the sense that any JSON value type can be converted to a CBOR value.
 
 !!! info "NaN/infinity handling"
 
-	If NaN or Infinity are stored inside a JSON number, they are serialized properly. This behavior differs from the normal JSON serialization which serializes NaN or Infinity to `null`.
+    If NaN or Infinity are stored inside a JSON number, they are serialized properly. This behavior differs from the normal JSON serialization which serializes NaN or Infinity to `null`.
 
 !!! info "Unused CBOR types"
 
-	The following CBOR types are not used in the conversion:
+    The following CBOR types are not used in the conversion:
 
       - UTF-8 strings terminated by "break" (0x7F)
       - arrays terminated by "break" (0x9F)
@@ -149,7 +150,7 @@ The library maps CBOR types to JSON value types as follows:
 
 !!! warning "Incomplete mapping"
 
-	The mapping is **incomplete** in the sense that not all CBOR types can be converted to a JSON value. The following CBOR types are not supported and will yield parse errors:
+    The mapping is **incomplete** in the sense that not all CBOR types can be converted to a JSON value. The following CBOR types are not supported and will yield parse errors:
 
      - date/time (0xC0..0xC1)
      - bignum (0xC2..0xC3)
@@ -161,7 +162,7 @@ The library maps CBOR types to JSON value types as follows:
 
 !!! warning "Object keys"
 
-	CBOR allows map keys of any type, whereas JSON only allows strings as keys in object values. Therefore, CBOR maps with keys other than UTF-8 strings are rejected.
+    CBOR allows map keys of any type, whereas JSON only allows strings as keys in object values. Therefore, CBOR maps with keys other than UTF-8 strings are rejected.
 
 !!! warning "Tagged items"
 

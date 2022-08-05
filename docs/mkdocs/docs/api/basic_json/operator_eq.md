@@ -20,8 +20,8 @@ class basic_json {
 ```
 
 1. Compares two JSON values for equality according to the following rules:
-    - Two JSON values are equal if (1) neither value is discarded, or (2) they are of the same
-      type and their stored values are the same according to their respective `operator==`.
+    - Two JSON values are equal if (1) neither value is discarded, or (2) they are of the same type and their stored
+      values are the same according to their respective `operator==`.
     - Integer and floating-point numbers are automatically converted before comparison.
 
 2. Compares a JSON value and a scalar or a scalar and a JSON value for equality by converting the

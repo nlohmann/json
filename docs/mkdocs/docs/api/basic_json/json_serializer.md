@@ -19,6 +19,23 @@ using json_serializer = JSONSerializer<T, SFINAE>;
 
 The default values for `json_serializer` is [`adl_serializer`](../adl_serializer).
 
+## Examples
+
+??? example
+
+    The example below shows how a conversion of a non-default-constructible type is implemented via a specialization of
+    the `adl_serializer`.
+        
+    ```cpp
+    --8<-- "examples/from_json__non_default_constructible.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/from_json__non_default_constructible.output"
+    ```
+
 ## Version history
 
 - Since version 2.0.0.

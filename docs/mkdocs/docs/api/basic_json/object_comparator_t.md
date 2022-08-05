@@ -28,4 +28,5 @@ and [`default_object_comparator_t`](default_object_comparator_t.md) otherwise.
 ## Version history
 
 - Added in version 3.0.0.
-- Changed to be conditionally defined as `#!cpp typename object_t::key_compare` or `default_object_comparator_t` in version 3.11.0.
+- Changed to be conditionally defined as `#!cpp typename object_t::key_compare` or `default_object_comparator_t` in
+  version 3.11.0.

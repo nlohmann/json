@@ -119,7 +119,7 @@ automatically download a release as a dependency at configure type.
     )
     ```
 
-	However, the repository <https://github.com/nlohmann/json> download size is quite large. You might want to depend on
+    However, the repository <https://github.com/nlohmann/json> download size is quite large. You might want to depend on
     a smaller repository. For instance, you might want to replace the URL in the example by
     <https://github.com/ArthurSonzogni/nlohmann_json_cmake_fetchcontent>.
 
