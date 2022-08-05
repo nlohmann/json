@@ -5074,19 +5074,12 @@ std::string to_string(const NLOHMANN_BASIC_JSON_TPL& j)
     return j.dump();
 }
 
-inline nlohmann::json operator+(const nlohmann::json& lhs, const nlohmann::json& rhs)
+NLOHMANN_BASIC_JSON_TPL_DECLARATION
+inline NLOHMANN_BASIC_JSON_TPL operator+(const NLOHMANN_BASIC_JSON_TPL& lhs, const NLOHMANN_BASIC_JSON_TPL& rhs)
 {
-    nlohmann::json ret;
-    for (const auto& el : lhs.items())
-    {
-        ret[el.key()] = el.value();
-    }
-
-    for (const auto& el : rhs.items())
-    {
-        ret[el.key()] = el.value();
-    }
-
+    NLOHMANN_BASIC_JSON_TPL ret;
+    ret.update(lhs, true);
+    ret.update(rhs, true);
     return ret;
 }
 
