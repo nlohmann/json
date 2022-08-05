@@ -5,6 +5,10 @@ on:
   push:
     branches:
       - develop
+    paths:
+      - docs/mkdocs/**
+      - docs/examples/**
+  workflow_dispatch:
 
 # we don't want to have concurrent jobs, and we don't want to cancel running jobs to avoid broken publications
 concurrency:
@@ -13,6 +17,7 @@ concurrency:
 
 jobs:
   publish_documentation:
+    if: github.repository == 'nlohmann/json'
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3

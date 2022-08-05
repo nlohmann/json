@@ -1,0 +1,4 @@
+"" != "": false
+"" != "": false
+"" != "/foo": true
+"/foo" != "/foo": false
