@@ -5074,6 +5074,22 @@ std::string to_string(const NLOHMANN_BASIC_JSON_TPL& j)
     return j.dump();
 }
 
+inline nlohmann::json operator+(const nlohmann::json& lhs, const nlohmann::json& rhs)
+{
+    nlohmann::json ret;
+    for (const auto& el : lhs.items())
+    {
+        ret[el.key()] = el.value();
+    }
+
+    for (const auto& el : rhs.items())
+    {
+        ret[el.key()] = el.value();
+    }
+
+    return ret;
+}
+
 inline namespace literals
 {
 inline namespace json_literals
