@@ -15,7 +15,7 @@ simple processing.
 
 !!! abstract "References"
 
-	- [BJData Specification](https://neurojson.org/bjdata/draft2)
+    - [BJData Specification](https://neurojson.org/bjdata/draft2)
 
 ## Serialization
 
@@ -52,38 +52,38 @@ The library uses the following mapping from JSON values types to BJData types ac
 
 !!! success "Complete mapping"
 
-	The mapping is **complete** in the sense that any JSON value type can be converted to a BJData value.
+    The mapping is **complete** in the sense that any JSON value type can be converted to a BJData value.
 
-	Any BJData output created by `to_bjdata` can be successfully parsed by `from_bjdata`.
+    Any BJData output created by `to_bjdata` can be successfully parsed by `from_bjdata`.
 
 !!! warning "Size constraints"
 
-	The following values can **not** be converted to a BJData value:
+    The following values can **not** be converted to a BJData value:
 
       - strings with more than 18446744073709551615 bytes, i.e., $2^{64}-1$ bytes (theoretical)
 
 !!! info "Unused BJData markers"
 
-	The following markers are not used in the conversion:
+    The following markers are not used in the conversion:
 
     - `Z`: no-op values are not created.
     - `C`: single-byte strings are serialized with `S` markers.
 
 !!! info "NaN/infinity handling"
 
-	If NaN or Infinity are stored inside a JSON number, they are serialized properly. This behavior differs from the
+    If NaN or Infinity are stored inside a JSON number, they are serialized properly. This behavior differs from the
     `dump()` function which serializes NaN or Infinity to `#!json null`.
 
 !!! info "Endianness"
 
-	A breaking difference between BJData and UBJSON is the endianness of numerical values. In BJData, all numerical data
+    A breaking difference between BJData and UBJSON is the endianness of numerical values. In BJData, all numerical data
     types (integers `UiuImlML` and floating-point values `hdD`) are stored in the little-endian (LE) byte order as
     opposed to big-endian as used by UBJSON. Adopting LE to store numeric records avoids unnecessary byte swapping on
     most modern computers where LE is used as the default byte order.
 
 !!! info "Optimized formats"
 
-	Optimized formats for containers are supported via two parameters of
+    Optimized formats for containers are supported via two parameters of
     [`to_bjdata`](../../api/basic_json/to_bjdata.md):
 
     - Parameter `use_size` adds size information to the beginning of a container and removes the closing marker.
@@ -96,7 +96,7 @@ The library uses the following mapping from JSON values types to BJData types ac
 
 !!! info "ND-array optimized format"
 
-	BJData extends UBJSON's optimized array **size** marker to support ND-arrays of uniform numerical data types
+    BJData extends UBJSON's optimized array **size** marker to support ND-arrays of uniform numerical data types
     (referred to as *packed arrays*). For example, the 2-D `uint8` integer array `[[1,2],[3,4],[5,6]]`, stored as nested
     optimized array in UBJSON `[ [$U#i2 1 2 [$U#i2 3 4 [$U#i2 5 6 ]`, can be further compressed in BJData to
     `[$U#[$i#i2 2 3 1 2 3 4 5 6` or `[$U#[i2 i3] 1 2 3 4 5 6`.
@@ -126,7 +126,7 @@ The library uses the following mapping from JSON values types to BJData types ac
 
 !!! info "Restrictions in optimized data types for arrays and objects"
 
-	Due to diminished space saving, hampered readability, and increased security risks, in BJData, the allowed data
+    Due to diminished space saving, hampered readability, and increased security risks, in BJData, the allowed data
     types following the `$` marker in an optimized array and object container are restricted to
     **non-zero-fixed-length** data types. Therefore, the valid optimized type markers can only be one of `UiuImlMLhdDC`.
     This also means other variable (`[{SH`) or zero-length types (`TFN`) can not be used in an optimized array or object
@@ -134,7 +134,7 @@ The library uses the following mapping from JSON values types to BJData types ac
 
 !!! info "Binary values"
 
-	If the JSON data contains the binary type, the value stored is a list of integers, as suggested by the BJData
+    If the JSON data contains the binary type, the value stored is a list of integers, as suggested by the BJData
     documentation. In particular, this means that the serialization and the deserialization of JSON containing binary
     values into BJData and back will result in a different JSON object.
 
@@ -179,7 +179,7 @@ The library maps BJData types to JSON value types as follows:
 
 !!! success "Complete mapping"
 
-	The mapping is **complete** in the sense that any BJData value can be converted to a JSON value.
+    The mapping is **complete** in the sense that any BJData value can be converted to a JSON value.
 
 ??? example
 

@@ -6,8 +6,8 @@ extra byte in addition to the strings themselves.
 
 !!! abstract "References"
 
-	- [MessagePack website](https://msgpack.org)
-	- [MessagePack specification](https://github.com/msgpack/msgpack/blob/master/spec.md)
+    - [MessagePack website](https://msgpack.org)
+    - [MessagePack specification](https://github.com/msgpack/msgpack/blob/master/spec.md)
 
 ## Serialization
 
@@ -52,18 +52,18 @@ specification:
 
 !!! success "Complete mapping"
 
-	The mapping is **complete** in the sense that any JSON value type can be converted to a MessagePack value.
+    The mapping is **complete** in the sense that any JSON value type can be converted to a MessagePack value.
 
-	Any MessagePack output created by `to_msgpack` can be successfully parsed by `from_msgpack`.
+    Any MessagePack output created by `to_msgpack` can be successfully parsed by `from_msgpack`.
 
 !!! warning "Size constraints"
 
-	The following values can **not** be converted to a MessagePack value:
+    The following values can **not** be converted to a MessagePack value:
 
-	  - strings with more than 4294967295 bytes
-	  - byte strings with more than 4294967295 bytes
-	  - arrays with more than 4294967295 elements
-	  - objects with more than 4294967295 elements
+      - strings with more than 4294967295 bytes
+      - byte strings with more than 4294967295 bytes
+      - arrays with more than 4294967295 elements
+      - objects with more than 4294967295 elements
 
 !!! info "NaN/infinity handling"
 
@@ -127,7 +127,7 @@ The library maps MessagePack types to JSON value types as follows:
 
 !!! info
 
-	Any MessagePack output created by `to_msgpack` can be successfully parsed by `from_msgpack`.
+    Any MessagePack output created by `to_msgpack` can be successfully parsed by `from_msgpack`.
 
 
 ??? example

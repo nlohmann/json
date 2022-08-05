@@ -44,7 +44,7 @@ for objects.
 
 !!! question
 
-	Can you add an option to ignore trailing commas?
+    Can you add an option to ignore trailing commas?
 
 This library does not support any feature which would jeopardize interoperability.
 
@@ -53,9 +53,9 @@ This library does not support any feature which would jeopardize interoperabilit
 
 !!! question "Questions"
 
-	- Why is the parser complaining about a Chinese character?
-	- Does the library support Unicode?
-	- I get an exception `[json.exception.parse_error.101] parse error at line 1, column 53: syntax error while parsing value - invalid string: ill-formed UTF-8 byte; last read: '"Testé$')"`
+    - Why is the parser complaining about a Chinese character?
+    - Does the library support Unicode?
+    - I get an exception `[json.exception.parse_error.101] parse error at line 1, column 53: syntax error while parsing value - invalid string: ill-formed UTF-8 byte; last read: '"Testé$')"`
 
 The library supports **Unicode input** as follows:
 
@@ -124,7 +124,7 @@ Yes, see [Parsing and exceptions](../features/parsing/parse_exceptions.md).
 
 !!! question
 
-	Can I get the key of the object item that caused an exception?
+    Can I get the key of the object item that caused an exception?
 
 Yes, you can. Please define the symbol [`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md) to get [extended diagnostics messages](exceptions.md#extended-diagnostic-messages).
 
@@ -136,18 +136,18 @@ Yes, you can. Please define the symbol [`JSON_DIAGNOSTICS`](../api/macros/json_d
 
 !!! question
 
-	- It seems that precision is lost when serializing a double.
-	- Can I change the precision for floating-point serialization?
+    - It seems that precision is lost when serializing a double.
+    - Can I change the precision for floating-point serialization?
 
 The library uses `std::numeric_limits<number_float_t>::digits10` (15 for IEEE `double`s) digits for serialization. This value is sufficient to guarantee roundtripping. If one uses more than this number of digits of precision, then string -> value -> string is not guaranteed to round-trip.
 
 !!! quote "[cppreference.com](https://en.cppreference.com/w/cpp/types/numeric_limits/digits10)"
 
-	The value of `std::numeric_limits<T>::digits10` is the number of base-10 digits that can be represented by the type T without change, that is, any number with this many significant decimal digits can be converted to a value of type T and back to decimal form, without change due to rounding or overflow. 
+    The value of `std::numeric_limits<T>::digits10` is the number of base-10 digits that can be represented by the type T without change, that is, any number with this many significant decimal digits can be converted to a value of type T and back to decimal form, without change due to rounding or overflow. 
 
 !!! tip
 
-	The website https://float.exposed gives a good insight into the internal storage of floating-point numbers.
+    The website https://float.exposed gives a good insight into the internal storage of floating-point numbers.
 
 See [this section](../features/types/number_handling.md#number-serialization) on the library's number handling for more information.
 
@@ -157,7 +157,7 @@ See [this section](../features/types/number_handling.md#number-serialization) on
 
 !!! question
 
-	Why does the code not compile with Android SDK?
+    Why does the code not compile with Android SDK?
 
 Android defaults to using very old compilers and C++ libraries. To fix this, add the following to your `Application.mk`. This will switch to the LLVM C++ library, the Clang compiler, and enable C++11 and other features disabled by default.
 
@@ -174,7 +174,7 @@ The code compiles successfully with [Android NDK](https://developer.android.com/
 
 !!! question "Questions"
 
-	- Why do I get a compilation error `'to_string' is not a member of 'std'` (or similarly, for `strtod` or `strtof`)?
-	- Why does the code not compile with MinGW or Android SDK?
+    - Why do I get a compilation error `'to_string' is not a member of 'std'` (or similarly, for `strtod` or `strtof`)?
+    - Why does the code not compile with MinGW or Android SDK?
 
 This is not an issue with the code,  but rather with the compiler itself. On Android, see above to build with a newer environment.  For MinGW, please refer to [this site](http://tehsausage.com/mingw-to-string) and [this discussion](https://github.com/nlohmann/json/issues/136) for information on how to fix this bug. For Android NDK using `APP_STL := gnustl_static`, please refer to [this discussion](https://github.com/nlohmann/json/issues/219).

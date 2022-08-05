@@ -5,7 +5,7 @@ achieve the generality of JSON, combined with being much easier to process than 
 
 !!! abstract "References"
 
-	- [UBJSON Website](http://ubjson.org)
+    - [UBJSON Website](http://ubjson.org)
 
 ## Serialization
 
@@ -37,19 +37,19 @@ The library uses the following mapping from JSON values types to UBJSON types ac
 
 !!! success "Complete mapping"
 
-	The mapping is **complete** in the sense that any JSON value type can be converted to a UBJSON value.
+    The mapping is **complete** in the sense that any JSON value type can be converted to a UBJSON value.
 
-	Any UBJSON output created by `to_ubjson` can be successfully parsed by `from_ubjson`.
+    Any UBJSON output created by `to_ubjson` can be successfully parsed by `from_ubjson`.
 
 !!! warning "Size constraints"
 
-	The following values can **not** be converted to a UBJSON value:
+    The following values can **not** be converted to a UBJSON value:
 
       - strings with more than 9223372036854775807 bytes (theoretical)
 
 !!! info "Unused UBJSON markers"
 
-	The following markers are not used in the conversion:
+    The following markers are not used in the conversion:
     
     - `Z`: no-op values are not created.
     - `C`: single-byte strings are serialized with `S` markers.
@@ -111,7 +111,7 @@ The library maps UBJSON types to JSON value types as follows:
 
 !!! success "Complete mapping"
 
-	The mapping is **complete** in the sense that any UBJSON value can be converted to a JSON value.
+    The mapping is **complete** in the sense that any UBJSON value can be converted to a JSON value.
 
 ??? example
 

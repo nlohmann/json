@@ -6,8 +6,8 @@ representation of data types that are not part of the JSON spec. For example, BS
 
 !!! abstract "References"
 
-	- [BSON Website](http://bsonspec.org) - the main source on BSON
-	- [BSON Specification](http://bsonspec.org/spec.html) - the specification
+    - [BSON Website](http://bsonspec.org) - the main source on BSON
+    - [BSON Specification](http://bsonspec.org/spec.html) - the specification
    
 
 ## Serialization
