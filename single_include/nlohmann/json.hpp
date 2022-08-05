@@ -14464,6 +14464,15 @@ class json_pointer
     {
         return *this == json_pointer(rhs);
     }
+
+    /// @brief compares JSON pointer and string for less-than
+    template<typename RefStringTypeLhs, typename RefStringTypeRhs>
+    friend bool operator<(json_pointer<RefStringTypeLhs> const& lhs,
+                          json_pointer<RefStringTypeRhs> const& rhs) noexcept
+    {
+        return lhs.reference_tokens < rhs.reference_tokens;
+    }
+
 #else
     /// @brief compares two JSON pointers for equality
     /// @sa https://json.nlohmann.me/api/json_pointer/operator_eq/
@@ -14506,6 +14515,12 @@ class json_pointer
     // NOLINTNEXTLINE(readability-redundant-declaration)
     friend bool operator!=(const StringType& lhs,
                            const json_pointer<RefStringTypeRhs>& rhs);
+
+    /// @brief compares string and JSON pointer for less-than
+    template<typename RefStringTypeRhs, typename StringType>
+    // NOLINTNEXTLINE(readability-redundant-declaration)
+    friend bool operator<(const StringType& lhs,
+                          const json_pointer<RefStringTypeRhs>& rhs);
 #endif
 
   private:
@@ -14559,6 +14574,13 @@ inline bool operator!=(const StringType& lhs,
                        const json_pointer<RefStringTypeRhs>& rhs)
 {
     return !(lhs == rhs);
+}
+
+template<typename RefStringTypeLhs, typename RefStringTypeRhs>
+inline bool operator<(const json_pointer<RefStringTypeLhs>& lhs,
+                      const json_pointer<RefStringTypeRhs>& rhs) noexcept
+{
+    return lhs.reference_tokens < rhs.reference_tokens;
 }
 #endif
 
