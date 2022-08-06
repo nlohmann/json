@@ -25,5 +25,6 @@ add_library(abi_compat_main STATIC main.cpp)
 target_link_libraries(abi_compat_main PUBLIC abi_compat_common)
 
 # add individual tests
+add_subdirectory(config)
 add_subdirectory(diag)
 add_subdirectory(inline_ns)
