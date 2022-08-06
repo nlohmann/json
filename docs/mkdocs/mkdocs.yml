@@ -58,6 +58,7 @@ nav:
     - features/json_pointer.md
     - features/json_patch.md
     - features/merge_patch.md
+    - 'nlohmann Namespace': features/namespace.md
     - features/object_order.md
     - Parsing:
         - features/parsing/index.md
@@ -270,6 +271,7 @@ nav:
         - 'NLOHMANN_JSON_NAMESPACE': api/macros/nlohmann_json_namespace.md
         - 'NLOHMANN_JSON_NAMESPACE_BEGIN': api/macros/nlohmann_json_namespace_begin.md
         - 'NLOHMANN_JSON_NAMESPACE_END': api/macros/nlohmann_json_namespace_begin.md
+        - 'NLOHMANN_JSON_NAMESPACE_NO_VERSION': api/macros/nlohmann_json_namespace_no_version.md
         - 'NLOHMANN_JSON_SERIALIZE_ENUM': api/macros/nlohmann_json_serialize_enum.md
         - 'NLOHMANN_JSON_VERSION_MAJOR': api/macros/nlohmann_json_version_major.md
         - 'NLOHMANN_JSON_VERSION_MINOR': api/macros/nlohmann_json_version_major.md

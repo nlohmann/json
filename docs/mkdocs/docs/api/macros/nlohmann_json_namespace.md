@@ -1,19 +1,18 @@
 # NLOHMANN_JSON_NAMESPACE
 
 ```cpp
-#define NLOHMANN_JSON_NAMESPACE
+#define NLOHMANN_JSON_NAMESPACE /* value */
 ```
 
-This macro evaluates to the full name of the `nlohmann` namespace, including  the name of a versioned and ABI-tagged
-inline namespace. Use this macro to unambiguously refer to the `nlohmann` namespace.
+This macro evaluates to the full name of the `nlohmann` namespace.
 
 ## Default definition
 
-The default value consists of a prefix, a version string, and optional ABI tags depending on whether ABI-affecting
-macros are defined (e.g., [`JSON_DIAGNOSTICS`](json_diagnostics.md), and
-[`JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON`](json_use_legacy_discarded_value_comparison.md)).
+The default value consists of the root namespace (`nlohmann`) and an inline ABI namespace. See
+[`nlohmann` Namespace](../../features/namespace.md#structure) for details.
 
-When the macro is not defined, the library will define it to its default value.
+When the macro is not defined, the library will define it to its default value. Overriding this value has no effect on
+the library.
 
 ## Examples
 
@@ -35,7 +34,8 @@ When the macro is not defined, the library will define it to its default value.
 ## See also
 
 - [`NLOHMANN_JSON_NAMESPACE_BEGIN, NLOHMANN_JSON_NAMESPACE_END`](nlohmann_json_namespace_begin.md)
+- [`NLOHMANN_JSON_NAMESPACE_NO_VERSION`](nlohmann_json_namespace_no_version.md)
 
 ## Version history
 
-- Added in version 3.11.0.
+- Added in version 3.11.0. Changed inline namespace name in version 3.11.2.
