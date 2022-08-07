@@ -21,3 +21,6 @@ distribution:
   - source-file: "single_include/nlohmann/json.hpp"
     target-file: "json.hpp"
     type: "source-code"
+  - source-file: "single_include/nlohmann/json_fwd.hpp"
+    target-file: "json_fwd.hpp"
+    type: "source-code"

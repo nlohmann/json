@@ -232,9 +232,11 @@ release: include.zip json.tar.xz
 	mkdir release_files
 	gpg --armor --detach-sig include.zip
 	gpg --armor --detach-sig $(AMALGAMATED_FILE)
+	gpg --armor --detach-sig $(AMALGAMATED_FWD_FILE)
 	gpg --armor --detach-sig json.tar.xz
 	cp $(AMALGAMATED_FILE) release_files
-	mv $(AMALGAMATED_FILE).asc json.tar.xz json.tar.xz.asc include.zip include.zip.asc release_files
+	cp $(AMALGAMATED_FWD_FILE) release_files
+	mv $(AMALGAMATED_FILE).asc $(AMALGAMATED_FWD_FILE).asc json.tar.xz json.tar.xz.asc include.zip include.zip.asc release_files
 	cd release_files ; shasum -a 256 json.hpp include.zip json.tar.xz > hashes.txt
 
 
