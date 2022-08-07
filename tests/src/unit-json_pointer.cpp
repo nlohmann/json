@@ -15,6 +15,7 @@ using nlohmann::json;
     using namespace nlohmann::literals; // NOLINT(google-build-using-namespace)
 #endif
 
+#include <map>
 #include <sstream>
 
 TEST_CASE("JSON pointers")
@@ -695,6 +696,32 @@ TEST_CASE("JSON pointers")
             CHECK_THROWS_WITH_AS("/~~" == ptr1,
                                  "[json.exception.parse_error.108] parse error: escape character '~' must be followed with '0' or '1'", json::parse_error&);
         }
+    }
+
+    SECTION("less-than comparison")
+    {
+        auto ptr1 = json::json_pointer("/foo/a");
+        auto ptr2 = json::json_pointer("/foo/b");
+
+        CHECK(ptr1 < ptr2);
+        CHECK_FALSE(ptr2 < ptr1);
+
+        // build with C++20
+        // JSON_HAS_CPP_20
+#if JSON_HAS_THREE_WAY_COMPARISON
+        CHECK((ptr1 <=> ptr2) == std::strong_ordering::less); // *NOPAD*
+        CHECK(ptr2 > ptr1);
+#endif
+    }
+
+    SECTION("usable as map key")
+    {
+        auto ptr = json::json_pointer("/foo");
+        std::map<json::json_pointer, int> m;
+
+        m[ptr] = 42;
+
+        CHECK(m.find(ptr) != m.end());
     }
 
     SECTION("backwards compatibility and mixing")
