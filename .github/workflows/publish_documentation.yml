@@ -23,7 +23,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Install and update PlantUML
-        run: sudo apt-get install -y plantuml
+        run: sudo apt-get update ; sudo apt-get install -y plantuml
 
       - name: Install virtual environment
         run: make install_venv -C docs/mkdocs
