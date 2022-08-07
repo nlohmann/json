@@ -128,6 +128,8 @@ INSERT INTO searchIndex(name, type, path) VALUES ('json_pointer', 'Class', 'api/
 INSERT INTO searchIndex(name, type, path) VALUES ('json_pointer::back', 'Method', 'api/json_pointer/back/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('json_pointer::empty', 'Method', 'api/json_pointer/empty/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('json_pointer::json_pointer', 'Constructor', 'api/json_pointer/json_pointer/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('json_pointer::operator==', 'Operator', 'api/json_pointer/operator_eq/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('json_pointer::operator!=', 'Operator', 'api/json_pointer/operator_ne/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('json_pointer::operator/', 'Operator', 'api/json_pointer/operator_slash/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('json_pointer::operator/=', 'Operator', 'api/json_pointer/operator_slasheq/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('json_pointer::operator string_t', 'Operator', 'api/json_pointer/operator_string_t/index.html');
