@@ -69,6 +69,10 @@ tokens.
     Since C++20 overload resolution will consider the _rewritten candidate_ generated from
     [`operator==`](operator_eq.md).
 
+!!! warning "Deprecation"
+
+    Overload 2 is deprecated and will be removed in a future major version release.
+
 ## Examples
 
 ??? example "Example: (1) Comparing JSON pointers"
@@ -102,4 +106,4 @@ tokens.
 ## Version history
 
 1. Added in version 2.1.0.
-2. Added in version 3.11.2.
+2. Added for backward compatibility and deprecated in version 3.11.2.
