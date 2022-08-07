@@ -240,7 +240,7 @@ class WorkTrees(FileSystemEventHandler):
         self.observer.stop()
         self.observer.join()
 
-class HeaderRequestHandler(SimpleHTTPRequestHandler):
+class HeaderRequestHandler(SimpleHTTPRequestHandler): # lgtm[py/missing-call-to-init]
     def __init__(self, request, client_address, server):
         """."""
         self.worktrees = server.worktrees
