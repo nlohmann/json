@@ -240,7 +240,7 @@ class WorkTrees(FileSystemEventHandler):
         self.observer.stop()
         self.observer.join()
 
-class HeaderRequestHandler(SimpleHTTPRequestHandler):
+class HeaderRequestHandler(SimpleHTTPRequestHandler): # lgtm[py/missing-call-to-init]
     def __init__(self, request, client_address, server):
         """."""
         self.worktrees = server.worktrees
@@ -388,11 +388,11 @@ if __name__ == '__main__':
             if https.get('enabled', True):
                 cert_file = https.get('cert_file', 'localhost.pem')
                 key_file = https.get('key_file', 'localhost-key.pem')
-                ssl.minimum_version = ssl.TLSVersion.TLSv1_3
-                ssl.maximum_version = ssl.TLSVersion.MAXIMUM_SUPPORTED
-                httpd.socket = ssl.wrap_socket(httpd.socket,
-                    certfile=cert_file, keyfile=key_file,
-                    server_side=True, ssl_version=ssl.PROTOCOL_TLS)
+                ssl_ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+                ssl_ctx.minimum_version = ssl.TLSVersion.TLSv1_2
+                ssl_ctx.maximum_version = ssl.TLSVersion.MAXIMUM_SUPPORTED
+                ssl_ctx.load_cert_chain(cert_file, key_file)
+                httpd.socket = ssl_ctx.wrap_socket(httpd.socket, server_side=True)
                 scheme = 'HTTPS'
             host, port = httpd.socket.getsockname()[:2]
             log.info(f'serving {scheme} on {host} port {port}')
@@ -402,8 +402,8 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         log.info('exiting')
     except Exception:
-        log.exception('an error occurred:')
         ec = 1
+        log.exception('an error occurred:')
     finally:
         if worktrees is not None:
             worktrees.stop()
