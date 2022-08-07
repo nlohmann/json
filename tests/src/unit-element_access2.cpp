@@ -14,6 +14,9 @@
     using namespace nlohmann::literals; // NOLINT(google-build-using-namespace)
 #endif
 
+// build test with C++14
+// JSON_HAS_CPP_14
+
 TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_json)
 {
     SECTION("object")
@@ -1488,3 +1491,304 @@ TEST_CASE_TEMPLATE("element access 2 (throwing tests)", Json, nlohmann::json, nl
     }
 }
 #endif
+
+// TODO(falbrechtskirchinger) merge with the other test case; clean up
+TEST_CASE_TEMPLATE("element access 2 (additional value() tests)", Json, nlohmann::json, nlohmann::ordered_json)
+{
+    using string_t = typename Json::string_t;
+    using number_integer_t = typename Json::number_integer_t;
+
+    // test assumes string_t and object_t::key_type are the same
+    REQUIRE(std::is_same<string_t, typename Json::object_t::key_type>::value);
+
+    Json j
+    {
+        {"foo", "bar"},
+        {"baz", 42}
+    };
+
+    const char* cpstr = "default";
+    const char castr[] = "default"; // NOLINT(hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
+    string_t str = "default";
+
+    number_integer_t integer = 69;
+    std::size_t size = 69;
+
+    SECTION("deduced ValueType")
+    {
+        SECTION("literal key")
+        {
+            CHECK(j.value("foo", "default") == "bar");
+            CHECK(j.value("foo", cpstr) == "bar");
+            CHECK(j.value("foo", castr) == "bar");
+            CHECK(j.value("foo", str) == "bar");
+            // this test is in fact different than the one below,
+            // because of 0 considering const char * overloads
+            // where as any other number does not
+            CHECK(j.value("baz", 0) == 42);
+            CHECK(j.value("baz", 47) == 42);
+            CHECK(j.value("baz", integer) == 42);
+            CHECK(j.value("baz", size) == 42);
+
+            CHECK(j.value("bar", "default") == "default");
+            CHECK(j.value("bar", 0) == 0);
+            CHECK(j.value("bar", 47) == 47);
+            CHECK(j.value("bar", integer) == integer);
+            CHECK(j.value("bar", size) == size);
+
+            CHECK_THROWS_WITH_AS(Json().value("foo", "default"), "[json.exception.type_error.306] cannot use value() with null", typename Json::type_error&);
+            CHECK_THROWS_WITH_AS(Json().value("foo", str), "[json.exception.type_error.306] cannot use value() with null", typename Json::type_error&);
+        }
+
+        SECTION("const char * key")
+        {
+            const char* key = "foo";
+            const char* key2 = "baz";
+            const char* key_notfound = "bar";
+
+            CHECK(j.value(key, "default") == "bar");
+            CHECK(j.value(key, cpstr) == "bar");
+            CHECK(j.value(key, castr) == "bar");
+            CHECK(j.value(key, str) == "bar");
+            CHECK(j.value(key2, 0) == 42);
+            CHECK(j.value(key2, 47) == 42);
+            CHECK(j.value(key2, integer) == 42);
+            CHECK(j.value(key2, size) == 42);
+
+            CHECK(j.value(key_notfound, "default") == "default");
+            CHECK(j.value(key_notfound, 0) == 0);
+            CHECK(j.value(key_notfound, 47) == 47);
+            CHECK(j.value(key_notfound, integer) == integer);
+            CHECK(j.value(key_notfound, size) == size);
+
+            CHECK_THROWS_WITH_AS(Json().value(key, "default"), "[json.exception.type_error.306] cannot use value() with null", typename Json::type_error&);
+            CHECK_THROWS_WITH_AS(Json().value(key, str), "[json.exception.type_error.306] cannot use value() with null", typename Json::type_error&);
+        }
+
+        SECTION("const char(&)[] key")
+        {
+            const char key[] = "foo"; // NOLINT(hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
+            const char key2[] = "baz"; // NOLINT(hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
+            const char key_notfound[] = "bar"; // NOLINT(hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
+
+            CHECK(j.value(key, "default") == "bar");
+            CHECK(j.value(key, cpstr) == "bar");
+            CHECK(j.value(key, castr) == "bar");
+            CHECK(j.value(key, str) == "bar");
+            CHECK(j.value(key2, 0) == 42);
+            CHECK(j.value(key2, 47) == 42);
+            CHECK(j.value(key2, integer) == 42);
+            CHECK(j.value(key2, size) == 42);
+
+            CHECK(j.value(key_notfound, "default") == "default");
+            CHECK(j.value(key_notfound, 0) == 0);
+            CHECK(j.value(key_notfound, 47) == 47);
+            CHECK(j.value(key_notfound, integer) == integer);
+            CHECK(j.value(key_notfound, size) == size);
+
+            CHECK_THROWS_WITH_AS(Json().value(key, "default"), "[json.exception.type_error.306] cannot use value() with null", typename Json::type_error&);
+            CHECK_THROWS_WITH_AS(Json().value(key, str), "[json.exception.type_error.306] cannot use value() with null", typename Json::type_error&);
+        }
+
+        SECTION("string_t/object_t::key_type key")
+        {
+            string_t key = "foo";
+            string_t key2 = "baz";
+            string_t key_notfound = "bar";
+
+            CHECK(j.value(key, "default") == "bar");
+            CHECK(j.value(key, cpstr) == "bar");
+            CHECK(j.value(key, castr) == "bar");
+            CHECK(j.value(key, str) == "bar");
+            CHECK(j.value(key2, 0) == 42);
+            CHECK(j.value(key2, 47) == 42);
+            CHECK(j.value(key2, integer) == 42);
+            CHECK(j.value(key2, size) == 42);
+
+            CHECK(j.value(key_notfound, "default") == "default");
+            CHECK(j.value(key_notfound, 0) == 0);
+            CHECK(j.value(key_notfound, 47) == 47);
+            CHECK(j.value(key_notfound, integer) == integer);
+            CHECK(j.value(key_notfound, size) == size);
+
+            CHECK_THROWS_WITH_AS(Json().value(key, "default"), "[json.exception.type_error.306] cannot use value() with null", typename Json::type_error&);
+            CHECK_THROWS_WITH_AS(Json().value(key, str), "[json.exception.type_error.306] cannot use value() with null", typename Json::type_error&);
+        }
+
+#ifdef JSON_HAS_CPP_17
+        SECTION("std::string_view key")
+        {
+            std::string_view key = "foo";
+            std::string_view key2 = "baz";
+            std::string_view key_notfound = "bar";
+
+            CHECK(j.value(key, "default") == "bar");
+            CHECK(j.value(key, cpstr) == "bar");
+            CHECK(j.value(key, castr) == "bar");
+            CHECK(j.value(key, str) == "bar");
+            CHECK(j.value(key2, 0) == 42);
+            CHECK(j.value(key2, 47) == 42);
+            CHECK(j.value(key2, integer) == 42);
+            CHECK(j.value(key2, size) == 42);
+
+            CHECK(j.value(key_notfound, "default") == "default");
+            CHECK(j.value(key_notfound, 0) == 0);
+            CHECK(j.value(key_notfound, 47) == 47);
+            CHECK(j.value(key_notfound, integer) == integer);
+            CHECK(j.value(key_notfound, size) == size);
+
+            CHECK_THROWS_WITH_AS(Json().value(key, "default"), "[json.exception.type_error.306] cannot use value() with null", typename Json::type_error&);
+            CHECK_THROWS_WITH_AS(Json().value(key, str), "[json.exception.type_error.306] cannot use value() with null", typename Json::type_error&);
+        }
+#endif
+    }
+
+    SECTION("explicit ValueType")
+    {
+        SECTION("literal key")
+        {
+            CHECK(j.template value<string_t>("foo", "default") == "bar");
+            CHECK(j.template value<string_t>("foo", cpstr) == "bar");
+            CHECK(j.template value<string_t>("foo", castr) == "bar");
+            CHECK(j.template value<string_t>("foo", str) == "bar");
+            CHECK(j.template value<number_integer_t>("baz", 0) == 42);
+            CHECK(j.template value<number_integer_t>("baz", 47) == 42);
+            CHECK(j.template value<number_integer_t>("baz", integer) == 42);
+            CHECK(j.template value<std::size_t>("baz", 0) == 42);
+            CHECK(j.template value<std::size_t>("baz", 47) == 42);
+            CHECK(j.template value<std::size_t>("baz", size) == 42);
+
+            CHECK(j.template value<string_t>("bar", "default") == "default");
+            CHECK(j.template value<number_integer_t>("bar", 0) == 0);
+            CHECK(j.template value<number_integer_t>("bar", 47) == 47);
+            CHECK(j.template value<number_integer_t>("bar", integer) == integer);
+            CHECK(j.template value<std::size_t>("bar", 0) == 0);
+            CHECK(j.template value<std::size_t>("bar", 47) == 47);
+            CHECK(j.template value<std::size_t>("bar", size) == size);
+
+            CHECK_THROWS_WITH_AS(Json().template value<string_t>("foo", "default"), "[json.exception.type_error.306] cannot use value() with null", typename Json::type_error&);
+            CHECK_THROWS_WITH_AS(Json().template value<string_t>("foo", str), "[json.exception.type_error.306] cannot use value() with null", typename Json::type_error&);
+        }
+
+        SECTION("const char * key")
+        {
+            const char* key = "foo";
+            const char* key2 = "baz";
+            const char* key_notfound = "bar";
+
+            CHECK(j.template value<string_t>(key, "default") == "bar");
+            CHECK(j.template value<string_t>(key, cpstr) == "bar");
+            CHECK(j.template value<string_t>(key, castr) == "bar");
+            CHECK(j.template value<string_t>(key, str) == "bar");
+            CHECK(j.template value<number_integer_t>(key2, 0) == 42);
+            CHECK(j.template value<number_integer_t>(key2, 47) == 42);
+            CHECK(j.template value<number_integer_t>(key2, integer) == 42);
+            CHECK(j.template value<std::size_t>(key2, 0) == 42);
+            CHECK(j.template value<std::size_t>(key2, 47) == 42);
+            CHECK(j.template value<std::size_t>(key2, size) == 42);
+
+            CHECK(j.template value<string_t>(key_notfound, "default") == "default");
+            CHECK(j.template value<number_integer_t>(key_notfound, 0) == 0);
+            CHECK(j.template value<number_integer_t>(key_notfound, 47) == 47);
+            CHECK(j.template value<number_integer_t>(key_notfound, integer) == integer);
+            CHECK(j.template value<std::size_t>(key_notfound, 0) == 0);
+            CHECK(j.template value<std::size_t>(key_notfound, 47) == 47);
+            CHECK(j.template value<std::size_t>(key_notfound, size) == size);
+
+            CHECK_THROWS_WITH_AS(Json().template value<string_t>(key, "default"), "[json.exception.type_error.306] cannot use value() with null", typename Json::type_error&);
+            CHECK_THROWS_WITH_AS(Json().template value<string_t>(key, str), "[json.exception.type_error.306] cannot use value() with null", typename Json::type_error&);
+        }
+
+        SECTION("const char(&)[] key")
+        {
+            const char key[] = "foo"; // NOLINT(hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
+            const char key2[] = "baz"; // NOLINT(hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
+            const char key_notfound[] = "bar"; // NOLINT(hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
+
+            CHECK(j.template value<string_t>(key, "default") == "bar");
+            CHECK(j.template value<string_t>(key, cpstr) == "bar");
+            CHECK(j.template value<string_t>(key, castr) == "bar");
+            CHECK(j.template value<string_t>(key, str) == "bar");
+            CHECK(j.template value<number_integer_t>(key2, 0) == 42);
+            CHECK(j.template value<number_integer_t>(key2, 47) == 42);
+            CHECK(j.template value<number_integer_t>(key2, integer) == 42);
+            CHECK(j.template value<std::size_t>(key2, 0) == 42);
+            CHECK(j.template value<std::size_t>(key2, 47) == 42);
+            CHECK(j.template value<std::size_t>(key2, size) == 42);
+
+            CHECK(j.template value<string_t>(key_notfound, "default") == "default");
+            CHECK(j.template value<number_integer_t>(key_notfound, 0) == 0);
+            CHECK(j.template value<number_integer_t>(key_notfound, 47) == 47);
+            CHECK(j.template value<number_integer_t>(key_notfound, integer) == integer);
+            CHECK(j.template value<std::size_t>(key_notfound, 0) == 0);
+            CHECK(j.template value<std::size_t>(key_notfound, 47) == 47);
+            CHECK(j.template value<std::size_t>(key_notfound, size) == size);
+
+            CHECK_THROWS_WITH_AS(Json().template value<string_t>(key, "default"), "[json.exception.type_error.306] cannot use value() with null", typename Json::type_error&);
+            CHECK_THROWS_WITH_AS(Json().template value<string_t>(key, str), "[json.exception.type_error.306] cannot use value() with null", typename Json::type_error&);
+        }
+
+        SECTION("string_t/object_t::key_type key")
+        {
+            string_t key = "foo";
+            string_t key2 = "baz";
+            string_t key_notfound = "bar";
+
+            CHECK(j.template value<string_t>(key, "default") == "bar");
+            CHECK(j.template value<string_t>(key, cpstr) == "bar");
+            CHECK(j.template value<string_t>(key, castr) == "bar");
+            CHECK(j.template value<string_t>(key, str) == "bar");
+            CHECK(j.template value<number_integer_t>(key2, 0) == 42);
+            CHECK(j.template value<number_integer_t>(key2, 47) == 42);
+            CHECK(j.template value<std::size_t>(key2, 0) == 42);
+            CHECK(j.template value<std::size_t>(key2, 47) == 42);
+
+            CHECK(j.template value<string_t>(key_notfound, "default") == "default");
+            CHECK(j.template value<number_integer_t>(key_notfound, 0) == 0);
+            CHECK(j.template value<number_integer_t>(key_notfound, 47) == 47);
+            CHECK(j.template value<std::size_t>(key_notfound, 0) == 0);
+            CHECK(j.template value<std::size_t>(key_notfound, 47) == 47);
+
+            CHECK_THROWS_WITH_AS(Json().template value<string_t>(key, "default"), "[json.exception.type_error.306] cannot use value() with null", typename Json::type_error&);
+            CHECK_THROWS_WITH_AS(Json().template value<string_t>(key, str), "[json.exception.type_error.306] cannot use value() with null", typename Json::type_error&);
+        }
+
+#ifdef JSON_HAS_CPP_17
+        SECTION("std::string_view key")
+        {
+            std::string_view key = "foo";
+            std::string_view key2 = "baz";
+            std::string_view key_notfound = "bar";
+
+            CHECK(j.template value<string_t>(key, "default") == "bar");
+            CHECK(j.template value<string_t>(key, cpstr) == "bar");
+            CHECK(j.template value<string_t>(key, castr) == "bar");
+            CHECK(j.template value<string_t>(key, str) == "bar");
+            CHECK(j.template value<number_integer_t>(key2, 0) == 42);
+            CHECK(j.template value<number_integer_t>(key2, 47) == 42);
+            CHECK(j.template value<number_integer_t>(key2, integer) == 42);
+            CHECK(j.template value<std::size_t>(key2, 0) == 42);
+            CHECK(j.template value<std::size_t>(key2, 47) == 42);
+            CHECK(j.template value<std::size_t>(key2, size) == 42);
+
+            CHECK(j.template value<string_t>(key_notfound, "default") == "default");
+            CHECK(j.template value<number_integer_t>(key_notfound, 0) == 0);
+            CHECK(j.template value<number_integer_t>(key_notfound, 47) == 47);
+            CHECK(j.template value<number_integer_t>(key_notfound, integer) == integer);
+            CHECK(j.template value<std::size_t>(key_notfound, 0) == 0);
+            CHECK(j.template value<std::size_t>(key_notfound, 47) == 47);
+            CHECK(j.template value<std::size_t>(key_notfound, size) == size);
+
+            CHECK(j.template value<std::string_view>(key, "default") == "bar");
+            CHECK(j.template value<std::string_view>(key, cpstr) == "bar");
+            CHECK(j.template value<std::string_view>(key, castr) == "bar");
+            CHECK(j.template value<std::string_view>(key, str) == "bar");
+
+            CHECK(j.template value<std::string_view>(key_notfound, "default") == "default");
+
+            CHECK_THROWS_WITH_AS(Json().template value<string_t>(key, "default"), "[json.exception.type_error.306] cannot use value() with null", typename Json::type_error&);
+            CHECK_THROWS_WITH_AS(Json().template value<string_t>(key, str), "[json.exception.type_error.306] cannot use value() with null", typename Json::type_error&);
+        }
+#endif
+    }
+}
