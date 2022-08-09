@@ -3,7 +3,7 @@
 ## Introduction
 
 The library supports **JSON Pointer** ([RFC 6901](https://tools.ietf.org/html/rfc6901)) as alternative means to address
-structured values. A JSON Pointer is a string that identifies a specific value withing a JSON document.
+structured values. A JSON Pointer is a string that identifies a specific value within a JSON document.
 
 Consider the following JSON document
 
