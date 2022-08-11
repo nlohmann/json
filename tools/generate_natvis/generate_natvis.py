@@ -4,11 +4,17 @@ import argparse
 import itertools
 import jinja2
 import os
+import re
 import sys
+
+def semver(v):
+    if not re.fullmatch(r'\d+\.\d+\.\d+', v):
+        raise ValueError
+    return v
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--version', required=True, help='Library version number')
+    parser.add_argument('--version', required=True, type=semver, help='Library version number')
     parser.add_argument('output', help='Output directory for nlohmann_json.natvis')
     args = parser.parse_args()
 
@@ -18,11 +24,11 @@ if __name__ == '__main__':
     version = '_v' + args.version.replace('.', '_')
     inline_namespaces = []
 
+    # generate all combinations of inline namespace names
     for n in range(0, len(abi_tags) + 1):
         for tags in itertools.combinations(abi_tags, n):
             ns = abi_prefix + ''.join(tags)
-            inline_namespaces += [ns]
-            inline_namespaces += [ns + version]
+            inline_namespaces += [ns, ns + version]
 
     namespaces += [f'{namespaces[0]}::{ns}' for ns in inline_namespaces]
 
