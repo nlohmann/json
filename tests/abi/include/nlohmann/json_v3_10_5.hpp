@@ -36,8 +36,8 @@ SOFTWARE.
  * file doc/README.md.                                                      *
 \****************************************************************************/
 
-#ifndef INCLUDE_NLOHMANN_JSON_HPP_
-#define INCLUDE_NLOHMANN_JSON_HPP_
+#ifndef INCLUDE_NLOHMANN_JSON_V3_10_5_HPP_
+#define INCLUDE_NLOHMANN_JSON_V3_10_5_HPP_
 
 #define NLOHMANN_JSON_VERSION_MAJOR 3
 #define NLOHMANN_JSON_VERSION_MINOR 10
@@ -22088,4 +22088,4 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 
 
 
-#endif  // INCLUDE_NLOHMANN_JSON_HPP_
+#endif  // INCLUDE_NLOHMANN_JSON_V3_10_5_HPP_

@@ -13,8 +13,8 @@ static void to_bjdata(const basic_json& j, detail::output_adapter<char> o,
                       const bool use_size = false, const bool use_type = false);
 ```
 
-Serializes a given JSON value `j` to a byte vector using the BJData (Binary JData) serialization format. BJData
-aims to be more compact than JSON itself, yet more efficient to parse.
+Serializes a given JSON value `j` to a byte vector using the BJData (Binary JData) serialization format. BJData aims to
+be more compact than JSON itself, yet more efficient to parse.
 
 1. Returns a byte vector containing the BJData serialization.
 2. Writes the BJData serialization to an output adapter.

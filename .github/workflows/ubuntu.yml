@@ -19,9 +19,9 @@ jobs:
     container: ghcr.io/nlohmann/json-ci:v2.4.0
     steps:
       - uses: actions/checkout@v3
-      - name: cmake
+      - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
-      - name: build
+      - name: Build
         run: cmake --build build --target ci_test_clang
 
   ci_test_gcc:
@@ -29,9 +29,9 @@ jobs:
     container: ghcr.io/nlohmann/json-ci:v2.4.0
     steps:
       - uses: actions/checkout@v3
-      - name: cmake
+      - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
-      - name: build
+      - name: Build
         run: cmake --build build --target ci_test_gcc
 
   ci_static_analysis:
@@ -42,9 +42,9 @@ jobs:
         target: [ci_clang_tidy, ci_cppcheck, ci_test_valgrind, ci_test_clang_sanitizer, ci_test_amalgamation, ci_clang_analyze, ci_cpplint, ci_cmake_flags, ci_single_binaries, ci_reproducible_tests, ci_non_git_tests, ci_offline_testdata, ci_infer]
     steps:
       - uses: actions/checkout@v3
-      - name: cmake
+      - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
-      - name: build
+      - name: Build
         run: cmake --build build --target ${{ matrix.target }}
 
   ci_test_single_header:
@@ -52,9 +52,9 @@ jobs:
     container: ghcr.io/nlohmann/json-ci:v2.4.0
     steps:
       - uses: actions/checkout@v3
-      - name: cmake
+      - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
-      - name: build
+      - name: Build
         run: cmake --build build --target ci_test_single_header
 
   ci_cmake_options:
@@ -65,9 +65,9 @@ jobs:
         target: [ci_test_diagnostics, ci_test_noexceptions, ci_test_noimplicitconversions, ci_test_legacycomparison, ci_test_noglobaludls]
     steps:
       - uses: actions/checkout@v3
-      - name: cmake
+      - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
-      - name: build
+      - name: Build
         run: cmake --build build --target ${{ matrix.target }}
 
   ci_test_coverage:
@@ -75,20 +75,20 @@ jobs:
     container: ghcr.io/nlohmann/json-ci:v2.4.0
     steps:
       - uses: actions/checkout@v3
-      - name: cmake
+      - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
-      - name: build
+      - name: Build
         run: cmake --build build --target ci_test_coverage
-      - name: archive coverage report
+      - name: Archive coverage report
         uses: actions/upload-artifact@v3
         with:
           name: code-coverage-report
-          path: /__w/json/json/build/html
-      - name: Coveralls
+          path: ${{ github.workspace }}/build/html
+      - name: Publish report to Coveralls
         uses: coverallsapp/github-action@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          path-to-lcov: /__w/json/json/build/json.info.filtered.noexcept
+          path-to-lcov: ${{ github.workspace }}/build/json.info.filtered.noexcept
 
   ci_test_compilers:
     runs-on: ubuntu-latest
@@ -98,9 +98,9 @@ jobs:
         compiler: [g++-4.8, g++-4.9, g++-5, g++-6, g++-7, g++-8, g++-9, g++-10, g++-11, clang++-3.5, clang++-3.6, clang++-3.7, clang++-3.8, clang++-3.9, clang++-4.0, clang++-5.0, clang++-6.0, clang++-7, clang++-8, clang++-9, clang++-10, clang++-11, clang++-12, clang++-13, clang++-14]
     steps:
       - uses: actions/checkout@v3
-      - name: cmake
+      - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
-      - name: build
+      - name: Build
         run: cmake --build build --target ci_test_compiler_${{ matrix.compiler }}
 
   ci_test_standards:
@@ -112,9 +112,9 @@ jobs:
         compiler: [gcc, clang]
     steps:
       - uses: actions/checkout@v3
-      - name: cmake
+      - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
-      - name: build
+      - name: Build
         run: cmake --build build --target ci_test_${{ matrix.compiler }}_cxx${{ matrix.standard }}
 
   ci_cuda_example:
@@ -122,9 +122,9 @@ jobs:
     container: ghcr.io/nlohmann/json-ci:v2.4.0
     steps:
       - uses: actions/checkout@v3
-      - name: cmake
+      - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
-      - name: build
+      - name: Build
         run: cmake --build build --target ci_cuda_example
 
   ci_icpc:
@@ -132,27 +132,31 @@ jobs:
     container: ghcr.io/nlohmann/json-ci:v2.2.0
     steps:
       - uses: actions/checkout@v2
-      - name: cmake
+      - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
-      - name: build
+      - name: Build
         run: |
           . /opt/intel/oneapi/setvars.sh
           cmake --build build --target ci_icpc
+
   ci_reuse_compliance:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v3
-      - name: install REUSE tool
+      - name: Install REUSE tool
         run:  python -m pip install reuse
-      - name: REUSE lint
+      - name: Run REUSE lint
         run: reuse lint
 
   ci_test_documentation:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [ci_test_examples, ci_test_api_documentation]
     steps:
       - uses: actions/checkout@v3
-      - name: cmake
+      - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
-      - name: build
-        run: cmake --build build --target ci_test_documentation
+      - name: Build
+        run: cmake --build build --target ${{ matrix.target }}

@@ -252,18 +252,18 @@ http://nlohmann.github.io/json/doxygen/classnlohmann_1_1basic__json_a0a45fc74063
 - Fixed documentation of parse function. #1473
 - Suppressed warning that cannot be fixed inside the library. #1401 #1468
 - Imroved package manager suppert:
-	- Updated Buckaroo instructions. #1495
-	- Improved Meson support. #1463
-	- Added Conda package manager documentation. #1430
-	- Added NuGet package manager documentation. #1132
+    - Updated Buckaroo instructions. #1495
+    - Improved Meson support. #1463
+    - Added Conda package manager documentation. #1430
+    - Added NuGet package manager documentation. #1132
 - Continuous Integration
-	- Removed unstable or deprecated Travis builders (Xcode 6.4 - 8.2) and added Xcode 10.1 builder.
-	- Added Clang 7 to Travis CI.
-	- Fixed AppVeyor x64 builds. #1374 #1414
+    - Removed unstable or deprecated Travis builders (Xcode 6.4 - 8.2) and added Xcode 10.1 builder.
+    - Added Clang 7 to Travis CI.
+    - Fixed AppVeyor x64 builds. #1374 #1414
 - Updated thirdparty libraries:
-	- Catch 1.12.0 -> 1.12.2
-	- Google Benchmark 1.3.0 -> 1.4.1
-	- Doxygen 1.8.15 -> 1.8.16
+    - Catch 1.12.0 -> 1.12.2
+    - Google Benchmark 1.3.0 -> 1.4.1
+    - Doxygen 1.8.15 -> 1.8.16
 
 ### :fire: Deprecated functions
 

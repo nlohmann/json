@@ -1,7 +1,7 @@
 import gdb
 import re
 
-ns_pattern = re.compile(r'nlohmann::json_v(?P<v_major>\d+)_(?P<v_minor>\d+)_(?P<v_patch>\d+)(?P<tags>\w*)::(?P<name>.+)')
+ns_pattern = re.compile(r'nlohmann(::json_abi(?P<tags>\w*)(_v(?P<v_major>\d+)_(?P<v_minor>\d+)_(?P<v_patch>\d+))?)?::(?P<name>.+)')
 class JsonValuePrinter:
     "Print a json-value"
 
@@ -26,7 +26,7 @@ def json_lookup_function(val):
                     return gdb.default_visualizer(union_val.dereference())
                 else:
                     return JsonValuePrinter(union_val)
-            except:
+            except Exception:
                 return JsonValuePrinter(val['m_type'])
 
 gdb.pretty_printers.append(json_lookup_function)

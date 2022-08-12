@@ -7,7 +7,7 @@ ValueType value(const typename object_t::key_type& key,
                 ValueType&& default_value) const;
 
 // (2)
-template<class KeyType, class ValueType>
+template<class ValueType, class KeyType>
 ValueType value(KeyType&& key,
                 ValueType&& default_value) const;
 
@@ -155,5 +155,5 @@ changes to any JSON value.
 ## Version history
 
 1. Added in version 1.0.0. Changed parameter `default_value` type from `const ValueType&` to `ValueType&&` in version 3.11.0.
-2. Added in version 3.11.0.
+2. Added in version 3.11.0. Made `ValueType` the first template parameter in version 3.11.2.
 3. Added in version 2.0.2.

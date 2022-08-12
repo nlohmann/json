@@ -589,15 +589,22 @@ file(GLOB_RECURSE INDENT_FILES
     ${PROJECT_SOURCE_DIR}/docs/examples/*.cpp
 )
 
+set(include_dir ${PROJECT_SOURCE_DIR}/single_include/nlohmann)
+set(tool_dir ${PROJECT_SOURCE_DIR}/tools/amalgamate)
 add_custom_target(ci_test_amalgamation
-    COMMAND rm -fr ${PROJECT_SOURCE_DIR}/single_include/nlohmann/json.hpp~
-    COMMAND cp ${PROJECT_SOURCE_DIR}/single_include/nlohmann/json.hpp ${PROJECT_SOURCE_DIR}/single_include/nlohmann/json.hpp~
-    COMMAND ${Python3_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tools/amalgamate/amalgamate.py -c ${PROJECT_SOURCE_DIR}/tools/amalgamate/config.json -s .
-    COMMAND ${ASTYLE_TOOL} ${ASTYLE_FLAGS} --suffix=none --quiet ${PROJECT_SOURCE_DIR}/single_include/nlohmann/json.hpp
-    COMMAND diff ${PROJECT_SOURCE_DIR}/single_include/nlohmann/json.hpp~ ${PROJECT_SOURCE_DIR}/single_include/nlohmann/json.hpp
+    COMMAND rm -fr ${include_dir}/json.hpp~ ${include_dir}/json_fwd.hpp~
+    COMMAND cp ${include_dir}/json.hpp ${include_dir}/json.hpp~
+    COMMAND cp ${include_dir}/json_fwd.hpp ${include_dir}/json_fwd.hpp~
+
+    COMMAND ${Python3_EXECUTABLE} ${tool_dir}/amalgamate.py -c ${tool_dir}/config_json.json -s .
+    COMMAND ${Python3_EXECUTABLE} ${tool_dir}/amalgamate.py -c ${tool_dir}/config_json_fwd.json -s .
+    COMMAND ${ASTYLE_TOOL} ${ASTYLE_FLAGS} --suffix=none --quiet ${include_dir}/json.hpp ${include_dir}/json_fwd.hpp
+
+    COMMAND diff ${include_dir}/json.hpp~ ${include_dir}/json.hpp
+    COMMAND diff ${include_dir}/json_fwd.hpp~ ${include_dir}/json_fwd.hpp
 
     COMMAND ${ASTYLE_TOOL} ${ASTYLE_FLAGS} ${INDENT_FILES}
-    COMMAND cd ${PROJECT_SOURCE_DIR} && for FILE in `find . -name '*.orig'`\; do false \; done
+    COMMAND for FILE in `find . -name '*.orig'`\; do false \; done
 
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
     COMMENT "Check amalgamation and indentation"
@@ -953,10 +960,16 @@ add_custom_target(ci_icpc
 # test documentation
 ###############################################################################
 
-add_custom_target(ci_test_documentation
+add_custom_target(ci_test_examples
     COMMAND make CXX="${GCC_TOOL}" check_output_portable -j8
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/docs
     COMMENT "Check that all examples compile and create the desired output"
+)
+
+add_custom_target(ci_test_api_documentation
+    COMMAND ${Python3_EXECUTABLE} scripts/check_structure.py
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/docs/mkdocs
+    COMMENT "Lint the API documentation"
 )
 
 ###############################################################################

@@ -2,9 +2,10 @@
 
 ## Overview
 
-With a parser callback function, the result of parsing a JSON text can be influenced. When passed to `parse`, it is called on certain events
-(passed as `parse_event_t` via parameter `event`) with a set recursion depth `depth` and context JSON value `parsed`. The return value of the
-callback function is a boolean indicating whether the element that emitted the callback shall be kept or not.
+With a parser callback function, the result of parsing a JSON text can be influenced. When passed to `parse`, it is
+called on certain events (passed as `parse_event_t` via parameter `event`) with a set recursion depth `depth` and
+context JSON value `parsed`. The return value of the callback function is a boolean indicating whether the element that
+emitted the callback shall be kept or not.
 
 The type of the callback function is:
 
@@ -17,8 +18,8 @@ using parser_callback_t =
 
 ## Callback event types
 
-We distinguish six scenarios (determined by the event type) in which the callback function can be called. The following table describes the values
-of the parameters `depth`, `event`, and `parsed`.
+We distinguish six scenarios (determined by the event type) in which the callback function can be called. The following
+table describes the values of the parameters `depth`, `event`, and `parsed`.
 
 | parameter `event`             | description                                               | parameter `depth`                         | parameter `parsed`               |
 |-------------------------------|-----------------------------------------------------------|-------------------------------------------|----------------------------------|
@@ -59,10 +60,13 @@ of the parameters `depth`, `event`, and `parsed`.
 
 ## Return value
 
-Discarding a value (i.e., returning `#!c false`) has different effects depending on the context in which function was called:
+Discarding a value (i.e., returning `#!c false`) has different effects depending on the context in which the function
+was called:
 
-- Discarded values in structured types are skipped. That is, the parser will behave as if the discarded value was never read.
-- In case a value outside a structured type is skipped, it is replaced with `#!json null`. This case happens if the top-level element is skipped.
+- Discarded values in structured types are skipped. That is, the parser will behave as if the discarded value was never
+  read.
+- In case a value outside a structured type is skipped, it is replaced with `#!json null`. This case happens if the
+  top-level element is skipped.
 
 ??? example
 

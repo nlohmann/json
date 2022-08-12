@@ -1,10 +1,11 @@
 # UBJSON
 
-Universal Binary JSON (UBJSON) is a binary form directly imitating JSON, but requiring fewer bytes of data. It aims to achieve the generality of JSON, combined with being much easier to process than JSON.
+Universal Binary JSON (UBJSON) is a binary form directly imitating JSON, but requiring fewer bytes of data. It aims to
+achieve the generality of JSON, combined with being much easier to process than JSON.
 
 !!! abstract "References"
 
-	- [UBJSON Website](http://ubjson.org)
+    - [UBJSON Website](http://ubjson.org)
 
 ## Serialization
 
@@ -36,50 +37,43 @@ The library uses the following mapping from JSON values types to UBJSON types ac
 
 !!! success "Complete mapping"
 
-	The mapping is **complete** in the sense that any JSON value type can be converted to a UBJSON value.
+    The mapping is **complete** in the sense that any JSON value type can be converted to a UBJSON value.
 
-	Any UBJSON output created by `to_ubjson` can be successfully parsed by `from_ubjson`.
+    Any UBJSON output created by `to_ubjson` can be successfully parsed by `from_ubjson`.
 
 !!! warning "Size constraints"
 
-	The following values can **not** be converted to a UBJSON value:
+    The following values can **not** be converted to a UBJSON value:
 
       - strings with more than 9223372036854775807 bytes (theoretical)
 
 !!! info "Unused UBJSON markers"
 
-	The following markers are not used in the conversion:
+    The following markers are not used in the conversion:
     
     - `Z`: no-op values are not created.
     - `C`: single-byte strings are serialized with `S` markers.
 
 !!! info "NaN/infinity handling"
 
-	If NaN or Infinity are stored inside a JSON number, they are
-    serialized properly. This behavior differs from the `dump()`
-    function which serializes NaN or Infinity to `null`.
+    If NaN or Infinity are stored inside a JSON number, they are serialized properly. This behavior differs from the
+    `dump()` function which serializes NaN or Infinity to `null`.
 
 !!! info "Optimized formats"
 
-	The optimized formats for containers are supported: Parameter
-    `use_size` adds size information to the beginning of a container and
-    removes the closing marker. Parameter `use_type` further checks
-    whether all elements of a container have the same type and adds the
-    type marker to the beginning of the container. The `use_type`
-    parameter must only be used together with `use_size = true`.
+    The optimized formats for containers are supported: Parameter `use_size` adds size information to the beginning of a
+    container and removes the closing marker. Parameter `use_type` further checks whether all elements of a container
+    have the same type and adds the type marker to the beginning of the container. The `use_type` parameter must only be
+    used together with `use_size = true`.
 
-    Note that `use_size = true` alone may result in larger representations -
-    the benefit of this parameter is that the receiving side is
-    immediately informed on the number of elements of the container.
+    Note that `use_size = true` alone may result in larger representations - the benefit of this parameter is that the
+    receiving side is immediately informed on the number of elements of the container.
 
 !!! info "Binary values"
 
-	If the JSON data contains the binary type, the value stored is a list
-    of integers, as suggested by the UBJSON documentation.  In particular,
-    this means that serialization and the deserialization of a JSON
-    containing binary values into UBJSON and back will result in a
-    different JSON object.
-
+    If the JSON data contains the binary type, the value stored is a list of integers, as suggested by the UBJSON
+    documentation.  In particular, this means that serialization and the deserialization of a JSON containing binary
+    values into UBJSON and back will result in a different JSON object.
 
 ??? example
 
@@ -117,8 +111,7 @@ The library maps UBJSON types to JSON value types as follows:
 
 !!! success "Complete mapping"
 
-	The mapping is **complete** in the sense that any UBJSON value can be converted to a JSON value.
-
+    The mapping is **complete** in the sense that any UBJSON value can be converted to a JSON value.
 
 ??? example
 

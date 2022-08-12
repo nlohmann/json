@@ -1,6 +1,6 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
-// |  |  |__   |  |  | | | |  version 3.11.1
+// |  |  |__   |  |  | | | |  version 3.11.2
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
@@ -15,6 +15,7 @@ using nlohmann::json;
     using namespace nlohmann::literals; // NOLINT(google-build-using-namespace)
 #endif
 
+#include <map>
 #include <sstream>
 
 TEST_CASE("JSON pointers")
@@ -651,11 +652,76 @@ TEST_CASE("JSON pointers")
 
     SECTION("equality comparison")
     {
-        auto ptr1 = json::json_pointer("/foo/bar");
-        auto ptr2 = json::json_pointer("/foo/bar");
+        const char* ptr_cpstring = "/foo/bar";
+        const char ptr_castring[] = "/foo/bar"; // NOLINT(hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
+        std::string ptr_string{"/foo/bar"};
+        auto ptr1 = json::json_pointer(ptr_string);
+        auto ptr2 = json::json_pointer(ptr_string);
+
+        // build with C++20 to test rewritten candidates
+        // JSON_HAS_CPP_20
 
         CHECK(ptr1 == ptr2);
+
+        CHECK(ptr1 == "/foo/bar");
+        CHECK(ptr1 == ptr_cpstring);
+        CHECK(ptr1 == ptr_castring);
+        CHECK(ptr1 == ptr_string);
+
+        CHECK("/foo/bar" == ptr1);
+        CHECK(ptr_cpstring == ptr1);
+        CHECK(ptr_castring == ptr1);
+        CHECK(ptr_string == ptr1);
+
         CHECK_FALSE(ptr1 != ptr2);
+
+        CHECK_FALSE(ptr1 != "/foo/bar");
+        CHECK_FALSE(ptr1 != ptr_cpstring);
+        CHECK_FALSE(ptr1 != ptr_castring);
+        CHECK_FALSE(ptr1 != ptr_string);
+
+        CHECK_FALSE("/foo/bar" != ptr1);
+        CHECK_FALSE(ptr_cpstring != ptr1);
+        CHECK_FALSE(ptr_castring != ptr1);
+        CHECK_FALSE(ptr_string != ptr1);
+
+        SECTION("exceptions")
+        {
+            CHECK_THROWS_WITH_AS(ptr1 == "foo",
+                                 "[json.exception.parse_error.107] parse error at byte 1: JSON pointer must be empty or begin with '/' - was: 'foo'", json::parse_error&);
+            CHECK_THROWS_WITH_AS("foo" == ptr1,
+                                 "[json.exception.parse_error.107] parse error at byte 1: JSON pointer must be empty or begin with '/' - was: 'foo'", json::parse_error&);
+            CHECK_THROWS_WITH_AS(ptr1 == "/~~",
+                                 "[json.exception.parse_error.108] parse error: escape character '~' must be followed with '0' or '1'", json::parse_error&);
+            CHECK_THROWS_WITH_AS("/~~" == ptr1,
+                                 "[json.exception.parse_error.108] parse error: escape character '~' must be followed with '0' or '1'", json::parse_error&);
+        }
+    }
+
+    SECTION("less-than comparison")
+    {
+        auto ptr1 = json::json_pointer("/foo/a");
+        auto ptr2 = json::json_pointer("/foo/b");
+
+        CHECK(ptr1 < ptr2);
+        CHECK_FALSE(ptr2 < ptr1);
+
+        // build with C++20
+        // JSON_HAS_CPP_20
+#if JSON_HAS_THREE_WAY_COMPARISON
+        CHECK((ptr1 <=> ptr2) == std::strong_ordering::less); // *NOPAD*
+        CHECK(ptr2 > ptr1);
+#endif
+    }
+
+    SECTION("usable as map key")
+    {
+        auto ptr = json::json_pointer("/foo");
+        std::map<json::json_pointer, int> m;
+
+        m[ptr] = 42;
+
+        CHECK(m.find(ptr) != m.end());
     }
 
     SECTION("backwards compatibility and mixing")
@@ -676,9 +742,10 @@ TEST_CASE("JSON pointers")
         CHECK(std::is_same<json_ptr_str::string_t, json_ptr_j::string_t>::value);
         CHECK(std::is_same<json_ptr_str::string_t, json_ptr_oj::string_t>::value);
 
-        json_ptr_str ptr{"/foo/0"};
-        json_ptr_j ptr_j{"/foo/0"};
-        json_ptr_oj ptr_oj{"/foo/0"};
+        std::string ptr_string{"/foo/0"};
+        json_ptr_str ptr{ptr_string};
+        json_ptr_j ptr_j{ptr_string};
+        json_ptr_oj ptr_oj{ptr_string};
 
         CHECK(j.contains(ptr));
         CHECK(j.contains(ptr_j));
@@ -697,5 +764,25 @@ TEST_CASE("JSON pointers")
         CHECK(ptr == ptr_oj);
         CHECK_FALSE(ptr != ptr_j);
         CHECK_FALSE(ptr != ptr_oj);
+
+        SECTION("equality comparison")
+        {
+            // build with C++20 to test rewritten candidates
+            // JSON_HAS_CPP_20
+
+            CHECK(ptr == ptr_j);
+            CHECK(ptr == ptr_oj);
+            CHECK(ptr_j == ptr);
+            CHECK(ptr_j == ptr_oj);
+            CHECK(ptr_oj == ptr_j);
+            CHECK(ptr_oj == ptr);
+
+            CHECK_FALSE(ptr != ptr_j);
+            CHECK_FALSE(ptr != ptr_oj);
+            CHECK_FALSE(ptr_j != ptr);
+            CHECK_FALSE(ptr_j != ptr_oj);
+            CHECK_FALSE(ptr_oj != ptr_j);
+            CHECK_FALSE(ptr_oj != ptr);
+        }
     }
 }

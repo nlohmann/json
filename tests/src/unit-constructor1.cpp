@@ -1,6 +1,6 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
-// |  |  |__   |  |  | | | |  version 3.11.1
+// |  |  |__   |  |  | | | |  version 3.11.2
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
@@ -454,10 +454,19 @@ TEST_CASE("constructors")
             CHECK(j.type() == json::value_t::boolean);
         }
 
-        SECTION("from std::vector<bool>::refrence")
+        SECTION("from std::vector<bool>::reference")
         {
             std::vector<bool> v{true};
             json j(v[0]);
+            CHECK(std::is_same<decltype(v[0]), std::vector<bool>::reference>::value);
+            CHECK(j.type() == json::value_t::boolean);
+        }
+
+        SECTION("from std::vector<bool>::const_reference")
+        {
+            const std::vector<bool> v{true};
+            json j(v[0]);
+            CHECK(std::is_same<decltype(v[0]), std::vector<bool>::const_reference>::value);
             CHECK(j.type() == json::value_t::boolean);
         }
     }

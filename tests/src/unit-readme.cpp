@@ -1,6 +1,6 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
-// |  |  |__   |  |  | | | |  version 3.11.1
+// |  |  |__   |  |  | | | |  version 3.11.2
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
@@ -106,12 +106,10 @@ TEST_CASE("README" * doctest::skip())
             json j = "{ \"happy\": true, \"pi\": 3.141 }"_json; // NOLINT(modernize-raw-string-literal)
 
             // or even nicer with a raw string literal
-            auto j2 = R"(
-          {
-            "happy": true,
-            "pi": 3.141
-          }
-        )"_json;
+            auto j2 = R"({
+                "happy": true,
+                "pi": 3.141
+            })"_json;
 
             // or explicitly
             auto j3 = json::parse(R"({"happy": true, "pi": 3.141})");
@@ -160,10 +158,10 @@ TEST_CASE("README" * doctest::skip())
             CHECK(foo == true);
 
             // other stuff
-            j.size();     // 3 entries
-            j.empty();    // false
-            j.type();     // json::value_t::array
-            j.clear();    // the array is empty again
+            CHECK(j.size() == 3);                     // 3 entries
+            CHECK_FALSE(j.empty());                   // false
+            CHECK(j.type() == json::value_t::array);  // json::value_t::array
+            j.clear();                                // the array is empty again
 
             // create an object
             json o;
@@ -172,6 +170,7 @@ TEST_CASE("README" * doctest::skip())
             o["baz"] = 3.141;
 
             // find an entry
+            CHECK(o.find("foo") != o.end());
             if (o.find("foo") != o.end())
             {
                 // there is an entry with key "foo"
@@ -266,9 +265,9 @@ TEST_CASE("README" * doctest::skip())
         {
             // a JSON value
             json j_original = R"({
-          "baz": ["one", "two", "three"],
-          "foo": "bar"
-        })"_json;
+                "baz": ["one", "two", "three"],
+                "foo": "bar"
+            })"_json;
 
             // access members with a JSON pointer (RFC 6901)
             j_original["/baz/1"_json_pointer];
@@ -276,10 +275,10 @@ TEST_CASE("README" * doctest::skip())
 
             // a JSON patch (RFC 6902)
             json j_patch = R"([
-          { "op": "replace", "path": "/baz", "value": "boo" },
-          { "op": "add", "path": "/hello", "value": ["world"] },
-          { "op": "remove", "path": "/foo"}
-        ])"_json;
+                { "op": "replace", "path": "/baz", "value": "boo" },
+                { "op": "add", "path": "/hello", "value": ["world"] },
+                { "op": "remove", "path": "/foo"}
+            ])"_json;
 
             // apply the patch
             json j_result = j_original.patch(j_patch);

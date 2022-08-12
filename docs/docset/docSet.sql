@@ -128,6 +128,8 @@ INSERT INTO searchIndex(name, type, path) VALUES ('json_pointer', 'Class', 'api/
 INSERT INTO searchIndex(name, type, path) VALUES ('json_pointer::back', 'Method', 'api/json_pointer/back/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('json_pointer::empty', 'Method', 'api/json_pointer/empty/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('json_pointer::json_pointer', 'Constructor', 'api/json_pointer/json_pointer/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('json_pointer::operator==', 'Operator', 'api/json_pointer/operator_eq/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('json_pointer::operator!=', 'Operator', 'api/json_pointer/operator_ne/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('json_pointer::operator/', 'Operator', 'api/json_pointer/operator_slash/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('json_pointer::operator/=', 'Operator', 'api/json_pointer/operator_slasheq/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('json_pointer::operator string_t', 'Operator', 'api/json_pointer/operator_string_t/index.html');
@@ -181,6 +183,7 @@ INSERT INTO searchIndex(name, type, path) VALUES ('Iterators', 'Guide', 'feature
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON Merge Patch', 'Guide', 'features/merge_patch/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON Patch and Diff', 'Guide', 'features/json_patch/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON Pointer', 'Guide', 'features/json_pointer/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('nlohmann Namespace', 'Guide', 'features/namespace/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('Types', 'Guide', 'features/types/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('Types: Number Handling', 'Guide', 'features/types/number_handling/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('Object Order', 'Guide', 'features/object_order/index.html');
@@ -223,6 +226,7 @@ INSERT INTO searchIndex(name, type, path) VALUES ('NLOHMANN_DEFINE_TYPE_NON_INTR
 INSERT INTO searchIndex(name, type, path) VALUES ('NLOHMANN_JSON_NAMESPACE', 'Macro', 'api/macros/nlohmann_json_namespace/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('NLOHMANN_JSON_NAMESPACE_BEGIN', 'Macro', 'api/macros/nlohmann_json_namespace_begin/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('NLOHMANN_JSON_NAMESPACE_END', 'Macro', 'api/macros/nlohmann_json_namespace_begin/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('NLOHMANN_JSON_NAMESPACE_NO_VERSION', 'Macro', 'api/macros/nlohmann_json_namespace_no_version/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('NLOHMANN_JSON_SERIALIZE_ENUM', 'Macro', 'api/macros/nlohmann_json_serialize_enum/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('NLOHMANN_JSON_VERSION_MAJOR', 'Macro', 'api/macros/nlohmann_json_version_major/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('NLOHMANN_JSON_VERSION_MINOR', 'Macro', 'api/macros/nlohmann_json_version_major/index.html');

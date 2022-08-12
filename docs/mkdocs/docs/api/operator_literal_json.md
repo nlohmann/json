@@ -15,8 +15,9 @@ using namespace nlohmann::json_literals;
 using namespace nlohmann::literals::json_literals;
 using namespace nlohmann;
 ```
-This is suggested to ease migration to the next major version release of the library.
-See ['JSON_USE_GLOBAL_UDLS`](macros/json_use_global_udls.md#notes) for details.
+
+This is suggested to ease migration to the next major version release of the library. See
+['JSON_USE_GLOBAL_UDLS`](macros/json_use_global_udls.md#notes) for details.
 
 ## Parameters
 

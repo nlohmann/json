@@ -15,37 +15,37 @@ concurrency:
 
 jobs:
   xcode_1:
-    runs-on: macos-10.15
+    runs-on: macos-11
     strategy:
       matrix:
-        xcode: [12.4, 12.3, 12.2, 12.1.1, 12.1, 12, 11.7, 11.6, 11.5, 11.4.1, 11.3.1, 11.2.1, 10.3]
+        xcode: ['11.7', '12.4', '12.5.1', '13.0']
     env:
       DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode }}.app/Contents/Developer
 
     steps:
       - uses: actions/checkout@v3
-      - name: cmake
+      - name: Run CMake
         run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On -DJSON_FastTests=ON
-      - name: build
+      - name: Build
         run: cmake --build build --parallel 10
-      - name: test
+      - name: Test
         run: cd build ; ctest -j 10 --output-on-failure
 
   xcode_2:
     runs-on: macos-12
     strategy:
       matrix:
-        xcode: [13.3.1, 13.3, 13.2.1, 13.2, 13.1]
+        xcode: ['13.1', '13.2.1', '13.3.1', '13.4.1']
     env:
       DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode }}.app/Contents/Developer
 
     steps:
       - uses: actions/checkout@v3
-      - name: cmake
+      - name: Run CMake
         run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On -DJSON_FastTests=ON
-      - name: build
+      - name: Build
         run: cmake --build build --parallel 10
-      - name: test
+      - name: Test
         run: cd build ; ctest -j 10 --output-on-failure
 
   xcode_standards:
@@ -58,9 +58,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - name: cmake
+      - name: Run CMake
         run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On -DJSON_TestStandards=${{ matrix.standard }}
-      - name: build
+      - name: Build
         run: cmake --build build --parallel 10
-      - name: test
+      - name: Test
         run: cd build ; ctest -j 10 --output-on-failure

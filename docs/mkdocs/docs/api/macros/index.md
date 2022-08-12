@@ -32,7 +32,10 @@ header. See also the [macro overview page](../../features/macros.md).
 ## Library namespace
 
 - [**NLOHMANN_JSON_NAMESPACE**](nlohmann_json_namespace.md) - full name of the `nlohmann` namespace
-- [**NLOHMANN_JSON_NAMESPACE_BEGIN**<br>**NLOHMANN_JSON_NAMESPACE_END**](nlohmann_json_namespace_begin.md) - open and close the library namespace
+- [**NLOHMANN_JSON_NAMESPACE_BEGIN**<br>**NLOHMANN_JSON_NAMESPACE_END**](nlohmann_json_namespace_begin.md) - open and
+  close the library namespace
+- [**NLOHMANN_JSON_NAMESPACE_NO_VERSION**](nlohmann_json_namespace_no_version.md) - disable the version component of
+  the inline namespace
 
 ## Type conversions
 

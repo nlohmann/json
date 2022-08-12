@@ -23,7 +23,7 @@ It is safe to move the passed object key value.
 
 ??? example
 
-    .The example below shows how the SAX interface is used.
+    The example below shows how the SAX interface is used.
 
     ```cpp
     --8<-- "examples/sax_parse.cpp"

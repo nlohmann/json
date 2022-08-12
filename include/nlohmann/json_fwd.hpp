@@ -1,6 +1,6 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
-// |  |  |__   |  |  | | | |  version 3.11.1
+// |  |  |__   |  |  | | | |  version 3.11.2
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
@@ -51,7 +51,7 @@ class basic_json;
 
 /// @brief JSON Pointer defines a string syntax for identifying a specific value within a JSON document
 /// @sa https://json.nlohmann.me/api/json_pointer/
-template<typename BasicJsonType>
+template<typename RefStringType>
 class json_pointer;
 
 /*!

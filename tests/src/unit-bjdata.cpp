@@ -1,6 +1,6 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
-// |  |  |__   |  |  | | | |  version 3.11.1
+// |  |  |__   |  |  | | | |  version 3.11.2
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
@@ -8,11 +8,13 @@
 
 #include "doctest_compatibility.h"
 
-#include <climits>
-#include <limits>
+#define JSON_TESTS_PRIVATE
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+#include <algorithm>
+#include <climits>
+#include <limits>
 #include <iostream>
 #include <fstream>
 #include <set>
@@ -205,6 +207,17 @@ TEST_CASE_TEMPLATE_INVOKE(value_in_range_of_test, \
 
 TEST_CASE("BJData")
 {
+    SECTION("binary_reader BJData LUT arrays are sorted")
+    {
+        std::vector<std::uint8_t> data;
+        auto ia = nlohmann::detail::input_adapter(data);
+        // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
+        nlohmann::detail::binary_reader<json, decltype(ia)> br{std::move(ia), json::input_format_t::bjdata};
+
+        CHECK(std::is_sorted(br.bjd_optimized_type_markers.begin(), br.bjd_optimized_type_markers.end()));
+        CHECK(std::is_sorted(br.bjd_types_map.begin(), br.bjd_types_map.end()));
+    }
+
     SECTION("individual values")
     {
         SECTION("discarded")

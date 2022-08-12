@@ -52,10 +52,8 @@ functions [`is_null`](is_null.md), [`is_object`](is_object.md), [`is_array`](is_
 
     `operator<` and `operator<=>` (since C++20) are overloaded and compare according to the ordering described above.
     Until C++20 all other relational and equality operators yield results according to the integer value of each
-    enumerator.
-    Since C++20 some compilers consider the _rewritten candidates_ generated from `operator<=>` during overload
-    resolution, while others do not.
-    For predictable and portable behavior use:
+    enumerator. Since C++20 some compilers consider the _rewritten candidates_ generated from `operator<=>` during
+    overload resolution, while others do not. For predictable and portable behavior use:
 
       - `operator<` or `operator<=>` when wanting to compare according to the order described above
       - `operator==` or `operator!=` when wanting to compare according to each enumerators integer value

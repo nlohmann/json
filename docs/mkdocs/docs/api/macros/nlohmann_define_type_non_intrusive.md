@@ -7,9 +7,9 @@
 
 These macros can be used to simplify the serialization/deserialization of types if you want to use a JSON object as
 serialization and want to use the member variable names as object keys in that object. The macro is to be defined
-**outside** the class/struct to create code for, but **inside** its namespace.
-Unlike [`NLOHMANN_DEFINE_TYPE_INTRUSIVE`](nlohmann_define_type_intrusive.md), it **cannot** access private members.
-The first parameter is the name of the class/struct, and all remaining parameters name the members.
+**outside** the class/struct to create code for, but **inside** its namespace. Unlike
+[`NLOHMANN_DEFINE_TYPE_INTRUSIVE`](nlohmann_define_type_intrusive.md), it **cannot** access private members. The first
+parameter is the name of the class/struct, and all remaining parameters name the members.
 
 1. Will use [`at`](../basic_json/at.md) during deserialization and will throw
    [`out_of_range.403`](../../home/exceptions.md#jsonexceptionout_of_range403) if a key is missing in the JSON object.
@@ -103,7 +103,8 @@ See examples below for the concrete generated code.
     - `ns::person` is default-constructible. This is a requirement for using the macro.
     - `ns::person` has only public member variables. This makes `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT`
       applicable.
-    - The macro `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT` is used _outside_ the class, but _inside_ its namespace `ns`.
+    - The macro `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT` is used _outside_ the class, but _inside_ its
+      namespace `ns`.
     - A missing key "age" in the deserialization does not yield an exception. Instead, the default value `-1` is used.
 
     The macro is equivalent to:

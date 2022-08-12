@@ -3,6 +3,7 @@
 import glob
 import os.path
 import re
+import sys
 
 warnings = 0
 
@@ -74,6 +75,12 @@ def check_structure():
                 # lines longer than 160 characters are bad (unless they are tables)
                 if len(line) > 160 and '|' not in line:
                     report('whitespace/line_length', f'{file}:{lineno+1} ({current_section})', f'line is too long ({len(line)} vs. 160 chars)')
+
+                # sections in `<!-- NOLINT -->` comments are treated as present
+                if line.startswith('<!-- NOLINT'):
+                    current_section = line.strip('<!-- NOLINT')
+                    current_section = current_section.strip(' -->')
+                    existing_sections.append(current_section)
 
                 # check if sections are correct
                 if line.startswith('## '):
@@ -167,3 +174,6 @@ if __name__ == '__main__':
     check_structure()
     check_examples()
     print(120 * '-')
+
+    if warnings > 0:
+        sys.exit(1)

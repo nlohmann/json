@@ -4,8 +4,8 @@
 #define JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON /* value */
 ```
 
-This macro enables the (incorrect) legacy comparison behavior of discarded JSON values.
-Possible values are `1` to enable or `0` to disable (default).
+This macro enables the (incorrect) legacy comparison behavior of discarded JSON values. Possible values are `1` to
+enable or `0` to disable (default).
 
 When enabled, comparisons involving at least one discarded JSON value yield results as follows:
 
@@ -42,19 +42,16 @@ When the macro is not defined, the library will define it to its default value.
         `JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON`.
       - Overloads for the equality and relational operators emulate the legacy behavior.
 
-    Code outside your control may use either 3-way comparison or the equality and
-    relational operators, resulting in inconsistent and unpredictable behavior.
+    Code outside your control may use either 3-way comparison or the equality and relational operators, resulting in
+    inconsistent and unpredictable behavior.
 
-    See [`operator<=>`](../basic_json/operator_spaceship.md) for more information on 3-way
-    comparison.
+    See [`operator<=>`](../basic_json/operator_spaceship.md) for more information on 3-way comparison.
 
 !!! warning "Deprecation"
 
-    The legacy comparison behavior is deprecated and may be removed in a future major
-    version release.
+    The legacy comparison behavior is deprecated and may be removed in a future major version release.
 
-    New code should not depend on it and existing code should try to remove or rewrite
-    expressions relying on it.
+    New code should not depend on it and existing code should try to remove or rewrite expressions relying on it.
 
 !!! hint "CMake option"
 
