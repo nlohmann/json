@@ -1,6 +1,6 @@
 {
   "name": "JSON for Modern C++",
-  "version": "3.11.1",
+  "version": "3.11.2",
   "archive": "JSON_for_Modern_C++.tgz",
   "author": {
     "name": "Niels Lohmann",
