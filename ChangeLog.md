@@ -1,9 +1,49 @@
 # Changelog
 All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [3.11.1](https://github.com/nlohmann/json/releases/tag/3.11.1) (2022-08-01)
+## [3.11.2](https://github.com/nlohmann/json/releases/tag/3.11.2) (2022-08-12)
 
-[Full Changelog](https://github.com/nlohmann/json/compare/v3.11.0...3.11.1)
+[Full Changelog](https://github.com/nlohmann/json/compare/v3.11.1...3.11.2)
+
+- MSVC natvis visualizer does not work after introduction of inline ABI namespace [\#3696](https://github.com/nlohmann/json/issues/3696)
+- The use of parenthesis gives compilation errors in some situations [\#3682](https://github.com/nlohmann/json/issues/3682)
+- extern from/to\_json result in linker error [\#3657](https://github.com/nlohmann/json/issues/3657)
+- json\_fwd.hpp no longer standalone [\#3656](https://github.com/nlohmann/json/issues/3656)
+- regression: `.value<size_t>` is compilation error. [\#3655](https://github.com/nlohmann/json/issues/3655)
+- Regression: no match for 'operator!=' comparing json\_pointer and const char \*/string\_t [\#3654](https://github.com/nlohmann/json/issues/3654)
+- Regression: call to member function 'value' is ambiguous [\#3652](https://github.com/nlohmann/json/issues/3652)
+- macOS 10.15 Actions runner image deprecation [\#3612](https://github.com/nlohmann/json/issues/3612)
+
+- generate\_natvis.py: validate version number; cleanup [\#3698](https://github.com/nlohmann/json/pull/3698) ([falbrechtskirchinger](https://github.com/falbrechtskirchinger))
+- Add Python script for generating Natvis file and update file for 3.11.2 [\#3697](https://github.com/nlohmann/json/pull/3697) ([falbrechtskirchinger](https://github.com/falbrechtskirchinger))
+- fix typo in json\_pointer.md [\#3692](https://github.com/nlohmann/json/pull/3692) ([eltociear](https://github.com/eltociear))
+- Add amalgamated json-fwd.hpp to release [\#3687](https://github.com/nlohmann/json/pull/3687) ([nlohmann](https://github.com/nlohmann))
+- Documentation updates for 3.11.2 [\#3686](https://github.com/nlohmann/json/pull/3686) ([falbrechtskirchinger](https://github.com/falbrechtskirchinger))
+- Make json\_pointer usable as map key \(again\) [\#3685](https://github.com/nlohmann/json/pull/3685) ([falbrechtskirchinger](https://github.com/falbrechtskirchinger))
+- Deprecate json\_pointer/string\_t comparisons [\#3684](https://github.com/nlohmann/json/pull/3684) ([falbrechtskirchinger](https://github.com/falbrechtskirchinger))
+- Restructure inline namespace and allow version component to be disabled [\#3683](https://github.com/nlohmann/json/pull/3683) ([falbrechtskirchinger](https://github.com/falbrechtskirchinger))
+- Properly constrain non-string json\_pointer overloads [\#3681](https://github.com/nlohmann/json/pull/3681) ([falbrechtskirchinger](https://github.com/falbrechtskirchinger))
+- Amalgamate the forward declaration header [\#3679](https://github.com/nlohmann/json/pull/3679) ([falbrechtskirchinger](https://github.com/falbrechtskirchinger))
+- Fix 'const' qualifier on bool& has no effect [\#3678](https://github.com/nlohmann/json/pull/3678) ([falbrechtskirchinger](https://github.com/falbrechtskirchinger))
+- Fix whitespace in workflow files [\#3675](https://github.com/nlohmann/json/pull/3675) ([nlohmann](https://github.com/nlohmann))
+- Attempt to fix labeler permissions [\#3674](https://github.com/nlohmann/json/pull/3674) ([falbrechtskirchinger](https://github.com/falbrechtskirchinger))
+- Refine 'Publish documentation' workflow [\#3673](https://github.com/nlohmann/json/pull/3673) ([falbrechtskirchinger](https://github.com/falbrechtskirchinger))
+- Documentation change [\#3672](https://github.com/nlohmann/json/pull/3672) ([nlohmann](https://github.com/nlohmann))
+- Add labeler action [\#3671](https://github.com/nlohmann/json/pull/3671) ([nlohmann](https://github.com/nlohmann))
+- Complete contributor list [\#3670](https://github.com/nlohmann/json/pull/3670) ([nlohmann](https://github.com/nlohmann))
+- Add json\_pointer/string\_t equality comparison operators [\#3664](https://github.com/nlohmann/json/pull/3664) ([falbrechtskirchinger](https://github.com/falbrechtskirchinger))
+- Reimplement value\(\) access functions [\#3663](https://github.com/nlohmann/json/pull/3663) ([falbrechtskirchinger](https://github.com/falbrechtskirchinger))
+- Complete contributor list [\#3662](https://github.com/nlohmann/json/pull/3662) ([nlohmann](https://github.com/nlohmann))
+- Adjust naming of GitHub action jobs [\#3661](https://github.com/nlohmann/json/pull/3661) ([nlohmann](https://github.com/nlohmann))
+- Publish documentation on push to develop branch [\#3660](https://github.com/nlohmann/json/pull/3660) ([nlohmann](https://github.com/nlohmann))
+- Add Discord badge to README [\#3651](https://github.com/nlohmann/json/pull/3651) ([falbrechtskirchinger](https://github.com/falbrechtskirchinger))
+- Miscellaneous small fixes [\#3643](https://github.com/nlohmann/json/pull/3643) ([falbrechtskirchinger](https://github.com/falbrechtskirchinger))
+- Minor BJData fixes [\#3637](https://github.com/nlohmann/json/pull/3637) ([falbrechtskirchinger](https://github.com/falbrechtskirchinger))
+- Update CI [\#3626](https://github.com/nlohmann/json/pull/3626) ([falbrechtskirchinger](https://github.com/falbrechtskirchinger))
+
+## [v3.11.1](https://github.com/nlohmann/json/releases/tag/v3.11.1) (2022-08-01)
+
+[Full Changelog](https://github.com/nlohmann/json/compare/v3.11.0...v3.11.1)
 
 - Regression: no matching literal operator for call to 'operator""\_json' [\#3645](https://github.com/nlohmann/json/issues/3645)
 - \_json  operator""\(\)  [\#3644](https://github.com/nlohmann/json/issues/3644)
