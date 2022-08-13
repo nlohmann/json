@@ -13,8 +13,8 @@ int main()
 
     // call empty()
     std::cout << std::boolalpha
-              << ptr0 << ": " << ptr0.empty() << '\n'
-              << ptr1 << ": " << ptr1.empty() << '\n'
-              << ptr2 << ": " << ptr2.empty() << '\n'
-              << ptr3 << ": " << ptr3.empty() << std::endl;
+              << "\"" << ptr0 << "\": " << ptr0.empty() << '\n'
+              << "\"" << ptr1 << "\": " << ptr1.empty() << '\n'
+              << "\"" << ptr2 << "\": " << ptr2.empty() << '\n'
+              << "\"" << ptr3 << "\": " << ptr3.empty() << std::endl;
 }

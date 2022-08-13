@@ -1,31 +1,10 @@
-/*
-    __ _____ _____ _____
- __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.10.5
-|_____|_____|_____|_|___|  https://github.com/nlohmann/json
-
-Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-SPDX-License-Identifier: MIT
-Copyright (c) 2013-2022 Niels Lohmann <http://nlohmann.me>.
-
-Permission is hereby  granted, free of charge, to any  person obtaining a copy
-of this software and associated  documentation files (the "Software"), to deal
-in the Software  without restriction, including without  limitation the rights
-to  use, copy,  modify, merge,  publish, distribute,  sublicense, and/or  sell
-copies  of  the Software,  and  to  permit persons  to  whom  the Software  is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE  IS PROVIDED "AS  IS", WITHOUT WARRANTY  OF ANY KIND,  EXPRESS OR
-IMPLIED,  INCLUDING BUT  NOT  LIMITED TO  THE  WARRANTIES OF  MERCHANTABILITY,
-FITNESS FOR  A PARTICULAR PURPOSE AND  NONINFRINGEMENT. IN NO EVENT  SHALL THE
-AUTHORS  OR COPYRIGHT  HOLDERS  BE  LIABLE FOR  ANY  CLAIM,  DAMAGES OR  OTHER
-LIABILITY, WHETHER IN AN ACTION OF  CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
 
 // cmake/test.cmake selects the C++ standard versions with which to build a
 // unit test based on the presence of JSON_HAS_CPP_<VERSION> macros.
@@ -43,6 +22,9 @@ SOFTWARE.
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 using ordered_json = nlohmann::ordered_json;
+#ifdef JSON_TEST_NO_GLOBAL_UDLS
+    using namespace nlohmann::literals; // NOLINT(google-build-using-namespace)
+#endif
 
 #include <cstdio>
 #include <list>
@@ -52,20 +34,6 @@ using ordered_json = nlohmann::ordered_json;
 #ifdef JSON_HAS_CPP_17
     #include <any>
     #include <variant>
-#endif
-
-#if JSON_HAS_EXPERIMENTAL_FILESYSTEM
-#include <experimental/filesystem>
-namespace nlohmann::detail
-{
-namespace std_fs = std::experimental::filesystem;
-} // namespace nlohmann::detail
-#elif JSON_HAS_FILESYSTEM
-#include <filesystem>
-namespace nlohmann::detail
-{
-namespace std_fs = std::filesystem;
-} // namespace nlohmann::detail
 #endif
 
 #ifdef JSON_HAS_CPP_20
@@ -290,6 +258,56 @@ inline void from_json(const json& j, for_3312& obj)
     j.at("name").get_to(obj.name);
 }
 #endif
+
+/////////////////////////////////////////////////////////////////////
+// for #3204
+/////////////////////////////////////////////////////////////////////
+
+struct for_3204_foo
+{
+    for_3204_foo() = default;
+    explicit for_3204_foo(std::string /*unused*/) {} // NOLINT(performance-unnecessary-value-param)
+};
+
+struct for_3204_bar
+{
+    enum constructed_from_t
+    {
+        constructed_from_none = 0,
+        constructed_from_foo = 1,
+        constructed_from_json = 2
+    };
+
+    explicit for_3204_bar(std::function<void(for_3204_foo)> /*unused*/) noexcept // NOLINT(performance-unnecessary-value-param)
+        : constructed_from(constructed_from_foo) {}
+    explicit for_3204_bar(std::function<void(json)> /*unused*/) noexcept // NOLINT(performance-unnecessary-value-param)
+        : constructed_from(constructed_from_json) {}
+
+    constructed_from_t constructed_from = constructed_from_none;
+};
+
+/////////////////////////////////////////////////////////////////////
+// for #3333
+/////////////////////////////////////////////////////////////////////
+
+struct for_3333 final
+{
+    for_3333(int x_ = 0, int y_ = 0) : x(x_), y(y_) {}
+
+    template <class T>
+    for_3333(const T& /*unused*/)
+    {
+        CHECK(false);
+    }
+
+    int x = 0;
+    int y = 0;
+};
+
+template <>
+inline for_3333::for_3333(const json& j)
+    : for_3333(j.value("x", 0), j.value("y", 0))
+{}
 
 TEST_CASE("regression tests 2")
 {
@@ -803,7 +821,7 @@ TEST_CASE("regression tests 2")
         const auto j_path = j.get<nlohmann::detail::std_fs::path>();
         CHECK(j_path == text_path);
 
-#if defined(__clang__) || ((defined(__GNUC__) && !defined(__INTEL_COMPILER)) && (__GNUC__ > 8 || (__GNUC__ == 8 && __GNUC_MINOR__ >= 4)))
+#if DOCTEST_CLANG || DOCTEST_GCC >= DOCTEST_COMPILER(8, 4, 0)
         // only known to work on Clang and GCC >=8.4
         CHECK_THROWS_WITH_AS(nlohmann::detail::std_fs::path(json(1)), "[json.exception.type_error.302] type must be string, but is number", json::type_error);
 #endif
@@ -883,6 +901,28 @@ TEST_CASE("regression tests 2")
         CHECK(a2.type() == typeid(j));
     }
 #endif
+
+    SECTION("issue #3204 - ambiguous regression")
+    {
+        for_3204_bar bar_from_foo([](for_3204_foo) noexcept {}); // NOLINT(performance-unnecessary-value-param)
+        for_3204_bar bar_from_json([](json) noexcept {}); // NOLINT(performance-unnecessary-value-param)
+
+        CHECK(bar_from_foo.constructed_from == for_3204_bar::constructed_from_foo);
+        CHECK(bar_from_json.constructed_from == for_3204_bar::constructed_from_json);
+    }
+
+    SECTION("issue #3333 - Ambiguous conversion from nlohmann::basic_json<> to custom class")
+    {
+        const json j
+        {
+            {"x", 1},
+            {"y", 2}
+        };
+        for_3333 p = j;
+
+        CHECK(p.x == 1);
+        CHECK(p.y == 2);
+    }
 }
 
 DOCTEST_CLANG_SUPPRESS_WARNING_POP

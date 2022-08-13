@@ -1,3 +1,11 @@
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 #pragma once
 
 #include <algorithm> // copy
@@ -9,30 +17,17 @@
 #include <valarray> // valarray
 #include <vector> // vector
 
-#include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/iterators/iteration_proxy.hpp>
+#include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/cpp_future.hpp>
+#include <nlohmann/detail/meta/std_fs.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
 #include <nlohmann/detail/value_t.hpp>
 
-#if JSON_HAS_EXPERIMENTAL_FILESYSTEM
-#include <experimental/filesystem>
-namespace nlohmann::detail
-{
-namespace std_fs = std::experimental::filesystem;
-} // namespace nlohmann::detail
-#elif JSON_HAS_FILESYSTEM
-#include <filesystem>
-namespace nlohmann::detail
-{
-namespace std_fs = std::filesystem;
-} // namespace nlohmann::detail
-#endif
-
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 //////////////////
 // constructors //
 //////////////////
@@ -272,9 +267,15 @@ inline void to_json(BasicJsonType& j, T b) noexcept
     external_constructor<value_t::boolean>::construct(j, b);
 }
 
-template<typename BasicJsonType,
-         enable_if_t<std::is_convertible<const std::vector<bool>::reference&, typename BasicJsonType::boolean_t>::value, int> = 0>
-inline void to_json(BasicJsonType& j, const std::vector<bool>::reference& b) noexcept
+template < typename BasicJsonType, typename BoolRef,
+           enable_if_t <
+               ((std::is_same<std::vector<bool>::reference, BoolRef>::value
+                 && !std::is_same <std::vector<bool>::reference, typename BasicJsonType::boolean_t&>::value)
+                || (std::is_same<std::vector<bool>::const_reference, BoolRef>::value
+                    && !std::is_same <detail::uncvref_t<std::vector<bool>::const_reference>,
+                                      typename BasicJsonType::boolean_t >::value))
+               && std::is_convertible<const BoolRef&, typename BasicJsonType::boolean_t>::value, int > = 0 >
+inline void to_json(BasicJsonType& j, const BoolRef& b) noexcept
 {
     external_constructor<value_t::boolean>::construct(j, static_cast<typename BasicJsonType::boolean_t>(b));
 }
@@ -439,6 +440,7 @@ namespace // NOLINT(cert-dcl59-cpp,fuchsia-header-anon-namespaces,google-build-n
 JSON_INLINE_VARIABLE constexpr const auto& to_json = // NOLINT(misc-definitions-in-headers)
     detail::static_const<detail::to_json_fn>::value;
 #ifndef JSON_HAS_CPP_17
-} // namespace
+}  // namespace
 #endif
-} // namespace nlohmann
+
+NLOHMANN_JSON_NAMESPACE_END

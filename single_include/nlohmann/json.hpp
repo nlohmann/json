@@ -1,31 +1,10 @@
-/*
-    __ _____ _____ _____
- __|  |   __|     |   | |  JSON for Modern C++
-|  |  |__   |  |  | | | |  version 3.10.5
-|_____|_____|_____|_|___|  https://github.com/nlohmann/json
-
-Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-SPDX-License-Identifier: MIT
-Copyright (c) 2013-2022 Niels Lohmann <http://nlohmann.me>.
-
-Permission is hereby  granted, free of charge, to any  person obtaining a copy
-of this software and associated  documentation files (the "Software"), to deal
-in the Software  without restriction, including without  limitation the rights
-to  use, copy,  modify, merge,  publish, distribute,  sublicense, and/or  sell
-copies  of  the Software,  and  to  permit persons  to  whom  the Software  is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE  IS PROVIDED "AS  IS", WITHOUT WARRANTY  OF ANY KIND,  EXPRESS OR
-IMPLIED,  INCLUDING BUT  NOT  LIMITED TO  THE  WARRANTIES OF  MERCHANTABILITY,
-FITNESS FOR  A PARTICULAR PURPOSE AND  NONINFRINGEMENT. IN NO EVENT  SHALL THE
-AUTHORS  OR COPYRIGHT  HOLDERS  BE  LIABLE FOR  ANY  CLAIM,  DAMAGES OR  OTHER
-LIABILITY, WHETHER IN AN ACTION OF  CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
 
 /****************************************************************************\
  * Note on documentation: The source files contain links to the online      *
@@ -38,18 +17,6 @@ SOFTWARE.
 
 #ifndef INCLUDE_NLOHMANN_JSON_HPP_
 #define INCLUDE_NLOHMANN_JSON_HPP_
-
-#ifndef JSON_SKIP_LIBRARY_VERSION_CHECK
-    #if defined(NLOHMANN_JSON_VERSION_MAJOR) && defined(NLOHMANN_JSON_VERSION_MINOR) && defined(NLOHMANN_JSON_VERSION_PATCH)
-        #if NLOHMANN_JSON_VERSION_MAJOR != 3 || NLOHMANN_JSON_VERSION_MINOR != 10 || NLOHMANN_JSON_VERSION_PATCH != 5
-            #warning "Already included a different version of the library!"
-        #endif
-    #endif
-#endif
-
-#define NLOHMANN_JSON_VERSION_MAJOR 3   // NOLINT(modernize-macro-to-enum)
-#define NLOHMANN_JSON_VERSION_MINOR 10  // NOLINT(modernize-macro-to-enum)
-#define NLOHMANN_JSON_VERSION_PATCH 5   // NOLINT(modernize-macro-to-enum)
 
 #include <algorithm> // all_of, find, for_each
 #include <cstddef> // nullptr_t, ptrdiff_t, size_t
@@ -66,12 +33,129 @@ SOFTWARE.
 #include <vector> // vector
 
 // #include <nlohmann/adl_serializer.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
 
 
-#include <type_traits>
+
 #include <utility>
 
+// #include <nlohmann/detail/abi_macros.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
+
+
+// This file contains all macro definitions affecting or depending on the ABI
+
+#ifndef JSON_SKIP_LIBRARY_VERSION_CHECK
+    #if defined(NLOHMANN_JSON_VERSION_MAJOR) && defined(NLOHMANN_JSON_VERSION_MINOR) && defined(NLOHMANN_JSON_VERSION_PATCH)
+        #if NLOHMANN_JSON_VERSION_MAJOR != 3 || NLOHMANN_JSON_VERSION_MINOR != 11 || NLOHMANN_JSON_VERSION_PATCH != 2
+            #warning "Already included a different version of the library!"
+        #endif
+    #endif
+#endif
+
+#define NLOHMANN_JSON_VERSION_MAJOR 3   // NOLINT(modernize-macro-to-enum)
+#define NLOHMANN_JSON_VERSION_MINOR 11  // NOLINT(modernize-macro-to-enum)
+#define NLOHMANN_JSON_VERSION_PATCH 2   // NOLINT(modernize-macro-to-enum)
+
+#ifndef JSON_DIAGNOSTICS
+    #define JSON_DIAGNOSTICS 0
+#endif
+
+#ifndef JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
+    #define JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON 0
+#endif
+
+#if JSON_DIAGNOSTICS
+    #define NLOHMANN_JSON_ABI_TAG_DIAGNOSTICS _diag
+#else
+    #define NLOHMANN_JSON_ABI_TAG_DIAGNOSTICS
+#endif
+
+#if JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
+    #define NLOHMANN_JSON_ABI_TAG_LEGACY_DISCARDED_VALUE_COMPARISON _ldvcmp
+#else
+    #define NLOHMANN_JSON_ABI_TAG_LEGACY_DISCARDED_VALUE_COMPARISON
+#endif
+
+#ifndef NLOHMANN_JSON_NAMESPACE_NO_VERSION
+    #define NLOHMANN_JSON_NAMESPACE_NO_VERSION 0
+#endif
+
+// Construct the namespace ABI tags component
+#define NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b) json_abi ## a ## b
+#define NLOHMANN_JSON_ABI_TAGS_CONCAT(a, b) \
+    NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b)
+
+#define NLOHMANN_JSON_ABI_TAGS                                       \
+    NLOHMANN_JSON_ABI_TAGS_CONCAT(                                   \
+            NLOHMANN_JSON_ABI_TAG_DIAGNOSTICS,                       \
+            NLOHMANN_JSON_ABI_TAG_LEGACY_DISCARDED_VALUE_COMPARISON)
+
+// Construct the namespace version component
+#define NLOHMANN_JSON_NAMESPACE_VERSION_CONCAT_EX(major, minor, patch) \
+    _v ## major ## _ ## minor ## _ ## patch
+#define NLOHMANN_JSON_NAMESPACE_VERSION_CONCAT(major, minor, patch) \
+    NLOHMANN_JSON_NAMESPACE_VERSION_CONCAT_EX(major, minor, patch)
+
+#if NLOHMANN_JSON_NAMESPACE_NO_VERSION
+#define NLOHMANN_JSON_NAMESPACE_VERSION
+#else
+#define NLOHMANN_JSON_NAMESPACE_VERSION                                 \
+    NLOHMANN_JSON_NAMESPACE_VERSION_CONCAT(NLOHMANN_JSON_VERSION_MAJOR, \
+                                           NLOHMANN_JSON_VERSION_MINOR, \
+                                           NLOHMANN_JSON_VERSION_PATCH)
+#endif
+
+// Combine namespace components
+#define NLOHMANN_JSON_NAMESPACE_CONCAT_EX(a, b) a ## b
+#define NLOHMANN_JSON_NAMESPACE_CONCAT(a, b) \
+    NLOHMANN_JSON_NAMESPACE_CONCAT_EX(a, b)
+
+#ifndef NLOHMANN_JSON_NAMESPACE
+#define NLOHMANN_JSON_NAMESPACE               \
+    nlohmann::NLOHMANN_JSON_NAMESPACE_CONCAT( \
+            NLOHMANN_JSON_ABI_TAGS,           \
+            NLOHMANN_JSON_NAMESPACE_VERSION)
+#endif
+
+#ifndef NLOHMANN_JSON_NAMESPACE_BEGIN
+#define NLOHMANN_JSON_NAMESPACE_BEGIN                \
+    namespace nlohmann                               \
+    {                                                \
+    inline namespace NLOHMANN_JSON_NAMESPACE_CONCAT( \
+                NLOHMANN_JSON_ABI_TAGS,              \
+                NLOHMANN_JSON_NAMESPACE_VERSION)     \
+    {
+#endif
+
+#ifndef NLOHMANN_JSON_NAMESPACE_END
+#define NLOHMANN_JSON_NAMESPACE_END                                     \
+    }  /* namespace (inline namespace) NOLINT(readability/namespace) */ \
+    }  // namespace nlohmann
+#endif
+
 // #include <nlohmann/detail/conversions/from_json.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 
 
 #include <algorithm> // transform
@@ -87,6 +171,14 @@ SOFTWARE.
 #include <valarray> // valarray
 
 // #include <nlohmann/detail/exceptions.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 
 
 #include <cstddef> // nullptr_t
@@ -96,6 +188,14 @@ SOFTWARE.
 #include <vector> // vector
 
 // #include <nlohmann/detail/value_t.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 
 
 #include <array> // array
@@ -104,22 +204,129 @@ SOFTWARE.
 #include <string> // string
 
 // #include <nlohmann/detail/macro_scope.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 
 
 #include <utility> // declval, pair
+// #include <nlohmann/detail/meta/detected.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
+
+
+#include <type_traits>
+
+// #include <nlohmann/detail/meta/void_t.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
+
+
+// #include <nlohmann/detail/abi_macros.hpp>
+
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
+namespace detail
+{
+
+template<typename ...Ts> struct make_void
+{
+    using type = void;
+};
+template<typename ...Ts> using void_t = typename make_void<Ts...>::type;
+
+}  // namespace detail
+NLOHMANN_JSON_NAMESPACE_END
+
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
+namespace detail
+{
+
+// https://en.cppreference.com/w/cpp/experimental/is_detected
+struct nonesuch
+{
+    nonesuch() = delete;
+    ~nonesuch() = delete;
+    nonesuch(nonesuch const&) = delete;
+    nonesuch(nonesuch const&&) = delete;
+    void operator=(nonesuch const&) = delete;
+    void operator=(nonesuch&&) = delete;
+};
+
+template<class Default,
+         class AlwaysVoid,
+         template<class...> class Op,
+         class... Args>
+struct detector
+{
+    using value_t = std::false_type;
+    using type = Default;
+};
+
+template<class Default, template<class...> class Op, class... Args>
+struct detector<Default, void_t<Op<Args...>>, Op, Args...>
+{
+    using value_t = std::true_type;
+    using type = Op<Args...>;
+};
+
+template<template<class...> class Op, class... Args>
+using is_detected = typename detector<nonesuch, void, Op, Args...>::value_t;
+
+template<template<class...> class Op, class... Args>
+struct is_detected_lazy : is_detected<Op, Args...> { };
+
+template<template<class...> class Op, class... Args>
+using detected_t = typename detector<nonesuch, void, Op, Args...>::type;
+
+template<class Default, template<class...> class Op, class... Args>
+using detected_or = detector<Default, void, Op, Args...>;
+
+template<class Default, template<class...> class Op, class... Args>
+using detected_or_t = typename detected_or<Default, Op, Args...>::type;
+
+template<class Expected, template<class...> class Op, class... Args>
+using is_detected_exact = std::is_same<Expected, detected_t<Op, Args...>>;
+
+template<class To, template<class...> class Op, class... Args>
+using is_detected_convertible =
+    std::is_convertible<detected_t<Op, Args...>, To>;
+
+}  // namespace detail
+NLOHMANN_JSON_NAMESPACE_END
+
 // #include <nlohmann/thirdparty/hedley/hedley.hpp>
 
 
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2016-2021 Evan Nemerson <evan@nemerson.com>
+// SPDX-License-Identifier: MIT
+
 /* Hedley - https://nemequ.github.io/hedley
  * Created by Evan Nemerson <evan@nemerson.com>
- *
- * To the extent possible under law, the author(s) have dedicated all
- * copyright and related and neighboring rights to this software to
- * the public domain worldwide. This software is distributed without
- * any warranty.
- *
- * For details, see <http://creativecommons.org/publicdomain/zero/1.0/>.
- * SPDX-License-Identifier: CC0-1.0
  */
 
 #if !defined(JSON_HEDLEY_VERSION) || (JSON_HEDLEY_VERSION < 15)
@@ -2153,86 +2360,12 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 
 #endif /* !defined(JSON_HEDLEY_VERSION) || (JSON_HEDLEY_VERSION < X) */
 
-// #include <nlohmann/detail/meta/detected.hpp>
 
-
-#include <type_traits>
-
-// #include <nlohmann/detail/meta/void_t.hpp>
-
-
-namespace nlohmann
-{
-namespace detail
-{
-template<typename ...Ts> struct make_void
-{
-    using type = void;
-};
-template<typename ...Ts> using void_t = typename make_void<Ts...>::type;
-} // namespace detail
-}  // namespace nlohmann
-
-
-// https://en.cppreference.com/w/cpp/experimental/is_detected
-namespace nlohmann
-{
-namespace detail
-{
-struct nonesuch
-{
-    nonesuch() = delete;
-    ~nonesuch() = delete;
-    nonesuch(nonesuch const&) = delete;
-    nonesuch(nonesuch const&&) = delete;
-    void operator=(nonesuch const&) = delete;
-    void operator=(nonesuch&&) = delete;
-};
-
-template<class Default,
-         class AlwaysVoid,
-         template<class...> class Op,
-         class... Args>
-struct detector
-{
-    using value_t = std::false_type;
-    using type = Default;
-};
-
-template<class Default, template<class...> class Op, class... Args>
-struct detector<Default, void_t<Op<Args...>>, Op, Args...>
-{
-    using value_t = std::true_type;
-    using type = Op<Args...>;
-};
-
-template<template<class...> class Op, class... Args>
-using is_detected = typename detector<nonesuch, void, Op, Args...>::value_t;
-
-template<template<class...> class Op, class... Args>
-struct is_detected_lazy : is_detected<Op, Args...> { };
-
-template<template<class...> class Op, class... Args>
-using detected_t = typename detector<nonesuch, void, Op, Args...>::type;
-
-template<class Default, template<class...> class Op, class... Args>
-using detected_or = detector<Default, void, Op, Args...>;
-
-template<class Default, template<class...> class Op, class... Args>
-using detected_or_t = typename detected_or<Default, Op, Args...>::type;
-
-template<class Expected, template<class...> class Op, class... Args>
-using is_detected_exact = std::is_same<Expected, detected_t<Op, Args...>>;
-
-template<class To, template<class...> class Op, class... Args>
-using is_detected_convertible =
-    std::is_convertible<detected_t<Op, Args...>, To>;
-}  // namespace detail
-}  // namespace nlohmann
-
-
-// This file contains all internal macro definitions
+// This file contains all internal macro definitions (except those affecting ABI)
 // You MUST include macro_unscope.hpp at the end of json.hpp to undef all of them
+
+// #include <nlohmann/detail/abi_macros.hpp>
+
 
 // exclude unsupported compilers
 #if !defined(JSON_SKIP_UNSUPPORTED_COMPILER_CHECK)
@@ -2676,26 +2809,22 @@ using is_detected_convertible =
     #define JSON_EXPLICIT explicit
 #endif
 
-#ifndef JSON_DIAGNOSTICS
-    #define JSON_DIAGNOSTICS 0
-#endif
-
-#ifndef JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
-    #define JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON 0
-#endif
-
 #ifndef JSON_DISABLE_ENUM_SERIALIZATION
     #define JSON_DISABLE_ENUM_SERIALIZATION 0
+#endif
+
+#ifndef JSON_USE_GLOBAL_UDLS
+    #define JSON_USE_GLOBAL_UDLS 1
 #endif
 
 #if JSON_HAS_THREE_WAY_COMPARISON
     #include <compare> // partial_ordering
 #endif
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 ///////////////////////////
 // JSON type enumeration //
 ///////////////////////////
@@ -2787,17 +2916,25 @@ inline bool operator<(const value_t lhs, const value_t rhs) noexcept
     return std::is_lt(lhs <=> rhs); // *NOPAD*
 }
 #endif
+
 }  // namespace detail
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/string_escape.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
 
 
-// #include <nlohmann/detail/macro_scope.hpp>
+
+// #include <nlohmann/detail/abi_macros.hpp>
 
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
 
@@ -2855,18 +2992,29 @@ static void unescape(StringType& s)
     replace_substring(s, StringType{"~0"}, StringType{"~"});
 }
 
-} // namespace detail
-} // namespace nlohmann
+}  // namespace detail
+NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/input/position_t.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 
 
 #include <cstddef> // size_t
 
-namespace nlohmann
-{
+// #include <nlohmann/detail/abi_macros.hpp>
+
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 /// struct to capture the start position of the current token
 struct position_t
 {
@@ -2884,14 +3032,24 @@ struct position_t
     }
 };
 
-} // namespace detail
-} // namespace nlohmann
+}  // namespace detail
+NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
 // #include <nlohmann/detail/meta/cpp_future.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2018 The Abseil Authors
+// SPDX-License-Identifier: MIT
 
 
+
+#include <array> // array
 #include <cstddef> // size_t
 #include <type_traits> // conditional, enable_if, false_type, integral_constant, is_constructible, is_integral, is_same, remove_cv, remove_reference, true_type
 #include <utility> // index_sequence, make_index_sequence, index_sequence_for
@@ -2899,8 +3057,7 @@ struct position_t
 // #include <nlohmann/detail/macro_scope.hpp>
 
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
 
@@ -3037,20 +3194,32 @@ template<> struct priority_tag<0> {};
 template<typename T>
 struct static_const
 {
-    static constexpr T value{};
+    static JSON_INLINE_VARIABLE constexpr T value{};
 };
 
 #ifndef JSON_HAS_CPP_17
-
     template<typename T>
-    constexpr T static_const<T>::value; // NOLINT(readability-redundant-declaration)
-
+    constexpr T static_const<T>::value;
 #endif
 
+template<typename T, typename... Args>
+inline constexpr std::array<T, sizeof...(Args)> make_array(Args&& ... args)
+{
+    return std::array<T, sizeof...(Args)> {{static_cast<T>(std::forward<Args>(args))...}};
+}
+
 }  // namespace detail
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/meta/type_traits.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 
 
 #include <limits> // numeric_limits
@@ -3058,23 +3227,30 @@ struct static_const
 #include <utility> // declval
 #include <tuple> // tuple
 
-// #include <nlohmann/detail/macro_scope.hpp>
-
-
 // #include <nlohmann/detail/iterators/iterator_traits.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 
 
 #include <iterator> // random_access_iterator_tag
+
+// #include <nlohmann/detail/abi_macros.hpp>
 
 // #include <nlohmann/detail/meta/void_t.hpp>
 
 // #include <nlohmann/detail/meta/cpp_future.hpp>
 
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 template<typename It, typename = void>
 struct iterator_types {};
 
@@ -3113,104 +3289,135 @@ struct iterator_traits<T*, enable_if_t<std::is_object<T>::value>>
     using pointer = T*;
     using reference = T&;
 };
-} // namespace detail
-} // namespace nlohmann
+
+}  // namespace detail
+NLOHMANN_JSON_NAMESPACE_END
+
+// #include <nlohmann/detail/macro_scope.hpp>
 
 // #include <nlohmann/detail/meta/call_std/begin.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
+
 NLOHMANN_CAN_CALL_STD_FUNC_IMPL(begin);
-} // namespace nlohmann
+
+NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/meta/call_std/end.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
+
 NLOHMANN_CAN_CALL_STD_FUNC_IMPL(end);
-}  // namespace nlohmann
+
+NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/meta/cpp_future.hpp>
 
 // #include <nlohmann/detail/meta/detected.hpp>
 
 // #include <nlohmann/json_fwd.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 #ifndef INCLUDE_NLOHMANN_JSON_FWD_HPP_
-#define INCLUDE_NLOHMANN_JSON_FWD_HPP_
+    #define INCLUDE_NLOHMANN_JSON_FWD_HPP_
 
-#include <cstdint> // int64_t, uint64_t
-#include <map> // map
-#include <memory> // allocator
-#include <string> // string
-#include <vector> // vector
+    #include <cstdint> // int64_t, uint64_t
+    #include <map> // map
+    #include <memory> // allocator
+    #include <string> // string
+    #include <vector> // vector
 
-/*!
-@brief namespace for Niels Lohmann
-@see https://github.com/nlohmann
-@since version 1.0.0
-*/
-namespace nlohmann
-{
-/*!
-@brief default JSONSerializer template argument
+    // #include <nlohmann/detail/abi_macros.hpp>
 
-This serializer ignores the template arguments and uses ADL
-([argument-dependent lookup](https://en.cppreference.com/w/cpp/language/adl))
-for serialization.
-*/
-template<typename T = void, typename SFINAE = void>
-struct adl_serializer;
 
-/// a class to store JSON values
-/// @sa https://json.nlohmann.me/api/basic_json/
-template<template<typename U, typename V, typename... Args> class ObjectType =
-         std::map,
-         template<typename U, typename... Args> class ArrayType = std::vector,
-         class StringType = std::string, class BooleanType = bool,
-         class NumberIntegerType = std::int64_t,
-         class NumberUnsignedType = std::uint64_t,
-         class NumberFloatType = double,
-         template<typename U> class AllocatorType = std::allocator,
-         template<typename T, typename SFINAE = void> class JSONSerializer =
-         adl_serializer,
-         class BinaryType = std::vector<std::uint8_t>>
-class basic_json;
+    /*!
+    @brief namespace for Niels Lohmann
+    @see https://github.com/nlohmann
+    @since version 1.0.0
+    */
+    NLOHMANN_JSON_NAMESPACE_BEGIN
 
-/// @brief JSON Pointer defines a string syntax for identifying a specific value within a JSON document
-/// @sa https://json.nlohmann.me/api/json_pointer/
-template<typename BasicJsonType>
-class json_pointer;
+    /*!
+    @brief default JSONSerializer template argument
 
-/*!
-@brief default specialization
-@sa https://json.nlohmann.me/api/json/
-*/
-using json = basic_json<>;
+    This serializer ignores the template arguments and uses ADL
+    ([argument-dependent lookup](https://en.cppreference.com/w/cpp/language/adl))
+    for serialization.
+    */
+    template<typename T = void, typename SFINAE = void>
+    struct adl_serializer;
 
-/// @brief a minimal map-like container that preserves insertion order
-/// @sa https://json.nlohmann.me/api/ordered_map/
-template<class Key, class T, class IgnoredLess, class Allocator>
-struct ordered_map;
+    /// a class to store JSON values
+    /// @sa https://json.nlohmann.me/api/basic_json/
+    template<template<typename U, typename V, typename... Args> class ObjectType =
+    std::map,
+    template<typename U, typename... Args> class ArrayType = std::vector,
+    class StringType = std::string, class BooleanType = bool,
+    class NumberIntegerType = std::int64_t,
+    class NumberUnsignedType = std::uint64_t,
+    class NumberFloatType = double,
+    template<typename U> class AllocatorType = std::allocator,
+    template<typename T, typename SFINAE = void> class JSONSerializer =
+    adl_serializer,
+    class BinaryType = std::vector<std::uint8_t>>
+    class basic_json;
 
-/// @brief specialization that maintains the insertion order of object keys
-/// @sa https://json.nlohmann.me/api/ordered_json/
-using ordered_json = basic_json<nlohmann::ordered_map>;
+    /// @brief JSON Pointer defines a string syntax for identifying a specific value within a JSON document
+    /// @sa https://json.nlohmann.me/api/json_pointer/
+    template<typename RefStringType>
+    class json_pointer;
 
-}  // namespace nlohmann
+    /*!
+    @brief default specialization
+    @sa https://json.nlohmann.me/api/json/
+    */
+    using json = basic_json<>;
+
+    /// @brief a minimal map-like container that preserves insertion order
+    /// @sa https://json.nlohmann.me/api/ordered_map/
+    template<class Key, class T, class IgnoredLess, class Allocator>
+    struct ordered_map;
+
+    /// @brief specialization that maintains the insertion order of object keys
+    /// @sa https://json.nlohmann.me/api/ordered_json/
+    using ordered_json = basic_json<nlohmann::ordered_map>;
+
+    NLOHMANN_JSON_NAMESPACE_END
 
 #endif  // INCLUDE_NLOHMANN_JSON_FWD_HPP_
 
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 /*!
 @brief detail namespace with internal helper functions
 
@@ -3221,6 +3428,7 @@ implementations of some @ref basic_json methods, and meta-programming helpers.
 */
 namespace detail
 {
+
 /////////////
 // helpers //
 /////////////
@@ -3550,8 +3758,10 @@ struct is_constructible_string_type
 #endif
 
     static constexpr auto value =
-        is_constructible<laundered_type,
-        typename BasicJsonType::string_t>::value;
+        conjunction <
+        is_constructible<laundered_type, typename BasicJsonType::string_t>,
+        is_detected_exact<typename BasicJsonType::string_t::value_type,
+        value_type_t, laundered_type >>::value;
 };
 
 template<typename BasicJsonType, typename CompatibleArrayType, typename = void>
@@ -3699,15 +3909,22 @@ decltype(std::declval<Compare>()(std::declval<A>(), std::declval<B>())),
 decltype(std::declval<Compare>()(std::declval<B>(), std::declval<A>()))
 >> : std::true_type {};
 
-// checks if BasicJsonType::object_t::key_type and KeyType are comparable using Compare functor
-template<typename BasicJsonType, typename KeyType>
-using is_key_type_comparable = typename is_comparable <
-                               typename BasicJsonType::object_comparator_t,
-                               const key_type_t<typename BasicJsonType::object_t>&,
-                               KeyType >::type;
-
 template<typename T>
 using detect_is_transparent = typename T::is_transparent;
+
+// type trait to check if KeyType can be used as object key (without a BasicJsonType)
+// see is_usable_as_basic_json_key_type below
+template<typename Comparator, typename ObjectKeyType, typename KeyTypeCVRef, bool RequireTransparentComparator = true,
+         bool ExcludeObjectKeyType = RequireTransparentComparator, typename KeyType = uncvref_t<KeyTypeCVRef>>
+using is_usable_as_key_type = typename std::conditional <
+                              is_comparable<Comparator, ObjectKeyType, KeyTypeCVRef>::value
+                              && !(ExcludeObjectKeyType && std::is_same<KeyType,
+                                   ObjectKeyType>::value)
+                              && (!RequireTransparentComparator
+                                  || is_detected <detect_is_transparent, Comparator>::value)
+                              && !is_json_pointer<KeyType>::value,
+                              std::true_type,
+                              std::false_type >::type;
 
 // type trait to check if KeyType can be used as object key
 // true if:
@@ -3717,17 +3934,13 @@ using detect_is_transparent = typename T::is_transparent;
 //   - KeyType is not a JSON iterator or json_pointer
 template<typename BasicJsonType, typename KeyTypeCVRef, bool RequireTransparentComparator = true,
          bool ExcludeObjectKeyType = RequireTransparentComparator, typename KeyType = uncvref_t<KeyTypeCVRef>>
-using is_usable_as_key_type = typename std::conditional <
-                              is_key_type_comparable<BasicJsonType, KeyTypeCVRef>::value
-                              && !(ExcludeObjectKeyType && std::is_same<KeyType,
-                                   typename BasicJsonType::object_t::key_type>::value)
-                              && (!RequireTransparentComparator || is_detected <
-                                  detect_is_transparent,
-                                  typename BasicJsonType::object_comparator_t >::value)
-                              && !is_json_iterator_of<BasicJsonType, KeyType>::value
-                              && !is_json_pointer<KeyType>::value,
-                              std::true_type,
-                              std::false_type >::type;
+using is_usable_as_basic_json_key_type = typename std::conditional <
+        is_usable_as_key_type<typename BasicJsonType::object_comparator_t,
+        typename BasicJsonType::object_t::key_type, KeyTypeCVRef,
+        RequireTransparentComparator, ExcludeObjectKeyType>::value
+        && !is_json_iterator_of<BasicJsonType, KeyType>::value,
+        std::true_type,
+        std::false_type >::type;
 
 template<typename ObjectType, typename KeyType>
 using detect_erase_with_key_type = decltype(std::declval<ObjectType&>().erase(std::declval<KeyType>()));
@@ -3802,7 +4015,7 @@ struct value_in_range_of_impl2<OfType, T, false, false>
     static constexpr bool test(T val)
     {
         using CommonType = typename std::common_type<OfType, T>::type;
-        return static_cast<CommonType>(val) <= static_cast<CommonType>(std::numeric_limits<OfType>::max());
+        return static_cast<CommonType>(val) <= static_cast<CommonType>((std::numeric_limits<OfType>::max)());
     }
 };
 
@@ -3812,7 +4025,7 @@ struct value_in_range_of_impl2<OfType, T, true, false>
     static constexpr bool test(T val)
     {
         using CommonType = typename std::common_type<OfType, T>::type;
-        return static_cast<CommonType>(val) <= static_cast<CommonType>(std::numeric_limits<OfType>::max());
+        return static_cast<CommonType>(val) <= static_cast<CommonType>((std::numeric_limits<OfType>::max)());
     }
 };
 
@@ -3822,7 +4035,7 @@ struct value_in_range_of_impl2<OfType, T, false, true>
     static constexpr bool test(T val)
     {
         using CommonType = typename std::common_type<OfType, T>::type;
-        return val >= 0 && static_cast<CommonType>(val) <= static_cast<CommonType>(std::numeric_limits<OfType>::max());
+        return val >= 0 && static_cast<CommonType>(val) <= static_cast<CommonType>((std::numeric_limits<OfType>::max)());
     }
 };
 
@@ -3833,8 +4046,8 @@ struct value_in_range_of_impl2<OfType, T, true, true>
     static constexpr bool test(T val)
     {
         using CommonType = typename std::common_type<OfType, T>::type;
-        return static_cast<CommonType>(val) >= static_cast<CommonType>(std::numeric_limits<OfType>::min())
-               && static_cast<CommonType>(val) <= static_cast<CommonType>(std::numeric_limits<OfType>::max());
+        return static_cast<CommonType>(val) >= static_cast<CommonType>((std::numeric_limits<OfType>::min)())
+               && static_cast<CommonType>(val) <= static_cast<CommonType>((std::numeric_limits<OfType>::max)());
     }
 };
 
@@ -3867,10 +4080,70 @@ inline constexpr bool value_in_range_of(T val)
     return value_in_range_of_impl1<OfType, T>::test(val);
 }
 
+template<bool Value>
+using bool_constant = std::integral_constant<bool, Value>;
+
+///////////////////////////////////////////////////////////////////////////////
+// is_c_string
+///////////////////////////////////////////////////////////////////////////////
+
+namespace impl
+{
+
+template<typename T>
+inline constexpr bool is_c_string()
+{
+    using TUnExt = typename std::remove_extent<T>::type;
+    using TUnCVExt = typename std::remove_cv<TUnExt>::type;
+    using TUnPtr = typename std::remove_pointer<T>::type;
+    using TUnCVPtr = typename std::remove_cv<TUnPtr>::type;
+    return
+        (std::is_array<T>::value && std::is_same<TUnCVExt, char>::value)
+        || (std::is_pointer<T>::value && std::is_same<TUnCVPtr, char>::value);
+}
+
+}  // namespace impl
+
+// checks whether T is a [cv] char */[cv] char[] C string
+template<typename T>
+struct is_c_string : bool_constant<impl::is_c_string<T>()> {};
+
+template<typename T>
+using is_c_string_uncvref = is_c_string<uncvref_t<T>>;
+
+///////////////////////////////////////////////////////////////////////////////
+// is_transparent
+///////////////////////////////////////////////////////////////////////////////
+
+namespace impl
+{
+
+template<typename T>
+inline constexpr bool is_transparent()
+{
+    return is_detected<detect_is_transparent, T>::value;
+}
+
+}  // namespace impl
+
+// checks whether T has a member named is_transparent
+template<typename T>
+struct is_transparent : bool_constant<impl::is_transparent<T>()> {};
+
+///////////////////////////////////////////////////////////////////////////////
+
 }  // namespace detail
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/string_concat.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 
 
 #include <cstring> // strlen
@@ -3882,8 +4155,7 @@ inline constexpr bool value_in_range_of(T val)
 // #include <nlohmann/detail/meta/detected.hpp>
 
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
 
@@ -4010,15 +4282,15 @@ inline OutStringType concat(Args && ... args)
     return str;
 }
 
-} // namespace detail
-} // namespace nlohmann
+}  // namespace detail
+NLOHMANN_JSON_NAMESPACE_END
 
 
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 ////////////////
 // exceptions //
 ////////////////
@@ -4244,23 +4516,67 @@ class other_error : public exception
 };
 
 }  // namespace detail
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
 // #include <nlohmann/detail/meta/cpp_future.hpp>
 
 // #include <nlohmann/detail/meta/identity_tag.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
 
 
-namespace nlohmann
-{
+
+// #include <nlohmann/detail/abi_macros.hpp>
+
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 // dispatching helper struct
 template <class T> struct identity_tag {};
+
 }  // namespace detail
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END
+
+// #include <nlohmann/detail/meta/std_fs.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
+
+
+// #include <nlohmann/detail/macro_scope.hpp>
+
+
+#if JSON_HAS_EXPERIMENTAL_FILESYSTEM
+#include <experimental/filesystem>
+NLOHMANN_JSON_NAMESPACE_BEGIN
+namespace detail
+{
+namespace std_fs = std::experimental::filesystem;
+}  // namespace detail
+NLOHMANN_JSON_NAMESPACE_END
+#elif JSON_HAS_FILESYSTEM
+#include <filesystem>
+NLOHMANN_JSON_NAMESPACE_BEGIN
+namespace detail
+{
+namespace std_fs = std::filesystem;
+}  // namespace detail
+NLOHMANN_JSON_NAMESPACE_END
+#endif
 
 // #include <nlohmann/detail/meta/type_traits.hpp>
 
@@ -4269,24 +4585,10 @@ template <class T> struct identity_tag {};
 // #include <nlohmann/detail/value_t.hpp>
 
 
-#if JSON_HAS_EXPERIMENTAL_FILESYSTEM
-#include <experimental/filesystem>
-namespace nlohmann::detail
-{
-namespace std_fs = std::experimental::filesystem;
-} // namespace nlohmann::detail
-#elif JSON_HAS_FILESYSTEM
-#include <filesystem>
-namespace nlohmann::detail
-{
-namespace std_fs = std::filesystem;
-} // namespace nlohmann::detail
-#endif
-
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 template<typename BasicJsonType>
 inline void from_json(const BasicJsonType& j, typename std::nullptr_t& n)
 {
@@ -4358,6 +4660,7 @@ template <
     typename BasicJsonType, typename StringType,
     enable_if_t <
         std::is_assignable<StringType&, const typename BasicJsonType::string_t>::value
+        && is_detected_exact<typename BasicJsonType::string_t::value_type, value_type_t, StringType>::value
         && !std::is_same<typename BasicJsonType::string_t, StringType>::value
         && !is_json_ref<StringType>::value, int > = 0 >
 inline void from_json(const BasicJsonType& j, StringType& s)
@@ -4731,6 +5034,7 @@ struct from_json_fn
         return from_json(j, std::forward<T>(val));
     }
 };
+
 }  // namespace detail
 
 #ifndef JSON_HAS_CPP_17
@@ -4743,11 +5047,20 @@ namespace // NOLINT(cert-dcl59-cpp,fuchsia-header-anon-namespaces,google-build-n
 JSON_INLINE_VARIABLE constexpr const auto& from_json = // NOLINT(misc-definitions-in-headers)
     detail::static_const<detail::from_json_fn>::value;
 #ifndef JSON_HAS_CPP_17
-} // namespace
+}  // namespace
 #endif
-} // namespace nlohmann
+
+NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/conversions/to_json.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 
 
 #include <algorithm> // copy
@@ -4759,9 +5072,15 @@ JSON_INLINE_VARIABLE constexpr const auto& from_json = // NOLINT(misc-definition
 #include <valarray> // valarray
 #include <vector> // vector
 
-// #include <nlohmann/detail/macro_scope.hpp>
-
 // #include <nlohmann/detail/iterators/iteration_proxy.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 
 
 #include <cstddef> // size_t
@@ -4774,15 +5093,17 @@ JSON_INLINE_VARIABLE constexpr const auto& from_json = // NOLINT(misc-definition
     #include <ranges> // enable_borrowed_range
 #endif
 
+// #include <nlohmann/detail/abi_macros.hpp>
+
 // #include <nlohmann/detail/meta/type_traits.hpp>
 
 // #include <nlohmann/detail/value_t.hpp>
 
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 template<typename string_type>
 void int_to_string( string_type& target, std::size_t value )
 {
@@ -4959,8 +5280,9 @@ auto get(const nlohmann::detail::iteration_proxy_value<IteratorType>& i) -> decl
 {
     return i.value();
 }
+
 }  // namespace detail
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END
 
 // The Addition to the STD Namespace is required to add
 // Structured Bindings Support to the iteration_proxy_value class
@@ -4968,6 +5290,7 @@ auto get(const nlohmann::detail::iteration_proxy_value<IteratorType>& i) -> decl
 // And see https://github.com/nlohmann/json/pull/1391
 namespace std
 {
+
 #if defined(__clang__)
     // Fix: https://github.com/nlohmann/json/issues/1401
     #pragma clang diagnostic push
@@ -4988,38 +5311,29 @@ class tuple_element<N, ::nlohmann::detail::iteration_proxy_value<IteratorType >>
 #if defined(__clang__)
     #pragma clang diagnostic pop
 #endif
-} // namespace std
+
+}  // namespace std
 
 #if JSON_HAS_RANGES
     template <typename IteratorType>
     inline constexpr bool ::std::ranges::enable_borrowed_range<::nlohmann::detail::iteration_proxy<IteratorType>> = true;
 #endif
 
+// #include <nlohmann/detail/macro_scope.hpp>
+
 // #include <nlohmann/detail/meta/cpp_future.hpp>
+
+// #include <nlohmann/detail/meta/std_fs.hpp>
 
 // #include <nlohmann/detail/meta/type_traits.hpp>
 
 // #include <nlohmann/detail/value_t.hpp>
 
 
-#if JSON_HAS_EXPERIMENTAL_FILESYSTEM
-#include <experimental/filesystem>
-namespace nlohmann::detail
-{
-namespace std_fs = std::experimental::filesystem;
-} // namespace nlohmann::detail
-#elif JSON_HAS_FILESYSTEM
-#include <filesystem>
-namespace nlohmann::detail
-{
-namespace std_fs = std::filesystem;
-} // namespace nlohmann::detail
-#endif
-
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 //////////////////
 // constructors //
 //////////////////
@@ -5259,9 +5573,15 @@ inline void to_json(BasicJsonType& j, T b) noexcept
     external_constructor<value_t::boolean>::construct(j, b);
 }
 
-template<typename BasicJsonType,
-         enable_if_t<std::is_convertible<const std::vector<bool>::reference&, typename BasicJsonType::boolean_t>::value, int> = 0>
-inline void to_json(BasicJsonType& j, const std::vector<bool>::reference& b) noexcept
+template < typename BasicJsonType, typename BoolRef,
+           enable_if_t <
+               ((std::is_same<std::vector<bool>::reference, BoolRef>::value
+                 && !std::is_same <std::vector<bool>::reference, typename BasicJsonType::boolean_t&>::value)
+                || (std::is_same<std::vector<bool>::const_reference, BoolRef>::value
+                    && !std::is_same <detail::uncvref_t<std::vector<bool>::const_reference>,
+                                      typename BasicJsonType::boolean_t >::value))
+               && std::is_convertible<const BoolRef&, typename BasicJsonType::boolean_t>::value, int > = 0 >
+inline void to_json(BasicJsonType& j, const BoolRef& b) noexcept
 {
     external_constructor<value_t::boolean>::construct(j, static_cast<typename BasicJsonType::boolean_t>(b));
 }
@@ -5426,17 +5746,15 @@ namespace // NOLINT(cert-dcl59-cpp,fuchsia-header-anon-namespaces,google-build-n
 JSON_INLINE_VARIABLE constexpr const auto& to_json = // NOLINT(misc-definitions-in-headers)
     detail::static_const<detail::to_json_fn>::value;
 #ifndef JSON_HAS_CPP_17
-} // namespace
+}  // namespace
 #endif
-} // namespace nlohmann
+
+NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/meta/identity_tag.hpp>
 
-// #include <nlohmann/detail/meta/type_traits.hpp>
 
-
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 
 /// @sa https://json.nlohmann.me/api/adl_serializer/
 template<typename ValueType, typename>
@@ -5472,17 +5790,28 @@ struct adl_serializer
         ::nlohmann::to_json(j, std::forward<TargetType>(val));
     }
 };
-}  // namespace nlohmann
+
+NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/byte_container_with_subtype.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 
 
 #include <cstdint> // uint8_t, uint64_t
 #include <tuple> // tie
 #include <utility> // move
 
-namespace nlohmann
-{
+// #include <nlohmann/detail/abi_macros.hpp>
+
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
 
 /// @brief an internal type for a backed binary type
 /// @sa https://json.nlohmann.me/api/byte_container_with_subtype/
@@ -5568,7 +5897,7 @@ class byte_container_with_subtype : public BinaryType
     bool m_has_subtype = false;
 };
 
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/conversions/from_json.hpp>
 
@@ -5577,19 +5906,26 @@ class byte_container_with_subtype : public BinaryType
 // #include <nlohmann/detail/exceptions.hpp>
 
 // #include <nlohmann/detail/hash.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 
 
 #include <cstdint> // uint8_t
 #include <cstddef> // size_t
 #include <functional> // hash
 
-// #include <nlohmann/detail/macro_scope.hpp>
+// #include <nlohmann/detail/abi_macros.hpp>
 
 // #include <nlohmann/detail/value_t.hpp>
 
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
 
@@ -5700,9 +6036,17 @@ std::size_t hash(const BasicJsonType& j)
 }
 
 }  // namespace detail
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/input/binary_reader.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 
 
 #include <algorithm> // generate_n
@@ -5717,11 +6061,18 @@ std::size_t hash(const BasicJsonType& j)
 #include <string> // char_traits, string
 #include <utility> // make_pair, move
 #include <vector> // vector
-#include <map> // map
 
 // #include <nlohmann/detail/exceptions.hpp>
 
 // #include <nlohmann/detail/input/input_adapters.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 
 
 #include <array> // array
@@ -5744,10 +6095,10 @@ std::size_t hash(const BasicJsonType& j)
 // #include <nlohmann/detail/macro_scope.hpp>
 
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 /// the supported input formats
 enum class input_format_t { json, cbor, msgpack, ubjson, bson, bjdata, bon8 };
 
@@ -5768,7 +6119,9 @@ class file_input_adapter
     JSON_HEDLEY_NON_NULL(2)
     explicit file_input_adapter(std::FILE* f) noexcept
         : m_file(f)
-    {}
+    {
+        JSON_ASSERT(m_file != nullptr);
+    }
 
     // make class move-only
     file_input_adapter(const file_input_adapter&) = delete;
@@ -6126,7 +6479,7 @@ struct container_input_adapter_factory< ContainerType,
 }
        };
 
-} // namespace container_input_adapter_factory_impl
+}  // namespace container_input_adapter_factory_impl
 
 template<typename ContainerType>
 typename container_input_adapter_factory_impl::container_input_adapter_factory<ContainerType>::adapter_type input_adapter(const ContainerType& container)
@@ -6205,10 +6558,19 @@ class span_input_adapter
   private:
     contiguous_bytes_input_adapter ia;
 };
+
 }  // namespace detail
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/input/json_sax.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 
 
 #include <cstddef>
@@ -6223,8 +6585,7 @@ class span_input_adapter
 // #include <nlohmann/detail/string_concat.hpp>
 
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 
 /*!
 @brief SAX interface
@@ -6930,11 +7291,19 @@ class json_sax_acceptor
         return false;
     }
 };
-}  // namespace detail
 
-}  // namespace nlohmann
+}  // namespace detail
+NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/input/lexer.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 
 
 #include <array> // array
@@ -6954,10 +7323,10 @@ class json_sax_acceptor
 // #include <nlohmann/detail/macro_scope.hpp>
 
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 ///////////
 // lexer //
 ///////////
@@ -8559,27 +8928,38 @@ scan_number_done:
     /// the decimal point
     const char_int_type decimal_point_char = '.';
 };
+
 }  // namespace detail
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
 // #include <nlohmann/detail/meta/is_sax.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 
 
 #include <cstdint> // size_t
 #include <utility> // declval
 #include <string> // string
 
+// #include <nlohmann/detail/abi_macros.hpp>
+
 // #include <nlohmann/detail/meta/detected.hpp>
 
 // #include <nlohmann/detail/meta/type_traits.hpp>
 
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 template<typename T>
 using null_function_t = decltype(std::declval<T&>().null());
 
@@ -8714,8 +9094,9 @@ struct is_sax_static_asserts
         "Missing/invalid function: bool parse_error(std::size_t, const "
         "std::string&, const exception&)");
 };
+
 }  // namespace detail
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/meta/type_traits.hpp>
 
@@ -8724,8 +9105,7 @@ struct is_sax_static_asserts
 // #include <nlohmann/detail/value_t.hpp>
 
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
 
@@ -10650,7 +11030,7 @@ class binary_reader
             return false;
         }
 
-        if (size_and_type.first != string_t::npos)
+        if (size_and_type.first != npos)
         {
             if (size_and_type.second != 0)
             {
@@ -10883,7 +11263,7 @@ class binary_reader
                     for (auto i : dim)
                     {
                         result *= i;
-                        if (result == 0 || result == string_t::npos) // because dim elements shall not have zeros, result = 0 means overflow happened; it also can't be string_t::npos as it is used to initialize size in get_ubjson_size_type()
+                        if (result == 0 || result == npos) // because dim elements shall not have zeros, result = 0 means overflow happened; it also can't be npos as it is used to initialize size in get_ubjson_size_type()
                         {
                             return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408, exception_message(input_format, "excessive ndarray size caused overflow", "size"), nullptr));
                         }
@@ -10929,7 +11309,7 @@ class binary_reader
     */
     bool get_ubjson_size_type(std::pair<std::size_t, char_int_type>& result, bool inside_ndarray = false)
     {
-        result.first = string_t::npos; // size
+        result.first = npos; // size
         result.second = 0; // type
         bool is_ndarray = false;
 
@@ -10937,10 +11317,9 @@ class binary_reader
 
         if (current == '$')
         {
-            std::vector<char_int_type> bjdx = {'[', '{', 'S', 'H', 'T', 'F', 'N', 'Z'}; // excluded markers in bjdata optimized type
-
             result.second = get();  // must not ignore 'N', because 'N' maybe the type
-            if (JSON_HEDLEY_UNLIKELY( input_format == input_format_t::bjdata && std::find(bjdx.begin(), bjdx.end(), result.second) != bjdx.end() ))
+            if (input_format == input_format_t::bjdata
+                    && JSON_HEDLEY_UNLIKELY(std::binary_search(bjd_optimized_type_markers.begin(), bjd_optimized_type_markers.end(), result.second)))
             {
                 auto last_token = get_token_string();
                 return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
@@ -11189,23 +11568,23 @@ class binary_reader
         // if bit-8 of size_and_type.second is set to 1, encode bjdata ndarray as an object in JData annotated array format (https://github.com/NeuroJSON/jdata):
         // {"_ArrayType_" : "typeid", "_ArraySize_" : [n1, n2, ...], "_ArrayData_" : [v1, v2, ...]}
 
-        if (input_format == input_format_t::bjdata && size_and_type.first != string_t::npos && (size_and_type.second & (1 << 8)) != 0)
+        if (input_format == input_format_t::bjdata && size_and_type.first != npos && (size_and_type.second & (1 << 8)) != 0)
         {
-            std::map<char_int_type, string_t> bjdtype = {{'U', "uint8"},  {'i', "int8"},  {'u', "uint16"}, {'I', "int16"},
-                {'m', "uint32"}, {'l', "int32"}, {'M', "uint64"}, {'L', "int64"}, {'d', "single"}, {'D', "double"}, {'C', "char"}
-            };
-
             size_and_type.second &= ~(static_cast<char_int_type>(1) << 8);  // use bit 8 to indicate ndarray, here we remove the bit to restore the type marker
-
+            auto it = std::lower_bound(bjd_types_map.begin(), bjd_types_map.end(), size_and_type.second, [](const bjd_type & p, char_int_type t)
+            {
+                return p.first < t;
+            });
             string_t key = "_ArrayType_";
-            if (JSON_HEDLEY_UNLIKELY(bjdtype.count(size_and_type.second) == 0))
+            if (JSON_HEDLEY_UNLIKELY(it == bjd_types_map.end() || it->first != size_and_type.second))
             {
                 auto last_token = get_token_string();
                 return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
                                         exception_message(input_format, "invalid byte: 0x" + last_token, "type"), nullptr));
             }
 
-            if (JSON_HEDLEY_UNLIKELY(!sax->key(key) || !sax->string(bjdtype[size_and_type.second]) ))
+            string_t type = it->second; // sax->string() takes a reference
+            if (JSON_HEDLEY_UNLIKELY(!sax->key(key) || !sax->string(type)))
             {
                 return false;
             }
@@ -11232,7 +11611,7 @@ class binary_reader
             return (sax->end_array() && sax->end_object());
         }
 
-        if (size_and_type.first != string_t::npos)
+        if (size_and_type.first != npos)
         {
             if (JSON_HEDLEY_UNLIKELY(!sax->start_array(size_and_type.first)))
             {
@@ -11295,7 +11674,7 @@ class binary_reader
         }
 
         // do not accept ND-array size in objects in BJData
-        if (input_format == input_format_t::bjdata && size_and_type.first != string_t::npos && (size_and_type.second & (1 << 8)) != 0)
+        if (input_format == input_format_t::bjdata && size_and_type.first != npos && (size_and_type.second & (1 << 8)) != 0)
         {
             auto last_token = get_token_string();
             return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
@@ -11303,7 +11682,7 @@ class binary_reader
         }
 
         string_t key;
-        if (size_and_type.first != string_t::npos)
+        if (size_and_type.first != npos)
         {
             if (JSON_HEDLEY_UNLIKELY(!sax->start_object(size_and_type.first)))
             {
@@ -11946,6 +12325,8 @@ class binary_reader
     }
 
   private:
+    static JSON_INLINE_VARIABLE constexpr std::size_t npos = static_cast<std::size_t>(-1);
+
     /// input adapter
     InputAdapterType ia;
 
@@ -11963,15 +12344,61 @@ class binary_reader
 
     /// the SAX parser
     json_sax_t* sax = nullptr;
+
+    // excluded markers in bjdata optimized type
+#define JSON_BINARY_READER_MAKE_BJD_OPTIMIZED_TYPE_MARKERS_ \
+    make_array<char_int_type>('F', 'H', 'N', 'S', 'T', 'Z', '[', '{')
+
+#define JSON_BINARY_READER_MAKE_BJD_TYPES_MAP_ \
+    make_array<bjd_type>(                      \
+    bjd_type{'C', "char"},                     \
+    bjd_type{'D', "double"},                   \
+    bjd_type{'I', "int16"},                    \
+    bjd_type{'L', "int64"},                    \
+    bjd_type{'M', "uint64"},                   \
+    bjd_type{'U', "uint8"},                    \
+    bjd_type{'d', "single"},                   \
+    bjd_type{'i', "int8"},                     \
+    bjd_type{'l', "int32"},                    \
+    bjd_type{'m', "uint32"},                   \
+    bjd_type{'u', "uint16"})
+
+  JSON_PRIVATE_UNLESS_TESTED:
+    // lookup tables
+    // NOLINTNEXTLINE(cppcoreguidelines-non-private-member-variables-in-classes)
+    const decltype(JSON_BINARY_READER_MAKE_BJD_OPTIMIZED_TYPE_MARKERS_) bjd_optimized_type_markers =
+        JSON_BINARY_READER_MAKE_BJD_OPTIMIZED_TYPE_MARKERS_;
+
+    using bjd_type = std::pair<char_int_type, string_t>;
+    // NOLINTNEXTLINE(cppcoreguidelines-non-private-member-variables-in-classes)
+    const decltype(JSON_BINARY_READER_MAKE_BJD_TYPES_MAP_) bjd_types_map =
+        JSON_BINARY_READER_MAKE_BJD_TYPES_MAP_;
+
+#undef JSON_BINARY_READER_MAKE_BJD_OPTIMIZED_TYPE_MARKERS_
+#undef JSON_BINARY_READER_MAKE_BJD_TYPES_MAP_
 };
+
+#ifndef JSON_HAS_CPP_17
+    template<typename BasicJsonType, typename InputAdapterType, typename SAX>
+    constexpr std::size_t binary_reader<BasicJsonType, InputAdapterType, SAX>::npos;
+#endif
+
 }  // namespace detail
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/input/input_adapters.hpp>
 
 // #include <nlohmann/detail/input/lexer.hpp>
 
 // #include <nlohmann/detail/input/parser.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 
 
 #include <cmath> // isfinite
@@ -11998,8 +12425,7 @@ class binary_reader
 // #include <nlohmann/detail/value_t.hpp>
 
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
 ////////////
@@ -12479,12 +12905,30 @@ class parser
 };
 
 }  // namespace detail
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/iterators/internal_iterator.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
 
+
+
+// #include <nlohmann/detail/abi_macros.hpp>
 
 // #include <nlohmann/detail/iterators/primitive_iterator.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 
 
 #include <cstddef> // ptrdiff_t
@@ -12493,10 +12937,10 @@ class parser
 // #include <nlohmann/detail/macro_scope.hpp>
 
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 /*
 @brief an iterator for primitive JSON types
 
@@ -12607,14 +13051,15 @@ class primitive_iterator_t
         return *this;
     }
 };
+
 }  // namespace detail
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END
 
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 /*!
 @brief an iterator value
 
@@ -12630,10 +13075,19 @@ template<typename BasicJsonType> struct internal_iterator
     /// generic iterator for all other types
     primitive_iterator_t primitive_iterator {};
 };
+
 }  // namespace detail
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/iterators/iter_impl.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 
 
 #include <iterator> // iterator, random_access_iterator_tag, bidirectional_iterator_tag, advance, next
@@ -12654,10 +13108,10 @@ template<typename BasicJsonType> struct internal_iterator
 // #include <nlohmann/detail/value_t.hpp>
 
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 // forward declare, to be able to friend it later on
 template<typename IteratorType> class iteration_proxy;
 template<typename IteratorType> class iteration_proxy_value;
@@ -13381,22 +13835,34 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
     /// the actual iterator of the associated instance
     internal_iterator<typename std::remove_const<BasicJsonType>::type> m_it {};
 };
-} // namespace detail
-} // namespace nlohmann
+
+}  // namespace detail
+NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/iterators/iteration_proxy.hpp>
 
 // #include <nlohmann/detail/iterators/json_reverse_iterator.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 
 
 #include <cstddef> // ptrdiff_t
 #include <iterator> // reverse_iterator
 #include <utility> // declval
 
-namespace nlohmann
-{
+// #include <nlohmann/detail/abi_macros.hpp>
+
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 //////////////////////
 // reverse_iterator //
 //////////////////////
@@ -13504,18 +13970,30 @@ class json_reverse_iterator : public std::reverse_iterator<Base>
         return it.operator * ();
     }
 };
+
 }  // namespace detail
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/iterators/primitive_iterator.hpp>
 
 // #include <nlohmann/detail/json_pointer.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 
 
 #include <algorithm> // all_of
 #include <cctype> // isdigit
 #include <cerrno> // errno, ERANGE
 #include <cstdlib> // strtoull
+#ifndef JSON_NO_IO
+    #include <iosfwd> // ostream
+#endif  // JSON_NO_IO
 #include <limits> // max
 #include <numeric> // accumulate
 #include <string> // string
@@ -13533,8 +14011,7 @@ class json_reverse_iterator : public std::reverse_iterator<Base>
 // #include <nlohmann/detail/value_t.hpp>
 
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 
 /// @brief JSON Pointer defines a string syntax for identifying a specific value within a JSON document
 /// @sa https://json.nlohmann.me/api/json_pointer/
@@ -13584,10 +14061,21 @@ class json_pointer
 
     /// @brief return a string representation of the JSON pointer
     /// @sa https://json.nlohmann.me/api/json_pointer/operator_string/
+    JSON_HEDLEY_DEPRECATED_FOR(3.11.0, to_string())
     operator string_t() const
     {
         return to_string();
     }
+
+#ifndef JSON_NO_IO
+    /// @brief write string representation of the JSON pointer to stream
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_ltlt/
+    friend std::ostream& operator<<(std::ostream& o, const json_pointer& ptr)
+    {
+        o << ptr.to_string();
+        return o;
+    }
+#endif
 
     /// @brief append another JSON pointer at the end of this JSON pointer
     /// @sa https://json.nlohmann.me/api/json_pointer/operator_slasheq/
@@ -14342,71 +14830,170 @@ class json_pointer
         return result;
     }
 
-    /*!
-    @brief compares two JSON pointers for equality
+  public:
+#if JSON_HAS_THREE_WAY_COMPARISON
+    /// @brief compares two JSON pointers for equality
+    /// @sa https://json.nlohmann.me/api/json_pointer/operator_eq/
+    template<typename RefStringTypeRhs>
+    bool operator==(const json_pointer<RefStringTypeRhs>& rhs) const noexcept
+    {
+        return reference_tokens == rhs.reference_tokens;
+    }
 
-    @param[in] lhs  JSON pointer to compare
-    @param[in] rhs  JSON pointer to compare
-    @return whether @a lhs is equal to @a rhs
+    /// @brief compares JSON pointer and string for equality
+    /// @sa https://json.nlohmann.me/api/json_pointer/operator_eq/
+    JSON_HEDLEY_DEPRECATED_FOR(3.11.2, operator==(json_pointer))
+    bool operator==(const string_t& rhs) const
+    {
+        return *this == json_pointer(rhs);
+    }
 
-    @complexity Linear in the length of the JSON pointer
-
-    @exceptionsafety No-throw guarantee: this function never throws exceptions.
-    */
+    /// @brief 3-way compares two JSON pointers
+    template<typename RefStringTypeRhs>
+    std::strong_ordering operator<=>(const json_pointer<RefStringTypeRhs>& rhs) const noexcept // *NOPAD*
+    {
+        return  reference_tokens <=> rhs.reference_tokens; // *NOPAD*
+    }
+#else
+    /// @brief compares two JSON pointers for equality
+    /// @sa https://json.nlohmann.me/api/json_pointer/operator_eq/
     template<typename RefStringTypeLhs, typename RefStringTypeRhs>
     // NOLINTNEXTLINE(readability-redundant-declaration)
-    friend bool operator==(json_pointer<RefStringTypeLhs> const& lhs,
-                           json_pointer<RefStringTypeRhs> const& rhs) noexcept;
+    friend bool operator==(const json_pointer<RefStringTypeLhs>& lhs,
+                           const json_pointer<RefStringTypeRhs>& rhs) noexcept;
 
-    /*!
-    @brief compares two JSON pointers for inequality
+    /// @brief compares JSON pointer and string for equality
+    /// @sa https://json.nlohmann.me/api/json_pointer/operator_eq/
+    template<typename RefStringTypeLhs, typename StringType>
+    // NOLINTNEXTLINE(readability-redundant-declaration)
+    friend bool operator==(const json_pointer<RefStringTypeLhs>& lhs,
+                           const StringType& rhs);
 
-    @param[in] lhs  JSON pointer to compare
-    @param[in] rhs  JSON pointer to compare
-    @return whether @a lhs is not equal @a rhs
+    /// @brief compares string and JSON pointer for equality
+    /// @sa https://json.nlohmann.me/api/json_pointer/operator_eq/
+    template<typename RefStringTypeRhs, typename StringType>
+    // NOLINTNEXTLINE(readability-redundant-declaration)
+    friend bool operator==(const StringType& lhs,
+                           const json_pointer<RefStringTypeRhs>& rhs);
 
-    @complexity Linear in the length of the JSON pointer
-
-    @exceptionsafety No-throw guarantee: this function never throws exceptions.
-    */
+    /// @brief compares two JSON pointers for inequality
+    /// @sa https://json.nlohmann.me/api/json_pointer/operator_ne/
     template<typename RefStringTypeLhs, typename RefStringTypeRhs>
     // NOLINTNEXTLINE(readability-redundant-declaration)
-    friend bool operator!=(json_pointer<RefStringTypeLhs> const& lhs,
-                           json_pointer<RefStringTypeRhs> const& rhs) noexcept;
+    friend bool operator!=(const json_pointer<RefStringTypeLhs>& lhs,
+                           const json_pointer<RefStringTypeRhs>& rhs) noexcept;
 
+    /// @brief compares JSON pointer and string for inequality
+    /// @sa https://json.nlohmann.me/api/json_pointer/operator_ne/
+    template<typename RefStringTypeLhs, typename StringType>
+    // NOLINTNEXTLINE(readability-redundant-declaration)
+    friend bool operator!=(const json_pointer<RefStringTypeLhs>& lhs,
+                           const StringType& rhs);
+
+    /// @brief compares string and JSON pointer for inequality
+    /// @sa https://json.nlohmann.me/api/json_pointer/operator_ne/
+    template<typename RefStringTypeRhs, typename StringType>
+    // NOLINTNEXTLINE(readability-redundant-declaration)
+    friend bool operator!=(const StringType& lhs,
+                           const json_pointer<RefStringTypeRhs>& rhs);
+
+    /// @brief compares two JSON pointer for less-than
+    template<typename RefStringTypeLhs, typename RefStringTypeRhs>
+    // NOLINTNEXTLINE(readability-redundant-declaration)
+    friend bool operator<(const json_pointer<RefStringTypeLhs>& lhs,
+                          const json_pointer<RefStringTypeRhs>& rhs) noexcept;
+#endif
+
+  private:
     /// the reference tokens
     std::vector<string_t> reference_tokens;
 };
 
+#if !JSON_HAS_THREE_WAY_COMPARISON
 // functions cannot be defined inside class due to ODR violations
 template<typename RefStringTypeLhs, typename RefStringTypeRhs>
-inline bool operator==(json_pointer<RefStringTypeLhs> const& lhs,
-                       json_pointer<RefStringTypeRhs> const& rhs) noexcept
+inline bool operator==(const json_pointer<RefStringTypeLhs>& lhs,
+                       const json_pointer<RefStringTypeRhs>& rhs) noexcept
 {
     return lhs.reference_tokens == rhs.reference_tokens;
 }
 
+template<typename RefStringTypeLhs,
+         typename StringType = typename json_pointer<RefStringTypeLhs>::string_t>
+JSON_HEDLEY_DEPRECATED_FOR(3.11.2, operator==(json_pointer, json_pointer))
+inline bool operator==(const json_pointer<RefStringTypeLhs>& lhs,
+                       const StringType& rhs)
+{
+    return lhs == json_pointer<RefStringTypeLhs>(rhs);
+}
+
+template<typename RefStringTypeRhs,
+         typename StringType = typename json_pointer<RefStringTypeRhs>::string_t>
+JSON_HEDLEY_DEPRECATED_FOR(3.11.2, operator==(json_pointer, json_pointer))
+inline bool operator==(const StringType& lhs,
+                       const json_pointer<RefStringTypeRhs>& rhs)
+{
+    return json_pointer<RefStringTypeRhs>(lhs) == rhs;
+}
+
 template<typename RefStringTypeLhs, typename RefStringTypeRhs>
-inline bool operator!=(json_pointer<RefStringTypeLhs> const& lhs,
-                       json_pointer<RefStringTypeRhs> const& rhs) noexcept
+inline bool operator!=(const json_pointer<RefStringTypeLhs>& lhs,
+                       const json_pointer<RefStringTypeRhs>& rhs) noexcept
 {
     return !(lhs == rhs);
 }
-}  // namespace nlohmann
+
+template<typename RefStringTypeLhs,
+         typename StringType = typename json_pointer<RefStringTypeLhs>::string_t>
+JSON_HEDLEY_DEPRECATED_FOR(3.11.2, operator!=(json_pointer, json_pointer))
+inline bool operator!=(const json_pointer<RefStringTypeLhs>& lhs,
+                       const StringType& rhs)
+{
+    return !(lhs == rhs);
+}
+
+template<typename RefStringTypeRhs,
+         typename StringType = typename json_pointer<RefStringTypeRhs>::string_t>
+JSON_HEDLEY_DEPRECATED_FOR(3.11.2, operator!=(json_pointer, json_pointer))
+inline bool operator!=(const StringType& lhs,
+                       const json_pointer<RefStringTypeRhs>& rhs)
+{
+    return !(lhs == rhs);
+}
+
+template<typename RefStringTypeLhs, typename RefStringTypeRhs>
+inline bool operator<(const json_pointer<RefStringTypeLhs>& lhs,
+                      const json_pointer<RefStringTypeRhs>& rhs) noexcept
+{
+    return lhs.reference_tokens < rhs.reference_tokens;
+}
+#endif
+
+NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/json_ref.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 
 
 #include <initializer_list>
 #include <utility>
 
+// #include <nlohmann/detail/abi_macros.hpp>
+
 // #include <nlohmann/detail/meta/type_traits.hpp>
 
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 template<typename BasicJsonType>
 class json_ref
 {
@@ -14462,8 +15049,9 @@ class json_ref
     mutable value_type owned_value = nullptr;
     value_type const* value_ref = nullptr;
 };
+
 }  // namespace detail
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
@@ -14476,6 +15064,14 @@ class json_ref
 // #include <nlohmann/detail/meta/type_traits.hpp>
 
 // #include <nlohmann/detail/output/binary_writer.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 
 
 #include <algorithm> // reverse
@@ -14494,6 +15090,14 @@ class json_ref
 // #include <nlohmann/detail/macro_scope.hpp>
 
 // #include <nlohmann/detail/output/output_adapters.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 
 
 #include <algorithm> // copy
@@ -14511,10 +15115,10 @@ class json_ref
 // #include <nlohmann/detail/macro_scope.hpp>
 
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 /// abstract output adapter interface
 template<typename CharType> struct output_adapter_protocol
 {
@@ -14550,7 +15154,7 @@ class output_vector_adapter : public output_adapter_protocol<CharType>
     JSON_HEDLEY_NON_NULL(2)
     void write_characters(const CharType* s, std::size_t length) override
     {
-        std::copy(s, s + length, std::back_inserter(v));
+        v.insert(v.end(), s, s + length);
     }
 
   private:
@@ -14631,16 +15235,17 @@ class output_adapter
   private:
     output_adapter_t<CharType> oa = nullptr;
 };
+
 }  // namespace detail
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/string_concat.hpp>
 
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 ///////////////////
 // binary writer //
 ///////////////////
@@ -16765,12 +17370,22 @@ class binary_writer
     /// the output
     output_adapter_t<CharType> oa = nullptr;
 };
+
 }  // namespace detail
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/output/output_adapters.hpp>
 
 // #include <nlohmann/detail/output/serializer.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2008-2009 Björn Hoehrmann <bjoern@hoehrmann.de>
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 
 
 #include <algorithm> // reverse, remove, fill, find, none_of
@@ -16787,6 +17402,15 @@ class binary_writer
 #include <utility> // move
 
 // #include <nlohmann/detail/conversions/to_chars.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2009 Florian Loitsch <https://florian.loitsch.com/>
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 
 
 #include <array> // array
@@ -16799,8 +17423,7 @@ class binary_writer
 // #include <nlohmann/detail/macro_scope.hpp>
 
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
 
@@ -17829,7 +18452,7 @@ inline char* format_buffer(char* buf, int len, int decimal_exponent,
     return append_exponent(buf, n - 1);
 }
 
-} // namespace dtoa_impl
+}  // namespace dtoa_impl
 
 /*!
 @brief generates a decimal representation of the floating-point number value in [first, last).
@@ -17896,8 +18519,8 @@ char* to_chars(char* first, const char* last, FloatType value)
     return dtoa_impl::format_buffer(first, len, decimal_exponent, kMinExp, kMaxExp);
 }
 
-} // namespace detail
-} // namespace nlohmann
+}  // namespace detail
+NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/exceptions.hpp>
 
@@ -17914,10 +18537,10 @@ char* to_chars(char* first, const char* last, FloatType value)
 // #include <nlohmann/detail/value_t.hpp>
 
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 ///////////////////
 // serialization //
 ///////////////////
@@ -18866,14 +19489,23 @@ class serializer
     /// error_handler how to react on decoding errors
     const error_handler_t error_handler;
 };
+
 }  // namespace detail
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/value_t.hpp>
 
 // #include <nlohmann/json_fwd.hpp>
 
 // #include <nlohmann/ordered_map.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 
 
 #include <functional> // equal_to, less
@@ -18887,9 +19519,10 @@ class serializer
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
+// #include <nlohmann/detail/meta/type_traits.hpp>
 
-namespace nlohmann
-{
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
 
 /// ordered_map: a minimal map-like container that preserves insertion order
 /// for use within nlohmann::basic_json<ordered_map>
@@ -18929,21 +19562,50 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
                 return {it, false};
             }
         }
-        Container::emplace_back(key, t);
-        return {--this->end(), true};
+        Container::emplace_back(key, std::forward<T>(t));
+        return {std::prev(this->end()), true};
     }
 
-    T& operator[](const Key& key)
+    template<class KeyType, detail::enable_if_t<
+                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+    std::pair<iterator, bool> emplace(KeyType && key, T && t)
+    {
+        for (auto it = this->begin(); it != this->end(); ++it)
+        {
+            if (m_compare(it->first, key))
+            {
+                return {it, false};
+            }
+        }
+        Container::emplace_back(std::forward<KeyType>(key), std::forward<T>(t));
+        return {std::prev(this->end()), true};
+    }
+
+    T& operator[](const key_type& key)
     {
         return emplace(key, T{}).first->second;
     }
 
-    const T& operator[](const Key& key) const
+    template<class KeyType, detail::enable_if_t<
+                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+    T & operator[](KeyType && key)
+    {
+        return emplace(std::forward<KeyType>(key), T{}).first->second;
+    }
+
+    const T& operator[](const key_type& key) const
     {
         return at(key);
     }
 
-    T& at(const Key& key)
+    template<class KeyType, detail::enable_if_t<
+                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+    const T & operator[](KeyType && key) const
+    {
+        return at(std::forward<KeyType>(key));
+    }
+
+    T& at(const key_type& key)
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
@@ -18956,7 +19618,9 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
         JSON_THROW(std::out_of_range("key not found"));
     }
 
-    const T& at(const Key& key) const
+    template<class KeyType, detail::enable_if_t<
+                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+    T & at(KeyType && key)
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
@@ -18969,7 +19633,56 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
         JSON_THROW(std::out_of_range("key not found"));
     }
 
-    size_type erase(const Key& key)
+    const T& at(const key_type& key) const
+    {
+        for (auto it = this->begin(); it != this->end(); ++it)
+        {
+            if (m_compare(it->first, key))
+            {
+                return it->second;
+            }
+        }
+
+        JSON_THROW(std::out_of_range("key not found"));
+    }
+
+    template<class KeyType, detail::enable_if_t<
+                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+    const T & at(KeyType && key) const
+    {
+        for (auto it = this->begin(); it != this->end(); ++it)
+        {
+            if (m_compare(it->first, key))
+            {
+                return it->second;
+            }
+        }
+
+        JSON_THROW(std::out_of_range("key not found"));
+    }
+
+    size_type erase(const key_type& key)
+    {
+        for (auto it = this->begin(); it != this->end(); ++it)
+        {
+            if (m_compare(it->first, key))
+            {
+                // Since we cannot move const Keys, re-construct them in place
+                for (auto next = it; ++next != this->end(); ++it)
+                {
+                    it->~value_type(); // Destroy but keep allocation
+                    new (&*it) value_type{std::move(*next)};
+                }
+                Container::pop_back();
+                return 1;
+            }
+        }
+        return 0;
+    }
+
+    template<class KeyType, detail::enable_if_t<
+                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+    size_type erase(KeyType && key)
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
@@ -18995,6 +19708,11 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
 
     iterator erase(iterator first, iterator last)
     {
+        if (first == last)
+        {
+            return first;
+        }
+
         const auto elements_affected = std::distance(first, last);
         const auto offset = std::distance(Container::begin(), first);
 
@@ -19041,7 +19759,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
         return Container::begin() + offset;
     }
 
-    size_type count(const Key& key) const
+    size_type count(const key_type& key) const
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
@@ -19053,7 +19771,21 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
         return 0;
     }
 
-    iterator find(const Key& key)
+    template<class KeyType, detail::enable_if_t<
+                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+    size_type count(KeyType && key) const
+    {
+        for (auto it = this->begin(); it != this->end(); ++it)
+        {
+            if (m_compare(it->first, key))
+            {
+                return 1;
+            }
+        }
+        return 0;
+    }
+
+    iterator find(const key_type& key)
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
@@ -19065,7 +19797,21 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
         return Container::end();
     }
 
-    const_iterator find(const Key& key) const
+    template<class KeyType, detail::enable_if_t<
+                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+    iterator find(KeyType && key)
+    {
+        for (auto it = this->begin(); it != this->end(); ++it)
+        {
+            if (m_compare(it->first, key))
+            {
+                return it;
+            }
+        }
+        return Container::end();
+    }
+
+    const_iterator find(const key_type& key) const
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
@@ -19112,7 +19858,7 @@ private:
     JSON_NO_UNIQUE_ADDRESS key_compare m_compare = key_compare();
 };
 
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END
 
 
 #if defined(JSON_HAS_CPP_17)
@@ -19125,8 +19871,7 @@ private:
 @see https://github.com/nlohmann
 @since version 1.0.0
 */
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 
 /*!
 @brief a class to store JSON values
@@ -19569,7 +20314,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     object = nullptr;  // silence warning, see #821
                     if (JSON_HEDLEY_UNLIKELY(t == value_t::null))
                     {
-                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.10.5", nullptr)); // LCOV_EXCL_LINE
+                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.11.2", nullptr)); // LCOV_EXCL_LINE
                     }
                     break;
                 }
@@ -21043,7 +21788,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @brief access specified object element with bounds checking
     /// @sa https://json.nlohmann.me/api/basic_json/at/
     template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int> = 0>
+                 detail::is_usable_as_basic_json_key_type<basic_json_t, KeyType>::value, int> = 0>
     reference at(KeyType && key)
     {
         // at only works for objects
@@ -21081,7 +21826,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @brief access specified object element with bounds checking
     /// @sa https://json.nlohmann.me/api/basic_json/at/
     template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int> = 0>
+                 detail::is_usable_as_basic_json_key_type<basic_json_t, KeyType>::value, int> = 0>
     const_reference at(KeyType && key) const
     {
         // at only works for objects
@@ -21211,7 +21956,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @brief access specified object element
     /// @sa https://json.nlohmann.me/api/basic_json/operator%5B%5D/
     template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int > = 0 >
+                 detail::is_usable_as_basic_json_key_type<basic_json_t, KeyType>::value, int > = 0 >
     reference operator[](KeyType && key)
     {
         // implicitly convert null value to an empty object
@@ -21235,7 +21980,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @brief access specified object element
     /// @sa https://json.nlohmann.me/api/basic_json/operator%5B%5D/
     template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int > = 0 >
+                 detail::is_usable_as_basic_json_key_type<basic_json_t, KeyType>::value, int > = 0 >
     const_reference operator[](KeyType && key) const
     {
         // const operator[] only works for objects
@@ -21249,14 +21994,24 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         JSON_THROW(type_error::create(305, detail::concat("cannot use operator[] with a string argument with ", type_name()), this));
     }
 
+  private:
+    template<typename KeyType>
+    using is_comparable_with_object_key = detail::is_comparable <
+        object_comparator_t, const typename object_t::key_type&, KeyType >;
+
+    template<typename ValueType>
+    using value_return_type = std::conditional <
+        detail::is_c_string_uncvref<ValueType>::value,
+        string_t, typename std::decay<ValueType>::type >;
+
+  public:
     /// @brief access specified object element with default value
     /// @sa https://json.nlohmann.me/api/basic_json/value/
-    // this is the value(const typename object_t::key_type&) overload
-    template < class KeyType, class ValueType, detail::enable_if_t <
-                   std::is_same<KeyType, typename object_t::key_type>::value
+    template < class ValueType, detail::enable_if_t <
+                   !detail::is_transparent<object_comparator_t>::value
                    && detail::is_getable<basic_json_t, ValueType>::value
-                   && !std::is_same<value_t, ValueType>::value, int > = 0 >
-    typename std::decay<ValueType>::type value(const KeyType& key, ValueType && default_value) const
+                   && !std::is_same<value_t, detail::uncvref_t<ValueType>>::value, int > = 0 >
+    ValueType value(const typename object_t::key_type& key, const ValueType& default_value) const
     {
         // value only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
@@ -21265,7 +22020,32 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             const auto it = find(key);
             if (it != end())
             {
-                return it->template get<typename std::decay<ValueType>::type>();
+                return it->template get<ValueType>();
+            }
+
+            return default_value;
+        }
+
+        JSON_THROW(type_error::create(306, detail::concat("cannot use value() with ", type_name()), this));
+    }
+
+    /// @brief access specified object element with default value
+    /// @sa https://json.nlohmann.me/api/basic_json/value/
+    template < class ValueType, class ReturnType = typename value_return_type<ValueType>::type,
+               detail::enable_if_t <
+                   !detail::is_transparent<object_comparator_t>::value
+                   && detail::is_getable<basic_json_t, ReturnType>::value
+                   && !std::is_same<value_t, detail::uncvref_t<ValueType>>::value, int > = 0 >
+    ReturnType value(const typename object_t::key_type& key, ValueType && default_value) const
+    {
+        // value only works for objects
+        if (JSON_HEDLEY_LIKELY(is_object()))
+        {
+            // if key is found, return value and given default value otherwise
+            const auto it = find(key);
+            if (it != end())
+            {
+                return it->template get<ReturnType>();
             }
 
             return std::forward<ValueType>(default_value);
@@ -21276,36 +22056,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     /// @brief access specified object element with default value
     /// @sa https://json.nlohmann.me/api/basic_json/value/
-    /// overload for a default value of type const char*
-    string_t value(const typename object_t::key_type& key, const char* default_value) const
-    {
-        return value(key, string_t(default_value));
-    }
-
-    // these two functions, in conjunction with value(const KeyType &, ValueType &&),
-    // resolve an ambiguity that would otherwise occur between the json_pointer and
-    // typename object_t::key_type & overloads
-    template < class ValueType, detail::enable_if_t <
-                   detail::is_getable<basic_json_t, ValueType>::value
-                   && !std::is_same<value_t, ValueType>::value, int > = 0 >
-    typename std::decay<ValueType>::type value(const char* key, ValueType && default_value) const
-    {
-        return value(typename object_t::key_type(key), std::forward<ValueType>(default_value));
-    }
-
-    string_t value(const char* key, const char* default_value) const
-    {
-        return value(typename object_t::key_type(key), string_t(default_value));
-    }
-
-    /// @brief access specified object element with default value
-    /// @sa https://json.nlohmann.me/api/basic_json/value/
-    /// using std::is_convertible in a std::enable_if will fail when using explicit conversions
-    template < class KeyType, class ValueType, detail::enable_if_t <
-                   detail::is_getable<basic_json_t, ValueType>::value
-                   && !std::is_same<value_t, ValueType>::value
-                   && detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int > = 0 >
-    typename std::decay<ValueType>::type value(KeyType && key, ValueType && default_value) const
+    template < class ValueType, class KeyType, detail::enable_if_t <
+                   detail::is_transparent<object_comparator_t>::value
+                   && !detail::is_json_pointer<KeyType>::value
+                   && is_comparable_with_object_key<KeyType>::value
+                   && detail::is_getable<basic_json_t, ValueType>::value
+                   && !std::is_same<value_t, detail::uncvref_t<ValueType>>::value, int > = 0 >
+    ValueType value(KeyType && key, const ValueType& default_value) const
     {
         // value only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
@@ -21314,7 +22071,34 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             const auto it = find(std::forward<KeyType>(key));
             if (it != end())
             {
-                return it->template get<typename std::decay<ValueType>::type>();
+                return it->template get<ValueType>();
+            }
+
+            return default_value;
+        }
+
+        JSON_THROW(type_error::create(306, detail::concat("cannot use value() with ", type_name()), this));
+    }
+
+    /// @brief access specified object element via JSON Pointer with default value
+    /// @sa https://json.nlohmann.me/api/basic_json/value/
+    template < class ValueType, class KeyType, class ReturnType = typename value_return_type<ValueType>::type,
+               detail::enable_if_t <
+                   detail::is_transparent<object_comparator_t>::value
+                   && !detail::is_json_pointer<KeyType>::value
+                   && is_comparable_with_object_key<KeyType>::value
+                   && detail::is_getable<basic_json_t, ReturnType>::value
+                   && !std::is_same<value_t, detail::uncvref_t<ValueType>>::value, int > = 0 >
+    ReturnType value(KeyType && key, ValueType && default_value) const
+    {
+        // value only works for objects
+        if (JSON_HEDLEY_LIKELY(is_object()))
+        {
+            // if key is found, return value and given default value otherwise
+            const auto it = find(std::forward<KeyType>(key));
+            if (it != end())
+            {
+                return it->template get<ReturnType>();
             }
 
             return std::forward<ValueType>(default_value);
@@ -21323,20 +22107,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         JSON_THROW(type_error::create(306, detail::concat("cannot use value() with ", type_name()), this));
     }
 
-    /// @brief access specified object element with default value
-    /// @sa https://json.nlohmann.me/api/basic_json/value/
-    /// overload for a default value of type const char*
-    template < class KeyType, detail::enable_if_t <
-                   !detail::is_json_pointer<KeyType>::value, int > = 0 >
-    string_t value(KeyType && key, const char* default_value) const
-    {
-        return value(std::forward<KeyType>(key), string_t(default_value));
-    }
-
     /// @brief access specified object element via JSON Pointer with default value
     /// @sa https://json.nlohmann.me/api/basic_json/value/
     template < class ValueType, detail::enable_if_t <
-                   detail::is_getable<basic_json_t, ValueType>::value, int> = 0 >
+                   detail::is_getable<basic_json_t, ValueType>::value
+                   && !std::is_same<value_t, detail::uncvref_t<ValueType>>::value, int > = 0 >
     ValueType value(const json_pointer& ptr, const ValueType& default_value) const
     {
         // value only works for objects
@@ -21356,29 +22131,50 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         JSON_THROW(type_error::create(306, detail::concat("cannot use value() with ", type_name()), this));
     }
 
+    /// @brief access specified object element via JSON Pointer with default value
+    /// @sa https://json.nlohmann.me/api/basic_json/value/
+    template < class ValueType, class ReturnType = typename value_return_type<ValueType>::type,
+               detail::enable_if_t <
+                   detail::is_getable<basic_json_t, ReturnType>::value
+                   && !std::is_same<value_t, detail::uncvref_t<ValueType>>::value, int > = 0 >
+    ReturnType value(const json_pointer& ptr, ValueType && default_value) const
+    {
+        // value only works for objects
+        if (JSON_HEDLEY_LIKELY(is_object()))
+        {
+            // if pointer resolves a value, return it or use default value
+            JSON_TRY
+            {
+                return ptr.get_checked(this).template get<ReturnType>();
+            }
+            JSON_INTERNAL_CATCH (out_of_range&)
+            {
+                return std::forward<ValueType>(default_value);
+            }
+        }
+
+        JSON_THROW(type_error::create(306, detail::concat("cannot use value() with ", type_name()), this));
+    }
+
     template < class ValueType, class BasicJsonType, detail::enable_if_t <
-                   detail::is_getable<basic_json_t, ValueType>::value, int> = 0 >
+                   detail::is_basic_json<BasicJsonType>::value
+                   && detail::is_getable<basic_json_t, ValueType>::value
+                   && !std::is_same<value_t, detail::uncvref_t<ValueType>>::value, int > = 0 >
     JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
     ValueType value(const ::nlohmann::json_pointer<BasicJsonType>& ptr, const ValueType& default_value) const
     {
         return value(ptr.convert(), default_value);
     }
 
-    /// @brief access specified object element via JSON Pointer with default value
-    /// @sa https://json.nlohmann.me/api/basic_json/value/
-    /// overload for a default value of type const char*
-    JSON_HEDLEY_NON_NULL(3)
-    string_t value(const json_pointer& ptr, const char* default_value) const
-    {
-        return value(ptr, string_t(default_value));
-    }
-
-    template<typename BasicJsonType>
+    template < class ValueType, class BasicJsonType, class ReturnType = typename value_return_type<ValueType>::type,
+               detail::enable_if_t <
+                   detail::is_basic_json<BasicJsonType>::value
+                   && detail::is_getable<basic_json_t, ReturnType>::value
+                   && !std::is_same<value_t, detail::uncvref_t<ValueType>>::value, int > = 0 >
     JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
-    JSON_HEDLEY_NON_NULL(3)
-    string_t value(const typename ::nlohmann::json_pointer<BasicJsonType>& ptr, const char* default_value) const
+    ReturnType value(const ::nlohmann::json_pointer<BasicJsonType>& ptr, ValueType && default_value) const
     {
-        return value(ptr.convert(), default_value);
+        return value(ptr.convert(), std::forward<ValueType>(default_value));
     }
 
     /// @brief access the first element
@@ -21603,7 +22399,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @brief remove element from a JSON object given a key
     /// @sa https://json.nlohmann.me/api/basic_json/erase/
     template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int> = 0>
+                 detail::is_usable_as_basic_json_key_type<basic_json_t, KeyType>::value, int> = 0>
     size_type erase(KeyType && key)
     {
         return erase_internal(std::forward<KeyType>(key));
@@ -21670,7 +22466,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @brief find an element in a JSON object
     /// @sa https://json.nlohmann.me/api/basic_json/find/
     template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int> = 0>
+                 detail::is_usable_as_basic_json_key_type<basic_json_t, KeyType>::value, int> = 0>
     iterator find(KeyType && key)
     {
         auto result = end();
@@ -21686,7 +22482,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @brief find an element in a JSON object
     /// @sa https://json.nlohmann.me/api/basic_json/find/
     template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int> = 0>
+                 detail::is_usable_as_basic_json_key_type<basic_json_t, KeyType>::value, int> = 0>
     const_iterator find(KeyType && key) const
     {
         auto result = cend();
@@ -21710,7 +22506,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @brief returns the number of occurrences of a key in a JSON object
     /// @sa https://json.nlohmann.me/api/basic_json/count/
     template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int> = 0>
+                 detail::is_usable_as_basic_json_key_type<basic_json_t, KeyType>::value, int> = 0>
     size_type count(KeyType && key) const
     {
         // return 0 for all nonobject types
@@ -21727,7 +22523,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @brief check the existence of an element in a JSON object
     /// @sa https://json.nlohmann.me/api/basic_json/contains/
     template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int> = 0>
+                 detail::is_usable_as_basic_json_key_type<basic_json_t, KeyType>::value, int> = 0>
     bool contains(KeyType && key) const
     {
         return is_object() && m_value.object->find(std::forward<KeyType>(key)) != m_value.object->end();
@@ -21740,9 +22536,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return ptr.contains(this);
     }
 
-    template<typename BasicJsonType>
+    template<typename BasicJsonType, detail::enable_if_t<detail::is_basic_json<BasicJsonType>::value, int> = 0>
     JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
-    bool contains(const typename ::nlohmann::json_pointer<BasicJsonType> ptr) const
+    bool contains(const typename ::nlohmann::json_pointer<BasicJsonType>& ptr) const
     {
         return ptr.contains(this);
     }
@@ -22489,11 +23285,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // swap only works for arrays
         if (JSON_HEDLEY_LIKELY(is_array()))
         {
-            std::swap(*(m_value.array), other);
+            using std::swap;
+            swap(*(m_value.array), other);
         }
         else
         {
-            JSON_THROW(type_error::create(310, detail::concat("cannot use swap() with ", type_name()), this));
+            JSON_THROW(type_error::create(310, detail::concat("cannot use swap(array_t&) with ", type_name()), this));
         }
     }
 
@@ -22504,11 +23301,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // swap only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
         {
-            std::swap(*(m_value.object), other);
+            using std::swap;
+            swap(*(m_value.object), other);
         }
         else
         {
-            JSON_THROW(type_error::create(310, detail::concat("cannot use swap() with ", type_name()), this));
+            JSON_THROW(type_error::create(310, detail::concat("cannot use swap(object_t&) with ", type_name()), this));
         }
     }
 
@@ -22519,11 +23317,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // swap only works for strings
         if (JSON_HEDLEY_LIKELY(is_string()))
         {
-            std::swap(*(m_value.string), other);
+            using std::swap;
+            swap(*(m_value.string), other);
         }
         else
         {
-            JSON_THROW(type_error::create(310, detail::concat("cannot use swap() with ", type_name()), this));
+            JSON_THROW(type_error::create(310, detail::concat("cannot use swap(string_t&) with ", type_name()), this));
         }
     }
 
@@ -22534,11 +23333,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // swap only works for strings
         if (JSON_HEDLEY_LIKELY(is_binary()))
         {
-            std::swap(*(m_value.binary), other);
+            using std::swap;
+            swap(*(m_value.binary), other);
         }
         else
         {
-            JSON_THROW(type_error::create(310, detail::concat("cannot use swap() with ", type_name()), this));
+            JSON_THROW(type_error::create(310, detail::concat("cannot use swap(binary_t&) with ", type_name()), this));
         }
     }
 
@@ -22549,11 +23349,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // swap only works for strings
         if (JSON_HEDLEY_LIKELY(is_binary()))
         {
-            std::swap(*(m_value.binary), other);
+            using std::swap;
+            swap(*(m_value.binary), other);
         }
         else
         {
-            JSON_THROW(type_error::create(310, detail::concat("cannot use swap() with ", type_name()), this));
+            JSON_THROW(type_error::create(310, detail::concat("cannot use swap(binary_t::container_type&) with ", type_name()), this));
         }
     }
 
@@ -23669,7 +24470,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return ptr.get_checked(this);
     }
 
-    template<typename BasicJsonType>
+    template<typename BasicJsonType, detail::enable_if_t<detail::is_basic_json<BasicJsonType>::value, int> = 0>
     JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
     reference at(const ::nlohmann::json_pointer<BasicJsonType>& ptr)
     {
@@ -23683,7 +24484,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return ptr.get_checked(this);
     }
 
-    template<typename BasicJsonType>
+    template<typename BasicJsonType, detail::enable_if_t<detail::is_basic_json<BasicJsonType>::value, int> = 0>
     JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
     const_reference at(const ::nlohmann::json_pointer<BasicJsonType>& ptr) const
     {
@@ -23715,13 +24516,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @name JSON Patch functions
     /// @{
 
-    /// @brief applies a JSON patch
+    /// @brief applies a JSON patch in-place without copying the object
     /// @sa https://json.nlohmann.me/api/basic_json/patch/
-    basic_json patch(const basic_json& json_patch) const
+    void patch_inplace(const basic_json& json_patch)
     {
-        // make a working copy to apply the patch to
-        basic_json result = *this;
-
+        basic_json& result = *this;
         // the valid JSON Patch operations
         enum class patch_operations {add, remove, replace, move, copy, test, invalid};
 
@@ -23775,7 +24574,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             // get reference to parent of JSON pointer ptr
             const auto last_path = ptr.back();
             ptr.pop_back();
-            basic_json& parent = result[ptr];
+            // parent must exist when performing patch add per RFC6902 specs
+            basic_json& parent = result.at(ptr);
 
             switch (parent.m_type)
             {
@@ -23985,7 +24785,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 }
             }
         }
+    }
 
+    /// @brief applies a JSON patch to a copy of the current object
+    /// @sa https://json.nlohmann.me/api/basic_json/patch/
+    basic_json patch(const basic_json& json_patch) const
+    {
+        basic_json result = *this;
+        result.patch_inplace(json_patch);
         return result;
     }
 
@@ -24123,7 +24930,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
         return result;
     }
-
     /// @}
 
     ////////////////////////////////
@@ -24172,7 +24978,30 @@ std::string to_string(const NLOHMANN_BASIC_JSON_TPL& j)
     return j.dump();
 }
 
-} // namespace nlohmann
+inline namespace literals
+{
+inline namespace json_literals
+{
+
+/// @brief user-defined string literal for JSON values
+/// @sa https://json.nlohmann.me/api/basic_json/operator_literal_json/
+JSON_HEDLEY_NON_NULL(1)
+inline nlohmann::json operator "" _json(const char* s, std::size_t n)
+{
+    return nlohmann::json::parse(s, s + n);
+}
+
+/// @brief user-defined string literal for JSON pointer
+/// @sa https://json.nlohmann.me/api/basic_json/operator_literal_json_pointer/
+JSON_HEDLEY_NON_NULL(1)
+inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std::size_t n)
+{
+    return nlohmann::json::json_pointer(std::string(s, n));
+}
+
+}  // namespace json_literals
+}  // namespace literals
+NLOHMANN_JSON_NAMESPACE_END
 
 ///////////////////////
 // nonmember support //
@@ -24226,25 +25055,22 @@ inline void swap(nlohmann::NLOHMANN_BASIC_JSON_TPL& j1, nlohmann::NLOHMANN_BASIC
 
 #endif
 
-} // namespace std
+}  // namespace std
 
-/// @brief user-defined string literal for JSON values
-/// @sa https://json.nlohmann.me/api/basic_json/operator_literal_json/
-JSON_HEDLEY_NON_NULL(1)
-inline nlohmann::json operator "" _json(const char* s, std::size_t n)
-{
-    return nlohmann::json::parse(s, s + n);
-}
-
-/// @brief user-defined string literal for JSON pointer
-/// @sa https://json.nlohmann.me/api/basic_json/operator_literal_json_pointer/
-JSON_HEDLEY_NON_NULL(1)
-inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std::size_t n)
-{
-    return nlohmann::json::json_pointer(std::string(s, n));
-}
+#if JSON_USE_GLOBAL_UDLS
+    using nlohmann::literals::json_literals::operator "" _json; // NOLINT(misc-unused-using-decls,google-global-names-in-headers)
+    using nlohmann::literals::json_literals::operator "" _json_pointer; //NOLINT(misc-unused-using-decls,google-global-names-in-headers)
+#endif
 
 // #include <nlohmann/detail/macro_unscope.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 
 
 // restore clang diagnostic settings
@@ -24264,6 +25090,7 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 #undef JSON_INLINE_VARIABLE
 #undef JSON_NO_UNIQUE_ADDRESS
 #undef JSON_DISABLE_ENUM_SERIALIZATION
+#undef JSON_USE_GLOBAL_UDLS
 
 #ifndef JSON_TEST_KEEP_MACROS
     #undef JSON_CATCH
@@ -24280,6 +25107,14 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 #endif
 
 // #include <nlohmann/thirdparty/hedley/hedley_undef.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 
 
 #undef JSON_HEDLEY_ALWAYS_INLINE

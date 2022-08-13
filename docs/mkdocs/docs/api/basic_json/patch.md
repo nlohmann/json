@@ -65,6 +65,7 @@ is thrown. In any case, the original value is not changed: the patch is applied 
 
 - [RFC 6902 (JSON Patch)](https://tools.ietf.org/html/rfc6902)
 - [RFC 6901 (JSON Pointer)](https://tools.ietf.org/html/rfc6901)
+- [patch_inplace](patch_inplace.md) applies a JSON Patch without creating a copy of the document
 - [merge_patch](merge_patch.md) applies a JSON Merge Patch
 
 ## Version history

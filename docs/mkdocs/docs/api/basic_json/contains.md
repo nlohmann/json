@@ -69,32 +69,46 @@ Logarithmic in the size of the JSON object.
 
 ## Examples
 
-??? example "Example (1) check with key"
+??? example "Example: (1) check with key"
 
     The example shows how `contains()` is used.
     
     ```cpp
-    --8<-- "examples/contains.cpp"
+    --8<-- "examples/contains__object_t_key_type.cpp"
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/contains.output"
+    --8<-- "examples/contains__object_t_key_type.output"
     ```
 
-??? example "Example (3) check with JSON pointer"
+??? example "Example: (2) check with key using string_view"
 
     The example shows how `contains()` is used.
     
     ```cpp
-    --8<-- "examples/contains_json_pointer.cpp"
+    --8<-- "examples/contains__keytype.c++17.cpp"
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/contains_json_pointer.output"
+    --8<-- "examples/contains__keytype.c++17.output"
+    ```
+
+??? example "Example: (3) check with JSON pointer"
+
+    The example shows how `contains()` is used.
+    
+    ```cpp
+    --8<-- "examples/contains__json_pointer.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/contains__json_pointer.output"
     ```
 
 ## Version history

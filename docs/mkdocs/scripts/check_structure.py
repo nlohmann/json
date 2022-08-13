@@ -3,6 +3,7 @@
 import glob
 import os.path
 import re
+import sys
 
 warnings = 0
 
@@ -75,6 +76,12 @@ def check_structure():
                 if len(line) > 160 and '|' not in line:
                     report('whitespace/line_length', f'{file}:{lineno+1} ({current_section})', f'line is too long ({len(line)} vs. 160 chars)')
 
+                # sections in `<!-- NOLINT -->` comments are treated as present
+                if line.startswith('<!-- NOLINT'):
+                    current_section = line.strip('<!-- NOLINT')
+                    current_section = current_section.strip(' -->')
+                    existing_sections.append(current_section)
+
                 # check if sections are correct
                 if line.startswith('## '):
                     # before starting a new section, check if the previous one documented all overloads
@@ -112,7 +119,7 @@ def check_structure():
                 if line == '```cpp' and section_idx == -1:
                     in_initial_code_example = True
 
-                if in_initial_code_example and line.startswith('//'):
+                if in_initial_code_example and line.startswith('//') and line not in ['// since C++20', '// until C++20']:
                     # check numbering of overloads
                     if any(map(str.isdigit, line)):
                         number = int(re.findall(r'\d+', line)[0])
@@ -121,7 +128,7 @@ def check_structure():
                         last_overload = number
 
                     if any(map(str.isdigit, line)) and '(' not in line:
-                        report('style/numbering', f'{file}:{lineno+1}', 'number should be in parentheses: {line}')
+                        report('style/numbering', f'{file}:{lineno+1}', f'number should be in parentheses: {line}')
 
                 if line == '```' and in_initial_code_example:
                     in_initial_code_example = False
@@ -167,3 +174,6 @@ if __name__ == '__main__':
     check_structure()
     check_examples()
     print(120 * '-')
+
+    if warnings > 0:
+        sys.exit(1)

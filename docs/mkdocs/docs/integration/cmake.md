@@ -18,7 +18,7 @@ and use the namespaced imported target from the generated package configuration:
     cmake_minimum_required(VERSION 3.1)
     project(ExampleProject LANGUAGES CXX)
     
-    find_package(nlohmann_json 3.10.5 REQUIRED)
+    find_package(nlohmann_json 3.11.2 REQUIRED)
     
     add_executable(example example.cpp)
     target_link_libraries(example PRIVATE nlohmann_json::nlohmann_json)
@@ -77,7 +77,7 @@ to the following.
     
     ```cmake title="thirdparty/CMakeLists.txt"
     if(EXAMPLE_USE_EXTERNAL_JSON)
-        find_package(nlohmann_json 3.10.5 REQUIRED)
+        find_package(nlohmann_json 3.11.2 REQUIRED)
     else()
         set(JSON_BuildTests OFF CACHE INTERNAL "")
         add_subdirectory(nlohmann_json)
@@ -100,7 +100,7 @@ automatically download a release as a dependency at configure type.
 
     include(FetchContent)
     
-    FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.10.5/json.tar.xz)
+    FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.2/json.tar.xz)
     FetchContent_MakeAvailable(json)
     
     add_executable(example example.cpp)
@@ -115,11 +115,11 @@ automatically download a release as a dependency at configure type.
     ```cmake
     FetchContent_Declare(json
         GIT_REPOSITORY https://github.com/nlohmann/json
-        GIT_TAG v3.10.5
+        GIT_TAG v3.11.2
     )
     ```
 
-	However, the repository <https://github.com/nlohmann/json> download size is quite large. You might want to depend on
+    However, the repository <https://github.com/nlohmann/json> download size is quite large. You might want to depend on
     a smaller repository. For instance, you might want to replace the URL in the example by
     <https://github.com/ArthurSonzogni/nlohmann_json_cmake_fetchcontent>.
 
@@ -135,15 +135,25 @@ Enable CI build targets. The exact targets are used during the several CI steps 
 
 ### `JSON_Diagnostics`
 
-Enable [extended diagnostic messages](../home/exceptions.md#extended-diagnostic-messages) by defining macro [`JSON_DIAGNOSTICS`](../features/macros.md#json_diagnostics). This option is `OFF` by default.
+Enable [extended diagnostic messages](../home/exceptions.md#extended-diagnostic-messages) by defining macro [`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md). This option is `OFF` by default.
+
+### `JSON_DisableEnumSerialization`
+
+Disable default `enum` serialization by defining the macro
+[`JSON_DISABLE_ENUM_SERIALIZATION`](../api/macros/json_disable_enum_serialization.md). This option is `OFF` by default.
 
 ### `JSON_FastTests`
 
 Skip expensive/slow test suites. This option is `OFF` by default. Depends on `JSON_BuildTests`.
 
+### `JSON_GlobalUDLs`
+
+Place user-defined string literals in the global namespace by defining the macro
+[`JSON_USE_GLOBAL_UDLS`](../api/macros/json_use_global_udls.md). This option is `OFF` by default.
+
 ### `JSON_ImplicitConversions`
 
-Enable implicit conversions by defining macro [`JSON_USE_IMPLICIT_CONVERSIONS`](../features/macros.md#json_use_implicit_conversions). This option is `ON` by default.
+Enable implicit conversions by defining macro [`JSON_USE_IMPLICIT_CONVERSIONS`](../api/macros/json_use_implicit_conversions.md). This option is `ON` by default.
 
 ### `JSON_Install`
 

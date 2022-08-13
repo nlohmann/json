@@ -137,11 +137,11 @@ Strong exception safety: if an exception occurs, the original value stays intact
     --8<-- "examples/at__object_t_key_type.output"
     ```
 
-??? example "Example (2) access specified object element with bounds checking"
+??? example "Example: (2) access specified object element with bounds checking"
 
     The example below shows how object elements can be read using `at()`. It also demonstrates the different exceptions
     that can be thrown.
-        
+    
     ```cpp
     --8<-- "examples/at__object_t_key_type_const.cpp"
     ```
@@ -152,34 +152,64 @@ Strong exception safety: if an exception occurs, the original value stays intact
     --8<-- "examples/at__object_t_key_type_const.output"
     ```
 
-??? example "Example (4) access specified element via JSON Pointer"
+??? example "Example: (3) access specified object element using string_view with bounds checking"
+
+    The example below shows how object elements can be read and written using `at()`. It also demonstrates the different
+    exceptions that can be thrown.
+    
+    ```cpp
+    --8<-- "examples/at__keytype.c++17.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/at__keytype.c++17.output"
+    ```
+
+??? example "Example: (3) access specified object element using string_view with bounds checking"
+
+    The example below shows how object elements can be read using `at()`. It also demonstrates the different exceptions
+    that can be thrown.
+    
+    ```cpp
+    --8<-- "examples/at__keytype_const.c++17.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/at__keytype_const.c++17.output"
+    ```
+
+??? example "Example: (4) access specified element via JSON Pointer"
 
     The example below shows how object elements can be read and written using `at()`. It also demonstrates the different
     exceptions that can be thrown.
         
     ```cpp
-    --8<-- "examples/at_json_pointer.cpp"
+    --8<-- "examples/at__json_pointer.cpp"
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/at_json_pointer.output"
+    --8<-- "examples/at__json_pointer.output"
     ```
 
-??? example "Example (4) access specified element via JSON Pointer"
+??? example "Example: (4) access specified element via JSON Pointer"
 
     The example below shows how object elements can be read using `at()`. It also demonstrates the different exceptions
     that can be thrown.
         
     ```cpp
-    --8<-- "examples/at_json_pointer_const.cpp"
+    --8<-- "examples/at__json_pointer_const.cpp"
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/at_json_pointer_const.output"
+    --8<-- "examples/at__json_pointer_const.output"
     ```
 
 ## See also

@@ -30,29 +30,29 @@ instead. See [nlohmann-json](https://formulae.brew.sh/formula/nlohmann-json) for
 
 ??? example
 
-	1. Create the following file:
+    1. Create the following file:
 
         ```cpp title="example.cpp"
         --8<-- "integration/example.cpp"
         ```
 
-	2. Install the package
+    2. Install the package
 
-		```sh
-		brew install nlohmann-json
-		```
+        ```sh
+        brew install nlohmann-json
+        ```
 
-	3. Determine the include path, which defaults to `/usr/local/Cellar/nlohmann-json/$version/include`, where `$version` is the version of the library, e.g. `3.7.3`. The path of the library can be determined with
+    3. Determine the include path, which defaults to `/usr/local/Cellar/nlohmann-json/$version/include`, where `$version` is the version of the library, e.g. `3.7.3`. The path of the library can be determined with
 
-		```sh
-		brew list nlohmann-json
-		```
+        ```sh
+        brew list nlohmann-json
+        ```
 
-	4. Compile the code. For instance, the code can be compiled using Clang with
+    4. Compile the code. For instance, the code can be compiled using Clang with
 
-		```sh
-		clang++ example.cpp -I/usr/local/Cellar/nlohmann-json/3.7.3/include -std=c++11 -o example
-		```
+        ```sh
+        clang++ example.cpp -I/usr/local/Cellar/nlohmann-json/3.7.3/include -std=c++11 -o example
+        ```
 
 :material-update: The [formula](https://formulae.brew.sh/formula/nlohmann-json) is updated automatically.
 
@@ -68,7 +68,7 @@ If you are using [Conan](https://www.conan.io/) to manage your dependencies, mer
 
 ??? example
 
-	1. Create the following files:
+    1. Create the following files:
 
         ```ini title="Conanfile.txt"
         --8<-- "integration/conan/Conanfile.txt"
@@ -82,15 +82,15 @@ If you are using [Conan](https://www.conan.io/) to manage your dependencies, mer
         --8<-- "integration/conan/example.cpp"
         ```
 
-	2. Build:
+    2. Build:
 
-		```sh
-		mkdir build
-		cd build
-		conan install ..
-		cmake ..
-		cmake --build .
-		```
+        ```sh
+        mkdir build
+        cd build
+        conan install ..
+        cmake ..
+        cmake --build .
+        ```
 
 :material-update: The [package](https://conan.io/center/nlohmann_json) is updated automatically.
 
@@ -112,7 +112,7 @@ If you are using [vcpkg](https://github.com/Microsoft/vcpkg/) on your project fo
 
 ??? example
 
-	1. Create the following files:
+    1. Create the following files:
 
         ```cmake title="CMakeLists.txt"
         --8<-- "integration/vcpkg/CMakeLists.txt"
@@ -128,14 +128,14 @@ If you are using [vcpkg](https://github.com/Microsoft/vcpkg/) on your project fo
         vcpkg install nlohmann-json
         ```
 
-	3. Build:
+    3. Build:
 
-		```sh
-		mkdir build
-		cd build
-		cmake .. -DCMAKE_TOOLCHAIN_FILE=/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake
-		cmake --build .
-		```
+        ```sh
+        mkdir build
+        cd build
+        cmake .. -DCMAKE_TOOLCHAIN_FILE=/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake
+        cmake --build .
+        ```
 
     Note you need to adjust `/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake` to your system.
 

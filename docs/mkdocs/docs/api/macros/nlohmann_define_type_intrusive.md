@@ -7,9 +7,9 @@
 
 These macros can be used to simplify the serialization/deserialization of types if you want to use a JSON object as
 serialization and want to use the member variable names as object keys in that object. The macro is to be defined
-**inside** the class/struct to create code for.
-Unlike [`NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE`](nlohmann_define_type_non_intrusive.md), it can access private members.
-The first parameter is the name of the class/struct, and all remaining parameters name the members.
+**inside** the class/struct to create code for. Unlike
+[`NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE`](nlohmann_define_type_non_intrusive.md), it can access private members. The first
+parameter is the name of the class/struct, and all remaining parameters name the members.
 
 1. Will use [`at`](../basic_json/at.md) during deserialization and will throw
   [`out_of_range.403`](../../home/exceptions.md#jsonexceptionout_of_range403) if a key is missing in the JSON object.
@@ -40,9 +40,11 @@ See examples below for the concrete generated code.
 
 !!! info "Prerequisites"
 
-    1. The type `type` must be default constructible. See [How can I use `get()` for non-default constructible/non-copyable types?](../../features/arbitrary_types.md#how-can-i-use-get-for-non-default-constructiblenon-copyable-types)
-       for how to overcome this limitation.
+    1. The type `type` must be default constructible. See [How can I use `get()` for non-default
+       constructible/non-copyable types?][GetNonDefNonCopy] for how to overcome this limitation.
     2. The macro must be used inside the type (class/struct).
+
+[GetNonDefNonCopy]: ../../features/arbitrary_types.md#how-can-i-use-get-for-non-default-constructiblenon-copyable-types
 
 !!! warning "Implementation limits"
 
@@ -116,7 +118,7 @@ See examples below for the concrete generated code.
 
 - [NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE / NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT](nlohmann_define_type_non_intrusive.md)
   for a similar macro that can be defined _outside_ the type.
-- [Arbitrary Types Conversions](../../features/arbitrary_types.md) for an overview.
+- [Arbitrary Type Conversions](../../features/arbitrary_types.md) for an overview.
 
 ## Version history
 

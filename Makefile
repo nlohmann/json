@@ -15,8 +15,12 @@ SED:=$(shell command -v gsed || which sed)
 # the list of sources in the include folder
 SRCS=$(shell find include -type f | sort)
 
-# the single header (amalgamated from the source files)
+# the list of sources in the tests folder
+TESTS_SRCS=$(shell find tests -type f \( -name '*.hpp' -o -name '*.cpp' -o -name '*.cu' \) -not -path 'tests/thirdparty/*' -not -path 'tests/abi/include/nlohmann/*' | sort)
+
+# the single headers (amalgamated from the source files)
 AMALGAMATED_FILE=single_include/nlohmann/json.hpp
+AMALGAMATED_FWD_FILE=single_include/nlohmann/json_fwd.hpp
 
 
 ##########################################################################
@@ -25,7 +29,7 @@ AMALGAMATED_FILE=single_include/nlohmann/json.hpp
 
 # main target
 all:
-	@echo "amalgamate - amalgamate file single_include/nlohmann/json.hpp from the include/nlohmann sources"
+	@echo "amalgamate - amalgamate files single_include/nlohmann/json{,_fwd}.hpp from the include/nlohmann sources"
 	@echo "ChangeLog.md - generate ChangeLog file"
 	@echo "check-amalgamation - check whether sources have been amalgamated"
 	@echo "clean - remove built files"
@@ -141,9 +145,9 @@ pvs_studio:
 # call the Artistic Style pretty printer on all source files
 pretty:
 	astyle \
-		--style=allman \
-		--indent=spaces=4 \
-		--indent-modifiers \
+	    --style=allman \
+	    --indent=spaces=4 \
+	    --indent-modifiers \
 	    --indent-switches \
 	    --indent-preproc-block \
 	    --indent-preproc-define \
@@ -159,27 +163,34 @@ pretty:
 	    --preserve-date \
 	    --suffix=none \
 	    --formatted \
-	   $(SRCS) $(AMALGAMATED_FILE) tests/src/*.cpp tests/src/*.hpp tests/benchmarks/src/benchmarks.cpp docs/examples/*.cpp
+	   $(SRCS) $(TESTS_SRCS) $(AMALGAMATED_FILE) $(AMALGAMATED_FWD_FILE) docs/examples/*.cpp
 
 # call the Clang-Format on all source files
 pretty_format:
-	for FILE in $(SRCS) $(AMALGAMATED_FILE) tests/src/*.cpp tests/src/*.hpp benchmarks/src/benchmarks.cpp docs/examples/*.cpp; do echo $$FILE; clang-format -i $$FILE; done
+	for FILE in $(SRCS) $(TESTS_SRCS) $(AMALGAMATED_FILE) docs/examples/*.cpp; do echo $$FILE; clang-format -i $$FILE; done
 
-# create single header file
-amalgamate: $(AMALGAMATED_FILE)
-
-# call the amalgamation tool and pretty print
-$(AMALGAMATED_FILE): $(SRCS)
-	tools/amalgamate/amalgamate.py -c tools/amalgamate/config.json -s . --verbose=yes
+# create single header files and pretty print
+amalgamate: $(AMALGAMATED_FILE) $(AMALGAMATED_FWD_FILE)
 	$(MAKE) pretty
+
+# call the amalgamation tool for json.hpp
+$(AMALGAMATED_FILE): $(SRCS)
+	tools/amalgamate/amalgamate.py -c tools/amalgamate/config_json.json -s . --verbose=yes
+
+# call the amalgamation tool for json_fwd.hpp
+$(AMALGAMATED_FWD_FILE): $(SRCS)
+	tools/amalgamate/amalgamate.py -c tools/amalgamate/config_json_fwd.json -s . --verbose=yes
 
 # check if file single_include/nlohmann/json.hpp has been amalgamated from the nlohmann sources
 # Note: this target is called by Travis
 check-amalgamation:
 	@mv $(AMALGAMATED_FILE) $(AMALGAMATED_FILE)~
+	@mv $(AMALGAMATED_FWD_FILE) $(AMALGAMATED_FWD_FILE)~
 	@$(MAKE) amalgamate
 	@diff $(AMALGAMATED_FILE) $(AMALGAMATED_FILE)~ || (echo "===================================================================\n  Amalgamation required! Please read the contribution guidelines\n  in file .github/CONTRIBUTING.md.\n===================================================================" ; mv $(AMALGAMATED_FILE)~ $(AMALGAMATED_FILE) ; false)
+	@diff $(AMALGAMATED_FWD_FILE) $(AMALGAMATED_FWD_FILE)~ || (echo "===================================================================\n  Amalgamation required! Please read the contribution guidelines\n  in file .github/CONTRIBUTING.md.\n===================================================================" ; mv $(AMALGAMATED_FWD_FILE)~ $(AMALGAMATED_FWD_FILE) ; false)
 	@mv $(AMALGAMATED_FILE)~ $(AMALGAMATED_FILE)
+	@mv $(AMALGAMATED_FWD_FILE)~ $(AMALGAMATED_FWD_FILE)
 
 
 ##########################################################################
@@ -221,9 +232,11 @@ release: include.zip json.tar.xz
 	mkdir release_files
 	gpg --armor --detach-sig include.zip
 	gpg --armor --detach-sig $(AMALGAMATED_FILE)
+	gpg --armor --detach-sig $(AMALGAMATED_FWD_FILE)
 	gpg --armor --detach-sig json.tar.xz
 	cp $(AMALGAMATED_FILE) release_files
-	mv $(AMALGAMATED_FILE).asc json.tar.xz json.tar.xz.asc include.zip include.zip.asc release_files
+	cp $(AMALGAMATED_FWD_FILE) release_files
+	mv $(AMALGAMATED_FILE).asc $(AMALGAMATED_FWD_FILE).asc json.tar.xz json.tar.xz.asc include.zip include.zip.asc release_files
 	cd release_files ; shasum -a 256 json.hpp include.zip json.tar.xz > hashes.txt
 
 
@@ -258,3 +271,12 @@ update_hedley:
 
 serve_header:
 	./tools/serve_header/serve_header.py --make $(MAKE)
+
+##########################################################################
+# REUSE
+##########################################################################
+
+reuse:
+	pipx run reuse addheader --recursive single_include include -tjson --license MIT --copyright "Niels Lohmann <https://nlohmann.me>" --year "2013-2022"
+	pipx run reuse addheader $(TESTS_SRCS) --style=c -tjson_support --license MIT --copyright "Niels Lohmann <https://nlohmann.me>" --year "2013-2022"
+	pipx run reuse lint

@@ -1,11 +1,21 @@
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 #pragma once
 
 #include <utility> // declval, pair
-#include <nlohmann/thirdparty/hedley/hedley.hpp>
 #include <nlohmann/detail/meta/detected.hpp>
+#include <nlohmann/thirdparty/hedley/hedley.hpp>
 
-// This file contains all internal macro definitions
+// This file contains all internal macro definitions (except those affecting ABI)
 // You MUST include macro_unscope.hpp at the end of json.hpp to undef all of them
+
+#include <nlohmann/detail/abi_macros.hpp>
 
 // exclude unsupported compilers
 #if !defined(JSON_SKIP_UNSUPPORTED_COMPILER_CHECK)
@@ -449,14 +459,10 @@
     #define JSON_EXPLICIT explicit
 #endif
 
-#ifndef JSON_DIAGNOSTICS
-    #define JSON_DIAGNOSTICS 0
-#endif
-
-#ifndef JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
-    #define JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON 0
-#endif
-
 #ifndef JSON_DISABLE_ENUM_SERIALIZATION
     #define JSON_DISABLE_ENUM_SERIALIZATION 0
+#endif
+
+#ifndef JSON_USE_GLOBAL_UDLS
+    #define JSON_USE_GLOBAL_UDLS 1
 #endif

@@ -1,31 +1,11 @@
-/*
-    __ _____ _____ _____
- __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.10.5
-|_____|_____|_____|_|___|  https://github.com/nlohmann/json
-
-Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-SPDX-License-Identifier: MIT
-Copyright (c) 2013-2022 Niels Lohmann <http://nlohmann.me>.
-
-Permission is hereby  granted, free of charge, to any  person obtaining a copy
-of this software and associated  documentation files (the "Software"), to deal
-in the Software  without restriction, including without  limitation the rights
-to  use, copy,  modify, merge,  publish, distribute,  sublicense, and/or  sell
-copies  of  the Software,  and  to  permit persons  to  whom  the Software  is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE  IS PROVIDED "AS  IS", WITHOUT WARRANTY  OF ANY KIND,  EXPRESS OR
-IMPLIED,  INCLUDING BUT  NOT  LIMITED TO  THE  WARRANTIES OF  MERCHANTABILITY,
-FITNESS FOR  A PARTICULAR PURPOSE AND  NONINFRINGEMENT. IN NO EVENT  SHALL THE
-AUTHORS  OR COPYRIGHT  HOLDERS  BE  LIABLE FOR  ANY  CLAIM,  DAMAGES OR  OTHER
-LIABILITY, WHETHER IN AN ACTION OF  CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// Copyright (c) 2013-2022 Niels Lohmann <http://nlohmann.me>.
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
 
@@ -875,7 +855,7 @@ TEST_CASE("modifiers")
                 json j = 17;
                 json::array_t a = {"foo", "bar", "baz"};
 
-                CHECK_THROWS_WITH_AS(j.swap(a), "[json.exception.type_error.310] cannot use swap() with number", json::type_error&);
+                CHECK_THROWS_WITH_AS(j.swap(a), "[json.exception.type_error.310] cannot use swap(array_t&) with number", json::type_error&);
             }
         }
 
@@ -900,7 +880,7 @@ TEST_CASE("modifiers")
                 json j = 17;
                 json::object_t o = {{"cow", "Kuh"}, {"chicken", "Huhn"}};
 
-                CHECK_THROWS_WITH_AS(j.swap(o), "[json.exception.type_error.310] cannot use swap() with number", json::type_error&);
+                CHECK_THROWS_WITH_AS(j.swap(o), "[json.exception.type_error.310] cannot use swap(object_t&) with number", json::type_error&);
             }
         }
 
@@ -925,7 +905,7 @@ TEST_CASE("modifiers")
                 json j = 17;
                 json::string_t s = "Hallo Welt";
 
-                CHECK_THROWS_WITH_AS(j.swap(s), "[json.exception.type_error.310] cannot use swap() with number", json::type_error&);
+                CHECK_THROWS_WITH_AS(j.swap(s), "[json.exception.type_error.310] cannot use swap(string_t&) with number", json::type_error&);
             }
         }
 
@@ -965,8 +945,8 @@ TEST_CASE("modifiers")
                 json::binary_t s1 = {{1, 2, 3, 4}};
                 std::vector<std::uint8_t> s2 = {{5, 6, 7, 8}};
 
-                CHECK_THROWS_WITH_AS(j.swap(s1), "[json.exception.type_error.310] cannot use swap() with number", json::type_error);
-                CHECK_THROWS_WITH_AS(j.swap(s2), "[json.exception.type_error.310] cannot use swap() with number", json::type_error);
+                CHECK_THROWS_WITH_AS(j.swap(s1), "[json.exception.type_error.310] cannot use swap(binary_t&) with number", json::type_error);
+                CHECK_THROWS_WITH_AS(j.swap(s2), "[json.exception.type_error.310] cannot use swap(binary_t::container_type&) with number", json::type_error);
             }
         }
     }

@@ -13,6 +13,19 @@ The default value is detected based on the preprocessor macro `#!cpp __cpp_lib_r
 
 When the macro is not defined, the library will define it to its default value.
 
+## Examples
+
+??? example
+
+    The code below forces the library to enable support for ranges:
+
+    ```cpp
+    #define JSON_HAS_RANGES 1
+    #include <nlohmann/json.hpp>
+
+    ...
+    ```
+
 ## Version history
 
 - Added in version 3.11.0.

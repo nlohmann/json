@@ -102,3 +102,30 @@ behavior and yields a runtime assertion.
     ```
     Assertion failed: (m_object != nullptr), function operator++, file iter_impl.hpp, line 368.
     ```
+
+### Reading from a null `FILE` pointer
+
+Reading from a null `#!cpp FILE` pointer is undefined behavior and yields a runtime assertion. This can happen when
+calling `#!cpp std::fopen` on a nonexistent file.
+
+??? example "Example 4: Uninitialized iterator"
+
+    The following code will trigger an assertion at runtime:
+
+    ```cpp
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    
+    int main()
+    {
+      std::FILE* f = std::fopen("nonexistent_file.json", "r");
+      json j = json::parse(f);
+    }
+    ```
+
+    Output:
+
+    ```
+    Assertion failed: (m_file != nullptr), function file_input_adapter, file input_adapters.hpp, line 55.
+    ```

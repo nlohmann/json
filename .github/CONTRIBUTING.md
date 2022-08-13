@@ -22,17 +22,17 @@ Clearly describe the issue:
 - If you propose a change or addition, try to give an **example** how the improved code could look like or how to use it.
 - If you found a compilation error, please tell us which **compiler** (version and operating system) you used and paste the (relevant part of) the error messages to the ticket.
 
-Please stick to the provided issue templates ([bug report](https://github.com/nlohmann/json/blob/develop/.github/ISSUE_TEMPLATE/Bug_report.md), [feature request](https://github.com/nlohmann/json/blob/develop/.github/ISSUE_TEMPLATE/Feature_request.md), or [question](https://github.com/nlohmann/json/blob/develop/.github/ISSUE_TEMPLATE/question.md)) if possible.
+Please stick to the provided issue template ([bug report](https://github.com/nlohmann/json/blob/develop/.github/ISSUE_TEMPLATE/bug.yml) if possible. For questions, feature or support requests, please [open a discussion](https://github.com/nlohmann/json/discussions/new).
 
 ## Files to change
 
-:exclamation: Before you make any changes, note the single-header file [`single_include/nlohmann/json.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json.hpp) is **generated** from the source files in the [`include/nlohmann` directory](https://github.com/nlohmann/json/tree/develop/include/nlohmann). Please **do not** edit file `single_include/nlohmann/json.hpp` directly, but change the `include/nlohmann` sources and regenerate file `single_include/nlohmann/json.hpp` by executing `make amalgamate`.
+:exclamation: Before you make any changes, note the single-header files [`single_include/nlohmann/json.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json.hpp) and [`single_include/nlohmann/json_fwd.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json_fwd.hpp) are **generated** from the source files in the [`include/nlohmann` directory](https://github.com/nlohmann/json/tree/develop/include/nlohmann). Please **do not** edit the files `single_include/nlohmann/json.hpp` and `single_include/nlohmann/json_fwd.hpp` directly, but change the `include/nlohmann` sources and regenerate the files by executing `make amalgamate`.
 
 To make changes, you need to edit the following files:
 
-1. [`include/nlohmann/*`](https://github.com/nlohmann/json/tree/develop/include/nlohmann) - These files are the sources of the library. Before testing or creating a pull request, execute `make amalgamate` to regenerate `single_include/nlohmann/json.hpp`.
+1. [`include/nlohmann/*`](https://github.com/nlohmann/json/tree/develop/include/nlohmann) - These files are the sources of the library. Before testing or creating a pull request, execute `make amalgamate` to regenerate `single_include/nlohmann/json.hpp` and `single_include/nlohmann/json_fwd.hpp`.
 
-2. [`test/src/unit-*.cpp`](https://github.com/nlohmann/json/tree/develop/test/src) - These files contain the [doctest](https://github.com/onqtam/doctest) unit tests which currently cover [100 %](https://coveralls.io/github/nlohmann/json) of the library's code.
+2. [`tests/src/unit-*.cpp`](https://github.com/nlohmann/json/tree/develop/tests/src) - These files contain the [doctest](https://github.com/onqtam/doctest) unit tests which currently cover [100 %](https://coveralls.io/github/nlohmann/json) of the library's code.
 
    If you add or change a feature, please also add a unit test to this file. The unit tests can be compiled and executed with
 

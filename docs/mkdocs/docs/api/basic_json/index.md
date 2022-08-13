@@ -256,6 +256,7 @@ Access to the JSON value
 ### JSON Patch functions
 
 - [**patch**](patch.md) - applies a JSON patch
+- [**patch_inplace**](patch_inplace.md) - applies a JSON patch in place
 - [**diff**](diff.md) (_static_) - creates a diff as a JSON patch
 
 ### JSON Merge Patch functions
@@ -283,14 +284,13 @@ Access to the JSON value
 
 ## Non-member functions
 
-- [**operator<<(std::ostream&)**](operator_ltlt.md) - serialize to stream
-- [**operator>>(std::istream&)**](operator_gtgt.md) - deserialize from stream
+- [**operator<<(std::ostream&)**](../operator_ltlt.md) - serialize to stream
+- [**operator>>(std::istream&)**](../operator_gtgt.md) - deserialize from stream
 - [**to_string**](to_string.md) - user-defined `to_string` function for JSON values
 
 ## Literals
 
-- [**operator""_json**](operator_literal_json.md) - user-defined string literal for JSON values
-- [**operator""_json_pointer**](operator_literal_json_pointer.md) - user-defined string literal for JSON pointers
+- [**operator""_json**](../operator_literal_json.md) - user-defined string literal for JSON values
 
 ## Helper classes
 

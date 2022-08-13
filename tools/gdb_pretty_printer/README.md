@@ -50,7 +50,8 @@ File [nlohmann-json.py](nlohmann-json.py) contains a pretty printer for GDB for 
     }
     ```
 
-Tested with GDB 9.2. See [#1952](https://github.com/nlohmann/json/issues/1952) for more information. Please post questions there.
+Requires Python 3.9+. Last tested with GDB 12.1.
+See [#1952](https://github.com/nlohmann/json/issues/1952) for more information. Please post questions there.
 
 ## Copyright
 

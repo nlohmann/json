@@ -28,7 +28,9 @@ are the base for JSON patches.
 
 - [(constructor)](json_pointer.md)
 - [**to_string**](to_string.md) - return a string representation of the JSON pointer
-- [**operator string_t**](operator_string.md) - return a string representation of the JSON pointer
+- [**operator string_t**](operator_string_t.md) - return a string representation of the JSON pointer
+- [**operator==**](operator_eq.md) - compare: equal
+- [**operator!=**](operator_ne.md) - compare: not equal
 - [**operator/=**](operator_slasheq.md) - append to the end of the JSON pointer
 - [**operator/**](operator_slash.md) - create JSON Pointer by appending
 - [**parent_pointer**](parent_pointer.md) - returns the parent of this JSON pointer
@@ -37,9 +39,11 @@ are the base for JSON patches.
 - [**push_back**](push_back.md) - append an unescaped token at the end of the pointer
 - [**empty**](empty.md) - return whether pointer points to the root document
 
+## Literals
+
+- [**operator""_json_pointer**](../operator_literal_json_pointer.md) - user-defined string literal for JSON pointers
 ## See also
 
-- [operator""_json_pointer](../basic_json/operator_literal_json_pointer.md) - user-defined string literal for JSON pointers
 - [RFC 6901](https://datatracker.ietf.org/doc/html/rfc6901)
 
 ## Version history

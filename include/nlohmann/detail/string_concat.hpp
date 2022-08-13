@@ -1,3 +1,11 @@
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 #pragma once
 
 #include <cstring> // strlen
@@ -7,8 +15,7 @@
 #include <nlohmann/detail/meta/cpp_future.hpp>
 #include <nlohmann/detail/meta/detected.hpp>
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
 
@@ -135,5 +142,5 @@ inline OutStringType concat(Args && ... args)
     return str;
 }
 
-} // namespace detail
-} // namespace nlohmann
+}  // namespace detail
+NLOHMANN_JSON_NAMESPACE_END

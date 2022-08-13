@@ -3,6 +3,7 @@
 #include <iomanip> // for std::setw
 
 using json = nlohmann::json;
+using namespace nlohmann::literals;
 
 int main()
 {

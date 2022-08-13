@@ -9,15 +9,22 @@ all: create_output
 # where are the example cpp files
 EXAMPLES = $(wildcard examples/*.cpp)
 
+cxx_standard = $(lastword c++11 $(filter c++%, $(subst ., ,$1)))
+
 # create output from a stand-alone example file
 %.output: %.cpp
-	make $(<:.cpp=) CPPFLAGS="-I $(SRCDIR)" CXXFLAGS="-std=c++11"
+	@echo "standard $(call cxx_standard $(<:.cpp=))"
+	$(MAKE) $(<:.cpp=) \
+		CPPFLAGS="-I $(SRCDIR) -DJSON_USE_GLOBAL_UDLS=0" \
+		CXXFLAGS="-std=$(call cxx_standard,$(<:.cpp=)) -Wno-deprecated-declarations"
 	./$(<:.cpp=) > $@
 	rm $(<:.cpp=)
 
 # compare created output with current output of the example files
 %.test: %.cpp
-	make $(<:.cpp=) CPPFLAGS="-I $(SRCDIR)" CXXFLAGS="-std=c++11"
+	$(MAKE) $(<:.cpp=) \
+		CPPFLAGS="-I $(SRCDIR) -DJSON_USE_GLOBAL_UDLS=0" \
+		CXXFLAGS="-std=$(call cxx_standard,$(<:.cpp=)) -Wno-deprecated-declarations"
 	./$(<:.cpp=) > $@
 	diff $@ $(<:.cpp=.output)
 	rm $(<:.cpp=) $@
@@ -27,6 +34,10 @@ create_output: $(EXAMPLES:.cpp=.output)
 
 # check output of all stand-alone example files
 check_output: $(EXAMPLES:.cpp=.test)
+
+# check output of all stand-alone example files (exclude files with platform-dependent output.)
+# This target is used in the CI (ci_test_documentation).
+check_output_portable: $(filter-out examples/meta.test examples/max_size.test examples/std_hash.test examples/basic_json__CompatibleType.test,$(EXAMPLES:.cpp=.test))
 
 clean:
 	rm -fr $(EXAMPLES:.cpp=)

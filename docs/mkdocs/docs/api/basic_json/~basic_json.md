@@ -14,6 +14,8 @@ No-throw guarantee: this member function never throws exceptions.
 
 Linear.
 
+<!-- NOLINT Examples -->
+
 ## Version history
 
 - Added in version 1.0.0.

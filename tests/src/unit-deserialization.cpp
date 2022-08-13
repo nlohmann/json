@@ -1,38 +1,22 @@
-/*
-    __ _____ _____ _____
- __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.10.5
-|_____|_____|_____|_|___|  https://github.com/nlohmann/json
-
-Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-SPDX-License-Identifier: MIT
-Copyright (c) 2013-2022 Niels Lohmann <http://nlohmann.me>.
-
-Permission is hereby  granted, free of charge, to any  person obtaining a copy
-of this software and associated  documentation files (the "Software"), to deal
-in the Software  without restriction, including without  limitation the rights
-to  use, copy,  modify, merge,  publish, distribute,  sublicense, and/or  sell
-copies  of  the Software,  and  to  permit persons  to  whom  the Software  is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE  IS PROVIDED "AS  IS", WITHOUT WARRANTY  OF ANY KIND,  EXPRESS OR
-IMPLIED,  INCLUDING BUT  NOT  LIMITED TO  THE  WARRANTIES OF  MERCHANTABILITY,
-FITNESS FOR  A PARTICULAR PURPOSE AND  NONINFRINGEMENT. IN NO EVENT  SHALL THE
-AUTHORS  OR COPYRIGHT  HOLDERS  BE  LIABLE FOR  ANY  CLAIM,  DAMAGES OR  OTHER
-LIABILITY, WHETHER IN AN ACTION OF  CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// Copyright (c) 2013-2022 Niels Lohmann <http://nlohmann.me>.
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;
+#ifdef JSON_TEST_NO_GLOBAL_UDLS
+    using namespace nlohmann::literals; // NOLINT(google-build-using-namespace)
+#endif
 
 #include <iostream>
+#include <iterator>
 #include <sstream>
 #include <valarray>
 
@@ -183,6 +167,52 @@ struct SaxEventLoggerExitAfterStartArray : public SaxEventLogger
         }
         return false;
     }
+};
+
+template <typename T>
+class proxy_iterator
+{
+  public:
+    using iterator = typename T::iterator;
+    using value_type = typename std::iterator_traits<iterator>::value_type;
+    using reference = typename std::iterator_traits<iterator>::reference;
+    using pointer = typename std::iterator_traits<iterator>::pointer;
+    using difference_type =
+        typename std::iterator_traits<iterator>::difference_type;
+    using iterator_category = std::input_iterator_tag;
+
+    proxy_iterator() = default;
+    explicit proxy_iterator(iterator& it) : m_it(std::addressof(it)) {}
+
+    proxy_iterator& operator++()
+    {
+        ++*m_it;
+        return *this;
+    }
+
+    proxy_iterator& operator--()
+    {
+        --*m_it;
+        return *this;
+    }
+
+    bool operator==(const proxy_iterator& rhs) const
+    {
+        return (m_it && rhs.m_it) ? (*m_it == *rhs.m_it) : (m_it == rhs.m_it);
+    }
+
+    bool operator!=(const proxy_iterator& rhs) const
+    {
+        return !(*this == rhs);
+    }
+
+    reference operator*() const
+    {
+        return **m_it;
+    }
+
+  private:
+    iterator* m_it = nullptr;
 };
 } // namespace
 
@@ -537,6 +567,28 @@ TEST_CASE("deserialization")
                 CHECK(!json::sax_parse(std::begin(v), std::end(v), &l));
                 CHECK(l.events.size() == 1);
                 CHECK(l.events == std::vector<std::string>({"parse_error(1)"}));
+            }
+
+            SECTION("iterator_input_adapter advances iterators correctly")
+            {
+                using nlohmann::json;
+                using nlohmann::detail::input_format_t;
+                using nlohmann::detail::json_sax_dom_parser;
+                using proxy = proxy_iterator<std::string>;
+
+                std::string str1 = "[1]";
+                std::string str2 = "[2]";
+                std::string str = str1 + str2;
+
+                auto first = str.begin();
+                auto last = str.end();
+                json j;
+                json_sax_dom_parser<json> sax(j, true);
+
+                CHECK(json::sax_parse(proxy(first), proxy(last), &sax,
+                                      input_format_t::json, false));
+                CHECK(j.dump() == str1);
+                CHECK(std::string(first, last) == str2);
             }
         }
 

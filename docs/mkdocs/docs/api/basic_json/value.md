@@ -7,7 +7,7 @@ ValueType value(const typename object_t::key_type& key,
                 ValueType&& default_value) const;
 
 // (2)
-template<class KeyType, class ValueType>
+template<class ValueType, class KeyType>
 ValueType value(KeyType&& key,
                 ValueType&& default_value) const;
 
@@ -105,32 +105,46 @@ changes to any JSON value.
 
 ## Examples
 
-??? example "Example (1): access specified object element with default value"
+??? example "Example: (1) access specified object element with default value"
 
     The example below shows how object elements can be queried with a default value.
     
     ```cpp
-    --8<-- "examples/basic_json__value.cpp"
+    --8<-- "examples/value__object_t_key_type.cpp"
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/basic_json__value.output"
+    --8<-- "examples/value__object_t_key_type.output"
     ```
 
-??? example "Example (3): access specified object element via JSON Pointer with default value"
+??? example "Example: (2) access specified object element using string_view with default value"
 
     The example below shows how object elements can be queried with a default value.
     
     ```cpp
-    --8<-- "examples/basic_json__value_ptr.cpp"
+    --8<-- "examples/value__keytype.c++17.cpp"
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/basic_json__value_ptr.output"
+    --8<-- "examples/value__keytype.c++17.output"
+    ```
+
+??? example "Example: (3) access specified object element via JSON Pointer with default value"
+
+    The example below shows how object elements can be queried with a default value.
+    
+    ```cpp
+    --8<-- "examples/value__json_ptr.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/value__json_ptr.output"
     ```
 
 ## See also
@@ -141,5 +155,5 @@ changes to any JSON value.
 ## Version history
 
 1. Added in version 1.0.0. Changed parameter `default_value` type from `const ValueType&` to `ValueType&&` in version 3.11.0.
-2. Added in version 3.11.0.
+2. Added in version 3.11.0. Made `ValueType` the first template parameter in version 3.11.2.
 3. Added in version 2.0.2.

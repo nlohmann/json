@@ -11,9 +11,6 @@ When enabled, exception messages contain a [JSON Pointer](../json_pointer/json_p
 triggered the exception. Note that enabling this macro increases the size of every JSON value by one pointer and adds
 some  runtime overhead.
 
-The diagnostics messages can also be controlled with the CMake option `JSON_Diagnostics` (`OFF` by default) which sets
-`JSON_DIAGNOSTICS` accordingly.
-
 ## Default definition
 
 The default value is `0` (extended diagnostics are switched off).
@@ -26,11 +23,22 @@ When the macro is not defined, the library will define it to its default value.
 
 ## Notes
 
-!!! danger "ABI incompatibility"
+!!! note "ABI compatibility"
 
-    As this macro changes the definition of the `basic_json` object, it MUST be defined in the same way globally, even
-    across different compilation units: `basic_json` objects with differently defined `JSON_DIAGNOSTICS` macros are
-    not compatible!
+    As of version 3.11.0, this macro is no longer required to be defined consistently throughout a codebase to avoid
+    One Definition Rule (ODR) violations, as the value of this macro is encoded in the namespace, resulting in distinct
+    symbol names. 
+    
+    This allows different parts of a codebase to use different versions or configurations of this library without
+    causing improper behavior.
+    
+    Where possible, it is still recommended that all code define this the same way for maximum interoperability.
+
+!!! hint "CMake option"
+
+    Diagnostic messages can also be controlled with the CMake option
+    [`JSON_Diagnostics`](../../integration/cmake.md#json_diagnostics) (`OFF` by default)
+    which defines `JSON_DIAGNOSTICS` accordingly.
 
 ## Examples
 
@@ -65,3 +73,4 @@ When the macro is not defined, the library will define it to its default value.
 ## Version history
 
 - Added in version 3.10.0.
+- As of version 3.11.0 the definition is allowed to vary between translation units.

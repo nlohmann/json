@@ -6,8 +6,8 @@ using boolean_t = BooleanType;
 
 The type used to store JSON booleans.
 
-[RFC 8259](https://tools.ietf.org/html/rfc8259) implicitly describes a boolean as a type which differentiates the two literals
-`#!json true` and `#!json false`.
+[RFC 8259](https://tools.ietf.org/html/rfc8259) implicitly describes a boolean as a type which differentiates the two
+literals `#!json true` and `#!json false`.
 
 To store objects in C++, a type is defined by the template parameter  `BooleanType` which chooses the type to use.
 

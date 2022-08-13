@@ -7,9 +7,9 @@
 
 These macros can be used to simplify the serialization/deserialization of types if you want to use a JSON object as
 serialization and want to use the member variable names as object keys in that object. The macro is to be defined
-**outside** the class/struct to create code for, but **inside** its namespace.
-Unlike [`NLOHMANN_DEFINE_TYPE_INTRUSIVE`](nlohmann_define_type_intrusive.md), it **cannot** access private members.
-The first parameter is the name of the class/struct, and all remaining parameters name the members.
+**outside** the class/struct to create code for, but **inside** its namespace. Unlike
+[`NLOHMANN_DEFINE_TYPE_INTRUSIVE`](nlohmann_define_type_intrusive.md), it **cannot** access private members. The first
+parameter is the name of the class/struct, and all remaining parameters name the members.
 
 1. Will use [`at`](../basic_json/at.md) during deserialization and will throw
    [`out_of_range.403`](../../home/exceptions.md#jsonexceptionout_of_range403) if a key is missing in the JSON object.
@@ -40,10 +40,12 @@ See examples below for the concrete generated code.
 
 !!! info "Prerequisites"
 
-    1. The type `type` must be default constructible. See [How can I use `get()` for non-default constructible/non-copyable types?](../../features/arbitrary_types.md#how-can-i-use-get-for-non-default-constructiblenon-copyable-types)
+    1. The type `type` must be default constructible. See [How can I use `get()` for non-default constructible/non-copyable types?][GetNonDefNonCopy]
        for how to overcome this limitation.
     2. The macro must be used outside the type (class/struct).
     3. The passed members must be public.
+
+[GetNonDefNonCopy]: ../../features/arbitrary_types.md#how-can-i-use-get-for-non-default-constructiblenon-copyable-types
 
 !!! warning "Implementation limits"
 
@@ -101,7 +103,8 @@ See examples below for the concrete generated code.
     - `ns::person` is default-constructible. This is a requirement for using the macro.
     - `ns::person` has only public member variables. This makes `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT`
       applicable.
-    - The macro `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT` is used _outside_ the class, but _inside_ its namespace `ns`.
+    - The macro `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT` is used _outside_ the class, but _inside_ its
+      namespace `ns`.
     - A missing key "age" in the deserialization does not yield an exception. Instead, the default value `-1` is used.
 
     The macro is equivalent to:
@@ -116,7 +119,7 @@ See examples below for the concrete generated code.
 
 - [NLOHMANN_DEFINE_TYPE_INTRUSIVE / NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT](nlohmann_define_type_intrusive.md)
   for a similar macro that can be defined _inside_ the type.
-- [Arbitrary Types Conversions](../../features/arbitrary_types.md) for an overview.
+- [Arbitrary Type Conversions](../../features/arbitrary_types.md) for an overview.
 
 ## Version history
 

@@ -28,6 +28,7 @@ publish: prepare_files
 # install a Python virtual environment
 install_venv: requirements.txt
 	python3 -mvenv venv
+	venv/bin/pip install --upgrade pip
 	venv/bin/pip install wheel
 	venv/bin/pip install -r requirements.txt
 

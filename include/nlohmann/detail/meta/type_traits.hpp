@@ -1,3 +1,11 @@
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 #pragma once
 
 #include <limits> // numeric_limits
@@ -5,17 +13,15 @@
 #include <utility> // declval
 #include <tuple> // tuple
 
-#include <nlohmann/detail/macro_scope.hpp>
-
 #include <nlohmann/detail/iterators/iterator_traits.hpp>
+#include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/call_std/begin.hpp>
 #include <nlohmann/detail/meta/call_std/end.hpp>
 #include <nlohmann/detail/meta/cpp_future.hpp>
 #include <nlohmann/detail/meta/detected.hpp>
 #include <nlohmann/json_fwd.hpp>
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 /*!
 @brief detail namespace with internal helper functions
 
@@ -26,6 +32,7 @@ implementations of some @ref basic_json methods, and meta-programming helpers.
 */
 namespace detail
 {
+
 /////////////
 // helpers //
 /////////////
@@ -355,8 +362,10 @@ struct is_constructible_string_type
 #endif
 
     static constexpr auto value =
-        is_constructible<laundered_type,
-        typename BasicJsonType::string_t>::value;
+        conjunction <
+        is_constructible<laundered_type, typename BasicJsonType::string_t>,
+        is_detected_exact<typename BasicJsonType::string_t::value_type,
+        value_type_t, laundered_type >>::value;
 };
 
 template<typename BasicJsonType, typename CompatibleArrayType, typename = void>
@@ -504,15 +513,22 @@ decltype(std::declval<Compare>()(std::declval<A>(), std::declval<B>())),
 decltype(std::declval<Compare>()(std::declval<B>(), std::declval<A>()))
 >> : std::true_type {};
 
-// checks if BasicJsonType::object_t::key_type and KeyType are comparable using Compare functor
-template<typename BasicJsonType, typename KeyType>
-using is_key_type_comparable = typename is_comparable <
-                               typename BasicJsonType::object_comparator_t,
-                               const key_type_t<typename BasicJsonType::object_t>&,
-                               KeyType >::type;
-
 template<typename T>
 using detect_is_transparent = typename T::is_transparent;
+
+// type trait to check if KeyType can be used as object key (without a BasicJsonType)
+// see is_usable_as_basic_json_key_type below
+template<typename Comparator, typename ObjectKeyType, typename KeyTypeCVRef, bool RequireTransparentComparator = true,
+         bool ExcludeObjectKeyType = RequireTransparentComparator, typename KeyType = uncvref_t<KeyTypeCVRef>>
+using is_usable_as_key_type = typename std::conditional <
+                              is_comparable<Comparator, ObjectKeyType, KeyTypeCVRef>::value
+                              && !(ExcludeObjectKeyType && std::is_same<KeyType,
+                                   ObjectKeyType>::value)
+                              && (!RequireTransparentComparator
+                                  || is_detected <detect_is_transparent, Comparator>::value)
+                              && !is_json_pointer<KeyType>::value,
+                              std::true_type,
+                              std::false_type >::type;
 
 // type trait to check if KeyType can be used as object key
 // true if:
@@ -522,17 +538,13 @@ using detect_is_transparent = typename T::is_transparent;
 //   - KeyType is not a JSON iterator or json_pointer
 template<typename BasicJsonType, typename KeyTypeCVRef, bool RequireTransparentComparator = true,
          bool ExcludeObjectKeyType = RequireTransparentComparator, typename KeyType = uncvref_t<KeyTypeCVRef>>
-using is_usable_as_key_type = typename std::conditional <
-                              is_key_type_comparable<BasicJsonType, KeyTypeCVRef>::value
-                              && !(ExcludeObjectKeyType && std::is_same<KeyType,
-                                   typename BasicJsonType::object_t::key_type>::value)
-                              && (!RequireTransparentComparator || is_detected <
-                                  detect_is_transparent,
-                                  typename BasicJsonType::object_comparator_t >::value)
-                              && !is_json_iterator_of<BasicJsonType, KeyType>::value
-                              && !is_json_pointer<KeyType>::value,
-                              std::true_type,
-                              std::false_type >::type;
+using is_usable_as_basic_json_key_type = typename std::conditional <
+        is_usable_as_key_type<typename BasicJsonType::object_comparator_t,
+        typename BasicJsonType::object_t::key_type, KeyTypeCVRef,
+        RequireTransparentComparator, ExcludeObjectKeyType>::value
+        && !is_json_iterator_of<BasicJsonType, KeyType>::value,
+        std::true_type,
+        std::false_type >::type;
 
 template<typename ObjectType, typename KeyType>
 using detect_erase_with_key_type = decltype(std::declval<ObjectType&>().erase(std::declval<KeyType>()));
@@ -607,7 +619,7 @@ struct value_in_range_of_impl2<OfType, T, false, false>
     static constexpr bool test(T val)
     {
         using CommonType = typename std::common_type<OfType, T>::type;
-        return static_cast<CommonType>(val) <= static_cast<CommonType>(std::numeric_limits<OfType>::max());
+        return static_cast<CommonType>(val) <= static_cast<CommonType>((std::numeric_limits<OfType>::max)());
     }
 };
 
@@ -617,7 +629,7 @@ struct value_in_range_of_impl2<OfType, T, true, false>
     static constexpr bool test(T val)
     {
         using CommonType = typename std::common_type<OfType, T>::type;
-        return static_cast<CommonType>(val) <= static_cast<CommonType>(std::numeric_limits<OfType>::max());
+        return static_cast<CommonType>(val) <= static_cast<CommonType>((std::numeric_limits<OfType>::max)());
     }
 };
 
@@ -627,7 +639,7 @@ struct value_in_range_of_impl2<OfType, T, false, true>
     static constexpr bool test(T val)
     {
         using CommonType = typename std::common_type<OfType, T>::type;
-        return val >= 0 && static_cast<CommonType>(val) <= static_cast<CommonType>(std::numeric_limits<OfType>::max());
+        return val >= 0 && static_cast<CommonType>(val) <= static_cast<CommonType>((std::numeric_limits<OfType>::max)());
     }
 };
 
@@ -638,8 +650,8 @@ struct value_in_range_of_impl2<OfType, T, true, true>
     static constexpr bool test(T val)
     {
         using CommonType = typename std::common_type<OfType, T>::type;
-        return static_cast<CommonType>(val) >= static_cast<CommonType>(std::numeric_limits<OfType>::min())
-               && static_cast<CommonType>(val) <= static_cast<CommonType>(std::numeric_limits<OfType>::max());
+        return static_cast<CommonType>(val) >= static_cast<CommonType>((std::numeric_limits<OfType>::min)())
+               && static_cast<CommonType>(val) <= static_cast<CommonType>((std::numeric_limits<OfType>::max)());
     }
 };
 
@@ -672,5 +684,57 @@ inline constexpr bool value_in_range_of(T val)
     return value_in_range_of_impl1<OfType, T>::test(val);
 }
 
+template<bool Value>
+using bool_constant = std::integral_constant<bool, Value>;
+
+///////////////////////////////////////////////////////////////////////////////
+// is_c_string
+///////////////////////////////////////////////////////////////////////////////
+
+namespace impl
+{
+
+template<typename T>
+inline constexpr bool is_c_string()
+{
+    using TUnExt = typename std::remove_extent<T>::type;
+    using TUnCVExt = typename std::remove_cv<TUnExt>::type;
+    using TUnPtr = typename std::remove_pointer<T>::type;
+    using TUnCVPtr = typename std::remove_cv<TUnPtr>::type;
+    return
+        (std::is_array<T>::value && std::is_same<TUnCVExt, char>::value)
+        || (std::is_pointer<T>::value && std::is_same<TUnCVPtr, char>::value);
+}
+
+}  // namespace impl
+
+// checks whether T is a [cv] char */[cv] char[] C string
+template<typename T>
+struct is_c_string : bool_constant<impl::is_c_string<T>()> {};
+
+template<typename T>
+using is_c_string_uncvref = is_c_string<uncvref_t<T>>;
+
+///////////////////////////////////////////////////////////////////////////////
+// is_transparent
+///////////////////////////////////////////////////////////////////////////////
+
+namespace impl
+{
+
+template<typename T>
+inline constexpr bool is_transparent()
+{
+    return is_detected<detect_is_transparent, T>::value;
+}
+
+}  // namespace impl
+
+// checks whether T has a member named is_transparent
+template<typename T>
+struct is_transparent : bool_constant<impl::is_transparent<T>()> {};
+
+///////////////////////////////////////////////////////////////////////////////
+
 }  // namespace detail
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END

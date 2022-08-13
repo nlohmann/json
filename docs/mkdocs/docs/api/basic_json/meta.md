@@ -32,8 +32,7 @@ Constant.
 
 ??? example
 
-    The following code shows an example output of the `meta()`
-    function.
+    The following code shows an example output of the `meta()` function.
     
     ```cpp
     --8<-- "examples/meta.cpp"
@@ -45,9 +44,12 @@ Constant.
     --8<-- "examples/meta.output"
     ```
 
+    Note the output is platform-dependent.
+
 ## See also
 
-- [**NLOHMANN_JSON_VERSION_MAJOR**/**NLOHMANN_JSON_VERSION_MINOR**/**NLOHMANN_JSON_VERSION_PATCH**](../macros/nlohmann_json_version_major.md) - library version information
+- [**NLOHMANN_JSON_VERSION_MAJOR**/**NLOHMANN_JSON_VERSION_MINOR**/**NLOHMANN_JSON_VERSION_PATCH**](../macros/nlohmann_json_version_major.md)
+  \- library version information
 
 ## Version history
 

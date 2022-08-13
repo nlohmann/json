@@ -1,43 +1,24 @@
-/*
-    __ _____ _____ _____
- __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.10.5
-|_____|_____|_____|_|___|  https://github.com/nlohmann/json
-
-Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-SPDX-License-Identifier: MIT
-Copyright (c) 2013-2022 Niels Lohmann <http://nlohmann.me>.
-
-Permission is hereby  granted, free of charge, to any  person obtaining a copy
-of this software and associated  documentation files (the "Software"), to deal
-in the Software  without restriction, including without  limitation the rights
-to  use, copy,  modify, merge,  publish, distribute,  sublicense, and/or  sell
-copies  of  the Software,  and  to  permit persons  to  whom  the Software  is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE  IS PROVIDED "AS  IS", WITHOUT WARRANTY  OF ANY KIND,  EXPRESS OR
-IMPLIED,  INCLUDING BUT  NOT  LIMITED TO  THE  WARRANTIES OF  MERCHANTABILITY,
-FITNESS FOR  A PARTICULAR PURPOSE AND  NONINFRINGEMENT. IN NO EVENT  SHALL THE
-AUTHORS  OR COPYRIGHT  HOLDERS  BE  LIABLE FOR  ANY  CLAIM,  DAMAGES OR  OTHER
-LIABILITY, WHETHER IN AN ACTION OF  CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
 
-#include <climits>
-#include <limits>
+#define JSON_TESTS_PRIVATE
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+#include <algorithm>
+#include <climits>
+#include <limits>
 #include <iostream>
 #include <fstream>
 #include <set>
-#include <test_data.hpp>
+#include "make_test_data_available.hpp"
 #include "test_utils.hpp"
 
 namespace
@@ -226,6 +207,17 @@ TEST_CASE_TEMPLATE_INVOKE(value_in_range_of_test, \
 
 TEST_CASE("BJData")
 {
+    SECTION("binary_reader BJData LUT arrays are sorted")
+    {
+        std::vector<std::uint8_t> data;
+        auto ia = nlohmann::detail::input_adapter(data);
+        // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
+        nlohmann::detail::binary_reader<json, decltype(ia)> br{std::move(ia), json::input_format_t::bjdata};
+
+        CHECK(std::is_sorted(br.bjd_optimized_type_markers.begin(), br.bjd_optimized_type_markers.end()));
+        CHECK(std::is_sorted(br.bjd_types_map.begin(), br.bjd_types_map.end()));
+    }
+
     SECTION("individual values")
     {
         SECTION("discarded")

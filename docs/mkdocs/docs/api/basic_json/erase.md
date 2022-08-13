@@ -165,13 +165,27 @@ Strong exception safety: if an exception occurs, the original value stays intact
     The example shows the effect of `erase()` for different JSON types using an object key.
     
     ```cpp
-    --8<-- "examples/erase__key_type.cpp"
+    --8<-- "examples/erase__object_t_key_type.cpp"
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/erase__key_type.output"
+    --8<-- "examples/erase__object_t_key_type.output"
+    ```
+
+??? example "Example: (4) remove element from a JSON object given a key using string_view"
+
+    The example shows the effect of `erase()` for different JSON types using an object key.
+    
+    ```cpp
+    --8<-- "examples/erase__keytype.c++17.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/erase__keytype.c++17.output"
     ```
 
 ??? example "Example: (5) remove element from a JSON array given an index"

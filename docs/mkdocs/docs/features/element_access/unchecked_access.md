@@ -99,7 +99,8 @@ that the passed index is the new maximal index. Intermediate values are filled w
 
 !!! failure "Exceptions"
 
-    `operator[]` can only be used with objects (with a string argument) or with arrays (with a numeric argument). For other types, a [`basic_json::type_error`](../../home/exceptions.md#jsonexceptiontype_error305) is thrown.
+    `operator[]` can only be used with objects (with a string argument) or with arrays (with a numeric argument). For
+    other types, a [`basic_json::type_error`](../../home/exceptions.md#jsonexceptiontype_error305) is thrown.
 
 ## Summary
 

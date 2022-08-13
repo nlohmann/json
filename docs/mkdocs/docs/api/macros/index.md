@@ -21,11 +21,21 @@ header. See also the [macro overview page](../../features/macros.md).
 - [**JSON_HAS_THREE_WAY_COMPARISON**](json_has_three_way_comparison.md) - control 3-way comparison support
 - [**JSON_NO_IO**](json_no_io.md) - switch off functions relying on certain C++ I/O headers
 - [**JSON_SKIP_UNSUPPORTED_COMPILER_CHECK**](json_skip_unsupported_compiler_check.md) - do not warn about unsupported compilers
+- [**JSON_USE_GLOBAL_UDLS**](json_use_global_udls.md) - place user-defined string literals (UDLs) into the global namespace
 
 ## Library version
 
 - [**JSON_SKIP_LIBRARY_VERSION_CHECK**](json_skip_library_version_check.md) - skip library version check
-- [**NLOHMANN_JSON_VERSION_MAJOR**<br>**NLOHMANN_JSON_VERSION_MINOR**<br>**NLOHMANN_JSON_VERSION_PATCH**](nlohmann_json_version_major.md) - library version information
+- [**NLOHMANN_JSON_VERSION_MAJOR**<br>**NLOHMANN_JSON_VERSION_MINOR**<br>**NLOHMANN_JSON_VERSION_PATCH**](nlohmann_json_version_major.md)
+  \- library version information
+
+## Library namespace
+
+- [**NLOHMANN_JSON_NAMESPACE**](nlohmann_json_namespace.md) - full name of the `nlohmann` namespace
+- [**NLOHMANN_JSON_NAMESPACE_BEGIN**<br>**NLOHMANN_JSON_NAMESPACE_END**](nlohmann_json_namespace_begin.md) - open and
+  close the library namespace
+- [**NLOHMANN_JSON_NAMESPACE_NO_VERSION**](nlohmann_json_namespace_no_version.md) - disable the version component of
+  the inline namespace
 
 ## Type conversions
 
@@ -40,7 +50,11 @@ header. See also the [macro overview page](../../features/macros.md).
 
 ## Serialization/deserialization macros
 
-- [**NLOHMANN_DEFINE_TYPE_INTRUSIVE(type, member...)**<br>**NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(type, member...)**](nlohmann_define_type_intrusive.md) - serialization/deserialization of types _with_ access to private variables
-- [**NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(type, member...)**<br>**NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(type, member...)**](nlohmann_define_type_non_intrusive.md) - serialization/deserialization of types _without_ access to private variables
-- [**NLOHMANN_JSON_SERIALIZE_ENUM(type, ...)**](nlohmann_json_serialize_enum.md) - serialization/deserialization of enum
-  types
+- [**NLOHMANN_DEFINE_TYPE_INTRUSIVE(type, member...)**<br>**NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(type, member...)**][DefInt]
+  \- serialization/deserialization of types _with_ access to private variables
+- [**NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(type, member...)**<br>**NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(type, member...)**][DefNonInt]
+  \- serialization/deserialization of types _without_ access to private variables
+- [**NLOHMANN_JSON_SERIALIZE_ENUM(type, ...)**](nlohmann_json_serialize_enum.md) - serialization/deserialization of enum types
+
+[DefInt]: nlohmann_define_type_intrusive.md
+[DefNonInt]: nlohmann_define_type_non_intrusive.md

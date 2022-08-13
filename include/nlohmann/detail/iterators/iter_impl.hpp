@@ -1,3 +1,11 @@
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 #pragma once
 
 #include <iterator> // iterator, random_access_iterator_tag, bidirectional_iterator_tag, advance, next
@@ -11,10 +19,10 @@
 #include <nlohmann/detail/meta/type_traits.hpp>
 #include <nlohmann/detail/value_t.hpp>
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 // forward declare, to be able to friend it later on
 template<typename IteratorType> class iteration_proxy;
 template<typename IteratorType> class iteration_proxy_value;
@@ -738,5 +746,6 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
     /// the actual iterator of the associated instance
     internal_iterator<typename std::remove_const<BasicJsonType>::type> m_it {};
 };
-} // namespace detail
-} // namespace nlohmann
+
+}  // namespace detail
+NLOHMANN_JSON_NAMESPACE_END

@@ -30,7 +30,7 @@ execute_process(COMMAND ${CPPCHECK_TOOL} --version OUTPUT_VARIABLE CPPCHECK_TOOL
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" CPPCHECK_TOOL_VERSION "${CPPCHECK_TOOL_VERSION}")
 message(STATUS "🔖 Cppcheck ${CPPCHECK_TOOL_VERSION} (${CPPCHECK_TOOL})")
 
-find_program(GCC_TOOL NAMES g++-latest g++-HEAD g++-11)
+find_program(GCC_TOOL NAMES g++-latest g++-HEAD g++-11 g++-10)
 execute_process(COMMAND ${GCC_TOOL} --version OUTPUT_VARIABLE GCC_TOOL_VERSION ERROR_VARIABLE GCC_TOOL_VERSION)
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" GCC_TOOL_VERSION "${GCC_TOOL_VERSION}")
 message(STATUS "🔖 GCC ${GCC_TOOL_VERSION} (${GCC_TOOL})")
@@ -518,6 +518,21 @@ add_custom_target(ci_test_legacycomparison
 )
 
 ###############################################################################
+# Disable global UDLs.
+###############################################################################
+
+add_custom_target(ci_test_noglobaludls
+    COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND}
+    -DCMAKE_BUILD_TYPE=Debug -GNinja
+    -DJSON_BuildTests=ON -DJSON_FastTests=ON -DJSON_GlobalUDLs=OFF
+    -DCMAKE_CXX_FLAGS=-DJSON_TEST_NO_GLOBAL_UDLS
+    -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_noglobaludls
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_noglobaludls
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_noglobaludls && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+    COMMENT "Compile and test with global UDLs disabled"
+)
+
+###############################################################################
 # Coverage.
 ###############################################################################
 
@@ -574,15 +589,22 @@ file(GLOB_RECURSE INDENT_FILES
     ${PROJECT_SOURCE_DIR}/docs/examples/*.cpp
 )
 
+set(include_dir ${PROJECT_SOURCE_DIR}/single_include/nlohmann)
+set(tool_dir ${PROJECT_SOURCE_DIR}/tools/amalgamate)
 add_custom_target(ci_test_amalgamation
-    COMMAND rm -fr ${PROJECT_SOURCE_DIR}/single_include/nlohmann/json.hpp~
-    COMMAND cp ${PROJECT_SOURCE_DIR}/single_include/nlohmann/json.hpp ${PROJECT_SOURCE_DIR}/single_include/nlohmann/json.hpp~
-    COMMAND ${Python3_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tools/amalgamate/amalgamate.py -c ${PROJECT_SOURCE_DIR}/tools/amalgamate/config.json -s .
-    COMMAND ${ASTYLE_TOOL} ${ASTYLE_FLAGS} --suffix=none --quiet ${PROJECT_SOURCE_DIR}/single_include/nlohmann/json.hpp
-    COMMAND diff ${PROJECT_SOURCE_DIR}/single_include/nlohmann/json.hpp~ ${PROJECT_SOURCE_DIR}/single_include/nlohmann/json.hpp
+    COMMAND rm -fr ${include_dir}/json.hpp~ ${include_dir}/json_fwd.hpp~
+    COMMAND cp ${include_dir}/json.hpp ${include_dir}/json.hpp~
+    COMMAND cp ${include_dir}/json_fwd.hpp ${include_dir}/json_fwd.hpp~
+
+    COMMAND ${Python3_EXECUTABLE} ${tool_dir}/amalgamate.py -c ${tool_dir}/config_json.json -s .
+    COMMAND ${Python3_EXECUTABLE} ${tool_dir}/amalgamate.py -c ${tool_dir}/config_json_fwd.json -s .
+    COMMAND ${ASTYLE_TOOL} ${ASTYLE_FLAGS} --suffix=none --quiet ${include_dir}/json.hpp ${include_dir}/json_fwd.hpp
+
+    COMMAND diff ${include_dir}/json.hpp~ ${include_dir}/json.hpp
+    COMMAND diff ${include_dir}/json_fwd.hpp~ ${include_dir}/json_fwd.hpp
 
     COMMAND ${ASTYLE_TOOL} ${ASTYLE_FLAGS} ${INDENT_FILES}
-    COMMAND cd ${PROJECT_SOURCE_DIR} && for FILE in `find . -name '*.orig'`\; do false \; done
+    COMMAND for FILE in `find . -name '*.orig'`\; do false \; done
 
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
     COMMENT "Check amalgamation and indentation"
@@ -595,7 +617,7 @@ add_custom_target(ci_test_amalgamation
 add_custom_target(ci_test_single_header
     COMMAND CXX=${GCC_TOOL} CXXFLAGS="${GCC_CXXFLAGS}" ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=Debug -GNinja
-        -DJSON_BuildTests=ON -DJSON_MultipleHeader=OFF -DJSON_FastTests=ON
+        -DJSON_BuildTests=ON -DJSON_MultipleHeaders=OFF -DJSON_FastTests=ON
         -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_single_header
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_single_header
     COMMAND cd ${PROJECT_BINARY_DIR}/build_single_header && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
@@ -838,7 +860,7 @@ endfunction()
 ci_get_cmake(3.1.0 CMAKE_3_1_0_BINARY)
 ci_get_cmake(3.13.0 CMAKE_3_13_0_BINARY)
 
-set(JSON_CMAKE_FLAGS_3_1_0 JSON_Diagnostics JSON_ImplicitConversions JSON_DisableEnumSerialization 
+set(JSON_CMAKE_FLAGS_3_1_0 JSON_Diagnostics JSON_GlobalUDLs JSON_ImplicitConversions JSON_DisableEnumSerialization
     JSON_LegacyDiscardedValueComparison JSON_Install JSON_MultipleHeaders JSON_SystemInclude JSON_Valgrind)
 set(JSON_CMAKE_FLAGS_3_13_0 JSON_BuildTests)
 
@@ -932,6 +954,22 @@ add_custom_target(ci_icpc
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_icpc
     COMMAND cd ${PROJECT_BINARY_DIR}/build_icpc && ${CMAKE_CTEST_COMMAND} --parallel ${N} --exclude-regex "test-unicode" --output-on-failure
     COMMENT "Compile and test with ICPC"
+)
+
+###############################################################################
+# test documentation
+###############################################################################
+
+add_custom_target(ci_test_examples
+    COMMAND make CXX="${GCC_TOOL}" check_output_portable -j8
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/docs
+    COMMENT "Check that all examples compile and create the desired output"
+)
+
+add_custom_target(ci_test_api_documentation
+    COMMAND ${Python3_EXECUTABLE} scripts/check_structure.py
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/docs/mkdocs
+    COMMENT "Lint the API documentation"
 )
 
 ###############################################################################

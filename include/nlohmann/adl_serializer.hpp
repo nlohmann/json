@@ -1,15 +1,21 @@
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 #pragma once
 
-#include <type_traits>
 #include <utility>
 
+#include <nlohmann/detail/abi_macros.hpp>
 #include <nlohmann/detail/conversions/from_json.hpp>
 #include <nlohmann/detail/conversions/to_json.hpp>
 #include <nlohmann/detail/meta/identity_tag.hpp>
-#include <nlohmann/detail/meta/type_traits.hpp>
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 
 /// @sa https://json.nlohmann.me/api/adl_serializer/
 template<typename ValueType, typename>
@@ -45,4 +51,5 @@ struct adl_serializer
         ::nlohmann::to_json(j, std::forward<TargetType>(val));
     }
 };
-}  // namespace nlohmann
+
+NLOHMANN_JSON_NAMESPACE_END

@@ -1,13 +1,23 @@
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 #pragma once
 
 #include <cstddef> // ptrdiff_t
 #include <iterator> // reverse_iterator
 #include <utility> // declval
 
-namespace nlohmann
-{
+#include <nlohmann/detail/abi_macros.hpp>
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 //////////////////////
 // reverse_iterator //
 //////////////////////
@@ -115,5 +125,6 @@ class json_reverse_iterator : public std::reverse_iterator<Base>
         return it.operator * ();
     }
 };
+
 }  // namespace detail
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END

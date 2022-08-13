@@ -1,15 +1,18 @@
 # MessagePack
 
-MessagePack is an efficient binary serialization format. It lets you exchange data among multiple languages like JSON. But it's faster and smaller. Small integers are encoded into a single byte, and typical short strings require only one extra byte in addition to the strings themselves.
+MessagePack is an efficient binary serialization format. It lets you exchange data among multiple languages like JSON.
+But it's faster and smaller. Small integers are encoded into a single byte, and typical short strings require only one
+extra byte in addition to the strings themselves.
 
 !!! abstract "References"
 
-	- [MessagePack website](https://msgpack.org)
-	- [MessagePack specification](https://github.com/msgpack/msgpack/blob/master/spec.md)
+    - [MessagePack website](https://msgpack.org)
+    - [MessagePack specification](https://github.com/msgpack/msgpack/blob/master/spec.md)
 
 ## Serialization
 
-The library uses the following mapping from JSON values types to MessagePack types according to the MessagePack specification:
+The library uses the following mapping from JSON values types to MessagePack types according to the MessagePack
+specification:
 
 | JSON value type | value/range                              | MessagePack type | first byte |
 |-----------------|------------------------------------------|------------------|------------|
@@ -49,22 +52,23 @@ The library uses the following mapping from JSON values types to MessagePack typ
 
 !!! success "Complete mapping"
 
-	The mapping is **complete** in the sense that any JSON value type can be converted to a MessagePack value.
+    The mapping is **complete** in the sense that any JSON value type can be converted to a MessagePack value.
 
-	Any MessagePack output created by `to_msgpack` can be successfully parsed by `from_msgpack`.
+    Any MessagePack output created by `to_msgpack` can be successfully parsed by `from_msgpack`.
 
 !!! warning "Size constraints"
 
-	The following values can **not** be converted to a MessagePack value:
+    The following values can **not** be converted to a MessagePack value:
 
-	  - strings with more than 4294967295 bytes
-	  - byte strings with more than 4294967295 bytes
-	  - arrays with more than 4294967295 elements
-	  - objects with more than 4294967295 elements
+      - strings with more than 4294967295 bytes
+      - byte strings with more than 4294967295 bytes
+      - arrays with more than 4294967295 elements
+      - objects with more than 4294967295 elements
 
 !!! info "NaN/infinity handling"
 
-	If NaN or Infinity are stored inside a JSON number, they are serialized properly. function which serializes NaN or Infinity to `null`.
+    If NaN or Infinity are stored inside a JSON number, they are serialized properly in contrast to the
+    [dump](../../api/basic_json/dump.md) function which serializes NaN or Infinity to `null`.
 
 ??? example
 
@@ -123,7 +127,7 @@ The library maps MessagePack types to JSON value types as follows:
 
 !!! info
 
-	Any MessagePack output created by `to_msgpack` can be successfully parsed by `from_msgpack`.
+    Any MessagePack output created by `to_msgpack` can be successfully parsed by `from_msgpack`.
 
 
 ??? example

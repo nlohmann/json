@@ -317,6 +317,8 @@ basic_json(basic_json&& other) noexcept;
     --8<-- "examples/basic_json__CompatibleType.output"
     ```
 
+    Note the output is platform-dependent.
+
 ??? example "Example: (5) create a container (array or object) from an initializer list"
 
     The example below shows how JSON values are created from initializer lists.

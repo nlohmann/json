@@ -1,36 +1,18 @@
-/*
-    __ _____ _____ _____
- __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.10.5
-|_____|_____|_____|_|___|  https://github.com/nlohmann/json
-
-Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-SPDX-License-Identifier: MIT
-Copyright (c) 2013-2022 Niels Lohmann <http://nlohmann.me>.
-
-Permission is hereby  granted, free of charge, to any  person obtaining a copy
-of this software and associated  documentation files (the "Software"), to deal
-in the Software  without restriction, including without  limitation the rights
-to  use, copy,  modify, merge,  publish, distribute,  sublicense, and/or  sell
-copies  of  the Software,  and  to  permit persons  to  whom  the Software  is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE  IS PROVIDED "AS  IS", WITHOUT WARRANTY  OF ANY KIND,  EXPRESS OR
-IMPLIED,  INCLUDING BUT  NOT  LIMITED TO  THE  WARRANTIES OF  MERCHANTABILITY,
-FITNESS FOR  A PARTICULAR PURPOSE AND  NONINFRINGEMENT. IN NO EVENT  SHALL THE
-AUTHORS  OR COPYRIGHT  HOLDERS  BE  LIABLE FOR  ANY  CLAIM,  DAMAGES OR  OTHER
-LIABILITY, WHETHER IN AN ACTION OF  CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;
+#ifdef JSON_TEST_NO_GLOBAL_UDLS
+    using namespace nlohmann::literals; // NOLINT(google-build-using-namespace)
+#endif
 
 #include <deque>
 #include <forward_list>
@@ -124,12 +106,10 @@ TEST_CASE("README" * doctest::skip())
             json j = "{ \"happy\": true, \"pi\": 3.141 }"_json; // NOLINT(modernize-raw-string-literal)
 
             // or even nicer with a raw string literal
-            auto j2 = R"(
-          {
-            "happy": true,
-            "pi": 3.141
-          }
-        )"_json;
+            auto j2 = R"({
+                "happy": true,
+                "pi": 3.141
+            })"_json;
 
             // or explicitly
             auto j3 = json::parse(R"({"happy": true, "pi": 3.141})");
@@ -178,10 +158,10 @@ TEST_CASE("README" * doctest::skip())
             CHECK(foo == true);
 
             // other stuff
-            j.size();     // 3 entries
-            j.empty();    // false
-            j.type();     // json::value_t::array
-            j.clear();    // the array is empty again
+            CHECK(j.size() == 3);                     // 3 entries
+            CHECK_FALSE(j.empty());                   // false
+            CHECK(j.type() == json::value_t::array);  // json::value_t::array
+            j.clear();                                // the array is empty again
 
             // create an object
             json o;
@@ -190,6 +170,7 @@ TEST_CASE("README" * doctest::skip())
             o["baz"] = 3.141;
 
             // find an entry
+            CHECK(o.find("foo") != o.end());
             if (o.find("foo") != o.end())
             {
                 // there is an entry with key "foo"
@@ -284,9 +265,9 @@ TEST_CASE("README" * doctest::skip())
         {
             // a JSON value
             json j_original = R"({
-          "baz": ["one", "two", "three"],
-          "foo": "bar"
-        })"_json;
+                "baz": ["one", "two", "three"],
+                "foo": "bar"
+            })"_json;
 
             // access members with a JSON pointer (RFC 6901)
             j_original["/baz/1"_json_pointer];
@@ -294,10 +275,10 @@ TEST_CASE("README" * doctest::skip())
 
             // a JSON patch (RFC 6902)
             json j_patch = R"([
-          { "op": "replace", "path": "/baz", "value": "boo" },
-          { "op": "add", "path": "/hello", "value": ["world"] },
-          { "op": "remove", "path": "/foo"}
-        ])"_json;
+                { "op": "replace", "path": "/baz", "value": "boo" },
+                { "op": "add", "path": "/hello", "value": ["world"] },
+                { "op": "remove", "path": "/foo"}
+            ])"_json;
 
             // apply the patch
             json j_result = j_original.patch(j_patch);
