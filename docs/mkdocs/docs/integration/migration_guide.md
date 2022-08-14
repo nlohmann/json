@@ -4,8 +4,8 @@ This page collects some guidelines on how to future-proof your code for future v
 
 ## Replace deprecated functions
 
-The following functions have been deprecated and will be removed in the next major version (i.e., 4.0.0). All
-deprecations are annotated with
+The following functions have been deprecated in earlier versions and will be removed in the next major version (i.e., 
+4.0.0). All deprecations are annotated with
 [`HEDLEY_DEPRECATED_FOR`](https://nemequ.github.io/hedley/api-reference.html#HEDLEY_DEPRECATED_FOR) to report which
 function to use instead.
 
@@ -53,10 +53,11 @@ function to use instead.
 
 #### JSON Pointers
 
-- Comparing JSON pointers with strings using the string overload of [`operator==`](../api/json_pointer/operator_eq.md)
-  and [`operator!=`](../api/json_pointer/operator_ne.md) is deprecated since 3.11.2. To compare a
-  [`json_pointer`](../api/json_pointer/index.md) `p` with a string `s`, convert `s` to a `json_pointer` first, then
-  compare the two JSON pointers.
+- Comparing JSON Pointers with strings via [`operator==`](../api/json_pointer/operator_eq.md) and
+  [`operator!=`](../api/json_pointer/operator_ne.md) is deprecated since 3.11.2. To compare a
+  [`json_pointer`](../api/json_pointer/index.md) `p` with a string `s`, convert `s` to a `json_pointer` first and use
+  [`json_pointer::operator==`](../api/json_pointer/operator_eq.md) or
+  [`json_pointer::operator!=`](../api/json_pointer/operator_ne.md).
     
     === "Deprecated"
   
@@ -197,6 +198,10 @@ conversions with calls to [`get`](../api/basic_json/get.md), [`get_to`](../api/b
       j.get_to(s);
       ```
 
+You can prepare existing code by already defining
+[`JSON_USE_IMPLICIT_CONVERSIONS`](../api/macros/json_use_implicit_conversions.md) to `0` and replace any implicit
+conversions with calls to [`get`](../api/basic_json/get.md).
+
 ## Import namespace `literals` for UDLs
 
 The user-defined string literals [`operator""_json`](../api/operator_literal_json.md) and
@@ -218,6 +223,9 @@ string literals into scope where needed.
       using namespace nlohmann::literals;
       nlohmann::json j = "[1,2,3]"_json;
       ```
+
+To prepare existing code, define [`JSON_USE_GLOBAL_UDLS`](../api/macros/json_use_global_udls.md) to `0` and bring the
+string literals into scope where needed.
 
 ## Do not hard-code the complete library namespace
 
