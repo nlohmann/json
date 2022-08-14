@@ -175,6 +175,7 @@ INSERT INTO searchIndex(name, type, path) VALUES ('Element Access', 'Guide', 'fe
 INSERT INTO searchIndex(name, type, path) VALUES ('Element Access: Access with default value: value', 'Guide', 'features/element_access/default_value/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('Element Access: Checked access: at', 'Guide', 'features/element_access/checked_access/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('Element Access: Unchecked access: operator[]', 'Guide', 'features/element_access/unchecked_access/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('Integration: Migration Guide', 'Guide', 'integration/migration_guide/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('Integration: CMake', 'Guide', 'integration/cmake/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('Integration: Header only', 'Guide', 'integration/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('Integration: Package Managers', 'Guide', 'integration/package_managers/index.html');
