@@ -94,7 +94,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        compiler: ['4', '5', '6', '7', '8', '9', '10', '11', '12']
+        compiler: ['7', '8', '9', '10', '11', '12', 'latest']
     container: gcc:${{ matrix.compiler }}
     steps:
       - uses: actions/checkout@v3
@@ -109,7 +109,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        compiler: ['3.5', '3.6', '3.7', '3.8', '3.9', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14']
+        compiler: ['3.5', '3.6', '3.7', '3.8', '3.9', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', 'latest']
     container: silkeh/clang:${{ matrix.compiler }}
     steps:
       - uses: actions/checkout@v3
