@@ -40,6 +40,7 @@ theme:
     - navigation.tabs
     - navigation.indexes
     - navigation.top
+    - content.tabs.link
 
 nav:
   - Home:
@@ -87,6 +88,7 @@ nav:
         - features/types/number_handling.md
   - Integration:
     - integration/index.md
+    - integration/migration_guide.md
     - integration/cmake.md
     - integration/package_managers.md
     - integration/pkg-config.md
@@ -332,7 +334,8 @@ markdown_extensions:
   - pymdownx.superfences
   - pymdownx.tasklist:
       custom_checkbox: true
-  - pymdownx.tabbed
+  - pymdownx.tabbed:
+      alternate_style: true
   - pymdownx.tilde
   - pymdownx.snippets:
       base_path: docs
