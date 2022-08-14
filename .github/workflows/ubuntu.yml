@@ -98,12 +98,12 @@ jobs:
     container: gcc:${{ matrix.compiler }}
     steps:
       - uses: actions/checkout@v3
-      - name: Install CMake
-        run: wget https://github.com/Kitware/CMake/releases/download/v3.24.0/cmake-3.24.0-linux-x86_64.tar.gz ; tar xfz cmake-3.24.0-linux-x86_64.tar.gz
+      - name: Get latest CMake and ninja
+        uses: lukka/get-cmake@latest
       - name: Run CMake
-        run: cmake-3.24.0-linux-x86_64/bin/cmake -S . -B build -DJSON_CI=On
+        run: cmake -S . -B build -DJSON_CI=On
       - name: Build
-        run: cmake-3.24.0-linux-x86_64/bin/cmake --build build --target ci_test_compiler_default
+        run: cmake --build build --target ci_test_compiler_default
 
 #  ci_test_compilers:
 #    runs-on: ubuntu-latest

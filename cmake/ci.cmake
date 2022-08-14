@@ -931,7 +931,7 @@ endforeach()
 
 add_custom_target(ci_test_compiler_default
     COMMAND ${CMAKE_COMMAND}
-        -DCMAKE_BUILD_TYPE=Debug
+        -DCMAKE_BUILD_TYPE=Debug -GNinja
         -DJSON_BuildTests=ON -DJSON_FastTests=ON
         -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_compiler_default
         ${ADDITIONAL_FLAGS}
