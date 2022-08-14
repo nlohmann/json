@@ -90,6 +90,21 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path-to-lcov: ${{ github.workspace }}/build/json.info.filtered.noexcept
 
+  ci_test_compilers_gcc:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: ['7.5.0', '8.5.0']
+    container: gcc:${{ matrix.compiler }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install CMake
+        run: sudo apt-get update ; sudo apt-get install -y cmake
+      - name: Run CMake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: Build
+        run: cmake --build build --target ci_test_compiler_default
+
   ci_test_compilers:
     runs-on: ubuntu-latest
     container: ghcr.io/nlohmann/json-ci:v2.4.0
