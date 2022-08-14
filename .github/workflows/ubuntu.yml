@@ -99,7 +99,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Install CMake
-        run: sudo apt-get update ; sudo apt-get install -y cmake
+        run: apt-get update ; apt-get install -y cmake
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
