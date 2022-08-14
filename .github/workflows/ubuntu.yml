@@ -99,11 +99,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Install CMake
-        run: apt-get update ; apt-get install -y cmake
+        run: wget https://github.com/Kitware/CMake/releases/download/v3.24.0/cmake-3.24.0-linux-x86_64.tar.gz ; tar xfz cmake-3.24.0-linux-x86_64.tar.gz
       - name: Run CMake
-        run: mkdir build ; cd build ; cmake .. -DJSON_CI=On
+        run: cmake-3.24.0-linux-x86_64/bin/cmake -S . -B build -DJSON_CI=On
       - name: Build
-        run: cd build ; cmake --build . --target ci_test_compiler_default
+        run: cmake-3.24.0-linux-x86_64/bin/cmake --build build --target ci_test_compiler_default
 
 #  ci_test_compilers:
 #    runs-on: ubuntu-latest
