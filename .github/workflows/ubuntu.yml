@@ -101,7 +101,7 @@ jobs:
       - name: Install CMake
         run: apt-get update ; apt-get install -y cmake
       - name: Run CMake
-        run: mkdir build ; cd build ; cmake .. -DJSON_CI=On
+        run: mkdir build ; cd build ; cmake .. -DJSON_CI=On ; cd ..
       - name: Build
         run: cd build ; cmake --target ci_test_compiler_default
 
