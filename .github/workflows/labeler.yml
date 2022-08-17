@@ -13,6 +13,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: falbrechtskirchinger/labeler@master
+      - uses: srvaroa/labeler@master
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
