@@ -1,11 +1,11 @@
 # Migration Guide
 
-This page collects some guidelines how to future-proof your code for future versions of this library.
+This page collects some guidelines on how to future-proof your code for future versions of this library.
 
 ## Replace deprecated functions
 
-The following functions have been deprecated in earlier versions and will be removed in the next major version (i.e., 
-4.0.0). All deprecations are annotated with
+The following functions have been deprecated and will be removed in the next major version (i.e., 4.0.0). All
+deprecations are annotated with
 [`HEDLEY_DEPRECATED_FOR`](https://nemequ.github.io/hedley/api-reference.html#HEDLEY_DEPRECATED_FOR) to report which
 function to use instead.
 
@@ -148,12 +148,12 @@ function to use instead.
 
 - The legacy comparison behavior for discarded values is deprecated since 3.11.0. It is already disabled by default and
   can still be enabled by defining
-  [`JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON`](../api/macros/json_use_legacy_discarded_value_comparison.md).
+  [`JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON`](../api/macros/json_use_legacy_discarded_value_comparison.md) to `1`.
   
     === "Deprecated"
 
           ```cpp
-          #define JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
+          #define JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON 1
           #include <nlohmann/json.hpp>
           ```
 
