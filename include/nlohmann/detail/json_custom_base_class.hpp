@@ -2,8 +2,7 @@
 
 #include <type_traits> // conditional, is_same
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
 
