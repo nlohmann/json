@@ -13704,7 +13704,7 @@ using json_base_class = typename std::conditional <
                         >::type;
 
 }  // namespace detail
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/json_pointer.hpp>
 //     __ _____ _____ _____
