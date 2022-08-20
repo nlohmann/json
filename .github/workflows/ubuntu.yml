@@ -59,13 +59,12 @@ jobs:
 
   ci_cmake_options:
     runs-on: ubuntu-latest
+    container: ghcr.io/nlohmann/json-ci:v2.4.0
     strategy:
       matrix:
         target: [ci_test_diagnostics, ci_test_noexceptions, ci_test_noimplicitconversions, ci_test_legacycomparison, ci_test_noglobaludls]
     steps:
       - uses: actions/checkout@v3
-      - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@latest
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -120,6 +119,19 @@ jobs:
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
         run: cmake --build build --target ci_test_compiler_default
+
+  ci_test_compilers:
+    runs-on: ubuntu-latest
+    container: ghcr.io/nlohmann/json-ci:v2.4.0
+    strategy:
+      matrix:
+        compiler: [g++-4.8]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run CMake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: Build
+        run: cmake --build build --target ci_test_compiler_${{ matrix.compiler }}
 
   ci_test_standards:
     runs-on: ubuntu-latest
