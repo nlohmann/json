@@ -94,7 +94,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        compiler: ['4', '5', '6', '7', '8', '9', '10', '11', '12', 'latest']
+        compiler: ['4.8', '4' '5', '6', '7', '8', '9', '10', '11', '12', 'latest']
     container: gcc:${{ matrix.compiler }}
     steps:
       - uses: actions/checkout@v3
@@ -119,19 +119,6 @@ jobs:
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
         run: cmake --build build --target ci_test_compiler_default
-
-  ci_test_compilers:
-    runs-on: ubuntu-latest
-    container: ghcr.io/nlohmann/json-ci:v2.4.0
-    strategy:
-      matrix:
-        compiler: [g++-4.8, g++-4.9, g++-5, g++-6]
-    steps:
-      - uses: actions/checkout@v3
-      - name: Run CMake
-        run: cmake -S . -B build -DJSON_CI=On
-      - name: Build
-        run: cmake --build build --target ci_test_compiler_${{ matrix.compiler }}
 
   ci_test_standards:
     runs-on: ubuntu-latest
