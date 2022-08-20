@@ -28,7 +28,7 @@ jobs:
 
   ci_test_gcc:
     runs-on: ubuntu-latest
-    container: gcc:latest
+    container: ghcr.io/nlohmann/json-ci:v2.4.0
     steps:
       - uses: actions/checkout@v3
       - name: Get latest CMake and ninja
