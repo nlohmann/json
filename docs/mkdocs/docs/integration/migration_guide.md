@@ -107,6 +107,9 @@ function to use instead.
           ```cpp
           nlohmann::json_pointer<my_string_type> ptr("/foo/bar/1");
           ```
+  
+    Thereby, `nlohmann::my_json::json_pointer` is an alias for `nlohmann::json_pointer<my_string_type>` and is always an 
+    alias to the `json_pointer` with the appropriate string type for all specializations of `basic_json`.
 
 #### Miscellaneous functions
 
@@ -168,6 +171,11 @@ function to use instead.
 Implicit conversions via [`operator ValueType`](../api/basic_json/operator_ValueType.md) will be switched off by default
 in the next major release of the library.
 
+You can prepare existing code by already defining
+[`JSON_USE_IMPLICIT_CONVERSIONS`](../api/macros/json_use_implicit_conversions.md) to `0` and replace any implicit
+conversions with calls to [`get`](../api/basic_json/get.md), [`get_to`](../api/basic_json/get_to.md),
+[`get_ref`](../api/basic_json/get_ref.md), or [`get_ptr`](../api/basic_json/get_ptr.md).
+
 === "Deprecated"
 
       ```cpp
@@ -182,15 +190,22 @@ in the next major release of the library.
       auto s = j.get<std::string>();
       ```
 
-You can prepare existing code by already defining
-[`JSON_USE_IMPLICIT_CONVERSIONS`](../api/macros/json_use_implicit_conversions.md) to `0` and replace any implicit
-conversions with calls to [`get`](../api/basic_json/get.md).
+=== "Future-proof (alternative)"
+
+      ```cpp
+      nlohmann::json j = "Hello, world!";
+      std::string s;
+      j.get_to(s);
+      ```
 
 ## Import namespace `literals` for UDLs
 
 The user-defined string literals [`operator""_json`](../api/operator_literal_json.md) and
 [`operator""_json_pointer`](../api/operator_literal_json_pointer.md) will be removed from the global namespace in the
 next major release of the library.
+
+To prepare existing code, define [`JSON_USE_GLOBAL_UDLS`](../api/macros/json_use_global_udls.md) to `0` and bring the
+string literals into scope where needed.
 
 === "Deprecated"
 
@@ -205,12 +220,9 @@ next major release of the library.
       nlohmann::json j = "[1,2,3]"_json;
       ```
 
-To prepare existing code, define [`JSON_USE_GLOBAL_UDLS`](../api/macros/json_use_global_udls.md) to `0` and bring the
-string literals into scope where needed.
-
 ## Do not hard-code the complete library namespace
 
-The [`nlohmann` namespace](../features/namespace.md) contains two sub-namespaces to avoid problems when different
+The [`nlohmann` namespace](../features/namespace.md) contains a sub-namespace to avoid problems when different
 versions or configurations of the library are used in the same project. Always use `nlohmann` as namespace or, when the
 exact version and configuration is relevant, use macro
 [`NLOHMANN_JSON_NAMESPACE`](../api/macros/nlohmann_json_namespace.md) to denote the namespace.
@@ -244,5 +256,5 @@ exact version and configuration is relevant, use macro
 
 ## Do not use the `details` namespace
 
-The `details` namespace is not part of the public API of the library and can change in any version without announcment.
+The `details` namespace is not part of the public API of the library and can change in any version without announcement.
 Do not rely on any function or type in the `details` namespace.
