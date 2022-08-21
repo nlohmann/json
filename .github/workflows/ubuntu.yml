@@ -33,8 +33,6 @@ jobs:
     container: ghcr.io/nlohmann/json-ci:v2.4.0
     steps:
       - uses: actions/checkout@v3
-      - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@latest
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
