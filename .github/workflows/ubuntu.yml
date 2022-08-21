@@ -16,7 +16,7 @@ concurrency:
 jobs:
   ci_test_clang:
     runs-on: ubuntu-latest
-    container: silkeh/clang:latest
+    container: silkeh/clang:dev
     steps:
       - uses: actions/checkout@v3
       - name: Get latest CMake and ninja
@@ -67,7 +67,7 @@ jobs:
 
   ci_static_analysis_clang:
     runs-on: ubuntu-latest
-    container: silkeh/clang:latest
+    container: silkeh/clang:dev
     strategy:
       matrix:
         target: [ci_clang_tidy, ci_test_clang_sanitizer, ci_clang_analyze]
