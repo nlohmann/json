@@ -667,8 +667,11 @@ add_custom_target(ci_cppcheck
 ###############################################################################
 
 add_custom_target(ci_cpplint
-    COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/cpplint/cpplint.py --filter=-whitespace,-legal,-runtime/references,-runtime/explicit,-runtime/indentation_namespace,-readability/casting,-readability/nolint --quiet --recursive ${SRC_FILES}
+    COMMAND ${Python3_EXECUTABLE} -mvenv venv_cpplint
+    COMMAND venv_cpplint/bin/pip3 --quiet install cpplint
+    COMMAND venv_cpplint/bin/cpplint --filter=-whitespace,-legal,-runtime/references,-runtime/explicit,-runtime/indentation_namespace,-readability/casting,-readability/nolint --quiet --recursive ${SRC_FILES}
     COMMENT "Check code with cpplint"
+    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 )
 
 ###############################################################################
