@@ -18,11 +18,11 @@ jobs:
     runs-on: ubuntu-latest
     container: silkeh/clang:dev
     steps:
+      - name: Install git
+        run: apt-get update ; apt-get install -y git
       - uses: actions/checkout@v3
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@latest
-      - name: Install git
-        run: apt-get update ; apt-get install -y git
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -74,11 +74,11 @@ jobs:
       matrix:
         target: [ci_clang_tidy, ci_test_clang_sanitizer, ci_clang_analyze]
     steps:
+      - name: Install git
+        run: apt-get update ; apt-get install -y git
       - uses: actions/checkout@v3
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@latest
-      - name: Install git
-        run: apt-get update ; apt-get install -y git
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
