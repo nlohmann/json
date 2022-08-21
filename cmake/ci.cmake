@@ -429,7 +429,7 @@ add_custom_target(ci_test_clang
         -DJSON_BuildTests=ON
         -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_clang
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_clang
-    COMMAND cd ${PROJECT_BINARY_DIR}/build_clang && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_clang && ${CMAKE_CTEST_COMMAND} -LE git_required --parallel ${N} --output-on-failure
     COMMENT "Compile and test with Clang using maximal warning flags"
 )
 
