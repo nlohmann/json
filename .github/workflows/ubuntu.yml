@@ -123,8 +123,6 @@ jobs:
         compiler: ['4', '5', '6', '7', '8', '9', '10', '11', '12', 'latest']
     container: gcc:${{ matrix.compiler }}
     steps:
-      - name: Install git
-        run: apt-get update ; apt-get install -y git
       - uses: actions/checkout@v3
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@latest
@@ -140,8 +138,6 @@ jobs:
         compiler: ['3.5', '3.6', '3.7', '3.8', '3.9', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', 'latest']
     container: silkeh/clang:${{ matrix.compiler }}
     steps:
-      - name: Install git
-        run: apt-get update ; apt-get install -y git
       - uses: actions/checkout@v3
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@latest
