@@ -40,11 +40,12 @@ endif()
 option(JSON_BuildTests                     "Build the unit tests when BUILD_TESTING is enabled." ${JSON_BuildTests_INIT})
 option(JSON_CI                             "Enable CI build targets." OFF)
 option(JSON_Diagnostics                    "Use extended diagnostic messages." OFF)
+option(JSON_DisableEnumSerialization       "Disable default integer enum serialization." OFF)
+option(JSON_GenerateBazelBuildFiles        "Generate Bazel Build files." OFF)
 option(JSON_GlobalUDLs                     "Place use-defined string literals in the global namespace." ON)
 option(JSON_ImplicitConversions            "Enable implicit conversions." ON)
-option(JSON_DisableEnumSerialization       "Disable default integer enum serialization." OFF)
-option(JSON_LegacyDiscardedValueComparison "Enable legacy discarded value comparison." OFF)           
 option(JSON_Install                        "Install CMake targets during install step." ${MAIN_PROJECT})
+option(JSON_LegacyDiscardedValueComparison "Enable legacy discarded value comparison." OFF)           
 option(JSON_MultipleHeaders                "Use non-amalgamated version of the library." ON)
 option(JSON_SystemInclude                  "Include as system headers (skip for clang-tidy)." OFF)
 
@@ -151,6 +152,15 @@ if (JSON_BuildTests)
     include(CTest)
     enable_testing()
     add_subdirectory(tests)
+endif()
+
+##
+## BAZEL
+## create Bazel BUILD file
+##
+if (JSON_BuildTests)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/create_bazel_build_file.cmake)
+    create_bazel_build_file(${NLOHMANN_JSON_INCLUDE_BUILD_DIR})
 endif()
 
 ##
