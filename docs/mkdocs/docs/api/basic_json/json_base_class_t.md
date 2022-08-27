@@ -41,4 +41,4 @@ The type `CustomBaseClass` has to be a default-constructible class.
 
 ## Version history
 
-- Added in version ?.?.?.
+- Added in version 3.12.0.
