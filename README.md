@@ -1152,39 +1152,40 @@ The following compilers are currently used in continuous integration at [AppVeyo
 | Apple Clang 13.0.0 (clang-1300.0.29.30);  Xcode 13.2.1                                                 | macOS 12.4         | GitHub Actions |
 | Apple Clang 13.1.6 (clang-1316.0.21.2.3); Xcode 13.3.1                                                 | macOS 12.4         | GitHub Actions |
 | Apple Clang 13.1.6 (clang-1316.0.21.2.5); Xcode 13.4.1                                                 | macOS 12.4         | GitHub Actions |
-| Clang 3.5.2 (3.5.2-3ubuntu1)                                                                           | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 3.6.2 (3.6.2-3ubuntu2)                                                                           | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 3.7.1 (3.7.1-2ubuntu2)                                                                           | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 3.8.0 (3.8.0-2ubuntu4)                                                                           | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 3.9.1 (3.9.1-4ubuntu3\~16.04.2)                                                                  | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 4.0.0 (4.0.0-1ubuntu1\~16.04.2)                                                                  | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 5.0.0 (5.0.0-3\~16.04.1)                                                                         | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 6.0.1 (6.0.1-14)                                                                                 | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 7.0.1 (7.0.1-12)                                                                                 | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 8.0.1 (8.0.1-9)                                                                                  | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 9.0.1 (9.0.1-12)                                                                                 | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 10.0.0 (10.0.0-4ubuntu1)                                                                         | Ubuntu 20.04.3 LTS | GitHub Actions |
+| Clang 3.5.2                                                                                            | Ubuntu 20.04.3 LTS | GitHub Actions |
+| Clang 3.6.2                                                                                            | Ubuntu 20.04.3 LTS | GitHub Actions |
+| Clang 3.7.1                                                                                            | Ubuntu 20.04.3 LTS | GitHub Actions |
+| Clang 3.8.1                                                                                            | Ubuntu 20.04.3 LTS | GitHub Actions |
+| Clang 3.9.1                                                                                            | Ubuntu 20.04.3 LTS | GitHub Actions |
+| Clang 4.0.1                                                                                            | Ubuntu 20.04.3 LTS | GitHub Actions |
+| Clang 5.0.2                                                                                            | Ubuntu 20.04.3 LTS | GitHub Actions |
+| Clang 6.0.1                                                                                            | Ubuntu 20.04.3 LTS | GitHub Actions |
+| Clang 7.0.1                                                                                            | Ubuntu 20.04.3 LTS | GitHub Actions |
+| Clang 8.0.0                                                                                            | Ubuntu 20.04.3 LTS | GitHub Actions |
+| Clang 9.0.0                                                                                            | Ubuntu 20.04.3 LTS | GitHub Actions |
+| Clang 10.0.0                                                                                           | Ubuntu 20.04.3 LTS | GitHub Actions |
 | Clang 10.0.0 with GNU-like command-line                                                                | Windows-10.0.17763 | GitHub Actions |
 | Clang 11.0.0 with GNU-like command-line                                                                | Windows-10.0.17763 | GitHub Actions |
 | Clang 11.0.0 with MSVC-like command-line                                                               | Windows-10.0.17763 | GitHub Actions |
-| Clang 11.0.0 (11.0.0-2~ubuntu20.04.1)                                                                  | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 12.0.0 (12.0.0-3ubuntu1~20.04.3)                                                                 | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 13.0.1 (13.0.1-++20211015123032+cf15ccdeb6d5-1exp120211015003613.5)                              | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 14.0.5-++20220603124341+2f0a69c32a4c-1~exp1~20220603124352.149                                   | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 15.0.0 (15.0.0-++20220530052901+b7d2b160c3ba-1~exp1~20220530172952.268)                          | Ubuntu 20.04.3 LTS | GitHub Actions |
+| Clang 11.0.0                                                                                           | Ubuntu 20.04.3 LTS | GitHub Actions |
+| Clang 12.0.0                                                                                           | Ubuntu 20.04.3 LTS | GitHub Actions |
+| Clang 13.0.0                                                                                           | Ubuntu 20.04.3 LTS | GitHub Actions |
+| Clang 14.0.0                                                                                           | Ubuntu 20.04.3 LTS | GitHub Actions |
+| Clang 15.0.0 (15.0.0-++20220719071818+5fc621355110-1~exp1~20220719071918.324)                          | Ubuntu 20.04.3 LTS | GitHub Actions |
 | GCC 4.8.5 (Ubuntu 4.8.5-4ubuntu2)                                                                      | Ubuntu 20.04.3 LTS | GitHub Actions |
-| GCC 4.9.3 (Ubuntu 4.9.3-13ubuntu2)                                                                     | Ubuntu 20.04.3 LTS | GitHub Actions |
-| GCC 5.4.0 (Ubuntu 5.4.0-6ubuntu1~16.04.12)                                                             | Ubuntu 20.04.3 LTS | GitHub Actions |
-| GCC 6.4.0 (Ubuntu 6.4.0-17ubuntu1)                                                                     | Ubuntu 20.04.3 LTS | GitHub Actions |
-| GCC 7.5.0 (Ubuntu 7.5.0-6ubuntu2)                                                                      | Ubuntu 20.04.3 LTS | GitHub Actions |
+| GCC 4.9.4                                                                                              | Ubuntu 20.04.3 LTS | GitHub Actions |
+| GCC 5.5.0                                                                                              | Ubuntu 20.04.3 LTS | GitHub Actions |
+| GCC 6.5.0                                                                                              | Ubuntu 20.04.3 LTS | GitHub Actions |
+| GCC 7.5.0                                                                                              | Ubuntu 20.04.3 LTS | GitHub Actions |
 | GCC 8.1.0 (i686-posix-dwarf-rev0, Built by MinGW-W64 project)                                          | Windows-10.0.17763 | GitHub Actions |
 | GCC 8.1.0 (x86_64-posix-seh-rev0, Built by MinGW-W64 project)                                          | Windows-10.0.17763 | GitHub Actions |
-| GCC 8.4.0 (Ubuntu 8.4.0-3ubuntu2)                                                                      | Ubuntu 20.04.3 LTS | GitHub Actions |
-| GCC 9.3.0 (Ubuntu 9.3.0-17ubuntu1~20.04)                                                               | Ubuntu 20.04.3 LTS | GitHub Actions |
-| GCC 10.2.0 (Ubuntu 10.2.0-5ubuntu1~20.04)                                                              | Ubuntu 20.04.3 LTS | GitHub Actions |
+| GCC 8.5.0                                                                                              | Ubuntu 20.04.3 LTS | GitHub Actions |
+| GCC 9.5.0                                                                                              | Ubuntu 20.04.3 LTS | GitHub Actions |
+| GCC 10.4.0                                                                                             | Ubuntu 20.04.3 LTS | GitHub Actions |
 | GCC 11.1.0                                                                                             | Ubuntu (aarch64)   | Drone CI       |
-| GCC 11.1.0 (Ubuntu 11.1.0-1ubuntu1~20.04)                                                              | Ubuntu 20.04.3 LTS | GitHub Actions |
-| GCC 13.0.0 13.0.0 20220605 (experimental)                                                              | Ubuntu 20.04.3 LTS | GitHub Actions |
+| GCC 11.3.0                                                                                             | Ubuntu 20.04.3 LTS | GitHub Actions |
+| GCC 12.2.0                                                                                             | Ubuntu 20.04.3 LTS | GitHub Actions |
+| GCC 13.0.0 20220605 (experimental)                                                                     | Ubuntu 20.04.3 LTS | GitHub Actions |
 | Intel C++ Compiler 2021.5.0.20211109                                                                   | Ubuntu 20.04.3 LTS | GitHub Actions |
 | NVCC 11.0.221                                                                                          | Ubuntu 20.04.3 LTS | GitHub Actions |
 | Visual Studio 14 2015 MSVC 19.0.24241.7 (Build Engine version 14.0.25420.1)                            | Windows-6.3.9600   | AppVeyor       |
