@@ -13,7 +13,7 @@ execute_process(COMMAND ${ASTYLE_TOOL} --version OUTPUT_VARIABLE ASTYLE_TOOL_VER
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" ASTYLE_TOOL_VERSION "${ASTYLE_TOOL_VERSION}")
 message(STATUS "🔖 Artistic Style ${ASTYLE_TOOL_VERSION} (${ASTYLE_TOOL})")
 
-find_program(CLANG_TOOL NAMES clang++-HEAD clang++-15 clang++-14 clang++-13 clang++-12 clang++-11 clang++)
+find_program(CLANG_TOOL NAMES clang++-HEAD clang++-16 clang++-15 clang++-14 clang++-13 clang++-12 clang++-11 clang++)
 execute_process(COMMAND ${CLANG_TOOL} --version OUTPUT_VARIABLE CLANG_TOOL_VERSION ERROR_VARIABLE CLANG_TOOL_VERSION)
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" CLANG_TOOL_VERSION "${CLANG_TOOL_VERSION}")
 message(STATUS "🔖 Clang ${CLANG_TOOL_VERSION} (${CLANG_TOOL})")
@@ -30,7 +30,7 @@ execute_process(COMMAND ${CPPCHECK_TOOL} --version OUTPUT_VARIABLE CPPCHECK_TOOL
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" CPPCHECK_TOOL_VERSION "${CPPCHECK_TOOL_VERSION}")
 message(STATUS "🔖 Cppcheck ${CPPCHECK_TOOL_VERSION} (${CPPCHECK_TOOL})")
 
-find_program(GCC_TOOL NAMES g++-latest g++-HEAD g++-11 g++-10)
+find_program(GCC_TOOL NAMES g++-latest g++-HEAD g++-12 g++-11 g++-10)
 execute_process(COMMAND ${GCC_TOOL} --version OUTPUT_VARIABLE GCC_TOOL_VERSION ERROR_VARIABLE GCC_TOOL_VERSION)
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" GCC_TOOL_VERSION "${GCC_TOOL_VERSION}")
 message(STATUS "🔖 GCC ${GCC_TOOL_VERSION} (${GCC_TOOL})")
@@ -667,8 +667,11 @@ add_custom_target(ci_cppcheck
 ###############################################################################
 
 add_custom_target(ci_cpplint
-    COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/cpplint/cpplint.py --filter=-whitespace,-legal,-runtime/references,-runtime/explicit,-runtime/indentation_namespace,-readability/casting,-readability/nolint --quiet --recursive ${SRC_FILES}
+    COMMAND ${Python3_EXECUTABLE} -mvenv venv_cpplint
+    COMMAND venv_cpplint/bin/pip3 --quiet install cpplint
+    COMMAND venv_cpplint/bin/cpplint --filter=-whitespace,-legal,-runtime/references,-runtime/explicit,-runtime/indentation_namespace,-readability/casting,-readability/nolint --quiet --recursive ${SRC_FILES}
     COMMENT "Check code with cpplint"
+    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 )
 
 ###############################################################################
@@ -928,6 +931,17 @@ foreach(COMPILER g++-4.8 g++-4.9 g++-5 g++-6 g++-7 g++-8 g++-9 g++-10 g++-11 cla
     endif()
     unset(COMPILER_TOOL CACHE)
 endforeach()
+
+add_custom_target(ci_test_compiler_default
+    COMMAND ${CMAKE_COMMAND}
+        -DCMAKE_BUILD_TYPE=Debug -GNinja
+        -DJSON_BuildTests=ON -DJSON_FastTests=ON
+        -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_compiler_default
+        ${ADDITIONAL_FLAGS}
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_compiler_default --parallel ${N}
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_compiler_default && ${CMAKE_CTEST_COMMAND} --parallel ${N} --exclude-regex "test-unicode" -LE git_required --output-on-failure
+    COMMENT "Compile and test with default C++ compiler"
+)
 
 ###############################################################################
 # CUDA example

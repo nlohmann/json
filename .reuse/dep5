@@ -27,10 +27,6 @@ Files: tools/amalgamate/*
 Copyright: 2012 Erik Edlund <erik.edlund@32767.se>
 License: BSD-3-Clause
 
-Files: tools/cpplint/*
-Copyright: 2009 Google Inc. All rights reserved.
-License: BSD-3-Clause
-
 Files: tools/gdb_pretty_printer
 Copyright: 2020 Hannes Domani <https://github.com/ssbssa>
 License: MIT

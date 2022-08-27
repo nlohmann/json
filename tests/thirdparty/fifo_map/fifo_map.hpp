@@ -520,7 +520,7 @@ template <
 namespace std // NOLINT(cert-dcl58-cpp,-warnings-as-errors)
 {
 template <class Key, class T, class Compare, class Allocator>
-inline void swap(nlohmann::fifo_map<Key, T, Compare, Allocator>& m1,
+inline void swap(nlohmann::fifo_map<Key, T, Compare, Allocator>& m1, // NOLINT(cert-dcl58-cpp)
                  nlohmann::fifo_map<Key, T, Compare, Allocator>& m2)
 {
     m1.swap(m2);
