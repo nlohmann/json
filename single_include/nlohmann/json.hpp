@@ -13688,7 +13688,7 @@ namespace detail
 @brief Default base class of the @ref basic_json class.
 
 So that the correct implementation of the copy / move ctors / assign operators
-of @ref basic_json does not require complex case distinctions
+of @ref basic_json do not require complex case distinctions
 (no base class / custom base class used as customization point),
 @ref basic_json always has a base class.
 By default, this class is used because it is empty and thus has no effect
