@@ -3837,8 +3837,8 @@ struct is_compatible_integer_type_impl : std::false_type {};
 template<typename RealIntegerType, typename CompatibleNumberIntegerType>
 struct is_compatible_integer_type_impl <
     RealIntegerType, CompatibleNumberIntegerType,
-    enable_if_t < std::is_integral<RealIntegerType>::value&&
-    std::is_integral<CompatibleNumberIntegerType>::value&&
+    enable_if_t < std::numeric_limits<RealIntegerType>::is_integer&&
+    std::numeric_limits<CompatibleNumberIntegerType>::is_integer&&
     !std::is_same<bool, CompatibleNumberIntegerType>::value >>
 {
     // is there an assert somewhere on overflows?
@@ -4601,7 +4601,7 @@ inline void from_json(const BasicJsonType& j, typename std::nullptr_t& n)
 
 // overloads for basic_json template parameters
 template < typename BasicJsonType, typename ArithmeticType,
-           enable_if_t < std::is_arithmetic<ArithmeticType>::value&&
+           enable_if_t < std::numeric_limits<ArithmeticType>::is_specialized&&
                          !std::is_same<ArithmeticType, typename BasicJsonType::boolean_t>::value,
                          int > = 0 >
 void get_arithmetic_value(const BasicJsonType& j, ArithmeticType& val)
@@ -5355,7 +5355,7 @@ struct external_constructor<value_t::boolean>
     {
         j.m_value.destroy(j.m_type);
         j.m_type = value_t::boolean;
-        j.m_value = b;
+        new (&j.m_value) typename BasicJsonType::json_value(b);
         j.assert_invariant();
     }
 };
@@ -5368,7 +5368,7 @@ struct external_constructor<value_t::string>
     {
         j.m_value.destroy(j.m_type);
         j.m_type = value_t::string;
-        j.m_value = s;
+        new (&j.m_value) typename BasicJsonType::json_value(s);
         j.assert_invariant();
     }
 
@@ -5377,7 +5377,7 @@ struct external_constructor<value_t::string>
     {
         j.m_value.destroy(j.m_type);
         j.m_type = value_t::string;
-        j.m_value = std::move(s);
+        new (&j.m_value) typename BasicJsonType::json_value(std::move(s));
         j.assert_invariant();
     }
 
@@ -5401,7 +5401,7 @@ struct external_constructor<value_t::binary>
     {
         j.m_value.destroy(j.m_type);
         j.m_type = value_t::binary;
-        j.m_value = typename BasicJsonType::binary_t(b);
+        new (&j.m_value) typename BasicJsonType::json_value(typename BasicJsonType::binary_t(b));
         j.assert_invariant();
     }
 
@@ -5410,7 +5410,7 @@ struct external_constructor<value_t::binary>
     {
         j.m_value.destroy(j.m_type);
         j.m_type = value_t::binary;
-        j.m_value = typename BasicJsonType::binary_t(std::move(b));
+        new (&j.m_value) typename BasicJsonType::json_value(typename BasicJsonType::binary_t(std::move(b)));
         j.assert_invariant();
     }
 };
@@ -5423,7 +5423,7 @@ struct external_constructor<value_t::number_float>
     {
         j.m_value.destroy(j.m_type);
         j.m_type = value_t::number_float;
-        j.m_value = val;
+        new (&j.m_value) typename BasicJsonType::json_value(val);
         j.assert_invariant();
     }
 };
@@ -5436,7 +5436,7 @@ struct external_constructor<value_t::number_unsigned>
     {
         j.m_value.destroy(j.m_type);
         j.m_type = value_t::number_unsigned;
-        j.m_value = val;
+        new (&j.m_value) typename BasicJsonType::json_value(val);
         j.assert_invariant();
     }
 };
@@ -5449,7 +5449,7 @@ struct external_constructor<value_t::number_integer>
     {
         j.m_value.destroy(j.m_type);
         j.m_type = value_t::number_integer;
-        j.m_value = val;
+        new (&j.m_value) typename BasicJsonType::json_value(val);
         j.assert_invariant();
     }
 };
@@ -5462,7 +5462,7 @@ struct external_constructor<value_t::array>
     {
         j.m_value.destroy(j.m_type);
         j.m_type = value_t::array;
-        j.m_value = arr;
+        new (&j.m_value) typename BasicJsonType::json_value(arr);
         j.set_parents();
         j.assert_invariant();
     }
@@ -5472,7 +5472,7 @@ struct external_constructor<value_t::array>
     {
         j.m_value.destroy(j.m_type);
         j.m_type = value_t::array;
-        j.m_value = std::move(arr);
+        new (&j.m_value) typename BasicJsonType::json_value(std::move(arr));
         j.set_parents();
         j.assert_invariant();
     }
@@ -5497,7 +5497,7 @@ struct external_constructor<value_t::array>
     {
         j.m_value.destroy(j.m_type);
         j.m_type = value_t::array;
-        j.m_value = value_t::array;
+        new (&j.m_value) typename BasicJsonType::json_value(value_t::array);
         j.m_value.array->reserve(arr.size());
         for (const bool x : arr)
         {
@@ -5513,7 +5513,7 @@ struct external_constructor<value_t::array>
     {
         j.m_value.destroy(j.m_type);
         j.m_type = value_t::array;
-        j.m_value = value_t::array;
+        new (&j.m_value) typename BasicJsonType::json_value(value_t::array);
         j.m_value.array->resize(arr.size());
         if (arr.size() > 0)
         {
@@ -5532,7 +5532,7 @@ struct external_constructor<value_t::object>
     {
         j.m_value.destroy(j.m_type);
         j.m_type = value_t::object;
-        j.m_value = obj;
+        new (&j.m_value) typename BasicJsonType::json_value(obj);
         j.set_parents();
         j.assert_invariant();
     }
@@ -5542,7 +5542,7 @@ struct external_constructor<value_t::object>
     {
         j.m_value.destroy(j.m_type);
         j.m_type = value_t::object;
-        j.m_value = std::move(obj);
+        new (&j.m_value) typename BasicJsonType:: json_value(std::move(obj));
         j.set_parents();
         j.assert_invariant();
     }
@@ -8559,7 +8559,7 @@ scan_number_done:
             if (errno == 0)
             {
                 value_unsigned = static_cast<number_unsigned_t>(x);
-                if (value_unsigned == x)
+                if (static_cast<long long>(value_unsigned) == x)
                 {
                     return token_type::value_unsigned;
                 }
@@ -8575,7 +8575,7 @@ scan_number_done:
             if (errno == 0)
             {
                 value_integer = static_cast<number_integer_t>(x);
-                if (value_integer == x)
+                if (static_cast<long long>(value_integer) == x)
                 {
                     return token_type::value_integer;
                 }
@@ -18568,13 +18568,13 @@ class serializer
     }
 
     // templates to avoid warnings about useless casts
-    template <typename NumberType, enable_if_t<std::is_signed<NumberType>::value, int> = 0>
+    template <typename NumberType, enable_if_t<std::numeric_limits<NumberType>::is_signed, int> = 0>
     bool is_negative_number(NumberType x)
     {
-        return x < 0;
+        return x < NumberType(0);
     }
 
-    template < typename NumberType, enable_if_t <std::is_unsigned<NumberType>::value, int > = 0 >
+    template < typename NumberType, enable_if_t < !std::numeric_limits<NumberType>::is_signed, int > = 0 >
     bool is_negative_number(NumberType /*unused*/)
     {
         return false;
@@ -18590,7 +18590,7 @@ class serializer
     @tparam NumberType either @a number_integer_t or @a number_unsigned_t
     */
     template < typename NumberType, detail::enable_if_t <
-                   std::is_integral<NumberType>::value ||
+                   std::numeric_limits<NumberType>::is_integer ||
                    std::is_same<NumberType, number_unsigned_t>::value ||
                    std::is_same<NumberType, number_integer_t>::value ||
                    std::is_same<NumberType, binary_char_t>::value,
@@ -18614,7 +18614,7 @@ class serializer
         };
 
         // special case for "0"
-        if (x == 0)
+        if (x == NumberType(0))
         {
             o->write_character('0');
             return;
@@ -18650,15 +18650,16 @@ class serializer
 
         // Fast int2ascii implementation inspired by "Fastware" talk by Andrei Alexandrescu
         // See: https://www.youtube.com/watch?v=o4-CwDo2zpg
-        while (abs_value >= 100)
+        const NumberType hundred = 100;
+        while (abs_value >= hundred)
         {
-            const auto digits_index = static_cast<unsigned>((abs_value % 100));
-            abs_value /= 100;
+            const auto digits_index = static_cast<unsigned>((abs_value % hundred));
+            abs_value /= hundred;
             *(--buffer_ptr) = digits_to_99[digits_index][1];
             *(--buffer_ptr) = digits_to_99[digits_index][0];
         }
 
-        if (abs_value >= 10)
+        if (abs_value >= NumberType(10))
         {
             const auto digits_index = static_cast<unsigned>(abs_value);
             *(--buffer_ptr) = digits_to_99[digits_index][1];
@@ -19618,7 +19619,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         number_float_t number_float;
 
         /// default constructor (for null values)
-        json_value() = default;
+        json_value() {};
         /// constructor for booleans
         json_value(boolean_t v) noexcept : boolean(v) {}
         /// constructor for numbers (integer)
@@ -19729,6 +19730,179 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         /// constructor for rvalue binary arrays (internal type)
         json_value(binary_t&& value) : binary(create<binary_t>(std::move(value))) {}
 
+        /// User is responsible for calling `destroy` first to make this safe
+        ~json_value() {}
+
+        json_value& operator=(json_value&) = delete;
+
+        /// Copy from an existing value of type t
+        json_value(value_t t, const json_value& v)
+        {
+            switch (t)
+            {
+                case value_t::object:
+                {
+                    new (this) json_value(v.object);
+                    break;
+                }
+                case value_t::array:
+                {
+                    new (this) json_value(v.array);
+                    break;
+                }
+                case value_t::string:
+                {
+                    new (this) json_value(v.string);
+                    break;
+                }
+                case value_t::binary:
+                {
+                    new (this) json_value(v.binary);
+                    break;
+                }
+                case value_t::boolean:
+                {
+                    new (this) json_value(v.boolean);
+                    break;
+                }
+                case value_t::number_integer:
+                {
+                    new (this) json_value(v.number_integer);
+                    break;
+                }
+                case value_t::number_unsigned:
+                {
+                    new (this) json_value(v.number_unsigned);
+                    break;
+                }
+                case value_t::number_float:
+                {
+                    new (this) json_value(v.number_float);
+                    break;
+                }
+                case value_t::discarded:
+                case value_t::null:
+                default:
+                    break;
+            }
+        }
+
+        /// Move from an existing value of type t
+        json_value(value_t t, json_value&& v)
+        {
+            switch (t)
+            {
+                case value_t::object:
+                {
+                    new (this) json_value(std::move(v.object));
+                    break;
+                }
+                case value_t::array:
+                {
+                    new (this) json_value(std::move(v.array));
+                    break;
+                }
+                case value_t::string:
+                {
+                    new (this) json_value(std::move(v.string));
+                    break;
+                }
+                case value_t::binary:
+                {
+                    new (this) json_value(std::move(v.binary));
+                    break;
+                }
+                case value_t::boolean:
+                {
+                    new (this) json_value(std::move(v.boolean));
+                    break;
+                }
+                case value_t::number_integer:
+                {
+                    new (this) json_value(std::move(v.number_integer));
+                    break;
+                }
+                case value_t::number_unsigned:
+                {
+                    new (this) json_value(std::move(v.number_unsigned));
+                    break;
+                }
+                case value_t::number_float:
+                {
+                    new (this) json_value(std::move(v.number_float));
+                    break;
+                }
+                case value_t::discarded:
+                case value_t::null:
+                default:
+                    break;
+            }
+            v.destroy(t);
+        }
+
+        static void swap (value_t& t1, json_value& v1, value_t& t2, json_value& v2)
+        {
+            using std::swap;
+            if (t1 == t2)
+            {
+                switch (t1)
+                {
+                    case value_t::object:
+                    {
+                        swap(v1.object, v2.object);
+                        break;
+                    }
+                    case value_t::array:
+                    {
+                        swap(v1.array, v2.array);
+                        break;
+                    }
+                    case value_t::string:
+                    {
+                        swap(v1.string, v2.string);
+                        break;
+                    }
+                    case value_t::binary:
+                    {
+                        swap(v1.binary, v2.binary);
+                        break;
+                    }
+                    case value_t::boolean:
+                    {
+                        swap(v1.boolean, v2.boolean);
+                        break;
+                    }
+                    case value_t::number_integer:
+                    {
+                        swap(v1.number_integer, v2.number_integer);
+                        break;
+                    }
+                    case value_t::number_unsigned:
+                    {
+                        swap(v1.number_unsigned, v2.number_unsigned);
+                        break;
+                    }
+                    case value_t::number_float:
+                    {
+                        swap(v1.number_float, v2.number_float);
+                        break;
+                    }
+                    case value_t::discarded:
+                    case value_t::null:
+                    default:
+                        break;
+                }
+            }
+            else
+            {
+                json_value tmp;
+                new (&tmp) json_value(t1, std::move(v1));
+                new (&v1) json_value(t2, std::move(v2));
+                new (&v2) json_value(t1, std::move(tmp));
+                swap(t1, t2);
+            }
+        }
+
         void destroy(value_t t)
         {
             if (t == value_t::array || t == value_t::object)
@@ -19814,11 +19988,27 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     break;
                 }
 
-                case value_t::null:
                 case value_t::boolean:
+                {
+                    boolean.~boolean_t();
+                    break;
+                }
                 case value_t::number_integer:
+                {
+                    number_integer.~number_integer_t();
+                    break;
+                }
                 case value_t::number_unsigned:
+                {
+                    number_unsigned.~number_unsigned_t();
+                    break;
+                }
                 case value_t::number_float:
+                {
+                    number_float.~number_float_t();
+                    break;
+                }
+                case value_t::null:
                 case value_t::discarded:
                 default:
                 {
@@ -20099,7 +20289,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         {
             // the initializer list is a list of pairs -> create object
             m_type = value_t::object;
-            m_value = value_t::object;
+            new (&m_value) json_value (value_t::object);
 
             for (auto& element_ref : init)
             {
@@ -20127,7 +20317,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     {
         auto res = basic_json();
         res.m_type = value_t::binary;
-        res.m_value = init;
+        new (&res.m_value) json_value(init);
         return res;
     }
 
@@ -20138,7 +20328,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     {
         auto res = basic_json();
         res.m_type = value_t::binary;
-        res.m_value = binary_t(init, subtype);
+        new (&res.m_value) json_value(binary_t(init, subtype));
         return res;
     }
 
@@ -20149,7 +20339,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     {
         auto res = basic_json();
         res.m_type = value_t::binary;
-        res.m_value = std::move(init);
+        new (&res.m_value) json_value(std::move(init));
         return res;
     }
 
@@ -20160,7 +20350,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     {
         auto res = basic_json();
         res.m_type = value_t::binary;
-        res.m_value = binary_t(std::move(init), subtype);
+        new (&res.m_value) json_value(binary_t(std::move(init), subtype));
         return res;
     }
 
@@ -20263,7 +20453,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
             case value_t::string:
             {
-                m_value = *first.m_object->m_value.string;
+                new (&m_value) json_value(*first.m_object->m_value.string);
                 break;
             }
 
@@ -20283,7 +20473,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
             case value_t::binary:
             {
-                m_value = *first.m_object->m_value.binary;
+                new (&m_value) json_value(*first.m_object->m_value.binary);
                 break;
             }
 
@@ -20319,49 +20509,50 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         {
             case value_t::object:
             {
-                m_value = *other.m_value.object;
+
+                new (&m_value) json_value(*other.m_value.object);
                 break;
             }
 
             case value_t::array:
             {
-                m_value = *other.m_value.array;
+                new (&m_value) json_value(*other.m_value.array);
                 break;
             }
 
             case value_t::string:
             {
-                m_value = *other.m_value.string;
+                new (&m_value) json_value(*other.m_value.string);
                 break;
             }
 
             case value_t::boolean:
             {
-                m_value = other.m_value.boolean;
+                new (&m_value) json_value(other.m_value.boolean);
                 break;
             }
 
             case value_t::number_integer:
             {
-                m_value = other.m_value.number_integer;
+                new (&m_value) json_value(other.m_value.number_integer);
                 break;
             }
 
             case value_t::number_unsigned:
             {
-                m_value = other.m_value.number_unsigned;
+                new (&m_value) json_value(other.m_value.number_unsigned);
                 break;
             }
 
             case value_t::number_float:
             {
-                m_value = other.m_value.number_float;
+                new (&m_value) json_value(other.m_value.number_float);
                 break;
             }
 
             case value_t::binary:
             {
-                m_value = *other.m_value.binary;
+                new (&m_value) json_value(*other.m_value.binary);
                 break;
             }
 
@@ -20379,14 +20570,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/basic_json/
     basic_json(basic_json&& other) noexcept
         : m_type(std::move(other.m_type)),
-          m_value(std::move(other.m_value))
+          m_value(other.m_type, other.m_value)
     {
         // check that passed value is valid
         other.assert_invariant(false);
 
         // invalidate payload
         other.m_type = value_t::null;
-        other.m_value = {};
 
         set_parents();
         assert_invariant();
@@ -20404,10 +20594,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // check that passed value is valid
         other.assert_invariant();
 
-        using std::swap;
-        swap(m_type, other.m_type);
-        swap(m_value, other.m_value);
-
+        json_value::swap(m_type, m_value, other.m_type, other.m_value);
         set_parents();
         assert_invariant();
         return *this;
@@ -22267,7 +22454,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         if (is_null())
         {
             m_type = value_t::array;
-            m_value = value_t::array;
+            new (&m_value) json_value(value_t::array);
             assert_invariant();
         }
 
@@ -22300,7 +22487,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         if (is_null())
         {
             m_type = value_t::array;
-            m_value = value_t::array;
+            new (&m_value) json_value(value_t::array);
             assert_invariant();
         }
 
@@ -22332,7 +22519,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         if (is_null())
         {
             m_type = value_t::object;
-            m_value = value_t::object;
+            new (&m_value) json_value(value_t::object);
             assert_invariant();
         }
 
@@ -22388,7 +22575,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         if (is_null())
         {
             m_type = value_t::array;
-            m_value = value_t::array;
+            new (&m_value) json_value(value_t::array);
             assert_invariant();
         }
 
@@ -22413,7 +22600,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         if (is_null())
         {
             m_type = value_t::object;
-            m_value = value_t::object;
+            new (&m_value) json_value(value_t::object);
             assert_invariant();
         }
 
@@ -22636,8 +22823,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         std::is_nothrow_move_assignable<json_value>::value
     )
     {
-        std::swap(m_type, other.m_type);
-        std::swap(m_value, other.m_value);
+        json_value::swap(m_type, m_value, other.m_type, other.m_value);
 
         set_parents();
         other.set_parents();
@@ -23362,7 +23548,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     value_t m_type = value_t::null;
 
     /// the value of the current element
-    json_value m_value = {};
+    json_value m_value;
 
 #if JSON_DIAGNOSTICS
     /// a pointer to a parent value (for debugging purposes)
