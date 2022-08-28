@@ -13680,6 +13680,9 @@ NLOHMANN_JSON_NAMESPACE_END
 
 #include <type_traits> // conditional, is_same
 
+// #include <nlohmann/detail/abi_macros.hpp>
+
+
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
