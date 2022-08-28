@@ -13,7 +13,8 @@ template<
     class NumberFloatType = double,
     template<typename U> class AllocatorType = std::allocator,
     template<typename T, typename SFINAE = void> class JSONSerializer = adl_serializer,
-    class BinaryType = std::vector<std::uint8_t>
+    class BinaryType = std::vector<std::uint8_t,
+    class CustomBaseClass = void>
 >
 class basic_json;
 ```
@@ -32,6 +33,7 @@ class basic_json;
 | `AllocatorType`      | type of the allocator to use                                              |                                             |
 | `JSONSerializer`     | the serializer to resolve internal calls to `to_json()` and `from_json()` | [`json_serializer`](json_serializer.md)     |
 | `BinaryType`         | type for binary arrays                                                    | [`binary_t`](binary_t.md)                   |
+| `CustomBaseClass`    | extension point for user code                                             | [`json_base_class_t`](json_base_class_t.md) |
 
 ## Specializations
 
