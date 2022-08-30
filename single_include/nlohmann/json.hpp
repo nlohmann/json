@@ -27,7 +27,6 @@
 #endif  // JSON_NO_IO
 #include <iterator> // random_access_iterator_tag
 #include <memory> // unique_ptr
-#include <numeric> // accumulate
 #include <string> // string, stoi, to_string
 #include <utility> // declval, forward, move, pair, swap
 #include <vector> // vector
@@ -183,6 +182,9 @@
 
 #include <cstddef> // nullptr_t
 #include <exception> // exception
+#if JSON_DIAGNOSTICS
+    #include <numeric> // accumulate
+#endif
 #include <stdexcept> // runtime_error
 #include <string> // to_string
 #include <vector> // vector
