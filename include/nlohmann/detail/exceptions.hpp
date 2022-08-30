@@ -14,6 +14,10 @@
 #include <string> // to_string
 #include <vector> // vector
 
+#if JSON_DIAGNOSTICS
+#include <numeric> // accumulate
+#endif
+
 #include <nlohmann/detail/value_t.hpp>
 #include <nlohmann/detail/string_escape.hpp>
 #include <nlohmann/detail/input/position_t.hpp>
