@@ -2737,32 +2737,96 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 #define NLOHMANN_JSON_FROM(v1) nlohmann_json_j.at(#v1).get_to(nlohmann_json_t.v1);
 #define NLOHMANN_JSON_FROM_WITH_DEFAULT(v1) nlohmann_json_t.v1 = nlohmann_json_j.value(#v1, nlohmann_json_default_obj.v1);
 
+#define NLOHMANN_DEFINE_TYPE_TO_IMPL(ReturnType, BasicJsonType, Type, ...)          \
+    ReturnType to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) \
+    {                                                                               \
+        NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__))    \
+    }
+#define NLOHMANN_DEFINE_TYPE_IMPL(ReturnType, BasicJsonType, Type, ...)               \
+    NLOHMANN_DEFINE_TYPE_TO_IMPL(ReturnType, BasicJsonType, Type, __VA_ARGS__)        \
+    ReturnType from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) \
+    {                                                                                 \
+        NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, __VA_ARGS__))    \
+    }
+#define NLOHMANN_DEFINE_TYPE_WITH_DEFAULT_IMPL(ReturnType, BasicJsonType, Type, ...)            \
+    NLOHMANN_DEFINE_TYPE_TO_IMPL(ReturnType, BasicJsonType, Type, __VA_ARGS__)                  \
+    ReturnType from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t)           \
+    {                                                                                           \
+        Type nlohmann_json_default_obj;                                                         \
+        NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT, __VA_ARGS__)) \
+    }
+
 /*!
-@brief macro
+@brief macro to briefly define intrusive serialization of given type to/from nlohmann::json
 @def NLOHMANN_DEFINE_TYPE_INTRUSIVE
 @since version 3.9.0
+@sa NLOHMANN_DEFINE_TYPE_INTRUSIVE_IMPL
 */
-#define NLOHMANN_DEFINE_TYPE_INTRUSIVE(Type, ...)  \
-    friend void to_json(nlohmann::json& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) } \
-    friend void from_json(const nlohmann::json& nlohmann_json_j, Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, __VA_ARGS__)) }
+#define NLOHMANN_DEFINE_TYPE_INTRUSIVE(Type, ...) NLOHMANN_DEFINE_TYPE_IMPL(friend void, nlohmann::json, Type, __VA_ARGS__)
 
-#define NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(Type, ...)  \
-    friend void to_json(nlohmann::json& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) } \
-    friend void from_json(const nlohmann::json& nlohmann_json_j, Type& nlohmann_json_t) { Type nlohmann_json_default_obj; NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT, __VA_ARGS__)) }
+#define NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(Type, ...) NLOHMANN_DEFINE_TYPE_WITH_DEFAULT_IMPL(friend void, nlohmann::json, Type, __VA_ARGS__)
 
 /*!
-@brief macro
+@brief macro to briefly define non-intrusive serialization of given type to/from nlohmann::json
 @def NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE
 @since version 3.9.0
+@sa NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_IMPL
 */
-#define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Type, ...)  \
-    inline void to_json(nlohmann::json& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) } \
-    inline void from_json(const nlohmann::json& nlohmann_json_j, Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, __VA_ARGS__)) }
+#define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Type, ...) NLOHMANN_DEFINE_TYPE_IMPL(inline void, nlohmann::json, Type, __VA_ARGS__)
 
-#define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(Type, ...)  \
-    inline void to_json(nlohmann::json& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) } \
-    inline void from_json(const nlohmann::json& nlohmann_json_j, Type& nlohmann_json_t) { Type nlohmann_json_default_obj; NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT, __VA_ARGS__)) }
+#define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(Type, ...) NLOHMANN_DEFINE_TYPE_WITH_DEFAULT_IMPL(inline void, nlohmann::json, Type, __VA_ARGS__)
 
+#define NLOHMANN_DEFINE_TYPE_T_TO_IMPL(ReturnType, Type, ...)                       \
+    template<typename BasicJsonType>                                                \
+    ReturnType to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) \
+    {                                                                               \
+        NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__))    \
+    }
+
+#define NLOHMANN_DEFINE_TYPE_T_IMPL(ReturnType, Type, ...)                            \
+    NLOHMANN_DEFINE_TYPE_T_TO_IMPL(ReturnType, Type, __VA_ARGS__)                     \
+    template<typename BasicJsonType>                                                  \
+    ReturnType from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) \
+    {                                                                                 \
+        NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, __VA_ARGS__))    \
+    }
+
+#define NLOHMANN_DEFINE_TYPE_T_WITH_DEFAULT_IMPL(ReturnType, Type, ...)                         \
+    NLOHMANN_DEFINE_TYPE_T_TO_IMPL(ReturnType, Type, __VA_ARGS__)                               \
+    template<typename BasicJsonType>                                                            \
+    ReturnType from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t)           \
+    {                                                                                           \
+        Type nlohmann_json_default_obj;                                                         \
+        NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT, __VA_ARGS__)) \
+    }
+
+/*!
+@brief macro to briefly define intrusive serialization of a given type to/from any basic_json object
+@def NLOHMANN_DEFINE_TYPE_INTRUSIVE_T
+@since version 3.10.6
+*/
+#define NLOHMANN_DEFINE_TYPE_INTRUSIVE_T(Type, ...) NLOHMANN_DEFINE_TYPE_T_IMPL(friend void, Type, __VA_ARGS__)
+
+/*!
+@brief macro to briefly define non-intrusive serialization of a given type to/from any basic_json object
+@def NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_T
+@since version 3.10.6
+*/
+#define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_T(Type, ...) NLOHMANN_DEFINE_TYPE_T_IMPL(void, Type, __VA_ARGS__)
+
+/*!
+@brief macro to briefly define intrusive serialization of a given type to/from any basic_json object (works with missing fields in json)
+@def NLOHMANN_DEFINE_TYPE_INTRUSIVE_T_WITH_DEFAULT
+@since version 3.10.6
+*/
+#define NLOHMANN_DEFINE_TYPE_INTRUSIVE_T_WITH_DEFAULT(Type, ...) NLOHMANN_DEFINE_TYPE_T_WITH_DEFAULT_IMPL(friend void, Type, __VA_ARGS__)
+
+/*!
+@brief macro to briefly define non-intrusive serialization of a given type to/from any basic_json object (works with missing fields in json)
+@def NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_T_WITH_DEFAULT
+@since version 3.10.6
+*/
+#define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_T_WITH_DEFAULT(Type, ...) NLOHMANN_DEFINE_TYPE_T_WITH_DEFAULT_IMPL(void, Type, __VA_ARGS__)
 
 // inspired from https://stackoverflow.com/a/26745591
 // allows to call any std function as if (e.g. with begin):

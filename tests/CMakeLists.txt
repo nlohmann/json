@@ -43,10 +43,11 @@ target_compile_features(test_main PRIVATE cxx_std_11)
 target_compile_options(test_main PUBLIC
     $<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>
     # MSVC: Force to always compile with W4
+    #       Disable warning C4503: ...: decorated name length (4096) exceeded, name was truncated
     #       Disable warning C4566: character represented by universal-character-name '\uFF01'
     #                              cannot be represented in the current code page (1252)
     #       Disable warning C4996: 'nlohmann::basic_json<...>::operator <<': was declared deprecated
-    $<$<CXX_COMPILER_ID:MSVC>:/W4 /wd4566 /wd4996>
+    $<$<CXX_COMPILER_ID:MSVC>:/W4 /wd4503 /wd4566 /wd4996>
     # https://github.com/nlohmann/json/issues/1114
     $<$<CXX_COMPILER_ID:MSVC>:/bigobj> $<$<BOOL:${MINGW}>:-Wa,-mbig-obj>
 
