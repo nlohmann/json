@@ -792,12 +792,12 @@ TEST_CASE("regression tests 2")
         CHECK(test1.dump() == "{\"root\":{}}");
 
         ordered_json test2;
-        test2[ordered_json::json_pointer(p)] = json::object();
+        test2[ordered_json::json_pointer(p)] = ordered_json::object();
         CHECK(test2.dump() == "{\"root\":{}}");
 
         // json::json_pointer and ordered_json::json_pointer are the same type; behave as above
         ordered_json test3;
-        test3[json::json_pointer(p)] = json::object();
+        test3[json::json_pointer(p)] = ordered_json::object();
         CHECK(std::is_same<json::json_pointer::string_t, ordered_json::json_pointer::string_t>::value);
         CHECK(test3.dump() == "{\"root\":{}}");
     }
@@ -877,7 +877,8 @@ TEST_CASE("regression tests 2")
         CHECK(td.str == "value");
     }
 
-#ifdef JSON_HAS_CPP_20
+    // this is no longer supported when implicit conversions are disabled
+#if defined(JSON_HAS_CPP_20) && JSON_USE_IMPLICIT_CONVERSIONS
     SECTION("issue #3312 - Parse to custom class from unordered_json breaks on G++11.2.0 with C++20")
     {
         // see test for #3171

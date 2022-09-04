@@ -10,7 +10,9 @@
 #include "doctest_compatibility.h"
 
 #include <nlohmann/json.hpp>
+using nlohmann::json;
 
+#include <iostream>
 #include <string>
 #include <utility>
 
@@ -308,17 +310,144 @@ TEST_CASE("alternative string type")
 
     SECTION("JSON pointer")
     {
-        // conversion from json to alt_json fails to compile (see #3425);
-        // attempted fix(*) produces: [[['b','a','r'],['b','a','z']]] (with each char being an integer)
-        // (*) disable implicit conversion for json_refs of any basic_json type
-        // alt_json j = R"(
-        // {
-        //     "foo": ["bar", "baz"]
-        // }
-        // )"_json;
         auto j = alt_json::parse(R"({"foo": ["bar", "baz"]})");
 
         CHECK(j.at(alt_json::json_pointer("/foo/0")) == j["foo"][0]);
         CHECK(j.at(alt_json::json_pointer("/foo/1")) == j["foo"][1]);
+    }
+
+    SECTION("conversion (#3425)")
+    {
+        SECTION("string")
+        {
+            SECTION("json to alt_json")
+            {
+                json j("foo");
+#if JSON_USE_IMPLICIT_CONVERSIONS
+                alt_json aj = j;
+#else
+                alt_json aj = alt_json(j);
+#endif
+
+                alt_string as = aj.dump();
+                CHECK(j.is_string());
+                CHECK(j.dump() == "\"foo\"");
+                CHECK(j.dump() == std::string(as.data(), as.size()));
+            }
+
+            SECTION("alt_json to json")
+            {
+                alt_json aj("foo");
+#if JSON_USE_IMPLICIT_CONVERSIONS
+                json j = aj;
+#else
+                json j = json(aj);
+#endif
+
+                alt_string as = aj.dump();
+                CHECK(aj.is_string());
+                CHECK(j.dump() == "\"foo\"");
+                CHECK(j.dump() == std::string(as.data(), as.size()));
+            }
+        }
+
+        SECTION("array")
+        {
+            SECTION("json to alt_json")
+            {
+                json j{"foo"};
+#if JSON_USE_IMPLICIT_CONVERSIONS
+                alt_json aj = j;
+#else
+                alt_json aj = alt_json(j);
+#endif
+
+                alt_string as = aj.dump();
+                CHECK(j.is_array());
+                CHECK(j.dump() == "[\"foo\"]");
+                CHECK(j.dump() == std::string(as.data(), as.size()));
+            }
+
+            SECTION("alt_json to json")
+            {
+                alt_json aj{"foo"};
+#if JSON_USE_IMPLICIT_CONVERSIONS
+                json j = aj;
+#else
+                json j = json(aj);
+#endif
+
+                alt_string as = aj.dump();
+                CHECK(aj.is_array());
+                CHECK(j.dump() == "[\"foo\"]");
+                CHECK(j.dump() == std::string(as.data(), as.size()));
+            }
+        }
+
+        SECTION("object")
+        {
+            SECTION("json to alt_json")
+            {
+                json j{{"foo", {"bar", "baz"}}};
+#if JSON_USE_IMPLICIT_CONVERSIONS
+                alt_json aj = j;
+#else
+                alt_json aj = alt_json(j);
+#endif
+
+                alt_string as = aj.dump();
+                CHECK(j.is_object());
+                CHECK(j.dump() == "{\"foo\":[\"bar\",\"baz\"]}");
+                CHECK(j.dump() == std::string(as.data(), as.size()));
+            }
+
+            SECTION("alt_json to json")
+            {
+                alt_json aj{{"foo", {"bar", "baz"}}};
+#if JSON_USE_IMPLICIT_CONVERSIONS
+                json j = aj;
+#else
+                json j = json(aj);
+#endif
+
+                alt_string as = aj.dump();
+                CHECK(aj.is_object());
+                CHECK(j.dump() == "{\"foo\":[\"bar\",\"baz\"]}");
+                CHECK(j.dump() == std::string(as.data(), as.size()));
+            }
+        }
+
+        SECTION("binary")
+        {
+            SECTION("json to alt_json")
+            {
+                auto j = json::binary({1, 2, 3, 4}, 128);
+#if JSON_USE_IMPLICIT_CONVERSIONS
+                alt_json aj = j;
+#else
+                alt_json aj = alt_json(j);
+#endif
+
+                alt_string as = aj.dump();
+                CHECK(j.is_binary());
+                CHECK(j.dump() == "{\"bytes\":[1,2,3,4],\"subtype\":128}");
+                CHECK(j.dump() == std::string(as.data(), as.size()));
+            }
+
+            SECTION("alt_json to json")
+            {
+                auto aj = alt_json::binary({1, 2, 3, 4}, 128);
+#if JSON_USE_IMPLICIT_CONVERSIONS
+                json j = aj;
+#else
+                json j = json(aj);
+#endif
+
+                alt_string as = aj.dump();
+                CHECK(aj.is_binary());
+                CHECK(j.dump() == "{\"bytes\":[1,2,3,4],\"subtype\":128}");
+                CHECK(j.dump() == std::string(as.data(), as.size()));
+            }
+        }
     }
 }

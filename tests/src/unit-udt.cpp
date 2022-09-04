@@ -695,14 +695,22 @@ TEST_CASE("different basic_json types conversions")
     SECTION("null")
     {
         json j;
+#if JSON_USE_IMPLICIT_CONVERSIONS
         custom_json cj = j;
+#else
+        custom_json cj = custom_json(j);
+#endif
         CHECK(cj == nullptr);
     }
 
     SECTION("boolean")
     {
         json j = true;
+#if JSON_USE_IMPLICIT_CONVERSIONS
         custom_json cj = j;
+#else
+        custom_json cj = custom_json(j);
+#endif
         CHECK(cj == true);
     }
 
@@ -710,49 +718,77 @@ TEST_CASE("different basic_json types conversions")
     {
         json j(json::value_t::discarded);
         custom_json cj;
+#if JSON_USE_IMPLICIT_CONVERSIONS
         CHECK_NOTHROW(cj = j);
+#else
+        CHECK_NOTHROW(cj = custom_json(j));
+#endif
         CHECK(cj.type() == custom_json::value_t::discarded);
     }
 
     SECTION("array")
     {
         json j = {1, 2, 3};
+#if JSON_USE_IMPLICIT_CONVERSIONS
         custom_json cj = j;
+#else
+        custom_json cj = custom_json(j);
+#endif
         CHECK((cj == std::vector<int> {1, 2, 3}));
     }
 
     SECTION("integer")
     {
         json j = 42;
+#if JSON_USE_IMPLICIT_CONVERSIONS
         custom_json cj = j;
+#else
+        custom_json cj = custom_json(j);
+#endif
         CHECK(cj == 42);
     }
 
     SECTION("float")
     {
         json j = 42.0;
+#if JSON_USE_IMPLICIT_CONVERSIONS
         custom_json cj = j;
+#else
+        custom_json cj = custom_json(j);
+#endif
         CHECK(cj == 42.0);
     }
 
     SECTION("unsigned")
     {
         json j = 42u;
+#if JSON_USE_IMPLICIT_CONVERSIONS
         custom_json cj = j;
+#else
+        custom_json cj = custom_json(j);
+#endif
         CHECK(cj == 42u);
     }
 
     SECTION("string")
     {
         json j = "forty-two";
+#if JSON_USE_IMPLICIT_CONVERSIONS
         custom_json cj = j;
+#else
+        custom_json cj = custom_json(j);
+#endif
         CHECK(cj == "forty-two");
     }
 
     SECTION("binary")
     {
         json j = json::binary({1, 2, 3}, 42);
+#if JSON_USE_IMPLICIT_CONVERSIONS
         custom_json cj = j;
+#else
+        custom_json cj = custom_json(j);
+#endif
         CHECK(cj.get_binary().subtype() == 42);
         std::vector<std::uint8_t> cv = cj.get_binary();
         std::vector<std::uint8_t> v = j.get_binary();
@@ -762,7 +798,11 @@ TEST_CASE("different basic_json types conversions")
     SECTION("object")
     {
         json j = {{"forty", "two"}};
+#if JSON_USE_IMPLICIT_CONVERSIONS
         custom_json cj = j;
+#else
+        custom_json cj = custom_json(j);
+#endif
         auto m = j.get<std::map<std::string, std::string>>();
         CHECK(cj == m);
     }
