@@ -230,7 +230,7 @@ class json_pointer
         const char* p = s.c_str();
         char* p_end = nullptr;
         errno = 0; // strtoull doesn't reset errno
-        unsigned long long res = std::strtoull(p, &p_end, 10); // NOLINT(runtime/int)
+        const unsigned long long res = std::strtoull(p, &p_end, 10); // NOLINT(runtime/int)
         if (p == p_end // invalid input or empty string
                 || errno == ERANGE // out of range
                 || JSON_HEDLEY_UNLIKELY(static_cast<std::size_t>(p_end - p) != s.size())) // incomplete read
