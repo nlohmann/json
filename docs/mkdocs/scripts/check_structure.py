@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import glob
 import os.path
@@ -6,6 +6,28 @@ import re
 import sys
 
 warnings = 0
+
+
+def filter_internal(files):
+    try:
+        import mkdocs.utils.meta
+    except ModuleNotFoundError:
+        print('Module mkdocs.utils.meta not found. Cannot exclude internal documentation pages from checks.')
+        return files
+
+    internal_paths = []
+    for file in files:
+        _, data = mkdocs.utils.meta.get_data(file)
+        if data.get('x-nlohmann-json-is-internal', False):
+            internal_paths.append(os.path.dirname(file))
+
+    def parent_of(path, parent):
+        return os.path.commonpath([parent]) == os.path.commonpath([path, parent])
+
+    return [
+        file for file in files
+        if not any(parent_of(file, path) for path in internal_paths)
+    ]
 
 
 def report(rule, location, description):
@@ -45,7 +67,7 @@ def check_structure():
         'Version history'
     ]
 
-    files = sorted(glob.glob('api/**/*.md', recursive=True))
+    files = sorted(filter_internal(glob.glob('api/**/*.md', recursive=True)))
     for file in files:
         with open(file) as file_content:
             section_idx = -1                 # the index of the current h2 section
