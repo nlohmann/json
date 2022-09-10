@@ -104,7 +104,7 @@ TEST_CASE("CBOR")
         SECTION("discarded")
         {
             // discarded values are not serialized
-            json j = json::value_t::discarded;
+            json const j = json::value_t::discarded;
             const auto result = json::to_cbor(j);
             CHECK(result.empty());
         }
@@ -112,7 +112,7 @@ TEST_CASE("CBOR")
         SECTION("NaN")
         {
             // NaN value
-            json j = std::numeric_limits<json::number_float_t>::quiet_NaN();
+            json const j = std::numeric_limits<json::number_float_t>::quiet_NaN();
             std::vector<uint8_t> expected = {0xf9, 0x7e, 0x00};
             const auto result = json::to_cbor(j);
             CHECK(result == expected);
@@ -121,7 +121,7 @@ TEST_CASE("CBOR")
         SECTION("Infinity")
         {
             // Infinity value
-            json j = std::numeric_limits<json::number_float_t>::infinity();
+            json const j = std::numeric_limits<json::number_float_t>::infinity();
             std::vector<uint8_t> expected = {0xf9, 0x7c, 0x00};
             const auto result = json::to_cbor(j);
             CHECK(result == expected);
@@ -985,21 +985,21 @@ TEST_CASE("CBOR")
                 {
                     SECTION("0 (0 00000 0000000000)")
                     {
-                        json j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x00, 0x00}));
+                        json const j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x00, 0x00}));
                         json::number_float_t d{j};
                         CHECK(d == 0.0);
                     }
 
                     SECTION("-0 (1 00000 0000000000)")
                     {
-                        json j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x80, 0x00}));
+                        json const j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x80, 0x00}));
                         json::number_float_t d{j};
                         CHECK(d == -0.0);
                     }
 
                     SECTION("2**-24 (0 00000 0000000001)")
                     {
-                        json j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x00, 0x01}));
+                        json const j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x00, 0x01}));
                         json::number_float_t d{j};
                         CHECK(d == std::pow(2.0, -24.0));
                     }
@@ -1009,7 +1009,7 @@ TEST_CASE("CBOR")
                 {
                     SECTION("infinity (0 11111 0000000000)")
                     {
-                        json j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x7c, 0x00}));
+                        json const j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x7c, 0x00}));
                         json::number_float_t d{j};
                         CHECK(d == std::numeric_limits<json::number_float_t>::infinity());
                         CHECK(j.dump() == "null");
@@ -1017,7 +1017,7 @@ TEST_CASE("CBOR")
 
                     SECTION("-infinity (1 11111 0000000000)")
                     {
-                        json j = json::from_cbor(std::vector<uint8_t>({0xf9, 0xfc, 0x00}));
+                        json const j = json::from_cbor(std::vector<uint8_t>({0xf9, 0xfc, 0x00}));
                         json::number_float_t d{j};
                         CHECK(d == -std::numeric_limits<json::number_float_t>::infinity());
                         CHECK(j.dump() == "null");
@@ -1028,21 +1028,21 @@ TEST_CASE("CBOR")
                 {
                     SECTION("1 (0 01111 0000000000)")
                     {
-                        json j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x3c, 0x00}));
+                        json const j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x3c, 0x00}));
                         json::number_float_t d{j};
                         CHECK(d == 1);
                     }
 
                     SECTION("-2 (1 10000 0000000000)")
                     {
-                        json j = json::from_cbor(std::vector<uint8_t>({0xf9, 0xc0, 0x00}));
+                        json const j = json::from_cbor(std::vector<uint8_t>({0xf9, 0xc0, 0x00}));
                         json::number_float_t d{j};
                         CHECK(d == -2);
                     }
 
                     SECTION("65504 (0 11110 1111111111)")
                     {
-                        json j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x7b, 0xff}));
+                        json const j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x7b, 0xff}));
                         json::number_float_t d{j};
                         CHECK(d == 65504);
                     }
@@ -1050,16 +1050,16 @@ TEST_CASE("CBOR")
 
                 SECTION("infinity")
                 {
-                    json j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x7c, 0x00}));
-                    json::number_float_t d{j};
+                    json const j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x7c, 0x00}));
+                    json::number_float_t const d{j};
                     CHECK(!std::isfinite(d));
                     CHECK(j.dump() == "null");
                 }
 
                 SECTION("NaN")
                 {
-                    json j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x7e, 0x00}));
-                    json::number_float_t d{j};
+                    json const j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x7e, 0x00}));
+                    json::number_float_t const d{j};
                     CHECK(std::isnan(d));
                     CHECK(j.dump() == "null");
                 }
@@ -1553,7 +1553,7 @@ TEST_CASE("CBOR")
 
             SECTION("indefinite size")
             {
-                std::vector<std::uint8_t> input = {0x5F, 0x44, 0xaa, 0xbb, 0xcc, 0xdd, 0x43, 0xee, 0xff, 0x99, 0xFF};
+                std::vector<std::uint8_t> const input = {0x5F, 0x44, 0xaa, 0xbb, 0xcc, 0xdd, 0x43, 0xee, 0xff, 0x99, 0xFF};
                 auto j = json::from_cbor(input);
                 CHECK(j.is_binary());
                 auto k = json::binary({0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x99});
@@ -1564,7 +1564,7 @@ TEST_CASE("CBOR")
             SECTION("binary in array")
             {
                 // array with three empty byte strings
-                std::vector<std::uint8_t> input = {0x83, 0x40, 0x40, 0x40};
+                std::vector<std::uint8_t> const input = {0x83, 0x40, 0x40, 0x40};
                 json _;
                 CHECK_NOTHROW(_ = json::from_cbor(input));
             }
@@ -1572,7 +1572,7 @@ TEST_CASE("CBOR")
             SECTION("binary in object")
             {
                 // object mapping "foo" to empty byte string
-                std::vector<std::uint8_t> input = {0xA1, 0x63, 0x66, 0x6F, 0x6F, 0x40};
+                std::vector<std::uint8_t> const input = {0xA1, 0x63, 0x66, 0x6F, 0x6F, 0x40};
                 json _;
                 CHECK_NOTHROW(_ = json::from_cbor(input));
             }
@@ -1580,7 +1580,7 @@ TEST_CASE("CBOR")
             SECTION("SAX callback with binary")
             {
                 // object mapping "foo" to byte string
-                std::vector<std::uint8_t> input = {0xA1, 0x63, 0x66, 0x6F, 0x6F, 0x41, 0x00};
+                std::vector<std::uint8_t> const input = {0xA1, 0x63, 0x66, 0x6F, 0x6F, 0x41, 0x00};
 
                 // callback to set binary_seen to true if a binary value was seen
                 bool binary_seen = false;
@@ -1606,7 +1606,7 @@ TEST_CASE("CBOR")
     {
         SECTION("0x5b (byte array)")
         {
-            std::vector<uint8_t> given = {0x5b, 0x00, 0x00, 0x00, 0x00,
+            std::vector<uint8_t> const given = {0x5b, 0x00, 0x00, 0x00, 0x00,
                                           0x00, 0x00, 0x00, 0x01, 0x61
                                          };
             json j = json::from_cbor(given);
@@ -1615,7 +1615,7 @@ TEST_CASE("CBOR")
 
         SECTION("0x7b (string)")
         {
-            std::vector<uint8_t> given = {0x7b, 0x00, 0x00, 0x00, 0x00,
+            std::vector<uint8_t> const given = {0x7b, 0x00, 0x00, 0x00, 0x00,
                                           0x00, 0x00, 0x00, 0x01, 0x61
                                          };
             json j = json::from_cbor(given);
@@ -1624,7 +1624,7 @@ TEST_CASE("CBOR")
 
         SECTION("0x9b (array)")
         {
-            std::vector<uint8_t> given = {0x9b, 0x00, 0x00, 0x00, 0x00,
+            std::vector<uint8_t> const given = {0x9b, 0x00, 0x00, 0x00, 0x00,
                                           0x00, 0x00, 0x00, 0x01, 0xf4
                                          };
             json j = json::from_cbor(given);
@@ -1633,7 +1633,7 @@ TEST_CASE("CBOR")
 
         SECTION("0xbb (map)")
         {
-            std::vector<uint8_t> given = {0xbb, 0x00, 0x00, 0x00, 0x00,
+            std::vector<uint8_t> const given = {0xbb, 0x00, 0x00, 0x00, 0x00,
                                           0x00, 0x00, 0x00, 0x01, 0x60, 0xf4
                                          };
             json j = json::from_cbor(given);
@@ -1778,7 +1778,7 @@ TEST_CASE("CBOR")
 
         SECTION("strict mode")
         {
-            std::vector<uint8_t> vec = {0xf6, 0xf6};
+            std::vector<uint8_t> const vec = {0xf6, 0xf6};
             SECTION("non-strict mode")
             {
                 const auto result = json::from_cbor(vec, false);
@@ -1799,21 +1799,21 @@ TEST_CASE("CBOR")
     {
         SECTION("start_array(len)")
         {
-            std::vector<uint8_t> v = {0x83, 0x01, 0x02, 0x03};
+            std::vector<uint8_t> const v = {0x83, 0x01, 0x02, 0x03};
             SaxCountdown scp(0);
             CHECK(!json::sax_parse(v, &scp, json::input_format_t::cbor));
         }
 
         SECTION("start_object(len)")
         {
-            std::vector<uint8_t> v = {0xA1, 0x63, 0x66, 0x6F, 0x6F, 0xF4};
+            std::vector<uint8_t> const v = {0xA1, 0x63, 0x66, 0x6F, 0x6F, 0xF4};
             SaxCountdown scp(0);
             CHECK(!json::sax_parse(v, &scp, json::input_format_t::cbor));
         }
 
         SECTION("key()")
         {
-            std::vector<uint8_t> v = {0xA1, 0x63, 0x66, 0x6F, 0x6F, 0xF4};
+            std::vector<uint8_t> const v = {0xA1, 0x63, 0x66, 0x6F, 0x6F, 0xF4};
             SaxCountdown scp(1);
             CHECK(!json::sax_parse(v, &scp, json::input_format_t::cbor));
         }
@@ -1825,7 +1825,7 @@ TEST_CASE("single CBOR roundtrip")
 {
     SECTION("sample.json")
     {
-        std::string filename = TEST_DATA_DIRECTORY "/json_testsuite/sample.json";
+        std::string const filename = TEST_DATA_DIRECTORY "/json_testsuite/sample.json";
 
         // parse JSON file
         std::ifstream f_json(filename);
@@ -1910,7 +1910,7 @@ TEST_CASE("CBOR regressions")
                 try
                 {
                     // step 2: round trip
-                    std::vector<uint8_t> vec2 = json::to_cbor(j1);
+                    std::vector<uint8_t> const vec2 = json::to_cbor(j1);
 
                     // parse serialization
                     json j2 = json::from_cbor(vec2);
@@ -2151,7 +2151,7 @@ TEST_CASE("CBOR roundtrips" * doctest::skip())
                 INFO_WITH_TEMP(filename + ": output to output adapters");
                 // parse JSON file
                 std::ifstream f_json(filename);
-                json j1 = json::parse(f_json);
+                json const j1 = json::parse(f_json);
 
                 // parse CBOR file
                 auto packed = utils::read_binary_file(filename + ".cbor");
