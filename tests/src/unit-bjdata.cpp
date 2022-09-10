@@ -3109,9 +3109,9 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
                                   'S', 'i', 3, 'b', 'a', 'z', ']'
                                  };
         std::vector<uint8_t> const v2 = {'[', 'S', 'i', 3, 'f', 'o', 'o', 'N',
-                                   'S', 'i', 3, 'b', 'a', 'r', 'N', 'N', 'N',
-                                   'S', 'i', 3, 'b', 'a', 'z', 'N', 'N', ']'
-                                  };
+                                         'S', 'i', 3, 'b', 'a', 'r', 'N', 'N', 'N',
+                                         'S', 'i', 3, 'b', 'a', 'z', 'N', 'N', ']'
+                                        };
         CHECK(json::to_bjdata(j) == v);
         CHECK(json::from_bjdata(v) == j);
         CHECK(json::from_bjdata(v2) == j);

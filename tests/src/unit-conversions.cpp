@@ -47,7 +47,7 @@ TEST_CASE("value conversion")
 
         SECTION("json::object_t")
         {
-            json::object_t const const o = j.get<json::object_t>();
+            json::object_t const o = j.get<json::object_t>();
             CHECK(json(o) == j);
         }
 

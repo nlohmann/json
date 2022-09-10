@@ -1607,8 +1607,8 @@ TEST_CASE("CBOR")
         SECTION("0x5b (byte array)")
         {
             std::vector<uint8_t> const given = {0x5b, 0x00, 0x00, 0x00, 0x00,
-                                          0x00, 0x00, 0x00, 0x01, 0x61
-                                         };
+                                                0x00, 0x00, 0x00, 0x01, 0x61
+                                               };
             json j = json::from_cbor(given);
             CHECK(j == json::binary(std::vector<uint8_t> {'a'}));
         }
@@ -1616,8 +1616,8 @@ TEST_CASE("CBOR")
         SECTION("0x7b (string)")
         {
             std::vector<uint8_t> const given = {0x7b, 0x00, 0x00, 0x00, 0x00,
-                                          0x00, 0x00, 0x00, 0x01, 0x61
-                                         };
+                                                0x00, 0x00, 0x00, 0x01, 0x61
+                                               };
             json j = json::from_cbor(given);
             CHECK(j == "a");
         }
@@ -1625,8 +1625,8 @@ TEST_CASE("CBOR")
         SECTION("0x9b (array)")
         {
             std::vector<uint8_t> const given = {0x9b, 0x00, 0x00, 0x00, 0x00,
-                                          0x00, 0x00, 0x00, 0x01, 0xf4
-                                         };
+                                                0x00, 0x00, 0x00, 0x01, 0xf4
+                                               };
             json j = json::from_cbor(given);
             CHECK(j == json::parse("[false]"));
         }
@@ -1634,8 +1634,8 @@ TEST_CASE("CBOR")
         SECTION("0xbb (map)")
         {
             std::vector<uint8_t> const given = {0xbb, 0x00, 0x00, 0x00, 0x00,
-                                          0x00, 0x00, 0x00, 0x01, 0x60, 0xf4
-                                         };
+                                                0x00, 0x00, 0x00, 0x01, 0x60, 0xf4
+                                               };
             json j = json::from_cbor(given);
             CHECK(j == json::parse("{\"\": false}"));
         }
