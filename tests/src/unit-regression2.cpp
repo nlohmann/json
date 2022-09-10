@@ -348,7 +348,7 @@ TEST_CASE("regression tests 2")
                ]
              })";
 
-        json::parser_callback_t cb = [&](int /*level*/, json::parse_event_t event, json & parsed) noexcept
+        const json::parser_callback_t cb = [&](int /*level*/, json::parse_event_t event, json & parsed) noexcept
         {
             // skip uninteresting events
             if (event == json::parse_event_t::value && !parsed.is_primitive())
@@ -440,7 +440,7 @@ TEST_CASE("regression tests 2")
     SECTION("issue #1299 - compile error in from_json converting to container "
             "with std::pair")
     {
-        json j =
+        const json j =
         {
             {"1", {{"a", "testa_1"}, {"b", "testb_1"}}},
             {"2", {{"a", "testa_2"}, {"b", "testb_2"}}},
@@ -501,7 +501,7 @@ TEST_CASE("regression tests 2")
                 {109, 108, 103, 125, -122, -53, 115, 18, 3, 0, 102, 19, 1, 15, -110, 13, -3, -1, -81, 32, 2, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -80, 2, 0, 0, 96, -118, 46, -116, 46, 109, -84, -87, 108, 14, 109, -24, -83, 13, -18, -51, -83, -52, -115, 14, 6, 32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 64, 3, 0, 0, 0, 35, -74, -73, 55, 57, -128, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 33, 0, 0, 0, -96, -54, -28, -26}
             };
             std::string s;
-            for (int i : data)
+            for (const int i : data)
             {
                 s += static_cast<char>(i);
             }
@@ -512,20 +512,20 @@ TEST_CASE("regression tests 2")
 
     SECTION("issue #1447 - Integer Overflow (OSS-Fuzz 12506)")
     {
-        json j = json::parse("[-9223372036854775808]");
+        const json j = json::parse("[-9223372036854775808]");
         CHECK(j.dump() == "[-9223372036854775808]");
     }
 
     SECTION("issue #1708 - minimum value of int64_t can be outputted")
     {
         constexpr auto smallest = (std::numeric_limits<int64_t>::min)();
-        json j = smallest;
+        const json j = smallest;
         CHECK(j.dump() == std::to_string(smallest));
     }
 
     SECTION("issue #1727 - Contains with non-const lvalue json_pointer picks the wrong overload")
     {
-        json j = {{"root", {{"settings", {{"logging", true}}}}}};
+        const json j = {{"root", {{"settings", {{"logging", true}}}}}};
 
         auto jptr1 = "/root/settings/logging"_json_pointer;
         auto jptr2 = json::json_pointer{"/root/settings/logging"};
@@ -539,7 +539,7 @@ TEST_CASE("regression tests 2")
         // does not compile on ICPC when targeting C++20
 #if !(defined(__INTEL_COMPILER) && __cplusplus >= 202000)
         {
-            json j;
+            const json j;
             NonDefaultFromJsonStruct x(j);
             NonDefaultFromJsonStruct y;
             CHECK(x == y);
@@ -548,27 +548,27 @@ TEST_CASE("regression tests 2")
 
         auto val = nlohmann::json("one").get<for_1647>();
         CHECK(val == for_1647::one);
-        json j = val;
+        const json j = val;
     }
 
     SECTION("issue #1715 - json::from_cbor does not respect allow_exceptions = false when input is string literal")
     {
         SECTION("string literal")
         {
-            json cbor = json::from_cbor("B", true, false);
+            const json cbor = json::from_cbor("B", true, false);
             CHECK(cbor.is_discarded());
         }
 
         SECTION("string array")
         {
             const std::array<char, 2> input = {{'B', 0x00}};
-            json cbor = json::from_cbor(input, true, false);
+            const json cbor = json::from_cbor(input, true, false);
             CHECK(cbor.is_discarded());
         }
 
         SECTION("std::string")
         {
-            json cbor = json::from_cbor(std::string("B"), true, false);
+            const json cbor = json::from_cbor(std::string("B"), true, false);
             CHECK(cbor.is_discarded());
         }
     }
@@ -597,7 +597,7 @@ TEST_CASE("regression tests 2")
     SECTION("issue #2067 - cannot serialize binary data to text JSON")
     {
         const std::array<unsigned char, 23> data = {{0x81, 0xA4, 0x64, 0x61, 0x74, 0x61, 0xC4, 0x0F, 0x33, 0x30, 0x30, 0x32, 0x33, 0x34, 0x30, 0x31, 0x30, 0x37, 0x30, 0x35, 0x30, 0x31, 0x30}};
-        json j = json::from_msgpack(data.data(), data.size());
+        const json j = json::from_msgpack(data.data(), data.size());
         CHECK_NOTHROW(
             j.dump(4,                             // Indent
                    ' ',                           // Indent char
@@ -609,15 +609,15 @@ TEST_CASE("regression tests 2")
     SECTION("PR #2181 - regression bug with lvalue")
     {
         // see https://github.com/nlohmann/json/pull/2181#issuecomment-653326060
-        json j{{"x", "test"}};
-        std::string defval = "default value";
+        const json j{{"x", "test"}};
+        const std::string defval = "default value";
         auto val = j.value("x", defval);
         auto val2 = j.value("y", defval);
     }
 
     SECTION("issue #2293 - eof doesn't cause parsing to stop")
     {
-        std::vector<uint8_t> data =
+        const std::vector<uint8_t> data =
         {
             0x7B,
             0x6F,
@@ -630,23 +630,23 @@ TEST_CASE("regression tests 2")
             0x4F,
             0x42
         };
-        json result = json::from_cbor(data, true, false);
+        const json result = json::from_cbor(data, true, false);
         CHECK(result.is_discarded());
     }
 
     SECTION("issue #2315 - json.update and vector<pair>does not work with ordered_json")
     {
         nlohmann::ordered_json jsonAnimals = {{"animal", "dog"}};
-        nlohmann::ordered_json jsonCat = {{"animal", "cat"}};
+        const nlohmann::ordered_json jsonCat = {{"animal", "cat"}};
         jsonAnimals.update(jsonCat);
         CHECK(jsonAnimals["animal"] == "cat");
 
         auto jsonAnimals_parsed = nlohmann::ordered_json::parse(jsonAnimals.dump());
         CHECK(jsonAnimals == jsonAnimals_parsed);
 
-        std::vector<std::pair<std::string, int64_t>> intData = {std::make_pair("aaaa", 11),
-                                                                std::make_pair("bbb", 222)
-                                                               };
+        const std::vector<std::pair<std::string, int64_t>> intData = {std::make_pair("aaaa", 11),
+                                                                      std::make_pair("bbb", 222)
+                                                                     };
         nlohmann::ordered_json jsonObj;
         for (const auto& data : intData)
         {
@@ -658,8 +658,8 @@ TEST_CASE("regression tests 2")
 
     SECTION("issue #2330 - ignore_comment=true fails on multiple consecutive lines starting with comments")
     {
-        std::string ss = "//\n//\n{\n}\n";
-        json j = json::parse(ss, nullptr, true, true);
+        const std::string ss = "//\n//\n{\n}\n";
+        const json j = json::parse(ss, nullptr, true, true);
         CHECK(j.dump() == "{}");
     }
 
@@ -668,7 +668,7 @@ TEST_CASE("regression tests 2")
     {
         const char DATA[] = R"("Hello, world!")"; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
         const auto s = std::as_bytes(std::span(DATA));
-        json j = json::parse(s);
+        const json j = json::parse(s);
         CHECK(j.dump() == "\"Hello, world!\"");
     }
 #endif
@@ -678,14 +678,14 @@ TEST_CASE("regression tests 2")
         SECTION("std::array")
         {
             {
-                json j = {7, 4};
+                const json j = {7, 4};
                 auto arr = j.get<std::array<NonDefaultConstructible, 2>>();
                 CHECK(arr[0].x == 7);
                 CHECK(arr[1].x == 4);
             }
 
             {
-                json j = 7;
+                const json j = 7;
                 CHECK_THROWS_AS((j.get<std::array<NonDefaultConstructible, 1>>()), json::type_error);
             }
         }
@@ -693,28 +693,28 @@ TEST_CASE("regression tests 2")
         SECTION("std::pair")
         {
             {
-                json j = {3, 8};
+                const json j = {3, 8};
                 auto p = j.get<std::pair<NonDefaultConstructible, NonDefaultConstructible>>();
                 CHECK(p.first.x == 3);
                 CHECK(p.second.x == 8);
             }
 
             {
-                json j = {4, 1};
+                const json j = {4, 1};
                 auto p = j.get<std::pair<int, NonDefaultConstructible>>();
                 CHECK(p.first == 4);
                 CHECK(p.second.x == 1);
             }
 
             {
-                json j = {6, 7};
+                const json j = {6, 7};
                 auto p = j.get<std::pair<NonDefaultConstructible, int>>();
                 CHECK(p.first.x == 6);
                 CHECK(p.second == 7);
             }
 
             {
-                json j = 7;
+                const json j = 7;
                 CHECK_THROWS_AS((j.get<std::pair<NonDefaultConstructible, int>>()), json::type_error);
             }
         }
@@ -722,13 +722,13 @@ TEST_CASE("regression tests 2")
         SECTION("std::tuple")
         {
             {
-                json j = {9};
+                const json j = {9};
                 auto t = j.get<std::tuple<NonDefaultConstructible>>();
                 CHECK(std::get<0>(t).x == 9);
             }
 
             {
-                json j = {9, 8, 7};
+                const json j = {9, 8, 7};
                 auto t = j.get<std::tuple<NonDefaultConstructible, int, NonDefaultConstructible>>();
                 CHECK(std::get<0>(t).x == 9);
                 CHECK(std::get<1>(t) == 8);
@@ -736,7 +736,7 @@ TEST_CASE("regression tests 2")
             }
 
             {
-                json j = 7;
+                const json j = 7;
                 CHECK_THROWS_AS((j.get<std::tuple<NonDefaultConstructible>>()), json::type_error);
             }
         }
@@ -747,7 +747,7 @@ TEST_CASE("regression tests 2")
         // the code below is expected to not leak memory
         {
             nlohmann::json o;
-            std::string s = "bar";
+            const std::string s = "bar";
 
             nlohmann::to_json(o["foo"], s);
 
@@ -759,7 +759,7 @@ TEST_CASE("regression tests 2")
 
         {
             nlohmann::json o;
-            std::string s = "bar";
+            const std::string s = "bar";
 
             nlohmann::to_json(o["foo"], s);
 
@@ -785,7 +785,7 @@ TEST_CASE("regression tests 2")
 
     SECTION("issue #2958 - Inserting in unordered json using a pointer retains the leading slash")
     {
-        std::string p = "/root";
+        const std::string p = "/root";
 
         json test1;
         test1[json::json_pointer(p)] = json::object();
@@ -816,7 +816,7 @@ TEST_CASE("regression tests 2")
     SECTION("issue #3070 - Version 3.10.3 breaks backward-compatibility with 3.10.2 ")
     {
         nlohmann::detail::std_fs::path text_path("/tmp/text.txt");
-        json j(text_path);
+        const json j(text_path);
 
         const auto j_path = j.get<nlohmann::detail::std_fs::path>();
         CHECK(j_path == text_path);
@@ -867,7 +867,7 @@ TEST_CASE("regression tests 2")
 
     SECTION("issue #3171 - if class is_constructible from std::string wrong from_json overload is being selected, compilation failed")
     {
-        json j{{ "str", "value"}};
+        const json j{{ "str", "value"}};
 
         // failed with: error: no match for ‘operator=’ (operand types are ‘for_3171_derived’ and ‘const nlohmann::basic_json<>::string_t’
         //                                               {aka ‘const std::__cxx11::basic_string<char>’})
@@ -881,7 +881,7 @@ TEST_CASE("regression tests 2")
     SECTION("issue #3312 - Parse to custom class from unordered_json breaks on G++11.2.0 with C++20")
     {
         // see test for #3171
-        ordered_json j = {{"name", "class"}};
+        const ordered_json j = {{"name", "class"}};
         for_3312 obj{};
 
         j.get_to(obj);
@@ -893,8 +893,8 @@ TEST_CASE("regression tests 2")
 #if defined(JSON_HAS_CPP_17) && JSON_USE_IMPLICIT_CONVERSIONS
     SECTION("issue #3428 - Error occurred when converting nlohmann::json to std::any")
     {
-        json j;
-        std::any a1 = j;
+        const json j;
+        const std::any a1 = j;
         std::any&& a2 = j;
 
         CHECK(a1.type() == typeid(j));

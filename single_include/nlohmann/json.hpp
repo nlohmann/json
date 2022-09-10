@@ -9408,7 +9408,7 @@ class binary_reader
             {
                 std::array<char, 3> cr{{}};
                 static_cast<void>((std::snprintf)(cr.data(), cr.size(), "%.2hhX", static_cast<unsigned char>(element_type))); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
-                std::string cr_str{cr.data()};
+                const std::string cr_str{cr.data()};
                 return sax->parse_error(element_type_parse_position, cr_str,
                                         parse_error::create(114, element_type_parse_position, concat("Unsupported BSON record type 0x", cr_str), nullptr));
             }
@@ -11343,7 +11343,7 @@ class binary_reader
                                         exception_message(input_format, concat("expected '#' after type information; last byte: 0x", last_token), "size"), nullptr));
             }
 
-            bool is_error = get_ubjson_size_value(result.first, is_ndarray);
+            const bool is_error = get_ubjson_size_value(result.first, is_ndarray);
             if (input_format == input_format_t::bjdata && is_ndarray)
             {
                 if (inside_ndarray)
@@ -11358,7 +11358,7 @@ class binary_reader
 
         if (current == '#')
         {
-            bool is_error = get_ubjson_size_value(result.first, is_ndarray);
+            const bool is_error = get_ubjson_size_value(result.first, is_ndarray);
             if (input_format == input_format_t::bjdata && is_ndarray)
             {
                 return sax->parse_error(chars_read, get_token_string(), parse_error::create(112, chars_read,
