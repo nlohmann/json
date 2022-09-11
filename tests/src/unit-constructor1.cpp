@@ -153,7 +153,7 @@ TEST_CASE("constructors")
 
         SECTION("std::map<std::string, std::string> #600")
         {
-            std::map<std::string, std::string> m
+            const std::map<std::string, std::string> m
             {
                 {"a", "b"},
                 {"c", "d"},
@@ -1108,9 +1108,9 @@ TEST_CASE("constructors")
                 SECTION("constructor with implicit types (array)")
                 {
                     // This should break through any short string optimization in std::string
-                    std::string const source(1024, '!');
+                    std::string source(1024, '!');
                     const auto* source_addr = source.data();
-                    json const j = {std::move(source)};
+                    json j = {std::move(source)};
                     const auto* target_addr = j[0].get_ref<std::string const&>().data();
                     const bool success = (target_addr == source_addr);
                     CHECK(success);
@@ -1269,7 +1269,7 @@ TEST_CASE("constructors")
             json const v = {1, "foo", 34.23, {1, 2, 3}, {{"A", 1}, {"B", 2u}}};
             json const arr(1, v);
             CHECK(arr.size() == 1);
-            for (auto& x : arr)
+            for (const auto& x : arr)
             {
                 CHECK(x == v);
             }
@@ -1280,7 +1280,7 @@ TEST_CASE("constructors")
             json const v = {1, "foo", 34.23, {1, 2, 3}, {{"A", 1}, {"B", 2u}}};
             json const arr(3, v);
             CHECK(arr.size() == 3);
-            for (auto& x : arr)
+            for (const auto& x : arr)
             {
                 CHECK(x == v);
             }
