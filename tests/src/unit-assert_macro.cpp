@@ -32,11 +32,7 @@ TEST_CASE("JSON_ASSERT(x)")
         assert_counter = 0;
         CHECK(assert_counter == 0);
 
-        // Fails on Clang 3.5 with "requires a user-provided default constructor"
-#if !DOCTEST_CLANG || DOCTEST_CLANG >= DOCTEST_COMPILER(4, 0, 0)
-        const
-#endif
-        json::iterator it;
+        const json::iterator it{};
         json j;
 
         // in case assertions do not abort execution, an exception is thrown

@@ -124,7 +124,7 @@ TEST_CASE("constructors")
     {
         SECTION("empty object")
         {
-            json::object_t const o;
+            json::object_t const o{};
             json const j(o);
             CHECK(j.type() == json::value_t::object);
         }
@@ -209,7 +209,7 @@ TEST_CASE("constructors")
     {
         SECTION("empty array")
         {
-            json::array_t const a;
+            json::array_t const a{};
             json const j(a);
             CHECK(j.type() == json::value_t::array);
         }
@@ -384,7 +384,7 @@ TEST_CASE("constructors")
     {
         SECTION("empty string")
         {
-            json::string_t const s;
+            json::string_t const s{};
             json const j(s);
             CHECK(j.type() == json::value_t::string);
         }
