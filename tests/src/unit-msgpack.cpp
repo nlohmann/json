@@ -524,7 +524,7 @@ TEST_CASE("MessagePack")
 
                 SECTION("-9223372036854775808..-2147483649 (int 64)")
                 {
-                    std::vector<int64_t> numbers
+                    std::vector<int64_t> const numbers
                     {
                         INT64_MIN,
                         -2147483649LL,

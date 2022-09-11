@@ -1154,7 +1154,7 @@ TEST_CASE("constructors")
                 SECTION("constructor with implicit types (object)")
                 {
                     json::array_t source = {1, 2, 3};
-                    auto* source_addr = source.data();
+                    const auto* source_addr = source.data();
                     json const j {{"key", std::move(source)}};
                     const auto* target_addr = j["key"].get_ref<json::array_t const&>().data();
                     const bool success = (target_addr == source_addr);
