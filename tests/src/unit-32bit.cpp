@@ -33,9 +33,9 @@ TEST_CASE_TEMPLATE_DEFINE("value_in_range_of trait", T, value_in_range_of_test)
     constexpr bool min_in_range = T::min_in_range;
     constexpr bool max_in_range = T::max_in_range;
 
-    type val_min = std::numeric_limits<type>::min();
+    type const val_min = std::numeric_limits<type>::min();
     type const val_min2 = val_min + 1;
-    type val_max = std::numeric_limits<type>::max();
+    type const val_max = std::numeric_limits<type>::max();
     type const val_max2 = val_max - 1;
 
     REQUIRE(CHAR_BIT == 8);
