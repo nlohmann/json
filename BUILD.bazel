@@ -1,6 +1,6 @@
 cc_library(
     name = "json",
-    hdrs = glob([
+    hdrs = [
         "include/nlohmann/adl_serializer.hpp",
         "include/nlohmann/byte_container_with_subtype.hpp",
         "include/nlohmann/detail/abi_macros.hpp",
@@ -46,7 +46,7 @@ cc_library(
         "include/nlohmann/ordered_map.hpp",
         "include/nlohmann/thirdparty/hedley/hedley.hpp",
         "include/nlohmann/thirdparty/hedley/hedley_undef.hpp",
-    ]),
+    ],
     includes = ["include"],
     visibility = ["//visibility:public"],
     alwayslink = True,
