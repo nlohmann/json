@@ -76,7 +76,7 @@ You can sponsor this library at [GitHub Sponsors](https://github.com/sponsors/nl
 
 ### :office: Corporate Sponsor
 
-[![](https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Codacy-logo-black.svg/320px-Codacy-logo-black.svg.png)](https://github.com/codacy)
+[![](https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Codacy-logo-black.svg/320px-Codacy-logo-black.svg.png)](https://github.com/codacy/About)
 
 ### :label: Named Sponsors
 
