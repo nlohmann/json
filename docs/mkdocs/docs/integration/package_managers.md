@@ -64,7 +64,7 @@ The provided `meson.build` can also be used as an alternative to cmake for insta
 
 ## Bazel
 
-This repository provides a [Bazel](https://bazel.build/) `WORKSPACE.bazel` and a corresponding `BUILD.bazel` file. Therefore, this repository can be referenced by workspace rules such as `http_archive`, `git_repository`, or `local_repository` from other Bazel workspaces. To use the library you only need to depend on the target `@nlohmann_json//:json` (e.g. via  `deps` attribute).
+This repository provides a [Bazel](https://bazel.build/) `WORKSPACE.bazel` and a corresponding `BUILD.bazel` file. Therefore, this repository can be referenced by workspace rules such as `http_archive`, `git_repository`, or `local_repository` from other Bazel workspaces. To use the library you only need to depend on the target `@nlohmann_json//:json` (e.g. via `deps` attribute).
 
 ## Conan
 
