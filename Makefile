@@ -192,6 +192,8 @@ check-amalgamation:
 	@mv $(AMALGAMATED_FILE)~ $(AMALGAMATED_FILE)
 	@mv $(AMALGAMATED_FWD_FILE)~ $(AMALGAMATED_FWD_FILE)
 
+BUILD.bazel: $(SRCS)
+	cmake -P cmake/scripts/gen_bazel_build_file.cmake
 
 ##########################################################################
 # ChangeLog
