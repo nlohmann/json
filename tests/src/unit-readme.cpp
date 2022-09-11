@@ -33,7 +33,7 @@ TEST_CASE("README" * doctest::skip())
     {
         // redirect std::cout for the README file
         auto* old_cout_buffer = std::cout.rdbuf();
-        std::ostringstream new_stream;
+        std::ostringstream const new_stream;
         std::cout.rdbuf(new_stream.rdbuf());
         {
             // create an empty structure (null)
@@ -61,7 +61,7 @@ TEST_CASE("README" * doctest::skip())
             j["object"] = { {"currency", "USD"}, {"value", 42.99} };
 
             // instead, you could also write (which looks very similar to the JSON above)
-            json j2 =
+            json const j2 =
             {
                 {"pi", 3.141},
                 {"happy", true},
@@ -84,13 +84,13 @@ TEST_CASE("README" * doctest::skip())
 
         {
             // ways to express the empty array []
-            json empty_array_implicit = {{}};
+            json const empty_array_implicit = {{}};
             CHECK(empty_array_implicit.is_array());
-            json empty_array_explicit = json::array();
+            json const empty_array_explicit = json::array();
             CHECK(empty_array_explicit.is_array());
 
             // a way to express the empty object {}
-            json empty_object_explicit = json::object();
+            json const empty_object_explicit = json::object();
             CHECK(empty_object_explicit.is_object());
 
             // a way to express an _array_ of key/value pairs [["currency", "USD"], ["value", 42.99]]
@@ -103,7 +103,7 @@ TEST_CASE("README" * doctest::skip())
 
         {
             // create object from string literal
-            json j = "{ \"happy\": true, \"pi\": 3.141 }"_json; // NOLINT(modernize-raw-string-literal)
+            json const j = "{ \"happy\": true, \"pi\": 3.141 }"_json; // NOLINT(modernize-raw-string-literal)
 
             // or even nicer with a raw string literal
             auto j2 = R"({
@@ -115,7 +115,7 @@ TEST_CASE("README" * doctest::skip())
             auto j3 = json::parse(R"({"happy": true, "pi": 3.141})");
 
             // explicit conversion to string
-            std::string s = j.dump();    // {\"happy\":true,\"pi\":3.141}
+            std::string const s = j.dump();    // {\"happy\":true,\"pi\":3.141}
 
             // serialization with pretty printing
             // pass in the amount of spaces to indent
@@ -178,82 +178,82 @@ TEST_CASE("README" * doctest::skip())
         }
 
         {
-            std::vector<int> c_vector {1, 2, 3, 4};
-            json j_vec(c_vector);
+            std::vector<int> const c_vector {1, 2, 3, 4};
+            json const j_vec(c_vector);
             // [1, 2, 3, 4]
 
-            std::deque<float> c_deque {1.2f, 2.3f, 3.4f, 5.6f};
-            json j_deque(c_deque);
+            std::deque<float> const c_deque {1.2f, 2.3f, 3.4f, 5.6f};
+            json const j_deque(c_deque);
             // [1.2, 2.3, 3.4, 5.6]
 
-            std::list<bool> c_list {true, true, false, true};
-            json j_list(c_list);
+            std::list<bool> const c_list {true, true, false, true};
+            json const j_list(c_list);
             // [true, true, false, true]
 
-            std::forward_list<int64_t> c_flist {12345678909876, 23456789098765, 34567890987654, 45678909876543};
-            json j_flist(c_flist);
+            std::forward_list<int64_t> const c_flist {12345678909876, 23456789098765, 34567890987654, 45678909876543};
+            json const j_flist(c_flist);
             // [12345678909876, 23456789098765, 34567890987654, 45678909876543]
 
-            std::array<unsigned long, 4> c_array {{1, 2, 3, 4}};
-            json j_array(c_array);
+            std::array<unsigned long, 4> const c_array {{1, 2, 3, 4}};
+            json const j_array(c_array);
             // [1, 2, 3, 4]
 
-            std::set<std::string> c_set {"one", "two", "three", "four", "one"};
-            json j_set(c_set); // only one entry for "one" is used
+            std::set<std::string> const c_set {"one", "two", "three", "four", "one"};
+            json const j_set(c_set); // only one entry for "one" is used
             // ["four", "one", "three", "two"]
 
-            std::unordered_set<std::string> c_uset {"one", "two", "three", "four", "one"};
-            json j_uset(c_uset); // only one entry for "one" is used
+            std::unordered_set<std::string> const c_uset {"one", "two", "three", "four", "one"};
+            json const j_uset(c_uset); // only one entry for "one" is used
             // maybe ["two", "three", "four", "one"]
 
-            std::multiset<std::string> c_mset {"one", "two", "one", "four"};
-            json j_mset(c_mset); // both entries for "one" are used
+            std::multiset<std::string> const c_mset {"one", "two", "one", "four"};
+            json const j_mset(c_mset); // both entries for "one" are used
             // maybe ["one", "two", "one", "four"]
 
-            std::unordered_multiset<std::string> c_umset {"one", "two", "one", "four"};
-            json j_umset(c_umset); // both entries for "one" are used
+            std::unordered_multiset<std::string> const c_umset {"one", "two", "one", "four"};
+            json const j_umset(c_umset); // both entries for "one" are used
             // maybe ["one", "two", "one", "four"]
         }
 
         {
-            std::map<std::string, int> c_map { {"one", 1}, {"two", 2}, {"three", 3} };
-            json j_map(c_map);
+            std::map<std::string, int> const c_map { {"one", 1}, {"two", 2}, {"three", 3} };
+            json const j_map(c_map);
             // {"one": 1, "two": 2, "three": 3}
 
-            std::unordered_map<const char*, float> c_umap { {"one", 1.2f}, {"two", 2.3f}, {"three", 3.4f} };
-            json j_umap(c_umap);
+            std::unordered_map<const char*, float> const c_umap { {"one", 1.2f}, {"two", 2.3f}, {"three", 3.4f} };
+            json const j_umap(c_umap);
             // {"one": 1.2, "two": 2.3, "three": 3.4}
 
-            std::multimap<std::string, bool> c_mmap { {"one", true}, {"two", true}, {"three", false}, {"three", true} };
-            json j_mmap(c_mmap); // only one entry for key "three" is used
+            std::multimap<std::string, bool> const c_mmap { {"one", true}, {"two", true}, {"three", false}, {"three", true} };
+            json const j_mmap(c_mmap); // only one entry for key "three" is used
             // maybe {"one": true, "two": true, "three": true}
 
-            std::unordered_multimap<std::string, bool> c_ummap { {"one", true}, {"two", true}, {"three", false}, {"three", true} };
-            json j_ummap(c_ummap); // only one entry for key "three" is used
+            std::unordered_multimap<std::string, bool> const c_ummap { {"one", true}, {"two", true}, {"three", false}, {"three", true} };
+            json const j_ummap(c_ummap); // only one entry for key "three" is used
             // maybe {"one": true, "two": true, "three": true}
         }
 
         {
             // strings
-            std::string s1 = "Hello, world!";
-            json js = s1;
+            std::string const s1 = "Hello, world!";
+            json const js = s1;
             auto s2 = js.get<std::string>();
 
             // Booleans
-            bool b1 = true;
-            json jb = b1;
+            bool const b1 = true;
+            json const jb = b1;
             bool b2{jb};
             CHECK(b2 == true);
 
             // numbers
-            int i = 42;
-            json jn = i;
+            int const i = 42;
+            json const jn = i;
             double f{jn};
             CHECK(f == 42);
 
             // etc.
 
-            std::string vs = js.get<std::string>();
+            std::string const vs = js.get<std::string>();
             bool vb = jb.get<bool>();
             CHECK(vb == true);
             int vi = jn.get<int>();
@@ -274,14 +274,14 @@ TEST_CASE("README" * doctest::skip())
             // "two"
 
             // a JSON patch (RFC 6902)
-            json j_patch = R"([
+            json const j_patch = R"([
                 { "op": "replace", "path": "/baz", "value": "boo" },
                 { "op": "add", "path": "/hello", "value": ["world"] },
                 { "op": "remove", "path": "/foo"}
             ])"_json;
 
             // apply the patch
-            json j_result = j_original.patch(j_patch);
+            json const j_result = j_original.patch(j_patch);
             // {
             //    "baz": "boo",
             //    "hello": ["world"]

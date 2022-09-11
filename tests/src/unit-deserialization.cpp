@@ -265,7 +265,7 @@ TEST_CASE("deserialization")
 
         SECTION("string_t")
         {
-            json::string_t s = R"(["foo",1,2,3,false,{"one":1}])";
+            json::string_t const s = R"(["foo",1,2,3,false,{"one":1}])";
             json j = json::parse(s);
             CHECK(json::accept(s));
             CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
@@ -341,7 +341,7 @@ TEST_CASE("deserialization")
 
         SECTION("string")
         {
-            json::string_t s = R"(["foo",1,2,3,false,{"one":1})";
+            json::string_t const s = R"(["foo",1,2,3,false,{"one":1})";
             json _;
             CHECK_THROWS_WITH_AS(_ = json::parse(s), "[json.exception.parse_error.101] parse error at line 1, column 29: syntax error while parsing array - unexpected end of input; expected ']'", json::parse_error&);
             CHECK(!json::accept(s));
@@ -390,7 +390,7 @@ TEST_CASE("deserialization")
         {
             SECTION("from std::vector")
             {
-                std::vector<uint8_t> v = {'t', 'r', 'u', 'e'};
+                std::vector<uint8_t> const v = {'t', 'r', 'u', 'e'};
                 CHECK(json::parse(v) == json(true));
                 CHECK(json::accept(v));
 
@@ -402,7 +402,7 @@ TEST_CASE("deserialization")
 
             SECTION("from std::array")
             {
-                std::array<uint8_t, 5> v { {'t', 'r', 'u', 'e'} };
+                std::array<uint8_t, 5> const v { {'t', 'r', 'u', 'e'} };
                 CHECK(json::parse(v) == json(true));
                 CHECK(json::accept(v));
 
@@ -445,7 +445,7 @@ TEST_CASE("deserialization")
 
             SECTION("from std::string")
             {
-                std::string v = {'t', 'r', 'u', 'e'};
+                std::string const v = {'t', 'r', 'u', 'e'};
                 CHECK(json::parse(v) == json(true));
                 CHECK(json::accept(v));
 
@@ -457,7 +457,7 @@ TEST_CASE("deserialization")
 
             SECTION("from std::initializer_list")
             {
-                std::initializer_list<uint8_t> v = {'t', 'r', 'u', 'e'};
+                std::initializer_list<uint8_t> const v = {'t', 'r', 'u', 'e'};
                 CHECK(json::parse(v) == json(true));
                 CHECK(json::accept(v));
 
@@ -469,7 +469,7 @@ TEST_CASE("deserialization")
 
             SECTION("empty container")
             {
-                std::vector<uint8_t> v;
+                std::vector<uint8_t> const v;
                 json _;
                 CHECK_THROWS_AS(_ = json::parse(v), json::parse_error&);
                 CHECK(!json::accept(v));
@@ -534,7 +534,7 @@ TEST_CASE("deserialization")
 
             SECTION("from std::initializer_list")
             {
-                std::initializer_list<uint8_t> v = {'t', 'r', 'u', 'e'};
+                std::initializer_list<uint8_t> const v = {'t', 'r', 'u', 'e'};
                 CHECK(json::parse(std::begin(v), std::end(v)) == json(true));
                 CHECK(json::accept(std::begin(v), std::end(v)));
 
@@ -1045,7 +1045,7 @@ TEST_CASE("deserialization")
 
     SECTION("SAX and early abort")
     {
-        std::string s = R"([1, ["string", 43.12], null, {"key1": true, "key2": false}])";
+        std::string const s = R"([1, ["string", 43.12], null, {"key1": true, "key2": false}])";
 
         SaxEventLogger default_logger;
         SaxEventLoggerExitAfterStartObject exit_after_start_object;
@@ -1139,7 +1139,7 @@ TEST_CASE_TEMPLATE("deserialization of different character types (ASCII)", T,
                    std::int16_t, std::uint16_t,
                    std::int32_t, std::uint32_t)
 {
-    std::vector<T> v = {'t', 'r', 'u', 'e'};
+    std::vector<T> const v = {'t', 'r', 'u', 'e'};
     CHECK(json::parse(v) == json(true));
     CHECK(json::accept(v));
 
@@ -1153,7 +1153,7 @@ TEST_CASE_TEMPLATE("deserialization of different character types (UTF-8)", T,
                    char, unsigned char, std::uint8_t)
 {
     // a star emoji
-    std::vector<T> v = {'"', static_cast<T>(0xe2u), static_cast<T>(0xadu), static_cast<T>(0x90u), static_cast<T>(0xefu), static_cast<T>(0xb8u), static_cast<T>(0x8fu), '"'};
+    std::vector<T> const v = {'"', static_cast<T>(0xe2u), static_cast<T>(0xadu), static_cast<T>(0x90u), static_cast<T>(0xefu), static_cast<T>(0xb8u), static_cast<T>(0x8fu), '"'};
     CHECK(json::parse(v).dump(-1, ' ', true) == "\"\\u2b50\\ufe0f\"");
     CHECK(json::accept(v));
 
@@ -1166,7 +1166,7 @@ TEST_CASE_TEMPLATE("deserialization of different character types (UTF-16)", T,
                    char16_t, std::uint16_t)
 {
     // a star emoji
-    std::vector<T> v = {static_cast<T>('"'), static_cast<T>(0x2b50), static_cast<T>(0xfe0f), static_cast<T>('"')};
+    std::vector<T> const v = {static_cast<T>('"'), static_cast<T>(0x2b50), static_cast<T>(0xfe0f), static_cast<T>('"')};
     CHECK(json::parse(v).dump(-1, ' ', true) == "\"\\u2b50\\ufe0f\"");
     CHECK(json::accept(v));
 
@@ -1179,7 +1179,7 @@ TEST_CASE_TEMPLATE("deserialization of different character types (UTF-32)", T,
                    char32_t, std::uint32_t)
 {
     // a star emoji
-    std::vector<T> v = {static_cast<T>('"'), static_cast<T>(0x2b50), static_cast<T>(0xfe0f), static_cast<T>('"')};
+    std::vector<T> const v = {static_cast<T>('"'), static_cast<T>(0x2b50), static_cast<T>(0xfe0f), static_cast<T>('"')};
     CHECK(json::parse(v).dump(-1, ' ', true) == "\"\\u2b50\\ufe0f\"");
     CHECK(json::accept(v));
 

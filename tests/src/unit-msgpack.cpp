@@ -106,7 +106,7 @@ TEST_CASE("MessagePack")
         SECTION("discarded")
         {
             // discarded values are not serialized
-            json j = json::value_t::discarded;
+            json const j = json::value_t::discarded;
             const auto result = json::to_msgpack(j);
             CHECK(result.empty());
         }
@@ -1150,7 +1150,7 @@ TEST_CASE("MessagePack")
                     // create JSON value with byte array containing of N * 'x'
                     const auto s = std::vector<uint8_t>(N, 'x');
                     json j = json::binary(s);
-                    std::uint8_t subtype = 42;
+                    std::uint8_t const subtype = 42;
                     j.get_binary().set_subtype(subtype);
 
                     // create expected byte vector
@@ -1225,7 +1225,7 @@ TEST_CASE("MessagePack")
                     // create JSON value with string containing of N * 'x'
                     const auto s = std::vector<uint8_t>(N, 'x');
                     json j = json::binary(s);
-                    std::uint8_t subtype = 42;
+                    std::uint8_t const subtype = 42;
                     j.get_binary().set_subtype(subtype);
 
                     // create expected byte vector (hack: create string first)
@@ -1261,7 +1261,7 @@ TEST_CASE("MessagePack")
                     // create JSON value with string containing of N * 'x'
                     const auto s = std::vector<uint8_t>(N, 'x');
                     json j = json::binary(s);
-                    std::uint8_t subtype = 42;
+                    std::uint8_t const subtype = 42;
                     j.get_binary().set_subtype(subtype);
 
                     // create expected byte vector (hack: create string first)
@@ -1398,7 +1398,7 @@ TEST_CASE("MessagePack")
     SECTION("from float32")
     {
         auto given = std::vector<uint8_t>({0xca, 0x41, 0xc8, 0x00, 0x01});
-        json j = json::from_msgpack(given);
+        json const j = json::from_msgpack(given);
         CHECK(j.get<double>() == Approx(25.0000019073486));
     }
 
@@ -1511,7 +1511,7 @@ TEST_CASE("MessagePack")
 
         SECTION("strict mode")
         {
-            std::vector<uint8_t> vec = {0xc0, 0xc0};
+            std::vector<uint8_t> const vec = {0xc0, 0xc0};
             SECTION("non-strict mode")
             {
                 const auto result = json::from_msgpack(vec, false);
@@ -1531,21 +1531,21 @@ TEST_CASE("MessagePack")
     {
         SECTION("start_array(len)")
         {
-            std::vector<uint8_t> v = {0x93, 0x01, 0x02, 0x03};
+            std::vector<uint8_t> const v = {0x93, 0x01, 0x02, 0x03};
             SaxCountdown scp(0);
             CHECK(!json::sax_parse(v, &scp, json::input_format_t::msgpack));
         }
 
         SECTION("start_object(len)")
         {
-            std::vector<uint8_t> v = {0x81, 0xa3, 0x66, 0x6F, 0x6F, 0xc2};
+            std::vector<uint8_t> const v = {0x81, 0xa3, 0x66, 0x6F, 0x6F, 0xc2};
             SaxCountdown scp(0);
             CHECK(!json::sax_parse(v, &scp, json::input_format_t::msgpack));
         }
 
         SECTION("key()")
         {
-            std::vector<uint8_t> v = {0x81, 0xa3, 0x66, 0x6F, 0x6F, 0xc2};
+            std::vector<uint8_t> const v = {0x81, 0xa3, 0x66, 0x6F, 0x6F, 0xc2};
             SaxCountdown scp(1);
             CHECK(!json::sax_parse(v, &scp, json::input_format_t::msgpack));
         }
@@ -1557,7 +1557,7 @@ TEST_CASE("single MessagePack roundtrip")
 {
     SECTION("sample.json")
     {
-        std::string filename = TEST_DATA_DIRECTORY "/json_testsuite/sample.json";
+        std::string const filename = TEST_DATA_DIRECTORY "/json_testsuite/sample.json";
 
         // parse JSON file
         std::ifstream f_json(filename);
@@ -1817,7 +1817,7 @@ TEST_CASE("MessagePack roundtrips" * doctest::skip())
                 INFO_WITH_TEMP(filename + ": output to output adapters");
                 // parse JSON file
                 std::ifstream f_json(filename);
-                json j1 = json::parse(f_json);
+                json const j1 = json::parse(f_json);
 
                 // parse MessagePack file
                 auto packed = utils::read_binary_file(filename + ".msgpack");

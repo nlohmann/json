@@ -21,7 +21,7 @@ TEST_CASE("object inspection")
     {
         SECTION("object")
         {
-            json j {{"foo", 1}, {"bar", false}};
+            json const j {{"foo", 1}, {"bar", false}};
             CHECK(!j.is_null());
             CHECK(!j.is_boolean());
             CHECK(!j.is_number());
@@ -39,7 +39,7 @@ TEST_CASE("object inspection")
 
         SECTION("array")
         {
-            json j {"foo", 1, 1u, 42.23, false};
+            json const j {"foo", 1, 1u, 42.23, false};
             CHECK(!j.is_null());
             CHECK(!j.is_boolean());
             CHECK(!j.is_number());
@@ -57,7 +57,7 @@ TEST_CASE("object inspection")
 
         SECTION("null")
         {
-            json j(nullptr);
+            json const j(nullptr);
             CHECK(j.is_null());
             CHECK(!j.is_boolean());
             CHECK(!j.is_number());
@@ -75,7 +75,7 @@ TEST_CASE("object inspection")
 
         SECTION("boolean")
         {
-            json j(true);
+            json const j(true);
             CHECK(!j.is_null());
             CHECK(j.is_boolean());
             CHECK(!j.is_number());
@@ -93,7 +93,7 @@ TEST_CASE("object inspection")
 
         SECTION("string")
         {
-            json j("Hello world");
+            json const j("Hello world");
             CHECK(!j.is_null());
             CHECK(!j.is_boolean());
             CHECK(!j.is_number());
@@ -111,7 +111,7 @@ TEST_CASE("object inspection")
 
         SECTION("number (integer)")
         {
-            json j(42);
+            json const j(42);
             CHECK(!j.is_null());
             CHECK(!j.is_boolean());
             CHECK(j.is_number());
@@ -129,7 +129,7 @@ TEST_CASE("object inspection")
 
         SECTION("number (unsigned)")
         {
-            json j(42u);
+            json const j(42u);
             CHECK(!j.is_null());
             CHECK(!j.is_boolean());
             CHECK(j.is_number());
@@ -147,7 +147,7 @@ TEST_CASE("object inspection")
 
         SECTION("number (floating-point)")
         {
-            json j(42.23);
+            json const j(42.23);
             CHECK(!j.is_null());
             CHECK(!j.is_boolean());
             CHECK(j.is_number());
@@ -165,7 +165,7 @@ TEST_CASE("object inspection")
 
         SECTION("binary")
         {
-            json j(json::value_t::binary);
+            json const j(json::value_t::binary);
             CHECK(!j.is_null());
             CHECK(!j.is_boolean());
             CHECK(!j.is_number());
@@ -183,7 +183,7 @@ TEST_CASE("object inspection")
 
         SECTION("discarded")
         {
-            json j(json::value_t::discarded);
+            json const j(json::value_t::discarded);
             CHECK(!j.is_null());
             CHECK(!j.is_boolean());
             CHECK(!j.is_number());
@@ -202,7 +202,7 @@ TEST_CASE("object inspection")
 
     SECTION("serialization")
     {
-        json j {{"object", json::object()}, {"array", {1, 2, 3, 4}}, {"number", 42}, {"boolean", false}, {"null", nullptr}, {"string", "Hello world"} };
+        json const j {{"object", json::object()}, {"array", {1, 2, 3, 4}}, {"number", 42}, {"boolean", false}, {"null", nullptr}, {"string", "Hello world"} };
 
         SECTION("no indent / indent=-1")
         {
@@ -288,7 +288,7 @@ TEST_CASE("object inspection")
                 std::ifstream f_escaped(TEST_DATA_DIRECTORY "/json_nlohmann_tests/all_unicode_ascii.json");
                 std::ifstream f_unescaped(TEST_DATA_DIRECTORY "/json_nlohmann_tests/all_unicode.json");
 
-                json value = json::parse(f_unescaped);
+                json const value = json::parse(f_unescaped);
                 std::string text = value.dump(4, ' ', true);
 
                 std::string expected((std::istreambuf_iterator<char>(f_escaped)),
@@ -299,7 +299,7 @@ TEST_CASE("object inspection")
 
         SECTION("serialization of discarded element")
         {
-            json j_discarded(json::value_t::discarded);
+            json const j_discarded(json::value_t::discarded);
             CHECK(j_discarded.dump() == "<discarded>");
         }
 
@@ -315,7 +315,7 @@ TEST_CASE("object inspection")
             ss.str(std::string());
 
             // use stringstream for JSON serialization
-            json j_number = 3.14159265358979;
+            json const j_number = 3.14159265358979;
             ss << j_number;
 
             // check that precision has been overridden during serialization
@@ -332,9 +332,9 @@ TEST_CASE("object inspection")
                 {"3.141592653589793", "1000000000000000010E5"
                 })
         {
-            json j1 = json::parse(s);
+            json const j1 = json::parse(s);
             std::string s1 = j1.dump();
-            json j2 = json::parse(s1);
+            json const j2 = json::parse(s1);
             std::string s2 = j2.dump();
             CHECK(s1 == s2);
         }
@@ -344,49 +344,49 @@ TEST_CASE("object inspection")
     {
         SECTION("null")
         {
-            json j = nullptr;
+            json const j = nullptr;
             CHECK(j.type() == json::value_t::null);
         }
 
         SECTION("object")
         {
-            json j = {{"foo", "bar"}};
+            json const j = {{"foo", "bar"}};
             CHECK(j.type() == json::value_t::object);
         }
 
         SECTION("array")
         {
-            json j = {1, 2, 3, 4};
+            json const j = {1, 2, 3, 4};
             CHECK(j.type() == json::value_t::array);
         }
 
         SECTION("boolean")
         {
-            json j = true;
+            json const j = true;
             CHECK(j.type() == json::value_t::boolean);
         }
 
         SECTION("string")
         {
-            json j = "Hello world";
+            json const j = "Hello world";
             CHECK(j.type() == json::value_t::string);
         }
 
         SECTION("number (integer)")
         {
-            json j = 23;
+            json const j = 23;
             CHECK(j.type() == json::value_t::number_integer);
         }
 
         SECTION("number (unsigned)")
         {
-            json j = 23u;
+            json const j = 23u;
             CHECK(j.type() == json::value_t::number_unsigned);
         }
 
         SECTION("number (floating-point)")
         {
-            json j = 42.23;
+            json const j = 42.23;
             CHECK(j.type() == json::value_t::number_float);
         }
     }
@@ -395,63 +395,63 @@ TEST_CASE("object inspection")
     {
         SECTION("null")
         {
-            json j = nullptr;
+            json const j = nullptr;
             json::value_t t = j;
             CHECK(t == j.type());
         }
 
         SECTION("object")
         {
-            json j = {{"foo", "bar"}};
+            json const j = {{"foo", "bar"}};
             json::value_t t = j;
             CHECK(t == j.type());
         }
 
         SECTION("array")
         {
-            json j = {1, 2, 3, 4};
+            json const j = {1, 2, 3, 4};
             json::value_t t = j;
             CHECK(t == j.type());
         }
 
         SECTION("boolean")
         {
-            json j = true;
+            json const j = true;
             json::value_t t = j;
             CHECK(t == j.type());
         }
 
         SECTION("string")
         {
-            json j = "Hello world";
+            json const j = "Hello world";
             json::value_t t = j;
             CHECK(t == j.type());
         }
 
         SECTION("number (integer)")
         {
-            json j = 23;
+            json const j = 23;
             json::value_t t = j;
             CHECK(t == j.type());
         }
 
         SECTION("number (unsigned)")
         {
-            json j = 23u;
+            json const j = 23u;
             json::value_t t = j;
             CHECK(t == j.type());
         }
 
         SECTION("number (floating-point)")
         {
-            json j = 42.23;
+            json const j = 42.23;
             json::value_t t = j;
             CHECK(t == j.type());
         }
 
         SECTION("binary")
         {
-            json j = json::binary({});
+            json const j = json::binary({});
             json::value_t t = j;
             CHECK(t == j.type());
         }

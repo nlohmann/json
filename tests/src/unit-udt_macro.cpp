@@ -349,7 +349,7 @@ TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/priv
     {
         {
             T obj1;
-            nlohmann::json j = obj1; //via json object
+            nlohmann::json const j = obj1; //via json object
             T obj2;
             j.get_to(obj2);
             bool ok = (obj1 == obj2);
@@ -358,9 +358,9 @@ TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/priv
 
         {
             T obj1;
-            nlohmann::json j1 = obj1; //via json string
-            std::string s = j1.dump();
-            nlohmann::json j2 = nlohmann::json::parse(s);
+            nlohmann::json const j1 = obj1; //via json string
+            std::string const s = j1.dump();
+            nlohmann::json const j2 = nlohmann::json::parse(s);
             T obj2;
             j2.get_to(obj2);
             bool ok = (obj1 == obj2);
@@ -369,9 +369,9 @@ TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/priv
 
         {
             T obj1;
-            nlohmann::json j1 = obj1; //via msgpack
-            std::vector<uint8_t> buf = nlohmann::json::to_msgpack(j1);
-            nlohmann::json j2 = nlohmann::json::from_msgpack(buf);
+            nlohmann::json const j1 = obj1; //via msgpack
+            std::vector<uint8_t> const buf = nlohmann::json::to_msgpack(j1);
+            nlohmann::json const j2 = nlohmann::json::from_msgpack(buf);
             T obj2;
             j2.get_to(obj2);
             bool ok = (obj1 == obj2);
@@ -380,9 +380,9 @@ TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/priv
 
         {
             T obj1;
-            nlohmann::json j1 = obj1; //via bson
-            std::vector<uint8_t> buf = nlohmann::json::to_bson(j1);
-            nlohmann::json j2 = nlohmann::json::from_bson(buf);
+            nlohmann::json const j1 = obj1; //via bson
+            std::vector<uint8_t> const buf = nlohmann::json::to_bson(j1);
+            nlohmann::json const j2 = nlohmann::json::from_bson(buf);
             T obj2;
             j2.get_to(obj2);
             bool ok = (obj1 == obj2);
@@ -391,9 +391,9 @@ TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/priv
 
         {
             T obj1;
-            nlohmann::json j1 = obj1; //via cbor
-            std::vector<uint8_t> buf = nlohmann::json::to_cbor(j1);
-            nlohmann::json j2 = nlohmann::json::from_cbor(buf);
+            nlohmann::json const j1 = obj1; //via cbor
+            std::vector<uint8_t> const buf = nlohmann::json::to_cbor(j1);
+            nlohmann::json const j2 = nlohmann::json::from_cbor(buf);
             T obj2;
             j2.get_to(obj2);
             bool ok = (obj1 == obj2);
@@ -402,9 +402,9 @@ TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/priv
 
         {
             T obj1;
-            nlohmann::json j1 = obj1; //via ubjson
-            std::vector<uint8_t> buf = nlohmann::json::to_ubjson(j1);
-            nlohmann::json j2 = nlohmann::json::from_ubjson(buf);
+            nlohmann::json const j1 = obj1; //via ubjson
+            std::vector<uint8_t> const buf = nlohmann::json::to_ubjson(j1);
+            nlohmann::json const j2 = nlohmann::json::from_ubjson(buf);
             T obj2;
             j2.get_to(obj2);
             bool ok = (obj1 == obj2);

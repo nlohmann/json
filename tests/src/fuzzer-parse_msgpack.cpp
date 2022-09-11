@@ -31,16 +31,16 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     try
     {
         // step 1: parse input
-        std::vector<uint8_t> vec1(data, data + size);
-        json j1 = json::from_msgpack(vec1);
+        std::vector<uint8_t> const vec1(data, data + size);
+        json const j1 = json::from_msgpack(vec1);
 
         try
         {
             // step 2: round trip
-            std::vector<uint8_t> vec2 = json::to_msgpack(j1);
+            std::vector<uint8_t> const vec2 = json::to_msgpack(j1);
 
             // parse serialization
-            json j2 = json::from_msgpack(vec2);
+            json const j2 = json::from_msgpack(vec2);
 
             // serializations must match
             assert(json::to_msgpack(j2) == vec2);
