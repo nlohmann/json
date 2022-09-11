@@ -12,7 +12,7 @@ cc_library(
 ]=])
 
 foreach(header ${HEADERS})
-	file(APPEND "${BUILD_FILE}" "        \"${header}\",\n")
+    file(APPEND "${BUILD_FILE}" "        \"${header}\",\n")
 endforeach()
 
 file(APPEND "${BUILD_FILE}" [=[
