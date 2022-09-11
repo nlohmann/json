@@ -20,7 +20,7 @@
 // doctest doesn't support THROWS_WITH for std::string out of the box (has to include <string>...)
 #define CHECK_THROWS_WITH_STD_STR_IMPL(expr, str, var_name)                    \
     do {                                                                       \
-        std::string var_name = str;                                            \
+        const std::string var_name = str;                                      \
         CHECK_THROWS_WITH(expr, var_name.c_str());                             \
     } while (false)
 #define CHECK_THROWS_WITH_STD_STR(expr, str)                                   \

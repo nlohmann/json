@@ -27,76 +27,76 @@ TEST_CASE("constructors")
     {
         SECTION("null")
         {
-            auto t = json::value_t::null;
+            auto const t = json::value_t::null;
             json const j(t);
             CHECK(j.type() == t);
         }
 
         SECTION("discarded")
         {
-            auto t = json::value_t::discarded;
+            auto const t = json::value_t::discarded;
             json const j(t);
             CHECK(j.type() == t);
         }
 
         SECTION("object")
         {
-            auto t = json::value_t::object;
+            auto const t = json::value_t::object;
             json const j(t);
             CHECK(j.type() == t);
         }
 
         SECTION("array")
         {
-            auto t = json::value_t::array;
+            auto const t = json::value_t::array;
             json const j(t);
             CHECK(j.type() == t);
         }
 
         SECTION("boolean")
         {
-            auto t = json::value_t::boolean;
-            json j(t);
+            auto const t = json::value_t::boolean;
+            json const j(t);
             CHECK(j.type() == t);
             CHECK(j == false);
         }
 
         SECTION("string")
         {
-            auto t = json::value_t::string;
-            json j(t);
+            auto const t = json::value_t::string;
+            json const j(t);
             CHECK(j.type() == t);
             CHECK(j == "");
         }
 
         SECTION("number_integer")
         {
-            auto t = json::value_t::number_integer;
-            json j(t);
+            auto const t = json::value_t::number_integer;
+            json const j(t);
             CHECK(j.type() == t);
             CHECK(j == 0);
         }
 
         SECTION("number_unsigned")
         {
-            auto t = json::value_t::number_unsigned;
-            json j(t);
+            auto const t = json::value_t::number_unsigned;
+            json const j(t);
             CHECK(j.type() == t);
             CHECK(j == 0);
         }
 
         SECTION("number_float")
         {
-            auto t = json::value_t::number_float;
-            json j(t);
+            auto const t = json::value_t::number_float;
+            json const j(t);
             CHECK(j.type() == t);
             CHECK(j == 0.0);
         }
 
         SECTION("binary")
         {
-            auto t = json::value_t::binary;
-            json j(t);
+            auto const t = json::value_t::binary;
+            json const j(t);
             CHECK(j.type() == t);
             CHECK(j == json::binary({}));
         }
@@ -141,22 +141,24 @@ TEST_CASE("constructors")
     {
         // reference object
         json::object_t const o_reference {{"a", json(1)}, {"b", json(1u)}, {"c", json(2.2)}, {"d", json(false)}, {"e", json("string")}, {"f", json()}};
-        json j_reference(o_reference);
+        json const j_reference(o_reference);
 
         SECTION("std::map<json::string_t, json>")
         {
             std::map<json::string_t, json> const o {{"a", json(1)}, {"b", json(1u)}, {"c", json(2.2)}, {"d", json(false)}, {"e", json("string")}, {"f", json()}};
-            json j(o);
+            json const j(o);
             CHECK(j.type() == json::value_t::object);
             CHECK(j == j_reference);
         }
 
         SECTION("std::map<std::string, std::string> #600")
         {
-            std::map<std::string, std::string> m;
-            m["a"] = "b";
-            m["c"] = "d";
-            m["e"] = "f";
+            std::map<std::string, std::string> m
+            {
+                {"a", "b"},
+                {"c", "d"},
+                {"e", "f"},
+            };
 
             json const j(m);
             CHECK((j.get<decltype(m)>() == m));
@@ -165,7 +167,7 @@ TEST_CASE("constructors")
         SECTION("std::map<const char*, json>")
         {
             std::map<const char*, json> const o {{"a", json(1)}, {"b", json(1u)}, {"c", json(2.2)}, {"d", json(false)}, {"e", json("string")}, {"f", json()}};
-            json j(o);
+            json const j(o);
             CHECK(j.type() == json::value_t::object);
             CHECK(j == j_reference);
         }
@@ -174,7 +176,7 @@ TEST_CASE("constructors")
         SECTION("std::multimap<json::string_t, json>")
         {
             std::multimap<json::string_t, json> const o {{"a", json(1)}, {"b", json(1u)}, {"c", json(2.2)}, {"d", json(false)}, {"e", json("string")}, {"f", json()}};
-            json j(o);
+            json const j(o);
             CHECK(j.type() == json::value_t::object);
             CHECK(j == j_reference);
         }
@@ -182,7 +184,7 @@ TEST_CASE("constructors")
         SECTION("std::unordered_map<json::string_t, json>")
         {
             std::unordered_map<json::string_t, json> const o {{"a", json(1)}, {"b", json(1u)}, {"c", json(2.2)}, {"d", json(false)}, {"e", json("string")}, {"f", json()}};
-            json j(o);
+            json const j(o);
             CHECK(j.type() == json::value_t::object);
             CHECK(j == j_reference);
         }
@@ -190,14 +192,14 @@ TEST_CASE("constructors")
         SECTION("std::unordered_multimap<json::string_t, json>")
         {
             std::unordered_multimap<json::string_t, json> const o {{"a", json(1)}, {"b", json(1u)}, {"c", json(2.2)}, {"d", json(false)}, {"e", json("string")}, {"f", json()}};
-            json j(o);
+            json const j(o);
             CHECK(j.type() == json::value_t::object);
             CHECK(j == j_reference);
         }
 
         SECTION("associative container literal")
         {
-            json j({{"a", json(1)}, {"b", json(1u)}, {"c", json(2.2)}, {"d", json(false)}, {"e", json("string")}, {"f", json()}});
+            json const j({{"a", json(1)}, {"b", json(1u)}, {"c", json(2.2)}, {"d", json(false)}, {"e", json("string")}, {"f", json()}});
             CHECK(j.type() == json::value_t::object);
             CHECK(j == j_reference);
         }
@@ -224,20 +226,20 @@ TEST_CASE("constructors")
     {
         // reference array
         json::array_t const a_reference {json(1), json(1u), json(2.2), json(false), json("string"), json()};
-        json j_reference(a_reference);
+        json const j_reference(a_reference);
 
         SECTION("std::list<json>")
         {
             std::list<json> const a {json(1), json(1u), json(2.2), json(false), json("string"), json()};
-            json j(a);
+            json const j(a);
             CHECK(j.type() == json::value_t::array);
             CHECK(j == j_reference);
         }
 
         SECTION("std::pair")
         {
-            std::pair<float, std::string> p{1.0f, "string"};
-            json j(p);
+            std::pair<float, std::string> const p{1.0f, "string"};
+            json const j(p);
 
             CHECK(j.type() == json::value_t::array);
             CHECK(j.get<decltype(p)>() == p);
@@ -248,7 +250,7 @@ TEST_CASE("constructors")
 
         SECTION("std::pair with discarded values")
         {
-            json j{1, 2.0, "string"};
+            json const j{1, 2.0, "string"};
 
             const auto p = j.get<std::pair<int, float>>();
             CHECK(p.first == j[0]);
@@ -258,7 +260,7 @@ TEST_CASE("constructors")
         SECTION("std::tuple")
         {
             const auto t = std::make_tuple(1.0, std::string{"string"}, 42, std::vector<int> {0, 1});
-            json j(t);
+            json const j(t);
 
             CHECK(j.type() == json::value_t::array);
             REQUIRE(j.size() == 4);
@@ -272,7 +274,7 @@ TEST_CASE("constructors")
 
         SECTION("std::tuple with discarded values")
         {
-            json j{1, 2.0, "string", 42};
+            json const j{1, 2.0, "string", 42};
 
             const auto t = j.get<std::tuple<int, float, std::string>>();
             CHECK(std::get<0>(t) == j[0]);
@@ -292,15 +294,15 @@ TEST_CASE("constructors")
         SECTION("std::forward_list<json>")
         {
             std::forward_list<json> const a {json(1), json(1u), json(2.2), json(false), json("string"), json()};
-            json j(a);
+            json const j(a);
             CHECK(j.type() == json::value_t::array);
             CHECK(j == j_reference);
         }
 
         SECTION("std::array<json, 6>")
         {
-            std::array<json, 6> a {{json(1), json(1u), json(2.2), json(false), json("string"), json()}};
-            json j(a);
+            std::array<json, 6> const a {{json(1), json(1u), json(2.2), json(false), json("string"), json()}};
+            json const j(a);
             CHECK(j.type() == json::value_t::array);
             CHECK(j == j_reference);
 
@@ -310,8 +312,8 @@ TEST_CASE("constructors")
 
         SECTION("std::valarray<int>")
         {
-            std::valarray<int> va = {1, 2, 3, 4, 5};
-            json j(va);
+            std::valarray<int> const va = {1, 2, 3, 4, 5};
+            json const j(va);
             CHECK(j.type() == json::value_t::array);
             CHECK(j == json({1, 2, 3, 4, 5}));
 
@@ -325,8 +327,8 @@ TEST_CASE("constructors")
 
         SECTION("std::valarray<double>")
         {
-            std::valarray<double> va = {1.2, 2.3, 3.4, 4.5, 5.6};
-            json j(va);
+            std::valarray<double> const va = {1.2, 2.3, 3.4, 4.5, 5.6};
+            json const j(va);
             CHECK(j.type() == json::value_t::array);
             CHECK(j == json({1.2, 2.3, 3.4, 4.5, 5.6}));
 
@@ -341,7 +343,7 @@ TEST_CASE("constructors")
         SECTION("std::vector<json>")
         {
             std::vector<json> const a {json(1), json(1u), json(2.2), json(false), json("string"), json()};
-            json j(a);
+            json const j(a);
             CHECK(j.type() == json::value_t::array);
             CHECK(j == j_reference);
         }
@@ -349,7 +351,7 @@ TEST_CASE("constructors")
         SECTION("std::deque<json>")
         {
             std::deque<json> const a {json(1), json(1u), json(2.2), json(false), json("string"), json()};
-            json j(a);
+            json const j(a);
             CHECK(j.type() == json::value_t::array);
             CHECK(j == j_reference);
         }
@@ -372,7 +374,7 @@ TEST_CASE("constructors")
 
         SECTION("sequence container literal")
         {
-            json j({json(1), json(1u), json(2.2), json(false), json("string"), json()});
+            json const j({json(1), json(1u), json(2.2), json(false), json("string"), json()});
             CHECK(j.type() == json::value_t::array);
             CHECK(j == j_reference);
         }
@@ -399,12 +401,12 @@ TEST_CASE("constructors")
     {
         // reference string
         json::string_t const s_reference {"Hello world"};
-        json j_reference(s_reference);
+        json const j_reference(s_reference);
 
         SECTION("std::string")
         {
             std::string const s {"Hello world"};
-            json j(s);
+            json const j(s);
             CHECK(j.type() == json::value_t::string);
             CHECK(j == j_reference);
         }
@@ -412,7 +414,7 @@ TEST_CASE("constructors")
         SECTION("char[]")
         {
             char const s[] {"Hello world"}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
-            json j(s);
+            json const j(s);
             CHECK(j.type() == json::value_t::string);
             CHECK(j == j_reference);
         }
@@ -420,14 +422,14 @@ TEST_CASE("constructors")
         SECTION("const char*")
         {
             const char* s {"Hello world"};
-            json j(s);
+            json const j(s);
             CHECK(j.type() == json::value_t::string);
             CHECK(j == j_reference);
         }
 
         SECTION("string literal")
         {
-            json j("Hello world");
+            json const j("Hello world");
             CHECK(j.type() == json::value_t::string);
             CHECK(j == j_reference);
         }
@@ -509,14 +511,14 @@ TEST_CASE("constructors")
     {
         // reference objects
         json::number_integer_t const n_reference = 42;
-        json j_reference(n_reference);
+        json const j_reference(n_reference);
         json::number_unsigned_t const n_unsigned_reference = 42;
-        json j_unsigned_reference(n_unsigned_reference);
+        json const j_unsigned_reference(n_unsigned_reference);
 
         SECTION("short")
         {
             short const n = 42;
-            json j(n);
+            json const j(n);
             CHECK(j.type() == json::value_t::number_integer);
             CHECK(j == j_reference);
         }
@@ -524,7 +526,7 @@ TEST_CASE("constructors")
         SECTION("unsigned short")
         {
             unsigned short const n = 42;
-            json j(n);
+            json const j(n);
             CHECK(j.type() == json::value_t::number_unsigned);
             CHECK(j == j_unsigned_reference);
         }
@@ -532,7 +534,7 @@ TEST_CASE("constructors")
         SECTION("int")
         {
             int const n = 42;
-            json j(n);
+            json const j(n);
             CHECK(j.type() == json::value_t::number_integer);
             CHECK(j == j_reference);
         }
@@ -540,7 +542,7 @@ TEST_CASE("constructors")
         SECTION("unsigned int")
         {
             unsigned int const n = 42;
-            json j(n);
+            json const j(n);
             CHECK(j.type() == json::value_t::number_unsigned);
             CHECK(j == j_unsigned_reference);
         }
@@ -548,7 +550,7 @@ TEST_CASE("constructors")
         SECTION("long")
         {
             long const n = 42;
-            json j(n);
+            json const j(n);
             CHECK(j.type() == json::value_t::number_integer);
             CHECK(j == j_reference);
         }
@@ -556,7 +558,7 @@ TEST_CASE("constructors")
         SECTION("unsigned long")
         {
             unsigned long const n = 42;
-            json j(n);
+            json const j(n);
             CHECK(j.type() == json::value_t::number_unsigned);
             CHECK(j == j_unsigned_reference);
         }
@@ -564,7 +566,7 @@ TEST_CASE("constructors")
         SECTION("long long")
         {
             long long const n = 42;
-            json j(n);
+            json const j(n);
             CHECK(j.type() == json::value_t::number_integer);
             CHECK(j == j_reference);
         }
@@ -572,7 +574,7 @@ TEST_CASE("constructors")
         SECTION("unsigned long long")
         {
             unsigned long long const n = 42;
-            json j(n);
+            json const j(n);
             CHECK(j.type() == json::value_t::number_unsigned);
             CHECK(j == j_unsigned_reference);
         }
@@ -580,7 +582,7 @@ TEST_CASE("constructors")
         SECTION("int8_t")
         {
             int8_t const n = 42;
-            json j(n);
+            json const j(n);
             CHECK(j.type() == json::value_t::number_integer);
             CHECK(j == j_reference);
         }
@@ -588,7 +590,7 @@ TEST_CASE("constructors")
         SECTION("int16_t")
         {
             int16_t const n = 42;
-            json j(n);
+            json const j(n);
             CHECK(j.type() == json::value_t::number_integer);
             CHECK(j == j_reference);
         }
@@ -596,7 +598,7 @@ TEST_CASE("constructors")
         SECTION("int32_t")
         {
             int32_t const n = 42;
-            json j(n);
+            json const j(n);
             CHECK(j.type() == json::value_t::number_integer);
             CHECK(j == j_reference);
         }
@@ -604,7 +606,7 @@ TEST_CASE("constructors")
         SECTION("int64_t")
         {
             int64_t const n = 42;
-            json j(n);
+            json const j(n);
             CHECK(j.type() == json::value_t::number_integer);
             CHECK(j == j_reference);
         }
@@ -612,7 +614,7 @@ TEST_CASE("constructors")
         SECTION("int_fast8_t")
         {
             int_fast8_t const n = 42;
-            json j(n);
+            json const j(n);
             CHECK(j.type() == json::value_t::number_integer);
             CHECK(j == j_reference);
         }
@@ -620,7 +622,7 @@ TEST_CASE("constructors")
         SECTION("int_fast16_t")
         {
             int_fast16_t const n = 42;
-            json j(n);
+            json const j(n);
             CHECK(j.type() == json::value_t::number_integer);
             CHECK(j == j_reference);
         }
@@ -628,7 +630,7 @@ TEST_CASE("constructors")
         SECTION("int_fast32_t")
         {
             int_fast32_t const n = 42;
-            json j(n);
+            json const j(n);
             CHECK(j.type() == json::value_t::number_integer);
             CHECK(j == j_reference);
         }
@@ -636,7 +638,7 @@ TEST_CASE("constructors")
         SECTION("int_fast64_t")
         {
             int_fast64_t const n = 42;
-            json j(n);
+            json const j(n);
             CHECK(j.type() == json::value_t::number_integer);
             CHECK(j == j_reference);
         }
@@ -644,7 +646,7 @@ TEST_CASE("constructors")
         SECTION("int_least8_t")
         {
             int_least8_t const n = 42;
-            json j(n);
+            json const j(n);
             CHECK(j.type() == json::value_t::number_integer);
             CHECK(j == j_reference);
         }
@@ -652,7 +654,7 @@ TEST_CASE("constructors")
         SECTION("int_least16_t")
         {
             int_least16_t const n = 42;
-            json j(n);
+            json const j(n);
             CHECK(j.type() == json::value_t::number_integer);
             CHECK(j == j_reference);
         }
@@ -660,7 +662,7 @@ TEST_CASE("constructors")
         SECTION("int_least32_t")
         {
             int_least32_t const n = 42;
-            json j(n);
+            json const j(n);
             CHECK(j.type() == json::value_t::number_integer);
             CHECK(j == j_reference);
         }
@@ -668,7 +670,7 @@ TEST_CASE("constructors")
         SECTION("int_least64_t")
         {
             int_least64_t const n = 42;
-            json j(n);
+            json const j(n);
             CHECK(j.type() == json::value_t::number_integer);
             CHECK(j == j_reference);
         }
@@ -676,7 +678,7 @@ TEST_CASE("constructors")
         SECTION("uint8_t")
         {
             uint8_t const n = 42;
-            json j(n);
+            json const j(n);
             CHECK(j.type() == json::value_t::number_unsigned);
             CHECK(j == j_unsigned_reference);
         }
@@ -684,7 +686,7 @@ TEST_CASE("constructors")
         SECTION("uint16_t")
         {
             uint16_t const n = 42;
-            json j(n);
+            json const j(n);
             CHECK(j.type() == json::value_t::number_unsigned);
             CHECK(j == j_unsigned_reference);
         }
@@ -692,7 +694,7 @@ TEST_CASE("constructors")
         SECTION("uint32_t")
         {
             uint32_t const n = 42;
-            json j(n);
+            json const j(n);
             CHECK(j.type() == json::value_t::number_unsigned);
             CHECK(j == j_unsigned_reference);
         }
@@ -700,7 +702,7 @@ TEST_CASE("constructors")
         SECTION("uint64_t")
         {
             uint64_t const n = 42;
-            json j(n);
+            json const j(n);
             CHECK(j.type() == json::value_t::number_unsigned);
             CHECK(j == j_unsigned_reference);
         }
@@ -708,7 +710,7 @@ TEST_CASE("constructors")
         SECTION("uint_fast8_t")
         {
             uint_fast8_t const n = 42;
-            json j(n);
+            json const j(n);
             CHECK(j.type() == json::value_t::number_unsigned);
             CHECK(j == j_unsigned_reference);
         }
@@ -716,7 +718,7 @@ TEST_CASE("constructors")
         SECTION("uint_fast16_t")
         {
             uint_fast16_t const n = 42;
-            json j(n);
+            json const j(n);
             CHECK(j.type() == json::value_t::number_unsigned);
             CHECK(j == j_unsigned_reference);
         }
@@ -724,7 +726,7 @@ TEST_CASE("constructors")
         SECTION("uint_fast32_t")
         {
             uint_fast32_t const n = 42;
-            json j(n);
+            json const j(n);
             CHECK(j.type() == json::value_t::number_unsigned);
             CHECK(j == j_unsigned_reference);
         }
@@ -732,7 +734,7 @@ TEST_CASE("constructors")
         SECTION("uint_fast64_t")
         {
             uint_fast64_t const n = 42;
-            json j(n);
+            json const j(n);
             CHECK(j.type() == json::value_t::number_unsigned);
             CHECK(j == j_unsigned_reference);
         }
@@ -740,7 +742,7 @@ TEST_CASE("constructors")
         SECTION("uint_least8_t")
         {
             uint_least8_t const n = 42;
-            json j(n);
+            json const j(n);
             CHECK(j.type() == json::value_t::number_unsigned);
             CHECK(j == j_unsigned_reference);
         }
@@ -748,7 +750,7 @@ TEST_CASE("constructors")
         SECTION("uint_least16_t")
         {
             uint_least16_t const n = 42;
-            json j(n);
+            json const j(n);
             CHECK(j.type() == json::value_t::number_unsigned);
             CHECK(j == j_unsigned_reference);
         }
@@ -756,7 +758,7 @@ TEST_CASE("constructors")
         SECTION("uint_least32_t")
         {
             uint_least32_t const n = 42;
-            json j(n);
+            json const j(n);
             CHECK(j.type() == json::value_t::number_unsigned);
             CHECK(j == j_unsigned_reference);
         }
@@ -764,14 +766,14 @@ TEST_CASE("constructors")
         SECTION("uint_least64_t")
         {
             uint_least64_t const n = 42;
-            json j(n);
+            json const j(n);
             CHECK(j.type() == json::value_t::number_unsigned);
             CHECK(j == j_unsigned_reference);
         }
 
         SECTION("integer literal without suffix")
         {
-            json j(42);
+            json const j(42);
             CHECK(j.type() == json::value_t::number_integer);
             CHECK(j == j_reference);
         }
@@ -785,7 +787,7 @@ TEST_CASE("constructors")
 
         SECTION("integer literal with l suffix")
         {
-            json j(42L);
+            json const j(42L);
             CHECK(j.type() == json::value_t::number_integer);
             CHECK(j == j_reference);
         }
@@ -799,7 +801,7 @@ TEST_CASE("constructors")
 
         SECTION("integer literal with ll suffix")
         {
-            json j(42LL);
+            json const j(42LL);
             CHECK(j.type() == json::value_t::number_integer);
             CHECK(j == j_reference);
         }
@@ -846,12 +848,12 @@ TEST_CASE("constructors")
         SECTION("infinity")
         {
             // infinity is stored properly, but serialized to null
-            json::number_float_t n(std::numeric_limits<json::number_float_t>::infinity());
+            json::number_float_t const n(std::numeric_limits<json::number_float_t>::infinity());
             json const j(n);
             CHECK(j.type() == json::value_t::number_float);
 
             // check round trip of infinity
-            json::number_float_t d{j};
+            json::number_float_t const d{j};
             CHECK(d == n);
 
             // check that inf is serialized to null
@@ -868,7 +870,7 @@ TEST_CASE("constructors")
         SECTION("float")
         {
             float const n = 42.23f;
-            json j(n);
+            json const j(n);
             CHECK(j.type() == json::value_t::number_float);
             CHECK(j.m_value.number_float == Approx(j_reference.m_value.number_float));
         }
@@ -876,7 +878,7 @@ TEST_CASE("constructors")
         SECTION("double")
         {
             double const n = 42.23;
-            json j(n);
+            json const j(n);
             CHECK(j.type() == json::value_t::number_float);
             CHECK(j.m_value.number_float == Approx(j_reference.m_value.number_float));
         }
@@ -884,28 +886,28 @@ TEST_CASE("constructors")
         SECTION("long double")
         {
             long double const n = 42.23L;
-            json j(n);
+            json const j(n);
             CHECK(j.type() == json::value_t::number_float);
             CHECK(j.m_value.number_float == Approx(j_reference.m_value.number_float));
         }
 
         SECTION("floating-point literal without suffix")
         {
-            json j(42.23);
+            json const j(42.23);
             CHECK(j.type() == json::value_t::number_float);
             CHECK(j.m_value.number_float == Approx(j_reference.m_value.number_float));
         }
 
         SECTION("integer literal with f suffix")
         {
-            json j(42.23f);
+            json const j(42.23f);
             CHECK(j.type() == json::value_t::number_float);
             CHECK(j.m_value.number_float == Approx(j_reference.m_value.number_float));
         }
 
         SECTION("integer literal with l suffix")
         {
-            json j(42.23L);
+            json const j(42.23L);
             CHECK(j.type() == json::value_t::number_float);
             CHECK(j.m_value.number_float == Approx(j_reference.m_value.number_float));
         }
@@ -1106,9 +1108,9 @@ TEST_CASE("constructors")
                 SECTION("constructor with implicit types (array)")
                 {
                     // This should break through any short string optimization in std::string
-                    std::string source(1024, '!');
+                    std::string const source(1024, '!');
                     const auto* source_addr = source.data();
-                    json j = {std::move(source)};
+                    json const j = {std::move(source)};
                     const auto* target_addr = j[0].get_ref<std::string const&>().data();
                     const bool success = (target_addr == source_addr);
                     CHECK(success);
@@ -1117,9 +1119,9 @@ TEST_CASE("constructors")
                 SECTION("constructor with implicit types (object)")
                 {
                     // This should break through any short string optimization in std::string
-                    std::string source(1024, '!');
+                    std::string const source(1024, '!');
                     const auto* source_addr = source.data();
-                    json j = {{"key", std::move(source)}};
+                    json const j = {{"key", std::move(source)}};
                     const auto* target_addr = j["key"].get_ref<std::string const&>().data();
                     const bool success = (target_addr == source_addr);
                     CHECK(success);
@@ -1128,7 +1130,7 @@ TEST_CASE("constructors")
                 SECTION("constructor with implicit types (object key)")
                 {
                     // This should break through any short string optimization in std::string
-                    std::string source(1024, '!');
+                    std::string const source(1024, '!');
                     const auto* source_addr = source.data();
                     json j = {{std::move(source), 42}};
                     const auto* target_addr = j.get_ref<json::object_t&>().begin()->first.data();
@@ -1141,9 +1143,9 @@ TEST_CASE("constructors")
             {
                 SECTION("constructor with implicit types (array)")
                 {
-                    json::array_t source = {1, 2, 3};
+                    json::array_t const source = {1, 2, 3};
                     const auto* source_addr = source.data();
-                    json j {std::move(source)};
+                    json const j {std::move(source)};
                     const auto* target_addr = j[0].get_ref<json::array_t const&>().data();
                     const bool success = (target_addr == source_addr);
                     CHECK(success);
@@ -1151,9 +1153,9 @@ TEST_CASE("constructors")
 
                 SECTION("constructor with implicit types (object)")
                 {
-                    json::array_t source = {1, 2, 3};
+                    json::array_t const source = {1, 2, 3};
                     const auto* source_addr = source.data();
-                    json j {{"key", std::move(source)}};
+                    json const j {{"key", std::move(source)}};
                     const auto* target_addr = j["key"].get_ref<json::array_t const&>().data();
                     const bool success = (target_addr == source_addr);
                     CHECK(success);
@@ -1161,9 +1163,9 @@ TEST_CASE("constructors")
 
                 SECTION("assignment with implicit types (array)")
                 {
-                    json::array_t source = {1, 2, 3};
+                    json::array_t const source = {1, 2, 3};
                     const auto* source_addr = source.data();
-                    json j = {std::move(source)};
+                    json const j = {std::move(source)};
                     const auto* target_addr = j[0].get_ref<json::array_t const&>().data();
                     const bool success = (target_addr == source_addr);
                     CHECK(success);
@@ -1171,9 +1173,9 @@ TEST_CASE("constructors")
 
                 SECTION("assignment with implicit types (object)")
                 {
-                    json::array_t source = {1, 2, 3};
+                    json::array_t const source = {1, 2, 3};
                     const auto* source_addr = source.data();
-                    json j = {{"key", std::move(source)}};
+                    json const j = {{"key", std::move(source)}};
                     const auto* target_addr = j["key"].get_ref<json::array_t const&>().data();
                     const bool success = (target_addr == source_addr);
                     CHECK(success);
@@ -1184,17 +1186,17 @@ TEST_CASE("constructors")
             {
                 SECTION("constructor with implicit types (array)")
                 {
-                    json::object_t source = {{"hello", "world"}};
+                    json::object_t const source = {{"hello", "world"}};
                     const json* source_addr = &source.at("hello");
-                    json j {std::move(source)};
+                    json const j {std::move(source)};
                     CHECK(&(j[0].get_ref<json::object_t const&>().at("hello")) == source_addr);
                 }
 
                 SECTION("constructor with implicit types (object)")
                 {
-                    json::object_t source = {{"hello", "world"}};
+                    json::object_t const source = {{"hello", "world"}};
                     const json* source_addr = &source.at("hello");
-                    json j {{"key", std::move(source)}};
+                    json const j {{"key", std::move(source)}};
                     CHECK(&(j["key"].get_ref<json::object_t const&>().at("hello")) == source_addr);
                 }
 
@@ -1208,9 +1210,9 @@ TEST_CASE("constructors")
 
                 SECTION("assignment with implicit types (object)")
                 {
-                    json::object_t source = {{"hello", "world"}};
+                    json::object_t const source = {{"hello", "world"}};
                     const json* source_addr = &source.at("hello");
-                    json j = {{"key", std::move(source)}};
+                    json const j = {{"key", std::move(source)}};
                     CHECK(&(j["key"].get_ref<json::object_t const&>().at("hello")) == source_addr);
                 }
             }
@@ -1219,33 +1221,33 @@ TEST_CASE("constructors")
             {
                 SECTION("constructor with implicit types (array)")
                 {
-                    json source {1, 2, 3};
+                    json const source {1, 2, 3};
                     const json* source_addr = &source[0];
-                    json j {std::move(source), {}};
+                    json const j {std::move(source), {}};
                     CHECK(&j[0][0] == source_addr);
                 }
 
                 SECTION("constructor with implicit types (object)")
                 {
-                    json source {1, 2, 3};
+                    json const source {1, 2, 3};
                     const json* source_addr = &source[0];
-                    json j {{"key", std::move(source)}};
+                    json const j {{"key", std::move(source)}};
                     CHECK(&j["key"][0] == source_addr);
                 }
 
                 SECTION("assignment with implicit types (array)")
                 {
-                    json source {1, 2, 3};
+                    json const source {1, 2, 3};
                     const json* source_addr = &source[0];
-                    json j = {std::move(source), {}};
+                    json const j = {std::move(source), {}};
                     CHECK(&j[0][0] == source_addr);
                 }
 
                 SECTION("assignment with implicit types (object)")
                 {
-                    json source {1, 2, 3};
+                    json const source {1, 2, 3};
                     const json* source_addr = &source[0];
-                    json j = {{"key", std::move(source)}};
+                    json const j = {{"key", std::move(source)}};
                     CHECK(&j["key"][0] == source_addr);
                 }
             }
@@ -1264,8 +1266,8 @@ TEST_CASE("constructors")
 
         SECTION("cnt = 1")
         {
-            json v = {1, "foo", 34.23, {1, 2, 3}, {{"A", 1}, {"B", 2u}}};
-            json arr(1, v);
+            json const v = {1, "foo", 34.23, {1, 2, 3}, {{"A", 1}, {"B", 2u}}};
+            json const arr(1, v);
             CHECK(arr.size() == 1);
             for (auto& x : arr)
             {
@@ -1275,8 +1277,8 @@ TEST_CASE("constructors")
 
         SECTION("cnt = 3")
         {
-            json v = {1, "foo", 34.23, {1, 2, 3}, {{"A", 1}, {"B", 2u}}};
-            json arr(3, v);
+            json const v = {1, "foo", 34.23, {1, 2, 3}, {{"A", 1}, {"B", 2u}}};
+            json const arr(3, v);
             CHECK(arr.size() == 3);
             for (auto& x : arr)
             {
@@ -1293,12 +1295,12 @@ TEST_CASE("constructors")
             {
                 {
                     json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}};
-                    json j_new(jobject.begin(), jobject.end());
+                    json const j_new(jobject.begin(), jobject.end());
                     CHECK(j_new == jobject);
                 }
                 {
                     json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}};
-                    json j_new(jobject.cbegin(), jobject.cend());
+                    json const j_new(jobject.cbegin(), jobject.cend());
                     CHECK(j_new == jobject);
                 }
             }
@@ -1307,20 +1309,20 @@ TEST_CASE("constructors")
             {
                 {
                     json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}};
-                    json j_new(jobject.begin(), jobject.begin());
+                    json const j_new(jobject.begin(), jobject.begin());
                     CHECK(j_new == json::object());
                 }
                 {
                     json const jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}};
-                    json j_new(jobject.cbegin(), jobject.cbegin());
+                    json const j_new(jobject.cbegin(), jobject.cbegin());
                     CHECK(j_new == json::object());
                 }
             }
 
             SECTION("construct from subrange")
             {
-                json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}, {"d", false}, {"e", true}};
-                json j_new(jobject.find("b"), jobject.find("e"));
+                json const jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}, {"d", false}, {"e", true}};
+                json const j_new(jobject.find("b"), jobject.find("e"));
                 CHECK(j_new == json({{"b", 1}, {"c", 17u}, {"d", false}}));
             }
 
@@ -1347,12 +1349,12 @@ TEST_CASE("constructors")
             {
                 {
                     json jarray = {1, 2, 3, 4, 5};
-                    json j_new(jarray.begin(), jarray.end());
+                    json const j_new(jarray.begin(), jarray.end());
                     CHECK(j_new == jarray);
                 }
                 {
-                    json jarray = {1, 2, 3, 4, 5};
-                    json j_new(jarray.cbegin(), jarray.cend());
+                    json const jarray = {1, 2, 3, 4, 5};
+                    json const j_new(jarray.cbegin(), jarray.cend());
                     CHECK(j_new == jarray);
                 }
             }
@@ -1366,7 +1368,7 @@ TEST_CASE("constructors")
                 }
                 {
                     json const jarray = {1, 2, 3, 4, 5};
-                    json j_new(jarray.cbegin(), jarray.cbegin());
+                    json const j_new(jarray.cbegin(), jarray.cbegin());
                     CHECK(j_new == json::array());
                 }
             }
@@ -1375,12 +1377,12 @@ TEST_CASE("constructors")
             {
                 {
                     json jarray = {1, 2, 3, 4, 5};
-                    json j_new(jarray.begin() + 1, jarray.begin() + 3);
+                    json const j_new(jarray.begin() + 1, jarray.begin() + 3);
                     CHECK(j_new == json({2, 3}));
                 }
                 {
                     json const jarray = {1, 2, 3, 4, 5};
-                    json j_new(jarray.cbegin() + 1, jarray.cbegin() + 3);
+                    json const j_new(jarray.cbegin() + 1, jarray.cbegin() + 3);
                     CHECK(j_new == json({2, 3}));
                 }
             }
@@ -1422,12 +1424,12 @@ TEST_CASE("constructors")
                 {
                     {
                         json j = "foo";
-                        json j_new(j.begin(), j.end());
+                        json const j_new(j.begin(), j.end());
                         CHECK(j == j_new);
                     }
                     {
-                        json j = "bar";
-                        json j_new(j.cbegin(), j.cend());
+                        json const j = "bar";
+                        json const j_new(j.cbegin(), j.cend());
                         CHECK(j == j_new);
                     }
                 }
@@ -1436,12 +1438,12 @@ TEST_CASE("constructors")
                 {
                     {
                         json j = false;
-                        json j_new(j.begin(), j.end());
+                        json const j_new(j.begin(), j.end());
                         CHECK(j == j_new);
                     }
                     {
-                        json j = true;
-                        json j_new(j.cbegin(), j.cend());
+                        json const j = true;
+                        json const j_new(j.cbegin(), j.cend());
                         CHECK(j == j_new);
                     }
                 }
@@ -1450,12 +1452,12 @@ TEST_CASE("constructors")
                 {
                     {
                         json j = 17;
-                        json j_new(j.begin(), j.end());
+                        json const j_new(j.begin(), j.end());
                         CHECK(j == j_new);
                     }
                     {
-                        json j = 17;
-                        json j_new(j.cbegin(), j.cend());
+                        json const j = 17;
+                        json const j_new(j.cbegin(), j.cend());
                         CHECK(j == j_new);
                     }
                 }
@@ -1464,12 +1466,12 @@ TEST_CASE("constructors")
                 {
                     {
                         json j = 17u;
-                        json j_new(j.begin(), j.end());
+                        json const j_new(j.begin(), j.end());
                         CHECK(j == j_new);
                     }
                     {
-                        json j = 17u;
-                        json j_new(j.cbegin(), j.cend());
+                        json const j = 17u;
+                        json const j_new(j.cbegin(), j.cend());
                         CHECK(j == j_new);
                     }
                 }
@@ -1478,12 +1480,12 @@ TEST_CASE("constructors")
                 {
                     {
                         json j = 23.42;
-                        json j_new(j.begin(), j.end());
+                        json const j_new(j.begin(), j.end());
                         CHECK(j == j_new);
                     }
                     {
-                        json j = 23.42;
-                        json j_new(j.cbegin(), j.cend());
+                        json const j = 23.42;
+                        json const j_new(j.cbegin(), j.cend());
                         CHECK(j == j_new);
                     }
                 }

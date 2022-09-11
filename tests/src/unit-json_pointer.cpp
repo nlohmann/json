@@ -40,7 +40,7 @@ TEST_CASE("JSON pointers")
         SECTION("array index error")
         {
             json v = {1, 2, 3, 4};
-            json::json_pointer const const ptr("/10e");
+            json::json_pointer const ptr("/10e");
             CHECK_THROWS_WITH_AS(v[ptr],
                                  "[json.exception.out_of_range.404] unresolved reference token '10e'", json::out_of_range&);
         }
@@ -311,7 +311,7 @@ TEST_CASE("JSON pointers")
 
             {
                 auto too_large_index = std::to_string((std::numeric_limits<unsigned long long>::max)()) + "1";
-                json::json_pointer const const jp(std::string("/") + too_large_index);
+                json::json_pointer const jp(std::string("/") + too_large_index);
                 std::string const throw_msg = std::string("[json.exception.out_of_range.404] unresolved reference token '") + too_large_index + "'";
 
                 CHECK_THROWS_WITH_AS(j[jp] = 1, throw_msg.c_str(), json::out_of_range&);
@@ -326,7 +326,7 @@ TEST_CASE("JSON pointers")
             {
                 auto size_type_max_uul = static_cast<unsigned long long>((std::numeric_limits<json::size_type>::max)());
                 auto too_large_index = std::to_string(size_type_max_uul);
-                json::json_pointer const const jp(std::string("/") + too_large_index);
+                json::json_pointer const jp(std::string("/") + too_large_index);
                 std::string const throw_msg = std::string("[json.exception.out_of_range.410] array index ") + too_large_index + " exceeds size_type";
 
                 CHECK_THROWS_WITH_AS(j[jp] = 1, throw_msg.c_str(), json::out_of_range&);
@@ -485,7 +485,7 @@ TEST_CASE("JSON pointers")
                 {"", "/foo", "/foo/0", "/", "/a~1b", "/c%d", "/e^f", "/g|h", "/i\\j", "/k\"l", "/ ", "/m~0n"
                 })
         {
-            json::json_pointer const const ptr(ptr_str);
+            json::json_pointer const ptr(ptr_str);
             std::stringstream ss;
             ss << ptr;
             CHECK(ptr.to_string() == ptr_str);

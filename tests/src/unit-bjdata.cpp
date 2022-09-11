@@ -118,9 +118,9 @@ TEST_CASE_TEMPLATE_DEFINE("value_in_range_of trait", T, value_in_range_of_test)
     constexpr bool min_in_range = T::min_in_range;
     constexpr bool max_in_range = T::max_in_range;
 
-    type val_min = std::numeric_limits<type>::min();
+    type const val_min = std::numeric_limits<type>::min();
     type const val_min2 = val_min + 1;
-    type val_max = std::numeric_limits<type>::max();
+    type const val_max = std::numeric_limits<type>::max();
     type const val_max2 = val_max - 1;
 
     REQUIRE(CHAR_BIT == 8);
@@ -230,8 +230,8 @@ TEST_CASE("BJData")
 
         SECTION("null")
         {
-            json j = nullptr;
-            std::vector<uint8_t> expected = {'Z'};
+            json const j = nullptr;
+            std::vector<uint8_t> const expected = {'Z'};
             const auto result = json::to_bjdata(j);
             CHECK(result == expected);
 
@@ -244,8 +244,8 @@ TEST_CASE("BJData")
         {
             SECTION("true")
             {
-                json j = true;
-                std::vector<uint8_t> expected = {'T'};
+                json const j = true;
+                std::vector<uint8_t> const expected = {'T'};
                 const auto result = json::to_bjdata(j);
                 CHECK(result == expected);
 
@@ -256,8 +256,8 @@ TEST_CASE("BJData")
 
             SECTION("false")
             {
-                json j = false;
-                std::vector<uint8_t> expected = {'F'};
+                json const j = false;
+                std::vector<uint8_t> const expected = {'F'};
                 const auto result = json::to_bjdata(j);
                 CHECK(result == expected);
 
@@ -273,39 +273,43 @@ TEST_CASE("BJData")
             {
                 SECTION("-9223372036854775808..-2147483649 (int64)")
                 {
-                    std::vector<int64_t> numbers;
-                    numbers.push_back((std::numeric_limits<int64_t>::min)());
-                    numbers.push_back(-1000000000000000000LL);
-                    numbers.push_back(-100000000000000000LL);
-                    numbers.push_back(-10000000000000000LL);
-                    numbers.push_back(-1000000000000000LL);
-                    numbers.push_back(-100000000000000LL);
-                    numbers.push_back(-10000000000000LL);
-                    numbers.push_back(-1000000000000LL);
-                    numbers.push_back(-100000000000LL);
-                    numbers.push_back(-10000000000LL);
-                    numbers.push_back(-2147483649LL);
-                    for (auto i : numbers)
+                    std::vector<int64_t> const numbers
+                    {
+                        (std::numeric_limits<int64_t>::min)(),
+                        -1000000000000000000LL,
+                        -100000000000000000LL,
+                        -10000000000000000LL,
+                        -1000000000000000LL,
+                        -100000000000000LL,
+                        -10000000000000LL,
+                        -1000000000000LL,
+                        -100000000000LL,
+                        -10000000000LL,
+                        -2147483649LL,
+                    };
+                    for (const auto i : numbers)
                     {
                         CAPTURE(i)
 
                         // create JSON value with integer number
-                        json j = i;
+                        json const j = i;
 
                         // check type
                         CHECK(j.is_number_integer());
 
                         // create expected byte vector
-                        std::vector<uint8_t> expected;
-                        expected.push_back(static_cast<uint8_t>('L'));
-                        expected.push_back(static_cast<uint8_t>(i & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 8) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 16) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 24) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 32) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 40) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 48) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 56) & 0xff));
+                        std::vector<uint8_t> const expected
+                        {
+                            static_cast<uint8_t>('L'),
+                            static_cast<uint8_t>(i & 0xff),
+                            static_cast<uint8_t>((i >> 8) & 0xff),
+                            static_cast<uint8_t>((i >> 16) & 0xff),
+                            static_cast<uint8_t>((i >> 24) & 0xff),
+                            static_cast<uint8_t>((i >> 32) & 0xff),
+                            static_cast<uint8_t>((i >> 40) & 0xff),
+                            static_cast<uint8_t>((i >> 48) & 0xff),
+                            static_cast<uint8_t>((i >> 56) & 0xff),
+                        };
 
                         // compare result + size
                         const auto result = json::to_bjdata(j);
@@ -314,14 +318,14 @@ TEST_CASE("BJData")
 
                         // check individual bytes
                         CHECK(result[0] == 'L');
-                        int64_t restored = (static_cast<int64_t>(result[8]) << 070) +
-                                           (static_cast<int64_t>(result[7]) << 060) +
-                                           (static_cast<int64_t>(result[6]) << 050) +
-                                           (static_cast<int64_t>(result[5]) << 040) +
-                                           (static_cast<int64_t>(result[4]) << 030) +
-                                           (static_cast<int64_t>(result[3]) << 020) +
-                                           (static_cast<int64_t>(result[2]) << 010) +
-                                           static_cast<int64_t>(result[1]);
+                        int64_t const restored = (static_cast<int64_t>(result[8]) << 070) +
+                                                 (static_cast<int64_t>(result[7]) << 060) +
+                                                 (static_cast<int64_t>(result[6]) << 050) +
+                                                 (static_cast<int64_t>(result[5]) << 040) +
+                                                 (static_cast<int64_t>(result[4]) << 030) +
+                                                 (static_cast<int64_t>(result[3]) << 020) +
+                                                 (static_cast<int64_t>(result[2]) << 010) +
+                                                 static_cast<int64_t>(result[1]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -332,31 +336,35 @@ TEST_CASE("BJData")
 
                 SECTION("-2147483648..-32769 (int32)")
                 {
-                    std::vector<int32_t> numbers;
-                    numbers.push_back(-32769);
-                    numbers.push_back(-100000);
-                    numbers.push_back(-1000000);
-                    numbers.push_back(-10000000);
-                    numbers.push_back(-100000000);
-                    numbers.push_back(-1000000000);
-                    numbers.push_back(-2147483647 - 1); // https://stackoverflow.com/a/29356002/266378
-                    for (auto i : numbers)
+                    std::vector<int32_t> numbers
+                    {
+                        -32769,
+                            -100000,
+                            -1000000,
+                            -10000000,
+                            -100000000,
+                            -1000000000,
+                            -2147483647 - 1, // https://stackoverflow.com/a/29356002/266378
+                        };
+                    for (const auto i : numbers)
                     {
                         CAPTURE(i)
 
                         // create JSON value with integer number
-                        json j = i;
+                        json const j = i;
 
                         // check type
                         CHECK(j.is_number_integer());
 
                         // create expected byte vector
-                        std::vector<uint8_t> expected;
-                        expected.push_back(static_cast<uint8_t>('l'));
-                        expected.push_back(static_cast<uint8_t>(i & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 8) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 16) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 24) & 0xff));
+                        std::vector<uint8_t> const expected
+                        {
+                            static_cast<uint8_t>('l'),
+                            static_cast<uint8_t>(i & 0xff),
+                            static_cast<uint8_t>((i >> 8) & 0xff),
+                            static_cast<uint8_t>((i >> 16) & 0xff),
+                            static_cast<uint8_t>((i >> 24) & 0xff),
+                        };
 
                         // compare result + size
                         const auto result = json::to_bjdata(j);
@@ -365,10 +373,10 @@ TEST_CASE("BJData")
 
                         // check individual bytes
                         CHECK(result[0] == 'l');
-                        int32_t restored = (static_cast<int32_t>(result[4]) << 030) +
-                                           (static_cast<int32_t>(result[3]) << 020) +
-                                           (static_cast<int32_t>(result[2]) << 010) +
-                                           static_cast<int32_t>(result[1]);
+                        int32_t const restored = (static_cast<int32_t>(result[4]) << 030) +
+                                                 (static_cast<int32_t>(result[3]) << 020) +
+                                                 (static_cast<int32_t>(result[2]) << 010) +
+                                                 static_cast<int32_t>(result[1]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -384,16 +392,18 @@ TEST_CASE("BJData")
                         CAPTURE(i)
 
                         // create JSON value with integer number
-                        json j = i;
+                        json const j = i;
 
                         // check type
                         CHECK(j.is_number_integer());
 
                         // create expected byte vector
-                        std::vector<uint8_t> expected;
-                        expected.push_back(static_cast<uint8_t>('I'));
-                        expected.push_back(static_cast<uint8_t>(i & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 8) & 0xff));
+                        std::vector<uint8_t> const expected
+                        {
+                            static_cast<uint8_t>('I'),
+                            static_cast<uint8_t>(i & 0xff),
+                            static_cast<uint8_t>((i >> 8) & 0xff),
+                        };
 
                         // compare result + size
                         const auto result = json::to_bjdata(j);
@@ -402,7 +412,7 @@ TEST_CASE("BJData")
 
                         // check individual bytes
                         CHECK(result[0] == 'I');
-                        auto restored = static_cast<int16_t>(((result[2] << 8) + result[1]));
+                        auto const restored = static_cast<int16_t>(((result[2] << 8) + result[1]));
                         CHECK(restored == i);
 
                         // roundtrip
@@ -413,7 +423,7 @@ TEST_CASE("BJData")
 
                 SECTION("-9263 (int16)")
                 {
-                    json j = -9263;
+                    json const j = -9263;
                     std::vector<uint8_t> expected = {'I', 0xd1, 0xdb};
 
                     // compare result + size
@@ -423,7 +433,7 @@ TEST_CASE("BJData")
 
                     // check individual bytes
                     CHECK(result[0] == 'I');
-                    auto restored = static_cast<int16_t>(((result[2] << 8) + result[1]));
+                    auto const restored = static_cast<int16_t>(((result[2] << 8) + result[1]));
                     CHECK(restored == -9263);
 
                     // roundtrip
@@ -438,15 +448,17 @@ TEST_CASE("BJData")
                         CAPTURE(i)
 
                         // create JSON value with integer number
-                        json j = i;
+                        json const j = i;
 
                         // check type
                         CHECK(j.is_number_integer());
 
                         // create expected byte vector
-                        std::vector<uint8_t> expected;
-                        expected.push_back('i');
-                        expected.push_back(static_cast<uint8_t>(i));
+                        std::vector<uint8_t> const expected
+                        {
+                            'i',
+                            static_cast<uint8_t>(i),
+                        };
 
                         // compare result + size
                         const auto result = json::to_bjdata(j);
@@ -477,9 +489,11 @@ TEST_CASE("BJData")
                         CHECK(j.is_number_integer());
 
                         // create expected byte vector
-                        std::vector<uint8_t> expected;
-                        expected.push_back(static_cast<uint8_t>('i'));
-                        expected.push_back(static_cast<uint8_t>(i));
+                        std::vector<uint8_t> const expected
+                        {
+                            static_cast<uint8_t>('i'),
+                            static_cast<uint8_t>(i),
+                        };
 
                         // compare result + size
                         const auto result = json::to_bjdata(j);
@@ -510,9 +524,11 @@ TEST_CASE("BJData")
                         CHECK(j.is_number_integer());
 
                         // create expected byte vector
-                        std::vector<uint8_t> expected;
-                        expected.push_back(static_cast<uint8_t>('U'));
-                        expected.push_back(static_cast<uint8_t>(i));
+                        std::vector<uint8_t> const expected
+                        {
+                            static_cast<uint8_t>('U'),
+                            static_cast<uint8_t>(i),
+                        };
 
                         // compare result + size
                         const auto result = json::to_bjdata(j);
@@ -543,10 +559,12 @@ TEST_CASE("BJData")
                         CHECK(j.is_number_integer());
 
                         // create expected byte vector
-                        std::vector<uint8_t> expected;
-                        expected.push_back(static_cast<uint8_t>('I'));
-                        expected.push_back(static_cast<uint8_t>(i & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 8) & 0xff));
+                        std::vector<uint8_t> const expected
+                        {
+                            static_cast<uint8_t>('I'),
+                            static_cast<uint8_t>(i & 0xff),
+                            static_cast<uint8_t>((i >> 8) & 0xff),
+                        };
 
                         // compare result + size
                         const auto result = json::to_bjdata(j);
@@ -555,7 +573,7 @@ TEST_CASE("BJData")
 
                         // check individual bytes
                         CHECK(result[0] == 'I');
-                        auto restored = static_cast<uint16_t>(static_cast<uint8_t>(result[2]) * 256 + static_cast<uint8_t>(result[1]));
+                        auto const restored = static_cast<uint16_t>(static_cast<uint8_t>(result[2]) * 256 + static_cast<uint8_t>(result[1]));
                         CHECK(restored == i);
 
                         // roundtrip
@@ -566,7 +584,7 @@ TEST_CASE("BJData")
 
                 SECTION("32768..65535 (uint16)")
                 {
-                    for (uint32_t i :
+                    for (const uint32_t i :
                             {
                                 32768u, 55555u, 65535u
                             })
@@ -581,10 +599,12 @@ TEST_CASE("BJData")
                         CHECK(j.is_number_integer());
 
                         // create expected byte vector
-                        std::vector<uint8_t> expected;
-                        expected.push_back(static_cast<uint8_t>('u'));
-                        expected.push_back(static_cast<uint8_t>(i & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 8) & 0xff));
+                        std::vector<uint8_t> const expected
+                        {
+                            static_cast<uint8_t>('u'),
+                            static_cast<uint8_t>(i & 0xff),
+                            static_cast<uint8_t>((i >> 8) & 0xff),
+                        };
 
                         // compare result + size
                         const auto result = json::to_bjdata(j);
@@ -593,7 +613,7 @@ TEST_CASE("BJData")
 
                         // check individual bytes
                         CHECK(result[0] == 'u');
-                        auto restored = static_cast<uint16_t>(static_cast<uint8_t>(result[2]) * 256 + static_cast<uint8_t>(result[1]));
+                        auto const restored = static_cast<uint16_t>(static_cast<uint8_t>(result[2]) * 256 + static_cast<uint8_t>(result[1]));
                         CHECK(restored == i);
 
                         // roundtrip
@@ -604,7 +624,7 @@ TEST_CASE("BJData")
 
                 SECTION("65536..2147483647 (int32)")
                 {
-                    for (uint32_t i :
+                    for (const uint32_t i :
                             {
                                 65536u, 77777u, 2147483647u
                             })
@@ -619,12 +639,14 @@ TEST_CASE("BJData")
                         CHECK(j.is_number_integer());
 
                         // create expected byte vector
-                        std::vector<uint8_t> expected;
-                        expected.push_back('l');
-                        expected.push_back(static_cast<uint8_t>(i & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 8) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 16) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 24) & 0xff));
+                        std::vector<uint8_t> const expected
+                        {
+                            'l',
+                            static_cast<uint8_t>(i & 0xff),
+                            static_cast<uint8_t>((i >> 8) & 0xff),
+                            static_cast<uint8_t>((i >> 16) & 0xff),
+                            static_cast<uint8_t>((i >> 24) & 0xff),
+                        };
 
                         // compare result + size
                         const auto result = json::to_bjdata(j);
@@ -633,10 +655,10 @@ TEST_CASE("BJData")
 
                         // check individual bytes
                         CHECK(result[0] == 'l');
-                        uint32_t restored = (static_cast<uint32_t>(result[4]) << 030) +
-                                            (static_cast<uint32_t>(result[3]) << 020) +
-                                            (static_cast<uint32_t>(result[2]) << 010) +
-                                            static_cast<uint32_t>(result[1]);
+                        uint32_t const restored = (static_cast<uint32_t>(result[4]) << 030) +
+                                                  (static_cast<uint32_t>(result[3]) << 020) +
+                                                  (static_cast<uint32_t>(result[2]) << 010) +
+                                                  static_cast<uint32_t>(result[1]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -647,7 +669,7 @@ TEST_CASE("BJData")
 
                 SECTION("2147483648..4294967295 (uint32)")
                 {
-                    for (uint32_t i :
+                    for (const uint32_t i :
                             {
                                 2147483648u, 3333333333u, 4294967295u
                             })
@@ -662,12 +684,14 @@ TEST_CASE("BJData")
                         CHECK(j.is_number_integer());
 
                         // create expected byte vector
-                        std::vector<uint8_t> expected;
-                        expected.push_back('m');
-                        expected.push_back(static_cast<uint8_t>(i & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 8) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 16) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 24) & 0xff));
+                        std::vector<uint8_t> const expected
+                        {
+                            'm',
+                            static_cast<uint8_t>(i & 0xff),
+                            static_cast<uint8_t>((i >> 8) & 0xff),
+                            static_cast<uint8_t>((i >> 16) & 0xff),
+                            static_cast<uint8_t>((i >> 24) & 0xff),
+                        };
 
                         // compare result + size
                         const auto result = json::to_bjdata(j);
@@ -676,10 +700,10 @@ TEST_CASE("BJData")
 
                         // check individual bytes
                         CHECK(result[0] == 'm');
-                        uint32_t restored = (static_cast<uint32_t>(result[4]) << 030) +
-                                            (static_cast<uint32_t>(result[3]) << 020) +
-                                            (static_cast<uint32_t>(result[2]) << 010) +
-                                            static_cast<uint32_t>(result[1]);
+                        uint32_t const restored = (static_cast<uint32_t>(result[4]) << 030) +
+                                                  (static_cast<uint32_t>(result[3]) << 020) +
+                                                  (static_cast<uint32_t>(result[2]) << 010) +
+                                                  static_cast<uint32_t>(result[1]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -691,7 +715,7 @@ TEST_CASE("BJData")
                 SECTION("4294967296..9223372036854775807 (int64)")
                 {
                     std::vector<uint64_t> const v = {4294967296LU, 9223372036854775807LU};
-                    for (uint64_t i : v)
+                    for (const uint64_t i : v)
                     {
                         CAPTURE(i)
 
@@ -703,16 +727,18 @@ TEST_CASE("BJData")
                         CHECK(j.is_number_integer());
 
                         // create expected byte vector
-                        std::vector<uint8_t> expected;
-                        expected.push_back('L');
-                        expected.push_back(static_cast<uint8_t>(i & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 010) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 020) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 030) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 040) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 050) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 060) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 070) & 0xff));
+                        std::vector<uint8_t> const expected
+                        {
+                            'L',
+                            static_cast<uint8_t>(i & 0xff),
+                            static_cast<uint8_t>((i >> 010) & 0xff),
+                            static_cast<uint8_t>((i >> 020) & 0xff),
+                            static_cast<uint8_t>((i >> 030) & 0xff),
+                            static_cast<uint8_t>((i >> 040) & 0xff),
+                            static_cast<uint8_t>((i >> 050) & 0xff),
+                            static_cast<uint8_t>((i >> 060) & 0xff),
+                            static_cast<uint8_t>((i >> 070) & 0xff),
+                        };
 
                         // compare result + size
                         const auto result = json::to_bjdata(j);
@@ -721,14 +747,14 @@ TEST_CASE("BJData")
 
                         // check individual bytes
                         CHECK(result[0] == 'L');
-                        uint64_t restored = (static_cast<uint64_t>(result[8]) << 070) +
-                                            (static_cast<uint64_t>(result[7]) << 060) +
-                                            (static_cast<uint64_t>(result[6]) << 050) +
-                                            (static_cast<uint64_t>(result[5]) << 040) +
-                                            (static_cast<uint64_t>(result[4]) << 030) +
-                                            (static_cast<uint64_t>(result[3]) << 020) +
-                                            (static_cast<uint64_t>(result[2]) << 010) +
-                                            static_cast<uint64_t>(result[1]);
+                        uint64_t const restored = (static_cast<uint64_t>(result[8]) << 070) +
+                                                  (static_cast<uint64_t>(result[7]) << 060) +
+                                                  (static_cast<uint64_t>(result[6]) << 050) +
+                                                  (static_cast<uint64_t>(result[5]) << 040) +
+                                                  (static_cast<uint64_t>(result[4]) << 030) +
+                                                  (static_cast<uint64_t>(result[3]) << 020) +
+                                                  (static_cast<uint64_t>(result[2]) << 010) +
+                                                  static_cast<uint64_t>(result[1]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -740,27 +766,29 @@ TEST_CASE("BJData")
                 SECTION("9223372036854775808..18446744073709551615 (uint64)")
                 {
                     std::vector<uint64_t> const v = {9223372036854775808ull, 18446744073709551615ull};
-                    for (uint64_t i : v)
+                    for (const uint64_t i : v)
                     {
                         CAPTURE(i)
 
                         // create JSON value with integer number
-                        json j = i;
+                        json const j = i;
 
                         // check type
                         CHECK(j.is_number_unsigned());
 
                         // create expected byte vector
-                        std::vector<uint8_t> expected;
-                        expected.push_back('M');
-                        expected.push_back(static_cast<uint8_t>(i & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 010) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 020) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 030) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 040) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 050) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 060) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 070) & 0xff));
+                        std::vector<uint8_t> const expected
+                        {
+                            'M',
+                            static_cast<uint8_t>(i & 0xff),
+                            static_cast<uint8_t>((i >> 010) & 0xff),
+                            static_cast<uint8_t>((i >> 020) & 0xff),
+                            static_cast<uint8_t>((i >> 030) & 0xff),
+                            static_cast<uint8_t>((i >> 040) & 0xff),
+                            static_cast<uint8_t>((i >> 050) & 0xff),
+                            static_cast<uint8_t>((i >> 060) & 0xff),
+                            static_cast<uint8_t>((i >> 070) & 0xff),
+                        };
 
                         // compare result + size
                         const auto result = json::to_bjdata(j);
@@ -769,14 +797,14 @@ TEST_CASE("BJData")
 
                         // check individual bytes
                         CHECK(result[0] == 'M');
-                        uint64_t restored = (static_cast<uint64_t>(result[8]) << 070) +
-                                            (static_cast<uint64_t>(result[7]) << 060) +
-                                            (static_cast<uint64_t>(result[6]) << 050) +
-                                            (static_cast<uint64_t>(result[5]) << 040) +
-                                            (static_cast<uint64_t>(result[4]) << 030) +
-                                            (static_cast<uint64_t>(result[3]) << 020) +
-                                            (static_cast<uint64_t>(result[2]) << 010) +
-                                            static_cast<uint64_t>(result[1]);
+                        uint64_t const restored = (static_cast<uint64_t>(result[8]) << 070) +
+                                                  (static_cast<uint64_t>(result[7]) << 060) +
+                                                  (static_cast<uint64_t>(result[6]) << 050) +
+                                                  (static_cast<uint64_t>(result[5]) << 040) +
+                                                  (static_cast<uint64_t>(result[4]) << 030) +
+                                                  (static_cast<uint64_t>(result[3]) << 020) +
+                                                  (static_cast<uint64_t>(result[2]) << 010) +
+                                                  static_cast<uint64_t>(result[1]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -795,15 +823,13 @@ TEST_CASE("BJData")
                         CAPTURE(i)
 
                         // create JSON value with unsigned integer number
-                        json j = i;
+                        json const j = i;
 
                         // check type
                         CHECK(j.is_number_unsigned());
 
                         // create expected byte vector
-                        std::vector<uint8_t> expected;
-                        expected.push_back('i');
-                        expected.push_back(static_cast<uint8_t>(i));
+                        std::vector<uint8_t> const expected{'i', static_cast<uint8_t>(i)};
 
                         // compare result + size
                         const auto result = json::to_bjdata(j);
@@ -812,7 +838,7 @@ TEST_CASE("BJData")
 
                         // check individual bytes
                         CHECK(result[0] == 'i');
-                        auto restored = static_cast<uint8_t>(result[1]);
+                        auto const restored = static_cast<uint8_t>(result[1]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -828,15 +854,13 @@ TEST_CASE("BJData")
                         CAPTURE(i)
 
                         // create JSON value with unsigned integer number
-                        json j = i;
+                        json const j = i;
 
                         // check type
                         CHECK(j.is_number_unsigned());
 
                         // create expected byte vector
-                        std::vector<uint8_t> expected;
-                        expected.push_back('U');
-                        expected.push_back(static_cast<uint8_t>(i));
+                        std::vector<uint8_t> const expected{'U', static_cast<uint8_t>(i)};
 
                         // compare result + size
                         const auto result = json::to_bjdata(j);
@@ -845,7 +869,7 @@ TEST_CASE("BJData")
 
                         // check individual bytes
                         CHECK(result[0] == 'U');
-                        auto restored = static_cast<uint8_t>(result[1]);
+                        auto const restored = static_cast<uint8_t>(result[1]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -861,16 +885,18 @@ TEST_CASE("BJData")
                         CAPTURE(i)
 
                         // create JSON value with unsigned integer number
-                        json j = i;
+                        json const j = i;
 
                         // check type
                         CHECK(j.is_number_unsigned());
 
                         // create expected byte vector
-                        std::vector<uint8_t> expected;
-                        expected.push_back('I');
-                        expected.push_back(static_cast<uint8_t>(i & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 8) & 0xff));
+                        std::vector<uint8_t> const expected
+                        {
+                            'I',
+                            static_cast<uint8_t>(i & 0xff),
+                            static_cast<uint8_t>((i >> 8) & 0xff),
+                        };
 
                         // compare result + size
                         const auto result = json::to_bjdata(j);
@@ -879,7 +905,7 @@ TEST_CASE("BJData")
 
                         // check individual bytes
                         CHECK(result[0] == 'I');
-                        auto restored = static_cast<uint16_t>(static_cast<uint8_t>(result[2]) * 256 + static_cast<uint8_t>(result[1]));
+                        auto const restored = static_cast<uint16_t>(static_cast<uint8_t>(result[2]) * 256 + static_cast<uint8_t>(result[1]));
                         CHECK(restored == i);
 
                         // roundtrip
@@ -890,7 +916,7 @@ TEST_CASE("BJData")
 
                 SECTION("32768..65535 (uint16)")
                 {
-                    for (uint32_t i :
+                    for (const uint32_t i :
                             {
                                 32768u, 55555u, 65535u
                             })
@@ -898,16 +924,18 @@ TEST_CASE("BJData")
                         CAPTURE(i)
 
                         // create JSON value with unsigned integer number
-                        json j = i;
+                        json const j = i;
 
                         // check type
                         CHECK(j.is_number_unsigned());
 
                         // create expected byte vector
-                        std::vector<uint8_t> expected;
-                        expected.push_back('u');
-                        expected.push_back(static_cast<uint8_t>(i & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 8) & 0xff));
+                        std::vector<uint8_t> const expected
+                        {
+                            'u',
+                            static_cast<uint8_t>(i & 0xff),
+                            static_cast<uint8_t>((i >> 8) & 0xff),
+                        };
 
                         // compare result + size
                         const auto result = json::to_bjdata(j);
@@ -916,7 +944,7 @@ TEST_CASE("BJData")
 
                         // check individual bytes
                         CHECK(result[0] == 'u');
-                        auto restored = static_cast<uint16_t>(static_cast<uint8_t>(result[2]) * 256 + static_cast<uint8_t>(result[1]));
+                        auto const restored = static_cast<uint16_t>(static_cast<uint8_t>(result[2]) * 256 + static_cast<uint8_t>(result[1]));
                         CHECK(restored == i);
 
                         // roundtrip
@@ -926,7 +954,7 @@ TEST_CASE("BJData")
                 }
                 SECTION("65536..2147483647 (int32)")
                 {
-                    for (uint32_t i :
+                    for (const uint32_t i :
                             {
                                 65536u, 77777u, 2147483647u
                             })
@@ -934,18 +962,20 @@ TEST_CASE("BJData")
                         CAPTURE(i)
 
                         // create JSON value with unsigned integer number
-                        json j = i;
+                        json const j = i;
 
                         // check type
                         CHECK(j.is_number_unsigned());
 
                         // create expected byte vector
-                        std::vector<uint8_t> expected;
-                        expected.push_back('l');
-                        expected.push_back(static_cast<uint8_t>(i & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 8) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 16) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 24) & 0xff));
+                        std::vector<uint8_t> const expected
+                        {
+                            'l',
+                            static_cast<uint8_t>(i & 0xff),
+                            static_cast<uint8_t>((i >> 8) & 0xff),
+                            static_cast<uint8_t>((i >> 16) & 0xff),
+                            static_cast<uint8_t>((i >> 24) & 0xff),
+                        };
 
                         // compare result + size
                         const auto result = json::to_bjdata(j);
@@ -954,10 +984,10 @@ TEST_CASE("BJData")
 
                         // check individual bytes
                         CHECK(result[0] == 'l');
-                        uint32_t restored = (static_cast<uint32_t>(result[4]) << 030) +
-                                            (static_cast<uint32_t>(result[3]) << 020) +
-                                            (static_cast<uint32_t>(result[2]) << 010) +
-                                            static_cast<uint32_t>(result[1]);
+                        uint32_t const restored = (static_cast<uint32_t>(result[4]) << 030) +
+                                                  (static_cast<uint32_t>(result[3]) << 020) +
+                                                  (static_cast<uint32_t>(result[2]) << 010) +
+                                                  static_cast<uint32_t>(result[1]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -968,7 +998,7 @@ TEST_CASE("BJData")
 
                 SECTION("2147483648..4294967295 (uint32)")
                 {
-                    for (uint32_t i :
+                    for (const uint32_t i :
                             {
                                 2147483648u, 3333333333u, 4294967295u
                             })
@@ -976,18 +1006,20 @@ TEST_CASE("BJData")
                         CAPTURE(i)
 
                         // create JSON value with unsigned integer number
-                        json j = i;
+                        json const j = i;
 
                         // check type
                         CHECK(j.is_number_unsigned());
 
                         // create expected byte vector
-                        std::vector<uint8_t> expected;
-                        expected.push_back('m');
-                        expected.push_back(static_cast<uint8_t>(i & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 8) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 16) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 24) & 0xff));
+                        std::vector<uint8_t> const expected
+                        {
+                            'm',
+                            static_cast<uint8_t>(i & 0xff),
+                            static_cast<uint8_t>((i >> 8) & 0xff),
+                            static_cast<uint8_t>((i >> 16) & 0xff),
+                            static_cast<uint8_t>((i >> 24) & 0xff),
+                        };
 
                         // compare result + size
                         const auto result = json::to_bjdata(j);
@@ -996,10 +1028,10 @@ TEST_CASE("BJData")
 
                         // check individual bytes
                         CHECK(result[0] == 'm');
-                        uint32_t restored = (static_cast<uint32_t>(result[4]) << 030) +
-                                            (static_cast<uint32_t>(result[3]) << 020) +
-                                            (static_cast<uint32_t>(result[2]) << 010) +
-                                            static_cast<uint32_t>(result[1]);
+                        uint32_t const restored = (static_cast<uint32_t>(result[4]) << 030) +
+                                                  (static_cast<uint32_t>(result[3]) << 020) +
+                                                  (static_cast<uint32_t>(result[2]) << 010) +
+                                                  static_cast<uint32_t>(result[1]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -1011,27 +1043,29 @@ TEST_CASE("BJData")
                 SECTION("4294967296..9223372036854775807 (int64)")
                 {
                     std::vector<uint64_t> const v = {4294967296ul, 9223372036854775807ul};
-                    for (uint64_t i : v)
+                    for (const uint64_t i : v)
                     {
                         CAPTURE(i)
 
                         // create JSON value with integer number
-                        json j = i;
+                        json const j = i;
 
                         // check type
                         CHECK(j.is_number_unsigned());
 
                         // create expected byte vector
-                        std::vector<uint8_t> expected;
-                        expected.push_back('L');
-                        expected.push_back(static_cast<uint8_t>(i & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 010) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 020) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 030) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 040) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 050) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 060) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 070) & 0xff));
+                        std::vector<uint8_t> const expected
+                        {
+                            'L',
+                            static_cast<uint8_t>(i & 0xff),
+                            static_cast<uint8_t>((i >> 010) & 0xff),
+                            static_cast<uint8_t>((i >> 020) & 0xff),
+                            static_cast<uint8_t>((i >> 030) & 0xff),
+                            static_cast<uint8_t>((i >> 040) & 0xff),
+                            static_cast<uint8_t>((i >> 050) & 0xff),
+                            static_cast<uint8_t>((i >> 060) & 0xff),
+                            static_cast<uint8_t>((i >> 070) & 0xff),
+                        };
 
                         // compare result + size
                         const auto result = json::to_bjdata(j);
@@ -1040,14 +1074,14 @@ TEST_CASE("BJData")
 
                         // check individual bytes
                         CHECK(result[0] == 'L');
-                        uint64_t restored = (static_cast<uint64_t>(result[8]) << 070) +
-                                            (static_cast<uint64_t>(result[7]) << 060) +
-                                            (static_cast<uint64_t>(result[6]) << 050) +
-                                            (static_cast<uint64_t>(result[5]) << 040) +
-                                            (static_cast<uint64_t>(result[4]) << 030) +
-                                            (static_cast<uint64_t>(result[3]) << 020) +
-                                            (static_cast<uint64_t>(result[2]) << 010) +
-                                            static_cast<uint64_t>(result[1]);
+                        uint64_t const restored = (static_cast<uint64_t>(result[8]) << 070) +
+                                                  (static_cast<uint64_t>(result[7]) << 060) +
+                                                  (static_cast<uint64_t>(result[6]) << 050) +
+                                                  (static_cast<uint64_t>(result[5]) << 040) +
+                                                  (static_cast<uint64_t>(result[4]) << 030) +
+                                                  (static_cast<uint64_t>(result[3]) << 020) +
+                                                  (static_cast<uint64_t>(result[2]) << 010) +
+                                                  static_cast<uint64_t>(result[1]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -1059,27 +1093,29 @@ TEST_CASE("BJData")
                 SECTION("9223372036854775808..18446744073709551615 (uint64)")
                 {
                     std::vector<uint64_t> const v = {9223372036854775808ull, 18446744073709551615ull};
-                    for (uint64_t i : v)
+                    for (const uint64_t i : v)
                     {
                         CAPTURE(i)
 
                         // create JSON value with integer number
-                        json j = i;
+                        json const j = i;
 
                         // check type
                         CHECK(j.is_number_unsigned());
 
                         // create expected byte vector
-                        std::vector<uint8_t> expected;
-                        expected.push_back('M');
-                        expected.push_back(static_cast<uint8_t>(i & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 010) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 020) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 030) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 040) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 050) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 060) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 070) & 0xff));
+                        std::vector<uint8_t> const expected
+                        {
+                            'M',
+                            static_cast<uint8_t>(i & 0xff),
+                            static_cast<uint8_t>((i >> 010) & 0xff),
+                            static_cast<uint8_t>((i >> 020) & 0xff),
+                            static_cast<uint8_t>((i >> 030) & 0xff),
+                            static_cast<uint8_t>((i >> 040) & 0xff),
+                            static_cast<uint8_t>((i >> 050) & 0xff),
+                            static_cast<uint8_t>((i >> 060) & 0xff),
+                            static_cast<uint8_t>((i >> 070) & 0xff),
+                        };
 
                         // compare result + size
                         const auto result = json::to_bjdata(j);
@@ -1088,14 +1124,14 @@ TEST_CASE("BJData")
 
                         // check individual bytes
                         CHECK(result[0] == 'M');
-                        uint64_t restored = (static_cast<uint64_t>(result[8]) << 070) +
-                                            (static_cast<uint64_t>(result[7]) << 060) +
-                                            (static_cast<uint64_t>(result[6]) << 050) +
-                                            (static_cast<uint64_t>(result[5]) << 040) +
-                                            (static_cast<uint64_t>(result[4]) << 030) +
-                                            (static_cast<uint64_t>(result[3]) << 020) +
-                                            (static_cast<uint64_t>(result[2]) << 010) +
-                                            static_cast<uint64_t>(result[1]);
+                        uint64_t const restored = (static_cast<uint64_t>(result[8]) << 070) +
+                                                  (static_cast<uint64_t>(result[7]) << 060) +
+                                                  (static_cast<uint64_t>(result[6]) << 050) +
+                                                  (static_cast<uint64_t>(result[5]) << 040) +
+                                                  (static_cast<uint64_t>(result[4]) << 030) +
+                                                  (static_cast<uint64_t>(result[3]) << 020) +
+                                                  (static_cast<uint64_t>(result[2]) << 010) +
+                                                  static_cast<uint64_t>(result[1]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -1109,7 +1145,7 @@ TEST_CASE("BJData")
                 SECTION("3.1415925")
                 {
                     double v = 3.1415925;
-                    json j = v;
+                    json const j = v;
                     std::vector<uint8_t> expected =
                     {
                         'D', 0xfc, 0xde, 0xa6, 0x3f, 0xfb, 0x21, 0x09, 0x40
@@ -1297,7 +1333,7 @@ TEST_CASE("BJData")
 
                     // create JSON value with string containing of N * 'x'
                     const auto s = std::string(N, 'x');
-                    json j = s;
+                    json const j = s;
 
                     // create expected byte vector
                     std::vector<uint8_t> expected;
@@ -1333,7 +1369,7 @@ TEST_CASE("BJData")
 
                     // create JSON value with string containing of N * 'x'
                     const auto s = std::string(N, 'x');
-                    json j = s;
+                    json const j = s;
 
                     // create expected byte vector
                     std::vector<uint8_t> expected;
@@ -1360,7 +1396,7 @@ TEST_CASE("BJData")
 
             SECTION("N = 256..32767")
             {
-                for (size_t N :
+                for (const size_t N :
                         {
                             256u, 999u, 1025u, 3333u, 2048u, 32767u
                         })
@@ -1369,7 +1405,7 @@ TEST_CASE("BJData")
 
                     // create JSON value with string containing of N * 'x'
                     const auto s = std::string(N, 'x');
-                    json j = s;
+                    json const j = s;
 
                     // create expected byte vector (hack: create string first)
                     std::vector<uint8_t> expected(N, 'x');
@@ -1394,7 +1430,7 @@ TEST_CASE("BJData")
 
             SECTION("N = 32768..65535")
             {
-                for (size_t N :
+                for (const size_t N :
                         {
                             32768u, 55555u, 65535u
                         })
@@ -1403,7 +1439,7 @@ TEST_CASE("BJData")
 
                     // create JSON value with string containing of N * 'x'
                     const auto s = std::string(N, 'x');
-                    json j = s;
+                    json const j = s;
 
                     // create expected byte vector (hack: create string first)
                     std::vector<uint8_t> expected(N, 'x');
@@ -1428,7 +1464,7 @@ TEST_CASE("BJData")
 
             SECTION("N = 65536..2147483647")
             {
-                for (size_t N :
+                for (const size_t N :
                         {
                             65536u, 77777u, 1048576u
                         })
@@ -1437,7 +1473,7 @@ TEST_CASE("BJData")
 
                     // create JSON value with string containing of N * 'x'
                     const auto s = std::string(N, 'x');
-                    json j = s;
+                    json const j = s;
 
                     // create expected byte vector (hack: create string first)
                     std::vector<uint8_t> expected(N, 'x');
@@ -1556,7 +1592,7 @@ TEST_CASE("BJData")
 
             SECTION("N = 256..32767")
             {
-                for (std::size_t N :
+                for (const std::size_t N :
                         {
                             256u, 999u, 1025u, 3333u, 2048u, 32767u
                         })
@@ -1593,7 +1629,7 @@ TEST_CASE("BJData")
 
             SECTION("N = 32768..65535")
             {
-                for (std::size_t N :
+                for (const std::size_t N :
                         {
                             32768u, 55555u, 65535u
                         })
@@ -1630,7 +1666,7 @@ TEST_CASE("BJData")
 
             SECTION("N = 65536..2147483647")
             {
-                for (std::size_t N :
+                for (const std::size_t N :
                         {
                             65536u, 77777u, 1048576u
                         })
@@ -1731,7 +1767,7 @@ TEST_CASE("BJData")
             {
                 SECTION("size=false type=false")
                 {
-                    json j = json::array();
+                    json const j = json::array();
                     std::vector<uint8_t> expected = {'[', ']'};
                     const auto result = json::to_bjdata(j);
                     CHECK(result == expected);
@@ -1743,7 +1779,7 @@ TEST_CASE("BJData")
 
                 SECTION("size=true type=false")
                 {
-                    json j = json::array();
+                    json const j = json::array();
                     std::vector<uint8_t> expected = {'[', '#', 'i', 0};
                     const auto result = json::to_bjdata(j, true);
                     CHECK(result == expected);
@@ -1755,7 +1791,7 @@ TEST_CASE("BJData")
 
                 SECTION("size=true type=true")
                 {
-                    json j = json::array();
+                    json const j = json::array();
                     std::vector<uint8_t> expected = {'[', '#', 'i', 0};
                     const auto result = json::to_bjdata(j, true, true);
                     CHECK(result == expected);
@@ -1770,7 +1806,7 @@ TEST_CASE("BJData")
             {
                 SECTION("size=false type=false")
                 {
-                    json j = {nullptr};
+                    json const j = {nullptr};
                     std::vector<uint8_t> expected = {'[', 'Z', ']'};
                     const auto result = json::to_bjdata(j);
                     CHECK(result == expected);
@@ -1782,7 +1818,7 @@ TEST_CASE("BJData")
 
                 SECTION("size=true type=false")
                 {
-                    json j = {nullptr};
+                    json const j = {nullptr};
                     std::vector<uint8_t> expected = {'[', '#', 'i', 1, 'Z'};
                     const auto result = json::to_bjdata(j, true);
                     CHECK(result == expected);
@@ -1794,7 +1830,7 @@ TEST_CASE("BJData")
 
                 SECTION("size=true type=true")
                 {
-                    json j = {nullptr};
+                    json const j = {nullptr};
                     std::vector<uint8_t> expected = {'[', '#', 'i', 1, 'Z'};
                     const auto result = json::to_bjdata(j, true, true);
                     CHECK(result == expected);
@@ -1809,7 +1845,7 @@ TEST_CASE("BJData")
             {
                 SECTION("size=false type=false")
                 {
-                    json j = json::parse("[1,2,3,4,5]");
+                    json const j = json::parse("[1,2,3,4,5]");
                     std::vector<uint8_t> expected = {'[', 'i', 1, 'i', 2, 'i', 3, 'i', 4, 'i', 5, ']'};
                     const auto result = json::to_bjdata(j);
                     CHECK(result == expected);
@@ -1821,7 +1857,7 @@ TEST_CASE("BJData")
 
                 SECTION("size=true type=false")
                 {
-                    json j = json::parse("[1,2,3,4,5]");
+                    json const j = json::parse("[1,2,3,4,5]");
                     std::vector<uint8_t> expected = {'[', '#', 'i', 5, 'i', 1, 'i', 2, 'i', 3, 'i', 4, 'i', 5};
                     const auto result = json::to_bjdata(j, true);
                     CHECK(result == expected);
@@ -1833,7 +1869,7 @@ TEST_CASE("BJData")
 
                 SECTION("size=true type=true")
                 {
-                    json j = json::parse("[1,2,3,4,5]");
+                    json const j = json::parse("[1,2,3,4,5]");
                     std::vector<uint8_t> expected = {'[', '$', 'i', '#', 'i', 5, 1, 2, 3, 4, 5};
                     const auto result = json::to_bjdata(j, true, true);
                     CHECK(result == expected);
@@ -1848,7 +1884,7 @@ TEST_CASE("BJData")
             {
                 SECTION("size=false type=false")
                 {
-                    json j = json::parse("[[[[]]]]");
+                    json const j = json::parse("[[[[]]]]");
                     std::vector<uint8_t> expected = {'[', '[', '[', '[', ']', ']', ']', ']'};
                     const auto result = json::to_bjdata(j);
                     CHECK(result == expected);
@@ -1860,7 +1896,7 @@ TEST_CASE("BJData")
 
                 SECTION("size=true type=false")
                 {
-                    json j = json::parse("[[[[]]]]");
+                    json const j = json::parse("[[[[]]]]");
                     std::vector<uint8_t> expected = {'[', '#', 'i', 1, '[', '#', 'i', 1, '[', '#', 'i', 1, '[', '#', 'i', 0};
                     const auto result = json::to_bjdata(j, true);
                     CHECK(result == expected);
@@ -1872,7 +1908,7 @@ TEST_CASE("BJData")
 
                 SECTION("size=true type=true")
                 {
-                    json j = json::parse("[[[[]]]]");
+                    json const j = json::parse("[[[[]]]]");
                     std::vector<uint8_t> expected = {'[', '#', 'i', 1, '[', '#', 'i', 1, '[', '#', 'i', 1, '[', '#', 'i', 0};
                     const auto result = json::to_bjdata(j, true, true);
                     CHECK(result == expected);
@@ -1994,7 +2030,7 @@ TEST_CASE("BJData")
             {
                 SECTION("size=false type=false")
                 {
-                    json j = json::object();
+                    json const j = json::object();
                     std::vector<uint8_t> expected = {'{', '}'};
                     const auto result = json::to_bjdata(j);
                     CHECK(result == expected);
@@ -2006,7 +2042,7 @@ TEST_CASE("BJData")
 
                 SECTION("size=true type=false")
                 {
-                    json j = json::object();
+                    json const j = json::object();
                     std::vector<uint8_t> expected = {'{', '#', 'i', 0};
                     const auto result = json::to_bjdata(j, true);
                     CHECK(result == expected);
@@ -2018,7 +2054,7 @@ TEST_CASE("BJData")
 
                 SECTION("size=true type=true")
                 {
-                    json j = json::object();
+                    json const j = json::object();
                     std::vector<uint8_t> expected = {'{', '#', 'i', 0};
                     const auto result = json::to_bjdata(j, true, true);
                     CHECK(result == expected);
@@ -2033,7 +2069,7 @@ TEST_CASE("BJData")
             {
                 SECTION("size=false type=false")
                 {
-                    json j = {{"", nullptr}};
+                    json const j = {{"", nullptr}};
                     std::vector<uint8_t> expected = {'{', 'i', 0, 'Z', '}'};
                     const auto result = json::to_bjdata(j);
                     CHECK(result == expected);
@@ -2045,7 +2081,7 @@ TEST_CASE("BJData")
 
                 SECTION("size=true type=false")
                 {
-                    json j = {{"", nullptr}};
+                    json const j = {{"", nullptr}};
                     std::vector<uint8_t> expected = {'{', '#', 'i', 1, 'i', 0, 'Z'};
                     const auto result = json::to_bjdata(j, true);
                     CHECK(result == expected);
@@ -2060,7 +2096,7 @@ TEST_CASE("BJData")
             {
                 SECTION("size=false type=false")
                 {
-                    json j = json::parse(R"({"a": {"b": {"c": {}}}})");
+                    json const j = json::parse(R"({"a": {"b": {"c": {}}}})");
                     std::vector<uint8_t> expected =
                     {
                         '{', 'i', 1, 'a', '{', 'i', 1, 'b', '{', 'i', 1, 'c', '{', '}', '}', '}', '}'
@@ -2075,7 +2111,7 @@ TEST_CASE("BJData")
 
                 SECTION("size=true type=false")
                 {
-                    json j = json::parse(R"({"a": {"b": {"c": {}}}})");
+                    json const j = json::parse(R"({"a": {"b": {"c": {}}}})");
                     std::vector<uint8_t> expected =
                     {
                         '{', '#', 'i', 1, 'i', 1, 'a', '{', '#', 'i', 1, 'i', 1, 'b', '{', '#', 'i', 1, 'i', 1, 'c', '{', '#', 'i', 0
@@ -2090,7 +2126,7 @@ TEST_CASE("BJData")
 
                 SECTION("size=true type=true ignore object type marker")
                 {
-                    json j = json::parse(R"({"a": {"b": {"c": {}}}})");
+                    json const j = json::parse(R"({"a": {"b": {"c": {}}}})");
                     std::vector<uint8_t> expected =
                     {
                         '{', '#', 'i', 1, 'i', 1, 'a', '{', '#', 'i', 1, 'i', 1, 'b', '{', '#', 'i', 1, 'i', 1, 'c', '{', '#', 'i', 0
@@ -2662,7 +2698,7 @@ TEST_CASE("BJData")
                 std::vector<uint8_t> const vL = {'[', '#', 'L', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7F};
                 std::vector<uint8_t> const vM = {'[', '$', 'M', '#', '[', 'I', 0x00, 0x20, 'M', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0xFF, ']'};
 
-                json const _;
+                json _;
 #if SIZE_MAX == 0xffffffff
                 CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vL), "[json.exception.out_of_range.408] syntax error while parsing BJData size: integer value overflow", json::out_of_range&);
                 CHECK(json::from_bjdata(vL, true, false).is_discarded());
@@ -3095,7 +3131,7 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
 {
     SECTION("Null Value")
     {
-        json j = {{"passcode", nullptr}};
+        json const j = {{"passcode", nullptr}};
         std::vector<uint8_t> v = {'{', 'i', 8, 'p', 'a', 's', 's', 'c', 'o', 'd', 'e', 'Z', '}'};
         CHECK(json::to_bjdata(j) == v);
         CHECK(json::from_bjdata(v) == j);
@@ -3103,7 +3139,7 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
 
     SECTION("No-Op Value")
     {
-        json j = {"foo", "bar", "baz"};
+        json const j = {"foo", "bar", "baz"};
         std::vector<uint8_t> v = {'[', 'S', 'i', 3, 'f', 'o', 'o',
                                   'S', 'i', 3, 'b', 'a', 'r',
                                   'S', 'i', 3, 'b', 'a', 'z', ']'
@@ -3119,7 +3155,7 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
 
     SECTION("Boolean Types")
     {
-        json j = {{"authorized", true}, {"verified", false}};
+        json const j = {{"authorized", true}, {"verified", false}};
         std::vector<uint8_t> v = {'{', 'i', 10, 'a', 'u', 't', 'h', 'o', 'r', 'i', 'z', 'e', 'd', 'T',
                                   'i', 8, 'v', 'e', 'r', 'i', 'f', 'i', 'e', 'd', 'F', '}'
                                  };
@@ -3159,7 +3195,7 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
 
     SECTION("Char Type")
     {
-        json j = {{"rolecode", "a"}, {"delim", ";"}};
+        json const j = {{"rolecode", "a"}, {"delim", ";"}};
         std::vector<uint8_t> const v = {'{', 'i', 5, 'd', 'e', 'l', 'i', 'm', 'C', ';', 'i', 8, 'r', 'o', 'l', 'e', 'c', 'o', 'd', 'e', 'C', 'a', '}'};
         //CHECK(json::to_bjdata(j) == v);
         CHECK(json::from_bjdata(v) == j);
@@ -3169,7 +3205,7 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
     {
         SECTION("English")
         {
-            json j = "hello";
+            json const j = "hello";
             std::vector<uint8_t> v = {'S', 'i', 5, 'h', 'e', 'l', 'l', 'o'};
             CHECK(json::to_bjdata(j) == v);
             CHECK(json::from_bjdata(v) == j);
@@ -3177,7 +3213,7 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
 
         SECTION("Russian")
         {
-            json j = "привет";
+            json const j = "привет";
             std::vector<uint8_t> v = {'S', 'i', 12, 0xD0, 0xBF, 0xD1, 0x80, 0xD0, 0xB8, 0xD0, 0xB2, 0xD0, 0xB5, 0xD1, 0x82};
             CHECK(json::to_bjdata(j) == v);
             CHECK(json::from_bjdata(v) == j);
@@ -3185,7 +3221,7 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
 
         SECTION("Russian")
         {
-            json j = "مرحبا";
+            json const j = "مرحبا";
             std::vector<uint8_t> v = {'S', 'i', 10, 0xD9, 0x85, 0xD8, 0xB1, 0xD8, 0xAD, 0xD8, 0xA8, 0xD8, 0xA7};
             CHECK(json::to_bjdata(j) == v);
             CHECK(json::from_bjdata(v) == j);
@@ -3197,7 +3233,7 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
         SECTION("size=false type=false")
         {
             // note the float has been replaced by a double
-            json j = {nullptr, true, false, 4782345193, 153.132, "ham"};
+            json const j = {nullptr, true, false, 4782345193, 153.132, "ham"};
             std::vector<uint8_t> v = {'[', 'Z', 'T', 'F', 'L', 0xE9, 0xCB, 0x0C, 0x1D, 0x01, 0x00, 0x00, 0x00, 'D', 0x4e, 0x62, 0x10, 0x58, 0x39, 0x24, 0x63, 0x40, 'S', 'i', 3, 'h', 'a', 'm', ']'};
             CHECK(json::to_bjdata(j) == v);
             CHECK(json::from_bjdata(v) == j);
@@ -3206,7 +3242,7 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
         SECTION("size=true type=false")
         {
             // note the float has been replaced by a double
-            json j = {nullptr, true, false, 4782345193, 153.132, "ham"};
+            json const j = {nullptr, true, false, 4782345193, 153.132, "ham"};
             std::vector<uint8_t> v = {'[', '#', 'i', 6, 'Z', 'T', 'F', 'L', 0xE9, 0xCB, 0x0C, 0x1D, 0x01, 0x00, 0x00, 0x00, 'D', 0x4e, 0x62, 0x10, 0x58, 0x39, 0x24, 0x63, 0x40, 'S', 'i', 3, 'h', 'a', 'm'};
             CHECK(json::to_bjdata(j, true) == v);
             CHECK(json::from_bjdata(v) == j);
@@ -3215,7 +3251,7 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
         SECTION("size=true type=true")
         {
             // note the float has been replaced by a double
-            json j = {nullptr, true, false, 4782345193, 153.132, "ham"};
+            json const j = {nullptr, true, false, 4782345193, 153.132, "ham"};
             std::vector<uint8_t> v = {'[', '#', 'i', 6, 'Z', 'T', 'F', 'L', 0xE9, 0xCB, 0x0C, 0x1D, 0x01, 0x00, 0x00, 0x00, 'D', 0x4e, 0x62, 0x10, 0x58, 0x39, 0x24, 0x63, 0x40, 'S', 'i', 3, 'h', 'a', 'm'};
             CHECK(json::to_bjdata(j, true, true) == v);
             CHECK(json::from_bjdata(v) == j);
@@ -3302,7 +3338,7 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
             SECTION("No Optimization")
             {
                 // note the floats have been replaced by doubles
-                json j = {29.97, 31.13, 67.0, 2.113, 23.888};
+                json const j = {29.97, 31.13, 67.0, 2.113, 23.888};
                 std::vector<uint8_t> v = {'[',
                                           'D', 0xb8, 0x1e, 0x85, 0xeb, 0x51, 0xf8, 0x3d, 0x40,
                                           'D', 0xe1, 0x7a, 0x14, 0xae, 0x47, 0x21, 0x3f, 0x40,
@@ -3318,7 +3354,7 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
             SECTION("Optimized with count")
             {
                 // note the floats have been replaced by doubles
-                json j = {29.97, 31.13, 67.0, 2.113, 23.888};
+                json const j = {29.97, 31.13, 67.0, 2.113, 23.888};
                 std::vector<uint8_t> v = {'[', '#', 'i', 5,
                                           'D', 0xb8, 0x1e, 0x85, 0xeb, 0x51, 0xf8, 0x3d, 0x40,
                                           'D', 0xe1, 0x7a, 0x14, 0xae, 0x47, 0x21, 0x3f, 0x40,
@@ -3333,7 +3369,7 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
             SECTION("Optimized with type & count")
             {
                 // note the floats have been replaced by doubles
-                json j = {29.97, 31.13, 67.0, 2.113, 23.888};
+                json const j = {29.97, 31.13, 67.0, 2.113, 23.888};
                 std::vector<uint8_t> v = {'[', '$', 'D', '#', 'i', 5,
                                           0xb8, 0x1e, 0x85, 0xeb, 0x51, 0xf8, 0x3d, 0x40,
                                           0xe1, 0x7a, 0x14, 0xae, 0x47, 0x21, 0x3f, 0x40,
@@ -3351,7 +3387,7 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
             SECTION("No Optimization")
             {
                 // note the floats have been replaced by doubles
-                json j = { {"lat", 29.976}, {"long", 31.131}, {"alt", 67.0} };
+                json const j = { {"lat", 29.976}, {"long", 31.131}, {"alt", 67.0} };
                 std::vector<uint8_t> v = {'{',
                                           'i', 3, 'a', 'l', 't', 'D',      0x00, 0x00, 0x00, 0x00, 0x00, 0xc0, 0x50, 0x40,
                                           'i', 3, 'l', 'a', 't', 'D',      0x60, 0xe5, 0xd0, 0x22, 0xdb, 0xf9, 0x3d, 0x40,
@@ -3365,7 +3401,7 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
             SECTION("Optimized with count")
             {
                 // note the floats have been replaced by doubles
-                json j = { {"lat", 29.976}, {"long", 31.131}, {"alt", 67.0} };
+                json const j = { {"lat", 29.976}, {"long", 31.131}, {"alt", 67.0} };
                 std::vector<uint8_t> v = {'{', '#', 'i', 3,
                                           'i', 3, 'a', 'l', 't', 'D',      0x00, 0x00, 0x00, 0x00, 0x00, 0xc0, 0x50, 0x40,
                                           'i', 3, 'l', 'a', 't', 'D',      0x60, 0xe5, 0xd0, 0x22, 0xdb, 0xf9, 0x3d, 0x40,
@@ -3378,7 +3414,7 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
             SECTION("Optimized with type & count")
             {
                 // note the floats have been replaced by doubles
-                json j = { {"lat", 29.976}, {"long", 31.131}, {"alt", 67.0} };
+                json const j = { {"lat", 29.976}, {"long", 31.131}, {"alt", 67.0} };
                 std::vector<uint8_t> v = {'{', '$', 'D', '#', 'i', 3,
                                           'i', 3, 'a', 'l', 't',      0x00, 0x00, 0x00, 0x00, 0x00, 0xc0, 0x50, 0x40,
                                           'i', 3, 'l', 'a', 't',      0x60, 0xe5, 0xd0, 0x22, 0xdb, 0xf9, 0x3d, 0x40,
@@ -3450,7 +3486,7 @@ TEST_CASE("BJData roundtrips" * doctest::skip())
 {
     SECTION("input from self-generated BJData files")
     {
-        for (std::string filename :
+        for (const std::string filename :
                 {
                     TEST_DATA_DIRECTORY "/json_nlohmann_tests/all_unicode.json",
                     TEST_DATA_DIRECTORY "/json.org/1.json",
