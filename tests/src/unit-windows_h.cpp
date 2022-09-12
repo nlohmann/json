@@ -7,6 +7,8 @@
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
+#undef WIN32_LEAN_AND_MEAN
+#undef NOMINMAX
 
 #ifdef _WIN32
     #include <windows.h>
