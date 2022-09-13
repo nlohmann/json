@@ -17,6 +17,7 @@ using nlohmann::json;
 #include <fstream>
 #include <sstream>
 #include <iomanip>
+#include <limits>
 #include <set>
 #include "make_test_data_available.hpp"
 #include "test_utils.hpp"
@@ -526,7 +527,7 @@ TEST_CASE("MessagePack")
                 {
                     std::vector<int64_t> const numbers
                     {
-                        INT64_MIN,
+                        (std::numeric_limits<int64_t>::min)(),
                         -2147483649LL,
                     };
                     for (auto i : numbers)

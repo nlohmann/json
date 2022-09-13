@@ -15,6 +15,7 @@ using nlohmann::json;
 #include <sstream>
 #include <iomanip>
 #include <iostream>
+#include <limits>
 #include <set>
 #include "make_test_data_available.hpp"
 #include "test_utils.hpp"
@@ -174,7 +175,7 @@ TEST_CASE("CBOR")
                 {
                     const std::vector<int64_t> numbers
                     {
-                        INT64_MIN,
+                        (std::numeric_limits<int64_t>::min)(),
                         -1000000000000000000,
                         -100000000000000000,
                         -10000000000000000,

@@ -21,6 +21,7 @@ using nlohmann::json;
 #include <fstream>
 #include <sstream>
 #include <list>
+#include <limits>
 #include <cstdio>
 #include "make_test_data_available.hpp"
 
@@ -877,12 +878,12 @@ TEST_CASE("regression tests 1")
         // original test case
         json const j1 = json::parse("-9223372036854775808");
         CHECK(j1.is_number_integer());
-        CHECK(j1.get<json::number_integer_t>() == INT64_MIN);
+        CHECK(j1.get<json::number_integer_t>() == (std::numeric_limits<std::int64_t>::min)());
 
         // edge case (+1; still an integer)
         json const j2 = json::parse("-9223372036854775807");
         CHECK(j2.is_number_integer());
-        CHECK(j2.get<json::number_integer_t>() == INT64_MIN + 1);
+        CHECK(j2.get<json::number_integer_t>() == (std::numeric_limits<std::int64_t>::min)() + 1);
 
         // edge case (-1; overflow -> floats)
         json const j3 = json::parse("-9223372036854775809");
