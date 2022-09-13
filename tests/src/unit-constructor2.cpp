@@ -83,7 +83,7 @@ TEST_CASE("other constructors and destructor")
     {
         json j {{"foo", "bar"}, {"baz", {1, 2, 3, 4}}, {"a", 42u}, {"b", 42.23}, {"c", nullptr}};
         CHECK(j.type() == json::value_t::object);
-        json k(std::move(j));
+        const json k(std::move(j));
         CHECK(k.type() == json::value_t::object);
         CHECK(j.type() == json::value_t::null); // NOLINT: access after move is OK here
     }

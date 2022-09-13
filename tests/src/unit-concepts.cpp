@@ -57,7 +57,7 @@ TEST_CASE("concepts")
 
         // the expression "X u" has the post-condition "u.empty()"
         {
-            json u;
+            const json u;
             CHECK(u.empty());
         }
 

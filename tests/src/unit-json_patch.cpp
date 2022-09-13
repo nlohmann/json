@@ -35,13 +35,13 @@ TEST_CASE("JSON patch")
 
         SECTION("4.1 add")
         {
-            json patch1 = R"([{ "op": "add", "path": "/a/b", "value": [ "foo", "bar" ] }])"_json;
+            json const patch1 = R"([{ "op": "add", "path": "/a/b", "value": [ "foo", "bar" ] }])"_json;
 
             // However, the object itself or an array containing it does need
             // to exist, and it remains an error for that not to be the case.
             // For example, an "add" with a target location of "/a/b" starting
             // with this document
-            json doc1 = R"({ "a": { "foo": 1 } })"_json;
+            json const doc1 = R"({ "a": { "foo": 1 } })"_json;
 
             // is not an error, because "a" exists, and "b" will be added to
             // its value.
@@ -57,13 +57,13 @@ TEST_CASE("JSON patch")
             CHECK(doc1.patch(patch1) == doc1_ans);
 
             // It is an error in this document:
-            json doc2 = R"({ "q": { "bar": 2 } })"_json;
+            json const doc2 = R"({ "q": { "bar": 2 } })"_json;
 
             // because "a" does not exist.
             CHECK_THROWS_WITH_AS(doc2.patch(patch1), "[json.exception.out_of_range.403] key 'a' not found", json::out_of_range&);
 
-            json doc3 = R"({ "a": {} })"_json;
-            json patch2 = R"([{ "op": "add", "path": "/a/b/c", "value": 1 }])"_json;
+            json const doc3 = R"({ "a": {} })"_json;
+            json const patch2 = R"([{ "op": "add", "path": "/a/b/c", "value": 1 }])"_json;
 
             // should cause an error because "b" does not exist in doc3
 #if JSON_DIAGNOSTICS
@@ -77,20 +77,20 @@ TEST_CASE("JSON patch")
         {
             // If removing an element from an array, any elements above the
             // specified index are shifted one position to the left.
-            json doc = {1, 2, 3, 4};
-            json patch = {{{"op", "remove"}, {"path", "/1"}}};
+            json const doc = {1, 2, 3, 4};
+            json const patch = {{{"op", "remove"}, {"path", "/1"}}};
             CHECK(doc.patch(patch) == json({1, 3, 4}));
         }
 
         SECTION("A.1. Adding an Object Member")
         {
             // An example target JSON document:
-            json doc = R"(
+            json const doc = R"(
                     { "foo": "bar"}
                 )"_json;
 
             // A JSON Patch document:
-            json patch = R"(
+            json const patch = R"(
                     [
                         { "op": "add", "path": "/baz", "value": "qux" }
                     ]
@@ -114,12 +114,12 @@ TEST_CASE("JSON patch")
         SECTION("A.2. Adding an Array Element")
         {
             // An example target JSON document:
-            json doc = R"(
+            json const doc = R"(
                     { "foo": [ "bar", "baz" ] }
                 )"_json;
 
             // A JSON Patch document:
-            json patch = R"(
+            json const patch = R"(
                     [
                         { "op": "add", "path": "/foo/1", "value": "qux" }
                     ]
@@ -140,7 +140,7 @@ TEST_CASE("JSON patch")
         SECTION("A.3. Removing an Object Member")
         {
             // An example target JSON document:
-            json doc = R"(
+            json const doc = R"(
                     {
                         "baz": "qux",
                         "foo": "bar"
@@ -148,7 +148,7 @@ TEST_CASE("JSON patch")
                 )"_json;
 
             // A JSON Patch document:
-            json patch = R"(
+            json const patch = R"(
                     [
                         { "op": "remove", "path": "/baz" }
                     ]
@@ -169,12 +169,12 @@ TEST_CASE("JSON patch")
         SECTION("A.4. Removing an Array Element")
         {
             // An example target JSON document:
-            json doc = R"(
+            json const doc = R"(
                     { "foo": [ "bar", "qux", "baz" ] }
                 )"_json;
 
             // A JSON Patch document:
-            json patch = R"(
+            json const patch = R"(
                     [
                         { "op": "remove", "path": "/foo/1" }
                     ]
@@ -195,7 +195,7 @@ TEST_CASE("JSON patch")
         SECTION("A.5. Replacing a Value")
         {
             // An example target JSON document:
-            json doc = R"(
+            json const doc = R"(
                     {
                         "baz": "qux",
                         "foo": "bar"
@@ -203,7 +203,7 @@ TEST_CASE("JSON patch")
                 )"_json;
 
             // A JSON Patch document:
-            json patch = R"(
+            json const patch = R"(
                     [
                         { "op": "replace", "path": "/baz", "value": "boo" }
                     ]
@@ -226,7 +226,7 @@ TEST_CASE("JSON patch")
         SECTION("A.6. Moving a Value")
         {
             // An example target JSON document:
-            json doc = R"(
+            json const doc = R"(
                     {
                         "foo": {
                            "bar": "baz",
@@ -239,7 +239,7 @@ TEST_CASE("JSON patch")
                 )"_json;
 
             // A JSON Patch document:
-            json patch = R"(
+            json const patch = R"(
                     [
                         { "op": "move", "from": "/foo/waldo", "path": "/qux/thud" }
                     ]
@@ -268,12 +268,12 @@ TEST_CASE("JSON patch")
         SECTION("A.7. Moving a Value")
         {
             // An example target JSON document:
-            json doc = R"(
+            json const doc = R"(
                     { "foo": [ "all", "grass", "cows", "eat" ] }
                 )"_json;
 
             // A JSON Patch document:
-            json patch = R"(
+            json const patch = R"(
                     [
                         { "op": "move", "from": "/foo/1", "path": "/foo/3" }
                     ]
@@ -302,7 +302,7 @@ TEST_CASE("JSON patch")
                 )"_json;
 
             // A JSON Patch document that will result in successful evaluation:
-            json patch = R"(
+            json const patch = R"(
                     [
                         { "op": "test", "path": "/baz", "value": "qux" },
                         { "op": "test", "path": "/foo/1", "value": 2 }
@@ -318,7 +318,7 @@ TEST_CASE("JSON patch")
         SECTION("A.9. Testing a Value: Error")
         {
             // An example target JSON document:
-            json doc = R"(
+            json const doc = R"(
                     { "baz": "qux" }
                 )"_json;
 
@@ -341,12 +341,12 @@ TEST_CASE("JSON patch")
         SECTION("A.10. Adding a Nested Member Object")
         {
             // An example target JSON document:
-            json doc = R"(
+            json const doc = R"(
                     { "foo": "bar" }
                 )"_json;
 
             // A JSON Patch document:
-            json patch = R"(
+            json const patch = R"(
                     [
                         { "op": "add", "path": "/child", "value": { "grandchild": { } } }
                     ]
@@ -373,12 +373,12 @@ TEST_CASE("JSON patch")
         SECTION("A.11. Ignoring Unrecognized Elements")
         {
             // An example target JSON document:
-            json doc = R"(
+            json const doc = R"(
                     { "foo": "bar" }
                 )"_json;
 
             // A JSON Patch document:
-            json patch = R"(
+            json const patch = R"(
                     [
                         { "op": "add", "path": "/baz", "value": "qux", "xyz": 123 }
                     ]
@@ -401,12 +401,12 @@ TEST_CASE("JSON patch")
         SECTION("A.12. Adding to a Nonexistent Target")
         {
             // An example target JSON document:
-            json doc = R"(
+            json const doc = R"(
                     { "foo": "bar" }
                 )"_json;
 
             // A JSON Patch document:
-            json patch = R"(
+            json const patch = R"(
                     [
                         { "op": "add", "path": "/baz/bat", "value": "qux" }
                     ]
@@ -427,7 +427,7 @@ TEST_CASE("JSON patch")
         SECTION("A.14. Escape Ordering")
         {
             // An example target JSON document:
-            json doc = R"(
+            json const doc = R"(
                     {
                         "/": 9,
                         "~1": 10
@@ -435,7 +435,7 @@ TEST_CASE("JSON patch")
                 )"_json;
 
             // A JSON Patch document:
-            json patch = R"(
+            json const patch = R"(
                     [
                         {"op": "test", "path": "/~01", "value": 10}
                     ]
@@ -458,7 +458,7 @@ TEST_CASE("JSON patch")
         SECTION("A.15. Comparing Strings and Numbers")
         {
             // An example target JSON document:
-            json doc = R"(
+            json const doc = R"(
                     {
                         "/": 9,
                         "~1": 10
@@ -484,12 +484,12 @@ TEST_CASE("JSON patch")
         SECTION("A.16. Adding an Array Value")
         {
             // An example target JSON document:
-            json doc = R"(
+            json const doc = R"(
                     { "foo": ["bar"] }
                 )"_json;
 
             // A JSON Patch document:
-            json patch = R"(
+            json const patch = R"(
                     [
                         { "op": "add", "path": "/foo/-", "value": ["abc", "def"] }
                     ]
@@ -519,10 +519,10 @@ TEST_CASE("JSON patch")
                 // document.
 
                 // An example target JSON document:
-                json doc = 17;
+                json const doc = 17;
 
                 // A JSON Patch document:
-                json patch = R"(
+                json const patch = R"(
                         [
                             { "op": "add", "path": "", "value": [1,2,3] }
                         ]
@@ -545,10 +545,10 @@ TEST_CASE("JSON patch")
                 // exactly the number of elements in the array which is legal.
 
                 // An example target JSON document:
-                json doc = {0, 1, 2};
+                json const doc = {0, 1, 2};
 
                 // A JSON Patch document:
-                json patch = R"(
+                json const patch = R"(
                     [
                         { "op": "add", "path": "/3", "value": 3 }
                     ]
@@ -568,7 +568,7 @@ TEST_CASE("JSON patch")
         SECTION("copy")
         {
             // An example target JSON document:
-            json doc = R"(
+            json const doc = R"(
                 {
                     "foo": {
                         "bar": "baz",
@@ -581,7 +581,7 @@ TEST_CASE("JSON patch")
             )"_json;
 
             // A JSON Patch document:
-            json patch = R"(
+            json const patch = R"(
                 [
                     { "op": "copy", "from": "/foo/waldo", "path": "/qux/thud" }
                 ]
@@ -610,8 +610,8 @@ TEST_CASE("JSON patch")
 
         SECTION("replace")
         {
-            json j = "string";
-            json patch = {{{"op", "replace"}, {"path", ""}, {"value", 1}}};
+            json const j = "string";
+            json const patch = {{{"op", "replace"}, {"path", ""}, {"value", 1}}};
             CHECK(j.patch(patch) == json(1));
         }
 
@@ -619,12 +619,12 @@ TEST_CASE("JSON patch")
         {
             {
                 // a JSON patch
-                json p1 = R"(
+                json const p1 = R"(
                      [{"op": "add", "path": "/GB", "value": "London"}]
                     )"_json;
 
                 // a JSON value
-                json source = R"(
+                json const source = R"(
                       {"D": "Berlin", "F": "Paris"}
                     )"_json;
 
@@ -665,15 +665,15 @@ TEST_CASE("JSON patch")
         {
             SECTION("not an array")
             {
-                json j;
-                json patch = {{"op", "add"}, {"path", ""}, {"value", 1}};
+                json const j;
+                json const patch = {{"op", "add"}, {"path", ""}, {"value", 1}};
                 CHECK_THROWS_WITH_AS(j.patch(patch), "[json.exception.parse_error.104] parse error: JSON patch must be an array of objects", json::parse_error&);
             }
 
             SECTION("not an array of objects")
             {
-                json j;
-                json patch = {"op", "add", "path", "", "value", 1};
+                json const j;
+                json const patch = {"op", "add", "path", "", "value", 1};
 #if JSON_DIAGNOSTICS
                 CHECK_THROWS_WITH_AS(j.patch(patch), "[json.exception.parse_error.104] parse error: (/0) JSON patch must be an array of objects", json::parse_error&);
 #else
@@ -683,8 +683,8 @@ TEST_CASE("JSON patch")
 
             SECTION("missing 'op'")
             {
-                json j;
-                json patch = {{{"foo", "bar"}}};
+                json const j;
+                json const patch = {{{"foo", "bar"}}};
 #if JSON_DIAGNOSTICS
                 CHECK_THROWS_WITH_AS(j.patch(patch), "[json.exception.parse_error.105] parse error: (/0) operation must have member 'op'", json::parse_error&);
 #else
@@ -694,8 +694,8 @@ TEST_CASE("JSON patch")
 
             SECTION("non-string 'op'")
             {
-                json j;
-                json patch = {{{"op", 1}}};
+                json const j;
+                json const patch = {{{"op", 1}}};
 #if JSON_DIAGNOSTICS
                 CHECK_THROWS_WITH_AS(j.patch(patch), "[json.exception.parse_error.105] parse error: (/0) operation must have string member 'op'", json::parse_error&);
 #else
@@ -705,8 +705,8 @@ TEST_CASE("JSON patch")
 
             SECTION("invalid operation")
             {
-                json j;
-                json patch = {{{"op", "foo"}, {"path", ""}}};
+                json const j;
+                json const patch = {{{"op", "foo"}, {"path", ""}}};
 #if JSON_DIAGNOSTICS
                 CHECK_THROWS_WITH_AS(j.patch(patch), "[json.exception.parse_error.105] parse error: (/0) operation value 'foo' is invalid", json::parse_error&);
 #else
@@ -719,8 +719,8 @@ TEST_CASE("JSON patch")
         {
             SECTION("missing 'path'")
             {
-                json j;
-                json patch = {{{"op", "add"}}};
+                json const j;
+                json const patch = {{{"op", "add"}}};
 #if JSON_DIAGNOSTICS
                 CHECK_THROWS_WITH_AS(j.patch(patch), "[json.exception.parse_error.105] parse error: (/0) operation 'add' must have member 'path'", json::parse_error&);
 #else
@@ -730,8 +730,8 @@ TEST_CASE("JSON patch")
 
             SECTION("non-string 'path'")
             {
-                json j;
-                json patch = {{{"op", "add"}, {"path", 1}}};
+                json const j;
+                json const patch = {{{"op", "add"}, {"path", 1}}};
 #if JSON_DIAGNOSTICS
                 CHECK_THROWS_WITH_AS(j.patch(patch), "[json.exception.parse_error.105] parse error: (/0) operation 'add' must have string member 'path'", json::parse_error&);
 #else
@@ -741,8 +741,8 @@ TEST_CASE("JSON patch")
 
             SECTION("missing 'value'")
             {
-                json j;
-                json patch = {{{"op", "add"}, {"path", ""}}};
+                json const j;
+                json const patch = {{{"op", "add"}, {"path", ""}}};
 #if JSON_DIAGNOSTICS
                 CHECK_THROWS_WITH_AS(j.patch(patch), "[json.exception.parse_error.105] parse error: (/0) operation 'add' must have member 'value'", json::parse_error&);
 #else
@@ -752,8 +752,8 @@ TEST_CASE("JSON patch")
 
             SECTION("invalid array index")
             {
-                json j = {1, 2};
-                json patch = {{{"op", "add"}, {"path", "/4"}, {"value", 4}}};
+                json const j = {1, 2};
+                json const patch = {{{"op", "add"}, {"path", "/4"}, {"value", 4}}};
                 CHECK_THROWS_WITH_AS(j.patch(patch), "[json.exception.out_of_range.401] array index 4 is out of range", json::out_of_range&);
             }
         }
@@ -762,8 +762,8 @@ TEST_CASE("JSON patch")
         {
             SECTION("missing 'path'")
             {
-                json j;
-                json patch = {{{"op", "remove"}}};
+                json const j;
+                json const patch = {{{"op", "remove"}}};
 #if JSON_DIAGNOSTICS
                 CHECK_THROWS_WITH_AS(j.patch(patch), "[json.exception.parse_error.105] parse error: (/0) operation 'remove' must have member 'path'", json::parse_error&);
 #else
@@ -773,8 +773,8 @@ TEST_CASE("JSON patch")
 
             SECTION("non-string 'path'")
             {
-                json j;
-                json patch = {{{"op", "remove"}, {"path", 1}}};
+                json const j;
+                json const patch = {{{"op", "remove"}, {"path", 1}}};
 #if JSON_DIAGNOSTICS
                 CHECK_THROWS_WITH_AS(j.patch(patch), "[json.exception.parse_error.105] parse error: (/0) operation 'remove' must have string member 'path'", json::parse_error&);
 #else
@@ -784,22 +784,22 @@ TEST_CASE("JSON patch")
 
             SECTION("nonexisting target location (array)")
             {
-                json j = {1, 2, 3};
-                json patch = {{{"op", "remove"}, {"path", "/17"}}};
+                json const j = {1, 2, 3};
+                json const patch = {{{"op", "remove"}, {"path", "/17"}}};
                 CHECK_THROWS_WITH_AS(j.patch(patch), "[json.exception.out_of_range.401] array index 17 is out of range", json::out_of_range&);
             }
 
             SECTION("nonexisting target location (object)")
             {
-                json j = {{"foo", 1}, {"bar", 2}};
-                json patch = {{{"op", "remove"}, {"path", "/baz"}}};
+                json const j = {{"foo", 1}, {"bar", 2}};
+                json const patch = {{{"op", "remove"}, {"path", "/baz"}}};
                 CHECK_THROWS_WITH_AS(j.patch(patch), "[json.exception.out_of_range.403] key 'baz' not found", json::out_of_range&);
             }
 
             SECTION("root element as target location")
             {
-                json j = "string";
-                json patch = {{{"op", "remove"}, {"path", ""}}};
+                json const j = "string";
+                json const patch = {{{"op", "remove"}, {"path", ""}}};
                 CHECK_THROWS_WITH_AS(j.patch(patch), "[json.exception.out_of_range.405] JSON pointer has no parent", json::out_of_range&);
             }
         }
@@ -808,8 +808,8 @@ TEST_CASE("JSON patch")
         {
             SECTION("missing 'path'")
             {
-                json j;
-                json patch = {{{"op", "replace"}}};
+                json const j;
+                json const patch = {{{"op", "replace"}}};
 #if JSON_DIAGNOSTICS
                 CHECK_THROWS_WITH_AS(j.patch(patch), "[json.exception.parse_error.105] parse error: (/0) operation 'replace' must have member 'path'", json::parse_error&);
 #else
@@ -819,8 +819,8 @@ TEST_CASE("JSON patch")
 
             SECTION("non-string 'path'")
             {
-                json j;
-                json patch = {{{"op", "replace"}, {"path", 1}}};
+                json const j;
+                json const patch = {{{"op", "replace"}, {"path", 1}}};
 #if JSON_DIAGNOSTICS
                 CHECK_THROWS_WITH_AS(j.patch(patch), "[json.exception.parse_error.105] parse error: (/0) operation 'replace' must have string member 'path'", json::parse_error&);
 #else
@@ -830,8 +830,8 @@ TEST_CASE("JSON patch")
 
             SECTION("missing 'value'")
             {
-                json j;
-                json patch = {{{"op", "replace"}, {"path", ""}}};
+                json const j;
+                json const patch = {{{"op", "replace"}, {"path", ""}}};
 #if JSON_DIAGNOSTICS
                 CHECK_THROWS_WITH_AS(j.patch(patch), "[json.exception.parse_error.105] parse error: (/0) operation 'replace' must have member 'value'", json::parse_error&);
 #else
@@ -841,15 +841,15 @@ TEST_CASE("JSON patch")
 
             SECTION("nonexisting target location (array)")
             {
-                json j = {1, 2, 3};
-                json patch = {{{"op", "replace"}, {"path", "/17"}, {"value", 19}}};
+                json const j = {1, 2, 3};
+                json const patch = {{{"op", "replace"}, {"path", "/17"}, {"value", 19}}};
                 CHECK_THROWS_WITH_AS(j.patch(patch), "[json.exception.out_of_range.401] array index 17 is out of range", json::out_of_range&);
             }
 
             SECTION("nonexisting target location (object)")
             {
-                json j = {{"foo", 1}, {"bar", 2}};
-                json patch = {{{"op", "replace"}, {"path", "/baz"}, {"value", 3}}};
+                json const j = {{"foo", 1}, {"bar", 2}};
+                json const patch = {{{"op", "replace"}, {"path", "/baz"}, {"value", 3}}};
                 CHECK_THROWS_WITH_AS(j.patch(patch), "[json.exception.out_of_range.403] key 'baz' not found", json::out_of_range&);
             }
         }
@@ -858,8 +858,8 @@ TEST_CASE("JSON patch")
         {
             SECTION("missing 'path'")
             {
-                json j;
-                json patch = {{{"op", "move"}}};
+                json const j;
+                json const patch = {{{"op", "move"}}};
 #if JSON_DIAGNOSTICS
                 CHECK_THROWS_WITH_AS(j.patch(patch), "[json.exception.parse_error.105] parse error: (/0) operation 'move' must have member 'path'", json::parse_error&);
 #else
@@ -869,8 +869,8 @@ TEST_CASE("JSON patch")
 
             SECTION("non-string 'path'")
             {
-                json j;
-                json patch = {{{"op", "move"}, {"path", 1}}};
+                json const j;
+                json const patch = {{{"op", "move"}, {"path", 1}}};
 #if JSON_DIAGNOSTICS
                 CHECK_THROWS_WITH_AS(j.patch(patch), "[json.exception.parse_error.105] parse error: (/0) operation 'move' must have string member 'path'", json::parse_error&);
 #else
@@ -880,8 +880,8 @@ TEST_CASE("JSON patch")
 
             SECTION("missing 'from'")
             {
-                json j;
-                json patch = {{{"op", "move"}, {"path", ""}}};
+                json const j;
+                json const patch = {{{"op", "move"}, {"path", ""}}};
                 CHECK_THROWS_AS(j.patch(patch), json::parse_error&);
 #if JSON_DIAGNOSTICS
                 CHECK_THROWS_WITH_AS(j.patch(patch), "[json.exception.parse_error.105] parse error: (/0) operation 'move' must have member 'from'", json::parse_error&);
@@ -892,8 +892,8 @@ TEST_CASE("JSON patch")
 
             SECTION("non-string 'from'")
             {
-                json j;
-                json patch = {{{"op", "move"}, {"path", ""}, {"from", 1}}};
+                json const j;
+                json const patch = {{{"op", "move"}, {"path", ""}, {"from", 1}}};
                 CHECK_THROWS_AS(j.patch(patch), json::parse_error&);
 #if JSON_DIAGNOSTICS
                 CHECK_THROWS_WITH_AS(j.patch(patch), "[json.exception.parse_error.105] parse error: (/0) operation 'move' must have string member 'from'", json::parse_error&);
@@ -904,15 +904,15 @@ TEST_CASE("JSON patch")
 
             SECTION("nonexisting from location (array)")
             {
-                json j = {1, 2, 3};
-                json patch = {{{"op", "move"}, {"path", "/0"}, {"from", "/5"}}};
+                json const j = {1, 2, 3};
+                json const patch = {{{"op", "move"}, {"path", "/0"}, {"from", "/5"}}};
                 CHECK_THROWS_WITH_AS(j.patch(patch), "[json.exception.out_of_range.401] array index 5 is out of range", json::out_of_range&);
             }
 
             SECTION("nonexisting from location (object)")
             {
-                json j = {{"foo", 1}, {"bar", 2}};
-                json patch = {{{"op", "move"}, {"path", "/baz"}, {"from", "/baz"}}};
+                json const j = {{"foo", 1}, {"bar", 2}};
+                json const patch = {{{"op", "move"}, {"path", "/baz"}, {"from", "/baz"}}};
                 CHECK_THROWS_WITH_AS(j.patch(patch), "[json.exception.out_of_range.403] key 'baz' not found", json::out_of_range&);
             }
         }
@@ -921,8 +921,8 @@ TEST_CASE("JSON patch")
         {
             SECTION("missing 'path'")
             {
-                json j;
-                json patch = {{{"op", "copy"}}};
+                json const j;
+                json const patch = {{{"op", "copy"}}};
 #if JSON_DIAGNOSTICS
                 CHECK_THROWS_WITH_AS(j.patch(patch), "[json.exception.parse_error.105] parse error: (/0) operation 'copy' must have member 'path'", json::parse_error&);
 #else
@@ -932,8 +932,8 @@ TEST_CASE("JSON patch")
 
             SECTION("non-string 'path'")
             {
-                json j;
-                json patch = {{{"op", "copy"}, {"path", 1}}};
+                json const j;
+                json const patch = {{{"op", "copy"}, {"path", 1}}};
 #if JSON_DIAGNOSTICS
                 CHECK_THROWS_WITH_AS(j.patch(patch), "[json.exception.parse_error.105] parse error: (/0) operation 'copy' must have string member 'path'", json::parse_error&);
 #else
@@ -943,8 +943,8 @@ TEST_CASE("JSON patch")
 
             SECTION("missing 'from'")
             {
-                json j;
-                json patch = {{{"op", "copy"}, {"path", ""}}};
+                json const j;
+                json const patch = {{{"op", "copy"}, {"path", ""}}};
 #if JSON_DIAGNOSTICS
                 CHECK_THROWS_WITH_AS(j.patch(patch), "[json.exception.parse_error.105] parse error: (/0) operation 'copy' must have member 'from'", json::parse_error&);
 #else
@@ -954,8 +954,8 @@ TEST_CASE("JSON patch")
 
             SECTION("non-string 'from'")
             {
-                json j;
-                json patch = {{{"op", "copy"}, {"path", ""}, {"from", 1}}};
+                json const j;
+                json const patch = {{{"op", "copy"}, {"path", ""}, {"from", 1}}};
 #if JSON_DIAGNOSTICS
                 CHECK_THROWS_WITH_AS(j.patch(patch), "[json.exception.parse_error.105] parse error: (/0) operation 'copy' must have string member 'from'", json::parse_error&);
 #else
@@ -965,15 +965,15 @@ TEST_CASE("JSON patch")
 
             SECTION("nonexisting from location (array)")
             {
-                json j = {1, 2, 3};
-                json patch = {{{"op", "copy"}, {"path", "/0"}, {"from", "/5"}}};
+                json const j = {1, 2, 3};
+                json const patch = {{{"op", "copy"}, {"path", "/0"}, {"from", "/5"}}};
                 CHECK_THROWS_WITH_AS(j.patch(patch), "[json.exception.out_of_range.401] array index 5 is out of range", json::out_of_range&);
             }
 
             SECTION("nonexisting from location (object)")
             {
-                json j = {{"foo", 1}, {"bar", 2}};
-                json patch = {{{"op", "copy"}, {"path", "/fob"}, {"from", "/baz"}}};
+                json const j = {{"foo", 1}, {"bar", 2}};
+                json const patch = {{{"op", "copy"}, {"path", "/fob"}, {"from", "/baz"}}};
                 CHECK_THROWS_WITH_AS(j.patch(patch), "[json.exception.out_of_range.403] key 'baz' not found", json::out_of_range&);
             }
         }
@@ -982,8 +982,8 @@ TEST_CASE("JSON patch")
         {
             SECTION("missing 'path'")
             {
-                json j;
-                json patch = {{{"op", "test"}}};
+                json const j;
+                json const patch = {{{"op", "test"}}};
 #if JSON_DIAGNOSTICS
                 CHECK_THROWS_WITH_AS(j.patch(patch), "[json.exception.parse_error.105] parse error: (/0) operation 'test' must have member 'path'", json::parse_error&);
 #else
@@ -993,8 +993,8 @@ TEST_CASE("JSON patch")
 
             SECTION("non-string 'path'")
             {
-                json j;
-                json patch = {{{"op", "test"}, {"path", 1}}};
+                json const j;
+                json const patch = {{{"op", "test"}, {"path", 1}}};
 #if JSON_DIAGNOSTICS
                 CHECK_THROWS_WITH_AS(j.patch(patch), "[json.exception.parse_error.105] parse error: (/0) operation 'test' must have string member 'path'", json::parse_error&);
 #else
@@ -1004,8 +1004,8 @@ TEST_CASE("JSON patch")
 
             SECTION("missing 'value'")
             {
-                json j;
-                json patch = {{{"op", "test"}, {"path", ""}}};
+                json const j;
+                json const patch = {{{"op", "test"}, {"path", ""}}};
 #if JSON_DIAGNOSTICS
                 CHECK_THROWS_WITH_AS(j.patch(patch), "[json.exception.parse_error.105] parse error: (/0) operation 'test' must have member 'value'", json::parse_error&);
 #else
@@ -1020,7 +1020,7 @@ TEST_CASE("JSON patch")
         SECTION("Simple Example")
         {
             // The original document
-            json doc = R"(
+            json const doc = R"(
                 {
                   "baz": "qux",
                   "foo": "bar"
@@ -1028,7 +1028,7 @@ TEST_CASE("JSON patch")
             )"_json;
 
             // The patch
-            json patch = R"(
+            json const patch = R"(
                 [
                   { "op": "replace", "path": "/baz", "value": "boo" },
                   { "op": "add", "path": "/hello", "value": ["world"] },
@@ -1054,7 +1054,7 @@ TEST_CASE("JSON patch")
         SECTION("Operations")
         {
             // The original document
-            json doc = R"(
+            json const doc = R"(
                 {
                   "biscuits": [
                     {"name":"Digestive"},
@@ -1066,7 +1066,7 @@ TEST_CASE("JSON patch")
             SECTION("add")
             {
                 // The patch
-                json patch = R"(
+                json const patch = R"(
                     [
                         {"op": "add", "path": "/biscuits/1", "value": {"name": "Ginger Nut"}}
                     ]
@@ -1093,7 +1093,7 @@ TEST_CASE("JSON patch")
             SECTION("remove")
             {
                 // The patch
-                json patch = R"(
+                json const patch = R"(
                     [
                         {"op": "remove", "path": "/biscuits"}
                     ]
@@ -1114,7 +1114,7 @@ TEST_CASE("JSON patch")
             SECTION("replace")
             {
                 // The patch
-                json patch = R"(
+                json const patch = R"(
                     [
                         {"op": "replace", "path": "/biscuits/0/name", "value": "Chocolate Digestive"}
                     ]
@@ -1140,7 +1140,7 @@ TEST_CASE("JSON patch")
             SECTION("copy")
             {
                 // The patch
-                json patch = R"(
+                json const patch = R"(
                     [
                         {"op": "copy", "from": "/biscuits/0", "path": "/best_biscuit"}
                     ]
@@ -1169,7 +1169,7 @@ TEST_CASE("JSON patch")
             SECTION("move")
             {
                 // The patch
-                json patch = R"(
+                json const patch = R"(
                     [
                         {"op": "move", "from": "/biscuits", "path": "/cookies"}
                     ]
@@ -1290,7 +1290,7 @@ TEST_CASE("JSON patch")
         {
             CAPTURE(filename)
             std::ifstream f(filename);
-            json suite = json::parse(f);
+            json const suite = json::parse(f);
 
             for (const auto& test : suite)
             {

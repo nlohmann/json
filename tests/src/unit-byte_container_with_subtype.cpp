@@ -45,7 +45,7 @@ TEST_CASE("byte_container_with_subtype")
 
     SECTION("comparisons")
     {
-        std::vector<std::uint8_t> bytes = {{0xCA, 0xFE, 0xBA, 0xBE}};
+        std::vector<std::uint8_t> const bytes = {{0xCA, 0xFE, 0xBA, 0xBE}};
         nlohmann::byte_container_with_subtype<std::vector<std::uint8_t>> container1;
         nlohmann::byte_container_with_subtype<std::vector<std::uint8_t>> container2({}, 42);
         nlohmann::byte_container_with_subtype<std::vector<std::uint8_t>> container3(bytes);

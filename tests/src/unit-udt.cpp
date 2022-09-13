@@ -418,15 +418,15 @@ TEST_CASE("adl_serializer specialization" * doctest::test_suite("udt"))
     {
         SECTION("to_json")
         {
-            udt::legacy_type lt{"4242"};
+            udt::legacy_type const lt{"4242"};
 
-            json j = lt;
+            json const j = lt;
             CHECK(j.get<int>() == 4242);
         }
 
         SECTION("from_json")
         {
-            json j = 4242;
+            json const j = 4242;
             auto lt = j.get<udt::legacy_type>();
             CHECK(lt.number == "4242");
         }
@@ -459,7 +459,7 @@ struct adl_serializer<std::vector<float>>
 
 TEST_CASE("even supported types can be specialized" * doctest::test_suite("udt"))
 {
-    json j = std::vector<float> {1.0, 2.0, 3.0};
+    json const j = std::vector<float> {1.0, 2.0, 3.0};
     CHECK(j.dump() == R"("hijacked!")");
     auto f = j.get<std::vector<float>>();
     // the single argument from_json method is preferred
@@ -644,14 +644,14 @@ TEST_CASE("custom serializer for pods" * doctest::test_suite("udt"))
         std::int64_t, std::uint64_t, double, std::allocator, pod_serializer>;
 
     auto p = udt::small_pod{42, '/', 42};
-    custom_json j = p;
+    custom_json const j = p;
 
     auto p2 = j.get<udt::small_pod>();
 
     CHECK(p == p2);
 
     auto np = udt::non_pod{{"non-pod"}};
-    custom_json j2 = np;
+    custom_json const j2 = np;
     auto np2 = j2.get<udt::non_pod>();
     CHECK(np == np2);
 }
@@ -681,8 +681,8 @@ TEST_CASE("custom serializer that does adl by default" * doctest::test_suite("ud
 {
     auto me = udt::person{{23}, {"theo"}, udt::country::france};
 
-    json j = me;
-    custom_json cj = me;
+    json const j = me;
+    custom_json const cj = me;
 
     CHECK(j.dump() == cj.dump());
 
@@ -694,21 +694,21 @@ TEST_CASE("different basic_json types conversions")
 {
     SECTION("null")
     {
-        json j;
+        json const j;
         custom_json cj = j;
         CHECK(cj == nullptr);
     }
 
     SECTION("boolean")
     {
-        json j = true;
+        json const j = true;
         custom_json cj = j;
         CHECK(cj == true);
     }
 
     SECTION("discarded")
     {
-        json j(json::value_t::discarded);
+        json const j(json::value_t::discarded);
         custom_json cj;
         CHECK_NOTHROW(cj = j);
         CHECK(cj.type() == custom_json::value_t::discarded);
@@ -716,35 +716,35 @@ TEST_CASE("different basic_json types conversions")
 
     SECTION("array")
     {
-        json j = {1, 2, 3};
-        custom_json cj = j;
+        json const j = {1, 2, 3};
+        custom_json const cj = j;
         CHECK((cj == std::vector<int> {1, 2, 3}));
     }
 
     SECTION("integer")
     {
-        json j = 42;
+        json const j = 42;
         custom_json cj = j;
         CHECK(cj == 42);
     }
 
     SECTION("float")
     {
-        json j = 42.0;
+        json const j = 42.0;
         custom_json cj = j;
         CHECK(cj == 42.0);
     }
 
     SECTION("unsigned")
     {
-        json j = 42u;
+        json const j = 42u;
         custom_json cj = j;
         CHECK(cj == 42u);
     }
 
     SECTION("string")
     {
-        json j = "forty-two";
+        json const j = "forty-two";
         custom_json cj = j;
         CHECK(cj == "forty-two");
     }
@@ -761,7 +761,7 @@ TEST_CASE("different basic_json types conversions")
 
     SECTION("object")
     {
-        json j = {{"forty", "two"}};
+        json const j = {{"forty", "two"}};
         custom_json cj = j;
         auto m = j.get<std::map<std::string, std::string>>();
         CHECK(cj == m);
@@ -769,7 +769,7 @@ TEST_CASE("different basic_json types conversions")
 
     SECTION("get<custom_json>")
     {
-        json j = 42;
+        json const j = 42;
         custom_json cj = j.get<custom_json>();
         CHECK(cj == 42);
     }
@@ -857,8 +857,8 @@ class no_iterator_type
 
 TEST_CASE("compatible array type, without iterator type alias")
 {
-    no_iterator_type vec{1, 2, 3};
-    json j = vec;
+    no_iterator_type const vec{1, 2, 3};
+    json const j = vec;
 }
 
 DOCTEST_GCC_SUPPRESS_WARNING_POP

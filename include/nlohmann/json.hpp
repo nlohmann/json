@@ -4718,7 +4718,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             }
 
             // make sure the top element of the pointer exists
-            json_pointer top_pointer = ptr.top();
+            json_pointer const top_pointer = ptr.top();
             if (top_pointer != ptr)
             {
                 result.at(top_pointer);
@@ -4880,7 +4880,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     json_pointer from_ptr(from_path);
 
                     // the "from" location must exist - use at()
-                    basic_json v = result.at(from_ptr);
+                    basic_json const v = result.at(from_ptr);
 
                     // The move operation is functionally identical to a
                     // "remove" operation on the "from" location, followed
@@ -4897,7 +4897,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     const json_pointer from_ptr(from_path);
 
                     // the "from" location must exist - use at()
-                    basic_json v = result.at(from_ptr);
+                    basic_json const v = result.at(from_ptr);
 
                     // The copy is functionally identical to an "add"
                     // operation at the target location using the value

@@ -32,7 +32,7 @@ TEST_CASE("JSON_ASSERT(x)")
         assert_counter = 0;
         CHECK(assert_counter == 0);
 
-        json::iterator it;
+        const json::iterator it{};
         json j;
 
         // in case assertions do not abort execution, an exception is thrown

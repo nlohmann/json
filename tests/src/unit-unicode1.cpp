@@ -233,9 +233,9 @@ void roundtrip(bool success_expected, const std::string& s)
     json _;
 
     // create JSON string value
-    json j = s;
+    const json j = s;
     // create JSON text
-    std::string ps = std::string("\"") + s + "\"";
+    const std::string ps = std::string("\"") + s + "\"";
 
     if (success_expected)
     {
@@ -253,7 +253,7 @@ void roundtrip(bool success_expected, const std::string& s)
         CHECK_NOTHROW(_ = json::parse(j.dump()));
 
         // after roundtrip, the same string is stored
-        json jr = json::parse(j.dump());
+        const json jr = json::parse(j.dump());
         CHECK(jr.get<std::string>() == s);
     }
     else

@@ -148,7 +148,7 @@ class alt_string
 
     alt_string substr(std::size_t pos = 0, std::size_t count = npos) const
     {
-        std::string s = str_impl.substr(pos, count);
+        const std::string s = str_impl.substr(pos, count);
         return {s.data(), s.size()};
     }
 

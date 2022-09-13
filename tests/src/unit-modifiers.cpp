@@ -19,7 +19,7 @@ TEST_CASE("modifiers")
         SECTION("boolean")
         {
             json j = true;
-            json k = j;
+            json const k = j;
 
             j.clear();
             CHECK(j == json(json::value_t::boolean));
@@ -29,7 +29,7 @@ TEST_CASE("modifiers")
         SECTION("string")
         {
             json j = "hello world";
-            json k = j;
+            json const k = j;
 
             j.clear();
             CHECK(j == json(json::value_t::string));
@@ -41,7 +41,7 @@ TEST_CASE("modifiers")
             SECTION("empty array")
             {
                 json j = json::array();
-                json k = j;
+                json const k = j;
 
                 j.clear();
                 CHECK(j.empty());
@@ -52,7 +52,7 @@ TEST_CASE("modifiers")
             SECTION("filled array")
             {
                 json j = {1, 2, 3};
-                json k = j;
+                json const k = j;
 
                 j.clear();
                 CHECK(j.empty());
@@ -66,7 +66,7 @@ TEST_CASE("modifiers")
             SECTION("empty object")
             {
                 json j = json::object();
-                json k = j;
+                json const k = j;
 
                 j.clear();
                 CHECK(j.empty());
@@ -77,7 +77,7 @@ TEST_CASE("modifiers")
             SECTION("filled object")
             {
                 json j = {{"one", 1}, {"two", 2}, {"three", 3}};
-                json k = j;
+                json const k = j;
 
                 j.clear();
                 CHECK(j.empty());
@@ -91,7 +91,7 @@ TEST_CASE("modifiers")
             SECTION("empty binary")
             {
                 json j = json::binary({});
-                json k = j;
+                json const k = j;
 
                 j.clear();
                 CHECK(!j.empty());
@@ -102,7 +102,7 @@ TEST_CASE("modifiers")
             SECTION("filled binary")
             {
                 json j = json::binary({1, 2, 3, 4, 5});
-                json k = j;
+                json const k = j;
 
                 j.clear();
                 CHECK(!j.empty());
@@ -114,7 +114,7 @@ TEST_CASE("modifiers")
         SECTION("number (integer)")
         {
             json j = 23;
-            json k = j;
+            json const k = j;
 
             j.clear();
             CHECK(j == json(json::value_t::number_integer));
@@ -124,7 +124,7 @@ TEST_CASE("modifiers")
         SECTION("number (unsigned)")
         {
             json j = 23u;
-            json k = j;
+            json const k = j;
 
             j.clear();
             CHECK(j == json(json::value_t::number_integer));
@@ -134,7 +134,7 @@ TEST_CASE("modifiers")
         SECTION("number (float)")
         {
             json j = 23.42;
-            json k = j;
+            json const k = j;
 
             j.clear();
             CHECK(j == json(json::value_t::number_float));
@@ -144,7 +144,7 @@ TEST_CASE("modifiers")
         SECTION("null")
         {
             json j = nullptr;
-            json k = j;
+            json const k = j;
 
             j.clear();
             CHECK(j == json(json::value_t::null));
@@ -187,7 +187,7 @@ TEST_CASE("modifiers")
                 SECTION("null")
                 {
                     json j;
-                    json k(1);
+                    json const k(1);
                     j.push_back(k);
                     j.push_back(k);
                     CHECK(j.type() == json::value_t::array);
@@ -197,7 +197,7 @@ TEST_CASE("modifiers")
                 SECTION("array")
                 {
                     json j = {1, 2, 3};
-                    json k("Hello");
+                    json const k("Hello");
                     j.push_back(k);
                     CHECK(j.type() == json::value_t::array);
                     CHECK(j == json({1, 2, 3, "Hello"}));
@@ -206,7 +206,7 @@ TEST_CASE("modifiers")
                 SECTION("other type")
                 {
                     json j = 1;
-                    json k("Hello");
+                    json const k("Hello");
                     CHECK_THROWS_WITH_AS(j.push_back(k), "[json.exception.type_error.308] cannot use push_back() with number", json::type_error&);
                 }
             }
@@ -238,7 +238,7 @@ TEST_CASE("modifiers")
             SECTION("other type")
             {
                 json j = 1;
-                json k("Hello");
+                json const k("Hello");
                 CHECK_THROWS_WITH_AS(j.push_back(json::object_t::value_type({"one", 1})), "[json.exception.type_error.308] cannot use push_back() with number", json::type_error&);
             }
         }
@@ -415,7 +415,7 @@ TEST_CASE("modifiers")
                 SECTION("null")
                 {
                     json j;
-                    json k(1);
+                    json const k(1);
                     j += k;
                     j += k;
                     CHECK(j.type() == json::value_t::array);
@@ -425,7 +425,7 @@ TEST_CASE("modifiers")
                 SECTION("array")
                 {
                     json j = {1, 2, 3};
-                    json k("Hello");
+                    json const k("Hello");
                     j += k;
                     CHECK(j.type() == json::value_t::array);
                     CHECK(j == json({1, 2, 3, "Hello"}));
@@ -434,7 +434,7 @@ TEST_CASE("modifiers")
                 SECTION("other type")
                 {
                     json j = 1;
-                    json k("Hello");
+                    json const k("Hello");
                     CHECK_THROWS_WITH_AS(j += k, "[json.exception.type_error.308] cannot use push_back() with number", json::type_error&);
                 }
             }
@@ -466,7 +466,7 @@ TEST_CASE("modifiers")
             SECTION("other type")
             {
                 json j = 1;
-                json k("Hello");
+                json const k("Hello");
                 CHECK_THROWS_WITH_AS(j += json::object_t::value_type({"one", 1}), "[json.exception.type_error.308] cannot use push_back() with number", json::type_error&);
             }
         }
@@ -663,7 +663,7 @@ TEST_CASE("modifiers")
 
             SECTION("invalid iterators")
             {
-                json j_other_array2 = {"first", "second"};
+                json const j_other_array2 = {"first", "second"};
 
                 CHECK_THROWS_WITH_AS(j_array.insert(j_object2.begin(), j_object2.end()), "[json.exception.type_error.309] cannot use insert() with array", json::type_error&);
                 CHECK_THROWS_WITH_AS(j_object1.insert(j_object1.begin(), j_object2.end()), "[json.exception.invalid_iterator.210] iterators do not fit", json::invalid_iterator&);
@@ -774,7 +774,7 @@ TEST_CASE("modifiers")
 
                 SECTION("invalid iterators")
                 {
-                    json j_other_array2 = {"first", "second"};
+                    json const j_other_array2 = {"first", "second"};
 
                     CHECK_THROWS_WITH_AS(j_array.update(j_object2.begin(), j_object2.end()), "[json.exception.type_error.312] cannot use update() with array", json::type_error&);
                     CHECK_THROWS_WITH_AS(j_object1.update(j_object1.begin(), j_object2.end()), "[json.exception.invalid_iterator.210] iterators do not fit", json::invalid_iterator&);
@@ -790,7 +790,7 @@ TEST_CASE("modifiers")
                 SECTION("extend object")
                 {
                     json j1 = {{"string", "s"}, {"numbers", {{"one", 1}}}};
-                    json j2 = {{"string", "t"}, {"numbers", {{"two", 2}}}};
+                    json const j2 = {{"string", "t"}, {"numbers", {{"two", 2}}}};
                     j1.update(j2, true);
                     CHECK(j1 == json({{"string", "t"}, {"numbers", {{"one", 1}, {"two", 2}}}}));
                 }
@@ -798,7 +798,7 @@ TEST_CASE("modifiers")
                 SECTION("replace object")
                 {
                     json j1 = {{"string", "s"}, {"numbers", {{"one", 1}}}};
-                    json j2 = {{"string", "t"}, {"numbers", 1}};
+                    json const j2 = {{"string", "t"}, {"numbers", 1}};
                     j1.update(j2, true);
                     CHECK(j1 == json({{"string", "t"}, {"numbers", 1}}));
                 }

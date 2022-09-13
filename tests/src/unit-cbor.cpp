@@ -104,7 +104,7 @@ TEST_CASE("CBOR")
         SECTION("discarded")
         {
             // discarded values are not serialized
-            json j = json::value_t::discarded;
+            json const j = json::value_t::discarded;
             const auto result = json::to_cbor(j);
             CHECK(result.empty());
         }
@@ -112,8 +112,8 @@ TEST_CASE("CBOR")
         SECTION("NaN")
         {
             // NaN value
-            json j = std::numeric_limits<json::number_float_t>::quiet_NaN();
-            std::vector<uint8_t> expected = {0xf9, 0x7e, 0x00};
+            json const j = std::numeric_limits<json::number_float_t>::quiet_NaN();
+            const std::vector<uint8_t> expected = {0xf9, 0x7e, 0x00};
             const auto result = json::to_cbor(j);
             CHECK(result == expected);
         }
@@ -121,16 +121,16 @@ TEST_CASE("CBOR")
         SECTION("Infinity")
         {
             // Infinity value
-            json j = std::numeric_limits<json::number_float_t>::infinity();
-            std::vector<uint8_t> expected = {0xf9, 0x7c, 0x00};
+            json const j = std::numeric_limits<json::number_float_t>::infinity();
+            const std::vector<uint8_t> expected = {0xf9, 0x7c, 0x00};
             const auto result = json::to_cbor(j);
             CHECK(result == expected);
         }
 
         SECTION("null")
         {
-            json j = nullptr;
-            std::vector<uint8_t> expected = {0xf6};
+            const json j = nullptr;
+            const std::vector<uint8_t> expected = {0xf6};
             const auto result = json::to_cbor(j);
             CHECK(result == expected);
 
@@ -143,8 +143,8 @@ TEST_CASE("CBOR")
         {
             SECTION("true")
             {
-                json j = true;
-                std::vector<uint8_t> expected = {0xf5};
+                const json j = true;
+                const std::vector<uint8_t> expected = {0xf5};
                 const auto result = json::to_cbor(j);
                 CHECK(result == expected);
 
@@ -155,8 +155,8 @@ TEST_CASE("CBOR")
 
             SECTION("false")
             {
-                json j = false;
-                std::vector<uint8_t> expected = {0xf4};
+                const json j = false;
+                const std::vector<uint8_t> expected = {0xf4};
                 const auto result = json::to_cbor(j);
                 CHECK(result == expected);
 
@@ -172,40 +172,44 @@ TEST_CASE("CBOR")
             {
                 SECTION("-9223372036854775808..-4294967297")
                 {
-                    std::vector<int64_t> numbers;
-                    numbers.push_back(INT64_MIN);
-                    numbers.push_back(-1000000000000000000);
-                    numbers.push_back(-100000000000000000);
-                    numbers.push_back(-10000000000000000);
-                    numbers.push_back(-1000000000000000);
-                    numbers.push_back(-100000000000000);
-                    numbers.push_back(-10000000000000);
-                    numbers.push_back(-1000000000000);
-                    numbers.push_back(-100000000000);
-                    numbers.push_back(-10000000000);
-                    numbers.push_back(-4294967297);
-                    for (auto i : numbers)
+                    const std::vector<int64_t> numbers
+                    {
+                        INT64_MIN,
+                        -1000000000000000000,
+                        -100000000000000000,
+                        -10000000000000000,
+                        -1000000000000000,
+                        -100000000000000,
+                        -10000000000000,
+                        -1000000000000,
+                        -100000000000,
+                        -10000000000,
+                        -4294967297,
+                    };
+                    for (const auto i : numbers)
                     {
                         CAPTURE(i)
 
                         // create JSON value with integer number
-                        json j = i;
+                        const json j = i;
 
                         // check type
                         CHECK(j.is_number_integer());
 
                         // create expected byte vector
-                        std::vector<uint8_t> expected;
-                        expected.push_back(static_cast<uint8_t>(0x3b));
-                        auto positive = static_cast<uint64_t>(-1 - i);
-                        expected.push_back(static_cast<uint8_t>((positive >> 56) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((positive >> 48) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((positive >> 40) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((positive >> 32) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((positive >> 24) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((positive >> 16) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((positive >> 8) & 0xff));
-                        expected.push_back(static_cast<uint8_t>(positive & 0xff));
+                        const auto positive = static_cast<uint64_t>(-1 - i);
+                        const std::vector<uint8_t> expected
+                        {
+                            static_cast<uint8_t>(0x3b),
+                            static_cast<uint8_t>((positive >> 56) & 0xff),
+                            static_cast<uint8_t>((positive >> 48) & 0xff),
+                            static_cast<uint8_t>((positive >> 40) & 0xff),
+                            static_cast<uint8_t>((positive >> 32) & 0xff),
+                            static_cast<uint8_t>((positive >> 24) & 0xff),
+                            static_cast<uint8_t>((positive >> 16) & 0xff),
+                            static_cast<uint8_t>((positive >> 8) & 0xff),
+                            static_cast<uint8_t>(positive & 0xff),
+                        };
 
                         // compare result + size
                         const auto result = json::to_cbor(j);
@@ -214,14 +218,14 @@ TEST_CASE("CBOR")
 
                         // check individual bytes
                         CHECK(result[0] == 0x3b);
-                        uint64_t restored = (static_cast<uint64_t>(result[1]) << 070) +
-                                            (static_cast<uint64_t>(result[2]) << 060) +
-                                            (static_cast<uint64_t>(result[3]) << 050) +
-                                            (static_cast<uint64_t>(result[4]) << 040) +
-                                            (static_cast<uint64_t>(result[5]) << 030) +
-                                            (static_cast<uint64_t>(result[6]) << 020) +
-                                            (static_cast<uint64_t>(result[7]) << 010) +
-                                            static_cast<uint64_t>(result[8]);
+                        const uint64_t restored = (static_cast<uint64_t>(result[1]) << 070) +
+                                                  (static_cast<uint64_t>(result[2]) << 060) +
+                                                  (static_cast<uint64_t>(result[3]) << 050) +
+                                                  (static_cast<uint64_t>(result[4]) << 040) +
+                                                  (static_cast<uint64_t>(result[5]) << 030) +
+                                                  (static_cast<uint64_t>(result[6]) << 020) +
+                                                  (static_cast<uint64_t>(result[7]) << 010) +
+                                                  static_cast<uint64_t>(result[8]);
                         CHECK(restored == positive);
                         CHECK(-1 - static_cast<int64_t>(restored) == i);
 
@@ -233,32 +237,36 @@ TEST_CASE("CBOR")
 
                 SECTION("-4294967296..-65537")
                 {
-                    std::vector<int64_t> numbers;
-                    numbers.push_back(-65537);
-                    numbers.push_back(-100000);
-                    numbers.push_back(-1000000);
-                    numbers.push_back(-10000000);
-                    numbers.push_back(-100000000);
-                    numbers.push_back(-1000000000);
-                    numbers.push_back(-4294967296);
-                    for (auto i : numbers)
+                    const std::vector<int64_t> numbers
+                    {
+                        -65537,
+                            -100000,
+                            -1000000,
+                            -10000000,
+                            -100000000,
+                            -1000000000,
+                            -4294967296,
+                        };
+                    for (const auto i : numbers)
                     {
                         CAPTURE(i)
 
                         // create JSON value with integer number
-                        json j = i;
+                        const json j = i;
 
                         // check type
                         CHECK(j.is_number_integer());
 
                         // create expected byte vector
-                        std::vector<uint8_t> expected;
-                        expected.push_back(static_cast<uint8_t>(0x3a));
                         auto positive = static_cast<uint32_t>(static_cast<uint64_t>(-1 - i) & 0x00000000ffffffff);
-                        expected.push_back(static_cast<uint8_t>((positive >> 24) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((positive >> 16) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((positive >> 8) & 0xff));
-                        expected.push_back(static_cast<uint8_t>(positive & 0xff));
+                        const std::vector<uint8_t> expected
+                        {
+                            static_cast<uint8_t>(0x3a),
+                            static_cast<uint8_t>((positive >> 24) & 0xff),
+                            static_cast<uint8_t>((positive >> 16) & 0xff),
+                            static_cast<uint8_t>((positive >> 8) & 0xff),
+                            static_cast<uint8_t>(positive & 0xff),
+                        };
 
                         // compare result + size
                         const auto result = json::to_cbor(j);
@@ -267,10 +275,10 @@ TEST_CASE("CBOR")
 
                         // check individual bytes
                         CHECK(result[0] == 0x3a);
-                        uint32_t restored = (static_cast<uint32_t>(result[1]) << 030) +
-                                            (static_cast<uint32_t>(result[2]) << 020) +
-                                            (static_cast<uint32_t>(result[3]) << 010) +
-                                            static_cast<uint32_t>(result[4]);
+                        const uint32_t restored = (static_cast<uint32_t>(result[1]) << 030) +
+                                                  (static_cast<uint32_t>(result[2]) << 020) +
+                                                  (static_cast<uint32_t>(result[3]) << 010) +
+                                                  static_cast<uint32_t>(result[4]);
                         CHECK(restored == positive);
                         CHECK(-1LL - restored == i);
 
@@ -287,17 +295,19 @@ TEST_CASE("CBOR")
                         CAPTURE(i)
 
                         // create JSON value with integer number
-                        json j = i;
+                        const json j = i;
 
                         // check type
                         CHECK(j.is_number_integer());
 
                         // create expected byte vector
-                        std::vector<uint8_t> expected;
-                        expected.push_back(static_cast<uint8_t>(0x39));
-                        auto positive = static_cast<uint16_t>(-1 - i);
-                        expected.push_back(static_cast<uint8_t>((positive >> 8) & 0xff));
-                        expected.push_back(static_cast<uint8_t>(positive & 0xff));
+                        const auto positive = static_cast<uint16_t>(-1 - i);
+                        const std::vector<uint8_t> expected
+                        {
+                            static_cast<uint8_t>(0x39),
+                            static_cast<uint8_t>((positive >> 8) & 0xff),
+                            static_cast<uint8_t>(positive & 0xff),
+                        };
 
                         // compare result + size
                         const auto result = json::to_cbor(j);
@@ -306,7 +316,7 @@ TEST_CASE("CBOR")
 
                         // check individual bytes
                         CHECK(result[0] == 0x39);
-                        auto restored = static_cast<uint16_t>(static_cast<uint8_t>(result[1]) * 256 + static_cast<uint8_t>(result[2]));
+                        const auto restored = static_cast<uint16_t>(static_cast<uint8_t>(result[1]) * 256 + static_cast<uint8_t>(result[2]));
                         CHECK(restored == positive);
                         CHECK(-1 - restored == i);
 
@@ -318,13 +328,13 @@ TEST_CASE("CBOR")
 
                 SECTION("-9263 (int 16)")
                 {
-                    json j = -9263;
+                    const json j = -9263;
                     std::vector<uint8_t> expected = {0x39, 0x24, 0x2e};
 
                     const auto result = json::to_cbor(j);
                     CHECK(result == expected);
 
-                    auto restored = static_cast<int16_t>(-1 - ((result[1] << 8) + result[2]));
+                    const auto restored = static_cast<int16_t>(-1 - ((result[1] << 8) + result[2]));
                     CHECK(restored == -9263);
 
                     // roundtrip
@@ -339,15 +349,17 @@ TEST_CASE("CBOR")
                         CAPTURE(i)
 
                         // create JSON value with integer number
-                        json j = i;
+                        const json j = i;
 
                         // check type
                         CHECK(j.is_number_integer());
 
                         // create expected byte vector
-                        std::vector<uint8_t> expected;
-                        expected.push_back(0x38);
-                        expected.push_back(static_cast<uint8_t>(-1 - i));
+                        const std::vector<uint8_t> expected
+                        {
+                            0x38,
+                            static_cast<uint8_t>(-1 - i),
+                        };
 
                         // compare result + size
                         const auto result = json::to_cbor(j);
@@ -371,14 +383,16 @@ TEST_CASE("CBOR")
                         CAPTURE(i)
 
                         // create JSON value with integer number
-                        json j = i;
+                        const json j = i;
 
                         // check type
                         CHECK(j.is_number_integer());
 
                         // create expected byte vector
-                        std::vector<uint8_t> expected;
-                        expected.push_back(static_cast<uint8_t>(0x20 - 1 - static_cast<uint8_t>(i)));
+                        const std::vector<uint8_t> expected
+                        {
+                            static_cast<uint8_t>(0x20 - 1 - static_cast<uint8_t>(i)),
+                        };
 
                         // compare result + size
                         const auto result = json::to_cbor(j);
@@ -408,8 +422,10 @@ TEST_CASE("CBOR")
                         CHECK(j.is_number_integer());
 
                         // create expected byte vector
-                        std::vector<uint8_t> expected;
-                        expected.push_back(static_cast<uint8_t>(i));
+                        const std::vector<uint8_t> expected
+                        {
+                            static_cast<uint8_t>(i),
+                        };
 
                         // compare result + size
                         const auto result = json::to_cbor(j);
@@ -439,9 +455,11 @@ TEST_CASE("CBOR")
                         CHECK(j.is_number_integer());
 
                         // create expected byte vector
-                        std::vector<uint8_t> expected;
-                        expected.push_back(static_cast<uint8_t>(0x18));
-                        expected.push_back(static_cast<uint8_t>(i));
+                        const std::vector<uint8_t> expected
+                        {
+                            static_cast<uint8_t>(0x18),
+                            static_cast<uint8_t>(i),
+                        };
 
                         // compare result + size
                         const auto result = json::to_cbor(j);
@@ -472,10 +490,12 @@ TEST_CASE("CBOR")
                         CHECK(j.is_number_integer());
 
                         // create expected byte vector
-                        std::vector<uint8_t> expected;
-                        expected.push_back(static_cast<uint8_t>(0x19));
-                        expected.push_back(static_cast<uint8_t>((i >> 8) & 0xff));
-                        expected.push_back(static_cast<uint8_t>(i & 0xff));
+                        const std::vector<uint8_t> expected
+                        {
+                            static_cast<uint8_t>(0x19),
+                            static_cast<uint8_t>((i >> 8) & 0xff),
+                            static_cast<uint8_t>(i & 0xff),
+                        };
 
                         // compare result + size
                         const auto result = json::to_cbor(j);
@@ -484,7 +504,7 @@ TEST_CASE("CBOR")
 
                         // check individual bytes
                         CHECK(result[0] == 0x19);
-                        auto restored = static_cast<uint16_t>(static_cast<uint8_t>(result[1]) * 256 + static_cast<uint8_t>(result[2]));
+                        const auto restored = static_cast<uint16_t>(static_cast<uint8_t>(result[1]) * 256 + static_cast<uint8_t>(result[2]));
                         CHECK(restored == i);
 
                         // roundtrip
@@ -495,7 +515,7 @@ TEST_CASE("CBOR")
 
                 SECTION("65536..4294967295")
                 {
-                    for (uint32_t i :
+                    for (const uint32_t i :
                             {
                                 65536u, 77777u, 1048576u
                             })
@@ -510,12 +530,14 @@ TEST_CASE("CBOR")
                         CHECK(j.is_number_integer());
 
                         // create expected byte vector
-                        std::vector<uint8_t> expected;
-                        expected.push_back(0x1a);
-                        expected.push_back(static_cast<uint8_t>((i >> 24) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 16) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 8) & 0xff));
-                        expected.push_back(static_cast<uint8_t>(i & 0xff));
+                        const std::vector<uint8_t> expected
+                        {
+                            0x1a,
+                            static_cast<uint8_t>((i >> 24) & 0xff),
+                            static_cast<uint8_t>((i >> 16) & 0xff),
+                            static_cast<uint8_t>((i >> 8) & 0xff),
+                            static_cast<uint8_t>(i & 0xff),
+                        };
 
                         // compare result + size
                         const auto result = json::to_cbor(j);
@@ -524,10 +546,10 @@ TEST_CASE("CBOR")
 
                         // check individual bytes
                         CHECK(result[0] == 0x1a);
-                        uint32_t restored = (static_cast<uint32_t>(result[1]) << 030) +
-                                            (static_cast<uint32_t>(result[2]) << 020) +
-                                            (static_cast<uint32_t>(result[3]) << 010) +
-                                            static_cast<uint32_t>(result[4]);
+                        const uint32_t restored = (static_cast<uint32_t>(result[1]) << 030) +
+                                                  (static_cast<uint32_t>(result[2]) << 020) +
+                                                  (static_cast<uint32_t>(result[3]) << 010) +
+                                                  static_cast<uint32_t>(result[4]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -538,7 +560,7 @@ TEST_CASE("CBOR")
 
                 SECTION("4294967296..4611686018427387903")
                 {
-                    for (uint64_t i :
+                    for (const uint64_t i :
                             {
                                 4294967296ul, 4611686018427387903ul
                             })
@@ -553,16 +575,18 @@ TEST_CASE("CBOR")
                         CHECK(j.is_number_integer());
 
                         // create expected byte vector
-                        std::vector<uint8_t> expected;
-                        expected.push_back(0x1b);
-                        expected.push_back(static_cast<uint8_t>((i >> 070) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 060) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 050) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 040) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 030) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 020) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 010) & 0xff));
-                        expected.push_back(static_cast<uint8_t>(i & 0xff));
+                        const std::vector<uint8_t> expected
+                        {
+                            0x1b,
+                            static_cast<uint8_t>((i >> 070) & 0xff),
+                            static_cast<uint8_t>((i >> 060) & 0xff),
+                            static_cast<uint8_t>((i >> 050) & 0xff),
+                            static_cast<uint8_t>((i >> 040) & 0xff),
+                            static_cast<uint8_t>((i >> 030) & 0xff),
+                            static_cast<uint8_t>((i >> 020) & 0xff),
+                            static_cast<uint8_t>((i >> 010) & 0xff),
+                            static_cast<uint8_t>(i & 0xff),
+                        };
 
                         // compare result + size
                         const auto result = json::to_cbor(j);
@@ -571,14 +595,14 @@ TEST_CASE("CBOR")
 
                         // check individual bytes
                         CHECK(result[0] == 0x1b);
-                        uint64_t restored = (static_cast<uint64_t>(result[1]) << 070) +
-                                            (static_cast<uint64_t>(result[2]) << 060) +
-                                            (static_cast<uint64_t>(result[3]) << 050) +
-                                            (static_cast<uint64_t>(result[4]) << 040) +
-                                            (static_cast<uint64_t>(result[5]) << 030) +
-                                            (static_cast<uint64_t>(result[6]) << 020) +
-                                            (static_cast<uint64_t>(result[7]) << 010) +
-                                            static_cast<uint64_t>(result[8]);
+                        const uint64_t restored = (static_cast<uint64_t>(result[1]) << 070) +
+                                                  (static_cast<uint64_t>(result[2]) << 060) +
+                                                  (static_cast<uint64_t>(result[3]) << 050) +
+                                                  (static_cast<uint64_t>(result[4]) << 040) +
+                                                  (static_cast<uint64_t>(result[5]) << 030) +
+                                                  (static_cast<uint64_t>(result[6]) << 020) +
+                                                  (static_cast<uint64_t>(result[7]) << 010) +
+                                                  static_cast<uint64_t>(result[8]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -594,16 +618,18 @@ TEST_CASE("CBOR")
                         CAPTURE(i)
 
                         // create JSON value with integer number
-                        json j = i;
+                        const json j = i;
 
                         // check type
                         CHECK(j.is_number_integer());
 
                         // create expected byte vector
-                        std::vector<uint8_t> expected;
-                        expected.push_back(0xd1);
-                        expected.push_back(static_cast<uint8_t>((i >> 8) & 0xff));
-                        expected.push_back(static_cast<uint8_t>(i & 0xff));
+                        const std::vector<uint8_t> expected
+                        {
+                            0xd1,
+                            static_cast<uint8_t>((i >> 8) & 0xff),
+                            static_cast<uint8_t>(i & 0xff),
+                        };
 
                         // compare result + size
                         const auto result = json::to_msgpack(j);
@@ -612,7 +638,7 @@ TEST_CASE("CBOR")
 
                         // check individual bytes
                         CHECK(result[0] == 0xd1);
-                        auto restored = static_cast<int16_t>((result[1] << 8) + result[2]);
+                        const auto restored = static_cast<int16_t>((result[1] << 8) + result[2]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -630,14 +656,16 @@ TEST_CASE("CBOR")
                         CAPTURE(i)
 
                         // create JSON value with unsigned integer number
-                        json j = i;
+                        const json j = i;
 
                         // check type
                         CHECK(j.is_number_unsigned());
 
                         // create expected byte vector
-                        std::vector<uint8_t> expected;
-                        expected.push_back(static_cast<uint8_t>(i));
+                        const std::vector<uint8_t> expected
+                        {
+                            static_cast<uint8_t>(i),
+                        };
 
                         // compare result + size
                         const auto result = json::to_cbor(j);
@@ -660,15 +688,17 @@ TEST_CASE("CBOR")
                         CAPTURE(i)
 
                         // create JSON value with unsigned integer number
-                        json j = i;
+                        const json j = i;
 
                         // check type
                         CHECK(j.is_number_unsigned());
 
                         // create expected byte vector
-                        std::vector<uint8_t> expected;
-                        expected.push_back(0x18);
-                        expected.push_back(static_cast<uint8_t>(i));
+                        const std::vector<uint8_t> expected
+                        {
+                            0x18,
+                            static_cast<uint8_t>(i),
+                        };
 
                         // compare result + size
                         const auto result = json::to_cbor(j);
@@ -677,7 +707,7 @@ TEST_CASE("CBOR")
 
                         // check individual bytes
                         CHECK(result[0] == 0x18);
-                        auto restored = static_cast<uint8_t>(result[1]);
+                        const auto restored = static_cast<uint8_t>(result[1]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -693,16 +723,18 @@ TEST_CASE("CBOR")
                         CAPTURE(i)
 
                         // create JSON value with unsigned integer number
-                        json j = i;
+                        const json j = i;
 
                         // check type
                         CHECK(j.is_number_unsigned());
 
                         // create expected byte vector
-                        std::vector<uint8_t> expected;
-                        expected.push_back(0x19);
-                        expected.push_back(static_cast<uint8_t>((i >> 8) & 0xff));
-                        expected.push_back(static_cast<uint8_t>(i & 0xff));
+                        const std::vector<uint8_t> expected
+                        {
+                            0x19,
+                            static_cast<uint8_t>((i >> 8) & 0xff),
+                            static_cast<uint8_t>(i & 0xff),
+                        };
 
                         // compare result + size
                         const auto result = json::to_cbor(j);
@@ -711,7 +743,7 @@ TEST_CASE("CBOR")
 
                         // check individual bytes
                         CHECK(result[0] == 0x19);
-                        auto restored = static_cast<uint16_t>(static_cast<uint8_t>(result[1]) * 256 + static_cast<uint8_t>(result[2]));
+                        const auto restored = static_cast<uint16_t>(static_cast<uint8_t>(result[1]) * 256 + static_cast<uint8_t>(result[2]));
                         CHECK(restored == i);
 
                         // roundtrip
@@ -722,7 +754,7 @@ TEST_CASE("CBOR")
 
                 SECTION("65536..4294967295 (four-byte uint32_t)")
                 {
-                    for (uint32_t i :
+                    for (const uint32_t i :
                             {
                                 65536u, 77777u, 1048576u
                             })
@@ -730,18 +762,20 @@ TEST_CASE("CBOR")
                         CAPTURE(i)
 
                         // create JSON value with unsigned integer number
-                        json j = i;
+                        const json j = i;
 
                         // check type
                         CHECK(j.is_number_unsigned());
 
                         // create expected byte vector
-                        std::vector<uint8_t> expected;
-                        expected.push_back(0x1a);
-                        expected.push_back(static_cast<uint8_t>((i >> 24) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 16) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 8) & 0xff));
-                        expected.push_back(static_cast<uint8_t>(i & 0xff));
+                        const std::vector<uint8_t> expected
+                        {
+                            0x1a,
+                            static_cast<uint8_t>((i >> 24) & 0xff),
+                            static_cast<uint8_t>((i >> 16) & 0xff),
+                            static_cast<uint8_t>((i >> 8) & 0xff),
+                            static_cast<uint8_t>(i & 0xff),
+                        };
 
                         // compare result + size
                         const auto result = json::to_cbor(j);
@@ -750,10 +784,10 @@ TEST_CASE("CBOR")
 
                         // check individual bytes
                         CHECK(result[0] == 0x1a);
-                        uint32_t restored = (static_cast<uint32_t>(result[1]) << 030) +
-                                            (static_cast<uint32_t>(result[2]) << 020) +
-                                            (static_cast<uint32_t>(result[3]) << 010) +
-                                            static_cast<uint32_t>(result[4]);
+                        const uint32_t restored = (static_cast<uint32_t>(result[1]) << 030) +
+                                                  (static_cast<uint32_t>(result[2]) << 020) +
+                                                  (static_cast<uint32_t>(result[3]) << 010) +
+                                                  static_cast<uint32_t>(result[4]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -764,7 +798,7 @@ TEST_CASE("CBOR")
 
                 SECTION("4294967296..4611686018427387903 (eight-byte uint64_t)")
                 {
-                    for (uint64_t i :
+                    for (const uint64_t i :
                             {
                                 4294967296ul, 4611686018427387903ul
                             })
@@ -772,22 +806,24 @@ TEST_CASE("CBOR")
                         CAPTURE(i)
 
                         // create JSON value with integer number
-                        json j = i;
+                        const json j = i;
 
                         // check type
                         CHECK(j.is_number_unsigned());
 
                         // create expected byte vector
-                        std::vector<uint8_t> expected;
-                        expected.push_back(0x1b);
-                        expected.push_back(static_cast<uint8_t>((i >> 070) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 060) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 050) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 040) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 030) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 020) & 0xff));
-                        expected.push_back(static_cast<uint8_t>((i >> 010) & 0xff));
-                        expected.push_back(static_cast<uint8_t>(i & 0xff));
+                        const std::vector<uint8_t> expected
+                        {
+                            0x1b,
+                            static_cast<uint8_t>((i >> 070) & 0xff),
+                            static_cast<uint8_t>((i >> 060) & 0xff),
+                            static_cast<uint8_t>((i >> 050) & 0xff),
+                            static_cast<uint8_t>((i >> 040) & 0xff),
+                            static_cast<uint8_t>((i >> 030) & 0xff),
+                            static_cast<uint8_t>((i >> 020) & 0xff),
+                            static_cast<uint8_t>((i >> 010) & 0xff),
+                            static_cast<uint8_t>(i & 0xff),
+                        };
 
                         // compare result + size
                         const auto result = json::to_cbor(j);
@@ -796,14 +832,14 @@ TEST_CASE("CBOR")
 
                         // check individual bytes
                         CHECK(result[0] == 0x1b);
-                        uint64_t restored = (static_cast<uint64_t>(result[1]) << 070) +
-                                            (static_cast<uint64_t>(result[2]) << 060) +
-                                            (static_cast<uint64_t>(result[3]) << 050) +
-                                            (static_cast<uint64_t>(result[4]) << 040) +
-                                            (static_cast<uint64_t>(result[5]) << 030) +
-                                            (static_cast<uint64_t>(result[6]) << 020) +
-                                            (static_cast<uint64_t>(result[7]) << 010) +
-                                            static_cast<uint64_t>(result[8]);
+                        const uint64_t restored = (static_cast<uint64_t>(result[1]) << 070) +
+                                                  (static_cast<uint64_t>(result[2]) << 060) +
+                                                  (static_cast<uint64_t>(result[3]) << 050) +
+                                                  (static_cast<uint64_t>(result[4]) << 040) +
+                                                  (static_cast<uint64_t>(result[5]) << 030) +
+                                                  (static_cast<uint64_t>(result[6]) << 020) +
+                                                  (static_cast<uint64_t>(result[7]) << 010) +
+                                                  static_cast<uint64_t>(result[8]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -818,7 +854,7 @@ TEST_CASE("CBOR")
                 SECTION("3.1415925")
                 {
                     double v = 3.1415925;
-                    json j = v;
+                    const json j = v;
                     std::vector<uint8_t> expected =
                     {
                         0xfb, 0x40, 0x09, 0x21, 0xfb, 0x3f, 0xa6, 0xde, 0xfc
@@ -839,11 +875,11 @@ TEST_CASE("CBOR")
                 SECTION("0.5")
                 {
                     double v = 0.5;
-                    json j = v;
+                    const json j = v;
                     // its double-precision float binary value is
                     // {0xfb, 0x3f, 0xe0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
                     // but to save memory, we can store it as single-precision float.
-                    std::vector<uint8_t> expected = {0xfa, 0x3f, 0x00, 0x00, 0x00};
+                    const std::vector<uint8_t> expected = {0xfa, 0x3f, 0x00, 0x00, 0x00};
                     const auto result = json::to_cbor(j);
                     CHECK(result == expected);
                     // roundtrip
@@ -853,10 +889,10 @@ TEST_CASE("CBOR")
                 SECTION("0.0")
                 {
                     double v = 0.0;
-                    json j = v;
+                    const json j = v;
                     // its double-precision binary value is:
                     // {0xfb, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
-                    std::vector<uint8_t> expected = {0xfa, 0x00, 0x00, 0x00, 0x00};
+                    const std::vector<uint8_t> expected = {0xfa, 0x00, 0x00, 0x00, 0x00};
                     const auto result = json::to_cbor(j);
                     CHECK(result == expected);
                     // roundtrip
@@ -866,10 +902,10 @@ TEST_CASE("CBOR")
                 SECTION("-0.0")
                 {
                     double v = -0.0;
-                    json j = v;
+                    const json j = v;
                     // its double-precision binary value is:
                     // {0xfb, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
-                    std::vector<uint8_t> expected = {0xfa, 0x80, 0x00, 0x00, 0x00};
+                    const std::vector<uint8_t> expected = {0xfa, 0x80, 0x00, 0x00, 0x00};
                     const auto result = json::to_cbor(j);
                     CHECK(result == expected);
                     // roundtrip
@@ -879,10 +915,10 @@ TEST_CASE("CBOR")
                 SECTION("100.0")
                 {
                     double v = 100.0;
-                    json j = v;
+                    const json j = v;
                     // its double-precision binary value is:
                     // {0xfb, 0x40, 0x59, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
-                    std::vector<uint8_t> expected = {0xfa, 0x42, 0xc8, 0x00, 0x00};
+                    const std::vector<uint8_t> expected = {0xfa, 0x42, 0xc8, 0x00, 0x00};
                     const auto result = json::to_cbor(j);
                     CHECK(result == expected);
                     // roundtrip
@@ -892,10 +928,10 @@ TEST_CASE("CBOR")
                 SECTION("200.0")
                 {
                     double v = 200.0;
-                    json j = v;
+                    const json j = v;
                     // its double-precision binary value is:
                     // {0xfb, 0x40, 0x69, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
-                    std::vector<uint8_t> expected = {0xfa, 0x43, 0x48, 0x00, 0x00};
+                    const std::vector<uint8_t> expected = {0xfa, 0x43, 0x48, 0x00, 0x00};
                     const auto result = json::to_cbor(j);
                     CHECK(result == expected);
                     // roundtrip
@@ -905,8 +941,8 @@ TEST_CASE("CBOR")
                 SECTION("3.40282e+38(max float)")
                 {
                     float v = (std::numeric_limits<float>::max)();
-                    json j = v;
-                    std::vector<uint8_t> expected =
+                    const json j = v;
+                    const std::vector<uint8_t> expected =
                     {
                         0xfa, 0x7f, 0x7f, 0xff, 0xff
                     };
@@ -919,8 +955,8 @@ TEST_CASE("CBOR")
                 SECTION("-3.40282e+38(lowest float)")
                 {
                     auto v = static_cast<double>(std::numeric_limits<float>::lowest());
-                    json j = v;
-                    std::vector<uint8_t> expected =
+                    const json j = v;
+                    const std::vector<uint8_t> expected =
                     {
                         0xfa, 0xff, 0x7f, 0xff, 0xff
                     };
@@ -933,8 +969,8 @@ TEST_CASE("CBOR")
                 SECTION("1 + 3.40282e+38(more than max float)")
                 {
                     double v = static_cast<double>((std::numeric_limits<float>::max)()) + 0.1e+34;
-                    json j = v;
-                    std::vector<uint8_t> expected =
+                    const json j = v;
+                    const std::vector<uint8_t> expected =
                     {
                         0xfb, 0x47, 0xf0, 0x00, 0x03, 0x04, 0xdc, 0x64, 0x49
                     };
@@ -948,8 +984,8 @@ TEST_CASE("CBOR")
                 SECTION("-1 - 3.40282e+38(less than lowest float)")
                 {
                     double v = static_cast<double>(std::numeric_limits<float>::lowest()) - 1.0;
-                    json j = v;
-                    std::vector<uint8_t> expected =
+                    const json j = v;
+                    const std::vector<uint8_t> expected =
                     {
                         0xfa, 0xff, 0x7f, 0xff, 0xff
                     };
@@ -985,21 +1021,21 @@ TEST_CASE("CBOR")
                 {
                     SECTION("0 (0 00000 0000000000)")
                     {
-                        json j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x00, 0x00}));
+                        json const j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x00, 0x00}));
                         json::number_float_t d{j};
                         CHECK(d == 0.0);
                     }
 
                     SECTION("-0 (1 00000 0000000000)")
                     {
-                        json j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x80, 0x00}));
+                        json const j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x80, 0x00}));
                         json::number_float_t d{j};
                         CHECK(d == -0.0);
                     }
 
                     SECTION("2**-24 (0 00000 0000000001)")
                     {
-                        json j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x00, 0x01}));
+                        json const j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x00, 0x01}));
                         json::number_float_t d{j};
                         CHECK(d == std::pow(2.0, -24.0));
                     }
@@ -1009,7 +1045,7 @@ TEST_CASE("CBOR")
                 {
                     SECTION("infinity (0 11111 0000000000)")
                     {
-                        json j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x7c, 0x00}));
+                        json const j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x7c, 0x00}));
                         json::number_float_t d{j};
                         CHECK(d == std::numeric_limits<json::number_float_t>::infinity());
                         CHECK(j.dump() == "null");
@@ -1017,7 +1053,7 @@ TEST_CASE("CBOR")
 
                     SECTION("-infinity (1 11111 0000000000)")
                     {
-                        json j = json::from_cbor(std::vector<uint8_t>({0xf9, 0xfc, 0x00}));
+                        json const j = json::from_cbor(std::vector<uint8_t>({0xf9, 0xfc, 0x00}));
                         json::number_float_t d{j};
                         CHECK(d == -std::numeric_limits<json::number_float_t>::infinity());
                         CHECK(j.dump() == "null");
@@ -1028,21 +1064,21 @@ TEST_CASE("CBOR")
                 {
                     SECTION("1 (0 01111 0000000000)")
                     {
-                        json j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x3c, 0x00}));
+                        json const j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x3c, 0x00}));
                         json::number_float_t d{j};
                         CHECK(d == 1);
                     }
 
                     SECTION("-2 (1 10000 0000000000)")
                     {
-                        json j = json::from_cbor(std::vector<uint8_t>({0xf9, 0xc0, 0x00}));
+                        json const j = json::from_cbor(std::vector<uint8_t>({0xf9, 0xc0, 0x00}));
                         json::number_float_t d{j};
                         CHECK(d == -2);
                     }
 
                     SECTION("65504 (0 11110 1111111111)")
                     {
-                        json j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x7b, 0xff}));
+                        json const j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x7b, 0xff}));
                         json::number_float_t d{j};
                         CHECK(d == 65504);
                     }
@@ -1050,16 +1086,16 @@ TEST_CASE("CBOR")
 
                 SECTION("infinity")
                 {
-                    json j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x7c, 0x00}));
-                    json::number_float_t d{j};
+                    json const j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x7c, 0x00}));
+                    json::number_float_t const d{j};
                     CHECK(!std::isfinite(d));
                     CHECK(j.dump() == "null");
                 }
 
                 SECTION("NaN")
                 {
-                    json j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x7e, 0x00}));
-                    json::number_float_t d{j};
+                    json const j = json::from_cbor(std::vector<uint8_t>({0xf9, 0x7e, 0x00}));
+                    json::number_float_t const d{j};
                     CHECK(std::isnan(d));
                     CHECK(j.dump() == "null");
                 }
@@ -1076,7 +1112,7 @@ TEST_CASE("CBOR")
 
                     // create JSON value with string containing of N * 'x'
                     const auto s = std::string(N, 'x');
-                    json j = s;
+                    const json j = s;
 
                     // create expected byte vector
                     std::vector<uint8_t> expected;
@@ -1110,10 +1146,11 @@ TEST_CASE("CBOR")
 
                     // create JSON value with string containing of N * 'x'
                     const auto s = std::string(N, 'x');
-                    json j = s;
+                    const json j = s;
 
                     // create expected byte vector
                     std::vector<uint8_t> expected;
+
                     expected.push_back(0x78);
                     expected.push_back(static_cast<uint8_t>(N));
                     for (size_t i = 0; i < N; ++i)
@@ -1136,7 +1173,7 @@ TEST_CASE("CBOR")
 
             SECTION("N = 256..65535")
             {
-                for (size_t N :
+                for (const size_t N :
                         {
                             256u, 999u, 1025u, 3333u, 2048u, 65535u
                         })
@@ -1145,7 +1182,7 @@ TEST_CASE("CBOR")
 
                     // create JSON value with string containing of N * 'x'
                     const auto s = std::string(N, 'x');
-                    json j = s;
+                    const json j = s;
 
                     // create expected byte vector (hack: create string first)
                     std::vector<uint8_t> expected(N, 'x');
@@ -1169,7 +1206,7 @@ TEST_CASE("CBOR")
 
             SECTION("N = 65536..4294967295")
             {
-                for (size_t N :
+                for (const size_t N :
                         {
                             65536u, 77777u, 1048576u
                         })
@@ -1178,7 +1215,7 @@ TEST_CASE("CBOR")
 
                     // create JSON value with string containing of N * 'x'
                     const auto s = std::string(N, 'x');
-                    json j = s;
+                    const json j = s;
 
                     // create expected byte vector (hack: create string first)
                     std::vector<uint8_t> expected(N, 'x');
@@ -1207,7 +1244,7 @@ TEST_CASE("CBOR")
         {
             SECTION("empty")
             {
-                json j = json::array();
+                const json j = json::array();
                 std::vector<uint8_t> expected = {0x80};
                 const auto result = json::to_cbor(j);
                 CHECK(result == expected);
@@ -1219,8 +1256,8 @@ TEST_CASE("CBOR")
 
             SECTION("[null]")
             {
-                json j = {nullptr};
-                std::vector<uint8_t> expected = {0x81, 0xf6};
+                const json j = {nullptr};
+                const std::vector<uint8_t> expected = {0x81, 0xf6};
                 const auto result = json::to_cbor(j);
                 CHECK(result == expected);
 
@@ -1231,8 +1268,8 @@ TEST_CASE("CBOR")
 
             SECTION("[1,2,3,4,5]")
             {
-                json j = json::parse("[1,2,3,4,5]");
-                std::vector<uint8_t> expected = {0x85, 0x01, 0x02, 0x03, 0x04, 0x05};
+                const json j = json::parse("[1,2,3,4,5]");
+                const std::vector<uint8_t> expected = {0x85, 0x01, 0x02, 0x03, 0x04, 0x05};
                 const auto result = json::to_cbor(j);
                 CHECK(result == expected);
 
@@ -1243,8 +1280,8 @@ TEST_CASE("CBOR")
 
             SECTION("[[[[]]]]")
             {
-                json j = json::parse("[[[[]]]]");
-                std::vector<uint8_t> expected = {0x81, 0x81, 0x81, 0x80};
+                const json j = json::parse("[[[[]]]]");
+                const std::vector<uint8_t> expected = {0x81, 0x81, 0x81, 0x80};
                 const auto result = json::to_cbor(j);
                 CHECK(result == expected);
 
@@ -1255,7 +1292,7 @@ TEST_CASE("CBOR")
 
             SECTION("array with uint16_t elements")
             {
-                json j(257, nullptr);
+                const json j(257, nullptr);
                 std::vector<uint8_t> expected(j.size() + 3, 0xf6); // all null
                 expected[0] = 0x99; // array 16 bit
                 expected[1] = 0x01; // size (0x0101), byte 0
@@ -1270,7 +1307,7 @@ TEST_CASE("CBOR")
 
             SECTION("array with uint32_t elements")
             {
-                json j(65793, nullptr);
+                const json j(65793, nullptr);
                 std::vector<uint8_t> expected(j.size() + 5, 0xf6); // all null
                 expected[0] = 0x9a; // array 32 bit
                 expected[1] = 0x00; // size (0x00010101), byte 0
@@ -1290,8 +1327,8 @@ TEST_CASE("CBOR")
         {
             SECTION("empty")
             {
-                json j = json::object();
-                std::vector<uint8_t> expected = {0xa0};
+                const json j = json::object();
+                const std::vector<uint8_t> expected = {0xa0};
                 const auto result = json::to_cbor(j);
                 CHECK(result == expected);
 
@@ -1302,8 +1339,8 @@ TEST_CASE("CBOR")
 
             SECTION("{\"\":null}")
             {
-                json j = {{"", nullptr}};
-                std::vector<uint8_t> expected = {0xa1, 0x60, 0xf6};
+                const json j = {{"", nullptr}};
+                const std::vector<uint8_t> expected = {0xa1, 0x60, 0xf6};
                 const auto result = json::to_cbor(j);
                 CHECK(result == expected);
 
@@ -1314,8 +1351,8 @@ TEST_CASE("CBOR")
 
             SECTION("{\"a\": {\"b\": {\"c\": {}}}}")
             {
-                json j = json::parse(R"({"a": {"b": {"c": {}}}})");
-                std::vector<uint8_t> expected =
+                const json j = json::parse(R"({"a": {"b": {"c": {}}}})");
+                const std::vector<uint8_t> expected =
                 {
                     0xa1, 0x61, 0x61, 0xa1, 0x61, 0x62, 0xa1, 0x61, 0x63, 0xa0
                 };
@@ -1425,7 +1462,7 @@ TEST_CASE("CBOR")
 
                     // create JSON value with byte array containing of N * 'x'
                     const auto s = std::vector<uint8_t>(N, 'x');
-                    json j = json::binary(s);
+                    const json j = json::binary(s);
 
                     // create expected byte vector
                     std::vector<uint8_t> expected;
@@ -1459,7 +1496,7 @@ TEST_CASE("CBOR")
 
                     // create JSON value with string containing of N * 'x'
                     const auto s = std::vector<uint8_t>(N, 'x');
-                    json j = json::binary(s);
+                    const json j = json::binary(s);
 
                     // create expected byte vector
                     std::vector<uint8_t> expected;
@@ -1485,7 +1522,7 @@ TEST_CASE("CBOR")
 
             SECTION("N = 256..65535")
             {
-                for (size_t N :
+                for (const size_t N :
                         {
                             256u, 999u, 1025u, 3333u, 2048u, 65535u
                         })
@@ -1494,7 +1531,7 @@ TEST_CASE("CBOR")
 
                     // create JSON value with string containing of N * 'x'
                     const auto s = std::vector<uint8_t>(N, 'x');
-                    json j = json::binary(s);
+                    const json j = json::binary(s);
 
                     // create expected byte vector (hack: create string first)
                     std::vector<uint8_t> expected(N, 'x');
@@ -1518,7 +1555,7 @@ TEST_CASE("CBOR")
 
             SECTION("N = 65536..4294967295")
             {
-                for (size_t N :
+                for (const size_t N :
                         {
                             65536u, 77777u, 1048576u
                         })
@@ -1527,7 +1564,7 @@ TEST_CASE("CBOR")
 
                     // create JSON value with string containing of N * 'x'
                     const auto s = std::vector<uint8_t>(N, 'x');
-                    json j = json::binary(s);
+                    const json j = json::binary(s);
 
                     // create expected byte vector (hack: create string first)
                     std::vector<uint8_t> expected(N, 'x');
@@ -1553,7 +1590,7 @@ TEST_CASE("CBOR")
 
             SECTION("indefinite size")
             {
-                std::vector<std::uint8_t> input = {0x5F, 0x44, 0xaa, 0xbb, 0xcc, 0xdd, 0x43, 0xee, 0xff, 0x99, 0xFF};
+                std::vector<std::uint8_t> const input = {0x5F, 0x44, 0xaa, 0xbb, 0xcc, 0xdd, 0x43, 0xee, 0xff, 0x99, 0xFF};
                 auto j = json::from_cbor(input);
                 CHECK(j.is_binary());
                 auto k = json::binary({0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x99});
@@ -1564,7 +1601,7 @@ TEST_CASE("CBOR")
             SECTION("binary in array")
             {
                 // array with three empty byte strings
-                std::vector<std::uint8_t> input = {0x83, 0x40, 0x40, 0x40};
+                std::vector<std::uint8_t> const input = {0x83, 0x40, 0x40, 0x40};
                 json _;
                 CHECK_NOTHROW(_ = json::from_cbor(input));
             }
@@ -1572,7 +1609,7 @@ TEST_CASE("CBOR")
             SECTION("binary in object")
             {
                 // object mapping "foo" to empty byte string
-                std::vector<std::uint8_t> input = {0xA1, 0x63, 0x66, 0x6F, 0x6F, 0x40};
+                std::vector<std::uint8_t> const input = {0xA1, 0x63, 0x66, 0x6F, 0x6F, 0x40};
                 json _;
                 CHECK_NOTHROW(_ = json::from_cbor(input));
             }
@@ -1580,7 +1617,7 @@ TEST_CASE("CBOR")
             SECTION("SAX callback with binary")
             {
                 // object mapping "foo" to byte string
-                std::vector<std::uint8_t> input = {0xA1, 0x63, 0x66, 0x6F, 0x6F, 0x41, 0x00};
+                std::vector<std::uint8_t> const input = {0xA1, 0x63, 0x66, 0x6F, 0x6F, 0x41, 0x00};
 
                 // callback to set binary_seen to true if a binary value was seen
                 bool binary_seen = false;
@@ -1606,37 +1643,37 @@ TEST_CASE("CBOR")
     {
         SECTION("0x5b (byte array)")
         {
-            std::vector<uint8_t> given = {0x5b, 0x00, 0x00, 0x00, 0x00,
-                                          0x00, 0x00, 0x00, 0x01, 0x61
-                                         };
-            json j = json::from_cbor(given);
+            std::vector<uint8_t> const given = {0x5b, 0x00, 0x00, 0x00, 0x00,
+                                                0x00, 0x00, 0x00, 0x01, 0x61
+                                               };
+            const json j = json::from_cbor(given);
             CHECK(j == json::binary(std::vector<uint8_t> {'a'}));
         }
 
         SECTION("0x7b (string)")
         {
-            std::vector<uint8_t> given = {0x7b, 0x00, 0x00, 0x00, 0x00,
-                                          0x00, 0x00, 0x00, 0x01, 0x61
-                                         };
-            json j = json::from_cbor(given);
+            std::vector<uint8_t> const given = {0x7b, 0x00, 0x00, 0x00, 0x00,
+                                                0x00, 0x00, 0x00, 0x01, 0x61
+                                               };
+            const json j = json::from_cbor(given);
             CHECK(j == "a");
         }
 
         SECTION("0x9b (array)")
         {
-            std::vector<uint8_t> given = {0x9b, 0x00, 0x00, 0x00, 0x00,
-                                          0x00, 0x00, 0x00, 0x01, 0xf4
-                                         };
-            json j = json::from_cbor(given);
+            std::vector<uint8_t> const given = {0x9b, 0x00, 0x00, 0x00, 0x00,
+                                                0x00, 0x00, 0x00, 0x01, 0xf4
+                                               };
+            const json j = json::from_cbor(given);
             CHECK(j == json::parse("[false]"));
         }
 
         SECTION("0xbb (map)")
         {
-            std::vector<uint8_t> given = {0xbb, 0x00, 0x00, 0x00, 0x00,
-                                          0x00, 0x00, 0x00, 0x01, 0x60, 0xf4
-                                         };
-            json j = json::from_cbor(given);
+            std::vector<uint8_t> const given = {0xbb, 0x00, 0x00, 0x00, 0x00,
+                                                0x00, 0x00, 0x00, 0x01, 0x60, 0xf4
+                                               };
+            const json j = json::from_cbor(given);
             CHECK(j == json::parse("{\"\": false}"));
         }
     }
@@ -1724,7 +1761,7 @@ TEST_CASE("CBOR")
 
             SECTION("all unsupported bytes")
             {
-                for (auto byte :
+                for (const auto byte :
                         {
                             // ?
                             0x1c, 0x1d, 0x1e, 0x1f,
@@ -1778,7 +1815,7 @@ TEST_CASE("CBOR")
 
         SECTION("strict mode")
         {
-            std::vector<uint8_t> vec = {0xf6, 0xf6};
+            std::vector<uint8_t> const vec = {0xf6, 0xf6};
             SECTION("non-strict mode")
             {
                 const auto result = json::from_cbor(vec, false);
@@ -1799,21 +1836,21 @@ TEST_CASE("CBOR")
     {
         SECTION("start_array(len)")
         {
-            std::vector<uint8_t> v = {0x83, 0x01, 0x02, 0x03};
+            std::vector<uint8_t> const v = {0x83, 0x01, 0x02, 0x03};
             SaxCountdown scp(0);
             CHECK(!json::sax_parse(v, &scp, json::input_format_t::cbor));
         }
 
         SECTION("start_object(len)")
         {
-            std::vector<uint8_t> v = {0xA1, 0x63, 0x66, 0x6F, 0x6F, 0xF4};
+            std::vector<uint8_t> const v = {0xA1, 0x63, 0x66, 0x6F, 0x6F, 0xF4};
             SaxCountdown scp(0);
             CHECK(!json::sax_parse(v, &scp, json::input_format_t::cbor));
         }
 
         SECTION("key()")
         {
-            std::vector<uint8_t> v = {0xA1, 0x63, 0x66, 0x6F, 0x6F, 0xF4};
+            std::vector<uint8_t> const v = {0xA1, 0x63, 0x66, 0x6F, 0x6F, 0xF4};
             SaxCountdown scp(1);
             CHECK(!json::sax_parse(v, &scp, json::input_format_t::cbor));
         }
@@ -1825,11 +1862,11 @@ TEST_CASE("single CBOR roundtrip")
 {
     SECTION("sample.json")
     {
-        std::string filename = TEST_DATA_DIRECTORY "/json_testsuite/sample.json";
+        std::string const filename = TEST_DATA_DIRECTORY "/json_testsuite/sample.json";
 
         // parse JSON file
         std::ifstream f_json(filename);
-        json j1 = json::parse(f_json);
+        const json j1 = json::parse(f_json);
 
         // parse CBOR file
         auto packed = utils::read_binary_file(filename + ".cbor");
@@ -1874,7 +1911,7 @@ TEST_CASE("CBOR regressions")
         AFL-Fuzz. As a result, empty byte vectors and excessive lengths are
         detected.
         */
-        for (std::string filename :
+        for (const std::string filename :
                 {
                     TEST_DATA_DIRECTORY "/cbor_regression/test01",
                     TEST_DATA_DIRECTORY "/cbor_regression/test02",
@@ -1910,7 +1947,7 @@ TEST_CASE("CBOR regressions")
                 try
                 {
                     // step 2: round trip
-                    std::vector<uint8_t> vec2 = json::to_cbor(j1);
+                    std::vector<uint8_t> const vec2 = json::to_cbor(j1);
 
                     // parse serialization
                     json j2 = json::from_cbor(vec2);
@@ -1951,7 +1988,7 @@ TEST_CASE("CBOR roundtrips" * doctest::skip())
         exclude_packed.insert(TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_duplicated_key.json");
         exclude_packed.insert(TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_long_strings.json");
 
-        for (std::string filename :
+        for (const std::string filename :
                 {
                     TEST_DATA_DIRECTORY "/json_nlohmann_tests/all_unicode.json",
                     TEST_DATA_DIRECTORY "/json.org/1.json",
@@ -2109,7 +2146,7 @@ TEST_CASE("CBOR roundtrips" * doctest::skip())
                 json j1 = json::parse(f_json);
 
                 // parse CBOR file
-                auto packed = utils::read_binary_file(filename + ".cbor");
+                const auto packed = utils::read_binary_file(filename + ".cbor");
                 json j2;
                 CHECK_NOTHROW(j2 = json::from_cbor(packed));
 
@@ -2139,7 +2176,7 @@ TEST_CASE("CBOR roundtrips" * doctest::skip())
                 json j1 = json::parse(f_json);
 
                 // parse CBOR file
-                auto packed = utils::read_binary_file(filename + ".cbor");
+                const auto packed = utils::read_binary_file(filename + ".cbor");
                 json j2;
                 CHECK_NOTHROW(j2 = json::from_cbor({packed.data(), packed.size()}));
 
@@ -2151,10 +2188,10 @@ TEST_CASE("CBOR roundtrips" * doctest::skip())
                 INFO_WITH_TEMP(filename + ": output to output adapters");
                 // parse JSON file
                 std::ifstream f_json(filename);
-                json j1 = json::parse(f_json);
+                json const j1 = json::parse(f_json);
 
                 // parse CBOR file
-                auto packed = utils::read_binary_file(filename + ".cbor");
+                const auto packed = utils::read_binary_file(filename + ".cbor");
 
                 if (exclude_packed.count(filename) == 0u)
                 {
@@ -2389,11 +2426,11 @@ TEST_CASE("examples from RFC 7049 Appendix A")
 
     SECTION("byte arrays")
     {
-        auto packed = utils::read_binary_file(TEST_DATA_DIRECTORY "/binary_data/cbor_binary.cbor");
+        const auto packed = utils::read_binary_file(TEST_DATA_DIRECTORY "/binary_data/cbor_binary.cbor");
         json j;
         CHECK_NOTHROW(j = json::from_cbor(packed));
 
-        auto expected = utils::read_binary_file(TEST_DATA_DIRECTORY "/binary_data/cbor_binary.out");
+        const auto expected = utils::read_binary_file(TEST_DATA_DIRECTORY "/binary_data/cbor_binary.out");
         CHECK(j == json::binary(expected));
 
         // 0xd8
@@ -2460,12 +2497,12 @@ TEST_CASE("examples from RFC 7049 Appendix A")
 
 TEST_CASE("Tagged values")
 {
-    json j = "s";
+    const json j = "s";
     auto v = json::to_cbor(j);
 
     SECTION("0xC6..0xD4")
     {
-        for (auto b : std::vector<std::uint8_t>
+        for (const auto b : std::vector<std::uint8_t>
     {
         0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF, 0xD0, 0xD1, 0xD2, 0xD3, 0xD4
     })

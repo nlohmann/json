@@ -45,7 +45,7 @@ const char* end(const MyContainer& c)
 TEST_CASE("Custom container non-member begin/end")
 {
 
-    MyContainer data{"[1,2,3,4]"};
+    const MyContainer data{"[1,2,3,4]"};
     json as_json = json::parse(data);
     CHECK(as_json.at(0) == 1);
     CHECK(as_json.at(1) == 2);
@@ -71,7 +71,7 @@ TEST_CASE("Custom container member begin/end")
         }
     };
 
-    MyContainer2 data{"[1,2,3,4]"};
+    const MyContainer2 data{"[1,2,3,4]"};
     json as_json = json::parse(data);
     CHECK(as_json.at(0) == 1);
     CHECK(as_json.at(1) == 2);
@@ -117,8 +117,8 @@ TEST_CASE("Custom iterator")
     CHECK(std::is_same<MyIterator::reference, const char&>::value);
     CHECK(std::is_same<MyIterator::iterator_category, std::input_iterator_tag>::value);
 
-    MyIterator begin{raw_data};
-    MyIterator end{raw_data + strlen(raw_data)}; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+    const MyIterator begin{raw_data};
+    const MyIterator end{raw_data + strlen(raw_data)}; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
     json as_json = json::parse(begin, end);
     CHECK(as_json.at(0) == 1);

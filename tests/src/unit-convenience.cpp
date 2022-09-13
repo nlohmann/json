@@ -173,9 +173,9 @@ TEST_CASE("convenience functions")
         using nlohmann::detail::concat;
 
         const char* expected = "Hello, world!";
-        alt_string_iter hello_iter{"Hello, "};
-        alt_string_data hello_data{"Hello, "};
-        std::string world = "world";
+        alt_string_iter const hello_iter{"Hello, "};
+        alt_string_data const hello_data{"Hello, "};
+        std::string const world = "world";
 
         SECTION("std::string")
         {

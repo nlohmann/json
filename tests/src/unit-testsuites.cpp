@@ -302,7 +302,7 @@ TEST_CASE("compliance tests from nativejson-benchmark")
                                      (std::istreambuf_iterator<char>()) );
 
             CAPTURE(json_string)
-            json j = json::parse(json_string);
+            const json j = json::parse(json_string);
             CHECK(j.dump() == json_string);
         }
     }
@@ -363,35 +363,35 @@ TEST_CASE("json.org examples")
     }
     SECTION("FILE 1.json")
     {
-        std::unique_ptr<std::FILE, decltype(&std::fclose)> f(std::fopen(TEST_DATA_DIRECTORY "/json.org/1.json", "r"), &std::fclose);
+        const std::unique_ptr<std::FILE, decltype(&std::fclose)> f(std::fopen(TEST_DATA_DIRECTORY "/json.org/1.json", "r"), &std::fclose);
         json _;
         CHECK_NOTHROW(_ = json::parse(f.get()));
     }
 
     SECTION("FILE 2.json")
     {
-        std::unique_ptr<std::FILE, decltype(&std::fclose)> f(std::fopen(TEST_DATA_DIRECTORY "/json.org/2.json", "r"), &std::fclose);
+        const std::unique_ptr<std::FILE, decltype(&std::fclose)> f(std::fopen(TEST_DATA_DIRECTORY "/json.org/2.json", "r"), &std::fclose);
         json _;
         CHECK_NOTHROW(_ = json::parse(f.get()));
     }
 
     SECTION("FILE 3.json")
     {
-        std::unique_ptr<std::FILE, decltype(&std::fclose)> f(std::fopen(TEST_DATA_DIRECTORY "/json.org/3.json", "r"), &std::fclose);
+        const std::unique_ptr<std::FILE, decltype(&std::fclose)> f(std::fopen(TEST_DATA_DIRECTORY "/json.org/3.json", "r"), &std::fclose);
         json _;
         CHECK_NOTHROW(_ = json::parse(f.get()));
     }
 
     SECTION("FILE 4.json")
     {
-        std::unique_ptr<std::FILE, decltype(&std::fclose)> f(std::fopen(TEST_DATA_DIRECTORY "/json.org/4.json", "r"), &std::fclose);
+        const std::unique_ptr<std::FILE, decltype(&std::fclose)> f(std::fopen(TEST_DATA_DIRECTORY "/json.org/4.json", "r"), &std::fclose);
         json _;
         CHECK_NOTHROW(_ = json::parse(f.get()));
     }
 
     SECTION("FILE 5.json")
     {
-        std::unique_ptr<std::FILE, decltype(&std::fclose)> f(std::fopen(TEST_DATA_DIRECTORY "/json.org/5.json", "r"), &std::fclose);
+        const std::unique_ptr<std::FILE, decltype(&std::fclose)> f(std::fopen(TEST_DATA_DIRECTORY "/json.org/5.json", "r"), &std::fclose);
         json _;
         CHECK_NOTHROW(_ = json::parse(f.get()));
     }
@@ -1340,12 +1340,12 @@ std::string trim(const std::string& str);
 // from https://stackoverflow.com/a/25829178/266378
 std::string trim(const std::string& str)
 {
-    size_t first = str.find_first_not_of(' ');
+    const size_t first = str.find_first_not_of(' ');
     if (std::string::npos == first)
     {
         return str;
     }
-    size_t last = str.find_last_not_of(' ');
+    const size_t last = str.find_last_not_of(' ');
     return str.substr(first, (last - first + 1));
 }
 } // namespace
@@ -1384,7 +1384,7 @@ TEST_CASE("Big List of Naughty Strings")
 
             // check roundtrip
             CAPTURE(line)
-            json j = json::parse(line);
+            const json j = json::parse(line);
             CHECK(j.dump() == line);
         }
     }

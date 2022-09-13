@@ -391,7 +391,7 @@ TEST_CASE("lexicographical comparison operators")
             }
 
             // compare with null pointer
-            json j_null;
+            const json j_null;
             CHECK((j_null != nullptr) == false);
             CHECK((nullptr != j_null) == false);
             CHECK((j_null != nullptr) == !(j_null == nullptr));

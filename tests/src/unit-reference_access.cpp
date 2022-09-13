@@ -14,7 +14,7 @@ using nlohmann::json;
 TEST_CASE("reference access")
 {
     // create a JSON value with different types
-    json json_types =
+    const json json_types =
     {
         {"boolean", true},
         {

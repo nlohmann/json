@@ -33,10 +33,10 @@ TEST_CASE_TEMPLATE_DEFINE("value_in_range_of trait", T, value_in_range_of_test)
     constexpr bool min_in_range = T::min_in_range;
     constexpr bool max_in_range = T::max_in_range;
 
-    type val_min = std::numeric_limits<type>::min();
-    type val_min2 = val_min + 1;
-    type val_max = std::numeric_limits<type>::max();
-    type val_max2 = val_max - 1;
+    type const val_min = std::numeric_limits<type>::min();
+    type const val_min2 = val_min + 1;
+    type const val_max = std::numeric_limits<type>::max();
+    type const val_max2 = val_max - 1;
 
     REQUIRE(CHAR_BIT == 8);
 
@@ -108,8 +108,8 @@ TEST_CASE("BJData")
         {
             SECTION("optimized array: negative size")
             {
-                std::vector<uint8_t> vM = {'[', '$', 'M', '#', '[', 'I', 0x00, 0x20, 'M', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0xFF, ']'};
-                std::vector<uint8_t> vMX = {'[', '$', 'U', '#', '[', 'M', 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 'U', 0x01, ']'};
+                std::vector<uint8_t> const vM = {'[', '$', 'M', '#', '[', 'I', 0x00, 0x20, 'M', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0xFF, ']'};
+                std::vector<uint8_t> const vMX = {'[', '$', 'U', '#', '[', 'M', 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 'U', 0x01, ']'};
 
                 json _;
                 CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vM), "[json.exception.out_of_range.408] syntax error while parsing BJData size: integer value overflow", json::out_of_range&);
@@ -121,8 +121,8 @@ TEST_CASE("BJData")
 
             SECTION("optimized array: integer value overflow")
             {
-                std::vector<uint8_t> vL = {'[', '#', 'L', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7F};
-                std::vector<uint8_t> vM = {'[', '$', 'M', '#', '[', 'I', 0x00, 0x20, 'M', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0xFF, ']'};
+                std::vector<uint8_t> const vL = {'[', '#', 'L', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7F};
+                std::vector<uint8_t> const vM = {'[', '$', 'M', '#', '[', 'I', 0x00, 0x20, 'M', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0xFF, ']'};
 
                 json _;
                 CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vL), "[json.exception.out_of_range.408] syntax error while parsing BJData size: integer value overflow", json::out_of_range&);

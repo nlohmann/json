@@ -26,7 +26,7 @@ int main()
 #endif
         // copy stdin to byte vector
         std::vector<uint8_t> vec;
-        char c;
+        char c = 0;
         while (std::cin.get(c))
         {
             vec.push_back(static_cast<uint8_t>(c));
