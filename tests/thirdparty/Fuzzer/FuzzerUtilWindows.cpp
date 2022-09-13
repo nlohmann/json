@@ -159,8 +159,8 @@ int ExecuteCommand(const std::string &Command) {
 const void *SearchMemory(const void *Data, size_t DataLen, const void *Patt,
                          size_t PattLen) {
   // TODO: make this implementation more efficient.
-  const char *Cdata = (const char *)Data;
-  const char *Cpatt = (const char *)Patt;
+  const char *Cdata = Data;
+  const char *Cpatt = Patt;
 
   if (!Data || !Patt || DataLen == 0 || PattLen == 0 || DataLen < PattLen)
     return NULL;
