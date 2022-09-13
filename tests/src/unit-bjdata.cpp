@@ -336,7 +336,7 @@ TEST_CASE("BJData")
 
                 SECTION("-2147483648..-32769 (int32)")
                 {
-                    std::vector<int32_t> numbers
+                    std::vector<int32_t> const numbers
                     {
                         -32769,
                             -100000,
@@ -424,7 +424,7 @@ TEST_CASE("BJData")
                 SECTION("-9263 (int16)")
                 {
                     json const j = -9263;
-                    std::vector<uint8_t> expected = {'I', 0xd1, 0xdb};
+                    std::vector<uint8_t> const expected = {'I', 0xd1, 0xdb};
 
                     // compare result + size
                     const auto result = json::to_bjdata(j);
@@ -1146,7 +1146,7 @@ TEST_CASE("BJData")
                 {
                     double v = 3.1415925;
                     json const j = v;
-                    std::vector<uint8_t> expected =
+                    std::vector<uint8_t> const expected =
                     {
                         'D', 0xfc, 0xde, 0xa6, 0x3f, 0xfb, 0x21, 0x09, 0x40
                     };
@@ -1768,7 +1768,7 @@ TEST_CASE("BJData")
                 SECTION("size=false type=false")
                 {
                     json const j = json::array();
-                    std::vector<uint8_t> expected = {'[', ']'};
+                    std::vector<uint8_t> const expected = {'[', ']'};
                     const auto result = json::to_bjdata(j);
                     CHECK(result == expected);
 
@@ -1780,7 +1780,7 @@ TEST_CASE("BJData")
                 SECTION("size=true type=false")
                 {
                     json const j = json::array();
-                    std::vector<uint8_t> expected = {'[', '#', 'i', 0};
+                    std::vector<uint8_t> const expected = {'[', '#', 'i', 0};
                     const auto result = json::to_bjdata(j, true);
                     CHECK(result == expected);
 
@@ -1792,7 +1792,7 @@ TEST_CASE("BJData")
                 SECTION("size=true type=true")
                 {
                     json const j = json::array();
-                    std::vector<uint8_t> expected = {'[', '#', 'i', 0};
+                    std::vector<uint8_t> const expected = {'[', '#', 'i', 0};
                     const auto result = json::to_bjdata(j, true, true);
                     CHECK(result == expected);
 
@@ -1807,7 +1807,7 @@ TEST_CASE("BJData")
                 SECTION("size=false type=false")
                 {
                     json const j = {nullptr};
-                    std::vector<uint8_t> expected = {'[', 'Z', ']'};
+                    std::vector<uint8_t> const expected = {'[', 'Z', ']'};
                     const auto result = json::to_bjdata(j);
                     CHECK(result == expected);
 
@@ -1819,7 +1819,7 @@ TEST_CASE("BJData")
                 SECTION("size=true type=false")
                 {
                     json const j = {nullptr};
-                    std::vector<uint8_t> expected = {'[', '#', 'i', 1, 'Z'};
+                    std::vector<uint8_t> const expected = {'[', '#', 'i', 1, 'Z'};
                     const auto result = json::to_bjdata(j, true);
                     CHECK(result == expected);
 
@@ -1831,7 +1831,7 @@ TEST_CASE("BJData")
                 SECTION("size=true type=true")
                 {
                     json const j = {nullptr};
-                    std::vector<uint8_t> expected = {'[', '#', 'i', 1, 'Z'};
+                    std::vector<uint8_t> const expected = {'[', '#', 'i', 1, 'Z'};
                     const auto result = json::to_bjdata(j, true, true);
                     CHECK(result == expected);
 
@@ -1846,7 +1846,7 @@ TEST_CASE("BJData")
                 SECTION("size=false type=false")
                 {
                     json const j = json::parse("[1,2,3,4,5]");
-                    std::vector<uint8_t> expected = {'[', 'i', 1, 'i', 2, 'i', 3, 'i', 4, 'i', 5, ']'};
+                    std::vector<uint8_t> const expected = {'[', 'i', 1, 'i', 2, 'i', 3, 'i', 4, 'i', 5, ']'};
                     const auto result = json::to_bjdata(j);
                     CHECK(result == expected);
 
@@ -1858,7 +1858,7 @@ TEST_CASE("BJData")
                 SECTION("size=true type=false")
                 {
                     json const j = json::parse("[1,2,3,4,5]");
-                    std::vector<uint8_t> expected = {'[', '#', 'i', 5, 'i', 1, 'i', 2, 'i', 3, 'i', 4, 'i', 5};
+                    std::vector<uint8_t> const expected = {'[', '#', 'i', 5, 'i', 1, 'i', 2, 'i', 3, 'i', 4, 'i', 5};
                     const auto result = json::to_bjdata(j, true);
                     CHECK(result == expected);
 
@@ -1870,7 +1870,7 @@ TEST_CASE("BJData")
                 SECTION("size=true type=true")
                 {
                     json const j = json::parse("[1,2,3,4,5]");
-                    std::vector<uint8_t> expected = {'[', '$', 'i', '#', 'i', 5, 1, 2, 3, 4, 5};
+                    std::vector<uint8_t> const expected = {'[', '$', 'i', '#', 'i', 5, 1, 2, 3, 4, 5};
                     const auto result = json::to_bjdata(j, true, true);
                     CHECK(result == expected);
 
@@ -1885,7 +1885,7 @@ TEST_CASE("BJData")
                 SECTION("size=false type=false")
                 {
                     json const j = json::parse("[[[[]]]]");
-                    std::vector<uint8_t> expected = {'[', '[', '[', '[', ']', ']', ']', ']'};
+                    std::vector<uint8_t> const expected = {'[', '[', '[', '[', ']', ']', ']', ']'};
                     const auto result = json::to_bjdata(j);
                     CHECK(result == expected);
 
@@ -1897,7 +1897,7 @@ TEST_CASE("BJData")
                 SECTION("size=true type=false")
                 {
                     json const j = json::parse("[[[[]]]]");
-                    std::vector<uint8_t> expected = {'[', '#', 'i', 1, '[', '#', 'i', 1, '[', '#', 'i', 1, '[', '#', 'i', 0};
+                    std::vector<uint8_t> const expected = {'[', '#', 'i', 1, '[', '#', 'i', 1, '[', '#', 'i', 1, '[', '#', 'i', 0};
                     const auto result = json::to_bjdata(j, true);
                     CHECK(result == expected);
 
@@ -1909,7 +1909,7 @@ TEST_CASE("BJData")
                 SECTION("size=true type=true")
                 {
                     json const j = json::parse("[[[[]]]]");
-                    std::vector<uint8_t> expected = {'[', '#', 'i', 1, '[', '#', 'i', 1, '[', '#', 'i', 1, '[', '#', 'i', 0};
+                    std::vector<uint8_t> const expected = {'[', '#', 'i', 1, '[', '#', 'i', 1, '[', '#', 'i', 1, '[', '#', 'i', 0};
                     const auto result = json::to_bjdata(j, true, true);
                     CHECK(result == expected);
 
@@ -2031,7 +2031,7 @@ TEST_CASE("BJData")
                 SECTION("size=false type=false")
                 {
                     json const j = json::object();
-                    std::vector<uint8_t> expected = {'{', '}'};
+                    std::vector<uint8_t> const expected = {'{', '}'};
                     const auto result = json::to_bjdata(j);
                     CHECK(result == expected);
 
@@ -2043,7 +2043,7 @@ TEST_CASE("BJData")
                 SECTION("size=true type=false")
                 {
                     json const j = json::object();
-                    std::vector<uint8_t> expected = {'{', '#', 'i', 0};
+                    std::vector<uint8_t> const expected = {'{', '#', 'i', 0};
                     const auto result = json::to_bjdata(j, true);
                     CHECK(result == expected);
 
@@ -2055,7 +2055,7 @@ TEST_CASE("BJData")
                 SECTION("size=true type=true")
                 {
                     json const j = json::object();
-                    std::vector<uint8_t> expected = {'{', '#', 'i', 0};
+                    std::vector<uint8_t> const expected = {'{', '#', 'i', 0};
                     const auto result = json::to_bjdata(j, true, true);
                     CHECK(result == expected);
 
@@ -2070,7 +2070,7 @@ TEST_CASE("BJData")
                 SECTION("size=false type=false")
                 {
                     json const j = {{"", nullptr}};
-                    std::vector<uint8_t> expected = {'{', 'i', 0, 'Z', '}'};
+                    std::vector<uint8_t> const expected = {'{', 'i', 0, 'Z', '}'};
                     const auto result = json::to_bjdata(j);
                     CHECK(result == expected);
 
@@ -2082,7 +2082,7 @@ TEST_CASE("BJData")
                 SECTION("size=true type=false")
                 {
                     json const j = {{"", nullptr}};
-                    std::vector<uint8_t> expected = {'{', '#', 'i', 1, 'i', 0, 'Z'};
+                    std::vector<uint8_t> const expected = {'{', '#', 'i', 1, 'i', 0, 'Z'};
                     const auto result = json::to_bjdata(j, true);
                     CHECK(result == expected);
 
@@ -2097,7 +2097,7 @@ TEST_CASE("BJData")
                 SECTION("size=false type=false")
                 {
                     json const j = json::parse(R"({"a": {"b": {"c": {}}}})");
-                    std::vector<uint8_t> expected =
+                    std::vector<uint8_t> const expected =
                     {
                         '{', 'i', 1, 'a', '{', 'i', 1, 'b', '{', 'i', 1, 'c', '{', '}', '}', '}', '}'
                     };
@@ -2112,7 +2112,7 @@ TEST_CASE("BJData")
                 SECTION("size=true type=false")
                 {
                     json const j = json::parse(R"({"a": {"b": {"c": {}}}})");
-                    std::vector<uint8_t> expected =
+                    std::vector<uint8_t> const expected =
                     {
                         '{', '#', 'i', 1, 'i', 1, 'a', '{', '#', 'i', 1, 'i', 1, 'b', '{', '#', 'i', 1, 'i', 1, 'c', '{', '#', 'i', 0
                     };
@@ -2127,7 +2127,7 @@ TEST_CASE("BJData")
                 SECTION("size=true type=true ignore object type marker")
                 {
                     json const j = json::parse(R"({"a": {"b": {"c": {}}}})");
-                    std::vector<uint8_t> expected =
+                    std::vector<uint8_t> const expected =
                     {
                         '{', '#', 'i', 1, 'i', 1, 'a', '{', '#', 'i', 1, 'i', 1, 'b', '{', '#', 'i', 1, 'i', 1, 'c', '{', '#', 'i', 0
                     };
@@ -2321,19 +2321,19 @@ TEST_CASE("BJData")
             {
                 // create vector with two elements of the same type
                 std::vector<uint8_t> const v_TU = {'[', '#', 'U', 2, 'T', 'T'};
-                std::vector<uint8_t> v_T = {'[', '#', 'i', 2, 'T', 'T'};
-                std::vector<uint8_t> v_F = {'[', '#', 'i', 2, 'F', 'F'};
-                std::vector<uint8_t> v_Z = {'[', '#', 'i', 2, 'Z', 'Z'};
-                std::vector<uint8_t> v_i = {'[', '#', 'i', 2, 'i', 0x7F, 'i', 0x7F};
-                std::vector<uint8_t> v_U = {'[', '#', 'i', 2, 'U', 0xFF, 'U', 0xFF};
-                std::vector<uint8_t> v_I = {'[', '#', 'i', 2, 'I', 0xFF, 0x7F, 'I', 0xFF, 0x7F};
-                std::vector<uint8_t> v_u = {'[', '#', 'i', 2, 'u', 0x0F, 0xA7, 'u', 0x0F, 0xA7};
-                std::vector<uint8_t> v_l = {'[', '#', 'i', 2, 'l', 0xFF, 0xFF, 0xFF, 0x7F, 'l', 0xFF, 0xFF, 0xFF, 0x7F};
-                std::vector<uint8_t> v_m = {'[', '#', 'i', 2, 'm', 0xFF, 0xC9, 0x9A, 0xBB, 'm', 0xFF, 0xC9, 0x9A, 0xBB};
-                std::vector<uint8_t> v_L = {'[', '#', 'i', 2, 'L', 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F, 'L', 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F};
-                std::vector<uint8_t> v_M = {'[', '#', 'i', 2, 'M', 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D, 'M', 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D};
-                std::vector<uint8_t> v_D = {'[', '#', 'i', 2, 'D', 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40, 'D', 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40};
-                std::vector<uint8_t> v_S = {'[', '#', 'i', 2, 'S', 'i', 1, 'a', 'S', 'i', 1, 'a'};
+                std::vector<uint8_t> const v_T = {'[', '#', 'i', 2, 'T', 'T'};
+                std::vector<uint8_t> const v_F = {'[', '#', 'i', 2, 'F', 'F'};
+                std::vector<uint8_t> const v_Z = {'[', '#', 'i', 2, 'Z', 'Z'};
+                std::vector<uint8_t> const v_i = {'[', '#', 'i', 2, 'i', 0x7F, 'i', 0x7F};
+                std::vector<uint8_t> const v_U = {'[', '#', 'i', 2, 'U', 0xFF, 'U', 0xFF};
+                std::vector<uint8_t> const v_I = {'[', '#', 'i', 2, 'I', 0xFF, 0x7F, 'I', 0xFF, 0x7F};
+                std::vector<uint8_t> const v_u = {'[', '#', 'i', 2, 'u', 0x0F, 0xA7, 'u', 0x0F, 0xA7};
+                std::vector<uint8_t> const v_l = {'[', '#', 'i', 2, 'l', 0xFF, 0xFF, 0xFF, 0x7F, 'l', 0xFF, 0xFF, 0xFF, 0x7F};
+                std::vector<uint8_t> const v_m = {'[', '#', 'i', 2, 'm', 0xFF, 0xC9, 0x9A, 0xBB, 'm', 0xFF, 0xC9, 0x9A, 0xBB};
+                std::vector<uint8_t> const v_L = {'[', '#', 'i', 2, 'L', 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F, 'L', 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F};
+                std::vector<uint8_t> const v_M = {'[', '#', 'i', 2, 'M', 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D, 'M', 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D};
+                std::vector<uint8_t> const v_D = {'[', '#', 'i', 2, 'D', 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40, 'D', 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40};
+                std::vector<uint8_t> const v_S = {'[', '#', 'i', 2, 'S', 'i', 1, 'a', 'S', 'i', 1, 'a'};
                 std::vector<uint8_t> const v_C = {'[', '#', 'i', 2, 'C', 'a', 'C', 'a'};
 
                 // check if vector is parsed correctly
@@ -2373,16 +2373,16 @@ TEST_CASE("BJData")
             SECTION("optimized version (type and length)")
             {
                 // create vector with two elements of the same type
-                std::vector<uint8_t> v_i = {'[', '$', 'i', '#', 'i', 2, 0x7F, 0x7F};
-                std::vector<uint8_t> v_U = {'[', '$', 'U', '#', 'i', 2, 0xFF, 0xFF};
-                std::vector<uint8_t> v_I = {'[', '$', 'I', '#', 'i', 2, 0xFF, 0x7F, 0xFF, 0x7F};
-                std::vector<uint8_t> v_u = {'[', '$', 'u', '#', 'i', 2, 0x0F, 0xA7, 0x0F, 0xA7};
-                std::vector<uint8_t> v_l = {'[', '$', 'l', '#', 'i', 2, 0xFF, 0xFF, 0xFF, 0x7F, 0xFF, 0xFF, 0xFF, 0x7F};
-                std::vector<uint8_t> v_m = {'[', '$', 'm', '#', 'i', 2, 0xFF, 0xC9, 0x9A, 0xBB, 0xFF, 0xC9, 0x9A, 0xBB};
-                std::vector<uint8_t> v_L = {'[', '$', 'L', '#', 'i', 2, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F};
-                std::vector<uint8_t> v_M = {'[', '$', 'M', '#', 'i', 2, 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D, 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D};
-                std::vector<uint8_t> v_D = {'[', '$', 'D', '#', 'i', 2, 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40, 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40};
-                std::vector<uint8_t> v_S = {'[', '#', 'i', 2, 'S', 'i', 1, 'a', 'S', 'i', 1, 'a'};
+                std::vector<uint8_t> const v_i = {'[', '$', 'i', '#', 'i', 2, 0x7F, 0x7F};
+                std::vector<uint8_t> const v_U = {'[', '$', 'U', '#', 'i', 2, 0xFF, 0xFF};
+                std::vector<uint8_t> const v_I = {'[', '$', 'I', '#', 'i', 2, 0xFF, 0x7F, 0xFF, 0x7F};
+                std::vector<uint8_t> const v_u = {'[', '$', 'u', '#', 'i', 2, 0x0F, 0xA7, 0x0F, 0xA7};
+                std::vector<uint8_t> const v_l = {'[', '$', 'l', '#', 'i', 2, 0xFF, 0xFF, 0xFF, 0x7F, 0xFF, 0xFF, 0xFF, 0x7F};
+                std::vector<uint8_t> const v_m = {'[', '$', 'm', '#', 'i', 2, 0xFF, 0xC9, 0x9A, 0xBB, 0xFF, 0xC9, 0x9A, 0xBB};
+                std::vector<uint8_t> const v_L = {'[', '$', 'L', '#', 'i', 2, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F};
+                std::vector<uint8_t> const v_M = {'[', '$', 'M', '#', 'i', 2, 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D, 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D};
+                std::vector<uint8_t> const v_D = {'[', '$', 'D', '#', 'i', 2, 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40, 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40};
+                std::vector<uint8_t> const v_S = {'[', '#', 'i', 2, 'S', 'i', 1, 'a', 'S', 'i', 1, 'a'};
                 std::vector<uint8_t> const v_C = {'[', '$', 'C', '#', 'i', 2, 'a', 'a'};
 
                 // check if vector is parsed correctly
@@ -2449,18 +2449,18 @@ TEST_CASE("BJData")
             SECTION("optimized ndarray (type and vector-size ndarray with JData annotations)")
             {
                 // create vector with 0, 1, 2 elements of the same type
-                std::vector<uint8_t> v_e = {'[', '$', 'U', '#', '[', '$', 'i', '#', 'i', 2, 2, 1, 0xFE, 0xFF};
-                std::vector<uint8_t> v_U = {'[', '$', 'U', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
-                std::vector<uint8_t> v_i = {'[', '$', 'i', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
-                std::vector<uint8_t> v_u = {'[', '$', 'u', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x01, 0x00, 0x02, 0x00, 0x03, 0x00, 0x04, 0x00, 0x05, 0x00, 0x06, 0x00};
-                std::vector<uint8_t> v_I = {'[', '$', 'I', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x01, 0x00, 0x02, 0x00, 0x03, 0x00, 0x04, 0x00, 0x05, 0x00, 0x06, 0x00};
-                std::vector<uint8_t> v_m = {'[', '$', 'm', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x01, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00};
-                std::vector<uint8_t> v_l = {'[', '$', 'l', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x01, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00};
-                std::vector<uint8_t> v_M = {'[', '$', 'M', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-                std::vector<uint8_t> v_L = {'[', '$', 'L', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-                std::vector<uint8_t> v_d = {'[', '$', 'd', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x40, 0x40, 0x00, 0x00, 0x80, 0x40, 0x00, 0x00, 0xA0, 0x40, 0x00, 0x00, 0xC0, 0x40};
-                std::vector<uint8_t> v_D = {'[', '$', 'D', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xF0, 0x3F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x14, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x18, 0x40};
-                std::vector<uint8_t> v_C = {'[', '$', 'C', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 'a', 'b', 'c', 'd', 'e', 'f'};
+                std::vector<uint8_t> const v_e = {'[', '$', 'U', '#', '[', '$', 'i', '#', 'i', 2, 2, 1, 0xFE, 0xFF};
+                std::vector<uint8_t> const v_U = {'[', '$', 'U', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
+                std::vector<uint8_t> const v_i = {'[', '$', 'i', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
+                std::vector<uint8_t> const v_u = {'[', '$', 'u', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x01, 0x00, 0x02, 0x00, 0x03, 0x00, 0x04, 0x00, 0x05, 0x00, 0x06, 0x00};
+                std::vector<uint8_t> const v_I = {'[', '$', 'I', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x01, 0x00, 0x02, 0x00, 0x03, 0x00, 0x04, 0x00, 0x05, 0x00, 0x06, 0x00};
+                std::vector<uint8_t> const v_m = {'[', '$', 'm', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x01, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00};
+                std::vector<uint8_t> const v_l = {'[', '$', 'l', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x01, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00};
+                std::vector<uint8_t> const v_M = {'[', '$', 'M', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+                std::vector<uint8_t> const v_L = {'[', '$', 'L', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+                std::vector<uint8_t> const v_d = {'[', '$', 'd', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x40, 0x40, 0x00, 0x00, 0x80, 0x40, 0x00, 0x00, 0xA0, 0x40, 0x00, 0x00, 0xC0, 0x40};
+                std::vector<uint8_t> const v_D = {'[', '$', 'D', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xF0, 0x3F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x14, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x18, 0x40};
+                std::vector<uint8_t> const v_C = {'[', '$', 'C', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 'a', 'b', 'c', 'd', 'e', 'f'};
 
                 // check if vector is parsed correctly
                 CHECK(json::from_bjdata(v_e) == json({{"_ArrayData_", {254, 255}}, {"_ArraySize_", {2, 1}}, {"_ArrayType_", "uint8"}}));
@@ -2695,16 +2695,13 @@ TEST_CASE("BJData")
 
             SECTION("optimized array: integer value overflow")
             {
+#if SIZE_MAX == 0xffffffff
                 std::vector<uint8_t> const vL = {'[', '#', 'L', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7F};
                 std::vector<uint8_t> const vM = {'[', '$', 'M', '#', '[', 'I', 0x00, 0x20, 'M', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0xFF, ']'};
 
                 json _;
-#if SIZE_MAX == 0xffffffff
                 CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vL), "[json.exception.out_of_range.408] syntax error while parsing BJData size: integer value overflow", json::out_of_range&);
                 CHECK(json::from_bjdata(vL, true, false).is_discarded());
-#endif
-
-#if SIZE_MAX == 0xffffffff
                 CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vM), "[json.exception.out_of_range.408] syntax error while parsing BJData size: integer value overflow", json::out_of_range&);
                 CHECK(json::from_bjdata(vM, true, false).is_discarded());
 #endif
@@ -3003,49 +3000,49 @@ TEST_CASE("BJData")
             SECTION("array of i")
             {
                 json const j = {1, -1};
-                std::vector<uint8_t> expected = {'[', '$', 'i', '#', 'i', 2, 1, 0xff};
+                std::vector<uint8_t> const expected = {'[', '$', 'i', '#', 'i', 2, 1, 0xff};
                 CHECK(json::to_bjdata(j, true, true) == expected);
             }
 
             SECTION("array of U")
             {
                 json const j = {200, 201};
-                std::vector<uint8_t> expected = {'[', '$', 'U', '#', 'i', 2, 0xC8, 0xC9};
+                std::vector<uint8_t> const expected = {'[', '$', 'U', '#', 'i', 2, 0xC8, 0xC9};
                 CHECK(json::to_bjdata(j, true, true) == expected);
             }
 
             SECTION("array of I")
             {
                 json const j = {30000, -30000};
-                std::vector<uint8_t> expected = {'[', '$', 'I', '#', 'i', 2, 0x30, 0x75, 0xd0, 0x8a};
+                std::vector<uint8_t> const expected = {'[', '$', 'I', '#', 'i', 2, 0x30, 0x75, 0xd0, 0x8a};
                 CHECK(json::to_bjdata(j, true, true) == expected);
             }
 
             SECTION("array of u")
             {
                 json const j = {50000, 50001};
-                std::vector<uint8_t> expected = {'[', '$', 'u', '#', 'i', 2, 0x50, 0xC3, 0x51, 0xC3};
+                std::vector<uint8_t> const expected = {'[', '$', 'u', '#', 'i', 2, 0x50, 0xC3, 0x51, 0xC3};
                 CHECK(json::to_bjdata(j, true, true) == expected);
             }
 
             SECTION("array of l")
             {
                 json const j = {70000, -70000};
-                std::vector<uint8_t> expected = {'[', '$', 'l', '#', 'i', 2, 0x70, 0x11, 0x01, 0x00, 0x90, 0xEE, 0xFE, 0xFF};
+                std::vector<uint8_t> const expected = {'[', '$', 'l', '#', 'i', 2, 0x70, 0x11, 0x01, 0x00, 0x90, 0xEE, 0xFE, 0xFF};
                 CHECK(json::to_bjdata(j, true, true) == expected);
             }
 
             SECTION("array of m")
             {
                 json const j = {3147483647, 3147483648};
-                std::vector<uint8_t> expected = {'[', '$', 'm', '#', 'i', 2, 0xFF, 0xC9, 0x9A, 0xBB, 0x00, 0xCA, 0x9A, 0xBB};
+                std::vector<uint8_t> const expected = {'[', '$', 'm', '#', 'i', 2, 0xFF, 0xC9, 0x9A, 0xBB, 0x00, 0xCA, 0x9A, 0xBB};
                 CHECK(json::to_bjdata(j, true, true) == expected);
             }
 
             SECTION("array of L")
             {
                 json const j = {5000000000, -5000000000};
-                std::vector<uint8_t> expected = {'[', '$', 'L', '#', 'i', 2, 0x00, 0xF2, 0x05, 0x2A, 0x01, 0x00, 0x00, 0x00, 0x00, 0x0E, 0xFA, 0xD5, 0xFE, 0xFF, 0xFF, 0xFF};
+                std::vector<uint8_t> const expected = {'[', '$', 'L', '#', 'i', 2, 0x00, 0xF2, 0x05, 0x2A, 0x01, 0x00, 0x00, 0x00, 0x00, 0x0E, 0xFA, 0xD5, 0xFE, 0xFF, 0xFF, 0xFF};
                 CHECK(json::to_bjdata(j, true, true) == expected);
             }
         }
@@ -3055,8 +3052,8 @@ TEST_CASE("BJData")
             SECTION("array of i")
             {
                 json const j = {1u, 2u};
-                std::vector<uint8_t> expected = {'[', '$', 'i', '#', 'i', 2, 1, 2};
-                std::vector<uint8_t> expected_size = {'[', '#', 'i', 2, 'i', 1, 'i', 2};
+                std::vector<uint8_t> const expected = {'[', '$', 'i', '#', 'i', 2, 1, 2};
+                std::vector<uint8_t> const expected_size = {'[', '#', 'i', 2, 'i', 1, 'i', 2};
                 CHECK(json::to_bjdata(j, true, true) == expected);
                 CHECK(json::to_bjdata(j, true) == expected_size);
             }
@@ -3064,8 +3061,8 @@ TEST_CASE("BJData")
             SECTION("array of U")
             {
                 json const j = {200u, 201u};
-                std::vector<uint8_t> expected = {'[', '$', 'U', '#', 'i', 2, 0xC8, 0xC9};
-                std::vector<uint8_t> expected_size = {'[', '#', 'i', 2, 'U', 0xC8, 'U', 0xC9};
+                std::vector<uint8_t> const expected = {'[', '$', 'U', '#', 'i', 2, 0xC8, 0xC9};
+                std::vector<uint8_t> const expected_size = {'[', '#', 'i', 2, 'U', 0xC8, 'U', 0xC9};
                 CHECK(json::to_bjdata(j, true, true) == expected);
                 CHECK(json::to_bjdata(j, true) == expected_size);
             }
@@ -3073,8 +3070,8 @@ TEST_CASE("BJData")
             SECTION("array of I")
             {
                 json const j = {30000u, 30001u};
-                std::vector<uint8_t> expected = {'[', '$', 'I', '#', 'i', 2, 0x30, 0x75, 0x31, 0x75};
-                std::vector<uint8_t> expected_size = {'[', '#', 'i', 2, 'I', 0x30, 0x75, 'I', 0x31, 0x75};
+                std::vector<uint8_t> const expected = {'[', '$', 'I', '#', 'i', 2, 0x30, 0x75, 0x31, 0x75};
+                std::vector<uint8_t> const expected_size = {'[', '#', 'i', 2, 'I', 0x30, 0x75, 'I', 0x31, 0x75};
                 CHECK(json::to_bjdata(j, true, true) == expected);
                 CHECK(json::to_bjdata(j, true) == expected_size);
             }
@@ -3082,8 +3079,8 @@ TEST_CASE("BJData")
             SECTION("array of u")
             {
                 json const j = {50000u, 50001u};
-                std::vector<uint8_t> expected = {'[', '$', 'u', '#', 'i', 2, 0x50, 0xC3, 0x51, 0xC3};
-                std::vector<uint8_t> expected_size = {'[', '#', 'i', 2, 'u', 0x50, 0xC3, 'u', 0x51, 0xC3};
+                std::vector<uint8_t> const expected = {'[', '$', 'u', '#', 'i', 2, 0x50, 0xC3, 0x51, 0xC3};
+                std::vector<uint8_t> const expected_size = {'[', '#', 'i', 2, 'u', 0x50, 0xC3, 'u', 0x51, 0xC3};
                 CHECK(json::to_bjdata(j, true, true) == expected);
                 CHECK(json::to_bjdata(j, true) == expected_size);
             }
@@ -3091,8 +3088,8 @@ TEST_CASE("BJData")
             SECTION("array of l")
             {
                 json const j = {70000u, 70001u};
-                std::vector<uint8_t> expected = {'[', '$', 'l', '#', 'i', 2, 0x70, 0x11, 0x01, 0x00, 0x71, 0x11, 0x01, 0x00};
-                std::vector<uint8_t> expected_size = {'[', '#', 'i', 2, 'l', 0x70, 0x11, 0x01, 0x00, 'l', 0x71, 0x11, 0x01, 0x00};
+                std::vector<uint8_t> const expected = {'[', '$', 'l', '#', 'i', 2, 0x70, 0x11, 0x01, 0x00, 0x71, 0x11, 0x01, 0x00};
+                std::vector<uint8_t> const expected_size = {'[', '#', 'i', 2, 'l', 0x70, 0x11, 0x01, 0x00, 'l', 0x71, 0x11, 0x01, 0x00};
                 CHECK(json::to_bjdata(j, true, true) == expected);
                 CHECK(json::to_bjdata(j, true) == expected_size);
             }
@@ -3100,8 +3097,8 @@ TEST_CASE("BJData")
             SECTION("array of m")
             {
                 json const j = {3147483647u, 3147483648u};
-                std::vector<uint8_t> expected = {'[', '$', 'm', '#', 'i', 2, 0xFF, 0xC9, 0x9A, 0xBB, 0x00, 0xCA, 0x9A, 0xBB};
-                std::vector<uint8_t> expected_size = {'[', '#', 'i', 2, 'm', 0xFF, 0xC9, 0x9A, 0xBB, 'm', 0x00, 0xCA, 0x9A, 0xBB};
+                std::vector<uint8_t> const expected = {'[', '$', 'm', '#', 'i', 2, 0xFF, 0xC9, 0x9A, 0xBB, 0x00, 0xCA, 0x9A, 0xBB};
+                std::vector<uint8_t> const expected_size = {'[', '#', 'i', 2, 'm', 0xFF, 0xC9, 0x9A, 0xBB, 'm', 0x00, 0xCA, 0x9A, 0xBB};
                 CHECK(json::to_bjdata(j, true, true) == expected);
                 CHECK(json::to_bjdata(j, true) == expected_size);
             }
@@ -3109,8 +3106,8 @@ TEST_CASE("BJData")
             SECTION("array of L")
             {
                 json const j = {5000000000u, 5000000001u};
-                std::vector<uint8_t> expected = {'[', '$', 'L', '#', 'i', 2, 0x00, 0xF2, 0x05, 0x2A, 0x01, 0x00, 0x00, 0x00, 0x01, 0xF2, 0x05, 0x2A, 0x01, 0x00, 0x00, 0x00};
-                std::vector<uint8_t> expected_size = {'[', '#', 'i', 2, 'L', 0x00, 0xF2, 0x05, 0x2A, 0x01, 0x00, 0x00, 0x00, 'L', 0x01, 0xF2, 0x05, 0x2A, 0x01, 0x00, 0x00, 0x00};
+                std::vector<uint8_t> const expected = {'[', '$', 'L', '#', 'i', 2, 0x00, 0xF2, 0x05, 0x2A, 0x01, 0x00, 0x00, 0x00, 0x01, 0xF2, 0x05, 0x2A, 0x01, 0x00, 0x00, 0x00};
+                std::vector<uint8_t> const expected_size = {'[', '#', 'i', 2, 'L', 0x00, 0xF2, 0x05, 0x2A, 0x01, 0x00, 0x00, 0x00, 'L', 0x01, 0xF2, 0x05, 0x2A, 0x01, 0x00, 0x00, 0x00};
                 CHECK(json::to_bjdata(j, true, true) == expected);
                 CHECK(json::to_bjdata(j, true) == expected_size);
             }
@@ -3118,8 +3115,8 @@ TEST_CASE("BJData")
             SECTION("array of M")
             {
                 json const j = {10223372036854775807ull, 10223372036854775808ull};
-                std::vector<uint8_t> expected = {'[', '$', 'M', '#', 'i', 2, 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D, 0x00, 0x00, 0x64, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D};
-                std::vector<uint8_t> expected_size = {'[', '#', 'i', 2, 'M', 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D, 'M', 0x00, 0x00, 0x64, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D};
+                std::vector<uint8_t> const expected = {'[', '$', 'M', '#', 'i', 2, 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D, 0x00, 0x00, 0x64, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D};
+                std::vector<uint8_t> const expected_size = {'[', '#', 'i', 2, 'M', 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D, 'M', 0x00, 0x00, 0x64, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D};
                 CHECK(json::to_bjdata(j, true, true) == expected);
                 CHECK(json::to_bjdata(j, true) == expected_size);
             }
