@@ -188,7 +188,7 @@ TEST_CASE("JSON Node Metadata")
         value.metadata().emplace_back(1);
         value.metadata().emplace_back(2);
 
-        json array(10, value);
+        json const array(10, value);
 
         CHECK(value.metadata().size() == 2);
         CHECK(value.metadata().at(0)  == 1);

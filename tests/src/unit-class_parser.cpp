@@ -249,11 +249,11 @@ bool accept_helper(const std::string& s)
     CHECK(json::parser(nlohmann::detail::input_adapter(s)).accept(false) == !el.errored);
 
     // 5. parse with simple callback
-    json::parser_callback_t cb = [](int /*unused*/, json::parse_event_t /*unused*/, json& /*unused*/) noexcept
+    json::parser_callback_t const cb = [](int /*unused*/, json::parse_event_t /*unused*/, json& /*unused*/) noexcept
     {
         return true;
     };
-    json j_cb = json::parse(s, cb, false);
+    json const j_cb = json::parse(s, cb, false);
     const bool ok_noexcept_cb = !j_cb.is_discarded();
 
     // 6. check if this approach came to the same result
@@ -1093,7 +1093,7 @@ TEST_CASE("parser class")
 
             for (int c = 1; c < 128; ++c)
             {
-                std::string s = "\"\\u";
+                std::string const s = "\"\\u";
 
                 // create a string with the iterated character at each position
                 auto s1 = s + "000" + std::string(1, static_cast<char>(c)) + "\"";
@@ -1308,7 +1308,7 @@ TEST_CASE("parser class")
 
             for (int c = 1; c < 128; ++c)
             {
-                std::string s = "\"\\u";
+                std::string const s = "\"\\u";
 
                 // create a string with the iterated character at each position
                 const auto s1 = s + "000" + std::string(1, static_cast<char>(c)) + "\"";
@@ -1361,7 +1361,7 @@ TEST_CASE("parser class")
 
         // test case to make sure the callback is properly evaluated after reading a key
         {
-            json::parser_callback_t cb = [](int /*unused*/, json::parse_event_t event, json& /*unused*/) noexcept
+            json::parser_callback_t const cb = [](int /*unused*/, json::parse_event_t event, json& /*unused*/) noexcept
             {
                 return event != json::parse_event_t::key;
             };
@@ -1417,7 +1417,7 @@ TEST_CASE("parser class")
 
         SECTION("filter everything")
         {
-            json j_object = json::parse(s_object, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/) noexcept
+            json const j_object = json::parse(s_object, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/) noexcept
             {
                 return false;
             });
@@ -1425,7 +1425,7 @@ TEST_CASE("parser class")
             // the top-level object will be discarded, leaving a null
             CHECK (j_object.is_null());
 
-            json j_array = json::parse(s_array, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/) noexcept
+            json const j_array = json::parse(s_array, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/) noexcept
             {
                 return false;
             });
@@ -1574,7 +1574,7 @@ TEST_CASE("parser class")
 
         SECTION("from std::initializer_list")
         {
-            std::initializer_list<uint8_t> v = {'t', 'r', 'u', 'e'};
+            std::initializer_list<uint8_t> const v = {'t', 'r', 'u', 'e'};
             json j;
             json::parser(nlohmann::detail::input_adapter(std::begin(v), std::end(v))).parse(true, j);
             CHECK(j == json(true));
@@ -1593,7 +1593,7 @@ TEST_CASE("parser class")
     {
         SECTION("parser with callback")
         {
-            json::parser_callback_t cb = [](int /*unused*/, json::parse_event_t /*unused*/, json& /*unused*/) noexcept
+            json::parser_callback_t const cb = [](int /*unused*/, json::parse_event_t /*unused*/, json& /*unused*/) noexcept
             {
                 return true;
             };

@@ -73,7 +73,7 @@ jobs:
         target: [ci_clang_tidy, ci_test_clang_sanitizer, ci_clang_analyze]
     steps:
       - name: Install git
-        run: apt-get update ; apt-get install -y git
+        run: apt-get update ; apt-get install -y git clang-tools
       - uses: actions/checkout@v3
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@latest

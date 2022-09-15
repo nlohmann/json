@@ -21,7 +21,7 @@ TEST_CASE("serialization")
         SECTION("no given width")
         {
             std::stringstream ss;
-            json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
+            const json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
             ss << j;
             CHECK(ss.str() == "[\"foo\",1,2,3,false,{\"one\":1}]");
         }
@@ -29,7 +29,7 @@ TEST_CASE("serialization")
         SECTION("given width")
         {
             std::stringstream ss;
-            json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
+            const json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
             ss << std::setw(4) << j;
             CHECK(ss.str() ==
                   "[\n    \"foo\",\n    1,\n    2,\n    3,\n    false,\n    {\n        \"one\": 1\n    }\n]");
@@ -38,7 +38,7 @@ TEST_CASE("serialization")
         SECTION("given fill")
         {
             std::stringstream ss;
-            json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
+            const json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
             ss << std::setw(1) << std::setfill('\t') << j;
             CHECK(ss.str() ==
                   "[\n\t\"foo\",\n\t1,\n\t2,\n\t3,\n\tfalse,\n\t{\n\t\t\"one\": 1\n\t}\n]");
@@ -50,7 +50,7 @@ TEST_CASE("serialization")
         SECTION("no given width")
         {
             std::stringstream ss;
-            json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
+            const json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
             j >> ss;
             CHECK(ss.str() == "[\"foo\",1,2,3,false,{\"one\":1}]");
         }
@@ -58,7 +58,7 @@ TEST_CASE("serialization")
         SECTION("given width")
         {
             std::stringstream ss;
-            json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
+            const json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
             ss.width(4);
             j >> ss;
             CHECK(ss.str() ==
@@ -68,7 +68,7 @@ TEST_CASE("serialization")
         SECTION("given fill")
         {
             std::stringstream ss;
-            json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
+            const json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
             ss.width(1);
             ss.fill('\t');
             j >> ss;
@@ -81,7 +81,7 @@ TEST_CASE("serialization")
     {
         SECTION("invalid character")
         {
-            json j = "ä\xA9ü";
+            const json j = "ä\xA9ü";
 
             CHECK_THROWS_WITH_AS(j.dump(), "[json.exception.type_error.316] invalid UTF-8 byte at index 2: 0xA9", json::type_error&);
             CHECK_THROWS_WITH_AS(j.dump(1, ' ', false, json::error_handler_t::strict), "[json.exception.type_error.316] invalid UTF-8 byte at index 2: 0xA9", json::type_error&);
@@ -92,7 +92,7 @@ TEST_CASE("serialization")
 
         SECTION("ending with incomplete character")
         {
-            json j = "123\xC2";
+            const json j = "123\xC2";
 
             CHECK_THROWS_WITH_AS(j.dump(), "[json.exception.type_error.316] incomplete UTF-8 string; last byte: 0xC2", json::type_error&);
             CHECK_THROWS_AS(j.dump(1, ' ', false, json::error_handler_t::strict), json::type_error&);
@@ -103,7 +103,7 @@ TEST_CASE("serialization")
 
         SECTION("unexpected character")
         {
-            json j = "123\xF1\xB0\x34\x35\x36";
+            const json j = "123\xF1\xB0\x34\x35\x36";
 
             CHECK_THROWS_WITH_AS(j.dump(), "[json.exception.type_error.316] invalid UTF-8 byte at index 5: 0x34", json::type_error&);
             CHECK_THROWS_AS(j.dump(1, ' ', false, json::error_handler_t::strict), json::type_error&);
@@ -120,7 +120,7 @@ TEST_CASE("serialization")
 
             auto test = [&](std::string const & input, std::string const & expected)
             {
-                json j = input;
+                const json j = input;
                 CHECK(j.dump(-1, ' ', true, json::error_handler_t::replace) == "\"" + expected + "\"");
             };
 
@@ -154,7 +154,7 @@ TEST_CASE("serialization")
         auto test = [&](std::string const & input, std::string const & expected)
         {
             using std::to_string;
-            json j = input;
+            const json j = input;
             CHECK(to_string(j) == "\"" + expected + "\"");
         };
 
@@ -170,14 +170,14 @@ TEST_CASE_TEMPLATE("serialization for extreme integer values", T, int32_t, uint3
     SECTION("minimum")
     {
         constexpr auto minimum = (std::numeric_limits<T>::min)();
-        json j = minimum;
+        const json j = minimum;
         CHECK(j.dump() == std::to_string(minimum));
     }
 
     SECTION("maximum")
     {
         constexpr auto maximum = (std::numeric_limits<T>::max)();
-        json j = maximum;
+        const json j = maximum;
         CHECK(j.dump() == std::to_string(maximum));
     }
 }
@@ -189,15 +189,15 @@ TEST_CASE("dump with binary values")
     auto binary_with_subtype = json::binary({1, 2, 3, 4}, 128);
     auto binary_empty_with_subtype = json::binary({}, 128);
 
-    json object = {{"key", binary}};
-    json object_empty = {{"key", binary_empty}};
-    json object_with_subtype = {{"key", binary_with_subtype}};
-    json object_empty_with_subtype = {{"key", binary_empty_with_subtype}};
+    const json object = {{"key", binary}};
+    const json object_empty = {{"key", binary_empty}};
+    const json object_with_subtype = {{"key", binary_with_subtype}};
+    const json object_empty_with_subtype = {{"key", binary_empty_with_subtype}};
 
-    json array = {"value", 1, binary};
-    json array_empty = {"value", 1, binary_empty};
-    json array_with_subtype = {"value", 1, binary_with_subtype};
-    json array_empty_with_subtype = {"value", 1, binary_empty_with_subtype};
+    const json array = {"value", 1, binary};
+    const json array_empty = {"value", 1, binary_empty};
+    const json array_with_subtype = {"value", 1, binary_with_subtype};
+    const json array_empty_with_subtype = {"value", 1, binary_empty_with_subtype};
 
     SECTION("normal")
     {

@@ -37,24 +37,24 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     try
     {
         // step 1: parse input
-        std::vector<uint8_t> vec1(data, data + size);
-        json j1 = json::from_ubjson(vec1);
+        std::vector<uint8_t> const vec1(data, data + size);
+        json const j1 = json::from_ubjson(vec1);
 
         try
         {
             // step 2.1: round trip without adding size annotations to container types
-            std::vector<uint8_t> vec2 = json::to_ubjson(j1, false, false);
+            std::vector<uint8_t> const vec2 = json::to_ubjson(j1, false, false);
 
             // step 2.2: round trip with adding size annotations but without adding type annonations to container types
-            std::vector<uint8_t> vec3 = json::to_ubjson(j1, true, false);
+            std::vector<uint8_t> const vec3 = json::to_ubjson(j1, true, false);
 
             // step 2.3: round trip with adding size as well as type annotations to container types
-            std::vector<uint8_t> vec4 = json::to_ubjson(j1, true, true);
+            std::vector<uint8_t> const vec4 = json::to_ubjson(j1, true, true);
 
             // parse serialization
-            json j2 = json::from_ubjson(vec2);
-            json j3 = json::from_ubjson(vec3);
-            json j4 = json::from_ubjson(vec4);
+            json const j2 = json::from_ubjson(vec2);
+            json const j3 = json::from_ubjson(vec3);
+            json const j4 = json::from_ubjson(vec4);
 
             // serializations must match
             assert(json::to_ubjson(j2, false, false) == vec2);

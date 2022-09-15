@@ -2748,7 +2748,7 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 
 #define NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(Type, ...)  \
     friend void to_json(nlohmann::json& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) } \
-    friend void from_json(const nlohmann::json& nlohmann_json_j, Type& nlohmann_json_t) { Type nlohmann_json_default_obj; NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT, __VA_ARGS__)) }
+    friend void from_json(const nlohmann::json& nlohmann_json_j, Type& nlohmann_json_t) { const Type nlohmann_json_default_obj{}; NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT, __VA_ARGS__)) }
 
 /*!
 @brief macro
@@ -2761,7 +2761,7 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 
 #define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(Type, ...)  \
     inline void to_json(nlohmann::json& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) } \
-    inline void from_json(const nlohmann::json& nlohmann_json_j, Type& nlohmann_json_t) { Type nlohmann_json_default_obj; NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT, __VA_ARGS__)) }
+    inline void from_json(const nlohmann::json& nlohmann_json_j, Type& nlohmann_json_t) { const Type nlohmann_json_default_obj{}; NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT, __VA_ARGS__)) }
 
 
 // inspired from https://stackoverflow.com/a/26745591
@@ -4414,17 +4414,17 @@ class parse_error : public exception
     template<typename BasicJsonContext, enable_if_t<is_basic_json_context<BasicJsonContext>::value, int> = 0>
     static parse_error create(int id_, const position_t& pos, const std::string& what_arg, BasicJsonContext context)
     {
-        std::string w = concat(exception::name("parse_error", id_), "parse error",
-                               position_string(pos), ": ", exception::diagnostics(context), what_arg);
+        const std::string w = concat(exception::name("parse_error", id_), "parse error",
+                                     position_string(pos), ": ", exception::diagnostics(context), what_arg);
         return {id_, pos.chars_read_total, w.c_str()};
     }
 
     template<typename BasicJsonContext, enable_if_t<is_basic_json_context<BasicJsonContext>::value, int> = 0>
     static parse_error create(int id_, std::size_t byte_, const std::string& what_arg, BasicJsonContext context)
     {
-        std::string w = concat(exception::name("parse_error", id_), "parse error",
-                               (byte_ != 0 ? (concat(" at byte ", std::to_string(byte_))) : ""),
-                               ": ", exception::diagnostics(context), what_arg);
+        const std::string w = concat(exception::name("parse_error", id_), "parse error",
+                                     (byte_ != 0 ? (concat(" at byte ", std::to_string(byte_))) : ""),
+                                     ": ", exception::diagnostics(context), what_arg);
         return {id_, byte_, w.c_str()};
     }
 
@@ -4458,7 +4458,7 @@ class invalid_iterator : public exception
     template<typename BasicJsonContext, enable_if_t<is_basic_json_context<BasicJsonContext>::value, int> = 0>
     static invalid_iterator create(int id_, const std::string& what_arg, BasicJsonContext context)
     {
-        std::string w = concat(exception::name("invalid_iterator", id_), exception::diagnostics(context), what_arg);
+        const std::string w = concat(exception::name("invalid_iterator", id_), exception::diagnostics(context), what_arg);
         return {id_, w.c_str()};
     }
 
@@ -4476,7 +4476,7 @@ class type_error : public exception
     template<typename BasicJsonContext, enable_if_t<is_basic_json_context<BasicJsonContext>::value, int> = 0>
     static type_error create(int id_, const std::string& what_arg, BasicJsonContext context)
     {
-        std::string w = concat(exception::name("type_error", id_), exception::diagnostics(context), what_arg);
+        const std::string w = concat(exception::name("type_error", id_), exception::diagnostics(context), what_arg);
         return {id_, w.c_str()};
     }
 
@@ -4493,7 +4493,7 @@ class out_of_range : public exception
     template<typename BasicJsonContext, enable_if_t<is_basic_json_context<BasicJsonContext>::value, int> = 0>
     static out_of_range create(int id_, const std::string& what_arg, BasicJsonContext context)
     {
-        std::string w = concat(exception::name("out_of_range", id_), exception::diagnostics(context), what_arg);
+        const std::string w = concat(exception::name("out_of_range", id_), exception::diagnostics(context), what_arg);
         return {id_, w.c_str()};
     }
 
@@ -4510,7 +4510,7 @@ class other_error : public exception
     template<typename BasicJsonContext, enable_if_t<is_basic_json_context<BasicJsonContext>::value, int> = 0>
     static other_error create(int id_, const std::string& what_arg, BasicJsonContext context)
     {
-        std::string w = concat(exception::name("other_error", id_), exception::diagnostics(context), what_arg);
+        const std::string w = concat(exception::name("other_error", id_), exception::diagnostics(context), what_arg);
         return {id_, w.c_str()};
     }
 
@@ -9408,7 +9408,7 @@ class binary_reader
             {
                 std::array<char, 3> cr{{}};
                 static_cast<void>((std::snprintf)(cr.data(), cr.size(), "%.2hhX", static_cast<unsigned char>(element_type))); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
-                std::string cr_str{cr.data()};
+                const std::string cr_str{cr.data()};
                 return sax->parse_error(element_type_parse_position, cr_str,
                                         parse_error::create(114, element_type_parse_position, concat("Unsupported BSON record type 0x", cr_str), nullptr));
             }
@@ -11343,7 +11343,7 @@ class binary_reader
                                         exception_message(input_format, concat("expected '#' after type information; last byte: 0x", last_token), "size"), nullptr));
             }
 
-            bool is_error = get_ubjson_size_value(result.first, is_ndarray);
+            const bool is_error = get_ubjson_size_value(result.first, is_ndarray);
             if (input_format == input_format_t::bjdata && is_ndarray)
             {
                 if (inside_ndarray)
@@ -11358,7 +11358,7 @@ class binary_reader
 
         if (current == '#')
         {
-            bool is_error = get_ubjson_size_value(result.first, is_ndarray);
+            const bool is_error = get_ubjson_size_value(result.first, is_ndarray);
             if (input_format == input_format_t::bjdata && is_ndarray)
             {
                 return sax->parse_error(chars_read, get_token_string(), parse_error::create(112, chars_read,
@@ -13949,7 +13949,7 @@ class json_pointer
         const char* p = s.c_str();
         char* p_end = nullptr;
         errno = 0; // strtoull doesn't reset errno
-        unsigned long long res = std::strtoull(p, &p_end, 10); // NOLINT(runtime/int)
+        const unsigned long long res = std::strtoull(p, &p_end, 10); // NOLINT(runtime/int)
         if (p == p_end // invalid input or empty string
                 || errno == ERANGE // out of range
                 || JSON_HEDLEY_UNLIKELY(static_cast<std::size_t>(p_end - p) != s.size())) // incomplete read
@@ -15614,18 +15614,18 @@ class binary_writer
                 }
                 else if (N <= (std::numeric_limits<std::uint16_t>::max)())
                 {
-                    std::uint8_t output_type = use_ext
-                                               ? 0xC8 // ext 16
-                                               : 0xC5; // bin 16
+                    const std::uint8_t output_type = use_ext
+                                                     ? 0xC8 // ext 16
+                                                     : 0xC5; // bin 16
 
                     oa->write_character(to_char_type(output_type));
                     write_number(static_cast<std::uint16_t>(N));
                 }
                 else if (N <= (std::numeric_limits<std::uint32_t>::max)())
                 {
-                    std::uint8_t output_type = use_ext
-                                               ? 0xC9 // ext 32
-                                               : 0xC6; // bin 32
+                    const std::uint8_t output_type = use_ext
+                                                     ? 0xC9 // ext 32
+                                                     : 0xC6; // bin 32
 
                     oa->write_character(to_char_type(output_type));
                     write_number(static_cast<std::uint32_t>(N));
@@ -16211,8 +16211,8 @@ class binary_writer
     */
     static std::size_t calc_bson_object_size(const typename BasicJsonType::object_t& value)
     {
-        std::size_t document_size = std::accumulate(value.begin(), value.end(), static_cast<std::size_t>(0),
-                                    [](size_t result, const typename BasicJsonType::object_t::value_type & el)
+        const std::size_t document_size = std::accumulate(value.begin(), value.end(), static_cast<std::size_t>(0),
+                                          [](size_t result, const typename BasicJsonType::object_t::value_type & el)
         {
             return result += calc_bson_element_size(el.first, el.second);
         });
@@ -18848,7 +18848,7 @@ class serializer
                 ? (byte & 0x3fu) | (codep << 6u)
                 : (0xFFu >> type) & (byte);
 
-        std::size_t index = 256u + static_cast<size_t>(state) * 16u + static_cast<size_t>(type);
+        const std::size_t index = 256u + static_cast<size_t>(state) * 16u + static_cast<size_t>(type);
         JSON_ASSERT(index < 400);
         state = utf8d[index];
         return state;
@@ -23934,7 +23934,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             }
 
             // make sure the top element of the pointer exists
-            json_pointer top_pointer = ptr.top();
+            json_pointer const top_pointer = ptr.top();
             if (top_pointer != ptr)
             {
                 result.at(top_pointer);
@@ -24096,7 +24096,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     json_pointer from_ptr(from_path);
 
                     // the "from" location must exist - use at()
-                    basic_json v = result.at(from_ptr);
+                    basic_json const v = result.at(from_ptr);
 
                     // The move operation is functionally identical to a
                     // "remove" operation on the "from" location, followed
@@ -24113,7 +24113,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     const json_pointer from_ptr(from_path);
 
                     // the "from" location must exist - use at()
-                    basic_json v = result.at(from_ptr);
+                    basic_json const v = result.at(from_ptr);
 
                     // The copy is functionally identical to an "add"
                     // operation at the target location using the value

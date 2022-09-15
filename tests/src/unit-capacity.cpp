@@ -18,8 +18,8 @@ TEST_CASE("capacity")
     {
         SECTION("boolean")
         {
-            json j = true;
-            const json j_const(j);
+            json j = true; // NOLINT(misc-const-correctness)
+            const json j_const = true;
 
             SECTION("result of empty")
             {
@@ -36,8 +36,8 @@ TEST_CASE("capacity")
 
         SECTION("string")
         {
-            json j = "hello world";
-            const json j_const(j);
+            json j = "hello world"; // NOLINT(misc-const-correctness)
+            const json j_const = "hello world";
 
             SECTION("result of empty")
             {
@@ -56,8 +56,8 @@ TEST_CASE("capacity")
         {
             SECTION("empty array")
             {
-                json j = json::array();
-                const json j_const(j);
+                json j = json::array(); // NOLINT(misc-const-correctness)
+                const json j_const = json::array();
 
                 SECTION("result of empty")
                 {
@@ -74,8 +74,8 @@ TEST_CASE("capacity")
 
             SECTION("filled array")
             {
-                json j = {1, 2, 3};
-                const json j_const(j);
+                json j = {1, 2, 3}; // NOLINT(misc-const-correctness)
+                const json j_const = {1, 2, 3};
 
                 SECTION("result of empty")
                 {
@@ -95,8 +95,8 @@ TEST_CASE("capacity")
         {
             SECTION("empty object")
             {
-                json j = json::object();
-                const json j_const(j);
+                json j = json::object(); // NOLINT(misc-const-correctness)
+                const json j_const = json::object();
 
                 SECTION("result of empty")
                 {
@@ -113,8 +113,8 @@ TEST_CASE("capacity")
 
             SECTION("filled object")
             {
-                json j = {{"one", 1}, {"two", 2}, {"three", 3}};
-                const json j_const(j);
+                json j = {{"one", 1}, {"two", 2}, {"three", 3}}; // NOLINT(misc-const-correctness)
+                const json j_const = {{"one", 1}, {"two", 2}, {"three", 3}};
 
                 SECTION("result of empty")
                 {
@@ -132,8 +132,8 @@ TEST_CASE("capacity")
 
         SECTION("number (integer)")
         {
-            json j = -23;
-            const json j_const(j);
+            json j = -23; // NOLINT(misc-const-correctness)
+            const json j_const = -23;
 
             SECTION("result of empty")
             {
@@ -150,8 +150,8 @@ TEST_CASE("capacity")
 
         SECTION("number (unsigned)")
         {
-            json j = 23u;
-            const json j_const(j);
+            json j = 23u; // NOLINT(misc-const-correctness)
+            const json j_const = 23u;
 
             SECTION("result of empty")
             {
@@ -168,8 +168,8 @@ TEST_CASE("capacity")
 
         SECTION("number (float)")
         {
-            json j = 23.42;
-            const json j_const(j);
+            json j = 23.42; // NOLINT(misc-const-correctness)
+            const json j_const = 23.42;
 
             SECTION("result of empty")
             {
@@ -186,8 +186,8 @@ TEST_CASE("capacity")
 
         SECTION("null")
         {
-            json j = nullptr;
-            const json j_const(j);
+            json j = nullptr; // NOLINT(misc-const-correctness)
+            const json j_const = nullptr;
 
             SECTION("result of empty")
             {
@@ -207,8 +207,8 @@ TEST_CASE("capacity")
     {
         SECTION("boolean")
         {
-            json j = true;
-            const json j_const(j);
+            json j = true; // NOLINT(misc-const-correctness)
+            const json j_const = true;
 
             SECTION("result of size")
             {
@@ -227,8 +227,8 @@ TEST_CASE("capacity")
 
         SECTION("string")
         {
-            json j = "hello world";
-            const json j_const(j);
+            json j = "hello world"; // NOLINT(misc-const-correctness)
+            const json j_const = "hello world";
 
             SECTION("result of size")
             {
@@ -249,8 +249,8 @@ TEST_CASE("capacity")
         {
             SECTION("empty array")
             {
-                json j = json::array();
-                const json j_const(j);
+                json j = json::array(); // NOLINT(misc-const-correctness)
+                const json j_const = json::array();
 
                 SECTION("result of size")
                 {
@@ -269,8 +269,8 @@ TEST_CASE("capacity")
 
             SECTION("filled array")
             {
-                json j = {1, 2, 3};
-                const json j_const(j);
+                json j = {1, 2, 3}; // NOLINT(misc-const-correctness)
+                const json j_const = {1, 2, 3};
 
                 SECTION("result of size")
                 {
@@ -292,8 +292,8 @@ TEST_CASE("capacity")
         {
             SECTION("empty object")
             {
-                json j = json::object();
-                const json j_const(j);
+                json j = json::object(); // NOLINT(misc-const-correctness)
+                const json j_const = json::object();
 
                 SECTION("result of size")
                 {
@@ -312,8 +312,8 @@ TEST_CASE("capacity")
 
             SECTION("filled object")
             {
-                json j = {{"one", 1}, {"two", 2}, {"three", 3}};
-                const json j_const(j);
+                json j = {{"one", 1}, {"two", 2}, {"three", 3}}; // NOLINT(misc-const-correctness)
+                const json j_const = {{"one", 1}, {"two", 2}, {"three", 3}};
 
                 SECTION("result of size")
                 {
@@ -333,8 +333,8 @@ TEST_CASE("capacity")
 
         SECTION("number (integer)")
         {
-            json j = -23;
-            const json j_const(j);
+            json j = -23; // NOLINT(misc-const-correctness)
+            const json j_const = -23;
 
             SECTION("result of size")
             {
@@ -353,8 +353,8 @@ TEST_CASE("capacity")
 
         SECTION("number (unsigned)")
         {
-            json j = 23u;
-            const json j_const(j);
+            json j = 23u; // NOLINT(misc-const-correctness)
+            const json j_const = 23u;
 
             SECTION("result of size")
             {
@@ -373,8 +373,8 @@ TEST_CASE("capacity")
 
         SECTION("number (float)")
         {
-            json j = 23.42;
-            const json j_const(j);
+            json j = 23.42; // NOLINT(misc-const-correctness)
+            const json j_const = 23.42;
 
             SECTION("result of size")
             {
@@ -393,8 +393,8 @@ TEST_CASE("capacity")
 
         SECTION("null")
         {
-            json j = nullptr;
-            const json j_const(j);
+            json j = nullptr; // NOLINT(misc-const-correctness)
+            const json j_const = nullptr;
 
             SECTION("result of size")
             {
@@ -416,7 +416,7 @@ TEST_CASE("capacity")
     {
         SECTION("boolean")
         {
-            json j = true;
+            json j = true; // NOLINT(misc-const-correctness)
             const json j_const = true;
 
             SECTION("result of max_size")
@@ -428,7 +428,7 @@ TEST_CASE("capacity")
 
         SECTION("string")
         {
-            json j = "hello world";
+            json j = "hello world"; // NOLINT(misc-const-correctness)
             const json j_const = "hello world";
 
             SECTION("result of max_size")
@@ -442,7 +442,7 @@ TEST_CASE("capacity")
         {
             SECTION("empty array")
             {
-                json j = json::array();
+                json j = json::array(); // NOLINT(misc-const-correctness)
                 const json j_const = json::array();
 
                 SECTION("result of max_size")
@@ -454,7 +454,7 @@ TEST_CASE("capacity")
 
             SECTION("filled array")
             {
-                json j = {1, 2, 3};
+                json j = {1, 2, 3}; // NOLINT(misc-const-correctness)
                 const json j_const = {1, 2, 3};
 
                 SECTION("result of max_size")
@@ -469,7 +469,7 @@ TEST_CASE("capacity")
         {
             SECTION("empty object")
             {
-                json j = json::object();
+                json j = json::object(); // NOLINT(misc-const-correctness)
                 const json j_const = json::object();
 
                 SECTION("result of max_size")
@@ -481,7 +481,7 @@ TEST_CASE("capacity")
 
             SECTION("filled object")
             {
-                json j = {{"one", 1}, {"two", 2}, {"three", 3}};
+                json j = {{"one", 1}, {"two", 2}, {"three", 3}}; // NOLINT(misc-const-correctness)
                 const json j_const = {{"one", 1}, {"two", 2}, {"three", 3}};
 
                 SECTION("result of max_size")
@@ -494,7 +494,7 @@ TEST_CASE("capacity")
 
         SECTION("number (integer)")
         {
-            json j = -23;
+            json j = -23; // NOLINT(misc-const-correctness)
             const json j_const = -23;
 
             SECTION("result of max_size")
@@ -506,7 +506,7 @@ TEST_CASE("capacity")
 
         SECTION("number (unsigned)")
         {
-            json j = 23u;
+            json j = 23u; // NOLINT(misc-const-correctness)
             const json j_const = 23u;
 
             SECTION("result of max_size")
@@ -518,7 +518,7 @@ TEST_CASE("capacity")
 
         SECTION("number (float)")
         {
-            json j = 23.42;
+            json j = 23.42; // NOLINT(misc-const-correctness)
             const json j_const = 23.42;
 
             SECTION("result of max_size")
@@ -530,7 +530,7 @@ TEST_CASE("capacity")
 
         SECTION("null")
         {
-            json j = nullptr;
+            json j = nullptr; // NOLINT(misc-const-correctness)
             const json j_const = nullptr;
 
             SECTION("result of max_size")

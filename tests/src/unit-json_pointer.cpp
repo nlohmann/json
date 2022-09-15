@@ -40,7 +40,7 @@ TEST_CASE("JSON pointers")
         SECTION("array index error")
         {
             json v = {1, 2, 3, 4};
-            json::json_pointer ptr("/10e");
+            json::json_pointer const ptr("/10e");
             CHECK_THROWS_WITH_AS(v[ptr],
                                  "[json.exception.out_of_range.404] unresolved reference token '10e'", json::out_of_range&);
         }
@@ -311,8 +311,8 @@ TEST_CASE("JSON pointers")
 
             {
                 auto too_large_index = std::to_string((std::numeric_limits<unsigned long long>::max)()) + "1";
-                json::json_pointer jp(std::string("/") + too_large_index);
-                std::string throw_msg = std::string("[json.exception.out_of_range.404] unresolved reference token '") + too_large_index + "'";
+                json::json_pointer const jp(std::string("/") + too_large_index);
+                std::string const throw_msg = std::string("[json.exception.out_of_range.404] unresolved reference token '") + too_large_index + "'";
 
                 CHECK_THROWS_WITH_AS(j[jp] = 1, throw_msg.c_str(), json::out_of_range&);
                 CHECK_THROWS_WITH_AS(j_const[jp] == 1, throw_msg.c_str(), json::out_of_range&);
@@ -326,8 +326,8 @@ TEST_CASE("JSON pointers")
             {
                 auto size_type_max_uul = static_cast<unsigned long long>((std::numeric_limits<json::size_type>::max)());
                 auto too_large_index = std::to_string(size_type_max_uul);
-                json::json_pointer jp(std::string("/") + too_large_index);
-                std::string throw_msg = std::string("[json.exception.out_of_range.410] array index ") + too_large_index + " exceeds size_type";
+                json::json_pointer const jp(std::string("/") + too_large_index);
+                std::string const throw_msg = std::string("[json.exception.out_of_range.410] array index ") + too_large_index + " exceeds size_type";
 
                 CHECK_THROWS_WITH_AS(j[jp] = 1, throw_msg.c_str(), json::out_of_range&);
                 CHECK_THROWS_WITH_AS(j_const[jp] == 1, throw_msg.c_str(), json::out_of_range&);
@@ -455,7 +455,7 @@ TEST_CASE("JSON pointers")
 #endif
 
         // error for conflicting values
-        json j_error = {{"", 42}, {"/foo", 17}};
+        json const j_error = {{"", 42}, {"/foo", 17}};
         CHECK_THROWS_WITH_AS(j_error.unflatten(),
                              "[json.exception.type_error.313] invalid value to unflatten", json::type_error&);
 
@@ -473,9 +473,9 @@ TEST_CASE("JSON pointers")
         CHECK(j_string.flatten().unflatten() == j_string);
 
         // roundtrip for empty structured values (will be unflattened to null)
-        json j_array(json::value_t::array);
+        json const j_array(json::value_t::array);
         CHECK(j_array.flatten().unflatten() == json());
-        json j_object(json::value_t::object);
+        json const j_object(json::value_t::object);
         CHECK(j_object.flatten().unflatten() == json());
     }
 
@@ -485,7 +485,7 @@ TEST_CASE("JSON pointers")
                 {"", "/foo", "/foo/0", "/", "/a~1b", "/c%d", "/e^f", "/g|h", "/i\\j", "/k\"l", "/ ", "/m~0n"
                 })
         {
-            json::json_pointer ptr(ptr_str);
+            json::json_pointer const ptr(ptr_str);
             std::stringstream ss;
             ss << ptr;
             CHECK(ptr.to_string() == ptr_str);
@@ -742,7 +742,7 @@ TEST_CASE("JSON pointers")
         CHECK(std::is_same<json_ptr_str::string_t, json_ptr_j::string_t>::value);
         CHECK(std::is_same<json_ptr_str::string_t, json_ptr_oj::string_t>::value);
 
-        std::string ptr_string{"/foo/0"};
+        std::string const ptr_string{"/foo/0"};
         json_ptr_str ptr{ptr_string};
         json_ptr_j ptr_j{ptr_string};
         json_ptr_oj ptr_oj{ptr_string};

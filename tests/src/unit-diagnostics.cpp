@@ -22,7 +22,7 @@ TEST_CASE("Better diagnostics")
 {
     SECTION("empty JSON Pointer")
     {
-        json j = 1;
+        json const j = 1;
         std::string s;
         CHECK_THROWS_WITH_AS(s = j.get<std::string>(), "[json.exception.type_error.302] type must be string, but is number", json::type_error);
     }
@@ -240,7 +240,7 @@ TEST_CASE("Regression tests for extended diagnostics")
             j_arr[5] = 5;
             j_arr[6] = 6;
             j_arr[7] = 7;
-            json j_arr_copy = j_arr;
+            json const j_arr_copy = j_arr;
         }
     }
 }

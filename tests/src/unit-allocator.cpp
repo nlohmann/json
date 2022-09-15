@@ -159,7 +159,7 @@ TEST_CASE("controlled bad_alloc")
         SECTION("json_value(const string_t&)")
         {
             next_construct_fails = false;
-            my_json::string_t v("foo");
+            const my_json::string_t v("foo");
             CHECK_NOTHROW(my_allocator_clean_up(my_json::json_value(v).string));
             next_construct_fails = true;
             CHECK_THROWS_AS(my_json::json_value(v), std::bad_alloc&);
@@ -172,7 +172,7 @@ TEST_CASE("controlled bad_alloc")
         SECTION("basic_json(const CompatibleObjectType&)")
         {
             next_construct_fails = false;
-            std::map<std::string, std::string> v {{"foo", "bar"}};
+            const std::map<std::string, std::string> v {{"foo", "bar"}};
             CHECK_NOTHROW(my_json(v));
             next_construct_fails = true;
             CHECK_THROWS_AS(my_json(v), std::bad_alloc&);
@@ -182,7 +182,7 @@ TEST_CASE("controlled bad_alloc")
         SECTION("basic_json(const CompatibleArrayType&)")
         {
             next_construct_fails = false;
-            std::vector<std::string> v {"foo", "bar", "baz"};
+            const std::vector<std::string> v {"foo", "bar", "baz"};
             CHECK_NOTHROW(my_json(v));
             next_construct_fails = true;
             CHECK_THROWS_AS(my_json(v), std::bad_alloc&);
@@ -201,7 +201,7 @@ TEST_CASE("controlled bad_alloc")
         SECTION("basic_json(const typename string_t::value_type*)")
         {
             next_construct_fails = false;
-            std::string s("foo");
+            const std::string s("foo");
             CHECK_NOTHROW(my_json(s));
             next_construct_fails = true;
             CHECK_THROWS_AS(my_json(s), std::bad_alloc&);

@@ -36,7 +36,7 @@ TEST_CASE("value conversion")
 {
     SECTION("get an object (explicit)")
     {
-        json::object_t o_reference = {{"object", json::object()},
+        const json::object_t o_reference = {{"object", json::object()},
             {"array", {1, 2, 3, 4}},
             {"number", 42},
             {"boolean", false},
@@ -47,34 +47,34 @@ TEST_CASE("value conversion")
 
         SECTION("json::object_t")
         {
-            json::object_t o = j.get<json::object_t>();
+            json::object_t const o = j.get<json::object_t>();
             CHECK(json(o) == j);
         }
 
         SECTION("std::map<json::string_t, json>")
         {
-            std::map<json::string_t, json> o =
+            const std::map<json::string_t, json> o =
                 j.get<std::map<json::string_t, json>>();
             CHECK(json(o) == j);
         }
 
         SECTION("std::multimap<json::string_t, json>")
         {
-            std::multimap<json::string_t, json> o =
+            const std::multimap<json::string_t, json> o =
                 j.get<std::multimap<json::string_t, json>>();
             CHECK(json(o) == j);
         }
 
         SECTION("std::unordered_map<json::string_t, json>")
         {
-            std::unordered_map<json::string_t, json> o =
+            const std::unordered_map<json::string_t, json> o =
                 j.get<std::unordered_map<json::string_t, json>>();
             CHECK(json(o) == j);
         }
 
         SECTION("std::unordered_multimap<json::string_t, json>")
         {
-            std::unordered_multimap<json::string_t, json> o =
+            const std::unordered_multimap<json::string_t, json> o =
                 j.get<std::unordered_multimap<json::string_t, json>>();
             CHECK(json(o) == j);
         }
@@ -107,7 +107,7 @@ TEST_CASE("value conversion")
 
     SECTION("get an object (explicit, get_to)")
     {
-        json::object_t o_reference = {{"object", json::object()},
+        const json::object_t o_reference = {{"object", json::object()},
             {"array", {1, 2, 3, 4}},
             {"number", 42},
             {"boolean", false},
@@ -155,7 +155,7 @@ TEST_CASE("value conversion")
 #if JSON_USE_IMPLICIT_CONVERSIONS
     SECTION("get an object (implicit)")
     {
-        json::object_t o_reference = {{"object", json::object()},
+        const json::object_t o_reference = {{"object", json::object()},
             {"array", {1, 2, 3, 4}},
             {"number", 42},
             {"boolean", false},
@@ -166,31 +166,31 @@ TEST_CASE("value conversion")
 
         SECTION("json::object_t")
         {
-            json::object_t o = j;
+            const json::object_t o = j;
             CHECK(json(o) == j);
         }
 
         SECTION("std::map<json::string_t, json>")
         {
-            std::map<json::string_t, json> o = j;
+            const std::map<json::string_t, json> o = j;
             CHECK(json(o) == j);
         }
 
         SECTION("std::multimap<json::string_t, json>")
         {
-            std::multimap<json::string_t, json> o = j;
+            const std::multimap<json::string_t, json> o = j;
             CHECK(json(o) == j);
         }
 
         SECTION("std::unordered_map<json::string_t, json>")
         {
-            std::unordered_map<json::string_t, json> o = j;
+            const std::unordered_map<json::string_t, json> o = j;
             CHECK(json(o) == j);
         }
 
         SECTION("std::unordered_multimap<json::string_t, json>")
         {
-            std::unordered_multimap<json::string_t, json> o = j;
+            const std::unordered_multimap<json::string_t, json> o = j;
             CHECK(json(o) == j);
         }
     }
@@ -198,25 +198,25 @@ TEST_CASE("value conversion")
 
     SECTION("get an array (explicit)")
     {
-        json::array_t a_reference{json(1),     json(1u),       json(2.2),
-                                  json(false), json("string"), json()};
+        const json::array_t a_reference{json(1),     json(1u),       json(2.2),
+                                        json(false), json("string"), json()};
         json j(a_reference);
 
         SECTION("json::array_t")
         {
-            json::array_t a = j.get<json::array_t>();
+            const json::array_t a = j.get<json::array_t>();
             CHECK(json(a) == j);
         }
 
         SECTION("std::list<json>")
         {
-            std::list<json> a = j.get<std::list<json>>();
+            const std::list<json> a = j.get<std::list<json>>();
             CHECK(json(a) == j);
         }
 
         SECTION("std::forward_list<json>")
         {
-            std::forward_list<json> a = j.get<std::forward_list<json>>();
+            const std::forward_list<json> a = j.get<std::forward_list<json>>();
             CHECK(json(a) == j);
 
             CHECK_THROWS_WITH_AS(
@@ -226,7 +226,7 @@ TEST_CASE("value conversion")
 
         SECTION("std::vector<json>")
         {
-            std::vector<json> a = j.get<std::vector<json>>();
+            const std::vector<json> a = j.get<std::vector<json>>();
             CHECK(json(a) == j);
 
             CHECK_THROWS_WITH_AS(
@@ -237,7 +237,7 @@ TEST_CASE("value conversion")
             SECTION("reserve is called on containers that supports it")
             {
                 // make sure all values are properly copied
-                json j2({1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
+                const json j2({1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
                 auto v2 = j2.get<std::vector<int>>();
                 CHECK(v2.size() == 10);
             }
@@ -249,8 +249,8 @@ TEST_CASE("value conversion")
             const char str[] = "a string"; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
             const int nbs[] = {0, 1, 2}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
 
-            json j2 = nbs;
-            json j3 = str;
+            const json j2 = nbs;
+            const json j3 = str;
 
             auto v = j2.get<std::vector<int>>();
             auto s = j3.get<std::string>();
@@ -260,7 +260,7 @@ TEST_CASE("value conversion")
 
         SECTION("std::deque<json>")
         {
-            std::deque<json> a = j.get<std::deque<json>>();
+            const std::deque<json> a = j.get<std::deque<json>>();
             CHECK(json(a) == j);
         }
 
@@ -295,8 +295,8 @@ TEST_CASE("value conversion")
 
     SECTION("get an array (explicit, get_to)")
     {
-        json::array_t a_reference{json(1),     json(1u),       json(2.2),
-                                  json(false), json("string"), json()};
+        const json::array_t a_reference{json(1),     json(1u),       json(2.2),
+                                        json(false), json("string"), json()};
         json j(a_reference);
 
         SECTION("json::array_t")
@@ -339,7 +339,7 @@ TEST_CASE("value conversion")
             const int nbs[] = {0, 1, 2}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
             int nbs2[] = {0, 0, 0}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
 
-            json j2 = nbs;
+            const json j2 = nbs;
             j2.get_to(nbs2);
             CHECK(std::equal(std::begin(nbs), std::end(nbs), std::begin(nbs2)));
         }
@@ -355,37 +355,37 @@ TEST_CASE("value conversion")
 #if JSON_USE_IMPLICIT_CONVERSIONS
     SECTION("get an array (implicit)")
     {
-        json::array_t a_reference{json(1),     json(1u),       json(2.2),
-                                  json(false), json("string"), json()};
+        const json::array_t a_reference{json(1),     json(1u),       json(2.2),
+                                        json(false), json("string"), json()};
         json j(a_reference);
 
         SECTION("json::array_t")
         {
-            json::array_t a = j;
+            const json::array_t a = j;
             CHECK(json(a) == j);
         }
 
         SECTION("std::list<json>")
         {
-            std::list<json> a = j;
+            const std::list<json> a = j;
             CHECK(json(a) == j);
         }
 
         SECTION("std::forward_list<json>")
         {
-            std::forward_list<json> a = j;
+            const std::forward_list<json> a = j;
             CHECK(json(a) == j);
         }
 
         SECTION("std::vector<json>")
         {
-            std::vector<json> a = j;
+            const std::vector<json> a = j;
             CHECK(json(a) == j);
         }
 
         SECTION("std::deque<json>")
         {
-            std::deque<json> a = j;
+            const std::deque<json> a = j;
             CHECK(json(a) == j);
         }
     }
@@ -393,24 +393,24 @@ TEST_CASE("value conversion")
 
     SECTION("get a string (explicit)")
     {
-        json::string_t s_reference{"Hello world"};
+        const json::string_t s_reference{"Hello world"};
         json j(s_reference);
 
         SECTION("string_t")
         {
-            json::string_t s = j.get<json::string_t>();
+            const json::string_t s = j.get<json::string_t>();
             CHECK(json(s) == j);
         }
 
         SECTION("std::string")
         {
-            std::string s = j.get<std::string>();
+            const std::string s = j.get<std::string>();
             CHECK(json(s) == j);
         }
 #if defined(JSON_HAS_CPP_17)
         SECTION("std::string_view")
         {
-            std::string_view s = j.get<std::string_view>();
+            std::string_view const s = j.get<std::string_view>();
             CHECK(json(s) == j);
         }
 #endif
@@ -463,7 +463,7 @@ TEST_CASE("value conversion")
 
     SECTION("get a string (explicit, get_to)")
     {
-        json::string_t s_reference{"Hello world"};
+        const json::string_t s_reference{"Hello world"};
         json j(s_reference);
 
         SECTION("string_t")
@@ -482,7 +482,7 @@ TEST_CASE("value conversion")
 #if defined(JSON_HAS_CPP_17)
         SECTION("std::string_view")
         {
-            std::string s = "previous value";
+            std::string const s = "previous value";
             std::string_view sv = s;
             j.get_to(sv);
             CHECK(json(sv) == j);
@@ -493,7 +493,7 @@ TEST_CASE("value conversion")
     SECTION("get null (explicit)")
     {
         std::nullptr_t n = nullptr;
-        json j(n);
+        const json j(n);
 
         auto n2 = j.get<std::nullptr_t>();
         CHECK(n2 == n);
@@ -517,26 +517,26 @@ TEST_CASE("value conversion")
 #if JSON_USE_IMPLICIT_CONVERSIONS
     SECTION("get a string (implicit)")
     {
-        json::string_t s_reference{"Hello world"};
+        const json::string_t s_reference{"Hello world"};
         json j(s_reference);
 
         SECTION("string_t")
         {
-            json::string_t s = j;
+            const json::string_t s = j;
             CHECK(json(s) == j);
         }
 
 #if defined(JSON_HAS_CPP_17)
         SECTION("std::string_view")
         {
-            std::string_view s = j.get<std::string_view>();
+            std::string_view const s = j.get<std::string_view>();
             CHECK(json(s) == j);
         }
 #endif
 
         SECTION("std::string")
         {
-            std::string s = j;
+            const std::string s = j;
             CHECK(json(s) == j);
         }
     }
@@ -544,7 +544,7 @@ TEST_CASE("value conversion")
 
     SECTION("get a boolean (explicit)")
     {
-        json::boolean_t b_reference{true};
+        const json::boolean_t b_reference{true};
         json j(b_reference);
 
         SECTION("boolean_t")
@@ -561,7 +561,7 @@ TEST_CASE("value conversion")
 
         SECTION("bool")
         {
-            bool b = j.get<bool>();
+            const bool b = j.get<bool>();
             CHECK(json(b) == j);
         }
 
@@ -600,18 +600,18 @@ TEST_CASE("value conversion")
 #if JSON_USE_IMPLICIT_CONVERSIONS
     SECTION("get a boolean (implicit)")
     {
-        json::boolean_t b_reference{true};
+        const json::boolean_t b_reference{true};
         json j(b_reference);
 
         SECTION("boolean_t")
         {
-            json::boolean_t b = j;
+            const json::boolean_t b = j;
             CHECK(json(b) == j);
         }
 
         SECTION("bool")
         {
-            bool b = j;
+            const bool b = j;
             CHECK(json(b) == j);
         }
     }
@@ -619,9 +619,9 @@ TEST_CASE("value conversion")
 
     SECTION("get an integer number (explicit)")
     {
-        json::number_integer_t n_reference{42};
+        const json::number_integer_t n_reference{42};
         json j(n_reference);
-        json::number_unsigned_t n_unsigned_reference{42u};
+        const json::number_unsigned_t n_unsigned_reference{42u};
         json j_unsigned(n_unsigned_reference);
 
         SECTION("number_integer_t")
@@ -650,7 +650,7 @@ TEST_CASE("value conversion")
 
         SECTION("int")
         {
-            int n = j.get<int>();
+            const int n = j.get<int>();
             CHECK(json(n) == j);
         }
 
@@ -662,7 +662,7 @@ TEST_CASE("value conversion")
 
         SECTION("long")
         {
-            long n = j.get<long>();
+            const long n = j.get<long>();
             CHECK(json(n) == j);
         }
 
@@ -857,9 +857,9 @@ TEST_CASE("value conversion")
 #if JSON_USE_IMPLICIT_CONVERSIONS
     SECTION("get an integer number (implicit)")
     {
-        json::number_integer_t n_reference{42};
+        json::number_integer_t const n_reference{42};
         json j(n_reference);
-        json::number_unsigned_t n_unsigned_reference{42u};
+        json::number_unsigned_t const n_unsigned_reference{42u};
         json j_unsigned(n_unsigned_reference);
 
         SECTION("number_integer_t")
@@ -876,193 +876,193 @@ TEST_CASE("value conversion")
 
         SECTION("short")
         {
-            short n = j;
+            short const n = j;
             CHECK(json(n) == j);
         }
 
         SECTION("unsigned short")
         {
-            unsigned short n = j_unsigned;
+            unsigned short const n = j_unsigned;
             CHECK(json(n) == j_unsigned);
         }
 
         SECTION("int")
         {
-            int n = j;
+            int const n = j;
             CHECK(json(n) == j);
         }
 
         SECTION("unsigned int")
         {
-            unsigned int n = j_unsigned;
+            unsigned int const n = j_unsigned;
             CHECK(json(n) == j_unsigned);
         }
 
         SECTION("long")
         {
-            long n = j;
+            long const n = j;
             CHECK(json(n) == j);
         }
 
         SECTION("unsigned long")
         {
-            unsigned long n = j_unsigned;
+            unsigned long const n = j_unsigned;
             CHECK(json(n) == j_unsigned);
         }
 
         SECTION("long long")
         {
-            long long n = j;
+            long long const n = j;
             CHECK(json(n) == j);
         }
 
         SECTION("unsigned long long")
         {
-            unsigned long long n = j_unsigned;
+            unsigned long long const n = j_unsigned;
             CHECK(json(n) == j_unsigned);
         }
 
         SECTION("int8_t")
         {
-            int8_t n = j;
+            int8_t const n = j;
             CHECK(json(n) == j);
         }
 
         SECTION("int16_t")
         {
-            int16_t n = j;
+            int16_t const n = j;
             CHECK(json(n) == j);
         }
 
         SECTION("int32_t")
         {
-            int32_t n = j;
+            int32_t const n = j;
             CHECK(json(n) == j);
         }
 
         SECTION("int64_t")
         {
-            int64_t n = j;
+            int64_t const n = j;
             CHECK(json(n) == j);
         }
 
         SECTION("int8_fast_t")
         {
-            int_fast8_t n = j;
+            int_fast8_t const n = j;
             CHECK(json(n) == j);
         }
 
         SECTION("int16_fast_t")
         {
-            int_fast16_t n = j;
+            int_fast16_t const n = j;
             CHECK(json(n) == j);
         }
 
         SECTION("int32_fast_t")
         {
-            int_fast32_t n = j;
+            int_fast32_t const n = j;
             CHECK(json(n) == j);
         }
 
         SECTION("int64_fast_t")
         {
-            int_fast64_t n = j;
+            int_fast64_t const n = j;
             CHECK(json(n) == j);
         }
 
         SECTION("int8_least_t")
         {
-            int_least8_t n = j;
+            int_least8_t const n = j;
             CHECK(json(n) == j);
         }
 
         SECTION("int16_least_t")
         {
-            int_least16_t n = j;
+            int_least16_t const n = j;
             CHECK(json(n) == j);
         }
 
         SECTION("int32_least_t")
         {
-            int_least32_t n = j;
+            int_least32_t const n = j;
             CHECK(json(n) == j);
         }
 
         SECTION("int64_least_t")
         {
-            int_least64_t n = j;
+            int_least64_t const n = j;
             CHECK(json(n) == j);
         }
 
         SECTION("uint8_t")
         {
-            uint8_t n = j_unsigned;
+            uint8_t const n = j_unsigned;
             CHECK(json(n) == j_unsigned);
         }
 
         SECTION("uint16_t")
         {
-            uint16_t n = j_unsigned;
+            uint16_t const n = j_unsigned;
             CHECK(json(n) == j_unsigned);
         }
 
         SECTION("uint32_t")
         {
-            uint32_t n = j_unsigned;
+            uint32_t const n = j_unsigned;
             CHECK(json(n) == j_unsigned);
         }
 
         SECTION("uint64_t")
         {
-            uint64_t n = j_unsigned;
+            uint64_t const n = j_unsigned;
             CHECK(json(n) == j_unsigned);
         }
 
         SECTION("uint8_fast_t")
         {
-            uint_fast8_t n = j_unsigned;
+            uint_fast8_t const n = j_unsigned;
             CHECK(json(n) == j_unsigned);
         }
 
         SECTION("uint16_fast_t")
         {
-            uint_fast16_t n = j_unsigned;
+            uint_fast16_t const n = j_unsigned;
             CHECK(json(n) == j_unsigned);
         }
 
         SECTION("uint32_fast_t")
         {
-            uint_fast32_t n = j_unsigned;
+            uint_fast32_t const n = j_unsigned;
             CHECK(json(n) == j_unsigned);
         }
 
         SECTION("uint64_fast_t")
         {
-            uint_fast64_t n = j_unsigned;
+            uint_fast64_t const n = j_unsigned;
             CHECK(json(n) == j_unsigned);
         }
 
         SECTION("uint8_least_t")
         {
-            uint_least8_t n = j_unsigned;
+            uint_least8_t const n = j_unsigned;
             CHECK(json(n) == j_unsigned);
         }
 
         SECTION("uint16_least_t")
         {
-            uint_least16_t n = j_unsigned;
+            uint_least16_t const n = j_unsigned;
             CHECK(json(n) == j_unsigned);
         }
 
         SECTION("uint32_least_t")
         {
-            uint_least32_t n = j_unsigned;
+            uint_least32_t const n = j_unsigned;
             CHECK(json(n) == j_unsigned);
         }
 
         SECTION("uint64_least_t")
         {
-            uint_least64_t n = j_unsigned;
+            uint_least64_t const n = j_unsigned;
             CHECK(json(n) == j_unsigned);
         }
     }
@@ -1070,8 +1070,8 @@ TEST_CASE("value conversion")
 
     SECTION("get a floating-point number (explicit)")
     {
-        json::number_float_t n_reference{42.23};
-        json j(n_reference);
+        json::number_float_t const n_reference{42.23};
+        json const j(n_reference);
 
         SECTION("number_float_t")
         {
@@ -1120,24 +1120,24 @@ TEST_CASE("value conversion")
 #if JSON_USE_IMPLICIT_CONVERSIONS
     SECTION("get a floating-point number (implicit)")
     {
-        json::number_float_t n_reference{42.23};
-        json j(n_reference);
+        json::number_float_t const n_reference{42.23};
+        json const j(n_reference);
 
         SECTION("number_float_t")
         {
-            json::number_float_t n = j;
+            json::number_float_t const n = j;
             CHECK(json(n).m_value.number_float == Approx(j.m_value.number_float));
         }
 
         SECTION("float")
         {
-            float n = j;
+            float const n = j;
             CHECK(json(n).m_value.number_float == Approx(j.m_value.number_float));
         }
 
         SECTION("double")
         {
-            double n = j;
+            double const n = j;
             CHECK(json(n).m_value.number_float == Approx(j.m_value.number_float));
         }
     }
@@ -1145,12 +1145,12 @@ TEST_CASE("value conversion")
 
     SECTION("get a binary value (explicit)")
     {
-        json::binary_t n_reference{{1, 2, 3}};
+        json::binary_t const n_reference{{1, 2, 3}};
         json j(n_reference);
 
         SECTION("binary_t")
         {
-            json::binary_t b = j.get<json::binary_t>();
+            json::binary_t const b = j.get<json::binary_t>();
             CHECK(*json(b).m_value.binary == *j.m_value.binary);
         }
 
@@ -1252,12 +1252,12 @@ TEST_CASE("value conversion")
 #if JSON_USE_IMPLICIT_CONVERSIONS
     SECTION("get a binary value (implicit)")
     {
-        json::binary_t n_reference{{1, 2, 3}};
-        json j(n_reference);
+        json::binary_t const n_reference{{1, 2, 3}};
+        json const j(n_reference);
 
         SECTION("binary_t")
         {
-            json::binary_t b = j;
+            json::binary_t const b = j;
             CHECK(*json(b).m_value.binary == *j.m_value.binary);
         }
     }
@@ -1276,11 +1276,11 @@ TEST_CASE("value conversion")
     {
         SECTION("object-like STL containers")
         {
-            json j1 = {{"one", 1}, {"two", 2}, {"three", 3}};
-            json j2 = {{"one", 1u}, {"two", 2u}, {"three", 3u}};
-            json j3 = {{"one", 1.1}, {"two", 2.2}, {"three", 3.3}};
-            json j4 = {{"one", true}, {"two", false}, {"three", true}};
-            json j5 = {{"one", "eins"}, {"two", "zwei"}, {"three", "drei"}};
+            json const j1 = {{"one", 1}, {"two", 2}, {"three", 3}};
+            json const j2 = {{"one", 1u}, {"two", 2u}, {"three", 3u}};
+            json const j3 = {{"one", 1.1}, {"two", 2.2}, {"three", 3.3}};
+            json const j4 = {{"one", true}, {"two", false}, {"three", true}};
+            json const j5 = {{"one", "eins"}, {"two", "zwei"}, {"three", "drei"}};
 
             SECTION("std::map")
             {
@@ -1331,11 +1331,11 @@ TEST_CASE("value conversion")
 
         SECTION("array-like STL containers")
         {
-            json j1 = {1, 2, 3, 4};
-            json j2 = {1u, 2u, 3u, 4u};
-            json j3 = {1.2, 2.3, 3.4, 4.5};
-            json j4 = {true, false, true};
-            json j5 = {"one", "two", "three"};
+            json const j1 = {1, 2, 3, 4};
+            json const j2 = {1u, 2u, 3u, 4u};
+            json const j3 = {1.2, 2.3, 3.4, 4.5};
+            json const j4 = {true, false, true};
+            json const j5 = {"one", "two", "three"};
 
             SECTION("std::list")
             {
@@ -1427,13 +1427,13 @@ TEST_CASE("value conversion")
             SECTION("std::map (array of pairs)")
             {
                 std::map<int, int> m{{0, 1}, {1, 2}, {2, 3}};
-                json j6 = m;
+                json const j6 = m;
 
                 auto m2 = j6.get<std::map<int, int>>();
                 CHECK(m == m2);
 
-                json j7 = {0, 1, 2, 3};
-                json j8 = 2;
+                json const j7 = {0, 1, 2, 3};
+                json const j8 = 2;
                 CHECK_THROWS_WITH_AS((j7.get<std::map<int, int>>()),
                                      "[json.exception.type_error.302] type must be array, "
                                      "but is number", json::type_error&);
@@ -1443,7 +1443,7 @@ TEST_CASE("value conversion")
 
                 SECTION("superfluous entries")
                 {
-                    json j9 = {{0, 1, 2}, {1, 2, 3}, {2, 3, 4}};
+                    json const j9 = {{0, 1, 2}, {1, 2, 3}, {2, 3, 4}};
                     m2 = j9.get<std::map<int, int>>();
                     CHECK(m == m2);
                 }
@@ -1452,13 +1452,13 @@ TEST_CASE("value conversion")
             SECTION("std::unordered_map (array of pairs)")
             {
                 std::unordered_map<int, int> m{{0, 1}, {1, 2}, {2, 3}};
-                json j6 = m;
+                json const j6 = m;
 
                 auto m2 = j6.get<std::unordered_map<int, int>>();
                 CHECK(m == m2);
 
-                json j7 = {0, 1, 2, 3};
-                json j8 = 2;
+                json const j7 = {0, 1, 2, 3};
+                json const j8 = 2;
                 CHECK_THROWS_WITH_AS((j7.get<std::unordered_map<int, int>>()),
                                      "[json.exception.type_error.302] type must be array, "
                                      "but is number", json::type_error&);
@@ -1468,7 +1468,7 @@ TEST_CASE("value conversion")
 
                 SECTION("superfluous entries")
                 {
-                    json j9{{0, 1, 2}, {1, 2, 3}, {2, 3, 4}};
+                    json const j9{{0, 1, 2}, {1, 2, 3}, {2, 3, 4}};
                     m2 = j9.get<std::unordered_map<int, int>>();
                     CHECK(m == m2);
                 }

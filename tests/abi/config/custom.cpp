@@ -25,7 +25,7 @@ TEST_CASE("custom namespace")
         std::string expected = "nlohmann::basic_json";
 
         // fallback for Clang
-        std::string ns{STRINGIZE(NLOHMANN_JSON_NAMESPACE) "::basic_json"};
+        const std::string ns{STRINGIZE(NLOHMANN_JSON_NAMESPACE) "::basic_json"};
 
         CHECK(namespace_name<nlohmann::json>(ns) == expected);
     }
