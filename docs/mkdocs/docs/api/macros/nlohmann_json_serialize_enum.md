@@ -16,7 +16,7 @@ The `NLOHMANN_JSON_SERIALIZE_ENUM` allows to define a user-defined serialization
 :   name of the enum to serialize/deserialize
 
 `conversion` (in)
-:   a pair of an enumerator and a JSON serialization; arbitrary pairs can can be given as comma-separated list
+:   a pair of an enumerator and a JSON serialization; arbitrary pairs can be given as a comma-separated list
 
 ## Default definition
 
