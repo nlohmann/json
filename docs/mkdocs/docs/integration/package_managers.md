@@ -62,6 +62,10 @@ If you are using the [Meson Build System](http://mesonbuild.com), add this sourc
 
 The provided `meson.build` can also be used as an alternative to cmake for installing `nlohmann_json` system-wide in which case a pkg-config file is installed. To use it, simply have your build system require the `nlohmann_json` pkg-config dependency. In Meson, it is preferred to use the [`dependency()`](https://mesonbuild.com/Reference-manual.html#dependency) object with a subproject fallback, rather than using the subproject directly.
 
+## Bazel
+
+This repository provides a [Bazel](https://bazel.build/) `WORKSPACE.bazel` and a corresponding `BUILD.bazel` file. Therefore, this repository can be referenced by workspace rules such as `http_archive`, `git_repository`, or `local_repository` from other Bazel workspaces. To use the library you only need to depend on the target `@nlohmann_json//:json` (e.g. via `deps` attribute).
+
 ## Conan
 
 If you are using [Conan](https://www.conan.io/) to manage your dependencies, merely add `nlohmann_json/x.y.z` to your `conanfile`'s requires, where `x.y.z` is the release version you want to use. Please file issues [here](https://github.com/conan-io/conan-center-index/issues) if you experience problems with the packages.
