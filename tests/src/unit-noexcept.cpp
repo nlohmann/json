@@ -18,9 +18,7 @@ using nlohmann::json;
 
 namespace
 {
-enum test
-{
-};
+enum test {};
 
 struct pod {};
 struct pod_bis {};
@@ -34,25 +32,29 @@ void to_json(json& /*unused*/, pod_bis /*unused*/) {}
 void from_json(const json& /*unused*/, pod /*unused*/) noexcept {}
 void from_json(const json& /*unused*/, pod_bis /*unused*/) {}
 
-json* j = nullptr;
-
 static_assert(noexcept(json{}), "");
-static_assert(noexcept(nlohmann::to_json(*j, 2)), "");
-static_assert(noexcept(nlohmann::to_json(*j, 2.5)), "");
-static_assert(noexcept(nlohmann::to_json(*j, true)), "");
-static_assert(noexcept(nlohmann::to_json(*j, test{})), "");
-static_assert(noexcept(nlohmann::to_json(*j, pod{})), "");
-static_assert(!noexcept(nlohmann::to_json(*j, pod_bis{})), "");
+static_assert(noexcept(nlohmann::to_json(std::declval<json&>(), 2)), "");
+static_assert(noexcept(nlohmann::to_json(std::declval<json&>(), 2.5)), "");
+static_assert(noexcept(nlohmann::to_json(std::declval<json&>(), true)), "");
+static_assert(noexcept(nlohmann::to_json(std::declval<json&>(), test{})), "");
+static_assert(noexcept(nlohmann::to_json(std::declval<json&>(), pod{})), "");
+static_assert(!noexcept(nlohmann::to_json(std::declval<json&>(), pod_bis{})), "");
 static_assert(noexcept(json(2)), "");
 static_assert(noexcept(json(test{})), "");
 static_assert(noexcept(json(pod{})), "");
-static_assert(noexcept(j->get<pod>()), "");
-static_assert(!noexcept(j->get<pod_bis>()), "");
+static_assert(noexcept(std::declval<json>().get<pod>()), "");
+static_assert(!noexcept(std::declval<json>().get<pod_bis>()), "");
 static_assert(noexcept(json(pod{})), "");
 } // namespace
 
-TEST_CASE("runtime checks")
+TEST_CASE("noexcept")
 {
+    // silence -Wunneeded-internal-declaration errors
+    static_cast<void>(static_cast<void(*)(json&, pod)>(&to_json));
+    static_cast<void>(static_cast<void(*)(json&, pod_bis)>(&to_json));
+    static_cast<void>(static_cast<void(*)(const json&, pod)>(&from_json));
+    static_cast<void>(static_cast<void(*)(const json&, pod_bis)>(&from_json));
+
     SECTION("nothrow-copy-constructible exceptions")
     {
         // for ERR60-CPP (https://github.com/nlohmann/json/issues/531):
@@ -66,16 +68,6 @@ TEST_CASE("runtime checks")
         CHECK(std::is_nothrow_copy_constructible<json::type_error>::value == std::is_nothrow_copy_constructible<std::runtime_error>::value);
         CHECK(std::is_nothrow_copy_constructible<json::out_of_range>::value == std::is_nothrow_copy_constructible<std::runtime_error>::value);
         CHECK(std::is_nothrow_copy_constructible<json::other_error>::value == std::is_nothrow_copy_constructible<std::runtime_error>::value);
-    }
-
-    SECTION("silence -Wunneeded-internal-declaration errors")
-    {
-        j = nullptr;
-        json j2;
-        to_json(j2, pod());
-        to_json(j2, pod_bis());
-        from_json(j2, pod());
-        from_json(j2, pod_bis());
     }
 }
 
