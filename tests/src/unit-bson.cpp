@@ -12,6 +12,7 @@
 using nlohmann::json;
 
 #include <fstream>
+#include <limits>
 #include <sstream>
 #include "make_test_data_available.hpp"
 #include "test_utils.hpp"
@@ -865,7 +866,7 @@ TEST_CASE("BSON numerical data")
             {
                 std::vector<int64_t> const numbers
                 {
-                    INT64_MIN,
+                    (std::numeric_limits<int64_t>::min)(),
                     -1000000000000000000LL,
                     -100000000000000000LL,
                     -10000000000000000LL,
@@ -875,7 +876,7 @@ TEST_CASE("BSON numerical data")
                     -1000000000000LL,
                     -100000000000LL,
                     -10000000000LL,
-                    static_cast<std::int64_t>(INT32_MIN) - 1,
+                    static_cast<std::int64_t>((std::numeric_limits<std::int32_t>::min)()) - 1,
                 };
 
                 for (const auto i : numbers)
@@ -923,7 +924,7 @@ TEST_CASE("BSON numerical data")
             {
                 std::vector<int32_t> const numbers
                 {
-                    INT32_MIN,
+                    (std::numeric_limits<int32_t>::min)(),
                     -2147483647L,
                     -1000000000L,
                     -100000000L,
@@ -947,7 +948,7 @@ TEST_CASE("BSON numerical data")
                     100000000L,
                     1000000000L,
                     2147483646L,
-                    INT32_MAX
+                    (std::numeric_limits<int32_t>::max)()
                 };
 
                 for (const auto i : numbers)
@@ -990,7 +991,7 @@ TEST_CASE("BSON numerical data")
             {
                 std::vector<int64_t> const numbers
                 {
-                    INT64_MAX,
+                    (std::numeric_limits<int64_t>::max)(),
                     1000000000000000000LL,
                     100000000000000000LL,
                     10000000000000000LL,
@@ -1000,7 +1001,7 @@ TEST_CASE("BSON numerical data")
                     1000000000000LL,
                     100000000000LL,
                     10000000000LL,
-                    static_cast<std::int64_t>(INT32_MAX) + 1,
+                    static_cast<std::int64_t>((std::numeric_limits<int32_t>::max)()) + 1,
                 };
 
                 for (const auto i : numbers)
@@ -1062,7 +1063,7 @@ TEST_CASE("BSON numerical data")
                     100000000ULL,
                     1000000000ULL,
                     2147483646ULL,
-                    static_cast<std::uint64_t>(INT32_MAX)
+                    static_cast<std::uint64_t>((std::numeric_limits<int32_t>::max)())
                 };
 
                 for (const auto i : numbers)
@@ -1105,9 +1106,9 @@ TEST_CASE("BSON numerical data")
             {
                 std::vector<std::uint64_t> const numbers
                 {
-                    static_cast<std::uint64_t>(INT32_MAX) + 1,
+                    static_cast<std::uint64_t>((std::numeric_limits<std::int32_t>::max)()) + 1,
                     4000000000ULL,
-                    static_cast<std::uint64_t>(UINT32_MAX),
+                    static_cast<std::uint64_t>((std::numeric_limits<std::uint32_t>::max)()),
                     10000000000ULL,
                     100000000000ULL,
                     1000000000000ULL,
@@ -1117,7 +1118,7 @@ TEST_CASE("BSON numerical data")
                     10000000000000000ULL,
                     100000000000000000ULL,
                     1000000000000000000ULL,
-                    static_cast<std::uint64_t>(INT64_MAX),
+                    static_cast<std::uint64_t>((std::numeric_limits<std::int64_t>::max)()),
                 };
 
                 for (const auto i : numbers)
@@ -1163,11 +1164,11 @@ TEST_CASE("BSON numerical data")
             {
                 std::vector<std::uint64_t> const numbers
                 {
-                    static_cast<std::uint64_t>(INT64_MAX) + 1ULL,
+                    static_cast<std::uint64_t>((std::numeric_limits<std::int64_t>::max)()) + 1ULL,
                     10000000000000000000ULL,
                     18000000000000000000ULL,
-                    UINT64_MAX - 1ULL,
-                    UINT64_MAX,
+                    (std::numeric_limits<std::uint64_t>::max)() - 1ULL,
+                    (std::numeric_limits<std::uint64_t>::max)(),
                 };
 
                 for (const auto i : numbers)
