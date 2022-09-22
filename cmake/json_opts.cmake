@@ -1,4 +1,5 @@
 include(CMakeDependentOption)
+include(GNUInstallDirs)
 
 #############################################################################
 # test options
