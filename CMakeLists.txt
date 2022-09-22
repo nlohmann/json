@@ -1,51 +1,42 @@
 cmake_minimum_required(VERSION 3.1)
 
-##
-## POLICIES
-##
+#############################################################################
+# set up
+#############################################################################
 
+# set policies
 if (POLICY CMP0077)
     # Allow CMake 3.13+ to override options when using FetchContent / add_subdirectory.
     cmake_policy(SET CMP0077 NEW)
 endif ()
 
-##
-## PROJECT
-## name and version
-##
-project(nlohmann_json VERSION 3.11.2 LANGUAGES CXX)
+# set the CMake module path
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 
-##
-## JSON_MAIN_PROJECT CHECK
-## determine if nlohmann_json is built as a subproject (using add_subdirectory) or if it is the main project
-##
+# determine if nlohmann_json is the main project or built as a subproject (using add_subdirectory)
 set(JSON_MAIN_PROJECT OFF)
 if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     set(JSON_MAIN_PROJECT ON)
 endif()
 
-##
-## INCLUDE
-##
-##
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
-include(ExternalProject)
+# set project name and version
+project(nlohmann_json VERSION 3.11.2 LANGUAGES CXX)
 
+# print CMake, system, and compiler information
 include(json_info)
 
-##
-## OPTIONS
-##
-include (json_opts)
+# handle options and configuration
+include(json_opts)
 
-if (JSON_CI)
+# add CI targets
+if(JSON_CI)
     include(ci)
-endif ()
+endif()
 
-##
-## TARGET
-## create target and add include path
-##
+#############################################################################
+# add library targets
+#############################################################################
+
 add_library(${NLOHMANN_JSON_TARGET_NAME} INTERFACE)
 add_library(${PROJECT_NAME}::${NLOHMANN_JSON_TARGET_NAME} ALIAS ${NLOHMANN_JSON_TARGET_NAME})
 if (${CMAKE_VERSION} VERSION_LESS "3.8.0")
@@ -89,20 +80,20 @@ CONFIGURE_FILE(
     "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc"
 )
 
-##
-## TESTS
-## create and configure the unit test target
-##
+#############################################################################
+# add tests
+#############################################################################
+
 if (JSON_BuildTests)
     include(CTest)
     enable_testing()
     add_subdirectory(tests)
 endif()
 
-##
-## INSTALL
-## install header files, generate and install cmake config files for find_package()
-##
+#############################################################################
+# install files and targets
+#############################################################################
+
 include(CMakePackageConfigHelpers)
 # use a custom package version config file instead of
 # write_basic_package_version_file to ensure that it's architecture-independent
@@ -153,5 +144,9 @@ if(JSON_Install)
         DESTINATION ${NLOHMANN_JSON_PKGCONFIG_INSTALL_DIR}
     )
 endif()
+
+#############################################################################
+# print feature summary
+#############################################################################
 
 include(json_summary)
