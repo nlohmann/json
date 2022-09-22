@@ -7,12 +7,12 @@ cmake_minimum_required(VERSION 3.1)
 project(nlohmann_json VERSION 3.11.2 LANGUAGES CXX)
 
 ##
-## MAIN_PROJECT CHECK
+## JSON_MAIN_PROJECT CHECK
 ## determine if nlohmann_json is built as a subproject (using add_subdirectory) or if it is the main project
 ##
-set(MAIN_PROJECT OFF)
+set(JSON_MAIN_PROJECT OFF)
 if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
-    set(MAIN_PROJECT ON)
+    set(JSON_MAIN_PROJECT ON)
 endif()
 
 ##
@@ -32,7 +32,7 @@ if (POLICY CMP0077)
 endif ()
 
 # VERSION_GREATER_EQUAL is not available in CMake 3.1
-if(${MAIN_PROJECT} AND (${CMAKE_VERSION} VERSION_EQUAL 3.13 OR ${CMAKE_VERSION} VERSION_GREATER 3.13))
+if(${JSON_MAIN_PROJECT} AND (${CMAKE_VERSION} VERSION_EQUAL 3.13 OR ${CMAKE_VERSION} VERSION_GREATER 3.13))
     set(JSON_BuildTests_INIT ON)
 else()
     set(JSON_BuildTests_INIT OFF)
@@ -44,7 +44,7 @@ option(JSON_GlobalUDLs                     "Place use-defined string literals in
 option(JSON_ImplicitConversions            "Enable implicit conversions." ON)
 option(JSON_DisableEnumSerialization       "Disable default integer enum serialization." OFF)
 option(JSON_LegacyDiscardedValueComparison "Enable legacy discarded value comparison." OFF)
-option(JSON_Install                        "Install CMake targets during install step." ${MAIN_PROJECT})
+option(JSON_Install                        "Install CMake targets during install step." ${JSON_MAIN_PROJECT})
 option(JSON_MultipleHeaders                "Use non-amalgamated version of the library." ON)
 option(JSON_SystemInclude                  "Include as system headers (skip for clang-tidy)." OFF)
 
