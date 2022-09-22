@@ -51,7 +51,17 @@ json_feature(JSON_BuildTests "Build tests?")
 if(JSON_BuildTests)
     json_feature(JSON_32bitTest "Build the 32bit unit test?" VALUES AUTO ONLY)
     json_feature(JSON_FastTests "Skip expensive/slow tests?")
+
+    if(JSON_TEST_DATA_DIRECTORY)
+        message("   Test data: ${JSON_TEST_DATA_DIRECTORY}")
+    else()
+        message("   Test data: ${JSON_TEST_DATA_URL} (v${JSON_TEST_DATA_VERSION})")
+    endif()
+
     json_feature(JSON_Valgrind "Execute test suite with Valgrind?")
+    if(JSON_Valgrind)
+        message("   Valgrind command: ${CMAKE_MEMORYCHECK_COMMAND}" ${CMAKE_MEMORYCHECK_COMMAND_OPTIONS})
+    endif()
 
     set(test_cxx_standards "")
     foreach(cxx_standard ${JSON_TEST_CXX_STANDARDS_FEATURE_INFO})
