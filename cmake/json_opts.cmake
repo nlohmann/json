@@ -62,3 +62,12 @@ endif()
 if (JSON_SystemInclude)
     set(NLOHMANN_JSON_SYSTEM_INCLUDE "SYSTEM")
 endif()
+
+if(JSON_TestDataDirectory)
+    set(JSON_TEST_DATA_DIRECTORY "${JSON_TestDataDirectory}" CACHE INTERNAL "")
+elseif(DEFINED ENV{JSON_TEST_DATA_DIRECTORY})
+    set(JSON_TEST_DATA_DIRECTORY "$ENV{JSON_TEST_DATA_DIRECTORY}" CACHE INTERNAL "")
+endif()
+
+set(JSON_TEST_DATA_URL     https://github.com/nlohmann/json_test_data CACHE INTERNAL "")
+set(JSON_TEST_DATA_VERSION 3.1.0 CACHE INTERNAL "")
