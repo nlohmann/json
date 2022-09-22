@@ -30,7 +30,7 @@ include(json_opts)
 
 # add CI targets
 if(JSON_CI)
-    include(ci)
+    include(json_ci)
 endif()
 
 #############################################################################
