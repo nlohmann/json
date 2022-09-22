@@ -58,26 +58,8 @@ set(NLOHMANN_JSON_PKGCONFIG_INSTALL_DIR     "${CMAKE_INSTALL_DATADIR}/pkgconfig"
 
 if (JSON_MultipleHeaders)
     set(NLOHMANN_JSON_INCLUDE_BUILD_DIR "${PROJECT_SOURCE_DIR}/include/")
-    message(STATUS "Using the multi-header code from ${NLOHMANN_JSON_INCLUDE_BUILD_DIR}")
 else()
     set(NLOHMANN_JSON_INCLUDE_BUILD_DIR "${PROJECT_SOURCE_DIR}/single_include/")
-    message(STATUS "Using the single-header code from ${NLOHMANN_JSON_INCLUDE_BUILD_DIR}")
-endif()
-
-if (NOT JSON_ImplicitConversions)
-    message(STATUS "Implicit conversions are disabled")
-endif()
-
-if (JSON_DisableEnumSerialization)
-    message(STATUS "Enum integer serialization is disabled")
-endif()
-
-if (JSON_LegacyDiscardedValueComparison)
-    message(STATUS "Legacy discarded value comparison enabled")
-endif()
-
-if (JSON_Diagnostics)
-    message(STATUS "Diagnostics enabled")
 endif()
 
 if (JSON_SystemInclude)
@@ -195,3 +177,5 @@ if(JSON_Install)
         DESTINATION ${NLOHMANN_JSON_PKGCONFIG_INSTALL_DIR}
     )
 endif()
+
+include(json_summary)
