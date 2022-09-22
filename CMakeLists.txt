@@ -1,6 +1,15 @@
 cmake_minimum_required(VERSION 3.1)
 
 ##
+## POLICIES
+##
+
+if (POLICY CMP0077)
+    # Allow CMake 3.13+ to override options when using FetchContent / add_subdirectory.
+    cmake_policy(SET CMP0077 NEW)
+endif ()
+
+##
 ## PROJECT
 ## name and version
 ##
@@ -25,11 +34,6 @@ include(ExternalProject)
 ##
 ## OPTIONS
 ##
-
-if (POLICY CMP0077)
-    # Allow CMake 3.13+ to override options when using FetchContent / add_subdirectory.
-    cmake_policy(SET CMP0077 NEW)
-endif ()
 
 # VERSION_GREATER_EQUAL is not available in CMake 3.1
 if(${JSON_MAIN_PROJECT} AND (${CMAKE_VERSION} VERSION_EQUAL 3.13 OR ${CMAKE_VERSION} VERSION_GREATER 3.13))
