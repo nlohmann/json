@@ -1,11 +1,5 @@
 cmake_minimum_required(VERSION 3.13)
 
-option(JSON_Valgrind    "Execute test suite with Valgrind." OFF)
-option(JSON_FastTests   "Skip expensive/slow tests." OFF)
-
-set(JSON_32bitTest     AUTO CACHE STRING "Enable the 32bit unit test (ON/OFF/AUTO/ONLY).")
-set(JSON_TestStandards "" CACHE STRING "The list of standards to test explicitly.")
-
 include(test)
 
 #############################################################################

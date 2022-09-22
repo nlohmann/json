@@ -34,23 +34,7 @@ include(ExternalProject)
 ##
 ## OPTIONS
 ##
-
-# VERSION_GREATER_EQUAL is not available in CMake 3.1
-if(${JSON_MAIN_PROJECT} AND (${CMAKE_VERSION} VERSION_EQUAL 3.13 OR ${CMAKE_VERSION} VERSION_GREATER 3.13))
-    set(JSON_BuildTests_INIT ON)
-else()
-    set(JSON_BuildTests_INIT OFF)
-endif()
-option(JSON_BuildTests                     "Build the unit tests when BUILD_TESTING is enabled." ${JSON_BuildTests_INIT})
-option(JSON_CI                             "Enable CI build targets." OFF)
-option(JSON_Diagnostics                    "Use extended diagnostic messages." OFF)
-option(JSON_GlobalUDLs                     "Place use-defined string literals in the global namespace." ON)
-option(JSON_ImplicitConversions            "Enable implicit conversions." ON)
-option(JSON_DisableEnumSerialization       "Disable default integer enum serialization." OFF)
-option(JSON_LegacyDiscardedValueComparison "Enable legacy discarded value comparison." OFF)
-option(JSON_Install                        "Install CMake targets during install step." ${JSON_MAIN_PROJECT})
-option(JSON_MultipleHeaders                "Use non-amalgamated version of the library." ON)
-option(JSON_SystemInclude                  "Include as system headers (skip for clang-tidy)." OFF)
+include (json_opts)
 
 if (JSON_CI)
     include(ci)
