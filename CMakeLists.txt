@@ -94,21 +94,33 @@ configure_file(
     "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc"
 )
 
-# generate CMake module configuration and version files
-configure_file(
+include(CMakePackageConfigHelpers)
+
+# generate CMake module configuration file
+configure_package_config_file(
     ${JSON_CMAKE_CONFIG_TEMPLATE}
     ${JSON_CMAKE_PROJECT_CONFIG_FILE}
-    @ONLY
+    INSTALL_DESTINATION ${JSON_CONFIG_INSTALL_DIR}
+    NO_SET_AND_CHECK_MACRO
 )
 
-# use a custom package version config file instead of
-# write_basic_package_version_file to ensure that it's architecture-independent
-# https://github.com/nlohmann/json/issues/1697
-configure_file(
-    "cmake/nlohmann_jsonConfigVersion.cmake.in"
-    ${JSON_CMAKE_VERSION_CONFIG_FILE}
-    @ONLY
-)
+# generate CMake module version file
+if(CMAKE_VERSION VERSION_EQUAL "3.14" OR CMAKE_VERSION VERSION_GREATER "3.14")
+    write_basic_package_version_file(
+        ${JSON_CMAKE_VERSION_CONFIG_FILE}
+        COMPATIBILITY SameMajorVersion
+        ARCH_INDEPENDENT
+    )
+else()
+    # use a custom package version config file instead of
+    # write_basic_package_version_file to ensure that it's architecture-independent
+    # https://github.com/nlohmann/json/issues/1697
+    configure_file(
+        "cmake/nlohmann_jsonConfigVersion.cmake.in"
+        ${JSON_CMAKE_VERSION_CONFIG_FILE}
+        @ONLY
+    )
+endif()
 
 #############################################################################
 # install files and targets

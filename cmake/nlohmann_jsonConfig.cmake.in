@@ -1,15 +1,16 @@
-include(FindPackageHandleStandardArgs)
-set(${CMAKE_FIND_PACKAGE_NAME}_CONFIG ${CMAKE_CURRENT_LIST_FILE})
-find_package_handle_standard_args(@PROJECT_NAME@ CONFIG_MODE)
+@PACKAGE_INIT@
 
-if(NOT TARGET @PROJECT_NAME@::@JSON_TARGET_NAME@)
-    include("${CMAKE_CURRENT_LIST_DIR}/@JSON_TARGETS_EXPORT_NAME@.cmake")
-    if((NOT TARGET @JSON_TARGET_NAME@) AND
-       (NOT @PROJECT_NAME@_FIND_VERSION OR
-        @PROJECT_NAME@_FIND_VERSION VERSION_LESS 3.2.0))
-        add_library(@JSON_TARGET_NAME@ INTERFACE IMPORTED)
-        set_target_properties(@JSON_TARGET_NAME@ PROPERTIES
-            INTERFACE_LINK_LIBRARIES @PROJECT_NAME@::@JSON_TARGET_NAME@
-        )
+include(FindPackageHandleStandardArgs)
+set(nlohmann_json_CONFIG ${CMAKE_CURRENT_LIST_FILE})
+find_package_handle_standard_args(nlohmann_json CONFIG_MODE)
+
+if(NOT TARGET nlohmann_json::nlohmann_json)
+    include("${CMAKE_CURRENT_LIST_DIR}/nlohmann_jsonTargets.cmake")
+    if((NOT TARGET nlohmann_json)
+       AND (NOT nlohmann_json_FIND_VERSION OR nlohmann_json_FIND_VERSION VERSION_LESS 3.2.0))  
+        add_library(nlohmann_json INTERFACE IMPORTED)
+        set_target_properties(nlohmann_json PROPERTIES INTERFACE_LINK_LIBRARIES nlohmann_json::nlohmann_json)
     endif()
 endif()
+
+check_required_components(nlohmann_json)
