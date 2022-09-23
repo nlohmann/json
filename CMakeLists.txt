@@ -69,12 +69,6 @@ if (MSVC)
     )
 endif()
 
-# Install a pkg-config file, so other tools can find this.
-CONFIGURE_FILE(
-    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/pkg-config.pc.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc"
-)
-
 #############################################################################
 # add tests
 #############################################################################
@@ -91,10 +85,22 @@ if(JSON_CI)
 endif()
 
 #############################################################################
-# install files and targets
+# generate package configuration files
 #############################################################################
 
-include(CMakePackageConfigHelpers)
+# generate pkg-config file
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/pkg-config.pc.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc"
+)
+
+# generate CMake module configuration and version files
+configure_file(
+    ${JSON_CMAKE_CONFIG_TEMPLATE}
+    ${JSON_CMAKE_PROJECT_CONFIG_FILE}
+    @ONLY
+)
+
 # use a custom package version config file instead of
 # write_basic_package_version_file to ensure that it's architecture-independent
 # https://github.com/nlohmann/json/issues/1697
@@ -103,11 +109,10 @@ configure_file(
     ${JSON_CMAKE_VERSION_CONFIG_FILE}
     @ONLY
 )
-configure_file(
-    ${JSON_CMAKE_CONFIG_TEMPLATE}
-    ${JSON_CMAKE_PROJECT_CONFIG_FILE}
-    @ONLY
-)
+
+#############################################################################
+# install files and targets
+#############################################################################
 
 if(JSON_Install)
     install(
