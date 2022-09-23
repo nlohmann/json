@@ -54,7 +54,7 @@ target_include_directories(test_main PUBLIC
     thirdparty/doctest
     thirdparty/fifo_map
     ${PROJECT_BINARY_DIR}/include)
-target_link_libraries(test_main PUBLIC ${JSON_TARGET_NAME})
+target_link_libraries(test_main PUBLIC nlohmann_json)
 
 #############################################################################
 # define test- and standard-specific build settings

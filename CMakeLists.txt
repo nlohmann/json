@@ -32,16 +32,16 @@ include(json_opts)
 # add library targets
 #############################################################################
 
-add_library(${JSON_TARGET_NAME} INTERFACE)
-add_library(${PROJECT_NAME}::${JSON_TARGET_NAME} ALIAS ${JSON_TARGET_NAME})
+add_library(nlohmann_json INTERFACE)
+add_library(nlohmann_json::nlohmann_json ALIAS nlohmann_json)
 if (${CMAKE_VERSION} VERSION_LESS "3.8.0")
-    target_compile_features(${JSON_TARGET_NAME} INTERFACE cxx_range_for)
+    target_compile_features(nlohmann_json INTERFACE cxx_range_for)
 else()
-    target_compile_features(${JSON_TARGET_NAME} INTERFACE cxx_std_11)
+    target_compile_features(nlohmann_json INTERFACE cxx_std_11)
 endif()
 
 target_compile_definitions(
-    ${JSON_TARGET_NAME}
+    nlohmann_json
     INTERFACE
     $<$<NOT:$<BOOL:${JSON_GlobalUDLs}>>:JSON_USE_GLOBAL_UDLS=0>
     $<$<NOT:$<BOOL:${JSON_ImplicitConversions}>>:JSON_USE_IMPLICIT_CONVERSIONS=0>
@@ -51,21 +51,19 @@ target_compile_definitions(
 )
 
 target_include_directories(
-    ${JSON_TARGET_NAME}
+    nlohmann_json
     ${JSON_SYSTEM_INCLUDE} INTERFACE
-    $<BUILD_INTERFACE:${JSON_INCLUDE_BUILD_DIR}>
-    $<INSTALL_INTERFACE:include>
+    $<BUILD_INTERFACE:${JSON_BUILD_INCLUDE_DIR}>
+    $<INSTALL_INTERFACE:${JSON_INSTALL_INCLUDE_DIR}>
 )
 
-## add debug view definition file for msvc (natvis)
+# add Natvis debug view definition file for MSVC
 if (MSVC)
-    set(NLOHMANN_ADD_NATVIS TRUE)
-    set(NLOHMANN_NATVIS_FILE "nlohmann_json.natvis")
     target_sources(
-        ${JSON_TARGET_NAME}
+        nlohmann_json
         INTERFACE
-            $<INSTALL_INTERFACE:${NLOHMANN_NATVIS_FILE}>
-            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/${NLOHMANN_NATVIS_FILE}>
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/nlohmann_json.natvis>
+            $<INSTALL_INTERFACE:nlohmann_json.natvis>
     )
 endif()
 
@@ -91,23 +89,23 @@ endif()
 # generate pkg-config file
 configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/pkg-config.pc.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc"
+    "${CMAKE_CURRENT_BINARY_DIR}/nlohmann_json.pc"
 )
 
 include(CMakePackageConfigHelpers)
 
 # generate CMake module configuration file
 configure_package_config_file(
-    ${JSON_CMAKE_CONFIG_TEMPLATE}
-    ${JSON_CMAKE_PROJECT_CONFIG_FILE}
-    INSTALL_DESTINATION ${JSON_CONFIG_INSTALL_DIR}
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/nlohmann_jsonConfig.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/nlohmann_jsonConfig.cmake"
+    INSTALL_DESTINATION "${JSON_INSTALL_CONFIG_DIR}/cmake/nlohmann_json"
     NO_SET_AND_CHECK_MACRO
 )
 
 # generate CMake module version file
 if(CMAKE_VERSION VERSION_EQUAL "3.14" OR CMAKE_VERSION VERSION_GREATER "3.14")
     write_basic_package_version_file(
-        ${JSON_CMAKE_VERSION_CONFIG_FILE}
+        "${CMAKE_CURRENT_BINARY_DIR}/nlohmann_jsonConfigVersion.cmake"
         COMPATIBILITY SameMajorVersion
         ARCH_INDEPENDENT
     )
@@ -116,50 +114,64 @@ else()
     # write_basic_package_version_file to ensure that it's architecture-independent
     # https://github.com/nlohmann/json/issues/1697
     configure_file(
-        "cmake/nlohmann_jsonConfigVersion.cmake.in"
-        ${JSON_CMAKE_VERSION_CONFIG_FILE}
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/nlohmann_jsonConfigVersion.cmake.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/nlohmann_jsonConfigVersion.cmake"
         @ONLY
     )
 endif()
+
+# generate CMake module targets file for use without installation
+export(
+    TARGETS nlohmann_json
+    NAMESPACE nlohmann_json::
+    FILE "${CMAKE_CURRENT_BINARY_DIR}/nlohmann_jsonTargets.cmake"
+)
 
 #############################################################################
 # install files and targets
 #############################################################################
 
 if(JSON_Install)
+    # install pkg-config file
     install(
-        DIRECTORY ${JSON_INCLUDE_BUILD_DIR}
-        DESTINATION ${JSON_INCLUDE_INSTALL_DIR}
+        FILES "${CMAKE_CURRENT_BINARY_DIR}/nlohmann_json.pc"
+        DESTINATION "${JSON_INSTALL_CONFIG_DIR}/pkgconfig"
     )
+
+    # install CMake module configuration and version files
     install(
-        FILES ${JSON_CMAKE_PROJECT_CONFIG_FILE} ${JSON_CMAKE_VERSION_CONFIG_FILE}
-        DESTINATION ${JSON_CONFIG_INSTALL_DIR}
+        FILES "${CMAKE_CURRENT_BINARY_DIR}/nlohmann_jsonConfig.cmake"
+              "${CMAKE_CURRENT_BINARY_DIR}/nlohmann_jsonConfigVersion.cmake"
+        DESTINATION "${JSON_INSTALL_CONFIG_DIR}/cmake/nlohmann_json"
     )
-    if (NLOHMANN_ADD_NATVIS)
+
+    # install targets
+    install(
+        TARGETS nlohmann_json
+        EXPORT nlohmann_jsonTargets
+        INCLUDES DESTINATION "${JSON_INSTALL_INCLUDE_DIR}"
+    )
+
+    # generate and install CMake module targets file(s)
+    install(
+        EXPORT nlohmann_jsonTargets
+        NAMESPACE nlohmann_json::
+        DESTINATION "${JSON_INSTALL_CONFIG_DIR}/cmake/nlohmann_json"
+    )
+
+    # install header files
+    install(
+        DIRECTORY "${JSON_BUILD_INCLUDE_DIR}"
+        DESTINATION "${JSON_INSTALL_INCLUDE_DIR}"
+    )
+
+    # install Natvis debug view definition file for MSVC
+    if (MSVC)
         install(
-            FILES ${NLOHMANN_NATVIS_FILE}
+            FILES "nlohmann_json.natvis"
             DESTINATION .
-    )
+        )
     endif()
-    export(
-        TARGETS ${JSON_TARGET_NAME}
-        NAMESPACE ${PROJECT_NAME}::
-        FILE ${JSON_CMAKE_PROJECT_TARGETS_FILE}
-    )
-    install(
-        TARGETS ${JSON_TARGET_NAME}
-        EXPORT ${JSON_TARGETS_EXPORT_NAME}
-        INCLUDES DESTINATION ${JSON_INCLUDE_INSTALL_DIR}
-    )
-    install(
-        EXPORT ${JSON_TARGETS_EXPORT_NAME}
-        NAMESPACE ${PROJECT_NAME}::
-        DESTINATION ${JSON_CONFIG_INSTALL_DIR}
-    )
-    install(
-        FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc"
-        DESTINATION ${JSON_PKGCONFIG_INSTALL_DIR}
-    )
 endif()
 
 #############################################################################

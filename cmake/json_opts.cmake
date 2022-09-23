@@ -43,21 +43,15 @@ option(JSON_SystemInclude "Include as system headers (skip for clang-tidy)." OFF
 # configuration
 #############################################################################
 
-set(JSON_TARGET_NAME                ${PROJECT_NAME})
-set(JSON_CONFIG_INSTALL_DIR         "${CMAKE_INSTALL_DATADIR}/cmake/${PROJECT_NAME}" CACHE INTERNAL "")
-set(JSON_INCLUDE_INSTALL_DIR        "${CMAKE_INSTALL_INCLUDEDIR}")
-set(JSON_TARGETS_EXPORT_NAME        "${PROJECT_NAME}Targets")
-set(JSON_CMAKE_CONFIG_TEMPLATE      "cmake/nlohmann_jsonConfig.cmake.in")
-set(JSON_CMAKE_CONFIG_DIR           "${CMAKE_CURRENT_BINARY_DIR}")
-set(JSON_CMAKE_VERSION_CONFIG_FILE  "${JSON_CMAKE_CONFIG_DIR}/${PROJECT_NAME}ConfigVersion.cmake")
-set(JSON_CMAKE_PROJECT_CONFIG_FILE  "${JSON_CMAKE_CONFIG_DIR}/${PROJECT_NAME}Config.cmake")
-set(JSON_CMAKE_PROJECT_TARGETS_FILE "${JSON_CMAKE_CONFIG_DIR}/${PROJECT_NAME}Targets.cmake")
-set(JSON_PKGCONFIG_INSTALL_DIR      "${CMAKE_INSTALL_DATADIR}/pkgconfig")
+# package configuration install base directory
+set(JSON_INSTALL_CONFIG_DIR "${CMAKE_INSTALL_DATADIR}")
 
+# include directories
+set(JSON_INSTALL_INCLUDE_DIR "${CMAKE_INSTALL_INCLUDEDIR}")
 if (JSON_MultipleHeaders)
-    set(JSON_INCLUDE_BUILD_DIR "${PROJECT_SOURCE_DIR}/include/")
+    set(JSON_BUILD_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include/")
 else()
-    set(JSON_INCLUDE_BUILD_DIR "${PROJECT_SOURCE_DIR}/single_include/")
+    set(JSON_BUILD_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/single_include/")
 endif()
 
 if (JSON_SystemInclude)

@@ -88,5 +88,5 @@ json_feature(JSON_LegacyDiscardedValueComparison "Legacy discarded value compari
 message("")
 
 json_feature(JSON_MultipleHeaders "Use the multi-header code?")
-message("   Include directory: ${JSON_INCLUDE_BUILD_DIR}")
+message("   Include directory: ${JSON_BUILD_INCLUDE_DIR}")
 json_feature(JSON_SystemInclude "Include as system headers?")
