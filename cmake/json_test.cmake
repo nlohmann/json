@@ -12,7 +12,11 @@ else()
     find_package(Git REQUIRED)
     # target to download test data
     add_custom_target(download_test_data
-        COMMAND test -d json_test_data || ${GIT_EXECUTABLE} clone -c advice.detachedHead=false --branch v${JSON_TEST_DATA_VERSION} ${JSON_TEST_DATA_URL} --quiet --depth 1
+        COMMAND ${CMAKE_COMMAND} 
+                    -DGIT_EXECUTABLE=${GIT_EXECUTABLE}
+                    -DJSON_TEST_DATA_VERSION=${JSON_TEST_DATA_VERSION}
+                    -DJSON_TEST_DATA_URL=${JSON_TEST_DATA_URL}
+                    -P ${PROJECT_SOURCE_DIR}/cmake/scripts/clone_test_data.cmake
         COMMENT "Downloading test data from ${JSON_TEST_DATA_URL} (v${JSON_TEST_DATA_VERSION})"
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     )
