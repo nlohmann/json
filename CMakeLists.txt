@@ -28,11 +28,6 @@ include(json_info)
 # handle options and configuration
 include(json_opts)
 
-# add CI targets
-if(JSON_CI)
-    include(json_ci)
-endif()
-
 #############################################################################
 # add library targets
 #############################################################################
@@ -88,6 +83,11 @@ if (JSON_BuildTests)
     include(CTest)
     enable_testing()
     add_subdirectory(tests)
+endif()
+
+# add CI targets
+if(JSON_CI)
+    include(json_ci)
 endif()
 
 #############################################################################
