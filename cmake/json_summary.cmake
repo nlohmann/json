@@ -52,10 +52,10 @@ if(JSON_BuildTests)
     json_feature(JSON_32bitTest "Build the 32bit unit test?" VALUES AUTO ONLY)
     json_feature(JSON_FastTests "Skip expensive/slow tests?")
 
-    if(JSON_TEST_DATA_DIRECTORY)
-        message("   Test data: ${JSON_TEST_DATA_DIRECTORY}")
+    if(JSON_TestDataDirectory)
+        message("   Test data directory: ${JSON_TestDataDirectory}")
     else()
-        message("   Test data: ${JSON_TEST_DATA_URL} (v${JSON_TEST_DATA_VERSION})")
+        message("   Test data source: ${JSON_TEST_DATA_URL} (v${JSON_TEST_DATA_VERSION})")
     endif()
 
     json_feature(JSON_Valgrind "Execute test suite with Valgrind?")
