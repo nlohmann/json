@@ -16,6 +16,7 @@ set(JSON_32bitTest AUTO CACHE STRING "Enable the 32bit unit test (ON/OFF/AUTO/ON
 cmake_dependent_option(JSON_FastTests "Skip expensive/slow tests." OFF "JSON_BuildTests" OFF)
 set(JSON_TestDataDirectory "$ENV{JSON_TEST_DATA_DIRECTORY}" CACHE FILEPATH "Test data directory for the unit tests (will be downloaded if not specified).")
 cmake_dependent_option(JSON_Valgrind "Execute test suite with Valgrind." OFF "JSON_BuildTests" OFF)
+set(JSON_MEMORYCHECK_COMMAND_OPTIONS "--error-exitcode=1;--leak-check=full" CACHE STRING "Options passed to the memory check command (valgrind).")
 
 set(JSON_TestStandards "" CACHE STRING "The list of standards to test explicitly.")
 

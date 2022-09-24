@@ -60,7 +60,8 @@ if(JSON_BuildTests)
 
     json_feature(JSON_Valgrind "Execute test suite with Valgrind?")
     if(JSON_Valgrind)
-        message("   Valgrind command: ${CMAKE_MEMORYCHECK_COMMAND}" ${CMAKE_MEMORYCHECK_COMMAND_OPTIONS})
+        string (REPLACE ";" " " memcheck_command "${JSON_MEMORYCHECK_COMMAND};${JSON_MEMORYCHECK_COMMAND_OPTIONS}")
+        message("   Valgrind command: ${memcheck_command}")
     endif()
 
     set(test_cxx_standards "")

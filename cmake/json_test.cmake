@@ -26,12 +26,11 @@ add_test(NAME "download_test_data" COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINA
 )
 set_tests_properties(download_test_data PROPERTIES FIXTURES_SETUP TEST_DATA)
 
-if(JSON_Valgrind)
-    find_program(CMAKE_MEMORYCHECK_COMMAND valgrind)
-    message(STATUS "Executing test suite with Valgrind (${CMAKE_MEMORYCHECK_COMMAND})")
-    set(memcheck_command "${CMAKE_MEMORYCHECK_COMMAND} ${CMAKE_MEMORYCHECK_COMMAND_OPTIONS} --error-exitcode=1 --leak-check=full")
-    separate_arguments(memcheck_command)
-endif()
+#############################################################################
+# locate memory check command
+#############################################################################
+
+find_program(JSON_MEMORYCHECK_COMMAND valgrind)
 
 #############################################################################
 # detect standard support
@@ -189,7 +188,8 @@ function(_json_test_add_test test_name file main cxx_standard)
 
     if(JSON_Valgrind)
         add_test(NAME ${test_target}_valgrind
-            COMMAND ${memcheck_command} $<TARGET_FILE:${test_target}> ${DOCTEST_TEST_FILTER}
+            COMMAND ${JSON_MEMORYCHECK_COMMAND} ${JSON_MEMORYCHECK_COMMAND_OPTIONS}
+                    -- $<TARGET_FILE:${test_target}> ${DOCTEST_TEST_FILTER}
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         )
         set_tests_properties(${test_target}_valgrind PROPERTIES
