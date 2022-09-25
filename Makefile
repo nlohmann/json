@@ -225,8 +225,8 @@ json.tar.xz:
 
 # We use `-X` to make the resulting ZIP file reproducible, see
 # <https://content.pivotal.io/blog/barriers-to-deterministic-reproducible-zip-files>.
-include.zip:
-	zip -9 --recurse-paths -X include.zip $(SRCS) $(AMALGAMATED_FILE) meson.build LICENSE.MIT
+include.zip: BUILD.bazel
+	zip -9 --recurse-paths -X include.zip $(SRCS) $(AMALGAMATED_FILE) $(AMALGAMATED_FWD_FILE) BUILD.bazel WORKSPACE.bazel meson.build LICENSE.MIT
 
 # Create the files for a release and add signatures and hashes.
 release: include.zip json.tar.xz
