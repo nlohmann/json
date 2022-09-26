@@ -2912,7 +2912,7 @@ TEST_CASE("BJData")
             CHECK(json::from_bjdata(vh, true, false).is_discarded());
 
             std::vector<uint8_t> const vR = {'[', '$', 'i', '#', '[', 'i', 1, '[', ']', ']', 1};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vR), "[json.exception.parse_error.113] parse error at byte 8: syntax error while parsing BJData size: ndarray dimentional vector is not allowed", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vR), "[json.exception.parse_error.113] parse error at byte 8: syntax error while parsing BJData size: ndarray dimensional vector is not allowed", json::parse_error&);
             CHECK(json::from_bjdata(vR, true, false).is_discarded());
 
             std::vector<uint8_t> const vRo = {'[', '$', 'i', '#', '[', 'i', 0, '{', '}', ']', 1};
@@ -2920,7 +2920,7 @@ TEST_CASE("BJData")
             CHECK(json::from_bjdata(vRo, true, false).is_discarded());
 
             std::vector<uint8_t> const vR1 = {'[', '$', 'i', '#', '[', '[', 'i', 1, ']', ']', 1};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vR1), "[json.exception.parse_error.113] parse error at byte 6: syntax error while parsing BJData size: ndarray dimentional vector is not allowed", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vR1), "[json.exception.parse_error.113] parse error at byte 6: syntax error while parsing BJData size: ndarray dimensional vector is not allowed", json::parse_error&);
             CHECK(json::from_bjdata(vR1, true, false).is_discarded());
 
             std::vector<uint8_t> const vR2 = {'[', '$', 'i', '#', '[', '#', '[', 'i', 1, ']', ']', 1};
@@ -2936,7 +2936,7 @@ TEST_CASE("BJData")
             CHECK(json::from_bjdata(vR4, true, false).is_discarded());
 
             std::vector<uint8_t> const vR5 = {'[', '$', 'i', '#', '[', '[', '[', ']', ']', ']'};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vR5), "[json.exception.parse_error.113] parse error at byte 6: syntax error while parsing BJData size: ndarray dimentional vector is not allowed", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vR5), "[json.exception.parse_error.113] parse error at byte 6: syntax error while parsing BJData size: ndarray dimensional vector is not allowed", json::parse_error&);
             CHECK(json::from_bjdata(vR5, true, false).is_discarded());
 
             std::vector<uint8_t> const vR6 = {'[', '$', 'i', '#', '[', '$', 'i', '#', '[', 'i', '2', 'i', 2, ']'};
@@ -2944,7 +2944,7 @@ TEST_CASE("BJData")
             CHECK(json::from_bjdata(vR6, true, false).is_discarded());
 
             std::vector<uint8_t> const vH = {'[', 'H', '[', '#', '[', '$', 'i', '#', '[', 'i', '2', 'i', 2, ']'};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vH), "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing BJData size: ndarray dimentional vector is not allowed", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vH), "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing BJData size: ndarray dimensional vector is not allowed", json::parse_error&);
             CHECK(json::from_bjdata(vH, true, false).is_discarded());
         }
 
