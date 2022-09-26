@@ -180,8 +180,8 @@ endif()
 json_feature(NEWLINE)
 
 json_feature(KEY_VALUE "Diagnostics enabled?" JSON_Diagnostics SWITCH JSON_Diagnostics)
-json_feature(KEY_VALUE "Default integer enum serialization enabled?" JSON_DisableEnumSerialization NEGATE)
-json_feature(KEY_VALUE "Define user-defined string literals globally?" JSON_GlobalUDLs)
+json_feature(KEY_VALUE "Default enum serialization enabled?" JSON_DisableEnumSerialization NEGATE)
+json_feature(KEY_VALUE "User-defined literals defined globally?" JSON_GlobalUDLs)
 json_feature(KEY_VALUE "Implicit conversions enabled?" JSON_ImplicitConversions)
 json_feature(KEY_VALUE "Legacy discarded value comparison enabled?" JSON_LegacyDiscardedValueComparison)
 
