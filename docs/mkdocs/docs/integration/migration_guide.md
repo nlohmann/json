@@ -53,11 +53,10 @@ function to use instead.
 
 #### JSON Pointers
 
-- Comparing JSON Pointers with strings via [`operator==`](../api/json_pointer/operator_eq.md) and
-  [`operator!=`](../api/json_pointer/operator_ne.md) is deprecated since 3.11.2. To compare a
-  [`json_pointer`](../api/json_pointer/index.md) `p` with a string `s`, convert `s` to a `json_pointer` first and use
-  [`json_pointer::operator==`](../api/json_pointer/operator_eq.md) or
-  [`json_pointer::operator!=`](../api/json_pointer/operator_ne.md).
+- Comparing JSON pointers with strings using the string overload of [`operator==`](../api/json_pointer/operator_eq.md)
+  and [`operator!=`](../api/json_pointer/operator_ne.md) is deprecated since 3.11.2. To compare a
+  [`json_pointer`](../api/json_pointer/index.md) `p` with a string `s`, convert `s` to a `json_pointer` first, then
+  compare the two JSON pointers.
     
     === "Deprecated"
   
