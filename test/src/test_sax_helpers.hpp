@@ -4,7 +4,7 @@
 
 using nlohmann::json;
 
-class SaxEventLogger : public nlohmann::sax_interface<nlohmann::json>
+class SaxEventLogger : public nlohmann::msgpack_sax<nlohmann::json>
 {
   public:
 
@@ -35,19 +35,19 @@ class SaxEventLogger : public nlohmann::sax_interface<nlohmann::json>
         return true;
     }
 
-    bool number_float(json::number_float_t /*unused*/, const std::string& s)  override
+    bool number_float(json::number_float_t /*unused*/, const std::string& s) override
     {
         events.push_back("number_float(" + s + ")");
         return true;
     }
 
-    bool string(std::string& val)  override
+    bool string(std::string& val) override
     {
         events.push_back("string(" + val + ")");
         return true;
     }
 
-    bool binary(json::binary_t& val)  override
+    bool binary(json::binary_t& val) override
     {
         std::string binary_contents = "binary(";
         std::string comma_space;
@@ -62,7 +62,26 @@ class SaxEventLogger : public nlohmann::sax_interface<nlohmann::json>
         return true;
     }
 
-    bool start_object(std::size_t elements)  override
+    bool start_array(std::size_t elements) override
+    {
+        if (elements == static_cast<std::size_t>(-1))
+        {
+            events.emplace_back("start_array()");
+        }
+        else
+        {
+            events.push_back("start_array(" + std::to_string(elements) + ")");
+        }
+        return true;
+    }
+
+    bool end_array() override
+    {
+        events.emplace_back("end_array()");
+        return true;
+    }
+
+    bool start_object(std::size_t elements) override
     {
         if (elements == static_cast<std::size_t>(-1))
         {
@@ -75,19 +94,26 @@ class SaxEventLogger : public nlohmann::sax_interface<nlohmann::json>
         return true;
     }
 
-    bool key(std::string& val)  override
+    bool end_object() override
+    {
+        events.emplace_back("end_object()");
+        return true;
+    }
+
+
+    bool key(std::string& val) override
     {
         events.push_back("key(" + val + ")");
         return true;
     }
 
-    virtual bool key_null()  override
+    virtual bool key_null() override
     {
-        events.push_back("key_null");
+        events.push_back("key_null()");
         return true;
     }
 
-    virtual bool key_boolean(bool val)  override
+    virtual bool key_boolean(bool val) override
     {
         events.push_back("key_bool(" + std::to_string(val) + ")");
         return true;
@@ -111,28 +137,56 @@ class SaxEventLogger : public nlohmann::sax_interface<nlohmann::json>
         return true;
     }
 
-    bool end_object() override
+    bool key_binary(binary_t& val) override
     {
-        events.emplace_back("end_object()");
+        std::string binary_contents = "key_binary(";
+        std::string comma_space;
+        for (auto b : val)
+        {
+            binary_contents.append(comma_space);
+            binary_contents.append(std::to_string(static_cast<int>(b)));
+            comma_space = ", ";
+        }
+        binary_contents.append(")");
+        events.push_back(binary_contents);
         return true;
     }
 
-    bool start_array(std::size_t elements) override
+    bool start_key_array(std::size_t elements) override
     {
         if (elements == static_cast<std::size_t>(-1))
         {
-            events.emplace_back("start_array()");
+            events.emplace_back("start_key_array()");
         }
         else
         {
-            events.push_back("start_array(" + std::to_string(elements) + ")");
+            events.push_back("start_key_array(" + std::to_string(elements) + ")");
         }
         return true;
     }
 
-    bool end_array() override
+    bool end_key_array() override
     {
-        events.emplace_back("end_array()");
+        events.emplace_back("end_key_array()");
+        return true;
+    }
+
+    bool start_key_object(std::size_t elements) override
+    {
+        if (elements == static_cast<std::size_t>(-1))
+        {
+            events.emplace_back("start_key_object()");
+        }
+        else
+        {
+            events.push_back("start_key_object(" + std::to_string(elements) + ")");
+        }
+        return true;
+    }
+
+    bool end_key_object() override
+    {
+        events.emplace_back("end_key_object()");
         return true;
     }
 
@@ -146,7 +200,7 @@ class SaxEventLogger : public nlohmann::sax_interface<nlohmann::json>
 };
 
 
-class SaxCountdown : public nlohmann::sax_interface<nlohmann::json>
+class SaxCountdown : public nlohmann::msgpack_sax<nlohmann::json>
 {
 
   protected:
@@ -190,8 +244,23 @@ class SaxCountdown : public nlohmann::sax_interface<nlohmann::json>
     {
         return events_left-- > 0;
     }
+    
+    bool start_array(std::size_t /*elements*/) override
+    {
+        return events_left-- > 0;
+    }
 
+    bool end_array() override
+    {
+        return events_left-- > 0;
+    }
+    
     bool start_object(std::size_t /*elements*/) override
+    {
+        return events_left-- > 0;
+    }
+
+    bool end_object() override
     {
         return events_left-- > 0;
     }
@@ -206,7 +275,7 @@ class SaxCountdown : public nlohmann::sax_interface<nlohmann::json>
         return events_left-- > 0;
     }
 
-    bool key_boolean(bool /*val*/)  override
+    bool key_boolean(bool /*val*/) override
     {
         return events_left-- > 0;
     }
@@ -226,17 +295,27 @@ class SaxCountdown : public nlohmann::sax_interface<nlohmann::json>
         return events_left-- > 0;
     }
 
-    bool end_object() override
+    bool key_binary(binary_t& /*val*/) override
     {
         return events_left-- > 0;
     }
 
-    bool start_array(std::size_t /*elements*/) override
+    bool start_key_array(std::size_t /*elements*/) override
     {
         return events_left-- > 0;
     }
 
-    bool end_array() override
+    bool end_key_array() override
+    {
+        return events_left-- > 0;
+    }
+
+    bool start_key_object(std::size_t /*elements*/) override
+    {
+        return events_left-- > 0;
+    }
+
+    bool end_key_object() override
     {
         return events_left-- > 0;
     }

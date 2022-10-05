@@ -21,7 +21,7 @@ boolean return value informs the parser whether to continue processing the
 input.
 */
 template<typename BasicJsonType>
-class sax_interface
+class json_sax
 {
   public:
     using number_integer_t = typename BasicJsonType::number_integer_t;
@@ -98,36 +98,6 @@ class sax_interface
     virtual bool key(string_t& val) = 0;
 
     /*!
-    @brief an object key of null value was read
-    @return whether parsing should proceed
-    */
-    virtual bool key_null() = 0;
-
-    /*!
-    @brief an object key of type bool was read
-    @return whether parsing should proceed
-    */
-    virtual bool key_boolean(bool val) = 0;
-
-    /*!
-    @brief an object key of type integer number was read
-    @return whether parsing should proceed
-    */
-    virtual bool key_integer(number_integer_t val) = 0;
-
-    /*!
-    @brief an object key of type unsigned was read
-    @return whether parsing should proceed
-    */
-    virtual bool key_unsigned(number_unsigned_t val) = 0;
-
-    /*!
-    @brief an object key of type float was read
-    @return whether parsing should proceed
-    */
-    virtual bool key_float(number_float_t val, const string_t& s) = 0;
-
-    /*!
     @brief the end of an object was read
     @return whether parsing should proceed
     */
@@ -158,16 +128,16 @@ class sax_interface
                              const std::string& last_token,
                              const detail::exception& ex) = 0;
 
-    sax_interface() = default;
-    sax_interface(const sax_interface&) = default;
-    sax_interface(sax_interface&&) noexcept = default;
-    sax_interface& operator=(const sax_interface&) = default;
-    sax_interface& operator=(sax_interface&&) noexcept = default;
-    virtual ~sax_interface() = default;
+    json_sax() = default;
+    json_sax(const json_sax&) = default;
+    json_sax(json_sax&&) noexcept = default;
+    json_sax& operator=(const json_sax&) = default;
+    json_sax& operator=(json_sax&&) noexcept = default;
+    virtual ~json_sax() = default;
 };
 
 template<typename BasicJsonType>
-class json_sax : public sax_interface<BasicJsonType>
+class msgpack_sax : public json_sax<BasicJsonType>
 {
   public:
 
@@ -177,31 +147,75 @@ class json_sax : public sax_interface<BasicJsonType>
     using string_t = typename BasicJsonType::string_t;
     using binary_t = typename BasicJsonType::binary_t;
 
-    bool key_null() override
-    {
-        return false;
-    }
+    /*!
+    @brief an object key of null value was read
+    @return whether parsing should proceed
+    */
+    virtual bool key_null() = 0;
 
-    bool key_boolean(bool val)  override
-    {
-        return false;
-    }
+    /*!
+    @brief an object key of type bool was read
+    @return whether parsing should proceed
+    */
+    virtual bool key_boolean(bool val) = 0;
 
-    bool key_integer(number_integer_t val) override
-    {
-        return false;
-    }
+    /*!
+    @brief an object key of type integer number was read
+    @return whether parsing should proceed
+    */
+    virtual bool key_integer(number_integer_t val) = 0;
 
-    bool key_unsigned(number_unsigned_t val) override
-    {
-        return false;
-    }
+    /*!
+    @brief an object key of type unsigned was read
+    @return whether parsing should proceed
+    */
+    virtual bool key_unsigned(number_unsigned_t val) = 0;
 
-    bool key_float(number_float_t val, const string_t& s) override
-    {
-        return false;
-    }
+    /*!
+    @brief an object key of type float was read
+    @return whether parsing should proceed
+    */
+    virtual bool key_float(number_float_t val, const string_t& s) = 0;
+
+    /*!
+    @brief an object key of type binary was read
+    @param[in] val  binary value
+    @return whether parsing should proceed
+    @note It is safe to move the passed binary value.
+    */
+    virtual bool key_binary(binary_t& val) = 0;
+
+    /*!
+    @brief the beginning of a key of type array was read
+    @param[in] elements  number of array elements or -1 if unknown
+    @return whether parsing should proceed
+    @note binary formats may report the number of elements
+    */
+    virtual bool start_key_array(std::size_t elements) = 0;
+
+    /*!
+    @brief the end of a key of type array was read
+    @return whether parsing should proceed
+    */
+    virtual bool end_key_array() = 0;
+
+    /*!
+    @brief the beginning of a key of type object was read
+    @param[in] elements  number of object elements or -1 if unknown
+    @return whether parsing should proceed
+    @note binary formats may report the number of elements
+    */
+    virtual bool start_key_object(std::size_t elements) = 0;
+
+    /*!
+    @brief the end of a key of type object was read
+    @return whether parsing should proceed
+    */
+    virtual bool end_key_object() = 0;
 };
+
+
+
 
 
 namespace detail
@@ -711,7 +725,7 @@ class json_sax_dom_callback_parser : public json_sax_exception_handler<BasicJson
 };
 
 template<typename BasicJsonType>
-class json_sax_acceptor : public sax_interface<BasicJsonType>
+class json_sax_acceptor : public msgpack_sax<BasicJsonType>
 {
   public:
     using number_integer_t = typename BasicJsonType::number_integer_t;
@@ -755,7 +769,22 @@ class json_sax_acceptor : public sax_interface<BasicJsonType>
         return true;
     }
 
+    bool start_array(std::size_t /*unused*/ = static_cast<std::size_t>(-1)) override
+    {
+        return true;
+    }
+
+    bool end_array() override
+    {
+        return true;
+    }
+
     bool start_object(std::size_t /*unused*/ = static_cast<std::size_t>(-1)) override
+    {
+        return true;
+    }
+
+    bool end_object() override
     {
         return true;
     }
@@ -790,17 +819,27 @@ class json_sax_acceptor : public sax_interface<BasicJsonType>
         return true;
     }
 
-    bool end_object() override
+    bool key_binary(binary_t& /*val*/) override
     {
         return true;
     }
 
-    bool start_array(std::size_t /*unused*/ = static_cast<std::size_t>(-1)) override
+    bool start_key_array(std::size_t /*elements*/) override
     {
         return true;
     }
 
-    bool end_array() override
+    bool end_key_array() override
+    {
+        return true;
+    }
+
+    bool start_key_object(std::size_t /*elements*/) override
+    {
+        return true;
+    }
+
+    bool end_key_object() override
     {
         return true;
     }

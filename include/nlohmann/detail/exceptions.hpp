@@ -228,6 +228,23 @@ class out_of_range : public exception
 
 /// @brief exception indicating other library errors
 /// @sa https://json.nlohmann.me/api/basic_json/other_error/
+class not_implemented : public exception
+{
+  public:
+    template<typename BasicJsonContext, enable_if_t<is_basic_json_context<BasicJsonContext>::value, int> = 0>
+    static not_implemented create(int id_, const std::string& what_arg, BasicJsonContext context)
+    {
+        std::string w = concat(exception::name("not_implemented", id_), exception::diagnostics(context), what_arg);
+        return {id_, w.c_str()};
+    }
+
+  private:
+    JSON_HEDLEY_NON_NULL(3)
+    not_implemented(int id_, const char* what_arg) : exception(id_, what_arg) {}
+};
+
+/// @brief exception indicating other library errors
+/// @sa https://json.nlohmann.me/api/basic_json/other_error/
 class other_error : public exception
 {
   public:

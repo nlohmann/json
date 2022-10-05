@@ -1174,7 +1174,7 @@ class binary_reader
             }
         }
 
-        return sax->end_object();
+        return true;
     }
 
     /////////////
@@ -1340,7 +1340,11 @@ class binary_reader
             case 0x8D:
             case 0x8E:
             case 0x8F:
-                return get_msgpack_object(static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x0Fu));
+            {
+                const auto len = static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x0Fu);
+                return sax->start_object(len) && get_msgpack_object(len) && sax->end_object();
+
+            }
 
             // fixarray
             case 0x90:
@@ -1502,13 +1506,13 @@ class binary_reader
             case 0xDE: // map 16
             {
                 std::uint16_t len{};
-                return get_number(input_format_t::msgpack, len) && get_msgpack_object(static_cast<std::size_t>(len));
+                return get_number(input_format_t::msgpack, len) && sax->start_object(len) && get_msgpack_object(static_cast<std::size_t>(len)) && sax->end_object();
             }
 
             case 0xDF: // map 32
             {
                 std::uint32_t len{};
-                return get_number(input_format_t::msgpack, len) && get_msgpack_object(static_cast<std::size_t>(len));
+                return get_number(input_format_t::msgpack, len) && sax->start_object(len) && get_msgpack_object(static_cast<std::size_t>(len)) && sax->end_object();
             }
 
             // negative fixint
@@ -1781,13 +1785,44 @@ class binary_reader
     @param[in] len  the length of the object
     @return whether object creation completed
     */
-    bool get_msgpack_object(const std::size_t len)
+    bool get_msgpack_object(const std::size_t len){
+        return get_msgpack_object_impl(len, detail::is_sax_msgpack<SAX, BasicJsonType>());
+    }
+
+    /*!
+    @param[in] len  the length of the object
+    @param[in] full_msgpack_support is full msgpack protocoll suppored by sax
+    @return whether object creation completed
+    */
+    bool get_msgpack_object_impl(const std::size_t len, std::false_type)
     {
-        if (JSON_HEDLEY_UNLIKELY(!sax->start_object(len)))
+
+        string_t key;
+        for (std::size_t i = 0; i < len; ++i)
         {
-            return false;
+            get();
+            if (JSON_HEDLEY_UNLIKELY(!get_msgpack_string(key) || !sax->key(key)))
+            {
+                return false;
+            }
+
+            if (JSON_HEDLEY_UNLIKELY(!parse_msgpack_internal()))
+            {
+                return false;
+            }
+            key.clear();
         }
 
+        return true;
+    }
+
+    /*!
+    @param[in] len  the length of the object
+    @param[in] full_msgpack_support is full msgpack protocoll suppored by sax
+    @return whether object creation completed
+    */
+    bool get_msgpack_object_impl(const std::size_t len, std::true_type)
+    {
         for (std::size_t i = 0; i < len; ++i)
         {
             switch (get())
@@ -1934,6 +1969,63 @@ class binary_reader
                     }
                     break;
                 }
+
+                // fixmap
+                case 0x80:
+                case 0x81:
+                case 0x82:
+                case 0x83:
+                case 0x84:
+                case 0x85:
+                case 0x86:
+                case 0x87:
+                case 0x88:
+                case 0x89:
+                case 0x8A:
+                case 0x8B:
+                case 0x8C:
+                case 0x8D:
+                case 0x8E:
+                case 0x8F:
+                {
+                    const auto len = static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x0Fu);
+
+                    if ( JSON_HEDLEY_UNLIKELY(
+                            ! (
+                                sax->start_key_object(len)
+                                    &&
+                                get_msgpack_object()
+                                    &&
+                                sax->end_key_object()
+                            )
+                        )
+                    )
+                    {
+                        return false;
+                    }
+                    break;
+                }
+                    
+
+                // // fixarray
+                // case 0x90:
+                // case 0x91:
+                // case 0x92:
+                // case 0x93:
+                // case 0x94:
+                // case 0x95:
+                // case 0x96:
+                // case 0x97:
+                // case 0x98:
+                // case 0x99:
+                // case 0x9A:
+                // case 0x9B:
+                // case 0x9C:
+                // case 0x9D:
+                // case 0x9E:
+                // case 0x9F:
+                // return get_msgpack_array(static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x0Fu));
+
 
                 // fixstr
                 case 0xA0:
@@ -2107,6 +2199,50 @@ class binary_reader
                     break;
                 }
 
+                case 0xDE: // map 16
+                {
+                    std::uint16_t len{};
+
+                    if ( JSON_HEDLEY_UNLIKELY( 
+                            ! (
+                                get_number(input_format_t::msgpack, len)
+                                    &&
+                                sax->start_key_object(len)
+                                    &&
+                                get_msgpack_object()
+                                    &&
+                                sax->end_key_object()
+                            )
+                        )
+                    )
+                    {
+                        return false;
+                    }
+                    break;
+                }
+
+                case 0xDF: // map 32
+                {
+                    std::uint32_t len{};
+
+                    if ( JSON_HEDLEY_UNLIKELY(
+                            ! (
+                                get_number(input_format_t::msgpack, len)
+                                    &&
+                                sax->start_key_object(len)
+                                    &&
+                                get_msgpack_object()
+                                    &&
+                                sax->end_key_object()
+                            )
+                        )
+                    )
+                    {
+                        return false;
+                    }
+                    break;
+                }
+  
                 // negative fixint
                 case 0xE0:
                 case 0xE1:
@@ -2163,7 +2299,7 @@ class binary_reader
 
         }
 
-        return sax->end_object();
+        return true;
     }
 
     ////////////
