@@ -52,34 +52,61 @@ using number_float_function_t = decltype(std::declval<T&>().number_float(
 
 template<typename T, typename Float, typename String>
 using key_number_float_function_t = decltype(std::declval<T&>().key_number_float(
-                                    std::declval<Float>(), std::declval<const String&>()));
+                                        std::declval<Float>(), std::declval<const String&>()));
 
 
 template<typename T, typename String>
 using string_function_t =
     decltype(std::declval<T&>().string(std::declval<String&>()));
 
-template<typename T, typename Binary>
-using binary_function_t =
-    decltype(std::declval<T&>().binary(std::declval<Binary&>()));
-
-template<typename T>
-using start_object_function_t =
-    decltype(std::declval<T&>().start_object(std::declval<std::size_t>()));
-
 template<typename T, typename String>
 using key_function_t =
     decltype(std::declval<T&>().key(std::declval<String&>()));
 
-template<typename T>
-using end_object_function_t = decltype(std::declval<T&>().end_object());
+
+template<typename T, typename Binary>
+using binary_function_t =
+    decltype(std::declval<T&>().binary(std::declval<Binary&>()));
+
+template<typename T, typename Binary>
+using key_binary_function_t =
+    decltype(std::declval<T&>().key_binary(std::declval<Binary&>()));
+
 
 template<typename T>
 using start_array_function_t =
     decltype(std::declval<T&>().start_array(std::declval<std::size_t>()));
 
 template<typename T>
+using start_key_array_function_t =
+    decltype(std::declval<T&>().start_key_array(std::declval<std::size_t>()));
+
+
+template<typename T>
 using end_array_function_t = decltype(std::declval<T&>().end_array());
+
+template<typename T>
+using end_key_array_function_t = decltype(std::declval<T&>().end_key_array());
+
+
+template<typename T>
+using start_object_function_t =
+    decltype(std::declval<T&>().start_object(std::declval<std::size_t>()));
+
+template<typename T>
+using start_key_object_function_t =
+    decltype(std::declval<T&>().start_key_object(std::declval<std::size_t>()));
+
+
+template<typename T>
+using end_object_function_t = decltype(std::declval<T&>().end_object());
+
+template<typename T>
+using end_key_object_function_t = decltype(std::declval<T&>().end_key_object());
+
+
+
+
 
 template<typename T, typename Exception>
 using parse_error_function_t = decltype(std::declval<T&>().parse_error(
@@ -87,21 +114,21 @@ using parse_error_function_t = decltype(std::declval<T&>().parse_error(
         std::declval<const Exception&>()));
 
 template<typename SAX, typename BasicJsonType, typename IsTrue = conjunction<
-        is_detected_exact<bool, null_function_t, SAX>,
-        is_detected_exact<bool, boolean_function_t, SAX>,
-        is_detected_exact<bool, number_integer_function_t, SAX, typename BasicJsonType::number_integer_t>,
-        is_detected_exact<bool, number_unsigned_function_t, SAX, typename BasicJsonType::number_unsigned_t>,
-        is_detected_exact<bool, number_float_function_t, SAX, typename BasicJsonType::number_float_t, typename BasicJsonType::string_t>,
-        is_detected_exact<bool, string_function_t, SAX, typename BasicJsonType::string_t>,
-        is_detected_exact<bool, binary_function_t, SAX, typename BasicJsonType::binary_t>,
-        is_detected_exact<bool, start_object_function_t, SAX>,
-        is_detected_exact<bool, key_function_t, SAX, typename BasicJsonType::string_t>,
-        is_detected_exact<bool, end_object_function_t, SAX>,
-        is_detected_exact<bool, start_array_function_t, SAX>,
-        is_detected_exact<bool, end_array_function_t, SAX>,
-        is_detected_exact<bool, parse_error_function_t, SAX, typename BasicJsonType::exception>
-    >
->
+             is_detected_exact<bool, null_function_t, SAX>,
+             is_detected_exact<bool, boolean_function_t, SAX>,
+             is_detected_exact<bool, number_integer_function_t, SAX, typename BasicJsonType::number_integer_t>,
+             is_detected_exact<bool, number_unsigned_function_t, SAX, typename BasicJsonType::number_unsigned_t>,
+             is_detected_exact<bool, number_float_function_t, SAX, typename BasicJsonType::number_float_t, typename BasicJsonType::string_t>,
+             is_detected_exact<bool, string_function_t, SAX, typename BasicJsonType::string_t>,
+             is_detected_exact<bool, binary_function_t, SAX, typename BasicJsonType::binary_t>,
+             is_detected_exact<bool, key_function_t, SAX, typename BasicJsonType::string_t>,
+             is_detected_exact<bool, start_array_function_t, SAX>,
+             is_detected_exact<bool, end_array_function_t, SAX>,
+             is_detected_exact<bool, start_object_function_t, SAX>,
+             is_detected_exact<bool, end_object_function_t, SAX>,
+             is_detected_exact<bool, parse_error_function_t, SAX, typename BasicJsonType::exception>
+             >
+         >
 struct is_sax : IsTrue
 {
   private:
@@ -111,14 +138,19 @@ struct is_sax : IsTrue
 
 
 template<typename SAX, typename BasicJsonType, typename IsTrue = conjunction<
-            is_sax<SAX, BasicJsonType>, 
-            is_detected_exact<bool, key_null_function_t, SAX>,
-            is_detected_exact<bool, key_boolean_function_t, SAX>,
-            is_detected_exact<bool, key_number_integer_function_t, SAX, typename BasicJsonType::number_integer_t>,
-            is_detected_exact<bool, key_number_unsigned_function_t, SAX, typename BasicJsonType::number_unsigned_t>,
-            is_detected_exact<bool, key_number_float_function_t, SAX, typename BasicJsonType::number_float_t, typename BasicJsonType::string_t>
-        >
->
+             is_sax<SAX, BasicJsonType>,
+             is_detected_exact<bool, key_null_function_t, SAX>,
+             is_detected_exact<bool, key_boolean_function_t, SAX>,
+             is_detected_exact<bool, key_number_integer_function_t, SAX, typename BasicJsonType::number_integer_t>,
+             is_detected_exact<bool, key_number_unsigned_function_t, SAX, typename BasicJsonType::number_unsigned_t>,
+             is_detected_exact<bool, key_number_float_function_t, SAX, typename BasicJsonType::number_float_t, typename BasicJsonType::string_t>,
+             is_detected_exact<bool, key_binary_function_t, SAX, typename BasicJsonType::binary_t>,
+             is_detected_exact<bool, start_array_function_t, SAX>,
+             is_detected_exact<bool, end_array_function_t, SAX>,
+             is_detected_exact<bool, start_key_object_function_t, SAX>,
+             is_detected_exact<bool, end_key_object_function_t, SAX>
+             >
+         >
 struct is_sax_msgpack : IsTrue
 {
   private:

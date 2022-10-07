@@ -244,7 +244,7 @@ class SaxCountdown : public nlohmann::msgpack_sax<nlohmann::json>
     {
         return events_left-- > 0;
     }
-    
+
     bool start_array(std::size_t /*elements*/) override
     {
         return events_left-- > 0;
@@ -254,7 +254,7 @@ class SaxCountdown : public nlohmann::msgpack_sax<nlohmann::json>
     {
         return events_left-- > 0;
     }
-    
+
     bool start_object(std::size_t /*elements*/) override
     {
         return events_left-- > 0;

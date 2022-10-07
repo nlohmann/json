@@ -22,6 +22,7 @@ benchmarks/files/numbers/*.json
 
 test/test-*
 /.vs
+/.vscode
 
 doc/html
 doc/mkdocs/venv/
