@@ -292,9 +292,9 @@ inline bool operator<(const value_t lhs, const value_t rhs) noexcept
     using type = Op<Args...>;
 };
 
-    const auto l_index = static_cast<std::size_t>(lhs);
-    const auto r_index = static_cast<std::size_t>(rhs);
-    return l_index < order.size() && r_index < order.size() && order[l_index] < order[r_index];
+const auto l_index = static_cast<std::size_t>(lhs);
+const auto r_index = static_cast<std::size_t>(rhs);
+return l_index < order.size() && r_index < order.size() && order[l_index] < order[r_index];
 }
 }  // namespace detail
 }  // namespace nlohmann
@@ -23463,182 +23463,182 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 #endif
 #else
-    /// @brief comparison: equal
-    /// @sa https://json.nlohmann.me/api/basic_json/operator_eq/
-    friend bool operator==(const_reference lhs, const_reference rhs) noexcept
-    {
+/// @brief comparison: equal
+/// @sa https://json.nlohmann.me/api/basic_json/operator_eq/
+friend bool operator==(const_reference lhs, const_reference rhs) noexcept
+{
 #ifdef __GNUC__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
 #endif
-        JSON_IMPLEMENT_OPERATOR( ==, true, false, false)
+    JSON_IMPLEMENT_OPERATOR( ==, true, false, false)
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
 #endif
-    }
+}
 
-    /// @brief comparison: equal
-    /// @sa https://json.nlohmann.me/api/basic_json/operator_eq/
-    template<typename ScalarType, typename std::enable_if<
-                 std::is_scalar<ScalarType>::value, int>::type = 0>
-    friend bool operator==(const_reference lhs, ScalarType rhs) noexcept
-    {
-        return lhs == basic_json(rhs);
-    }
+/// @brief comparison: equal
+/// @sa https://json.nlohmann.me/api/basic_json/operator_eq/
+template<typename ScalarType, typename std::enable_if<
+             std::is_scalar<ScalarType>::value, int>::type = 0>
+friend bool operator==(const_reference lhs, ScalarType rhs) noexcept
+{
+    return lhs == basic_json(rhs);
+}
 
-    /// @brief comparison: equal
-    /// @sa https://json.nlohmann.me/api/basic_json/operator_eq/
-    template<typename ScalarType, typename std::enable_if<
-                 std::is_scalar<ScalarType>::value, int>::type = 0>
-    friend bool operator==(ScalarType lhs, const_reference rhs) noexcept
-    {
-        return basic_json(lhs) == rhs;
-    }
+/// @brief comparison: equal
+/// @sa https://json.nlohmann.me/api/basic_json/operator_eq/
+template<typename ScalarType, typename std::enable_if<
+             std::is_scalar<ScalarType>::value, int>::type = 0>
+friend bool operator==(ScalarType lhs, const_reference rhs) noexcept
+{
+    return basic_json(lhs) == rhs;
+}
 
-    /// @brief comparison: not equal
-    /// @sa https://json.nlohmann.me/api/basic_json/operator_ne/
-    friend bool operator!=(const_reference lhs, const_reference rhs) noexcept
+/// @brief comparison: not equal
+/// @sa https://json.nlohmann.me/api/basic_json/operator_ne/
+friend bool operator!=(const_reference lhs, const_reference rhs) noexcept
+{
+    if (compares_unordered(lhs, rhs, true))
     {
-        if (compares_unordered(lhs, rhs, true))
-        {
-            return false;
-        }
-        return !(lhs == rhs);
+        return false;
     }
+    return !(lhs == rhs);
+}
 
-    /// @brief comparison: not equal
-    /// @sa https://json.nlohmann.me/api/basic_json/operator_ne/
-    template<typename ScalarType, typename std::enable_if<
-                 std::is_scalar<ScalarType>::value, int>::type = 0>
-    friend bool operator!=(const_reference lhs, ScalarType rhs) noexcept
-    {
-        return lhs != basic_json(rhs);
-    }
+/// @brief comparison: not equal
+/// @sa https://json.nlohmann.me/api/basic_json/operator_ne/
+template<typename ScalarType, typename std::enable_if<
+             std::is_scalar<ScalarType>::value, int>::type = 0>
+friend bool operator!=(const_reference lhs, ScalarType rhs) noexcept
+{
+    return lhs != basic_json(rhs);
+}
 
-    /// @brief comparison: not equal
-    /// @sa https://json.nlohmann.me/api/basic_json/operator_ne/
-    template<typename ScalarType, typename std::enable_if<
-                 std::is_scalar<ScalarType>::value, int>::type = 0>
-    friend bool operator!=(ScalarType lhs, const_reference rhs) noexcept
-    {
-        return basic_json(lhs) != rhs;
-    }
+/// @brief comparison: not equal
+/// @sa https://json.nlohmann.me/api/basic_json/operator_ne/
+template<typename ScalarType, typename std::enable_if<
+             std::is_scalar<ScalarType>::value, int>::type = 0>
+friend bool operator!=(ScalarType lhs, const_reference rhs) noexcept
+{
+    return basic_json(lhs) != rhs;
+}
 
-    /// @brief comparison: less than
-    /// @sa https://json.nlohmann.me/api/basic_json/operator_lt/
-    friend bool operator<(const_reference lhs, const_reference rhs) noexcept
-    {
-        // default_result is used if we cannot compare values. In that case,
-        // we compare types. Note we have to call the operator explicitly,
-        // because MSVC has problems otherwise.
-        JSON_IMPLEMENT_OPERATOR( <, false, false, operator<(lhs_type, rhs_type))
-    }
+/// @brief comparison: less than
+/// @sa https://json.nlohmann.me/api/basic_json/operator_lt/
+friend bool operator<(const_reference lhs, const_reference rhs) noexcept
+{
+    // default_result is used if we cannot compare values. In that case,
+    // we compare types. Note we have to call the operator explicitly,
+    // because MSVC has problems otherwise.
+    JSON_IMPLEMENT_OPERATOR( <, false, false, operator<(lhs_type, rhs_type))
+}
 
-    /// @brief comparison: less than
-    /// @sa https://json.nlohmann.me/api/basic_json/operator_lt/
-    template<typename ScalarType, typename std::enable_if<
-                 std::is_scalar<ScalarType>::value, int>::type = 0>
-    friend bool operator<(const_reference lhs, ScalarType rhs) noexcept
-    {
-        return lhs < basic_json(rhs);
-    }
+/// @brief comparison: less than
+/// @sa https://json.nlohmann.me/api/basic_json/operator_lt/
+template<typename ScalarType, typename std::enable_if<
+             std::is_scalar<ScalarType>::value, int>::type = 0>
+friend bool operator<(const_reference lhs, ScalarType rhs) noexcept
+{
+    return lhs < basic_json(rhs);
+}
 
-    /// @brief comparison: less than
-    /// @sa https://json.nlohmann.me/api/basic_json/operator_lt/
-    template<typename ScalarType, typename std::enable_if<
-                 std::is_scalar<ScalarType>::value, int>::type = 0>
-    friend bool operator<(ScalarType lhs, const_reference rhs) noexcept
-    {
-        return basic_json(lhs) < rhs;
-    }
+/// @brief comparison: less than
+/// @sa https://json.nlohmann.me/api/basic_json/operator_lt/
+template<typename ScalarType, typename std::enable_if<
+             std::is_scalar<ScalarType>::value, int>::type = 0>
+friend bool operator<(ScalarType lhs, const_reference rhs) noexcept
+{
+    return basic_json(lhs) < rhs;
+}
 
-    /// @brief comparison: less than or equal
-    /// @sa https://json.nlohmann.me/api/basic_json/operator_le/
-    friend bool operator<=(const_reference lhs, const_reference rhs) noexcept
+/// @brief comparison: less than or equal
+/// @sa https://json.nlohmann.me/api/basic_json/operator_le/
+friend bool operator<=(const_reference lhs, const_reference rhs) noexcept
+{
+    if (compares_unordered(lhs, rhs, true))
     {
-        if (compares_unordered(lhs, rhs, true))
-        {
-            return false;
-        }
-        return !(rhs < lhs);
+        return false;
     }
+    return !(rhs < lhs);
+}
 
-    /// @brief comparison: less than or equal
-    /// @sa https://json.nlohmann.me/api/basic_json/operator_le/
-    template<typename ScalarType, typename std::enable_if<
-                 std::is_scalar<ScalarType>::value, int>::type = 0>
-    friend bool operator<=(const_reference lhs, ScalarType rhs) noexcept
-    {
-        return lhs <= basic_json(rhs);
-    }
+/// @brief comparison: less than or equal
+/// @sa https://json.nlohmann.me/api/basic_json/operator_le/
+template<typename ScalarType, typename std::enable_if<
+             std::is_scalar<ScalarType>::value, int>::type = 0>
+friend bool operator<=(const_reference lhs, ScalarType rhs) noexcept
+{
+    return lhs <= basic_json(rhs);
+}
 
-    /// @brief comparison: less than or equal
-    /// @sa https://json.nlohmann.me/api/basic_json/operator_le/
-    template<typename ScalarType, typename std::enable_if<
-                 std::is_scalar<ScalarType>::value, int>::type = 0>
-    friend bool operator<=(ScalarType lhs, const_reference rhs) noexcept
-    {
-        return basic_json(lhs) <= rhs;
-    }
+/// @brief comparison: less than or equal
+/// @sa https://json.nlohmann.me/api/basic_json/operator_le/
+template<typename ScalarType, typename std::enable_if<
+             std::is_scalar<ScalarType>::value, int>::type = 0>
+friend bool operator<=(ScalarType lhs, const_reference rhs) noexcept
+{
+    return basic_json(lhs) <= rhs;
+}
 
-    /// @brief comparison: greater than
-    /// @sa https://json.nlohmann.me/api/basic_json/operator_gt/
-    friend bool operator>(const_reference lhs, const_reference rhs) noexcept
+/// @brief comparison: greater than
+/// @sa https://json.nlohmann.me/api/basic_json/operator_gt/
+friend bool operator>(const_reference lhs, const_reference rhs) noexcept
+{
+    // double inverse
+    if (compares_unordered(lhs, rhs))
     {
-        // double inverse
-        if (compares_unordered(lhs, rhs))
-        {
-            return false;
-        }
-        return !(lhs <= rhs);
+        return false;
     }
+    return !(lhs <= rhs);
+}
 
-    /// @brief comparison: greater than
-    /// @sa https://json.nlohmann.me/api/basic_json/operator_gt/
-    template<typename ScalarType, typename std::enable_if<
-                 std::is_scalar<ScalarType>::value, int>::type = 0>
-    friend bool operator>(const_reference lhs, ScalarType rhs) noexcept
-    {
-        return lhs > basic_json(rhs);
-    }
+/// @brief comparison: greater than
+/// @sa https://json.nlohmann.me/api/basic_json/operator_gt/
+template<typename ScalarType, typename std::enable_if<
+             std::is_scalar<ScalarType>::value, int>::type = 0>
+friend bool operator>(const_reference lhs, ScalarType rhs) noexcept
+{
+    return lhs > basic_json(rhs);
+}
 
-    /// @brief comparison: greater than
-    /// @sa https://json.nlohmann.me/api/basic_json/operator_gt/
-    template<typename ScalarType, typename std::enable_if<
-                 std::is_scalar<ScalarType>::value, int>::type = 0>
-    friend bool operator>(ScalarType lhs, const_reference rhs) noexcept
-    {
-        return basic_json(lhs) > rhs;
-    }
+/// @brief comparison: greater than
+/// @sa https://json.nlohmann.me/api/basic_json/operator_gt/
+template<typename ScalarType, typename std::enable_if<
+             std::is_scalar<ScalarType>::value, int>::type = 0>
+friend bool operator>(ScalarType lhs, const_reference rhs) noexcept
+{
+    return basic_json(lhs) > rhs;
+}
 
-    /// @brief comparison: greater than or equal
-    /// @sa https://json.nlohmann.me/api/basic_json/operator_ge/
-    friend bool operator>=(const_reference lhs, const_reference rhs) noexcept
+/// @brief comparison: greater than or equal
+/// @sa https://json.nlohmann.me/api/basic_json/operator_ge/
+friend bool operator>=(const_reference lhs, const_reference rhs) noexcept
+{
+    if (compares_unordered(lhs, rhs, true))
     {
-        if (compares_unordered(lhs, rhs, true))
-        {
-            return false;
-        }
-        return !(lhs < rhs);
+        return false;
     }
+    return !(lhs < rhs);
+}
 
-    /// @brief comparison: greater than or equal
-    /// @sa https://json.nlohmann.me/api/basic_json/operator_ge/
-    template<typename ScalarType, typename std::enable_if<
-                 std::is_scalar<ScalarType>::value, int>::type = 0>
-    friend bool operator>=(const_reference lhs, ScalarType rhs) noexcept
-    {
-        return lhs >= basic_json(rhs);
-    }
+/// @brief comparison: greater than or equal
+/// @sa https://json.nlohmann.me/api/basic_json/operator_ge/
+template<typename ScalarType, typename std::enable_if<
+             std::is_scalar<ScalarType>::value, int>::type = 0>
+friend bool operator>=(const_reference lhs, ScalarType rhs) noexcept
+{
+    return lhs >= basic_json(rhs);
+}
 
-    /// @brief comparison: greater than or equal
-    /// @sa https://json.nlohmann.me/api/basic_json/operator_ge/
-    template<typename ScalarType, typename std::enable_if<
-                 std::is_scalar<ScalarType>::value, int>::type = 0>
-    friend bool operator>=(ScalarType lhs, const_reference rhs) noexcept
-    {
-        return basic_json(lhs) >= rhs;
-    }
+/// @brief comparison: greater than or equal
+/// @sa https://json.nlohmann.me/api/basic_json/operator_ge/
+template<typename ScalarType, typename std::enable_if<
+             std::is_scalar<ScalarType>::value, int>::type = 0>
+friend bool operator>=(ScalarType lhs, const_reference rhs) noexcept
+{
+    return basic_json(lhs) >= rhs;
+}
 #endif
 
 #undef JSON_IMPLEMENT_OPERATOR
