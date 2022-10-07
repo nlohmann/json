@@ -50,9 +50,10 @@ endforeach()
 #     [COMPILE_FEATURES <args>...]
 #     [COMPILE_OPTIONS <args>...]
 #     [LINK_LIBRARIES <args>...]
-#     [LINK_OPTIONS <args>...])
+#     [LINK_OPTIONS <args>...]
+#     [TEST_PROPERTIES <args>...])
 #
-# Supply test- and standard-specific build settings.
+# Supply test- and standard-specific build settings and/or test properties.
 # Specify multiple tests using a list e.g., "test-foo;test-bar".
 #
 # Must be called BEFORE the test is created.
@@ -60,7 +61,7 @@ endforeach()
 
 function(json_test_set_test_options tests)
     cmake_parse_arguments(args "" ""
-        "CXX_STANDARDS;COMPILE_DEFINITIONS;COMPILE_FEATURES;COMPILE_OPTIONS;LINK_LIBRARIES;LINK_OPTIONS"
+        "CXX_STANDARDS;COMPILE_DEFINITIONS;COMPILE_FEATURES;COMPILE_OPTIONS;LINK_LIBRARIES;LINK_OPTIONS;TEST_PROPERTIES"
         ${ARGN})
 
     if(NOT args_CXX_STANDARDS)
@@ -91,8 +92,21 @@ function(json_test_set_test_options tests)
             target_compile_options(${test_interface} INTERFACE ${args_COMPILE_OPTIONS})
             target_link_libraries (${test_interface} INTERFACE ${args_LINK_LIBRARIES})
             target_link_options(${test_interface} INTERFACE ${args_LINK_OPTIONS})
+            #set_target_properties(${test_interface} PROPERTIES JSON_TEST_PROPERTIES "${args_TEST_PROPERTIES}")
+            set_property(DIRECTORY PROPERTY
+                ${test_interface}_TEST_PROPERTIES "${args_TEST_PROPERTIES}"
+            )
         endforeach()
     endforeach()
+endfunction()
+
+# for internal use by _json_test_add_test()
+function(_json_test_apply_test_properties test_target properties_target)
+    #get_target_property(test_properties ${properties_target} JSON_TEST_PROPERTIES)
+    get_property(test_properties DIRECTORY PROPERTY ${properties_target}_TEST_PROPERTIES)
+    if(test_properties)
+        set_tests_properties(${test_target} PROPERTIES ${test_properties})
+    endif()
 endfunction()
 
 # for internal use by json_test_add_test_for()
@@ -142,6 +156,23 @@ function(_json_test_add_test test_name file main cxx_standard)
     endif()
     set_tests_properties(${test_target} PROPERTIES LABELS "all" FIXTURES_REQUIRED TEST_DATA)
 
+    # apply standard-specific test properties
+    if(TARGET _json_test_interface__cpp_${cxx_standard})
+        _json_test_apply_test_properties(${test_target} _json_test_interface__cpp_${cxx_standard})
+    endif()
+
+    # apply test-specific test properties
+    if(TARGET _json_test_interface_${test_name})
+        _json_test_apply_test_properties(${test_target} _json_test_interface_${test_name})
+    endif()
+
+    # apply test- and standard-specific test properties
+    if(TARGET _json_test_interface_${test_name}_cpp_${cxx_standard})
+        _json_test_apply_test_properties(${test_target}
+            _json_test_interface_${test_name}_cpp_${cxx_standard}
+        )
+    endif()
+
     if(JSON_Valgrind)
         add_test(NAME ${test_target}_valgrind
             COMMAND ${memcheck_command} $<TARGET_FILE:${test_target}> ${DOCTEST_TEST_FILTER}
@@ -156,6 +187,7 @@ endfunction()
 #############################################################################
 # json_test_add_test_for(
 #     <file>
+#     [NAME <name>]
 #     MAIN <main>
 #     [CXX_STANDARDS <version_number>...] [FORCE])
 #
@@ -165,6 +197,7 @@ endfunction()
 #
 # if C++ standard <version_number> is supported by the compiler and the
 # source file contains JSON_HAS_CPP_<version_number>.
+# Use NAME <name> to override the filename-derived test name.
 # Use FORCE to create the test regardless of the file containing
 # JSON_HAS_CPP_<version_number>.
 # Test targets are linked against <main>.
@@ -172,13 +205,20 @@ endfunction()
 #############################################################################
 
 function(json_test_add_test_for file)
-    cmake_parse_arguments(args "FORCE" "MAIN" "CXX_STANDARDS" ${ARGN})
-
-    get_filename_component(file_basename ${file} NAME_WE)
-    string(REGEX REPLACE "unit-([^$]+)" "test-\\1" test_name ${file_basename})
+    cmake_parse_arguments(args "FORCE" "MAIN;NAME" "CXX_STANDARDS" ${ARGN})
 
     if("${args_MAIN}" STREQUAL "")
         message(FATAL_ERROR "Required argument MAIN <main> missing.")
+    endif()
+
+    if("${args_NAME}" STREQUAL "")
+        get_filename_component(file_basename ${file} NAME_WE)
+        string(REGEX REPLACE "unit-([^$]+)" "test-\\1" test_name ${file_basename})
+    else()
+        set(test_name ${args_NAME})
+        if(NOT test_name MATCHES "test-[^$]+")
+            message(FATAL_ERROR "Test name must start with 'test-'.")
+        endif()
     endif()
 
     if("${args_CXX_STANDARDS}" STREQUAL "")
@@ -201,4 +241,33 @@ function(json_test_add_test_for file)
 
         _json_test_add_test(${test_name} ${file} ${args_MAIN} ${cxx_standard})
     endforeach()
+endfunction()
+
+#############################################################################
+# json_test_should_build_32bit_test(
+#     <build_32bit_var> <build_32bit_only_var> <input>)
+#
+# Check if the 32bit unit test should be built based on the value of <input>
+# and store the result in the variables <build_32bit_var> and
+# <build_32bit_only_var>.
+#############################################################################
+
+function(json_test_should_build_32bit_test build_32bit_var build_32bit_only_var input)
+    set(${build_32bit_only_var} OFF PARENT_SCOPE)
+    string(TOUPPER "${input}" ${build_32bit_var})
+    if("${${build_32bit_var}}" STREQUAL AUTO)
+        # check if compiler is targeting 32bit by default
+        include(CheckTypeSize)
+        check_type_size("size_t" sizeof_size_t LANGUAGE CXX)
+        if(sizeof_size_t AND ${sizeof_size_t} EQUAL 4)
+            message(STATUS "Auto-enabling 32bit unit test.")
+            set(${build_32bit_var} ON)
+        else()
+            set(${build_32bit_var} OFF)
+        endif()
+    elseif("${${build_32bit_var}}" STREQUAL ONLY)
+        set(${build_32bit_only_var} ON PARENT_SCOPE)
+    endif()
+
+    set(${build_32bit_var} "${${build_32bit_var}}" PARENT_SCOPE)
 endfunction()

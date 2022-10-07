@@ -1,11 +1,20 @@
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 #pragma once
 
 #include <cstdint> // uint8_t, uint64_t
 #include <tuple> // tie
 #include <utility> // move
 
-namespace nlohmann
-{
+#include <nlohmann/detail/abi_macros.hpp>
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
 
 /// @brief an internal type for a backed binary type
 /// @sa https://json.nlohmann.me/api/byte_container_with_subtype/
@@ -91,4 +100,4 @@ class byte_container_with_subtype : public BinaryType
     bool m_has_subtype = false;
 };
 
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END

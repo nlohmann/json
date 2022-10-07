@@ -1,0 +1,2 @@
+before calling set_subtype(42): {"bytes":[202,254,186,190],"subtype":null}
+after calling set_subtype(42): {"bytes":[202,254,186,190],"subtype":42}
