@@ -4746,7 +4746,9 @@ auto from_json(const BasicJsonType& j, T (&arr)[N])  // NOLINT(cppcoreguidelines
 {
     for (std::size_t i = 0; i < N; ++i)
     {
-        arr[i] = j.at(i).template get<T>();
+        // inplace assignment to avoid calling constructor and losing the data of its  members
+        // arr[i] = j.at(i).template get<T>();
+        j.at(i).get_to(arr[i]);
     }
 }
 
@@ -4763,7 +4765,9 @@ auto from_json_array_impl(const BasicJsonType& j, std::array<T, N>& arr,
 {
     for (std::size_t i = 0; i < N; ++i)
     {
-        arr[i] = j.at(i).template get<T>();
+        // inplace assignment to avoid calling constructor and losing the data of its  members
+        // arr[i] = j.at(i).template get<T>();
+        j.at(i).get_to(arr[i]);
     }
 }
 
