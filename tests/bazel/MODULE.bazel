@@ -1,0 +1,5 @@
+bazel_dep(name = "nlohmann_json", repo_name = "json")
+local_path_override(
+    module_name = "nlohmann_json",
+    path = "../.."
+)

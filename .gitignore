@@ -20,6 +20,7 @@
 
 # build directories (vscode-cmake-tools, user-defined, ...)
 /build*/
+bazel-*
 
 # fuzzers
 /tests/corpus_*

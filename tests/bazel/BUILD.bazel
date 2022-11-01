@@ -1,0 +1,5 @@
+cc_test(
+    name = "json_example_test",
+    srcs = ["json_example_test.cpp"],
+    deps = ["@json"],
+)

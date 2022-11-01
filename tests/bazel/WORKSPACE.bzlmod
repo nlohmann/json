@@ -1,0 +1,2 @@
+# The presence of this file ensures that Bazel ignores WORKSPACE.bazel and
+# does not implicitly add any dependency declarations.
