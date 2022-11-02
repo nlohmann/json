@@ -295,7 +295,7 @@ class person_without_default_constructor_1
         , age{std::move(age_)}
     {}
 
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE(person_without_default_constructor_1, name, age);
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE(person_without_default_constructor_1, name, age)
 };
 
 class person_without_default_constructor_2
@@ -315,7 +315,7 @@ class person_without_default_constructor_2
     {}
 };
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE(person_without_default_constructor_2, name, age);
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE(person_without_default_constructor_2, name, age)
 
 } // namespace persons
 
