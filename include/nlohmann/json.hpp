@@ -1282,6 +1282,28 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return result;
     }
 
+    template <typename PrettyPrintPredicate>
+    string_t dump(const int indent,
+                  const char indent_char,
+                  const bool ensure_ascii,
+                  const error_handler_t error_handler,
+                  const PrettyPrintPredicate& pretty_print) const
+    {
+        string_t result;
+        serializer s(detail::output_adapter<char, string_t>(result), indent_char, error_handler);
+
+        if (indent >= 0)
+        {
+            s.dump_configured(*this, ensure_ascii, static_cast<unsigned int>(indent), 0, pretty_print);
+        }
+        else
+        {
+            s.dump(*this, false, ensure_ascii, 0);
+        }
+
+        return result;
+    }
+
     /// @brief return the type of the JSON value (explicit)
     /// @sa https://json.nlohmann.me/api/basic_json/type/
     constexpr value_t type() const noexcept

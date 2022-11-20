@@ -110,6 +110,43 @@ class serializer
               const unsigned int indent_step,
               const unsigned int current_indent = 0)
     {
+        auto predicate = [pretty_print](const BasicJsonType&, int) { return pretty_print; };
+        dump_configured(val, ensure_ascii, indent_step, current_indent, predicate);
+    }
+
+    /*!
+    @brief internal implementation of the serialization function
+
+    This function is called by the public member function dump and organizes
+    the serialization internally. The indentation level is propagated as
+    additional parameter. In case of arrays and objects, the function is
+    called recursively. If uses a predicate to decide whether to avoid pretty
+    printing a subtree. If the predicate returns false, pretty printing is
+    avoided for the whole tree, otherwise the current value is pretty printed
+    and the function is reevaluated for nested values.
+
+    - strings and object keys are escaped using `escape_string()`
+    - integer numbers are converted implicitly via `operator<<`
+    - floating-point numbers are converted to a string using `"%g"` format
+    - binary values are serialized as objects containing the subtype and the
+      byte array
+
+    @param[in] val               value to serialize
+    @param[in] pretty_print      whether the output shall be pretty-printed based 
+    on the value and current identation
+    @param[in] ensure_ascii If @a ensure_ascii is true, all non-ASCII characters
+    in the output are escaped with `\uXXXX` sequences, and the result consists
+    of ASCII characters only.
+    @param[in] indent_step       the indent level
+    @param[in] current_indent    the current indent level (only used internally)
+    */
+    template<typename PrettyPrintPredicate>
+    void dump_configured(const BasicJsonType& val,
+              const bool ensure_ascii,
+              const unsigned int indent_step,
+              const unsigned int current_indent,
+              const PrettyPrintPredicate& pretty_print)
+    {
         switch (val.m_type)
         {
             case value_t::object:
@@ -120,7 +157,7 @@ class serializer
                     return;
                 }
 
-                if (pretty_print)
+                if (pretty_print(val, current_indent))
                 {
                     o->write_characters("{\n", 2);
 
@@ -139,7 +176,7 @@ class serializer
                         o->write_character('\"');
                         dump_escaped(i->first, ensure_ascii);
                         o->write_characters("\": ", 3);
-                        dump(i->second, true, ensure_ascii, indent_step, new_indent);
+                        dump_configured(i->second, ensure_ascii, indent_step, new_indent, pretty_print);
                         o->write_characters(",\n", 2);
                     }
 
@@ -150,7 +187,7 @@ class serializer
                     o->write_character('\"');
                     dump_escaped(i->first, ensure_ascii);
                     o->write_characters("\": ", 3);
-                    dump(i->second, true, ensure_ascii, indent_step, new_indent);
+                    dump_configured(i->second, ensure_ascii, indent_step, new_indent, pretty_print);
 
                     o->write_character('\n');
                     o->write_characters(indent_string.c_str(), current_indent);
@@ -193,7 +230,7 @@ class serializer
                     return;
                 }
 
-                if (pretty_print)
+                if (pretty_print(val, current_indent))
                 {
                     o->write_characters("[\n", 2);
 
@@ -206,17 +243,18 @@ class serializer
 
                     // first n-1 elements
                     for (auto i = val.m_value.array->cbegin();
-                            i != val.m_value.array->cend() - 1; ++i)
+                         i != val.m_value.array->cend() - 1;
+                         ++i)
                     {
                         o->write_characters(indent_string.c_str(), new_indent);
-                        dump(*i, true, ensure_ascii, indent_step, new_indent);
+                        dump_configured(*i, ensure_ascii, indent_step, new_indent, pretty_print);
                         o->write_characters(",\n", 2);
                     }
 
                     // last element
                     JSON_ASSERT(!val.m_value.array->empty());
                     o->write_characters(indent_string.c_str(), new_indent);
-                    dump(val.m_value.array->back(), true, ensure_ascii, indent_step, new_indent);
+                    dump_configured(val.m_value.array->back(), ensure_ascii, indent_step, new_indent, pretty_print);
 
                     o->write_character('\n');
                     o->write_characters(indent_string.c_str(), current_indent);
@@ -254,7 +292,7 @@ class serializer
 
             case value_t::binary:
             {
-                if (pretty_print)
+                if (pretty_print(val, current_indent))
                 {
                     o->write_characters("{\n", 2);
 
