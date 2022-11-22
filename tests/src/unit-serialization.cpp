@@ -81,9 +81,12 @@ TEST_CASE("serialization")
     {
         SECTION("no pretty primitive arrays")
         {
-            auto pretty_print = [](json const& x, int)
+            auto pretty_print = [](json const & x, int)
             {
-              return !x.is_array() || std::any_of(x.cbegin(), x.cend(), [](json const& e) { return !e.is_primitive(); });
+                return !x.is_array() || std::any_of(x.cbegin(), x.cend(), [](json const & e)
+                {
+                    return !e.is_primitive();
+                });
             };
 
             const json j = {{"foo", {1, 2, 3}}};

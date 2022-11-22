@@ -110,7 +110,10 @@ class serializer
               const unsigned int indent_step,
               const unsigned int current_indent = 0)
     {
-        auto predicate = [pretty_print](const BasicJsonType&, int) { return pretty_print; };
+        auto predicate = [pretty_print](const BasicJsonType&, int)
+        {
+            return pretty_print;
+        };
         dump_configured(val, ensure_ascii, indent_step, current_indent, predicate);
     }
 
@@ -132,7 +135,7 @@ class serializer
       byte array
 
     @param[in] val               value to serialize
-    @param[in] pretty_print      whether the output shall be pretty-printed based 
+    @param[in] pretty_print      whether the output shall be pretty-printed based
     on the value and current identation
     @param[in] ensure_ascii If @a ensure_ascii is true, all non-ASCII characters
     in the output are escaped with `\uXXXX` sequences, and the result consists
@@ -142,10 +145,10 @@ class serializer
     */
     template<typename PrettyPrintPredicate>
     void dump_configured(const BasicJsonType& val,
-              const bool ensure_ascii,
-              const unsigned int indent_step,
-              const unsigned int current_indent,
-              const PrettyPrintPredicate& pretty_print)
+                         const bool ensure_ascii,
+                         const unsigned int indent_step,
+                         const unsigned int current_indent,
+                         const PrettyPrintPredicate& pretty_print)
     {
         switch (val.m_type)
         {
@@ -243,8 +246,8 @@ class serializer
 
                     // first n-1 elements
                     for (auto i = val.m_value.array->cbegin();
-                         i != val.m_value.array->cend() - 1;
-                         ++i)
+                            i != val.m_value.array->cend() - 1;
+                            ++i)
                     {
                         o->write_characters(indent_string.c_str(), new_indent);
                         dump_configured(*i, ensure_ascii, indent_step, new_indent, pretty_print);
