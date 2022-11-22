@@ -1267,21 +1267,15 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                   const bool ensure_ascii = false,
                   const error_handler_t error_handler = error_handler_t::strict) const
     {
-        string_t result;
-        serializer s(detail::output_adapter<char, string_t>(result), indent_char, error_handler);
-
-        if (indent >= 0)
-        {
-            s.dump(*this, true, ensure_ascii, static_cast<unsigned int>(indent));
-        }
-        else
-        {
-            s.dump(*this, false, ensure_ascii, 0);
-        }
-
-        return result;
+        return dump(indent, indent_char, ensure_ascii, error_handler, [](basic_json const&, int) {return true;});
     }
 
+    /// @name object inspection
+    /// Functions to inspect the type of a JSON value.
+    /// @{
+
+    /// @brief serialization
+    /// @sa https://json.nlohmann.me/api/basic_json/dump/
     template <typename PrettyPrintPredicate>
     string_t dump(const int indent,
                   const char indent_char,
