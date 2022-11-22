@@ -18082,7 +18082,7 @@ class serializer
                     return;
                 }
 
-                if (pretty_print(val, current_indent))
+                if (pretty_print(val, static_cast<int>(current_indent)))
                 {
                     o->write_characters("{\n", 2);
 
@@ -18155,7 +18155,7 @@ class serializer
                     return;
                 }
 
-                if (pretty_print(val, current_indent))
+                if (pretty_print(val, static_cast<int>(current_indent)))
                 {
                     o->write_characters("[\n", 2);
 
@@ -18217,7 +18217,7 @@ class serializer
 
             case value_t::binary:
             {
-                if (pretty_print(val, current_indent))
+                if (pretty_print(val, static_cast<int>(current_indent)))
                 {
                     o->write_characters("{\n", 2);
 
