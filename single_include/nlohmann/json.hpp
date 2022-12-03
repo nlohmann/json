@@ -8804,7 +8804,7 @@ scan_number_done:
 
     void skip_whitespace()
     {
-        do
+        do // NOLINT(cppcoreguidelines-avoid-do-while)
         {
             get();
         }
