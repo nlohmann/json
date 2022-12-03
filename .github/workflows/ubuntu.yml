@@ -57,8 +57,8 @@ jobs:
       matrix:
         target: [ci_cpplint, ci_cmake_flags, ci_reproducible_tests, ci_non_git_tests, ci_offline_testdata]
     steps:
-      - name: Install libidn11:386
-        run: sudo apt-get update ; sudo apt-get install -y libidn11:386
+      - name: Install libidn11:i386
+        run: sudo apt-get update ; sudo apt-get install -y libidn11:i386
       - uses: actions/checkout@v3
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@latest
