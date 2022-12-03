@@ -11838,7 +11838,7 @@ class binary_reader
     */
     char_int_type get_ignore_noop()
     {
-        do
+        do // NOLINT(cppcoreguidelines-avoid-do-while)
         {
             get();
         }
