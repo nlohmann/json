@@ -1499,7 +1499,7 @@ scan_number_done:
 
     void skip_whitespace()
     {
-        do // NOLINT(cppcoreguidelines-avoid-do-while)
+        do
         {
             get();
         }
