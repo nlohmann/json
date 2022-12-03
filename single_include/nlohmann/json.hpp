@@ -8804,7 +8804,7 @@ scan_number_done:
 
     void skip_whitespace()
     {
-        do // NOLINT(cppcoreguidelines-avoid-do-while)
+        do
         {
             get();
         }
@@ -11838,7 +11838,7 @@ class binary_reader
     */
     char_int_type get_ignore_noop()
     {
-        do // NOLINT(cppcoreguidelines-avoid-do-while)
+        do
         {
             get();
         }
