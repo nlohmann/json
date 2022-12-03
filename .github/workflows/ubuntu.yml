@@ -55,10 +55,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        target: [ci_cpplint, ci_cmake_flags, ci_reproducible_tests, ci_non_git_tests, ci_offline_testdata]
+        target: [ci_cpplint, ci_reproducible_tests, ci_non_git_tests, ci_offline_testdata]
     steps:
-      - name: Install libidn11:i386
-        run: sudo apt-get update ; sudo apt-get install -y libidn11:i386
       - uses: actions/checkout@v3
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@latest
@@ -66,6 +64,17 @@ jobs:
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
         run: cmake --build build --target ${{ matrix.target }}
+
+  ci_cmake_flags:
+    runs-on: ubuntu-focal
+    steps:
+      - uses: actions/checkout@v3
+      - name: Get latest CMake and ninja
+        uses: lukka/get-cmake@latest
+      - name: Run CMake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: Build
+        run: cmake --build build --target ci_cmake_flags
 
   ci_static_analysis_clang:
     runs-on: ubuntu-latest
