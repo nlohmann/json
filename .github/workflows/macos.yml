@@ -35,7 +35,7 @@ jobs:
     runs-on: macos-12
     strategy:
       matrix:
-        xcode: ['13.1', '13.2.1', '13.3.1', '13.4.1']
+        xcode: ['13.1', '13.2.1', '13.3.1', '13.4.1', '14.0', '14.0.1', '14.1']
     env:
       DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode }}.app/Contents/Developer
 
@@ -53,8 +53,6 @@ jobs:
     strategy:
       matrix:
         standard: [11, 14, 17, 20]
-    env:
-      DEVELOPER_DIR: /Applications/Xcode_12.4.app/Contents/Developer
 
     steps:
       - uses: actions/checkout@v3
