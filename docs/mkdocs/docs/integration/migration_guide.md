@@ -208,9 +208,6 @@ The user-defined string literals [`operator""_json`](../api/operator_literal_jso
 [`operator""_json_pointer`](../api/operator_literal_json_pointer.md) will be removed from the global namespace in the
 next major release of the library.
 
-To prepare existing code, define [`JSON_USE_GLOBAL_UDLS`](../api/macros/json_use_global_udls.md) to `0` and bring the
-string literals into scope where needed.
-
 === "Deprecated"
 
       ```cpp
