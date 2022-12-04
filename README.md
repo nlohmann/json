@@ -1144,14 +1144,17 @@ The following compilers are currently used in continuous integration at [AppVeyo
 
 | Compiler                                                                                               | Operating System   | CI Provider    |
 |--------------------------------------------------------------------------------------------------------|--------------------|----------------|
-| Apple Clang 11.0.3 (clang-1103.0.32.62);  Xcode 11.7                                                   | macOS 11.6.8       | GitHub Actions |
-| Apple Clang 12.0.0 (clang-1200.0.32.29);  Xcode 12.4                                                   | macOS 11.6.8       | GitHub Actions |
-| Apple Clang 12.0.5 (clang-1205.0.22.11);  Xcode 12.5.1                                                 | macOS 11.6.8       | GitHub Actions |
-| Apple Clang 13.0.0 (clang-1300.0.29.3);   Xcode 13.0                                                   | macOS 11.6.8       | GitHub Actions |
-| Apple Clang 13.0.0 (clang-1300.0.29.3);   Xcode 13.1                                                   | macOS 12.4         | GitHub Actions |
-| Apple Clang 13.0.0 (clang-1300.0.29.30);  Xcode 13.2.1                                                 | macOS 12.4         | GitHub Actions |
-| Apple Clang 13.1.6 (clang-1316.0.21.2.3); Xcode 13.3.1                                                 | macOS 12.4         | GitHub Actions |
-| Apple Clang 13.1.6 (clang-1316.0.21.2.5); Xcode 13.4.1                                                 | macOS 12.4         | GitHub Actions |
+| Apple Clang 11.0.3 (clang-1103.0.32.62);  Xcode 11.7                                                   | macOS 11.7.1       | GitHub Actions |
+| Apple Clang 12.0.0 (clang-1200.0.32.29);  Xcode 12.4                                                   | macOS 11.7.1       | GitHub Actions |
+| Apple Clang 12.0.5 (clang-1205.0.22.11);  Xcode 12.5.1                                                 | macOS 11.7.1       | GitHub Actions |
+| Apple Clang 13.0.0 (clang-1300.0.29.3);   Xcode 13.0                                                   | macOS 11.7.1       | GitHub Actions |
+| Apple Clang 13.0.0 (clang-1300.0.29.3);   Xcode 13.1                                                   | macOS 12.6.1       | GitHub Actions |
+| Apple Clang 13.0.0 (clang-1300.0.29.30);  Xcode 13.2.1                                                 | macOS 12.6.1       | GitHub Actions |
+| Apple Clang 13.1.6 (clang-1316.0.21.2.3); Xcode 13.3.1                                                 | macOS 12.6.1       | GitHub Actions |
+| Apple Clang 13.1.6 (clang-1316.0.21.2.5); Xcode 13.4.1                                                 | macOS 12.6.1       | GitHub Actions |
+| Apple Clang 14.0.0 (clang-1400.0.29.102); Xcode 14.0                                                   | macOS 12.6.1       | GitHub Actions |
+| Apple Clang 14.0.0 (clang-1400.0.29.102); Xcode 14.0.1                                                 | macOS 12.6.1       | GitHub Actions |
+| Apple Clang 14.0.0 (clang-1400.0.29.202); Xcode 14.1                                                   | macOS 12.6.1       | GitHub Actions |
 | Clang 3.5.2                                                                                            | Ubuntu 20.04.3 LTS | GitHub Actions |
 | Clang 3.6.2                                                                                            | Ubuntu 20.04.3 LTS | GitHub Actions |
 | Clang 3.7.1                                                                                            | Ubuntu 20.04.3 LTS | GitHub Actions |
