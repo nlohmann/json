@@ -18,7 +18,7 @@ target_compile_options(abi_compat_common INTERFACE
 target_include_directories(abi_compat_common SYSTEM INTERFACE
     ../thirdparty/doctest
     include)
-target_link_libraries(abi_compat_common INTERFACE ${NLOHMANN_JSON_TARGET_NAME})
+target_link_libraries(abi_compat_common INTERFACE nlohmann_json)
 
 # shared main()
 add_library(abi_compat_main STATIC main.cpp)

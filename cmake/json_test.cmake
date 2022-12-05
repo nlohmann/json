@@ -4,7 +4,25 @@ set(_json_test_cmake_list_file ${CMAKE_CURRENT_LIST_FILE})
 # download test data
 #############################################################################
 
-include(download_test_data)
+# if variable is set, use test data from given directory rather than downloading them
+if(JSON_TestDataDirectory)
+    add_custom_target(download_test_data)
+    file(WRITE ${CMAKE_BINARY_DIR}/include/test_data.hpp "#define TEST_DATA_DIRECTORY \"${JSON_TestDataDirectory}\"\n")
+else()
+    find_package(Git REQUIRED)
+    # target to download test data
+    add_custom_target(download_test_data
+        COMMAND ${CMAKE_COMMAND} 
+                    -DGIT_EXECUTABLE=${GIT_EXECUTABLE}
+                    -DJSON_TEST_DATA_VERSION=${JSON_TEST_DATA_VERSION}
+                    -DJSON_TEST_DATA_URL=${JSON_TEST_DATA_URL}
+                    -P ${PROJECT_SOURCE_DIR}/cmake/scripts/clone_test_data.cmake
+        COMMENT "Downloading test data from ${JSON_TEST_DATA_URL} (v${JSON_TEST_DATA_VERSION})"
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    )
+    # create a header with the path to the downloaded test data
+    file(WRITE ${CMAKE_BINARY_DIR}/include/test_data.hpp "#define TEST_DATA_DIRECTORY \"${CMAKE_BINARY_DIR}/json_test_data\"\n")
+endif()
 
 # test fixture to download test data
 add_test(NAME "download_test_data" COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR}
@@ -12,12 +30,11 @@ add_test(NAME "download_test_data" COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINA
 )
 set_tests_properties(download_test_data PROPERTIES FIXTURES_SETUP TEST_DATA)
 
-if(JSON_Valgrind)
-    find_program(CMAKE_MEMORYCHECK_COMMAND valgrind)
-    message(STATUS "Executing test suite with Valgrind (${CMAKE_MEMORYCHECK_COMMAND})")
-    set(memcheck_command "${CMAKE_MEMORYCHECK_COMMAND} ${CMAKE_MEMORYCHECK_COMMAND_OPTIONS} --error-exitcode=1 --leak-check=full")
-    separate_arguments(memcheck_command)
-endif()
+#############################################################################
+# locate memory check command
+#############################################################################
+
+find_program(JSON_MEMORYCHECK_COMMAND valgrind)
 
 #############################################################################
 # detect standard support
@@ -175,7 +192,8 @@ function(_json_test_add_test test_name file main cxx_standard)
 
     if(JSON_Valgrind)
         add_test(NAME ${test_target}_valgrind
-            COMMAND ${memcheck_command} $<TARGET_FILE:${test_target}> ${DOCTEST_TEST_FILTER}
+            COMMAND ${JSON_MEMORYCHECK_COMMAND} ${JSON_MEMORYCHECK_COMMAND_OPTIONS}
+                    -- $<TARGET_FILE:${test_target}> ${DOCTEST_TEST_FILTER}
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         )
         set_tests_properties(${test_target}_valgrind PROPERTIES
