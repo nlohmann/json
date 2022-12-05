@@ -1,105 +1,37 @@
 cmake_minimum_required(VERSION 3.1)
 
-##
-## PROJECT
-## name and version
-##
-project(nlohmann_json VERSION 3.11.2 LANGUAGES CXX)
+#############################################################################
+# set up
+#############################################################################
 
-##
-## MAIN_PROJECT CHECK
-## determine if nlohmann_json is built as a subproject (using add_subdirectory) or if it is the main project
-##
-set(MAIN_PROJECT OFF)
-if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
-    set(MAIN_PROJECT ON)
-endif()
-
-##
-## INCLUDE
-##
-##
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
-include(ExternalProject)
-
-##
-## OPTIONS
-##
-
+# set policies
 if (POLICY CMP0077)
     # Allow CMake 3.13+ to override options when using FetchContent / add_subdirectory.
     cmake_policy(SET CMP0077 NEW)
 endif ()
 
-# VERSION_GREATER_EQUAL is not available in CMake 3.1
-if(${MAIN_PROJECT} AND (${CMAKE_VERSION} VERSION_EQUAL 3.13 OR ${CMAKE_VERSION} VERSION_GREATER 3.13))
-    set(JSON_BuildTests_INIT ON)
-else()
-    set(JSON_BuildTests_INIT OFF)
-endif()
-option(JSON_BuildTests                     "Build the unit tests when BUILD_TESTING is enabled." ${JSON_BuildTests_INIT})
-option(JSON_CI                             "Enable CI build targets." OFF)
-option(JSON_Diagnostics                    "Use extended diagnostic messages." OFF)
-option(JSON_GlobalUDLs                     "Place use-defined string literals in the global namespace." ON)
-option(JSON_ImplicitConversions            "Enable implicit conversions." ON)
-option(JSON_DisableEnumSerialization       "Disable default integer enum serialization." OFF)
-option(JSON_LegacyDiscardedValueComparison "Enable legacy discarded value comparison." OFF)
-option(JSON_Install                        "Install CMake targets during install step." ${MAIN_PROJECT})
-option(JSON_MultipleHeaders                "Use non-amalgamated version of the library." ON)
-option(JSON_SystemInclude                  "Include as system headers (skip for clang-tidy)." OFF)
+# set the CMake module path
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 
-if (JSON_CI)
-    include(ci)
-endif ()
-
-##
-## CONFIGURATION
-##
-include(GNUInstallDirs)
-
-set(NLOHMANN_JSON_TARGET_NAME               ${PROJECT_NAME})
-set(NLOHMANN_JSON_CONFIG_INSTALL_DIR        "${CMAKE_INSTALL_DATADIR}/cmake/${PROJECT_NAME}" CACHE INTERNAL "")
-set(NLOHMANN_JSON_INCLUDE_INSTALL_DIR       "${CMAKE_INSTALL_INCLUDEDIR}")
-set(NLOHMANN_JSON_TARGETS_EXPORT_NAME       "${PROJECT_NAME}Targets")
-set(NLOHMANN_JSON_CMAKE_CONFIG_TEMPLATE     "cmake/config.cmake.in")
-set(NLOHMANN_JSON_CMAKE_CONFIG_DIR          "${CMAKE_CURRENT_BINARY_DIR}")
-set(NLOHMANN_JSON_CMAKE_VERSION_CONFIG_FILE "${NLOHMANN_JSON_CMAKE_CONFIG_DIR}/${PROJECT_NAME}ConfigVersion.cmake")
-set(NLOHMANN_JSON_CMAKE_PROJECT_CONFIG_FILE "${NLOHMANN_JSON_CMAKE_CONFIG_DIR}/${PROJECT_NAME}Config.cmake")
-set(NLOHMANN_JSON_CMAKE_PROJECT_TARGETS_FILE "${NLOHMANN_JSON_CMAKE_CONFIG_DIR}/${PROJECT_NAME}Targets.cmake")
-set(NLOHMANN_JSON_PKGCONFIG_INSTALL_DIR     "${CMAKE_INSTALL_DATADIR}/pkgconfig")
-
-if (JSON_MultipleHeaders)
-    set(NLOHMANN_JSON_INCLUDE_BUILD_DIR "${PROJECT_SOURCE_DIR}/include/")
-    message(STATUS "Using the multi-header code from ${NLOHMANN_JSON_INCLUDE_BUILD_DIR}")
-else()
-    set(NLOHMANN_JSON_INCLUDE_BUILD_DIR "${PROJECT_SOURCE_DIR}/single_include/")
-    message(STATUS "Using the single-header code from ${NLOHMANN_JSON_INCLUDE_BUILD_DIR}")
+# determine if nlohmann_json is the main project or built as a subproject (using add_subdirectory)
+set(JSON_MAIN_PROJECT OFF)
+if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+    set(JSON_MAIN_PROJECT ON)
 endif()
 
-if (NOT JSON_ImplicitConversions)
-    message(STATUS "Implicit conversions are disabled")
-endif()
+# set project name and version
+project(nlohmann_json VERSION 3.11.2 LANGUAGES CXX)
 
-if (JSON_DisableEnumSerialization)
-    message(STATUS "Enum integer serialization is disabled")
-endif()
+# print CMake, system, and compiler information
+include(json_info)
 
-if (JSON_LegacyDiscardedValueComparison)
-    message(STATUS "Legacy discarded value comparison enabled")
-endif()
+# handle options and configuration
+include(json_opts)
 
-if (JSON_Diagnostics)
-    message(STATUS "Diagnostics enabled")
-endif()
+#############################################################################
+# add library targets
+#############################################################################
 
-if (JSON_SystemInclude)
-    set(NLOHMANN_JSON_SYSTEM_INCLUDE "SYSTEM")
-endif()
-
-##
-## TARGET
-## create target and add include path
-##
 add_library(${NLOHMANN_JSON_TARGET_NAME} INTERFACE)
 add_library(${PROJECT_NAME}::${NLOHMANN_JSON_TARGET_NAME} ALIAS ${NLOHMANN_JSON_TARGET_NAME})
 if (${CMAKE_VERSION} VERSION_LESS "3.8.0")
@@ -143,20 +75,25 @@ CONFIGURE_FILE(
     "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc"
 )
 
-##
-## TESTS
-## create and configure the unit test target
-##
+#############################################################################
+# add tests
+#############################################################################
+
 if (JSON_BuildTests)
     include(CTest)
     enable_testing()
     add_subdirectory(tests)
 endif()
 
-##
-## INSTALL
-## install header files, generate and install cmake config files for find_package()
-##
+# add CI targets
+if(JSON_CI)
+    include(json_ci)
+endif()
+
+#############################################################################
+# install files and targets
+#############################################################################
+
 include(CMakePackageConfigHelpers)
 # use a custom package version config file instead of
 # write_basic_package_version_file to ensure that it's architecture-independent
@@ -207,3 +144,9 @@ if(JSON_Install)
         DESTINATION ${NLOHMANN_JSON_PKGCONFIG_INSTALL_DIR}
     )
 endif()
+
+#############################################################################
+# print feature summary
+#############################################################################
+
+include(json_summary)

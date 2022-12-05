@@ -1,12 +1,6 @@
 cmake_minimum_required(VERSION 3.13)
 
-option(JSON_Valgrind    "Execute test suite with Valgrind." OFF)
-option(JSON_FastTests   "Skip expensive/slow tests." OFF)
-
-set(JSON_32bitTest     AUTO CACHE STRING "Enable the 32bit unit test (ON/OFF/AUTO/ONLY).")
-set(JSON_TestStandards "" CACHE STRING "The list of standards to test explicitly.")
-
-include(test)
+include(json_test)
 
 #############################################################################
 # override standard support
@@ -101,27 +95,23 @@ json_test_set_test_options(test-unicode4 TEST_PROPERTIES TIMEOUT 3000)
 
 if("${JSON_TestStandards}" STREQUAL "")
     set(test_cxx_standards 11 14 17 20 23)
-    unset(test_force)
+    set(test_force "")
 else()
     set(test_cxx_standards ${JSON_TestStandards})
     set(test_force FORCE)
 endif()
 
-# Print selected standards marking unavailable ones with brackets
-set(msg_standards "")
+# create list of selected C++ standards for feature summary
+set(info "")
 foreach(cxx_standard ${test_cxx_standards})
     if(compiler_supports_cpp_${cxx_standard})
-        list(APPEND msg_standards ${cxx_standard})
+        list(APPEND info ${cxx_standard})
     else()
-        list(APPEND msg_standards [${cxx_standard}])
+        list(APPEND info [${cxx_standard}])
     endif()
 endforeach()
-string(JOIN " " msg_standards ${msg_standards})
-set(msg "Testing standards: ${msg_standards}")
-if(test_force)
-    string(APPEND msg " (forced)")
-endif()
-message(STATUS "${msg}")
+set(JSON_TEST_CXX_STANDARDS_FEATURE_INFO "${info}" PARENT_SCOPE)
+set(JSON_TEST_CXX_STANDARDS_FORCED ${test_force} PARENT_SCOPE)
 
 # *DO* use json_test_set_test_options() above this line
 
