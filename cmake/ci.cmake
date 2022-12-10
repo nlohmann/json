@@ -836,27 +836,17 @@ add_custom_target(ci_benchmarks
 ###############################################################################
 
 function(ci_get_cmake version var)
-    if (APPLE)
-        set(${var} ${PROJECT_BINARY_DIR}/cmake-${version}-Darwin64/CMake.app/Contents/bin/cmake)
-        add_custom_command(
-            OUTPUT ${${var}}
-            COMMAND wget -nc https://github.com/Kitware/CMake/releases/download/v${version}/cmake-${version}-Darwin64.tar.gz
-            COMMAND tar xfz cmake-${version}-Darwin64.tar.gz
-            COMMAND rm cmake-${version}-Darwin64.tar.gz
-            WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-            COMMENT "Download CMake ${version}"
-        )
-    else()
-        set(${var} ${PROJECT_BINARY_DIR}/cmake-${version}-Linux-x86_64/bin/cmake)
-        add_custom_command(
-            OUTPUT ${${var}}
-            COMMAND wget -nc https://github.com/Kitware/CMake/releases/download/v${version}/cmake-${version}-Linux-x86_64.tar.gz
-            COMMAND tar xfz cmake-${version}-Linux-x86_64.tar.gz
-            COMMAND rm cmake-${version}-Linux-x86_64.tar.gz
-            WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-            COMMENT "Download CMake ${version}"
-        )
-    endif()
+    set(${var} ${PROJECT_BINARY_DIR}/cmake-${version}/bin/cmake)
+    add_custom_command(
+        OUTPUT ${${var}}
+        COMMAND wget -nc https://github.com/Kitware/CMake/releases/download/v${version}/cmake-${version}.tar.gz
+        COMMAND tar xfz cmake-${version}.tar.gz
+        COMMAND rm cmake-${version}.tar.gz
+        COMMAND ${CMAKE_COMMAND} -S cmake-${version} -B cmake-${version}
+        COMMAND ${CMAKE_COMMAND} --build cmake-${version} --parallel 10
+        WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+        COMMENT "Download CMake ${version}"
+    )
     set(${var} ${${var}} PARENT_SCOPE)
 endfunction()
 
