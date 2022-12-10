@@ -65,20 +65,6 @@ jobs:
       - name: Build
         run: cmake --build build --target ${{ matrix.target }}
 
-  ci_cmake_flags:
-    runs-on: ubuntu-latest
-    container: ubuntu:focal
-    steps:
-      - name: Install unzip
-        run: apt-get update ; apt-get install -y unzip
-      - uses: actions/checkout@v3
-      - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@latest
-      - name: Run CMake
-        run: cmake -S . -B build -DJSON_CI=On
-      - name: Build
-        run: cmake --build build --target ci_cmake_flags
-
   ci_static_analysis_clang:
     runs-on: ubuntu-latest
     container: silkeh/clang:dev
@@ -101,7 +87,7 @@ jobs:
     container: ubuntu:focal
     strategy:
       matrix:
-        target: [ci_test_diagnostics, ci_test_noexceptions, ci_test_noimplicitconversions, ci_test_legacycomparison, ci_test_noglobaludls]
+        target: [ci_cmake_flags, ci_test_diagnostics, ci_test_noexceptions, ci_test_noimplicitconversions, ci_test_legacycomparison, ci_test_noglobaludls]
     steps:
       - name: Install build-essential
         run: apt-get update ; apt-get install -y build-essential unzip
