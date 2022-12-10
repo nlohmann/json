@@ -494,7 +494,7 @@ add_custom_target(ci_test_noimplicitconversions
 ###############################################################################
 
 add_custom_target(ci_test_diagnostics
-    COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND}
+    COMMAND ${CMAKE_COMMAND}
     -DCMAKE_BUILD_TYPE=Debug -GNinja
     -DJSON_BuildTests=ON -DJSON_Diagnostics=ON
     -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_diagnostics
