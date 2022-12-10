@@ -90,7 +90,7 @@ jobs:
         target: [ci_cmake_flags, ci_test_diagnostics, ci_test_noexceptions, ci_test_noimplicitconversions, ci_test_legacycomparison, ci_test_noglobaludls]
     steps:
       - name: Install build-essential
-        run: apt-get update ; apt-get install -y build-essential unzip clang wget
+        run: apt-get update ; apt-get install -y build-essential unzip clang wget libidn11:i386
       - uses: actions/checkout@v3
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@latest
