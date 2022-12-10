@@ -508,7 +508,7 @@ add_custom_target(ci_test_diagnostics
 ###############################################################################
 
 add_custom_target(ci_test_legacycomparison
-    COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND}
+    COMMAND ${CMAKE_COMMAND}
     -DCMAKE_BUILD_TYPE=Debug -GNinja
     -DJSON_BuildTests=ON -DJSON_LegacyDiscardedValueComparison=ON
     -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_legacycomparison
@@ -522,7 +522,7 @@ add_custom_target(ci_test_legacycomparison
 ###############################################################################
 
 add_custom_target(ci_test_noglobaludls
-    COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND}
+    COMMAND ${CMAKE_COMMAND}
     -DCMAKE_BUILD_TYPE=Debug -GNinja
     -DJSON_BuildTests=ON -DJSON_FastTests=ON -DJSON_GlobalUDLs=OFF
     -DCMAKE_CXX_FLAGS=-DJSON_TEST_NO_GLOBAL_UDLS
