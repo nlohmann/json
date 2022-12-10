@@ -69,6 +69,8 @@ jobs:
     runs-on: ubuntu-latest
     container: ubuntu:focal
     steps:
+      - name: Install unzip
+        run: apt-get update ; apt-get install -y unzip
       - uses: actions/checkout@v3
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@latest
@@ -96,12 +98,13 @@ jobs:
 
   ci_cmake_options:
     runs-on: ubuntu-latest
+    container: ubuntu:focal
     strategy:
       matrix:
         target: [ci_test_diagnostics, ci_test_noexceptions, ci_test_noimplicitconversions, ci_test_legacycomparison, ci_test_noglobaludls]
     steps:
       - name: Install build-essential
-        run: apt-get update ; apt-get install -y build-essential
+        run: apt-get update ; apt-get install -y build-essential unzip
       - uses: actions/checkout@v3
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@latest
