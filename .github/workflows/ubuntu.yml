@@ -138,11 +138,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        compiler: ['3.5', '3.6', '3.7', '3.8', '3.9', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', 'latest']
+        compiler: ['3.5', '3.6', '3.7', '3.8', '3.9', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15-bullseye', 'latest']
     container: silkeh/clang:${{ matrix.compiler }}
     steps:
-      - name: Install unzip
-        run: apt-get update ; apt-get install -y unzip
+      - name: Install unzip and git
+        run: apt-get update ; apt-get install -y unzip git
       - uses: actions/checkout@v3
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@latest

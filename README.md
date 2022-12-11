@@ -1174,7 +1174,8 @@ The following compilers are currently used in continuous integration at [AppVeyo
 | Clang 12.0.0                                                                                           | Ubuntu 20.04.3 LTS | GitHub Actions |
 | Clang 13.0.0                                                                                           | Ubuntu 20.04.3 LTS | GitHub Actions |
 | Clang 14.0.0                                                                                           | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 15.0.0 (15.0.0-++20220719071818+5fc621355110-1~exp1~20220719071918.324)                          | Ubuntu 20.04.3 LTS | GitHub Actions |
+| Clang 15.0.4                                                                                           | Ubuntu 20.04.3 LTS | GitHub Actions |
+| Clang 16.0.0 (16.0.0-++20221031071727+500876226c60-1~exp1~20221031071831.439)                          | Ubuntu 20.04.3 LTS | GitHub Actions |
 | GCC 4.8.5 (Ubuntu 4.8.5-4ubuntu2)                                                                      | Ubuntu 20.04.3 LTS | GitHub Actions |
 | GCC 4.9.4                                                                                              | Ubuntu 20.04.3 LTS | GitHub Actions |
 | GCC 5.5.0                                                                                              | Ubuntu 20.04.3 LTS | GitHub Actions |
