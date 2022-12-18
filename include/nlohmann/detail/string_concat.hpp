@@ -25,28 +25,28 @@ inline std::size_t concat_length()
 }
 
 template<typename... Args>
-inline std::size_t concat_length(const char* cstr, Args&& ... rest);
+inline std::size_t concat_length(const char* cstr, const Args& ... rest);
 
 template<typename StringType, typename... Args>
-inline std::size_t concat_length(const StringType& str, Args&& ... rest);
+inline std::size_t concat_length(const StringType& str, const Args& ... rest);
 
 template<typename... Args>
-inline std::size_t concat_length(const char /*c*/, Args&& ... rest)
+inline std::size_t concat_length(const char /*c*/, const Args& ... rest)
 {
-    return 1 + concat_length(std::forward<Args>(rest)...);
+    return 1 + concat_length(rest...);
 }
 
 template<typename... Args>
-inline std::size_t concat_length(const char* cstr, Args&& ... rest)
+inline std::size_t concat_length(const char* cstr, const Args& ... rest)
 {
     // cppcheck-suppress ignoredReturnValue
-    return ::strlen(cstr) + concat_length(std::forward<Args>(rest)...);
+    return ::strlen(cstr) + concat_length(rest...);
 }
 
 template<typename StringType, typename... Args>
-inline std::size_t concat_length(const StringType& str, Args&& ... rest)
+inline std::size_t concat_length(const StringType& str, const Args& ... rest)
 {
-    return str.size() + concat_length(std::forward<Args>(rest)...);
+    return str.size() + concat_length(rest...);
 }
 
 template<typename OutStringType>
@@ -137,7 +137,7 @@ template<typename OutStringType = std::string, typename... Args>
 inline OutStringType concat(Args && ... args)
 {
     OutStringType str;
-    str.reserve(concat_length(std::forward<Args>(args)...));
+    str.reserve(concat_length(args...));
     concat_into(str, std::forward<Args>(args)...);
     return str;
 }
