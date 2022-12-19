@@ -1351,7 +1351,7 @@ void fill_expected_sax_pos_ubjson(SAX& sax, const FN& element, const nlohmann::j
             {
                 ++nbytes;
             }
-            else if (val >= 128 && val <= 255)
+            else if (val <= 255)
             {
                 use_uint = true;
                 ++nbytes;
