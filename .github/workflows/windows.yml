@@ -101,7 +101,7 @@ jobs:
     runs-on: windows-2019
     strategy:
       matrix:
-        version: [11, 12]
+        version: [11, 12, 13, 14, 15]
 
     steps:
       - uses: actions/checkout@v3
