@@ -15,38 +15,17 @@ concurrency:
 
 jobs:
   mingw:
-    runs-on: windows-latest
+    runs-on: windows-2019
     strategy:
       matrix:
         architecture: [x64, x86]
 
     steps:
       - uses: actions/checkout@v3
-      - name: Download MinGW 8.1.0
-        run: |
-          $headers = @{Authorization = 'Bearer ${{ secrets.GITHUB_TOKEN }}'}
-          $uri = 'https://nuget.pkg.github.com/falbrechtskirchinger/download/mingw/8.1.0/mingw.8.1.0.nupkg'
-          Invoke-WebRequest -Uri $uri -Headers $headers -OutFile mingw.8.1.0.nupkg
-      - name: Uninstall MinGW
-        continue-on-error: true
-        run: choco uninstall mingw
-      # Based on egor-tensin/setup-mingw
-      - name: Install MinGW 8.1.0
-        run: |
-          choco install mingw.8.1.0.nupkg ${{ matrix.architecture == 'x86' && '--x86' || '' }}
-          $prefix = "${{ matrix.architecture == 'x64' && 'x86_64-w64-mingw32' || 'i686-w64-mingw32' }}"
-          $mingw = "${{ matrix.architecture == 'x64' && 'mingw64' || 'mingw32' }}"
-          $mingw_install = Join-Path C: ProgramData chocolatey lib mingw tools install
-          $mingw_root = Join-Path $mingw_install $mingw
-          $mingw_bin = Join-Path $mingw_root bin
-          $mingw_lib = Join-Path $mingw_root $prefix lib
-          echo $mingw_bin >> $env:GITHUB_PATH
-          Remove-Item (Join-Path $mingw_lib 'libpthread.dll.a')
-          Remove-Item (Join-Path $mingw_lib 'libwinpthread.dll.a')
-      #- name: Set up MinGW
-      #  uses: egor-tensin/setup-mingw@v2
-      #  with:
-      #    platform: ${{ matrix.architecture }}
+      - name: Set up MinGW
+        uses: egor-tensin/setup-mingw@v2
+        with:
+          platform: ${{ matrix.architecture }}
       - name: Run CMake
         run: cmake -S . -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On
       - name: Build
@@ -122,7 +101,7 @@ jobs:
     runs-on: windows-2019
     strategy:
       matrix:
-        version: [11, 12]
+        version: [11, 12, 13, 14, 15]
 
     steps:
       - uses: actions/checkout@v3
