@@ -13,9 +13,6 @@
 #include <nlohmann/detail/abi_macros.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
-namespace detail
-{
-
 /// struct to capture the start position of the current token
 struct position_t
 {
@@ -32,6 +29,4 @@ struct position_t
         return chars_read_total;
     }
 };
-
-}  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END

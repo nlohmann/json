@@ -7,31 +7,23 @@ There are two possible signatures for this method:
 ```cpp
 void next_token_end(std::size_t pos);
 ```
-This version is called with the byte position after the next element ends. This version also works when parsing binary formats such as [msgpack](../basic_json/input_format_t.md).
+This version is called with the byte position after the next element ends.
+This version also works when parsing binary formats such as [msgpack](../basic_json/input_format_t.md).
 
 2. 
 ```cpp
-template<class BasicJsonType, class InputAdapterType>
-void next_token_end(const nlohmann::detail::lexer<BasicJsonType, InputAdapterType>& lex)
+void next_token_end(const nlohmann::position_t& p)
 ```
-This version is called with the lexer after the last character of the next element was parsed. The lexer can provide additional information about the current parse context. This version only available when calling `nlohmann::json::sax_parse` with `nlohmann::json::input_format_t::json` and takes precedence.
-
-## Template parameters
-1. 
-(none)
-2. 
-`BasicJsonType`
-:   a specialization of `basic_json` used by the lexer. (Leave this as a template parameter)
-`InputAdapterType`
-:   The input adapter used by the lexer. (Leave this as a template parameter)
+This version is called with the [detailed parser position information](../position_t/index.md) after the last character of the next element was parsed.
+This version only available when calling `nlohmann::json::sax_parse` with `nlohmann::json::input_format_t::json` and takes precedence.
 
 ## Parameters
 1. 
 `pos` (in)
 :   Byte position one after the next elements last byte.
 2. 
-`lex` (in)
-:   Lexer after the last char of the next element was parsed.
+`p` (in)
+:   [Detailed parser position information](../position_t/index.md) after the last char of the next element was parsed.
 
 ## Notes
 
@@ -57,7 +49,8 @@ It is recommended, but not required, to also implement [next_token_start](next_t
 
 ??? example
 
-    The example below shows a SAX parser using the second version of this method and storing the location information in each json node using a [base class](../basic_json/json_base_class_t.md) for `nlohmann::json` as customization point.
+    The example below shows a SAX parser using the second version of this method and
+    storing the location information in each json node using a [base class](../basic_json/json_base_class_t.md) for `nlohmann::json` as customization point.
 
     ```cpp
     --8<-- "examples/sax_parse_with_src_location_in_json.cpp"

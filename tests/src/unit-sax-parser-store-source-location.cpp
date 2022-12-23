@@ -35,17 +35,17 @@ SOFTWARE.
 #include <nlohmann/json.hpp>
 
 //prototype to make -Wmissing-prototypes happy
-std::ostream& operator<<(std::ostream& out, const nlohmann::detail::position_t& p);
+std::ostream& operator<<(std::ostream& out, const nlohmann::position_t& p);
 
 //test json parser with detailed line / col information as metadata
 
 struct token_start_stop
 {
-    nlohmann::detail::position_t start{};
-    nlohmann::detail::position_t stop{};
+    nlohmann::position_t start{};
+    nlohmann::position_t stop{};
 };
 
-std::ostream& operator<<(std::ostream& out, const nlohmann::detail::position_t& p)
+std::ostream& operator<<(std::ostream& out, const nlohmann::position_t& p)
 {
     out << p.chars_read_total << '(' << p.lines_read << ':' << p.chars_read_current_line << ')';
     return out;
@@ -90,16 +90,14 @@ class sax_with_token_start_stop_metadata
         , start_stop{}
     {}
 
-    template<class T1, class T2>
-    void next_token_start(const nlohmann::detail::lexer<T1, T2>& lex)
+    void next_token_start(const nlohmann::position_t& p)
     {
-        start_stop.start = lex.get_position();
+        start_stop.start = p;
     }
 
-    template<class T1, class T2>
-    void next_token_end(const nlohmann::detail::lexer<T1, T2>& lex)
+    void next_token_end(const nlohmann::position_t& p)
     {
-        start_stop.stop = lex.get_position();
+        start_stop.stop = p;
     }
 
     bool null()
@@ -294,38 +292,38 @@ TEST_CASE("parse-json-with-position-info")
     sax_with_token_start_stop_metadata sax{j};
     CHECK(nlohmann::json::sax_parse(str, &sax, nlohmann::json::input_format_t::json));
     CHECK(j.start.lines_read == 0);
-    CHECK(j.start.chars_read_current_line == 1);
+    CHECK(j.start.chars_read_current_line == 0);
 
     CHECK(j["array"].start.lines_read == 1);
-    CHECK(j["array"].start.chars_read_current_line == 13);
+    CHECK(j["array"].start.chars_read_current_line == 12);
 
     CHECK(j["array"][0].start.lines_read == 2);
-    CHECK(j["array"][0].start.chars_read_current_line == 5);
+    CHECK(j["array"][0].start.chars_read_current_line == 4);
     CHECK(j["array"][0].stop.lines_read == 2);
     CHECK(j["array"][0].stop.chars_read_current_line == 15);
 
     CHECK(j["array"][1].start.lines_read == 3);
-    CHECK(j["array"][1].start.chars_read_current_line == 5);
+    CHECK(j["array"][1].start.chars_read_current_line == 4);
     CHECK(j["array"][1].stop.lines_read == 3);
     CHECK(j["array"][1].stop.chars_read_current_line == 6);
 
     CHECK(j["array"][2].start.lines_read == 4);
-    CHECK(j["array"][2].start.chars_read_current_line == 5);
+    CHECK(j["array"][2].start.chars_read_current_line == 4);
     CHECK(j["array"][2].stop.lines_read == 4);
     CHECK(j["array"][2].stop.chars_read_current_line == 8);
 
     CHECK(j["array"][3].start.lines_read == 5);
-    CHECK(j["array"][3].start.chars_read_current_line == 5);
+    CHECK(j["array"][3].start.chars_read_current_line == 4);
     CHECK(j["array"][3].stop.lines_read == 5);
     CHECK(j["array"][3].stop.chars_read_current_line == 7);
 
     CHECK(j["array"][4].start.lines_read == 6);  //starts directly after last value....
-    CHECK(j["array"][4].start.chars_read_current_line == 5);
+    CHECK(j["array"][4].start.chars_read_current_line == 4);
     CHECK(j["array"][4].stop.lines_read == 6);
     CHECK(j["array"][4].stop.chars_read_current_line == 8);
 
     CHECK(j["array"][5].start.lines_read == 7);
-    CHECK(j["array"][5].start.chars_read_current_line == 5);
+    CHECK(j["array"][5].start.chars_read_current_line == 4);
     CHECK(j["array"][5].stop.lines_read == 7);
     CHECK(j["array"][5].stop.chars_read_current_line == 9);
 

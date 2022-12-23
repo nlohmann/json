@@ -9,14 +9,13 @@ using json = nlohmann::json;
 // allows us to store metadata and add custom methods to each node
 struct token_start_stop
 {
-    nlohmann::detail::position_t start{};
-    nlohmann::detail::position_t stop{};
+    nlohmann::position_t start{};
+    nlohmann::position_t stop{};
 
     std::string start_pos_str() const
     {
         return "{l=" + std::to_string(start.lines_read) + ":c="
-               //the lexer is already one char ahead (e.g. the opening { of an object )
-               + std::to_string(start.chars_read_current_line - 1) + "}";
+               + std::to_string(start.chars_read_current_line) + "}";
     }
     std::string stop_pos_str() const
     {
@@ -68,16 +67,14 @@ class sax_with_token_start_stop_metadata
         , start_stop{}
     {}
 
-    template<class T1, class T2>
-    void next_token_start(const nlohmann::detail::lexer<T1, T2>& lex)
+    void next_token_start(const nlohmann::position_t&  p)
     {
-        start_stop.start = lex.get_position();
+        start_stop.start = p;
     }
 
-    template<class T1, class T2>
-    void next_token_end(const nlohmann::detail::lexer<T1, T2>& lex)
+    void next_token_end(const nlohmann::position_t&  p)
     {
-        start_stop.stop = lex.get_position();
+        start_stop.stop = p;
     }
 
     bool null()

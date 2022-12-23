@@ -3015,9 +3015,6 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
-namespace detail
-{
-
 /// struct to capture the start position of the current token
 struct position_t
 {
@@ -3034,8 +3031,6 @@ struct position_t
         return chars_read_total;
     }
 };
-
-}  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/macro_scope.hpp>
@@ -9002,30 +8997,30 @@ struct sax_call_next_token_end_pos_direct
 template <typename DirectCaller, typename SAX, typename LexOrPos>
 struct sax_call_function
 {
-    // is the parameter a lexer or a position
-    static constexpr bool no_lexer = std::is_same<LexOrPos, std::size_t>::value;
+    // is the parameter a lexer or a byte position
+    static constexpr bool called_with_byte_pos = std::is_same<LexOrPos, std::size_t>::value;
 
     template<typename SAX2, typename...Ts2>
     using call_t = decltype(DirectCaller::call(std::declval<SAX2*>(), std::declval<Ts2>()...));
 
     //the sax parser supports calls with a position
-    static constexpr bool detected_call_with_pos =
+    static constexpr bool detected_call_with_byte_pos =
         is_detected_exact<void, call_t, SAX, std::size_t>::value;
 
     //the sax parser supports calls with a lexer
-    static constexpr bool detected_call_with_lex =
-        !no_lexer &&
-        is_detected_exact<void, call_t, SAX, const LexOrPos>::value;
+    static constexpr bool detected_call_with_lex_pos =
+        !called_with_byte_pos &&
+        is_detected_exact<void, call_t, SAX, const position_t >::value;
 
     //there either has to be a version accepting a lexer or a position
-    static constexpr bool valid = detected_call_with_pos || detected_call_with_lex;
+    static constexpr bool valid = detected_call_with_byte_pos || detected_call_with_lex_pos;
 
-    //called with pos and pos is method supported -> pass data on
+    //called with byte pos and byte pos is method supported -> pass data on
     template<typename SaxT = SAX>
     static typename std::enable_if <
-    sax_call_function<DirectCaller, SaxT, LexOrPos>::valid &&
     std::is_same<SaxT, SAX>::value &&
-    sax_call_function<DirectCaller, SaxT, LexOrPos>::detected_call_with_pos
+    valid &&
+    detected_call_with_byte_pos
     >::type
     call(SaxT* sax, std::size_t pos)
     {
@@ -9036,46 +9031,70 @@ struct sax_call_function
     template<typename SaxT = SAX>
     static typename std::enable_if <
     std::is_same<SaxT, SAX>::value &&
-    !sax_call_function<DirectCaller, SaxT, LexOrPos>::valid
+    !valid
     >::type
     call(SaxT* /*unused*/, const LexOrPos& /*unused*/) {}
 
-    //called with lex and lex method is supported -> pass data on
-    template<typename SaxT = SAX>
-    static typename std::enable_if <
-    sax_call_function<DirectCaller, SaxT, LexOrPos>::valid &&
-    std::is_same<SaxT, SAX>::value &&
-    !sax_call_function<DirectCaller, SaxT, LexOrPos>::no_lexer &&
-    sax_call_function<DirectCaller, SaxT, LexOrPos>::detected_call_with_lex
-    >::type
-    call(SaxT* sax, const LexOrPos& lex)
-    {
-        DirectCaller::call(sax, lex);
-    }
-
-    // called with lex and only pos method is supported -> call with position from lexer
+    //called with lex and lex pos method is supported -> call with position from lexer
     // the start pos in the lexer is last read char -> chars_read_total-1
     template<typename SaxT = SAX>
     static typename std::enable_if <
-    sax_call_function<DirectCaller, SaxT, LexOrPos>::valid &&
     std::is_same<SaxT, SAX>::value &&
-    !sax_call_function<DirectCaller, SaxT, LexOrPos>::no_lexer &&
-    !sax_call_function<DirectCaller, SaxT, LexOrPos>::detected_call_with_lex &&
+    valid &&
+    !called_with_byte_pos &&
+    detected_call_with_lex_pos &&
     std::is_same<DirectCaller, sax_call_next_token_start_pos_direct>::value
     >::type
     call(SaxT* sax, const LexOrPos& lex)
     {
-        DirectCaller::call(sax, lex.get_position().chars_read_total - 1);
+        JSON_ASSERT(lex.get_position().chars_read_total > 0);
+        JSON_ASSERT(lex.get_position().chars_read_current_line > 0);
+        //the lexer has already read the first char of the current element -> fix this
+        auto pos_copy = lex.get_position();
+        --pos_copy.chars_read_total;
+        --pos_copy.chars_read_current_line;
+        DirectCaller::call(sax, pos_copy);
     }
 
-    // called with lex and only pos method is supported -> call with position from lexer
+    //called with lex and lex pos method is supported -> pass data on
     // the one past end pos in the lexer is the current index -> chars_read_total
     template<typename SaxT = SAX>
     static typename std::enable_if <
-    sax_call_function<DirectCaller, SaxT, LexOrPos>::valid &&
     std::is_same<SaxT, SAX>::value &&
-    !sax_call_function<DirectCaller, SaxT, LexOrPos>::no_lexer &&
-    !sax_call_function<DirectCaller, SaxT, LexOrPos>::detected_call_with_lex &&
+    valid &&
+    !called_with_byte_pos &&
+    detected_call_with_lex_pos &&
+    std::is_same<DirectCaller, sax_call_next_token_end_pos_direct>::value
+    >::type
+    call(SaxT* sax, const LexOrPos& lex)
+    {
+        DirectCaller::call(sax, lex.get_position());
+    }
+
+    // called with lex and only byte pos method is supported -> call with byte position from lexer
+    // the start pos in the lexer is last read char -> chars_read_total-1
+    template<typename SaxT = SAX>
+    static typename std::enable_if <
+    std::is_same<SaxT, SAX>::value &&
+    valid &&
+    !called_with_byte_pos &&
+    !detected_call_with_lex_pos &&
+    std::is_same<DirectCaller, sax_call_next_token_start_pos_direct>::value
+    >::type
+    call(SaxT* sax, const LexOrPos& lex)
+    {
+        JSON_ASSERT(lex.get_position().chars_read_total > 0);
+        DirectCaller::call(sax, lex.get_position().chars_read_total - 1);
+    }
+
+    // called with lex and only byte pos method is supported -> call with byte position from lexer
+    // the one past end pos in the lexer is the current index -> chars_read_total
+    template<typename SaxT = SAX>
+    static typename std::enable_if <
+    std::is_same<SaxT, SAX>::value &&
+    valid &&
+    !called_with_byte_pos &&
+    !detected_call_with_lex_pos &&
     std::is_same<DirectCaller, sax_call_next_token_end_pos_direct>::value
     >::type
     call(SaxT* sax, const LexOrPos& lex)

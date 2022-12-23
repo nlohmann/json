@@ -109,10 +109,10 @@ std::ostream& operator<<(std::ostream& out, const std::set<element_info_t>& v)
     return out;
 }
 
-template<bool LexCallImpossible, bool WithPos, bool WithLex>
+template<bool LexCallImpossible, bool WithBytePos, bool WithLexPos>
 struct Sax
 {
-    static constexpr bool has_callback = WithPos || (WithLex && !LexCallImpossible);
+    static constexpr bool has_callback = WithBytePos || (WithLexPos && !LexCallImpossible);
     using json = nlohmann::json;
 
     enum class last_call_t
@@ -167,32 +167,32 @@ struct Sax
         last_call = last_call_t::end_pos;
     }
 
-    template<bool Act = WithPos>
+    template<bool Act = WithBytePos>
     typename std::enable_if<Act>::type next_token_start(std::size_t pos)
     {
         check_start(pos);
-        CHECK((!WithLex || LexCallImpossible));
+        CHECK((!WithLexPos || LexCallImpossible));
     }
 
-    template < class LexT, bool Act = WithLex && !std::is_same<LexT, std::size_t>::value >
-    typename std::enable_if<Act>::type next_token_start(const LexT& lex)
+    template < bool Act = WithLexPos >
+    typename std::enable_if<Act>::type next_token_start(const nlohmann::position_t& p)
     {
-        check_start(lex.get_position().chars_read_total - 1);
-        CHECK(WithLex);
+        check_start(p.chars_read_total);
+        CHECK(WithLexPos);
     }
 
-    template<bool Act = WithPos>
+    template<bool Act = WithBytePos>
     typename std::enable_if<Act>::type next_token_end(std::size_t pos)
     {
         check_end(pos);
-        CHECK((!WithLex || LexCallImpossible));
+        CHECK((!WithLexPos || LexCallImpossible));
     }
 
-    template < class LexT, bool Act = WithLex && !std::is_same<LexT, std::size_t>::value >
-    typename std::enable_if<Act>::type next_token_end(const LexT& lex)
+    template < bool Act = WithLexPos >
+    typename std::enable_if<Act>::type next_token_end(const nlohmann::position_t& p)
     {
-        check_end(lex.get_position().chars_read_total);
-        CHECK(WithLex);
+        check_end(p.chars_read_total);
+        CHECK(WithLexPos);
     }
 
     bool null()
@@ -303,11 +303,11 @@ struct Sax
     }
 };
 
-template<bool WithPosV, bool WithLexV>
+template<bool WithBytePosV, bool WithLexPosV>
 struct Opt
 {
-    static constexpr bool WithPos = WithPosV;
-    static constexpr bool WithLex = WithLexV;
+    static constexpr bool WithBytePos = WithBytePosV;
+    static constexpr bool WithLexPos = WithLexPosV;
 };
 
 using OptNone = Opt<false, false>;
@@ -318,10 +318,10 @@ using OptBoth = Opt<true, true>;
 //test basic functionality
 TEST_CASE_TEMPLATE("extended parser", T, OptNone, OptLex, OptPos, OptBoth)
 {
-    const bool with_pos = T::WithPos;
-    const bool with_lex = T::WithLex;
+    const bool with_pos = T::WithBytePos;
+    const bool with_lex = T::WithLexPos;
 
-    INFO("WithPos " << with_pos << ", WithLex " << with_lex);
+    INFO("WithBytePos " << with_pos << ", WithLexPos " << with_lex);
     //element count            0     1       2  3          4   5   6   7     8   9 10
     //index 10s place          0         1         2         3         4         5
     //index  1s place          012345678901234567890123456789012345678901234567890123
@@ -351,7 +351,7 @@ TEST_CASE_TEMPLATE("extended parser", T, OptNone, OptLex, OptPos, OptBoth)
             reconstructed += s;
             skip(s.size());
         };
-        Sax</*LexCallImpossible*/ false, T::WithPos, T::WithLex> sax;
+        Sax</*LexCallImpossible*/ false, T::WithBytePos, T::WithLexPos> sax;
         sax.pos_start_object.emplace(elementFromStr("{"));
         skipFromStr("   ");
         sax.pos_key.emplace(elementFromStr(R"("array")"));
@@ -384,7 +384,7 @@ TEST_CASE_TEMPLATE("extended parser", T, OptNone, OptLex, OptPos, OptBoth)
     {
         const auto j = nlohmann::json::parse(str);
         const auto bin = nlohmann::json::to_bson(j);
-        Sax</*LexCallImpossible*/ true, T::WithPos, T::WithLex> sax;
+        Sax</*LexCallImpossible*/ true, T::WithBytePos, T::WithLexPos> sax;
         sax.pos_start_object.emplace(element(4));    //4 bytes size
         skip(1);                                     //one byte type array
         sax.pos_key.emplace(element(6));             //6 key (array\0)
@@ -414,7 +414,7 @@ TEST_CASE_TEMPLATE("extended parser", T, OptNone, OptLex, OptPos, OptBoth)
     {
         const auto j = nlohmann::json::parse(str);
         const auto bin = nlohmann::json::to_cbor(j);
-        Sax</*LexCallImpossible*/ true, T::WithPos, T::WithLex> sax;
+        Sax</*LexCallImpossible*/ true, T::WithBytePos, T::WithLexPos> sax;
         sax.pos_start_object.emplace(element(1));     //1 byte type + 0 bytes size (implicit in type)
         sax.pos_key.emplace(element(6));              //1 byte type + 5 bytes string (array) (size implicit)
         sax.pos_start_array.emplace(element(1));      //1 byte type + 0 bytes size (implicit in type)
@@ -437,7 +437,7 @@ TEST_CASE_TEMPLATE("extended parser", T, OptNone, OptLex, OptPos, OptBoth)
     {
         const auto j = nlohmann::json::parse(str);
         const auto bin = nlohmann::json::to_msgpack(j);
-        Sax</*LexCallImpossible*/ true, T::WithPos, T::WithLex> sax;
+        Sax</*LexCallImpossible*/ true, T::WithBytePos, T::WithLexPos> sax;
         sax.pos_start_object.emplace(element(1));     //1 byte type + 0 bytes size
         sax.pos_key.emplace(element(6));              //1 byte type + 5 bytes string (array) (size implicit)
         sax.pos_start_array.emplace(element(1));      //1 byte type + 0 bytes size (implicit in type)
@@ -460,7 +460,7 @@ TEST_CASE_TEMPLATE("extended parser", T, OptNone, OptLex, OptPos, OptBoth)
     {
         const auto j = nlohmann::json::parse(str);
         const auto bin = nlohmann::json::to_ubjson(j);
-        Sax</*LexCallImpossible*/ true, T::WithPos, T::WithLex> sax;
+        Sax</*LexCallImpossible*/ true, T::WithBytePos, T::WithLexPos> sax;
         sax.pos_start_object.emplace(element(1));    //1 byte type + 0 bytes size
         sax.pos_key.emplace(element(7));             //1 byte type + 6 bytes string (array\0)
         sax.pos_start_array.emplace(element(1));     //1 byte type + 0 bytes size (implicit in type)
@@ -483,7 +483,7 @@ TEST_CASE_TEMPLATE("extended parser", T, OptNone, OptLex, OptPos, OptBoth)
     {
         const auto j = nlohmann::json::parse(str);
         const auto bin = nlohmann::json::to_bjdata(j);
-        Sax</*LexCallImpossible*/ true, T::WithPos, T::WithLex> sax;
+        Sax</*LexCallImpossible*/ true, T::WithBytePos, T::WithLexPos> sax;
         sax.pos_start_object.emplace(element(1));    //1 byte type + 0 bytes size
         sax.pos_key.emplace(element(7));             //1 byte type + 6 bytes string (array\0)
         sax.pos_start_array.emplace(element(1));     //1 byte type + 0 bytes size (implicit in type)

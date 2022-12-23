@@ -67,6 +67,30 @@ To implement your own SAX handler, proceed as follows:
 
 Note the `sax_parse` function only returns a `#!cpp bool` indicating the result of the last executed SAX event. It does not return `json` value - it is up to you to decide what to do with the SAX events. Furthermore, no exceptions are thrown in case of a parse error - it is up to you what to do with the exception object passed to your `parse_error` implementation. Internally, the SAX interface is used for the DOM parser (class `json_sax_dom_parser`) as well as the acceptor (`json_sax_acceptor`), see file `json_sax.hpp`.
 
+## Element position information
+
+The position of a parsed element can be retrieved by implementing the optional methods [next_token_start](../../api/json_sax/next_token_start.md) and [next_token_end](../../api/json_sax/next_token_end.md).
+These methods will be called with the parser position before any of the other methods are called and can be used to retrieve the half open bounds (`[start, end)`) of a parsed element.
+
+These Methods come in two flavors:
+
+1. 
+```cpp
+void next_token_start(std::size_t pos);
+void next_token_end(std::size_t pos);
+```
+This flavor is called with the byte positions of each element and are available for any `nlohmann::json::input_format_t` passed to `nlohmann::json::sax_parse`.
+
+2. 
+```cpp
+void next_token_start(const nlohmann::position_t& p);
+void next_token_end(const nlohmann::position_t& p);
+```
+This flavor is called with the [detailed parser position information](../../api/position_t/index.md) of each element and are only available if `nlohmann::json::sax_parse` is called with `nlohmann::json::input_format_t::json`.
+Furthermore this flavor takes precedence over the first flavor.
+
+Depending on the required information it is possible for the SAX parser to implement all four or only one or none of these methods.
+
 ## See also
 
 - [json_sax](../../api/json_sax/index.md) - documentation of the SAX interface
