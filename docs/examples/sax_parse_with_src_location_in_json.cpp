@@ -187,7 +187,7 @@ class sax_with_token_start_stop_metadata
         return false;
     }
 
-    constexpr bool is_errored() const
+    bool is_errored() const
     {
         return errored;
     }

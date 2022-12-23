@@ -521,7 +521,7 @@ void fill_expected_sax_pos_json(SAX& sax,
         case nlohmann::json::value_t::object:
         {
             sax.pos_start_object.emplace(element(1));  // {
-            for (auto& el : part.items())
+            for (const auto& el : part.items())
             {
                 sax.pos_key.emplace(element(el.key().size() + 2));  //'"' + str + '"'
                 offset += 1;                                        // separator ':' between key and value
@@ -538,7 +538,7 @@ void fill_expected_sax_pos_json(SAX& sax,
         case nlohmann::json::value_t::array:
         {
             sax.pos_start_array.emplace(element(1));  // [
-            for (auto& el : part.items())
+            for (const auto& el : part.items())
             {
                 fill_expected_sax_pos_json(sax, element, el.value(), offset);
                 offset += 1;  // add ,
@@ -553,7 +553,7 @@ void fill_expected_sax_pos_json(SAX& sax,
         case nlohmann::json::value_t::string:
         {
             const auto val = part.get<std::string>();
-            std::size_t nbytes = val.size() + 2;  //'"' + value + '"'
+            const std::size_t nbytes = val.size() + 2;  //'"' + value + '"'
             sax.pos_string.emplace(element(nbytes));
         }
         break;
@@ -573,21 +573,21 @@ void fill_expected_sax_pos_json(SAX& sax,
         case nlohmann::json::value_t::number_integer:
         {
             const auto val = part.get<std::int64_t>();
-            std::size_t nbytes = std::to_string(val).size();
+            const std::size_t nbytes = std::to_string(val).size();
             sax.pos_number_integer.emplace(element(nbytes));
         }
         break;
         case nlohmann::json::value_t::number_unsigned:
         {
             const auto val = part.get<std::uint64_t>();
-            std::size_t nbytes = std::to_string(val).size();
+            const std::size_t nbytes = std::to_string(val).size();
             sax.pos_number_unsigned.emplace(element(nbytes));
         }
         break;
         case nlohmann::json::value_t::number_float:
         {
             const auto val = part.get<double>();
-            std::size_t nbytes = std::to_string(val).size();
+            const std::size_t nbytes = std::to_string(val).size();
             sax.pos_number_float.emplace(element(nbytes));
         }
         break;
@@ -632,7 +632,7 @@ void fill_expected_sax_pos_bson(SAX& sax,
         case nlohmann::json::value_t::object:
         {
             sax.pos_start_object.emplace(element(4));  //32 bit size
-            for (auto& el : part.items())
+            for (const auto& el : part.items())
             {
                 offset += 1;                                        // type of item
                 sax.pos_key.emplace(element(el.key().size() + 1));  // str + terminator
@@ -645,7 +645,7 @@ void fill_expected_sax_pos_bson(SAX& sax,
         {
             sax.pos_start_array.emplace(element(4));  //32 bit size
             std::size_t i = 0;
-            for (auto& el : part.items())
+            for (const auto& el : part.items())
             {
                 offset += 1;                             // type of item
                 offset += 1 + std::to_string(i).size();  // dummy key + terminator
@@ -667,8 +667,7 @@ void fill_expected_sax_pos_bson(SAX& sax,
         case nlohmann::json::value_t::boolean:
         {
             //type is before the key -> not included
-            std::size_t nbytes = 1;  //value
-            sax.pos_boolean.emplace(element(nbytes));
+            sax.pos_boolean.emplace(element(1)); //value
         }
         break;
         case nlohmann::json::value_t::number_integer:
@@ -741,8 +740,7 @@ void fill_expected_sax_pos_cbor(SAX& sax, const FN& element, const nlohmann::jso
     {
         case nlohmann::json::value_t::null:
         {
-            std::size_t nbytes = 1;  //type
-            sax.pos_null.emplace(element(nbytes));
+            sax.pos_null.emplace(element(1)); //type
         }
         break;
         case nlohmann::json::value_t::object:
@@ -770,7 +768,7 @@ void fill_expected_sax_pos_cbor(SAX& sax, const FN& element, const nlohmann::jso
             }
             sax.pos_start_object.emplace(element(nbytes));
             //key follows same rules as string
-            for (auto& el : part.items())
+            for (const auto& el : part.items())
             {
                 std::size_t nbyteskey = 1;  //type
                 nbyteskey += el.key().size();
@@ -862,8 +860,7 @@ void fill_expected_sax_pos_cbor(SAX& sax, const FN& element, const nlohmann::jso
         break;
         case nlohmann::json::value_t::boolean:
         {
-            std::size_t nbytes = 1;  //type
-            sax.pos_boolean.emplace(element(nbytes));
+            sax.pos_boolean.emplace(element(1)); //type
         }
         break;
         case nlohmann::json::value_t::number_integer:
@@ -880,15 +877,15 @@ void fill_expected_sax_pos_cbor(SAX& sax, const FN& element, const nlohmann::jso
             {
                 //value implicit in type
             }
-            else if (-val - 1 <= static_cast<std::int64_t>(std::numeric_limits<std::uint8_t>::max()))
+            else if (-(val + 1) <= static_cast<std::int64_t>(std::numeric_limits<std::uint8_t>::max()))
             {
                 nbytes += 1;
             }
-            else if (-val - 1 <= static_cast<std::int64_t>(std::numeric_limits<std::uint16_t>::max()))
+            else if (-(val + 1) <= static_cast<std::int64_t>(std::numeric_limits<std::uint16_t>::max()))
             {
                 nbytes += 2;
             }
-            else if (-val - 1 <= static_cast<std::int64_t>(std::numeric_limits<std::uint32_t>::max()))
+            else if (-(val + 1) <= static_cast<std::int64_t>(std::numeric_limits<std::uint32_t>::max()))
             {
                 nbytes += 4;
             }
@@ -993,8 +990,7 @@ void fill_expected_sax_pos_msgpack(SAX& sax, const FN& element, const nlohmann::
     {
         case nlohmann::json::value_t::null:
         {
-            std::size_t nbytes = 1;  //type
-            sax.pos_null.emplace(element(nbytes));
+            sax.pos_null.emplace(element(1)); //type
         }
         break;
         case nlohmann::json::value_t::object:
@@ -1018,7 +1014,7 @@ void fill_expected_sax_pos_msgpack(SAX& sax, const FN& element, const nlohmann::
             }
             sax.pos_start_object.emplace(element(nbytes));
             //key follows same rules as string
-            for (auto& el : part.items())
+            for (const auto& el : part.items())
             {
                 std::size_t nbyteskey = 1;  //type
                 nbyteskey += el.key().size();
@@ -1106,8 +1102,7 @@ void fill_expected_sax_pos_msgpack(SAX& sax, const FN& element, const nlohmann::
         break;
         case nlohmann::json::value_t::boolean:
         {
-            std::size_t nbytes = 1;  //type
-            sax.pos_boolean.emplace(element(nbytes));
+            sax.pos_boolean.emplace(element(1)); //type
         }
         break;
         case nlohmann::json::value_t::number_integer:
@@ -1233,15 +1228,14 @@ void fill_expected_sax_pos_ubjson(SAX& sax, const FN& element, const nlohmann::j
     {
         case nlohmann::json::value_t::null:
         {
-            std::size_t nbytes = 1;  //type
-            sax.pos_null.emplace(element(nbytes));
+            sax.pos_null.emplace(element(1)); //type
         }
         break;
         case nlohmann::json::value_t::object:
         {
             sax.pos_start_object.emplace(element(1));
             //key follows same rules as string
-            for (auto& el : part.items())
+            for (const auto& el : part.items())
             {
                 std::size_t nbyteskey = 1;  //type of len
                 nbyteskey += el.key().size();
@@ -1305,8 +1299,7 @@ void fill_expected_sax_pos_ubjson(SAX& sax, const FN& element, const nlohmann::j
         break;
         case nlohmann::json::value_t::boolean:
         {
-            std::size_t nbytes = 1;  //type
-            sax.pos_boolean.emplace(element(nbytes));
+            sax.pos_boolean.emplace(element(1)); //type
         }
         break;
         case nlohmann::json::value_t::number_integer:
@@ -1442,15 +1435,14 @@ void fill_expected_sax_pos_bjdata(SAX& sax, const FN& element, const nlohmann::j
     {
         case nlohmann::json::value_t::null:
         {
-            std::size_t nbytes = 1;  //type
-            sax.pos_null.emplace(element(nbytes));
+            sax.pos_null.emplace(element(1)); //type
         }
         break;
         case nlohmann::json::value_t::object:
         {
             sax.pos_start_object.emplace(element(1));
             //key follows same rules as string
-            for (auto& el : part.items())
+            for (const auto& el : part.items())
             {
                 std::size_t nbyteskey = 1;  //type of len
                 nbyteskey += el.key().size();
@@ -1514,8 +1506,7 @@ void fill_expected_sax_pos_bjdata(SAX& sax, const FN& element, const nlohmann::j
         break;
         case nlohmann::json::value_t::boolean:
         {
-            std::size_t nbytes = 1;  //type
-            sax.pos_boolean.emplace(element(nbytes));
+            sax.pos_boolean.emplace(element(1)); //type
         }
         break;
         case nlohmann::json::value_t::number_integer:

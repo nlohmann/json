@@ -83,12 +83,17 @@ class sax_with_token_start_stop_metadata
     */
     explicit sax_with_token_start_stop_metadata(json& r, const bool allow_exceptions_ = true)
         : root(r)
-        , ref_stack{}
-        , object_element{nullptr}
-        , errored{false}
+        , object_element{nullptr} // NOLINT(modernize-use-default-member-init)
+        , errored{false} // NOLINT(modernize-use-default-member-init)
         , allow_exceptions(allow_exceptions_)
-        , start_stop{}
     {}
+
+    sax_with_token_start_stop_metadata(sax_with_token_start_stop_metadata&&) = delete;
+    sax_with_token_start_stop_metadata(const sax_with_token_start_stop_metadata&) = delete;
+    sax_with_token_start_stop_metadata& operator=(sax_with_token_start_stop_metadata&&) = delete;
+    sax_with_token_start_stop_metadata& operator=(const sax_with_token_start_stop_metadata&) = delete;
+
+    ~sax_with_token_start_stop_metadata() = default;
 
     void next_token_start(const nlohmann::position_t& p)
     {
@@ -210,7 +215,7 @@ class sax_with_token_start_stop_metadata
         return false;
     }
 
-    constexpr bool is_errored() const
+    bool is_errored() const
     {
         return errored;
     }
@@ -263,7 +268,7 @@ class sax_with_token_start_stop_metadata
     /// whether to throw exceptions in case of errors
     const bool allow_exceptions = true;
     /// start / stop information for the current token
-    token_start_stop start_stop{};
+    token_start_stop start_stop {};
 };
 
 TEST_CASE("parse-json-with-position-info")

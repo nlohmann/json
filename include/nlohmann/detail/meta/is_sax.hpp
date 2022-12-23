@@ -15,6 +15,7 @@
 #include <nlohmann/detail/abi_macros.hpp>
 #include <nlohmann/detail/meta/detected.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
+#include <nlohmann/detail/input/position_t.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -63,7 +64,7 @@ struct sax_call_function
     //the sax parser supports calls with a lexer
     static constexpr bool detected_call_with_lex_pos =
         !called_with_byte_pos &&
-        is_detected_exact<void, call_t, SAX, const position_t >::value;
+        is_detected_exact<void, call_t, SAX, position_t >::value;
 
     //there either has to be a version accepting a lexer or a position
     static constexpr bool valid = detected_call_with_byte_pos || detected_call_with_lex_pos;
