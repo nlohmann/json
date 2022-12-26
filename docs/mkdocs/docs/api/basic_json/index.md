@@ -151,6 +151,7 @@ The class satisfies the following concept requirements:
 - [**array**](array_t.md) (_static_) - explicitly create an array
 - [**binary**](binary.md) (_static_) - explicitly create a binary array
 - [**object**](object_t.md) (_static_) - explicitly create an object
+- [**as_base_class**](as_base_class.md) - cast this object to [json_base_class_t](json_base_class_t.md)
 
 ### Object inspection
 
