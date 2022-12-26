@@ -42,14 +42,7 @@ TEST_CASE("bad_alloc")
     SECTION("bad_alloc")
     {
         // create JSON type using the throwing allocator
-        using bad_json = nlohmann::basic_json<std::map,
-              std::vector,
-              std::string,
-              bool,
-              std::int64_t,
-              std::uint64_t,
-              double,
-              bad_allocator>;
+        using bad_json = nlohmann::json::with_changed_allocator_t<bad_allocator>;
 
         // creating an object should throw
         CHECK_THROWS_AS(bad_json(bad_json::value_t::object), std::bad_alloc&);
@@ -123,14 +116,7 @@ void my_allocator_clean_up(T* p)
 TEST_CASE("controlled bad_alloc")
 {
     // create JSON type using the throwing allocator
-    using my_json = nlohmann::basic_json<std::map,
-          std::vector,
-          std::string,
-          bool,
-          std::int64_t,
-          std::uint64_t,
-          double,
-          my_allocator>;
+    using my_json = nlohmann::json::with_changed_allocator_t<my_allocator>;
 
     SECTION("class json_value")
     {
@@ -247,14 +233,7 @@ TEST_CASE("bad my_allocator::construct")
 {
     SECTION("my_allocator::construct doesn't forward")
     {
-        using bad_alloc_json = nlohmann::basic_json<std::map,
-              std::vector,
-              std::string,
-              bool,
-              std::int64_t,
-              std::uint64_t,
-              double,
-              allocator_no_forward>;
+        using bad_alloc_json = nlohmann::json::with_changed_allocator_t<allocator_no_forward>;
 
         bad_alloc_json j;
         j["test"] = bad_alloc_json::array_t();
