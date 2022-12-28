@@ -19771,6 +19771,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
         void destroy(value_t t)
         {
+            if (object == nullptr)
+            {
+                //not initialized (e.g. due to exception in the ctor)
+                return;
+            }
             if (t == value_t::array || t == value_t::object)
             {
                 // flatten the current json_value to a heap-allocated stack
@@ -23389,6 +23394,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
         void assert_invariant(const basic_json* parent = nullptr) const noexcept
         {
+            if (m_value.object == nullptr)
+            {
+                //the data was not fully initialized (e.g. due to an exception in the ctor)
+                return;
+            }
             JSON_ASSERT(m_type != value_t::object || m_value.object != nullptr);
             JSON_ASSERT(m_type != value_t::array || m_value.array != nullptr);
             JSON_ASSERT(m_type != value_t::string || m_value.string != nullptr);
@@ -23413,11 +23423,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         {
         }
 
-        data() = default;
-        data(data&&) = default;
-        data(const data&) = default;
-        data& operator=(data&&) = default;
-        data& operator=(const data&) = default;
+        data() noexcept = default;
+        data(data&&) noexcept = default;
+        data(const data&) noexcept = default;
+        data& operator=(data&&) noexcept = default;
+        data& operator=(const data&) noexcept = default;
 
         ~data() noexcept
         {

@@ -10,6 +10,7 @@
 
 #include <nlohmann/json.hpp>
 #include <exception>
+#include <iostream>
 
 struct Foo
 {
@@ -41,13 +42,14 @@ struct adl_serializer<Foo>
         }
     }
 };
-}
+} // namespace nlohmann
 
 TEST_CASE("check_for_mem_leak_on_adl_to_json-1")
 {
     try
     {
-        nlohmann::json j = Foo {1, 0};
+        const nlohmann::json j = Foo {1, 0};
+        std::cout << j.dump() << "\n";
     }
     catch (...)
     {
@@ -59,7 +61,8 @@ TEST_CASE("check_for_mem_leak_on_adl_to_json-2")
 {
     try
     {
-        nlohmann::json j = Foo {1, 1};
+        const nlohmann::json j = Foo {1, 1};
+        std::cout << j.dump() << "\n";
     }
     catch (...)
     {
@@ -71,7 +74,8 @@ TEST_CASE("check_for_mem_leak_on_adl_to_json-2")
 {
     try
     {
-        nlohmann::json j = Foo {1, 2};
+        const nlohmann::json j = Foo {1, 2};
+        std::cout << j.dump() << "\n";
     }
     catch (...)
     {
