@@ -19771,7 +19771,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
         void destroy(value_t t)
         {
-            if (object == nullptr)
+            if (
+                (t == value_t::object && object == nullptr) ||
+                (t == value_t::array && array == nullptr) ||
+                (t == value_t::string && string == nullptr) ||
+                (t == value_t::binary && binary == nullptr)
+            )
             {
                 //not initialized (e.g. due to exception in the ctor)
                 return;
@@ -19894,7 +19899,23 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     */
     void assert_invariant(bool check_parents = true) const noexcept
     {
-        m_data.assert_invariant(check_parents ? this : nullptr);
+        JSON_ASSERT(m_data.m_type != value_t::object || m_data.m_value.object != nullptr);
+        JSON_ASSERT(m_data.m_type != value_t::array || m_data.m_value.array != nullptr);
+        JSON_ASSERT(m_data.m_type != value_t::string || m_data.m_value.string != nullptr);
+        JSON_ASSERT(m_data.m_type != value_t::binary || m_data.m_value.binary != nullptr);
+
+#if JSON_DIAGNOSTICS
+        JSON_TRY
+        {
+            // cppcheck-suppress assertWithSideEffect
+            JSON_ASSERT(!check_parents || !is_structured() || std::all_of(begin(), end(), [this](const basic_json & j)
+            {
+                return j.m_parent == this;
+            }));
+        }
+        JSON_CATCH(...) {} // LCOV_EXCL_LINE
+#endif
+        static_cast<void>(check_parents);
     }
 
     void set_parents()
@@ -20445,6 +20466,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return *this;
     }
 
+    /// @brief destructor
+    /// @sa https://json.nlohmann.me/api/basic_json/~basic_json/
+    ~basic_json() noexcept
+    {
+        assert_invariant(false);
+    }
 
     /// @}
 
@@ -23391,33 +23418,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         /// the value of the current element
         json_value m_value = {};
 
-
-        void assert_invariant(const basic_json* parent = nullptr) const noexcept
-        {
-            if (m_value.object == nullptr)
-            {
-                //the data was not fully initialized (e.g. due to an exception in the ctor)
-                return;
-            }
-            JSON_ASSERT(m_type != value_t::object || m_value.object != nullptr);
-            JSON_ASSERT(m_type != value_t::array || m_value.array != nullptr);
-            JSON_ASSERT(m_type != value_t::string || m_value.string != nullptr);
-            JSON_ASSERT(m_type != value_t::binary || m_value.binary != nullptr);
-
-#if JSON_DIAGNOSTICS
-            JSON_TRY
-            {
-                // cppcheck-suppress assertWithSideEffect
-                JSON_ASSERT(parent == nullptr || !parent->is_structured() || std::all_of(parent->begin(), parent->end(), [parent](const basic_json & j)
-                {
-                    return j.m_parent == parent;
-                }));
-            }
-            JSON_CATCH(...) {} // LCOV_EXCL_LINE
-#endif
-            static_cast<void>(parent);
-        }
-
         data(const value_t v)
             : m_type(v), m_value(v)
         {
@@ -23431,7 +23431,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
         ~data() noexcept
         {
-            assert_invariant(nullptr);
             m_value.destroy(m_type);
         }
     };
