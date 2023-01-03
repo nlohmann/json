@@ -20232,10 +20232,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     /// @brief construct an array with count copies of given value
     /// @sa https://json.nlohmann.me/api/basic_json/basic_json/
-    basic_json(size_type cnt, const basic_json& val)
+    basic_json(size_type cnt, const basic_json& val):
+        m_data{cnt, val}
     {
-        m_data.m_type = value_t::array;
-        m_data.m_value.array = create<array_t>(cnt, val);
         set_parents();
         assert_invariant();
     }
@@ -23421,6 +23420,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         data(const value_t v)
             : m_type(v), m_value(v)
         {
+        }
+
+        data(size_type cnt, const basic_json& val)
+            : m_type(value_t::array)
+        {
+            m_value.array = create<array_t>(cnt, val);
         }
 
         data() noexcept = default;
