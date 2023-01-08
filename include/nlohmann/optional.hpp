@@ -170,159 +170,55 @@ template <typename T> const std::optional<T>& cmp_val(const optional<T>& v)
 {
     return v.base();
 }
-template <typename T> void cmp_val(const std::optional<T>& v) = delete;
 
 }  // namespace detail::opt
 
-#ifdef JSON_HAS_CPP_20
+#define JSON_OPTIONAL_COMPARISON_EXPR(OP) \
+    detail::opt::cmp_val(lhs) OP detail::opt::cmp_val(rhs)
 
-template <typename T, typename U>
-auto operator == (const optional<T>& lhs, const U& rhs) ->
-decltype(detail::opt::cmp_val(lhs) == detail::opt::cmp_val(rhs))
-{
-    return detail::opt::cmp_val(lhs) == detail::opt::cmp_val(rhs);
-}
+#define JSON_OPTIONAL_COMPARISON(OP, LHS, RHS) \
+    template <typename A, typename B> \
+    auto operator OP (const LHS& lhs, const RHS& rhs) \
+    noexcept(noexcept(JSON_OPTIONAL_COMPARISON_EXPR(OP))) \
+    -> decltype(JSON_OPTIONAL_COMPARISON_EXPR(OP)) \
+    { \
+        return JSON_OPTIONAL_COMPARISON_EXPR(OP); \
+    }
+
+#ifdef JSON_HAS_CPP_20
 
 // *INDENT-OFF*
 
-template <typename T, typename U>
-auto operator <=> (const optional<T>& lhs, const U& rhs) ->
-decltype(detail::opt::cmp_val(lhs) <=> detail::opt::cmp_val(rhs))
-{
-    return detail::opt::cmp_val(lhs) <=> detail::opt::cmp_val(rhs);
-}
+JSON_OPTIONAL_COMPARISON( <=>, optional<A>, B)
 
 // *INDENT-ON*
 
+JSON_OPTIONAL_COMPARISON( ==, optional<A>, B)
+JSON_OPTIONAL_COMPARISON( ==, optional<A>, std::optional<B>)
+JSON_OPTIONAL_COMPARISON( ==, std::optional<A>, optional<B>)
+
 #else // JSON_HAS_CPP_20
 
-template<class T, class U>
-constexpr auto operator == (const optional<T>& lhs, const optional<U>& rhs) ->
-decltype(detail::opt::cmp_val(lhs) == detail::opt::cmp_val(rhs))
-{
-    return detail::opt::cmp_val(lhs) == detail::opt::cmp_val(rhs);
-}
+#define JSON_OPTIONAL_COMPARISON_OP(OP) \
+    JSON_OPTIONAL_COMPARISON(OP, optional<A>, optional<B>) \
+    JSON_OPTIONAL_COMPARISON(OP, optional<A>, std::optional<B>) \
+    JSON_OPTIONAL_COMPARISON(OP, std::optional<A>, optional<B>) \
+    JSON_OPTIONAL_COMPARISON(OP, optional<A>, B) \
+    JSON_OPTIONAL_COMPARISON(OP, A, optional<B>)
 
-template <class T, class U>
-constexpr auto operator == (const optional<T>& lhs, const U& rhs) ->
-decltype(detail::opt::cmp_val(lhs) == detail::opt::cmp_val(rhs))
-{
-    return detail::opt::cmp_val(lhs) == detail::opt::cmp_val(rhs);
-}
+JSON_OPTIONAL_COMPARISON_OP( == )
+JSON_OPTIONAL_COMPARISON_OP( != )
+JSON_OPTIONAL_COMPARISON_OP( < )
+JSON_OPTIONAL_COMPARISON_OP( <= )
+JSON_OPTIONAL_COMPARISON_OP( > )
+JSON_OPTIONAL_COMPARISON_OP( >= )
 
-template <class T, class U>
-constexpr auto operator == (const T& lhs, const optional<U>& rhs) ->
-decltype(detail::opt::cmp_val(lhs) == detail::opt::cmp_val(rhs))
-{
-    return detail::opt::cmp_val(lhs) == detail::opt::cmp_val(rhs);
-}
-
-template<class T, class U>
-constexpr auto operator != (const optional<T>& lhs, const optional<U>& rhs) ->
-decltype(detail::opt::cmp_val(lhs) != detail::opt::cmp_val(rhs))
-{
-    return detail::opt::cmp_val(lhs) != detail::opt::cmp_val(rhs);
-}
-
-template <class T, class U>
-constexpr auto operator != (const optional<T>& lhs, const U& rhs) ->
-decltype(detail::opt::cmp_val(lhs) != detail::opt::cmp_val(rhs))
-{
-    return detail::opt::cmp_val(lhs) != detail::opt::cmp_val(rhs);
-}
-
-template <class T, class U>
-constexpr auto operator != (const T& lhs, const optional<U>& rhs) ->
-decltype(detail::opt::cmp_val(lhs) != detail::opt::cmp_val(rhs))
-{
-    return detail::opt::cmp_val(lhs) != detail::opt::cmp_val(rhs);
-}
-
-template<class T, class U>
-constexpr auto operator < (const optional<T>& lhs, const optional<U>& rhs) ->
-decltype(detail::opt::cmp_val(lhs) < detail::opt::cmp_val(rhs))
-{
-    return detail::opt::cmp_val(lhs) < detail::opt::cmp_val(rhs);
-}
-
-template <class T, class U>
-constexpr auto operator < (const optional<T>& lhs, const U& rhs) ->
-decltype(detail::opt::cmp_val(lhs) < detail::opt::cmp_val(rhs))
-{
-    return detail::opt::cmp_val(lhs) < detail::opt::cmp_val(rhs);
-}
-
-template <class T, class U>
-constexpr auto operator < (const T& lhs, const optional<U>& rhs) ->
-decltype(detail::opt::cmp_val(lhs) < detail::opt::cmp_val(rhs))
-{
-    return detail::opt::cmp_val(lhs) < detail::opt::cmp_val(rhs);
-}
-
-template<class T, class U>
-constexpr auto operator <= (const optional<T>& lhs, const optional<U>& rhs) ->
-decltype(detail::opt::cmp_val(lhs) <= detail::opt::cmp_val(rhs))
-{
-    return detail::opt::cmp_val(lhs) <= detail::opt::cmp_val(rhs);
-}
-
-template <class T, class U>
-constexpr auto operator <= (const optional<T>& lhs, const U& rhs) ->
-decltype(detail::opt::cmp_val(lhs) <= detail::opt::cmp_val(rhs))
-{
-    return detail::opt::cmp_val(lhs) <= detail::opt::cmp_val(rhs);
-}
-
-template <class T, class U>
-constexpr auto operator <= (const T& lhs, const optional<U>& rhs) ->
-decltype(detail::opt::cmp_val(lhs) <= detail::opt::cmp_val(rhs))
-{
-    return detail::opt::cmp_val(lhs) <= detail::opt::cmp_val(rhs);
-}
-
-template<class T, class U>
-constexpr auto operator > (const optional<T>& lhs, const optional<U>& rhs) ->
-decltype(detail::opt::cmp_val(lhs) > detail::opt::cmp_val(rhs))
-{
-    return detail::opt::cmp_val(lhs) > detail::opt::cmp_val(rhs);
-}
-
-template <class T, class U>
-constexpr auto operator > (const optional<T>& lhs, const U& rhs) ->
-decltype(detail::opt::cmp_val(lhs) > detail::opt::cmp_val(rhs))
-{
-    return detail::opt::cmp_val(lhs) > detail::opt::cmp_val(rhs);
-}
-
-template <class T, class U>
-constexpr auto operator > (const T& lhs, const optional<U>& rhs) ->
-decltype(detail::opt::cmp_val(lhs) > detail::opt::cmp_val(rhs))
-{
-    return detail::opt::cmp_val(lhs) > detail::opt::cmp_val(rhs);
-}
-
-template<class T, class U>
-constexpr auto operator >= (const optional<T>& lhs, const optional<U>& rhs) ->
-decltype(detail::opt::cmp_val(lhs) >= detail::opt::cmp_val(rhs))
-{
-    return detail::opt::cmp_val(lhs) >= detail::opt::cmp_val(rhs);
-}
-
-template <class T, class U>
-constexpr auto operator >= (const optional<T>& lhs, const U& rhs) ->
-decltype(detail::opt::cmp_val(lhs) >= detail::opt::cmp_val(rhs))
-{
-    return detail::opt::cmp_val(lhs) >= detail::opt::cmp_val(rhs);
-}
-
-template <class T, class U>
-constexpr auto operator >= (const T& lhs, const optional<U>& rhs) ->
-decltype(detail::opt::cmp_val(lhs) >= detail::opt::cmp_val(rhs))
-{
-    return detail::opt::cmp_val(lhs) >= detail::opt::cmp_val(rhs);
-}
+#undef JSON_OPTIONAL_COMPARISON_OP
 
 #endif // JSON_HAS_CPP_20
+
+#undef JSON_OPTIONAL_COMPARISON
+#undef JSON_OPTIONAL_COMPARISON_EXPR
 
 NLOHMANN_JSON_NAMESPACE_END
 
