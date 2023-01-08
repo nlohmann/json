@@ -1656,7 +1656,7 @@ TEST_CASE("nlohmann::optional")
     SECTION("null")
     {
         json j_null;
-        nlohmann::optional<std::string> opt_null;
+        nlohmann::optional<std::string> const opt_null;
 
         CHECK(json(opt_null) == j_null);
         CHECK(j_null.get<nlohmann::optional<std::string>>() == std::nullopt);
