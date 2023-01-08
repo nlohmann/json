@@ -71,17 +71,17 @@ class optional
 
   public:
 
-    base_type& base() &
+    base_type& base() & noexcept
     {
         return base_value;
     }
 
-    const base_type& base() const &
+    const base_type& base() const & noexcept
     {
         return base_value;
     }
 
-    base_type&& base() &&
+    base_type&& base() && noexcept
     {
         return std::move(base_value);
     }
@@ -150,8 +150,8 @@ class optional
     constexpr T* operator ->() noexcept { return base_value.operator ->(); }
     constexpr const T* operator ->() const noexcept { return base_value.operator ->(); }
 
-    operator base_type& () & { return base_value; }
-    operator base_type&& () && { return std::move(base_value); }
+    operator base_type& () & noexcept { return base_value; }
+    operator base_type&& () && noexcept { return std::move(base_value); }
 
     // *INDENT-ON*
 };
