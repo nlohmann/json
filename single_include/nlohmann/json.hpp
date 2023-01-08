@@ -4771,7 +4771,6 @@ template <typename T> const std::optional<T>& cmp_val(const optional<T>& v)
 #define JSON_OPTIONAL_COMPARISON(OP, LHS, RHS) \
     template <typename A, typename B> \
     auto operator OP (const LHS& lhs, const RHS& rhs) \
-    noexcept(noexcept(JSON_OPTIONAL_COMPARISON_EXPR(OP))) \
     -> decltype(JSON_OPTIONAL_COMPARISON_EXPR(OP)) \
     { \
         return JSON_OPTIONAL_COMPARISON_EXPR(OP); \
