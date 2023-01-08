@@ -65,7 +65,7 @@ class optional
             is_base_constructible_from<std::in_place_t, U...>
         >;
 
-    struct noexcept_fix_t {};
+    struct noexcept_fix_t {}; // trick for GCC8.1 (see default constructor)
 
     base_type base_value;
 
