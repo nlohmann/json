@@ -86,7 +86,10 @@ class optional
         return std::move(base_value);
     }
 
-    constexpr optional() noexcept(noexcept(std::optional<noexcept_fix_t>())) = default;
+    constexpr optional() noexcept(noexcept(std::optional<noexcept_fix_t>()))
+        : base_value() // explicitly initialized to mitigate -Werror=effc++
+    {
+    }
 
     constexpr optional(std::nullopt_t /* unused */) noexcept
         : base_value(std::nullopt)
