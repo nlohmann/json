@@ -35,6 +35,14 @@ TEST_CASE("nlohmann::optional comparison")
     CHECK_FALSE(nullopt == opt_int(0));
     CHECK_FALSE(opt_int(0) == opt_int(1));
 
+    CHECK(opt_int() == std_opt_int());
+    CHECK(opt_int(0) == std_opt_int(0));
+    CHECK_FALSE(opt_int(0) == std_opt_int(1));
+
+    CHECK(std_opt_int() == opt_int());
+    CHECK(std_opt_int(0) == opt_int(0));
+    CHECK_FALSE(std_opt_int(0) == opt_int(1));
+
     CHECK(opt_int(0) != nullopt);
     CHECK(nullopt != opt_int(0));
     CHECK(opt_int(0) != opt_int(1));
@@ -43,25 +51,45 @@ TEST_CASE("nlohmann::optional comparison")
     CHECK_FALSE(opt_int() != opt_int(nullopt));
     CHECK_FALSE(opt_int(0) != opt_int(0));
 
+    CHECK_FALSE(opt_int() != std_opt_int());
+    CHECK_FALSE(opt_int(0) != std_opt_int(0));
+    CHECK(opt_int(0) != std_opt_int(1));
+
+    CHECK_FALSE(std_opt_int() != opt_int());
+    CHECK_FALSE(std_opt_int(0) != opt_int(0));
+    CHECK(std_opt_int(0) != opt_int(1));
+
     CHECK(opt_int(0) > nullopt);
     CHECK(opt_int(1) > opt_int(0));
     CHECK_FALSE(nullopt > opt_int(0));
     CHECK_FALSE(opt_int(0) > opt_int(1));
+
+    CHECK(opt_int(0) > std_opt_int());
+    CHECK(std_opt_int(0) > opt_int());
 
     CHECK(opt_int(0) >= nullopt);
     CHECK(opt_int(1) >= opt_int(0));
     CHECK_FALSE(nullopt >= opt_int(0));
     CHECK_FALSE(opt_int(0) >= opt_int(1));
 
+    CHECK(opt_int(0) >= std_opt_int());
+    CHECK(std_opt_int(0) >= opt_int());
+
     CHECK(nullopt < opt_int(0));
     CHECK(opt_int(0) < opt_int(1));
     CHECK_FALSE(opt_int(0) < nullopt);
     CHECK_FALSE(opt_int(1) < opt_int(0));
 
+    CHECK_FALSE(opt_int(0) < std_opt_int());
+    CHECK_FALSE(std_opt_int(0) < opt_int());
+
     CHECK(nullopt <= opt_int(0));
     CHECK(opt_int(0) <= opt_int(1));
     CHECK_FALSE(opt_int(0) <= nullopt);
     CHECK_FALSE(opt_int(1) <= opt_int(0));
+
+    CHECK_FALSE(opt_int(0) <= std_opt_int());
+    CHECK_FALSE(std_opt_int(0) <= opt_int());
 }
 
 TEST_CASE("nlohmann::optional constructors")
