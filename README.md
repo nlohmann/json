@@ -1140,7 +1140,7 @@ Please note:
 
 - Unsupported versions of GCC and Clang are rejected by `#error` directives. This can be switched off by defining `JSON_SKIP_UNSUPPORTED_COMPILER_CHECK`. Note that you can expect no support in this case.
 
-The following compilers are currently used in continuous integration at [AppVeyor](https://ci.appveyor.com/project/nlohmann/json), [Drone CI](https://cloud.drone.io/nlohmann/json), and [GitHub Actions](https://github.com/nlohmann/json/actions):
+The following compilers are currently used in continuous integration at [AppVeyor](https://ci.appveyor.com/project/nlohmann/json), [Cirrus CI](https://cirrus-ci.com/github/nlohmann/json), and [GitHub Actions](https://github.com/nlohmann/json/actions):
 
 | Compiler                                                                                               | Operating System   | CI Provider    |
 |--------------------------------------------------------------------------------------------------------|--------------------|----------------|
@@ -1190,7 +1190,7 @@ The following compilers are currently used in continuous integration at [AppVeyo
 | GCC 8.5.0                                                                                              | Ubuntu 20.04.3 LTS | GitHub Actions |
 | GCC 9.5.0                                                                                              | Ubuntu 20.04.3 LTS | GitHub Actions |
 | GCC 10.4.0                                                                                             | Ubuntu 20.04.3 LTS | GitHub Actions |
-| GCC 11.1.0                                                                                             | Ubuntu (aarch64)   | Drone CI       |
+| GCC 11.1.0                                                                                             | Ubuntu (aarch64)   | Cirrus CI      |
 | GCC 11.3.0                                                                                             | Ubuntu 20.04.3 LTS | GitHub Actions |
 | GCC 12.2.0                                                                                             | Ubuntu 20.04.3 LTS | GitHub Actions |
 | GCC 13.0.0 20220605 (experimental)                                                                     | Ubuntu 20.04.3 LTS | GitHub Actions |
