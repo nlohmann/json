@@ -832,7 +832,12 @@ class serializer
 
         // the actual conversion
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
-        std::ptrdiff_t len = (std::snprintf)(number_buffer.data(), number_buffer.size(), "%.*g", d, x);
+        std::ptrdiff_t len;
+        if constexpr (std::is_same_v<number_float_t, long double>) {
+            len = (std::snprintf)(number_buffer.data(), number_buffer.size(), "%.*Lg", d, x);
+        } else {
+            len = (std::snprintf)(number_buffer.data(), number_buffer.size(), "%.*g", d, x);
+        }
 
         // negative value indicates an error
         JSON_ASSERT(len > 0);
