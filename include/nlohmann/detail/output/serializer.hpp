@@ -832,7 +832,7 @@ class serializer
 
         // the actual conversion
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
-        std::ptrdiff_t len = (std::snprintf)(number_buffer.data(), number_buffer.size(), 
+        std::ptrdiff_t len = (std::snprintf)(number_buffer.data(), number_buffer.size(),
                                              std::is_same<number_float_t, long double>::value ? "%.*Lg" : "%.*g",
                                              d, x);
 
