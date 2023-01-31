@@ -1109,7 +1109,7 @@ auto cbor = json::to_msgpack(j); // 0xD5 (fixext2), 0x10, 0xCA, 0xFE
 
 ## Supported compilers
 
-Though it's 2022 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
+Though it's 2023 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
 
 - GCC 4.8 - 12.0 (and possibly later)
 - Clang 3.4 - 15.0 (and possibly later)
