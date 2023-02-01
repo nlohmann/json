@@ -1,13 +1,8 @@
-kind: pipeline
-name: test-on-arm64
+arm_container:
+  image: gcc:latest
 
-platform:
-  arch: arm64
-
-steps:
-- name: build
-  image: gcc
-  commands:
+check_task:
+  check_script:
   - wget https://github.com/Kitware/CMake/releases/download/v3.20.2/cmake-3.20.2.tar.gz
   - tar xfz cmake-3.20.2.tar.gz
   - cd cmake-3.20.2
