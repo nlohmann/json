@@ -146,6 +146,9 @@ jobs:
       - uses: actions/checkout@v3
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@latest
+      - name: Set env FORCE_STDCPPFS_FLAG for clang 7 / 8 / 9 / 10
+        run: echo "JSON_FORCED_GLOBAL_COMPILE_OPTIONS=-DJSON_HAS_FILESYSTEM=0;-DJSON_HAS_EXPERIMENTAL_FILESYSTEM=0" >> "$GITHUB_ENV"
+        if: ${{ matrix.compiler == '7' || matrix.compiler == '8' || matrix.compiler == '9' || matrix.compiler == '10' }}
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
