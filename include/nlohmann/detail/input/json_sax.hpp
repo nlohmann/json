@@ -28,8 +28,9 @@ boolean return value informs the parser whether to continue processing the
 input.
 */
 template<typename BasicJsonType>
-struct json_sax
+class json_sax
 {
+  public:
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
@@ -142,6 +143,87 @@ struct json_sax
     virtual ~json_sax() = default;
 };
 
+template<typename BasicJsonType>
+class msgpack_sax : public json_sax<BasicJsonType>
+{
+  public:
+
+    using number_integer_t = typename BasicJsonType::number_integer_t;
+    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+    using number_float_t = typename BasicJsonType::number_float_t;
+    using string_t = typename BasicJsonType::string_t;
+    using binary_t = typename BasicJsonType::binary_t;
+
+    /*!
+    @brief an object key of null value was read
+    @return whether parsing should proceed
+    */
+    virtual bool key_null() = 0;
+
+    /*!
+    @brief an object key of type bool was read
+    @return whether parsing should proceed
+    */
+    virtual bool key_boolean(bool val) = 0;
+
+    /*!
+    @brief an object key of type integer number was read
+    @return whether parsing should proceed
+    */
+    virtual bool key_integer(number_integer_t val) = 0;
+
+    /*!
+    @brief an object key of type unsigned was read
+    @return whether parsing should proceed
+    */
+    virtual bool key_unsigned(number_unsigned_t val) = 0;
+
+    /*!
+    @brief an object key of type float was read
+    @return whether parsing should proceed
+    */
+    virtual bool key_float(number_float_t val, const string_t& s) = 0;
+
+    /*!
+    @brief an object key of type binary was read
+    @param[in] val  binary value
+    @return whether parsing should proceed
+    @note It is safe to move the passed binary value.
+    */
+    virtual bool key_binary(binary_t& val) = 0;
+
+    /*!
+    @brief the beginning of a key of type array was read
+    @param[in] elements  number of array elements or -1 if unknown
+    @return whether parsing should proceed
+    @note binary formats may report the number of elements
+    */
+    virtual bool start_key_array(std::size_t elements) = 0;
+
+    /*!
+    @brief the end of a key of type array was read
+    @return whether parsing should proceed
+    */
+    virtual bool end_key_array() = 0;
+
+    /*!
+    @brief the beginning of a key of type object was read
+    @param[in] elements  number of object elements or -1 if unknown
+    @return whether parsing should proceed
+    @note binary formats may report the number of elements
+    */
+    virtual bool start_key_object(std::size_t elements) = 0;
+
+    /*!
+    @brief the end of a key of type object was read
+    @return whether parsing should proceed
+    */
+    virtual bool end_key_object() = 0;
+};
+
+
+
+
 
 namespace detail
 {
@@ -158,8 +240,59 @@ constructor contains the parsed value.
 
 @tparam BasicJsonType  the JSON type
 */
+
 template<typename BasicJsonType>
-class json_sax_dom_parser
+class json_sax_exception_handler : public json_sax<BasicJsonType>
+{
+  protected:
+    /// whether a syntax error occurred
+    bool errored = false;
+    /// whether to throw exceptions in case of errors
+    const bool allow_exceptions = true;
+
+  public:
+    using number_integer_t = typename BasicJsonType::number_integer_t;
+    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+    using number_float_t = typename BasicJsonType::number_float_t;
+    using string_t = typename BasicJsonType::string_t;
+    using binary_t = typename BasicJsonType::binary_t;
+
+    explicit json_sax_exception_handler(const bool allow_exceptions_)
+        : errored{false}, allow_exceptions{allow_exceptions_}
+    {}
+
+
+    template<class Exception>
+    bool handle_throw_exception(const Exception& ex)
+    {
+        errored = true;
+        static_cast<void>(ex);
+        if (allow_exceptions)
+        {
+            JSON_THROW(ex);
+        }
+        return false;
+    }
+
+    virtual bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const detail::exception& ex) override
+    {
+        return handle_throw_exception(ex);
+    }
+
+    template<class Exception>
+    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const Exception& ex)
+    {
+        return handle_throw_exception(ex);
+    }
+
+    constexpr bool is_errored() const
+    {
+        return errored;
+    }
+};
+
+template<typename BasicJsonType>
+class json_sax_dom_parser : public json_sax_exception_handler<BasicJsonType>
 {
   public:
     using number_integer_t = typename BasicJsonType::number_integer_t;
@@ -174,7 +307,7 @@ class json_sax_dom_parser
     @param[in] allow_exceptions_  whether parse errors yield exceptions
     */
     explicit json_sax_dom_parser(BasicJsonType& r, const bool allow_exceptions_ = true)
-        : root(r), allow_exceptions(allow_exceptions_)
+        : root(r), json_sax_exception_handler<BasicJsonType>(allow_exceptions_)
     {}
 
     // make class move-only
@@ -184,49 +317,49 @@ class json_sax_dom_parser
     json_sax_dom_parser& operator=(json_sax_dom_parser&&) = default; // NOLINT(hicpp-noexcept-move,performance-noexcept-move-constructor)
     ~json_sax_dom_parser() = default;
 
-    bool null()
+    bool null() override
     {
         handle_value(nullptr);
         return true;
     }
 
-    bool boolean(bool val)
+    bool boolean(bool val) override
     {
         handle_value(val);
         return true;
     }
 
-    bool number_integer(number_integer_t val)
+    bool number_integer(number_integer_t val) override
     {
         handle_value(val);
         return true;
     }
 
-    bool number_unsigned(number_unsigned_t val)
+    bool number_unsigned(number_unsigned_t val) override
     {
         handle_value(val);
         return true;
     }
 
-    bool number_float(number_float_t val, const string_t& /*unused*/)
+    bool number_float(number_float_t val, const string_t& /*unused*/) override
     {
         handle_value(val);
         return true;
     }
 
-    bool string(string_t& val)
+    bool string(string_t& val) override
     {
         handle_value(val);
         return true;
     }
 
-    bool binary(binary_t& val)
+    bool binary(binary_t& val) override
     {
         handle_value(std::move(val));
         return true;
     }
 
-    bool start_object(std::size_t len)
+    bool start_object(std::size_t len) override
     {
         ref_stack.push_back(handle_value(BasicJsonType::value_t::object));
 
@@ -238,7 +371,7 @@ class json_sax_dom_parser
         return true;
     }
 
-    bool key(string_t& val)
+    bool key(string_t& val) override
     {
         JSON_ASSERT(!ref_stack.empty());
         JSON_ASSERT(ref_stack.back()->is_object());
@@ -248,7 +381,7 @@ class json_sax_dom_parser
         return true;
     }
 
-    bool end_object()
+    bool end_object() override
     {
         JSON_ASSERT(!ref_stack.empty());
         JSON_ASSERT(ref_stack.back()->is_object());
@@ -258,7 +391,7 @@ class json_sax_dom_parser
         return true;
     }
 
-    bool start_array(std::size_t len)
+    bool start_array(std::size_t len) override
     {
         ref_stack.push_back(handle_value(BasicJsonType::value_t::array));
 
@@ -270,7 +403,7 @@ class json_sax_dom_parser
         return true;
     }
 
-    bool end_array()
+    bool end_array() override
     {
         JSON_ASSERT(!ref_stack.empty());
         JSON_ASSERT(ref_stack.back()->is_array());
@@ -280,23 +413,6 @@ class json_sax_dom_parser
         return true;
     }
 
-    template<class Exception>
-    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/,
-                     const Exception& ex)
-    {
-        errored = true;
-        static_cast<void>(ex);
-        if (allow_exceptions)
-        {
-            JSON_THROW(ex);
-        }
-        return false;
-    }
-
-    constexpr bool is_errored() const
-    {
-        return errored;
-    }
 
   private:
     /*!
@@ -335,14 +451,11 @@ class json_sax_dom_parser
     std::vector<BasicJsonType*> ref_stack {};
     /// helper to hold the reference for the next object element
     BasicJsonType* object_element = nullptr;
-    /// whether a syntax error occurred
-    bool errored = false;
-    /// whether to throw exceptions in case of errors
-    const bool allow_exceptions = true;
+
 };
 
 template<typename BasicJsonType>
-class json_sax_dom_callback_parser
+class json_sax_dom_callback_parser : public json_sax_exception_handler<BasicJsonType>
 {
   public:
     using number_integer_t = typename BasicJsonType::number_integer_t;
@@ -356,7 +469,7 @@ class json_sax_dom_callback_parser
     json_sax_dom_callback_parser(BasicJsonType& r,
                                  const parser_callback_t cb,
                                  const bool allow_exceptions_ = true)
-        : root(r), callback(cb), allow_exceptions(allow_exceptions_)
+        : root(r), callback(cb), json_sax_exception_handler<BasicJsonType>(allow_exceptions_)
     {
         keep_stack.push_back(true);
     }
@@ -368,49 +481,49 @@ class json_sax_dom_callback_parser
     json_sax_dom_callback_parser& operator=(json_sax_dom_callback_parser&&) = default; // NOLINT(hicpp-noexcept-move,performance-noexcept-move-constructor)
     ~json_sax_dom_callback_parser() = default;
 
-    bool null()
+    bool null() override
     {
         handle_value(nullptr);
         return true;
     }
 
-    bool boolean(bool val)
+    bool boolean(bool val) override
     {
         handle_value(val);
         return true;
     }
 
-    bool number_integer(number_integer_t val)
+    bool number_integer(number_integer_t val) override
     {
         handle_value(val);
         return true;
     }
 
-    bool number_unsigned(number_unsigned_t val)
+    bool number_unsigned(number_unsigned_t val) override
     {
         handle_value(val);
         return true;
     }
 
-    bool number_float(number_float_t val, const string_t& /*unused*/)
+    bool number_float(number_float_t val, const string_t& /*unused*/) override
     {
         handle_value(val);
         return true;
     }
 
-    bool string(string_t& val)
+    bool string(string_t& val) override
     {
         handle_value(val);
         return true;
     }
 
-    bool binary(binary_t& val)
+    bool binary(binary_t& val) override
     {
         handle_value(std::move(val));
         return true;
     }
 
-    bool start_object(std::size_t len)
+    bool start_object(std::size_t len) override
     {
         // check callback for object start
         const bool keep = callback(static_cast<int>(ref_stack.size()), parse_event_t::object_start, discarded);
@@ -428,7 +541,7 @@ class json_sax_dom_callback_parser
         return true;
     }
 
-    bool key(string_t& val)
+    bool key(string_t& val) override
     {
         BasicJsonType k = BasicJsonType(val);
 
@@ -445,7 +558,7 @@ class json_sax_dom_callback_parser
         return true;
     }
 
-    bool end_object()
+    bool end_object() override
     {
         if (ref_stack.back())
         {
@@ -481,7 +594,7 @@ class json_sax_dom_callback_parser
         return true;
     }
 
-    bool start_array(std::size_t len)
+    bool start_array(std::size_t len) override
     {
         const bool keep = callback(static_cast<int>(ref_stack.size()), parse_event_t::array_start, discarded);
         keep_stack.push_back(keep);
@@ -498,7 +611,7 @@ class json_sax_dom_callback_parser
         return true;
     }
 
-    bool end_array()
+    bool end_array() override
     {
         bool keep = true;
 
@@ -530,23 +643,6 @@ class json_sax_dom_callback_parser
         return true;
     }
 
-    template<class Exception>
-    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/,
-                     const Exception& ex)
-    {
-        errored = true;
-        static_cast<void>(ex);
-        if (allow_exceptions)
-        {
-            JSON_THROW(ex);
-        }
-        return false;
-    }
-
-    constexpr bool is_errored() const
-    {
-        return errored;
-    }
 
   private:
     /*!
@@ -638,18 +734,14 @@ class json_sax_dom_callback_parser
     std::vector<bool> key_keep_stack {};
     /// helper to hold the reference for the next object element
     BasicJsonType* object_element = nullptr;
-    /// whether a syntax error occurred
-    bool errored = false;
     /// callback function
     const parser_callback_t callback = nullptr;
-    /// whether to throw exceptions in case of errors
-    const bool allow_exceptions = true;
     /// a discarded value for the callback
     BasicJsonType discarded = BasicJsonType::value_t::discarded;
 };
 
 template<typename BasicJsonType>
-class json_sax_acceptor
+class json_sax_acceptor : public msgpack_sax<BasicJsonType>
 {
   public:
     using number_integer_t = typename BasicJsonType::number_integer_t;
@@ -658,67 +750,117 @@ class json_sax_acceptor
     using string_t = typename BasicJsonType::string_t;
     using binary_t = typename BasicJsonType::binary_t;
 
-    bool null()
+    bool null() override
     {
         return true;
     }
 
-    bool boolean(bool /*unused*/)
+    bool boolean(bool /*unused*/) override
     {
         return true;
     }
 
-    bool number_integer(number_integer_t /*unused*/)
+    bool number_integer(number_integer_t /*unused*/) override
     {
         return true;
     }
 
-    bool number_unsigned(number_unsigned_t /*unused*/)
+    bool number_unsigned(number_unsigned_t /*unused*/) override
     {
         return true;
     }
 
-    bool number_float(number_float_t /*unused*/, const string_t& /*unused*/)
+    bool number_float(number_float_t /*unused*/, const string_t& /*unused*/) override
     {
         return true;
     }
 
-    bool string(string_t& /*unused*/)
+    bool string(string_t& /*unused*/) override
     {
         return true;
     }
 
-    bool binary(binary_t& /*unused*/)
+    bool binary(binary_t& /*unused*/) override
     {
         return true;
     }
 
-    bool start_object(std::size_t /*unused*/ = static_cast<std::size_t>(-1))
+    bool start_array(std::size_t /*unused*/ = static_cast<std::size_t>(-1)) override
     {
         return true;
     }
 
-    bool key(string_t& /*unused*/)
+    bool end_array() override
     {
         return true;
     }
 
-    bool end_object()
+    bool start_object(std::size_t /*unused*/ = static_cast<std::size_t>(-1)) override
     {
         return true;
     }
 
-    bool start_array(std::size_t /*unused*/ = static_cast<std::size_t>(-1))
+    bool end_object() override
     {
         return true;
     }
 
-    bool end_array()
+    bool key(string_t& /*unused*/) override
     {
         return true;
     }
 
-    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const detail::exception& /*unused*/)
+    bool key_null() override
+    {
+        return true;
+    }
+
+    bool key_boolean(bool /*unused*/)  override
+    {
+        return true;
+    }
+
+    bool key_integer(number_integer_t /*unused*/) override
+    {
+        return true;
+    }
+
+    bool key_unsigned(number_unsigned_t /*unused*/) override
+    {
+        return true;
+    }
+
+    bool key_float(number_float_t /*unused*/, const string_t& /*unused*/) override
+    {
+        return true;
+    }
+
+    bool key_binary(binary_t& /*val*/) override
+    {
+        return true;
+    }
+
+    bool start_key_array(std::size_t /*elements*/) override
+    {
+        return true;
+    }
+
+    bool end_key_array() override
+    {
+        return true;
+    }
+
+    bool start_key_object(std::size_t /*elements*/) override
+    {
+        return true;
+    }
+
+    bool end_key_object() override
+    {
+        return true;
+    }
+
+    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const detail::exception& /*unused*/) override
     {
         return false;
     }

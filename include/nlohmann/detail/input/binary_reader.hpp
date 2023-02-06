@@ -1183,7 +1183,7 @@ class binary_reader
             }
         }
 
-        return sax->end_object();
+        return true;
     }
 
     /////////////
@@ -1349,7 +1349,11 @@ class binary_reader
             case 0x8D:
             case 0x8E:
             case 0x8F:
-                return get_msgpack_object(conditional_static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x0Fu));
+            {
+                const auto len = conditional_static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x0Fu);
+                return sax->start_object(len) && get_msgpack_object(len) && sax->end_object();
+
+            }
 
             // fixarray
             case 0x90:
@@ -1368,7 +1372,16 @@ class binary_reader
             case 0x9D:
             case 0x9E:
             case 0x9F:
-                return get_msgpack_array(conditional_static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x0Fu));
+            {
+                const auto len = conditional_static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x0Fu);
+                return JSON_HEDLEY_LIKELY(
+                           sax->start_array(len)
+                           &&
+                           get_msgpack_array(len)
+                           &&
+                           sax->end_array()
+                       );
+            }
 
             // fixstr
             case 0xA0:
@@ -1499,25 +1512,58 @@ class binary_reader
             case 0xDC: // array 16
             {
                 std::uint16_t len{};
-                return get_number(input_format_t::msgpack, len) && get_msgpack_array(static_cast<std::size_t>(len));
+                return JSON_HEDLEY_LIKELY(
+                           get_number(input_format_t::msgpack, len)
+                           &&
+                           sax->start_array(static_cast<std::size_t>(len))
+                           &&
+                           get_msgpack_array(static_cast<std::size_t>(len))
+                           &&
+                           sax->end_array()
+                       );
             }
 
             case 0xDD: // array 32
             {
                 std::uint32_t len{};
-                return get_number(input_format_t::msgpack, len) && get_msgpack_array(conditional_static_cast<std::size_t>(len));
+                return JSON_HEDLEY_LIKELY(
+                           get_number(input_format_t::msgpack, len)
+                           &&
+                           sax->start_array(conditional_static_cast<std::size_t>(len))
+                           &&
+                           get_msgpack_array(conditional_static_cast<std::size_t>(len))
+                           &&
+                           sax->end_array()
+                       );
             }
 
             case 0xDE: // map 16
             {
                 std::uint16_t len{};
-                return get_number(input_format_t::msgpack, len) && get_msgpack_object(static_cast<std::size_t>(len));
+
+                return JSON_HEDLEY_LIKELY(
+                           get_number(input_format_t::msgpack, len)
+                           &&
+                           sax->start_object(len)
+                           &&
+                           get_msgpack_object(static_cast<std::size_t>(len))
+                           &&
+                           sax->end_object()
+                       );
             }
 
             case 0xDF: // map 32
             {
                 std::uint32_t len{};
-                return get_number(input_format_t::msgpack, len) && get_msgpack_object(conditional_static_cast<std::size_t>(len));
+                return JSON_HEDLEY_LIKELY(
+                           get_number(input_format_t::msgpack, len)
+                           &&
+                           sax->start_object(len)
+                           &&
+                           get_msgpack_object(conditional_static_cast<std::size_t>(len))
+                           &&
+                           sax->end_object()
+                       );
             }
 
             // negative fixint
@@ -1770,11 +1816,6 @@ class binary_reader
     */
     bool get_msgpack_array(const std::size_t len)
     {
-        if (JSON_HEDLEY_UNLIKELY(!sax->start_array(len)))
-        {
-            return false;
-        }
-
         for (std::size_t i = 0; i < len; ++i)
         {
             if (JSON_HEDLEY_UNLIKELY(!parse_msgpack_internal()))
@@ -1783,7 +1824,7 @@ class binary_reader
             }
         }
 
-        return sax->end_array();
+        return true;
     }
 
     /*!
@@ -1792,28 +1833,438 @@ class binary_reader
     */
     bool get_msgpack_object(const std::size_t len)
     {
-        if (JSON_HEDLEY_UNLIKELY(!sax->start_object(len)))
-        {
-            return false;
-        }
 
-        string_t key;
+        string_t recycle_string;
+
         for (std::size_t i = 0; i < len; ++i)
         {
-            get();
-            if (JSON_HEDLEY_UNLIKELY(!get_msgpack_string(key) || !sax->key(key)))
+            if (JSON_HEDLEY_UNLIKELY(
+                        !(
+                            get_msgpack_object_key(recycle_string, detail::is_sax_msgpack<SAX, BasicJsonType>())
+                            &&
+                            parse_msgpack_internal()
+                        )
+                    )
+               )
             {
                 return false;
             }
 
-            if (JSON_HEDLEY_UNLIKELY(!parse_msgpack_internal()))
-            {
-                return false;
-            }
-            key.clear();
+            recycle_string.clear();
         }
+        return true;
+    }
 
-        return sax->end_object();
+    // /*!
+    // @param[in] len  the length of the object
+    // @param[in] full_msgpack_support is full msgpack protocoll suppored by sax
+    // @return whether object creation completed
+    // */
+    bool get_msgpack_object_key(string_t& recycle_string, std::false_type)
+    {
+        get();
+        return JSON_HEDLEY_LIKELY(get_msgpack_string(recycle_string) && sax->key(recycle_string));
+    }
+
+    // /*!
+    // @param[in] len  the length of the object
+    // @param[in] full_msgpack_support is full msgpack protocoll suppored by sax
+    // @return whether object creation completed
+    // */
+    bool get_msgpack_object_key(string_t& recycle_string, std::true_type)
+    {
+        switch (get())
+        {
+            // EOF
+            case std::char_traits<char_type>::eof():
+            {
+                return unexpect_eof(input_format_t::msgpack, "key");
+            }
+
+            // positive fixint
+            case 0x00:
+            case 0x01:
+            case 0x02:
+            case 0x03:
+            case 0x04:
+            case 0x05:
+            case 0x06:
+            case 0x07:
+            case 0x08:
+            case 0x09:
+            case 0x0A:
+            case 0x0B:
+            case 0x0C:
+            case 0x0D:
+            case 0x0E:
+            case 0x0F:
+            case 0x10:
+            case 0x11:
+            case 0x12:
+            case 0x13:
+            case 0x14:
+            case 0x15:
+            case 0x16:
+            case 0x17:
+            case 0x18:
+            case 0x19:
+            case 0x1A:
+            case 0x1B:
+            case 0x1C:
+            case 0x1D:
+            case 0x1E:
+            case 0x1F:
+            case 0x20:
+            case 0x21:
+            case 0x22:
+            case 0x23:
+            case 0x24:
+            case 0x25:
+            case 0x26:
+            case 0x27:
+            case 0x28:
+            case 0x29:
+            case 0x2A:
+            case 0x2B:
+            case 0x2C:
+            case 0x2D:
+            case 0x2E:
+            case 0x2F:
+            case 0x30:
+            case 0x31:
+            case 0x32:
+            case 0x33:
+            case 0x34:
+            case 0x35:
+            case 0x36:
+            case 0x37:
+            case 0x38:
+            case 0x39:
+            case 0x3A:
+            case 0x3B:
+            case 0x3C:
+            case 0x3D:
+            case 0x3E:
+            case 0x3F:
+            case 0x40:
+            case 0x41:
+            case 0x42:
+            case 0x43:
+            case 0x44:
+            case 0x45:
+            case 0x46:
+            case 0x47:
+            case 0x48:
+            case 0x49:
+            case 0x4A:
+            case 0x4B:
+            case 0x4C:
+            case 0x4D:
+            case 0x4E:
+            case 0x4F:
+            case 0x50:
+            case 0x51:
+            case 0x52:
+            case 0x53:
+            case 0x54:
+            case 0x55:
+            case 0x56:
+            case 0x57:
+            case 0x58:
+            case 0x59:
+            case 0x5A:
+            case 0x5B:
+            case 0x5C:
+            case 0x5D:
+            case 0x5E:
+            case 0x5F:
+            case 0x60:
+            case 0x61:
+            case 0x62:
+            case 0x63:
+            case 0x64:
+            case 0x65:
+            case 0x66:
+            case 0x67:
+            case 0x68:
+            case 0x69:
+            case 0x6A:
+            case 0x6B:
+            case 0x6C:
+            case 0x6D:
+            case 0x6E:
+            case 0x6F:
+            case 0x70:
+            case 0x71:
+            case 0x72:
+            case 0x73:
+            case 0x74:
+            case 0x75:
+            case 0x76:
+            case 0x77:
+            case 0x78:
+            case 0x79:
+            case 0x7A:
+            case 0x7B:
+            case 0x7C:
+            case 0x7D:
+            case 0x7E:
+            case 0x7F:
+                return JSON_HEDLEY_LIKELY(sax->key_unsigned(static_cast<number_unsigned_t>(current) ) );
+
+            // fixmap
+            case 0x80:
+            case 0x81:
+            case 0x82:
+            case 0x83:
+            case 0x84:
+            case 0x85:
+            case 0x86:
+            case 0x87:
+            case 0x88:
+            case 0x89:
+            case 0x8A:
+            case 0x8B:
+            case 0x8C:
+            case 0x8D:
+            case 0x8E:
+            case 0x8F:
+            {
+                const auto len = static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x0Fu);
+                return JSON_HEDLEY_LIKELY( sax->start_key_object(len) && get_msgpack_object() && sax->end_key_object() );
+            }
+
+            // fixarray
+            case 0x90:
+            case 0x91:
+            case 0x92:
+            case 0x93:
+            case 0x94:
+            case 0x95:
+            case 0x96:
+            case 0x97:
+            case 0x98:
+            case 0x99:
+            case 0x9A:
+            case 0x9B:
+            case 0x9C:
+            case 0x9D:
+            case 0x9E:
+            case 0x9F:
+            {
+                const auto len = static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x0Fu);
+                return sax->start_key_array(len) && get_msgpack_array(len) && sax->end_key_array();
+            }
+
+            // fixstr
+            case 0xA0:
+            case 0xA1:
+            case 0xA2:
+            case 0xA3:
+            case 0xA4:
+            case 0xA5:
+            case 0xA6:
+            case 0xA7:
+            case 0xA8:
+            case 0xA9:
+            case 0xAA:
+            case 0xAB:
+            case 0xAC:
+            case 0xAD:
+            case 0xAE:
+            case 0xAF:
+            case 0xB0:
+            case 0xB1:
+            case 0xB2:
+            case 0xB3:
+            case 0xB4:
+            case 0xB5:
+            case 0xB6:
+            case 0xB7:
+            case 0xB8:
+            case 0xB9:
+            case 0xBA:
+            case 0xBB:
+            case 0xBC:
+            case 0xBD:
+            case 0xBE:
+            case 0xBF:
+            case 0xD9: // str 8
+            case 0xDA: // str 16
+            case 0xDB: // str 32
+            {
+                return JSON_HEDLEY_LIKELY( get_msgpack_string(recycle_string) && sax->key(recycle_string) );
+            }
+
+            case 0xC0: // nil
+                return JSON_HEDLEY_LIKELY( sax->key_null() );
+
+            case 0xC2: // false
+                return JSON_HEDLEY_LIKELY( sax->key_boolean(false) );
+
+            case 0xC3: // true
+                return JSON_HEDLEY_LIKELY( sax->key_boolean(true)  );
+
+            case 0xC4: // bin 8
+            case 0xC5: // bin 16
+            case 0xC6: // bin 32
+            case 0xC7: // ext 8
+            case 0xC8: // ext 16
+            case 0xC9: // ext 32
+            case 0xD4: // fixext 1
+            case 0xD5: // fixext 2
+            case 0xD6: // fixext 4
+            case 0xD7: // fixext 8
+            case 0xD8: // fixext 16
+            {
+                binary_t b;
+                return get_msgpack_binary(b) && sax->key_binary(b);
+            }
+
+            case 0xCA: // float 32
+            {
+                float number{};
+                return JSON_HEDLEY_LIKELY( get_number(input_format_t::msgpack, number) && sax->key_float(static_cast<number_float_t>(number), "") );
+            }
+
+            case 0xCB: // float 64
+            {
+                double number{};
+                return JSON_HEDLEY_LIKELY( get_number(input_format_t::msgpack, number) && sax->key_float(static_cast<number_float_t>(number), "") );
+            }
+
+            case 0xCC: // uint 8
+            {
+                std::uint8_t number{};
+                return JSON_HEDLEY_LIKELY( get_number(input_format_t::msgpack, number) && sax->key_unsigned(number) );
+            }
+
+            case 0xCD: // uint 16
+            {
+                std::uint16_t number{};
+                return JSON_HEDLEY_LIKELY( get_number(input_format_t::msgpack, number) && sax->key_unsigned(number) );
+            }
+
+            case 0xCE: // uint 32
+            {
+                std::uint32_t number{};
+                return JSON_HEDLEY_LIKELY( get_number(input_format_t::msgpack, number) && sax->key_unsigned(number) );
+            }
+
+            case 0xCF: // uint 64
+            {
+                std::uint64_t number{};
+                return JSON_HEDLEY_LIKELY( get_number(input_format_t::msgpack, number) && sax->key_unsigned(number) );
+            }
+
+            case 0xD0: // int 8
+            {
+                std::int8_t number{};
+                return JSON_HEDLEY_LIKELY( get_number(input_format_t::msgpack, number) && sax->key_integer(number) );
+            }
+
+            case 0xD1: // int 16
+            {
+                std::int16_t number{};
+                return JSON_HEDLEY_LIKELY( get_number(input_format_t::msgpack, number) && sax->key_integer(number) );
+            }
+
+            case 0xD2: // int 32
+            {
+                std::int32_t number{};
+                return JSON_HEDLEY_LIKELY( get_number(input_format_t::msgpack, number) && sax->key_integer(number) );
+            }
+
+            case 0xD3: // int 64
+            {
+                std::int64_t number{};
+                return JSON_HEDLEY_LIKELY( get_number(input_format_t::msgpack, number) && sax->key_integer(number) );
+            }
+
+            case 0xDC: // array 16
+            {
+                std::uint16_t len{};
+                return get_number(input_format_t::msgpack, len) && sax->start_key_array(static_cast<std::size_t>(len)) && get_msgpack_array(static_cast<std::size_t>(len)) && sax->end_key_array();
+            }
+
+            case 0xDD: // array 32
+            {
+                std::uint32_t len{};
+                return get_number(input_format_t::msgpack, len) && sax->start_key_array(static_cast<std::size_t>(len)) && get_msgpack_array(static_cast<std::size_t>(len)) && sax->end_key_array();
+            }
+
+            case 0xDE: // map 16
+            {
+                std::uint16_t len{};
+
+                return JSON_HEDLEY_LIKELY(
+                           get_number(input_format_t::msgpack, len)
+                           &&
+                           sax->start_key_object(len)
+                           &&
+                           get_msgpack_object()
+                           &&
+                           sax->end_key_object()
+                       );
+            }
+
+            case 0xDF: // map 32
+            {
+                std::uint32_t len{};
+
+                return JSON_HEDLEY_LIKELY(
+                           get_number(input_format_t::msgpack, len)
+                           &&
+                           sax->start_key_object(len)
+                           &&
+                           get_msgpack_object()
+                           &&
+                           sax->end_key_object()
+                       );
+            }
+
+            // negative fixint
+            case 0xE0:
+            case 0xE1:
+            case 0xE2:
+            case 0xE3:
+            case 0xE4:
+            case 0xE5:
+            case 0xE6:
+            case 0xE7:
+            case 0xE8:
+            case 0xE9:
+            case 0xEA:
+            case 0xEB:
+            case 0xEC:
+            case 0xED:
+            case 0xEE:
+            case 0xEF:
+            case 0xF0:
+            case 0xF1:
+            case 0xF2:
+            case 0xF3:
+            case 0xF4:
+            case 0xF5:
+            case 0xF6:
+            case 0xF7:
+            case 0xF8:
+            case 0xF9:
+            case 0xFA:
+            case 0xFB:
+            case 0xFC:
+            case 0xFD:
+            case 0xFE:
+            case 0xFF:
+                return JSON_HEDLEY_LIKELY( sax->key_integer( static_cast<std::int8_t>(current) ) );
+
+            default: // anything else
+            {
+                auto last_token = get_token_string();
+                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                        exception_message(input_format_t::msgpack, concat("unsupported byte: 0x", last_token), "key"), nullptr));
+            }
+        }
     }
 
     ////////////

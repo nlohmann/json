@@ -21,84 +21,7 @@ using nlohmann::json;
 #include <set>
 #include "make_test_data_available.hpp"
 #include "test_utils.hpp"
-
-namespace
-{
-class SaxCountdown
-{
-  public:
-    explicit SaxCountdown(const int count) : events_left(count)
-    {}
-
-    bool null()
-    {
-        return events_left-- > 0;
-    }
-
-    bool boolean(bool /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool number_integer(json::number_integer_t /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool number_unsigned(json::number_unsigned_t /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool number_float(json::number_float_t /*unused*/, const std::string& /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool string(std::string& /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool binary(std::vector<std::uint8_t>& /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool start_object(std::size_t /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool key(std::string& /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool end_object()
-    {
-        return events_left-- > 0;
-    }
-
-    bool start_array(std::size_t /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool end_array()
-    {
-        return events_left-- > 0;
-    }
-
-    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const json::exception& /*unused*/) // NOLINT(readability-convert-member-functions-to-static)
-    {
-        return false;
-    }
-
-  private:
-    int events_left = 0;
-};
-} // namespace
+#include "test_sax_helpers.hpp"
 
 TEST_CASE("MessagePack")
 {
@@ -1445,7 +1368,7 @@ TEST_CASE("MessagePack")
             json _;
 
             CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0x87})),
-                                 "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing MessagePack string: unexpected end of input", json::parse_error&);
+                                 "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing MessagePack key: unexpected end of input", json::parse_error&);
             CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0xcc})),
                                  "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing MessagePack number: unexpected end of input", json::parse_error&);
             CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0xcd})),
@@ -1531,12 +1454,14 @@ TEST_CASE("MessagePack")
             }
         }
 
-        SECTION("invalid string in map")
-        {
-            json _;
-            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0x81, 0xff, 0x01})), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing MessagePack string: expected length specification (0xA0-0xBF, 0xD9-0xDB); last byte: 0xFF", json::parse_error&);
-            CHECK(json::from_msgpack(std::vector<uint8_t>({0x81, 0xff, 0x01}), true, false).is_discarded());
-        }
+        // THIS TEST SHOULD FAIL NO MORE!
+        // INT AS KEY IN MSGPACK IS NOW SUPPORTED!
+        // SECTION("invalid string in map")
+        // {
+        //     json _;
+        //     CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0x81, 0xff, 0x01})), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing MessagePack string: expected length specification (0xA0-0xBF, 0xD9-0xDB); last byte: 0xFF", json::parse_error&);
+        //     CHECK(json::from_msgpack(std::vector<uint8_t>({0x81, 0xff, 0x01}), true, false).is_discarded());
+        // }
 
         SECTION("strict mode")
         {
