@@ -79,6 +79,20 @@ TEST_CASE("serialization")
 
     SECTION("dump")
     {
+        SECTION("no pretty primitive arrays")
+        {
+            auto pretty_print = [](json const & x, int)
+            {
+                return !x.is_array() || std::any_of(x.cbegin(), x.cend(), [](json const & e)
+                {
+                    return !e.is_primitive();
+                });
+            };
+
+            const json j = {{"foo", {1, 2, 3}}};
+            CHECK(j.dump(1, ' ', false, json::error_handler_t::strict, pretty_print) == "{\n \"foo\": [1,2,3]\n}");
+        }
+
         SECTION("invalid character")
         {
             const json j = "ä\xA9ü";
