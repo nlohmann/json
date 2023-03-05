@@ -36,11 +36,11 @@ TEST_CASE("iterators 1")
                 CHECK(it != j.end());
                 CHECK(*it == j);
 
-                it++;
+                ++it;
                 CHECK(it != j.begin());
                 CHECK(it == j.end());
 
-                it--;
+                --it;
                 CHECK(it == j.begin());
                 CHECK(it != j.end());
                 CHECK(*it == j);
@@ -61,11 +61,11 @@ TEST_CASE("iterators 1")
                 CHECK(it != j_const.end());
                 CHECK(*it == j_const);
 
-                it++;
+                ++it;
                 CHECK(it != j_const.begin());
                 CHECK(it == j_const.end());
 
-                it--;
+                --it;
                 CHECK(it == j_const.begin());
                 CHECK(it != j_const.end());
                 CHECK(*it == j_const);
@@ -86,11 +86,11 @@ TEST_CASE("iterators 1")
                 CHECK(it != j.cend());
                 CHECK(*it == j);
 
-                it++;
+                ++it;
                 CHECK(it != j.cbegin());
                 CHECK(it == j.cend());
 
-                it--;
+                --it;
                 CHECK(it == j.cbegin());
                 CHECK(it != j.cend());
                 CHECK(*it == j);
@@ -111,11 +111,11 @@ TEST_CASE("iterators 1")
                 CHECK(it != j_const.cend());
                 CHECK(*it == j_const);
 
-                it++;
+                ++it;
                 CHECK(it != j_const.cbegin());
                 CHECK(it == j_const.cend());
 
-                it--;
+                --it;
                 CHECK(it == j_const.cbegin());
                 CHECK(it != j_const.cend());
                 CHECK(*it == j_const);
@@ -136,11 +136,11 @@ TEST_CASE("iterators 1")
                 CHECK(it != j.rend());
                 CHECK(*it == j);
 
-                it++;
+                ++it;
                 CHECK(it != j.rbegin());
                 CHECK(it == j.rend());
 
-                it--;
+                --it;
                 CHECK(it == j.rbegin());
                 CHECK(it != j.rend());
                 CHECK(*it == j);
@@ -161,11 +161,11 @@ TEST_CASE("iterators 1")
                 CHECK(it != j.crend());
                 CHECK(*it == j);
 
-                it++;
+                ++it;
                 CHECK(it != j.crbegin());
                 CHECK(it == j.crend());
 
-                it--;
+                --it;
                 CHECK(it == j.crbegin());
                 CHECK(it != j.crend());
                 CHECK(*it == j);
@@ -186,11 +186,11 @@ TEST_CASE("iterators 1")
                 CHECK(it != j_const.crend());
                 CHECK(*it == j_const);
 
-                it++;
+                ++it;
                 CHECK(it != j_const.crbegin());
                 CHECK(it == j_const.crend());
 
-                it--;
+                --it;
                 CHECK(it == j_const.crbegin());
                 CHECK(it != j_const.crend());
                 CHECK(*it == j_const);
@@ -342,11 +342,11 @@ TEST_CASE("iterators 1")
                 CHECK(it != j.end());
                 CHECK(*it == j);
 
-                it++;
+                ++it;
                 CHECK(it != j.begin());
                 CHECK(it == j.end());
 
-                it--;
+                --it;
                 CHECK(it == j.begin());
                 CHECK(it != j.end());
                 CHECK(*it == j);
@@ -367,11 +367,11 @@ TEST_CASE("iterators 1")
                 CHECK(it != j_const.end());
                 CHECK(*it == j_const);
 
-                it++;
+                ++it;
                 CHECK(it != j_const.begin());
                 CHECK(it == j_const.end());
 
-                it--;
+                --it;
                 CHECK(it == j_const.begin());
                 CHECK(it != j_const.end());
                 CHECK(*it == j_const);
@@ -392,11 +392,11 @@ TEST_CASE("iterators 1")
                 CHECK(it != j.cend());
                 CHECK(*it == j);
 
-                it++;
+                ++it;
                 CHECK(it != j.cbegin());
                 CHECK(it == j.cend());
 
-                it--;
+                --it;
                 CHECK(it == j.cbegin());
                 CHECK(it != j.cend());
                 CHECK(*it == j);
@@ -417,11 +417,11 @@ TEST_CASE("iterators 1")
                 CHECK(it != j_const.cend());
                 CHECK(*it == j_const);
 
-                it++;
+                ++it;
                 CHECK(it != j_const.cbegin());
                 CHECK(it == j_const.cend());
 
-                it--;
+                --it;
                 CHECK(it == j_const.cbegin());
                 CHECK(it != j_const.cend());
                 CHECK(*it == j_const);
@@ -442,11 +442,11 @@ TEST_CASE("iterators 1")
                 CHECK(it != j.rend());
                 CHECK(*it == j);
 
-                it++;
+                ++it;
                 CHECK(it != j.rbegin());
                 CHECK(it == j.rend());
 
-                it--;
+                --it;
                 CHECK(it == j.rbegin());
                 CHECK(it != j.rend());
                 CHECK(*it == j);
@@ -467,11 +467,11 @@ TEST_CASE("iterators 1")
                 CHECK(it != j.crend());
                 CHECK(*it == j);
 
-                it++;
+                ++it;
                 CHECK(it != j.crbegin());
                 CHECK(it == j.crend());
 
-                it--;
+                --it;
                 CHECK(it == j.crbegin());
                 CHECK(it != j.crend());
                 CHECK(*it == j);
@@ -492,11 +492,11 @@ TEST_CASE("iterators 1")
                 CHECK(it != j_const.crend());
                 CHECK(*it == j_const);
 
-                it++;
+                ++it;
                 CHECK(it != j_const.crbegin());
                 CHECK(it == j_const.crend());
 
-                it--;
+                --it;
                 CHECK(it == j_const.crbegin());
                 CHECK(it != j_const.crend());
                 CHECK(*it == j_const);
@@ -908,11 +908,11 @@ TEST_CASE("iterators 1")
                 CHECK(it != j.end());
                 CHECK(*it == j);
 
-                it++;
+                ++it;
                 CHECK(it != j.begin());
                 CHECK(it == j.end());
 
-                it--;
+                --it;
                 CHECK(it == j.begin());
                 CHECK(it != j.end());
                 CHECK(*it == j);
@@ -933,11 +933,11 @@ TEST_CASE("iterators 1")
                 CHECK(it != j_const.end());
                 CHECK(*it == j_const);
 
-                it++;
+                ++it;
                 CHECK(it != j_const.begin());
                 CHECK(it == j_const.end());
 
-                it--;
+                --it;
                 CHECK(it == j_const.begin());
                 CHECK(it != j_const.end());
                 CHECK(*it == j_const);
@@ -958,11 +958,11 @@ TEST_CASE("iterators 1")
                 CHECK(it != j.cend());
                 CHECK(*it == j);
 
-                it++;
+                ++it;
                 CHECK(it != j.cbegin());
                 CHECK(it == j.cend());
 
-                it--;
+                --it;
                 CHECK(it == j.cbegin());
                 CHECK(it != j.cend());
                 CHECK(*it == j);
@@ -983,11 +983,11 @@ TEST_CASE("iterators 1")
                 CHECK(it != j_const.cend());
                 CHECK(*it == j_const);
 
-                it++;
+                ++it;
                 CHECK(it != j_const.cbegin());
                 CHECK(it == j_const.cend());
 
-                it--;
+                --it;
                 CHECK(it == j_const.cbegin());
                 CHECK(it != j_const.cend());
                 CHECK(*it == j_const);
@@ -1008,11 +1008,11 @@ TEST_CASE("iterators 1")
                 CHECK(it != j.rend());
                 CHECK(*it == j);
 
-                it++;
+                ++it;
                 CHECK(it != j.rbegin());
                 CHECK(it == j.rend());
 
-                it--;
+                --it;
                 CHECK(it == j.rbegin());
                 CHECK(it != j.rend());
                 CHECK(*it == j);
@@ -1033,11 +1033,11 @@ TEST_CASE("iterators 1")
                 CHECK(it != j.crend());
                 CHECK(*it == j);
 
-                it++;
+                ++it;
                 CHECK(it != j.crbegin());
                 CHECK(it == j.crend());
 
-                it--;
+                --it;
                 CHECK(it == j.crbegin());
                 CHECK(it != j.crend());
                 CHECK(*it == j);
@@ -1058,11 +1058,11 @@ TEST_CASE("iterators 1")
                 CHECK(it != j_const.crend());
                 CHECK(*it == j_const);
 
-                it++;
+                ++it;
                 CHECK(it != j_const.crbegin());
                 CHECK(it == j_const.crend());
 
-                it--;
+                --it;
                 CHECK(it == j_const.crbegin());
                 CHECK(it != j_const.crend());
                 CHECK(*it == j_const);
@@ -1106,11 +1106,11 @@ TEST_CASE("iterators 1")
                 CHECK(it != j.end());
                 CHECK(*it == j);
 
-                it++;
+                ++it;
                 CHECK(it != j.begin());
                 CHECK(it == j.end());
 
-                it--;
+                --it;
                 CHECK(it == j.begin());
                 CHECK(it != j.end());
                 CHECK(*it == j);
@@ -1131,11 +1131,11 @@ TEST_CASE("iterators 1")
                 CHECK(it != j_const.end());
                 CHECK(*it == j_const);
 
-                it++;
+                ++it;
                 CHECK(it != j_const.begin());
                 CHECK(it == j_const.end());
 
-                it--;
+                --it;
                 CHECK(it == j_const.begin());
                 CHECK(it != j_const.end());
                 CHECK(*it == j_const);
@@ -1156,11 +1156,11 @@ TEST_CASE("iterators 1")
                 CHECK(it != j.cend());
                 CHECK(*it == j);
 
-                it++;
+                ++it;
                 CHECK(it != j.cbegin());
                 CHECK(it == j.cend());
 
-                it--;
+                --it;
                 CHECK(it == j.cbegin());
                 CHECK(it != j.cend());
                 CHECK(*it == j);
@@ -1181,11 +1181,11 @@ TEST_CASE("iterators 1")
                 CHECK(it != j_const.cend());
                 CHECK(*it == j_const);
 
-                it++;
+                ++it;
                 CHECK(it != j_const.cbegin());
                 CHECK(it == j_const.cend());
 
-                it--;
+                --it;
                 CHECK(it == j_const.cbegin());
                 CHECK(it != j_const.cend());
                 CHECK(*it == j_const);
@@ -1206,11 +1206,11 @@ TEST_CASE("iterators 1")
                 CHECK(it != j.rend());
                 CHECK(*it == j);
 
-                it++;
+                ++it;
                 CHECK(it != j.rbegin());
                 CHECK(it == j.rend());
 
-                it--;
+                --it;
                 CHECK(it == j.rbegin());
                 CHECK(it != j.rend());
                 CHECK(*it == j);
@@ -1231,11 +1231,11 @@ TEST_CASE("iterators 1")
                 CHECK(it != j.crend());
                 CHECK(*it == j);
 
-                it++;
+                ++it;
                 CHECK(it != j.crbegin());
                 CHECK(it == j.crend());
 
-                it--;
+                --it;
                 CHECK(it == j.crbegin());
                 CHECK(it != j.crend());
                 CHECK(*it == j);
@@ -1256,11 +1256,11 @@ TEST_CASE("iterators 1")
                 CHECK(it != j_const.crend());
                 CHECK(*it == j_const);
 
-                it++;
+                ++it;
                 CHECK(it != j_const.crbegin());
                 CHECK(it == j_const.crend());
 
-                it--;
+                --it;
                 CHECK(it == j_const.crbegin());
                 CHECK(it != j_const.crend());
                 CHECK(*it == j_const);
@@ -1304,11 +1304,11 @@ TEST_CASE("iterators 1")
                 CHECK(it != j.end());
                 CHECK(*it == j);
 
-                it++;
+                ++it;
                 CHECK(it != j.begin());
                 CHECK(it == j.end());
 
-                it--;
+                --it;
                 CHECK(it == j.begin());
                 CHECK(it != j.end());
                 CHECK(*it == j);
@@ -1329,11 +1329,11 @@ TEST_CASE("iterators 1")
                 CHECK(it != j_const.end());
                 CHECK(*it == j_const);
 
-                it++;
+                ++it;
                 CHECK(it != j_const.begin());
                 CHECK(it == j_const.end());
 
-                it--;
+                --it;
                 CHECK(it == j_const.begin());
                 CHECK(it != j_const.end());
                 CHECK(*it == j_const);
@@ -1354,11 +1354,11 @@ TEST_CASE("iterators 1")
                 CHECK(it != j.cend());
                 CHECK(*it == j);
 
-                it++;
+                ++it;
                 CHECK(it != j.cbegin());
                 CHECK(it == j.cend());
 
-                it--;
+                --it;
                 CHECK(it == j.cbegin());
                 CHECK(it != j.cend());
                 CHECK(*it == j);
@@ -1379,11 +1379,11 @@ TEST_CASE("iterators 1")
                 CHECK(it != j_const.cend());
                 CHECK(*it == j_const);
 
-                it++;
+                ++it;
                 CHECK(it != j_const.cbegin());
                 CHECK(it == j_const.cend());
 
-                it--;
+                --it;
                 CHECK(it == j_const.cbegin());
                 CHECK(it != j_const.cend());
                 CHECK(*it == j_const);
@@ -1404,11 +1404,11 @@ TEST_CASE("iterators 1")
                 CHECK(it != j.rend());
                 CHECK(*it == j);
 
-                it++;
+                ++it;
                 CHECK(it != j.rbegin());
                 CHECK(it == j.rend());
 
-                it--;
+                --it;
                 CHECK(it == j.rbegin());
                 CHECK(it != j.rend());
                 CHECK(*it == j);
@@ -1429,11 +1429,11 @@ TEST_CASE("iterators 1")
                 CHECK(it != j.crend());
                 CHECK(*it == j);
 
-                it++;
+                ++it;
                 CHECK(it != j.crbegin());
                 CHECK(it == j.crend());
 
-                it--;
+                --it;
                 CHECK(it == j.crbegin());
                 CHECK(it != j.crend());
                 CHECK(*it == j);
@@ -1454,11 +1454,11 @@ TEST_CASE("iterators 1")
                 CHECK(it != j_const.crend());
                 CHECK(*it == j_const);
 
-                it++;
+                ++it;
                 CHECK(it != j_const.crbegin());
                 CHECK(it == j_const.crend());
 
-                it--;
+                --it;
                 CHECK(it == j_const.crbegin());
                 CHECK(it != j_const.crend());
                 CHECK(*it == j_const);
