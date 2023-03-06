@@ -188,8 +188,9 @@ template<class T>
 class my_allocator : public std::allocator<T>
 {
     template<typename U>
-    struct rebind {
-      using other = my_allocator<U>;
+    struct rebind
+    {
+        using other = my_allocator<U>;
     };
 
   public:
