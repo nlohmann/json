@@ -187,6 +187,11 @@ std::string* sax_no_exception::error_string = nullptr;
 template<class T>
 class my_allocator : public std::allocator<T>
 {
+    template<typename U>
+    struct rebind {
+      using other = my_allocator<U>;
+    };
+
   public:
     using std::allocator<T>::allocator;
 };

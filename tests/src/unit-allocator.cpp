@@ -20,6 +20,11 @@ struct bad_allocator : std::allocator<T>
 {
     using std::allocator<T>::allocator;
 
+    template<typename U>
+    struct rebind {
+      using other = bad_allocator<U>;
+    };
+
     template<class... Args>
     void construct(T* /*unused*/, Args&& ... /*unused*/)
     {
