@@ -1,0 +1,4 @@
+{}
+{}
+{"one":1,"two":2}
+[json.exception.type_error.301] cannot create object from initializer list

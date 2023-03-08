@@ -1,0 +1,4 @@
+[1,2,3] <=> [1,2,4] := less
+{"A":"a","B":"b"} <=> {"A":"a","B":"b"} := equivalent
+"foo" <=> 17 := greater
+"foo" <=> <discarded> := unordered

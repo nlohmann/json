@@ -1,0 +1,17 @@
+{
+    "compiler": {
+        "c++": "201103",
+        "family": "gcc",
+        "version": "12.1.0"
+    },
+    "copyright": "(C) 2013-2022 Niels Lohmann",
+    "name": "JSON for Modern C++",
+    "platform": "apple",
+    "url": "https://github.com/nlohmann/json",
+    "version": {
+        "major": 3,
+        "minor": 11,
+        "patch": 2,
+        "string": "3.11.2"
+    }
+}

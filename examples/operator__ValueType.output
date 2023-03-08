@@ -1,0 +1,12 @@
+1
+42 42
+17.23 17
+Hello, world!
+1 2 3 4 5 
+
+string: "Hello, world!"
+number: {"floating-point":17.23,"integer":42}
+null: null
+boolean: true
+array: [1,2,3,4,5]
+[json.exception.type_error.302] type must be boolean, but is string

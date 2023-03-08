@@ -1,0 +1,9 @@
+1
+"foo"
+[1,2]
+2
+[json.exception.parse_error.109] parse error: array index 'one' is not a number
+[json.exception.out_of_range.401] array index 4 is out of range
+[json.exception.out_of_range.402] array index '-' (2) is out of range
+[json.exception.out_of_range.403] key 'foo' not found
+[json.exception.out_of_range.404] unresolved reference token 'foo'

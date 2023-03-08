@@ -1,0 +1,8 @@
+1
+"foo"
+[1,2]
+2
+"bar"
+{"array":[1,2],"boolean":true,"number":1,"string":"bar"}
+[1,21,null,null,44]
+[1,21,null,null,44,55]

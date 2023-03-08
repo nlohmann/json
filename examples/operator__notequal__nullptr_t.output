@@ -1,0 +1,5 @@
+[1,2,3] != nullptr true
+{"A":"a","B":"b"} != nullptr true
+17 != nullptr true
+"foo" != nullptr true
+null != nullptr false
