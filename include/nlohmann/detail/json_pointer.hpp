@@ -386,7 +386,7 @@ class json_pointer
                     if (reference_token == "-")
                     {
                         // explicitly treat "-" as index beyond the end
-                        ptr = &ptr->operator[](ptr->m_value.array->size());
+                        ptr = &ptr->operator[](ptr->m_data.m_value.array->size());
                     }
                     else
                     {
@@ -438,7 +438,7 @@ class json_pointer
                     {
                         // "-" always fails the range check
                         JSON_THROW(detail::out_of_range::create(402, detail::concat(
-                                "array index '-' (", std::to_string(ptr->m_value.array->size()),
+                                "array index '-' (", std::to_string(ptr->m_data.m_value.array->size()),
                                 ") is out of range"), ptr));
                     }
 
@@ -495,7 +495,7 @@ class json_pointer
                     if (JSON_HEDLEY_UNLIKELY(reference_token == "-"))
                     {
                         // "-" cannot be used for const access
-                        JSON_THROW(detail::out_of_range::create(402, detail::concat("array index '-' (", std::to_string(ptr->m_value.array->size()), ") is out of range"), ptr));
+                        JSON_THROW(detail::out_of_range::create(402, detail::concat("array index '-' (", std::to_string(ptr->m_data.m_value.array->size()), ") is out of range"), ptr));
                     }
 
                     // use unchecked array access
@@ -545,7 +545,7 @@ class json_pointer
                     {
                         // "-" always fails the range check
                         JSON_THROW(detail::out_of_range::create(402, detail::concat(
-                                "array index '-' (", std::to_string(ptr->m_value.array->size()),
+                                "array index '-' (", std::to_string(ptr->m_data.m_value.array->size()),
                                 ") is out of range"), ptr));
                     }
 
@@ -740,7 +740,7 @@ class json_pointer
         {
             case detail::value_t::array:
             {
-                if (value.m_value.array->empty())
+                if (value.m_data.m_value.array->empty())
                 {
                     // flatten empty array as null
                     result[reference_string] = nullptr;
@@ -748,10 +748,10 @@ class json_pointer
                 else
                 {
                     // iterate array and use index as reference string
-                    for (std::size_t i = 0; i < value.m_value.array->size(); ++i)
+                    for (std::size_t i = 0; i < value.m_data.m_value.array->size(); ++i)
                     {
                         flatten(detail::concat(reference_string, '/', std::to_string(i)),
-                                value.m_value.array->operator[](i), result);
+                                value.m_data.m_value.array->operator[](i), result);
                     }
                 }
                 break;
@@ -759,7 +759,7 @@ class json_pointer
 
             case detail::value_t::object:
             {
-                if (value.m_value.object->empty())
+                if (value.m_data.m_value.object->empty())
                 {
                     // flatten empty object as null
                     result[reference_string] = nullptr;
@@ -767,7 +767,7 @@ class json_pointer
                 else
                 {
                     // iterate object and use keys as reference string
-                    for (const auto& element : *value.m_value.object)
+                    for (const auto& element : *value.m_data.m_value.object)
                     {
                         flatten(detail::concat(reference_string, '/', detail::escape(element.first)), element.second, result);
                     }
@@ -814,7 +814,7 @@ class json_pointer
         BasicJsonType result;
 
         // iterate the JSON object values
-        for (const auto& element : *value.m_value.object)
+        for (const auto& element : *value.m_data.m_value.object)
         {
             if (JSON_HEDLEY_UNLIKELY(!element.second.is_primitive()))
             {
