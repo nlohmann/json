@@ -13,12 +13,12 @@ execute_process(COMMAND ${ASTYLE_TOOL} --version OUTPUT_VARIABLE ASTYLE_TOOL_VER
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" ASTYLE_TOOL_VERSION "${ASTYLE_TOOL_VERSION}")
 message(STATUS "🔖 Artistic Style ${ASTYLE_TOOL_VERSION} (${ASTYLE_TOOL})")
 
-find_program(CLANG_TOOL NAMES clang++-HEAD clang++-16 clang++-15 clang++-14 clang++-13 clang++-12 clang++-11 clang++)
+find_program(CLANG_TOOL NAMES clang++-HEAD clang++ clang++-17 clang++-16 clang++-15 clang++-14 clang++-13 clang++-12 clang++-11 clang++)
 execute_process(COMMAND ${CLANG_TOOL} --version OUTPUT_VARIABLE CLANG_TOOL_VERSION ERROR_VARIABLE CLANG_TOOL_VERSION)
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" CLANG_TOOL_VERSION "${CLANG_TOOL_VERSION}")
 message(STATUS "🔖 Clang ${CLANG_TOOL_VERSION} (${CLANG_TOOL})")
 
-find_program(CLANG_TIDY_TOOL NAMES clang-tidy-15 clang-tidy-14 clang-tidy-13 clang-tidy-12 clang-tidy-11 clang-tidy)
+find_program(CLANG_TIDY_TOOL NAMES clang-tidy-17 clang-tidy-16 clang-tidy-15 clang-tidy-14 clang-tidy-13 clang-tidy-12 clang-tidy-11 clang-tidy)
 execute_process(COMMAND ${CLANG_TIDY_TOOL} --version OUTPUT_VARIABLE CLANG_TIDY_TOOL_VERSION ERROR_VARIABLE CLANG_TIDY_TOOL_VERSION)
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" CLANG_TIDY_TOOL_VERSION "${CLANG_TIDY_TOOL_VERSION}")
 message(STATUS "🔖 Clang-Tidy ${CLANG_TIDY_TOOL_VERSION} (${CLANG_TIDY_TOOL})")
@@ -30,7 +30,7 @@ execute_process(COMMAND ${CPPCHECK_TOOL} --version OUTPUT_VARIABLE CPPCHECK_TOOL
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" CPPCHECK_TOOL_VERSION "${CPPCHECK_TOOL_VERSION}")
 message(STATUS "🔖 Cppcheck ${CPPCHECK_TOOL_VERSION} (${CPPCHECK_TOOL})")
 
-find_program(GCC_TOOL NAMES g++-latest g++-HEAD g++-12 g++-11 g++-10)
+find_program(GCC_TOOL NAMES g++-latest g++-HEAD g++-13 g++-12 g++-11 g++-10)
 execute_process(COMMAND ${GCC_TOOL} --version OUTPUT_VARIABLE GCC_TOOL_VERSION ERROR_VARIABLE GCC_TOOL_VERSION)
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" GCC_TOOL_VERSION "${GCC_TOOL_VERSION}")
 message(STATUS "🔖 GCC ${GCC_TOOL_VERSION} (${GCC_TOOL})")
