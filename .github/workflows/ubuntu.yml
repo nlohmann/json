@@ -178,7 +178,7 @@ jobs:
     container: ghcr.io/nlohmann/json-ci:v2.4.0
     strategy:
       matrix:
-        standard: [11, 14, 17, 20]
+        standard: [11, 14, 17, 20, 23]
     steps:
       - uses: actions/checkout@v3
       - name: Run CMake
@@ -191,7 +191,7 @@ jobs:
     container: silkeh/clang:dev
     strategy:
       matrix:
-        standard: [11, 14, 17, 20]
+        standard: [11, 14, 17, 20, 23]
     steps:
       - name: Install git and unzip
         run: apt-get update ; apt-get install -y git unzip
