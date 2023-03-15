@@ -1,6 +1,6 @@
 cc_library(
     name = "json",
-    hdrs = [
+    srcs = [
         "include/nlohmann/adl_serializer.hpp",
         "include/nlohmann/byte_container_with_subtype.hpp",
         "include/nlohmann/detail/abi_macros.hpp",
@@ -41,12 +41,12 @@ cc_library(
         "include/nlohmann/detail/string_concat.hpp",
         "include/nlohmann/detail/string_escape.hpp",
         "include/nlohmann/detail/value_t.hpp",
-        "include/nlohmann/json.hpp",
         "include/nlohmann/json_fwd.hpp",
         "include/nlohmann/ordered_map.hpp",
         "include/nlohmann/thirdparty/hedley/hedley.hpp",
         "include/nlohmann/thirdparty/hedley/hedley_undef.hpp",
     ],
+    hdrs = ["include/nlohmann/json.hpp"],
     includes = ["include"],
     visibility = ["//visibility:public"],
     alwayslink = True,
