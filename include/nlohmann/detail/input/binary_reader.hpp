@@ -6,7 +6,8 @@
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-#pragma once
+#ifndef INCLUDE_NLOHMANN_DETAIL_INPUT_BINARY_READER_HPP
+#define INCLUDE_NLOHMANN_DETAIL_INPUT_BINARY_READER_HPP
 
 #include <algorithm> // generate_n
 #include <array> // array
@@ -3008,3 +3009,5 @@ class binary_reader
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
+
+#endif  // INCLUDE_NLOHMANN_DETAIL_INPUT_BINARY_READER_HPP

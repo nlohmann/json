@@ -6,7 +6,8 @@
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-#pragma once
+#ifndef INCLUDE_NLOHMANN_DETAIL_JSON_REF_HPP
+#define INCLUDE_NLOHMANN_DETAIL_JSON_REF_HPP
 
 #include <initializer_list>
 #include <utility>
@@ -76,3 +77,5 @@ class json_ref
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
+
+#endif  // INCLUDE_NLOHMANN_DETAIL_JSON_REF_HPP

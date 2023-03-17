@@ -6,7 +6,8 @@
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-#pragma once
+#ifndef INCLUDE_NLOHMANN_DETAIL_ITERATORS_JSON_REVERSE_ITERATOR_HPP
+#define INCLUDE_NLOHMANN_DETAIL_ITERATORS_JSON_REVERSE_ITERATOR_HPP
 
 #include <cstddef> // ptrdiff_t
 #include <iterator> // reverse_iterator
@@ -128,3 +129,5 @@ class json_reverse_iterator : public std::reverse_iterator<Base>
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
+
+#endif  // INCLUDE_NLOHMANN_DETAIL_ITERATORS_JSON_REVERSE_ITERATOR_HPP

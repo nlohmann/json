@@ -7,7 +7,8 @@
 // SPDX-FileCopyrightText: 2018 The Abseil Authors
 // SPDX-License-Identifier: MIT
 
-#pragma once
+#ifndef INCLUDE_NLOHMANN_DETAIL_META_CPP_FUTURE_HPP
+#define INCLUDE_NLOHMANN_DETAIL_META_CPP_FUTURE_HPP
 
 #include <array> // array
 #include <cstddef> // size_t
@@ -169,3 +170,5 @@ inline constexpr std::array<T, sizeof...(Args)> make_array(Args&& ... args)
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
+
+#endif  // INCLUDE_NLOHMANN_DETAIL_META_CPP_FUTURE_HPP

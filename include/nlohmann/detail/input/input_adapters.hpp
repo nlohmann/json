@@ -6,7 +6,8 @@
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-#pragma once
+#ifndef INCLUDE_NLOHMANN_DETAIL_INPUT_INPUT_ADAPTERS_HPP
+#define INCLUDE_NLOHMANN_DETAIL_INPUT_INPUT_ADAPTERS_HPP
 
 #include <array> // array
 #include <cstddef> // size_t
@@ -492,3 +493,5 @@ class span_input_adapter
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
+
+#endif  // INCLUDE_NLOHMANN_DETAIL_INPUT_INPUT_ADAPTERS_HPP

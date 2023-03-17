@@ -6,7 +6,8 @@
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-#pragma once
+#ifndef INCLUDE_NLOHMANN_DETAIL_ITERATORS_INTERNAL_ITERATOR_HPP
+#define INCLUDE_NLOHMANN_DETAIL_ITERATORS_INTERNAL_ITERATOR_HPP
 
 #include <nlohmann/detail/abi_macros.hpp>
 #include <nlohmann/detail/iterators/primitive_iterator.hpp>
@@ -33,3 +34,5 @@ template<typename BasicJsonType> struct internal_iterator
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
+
+#endif  // INCLUDE_NLOHMANN_DETAIL_ITERATORS_INTERNAL_ITERATOR_HPP

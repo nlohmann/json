@@ -6,7 +6,8 @@
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-#pragma once
+#ifndef INCLUDE_NLOHMANN_DETAIL_ITERATORS_ITERATOR_TRAITS_HPP
+#define INCLUDE_NLOHMANN_DETAIL_ITERATORS_ITERATOR_TRAITS_HPP
 
 #include <iterator> // random_access_iterator_tag
 
@@ -59,3 +60,5 @@ struct iterator_traits<T*, enable_if_t<std::is_object<T>::value>>
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
+
+#endif  // INCLUDE_NLOHMANN_DETAIL_ITERATORS_ITERATOR_TRAITS_HPP

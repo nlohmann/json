@@ -6,7 +6,8 @@
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-#pragma once
+#ifndef INCLUDE_NLOHMANN_ORDERED_MAP_HPP
+#define INCLUDE_NLOHMANN_ORDERED_MAP_HPP
 
 #include <functional> // equal_to, less
 #include <initializer_list> // initializer_list
@@ -357,3 +358,5 @@ private:
 };
 
 NLOHMANN_JSON_NAMESPACE_END
+
+#endif  // INCLUDE_NLOHMANN_ORDERED_MAP_HPP

@@ -40,7 +40,8 @@
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-
+#ifndef INCLUDE_NLOHMANN_ADL_SERIALIZER_HPP
+#define INCLUDE_NLOHMANN_ADL_SERIALIZER_HPP
 
 #include <utility>
 
@@ -53,7 +54,8 @@
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-
+#ifndef INCLUDE_NLOHMANN_DETAIL_ABI_MACROS_HPP
+#define INCLUDE_NLOHMANN_DETAIL_ABI_MACROS_HPP
 
 // This file contains all macro definitions affecting or depending on the ABI
 
@@ -146,6 +148,8 @@
     }  // namespace nlohmann
 #endif
 
+#endif  // INCLUDE_NLOHMANN_DETAIL_ABI_MACROS_HPP
+
 // #include <nlohmann/detail/conversions/from_json.hpp>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
@@ -155,7 +159,8 @@
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-
+#ifndef INCLUDE_NLOHMANN_DETAIL_CONVERSIONS_FROM_JSON_HPP
+#define INCLUDE_NLOHMANN_DETAIL_CONVERSIONS_FROM_JSON_HPP
 
 #include <algorithm> // transform
 #include <array> // array
@@ -178,7 +183,8 @@
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-
+#ifndef INCLUDE_NLOHMANN_DETAIL_EXCEPTIONS_HPP
+#define INCLUDE_NLOHMANN_DETAIL_EXCEPTIONS_HPP
 
 #include <cstddef> // nullptr_t
 #include <exception> // exception
@@ -198,7 +204,8 @@
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-
+#ifndef INCLUDE_NLOHMANN_DETAIL_VALUE_T_HPP
+#define INCLUDE_NLOHMANN_DETAIL_VALUE_T_HPP
 
 #include <array> // array
 #include <cstddef> // size_t
@@ -214,7 +221,8 @@
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-
+#ifndef INCLUDE_NLOHMANN_DETAIL_MACRO_SCOPE_HPP
+#define INCLUDE_NLOHMANN_DETAIL_MACRO_SCOPE_HPP
 
 #include <utility> // declval, pair
 // #include <nlohmann/detail/meta/detected.hpp>
@@ -226,7 +234,8 @@
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-
+#ifndef INCLUDE_NLOHMANN_DETAIL_META_DETECTED_HPP
+#define INCLUDE_NLOHMANN_DETAIL_META_DETECTED_HPP
 
 #include <type_traits>
 
@@ -239,7 +248,8 @@
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-
+#ifndef INCLUDE_NLOHMANN_DETAIL_META_VOID_T_HPP
+#define INCLUDE_NLOHMANN_DETAIL_META_VOID_T_HPP
 
 // #include <nlohmann/detail/abi_macros.hpp>
 
@@ -256,6 +266,8 @@ template<typename ...Ts> using void_t = typename make_void<Ts...>::type;
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
+
+#endif  // INCLUDE_NLOHMANN_DETAIL_META_VOID_T_HPP
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -315,8 +327,11 @@ using is_detected_convertible =
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
-// #include <nlohmann/thirdparty/hedley/hedley.hpp>
+#endif  // INCLUDE_NLOHMANN_DETAIL_META_DETECTED_HPP
 
+// #include <nlohmann/thirdparty/hedley/hedley.hpp>
+#ifndef INCLUDE_NLOHMANN_THIRDPARTY_HEDLEY_HEDLEY_HPP
+#define INCLUDE_NLOHMANN_THIRDPARTY_HEDLEY_HEDLEY_HPP
 
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
@@ -2362,6 +2377,8 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 
 #endif /* !defined(JSON_HEDLEY_VERSION) || (JSON_HEDLEY_VERSION < X) */
 
+#endif  // INCLUDE_NLOHMANN_THIRDPARTY_HEDLEY_HEDLEY_HPP
+
 
 // This file contains all internal macro definitions (except those affecting ABI)
 // You MUST include macro_unscope.hpp at the end of json.hpp to undef all of them
@@ -2820,6 +2837,8 @@ JSON_HEDLEY_DIAGNOSTIC_POP
     #define JSON_USE_GLOBAL_UDLS 1
 #endif
 
+#endif  // INCLUDE_NLOHMANN_DETAIL_MACRO_SCOPE_HPP
+
 #if JSON_HAS_THREE_WAY_COMPARISON
     #include <compare> // partial_ordering
 #endif
@@ -2923,6 +2942,8 @@ inline bool operator<(const value_t lhs, const value_t rhs) noexcept
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
+#endif  // INCLUDE_NLOHMANN_DETAIL_VALUE_T_HPP
+
 // #include <nlohmann/detail/string_escape.hpp>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
@@ -2932,7 +2953,8 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-
+#ifndef INCLUDE_NLOHMANN_DETAIL_STRING_ESCAPE_HPP
+#define INCLUDE_NLOHMANN_DETAIL_STRING_ESCAPE_HPP
 
 // #include <nlohmann/detail/abi_macros.hpp>
 
@@ -2998,6 +3020,8 @@ static void unescape(StringType& s)
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
+#endif  // INCLUDE_NLOHMANN_DETAIL_STRING_ESCAPE_HPP
+
 // #include <nlohmann/detail/input/position_t.hpp>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
@@ -3007,7 +3031,8 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-
+#ifndef INCLUDE_NLOHMANN_DETAIL_INPUT_POSITION_T_HPP
+#define INCLUDE_NLOHMANN_DETAIL_INPUT_POSITION_T_HPP
 
 #include <cstddef> // size_t
 
@@ -3038,6 +3063,8 @@ struct position_t
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
+#endif  // INCLUDE_NLOHMANN_DETAIL_INPUT_POSITION_T_HPP
+
 // #include <nlohmann/detail/macro_scope.hpp>
 
 // #include <nlohmann/detail/meta/cpp_future.hpp>
@@ -3050,7 +3077,8 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-FileCopyrightText: 2018 The Abseil Authors
 // SPDX-License-Identifier: MIT
 
-
+#ifndef INCLUDE_NLOHMANN_DETAIL_META_CPP_FUTURE_HPP
+#define INCLUDE_NLOHMANN_DETAIL_META_CPP_FUTURE_HPP
 
 #include <array> // array
 #include <cstddef> // size_t
@@ -3214,6 +3242,8 @@ inline constexpr std::array<T, sizeof...(Args)> make_array(Args&& ... args)
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
+#endif  // INCLUDE_NLOHMANN_DETAIL_META_CPP_FUTURE_HPP
+
 // #include <nlohmann/detail/meta/type_traits.hpp>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
@@ -3223,7 +3253,8 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-
+#ifndef INCLUDE_NLOHMANN_DETAIL_META_TYPE_TRAITS_HPP
+#define INCLUDE_NLOHMANN_DETAIL_META_TYPE_TRAITS_HPP
 
 #include <limits> // numeric_limits
 #include <type_traits> // false_type, is_constructible, is_integral, is_same, true_type
@@ -3239,7 +3270,8 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-
+#ifndef INCLUDE_NLOHMANN_DETAIL_ITERATORS_ITERATOR_TRAITS_HPP
+#define INCLUDE_NLOHMANN_DETAIL_ITERATORS_ITERATOR_TRAITS_HPP
 
 #include <iterator> // random_access_iterator_tag
 
@@ -3296,6 +3328,8 @@ struct iterator_traits<T*, enable_if_t<std::is_object<T>::value>>
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
+#endif  // INCLUDE_NLOHMANN_DETAIL_ITERATORS_ITERATOR_TRAITS_HPP
+
 // #include <nlohmann/detail/macro_scope.hpp>
 
 // #include <nlohmann/detail/meta/call_std/begin.hpp>
@@ -3307,16 +3341,19 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
+#ifndef INCLUDE_NLOHMANN_DETAIL_META_CALL_STD_BEGIN_HPP
+    #define INCLUDE_NLOHMANN_DETAIL_META_CALL_STD_BEGIN_HPP
+
+    // #include <nlohmann/detail/macro_scope.hpp>
 
 
-// #include <nlohmann/detail/macro_scope.hpp>
+    NLOHMANN_JSON_NAMESPACE_BEGIN
 
+    NLOHMANN_CAN_CALL_STD_FUNC_IMPL(begin);
 
-NLOHMANN_JSON_NAMESPACE_BEGIN
+    NLOHMANN_JSON_NAMESPACE_END
 
-NLOHMANN_CAN_CALL_STD_FUNC_IMPL(begin);
-
-NLOHMANN_JSON_NAMESPACE_END
+#endif  // INCLUDE_NLOHMANN_DETAIL_META_CALL_STD_BEGIN_HPP
 
 // #include <nlohmann/detail/meta/call_std/end.hpp>
 //     __ _____ _____ _____
@@ -3327,16 +3364,19 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
+#ifndef INCLUDE_NLOHMANN_DETAIL_META_CALL_STD_END_HPP
+    #define INCLUDE_NLOHMANN_DETAIL_META_CALL_STD_END_HPP
+
+    // #include <nlohmann/detail/macro_scope.hpp>
 
 
-// #include <nlohmann/detail/macro_scope.hpp>
+    NLOHMANN_JSON_NAMESPACE_BEGIN
 
+    NLOHMANN_CAN_CALL_STD_FUNC_IMPL(end);
 
-NLOHMANN_JSON_NAMESPACE_BEGIN
+    NLOHMANN_JSON_NAMESPACE_END
 
-NLOHMANN_CAN_CALL_STD_FUNC_IMPL(end);
-
-NLOHMANN_JSON_NAMESPACE_END
+#endif  // INCLUDE_NLOHMANN_DETAIL_META_CALL_STD_END_HPP
 
 // #include <nlohmann/detail/meta/cpp_future.hpp>
 
@@ -4139,6 +4179,8 @@ struct is_transparent : bool_constant<impl::is_transparent<T>()> {};
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
+#endif  // INCLUDE_NLOHMANN_DETAIL_META_TYPE_TRAITS_HPP
+
 // #include <nlohmann/detail/string_concat.hpp>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
@@ -4148,7 +4190,8 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-
+#ifndef INCLUDE_NLOHMANN_DETAIL_STRING_CONCAT_HPP
+#define INCLUDE_NLOHMANN_DETAIL_STRING_CONCAT_HPP
 
 #include <cstring> // strlen
 #include <string> // string
@@ -4288,6 +4331,8 @@ inline OutStringType concat(Args && ... args)
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
+
+#endif  // INCLUDE_NLOHMANN_DETAIL_STRING_CONCAT_HPP
 
 
 
@@ -4522,6 +4567,8 @@ class other_error : public exception
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
+#endif  // INCLUDE_NLOHMANN_DETAIL_EXCEPTIONS_HPP
+
 // #include <nlohmann/detail/macro_scope.hpp>
 
 // #include <nlohmann/detail/meta/cpp_future.hpp>
@@ -4535,7 +4582,8 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-
+#ifndef INCLUDE_NLOHMANN_DETAIL_META_IDENTITY_TAG_HPP
+#define INCLUDE_NLOHMANN_DETAIL_META_IDENTITY_TAG_HPP
 
 // #include <nlohmann/detail/abi_macros.hpp>
 
@@ -4550,6 +4598,8 @@ template <class T> struct identity_tag {};
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
+#endif  // INCLUDE_NLOHMANN_DETAIL_META_IDENTITY_TAG_HPP
+
 // #include <nlohmann/detail/meta/std_fs.hpp>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
@@ -4559,7 +4609,8 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-
+#ifndef INCLUDE_NLOHMANN_DETAIL_META_STD_FS_HPP
+#define INCLUDE_NLOHMANN_DETAIL_META_STD_FS_HPP
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
@@ -4581,6 +4632,8 @@ namespace std_fs = std::filesystem;
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 #endif
+
+#endif  // INCLUDE_NLOHMANN_DETAIL_META_STD_FS_HPP
 
 // #include <nlohmann/detail/meta/type_traits.hpp>
 
@@ -5056,6 +5109,8 @@ JSON_INLINE_VARIABLE constexpr const auto& from_json = // NOLINT(misc-definition
 
 NLOHMANN_JSON_NAMESPACE_END
 
+#endif  // INCLUDE_NLOHMANN_DETAIL_CONVERSIONS_FROM_JSON_HPP
+
 // #include <nlohmann/detail/conversions/to_json.hpp>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
@@ -5065,7 +5120,8 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-
+#ifndef INCLUDE_NLOHMANN_DETAIL_CONVERSIONS_TO_JSON_HPP
+#define INCLUDE_NLOHMANN_DETAIL_CONVERSIONS_TO_JSON_HPP
 
 #include <algorithm> // copy
 #include <iterator> // begin, end
@@ -5085,7 +5141,8 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-
+#ifndef INCLUDE_NLOHMANN_DETAIL_ITERATORS_ITERATION_PROXY_HPP
+#define INCLUDE_NLOHMANN_DETAIL_ITERATORS_ITERATION_PROXY_HPP
 
 #include <cstddef> // size_t
 #include <iterator> // input_iterator_tag
@@ -5322,6 +5379,8 @@ class tuple_element<N, ::nlohmann::detail::iteration_proxy_value<IteratorType >>
     template <typename IteratorType>
     inline constexpr bool ::std::ranges::enable_borrowed_range<::nlohmann::detail::iteration_proxy<IteratorType>> = true;
 #endif
+
+#endif  // INCLUDE_NLOHMANN_DETAIL_ITERATORS_ITERATION_PROXY_HPP
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
@@ -5755,6 +5814,8 @@ JSON_INLINE_VARIABLE constexpr const auto& to_json = // NOLINT(misc-definitions-
 
 NLOHMANN_JSON_NAMESPACE_END
 
+#endif  // INCLUDE_NLOHMANN_DETAIL_CONVERSIONS_TO_JSON_HPP
+
 // #include <nlohmann/detail/meta/identity_tag.hpp>
 
 
@@ -5797,6 +5858,8 @@ struct adl_serializer
 
 NLOHMANN_JSON_NAMESPACE_END
 
+#endif  // INCLUDE_NLOHMANN_ADL_SERIALIZER_HPP
+
 // #include <nlohmann/byte_container_with_subtype.hpp>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
@@ -5806,7 +5869,8 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-
+#ifndef INCLUDE_NLOHMANN_BYTE_CONTAINER_WITH_SUBTYPE_HPP
+#define INCLUDE_NLOHMANN_BYTE_CONTAINER_WITH_SUBTYPE_HPP
 
 #include <cstdint> // uint8_t, uint64_t
 #include <tuple> // tie
@@ -5903,6 +5967,8 @@ class byte_container_with_subtype : public BinaryType
 
 NLOHMANN_JSON_NAMESPACE_END
 
+#endif  // INCLUDE_NLOHMANN_BYTE_CONTAINER_WITH_SUBTYPE_HPP
+
 // #include <nlohmann/detail/conversions/from_json.hpp>
 
 // #include <nlohmann/detail/conversions/to_json.hpp>
@@ -5918,7 +5984,8 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-
+#ifndef INCLUDE_NLOHMANN_DETAIL_HASH_HPP
+#define INCLUDE_NLOHMANN_DETAIL_HASH_HPP
 
 #include <cstdint> // uint8_t
 #include <cstddef> // size_t
@@ -6042,6 +6109,8 @@ std::size_t hash(const BasicJsonType& j)
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
+#endif  // INCLUDE_NLOHMANN_DETAIL_HASH_HPP
+
 // #include <nlohmann/detail/input/binary_reader.hpp>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
@@ -6051,7 +6120,8 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-
+#ifndef INCLUDE_NLOHMANN_DETAIL_INPUT_BINARY_READER_HPP
+#define INCLUDE_NLOHMANN_DETAIL_INPUT_BINARY_READER_HPP
 
 #include <algorithm> // generate_n
 #include <array> // array
@@ -6077,7 +6147,8 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-
+#ifndef INCLUDE_NLOHMANN_DETAIL_INPUT_INPUT_ADAPTERS_HPP
+#define INCLUDE_NLOHMANN_DETAIL_INPUT_INPUT_ADAPTERS_HPP
 
 #include <array> // array
 #include <cstddef> // size_t
@@ -6566,6 +6637,8 @@ class span_input_adapter
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
+#endif  // INCLUDE_NLOHMANN_DETAIL_INPUT_INPUT_ADAPTERS_HPP
+
 // #include <nlohmann/detail/input/json_sax.hpp>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
@@ -6575,7 +6648,8 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-
+#ifndef INCLUDE_NLOHMANN_DETAIL_INPUT_JSON_SAX_HPP
+#define INCLUDE_NLOHMANN_DETAIL_INPUT_JSON_SAX_HPP
 
 #include <cstddef>
 #include <string> // string
@@ -7299,6 +7373,8 @@ class json_sax_acceptor
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
+#endif  // INCLUDE_NLOHMANN_DETAIL_INPUT_JSON_SAX_HPP
+
 // #include <nlohmann/detail/input/lexer.hpp>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
@@ -7308,7 +7384,8 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-
+#ifndef INCLUDE_NLOHMANN_DETAIL_INPUT_LEXER_HPP
+#define INCLUDE_NLOHMANN_DETAIL_INPUT_LEXER_HPP
 
 #include <array> // array
 #include <clocale> // localeconv
@@ -8936,6 +9013,8 @@ scan_number_done:
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
+#endif  // INCLUDE_NLOHMANN_DETAIL_INPUT_LEXER_HPP
+
 // #include <nlohmann/detail/macro_scope.hpp>
 
 // #include <nlohmann/detail/meta/is_sax.hpp>
@@ -8947,7 +9026,8 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-
+#ifndef INCLUDE_NLOHMANN_DETAIL_META_IS_SAX_HPP
+#define INCLUDE_NLOHMANN_DETAIL_META_IS_SAX_HPP
 
 #include <cstdint> // size_t
 #include <utility> // declval
@@ -9101,6 +9181,8 @@ struct is_sax_static_asserts
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
+
+#endif  // INCLUDE_NLOHMANN_DETAIL_META_IS_SAX_HPP
 
 // #include <nlohmann/detail/meta/type_traits.hpp>
 
@@ -12087,6 +12169,8 @@ class binary_reader
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
+#endif  // INCLUDE_NLOHMANN_DETAIL_INPUT_BINARY_READER_HPP
+
 // #include <nlohmann/detail/input/input_adapters.hpp>
 
 // #include <nlohmann/detail/input/lexer.hpp>
@@ -12100,7 +12184,8 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-
+#ifndef INCLUDE_NLOHMANN_DETAIL_INPUT_PARSER_HPP
+#define INCLUDE_NLOHMANN_DETAIL_INPUT_PARSER_HPP
 
 #include <cmath> // isfinite
 #include <cstdint> // uint8_t
@@ -12608,6 +12693,8 @@ class parser
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
+#endif  // INCLUDE_NLOHMANN_DETAIL_INPUT_PARSER_HPP
+
 // #include <nlohmann/detail/iterators/internal_iterator.hpp>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
@@ -12617,7 +12704,8 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-
+#ifndef INCLUDE_NLOHMANN_DETAIL_ITERATORS_INTERNAL_ITERATOR_HPP
+#define INCLUDE_NLOHMANN_DETAIL_ITERATORS_INTERNAL_ITERATOR_HPP
 
 // #include <nlohmann/detail/abi_macros.hpp>
 
@@ -12630,7 +12718,8 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-
+#ifndef INCLUDE_NLOHMANN_DETAIL_ITERATORS_PRIMITIVE_ITERATOR_HPP
+#define INCLUDE_NLOHMANN_DETAIL_ITERATORS_PRIMITIVE_ITERATOR_HPP
 
 #include <cstddef> // ptrdiff_t
 #include <limits>  // numeric_limits
@@ -12756,6 +12845,8 @@ class primitive_iterator_t
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
+#endif  // INCLUDE_NLOHMANN_DETAIL_ITERATORS_PRIMITIVE_ITERATOR_HPP
+
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -12780,6 +12871,8 @@ template<typename BasicJsonType> struct internal_iterator
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
+#endif  // INCLUDE_NLOHMANN_DETAIL_ITERATORS_INTERNAL_ITERATOR_HPP
+
 // #include <nlohmann/detail/iterators/iter_impl.hpp>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
@@ -12789,7 +12882,8 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-
+#ifndef INCLUDE_NLOHMANN_DETAIL_ITERATORS_ITER_IMPL_HPP
+#define INCLUDE_NLOHMANN_DETAIL_ITERATORS_ITER_IMPL_HPP
 
 #include <iterator> // iterator, random_access_iterator_tag, bidirectional_iterator_tag, advance, next
 #include <type_traits> // conditional, is_const, remove_const
@@ -13540,6 +13634,8 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
+#endif  // INCLUDE_NLOHMANN_DETAIL_ITERATORS_ITER_IMPL_HPP
+
 // #include <nlohmann/detail/iterators/iteration_proxy.hpp>
 
 // #include <nlohmann/detail/iterators/json_reverse_iterator.hpp>
@@ -13551,7 +13647,8 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-
+#ifndef INCLUDE_NLOHMANN_DETAIL_ITERATORS_JSON_REVERSE_ITERATOR_HPP
+#define INCLUDE_NLOHMANN_DETAIL_ITERATORS_JSON_REVERSE_ITERATOR_HPP
 
 #include <cstddef> // ptrdiff_t
 #include <iterator> // reverse_iterator
@@ -13675,10 +13772,13 @@ class json_reverse_iterator : public std::reverse_iterator<Base>
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
+#endif  // INCLUDE_NLOHMANN_DETAIL_ITERATORS_JSON_REVERSE_ITERATOR_HPP
+
 // #include <nlohmann/detail/iterators/primitive_iterator.hpp>
 
 // #include <nlohmann/detail/json_custom_base_class.hpp>
-
+#ifndef INCLUDE_NLOHMANN_DETAIL_JSON_CUSTOM_BASE_CLASS_HPP
+#define INCLUDE_NLOHMANN_DETAIL_JSON_CUSTOM_BASE_CLASS_HPP
 
 #include <type_traits> // conditional, is_same
 
@@ -13711,6 +13811,8 @@ using json_base_class = typename std::conditional <
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
+#endif  // INCLUDE_NLOHMANN_DETAIL_JSON_CUSTOM_BASE_CLASS_HPP
+
 // #include <nlohmann/detail/json_pointer.hpp>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
@@ -13720,7 +13822,8 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-
+#ifndef INCLUDE_NLOHMANN_DETAIL_JSON_POINTER_HPP
+#define INCLUDE_NLOHMANN_DETAIL_JSON_POINTER_HPP
 
 #include <algorithm> // all_of
 #include <cctype> // isdigit
@@ -14706,6 +14809,8 @@ inline bool operator<(const json_pointer<RefStringTypeLhs>& lhs,
 
 NLOHMANN_JSON_NAMESPACE_END
 
+#endif  // INCLUDE_NLOHMANN_DETAIL_JSON_POINTER_HPP
+
 // #include <nlohmann/detail/json_ref.hpp>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
@@ -14715,7 +14820,8 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-
+#ifndef INCLUDE_NLOHMANN_DETAIL_JSON_REF_HPP
+#define INCLUDE_NLOHMANN_DETAIL_JSON_REF_HPP
 
 #include <initializer_list>
 #include <utility>
@@ -14788,6 +14894,8 @@ class json_ref
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
+#endif  // INCLUDE_NLOHMANN_DETAIL_JSON_REF_HPP
+
 // #include <nlohmann/detail/macro_scope.hpp>
 
 // #include <nlohmann/detail/string_concat.hpp>
@@ -14807,7 +14915,8 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-
+#ifndef INCLUDE_NLOHMANN_DETAIL_OUTPUT_BINARY_WRITER_HPP
+#define INCLUDE_NLOHMANN_DETAIL_OUTPUT_BINARY_WRITER_HPP
 
 #include <algorithm> // reverse
 #include <array> // array
@@ -14833,7 +14942,8 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-
+#ifndef INCLUDE_NLOHMANN_DETAIL_OUTPUT_OUTPUT_ADAPTERS_HPP
+#define INCLUDE_NLOHMANN_DETAIL_OUTPUT_OUTPUT_ADAPTERS_HPP
 
 #include <algorithm> // copy
 #include <cstddef> // size_t
@@ -14973,6 +15083,8 @@ class output_adapter
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
+
+#endif  // INCLUDE_NLOHMANN_DETAIL_OUTPUT_OUTPUT_ADAPTERS_HPP
 
 // #include <nlohmann/detail/string_concat.hpp>
 
@@ -16790,6 +16902,8 @@ class binary_writer
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
+#endif  // INCLUDE_NLOHMANN_DETAIL_OUTPUT_BINARY_WRITER_HPP
+
 // #include <nlohmann/detail/output/output_adapters.hpp>
 
 // #include <nlohmann/detail/output/serializer.hpp>
@@ -16802,7 +16916,8 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-
+#ifndef INCLUDE_NLOHMANN_DETAIL_OUTPUT_SERIALIZER_HPP
+#define INCLUDE_NLOHMANN_DETAIL_OUTPUT_SERIALIZER_HPP
 
 #include <algorithm> // reverse, remove, fill, find, none_of
 #include <array> // array
@@ -16827,7 +16942,8 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-
+#ifndef INCLUDE_NLOHMANN_DETAIL_CONVERSIONS_TO_CHARS_HPP
+#define INCLUDE_NLOHMANN_DETAIL_CONVERSIONS_TO_CHARS_HPP
 
 #include <array> // array
 #include <cmath>   // signbit, isfinite
@@ -17938,6 +18054,8 @@ char* to_chars(char* first, const char* last, FloatType value)
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
+#endif  // INCLUDE_NLOHMANN_DETAIL_CONVERSIONS_TO_CHARS_HPP
+
 // #include <nlohmann/detail/exceptions.hpp>
 
 // #include <nlohmann/detail/macro_scope.hpp>
@@ -18909,6 +19027,8 @@ class serializer
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
+#endif  // INCLUDE_NLOHMANN_DETAIL_OUTPUT_SERIALIZER_HPP
+
 // #include <nlohmann/detail/value_t.hpp>
 
 // #include <nlohmann/json_fwd.hpp>
@@ -18922,7 +19042,8 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-
+#ifndef INCLUDE_NLOHMANN_ORDERED_MAP_HPP
+#define INCLUDE_NLOHMANN_ORDERED_MAP_HPP
 
 #include <functional> // equal_to, less
 #include <initializer_list> // initializer_list
@@ -19275,6 +19396,8 @@ private:
 };
 
 NLOHMANN_JSON_NAMESPACE_END
+
+#endif  // INCLUDE_NLOHMANN_ORDERED_MAP_HPP
 
 
 #if defined(JSON_HAS_CPP_17)
@@ -24474,201 +24597,207 @@ inline void swap(nlohmann::NLOHMANN_BASIC_JSON_TPL& j1, nlohmann::NLOHMANN_BASIC
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
+#ifndef INCLUDE_NLOHMANN_DETAIL_MACRO_UNSCOPE_HPP
+    #define INCLUDE_NLOHMANN_DETAIL_MACRO_UNSCOPE_HPP
+
+    // restore clang diagnostic settings
+    #if defined(__clang__)
+        #pragma clang diagnostic pop
+    #endif
+
+    // clean up
+    #undef JSON_ASSERT
+    #undef JSON_INTERNAL_CATCH
+    #undef JSON_THROW
+    #undef JSON_PRIVATE_UNLESS_TESTED
+    #undef NLOHMANN_BASIC_JSON_TPL_DECLARATION
+    #undef NLOHMANN_BASIC_JSON_TPL
+    #undef JSON_EXPLICIT
+    #undef NLOHMANN_CAN_CALL_STD_FUNC_IMPL
+    #undef JSON_INLINE_VARIABLE
+    #undef JSON_NO_UNIQUE_ADDRESS
+    #undef JSON_DISABLE_ENUM_SERIALIZATION
+    #undef JSON_USE_GLOBAL_UDLS
+
+    #ifndef JSON_TEST_KEEP_MACROS
+        #undef JSON_CATCH
+        #undef JSON_TRY
+        #undef JSON_HAS_CPP_11
+        #undef JSON_HAS_CPP_14
+        #undef JSON_HAS_CPP_17
+        #undef JSON_HAS_CPP_20
+        #undef JSON_HAS_FILESYSTEM
+        #undef JSON_HAS_EXPERIMENTAL_FILESYSTEM
+        #undef JSON_HAS_THREE_WAY_COMPARISON
+        #undef JSON_HAS_RANGES
+        #undef JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
+    #endif
+
+    // #include <nlohmann/thirdparty/hedley/hedley_undef.hpp>
+    //     __ _____ _____ _____
+    //  __|  |   __|     |   | |  JSON for Modern C++
+    // |  |  |__   |  |  | | | |  version 3.11.2
+    // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+    //
+    // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+    // SPDX-License-Identifier: MIT
+
+    #ifndef INCLUDE_NLOHMANN_THIRDPARTY_HEDLEY_HEDLEY_UNDEF_HPP
+        #define INCLUDE_NLOHMANN_THIRDPARTY_HEDLEY_HEDLEY_UNDEF_HPP
+
+        #undef JSON_HEDLEY_ALWAYS_INLINE
+        #undef JSON_HEDLEY_ARM_VERSION
+        #undef JSON_HEDLEY_ARM_VERSION_CHECK
+        #undef JSON_HEDLEY_ARRAY_PARAM
+        #undef JSON_HEDLEY_ASSUME
+        #undef JSON_HEDLEY_BEGIN_C_DECLS
+        #undef JSON_HEDLEY_CLANG_HAS_ATTRIBUTE
+        #undef JSON_HEDLEY_CLANG_HAS_BUILTIN
+        #undef JSON_HEDLEY_CLANG_HAS_CPP_ATTRIBUTE
+        #undef JSON_HEDLEY_CLANG_HAS_DECLSPEC_DECLSPEC_ATTRIBUTE
+        #undef JSON_HEDLEY_CLANG_HAS_EXTENSION
+        #undef JSON_HEDLEY_CLANG_HAS_FEATURE
+        #undef JSON_HEDLEY_CLANG_HAS_WARNING
+        #undef JSON_HEDLEY_COMPCERT_VERSION
+        #undef JSON_HEDLEY_COMPCERT_VERSION_CHECK
+        #undef JSON_HEDLEY_CONCAT
+        #undef JSON_HEDLEY_CONCAT3
+        #undef JSON_HEDLEY_CONCAT3_EX
+        #undef JSON_HEDLEY_CONCAT_EX
+        #undef JSON_HEDLEY_CONST
+        #undef JSON_HEDLEY_CONSTEXPR
+        #undef JSON_HEDLEY_CONST_CAST
+        #undef JSON_HEDLEY_CPP_CAST
+        #undef JSON_HEDLEY_CRAY_VERSION
+        #undef JSON_HEDLEY_CRAY_VERSION_CHECK
+        #undef JSON_HEDLEY_C_DECL
+        #undef JSON_HEDLEY_DEPRECATED
+        #undef JSON_HEDLEY_DEPRECATED_FOR
+        #undef JSON_HEDLEY_DIAGNOSTIC_DISABLE_CAST_QUAL
+        #undef JSON_HEDLEY_DIAGNOSTIC_DISABLE_CPP98_COMPAT_WRAP_
+        #undef JSON_HEDLEY_DIAGNOSTIC_DISABLE_DEPRECATED
+        #undef JSON_HEDLEY_DIAGNOSTIC_DISABLE_UNKNOWN_CPP_ATTRIBUTES
+        #undef JSON_HEDLEY_DIAGNOSTIC_DISABLE_UNKNOWN_PRAGMAS
+        #undef JSON_HEDLEY_DIAGNOSTIC_DISABLE_UNUSED_FUNCTION
+        #undef JSON_HEDLEY_DIAGNOSTIC_POP
+        #undef JSON_HEDLEY_DIAGNOSTIC_PUSH
+        #undef JSON_HEDLEY_DMC_VERSION
+        #undef JSON_HEDLEY_DMC_VERSION_CHECK
+        #undef JSON_HEDLEY_EMPTY_BASES
+        #undef JSON_HEDLEY_EMSCRIPTEN_VERSION
+        #undef JSON_HEDLEY_EMSCRIPTEN_VERSION_CHECK
+        #undef JSON_HEDLEY_END_C_DECLS
+        #undef JSON_HEDLEY_FLAGS
+        #undef JSON_HEDLEY_FLAGS_CAST
+        #undef JSON_HEDLEY_GCC_HAS_ATTRIBUTE
+        #undef JSON_HEDLEY_GCC_HAS_BUILTIN
+        #undef JSON_HEDLEY_GCC_HAS_CPP_ATTRIBUTE
+        #undef JSON_HEDLEY_GCC_HAS_DECLSPEC_ATTRIBUTE
+        #undef JSON_HEDLEY_GCC_HAS_EXTENSION
+        #undef JSON_HEDLEY_GCC_HAS_FEATURE
+        #undef JSON_HEDLEY_GCC_HAS_WARNING
+        #undef JSON_HEDLEY_GCC_NOT_CLANG_VERSION_CHECK
+        #undef JSON_HEDLEY_GCC_VERSION
+        #undef JSON_HEDLEY_GCC_VERSION_CHECK
+        #undef JSON_HEDLEY_GNUC_HAS_ATTRIBUTE
+        #undef JSON_HEDLEY_GNUC_HAS_BUILTIN
+        #undef JSON_HEDLEY_GNUC_HAS_CPP_ATTRIBUTE
+        #undef JSON_HEDLEY_GNUC_HAS_DECLSPEC_ATTRIBUTE
+        #undef JSON_HEDLEY_GNUC_HAS_EXTENSION
+        #undef JSON_HEDLEY_GNUC_HAS_FEATURE
+        #undef JSON_HEDLEY_GNUC_HAS_WARNING
+        #undef JSON_HEDLEY_GNUC_VERSION
+        #undef JSON_HEDLEY_GNUC_VERSION_CHECK
+        #undef JSON_HEDLEY_HAS_ATTRIBUTE
+        #undef JSON_HEDLEY_HAS_BUILTIN
+        #undef JSON_HEDLEY_HAS_CPP_ATTRIBUTE
+        #undef JSON_HEDLEY_HAS_CPP_ATTRIBUTE_NS
+        #undef JSON_HEDLEY_HAS_DECLSPEC_ATTRIBUTE
+        #undef JSON_HEDLEY_HAS_EXTENSION
+        #undef JSON_HEDLEY_HAS_FEATURE
+        #undef JSON_HEDLEY_HAS_WARNING
+        #undef JSON_HEDLEY_IAR_VERSION
+        #undef JSON_HEDLEY_IAR_VERSION_CHECK
+        #undef JSON_HEDLEY_IBM_VERSION
+        #undef JSON_HEDLEY_IBM_VERSION_CHECK
+        #undef JSON_HEDLEY_IMPORT
+        #undef JSON_HEDLEY_INLINE
+        #undef JSON_HEDLEY_INTEL_CL_VERSION
+        #undef JSON_HEDLEY_INTEL_CL_VERSION_CHECK
+        #undef JSON_HEDLEY_INTEL_VERSION
+        #undef JSON_HEDLEY_INTEL_VERSION_CHECK
+        #undef JSON_HEDLEY_IS_CONSTANT
+        #undef JSON_HEDLEY_IS_CONSTEXPR_
+        #undef JSON_HEDLEY_LIKELY
+        #undef JSON_HEDLEY_MALLOC
+        #undef JSON_HEDLEY_MCST_LCC_VERSION
+        #undef JSON_HEDLEY_MCST_LCC_VERSION_CHECK
+        #undef JSON_HEDLEY_MESSAGE
+        #undef JSON_HEDLEY_MSVC_VERSION
+        #undef JSON_HEDLEY_MSVC_VERSION_CHECK
+        #undef JSON_HEDLEY_NEVER_INLINE
+        #undef JSON_HEDLEY_NON_NULL
+        #undef JSON_HEDLEY_NO_ESCAPE
+        #undef JSON_HEDLEY_NO_RETURN
+        #undef JSON_HEDLEY_NO_THROW
+        #undef JSON_HEDLEY_NULL
+        #undef JSON_HEDLEY_PELLES_VERSION
+        #undef JSON_HEDLEY_PELLES_VERSION_CHECK
+        #undef JSON_HEDLEY_PGI_VERSION
+        #undef JSON_HEDLEY_PGI_VERSION_CHECK
+        #undef JSON_HEDLEY_PREDICT
+        #undef JSON_HEDLEY_PRINTF_FORMAT
+        #undef JSON_HEDLEY_PRIVATE
+        #undef JSON_HEDLEY_PUBLIC
+        #undef JSON_HEDLEY_PURE
+        #undef JSON_HEDLEY_REINTERPRET_CAST
+        #undef JSON_HEDLEY_REQUIRE
+        #undef JSON_HEDLEY_REQUIRE_CONSTEXPR
+        #undef JSON_HEDLEY_REQUIRE_MSG
+        #undef JSON_HEDLEY_RESTRICT
+        #undef JSON_HEDLEY_RETURNS_NON_NULL
+        #undef JSON_HEDLEY_SENTINEL
+        #undef JSON_HEDLEY_STATIC_ASSERT
+        #undef JSON_HEDLEY_STATIC_CAST
+        #undef JSON_HEDLEY_STRINGIFY
+        #undef JSON_HEDLEY_STRINGIFY_EX
+        #undef JSON_HEDLEY_SUNPRO_VERSION
+        #undef JSON_HEDLEY_SUNPRO_VERSION_CHECK
+        #undef JSON_HEDLEY_TINYC_VERSION
+        #undef JSON_HEDLEY_TINYC_VERSION_CHECK
+        #undef JSON_HEDLEY_TI_ARMCL_VERSION
+        #undef JSON_HEDLEY_TI_ARMCL_VERSION_CHECK
+        #undef JSON_HEDLEY_TI_CL2000_VERSION
+        #undef JSON_HEDLEY_TI_CL2000_VERSION_CHECK
+        #undef JSON_HEDLEY_TI_CL430_VERSION
+        #undef JSON_HEDLEY_TI_CL430_VERSION_CHECK
+        #undef JSON_HEDLEY_TI_CL6X_VERSION
+        #undef JSON_HEDLEY_TI_CL6X_VERSION_CHECK
+        #undef JSON_HEDLEY_TI_CL7X_VERSION
+        #undef JSON_HEDLEY_TI_CL7X_VERSION_CHECK
+        #undef JSON_HEDLEY_TI_CLPRU_VERSION
+        #undef JSON_HEDLEY_TI_CLPRU_VERSION_CHECK
+        #undef JSON_HEDLEY_TI_VERSION
+        #undef JSON_HEDLEY_TI_VERSION_CHECK
+        #undef JSON_HEDLEY_UNAVAILABLE
+        #undef JSON_HEDLEY_UNLIKELY
+        #undef JSON_HEDLEY_UNPREDICTABLE
+        #undef JSON_HEDLEY_UNREACHABLE
+        #undef JSON_HEDLEY_UNREACHABLE_RETURN
+        #undef JSON_HEDLEY_VERSION
+        #undef JSON_HEDLEY_VERSION_DECODE_MAJOR
+        #undef JSON_HEDLEY_VERSION_DECODE_MINOR
+        #undef JSON_HEDLEY_VERSION_DECODE_REVISION
+        #undef JSON_HEDLEY_VERSION_ENCODE
+        #undef JSON_HEDLEY_WARNING
+        #undef JSON_HEDLEY_WARN_UNUSED_RESULT
+        #undef JSON_HEDLEY_WARN_UNUSED_RESULT_MSG
+        #undef JSON_HEDLEY_FALL_THROUGH
+
+    #endif  // INCLUDE_NLOHMANN_THIRDPARTY_HEDLEY_HEDLEY_UNDEF_HPP
 
 
-// restore clang diagnostic settings
-#if defined(__clang__)
-    #pragma clang diagnostic pop
-#endif
-
-// clean up
-#undef JSON_ASSERT
-#undef JSON_INTERNAL_CATCH
-#undef JSON_THROW
-#undef JSON_PRIVATE_UNLESS_TESTED
-#undef NLOHMANN_BASIC_JSON_TPL_DECLARATION
-#undef NLOHMANN_BASIC_JSON_TPL
-#undef JSON_EXPLICIT
-#undef NLOHMANN_CAN_CALL_STD_FUNC_IMPL
-#undef JSON_INLINE_VARIABLE
-#undef JSON_NO_UNIQUE_ADDRESS
-#undef JSON_DISABLE_ENUM_SERIALIZATION
-#undef JSON_USE_GLOBAL_UDLS
-
-#ifndef JSON_TEST_KEEP_MACROS
-    #undef JSON_CATCH
-    #undef JSON_TRY
-    #undef JSON_HAS_CPP_11
-    #undef JSON_HAS_CPP_14
-    #undef JSON_HAS_CPP_17
-    #undef JSON_HAS_CPP_20
-    #undef JSON_HAS_FILESYSTEM
-    #undef JSON_HAS_EXPERIMENTAL_FILESYSTEM
-    #undef JSON_HAS_THREE_WAY_COMPARISON
-    #undef JSON_HAS_RANGES
-    #undef JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
-#endif
-
-// #include <nlohmann/thirdparty/hedley/hedley_undef.hpp>
-//     __ _____ _____ _____
-//  __|  |   __|     |   | |  JSON for Modern C++
-// |  |  |__   |  |  | | | |  version 3.11.2
-// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
-//
-// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
-// SPDX-License-Identifier: MIT
-
-
-
-#undef JSON_HEDLEY_ALWAYS_INLINE
-#undef JSON_HEDLEY_ARM_VERSION
-#undef JSON_HEDLEY_ARM_VERSION_CHECK
-#undef JSON_HEDLEY_ARRAY_PARAM
-#undef JSON_HEDLEY_ASSUME
-#undef JSON_HEDLEY_BEGIN_C_DECLS
-#undef JSON_HEDLEY_CLANG_HAS_ATTRIBUTE
-#undef JSON_HEDLEY_CLANG_HAS_BUILTIN
-#undef JSON_HEDLEY_CLANG_HAS_CPP_ATTRIBUTE
-#undef JSON_HEDLEY_CLANG_HAS_DECLSPEC_DECLSPEC_ATTRIBUTE
-#undef JSON_HEDLEY_CLANG_HAS_EXTENSION
-#undef JSON_HEDLEY_CLANG_HAS_FEATURE
-#undef JSON_HEDLEY_CLANG_HAS_WARNING
-#undef JSON_HEDLEY_COMPCERT_VERSION
-#undef JSON_HEDLEY_COMPCERT_VERSION_CHECK
-#undef JSON_HEDLEY_CONCAT
-#undef JSON_HEDLEY_CONCAT3
-#undef JSON_HEDLEY_CONCAT3_EX
-#undef JSON_HEDLEY_CONCAT_EX
-#undef JSON_HEDLEY_CONST
-#undef JSON_HEDLEY_CONSTEXPR
-#undef JSON_HEDLEY_CONST_CAST
-#undef JSON_HEDLEY_CPP_CAST
-#undef JSON_HEDLEY_CRAY_VERSION
-#undef JSON_HEDLEY_CRAY_VERSION_CHECK
-#undef JSON_HEDLEY_C_DECL
-#undef JSON_HEDLEY_DEPRECATED
-#undef JSON_HEDLEY_DEPRECATED_FOR
-#undef JSON_HEDLEY_DIAGNOSTIC_DISABLE_CAST_QUAL
-#undef JSON_HEDLEY_DIAGNOSTIC_DISABLE_CPP98_COMPAT_WRAP_
-#undef JSON_HEDLEY_DIAGNOSTIC_DISABLE_DEPRECATED
-#undef JSON_HEDLEY_DIAGNOSTIC_DISABLE_UNKNOWN_CPP_ATTRIBUTES
-#undef JSON_HEDLEY_DIAGNOSTIC_DISABLE_UNKNOWN_PRAGMAS
-#undef JSON_HEDLEY_DIAGNOSTIC_DISABLE_UNUSED_FUNCTION
-#undef JSON_HEDLEY_DIAGNOSTIC_POP
-#undef JSON_HEDLEY_DIAGNOSTIC_PUSH
-#undef JSON_HEDLEY_DMC_VERSION
-#undef JSON_HEDLEY_DMC_VERSION_CHECK
-#undef JSON_HEDLEY_EMPTY_BASES
-#undef JSON_HEDLEY_EMSCRIPTEN_VERSION
-#undef JSON_HEDLEY_EMSCRIPTEN_VERSION_CHECK
-#undef JSON_HEDLEY_END_C_DECLS
-#undef JSON_HEDLEY_FLAGS
-#undef JSON_HEDLEY_FLAGS_CAST
-#undef JSON_HEDLEY_GCC_HAS_ATTRIBUTE
-#undef JSON_HEDLEY_GCC_HAS_BUILTIN
-#undef JSON_HEDLEY_GCC_HAS_CPP_ATTRIBUTE
-#undef JSON_HEDLEY_GCC_HAS_DECLSPEC_ATTRIBUTE
-#undef JSON_HEDLEY_GCC_HAS_EXTENSION
-#undef JSON_HEDLEY_GCC_HAS_FEATURE
-#undef JSON_HEDLEY_GCC_HAS_WARNING
-#undef JSON_HEDLEY_GCC_NOT_CLANG_VERSION_CHECK
-#undef JSON_HEDLEY_GCC_VERSION
-#undef JSON_HEDLEY_GCC_VERSION_CHECK
-#undef JSON_HEDLEY_GNUC_HAS_ATTRIBUTE
-#undef JSON_HEDLEY_GNUC_HAS_BUILTIN
-#undef JSON_HEDLEY_GNUC_HAS_CPP_ATTRIBUTE
-#undef JSON_HEDLEY_GNUC_HAS_DECLSPEC_ATTRIBUTE
-#undef JSON_HEDLEY_GNUC_HAS_EXTENSION
-#undef JSON_HEDLEY_GNUC_HAS_FEATURE
-#undef JSON_HEDLEY_GNUC_HAS_WARNING
-#undef JSON_HEDLEY_GNUC_VERSION
-#undef JSON_HEDLEY_GNUC_VERSION_CHECK
-#undef JSON_HEDLEY_HAS_ATTRIBUTE
-#undef JSON_HEDLEY_HAS_BUILTIN
-#undef JSON_HEDLEY_HAS_CPP_ATTRIBUTE
-#undef JSON_HEDLEY_HAS_CPP_ATTRIBUTE_NS
-#undef JSON_HEDLEY_HAS_DECLSPEC_ATTRIBUTE
-#undef JSON_HEDLEY_HAS_EXTENSION
-#undef JSON_HEDLEY_HAS_FEATURE
-#undef JSON_HEDLEY_HAS_WARNING
-#undef JSON_HEDLEY_IAR_VERSION
-#undef JSON_HEDLEY_IAR_VERSION_CHECK
-#undef JSON_HEDLEY_IBM_VERSION
-#undef JSON_HEDLEY_IBM_VERSION_CHECK
-#undef JSON_HEDLEY_IMPORT
-#undef JSON_HEDLEY_INLINE
-#undef JSON_HEDLEY_INTEL_CL_VERSION
-#undef JSON_HEDLEY_INTEL_CL_VERSION_CHECK
-#undef JSON_HEDLEY_INTEL_VERSION
-#undef JSON_HEDLEY_INTEL_VERSION_CHECK
-#undef JSON_HEDLEY_IS_CONSTANT
-#undef JSON_HEDLEY_IS_CONSTEXPR_
-#undef JSON_HEDLEY_LIKELY
-#undef JSON_HEDLEY_MALLOC
-#undef JSON_HEDLEY_MCST_LCC_VERSION
-#undef JSON_HEDLEY_MCST_LCC_VERSION_CHECK
-#undef JSON_HEDLEY_MESSAGE
-#undef JSON_HEDLEY_MSVC_VERSION
-#undef JSON_HEDLEY_MSVC_VERSION_CHECK
-#undef JSON_HEDLEY_NEVER_INLINE
-#undef JSON_HEDLEY_NON_NULL
-#undef JSON_HEDLEY_NO_ESCAPE
-#undef JSON_HEDLEY_NO_RETURN
-#undef JSON_HEDLEY_NO_THROW
-#undef JSON_HEDLEY_NULL
-#undef JSON_HEDLEY_PELLES_VERSION
-#undef JSON_HEDLEY_PELLES_VERSION_CHECK
-#undef JSON_HEDLEY_PGI_VERSION
-#undef JSON_HEDLEY_PGI_VERSION_CHECK
-#undef JSON_HEDLEY_PREDICT
-#undef JSON_HEDLEY_PRINTF_FORMAT
-#undef JSON_HEDLEY_PRIVATE
-#undef JSON_HEDLEY_PUBLIC
-#undef JSON_HEDLEY_PURE
-#undef JSON_HEDLEY_REINTERPRET_CAST
-#undef JSON_HEDLEY_REQUIRE
-#undef JSON_HEDLEY_REQUIRE_CONSTEXPR
-#undef JSON_HEDLEY_REQUIRE_MSG
-#undef JSON_HEDLEY_RESTRICT
-#undef JSON_HEDLEY_RETURNS_NON_NULL
-#undef JSON_HEDLEY_SENTINEL
-#undef JSON_HEDLEY_STATIC_ASSERT
-#undef JSON_HEDLEY_STATIC_CAST
-#undef JSON_HEDLEY_STRINGIFY
-#undef JSON_HEDLEY_STRINGIFY_EX
-#undef JSON_HEDLEY_SUNPRO_VERSION
-#undef JSON_HEDLEY_SUNPRO_VERSION_CHECK
-#undef JSON_HEDLEY_TINYC_VERSION
-#undef JSON_HEDLEY_TINYC_VERSION_CHECK
-#undef JSON_HEDLEY_TI_ARMCL_VERSION
-#undef JSON_HEDLEY_TI_ARMCL_VERSION_CHECK
-#undef JSON_HEDLEY_TI_CL2000_VERSION
-#undef JSON_HEDLEY_TI_CL2000_VERSION_CHECK
-#undef JSON_HEDLEY_TI_CL430_VERSION
-#undef JSON_HEDLEY_TI_CL430_VERSION_CHECK
-#undef JSON_HEDLEY_TI_CL6X_VERSION
-#undef JSON_HEDLEY_TI_CL6X_VERSION_CHECK
-#undef JSON_HEDLEY_TI_CL7X_VERSION
-#undef JSON_HEDLEY_TI_CL7X_VERSION_CHECK
-#undef JSON_HEDLEY_TI_CLPRU_VERSION
-#undef JSON_HEDLEY_TI_CLPRU_VERSION_CHECK
-#undef JSON_HEDLEY_TI_VERSION
-#undef JSON_HEDLEY_TI_VERSION_CHECK
-#undef JSON_HEDLEY_UNAVAILABLE
-#undef JSON_HEDLEY_UNLIKELY
-#undef JSON_HEDLEY_UNPREDICTABLE
-#undef JSON_HEDLEY_UNREACHABLE
-#undef JSON_HEDLEY_UNREACHABLE_RETURN
-#undef JSON_HEDLEY_VERSION
-#undef JSON_HEDLEY_VERSION_DECODE_MAJOR
-#undef JSON_HEDLEY_VERSION_DECODE_MINOR
-#undef JSON_HEDLEY_VERSION_DECODE_REVISION
-#undef JSON_HEDLEY_VERSION_ENCODE
-#undef JSON_HEDLEY_WARNING
-#undef JSON_HEDLEY_WARN_UNUSED_RESULT
-#undef JSON_HEDLEY_WARN_UNUSED_RESULT_MSG
-#undef JSON_HEDLEY_FALL_THROUGH
-
+#endif  // INCLUDE_NLOHMANN_DETAIL_MACRO_UNSCOPE_HPP
 
 
 #endif  // INCLUDE_NLOHMANN_JSON_HPP_

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef INCLUDE_NLOHMANN_THIRDPARTY_HEDLEY_HEDLEY_HPP
+#define INCLUDE_NLOHMANN_THIRDPARTY_HEDLEY_HEDLEY_HPP
 
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
@@ -2043,3 +2044,5 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 #define JSON_HEDLEY_CLANG_HAS_WARNING(warning) JSON_HEDLEY_HAS_WARNING(warning)
 
 #endif /* !defined(JSON_HEDLEY_VERSION) || (JSON_HEDLEY_VERSION < X) */
+
+#endif  // INCLUDE_NLOHMANN_THIRDPARTY_HEDLEY_HEDLEY_HPP

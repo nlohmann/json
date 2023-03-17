@@ -7,7 +7,8 @@
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-#pragma once
+#ifndef INCLUDE_NLOHMANN_DETAIL_CONVERSIONS_TO_CHARS_HPP
+#define INCLUDE_NLOHMANN_DETAIL_CONVERSIONS_TO_CHARS_HPP
 
 #include <array> // array
 #include <cmath>   // signbit, isfinite
@@ -1116,3 +1117,5 @@ char* to_chars(char* first, const char* last, FloatType value)
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
+
+#endif  // INCLUDE_NLOHMANN_DETAIL_CONVERSIONS_TO_CHARS_HPP

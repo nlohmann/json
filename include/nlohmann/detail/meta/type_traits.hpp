@@ -6,7 +6,8 @@
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-#pragma once
+#ifndef INCLUDE_NLOHMANN_DETAIL_META_TYPE_TRAITS_HPP
+#define INCLUDE_NLOHMANN_DETAIL_META_TYPE_TRAITS_HPP
 
 #include <limits> // numeric_limits
 #include <type_traits> // false_type, is_constructible, is_integral, is_same, true_type
@@ -738,3 +739,5 @@ struct is_transparent : bool_constant<impl::is_transparent<T>()> {};
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
+
+#endif  // INCLUDE_NLOHMANN_DETAIL_META_TYPE_TRAITS_HPP

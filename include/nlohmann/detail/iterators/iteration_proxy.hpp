@@ -6,7 +6,8 @@
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-#pragma once
+#ifndef INCLUDE_NLOHMANN_DETAIL_ITERATORS_ITERATION_PROXY_HPP
+#define INCLUDE_NLOHMANN_DETAIL_ITERATORS_ITERATION_PROXY_HPP
 
 #include <cstddef> // size_t
 #include <iterator> // input_iterator_tag
@@ -240,3 +241,5 @@ class tuple_element<N, ::nlohmann::detail::iteration_proxy_value<IteratorType >>
     template <typename IteratorType>
     inline constexpr bool ::std::ranges::enable_borrowed_range<::nlohmann::detail::iteration_proxy<IteratorType>> = true;
 #endif
+
+#endif  // INCLUDE_NLOHMANN_DETAIL_ITERATORS_ITERATION_PROXY_HPP

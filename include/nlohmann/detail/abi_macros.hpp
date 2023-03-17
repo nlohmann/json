@@ -6,7 +6,8 @@
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-#pragma once
+#ifndef INCLUDE_NLOHMANN_DETAIL_ABI_MACROS_HPP
+#define INCLUDE_NLOHMANN_DETAIL_ABI_MACROS_HPP
 
 // This file contains all macro definitions affecting or depending on the ABI
 
@@ -98,3 +99,5 @@
     }  /* namespace (inline namespace) NOLINT(readability/namespace) */ \
     }  // namespace nlohmann
 #endif
+
+#endif  // INCLUDE_NLOHMANN_DETAIL_ABI_MACROS_HPP

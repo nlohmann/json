@@ -6,7 +6,8 @@
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-#pragma once
+#ifndef INCLUDE_NLOHMANN_DETAIL_MACRO_SCOPE_HPP
+#define INCLUDE_NLOHMANN_DETAIL_MACRO_SCOPE_HPP
 
 #include <utility> // declval, pair
 #include <nlohmann/detail/meta/detected.hpp>
@@ -467,3 +468,5 @@
 #ifndef JSON_USE_GLOBAL_UDLS
     #define JSON_USE_GLOBAL_UDLS 1
 #endif
+
+#endif  // INCLUDE_NLOHMANN_DETAIL_MACRO_SCOPE_HPP

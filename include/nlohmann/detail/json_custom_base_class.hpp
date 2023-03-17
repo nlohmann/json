@@ -1,4 +1,5 @@
-#pragma once
+#ifndef INCLUDE_NLOHMANN_DETAIL_JSON_CUSTOM_BASE_CLASS_HPP
+#define INCLUDE_NLOHMANN_DETAIL_JSON_CUSTOM_BASE_CLASS_HPP
 
 #include <type_traits> // conditional, is_same
 
@@ -29,3 +30,5 @@ using json_base_class = typename std::conditional <
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
+
+#endif  // INCLUDE_NLOHMANN_DETAIL_JSON_CUSTOM_BASE_CLASS_HPP

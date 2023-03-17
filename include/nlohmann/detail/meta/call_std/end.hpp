@@ -6,7 +6,8 @@
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-#pragma once
+#ifndef INCLUDE_NLOHMANN_DETAIL_META_CALL_STD_END_HPP
+#define INCLUDE_NLOHMANN_DETAIL_META_CALL_STD_END_HPP
 
 #include <nlohmann/detail/macro_scope.hpp>
 
@@ -15,3 +16,5 @@ NLOHMANN_JSON_NAMESPACE_BEGIN
 NLOHMANN_CAN_CALL_STD_FUNC_IMPL(end);
 
 NLOHMANN_JSON_NAMESPACE_END
+
+#endif  // INCLUDE_NLOHMANN_DETAIL_META_CALL_STD_END_HPP

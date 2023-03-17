@@ -6,7 +6,8 @@
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-#pragma once
+#ifndef INCLUDE_NLOHMANN_DETAIL_ITERATORS_ITER_IMPL_HPP
+#define INCLUDE_NLOHMANN_DETAIL_ITERATORS_ITER_IMPL_HPP
 
 #include <iterator> // iterator, random_access_iterator_tag, bidirectional_iterator_tag, advance, next
 #include <type_traits> // conditional, is_const, remove_const
@@ -749,3 +750,5 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
+
+#endif  // INCLUDE_NLOHMANN_DETAIL_ITERATORS_ITER_IMPL_HPP

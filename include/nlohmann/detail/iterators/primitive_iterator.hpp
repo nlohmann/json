@@ -6,7 +6,8 @@
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-#pragma once
+#ifndef INCLUDE_NLOHMANN_DETAIL_ITERATORS_PRIMITIVE_ITERATOR_HPP
+#define INCLUDE_NLOHMANN_DETAIL_ITERATORS_PRIMITIVE_ITERATOR_HPP
 
 #include <cstddef> // ptrdiff_t
 #include <limits>  // numeric_limits
@@ -130,3 +131,5 @@ class primitive_iterator_t
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
+
+#endif  // INCLUDE_NLOHMANN_DETAIL_ITERATORS_PRIMITIVE_ITERATOR_HPP

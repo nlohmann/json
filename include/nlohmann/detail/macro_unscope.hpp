@@ -6,7 +6,8 @@
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-#pragma once
+#ifndef INCLUDE_NLOHMANN_DETAIL_MACRO_UNSCOPE_HPP
+#define INCLUDE_NLOHMANN_DETAIL_MACRO_UNSCOPE_HPP
 
 // restore clang diagnostic settings
 #if defined(__clang__)
@@ -42,3 +43,5 @@
 #endif
 
 #include <nlohmann/thirdparty/hedley/hedley_undef.hpp>
+
+#endif  // INCLUDE_NLOHMANN_DETAIL_MACRO_UNSCOPE_HPP

@@ -6,7 +6,8 @@
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-#pragma once
+#ifndef INCLUDE_NLOHMANN_DETAIL_META_IS_SAX_HPP
+#define INCLUDE_NLOHMANN_DETAIL_META_IS_SAX_HPP
 
 #include <cstdint> // size_t
 #include <utility> // declval
@@ -157,3 +158,5 @@ struct is_sax_static_asserts
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
+
+#endif  // INCLUDE_NLOHMANN_DETAIL_META_IS_SAX_HPP

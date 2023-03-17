@@ -6,7 +6,8 @@
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-#pragma once
+#ifndef INCLUDE_NLOHMANN_DETAIL_VALUE_T_HPP
+#define INCLUDE_NLOHMANN_DETAIL_VALUE_T_HPP
 
 #include <array> // array
 #include <cstddef> // size_t
@@ -116,3 +117,5 @@ inline bool operator<(const value_t lhs, const value_t rhs) noexcept
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
+
+#endif  // INCLUDE_NLOHMANN_DETAIL_VALUE_T_HPP

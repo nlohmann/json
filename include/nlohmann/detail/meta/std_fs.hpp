@@ -6,7 +6,8 @@
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-#pragma once
+#ifndef INCLUDE_NLOHMANN_DETAIL_META_STD_FS_HPP
+#define INCLUDE_NLOHMANN_DETAIL_META_STD_FS_HPP
 
 #include <nlohmann/detail/macro_scope.hpp>
 
@@ -27,3 +28,5 @@ namespace std_fs = std::filesystem;
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 #endif
+
+#endif  // INCLUDE_NLOHMANN_DETAIL_META_STD_FS_HPP

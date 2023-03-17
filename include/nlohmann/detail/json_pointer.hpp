@@ -6,7 +6,8 @@
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-#pragma once
+#ifndef INCLUDE_NLOHMANN_DETAIL_JSON_POINTER_HPP
+#define INCLUDE_NLOHMANN_DETAIL_JSON_POINTER_HPP
 
 #include <algorithm> // all_of
 #include <cctype> // isdigit
@@ -986,3 +987,5 @@ inline bool operator<(const json_pointer<RefStringTypeLhs>& lhs,
 #endif
 
 NLOHMANN_JSON_NAMESPACE_END
+
+#endif  // INCLUDE_NLOHMANN_DETAIL_JSON_POINTER_HPP

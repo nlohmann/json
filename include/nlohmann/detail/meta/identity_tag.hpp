@@ -6,7 +6,8 @@
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-#pragma once
+#ifndef INCLUDE_NLOHMANN_DETAIL_META_IDENTITY_TAG_HPP
+#define INCLUDE_NLOHMANN_DETAIL_META_IDENTITY_TAG_HPP
 
 #include <nlohmann/detail/abi_macros.hpp>
 
@@ -19,3 +20,5 @@ template <class T> struct identity_tag {};
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
+
+#endif  // INCLUDE_NLOHMANN_DETAIL_META_IDENTITY_TAG_HPP

@@ -6,7 +6,8 @@
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-#pragma once
+#ifndef INCLUDE_NLOHMANN_DETAIL_CONVERSIONS_TO_JSON_HPP
+#define INCLUDE_NLOHMANN_DETAIL_CONVERSIONS_TO_JSON_HPP
 
 #include <algorithm> // copy
 #include <iterator> // begin, end
@@ -444,3 +445,5 @@ JSON_INLINE_VARIABLE constexpr const auto& to_json = // NOLINT(misc-definitions-
 #endif
 
 NLOHMANN_JSON_NAMESPACE_END
+
+#endif  // INCLUDE_NLOHMANN_DETAIL_CONVERSIONS_TO_JSON_HPP

@@ -6,7 +6,8 @@
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-#pragma once
+#ifndef INCLUDE_NLOHMANN_BYTE_CONTAINER_WITH_SUBTYPE_HPP
+#define INCLUDE_NLOHMANN_BYTE_CONTAINER_WITH_SUBTYPE_HPP
 
 #include <cstdint> // uint8_t, uint64_t
 #include <tuple> // tie
@@ -101,3 +102,5 @@ class byte_container_with_subtype : public BinaryType
 };
 
 NLOHMANN_JSON_NAMESPACE_END
+
+#endif  // INCLUDE_NLOHMANN_BYTE_CONTAINER_WITH_SUBTYPE_HPP
