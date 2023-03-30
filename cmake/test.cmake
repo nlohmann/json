@@ -259,7 +259,7 @@ function(json_test_should_build_32bit_test build_32bit_var build_32bit_only_var 
         # check if compiler is targeting 32bit by default
         include(CheckTypeSize)
         check_type_size("size_t" sizeof_size_t LANGUAGE CXX)
-        if(sizeof_size_t AND ${sizeof_size_t} EQUAL 4)
+        if(${sizeof_size_t} AND ${sizeof_size_t} EQUAL 4)
             message(STATUS "Auto-enabling 32bit unit test.")
             set(${build_32bit_var} ON)
         else()

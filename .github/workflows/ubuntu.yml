@@ -8,6 +8,9 @@ on:
       - release/*
   pull_request:
   workflow_dispatch:
+  
+permissions:
+  contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
@@ -102,6 +105,9 @@ jobs:
   ci_test_coverage:
     runs-on: ubuntu-latest
     container: ghcr.io/nlohmann/json-ci:v2.4.0
+    permissions:
+      contents: read
+      checks: write
     steps:
       - uses: actions/checkout@v3
       - name: Run CMake

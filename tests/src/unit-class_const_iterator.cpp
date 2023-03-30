@@ -216,28 +216,28 @@ TEST_CASE("const_iterator class")
             {
                 json const j({{"foo", "bar"}});
                 json::const_iterator it = j.cbegin();
-                CHECK((it.m_it.object_iterator == it.m_object->m_value.object->begin()));
+                CHECK((it.m_it.object_iterator == it.m_object->m_data.m_value.object->begin()));
                 it++;
-                CHECK((it.m_it.object_iterator == it.m_object->m_value.object->end()));
+                CHECK((it.m_it.object_iterator == it.m_object->m_data.m_value.object->end()));
             }
 
             SECTION("array")
             {
                 json const j({1, 2, 3, 4});
                 json::const_iterator it = j.cbegin();
-                CHECK((it.m_it.array_iterator == it.m_object->m_value.array->begin()));
+                CHECK((it.m_it.array_iterator == it.m_object->m_data.m_value.array->begin()));
                 it++;
-                CHECK((it.m_it.array_iterator != it.m_object->m_value.array->begin()));
-                CHECK((it.m_it.array_iterator != it.m_object->m_value.array->end()));
+                CHECK((it.m_it.array_iterator != it.m_object->m_data.m_value.array->begin()));
+                CHECK((it.m_it.array_iterator != it.m_object->m_data.m_value.array->end()));
                 it++;
-                CHECK((it.m_it.array_iterator != it.m_object->m_value.array->begin()));
-                CHECK((it.m_it.array_iterator != it.m_object->m_value.array->end()));
+                CHECK((it.m_it.array_iterator != it.m_object->m_data.m_value.array->begin()));
+                CHECK((it.m_it.array_iterator != it.m_object->m_data.m_value.array->end()));
                 it++;
-                CHECK((it.m_it.array_iterator != it.m_object->m_value.array->begin()));
-                CHECK((it.m_it.array_iterator != it.m_object->m_value.array->end()));
+                CHECK((it.m_it.array_iterator != it.m_object->m_data.m_value.array->begin()));
+                CHECK((it.m_it.array_iterator != it.m_object->m_data.m_value.array->end()));
                 it++;
-                CHECK((it.m_it.array_iterator != it.m_object->m_value.array->begin()));
-                CHECK((it.m_it.array_iterator == it.m_object->m_value.array->end()));
+                CHECK((it.m_it.array_iterator != it.m_object->m_data.m_value.array->begin()));
+                CHECK((it.m_it.array_iterator == it.m_object->m_data.m_value.array->end()));
             }
         }
 
@@ -267,28 +267,28 @@ TEST_CASE("const_iterator class")
             {
                 json const j({{"foo", "bar"}});
                 json::const_iterator it = j.cbegin();
-                CHECK((it.m_it.object_iterator == it.m_object->m_value.object->begin()));
+                CHECK((it.m_it.object_iterator == it.m_object->m_data.m_value.object->begin()));
                 ++it;
-                CHECK((it.m_it.object_iterator == it.m_object->m_value.object->end()));
+                CHECK((it.m_it.object_iterator == it.m_object->m_data.m_value.object->end()));
             }
 
             SECTION("array")
             {
                 json const j({1, 2, 3, 4});
                 json::const_iterator it = j.cbegin();
-                CHECK((it.m_it.array_iterator == it.m_object->m_value.array->begin()));
+                CHECK((it.m_it.array_iterator == it.m_object->m_data.m_value.array->begin()));
                 ++it;
-                CHECK((it.m_it.array_iterator != it.m_object->m_value.array->begin()));
-                CHECK((it.m_it.array_iterator != it.m_object->m_value.array->end()));
+                CHECK((it.m_it.array_iterator != it.m_object->m_data.m_value.array->begin()));
+                CHECK((it.m_it.array_iterator != it.m_object->m_data.m_value.array->end()));
                 ++it;
-                CHECK((it.m_it.array_iterator != it.m_object->m_value.array->begin()));
-                CHECK((it.m_it.array_iterator != it.m_object->m_value.array->end()));
+                CHECK((it.m_it.array_iterator != it.m_object->m_data.m_value.array->begin()));
+                CHECK((it.m_it.array_iterator != it.m_object->m_data.m_value.array->end()));
                 ++it;
-                CHECK((it.m_it.array_iterator != it.m_object->m_value.array->begin()));
-                CHECK((it.m_it.array_iterator != it.m_object->m_value.array->end()));
+                CHECK((it.m_it.array_iterator != it.m_object->m_data.m_value.array->begin()));
+                CHECK((it.m_it.array_iterator != it.m_object->m_data.m_value.array->end()));
                 ++it;
-                CHECK((it.m_it.array_iterator != it.m_object->m_value.array->begin()));
-                CHECK((it.m_it.array_iterator == it.m_object->m_value.array->end()));
+                CHECK((it.m_it.array_iterator != it.m_object->m_data.m_value.array->begin()));
+                CHECK((it.m_it.array_iterator == it.m_object->m_data.m_value.array->end()));
             }
         }
 
@@ -316,28 +316,28 @@ TEST_CASE("const_iterator class")
             {
                 json const j({{"foo", "bar"}});
                 json::const_iterator it = j.cend();
-                CHECK((it.m_it.object_iterator == it.m_object->m_value.object->end()));
+                CHECK((it.m_it.object_iterator == it.m_object->m_data.m_value.object->end()));
                 it--;
-                CHECK((it.m_it.object_iterator == it.m_object->m_value.object->begin()));
+                CHECK((it.m_it.object_iterator == it.m_object->m_data.m_value.object->begin()));
             }
 
             SECTION("array")
             {
                 json const j({1, 2, 3, 4});
                 json::const_iterator it = j.cend();
-                CHECK((it.m_it.array_iterator == it.m_object->m_value.array->end()));
+                CHECK((it.m_it.array_iterator == it.m_object->m_data.m_value.array->end()));
                 it--;
-                CHECK((it.m_it.array_iterator != it.m_object->m_value.array->begin()));
-                CHECK((it.m_it.array_iterator != it.m_object->m_value.array->end()));
+                CHECK((it.m_it.array_iterator != it.m_object->m_data.m_value.array->begin()));
+                CHECK((it.m_it.array_iterator != it.m_object->m_data.m_value.array->end()));
                 it--;
-                CHECK((it.m_it.array_iterator != it.m_object->m_value.array->begin()));
-                CHECK((it.m_it.array_iterator != it.m_object->m_value.array->end()));
+                CHECK((it.m_it.array_iterator != it.m_object->m_data.m_value.array->begin()));
+                CHECK((it.m_it.array_iterator != it.m_object->m_data.m_value.array->end()));
                 it--;
-                CHECK((it.m_it.array_iterator != it.m_object->m_value.array->begin()));
-                CHECK((it.m_it.array_iterator != it.m_object->m_value.array->end()));
+                CHECK((it.m_it.array_iterator != it.m_object->m_data.m_value.array->begin()));
+                CHECK((it.m_it.array_iterator != it.m_object->m_data.m_value.array->end()));
                 it--;
-                CHECK((it.m_it.array_iterator == it.m_object->m_value.array->begin()));
-                CHECK((it.m_it.array_iterator != it.m_object->m_value.array->end()));
+                CHECK((it.m_it.array_iterator == it.m_object->m_data.m_value.array->begin()));
+                CHECK((it.m_it.array_iterator != it.m_object->m_data.m_value.array->end()));
             }
         }
 
@@ -365,28 +365,28 @@ TEST_CASE("const_iterator class")
             {
                 json const j({{"foo", "bar"}});
                 json::const_iterator it = j.cend();
-                CHECK((it.m_it.object_iterator == it.m_object->m_value.object->end()));
+                CHECK((it.m_it.object_iterator == it.m_object->m_data.m_value.object->end()));
                 --it;
-                CHECK((it.m_it.object_iterator == it.m_object->m_value.object->begin()));
+                CHECK((it.m_it.object_iterator == it.m_object->m_data.m_value.object->begin()));
             }
 
             SECTION("array")
             {
                 json const j({1, 2, 3, 4});
                 json::const_iterator it = j.cend();
-                CHECK((it.m_it.array_iterator == it.m_object->m_value.array->end()));
+                CHECK((it.m_it.array_iterator == it.m_object->m_data.m_value.array->end()));
                 --it;
-                CHECK((it.m_it.array_iterator != it.m_object->m_value.array->begin()));
-                CHECK((it.m_it.array_iterator != it.m_object->m_value.array->end()));
+                CHECK((it.m_it.array_iterator != it.m_object->m_data.m_value.array->begin()));
+                CHECK((it.m_it.array_iterator != it.m_object->m_data.m_value.array->end()));
                 --it;
-                CHECK((it.m_it.array_iterator != it.m_object->m_value.array->begin()));
-                CHECK((it.m_it.array_iterator != it.m_object->m_value.array->end()));
+                CHECK((it.m_it.array_iterator != it.m_object->m_data.m_value.array->begin()));
+                CHECK((it.m_it.array_iterator != it.m_object->m_data.m_value.array->end()));
                 --it;
-                CHECK((it.m_it.array_iterator != it.m_object->m_value.array->begin()));
-                CHECK((it.m_it.array_iterator != it.m_object->m_value.array->end()));
+                CHECK((it.m_it.array_iterator != it.m_object->m_data.m_value.array->begin()));
+                CHECK((it.m_it.array_iterator != it.m_object->m_data.m_value.array->end()));
                 --it;
-                CHECK((it.m_it.array_iterator == it.m_object->m_value.array->begin()));
-                CHECK((it.m_it.array_iterator != it.m_object->m_value.array->end()));
+                CHECK((it.m_it.array_iterator == it.m_object->m_data.m_value.array->begin()));
+                CHECK((it.m_it.array_iterator != it.m_object->m_data.m_value.array->end()));
             }
         }
     }

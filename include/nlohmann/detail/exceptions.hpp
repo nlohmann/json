@@ -73,9 +73,9 @@ class exception : public std::exception
             {
                 case value_t::array:
                 {
-                    for (std::size_t i = 0; i < current->m_parent->m_value.array->size(); ++i)
+                    for (std::size_t i = 0; i < current->m_parent->m_data.m_value.array->size(); ++i)
                     {
-                        if (&current->m_parent->m_value.array->operator[](i) == current)
+                        if (&current->m_parent->m_data.m_value.array->operator[](i) == current)
                         {
                             tokens.emplace_back(std::to_string(i));
                             break;
@@ -86,7 +86,7 @@ class exception : public std::exception
 
                 case value_t::object:
                 {
-                    for (const auto& element : *current->m_parent->m_value.object)
+                    for (const auto& element : *current->m_parent->m_data.m_value.object)
                     {
                         if (&element.second == current)
                         {

@@ -189,6 +189,15 @@ class my_allocator : public std::allocator<T>
 {
   public:
     using std::allocator<T>::allocator;
+
+    my_allocator() = default;
+    template<class U> my_allocator(const my_allocator<U>& /*unused*/) { }
+
+    template <class U>
+    struct rebind
+    {
+        using other = my_allocator<U>;
+    };
 };
 
 /////////////////////////////////////////////////////////////////////
