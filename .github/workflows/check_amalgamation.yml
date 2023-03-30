@@ -1,9 +1,24 @@
 name: "Check amalgamation"
 
 on:
-  pull_request_target:
+  pull_request:
+
+permissions: read-all
 
 jobs:
+  save:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Save PR number
+        run: |
+          mkdir -p ./pr
+          echo ${{ github.event.number }} > ./pr/number
+          echo ${{ github.event.pull_request.user.login }} > ./pr/author
+      - uses: actions/upload-artifact@v2
+        with:
+          name: pr
+          path: pr/
+
   check:
     runs-on: ubuntu-latest
     env:
@@ -53,40 +68,3 @@ jobs:
           astyle $ASTYLE_FLAGS $(find docs/examples include tests -type f \( -name '*.hpp' -o -name '*.cpp' -o -name '*.cu' \) -not -path 'tests/thirdparty/*' -not -path 'tests/abi/include/nlohmann/*' | sort)
           echo Check
           find $MAIN_DIR -name '*.orig' -exec false {} \+
-
-      - name: Comment on pull request
-        if: failure()
-        uses: actions/github-script@v6
-        with:
-          github-token: ${{secrets.GITHUB_TOKEN}}
-          script: |
-            const author = context.payload.pull_request.user.login
-            const opts = github.rest.issues.listForRepo.endpoint.merge({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              creator: author,
-              state: 'all'
-            })
-
-            let first = true
-            const issues = await github.paginate(opts)
-            for (const issue of issues) {
-              if (issue.number === context.issue.number) {
-                continue
-              }
-
-              if (issue.pull_request) {
-                first = false
-                break
-              }
-            }
-
-            await github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '## 🔴 Amalgamation check failed! 🔴\nThe source code has not been amalgamated.'
-                    + (first ? ' @' + author + ' Please read and follow the [Contribution Guidelines]'
-                               + '(https://github.com/nlohmann/json/blob/develop/.github/CONTRIBUTING.md#files-to-change).'
-                             : '')
-              })

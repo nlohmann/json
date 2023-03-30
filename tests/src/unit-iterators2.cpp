@@ -943,7 +943,7 @@ TEST_CASE("iterators 2")
                 json j_expected{5, 4, 3, 2, 1};
 
                 auto reversed = j | std::views::reverse;
-                CHECK(reversed == j_expected);
+                CHECK(std::ranges::equal(reversed, j_expected));
             }
 
             SECTION("transform")

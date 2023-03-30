@@ -101,7 +101,7 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
     {
         JSON_ASSERT(m_object != nullptr);
 
-        switch (m_object->m_type)
+        switch (m_object->m_data.m_type)
         {
             case value_t::object:
             {
@@ -198,17 +198,17 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
     {
         JSON_ASSERT(m_object != nullptr);
 
-        switch (m_object->m_type)
+        switch (m_object->m_data.m_type)
         {
             case value_t::object:
             {
-                m_it.object_iterator = m_object->m_value.object->begin();
+                m_it.object_iterator = m_object->m_data.m_value.object->begin();
                 break;
             }
 
             case value_t::array:
             {
-                m_it.array_iterator = m_object->m_value.array->begin();
+                m_it.array_iterator = m_object->m_data.m_value.array->begin();
                 break;
             }
 
@@ -242,17 +242,17 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
     {
         JSON_ASSERT(m_object != nullptr);
 
-        switch (m_object->m_type)
+        switch (m_object->m_data.m_type)
         {
             case value_t::object:
             {
-                m_it.object_iterator = m_object->m_value.object->end();
+                m_it.object_iterator = m_object->m_data.m_value.object->end();
                 break;
             }
 
             case value_t::array:
             {
-                m_it.array_iterator = m_object->m_value.array->end();
+                m_it.array_iterator = m_object->m_data.m_value.array->end();
                 break;
             }
 
@@ -281,17 +281,17 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
     {
         JSON_ASSERT(m_object != nullptr);
 
-        switch (m_object->m_type)
+        switch (m_object->m_data.m_type)
         {
             case value_t::object:
             {
-                JSON_ASSERT(m_it.object_iterator != m_object->m_value.object->end());
+                JSON_ASSERT(m_it.object_iterator != m_object->m_data.m_value.object->end());
                 return m_it.object_iterator->second;
             }
 
             case value_t::array:
             {
-                JSON_ASSERT(m_it.array_iterator != m_object->m_value.array->end());
+                JSON_ASSERT(m_it.array_iterator != m_object->m_data.m_value.array->end());
                 return *m_it.array_iterator;
             }
 
@@ -325,17 +325,17 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
     {
         JSON_ASSERT(m_object != nullptr);
 
-        switch (m_object->m_type)
+        switch (m_object->m_data.m_type)
         {
             case value_t::object:
             {
-                JSON_ASSERT(m_it.object_iterator != m_object->m_value.object->end());
+                JSON_ASSERT(m_it.object_iterator != m_object->m_data.m_value.object->end());
                 return &(m_it.object_iterator->second);
             }
 
             case value_t::array:
             {
-                JSON_ASSERT(m_it.array_iterator != m_object->m_value.array->end());
+                JSON_ASSERT(m_it.array_iterator != m_object->m_data.m_value.array->end());
                 return &*m_it.array_iterator;
             }
 
@@ -378,7 +378,7 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
     {
         JSON_ASSERT(m_object != nullptr);
 
-        switch (m_object->m_type)
+        switch (m_object->m_data.m_type)
         {
             case value_t::object:
             {
@@ -429,7 +429,7 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
     {
         JSON_ASSERT(m_object != nullptr);
 
-        switch (m_object->m_type)
+        switch (m_object->m_data.m_type)
         {
             case value_t::object:
             {
@@ -476,7 +476,7 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
 
         JSON_ASSERT(m_object != nullptr);
 
-        switch (m_object->m_type)
+        switch (m_object->m_data.m_type)
         {
             case value_t::object:
                 return (m_it.object_iterator == other.m_it.object_iterator);
@@ -521,7 +521,7 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
 
         JSON_ASSERT(m_object != nullptr);
 
-        switch (m_object->m_type)
+        switch (m_object->m_data.m_type)
         {
             case value_t::object:
                 JSON_THROW(invalid_iterator::create(213, "cannot compare order of object iterators", m_object));
@@ -577,7 +577,7 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
     {
         JSON_ASSERT(m_object != nullptr);
 
-        switch (m_object->m_type)
+        switch (m_object->m_data.m_type)
         {
             case value_t::object:
                 JSON_THROW(invalid_iterator::create(209, "cannot use offsets with object iterators", m_object));
@@ -656,7 +656,7 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
     {
         JSON_ASSERT(m_object != nullptr);
 
-        switch (m_object->m_type)
+        switch (m_object->m_data.m_type)
         {
             case value_t::object:
                 JSON_THROW(invalid_iterator::create(209, "cannot use offsets with object iterators", m_object));
@@ -685,7 +685,7 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
     {
         JSON_ASSERT(m_object != nullptr);
 
-        switch (m_object->m_type)
+        switch (m_object->m_data.m_type)
         {
             case value_t::object:
                 JSON_THROW(invalid_iterator::create(208, "cannot use operator[] for object iterators", m_object));

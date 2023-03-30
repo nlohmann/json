@@ -10,6 +10,9 @@ on:
   schedule:
     - cron: '0 19 * * 1'
   workflow_dispatch:
+  
+permissions:
+  contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
@@ -19,6 +22,8 @@ jobs:
   CodeQL-Build:
 
     runs-on: ubuntu-latest
+    permissions:
+      security-events: write
 
     steps:
     - name: Checkout repository

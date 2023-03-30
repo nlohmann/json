@@ -7,11 +7,11 @@ check_task:
   - tar xfz cmake-3.20.2.tar.gz
   - cd cmake-3.20.2
   - ./configure
-  - make cmake ctest -j10
+  - make cmake ctest -j4
   - cd ..
   - mkdir build
   - cd build
   - ../cmake-3.20.2/bin/cmake .. -DJSON_FastTests=ON
-  - make -j10
+  - make -j4
   - cd tests
-  - ../../cmake-3.20.2/bin/ctest -j10
+  - ../../cmake-3.20.2/bin/ctest -j4
