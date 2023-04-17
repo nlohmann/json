@@ -1359,6 +1359,27 @@ CPMAddPackage(
     VERSION 3.9.1)
 ```
 
+If you are using [PlatformIO](https://platformio.org/) you can add this repo directly to your `platformio.ini` like this:
+
+```ini
+[env:your_env_name]
+lib_deps =
+  nlohmann-json=https://github.com/nlohmann/json.git
+```
+
+or you can include it as a dependency in your `library.json` like this:
+
+```json
+…
+  "dependencies": [
+    {
+      "name": "nlohmann-json",
+      "version": "https://github.com/pidpawel/json.git"
+    }
+  ]
+ …
+```
+
 ### Pkg-config
 
 If you are using bare Makefiles, you can use `pkg-config` to generate the include flags that point to where the library is installed:
