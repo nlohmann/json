@@ -29,5 +29,9 @@
   "examples": [
     "https://github.com/nlohmann/json/tree/develop/docs/examples"
   ],
-  "include": "single_include/nlohmann/json.hpp"
+  "include": "single_include/nlohmann/json.hpp",
+  "build": {
+    "flags": ["-std=c++11"],
+    "srcFilter": ["-<**/*>"]
+  }
 }
