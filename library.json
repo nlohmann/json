@@ -1,0 +1,33 @@
+{
+  "name": "nlohmann-json",
+  "version": "3.11.2",
+  "description": "JSON for Modern C++",
+  "keywords": [
+    "json",
+    "serialization",
+    "deserialization",
+    "parser",
+    "generator",
+    "C++"
+  ],
+  "authors": [
+    {
+      "name": "Niels Lohmann",
+      "email": "mail@nlohmann.me",
+      "url": "https://github.com/nlohmann"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nlohmann/json.git"
+  },
+  "homepage": "https://nlohmann.github.io/json/",
+  "license": "MIT",
+  "dependencies": [],
+  "frameworks": "*",
+  "platforms": "*",
+  "examples": [
+    "https://github.com/nlohmann/json/tree/develop/docs/examples"
+  ],
+  "include": "single_include/nlohmann/json.hpp"
+}
