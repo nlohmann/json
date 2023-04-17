@@ -1374,7 +1374,7 @@ or you can include it as a dependency in your `library.json` like this:
   "dependencies": [
     {
       "name": "nlohmann-json",
-      "version": "https://github.com/pidpawel/json.git"
+      "version": "https://github.com/nlohmann/json.git"
     }
   ]
  …
