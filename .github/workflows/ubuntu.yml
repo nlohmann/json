@@ -188,7 +188,7 @@ jobs:
 
   ci_test_standards_clang:
     runs-on: ubuntu-latest
-    container: silkeh/clang:dev
+    container: silkeh/clang:latest
     strategy:
       matrix:
         standard: [11, 14, 17, 20, 23]
