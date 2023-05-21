@@ -17730,7 +17730,7 @@ void grisu2(char* buf, int& len, int& decimal_exponent, FloatType value)
     // NB: If the neighbors are computed for single-precision numbers, there is a single float
     //     (7.0385307e-26f) which can't be recovered using strtod. The resulting double precision
     //     value is off by 1 ulp.
-#if 0
+#if 0 // NOLINT(readability-avoid-unconditional-preprocessor-if)
     const boundaries w = compute_boundaries(static_cast<double>(value));
 #else
     const boundaries w = compute_boundaries(value);
@@ -20428,11 +20428,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @brief move constructor
     /// @sa https://json.nlohmann.me/api/basic_json/basic_json/
     basic_json(basic_json&& other) noexcept
-        : json_base_class_t(std::move(other)),
+        : json_base_class_t(std::forward<json_base_class_t>(other)),
           m_data(std::move(other.m_data))
     {
         // check that passed value is valid
-        other.assert_invariant(false); // NOLINT(bugprone-use-after-move,hicpp-invalid-access-moved)
+        other.assert_invariant(false);
 
         // invalidate payload
         other.m_data.m_type = value_t::null;

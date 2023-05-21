@@ -173,19 +173,35 @@ jobs:
       - name: Build
         run: cmake --build build --target ci_test_compiler_${{ matrix.compiler }}
 
-  ci_test_standards:
+  ci_test_standards_gcc:
     runs-on: ubuntu-latest
     container: ghcr.io/nlohmann/json-ci:v2.4.0
     strategy:
       matrix:
-        standard: [11, 14, 17, 20]
-        compiler: [gcc, clang]
+        standard: [11, 14, 17, 20, 23]
     steps:
       - uses: actions/checkout@v3
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
-        run: cmake --build build --target ci_test_${{ matrix.compiler }}_cxx${{ matrix.standard }}
+        run: cmake --build build --target ci_test_gcc_cxx${{ matrix.standard }}
+
+  ci_test_standards_clang:
+    runs-on: ubuntu-latest
+    container: silkeh/clang:latest
+    strategy:
+      matrix:
+        standard: [11, 14, 17, 20, 23]
+    steps:
+      - name: Install git and unzip
+        run: apt-get update ; apt-get install -y git unzip
+      - uses: actions/checkout@v3
+      - name: Get latest CMake and ninja
+        uses: lukka/get-cmake@latest
+      - name: Run CMake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: Build
+        run: cmake --build build --target ci_test_clang_cxx${{ matrix.standard }}
 
   ci_cuda_example:
     runs-on: ubuntu-latest
