@@ -46,7 +46,7 @@ By default, implicit conversions are enabled.
 
     ```cpp
     json j = "Hello, world!";
-    auto s = j.get<std::string>();
+    auto s = j.template get<std::string>();
     ```
 
 ## See also

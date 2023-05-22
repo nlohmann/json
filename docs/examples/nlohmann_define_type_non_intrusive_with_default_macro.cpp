@@ -31,10 +31,10 @@ int main()
 
     // deserialization: json -> person
     json j2 = R"({"address": "742 Evergreen Terrace", "age": 40, "name": "Homer Simpson"})"_json;
-    auto p2 = j2.get<ns::person>();
+    auto p2 = j2.template get<ns::person>();
 
     // incomplete deserialization:
     json j3 = R"({"address": "742 Evergreen Terrace", "name": "Maggie Simpson"})"_json;
-    auto p3 = j3.get<ns::person>();
+    auto p3 = j3.template get<ns::person>();
     std::cout << "roundtrip: " << json(p3) << std::endl;
 }

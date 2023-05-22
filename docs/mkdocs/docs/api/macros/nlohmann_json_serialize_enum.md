@@ -37,7 +37,7 @@ inline void from_json(const BasicJsonType& j, type& e);
 
 !!! important "Important notes"
 
-    - When using [`get<ENUM_TYPE>()`](../basic_json/get.md), undefined JSON values will default to the first specified
+    - When using [`template get<ENUM_TYPE>()`](../basic_json/get.md), undefined JSON values will default to the first specified
       conversion. Select this default pair carefully. See example 1 below.
     - If an enum or JSON value is specified in multiple conversions, the first matching conversion from the top of the
       list will be returned when converting to or from JSON. See example 2 below.
