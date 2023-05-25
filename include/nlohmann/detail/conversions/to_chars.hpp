@@ -909,7 +909,7 @@ void grisu2(char* buf, int& len, int& decimal_exponent, FloatType value)
     // NB: If the neighbors are computed for single-precision numbers, there is a single float
     //     (7.0385307e-26f) which can't be recovered using strtod. The resulting double precision
     //     value is off by 1 ulp.
-#if 0
+#if 0 // NOLINT(readability-avoid-unconditional-preprocessor-if)
     const boundaries w = compute_boundaries(static_cast<double>(value));
 #else
     const boundaries w = compute_boundaries(value);

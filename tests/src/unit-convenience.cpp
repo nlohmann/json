@@ -34,17 +34,17 @@ struct alt_string_iter
         impl.append(first, last);
     }
 
-    std::string::const_iterator begin() const
+    std::string::const_iterator begin() const noexcept
     {
         return impl.begin();
     }
 
-    std::string::const_iterator end() const
+    std::string::const_iterator end() const noexcept
     {
         return impl.end();
     }
 
-    std::size_t size() const
+    std::size_t size() const noexcept
     {
         return impl.size();
     }

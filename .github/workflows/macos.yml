@@ -55,7 +55,7 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        standard: [11, 14, 17, 20]
+        standard: [11, 14, 17, 20, 23]
 
     steps:
       - uses: actions/checkout@v3
