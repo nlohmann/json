@@ -294,4 +294,70 @@ TEST_CASE("algorithms")
         std::sort_heap(j_array.begin(), j_array.end());
         CHECK(j_array == json({false, true, 3, 13, 29, {{"one", 1}, {"two", 2}}, {1, 2, 3}, "baz", "foo"}));
     }
+
+    SECTION("iota")
+    {
+        SECTION("int")
+        {
+            std::vector<int> arr(10);
+            json json_arr(arr);
+            std::iota(json_arr.begin(), json_arr.end(), 0);
+            CHECK(json_arr == json({0, 1, 2, 3, 4, 5, 6, 7, 8, 9}));
+        }
+
+        SECTION("double")
+        {
+            std::vector<double> arr(10);
+            json json_arr(arr);
+            std::iota(json_arr.begin(), json_arr.end(), 0.5);
+            CHECK(json_arr == json({0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5}));
+        }
+
+        SECTION("char")
+        {
+            std::vector<char> arr(10);
+            json json_arr(arr);
+            std::iota(json_arr.begin(), json_arr.end(), '0');
+            CHECK(json_arr == json({'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}));
+        }
+    }
+
+    SECTION("copy")
+    {
+        SECTION("copy without if")
+        {
+            json dest_arr;
+            json source_arr = {1, 2, 3, 4};
+
+            std::copy(source_arr.begin(), source_arr.end(), std::back_inserter(dest_arr));
+
+            CHECK(dest_arr == source_arr);
+        }
+        SECTION("copy if")
+        {
+            json dest_arr;
+            json source_arr = {0,3,6,9,12,15,20};
+            auto condition = [](int x) {
+                return x % 3 == 0;
+            };
+
+            std::copy_if(source_arr.begin(), source_arr.end(), std::back_inserter(dest_arr), condition);
+            CHECK(dest_arr == json({0, 3, 6, 9, 12, 15}));               
+        }
+        SECTION("copy n")
+        {
+            json source_arr = {'1', '2', '3', '4', '5', '6', '7'};
+            json dest_arr;
+            const unsigned char numToCopy = 2;
+
+            std::copy_n(source_arr.begin(), numToCopy, std::back_inserter(dest_arr));
+            CHECK(dest_arr == json{'1','2'});  
+
+        }
+        
+    }
+    
+
+
+
 }
