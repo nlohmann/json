@@ -299,7 +299,7 @@ TEST_CASE("algorithms")
     {
         SECTION("int")
         {
-            std::vector<int> arr(10);
+            const std::vector<int> arr(10);
             json json_arr(arr);
             std::iota(json_arr.begin(), json_arr.end(), 0);
             CHECK(json_arr == json({0, 1, 2, 3, 4, 5, 6, 7, 8, 9}));
@@ -307,7 +307,7 @@ TEST_CASE("algorithms")
 
         SECTION("double")
         {
-            std::vector<double> arr(10);
+            const std::vector<double> arr(10);
             json json_arr(arr);
             std::iota(json_arr.begin(), json_arr.end(), 0.5);
             CHECK(json_arr == json({0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5}));
@@ -315,7 +315,7 @@ TEST_CASE("algorithms")
 
         SECTION("char")
         {
-            std::vector<char> arr(10);
+            const std::vector<char> arr(10);
             json json_arr(arr);
             std::iota(json_arr.begin(), json_arr.end(), '0');
             CHECK(json_arr == json({'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}));
@@ -327,7 +327,7 @@ TEST_CASE("algorithms")
         SECTION("copy without if")
         {
             json dest_arr;
-            json source_arr = {1, 2, 3, 4};
+            const json source_arr = {1, 2, 3, 4};
 
             std::copy(source_arr.begin(), source_arr.end(), std::back_inserter(dest_arr));
 
@@ -336,17 +336,17 @@ TEST_CASE("algorithms")
         SECTION("copy if")
         {
             json dest_arr;
-            json source_arr = {0,3,6,9,12,15,20};
-            auto condition = [](int x) {
-                return x % 3 == 0;
-            };
-
-            std::copy_if(source_arr.begin(), source_arr.end(), std::back_inserter(dest_arr), condition);
+            const json source_arr = {0,3,6,9,12,15,20};
+            
+           
+            std::copy_if(source_arr.begin(), source_arr.end(), std::back_inserter(dest_arr), [](const json& _value) {
+                return _value.get<int>() % 3 == 0;
+             });
             CHECK(dest_arr == json({0, 3, 6, 9, 12, 15}));               
         }
         SECTION("copy n")
         {
-            json source_arr = {'1', '2', '3', '4', '5', '6', '7'};
+            const json source_arr = {'1', '2', '3', '4', '5', '6', '7'};
             json dest_arr;
             const unsigned char numToCopy = 2;
 
