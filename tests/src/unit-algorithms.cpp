@@ -299,16 +299,14 @@ TEST_CASE("algorithms")
     {
         SECTION("int")
         {
-            const std::vector<int> arr(10);
-            json json_arr(arr);
+            json json_arr = {0, 5, 2, 4, 10, 20, 30, 40, 50, 1};
             std::iota(json_arr.begin(), json_arr.end(), 0);
             CHECK(json_arr == json({0, 1, 2, 3, 4, 5, 6, 7, 8, 9}));
         }
 
         SECTION("double")
         {
-            const std::vector<double> arr(10);
-            json json_arr(arr);
+            json json_arr = {0.5, 51, 2.53, 4.1, 10.43, 20.12, 30.5, 140, 50.50, 1};
             std::iota(json_arr.begin(), json_arr.end(), 0.5);
             CHECK(json_arr == json({0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5}));
         }
