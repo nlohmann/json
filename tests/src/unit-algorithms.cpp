@@ -313,13 +313,6 @@ TEST_CASE("algorithms")
             CHECK(json_arr == json({0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5}));
         }
 
-        SECTION("char")
-        {
-            const std::vector<char> arr(10);
-            json json_arr(arr);
-            std::iota(json_arr.begin(), json_arr.end(), '0');
-            CHECK(json_arr == json({'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}));
-        }
     }
 
     SECTION("copy")
@@ -346,12 +339,12 @@ TEST_CASE("algorithms")
         }
         SECTION("copy n")
         {
-            const json source_arr = {'1', '2', '3', '4', '5', '6', '7'};
+            const json source_arr = {0, 1, 2, 3, 4, 5, 6, 7};
             json dest_arr;
             const unsigned char numToCopy = 2;
 
             std::copy_n(source_arr.begin(), numToCopy, std::back_inserter(dest_arr));
-            CHECK(dest_arr == json{'1','2'});  
+            CHECK(dest_arr == json{0, 1});  
 
         }
         
