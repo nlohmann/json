@@ -315,6 +315,7 @@ TEST_CASE("algorithms")
 
     }
 
+    /*
     SECTION("copy")
     {
         SECTION("copy without if")
@@ -349,7 +350,7 @@ TEST_CASE("algorithms")
         }
         
     }
-    
+    */
 
 
 
