@@ -134,7 +134,7 @@
 #endif
 
 #ifndef JSON_HAS_STATIC_RTTI
-    #if defined(_HAS_STATIC_RTTI) && _HAS_STATIC_RTTI != 0
+    #if !defined(_HAS_STATIC_RTTI) || _HAS_STATIC_RTTI != 0
         #define JSON_HAS_STATIC_RTTI 1
     #else
         #define JSON_HAS_STATIC_RTTI 0
