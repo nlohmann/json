@@ -123,7 +123,7 @@ void check_utf8string(bool success_expected, int byte1, int byte2 = -1, int byte
 {
     if (++calls % 100000 == 0)
     {
-        std::cout << calls << " of 5517507 UTF-8 strings checked" << std::endl;
+        std::cout << calls << " of 5517507 UTF-8 strings checked" << std::endl; // NOLINT(performance-avoid-endl)
     }
 
     static std::string json_string;
