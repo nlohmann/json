@@ -300,7 +300,7 @@ template <
 
     /// insert value
     template<class P>
-    std::pair<iterator, bool> insert( P&& value )
+    std::pair<iterator, bool> insert( P&& value ) // NOLINT(cppcoreguidelines-missing-std-forward)
     {
         m_compare.add_key(value.first);
         return m_map.insert(value);
