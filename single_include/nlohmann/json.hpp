@@ -19040,7 +19040,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
-            if (m_compare(it->first, std::forward<KeyType>(key)))
+            if (m_compare(it->first, key))  // NOLINT(cppcoreguidelines-missing-std-forward)
             {
                 return it->second;
             }
@@ -19068,7 +19068,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
-            if (m_compare(it->first, std::forward<KeyType>(key)))
+            if (m_compare(it->first, key))  // NOLINT(cppcoreguidelines-missing-std-forward)
             {
                 return it->second;
             }
@@ -19102,10 +19102,10 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
-            if (m_compare(it->first, std::forward<KeyType>(key)))
-            {
-                // Since we cannot move const Keys, re-construct them in place
-                for (auto next = it; ++next != this->end(); ++it)
+            if (m_compare(it->first, key)  // NOLINT(cppcoreguidelines-missing-std-forward)
+        {
+            // Since we cannot move const Keys, re-construct them in place
+            for (auto next = it; ++next != this->end(); ++it)
                 {
                     it->~value_type(); // Destroy but keep allocation
                     new (&*it) value_type{std::move(*next)};
@@ -19193,7 +19193,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
-            if (m_compare(it->first, std::forward<KeyType>(key)))
+            if (m_compare(it->first, key))// NOLINT(cppcoreguidelines-missing-std-forward)
             {
                 return 1;
             }
@@ -19219,7 +19219,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
-            if (m_compare(it->first, std::forward<KeyType>(key)))
+            if (m_compare(it->first, key)) // NOLINT(cppcoreguidelines-missing-std-forward)
             {
                 return it;
             }
