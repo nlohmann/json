@@ -24,7 +24,7 @@ struct bad_allocator : std::allocator<T>
     template<class U> bad_allocator(const bad_allocator<U>& /*unused*/) { }
 
     template<class... Args>
-    void construct(T* /*unused*/, Args&& ... /*unused*/)
+    void construct(T* /*unused*/, Args&& ... /*unused*/) // NOLINT(cppcoreguidelines-missing-std-forward)
     {
         throw std::bad_alloc();
     }
