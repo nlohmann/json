@@ -300,9 +300,21 @@ TEST_CASE("algorithms")
         SECTION("int")
         {
             json json_arr = {0, 5, 2, 4, 10, 20, 30, 40, 50, 1};
-            const int number = 0;
-            std::iota(json_arr.begin(), json_arr.end(), number);
+            std::iota(json_arr.begin(), json_arr.end(), 0);
             CHECK(json_arr == json({0, 1, 2, 3, 4, 5, 6, 7, 8, 9}));
+        }
+        SECTION("double")
+        {
+            json json_arr = {0.5, 1.5, 1.3, 4.1, 10.2, 20.5, 30.6, 40.1, 50.22, 1.5};
+            std::iota(json_arr.begin(), json_arr.end(), 0.5);
+            CHECK(json_arr == json({0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5}));
+        }
+
+        SECTION("char")
+        {
+            json json_arr = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', '0', '1'};
+            std::iota(json_arr.begin(), json_arr.end(), '0');
+            CHECK(json_arr == json({'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}));
         }
     }
 
@@ -340,7 +352,15 @@ TEST_CASE("algorithms")
             CHECK(dest_arr == json{0, 1});
 
         }
+        SECTION("copy n chars")
+        {
+            const json source_arr = {'1', '2', '3', '4', '5', '6', '7'};
+            json dest_arr;
+            const unsigned char numToCopy = 4;
 
+            std::copy_n(source_arr.begin(), numToCopy, std::back_inserter(dest_arr));
+            CHECK(dest_arr == json{'1', '2', '3', '4'});
+        }
     }
 
 
