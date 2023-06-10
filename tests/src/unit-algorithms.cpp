@@ -322,12 +322,12 @@ TEST_CASE("algorithms")
         {
             json dest_arr;
             const json source_arr = {0,3,6,9,12,15,20};
-            
-           
+
+
             std::copy_if(source_arr.begin(), source_arr.end(), std::back_inserter(dest_arr), [](const json& _value) {
                 return _value.get<int>() % 3 == 0;
              });
-            CHECK(dest_arr == json({0, 3, 6, 9, 12, 15}));               
+            CHECK(dest_arr == json({0, 3, 6, 9, 12, 15}));
         }
         SECTION("copy n")
         {
@@ -336,10 +336,10 @@ TEST_CASE("algorithms")
             const unsigned char numToCopy = 2;
 
             std::copy_n(source_arr.begin(), numToCopy, std::back_inserter(dest_arr));
-            CHECK(dest_arr == json{0, 1});  
+            CHECK(dest_arr == json{0, 1});
 
         }
-        
+
     }
     */
 
