@@ -31,7 +31,7 @@ int main()
     j["address"] = "744 Evergreen Terrace";
     j["age"] = 60;
 
-    auto p = j.get<ns::person>();
+    auto p = j.template get<ns::person>();
 
     std::cout << p.name << " (" << p.age << ") lives in " << p.address << std::endl;
 }
