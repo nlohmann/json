@@ -295,4 +295,75 @@ TEST_CASE("algorithms")
         std::sort_heap(j_array.begin(), j_array.end());
         CHECK(j_array == json({false, true, 3, 13, 29, {{"one", 1}, {"two", 2}}, {1, 2, 3}, "baz", "foo"}));
     }
+
+    SECTION("iota")
+    {
+        SECTION("int")
+        {
+            json json_arr = {0, 5, 2, 4, 10, 20, 30, 40, 50, 1};
+            std::iota(json_arr.begin(), json_arr.end(), 0);
+            CHECK(json_arr == json({0, 1, 2, 3, 4, 5, 6, 7, 8, 9}));
+        }
+        SECTION("double")
+        {
+            json json_arr = {0.5, 1.5, 1.3, 4.1, 10.2, 20.5, 30.6, 40.1, 50.22, 1.5};
+            std::iota(json_arr.begin(), json_arr.end(), 0.5);
+            CHECK(json_arr == json({0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5}));
+        }
+
+        SECTION("char")
+        {
+            json json_arr = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', '0', '1'};
+            std::iota(json_arr.begin(), json_arr.end(), '0');
+            CHECK(json_arr == json({'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}));
+        }
+    }
+
+
+    SECTION("copy")
+    {
+        SECTION("copy without if")
+        {
+            json dest_arr;
+            const json source_arr = {1, 2, 3, 4};
+
+            std::copy(source_arr.begin(), source_arr.end(), std::back_inserter(dest_arr));
+
+            CHECK(dest_arr == source_arr);
+        }
+        SECTION("copy if")
+        {
+            json dest_arr;
+            const json source_arr = {0, 3, 6, 9, 12, 15, 20};
+
+
+            std::copy_if(source_arr.begin(), source_arr.end(), std::back_inserter(dest_arr), [](const json & _value)
+            {
+                return _value.get<int>() % 3 == 0;
+            });
+            CHECK(dest_arr == json({0, 3, 6, 9, 12, 15}));
+        }
+        SECTION("copy n")
+        {
+            const json source_arr = {0, 1, 2, 3, 4, 5, 6, 7};
+            json dest_arr;
+            const unsigned char numToCopy = 2;
+
+            std::copy_n(source_arr.begin(), numToCopy, std::back_inserter(dest_arr));
+            CHECK(dest_arr == json{0, 1});
+
+        }
+        SECTION("copy n chars")
+        {
+            const json source_arr = {'1', '2', '3', '4', '5', '6', '7'};
+            json dest_arr;
+            const unsigned char numToCopy = 4;
+
+            std::copy_n(source_arr.begin(), numToCopy, std::back_inserter(dest_arr));
+            CHECK(dest_arr == json{'1', '2', '3', '4'});
+        }
+    }
+
+
+
 }
