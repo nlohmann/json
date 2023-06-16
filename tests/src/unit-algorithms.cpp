@@ -364,6 +364,86 @@ TEST_CASE("algorithms")
         }
     }
 
+    SECTION("move")
+    {
+        SECTION("move int")
+        {
+            json dest_arr;
+            const json source_arr = {1, 2, 3, 4};
+
+            std::move(source_arr.begin(), source_arr.end(), std::back_inserter(dest_arr));
+
+            CHECK(dest_arr == source_arr);
+        }
+        SECTION("move float")
+        {
+            json dest_arr = {0.5, 0.1, 0.1};
+            const json source_arr = {1, 2, 3, 4};
+
+            std::move(source_arr.begin(), source_arr.end(), std::back_inserter(dest_arr));
+
+            CHECK(dest_arr == json({0.5, 0.1, 0.1, 1, 2, 3, 4}));
+        }
+        SECTION("move backward int")
+        {
+            json dest_arr = {1, 1, 1, 1};
+            const json source_arr = {1, 2, 3, 4};
+
+            std::move_backward(source_arr.begin(), source_arr.end(), dest_arr.end());
+
+            CHECK(dest_arr == source_arr);
+        }
+        SECTION("move backward float")
+        {
+            json dest_arr = {0.2, 0.5, 0.1, 0.5, 0.8};
+            const json source_arr = {1, 2, 3, 4};
+
+            std::move_backward(source_arr.begin(), source_arr.end(), dest_arr.end());
+
+            CHECK(dest_arr == json({0.2, 1, 2, 3, 4}));
+        }
+    }
+    SECTION("fill")
+    {
+        SECTION("fill zeros")
+        {
+            json dest_arr = {1, 1, 1, 1, 1, 1, 1, 1, 1};
+
+            std::fill(dest_arr.begin(), dest_arr.end(), 0);
+
+            CHECK(dest_arr == json({0, 0, 0, 0, 0, 0, 0, 0, 0}));
+        }
+        SECTION("fill char value")
+        {
+            json dest_arr = {1, 1, 1, 1, 1, 1, 1, 1, 1};
+            const char val = '1';
+            std::fill(dest_arr.begin(), dest_arr.end(), val);
+
+            CHECK(dest_arr == json({val, val, val, val, val, val, val, val, val}));
+        }
+        SECTION("fill n zeros")
+        {
+            json dest_arr = {1, 1, 1, 1, 1, 1, 1, 1, 1};
+            const size_t n = 5;
+
+            std::fill_n(dest_arr.begin(), n, 0);
+
+            CHECK(dest_arr == json({0, 0, 0, 0, 0, 1, 1, 1, 1}));
+        }
+        SECTION("fill n chars")
+        {
+            json dest_arr = {1, 2, 3, 4, 5, 6, 7, '8', '9'};
+            const size_t n = 2;
+
+            std::fill_n(dest_arr.begin(), n, '1');
+
+            CHECK(dest_arr == json({'1', '1', 3, 4, 5, 6, 7, '8', '9'}));
+        }
+    }
+
+
+
+
 
 
 }
