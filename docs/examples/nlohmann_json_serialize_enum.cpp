@@ -44,16 +44,16 @@ int main()
     // deserialization
     json j_running = "running";
     json j_blue = "blue";
-    auto running = j_running.get<ns::TaskState>();
-    auto blue = j_blue.get<ns::Color>();
+    auto running = j_running.template get<ns::TaskState>();
+    auto blue = j_blue.template get<ns::Color>();
     std::cout << j_running << " -> " << running
               << ", " << j_blue << " -> " << static_cast<int>(blue) << std::endl;
 
     // deserializing undefined JSON value to enum
     // (where the first map entry above is the default)
     json j_pi = 3.14;
-    auto invalid = j_pi.get<ns::TaskState>();
-    auto unknown = j_pi.get<ns::Color>();
+    auto invalid = j_pi.template get<ns::TaskState>();
+    auto unknown = j_pi.template get<ns::Color>();
     std::cout << j_pi << " -> " << invalid << ", "
               << j_pi << " -> " << static_cast<int>(unknown) << std::endl;
 }

@@ -36,11 +36,11 @@ assert(j == "stopped");
 
 // json string to enum
 json j3 = "running";
-assert(j3.get<TaskState>() == TS_RUNNING);
+assert(j3.template get<TaskState>() == TS_RUNNING);
 
 // undefined json value to enum (where the first map entry above is the default)
 json jPi = 3.14;
-assert(jPi.get<TaskState>() == TS_INVALID );
+assert(jPi.template get<TaskState>() == TS_INVALID );
 ```
 
 ## Notes
@@ -54,7 +54,7 @@ Just as in [Arbitrary Type Conversions](arbitrary_types.md) above,
 
 Other Important points:
 
-- When using `get<ENUM_TYPE>()`, undefined JSON values will default to the first pair specified in your map. Select this
+- When using `template get<ENUM_TYPE>()`, undefined JSON values will default to the first pair specified in your map. Select this
   default pair carefully.
 - If an enum or JSON value is specified more than once in your map, the first matching occurrence from the top of the
   map will be returned when converting to or from JSON.

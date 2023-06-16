@@ -8,6 +8,7 @@
 
 #include "doctest_compatibility.h"
 
+#include <algorithm>
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 

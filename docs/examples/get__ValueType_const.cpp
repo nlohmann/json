@@ -22,14 +22,14 @@ int main()
     };
 
     // use explicit conversions
-    auto v1 = json_types["boolean"].get<bool>();
-    auto v2 = json_types["number"]["integer"].get<int>();
-    auto v3 = json_types["number"]["integer"].get<short>();
-    auto v4 = json_types["number"]["floating-point"].get<float>();
-    auto v5 = json_types["number"]["floating-point"].get<int>();
-    auto v6 = json_types["string"].get<std::string>();
-    auto v7 = json_types["array"].get<std::vector<short>>();
-    auto v8 = json_types.get<std::unordered_map<std::string, json>>();
+    auto v1 = json_types["boolean"].template get<bool>();
+    auto v2 = json_types["number"]["integer"].template get<int>();
+    auto v3 = json_types["number"]["integer"].template get<short>();
+    auto v4 = json_types["number"]["floating-point"].template get<float>();
+    auto v5 = json_types["number"]["floating-point"].template get<int>();
+    auto v6 = json_types["string"].template get<std::string>();
+    auto v7 = json_types["array"].template get<std::vector<short>>();
+    auto v8 = json_types.template get<std::unordered_map<std::string, json>>();
 
     // print the conversion results
     std::cout << v1 << '\n';

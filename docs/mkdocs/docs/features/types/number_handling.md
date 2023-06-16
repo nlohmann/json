@@ -235,9 +235,9 @@ integers, and  between integers and floating-point values to integers. This beha
 !!! warning "Unconditional number conversions"
 
     ```cpp hl_lines="3"
-    double d = 42.3;                          // non-integer double value 42.3
-    json jd = d;                              // stores double value 42.3
-    std::int64_t i = jd.get<std::int64_t>();  // now i==42; no warning or error is produced
+    double d = 42.3;                                   // non-integer double value 42.3
+    json jd = d;                                       // stores double value 42.3
+    std::int64_t i = jd.template get<std::int64_t>();  // now i==42; no warning or error is produced
     ```
 
     Note the last line with throw a [`json.exception.type_error.302`](../../home/exceptions.md#jsonexceptiontype_error302)
@@ -259,7 +259,7 @@ The rationale is twofold:
     if (jd.is_number_integer())
     {
         // if so, do the conversion and use i
-        std::int64_t i = jd.get<std::int64_t>();
+        std::int64_t i = jd.template get<std::int64_t>();
         // ...
     }
     else

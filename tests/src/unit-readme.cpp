@@ -119,13 +119,13 @@ TEST_CASE("README" * doctest::skip())
 
             // serialization with pretty printing
             // pass in the amount of spaces to indent
-            std::cout << j.dump(4) << std::endl;
+            std::cout << j.dump(4) << std::endl; // NOLINT(performance-avoid-endl)
             // {
             //     "happy": true,
             //     "pi": 3.141
             // }
 
-            std::cout << std::setw(2) << j << std::endl;
+            std::cout << std::setw(2) << j << std::endl; // NOLINT(performance-avoid-endl)
         }
 
         {
