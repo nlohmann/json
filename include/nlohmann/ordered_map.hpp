@@ -53,13 +53,12 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
 
     std::pair<iterator, bool> emplace(const key_type& key, T&& t)
     {
-        for (auto it = this->begin(); it != this->end(); ++it)
+        auto iter = this->find(key);
+        if (iter != this->end())
         {
-            if (m_compare(it->first, key))
-            {
-                return {it, false};
-            }
+            return {iter, false};
         }
+
         Container::emplace_back(key, std::forward<T>(t));
         return {std::prev(this->end()), true};
     }
