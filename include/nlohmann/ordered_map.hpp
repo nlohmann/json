@@ -8,14 +8,14 @@
 
 #pragma once
 
-#include <functional> // equal_to, less
-#include <initializer_list> // initializer_list
-#include <iterator> // input_iterator_tag, iterator_traits
-#include <memory> // allocator
-#include <stdexcept> // for out_of_range
-#include <type_traits> // enable_if, is_convertible
-#include <utility> // pair
-#include <vector> // vector
+#include <functional>        // equal_to, less
+#include <initializer_list>  // initializer_list
+#include <iterator>          // input_iterator_tag, iterator_traits
+#include <memory>            // allocator
+#include <stdexcept>         // for out_of_range
+#include <type_traits>       // enable_if, is_convertible
+#include <utility>           // pair
+#include <vector>            // vector
 
 #include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
@@ -24,9 +24,8 @@ NLOHMANN_JSON_NAMESPACE_BEGIN
 
 /// ordered_map: a minimal map-like container that preserves insertion order
 /// for use within nlohmann::basic_json<ordered_map>
-template <class Key, class T, class IgnoredLess = std::less<Key>,
-          class Allocator = std::allocator<std::pair<const Key, T>>>
-                  struct ordered_map : std::vector<std::pair<const Key, T>, Allocator>
+template<class Key, class T, class IgnoredLess = std::less<Key>, class Allocator = std::allocator<std::pair<const Key, T>>>
+         struct ordered_map : std::vector<std::pair<const Key, T>, Allocator>
 {
     using key_type = Key;
     using mapped_type = T;
@@ -43,17 +42,24 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
 
     // Explicit constructors instead of `using Container::Container`
     // otherwise older compilers choke on it (GCC <= 5.5, xcode <= 9.4)
-    ordered_map() noexcept(noexcept(Container())) : Container{} {}
-    explicit ordered_map(const Allocator& alloc) noexcept(noexcept(Container(alloc))) : Container{alloc} {}
-    template <class It>
+    ordered_map() noexcept(noexcept(Container()))
+        : Container{}
+    {}
+    explicit ordered_map(const Allocator& alloc) noexcept(noexcept(Container(alloc)))
+        : Container{alloc}
+    {}
+    template<class It>
     ordered_map(It first, It last, const Allocator& alloc = Allocator())
-        : Container{first, last, alloc} {}
-    ordered_map(std::initializer_list<value_type> init, const Allocator& alloc = Allocator() )
-        : Container{init, alloc} {}
+        : Container{first, last, alloc}
+    {}
+    ordered_map(std::initializer_list<value_type> init, const Allocator& alloc = Allocator())
+        : Container{init, alloc}
+    {}
 
     std::pair<iterator, bool> emplace(const key_type& key, T&& t)
     {
-        for (auto it = this->begin(); it != this->end(); ++it)
+        auto endItr = this->end();
+        for (auto it = this->begin(); it != endItr; ++it)
         {
             if (m_compare(it->first, key))
             {
@@ -64,11 +70,11 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
         return {std::prev(this->end()), true};
     }
 
-    template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+    template<class KeyType, detail::enable_if_t<detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
     std::pair<iterator, bool> emplace(KeyType && key, T && t)
     {
-        for (auto it = this->begin(); it != this->end(); ++it)
+        auto endItr = this->end();
+        for (auto it = this->begin(); it != endItr; ++it)
         {
             if (m_compare(it->first, key))
             {
@@ -84,8 +90,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
         return emplace(key, T{}).first->second;
     }
 
-    template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+    template<class KeyType, detail::enable_if_t<detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
     T & operator[](KeyType && key)
     {
         return emplace(std::forward<KeyType>(key), T{}).first->second;
@@ -96,8 +101,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
         return at(key);
     }
 
-    template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+    template<class KeyType, detail::enable_if_t<detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
     const T & operator[](KeyType && key) const
     {
         return at(std::forward<KeyType>(key));
@@ -105,22 +109,15 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
 
     T& at(const key_type& key)
     {
-        for (auto it = this->begin(); it != this->end(); ++it)
-        {
-            if (m_compare(it->first, key))
-            {
-                return it->second;
-            }
-        }
-
-        JSON_THROW(std::out_of_range("key not found"));
+        const ordered_map<Key, T, IgnoredLess, Allocator>& cThis = *this;
+        return const_cast<T&>(cThis.at(key));
     }
 
-    template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+    template<class KeyType, detail::enable_if_t<detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
     T & at(KeyType && key) // NOLINT(cppcoreguidelines-missing-std-forward)
     {
-        for (auto it = this->begin(); it != this->end(); ++it)
+        auto endItr = this->end();
+        for (auto it = this->begin(); it != endItr; ++it)
         {
             if (m_compare(it->first, key))
             {
@@ -133,7 +130,8 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
 
     const T& at(const key_type& key) const
     {
-        for (auto it = this->begin(); it != this->end(); ++it)
+        auto endItr = this->end();
+        for (auto it = this->begin(); it != endItr; ++it)
         {
             if (m_compare(it->first, key))
             {
@@ -144,11 +142,11 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
         JSON_THROW(std::out_of_range("key not found"));
     }
 
-    template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+    template<class KeyType, detail::enable_if_t<detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
     const T & at(KeyType && key) const // NOLINT(cppcoreguidelines-missing-std-forward)
     {
-        for (auto it = this->begin(); it != this->end(); ++it)
+        auto endItr = this->end();
+        for (auto it = this->begin(); it != endItr; ++it)
         {
             if (m_compare(it->first, key))
             {
@@ -161,14 +159,15 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
 
     size_type erase(const key_type& key)
     {
-        for (auto it = this->begin(); it != this->end(); ++it)
+        auto endItr = this->end();
+        for (auto it = this->begin(); it != endItr; ++it)
         {
             if (m_compare(it->first, key))
             {
                 // Since we cannot move const Keys, re-construct them in place
-                for (auto next = it; ++next != this->end(); ++it)
+                for (auto next = it; ++next != endItr; ++it)
                 {
-                    it->~value_type(); // Destroy but keep allocation
+                    it->~value_type();  // Destroy but keep allocation
                     new (&*it) value_type{std::move(*next)};
                 }
                 Container::pop_back();
@@ -178,18 +177,18 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
         return 0;
     }
 
-    template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+    template<class KeyType, detail::enable_if_t<detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
     size_type erase(KeyType && key) // NOLINT(cppcoreguidelines-missing-std-forward)
     {
-        for (auto it = this->begin(); it != this->end(); ++it)
+        auto endItr = this->end();
+        for (auto it = this->begin(); it != endItr; ++it)
         {
             if (m_compare(it->first, key))
             {
                 // Since we cannot move const Keys, re-construct them in place
-                for (auto next = it; ++next != this->end(); ++it)
+                for (auto next = it; ++next != endItr; ++it)
                 {
-                    it->~value_type(); // Destroy but keep allocation
+                    it->~value_type();  // Destroy but keep allocation
                     new (&*it) value_type{std::move(*next)};
                 }
                 Container::pop_back();
@@ -236,8 +235,8 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
 
         for (auto it = first; std::next(it, elements_affected) != Container::end(); ++it)
         {
-            it->~value_type(); // destroy but keep allocation
-            new (&*it) value_type{std::move(*std::next(it, elements_affected))}; // "move" next element to it
+            it->~value_type();                                                    // destroy but keep allocation
+            new (&*it) value_type{std::move(*std::next(it, elements_affected))};  // "move" next element to it
         }
 
         // [ a, b, c, d, h, i, j, h, i, j ]
@@ -259,7 +258,8 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
 
     size_type count(const key_type& key) const
     {
-        for (auto it = this->begin(); it != this->end(); ++it)
+        auto endItr = this->end();
+        for (auto it = this->begin(); it != endItr; ++it)
         {
             if (m_compare(it->first, key))
             {
@@ -269,11 +269,11 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
         return 0;
     }
 
-    template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+    template<class KeyType, detail::enable_if_t<detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
     size_type count(KeyType && key) const // NOLINT(cppcoreguidelines-missing-std-forward)
     {
-        for (auto it = this->begin(); it != this->end(); ++it)
+        auto endItr = this->end();
+        for (auto it = this->begin(); it != endItr; ++it)
         {
             if (m_compare(it->first, key))
             {
@@ -285,7 +285,8 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
 
     iterator find(const key_type& key)
     {
-        for (auto it = this->begin(); it != this->end(); ++it)
+        auto endItr = this->end();
+        for (auto it = this->begin(); it != endItr; ++it)
         {
             if (m_compare(it->first, key))
             {
@@ -295,11 +296,11 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
         return Container::end();
     }
 
-    template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+    template<class KeyType, detail::enable_if_t<detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
     iterator find(KeyType && key) // NOLINT(cppcoreguidelines-missing-std-forward)
     {
-        for (auto it = this->begin(); it != this->end(); ++it)
+        auto endItr = this->end();
+        for (auto it = this->begin(); it != endItr; ++it)
         {
             if (m_compare(it->first, key))
             {
@@ -311,7 +312,8 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
 
     const_iterator find(const key_type& key) const
     {
-        for (auto it = this->begin(); it != this->end(); ++it)
+        auto endItr = this->end();
+        for (auto it = this->begin(); it != endItr; ++it)
         {
             if (m_compare(it->first, key))
             {
@@ -321,14 +323,15 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
         return Container::end();
     }
 
-    std::pair<iterator, bool> insert( value_type&& value )
+    std::pair<iterator, bool> insert(value_type&& value)
     {
         return emplace(value.first, std::move(value.second));
     }
 
-    std::pair<iterator, bool> insert( const value_type& value )
+    std::pair<iterator, bool> insert(const value_type& value)
     {
-        for (auto it = this->begin(); it != this->end(); ++it)
+        auto endItr = this->end();
+        for (auto it = this->begin(); it != endItr; ++it)
         {
             if (m_compare(it->first, value.first))
             {
