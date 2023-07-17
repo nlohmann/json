@@ -479,6 +479,10 @@ class parser
             error_msg += concat(m_lexer.get_error_message(), "; last read: '",
                                 m_lexer.get_token_string(), '\'');
         }
+        else if (last_token == token_type::end_of_input && m_lexer.get_position().chars_read_total == 1)
+        {
+            error_msg += concat("unexpected end of input, check that your input string or stream contains the expected JSON");
+        }
         else
         {
             error_msg += concat("unexpected ", lexer_t::token_type_name(last_token));
