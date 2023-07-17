@@ -37,7 +37,7 @@ Copy of the JSON value, converted to `ValueType`
 ??? example "Example: (1) Default-constructible type"
 
     The example below shows how a `from_json` function can be implemented for a user-defined type. This function is
-    called by the `adl_serializer` when `get<ns::person>()` is called.
+    called by the `adl_serializer` when `template get<ns::person>()` is called.
         
     ```cpp
     --8<-- "examples/from_json__default_constructible.cpp"

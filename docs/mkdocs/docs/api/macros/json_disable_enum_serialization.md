@@ -53,7 +53,7 @@ The default value is `0`.
         const json j = Choice::first; 
 
         // normally invokes from_json parse function but with JSON_DISABLE_ENUM_SERIALIZATION defined, it does not
-        Choice ch = j.get<Choice>();
+        Choice ch = j.template get<Choice>();
     }
     ```
 
@@ -86,7 +86,7 @@ The default value is `0`.
         const json j = Choice::first; 
 
         // uses user-defined from_json function defined by macro
-        Choice ch = j.get<Choice>();
+        Choice ch = j.template get<Choice>();
     }
     ```
 
@@ -109,7 +109,7 @@ The default value is `0`.
 
     void from_json(const json& j, Choice& ch)
     {
-        auto value = j.get<std::string>();
+        auto value = j.template get<std::string>();
         if (value == "first")
         {
             ch = Choice::first;
@@ -122,7 +122,7 @@ The default value is `0`.
 
     void to_json(json& j, const Choice& ch)
     {
-        auto value = j.get<std::string>();
+        auto value = j.template get<std::string>();
         if (value == "first")
         {
             ch = Choice::first;
@@ -139,7 +139,7 @@ The default value is `0`.
         const json j = Choice::first; 
 
         // uses user-defined from_json function
-        Choice ch = j.get<Choice>();
+        Choice ch = j.template get<Choice>();
     }
     ```
 
