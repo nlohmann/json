@@ -1216,13 +1216,13 @@ TEST_CASE("BSON roundtrips" * doctest::skip())
     SECTION("reference files")
     {
         for (const std::string filename :
-                {
-                    TEST_DATA_DIRECTORY "/json.org/1.json",
-                    TEST_DATA_DIRECTORY "/json.org/2.json",
-                    TEST_DATA_DIRECTORY "/json.org/3.json",
-                    TEST_DATA_DIRECTORY "/json.org/4.json",
-                    TEST_DATA_DIRECTORY "/json.org/5.json"
-                })
+    {
+        TEST_DATA_DIRECTORY "/json.org/1.json",
+        TEST_DATA_DIRECTORY "/json.org/2.json",
+        TEST_DATA_DIRECTORY "/json.org/3.json",
+        TEST_DATA_DIRECTORY "/json.org/4.json",
+        TEST_DATA_DIRECTORY "/json.org/5.json"
+    })
         {
             CAPTURE(filename)
 

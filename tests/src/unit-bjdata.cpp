@@ -339,13 +339,13 @@ TEST_CASE("BJData")
                     std::vector<int32_t> const numbers
                     {
                         -32769,
-                            -100000,
-                            -1000000,
-                            -10000000,
-                            -100000000,
-                            -1000000000,
-                            -2147483647 - 1, // https://stackoverflow.com/a/29356002/266378
-                        };
+                        -100000,
+                        -1000000,
+                        -10000000,
+                        -100000000,
+                        -1000000000,
+                        -2147483647 - 1, // https://stackoverflow.com/a/29356002/266378
+                    };
                     for (const auto i : numbers)
                     {
                         CAPTURE(i)
@@ -585,9 +585,9 @@ TEST_CASE("BJData")
                 SECTION("32768..65535 (uint16)")
                 {
                     for (const uint32_t i :
-                            {
-                                32768u, 55555u, 65535u
-                            })
+                {
+                    32768u, 55555u, 65535u
+                })
                     {
                         CAPTURE(i)
 
@@ -625,9 +625,9 @@ TEST_CASE("BJData")
                 SECTION("65536..2147483647 (int32)")
                 {
                     for (const uint32_t i :
-                            {
-                                65536u, 77777u, 2147483647u
-                            })
+                {
+                    65536u, 77777u, 2147483647u
+                })
                     {
                         CAPTURE(i)
 
@@ -670,9 +670,9 @@ TEST_CASE("BJData")
                 SECTION("2147483648..4294967295 (uint32)")
                 {
                     for (const uint32_t i :
-                            {
-                                2147483648u, 3333333333u, 4294967295u
-                            })
+                {
+                    2147483648u, 3333333333u, 4294967295u
+                })
                     {
                         CAPTURE(i)
 
@@ -917,9 +917,9 @@ TEST_CASE("BJData")
                 SECTION("32768..65535 (uint16)")
                 {
                     for (const uint32_t i :
-                            {
-                                32768u, 55555u, 65535u
-                            })
+                {
+                    32768u, 55555u, 65535u
+                })
                     {
                         CAPTURE(i)
 
@@ -955,9 +955,9 @@ TEST_CASE("BJData")
                 SECTION("65536..2147483647 (int32)")
                 {
                     for (const uint32_t i :
-                            {
-                                65536u, 77777u, 2147483647u
-                            })
+                {
+                    65536u, 77777u, 2147483647u
+                })
                     {
                         CAPTURE(i)
 
@@ -999,9 +999,9 @@ TEST_CASE("BJData")
                 SECTION("2147483648..4294967295 (uint32)")
                 {
                     for (const uint32_t i :
-                            {
-                                2147483648u, 3333333333u, 4294967295u
-                            })
+                {
+                    2147483648u, 3333333333u, 4294967295u
+                })
                     {
                         CAPTURE(i)
 
@@ -1397,9 +1397,9 @@ TEST_CASE("BJData")
             SECTION("N = 256..32767")
             {
                 for (const size_t N :
-                        {
-                            256u, 999u, 1025u, 3333u, 2048u, 32767u
-                        })
+            {
+                256u, 999u, 1025u, 3333u, 2048u, 32767u
+            })
                 {
                     CAPTURE(N)
 
@@ -1431,9 +1431,9 @@ TEST_CASE("BJData")
             SECTION("N = 32768..65535")
             {
                 for (const size_t N :
-                        {
-                            32768u, 55555u, 65535u
-                        })
+            {
+                32768u, 55555u, 65535u
+            })
                 {
                     CAPTURE(N)
 
@@ -1465,9 +1465,9 @@ TEST_CASE("BJData")
             SECTION("N = 65536..2147483647")
             {
                 for (const size_t N :
-                        {
-                            65536u, 77777u, 1048576u
-                        })
+            {
+                65536u, 77777u, 1048576u
+            })
                 {
                     CAPTURE(N)
 
@@ -1593,9 +1593,9 @@ TEST_CASE("BJData")
             SECTION("N = 256..32767")
             {
                 for (const std::size_t N :
-                        {
-                            256u, 999u, 1025u, 3333u, 2048u, 32767u
-                        })
+            {
+                256u, 999u, 1025u, 3333u, 2048u, 32767u
+            })
                 {
                     CAPTURE(N)
 
@@ -1630,9 +1630,9 @@ TEST_CASE("BJData")
             SECTION("N = 32768..65535")
             {
                 for (const std::size_t N :
-                        {
-                            32768u, 55555u, 65535u
-                        })
+            {
+                32768u, 55555u, 65535u
+            })
                 {
                     CAPTURE(N)
 
@@ -1667,9 +1667,9 @@ TEST_CASE("BJData")
             SECTION("N = 65536..2147483647")
             {
                 for (const std::size_t N :
-                        {
-                            65536u, 77777u, 1048576u
-                        })
+            {
+                65536u, 77777u, 1048576u
+            })
                 {
                     CAPTURE(N)
 
@@ -3484,50 +3484,50 @@ TEST_CASE("BJData roundtrips" * doctest::skip())
     SECTION("input from self-generated BJData files")
     {
         for (const std::string filename :
-                {
-                    TEST_DATA_DIRECTORY "/json_nlohmann_tests/all_unicode.json",
-                    TEST_DATA_DIRECTORY "/json.org/1.json",
-                    TEST_DATA_DIRECTORY "/json.org/2.json",
-                    TEST_DATA_DIRECTORY "/json.org/3.json",
-                    TEST_DATA_DIRECTORY "/json.org/4.json",
-                    TEST_DATA_DIRECTORY "/json.org/5.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip01.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip02.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip03.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip04.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip05.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip06.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip07.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip08.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip09.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip10.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip11.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip12.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip13.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip14.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip15.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip16.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip17.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip18.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip19.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip20.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip21.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip22.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip23.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip24.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip25.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip26.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip27.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip28.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip29.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip30.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip31.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip32.json",
-                    TEST_DATA_DIRECTORY "/json_testsuite/sample.json",
-                    TEST_DATA_DIRECTORY "/json_tests/pass1.json",
-                    TEST_DATA_DIRECTORY "/json_tests/pass2.json",
-                    TEST_DATA_DIRECTORY "/json_tests/pass3.json"
-                })
+    {
+        TEST_DATA_DIRECTORY "/json_nlohmann_tests/all_unicode.json",
+        TEST_DATA_DIRECTORY "/json.org/1.json",
+        TEST_DATA_DIRECTORY "/json.org/2.json",
+        TEST_DATA_DIRECTORY "/json.org/3.json",
+        TEST_DATA_DIRECTORY "/json.org/4.json",
+        TEST_DATA_DIRECTORY "/json.org/5.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip01.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip02.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip03.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip04.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip05.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip06.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip07.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip08.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip09.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip10.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip11.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip12.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip13.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip14.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip15.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip16.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip17.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip18.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip19.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip20.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip21.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip22.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip23.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip24.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip25.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip26.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip27.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip28.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip29.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip30.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip31.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip32.json",
+        TEST_DATA_DIRECTORY "/json_testsuite/sample.json",
+        TEST_DATA_DIRECTORY "/json_tests/pass1.json",
+        TEST_DATA_DIRECTORY "/json_tests/pass2.json",
+        TEST_DATA_DIRECTORY "/json_tests/pass3.json"
+    })
         {
             CAPTURE(filename)
 

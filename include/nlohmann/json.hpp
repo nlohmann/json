@@ -579,7 +579,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 else
                 {
                     stack.reserve(object->size());
-                    for (auto&& it : *object)
+                    for (auto && it : *object)
                     {
                         stack.push_back(std::move(it.second));
                     }
@@ -601,7 +601,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     }
                     else if (current_item.is_object())
                     {
-                        for (auto&& it : *current_item.m_data.m_value.object)
+                        for (auto && it : *current_item.m_data.m_value.object)
                         {
                             stack.push_back(std::move(it.second));
                         }
@@ -1742,7 +1742,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     constexpr
 #endif
     auto get() const noexcept(
-    noexcept(std::declval<const basic_json_t&>().template get_impl<ValueType>(detail::priority_tag<4> {})))
+        noexcept(std::declval<const basic_json_t&>().template get_impl<ValueType>(detail::priority_tag<4> {})))
     -> decltype(std::declval<const basic_json_t&>().template get_impl<ValueType>(detail::priority_tag<4> {}))
     {
         // we cannot static_assert on ValueTypeCV being non-const, because
@@ -5218,14 +5218,14 @@ struct less< ::nlohmann::detail::value_t> // do not remove the space after '<', 
     */
     bool operator()(::nlohmann::detail::value_t lhs,
                     ::nlohmann::detail::value_t rhs) const noexcept
-    {
+{
 #if JSON_HAS_THREE_WAY_COMPARISON
-        return std::is_lt(lhs <=> rhs); // *NOPAD*
+    return std::is_lt(lhs <=> rhs); // *NOPAD*
 #else
-        return ::nlohmann::detail::operator<(lhs, rhs);
+    return ::nlohmann::detail::operator<(lhs, rhs);
 #endif
-    }
-};
+}
+                 };
 
 // C++20 prohibit function specialization in the std namespace.
 #ifndef JSON_HAS_CPP_20

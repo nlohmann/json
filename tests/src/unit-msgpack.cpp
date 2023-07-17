@@ -479,11 +479,11 @@ TEST_CASE("MessagePack")
                     std::vector<int32_t> const numbers
                     {
                         -32769,
-                            -65536,
-                            -77777,
-                            -1048576,
-                            -2147483648LL,
-                        };
+                        -65536,
+                        -77777,
+                        -1048576,
+                        -2147483648LL,
+                    };
                     for (auto i : numbers)
                     {
                         CAPTURE(i)
@@ -683,9 +683,9 @@ TEST_CASE("MessagePack")
                 SECTION("65536..4294967295 (uint 32)")
                 {
                     for (const uint32_t i :
-                            {
-                                65536u, 77777u, 1048576u, 4294967295u
-                            })
+                {
+                    65536u, 77777u, 1048576u, 4294967295u
+                })
                     {
                         CAPTURE(i)
 
@@ -727,9 +727,9 @@ TEST_CASE("MessagePack")
                 SECTION("4294967296..18446744073709551615 (uint 64)")
                 {
                     for (const uint64_t i :
-                            {
-                                4294967296LU, 18446744073709551615LU
-                            })
+                {
+                    4294967296LU, 18446744073709551615LU
+                })
                     {
                         CAPTURE(i)
 

@@ -207,7 +207,7 @@ struct is_default_constructible<std::pair<T1, T2>>
 
 template <typename T1, typename T2>
 struct is_default_constructible<const std::pair<T1, T2>>
-            : conjunction<is_default_constructible<T1>, is_default_constructible<T2>> {};
+                : conjunction<is_default_constructible<T1>, is_default_constructible<T2>> {};
 
 template <typename... Ts>
 struct is_default_constructible<std::tuple<Ts...>>
@@ -215,7 +215,7 @@ struct is_default_constructible<std::tuple<Ts...>>
 
 template <typename... Ts>
 struct is_default_constructible<const std::tuple<Ts...>>
-            : conjunction<is_default_constructible<Ts>...> {};
+                : conjunction<is_default_constructible<Ts>...> {};
 
 
 template <typename T, typename... Args>
@@ -417,18 +417,18 @@ is_detected<range_value_t, ConstructibleArrayType>::value&&
 !std::is_same<ConstructibleArrayType, detected_t<range_value_t, ConstructibleArrayType>>::value&&
         is_complete_type <
         detected_t<range_value_t, ConstructibleArrayType >>::value >>
-{
-    using value_type = range_value_t<ConstructibleArrayType>;
+        {
+            using value_type = range_value_t<ConstructibleArrayType>;
 
-    static constexpr bool value =
-        std::is_same<value_type,
-        typename BasicJsonType::array_t::value_type>::value ||
-        has_from_json<BasicJsonType,
-        value_type>::value ||
-        has_non_default_from_json <
-        BasicJsonType,
-        value_type >::value;
-};
+            static constexpr bool value =
+                std::is_same<value_type,
+            typename BasicJsonType::array_t::value_type>::value ||
+            has_from_json<BasicJsonType,
+            value_type>::value ||
+            has_non_default_from_json <
+            BasicJsonType,
+            value_type >::value;
+        };
 
 template<typename BasicJsonType, typename ConstructibleArrayType>
 struct is_constructible_array_type
@@ -511,7 +511,7 @@ template<typename Compare, typename A, typename B>
 struct is_comparable<Compare, A, B, void_t<
 decltype(std::declval<Compare>()(std::declval<A>(), std::declval<B>())),
 decltype(std::declval<Compare>()(std::declval<B>(), std::declval<A>()))
->> : std::true_type {};
+        >> : std::true_type {};
 
 template<typename T>
 using detect_is_transparent = typename T::is_transparent;

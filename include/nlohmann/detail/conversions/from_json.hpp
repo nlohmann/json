@@ -262,8 +262,8 @@ template < typename BasicJsonType, typename ConstructibleArrayType,
                int > = 0 >
 auto from_json(const BasicJsonType& j, ConstructibleArrayType& arr)
 -> decltype(from_json_array_impl(j, arr, priority_tag<3> {}),
-j.template get<typename ConstructibleArrayType::value_type>(),
-void())
+            j.template get<typename ConstructibleArrayType::value_type>(),
+            void())
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {

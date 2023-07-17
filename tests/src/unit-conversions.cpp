@@ -199,7 +199,7 @@ TEST_CASE("value conversion")
     SECTION("get an array (explicit)")
     {
         const json::array_t a_reference{json(1),     json(1u),       json(2.2),
-                                        json(false), json("string"), json()};
+                  json(false), json("string"), json()};
         json j(a_reference);
 
         SECTION("json::array_t")
@@ -296,7 +296,7 @@ TEST_CASE("value conversion")
     SECTION("get an array (explicit, get_to)")
     {
         const json::array_t a_reference{json(1),     json(1u),       json(2.2),
-                                        json(false), json("string"), json()};
+                  json(false), json("string"), json()};
         json j(a_reference);
 
         SECTION("json::array_t")
@@ -356,7 +356,7 @@ TEST_CASE("value conversion")
     SECTION("get an array (implicit)")
     {
         const json::array_t a_reference{json(1),     json(1u),       json(2.2),
-                                        json(false), json("string"), json()};
+                  json(false), json("string"), json()};
         json j(a_reference);
 
         SECTION("json::array_t")

@@ -1009,8 +1009,8 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
             SECTION("existing element")
             {
                 for (const auto* key :
-                        {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"
-                        })
+            {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"
+            })
                 {
                     CHECK(j.find(key) != j.end());
                     CHECK(*j.find(key) == j.at(key));
@@ -1019,8 +1019,8 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                 }
 #ifdef JSON_HAS_CPP_17
                 for (const std::string_view key :
-                        {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"
-                        })
+            {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"
+            })
                 {
                     CHECK(j.find(key) != j.end());
                     CHECK(*j.find(key) == j.at(key));
@@ -1162,16 +1162,16 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
             SECTION("existing element")
             {
                 for (const auto* key :
-                        {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"
-                        })
+            {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"
+            })
                 {
                     CHECK(j.count(key) == 1);
                     CHECK(j_const.count(key) == 1);
                 }
 #ifdef JSON_HAS_CPP_17
                 for (const std::string_view key :
-                        {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"
-                        })
+            {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"
+            })
                 {
                     CHECK(j.count(key) == 1);
                     CHECK(j_const.count(key) == 1);
@@ -1311,8 +1311,8 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
             SECTION("existing element")
             {
                 for (const auto* key :
-                        {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"
-                        })
+            {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"
+            })
                 {
                     CHECK(j.contains(key) == true);
                     CHECK(j_const.contains(key) == true);
@@ -1320,8 +1320,8 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
 
 #ifdef JSON_HAS_CPP_17
                 for (const std::string_view key :
-                        {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"
-                        })
+            {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"
+            })
                 {
                     CHECK(j.contains(key) == true);
                     CHECK(j_const.contains(key) == true);

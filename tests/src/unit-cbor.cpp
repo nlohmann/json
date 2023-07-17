@@ -241,13 +241,13 @@ TEST_CASE("CBOR")
                     const std::vector<int64_t> numbers
                     {
                         -65537,
-                            -100000,
-                            -1000000,
-                            -10000000,
-                            -100000000,
-                            -1000000000,
-                            -4294967296,
-                        };
+                        -100000,
+                        -1000000,
+                        -10000000,
+                        -100000000,
+                        -1000000000,
+                        -4294967296,
+                    };
                     for (const auto i : numbers)
                     {
                         CAPTURE(i)
@@ -517,9 +517,9 @@ TEST_CASE("CBOR")
                 SECTION("65536..4294967295")
                 {
                     for (const uint32_t i :
-                            {
-                                65536u, 77777u, 1048576u
-                            })
+                {
+                    65536u, 77777u, 1048576u
+                })
                     {
                         CAPTURE(i)
 
@@ -562,9 +562,9 @@ TEST_CASE("CBOR")
                 SECTION("4294967296..4611686018427387903")
                 {
                     for (const uint64_t i :
-                            {
-                                4294967296ul, 4611686018427387903ul
-                            })
+                {
+                    4294967296ul, 4611686018427387903ul
+                })
                     {
                         CAPTURE(i)
 
@@ -756,9 +756,9 @@ TEST_CASE("CBOR")
                 SECTION("65536..4294967295 (four-byte uint32_t)")
                 {
                     for (const uint32_t i :
-                            {
-                                65536u, 77777u, 1048576u
-                            })
+                {
+                    65536u, 77777u, 1048576u
+                })
                     {
                         CAPTURE(i)
 
@@ -800,9 +800,9 @@ TEST_CASE("CBOR")
                 SECTION("4294967296..4611686018427387903 (eight-byte uint64_t)")
                 {
                     for (const uint64_t i :
-                            {
-                                4294967296ul, 4611686018427387903ul
-                            })
+                {
+                    4294967296ul, 4611686018427387903ul
+                })
                     {
                         CAPTURE(i)
 
@@ -1175,9 +1175,9 @@ TEST_CASE("CBOR")
             SECTION("N = 256..65535")
             {
                 for (const size_t N :
-                        {
-                            256u, 999u, 1025u, 3333u, 2048u, 65535u
-                        })
+            {
+                256u, 999u, 1025u, 3333u, 2048u, 65535u
+            })
                 {
                     CAPTURE(N)
 
@@ -1208,9 +1208,9 @@ TEST_CASE("CBOR")
             SECTION("N = 65536..4294967295")
             {
                 for (const size_t N :
-                        {
-                            65536u, 77777u, 1048576u
-                        })
+            {
+                65536u, 77777u, 1048576u
+            })
                 {
                     CAPTURE(N)
 
@@ -1524,9 +1524,9 @@ TEST_CASE("CBOR")
             SECTION("N = 256..65535")
             {
                 for (const size_t N :
-                        {
-                            256u, 999u, 1025u, 3333u, 2048u, 65535u
-                        })
+            {
+                256u, 999u, 1025u, 3333u, 2048u, 65535u
+            })
                 {
                     CAPTURE(N)
 
@@ -1557,9 +1557,9 @@ TEST_CASE("CBOR")
             SECTION("N = 65536..4294967295")
             {
                 for (const size_t N :
-                        {
-                            65536u, 77777u, 1048576u
-                        })
+            {
+                65536u, 77777u, 1048576u
+            })
                 {
                     CAPTURE(N)
 
@@ -1763,42 +1763,42 @@ TEST_CASE("CBOR")
             SECTION("all unsupported bytes")
             {
                 for (const auto byte :
-                        {
-                            // ?
-                            0x1c, 0x1d, 0x1e, 0x1f,
-                            // ?
-                            0x3c, 0x3d, 0x3e, 0x3f,
-                            // ?
-                            0x5c, 0x5d, 0x5e,
-                            // ?
-                            0x7c, 0x7d, 0x7e,
-                            // ?
-                            0x9c, 0x9d, 0x9e,
-                            // ?
-                            0xbc, 0xbd, 0xbe,
-                            // date/time
-                            0xc0, 0xc1,
-                            // bignum
-                            0xc2, 0xc3,
-                            // fraction
-                            0xc4,
-                            // bigfloat
-                            0xc5,
-                            // tagged item
-                            0xc6, 0xc7, 0xc8, 0xc9, 0xca, 0xcb, 0xcc, 0xcd, 0xce, 0xcf, 0xd0, 0xd1, 0xd2, 0xd3, 0xd4,
-                            // expected conversion
-                            0xd5, 0xd6, 0xd7,
-                            // more tagged items
-                            0xd8, 0xd9, 0xda, 0xdb,
-                            // ?
-                            0xdc, 0xdd, 0xde, 0xdf,
-                            // (simple value)
-                            0xe0, 0xe1, 0xe2, 0xe3, 0xe4, 0xe5, 0xe6, 0xe7, 0xe8, 0xe9, 0xea, 0xeb, 0xec, 0xed, 0xee, 0xef, 0xf0, 0xf1, 0xf2, 0xf3,
-                            // undefined
-                            0xf7,
-                            // simple value
-                            0xf8
-                        })
+            {
+                // ?
+                0x1c, 0x1d, 0x1e, 0x1f,
+                      // ?
+                      0x3c, 0x3d, 0x3e, 0x3f,
+                      // ?
+                      0x5c, 0x5d, 0x5e,
+                      // ?
+                      0x7c, 0x7d, 0x7e,
+                      // ?
+                      0x9c, 0x9d, 0x9e,
+                      // ?
+                      0xbc, 0xbd, 0xbe,
+                      // date/time
+                      0xc0, 0xc1,
+                      // bignum
+                      0xc2, 0xc3,
+                      // fraction
+                      0xc4,
+                      // bigfloat
+                      0xc5,
+                      // tagged item
+                      0xc6, 0xc7, 0xc8, 0xc9, 0xca, 0xcb, 0xcc, 0xcd, 0xce, 0xcf, 0xd0, 0xd1, 0xd2, 0xd3, 0xd4,
+                      // expected conversion
+                      0xd5, 0xd6, 0xd7,
+                      // more tagged items
+                      0xd8, 0xd9, 0xda, 0xdb,
+                      // ?
+                      0xdc, 0xdd, 0xde, 0xdf,
+                      // (simple value)
+                      0xe0, 0xe1, 0xe2, 0xe3, 0xe4, 0xe5, 0xe6, 0xe7, 0xe8, 0xe9, 0xea, 0xeb, 0xec, 0xed, 0xee, 0xef, 0xf0, 0xf1, 0xf2, 0xf3,
+                      // undefined
+                      0xf7,
+                      // simple value
+                      0xf8
+            })
                 {
                     json _;
                     CHECK_THROWS_AS(_ = json::from_cbor(std::vector<uint8_t>({static_cast<uint8_t>(byte)})), json::parse_error&);
@@ -1913,29 +1913,29 @@ TEST_CASE("CBOR regressions")
         detected.
         */
         for (const std::string filename :
-                {
-                    TEST_DATA_DIRECTORY "/cbor_regression/test01",
-                    TEST_DATA_DIRECTORY "/cbor_regression/test02",
-                    TEST_DATA_DIRECTORY "/cbor_regression/test03",
-                    TEST_DATA_DIRECTORY "/cbor_regression/test04",
-                    TEST_DATA_DIRECTORY "/cbor_regression/test05",
-                    TEST_DATA_DIRECTORY "/cbor_regression/test06",
-                    TEST_DATA_DIRECTORY "/cbor_regression/test07",
-                    TEST_DATA_DIRECTORY "/cbor_regression/test08",
-                    TEST_DATA_DIRECTORY "/cbor_regression/test09",
-                    TEST_DATA_DIRECTORY "/cbor_regression/test10",
-                    TEST_DATA_DIRECTORY "/cbor_regression/test11",
-                    TEST_DATA_DIRECTORY "/cbor_regression/test12",
-                    TEST_DATA_DIRECTORY "/cbor_regression/test13",
-                    TEST_DATA_DIRECTORY "/cbor_regression/test14",
-                    TEST_DATA_DIRECTORY "/cbor_regression/test15",
-                    TEST_DATA_DIRECTORY "/cbor_regression/test16",
-                    TEST_DATA_DIRECTORY "/cbor_regression/test17",
-                    TEST_DATA_DIRECTORY "/cbor_regression/test18",
-                    TEST_DATA_DIRECTORY "/cbor_regression/test19",
-                    TEST_DATA_DIRECTORY "/cbor_regression/test20",
-                    TEST_DATA_DIRECTORY "/cbor_regression/test21"
-                })
+    {
+        TEST_DATA_DIRECTORY "/cbor_regression/test01",
+        TEST_DATA_DIRECTORY "/cbor_regression/test02",
+        TEST_DATA_DIRECTORY "/cbor_regression/test03",
+        TEST_DATA_DIRECTORY "/cbor_regression/test04",
+        TEST_DATA_DIRECTORY "/cbor_regression/test05",
+        TEST_DATA_DIRECTORY "/cbor_regression/test06",
+        TEST_DATA_DIRECTORY "/cbor_regression/test07",
+        TEST_DATA_DIRECTORY "/cbor_regression/test08",
+        TEST_DATA_DIRECTORY "/cbor_regression/test09",
+        TEST_DATA_DIRECTORY "/cbor_regression/test10",
+        TEST_DATA_DIRECTORY "/cbor_regression/test11",
+        TEST_DATA_DIRECTORY "/cbor_regression/test12",
+        TEST_DATA_DIRECTORY "/cbor_regression/test13",
+        TEST_DATA_DIRECTORY "/cbor_regression/test14",
+        TEST_DATA_DIRECTORY "/cbor_regression/test15",
+        TEST_DATA_DIRECTORY "/cbor_regression/test16",
+        TEST_DATA_DIRECTORY "/cbor_regression/test17",
+        TEST_DATA_DIRECTORY "/cbor_regression/test18",
+        TEST_DATA_DIRECTORY "/cbor_regression/test19",
+        TEST_DATA_DIRECTORY "/cbor_regression/test20",
+        TEST_DATA_DIRECTORY "/cbor_regression/test21"
+    })
         {
             CAPTURE(filename)
 
@@ -1990,153 +1990,153 @@ TEST_CASE("CBOR roundtrips" * doctest::skip())
         exclude_packed.insert(TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_long_strings.json");
 
         for (const std::string filename :
-                {
-                    TEST_DATA_DIRECTORY "/json_nlohmann_tests/all_unicode.json",
-                    TEST_DATA_DIRECTORY "/json.org/1.json",
-                    TEST_DATA_DIRECTORY "/json.org/2.json",
-                    TEST_DATA_DIRECTORY "/json.org/3.json",
-                    TEST_DATA_DIRECTORY "/json.org/4.json",
-                    TEST_DATA_DIRECTORY "/json.org/5.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip01.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip02.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip03.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip04.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip05.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip06.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip07.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip08.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip09.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip10.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip11.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip12.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip13.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip14.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip15.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip16.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip17.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip18.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip19.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip20.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip21.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip22.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip23.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip24.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip25.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip26.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip27.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip28.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip29.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip30.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip31.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip32.json",
-                    TEST_DATA_DIRECTORY "/json_testsuite/sample.json", // kills AppVeyor
-                    TEST_DATA_DIRECTORY "/json_tests/pass1.json",
-                    TEST_DATA_DIRECTORY "/json_tests/pass2.json",
-                    TEST_DATA_DIRECTORY "/json_tests/pass3.json",
-                    TEST_DATA_DIRECTORY "/regression/floats.json",
-                    TEST_DATA_DIRECTORY "/regression/signed_ints.json",
-                    TEST_DATA_DIRECTORY "/regression/unsigned_ints.json",
-                    TEST_DATA_DIRECTORY "/regression/working_file.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_arraysWithSpaces.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_empty-string.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_empty.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_ending_with_newline.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_false.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_heterogeneous.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_null.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_with_1_and_newline.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_with_leading_space.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_with_several_null.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_with_trailing_space.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_0e+1.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_0e1.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_after_space.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_double_close_to_zero.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_double_huge_neg_exp.json",
-                    //TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_huge_exp.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_int_with_exp.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_minus_zero.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_negative_int.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_negative_one.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_negative_zero.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_capital_e.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_capital_e_neg_exp.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_capital_e_pos_exp.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_exponent.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_fraction_exponent.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_neg_exp.json",
-                    //TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_neg_overflow.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_pos_exponent.json",
-                    //TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_pos_overflow.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_underflow.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_simple_int.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_simple_real.json",
-                    //TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_too_big_neg_int.json",
-                    //TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_too_big_pos_int.json",
-                    //TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_very_big_negative_int.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_basic.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_duplicated_key.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_duplicated_key_and_value.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_empty.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_empty_key.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_escaped_null_in_key.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_extreme_numbers.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_long_strings.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_simple.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_string_unicode.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_with_newlines.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_1_2_3_bytes_UTF-8_sequences.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_UTF-16_Surrogates_U+1D11E_MUSICAL_SYMBOL_G_CLEF.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_accepted_surrogate_pair.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_accepted_surrogate_pairs.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_allowed_escapes.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_backslash_and_u_escaped_zero.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_backslash_doublequotes.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_comments.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_double_escape_a.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_double_escape_n.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_escaped_control_character.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_escaped_noncharacter.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_in_array.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_in_array_with_leading_space.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_last_surrogates_1_and_2.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_newline_uescaped.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_nonCharacterInUTF-8_U+10FFFF.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_nonCharacterInUTF-8_U+1FFFF.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_nonCharacterInUTF-8_U+FFFF.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_null_escape.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_one-byte-utf-8.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_pi.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_simple_ascii.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_space.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_three-byte-utf-8.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_two-byte-utf-8.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_u+2028_line_sep.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_u+2029_par_sep.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_uEscape.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unescaped_char_delete.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unicode.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unicodeEscapedBackslash.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unicode_2.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unicode_U+200B_ZERO_WIDTH_SPACE.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unicode_U+2064_invisible_plus.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unicode_escaped_double_quote.json",
-                    // TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_utf16.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_utf8.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_with_del_character.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_lonely_false.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_lonely_int.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_lonely_negative_real.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_lonely_null.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_lonely_string.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_lonely_true.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_string_empty.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_trailing_newline.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_true_in_array.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_whitespace_array.json"
-                })
+    {
+        TEST_DATA_DIRECTORY "/json_nlohmann_tests/all_unicode.json",
+        TEST_DATA_DIRECTORY "/json.org/1.json",
+        TEST_DATA_DIRECTORY "/json.org/2.json",
+        TEST_DATA_DIRECTORY "/json.org/3.json",
+        TEST_DATA_DIRECTORY "/json.org/4.json",
+        TEST_DATA_DIRECTORY "/json.org/5.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip01.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip02.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip03.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip04.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip05.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip06.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip07.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip08.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip09.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip10.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip11.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip12.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip13.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip14.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip15.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip16.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip17.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip18.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip19.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip20.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip21.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip22.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip23.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip24.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip25.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip26.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip27.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip28.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip29.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip30.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip31.json",
+        TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip32.json",
+        TEST_DATA_DIRECTORY "/json_testsuite/sample.json", // kills AppVeyor
+        TEST_DATA_DIRECTORY "/json_tests/pass1.json",
+        TEST_DATA_DIRECTORY "/json_tests/pass2.json",
+        TEST_DATA_DIRECTORY "/json_tests/pass3.json",
+        TEST_DATA_DIRECTORY "/regression/floats.json",
+        TEST_DATA_DIRECTORY "/regression/signed_ints.json",
+        TEST_DATA_DIRECTORY "/regression/unsigned_ints.json",
+        TEST_DATA_DIRECTORY "/regression/working_file.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_arraysWithSpaces.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_empty-string.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_empty.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_ending_with_newline.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_false.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_heterogeneous.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_null.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_with_1_and_newline.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_with_leading_space.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_with_several_null.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_with_trailing_space.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_0e+1.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_0e1.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_after_space.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_double_close_to_zero.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_double_huge_neg_exp.json",
+        //TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_huge_exp.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_int_with_exp.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_minus_zero.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_negative_int.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_negative_one.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_negative_zero.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_capital_e.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_capital_e_neg_exp.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_capital_e_pos_exp.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_exponent.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_fraction_exponent.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_neg_exp.json",
+        //TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_neg_overflow.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_pos_exponent.json",
+        //TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_pos_overflow.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_underflow.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_simple_int.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_simple_real.json",
+        //TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_too_big_neg_int.json",
+        //TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_too_big_pos_int.json",
+        //TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_very_big_negative_int.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_basic.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_duplicated_key.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_duplicated_key_and_value.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_empty.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_empty_key.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_escaped_null_in_key.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_extreme_numbers.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_long_strings.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_simple.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_string_unicode.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_with_newlines.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_1_2_3_bytes_UTF-8_sequences.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_UTF-16_Surrogates_U+1D11E_MUSICAL_SYMBOL_G_CLEF.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_accepted_surrogate_pair.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_accepted_surrogate_pairs.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_allowed_escapes.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_backslash_and_u_escaped_zero.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_backslash_doublequotes.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_comments.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_double_escape_a.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_double_escape_n.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_escaped_control_character.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_escaped_noncharacter.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_in_array.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_in_array_with_leading_space.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_last_surrogates_1_and_2.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_newline_uescaped.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_nonCharacterInUTF-8_U+10FFFF.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_nonCharacterInUTF-8_U+1FFFF.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_nonCharacterInUTF-8_U+FFFF.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_null_escape.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_one-byte-utf-8.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_pi.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_simple_ascii.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_space.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_three-byte-utf-8.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_two-byte-utf-8.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_u+2028_line_sep.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_u+2029_par_sep.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_uEscape.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unescaped_char_delete.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unicode.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unicodeEscapedBackslash.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unicode_2.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unicode_U+200B_ZERO_WIDTH_SPACE.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unicode_U+2064_invisible_plus.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unicode_escaped_double_quote.json",
+        // TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_utf16.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_utf8.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_with_del_character.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_lonely_false.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_lonely_int.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_lonely_negative_real.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_lonely_null.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_lonely_string.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_lonely_true.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_string_empty.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_trailing_newline.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_true_in_array.json",
+        TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_whitespace_array.json"
+    })
         {
             CAPTURE(filename)
 

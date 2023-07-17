@@ -482,8 +482,8 @@ TEST_CASE("JSON pointers")
     SECTION("string representation")
     {
         for (const auto* ptr_str :
-                {"", "/foo", "/foo/0", "/", "/a~1b", "/c%d", "/e^f", "/g|h", "/i\\j", "/k\"l", "/ ", "/m~0n"
-                })
+    {"", "/foo", "/foo/0", "/", "/a~1b", "/c%d", "/e^f", "/g|h", "/i\\j", "/k\"l", "/ ", "/m~0n"
+    })
         {
             json::json_pointer const ptr(ptr_str);
             std::stringstream ss;

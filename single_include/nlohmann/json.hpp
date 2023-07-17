@@ -3607,7 +3607,7 @@ struct is_default_constructible<std::pair<T1, T2>>
 
 template <typename T1, typename T2>
 struct is_default_constructible<const std::pair<T1, T2>>
-            : conjunction<is_default_constructible<T1>, is_default_constructible<T2>> {};
+                : conjunction<is_default_constructible<T1>, is_default_constructible<T2>> {};
 
 template <typename... Ts>
 struct is_default_constructible<std::tuple<Ts...>>
@@ -3615,7 +3615,7 @@ struct is_default_constructible<std::tuple<Ts...>>
 
 template <typename... Ts>
 struct is_default_constructible<const std::tuple<Ts...>>
-            : conjunction<is_default_constructible<Ts>...> {};
+                : conjunction<is_default_constructible<Ts>...> {};
 
 
 template <typename T, typename... Args>
@@ -3817,18 +3817,18 @@ is_detected<range_value_t, ConstructibleArrayType>::value&&
 !std::is_same<ConstructibleArrayType, detected_t<range_value_t, ConstructibleArrayType>>::value&&
         is_complete_type <
         detected_t<range_value_t, ConstructibleArrayType >>::value >>
-{
-    using value_type = range_value_t<ConstructibleArrayType>;
+        {
+            using value_type = range_value_t<ConstructibleArrayType>;
 
-    static constexpr bool value =
-        std::is_same<value_type,
-        typename BasicJsonType::array_t::value_type>::value ||
-        has_from_json<BasicJsonType,
-        value_type>::value ||
-        has_non_default_from_json <
-        BasicJsonType,
-        value_type >::value;
-};
+            static constexpr bool value =
+                std::is_same<value_type,
+            typename BasicJsonType::array_t::value_type>::value ||
+            has_from_json<BasicJsonType,
+            value_type>::value ||
+            has_non_default_from_json <
+            BasicJsonType,
+            value_type >::value;
+        };
 
 template<typename BasicJsonType, typename ConstructibleArrayType>
 struct is_constructible_array_type
@@ -3911,7 +3911,7 @@ template<typename Compare, typename A, typename B>
 struct is_comparable<Compare, A, B, void_t<
 decltype(std::declval<Compare>()(std::declval<A>(), std::declval<B>())),
 decltype(std::declval<Compare>()(std::declval<B>(), std::declval<A>()))
->> : std::true_type {};
+        >> : std::true_type {};
 
 template<typename T>
 using detect_is_transparent = typename T::is_transparent;
@@ -4822,8 +4822,8 @@ template < typename BasicJsonType, typename ConstructibleArrayType,
                int > = 0 >
 auto from_json(const BasicJsonType& j, ConstructibleArrayType& arr)
 -> decltype(from_json_array_impl(j, arr, priority_tag<3> {}),
-j.template get<typename ConstructibleArrayType::value_type>(),
-void())
+            j.template get<typename ConstructibleArrayType::value_type>(),
+            void())
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
@@ -5778,7 +5778,7 @@ struct adl_serializer
     /// @sa https://json.nlohmann.me/api/adl_serializer/from_json/
     template<typename BasicJsonType, typename TargetType = ValueType>
     static auto from_json(BasicJsonType && j) noexcept(
-    noexcept(::nlohmann::from_json(std::forward<BasicJsonType>(j), detail::identity_tag<TargetType> {})))
+        noexcept(::nlohmann::from_json(std::forward<BasicJsonType>(j), detail::identity_tag<TargetType> {})))
     -> decltype(::nlohmann::from_json(std::forward<BasicJsonType>(j), detail::identity_tag<TargetType> {}))
     {
         return ::nlohmann::from_json(std::forward<BasicJsonType>(j), detail::identity_tag<TargetType> {});
@@ -19799,7 +19799,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 else
                 {
                     stack.reserve(object->size());
-                    for (auto&& it : *object)
+                    for (auto && it : *object)
                     {
                         stack.push_back(std::move(it.second));
                     }
@@ -19821,7 +19821,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     }
                     else if (current_item.is_object())
                     {
-                        for (auto&& it : *current_item.m_data.m_value.object)
+                        for (auto && it : *current_item.m_data.m_value.object)
                         {
                             stack.push_back(std::move(it.second));
                         }
@@ -20962,7 +20962,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     constexpr
 #endif
     auto get() const noexcept(
-    noexcept(std::declval<const basic_json_t&>().template get_impl<ValueType>(detail::priority_tag<4> {})))
+        noexcept(std::declval<const basic_json_t&>().template get_impl<ValueType>(detail::priority_tag<4> {})))
     -> decltype(std::declval<const basic_json_t&>().template get_impl<ValueType>(detail::priority_tag<4> {}))
     {
         // we cannot static_assert on ValueTypeCV being non-const, because
@@ -24438,14 +24438,14 @@ struct less< ::nlohmann::detail::value_t> // do not remove the space after '<', 
     */
     bool operator()(::nlohmann::detail::value_t lhs,
                     ::nlohmann::detail::value_t rhs) const noexcept
-    {
+{
 #if JSON_HAS_THREE_WAY_COMPARISON
-        return std::is_lt(lhs <=> rhs); // *NOPAD*
+    return std::is_lt(lhs <=> rhs); // *NOPAD*
 #else
-        return ::nlohmann::detail::operator<(lhs, rhs);
+    return ::nlohmann::detail::operator<(lhs, rhs);
 #endif
-    }
-};
+}
+                 };
 
 // C++20 prohibit function specialization in the std namespace.
 #ifndef JSON_HAS_CPP_20

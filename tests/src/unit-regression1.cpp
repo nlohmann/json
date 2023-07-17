@@ -618,10 +618,10 @@ TEST_CASE("regression tests 1")
     SECTION("issue #306 - Parsing fails without space at end of file")
     {
         for (const auto* filename :
-                {
-                    TEST_DATA_DIRECTORY "/regression/broken_file.json",
-                    TEST_DATA_DIRECTORY "/regression/working_file.json"
-                })
+    {
+        TEST_DATA_DIRECTORY "/regression/broken_file.json",
+        TEST_DATA_DIRECTORY "/regression/working_file.json"
+    })
         {
             CAPTURE(filename)
             json j;
@@ -633,12 +633,12 @@ TEST_CASE("regression tests 1")
     SECTION("issue #310 - make json_benchmarks no longer working in 2.0.4")
     {
         for (const auto* filename :
-                {
-                    TEST_DATA_DIRECTORY "/regression/floats.json",
-                    TEST_DATA_DIRECTORY "/regression/signed_ints.json",
-                    TEST_DATA_DIRECTORY "/regression/unsigned_ints.json",
-                    TEST_DATA_DIRECTORY "/regression/small_signed_ints.json"
-                })
+    {
+        TEST_DATA_DIRECTORY "/regression/floats.json",
+        TEST_DATA_DIRECTORY "/regression/signed_ints.json",
+        TEST_DATA_DIRECTORY "/regression/unsigned_ints.json",
+        TEST_DATA_DIRECTORY "/regression/small_signed_ints.json"
+    })
         {
             CAPTURE(filename)
             json j;
