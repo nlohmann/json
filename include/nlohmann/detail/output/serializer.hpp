@@ -373,6 +373,14 @@ class serializer
         }
     }
 
+    template<typename UnderlyingType>
+    void dump_annotated(const BasicJsonType& val,
+                        const bool pretty_print,
+                        const bool ensure_ascii,
+                        const unsigned int indent_step,
+                        const unsigned int current_indent = 0) {
+        o->write_characters(UnderlyingType::get_annotation("property3").c_str(), UnderlyingType::get_annotation("property1").size());
+    }
   JSON_PRIVATE_UNLESS_TESTED:
     /*!
     @brief dump escaped string

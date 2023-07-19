@@ -14,10 +14,9 @@ private:
 public:
     ExampleClass() = default;
 
-    // NLOHMANN_DEFINE_TYPE_INTRUSIVE(ExampleClass, property1, property2, property3, property4, property5);
-
     NLOHMANN_DEFINE_TYPE_INTRUSIVE_ANNOTATED(ExampleClass, property1, "comment1", 
-                                                           property2, "comment2");
+                                                           property2, "comment2", 
+                                                           property3, "comment3");
 };
 
 int main() {
@@ -25,6 +24,6 @@ int main() {
     ExampleClass ec;
 
     nlohmann::json j = ec;
-    std::cout << j.dump() << std::endl;
+    std::cout << j.dump_annotated<ExampleClass>() << std::endl;
     return 0;
 }

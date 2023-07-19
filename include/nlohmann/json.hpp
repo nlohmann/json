@@ -1289,6 +1289,27 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return result;
     }
 
+    template<typename UnderlyingType>
+    string_t dump_annotated(const int indent = -1,
+                            const char indent_char = ' ',
+                            const bool ensure_ascii = false,
+                            const error_handler_t error_handler = error_handler_t::strict) const
+    {
+        string_t result;
+        serializer s(detail::output_adapter<char, string_t>(result), indent_char, error_handler);
+
+        if (indent >= 0)
+        {
+            s.template dump_annotated<UnderlyingType>(*this, true, ensure_ascii, static_cast<unsigned int>(indent));
+        }
+        else
+        {
+            s.template dump_annotated<UnderlyingType>(*this, false, ensure_ascii, 0);
+        }
+
+        return result;
+    }
+
     /// @brief return the type of the JSON value (explicit)
     /// @sa https://json.nlohmann.me/api/basic_json/type/
     constexpr value_t type() const noexcept
