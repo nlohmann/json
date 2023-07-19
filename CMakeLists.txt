@@ -207,3 +207,5 @@ if(JSON_Install)
         DESTINATION ${NLOHMANN_JSON_PKGCONFIG_INSTALL_DIR}
     )
 endif()
+
+add_subdirectory(example)
