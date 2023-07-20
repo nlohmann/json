@@ -382,24 +382,6 @@
 #define NLOHMANN_JSON_PASTE64(func, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39, v40, v41, v42, v43, v44, v45, v46, v47, v48, v49, v50, v51, v52, v53, v54, v55, v56, v57, v58, v59, v60, v61, v62, v63) NLOHMANN_JSON_PASTE2(func, v1) NLOHMANN_JSON_PASTE63(func, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39, v40, v41, v42, v43, v44, v45, v46, v47, v48, v49, v50, v51, v52, v53, v54, v55, v56, v57, v58, v59, v60, v61, v62, v63)
 
 #define NLOHMANN_JSON_TO(v1) nlohmann_json_j[#v1] = nlohmann_json_t.v1;
-
-
-#define NLOHMANN_JSON_ANNOTATED_EXPAND( x ) x
-#define NLOHMANN_JSON_ANNOTATED_GET_MACRO(_1, _2, _3, _4, _5, _6, _7, NAME,...) NAME
-#define NLOHMANN_JSON_ANNOTATED_PASTE(...) NLOHMANN_JSON_ANNOTATED_EXPAND(NLOHMANN_JSON_ANNOTATED_GET_MACRO(__VA_ARGS__, \
-        NLOHMANN_JSON_ANNOTATED_PASTE7, \
-        NLOHMANN_JSON_ANNOTATED_PASTE5, \
-        NLOHMANN_JSON_ANNOTATED_PASTE2, \
-        NLOHMANN_JSON_ANNOTATED_PASTE1)(__VA_ARGS__))
-#define NLOHMANN_JSON_ANNOTATED_PASTE2(func, v1, w1) func(v1, w1)
-// #define NLOHMANN_JSON_ANNOTATED_PASTE3(func, v1, w1, v2, w2) NLOHMANN_JSON_ANNOTATED_PASTE2(func, v1, w1) NLOHMANN_JSON_ANNOTATED_PASTE2(func, v2, w2)
-// #define NLOHMANN_JSON_ANNOTATED_PASTE4(func, v1, w1, v2, w2, v3, w3) NLOHMANN_JSON_ANNOTATED_PASTE2(func, v1, w1) NLOHMANN_JSON_ANNOTATED_PASTE3(func, v2, w2, v3, w3)
-#define NLOHMANN_JSON_ANNOTATED_PASTE5(func, v1, w1, v2, w2) NLOHMANN_JSON_ANNOTATED_PASTE2(func, v1, w1) NLOHMANN_JSON_ANNOTATED_PASTE2(func, v2, w2)
-#define NLOHMANN_JSON_ANNOTATED_PASTE7(func, v1, w1, v2, w2, v3, w3) NLOHMANN_JSON_ANNOTATED_PASTE2(func, v1, w1) NLOHMANN_JSON_ANNOTATED_PASTE5(func, v2, w2, v3, w3)
-
-#define NLOHMANN_JSON_ANNOTATED_TO(v1, w1) nlohmann_json_j[#v1] = nlohmann_json_t.v1;
-// #define NLOHMANN_EXPAND_ANNOTATION(v1, w1) static constexpr char annotation_##v1[] = w1;
-
 #define NLOHMANN_JSON_FROM(v1) nlohmann_json_j.at(#v1).get_to(nlohmann_json_t.v1);
 #define NLOHMANN_JSON_FROM_WITH_DEFAULT(v1) nlohmann_json_t.v1 = nlohmann_json_j.value(#v1, nlohmann_json_default_obj.v1);
 
@@ -411,18 +393,6 @@
 #define NLOHMANN_DEFINE_TYPE_INTRUSIVE(Type, ...)  \
     friend void to_json(nlohmann::json& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) } \
     friend void from_json(const nlohmann::json& nlohmann_json_j, Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, __VA_ARGS__)) }
-
-#define TERNARY_EXPAND1(v1, w1) (property == #v1 ? w1 : "")
-#define TERNARY_EXPAND2(v1, w1, v2, w2) (property == #v2 ? w2 : TERNARY_EXPAND1(v1, w1))
-#define TERNARY_EXPAND3(v1, w1, v2, w2, v3, w3) (property == #v3 ? w3 : TERNARY_EXPAND2(v1, w1, v2, w2))
-#define TERNARY_NOT_ALLOWED
-
-#define GET_TERNARY_EXPAND_MACRO(_1,_2,_3,_4,_5,_6,NAME,...) NAME
-#define TERNARY_EXPAND(...) GET_TERNARY_EXPAND_MACRO(__VA_ARGS__, TERNARY_EXPAND3, TERNARY_NOT_ALLOWED, TERNARY_EXPAND2, TERNARY_NOT_ALLOWED, TERNARY_EXPAND1)(__VA_ARGS__)
-
-#define NLOHMANN_DEFINE_TYPE_INTRUSIVE_ANNOTATED(Type, ...)  \
-    friend void to_json(nlohmann::json& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_ANNOTATED_EXPAND(NLOHMANN_JSON_ANNOTATED_PASTE(NLOHMANN_JSON_ANNOTATED_TO, __VA_ARGS__)) } \
-    static std::string get_annotation(const std::string& property) { return TERNARY_EXPAND(__VA_ARGS__); }
 
 #define NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(Type, ...)  \
     friend void to_json(nlohmann::json& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) } \
