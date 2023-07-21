@@ -4217,8 +4217,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         /// the value of the current element
         json_value m_value = {};
 
-        std::string m_annotation{""};
-
         data(const value_t v)
             : m_type(v), m_value(v)
         {
@@ -4257,10 +4255,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @{
 
   public:
-    void annotate(const std::string& annotation) {
-        m_data.m_annotation = annotation;
-    }
-
     /// @brief create a CBOR serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_cbor/
     static std::vector<std::uint8_t> to_cbor(const basic_json& j)

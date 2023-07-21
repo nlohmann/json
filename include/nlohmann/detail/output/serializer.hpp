@@ -380,7 +380,6 @@ class serializer
                         const bool ensure_ascii,
                         const unsigned int indent_step,
                         const unsigned int current_indent = 0) {
-        // o->write_characters(UnderlyingType::get_annotation("property3").c_str(), UnderlyingType::get_annotation("property1").size());
         switch (val.m_data.m_type)
         {
             case value_t::object:
