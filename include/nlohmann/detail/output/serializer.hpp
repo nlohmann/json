@@ -404,7 +404,7 @@ class serializer
                 auto i = val.m_data.m_value.object->cbegin();
                 for (std::size_t cnt = 0; cnt < val.m_data.m_value.object->size() - 1; ++cnt, ++i)
                 {
-                    write_annotation_if_available<UnderlyingType>(i->first, indent_string, new_indent);
+                    write_annotation_if_available<UnderlyingType>(i->first, indent_string, new_indent, ensure_ascii);
                     o->write_characters(indent_string.c_str(), new_indent);
                     o->write_character('\"');
                     dump_escaped(i->first, ensure_ascii);
@@ -416,7 +416,7 @@ class serializer
                 // last element
                 JSON_ASSERT(i != val.m_data.m_value.object->cend());
                 JSON_ASSERT(std::next(i) == val.m_data.m_value.object->cend());
-                write_annotation_if_available<UnderlyingType>(i->first, indent_string, new_indent);
+                write_annotation_if_available<UnderlyingType>(i->first, indent_string, new_indent, ensure_ascii);
                 o->write_characters(indent_string.c_str(), new_indent);
                 o->write_character('\"');
                 dump_escaped(i->first, ensure_ascii);
@@ -1153,9 +1153,8 @@ class serializer
     }
 
     template<typename UnderlyingType>
-    void write_annotation_if_available(const std::string& property, const std::string& indent_string, unsigned int new_indent)
+    void write_annotation_if_available(const std::string& property, const std::string& indent_string, unsigned int new_indent, bool ensure_ascii)
     {
-        // TODO potentially add escaping option
         const auto annotation = UnderlyingType::get_annotation(property);
         if(annotation != "") {
             std::stringstream ss{annotation};
@@ -1163,7 +1162,7 @@ class serializer
             {
                 o->write_characters(indent_string.c_str(), new_indent);
                 o->write_characters("/* ", 3);
-                o->write_characters(line.c_str(), line.size());
+                dump_escaped(line, ensure_ascii);
                 o->write_characters(" */", 3);
                 o->write_characters("\n", 1);
             }
