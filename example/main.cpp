@@ -32,24 +32,23 @@ private:
 public:
     AnotherExampleClass() = default;
 
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE_ANNOTATED(AnotherExampleClass, property1, "comment两", 
-                                                                  property2, "multiline\ncomment22", 
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE_ANNOTATED(AnotherExampleClass, property1, "comment11", 
+                                                                  property2, "comment22", 
                                                                   property3, "comment33",
                                                                   property4, "comment44",
                                                                   property5, "comment55");
 };
 
 int main() {
-    std::cout << "Hello, world!" << std::endl;
     ExampleClass ec;
     AnotherExampleClass aec;
     std::ofstream example_file;
-    example_file.open("/Users/marekpiotrowski/private/json/example.json");
+    example_file.open("example_1.json");
 
     nlohmann::json j = ec;
     example_file << j.dump_annotated<ExampleClass>(4, ' ', true) << std::endl;
 
-    // nlohmann::json j2 = aec;
-    // std::cout << j2.dump_annotated<AnotherExampleClass>() << std::endl;
+    nlohmann::json j2 = aec;
+    std::cout << j2.dump_annotated<AnotherExampleClass>() << std::endl;
     return 0;
 }

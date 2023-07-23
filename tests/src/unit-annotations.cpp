@@ -42,6 +42,17 @@ public:
     NLOHMANN_DEFINE_TYPE_INTRUSIVE_ANNOTATED(MultiLineAnnotationExampleClass, property1, "multiline\ncomment11", 
                                                                               property2, "multiline\ncomment22");
 };
+
+class ExampleClassUTF8 {
+private:
+    double property3{1.1};
+    std::vector<double> property5{1.5, 5.4, 3.2};
+public:
+    ExampleClassUTF8() = default;
+
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE_ANNOTATED(ExampleClassUTF8, property3, "comment三", 
+                                                               property5, "comment五");
+};
 }
 
 TEST_CASE("annotation")
@@ -50,7 +61,7 @@ TEST_CASE("annotation")
     {
         ExampleClass ex;
         nlohmann::json j = ex;
-        const auto ex_actual_json = j.dump_annotated<decltype(ex)>(4, ' ', true);
+        const auto ex_actual_json = j.dump_annotated<decltype(ex)>(4);
         const auto expected_json = "{\n"
         "    /* comment1 */\n"
         "    \"property1\": 1,\n"
@@ -78,7 +89,7 @@ TEST_CASE("annotation")
         AnotherExampleClass another_ex;
         nlohmann::json j1 = ex;
         nlohmann::json j2 = another_ex;
-        const auto another_ex_actual_json = j2.dump_annotated<AnotherExampleClass>(4, ' ', true);
+        const auto another_ex_actual_json = j2.dump_annotated<AnotherExampleClass>(4);
         const auto expected_json = "{\n"
         "    /* comment11 */\n"
         "    \"property1\": 11,\n"
@@ -91,7 +102,7 @@ TEST_CASE("annotation")
     {
         MultiLineAnnotationExampleClass ex;
         nlohmann::json j = ex;
-        const auto ex_actual_json = j.dump_annotated<MultiLineAnnotationExampleClass>(4, ' ', true);
+        const auto ex_actual_json = j.dump_annotated<MultiLineAnnotationExampleClass>(4);
         const auto expected_json = "{\n"
         "    /* multiline */\n"
         "    /* comment11 */\n"
@@ -102,12 +113,38 @@ TEST_CASE("annotation")
         "}";
         CHECK(ex_actual_json == expected_json);
     }
-    SECTION("utf8_comment_not_ascii")
+    SECTION("utf8_comment_ascii_not_ensured")
     {
-        // TODO
+        ExampleClassUTF8 ex;
+        nlohmann::json j = ex;
+        const auto ex_actual_json = j.dump_annotated<ExampleClassUTF8>(4);
+        const auto expected_json = "{\n"
+        "    /* comment三 */\n"
+        "    \"property3\": 1.1,\n"
+        "    /* comment五 */\n"
+        "    \"property5\": [\n"
+        "        1.5,\n"
+        "        5.4,\n"
+        "        3.2\n"
+        "    ]\n"
+        "}";
+        CHECK(ex_actual_json == expected_json);
     }
     SECTION("utf8_comment_ensure_ascii")
     {
-        // TODO
+        ExampleClassUTF8 ex;
+        nlohmann::json j = ex;
+        const auto ex_actual_json = j.dump_annotated<ExampleClassUTF8>(4, ' ', true);
+        const auto expected_json = "{\n"
+        "    /* comment\\u4e09 */\n"
+        "    \"property3\": 1.1,\n"
+        "    /* comment\\u4e94 */\n"
+        "    \"property5\": [\n"
+        "        1.5,\n"
+        "        5.4,\n"
+        "        3.2\n"
+        "    ]\n"
+        "}";
+        CHECK(ex_actual_json == expected_json);
     }
 }
