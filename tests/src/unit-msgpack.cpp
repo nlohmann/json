@@ -479,11 +479,11 @@ TEST_CASE("MessagePack")
                     std::vector<int32_t> const numbers
                     {
                         -32769,
-                            -65536,
-                            -77777,
-                            -1048576,
-                            -2147483648LL,
-                        };
+                        -65536,
+                        -77777,
+                        -1048576,
+                        -2147483648LL,
+                    };
                     for (auto i : numbers)
                     {
                         CAPTURE(i)

@@ -919,7 +919,6 @@ TEST_CASE("BSON numerical data")
                 }
             }
 
-
             SECTION("signed std::int32_t: INT32_MIN .. INT32_MAX")
             {
                 std::vector<int32_t> const numbers

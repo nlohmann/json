@@ -55,7 +55,6 @@ int main()
     std::cout << j_mmap << '\n';
     std::cout << j_ummap << "\n\n";
 
-
     // ===========
     // array types
     // ===========
@@ -117,7 +116,6 @@ int main()
     std::cout << j_mset << '\n';
     std::cout << j_umset << "\n\n";
 
-
     // ============
     // string types
     // ============
@@ -137,7 +135,6 @@ int main()
     std::cout << j_string_t << '\n';
     std::cout << j_string_literal << '\n';
     std::cout << j_stdstring << "\n\n";
-
 
     // ============
     // number types
@@ -202,7 +199,6 @@ int main()
     std::cout << j_float << '\n';
     std::cout << j_float_nan << '\n';
     std::cout << j_double << "\n\n";
-
 
     // =============
     // boolean types
