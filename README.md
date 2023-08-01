@@ -858,6 +858,7 @@ namespace ns {
 Or in case if you use some naming convention that you do not want to expose to JSON:
 
 ```cpp
+namespace ns {
     class address {
       private:
         std::string m_street;
@@ -865,7 +866,9 @@ Or in case if you use some naming convention that you do not want to expose to J
         int m_postcode;
 
       public:
-        NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_NAMES(address, "street", m_street, "housenumber", m_housenumber, "postcode", m_postcode)
+        NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_NAMES(address, "street", m_street,
+                                                           "housenumber", m_housenumber,
+                                                           "postcode", m_postcode)
     };
 }
 ```
