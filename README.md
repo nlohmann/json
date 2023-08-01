@@ -853,6 +853,7 @@ namespace ns {
       public:
         NLOHMANN_DEFINE_TYPE_INTRUSIVE(address, street, housenumber, postcode)
     };
+}
 ```
 
 Or in case if you use some naming convention that you do not want to expose to JSON:
