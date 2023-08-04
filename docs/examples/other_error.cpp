@@ -21,7 +21,7 @@ int main()
         }])"_json;
         value.patch(patch);
     }
-    catch (json::other_error& e)
+    catch (const json::other_error& e)
     {
         // output exception information
         std::cout << "message: " << e.what() << '\n'

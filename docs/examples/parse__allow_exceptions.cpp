@@ -17,7 +17,7 @@ int main()
     {
         json j = json::parse(text);
     }
-    catch (json::parse_error& e)
+    catch (const json::parse_error& e)
     {
         std::cout << e.what() << std::endl;
     }
