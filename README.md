@@ -73,8 +73,30 @@ int main() {
 }
 ```
 
+This is then going to produce a JSON file like this:
+
+```
+{
+    /* comment两两 */
+    "property1": 1,
+    /* multiline */
+    /* comment2 */
+    "property2": 2.5,
+    /* comment3 */
+    "property3": "test",
+    /* comment4 */
+    "property4": {
+        "x": 1,
+        "y": 2
+    },
+    /* comment5 */
+    "property5": [
+        1.5,
+        5.4,
+        3.2
+    ]
+}
+```
+
 [^1]: Tried creating a pull request in the original repository, but I doubt it's ever going to be considered.
 [^2]: If you look closely at the new macro, it's relatively easy to figure out how to actually *avoid* using the macro, but I need to document that to make it officially supported.
-
-
-
