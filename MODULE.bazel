@@ -1,0 +1,5 @@
+module(
+    name = "nlohmann_json",
+    version = "3.11.2", # Keep in sync with NLOHMANN_JSON_VERSION_MAJOR, NLOHMANN_JSON_VERSION_MINOR, NLOHMANN_JSON_VERSION_PATCH
+    compatibility_level = 1,
+)
