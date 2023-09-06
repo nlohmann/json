@@ -5157,6 +5157,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @}
 };
 
+// Explicit instantiation
+// fix for issue #3732
+template class nlohmann::basic_json<nlohmann::ordered_map>;
+
 /// @brief user-defined to_string function for JSON values
 /// @sa https://json.nlohmann.me/api/basic_json/to_string/
 NLOHMANN_BASIC_JSON_TPL_DECLARATION

@@ -12,6 +12,12 @@
 using nlohmann::json;
 using nlohmann::ordered_json;
 
+//fix for issue #3732
+void test(nlohmann::detail::iteration_proxy_value <
+          nlohmann::detail::iter_impl<nlohmann::ordered_json >> const& val)
+{
+    static_cast<void>(val.value());
+}
 
 TEST_CASE("ordered_json")
 {
