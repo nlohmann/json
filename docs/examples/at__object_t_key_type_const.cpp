@@ -16,7 +16,6 @@ int main()
     // output element with key "the ugly"
     std::cout << object.at("the ugly") << '\n';
 
-
     // exception type_error.304
     try
     {

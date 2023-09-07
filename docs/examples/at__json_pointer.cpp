@@ -35,7 +35,6 @@ int main()
     // output the changed array
     std::cout << j["array"] << '\n';
 
-
     // out_of_range.106
     try
     {

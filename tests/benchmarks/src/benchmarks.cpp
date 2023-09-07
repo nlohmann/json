@@ -81,7 +81,6 @@ BENCHMARK_CAPTURE(ParseString, signed_ints,       TEST_DATA_DIRECTORY "/regressi
 BENCHMARK_CAPTURE(ParseString, unsigned_ints,     TEST_DATA_DIRECTORY "/regression/unsigned_ints.json");
 BENCHMARK_CAPTURE(ParseString, small_signed_ints, TEST_DATA_DIRECTORY "/regression/small_signed_ints.json");
 
-
 //////////////////////////////////////////////////////////////////////////////
 // serialize JSON
 //////////////////////////////////////////////////////////////////////////////
@@ -115,7 +114,6 @@ BENCHMARK_CAPTURE(Dump, unsigned_ints / -,     TEST_DATA_DIRECTORY "/regression/
 BENCHMARK_CAPTURE(Dump, unsigned_ints / 4,     TEST_DATA_DIRECTORY "/regression/unsigned_ints.json",          4);
 BENCHMARK_CAPTURE(Dump, small_signed_ints / -, TEST_DATA_DIRECTORY "/regression/small_signed_ints.json",      -1);
 BENCHMARK_CAPTURE(Dump, small_signed_ints / 4, TEST_DATA_DIRECTORY "/regression/small_signed_ints.json",      4);
-
 
 //////////////////////////////////////////////////////////////////////////////
 // serialize CBOR

@@ -319,7 +319,6 @@ TEST_CASE("algorithms")
         }
     }
 
-
     SECTION("copy")
     {
         SECTION("copy without if")
@@ -335,7 +334,6 @@ TEST_CASE("algorithms")
         {
             json dest_arr;
             const json source_arr = {0, 3, 6, 9, 12, 15, 20};
-
 
             std::copy_if(source_arr.begin(), source_arr.end(), std::back_inserter(dest_arr), [](const json & _value)
             {
@@ -363,7 +361,5 @@ TEST_CASE("algorithms")
             CHECK(dest_arr == json{'1', '2', '3', '4'});
         }
     }
-
-
 
 }

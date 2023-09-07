@@ -72,7 +72,6 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                 CHECK_THROWS_WITH_AS(j.at("foo"), "[json.exception.out_of_range.403] key 'foo' not found", typename Json::out_of_range&);
                 CHECK_THROWS_WITH_AS(j_const.at("foo"), "[json.exception.out_of_range.403] key 'foo' not found", typename Json::out_of_range&);
 
-
 #ifdef JSON_HAS_CPP_17
                 CHECK_THROWS_WITH_AS(j.at(std::string_view("foo")), "[json.exception.out_of_range.403] key 'foo' not found", typename Json::out_of_range&);
                 CHECK_THROWS_WITH_AS(j_const.at(std::string_view("foo")), "[json.exception.out_of_range.403] key 'foo' not found", typename Json::out_of_range&);

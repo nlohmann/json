@@ -28,7 +28,6 @@ int main()
     json j_complete = json::parse(text);
     std::cout << std::setw(4) << j_complete << "\n\n";
 
-
     // define parser callback
     json::parser_callback_t cb = [](int depth, json::parse_event_t event, json & parsed)
     {

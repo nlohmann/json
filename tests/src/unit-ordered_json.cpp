@@ -12,7 +12,6 @@
 using nlohmann::json;
 using nlohmann::ordered_json;
 
-
 TEST_CASE("ordered_json")
 {
     json j;

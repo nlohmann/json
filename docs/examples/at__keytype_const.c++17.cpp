@@ -18,7 +18,6 @@ int main()
     // output element with key "the ugly" using string_view
     std::cout << object.at("the ugly"sv) << '\n';
 
-
     // exception type_error.304
     try
     {
