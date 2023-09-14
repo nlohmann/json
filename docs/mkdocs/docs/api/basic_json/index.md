@@ -13,7 +13,7 @@ template<
     class NumberFloatType = double,
     template<typename U> class AllocatorType = std::allocator,
     template<typename T, typename SFINAE = void> class JSONSerializer = adl_serializer,
-    class BinaryType = std::vector<std::uint8_t,
+    class BinaryType = std::vector<std::uint8_t>,
     class CustomBaseClass = void>
 >
 class basic_json;
