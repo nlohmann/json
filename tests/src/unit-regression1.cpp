@@ -1203,7 +1203,6 @@ TEST_CASE("regression tests 1")
         CHECK(j["a"] >= 3);
         CHECK(j["a"] >  3);
 
-
         CHECK(!(j["a"] <= 4));
         CHECK(!(j["a"] <  4));
         CHECK(!(j["a"] >= 6));

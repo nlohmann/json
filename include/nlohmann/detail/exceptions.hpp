@@ -25,7 +25,6 @@
 #include <nlohmann/detail/meta/type_traits.hpp>
 #include <nlohmann/detail/string_concat.hpp>
 
-
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {

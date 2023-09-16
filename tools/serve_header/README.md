@@ -65,7 +65,7 @@ An annotated example configuration can be found in `tools/serve_header/serve_hea
 `serve_header.py` was designed with the goal of supporting multiple project roots or working trees at the same time.
 The recommended directory structure is shown below but `serve_header.py` can work with other structures as well, including a nested hierarchy.
 ```
-json/          ⮜ the parent or web server root directoy
+json/          ⮜ the parent or web server root directory
 ├── develop/   ⮜ the main git checkout
 │   └── ...
 ├── feature1/

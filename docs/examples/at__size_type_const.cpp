@@ -11,7 +11,6 @@ int main()
     // output element at index 2 (third element)
     std::cout << array.at(2) << '\n';
 
-
     // exception type_error.304
     try
     {

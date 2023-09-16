@@ -102,7 +102,7 @@ TEST_CASE("Unicode (1/5)" * doctest::skip())
             }
         }
 
-#if 0
+#if 0 // NOLINT(readability-avoid-unconditional-preprocessor-if)
         SECTION("incorrect sequences")
         {
             SECTION("high surrogate without low surrogate")

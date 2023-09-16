@@ -17,7 +17,6 @@ int main()
     // output changed array
     std::cout << array << '\n';
 
-
     // exception type_error.304
     try
     {

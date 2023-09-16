@@ -14,7 +14,6 @@ using nlohmann::json;
 #include <climits> // SIZE_MAX
 #include <limits> // numeric_limits
 
-
 template <typename OfType, typename T, bool MinInRange, bool MaxInRange>
 struct trait_test_arg
 {
@@ -87,7 +86,6 @@ TEST_CASE_TEMPLATE_DEFINE("value_in_range_of trait", T, value_in_range_of_test)
         CHECK_FALSE(value_in_range_of<of_type>(val_max2));
     }
 }
-
 
 TEST_CASE("32bit")
 {

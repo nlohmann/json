@@ -24,7 +24,6 @@ int main()
     // output changed array
     std::cout << object << '\n';
 
-
     // exception type_error.304
     try
     {

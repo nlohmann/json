@@ -26,8 +26,8 @@ int main()
 
     // deserialization
     json j_rot = "rot";
-    auto rot = j_rot.get<ns::Color>();
-    auto red = j_red.get<ns::Color>();
+    auto rot = j_rot.template get<ns::Color>();
+    auto red = j_red.template get<ns::Color>();
     std::cout << j_rot << " -> " << static_cast<int>(rot) << std::endl;
     std::cout << j_red << " -> " << static_cast<int>(red) << std::endl;
 }

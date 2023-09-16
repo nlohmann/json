@@ -156,7 +156,8 @@ pretty:
 	    --pad-header \
 	    --align-pointer=type \
 	    --align-reference=type \
-	    --add-brackets \
+	    --add-braces \
+	    --squeeze-lines=2 \
 	    --convert-tabs \
 	    --close-templates \
 	    --lineend=linux \

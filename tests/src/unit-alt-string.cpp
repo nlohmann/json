@@ -14,7 +14,6 @@
 #include <string>
 #include <utility>
 
-
 /* forward declarations */
 class alt_string;
 bool operator<(const char* op1, const alt_string& op2) noexcept;
@@ -179,7 +178,6 @@ using alt_json = nlohmann::basic_json <
                  double,
                  std::allocator,
                  nlohmann::adl_serializer >;
-
 
 bool operator<(const char* op1, const alt_string& op2) noexcept
 {

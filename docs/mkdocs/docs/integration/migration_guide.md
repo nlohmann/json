@@ -187,7 +187,7 @@ conversions with calls to [`get`](../api/basic_json/get.md), [`get_to`](../api/b
 
       ```cpp
       nlohmann::json j = "Hello, world!";
-      auto s = j.get<std::string>();
+      auto s = j.template get<std::string>();
       ```
 
 === "Future-proof (alternative)"
