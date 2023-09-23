@@ -1521,9 +1521,9 @@ TEST_CASE_TEMPLATE("element access 2 (additional value() tests)", Json, nlohmann
             CHECK(j.value("foo", cpstr) == "bar");
             CHECK(j.value("foo", castr) == "bar");
             CHECK(j.value("foo", str) == "bar");
-            // this test is in fact different than the one below,
+            // this test is in fact different from the one below,
             // because of 0 considering const char * overloads
-            // where as any other number does not
+            // whereas any other number does not
             CHECK(j.value("baz", 0) == 42);
             CHECK(j.value("baz", 47) == 42);
             CHECK(j.value("baz", integer) == 42);

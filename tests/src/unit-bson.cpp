@@ -562,7 +562,7 @@ TEST_CASE("BSON")
         }
     }
 
-    SECTION("Examples from http://bsonspec.org/faq.html")
+    SECTION("Examples from https://bsonspec.org/faq.html")
     {
         SECTION("Example 1")
         {
