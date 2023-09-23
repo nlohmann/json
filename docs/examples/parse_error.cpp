@@ -10,7 +10,7 @@ int main()
         // parsing input with a syntax error
         json::parse("[1,2,3,]");
     }
-    catch (json::parse_error& e)
+    catch (const json::parse_error& e)
     {
         // output exception information
         std::cout << "message: " << e.what() << '\n'

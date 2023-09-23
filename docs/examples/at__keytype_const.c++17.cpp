@@ -25,7 +25,7 @@ int main()
         const json str = "I am a string";
         std::cout << str.at("the good"sv) << '\n';
     }
-    catch (json::type_error& e)
+    catch (const json::type_error& e)
     {
         std::cout << e.what() << '\n';
     }
@@ -36,7 +36,7 @@ int main()
         // try to read from a nonexisting key using string_view
         std::cout << object.at("the fast"sv) << '\n';
     }
-    catch (json::out_of_range)
+    catch (const json::out_of_range)
     {
         std::cout << "out of range" << '\n';
     }

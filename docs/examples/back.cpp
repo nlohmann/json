@@ -31,7 +31,7 @@ int main()
         json j_null;
         j_null.back();
     }
-    catch (json::invalid_iterator& e)
+    catch (const json::invalid_iterator& e)
     {
         std::cout << e.what() << '\n';
     }

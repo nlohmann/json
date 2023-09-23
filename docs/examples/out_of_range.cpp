@@ -11,7 +11,7 @@ int main()
         json j = {1, 2, 3, 4};
         j.at(4) = 10;
     }
-    catch (json::out_of_range& e)
+    catch (const json::out_of_range& e)
     {
         // output exception information
         std::cout << "message: " << e.what() << '\n'
