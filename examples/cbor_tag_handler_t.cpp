@@ -13,7 +13,7 @@ int main()
     {
         auto b_throw_on_tag = json::from_cbor(vec, true, true, json::cbor_tag_handler_t::error);
     }
-    catch (json::parse_error& e)
+    catch (const json::parse_error& e)
     {
         std::cout << e.what() << std::endl;
     }

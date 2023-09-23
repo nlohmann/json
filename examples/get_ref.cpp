@@ -20,7 +20,7 @@ int main()
     {
         auto r3 = value.get_ref<json::number_float_t&>();
     }
-    catch (json::type_error& ex)
+    catch (const json::type_error& ex)
     {
         std::cout << ex.what() << '\n';
     }
