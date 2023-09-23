@@ -123,8 +123,7 @@ TEST_CASE("JSON pointers")
             CHECK(j.contains(json::json_pointer("/a~1b")));
             CHECK(j.contains(json::json_pointer("/m~0n")));
 
-            // unescaped access
-            // access to nonexisting values yield object creation
+            // unescaped access to nonexisting values yield object creation
             CHECK(!j.contains(json::json_pointer("/a/b")));
             CHECK_NOTHROW(j[json::json_pointer("/a/b")] = 42);
             CHECK(j.contains(json::json_pointer("/a/b")));

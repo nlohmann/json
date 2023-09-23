@@ -45,7 +45,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
             // step 2.1: round trip without adding size annotations to container types
             std::vector<uint8_t> const vec2 = json::to_ubjson(j1, false, false);
 
-            // step 2.2: round trip with adding size annotations but without adding type annonations to container types
+            // step 2.2: round trip with adding size annotations but without adding type annotations to container types
             std::vector<uint8_t> const vec3 = json::to_ubjson(j1, true, false);
 
             // step 2.3: round trip with adding size as well as type annotations to container types
