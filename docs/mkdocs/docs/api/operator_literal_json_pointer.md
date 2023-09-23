@@ -1,7 +1,7 @@
 # <small>nlohmann::</small>operator""_json_pointer
 
 ```cpp
-json_pointer operator "" _json_pointer(const char* s, std::size_t n);
+json_pointer operator ""_json_pointer(const char* s, std::size_t n);
 ```
 
 This operator implements a user-defined string literal for JSON Pointers. It can be used by adding `#!cpp _json_pointer`
@@ -9,7 +9,7 @@ to a string literal and returns a [`json_pointer`](json_pointer/index.md) object
 
 It is recommended to bring the operator into scope using any of the following lines:
 ```cpp
-using nlohmann::literals::operator "" _json_pointer;
+using nlohmann::literals::operator ""_json_pointer;
 using namespace nlohmann::literals;
 using namespace nlohmann::json_literals;
 using namespace nlohmann::literals::json_literals;
