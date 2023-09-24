@@ -2,1117 +2,1122 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://json.nlohmann.me/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/json/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/operator_gtgt/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/operator_literal_json/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/operator_literal_json_pointer/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/operator_ltlt/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/ordered_json/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/ordered_map/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/adl_serializer/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/adl_serializer/from_json/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/adl_serializer/to_json/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/accept/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/array/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/array_t/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/at/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/back/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/basic_json/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/begin/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/binary/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/binary_t/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/boolean_t/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/cbegin/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/cbor_tag_handler_t/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/cend/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/clear/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/contains/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/count/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/crbegin/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/crend/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/default_object_comparator_t/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/diff/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/dump/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/emplace/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/emplace_back/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/empty/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/end/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/erase/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/error_handler_t/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/exception/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/find/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/flatten/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/from_bjdata/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/from_bson/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/from_cbor/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/from_msgpack/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/from_ubjson/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/front/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/get/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/get_allocator/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/get_binary/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/get_ptr/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/get_ref/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/get_to/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/input_format_t/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/insert/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/invalid_iterator/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/is_array/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/is_binary/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/is_boolean/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/is_discarded/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/is_null/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/is_number/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/is_number_float/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/is_number_integer/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/is_number_unsigned/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/is_object/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/is_primitive/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/is_string/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/is_structured/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/items/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/json_base_class_t/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/json_serializer/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/max_size/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/merge_patch/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/meta/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/number_float_t/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/number_integer_t/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/number_unsigned_t/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/object/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/object_comparator_t/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/object_t/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/operator%2B%3D/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/operator%3D/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/operator%5B%5D/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/operator_ValueType/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/operator_eq/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/operator_ge/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/operator_gt/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/operator_le/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/operator_lt/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/operator_ne/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/operator_spaceship/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/operator_value_t/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/other_error/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/out_of_range/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/parse/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/parse_error/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/parse_event_t/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/parser_callback_t/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/patch/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/patch_inplace/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/push_back/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/rbegin/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/rend/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/sax_parse/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/size/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/std_hash/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/std_swap/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/string_t/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/swap/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/to_bjdata/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/to_bson/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/to_cbor/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/to_msgpack/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/to_string/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/to_ubjson/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/type/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/type_error/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/type_name/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/unflatten/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/update/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/value/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/value_t/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/~basic_json/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/byte_container_with_subtype/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/byte_container_with_subtype/byte_container_with_subtype/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/byte_container_with_subtype/clear_subtype/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/byte_container_with_subtype/has_subtype/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/byte_container_with_subtype/set_subtype/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/byte_container_with_subtype/subtype/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/json_pointer/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/json_pointer/back/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/json_pointer/empty/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/json_pointer/json_pointer/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/json_pointer/operator_eq/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/json_pointer/operator_ne/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/json_pointer/operator_slash/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/json_pointer/operator_slasheq/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/json_pointer/operator_string_t/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/json_pointer/parent_pointer/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/json_pointer/pop_back/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/json_pointer/push_back/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/json_pointer/string_t/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/json_pointer/to_string/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/json_sax/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/json_sax/binary/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/json_sax/boolean/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/json_sax/end_array/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/json_sax/end_object/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/json_sax/key/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/json_sax/null/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/json_sax/number_float/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/json_sax/number_integer/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/json_sax/number_unsigned/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/json_sax/parse_error/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/json_sax/start_array/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/json_sax/start_object/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/json_sax/string/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/macros/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/macros/json_assert/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/macros/json_diagnostics/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/macros/json_disable_enum_serialization/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/macros/json_has_cpp_11/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/macros/json_has_filesystem/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/macros/json_has_ranges/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://json.nlohmann.me/api/macros/json_has_static_rtti/</loc>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/macros/json_has_three_way_comparison/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/macros/json_no_io/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/macros/json_noexception/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/macros/json_skip_library_version_check/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/macros/json_skip_unsupported_compiler_check/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/macros/json_throw_user/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/macros/json_use_global_udls/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/macros/json_use_implicit_conversions/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/macros/json_use_legacy_discarded_value_comparison/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/macros/nlohmann_define_type_intrusive/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/macros/nlohmann_define_type_non_intrusive/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/macros/nlohmann_json_namespace/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/macros/nlohmann_json_namespace_begin/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/macros/nlohmann_json_namespace_no_version/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/macros/nlohmann_json_serialize_enum/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/macros/nlohmann_json_version_major/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/features/arbitrary_types/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/features/assertions/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/features/binary_values/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/features/comments/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/features/enum_conversion/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/features/iterators/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/features/json_patch/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/features/json_pointer/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/features/macros/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/features/merge_patch/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/features/namespace/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/features/object_order/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/features/binary_formats/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/features/binary_formats/bjdata/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/features/binary_formats/bson/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/features/binary_formats/cbor/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/features/binary_formats/messagepack/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/features/binary_formats/ubjson/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/features/element_access/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/features/element_access/checked_access/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/features/element_access/default_value/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/features/element_access/unchecked_access/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/features/parsing/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/features/parsing/json_lines/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/features/parsing/parse_exceptions/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/features/parsing/parser_callbacks/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/features/parsing/sax_interface/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/features/types/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/features/types/number_handling/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/home/code_of_conduct/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/home/design_goals/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/home/exceptions/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/home/faq/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/home/license/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/home/releases/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/home/sponsors/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/integration/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/integration/cmake/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/integration/migration_guide/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/integration/package_managers/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://json.nlohmann.me/integration/pkg-config/</loc>
-         <lastmod>2023-09-23</lastmod>
+         <lastmod>2023-09-24</lastmod>
          <changefreq>daily</changefreq>
     </url>
 </urlset>
