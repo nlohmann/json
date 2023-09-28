@@ -1,3 +1,4 @@
+#if __cplusplus >= 202002L
 #include <compare>
 #include <iostream>
 #include <nlohmann/json.hpp>
@@ -38,3 +39,4 @@ int main()
     std::cout << string << " <=> " << number << " := " << to_string(string <=> number) << '\n'; // *NOPAD*
     std::cout << string << " <=> " << discarded << " := " << to_string(string <=> discarded) << '\n'; // *NOPAD*
 }
+#endif
