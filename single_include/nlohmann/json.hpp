@@ -6903,7 +6903,10 @@ class json_sax_dom_parser
     /// the parsed JSON value
     BasicJsonType& root;
     /// stack to model hierarchy of values
-    std::vector<BasicJsonType*> ref_stack {};
+  
+  
+    using allocator_type = typename BasicJsonType::allocator_type;
+    std::vector<BasicJsonType*,allocator_type> ref_stack {}; 
     /// helper to hold the reference for the next object element
     BasicJsonType* object_element = nullptr;
     /// whether a syntax error occurred
@@ -8915,8 +8918,10 @@ scan_number_done:
     position_t position {};
 
     /// raw input token string (for error messages)
-    std::vector<char_type> token_string {};
 
+    using allocator_type = typename BasicJsonType::allocator_type;
+   
+    std::vector<char_type,allocator_type> token_string {};
     /// buffer for variable-length tokens (numbers, strings)
     string_t token_buffer {};
 
@@ -11791,7 +11796,7 @@ class binary_reader
             case token_type::value_unsigned:
                 return sax->number_unsigned(number_lexer.get_number_unsigned());
             case token_type::value_float:
-                return sax->number_float(number_lexer.get_number_float(), std::move(number_string));
+                return sax->number_float(number_lexer.get_number_float(), std::move(static_cast<string_t>(number_string)));
             case token_type::uninitialized:
             case token_type::literal_true:
             case token_type::literal_false:
@@ -12165,7 +12170,7 @@ class parser
     using string_t = typename BasicJsonType::string_t;
     using lexer_t = lexer<BasicJsonType, InputAdapterType>;
     using token_type = typename lexer_t::token_type;
-
+    using allocator_type = typename BasicJsonType::string_t::allocator_type;
   public:
     /// a parser reading from an input adapter
     explicit parser(InputAdapterType&& adapter,
@@ -12279,9 +12284,10 @@ class parser
     JSON_HEDLEY_NON_NULL(2)
     bool sax_parse_internal(SAX* sax)
     {
+        using allocator_type = typename BasicJsonType::allocator_type;
         // stack to remember the hierarchy of structured values we are parsing
         // true = array; false = object
-        std::vector<bool> states;
+        std::vector<bool,allocator_type> states;
         // value to avoid a goto (see comment where set to true)
         bool skip_to_state_evaluation = false;
 
@@ -14950,7 +14956,10 @@ class output_adapter
   public:
     template<typename AllocatorType = std::allocator<CharType>>
     output_adapter(std::vector<CharType, AllocatorType>& vec)
-        : oa(std::make_shared<output_vector_adapter<CharType, AllocatorType>>(vec)) {}
+    {
+        AllocatorType alloc;
+        oa = std::allocate_shared<output_vector_adapter<CharType, AllocatorType>>(alloc ,vec);
+    }
 
 #ifndef JSON_NO_IO
     output_adapter(std::basic_ostream<CharType>& s)
@@ -16061,7 +16070,7 @@ class binary_writer
 
         const std::size_t embedded_document_size = std::accumulate(std::begin(value), std::end(value), static_cast<std::size_t>(0), [&array_index](std::size_t result, const typename BasicJsonType::array_t::value_type & el)
         {
-            return result + calc_bson_element_size(std::to_string(array_index++), el);
+            return result + calc_bson_element_size(static_cast<string_t>(std::to_string(array_index++)), el);
         });
 
         return sizeof(std::int32_t) + embedded_document_size + 1ul;
@@ -16088,7 +16097,7 @@ class binary_writer
 
         for (const auto& el : value)
         {
-            write_bson_element(std::to_string(array_index++), el);
+            write_bson_element(static_cast<string_t>(std::to_string(array_index++)), el);
         }
 
         oa->write_character(to_char_type(0x00));
@@ -19780,7 +19789,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             if (t == value_t::array || t == value_t::object)
             {
                 // flatten the current json_value to a heap-allocated stack
-                std::vector<basic_json> stack;
+                std::vector<basic_json,AllocatorType<basic_json>> stack;
 
                 // move the top-level items to stack
                 if (t == value_t::array)
