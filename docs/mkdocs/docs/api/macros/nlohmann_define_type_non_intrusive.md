@@ -90,7 +90,7 @@ See examples below for the concrete generated code.
 
     Consider the following complete example:
 
-    ```cpp hl_lines="21"
+    ```cpp hl_lines="22"
     --8<-- "examples/nlohmann_define_type_non_intrusive_with_default_macro.cpp"
     ```
     
@@ -111,7 +111,7 @@ See examples below for the concrete generated code.
 
     The macro is equivalent to:
 
-    ```cpp hl_lines="21 22 23 24 25 26 27 28 29 30 31 32 33 34"
+    ```cpp hl_lines="22 23 24 25 26 27 28 29 30 31 32 33 34 35"
     --8<-- "examples/nlohmann_define_type_non_intrusive_with_default_explicit.cpp"
     ```
 
@@ -121,7 +121,7 @@ See examples below for the concrete generated code.
 
     Consider the following complete example:
 
-    ```cpp hl_lines="15"
+    ```cpp hl_lines="16"
     --8<-- "examples/nlohmann_define_type_non_intrusive_only_serialize_macro.cpp"
     ```
     
@@ -140,7 +140,7 @@ See examples below for the concrete generated code.
 
     The macro is equivalent to:
 
-    ```cpp hl_lines="15 16 17 18 19 20"
+    ```cpp hl_lines="16 17 18 19 20 21"
     --8<-- "examples/nlohmann_define_type_non_intrusive_only_serialize_explicit.cpp"
     ```
 
