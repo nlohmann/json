@@ -292,7 +292,7 @@ class person_without_default_constructor_1
 
     person_without_default_constructor_1(std::string name_, int age_)
         : name{std::move(name_)}
-        , age{std::move(age_)}
+        , age{age_}
     {}
 
     NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE(person_without_default_constructor_1, name, age)
@@ -311,7 +311,7 @@ class person_without_default_constructor_2
 
     person_without_default_constructor_2(std::string name_, int age_)
         : name{std::move(name_)}
-        , age{std::move(age_)}
+        , age{age_}
     {}
 };
 
@@ -463,7 +463,7 @@ TEST_CASE_TEMPLATE("Serialization of non-default-constructible classes via NLOHM
             CHECK(json(person).dump() == "{\"age\":1,\"name\":\"Erik\"}");
 
             // serialization of a container with objects
-            std::vector<T> two_persons
+            std::vector<T> const two_persons
             {
                 {"Erik", 1},
                 {"Kyle", 2}
