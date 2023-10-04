@@ -35,14 +35,13 @@ int main()
     // output the changed array
     std::cout << j["array"] << '\n';
 
-
     // out_of_range.106
     try
     {
         // try to use an array index with leading '0'
         json::reference ref = j.at("/array/01"_json_pointer);
     }
-    catch (json::parse_error& e)
+    catch (const json::parse_error& e)
     {
         std::cout << e.what() << '\n';
     }
@@ -53,7 +52,7 @@ int main()
         // try to use an array index that is not a number
         json::reference ref = j.at("/array/one"_json_pointer);
     }
-    catch (json::parse_error& e)
+    catch (const json::parse_error& e)
     {
         std::cout << e.what() << '\n';
     }
@@ -64,7 +63,7 @@ int main()
         // try to use an invalid array index
         json::reference ref = j.at("/array/4"_json_pointer);
     }
-    catch (json::out_of_range& e)
+    catch (const json::out_of_range& e)
     {
         std::cout << e.what() << '\n';
     }
@@ -75,7 +74,7 @@ int main()
         // try to use the array index '-'
         json::reference ref = j.at("/array/-"_json_pointer);
     }
-    catch (json::out_of_range& e)
+    catch (const json::out_of_range& e)
     {
         std::cout << e.what() << '\n';
     }
@@ -86,7 +85,7 @@ int main()
         // try to use a JSON pointer to a nonexistent object key
         json::const_reference ref = j.at("/foo"_json_pointer);
     }
-    catch (json::out_of_range& e)
+    catch (const json::out_of_range& e)
     {
         std::cout << e.what() << '\n';
     }
@@ -97,7 +96,7 @@ int main()
         // try to use a JSON pointer that cannot be resolved
         json::reference ref = j.at("/number/foo"_json_pointer);
     }
-    catch (json::out_of_range& e)
+    catch (const json::out_of_range& e)
     {
         std::cout << e.what() << '\n';
     }

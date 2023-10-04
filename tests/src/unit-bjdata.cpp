@@ -1499,7 +1499,6 @@ TEST_CASE("BJData")
             }
         }
 
-
         SECTION("binary")
         {
             SECTION("N = 0..127")

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.13...3.14)
 
 option(JSON_Valgrind    "Execute test suite with Valgrind." OFF)
 option(JSON_FastTests   "Skip expensive/slow tests." OFF)

@@ -142,7 +142,6 @@ struct json_sax
     virtual ~json_sax() = default;
 };
 
-
 namespace detail
 {
 /*!
@@ -591,7 +590,7 @@ class json_sax_dom_callback_parser
         if (ref_stack.empty())
         {
             root = std::move(value);
-            return {true, &root};
+            return {true, & root};
         }
 
         // skip this value if we already decided to skip the parent
@@ -608,7 +607,7 @@ class json_sax_dom_callback_parser
         if (ref_stack.back()->is_array())
         {
             ref_stack.back()->m_data.m_value.array->emplace_back(std::move(value));
-            return {true, &(ref_stack.back()->m_data.m_value.array->back())};
+            return {true, & (ref_stack.back()->m_data.m_value.array->back())};
         }
 
         // object

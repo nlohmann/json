@@ -222,7 +222,7 @@ class lexer : public lexer_base<BasicJsonType>
         for (auto range = ranges.begin(); range != ranges.end(); ++range)
         {
             get();
-            if (JSON_HEDLEY_LIKELY(*range <= current && current <= *(++range)))
+            if (JSON_HEDLEY_LIKELY(*range <= current && current <= *(++range))) // NOLINT(bugprone-inc-dec-in-conditions)
             {
                 add(current);
             }
