@@ -32,7 +32,6 @@ int main()
     json string = "foo";
     json discarded = json(json::value_t::discarded);
 
-
     // output values and comparisons
     std::cout << array_1 << " <=> " << array_2 << " := " << to_string(array_1 <=> array_2) << '\n'; // *NOPAD*
     std::cout << object_1 << " <=> " << object_2 << " := " << to_string(object_1 <=> object_2) << '\n'; // *NOPAD*

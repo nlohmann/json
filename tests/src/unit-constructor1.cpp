@@ -172,7 +172,6 @@ TEST_CASE("constructors")
             CHECK(j == j_reference);
         }
 
-
         SECTION("std::multimap<json::string_t, json>")
         {
             std::multimap<json::string_t, json> const o {{"a", json(1)}, {"b", json(1u)}, {"c", json(2.2)}, {"d", json(false)}, {"e", json("string")}, {"f", json()}};

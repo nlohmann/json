@@ -20,7 +20,7 @@ int main()
     {
         json::json_pointer p9("foo");
     }
-    catch (json::parse_error& e)
+    catch (const json::parse_error& e)
     {
         std::cout << e.what() << '\n';
     }
@@ -30,7 +30,7 @@ int main()
     {
         json::json_pointer p10("/foo/~");
     }
-    catch (json::parse_error& e)
+    catch (const json::parse_error& e)
     {
         std::cout << e.what() << '\n';
     }
@@ -40,7 +40,7 @@ int main()
     {
         json::json_pointer p11("/foo/~3");
     }
-    catch (json::parse_error& e)
+    catch (const json::parse_error& e)
     {
         std::cout << e.what() << '\n';
     }

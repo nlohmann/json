@@ -53,7 +53,7 @@ int main()
     {
         auto p3 = j3.template get<ns::person>();
     }
-    catch (json::exception& e)
+    catch (const json::exception& e)
     {
         std::cout << "deserialization failed: " << e.what() << std::endl;
     }

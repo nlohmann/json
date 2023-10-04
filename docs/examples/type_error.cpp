@@ -11,7 +11,7 @@ int main()
         json j = "string";
         j.push_back("another string");
     }
-    catch (json::type_error& e)
+    catch (const json::type_error& e)
     {
         // output exception information
         std::cout << "message: " << e.what() << '\n'

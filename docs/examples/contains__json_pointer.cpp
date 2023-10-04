@@ -26,7 +26,7 @@ int main()
         // try to use an array index with leading '0'
         j.contains("/array/01"_json_pointer);
     }
-    catch (json::parse_error& e)
+    catch (const json::parse_error& e)
     {
         std::cout << e.what() << '\n';
     }
@@ -36,7 +36,7 @@ int main()
         // try to use an array index that is not a number
         j.contains("/array/one"_json_pointer);
     }
-    catch (json::parse_error& e)
+    catch (const json::parse_error& e)
     {
         std::cout << e.what() << '\n';
     }

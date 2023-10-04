@@ -12,7 +12,7 @@ int main()
         json::iterator it = j.begin();
         auto k = it.key();
     }
-    catch (json::invalid_iterator& e)
+    catch (const json::invalid_iterator& e)
     {
         // output exception information
         std::cout << "message: " << e.what() << '\n'
