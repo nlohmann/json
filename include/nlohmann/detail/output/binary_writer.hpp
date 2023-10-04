@@ -1110,7 +1110,7 @@ class binary_writer
 
         const std::size_t embedded_document_size = std::accumulate(std::begin(value), std::end(value), static_cast<std::size_t>(0), [&array_index](std::size_t result, const typename BasicJsonType::array_t::value_type & el)
         {
-            return result + calc_bson_element_size(std::to_string(array_index++), el);
+            return result + calc_bson_element_size(static_cast<string_t>(std::to_string(array_index++)), el);
         });
 
         return sizeof(std::int32_t) + embedded_document_size + 1ul;
@@ -1137,7 +1137,7 @@ class binary_writer
 
         for (const auto& el : value)
         {
-            write_bson_element(std::to_string(array_index++), el);
+            write_bson_element(static_cast<string_t>(std::to_string(array_index++)), el);
         }
 
         oa->write_character(to_char_type(0x00));
