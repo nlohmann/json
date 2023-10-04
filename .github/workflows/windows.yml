@@ -29,6 +29,7 @@ jobs:
         uses: egor-tensin/setup-mingw@v2
         with:
           platform: ${{ matrix.architecture }}
+          version: 12.2.0 # https://github.com/egor-tensin/setup-mingw/issues/14
       - name: Run CMake
         run: cmake -S . -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On
       - name: Build
