@@ -62,7 +62,8 @@ static inline bool little_endianness(int num = 1) noexcept
 /*!
 @brief deserialization of CBOR, MessagePack, and UBJSON values
 */
-template<typename BasicJsonType, typename InputAdapterType, typename SAX = json_sax_dom_parser<BasicJsonType>>
+template<typename BasicJsonType, typename InputAdapterType, typename Allocator = std::allocator<  InputAdapterType>
+         , typename SAX = json_sax_dom_parser<BasicJsonType, Allocator>>
 class binary_reader
 {
     using number_integer_t = typename BasicJsonType::number_integer_t;
@@ -2694,7 +2695,7 @@ class binary_reader
 
         // parse number string
         using ia_type = decltype(detail::input_adapter(number_vector));
-        auto number_lexer = detail::lexer<BasicJsonType, ia_type>(detail::input_adapter(number_vector), false);
+        auto number_lexer = detail::lexer<BasicJsonType, ia_type, Allocator>(detail::input_adapter(number_vector), false);
         const auto result_number = number_lexer.scan();
         const auto number_string = number_lexer.get_token_string();
         const auto result_remainder = number_lexer.scan();
@@ -2714,7 +2715,7 @@ class binary_reader
             case token_type::value_unsigned:
                 return sax->number_unsigned(number_lexer.get_number_unsigned());
             case token_type::value_float:
-                return sax->number_float(number_lexer.get_number_float(), std::move(number_string));
+                return sax->number_float(number_lexer.get_number_float(), std::move(static_cast<string_t>(number_string)));
             case token_type::uninitialized:
             case token_type::literal_true:
             case token_type::literal_false:
@@ -3001,8 +3002,8 @@ class binary_reader
 };
 
 #ifndef JSON_HAS_CPP_17
-    template<typename BasicJsonType, typename InputAdapterType, typename SAX>
-    constexpr std::size_t binary_reader<BasicJsonType, InputAdapterType, SAX>::npos;
+    template<typename BasicJsonType, typename InputAdapterType, typename Allocator, typename SAX>
+    constexpr std::size_t binary_reader<BasicJsonType, InputAdapterType, Allocator, SAX>::npos;
 #endif
 
 }  // namespace detail

@@ -107,7 +107,7 @@ class lexer_base
 
 This class organizes the lexical analysis during JSON deserialization.
 */
-template<typename BasicJsonType, typename InputAdapterType>
+template<typename BasicJsonType, typename InputAdapterType, class Allocator = std::allocator<typename InputAdapterType::char_type>>
 class lexer : public lexer_base<BasicJsonType>
 {
     using number_integer_t = typename BasicJsonType::number_integer_t;
@@ -1611,7 +1611,7 @@ scan_number_done:
     position_t position {};
 
     /// raw input token string (for error messages)
-    std::vector<char_type> token_string {};
+    std::vector<char_type, Allocator> token_string {};
 
     /// buffer for variable-length tokens (numbers, strings)
     string_t token_buffer {};
