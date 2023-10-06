@@ -62,7 +62,7 @@ static inline bool little_endianness(int num = 1) noexcept
 /*!
 @brief deserialization of CBOR, MessagePack, and UBJSON values
 */
-template<typename BasicJsonType, typename InputAdapterType, typename Allocator = std::allocator<  InputAdapterType>
+template<typename BasicJsonType, typename InputAdapterType, typename Allocator = std::allocator<  BasicJsonType*>
          , typename SAX = json_sax_dom_parser<BasicJsonType, Allocator>>
 class binary_reader
 {
