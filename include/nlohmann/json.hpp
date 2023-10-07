@@ -3694,9 +3694,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     /// @brief comparison: equal
     /// @sa https://json.nlohmann.me/api/basic_json/operator_eq/
-    template<typename ScalarType>
-    requires std::is_scalar_v<ScalarType>
-    bool operator==(ScalarType rhs) const noexcept
+    template < typename CompatibleType,
+               typename U = detail::uncvref_t<CompatibleType>,
+               detail::enable_if_t <
+                   !detail::is_basic_json<U>::value && detail::is_compatible_type<basic_json_t, U>::value, int > = 0 >
+    bool operator==(CompatibleType rhs) const noexcept
     {
         return *this == basic_json(rhs);
     }
