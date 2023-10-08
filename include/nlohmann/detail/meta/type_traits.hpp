@@ -685,8 +685,8 @@ template<bool Value>
 using bool_constant = std::integral_constant<bool, Value>;
 
 #ifdef JSON_HAS_CPP_20
-template <typename T, typename BasicJsonType>
-concept CompatibleType = !is_basic_json<uncvref_t<T>>::value && is_compatible_type<BasicJsonType, uncvref_t<T>>::value;
+    template <typename T, typename BasicJsonType>
+    concept CompatibleType = !is_basic_json<uncvref_t<T>>::value && is_compatible_type<BasicJsonType, uncvref_t<T>>::value;
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////

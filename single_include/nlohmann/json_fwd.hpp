@@ -25,7 +25,6 @@
 // SPDX-License-Identifier: MIT
 
 
-
 // This file contains all macro definitions affecting or depending on the ABI
 
 #ifndef JSON_SKIP_LIBRARY_VERSION_CHECK
