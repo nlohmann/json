@@ -112,7 +112,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     friend class ::nlohmann::detail::iter_impl;
     template<typename BasicJsonType, typename CharType>
     friend class ::nlohmann::detail::binary_writer;
-    template<typename BasicJsonType, typename InputType, typename Allocator, typename SAX>
+    template<typename BasicJsonType, typename InputType, typename AllocatorJson, typename AllocatorChar, typename SAX>
     friend class ::nlohmann::detail::binary_reader;
     template<typename BasicJsonType, typename Allocator>
     friend class ::nlohmann::detail::json_sax_dom_parser;
@@ -153,8 +153,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     template<typename CharType>
     using output_adapter_t = ::nlohmann::detail::output_adapter_t<CharType>;
 
-    template<typename InputType>
-    using binary_reader = ::nlohmann::detail::binary_reader<basic_json, InputType, AllocatorType<basic_json*>>;
+    template<typename InputType, typename CharType = char>
+    using binary_reader = ::nlohmann::detail::binary_reader<basic_json, InputType, AllocatorType<basic_json*>, AllocatorType<CharType>>;
     template<typename CharType> using binary_writer = ::nlohmann::detail::binary_writer<basic_json, CharType>;
 
   JSON_PRIVATE_UNLESS_TESTED:
@@ -219,6 +219,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// the allocator type
     using allocator_type = AllocatorType<basic_json>;
     using allocator_type_ptr = AllocatorType<basic_json*>;
+    using allocator_type_char = AllocatorType<char>;
     /// the type of an element pointer
     using pointer = typename std::allocator_traits<allocator_type>::pointer;
     /// the type of an element const pointer
@@ -4087,7 +4088,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         auto ia = detail::input_adapter(std::forward<InputType>(i));
         return format == input_format_t::json
                ? parser(std::move(ia), nullptr, true, ignore_comments).sax_parse(sax, strict)
-               : detail::binary_reader<basic_json, decltype(ia), allocator_type_ptr, SAX>(std::move(ia), format).sax_parse(format, sax, strict);
+               : detail::binary_reader<basic_json, decltype(ia), allocator_type_ptr, allocator_type_char, SAX>(std::move(ia), format).sax_parse(format, sax, strict);
     }
 
     /// @brief generate SAX events
@@ -4102,7 +4103,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         auto ia = detail::input_adapter(std::move(first), std::move(last));
         return format == input_format_t::json
                ? parser(std::move(ia), nullptr, true, ignore_comments).sax_parse(sax, strict)
-               : detail::binary_reader<basic_json, decltype(ia), allocator_type_ptr, SAX>(std::move(ia), format).sax_parse(format, sax, strict);
+               : detail::binary_reader<basic_json, decltype(ia), allocator_type_ptr, allocator_type_char, SAX>(std::move(ia), format).sax_parse(format, sax, strict);
     }
 
     /// @brief generate SAX events
@@ -4123,7 +4124,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
                ? parser(std::move(ia), nullptr, true, ignore_comments).sax_parse(sax, strict)
                // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
-               : detail::binary_reader<basic_json, decltype(ia), allocator_type_ptr, SAX>(std::move(ia), format).sax_parse(format, sax, strict);
+               : detail::binary_reader<basic_json, decltype(ia), allocator_type_ptr, allocator_type_char, SAX>(std::move(ia), format).sax_parse(format, sax, strict);
     }
 #ifndef JSON_NO_IO
     /// @brief deserialize from stream

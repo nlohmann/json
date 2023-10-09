@@ -62,8 +62,8 @@ static inline bool little_endianness(int num = 1) noexcept
 /*!
 @brief deserialization of CBOR, MessagePack, and UBJSON values
 */
-template<typename BasicJsonType, typename InputAdapterType, typename Allocator = std::allocator<  BasicJsonType*>
-         , typename SAX = json_sax_dom_parser<BasicJsonType, Allocator>>
+template<typename BasicJsonType, typename InputAdapterType, typename AllocatorJson = std::allocator<  BasicJsonType*>, typename AllocatorChar = std::allocator< typename InputAdapterType::char_type>
+         , typename SAX = json_sax_dom_parser<BasicJsonType, AllocatorJson>>
 class binary_reader
 {
     using number_integer_t = typename BasicJsonType::number_integer_t;
@@ -2695,7 +2695,7 @@ class binary_reader
 
         // parse number string
         using ia_type = decltype(detail::input_adapter(number_vector));
-        auto number_lexer = detail::lexer<BasicJsonType, ia_type, Allocator>(detail::input_adapter(number_vector), false);
+        auto number_lexer = detail::lexer<BasicJsonType, ia_type, AllocatorChar>(detail::input_adapter(number_vector), false);
         const auto result_number = number_lexer.scan();
         const auto number_string = number_lexer.get_token_string();
         const auto result_remainder = number_lexer.scan();
@@ -3002,8 +3002,8 @@ class binary_reader
 };
 
 #ifndef JSON_HAS_CPP_17
-    template<typename BasicJsonType, typename InputAdapterType, typename Allocator, typename SAX>
-    constexpr std::size_t binary_reader<BasicJsonType, InputAdapterType, Allocator, SAX>::npos;
+    template<typename BasicJsonType, typename InputAdapterType, typename AllocatorJson, typename  AllocatorChar, typename SAX>
+    constexpr std::size_t binary_reader<BasicJsonType, InputAdapterType, AllocatorJson, AllocatorChar, SAX>::npos;
 #endif
 
 }  // namespace detail
