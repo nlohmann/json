@@ -73,7 +73,7 @@ using parse_error_function_t = decltype(std::declval<T&>().parse_error(
 template<typename SAX, typename BasicJsonType>
 struct is_sax
 {
-    private:
+  private:
     static_assert(is_basic_json<BasicJsonType>::value,
                   "BasicJsonType must be of type basic_json<...>");
 
@@ -84,7 +84,7 @@ struct is_sax
     using binary_t = typename BasicJsonType::binary_t;
     using exception_t = typename BasicJsonType::exception;
 
-    public:
+  public:
     static constexpr bool value =
         is_detected_exact<bool, null_function_t, SAX>::value &&
         is_detected_exact<bool, boolean_function_t, SAX>::value &&
@@ -104,7 +104,7 @@ struct is_sax
 template<typename SAX, typename BasicJsonType>
 struct is_sax_static_asserts
 {
-    private:
+  private:
     static_assert(is_basic_json<BasicJsonType>::value,
                   "BasicJsonType must be of type basic_json<...>");
 
@@ -115,7 +115,7 @@ struct is_sax_static_asserts
     using binary_t = typename BasicJsonType::binary_t;
     using exception_t = typename BasicJsonType::exception;
 
-    public:
+  public:
     static_assert(is_detected_exact<bool, null_function_t, SAX>::value,
                   "Missing/invalid function: bool null()");
     static_assert(is_detected_exact<bool, boolean_function_t, SAX>::value,

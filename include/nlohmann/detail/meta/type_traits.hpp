@@ -190,7 +190,7 @@ template<class...> struct conjunction : std::true_type { };
 template<class B> struct conjunction<B> : B { };
 template<class B, class... Bn>
 struct conjunction<B, Bn...>
-    : std::conditional<static_cast<bool>(B::value), conjunction<Bn...>, B>::type {};
+: std::conditional<static_cast<bool>(B::value), conjunction<Bn...>, B>::type {};
 
 // https://en.cppreference.com/w/cpp/types/negation
 template<class B> struct negation : std::integral_constant < bool, !B::value > { };
@@ -203,19 +203,19 @@ struct is_default_constructible : std::is_default_constructible<T> {};
 
 template <typename T1, typename T2>
 struct is_default_constructible<std::pair<T1, T2>>
-                : conjunction<is_default_constructible<T1>, is_default_constructible<T2>> {};
+            : conjunction<is_default_constructible<T1>, is_default_constructible<T2>> {};
 
 template <typename T1, typename T2>
 struct is_default_constructible<const std::pair<T1, T2>>
-                : conjunction<is_default_constructible<T1>, is_default_constructible<T2>> {};
+            : conjunction<is_default_constructible<T1>, is_default_constructible<T2>> {};
 
 template <typename... Ts>
 struct is_default_constructible<std::tuple<Ts...>>
-                : conjunction<is_default_constructible<Ts>...> {};
+            : conjunction<is_default_constructible<Ts>...> {};
 
 template <typename... Ts>
 struct is_default_constructible<const std::tuple<Ts...>>
-                : conjunction<is_default_constructible<Ts>...> {};
+            : conjunction<is_default_constructible<Ts>...> {};
 
 template <typename T, typename... Args>
 struct is_constructible : std::is_constructible<T, Args...> {};
@@ -238,10 +238,10 @@ struct is_iterator_traits : std::false_type {};
 template<typename T>
 struct is_iterator_traits<iterator_traits<T>>
 {
-    private:
+  private:
     using traits = iterator_traits<T>;
 
-    public:
+  public:
     static constexpr auto value =
         is_detected<value_type_t, traits>::value &&
         is_detected<difference_type_t, traits>::value &&
@@ -253,7 +253,7 @@ struct is_iterator_traits<iterator_traits<T>>
 template<typename T>
 struct is_range
 {
-    private:
+  private:
     using t_ref = typename std::add_lvalue_reference<T>::type;
 
     using iterator = detected_t<result_of_begin, t_ref>;
@@ -265,7 +265,7 @@ struct is_range
     static constexpr auto is_iterator_begin =
         is_iterator_traits<iterator_traits<iterator>>::value;
 
-    public:
+  public:
     static constexpr bool value = !std::is_same<iterator, nonesuch>::value && !std::is_same<sentinel, nonesuch>::value && is_iterator_begin;
 };
 
@@ -307,7 +307,7 @@ struct is_compatible_object_type_impl <
 
 template<typename BasicJsonType, typename CompatibleObjectType>
 struct is_compatible_object_type
-        : is_compatible_object_type_impl<BasicJsonType, CompatibleObjectType> {};
+    : is_compatible_object_type_impl<BasicJsonType, CompatibleObjectType> {};
 
 template<typename BasicJsonType, typename ConstructibleObjectType,
          typename = void>
@@ -339,8 +339,8 @@ struct is_constructible_object_type_impl <
 
 template<typename BasicJsonType, typename ConstructibleObjectType>
 struct is_constructible_object_type
-        : is_constructible_object_type_impl<BasicJsonType,
-    ConstructibleObjectType> {};
+    : is_constructible_object_type_impl<BasicJsonType,
+      ConstructibleObjectType> {};
 
 template<typename BasicJsonType, typename CompatibleStringType>
 struct is_compatible_string_type
@@ -386,7 +386,7 @@ struct is_compatible_array_type_impl <
 
 template<typename BasicJsonType, typename CompatibleArrayType>
 struct is_compatible_array_type
-        : is_compatible_array_type_impl<BasicJsonType, CompatibleArrayType> {};
+    : is_compatible_array_type_impl<BasicJsonType, CompatibleArrayType> {};
 
 template<typename BasicJsonType, typename ConstructibleArrayType, typename = void>
 struct is_constructible_array_type_impl : std::false_type {};
@@ -396,7 +396,7 @@ struct is_constructible_array_type_impl <
     BasicJsonType, ConstructibleArrayType,
     enable_if_t<std::is_same<ConstructibleArrayType,
     typename BasicJsonType::value_type>::value >>
-                : std::true_type {};
+            : std::true_type {};
 
 template<typename BasicJsonType, typename ConstructibleArrayType>
 struct is_constructible_array_type_impl <
@@ -415,22 +415,22 @@ is_detected<range_value_t, ConstructibleArrayType>::value&&
 !std::is_same<ConstructibleArrayType, detected_t<range_value_t, ConstructibleArrayType>>::value&&
         is_complete_type <
         detected_t<range_value_t, ConstructibleArrayType >>::value >>
-        {
-            using value_type = range_value_t<ConstructibleArrayType>;
+{
+    using value_type = range_value_t<ConstructibleArrayType>;
 
-            static constexpr bool value =
-                std::is_same<value_type,
-            typename BasicJsonType::array_t::value_type>::value ||
-            has_from_json<BasicJsonType,
-            value_type>::value ||
-            has_non_default_from_json <
-            BasicJsonType,
-            value_type >::value;
-        };
+    static constexpr bool value =
+        std::is_same<value_type,
+        typename BasicJsonType::array_t::value_type>::value ||
+        has_from_json<BasicJsonType,
+        value_type>::value ||
+        has_non_default_from_json <
+        BasicJsonType,
+        value_type >::value;
+};
 
 template<typename BasicJsonType, typename ConstructibleArrayType>
 struct is_constructible_array_type
-        : is_constructible_array_type_impl<BasicJsonType, ConstructibleArrayType> {};
+    : is_constructible_array_type_impl<BasicJsonType, ConstructibleArrayType> {};
 
 template<typename RealIntegerType, typename CompatibleNumberIntegerType,
          typename = void>
@@ -456,8 +456,8 @@ struct is_compatible_integer_type_impl <
 
 template<typename RealIntegerType, typename CompatibleNumberIntegerType>
 struct is_compatible_integer_type
-        : is_compatible_integer_type_impl<RealIntegerType,
-    CompatibleNumberIntegerType> {};
+    : is_compatible_integer_type_impl<RealIntegerType,
+      CompatibleNumberIntegerType> {};
 
 template<typename BasicJsonType, typename CompatibleType, typename = void>
 struct is_compatible_type_impl: std::false_type {};
@@ -473,7 +473,7 @@ struct is_compatible_type_impl <
 
 template<typename BasicJsonType, typename CompatibleType>
 struct is_compatible_type
-        : is_compatible_type_impl<BasicJsonType, CompatibleType> {};
+    : is_compatible_type_impl<BasicJsonType, CompatibleType> {};
 
 template<typename T1, typename T2>
 struct is_constructible_tuple : std::false_type {};
@@ -509,7 +509,7 @@ template<typename Compare, typename A, typename B>
 struct is_comparable<Compare, A, B, void_t<
 decltype(std::declval<Compare>()(std::declval<A>(), std::declval<B>())),
 decltype(std::declval<Compare>()(std::declval<B>(), std::declval<A>()))
-        >> : std::true_type {};
+>> : std::true_type {};
 
 template<typename T>
 using detect_is_transparent = typename T::is_transparent;

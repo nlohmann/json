@@ -4701,7 +4701,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // the valid JSON Patch operations
         enum class patch_operations {add, remove, replace, move, copy, test, invalid};
 
-        const auto get_op = [](const std::string& op)
+        const auto get_op = [](const std::string & op)
         {
             if (op == "add")
             {
@@ -4838,8 +4838,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         for (const auto& val : json_patch)
         {
             // wrapper to get a value for an operation
-            const auto get_value = [&val](const std::string& op,
-                                          const std::string& member,
+            const auto get_value = [&val](const std::string & op,
+                                          const std::string & member,
                                           bool string_type) -> basic_json &
             {
                 // find value
@@ -5216,14 +5216,14 @@ struct less< ::nlohmann::detail::value_t> // do not remove the space after '<', 
     */
     bool operator()(::nlohmann::detail::value_t lhs,
                     ::nlohmann::detail::value_t rhs) const noexcept
-{
+    {
 #if JSON_HAS_THREE_WAY_COMPARISON
-    return std::is_lt(lhs <=> rhs); // *NOPAD*
+        return std::is_lt(lhs <=> rhs); // *NOPAD*
 #else
-    return ::nlohmann::detail::operator<(lhs, rhs);
+        return ::nlohmann::detail::operator<(lhs, rhs);
 #endif
-}
-                 };
+    }
+};
 
 // C++20 prohibit function specialization in the std namespace.
 #ifndef JSON_HAS_CPP_20

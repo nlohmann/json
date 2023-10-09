@@ -88,7 +88,7 @@ struct Data
     Data() = default;
     Data(std::string a_, std::string b_)
         : a(std::move(a_))
-    , b(std::move(b_))
+        , b(std::move(b_))
     {}
     std::string a{};
     std::string b{};

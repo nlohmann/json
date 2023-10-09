@@ -115,7 +115,7 @@ class exception : public std::exception
         }
 
         auto str = std::accumulate(tokens.rbegin(), tokens.rend(), std::string{},
-                                   [](const std::string& a, const std::string& b)
+                                   [](const std::string & a, const std::string & b)
         {
             return concat(a, '/', detail::escape(b));
         });
