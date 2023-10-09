@@ -283,7 +283,7 @@ struct NAlloc
     };
 
     NAlloc() :
-        alloc()
+        alloc(),m_alloc_size(0)
     {
 
     }
@@ -293,7 +293,7 @@ struct NAlloc
     pointer allocate(std::size_t n)
     {
 
-
+        m_alloc_size = n;
         return static_cast<pointer>(alloc.allocate(n));  // get memory from pool
     }
     void deallocate(pointer p, [[maybe_unused]] std::size_t n)
@@ -314,6 +314,7 @@ struct NAlloc
     }
 
     my_allocator<char> alloc;
+    std::size_t m_alloc_size;
 };
 
 
