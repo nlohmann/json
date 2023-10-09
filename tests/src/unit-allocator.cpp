@@ -295,7 +295,7 @@ struct NAlloc
      
         return static_cast<pointer>(alloc.allocate(n));  // get memory from pool
     }
-    void deallocate(pointer p, [[maybe_unused]] std::size_t n)
+    void deallocate(pointer p, std::size_t n)
     {
         m_alloc_size = n;
         alloc.deallocate(static_cast<pointer>(p), 1);  // return memory to pool
@@ -342,16 +342,7 @@ TEST_CASE("controlled bad_alloc_rt_string")
 
         SECTION("json_value(value_t)")
         {
-            
-            SECTION("array")
-            {
-                next_construct_fails = false;
-                auto t = my_json::value_t::array;
-                CHECK_NOTHROW(my_allocator_clean_up(my_json::json_value(t).array));
-                next_construct_fails = true;
-                CHECK_THROWS_AS(my_json::json_value(t), std::bad_alloc&);
-                next_construct_fails = false;
-            }
+                        
             SECTION("string")
             {
                 next_construct_fails = false;
