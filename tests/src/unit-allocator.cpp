@@ -262,60 +262,64 @@ TEST_CASE("bad my_allocator::construct")
     }
 }
 
-namespace{
-  template <class T>
-    struct NAlloc {
-        // Aliases and inner types
-        using value_type = T;
-        using size_type = std::size_t;
-        using difference_type = ptrdiff_t;
-        using reference = value_type&;
-        using const_reference = const value_type&;
-        using pointer = value_type*;
-        using const_pointer = const value_type*;
+namespace
+{
+template <class T>
+struct NAlloc
+{
+    // Aliases and inner types
+    using value_type = T;
+    using size_type = std::size_t;
+    using difference_type = ptrdiff_t;
+    using reference = value_type&;
+    using const_reference = const value_type&;
+    using pointer = value_type*;
+    using const_pointer = const value_type*;
 
-        template <typename U>
-        struct rebind {
-            using other = NAlloc<U>;
-        };
-
-        NAlloc() :
-            alloc() {
-
-            };
-
-        virtual ~NAlloc() { }
-
-        pointer allocate(std::size_t n) {
-    #ifdef _DEBUG
-            std::cout << "NAlloc allocating " << n << " bytes\n";
-    #endif
-
-            return static_cast<pointer>(alloc.allocate(n));  // get memory from pool
-        }
-        void deallocate(pointer p, [[maybe_unused]] std::size_t n) {
-    #ifdef _DEBUG
-            std::cout << "NAlloc deallocating " << n * sizeof *p << " bytes\n";
-    #endif
-
-            alloc.deallocate(static_cast<pointer>(p), 1);  // return memory to pool
-        }
-
-
-        bool operator!=(const NAlloc<T>& other) const {
-            return !(*this == other);
-        }
-        bool operator==(const NAlloc<T>& other) const {
-            return alloc == other.alloc;
-        }
-
-        my_allocator<char> alloc;
+    template <typename U>
+    struct rebind
+    {
+        using other = NAlloc<U>;
     };
 
+    NAlloc() :
+        alloc()
+    {
 
-    using OstringStream = std::basic_ostringstream<char, std::char_traits<char>, NAlloc<char>>;
-    using IstringStream = std::basic_istringstream<char, std::char_traits<char>, NAlloc<char>>;
-    typedef std::basic_string<char, std::char_traits<char>, NAlloc<char>> RtString;
+    };
+
+    virtual ~NAlloc() { }
+
+    pointer allocate(std::size_t n)
+    {
+
+
+        return static_cast<pointer>(alloc.allocate(n));  // get memory from pool
+    }
+    void deallocate(pointer p, [[maybe_unused]] std::size_t n)
+    {
+
+
+        alloc.deallocate(static_cast<pointer>(p), 1);  // return memory to pool
+    }
+
+
+    bool operator!=(const NAlloc<T>& other) const
+    {
+        return !(*this == other);
+    }
+    bool operator==(const NAlloc<T>& other) const
+    {
+        return alloc == other.alloc;
+    }
+
+    my_allocator<char> alloc;
+};
+
+
+using OstringStream = std::basic_ostringstream<char, std::char_traits<char>, NAlloc<char>>;
+using IstringStream = std::basic_istringstream<char, std::char_traits<char>, NAlloc<char>>;
+typedef std::basic_string<char, std::char_traits<char>, NAlloc<char>> RtString;
 
 
 }
@@ -332,11 +336,11 @@ TEST_CASE("controlled bad_alloc_rt_string")
           double,
           my_allocator>;
 
-         
+
 
     SECTION("class json_value")
     {
-        
+
         SECTION("json_value(value_t)")
         {
             SECTION("object")
