@@ -6,14 +6,14 @@ import PackageDescription
 let package = Package(
     name: "nlohmann-json",
      platforms: [
-        .iOS(.v11), .macOS(.v10_13), .tvOS(.v11), .watchOS(.v4)
+        .iOS(.v12), .macOS(.v10_13), .tvOS(.v12), .watchOS(.v4)
     ],
     products: [
-        .library(name: "nlohmann-json", targets: ["nlohmann-json"])
+        .library(name: "json", targets: ["json"])
     ],
     targets: [
         .target(
-            name: "nlohmann-json",
+            name: "json",
             path: "single_include/nlohmann",
             publicHeadersPath: "."
         )
