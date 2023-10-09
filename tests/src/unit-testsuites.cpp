@@ -106,7 +106,7 @@ TEST_CASE("compliance tests from nativejson-benchmark")
 
     SECTION("doubles")
     {
-        auto TEST_DOUBLE = [](const std::string & json_string, const double expected)
+        auto TEST_DOUBLE = [](const std::string& json_string, const double expected)
         {
             CAPTURE(json_string)
             CAPTURE(expected)
@@ -238,7 +238,7 @@ TEST_CASE("compliance tests from nativejson-benchmark")
 
     SECTION("strings")
     {
-        auto TEST_STRING = [](const std::string & json_string, const std::string & expected)
+        auto TEST_STRING = [](const std::string& json_string, const std::string& expected)
         {
             CAPTURE(json_string)
             CAPTURE(expected)

@@ -41,6 +41,7 @@
 // SPDX-License-Identifier: MIT
 
 
+
 #include <utility>
 
 // #include <nlohmann/detail/abi_macros.hpp>
@@ -51,6 +52,7 @@
 //
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
+
 
 
 // This file contains all macro definitions affecting or depending on the ABI
@@ -154,6 +156,7 @@
 // SPDX-License-Identifier: MIT
 
 
+
 #include <algorithm> // transform
 #include <array> // array
 #include <forward_list> // forward_list
@@ -176,6 +179,7 @@
 // SPDX-License-Identifier: MIT
 
 
+
 #include <cstddef> // nullptr_t
 #include <exception> // exception
 #if JSON_DIAGNOSTICS
@@ -195,6 +199,7 @@
 // SPDX-License-Identifier: MIT
 
 
+
 #include <array> // array
 #include <cstddef> // size_t
 #include <cstdint> // uint8_t
@@ -210,6 +215,7 @@
 // SPDX-License-Identifier: MIT
 
 
+
 #include <utility> // declval, pair
 // #include <nlohmann/detail/meta/detected.hpp>
 //     __ _____ _____ _____
@@ -219,6 +225,7 @@
 //
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
+
 
 
 #include <type_traits>
@@ -231,6 +238,7 @@
 //
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
+
 
 
 // #include <nlohmann/detail/abi_macros.hpp>
@@ -2932,6 +2940,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-License-Identifier: MIT
 
 
+
 // #include <nlohmann/detail/abi_macros.hpp>
 
 
@@ -3006,6 +3015,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-License-Identifier: MIT
 
 
+
 #include <cstddef> // size_t
 
 // #include <nlohmann/detail/abi_macros.hpp>
@@ -3046,6 +3056,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-FileCopyrightText: 2018 The Abseil Authors
 // SPDX-License-Identifier: MIT
+
 
 
 #include <array> // array
@@ -3220,6 +3231,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-License-Identifier: MIT
 
 
+
 #include <limits> // numeric_limits
 #include <type_traits> // false_type, is_constructible, is_integral, is_same, true_type
 #include <utility> // declval
@@ -3233,6 +3245,7 @@ NLOHMANN_JSON_NAMESPACE_END
 //
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
+
 
 
 #include <iterator> // random_access_iterator_tag
@@ -3273,7 +3286,7 @@ struct iterator_traits
 
 template<typename T>
 struct iterator_traits < T, enable_if_t < !std::is_pointer<T>::value >>
-            : iterator_types<T>
+                : iterator_types<T>
 {
 };
 
@@ -3302,6 +3315,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-License-Identifier: MIT
 
 
+
 // #include <nlohmann/detail/macro_scope.hpp>
 
 
@@ -3319,6 +3333,7 @@ NLOHMANN_JSON_NAMESPACE_END
 //
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
+
 
 
 // #include <nlohmann/detail/macro_scope.hpp>
@@ -3582,7 +3597,7 @@ template<class...> struct conjunction : std::true_type { };
 template<class B> struct conjunction<B> : B { };
 template<class B, class... Bn>
 struct conjunction<B, Bn...>
-: std::conditional<static_cast<bool>(B::value), conjunction<Bn...>, B>::type {};
+    : std::conditional<static_cast<bool>(B::value), conjunction<Bn...>, B>::type {};
 
 // https://en.cppreference.com/w/cpp/types/negation
 template<class B> struct negation : std::integral_constant < bool, !B::value > { };
@@ -3595,19 +3610,19 @@ struct is_default_constructible : std::is_default_constructible<T> {};
 
 template <typename T1, typename T2>
 struct is_default_constructible<std::pair<T1, T2>>
-            : conjunction<is_default_constructible<T1>, is_default_constructible<T2>> {};
+                : conjunction<is_default_constructible<T1>, is_default_constructible<T2>> {};
 
 template <typename T1, typename T2>
 struct is_default_constructible<const std::pair<T1, T2>>
-            : conjunction<is_default_constructible<T1>, is_default_constructible<T2>> {};
+                : conjunction<is_default_constructible<T1>, is_default_constructible<T2>> {};
 
 template <typename... Ts>
 struct is_default_constructible<std::tuple<Ts...>>
-            : conjunction<is_default_constructible<Ts>...> {};
+                : conjunction<is_default_constructible<Ts>...> {};
 
 template <typename... Ts>
 struct is_default_constructible<const std::tuple<Ts...>>
-            : conjunction<is_default_constructible<Ts>...> {};
+                : conjunction<is_default_constructible<Ts>...> {};
 
 template <typename T, typename... Args>
 struct is_constructible : std::is_constructible<T, Args...> {};
@@ -3630,10 +3645,10 @@ struct is_iterator_traits : std::false_type {};
 template<typename T>
 struct is_iterator_traits<iterator_traits<T>>
 {
-  private:
+    private:
     using traits = iterator_traits<T>;
 
-  public:
+    public:
     static constexpr auto value =
         is_detected<value_type_t, traits>::value &&
         is_detected<difference_type_t, traits>::value &&
@@ -3645,7 +3660,7 @@ struct is_iterator_traits<iterator_traits<T>>
 template<typename T>
 struct is_range
 {
-  private:
+    private:
     using t_ref = typename std::add_lvalue_reference<T>::type;
 
     using iterator = detected_t<result_of_begin, t_ref>;
@@ -3657,7 +3672,7 @@ struct is_range
     static constexpr auto is_iterator_begin =
         is_iterator_traits<iterator_traits<iterator>>::value;
 
-  public:
+    public:
     static constexpr bool value = !std::is_same<iterator, nonesuch>::value && !std::is_same<sentinel, nonesuch>::value && is_iterator_begin;
 };
 
@@ -3699,7 +3714,7 @@ struct is_compatible_object_type_impl <
 
 template<typename BasicJsonType, typename CompatibleObjectType>
 struct is_compatible_object_type
-    : is_compatible_object_type_impl<BasicJsonType, CompatibleObjectType> {};
+        : is_compatible_object_type_impl<BasicJsonType, CompatibleObjectType> {};
 
 template<typename BasicJsonType, typename ConstructibleObjectType,
          typename = void>
@@ -3731,8 +3746,8 @@ struct is_constructible_object_type_impl <
 
 template<typename BasicJsonType, typename ConstructibleObjectType>
 struct is_constructible_object_type
-    : is_constructible_object_type_impl<BasicJsonType,
-      ConstructibleObjectType> {};
+        : is_constructible_object_type_impl<BasicJsonType,
+    ConstructibleObjectType> {};
 
 template<typename BasicJsonType, typename CompatibleStringType>
 struct is_compatible_string_type
@@ -3778,7 +3793,7 @@ struct is_compatible_array_type_impl <
 
 template<typename BasicJsonType, typename CompatibleArrayType>
 struct is_compatible_array_type
-    : is_compatible_array_type_impl<BasicJsonType, CompatibleArrayType> {};
+        : is_compatible_array_type_impl<BasicJsonType, CompatibleArrayType> {};
 
 template<typename BasicJsonType, typename ConstructibleArrayType, typename = void>
 struct is_constructible_array_type_impl : std::false_type {};
@@ -3788,7 +3803,7 @@ struct is_constructible_array_type_impl <
     BasicJsonType, ConstructibleArrayType,
     enable_if_t<std::is_same<ConstructibleArrayType,
     typename BasicJsonType::value_type>::value >>
-            : std::true_type {};
+                : std::true_type {};
 
 template<typename BasicJsonType, typename ConstructibleArrayType>
 struct is_constructible_array_type_impl <
@@ -3807,22 +3822,22 @@ is_detected<range_value_t, ConstructibleArrayType>::value&&
 !std::is_same<ConstructibleArrayType, detected_t<range_value_t, ConstructibleArrayType>>::value&&
         is_complete_type <
         detected_t<range_value_t, ConstructibleArrayType >>::value >>
-{
-    using value_type = range_value_t<ConstructibleArrayType>;
+        {
+            using value_type = range_value_t<ConstructibleArrayType>;
 
-    static constexpr bool value =
-        std::is_same<value_type,
-        typename BasicJsonType::array_t::value_type>::value ||
-        has_from_json<BasicJsonType,
-        value_type>::value ||
-        has_non_default_from_json <
-        BasicJsonType,
-        value_type >::value;
-};
+            static constexpr bool value =
+                std::is_same<value_type,
+            typename BasicJsonType::array_t::value_type>::value ||
+            has_from_json<BasicJsonType,
+            value_type>::value ||
+            has_non_default_from_json <
+            BasicJsonType,
+            value_type >::value;
+        };
 
 template<typename BasicJsonType, typename ConstructibleArrayType>
 struct is_constructible_array_type
-    : is_constructible_array_type_impl<BasicJsonType, ConstructibleArrayType> {};
+        : is_constructible_array_type_impl<BasicJsonType, ConstructibleArrayType> {};
 
 template<typename RealIntegerType, typename CompatibleNumberIntegerType,
          typename = void>
@@ -3848,8 +3863,8 @@ struct is_compatible_integer_type_impl <
 
 template<typename RealIntegerType, typename CompatibleNumberIntegerType>
 struct is_compatible_integer_type
-    : is_compatible_integer_type_impl<RealIntegerType,
-      CompatibleNumberIntegerType> {};
+        : is_compatible_integer_type_impl<RealIntegerType,
+    CompatibleNumberIntegerType> {};
 
 template<typename BasicJsonType, typename CompatibleType, typename = void>
 struct is_compatible_type_impl: std::false_type {};
@@ -3865,7 +3880,7 @@ struct is_compatible_type_impl <
 
 template<typename BasicJsonType, typename CompatibleType>
 struct is_compatible_type
-    : is_compatible_type_impl<BasicJsonType, CompatibleType> {};
+        : is_compatible_type_impl<BasicJsonType, CompatibleType> {};
 
 template<typename T1, typename T2>
 struct is_constructible_tuple : std::false_type {};
@@ -3901,7 +3916,7 @@ template<typename Compare, typename A, typename B>
 struct is_comparable<Compare, A, B, void_t<
 decltype(std::declval<Compare>()(std::declval<A>(), std::declval<B>())),
 decltype(std::declval<Compare>()(std::declval<B>(), std::declval<A>()))
->> : std::true_type {};
+        >> : std::true_type {};
 
 template<typename T>
 using detect_is_transparent = typename T::is_transparent;
@@ -4143,6 +4158,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-License-Identifier: MIT
 
 
+
 #include <cstring> // strlen
 #include <string> // string
 #include <utility> // forward
@@ -4373,7 +4389,7 @@ class exception : public std::exception
         }
 
         auto str = std::accumulate(tokens.rbegin(), tokens.rend(), std::string{},
-                                   [](const std::string & a, const std::string & b)
+                                   [](const std::string& a, const std::string& b)
         {
             return concat(a, '/', detail::escape(b));
         });
@@ -4528,6 +4544,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-License-Identifier: MIT
 
 
+
 // #include <nlohmann/detail/abi_macros.hpp>
 
 
@@ -4549,6 +4566,7 @@ NLOHMANN_JSON_NAMESPACE_END
 //
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
+
 
 
 // #include <nlohmann/detail/macro_scope.hpp>
@@ -5056,6 +5074,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-License-Identifier: MIT
 
 
+
 #include <algorithm> // copy
 #include <iterator> // begin, end
 #include <string> // string
@@ -5073,6 +5092,7 @@ NLOHMANN_JSON_NAMESPACE_END
 //
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
+
 
 
 #include <cstddef> // size_t
@@ -5795,6 +5815,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-License-Identifier: MIT
 
 
+
 #include <cstdint> // uint8_t, uint64_t
 #include <tuple> // tie
 #include <utility> // move
@@ -5904,6 +5925,7 @@ NLOHMANN_JSON_NAMESPACE_END
 //
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
+
 
 
 #include <cstdint> // uint8_t
@@ -6038,6 +6060,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-License-Identifier: MIT
 
 
+
 #include <algorithm> // generate_n
 #include <array> // array
 #include <cmath> // ldexp
@@ -6061,6 +6084,7 @@ NLOHMANN_JSON_NAMESPACE_END
 //
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
+
 
 
 #include <array> // array
@@ -6555,6 +6579,7 @@ NLOHMANN_JSON_NAMESPACE_END
 //
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
+
 
 
 #include <cstddef>
@@ -7286,6 +7311,7 @@ NLOHMANN_JSON_NAMESPACE_END
 //
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
+
 
 
 #include <array> // array
@@ -8926,6 +8952,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-License-Identifier: MIT
 
 
+
 #include <cstdint> // size_t
 #include <utility> // declval
 #include <string> // string
@@ -8994,7 +9021,7 @@ using parse_error_function_t = decltype(std::declval<T&>().parse_error(
 template<typename SAX, typename BasicJsonType>
 struct is_sax
 {
-  private:
+    private:
     static_assert(is_basic_json<BasicJsonType>::value,
                   "BasicJsonType must be of type basic_json<...>");
 
@@ -9005,7 +9032,7 @@ struct is_sax
     using binary_t = typename BasicJsonType::binary_t;
     using exception_t = typename BasicJsonType::exception;
 
-  public:
+    public:
     static constexpr bool value =
         is_detected_exact<bool, null_function_t, SAX>::value &&
         is_detected_exact<bool, boolean_function_t, SAX>::value &&
@@ -9025,7 +9052,7 @@ struct is_sax
 template<typename SAX, typename BasicJsonType>
 struct is_sax_static_asserts
 {
-  private:
+    private:
     static_assert(is_basic_json<BasicJsonType>::value,
                   "BasicJsonType must be of type basic_json<...>");
 
@@ -9036,7 +9063,7 @@ struct is_sax_static_asserts
     using binary_t = typename BasicJsonType::binary_t;
     using exception_t = typename BasicJsonType::exception;
 
-  public:
+    public:
     static_assert(is_detected_exact<bool, null_function_t, SAX>::value,
                   "Missing/invalid function: bool null()");
     static_assert(is_detected_exact<bool, boolean_function_t, SAX>::value,
@@ -12077,6 +12104,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-License-Identifier: MIT
 
 
+
 #include <cmath> // isfinite
 #include <cstdint> // uint8_t
 #include <functional> // function
@@ -12593,6 +12621,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-License-Identifier: MIT
 
 
+
 // #include <nlohmann/detail/abi_macros.hpp>
 
 // #include <nlohmann/detail/iterators/primitive_iterator.hpp>
@@ -12603,6 +12632,7 @@ NLOHMANN_JSON_NAMESPACE_END
 //
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
+
 
 
 #include <cstddef> // ptrdiff_t
@@ -12761,6 +12791,7 @@ NLOHMANN_JSON_NAMESPACE_END
 //
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
+
 
 
 #include <iterator> // iterator, random_access_iterator_tag, bidirectional_iterator_tag, advance, next
@@ -13524,6 +13555,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-License-Identifier: MIT
 
 
+
 #include <cstddef> // ptrdiff_t
 #include <iterator> // reverse_iterator
 #include <utility> // declval
@@ -13690,6 +13722,7 @@ NLOHMANN_JSON_NAMESPACE_END
 //
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
+
 
 
 #include <algorithm> // all_of
@@ -14686,6 +14719,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-License-Identifier: MIT
 
 
+
 #include <initializer_list>
 #include <utility>
 
@@ -14777,6 +14811,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-License-Identifier: MIT
 
 
+
 #include <algorithm> // reverse
 #include <array> // array
 #include <map> // map
@@ -14800,6 +14835,7 @@ NLOHMANN_JSON_NAMESPACE_END
 //
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
+
 
 
 #include <algorithm> // copy
@@ -16770,6 +16806,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-License-Identifier: MIT
 
 
+
 #include <algorithm> // reverse, remove, fill, find, none_of
 #include <array> // array
 #include <clocale> // localeconv, lconv
@@ -16792,6 +16829,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-FileCopyrightText: 2009 Florian Loitsch <https://florian.loitsch.com/>
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
+
 
 
 #include <array> // array
@@ -18888,6 +18926,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-License-Identifier: MIT
 
 
+
 #include <functional> // equal_to, less
 #include <initializer_list> // initializer_list
 #include <iterator> // input_iterator_tag, iterator_traits
@@ -18909,334 +18948,334 @@ NLOHMANN_JSON_NAMESPACE_BEGIN
 template <class Key, class T, class IgnoredLess = std::less<Key>,
           class Allocator = std::allocator<std::pair<const Key, T>>>
                   struct ordered_map : std::vector<std::pair<const Key, T>, Allocator>
-{
-    using key_type = Key;
-    using mapped_type = T;
-    using Container = std::vector<std::pair<const Key, T>, Allocator>;
-    using iterator = typename Container::iterator;
-    using const_iterator = typename Container::const_iterator;
-    using size_type = typename Container::size_type;
-    using value_type = typename Container::value_type;
+                  {
+                      using key_type = Key;
+                      using mapped_type = T;
+                      using Container = std::vector<std::pair<const Key, T>, Allocator>;
+                      using iterator = typename Container::iterator;
+                      using const_iterator = typename Container::const_iterator;
+                      using size_type = typename Container::size_type;
+                      using value_type = typename Container::value_type;
 #ifdef JSON_HAS_CPP_14
-    using key_compare = std::equal_to<>;
+                      using key_compare = std::equal_to<>;
 #else
-    using key_compare = std::equal_to<Key>;
+                      using key_compare = std::equal_to<Key>;
 #endif
 
-    // Explicit constructors instead of `using Container::Container`
-    // otherwise older compilers choke on it (GCC <= 5.5, xcode <= 9.4)
-    ordered_map() noexcept(noexcept(Container())) : Container{} {}
-    explicit ordered_map(const Allocator& alloc) noexcept(noexcept(Container(alloc))) : Container{alloc} {}
-    template <class It>
-    ordered_map(It first, It last, const Allocator& alloc = Allocator())
-        : Container{first, last, alloc} {}
-    ordered_map(std::initializer_list<value_type> init, const Allocator& alloc = Allocator() )
-        : Container{init, alloc} {}
+                      // Explicit constructors instead of `using Container::Container`
+                      // otherwise older compilers choke on it (GCC <= 5.5, xcode <= 9.4)
+ordered_map() noexcept(noexcept(Container())) : Container{} {}
+explicit ordered_map(const Allocator& alloc) noexcept(noexcept(Container(alloc))) : Container{alloc} {}
+template <class It>
+ordered_map(It first, It last, const Allocator& alloc = Allocator())
+: Container{first, last, alloc} {}
+ordered_map(std::initializer_list<value_type> init, const Allocator& alloc = Allocator() )
+: Container{init, alloc} {}
 
-    std::pair<iterator, bool> emplace(const key_type& key, T&& t)
+std::pair<iterator, bool> emplace(const key_type& key, T&& t)
+{
+    for (auto it = this->begin(); it != this->end(); ++it)
     {
-        for (auto it = this->begin(); it != this->end(); ++it)
+        if (m_compare(it->first, key))
         {
-            if (m_compare(it->first, key))
+            return {it, false};
+        }
+    }
+    Container::emplace_back(key, std::forward<T>(t));
+    return {std::prev(this->end()), true};
+}
+
+template<class KeyType, detail::enable_if_t<
+             detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+std::pair<iterator, bool> emplace(KeyType && key, T && t)
+{
+    for (auto it = this->begin(); it != this->end(); ++it)
+    {
+        if (m_compare(it->first, key))
+        {
+            return {it, false};
+        }
+    }
+    Container::emplace_back(std::forward<KeyType>(key), std::forward<T>(t));
+    return {std::prev(this->end()), true};
+}
+
+T& operator[](const key_type& key)
+{
+    return emplace(key, T{}).first->second;
+}
+
+template<class KeyType, detail::enable_if_t<
+             detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+T & operator[](KeyType && key)
+{
+    return emplace(std::forward<KeyType>(key), T{}).first->second;
+}
+
+const T& operator[](const key_type& key) const
+{
+    return at(key);
+}
+
+template<class KeyType, detail::enable_if_t<
+             detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+const T & operator[](KeyType && key) const
+{
+    return at(std::forward<KeyType>(key));
+}
+
+T& at(const key_type& key)
+{
+    for (auto it = this->begin(); it != this->end(); ++it)
+    {
+        if (m_compare(it->first, key))
+        {
+            return it->second;
+        }
+    }
+
+    JSON_THROW(std::out_of_range("key not found"));
+}
+
+template<class KeyType, detail::enable_if_t<
+             detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+T & at(KeyType && key) // NOLINT(cppcoreguidelines-missing-std-forward)
+{
+    for (auto it = this->begin(); it != this->end(); ++it)
+    {
+        if (m_compare(it->first, key))
+        {
+            return it->second;
+        }
+    }
+
+    JSON_THROW(std::out_of_range("key not found"));
+}
+
+const T& at(const key_type& key) const
+{
+    for (auto it = this->begin(); it != this->end(); ++it)
+    {
+        if (m_compare(it->first, key))
+        {
+            return it->second;
+        }
+    }
+
+    JSON_THROW(std::out_of_range("key not found"));
+}
+
+template<class KeyType, detail::enable_if_t<
+             detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+const T & at(KeyType && key) const // NOLINT(cppcoreguidelines-missing-std-forward)
+{
+    for (auto it = this->begin(); it != this->end(); ++it)
+    {
+        if (m_compare(it->first, key))
+        {
+            return it->second;
+        }
+    }
+
+    JSON_THROW(std::out_of_range("key not found"));
+}
+
+size_type erase(const key_type& key)
+{
+    for (auto it = this->begin(); it != this->end(); ++it)
+    {
+        if (m_compare(it->first, key))
+        {
+            // Since we cannot move const Keys, re-construct them in place
+            for (auto next = it; ++next != this->end(); ++it)
             {
-                return {it, false};
+                it->~value_type(); // Destroy but keep allocation
+                new (&*it) value_type{std::move(*next)};
             }
+            Container::pop_back();
+            return 1;
         }
-        Container::emplace_back(key, std::forward<T>(t));
-        return {std::prev(this->end()), true};
     }
+    return 0;
+}
 
-    template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
-    std::pair<iterator, bool> emplace(KeyType && key, T && t)
+template<class KeyType, detail::enable_if_t<
+             detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+size_type erase(KeyType && key) // NOLINT(cppcoreguidelines-missing-std-forward)
+{
+    for (auto it = this->begin(); it != this->end(); ++it)
     {
-        for (auto it = this->begin(); it != this->end(); ++it)
+        if (m_compare(it->first, key))
         {
-            if (m_compare(it->first, key))
+            // Since we cannot move const Keys, re-construct them in place
+            for (auto next = it; ++next != this->end(); ++it)
             {
-                return {it, false};
+                it->~value_type(); // Destroy but keep allocation
+                new (&*it) value_type{std::move(*next)};
             }
+            Container::pop_back();
+            return 1;
         }
-        Container::emplace_back(std::forward<KeyType>(key), std::forward<T>(t));
-        return {std::prev(this->end()), true};
+    }
+    return 0;
+}
+
+iterator erase(iterator pos)
+{
+    return erase(pos, std::next(pos));
+}
+
+iterator erase(iterator first, iterator last)
+{
+    if (first == last)
+    {
+        return first;
     }
 
-    T& operator[](const key_type& key)
+    const auto elements_affected = std::distance(first, last);
+    const auto offset = std::distance(Container::begin(), first);
+
+    // This is the start situation. We need to delete elements_affected
+    // elements (3 in this example: e, f, g), and need to return an
+    // iterator past the last deleted element (h in this example).
+    // Note that offset is the distance from the start of the vector
+    // to first. We will need this later.
+
+    // [ a, b, c, d, e, f, g, h, i, j ]
+    //               ^        ^
+    //             first    last
+
+    // Since we cannot move const Keys, we re-construct them in place.
+    // We start at first and re-construct (viz. copy) the elements from
+    // the back of the vector. Example for first iteration:
+
+    //               ,--------.
+    //               v        |   destroy e and re-construct with h
+    // [ a, b, c, d, e, f, g, h, i, j ]
+    //               ^        ^
+    //               it       it + elements_affected
+
+    for (auto it = first; std::next(it, elements_affected) != Container::end(); ++it)
     {
-        return emplace(key, T{}).first->second;
+        it->~value_type(); // destroy but keep allocation
+        new (&*it) value_type{std::move(*std::next(it, elements_affected))}; // "move" next element to it
     }
 
-    template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
-    T & operator[](KeyType && key)
-    {
-        return emplace(std::forward<KeyType>(key), T{}).first->second;
-    }
+    // [ a, b, c, d, h, i, j, h, i, j ]
+    //               ^        ^
+    //             first    last
 
-    const T& operator[](const key_type& key) const
-    {
-        return at(key);
-    }
+    // remove the unneeded elements at the end of the vector
+    Container::resize(this->size() - static_cast<size_type>(elements_affected));
 
-    template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
-    const T & operator[](KeyType && key) const
-    {
-        return at(std::forward<KeyType>(key));
-    }
+    // [ a, b, c, d, h, i, j ]
+    //               ^        ^
+    //             first    last
 
-    T& at(const key_type& key)
+    // first is now pointing past the last deleted element, but we cannot
+    // use this iterator, because it may have been invalidated by the
+    // resize call. Instead, we can return begin() + offset.
+    return Container::begin() + offset;
+}
+
+size_type count(const key_type& key) const
+{
+    for (auto it = this->begin(); it != this->end(); ++it)
     {
-        for (auto it = this->begin(); it != this->end(); ++it)
+        if (m_compare(it->first, key))
         {
-            if (m_compare(it->first, key))
-            {
-                return it->second;
-            }
+            return 1;
         }
-
-        JSON_THROW(std::out_of_range("key not found"));
     }
+    return 0;
+}
 
-    template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
-    T & at(KeyType && key) // NOLINT(cppcoreguidelines-missing-std-forward)
+template<class KeyType, detail::enable_if_t<
+             detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+size_type count(KeyType && key) const // NOLINT(cppcoreguidelines-missing-std-forward)
+{
+    for (auto it = this->begin(); it != this->end(); ++it)
     {
-        for (auto it = this->begin(); it != this->end(); ++it)
+        if (m_compare(it->first, key))
         {
-            if (m_compare(it->first, key))
-            {
-                return it->second;
-            }
+            return 1;
         }
-
-        JSON_THROW(std::out_of_range("key not found"));
     }
+    return 0;
+}
 
-    const T& at(const key_type& key) const
+iterator find(const key_type& key)
+{
+    for (auto it = this->begin(); it != this->end(); ++it)
     {
-        for (auto it = this->begin(); it != this->end(); ++it)
+        if (m_compare(it->first, key))
         {
-            if (m_compare(it->first, key))
-            {
-                return it->second;
-            }
+            return it;
         }
-
-        JSON_THROW(std::out_of_range("key not found"));
     }
+    return Container::end();
+}
 
-    template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
-    const T & at(KeyType && key) const // NOLINT(cppcoreguidelines-missing-std-forward)
+template<class KeyType, detail::enable_if_t<
+             detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+iterator find(KeyType && key) // NOLINT(cppcoreguidelines-missing-std-forward)
+{
+    for (auto it = this->begin(); it != this->end(); ++it)
     {
-        for (auto it = this->begin(); it != this->end(); ++it)
+        if (m_compare(it->first, key))
         {
-            if (m_compare(it->first, key))
-            {
-                return it->second;
-            }
+            return it;
         }
-
-        JSON_THROW(std::out_of_range("key not found"));
     }
+    return Container::end();
+}
 
-    size_type erase(const key_type& key)
+const_iterator find(const key_type& key) const
+{
+    for (auto it = this->begin(); it != this->end(); ++it)
     {
-        for (auto it = this->begin(); it != this->end(); ++it)
+        if (m_compare(it->first, key))
         {
-            if (m_compare(it->first, key))
-            {
-                // Since we cannot move const Keys, re-construct them in place
-                for (auto next = it; ++next != this->end(); ++it)
-                {
-                    it->~value_type(); // Destroy but keep allocation
-                    new (&*it) value_type{std::move(*next)};
-                }
-                Container::pop_back();
-                return 1;
-            }
+            return it;
         }
-        return 0;
     }
+    return Container::end();
+}
 
-    template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
-    size_type erase(KeyType && key) // NOLINT(cppcoreguidelines-missing-std-forward)
+std::pair<iterator, bool> insert( value_type&& value )
+{
+    return emplace(value.first, std::move(value.second));
+}
+
+std::pair<iterator, bool> insert( const value_type& value )
+{
+    for (auto it = this->begin(); it != this->end(); ++it)
     {
-        for (auto it = this->begin(); it != this->end(); ++it)
+        if (m_compare(it->first, value.first))
         {
-            if (m_compare(it->first, key))
-            {
-                // Since we cannot move const Keys, re-construct them in place
-                for (auto next = it; ++next != this->end(); ++it)
-                {
-                    it->~value_type(); // Destroy but keep allocation
-                    new (&*it) value_type{std::move(*next)};
-                }
-                Container::pop_back();
-                return 1;
-            }
-        }
-        return 0;
-    }
-
-    iterator erase(iterator pos)
-    {
-        return erase(pos, std::next(pos));
-    }
-
-    iterator erase(iterator first, iterator last)
-    {
-        if (first == last)
-        {
-            return first;
-        }
-
-        const auto elements_affected = std::distance(first, last);
-        const auto offset = std::distance(Container::begin(), first);
-
-        // This is the start situation. We need to delete elements_affected
-        // elements (3 in this example: e, f, g), and need to return an
-        // iterator past the last deleted element (h in this example).
-        // Note that offset is the distance from the start of the vector
-        // to first. We will need this later.
-
-        // [ a, b, c, d, e, f, g, h, i, j ]
-        //               ^        ^
-        //             first    last
-
-        // Since we cannot move const Keys, we re-construct them in place.
-        // We start at first and re-construct (viz. copy) the elements from
-        // the back of the vector. Example for first iteration:
-
-        //               ,--------.
-        //               v        |   destroy e and re-construct with h
-        // [ a, b, c, d, e, f, g, h, i, j ]
-        //               ^        ^
-        //               it       it + elements_affected
-
-        for (auto it = first; std::next(it, elements_affected) != Container::end(); ++it)
-        {
-            it->~value_type(); // destroy but keep allocation
-            new (&*it) value_type{std::move(*std::next(it, elements_affected))}; // "move" next element to it
-        }
-
-        // [ a, b, c, d, h, i, j, h, i, j ]
-        //               ^        ^
-        //             first    last
-
-        // remove the unneeded elements at the end of the vector
-        Container::resize(this->size() - static_cast<size_type>(elements_affected));
-
-        // [ a, b, c, d, h, i, j ]
-        //               ^        ^
-        //             first    last
-
-        // first is now pointing past the last deleted element, but we cannot
-        // use this iterator, because it may have been invalidated by the
-        // resize call. Instead, we can return begin() + offset.
-        return Container::begin() + offset;
-    }
-
-    size_type count(const key_type& key) const
-    {
-        for (auto it = this->begin(); it != this->end(); ++it)
-        {
-            if (m_compare(it->first, key))
-            {
-                return 1;
-            }
-        }
-        return 0;
-    }
-
-    template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
-    size_type count(KeyType && key) const // NOLINT(cppcoreguidelines-missing-std-forward)
-    {
-        for (auto it = this->begin(); it != this->end(); ++it)
-        {
-            if (m_compare(it->first, key))
-            {
-                return 1;
-            }
-        }
-        return 0;
-    }
-
-    iterator find(const key_type& key)
-    {
-        for (auto it = this->begin(); it != this->end(); ++it)
-        {
-            if (m_compare(it->first, key))
-            {
-                return it;
-            }
-        }
-        return Container::end();
-    }
-
-    template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
-    iterator find(KeyType && key) // NOLINT(cppcoreguidelines-missing-std-forward)
-    {
-        for (auto it = this->begin(); it != this->end(); ++it)
-        {
-            if (m_compare(it->first, key))
-            {
-                return it;
-            }
-        }
-        return Container::end();
-    }
-
-    const_iterator find(const key_type& key) const
-    {
-        for (auto it = this->begin(); it != this->end(); ++it)
-        {
-            if (m_compare(it->first, key))
-            {
-                return it;
-            }
-        }
-        return Container::end();
-    }
-
-    std::pair<iterator, bool> insert( value_type&& value )
-    {
-        return emplace(value.first, std::move(value.second));
-    }
-
-    std::pair<iterator, bool> insert( const value_type& value )
-    {
-        for (auto it = this->begin(); it != this->end(); ++it)
-        {
-            if (m_compare(it->first, value.first))
-            {
-                return {it, false};
-            }
-        }
-        Container::push_back(value);
-        return {--this->end(), true};
-    }
-
-    template<typename InputIt>
-    using require_input_iter = typename std::enable_if<std::is_convertible<typename std::iterator_traits<InputIt>::iterator_category,
-            std::input_iterator_tag>::value>::type;
-
-    template<typename InputIt, typename = require_input_iter<InputIt>>
-    void insert(InputIt first, InputIt last)
-    {
-        for (auto it = first; it != last; ++it)
-        {
-            insert(*it);
+            return {it, false};
         }
     }
+    Container::push_back(value);
+    return {--this->end(), true};
+}
+
+template<typename InputIt>
+using require_input_iter = typename std::enable_if<std::is_convertible<typename std::iterator_traits<InputIt>::iterator_category,
+        std::input_iterator_tag>::value>::type;
+
+template<typename InputIt, typename = require_input_iter<InputIt>>
+void insert(InputIt first, InputIt last)
+{
+    for (auto it = first; it != last; ++it)
+    {
+        insert(*it);
+    }
+}
 
 private:
-    JSON_NO_UNIQUE_ADDRESS key_compare m_compare = key_compare();
-};
+JSON_NO_UNIQUE_ADDRESS key_compare m_compare = key_compare();
+                                                        };
 
 NLOHMANN_JSON_NAMESPACE_END
 
@@ -23881,7 +23920,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // the valid JSON Patch operations
         enum class patch_operations {add, remove, replace, move, copy, test, invalid};
 
-        const auto get_op = [](const std::string & op)
+        const auto get_op = [](const std::string& op)
         {
             if (op == "add")
             {
@@ -24018,8 +24057,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         for (const auto& val : json_patch)
         {
             // wrapper to get a value for an operation
-            const auto get_value = [&val](const std::string & op,
-                                          const std::string & member,
+            const auto get_value = [&val](const std::string& op,
+                                          const std::string& member,
                                           bool string_type) -> basic_json &
             {
                 // find value
@@ -24396,14 +24435,14 @@ struct less< ::nlohmann::detail::value_t> // do not remove the space after '<', 
     */
     bool operator()(::nlohmann::detail::value_t lhs,
                     ::nlohmann::detail::value_t rhs) const noexcept
-    {
+{
 #if JSON_HAS_THREE_WAY_COMPARISON
-        return std::is_lt(lhs <=> rhs); // *NOPAD*
+    return std::is_lt(lhs <=> rhs); // *NOPAD*
 #else
-        return ::nlohmann::detail::operator<(lhs, rhs);
+    return ::nlohmann::detail::operator<(lhs, rhs);
 #endif
-    }
-};
+}
+                 };
 
 // C++20 prohibit function specialization in the std namespace.
 #ifndef JSON_HAS_CPP_20
@@ -24440,6 +24479,7 @@ inline void swap(nlohmann::NLOHMANN_BASIC_JSON_TPL& j1, nlohmann::NLOHMANN_BASIC
 //
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
+
 
 
 // restore clang diagnostic settings
@@ -24484,6 +24524,7 @@ inline void swap(nlohmann::NLOHMANN_BASIC_JSON_TPL& j1, nlohmann::NLOHMANN_BASIC
 //
 // SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
+
 
 
 #undef JSON_HEDLEY_ALWAYS_INLINE
@@ -24634,6 +24675,7 @@ inline void swap(nlohmann::NLOHMANN_BASIC_JSON_TPL& j1, nlohmann::NLOHMANN_BASIC
 #undef JSON_HEDLEY_WARN_UNUSED_RESULT
 #undef JSON_HEDLEY_WARN_UNUSED_RESULT_MSG
 #undef JSON_HEDLEY_FALL_THROUGH
+
 
 
 #endif  // INCLUDE_NLOHMANN_JSON_HPP_

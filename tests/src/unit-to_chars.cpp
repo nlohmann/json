@@ -126,7 +126,7 @@ TEST_CASE("digit gen")
 {
     SECTION("single precision")
     {
-        auto check_float = [](float number, const std::string & digits, int expected_exponent)
+        auto check_float = [](float number, const std::string& digits, int expected_exponent)
         {
             CAPTURE(number)
             CAPTURE(digits)
@@ -190,7 +190,7 @@ TEST_CASE("digit gen")
 
     SECTION("double precision")
     {
-        auto check_double = [](double number, const std::string & digits, int expected_exponent)
+        auto check_double = [](double number, const std::string& digits, int expected_exponent)
         {
             CAPTURE(number)
             CAPTURE(digits)
@@ -336,7 +336,7 @@ TEST_CASE("formatting")
 {
     SECTION("single precision")
     {
-        auto check_float = [](float number, const std::string & expected)
+        auto check_float = [](float number, const std::string& expected)
         {
             std::array<char, 33> buf{};
             char* end = nlohmann::detail::to_chars(buf.data(), buf.data() + 32, number); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
@@ -396,7 +396,7 @@ TEST_CASE("formatting")
 
     SECTION("double precision")
     {
-        auto check_double = [](double number, const std::string & expected)
+        auto check_double = [](double number, const std::string& expected)
         {
             std::array<char, 33> buf{};
             char* end = nlohmann::detail::to_chars(buf.data(), buf.data() + 32, number); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
@@ -456,7 +456,7 @@ TEST_CASE("formatting")
 
     SECTION("integer")
     {
-        auto check_integer = [](std::int64_t number, const std::string & expected)
+        auto check_integer = [](std::int64_t number, const std::string& expected)
         {
             const nlohmann::json j = number;
             CHECK(j.dump() == expected);
