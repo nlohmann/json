@@ -129,7 +129,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     using lexer = ::nlohmann::detail::lexer_base<basic_json>;
 
     template<typename InputAdapterType>
-    static ::nlohmann::detail::parser<basic_json, InputAdapterType, AllocatorType<basic_json*>, AllocatorType<typename InputAdapterType::char_type>> parser( //alex
+    static ::nlohmann::detail::parser<basic_json, InputAdapterType, AllocatorType<basic_json*>, AllocatorType<typename InputAdapterType::char_type>> parser( 
                 InputAdapterType adapter,
                 detail::parser_callback_t<basic_json>cb = nullptr,
                 const bool allow_exceptions = true,
