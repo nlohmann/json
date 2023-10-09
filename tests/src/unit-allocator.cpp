@@ -286,7 +286,7 @@ struct NAlloc
         alloc()
     {
 
-    };
+    }
 
     virtual ~NAlloc() { }
 
