@@ -1962,7 +1962,7 @@ TEST_CASE("CBOR regressions")
                     CHECK(false);
                 }
             }
-            catch (const json::parse_error&)
+            catch (const json::parse_error&) // NOLINT(bugprone-empty-catch)
             {
                 // parse errors are ok, because input may be random bytes
             }

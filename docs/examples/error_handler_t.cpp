@@ -11,7 +11,7 @@ int main()
     {
         std::cout << j_invalid.dump() << std::endl;
     }
-    catch (json::type_error& e)
+    catch (const json::type_error& e)
     {
         std::cout << e.what() << std::endl;
     }

@@ -11,7 +11,7 @@ int main()
         json j = {{"foo", "bar"}};
         json k = j.at("non-existing");
     }
-    catch (json::exception& e)
+    catch (const json::exception& e)
     {
         // output exception information
         std::cout << "message: " << e.what() << '\n'

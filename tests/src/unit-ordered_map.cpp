@@ -11,7 +11,6 @@
 #include <nlohmann/json.hpp>
 using nlohmann::ordered_map;
 
-
 TEST_CASE("ordered_map")
 {
     SECTION("constructor")

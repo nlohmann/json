@@ -30,7 +30,6 @@ int main()
     std::vector<short> v7;
     std::unordered_map<std::string, json> v8;
 
-
     // use explicit conversions
     json_types["boolean"].get_to(v1);
     json_types["number"]["integer"].get_to(v2);

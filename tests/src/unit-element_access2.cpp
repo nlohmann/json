@@ -72,7 +72,6 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                 CHECK_THROWS_WITH_AS(j.at("foo"), "[json.exception.out_of_range.403] key 'foo' not found", typename Json::out_of_range&);
                 CHECK_THROWS_WITH_AS(j_const.at("foo"), "[json.exception.out_of_range.403] key 'foo' not found", typename Json::out_of_range&);
 
-
 #ifdef JSON_HAS_CPP_17
                 CHECK_THROWS_WITH_AS(j.at(std::string_view("foo")), "[json.exception.out_of_range.403] key 'foo' not found", typename Json::out_of_range&);
                 CHECK_THROWS_WITH_AS(j_const.at(std::string_view("foo")), "[json.exception.out_of_range.403] key 'foo' not found", typename Json::out_of_range&);
@@ -1522,9 +1521,9 @@ TEST_CASE_TEMPLATE("element access 2 (additional value() tests)", Json, nlohmann
             CHECK(j.value("foo", cpstr) == "bar");
             CHECK(j.value("foo", castr) == "bar");
             CHECK(j.value("foo", str) == "bar");
-            // this test is in fact different than the one below,
+            // this test is in fact different from the one below,
             // because of 0 considering const char * overloads
-            // where as any other number does not
+            // whereas any other number does not
             CHECK(j.value("baz", 0) == 42);
             CHECK(j.value("baz", 47) == 42);
             CHECK(j.value("baz", integer) == 42);
