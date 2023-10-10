@@ -56,7 +56,7 @@ using parser_callback_t =
 
 This class implements a recursive descent parser.
 */
-template<typename BasicJsonType, typename InputAdapterType, typename AllocatorJson, typename AllocatorChar >
+template<typename BasicJsonType, typename InputAdapterType, typename AllocatorJson, typename AllocatorChar, typename  AllocatorBool>
 class parser
 {
     using number_integer_t = typename BasicJsonType::number_integer_t;
@@ -181,7 +181,8 @@ class parser
     {
         // stack to remember the hierarchy of structured values we are parsing
         // true = array; false = object
-        std::vector<bool, AllocatorChar> states;
+        std::vector<bool, AllocatorBool> states;
+
         // value to avoid a goto (see comment where set to true)
         bool skip_to_state_evaluation = false;
 

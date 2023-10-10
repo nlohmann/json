@@ -12160,7 +12160,7 @@ using parser_callback_t =
 
 This class implements a recursive descent parser.
 */
-template<typename BasicJsonType, typename InputAdapterType, typename AllocatorJson, typename AllocatorChar >
+template<typename BasicJsonType, typename InputAdapterType, typename AllocatorJson, typename AllocatorChar, typename  AllocatorBool>
 class parser
 {
     using number_integer_t = typename BasicJsonType::number_integer_t;
@@ -12285,7 +12285,8 @@ class parser
     {
         // stack to remember the hierarchy of structured values we are parsing
         // true = array; false = object
-        std::vector<bool, AllocatorChar> states;
+        std::vector<bool, AllocatorBool> states;
+
         // value to avoid a goto (see comment where set to true)
         bool skip_to_state_evaluation = false;
 
@@ -19326,7 +19327,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     // can be restored when json_pointer backwards compatibility is removed
     // friend ::nlohmann::json_pointer<StringType>;
 
-    template<typename BasicJsonType, typename InputType, typename AllocatorJson, typename AllocatorChar>
+    template<typename BasicJsonType, typename InputType, typename AllocatorJson, typename AllocatorChar, typename AllocatorBool>
     friend class ::nlohmann::detail::parser;
     friend ::nlohmann::detail::serializer<basic_json>;
     template<typename BasicJsonType>
@@ -19350,14 +19351,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     using lexer = ::nlohmann::detail::lexer_base<basic_json>;
 
     template<typename InputAdapterType>
-    static ::nlohmann::detail::parser<basic_json, InputAdapterType, AllocatorType<basic_json*>, AllocatorType<typename InputAdapterType::char_type>> parser(
+    static ::nlohmann::detail::parser<basic_json, InputAdapterType, AllocatorType<basic_json*>, AllocatorType<typename InputAdapterType::char_type>, AllocatorType<bool>> parser(
         InputAdapterType adapter,
         detail::parser_callback_t<basic_json>cb = nullptr,
         const bool allow_exceptions = true,
         const bool ignore_comments = false
                                  )
     {
-        return ::nlohmann::detail::parser<basic_json, InputAdapterType, AllocatorType<basic_json*>, AllocatorType<typename InputAdapterType::char_type>>(std::move(adapter),
+        return ::nlohmann::detail::parser<basic_json, InputAdapterType, AllocatorType<basic_json*>, AllocatorType<typename InputAdapterType::char_type>, AllocatorType<bool>>(std::move(adapter),
                 std::move(cb), allow_exceptions, ignore_comments);
     }
 
