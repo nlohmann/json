@@ -283,10 +283,15 @@ struct NAlloc
     };
 
     NAlloc() :
-        alloc(), m_alloc_size(0)
+        alloc()
     {
 
     }
+
+    NAlloc(const NAlloc&) = default;                   // Copy constructor
+    NAlloc(NAlloc&&) = default;                       // Move constructor
+    NAlloc& operator=(const NAlloc& other) = default;  // Copy assignment operator
+    NAlloc& operator=(NAlloc&&) = default;            // Move assignment operator
 
     virtual ~NAlloc() = default;
 
