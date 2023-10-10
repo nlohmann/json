@@ -12,6 +12,7 @@
 #include <string> // string
 #include <utility> // move
 #include <vector> // vector
+#include <memory>
 
 #include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/macro_scope.hpp>

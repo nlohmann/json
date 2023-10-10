@@ -20,6 +20,7 @@
 #include <string> // char_traits, string
 #include <utility> // make_pair, move
 #include <vector> // vector
+#include <memory>
 
 #include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/input/input_adapters.hpp>

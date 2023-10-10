@@ -17,6 +17,7 @@
 #include <string> // char_traits, string
 #include <utility> // move
 #include <vector> // vector
+#include <memory>
 
 #include <nlohmann/detail/input/input_adapters.hpp>
 #include <nlohmann/detail/input/position_t.hpp>

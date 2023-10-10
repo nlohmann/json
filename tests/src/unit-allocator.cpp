@@ -288,7 +288,7 @@ struct NAlloc
 
     }
 
-    virtual ~NAlloc() { }
+    virtual ~NAlloc() = default;
 
     pointer allocate(std::size_t n)
     {
@@ -312,16 +312,16 @@ struct NAlloc
     }
 
     my_allocator<char> alloc;
-    std::size_t m_alloc_size;
+    std::size_t m_alloc_size {};
 };
 
 
 using OstringStream = std::basic_ostringstream<char, std::char_traits<char>, NAlloc<char>>;
 using IstringStream = std::basic_istringstream<char, std::char_traits<char>, NAlloc<char>>;
-typedef std::basic_string<char, std::char_traits<char>, NAlloc<char>> RtString;
+using RtString = std::basic_string<char, std::char_traits<char>, NAlloc<char>>;
 
 
-}
+} //namespace
 
 TEST_CASE("controlled bad_alloc_rt_string")
 {
