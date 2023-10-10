@@ -283,7 +283,7 @@ struct NAlloc
     };
 
     NAlloc() :
-        alloc(),m_alloc_size(0)
+        alloc(), m_alloc_size(0)
     {
 
     }
@@ -292,7 +292,7 @@ struct NAlloc
 
     pointer allocate(std::size_t n)
     {
-     
+
         return static_cast<pointer>(alloc.allocate(n));  // get memory from pool
     }
     void deallocate(pointer p, std::size_t n)
@@ -342,7 +342,7 @@ TEST_CASE("controlled bad_alloc_rt_string")
 
         SECTION("json_value(value_t)")
         {
-                        
+
             SECTION("string")
             {
                 next_construct_fails = false;

@@ -6068,6 +6068,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <string> // char_traits, string
 #include <utility> // make_pair, move
 #include <vector> // vector
+#include <memory>
 
 // #include <nlohmann/detail/exceptions.hpp>
 
@@ -6581,6 +6582,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <string> // string
 #include <utility> // move
 #include <vector> // vector
+#include <memory>
 
 // #include <nlohmann/detail/exceptions.hpp>
 
@@ -7318,6 +7320,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <string> // char_traits, string
 #include <utility> // move
 #include <vector> // vector
+#include <memory>
 
 // #include <nlohmann/detail/input/input_adapters.hpp>
 
