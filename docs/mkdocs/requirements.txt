@@ -6,7 +6,7 @@ csscompressor==0.9.5
 future==0.18.3
 ghp-import==2.1.0
 gitdb==4.0.10
-GitPython==3.1.29
+GitPython==3.1.37
 htmlmin==0.1.12
 httplib2==0.21.0
 idna==3.4
