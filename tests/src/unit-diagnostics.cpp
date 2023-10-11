@@ -74,7 +74,7 @@ TEST_CASE("Better diagnostics")
     SECTION("Parse error")
     {
         json _;
-        CHECK_THROWS_WITH_AS(_ = json::parse(""), "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal", json::parse_error);
+        CHECK_THROWS_WITH_AS(_ = json::parse(""), "[json.exception.parse_error.101] parse error at line 1, column 1: attempting to parse an empty input; check that your input string or stream contains the expected JSON", json::parse_error);
     }
 
     SECTION("Wrong type in update()")
