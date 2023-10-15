@@ -1,2 +1,0 @@
-before calling clear_subtype(): {"bytes":[202,254,186,190],"subtype":42}
-after calling clear_subtype(): {"bytes":[202,254,186,190],"subtype":null}

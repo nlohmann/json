@@ -1,4 +1,0 @@
-m_ordered = { one:eins two:zwei three:drei }
-m_std = { one:eins three:drei two:zwei }
-m_ordered = { two:zwei three:drei one:eins }
-m_std = { one:eins three:drei two:zwei }

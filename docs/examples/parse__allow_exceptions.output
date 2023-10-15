@@ -1,2 +1,0 @@
-[json.exception.parse_error.101] parse error at line 4, column 0: syntax error while parsing value - invalid string: control character U+000A (LF) must be escaped to \u000A or \n; last read: '"value without closing quotes<U+000A>'
-the input is invalid JSON

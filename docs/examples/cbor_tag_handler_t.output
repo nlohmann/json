@@ -1,3 +1,0 @@
-[json.exception.parse_error.112] parse error at byte 1: syntax error while parsing CBOR value: invalid byte: 0xD8
-{"bytes":[202,254,186,190],"subtype":null}
-{"bytes":[202,254,186,190],"subtype":66}

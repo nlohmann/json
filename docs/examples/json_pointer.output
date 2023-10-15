@@ -1,3 +1,0 @@
-[json.exception.parse_error.107] parse error at byte 1: JSON pointer must be empty or begin with '/' - was: 'foo'
-[json.exception.parse_error.108] parse error: escape character '~' must be followed with '0' or '1'
-[json.exception.parse_error.108] parse error: escape character '~' must be followed with '0' or '1'

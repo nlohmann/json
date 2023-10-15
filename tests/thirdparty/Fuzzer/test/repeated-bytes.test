@@ -1,2 +1,0 @@
-CHECK: BINGO
-RUN: LLVMFuzzer-RepeatedBytesTest -seed=1 -runs=1000000 2>&1 | FileCheck %s

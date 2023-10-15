@@ -1,4 +1,0 @@
-/* disable ligatures in code and preformatted blocks */
-code, pre {
-    font-variant-ligatures: none;
-}

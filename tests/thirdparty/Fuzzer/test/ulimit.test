@@ -1,2 +1,0 @@
-RUN: ulimit -s 1000
-RUN: LLVMFuzzer-SimpleTest

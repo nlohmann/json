@@ -1,5 +1,0 @@
-[1,2,3] == nullptr false
-{"A":"a","B":"b"} == nullptr false
-17 == nullptr false
-"foo" == nullptr false
-null == nullptr true

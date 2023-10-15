@@ -1,8 +1,0 @@
-null is a null
-true is a boolean
--17 is a number
-42 is a number
-23.42 is a number
-{"one":1,"two":2} is an object
-[1,2,4,8,16] is an array
-"Hello, world" is a string

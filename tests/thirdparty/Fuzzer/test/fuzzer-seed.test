@@ -1,3 +1,0 @@
-RUN: LLVMFuzzer-SimpleCmpTest -seed=-1 -runs=0 2>&1 | FileCheck %s --check-prefix=CHECK_SEED_MINUS_ONE
-CHECK_SEED_MINUS_ONE: Seed: 4294967295
-

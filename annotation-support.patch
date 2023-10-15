@@ -1,0 +1,520 @@
+diff --git a/include/nlohmann/detail/macro_scope_annotated.hpp b/include/nlohmann/detail/macro_scope_annotated.hpp
+new file mode 100644
+index 00000000..6aca7839
+--- /dev/null
++++ b/include/nlohmann/detail/macro_scope_annotated.hpp
+@@ -0,0 +1,80 @@
++#include <nlohmann/detail/macro_scope.hpp>
++
++#define ANNOTATED_JSON_NOT_ALLOWED static_assert(false, "Annotated macro requires even number of arguments where each property is accompanied by a string comment.")
++
++#define NLOHMANN_JSON_ANNOTATED_TO(v1, w1) nlohmann_json_j[#v1] = nlohmann_json_t.v1;
++
++#define NLOHMANN_JSON_ANNOTATED_EXPAND( x ) x
++#define NLOHMANN_JSON_ANNOTATED_GET_MACRO(_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,_11,_12,_13,_14,_15,_16,_17,_18,_19,_20,_21,_22,_23,_24,_25,_26,_27,_28,_29,_30,_31,_32,NAME,...) NAME
++#define NLOHMANN_JSON_ANNOTATED_PASTE(...) NLOHMANN_JSON_ANNOTATED_EXPAND(NLOHMANN_JSON_ANNOTATED_GET_MACRO(__VA_ARGS__, \
++        ANNOTATED_JSON_NOT_ALLOWED, NLOHMANN_JSON_ANNOTATED_PASTE30, \
++        ANNOTATED_JSON_NOT_ALLOWED, NLOHMANN_JSON_ANNOTATED_PASTE28, \
++        ANNOTATED_JSON_NOT_ALLOWED, NLOHMANN_JSON_ANNOTATED_PASTE26, \
++        ANNOTATED_JSON_NOT_ALLOWED, NLOHMANN_JSON_ANNOTATED_PASTE24, \
++        ANNOTATED_JSON_NOT_ALLOWED, NLOHMANN_JSON_ANNOTATED_PASTE22, \
++        ANNOTATED_JSON_NOT_ALLOWED, NLOHMANN_JSON_ANNOTATED_PASTE20, \
++        ANNOTATED_JSON_NOT_ALLOWED, NLOHMANN_JSON_ANNOTATED_PASTE18, \
++        ANNOTATED_JSON_NOT_ALLOWED, NLOHMANN_JSON_ANNOTATED_PASTE16, \
++        ANNOTATED_JSON_NOT_ALLOWED, NLOHMANN_JSON_ANNOTATED_PASTE14, \
++        ANNOTATED_JSON_NOT_ALLOWED, NLOHMANN_JSON_ANNOTATED_PASTE12, \
++        ANNOTATED_JSON_NOT_ALLOWED, NLOHMANN_JSON_ANNOTATED_PASTE10, \
++        ANNOTATED_JSON_NOT_ALLOWED, NLOHMANN_JSON_ANNOTATED_PASTE8, \
++        ANNOTATED_JSON_NOT_ALLOWED, NLOHMANN_JSON_ANNOTATED_PASTE6, \
++        ANNOTATED_JSON_NOT_ALLOWED, NLOHMANN_JSON_ANNOTATED_PASTE4, \
++        ANNOTATED_JSON_NOT_ALLOWED, NLOHMANN_JSON_ANNOTATED_PASTE2, \
++        ANNOTATED_JSON_NOT_ALLOWED, ANNOTATED_JSON_NOT_ALLOWED, \
++        ANNOTATED_JSON_NOT_ALLOWED)(__VA_ARGS__))
++#define NLOHMANN_JSON_ANNOTATED_PASTE2(func, v1, w1) func(v1, w1)
++#define NLOHMANN_JSON_ANNOTATED_PASTE4(func, v1, w1, v2, w2) NLOHMANN_JSON_ANNOTATED_PASTE2(func, v1, w1) NLOHMANN_JSON_ANNOTATED_PASTE2(func, v2, w2)
++#define NLOHMANN_JSON_ANNOTATED_PASTE6(func, v1, w1, v2, w2, v3, w3) NLOHMANN_JSON_ANNOTATED_PASTE2(func, v1, w1) NLOHMANN_JSON_ANNOTATED_PASTE4(func, v2, w2, v3, w3)
++#define NLOHMANN_JSON_ANNOTATED_PASTE8(func, v1, w1, v2, w2, v3, w3, v4, w4) NLOHMANN_JSON_ANNOTATED_PASTE2(func, v1, w1) NLOHMANN_JSON_ANNOTATED_PASTE6(func, v2, w2, v3, w3, v4, w4)
++#define NLOHMANN_JSON_ANNOTATED_PASTE10(func, v1, w1, v2, w2, v3, w3, v4, w4, v5, w5) NLOHMANN_JSON_ANNOTATED_PASTE2(func, v1, w1) NLOHMANN_JSON_ANNOTATED_PASTE8(func, v2, w2, v3, w3, v4, w4, v5, w5)
++#define NLOHMANN_JSON_ANNOTATED_PASTE12(func, v1, w1, v2, w2, v3, w3, v4, w4, v5, w5, v6, w6) NLOHMANN_JSON_ANNOTATED_PASTE2(func, v1, w1) NLOHMANN_JSON_ANNOTATED_PASTE10(func, v2, w2, v3, w3, v4, w4, v5, w5, v6, w6)
++#define NLOHMANN_JSON_ANNOTATED_PASTE14(func, v1, w1, v2, w2, v3, w3, v4, w4, v5, w5, v6, w6, v7, w7) NLOHMANN_JSON_ANNOTATED_PASTE2(func, v1, w1) NLOHMANN_JSON_ANNOTATED_PASTE12(func, v2, w2, v3, w3, v4, w4, v5, w5, v6, w6, v7, w7)
++#define NLOHMANN_JSON_ANNOTATED_PASTE16(func, v1, w1, v2, w2, v3, w3, v4, w4, v5, w5, v6, w6, v7, w7, v8, w8) NLOHMANN_JSON_ANNOTATED_PASTE2(func, v1, w1) NLOHMANN_JSON_ANNOTATED_PASTE14(func, v2, w2, v3, w3, v4, w4, v5, w5, v6, w6, v7, w7, v8, w8)
++#define NLOHMANN_JSON_ANNOTATED_PASTE18(func, v1, w1, v2, w2, v3, w3, v4, w4, v5, w5, v6, w6, v7, w7, v8, w8, v9, w9) NLOHMANN_JSON_ANNOTATED_PASTE2(func, v1, w1) NLOHMANN_JSON_ANNOTATED_PASTE16(func, v2, w2, v3, w3, v4, w4, v5, w5, v6, w6, v7, w7, v8, w8, v9, w9)
++#define NLOHMANN_JSON_ANNOTATED_PASTE20(func, v1, w1, v2, w2, v3, w3, v4, w4, v5, w5, v6, w6, v7, w7, v8, w8, v9, w9, v10, w10) NLOHMANN_JSON_ANNOTATED_PASTE2(func, v1, w1) NLOHMANN_JSON_ANNOTATED_PASTE18(func, v2, w2, v3, w3, v4, w4, v5, w5, v6, w6, v7, w7, v8, w8, v9, w9, v10, w10)
++#define NLOHMANN_JSON_ANNOTATED_PASTE22(func, v1, w1, v2, w2, v3, w3, v4, w4, v5, w5, v6, w6, v7, w7, v8, w8, v9, w9, v10, w10, v11, w11) NLOHMANN_JSON_ANNOTATED_PASTE2(func, v1, w1) NLOHMANN_JSON_ANNOTATED_PASTE20(func, v2, w2, v3, w3, v4, w4, v5, w5, v6, w6, v7, w7, v8, w8, v9, w9, v10, w10, v11, w11)
++#define NLOHMANN_JSON_ANNOTATED_PASTE24(func, v1, w1, v2, w2, v3, w3, v4, w4, v5, w5, v6, w6, v7, w7, v8, w8, v9, w9, v10, w10, v11, w11, v12, w12) NLOHMANN_JSON_ANNOTATED_PASTE2(func, v1, w1) NLOHMANN_JSON_ANNOTATED_PASTE22(func, v2, w2, v3, w3, v4, w4, v5, w5, v6, w6, v7, w7, v8, w8, v9, w9, v10, w10, v11, w11, v12, w12)
++#define NLOHMANN_JSON_ANNOTATED_PASTE26(func, v1, w1, v2, w2, v3, w3, v4, w4, v5, w5, v6, w6, v7, w7, v8, w8, v9, w9, v10, w10, v11, w11, v12, w12, v13, w13) NLOHMANN_JSON_ANNOTATED_PASTE2(func, v1, w1) NLOHMANN_JSON_ANNOTATED_PASTE24(func, v2, w2, v3, w3, v4, w4, v5, w5, v6, w6, v7, w7, v8, w8, v9, w9, v10, w10, v11, w11, v12, w12, v13, w13)
++#define NLOHMANN_JSON_ANNOTATED_PASTE28(func, v1, w1, v2, w2, v3, w3, v4, w4, v5, w5, v6, w6, v7, w7, v8, w8, v9, w9, v10, w10, v11, w11, v12, w12, v13, w13, v14, w14) NLOHMANN_JSON_ANNOTATED_PASTE2(func, v1, w1) NLOHMANN_JSON_ANNOTATED_PASTE26(func, v2, w2, v3, w3, v4, w4, v5, w5, v6, w6, v7, w7, v8, w8, v9, w9, v10, w10, v11, w11, v12, w12, v13, w13, v14, w14)
++#define NLOHMANN_JSON_ANNOTATED_PASTE30(func, v1, w1, v2, w2, v3, w3, v4, w4, v5, w5, v6, w6, v7, w7, v8, w8, v9, w9, v10, w10, v11, w11, v12, w12, v13, w13, v14, w14, v15, w15) NLOHMANN_JSON_ANNOTATED_PASTE2(func, v1, w1) NLOHMANN_JSON_ANNOTATED_PASTE28(func, v2, w2, v3, w3, v4, w4, v5, w5, v6, w6, v7, w7, v8, w8, v9, w9, v10, w10, v11, w11, v12, w12, v13, w13, v14, w14, v15, w15)
++
++
++#define TERNARY_EXPAND1(v1, w1) (property == #v1 ? w1 : "")
++#define TERNARY_EXPAND2(v1, w1, v2, w2) (property == #v2 ? w2 : TERNARY_EXPAND1(v1, w1))
++#define TERNARY_EXPAND3(v1, w1, v2, w2, v3, w3) (property == #v3 ? w3 : TERNARY_EXPAND2(v1, w1, v2, w2))
++#define TERNARY_EXPAND4(v1, w1, v2, w2, v3, w3, v4, w4) (property == #v4 ? w4 : TERNARY_EXPAND3(v1, w1, v2, w2, v3, w3))
++#define TERNARY_EXPAND5(v1, w1, v2, w2, v3, w3, v4, w4, v5, w5) (property == #v5 ? w5 : TERNARY_EXPAND4(v1, w1, v2, w2, v3, w3, v4, w4))
++#define TERNARY_EXPAND6(v1, w1, v2, w2, v3, w3, v4, w4, v5, w5, v6, w6) (property == #v6 ? w6 : TERNARY_EXPAND5(v1, w1, v2, w2, v3, w3, v4, w4, v5, w5))
++#define TERNARY_EXPAND7(v1, w1, v2, w2, v3, w3, v4, w4, v5, w5, v6, w6, v7, w7) (property == #v7 ? w7 : TERNARY_EXPAND6(v1, w1, v2, w2, v3, w3, v4, w4, v5, w5, v6, w6))
++#define TERNARY_EXPAND8(v1, w1, v2, w2, v3, w3, v4, w4, v5, w5, v6, w6, v7, w7, v8, w8) (property == #v8 ? w8 : TERNARY_EXPAND7(v1, w1, v2, w2, v3, w3, v4, w4, v5, w5, v6, w6, v7, w7))
++#define TERNARY_EXPAND9(v1, w1, v2, w2, v3, w3, v4, w4, v5, w5, v6, w6, v7, w7, v8, w8, v9, w9) (property == #v9 ? w9 : TERNARY_EXPAND8(v1, w1, v2, w2, v3, w3, v4, w4, v5, w5, v6, w6, v7, w7, v8, w8))
++#define TERNARY_EXPAND10(v1, w1, v2, w2, v3, w3, v4, w4, v5, w5, v6, w6, v7, w7, v8, w8, v9, w9, v10, w10) (property == #v10 ? w10 : TERNARY_EXPAND9(v1, w1, v2, w2, v3, w3, v4, w4, v5, w5, v6, w6, v7, w7, v8, w8, v9, w9))
++#define TERNARY_EXPAND11(v1, w1, v2, w2, v3, w3, v4, w4, v5, w5, v6, w6, v7, w7, v8, w8, v9, w9, v10, w10, v11, w11) (property == #v11 ? w11 : TERNARY_EXPAND10(v1, w1, v2, w2, v3, w3, v4, w4, v5, w5, v6, w6, v7, w7, v8, w8, v9, w9, v10, w10))
++#define TERNARY_EXPAND12(v1, w1, v2, w2, v3, w3, v4, w4, v5, w5, v6, w6, v7, w7, v8, w8, v9, w9, v10, w10, v11, w11, v12, w12) (property == #v12 ? w12 : TERNARY_EXPAND11(v1, w1, v2, w2, v3, w3, v4, w4, v5, w5, v6, w6, v7, w7, v8, w8, v9, w9, v10, w10, v11, w11))
++#define TERNARY_EXPAND13(v1, w1, v2, w2, v3, w3, v4, w4, v5, w5, v6, w6, v7, w7, v8, w8, v9, w9, v10, w10, v11, w11, v12, w12, v13, w13) (property == #v13 ? w13 : TERNARY_EXPAND12(v1, w1, v2, w2, v3, w3, v4, w4, v5, w5, v6, w6, v7, w7, v8, w8, v9, w9, v10, w10, v11, w11, v12, w12))
++#define TERNARY_EXPAND14(v1, w1, v2, w2, v3, w3, v4, w4, v5, w5, v6, w6, v7, w7, v8, w8, v9, w9, v10, w10, v11, w11, v12, w12, v13, w13, v14, w14) (property == #v14 ? w14 : TERNARY_EXPAND13(v1, w1, v2, w2, v3, w3, v4, w4, v5, w5, v6, w6, v7, w7, v8, w8, v9, w9, v10, w10, v11, w11, v12, w12, v13, w13))
++#define TERNARY_EXPAND15(v1, w1, v2, w2, v3, w3, v4, w4, v5, w5, v6, w6, v7, w7, v8, w8, v9, w9, v10, w10, v11, w11, v12, w12, v13, w13, v14, w14, v15, w15) (property == #v15 ? w15 : TERNARY_EXPAND14(v1, w1, v2, w2, v3, w3, v4, w4, v5, w5, v6, w6, v7, w7, v8, w8, v9, w9, v10, w10, v11, w11, v12, w12, v13, w13, v14, w14))
++
++#define GET_TERNARY_EXPAND_MACRO(_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,_11,_12,_13,_14,_15,_16,_17,_18,_19,_20,_21,_22,_23,_24,_25,_26,_27,_28,_29,_30,NAME,...) NAME
++#define TERNARY_EXPAND(...) GET_TERNARY_EXPAND_MACRO(__VA_ARGS__, \
++                TERNARY_EXPAND15, ANNOTATED_JSON_NOT_ALLOWED, \
++                TERNARY_EXPAND14, ANNOTATED_JSON_NOT_ALLOWED, \
++                TERNARY_EXPAND13, ANNOTATED_JSON_NOT_ALLOWED, \
++                TERNARY_EXPAND12, ANNOTATED_JSON_NOT_ALLOWED, \
++                TERNARY_EXPAND11, ANNOTATED_JSON_NOT_ALLOWED, \
++                TERNARY_EXPAND10, ANNOTATED_JSON_NOT_ALLOWED, \
++                TERNARY_EXPAND9, ANNOTATED_JSON_NOT_ALLOWED, \
++                TERNARY_EXPAND8, ANNOTATED_JSON_NOT_ALLOWED, \
++                TERNARY_EXPAND7, ANNOTATED_JSON_NOT_ALLOWED, \
++                TERNARY_EXPAND6, ANNOTATED_JSON_NOT_ALLOWED, \
++                TERNARY_EXPAND5, ANNOTATED_JSON_NOT_ALLOWED, \
++                TERNARY_EXPAND4, ANNOTATED_JSON_NOT_ALLOWED, \
++                TERNARY_EXPAND3, ANNOTATED_JSON_NOT_ALLOWED, \
++                TERNARY_EXPAND2, ANNOTATED_JSON_NOT_ALLOWED, \
++                TERNARY_EXPAND1, ANNOTATED_JSON_NOT_ALLOWED)(__VA_ARGS__)
++
++#define NLOHMANN_DEFINE_TYPE_INTRUSIVE_ANNOTATED(Type, ...)  \
++    friend void to_json(nlohmann::json& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_ANNOTATED_EXPAND(NLOHMANN_JSON_ANNOTATED_PASTE(NLOHMANN_JSON_ANNOTATED_TO, __VA_ARGS__)) } \
++    static std::string get_annotation(const std::string& property) { return TERNARY_EXPAND(__VA_ARGS__); }
+\ No newline at end of file
+diff --git a/include/nlohmann/detail/output/serializer.hpp b/include/nlohmann/detail/output/serializer.hpp
+index f17b89c6..1cad019d 100644
+--- a/include/nlohmann/detail/output/serializer.hpp
++++ b/include/nlohmann/detail/output/serializer.hpp
+@@ -21,6 +21,7 @@
+ #include <iomanip> // setfill, setw
+ #include <type_traits> // is_same
+ #include <utility> // move
++#include <sstream>
+ 
+ #include <nlohmann/detail/conversions/to_chars.hpp>
+ #include <nlohmann/detail/exceptions.hpp>
+@@ -31,6 +32,7 @@
+ #include <nlohmann/detail/string_concat.hpp>
+ #include <nlohmann/detail/value_t.hpp>
+ 
++
+ NLOHMANN_JSON_NAMESPACE_BEGIN
+ namespace detail
+ {
+@@ -373,6 +375,197 @@ class serializer
+         }
+     }
+ 
++    template<typename UnderlyingType>
++    void dump_annotated(const BasicJsonType& val,
++                        const bool ensure_ascii,
++                        const unsigned int indent_step,
++                        const unsigned int current_indent = 0) {
++        switch (val.m_data.m_type)
++        {
++            case value_t::object:
++            {
++                if (val.m_data.m_value.object->empty())
++                {
++                    o->write_characters("{}", 2);
++                    return;
++                }
++
++                o->write_characters("{\n", 2);
++
++                // variable to hold indentation for recursive calls
++                const auto new_indent = current_indent + indent_step;
++                if (JSON_HEDLEY_UNLIKELY(indent_string.size() < new_indent))
++                {
++                    indent_string.resize(indent_string.size() * 2, ' ');
++                }
++
++                // first n-1 elements
++                auto i = val.m_data.m_value.object->cbegin();
++                for (std::size_t cnt = 0; cnt < val.m_data.m_value.object->size() - 1; ++cnt, ++i)
++                {
++                    write_annotation_if_available<UnderlyingType>(i->first, indent_string, new_indent, ensure_ascii);
++                    o->write_characters(indent_string.c_str(), new_indent);
++                    o->write_character('\"');
++                    dump_escaped(i->first, ensure_ascii);
++                    o->write_characters("\": ", 3);
++                    dump(i->second, true, ensure_ascii, indent_step, new_indent);
++                    o->write_characters(",\n", 2);
++                }
++
++                // last element
++                JSON_ASSERT(i != val.m_data.m_value.object->cend());
++                JSON_ASSERT(std::next(i) == val.m_data.m_value.object->cend());
++                write_annotation_if_available<UnderlyingType>(i->first, indent_string, new_indent, ensure_ascii);
++                o->write_characters(indent_string.c_str(), new_indent);
++                o->write_character('\"');
++                dump_escaped(i->first, ensure_ascii);
++                o->write_characters("\": ", 3);
++                dump(i->second, true, ensure_ascii, indent_step, new_indent);
++
++                o->write_character('\n');
++                o->write_characters(indent_string.c_str(), current_indent);
++                o->write_character('}');
++
++                return;
++            }
++
++            case value_t::array:
++            {
++                if (val.m_data.m_value.array->empty())
++                {
++                    o->write_characters("[]", 2);
++                    return;
++                }
++
++                o->write_characters("[\n", 2);
++
++                // variable to hold indentation for recursive calls
++                const auto new_indent = current_indent + indent_step;
++                if (JSON_HEDLEY_UNLIKELY(indent_string.size() < new_indent))
++                {
++                    indent_string.resize(indent_string.size() * 2, ' ');
++                }
++
++                // first n-1 elements
++                for (auto i = val.m_data.m_value.array->cbegin();
++                        i != val.m_data.m_value.array->cend() - 1; ++i)
++                {
++                    o->write_characters(indent_string.c_str(), new_indent);
++                    dump(*i, true, ensure_ascii, indent_step, new_indent);
++                    o->write_characters(",\n", 2);
++                }
++
++                // last element
++                JSON_ASSERT(!val.m_data.m_value.array->empty());
++                o->write_characters(indent_string.c_str(), new_indent);
++                dump(val.m_data.m_value.array->back(), true, ensure_ascii, indent_step, new_indent);
++
++                o->write_character('\n');
++                o->write_characters(indent_string.c_str(), current_indent);
++                o->write_character(']');
++
++                return;
++            }
++
++            case value_t::string:
++            {
++                o->write_character('\"');
++                dump_escaped(*val.m_data.m_value.string, ensure_ascii);
++                o->write_character('\"');
++                return;
++            }
++
++            case value_t::binary:
++            {
++                o->write_characters("{\n", 2);
++
++                // variable to hold indentation for recursive calls
++                const auto new_indent = current_indent + indent_step;
++                if (JSON_HEDLEY_UNLIKELY(indent_string.size() < new_indent))
++                {
++                    indent_string.resize(indent_string.size() * 2, ' ');
++                }
++
++                o->write_characters(indent_string.c_str(), new_indent);
++
++                o->write_characters("\"bytes\": [", 10);
++
++                if (!val.m_data.m_value.binary->empty())
++                {
++                    for (auto i = val.m_data.m_value.binary->cbegin();
++                            i != val.m_data.m_value.binary->cend() - 1; ++i)
++                    {
++                        dump_integer(*i);
++                        o->write_characters(", ", 2);
++                    }
++                    dump_integer(val.m_data.m_value.binary->back());
++                }
++
++                o->write_characters("],\n", 3);
++                o->write_characters(indent_string.c_str(), new_indent);
++
++                o->write_characters("\"subtype\": ", 11);
++                if (val.m_data.m_value.binary->has_subtype())
++                {
++                    dump_integer(val.m_data.m_value.binary->subtype());
++                }
++                else
++                {
++                    o->write_characters("null", 4);
++                }
++                o->write_character('\n');
++                o->write_characters(indent_string.c_str(), current_indent);
++                o->write_character('}');
++                return;
++            }
++
++            case value_t::boolean:
++            {
++                if (val.m_data.m_value.boolean)
++                {
++                    o->write_characters("true", 4);
++                }
++                else
++                {
++                    o->write_characters("false", 5);
++                }
++                return;
++            }
++
++            case value_t::number_integer:
++            {
++                dump_integer(val.m_data.m_value.number_integer);
++                return;
++            }
++
++            case value_t::number_unsigned:
++            {
++                dump_integer(val.m_data.m_value.number_unsigned);
++                return;
++            }
++
++            case value_t::number_float:
++            {
++                dump_float(val.m_data.m_value.number_float);
++                return;
++            }
++
++            case value_t::discarded:
++            {
++                o->write_characters("<discarded>", 11);
++                return;
++            }
++
++            case value_t::null:
++            {
++                o->write_characters("null", 4);
++                return;
++            }
++
++            default:            // LCOV_EXCL_LINE
++                JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
++        }
++    }
+   JSON_PRIVATE_UNLESS_TESTED:
+     /*!
+     @brief dump escaped string
+@@ -958,6 +1151,23 @@ class serializer
+         return static_cast<number_unsigned_t>(-(x + 1)) + 1;
+     }
+ 
++    template<typename UnderlyingType>
++    void write_annotation_if_available(const std::string& property, const std::string& indent_string, unsigned int new_indent, bool ensure_ascii)
++    {
++        const auto annotation = UnderlyingType::get_annotation(property);
++        if(annotation != "") {
++            std::stringstream ss{annotation};
++            for (std::string line; std::getline(ss, line, '\n');)
++            {
++                o->write_characters(indent_string.c_str(), new_indent);
++                o->write_characters("/* ", 3);
++                dump_escaped(line, ensure_ascii);
++                o->write_characters(" */", 3);
++                o->write_characters("\n", 1);
++            }
++        }
++    }
++
+   private:
+     /// the output of the serializer
+     output_adapter_t<char> o = nullptr;
+diff --git a/include/nlohmann/json.hpp b/include/nlohmann/json.hpp
+index a3c0af1e..c06a4be4 100644
+--- a/include/nlohmann/json.hpp
++++ b/include/nlohmann/json.hpp
+@@ -60,6 +60,7 @@
+ #include <nlohmann/detail/value_t.hpp>
+ #include <nlohmann/json_fwd.hpp>
+ #include <nlohmann/ordered_map.hpp>
++#include <nlohmann/detail/macro_scope_annotated.hpp>
+ 
+ #if defined(JSON_HAS_CPP_17)
+     #include <any>
+@@ -1289,6 +1290,21 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
+         return result;
+     }
+ 
++    template<typename UnderlyingType>
++    string_t dump_annotated(const int indent = 4,
++                            const char indent_char = ' ',
++                            const bool ensure_ascii = false,
++                            const error_handler_t error_handler = error_handler_t::strict) const
++    {
++        string_t result;
++        serializer s(detail::output_adapter<char, string_t>(result), indent_char, error_handler);
++
++        JSON_ASSERT(indent >= 0);
++        s.template dump_annotated<UnderlyingType>(*this, ensure_ascii, static_cast<unsigned int>(indent));
++
++        return result;
++    }
++
+     /// @brief return the type of the JSON value (explicit)
+     /// @sa https://json.nlohmann.me/api/basic_json/type/
+     constexpr value_t type() const noexcept
+diff --git a/tests/src/unit-annotations.cpp b/tests/src/unit-annotations.cpp
+new file mode 100644
+index 00000000..df9b4f45
+--- /dev/null
++++ b/tests/src/unit-annotations.cpp
+@@ -0,0 +1,150 @@
++#include "doctest_compatibility.h"
++
++#include <nlohmann/json.hpp>
++using nlohmann::json;
++
++namespace {
++    class ExampleClass {
++private:
++    int property1{1};
++    double property2{2.5};
++    std::string property3{"test"};
++    std::map<std::string, int> property4{{"x", 1}, {"y", 2}};
++    std::vector<double> property5{1.5, 5.4, 3.2};
++public:
++    ExampleClass() = default;
++
++    NLOHMANN_DEFINE_TYPE_INTRUSIVE_ANNOTATED(ExampleClass, property1, "comment1", 
++                                                           property2, "comment2", 
++                                                           property3, "comment3",
++                                                           property4, "comment4",
++                                                           property5, "comment5");
++};
++
++class AnotherExampleClass {
++private:
++    int property1{11};
++    double property2{25.5};
++public:
++    AnotherExampleClass() = default;
++
++    NLOHMANN_DEFINE_TYPE_INTRUSIVE_ANNOTATED(AnotherExampleClass, property1, "comment11", 
++                                                                  property2, "comment22");
++};
++
++class MultiLineAnnotationExampleClass {
++private:
++    int property1{11};
++    std::string property2{"test"};
++public:
++    MultiLineAnnotationExampleClass() = default;
++
++    NLOHMANN_DEFINE_TYPE_INTRUSIVE_ANNOTATED(MultiLineAnnotationExampleClass, property1, "multiline\ncomment11", 
++                                                                              property2, "multiline\ncomment22");
++};
++
++class ExampleClassUTF8 {
++private:
++    double property3{1.1};
++    std::vector<double> property5{1.5, 5.4, 3.2};
++public:
++    ExampleClassUTF8() = default;
++
++    NLOHMANN_DEFINE_TYPE_INTRUSIVE_ANNOTATED(ExampleClassUTF8, property3, "comment三", 
++                                                               property5, "comment五");
++};
++}
++
++TEST_CASE("annotation")
++{
++    SECTION("canonical")
++    {
++        ExampleClass ex;
++        nlohmann::json j = ex;
++        const auto ex_actual_json = j.dump_annotated<decltype(ex)>(4);
++        const auto expected_json = "{\n"
++        "    /* comment1 */\n"
++        "    \"property1\": 1,\n"
++        "    /* comment2 */\n"
++        "    \"property2\": 2.5,\n"
++        "    /* comment3 */\n"
++        "    \"property3\": \"test\",\n"
++        "    /* comment4 */\n"
++        "    \"property4\": {\n"
++        "        \"x\": 1,\n"
++        "        \"y\": 2\n"
++        "    },\n"
++        "    /* comment5 */\n"
++        "    \"property5\": [\n"
++        "        1.5,\n"
++        "        5.4,\n"
++        "        3.2\n"
++        "    ]\n"
++        "}";
++        CHECK(ex_actual_json == expected_json);
++    }
++    SECTION("macro_does_not_pollute_global_scope")
++    {
++        ExampleClass ex;
++        AnotherExampleClass another_ex;
++        nlohmann::json j1 = ex;
++        nlohmann::json j2 = another_ex;
++        const auto another_ex_actual_json = j2.dump_annotated<AnotherExampleClass>(4);
++        const auto expected_json = "{\n"
++        "    /* comment11 */\n"
++        "    \"property1\": 11,\n"
++        "    /* comment22 */\n"
++        "    \"property2\": 25.5\n"
++        "}";
++        CHECK(another_ex_actual_json == expected_json);
++    }
++    SECTION("multi_line_annotation")
++    {
++        MultiLineAnnotationExampleClass ex;
++        nlohmann::json j = ex;
++        const auto ex_actual_json = j.dump_annotated<MultiLineAnnotationExampleClass>(4);
++        const auto expected_json = "{\n"
++        "    /* multiline */\n"
++        "    /* comment11 */\n"
++        "    \"property1\": 11,\n"
++        "    /* multiline */\n"
++        "    /* comment22 */\n"
++        "    \"property2\": \"test\"\n"
++        "}";
++        CHECK(ex_actual_json == expected_json);
++    }
++    SECTION("utf8_comment_ascii_not_ensured")
++    {
++        ExampleClassUTF8 ex;
++        nlohmann::json j = ex;
++        const auto ex_actual_json = j.dump_annotated<ExampleClassUTF8>(4);
++        const auto expected_json = "{\n"
++        "    /* comment三 */\n"
++        "    \"property3\": 1.1,\n"
++        "    /* comment五 */\n"
++        "    \"property5\": [\n"
++        "        1.5,\n"
++        "        5.4,\n"
++        "        3.2\n"
++        "    ]\n"
++        "}";
++        CHECK(ex_actual_json == expected_json);
++    }
++    SECTION("utf8_comment_ensure_ascii")
++    {
++        ExampleClassUTF8 ex;
++        nlohmann::json j = ex;
++        const auto ex_actual_json = j.dump_annotated<ExampleClassUTF8>(4, ' ', true);
++        const auto expected_json = "{\n"
++        "    /* comment\\u4e09 */\n"
++        "    \"property3\": 1.1,\n"
++        "    /* comment\\u4e94 */\n"
++        "    \"property5\": [\n"
++        "        1.5,\n"
++        "        5.4,\n"
++        "        3.2\n"
++        "    ]\n"
++        "}";
++        CHECK(ex_actual_json == expected_json);
++    }
++}
+\ No newline at end of file

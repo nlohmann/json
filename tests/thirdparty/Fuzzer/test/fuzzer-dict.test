@@ -1,6 +1,0 @@
-CHECK: BINGO
-Done1000000: Done 1000000 runs in
-
-RUN: not LLVMFuzzer-SimpleDictionaryTest -dict=%S/dict1.txt -seed=1 -runs=1000003  2>&1 | FileCheck %s
-RUN:     LLVMFuzzer-SimpleDictionaryTest                    -seed=1 -runs=1000000  2>&1 | FileCheck %s --check-prefix=Done1000000
-

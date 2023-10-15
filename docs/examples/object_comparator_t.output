@@ -1,2 +1,0 @@
-json::object_comparator_t("one", "two") = true
-json::object_comparator_t("three", "four") = false
