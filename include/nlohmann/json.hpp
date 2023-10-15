@@ -60,6 +60,7 @@
 #include <nlohmann/detail/value_t.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include <nlohmann/ordered_map.hpp>
+#include <nlohmann/detail/macro_scope_annotated.hpp>
 
 #if defined(JSON_HAS_CPP_17)
     #if JSON_HAS_STATIC_RTTI
@@ -1285,6 +1286,21 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         {
             s.dump(*this, false, ensure_ascii, 0);
         }
+
+        return result;
+    }
+
+    template<typename UnderlyingType>
+    string_t dump_annotated(const int indent = 4,
+                            const char indent_char = ' ',
+                            const bool ensure_ascii = false,
+                            const error_handler_t error_handler = error_handler_t::strict) const
+    {
+        string_t result;
+        serializer s(detail::output_adapter<char, string_t>(result), indent_char, error_handler);
+
+        JSON_ASSERT(indent >= 0);
+        s.template dump_annotated<UnderlyingType>(*this, ensure_ascii, static_cast<unsigned int>(indent));
 
         return result;
     }

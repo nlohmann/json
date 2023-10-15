@@ -21,6 +21,7 @@
 #include <iomanip> // setfill, setw
 #include <type_traits> // is_same
 #include <utility> // move
+#include <sstream>
 
 #include <nlohmann/detail/conversions/to_chars.hpp>
 #include <nlohmann/detail/exceptions.hpp>
@@ -30,6 +31,7 @@
 #include <nlohmann/detail/output/output_adapters.hpp>
 #include <nlohmann/detail/string_concat.hpp>
 #include <nlohmann/detail/value_t.hpp>
+
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -373,6 +375,197 @@ class serializer
         }
     }
 
+    template<typename UnderlyingType>
+    void dump_annotated(const BasicJsonType& val,
+                        const bool ensure_ascii,
+                        const unsigned int indent_step,
+                        const unsigned int current_indent = 0) {
+        switch (val.m_data.m_type)
+        {
+            case value_t::object:
+            {
+                if (val.m_data.m_value.object->empty())
+                {
+                    o->write_characters("{}", 2);
+                    return;
+                }
+
+                o->write_characters("{\n", 2);
+
+                // variable to hold indentation for recursive calls
+                const auto new_indent = current_indent + indent_step;
+                if (JSON_HEDLEY_UNLIKELY(indent_string.size() < new_indent))
+                {
+                    indent_string.resize(indent_string.size() * 2, ' ');
+                }
+
+                // first n-1 elements
+                auto i = val.m_data.m_value.object->cbegin();
+                for (std::size_t cnt = 0; cnt < val.m_data.m_value.object->size() - 1; ++cnt, ++i)
+                {
+                    write_annotation_if_available<UnderlyingType>(i->first, indent_string, new_indent, ensure_ascii);
+                    o->write_characters(indent_string.c_str(), new_indent);
+                    o->write_character('\"');
+                    dump_escaped(i->first, ensure_ascii);
+                    o->write_characters("\": ", 3);
+                    dump(i->second, true, ensure_ascii, indent_step, new_indent);
+                    o->write_characters(",\n", 2);
+                }
+
+                // last element
+                JSON_ASSERT(i != val.m_data.m_value.object->cend());
+                JSON_ASSERT(std::next(i) == val.m_data.m_value.object->cend());
+                write_annotation_if_available<UnderlyingType>(i->first, indent_string, new_indent, ensure_ascii);
+                o->write_characters(indent_string.c_str(), new_indent);
+                o->write_character('\"');
+                dump_escaped(i->first, ensure_ascii);
+                o->write_characters("\": ", 3);
+                dump(i->second, true, ensure_ascii, indent_step, new_indent);
+
+                o->write_character('\n');
+                o->write_characters(indent_string.c_str(), current_indent);
+                o->write_character('}');
+
+                return;
+            }
+
+            case value_t::array:
+            {
+                if (val.m_data.m_value.array->empty())
+                {
+                    o->write_characters("[]", 2);
+                    return;
+                }
+
+                o->write_characters("[\n", 2);
+
+                // variable to hold indentation for recursive calls
+                const auto new_indent = current_indent + indent_step;
+                if (JSON_HEDLEY_UNLIKELY(indent_string.size() < new_indent))
+                {
+                    indent_string.resize(indent_string.size() * 2, ' ');
+                }
+
+                // first n-1 elements
+                for (auto i = val.m_data.m_value.array->cbegin();
+                        i != val.m_data.m_value.array->cend() - 1; ++i)
+                {
+                    o->write_characters(indent_string.c_str(), new_indent);
+                    dump(*i, true, ensure_ascii, indent_step, new_indent);
+                    o->write_characters(",\n", 2);
+                }
+
+                // last element
+                JSON_ASSERT(!val.m_data.m_value.array->empty());
+                o->write_characters(indent_string.c_str(), new_indent);
+                dump(val.m_data.m_value.array->back(), true, ensure_ascii, indent_step, new_indent);
+
+                o->write_character('\n');
+                o->write_characters(indent_string.c_str(), current_indent);
+                o->write_character(']');
+
+                return;
+            }
+
+            case value_t::string:
+            {
+                o->write_character('\"');
+                dump_escaped(*val.m_data.m_value.string, ensure_ascii);
+                o->write_character('\"');
+                return;
+            }
+
+            case value_t::binary:
+            {
+                o->write_characters("{\n", 2);
+
+                // variable to hold indentation for recursive calls
+                const auto new_indent = current_indent + indent_step;
+                if (JSON_HEDLEY_UNLIKELY(indent_string.size() < new_indent))
+                {
+                    indent_string.resize(indent_string.size() * 2, ' ');
+                }
+
+                o->write_characters(indent_string.c_str(), new_indent);
+
+                o->write_characters("\"bytes\": [", 10);
+
+                if (!val.m_data.m_value.binary->empty())
+                {
+                    for (auto i = val.m_data.m_value.binary->cbegin();
+                            i != val.m_data.m_value.binary->cend() - 1; ++i)
+                    {
+                        dump_integer(*i);
+                        o->write_characters(", ", 2);
+                    }
+                    dump_integer(val.m_data.m_value.binary->back());
+                }
+
+                o->write_characters("],\n", 3);
+                o->write_characters(indent_string.c_str(), new_indent);
+
+                o->write_characters("\"subtype\": ", 11);
+                if (val.m_data.m_value.binary->has_subtype())
+                {
+                    dump_integer(val.m_data.m_value.binary->subtype());
+                }
+                else
+                {
+                    o->write_characters("null", 4);
+                }
+                o->write_character('\n');
+                o->write_characters(indent_string.c_str(), current_indent);
+                o->write_character('}');
+                return;
+            }
+
+            case value_t::boolean:
+            {
+                if (val.m_data.m_value.boolean)
+                {
+                    o->write_characters("true", 4);
+                }
+                else
+                {
+                    o->write_characters("false", 5);
+                }
+                return;
+            }
+
+            case value_t::number_integer:
+            {
+                dump_integer(val.m_data.m_value.number_integer);
+                return;
+            }
+
+            case value_t::number_unsigned:
+            {
+                dump_integer(val.m_data.m_value.number_unsigned);
+                return;
+            }
+
+            case value_t::number_float:
+            {
+                dump_float(val.m_data.m_value.number_float);
+                return;
+            }
+
+            case value_t::discarded:
+            {
+                o->write_characters("<discarded>", 11);
+                return;
+            }
+
+            case value_t::null:
+            {
+                o->write_characters("null", 4);
+                return;
+            }
+
+            default:            // LCOV_EXCL_LINE
+                JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
+        }
+    }
   JSON_PRIVATE_UNLESS_TESTED:
     /*!
     @brief dump escaped string
@@ -956,6 +1149,23 @@ class serializer
     {
         JSON_ASSERT(x < 0 && x < (std::numeric_limits<number_integer_t>::max)()); // NOLINT(misc-redundant-expression)
         return static_cast<number_unsigned_t>(-(x + 1)) + 1;
+    }
+
+    template<typename UnderlyingType>
+    void write_annotation_if_available(const std::string& property, const std::string& indent_string, unsigned int new_indent, bool ensure_ascii)
+    {
+        const auto annotation = UnderlyingType::get_annotation(property);
+        if(annotation != "") {
+            std::stringstream ss{annotation};
+            for (std::string line; std::getline(ss, line, '\n');)
+            {
+                o->write_characters(indent_string.c_str(), new_indent);
+                o->write_characters("/* ", 3);
+                dump_escaped(line, ensure_ascii);
+                o->write_characters(" */", 3);
+                o->write_characters("\n", 1);
+            }
+        }
     }
 
   private:
