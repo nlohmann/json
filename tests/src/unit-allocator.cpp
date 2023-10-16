@@ -262,71 +262,7 @@ TEST_CASE("bad my_allocator::construct")
     }
 }
 
-// namespace
-// {
-// template <class T>
-// struct NAlloc
-// {
-//     // Aliases and inner types
-//     using value_type = T;
-//     using size_type = std::size_t;
-//     using difference_type = ptrdiff_t;
-//     using reference = value_type&;
-//     using const_reference = const value_type&;
-//     using pointer = value_type*;
-//     using const_pointer = const value_type*;
 
-//     template <typename U>
-//     struct rebind
-//     {
-//         using other = NAlloc<U>;
-//     };
-
-//     NAlloc() :
-//         alloc()
-//     {
-
-//     }
-
-//     NAlloc(const NAlloc&) = default;                   // Copy constructor
-//     NAlloc(NAlloc&&) = default;                       // Move constructor
-//     NAlloc& operator=(const NAlloc& other) = default;  // Copy assignment operator
-//     NAlloc& operator=(NAlloc&&) = default;            // Move assignment operator
-
-//     virtual ~NAlloc() = default;
-
-//     pointer allocate(std::size_t n)
-//     {
-
-//         return static_cast<pointer>(alloc.allocate(n));  // get memory from pool
-//     }
-//     void deallocate(pointer p, std::size_t n)
-//     {
-//         m_alloc_size = n;
-//         alloc.deallocate(static_cast<pointer>(p), 1);  // return memory to pool
-//     }
-
-
-//     bool operator!=(const NAlloc<T>& other) const
-//     {
-//         return !(*this == other);
-//     }
-//     bool operator==(const NAlloc<T>& other) const
-//     {
-//         return alloc == other.alloc;
-//     }
-
-//     my_allocator<char> alloc;
-//     std::size_t m_alloc_size {};
-// };
-
-
-// using OstringStream = std::basic_ostringstream<char, std::char_traits<char>, NAlloc<char>>;
-// using IstringStream = std::basic_istringstream<char, std::char_traits<char>, NAlloc<char>>;
-// using RtString = std::basic_string<char, std::char_traits<char>, NAlloc<char>>;
-
-
-// } //namespace
 
 TEST_CASE("controlled bad_alloc_rt_string")
 {
