@@ -263,7 +263,6 @@ TEST_CASE("bad my_allocator::construct")
 }
 
 
-
 TEST_CASE("controlled bad_alloc_rt_string")
 {
     using RtString = std::basic_string<char, std::char_traits<char>, my_allocator<char>>;
