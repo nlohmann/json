@@ -1811,13 +1811,13 @@ JSON_HEDLEY_DIAGNOSTIC_POP
        defined(JSON_HEDLEY_TI_CLPRU_VERSION) || \
        defined(__clang__)
 #    define JSON_HEDLEY_IS_CONSTEXPR_(expr) ( \
-        sizeof(void) != \
-        sizeof(*( \
-                  1 ? \
-                  ((void*) ((expr) * 0L) ) : \
+    sizeof(void) != \
+    sizeof(*( \
+              1 ? \
+              ((void*) ((expr) * 0L) ) : \
 ((struct { char v[sizeof(void) * 2]; } *) 1) \
-                ) \
-              ) \
+            ) \
+          ) \
                                             )
 #  endif
 #endif

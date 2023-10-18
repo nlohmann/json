@@ -525,7 +525,7 @@ class binary_reader
             {
                 std::uint64_t number{};
                 return get_number(input_format_t::cbor, number) && sax->number_integer(static_cast<number_integer_t>(-1)
-                        - static_cast<number_integer_t>(number));
+                       - static_cast<number_integer_t>(number));
             }
 
             // Binary data (0x00..0x17 bytes follow)
