@@ -25,7 +25,7 @@ int main()
     {
         json j_invalid(j_number.begin() + 1, j_number.end());
     }
-    catch (json::invalid_iterator& e)
+    catch (const json::invalid_iterator& e)
     {
         std::cout << e.what() << '\n';
     }

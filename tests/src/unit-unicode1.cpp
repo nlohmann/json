@@ -442,7 +442,7 @@ TEST_CASE("Markus Kuhn's UTF-8 decoder capability and stress test")
 
         SECTION("4.1  Examples of an overlong ASCII character")
         {
-            // With a safe UTF-8 decoder, all of the following five overlong
+            // With a safe UTF-8 decoder, all the following five overlong
             // representations of the ASCII character slash ("/") should be rejected
             // like a malformed UTF-8 sequence, for instance by substituting it with
             // a replacement character. If you see a slash below, you do not have a

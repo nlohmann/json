@@ -18,7 +18,7 @@ int main()
         const json str = "I am a string";
         std::cout << str.at(0) << '\n';
     }
-    catch (json::type_error& e)
+    catch (const json::type_error& e)
     {
         std::cout << e.what() << '\n';
     }
@@ -29,7 +29,7 @@ int main()
         // try to read beyond the array limit
         std::cout << array.at(5) << '\n';
     }
-    catch (json::out_of_range& e)
+    catch (const json::out_of_range& e)
     {
         std::cout << e.what() << '\n';
     }

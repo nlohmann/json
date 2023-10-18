@@ -1,7 +1,7 @@
 # <small>nlohmann::</small>operator""_json
 
 ```cpp
-json operator "" _json(const char* s, std::size_t n);
+json operator ""_json(const char* s, std::size_t n);
 ```
 
 This operator implements a user-defined string literal for JSON objects. It can be used by adding `#!cpp _json` to a
@@ -9,7 +9,7 @@ string literal and returns a [`json`](json.md) object if no parse error occurred
 
 It is recommended to bring the operator into scope using any of the following lines:
 ```cpp
-using nlohmann::literals::operator "" _json;
+using nlohmann::literals::operator ""_json;
 using namespace nlohmann::literals;
 using namespace nlohmann::json_literals;
 using namespace nlohmann::literals::json_literals;

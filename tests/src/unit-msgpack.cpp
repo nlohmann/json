@@ -479,11 +479,11 @@ TEST_CASE("MessagePack")
                     std::vector<int32_t> const numbers
                     {
                         -32769,
-                        -65536,
-                        -77777,
-                        -1048576,
-                        -2147483648LL,
-                    };
+                            -65536,
+                            -77777,
+                            -1048576,
+                            -2147483648LL,
+                        };
                     for (auto i : numbers)
                     {
                         CAPTURE(i)
@@ -1124,7 +1124,7 @@ TEST_CASE("MessagePack")
                 // Checking against an expected vector byte by byte is
                 // difficult, because no assumption on the order of key/value
                 // pairs are made. We therefore only check the prefix (type and
-                // size and the overall size. The rest is then handled in the
+                // size) and the overall size. The rest is then handled in the
                 // roundtrip check.
                 CHECK(result.size() == 67); // 1 type, 2 size, 16*4 content
                 CHECK(result[0] == 0xde); // map 16
@@ -1153,7 +1153,7 @@ TEST_CASE("MessagePack")
                 // Checking against an expected vector byte by byte is
                 // difficult, because no assumption on the order of key/value
                 // pairs are made. We therefore only check the prefix (type and
-                // size and the overall size. The rest is then handled in the
+                // size) and the overall size. The rest is then handled in the
                 // roundtrip check.
                 CHECK(result.size() == 458757); // 1 type, 4 size, 65536*7 content
                 CHECK(result[0] == 0xdf); // map 32

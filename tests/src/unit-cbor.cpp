@@ -241,13 +241,13 @@ TEST_CASE("CBOR")
                     const std::vector<int64_t> numbers
                     {
                         -65537,
-                        -100000,
-                        -1000000,
-                        -10000000,
-                        -100000000,
-                        -1000000000,
-                        -4294967296,
-                    };
+                            -100000,
+                            -1000000,
+                            -10000000,
+                            -100000000,
+                            -1000000000,
+                            -4294967296,
+                        };
                     for (const auto i : numbers)
                     {
                         CAPTURE(i)
@@ -1962,7 +1962,7 @@ TEST_CASE("CBOR regressions")
                     CHECK(false);
                 }
             }
-            catch (const json::parse_error&)
+            catch (const json::parse_error&) // NOLINT(bugprone-empty-catch)
             {
                 // parse errors are ok, because input may be random bytes
             }
