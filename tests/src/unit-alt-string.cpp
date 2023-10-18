@@ -346,6 +346,9 @@ TEST_CASE("alternative string type")
 
         CHECK(j.at(alt_json::json_pointer("/foo/0")) == j["foo"][0]);
         CHECK(j.at(alt_json::json_pointer("/foo/1")) == j["foo"][1]);
+
+        // ensures successful compilation
+        CHECK(alt_json::json_pointer("/foo/0").to_string() == "/foo/0");
     }
 
     SECTION("JSON patch")

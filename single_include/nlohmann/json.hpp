@@ -13755,7 +13755,7 @@ class json_pointer
                                string_t{},
                                [](const string_t& a, const string_t& b)
         {
-            return detail::concat(a, '/', detail::escape(b));
+            return detail::concat<string_t>(a, '/', detail::escape(b));
         });
     }
 
