@@ -250,6 +250,8 @@ nav:
         - 'start_array': api/json_sax/start_array.md
         - 'start_object': api/json_sax/start_object.md
         - 'string': api/json_sax/string.md
+        - 'next_token_start' : api/json_sax/next_token_start.md
+        - 'next_token_end' : api/json_sax/next_token_end.md
       - 'operator<<(basic_json)': api/operator_ltlt.md
       - 'operator<<(json_pointer)': api/operator_ltlt.md
       - 'operator>>(basic_json)': api/operator_gtgt.md
@@ -257,6 +259,12 @@ nav:
       - 'operator""_json_pointer': api/operator_literal_json_pointer.md
       - 'ordered_json': api/ordered_json.md
       - 'ordered_map': api/ordered_map.md
+      - position_t:
+        - 'Overview': api/position_t/index.md
+        - 'operator size_t': api/position_t/operator_size_t.md
+        - 'chars_read_total': api/position_t/chars_read_total.md
+        - 'lines_read': api/position_t/lines_read.md
+        - 'chars_read_current_line': api/position_t/chars_read_current_line.md
       - macros:
         - 'Overview': api/macros/index.md
         - 'JSON_ASSERT': api/macros/json_assert.md

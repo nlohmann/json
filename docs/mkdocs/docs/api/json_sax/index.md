@@ -37,8 +37,11 @@ processing the input.
 - [**start_array**](start_array.md) (_virtual_) - the beginning of an array was read
 - [**start_object**](start_object.md) (_virtual_) - the beginning of an object was read
 - [**string**](string.md) (_virtual_) - a string value was read
+- [**next_token_start**](next_token_start.md) - called to provide the start of the next element in the parsed input.
+- [**next_token_end**](next_token_end.md) - called to provide the end (one past convention) of the next element in the parsed input.
 
 ## Version history
 
 - Added in version 3.2.0.
 - Support for binary values (`binary_t`, `binary`) added in version 3.8.0.
+- Support for parser location information (`next_token_start`, `next_token_end`) added in version ???.???.???.

@@ -1733,6 +1733,7 @@ I deeply appreciate the help of the following people.
 314. [Berkus Decker](https://github.com/berkus) fixed a typo in the README.
 315. [Illia Polishchuk](https://github.com/effolkronium) improved the CMake testing.
 316. [Ikko Ashimine](https://github.com/eltociear) fixed a typo.
+317. [Raphael Grimm](https://github.com/barcode) Added custom base classes as customization point and parser location information for sax parsers.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 

@@ -167,8 +167,9 @@ class binary_reader
     bool parse_bson_internal()
     {
         std::int32_t document_size{};
+        detail::sax_call_next_token_start_pos(sax, chars_read);
         get_number<std::int32_t, true>(input_format_t::bson, document_size);
-
+        detail::sax_call_next_token_end_pos(sax, chars_read);
         if (JSON_HEDLEY_UNLIKELY(!sax->start_object(static_cast<std::size_t>(-1))))
         {
             return false;
@@ -179,6 +180,7 @@ class binary_reader
             return false;
         }
 
+        detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read);
         return sax->end_object();
     }
 
@@ -276,6 +278,7 @@ class binary_reader
             case 0x01: // double
             {
                 double number{};
+                detail::sax_call_next_token_start_end_pos(sax, chars_read, chars_read + sizeof(number));
                 return get_number<double, true>(input_format_t::bson, number) && sax->number_float(static_cast<number_float_t>(number), "");
             }
 
@@ -283,7 +286,10 @@ class binary_reader
             {
                 std::int32_t len{};
                 string_t value;
-                return get_number<std::int32_t, true>(input_format_t::bson, len) && get_bson_string(len, value) && sax->string(value);
+                detail::sax_call_next_token_start_pos(sax, chars_read);
+                const bool result_get = get_number<std::int32_t, true>(input_format_t::bson, len) && get_bson_string(len, value);
+                detail::sax_call_next_token_end_pos(sax, chars_read);
+                return result_get && sax->string(value);
             }
 
             case 0x03: // object
@@ -300,28 +306,35 @@ class binary_reader
             {
                 std::int32_t len{};
                 binary_t value;
-                return get_number<std::int32_t, true>(input_format_t::bson, len) && get_bson_binary(len, value) && sax->binary(value);
+                detail::sax_call_next_token_start_pos(sax, chars_read);
+                const bool result_get =  get_number<std::int32_t, true>(input_format_t::bson, len) && get_bson_binary(len, value);
+                detail::sax_call_next_token_end_pos(sax, chars_read);
+                return result_get && sax->binary(value);
             }
 
             case 0x08: // boolean
             {
+                detail::sax_call_next_token_start_end_pos(sax, chars_read, chars_read + 1);
                 return sax->boolean(get() != 0);
             }
 
             case 0x0A: // null
             {
+                detail::sax_call_next_token_start_end_pos(sax, chars_read);
                 return sax->null();
             }
 
             case 0x10: // int32
             {
                 std::int32_t value{};
-                return get_number<std::int32_t, true>(input_format_t::bson, value) && sax->number_integer(value);
+                detail::sax_call_next_token_start_end_pos(sax, chars_read, chars_read + sizeof(value));
+                return get_number<std::int32_t, true>(input_format_t::bson, value) &&  sax->number_integer(value);
             }
 
             case 0x12: // int64
             {
                 std::int64_t value{};
+                detail::sax_call_next_token_start_end_pos(sax, chars_read, chars_read + sizeof(value));
                 return get_number<std::int64_t, true>(input_format_t::bson, value) && sax->number_integer(value);
             }
 
@@ -360,14 +373,22 @@ class binary_reader
             }
 
             const std::size_t element_type_parse_position = chars_read;
+            if (!is_array)
+            {
+                detail::sax_call_next_token_start_pos(sax, chars_read);
+            }
             if (JSON_HEDLEY_UNLIKELY(!get_bson_cstr(key)))
             {
                 return false;
             }
 
-            if (!is_array && !sax->key(key))
+            if (!is_array)
             {
-                return false;
+                detail::sax_call_next_token_end_pos(sax, chars_read);
+                if (!sax->key(key))
+                {
+                    return false;
+                }
             }
 
             if (JSON_HEDLEY_UNLIKELY(!parse_bson_element_internal(element_type, element_type_parse_position)))
@@ -389,6 +410,7 @@ class binary_reader
     bool parse_bson_array()
     {
         std::int32_t document_size{};
+        detail::sax_call_next_token_start_end_pos(sax, chars_read, chars_read + sizeof(std::int32_t));
         get_number<std::int32_t, true>(input_format_t::bson, document_size);
 
         if (JSON_HEDLEY_UNLIKELY(!sax->start_array(static_cast<std::size_t>(-1))))
@@ -401,6 +423,7 @@ class binary_reader
             return false;
         }
 
+        detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read);
         return sax->end_array();
     }
 
@@ -450,29 +473,34 @@ class binary_reader
             case 0x15:
             case 0x16:
             case 0x17:
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read);
                 return sax->number_unsigned(static_cast<number_unsigned_t>(current));
 
             case 0x18: // Unsigned integer (one-byte uint8_t follows)
             {
                 std::uint8_t number{};
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read + sizeof(number));
                 return get_number(input_format_t::cbor, number) && sax->number_unsigned(number);
             }
 
             case 0x19: // Unsigned integer (two-byte uint16_t follows)
             {
                 std::uint16_t number{};
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read + sizeof(number));
                 return get_number(input_format_t::cbor, number) && sax->number_unsigned(number);
             }
 
             case 0x1A: // Unsigned integer (four-byte uint32_t follows)
             {
                 std::uint32_t number{};
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read + sizeof(number));
                 return get_number(input_format_t::cbor, number) && sax->number_unsigned(number);
             }
 
             case 0x1B: // Unsigned integer (eight-byte uint64_t follows)
             {
                 std::uint64_t number{};
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read + sizeof(number));
                 return get_number(input_format_t::cbor, number) && sax->number_unsigned(number);
             }
 
@@ -501,29 +529,34 @@ class binary_reader
             case 0x35:
             case 0x36:
             case 0x37:
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read);
                 return sax->number_integer(static_cast<std::int8_t>(0x20 - 1 - current));
 
             case 0x38: // Negative integer (one-byte uint8_t follows)
             {
                 std::uint8_t number{};
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read + sizeof(number));
                 return get_number(input_format_t::cbor, number) && sax->number_integer(static_cast<number_integer_t>(-1) - number);
             }
 
             case 0x39: // Negative integer -1-n (two-byte uint16_t follows)
             {
                 std::uint16_t number{};
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read + sizeof(number));
                 return get_number(input_format_t::cbor, number) && sax->number_integer(static_cast<number_integer_t>(-1) - number);
             }
 
             case 0x3A: // Negative integer -1-n (four-byte uint32_t follows)
             {
                 std::uint32_t number{};
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read + sizeof(number));
                 return get_number(input_format_t::cbor, number) && sax->number_integer(static_cast<number_integer_t>(-1) - number);
             }
 
             case 0x3B: // Negative integer -1-n (eight-byte uint64_t follows)
             {
                 std::uint64_t number{};
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read + sizeof(number));
                 return get_number(input_format_t::cbor, number) && sax->number_integer(static_cast<number_integer_t>(-1)
                         - static_cast<number_integer_t>(number));
             }
@@ -560,7 +593,10 @@ class binary_reader
             case 0x5F: // Binary data (indefinite length)
             {
                 binary_t b;
-                return get_cbor_binary(b) && sax->binary(b);
+                detail::sax_call_next_token_start_pos(sax, chars_read - 1);
+                const bool result_get = get_cbor_binary(b);
+                detail::sax_call_next_token_end_pos(sax, chars_read);
+                return result_get && sax->binary(b);
             }
 
             // UTF-8 string (0x00..0x17 bytes follow)
@@ -595,7 +631,10 @@ class binary_reader
             case 0x7F: // UTF-8 string (indefinite length)
             {
                 string_t s;
-                return get_cbor_string(s) && sax->string(s);
+                detail::sax_call_next_token_start_pos(sax, chars_read - 1);
+                const bool result_get = get_cbor_string(s);
+                detail::sax_call_next_token_end_pos(sax, chars_read);
+                return result_get && sax->string(s);
             }
 
             // array (0x00..0x17 data items follow)
@@ -623,35 +662,51 @@ class binary_reader
             case 0x95:
             case 0x96:
             case 0x97:
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read);
                 return get_cbor_array(
                            conditional_static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x1Fu), tag_handler);
 
             case 0x98: // array (one-byte uint8_t for n follows)
             {
                 std::uint8_t len{};
-                return get_number(input_format_t::cbor, len) && get_cbor_array(static_cast<std::size_t>(len), tag_handler);
+                detail::sax_call_next_token_start_pos(sax, chars_read - 1);
+                const bool result_get = get_number(input_format_t::cbor, len);
+                detail::sax_call_next_token_end_pos(sax, chars_read);
+                return result_get && get_cbor_array(static_cast<std::size_t>(len), tag_handler);
             }
 
             case 0x99: // array (two-byte uint16_t for n follow)
             {
                 std::uint16_t len{};
-                return get_number(input_format_t::cbor, len) && get_cbor_array(static_cast<std::size_t>(len), tag_handler);
+                detail::sax_call_next_token_start_pos(sax, chars_read - 1);
+                const bool result_get = get_number(input_format_t::cbor, len);
+                detail::sax_call_next_token_end_pos(sax, chars_read);
+                return result_get && get_cbor_array(static_cast<std::size_t>(len), tag_handler);
             }
 
             case 0x9A: // array (four-byte uint32_t for n follow)
             {
                 std::uint32_t len{};
-                return get_number(input_format_t::cbor, len) && get_cbor_array(conditional_static_cast<std::size_t>(len), tag_handler);
+                detail::sax_call_next_token_start_pos(sax, chars_read - 1);
+                const bool result_get = get_number(input_format_t::cbor, len);
+                detail::sax_call_next_token_end_pos(sax, chars_read);
+                return result_get && get_cbor_array(conditional_static_cast<std::size_t>(len), tag_handler);
             }
 
             case 0x9B: // array (eight-byte uint64_t for n follow)
             {
                 std::uint64_t len{};
-                return get_number(input_format_t::cbor, len) && get_cbor_array(conditional_static_cast<std::size_t>(len), tag_handler);
+                detail::sax_call_next_token_start_pos(sax, chars_read - 1);
+                const bool result_get = get_number(input_format_t::cbor, len);
+                detail::sax_call_next_token_end_pos(sax, chars_read);
+                return result_get && get_cbor_array(conditional_static_cast<std::size_t>(len), tag_handler);
             }
 
             case 0x9F: // array (indefinite length)
+            {
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read);
                 return get_cbor_array(static_cast<std::size_t>(-1), tag_handler);
+            }
 
             // map (0x00..0x17 pairs of data items follow)
             case 0xA0:
@@ -678,33 +733,47 @@ class binary_reader
             case 0xB5:
             case 0xB6:
             case 0xB7:
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read);
                 return get_cbor_object(conditional_static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x1Fu), tag_handler);
 
             case 0xB8: // map (one-byte uint8_t for n follows)
             {
                 std::uint8_t len{};
-                return get_number(input_format_t::cbor, len) && get_cbor_object(static_cast<std::size_t>(len), tag_handler);
+                detail::sax_call_next_token_start_pos(sax, chars_read - 1);
+                const bool result_get = get_number(input_format_t::cbor, len);
+                detail::sax_call_next_token_end_pos(sax, chars_read);
+                return result_get && get_cbor_object(static_cast<std::size_t>(len), tag_handler);
             }
 
             case 0xB9: // map (two-byte uint16_t for n follow)
             {
                 std::uint16_t len{};
-                return get_number(input_format_t::cbor, len) && get_cbor_object(static_cast<std::size_t>(len), tag_handler);
+                detail::sax_call_next_token_start_pos(sax, chars_read - 1);
+                const bool result_get = get_number(input_format_t::cbor, len);
+                detail::sax_call_next_token_end_pos(sax, chars_read);
+                return result_get && get_cbor_object(static_cast<std::size_t>(len), tag_handler);
             }
 
             case 0xBA: // map (four-byte uint32_t for n follow)
             {
                 std::uint32_t len{};
-                return get_number(input_format_t::cbor, len) && get_cbor_object(conditional_static_cast<std::size_t>(len), tag_handler);
+                detail::sax_call_next_token_start_pos(sax, chars_read - 1);
+                const bool result_get = get_number(input_format_t::cbor, len);
+                detail::sax_call_next_token_end_pos(sax, chars_read);
+                return result_get && get_cbor_object(conditional_static_cast<std::size_t>(len), tag_handler);
             }
 
             case 0xBB: // map (eight-byte uint64_t for n follow)
             {
                 std::uint64_t len{};
-                return get_number(input_format_t::cbor, len) && get_cbor_object(conditional_static_cast<std::size_t>(len), tag_handler);
+                detail::sax_call_next_token_start_pos(sax, chars_read - 1);
+                const bool result_get = get_number(input_format_t::cbor, len);
+                detail::sax_call_next_token_end_pos(sax, chars_read);
+                return result_get && get_cbor_object(conditional_static_cast<std::size_t>(len), tag_handler);
             }
 
             case 0xBF: // map (indefinite length)
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read);
                 return get_cbor_object(static_cast<std::size_t>(-1), tag_handler);
 
             case 0xC6: // tagged item
@@ -809,7 +878,10 @@ class binary_reader
                                 return parse_cbor_internal(true, tag_handler);
                         }
                         get();
-                        return get_cbor_binary(b) && sax->binary(b);
+                        detail::sax_call_next_token_start_pos(sax, chars_read);
+                        const bool result_get = get_cbor_binary(b);
+                        detail::sax_call_next_token_end_pos(sax, chars_read);
+                        return result_get && sax->binary(b);
                     }
 
                     default:                 // LCOV_EXCL_LINE
@@ -819,16 +891,20 @@ class binary_reader
             }
 
             case 0xF4: // false
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read);
                 return sax->boolean(false);
 
             case 0xF5: // true
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read);
                 return sax->boolean(true);
 
             case 0xF6: // null
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read);
                 return sax->null();
 
             case 0xF9: // Half-Precision Float (two-byte IEEE 754)
             {
+                detail::sax_call_next_token_start_pos(sax, chars_read - 1);
                 const auto byte1_raw = get();
                 if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::cbor, "number")))
                 {
@@ -870,6 +946,7 @@ class binary_reader
                             return std::ldexp(mant + 1024, exp - 25);
                     }
                 }();
+                detail::sax_call_next_token_end_pos(sax, chars_read);
                 return sax->number_float((half & 0x8000u) != 0
                                          ? static_cast<number_float_t>(-val)
                                          : static_cast<number_float_t>(val), "");
@@ -878,12 +955,14 @@ class binary_reader
             case 0xFA: // Single-Precision Float (four-byte IEEE 754)
             {
                 float number{};
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read + sizeof(number));
                 return get_number(input_format_t::cbor, number) && sax->number_float(static_cast<number_float_t>(number), "");
             }
 
             case 0xFB: // Double-Precision Float (eight-byte IEEE 754)
             {
                 double number{};
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read + sizeof(number));
                 return get_number(input_format_t::cbor, number) && sax->number_float(static_cast<number_float_t>(number), "");
             }
 
@@ -1127,6 +1206,7 @@ class binary_reader
             }
         }
 
+        detail::sax_call_next_token_start_end_pos(sax, chars_read);
         return sax->end_array();
     }
 
@@ -1152,7 +1232,10 @@ class binary_reader
                 for (std::size_t i = 0; i < len; ++i)
                 {
                     get();
-                    if (JSON_HEDLEY_UNLIKELY(!get_cbor_string(key) || !sax->key(key)))
+                    detail::sax_call_next_token_start_pos(sax, chars_read - 1);
+                    const bool result_get = get_cbor_string(key);
+                    detail::sax_call_next_token_end_pos(sax, chars_read);
+                    if (JSON_HEDLEY_UNLIKELY(!result_get || !sax->key(key)))
                     {
                         return false;
                     }
@@ -1168,7 +1251,10 @@ class binary_reader
             {
                 while (get() != 0xFF)
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!get_cbor_string(key) || !sax->key(key)))
+                    detail::sax_call_next_token_start_pos(sax, chars_read - 1);
+                    const bool result_get = get_cbor_string(key);
+                    detail::sax_call_next_token_end_pos(sax, chars_read);
+                    if (JSON_HEDLEY_UNLIKELY(!result_get || !sax->key(key)))
                     {
                         return false;
                     }
@@ -1182,6 +1268,7 @@ class binary_reader
             }
         }
 
+        detail::sax_call_next_token_start_end_pos(sax, chars_read);
         return sax->end_object();
     }
 
@@ -1329,6 +1416,7 @@ class binary_reader
             case 0x7D:
             case 0x7E:
             case 0x7F:
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read);
                 return sax->number_unsigned(static_cast<number_unsigned_t>(current));
 
             // fixmap
@@ -1348,6 +1436,7 @@ class binary_reader
             case 0x8D:
             case 0x8E:
             case 0x8F:
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read);
                 return get_msgpack_object(conditional_static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x0Fu));
 
             // fixarray
@@ -1367,6 +1456,7 @@ class binary_reader
             case 0x9D:
             case 0x9E:
             case 0x9F:
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read);
                 return get_msgpack_array(conditional_static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x0Fu));
 
             // fixstr
@@ -1407,16 +1497,22 @@ class binary_reader
             case 0xDB: // str 32
             {
                 string_t s;
-                return get_msgpack_string(s) && sax->string(s);
+                detail::sax_call_next_token_start_pos(sax, chars_read - 1);
+                const bool result_get = get_msgpack_string(s);
+                detail::sax_call_next_token_end_pos(sax, chars_read);
+                return result_get && sax->string(s);
             }
 
             case 0xC0: // nil
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read);
                 return sax->null();
 
             case 0xC2: // false
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read);
                 return sax->boolean(false);
 
             case 0xC3: // true
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read);
                 return sax->boolean(true);
 
             case 0xC4: // bin 8
@@ -1432,90 +1528,107 @@ class binary_reader
             case 0xD8: // fixext 16
             {
                 binary_t b;
-                return get_msgpack_binary(b) && sax->binary(b);
+                detail::sax_call_next_token_start_pos(sax, chars_read - 1);
+                const bool result_get = get_msgpack_binary(b);
+                detail::sax_call_next_token_end_pos(sax, chars_read);
+                return result_get && sax->binary(b);
             }
 
             case 0xCA: // float 32
             {
                 float number{};
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read + sizeof(number));
                 return get_number(input_format_t::msgpack, number) && sax->number_float(static_cast<number_float_t>(number), "");
             }
 
             case 0xCB: // float 64
             {
                 double number{};
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read + sizeof(number));
                 return get_number(input_format_t::msgpack, number) && sax->number_float(static_cast<number_float_t>(number), "");
             }
 
             case 0xCC: // uint 8
             {
                 std::uint8_t number{};
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read + sizeof(number));
                 return get_number(input_format_t::msgpack, number) && sax->number_unsigned(number);
             }
 
             case 0xCD: // uint 16
             {
                 std::uint16_t number{};
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read + sizeof(number));
                 return get_number(input_format_t::msgpack, number) && sax->number_unsigned(number);
             }
 
             case 0xCE: // uint 32
             {
                 std::uint32_t number{};
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read + sizeof(number));
                 return get_number(input_format_t::msgpack, number) && sax->number_unsigned(number);
             }
 
             case 0xCF: // uint 64
             {
                 std::uint64_t number{};
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read + sizeof(number));
                 return get_number(input_format_t::msgpack, number) && sax->number_unsigned(number);
             }
 
             case 0xD0: // int 8
             {
                 std::int8_t number{};
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read + sizeof(number));
                 return get_number(input_format_t::msgpack, number) && sax->number_integer(number);
             }
 
             case 0xD1: // int 16
             {
                 std::int16_t number{};
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read + sizeof(number));
                 return get_number(input_format_t::msgpack, number) && sax->number_integer(number);
             }
 
             case 0xD2: // int 32
             {
                 std::int32_t number{};
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read + sizeof(number));
                 return get_number(input_format_t::msgpack, number) && sax->number_integer(number);
             }
 
             case 0xD3: // int 64
             {
                 std::int64_t number{};
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read + sizeof(number));
                 return get_number(input_format_t::msgpack, number) && sax->number_integer(number);
             }
 
             case 0xDC: // array 16
             {
                 std::uint16_t len{};
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read + sizeof(len));
                 return get_number(input_format_t::msgpack, len) && get_msgpack_array(static_cast<std::size_t>(len));
             }
 
             case 0xDD: // array 32
             {
                 std::uint32_t len{};
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read + sizeof(len));
                 return get_number(input_format_t::msgpack, len) && get_msgpack_array(conditional_static_cast<std::size_t>(len));
             }
 
             case 0xDE: // map 16
             {
                 std::uint16_t len{};
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read + sizeof(len));
                 return get_number(input_format_t::msgpack, len) && get_msgpack_object(static_cast<std::size_t>(len));
             }
 
             case 0xDF: // map 32
             {
                 std::uint32_t len{};
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read + sizeof(len));
                 return get_number(input_format_t::msgpack, len) && get_msgpack_object(conditional_static_cast<std::size_t>(len));
             }
 
@@ -1552,6 +1665,7 @@ class binary_reader
             case 0xFD:
             case 0xFE:
             case 0xFF:
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read);
                 return sax->number_integer(static_cast<std::int8_t>(current));
 
             default: // anything else
@@ -1782,6 +1896,7 @@ class binary_reader
             }
         }
 
+        detail::sax_call_next_token_start_end_pos(sax, chars_read);
         return sax->end_array();
     }
 
@@ -1800,7 +1915,10 @@ class binary_reader
         for (std::size_t i = 0; i < len; ++i)
         {
             get();
-            if (JSON_HEDLEY_UNLIKELY(!get_msgpack_string(key) || !sax->key(key)))
+            detail::sax_call_next_token_start_pos(sax, chars_read - 1);
+            const bool result_get = get_msgpack_string(key);
+            detail::sax_call_next_token_end_pos(sax, chars_read);
+            if (JSON_HEDLEY_UNLIKELY(!result_get || !sax->key(key)))
             {
                 return false;
             }
@@ -1812,6 +1930,7 @@ class binary_reader
             key.clear();
         }
 
+        detail::sax_call_next_token_start_end_pos(sax, chars_read);
         return sax->end_object();
     }
 
@@ -2174,7 +2293,6 @@ class binary_reader
                             return true;
                         }
                     }
-
                     string_t key = "_ArraySize_";
                     if (JSON_HEDLEY_UNLIKELY(!sax->start_object(3) || !sax->key(key) || !sax->start_array(dim.size())))
                     {
@@ -2235,7 +2353,6 @@ class binary_reader
         bool is_ndarray = false;
 
         get_ignore_noop();
-
         if (current == '$')
         {
             result.second = get();  // must not ignore 'N', because 'N' maybe the type
@@ -2264,7 +2381,9 @@ class binary_reader
                                         exception_message(input_format, concat("expected '#' after type information; last byte: 0x", last_token), "size"), nullptr));
             }
 
+            // detail::sax_call_next_token_start_pos(sax, chars_read - 1);
             const bool is_error = get_ubjson_size_value(result.first, is_ndarray);
+            //detail::sax_call_next_token_end_pos(sax, chars_read);
             if (input_format == input_format_t::bjdata && is_ndarray)
             {
                 if (inside_ndarray)
@@ -2279,7 +2398,9 @@ class binary_reader
 
         if (current == '#')
         {
+            //    detail::sax_call_next_token_start_pos(sax, chars_read - 1);
             const bool is_error = get_ubjson_size_value(result.first, is_ndarray);
+            //   detail::sax_call_next_token_end_pos(sax, chars_read);
             if (input_format == input_format_t::bjdata && is_ndarray)
             {
                 return sax->parse_error(chars_read, get_token_string(), parse_error::create(112, chars_read,
@@ -2288,6 +2409,7 @@ class binary_reader
             return is_error;
         }
 
+        //   detail::sax_call_next_token_start_end_pos(sax, chars_read - 2, chars_read - 1);
         return true;
     }
 
@@ -2303,40 +2425,47 @@ class binary_reader
                 return unexpect_eof(input_format, "value");
 
             case 'T':  // true
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read);
                 return sax->boolean(true);
             case 'F':  // false
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read);
                 return sax->boolean(false);
 
             case 'Z':  // null
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read);
                 return sax->null();
 
             case 'U':
             {
                 std::uint8_t number{};
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read + sizeof(number));
                 return get_number(input_format, number) && sax->number_unsigned(number);
             }
 
             case 'i':
             {
                 std::int8_t number{};
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read + sizeof(number));
                 return get_number(input_format, number) && sax->number_integer(number);
             }
 
             case 'I':
             {
                 std::int16_t number{};
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read + sizeof(number));
                 return get_number(input_format, number) && sax->number_integer(number);
             }
 
             case 'l':
             {
                 std::int32_t number{};
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read + sizeof(number));
                 return get_number(input_format, number) && sax->number_integer(number);
             }
-
             case 'L':
             {
                 std::int64_t number{};
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read + sizeof(number));
                 return get_number(input_format, number) && sax->number_integer(number);
             }
 
@@ -2347,6 +2476,7 @@ class binary_reader
                     break;
                 }
                 std::uint16_t number{};
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read + sizeof(number));
                 return get_number(input_format, number) && sax->number_unsigned(number);
             }
 
@@ -2357,6 +2487,7 @@ class binary_reader
                     break;
                 }
                 std::uint32_t number{};
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read + sizeof(number));
                 return get_number(input_format, number) && sax->number_unsigned(number);
             }
 
@@ -2367,11 +2498,13 @@ class binary_reader
                     break;
                 }
                 std::uint64_t number{};
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read + sizeof(number));
                 return get_number(input_format, number) && sax->number_unsigned(number);
             }
 
             case 'h':
             {
+                detail::sax_call_next_token_start_pos(sax, chars_read - 1);
                 if (input_format != input_format_t::bjdata)
                 {
                     break;
@@ -2417,25 +2550,30 @@ class binary_reader
                             return std::ldexp(mant + 1024, exp - 25);
                     }
                 }();
+                detail::sax_call_next_token_end_pos(sax, chars_read);
                 return sax->number_float((half & 0x8000u) != 0
                                          ? static_cast<number_float_t>(-val)
-                                         : static_cast<number_float_t>(val), "");
+                                         : static_cast<number_float_t>(val),
+                                         "");
             }
 
             case 'd':
             {
                 float number{};
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read + sizeof(number));
                 return get_number(input_format, number) && sax->number_float(static_cast<number_float_t>(number), "");
             }
 
             case 'D':
             {
                 double number{};
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read + sizeof(number));
                 return get_number(input_format, number) && sax->number_float(static_cast<number_float_t>(number), "");
             }
 
             case 'H':
             {
+                // call to detail::sax_call_next_token_start_end_pos inside of the method
                 return get_ubjson_high_precision_number();
             }
 
@@ -2453,19 +2591,25 @@ class binary_reader
                                             exception_message(input_format, concat("byte after 'C' must be in range 0x00..0x7F; last byte: 0x", last_token), "char"), nullptr));
                 }
                 string_t s(1, static_cast<typename string_t::value_type>(current));
+                detail::sax_call_next_token_start_end_pos(sax, chars_read - 2, chars_read);
                 return sax->string(s);
             }
 
             case 'S':  // string
             {
                 string_t s;
-                return get_ubjson_string(s) && sax->string(s);
+                detail::sax_call_next_token_start_pos(sax, chars_read - 1);
+                const bool result_get = get_ubjson_string(s);
+                detail::sax_call_next_token_end_pos(sax, chars_read);
+                return result_get && sax->string(s);
             }
 
             case '[':  // array
+                // call to detail::sax_call_next_token_start_end_pos inside of the method
                 return get_ubjson_array();
 
             case '{':  // object
+                // call to detail::sax_call_next_token_start_end_pos inside of the method
                 return get_ubjson_object();
 
             default: // anything else
@@ -2480,6 +2624,7 @@ class binary_reader
     */
     bool get_ubjson_array()
     {
+        detail::sax_call_next_token_start_pos(sax, chars_read - 1);
         std::pair<std::size_t, char_int_type> size_and_type;
         if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_type(size_and_type)))
         {
@@ -2504,6 +2649,7 @@ class binary_reader
                                         exception_message(input_format, "invalid byte: 0x" + last_token, "type"), nullptr));
             }
 
+            detail::sax_call_next_token_end_pos(sax, chars_read);
             string_t type = it->second; // sax->string() takes a reference
             if (JSON_HEDLEY_UNLIKELY(!sax->key(key) || !sax->string(type)))
             {
@@ -2515,6 +2661,7 @@ class binary_reader
                 size_and_type.second = 'U';
             }
 
+            detail::sax_call_next_token_start_end_pos(sax, chars_read);
             key = "_ArrayData_";
             if (JSON_HEDLEY_UNLIKELY(!sax->key(key) || !sax->start_array(size_and_type.first) ))
             {
@@ -2523,17 +2670,20 @@ class binary_reader
 
             for (std::size_t i = 0; i < size_and_type.first; ++i)
             {
+                // call to detail::sax_call_next_token_start_end_pos inside of the method
                 if (JSON_HEDLEY_UNLIKELY(!get_ubjson_value(size_and_type.second)))
                 {
                     return false;
                 }
             }
 
+            detail::sax_call_next_token_start_end_pos(sax, chars_read);
             return (sax->end_array() && sax->end_object());
         }
 
         if (size_and_type.first != npos)
         {
+            detail::sax_call_next_token_end_pos(sax, chars_read);
             if (JSON_HEDLEY_UNLIKELY(!sax->start_array(size_and_type.first)))
             {
                 return false;
@@ -2545,6 +2695,7 @@ class binary_reader
                 {
                     for (std::size_t i = 0; i < size_and_type.first; ++i)
                     {
+                        // call to detail::sax_call_next_token_start_end_pos inside of the method
                         if (JSON_HEDLEY_UNLIKELY(!get_ubjson_value(size_and_type.second)))
                         {
                             return false;
@@ -2556,6 +2707,7 @@ class binary_reader
             {
                 for (std::size_t i = 0; i < size_and_type.first; ++i)
                 {
+                    // call to detail::sax_call_next_token_start_end_pos inside of the method
                     if (JSON_HEDLEY_UNLIKELY(!parse_ubjson_internal()))
                     {
                         return false;
@@ -2565,6 +2717,7 @@ class binary_reader
         }
         else
         {
+            detail::sax_call_next_token_end_pos(sax, chars_read - 1);
             if (JSON_HEDLEY_UNLIKELY(!sax->start_array(static_cast<std::size_t>(-1))))
             {
                 return false;
@@ -2580,6 +2733,7 @@ class binary_reader
             }
         }
 
+        detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read);
         return sax->end_array();
     }
 
@@ -2588,6 +2742,7 @@ class binary_reader
     */
     bool get_ubjson_object()
     {
+        detail::sax_call_next_token_start_pos(sax, chars_read - 1);
         std::pair<std::size_t, char_int_type> size_and_type;
         if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_type(size_and_type)))
         {
@@ -2605,6 +2760,7 @@ class binary_reader
         string_t key;
         if (size_and_type.first != npos)
         {
+            detail::sax_call_next_token_end_pos(sax, chars_read - 1);
             if (JSON_HEDLEY_UNLIKELY(!sax->start_object(size_and_type.first)))
             {
                 return false;
@@ -2614,7 +2770,10 @@ class binary_reader
             {
                 for (std::size_t i = 0; i < size_and_type.first; ++i)
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!get_ubjson_string(key) || !sax->key(key)))
+                    detail::sax_call_next_token_start_pos(sax, chars_read - 1);
+                    const bool result_get = get_ubjson_string(key);
+                    detail::sax_call_next_token_end_pos(sax, chars_read);
+                    if (JSON_HEDLEY_UNLIKELY(!result_get || !sax->key(key)))
                     {
                         return false;
                     }
@@ -2629,7 +2788,10 @@ class binary_reader
             {
                 for (std::size_t i = 0; i < size_and_type.first; ++i)
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!get_ubjson_string(key) || !sax->key(key)))
+                    detail::sax_call_next_token_start_pos(sax, chars_read - 1);
+                    const bool result_get = get_ubjson_string(key);
+                    detail::sax_call_next_token_end_pos(sax, chars_read);
+                    if (JSON_HEDLEY_UNLIKELY(!result_get || !sax->key(key)))
                     {
                         return false;
                     }
@@ -2643,6 +2805,7 @@ class binary_reader
         }
         else
         {
+            detail::sax_call_next_token_end_pos(sax, chars_read - 1);
             if (JSON_HEDLEY_UNLIKELY(!sax->start_object(static_cast<std::size_t>(-1))))
             {
                 return false;
@@ -2650,7 +2813,10 @@ class binary_reader
 
             while (current != '}')
             {
-                if (JSON_HEDLEY_UNLIKELY(!get_ubjson_string(key, false) || !sax->key(key)))
+                detail::sax_call_next_token_start_pos(sax, chars_read - 1);
+                const bool result_get = get_ubjson_string(key, false);
+                detail::sax_call_next_token_end_pos(sax, chars_read);
+                if (JSON_HEDLEY_UNLIKELY(!result_get || !sax->key(key)))
                 {
                     return false;
                 }
@@ -2663,6 +2829,7 @@ class binary_reader
             }
         }
 
+        detail::sax_call_next_token_start_end_pos(sax, chars_read - 1, chars_read);
         return sax->end_object();
     }
 
@@ -2671,6 +2838,7 @@ class binary_reader
 
     bool get_ubjson_high_precision_number()
     {
+        detail::sax_call_next_token_start_pos(sax, chars_read - 1);
         // get size of following number string
         std::size_t size{};
         bool no_ndarray = true;
@@ -2691,6 +2859,7 @@ class binary_reader
             }
             number_vector.push_back(static_cast<char>(current));
         }
+        detail::sax_call_next_token_end_pos(sax, chars_read);
 
         // parse number string
         using ia_type = decltype(detail::input_adapter(number_vector));
@@ -2888,6 +3057,7 @@ class binary_reader
     {
         if (JSON_HEDLEY_UNLIKELY(current == std::char_traits<char_type>::eof()))
         {
+            detail::sax_call_next_token_end_pos(sax, chars_read);
             return sax->parse_error(chars_read, "<end of file>",
                                     parse_error::create(110, chars_read, exception_message(format, "unexpected end of input", context), nullptr));
         }

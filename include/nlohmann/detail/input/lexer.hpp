@@ -1506,13 +1506,13 @@ scan_number_done:
         while (current == ' ' || current == '\t' || current == '\n' || current == '\r');
     }
 
-    token_type scan()
+    bool scan_start()
     {
         // initially, skip the BOM
         if (position.chars_read_total == 0 && !skip_bom())
         {
             error_message = "invalid BOM; must be 0xEF 0xBB 0xBF if given";
-            return token_type::parse_error;
+            return false;
         }
 
         // read next character and ignore whitespace
@@ -1523,13 +1523,17 @@ scan_number_done:
         {
             if (!scan_comment())
             {
-                return token_type::parse_error;
+                return false;
             }
 
             // skip following whitespace
             skip_whitespace();
         }
+        return true;
+    }
 
+    token_type scan_end()
+    {
         switch (current)
         {
             // structural characters
@@ -1592,6 +1596,10 @@ scan_number_done:
                 error_message = "invalid literal";
                 return token_type::parse_error;
         }
+    }
+    token_type scan()
+    {
+        return !scan_start() ? token_type::parse_error : scan_end();
     }
 
   private:
