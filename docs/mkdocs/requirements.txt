@@ -27,7 +27,7 @@ mkdocs-material-extensions==1.1.1
 mkdocs-minify-plugin==0.6.2
 mkdocs-redirects==1.2.1
 mkdocs-simple-hooks==0.1.5
-nltk==3.8
+nltk==3.8.1
 packaging==22.0
 plantuml==0.3.0
 plantuml-markdown==3.7.3
