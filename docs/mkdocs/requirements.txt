@@ -41,7 +41,7 @@ pyyaml_env_tag==0.1
 regex==2022.10.31
 requests==2.31.0
 six==1.16.0
-smmap==5.0.0
+smmap==5.0.1
 tornado==6.3.3
 tqdm==4.64.1
 urllib3==1.26.18
