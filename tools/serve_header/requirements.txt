@@ -1,2 +1,2 @@
-PyYAML==6.0
+PyYAML==6.0.1
 watchdog==2.1.7
