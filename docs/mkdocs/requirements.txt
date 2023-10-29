@@ -36,7 +36,7 @@ pymdown-extensions==10.0
 pyparsing==3.0.9
 python-dateutil==2.8.2
 pytz==2022.7
-PyYAML==6.0
+PyYAML==6.0.1
 pyyaml_env_tag==0.1
 regex==2022.10.31
 requests==2.31.0
