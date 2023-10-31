@@ -122,7 +122,7 @@ target_include_directories(
     ${NLOHMANN_JSON_TARGET_NAME}
     ${NLOHMANN_JSON_SYSTEM_INCLUDE} INTERFACE
     $<BUILD_INTERFACE:${NLOHMANN_JSON_INCLUDE_BUILD_DIR}>
-    $<INSTALL_INTERFACE:include>
+    $<INSTALL_INTERFACE:${NLOHMANN_JSON_INCLUDE_INSTALL_DIR}>
 )
 
 ## add debug view definition file for msvc (natvis)
