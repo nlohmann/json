@@ -722,7 +722,7 @@ TEST_CASE("regression tests 1")
     {
         std::ifstream f("file_not_found.json");
         json _;
-        CHECK_THROWS_WITH_AS(_ = json::parse(f), "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal", json::parse_error&);
+        CHECK_THROWS_WITH_AS(_ = json::parse(f), "[json.exception.parse_error.101] parse error at line 1, column 1: attempting to parse an empty input; check that your input string or stream contains the expected JSON", json::parse_error&);
     }
 
     SECTION("issue #367 - calling stream at EOF")
@@ -736,7 +736,7 @@ TEST_CASE("regression tests 1")
         // ss is not at EOF; this yielded an error before the fix
         // (threw basic_string::append). No, it should just throw
         // a parse error because of the EOF.
-        CHECK_THROWS_WITH_AS(ss >> j, "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal", json::parse_error&);
+        CHECK_THROWS_WITH_AS(ss >> j, "[json.exception.parse_error.101] parse error at line 1, column 1: attempting to parse an empty input; check that your input string or stream contains the expected JSON", json::parse_error&);
     }
 
     SECTION("issue #367 - behavior of operator>> should more closely resemble that of built-in overloads")
@@ -745,7 +745,7 @@ TEST_CASE("regression tests 1")
         {
             std::stringstream ss;
             json j;
-            CHECK_THROWS_WITH_AS(ss >> j, "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal", json::parse_error&);
+            CHECK_THROWS_WITH_AS(ss >> j, "[json.exception.parse_error.101] parse error at line 1, column 1: attempting to parse an empty input; check that your input string or stream contains the expected JSON", json::parse_error&);
         }
 
         SECTION("(whitespace)")
@@ -765,7 +765,7 @@ TEST_CASE("regression tests 1")
             CHECK_NOTHROW(ss >> j);
             CHECK(j == 111);
 
-            CHECK_THROWS_WITH_AS(ss >> j, "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal", json::parse_error&);
+            CHECK_THROWS_WITH_AS(ss >> j, "[json.exception.parse_error.101] parse error at line 1, column 1: attempting to parse an empty input; check that your input string or stream contains the expected JSON", json::parse_error&);
         }
 
         SECTION("one value + whitespace")
@@ -788,7 +788,7 @@ TEST_CASE("regression tests 1")
             CHECK_NOTHROW(ss >> j);
             CHECK(j == 333);
 
-            CHECK_THROWS_WITH_AS(ss >> j, "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal", json::parse_error&);
+            CHECK_THROWS_WITH_AS(ss >> j, "[json.exception.parse_error.101] parse error at line 1, column 1: attempting to parse an empty input; check that your input string or stream contains the expected JSON", json::parse_error&);
         }
 
         SECTION("three values")
@@ -803,7 +803,7 @@ TEST_CASE("regression tests 1")
             CHECK_NOTHROW(ss >> j);
             CHECK(j == 333);
 
-            CHECK_THROWS_WITH_AS(ss >> j, "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal", json::parse_error&);
+            CHECK_THROWS_WITH_AS(ss >> j, "[json.exception.parse_error.101] parse error at line 1, column 1: attempting to parse an empty input; check that your input string or stream contains the expected JSON", json::parse_error&);
         }
 
         SECTION("literals without whitespace")
@@ -820,7 +820,7 @@ TEST_CASE("regression tests 1")
             CHECK_NOTHROW(ss >> j);
             CHECK(j == "");
 
-            CHECK_THROWS_WITH_AS(ss >> j, "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal", json::parse_error&);
+            CHECK_THROWS_WITH_AS(ss >> j, "[json.exception.parse_error.101] parse error at line 1, column 1: attempting to parse an empty input; check that your input string or stream contains the expected JSON", json::parse_error&);
         }
 
         SECTION("example from #529")
@@ -833,7 +833,7 @@ TEST_CASE("regression tests 1")
             CHECK_NOTHROW(ss >> j);
             CHECK(j == json({{"three", 3}}));
 
-            CHECK_THROWS_WITH_AS(ss >> j, "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal", json::parse_error&);
+            CHECK_THROWS_WITH_AS(ss >> j, "[json.exception.parse_error.101] parse error at line 1, column 1: attempting to parse an empty input; check that your input string or stream contains the expected JSON", json::parse_error&);
         }
 
         SECTION("second example from #529")
