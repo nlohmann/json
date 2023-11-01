@@ -35,6 +35,9 @@ jobs:
         run: make build -C docs/mkdocs
 
       - name: Deploy documentation
-        uses: JamesIves/github-pages-deploy-action@v4
+        uses: crazy-max/ghaction-github-pages@v4
         with:
-          folder: docs/mkdocs/site
+          target_branch: gh-pages
+          build_dir: docs/mkdocs/site
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

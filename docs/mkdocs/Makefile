@@ -21,7 +21,7 @@ style_check:
 clean:
 	rm -fr docs/images/json.gif docs/examples
 
-# publish site to GitHub pages (not working in CI)
+# publish site to GitHub pages (not working in GitHub Actions)
 publish: prepare_files
 	venv/bin/mkdocs gh-deploy --clean --force
 
