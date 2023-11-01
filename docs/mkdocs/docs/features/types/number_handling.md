@@ -245,7 +245,7 @@ integers, and  between integers and floating-point values to integers. This beha
 
 The rationale is twofold:
 
-1. JSON does not define a number type or precision (see [#json-specification](above)).
+1. JSON does not define a number type or precision (see above).
 2. C++ also allows to silently convert between number types.
 
 !!! success "Conditional number conversion"

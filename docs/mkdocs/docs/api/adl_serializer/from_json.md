@@ -14,7 +14,7 @@ noexcept(::nlohmann::from_json(std::forward<BasicJsonType>(j), detail::identity_
 -> decltype(::nlohmann::from_json(std::forward<BasicJsonType>(j), detail::identity_tag<TargetType> {}))
 ```
 
-This function is usually called by the [`get()`](../basic_json/get.md) function of the [basic_json](../basic_json)
+This function is usually called by the [`get()`](../basic_json/get.md) function of the [basic_json](../basic_json/index.md)
 class (either explicitly or via the conversion operators).
 
 1. This function is chosen for default-constructible value types.

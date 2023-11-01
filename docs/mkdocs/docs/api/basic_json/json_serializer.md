@@ -17,7 +17,7 @@ using json_serializer = JSONSerializer<T, SFINAE>;
 
 #### Default type
 
-The default values for `json_serializer` is [`adl_serializer`](../adl_serializer).
+The default values for `json_serializer` is [`adl_serializer`](../adl_serializer/index.md).
 
 ## Examples
 
