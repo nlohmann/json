@@ -68,7 +68,7 @@ constructor.
 
 ## See also
 
-[List of exceptions](127.0.0.1:8000/home/exceptions/)
+[List of exceptions](../../home/exceptions.md)
 
 ## Version history
 

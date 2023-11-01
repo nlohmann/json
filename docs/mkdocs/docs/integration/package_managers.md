@@ -9,7 +9,7 @@ Throughout this page, we will describe how to compile the example file `example.
 When executed, this program should create output similar to
 
 ```json
---8<-- "../../examples/meta.output"
+--8<-- "examples/meta.output"
 ```
 
 ## Homebrew

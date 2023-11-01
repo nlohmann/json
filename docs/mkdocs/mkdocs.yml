@@ -9,7 +9,7 @@ repo_url: https://github.com/nlohmann/json
 edit_uri: edit/develop/docs/mkdocs/docs
 
 # Copyright
-copyright: Copyright &copy; 2013 - 2022 Niels Lohmann
+copyright: Copyright &copy; 2013 - 2023 Niels Lohmann
 
 # Configuration
 theme:
@@ -270,6 +270,7 @@ nav:
         - 'JSON_HAS_EXPERIMENTAL_FILESYSTEM': api/macros/json_has_filesystem.md
         - 'JSON_HAS_FILESYSTEM': api/macros/json_has_filesystem.md
         - 'JSON_HAS_RANGES': api/macros/json_has_ranges.md
+        - 'JSON_HAS_STATIC_RTTI': api/macros/json_has_static_rtti.md
         - 'JSON_HAS_THREE_WAY_COMPARISON': api/macros/json_has_three_way_comparison.md
         - 'JSON_NOEXCEPTION': api/macros/json_noexception.md
         - 'JSON_NO_IO': api/macros/json_no_io.md
@@ -325,8 +326,8 @@ markdown_extensions:
   - pymdownx.critic
   - pymdownx.details
   - pymdownx.emoji:
-      emoji_index: !!python/name:materialx.emoji.twemoji
-      emoji_generator: !!python/name:materialx.emoji.to_svg
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - pymdownx.inlinehilite
   - pymdownx.magiclink
   - pymdownx.mark

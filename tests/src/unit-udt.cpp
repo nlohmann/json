@@ -566,7 +566,7 @@ struct pod_serializer
         // calling get calls from_json, for now, we cannot do this in custom
         // serializers
         nlohmann::from_json(j, value);
-        auto* bytes = static_cast<char*>(static_cast<void*>(&value));
+        auto* bytes = static_cast<char*>(static_cast<void*>(&value)); // NOLINT(bugprone-casting-through-void)
         std::memcpy(&t, bytes, sizeof(value));
     }
 
@@ -585,7 +585,7 @@ struct pod_serializer
                    std::is_pod<U>::value && std::is_class<U>::value, int >::type = 0 >
     static void to_json(BasicJsonType& j, const  T& t) noexcept
     {
-        const auto* bytes = static_cast< const unsigned char*>(static_cast<const void*>(&t));
+        const auto* bytes = static_cast< const unsigned char*>(static_cast<const void*>(&t));  // NOLINT(bugprone-casting-through-void)
         std::uint64_t value = 0;
         std::memcpy(&value, bytes, sizeof(value));
         nlohmann::to_json(j, value);
