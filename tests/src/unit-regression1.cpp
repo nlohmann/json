@@ -1328,10 +1328,10 @@ TEST_CASE("regression tests 1")
         {
             std::ifstream is;
             is.exceptions(
-                is.exceptions()
-                | std::ios_base::failbit
-                | std::ios_base::badbit
-            ); // handle different exceptions as 'file not found', 'permission denied'
+                  is.exceptions()
+                  | std::ios_base::failbit
+                  | std::ios_base::badbit
+              ); // handle different exceptions as 'file not found', 'permission denied'
 
             is.open(TEST_DATA_DIRECTORY "/regression/working_file.json");
             json _;
@@ -1341,10 +1341,10 @@ TEST_CASE("regression tests 1")
         {
             std::ifstream is;
             is.exceptions(
-                is.exceptions()
-                | std::ios_base::failbit
-                | std::ios_base::badbit
-            ); // handle different exceptions as 'file not found', 'permission denied'
+                  is.exceptions()
+                  | std::ios_base::failbit
+                  | std::ios_base::badbit
+              ); // handle different exceptions as 'file not found', 'permission denied'
 
             is.open(TEST_DATA_DIRECTORY "/json_nlohmann_tests/all_unicode.json.cbor",
                     std::ios_base::in | std::ios_base::binary);

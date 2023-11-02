@@ -53,8 +53,8 @@
 
 #define NLOHMANN_JSON_ABI_TAGS                                       \
     NLOHMANN_JSON_ABI_TAGS_CONCAT(                                   \
-            NLOHMANN_JSON_ABI_TAG_DIAGNOSTICS,                       \
-            NLOHMANN_JSON_ABI_TAG_LEGACY_DISCARDED_VALUE_COMPARISON)
+        NLOHMANN_JSON_ABI_TAG_DIAGNOSTICS,                       \
+        NLOHMANN_JSON_ABI_TAG_LEGACY_DISCARDED_VALUE_COMPARISON)
 
 // Construct the namespace version component
 #define NLOHMANN_JSON_NAMESPACE_VERSION_CONCAT_EX(major, minor, patch) \
@@ -79,8 +79,8 @@
 #ifndef NLOHMANN_JSON_NAMESPACE
 #define NLOHMANN_JSON_NAMESPACE               \
     nlohmann::NLOHMANN_JSON_NAMESPACE_CONCAT( \
-            NLOHMANN_JSON_ABI_TAGS,           \
-            NLOHMANN_JSON_NAMESPACE_VERSION)
+        NLOHMANN_JSON_ABI_TAGS,           \
+        NLOHMANN_JSON_NAMESPACE_VERSION)
 #endif
 
 #ifndef NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -88,8 +88,8 @@
     namespace nlohmann                               \
     {                                                \
     inline namespace NLOHMANN_JSON_NAMESPACE_CONCAT( \
-                NLOHMANN_JSON_ABI_TAGS,              \
-                NLOHMANN_JSON_NAMESPACE_VERSION)     \
+            NLOHMANN_JSON_ABI_TAGS,              \
+            NLOHMANN_JSON_NAMESPACE_VERSION)     \
     {
 #endif
 
