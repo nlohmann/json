@@ -2740,10 +2740,110 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 #define NLOHMANN_JSON_PASTE62(func, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39, v40, v41, v42, v43, v44, v45, v46, v47, v48, v49, v50, v51, v52, v53, v54, v55, v56, v57, v58, v59, v60, v61) NLOHMANN_JSON_PASTE2(func, v1) NLOHMANN_JSON_PASTE61(func, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39, v40, v41, v42, v43, v44, v45, v46, v47, v48, v49, v50, v51, v52, v53, v54, v55, v56, v57, v58, v59, v60, v61)
 #define NLOHMANN_JSON_PASTE63(func, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39, v40, v41, v42, v43, v44, v45, v46, v47, v48, v49, v50, v51, v52, v53, v54, v55, v56, v57, v58, v59, v60, v61, v62) NLOHMANN_JSON_PASTE2(func, v1) NLOHMANN_JSON_PASTE62(func, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39, v40, v41, v42, v43, v44, v45, v46, v47, v48, v49, v50, v51, v52, v53, v54, v55, v56, v57, v58, v59, v60, v61, v62)
 #define NLOHMANN_JSON_PASTE64(func, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39, v40, v41, v42, v43, v44, v45, v46, v47, v48, v49, v50, v51, v52, v53, v54, v55, v56, v57, v58, v59, v60, v61, v62, v63) NLOHMANN_JSON_PASTE2(func, v1) NLOHMANN_JSON_PASTE63(func, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39, v40, v41, v42, v43, v44, v45, v46, v47, v48, v49, v50, v51, v52, v53, v54, v55, v56, v57, v58, v59, v60, v61, v62, v63)
+#define NLOHMANN_JSON_DOUBLE_PASTE(...) NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_GET_MACRO(__VA_ARGS__, \
+        NLOHMANN_JSON_DOUBLE_PASTE63, \
+        NLOHMANN_JSON_DOUBLE_PASTE63, \
+        NLOHMANN_JSON_DOUBLE_PASTE61, \
+        NLOHMANN_JSON_DOUBLE_PASTE61, \
+        NLOHMANN_JSON_DOUBLE_PASTE59, \
+        NLOHMANN_JSON_DOUBLE_PASTE59, \
+        NLOHMANN_JSON_DOUBLE_PASTE57, \
+        NLOHMANN_JSON_DOUBLE_PASTE57, \
+        NLOHMANN_JSON_DOUBLE_PASTE55, \
+        NLOHMANN_JSON_DOUBLE_PASTE55, \
+        NLOHMANN_JSON_DOUBLE_PASTE53, \
+        NLOHMANN_JSON_DOUBLE_PASTE53, \
+        NLOHMANN_JSON_DOUBLE_PASTE51, \
+        NLOHMANN_JSON_DOUBLE_PASTE51, \
+        NLOHMANN_JSON_DOUBLE_PASTE49, \
+        NLOHMANN_JSON_DOUBLE_PASTE49, \
+        NLOHMANN_JSON_DOUBLE_PASTE47, \
+        NLOHMANN_JSON_DOUBLE_PASTE47, \
+        NLOHMANN_JSON_DOUBLE_PASTE45, \
+        NLOHMANN_JSON_DOUBLE_PASTE45, \
+        NLOHMANN_JSON_DOUBLE_PASTE43, \
+        NLOHMANN_JSON_DOUBLE_PASTE43, \
+        NLOHMANN_JSON_DOUBLE_PASTE41, \
+        NLOHMANN_JSON_DOUBLE_PASTE41, \
+        NLOHMANN_JSON_DOUBLE_PASTE39, \
+        NLOHMANN_JSON_DOUBLE_PASTE39, \
+        NLOHMANN_JSON_DOUBLE_PASTE37, \
+        NLOHMANN_JSON_DOUBLE_PASTE37, \
+        NLOHMANN_JSON_DOUBLE_PASTE35, \
+        NLOHMANN_JSON_DOUBLE_PASTE35, \
+        NLOHMANN_JSON_DOUBLE_PASTE33, \
+        NLOHMANN_JSON_DOUBLE_PASTE33, \
+        NLOHMANN_JSON_DOUBLE_PASTE31, \
+        NLOHMANN_JSON_DOUBLE_PASTE31, \
+        NLOHMANN_JSON_DOUBLE_PASTE29, \
+        NLOHMANN_JSON_DOUBLE_PASTE29, \
+        NLOHMANN_JSON_DOUBLE_PASTE27, \
+        NLOHMANN_JSON_DOUBLE_PASTE27, \
+        NLOHMANN_JSON_DOUBLE_PASTE25, \
+        NLOHMANN_JSON_DOUBLE_PASTE25, \
+        NLOHMANN_JSON_DOUBLE_PASTE23, \
+        NLOHMANN_JSON_DOUBLE_PASTE23, \
+        NLOHMANN_JSON_DOUBLE_PASTE21, \
+        NLOHMANN_JSON_DOUBLE_PASTE21, \
+        NLOHMANN_JSON_DOUBLE_PASTE19, \
+        NLOHMANN_JSON_DOUBLE_PASTE19, \
+        NLOHMANN_JSON_DOUBLE_PASTE17, \
+        NLOHMANN_JSON_DOUBLE_PASTE17, \
+        NLOHMANN_JSON_DOUBLE_PASTE15, \
+        NLOHMANN_JSON_DOUBLE_PASTE15, \
+        NLOHMANN_JSON_DOUBLE_PASTE13, \
+        NLOHMANN_JSON_DOUBLE_PASTE13, \
+        NLOHMANN_JSON_DOUBLE_PASTE11, \
+        NLOHMANN_JSON_DOUBLE_PASTE11, \
+        NLOHMANN_JSON_DOUBLE_PASTE9, \
+        NLOHMANN_JSON_DOUBLE_PASTE9, \
+        NLOHMANN_JSON_DOUBLE_PASTE7, \
+        NLOHMANN_JSON_DOUBLE_PASTE7, \
+        NLOHMANN_JSON_DOUBLE_PASTE5, \
+        NLOHMANN_JSON_DOUBLE_PASTE5, \
+        NLOHMANN_JSON_DOUBLE_PASTE3, \
+        NLOHMANN_JSON_DOUBLE_PASTE3, \
+        NLOHMANN_JSON_DOUBLE_PASTE1, \
+        NLOHMANN_JSON_DOUBLE_PASTE1)(__VA_ARGS__))
+#define NLOHMANN_JSON_DOUBLE_PASTE3(func, v1, v2) func(v1, v2)
+#define NLOHMANN_JSON_DOUBLE_PASTE5(func, v1, v2, v3, v4) NLOHMANN_JSON_DOUBLE_PASTE3(func, v1, v2) NLOHMANN_JSON_DOUBLE_PASTE3(func, v3, v4)
+#define NLOHMANN_JSON_DOUBLE_PASTE7(func, v1, v2, v3, v4, v5, v6) NLOHMANN_JSON_DOUBLE_PASTE3(func, v1, v2) NLOHMANN_JSON_DOUBLE_PASTE5(func, v3, v4, v5, v6)
+#define NLOHMANN_JSON_DOUBLE_PASTE9(func, v1, v2, v3, v4, v5, v6, v7, v8) NLOHMANN_JSON_DOUBLE_PASTE3(func, v1, v2) NLOHMANN_JSON_DOUBLE_PASTE7(func, v3, v4, v5, v6, v7, v8)
+#define NLOHMANN_JSON_DOUBLE_PASTE11(func, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10) NLOHMANN_JSON_DOUBLE_PASTE3(func, v1, v2) NLOHMANN_JSON_DOUBLE_PASTE9(func, v3, v4, v5, v6, v7, v8, v9, v10)
+#define NLOHMANN_JSON_DOUBLE_PASTE13(func, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12) NLOHMANN_JSON_DOUBLE_PASTE3(func, v1, v2) NLOHMANN_JSON_DOUBLE_PASTE11(func, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12)
+#define NLOHMANN_JSON_DOUBLE_PASTE15(func, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14) NLOHMANN_JSON_DOUBLE_PASTE3(func, v1, v2) NLOHMANN_JSON_DOUBLE_PASTE13(func, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14)
+#define NLOHMANN_JSON_DOUBLE_PASTE17(func, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16) NLOHMANN_JSON_DOUBLE_PASTE3(func, v1, v2) NLOHMANN_JSON_DOUBLE_PASTE15(func, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16)
+#define NLOHMANN_JSON_DOUBLE_PASTE19(func, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18) NLOHMANN_JSON_DOUBLE_PASTE3(func, v1, v2) NLOHMANN_JSON_DOUBLE_PASTE17(func, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18)
+#define NLOHMANN_JSON_DOUBLE_PASTE21(func, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20) NLOHMANN_JSON_DOUBLE_PASTE3(func, v1, v2) NLOHMANN_JSON_DOUBLE_PASTE19(func, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20)
+#define NLOHMANN_JSON_DOUBLE_PASTE23(func, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22) NLOHMANN_JSON_DOUBLE_PASTE3(func, v1, v2) NLOHMANN_JSON_DOUBLE_PASTE21(func, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22)
+#define NLOHMANN_JSON_DOUBLE_PASTE25(func, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24) NLOHMANN_JSON_DOUBLE_PASTE3(func, v1, v2) NLOHMANN_JSON_DOUBLE_PASTE23(func, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24)
+#define NLOHMANN_JSON_DOUBLE_PASTE27(func, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26) NLOHMANN_JSON_DOUBLE_PASTE3(func, v1, v2) NLOHMANN_JSON_DOUBLE_PASTE25(func, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26)
+#define NLOHMANN_JSON_DOUBLE_PASTE29(func, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28) NLOHMANN_JSON_DOUBLE_PASTE3(func, v1, v2) NLOHMANN_JSON_DOUBLE_PASTE27(func, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28)
+#define NLOHMANN_JSON_DOUBLE_PASTE31(func, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30) NLOHMANN_JSON_DOUBLE_PASTE3(func, v1, v2) NLOHMANN_JSON_DOUBLE_PASTE29(func, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30)
+#define NLOHMANN_JSON_DOUBLE_PASTE33(func, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32) NLOHMANN_JSON_DOUBLE_PASTE3(func, v1, v2) NLOHMANN_JSON_DOUBLE_PASTE31(func, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32)
+#define NLOHMANN_JSON_DOUBLE_PASTE35(func, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34) NLOHMANN_JSON_DOUBLE_PASTE3(func, v1, v2) NLOHMANN_JSON_DOUBLE_PASTE33(func, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34)
+#define NLOHMANN_JSON_DOUBLE_PASTE37(func, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36) NLOHMANN_JSON_DOUBLE_PASTE3(func, v1, v2) NLOHMANN_JSON_DOUBLE_PASTE35(func, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36)
+#define NLOHMANN_JSON_DOUBLE_PASTE39(func, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38) NLOHMANN_JSON_DOUBLE_PASTE3(func, v1, v2) NLOHMANN_JSON_DOUBLE_PASTE37(func, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38)
+#define NLOHMANN_JSON_DOUBLE_PASTE41(func, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39, v40) NLOHMANN_JSON_DOUBLE_PASTE3(func, v1, v2) NLOHMANN_JSON_DOUBLE_PASTE39(func, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39, v40)
+#define NLOHMANN_JSON_DOUBLE_PASTE43(func, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39, v40, v41, v42) NLOHMANN_JSON_DOUBLE_PASTE3(func, v1, v2) NLOHMANN_JSON_DOUBLE_PASTE41(func, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39, v40, v41, v42)
+#define NLOHMANN_JSON_DOUBLE_PASTE45(func, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39, v40, v41, v42, v43, v44) NLOHMANN_JSON_DOUBLE_PASTE3(func, v1, v2) NLOHMANN_JSON_DOUBLE_PASTE43(func, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39, v40, v41, v42, v43, v44)
+#define NLOHMANN_JSON_DOUBLE_PASTE47(func, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39, v40, v41, v42, v43, v44, v45, v46) NLOHMANN_JSON_DOUBLE_PASTE3(func, v1, v2) NLOHMANN_JSON_DOUBLE_PASTE45(func, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39, v40, v41, v42, v43, v44, v45, v46)
+#define NLOHMANN_JSON_DOUBLE_PASTE49(func, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39, v40, v41, v42, v43, v44, v45, v46, v47, v48) NLOHMANN_JSON_DOUBLE_PASTE3(func, v1, v2) NLOHMANN_JSON_DOUBLE_PASTE47(func, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39, v40, v41, v42, v43, v44, v45, v46, v47, v48)
+#define NLOHMANN_JSON_DOUBLE_PASTE51(func, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39, v40, v41, v42, v43, v44, v45, v46, v47, v48, v49, v50) NLOHMANN_JSON_DOUBLE_PASTE3(func, v1, v2) NLOHMANN_JSON_DOUBLE_PASTE49(func, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39, v40, v41, v42, v43, v44, v45, v46, v47, v48, v49, v50)
+#define NLOHMANN_JSON_DOUBLE_PASTE53(func, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39, v40, v41, v42, v43, v44, v45, v46, v47, v48, v49, v50, v51, v52) NLOHMANN_JSON_DOUBLE_PASTE3(func, v1, v2) NLOHMANN_JSON_DOUBLE_PASTE51(func, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39, v40, v41, v42, v43, v44, v45, v46, v47, v48, v49, v50, v51, v52)
+#define NLOHMANN_JSON_DOUBLE_PASTE55(func, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39, v40, v41, v42, v43, v44, v45, v46, v47, v48, v49, v50, v51, v52, v53, v54) NLOHMANN_JSON_DOUBLE_PASTE3(func, v1, v2) NLOHMANN_JSON_DOUBLE_PASTE53(func, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39, v40, v41, v42, v43, v44, v45, v46, v47, v48, v49, v50, v51, v52, v53, v54)
+#define NLOHMANN_JSON_DOUBLE_PASTE57(func, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39, v40, v41, v42, v43, v44, v45, v46, v47, v48, v49, v50, v51, v52, v53, v54, v55, v56) NLOHMANN_JSON_DOUBLE_PASTE3(func, v1, v2) NLOHMANN_JSON_DOUBLE_PASTE55(func, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39, v40, v41, v42, v43, v44, v45, v46, v47, v48, v49, v50, v51, v52, v53, v54, v55, v56)
+#define NLOHMANN_JSON_DOUBLE_PASTE59(func, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39, v40, v41, v42, v43, v44, v45, v46, v47, v48, v49, v50, v51, v52, v53, v54, v55, v56, v57, v58) NLOHMANN_JSON_DOUBLE_PASTE3(func, v1, v2) NLOHMANN_JSON_DOUBLE_PASTE57(func, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39, v40, v41, v42, v43, v44, v45, v46, v47, v48, v49, v50, v51, v52, v53, v54, v55, v56, v57, v58)
+#define NLOHMANN_JSON_DOUBLE_PASTE61(func, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39, v40, v41, v42, v43, v44, v45, v46, v47, v48, v49, v50, v51, v52, v53, v54, v55, v56, v57, v58, v59, v60) NLOHMANN_JSON_DOUBLE_PASTE3(func, v1, v2) NLOHMANN_JSON_DOUBLE_PASTE59(func, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39, v40, v41, v42, v43, v44, v45, v46, v47, v48, v49, v50, v51, v52, v53, v54, v55, v56, v57, v58, v59, v60)
+#define NLOHMANN_JSON_DOUBLE_PASTE63(func, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39, v40, v41, v42, v43, v44, v45, v46, v47, v48, v49, v50, v51, v52, v53, v54, v55, v56, v57, v58, v59, v60, v61, v62) NLOHMANN_JSON_DOUBLE_PASTE3(func, v1, v2) NLOHMANN_JSON_DOUBLE_PASTE61(func, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39, v40, v41, v42, v43, v44, v45, v46, v47, v48, v49, v50, v51, v52, v53, v54, v55, v56, v57, v58, v59, v60, v61, v62)
 
 #define NLOHMANN_JSON_TO(v1) nlohmann_json_j[#v1] = nlohmann_json_t.v1;
 #define NLOHMANN_JSON_FROM(v1) nlohmann_json_j.at(#v1).get_to(nlohmann_json_t.v1);
 #define NLOHMANN_JSON_FROM_WITH_DEFAULT(v1) nlohmann_json_t.v1 = nlohmann_json_j.value(#v1, nlohmann_json_default_obj.v1);
+
+#define NLOHMANN_JSON_TO_WITH_NAME(v1, v2) nlohmann_json_j[v1] = nlohmann_json_t.v2;
+#define NLOHMANN_JSON_FROM_WITH_NAME(v1, v2) nlohmann_json_j.at(v1).get_to(nlohmann_json_t.v2);
+#define NLOHMANN_JSON_FROM_WITH_DEFAULT_WITH_NAME(v1, v2) nlohmann_json_t.v2 = nlohmann_json_j.value(v1, nlohmann_json_default_obj.v2);
 
 /*!
 @brief macro
@@ -2754,9 +2854,17 @@ JSON_HEDLEY_DIAGNOSTIC_POP
     friend void to_json(nlohmann::json& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) } \
     friend void from_json(const nlohmann::json& nlohmann_json_j, Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, __VA_ARGS__)) }
 
+#define NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_NAMES(Type, ...)  \
+    friend void to_json(nlohmann::json& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_TO_WITH_NAME, __VA_ARGS__)) } \
+    friend void from_json(const nlohmann::json& nlohmann_json_j, Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_FROM_WITH_NAME, __VA_ARGS__)) }
+
 #define NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(Type, ...)  \
     friend void to_json(nlohmann::json& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) } \
     friend void from_json(const nlohmann::json& nlohmann_json_j, Type& nlohmann_json_t) { const Type nlohmann_json_default_obj{}; NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT, __VA_ARGS__)) }
+
+#define NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT_WITH_NAMES(Type, ...)  \
+    friend void to_json(nlohmann::json& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_TO_WITH_NAME, __VA_ARGS__)) } \
+    friend void from_json(const nlohmann::json& nlohmann_json_j, Type& nlohmann_json_t) { const Type nlohmann_json_default_obj{}; NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT_WITH_NAME, __VA_ARGS__)) }
 
 /*!
 @brief macro
@@ -2767,9 +2875,18 @@ JSON_HEDLEY_DIAGNOSTIC_POP
     inline void to_json(nlohmann::json& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) } \
     inline void from_json(const nlohmann::json& nlohmann_json_j, Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, __VA_ARGS__)) }
 
+#define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_NAMES(Type, ...)  \
+    inline void to_json(nlohmann::json& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_TO_WITH_NAME, __VA_ARGS__)) } \
+    inline void from_json(const nlohmann::json& nlohmann_json_j, Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_FROM_WITH_NAME, __VA_ARGS__)) }
+
 #define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(Type, ...)  \
     inline void to_json(nlohmann::json& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) } \
     inline void from_json(const nlohmann::json& nlohmann_json_j, Type& nlohmann_json_t) { const Type nlohmann_json_default_obj{}; NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT, __VA_ARGS__)) }
+
+#define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_WITH_NAMES(Type, ...)  \
+    inline void to_json(nlohmann::json& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_TO_WITH_NAME, __VA_ARGS__)) } \
+    inline void from_json(const nlohmann::json& nlohmann_json_j, Type& nlohmann_json_t) { const Type nlohmann_json_default_obj{}; NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT_WITH_NAME, __VA_ARGS__)) }
+
 
 // inspired from https://stackoverflow.com/a/26745591
 // allows to call any std function as if (e.g. with begin):

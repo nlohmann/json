@@ -813,12 +813,22 @@ Some important things:
 
 If you just want to serialize/deserialize some structs, the `to_json`/`from_json` functions can be a lot of boilerplate.
 
-There are two macros to make your life easier as long as you (1) want to use a JSON object as serialization and (2) want to use the member variable names as object keys in that object:
+There are several macros to make your life easier if you want to use a JSON object as serialization:
 
-- `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(name, member1, member2, ...)` is to be defined inside the namespace of the class/struct to create code for.
-- `NLOHMANN_DEFINE_TYPE_INTRUSIVE(name, member1, member2, ...)` is to be defined inside the class/struct to create code for. This macro can also access private members.
+- `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(name, member1, member2, ...)`
+- `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_NAMES(name, "json_member1", member1, "json_member2", member2, ...)`
+- `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(name, member1, member2, ...)`
+- `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_WITH_NAMES(name, "json_member1", member1, "json_member2", member2, ...)`
+- `NLOHMANN_DEFINE_TYPE_INTRUSIVE(name, member1, member2, ...)`
+- `NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_NAMES(name, "json_member1", member1, "json_member2", member2, ...)`
+- `NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(name, member1, member2, ...)`
+- `NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT_WITH_NAMES(name, "json_member1", member1, "json_member2", member2, ...)`
 
-In both macros, the first parameter is the name of the class/struct, and all remaining parameters name the members.
+The `NON_INTRUSIVE` macros should be defined inside the namespace of the class/struct to create code for, the `INTRUSIVE` is to be defined inside the class/struct.
+The `WITH_DEFAULT` macros should be used when not all fields are required to be present in the JSON, the ones without `WITH_DEFAULTS` will raise an exception if the fields are missing.
+The `WITH_NAMES` macros should be used if you want custom names for you JSON fields, the ones without `WITH_NAMES` will use the member names for JSON fields.
+
+For all the macros, the first parameter is the name of the class/struct, and all remaining parameters name the members.
 
 ##### Examples
 
@@ -830,7 +840,7 @@ namespace ns {
 }
 ```
 
-Here is an example with private members, where `NLOHMANN_DEFINE_TYPE_INTRUSIVE` is needed:
+Here is an example with private members, where `INTRUSIVE` is needed:
 
 ```cpp
 namespace ns {
@@ -842,6 +852,24 @@ namespace ns {
 
       public:
         NLOHMANN_DEFINE_TYPE_INTRUSIVE(address, street, housenumber, postcode)
+    };
+}
+```
+
+Or in case if you use some naming convention that you do not want to expose to JSON:
+
+```cpp
+namespace ns {
+    class address {
+      private:
+        std::string m_street;
+        int m_housenumber;
+        int m_postcode;
+
+      public:
+        NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_NAMES(address, "street", m_street,
+                                                           "housenumber", m_housenumber,
+                                                           "postcode", m_postcode)
     };
 }
 ```
