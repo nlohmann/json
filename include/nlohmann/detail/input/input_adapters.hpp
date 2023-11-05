@@ -162,6 +162,18 @@ template<>
 struct char_traits<signed char> : std::char_traits<char>
 {
     using char_type = signed char;
+    using int_type = unsigned long;
+
+    // Redefine to_int_type function
+    static int_type to_int_type(char_type c)
+    {
+        return static_cast<int_type>(c);
+    }
+
+    static int_type eof()
+    {
+        return static_cast<int_type>(EOF);
+    }
 };
 
 // General-purpose iterator-based adapter. It might not be as fast as
