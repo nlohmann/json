@@ -25,6 +25,7 @@
 
 #include <nlohmann/detail/iterators/iterator_traits.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
+#include <nlohmann/detail/meta/type_traits.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -141,14 +142,21 @@ struct char_traits : std::char_traits<T>
 template<>
 struct char_traits<unsigned char> : std::char_traits<char>
 {
-    using char_type = signed char;
+    using char_type = unsigned char;
+    using int_type = unsigned long;
+
+    // Redefine to_int_type function
+    static int_type to_int_type(char_type c)
+    {
+        return static_cast<int_type>(c);
+    }
 };
 
 // Explicitly define char traits for signed char since it is not standard
 template<>
 struct char_traits<signed char> : std::char_traits<char>
 {
-    using char_type = unsigned char;
+    using char_type = signed char;
 };
 
 // General-purpose iterator-based adapter. It might not be as fast as
