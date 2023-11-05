@@ -6226,7 +6226,7 @@ template<>
 struct char_traits<unsigned char> : std::char_traits<char>
 {
     using char_type = unsigned char;
-    using int_type = unsigned long;
+    using int_type = uint64_t;
 
     // Redefine to_int_type function
     static int_type to_int_type(char_type c)
@@ -6245,7 +6245,7 @@ template<>
 struct char_traits<signed char> : std::char_traits<char>
 {
     using char_type = signed char;
-    using int_type = unsigned long;
+    using int_type = uint64_t;
 
     // Redefine to_int_type function
     static int_type to_int_type(char_type c)
