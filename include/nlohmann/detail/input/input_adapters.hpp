@@ -150,6 +150,11 @@ struct char_traits<unsigned char> : std::char_traits<char>
     {
         return static_cast<int_type>(c);
     }
+
+    static int_type eof()
+    {
+        return static_cast<int_type>(EOF);
+    }
 };
 
 // Explicitly define char traits for signed char since it is not standard
