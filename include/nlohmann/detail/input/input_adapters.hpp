@@ -133,49 +133,6 @@ class input_stream_adapter
 };
 #endif  // JSON_NO_IO
 
-// Primary template of json_char_traits calls std char_traits
-template<typename T>
-struct char_traits : std::char_traits<T>
-{};
-
-// Explicitly define char traits for unsigned char since it is not standard
-template<>
-struct char_traits<unsigned char> : std::char_traits<char>
-{
-    using char_type = unsigned char;
-    using int_type = uint64_t;
-
-    // Redefine to_int_type function
-    static int_type to_int_type(char_type c)
-    {
-        return static_cast<int_type>(c);
-    }
-
-    static int_type eof()
-    {
-        return static_cast<int_type>(EOF);
-    }
-};
-
-// Explicitly define char traits for signed char since it is not standard
-template<>
-struct char_traits<signed char> : std::char_traits<char>
-{
-    using char_type = signed char;
-    using int_type = uint64_t;
-
-    // Redefine to_int_type function
-    static int_type to_int_type(char_type c)
-    {
-        return static_cast<int_type>(c);
-    }
-
-    static int_type eof()
-    {
-        return static_cast<int_type>(EOF);
-    }
-};
-
 // General-purpose iterator-based adapter. It might not be as fast as
 // theoretically possible for some containers, but it is extremely versatile.
 template<typename IteratorType>
