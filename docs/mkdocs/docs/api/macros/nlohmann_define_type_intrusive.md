@@ -59,7 +59,7 @@ See examples below for the concrete generated code.
 
     Consider the following complete example:
 
-    ```cpp hl_lines="21"
+    ```cpp hl_lines="22"
     --8<-- "examples/nlohmann_define_type_intrusive_macro.cpp"
     ```
     
@@ -80,7 +80,7 @@ See examples below for the concrete generated code.
 
     The macro is equivalent to:
 
-    ```cpp hl_lines="21 22 23 24 25 26 27 28 29 30 31 32 33"
+    ```cpp hl_lines="22 23 24 25 26 27 28 29 30 31 32 33 34"
     --8<-- "examples/nlohmann_define_type_intrusive_explicit.cpp"
     ```
 
@@ -88,7 +88,7 @@ See examples below for the concrete generated code.
 
     Consider the following complete example:
 
-    ```cpp hl_lines="21"
+    ```cpp hl_lines="22"
     --8<-- "examples/nlohmann_define_type_intrusive_with_default_macro.cpp"
     ```
     
@@ -108,7 +108,7 @@ See examples below for the concrete generated code.
 
     The macro is equivalent to:
 
-    ```cpp hl_lines="21 22 23 24 25 26 27 28 29 30 31 32 33 34"
+    ```cpp hl_lines="21 22 23 24 25 26 27 28 29 30 31 32 33 34 35"
     --8<-- "examples/nlohmann_define_type_intrusive_with_default_explicit.cpp"
     ```
 

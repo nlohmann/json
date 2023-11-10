@@ -229,7 +229,6 @@ using json_with_visitor_t = nlohmann::basic_json <
                             visitor_adaptor
                             >;
 
-
 template <class Fnc>
 void visitor_adaptor::visit(const Fnc& fnc) const
 {

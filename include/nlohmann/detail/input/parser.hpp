@@ -341,13 +341,25 @@ class parser
                                                 m_lexer.get_token_string(),
                                                 parse_error::create(101, m_lexer.get_position(), exception_message(token_type::uninitialized, "value"), nullptr));
                     }
+                    case token_type::end_of_input:
+                    {
+                        if (JSON_HEDLEY_UNLIKELY(m_lexer.get_position().chars_read_total == 1))
+                        {
+                            return sax->parse_error(m_lexer.get_position(),
+                                                    m_lexer.get_token_string(),
+                                                    parse_error::create(101, m_lexer.get_position(),
+                                                            "attempting to parse an empty input; check that your input string or stream contains the expected JSON", nullptr));
+                        }
 
+                        return sax->parse_error(m_lexer.get_position(),
+                                                m_lexer.get_token_string(),
+                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::literal_or_value, "value"), nullptr));
+                    }
                     case token_type::uninitialized:
                     case token_type::end_array:
                     case token_type::end_object:
                     case token_type::name_separator:
                     case token_type::value_separator:
-                    case token_type::end_of_input:
                     case token_type::literal_or_value:
                     default: // the last token was unexpected
                     {

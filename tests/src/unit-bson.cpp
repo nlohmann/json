@@ -562,7 +562,7 @@ TEST_CASE("BSON")
         }
     }
 
-    SECTION("Examples from http://bsonspec.org/faq.html")
+    SECTION("Examples from https://bsonspec.org/faq.html")
     {
         SECTION("Example 1")
         {
@@ -918,7 +918,6 @@ TEST_CASE("BSON numerical data")
 
                 }
             }
-
 
             SECTION("signed std::int32_t: INT32_MIN .. INT32_MAX")
             {

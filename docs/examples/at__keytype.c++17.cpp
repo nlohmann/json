@@ -24,7 +24,6 @@ int main()
     // output changed array
     std::cout << object << '\n';
 
-
     // exception type_error.304
     try
     {
@@ -32,7 +31,7 @@ int main()
         json str = "I am a string";
         str.at("the good"sv) = "Another string";
     }
-    catch (json::type_error& e)
+    catch (const json::type_error& e)
     {
         std::cout << e.what() << '\n';
     }
@@ -43,7 +42,7 @@ int main()
         // try to write at a nonexisting key using string_view
         object.at("the fast"sv) = "il rapido";
     }
-    catch (json::out_of_range& e)
+    catch (const json::out_of_range& e)
     {
         std::cout << e.what() << '\n';
     }

@@ -31,5 +31,11 @@ jobs:
       - name: Install virtual environment
         run: make install_venv -C docs/mkdocs
 
-      - name: Publish documentation
-        run: make publish -C docs/mkdocs
+      - name: Build documentation
+        run: make build -C docs/mkdocs
+
+      - name: Deploy documentation
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/mkdocs/site

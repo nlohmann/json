@@ -31,7 +31,6 @@ int main()
     json number = 17;
     json string = "17";
 
-
     // output values and comparisons
     std::cout << std::boolalpha << std::fixed;
     std::cout << boolean << " <=> " << true << " := " << to_string(boolean <=> true) << '\n'; // *NOPAD*

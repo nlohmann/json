@@ -873,7 +873,6 @@ TEST_CASE("iterators 2")
         }
     }
 
-
 #if JSON_HAS_RANGES
     // JSON_HAS_CPP_20 (do not remove; see note at top of file)
     SECTION("ranges")

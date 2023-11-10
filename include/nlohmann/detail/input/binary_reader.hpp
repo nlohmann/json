@@ -55,7 +55,6 @@ static inline bool little_endianness(int num = 1) noexcept
     return *reinterpret_cast<char*>(&num) == 1;
 }
 
-
 ///////////////////
 // binary reader //
 ///////////////////

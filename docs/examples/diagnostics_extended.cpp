@@ -15,7 +15,7 @@ int main()
     {
         int housenumber = j["address"]["housenumber"];
     }
-    catch (json::exception& e)
+    catch (const json::exception& e)
     {
         std::cout << e.what() << '\n';
     }

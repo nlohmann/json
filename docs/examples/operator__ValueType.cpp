@@ -53,7 +53,7 @@ int main()
     {
         bool v1 = json_types["string"];
     }
-    catch (json::type_error& e)
+    catch (const json::type_error& e)
     {
         std::cout << e.what() << '\n';
     }

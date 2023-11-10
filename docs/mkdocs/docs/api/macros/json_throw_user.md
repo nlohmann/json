@@ -68,7 +68,7 @@ replaced by calling [`std::abort`](https://en.cppreference.com/w/cpp/utility/pro
 ## See also
 
 - [Switch off exceptions](../../home/exceptions.md#switch-off-exceptions) for more information how to switch off exceptions
-- [JSON_NOEXCEPTION](JSON_NOEXCEPTION) - switch off exceptions
+- [JSON_NOEXCEPTION](json_noexception.md) - switch off exceptions
 
 ## Version history
 
