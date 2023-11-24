@@ -1,15 +1,7 @@
 version: 2
 updates:
   - package-ecosystem: "github-actions"
-    directory: "/.github/workflows/codeql-analysis.yml"
-    schedule:
-      interval: "monthly"
-    groups:
-      github-actions:
-        patterns:
-          - "*"
-  - package-ecosystem: "github-actions"
-    directory: "/.github/workflows/labeler.yml"
+    directory: "/"
     schedule:
       interval: "monthly"
     groups:
