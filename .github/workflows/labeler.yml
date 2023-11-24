@@ -15,6 +15,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: srvaroa/labeler@master
+      - uses: srvaroa/labeler@74404350883f8b689b026d8747622bd12d3f070a # v1.8.0
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
