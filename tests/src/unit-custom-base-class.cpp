@@ -239,7 +239,7 @@ template <class Ptr, class Fnc>
 void visitor_adaptor::do_visit(const Ptr& ptr, const Fnc& fnc) const
 {
     using value_t = nlohmann::detail::value_t;
-    const json_with_visitor_t& json = *static_cast<const json_with_visitor_t*>(this);
+    const json_with_visitor_t& json = *static_cast<const json_with_visitor_t*>(this); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     switch (json.type())
     {
         case value_t::object:
