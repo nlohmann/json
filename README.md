@@ -1733,6 +1733,36 @@ I deeply appreciate the help of the following people.
 314. [Berkus Decker](https://github.com/berkus) fixed a typo in the README.
 315. [Illia Polishchuk](https://github.com/effolkronium) improved the CMake testing.
 316. [Ikko Ashimine](https://github.com/eltociear) fixed a typo.
+317. [Raphael Grimm](https://github.com/barcode) added the possibility to define a custom base class.
+318. [tocic](https://github.com/tocic) fixed typos in the documentation.
+319. [Vertexwahn](https://github.com/Vertexwahn) added Bazel build support.
+320. [Dirk Stolle](https://github.com/striezel) fixed typos in the documentation.
+321. [DavidKorczynski](https://github.com/DavidKorczynski) added a CIFuzz CI GitHub action.
+322. [Finkman](https://github.com/Finkman) fixed the debug pretty-printer.
+323. [Florian Segginger](https://github.com/floriansegginger) bumped the years in the README.
+324. [haadfida](https://github.com/haadfida) cleaned up the badges of used services.
+325. [Arsen Arsenović](https://github.com/ArsenArsen) fixed a build error.
+326. [theevilone45](https://github.com/theevilone45) fixed a typo in a CMake file.
+327. [Sergei Trofimovich](https://github.com/trofi) fixed the custom allocator support.
+328. [Joyce](https://github.com/joycebrum) fixed some security issues in the GitHub workflows.
+329. [Nicolas Jakob](https://github.com/njakob) add vcpkg version badge.
+330. [Tomerkm](https://github.com/Tomerkm) added tests.
+331. [No.](https://github.com/tusooa) fixed the use of `get<>` calls.
+332. [taro](https://github.com/tarolling) fixed a typo in the `CODEOWNERS` file.
+333. [Ikko Eltociear Ashimine](https://github.com/eltociear) fixed a typo.
+334. [Felix Yan](https://github.com/felixonmars) fixed a typo in the README.
+335. [HO-COOH](https://github.com/HO-COOH) fixed a parentheses in the documentation.
+336. [Ivor Wanders](https://github.com/iwanders) fixed the examples to catch exception by `const&`.
+337. [miny1233](https://github.com/miny1233) fixed a parentheses in the documentation.
+338. [tomalakgeretkal](https://github.com/tomalakgeretkal) fixed a compilation error.
+339. [alferov](https://github.com/ALF-ONE) fixed a compilation error.
+340. [Craig Scott](https://github.com/craigscott-crascit) fixed a deprecation warning in CMake.
+341. [Vyacheslav Zhdanovskiy](https://github.com/ZeronSix) added macros for serialization-only types.
+342. [Mathieu Westphal](https://github.com/mwestphal) fixed typos.
+343. [scribam](https://github.com/scribam) fixed the MinGW workflow.
+344. [Aleksei Sapitskii](https://github.com/aleksproger) added support for Apple's Swift Package Manager.
+345. [Benjamin Buch](https://github.com/bebuch) fixed the installation path in CMake.
+346. [Colby Haskell](https://github.com/colbychaskell) clarified the parse error message in case a file cannot be opened.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
