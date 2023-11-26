@@ -1,8 +1,9 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
-// |  |  |__   |  |  | | | |  version 3.11.2
+// |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
@@ -137,7 +138,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     )
     {
         return ::nlohmann::detail::parser<basic_json, InputAdapterType>(std::move(adapter),
-                std::move(cb), allow_exceptions, ignore_comments);
+               std::move(cb), allow_exceptions, ignore_comments);
     }
 
   private:
@@ -514,7 +515,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     object = nullptr;  // silence warning, see #821
                     if (JSON_HEDLEY_UNLIKELY(t == value_t::null))
                     {
-                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.11.2", nullptr)); // LCOV_EXCL_LINE
+                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.11.3", nullptr)); // LCOV_EXCL_LINE
                     }
                     break;
                 }
@@ -940,8 +941,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             {
                 auto element = element_ref.moved_or_copied();
                 m_data.m_value.object->emplace(
-                    std::move(*((*element.m_data.m_value.array)[0].m_data.m_value.string)),
-                    std::move((*element.m_data.m_value.array)[1]));
+                          std::move(*((*element.m_data.m_value.array)[0].m_data.m_value.string)),
+                          std::move((*element.m_data.m_value.array)[1]));
             }
         }
         else

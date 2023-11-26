@@ -1,8 +1,9 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
-// |  |  |__   |  |  | | | |  version 3.11.2
+// |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
@@ -241,13 +242,13 @@ TEST_CASE("CBOR")
                     const std::vector<int64_t> numbers
                     {
                         -65537,
-                            -100000,
-                            -1000000,
-                            -10000000,
-                            -100000000,
-                            -1000000000,
-                            -4294967296,
-                        };
+                        -100000,
+                        -1000000,
+                        -10000000,
+                        -100000000,
+                        -1000000000,
+                        -4294967296,
+                    };
                     for (const auto i : numbers)
                     {
                         CAPTURE(i)

@@ -1,8 +1,9 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
-// |  |  |__   |  |  | | | |  version 3.11.2
+// |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
@@ -537,12 +538,12 @@ using is_usable_as_key_type = typename std::conditional <
 template<typename BasicJsonType, typename KeyTypeCVRef, bool RequireTransparentComparator = true,
          bool ExcludeObjectKeyType = RequireTransparentComparator, typename KeyType = uncvref_t<KeyTypeCVRef>>
 using is_usable_as_basic_json_key_type = typename std::conditional <
-        is_usable_as_key_type<typename BasicJsonType::object_comparator_t,
-        typename BasicJsonType::object_t::key_type, KeyTypeCVRef,
-        RequireTransparentComparator, ExcludeObjectKeyType>::value
-        && !is_json_iterator_of<BasicJsonType, KeyType>::value,
-        std::true_type,
-        std::false_type >::type;
+    is_usable_as_key_type<typename BasicJsonType::object_comparator_t,
+    typename BasicJsonType::object_t::key_type, KeyTypeCVRef,
+    RequireTransparentComparator, ExcludeObjectKeyType>::value
+    && !is_json_iterator_of<BasicJsonType, KeyType>::value,
+    std::true_type,
+    std::false_type >::type;
 
 template<typename ObjectType, typename KeyType>
 using detect_erase_with_key_type = decltype(std::declval<ObjectType&>().erase(std::declval<KeyType>()));

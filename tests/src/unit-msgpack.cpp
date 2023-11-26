@@ -1,8 +1,9 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
-// |  |  |__   |  |  | | | |  version 3.11.2
+// |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
@@ -479,11 +480,11 @@ TEST_CASE("MessagePack")
                     std::vector<int32_t> const numbers
                     {
                         -32769,
-                            -65536,
-                            -77777,
-                            -1048576,
-                            -2147483648LL,
-                        };
+                        -65536,
+                        -77777,
+                        -1048576,
+                        -2147483648LL,
+                    };
                     for (auto i : numbers)
                     {
                         CAPTURE(i)

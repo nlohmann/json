@@ -1,8 +1,9 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
-// |  |  |__   |  |  | | | |  version 3.11.2
+// |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
 // SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
@@ -263,7 +264,7 @@ template < typename BasicJsonType, typename ConstructibleArrayType,
 auto from_json(const BasicJsonType& j, ConstructibleArrayType& arr)
 -> decltype(from_json_array_impl(j, arr, priority_tag<3> {}),
 j.template get<typename ConstructibleArrayType::value_type>(),
-void())
+ void())
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
@@ -275,7 +276,7 @@ void())
 
 template < typename BasicJsonType, typename T, std::size_t... Idx >
 std::array<T, sizeof...(Idx)> from_json_inplace_array_impl(BasicJsonType&& j,
-        identity_tag<std::array<T, sizeof...(Idx)>> /*unused*/, index_sequence<Idx...> /*unused*/)
+                    identity_tag<std::array<T, sizeof...(Idx)>> /*unused*/, index_sequence<Idx...> /*unused*/)
 {
     return { { std::forward<BasicJsonType>(j).at(Idx).template get<T>()... } };
 }
