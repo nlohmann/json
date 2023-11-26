@@ -76,7 +76,7 @@ body:
       label: Library version
       description: >
         Which version of the library did you use? If it is a released version,
-        please enter the version number (e.g., 3.11.2). Otherwise, please enter
+        please enter the version number (e.g., 3.11.3). Otherwise, please enter
         the commit hash. If you got the library from another source as the
         GitHub repository (e.g., via a package manager), please also state
         this.
