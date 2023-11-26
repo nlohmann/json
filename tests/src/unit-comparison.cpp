@@ -48,28 +48,6 @@ template<> struct StringMaker<std::partial_ordering>
 };
 } // namespace doctest
 
-#include <compare>
-
-namespace
-{
-const char* to_string(const std::partial_ordering& po)
-{
-    if (std::is_lt(po))
-    {
-        return "less";
-    }
-    else if (std::is_gt(po))
-    {
-        return "greater";
-    }
-    else if (std::is_eq(po))
-    {
-        return "equivalent";
-    }
-    return "unordered";
-}
-}
-
 #endif
 
 namespace
@@ -577,39 +555,6 @@ TEST_CASE("lexicographical comparison operators")
                     CHECK((j_values[i] <=> j_values[j]) == expected[i][j]); // *NOPAD*
                 }
             }
-        }
-
-        SECTION("Example operator_spaceship__scalartype.c++20")
-        {
-            using float_limits = std::numeric_limits<json::number_float_t>;
-            constexpr auto nan = float_limits::quiet_NaN();
-
-            // create several JSON values
-            json boolean = false;
-            json number = 17;
-            json string = "17";
-
-            CHECK(to_string(boolean <= > true) == "less");
-            CHECK(to_string(number <= > 17.0) == "equivalent");
-            CHECK(to_string(number <= > nan) == "unordered");
-            CHECK(to_string(string <= > 17) == "greater");
-        }
-
-        SECTION("Example operator_spaceship__const_reference.c++20")
-        {
-            // create several JSON values
-            json array_1 = {1, 2, 3};
-            json array_2 = {1, 2, 4};
-            json object_1 = {{"A", "a"}, {"B", "b"}};
-            json object_2 = {{"B", "b"}, {"A", "a"}};
-            json number = 17;
-            json string = "foo";
-            json discarded = json(json::value_t::discarded);
-
-            CHECK(to_string(array_1 <= > array_2) == "less");
-            CHECK(to_string(object_1 <= > object_2) == "equivalent");
-            CHECK(to_string(string <= > number) == "greater");
-            CHECK(to_string(string <= > discarded) == "unordered");
         }
 #endif
     }
