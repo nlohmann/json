@@ -50,9 +50,11 @@ header. See also the [macro overview page](../../features/macros.md).
 
 ## Serialization/deserialization macros
 
-- [**NLOHMANN_DEFINE_TYPE_INTRUSIVE(type, member...)**<br>**NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(type, member...)**][DefInt]
+- [**NLOHMANN_DEFINE_TYPE_INTRUSIVE(type, member...)**<br>**NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(type, member...)**
+<br>**NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE(type, member...)**][DefInt]
   \- serialization/deserialization of types _with_ access to private variables
-- [**NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(type, member...)**<br>**NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(type, member...)**][DefNonInt]
+- [**NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(type, member...)**<br>**NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(type, member...)**
+<br>**NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE(type, member...)**][DefNonInt]
   \- serialization/deserialization of types _without_ access to private variables
 - [**NLOHMANN_JSON_SERIALIZE_ENUM(type, ...)**](nlohmann_json_serialize_enum.md) - serialization/deserialization of enum types
 

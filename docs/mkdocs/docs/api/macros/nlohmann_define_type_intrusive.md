@@ -1,8 +1,9 @@
-# NLOHMANN_DEFINE_TYPE_INTRUSIVE, NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT
+# NLOHMANN_DEFINE_TYPE_INTRUSIVE, NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT, NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE
 
 ```cpp
 #define NLOHMANN_DEFINE_TYPE_INTRUSIVE(type, member...)              // (1)
 #define NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(type, member...) // (2)
+#define NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE(type, member...) // (3)
 ```
 
 These macros can be used to simplify the serialization/deserialization of types if you want to use a JSON object as
@@ -16,6 +17,7 @@ parameter is the name of the class/struct, and all remaining parameters name the
 2. Will use [`value`](../basic_json/value.md) during deserialization and fall back to the default value for the
    respective type of the member variable if a key in the JSON object is missing. The generated `from_json()` function
    default constructs an object and uses its values as the defaults when calling the `value` function.
+3. Only defines the serialization. Useful in cases when the type does not have a default constructor and only serialization in required.
 
 ## Parameters
 
@@ -31,7 +33,7 @@ The macros add two friend functions to the class which take care of the serializ
 
 ```cpp
 friend void to_json(nlohmann::json&, const type&);
-friend void from_json(const nlohmann::json&, type&);
+friend void from_json(const nlohmann::json&, type&); // except (3)
 ```
 
 See examples below for the concrete generated code.
@@ -40,7 +42,7 @@ See examples below for the concrete generated code.
 
 !!! info "Prerequisites"
 
-    1. The type `type` must be default constructible. See [How can I use `get()` for non-default
+    1. The type `type` must be default constructible (except (3)). See [How can I use `get()` for non-default
        constructible/non-copyable types?][GetNonDefNonCopy] for how to overcome this limitation.
     2. The macro must be used inside the type (class/struct).
 
@@ -108,15 +110,42 @@ See examples below for the concrete generated code.
 
     The macro is equivalent to:
 
-    ```cpp hl_lines="21 22 23 24 25 26 27 28 29 30 31 32 33 34 35"
+    ```cpp hl_lines="22 23 24 25 26 27 28 29 30 31 32 33 34 35"
     --8<-- "examples/nlohmann_define_type_intrusive_with_default_explicit.cpp"
     ```
 
     Note how a default-initialized `person` object is used in the `from_json` to fill missing values.
 
+??? example "Example (3): NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE"
+    Consider the following complete example:
+
+    ```cpp hl_lines="22"
+    --8<-- "examples/nlohmann_define_type_intrusive_only_serialize_macro.cpp"
+    ```
+    
+    Output:
+    
+    ```json
+    --8<-- "examples/nlohmann_define_type_intrusive_only_serialize_macro.output"
+    ```
+
+    Notes:
+
+    - `ns::person` is non-default-constructible. This allows this macro to be used instead of 
+      `NLOHMANN_DEFINE_TYPE_INTRUSIVE` and `NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT`.
+    - `ns::person` has private member variables. This makes `NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE` applicable, but not
+      `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE`.
+    - The macro `NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE` is used _inside_ the class.
+
+    The macro is equivalent to:
+
+    ```cpp hl_lines="22 22 23 24 25 26 27"
+    --8<-- "examples/nlohmann_define_type_intrusive_only_serialize_explicit.cpp"
+    ```
+
 ## See also
 
-- [NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE / NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT](nlohmann_define_type_non_intrusive.md)
+- [NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE{_WITH_DEFAULT, _ONLY_SERIALIZE}](nlohmann_define_type_non_intrusive.md)
   for a similar macro that can be defined _outside_ the type.
 - [Arbitrary Type Conversions](../../features/arbitrary_types.md) for an overview.
 
@@ -124,3 +153,4 @@ See examples below for the concrete generated code.
 
 1. Added in version 3.9.0.
 2. Added in version 3.11.0.
+3. Added in version TODO.

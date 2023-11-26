@@ -119,6 +119,13 @@ an object and uses its values as the defaults when calling the [`value`](../api/
 
 See [full documentation of `NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT`](../api/macros/nlohmann_define_type_intrusive.md).
 
+## `NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE(type, member...)`
+
+This macro is similar to `NLOHMANN_DEFINE_TYPE_INTRUSIVE` except that it defines only the serialization code. This is
+useful when the user type does not have a default constructor and only the serialization is required.
+
+See [full documentation of `NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE`](../api/macros//nlohmann_define_type_intrusive.md).
+
 ## `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(type, member...)`
 
 This macro can be used to simplify the serialization/deserialization of types if (1) want to use a JSON object as
@@ -137,6 +144,13 @@ missing value in the JSON object, but can throw due to a mismatched type. The `f
 an object and uses its values as the defaults when calling the [`value`](../api/basic_json/value.md) function.
 
 See [full documentation of `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT`](../api/macros/nlohmann_define_type_non_intrusive.md).
+
+## `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE(type, member...)`
+
+This macro is similar to `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE` except that it defines only the serialization code. This is
+useful when the user type does not have a default constructor and only the serialization is required.
+
+See [full documentation of `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE`](../api/macros//nlohmann_define_type_non_intrusive.md).
 
 ## `NLOHMANN_JSON_SERIALIZE_ENUM(type, ...)`
 
