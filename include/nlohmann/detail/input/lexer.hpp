@@ -21,6 +21,7 @@
 #include <nlohmann/detail/input/input_adapters.hpp>
 #include <nlohmann/detail/input/position_t.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
+#include <nlohmann/detail/meta/type_traits.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -115,7 +116,7 @@ class lexer : public lexer_base<BasicJsonType>
     using number_float_t = typename BasicJsonType::number_float_t;
     using string_t = typename BasicJsonType::string_t;
     using char_type = typename InputAdapterType::char_type;
-    using char_int_type = typename std::char_traits<char_type>::int_type;
+    using char_int_type = typename char_traits<char_type>::int_type;
 
   public:
     using token_type = typename lexer_base<BasicJsonType>::token_type;
@@ -265,7 +266,7 @@ class lexer : public lexer_base<BasicJsonType>
             switch (get())
             {
                 // end of file while parsing string
-                case std::char_traits<char_type>::eof():
+                case char_traits<char_type>::eof():
                 {
                     error_message = "invalid string: missing closing quote";
                     return token_type::parse_error;
@@ -854,7 +855,7 @@ class lexer : public lexer_base<BasicJsonType>
                     {
                         case '\n':
                         case '\r':
-                        case std::char_traits<char_type>::eof():
+                        case char_traits<char_type>::eof():
                         case '\0':
                             return true;
 
@@ -871,7 +872,7 @@ class lexer : public lexer_base<BasicJsonType>
                 {
                     switch (get())
                     {
-                        case std::char_traits<char_type>::eof():
+                        case char_traits<char_type>::eof():
                         case '\0':
                         {
                             error_message = "invalid comment; missing closing '*/'";
@@ -1300,10 +1301,10 @@ scan_number_done:
     token_type scan_literal(const char_type* literal_text, const std::size_t length,
                             token_type return_type)
     {
-        JSON_ASSERT(std::char_traits<char_type>::to_char_type(current) == literal_text[0]);
+        JSON_ASSERT(char_traits<char_type>::to_char_type(current) == literal_text[0]);
         for (std::size_t i = 1; i < length; ++i)
         {
-            if (JSON_HEDLEY_UNLIKELY(std::char_traits<char_type>::to_char_type(get()) != literal_text[i]))
+            if (JSON_HEDLEY_UNLIKELY(char_traits<char_type>::to_char_type(get()) != literal_text[i]))
             {
                 error_message = "invalid literal";
                 return token_type::parse_error;
@@ -1321,7 +1322,7 @@ scan_number_done:
     {
         token_buffer.clear();
         token_string.clear();
-        token_string.push_back(std::char_traits<char_type>::to_char_type(current));
+        token_string.push_back(char_traits<char_type>::to_char_type(current));
     }
 
     /*
@@ -1329,7 +1330,7 @@ scan_number_done:
 
     This function provides the interface to the used input adapter. It does
     not throw in case the input reached EOF, but returns a
-    `std::char_traits<char>::eof()` in that case.  Stores the scanned characters
+    `char_traits<char>::eof()` in that case.  Stores the scanned characters
     for use in error messages.
 
     @return character read from the input
@@ -1349,9 +1350,9 @@ scan_number_done:
             current = ia.get_character();
         }
 
-        if (JSON_HEDLEY_LIKELY(current != std::char_traits<char_type>::eof()))
+        if (JSON_HEDLEY_LIKELY(current != char_traits<char_type>::eof()))
         {
-            token_string.push_back(std::char_traits<char_type>::to_char_type(current));
+            token_string.push_back(char_traits<char_type>::to_char_type(current));
         }
 
         if (current == '\n')
@@ -1390,7 +1391,7 @@ scan_number_done:
             --position.chars_read_current_line;
         }
 
-        if (JSON_HEDLEY_LIKELY(current != std::char_traits<char_type>::eof()))
+        if (JSON_HEDLEY_LIKELY(current != char_traits<char_type>::eof()))
         {
             JSON_ASSERT(!token_string.empty());
             token_string.pop_back();
@@ -1584,7 +1585,7 @@ scan_number_done:
             // end of input (the null byte is needed when parsing from
             // string literals)
             case '\0':
-            case std::char_traits<char_type>::eof():
+            case char_traits<char_type>::eof():
                 return token_type::end_of_input;
 
             // error
@@ -1602,7 +1603,7 @@ scan_number_done:
     const bool ignore_comments = false;
 
     /// the current character
-    char_int_type current = std::char_traits<char_type>::eof();
+    char_int_type current = char_traits<char_type>::eof();
 
     /// whether the next get() call should just return current
     bool next_unget = false;

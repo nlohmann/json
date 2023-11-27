@@ -3242,6 +3242,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <type_traits> // false_type, is_constructible, is_integral, is_same, true_type
 #include <utility> // declval
 #include <tuple> // tuple
+#include <string> // char_traits
 
 // #include <nlohmann/detail/iterators/iterator_traits.hpp>
 //     __ _____ _____ _____
@@ -3593,6 +3594,63 @@ struct actual_object_comparator
 
 template<typename BasicJsonType>
 using actual_object_comparator_t = typename actual_object_comparator<BasicJsonType>::type;
+
+/////////////////
+// char_traits //
+/////////////////
+
+// Primary template of char_traits calls std char_traits
+template<typename T>
+struct char_traits : std::char_traits<T>
+{};
+
+// Explicitly define char traits for unsigned char since it is not standard
+template<>
+struct char_traits<unsigned char> : std::char_traits<char>
+{
+    using char_type = unsigned char;
+    using int_type = uint64_t;
+
+    // Redefine to_int_type function
+    static int_type to_int_type(char_type c) noexcept
+    {
+        return static_cast<int_type>(c);
+    }
+
+    static char_type to_char_type(int_type i) noexcept
+    {
+        return static_cast<char_type>(i);
+    }
+
+    static constexpr int_type eof() noexcept
+    {
+        return static_cast<int_type>(EOF);
+    }
+};
+
+// Explicitly define char traits for signed char since it is not standard
+template<>
+struct char_traits<signed char> : std::char_traits<char>
+{
+    using char_type = signed char;
+    using int_type = uint64_t;
+
+    // Redefine to_int_type function
+    static int_type to_int_type(char_type c) noexcept
+    {
+        return static_cast<int_type>(c);
+    }
+
+    static char_type to_char_type(int_type i) noexcept
+    {
+        return static_cast<char_type>(i);
+    }
+
+    static constexpr int_type eof() noexcept
+    {
+        return static_cast<int_type>(EOF);
+    }
+};
 
 ///////////////////
 // is_ functions //
@@ -6107,6 +6165,8 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
+// #include <nlohmann/detail/meta/type_traits.hpp>
+
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -6226,16 +6286,16 @@ class iterator_input_adapter
         : current(std::move(first)), end(std::move(last))
     {}
 
-    typename std::char_traits<char_type>::int_type get_character()
+    typename char_traits<char_type>::int_type get_character()
     {
         if (JSON_HEDLEY_LIKELY(current != end))
         {
-            auto result = std::char_traits<char_type>::to_int_type(*current);
+            auto result = char_traits<char_type>::to_int_type(*current);
             std::advance(current, 1);
             return result;
         }
 
-        return std::char_traits<char_type>::eof();
+        return char_traits<char_type>::eof();
     }
 
   private:
@@ -7331,6 +7391,8 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
+// #include <nlohmann/detail/meta/type_traits.hpp>
+
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -7425,7 +7487,7 @@ class lexer : public lexer_base<BasicJsonType>
     using number_float_t = typename BasicJsonType::number_float_t;
     using string_t = typename BasicJsonType::string_t;
     using char_type = typename InputAdapterType::char_type;
-    using char_int_type = typename std::char_traits<char_type>::int_type;
+    using char_int_type = typename char_traits<char_type>::int_type;
 
   public:
     using token_type = typename lexer_base<BasicJsonType>::token_type;
@@ -7575,7 +7637,7 @@ class lexer : public lexer_base<BasicJsonType>
             switch (get())
             {
                 // end of file while parsing string
-                case std::char_traits<char_type>::eof():
+                case char_traits<char_type>::eof():
                 {
                     error_message = "invalid string: missing closing quote";
                     return token_type::parse_error;
@@ -8164,7 +8226,7 @@ class lexer : public lexer_base<BasicJsonType>
                     {
                         case '\n':
                         case '\r':
-                        case std::char_traits<char_type>::eof():
+                        case char_traits<char_type>::eof():
                         case '\0':
                             return true;
 
@@ -8181,7 +8243,7 @@ class lexer : public lexer_base<BasicJsonType>
                 {
                     switch (get())
                     {
-                        case std::char_traits<char_type>::eof():
+                        case char_traits<char_type>::eof():
                         case '\0':
                         {
                             error_message = "invalid comment; missing closing '*/'";
@@ -8610,10 +8672,10 @@ scan_number_done:
     token_type scan_literal(const char_type* literal_text, const std::size_t length,
                             token_type return_type)
     {
-        JSON_ASSERT(std::char_traits<char_type>::to_char_type(current) == literal_text[0]);
+        JSON_ASSERT(char_traits<char_type>::to_char_type(current) == literal_text[0]);
         for (std::size_t i = 1; i < length; ++i)
         {
-            if (JSON_HEDLEY_UNLIKELY(std::char_traits<char_type>::to_char_type(get()) != literal_text[i]))
+            if (JSON_HEDLEY_UNLIKELY(char_traits<char_type>::to_char_type(get()) != literal_text[i]))
             {
                 error_message = "invalid literal";
                 return token_type::parse_error;
@@ -8631,7 +8693,7 @@ scan_number_done:
     {
         token_buffer.clear();
         token_string.clear();
-        token_string.push_back(std::char_traits<char_type>::to_char_type(current));
+        token_string.push_back(char_traits<char_type>::to_char_type(current));
     }
 
     /*
@@ -8639,7 +8701,7 @@ scan_number_done:
 
     This function provides the interface to the used input adapter. It does
     not throw in case the input reached EOF, but returns a
-    `std::char_traits<char>::eof()` in that case.  Stores the scanned characters
+    `char_traits<char>::eof()` in that case.  Stores the scanned characters
     for use in error messages.
 
     @return character read from the input
@@ -8659,9 +8721,9 @@ scan_number_done:
             current = ia.get_character();
         }
 
-        if (JSON_HEDLEY_LIKELY(current != std::char_traits<char_type>::eof()))
+        if (JSON_HEDLEY_LIKELY(current != char_traits<char_type>::eof()))
         {
-            token_string.push_back(std::char_traits<char_type>::to_char_type(current));
+            token_string.push_back(char_traits<char_type>::to_char_type(current));
         }
 
         if (current == '\n')
@@ -8700,7 +8762,7 @@ scan_number_done:
             --position.chars_read_current_line;
         }
 
-        if (JSON_HEDLEY_LIKELY(current != std::char_traits<char_type>::eof()))
+        if (JSON_HEDLEY_LIKELY(current != char_traits<char_type>::eof()))
         {
             JSON_ASSERT(!token_string.empty());
             token_string.pop_back();
@@ -8894,7 +8956,7 @@ scan_number_done:
             // end of input (the null byte is needed when parsing from
             // string literals)
             case '\0':
-            case std::char_traits<char_type>::eof():
+            case char_traits<char_type>::eof():
                 return token_type::end_of_input;
 
             // error
@@ -8912,7 +8974,7 @@ scan_number_done:
     const bool ignore_comments = false;
 
     /// the current character
-    char_int_type current = std::char_traits<char_type>::eof();
+    char_int_type current = char_traits<char_type>::eof();
 
     /// whether the next get() call should just return current
     bool next_unget = false;
@@ -9155,7 +9217,7 @@ class binary_reader
     using binary_t = typename BasicJsonType::binary_t;
     using json_sax_t = SAX;
     using char_type = typename InputAdapterType::char_type;
-    using char_int_type = typename std::char_traits<char_type>::int_type;
+    using char_int_type = typename char_traits<char_type>::int_type;
 
   public:
     /*!
@@ -9228,7 +9290,7 @@ class binary_reader
                 get();
             }
 
-            if (JSON_HEDLEY_UNLIKELY(current != std::char_traits<char_type>::eof()))
+            if (JSON_HEDLEY_UNLIKELY(current != char_traits<char_type>::eof()))
             {
                 return sax->parse_error(chars_read, get_token_string(), parse_error::create(110, chars_read,
                                         exception_message(input_format, concat("expected end of input; last byte: 0x", get_token_string()), "value"), nullptr));
@@ -9311,7 +9373,7 @@ class binary_reader
                                     exception_message(input_format_t::bson, concat("string length must be at least 1, is ", std::to_string(len)), "string"), nullptr));
         }
 
-        return get_string(input_format_t::bson, len - static_cast<NumberType>(1), result) && get() != std::char_traits<char_type>::eof();
+        return get_string(input_format_t::bson, len - static_cast<NumberType>(1), result) && get() != char_traits<char_type>::eof();
     }
 
     /*!
@@ -9505,7 +9567,7 @@ class binary_reader
         switch (get_char ? get() : current)
         {
             // EOF
-            case std::char_traits<char_type>::eof():
+            case char_traits<char_type>::eof():
                 return unexpect_eof(input_format_t::cbor, "value");
 
             // Integer 0x00..0x17 (0..23)
@@ -10280,7 +10342,7 @@ class binary_reader
         switch (get())
         {
             // EOF
-            case std::char_traits<char_type>::eof():
+            case char_traits<char_type>::eof():
                 return unexpect_eof(input_format_t::msgpack, "value");
 
             // positive fixint
@@ -11382,7 +11444,7 @@ class binary_reader
     {
         switch (prefix)
         {
-            case std::char_traits<char_type>::eof():  // EOF
+            case char_traits<char_type>::eof():  // EOF
                 return unexpect_eof(input_format, "value");
 
             case 'T':  // true
@@ -11827,7 +11889,7 @@ class binary_reader
 
     This function provides the interface to the used input adapter. It does
     not throw in case the input reached EOF, but returns a -'ve valued
-    `std::char_traits<char_type>::eof()` in that case.
+    `char_traits<char_type>::eof()` in that case.
 
     @return character read from the input
     */
@@ -11969,7 +12031,7 @@ class binary_reader
     JSON_HEDLEY_NON_NULL(3)
     bool unexpect_eof(const input_format_t format, const char* context) const
     {
-        if (JSON_HEDLEY_UNLIKELY(current == std::char_traits<char_type>::eof()))
+        if (JSON_HEDLEY_UNLIKELY(current == char_traits<char_type>::eof()))
         {
             return sax->parse_error(chars_read, "<end of file>",
                                     parse_error::create(110, chars_read, exception_message(format, "unexpected end of input", context), nullptr));
@@ -12036,7 +12098,7 @@ class binary_reader
     InputAdapterType ia;
 
     /// the current character
-    char_int_type current = std::char_traits<char_type>::eof();
+    char_int_type current = char_traits<char_type>::eof();
 
     /// the number of characters read
     std::size_t chars_read = 0;

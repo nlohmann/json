@@ -12,6 +12,7 @@
 #include <type_traits> // false_type, is_constructible, is_integral, is_same, true_type
 #include <utility> // declval
 #include <tuple> // tuple
+#include <string> // char_traits
 
 #include <nlohmann/detail/iterators/iterator_traits.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
@@ -180,6 +181,63 @@ struct actual_object_comparator
 
 template<typename BasicJsonType>
 using actual_object_comparator_t = typename actual_object_comparator<BasicJsonType>::type;
+
+/////////////////
+// char_traits //
+/////////////////
+
+// Primary template of char_traits calls std char_traits
+template<typename T>
+struct char_traits : std::char_traits<T>
+{};
+
+// Explicitly define char traits for unsigned char since it is not standard
+template<>
+struct char_traits<unsigned char> : std::char_traits<char>
+{
+    using char_type = unsigned char;
+    using int_type = uint64_t;
+
+    // Redefine to_int_type function
+    static int_type to_int_type(char_type c) noexcept
+    {
+        return static_cast<int_type>(c);
+    }
+
+    static char_type to_char_type(int_type i) noexcept
+    {
+        return static_cast<char_type>(i);
+    }
+
+    static constexpr int_type eof() noexcept
+    {
+        return static_cast<int_type>(EOF);
+    }
+};
+
+// Explicitly define char traits for signed char since it is not standard
+template<>
+struct char_traits<signed char> : std::char_traits<char>
+{
+    using char_type = signed char;
+    using int_type = uint64_t;
+
+    // Redefine to_int_type function
+    static int_type to_int_type(char_type c) noexcept
+    {
+        return static_cast<int_type>(c);
+    }
+
+    static char_type to_char_type(int_type i) noexcept
+    {
+        return static_cast<char_type>(i);
+    }
+
+    static constexpr int_type eof() noexcept
+    {
+        return static_cast<int_type>(EOF);
+    }
+};
 
 ///////////////////
 // is_ functions //
