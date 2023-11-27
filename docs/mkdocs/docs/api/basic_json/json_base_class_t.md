@@ -7,6 +7,12 @@ using json_base_class_t = detail::json_base_class<CustomBaseClass>;
 The base class used to inject custom functionality into each instance of `basic_json`.
 Examples of such functionality might be metadata, additional member functions (e.g., visitors), or other application-specific code.
 
+!!! warning "Name conflicts when using generic names"
+
+    Tt is possible for name shadowing to occur since `nlohmann::basic_json` is derived from this class.
+    If this happens, the correct method or member variable can be accessed by either casting the json object to the base class or calling [as_base_class](as_base_class.md).
+    When updating to a new version of this library a previously available member might be shadowed by a new member of `nlohmann::basic_json`.
+
 ## Template parameters
 
 `CustomBaseClass`

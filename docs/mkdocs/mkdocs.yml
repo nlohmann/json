@@ -100,6 +100,7 @@ nav:
         - 'accept': api/basic_json/accept.md
         - 'array': api/basic_json/array.md
         - 'array_t': api/basic_json/array_t.md
+        - 'as_base_class' : api/basic_json/as_base_class.md
         - 'at': api/basic_json/at.md
         - 'back': api/basic_json/back.md
         - 'begin': api/basic_json/begin.md

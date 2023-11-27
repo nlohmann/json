@@ -5146,6 +5146,16 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 
     /// @}
+
+    json_base_class_t& as_base_class()
+    {
+        return static_cast<json_base_class_t&>(*this);
+    }
+
+    const json_base_class_t& as_base_class() const
+    {
+        return static_cast<const json_base_class_t&>(*this);
+    }
 };
 
 /// @brief user-defined to_string function for JSON values

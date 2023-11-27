@@ -13756,6 +13756,14 @@ NLOHMANN_JSON_NAMESPACE_END
 // #include <nlohmann/detail/iterators/primitive_iterator.hpp>
 
 // #include <nlohmann/detail/json_custom_base_class.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.11.2
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 
 
 #include <type_traits> // conditional, is_same
@@ -24440,6 +24448,16 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 
     /// @}
+
+    json_base_class_t& as_base_class()
+    {
+        return static_cast<json_base_class_t&>(*this);
+    }
+
+    const json_base_class_t& as_base_class() const
+    {
+        return static_cast<const json_base_class_t&>(*this);
+    }
 };
 
 /// @brief user-defined to_string function for JSON values
