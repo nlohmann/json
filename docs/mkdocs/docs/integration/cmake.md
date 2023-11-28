@@ -18,7 +18,7 @@ and use the namespaced imported target from the generated package configuration:
     cmake_minimum_required(VERSION 3.1)
     project(ExampleProject LANGUAGES CXX)
     
-    find_package(nlohmann_json 3.11.2 REQUIRED)
+    find_package(nlohmann_json 3.11.3 REQUIRED)
     
     add_executable(example example.cpp)
     target_link_libraries(example PRIVATE nlohmann_json::nlohmann_json)
@@ -77,7 +77,7 @@ to the following.
     
     ```cmake title="thirdparty/CMakeLists.txt"
     if(EXAMPLE_USE_EXTERNAL_JSON)
-        find_package(nlohmann_json 3.11.2 REQUIRED)
+        find_package(nlohmann_json 3.11.3 REQUIRED)
     else()
         set(JSON_BuildTests OFF CACHE INTERNAL "")
         add_subdirectory(nlohmann_json)
@@ -100,7 +100,7 @@ automatically download a release as a dependency at configure type.
 
     include(FetchContent)
     
-    FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.2/json.tar.xz)
+    FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
     FetchContent_MakeAvailable(json)
     
     add_executable(example example.cpp)
@@ -115,7 +115,7 @@ automatically download a release as a dependency at configure type.
     ```cmake
     FetchContent_Declare(json
         GIT_REPOSITORY https://github.com/nlohmann/json
-        GIT_TAG v3.11.2
+        GIT_TAG v3.11.3
     )
     ```
 
