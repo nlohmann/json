@@ -21,7 +21,14 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
 {
     SECTION("object")
     {
-        Json j = {{"integer", 1}, {"unsigned", 1u}, {"floating", 42.23}, {"null", nullptr}, {"string", "hello world"}, {"boolean", true}, {"object", Json::object()}, {"array", {1, 2, 3}}};
+        Json j = {{"integer", 1},
+                  {"unsigned", 1u},
+                  {"floating", 42.23},
+                  {"null", nullptr},
+                  {"string", "hello world"},
+                  {"boolean", true},
+                  {"object", Json::object()},
+                  {"array", {1, 2, 3}}};
         const Json j_const = j;
 
         SECTION("access specified element with bounds checking")
@@ -74,7 +81,9 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
 
 #ifdef JSON_HAS_CPP_17
                 CHECK_THROWS_WITH_AS(j.at(std::string_view("foo")), "[json.exception.out_of_range.403] key 'foo' not found", typename Json::out_of_range&);
-                CHECK_THROWS_WITH_AS(j_const.at(std::string_view("foo")), "[json.exception.out_of_range.403] key 'foo' not found", typename Json::out_of_range&);
+                CHECK_THROWS_WITH_AS(j_const.at(std::string_view("foo")),
+                                     "[json.exception.out_of_range.403] key 'foo' not found",
+                                     typename Json::out_of_range&);
 #endif
             }
 
@@ -88,8 +97,12 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                     CHECK_THROWS_WITH_AS(j_nonobject_const.at("foo"), "[json.exception.type_error.304] cannot use at() with null", typename Json::type_error&);
 
 #ifdef JSON_HAS_CPP_17
-                    CHECK_THROWS_WITH_AS(j_nonobject.at(std::string_view(std::string_view("foo"))), "[json.exception.type_error.304] cannot use at() with null", typename Json::type_error&);
-                    CHECK_THROWS_WITH_AS(j_nonobject_const.at(std::string_view(std::string_view("foo"))), "[json.exception.type_error.304] cannot use at() with null", typename Json::type_error&);
+                    CHECK_THROWS_WITH_AS(j_nonobject.at(std::string_view(std::string_view("foo"))),
+                                         "[json.exception.type_error.304] cannot use at() with null",
+                                         typename Json::type_error&);
+                    CHECK_THROWS_WITH_AS(j_nonobject_const.at(std::string_view(std::string_view("foo"))),
+                                         "[json.exception.type_error.304] cannot use at() with null",
+                                         typename Json::type_error&);
 #endif
                 }
 
@@ -98,11 +111,17 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                     Json j_nonobject(Json::value_t::boolean);
                     const Json j_nonobject_const(j_nonobject);
                     CHECK_THROWS_WITH_AS(j_nonobject.at("foo"), "[json.exception.type_error.304] cannot use at() with boolean", typename Json::type_error&);
-                    CHECK_THROWS_WITH_AS(j_nonobject_const.at("foo"), "[json.exception.type_error.304] cannot use at() with boolean", typename Json::type_error&);
+                    CHECK_THROWS_WITH_AS(j_nonobject_const.at("foo"),
+                                         "[json.exception.type_error.304] cannot use at() with boolean",
+                                         typename Json::type_error&);
 
 #ifdef JSON_HAS_CPP_17
-                    CHECK_THROWS_WITH_AS(j_nonobject.at(std::string_view("foo")), "[json.exception.type_error.304] cannot use at() with boolean", typename Json::type_error&);
-                    CHECK_THROWS_WITH_AS(j_nonobject_const.at(std::string_view("foo")), "[json.exception.type_error.304] cannot use at() with boolean", typename Json::type_error&);
+                    CHECK_THROWS_WITH_AS(j_nonobject.at(std::string_view("foo")),
+                                         "[json.exception.type_error.304] cannot use at() with boolean",
+                                         typename Json::type_error&);
+                    CHECK_THROWS_WITH_AS(j_nonobject_const.at(std::string_view("foo")),
+                                         "[json.exception.type_error.304] cannot use at() with boolean",
+                                         typename Json::type_error&);
 #endif
                 }
 
@@ -111,11 +130,17 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                     Json j_nonobject(Json::value_t::string);
                     const Json j_nonobject_const(j_nonobject);
                     CHECK_THROWS_WITH_AS(j_nonobject.at("foo"), "[json.exception.type_error.304] cannot use at() with string", typename Json::type_error&);
-                    CHECK_THROWS_WITH_AS(j_nonobject_const.at("foo"), "[json.exception.type_error.304] cannot use at() with string", typename Json::type_error&);
+                    CHECK_THROWS_WITH_AS(j_nonobject_const.at("foo"),
+                                         "[json.exception.type_error.304] cannot use at() with string",
+                                         typename Json::type_error&);
 
 #ifdef JSON_HAS_CPP_17
-                    CHECK_THROWS_WITH_AS(j_nonobject.at(std::string_view("foo")), "[json.exception.type_error.304] cannot use at() with string", typename Json::type_error&);
-                    CHECK_THROWS_WITH_AS(j_nonobject_const.at(std::string_view("foo")), "[json.exception.type_error.304] cannot use at() with string", typename Json::type_error&);
+                    CHECK_THROWS_WITH_AS(j_nonobject.at(std::string_view("foo")),
+                                         "[json.exception.type_error.304] cannot use at() with string",
+                                         typename Json::type_error&);
+                    CHECK_THROWS_WITH_AS(j_nonobject_const.at(std::string_view("foo")),
+                                         "[json.exception.type_error.304] cannot use at() with string",
+                                         typename Json::type_error&);
 #endif
                 }
 
@@ -127,8 +152,12 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                     CHECK_THROWS_WITH_AS(j_nonobject_const.at("foo"), "[json.exception.type_error.304] cannot use at() with array", typename Json::type_error&);
 
 #ifdef JSON_HAS_CPP_17
-                    CHECK_THROWS_WITH_AS(j_nonobject.at(std::string_view("foo")), "[json.exception.type_error.304] cannot use at() with array", typename Json::type_error&);
-                    CHECK_THROWS_WITH_AS(j_nonobject_const.at(std::string_view("foo")), "[json.exception.type_error.304] cannot use at() with array", typename Json::type_error&);
+                    CHECK_THROWS_WITH_AS(j_nonobject.at(std::string_view("foo")),
+                                         "[json.exception.type_error.304] cannot use at() with array",
+                                         typename Json::type_error&);
+                    CHECK_THROWS_WITH_AS(j_nonobject_const.at(std::string_view("foo")),
+                                         "[json.exception.type_error.304] cannot use at() with array",
+                                         typename Json::type_error&);
 #endif
                 }
 
@@ -137,11 +166,17 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                     Json j_nonobject(Json::value_t::number_integer);
                     const Json j_nonobject_const(j_nonobject);
                     CHECK_THROWS_WITH_AS(j_nonobject.at("foo"), "[json.exception.type_error.304] cannot use at() with number", typename Json::type_error&);
-                    CHECK_THROWS_WITH_AS(j_nonobject_const.at("foo"), "[json.exception.type_error.304] cannot use at() with number", typename Json::type_error&);
+                    CHECK_THROWS_WITH_AS(j_nonobject_const.at("foo"),
+                                         "[json.exception.type_error.304] cannot use at() with number",
+                                         typename Json::type_error&);
 
 #ifdef JSON_HAS_CPP_17
-                    CHECK_THROWS_WITH_AS(j_nonobject.at(std::string_view("foo")), "[json.exception.type_error.304] cannot use at() with number", typename Json::type_error&);
-                    CHECK_THROWS_WITH_AS(j_nonobject_const.at(std::string_view("foo")), "[json.exception.type_error.304] cannot use at() with number", typename Json::type_error&);
+                    CHECK_THROWS_WITH_AS(j_nonobject.at(std::string_view("foo")),
+                                         "[json.exception.type_error.304] cannot use at() with number",
+                                         typename Json::type_error&);
+                    CHECK_THROWS_WITH_AS(j_nonobject_const.at(std::string_view("foo")),
+                                         "[json.exception.type_error.304] cannot use at() with number",
+                                         typename Json::type_error&);
 #endif
                 }
 
@@ -150,11 +185,17 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                     Json j_nonobject(Json::value_t::number_unsigned);
                     const Json j_nonobject_const(j_nonobject);
                     CHECK_THROWS_WITH_AS(j_nonobject.at("foo"), "[json.exception.type_error.304] cannot use at() with number", typename Json::type_error&);
-                    CHECK_THROWS_WITH_AS(j_nonobject_const.at("foo"), "[json.exception.type_error.304] cannot use at() with number", typename Json::type_error&);
+                    CHECK_THROWS_WITH_AS(j_nonobject_const.at("foo"),
+                                         "[json.exception.type_error.304] cannot use at() with number",
+                                         typename Json::type_error&);
 
 #ifdef JSON_HAS_CPP_17
-                    CHECK_THROWS_WITH_AS(j_nonobject.at(std::string_view("foo")), "[json.exception.type_error.304] cannot use at() with number", typename Json::type_error&);
-                    CHECK_THROWS_WITH_AS(j_nonobject_const.at(std::string_view("foo")), "[json.exception.type_error.304] cannot use at() with number", typename Json::type_error&);
+                    CHECK_THROWS_WITH_AS(j_nonobject.at(std::string_view("foo")),
+                                         "[json.exception.type_error.304] cannot use at() with number",
+                                         typename Json::type_error&);
+                    CHECK_THROWS_WITH_AS(j_nonobject_const.at(std::string_view("foo")),
+                                         "[json.exception.type_error.304] cannot use at() with number",
+                                         typename Json::type_error&);
 #endif
                 }
 
@@ -163,11 +204,17 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                     Json j_nonobject(Json::value_t::number_float);
                     const Json j_nonobject_const(j_nonobject);
                     CHECK_THROWS_WITH_AS(j_nonobject.at("foo"), "[json.exception.type_error.304] cannot use at() with number", typename Json::type_error&);
-                    CHECK_THROWS_WITH_AS(j_nonobject_const.at("foo"), "[json.exception.type_error.304] cannot use at() with number", typename Json::type_error&);
+                    CHECK_THROWS_WITH_AS(j_nonobject_const.at("foo"),
+                                         "[json.exception.type_error.304] cannot use at() with number",
+                                         typename Json::type_error&);
 
 #ifdef JSON_HAS_CPP_17
-                    CHECK_THROWS_WITH_AS(j_nonobject.at(std::string_view("foo")), "[json.exception.type_error.304] cannot use at() with number", typename Json::type_error&);
-                    CHECK_THROWS_WITH_AS(j_nonobject_const.at(std::string_view("foo")), "[json.exception.type_error.304] cannot use at() with number", typename Json::type_error&);
+                    CHECK_THROWS_WITH_AS(j_nonobject.at(std::string_view("foo")),
+                                         "[json.exception.type_error.304] cannot use at() with number",
+                                         typename Json::type_error&);
+                    CHECK_THROWS_WITH_AS(j_nonobject_const.at(std::string_view("foo")),
+                                         "[json.exception.type_error.304] cannot use at() with number",
+                                         typename Json::type_error&);
 #endif
                 }
             }
@@ -275,12 +322,20 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                     {
                         Json j_nonobject(Json::value_t::null);
                         const Json j_nonobject_const(Json::value_t::null);
-                        CHECK_THROWS_WITH_AS(j_nonobject.value("foo", 1), "[json.exception.type_error.306] cannot use value() with null", typename Json::type_error&);
-                        CHECK_THROWS_WITH_AS(j_nonobject_const.value("foo", 1), "[json.exception.type_error.306] cannot use value() with null", typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject.value("foo", 1),
+                                             "[json.exception.type_error.306] cannot use value() with null",
+                                             typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject_const.value("foo", 1),
+                                             "[json.exception.type_error.306] cannot use value() with null",
+                                             typename Json::type_error&);
 
 #ifdef JSON_HAS_CPP_17
-                        CHECK_THROWS_WITH_AS(j_nonobject.value(std::string_view("foo"), 1), "[json.exception.type_error.306] cannot use value() with null", typename Json::type_error&);
-                        CHECK_THROWS_WITH_AS(j_nonobject_const.value(std::string_view("foo"), 1), "[json.exception.type_error.306] cannot use value() with null", typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject.value(std::string_view("foo"), 1),
+                                             "[json.exception.type_error.306] cannot use value() with null",
+                                             typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject_const.value(std::string_view("foo"), 1),
+                                             "[json.exception.type_error.306] cannot use value() with null",
+                                             typename Json::type_error&);
 #endif
                     }
 
@@ -288,12 +343,20 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                     {
                         Json j_nonobject(Json::value_t::boolean);
                         const Json j_nonobject_const(Json::value_t::boolean);
-                        CHECK_THROWS_WITH_AS(j_nonobject.value("foo", 1), "[json.exception.type_error.306] cannot use value() with boolean", typename Json::type_error&);
-                        CHECK_THROWS_WITH_AS(j_nonobject_const.value("foo", 1), "[json.exception.type_error.306] cannot use value() with boolean", typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject.value("foo", 1),
+                                             "[json.exception.type_error.306] cannot use value() with boolean",
+                                             typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject_const.value("foo", 1),
+                                             "[json.exception.type_error.306] cannot use value() with boolean",
+                                             typename Json::type_error&);
 
 #ifdef JSON_HAS_CPP_17
-                        CHECK_THROWS_WITH_AS(j_nonobject.value(std::string_view("foo"), 1), "[json.exception.type_error.306] cannot use value() with boolean", typename Json::type_error&);
-                        CHECK_THROWS_WITH_AS(j_nonobject_const.value(std::string_view("foo"), 1), "[json.exception.type_error.306] cannot use value() with boolean", typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject.value(std::string_view("foo"), 1),
+                                             "[json.exception.type_error.306] cannot use value() with boolean",
+                                             typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject_const.value(std::string_view("foo"), 1),
+                                             "[json.exception.type_error.306] cannot use value() with boolean",
+                                             typename Json::type_error&);
 #endif
                     }
 
@@ -301,12 +364,20 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                     {
                         Json j_nonobject(Json::value_t::string);
                         const Json j_nonobject_const(Json::value_t::string);
-                        CHECK_THROWS_WITH_AS(j_nonobject.value("foo", 1), "[json.exception.type_error.306] cannot use value() with string", typename Json::type_error&);
-                        CHECK_THROWS_WITH_AS(j_nonobject_const.value("foo", 1), "[json.exception.type_error.306] cannot use value() with string", typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject.value("foo", 1),
+                                             "[json.exception.type_error.306] cannot use value() with string",
+                                             typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject_const.value("foo", 1),
+                                             "[json.exception.type_error.306] cannot use value() with string",
+                                             typename Json::type_error&);
 
 #ifdef JSON_HAS_CPP_17
-                        CHECK_THROWS_WITH_AS(j_nonobject.value(std::string_view("foo"), 1), "[json.exception.type_error.306] cannot use value() with string", typename Json::type_error&);
-                        CHECK_THROWS_WITH_AS(j_nonobject_const.value(std::string_view("foo"), 1), "[json.exception.type_error.306] cannot use value() with string", typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject.value(std::string_view("foo"), 1),
+                                             "[json.exception.type_error.306] cannot use value() with string",
+                                             typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject_const.value(std::string_view("foo"), 1),
+                                             "[json.exception.type_error.306] cannot use value() with string",
+                                             typename Json::type_error&);
 #endif
                     }
 
@@ -314,12 +385,20 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                     {
                         Json j_nonobject(Json::value_t::array);
                         const Json j_nonobject_const(Json::value_t::array);
-                        CHECK_THROWS_WITH_AS(j_nonobject.value("foo", 1), "[json.exception.type_error.306] cannot use value() with array", typename Json::type_error&);
-                        CHECK_THROWS_WITH_AS(j_nonobject_const.value("foo", 1), "[json.exception.type_error.306] cannot use value() with array", typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject.value("foo", 1),
+                                             "[json.exception.type_error.306] cannot use value() with array",
+                                             typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject_const.value("foo", 1),
+                                             "[json.exception.type_error.306] cannot use value() with array",
+                                             typename Json::type_error&);
 
 #ifdef JSON_HAS_CPP_17
-                        CHECK_THROWS_WITH_AS(j_nonobject.value(std::string_view("foo"), 1), "[json.exception.type_error.306] cannot use value() with array", typename Json::type_error&);
-                        CHECK_THROWS_WITH_AS(j_nonobject_const.value(std::string_view("foo"), 1), "[json.exception.type_error.306] cannot use value() with array", typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject.value(std::string_view("foo"), 1),
+                                             "[json.exception.type_error.306] cannot use value() with array",
+                                             typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject_const.value(std::string_view("foo"), 1),
+                                             "[json.exception.type_error.306] cannot use value() with array",
+                                             typename Json::type_error&);
 #endif
                     }
 
@@ -327,12 +406,20 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                     {
                         Json j_nonobject(Json::value_t::number_integer);
                         const Json j_nonobject_const(Json::value_t::number_integer);
-                        CHECK_THROWS_WITH_AS(j_nonobject.value("foo", 1), "[json.exception.type_error.306] cannot use value() with number", typename Json::type_error&);
-                        CHECK_THROWS_WITH_AS(j_nonobject_const.value("foo", 1), "[json.exception.type_error.306] cannot use value() with number", typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject.value("foo", 1),
+                                             "[json.exception.type_error.306] cannot use value() with number",
+                                             typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject_const.value("foo", 1),
+                                             "[json.exception.type_error.306] cannot use value() with number",
+                                             typename Json::type_error&);
 
 #ifdef JSON_HAS_CPP_17
-                        CHECK_THROWS_WITH_AS(j_nonobject.value(std::string_view("foo"), 1), "[json.exception.type_error.306] cannot use value() with number", typename Json::type_error&);
-                        CHECK_THROWS_WITH_AS(j_nonobject_const.value(std::string_view("foo"), 1), "[json.exception.type_error.306] cannot use value() with number", typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject.value(std::string_view("foo"), 1),
+                                             "[json.exception.type_error.306] cannot use value() with number",
+                                             typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject_const.value(std::string_view("foo"), 1),
+                                             "[json.exception.type_error.306] cannot use value() with number",
+                                             typename Json::type_error&);
 #endif
                     }
 
@@ -340,12 +427,20 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                     {
                         Json j_nonobject(Json::value_t::number_unsigned);
                         const Json j_nonobject_const(Json::value_t::number_unsigned);
-                        CHECK_THROWS_WITH_AS(j_nonobject.value("foo", 1), "[json.exception.type_error.306] cannot use value() with number", typename Json::type_error&);
-                        CHECK_THROWS_WITH_AS(j_nonobject_const.value("foo", 1), "[json.exception.type_error.306] cannot use value() with number", typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject.value("foo", 1),
+                                             "[json.exception.type_error.306] cannot use value() with number",
+                                             typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject_const.value("foo", 1),
+                                             "[json.exception.type_error.306] cannot use value() with number",
+                                             typename Json::type_error&);
 
 #ifdef JSON_HAS_CPP_17
-                        CHECK_THROWS_WITH_AS(j_nonobject.value(std::string_view("foo"), 1), "[json.exception.type_error.306] cannot use value() with number", typename Json::type_error&);
-                        CHECK_THROWS_WITH_AS(j_nonobject_const.value(std::string_view("foo"), 1), "[json.exception.type_error.306] cannot use value() with number", typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject.value(std::string_view("foo"), 1),
+                                             "[json.exception.type_error.306] cannot use value() with number",
+                                             typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject_const.value(std::string_view("foo"), 1),
+                                             "[json.exception.type_error.306] cannot use value() with number",
+                                             typename Json::type_error&);
 #endif
                     }
 
@@ -353,12 +448,20 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                     {
                         Json j_nonobject(Json::value_t::number_float);
                         const Json j_nonobject_const(Json::value_t::number_float);
-                        CHECK_THROWS_WITH_AS(j_nonobject.value("foo", 1), "[json.exception.type_error.306] cannot use value() with number", typename Json::type_error&);
-                        CHECK_THROWS_WITH_AS(j_nonobject_const.value("foo", 1), "[json.exception.type_error.306] cannot use value() with number", typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject.value("foo", 1),
+                                             "[json.exception.type_error.306] cannot use value() with number",
+                                             typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject_const.value("foo", 1),
+                                             "[json.exception.type_error.306] cannot use value() with number",
+                                             typename Json::type_error&);
 
 #ifdef JSON_HAS_CPP_17
-                        CHECK_THROWS_WITH_AS(j_nonobject.value(std::string_view("foo"), 1), "[json.exception.type_error.306] cannot use value() with number", typename Json::type_error&);
-                        CHECK_THROWS_WITH_AS(j_nonobject_const.value(std::string_view("foo"), 1), "[json.exception.type_error.306] cannot use value() with number", typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject.value(std::string_view("foo"), 1),
+                                             "[json.exception.type_error.306] cannot use value() with number",
+                                             typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject_const.value(std::string_view("foo"), 1),
+                                             "[json.exception.type_error.306] cannot use value() with number",
+                                             typename Json::type_error&);
 #endif
                     }
                 }
@@ -400,63 +503,90 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                     {
                         Json j_nonobject(Json::value_t::null);
                         const Json j_nonobject_const(Json::value_t::null);
-                        CHECK_THROWS_WITH_AS(j_nonobject.value("/foo"_json_pointer, 1), "[json.exception.type_error.306] cannot use value() with null", typename Json::type_error&);
-                        CHECK_THROWS_WITH_AS(j_nonobject_const.value("/foo"_json_pointer, 1), "[json.exception.type_error.306] cannot use value() with null", typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject.value("/foo"_json_pointer, 1),
+                                             "[json.exception.type_error.306] cannot use value() with null",
+                                             typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject_const.value("/foo"_json_pointer, 1),
+                                             "[json.exception.type_error.306] cannot use value() with null",
+                                             typename Json::type_error&);
                     }
 
                     SECTION("boolean")
                     {
                         Json j_nonobject(Json::value_t::boolean);
                         const Json j_nonobject_const(Json::value_t::boolean);
-                        CHECK_THROWS_WITH_AS(j_nonobject.value("/foo"_json_pointer, 1), "[json.exception.type_error.306] cannot use value() with boolean", typename Json::type_error&);
-                        CHECK_THROWS_WITH_AS(j_nonobject_const.value("/foo"_json_pointer, 1), "[json.exception.type_error.306] cannot use value() with boolean", typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject.value("/foo"_json_pointer, 1),
+                                             "[json.exception.type_error.306] cannot use value() with boolean",
+                                             typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject_const.value("/foo"_json_pointer, 1),
+                                             "[json.exception.type_error.306] cannot use value() with boolean",
+                                             typename Json::type_error&);
                     }
 
                     SECTION("string")
                     {
                         Json j_nonobject(Json::value_t::string);
                         const Json j_nonobject_const(Json::value_t::string);
-                        CHECK_THROWS_WITH_AS(j_nonobject.value("/foo"_json_pointer, 1), "[json.exception.type_error.306] cannot use value() with string", typename Json::type_error&);
-                        CHECK_THROWS_WITH_AS(j_nonobject_const.value("/foo"_json_pointer, 1), "[json.exception.type_error.306] cannot use value() with string", typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject.value("/foo"_json_pointer, 1),
+                                             "[json.exception.type_error.306] cannot use value() with string",
+                                             typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject_const.value("/foo"_json_pointer, 1),
+                                             "[json.exception.type_error.306] cannot use value() with string",
+                                             typename Json::type_error&);
                     }
 
                     SECTION("array")
                     {
                         Json j_nonobject(Json::value_t::array);
                         const Json j_nonobject_const(Json::value_t::array);
-                        CHECK_THROWS_WITH_AS(j_nonobject.value("/foo"_json_pointer, 1), "[json.exception.type_error.306] cannot use value() with array", typename Json::type_error&);
-                        CHECK_THROWS_WITH_AS(j_nonobject_const.value("/foo"_json_pointer, 1), "[json.exception.type_error.306] cannot use value() with array", typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject.value("/foo"_json_pointer, 1),
+                                             "[json.exception.type_error.306] cannot use value() with array",
+                                             typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject_const.value("/foo"_json_pointer, 1),
+                                             "[json.exception.type_error.306] cannot use value() with array",
+                                             typename Json::type_error&);
                     }
 
                     SECTION("number (integer)")
                     {
                         Json j_nonobject(Json::value_t::number_integer);
                         const Json j_nonobject_const(Json::value_t::number_integer);
-                        CHECK_THROWS_WITH_AS(j_nonobject.value("/foo"_json_pointer, 1), "[json.exception.type_error.306] cannot use value() with number", typename Json::type_error&);
-                        CHECK_THROWS_WITH_AS(j_nonobject_const.value("/foo"_json_pointer, 1), "[json.exception.type_error.306] cannot use value() with number", typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject.value("/foo"_json_pointer, 1),
+                                             "[json.exception.type_error.306] cannot use value() with number",
+                                             typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject_const.value("/foo"_json_pointer, 1),
+                                             "[json.exception.type_error.306] cannot use value() with number",
+                                             typename Json::type_error&);
                     }
 
                     SECTION("number (unsigned)")
                     {
                         Json j_nonobject(Json::value_t::number_unsigned);
                         const Json j_nonobject_const(Json::value_t::number_unsigned);
-                        CHECK_THROWS_WITH_AS(j_nonobject.value("/foo"_json_pointer, 1), "[json.exception.type_error.306] cannot use value() with number", typename Json::type_error&);
-                        CHECK_THROWS_WITH_AS(j_nonobject_const.value("/foo"_json_pointer, 1), "[json.exception.type_error.306] cannot use value() with number", typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject.value("/foo"_json_pointer, 1),
+                                             "[json.exception.type_error.306] cannot use value() with number",
+                                             typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject_const.value("/foo"_json_pointer, 1),
+                                             "[json.exception.type_error.306] cannot use value() with number",
+                                             typename Json::type_error&);
                     }
 
                     SECTION("number (floating-point)")
                     {
                         Json j_nonobject(Json::value_t::number_float);
                         const Json j_nonobject_const(Json::value_t::number_float);
-                        CHECK_THROWS_WITH_AS(j_nonobject.value("/foo"_json_pointer, 1), "[json.exception.type_error.306] cannot use value() with number", typename Json::type_error&);
-                        CHECK_THROWS_WITH_AS(j_nonobject_const.value("/foo"_json_pointer, 1), "[json.exception.type_error.306] cannot use value() with number", typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject.value("/foo"_json_pointer, 1),
+                                             "[json.exception.type_error.306] cannot use value() with number",
+                                             typename Json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonobject_const.value("/foo"_json_pointer, 1),
+                                             "[json.exception.type_error.306] cannot use value() with number",
+                                             typename Json::type_error&);
                     }
                 }
             }
         }
 
-        SECTION("non-const operator[]"){
-            {Json j_null;
+        SECTION("non-const operator[]"){{Json j_null;
         CHECK(j_null.is_null());
         j_null["key"] = 1;
         CHECK(j_null.is_object());
@@ -610,12 +740,18 @@ SECTION("access specified element")
 
             CHECK_NOTHROW(j_nonobject["foo"]);
             CHECK_NOTHROW(j_nonobject2[typename Json::object_t::key_type("foo")]);
-            CHECK_THROWS_WITH_AS(j_const_nonobject["foo"], "[json.exception.type_error.305] cannot use operator[] with a string argument with null", typename Json::type_error&);
-            CHECK_THROWS_WITH_AS(j_const_nonobject[typename Json::object_t::key_type("foo")], "[json.exception.type_error.305] cannot use operator[] with a string argument with null", typename Json::type_error&);
+            CHECK_THROWS_WITH_AS(j_const_nonobject["foo"],
+                                 "[json.exception.type_error.305] cannot use operator[] with a string argument with null",
+                                 typename Json::type_error&);
+            CHECK_THROWS_WITH_AS(j_const_nonobject[typename Json::object_t::key_type("foo")],
+                                 "[json.exception.type_error.305] cannot use operator[] with a string argument with null",
+                                 typename Json::type_error&);
 
 #ifdef JSON_HAS_CPP_17
             CHECK_NOTHROW(j_nonobject2[std::string_view("foo")]);
-            CHECK_THROWS_WITH_AS(j_const_nonobject[std::string_view("foo")], "[json.exception.type_error.305] cannot use operator[] with a string argument with null", typename Json::type_error&);
+            CHECK_THROWS_WITH_AS(j_const_nonobject[std::string_view("foo")],
+                                 "[json.exception.type_error.305] cannot use operator[] with a string argument with null",
+                                 typename Json::type_error&);
 #endif
         }
 
@@ -637,8 +773,12 @@ SECTION("access specified element")
                                  typename Json::type_error&);
 
 #ifdef JSON_HAS_CPP_17
-            CHECK_THROWS_WITH_AS(j_nonobject[std::string_view("foo")], "[json.exception.type_error.305] cannot use operator[] with a string argument with boolean", typename Json::type_error&);
-            CHECK_THROWS_WITH_AS(j_const_nonobject[std::string_view("foo")], "[json.exception.type_error.305] cannot use operator[] with a string argument with boolean", typename Json::type_error&);
+            CHECK_THROWS_WITH_AS(j_nonobject[std::string_view("foo")],
+                                 "[json.exception.type_error.305] cannot use operator[] with a string argument with boolean",
+                                 typename Json::type_error&);
+            CHECK_THROWS_WITH_AS(j_const_nonobject[std::string_view("foo")],
+                                 "[json.exception.type_error.305] cannot use operator[] with a string argument with boolean",
+                                 typename Json::type_error&);
 #endif
         }
 
@@ -660,8 +800,12 @@ SECTION("access specified element")
                                  typename Json::type_error&);
 
 #ifdef JSON_HAS_CPP_17
-            CHECK_THROWS_WITH_AS(j_nonobject[std::string_view("foo")], "[json.exception.type_error.305] cannot use operator[] with a string argument with string", typename Json::type_error&);
-            CHECK_THROWS_WITH_AS(j_const_nonobject[std::string_view("foo")], "[json.exception.type_error.305] cannot use operator[] with a string argument with string", typename Json::type_error&);
+            CHECK_THROWS_WITH_AS(j_nonobject[std::string_view("foo")],
+                                 "[json.exception.type_error.305] cannot use operator[] with a string argument with string",
+                                 typename Json::type_error&);
+            CHECK_THROWS_WITH_AS(j_const_nonobject[std::string_view("foo")],
+                                 "[json.exception.type_error.305] cannot use operator[] with a string argument with string",
+                                 typename Json::type_error&);
 #endif
         }
 
@@ -672,7 +816,9 @@ SECTION("access specified element")
             CHECK_THROWS_WITH_AS(j_nonobject["foo"],
                                  "[json.exception.type_error.305] cannot use operator[] with a string argument with array",
                                  typename Json::type_error&);
-            CHECK_THROWS_WITH_AS(j_nonobject[typename Json::object_t::key_type("foo")], "[json.exception.type_error.305] cannot use operator[] with a string argument with array", typename Json::type_error&);
+            CHECK_THROWS_WITH_AS(j_nonobject[typename Json::object_t::key_type("foo")],
+                                 "[json.exception.type_error.305] cannot use operator[] with a string argument with array",
+                                 typename Json::type_error&);
             CHECK_THROWS_WITH_AS(j_const_nonobject["foo"],
                                  "[json.exception.type_error.305] cannot use operator[] with a string argument with array",
                                  typename Json::type_error&);
@@ -681,8 +827,12 @@ SECTION("access specified element")
                                  typename Json::type_error&);
 
 #ifdef JSON_HAS_CPP_17
-            CHECK_THROWS_WITH_AS(j_nonobject[std::string_view("foo")], "[json.exception.type_error.305] cannot use operator[] with a string argument with array", typename Json::type_error&);
-            CHECK_THROWS_WITH_AS(j_const_nonobject[std::string_view("foo")], "[json.exception.type_error.305] cannot use operator[] with a string argument with array", typename Json::type_error&);
+            CHECK_THROWS_WITH_AS(j_nonobject[std::string_view("foo")],
+                                 "[json.exception.type_error.305] cannot use operator[] with a string argument with array",
+                                 typename Json::type_error&);
+            CHECK_THROWS_WITH_AS(j_const_nonobject[std::string_view("foo")],
+                                 "[json.exception.type_error.305] cannot use operator[] with a string argument with array",
+                                 typename Json::type_error&);
 #endif
         }
 
@@ -704,8 +854,12 @@ SECTION("access specified element")
                                  typename Json::type_error&);
 
 #ifdef JSON_HAS_CPP_17
-            CHECK_THROWS_WITH_AS(j_nonobject[std::string_view("foo")], "[json.exception.type_error.305] cannot use operator[] with a string argument with number", typename Json::type_error&);
-            CHECK_THROWS_WITH_AS(j_const_nonobject[std::string_view("foo")], "[json.exception.type_error.305] cannot use operator[] with a string argument with number", typename Json::type_error&);
+            CHECK_THROWS_WITH_AS(j_nonobject[std::string_view("foo")],
+                                 "[json.exception.type_error.305] cannot use operator[] with a string argument with number",
+                                 typename Json::type_error&);
+            CHECK_THROWS_WITH_AS(j_const_nonobject[std::string_view("foo")],
+                                 "[json.exception.type_error.305] cannot use operator[] with a string argument with number",
+                                 typename Json::type_error&);
 #endif
         }
 
@@ -727,8 +881,12 @@ SECTION("access specified element")
                                  typename Json::type_error&);
 
 #ifdef JSON_HAS_CPP_17
-            CHECK_THROWS_WITH_AS(j_nonobject[std::string_view("foo")], "[json.exception.type_error.305] cannot use operator[] with a string argument with number", typename Json::type_error&);
-            CHECK_THROWS_WITH_AS(j_const_nonobject[std::string_view("foo")], "[json.exception.type_error.305] cannot use operator[] with a string argument with number", typename Json::type_error&);
+            CHECK_THROWS_WITH_AS(j_nonobject[std::string_view("foo")],
+                                 "[json.exception.type_error.305] cannot use operator[] with a string argument with number",
+                                 typename Json::type_error&);
+            CHECK_THROWS_WITH_AS(j_const_nonobject[std::string_view("foo")],
+                                 "[json.exception.type_error.305] cannot use operator[] with a string argument with number",
+                                 typename Json::type_error&);
 #endif
         }
 
@@ -750,8 +908,12 @@ SECTION("access specified element")
                                  typename Json::type_error&);
 
 #ifdef JSON_HAS_CPP_17
-            CHECK_THROWS_WITH_AS(j_nonobject[std::string_view("foo")], "[json.exception.type_error.305] cannot use operator[] with a string argument with number", typename Json::type_error&);
-            CHECK_THROWS_WITH_AS(j_const_nonobject[std::string_view("foo")], "[json.exception.type_error.305] cannot use operator[] with a string argument with number", typename Json::type_error&);
+            CHECK_THROWS_WITH_AS(j_nonobject[std::string_view("foo")],
+                                 "[json.exception.type_error.305] cannot use operator[] with a string argument with number",
+                                 typename Json::type_error&);
+            CHECK_THROWS_WITH_AS(j_const_nonobject[std::string_view("foo")],
+                                 "[json.exception.type_error.305] cannot use operator[] with a string argument with number",
+                                 typename Json::type_error&);
 #endif
         }
     }
@@ -976,7 +1138,9 @@ SECTION("remove specified element")
             CHECK_THROWS_WITH_AS(j_nonobject.erase("foo"), "[json.exception.type_error.307] cannot use erase() with null", typename Json::type_error&);
 
 #ifdef JSON_HAS_CPP_17
-            CHECK_THROWS_WITH_AS(j_nonobject.erase(std::string_view("foo")), "[json.exception.type_error.307] cannot use erase() with null", typename Json::type_error&);
+            CHECK_THROWS_WITH_AS(j_nonobject.erase(std::string_view("foo")),
+                                 "[json.exception.type_error.307] cannot use erase() with null",
+                                 typename Json::type_error&);
 #endif
         }
 
@@ -986,7 +1150,9 @@ SECTION("remove specified element")
             CHECK_THROWS_WITH_AS(j_nonobject.erase("foo"), "[json.exception.type_error.307] cannot use erase() with boolean", typename Json::type_error&);
 
 #ifdef JSON_HAS_CPP_17
-            CHECK_THROWS_WITH_AS(j_nonobject.erase(std::string_view("foo")), "[json.exception.type_error.307] cannot use erase() with boolean", typename Json::type_error&);
+            CHECK_THROWS_WITH_AS(j_nonobject.erase(std::string_view("foo")),
+                                 "[json.exception.type_error.307] cannot use erase() with boolean",
+                                 typename Json::type_error&);
 #endif
         }
 
@@ -996,7 +1162,9 @@ SECTION("remove specified element")
             CHECK_THROWS_WITH_AS(j_nonobject.erase("foo"), "[json.exception.type_error.307] cannot use erase() with string", typename Json::type_error&);
 
 #ifdef JSON_HAS_CPP_17
-            CHECK_THROWS_WITH_AS(j_nonobject.erase(std::string_view("foo")), "[json.exception.type_error.307] cannot use erase() with string", typename Json::type_error&);
+            CHECK_THROWS_WITH_AS(j_nonobject.erase(std::string_view("foo")),
+                                 "[json.exception.type_error.307] cannot use erase() with string",
+                                 typename Json::type_error&);
 #endif
         }
 
@@ -1006,7 +1174,9 @@ SECTION("remove specified element")
             CHECK_THROWS_WITH_AS(j_nonobject.erase("foo"), "[json.exception.type_error.307] cannot use erase() with array", typename Json::type_error&);
 
 #ifdef JSON_HAS_CPP_17
-            CHECK_THROWS_WITH_AS(j_nonobject.erase(std::string_view("foo")), "[json.exception.type_error.307] cannot use erase() with array", typename Json::type_error&);
+            CHECK_THROWS_WITH_AS(j_nonobject.erase(std::string_view("foo")),
+                                 "[json.exception.type_error.307] cannot use erase() with array",
+                                 typename Json::type_error&);
 #endif
         }
 
@@ -1016,7 +1186,9 @@ SECTION("remove specified element")
             CHECK_THROWS_WITH_AS(j_nonobject.erase("foo"), "[json.exception.type_error.307] cannot use erase() with number", typename Json::type_error&);
 
 #ifdef JSON_HAS_CPP_17
-            CHECK_THROWS_WITH_AS(j_nonobject.erase(std::string_view("foo")), "[json.exception.type_error.307] cannot use erase() with number", typename Json::type_error&);
+            CHECK_THROWS_WITH_AS(j_nonobject.erase(std::string_view("foo")),
+                                 "[json.exception.type_error.307] cannot use erase() with number",
+                                 typename Json::type_error&);
 #endif
         }
 
@@ -1026,7 +1198,9 @@ SECTION("remove specified element")
             CHECK_THROWS_WITH_AS(j_nonobject.erase("foo"), "[json.exception.type_error.307] cannot use erase() with number", typename Json::type_error&);
 
 #ifdef JSON_HAS_CPP_17
-            CHECK_THROWS_WITH_AS(j_nonobject.erase(std::string_view("foo")), "[json.exception.type_error.307] cannot use erase() with number", typename Json::type_error&);
+            CHECK_THROWS_WITH_AS(j_nonobject.erase(std::string_view("foo")),
+                                 "[json.exception.type_error.307] cannot use erase() with number",
+                                 typename Json::type_error&);
 #endif
         }
     }
@@ -1036,8 +1210,7 @@ SECTION("find an element in an object")
 {
     SECTION("existing element")
     {
-        for (const auto* key :
-             {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"})
+        for (const auto* key : {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"})
         {
             CHECK(j.find(key) != j.end());
             CHECK(*j.find(key) == j.at(key));
@@ -1045,8 +1218,7 @@ SECTION("find an element in an object")
             CHECK(*j_const.find(key) == j_const.at(key));
         }
 #ifdef JSON_HAS_CPP_17
-        for (const std::string_view key :
-             {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"})
+        for (const std::string_view key : {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"})
         {
             CHECK(j.find(key) != j.end());
             CHECK(*j.find(key) == j.at(key));
@@ -1187,15 +1359,13 @@ SECTION("count keys in an object")
 {
     SECTION("existing element")
     {
-        for (const auto* key :
-             {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"})
+        for (const auto* key : {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"})
         {
             CHECK(j.count(key) == 1);
             CHECK(j_const.count(key) == 1);
         }
 #ifdef JSON_HAS_CPP_17
-        for (const std::string_view key :
-             {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"})
+        for (const std::string_view key : {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"})
         {
             CHECK(j.count(key) == 1);
             CHECK(j_const.count(key) == 1);
@@ -1334,16 +1504,14 @@ SECTION("check existence of key in an object")
 {
     SECTION("existing element")
     {
-        for (const auto* key :
-             {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"})
+        for (const auto* key : {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"})
         {
             CHECK(j.contains(key) == true);
             CHECK(j_const.contains(key) == true);
         }
 
 #ifdef JSON_HAS_CPP_17
-        for (const std::string_view key :
-             {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"})
+        for (const std::string_view key : {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"})
         {
             CHECK(j.contains(key) == true);
             CHECK(j_const.contains(key) == true);
@@ -1483,8 +1651,22 @@ TEST_CASE_TEMPLATE("element access 2 (throwing tests)", Json, nlohmann::json, nl
 {
     SECTION("object")
     {
-        Json j = {{"integer", 1}, {"unsigned", 1u}, {"floating", 42.23}, {"null", nullptr}, {"string", "hello world"}, {"boolean", true}, {"object", Json::object()}, {"array", {1, 2, 3}}};
-        const Json j_const = {{"integer", 1}, {"unsigned", 1u}, {"floating", 42.23}, {"null", nullptr}, {"string", "hello world"}, {"boolean", true}, {"object", Json::object()}, {"array", {1, 2, 3}}};
+        Json j = {{"integer", 1},
+                  {"unsigned", 1u},
+                  {"floating", 42.23},
+                  {"null", nullptr},
+                  {"string", "hello world"},
+                  {"boolean", true},
+                  {"object", Json::object()},
+                  {"array", {1, 2, 3}}};
+        const Json j_const = {{"integer", 1},
+                              {"unsigned", 1u},
+                              {"floating", 42.23},
+                              {"null", nullptr},
+                              {"string", "hello world"},
+                              {"boolean", true},
+                              {"object", Json::object()},
+                              {"array", {1, 2, 3}}};
 
         SECTION("access specified element with default value")
         {
@@ -1523,9 +1705,7 @@ TEST_CASE_TEMPLATE("element access 2 (additional value() tests)", Json, nlohmann
     // test assumes string_t and object_t::key_type are the same
     REQUIRE(std::is_same<string_t, typename Json::object_t::key_type>::value);
 
-    Json j{
-        {"foo", "bar"},
-        {"baz", 42}};
+    Json j{{"foo", "bar"}, {"baz", 42}};
 
     const char* cpstr = "default";
     const char castr[] = "default";  // NOLINT(hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
@@ -1534,9 +1714,7 @@ TEST_CASE_TEMPLATE("element access 2 (additional value() tests)", Json, nlohmann
     number_integer_t integer = 69;
     std::size_t size = 69;
 
-    SECTION("deduced ValueType"){
-        SECTION("literal key"){
-            CHECK(j.value("foo", "default") == "bar");
+    SECTION("deduced ValueType"){SECTION("literal key"){CHECK(j.value("foo", "default") == "bar");
     CHECK(j.value("foo", cpstr) == "bar");
     CHECK(j.value("foo", castr) == "bar");
     CHECK(j.value("foo", str) == "bar");
@@ -1684,8 +1862,12 @@ SECTION("explicit ValueType")
         CHECK(j.template value<std::size_t>("bar", 47) == 47);
         CHECK(j.template value<std::size_t>("bar", size) == size);
 
-        CHECK_THROWS_WITH_AS(Json().template value<string_t>("foo", "default"), "[json.exception.type_error.306] cannot use value() with null", typename Json::type_error&);
-        CHECK_THROWS_WITH_AS(Json().template value<string_t>("foo", str), "[json.exception.type_error.306] cannot use value() with null", typename Json::type_error&);
+        CHECK_THROWS_WITH_AS(Json().template value<string_t>("foo", "default"),
+                             "[json.exception.type_error.306] cannot use value() with null",
+                             typename Json::type_error&);
+        CHECK_THROWS_WITH_AS(Json().template value<string_t>("foo", str),
+                             "[json.exception.type_error.306] cannot use value() with null",
+                             typename Json::type_error&);
     }
 
     SECTION("const char * key")
@@ -1713,8 +1895,12 @@ SECTION("explicit ValueType")
         CHECK(j.template value<std::size_t>(key_notfound, 47) == 47);
         CHECK(j.template value<std::size_t>(key_notfound, size) == size);
 
-        CHECK_THROWS_WITH_AS(Json().template value<string_t>(key, "default"), "[json.exception.type_error.306] cannot use value() with null", typename Json::type_error&);
-        CHECK_THROWS_WITH_AS(Json().template value<string_t>(key, str), "[json.exception.type_error.306] cannot use value() with null", typename Json::type_error&);
+        CHECK_THROWS_WITH_AS(Json().template value<string_t>(key, "default"),
+                             "[json.exception.type_error.306] cannot use value() with null",
+                             typename Json::type_error&);
+        CHECK_THROWS_WITH_AS(Json().template value<string_t>(key, str),
+                             "[json.exception.type_error.306] cannot use value() with null",
+                             typename Json::type_error&);
     }
 
     SECTION("const char(&)[] key")
@@ -1742,8 +1928,12 @@ SECTION("explicit ValueType")
         CHECK(j.template value<std::size_t>(key_notfound, 47) == 47);
         CHECK(j.template value<std::size_t>(key_notfound, size) == size);
 
-        CHECK_THROWS_WITH_AS(Json().template value<string_t>(key, "default"), "[json.exception.type_error.306] cannot use value() with null", typename Json::type_error&);
-        CHECK_THROWS_WITH_AS(Json().template value<string_t>(key, str), "[json.exception.type_error.306] cannot use value() with null", typename Json::type_error&);
+        CHECK_THROWS_WITH_AS(Json().template value<string_t>(key, "default"),
+                             "[json.exception.type_error.306] cannot use value() with null",
+                             typename Json::type_error&);
+        CHECK_THROWS_WITH_AS(Json().template value<string_t>(key, str),
+                             "[json.exception.type_error.306] cannot use value() with null",
+                             typename Json::type_error&);
     }
 
     SECTION("string_t/object_t::key_type key")
@@ -1767,8 +1957,12 @@ SECTION("explicit ValueType")
         CHECK(j.template value<std::size_t>(key_notfound, 0) == 0);
         CHECK(j.template value<std::size_t>(key_notfound, 47) == 47);
 
-        CHECK_THROWS_WITH_AS(Json().template value<string_t>(key, "default"), "[json.exception.type_error.306] cannot use value() with null", typename Json::type_error&);
-        CHECK_THROWS_WITH_AS(Json().template value<string_t>(key, str), "[json.exception.type_error.306] cannot use value() with null", typename Json::type_error&);
+        CHECK_THROWS_WITH_AS(Json().template value<string_t>(key, "default"),
+                             "[json.exception.type_error.306] cannot use value() with null",
+                             typename Json::type_error&);
+        CHECK_THROWS_WITH_AS(Json().template value<string_t>(key, str),
+                             "[json.exception.type_error.306] cannot use value() with null",
+                             typename Json::type_error&);
     }
 
 #ifdef JSON_HAS_CPP_17
@@ -1804,8 +1998,12 @@ SECTION("explicit ValueType")
 
         CHECK(j.template value<std::string_view>(key_notfound, "default") == "default");
 
-        CHECK_THROWS_WITH_AS(Json().template value<string_t>(key, "default"), "[json.exception.type_error.306] cannot use value() with null", typename Json::type_error&);
-        CHECK_THROWS_WITH_AS(Json().template value<string_t>(key, str), "[json.exception.type_error.306] cannot use value() with null", typename Json::type_error&);
+        CHECK_THROWS_WITH_AS(Json().template value<string_t>(key, "default"),
+                             "[json.exception.type_error.306] cannot use value() with null",
+                             typename Json::type_error&);
+        CHECK_THROWS_WITH_AS(Json().template value<string_t>(key, str),
+                             "[json.exception.type_error.306] cannot use value() with null",
+                             typename Json::type_error&);
     }
 #endif
 }

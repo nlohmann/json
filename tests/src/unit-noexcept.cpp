@@ -16,7 +16,8 @@ DOCTEST_GCC_SUPPRESS_WARNING("-Wnoexcept")
 
 using nlohmann::json;
 
-namespace {
+namespace
+{
 enum test
 {
 };

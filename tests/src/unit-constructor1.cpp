@@ -173,7 +173,12 @@ TEST_CASE("constructors")
 
         SECTION("std::multimap<json::string_t, json>")
         {
-            std::multimap<json::string_t, json> const o{{"a", json(1)}, {"b", json(1u)}, {"c", json(2.2)}, {"d", json(false)}, {"e", json("string")}, {"f", json()}};
+            std::multimap<json::string_t, json> const o{{"a", json(1)},
+                                                        {"b", json(1u)},
+                                                        {"c", json(2.2)},
+                                                        {"d", json(false)},
+                                                        {"e", json("string")},
+                                                        {"f", json()}};
             json const j(o);
             CHECK(j.type() == json::value_t::object);
             CHECK(j == j_reference);
@@ -181,7 +186,12 @@ TEST_CASE("constructors")
 
         SECTION("std::unordered_map<json::string_t, json>")
         {
-            std::unordered_map<json::string_t, json> const o{{"a", json(1)}, {"b", json(1u)}, {"c", json(2.2)}, {"d", json(false)}, {"e", json("string")}, {"f", json()}};
+            std::unordered_map<json::string_t, json> const o{{"a", json(1)},
+                                                             {"b", json(1u)},
+                                                             {"c", json(2.2)},
+                                                             {"d", json(false)},
+                                                             {"e", json("string")},
+                                                             {"f", json()}};
             json const j(o);
             CHECK(j.type() == json::value_t::object);
             CHECK(j == j_reference);
@@ -189,7 +199,12 @@ TEST_CASE("constructors")
 
         SECTION("std::unordered_multimap<json::string_t, json>")
         {
-            std::unordered_multimap<json::string_t, json> const o{{"a", json(1)}, {"b", json(1u)}, {"c", json(2.2)}, {"d", json(false)}, {"e", json("string")}, {"f", json()}};
+            std::unordered_multimap<json::string_t, json> const o{{"a", json(1)},
+                                                                  {"b", json(1u)},
+                                                                  {"c", json(2.2)},
+                                                                  {"d", json(false)},
+                                                                  {"e", json("string")},
+                                                                  {"f", json()}};
             json const j(o);
             CHECK(j.type() == json::value_t::object);
             CHECK(j == j_reference);
@@ -1083,7 +1098,9 @@ TEST_CASE("constructors")
             SECTION("object with error")
             {
                 json _;
-                CHECK_THROWS_WITH_AS(_ = json::object({{"one", 1}, {"two", 1u}, {"three", 2.2}, {"four", false}, 13}), "[json.exception.type_error.301] cannot create object from initializer list", json::type_error&);
+                CHECK_THROWS_WITH_AS(_ = json::object({{"one", 1}, {"two", 1u}, {"three", 2.2}, {"four", false}, 13}),
+                                     "[json.exception.type_error.301] cannot create object from initializer list",
+                                     json::type_error&);
             }
 
             SECTION("empty array")
@@ -1328,14 +1345,22 @@ TEST_CASE("constructors")
                 {
                     json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}, {"d", false}, {"e", true}};
                     json jobject2 = {{"a", "a"}, {"b", 1}, {"c", 17u}};
-                    CHECK_THROWS_WITH_AS(json(jobject.begin(), jobject2.end()), "[json.exception.invalid_iterator.201] iterators are not compatible", json::invalid_iterator&);
-                    CHECK_THROWS_WITH_AS(json(jobject2.begin(), jobject.end()), "[json.exception.invalid_iterator.201] iterators are not compatible", json::invalid_iterator&);
+                    CHECK_THROWS_WITH_AS(json(jobject.begin(), jobject2.end()),
+                                         "[json.exception.invalid_iterator.201] iterators are not compatible",
+                                         json::invalid_iterator&);
+                    CHECK_THROWS_WITH_AS(json(jobject2.begin(), jobject.end()),
+                                         "[json.exception.invalid_iterator.201] iterators are not compatible",
+                                         json::invalid_iterator&);
                 }
                 {
                     json const jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}, {"d", false}, {"e", true}};
                     json const jobject2 = {{"a", "a"}, {"b", 1}, {"c", 17u}};
-                    CHECK_THROWS_WITH_AS(json(jobject.cbegin(), jobject2.cend()), "[json.exception.invalid_iterator.201] iterators are not compatible", json::invalid_iterator&);
-                    CHECK_THROWS_WITH_AS(json(jobject2.cbegin(), jobject.cend()), "[json.exception.invalid_iterator.201] iterators are not compatible", json::invalid_iterator&);
+                    CHECK_THROWS_WITH_AS(json(jobject.cbegin(), jobject2.cend()),
+                                         "[json.exception.invalid_iterator.201] iterators are not compatible",
+                                         json::invalid_iterator&);
+                    CHECK_THROWS_WITH_AS(json(jobject2.cbegin(), jobject.cend()),
+                                         "[json.exception.invalid_iterator.201] iterators are not compatible",
+                                         json::invalid_iterator&);
                 }
             }
         }
@@ -1389,14 +1414,22 @@ TEST_CASE("constructors")
                 {
                     json jarray = {1, 2, 3, 4};
                     json jarray2 = {2, 3, 4, 5};
-                    CHECK_THROWS_WITH_AS(json(jarray.begin(), jarray2.end()), "[json.exception.invalid_iterator.201] iterators are not compatible", json::invalid_iterator&);
-                    CHECK_THROWS_WITH_AS(json(jarray2.begin(), jarray.end()), "[json.exception.invalid_iterator.201] iterators are not compatible", json::invalid_iterator&);
+                    CHECK_THROWS_WITH_AS(json(jarray.begin(), jarray2.end()),
+                                         "[json.exception.invalid_iterator.201] iterators are not compatible",
+                                         json::invalid_iterator&);
+                    CHECK_THROWS_WITH_AS(json(jarray2.begin(), jarray.end()),
+                                         "[json.exception.invalid_iterator.201] iterators are not compatible",
+                                         json::invalid_iterator&);
                 }
                 {
                     json const jarray = {1, 2, 3, 4};
                     json const jarray2 = {2, 3, 4, 5};
-                    CHECK_THROWS_WITH_AS(json(jarray.cbegin(), jarray2.cend()), "[json.exception.invalid_iterator.201] iterators are not compatible", json::invalid_iterator&);
-                    CHECK_THROWS_WITH_AS(json(jarray2.cbegin(), jarray.cend()), "[json.exception.invalid_iterator.201] iterators are not compatible", json::invalid_iterator&);
+                    CHECK_THROWS_WITH_AS(json(jarray.cbegin(), jarray2.cend()),
+                                         "[json.exception.invalid_iterator.201] iterators are not compatible",
+                                         json::invalid_iterator&);
+                    CHECK_THROWS_WITH_AS(json(jarray2.cbegin(), jarray.cend()),
+                                         "[json.exception.invalid_iterator.201] iterators are not compatible",
+                                         json::invalid_iterator&);
                 }
             }
         }
@@ -1409,11 +1442,15 @@ TEST_CASE("constructors")
                 {
                     {
                         json j;
-                        CHECK_THROWS_WITH_AS(json(j.begin(), j.end()), "[json.exception.invalid_iterator.206] cannot construct with iterators from null", json::invalid_iterator&);
+                        CHECK_THROWS_WITH_AS(json(j.begin(), j.end()),
+                                             "[json.exception.invalid_iterator.206] cannot construct with iterators from null",
+                                             json::invalid_iterator&);
                     }
                     {
                         json const j;
-                        CHECK_THROWS_WITH_AS(json(j.cbegin(), j.cend()), "[json.exception.invalid_iterator.206] cannot construct with iterators from null", json::invalid_iterator&);
+                        CHECK_THROWS_WITH_AS(json(j.cbegin(), j.cend()),
+                                             "[json.exception.invalid_iterator.206] cannot construct with iterators from null",
+                                             json::invalid_iterator&);
                     }
                 }
 
@@ -1509,12 +1546,16 @@ TEST_CASE("constructors")
                     {
                         json j = "foo";
                         CHECK_THROWS_WITH_AS(json(j.end(), j.end()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
-                        CHECK_THROWS_WITH_AS(json(j.begin(), j.begin()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
+                        CHECK_THROWS_WITH_AS(json(j.begin(), j.begin()),
+                                             "[json.exception.invalid_iterator.204] iterators out of range",
+                                             json::invalid_iterator&);
                     }
                     {
                         json const j = "bar";
                         CHECK_THROWS_WITH_AS(json(j.cend(), j.cend()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
-                        CHECK_THROWS_WITH_AS(json(j.cbegin(), j.cbegin()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
+                        CHECK_THROWS_WITH_AS(json(j.cbegin(), j.cbegin()),
+                                             "[json.exception.invalid_iterator.204] iterators out of range",
+                                             json::invalid_iterator&);
                     }
                 }
 
@@ -1523,12 +1564,16 @@ TEST_CASE("constructors")
                     {
                         json j = false;
                         CHECK_THROWS_WITH_AS(json(j.end(), j.end()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
-                        CHECK_THROWS_WITH_AS(json(j.begin(), j.begin()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
+                        CHECK_THROWS_WITH_AS(json(j.begin(), j.begin()),
+                                             "[json.exception.invalid_iterator.204] iterators out of range",
+                                             json::invalid_iterator&);
                     }
                     {
                         json const j = true;
                         CHECK_THROWS_WITH_AS(json(j.cend(), j.cend()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
-                        CHECK_THROWS_WITH_AS(json(j.cbegin(), j.cbegin()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
+                        CHECK_THROWS_WITH_AS(json(j.cbegin(), j.cbegin()),
+                                             "[json.exception.invalid_iterator.204] iterators out of range",
+                                             json::invalid_iterator&);
                     }
                 }
 
@@ -1537,12 +1582,16 @@ TEST_CASE("constructors")
                     {
                         json j = 17;
                         CHECK_THROWS_WITH_AS(json(j.end(), j.end()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
-                        CHECK_THROWS_WITH_AS(json(j.begin(), j.begin()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
+                        CHECK_THROWS_WITH_AS(json(j.begin(), j.begin()),
+                                             "[json.exception.invalid_iterator.204] iterators out of range",
+                                             json::invalid_iterator&);
                     }
                     {
                         json const j = 17;
                         CHECK_THROWS_WITH_AS(json(j.cend(), j.cend()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
-                        CHECK_THROWS_WITH_AS(json(j.cbegin(), j.cbegin()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
+                        CHECK_THROWS_WITH_AS(json(j.cbegin(), j.cbegin()),
+                                             "[json.exception.invalid_iterator.204] iterators out of range",
+                                             json::invalid_iterator&);
                     }
                 }
 
@@ -1551,12 +1600,16 @@ TEST_CASE("constructors")
                     {
                         json j = 17u;
                         CHECK_THROWS_WITH_AS(json(j.end(), j.end()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
-                        CHECK_THROWS_WITH_AS(json(j.begin(), j.begin()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
+                        CHECK_THROWS_WITH_AS(json(j.begin(), j.begin()),
+                                             "[json.exception.invalid_iterator.204] iterators out of range",
+                                             json::invalid_iterator&);
                     }
                     {
                         json const j = 17u;
                         CHECK_THROWS_WITH_AS(json(j.cend(), j.cend()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
-                        CHECK_THROWS_WITH_AS(json(j.cbegin(), j.cbegin()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
+                        CHECK_THROWS_WITH_AS(json(j.cbegin(), j.cbegin()),
+                                             "[json.exception.invalid_iterator.204] iterators out of range",
+                                             json::invalid_iterator&);
                     }
                 }
 
@@ -1565,12 +1618,16 @@ TEST_CASE("constructors")
                     {
                         json j = 23.42;
                         CHECK_THROWS_WITH_AS(json(j.end(), j.end()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
-                        CHECK_THROWS_WITH_AS(json(j.begin(), j.begin()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
+                        CHECK_THROWS_WITH_AS(json(j.begin(), j.begin()),
+                                             "[json.exception.invalid_iterator.204] iterators out of range",
+                                             json::invalid_iterator&);
                     }
                     {
                         json const j = 23.42;
                         CHECK_THROWS_WITH_AS(json(j.cend(), j.cend()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
-                        CHECK_THROWS_WITH_AS(json(j.cbegin(), j.cbegin()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
+                        CHECK_THROWS_WITH_AS(json(j.cbegin(), j.cbegin()),
+                                             "[json.exception.invalid_iterator.204] iterators out of range",
+                                             json::invalid_iterator&);
                     }
                 }
             }

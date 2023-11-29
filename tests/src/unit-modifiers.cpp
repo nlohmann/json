@@ -239,7 +239,9 @@ TEST_CASE("modifiers")
             {
                 json j = 1;
                 json const k("Hello");
-                CHECK_THROWS_WITH_AS(j.push_back(json::object_t::value_type({"one", 1})), "[json.exception.type_error.308] cannot use push_back() with number", json::type_error&);
+                CHECK_THROWS_WITH_AS(j.push_back(json::object_t::value_type({"one", 1})),
+                                     "[json.exception.type_error.308] cannot use push_back() with number",
+                                     json::type_error&);
             }
         }
 
@@ -467,7 +469,9 @@ TEST_CASE("modifiers")
             {
                 json j = 1;
                 json const k("Hello");
-                CHECK_THROWS_WITH_AS(j += json::object_t::value_type({"one", 1}), "[json.exception.type_error.308] cannot use push_back() with number", json::type_error&);
+                CHECK_THROWS_WITH_AS(j += json::object_t::value_type({"one", 1}),
+                                     "[json.exception.type_error.308] cannot use push_back() with number",
+                                     json::type_error&);
             }
         }
 
@@ -637,8 +641,12 @@ TEST_CASE("modifiers")
             {
                 json j_other_array2 = {"first", "second"};
 
-                CHECK_THROWS_WITH_AS(j_array.insert(j_array.end(), j_array.begin(), j_array.end()), "[json.exception.invalid_iterator.211] passed iterators may not belong to container", json::invalid_iterator&);
-                CHECK_THROWS_WITH_AS(j_array.insert(j_array.end(), j_other_array.begin(), j_other_array2.end()), "[json.exception.invalid_iterator.210] iterators do not fit", json::invalid_iterator&);
+                CHECK_THROWS_WITH_AS(j_array.insert(j_array.end(), j_array.begin(), j_array.end()),
+                                     "[json.exception.invalid_iterator.211] passed iterators may not belong to container",
+                                     json::invalid_iterator&);
+                CHECK_THROWS_WITH_AS(j_array.insert(j_array.end(), j_other_array.begin(), j_other_array2.end()),
+                                     "[json.exception.invalid_iterator.210] iterators do not fit",
+                                     json::invalid_iterator&);
             }
         }
 
@@ -663,9 +671,15 @@ TEST_CASE("modifiers")
             {
                 json const j_other_array2 = {"first", "second"};
 
-                CHECK_THROWS_WITH_AS(j_array.insert(j_object2.begin(), j_object2.end()), "[json.exception.type_error.309] cannot use insert() with array", json::type_error&);
-                CHECK_THROWS_WITH_AS(j_object1.insert(j_object1.begin(), j_object2.end()), "[json.exception.invalid_iterator.210] iterators do not fit", json::invalid_iterator&);
-                CHECK_THROWS_WITH_AS(j_object1.insert(j_array.begin(), j_array.end()), "[json.exception.invalid_iterator.202] iterators first and last must point to objects", json::invalid_iterator&);
+                CHECK_THROWS_WITH_AS(j_array.insert(j_object2.begin(), j_object2.end()),
+                                     "[json.exception.type_error.309] cannot use insert() with array",
+                                     json::type_error&);
+                CHECK_THROWS_WITH_AS(j_object1.insert(j_object1.begin(), j_object2.end()),
+                                     "[json.exception.invalid_iterator.210] iterators do not fit",
+                                     json::invalid_iterator&);
+                CHECK_THROWS_WITH_AS(j_object1.insert(j_array.begin(), j_array.end()),
+                                     "[json.exception.invalid_iterator.202] iterators first and last must point to objects",
+                                     json::invalid_iterator&);
             }
         }
 
@@ -704,11 +718,21 @@ TEST_CASE("modifiers")
             // pass iterator to a different array
             json j_another_array = {1, 2};
             json j_yet_another_array = {"first", "second"};
-            CHECK_THROWS_WITH_AS(j_array.insert(j_another_array.end(), 10), "[json.exception.invalid_iterator.202] iterator does not fit current value", json::invalid_iterator&);
-            CHECK_THROWS_WITH_AS(j_array.insert(j_another_array.end(), j_value), "[json.exception.invalid_iterator.202] iterator does not fit current value", json::invalid_iterator&);
-            CHECK_THROWS_WITH_AS(j_array.insert(j_another_array.end(), 10, 11), "[json.exception.invalid_iterator.202] iterator does not fit current value", json::invalid_iterator&);
-            CHECK_THROWS_WITH_AS(j_array.insert(j_another_array.end(), j_yet_another_array.begin(), j_yet_another_array.end()), "[json.exception.invalid_iterator.202] iterator does not fit current value", json::invalid_iterator&);
-            CHECK_THROWS_WITH_AS(j_array.insert(j_another_array.end(), {1, 2, 3, 4}), "[json.exception.invalid_iterator.202] iterator does not fit current value", json::invalid_iterator&);
+            CHECK_THROWS_WITH_AS(j_array.insert(j_another_array.end(), 10),
+                                 "[json.exception.invalid_iterator.202] iterator does not fit current value",
+                                 json::invalid_iterator&);
+            CHECK_THROWS_WITH_AS(j_array.insert(j_another_array.end(), j_value),
+                                 "[json.exception.invalid_iterator.202] iterator does not fit current value",
+                                 json::invalid_iterator&);
+            CHECK_THROWS_WITH_AS(j_array.insert(j_another_array.end(), 10, 11),
+                                 "[json.exception.invalid_iterator.202] iterator does not fit current value",
+                                 json::invalid_iterator&);
+            CHECK_THROWS_WITH_AS(j_array.insert(j_another_array.end(), j_yet_another_array.begin(), j_yet_another_array.end()),
+                                 "[json.exception.invalid_iterator.202] iterator does not fit current value",
+                                 json::invalid_iterator&);
+            CHECK_THROWS_WITH_AS(j_array.insert(j_another_array.end(), {1, 2, 3, 4}),
+                                 "[json.exception.invalid_iterator.202] iterator does not fit current value",
+                                 json::invalid_iterator&);
         }
 
         SECTION("non-array type")
@@ -717,10 +741,18 @@ TEST_CASE("modifiers")
             json j_nonarray = 3;
             json j_yet_another_array = {"first", "second"};
             CHECK_THROWS_WITH_AS(j_nonarray.insert(j_nonarray.end(), 10), "[json.exception.type_error.309] cannot use insert() with number", json::type_error&);
-            CHECK_THROWS_WITH_AS(j_nonarray.insert(j_nonarray.end(), j_value), "[json.exception.type_error.309] cannot use insert() with number", json::type_error&);
-            CHECK_THROWS_WITH_AS(j_nonarray.insert(j_nonarray.end(), 10, 11), "[json.exception.type_error.309] cannot use insert() with number", json::type_error&);
-            CHECK_THROWS_WITH_AS(j_nonarray.insert(j_nonarray.end(), j_yet_another_array.begin(), j_yet_another_array.end()), "[json.exception.type_error.309] cannot use insert() with number", json::type_error&);
-            CHECK_THROWS_WITH_AS(j_nonarray.insert(j_nonarray.end(), {1, 2, 3, 4}), "[json.exception.type_error.309] cannot use insert() with number", json::type_error&);
+            CHECK_THROWS_WITH_AS(j_nonarray.insert(j_nonarray.end(), j_value),
+                                 "[json.exception.type_error.309] cannot use insert() with number",
+                                 json::type_error&);
+            CHECK_THROWS_WITH_AS(j_nonarray.insert(j_nonarray.end(), 10, 11),
+                                 "[json.exception.type_error.309] cannot use insert() with number",
+                                 json::type_error&);
+            CHECK_THROWS_WITH_AS(j_nonarray.insert(j_nonarray.end(), j_yet_another_array.begin(), j_yet_another_array.end()),
+                                 "[json.exception.type_error.309] cannot use insert() with number",
+                                 json::type_error&);
+            CHECK_THROWS_WITH_AS(j_nonarray.insert(j_nonarray.end(), {1, 2, 3, 4}),
+                                 "[json.exception.type_error.309] cannot use insert() with number",
+                                 json::type_error&);
         }
     }
 
@@ -774,9 +806,15 @@ TEST_CASE("modifiers")
                 {
                     json const j_other_array2 = {"first", "second"};
 
-                    CHECK_THROWS_WITH_AS(j_array.update(j_object2.begin(), j_object2.end()), "[json.exception.type_error.312] cannot use update() with array", json::type_error&);
-                    CHECK_THROWS_WITH_AS(j_object1.update(j_object1.begin(), j_object2.end()), "[json.exception.invalid_iterator.210] iterators do not fit", json::invalid_iterator&);
-                    CHECK_THROWS_WITH_AS(j_object1.update(j_array.begin(), j_array.end()), "[json.exception.type_error.312] cannot use update() with array", json::type_error&);
+                    CHECK_THROWS_WITH_AS(j_array.update(j_object2.begin(), j_object2.end()),
+                                         "[json.exception.type_error.312] cannot use update() with array",
+                                         json::type_error&);
+                    CHECK_THROWS_WITH_AS(j_object1.update(j_object1.begin(), j_object2.end()),
+                                         "[json.exception.invalid_iterator.210] iterators do not fit",
+                                         json::invalid_iterator&);
+                    CHECK_THROWS_WITH_AS(j_object1.update(j_array.begin(), j_array.end()),
+                                         "[json.exception.type_error.312] cannot use update() with array",
+                                         json::type_error&);
                 }
             }
         }

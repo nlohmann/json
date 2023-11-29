@@ -16,7 +16,8 @@
 #include <nlohmann/detail/meta/detected.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
-namespace detail {
+namespace detail
+{
 
 inline std::size_t concat_length()
 {
@@ -76,13 +77,26 @@ using string_can_append_data = decltype(std::declval<StringType&>().append(std::
 template<typename StringType, typename Arg>
 using detect_string_can_append_data = is_detected<string_can_append_data, StringType, Arg>;
 
-template<typename OutStringType, typename Arg, typename... Args, enable_if_t<!detect_string_can_append<OutStringType, Arg>::value && detect_string_can_append_op<OutStringType, Arg>::value, int> = 0>
+template<typename OutStringType,
+         typename Arg,
+         typename... Args,
+         enable_if_t<!detect_string_can_append<OutStringType, Arg>::value && detect_string_can_append_op<OutStringType, Arg>::value, int> = 0>
 inline void concat_into(OutStringType& out, Arg&& arg, Args&&... rest);
 
-template<typename OutStringType, typename Arg, typename... Args, enable_if_t<!detect_string_can_append<OutStringType, Arg>::value && !detect_string_can_append_op<OutStringType, Arg>::value && detect_string_can_append_iter<OutStringType, Arg>::value, int> = 0>
+template<typename OutStringType,
+         typename Arg,
+         typename... Args,
+         enable_if_t<!detect_string_can_append<OutStringType, Arg>::value && !detect_string_can_append_op<OutStringType, Arg>::value &&
+                         detect_string_can_append_iter<OutStringType, Arg>::value,
+                     int> = 0>
 inline void concat_into(OutStringType& out, const Arg& arg, Args&&... rest);
 
-template<typename OutStringType, typename Arg, typename... Args, enable_if_t<!detect_string_can_append<OutStringType, Arg>::value && !detect_string_can_append_op<OutStringType, Arg>::value && !detect_string_can_append_iter<OutStringType, Arg>::value && detect_string_can_append_data<OutStringType, Arg>::value, int> = 0>
+template<typename OutStringType,
+         typename Arg,
+         typename... Args,
+         enable_if_t<!detect_string_can_append<OutStringType, Arg>::value && !detect_string_can_append_op<OutStringType, Arg>::value &&
+                         !detect_string_can_append_iter<OutStringType, Arg>::value && detect_string_can_append_data<OutStringType, Arg>::value,
+                     int> = 0>
 inline void concat_into(OutStringType& out, const Arg& arg, Args&&... rest);
 
 template<typename OutStringType, typename Arg, typename... Args, enable_if_t<detect_string_can_append<OutStringType, Arg>::value, int> = 0>
@@ -92,21 +106,34 @@ inline void concat_into(OutStringType& out, Arg&& arg, Args&&... rest)
     concat_into(out, std::forward<Args>(rest)...);
 }
 
-template<typename OutStringType, typename Arg, typename... Args, enable_if_t<!detect_string_can_append<OutStringType, Arg>::value && detect_string_can_append_op<OutStringType, Arg>::value, int>>
+template<typename OutStringType,
+         typename Arg,
+         typename... Args,
+         enable_if_t<!detect_string_can_append<OutStringType, Arg>::value && detect_string_can_append_op<OutStringType, Arg>::value, int>>
 inline void concat_into(OutStringType& out, Arg&& arg, Args&&... rest)
 {
     out += std::forward<Arg>(arg);
     concat_into(out, std::forward<Args>(rest)...);
 }
 
-template<typename OutStringType, typename Arg, typename... Args, enable_if_t<!detect_string_can_append<OutStringType, Arg>::value && !detect_string_can_append_op<OutStringType, Arg>::value && detect_string_can_append_iter<OutStringType, Arg>::value, int>>
+template<typename OutStringType,
+         typename Arg,
+         typename... Args,
+         enable_if_t<!detect_string_can_append<OutStringType, Arg>::value && !detect_string_can_append_op<OutStringType, Arg>::value &&
+                         detect_string_can_append_iter<OutStringType, Arg>::value,
+                     int>>
 inline void concat_into(OutStringType& out, const Arg& arg, Args&&... rest)
 {
     out.append(arg.begin(), arg.end());
     concat_into(out, std::forward<Args>(rest)...);
 }
 
-template<typename OutStringType, typename Arg, typename... Args, enable_if_t<!detect_string_can_append<OutStringType, Arg>::value && !detect_string_can_append_op<OutStringType, Arg>::value && !detect_string_can_append_iter<OutStringType, Arg>::value && detect_string_can_append_data<OutStringType, Arg>::value, int>>
+template<typename OutStringType,
+         typename Arg,
+         typename... Args,
+         enable_if_t<!detect_string_can_append<OutStringType, Arg>::value && !detect_string_can_append_op<OutStringType, Arg>::value &&
+                         !detect_string_can_append_iter<OutStringType, Arg>::value && detect_string_can_append_data<OutStringType, Arg>::value,
+                     int>>
 inline void concat_into(OutStringType& out, const Arg& arg, Args&&... rest)
 {
     out.append(arg.data(), arg.size());

@@ -337,8 +337,8 @@ struct ordered_map : std::vector<std::pair<const Key, T>, Allocator>
     }
 
     template<typename InputIt>
-    using require_input_iter = typename std::enable_if<std::is_convertible<typename std::iterator_traits<InputIt>::iterator_category,
-                                                                           std::input_iterator_tag>::value>::type;
+    using require_input_iter =
+        typename std::enable_if<std::is_convertible<typename std::iterator_traits<InputIt>::iterator_category, std::input_iterator_tag>::value>::type;
 
     template<typename InputIt, typename = require_input_iter<InputIt>>
     void insert(InputIt first, InputIt last)

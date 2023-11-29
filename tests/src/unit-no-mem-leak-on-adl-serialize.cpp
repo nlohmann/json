@@ -18,7 +18,8 @@ struct Foo
     int b;
 };
 
-namespace nlohmann {
+namespace nlohmann
+{
 template<>
 struct adl_serializer<Foo>
 {

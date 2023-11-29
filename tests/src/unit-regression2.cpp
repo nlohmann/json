@@ -55,7 +55,8 @@ using float_json = nlohmann::basic_json<std::map, std::vector, std::string, bool
 /////////////////////////////////////////////////////////////////////
 // for #1647
 /////////////////////////////////////////////////////////////////////
-namespace {
+namespace
+{
 struct NonDefaultFromJsonStruct
 {};
 
@@ -111,7 +112,8 @@ bool operator==(Data const& lhs, Data const& rhs)
 //    return !(lhs == rhs);
 //}
 
-namespace nlohmann {
+namespace nlohmann
+{
 template<>
 struct adl_serializer<NonDefaultFromJsonStruct>
 {
@@ -144,7 +146,8 @@ struct NonDefaultConstructible
     int x;
 };
 
-namespace nlohmann {
+namespace nlohmann
+{
 template<>
 struct adl_serializer<NonDefaultConstructible>
 {
@@ -429,16 +432,10 @@ TEST_CASE("regression tests 2")
 
         using it_type = decltype(p1.begin());
 
-        std::set_difference(
-            p1.begin(),
-            p1.end(),
-            p2.begin(),
-            p2.end(),
-            std::inserter(diffs, diffs.end()),
-            [&](const it_type& e1, const it_type& e2) -> bool {
-                using comper_pair = std::pair<std::string, decltype(e1.value())>;              // Trying to avoid unneeded copy
-                return comper_pair(e1.key(), e1.value()) < comper_pair(e2.key(), e2.value());  // Using pair comper
-            });
+        std::set_difference(p1.begin(), p1.end(), p2.begin(), p2.end(), std::inserter(diffs, diffs.end()), [&](const it_type& e1, const it_type& e2) -> bool {
+            using comper_pair = std::pair<std::string, decltype(e1.value())>;              // Trying to avoid unneeded copy
+            return comper_pair(e1.key(), e1.value()) < comper_pair(e2.key(), e2.value());  // Using pair comper
+        });
 
         CHECK(diffs.size() == 1);  // Note the change here, was 2
     }
@@ -453,12 +450,11 @@ TEST_CASE("regression tests 2")
     SECTION("issue #1299 - compile error in from_json converting to container "
             "with std::pair")
     {
-        const json j =
-            {
-                {"1", {{"a", "testa_1"}, {"b", "testb_1"}}},
-                {"2", {{"a", "testa_2"}, {"b", "testb_2"}}},
-                {"3", {{"a", "testa_3"}, {"b", "testb_3"}}},
-            };
+        const json j = {
+            {"1", {{"a", "testa_1"}, {"b", "testb_1"}}},
+            {"2", {{"a", "testa_2"}, {"b", "testb_2"}}},
+            {"3", {{"a", "testa_3"}, {"b", "testb_3"}}},
+        };
 
         std::map<std::string, Data> expected{
             {"1", {"testa_1", "testb_1"}},
@@ -508,9 +504,11 @@ TEST_CASE("regression tests 2")
         SECTION("test case in issue #1445")
         {
             nlohmann::json dump_test;
-            const std::array<int, 108> data =
-                {
-                    {109, 108, 103, 125, -122, -53, 115, 18, 3, 0, 102, 19, 1, 15, -110, 13, -3, -1, -81, 32, 2, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -80, 2, 0, 0, 96, -118, 46, -116, 46, 109, -84, -87, 108, 14, 109, -24, -83, 13, -18, -51, -83, -52, -115, 14, 6, 32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 64, 3, 0, 0, 0, 35, -74, -73, 55, 57, -128, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 33, 0, 0, 0, -96, -54, -28, -26}};
+            const std::array<int, 108> data = {{109, 108,  103, 125,  -122, -53, 115, 18,  3,   0,  102, 19,  1,   15, -110, 13,  -3,  -1,  -81,  32, 2,  0,
+                                                0,   0,    0,   0,    0,    0,   8,   0,   0,   0,  0,   0,   0,   0,  0,    0,   0,   0,   -80,  2,  0,  0,
+                                                96,  -118, 46,  -116, 46,   109, -84, -87, 108, 14, 109, -24, -83, 13, -18,  -51, -83, -52, -115, 14, 6,  32,
+                                                0,   0,    0,   0,    0,    0,   0,   0,   0,   0,  0,   64,  3,   0,  0,    0,   35,  -74, -73,  55, 57, -128,
+                                                0,   0,    0,   0,    0,    0,   0,   0,   0,   0,  0,   0,   33,  0,  0,    0,   -96, -54, -28,  -26}};
             std::string s;
             for (const int i : data)
             {
@@ -607,14 +605,14 @@ TEST_CASE("regression tests 2")
 
     SECTION("issue #2067 - cannot serialize binary data to text JSON")
     {
-        const std::array<unsigned char, 23> data = {{0x81, 0xA4, 0x64, 0x61, 0x74, 0x61, 0xC4, 0x0F, 0x33, 0x30, 0x30, 0x32, 0x33, 0x34, 0x30, 0x31, 0x30, 0x37, 0x30, 0x35, 0x30, 0x31, 0x30}};
+        const std::array<unsigned char, 23> data = {
+            {0x81, 0xA4, 0x64, 0x61, 0x74, 0x61, 0xC4, 0x0F, 0x33, 0x30, 0x30, 0x32, 0x33, 0x34, 0x30, 0x31, 0x30, 0x37, 0x30, 0x35, 0x30, 0x31, 0x30}};
         const json j = json::from_msgpack(data.data(), data.size());
-        CHECK_NOTHROW(
-            j.dump(4,                             // Indent
-                   ' ',                           // Indent char
-                   false,                         // Ensure ascii
-                   json::error_handler_t::strict  // Error
-                   ));
+        CHECK_NOTHROW(j.dump(4,                             // Indent
+                             ' ',                           // Indent char
+                             false,                         // Ensure ascii
+                             json::error_handler_t::strict  // Error
+                             ));
     }
 
     SECTION("PR #2181 - regression bug with lvalue")
@@ -628,18 +626,7 @@ TEST_CASE("regression tests 2")
 
     SECTION("issue #2293 - eof doesn't cause parsing to stop")
     {
-        const std::vector<uint8_t> data =
-            {
-                0x7B,
-                0x6F,
-                0x62,
-                0x6A,
-                0x65,
-                0x63,
-                0x74,
-                0x20,
-                0x4F,
-                0x42};
+        const std::vector<uint8_t> data = {0x7B, 0x6F, 0x62, 0x6A, 0x65, 0x63, 0x74, 0x20, 0x4F, 0x42};
         const json result = json::from_cbor(data, true, false);
         CHECK(result.is_discarded());
     }
@@ -654,8 +641,7 @@ TEST_CASE("regression tests 2")
         auto jsonAnimals_parsed = nlohmann::ordered_json::parse(jsonAnimals.dump());
         CHECK(jsonAnimals == jsonAnimals_parsed);
 
-        const std::vector<std::pair<std::string, int64_t>> intData = {std::make_pair("aaaa", 11),
-                                                                      std::make_pair("bbb", 222)};
+        const std::vector<std::pair<std::string, int64_t>> intData = {std::make_pair("aaaa", 11), std::make_pair("bbb", 222)};
         nlohmann::ordered_json jsonObj;
         for (const auto& data : intData)
         {
@@ -785,7 +771,8 @@ TEST_CASE("regression tests 2")
         sax_no_exception sax(j);
 
         CHECK(!json::sax_parse("xyz", &sax));
-        CHECK(*sax_no_exception::error_string == "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - invalid literal; last read: 'x'");
+        CHECK(*sax_no_exception::error_string ==
+              "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - invalid literal; last read: 'x'");
         delete sax_no_exception::error_string;  // NOLINT(cppcoreguidelines-owning-memory)
     }
 
@@ -856,9 +843,11 @@ TEST_CASE("regression tests 2")
 
         CHECK(j.dump() == "[1,2,4]");
 
-        j.erase(std::remove_if(j.begin(), j.end(), [](const ordered_json& val) {
-                    return val == 2;
-                }),
+        j.erase(std::remove_if(j.begin(),
+                               j.end(),
+                               [](const ordered_json& val) {
+                                   return val == 2;
+                               }),
                 j.end());
 
         CHECK(j.dump() == "[1,4]");
@@ -924,9 +913,7 @@ TEST_CASE("regression tests 2")
 
     SECTION("issue #3333 - Ambiguous conversion from nlohmann::basic_json<> to custom class")
     {
-        const json j{
-            {"x", 1},
-            {"y", 2}};
+        const json j{{"x", 1}, {"y", 2}};
         for_3333 p = j;
 
         CHECK(p.x == 1);

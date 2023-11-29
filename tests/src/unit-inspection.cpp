@@ -206,8 +206,7 @@ TEST_CASE("object inspection")
 
         SECTION("no indent / indent=-1")
         {
-            CHECK(j.dump() ==
-                  "{\"array\":[1,2,3,4],\"boolean\":false,\"null\":null,\"number\":42,\"object\":{},\"string\":\"Hello world\"}");
+            CHECK(j.dump() == "{\"array\":[1,2,3,4],\"boolean\":false,\"null\":null,\"number\":42,\"object\":{},\"string\":\"Hello world\"}");
 
             CHECK(j.dump() == j.dump(-1));
         }
@@ -220,14 +219,16 @@ TEST_CASE("object inspection")
 
         SECTION("indent=1, space='\t'")
         {
-            CHECK(j.dump(1, '\t') ==
-                  "{\n\t\"array\": [\n\t\t1,\n\t\t2,\n\t\t3,\n\t\t4\n\t],\n\t\"boolean\": false,\n\t\"null\": null,\n\t\"number\": 42,\n\t\"object\": {},\n\t\"string\": \"Hello world\"\n}");
+            CHECK(
+                j.dump(1, '\t') ==
+                "{\n\t\"array\": [\n\t\t1,\n\t\t2,\n\t\t3,\n\t\t4\n\t],\n\t\"boolean\": false,\n\t\"null\": null,\n\t\"number\": 42,\n\t\"object\": {},\n\t\"string\": \"Hello world\"\n}");
         }
 
         SECTION("indent=4")
         {
-            CHECK(j.dump(4) ==
-                  "{\n    \"array\": [\n        1,\n        2,\n        3,\n        4\n    ],\n    \"boolean\": false,\n    \"null\": null,\n    \"number\": 42,\n    \"object\": {},\n    \"string\": \"Hello world\"\n}");
+            CHECK(
+                j.dump(4) ==
+                "{\n    \"array\": [\n        1,\n        2,\n        3,\n        4\n    ],\n    \"boolean\": false,\n    \"null\": null,\n    \"number\": 42,\n    \"object\": {},\n    \"string\": \"Hello world\"\n}");
         }
 
         SECTION("indent=x")
@@ -291,8 +292,7 @@ TEST_CASE("object inspection")
                 json const value = json::parse(f_unescaped);
                 std::string text = value.dump(4, ' ', true);
 
-                std::string expected((std::istreambuf_iterator<char>(f_escaped)),
-                                     std::istreambuf_iterator<char>());
+                std::string expected((std::istreambuf_iterator<char>(f_escaped)), std::istreambuf_iterator<char>());
                 CHECK(text == expected);
             }
         }
@@ -328,8 +328,7 @@ TEST_CASE("object inspection")
 
     SECTION("round trips")
     {
-        for (const auto& s :
-             {"3.141592653589793", "1000000000000000010E5"})
+        for (const auto& s : {"3.141592653589793", "1000000000000000010E5"})
         {
             json const j1 = json::parse(s);
             std::string s1 = j1.dump();

@@ -24,7 +24,8 @@ using nlohmann::json;
 DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
 DOCTEST_CLANG_SUPPRESS_WARNING("-Wexit-time-destructors")
 
-namespace {
+namespace
+{
 extern size_t calls;
 size_t calls = 0;
 

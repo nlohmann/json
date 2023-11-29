@@ -13,7 +13,8 @@ using nlohmann::json;
 
 #include <list>
 
-namespace {
+namespace
+{
 TEST_CASE("Use arbitrary stdlib container")
 {
     std::string raw_data = "[1,2,3,4]";

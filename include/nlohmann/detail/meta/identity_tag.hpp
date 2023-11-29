@@ -11,7 +11,8 @@
 #include <nlohmann/detail/abi_macros.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
-namespace detail {
+namespace detail
+{
 
 // dispatching helper struct
 template<class T>

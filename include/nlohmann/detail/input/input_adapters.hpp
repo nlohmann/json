@@ -28,7 +28,8 @@
 #include <nlohmann/detail/meta/type_traits.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
-namespace detail {
+namespace detail
+{
 
 /// the supported input formats
 enum class input_format_t
@@ -187,10 +188,8 @@ template<typename BaseInputAdapter>
 struct wide_string_input_helper<BaseInputAdapter, 4>
 {
     // UTF-32
-    static void fill_buffer(BaseInputAdapter& input,
-                            std::array<std::char_traits<char>::int_type, 4>& utf8_bytes,
-                            size_t& utf8_bytes_index,
-                            size_t& utf8_bytes_filled)
+    static void
+    fill_buffer(BaseInputAdapter& input, std::array<std::char_traits<char>::int_type, 4>& utf8_bytes, size_t& utf8_bytes_index, size_t& utf8_bytes_filled)
     {
         utf8_bytes_index = 0;
 
@@ -245,10 +244,8 @@ template<typename BaseInputAdapter>
 struct wide_string_input_helper<BaseInputAdapter, 2>
 {
     // UTF-16
-    static void fill_buffer(BaseInputAdapter& input,
-                            std::array<std::char_traits<char>::int_type, 4>& utf8_bytes,
-                            size_t& utf8_bytes_index,
-                            size_t& utf8_bytes_filled)
+    static void
+    fill_buffer(BaseInputAdapter& input, std::array<std::char_traits<char>::int_type, 4>& utf8_bytes, size_t& utf8_bytes_index, size_t& utf8_bytes_filled)
     {
         utf8_bytes_index = 0;
 
@@ -398,7 +395,8 @@ typename iterator_input_adapter_factory<IteratorType>::adapter_type input_adapte
 // Enables ADL on begin(container) and end(container)
 // Encloses the using declarations in namespace for not to leak them to outside scope
 
-namespace container_input_adapter_factory_impl {
+namespace container_input_adapter_factory_impl
+{
 
 using std::begin;
 using std::end;
@@ -408,8 +406,7 @@ struct container_input_adapter_factory
 {};
 
 template<typename ContainerType>
-struct container_input_adapter_factory<ContainerType,
-                                       void_t<decltype(begin(std::declval<ContainerType>()), end(std::declval<ContainerType>()))>>
+struct container_input_adapter_factory<ContainerType, void_t<decltype(begin(std::declval<ContainerType>()), end(std::declval<ContainerType>()))>>
 {
     using adapter_type = decltype(input_adapter(begin(std::declval<ContainerType>()), end(std::declval<ContainerType>())));
 
@@ -448,13 +445,11 @@ inline input_stream_adapter input_adapter(std::istream&& stream)
 using contiguous_bytes_input_adapter = decltype(input_adapter(std::declval<const char*>(), std::declval<const char*>()));
 
 // Null-delimited strings, and the like.
-template<typename CharT,
-         typename std::enable_if<
-             std::is_pointer<CharT>::value &&
-                 !std::is_array<CharT>::value &&
-                 std::is_integral<typename std::remove_pointer<CharT>::type>::value &&
-                 sizeof(typename std::remove_pointer<CharT>::type) == 1,
-             int>::type = 0>
+template<
+    typename CharT,
+    typename std::enable_if<std::is_pointer<CharT>::value && !std::is_array<CharT>::value &&
+                                std::is_integral<typename std::remove_pointer<CharT>::type>::value && sizeof(typename std::remove_pointer<CharT>::type) == 1,
+                            int>::type = 0>
 contiguous_bytes_input_adapter input_adapter(CharT b)
 {
     auto length = std::strlen(reinterpret_cast<const char*>(b));
@@ -463,7 +458,8 @@ contiguous_bytes_input_adapter input_adapter(CharT b)
 }
 
 template<typename T, std::size_t N>
-auto input_adapter(T (&array)[N]) -> decltype(input_adapter(array, array + N))  // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+auto input_adapter(T (&array)[N])
+    -> decltype(input_adapter(array, array + N))  // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
 {
     return input_adapter(array, array + N);
 }
@@ -475,19 +471,16 @@ class span_input_adapter
 {
   public:
     template<typename CharT,
-             typename std::enable_if<
-                 std::is_pointer<CharT>::value &&
-                     std::is_integral<typename std::remove_pointer<CharT>::type>::value &&
-                     sizeof(typename std::remove_pointer<CharT>::type) == 1,
-                 int>::type = 0>
+             typename std::enable_if<std::is_pointer<CharT>::value && std::is_integral<typename std::remove_pointer<CharT>::type>::value &&
+                                         sizeof(typename std::remove_pointer<CharT>::type) == 1,
+                                     int>::type = 0>
     span_input_adapter(CharT b, std::size_t l)
       : ia(reinterpret_cast<const char*>(b), reinterpret_cast<const char*>(b) + l)
     {}
 
-    template<class IteratorType,
-             typename std::enable_if<
-                 std::is_same<typename iterator_traits<IteratorType>::iterator_category, std::random_access_iterator_tag>::value,
-                 int>::type = 0>
+    template<
+        class IteratorType,
+        typename std::enable_if<std::is_same<typename iterator_traits<IteratorType>::iterator_category, std::random_access_iterator_tag>::value, int>::type = 0>
     span_input_adapter(IteratorType first, IteratorType last)
       : ia(input_adapter(first, last))
     {}

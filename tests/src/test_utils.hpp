@@ -12,7 +12,8 @@
 #include <fstream>  // ifstream, istreambuf_iterator, ios
 #include <vector>   // vector
 
-namespace utils {
+namespace utils
+{
 
 inline std::vector<std::uint8_t> read_binary_file(const std::string& filename)
 {

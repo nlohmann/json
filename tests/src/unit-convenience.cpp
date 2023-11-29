@@ -14,7 +14,8 @@ using nlohmann::json;
 
 #include <sstream>
 
-namespace {
+namespace
+{
 struct alt_string_iter
 {
     alt_string_iter() = default;

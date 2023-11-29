@@ -16,7 +16,8 @@
 #include <nlohmann/detail/value_t.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
-namespace detail {
+namespace detail
+{
 
 // boost::hash_combine
 inline std::size_t combine(std::size_t seed, std::size_t h) noexcept

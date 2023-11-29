@@ -29,7 +29,7 @@ BraceWrapping:
   AfterControlStatement: Always
   AfterEnum: true
   AfterFunction: true
-  AfterNamespace: false
+  AfterNamespace: true
   AfterStruct: true
   AfterUnion: true
   AfterExternBlock: false
@@ -43,13 +43,12 @@ BraceWrapping:
 BreakBeforeTernaryOperators: true
 BreakConstructorInitializers: BeforeComma
 BreakStringLiterals: false
-ColumnLimit: 0
+ColumnLimit: 160
 CompactNamespaces: false
 ConstructorInitializerIndentWidth: 2
 Cpp11BracedListStyle: true
 PointerAlignment: Left
 FixNamespaceComments: true
-IncludeBlocks: Preserve
 #IndentCaseBlocks: false
 IndentCaseLabels: true
 IndentGotoLabels: false
@@ -59,7 +58,6 @@ KeepEmptyLinesAtTheStartOfBlocks: false
 MaxEmptyLinesToKeep: 1
 NamespaceIndentation: None
 ReflowComments: false
-SortIncludes: CaseSensitive
 SortUsingDeclarations: true
 SpaceAfterCStyleCast: false
 SpaceAfterLogicalNot: false
@@ -81,3 +79,16 @@ SpacesInSquareBrackets: false
 Standard: Latest
 TabWidth: 4
 UseTab: Never
+
+# what to do with include blocks
+SortIncludes: true
+IncludeBlocks: Preserve
+IncludeCategories:
+  - Regex:           '^".*"'
+    Priority:        1
+  - Regex:           '<[^\/]+>'
+    Priority:        2
+  - Regex:           '^<(nlohmann)\/-*'
+    Priority:        3
+  - Regex:           '.*'
+    Priority:        4

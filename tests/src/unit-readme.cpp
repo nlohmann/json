@@ -61,15 +61,13 @@ TEST_CASE("README" * doctest::skip())
             j["object"] = {{"currency", "USD"}, {"value", 42.99}};
 
             // instead, you could also write (which looks very similar to the JSON above)
-            json const j2 =
-                {
-                    {"pi", 3.141},
-                    {"happy", true},
-                    {"name", "Niels"},
-                    {"nothing", nullptr},
-                    {"answer", {{"everything", 42}}},
-                    {"list", {1, 0, 2}},
-                    {"object", {{"currency", "USD"}, {"value", 42.99}}}};
+            json const j2 = {{"pi", 3.141},
+                             {"happy", true},
+                             {"name", "Niels"},
+                             {"nothing", nullptr},
+                             {"answer", {{"everything", 42}}},
+                             {"list", {1, 0, 2}},
+                             {"object", {{"currency", "USD"}, {"value", 42.99}}}};
         }
 
         {

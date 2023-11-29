@@ -21,7 +21,8 @@ using nlohmann::json;
 
 #if JSON_HAS_THREE_WAY_COMPARISON
 // this can be replaced with the doctest stl extension header in version 2.5
-namespace doctest {
+namespace doctest
+{
 template<>
 struct StringMaker<std::partial_ordering>
 {
@@ -50,7 +51,8 @@ struct StringMaker<std::partial_ordering>
 
 #endif
 
-namespace {
+namespace
+{
 // helper function to check std::less<json::value_t>
 // see https://en.cppreference.com/w/cpp/utility/functional/less
 template<typename A, typename B, typename U = std::less<json::value_t>>
@@ -85,33 +87,30 @@ TEST_CASE("lexicographical comparison operators")
 
     SECTION("types")
     {
-        std::vector<json::value_t> j_types =
-            {
-                json::value_t::null,
-                json::value_t::boolean,
-                json::value_t::number_integer,
-                json::value_t::number_unsigned,
-                json::value_t::number_float,
-                json::value_t::object,
-                json::value_t::array,
-                json::value_t::string,
-                json::value_t::binary,
-                json::value_t::discarded};
+        std::vector<json::value_t> j_types = {json::value_t::null,
+                                              json::value_t::boolean,
+                                              json::value_t::number_integer,
+                                              json::value_t::number_unsigned,
+                                              json::value_t::number_float,
+                                              json::value_t::object,
+                                              json::value_t::array,
+                                              json::value_t::string,
+                                              json::value_t::binary,
+                                              json::value_t::discarded};
 
-        std::vector<std::vector<bool>> expected_lt =
-            {
-                //0   1   2   3   4   5   6   7   8   9
-                {f_, _t, _t, _t, _t, _t, _t, _t, _t, f_},  //  0
-                {f_, f_, _t, _t, _t, _t, _t, _t, _t, f_},  //  1
-                {f_, f_, f_, f_, f_, _t, _t, _t, _t, f_},  //  2
-                {f_, f_, f_, f_, f_, _t, _t, _t, _t, f_},  //  3
-                {f_, f_, f_, f_, f_, _t, _t, _t, _t, f_},  //  4
-                {f_, f_, f_, f_, f_, f_, _t, _t, _t, f_},  //  5
-                {f_, f_, f_, f_, f_, f_, f_, _t, _t, f_},  //  6
-                {f_, f_, f_, f_, f_, f_, f_, f_, _t, f_},  //  7
-                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  8
-                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  9
-            };
+        std::vector<std::vector<bool>> expected_lt = {
+            //0   1   2   3   4   5   6   7   8   9
+            {f_, _t, _t, _t, _t, _t, _t, _t, _t, f_},  //  0
+            {f_, f_, _t, _t, _t, _t, _t, _t, _t, f_},  //  1
+            {f_, f_, f_, f_, f_, _t, _t, _t, _t, f_},  //  2
+            {f_, f_, f_, f_, f_, _t, _t, _t, _t, f_},  //  3
+            {f_, f_, f_, f_, f_, _t, _t, _t, _t, f_},  //  4
+            {f_, f_, f_, f_, f_, f_, _t, _t, _t, f_},  //  5
+            {f_, f_, f_, f_, f_, f_, f_, _t, _t, f_},  //  6
+            {f_, f_, f_, f_, f_, f_, f_, f_, _t, f_},  //  7
+            {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  8
+            {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  9
+        };
 
         SECTION("comparison: less")
         {
@@ -138,20 +137,19 @@ TEST_CASE("lexicographical comparison operators")
         // JSON_HAS_CPP_20 (do not remove; see note at top of file)
         SECTION("comparison: 3-way")
         {
-            std::vector<std::vector<std::partial_ordering>> expected =
-                {
-                    //0   1   2   3   4   5   6   7   8   9
-                    {eq, lt, lt, lt, lt, lt, lt, lt, lt, un},  //  0
-                    {gt, eq, lt, lt, lt, lt, lt, lt, lt, un},  //  1
-                    {gt, gt, eq, eq, eq, lt, lt, lt, lt, un},  //  2
-                    {gt, gt, eq, eq, eq, lt, lt, lt, lt, un},  //  3
-                    {gt, gt, eq, eq, eq, lt, lt, lt, lt, un},  //  4
-                    {gt, gt, gt, gt, gt, eq, lt, lt, lt, un},  //  5
-                    {gt, gt, gt, gt, gt, gt, eq, lt, lt, un},  //  6
-                    {gt, gt, gt, gt, gt, gt, gt, eq, lt, un},  //  7
-                    {gt, gt, gt, gt, gt, gt, gt, gt, eq, un},  //  8
-                    {un, un, un, un, un, un, un, un, un, un},  //  9
-                };
+            std::vector<std::vector<std::partial_ordering>> expected = {
+                //0   1   2   3   4   5   6   7   8   9
+                {eq, lt, lt, lt, lt, lt, lt, lt, lt, un},  //  0
+                {gt, eq, lt, lt, lt, lt, lt, lt, lt, un},  //  1
+                {gt, gt, eq, eq, eq, lt, lt, lt, lt, un},  //  2
+                {gt, gt, eq, eq, eq, lt, lt, lt, lt, un},  //  3
+                {gt, gt, eq, eq, eq, lt, lt, lt, lt, un},  //  4
+                {gt, gt, gt, gt, gt, eq, lt, lt, lt, un},  //  5
+                {gt, gt, gt, gt, gt, gt, eq, lt, lt, un},  //  6
+                {gt, gt, gt, gt, gt, gt, gt, eq, lt, un},  //  7
+                {gt, gt, gt, gt, gt, gt, gt, gt, eq, un},  //  8
+                {un, un, un, un, un, un, un, un, un, un},  //  9
+            };
 
             // check expected partial_ordering against expected boolean
             REQUIRE(expected.size() == expected_lt.size());
@@ -184,114 +182,110 @@ TEST_CASE("lexicographical comparison operators")
 
     SECTION("values")
     {
-        json j_values =
-            {
-                nullptr,
-                nullptr,  // 0 1
-                -17,
-                42,  // 2 3
-                8u,
-                13u,  // 4 5
-                3.14159,
-                23.42,  // 6 7
-                nan,
-                nan,  // 8 9
-                "foo",
-                "bar",  // 10 11
-                true,
-                false,  // 12 13
-                {1, 2, 3},
-                {"one", "two", "three"},  // 14 15
-                {{"first", 1}, {"second", 2}},
-                {{"a", "A"}, {"b", {"B"}}},  // 16 17
-                json::binary({1, 2, 3}),
-                json::binary({1, 2, 4}),  // 18 19
-                json(json::value_t::discarded),
-                json(json::value_t::discarded)  // 20 21
-            };
+        json j_values = {
+            nullptr,
+            nullptr,  // 0 1
+            -17,
+            42,  // 2 3
+            8u,
+            13u,  // 4 5
+            3.14159,
+            23.42,  // 6 7
+            nan,
+            nan,  // 8 9
+            "foo",
+            "bar",  // 10 11
+            true,
+            false,  // 12 13
+            {1, 2, 3},
+            {"one", "two", "three"},  // 14 15
+            {{"first", 1}, {"second", 2}},
+            {{"a", "A"}, {"b", {"B"}}},  // 16 17
+            json::binary({1, 2, 3}),
+            json::binary({1, 2, 4}),  // 18 19
+            json(json::value_t::discarded),
+            json(json::value_t::discarded)  // 20 21
+        };
 
-        std::vector<std::vector<bool>> expected_eq =
-            {
-                //0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19  20  21
-                {_t, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  0
-                {_t, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  1
-                {f_, f_, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  2
-                {f_, f_, f_, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  3
-                {f_, f_, f_, f_, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  4
-                {f_, f_, f_, f_, f_, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  5
-                {f_, f_, f_, f_, f_, f_, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  6
-                {f_, f_, f_, f_, f_, f_, f_, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  7
-                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  8
-                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  9
-                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  // 10
-                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  // 11
-                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_},  // 12
-                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, f_, f_, f_, f_, f_, f_, f_, f_},  // 13
-                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, f_, f_, f_, f_, f_, f_, f_},  // 14
-                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, f_, f_, f_, f_, f_, f_},  // 15
-                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, f_, f_, f_, f_, f_},  // 16
-                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, f_, f_, f_, f_},  // 17
-                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, f_, f_, f_},  // 18
-                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, f_, f_},  // 19
-                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  // 20
-                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  // 21
-            };
+        std::vector<std::vector<bool>> expected_eq = {
+            //0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19  20  21
+            {_t, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  0
+            {_t, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  1
+            {f_, f_, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  2
+            {f_, f_, f_, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  3
+            {f_, f_, f_, f_, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  4
+            {f_, f_, f_, f_, f_, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  5
+            {f_, f_, f_, f_, f_, f_, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  6
+            {f_, f_, f_, f_, f_, f_, f_, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  7
+            {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  8
+            {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  9
+            {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  // 10
+            {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  // 11
+            {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_},  // 12
+            {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, f_, f_, f_, f_, f_, f_, f_, f_},  // 13
+            {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, f_, f_, f_, f_, f_, f_, f_},  // 14
+            {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, f_, f_, f_, f_, f_, f_},  // 15
+            {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, f_, f_, f_, f_, f_},  // 16
+            {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, f_, f_, f_, f_},  // 17
+            {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, f_, f_, f_},  // 18
+            {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, f_, f_},  // 19
+            {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  // 20
+            {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  // 21
+        };
 
-        std::vector<std::vector<bool>> expected_lt =
-            {
-                //0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19  20  21
-                {f_, f_, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, f_, f_},  //  0
-                {f_, f_, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, f_, f_},  //  1
-                {f_, f_, f_, _t, _t, _t, _t, _t, f_, f_, _t, _t, f_, f_, _t, _t, _t, _t, _t, _t, f_, f_},  //  2
-                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_, _t, _t, _t, _t, _t, _t, f_, f_},  //  3
-                {f_, f_, f_, _t, f_, _t, f_, _t, f_, f_, _t, _t, f_, f_, _t, _t, _t, _t, _t, _t, f_, f_},  //  4
-                {f_, f_, f_, _t, f_, f_, f_, _t, f_, f_, _t, _t, f_, f_, _t, _t, _t, _t, _t, _t, f_, f_},  //  5
-                {f_, f_, f_, _t, _t, _t, f_, _t, f_, f_, _t, _t, f_, f_, _t, _t, _t, _t, _t, _t, f_, f_},  //  6
-                {f_, f_, f_, _t, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_, _t, _t, _t, _t, _t, _t, f_, f_},  //  7
-                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_, _t, _t, _t, _t, _t, _t, f_, f_},  //  8
-                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_, _t, _t, _t, _t, _t, _t, f_, f_},  //  9
-                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_},  // 10
-                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_},  // 11
-                {f_, f_, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, f_, f_, _t, _t, _t, _t, _t, _t, f_, f_},  // 12
-                {f_, f_, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, f_, _t, _t, _t, _t, _t, _t, f_, f_},  // 13
-                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_, f_, _t, f_, f_, _t, _t, f_, f_},  // 14
-                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_},  // 15
-                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_, _t, _t, f_, f_, _t, _t, f_, f_},  // 16
-                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_, _t, _t, _t, f_, _t, _t, f_, f_},  // 17
-                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, f_, f_},  // 18
-                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  // 19
-                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  // 20
-                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  // 21
-            };
+        std::vector<std::vector<bool>> expected_lt = {
+            //0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19  20  21
+            {f_, f_, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, f_, f_},  //  0
+            {f_, f_, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, f_, f_},  //  1
+            {f_, f_, f_, _t, _t, _t, _t, _t, f_, f_, _t, _t, f_, f_, _t, _t, _t, _t, _t, _t, f_, f_},  //  2
+            {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_, _t, _t, _t, _t, _t, _t, f_, f_},  //  3
+            {f_, f_, f_, _t, f_, _t, f_, _t, f_, f_, _t, _t, f_, f_, _t, _t, _t, _t, _t, _t, f_, f_},  //  4
+            {f_, f_, f_, _t, f_, f_, f_, _t, f_, f_, _t, _t, f_, f_, _t, _t, _t, _t, _t, _t, f_, f_},  //  5
+            {f_, f_, f_, _t, _t, _t, f_, _t, f_, f_, _t, _t, f_, f_, _t, _t, _t, _t, _t, _t, f_, f_},  //  6
+            {f_, f_, f_, _t, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_, _t, _t, _t, _t, _t, _t, f_, f_},  //  7
+            {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_, _t, _t, _t, _t, _t, _t, f_, f_},  //  8
+            {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_, _t, _t, _t, _t, _t, _t, f_, f_},  //  9
+            {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_},  // 10
+            {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_},  // 11
+            {f_, f_, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, f_, f_, _t, _t, _t, _t, _t, _t, f_, f_},  // 12
+            {f_, f_, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, f_, _t, _t, _t, _t, _t, _t, f_, f_},  // 13
+            {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_, f_, _t, f_, f_, _t, _t, f_, f_},  // 14
+            {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_},  // 15
+            {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_, _t, _t, f_, f_, _t, _t, f_, f_},  // 16
+            {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_, _t, _t, _t, f_, _t, _t, f_, f_},  // 17
+            {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, f_, f_},  // 18
+            {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  // 19
+            {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  // 20
+            {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  // 21
+        };
 
         SECTION("compares unordered")
         {
-            std::vector<std::vector<bool>> expected =
-                {
-                    //0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19  20  21
-                    {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t},  //  0
-                    {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t},  //  1
-                    {f_, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t},  //  2
-                    {f_, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t},  //  3
-                    {f_, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t},  //  4
-                    {f_, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t},  //  5
-                    {f_, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t},  //  6
-                    {f_, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t},  //  7
-                    {f_, f_, _t, _t, _t, _t, _t, _t, _t, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t},  //  8
-                    {f_, f_, _t, _t, _t, _t, _t, _t, _t, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t},  //  9
-                    {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t},  // 10
-                    {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t},  // 11
-                    {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t},  // 12
-                    {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t},  // 13
-                    {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t},  // 14
-                    {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t},  // 15
-                    {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t},  // 16
-                    {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t},  // 17
-                    {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t},  // 18
-                    {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t},  // 19
-                    {_t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t},  // 20
-                    {_t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t},  // 21
-                };
+            std::vector<std::vector<bool>> expected = {
+                //0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19  20  21
+                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t},  //  0
+                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t},  //  1
+                {f_, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t},  //  2
+                {f_, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t},  //  3
+                {f_, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t},  //  4
+                {f_, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t},  //  5
+                {f_, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t},  //  6
+                {f_, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t},  //  7
+                {f_, f_, _t, _t, _t, _t, _t, _t, _t, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t},  //  8
+                {f_, f_, _t, _t, _t, _t, _t, _t, _t, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t},  //  9
+                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t},  // 10
+                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t},  // 11
+                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t},  // 12
+                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t},  // 13
+                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t},  // 14
+                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t},  // 15
+                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t},  // 16
+                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t},  // 17
+                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t},  // 18
+                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, _t, _t},  // 19
+                {_t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t},  // 20
+                {_t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t, _t},  // 21
+            };
 
             // check if two values compare unordered as expected
             REQUIRE(expected.size() == j_values.size());
@@ -310,32 +304,31 @@ TEST_CASE("lexicographical comparison operators")
 #if JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
         SECTION("compares unordered (inverse)")
         {
-            std::vector<std::vector<bool>> expected =
-                {
-                    //0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19  20  21
-                    {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  0
-                    {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  1
-                    {f_, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  2
-                    {f_, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  3
-                    {f_, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  4
-                    {f_, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  5
-                    {f_, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  6
-                    {f_, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  7
-                    {f_, f_, _t, _t, _t, _t, _t, _t, _t, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  8
-                    {f_, f_, _t, _t, _t, _t, _t, _t, _t, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  9
-                    {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  // 10
-                    {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  // 11
-                    {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  // 12
-                    {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  // 13
-                    {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  // 14
-                    {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  // 15
-                    {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  // 16
-                    {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  // 17
-                    {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  // 18
-                    {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  // 19
-                    {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  // 20
-                    {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  // 21
-                };
+            std::vector<std::vector<bool>> expected = {
+                //0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19  20  21
+                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  0
+                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  1
+                {f_, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  2
+                {f_, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  3
+                {f_, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  4
+                {f_, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  5
+                {f_, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  6
+                {f_, f_, f_, f_, f_, f_, f_, f_, _t, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  7
+                {f_, f_, _t, _t, _t, _t, _t, _t, _t, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  8
+                {f_, f_, _t, _t, _t, _t, _t, _t, _t, _t, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  //  9
+                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  // 10
+                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  // 11
+                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  // 12
+                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  // 13
+                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  // 14
+                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  // 15
+                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  // 16
+                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  // 17
+                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  // 18
+                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  // 19
+                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  // 20
+                {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_},  // 21
+            };
 
             // check that two values compare unordered as expected (with legacy-mode enabled)
             REQUIRE(expected.size() == j_values.size());
@@ -505,32 +498,31 @@ TEST_CASE("lexicographical comparison operators")
         // JSON_HAS_CPP_20 (do not remove; see note at top of file)
         SECTION("comparison: 3-way")
         {
-            std::vector<std::vector<std::partial_ordering>> expected =
-                {
-                    //0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19  20  21
-                    {eq, eq, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, un, un},  //  0
-                    {eq, eq, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, un, un},  //  1
-                    {gt, gt, eq, lt, lt, lt, lt, lt, un, un, lt, lt, gt, gt, lt, lt, lt, lt, lt, lt, un, un},  //  2
-                    {gt, gt, gt, eq, gt, gt, gt, gt, un, un, lt, lt, gt, gt, lt, lt, lt, lt, lt, lt, un, un},  //  3
-                    {gt, gt, gt, lt, eq, lt, gt, lt, un, un, lt, lt, gt, gt, lt, lt, lt, lt, lt, lt, un, un},  //  4
-                    {gt, gt, gt, lt, gt, eq, gt, lt, un, un, lt, lt, gt, gt, lt, lt, lt, lt, lt, lt, un, un},  //  5
-                    {gt, gt, gt, lt, lt, lt, eq, lt, un, un, lt, lt, gt, gt, lt, lt, lt, lt, lt, lt, un, un},  //  6
-                    {gt, gt, gt, lt, gt, gt, gt, eq, un, un, lt, lt, gt, gt, lt, lt, lt, lt, lt, lt, un, un},  //  7
-                    {gt, gt, un, un, un, un, un, un, un, un, lt, lt, gt, gt, lt, lt, lt, lt, lt, lt, un, un},  //  8
-                    {gt, gt, un, un, un, un, un, un, un, un, lt, lt, gt, gt, lt, lt, lt, lt, lt, lt, un, un},  //  9
-                    {gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, eq, gt, gt, gt, gt, gt, gt, gt, lt, lt, un, un},  // 10
-                    {gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, lt, eq, gt, gt, gt, gt, gt, gt, lt, lt, un, un},  // 11
-                    {gt, gt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, eq, gt, lt, lt, lt, lt, lt, lt, un, un},  // 12
-                    {gt, gt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, eq, lt, lt, lt, lt, lt, lt, un, un},  // 13
-                    {gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, lt, lt, gt, gt, eq, lt, gt, gt, lt, lt, un, un},  // 14
-                    {gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, lt, lt, gt, gt, gt, eq, gt, gt, lt, lt, un, un},  // 15
-                    {gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, lt, lt, gt, gt, lt, lt, eq, gt, lt, lt, un, un},  // 16
-                    {gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, lt, lt, gt, gt, lt, lt, lt, eq, lt, lt, un, un},  // 17
-                    {gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, eq, lt, un, un},  // 18
-                    {gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, eq, un, un},  // 19
-                    {un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un},  // 20
-                    {un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un},  // 21
-                };
+            std::vector<std::vector<std::partial_ordering>> expected = {
+                //0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19  20  21
+                {eq, eq, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, un, un},  //  0
+                {eq, eq, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, un, un},  //  1
+                {gt, gt, eq, lt, lt, lt, lt, lt, un, un, lt, lt, gt, gt, lt, lt, lt, lt, lt, lt, un, un},  //  2
+                {gt, gt, gt, eq, gt, gt, gt, gt, un, un, lt, lt, gt, gt, lt, lt, lt, lt, lt, lt, un, un},  //  3
+                {gt, gt, gt, lt, eq, lt, gt, lt, un, un, lt, lt, gt, gt, lt, lt, lt, lt, lt, lt, un, un},  //  4
+                {gt, gt, gt, lt, gt, eq, gt, lt, un, un, lt, lt, gt, gt, lt, lt, lt, lt, lt, lt, un, un},  //  5
+                {gt, gt, gt, lt, lt, lt, eq, lt, un, un, lt, lt, gt, gt, lt, lt, lt, lt, lt, lt, un, un},  //  6
+                {gt, gt, gt, lt, gt, gt, gt, eq, un, un, lt, lt, gt, gt, lt, lt, lt, lt, lt, lt, un, un},  //  7
+                {gt, gt, un, un, un, un, un, un, un, un, lt, lt, gt, gt, lt, lt, lt, lt, lt, lt, un, un},  //  8
+                {gt, gt, un, un, un, un, un, un, un, un, lt, lt, gt, gt, lt, lt, lt, lt, lt, lt, un, un},  //  9
+                {gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, eq, gt, gt, gt, gt, gt, gt, gt, lt, lt, un, un},  // 10
+                {gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, lt, eq, gt, gt, gt, gt, gt, gt, lt, lt, un, un},  // 11
+                {gt, gt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, eq, gt, lt, lt, lt, lt, lt, lt, un, un},  // 12
+                {gt, gt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, lt, eq, lt, lt, lt, lt, lt, lt, un, un},  // 13
+                {gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, lt, lt, gt, gt, eq, lt, gt, gt, lt, lt, un, un},  // 14
+                {gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, lt, lt, gt, gt, gt, eq, gt, gt, lt, lt, un, un},  // 15
+                {gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, lt, lt, gt, gt, lt, lt, eq, gt, lt, lt, un, un},  // 16
+                {gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, lt, lt, gt, gt, lt, lt, lt, eq, lt, lt, un, un},  // 17
+                {gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, eq, lt, un, un},  // 18
+                {gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, gt, eq, un, un},  // 19
+                {un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un},  // 20
+                {un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un, un},  // 21
+            };
 
             // check expected partial_ordering against expected booleans
             REQUIRE(expected.size() == expected_eq.size());

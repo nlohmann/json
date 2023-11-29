@@ -23,7 +23,8 @@
 #include <nlohmann/detail/value_t.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
-namespace detail {
+namespace detail
+{
 
 template<typename string_type>
 void int_to_string(string_type& target, std::size_t value)
@@ -57,7 +58,8 @@ class iteration_proxy_value
 
   public:
     explicit iteration_proxy_value() = default;
-    explicit iteration_proxy_value(IteratorType it, std::size_t array_index_ = 0) noexcept(std::is_nothrow_move_constructible<IteratorType>::value && std::is_nothrow_default_constructible<string_type>::value)
+    explicit iteration_proxy_value(IteratorType it, std::size_t array_index_ = 0) noexcept(std::is_nothrow_move_constructible<IteratorType>::value &&
+                                                                                           std::is_nothrow_default_constructible<string_type>::value)
       : anchor(std::move(it))
       , array_index(array_index_)
     {}
@@ -65,8 +67,12 @@ class iteration_proxy_value
     iteration_proxy_value(iteration_proxy_value const&) = default;
     iteration_proxy_value& operator=(iteration_proxy_value const&) = default;
     // older GCCs are a bit fussy and require explicit noexcept specifiers on defaulted functions
-    iteration_proxy_value(iteration_proxy_value&&) noexcept(std::is_nothrow_move_constructible<IteratorType>::value && std::is_nothrow_move_constructible<string_type>::value) = default;       // NOLINT(hicpp-noexcept-move,performance-noexcept-move-constructor,cppcoreguidelines-noexcept-move-operations)
-    iteration_proxy_value& operator=(iteration_proxy_value&&) noexcept(std::is_nothrow_move_assignable<IteratorType>::value && std::is_nothrow_move_assignable<string_type>::value) = default;  // NOLINT(hicpp-noexcept-move,performance-noexcept-move-constructor,cppcoreguidelines-noexcept-move-operations)
+    iteration_proxy_value(iteration_proxy_value&&) noexcept(std::is_nothrow_move_constructible<IteratorType>::value &&
+                                                            std::is_nothrow_move_constructible<string_type>::value) =
+        default;  // NOLINT(hicpp-noexcept-move,performance-noexcept-move-constructor,cppcoreguidelines-noexcept-move-operations)
+    iteration_proxy_value& operator=(iteration_proxy_value&&) noexcept(std::is_nothrow_move_assignable<IteratorType>::value &&
+                                                                       std::is_nothrow_move_assignable<string_type>::value) =
+        default;  // NOLINT(hicpp-noexcept-move,performance-noexcept-move-constructor,cppcoreguidelines-noexcept-move-operations)
     ~iteration_proxy_value() = default;
 
     /// dereference operator (needed for range-based for)
@@ -206,7 +212,8 @@ NLOHMANN_JSON_NAMESPACE_END
 // Structured Bindings Support to the iteration_proxy_value class
 // For further reference see https://blog.tartanllama.xyz/structured-bindings/
 // And see https://github.com/nlohmann/json/pull/1391
-namespace std {
+namespace std
+{
 
 #if defined(__clang__)
     // Fix: https://github.com/nlohmann/json/issues/1401
@@ -222,8 +229,7 @@ template<std::size_t N, typename IteratorType>
 class tuple_element<N, ::nlohmann::detail::iteration_proxy_value<IteratorType>>  // NOLINT(cert-dcl58-cpp)
 {
   public:
-    using type = decltype(get<N>(std::declval<
-                                 ::nlohmann::detail::iteration_proxy_value<IteratorType>>()));
+    using type = decltype(get<N>(std::declval<::nlohmann::detail::iteration_proxy_value<IteratorType>>()));
 };
 #if defined(__clang__)
     #pragma clang diagnostic pop

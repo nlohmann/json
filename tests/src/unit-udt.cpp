@@ -23,7 +23,8 @@ using namespace nlohmann::literals;  // NOLINT(google-build-using-namespace)
 #include <string>
 #include <utility>
 
-namespace udt {
+namespace udt
+{
 enum class country
 {
     china,
@@ -92,7 +93,8 @@ struct contact_book
 }  // namespace udt
 
 // to_json methods
-namespace udt {
+namespace udt
+{
 // templates because of the custom_json tests (see below)
 template<typename BasicJsonType>
 static void to_json(BasicJsonType& j, age a)
@@ -169,19 +171,18 @@ static bool operator==(const person& lhs, const person& rhs)
 
 static bool operator==(const contact& lhs, const contact& rhs)
 {
-    return std::tie(lhs.m_person, lhs.m_address) ==
-           std::tie(rhs.m_person, rhs.m_address);
+    return std::tie(lhs.m_person, lhs.m_address) == std::tie(rhs.m_person, rhs.m_address);
 }
 
 static bool operator==(const contact_book& lhs, const contact_book& rhs)
 {
-    return std::tie(lhs.m_book_name, lhs.m_contacts) ==
-           std::tie(rhs.m_book_name, rhs.m_contacts);
+    return std::tie(lhs.m_book_name, lhs.m_contacts) == std::tie(rhs.m_book_name, rhs.m_contacts);
 }
 }  // namespace udt
 
 // from_json methods
-namespace udt {
+namespace udt
+{
 template<typename BasicJsonType>
 static void from_json(const BasicJsonType& j, age& a)
 {
@@ -198,11 +199,7 @@ template<typename BasicJsonType>
 static void from_json(const BasicJsonType& j, country& c)
 {
     const auto str = j.template get<std::string>();
-    const std::map<std::string, country> m =
-        {
-            {"中华人民共和国", country::china},
-            {"France", country::france},
-            {"Российская Федерация", country::russia}};
+    const std::map<std::string, country> m = {{"中华人民共和国", country::china}, {"France", country::france}, {"Российская Федерация", country::russia}};
 
     const auto it = m.find(str);
     // TODO(nlohmann) test exceptions
@@ -238,8 +235,7 @@ static void from_json(const nlohmann::json& j, contact_book& cb)
 TEST_CASE("basic usage" * doctest::test_suite("udt"))
 {
     // a bit narcissistic maybe :) ?
-    const udt::age a{
-        23};
+    const udt::age a{23};
     const udt::name n{"theo"};
     const udt::country c{udt::country::france};
     const udt::person sfinae_addict{a, n, c};
@@ -255,8 +251,7 @@ TEST_CASE("basic usage" * doctest::test_suite("udt"))
         CHECK(json(c) == json("France"));
         CHECK(json(sfinae_addict) == R"({"name":"theo", "age":23, "country":"France"})"_json);
         CHECK(json("Paris") == json(addr));
-        CHECK(json(cpp_programmer) ==
-              R"({"person" : {"age":23, "name":"theo", "country":"France"}, "address":"Paris"})"_json);
+        CHECK(json(cpp_programmer) == R"({"person" : {"age":23, "name":"theo", "country":"France"}, "address":"Paris"})"_json);
 
         CHECK(
             json(book) ==
@@ -271,15 +266,13 @@ TEST_CASE("basic usage" * doctest::test_suite("udt"))
         {
             const auto parsed_book = big_json.get<udt::contact_book>();
             const auto book_name = big_json["name"].get<udt::name>();
-            const auto contacts =
-                big_json["contacts"].get<std::vector<udt::contact>>();
+            const auto contacts = big_json["contacts"].get<std::vector<udt::contact>>();
             const auto contact_json = big_json["contacts"].at(0);
             const auto contact = contact_json.get<udt::contact>();
             const auto person = contact_json["person"].get<udt::person>();
             const auto address = contact_json["address"].get<udt::address>();
             const auto age = contact_json["person"]["age"].get<udt::age>();
-            const auto country =
-                contact_json["person"]["country"].get<udt::country>();
+            const auto country = contact_json["person"]["country"].get<udt::country>();
             const auto name = contact_json["person"]["name"].get<udt::name>();
 
             CHECK(age == a);
@@ -334,7 +327,8 @@ TEST_CASE("basic usage" * doctest::test_suite("udt"))
     }
 }
 
-namespace udt {
+namespace udt
+{
 struct legacy_type
 {
     std::string number{};
@@ -345,7 +339,8 @@ struct legacy_type
 };
 }  // namespace udt
 
-namespace nlohmann {
+namespace nlohmann
+{
 template<typename T>
 struct adl_serializer<std::shared_ptr<T>>
 {
@@ -441,7 +436,8 @@ TEST_CASE("adl_serializer specialization" * doctest::test_suite("udt"))
     }
 }
 
-namespace nlohmann {
+namespace nlohmann
+{
 template<>
 struct adl_serializer<std::vector<float>>
 {
@@ -473,7 +469,8 @@ TEST_CASE("even supported types can be specialized" * doctest::test_suite("udt")
     CHECK((f == std::vector<float>{4.0, 5.0, 6.0}));
 }
 
-namespace nlohmann {
+namespace nlohmann
+{
 template<typename T>
 struct adl_serializer<std::unique_ptr<T>>
 {
@@ -540,12 +537,7 @@ template<typename T, typename = void>
 struct pod_serializer
 {
     // use adl for non-pods, or scalar types
-    template<
-        typename BasicJsonType,
-        typename U = T,
-        typename std::enable_if<
-            !(std::is_pod<U>::value && std::is_class<U>::value),
-            int>::type = 0>
+    template<typename BasicJsonType, typename U = T, typename std::enable_if<!(std::is_pod<U>::value && std::is_class<U>::value), int>::type = 0>
     static void from_json(const BasicJsonType& j, U& t)
     {
         using nlohmann::from_json;
@@ -576,12 +568,7 @@ struct pod_serializer
         std::memcpy(&t, bytes, sizeof(value));
     }
 
-    template<
-        typename BasicJsonType,
-        typename U = T,
-        typename std::enable_if<
-            !(std::is_pod<U>::value && std::is_class<U>::value),
-            int>::type = 0>
+    template<typename BasicJsonType, typename U = T, typename std::enable_if<!(std::is_pod<U>::value && std::is_class<U>::value), int>::type = 0>
     static void to_json(BasicJsonType& j, const T& t)
     {
         using nlohmann::to_json;
@@ -598,7 +585,8 @@ struct pod_serializer
     }
 };
 
-namespace udt {
+namespace udt
+{
 struct small_pod
 {
     int begin;
@@ -629,8 +617,7 @@ static void from_json(const BasicJsonType& j, non_pod& np)
 
 static bool operator==(small_pod lhs, small_pod rhs) noexcept
 {
-    return std::tie(lhs.begin, lhs.middle, lhs.end) ==
-           std::tie(rhs.begin, rhs.middle, rhs.end);
+    return std::tie(lhs.begin, lhs.middle, lhs.end) == std::tie(rhs.begin, rhs.middle, rhs.end);
 }
 
 static bool operator==(const non_pod& lhs, const non_pod& rhs) noexcept
@@ -646,8 +633,7 @@ static std::ostream& operator<<(std::ostream& os, small_pod l)
 
 TEST_CASE("custom serializer for pods" * doctest::test_suite("udt"))
 {
-    using custom_json =
-        nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, double, std::allocator, pod_serializer>;
+    using custom_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, double, std::allocator, pod_serializer>;
 
     auto p = udt::small_pod{42, '/', 42};
     custom_json const j = p;
@@ -781,7 +767,8 @@ TEST_CASE("different basic_json types conversions")
     }
 }
 
-namespace {
+namespace
+{
 struct incomplete;
 
 // std::is_constructible is broken on macOS' libc++
@@ -801,7 +788,8 @@ TEST_CASE("an incomplete type does not trigger a compiler error in non-evaluated
     static_assert(!is_constructible_patched<json, incomplete>::value, "");
 }
 
-namespace {
+namespace
+{
 class Evil
 {
   public:
@@ -839,7 +827,8 @@ TEST_CASE("Issue #1237")
     static_assert(!std::is_convertible<json, non_convertible_type>::value, "");
 }
 
-namespace {
+namespace
+{
 class no_iterator_type
 {
   public:

@@ -94,9 +94,7 @@ class json_pointer
     /// @sa https://json.nlohmann.me/api/json_pointer/operator_slasheq/
     json_pointer& operator/=(const json_pointer& ptr)
     {
-        reference_tokens.insert(reference_tokens.end(),
-                                ptr.reference_tokens.begin(),
-                                ptr.reference_tokens.end());
+        reference_tokens.insert(reference_tokens.end(), ptr.reference_tokens.begin(), ptr.reference_tokens.end());
         return *this;
     }
 
@@ -117,8 +115,7 @@ class json_pointer
 
     /// @brief create a new JSON pointer by appending the right JSON pointer at the end of the left JSON pointer
     /// @sa https://json.nlohmann.me/api/json_pointer/operator_slash/
-    friend json_pointer operator/(const json_pointer& lhs,
-                                  const json_pointer& rhs)
+    friend json_pointer operator/(const json_pointer& lhs, const json_pointer& rhs)
     {
         return json_pointer(lhs) /= rhs;
     }
@@ -355,15 +352,12 @@ class json_pointer
             if (ptr->is_null())
             {
                 // check if reference token is a number
-                const bool nums =
-                    std::all_of(reference_token.begin(), reference_token.end(), [](const unsigned char x) {
-                        return std::isdigit(x);
-                    });
+                const bool nums = std::all_of(reference_token.begin(), reference_token.end(), [](const unsigned char x) {
+                    return std::isdigit(x);
+                });
 
                 // change value to array for numbers or "-" or to object otherwise
-                *ptr = (nums || reference_token == "-")
-                           ? detail::value_t::array
-                           : detail::value_t::object;
+                *ptr = (nums || reference_token == "-") ? detail::value_t::array : detail::value_t::object;
             }
 
             switch (ptr->type())
@@ -431,7 +425,10 @@ class json_pointer
                     if (JSON_HEDLEY_UNLIKELY(reference_token == "-"))
                     {
                         // "-" always fails the range check
-                        JSON_THROW(detail::out_of_range::create(402, detail::concat("array index '-' (", std::to_string(ptr->m_data.m_value.array->size()), ") is out of range"), ptr));
+                        JSON_THROW(detail::out_of_range::create(
+                            402,
+                            detail::concat("array index '-' (", std::to_string(ptr->m_data.m_value.array->size()), ") is out of range"),
+                            ptr));
                     }
 
                     // note: at performs range check
@@ -487,7 +484,10 @@ class json_pointer
                     if (JSON_HEDLEY_UNLIKELY(reference_token == "-"))
                     {
                         // "-" cannot be used for const access
-                        JSON_THROW(detail::out_of_range::create(402, detail::concat("array index '-' (", std::to_string(ptr->m_data.m_value.array->size()), ") is out of range"), ptr));
+                        JSON_THROW(detail::out_of_range::create(
+                            402,
+                            detail::concat("array index '-' (", std::to_string(ptr->m_data.m_value.array->size()), ") is out of range"),
+                            ptr));
                     }
 
                     // use unchecked array access
@@ -536,7 +536,10 @@ class json_pointer
                     if (JSON_HEDLEY_UNLIKELY(reference_token == "-"))
                     {
                         // "-" always fails the range check
-                        JSON_THROW(detail::out_of_range::create(402, detail::concat("array index '-' (", std::to_string(ptr->m_data.m_value.array->size()), ") is out of range"), ptr));
+                        JSON_THROW(detail::out_of_range::create(
+                            402,
+                            detail::concat("array index '-' (", std::to_string(ptr->m_data.m_value.array->size()), ") is out of range"),
+                            ptr));
                     }
 
                     // note: at performs range check
@@ -666,7 +669,8 @@ class json_pointer
         // check if nonempty reference string begins with slash
         if (JSON_HEDLEY_UNLIKELY(reference_string[0] != '/'))
         {
-            JSON_THROW(detail::parse_error::create(107, 1, detail::concat("JSON pointer must be empty or begin with '/' - was: '", reference_string, "'"), nullptr));
+            JSON_THROW(
+                detail::parse_error::create(107, 1, detail::concat("JSON pointer must be empty or begin with '/' - was: '", reference_string, "'"), nullptr));
         }
 
         // extract the reference tokens:
@@ -690,16 +694,12 @@ class json_pointer
             auto reference_token = reference_string.substr(start, slash - start);
 
             // check reference tokens are properly escaped
-            for (std::size_t pos = reference_token.find_first_of('~');
-                 pos != string_t::npos;
-                 pos = reference_token.find_first_of('~', pos + 1))
+            for (std::size_t pos = reference_token.find_first_of('~'); pos != string_t::npos; pos = reference_token.find_first_of('~', pos + 1))
             {
                 JSON_ASSERT(reference_token[pos] == '~');
 
                 // ~ must be followed by 0 or 1
-                if (JSON_HEDLEY_UNLIKELY(pos == reference_token.size() - 1 ||
-                                         (reference_token[pos + 1] != '0' &&
-                                          reference_token[pos + 1] != '1')))
+                if (JSON_HEDLEY_UNLIKELY(pos == reference_token.size() - 1 || (reference_token[pos + 1] != '0' && reference_token[pos + 1] != '1')))
                 {
                     JSON_THROW(detail::parse_error::create(108, 0, "escape character '~' must be followed with '0' or '1'", nullptr));
                 }
@@ -722,9 +722,7 @@ class json_pointer
     @note Empty objects or arrays are flattened to `null`.
     */
     template<typename BasicJsonType>
-    static void flatten(const string_t& reference_string,
-                        const BasicJsonType& value,
-                        BasicJsonType& result)
+    static void flatten(const string_t& reference_string, const BasicJsonType& value, BasicJsonType& result)
     {
         switch (value.type())
         {
@@ -740,9 +738,7 @@ class json_pointer
                     // iterate array and use index as reference string
                     for (std::size_t i = 0; i < value.m_data.m_value.array->size(); ++i)
                     {
-                        flatten(detail::concat(reference_string, '/', std::to_string(i)),
-                                value.m_data.m_value.array->operator[](i),
-                                result);
+                        flatten(detail::concat(reference_string, '/', std::to_string(i)), value.m_data.m_value.array->operator[](i), result);
                     }
                 }
                 break;
@@ -794,8 +790,7 @@ class json_pointer
     @throw type_error.313  if value cannot be unflattened
     */
     template<typename BasicJsonType>
-    static BasicJsonType
-    unflatten(const BasicJsonType& value)
+    static BasicJsonType unflatten(const BasicJsonType& value)
     {
         if (JSON_HEDLEY_UNLIKELY(!value.is_object()))
         {
@@ -866,49 +861,42 @@ class json_pointer
     /// @sa https://json.nlohmann.me/api/json_pointer/operator_eq/
     template<typename RefStringTypeLhs, typename RefStringTypeRhs>
     // NOLINTNEXTLINE(readability-redundant-declaration)
-    friend bool operator==(const json_pointer<RefStringTypeLhs>& lhs,
-                           const json_pointer<RefStringTypeRhs>& rhs) noexcept;
+    friend bool operator==(const json_pointer<RefStringTypeLhs>& lhs, const json_pointer<RefStringTypeRhs>& rhs) noexcept;
 
     /// @brief compares JSON pointer and string for equality
     /// @sa https://json.nlohmann.me/api/json_pointer/operator_eq/
     template<typename RefStringTypeLhs, typename StringType>
     // NOLINTNEXTLINE(readability-redundant-declaration)
-    friend bool operator==(const json_pointer<RefStringTypeLhs>& lhs,
-                           const StringType& rhs);
+    friend bool operator==(const json_pointer<RefStringTypeLhs>& lhs, const StringType& rhs);
 
     /// @brief compares string and JSON pointer for equality
     /// @sa https://json.nlohmann.me/api/json_pointer/operator_eq/
     template<typename RefStringTypeRhs, typename StringType>
     // NOLINTNEXTLINE(readability-redundant-declaration)
-    friend bool operator==(const StringType& lhs,
-                           const json_pointer<RefStringTypeRhs>& rhs);
+    friend bool operator==(const StringType& lhs, const json_pointer<RefStringTypeRhs>& rhs);
 
     /// @brief compares two JSON pointers for inequality
     /// @sa https://json.nlohmann.me/api/json_pointer/operator_ne/
     template<typename RefStringTypeLhs, typename RefStringTypeRhs>
     // NOLINTNEXTLINE(readability-redundant-declaration)
-    friend bool operator!=(const json_pointer<RefStringTypeLhs>& lhs,
-                           const json_pointer<RefStringTypeRhs>& rhs) noexcept;
+    friend bool operator!=(const json_pointer<RefStringTypeLhs>& lhs, const json_pointer<RefStringTypeRhs>& rhs) noexcept;
 
     /// @brief compares JSON pointer and string for inequality
     /// @sa https://json.nlohmann.me/api/json_pointer/operator_ne/
     template<typename RefStringTypeLhs, typename StringType>
     // NOLINTNEXTLINE(readability-redundant-declaration)
-    friend bool operator!=(const json_pointer<RefStringTypeLhs>& lhs,
-                           const StringType& rhs);
+    friend bool operator!=(const json_pointer<RefStringTypeLhs>& lhs, const StringType& rhs);
 
     /// @brief compares string and JSON pointer for inequality
     /// @sa https://json.nlohmann.me/api/json_pointer/operator_ne/
     template<typename RefStringTypeRhs, typename StringType>
     // NOLINTNEXTLINE(readability-redundant-declaration)
-    friend bool operator!=(const StringType& lhs,
-                           const json_pointer<RefStringTypeRhs>& rhs);
+    friend bool operator!=(const StringType& lhs, const json_pointer<RefStringTypeRhs>& rhs);
 
     /// @brief compares two JSON pointer for less-than
     template<typename RefStringTypeLhs, typename RefStringTypeRhs>
     // NOLINTNEXTLINE(readability-redundant-declaration)
-    friend bool operator<(const json_pointer<RefStringTypeLhs>& lhs,
-                          const json_pointer<RefStringTypeRhs>& rhs) noexcept;
+    friend bool operator<(const json_pointer<RefStringTypeLhs>& lhs, const json_pointer<RefStringTypeRhs>& rhs) noexcept;
 #endif
 
   private:
@@ -919,58 +907,47 @@ class json_pointer
 #if !JSON_HAS_THREE_WAY_COMPARISON
 // functions cannot be defined inside class due to ODR violations
 template<typename RefStringTypeLhs, typename RefStringTypeRhs>
-inline bool operator==(const json_pointer<RefStringTypeLhs>& lhs,
-                       const json_pointer<RefStringTypeRhs>& rhs) noexcept
+inline bool operator==(const json_pointer<RefStringTypeLhs>& lhs, const json_pointer<RefStringTypeRhs>& rhs) noexcept
 {
     return lhs.reference_tokens == rhs.reference_tokens;
 }
 
-template<typename RefStringTypeLhs,
-         typename StringType = typename json_pointer<RefStringTypeLhs>::string_t>
+template<typename RefStringTypeLhs, typename StringType = typename json_pointer<RefStringTypeLhs>::string_t>
 JSON_HEDLEY_DEPRECATED_FOR(3.11.2, operator==(json_pointer, json_pointer))
-inline bool operator==(const json_pointer<RefStringTypeLhs>& lhs,
-                       const StringType& rhs)
+inline bool operator==(const json_pointer<RefStringTypeLhs>& lhs, const StringType& rhs)
 {
     return lhs == json_pointer<RefStringTypeLhs>(rhs);
 }
 
-template<typename RefStringTypeRhs,
-         typename StringType = typename json_pointer<RefStringTypeRhs>::string_t>
+template<typename RefStringTypeRhs, typename StringType = typename json_pointer<RefStringTypeRhs>::string_t>
 JSON_HEDLEY_DEPRECATED_FOR(3.11.2, operator==(json_pointer, json_pointer))
-inline bool operator==(const StringType& lhs,
-                       const json_pointer<RefStringTypeRhs>& rhs)
+inline bool operator==(const StringType& lhs, const json_pointer<RefStringTypeRhs>& rhs)
 {
     return json_pointer<RefStringTypeRhs>(lhs) == rhs;
 }
 
 template<typename RefStringTypeLhs, typename RefStringTypeRhs>
-inline bool operator!=(const json_pointer<RefStringTypeLhs>& lhs,
-                       const json_pointer<RefStringTypeRhs>& rhs) noexcept
+inline bool operator!=(const json_pointer<RefStringTypeLhs>& lhs, const json_pointer<RefStringTypeRhs>& rhs) noexcept
 {
     return !(lhs == rhs);
 }
 
-template<typename RefStringTypeLhs,
-         typename StringType = typename json_pointer<RefStringTypeLhs>::string_t>
+template<typename RefStringTypeLhs, typename StringType = typename json_pointer<RefStringTypeLhs>::string_t>
 JSON_HEDLEY_DEPRECATED_FOR(3.11.2, operator!=(json_pointer, json_pointer))
-inline bool operator!=(const json_pointer<RefStringTypeLhs>& lhs,
-                       const StringType& rhs)
+inline bool operator!=(const json_pointer<RefStringTypeLhs>& lhs, const StringType& rhs)
 {
     return !(lhs == rhs);
 }
 
-template<typename RefStringTypeRhs,
-         typename StringType = typename json_pointer<RefStringTypeRhs>::string_t>
+template<typename RefStringTypeRhs, typename StringType = typename json_pointer<RefStringTypeRhs>::string_t>
 JSON_HEDLEY_DEPRECATED_FOR(3.11.2, operator!=(json_pointer, json_pointer))
-inline bool operator!=(const StringType& lhs,
-                       const json_pointer<RefStringTypeRhs>& rhs)
+inline bool operator!=(const StringType& lhs, const json_pointer<RefStringTypeRhs>& rhs)
 {
     return !(lhs == rhs);
 }
 
 template<typename RefStringTypeLhs, typename RefStringTypeRhs>
-inline bool operator<(const json_pointer<RefStringTypeLhs>& lhs,
-                      const json_pointer<RefStringTypeRhs>& rhs) noexcept
+inline bool operator<(const json_pointer<RefStringTypeLhs>& lhs, const json_pointer<RefStringTypeRhs>& rhs) noexcept
 {
     return lhs.reference_tokens < rhs.reference_tokens;
 }

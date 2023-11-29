@@ -13,7 +13,8 @@ using nlohmann::json;
 
 // ICPC errors out on multibyte character sequences in source files
 #ifndef __INTEL_COMPILER
-namespace {
+namespace
+{
 bool wstring_is_utf16();
 bool wstring_is_utf16()
 {

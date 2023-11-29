@@ -26,7 +26,8 @@
 #include <nlohmann/detail/value_t.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
-namespace detail {
+namespace detail
+{
 
 ////////////////
 // exceptions //
@@ -155,7 +156,12 @@ class parse_error : public exception
     template<typename BasicJsonContext, enable_if_t<is_basic_json_context<BasicJsonContext>::value, int> = 0>
     static parse_error create(int id_, std::size_t byte_, const std::string& what_arg, BasicJsonContext context)
     {
-        const std::string w = concat(exception::name("parse_error", id_), "parse error", (byte_ != 0 ? (concat(" at byte ", std::to_string(byte_))) : ""), ": ", exception::diagnostics(context), what_arg);
+        const std::string w = concat(exception::name("parse_error", id_),
+                                     "parse error",
+                                     (byte_ != 0 ? (concat(" at byte ", std::to_string(byte_))) : ""),
+                                     ": ",
+                                     exception::diagnostics(context),
+                                     what_arg);
         return {id_, byte_, w.c_str()};
     }
 

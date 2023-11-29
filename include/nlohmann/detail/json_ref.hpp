@@ -15,7 +15,8 @@
 #include <nlohmann/detail/meta/type_traits.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
-namespace detail {
+namespace detail
+{
 
 template<typename BasicJsonType>
 class json_ref
@@ -35,9 +36,7 @@ class json_ref
       : owned_value(init)
     {}
 
-    template<
-        class... Args,
-        enable_if_t<std::is_constructible<value_type, Args...>::value, int> = 0>
+    template<class... Args, enable_if_t<std::is_constructible<value_type, Args...>::value, int> = 0>
     json_ref(Args&&... args)
       : owned_value(std::forward<Args>(args)...)
     {}

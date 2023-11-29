@@ -20,7 +20,8 @@ using nlohmann::json;
 #include <set>
 #include <sstream>
 
-namespace {
+namespace
+{
 class SaxCountdown
 {
   public:
@@ -88,7 +89,9 @@ class SaxCountdown
         return events_left-- > 0;
     }
 
-    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const json::exception& /*unused*/)  // NOLINT(readability-convert-member-functions-to-static)
+    bool parse_error(std::size_t /*unused*/,
+                     const std::string& /*unused*/,
+                     const json::exception& /*unused*/)  // NOLINT(readability-convert-member-functions-to-static)
     {
         return false;
     }
@@ -217,14 +220,10 @@ TEST_CASE("CBOR")
 
                         // check individual bytes
                         CHECK(result[0] == 0x3b);
-                        const uint64_t restored = (static_cast<uint64_t>(result[1]) << 070) +
-                                                  (static_cast<uint64_t>(result[2]) << 060) +
-                                                  (static_cast<uint64_t>(result[3]) << 050) +
-                                                  (static_cast<uint64_t>(result[4]) << 040) +
-                                                  (static_cast<uint64_t>(result[5]) << 030) +
-                                                  (static_cast<uint64_t>(result[6]) << 020) +
-                                                  (static_cast<uint64_t>(result[7]) << 010) +
-                                                  static_cast<uint64_t>(result[8]);
+                        const uint64_t restored = (static_cast<uint64_t>(result[1]) << 070) + (static_cast<uint64_t>(result[2]) << 060) +
+                                                  (static_cast<uint64_t>(result[3]) << 050) + (static_cast<uint64_t>(result[4]) << 040) +
+                                                  (static_cast<uint64_t>(result[5]) << 030) + (static_cast<uint64_t>(result[6]) << 020) +
+                                                  (static_cast<uint64_t>(result[7]) << 010) + static_cast<uint64_t>(result[8]);
                         CHECK(restored == positive);
                         CHECK(-1 - static_cast<int64_t>(restored) == i);
 
@@ -272,10 +271,8 @@ TEST_CASE("CBOR")
 
                         // check individual bytes
                         CHECK(result[0] == 0x3a);
-                        const uint32_t restored = (static_cast<uint32_t>(result[1]) << 030) +
-                                                  (static_cast<uint32_t>(result[2]) << 020) +
-                                                  (static_cast<uint32_t>(result[3]) << 010) +
-                                                  static_cast<uint32_t>(result[4]);
+                        const uint32_t restored = (static_cast<uint32_t>(result[1]) << 030) + (static_cast<uint32_t>(result[2]) << 020) +
+                                                  (static_cast<uint32_t>(result[3]) << 010) + static_cast<uint32_t>(result[4]);
                         CHECK(restored == positive);
                         CHECK(-1LL - restored == i);
 
@@ -506,11 +503,7 @@ TEST_CASE("CBOR")
 
                 SECTION("65536..4294967295")
                 {
-                    for (const uint32_t i :
-                         {
-                             65536u,
-                             77777u,
-                             1048576u})
+                    for (const uint32_t i : {65536u, 77777u, 1048576u})
                     {
                         CAPTURE(i)
 
@@ -537,10 +530,8 @@ TEST_CASE("CBOR")
 
                         // check individual bytes
                         CHECK(result[0] == 0x1a);
-                        const uint32_t restored = (static_cast<uint32_t>(result[1]) << 030) +
-                                                  (static_cast<uint32_t>(result[2]) << 020) +
-                                                  (static_cast<uint32_t>(result[3]) << 010) +
-                                                  static_cast<uint32_t>(result[4]);
+                        const uint32_t restored = (static_cast<uint32_t>(result[1]) << 030) + (static_cast<uint32_t>(result[2]) << 020) +
+                                                  (static_cast<uint32_t>(result[3]) << 010) + static_cast<uint32_t>(result[4]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -551,10 +542,7 @@ TEST_CASE("CBOR")
 
                 SECTION("4294967296..4611686018427387903")
                 {
-                    for (const uint64_t i :
-                         {
-                             4294967296ul,
-                             4611686018427387903ul})
+                    for (const uint64_t i : {4294967296ul, 4611686018427387903ul})
                     {
                         CAPTURE(i)
 
@@ -585,14 +573,10 @@ TEST_CASE("CBOR")
 
                         // check individual bytes
                         CHECK(result[0] == 0x1b);
-                        const uint64_t restored = (static_cast<uint64_t>(result[1]) << 070) +
-                                                  (static_cast<uint64_t>(result[2]) << 060) +
-                                                  (static_cast<uint64_t>(result[3]) << 050) +
-                                                  (static_cast<uint64_t>(result[4]) << 040) +
-                                                  (static_cast<uint64_t>(result[5]) << 030) +
-                                                  (static_cast<uint64_t>(result[6]) << 020) +
-                                                  (static_cast<uint64_t>(result[7]) << 010) +
-                                                  static_cast<uint64_t>(result[8]);
+                        const uint64_t restored = (static_cast<uint64_t>(result[1]) << 070) + (static_cast<uint64_t>(result[2]) << 060) +
+                                                  (static_cast<uint64_t>(result[3]) << 050) + (static_cast<uint64_t>(result[4]) << 040) +
+                                                  (static_cast<uint64_t>(result[5]) << 030) + (static_cast<uint64_t>(result[6]) << 020) +
+                                                  (static_cast<uint64_t>(result[7]) << 010) + static_cast<uint64_t>(result[8]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -740,11 +724,7 @@ TEST_CASE("CBOR")
 
                 SECTION("65536..4294967295 (four-byte uint32_t)")
                 {
-                    for (const uint32_t i :
-                         {
-                             65536u,
-                             77777u,
-                             1048576u})
+                    for (const uint32_t i : {65536u, 77777u, 1048576u})
                     {
                         CAPTURE(i)
 
@@ -770,10 +750,8 @@ TEST_CASE("CBOR")
 
                         // check individual bytes
                         CHECK(result[0] == 0x1a);
-                        const uint32_t restored = (static_cast<uint32_t>(result[1]) << 030) +
-                                                  (static_cast<uint32_t>(result[2]) << 020) +
-                                                  (static_cast<uint32_t>(result[3]) << 010) +
-                                                  static_cast<uint32_t>(result[4]);
+                        const uint32_t restored = (static_cast<uint32_t>(result[1]) << 030) + (static_cast<uint32_t>(result[2]) << 020) +
+                                                  (static_cast<uint32_t>(result[3]) << 010) + static_cast<uint32_t>(result[4]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -784,10 +762,7 @@ TEST_CASE("CBOR")
 
                 SECTION("4294967296..4611686018427387903 (eight-byte uint64_t)")
                 {
-                    for (const uint64_t i :
-                         {
-                             4294967296ul,
-                             4611686018427387903ul})
+                    for (const uint64_t i : {4294967296ul, 4611686018427387903ul})
                     {
                         CAPTURE(i)
 
@@ -817,14 +792,10 @@ TEST_CASE("CBOR")
 
                         // check individual bytes
                         CHECK(result[0] == 0x1b);
-                        const uint64_t restored = (static_cast<uint64_t>(result[1]) << 070) +
-                                                  (static_cast<uint64_t>(result[2]) << 060) +
-                                                  (static_cast<uint64_t>(result[3]) << 050) +
-                                                  (static_cast<uint64_t>(result[4]) << 040) +
-                                                  (static_cast<uint64_t>(result[5]) << 030) +
-                                                  (static_cast<uint64_t>(result[6]) << 020) +
-                                                  (static_cast<uint64_t>(result[7]) << 010) +
-                                                  static_cast<uint64_t>(result[8]);
+                        const uint64_t restored = (static_cast<uint64_t>(result[1]) << 070) + (static_cast<uint64_t>(result[2]) << 060) +
+                                                  (static_cast<uint64_t>(result[3]) << 050) + (static_cast<uint64_t>(result[4]) << 040) +
+                                                  (static_cast<uint64_t>(result[5]) << 030) + (static_cast<uint64_t>(result[6]) << 020) +
+                                                  (static_cast<uint64_t>(result[7]) << 010) + static_cast<uint64_t>(result[8]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -840,17 +811,7 @@ TEST_CASE("CBOR")
                 {
                     double v = 3.1415925;
                     const json j = v;
-                    std::vector<uint8_t> expected =
-                        {
-                            0xfb,
-                            0x40,
-                            0x09,
-                            0x21,
-                            0xfb,
-                            0x3f,
-                            0xa6,
-                            0xde,
-                            0xfc};
+                    std::vector<uint8_t> expected = {0xfb, 0x40, 0x09, 0x21, 0xfb, 0x3f, 0xa6, 0xde, 0xfc};
                     const auto result = json::to_cbor(j);
                     CHECK(result == expected);
 
@@ -934,13 +895,7 @@ TEST_CASE("CBOR")
                 {
                     float v = (std::numeric_limits<float>::max)();
                     const json j = v;
-                    const std::vector<uint8_t> expected =
-                        {
-                            0xfa,
-                            0x7f,
-                            0x7f,
-                            0xff,
-                            0xff};
+                    const std::vector<uint8_t> expected = {0xfa, 0x7f, 0x7f, 0xff, 0xff};
                     const auto result = json::to_cbor(j);
                     CHECK(result == expected);
                     // roundtrip
@@ -951,13 +906,7 @@ TEST_CASE("CBOR")
                 {
                     auto v = static_cast<double>(std::numeric_limits<float>::lowest());
                     const json j = v;
-                    const std::vector<uint8_t> expected =
-                        {
-                            0xfa,
-                            0xff,
-                            0x7f,
-                            0xff,
-                            0xff};
+                    const std::vector<uint8_t> expected = {0xfa, 0xff, 0x7f, 0xff, 0xff};
                     const auto result = json::to_cbor(j);
                     CHECK(result == expected);
                     // roundtrip
@@ -968,17 +917,7 @@ TEST_CASE("CBOR")
                 {
                     double v = static_cast<double>((std::numeric_limits<float>::max)()) + 0.1e+34;
                     const json j = v;
-                    const std::vector<uint8_t> expected =
-                        {
-                            0xfb,
-                            0x47,
-                            0xf0,
-                            0x00,
-                            0x03,
-                            0x04,
-                            0xdc,
-                            0x64,
-                            0x49};
+                    const std::vector<uint8_t> expected = {0xfb, 0x47, 0xf0, 0x00, 0x03, 0x04, 0xdc, 0x64, 0x49};
                     // double
                     const auto result = json::to_cbor(j);
                     CHECK(result == expected);
@@ -990,13 +929,7 @@ TEST_CASE("CBOR")
                 {
                     double v = static_cast<double>(std::numeric_limits<float>::lowest()) - 1.0;
                     const json j = v;
-                    const std::vector<uint8_t> expected =
-                        {
-                            0xfa,
-                            0xff,
-                            0x7f,
-                            0xff,
-                            0xff};
+                    const std::vector<uint8_t> expected = {0xfa, 0xff, 0x7f, 0xff, 0xff};
                     // the same with lowest float
                     const auto result = json::to_cbor(j);
                     CHECK(result == expected);
@@ -1013,13 +946,19 @@ TEST_CASE("CBOR")
                     SECTION("no byte follows")
                     {
                         json _;
-                        CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0xf9})), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing CBOR number: unexpected end of input", json::parse_error&);
+                        CHECK_THROWS_WITH_AS(
+                            _ = json::from_cbor(std::vector<uint8_t>({0xf9})),
+                            "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing CBOR number: unexpected end of input",
+                            json::parse_error&);
                         CHECK(json::from_cbor(std::vector<uint8_t>({0xf9}), true, false).is_discarded());
                     }
                     SECTION("only one byte follows")
                     {
                         json _;
-                        CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0xf9, 0x7c})), "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing CBOR number: unexpected end of input", json::parse_error&);
+                        CHECK_THROWS_WITH_AS(
+                            _ = json::from_cbor(std::vector<uint8_t>({0xf9, 0x7c})),
+                            "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing CBOR number: unexpected end of input",
+                            json::parse_error&);
                         CHECK(json::from_cbor(std::vector<uint8_t>({0xf9, 0x7c}), true, false).is_discarded());
                     }
                 }
@@ -1180,14 +1119,7 @@ TEST_CASE("CBOR")
 
             SECTION("N = 256..65535")
             {
-                for (const size_t N :
-                     {
-                         256u,
-                         999u,
-                         1025u,
-                         3333u,
-                         2048u,
-                         65535u})
+                for (const size_t N : {256u, 999u, 1025u, 3333u, 2048u, 65535u})
                 {
                     CAPTURE(N)
 
@@ -1217,11 +1149,7 @@ TEST_CASE("CBOR")
 
             SECTION("N = 65536..4294967295")
             {
-                for (const size_t N :
-                     {
-                         65536u,
-                         77777u,
-                         1048576u})
+                for (const size_t N : {65536u, 77777u, 1048576u})
                 {
                     CAPTURE(N)
 
@@ -1364,18 +1292,7 @@ TEST_CASE("CBOR")
             SECTION("{\"a\": {\"b\": {\"c\": {}}}}")
             {
                 const json j = json::parse(R"({"a": {"b": {"c": {}}}})");
-                const std::vector<uint8_t> expected =
-                    {
-                        0xa1,
-                        0x61,
-                        0x61,
-                        0xa1,
-                        0x61,
-                        0x62,
-                        0xa1,
-                        0x61,
-                        0x63,
-                        0xa0};
+                const std::vector<uint8_t> expected = {0xa1, 0x61, 0x61, 0xa1, 0x61, 0x62, 0xa1, 0x61, 0x63, 0xa0};
                 const auto result = json::to_cbor(j);
                 CHECK(result == expected);
 
@@ -1542,14 +1459,7 @@ TEST_CASE("CBOR")
 
             SECTION("N = 256..65535")
             {
-                for (const size_t N :
-                     {
-                         256u,
-                         999u,
-                         1025u,
-                         3333u,
-                         2048u,
-                         65535u})
+                for (const size_t N : {256u, 999u, 1025u, 3333u, 2048u, 65535u})
                 {
                     CAPTURE(N)
 
@@ -1579,11 +1489,7 @@ TEST_CASE("CBOR")
 
             SECTION("N = 65536..4294967295")
             {
-                for (const size_t N :
-                     {
-                         65536u,
-                         77777u,
-                         1048576u})
+                for (const size_t N : {65536u, 77777u, 1048576u})
                 {
                     CAPTURE(N)
 
@@ -1699,40 +1605,97 @@ TEST_CASE("CBOR")
         SECTION("empty byte vector")
         {
             json _;
-            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>()), "[json.exception.parse_error.110] parse error at byte 1: syntax error while parsing CBOR value: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>()),
+                                 "[json.exception.parse_error.110] parse error at byte 1: syntax error while parsing CBOR value: unexpected end of input",
+                                 json::parse_error&);
             CHECK(json::from_cbor(std::vector<uint8_t>(), true, false).is_discarded());
         }
 
         SECTION("too short byte vector")
         {
             json _;
-            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x18})), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing CBOR number: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x19})), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing CBOR number: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x19, 0x00})), "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing CBOR number: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x1a})), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing CBOR number: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x1a, 0x00})), "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing CBOR number: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x1a, 0x00, 0x00})), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing CBOR number: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x1a, 0x00, 0x00, 0x00})), "[json.exception.parse_error.110] parse error at byte 5: syntax error while parsing CBOR number: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x1b})), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing CBOR number: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x1b, 0x00})), "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing CBOR number: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x1b, 0x00, 0x00})), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing CBOR number: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x1b, 0x00, 0x00, 0x00})), "[json.exception.parse_error.110] parse error at byte 5: syntax error while parsing CBOR number: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x1b, 0x00, 0x00, 0x00, 0x00})), "[json.exception.parse_error.110] parse error at byte 6: syntax error while parsing CBOR number: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x1b, 0x00, 0x00, 0x00, 0x00, 0x00})), "[json.exception.parse_error.110] parse error at byte 7: syntax error while parsing CBOR number: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x1b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00})), "[json.exception.parse_error.110] parse error at byte 8: syntax error while parsing CBOR number: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x1b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00})), "[json.exception.parse_error.110] parse error at byte 9: syntax error while parsing CBOR number: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x62})), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing CBOR string: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x62, 0x60})), "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing CBOR string: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x7F})), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing CBOR string: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x7F, 0x60})), "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing CBOR string: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x82, 0x01})), "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing CBOR value: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x9F, 0x01})), "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing CBOR value: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0xBF, 0x61, 0x61, 0xF5})), "[json.exception.parse_error.110] parse error at byte 5: syntax error while parsing CBOR string: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0xA1, 0x61, 0X61})), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing CBOR value: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0xBF, 0x61, 0X61})), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing CBOR value: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x5F})), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing CBOR binary: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x5F, 0x00})), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing CBOR binary: expected length specification (0x40-0x5B) or indefinite binary array type (0x5F); last byte: 0x00", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x41})), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing CBOR binary: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x18})),
+                                 "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing CBOR number: unexpected end of input",
+                                 json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x19})),
+                                 "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing CBOR number: unexpected end of input",
+                                 json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x19, 0x00})),
+                                 "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing CBOR number: unexpected end of input",
+                                 json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x1a})),
+                                 "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing CBOR number: unexpected end of input",
+                                 json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x1a, 0x00})),
+                                 "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing CBOR number: unexpected end of input",
+                                 json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x1a, 0x00, 0x00})),
+                                 "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing CBOR number: unexpected end of input",
+                                 json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x1a, 0x00, 0x00, 0x00})),
+                                 "[json.exception.parse_error.110] parse error at byte 5: syntax error while parsing CBOR number: unexpected end of input",
+                                 json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x1b})),
+                                 "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing CBOR number: unexpected end of input",
+                                 json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x1b, 0x00})),
+                                 "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing CBOR number: unexpected end of input",
+                                 json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x1b, 0x00, 0x00})),
+                                 "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing CBOR number: unexpected end of input",
+                                 json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x1b, 0x00, 0x00, 0x00})),
+                                 "[json.exception.parse_error.110] parse error at byte 5: syntax error while parsing CBOR number: unexpected end of input",
+                                 json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x1b, 0x00, 0x00, 0x00, 0x00})),
+                                 "[json.exception.parse_error.110] parse error at byte 6: syntax error while parsing CBOR number: unexpected end of input",
+                                 json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x1b, 0x00, 0x00, 0x00, 0x00, 0x00})),
+                                 "[json.exception.parse_error.110] parse error at byte 7: syntax error while parsing CBOR number: unexpected end of input",
+                                 json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x1b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00})),
+                                 "[json.exception.parse_error.110] parse error at byte 8: syntax error while parsing CBOR number: unexpected end of input",
+                                 json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x1b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00})),
+                                 "[json.exception.parse_error.110] parse error at byte 9: syntax error while parsing CBOR number: unexpected end of input",
+                                 json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x62})),
+                                 "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing CBOR string: unexpected end of input",
+                                 json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x62, 0x60})),
+                                 "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing CBOR string: unexpected end of input",
+                                 json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x7F})),
+                                 "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing CBOR string: unexpected end of input",
+                                 json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x7F, 0x60})),
+                                 "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing CBOR string: unexpected end of input",
+                                 json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x82, 0x01})),
+                                 "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing CBOR value: unexpected end of input",
+                                 json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x9F, 0x01})),
+                                 "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing CBOR value: unexpected end of input",
+                                 json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0xBF, 0x61, 0x61, 0xF5})),
+                                 "[json.exception.parse_error.110] parse error at byte 5: syntax error while parsing CBOR string: unexpected end of input",
+                                 json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0xA1, 0x61, 0X61})),
+                                 "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing CBOR value: unexpected end of input",
+                                 json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0xBF, 0x61, 0X61})),
+                                 "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing CBOR value: unexpected end of input",
+                                 json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x5F})),
+                                 "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing CBOR binary: unexpected end of input",
+                                 json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_cbor(std::vector<uint8_t>({0x5F, 0x00})),
+                "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing CBOR binary: expected length specification (0x40-0x5B) or indefinite binary array type (0x5F); last byte: 0x00",
+                json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x41})),
+                                 "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing CBOR binary: unexpected end of input",
+                                 json::parse_error&);
 
             CHECK(json::from_cbor(std::vector<uint8_t>({0x18}), true, false).is_discarded());
             CHECK(json::from_cbor(std::vector<uint8_t>({0x19}), true, false).is_discarded());
@@ -1768,108 +1731,110 @@ TEST_CASE("CBOR")
             SECTION("concrete examples")
             {
                 json _;
-                CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x1c})), "[json.exception.parse_error.112] parse error at byte 1: syntax error while parsing CBOR value: invalid byte: 0x1C", json::parse_error&);
+                CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x1c})),
+                                     "[json.exception.parse_error.112] parse error at byte 1: syntax error while parsing CBOR value: invalid byte: 0x1C",
+                                     json::parse_error&);
                 CHECK(json::from_cbor(std::vector<uint8_t>({0x1c}), true, false).is_discarded());
 
-                CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0xf8})), "[json.exception.parse_error.112] parse error at byte 1: syntax error while parsing CBOR value: invalid byte: 0xF8", json::parse_error&);
+                CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0xf8})),
+                                     "[json.exception.parse_error.112] parse error at byte 1: syntax error while parsing CBOR value: invalid byte: 0xF8",
+                                     json::parse_error&);
                 CHECK(json::from_cbor(std::vector<uint8_t>({0xf8}), true, false).is_discarded());
             }
 
             SECTION("all unsupported bytes")
             {
-                for (const auto byte :
-                     {
-                         // ?
-                         0x1c,
-                         0x1d,
-                         0x1e,
-                         0x1f,
-                         // ?
-                         0x3c,
-                         0x3d,
-                         0x3e,
-                         0x3f,
-                         // ?
-                         0x5c,
-                         0x5d,
-                         0x5e,
-                         // ?
-                         0x7c,
-                         0x7d,
-                         0x7e,
-                         // ?
-                         0x9c,
-                         0x9d,
-                         0x9e,
-                         // ?
-                         0xbc,
-                         0xbd,
-                         0xbe,
-                         // date/time
-                         0xc0,
-                         0xc1,
-                         // bignum
-                         0xc2,
-                         0xc3,
-                         // fraction
-                         0xc4,
-                         // bigfloat
-                         0xc5,
-                         // tagged item
-                         0xc6,
-                         0xc7,
-                         0xc8,
-                         0xc9,
-                         0xca,
-                         0xcb,
-                         0xcc,
-                         0xcd,
-                         0xce,
-                         0xcf,
-                         0xd0,
-                         0xd1,
-                         0xd2,
-                         0xd3,
-                         0xd4,
-                         // expected conversion
-                         0xd5,
-                         0xd6,
-                         0xd7,
-                         // more tagged items
-                         0xd8,
-                         0xd9,
-                         0xda,
-                         0xdb,
-                         // ?
-                         0xdc,
-                         0xdd,
-                         0xde,
-                         0xdf,
-                         // (simple value)
-                         0xe0,
-                         0xe1,
-                         0xe2,
-                         0xe3,
-                         0xe4,
-                         0xe5,
-                         0xe6,
-                         0xe7,
-                         0xe8,
-                         0xe9,
-                         0xea,
-                         0xeb,
-                         0xec,
-                         0xed,
-                         0xee,
-                         0xef,
-                         0xf0,
-                         0xf1,
-                         0xf2,
-                         0xf3,
-                         // undefined
-                         0xf7,
-                         // simple value
-                         0xf8})
+                for (const auto byte : {// ?
+                                        0x1c,
+                                        0x1d,
+                                        0x1e,
+                                        0x1f,
+                                        // ?
+                                        0x3c,
+                                        0x3d,
+                                        0x3e,
+                                        0x3f,
+                                        // ?
+                                        0x5c,
+                                        0x5d,
+                                        0x5e,
+                                        // ?
+                                        0x7c,
+                                        0x7d,
+                                        0x7e,
+                                        // ?
+                                        0x9c,
+                                        0x9d,
+                                        0x9e,
+                                        // ?
+                                        0xbc,
+                                        0xbd,
+                                        0xbe,
+                                        // date/time
+                                        0xc0,
+                                        0xc1,
+                                        // bignum
+                                        0xc2,
+                                        0xc3,
+                                        // fraction
+                                        0xc4,
+                                        // bigfloat
+                                        0xc5,
+                                        // tagged item
+                                        0xc6,
+                                        0xc7,
+                                        0xc8,
+                                        0xc9,
+                                        0xca,
+                                        0xcb,
+                                        0xcc,
+                                        0xcd,
+                                        0xce,
+                                        0xcf,
+                                        0xd0,
+                                        0xd1,
+                                        0xd2,
+                                        0xd3,
+                                        0xd4,
+                                        // expected conversion
+                                        0xd5,
+                                        0xd6,
+                                        0xd7,
+                                        // more tagged items
+                                        0xd8,
+                                        0xd9,
+                                        0xda,
+                                        0xdb,
+                                        // ?
+                                        0xdc,
+                                        0xdd,
+                                        0xde,
+                                        0xdf,
+                                        // (simple value)
+                                        0xe0,
+                                        0xe1,
+                                        0xe2,
+                                        0xe3,
+                                        0xe4,
+                                        0xe5,
+                                        0xe6,
+                                        0xe7,
+                                        0xe8,
+                                        0xe9,
+                                        0xea,
+                                        0xeb,
+                                        0xec,
+                                        0xed,
+                                        0xee,
+                                        0xef,
+                                        0xf0,
+                                        0xf1,
+                                        0xf2,
+                                        0xf3,
+                                        // undefined
+                                        0xf7,
+                                        // simple value
+                                        0xf8})
                 {
                     json _;
                     CHECK_THROWS_AS(_ = json::from_cbor(std::vector<uint8_t>({static_cast<uint8_t>(byte)})), json::parse_error&);
@@ -1881,7 +1846,10 @@ TEST_CASE("CBOR")
         SECTION("invalid string in map")
         {
             json _;
-            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0xa1, 0xff, 0x01})), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing CBOR string: expected length specification (0x60-0x7B) or indefinite string type (0x7F); last byte: 0xFF", json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_cbor(std::vector<uint8_t>({0xa1, 0xff, 0x01})),
+                "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing CBOR string: expected length specification (0x60-0x7B) or indefinite string type (0x7F); last byte: 0xFF",
+                json::parse_error&);
             CHECK(json::from_cbor(std::vector<uint8_t>({0xa1, 0xff, 0x01}), true, false).is_discarded());
         }
 
@@ -1898,7 +1866,10 @@ TEST_CASE("CBOR")
             SECTION("strict mode")
             {
                 json _;
-                CHECK_THROWS_WITH_AS(_ = json::from_cbor(vec), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing CBOR value: expected end of input; last byte: 0xF6", json::parse_error&);
+                CHECK_THROWS_WITH_AS(
+                    _ = json::from_cbor(vec),
+                    "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing CBOR value: expected end of input; last byte: 0xF6",
+                    json::parse_error&);
                 CHECK(json::from_cbor(vec, true, false).is_discarded());
             }
         }
@@ -1984,28 +1955,13 @@ TEST_CASE("CBOR regressions")
         detected.
         */
         for (const std::string filename :
-             {
-                 TEST_DATA_DIRECTORY "/cbor_regression/test01",
-                 TEST_DATA_DIRECTORY "/cbor_regression/test02",
-                 TEST_DATA_DIRECTORY "/cbor_regression/test03",
-                 TEST_DATA_DIRECTORY "/cbor_regression/test04",
-                 TEST_DATA_DIRECTORY "/cbor_regression/test05",
-                 TEST_DATA_DIRECTORY "/cbor_regression/test06",
-                 TEST_DATA_DIRECTORY "/cbor_regression/test07",
-                 TEST_DATA_DIRECTORY "/cbor_regression/test08",
-                 TEST_DATA_DIRECTORY "/cbor_regression/test09",
-                 TEST_DATA_DIRECTORY "/cbor_regression/test10",
-                 TEST_DATA_DIRECTORY "/cbor_regression/test11",
-                 TEST_DATA_DIRECTORY "/cbor_regression/test12",
-                 TEST_DATA_DIRECTORY "/cbor_regression/test13",
-                 TEST_DATA_DIRECTORY "/cbor_regression/test14",
-                 TEST_DATA_DIRECTORY "/cbor_regression/test15",
-                 TEST_DATA_DIRECTORY "/cbor_regression/test16",
-                 TEST_DATA_DIRECTORY "/cbor_regression/test17",
-                 TEST_DATA_DIRECTORY "/cbor_regression/test18",
-                 TEST_DATA_DIRECTORY "/cbor_regression/test19",
-                 TEST_DATA_DIRECTORY "/cbor_regression/test20",
-                 TEST_DATA_DIRECTORY "/cbor_regression/test21"})
+             {TEST_DATA_DIRECTORY "/cbor_regression/test01", TEST_DATA_DIRECTORY "/cbor_regression/test02", TEST_DATA_DIRECTORY "/cbor_regression/test03",
+              TEST_DATA_DIRECTORY "/cbor_regression/test04", TEST_DATA_DIRECTORY "/cbor_regression/test05", TEST_DATA_DIRECTORY "/cbor_regression/test06",
+              TEST_DATA_DIRECTORY "/cbor_regression/test07", TEST_DATA_DIRECTORY "/cbor_regression/test08", TEST_DATA_DIRECTORY "/cbor_regression/test09",
+              TEST_DATA_DIRECTORY "/cbor_regression/test10", TEST_DATA_DIRECTORY "/cbor_regression/test11", TEST_DATA_DIRECTORY "/cbor_regression/test12",
+              TEST_DATA_DIRECTORY "/cbor_regression/test13", TEST_DATA_DIRECTORY "/cbor_regression/test14", TEST_DATA_DIRECTORY "/cbor_regression/test15",
+              TEST_DATA_DIRECTORY "/cbor_regression/test16", TEST_DATA_DIRECTORY "/cbor_regression/test17", TEST_DATA_DIRECTORY "/cbor_regression/test18",
+              TEST_DATA_DIRECTORY "/cbor_regression/test19", TEST_DATA_DIRECTORY "/cbor_regression/test20", TEST_DATA_DIRECTORY "/cbor_regression/test21"})
         {
             CAPTURE(filename)
 
@@ -2059,153 +2015,151 @@ TEST_CASE("CBOR roundtrips" * doctest::skip())
         exclude_packed.insert(TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_duplicated_key.json");
         exclude_packed.insert(TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_long_strings.json");
 
-        for (const std::string filename :
-             {
-                 TEST_DATA_DIRECTORY "/json_nlohmann_tests/all_unicode.json",
-                 TEST_DATA_DIRECTORY "/json.org/1.json",
-                 TEST_DATA_DIRECTORY "/json.org/2.json",
-                 TEST_DATA_DIRECTORY "/json.org/3.json",
-                 TEST_DATA_DIRECTORY "/json.org/4.json",
-                 TEST_DATA_DIRECTORY "/json.org/5.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip01.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip02.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip03.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip04.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip05.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip06.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip07.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip08.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip09.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip10.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip11.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip12.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip13.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip14.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip15.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip16.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip17.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip18.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip19.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip20.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip21.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip22.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip23.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip24.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip25.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip26.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip27.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip28.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip29.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip30.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip31.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip32.json",
-                 TEST_DATA_DIRECTORY "/json_testsuite/sample.json",  // kills AppVeyor
-                 TEST_DATA_DIRECTORY "/json_tests/pass1.json",
-                 TEST_DATA_DIRECTORY "/json_tests/pass2.json",
-                 TEST_DATA_DIRECTORY "/json_tests/pass3.json",
-                 TEST_DATA_DIRECTORY "/regression/floats.json",
-                 TEST_DATA_DIRECTORY "/regression/signed_ints.json",
-                 TEST_DATA_DIRECTORY "/regression/unsigned_ints.json",
-                 TEST_DATA_DIRECTORY "/regression/working_file.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_arraysWithSpaces.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_empty-string.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_empty.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_ending_with_newline.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_false.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_heterogeneous.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_null.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_with_1_and_newline.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_with_leading_space.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_with_several_null.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_with_trailing_space.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_0e+1.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_0e1.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_after_space.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_double_close_to_zero.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_double_huge_neg_exp.json",
-                 //TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_huge_exp.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_int_with_exp.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_minus_zero.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_negative_int.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_negative_one.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_negative_zero.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_capital_e.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_capital_e_neg_exp.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_capital_e_pos_exp.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_exponent.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_fraction_exponent.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_neg_exp.json",
-                 //TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_neg_overflow.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_pos_exponent.json",
-                 //TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_pos_overflow.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_underflow.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_simple_int.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_simple_real.json",
-                 //TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_too_big_neg_int.json",
-                 //TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_too_big_pos_int.json",
-                 //TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_very_big_negative_int.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_basic.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_duplicated_key.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_duplicated_key_and_value.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_empty.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_empty_key.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_escaped_null_in_key.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_extreme_numbers.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_long_strings.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_simple.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_string_unicode.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_with_newlines.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_1_2_3_bytes_UTF-8_sequences.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_UTF-16_Surrogates_U+1D11E_MUSICAL_SYMBOL_G_CLEF.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_accepted_surrogate_pair.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_accepted_surrogate_pairs.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_allowed_escapes.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_backslash_and_u_escaped_zero.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_backslash_doublequotes.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_comments.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_double_escape_a.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_double_escape_n.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_escaped_control_character.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_escaped_noncharacter.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_in_array.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_in_array_with_leading_space.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_last_surrogates_1_and_2.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_newline_uescaped.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_nonCharacterInUTF-8_U+10FFFF.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_nonCharacterInUTF-8_U+1FFFF.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_nonCharacterInUTF-8_U+FFFF.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_null_escape.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_one-byte-utf-8.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_pi.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_simple_ascii.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_space.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_three-byte-utf-8.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_two-byte-utf-8.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_u+2028_line_sep.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_u+2029_par_sep.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_uEscape.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unescaped_char_delete.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unicode.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unicodeEscapedBackslash.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unicode_2.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unicode_U+200B_ZERO_WIDTH_SPACE.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unicode_U+2064_invisible_plus.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unicode_escaped_double_quote.json",
-                 // TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_utf16.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_utf8.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_with_del_character.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_lonely_false.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_lonely_int.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_lonely_negative_real.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_lonely_null.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_lonely_string.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_lonely_true.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_string_empty.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_trailing_newline.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_true_in_array.json",
-                 TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_whitespace_array.json"})
+        for (const std::string filename : {TEST_DATA_DIRECTORY "/json_nlohmann_tests/all_unicode.json",
+                                           TEST_DATA_DIRECTORY "/json.org/1.json",
+                                           TEST_DATA_DIRECTORY "/json.org/2.json",
+                                           TEST_DATA_DIRECTORY "/json.org/3.json",
+                                           TEST_DATA_DIRECTORY "/json.org/4.json",
+                                           TEST_DATA_DIRECTORY "/json.org/5.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip01.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip02.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip03.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip04.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip05.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip06.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip07.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip08.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip09.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip10.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip11.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip12.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip13.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip14.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip15.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip16.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip17.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip18.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip19.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip20.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip21.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip22.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip23.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip24.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip25.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip26.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip27.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip28.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip29.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip30.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip31.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip32.json",
+                                           TEST_DATA_DIRECTORY "/json_testsuite/sample.json",  // kills AppVeyor
+                                           TEST_DATA_DIRECTORY "/json_tests/pass1.json",
+                                           TEST_DATA_DIRECTORY "/json_tests/pass2.json",
+                                           TEST_DATA_DIRECTORY "/json_tests/pass3.json",
+                                           TEST_DATA_DIRECTORY "/regression/floats.json",
+                                           TEST_DATA_DIRECTORY "/regression/signed_ints.json",
+                                           TEST_DATA_DIRECTORY "/regression/unsigned_ints.json",
+                                           TEST_DATA_DIRECTORY "/regression/working_file.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_arraysWithSpaces.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_empty-string.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_empty.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_ending_with_newline.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_false.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_heterogeneous.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_null.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_with_1_and_newline.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_with_leading_space.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_with_several_null.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_with_trailing_space.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_0e+1.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_0e1.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_after_space.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_double_close_to_zero.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_double_huge_neg_exp.json",
+                                           //TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_huge_exp.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_int_with_exp.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_minus_zero.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_negative_int.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_negative_one.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_negative_zero.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_capital_e.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_capital_e_neg_exp.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_capital_e_pos_exp.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_exponent.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_fraction_exponent.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_neg_exp.json",
+                                           //TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_neg_overflow.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_pos_exponent.json",
+                                           //TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_pos_overflow.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_underflow.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_simple_int.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_simple_real.json",
+                                           //TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_too_big_neg_int.json",
+                                           //TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_too_big_pos_int.json",
+                                           //TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_very_big_negative_int.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_basic.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_duplicated_key.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_duplicated_key_and_value.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_empty.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_empty_key.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_escaped_null_in_key.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_extreme_numbers.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_long_strings.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_simple.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_string_unicode.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_with_newlines.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_1_2_3_bytes_UTF-8_sequences.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_UTF-16_Surrogates_U+1D11E_MUSICAL_SYMBOL_G_CLEF.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_accepted_surrogate_pair.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_accepted_surrogate_pairs.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_allowed_escapes.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_backslash_and_u_escaped_zero.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_backslash_doublequotes.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_comments.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_double_escape_a.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_double_escape_n.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_escaped_control_character.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_escaped_noncharacter.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_in_array.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_in_array_with_leading_space.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_last_surrogates_1_and_2.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_newline_uescaped.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_nonCharacterInUTF-8_U+10FFFF.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_nonCharacterInUTF-8_U+1FFFF.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_nonCharacterInUTF-8_U+FFFF.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_null_escape.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_one-byte-utf-8.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_pi.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_simple_ascii.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_space.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_three-byte-utf-8.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_two-byte-utf-8.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_u+2028_line_sep.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_u+2029_par_sep.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_uEscape.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unescaped_char_delete.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unicode.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unicodeEscapedBackslash.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unicode_2.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unicode_U+200B_ZERO_WIDTH_SPACE.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unicode_U+2064_invisible_plus.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unicode_escaped_double_quote.json",
+                                           // TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_utf16.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_utf8.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_with_del_character.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_lonely_false.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_lonely_int.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_lonely_negative_real.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_lonely_null.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_lonely_string.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_lonely_true.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_string_empty.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_trailing_newline.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_true_in_array.json",
+                                           TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_whitespace_array.json"})
         {
             CAPTURE(filename)
 
@@ -2281,102 +2235,100 @@ TEST_CASE("CBOR roundtrips" * doctest::skip())
 TEST_CASE("all CBOR first bytes")
 {
     // these bytes will fail immediately with exception parse_error.112
-    std::set<uint8_t> unsupported =
-        {
-            //// types not supported by this library
+    std::set<uint8_t> unsupported = {//// types not supported by this library
 
-            // date/time
-            0xc0,
-            0xc1,
-            // bignum
-            0xc2,
-            0xc3,
-            // decimal fracion
-            0xc4,
-            // bigfloat
-            0xc5,
-            // tagged item
-            0xc6,
-            0xc7,
-            0xc8,
-            0xc9,
-            0xca,
-            0xcb,
-            0xcc,
-            0xcd,
-            0xce,
-            0xcf,
-            0xd0,
-            0xd1,
-            0xd2,
-            0xd3,
-            0xd4,
-            0xd8,
-            0xd9,
-            0xda,
-            0xdb,
-            // expected conversion
-            0xd5,
-            0xd6,
-            0xd7,
-            // simple value
-            0xe0,
-            0xe1,
-            0xe2,
-            0xe3,
-            0xe4,
-            0xe5,
-            0xe6,
-            0xe7,
-            0xe8,
-            0xe9,
-            0xea,
-            0xeb,
-            0xec,
-            0xed,
-            0xef,
-            0xf0,
-            0xf1,
-            0xf2,
-            0xf3,
-            0xf8,
-            // undefined
-            0xf7,
+                                     // date/time
+                                     0xc0,
+                                     0xc1,
+                                     // bignum
+                                     0xc2,
+                                     0xc3,
+                                     // decimal fracion
+                                     0xc4,
+                                     // bigfloat
+                                     0xc5,
+                                     // tagged item
+                                     0xc6,
+                                     0xc7,
+                                     0xc8,
+                                     0xc9,
+                                     0xca,
+                                     0xcb,
+                                     0xcc,
+                                     0xcd,
+                                     0xce,
+                                     0xcf,
+                                     0xd0,
+                                     0xd1,
+                                     0xd2,
+                                     0xd3,
+                                     0xd4,
+                                     0xd8,
+                                     0xd9,
+                                     0xda,
+                                     0xdb,
+                                     // expected conversion
+                                     0xd5,
+                                     0xd6,
+                                     0xd7,
+                                     // simple value
+                                     0xe0,
+                                     0xe1,
+                                     0xe2,
+                                     0xe3,
+                                     0xe4,
+                                     0xe5,
+                                     0xe6,
+                                     0xe7,
+                                     0xe8,
+                                     0xe9,
+                                     0xea,
+                                     0xeb,
+                                     0xec,
+                                     0xed,
+                                     0xef,
+                                     0xf0,
+                                     0xf1,
+                                     0xf2,
+                                     0xf3,
+                                     0xf8,
+                                     // undefined
+                                     0xf7,
 
-            //// bytes not specified by CBOR
+                                     //// bytes not specified by CBOR
 
-            0x1c,
-            0x1d,
-            0x1e,
-            0x1f,
-            0x3c,
-            0x3d,
-            0x3e,
-            0x3f,
-            0x5c,
-            0x5d,
-            0x5e,
-            0x7c,
-            0x7d,
-            0x7e,
-            0x9c,
-            0x9d,
-            0x9e,
-            0xbc,
-            0xbd,
-            0xbe,
-            0xdc,
-            0xdd,
-            0xde,
-            0xdf,
-            0xee,
-            0xfc,
-            0xfe,
-            0xfd,
+                                     0x1c,
+                                     0x1d,
+                                     0x1e,
+                                     0x1f,
+                                     0x3c,
+                                     0x3d,
+                                     0x3e,
+                                     0x3f,
+                                     0x5c,
+                                     0x5d,
+                                     0x5e,
+                                     0x7c,
+                                     0x7d,
+                                     0x7e,
+                                     0x9c,
+                                     0x9d,
+                                     0x9e,
+                                     0xbc,
+                                     0xbd,
+                                     0xbe,
+                                     0xdc,
+                                     0xdd,
+                                     0xde,
+                                     0xdf,
+                                     0xee,
+                                     0xfc,
+                                     0xfe,
+                                     0xfd,
 
-            /// break cannot be the first byte
+                                     /// break cannot be the first byte
 
-            0xff};
+                                     0xff};
 
     for (auto i = 0; i < 256; ++i)
     {
@@ -2545,7 +2497,8 @@ TEST_CASE("examples from RFC 7049 Appendix A")
         CHECK(json::parse("\"\\ud800\\udd51\"") == json::from_cbor(std::vector<uint8_t>({0x64, 0xf0, 0x90, 0x85, 0x91})));
 
         // indefinite length strings
-        CHECK(json::parse("\"streaming\"") == json::from_cbor(std::vector<uint8_t>({0x7f, 0x65, 0x73, 0x74, 0x72, 0x65, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x67, 0xff})));
+        CHECK(json::parse("\"streaming\"") ==
+              json::from_cbor(std::vector<uint8_t>({0x7f, 0x65, 0x73, 0x74, 0x72, 0x65, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x67, 0xff})));
     }
 
     SECTION("byte arrays")
@@ -2559,20 +2512,35 @@ TEST_CASE("examples from RFC 7049 Appendix A")
 
         // 0xd8
         CHECK(json::to_cbor(json::binary(std::vector<uint8_t>{}, 0x42)) == std::vector<uint8_t>{0xd8, 0x42, 0x40});
-        CHECK(!json::from_cbor(json::to_cbor(json::binary(std::vector<uint8_t>{}, 0x42)), true, true, json::cbor_tag_handler_t::ignore).get_binary().has_subtype());
-        CHECK(json::from_cbor(json::to_cbor(json::binary(std::vector<uint8_t>{}, 0x42)), true, true, json::cbor_tag_handler_t::store).get_binary().subtype() == 0x42);
+        CHECK(!json::from_cbor(json::to_cbor(json::binary(std::vector<uint8_t>{}, 0x42)), true, true, json::cbor_tag_handler_t::ignore)
+                   .get_binary()
+                   .has_subtype());
+        CHECK(json::from_cbor(json::to_cbor(json::binary(std::vector<uint8_t>{}, 0x42)), true, true, json::cbor_tag_handler_t::store).get_binary().subtype() ==
+              0x42);
         // 0xd9
         CHECK(json::to_cbor(json::binary(std::vector<uint8_t>{}, 1000)) == std::vector<uint8_t>{0xd9, 0x03, 0xe8, 0x40});
-        CHECK(!json::from_cbor(json::to_cbor(json::binary(std::vector<uint8_t>{}, 1000)), true, true, json::cbor_tag_handler_t::ignore).get_binary().has_subtype());
-        CHECK(json::from_cbor(json::to_cbor(json::binary(std::vector<uint8_t>{}, 1000)), true, true, json::cbor_tag_handler_t::store).get_binary().subtype() == 1000);
+        CHECK(!json::from_cbor(json::to_cbor(json::binary(std::vector<uint8_t>{}, 1000)), true, true, json::cbor_tag_handler_t::ignore)
+                   .get_binary()
+                   .has_subtype());
+        CHECK(json::from_cbor(json::to_cbor(json::binary(std::vector<uint8_t>{}, 1000)), true, true, json::cbor_tag_handler_t::store).get_binary().subtype() ==
+              1000);
         // 0xda
         CHECK(json::to_cbor(json::binary(std::vector<uint8_t>{}, 394216)) == std::vector<uint8_t>{0xda, 0x00, 0x06, 0x03, 0xe8, 0x40});
-        CHECK(!json::from_cbor(json::to_cbor(json::binary(std::vector<uint8_t>{}, 394216)), true, true, json::cbor_tag_handler_t::ignore).get_binary().has_subtype());
-        CHECK(json::from_cbor(json::to_cbor(json::binary(std::vector<uint8_t>{}, 394216)), true, true, json::cbor_tag_handler_t::store).get_binary().subtype() == 394216);
+        CHECK(!json::from_cbor(json::to_cbor(json::binary(std::vector<uint8_t>{}, 394216)), true, true, json::cbor_tag_handler_t::ignore)
+                   .get_binary()
+                   .has_subtype());
+        CHECK(
+            json::from_cbor(json::to_cbor(json::binary(std::vector<uint8_t>{}, 394216)), true, true, json::cbor_tag_handler_t::store).get_binary().subtype() ==
+            394216);
         // 0xdb
-        CHECK(json::to_cbor(json::binary(std::vector<uint8_t>{}, 8589934590)) == std::vector<uint8_t>{0xdb, 0x00, 0x00, 0x00, 0x01, 0xff, 0xff, 0xff, 0xfe, 0x40});
-        CHECK(!json::from_cbor(json::to_cbor(json::binary(std::vector<uint8_t>{}, 8589934590)), true, true, json::cbor_tag_handler_t::ignore).get_binary().has_subtype());
-        CHECK(json::from_cbor(json::to_cbor(json::binary(std::vector<uint8_t>{}, 8589934590)), true, true, json::cbor_tag_handler_t::store).get_binary().subtype() == 8589934590);
+        CHECK(json::to_cbor(json::binary(std::vector<uint8_t>{}, 8589934590)) ==
+              std::vector<uint8_t>{0xdb, 0x00, 0x00, 0x00, 0x01, 0xff, 0xff, 0xff, 0xfe, 0x40});
+        CHECK(!json::from_cbor(json::to_cbor(json::binary(std::vector<uint8_t>{}, 8589934590)), true, true, json::cbor_tag_handler_t::ignore)
+                   .get_binary()
+                   .has_subtype());
+        CHECK(json::from_cbor(json::to_cbor(json::binary(std::vector<uint8_t>{}, 8589934590)), true, true, json::cbor_tag_handler_t::store)
+                  .get_binary()
+                  .subtype() == 8589934590);
     }
 
     SECTION("arrays")
@@ -2586,8 +2554,12 @@ TEST_CASE("examples from RFC 7049 Appendix A")
         CHECK(json::to_cbor(json::parse("[1, [2, 3], [4, 5]]")) == std::vector<uint8_t>({0x83, 0x01, 0x82, 0x02, 0x03, 0x82, 0x04, 0x05}));
         CHECK(json::parse("[1, [2, 3], [4, 5]]") == json::from_cbor(std::vector<uint8_t>({0x83, 0x01, 0x82, 0x02, 0x03, 0x82, 0x04, 0x05})));
 
-        CHECK(json::to_cbor(json::parse("[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]")) == std::vector<uint8_t>({0x98, 0x19, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x18, 0x18, 0x19}));
-        CHECK(json::parse("[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]") == json::from_cbor(std::vector<uint8_t>({0x98, 0x19, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x18, 0x18, 0x19})));
+        CHECK(json::to_cbor(json::parse("[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]")) ==
+              std::vector<uint8_t>({0x98, 0x19, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d,
+                                    0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x18, 0x18, 0x19}));
+        CHECK(json::parse("[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]") ==
+              json::from_cbor(std::vector<uint8_t>({0x98, 0x19, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d,
+                                                    0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x18, 0x18, 0x19})));
 
         // indefinite length arrays
         CHECK(json::parse("[]") == json::from_cbor(std::vector<uint8_t>({0x9f, 0xff})));
@@ -2595,7 +2567,9 @@ TEST_CASE("examples from RFC 7049 Appendix A")
         CHECK(json::parse("[1, [2, 3], [4, 5]]") == json::from_cbor(std::vector<uint8_t>({0x9f, 0x01, 0x82, 0x02, 0x03, 0x82, 0x04, 0x05, 0xff})));
         CHECK(json::parse("[1, [2, 3], [4, 5]]") == json::from_cbor(std::vector<uint8_t>({0x83, 0x01, 0x82, 0x02, 0x03, 0x9f, 0x04, 0x05, 0xff})));
         CHECK(json::parse("[1, [2, 3], [4, 5]]") == json::from_cbor(std::vector<uint8_t>({0x83, 0x01, 0x9f, 0x02, 0x03, 0xff, 0x82, 0x04, 0x05})));
-        CHECK(json::parse("[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]") == json::from_cbor(std::vector<uint8_t>({0x9f, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x18, 0x18, 0x19, 0xff})));
+        CHECK(json::parse("[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]") ==
+              json::from_cbor(std::vector<uint8_t>({0x9f, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e,
+                                                    0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x18, 0x18, 0x19, 0xff})));
     }
 
     SECTION("objects")
@@ -2609,13 +2583,19 @@ TEST_CASE("examples from RFC 7049 Appendix A")
         CHECK(json::to_cbor(json::parse("[\"a\", {\"b\": \"c\"}]")) == std::vector<uint8_t>({0x82, 0x61, 0x61, 0xa1, 0x61, 0x62, 0x61, 0x63}));
         CHECK(json::parse("[\"a\", {\"b\": \"c\"}]") == json::from_cbor(std::vector<uint8_t>({0x82, 0x61, 0x61, 0xa1, 0x61, 0x62, 0x61, 0x63})));
 
-        CHECK(json::to_cbor(json::parse("{\"a\": \"A\", \"b\": \"B\", \"c\": \"C\", \"d\": \"D\", \"e\": \"E\"}")) == std::vector<uint8_t>({0xa5, 0x61, 0x61, 0x61, 0x41, 0x61, 0x62, 0x61, 0x42, 0x61, 0x63, 0x61, 0x43, 0x61, 0x64, 0x61, 0x44, 0x61, 0x65, 0x61, 0x45}));
-        CHECK(json::parse("{\"a\": \"A\", \"b\": \"B\", \"c\": \"C\", \"d\": \"D\", \"e\": \"E\"}") == json::from_cbor(std::vector<uint8_t>({0xa5, 0x61, 0x61, 0x61, 0x41, 0x61, 0x62, 0x61, 0x42, 0x61, 0x63, 0x61, 0x43, 0x61, 0x64, 0x61, 0x44, 0x61, 0x65, 0x61, 0x45})));
+        CHECK(json::to_cbor(json::parse("{\"a\": \"A\", \"b\": \"B\", \"c\": \"C\", \"d\": \"D\", \"e\": \"E\"}")) ==
+              std::vector<uint8_t>(
+                  {0xa5, 0x61, 0x61, 0x61, 0x41, 0x61, 0x62, 0x61, 0x42, 0x61, 0x63, 0x61, 0x43, 0x61, 0x64, 0x61, 0x44, 0x61, 0x65, 0x61, 0x45}));
+        CHECK(json::parse("{\"a\": \"A\", \"b\": \"B\", \"c\": \"C\", \"d\": \"D\", \"e\": \"E\"}") ==
+              json::from_cbor(std::vector<uint8_t>(
+                  {0xa5, 0x61, 0x61, 0x61, 0x41, 0x61, 0x62, 0x61, 0x42, 0x61, 0x63, 0x61, 0x43, 0x61, 0x64, 0x61, 0x44, 0x61, 0x65, 0x61, 0x45})));
 
         // indefinite length objects
-        CHECK(json::parse("{\"a\": 1, \"b\": [2, 3]}") == json::from_cbor(std::vector<uint8_t>({0xbf, 0x61, 0x61, 0x01, 0x61, 0x62, 0x9f, 0x02, 0x03, 0xff, 0xff})));
+        CHECK(json::parse("{\"a\": 1, \"b\": [2, 3]}") ==
+              json::from_cbor(std::vector<uint8_t>({0xbf, 0x61, 0x61, 0x01, 0x61, 0x62, 0x9f, 0x02, 0x03, 0xff, 0xff})));
         CHECK(json::parse("[\"a\", {\"b\": \"c\"}]") == json::from_cbor(std::vector<uint8_t>({0x82, 0x61, 0x61, 0xbf, 0x61, 0x62, 0x61, 0x63, 0xff})));
-        CHECK(json::parse("{\"Fun\": true, \"Amt\": -2}") == json::from_cbor(std::vector<uint8_t>({0xbf, 0x63, 0x46, 0x75, 0x6e, 0xf5, 0x63, 0x41, 0x6d, 0x74, 0x21, 0xff})));
+        CHECK(json::parse("{\"Fun\": true, \"Amt\": -2}") ==
+              json::from_cbor(std::vector<uint8_t>({0xbf, 0x63, 0x46, 0x75, 0x6e, 0xf5, 0x63, 0x41, 0x6d, 0x74, 0x21, 0xff})));
     }
 }
 
@@ -2626,22 +2606,7 @@ TEST_CASE("Tagged values")
 
     SECTION("0xC6..0xD4")
     {
-        for (const auto b : std::vector<std::uint8_t>{
-                 0xC6,
-                 0xC7,
-                 0xC8,
-                 0xC9,
-                 0xCA,
-                 0xCB,
-                 0xCC,
-                 0xCD,
-                 0xCE,
-                 0xCF,
-                 0xD0,
-                 0xD1,
-                 0xD2,
-                 0xD3,
-                 0xD4})
+        for (const auto b : std::vector<std::uint8_t>{0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF, 0xD0, 0xD1, 0xD2, 0xD3, 0xD4})
         {
             CAPTURE(b);
 
@@ -2829,7 +2794,9 @@ TEST_CASE("Tagged values")
 
         // parse error when parsing tagged value
         json _;
-        CHECK_THROWS_WITH_AS(_ = json::from_cbor(vec), "[json.exception.parse_error.112] parse error at byte 9: syntax error while parsing CBOR value: invalid byte: 0xD8", json::parse_error);
+        CHECK_THROWS_WITH_AS(_ = json::from_cbor(vec),
+                             "[json.exception.parse_error.112] parse error at byte 9: syntax error while parsing CBOR value: invalid byte: 0xD8",
+                             json::parse_error);
 
         // binary without subtype when tags are ignored
         json jb = json::from_cbor(vec, true, true, json::cbor_tag_handler_t::ignore);

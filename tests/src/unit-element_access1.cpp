@@ -44,12 +44,8 @@ TEST_CASE("element access 1")
 
             SECTION("access outside bounds")
             {
-                CHECK_THROWS_WITH_AS(j.at(8),
-                                     "[json.exception.out_of_range.401] array index 8 is out of range",
-                                     json::out_of_range&);
-                CHECK_THROWS_WITH_AS(j_const.at(8),
-                                     "[json.exception.out_of_range.401] array index 8 is out of range",
-                                     json::out_of_range&);
+                CHECK_THROWS_WITH_AS(j.at(8), "[json.exception.out_of_range.401] array index 8 is out of range", json::out_of_range&);
+                CHECK_THROWS_WITH_AS(j_const.at(8), "[json.exception.out_of_range.401] array index 8 is out of range", json::out_of_range&);
             }
 
             SECTION("access on non-array type")
@@ -159,7 +155,9 @@ TEST_CASE("element access 1")
                         json j_nonarray(json::value_t::null);
                         const json j_nonarray_const(j_nonarray);
                         CHECK_NOTHROW(j_nonarray[0]);
-                        CHECK_THROWS_WITH_AS(j_nonarray_const[0], "[json.exception.type_error.305] cannot use operator[] with a numeric argument with null", json::type_error&);
+                        CHECK_THROWS_WITH_AS(j_nonarray_const[0],
+                                             "[json.exception.type_error.305] cannot use operator[] with a numeric argument with null",
+                                             json::type_error&);
                     }
 
                     SECTION("implicit transformation to properly filled array")
@@ -174,48 +172,72 @@ TEST_CASE("element access 1")
                 {
                     json j_nonarray(json::value_t::boolean);
                     const json j_nonarray_const(j_nonarray);
-                    CHECK_THROWS_WITH_AS(j_nonarray[0], "[json.exception.type_error.305] cannot use operator[] with a numeric argument with boolean", json::type_error&);
-                    CHECK_THROWS_WITH_AS(j_nonarray_const[0], "[json.exception.type_error.305] cannot use operator[] with a numeric argument with boolean", json::type_error&);
+                    CHECK_THROWS_WITH_AS(j_nonarray[0],
+                                         "[json.exception.type_error.305] cannot use operator[] with a numeric argument with boolean",
+                                         json::type_error&);
+                    CHECK_THROWS_WITH_AS(j_nonarray_const[0],
+                                         "[json.exception.type_error.305] cannot use operator[] with a numeric argument with boolean",
+                                         json::type_error&);
                 }
 
                 SECTION("string")
                 {
                     json j_nonarray(json::value_t::string);
                     const json j_nonarray_const(j_nonarray);
-                    CHECK_THROWS_WITH_AS(j_nonarray[0], "[json.exception.type_error.305] cannot use operator[] with a numeric argument with string", json::type_error&);
-                    CHECK_THROWS_WITH_AS(j_nonarray_const[0], "[json.exception.type_error.305] cannot use operator[] with a numeric argument with string", json::type_error&);
+                    CHECK_THROWS_WITH_AS(j_nonarray[0],
+                                         "[json.exception.type_error.305] cannot use operator[] with a numeric argument with string",
+                                         json::type_error&);
+                    CHECK_THROWS_WITH_AS(j_nonarray_const[0],
+                                         "[json.exception.type_error.305] cannot use operator[] with a numeric argument with string",
+                                         json::type_error&);
                 }
 
                 SECTION("object")
                 {
                     json j_nonarray(json::value_t::object);
                     const json j_nonarray_const(j_nonarray);
-                    CHECK_THROWS_WITH_AS(j_nonarray[0], "[json.exception.type_error.305] cannot use operator[] with a numeric argument with object", json::type_error&);
-                    CHECK_THROWS_WITH_AS(j_nonarray_const[0], "[json.exception.type_error.305] cannot use operator[] with a numeric argument with object", json::type_error&);
+                    CHECK_THROWS_WITH_AS(j_nonarray[0],
+                                         "[json.exception.type_error.305] cannot use operator[] with a numeric argument with object",
+                                         json::type_error&);
+                    CHECK_THROWS_WITH_AS(j_nonarray_const[0],
+                                         "[json.exception.type_error.305] cannot use operator[] with a numeric argument with object",
+                                         json::type_error&);
                 }
 
                 SECTION("number (integer)")
                 {
                     json j_nonarray(json::value_t::number_integer);
                     const json j_nonarray_const(j_nonarray);
-                    CHECK_THROWS_WITH_AS(j_nonarray[0], "[json.exception.type_error.305] cannot use operator[] with a numeric argument with number", json::type_error&);
-                    CHECK_THROWS_WITH_AS(j_nonarray_const[0], "[json.exception.type_error.305] cannot use operator[] with a numeric argument with number", json::type_error&);
+                    CHECK_THROWS_WITH_AS(j_nonarray[0],
+                                         "[json.exception.type_error.305] cannot use operator[] with a numeric argument with number",
+                                         json::type_error&);
+                    CHECK_THROWS_WITH_AS(j_nonarray_const[0],
+                                         "[json.exception.type_error.305] cannot use operator[] with a numeric argument with number",
+                                         json::type_error&);
                 }
 
                 SECTION("number (unsigned)")
                 {
                     json j_nonarray(json::value_t::number_unsigned);
                     const json j_nonarray_const(j_nonarray);
-                    CHECK_THROWS_WITH_AS(j_nonarray[0], "[json.exception.type_error.305] cannot use operator[] with a numeric argument with number", json::type_error&);
-                    CHECK_THROWS_WITH_AS(j_nonarray_const[0], "[json.exception.type_error.305] cannot use operator[] with a numeric argument with number", json::type_error&);
+                    CHECK_THROWS_WITH_AS(j_nonarray[0],
+                                         "[json.exception.type_error.305] cannot use operator[] with a numeric argument with number",
+                                         json::type_error&);
+                    CHECK_THROWS_WITH_AS(j_nonarray_const[0],
+                                         "[json.exception.type_error.305] cannot use operator[] with a numeric argument with number",
+                                         json::type_error&);
                 }
 
                 SECTION("number (floating-point)")
                 {
                     json j_nonarray(json::value_t::number_float);
                     const json j_nonarray_const(j_nonarray);
-                    CHECK_THROWS_WITH_AS(j_nonarray[0], "[json.exception.type_error.305] cannot use operator[] with a numeric argument with number", json::type_error&);
-                    CHECK_THROWS_WITH_AS(j_nonarray_const[0], "[json.exception.type_error.305] cannot use operator[] with a numeric argument with number", json::type_error&);
+                    CHECK_THROWS_WITH_AS(j_nonarray[0],
+                                         "[json.exception.type_error.305] cannot use operator[] with a numeric argument with number",
+                                         json::type_error&);
+                    CHECK_THROWS_WITH_AS(j_nonarray_const[0],
+                                         "[json.exception.type_error.305] cannot use operator[] with a numeric argument with number",
+                                         json::type_error&);
                 }
             }
         }
@@ -539,9 +561,7 @@ TEST_CASE("element access 1")
                 }
                 {
                     json j;
-                    CHECK_THROWS_WITH_AS(j.erase(j.begin()),
-                                         "[json.exception.type_error.307] cannot use erase() with null",
-                                         json::type_error&);
+                    CHECK_THROWS_WITH_AS(j.erase(j.begin()), "[json.exception.type_error.307] cannot use erase() with null", json::type_error&);
                 }
             }
 
@@ -823,12 +843,16 @@ TEST_CASE("element access 1")
                 {
                     json j = "foo";
                     CHECK_THROWS_WITH_AS(j.erase(j.end(), j.end()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
-                    CHECK_THROWS_WITH_AS(j.erase(j.begin(), j.begin()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
+                    CHECK_THROWS_WITH_AS(j.erase(j.begin(), j.begin()),
+                                         "[json.exception.invalid_iterator.204] iterators out of range",
+                                         json::invalid_iterator&);
                 }
                 {
                     json j = "bar";
                     CHECK_THROWS_WITH_AS(j.erase(j.cend(), j.cend()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
-                    CHECK_THROWS_WITH_AS(j.erase(j.cbegin(), j.cbegin()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
+                    CHECK_THROWS_WITH_AS(j.erase(j.cbegin(), j.cbegin()),
+                                         "[json.exception.invalid_iterator.204] iterators out of range",
+                                         json::invalid_iterator&);
                 }
             }
 
@@ -837,12 +861,16 @@ TEST_CASE("element access 1")
                 {
                     json j = false;
                     CHECK_THROWS_WITH_AS(j.erase(j.end(), j.end()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
-                    CHECK_THROWS_WITH_AS(j.erase(j.begin(), j.begin()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
+                    CHECK_THROWS_WITH_AS(j.erase(j.begin(), j.begin()),
+                                         "[json.exception.invalid_iterator.204] iterators out of range",
+                                         json::invalid_iterator&);
                 }
                 {
                     json j = true;
                     CHECK_THROWS_WITH_AS(j.erase(j.cend(), j.cend()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
-                    CHECK_THROWS_WITH_AS(j.erase(j.cbegin(), j.cbegin()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
+                    CHECK_THROWS_WITH_AS(j.erase(j.cbegin(), j.cbegin()),
+                                         "[json.exception.invalid_iterator.204] iterators out of range",
+                                         json::invalid_iterator&);
                 }
             }
 
@@ -851,12 +879,16 @@ TEST_CASE("element access 1")
                 {
                     json j = 17;
                     CHECK_THROWS_WITH_AS(j.erase(j.end(), j.end()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
-                    CHECK_THROWS_WITH_AS(j.erase(j.begin(), j.begin()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
+                    CHECK_THROWS_WITH_AS(j.erase(j.begin(), j.begin()),
+                                         "[json.exception.invalid_iterator.204] iterators out of range",
+                                         json::invalid_iterator&);
                 }
                 {
                     json j = 17;
                     CHECK_THROWS_WITH_AS(j.erase(j.cend(), j.cend()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
-                    CHECK_THROWS_WITH_AS(j.erase(j.cbegin(), j.cbegin()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
+                    CHECK_THROWS_WITH_AS(j.erase(j.cbegin(), j.cbegin()),
+                                         "[json.exception.invalid_iterator.204] iterators out of range",
+                                         json::invalid_iterator&);
                 }
             }
 
@@ -865,12 +897,16 @@ TEST_CASE("element access 1")
                 {
                     json j = 17u;
                     CHECK_THROWS_WITH_AS(j.erase(j.end(), j.end()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
-                    CHECK_THROWS_WITH_AS(j.erase(j.begin(), j.begin()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
+                    CHECK_THROWS_WITH_AS(j.erase(j.begin(), j.begin()),
+                                         "[json.exception.invalid_iterator.204] iterators out of range",
+                                         json::invalid_iterator&);
                 }
                 {
                     json j = 17u;
                     CHECK_THROWS_WITH_AS(j.erase(j.cend(), j.cend()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
-                    CHECK_THROWS_WITH_AS(j.erase(j.cbegin(), j.cbegin()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
+                    CHECK_THROWS_WITH_AS(j.erase(j.cbegin(), j.cbegin()),
+                                         "[json.exception.invalid_iterator.204] iterators out of range",
+                                         json::invalid_iterator&);
                 }
             }
 
@@ -879,12 +915,16 @@ TEST_CASE("element access 1")
                 {
                     json j = 23.42;
                     CHECK_THROWS_WITH_AS(j.erase(j.end(), j.end()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
-                    CHECK_THROWS_WITH_AS(j.erase(j.begin(), j.begin()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
+                    CHECK_THROWS_WITH_AS(j.erase(j.begin(), j.begin()),
+                                         "[json.exception.invalid_iterator.204] iterators out of range",
+                                         json::invalid_iterator&);
                 }
                 {
                     json j = 23.42;
                     CHECK_THROWS_WITH_AS(j.erase(j.cend(), j.cend()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
-                    CHECK_THROWS_WITH_AS(j.erase(j.cbegin(), j.cbegin()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
+                    CHECK_THROWS_WITH_AS(j.erase(j.cbegin(), j.cbegin()),
+                                         "[json.exception.invalid_iterator.204] iterators out of range",
+                                         json::invalid_iterator&);
                 }
             }
         }

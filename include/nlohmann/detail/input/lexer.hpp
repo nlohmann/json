@@ -24,7 +24,8 @@
 #include <nlohmann/detail/meta/type_traits.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
-namespace detail {
+namespace detail
+{
 
 ///////////
 // lexer //
@@ -1184,8 +1185,7 @@ scan_number_exponent:
 
             default:
             {
-                error_message =
-                    "invalid number; expected '+', '-', or digit after exponent";
+                error_message = "invalid number; expected '+', '-', or digit after exponent";
                 return token_type::parse_error;
             }
         }
@@ -1454,7 +1454,8 @@ scan_number_done:
             {
                 // escape control characters
                 std::array<char, 9> cs{{}};
-                static_cast<void>((std::snprintf)(cs.data(), cs.size(), "<U+%.4X>", static_cast<unsigned char>(c)));  // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+                static_cast<void>((
+                    std::snprintf)(cs.data(), cs.size(), "<U+%.4X>", static_cast<unsigned char>(c)));  // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
                 result += cs.data();
             }
             else
@@ -1547,17 +1548,23 @@ scan_number_done:
             // literals
             case 't':
             {
-                std::array<char_type, 4> true_literal = {{static_cast<char_type>('t'), static_cast<char_type>('r'), static_cast<char_type>('u'), static_cast<char_type>('e')}};
+                std::array<char_type, 4> true_literal = {
+                    {static_cast<char_type>('t'), static_cast<char_type>('r'), static_cast<char_type>('u'), static_cast<char_type>('e')}};
                 return scan_literal(true_literal.data(), true_literal.size(), token_type::literal_true);
             }
             case 'f':
             {
-                std::array<char_type, 5> false_literal = {{static_cast<char_type>('f'), static_cast<char_type>('a'), static_cast<char_type>('l'), static_cast<char_type>('s'), static_cast<char_type>('e')}};
+                std::array<char_type, 5> false_literal = {{static_cast<char_type>('f'),
+                                                           static_cast<char_type>('a'),
+                                                           static_cast<char_type>('l'),
+                                                           static_cast<char_type>('s'),
+                                                           static_cast<char_type>('e')}};
                 return scan_literal(false_literal.data(), false_literal.size(), token_type::literal_false);
             }
             case 'n':
             {
-                std::array<char_type, 4> null_literal = {{static_cast<char_type>('n'), static_cast<char_type>('u'), static_cast<char_type>('l'), static_cast<char_type>('l')}};
+                std::array<char_type, 4> null_literal = {
+                    {static_cast<char_type>('n'), static_cast<char_type>('u'), static_cast<char_type>('l'), static_cast<char_type>('l')}};
                 return scan_literal(null_literal.data(), null_literal.size(), token_type::literal_null);
             }
 

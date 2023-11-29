@@ -130,9 +130,7 @@ struct json_sax
     @param[in] ex          an exception object describing the error
     @return whether parsing should proceed (must return false)
     */
-    virtual bool parse_error(std::size_t position,
-                             const std::string& last_token,
-                             const detail::exception& ex) = 0;
+    virtual bool parse_error(std::size_t position, const std::string& last_token, const detail::exception& ex) = 0;
 
     json_sax() = default;
     json_sax(const json_sax&) = default;
@@ -142,7 +140,8 @@ struct json_sax
     virtual ~json_sax() = default;
 };
 
-namespace detail {
+namespace detail
+{
 /*!
 @brief SAX implementation to create a JSON value from SAX events
 
@@ -304,9 +303,7 @@ class json_sax_dom_parser
                object to which we can add elements
     */
     template<typename Value>
-    JSON_HEDLEY_RETURNS_NON_NULL
-        BasicJsonType*
-        handle_value(Value&& v)
+    JSON_HEDLEY_RETURNS_NON_NULL BasicJsonType* handle_value(Value&& v)
     {
         if (ref_stack.empty())
         {
@@ -352,9 +349,7 @@ class json_sax_dom_callback_parser
     using parser_callback_t = typename BasicJsonType::parser_callback_t;
     using parse_event_t = typename BasicJsonType::parse_event_t;
 
-    json_sax_dom_callback_parser(BasicJsonType& r,
-                                 const parser_callback_t cb,
-                                 const bool allow_exceptions_ = true)
+    json_sax_dom_callback_parser(BasicJsonType& r, const parser_callback_t cb, const bool allow_exceptions_ = true)
       : root(r)
       , callback(cb)
       , allow_exceptions(allow_exceptions_)

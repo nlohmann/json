@@ -15,7 +15,8 @@
 #include <nlohmann/detail/meta/void_t.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
-namespace detail {
+namespace detail
+{
 
 template<typename It, typename = void>
 struct iterator_types
@@ -37,14 +38,11 @@ struct iterator_types<
 // doesn't work with SFINAE. See https://github.com/nlohmann/json/issues/1341.
 template<typename T, typename = void>
 struct iterator_traits
-{
-};
+{};
 
 template<typename T>
-struct iterator_traits<T, enable_if_t<!std::is_pointer<T>::value>>
-  : iterator_types<T>
-{
-};
+struct iterator_traits<T, enable_if_t<!std::is_pointer<T>::value>> : iterator_types<T>
+{};
 
 template<typename T>
 struct iterator_traits<T*, enable_if_t<std::is_object<T>::value>>

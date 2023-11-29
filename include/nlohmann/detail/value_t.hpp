@@ -19,7 +19,8 @@
 #endif
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
-namespace detail {
+namespace detail
+{
 
 ///////////////////////////
 // JSON type enumeration //

@@ -18,10 +18,10 @@ DOCTEST_CLANG_SUPPRESS_WARNING("-Wstrict-overflow")
 static int assert_counter;
 
 /// set failure variable to true instead of calling assert(x)
-#define JSON_ASSERT(x)        \
-    {                         \
-        if (!(x))             \
-            ++assert_counter; \
+#define JSON_ASSERT(x)                                                                                                                                         \
+    {                                                                                                                                                          \
+        if (!(x))                                                                                                                                              \
+            ++assert_counter;                                                                                                                                  \
     }
 
 #include <nlohmann/json.hpp>

@@ -13,7 +13,8 @@
 #include <nlohmann/detail/abi_macros.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
-namespace detail {
+namespace detail
+{
 
 /*!
 @brief Default base class of the @ref basic_json class.
@@ -29,10 +30,7 @@ struct json_default_base
 {};
 
 template<class T>
-using json_base_class = typename std::conditional<
-    std::is_same<T, void>::value,
-    json_default_base,
-    T>::type;
+using json_base_class = typename std::conditional<std::is_same<T, void>::value, json_default_base, T>::type;
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END

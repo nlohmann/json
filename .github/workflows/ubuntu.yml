@@ -43,12 +43,14 @@ jobs:
 
   ci_static_analysis:
     runs-on: ubuntu-latest
-    container: ghcr.io/nlohmann/json-ci:v2.4.0
+    container: silkeh/clang:dev
     strategy:
       matrix:
         target: [ci_cppcheck, ci_test_valgrind, ci_test_amalgamation, ci_test_single_header, ci_single_binaries, ci_infer]
     steps:
       - uses: actions/checkout@v3
+      - name: Get latest CMake and ninja
+        uses: lukka/get-cmake@v3.27.7
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build

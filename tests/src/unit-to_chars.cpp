@@ -15,7 +15,8 @@
 #include <nlohmann/json.hpp>
 using nlohmann::detail::dtoa_impl::reinterpret_bits;
 
-namespace {
+namespace
+{
 float make_float(uint32_t sign_bit, uint32_t biased_exponent, uint32_t significand)
 {
     assert(sign_bit == 0 || sign_bit == 1);
@@ -60,9 +61,7 @@ float make_float(uint64_t f, int e)
         e--;
     }
 
-    const uint64_t biased_exponent = (e == kDenormalExponent && (f & kHiddenBit) == 0)
-                                         ? 0
-                                         : static_cast<uint64_t>(e + kExponentBias);
+    const uint64_t biased_exponent = (e == kDenormalExponent && (f & kHiddenBit) == 0) ? 0 : static_cast<uint64_t>(e + kExponentBias);
 
     const uint64_t bits = (f & kSignificandMask) | (biased_exponent << kPhysicalSignificandSize);
     return reinterpret_bits<float>(static_cast<uint32_t>(bits));
@@ -112,9 +111,7 @@ double make_double(uint64_t f, int e)
         e--;
     }
 
-    const uint64_t biased_exponent = (e == kDenormalExponent && (f & kHiddenBit) == 0)
-                                         ? 0
-                                         : static_cast<uint64_t>(e + kExponentBias);
+    const uint64_t biased_exponent = (e == kDenormalExponent && (f & kHiddenBit) == 0) ? 0 : static_cast<uint64_t>(e + kExponentBias);
 
     const uint64_t bits = (f & kSignificandMask) | (biased_exponent << kPhysicalSignificandSize);
     return reinterpret_bits<double>(bits);

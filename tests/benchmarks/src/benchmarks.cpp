@@ -6,12 +6,12 @@
 // SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-#include <benchmark/benchmark.h>
 #include <fstream>
-#include <nlohmann/json.hpp>
 #include <numeric>
 #include <test_data.hpp>
 #include <vector>
+#include <nlohmann/json.hpp>
+#include <benchmark/benchmark.h>
 
 using json = nlohmann::json;
 

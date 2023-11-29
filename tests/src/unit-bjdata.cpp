@@ -21,7 +21,8 @@ using nlohmann::json;
 #include <limits>
 #include <set>
 
-namespace {
+namespace
+{
 class SaxCountdown
 {
   public:
@@ -89,7 +90,9 @@ class SaxCountdown
         return events_left-- > 0;
     }
 
-    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const json::exception& /*unused*/)  // NOLINT(readability-convert-member-functions-to-static)
+    bool parse_error(std::size_t /*unused*/,
+                     const std::string& /*unused*/,
+                     const json::exception& /*unused*/)  // NOLINT(readability-convert-member-functions-to-static)
     {
         return false;
     }
@@ -316,14 +319,10 @@ TEST_CASE("BJData")
 
                         // check individual bytes
                         CHECK(result[0] == 'L');
-                        int64_t const restored = (static_cast<int64_t>(result[8]) << 070) +
-                                                 (static_cast<int64_t>(result[7]) << 060) +
-                                                 (static_cast<int64_t>(result[6]) << 050) +
-                                                 (static_cast<int64_t>(result[5]) << 040) +
-                                                 (static_cast<int64_t>(result[4]) << 030) +
-                                                 (static_cast<int64_t>(result[3]) << 020) +
-                                                 (static_cast<int64_t>(result[2]) << 010) +
-                                                 static_cast<int64_t>(result[1]);
+                        int64_t const restored = (static_cast<int64_t>(result[8]) << 070) + (static_cast<int64_t>(result[7]) << 060) +
+                                                 (static_cast<int64_t>(result[6]) << 050) + (static_cast<int64_t>(result[5]) << 040) +
+                                                 (static_cast<int64_t>(result[4]) << 030) + (static_cast<int64_t>(result[3]) << 020) +
+                                                 (static_cast<int64_t>(result[2]) << 010) + static_cast<int64_t>(result[1]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -369,10 +368,8 @@ TEST_CASE("BJData")
 
                         // check individual bytes
                         CHECK(result[0] == 'l');
-                        int32_t const restored = (static_cast<int32_t>(result[4]) << 030) +
-                                                 (static_cast<int32_t>(result[3]) << 020) +
-                                                 (static_cast<int32_t>(result[2]) << 010) +
-                                                 static_cast<int32_t>(result[1]);
+                        int32_t const restored = (static_cast<int32_t>(result[4]) << 030) + (static_cast<int32_t>(result[3]) << 020) +
+                                                 (static_cast<int32_t>(result[2]) << 010) + static_cast<int32_t>(result[1]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -575,11 +572,7 @@ TEST_CASE("BJData")
 
                 SECTION("32768..65535 (uint16)")
                 {
-                    for (const uint32_t i :
-                         {
-                             32768u,
-                             55555u,
-                             65535u})
+                    for (const uint32_t i : {32768u, 55555u, 65535u})
                     {
                         CAPTURE(i)
 
@@ -615,11 +608,7 @@ TEST_CASE("BJData")
 
                 SECTION("65536..2147483647 (int32)")
                 {
-                    for (const uint32_t i :
-                         {
-                             65536u,
-                             77777u,
-                             2147483647u})
+                    for (const uint32_t i : {65536u, 77777u, 2147483647u})
                     {
                         CAPTURE(i)
 
@@ -646,10 +635,8 @@ TEST_CASE("BJData")
 
                         // check individual bytes
                         CHECK(result[0] == 'l');
-                        uint32_t const restored = (static_cast<uint32_t>(result[4]) << 030) +
-                                                  (static_cast<uint32_t>(result[3]) << 020) +
-                                                  (static_cast<uint32_t>(result[2]) << 010) +
-                                                  static_cast<uint32_t>(result[1]);
+                        uint32_t const restored = (static_cast<uint32_t>(result[4]) << 030) + (static_cast<uint32_t>(result[3]) << 020) +
+                                                  (static_cast<uint32_t>(result[2]) << 010) + static_cast<uint32_t>(result[1]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -660,11 +647,7 @@ TEST_CASE("BJData")
 
                 SECTION("2147483648..4294967295 (uint32)")
                 {
-                    for (const uint32_t i :
-                         {
-                             2147483648u,
-                             3333333333u,
-                             4294967295u})
+                    for (const uint32_t i : {2147483648u, 3333333333u, 4294967295u})
                     {
                         CAPTURE(i)
 
@@ -691,10 +674,8 @@ TEST_CASE("BJData")
 
                         // check individual bytes
                         CHECK(result[0] == 'm');
-                        uint32_t const restored = (static_cast<uint32_t>(result[4]) << 030) +
-                                                  (static_cast<uint32_t>(result[3]) << 020) +
-                                                  (static_cast<uint32_t>(result[2]) << 010) +
-                                                  static_cast<uint32_t>(result[1]);
+                        uint32_t const restored = (static_cast<uint32_t>(result[4]) << 030) + (static_cast<uint32_t>(result[3]) << 020) +
+                                                  (static_cast<uint32_t>(result[2]) << 010) + static_cast<uint32_t>(result[1]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -737,14 +718,10 @@ TEST_CASE("BJData")
 
                         // check individual bytes
                         CHECK(result[0] == 'L');
-                        uint64_t const restored = (static_cast<uint64_t>(result[8]) << 070) +
-                                                  (static_cast<uint64_t>(result[7]) << 060) +
-                                                  (static_cast<uint64_t>(result[6]) << 050) +
-                                                  (static_cast<uint64_t>(result[5]) << 040) +
-                                                  (static_cast<uint64_t>(result[4]) << 030) +
-                                                  (static_cast<uint64_t>(result[3]) << 020) +
-                                                  (static_cast<uint64_t>(result[2]) << 010) +
-                                                  static_cast<uint64_t>(result[1]);
+                        uint64_t const restored = (static_cast<uint64_t>(result[8]) << 070) + (static_cast<uint64_t>(result[7]) << 060) +
+                                                  (static_cast<uint64_t>(result[6]) << 050) + (static_cast<uint64_t>(result[5]) << 040) +
+                                                  (static_cast<uint64_t>(result[4]) << 030) + (static_cast<uint64_t>(result[3]) << 020) +
+                                                  (static_cast<uint64_t>(result[2]) << 010) + static_cast<uint64_t>(result[1]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -786,14 +763,10 @@ TEST_CASE("BJData")
 
                         // check individual bytes
                         CHECK(result[0] == 'M');
-                        uint64_t const restored = (static_cast<uint64_t>(result[8]) << 070) +
-                                                  (static_cast<uint64_t>(result[7]) << 060) +
-                                                  (static_cast<uint64_t>(result[6]) << 050) +
-                                                  (static_cast<uint64_t>(result[5]) << 040) +
-                                                  (static_cast<uint64_t>(result[4]) << 030) +
-                                                  (static_cast<uint64_t>(result[3]) << 020) +
-                                                  (static_cast<uint64_t>(result[2]) << 010) +
-                                                  static_cast<uint64_t>(result[1]);
+                        uint64_t const restored = (static_cast<uint64_t>(result[8]) << 070) + (static_cast<uint64_t>(result[7]) << 060) +
+                                                  (static_cast<uint64_t>(result[6]) << 050) + (static_cast<uint64_t>(result[5]) << 040) +
+                                                  (static_cast<uint64_t>(result[4]) << 030) + (static_cast<uint64_t>(result[3]) << 020) +
+                                                  (static_cast<uint64_t>(result[2]) << 010) + static_cast<uint64_t>(result[1]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -904,11 +877,7 @@ TEST_CASE("BJData")
 
                 SECTION("32768..65535 (uint16)")
                 {
-                    for (const uint32_t i :
-                         {
-                             32768u,
-                             55555u,
-                             65535u})
+                    for (const uint32_t i : {32768u, 55555u, 65535u})
                     {
                         CAPTURE(i)
 
@@ -942,11 +911,7 @@ TEST_CASE("BJData")
                 }
                 SECTION("65536..2147483647 (int32)")
                 {
-                    for (const uint32_t i :
-                         {
-                             65536u,
-                             77777u,
-                             2147483647u})
+                    for (const uint32_t i : {65536u, 77777u, 2147483647u})
                     {
                         CAPTURE(i)
 
@@ -972,10 +937,8 @@ TEST_CASE("BJData")
 
                         // check individual bytes
                         CHECK(result[0] == 'l');
-                        uint32_t const restored = (static_cast<uint32_t>(result[4]) << 030) +
-                                                  (static_cast<uint32_t>(result[3]) << 020) +
-                                                  (static_cast<uint32_t>(result[2]) << 010) +
-                                                  static_cast<uint32_t>(result[1]);
+                        uint32_t const restored = (static_cast<uint32_t>(result[4]) << 030) + (static_cast<uint32_t>(result[3]) << 020) +
+                                                  (static_cast<uint32_t>(result[2]) << 010) + static_cast<uint32_t>(result[1]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -986,11 +949,7 @@ TEST_CASE("BJData")
 
                 SECTION("2147483648..4294967295 (uint32)")
                 {
-                    for (const uint32_t i :
-                         {
-                             2147483648u,
-                             3333333333u,
-                             4294967295u})
+                    for (const uint32_t i : {2147483648u, 3333333333u, 4294967295u})
                     {
                         CAPTURE(i)
 
@@ -1016,10 +975,8 @@ TEST_CASE("BJData")
 
                         // check individual bytes
                         CHECK(result[0] == 'm');
-                        uint32_t const restored = (static_cast<uint32_t>(result[4]) << 030) +
-                                                  (static_cast<uint32_t>(result[3]) << 020) +
-                                                  (static_cast<uint32_t>(result[2]) << 010) +
-                                                  static_cast<uint32_t>(result[1]);
+                        uint32_t const restored = (static_cast<uint32_t>(result[4]) << 030) + (static_cast<uint32_t>(result[3]) << 020) +
+                                                  (static_cast<uint32_t>(result[2]) << 010) + static_cast<uint32_t>(result[1]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -1061,14 +1018,10 @@ TEST_CASE("BJData")
 
                         // check individual bytes
                         CHECK(result[0] == 'L');
-                        uint64_t const restored = (static_cast<uint64_t>(result[8]) << 070) +
-                                                  (static_cast<uint64_t>(result[7]) << 060) +
-                                                  (static_cast<uint64_t>(result[6]) << 050) +
-                                                  (static_cast<uint64_t>(result[5]) << 040) +
-                                                  (static_cast<uint64_t>(result[4]) << 030) +
-                                                  (static_cast<uint64_t>(result[3]) << 020) +
-                                                  (static_cast<uint64_t>(result[2]) << 010) +
-                                                  static_cast<uint64_t>(result[1]);
+                        uint64_t const restored = (static_cast<uint64_t>(result[8]) << 070) + (static_cast<uint64_t>(result[7]) << 060) +
+                                                  (static_cast<uint64_t>(result[6]) << 050) + (static_cast<uint64_t>(result[5]) << 040) +
+                                                  (static_cast<uint64_t>(result[4]) << 030) + (static_cast<uint64_t>(result[3]) << 020) +
+                                                  (static_cast<uint64_t>(result[2]) << 010) + static_cast<uint64_t>(result[1]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -1110,14 +1063,10 @@ TEST_CASE("BJData")
 
                         // check individual bytes
                         CHECK(result[0] == 'M');
-                        uint64_t const restored = (static_cast<uint64_t>(result[8]) << 070) +
-                                                  (static_cast<uint64_t>(result[7]) << 060) +
-                                                  (static_cast<uint64_t>(result[6]) << 050) +
-                                                  (static_cast<uint64_t>(result[5]) << 040) +
-                                                  (static_cast<uint64_t>(result[4]) << 030) +
-                                                  (static_cast<uint64_t>(result[3]) << 020) +
-                                                  (static_cast<uint64_t>(result[2]) << 010) +
-                                                  static_cast<uint64_t>(result[1]);
+                        uint64_t const restored = (static_cast<uint64_t>(result[8]) << 070) + (static_cast<uint64_t>(result[7]) << 060) +
+                                                  (static_cast<uint64_t>(result[6]) << 050) + (static_cast<uint64_t>(result[5]) << 040) +
+                                                  (static_cast<uint64_t>(result[4]) << 030) + (static_cast<uint64_t>(result[3]) << 020) +
+                                                  (static_cast<uint64_t>(result[2]) << 010) + static_cast<uint64_t>(result[1]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -1132,17 +1081,7 @@ TEST_CASE("BJData")
                 {
                     double v = 3.1415925;
                     json const j = v;
-                    std::vector<uint8_t> const expected =
-                        {
-                            'D',
-                            0xfc,
-                            0xde,
-                            0xa6,
-                            0x3f,
-                            0xfb,
-                            0x21,
-                            0x09,
-                            0x40};
+                    std::vector<uint8_t> const expected = {'D', 0xfc, 0xde, 0xa6, 0x3f, 0xfb, 0x21, 0x09, 0x40};
                     const auto result = json::to_bjdata(j);
                     CHECK(result == expected);
 
@@ -1170,7 +1109,10 @@ TEST_CASE("BJData")
                     {
                         json _;
                         std::vector<uint8_t> const vec0 = {'h'};
-                        CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vec0), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing BJData number: unexpected end of input", json::parse_error&);
+                        CHECK_THROWS_WITH_AS(
+                            _ = json::from_bjdata(vec0),
+                            "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing BJData number: unexpected end of input",
+                            json::parse_error&);
                         CHECK(json::from_bjdata(vec0, true, false).is_discarded());
                     }
 
@@ -1178,7 +1120,10 @@ TEST_CASE("BJData")
                     {
                         json _;
                         std::vector<uint8_t> const vec1 = {'h', 0x00};
-                        CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vec1), "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing BJData number: unexpected end of input", json::parse_error&);
+                        CHECK_THROWS_WITH_AS(
+                            _ = json::from_bjdata(vec1),
+                            "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing BJData number: unexpected end of input",
+                            json::parse_error&);
                         CHECK(json::from_bjdata(vec1, true, false).is_discarded());
                     }
                 }
@@ -1274,7 +1219,8 @@ TEST_CASE("BJData")
             {
                 SECTION("unsigned integer number")
                 {
-                    std::vector<uint8_t> const vec = {'H', 'i', 0x14, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0'};
+                    std::vector<uint8_t> const vec = {'H', 'i', 0x14, '1', '2', '3', '4', '5', '6', '7', '8', '9',
+                                                      '0', '1', '2',  '3', '4', '5', '6', '7', '8', '9', '0'};
                     const auto j = json::from_bjdata(vec);
                     CHECK(j.is_number_unsigned());
                     CHECK(j.dump() == "12345678901234567890");
@@ -1282,7 +1228,8 @@ TEST_CASE("BJData")
 
                 SECTION("signed integer number")
                 {
-                    std::vector<uint8_t> const vec = {'H', 'i', 0x13, '-', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8'};
+                    std::vector<uint8_t> const vec = {'H', 'i', 0x13, '-', '1', '2', '3', '4', '5', '6', '7',
+                                                      '8', '9', '0',  '1', '2', '3', '4', '5', '6', '7', '8'};
                     const auto j = json::from_bjdata(vec);
                     CHECK(j.is_number_integer());
                     CHECK(j.dump() == "-123456789012345678");
@@ -1290,7 +1237,8 @@ TEST_CASE("BJData")
 
                 SECTION("floating-point number")
                 {
-                    std::vector<uint8_t> const vec = {'H', 'i', 0x16, '3', '.', '1', '4', '1', '5', '9', '2', '6', '5', '3', '5', '8', '9', '7', '9', '3', '2', '3', '8', '4', '6'};
+                    std::vector<uint8_t> const vec = {'H', 'i', 0x16, '3', '.', '1', '4', '1', '5', '9', '2', '6', '5',
+                                                      '3', '5', '8',  '9', '7', '9', '3', '2', '3', '8', '4', '6'};
                     const auto j = json::from_bjdata(vec);
                     CHECK(j.is_number_float());
                     CHECK(j.dump() == "3.141592653589793");
@@ -1307,11 +1255,20 @@ TEST_CASE("BJData")
 
                     json _;
                     std::vector<uint8_t> const vec2 = {'H', 'i', 2, '1', 'A', '3'};
-                    CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vec2), "[json.exception.parse_error.115] parse error at byte 5: syntax error while parsing BJData high-precision number: invalid number text: 1A", json::parse_error);
+                    CHECK_THROWS_WITH_AS(
+                        _ = json::from_bjdata(vec2),
+                        "[json.exception.parse_error.115] parse error at byte 5: syntax error while parsing BJData high-precision number: invalid number text: 1A",
+                        json::parse_error);
                     std::vector<uint8_t> const vec3 = {'H', 'i', 2, '1', '.'};
-                    CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vec3), "[json.exception.parse_error.115] parse error at byte 5: syntax error while parsing BJData high-precision number: invalid number text: 1.", json::parse_error);
+                    CHECK_THROWS_WITH_AS(
+                        _ = json::from_bjdata(vec3),
+                        "[json.exception.parse_error.115] parse error at byte 5: syntax error while parsing BJData high-precision number: invalid number text: 1.",
+                        json::parse_error);
                     std::vector<uint8_t> const vec4 = {'H', 2, '1', '0'};
-                    CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vec4), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing BJData size: expected length type specification (U, i, u, I, m, l, M, L) after '#'; last byte: 0x02", json::parse_error);
+                    CHECK_THROWS_WITH_AS(
+                        _ = json::from_bjdata(vec4),
+                        "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing BJData size: expected length type specification (U, i, u, I, m, l, M, L) after '#'; last byte: 0x02",
+                        json::parse_error);
                 }
             }
         }
@@ -1389,14 +1346,7 @@ TEST_CASE("BJData")
 
             SECTION("N = 256..32767")
             {
-                for (const size_t N :
-                     {
-                         256u,
-                         999u,
-                         1025u,
-                         3333u,
-                         2048u,
-                         32767u})
+                for (const size_t N : {256u, 999u, 1025u, 3333u, 2048u, 32767u})
                 {
                     CAPTURE(N)
 
@@ -1427,11 +1377,7 @@ TEST_CASE("BJData")
 
             SECTION("N = 32768..65535")
             {
-                for (const size_t N :
-                     {
-                         32768u,
-                         55555u,
-                         65535u})
+                for (const size_t N : {32768u, 55555u, 65535u})
                 {
                     CAPTURE(N)
 
@@ -1462,11 +1408,7 @@ TEST_CASE("BJData")
 
             SECTION("N = 65536..2147483647")
             {
-                for (const size_t N :
-                     {
-                         65536u,
-                         77777u,
-                         1048576u})
+                for (const size_t N : {65536u, 77777u, 1048576u})
                 {
                     CAPTURE(N)
 
@@ -1590,14 +1532,7 @@ TEST_CASE("BJData")
 
             SECTION("N = 256..32767")
             {
-                for (const std::size_t N :
-                     {
-                         256u,
-                         999u,
-                         1025u,
-                         3333u,
-                         2048u,
-                         32767u})
+                for (const std::size_t N : {256u, 999u, 1025u, 3333u, 2048u, 32767u})
                 {
                     CAPTURE(N)
 
@@ -1631,11 +1566,7 @@ TEST_CASE("BJData")
 
             SECTION("N = 32768..65535")
             {
-                for (const std::size_t N :
-                     {
-                         32768u,
-                         55555u,
-                         65535u})
+                for (const std::size_t N : {32768u, 55555u, 65535u})
                 {
                     CAPTURE(N)
 
@@ -1669,11 +1600,7 @@ TEST_CASE("BJData")
 
             SECTION("N = 65536..2147483647")
             {
-                for (const std::size_t N :
-                     {
-                         65536u,
-                         77777u,
-                         1048576u})
+                for (const std::size_t N : {65536u, 77777u, 1048576u})
                 {
                     CAPTURE(N)
 
@@ -2101,25 +2028,7 @@ TEST_CASE("BJData")
                 SECTION("size=false type=false")
                 {
                     json const j = json::parse(R"({"a": {"b": {"c": {}}}})");
-                    std::vector<uint8_t> const expected =
-                        {
-                            '{',
-                            'i',
-                            1,
-                            'a',
-                            '{',
-                            'i',
-                            1,
-                            'b',
-                            '{',
-                            'i',
-                            1,
-                            'c',
-                            '{',
-                            '}',
-                            '}',
-                            '}',
-                            '}'};
+                    std::vector<uint8_t> const expected = {'{', 'i', 1, 'a', '{', 'i', 1, 'b', '{', 'i', 1, 'c', '{', '}', '}', '}', '}'};
                     const auto result = json::to_bjdata(j);
                     CHECK(result == expected);
 
@@ -2131,33 +2040,8 @@ TEST_CASE("BJData")
                 SECTION("size=true type=false")
                 {
                     json const j = json::parse(R"({"a": {"b": {"c": {}}}})");
-                    std::vector<uint8_t> const expected =
-                        {
-                            '{',
-                            '#',
-                            'i',
-                            1,
-                            'i',
-                            1,
-                            'a',
-                            '{',
-                            '#',
-                            'i',
-                            1,
-                            'i',
-                            1,
-                            'b',
-                            '{',
-                            '#',
-                            'i',
-                            1,
-                            'i',
-                            1,
-                            'c',
-                            '{',
-                            '#',
-                            'i',
-                            0};
+                    std::vector<uint8_t> const expected = {'{', '#', 'i', 1,   'i', 1,   'a', '{', '#', 'i', 1,   'i', 1,
+                                                           'b', '{', '#', 'i', 1,   'i', 1,   'c', '{', '#', 'i', 0};
                     const auto result = json::to_bjdata(j, true);
                     CHECK(result == expected);
 
@@ -2169,33 +2053,8 @@ TEST_CASE("BJData")
                 SECTION("size=true type=true ignore object type marker")
                 {
                     json const j = json::parse(R"({"a": {"b": {"c": {}}}})");
-                    std::vector<uint8_t> const expected =
-                        {
-                            '{',
-                            '#',
-                            'i',
-                            1,
-                            'i',
-                            1,
-                            'a',
-                            '{',
-                            '#',
-                            'i',
-                            1,
-                            'i',
-                            1,
-                            'b',
-                            '{',
-                            '#',
-                            'i',
-                            1,
-                            'i',
-                            1,
-                            'c',
-                            '{',
-                            '#',
-                            'i',
-                            0};
+                    std::vector<uint8_t> const expected = {'{', '#', 'i', 1,   'i', 1,   'a', '{', '#', 'i', 1,   'i', 1,
+                                                           'b', '{', '#', 'i', 1,   'i', 1,   'c', '{', '#', 'i', 0};
                     const auto result = json::to_bjdata(j, true, true);
                     CHECK(result == expected);
 
@@ -2221,9 +2080,10 @@ TEST_CASE("BJData")
             SECTION("strict mode")
             {
                 json _;
-                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vec),
-                                     "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing BJData value: expected end of input; last byte: 0x5A",
-                                     json::parse_error&);
+                CHECK_THROWS_WITH_AS(
+                    _ = json::from_bjdata(vec),
+                    "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing BJData value: expected end of input; last byte: 0x5A",
+                    json::parse_error&);
             }
         }
     }
@@ -2396,9 +2256,12 @@ TEST_CASE("BJData")
                 std::vector<uint8_t> const v_u = {'[', '#', 'i', 2, 'u', 0x0F, 0xA7, 'u', 0x0F, 0xA7};
                 std::vector<uint8_t> const v_l = {'[', '#', 'i', 2, 'l', 0xFF, 0xFF, 0xFF, 0x7F, 'l', 0xFF, 0xFF, 0xFF, 0x7F};
                 std::vector<uint8_t> const v_m = {'[', '#', 'i', 2, 'm', 0xFF, 0xC9, 0x9A, 0xBB, 'm', 0xFF, 0xC9, 0x9A, 0xBB};
-                std::vector<uint8_t> const v_L = {'[', '#', 'i', 2, 'L', 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F, 'L', 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F};
-                std::vector<uint8_t> const v_M = {'[', '#', 'i', 2, 'M', 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D, 'M', 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D};
-                std::vector<uint8_t> const v_D = {'[', '#', 'i', 2, 'D', 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40, 'D', 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40};
+                std::vector<uint8_t> const v_L = {'[',  '#',  'i', 2,    'L',  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+                                                  0xFF, 0x7F, 'L', 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F};
+                std::vector<uint8_t> const v_M = {'[',  '#',  'i', 2,    'M',  0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6,
+                                                  0xE0, 0x8D, 'M', 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D};
+                std::vector<uint8_t> const v_D = {'[',  '#',  'i', 2,    'D',  0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21,
+                                                  0x09, 0x40, 'D', 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40};
                 std::vector<uint8_t> const v_S = {'[', '#', 'i', 2, 'S', 'i', 1, 'a', 'S', 'i', 1, 'a'};
                 std::vector<uint8_t> const v_C = {'[', '#', 'i', 2, 'C', 'a', 'C', 'a'};
 
@@ -2445,9 +2308,12 @@ TEST_CASE("BJData")
                 std::vector<uint8_t> const v_u = {'[', '$', 'u', '#', 'i', 2, 0x0F, 0xA7, 0x0F, 0xA7};
                 std::vector<uint8_t> const v_l = {'[', '$', 'l', '#', 'i', 2, 0xFF, 0xFF, 0xFF, 0x7F, 0xFF, 0xFF, 0xFF, 0x7F};
                 std::vector<uint8_t> const v_m = {'[', '$', 'm', '#', 'i', 2, 0xFF, 0xC9, 0x9A, 0xBB, 0xFF, 0xC9, 0x9A, 0xBB};
-                std::vector<uint8_t> const v_L = {'[', '$', 'L', '#', 'i', 2, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F};
-                std::vector<uint8_t> const v_M = {'[', '$', 'M', '#', 'i', 2, 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D, 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D};
-                std::vector<uint8_t> const v_D = {'[', '$', 'D', '#', 'i', 2, 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40, 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40};
+                std::vector<uint8_t> const v_L = {'[',  '$',  'L',  '#',  'i',  2,    0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+                                                  0xFF, 0xFF, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F};
+                std::vector<uint8_t> const v_M = {'[',  '$',  'M',  '#',  'i',  2,    0xFF, 0xFF, 0x63, 0xA7, 0xB3,
+                                                  0xB6, 0xE0, 0x8D, 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D};
+                std::vector<uint8_t> const v_D = {'[',  '$',  'D',  '#',  'i',  2,    0x4a, 0xd8, 0x12, 0x4d, 0xfb,
+                                                  0x21, 0x09, 0x40, 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40};
                 std::vector<uint8_t> const v_S = {'[', '#', 'i', 2, 'S', 'i', 1, 'a', 'S', 'i', 1, 'a'};
                 std::vector<uint8_t> const v_C = {'[', '$', 'C', '#', 'i', 2, 'a', 'a'};
 
@@ -2490,9 +2356,12 @@ TEST_CASE("BJData")
                 std::vector<uint8_t> const v_u = {'[', '$', 'u', '#', '[', '$', 'i', '#', 'i', 2, 1, 2, 0x0F, 0xA7, 0x0F, 0xA7};
                 std::vector<uint8_t> const v_l = {'[', '$', 'l', '#', '[', '$', 'i', '#', 'i', 2, 1, 2, 0xFF, 0xFF, 0xFF, 0x7F, 0xFF, 0xFF, 0xFF, 0x7F};
                 std::vector<uint8_t> const v_m = {'[', '$', 'm', '#', '[', '$', 'i', '#', 'i', 2, 1, 2, 0xFF, 0xC9, 0x9A, 0xBB, 0xFF, 0xC9, 0x9A, 0xBB};
-                std::vector<uint8_t> const v_L = {'[', '$', 'L', '#', '[', '$', 'i', '#', 'i', 2, 1, 2, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F};
-                std::vector<uint8_t> const v_M = {'[', '$', 'M', '#', '[', '$', 'i', '#', 'i', 2, 1, 2, 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D, 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D};
-                std::vector<uint8_t> const v_D = {'[', '$', 'D', '#', '[', '$', 'i', '#', 'i', 2, 1, 2, 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40, 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40};
+                std::vector<uint8_t> const v_L = {'[',  '$',  'L',  '#',  '[',  '$',  'i',  '#',  'i',  2,    1,    2,    0xFF, 0xFF,
+                                                  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F};
+                std::vector<uint8_t> const v_M = {'[',  '$',  'M',  '#',  '[',  '$',  'i',  '#',  'i',  2,    1,    2,    0xFF, 0xFF,
+                                                  0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D, 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D};
+                std::vector<uint8_t> const v_D = {'[',  '$',  'D',  '#',  '[',  '$',  'i',  '#',  'i',  2,    1,    2,    0x4a, 0xd8,
+                                                  0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40, 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40};
                 std::vector<uint8_t> const v_S = {'[', '#', '[', '$', 'i', '#', 'i', 2, 1, 2, 'S', 'i', 1, 'a', 'S', 'i', 1, 'a'};
                 std::vector<uint8_t> const v_C = {'[', '$', 'C', '#', '[', '$', 'i', '#', 'i', 2, 1, 2, 'a', 'a'};
 
@@ -2518,14 +2387,28 @@ TEST_CASE("BJData")
                 std::vector<uint8_t> const v_e = {'[', '$', 'U', '#', '[', '$', 'i', '#', 'i', 2, 2, 1, 0xFE, 0xFF};
                 std::vector<uint8_t> const v_U = {'[', '$', 'U', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
                 std::vector<uint8_t> const v_i = {'[', '$', 'i', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
-                std::vector<uint8_t> const v_u = {'[', '$', 'u', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x01, 0x00, 0x02, 0x00, 0x03, 0x00, 0x04, 0x00, 0x05, 0x00, 0x06, 0x00};
-                std::vector<uint8_t> const v_I = {'[', '$', 'I', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x01, 0x00, 0x02, 0x00, 0x03, 0x00, 0x04, 0x00, 0x05, 0x00, 0x06, 0x00};
-                std::vector<uint8_t> const v_m = {'[', '$', 'm', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x01, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00};
-                std::vector<uint8_t> const v_l = {'[', '$', 'l', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x01, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00};
-                std::vector<uint8_t> const v_M = {'[', '$', 'M', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-                std::vector<uint8_t> const v_L = {'[', '$', 'L', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-                std::vector<uint8_t> const v_d = {'[', '$', 'd', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x40, 0x40, 0x00, 0x00, 0x80, 0x40, 0x00, 0x00, 0xA0, 0x40, 0x00, 0x00, 0xC0, 0x40};
-                std::vector<uint8_t> const v_D = {'[', '$', 'D', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xF0, 0x3F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x14, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x18, 0x40};
+                std::vector<uint8_t> const v_u = {'[',  '$',  'u',  '#',  '[',  '$',  'i',  '#',  'i',  2,    2,    3,
+                                                  0x01, 0x00, 0x02, 0x00, 0x03, 0x00, 0x04, 0x00, 0x05, 0x00, 0x06, 0x00};
+                std::vector<uint8_t> const v_I = {'[',  '$',  'I',  '#',  '[',  '$',  'i',  '#',  'i',  2,    2,    3,
+                                                  0x01, 0x00, 0x02, 0x00, 0x03, 0x00, 0x04, 0x00, 0x05, 0x00, 0x06, 0x00};
+                std::vector<uint8_t> const v_m = {'[',  '$',  'm',  '#',  '[',  '$',  'i',  '#',  'i',  2,    2,    3,    0x01, 0x00, 0x00, 0x00, 0x02, 0x00,
+                                                  0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00};
+                std::vector<uint8_t> const v_l = {'[',  '$',  'l',  '#',  '[',  '$',  'i',  '#',  'i',  2,    2,    3,    0x01, 0x00, 0x00, 0x00, 0x02, 0x00,
+                                                  0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00};
+                std::vector<uint8_t> const v_M = {'[',  '$',  'M',  '#',  '[',  '$',  'i',  '#',  'i',  2,    2,    3,    0x01, 0x00, 0x00,
+                                                  0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00,
+                                                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05,
+                                                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+                std::vector<uint8_t> const v_L = {'[',  '$',  'L',  '#',  '[',  '$',  'i',  '#',  'i',  2,    2,    3,    0x01, 0x00, 0x00,
+                                                  0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00,
+                                                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05,
+                                                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+                std::vector<uint8_t> const v_d = {'[',  '$',  'd',  '#',  '[',  '$',  'i',  '#',  'i',  2,    2,    3,    0x00, 0x00, 0x80, 0x3F, 0x00, 0x00,
+                                                  0x00, 0x40, 0x00, 0x00, 0x40, 0x40, 0x00, 0x00, 0x80, 0x40, 0x00, 0x00, 0xA0, 0x40, 0x00, 0x00, 0xC0, 0x40};
+                std::vector<uint8_t> const v_D = {'[',  '$',  'D',  '#',  '[',  '$',  'i',  '#',  'i',  2,    2,    3,    0x00, 0x00, 0x00,
+                                                  0x00, 0x00, 0x00, 0xF0, 0x3F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00,
+                                                  0x00, 0x00, 0x00, 0x00, 0x08, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x40, 0x00,
+                                                  0x00, 0x00, 0x00, 0x00, 0x00, 0x14, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x18, 0x40};
                 std::vector<uint8_t> const v_C = {'[', '$', 'C', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 'a', 'b', 'c', 'd', 'e', 'f'};
 
                 // check if vector is parsed correctly
@@ -2569,9 +2452,12 @@ TEST_CASE("BJData")
                 std::vector<uint8_t> const v_u = {'[', '$', 'u', '#', '[', 'i', 1, 'i', 2, ']', 0x0F, 0xA7, 0x0F, 0xA7};
                 std::vector<uint8_t> const v_l = {'[', '$', 'l', '#', '[', 'i', 1, 'i', 2, ']', 0xFF, 0xFF, 0xFF, 0x7F, 0xFF, 0xFF, 0xFF, 0x7F};
                 std::vector<uint8_t> const v_m = {'[', '$', 'm', '#', '[', 'i', 1, 'i', 2, ']', 0xFF, 0xC9, 0x9A, 0xBB, 0xFF, 0xC9, 0x9A, 0xBB};
-                std::vector<uint8_t> const v_L = {'[', '$', 'L', '#', '[', 'i', 1, 'i', 2, ']', 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F};
-                std::vector<uint8_t> const v_M = {'[', '$', 'M', '#', '[', 'i', 1, 'i', 2, ']', 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D, 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D};
-                std::vector<uint8_t> const v_D = {'[', '$', 'D', '#', '[', 'i', 1, 'i', 2, ']', 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40, 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40};
+                std::vector<uint8_t> const v_L = {'[',  '$',  'L',  '#',  '[',  'i',  1,    'i',  2,    ']',  0xFF, 0xFF, 0xFF,
+                                                  0xFF, 0xFF, 0xFF, 0xFF, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F};
+                std::vector<uint8_t> const v_M = {'[',  '$',  'M',  '#',  '[',  'i',  1,    'i',  2,    ']',  0xFF, 0xFF, 0x63,
+                                                  0xA7, 0xB3, 0xB6, 0xE0, 0x8D, 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D};
+                std::vector<uint8_t> const v_D = {'[',  '$',  'D',  '#',  '[',  'i',  1,    'i',  2,    ']',  0x4a, 0xd8, 0x12,
+                                                  0x4d, 0xfb, 0x21, 0x09, 0x40, 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40};
                 std::vector<uint8_t> const v_S = {'[', '#', '[', 'i', 1, 'i', 2, ']', 'S', 'i', 1, 'a', 'S', 'i', 1, 'a'};
                 std::vector<uint8_t> const v_C = {'[', '$', 'C', '#', '[', 'i', 1, 'i', 2, ']', 'a', 'a'};
                 std::vector<uint8_t> const v_R = {'[', '#', '[', 'i', 2, ']', 'i', 6, 'U', 7};
@@ -2602,9 +2488,12 @@ TEST_CASE("BJData")
                 std::vector<uint8_t> const v_u = {'[', '$', 'u', '#', '[', '#', 'i', 2, 'i', 1, 'i', 2, 0x0F, 0xA7, 0x0F, 0xA7};
                 std::vector<uint8_t> const v_l = {'[', '$', 'l', '#', '[', '#', 'i', 2, 'i', 1, 'i', 2, 0xFF, 0xFF, 0xFF, 0x7F, 0xFF, 0xFF, 0xFF, 0x7F};
                 std::vector<uint8_t> const v_m = {'[', '$', 'm', '#', '[', '#', 'i', 2, 'i', 1, 'i', 2, 0xFF, 0xC9, 0x9A, 0xBB, 0xFF, 0xC9, 0x9A, 0xBB};
-                std::vector<uint8_t> const v_L = {'[', '$', 'L', '#', '[', '#', 'i', 2, 'i', 1, 'i', 2, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F};
-                std::vector<uint8_t> const v_M = {'[', '$', 'M', '#', '[', '#', 'i', 2, 'i', 1, 'i', 2, 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D, 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D};
-                std::vector<uint8_t> const v_D = {'[', '$', 'D', '#', '[', '#', 'i', 2, 'i', 1, 'i', 2, 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40, 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40};
+                std::vector<uint8_t> const v_L = {'[',  '$',  'L',  '#',  '[',  '#',  'i',  2,    'i',  1,    'i',  2,    0xFF, 0xFF,
+                                                  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F};
+                std::vector<uint8_t> const v_M = {'[',  '$',  'M',  '#',  '[',  '#',  'i',  2,    'i',  1,    'i',  2,    0xFF, 0xFF,
+                                                  0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D, 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D};
+                std::vector<uint8_t> const v_D = {'[',  '$',  'D',  '#',  '[',  '#',  'i',  2,    'i',  1,    'i',  2,    0x4a, 0xd8,
+                                                  0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40, 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40};
                 std::vector<uint8_t> const v_S = {'[', '#', '[', '#', 'i', 2, 'i', 1, 'i', 2, 'S', 'i', 1, 'a', 'S', 'i', 1, 'a'};
                 std::vector<uint8_t> const v_C = {'[', '$', 'C', '#', '[', '#', 'i', 2, 'i', 1, 'i', 2, 'a', 'a'};
 
@@ -2651,14 +2540,18 @@ TEST_CASE("BJData")
             {
                 std::vector<uint8_t> const v = {'C'};
                 json _;
-                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing BJData char: unexpected end of input", json::parse_error&);
+                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v),
+                                     "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing BJData char: unexpected end of input",
+                                     json::parse_error&);
             }
 
             SECTION("byte out of range")
             {
                 std::vector<uint8_t> const v = {'C', 130};
                 json _;
-                CHECK_THROWS_WITH(_ = json::from_bjdata(v), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing BJData char: byte after 'C' must be in range 0x00..0x7F; last byte: 0x82");
+                CHECK_THROWS_WITH(
+                    _ = json::from_bjdata(v),
+                    "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing BJData char: byte after 'C' must be in range 0x00..0x7F; last byte: 0x82");
             }
         }
 
@@ -2668,14 +2561,19 @@ TEST_CASE("BJData")
             {
                 std::vector<uint8_t> const v = {'S'};
                 json _;
-                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing BJData value: unexpected end of input", json::parse_error&);
+                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v),
+                                     "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing BJData value: unexpected end of input",
+                                     json::parse_error&);
             }
 
             SECTION("invalid byte")
             {
                 std::vector<uint8_t> const v = {'S', '1', 'a'};
                 json _;
-                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing BJData string: expected length type specification (U, i, u, I, m, l, M, L); last byte: 0x31", json::parse_error&);
+                CHECK_THROWS_WITH_AS(
+                    _ = json::from_bjdata(v),
+                    "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing BJData string: expected length type specification (U, i, u, I, m, l, M, L); last byte: 0x31",
+                    json::parse_error&);
             }
 
             SECTION("parse bjdata markers in ubjson")
@@ -2687,9 +2585,18 @@ TEST_CASE("BJData")
 
                 json _;
                 // check if string is parsed correctly to "a"
-                CHECK_THROWS_WITH_AS(_ = json::from_ubjson(s_u), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing UBJSON string: expected length type specification (U, i, I, l, L); last byte: 0x75", json::parse_error&);
-                CHECK_THROWS_WITH_AS(_ = json::from_ubjson(s_m), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing UBJSON string: expected length type specification (U, i, I, l, L); last byte: 0x6D", json::parse_error&);
-                CHECK_THROWS_WITH_AS(_ = json::from_ubjson(s_M), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing UBJSON string: expected length type specification (U, i, I, l, L); last byte: 0x4D", json::parse_error&);
+                CHECK_THROWS_WITH_AS(
+                    _ = json::from_ubjson(s_u),
+                    "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing UBJSON string: expected length type specification (U, i, I, l, L); last byte: 0x75",
+                    json::parse_error&);
+                CHECK_THROWS_WITH_AS(
+                    _ = json::from_ubjson(s_m),
+                    "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing UBJSON string: expected length type specification (U, i, I, l, L); last byte: 0x6D",
+                    json::parse_error&);
+                CHECK_THROWS_WITH_AS(
+                    _ = json::from_ubjson(s_M),
+                    "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing UBJSON string: expected length type specification (U, i, I, l, L); last byte: 0x4D",
+                    json::parse_error&);
             }
         }
 
@@ -2699,7 +2606,10 @@ TEST_CASE("BJData")
             {
                 std::vector<uint8_t> const v = {'[', '$', 'i', 2};
                 json _;
-                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v), "[json.exception.parse_error.112] parse error at byte 4: syntax error while parsing BJData size: expected '#' after type information; last byte: 0x02", json::parse_error&);
+                CHECK_THROWS_WITH_AS(
+                    _ = json::from_bjdata(v),
+                    "[json.exception.parse_error.112] parse error at byte 4: syntax error while parsing BJData size: expected '#' after type information; last byte: 0x02",
+                    json::parse_error&);
             }
 
             SECTION("optimized array: negative size")
@@ -2718,44 +2628,79 @@ TEST_CASE("BJData")
                 std::vector<uint8_t> const vMX = {'[', '$', 'U', '#', '[', 'M', 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 'U', 0x01, ']'};
 
                 json _;
-                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v1), "[json.exception.parse_error.113] parse error at byte 4: syntax error while parsing BJData size: count in an optimized container must be positive", json::parse_error&);
+                CHECK_THROWS_WITH_AS(
+                    _ = json::from_bjdata(v1),
+                    "[json.exception.parse_error.113] parse error at byte 4: syntax error while parsing BJData size: count in an optimized container must be positive",
+                    json::parse_error&);
                 CHECK(json::from_bjdata(v1, true, false).is_discarded());
 
-                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v2), "[json.exception.parse_error.113] parse error at byte 6: syntax error while parsing BJData size: count in an optimized container must be positive", json::parse_error&);
+                CHECK_THROWS_WITH_AS(
+                    _ = json::from_bjdata(v2),
+                    "[json.exception.parse_error.113] parse error at byte 6: syntax error while parsing BJData size: count in an optimized container must be positive",
+                    json::parse_error&);
                 CHECK(json::from_bjdata(v2, true, false).is_discarded());
 
-                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v3), "[json.exception.parse_error.113] parse error at byte 7: syntax error while parsing BJData size: count in an optimized container must be positive", json::parse_error&);
+                CHECK_THROWS_WITH_AS(
+                    _ = json::from_bjdata(v3),
+                    "[json.exception.parse_error.113] parse error at byte 7: syntax error while parsing BJData size: count in an optimized container must be positive",
+                    json::parse_error&);
                 CHECK(json::from_bjdata(v3, true, false).is_discarded());
 
-                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v4), "[json.exception.parse_error.113] parse error at byte 6: syntax error while parsing BJData size: count in an optimized container must be positive", json::parse_error&);
+                CHECK_THROWS_WITH_AS(
+                    _ = json::from_bjdata(v4),
+                    "[json.exception.parse_error.113] parse error at byte 6: syntax error while parsing BJData size: count in an optimized container must be positive",
+                    json::parse_error&);
                 CHECK(json::from_bjdata(v4, true, false).is_discarded());
 
-                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v5), "[json.exception.parse_error.113] parse error at byte 7: syntax error while parsing BJData size: count in an optimized container must be positive", json::parse_error&);
+                CHECK_THROWS_WITH_AS(
+                    _ = json::from_bjdata(v5),
+                    "[json.exception.parse_error.113] parse error at byte 7: syntax error while parsing BJData size: count in an optimized container must be positive",
+                    json::parse_error&);
                 CHECK(json::from_bjdata(v5, true, false).is_discarded());
 
-                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v6), "[json.exception.parse_error.113] parse error at byte 5: syntax error while parsing BJData size: count in an optimized container must be positive", json::parse_error&);
+                CHECK_THROWS_WITH_AS(
+                    _ = json::from_bjdata(v6),
+                    "[json.exception.parse_error.113] parse error at byte 5: syntax error while parsing BJData size: count in an optimized container must be positive",
+                    json::parse_error&);
                 CHECK(json::from_bjdata(v6, true, false).is_discarded());
 
-                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vI), "[json.exception.parse_error.113] parse error at byte 5: syntax error while parsing BJData size: count in an optimized container must be positive", json::parse_error&);
+                CHECK_THROWS_WITH_AS(
+                    _ = json::from_bjdata(vI),
+                    "[json.exception.parse_error.113] parse error at byte 5: syntax error while parsing BJData size: count in an optimized container must be positive",
+                    json::parse_error&);
                 CHECK(json::from_bjdata(vI, true, false).is_discarded());
 
-                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vl), "[json.exception.parse_error.113] parse error at byte 7: syntax error while parsing BJData size: count in an optimized container must be positive", json::parse_error&);
+                CHECK_THROWS_WITH_AS(
+                    _ = json::from_bjdata(vl),
+                    "[json.exception.parse_error.113] parse error at byte 7: syntax error while parsing BJData size: count in an optimized container must be positive",
+                    json::parse_error&);
                 CHECK(json::from_bjdata(vl, true, false).is_discarded());
 
-                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vL), "[json.exception.parse_error.113] parse error at byte 11: syntax error while parsing BJData size: count in an optimized container must be positive", json::parse_error&);
+                CHECK_THROWS_WITH_AS(
+                    _ = json::from_bjdata(vL),
+                    "[json.exception.parse_error.113] parse error at byte 11: syntax error while parsing BJData size: count in an optimized container must be positive",
+                    json::parse_error&);
                 CHECK(json::from_bjdata(vL, true, false).is_discarded());
 
 #if SIZE_MAX != 0xffffffff
-                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vM), "[json.exception.out_of_range.408] syntax error while parsing BJData size: excessive ndarray size caused overflow", json::out_of_range&);
+                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vM),
+                                     "[json.exception.out_of_range.408] syntax error while parsing BJData size: excessive ndarray size caused overflow",
+                                     json::out_of_range&);
 #else
-                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vM), "[json.exception.out_of_range.408] syntax error while parsing BJData size: integer value overflow", json::out_of_range&);
+                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vM),
+                                     "[json.exception.out_of_range.408] syntax error while parsing BJData size: integer value overflow",
+                                     json::out_of_range&);
 #endif
                 CHECK(json::from_bjdata(vM, true, false).is_discarded());
 
 #if SIZE_MAX != 0xffffffff
-                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vMX), "[json.exception.out_of_range.408] syntax error while parsing BJData size: excessive ndarray size caused overflow", json::out_of_range&);
+                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vMX),
+                                     "[json.exception.out_of_range.408] syntax error while parsing BJData size: excessive ndarray size caused overflow",
+                                     json::out_of_range&);
 #else
-                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vMX), "[json.exception.out_of_range.408] syntax error while parsing BJData size: integer value overflow", json::out_of_range&);
+                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vMX),
+                                     "[json.exception.out_of_range.408] syntax error while parsing BJData size: integer value overflow",
+                                     json::out_of_range&);
 #endif
                 CHECK(json::from_bjdata(vMX, true, false).is_discarded());
             }
@@ -2767,9 +2712,13 @@ TEST_CASE("BJData")
                 std::vector<uint8_t> const vM = {'[', '$', 'M', '#', '[', 'I', 0x00, 0x20, 'M', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0xFF, ']'};
 
                 json _;
-                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vL), "[json.exception.out_of_range.408] syntax error while parsing BJData size: integer value overflow", json::out_of_range&);
+                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vL),
+                                     "[json.exception.out_of_range.408] syntax error while parsing BJData size: integer value overflow",
+                                     json::out_of_range&);
                 CHECK(json::from_bjdata(vL, true, false).is_discarded());
-                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vM), "[json.exception.out_of_range.408] syntax error while parsing BJData size: integer value overflow", json::out_of_range&);
+                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vM),
+                                     "[json.exception.out_of_range.408] syntax error while parsing BJData size: integer value overflow",
+                                     json::out_of_range&);
                 CHECK(json::from_bjdata(vM, true, false).is_discarded());
 #endif
             }
@@ -2782,16 +2731,28 @@ TEST_CASE("BJData")
                 std::vector<uint8_t> const v_F = {'[', '$', 'F', '#', '[', '#', 'i', 2, 'i', 1, 'i', 2};
                 std::vector<uint8_t> const v_Z = {'[', '$', 'Z', '#', '[', '#', 'i', 2, 'i', 1, 'i', 2};
 
-                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v_N), "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing BJData type: marker 0x4E is not a permitted optimized array type", json::parse_error&);
+                CHECK_THROWS_WITH_AS(
+                    _ = json::from_bjdata(v_N),
+                    "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing BJData type: marker 0x4E is not a permitted optimized array type",
+                    json::parse_error&);
                 CHECK(json::from_bjdata(v_N, true, false).is_discarded());
 
-                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v_T), "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing BJData type: marker 0x54 is not a permitted optimized array type", json::parse_error&);
+                CHECK_THROWS_WITH_AS(
+                    _ = json::from_bjdata(v_T),
+                    "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing BJData type: marker 0x54 is not a permitted optimized array type",
+                    json::parse_error&);
                 CHECK(json::from_bjdata(v_T, true, false).is_discarded());
 
-                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v_F), "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing BJData type: marker 0x46 is not a permitted optimized array type", json::parse_error&);
+                CHECK_THROWS_WITH_AS(
+                    _ = json::from_bjdata(v_F),
+                    "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing BJData type: marker 0x46 is not a permitted optimized array type",
+                    json::parse_error&);
                 CHECK(json::from_bjdata(v_F, true, false).is_discarded());
 
-                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v_Z), "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing BJData type: marker 0x5A is not a permitted optimized array type", json::parse_error&);
+                CHECK_THROWS_WITH_AS(
+                    _ = json::from_bjdata(v_Z),
+                    "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing BJData type: marker 0x5A is not a permitted optimized array type",
+                    json::parse_error&);
                 CHECK(json::from_bjdata(v_Z, true, false).is_discarded());
             }
 
@@ -2803,16 +2764,28 @@ TEST_CASE("BJData")
                 std::vector<uint8_t> const v_F = {'[', '$', 'F', '#', '[', 'i', 1, 'i', 2, ']'};
                 std::vector<uint8_t> const v_Z = {'[', '$', 'Z', '#', '[', 'i', 1, 'i', 2, ']'};
 
-                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v_N), "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing BJData type: marker 0x4E is not a permitted optimized array type", json::parse_error&);
+                CHECK_THROWS_WITH_AS(
+                    _ = json::from_bjdata(v_N),
+                    "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing BJData type: marker 0x4E is not a permitted optimized array type",
+                    json::parse_error&);
                 CHECK(json::from_bjdata(v_N, true, false).is_discarded());
 
-                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v_T), "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing BJData type: marker 0x54 is not a permitted optimized array type", json::parse_error&);
+                CHECK_THROWS_WITH_AS(
+                    _ = json::from_bjdata(v_T),
+                    "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing BJData type: marker 0x54 is not a permitted optimized array type",
+                    json::parse_error&);
                 CHECK(json::from_bjdata(v_T, true, false).is_discarded());
 
-                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v_F), "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing BJData type: marker 0x46 is not a permitted optimized array type", json::parse_error&);
+                CHECK_THROWS_WITH_AS(
+                    _ = json::from_bjdata(v_F),
+                    "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing BJData type: marker 0x46 is not a permitted optimized array type",
+                    json::parse_error&);
                 CHECK(json::from_bjdata(v_F, true, false).is_discarded());
 
-                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v_Z), "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing BJData type: marker 0x5A is not a permitted optimized array type", json::parse_error&);
+                CHECK_THROWS_WITH_AS(
+                    _ = json::from_bjdata(v_Z),
+                    "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing BJData type: marker 0x5A is not a permitted optimized array type",
+                    json::parse_error&);
                 CHECK(json::from_bjdata(v_Z, true, false).is_discarded());
             }
         }
@@ -2821,15 +2794,21 @@ TEST_CASE("BJData")
         {
             std::vector<uint8_t> const vS = {'S'};
             json _;
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vS), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing BJData value: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vS),
+                                 "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing BJData value: unexpected end of input",
+                                 json::parse_error&);
             CHECK(json::from_bjdata(vS, true, false).is_discarded());
 
             std::vector<uint8_t> const v = {'S', 'i', '2', 'a'};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v), "[json.exception.parse_error.110] parse error at byte 5: syntax error while parsing BJData string: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v),
+                                 "[json.exception.parse_error.110] parse error at byte 5: syntax error while parsing BJData string: unexpected end of input",
+                                 json::parse_error&);
             CHECK(json::from_bjdata(v, true, false).is_discarded());
 
             std::vector<uint8_t> const vC = {'C'};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vC), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing BJData char: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vC),
+                                 "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing BJData char: unexpected end of input",
+                                 json::parse_error&);
             CHECK(json::from_bjdata(vC, true, false).is_discarded());
         }
 
@@ -2837,39 +2816,57 @@ TEST_CASE("BJData")
         {
             std::vector<uint8_t> const vU = {'[', '#', 'U'};
             json _;
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vU), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BJData number: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vU),
+                                 "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BJData number: unexpected end of input",
+                                 json::parse_error&);
             CHECK(json::from_bjdata(vU, true, false).is_discarded());
 
             std::vector<uint8_t> const vi = {'[', '#', 'i'};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vi), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BJData number: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vi),
+                                 "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BJData number: unexpected end of input",
+                                 json::parse_error&);
             CHECK(json::from_bjdata(vi, true, false).is_discarded());
 
             std::vector<uint8_t> const vI = {'[', '#', 'I'};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vI), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BJData number: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vI),
+                                 "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BJData number: unexpected end of input",
+                                 json::parse_error&);
             CHECK(json::from_bjdata(vI, true, false).is_discarded());
 
             std::vector<uint8_t> const vu = {'[', '#', 'u'};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vu), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BJData number: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vu),
+                                 "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BJData number: unexpected end of input",
+                                 json::parse_error&);
             CHECK(json::from_bjdata(vu, true, false).is_discarded());
 
             std::vector<uint8_t> const vl = {'[', '#', 'l'};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vl), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BJData number: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vl),
+                                 "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BJData number: unexpected end of input",
+                                 json::parse_error&);
             CHECK(json::from_bjdata(vl, true, false).is_discarded());
 
             std::vector<uint8_t> const vm = {'[', '#', 'm'};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vm), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BJData number: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vm),
+                                 "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BJData number: unexpected end of input",
+                                 json::parse_error&);
             CHECK(json::from_bjdata(vm, true, false).is_discarded());
 
             std::vector<uint8_t> const vL = {'[', '#', 'L'};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vL), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BJData number: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vL),
+                                 "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BJData number: unexpected end of input",
+                                 json::parse_error&);
             CHECK(json::from_bjdata(vL, true, false).is_discarded());
 
             std::vector<uint8_t> const vM = {'[', '#', 'M'};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vM), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BJData number: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vM),
+                                 "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BJData number: unexpected end of input",
+                                 json::parse_error&);
             CHECK(json::from_bjdata(vM, true, false).is_discarded());
 
             std::vector<uint8_t> const v0 = {'[', '#', 'T', ']'};
-            CHECK_THROWS_WITH(_ = json::from_bjdata(v0), "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing BJData size: expected length type specification (U, i, u, I, m, l, M, L) after '#'; last byte: 0x54");
+            CHECK_THROWS_WITH(
+                _ = json::from_bjdata(v0),
+                "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing BJData size: expected length type specification (U, i, u, I, m, l, M, L) after '#'; last byte: 0x54");
             CHECK(json::from_bjdata(v0, true, false).is_discarded());
         }
 
@@ -2877,19 +2874,31 @@ TEST_CASE("BJData")
         {
             json _;
             std::vector<uint8_t> const vu = {'[', '#', 'u'};
-            CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vu), "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing UBJSON size: expected length type specification (U, i, I, l, L) after '#'; last byte: 0x75", json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_ubjson(vu),
+                "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing UBJSON size: expected length type specification (U, i, I, l, L) after '#'; last byte: 0x75",
+                json::parse_error&);
             CHECK(json::from_ubjson(vu, true, false).is_discarded());
 
             std::vector<uint8_t> const vm = {'[', '#', 'm'};
-            CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vm), "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing UBJSON size: expected length type specification (U, i, I, l, L) after '#'; last byte: 0x6D", json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_ubjson(vm),
+                "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing UBJSON size: expected length type specification (U, i, I, l, L) after '#'; last byte: 0x6D",
+                json::parse_error&);
             CHECK(json::from_ubjson(vm, true, false).is_discarded());
 
             std::vector<uint8_t> const vM = {'[', '#', 'M'};
-            CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vM), "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing UBJSON size: expected length type specification (U, i, I, l, L) after '#'; last byte: 0x4D", json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_ubjson(vM),
+                "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing UBJSON size: expected length type specification (U, i, I, l, L) after '#'; last byte: 0x4D",
+                json::parse_error&);
             CHECK(json::from_ubjson(vM, true, false).is_discarded());
 
             std::vector<uint8_t> const v0 = {'[', '#', '['};
-            CHECK_THROWS_WITH_AS(_ = json::from_ubjson(v0), "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing UBJSON size: expected length type specification (U, i, I, l, L) after '#'; last byte: 0x5B", json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_ubjson(v0),
+                "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing UBJSON size: expected length type specification (U, i, I, l, L) after '#'; last byte: 0x5B",
+                json::parse_error&);
             CHECK(json::from_ubjson(v0, true, false).is_discarded());
         }
 
@@ -2897,19 +2906,28 @@ TEST_CASE("BJData")
         {
             std::vector<uint8_t> const v0 = {'[', '$'};
             json _;
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v0), "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing BJData type: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v0),
+                                 "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing BJData type: unexpected end of input",
+                                 json::parse_error&);
             CHECK(json::from_bjdata(v0, true, false).is_discarded());
 
             std::vector<uint8_t> const vi = {'[', '$', '#'};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vi), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BJData value: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vi),
+                                 "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BJData value: unexpected end of input",
+                                 json::parse_error&);
             CHECK(json::from_bjdata(vi, true, false).is_discarded());
 
             std::vector<uint8_t> const vU = {'[', '$', 'U'};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vU), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BJData value: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vU),
+                                 "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BJData value: unexpected end of input",
+                                 json::parse_error&);
             CHECK(json::from_bjdata(vU, true, false).is_discarded());
 
             std::vector<uint8_t> const v1 = {'[', '$', '['};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v1), "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing BJData type: marker 0x5B is not a permitted optimized array type", json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_bjdata(v1),
+                "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing BJData type: marker 0x5B is not a permitted optimized array type",
+                json::parse_error&);
             CHECK(json::from_bjdata(v1, true, false).is_discarded());
         }
 
@@ -2917,15 +2935,21 @@ TEST_CASE("BJData")
         {
             std::vector<uint8_t> const vST = {'[', '$', 'i', '#', 'i', 2, 1};
             json _;
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vST), "[json.exception.parse_error.110] parse error at byte 8: syntax error while parsing BJData number: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vST),
+                                 "[json.exception.parse_error.110] parse error at byte 8: syntax error while parsing BJData number: unexpected end of input",
+                                 json::parse_error&);
             CHECK(json::from_bjdata(vST, true, false).is_discarded());
 
             std::vector<uint8_t> const vS = {'[', '#', 'i', 2, 'i', 1};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vS), "[json.exception.parse_error.110] parse error at byte 7: syntax error while parsing BJData value: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vS),
+                                 "[json.exception.parse_error.110] parse error at byte 7: syntax error while parsing BJData value: unexpected end of input",
+                                 json::parse_error&);
             CHECK(json::from_bjdata(vS, true, false).is_discarded());
 
             std::vector<uint8_t> const v = {'[', 'i', 2, 'i', 1};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v), "[json.exception.parse_error.110] parse error at byte 6: syntax error while parsing BJData value: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v),
+                                 "[json.exception.parse_error.110] parse error at byte 6: syntax error while parsing BJData value: unexpected end of input",
+                                 json::parse_error&);
             CHECK(json::from_bjdata(v, true, false).is_discarded());
         }
 
@@ -2933,43 +2957,65 @@ TEST_CASE("BJData")
         {
             std::vector<uint8_t> const vST = {'[', '$', 'i', '#', '[', '$', 'i', '#'};
             json _;
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vST), "[json.exception.parse_error.113] parse error at byte 9: syntax error while parsing BJData size: expected length type specification (U, i, u, I, m, l, M, L) after '#'; last byte: 0xFF", json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_bjdata(vST),
+                "[json.exception.parse_error.113] parse error at byte 9: syntax error while parsing BJData size: expected length type specification (U, i, u, I, m, l, M, L) after '#'; last byte: 0xFF",
+                json::parse_error&);
             CHECK(json::from_bjdata(vST, true, false).is_discarded());
 
             std::vector<uint8_t> const v = {'[', '$', 'i', '#', '[', '$', 'i', '#', 'i', 2, 1, 2};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v), "[json.exception.parse_error.110] parse error at byte 13: syntax error while parsing BJData number: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v),
+                                 "[json.exception.parse_error.110] parse error at byte 13: syntax error while parsing BJData number: unexpected end of input",
+                                 json::parse_error&);
             CHECK(json::from_bjdata(v, true, false).is_discarded());
 
             std::vector<uint8_t> const vS0 = {'[', '$', 'i', '#', '[', '$', 'i', '#', 'i', 2, 1};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vS0), "[json.exception.parse_error.110] parse error at byte 12: syntax error while parsing BJData number: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vS0),
+                                 "[json.exception.parse_error.110] parse error at byte 12: syntax error while parsing BJData number: unexpected end of input",
+                                 json::parse_error&);
             CHECK(json::from_bjdata(vS0, true, false).is_discarded());
 
             std::vector<uint8_t> const vS = {'[', '$', 'i', '#', '[', '#', 'i', 2, 1, 2, 1};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vS), "[json.exception.parse_error.113] parse error at byte 9: syntax error while parsing BJData size: expected length type specification (U, i, u, I, m, l, M, L) after '#'; last byte: 0x01", json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_bjdata(vS),
+                "[json.exception.parse_error.113] parse error at byte 9: syntax error while parsing BJData size: expected length type specification (U, i, u, I, m, l, M, L) after '#'; last byte: 0x01",
+                json::parse_error&);
             CHECK(json::from_bjdata(vS, true, false).is_discarded());
 
             std::vector<uint8_t> const vT = {'[', '$', 'i', '#', '[', 'i', 2, 'i'};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vT), "[json.exception.parse_error.110] parse error at byte 9: syntax error while parsing BJData number: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vT),
+                                 "[json.exception.parse_error.110] parse error at byte 9: syntax error while parsing BJData number: unexpected end of input",
+                                 json::parse_error&);
             CHECK(json::from_bjdata(vT, true, false).is_discarded());
 
             std::vector<uint8_t> const vT0 = {'[', '$', 'i', '#', '[', 'i'};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vT0), "[json.exception.parse_error.110] parse error at byte 7: syntax error while parsing BJData number: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vT0),
+                                 "[json.exception.parse_error.110] parse error at byte 7: syntax error while parsing BJData number: unexpected end of input",
+                                 json::parse_error&);
             CHECK(json::from_bjdata(vT0, true, false).is_discarded());
 
             std::vector<uint8_t> const vu = {'[', '$', 'i', '#', '[', '$', 'i', '#', 'u', 1, 0};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vu), "[json.exception.parse_error.110] parse error at byte 12: syntax error while parsing BJData number: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vu),
+                                 "[json.exception.parse_error.110] parse error at byte 12: syntax error while parsing BJData number: unexpected end of input",
+                                 json::parse_error&);
             CHECK(json::from_bjdata(vu, true, false).is_discarded());
 
             std::vector<uint8_t> const vm = {'[', '$', 'i', '#', '[', '$', 'i', '#', 'm', 1, 0, 0, 0};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vm), "[json.exception.parse_error.110] parse error at byte 14: syntax error while parsing BJData number: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vm),
+                                 "[json.exception.parse_error.110] parse error at byte 14: syntax error while parsing BJData number: unexpected end of input",
+                                 json::parse_error&);
             CHECK(json::from_bjdata(vm, true, false).is_discarded());
 
             std::vector<uint8_t> const vM = {'[', '$', 'i', '#', '[', '$', 'i', '#', 'M', 1, 0, 0, 0, 0, 0, 0, 0};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vM), "[json.exception.parse_error.110] parse error at byte 18: syntax error while parsing BJData number: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vM),
+                                 "[json.exception.parse_error.110] parse error at byte 18: syntax error while parsing BJData number: unexpected end of input",
+                                 json::parse_error&);
             CHECK(json::from_bjdata(vM, true, false).is_discarded());
 
             std::vector<uint8_t> const vU = {'[', '$', 'U', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 1, 2, 3, 4, 5};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vU), "[json.exception.parse_error.110] parse error at byte 18: syntax error while parsing BJData number: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vU),
+                                 "[json.exception.parse_error.110] parse error at byte 18: syntax error while parsing BJData number: unexpected end of input",
+                                 json::parse_error&);
             CHECK(json::from_bjdata(vU, true, false).is_discarded());
 
             std::vector<uint8_t> const vT1 = {'[', '$', 'T', '#', '[', '$', 'i', '#', 'i', 2, 2, 3};
@@ -2979,39 +3025,65 @@ TEST_CASE("BJData")
             CHECK(json::from_bjdata(vh, true, false).is_discarded());
 
             std::vector<uint8_t> const vR = {'[', '$', 'i', '#', '[', 'i', 1, '[', ']', ']', 1};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vR), "[json.exception.parse_error.113] parse error at byte 8: syntax error while parsing BJData size: ndarray dimensional vector is not allowed", json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_bjdata(vR),
+                "[json.exception.parse_error.113] parse error at byte 8: syntax error while parsing BJData size: ndarray dimensional vector is not allowed",
+                json::parse_error&);
             CHECK(json::from_bjdata(vR, true, false).is_discarded());
 
             std::vector<uint8_t> const vRo = {'[', '$', 'i', '#', '[', 'i', 0, '{', '}', ']', 1};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vRo), "[json.exception.parse_error.113] parse error at byte 8: syntax error while parsing BJData size: expected length type specification (U, i, u, I, m, l, M, L) after '#'; last byte: 0x7B", json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_bjdata(vRo),
+                "[json.exception.parse_error.113] parse error at byte 8: syntax error while parsing BJData size: expected length type specification (U, i, u, I, m, l, M, L) after '#'; last byte: 0x7B",
+                json::parse_error&);
             CHECK(json::from_bjdata(vRo, true, false).is_discarded());
 
             std::vector<uint8_t> const vR1 = {'[', '$', 'i', '#', '[', '[', 'i', 1, ']', ']', 1};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vR1), "[json.exception.parse_error.113] parse error at byte 6: syntax error while parsing BJData size: ndarray dimensional vector is not allowed", json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_bjdata(vR1),
+                "[json.exception.parse_error.113] parse error at byte 6: syntax error while parsing BJData size: ndarray dimensional vector is not allowed",
+                json::parse_error&);
             CHECK(json::from_bjdata(vR1, true, false).is_discarded());
 
             std::vector<uint8_t> const vR2 = {'[', '$', 'i', '#', '[', '#', '[', 'i', 1, ']', ']', 1};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vR2), "[json.exception.parse_error.113] parse error at byte 11: syntax error while parsing BJData size: expected length type specification (U, i, u, I, m, l, M, L) after '#'; last byte: 0x5D", json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_bjdata(vR2),
+                "[json.exception.parse_error.113] parse error at byte 11: syntax error while parsing BJData size: expected length type specification (U, i, u, I, m, l, M, L) after '#'; last byte: 0x5D",
+                json::parse_error&);
             CHECK(json::from_bjdata(vR2, true, false).is_discarded());
 
             std::vector<uint8_t> const vR3 = {'[', '#', '[', 'i', '2', 'i', 2, ']'};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vR3), "[json.exception.parse_error.112] parse error at byte 8: syntax error while parsing BJData size: ndarray requires both type and size", json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_bjdata(vR3),
+                "[json.exception.parse_error.112] parse error at byte 8: syntax error while parsing BJData size: ndarray requires both type and size",
+                json::parse_error&);
             CHECK(json::from_bjdata(vR3, true, false).is_discarded());
 
             std::vector<uint8_t> const vR4 = {'[', '$', 'i', '#', '[', '$', 'i', '#', '[', 'i', 1, ']', 1};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vR4), "[json.exception.parse_error.110] parse error at byte 14: syntax error while parsing BJData number: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vR4),
+                                 "[json.exception.parse_error.110] parse error at byte 14: syntax error while parsing BJData number: unexpected end of input",
+                                 json::parse_error&);
             CHECK(json::from_bjdata(vR4, true, false).is_discarded());
 
             std::vector<uint8_t> const vR5 = {'[', '$', 'i', '#', '[', '[', '[', ']', ']', ']'};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vR5), "[json.exception.parse_error.113] parse error at byte 6: syntax error while parsing BJData size: ndarray dimensional vector is not allowed", json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_bjdata(vR5),
+                "[json.exception.parse_error.113] parse error at byte 6: syntax error while parsing BJData size: ndarray dimensional vector is not allowed",
+                json::parse_error&);
             CHECK(json::from_bjdata(vR5, true, false).is_discarded());
 
             std::vector<uint8_t> const vR6 = {'[', '$', 'i', '#', '[', '$', 'i', '#', '[', 'i', '2', 'i', 2, ']'};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vR6), "[json.exception.parse_error.112] parse error at byte 14: syntax error while parsing BJData size: ndarray can not be recursive", json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_bjdata(vR6),
+                "[json.exception.parse_error.112] parse error at byte 14: syntax error while parsing BJData size: ndarray can not be recursive",
+                json::parse_error&);
             CHECK(json::from_bjdata(vR6, true, false).is_discarded());
 
             std::vector<uint8_t> const vH = {'[', 'H', '[', '#', '[', '$', 'i', '#', '[', 'i', '2', 'i', 2, ']'};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vH), "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing BJData size: ndarray dimensional vector is not allowed", json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_bjdata(vH),
+                "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing BJData size: ndarray dimensional vector is not allowed",
+                json::parse_error&);
             CHECK(json::from_bjdata(vH, true, false).is_discarded());
         }
 
@@ -3019,43 +3091,65 @@ TEST_CASE("BJData")
         {
             std::vector<uint8_t> const vST = {'{', '$', 'i', '#', 'i', 2, 'i', 1, 'a', 1};
             json _;
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vST), "[json.exception.parse_error.110] parse error at byte 11: syntax error while parsing BJData value: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vST),
+                                 "[json.exception.parse_error.110] parse error at byte 11: syntax error while parsing BJData value: unexpected end of input",
+                                 json::parse_error&);
             CHECK(json::from_bjdata(vST, true, false).is_discarded());
 
             std::vector<uint8_t> const vT = {'{', '$', 'i', 'i', 1, 'a', 1};
-            CHECK_THROWS_WITH(_ = json::from_bjdata(vT), "[json.exception.parse_error.112] parse error at byte 4: syntax error while parsing BJData size: expected '#' after type information; last byte: 0x69");
+            CHECK_THROWS_WITH(
+                _ = json::from_bjdata(vT),
+                "[json.exception.parse_error.112] parse error at byte 4: syntax error while parsing BJData size: expected '#' after type information; last byte: 0x69");
             CHECK(json::from_bjdata(vT, true, false).is_discarded());
 
             std::vector<uint8_t> const vS = {'{', '#', 'i', 2, 'i', 1, 'a', 'i', 1};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vS), "[json.exception.parse_error.110] parse error at byte 10: syntax error while parsing BJData value: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vS),
+                                 "[json.exception.parse_error.110] parse error at byte 10: syntax error while parsing BJData value: unexpected end of input",
+                                 json::parse_error&);
             CHECK(json::from_bjdata(vS, true, false).is_discarded());
 
             std::vector<uint8_t> const v = {'{', 'i', 1, 'a', 'i', 1};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v), "[json.exception.parse_error.110] parse error at byte 7: syntax error while parsing BJData value: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v),
+                                 "[json.exception.parse_error.110] parse error at byte 7: syntax error while parsing BJData value: unexpected end of input",
+                                 json::parse_error&);
             CHECK(json::from_bjdata(v, true, false).is_discarded());
 
             std::vector<uint8_t> const v2 = {'{', 'i', 1, 'a', 'i', 1, 'i'};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v2), "[json.exception.parse_error.110] parse error at byte 8: syntax error while parsing BJData number: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v2),
+                                 "[json.exception.parse_error.110] parse error at byte 8: syntax error while parsing BJData number: unexpected end of input",
+                                 json::parse_error&);
             CHECK(json::from_bjdata(v2, true, false).is_discarded());
 
             std::vector<uint8_t> const v3 = {'{', 'i', 1, 'a'};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v3), "[json.exception.parse_error.110] parse error at byte 5: syntax error while parsing BJData value: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v3),
+                                 "[json.exception.parse_error.110] parse error at byte 5: syntax error while parsing BJData value: unexpected end of input",
+                                 json::parse_error&);
             CHECK(json::from_bjdata(v3, true, false).is_discarded());
 
             std::vector<uint8_t> const vST1 = {'{', '$', 'd', '#', 'i', 2, 'i', 1, 'a'};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vST1), "[json.exception.parse_error.110] parse error at byte 10: syntax error while parsing BJData number: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vST1),
+                                 "[json.exception.parse_error.110] parse error at byte 10: syntax error while parsing BJData number: unexpected end of input",
+                                 json::parse_error&);
             CHECK(json::from_bjdata(vST1, true, false).is_discarded());
 
             std::vector<uint8_t> const vST2 = {'{', '#', 'i', 2, 'i', 1, 'a'};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vST2), "[json.exception.parse_error.110] parse error at byte 8: syntax error while parsing BJData value: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vST2),
+                                 "[json.exception.parse_error.110] parse error at byte 8: syntax error while parsing BJData value: unexpected end of input",
+                                 json::parse_error&);
             CHECK(json::from_bjdata(vST2, true, false).is_discarded());
 
             std::vector<uint8_t> const vO = {'{', '#', '[', 'i', 2, 'i', 1, ']', 'i', 1, 'a', 'i', 1, 'i', 1, 'b', 'i', 2};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vO), "[json.exception.parse_error.112] parse error at byte 8: syntax error while parsing BJData size: ndarray requires both type and size", json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_bjdata(vO),
+                "[json.exception.parse_error.112] parse error at byte 8: syntax error while parsing BJData size: ndarray requires both type and size",
+                json::parse_error&);
             CHECK(json::from_bjdata(vO, true, false).is_discarded());
 
             std::vector<uint8_t> const vO2 = {'{', '$', 'i', '#', '[', 'i', 2, 'i', 1, ']', 'i', 1, 'a', 1, 'i', 1, 'b', 2};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vO2), "[json.exception.parse_error.112] parse error at byte 10: syntax error while parsing BJData object: BJData object does not support ND-array size in optimized format", json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_bjdata(vO2),
+                "[json.exception.parse_error.112] parse error at byte 10: syntax error while parsing BJData object: BJData object does not support ND-array size in optimized format",
+                json::parse_error&);
             CHECK(json::from_bjdata(vO2, true, false).is_discarded());
         }
     }
@@ -3109,7 +3203,8 @@ TEST_CASE("BJData")
             SECTION("array of L")
             {
                 json const j = {5000000000, -5000000000};
-                std::vector<uint8_t> const expected = {'[', '$', 'L', '#', 'i', 2, 0x00, 0xF2, 0x05, 0x2A, 0x01, 0x00, 0x00, 0x00, 0x00, 0x0E, 0xFA, 0xD5, 0xFE, 0xFF, 0xFF, 0xFF};
+                std::vector<uint8_t> const expected = {'[',  '$',  'L',  '#',  'i',  2,    0x00, 0xF2, 0x05, 0x2A, 0x01,
+                                                       0x00, 0x00, 0x00, 0x00, 0x0E, 0xFA, 0xD5, 0xFE, 0xFF, 0xFF, 0xFF};
                 CHECK(json::to_bjdata(j, true, true) == expected);
             }
         }
@@ -3173,8 +3268,10 @@ TEST_CASE("BJData")
             SECTION("array of L")
             {
                 json const j = {5000000000u, 5000000001u};
-                std::vector<uint8_t> const expected = {'[', '$', 'L', '#', 'i', 2, 0x00, 0xF2, 0x05, 0x2A, 0x01, 0x00, 0x00, 0x00, 0x01, 0xF2, 0x05, 0x2A, 0x01, 0x00, 0x00, 0x00};
-                std::vector<uint8_t> const expected_size = {'[', '#', 'i', 2, 'L', 0x00, 0xF2, 0x05, 0x2A, 0x01, 0x00, 0x00, 0x00, 'L', 0x01, 0xF2, 0x05, 0x2A, 0x01, 0x00, 0x00, 0x00};
+                std::vector<uint8_t> const expected = {'[',  '$',  'L',  '#',  'i',  2,    0x00, 0xF2, 0x05, 0x2A, 0x01,
+                                                       0x00, 0x00, 0x00, 0x01, 0xF2, 0x05, 0x2A, 0x01, 0x00, 0x00, 0x00};
+                std::vector<uint8_t> const expected_size = {'[',  '#',  'i', 2,    'L',  0x00, 0xF2, 0x05, 0x2A, 0x01, 0x00,
+                                                            0x00, 0x00, 'L', 0x01, 0xF2, 0x05, 0x2A, 0x01, 0x00, 0x00, 0x00};
                 CHECK(json::to_bjdata(j, true, true) == expected);
                 CHECK(json::to_bjdata(j, true) == expected_size);
             }
@@ -3182,8 +3279,10 @@ TEST_CASE("BJData")
             SECTION("array of M")
             {
                 json const j = {10223372036854775807ull, 10223372036854775808ull};
-                std::vector<uint8_t> const expected = {'[', '$', 'M', '#', 'i', 2, 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D, 0x00, 0x00, 0x64, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D};
-                std::vector<uint8_t> const expected_size = {'[', '#', 'i', 2, 'M', 0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D, 'M', 0x00, 0x00, 0x64, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D};
+                std::vector<uint8_t> const expected = {'[',  '$',  'M',  '#',  'i',  2,    0xFF, 0xFF, 0x63, 0xA7, 0xB3,
+                                                       0xB6, 0xE0, 0x8D, 0x00, 0x00, 0x64, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D};
+                std::vector<uint8_t> const expected_size = {'[',  '#',  'i', 2,    'M',  0xFF, 0xFF, 0x63, 0xA7, 0xB3, 0xB6,
+                                                            0xE0, 0x8D, 'M', 0x00, 0x00, 0x64, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D};
                 CHECK(json::to_bjdata(j, true, true) == expected);
                 CHECK(json::to_bjdata(j, true) == expected_size);
             }
@@ -3205,7 +3304,8 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
     {
         json const j = {"foo", "bar", "baz"};
         std::vector<uint8_t> v = {'[', 'S', 'i', 3, 'f', 'o', 'o', 'S', 'i', 3, 'b', 'a', 'r', 'S', 'i', 3, 'b', 'a', 'z', ']'};
-        std::vector<uint8_t> const v2 = {'[', 'S', 'i', 3, 'f', 'o', 'o', 'N', 'S', 'i', 3, 'b', 'a', 'r', 'N', 'N', 'N', 'S', 'i', 3, 'b', 'a', 'z', 'N', 'N', ']'};
+        std::vector<uint8_t> const v2 = {'[', 'S', 'i', 3,   'f', 'o', 'o', 'N', 'S', 'i', 3,   'b', 'a',
+                                         'r', 'N', 'N', 'N', 'S', 'i', 3,   'b', 'a', 'z', 'N', 'N', ']'};
         CHECK(json::to_bjdata(j) == v);
         CHECK(json::from_bjdata(v) == j);
         CHECK(json::from_bjdata(v2) == j);
@@ -3214,140 +3314,29 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
     SECTION("Boolean Types")
     {
         json const j = {{"authorized", true}, {"verified", false}};
-        std::vector<uint8_t> v = {'{', 'i', 10, 'a', 'u', 't', 'h', 'o', 'r', 'i', 'z', 'e', 'd', 'T', 'i', 8, 'v', 'e', 'r', 'i', 'f', 'i', 'e', 'd', 'F', '}'};
+        std::vector<uint8_t> v = {'{', 'i', 10, 'a', 'u', 't', 'h', 'o', 'r', 'i', 'z', 'e', 'd',
+                                  'T', 'i', 8,  'v', 'e', 'r', 'i', 'f', 'i', 'e', 'd', 'F', '}'};
         CHECK(json::to_bjdata(j) == v);
         CHECK(json::from_bjdata(v) == j);
     }
 
     SECTION("Numeric Types")
     {
-        json j =
-            {
-                {"int8", 16},
-                {"uint8", 255},
-                {"int16", 32767},
-                {"uint16", 42767},
-                {"int32", 2147483647},
-                {"uint32", 3147483647},
-                {"int64", 9223372036854775807},
-                {"uint64", 10223372036854775807ull},
-                {"float64", 113243.7863123}};
-        std::vector<uint8_t> v = {'{',
-                                  'i',
-                                  7,
-                                  'f',
-                                  'l',
-                                  'o',
-                                  'a',
-                                  't',
-                                  '6',
-                                  '4',
-                                  'D',
-                                  0xcf,
-                                  0x34,
-                                  0xbc,
-                                  0x94,
-                                  0xbc,
-                                  0xa5,
-                                  0xfb,
-                                  0x40,
-                                  'i',
-                                  5,
-                                  'i',
-                                  'n',
-                                  't',
-                                  '1',
-                                  '6',
-                                  'I',
-                                  0xff,
-                                  0x7f,
-                                  'i',
-                                  5,
-                                  'i',
-                                  'n',
-                                  't',
-                                  '3',
-                                  '2',
-                                  'l',
-                                  0xff,
-                                  0xff,
-                                  0xff,
-                                  0x7f,
-                                  'i',
-                                  5,
-                                  'i',
-                                  'n',
-                                  't',
-                                  '6',
-                                  '4',
-                                  'L',
-                                  0xff,
-                                  0xff,
-                                  0xff,
-                                  0xff,
-                                  0xff,
-                                  0xff,
-                                  0xff,
-                                  0x7f,
-                                  'i',
-                                  4,
-                                  'i',
-                                  'n',
-                                  't',
-                                  '8',
-                                  'i',
-                                  16,
-                                  'i',
-                                  6,
-                                  'u',
-                                  'i',
-                                  'n',
-                                  't',
-                                  '1',
-                                  '6',
-                                  'u',
-                                  0x0F,
-                                  0xA7,
-                                  'i',
-                                  6,
-                                  'u',
-                                  'i',
-                                  'n',
-                                  't',
-                                  '3',
-                                  '2',
-                                  'm',
-                                  0xFF,
-                                  0xC9,
-                                  0x9A,
-                                  0xBB,
-                                  'i',
-                                  6,
-                                  'u',
-                                  'i',
-                                  'n',
-                                  't',
-                                  '6',
-                                  '4',
-                                  'M',
-                                  0xFF,
-                                  0xFF,
-                                  0x63,
-                                  0xA7,
-                                  0xB3,
-                                  0xB6,
-                                  0xE0,
-                                  0x8D,
-                                  'i',
-                                  5,
-                                  'u',
-                                  'i',
-                                  'n',
-                                  't',
-                                  '8',
-                                  'U',
-                                  0xff,
-                                  '}'};
+        json j = {{"int8", 16},
+                  {"uint8", 255},
+                  {"int16", 32767},
+                  {"uint16", 42767},
+                  {"int32", 2147483647},
+                  {"uint32", 3147483647},
+                  {"int64", 9223372036854775807},
+                  {"uint64", 10223372036854775807ull},
+                  {"float64", 113243.7863123}};
+        std::vector<uint8_t> v = {'{',  'i',  7,    'f',  'l',  'o',  'a',  't',  '6',  '4',  'D',  0xcf, 0x34, 0xbc, 0x94, 0xbc, 0xa5, 0xfb, 0x40, 'i',
+                                  5,    'i',  'n',  't',  '1',  '6',  'I',  0xff, 0x7f, 'i',  5,    'i',  'n',  't',  '3',  '2',  'l',  0xff, 0xff, 0xff,
+                                  0x7f, 'i',  5,    'i',  'n',  't',  '6',  '4',  'L',  0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f, 'i',  4,    'i',
+                                  'n',  't',  '8',  'i',  16,   'i',  6,    'u',  'i',  'n',  't',  '1',  '6',  'u',  0x0F, 0xA7, 'i',  6,    'u',  'i',
+                                  'n',  't',  '3',  '2',  'm',  0xFF, 0xC9, 0x9A, 0xBB, 'i',  6,    'u',  'i',  'n',  't',  '6',  '4',  'M',  0xFF, 0xFF,
+                                  0x63, 0xA7, 0xB3, 0xB6, 0xE0, 0x8D, 'i',  5,    'u',  'i',  'n',  't',  '8',  'U',  0xff, '}'};
         CHECK(json::to_bjdata(j) == v);
         CHECK(json::from_bjdata(v) == j);
     }
@@ -3393,7 +3382,8 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
         {
             // note the float has been replaced by a double
             json const j = {nullptr, true, false, 4782345193, 153.132, "ham"};
-            std::vector<uint8_t> v = {'[', 'Z', 'T', 'F', 'L', 0xE9, 0xCB, 0x0C, 0x1D, 0x01, 0x00, 0x00, 0x00, 'D', 0x4e, 0x62, 0x10, 0x58, 0x39, 0x24, 0x63, 0x40, 'S', 'i', 3, 'h', 'a', 'm', ']'};
+            std::vector<uint8_t> v = {'[',  'Z',  'T',  'F',  'L',  0xE9, 0xCB, 0x0C, 0x1D, 0x01, 0x00, 0x00, 0x00, 'D', 0x4e,
+                                      0x62, 0x10, 0x58, 0x39, 0x24, 0x63, 0x40, 'S',  'i',  3,    'h',  'a',  'm',  ']'};
             CHECK(json::to_bjdata(j) == v);
             CHECK(json::from_bjdata(v) == j);
         }
@@ -3402,7 +3392,8 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
         {
             // note the float has been replaced by a double
             json const j = {nullptr, true, false, 4782345193, 153.132, "ham"};
-            std::vector<uint8_t> v = {'[', '#', 'i', 6, 'Z', 'T', 'F', 'L', 0xE9, 0xCB, 0x0C, 0x1D, 0x01, 0x00, 0x00, 0x00, 'D', 0x4e, 0x62, 0x10, 0x58, 0x39, 0x24, 0x63, 0x40, 'S', 'i', 3, 'h', 'a', 'm'};
+            std::vector<uint8_t> v = {'[', '#',  'i',  6,    'Z',  'T',  'F',  'L',  0xE9, 0xCB, 0x0C, 0x1D, 0x01, 0x00, 0x00, 0x00,
+                                      'D', 0x4e, 0x62, 0x10, 0x58, 0x39, 0x24, 0x63, 0x40, 'S',  'i',  3,    'h',  'a',  'm'};
             CHECK(json::to_bjdata(j, true) == v);
             CHECK(json::from_bjdata(v) == j);
         }
@@ -3411,7 +3402,8 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
         {
             // note the float has been replaced by a double
             json const j = {nullptr, true, false, 4782345193, 153.132, "ham"};
-            std::vector<uint8_t> v = {'[', '#', 'i', 6, 'Z', 'T', 'F', 'L', 0xE9, 0xCB, 0x0C, 0x1D, 0x01, 0x00, 0x00, 0x00, 'D', 0x4e, 0x62, 0x10, 0x58, 0x39, 0x24, 0x63, 0x40, 'S', 'i', 3, 'h', 'a', 'm'};
+            std::vector<uint8_t> v = {'[', '#',  'i',  6,    'Z',  'T',  'F',  'L',  0xE9, 0xCB, 0x0C, 0x1D, 0x01, 0x00, 0x00, 0x00,
+                                      'D', 0x4e, 0x62, 0x10, 0x58, 0x39, 0x24, 0x63, 0x40, 'S',  'i',  3,    'h',  'a',  'm'};
             CHECK(json::to_bjdata(j, true, true) == v);
             CHECK(json::from_bjdata(v) == j);
         }
@@ -3421,103 +3413,23 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
     {
         SECTION("size=false type=false")
         {
-            json j =
-                {
-                    {"post", {{"id", 1137}, {"author", "rkalla"}, {"timestamp", 1364482090592}, {"body", "I totally agree!"}}}};
-            std::vector<uint8_t> v = {'{', 'i', 4, 'p', 'o', 's', 't', '{', 'i', 6, 'a', 'u', 't', 'h', 'o', 'r', 'S', 'i', 6, 'r', 'k', 'a', 'l', 'l', 'a', 'i', 4, 'b', 'o', 'd', 'y', 'S', 'i', 16, 'I', ' ', 't', 'o', 't', 'a', 'l', 'l', 'y', ' ', 'a', 'g', 'r', 'e', 'e', '!', 'i', 2, 'i', 'd', 'I', 0x71, 0x04, 'i', 9, 't', 'i', 'm', 'e', 's', 't', 'a', 'm', 'p', 'L', 0x60, 0x66, 0x78, 0xB1, 0x3D, 0x01, 0x00, 0x00, '}', '}'};
+            json j = {{"post", {{"id", 1137}, {"author", "rkalla"}, {"timestamp", 1364482090592}, {"body", "I totally agree!"}}}};
+            std::vector<uint8_t> v = {'{', 'i', 4,   'p', 'o', 's', 't', '{', 'i', 6,    'a',  'u',  't',  'h',  'o',  'r',  'S',  'i', 6,   'r',
+                                      'k', 'a', 'l', 'l', 'a', 'i', 4,   'b', 'o', 'd',  'y',  'S',  'i',  16,   'I',  ' ',  't',  'o', 't', 'a',
+                                      'l', 'l', 'y', ' ', 'a', 'g', 'r', 'e', 'e', '!',  'i',  2,    'i',  'd',  'I',  0x71, 0x04, 'i', 9,   't',
+                                      'i', 'm', 'e', 's', 't', 'a', 'm', 'p', 'L', 0x60, 0x66, 0x78, 0xB1, 0x3D, 0x01, 0x00, 0x00, '}', '}'};
             CHECK(json::to_bjdata(j) == v);
             CHECK(json::from_bjdata(v) == j);
         }
 
         SECTION("size=true type=false")
         {
-            json j =
-                {
-                    {"post", {{"id", 1137}, {"author", "rkalla"}, {"timestamp", 1364482090592}, {"body", "I totally agree!"}}}};
+            json j = {{"post", {{"id", 1137}, {"author", "rkalla"}, {"timestamp", 1364482090592}, {"body", "I totally agree!"}}}};
             std::vector<uint8_t> v = {
-                '{',
-                '#',
-                'i',
-                1,
-                'i',
-                4,
-                'p',
-                'o',
-                's',
-                't',
-                '{',
-                '#',
-                'i',
-                4,
-                'i',
-                6,
-                'a',
-                'u',
-                't',
-                'h',
-                'o',
-                'r',
-                'S',
-                'i',
-                6,
-                'r',
-                'k',
-                'a',
-                'l',
-                'l',
-                'a',
-                'i',
-                4,
-                'b',
-                'o',
-                'd',
-                'y',
-                'S',
-                'i',
-                16,
-                'I',
-                ' ',
-                't',
-                'o',
-                't',
-                'a',
-                'l',
-                'l',
-                'y',
-                ' ',
-                'a',
-                'g',
-                'r',
-                'e',
-                'e',
-                '!',
-                'i',
-                2,
-                'i',
-                'd',
-                'I',
-                0x71,
-                0x04,
-                'i',
-                9,
-                't',
-                'i',
-                'm',
-                'e',
-                's',
-                't',
-                'a',
-                'm',
-                'p',
-                'L',
-                0x60,
-                0x66,
-                0x78,
-                0xB1,
-                0x3D,
-                0x01,
-                0x00,
-                0x00,
+                '{', '#', 'i', 1,   'i', 4,   'p', 'o', 's', 't', '{', '#', 'i',  4,    'i',  6,    'a',  'u',  't',  'h',  'o',
+                'r', 'S', 'i', 6,   'r', 'k', 'a', 'l', 'l', 'a', 'i', 4,   'b',  'o',  'd',  'y',  'S',  'i',  16,   'I',  ' ',
+                't', 'o', 't', 'a', 'l', 'l', 'y', ' ', 'a', 'g', 'r', 'e', 'e',  '!',  'i',  2,    'i',  'd',  'I',  0x71, 0x04,
+                'i', 9,   't', 'i', 'm', 'e', 's', 't', 'a', 'm', 'p', 'L', 0x60, 0x66, 0x78, 0xB1, 0x3D, 0x01, 0x00, 0x00,
             };
             CHECK(json::to_bjdata(j, true) == v);
             CHECK(json::from_bjdata(v) == j);
@@ -3525,93 +3437,12 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
 
         SECTION("size=true type=true")
         {
-            json j =
-                {
-                    {"post", {{"id", 1137}, {"author", "rkalla"}, {"timestamp", 1364482090592}, {"body", "I totally agree!"}}}};
+            json j = {{"post", {{"id", 1137}, {"author", "rkalla"}, {"timestamp", 1364482090592}, {"body", "I totally agree!"}}}};
             std::vector<uint8_t> v = {
-                '{',
-                '#',
-                'i',
-                1,
-                'i',
-                4,
-                'p',
-                'o',
-                's',
-                't',
-                '{',
-                '#',
-                'i',
-                4,
-                'i',
-                6,
-                'a',
-                'u',
-                't',
-                'h',
-                'o',
-                'r',
-                'S',
-                'i',
-                6,
-                'r',
-                'k',
-                'a',
-                'l',
-                'l',
-                'a',
-                'i',
-                4,
-                'b',
-                'o',
-                'd',
-                'y',
-                'S',
-                'i',
-                16,
-                'I',
-                ' ',
-                't',
-                'o',
-                't',
-                'a',
-                'l',
-                'l',
-                'y',
-                ' ',
-                'a',
-                'g',
-                'r',
-                'e',
-                'e',
-                '!',
-                'i',
-                2,
-                'i',
-                'd',
-                'I',
-                0x71,
-                0x04,
-                'i',
-                9,
-                't',
-                'i',
-                'm',
-                'e',
-                's',
-                't',
-                'a',
-                'm',
-                'p',
-                'L',
-                0x60,
-                0x66,
-                0x78,
-                0xB1,
-                0x3D,
-                0x01,
-                0x00,
-                0x00,
+                '{', '#', 'i', 1,   'i', 4,   'p', 'o', 's', 't', '{', '#', 'i',  4,    'i',  6,    'a',  'u',  't',  'h',  'o',
+                'r', 'S', 'i', 6,   'r', 'k', 'a', 'l', 'l', 'a', 'i', 4,   'b',  'o',  'd',  'y',  'S',  'i',  16,   'I',  ' ',
+                't', 'o', 't', 'a', 'l', 'l', 'y', ' ', 'a', 'g', 'r', 'e', 'e',  '!',  'i',  2,    'i',  'd',  'I',  0x71, 0x04,
+                'i', 9,   't', 'i', 'm', 'e', 's', 't', 'a', 'm', 'p', 'L', 0x60, 0x66, 0x78, 0xB1, 0x3D, 0x01, 0x00, 0x00,
             };
             CHECK(json::to_bjdata(j, true, true) == v);
             CHECK(json::from_bjdata(v) == j);
@@ -3626,53 +3457,9 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
             {
                 // note the floats have been replaced by doubles
                 json const j = {29.97, 31.13, 67.0, 2.113, 23.888};
-                std::vector<uint8_t> v = {'[',
-                                          'D',
-                                          0xb8,
-                                          0x1e,
-                                          0x85,
-                                          0xeb,
-                                          0x51,
-                                          0xf8,
-                                          0x3d,
-                                          0x40,
-                                          'D',
-                                          0xe1,
-                                          0x7a,
-                                          0x14,
-                                          0xae,
-                                          0x47,
-                                          0x21,
-                                          0x3f,
-                                          0x40,
-                                          'D',
-                                          0x00,
-                                          0x00,
-                                          0x00,
-                                          0x00,
-                                          0x00,
-                                          0xc0,
-                                          0x50,
-                                          0x40,
-                                          'D',
-                                          0x81,
-                                          0x95,
-                                          0x43,
-                                          0x8b,
-                                          0x6c,
-                                          0xe7,
-                                          0x00,
-                                          0x40,
-                                          'D',
-                                          0x17,
-                                          0xd9,
-                                          0xce,
-                                          0xf7,
-                                          0x53,
-                                          0xe3,
-                                          0x37,
-                                          0x40,
-                                          ']'};
+                std::vector<uint8_t> v = {'[',  'D',  0xb8, 0x1e, 0x85, 0xeb, 0x51, 0xf8, 0x3d, 0x40, 'D',  0xe1, 0x7a, 0x14, 0xae, 0x47,
+                                          0x21, 0x3f, 0x40, 'D',  0x00, 0x00, 0x00, 0x00, 0x00, 0xc0, 0x50, 0x40, 'D',  0x81, 0x95, 0x43,
+                                          0x8b, 0x6c, 0xe7, 0x00, 0x40, 'D',  0x17, 0xd9, 0xce, 0xf7, 0x53, 0xe3, 0x37, 0x40, ']'};
                 CHECK(json::to_bjdata(j) == v);
                 CHECK(json::from_bjdata(v) == j);
             }
@@ -3682,55 +3469,9 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
                 // note the floats have been replaced by doubles
                 json const j = {29.97, 31.13, 67.0, 2.113, 23.888};
                 std::vector<uint8_t> v = {
-                    '[',
-                    '#',
-                    'i',
-                    5,
-                    'D',
-                    0xb8,
-                    0x1e,
-                    0x85,
-                    0xeb,
-                    0x51,
-                    0xf8,
-                    0x3d,
-                    0x40,
-                    'D',
-                    0xe1,
-                    0x7a,
-                    0x14,
-                    0xae,
-                    0x47,
-                    0x21,
-                    0x3f,
-                    0x40,
-                    'D',
-                    0x00,
-                    0x00,
-                    0x00,
-                    0x00,
-                    0x00,
-                    0xc0,
-                    0x50,
-                    0x40,
-                    'D',
-                    0x81,
-                    0x95,
-                    0x43,
-                    0x8b,
-                    0x6c,
-                    0xe7,
-                    0x00,
-                    0x40,
-                    'D',
-                    0x17,
-                    0xd9,
-                    0xce,
-                    0xf7,
-                    0x53,
-                    0xe3,
-                    0x37,
-                    0x40,
+                    '[',  '#',  'i',  5,    'D',  0xb8, 0x1e, 0x85, 0xeb, 0x51, 0xf8, 0x3d, 0x40, 'D',  0xe1, 0x7a, 0x14,
+                    0xae, 0x47, 0x21, 0x3f, 0x40, 'D',  0x00, 0x00, 0x00, 0x00, 0x00, 0xc0, 0x50, 0x40, 'D',  0x81, 0x95,
+                    0x43, 0x8b, 0x6c, 0xe7, 0x00, 0x40, 'D',  0x17, 0xd9, 0xce, 0xf7, 0x53, 0xe3, 0x37, 0x40,
                 };
                 CHECK(json::to_bjdata(j, true) == v);
                 CHECK(json::from_bjdata(v) == j);
@@ -3741,52 +3482,8 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
                 // note the floats have been replaced by doubles
                 json const j = {29.97, 31.13, 67.0, 2.113, 23.888};
                 std::vector<uint8_t> v = {
-                    '[',
-                    '$',
-                    'D',
-                    '#',
-                    'i',
-                    5,
-                    0xb8,
-                    0x1e,
-                    0x85,
-                    0xeb,
-                    0x51,
-                    0xf8,
-                    0x3d,
-                    0x40,
-                    0xe1,
-                    0x7a,
-                    0x14,
-                    0xae,
-                    0x47,
-                    0x21,
-                    0x3f,
-                    0x40,
-                    0x00,
-                    0x00,
-                    0x00,
-                    0x00,
-                    0x00,
-                    0xc0,
-                    0x50,
-                    0x40,
-                    0x81,
-                    0x95,
-                    0x43,
-                    0x8b,
-                    0x6c,
-                    0xe7,
-                    0x00,
-                    0x40,
-                    0x17,
-                    0xd9,
-                    0xce,
-                    0xf7,
-                    0x53,
-                    0xe3,
-                    0x37,
-                    0x40,
+                    '[',  '$',  'D',  '#',  'i',  5,    0xb8, 0x1e, 0x85, 0xeb, 0x51, 0xf8, 0x3d, 0x40, 0xe1, 0x7a, 0x14, 0xae, 0x47, 0x21, 0x3f, 0x40, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0xc0, 0x50, 0x40, 0x81, 0x95, 0x43, 0x8b, 0x6c, 0xe7, 0x00, 0x40, 0x17, 0xd9, 0xce, 0xf7, 0x53, 0xe3, 0x37, 0x40,
                 };
                 CHECK(json::to_bjdata(j, true, true) == v);
                 CHECK(json::from_bjdata(v) == j);
@@ -3799,51 +3496,9 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
             {
                 // note the floats have been replaced by doubles
                 json const j = {{"lat", 29.976}, {"long", 31.131}, {"alt", 67.0}};
-                std::vector<uint8_t> v = {'{',
-                                          'i',
-                                          3,
-                                          'a',
-                                          'l',
-                                          't',
-                                          'D',
-                                          0x00,
-                                          0x00,
-                                          0x00,
-                                          0x00,
-                                          0x00,
-                                          0xc0,
-                                          0x50,
-                                          0x40,
-                                          'i',
-                                          3,
-                                          'l',
-                                          'a',
-                                          't',
-                                          'D',
-                                          0x60,
-                                          0xe5,
-                                          0xd0,
-                                          0x22,
-                                          0xdb,
-                                          0xf9,
-                                          0x3d,
-                                          0x40,
-                                          'i',
-                                          4,
-                                          'l',
-                                          'o',
-                                          'n',
-                                          'g',
-                                          'D',
-                                          0xa8,
-                                          0xc6,
-                                          0x4b,
-                                          0x37,
-                                          0x89,
-                                          0x21,
-                                          0x3f,
-                                          0x40,
-                                          '}'};
+                std::vector<uint8_t> v = {'{', 'i', 3,   'a', 'l', 't', 'D',  0x00, 0x00, 0x00, 0x00, 0x00, 0xc0, 0x50, 0x40,
+                                          'i', 3,   'l', 'a', 't', 'D', 0x60, 0xe5, 0xd0, 0x22, 0xdb, 0xf9, 0x3d, 0x40, 'i',
+                                          4,   'l', 'o', 'n', 'g', 'D', 0xa8, 0xc6, 0x4b, 0x37, 0x89, 0x21, 0x3f, 0x40, '}'};
                 CHECK(json::to_bjdata(j) == v);
                 CHECK(json::from_bjdata(v) == j);
             }
@@ -3853,53 +3508,8 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
                 // note the floats have been replaced by doubles
                 json const j = {{"lat", 29.976}, {"long", 31.131}, {"alt", 67.0}};
                 std::vector<uint8_t> v = {
-                    '{',
-                    '#',
-                    'i',
-                    3,
-                    'i',
-                    3,
-                    'a',
-                    'l',
-                    't',
-                    'D',
-                    0x00,
-                    0x00,
-                    0x00,
-                    0x00,
-                    0x00,
-                    0xc0,
-                    0x50,
-                    0x40,
-                    'i',
-                    3,
-                    'l',
-                    'a',
-                    't',
-                    'D',
-                    0x60,
-                    0xe5,
-                    0xd0,
-                    0x22,
-                    0xdb,
-                    0xf9,
-                    0x3d,
-                    0x40,
-                    'i',
-                    4,
-                    'l',
-                    'o',
-                    'n',
-                    'g',
-                    'D',
-                    0xa8,
-                    0xc6,
-                    0x4b,
-                    0x37,
-                    0x89,
-                    0x21,
-                    0x3f,
-                    0x40,
+                    '{',  '#',  'i',  3,    'i',  3,    'a',  'l',  't', 'D', 0x00, 0x00, 0x00, 0x00, 0x00, 0xc0, 0x50, 0x40, 'i',  3,    'l',  'a',  't',  'D',
+                    0x60, 0xe5, 0xd0, 0x22, 0xdb, 0xf9, 0x3d, 0x40, 'i', 4,   'l',  'o',  'n',  'g',  'D',  0xa8, 0xc6, 0x4b, 0x37, 0x89, 0x21, 0x3f, 0x40,
                 };
                 CHECK(json::to_bjdata(j, true) == v);
                 CHECK(json::from_bjdata(v) == j);
@@ -3910,52 +3520,8 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
                 // note the floats have been replaced by doubles
                 json const j = {{"lat", 29.976}, {"long", 31.131}, {"alt", 67.0}};
                 std::vector<uint8_t> v = {
-                    '{',
-                    '$',
-                    'D',
-                    '#',
-                    'i',
-                    3,
-                    'i',
-                    3,
-                    'a',
-                    'l',
-                    't',
-                    0x00,
-                    0x00,
-                    0x00,
-                    0x00,
-                    0x00,
-                    0xc0,
-                    0x50,
-                    0x40,
-                    'i',
-                    3,
-                    'l',
-                    'a',
-                    't',
-                    0x60,
-                    0xe5,
-                    0xd0,
-                    0x22,
-                    0xdb,
-                    0xf9,
-                    0x3d,
-                    0x40,
-                    'i',
-                    4,
-                    'l',
-                    'o',
-                    'n',
-                    'g',
-                    0xa8,
-                    0xc6,
-                    0x4b,
-                    0x37,
-                    0x89,
-                    0x21,
-                    0x3f,
-                    0x40,
+                    '{', '$',  'D',  '#',  'i',  3,    'i',  3,    'a',  'l', 't', 0x00, 0x00, 0x00, 0x00, 0x00, 0xc0, 0x50, 0x40, 'i',  3,    'l',  'a',
+                    't', 0x60, 0xe5, 0xd0, 0x22, 0xdb, 0xf9, 0x3d, 0x40, 'i', 4,   'l',  'o',  'n',  'g',  0xa8, 0xc6, 0x4b, 0x37, 0x89, 0x21, 0x3f, 0x40,
                 };
                 CHECK(json::to_bjdata(j, true, true) == v);
                 CHECK(json::from_bjdata(v) == j);
@@ -3968,15 +3534,22 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
             {
                 json _;
                 std::vector<uint8_t> const v = {'[', '$', 'N', '#', 'I', 0x00, 0x02};
-                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v), "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing BJData type: marker 0x4E is not a permitted optimized array type", json::parse_error&);
+                CHECK_THROWS_WITH_AS(
+                    _ = json::from_bjdata(v),
+                    "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing BJData type: marker 0x4E is not a permitted optimized array type",
+                    json::parse_error&);
                 CHECK(json::from_bjdata(v, true, false).is_discarded());
             }
 
             SECTION("Object")
             {
                 json _;
-                std::vector<uint8_t> const v = {'{', '$', 'Z', '#', 'i', 3, 'i', 4, 'n', 'a', 'm', 'e', 'i', 8, 'p', 'a', 's', 's', 'w', 'o', 'r', 'd', 'i', 5, 'e', 'm', 'a', 'i', 'l'};
-                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v), "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing BJData type: marker 0x5A is not a permitted optimized array type", json::parse_error&);
+                std::vector<uint8_t> const v = {'{', '$', 'Z', '#', 'i', 3,   'i', 4,   'n', 'a', 'm', 'e', 'i', 8,  'p',
+                                                'a', 's', 's', 'w', 'o', 'r', 'd', 'i', 5,   'e', 'm', 'a', 'i', 'l'};
+                CHECK_THROWS_WITH_AS(
+                    _ = json::from_bjdata(v),
+                    "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing BJData type: marker 0x5A is not a permitted optimized array type",
+                    json::parse_error&);
                 CHECK(json::from_bjdata(v, true, false).is_discarded());
             }
         }
@@ -3987,28 +3560,7 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
 TEST_CASE("all BJData first bytes")
 {
     // these bytes will fail immediately with exception parse_error.112
-    std::set<uint8_t> supported =
-        {
-            'T',
-            'F',
-            'Z',
-            'U',
-            'i',
-            'I',
-            'l',
-            'L',
-            'd',
-            'D',
-            'C',
-            'S',
-            '[',
-            '{',
-            'N',
-            'H',
-            'u',
-            'm',
-            'M',
-            'h'};
+    std::set<uint8_t> supported = {'T', 'F', 'Z', 'U', 'i', 'I', 'l', 'L', 'd', 'D', 'C', 'S', '[', '{', 'N', 'H', 'u', 'm', 'M', 'h'};
 
     for (auto i = 0; i < 256; ++i)
     {
@@ -4041,50 +3593,48 @@ TEST_CASE("BJData roundtrips" * doctest::skip())
 {
     SECTION("input from self-generated BJData files")
     {
-        for (const std::string filename :
-             {
-                 TEST_DATA_DIRECTORY "/json_nlohmann_tests/all_unicode.json",
-                 TEST_DATA_DIRECTORY "/json.org/1.json",
-                 TEST_DATA_DIRECTORY "/json.org/2.json",
-                 TEST_DATA_DIRECTORY "/json.org/3.json",
-                 TEST_DATA_DIRECTORY "/json.org/4.json",
-                 TEST_DATA_DIRECTORY "/json.org/5.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip01.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip02.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip03.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip04.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip05.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip06.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip07.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip08.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip09.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip10.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip11.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip12.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip13.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip14.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip15.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip16.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip17.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip18.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip19.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip20.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip21.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip22.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip23.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip24.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip25.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip26.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip27.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip28.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip29.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip30.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip31.json",
-                 TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip32.json",
-                 TEST_DATA_DIRECTORY "/json_testsuite/sample.json",
-                 TEST_DATA_DIRECTORY "/json_tests/pass1.json",
-                 TEST_DATA_DIRECTORY "/json_tests/pass2.json",
-                 TEST_DATA_DIRECTORY "/json_tests/pass3.json"})
+        for (const std::string filename : {TEST_DATA_DIRECTORY "/json_nlohmann_tests/all_unicode.json",
+                                           TEST_DATA_DIRECTORY "/json.org/1.json",
+                                           TEST_DATA_DIRECTORY "/json.org/2.json",
+                                           TEST_DATA_DIRECTORY "/json.org/3.json",
+                                           TEST_DATA_DIRECTORY "/json.org/4.json",
+                                           TEST_DATA_DIRECTORY "/json.org/5.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip01.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip02.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip03.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip04.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip05.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip06.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip07.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip08.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip09.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip10.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip11.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip12.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip13.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip14.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip15.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip16.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip17.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip18.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip19.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip20.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip21.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip22.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip23.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip24.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip25.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip26.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip27.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip28.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip29.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip30.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip31.json",
+                                           TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip32.json",
+                                           TEST_DATA_DIRECTORY "/json_testsuite/sample.json",
+                                           TEST_DATA_DIRECTORY "/json_tests/pass1.json",
+                                           TEST_DATA_DIRECTORY "/json_tests/pass2.json",
+                                           TEST_DATA_DIRECTORY "/json_tests/pass3.json"})
         {
             CAPTURE(filename)
 

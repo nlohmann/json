@@ -14,7 +14,8 @@
 #include <nlohmann/detail/macro_scope.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
-namespace detail {
+namespace detail
+{
 
 /*
 @brief an iterator for primitive JSON types

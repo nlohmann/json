@@ -17,7 +17,8 @@
 #include <nlohmann/detail/macro_scope.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
-namespace detail {
+namespace detail
+{
 
 template<typename T>
 using uncvref_t = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
@@ -78,7 +79,8 @@ struct integer_sequence
 template<size_t... Ints>
 using index_sequence = integer_sequence<size_t, Ints...>;
 
-namespace utility_internal {
+namespace utility_internal
+{
 
 template<typename Seq, size_t SeqSize, size_t Rem>
 struct Extend;
@@ -101,8 +103,7 @@ struct Extend<integer_sequence<T, Ints...>, SeqSize, 1>
 template<typename T, size_t N>
 struct Gen
 {
-    using type =
-        typename Extend<typename Gen<T, N / 2>::type, N / 2, N % 2>::type;
+    using type = typename Extend<typename Gen<T, N / 2>::type, N / 2, N % 2>::type;
 };
 
 template<typename T>

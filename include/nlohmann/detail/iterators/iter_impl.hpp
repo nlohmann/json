@@ -20,7 +20,8 @@
 #include <nlohmann/detail/value_t.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
-namespace detail {
+namespace detail
+{
 
 // forward declare, to be able to friend it later on
 template<typename IteratorType>
@@ -48,7 +49,8 @@ template<typename BasicJsonType>
 class iter_impl  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-special-member-functions)
 {
     /// the iterator with BasicJsonType of different const-ness
-    using other_iter_impl = iter_impl<typename std::conditional<std::is_const<BasicJsonType>::value, typename std::remove_const<BasicJsonType>::type, const BasicJsonType>::type>;
+    using other_iter_impl =
+        iter_impl<typename std::conditional<std::is_const<BasicJsonType>::value, typename std::remove_const<BasicJsonType>::type, const BasicJsonType>::type>;
     /// allow basic_json to access private members
     friend other_iter_impl;
     friend BasicJsonType;
@@ -58,10 +60,10 @@ class iter_impl  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     using object_t = typename BasicJsonType::object_t;
     using array_t = typename BasicJsonType::array_t;
     // make sure BasicJsonType is basic_json or const basic_json
-    static_assert(is_basic_json<typename std::remove_const<BasicJsonType>::type>::value,
-                  "iter_impl only accepts (const) basic_json");
+    static_assert(is_basic_json<typename std::remove_const<BasicJsonType>::type>::value, "iter_impl only accepts (const) basic_json");
     // superficial check for the LegacyBidirectionalIterator named requirement
-    static_assert(std::is_base_of<std::bidirectional_iterator_tag, std::bidirectional_iterator_tag>::value && std::is_base_of<std::bidirectional_iterator_tag, typename std::iterator_traits<typename array_t::iterator>::iterator_category>::value,
+    static_assert(std::is_base_of<std::bidirectional_iterator_tag, std::bidirectional_iterator_tag>::value &&
+                      std::is_base_of<std::bidirectional_iterator_tag, typename std::iterator_traits<typename array_t::iterator>::iterator_category>::value,
                   "basic_json iterator assumes array and object type iterators satisfy the LegacyBidirectionalIterator named requirement.");
 
   public:
@@ -77,14 +79,11 @@ class iter_impl  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// a type to represent differences between iterators
     using difference_type = typename BasicJsonType::difference_type;
     /// defines a pointer to the type iterated over (value_type)
-    using pointer = typename std::conditional<std::is_const<BasicJsonType>::value,
-                                              typename BasicJsonType::const_pointer,
-                                              typename BasicJsonType::pointer>::type;
+    using pointer =
+        typename std::conditional<std::is_const<BasicJsonType>::value, typename BasicJsonType::const_pointer, typename BasicJsonType::pointer>::type;
     /// defines a reference to the type iterated over (value_type)
     using reference =
-        typename std::conditional<std::is_const<BasicJsonType>::value,
-                                  typename BasicJsonType::const_reference,
-                                  typename BasicJsonType::reference>::type;
+        typename std::conditional<std::is_const<BasicJsonType>::value, typename BasicJsonType::const_reference, typename BasicJsonType::reference>::type;
 
     iter_impl() = default;
     ~iter_impl() = default;
@@ -469,7 +468,8 @@ class iter_impl  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @brief comparison: equal
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
-    template<typename IterImpl, detail::enable_if_t<(std::is_same<IterImpl, iter_impl>::value || std::is_same<IterImpl, other_iter_impl>::value), std::nullptr_t> = nullptr>
+    template<typename IterImpl,
+             detail::enable_if_t<(std::is_same<IterImpl, iter_impl>::value || std::is_same<IterImpl, other_iter_impl>::value), std::nullptr_t> = nullptr>
     bool operator==(const IterImpl& other) const
     {
         // if objects are not the same, the comparison is undefined
@@ -505,7 +505,8 @@ class iter_impl  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @brief comparison: not equal
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
-    template<typename IterImpl, detail::enable_if_t<(std::is_same<IterImpl, iter_impl>::value || std::is_same<IterImpl, other_iter_impl>::value), std::nullptr_t> = nullptr>
+    template<typename IterImpl,
+             detail::enable_if_t<(std::is_same<IterImpl, iter_impl>::value || std::is_same<IterImpl, other_iter_impl>::value), std::nullptr_t> = nullptr>
     bool operator!=(const IterImpl& other) const
     {
         return !operator==(other);

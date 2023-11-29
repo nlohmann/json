@@ -46,7 +46,8 @@ TEST_CASE("Tests with disabled exceptions")
         sax_no_exception sax(j);
 
         CHECK(!json::sax_parse("xyz", &sax));
-        CHECK(*sax_no_exception::error_string == "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - invalid literal; last read: 'x'");
+        CHECK(*sax_no_exception::error_string ==
+              "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - invalid literal; last read: 'x'");
         delete sax_no_exception::error_string;  // NOLINT(cppcoreguidelines-owning-memory)
     }
 }

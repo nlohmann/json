@@ -12,7 +12,8 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
-namespace {
+namespace
+{
 // shortcut to scan a string literal
 json::lexer::token_type scan_string(const char* s, bool ignore_comments = false);
 json::lexer::token_type scan_string(const char* s, const bool ignore_comments)

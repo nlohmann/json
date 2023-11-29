@@ -20,7 +20,8 @@ using namespace nlohmann::literals;  // NOLINT(google-build-using-namespace)
 #include <sstream>
 #include <valarray>
 
-namespace {
+namespace
+{
 struct SaxEventLogger : public nlohmann::json_sax<json>
 {
     bool null() override
@@ -176,8 +177,7 @@ class proxy_iterator
     using value_type = typename std::iterator_traits<iterator>::value_type;
     using reference = typename std::iterator_traits<iterator>::reference;
     using pointer = typename std::iterator_traits<iterator>::pointer;
-    using difference_type =
-        typename std::iterator_traits<iterator>::difference_type;
+    using difference_type = typename std::iterator_traits<iterator>::difference_type;
     using iterator_category = std::input_iterator_tag;
 
     proxy_iterator() = default;
@@ -236,8 +236,17 @@ TEST_CASE("deserialization")
             SaxEventLogger l;
             CHECK(json::sax_parse(ss3, &l));
             CHECK(l.events.size() == 11);
-            CHECK(l.events == std::vector<std::string>(
-                                  {"start_array()", "string(foo)", "number_unsigned(1)", "number_unsigned(2)", "number_unsigned(3)", "boolean(false)", "start_object()", "key(one)", "number_unsigned(1)", "end_object()", "end_array()"}));
+            CHECK(l.events == std::vector<std::string>({"start_array()",
+                                                        "string(foo)",
+                                                        "number_unsigned(1)",
+                                                        "number_unsigned(2)",
+                                                        "number_unsigned(3)",
+                                                        "boolean(false)",
+                                                        "start_object()",
+                                                        "key(one)",
+                                                        "number_unsigned(1)",
+                                                        "end_object()",
+                                                        "end_array()"}));
         }
 
         SECTION("string literal")
@@ -250,8 +259,17 @@ TEST_CASE("deserialization")
             SaxEventLogger l;
             CHECK(json::sax_parse(s, &l));
             CHECK(l.events.size() == 11);
-            CHECK(l.events == std::vector<std::string>(
-                                  {"start_array()", "string(foo)", "number_unsigned(1)", "number_unsigned(2)", "number_unsigned(3)", "boolean(false)", "start_object()", "key(one)", "number_unsigned(1)", "end_object()", "end_array()"}));
+            CHECK(l.events == std::vector<std::string>({"start_array()",
+                                                        "string(foo)",
+                                                        "number_unsigned(1)",
+                                                        "number_unsigned(2)",
+                                                        "number_unsigned(3)",
+                                                        "boolean(false)",
+                                                        "start_object()",
+                                                        "key(one)",
+                                                        "number_unsigned(1)",
+                                                        "end_object()",
+                                                        "end_array()"}));
         }
 
         SECTION("string_t")
@@ -264,8 +282,17 @@ TEST_CASE("deserialization")
             SaxEventLogger l;
             CHECK(json::sax_parse(s, &l));
             CHECK(l.events.size() == 11);
-            CHECK(l.events == std::vector<std::string>(
-                                  {"start_array()", "string(foo)", "number_unsigned(1)", "number_unsigned(2)", "number_unsigned(3)", "boolean(false)", "start_object()", "key(one)", "number_unsigned(1)", "end_object()", "end_array()"}));
+            CHECK(l.events == std::vector<std::string>({"start_array()",
+                                                        "string(foo)",
+                                                        "number_unsigned(1)",
+                                                        "number_unsigned(2)",
+                                                        "number_unsigned(3)",
+                                                        "boolean(false)",
+                                                        "start_object()",
+                                                        "key(one)",
+                                                        "number_unsigned(1)",
+                                                        "end_object()",
+                                                        "end_array()"}));
         }
 
         SECTION("operator<<")
@@ -306,7 +333,10 @@ TEST_CASE("deserialization")
             ss5 << R"(["foo",1,2,3,false,{"one":1})";
 
             json _;
-            CHECK_THROWS_WITH_AS(_ = json::parse(ss1), "[json.exception.parse_error.101] parse error at line 1, column 29: syntax error while parsing array - unexpected end of input; expected ']'", json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::parse(ss1),
+                "[json.exception.parse_error.101] parse error at line 1, column 29: syntax error while parsing array - unexpected end of input; expected ']'",
+                json::parse_error&);
             CHECK(!json::accept(ss3));
 
             json j_error;
@@ -316,15 +346,27 @@ TEST_CASE("deserialization")
             SaxEventLogger l;
             CHECK(!json::sax_parse(ss5, &l));
             CHECK(l.events.size() == 11);
-            CHECK(l.events == std::vector<std::string>(
-                                  {"start_array()", "string(foo)", "number_unsigned(1)", "number_unsigned(2)", "number_unsigned(3)", "boolean(false)", "start_object()", "key(one)", "number_unsigned(1)", "end_object()", "parse_error(29)"}));
+            CHECK(l.events == std::vector<std::string>({"start_array()",
+                                                        "string(foo)",
+                                                        "number_unsigned(1)",
+                                                        "number_unsigned(2)",
+                                                        "number_unsigned(3)",
+                                                        "boolean(false)",
+                                                        "start_object()",
+                                                        "key(one)",
+                                                        "number_unsigned(1)",
+                                                        "end_object()",
+                                                        "parse_error(29)"}));
         }
 
         SECTION("string")
         {
             json::string_t const s = R"(["foo",1,2,3,false,{"one":1})";
             json _;
-            CHECK_THROWS_WITH_AS(_ = json::parse(s), "[json.exception.parse_error.101] parse error at line 1, column 29: syntax error while parsing array - unexpected end of input; expected ']'", json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::parse(s),
+                "[json.exception.parse_error.101] parse error at line 1, column 29: syntax error while parsing array - unexpected end of input; expected ']'",
+                json::parse_error&);
             CHECK(!json::accept(s));
 
             json j_error;
@@ -334,8 +376,17 @@ TEST_CASE("deserialization")
             SaxEventLogger l;
             CHECK(!json::sax_parse(s, &l));
             CHECK(l.events.size() == 11);
-            CHECK(l.events == std::vector<std::string>(
-                                  {"start_array()", "string(foo)", "number_unsigned(1)", "number_unsigned(2)", "number_unsigned(3)", "boolean(false)", "start_object()", "key(one)", "number_unsigned(1)", "end_object()", "parse_error(29)"}));
+            CHECK(l.events == std::vector<std::string>({"start_array()",
+                                                        "string(foo)",
+                                                        "number_unsigned(1)",
+                                                        "number_unsigned(2)",
+                                                        "number_unsigned(3)",
+                                                        "boolean(false)",
+                                                        "start_object()",
+                                                        "key(one)",
+                                                        "number_unsigned(1)",
+                                                        "end_object()",
+                                                        "parse_error(29)"}));
         }
 
         SECTION("operator<<")
@@ -343,7 +394,10 @@ TEST_CASE("deserialization")
             std::stringstream ss;
             ss << R"(["foo",1,2,3,false,{"one":1})";
             json j;
-            CHECK_THROWS_WITH_AS(j << ss, "[json.exception.parse_error.101] parse error at line 1, column 29: syntax error while parsing array - unexpected end of input; expected ']'", json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                j << ss,
+                "[json.exception.parse_error.101] parse error at line 1, column 29: syntax error while parsing array - unexpected end of input; expected ']'",
+                json::parse_error&);
         }
 
         SECTION("operator>>")
@@ -351,12 +405,18 @@ TEST_CASE("deserialization")
             std::stringstream ss;
             ss << R"(["foo",1,2,3,false,{"one":1})";
             json j;
-            CHECK_THROWS_WITH_AS(ss >> j, "[json.exception.parse_error.101] parse error at line 1, column 29: syntax error while parsing array - unexpected end of input; expected ']'", json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                ss >> j,
+                "[json.exception.parse_error.101] parse error at line 1, column 29: syntax error while parsing array - unexpected end of input; expected ']'",
+                json::parse_error&);
         }
 
         SECTION("user-defined string literal")
         {
-            CHECK_THROWS_WITH_AS("[\"foo\",1,2,3,false,{\"one\":1}"_json, "[json.exception.parse_error.101] parse error at line 1, column 29: syntax error while parsing array - unexpected end of input; expected ']'", json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                "[\"foo\",1,2,3,false,{\"one\":1}"_json,
+                "[json.exception.parse_error.101] parse error at line 1, column 29: syntax error while parsing array - unexpected end of input; expected ']'",
+                json::parse_error&);
         }
     }
 
@@ -658,7 +718,10 @@ TEST_CASE("deserialization")
             {
                 std::array<std::uint8_t, 4> v = {{'\"', 0x7F, 0xDF, 0x7F}};
                 json _;
-                CHECK_THROWS_WITH_AS(_ = json::parse(std::begin(v), std::end(v)), "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid string: ill-formed UTF-8 byte; last read: '\"\x7f\xdf\x7f'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(
+                    _ = json::parse(std::begin(v), std::end(v)),
+                    "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid string: ill-formed UTF-8 byte; last read: '\"\x7f\xdf\x7f'",
+                    json::parse_error&);
                 CHECK(!json::accept(std::begin(v), std::end(v)));
 
                 json j_error;
@@ -838,8 +901,7 @@ TEST_CASE("deserialization")
                 SaxEventLogger l;
                 CHECK(!json::sax_parse(std::begin(v), std::end(v), &l));
                 CHECK(l.events.size() == 4);
-                CHECK(l.events == std::vector<std::string>(
-                                      {"start_object()", "key()", "number_unsigned(11)", "parse_error(7)"}));
+                CHECK(l.events == std::vector<std::string>({"start_object()", "key()", "number_unsigned(11)", "parse_error(7)"}));
             }
         }
     }
@@ -851,15 +913,20 @@ TEST_CASE("deserialization")
         SECTION("BOM only")
         {
             json _;
-            CHECK_THROWS_WITH_AS(_ = json::parse(bom), "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal", json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::parse(bom),
+                "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal",
+                json::parse_error&);
 
-            CHECK_THROWS_WITH_AS(_ = json::parse(std::istringstream(bom)), "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal", json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::parse(std::istringstream(bom)),
+                "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal",
+                json::parse_error&);
 
             SaxEventLogger l;
             CHECK(!json::sax_parse(bom, &l));
             CHECK(l.events.size() == 1);
-            CHECK(l.events == std::vector<std::string>(
-                                  {"parse_error(4)"}));
+            CHECK(l.events == std::vector<std::string>({"parse_error(4)"}));
         }
 
         SECTION("BOM and content")
@@ -872,49 +939,55 @@ TEST_CASE("deserialization")
             CHECK(json::sax_parse(std::istringstream(bom + "1"), &l1));
             CHECK(json::sax_parse(bom + "1", &l2));
             CHECK(l1.events.size() == 1);
-            CHECK(l1.events == std::vector<std::string>(
-                                   {"number_unsigned(1)"}));
+            CHECK(l1.events == std::vector<std::string>({"number_unsigned(1)"}));
             CHECK(l2.events.size() == 1);
-            CHECK(l2.events == std::vector<std::string>(
-                                   {"number_unsigned(1)"}));
+            CHECK(l2.events == std::vector<std::string>({"number_unsigned(1)"}));
         }
 
         SECTION("2 byte of BOM")
         {
             json _;
-            CHECK_THROWS_WITH_AS(_ = json::parse(bom.substr(0, 2)), "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid BOM; must be 0xEF 0xBB 0xBF if given; last read: '\xEF\xBB'", json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::parse(bom.substr(0, 2)),
+                "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid BOM; must be 0xEF 0xBB 0xBF if given; last read: '\xEF\xBB'",
+                json::parse_error&);
 
-            CHECK_THROWS_WITH_AS(_ = json::parse(std::istringstream(bom.substr(0, 2))), "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid BOM; must be 0xEF 0xBB 0xBF if given; last read: '\xEF\xBB'", json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::parse(std::istringstream(bom.substr(0, 2))),
+                "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid BOM; must be 0xEF 0xBB 0xBF if given; last read: '\xEF\xBB'",
+                json::parse_error&);
 
             SaxEventLogger l1;
             SaxEventLogger l2;
             CHECK(!json::sax_parse(std::istringstream(bom.substr(0, 2)), &l1));
             CHECK(!json::sax_parse(bom.substr(0, 2), &l2));
             CHECK(l1.events.size() == 1);
-            CHECK(l1.events == std::vector<std::string>(
-                                   {"parse_error(3)"}));
+            CHECK(l1.events == std::vector<std::string>({"parse_error(3)"}));
             CHECK(l2.events.size() == 1);
-            CHECK(l2.events == std::vector<std::string>(
-                                   {"parse_error(3)"}));
+            CHECK(l2.events == std::vector<std::string>({"parse_error(3)"}));
         }
 
         SECTION("1 byte of BOM")
         {
             json _;
-            CHECK_THROWS_WITH_AS(_ = json::parse(bom.substr(0, 1)), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid BOM; must be 0xEF 0xBB 0xBF if given; last read: '\xEF'", json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::parse(bom.substr(0, 1)),
+                "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid BOM; must be 0xEF 0xBB 0xBF if given; last read: '\xEF'",
+                json::parse_error&);
 
-            CHECK_THROWS_WITH_AS(_ = json::parse(std::istringstream(bom.substr(0, 1))), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid BOM; must be 0xEF 0xBB 0xBF if given; last read: '\xEF'", json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::parse(std::istringstream(bom.substr(0, 1))),
+                "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid BOM; must be 0xEF 0xBB 0xBF if given; last read: '\xEF'",
+                json::parse_error&);
 
             SaxEventLogger l1;
             SaxEventLogger l2;
             CHECK(!json::sax_parse(std::istringstream(bom.substr(0, 1)), &l1));
             CHECK(!json::sax_parse(bom.substr(0, 1), &l2));
             CHECK(l1.events.size() == 1);
-            CHECK(l1.events == std::vector<std::string>(
-                                   {"parse_error(2)"}));
+            CHECK(l1.events == std::vector<std::string>({"parse_error(2)"}));
             CHECK(l2.events.size() == 1);
-            CHECK(l2.events == std::vector<std::string>(
-                                   {"parse_error(2)"}));
+            CHECK(l2.events == std::vector<std::string>({"parse_error(2)"}));
         }
 
         SECTION("variations")
@@ -946,8 +1019,7 @@ TEST_CASE("deserialization")
                             SaxEventLogger l;
                             CHECK(json::sax_parse(s + "null", &l));
                             CHECK(l.events.size() == 1);
-                            CHECK(l.events == std::vector<std::string>(
-                                                  {"null()"}));
+                            CHECK(l.events == std::vector<std::string>({"null()"}));
                         }
                         else
                         {
@@ -962,18 +1034,15 @@ TEST_CASE("deserialization")
 
                             if (i0 != 0)
                             {
-                                CHECK(l.events == std::vector<std::string>(
-                                                      {"parse_error(1)"}));
+                                CHECK(l.events == std::vector<std::string>({"parse_error(1)"}));
                             }
                             else if (i1 != 0)
                             {
-                                CHECK(l.events == std::vector<std::string>(
-                                                      {"parse_error(2)"}));
+                                CHECK(l.events == std::vector<std::string>({"parse_error(2)"}));
                             }
                             else
                             {
-                                CHECK(l.events == std::vector<std::string>(
-                                                      {"parse_error(3)"}));
+                                CHECK(l.events == std::vector<std::string>({"parse_error(3)"}));
                             }
                         }
                     }
@@ -1003,23 +1072,43 @@ TEST_CASE("deserialization")
 
         json::sax_parse(s, &default_logger);
         CHECK(default_logger.events.size() == 14);
-        CHECK(default_logger.events == std::vector<std::string>(
-                                           {"start_array()", "number_unsigned(1)", "start_array()", "string(string)", "number_float(43.12)", "end_array()", "null()", "start_object()", "key(key1)", "boolean(true)", "key(key2)", "boolean(false)", "end_object()", "end_array()"}));
+        CHECK(default_logger.events == std::vector<std::string>({"start_array()",
+                                                                 "number_unsigned(1)",
+                                                                 "start_array()",
+                                                                 "string(string)",
+                                                                 "number_float(43.12)",
+                                                                 "end_array()",
+                                                                 "null()",
+                                                                 "start_object()",
+                                                                 "key(key1)",
+                                                                 "boolean(true)",
+                                                                 "key(key2)",
+                                                                 "boolean(false)",
+                                                                 "end_object()",
+                                                                 "end_array()"}));
 
         json::sax_parse(s, &exit_after_start_object);
         CHECK(exit_after_start_object.events.size() == 8);
-        CHECK(exit_after_start_object.events == std::vector<std::string>(
-                                                    {"start_array()", "number_unsigned(1)", "start_array()", "string(string)", "number_float(43.12)", "end_array()", "null()", "start_object()"}));
+        CHECK(
+            exit_after_start_object.events ==
+            std::vector<std::string>(
+                {"start_array()", "number_unsigned(1)", "start_array()", "string(string)", "number_float(43.12)", "end_array()", "null()", "start_object()"}));
 
         json::sax_parse(s, &exit_after_key);
         CHECK(exit_after_key.events.size() == 9);
-        CHECK(exit_after_key.events == std::vector<std::string>(
-                                           {"start_array()", "number_unsigned(1)", "start_array()", "string(string)", "number_float(43.12)", "end_array()", "null()", "start_object()", "key(key1)"}));
+        CHECK(exit_after_key.events == std::vector<std::string>({"start_array()",
+                                                                 "number_unsigned(1)",
+                                                                 "start_array()",
+                                                                 "string(string)",
+                                                                 "number_float(43.12)",
+                                                                 "end_array()",
+                                                                 "null()",
+                                                                 "start_object()",
+                                                                 "key(key1)"}));
 
         json::sax_parse(s, &exit_after_start_array);
         CHECK(exit_after_start_array.events.size() == 1);
-        CHECK(exit_after_start_array.events == std::vector<std::string>(
-                                                   {"start_array()"}));
+        CHECK(exit_after_start_array.events == std::vector<std::string>({"start_array()"}));
     }
 
     SECTION("JSON Lines")
@@ -1065,7 +1154,20 @@ TEST_CASE("deserialization")
     }
 }
 
-TEST_CASE_TEMPLATE("deserialization of different character types (ASCII)", T, char, unsigned char, signed char, wchar_t, char16_t, char32_t, std::uint8_t, std::int8_t, std::int16_t, std::uint16_t, std::int32_t, std::uint32_t)
+TEST_CASE_TEMPLATE("deserialization of different character types (ASCII)",
+                   T,
+                   char,
+                   unsigned char,
+                   signed char,
+                   wchar_t,
+                   char16_t,
+                   char32_t,
+                   std::uint8_t,
+                   std::int8_t,
+                   std::int16_t,
+                   std::uint16_t,
+                   std::int32_t,
+                   std::uint32_t)
 {
     std::vector<T> const v = {'t', 'r', 'u', 'e'};
     CHECK(json::parse(v) == json(true));
@@ -1080,7 +1182,8 @@ TEST_CASE_TEMPLATE("deserialization of different character types (ASCII)", T, ch
 TEST_CASE_TEMPLATE("deserialization of different character types (UTF-8)", T, char, unsigned char, std::uint8_t)
 {
     // a star emoji
-    std::vector<T> const v = {'"', static_cast<T>(0xe2u), static_cast<T>(0xadu), static_cast<T>(0x90u), static_cast<T>(0xefu), static_cast<T>(0xb8u), static_cast<T>(0x8fu), '"'};
+    std::vector<T> const v =
+        {'"', static_cast<T>(0xe2u), static_cast<T>(0xadu), static_cast<T>(0x90u), static_cast<T>(0xefu), static_cast<T>(0xb8u), static_cast<T>(0x8fu), '"'};
     CHECK(json::parse(v).dump(-1, ' ', true) == "\"\\u2b50\\ufe0f\"");
     CHECK(json::accept(v));
 

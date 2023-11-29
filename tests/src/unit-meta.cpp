@@ -20,11 +20,7 @@ TEST_CASE("version information")
         CHECK(j["name"] == "JSON for Modern C++");
         CHECK(j["copyright"] == "(C) 2013-2023 Niels Lohmann");
         CHECK(j["url"] == "https://github.com/nlohmann/json");
-        CHECK(j["version"] == json(
-                                  {{"string", "3.11.3"},
-                                   {"major", 3},
-                                   {"minor", 11},
-                                   {"patch", 3}}));
+        CHECK(j["version"] == json({{"string", "3.11.3"}, {"major", 3}, {"minor", 11}, {"patch", 3}}));
 
         CHECK(j.find("platform") != j.end());
         CHECK(j.at("compiler").find("family") != j.at("compiler").end());

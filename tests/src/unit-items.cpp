@@ -718,9 +718,7 @@ TEST_CASE("iterator_wrapper")
 
 TEST_CASE("items()")
 {
-    SECTION("object"){
-        SECTION("value"){
-            json j = {{"A", 1}, {"B", 2}};
+    SECTION("object"){SECTION("value"){json j = {{"A", 1}, {"B", 2}};
     int counter = 1;
 
     for (auto i : j.items())  // NOLINT(performance-for-range-copy)

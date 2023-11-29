@@ -36,8 +36,7 @@ struct adl_serializer;
 
 /// a class to store JSON values
 /// @sa https://json.nlohmann.me/api/basic_json/
-template<template<typename U, typename V, typename... Args> class ObjectType =
-             std::map,
+template<template<typename U, typename V, typename... Args> class ObjectType = std::map,
          template<typename U, typename... Args> class ArrayType = std::vector,
          class StringType = std::string,
          class BooleanType = bool,
@@ -45,8 +44,7 @@ template<template<typename U, typename V, typename... Args> class ObjectType =
          class NumberUnsignedType = std::uint64_t,
          class NumberFloatType = double,
          template<typename U> class AllocatorType = std::allocator,
-         template<typename T, typename SFINAE = void> class JSONSerializer =
-             adl_serializer,
+         template<typename T, typename SFINAE = void> class JSONSerializer = adl_serializer,
          class BinaryType = std::vector<std::uint8_t>,  // cppcheck-suppress syntaxError
          class CustomBaseClass = void>
 class basic_json;

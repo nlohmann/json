@@ -19,7 +19,8 @@
 #include <nlohmann/detail/macro_scope.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
-namespace detail {
+namespace detail
+{
 
 /*!
 @brief implements the Grisu2 algorithm for binary to decimal floating-point
@@ -40,7 +41,8 @@ For a detailed description of the algorithm see:
     Proceedings of the ACM SIGPLAN 1996 Conference on Programming Language
     Design and Implementation, PLDI 1996
 */
-namespace dtoa_impl {
+namespace dtoa_impl
+{
 
 template<typename Target, typename Source>
 Target reinterpret_bits(const Source source)
@@ -199,8 +201,7 @@ boundaries compute_boundaries(FloatType value)
     // If v is normalized:
     //      value = 1.F * 2^(E - bias) = (2^(p-1) + F) * 2^(E - bias - (p-1))
 
-    static_assert(std::numeric_limits<FloatType>::is_iec559,
-                  "internal error: dtoa_short requires an IEEE-754 floating-point implementation");
+    static_assert(std::numeric_limits<FloatType>::is_iec559, "internal error: dtoa_short requires an IEEE-754 floating-point implementation");
 
     constexpr int kPrecision = std::numeric_limits<FloatType>::digits;  // = p (includes the hidden bit)
     constexpr int kBias = std::numeric_limits<FloatType>::max_exponent - 1 + (kPrecision - 1);
@@ -214,9 +215,7 @@ boundaries compute_boundaries(FloatType value)
     const std::uint64_t F = bits & (kHiddenBit - 1);
 
     const bool is_denormal = E == 0;
-    const diyfp v = is_denormal
-                        ? diyfp(F, kMinExp)
-                        : diyfp(F + kHiddenBit, static_cast<int>(E) - kBias);
+    const diyfp v = is_denormal ? diyfp(F, kMinExp) : diyfp(F + kHiddenBit, static_cast<int>(E) - kBias);
 
     // Compute the boundaries m- and m+ of the floating-point value
     // v = f * 2^e.
@@ -241,9 +240,8 @@ boundaries compute_boundaries(FloatType value)
 
     const bool lower_boundary_is_closer = F == 0 && E > 1;
     const diyfp m_plus = diyfp(2 * v.f + 1, v.e - 1);
-    const diyfp m_minus = lower_boundary_is_closer
-                              ? diyfp(4 * v.f - 1, v.e - 2)   // (B)
-                              : diyfp(2 * v.f - 1, v.e - 1);  // (A)
+    const diyfp m_minus = lower_boundary_is_closer ? diyfp(4 * v.f - 1, v.e - 2)   // (B)
+                                                   : diyfp(2 * v.f - 1, v.e - 1);  // (A)
 
     // Determine the normalized w+ = m+.
     const diyfp w_plus = diyfp::normalize(m_plus);
@@ -381,89 +379,28 @@ inline cached_power get_cached_power_for_binary_exponent(int e)
     constexpr int kCachedPowersMinDecExp = -300;
     constexpr int kCachedPowersDecStep = 8;
 
-    static constexpr std::array<cached_power, 79> kCachedPowers =
-        {
-            {
-                {0xAB70FE17C79AC6CA, -1060, -300},
-                {0xFF77B1FCBEBCDC4F, -1034, -292},
-                {0xBE5691EF416BD60C, -1007, -284},
-                {0x8DD01FAD907FFC3C, -980, -276},
-                {0xD3515C2831559A83, -954, -268},
-                {0x9D71AC8FADA6C9B5, -927, -260},
-                {0xEA9C227723EE8BCB, -901, -252},
-                {0xAECC49914078536D, -874, -244},
-                {0x823C12795DB6CE57, -847, -236},
-                {0xC21094364DFB5637, -821, -228},
-                {0x9096EA6F3848984F, -794, -220},
-                {0xD77485CB25823AC7, -768, -212},
-                {0xA086CFCD97BF97F4, -741, -204},
-                {0xEF340A98172AACE5, -715, -196},
-                {0xB23867FB2A35B28E, -688, -188},
-                {0x84C8D4DFD2C63F3B, -661, -180},
-                {0xC5DD44271AD3CDBA, -635, -172},
-                {0x936B9FCEBB25C996, -608, -164},
-                {0xDBAC6C247D62A584, -582, -156},
-                {0xA3AB66580D5FDAF6, -555, -148},
-                {0xF3E2F893DEC3F126, -529, -140},
-                {0xB5B5ADA8AAFF80B8, -502, -132},
-                {0x87625F056C7C4A8B, -475, -124},
-                {0xC9BCFF6034C13053, -449, -116},
-                {0x964E858C91BA2655, -422, -108},
-                {0xDFF9772470297EBD, -396, -100},
-                {0xA6DFBD9FB8E5B88F, -369, -92},
-                {0xF8A95FCF88747D94, -343, -84},
-                {0xB94470938FA89BCF, -316, -76},
-                {0x8A08F0F8BF0F156B, -289, -68},
-                {0xCDB02555653131B6, -263, -60},
-                {0x993FE2C6D07B7FAC, -236, -52},
-                {0xE45C10C42A2B3B06, -210, -44},
-                {0xAA242499697392D3, -183, -36},
-                {0xFD87B5F28300CA0E, -157, -28},
-                {0xBCE5086492111AEB, -130, -20},
-                {0x8CBCCC096F5088CC, -103, -12},
-                {0xD1B71758E219652C, -77, -4},
-                {0x9C40000000000000, -50, 4},
-                {0xE8D4A51000000000, -24, 12},
-                {0xAD78EBC5AC620000, 3, 20},
-                {0x813F3978F8940984, 30, 28},
-                {0xC097CE7BC90715B3, 56, 36},
-                {0x8F7E32CE7BEA5C70, 83, 44},
-                {0xD5D238A4ABE98068, 109, 52},
-                {0x9F4F2726179A2245, 136, 60},
-                {0xED63A231D4C4FB27, 162, 68},
-                {0xB0DE65388CC8ADA8, 189, 76},
-                {0x83C7088E1AAB65DB, 216, 84},
-                {0xC45D1DF942711D9A, 242, 92},
-                {0x924D692CA61BE758, 269, 100},
-                {0xDA01EE641A708DEA, 295, 108},
-                {0xA26DA3999AEF774A, 322, 116},
-                {0xF209787BB47D6B85, 348, 124},
-                {0xB454E4A179DD1877, 375, 132},
-                {0x865B86925B9BC5C2, 402, 140},
-                {0xC83553C5C8965D3D, 428, 148},
-                {0x952AB45CFA97A0B3, 455, 156},
-                {0xDE469FBD99A05FE3, 481, 164},
-                {0xA59BC234DB398C25, 508, 172},
-                {0xF6C69A72A3989F5C, 534, 180},
-                {0xB7DCBF5354E9BECE, 561, 188},
-                {0x88FCF317F22241E2, 588, 196},
-                {0xCC20CE9BD35C78A5, 614, 204},
-                {0x98165AF37B2153DF, 641, 212},
-                {0xE2A0B5DC971F303A, 667, 220},
-                {0xA8D9D1535CE3B396, 694, 228},
-                {0xFB9B7CD9A4A7443C, 720, 236},
-                {0xBB764C4CA7A44410, 747, 244},
-                {0x8BAB8EEFB6409C1A, 774, 252},
-                {0xD01FEF10A657842C, 800, 260},
-                {0x9B10A4E5E9913129, 827, 268},
-                {0xE7109BFBA19C0C9D, 853, 276},
-                {0xAC2820D9623BF429, 880, 284},
-                {0x80444B5E7AA7CF85, 907, 292},
-                {0xBF21E44003ACDD2D, 933, 300},
-                {0x8E679C2F5E44FF8F, 960, 308},
-                {0xD433179D9C8CB841, 986, 316},
-                {0x9E19DB92B4E31BA9, 1013, 324},
-            }};
+    static constexpr std::array<cached_power, 79> kCachedPowers = {{
+        {0xAB70FE17C79AC6CA, -1060, -300}, {0xFF77B1FCBEBCDC4F, -1034, -292}, {0xBE5691EF416BD60C, -1007, -284}, {0x8DD01FAD907FFC3C, -980, -276},
+        {0xD3515C2831559A83, -954, -268},  {0x9D71AC8FADA6C9B5, -927, -260},  {0xEA9C227723EE8BCB, -901, -252},  {0xAECC49914078536D, -874, -244},
+        {0x823C12795DB6CE57, -847, -236},  {0xC21094364DFB5637, -821, -228},  {0x9096EA6F3848984F, -794, -220},  {0xD77485CB25823AC7, -768, -212},
+        {0xA086CFCD97BF97F4, -741, -204},  {0xEF340A98172AACE5, -715, -196},  {0xB23867FB2A35B28E, -688, -188},  {0x84C8D4DFD2C63F3B, -661, -180},
+        {0xC5DD44271AD3CDBA, -635, -172},  {0x936B9FCEBB25C996, -608, -164},  {0xDBAC6C247D62A584, -582, -156},  {0xA3AB66580D5FDAF6, -555, -148},
+        {0xF3E2F893DEC3F126, -529, -140},  {0xB5B5ADA8AAFF80B8, -502, -132},  {0x87625F056C7C4A8B, -475, -124},  {0xC9BCFF6034C13053, -449, -116},
+        {0x964E858C91BA2655, -422, -108},  {0xDFF9772470297EBD, -396, -100},  {0xA6DFBD9FB8E5B88F, -369, -92},   {0xF8A95FCF88747D94, -343, -84},
+        {0xB94470938FA89BCF, -316, -76},   {0x8A08F0F8BF0F156B, -289, -68},   {0xCDB02555653131B6, -263, -60},   {0x993FE2C6D07B7FAC, -236, -52},
+        {0xE45C10C42A2B3B06, -210, -44},   {0xAA242499697392D3, -183, -36},   {0xFD87B5F28300CA0E, -157, -28},   {0xBCE5086492111AEB, -130, -20},
+        {0x8CBCCC096F5088CC, -103, -12},   {0xD1B71758E219652C, -77, -4},     {0x9C40000000000000, -50, 4},      {0xE8D4A51000000000, -24, 12},
+        {0xAD78EBC5AC620000, 3, 20},       {0x813F3978F8940984, 30, 28},      {0xC097CE7BC90715B3, 56, 36},      {0x8F7E32CE7BEA5C70, 83, 44},
+        {0xD5D238A4ABE98068, 109, 52},     {0x9F4F2726179A2245, 136, 60},     {0xED63A231D4C4FB27, 162, 68},     {0xB0DE65388CC8ADA8, 189, 76},
+        {0x83C7088E1AAB65DB, 216, 84},     {0xC45D1DF942711D9A, 242, 92},     {0x924D692CA61BE758, 269, 100},    {0xDA01EE641A708DEA, 295, 108},
+        {0xA26DA3999AEF774A, 322, 116},    {0xF209787BB47D6B85, 348, 124},    {0xB454E4A179DD1877, 375, 132},    {0x865B86925B9BC5C2, 402, 140},
+        {0xC83553C5C8965D3D, 428, 148},    {0x952AB45CFA97A0B3, 455, 156},    {0xDE469FBD99A05FE3, 481, 164},    {0xA59BC234DB398C25, 508, 172},
+        {0xF6C69A72A3989F5C, 534, 180},    {0xB7DCBF5354E9BECE, 561, 188},    {0x88FCF317F22241E2, 588, 196},    {0xCC20CE9BD35C78A5, 614, 204},
+        {0x98165AF37B2153DF, 641, 212},    {0xE2A0B5DC971F303A, 667, 220},    {0xA8D9D1535CE3B396, 694, 228},    {0xFB9B7CD9A4A7443C, 720, 236},
+        {0xBB764C4CA7A44410, 747, 244},    {0x8BAB8EEFB6409C1A, 774, 252},    {0xD01FEF10A657842C, 800, 260},    {0x9B10A4E5E9913129, 827, 268},
+        {0xE7109BFBA19C0C9D, 853, 276},    {0xAC2820D9623BF429, 880, 284},    {0x80444B5E7AA7CF85, 907, 292},    {0xBF21E44003ACDD2D, 933, 300},
+        {0x8E679C2F5E44FF8F, 960, 308},    {0xD433179D9C8CB841, 986, 316},    {0x9E19DB92B4E31BA9, 1013, 324},
+    }};
 
     // This computation gives exactly the same results for k as
     //      k = ceil((kAlpha - e - 1) * 0.30102999566398114)
@@ -882,8 +819,7 @@ template<typename FloatType>
 JSON_HEDLEY_NON_NULL(1)
 void grisu2(char* buf, int& len, int& decimal_exponent, FloatType value)
 {
-    static_assert(diyfp::kPrecision >= std::numeric_limits<FloatType>::digits + 3,
-                  "internal error: not enough precision");
+    static_assert(diyfp::kPrecision >= std::numeric_limits<FloatType>::digits + 3, "internal error: not enough precision");
 
     JSON_ASSERT(std::isfinite(value));
     JSON_ASSERT(value > 0);
@@ -1055,8 +991,7 @@ format. Returns an iterator pointing past-the-end of the decimal representation.
 */
 template<typename FloatType>
 JSON_HEDLEY_NON_NULL(1, 2)
-JSON_HEDLEY_RETURNS_NON_NULL
-    char* to_chars(char* first, const char* last, FloatType value)
+JSON_HEDLEY_RETURNS_NON_NULL char* to_chars(char* first, const char* last, FloatType value)
 {
     static_cast<void>(last);  // maybe unused - fix warning
     JSON_ASSERT(std::isfinite(value));

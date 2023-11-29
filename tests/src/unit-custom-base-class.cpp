@@ -36,19 +36,17 @@ class json_metadata
 };
 
 template<class T>
-using json_with_metadata =
-    nlohmann::basic_json<
-        std::map,
-        std::vector,
-        std::string,
-        bool,
-        std::int64_t,
-        std::uint64_t,
-        double,
-        std::allocator,
-        nlohmann::adl_serializer,
-        std::vector<std::uint8_t>,
-        json_metadata<T>>;
+using json_with_metadata = nlohmann::basic_json<std::map,
+                                                std::vector,
+                                                std::string,
+                                                bool,
+                                                std::int64_t,
+                                                std::uint64_t,
+                                                double,
+                                                std::allocator,
+                                                nlohmann::adl_serializer,
+                                                std::vector<std::uint8_t>,
+                                                json_metadata<T>>;
 
 TEST_CASE("JSON Node Metadata")
 {
@@ -196,18 +194,17 @@ class visitor_adaptor
     void do_visit(const Ptr& ptr, const Fnc& fnc) const;
 };
 
-using json_with_visitor_t = nlohmann::basic_json<
-    std::map,
-    std::vector,
-    std::string,
-    bool,
-    std::int64_t,
-    std::uint64_t,
-    double,
-    std::allocator,
-    nlohmann::adl_serializer,
-    std::vector<std::uint8_t>,
-    visitor_adaptor>;
+using json_with_visitor_t = nlohmann::basic_json<std::map,
+                                                 std::vector,
+                                                 std::string,
+                                                 bool,
+                                                 std::int64_t,
+                                                 std::uint64_t,
+                                                 double,
+                                                 std::allocator,
+                                                 nlohmann::adl_serializer,
+                                                 std::vector<std::uint8_t>,
+                                                 visitor_adaptor>;
 
 template<class Fnc>
 void visitor_adaptor::visit(const Fnc& fnc) const
@@ -261,72 +258,69 @@ TEST_CASE("JSON Visit Node")
     json["array"].push_back(1);
     json["array"].push_back(json);
 
-    std::set<std::string> expected{
-        "/null - null - null",
-        "/int - number_integer - -1",
-        "/uint - number_unsigned - 1",
-        "/float - number_float - 1.0",
-        "/boolean - boolean - true",
-        "/string - string - \"string\"",
-        "/array/0 - number_integer - 0",
-        "/array/1 - number_integer - 1",
+    std::set<std::string> expected{"/null - null - null",
+                                   "/int - number_integer - -1",
+                                   "/uint - number_unsigned - 1",
+                                   "/float - number_float - 1.0",
+                                   "/boolean - boolean - true",
+                                   "/string - string - \"string\"",
+                                   "/array/0 - number_integer - 0",
+                                   "/array/1 - number_integer - 1",
 
-        "/array/2/null - null - null",
-        "/array/2/int - number_integer - -1",
-        "/array/2/uint - number_unsigned - 1",
-        "/array/2/float - number_float - 1.0",
-        "/array/2/boolean - boolean - true",
-        "/array/2/string - string - \"string\"",
-        "/array/2/array/0 - number_integer - 0",
-        "/array/2/array/1 - number_integer - 1"};
+                                   "/array/2/null - null - null",
+                                   "/array/2/int - number_integer - -1",
+                                   "/array/2/uint - number_unsigned - 1",
+                                   "/array/2/float - number_float - 1.0",
+                                   "/array/2/boolean - boolean - true",
+                                   "/array/2/string - string - \"string\"",
+                                   "/array/2/array/0 - number_integer - 0",
+                                   "/array/2/array/1 - number_integer - 1"};
 
-    json.visit(
-        [&](const json_with_visitor_t::json_pointer& p,
-            const json_with_visitor_t& j) {
-            std::stringstream str;
-            str << p.to_string() << " - ";
-            using value_t = nlohmann::detail::value_t;
-            switch (j.type())
-            {
-                case value_t::object:
-                    str << "object";
-                    break;
-                case value_t::array:
-                    str << "array";
-                    break;
-                case value_t::discarded:
-                    str << "discarded";
-                    break;
-                case value_t::null:
-                    str << "null";
-                    break;
-                case value_t::string:
-                    str << "string";
-                    break;
-                case value_t::boolean:
-                    str << "boolean";
-                    break;
-                case value_t::number_integer:
-                    str << "number_integer";
-                    break;
-                case value_t::number_unsigned:
-                    str << "number_unsigned";
-                    break;
-                case value_t::number_float:
-                    str << "number_float";
-                    break;
-                case value_t::binary:
-                    str << "binary";
-                    break;
-                default:
-                    str << "error";
-                    break;
-            }
-            str << " - " << j.dump();
-            CHECK(json.at(p) == j);
-            INFO(str.str());
-            CHECK(expected.count(str.str()) == 1);
-            expected.erase(str.str());
-        });
+    json.visit([&](const json_with_visitor_t::json_pointer& p, const json_with_visitor_t& j) {
+        std::stringstream str;
+        str << p.to_string() << " - ";
+        using value_t = nlohmann::detail::value_t;
+        switch (j.type())
+        {
+            case value_t::object:
+                str << "object";
+                break;
+            case value_t::array:
+                str << "array";
+                break;
+            case value_t::discarded:
+                str << "discarded";
+                break;
+            case value_t::null:
+                str << "null";
+                break;
+            case value_t::string:
+                str << "string";
+                break;
+            case value_t::boolean:
+                str << "boolean";
+                break;
+            case value_t::number_integer:
+                str << "number_integer";
+                break;
+            case value_t::number_unsigned:
+                str << "number_unsigned";
+                break;
+            case value_t::number_float:
+                str << "number_float";
+                break;
+            case value_t::binary:
+                str << "binary";
+                break;
+            default:
+                str << "error";
+                break;
+        }
+        str << " - " << j.dump();
+        CHECK(json.at(p) == j);
+        INFO(str.str());
+        CHECK(expected.count(str.str()) == 1);
+        expected.erase(str.str());
+    });
     CHECK(expected.empty());
 }

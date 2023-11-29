@@ -13,7 +13,8 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
-namespace persons {
+namespace persons
+{
 class person_with_private_data
 {
   private:
@@ -157,32 +158,9 @@ class person_with_private_alphabet
   public:
     bool operator==(const person_with_private_alphabet& other) const
     {
-        return a == other.a &&
-               b == other.b &&
-               c == other.c &&
-               d == other.d &&
-               e == other.e &&
-               f == other.f &&
-               g == other.g &&
-               h == other.h &&
-               i == other.i &&
-               j == other.j &&
-               k == other.k &&
-               l == other.l &&
-               m == other.m &&
-               n == other.n &&
-               o == other.o &&
-               p == other.p &&
-               q == other.q &&
-               r == other.r &&
-               s == other.s &&
-               t == other.t &&
-               u == other.u &&
-               v == other.v &&
-               w == other.w &&
-               x == other.x &&
-               y == other.y &&
-               z == other.z;
+        return a == other.a && b == other.b && c == other.c && d == other.d && e == other.e && f == other.f && g == other.g && h == other.h && i == other.i &&
+               j == other.j && k == other.k && l == other.l && m == other.m && n == other.n && o == other.o && p == other.p && q == other.q && r == other.r &&
+               s == other.s && t == other.t && u == other.u && v == other.v && w == other.w && x == other.x && y == other.y && z == other.z;
     }
 
   private:
@@ -220,32 +198,9 @@ class person_with_public_alphabet
   public:
     bool operator==(const person_with_public_alphabet& other) const
     {
-        return a == other.a &&
-               b == other.b &&
-               c == other.c &&
-               d == other.d &&
-               e == other.e &&
-               f == other.f &&
-               g == other.g &&
-               h == other.h &&
-               i == other.i &&
-               j == other.j &&
-               k == other.k &&
-               l == other.l &&
-               m == other.m &&
-               n == other.n &&
-               o == other.o &&
-               p == other.p &&
-               q == other.q &&
-               r == other.r &&
-               s == other.s &&
-               t == other.t &&
-               u == other.u &&
-               v == other.v &&
-               w == other.w &&
-               x == other.x &&
-               y == other.y &&
-               z == other.z;
+        return a == other.a && b == other.b && c == other.c && d == other.d && e == other.e && f == other.f && g == other.g && h == other.h && i == other.i &&
+               j == other.j && k == other.k && l == other.l && m == other.m && n == other.n && o == other.o && p == other.p && q == other.q && r == other.r &&
+               s == other.s && t == other.t && u == other.u && v == other.v && w == other.w && x == other.x && y == other.y && z == other.z;
     }
 
     int a = 0;
@@ -318,7 +273,11 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE(person_without_default_constru
 
 }  // namespace persons
 
-TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRUSIVE and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE", T, persons::person_with_private_data, persons::person_without_private_data_1, persons::person_without_private_data_2)
+TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRUSIVE and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE",
+                   T,
+                   persons::person_with_private_data,
+                   persons::person_without_private_data_1,
+                   persons::person_without_private_data_2)
 {
     SECTION("person")
     {
@@ -341,7 +300,10 @@ TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRU
     }
 }
 
-TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT", T, persons::person_with_private_data_2, persons::person_without_private_data_3)
+TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT",
+                   T,
+                   persons::person_with_private_data_2,
+                   persons::person_without_private_data_3)
 {
     SECTION("person with default values")
     {
@@ -373,7 +335,11 @@ TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRU
     }
 }
 
-TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/private member variables via NLOHMANN_DEFINE_TYPE_INTRUSIVE and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE", T, persons::person_with_private_alphabet, persons::person_with_public_alphabet)
+TEST_CASE_TEMPLATE(
+    "Serialization/deserialization of classes with 26 public/private member variables via NLOHMANN_DEFINE_TYPE_INTRUSIVE and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE",
+    T,
+    persons::person_with_private_alphabet,
+    persons::person_with_public_alphabet)
 {
     SECTION("alphabet")
     {
@@ -443,7 +409,11 @@ TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/priv
     }
 }
 
-TEST_CASE_TEMPLATE("Serialization of non-default-constructible classes via NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE", T, persons::person_without_default_constructor_1, persons::person_without_default_constructor_2)
+TEST_CASE_TEMPLATE(
+    "Serialization of non-default-constructible classes via NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE",
+    T,
+    persons::person_without_default_constructor_1,
+    persons::person_without_default_constructor_2)
 {
     SECTION("person")
     {
@@ -453,9 +423,7 @@ TEST_CASE_TEMPLATE("Serialization of non-default-constructible classes via NLOHM
             CHECK(json(person).dump() == "{\"age\":1,\"name\":\"Erik\"}");
 
             // serialization of a container with objects
-            std::vector<T> const two_persons{
-                {"Erik", 1},
-                {"Kyle", 2}};
+            std::vector<T> const two_persons{{"Erik", 1}, {"Kyle", 2}};
             CHECK(json(two_persons).dump() == "[{\"age\":1,\"name\":\"Erik\"},{\"age\":2,\"name\":\"Kyle\"}]");
         }
     }

@@ -31,8 +31,7 @@ TEST_CASE("serialization")
             std::stringstream ss;
             const json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
             ss << std::setw(4) << j;
-            CHECK(ss.str() ==
-                  "[\n    \"foo\",\n    1,\n    2,\n    3,\n    false,\n    {\n        \"one\": 1\n    }\n]");
+            CHECK(ss.str() == "[\n    \"foo\",\n    1,\n    2,\n    3,\n    false,\n    {\n        \"one\": 1\n    }\n]");
         }
 
         SECTION("given fill")
@@ -40,8 +39,7 @@ TEST_CASE("serialization")
             std::stringstream ss;
             const json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
             ss << std::setw(1) << std::setfill('\t') << j;
-            CHECK(ss.str() ==
-                  "[\n\t\"foo\",\n\t1,\n\t2,\n\t3,\n\tfalse,\n\t{\n\t\t\"one\": 1\n\t}\n]");
+            CHECK(ss.str() == "[\n\t\"foo\",\n\t1,\n\t2,\n\t3,\n\tfalse,\n\t{\n\t\t\"one\": 1\n\t}\n]");
         }
     }
 
@@ -61,8 +59,7 @@ TEST_CASE("serialization")
             const json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
             ss.width(4);
             j >> ss;
-            CHECK(ss.str() ==
-                  "[\n    \"foo\",\n    1,\n    2,\n    3,\n    false,\n    {\n        \"one\": 1\n    }\n]");
+            CHECK(ss.str() == "[\n    \"foo\",\n    1,\n    2,\n    3,\n    false,\n    {\n        \"one\": 1\n    }\n]");
         }
 
         SECTION("given fill")
@@ -72,8 +69,7 @@ TEST_CASE("serialization")
             ss.width(1);
             ss.fill('\t');
             j >> ss;
-            CHECK(ss.str() ==
-                  "[\n\t\"foo\",\n\t1,\n\t2,\n\t3,\n\tfalse,\n\t{\n\t\t\"one\": 1\n\t}\n]");
+            CHECK(ss.str() == "[\n\t\"foo\",\n\t1,\n\t2,\n\t3,\n\tfalse,\n\t{\n\t\t\"one\": 1\n\t}\n]");
         }
     }
 
@@ -84,7 +80,9 @@ TEST_CASE("serialization")
             const json j = "ä\xA9ü";
 
             CHECK_THROWS_WITH_AS(j.dump(), "[json.exception.type_error.316] invalid UTF-8 byte at index 2: 0xA9", json::type_error&);
-            CHECK_THROWS_WITH_AS(j.dump(1, ' ', false, json::error_handler_t::strict), "[json.exception.type_error.316] invalid UTF-8 byte at index 2: 0xA9", json::type_error&);
+            CHECK_THROWS_WITH_AS(j.dump(1, ' ', false, json::error_handler_t::strict),
+                                 "[json.exception.type_error.316] invalid UTF-8 byte at index 2: 0xA9",
+                                 json::type_error&);
             CHECK(j.dump(-1, ' ', false, json::error_handler_t::ignore) == "\"äü\"");
             CHECK(j.dump(-1, ' ', false, json::error_handler_t::replace) == "\"ä\xEF\xBF\xBDü\"");
             CHECK(j.dump(-1, ' ', true, json::error_handler_t::replace) == "\"\\u00e4\\ufffd\\u00fc\"");
@@ -124,78 +122,96 @@ TEST_CASE("serialization")
             };
 
             test("\xC2", "\\ufffd");
-            test("\xC2\x41\x42", "\\ufffd"
-                                 "\x41"
-                                 "\x42");
-            test("\xC2\xF4", "\\ufffd"
-                             "\\ufffd");
+            test("\xC2\x41\x42",
+                 "\\ufffd"
+                 "\x41"
+                 "\x42");
+            test("\xC2\xF4",
+                 "\\ufffd"
+                 "\\ufffd");
 
-            test("\xF0\x80\x80\x41", "\\ufffd"
-                                     "\\ufffd"
-                                     "\\ufffd"
-                                     "\x41");
-            test("\xF1\x80\x80\x41", "\\ufffd"
-                                     "\x41");
-            test("\xF2\x80\x80\x41", "\\ufffd"
-                                     "\x41");
-            test("\xF3\x80\x80\x41", "\\ufffd"
-                                     "\x41");
-            test("\xF4\x80\x80\x41", "\\ufffd"
-                                     "\x41");
-            test("\xF5\x80\x80\x41", "\\ufffd"
-                                     "\\ufffd"
-                                     "\\ufffd"
-                                     "\x41");
+            test("\xF0\x80\x80\x41",
+                 "\\ufffd"
+                 "\\ufffd"
+                 "\\ufffd"
+                 "\x41");
+            test("\xF1\x80\x80\x41",
+                 "\\ufffd"
+                 "\x41");
+            test("\xF2\x80\x80\x41",
+                 "\\ufffd"
+                 "\x41");
+            test("\xF3\x80\x80\x41",
+                 "\\ufffd"
+                 "\x41");
+            test("\xF4\x80\x80\x41",
+                 "\\ufffd"
+                 "\x41");
+            test("\xF5\x80\x80\x41",
+                 "\\ufffd"
+                 "\\ufffd"
+                 "\\ufffd"
+                 "\x41");
 
-            test("\xF0\x90\x80\x41", "\\ufffd"
-                                     "\x41");
-            test("\xF1\x90\x80\x41", "\\ufffd"
-                                     "\x41");
-            test("\xF2\x90\x80\x41", "\\ufffd"
-                                     "\x41");
-            test("\xF3\x90\x80\x41", "\\ufffd"
-                                     "\x41");
-            test("\xF4\x90\x80\x41", "\\ufffd"
-                                     "\\ufffd"
-                                     "\\ufffd"
-                                     "\x41");
-            test("\xF5\x90\x80\x41", "\\ufffd"
-                                     "\\ufffd"
-                                     "\\ufffd"
-                                     "\x41");
+            test("\xF0\x90\x80\x41",
+                 "\\ufffd"
+                 "\x41");
+            test("\xF1\x90\x80\x41",
+                 "\\ufffd"
+                 "\x41");
+            test("\xF2\x90\x80\x41",
+                 "\\ufffd"
+                 "\x41");
+            test("\xF3\x90\x80\x41",
+                 "\\ufffd"
+                 "\x41");
+            test("\xF4\x90\x80\x41",
+                 "\\ufffd"
+                 "\\ufffd"
+                 "\\ufffd"
+                 "\x41");
+            test("\xF5\x90\x80\x41",
+                 "\\ufffd"
+                 "\\ufffd"
+                 "\\ufffd"
+                 "\x41");
 
-            test("\xC0\xAF\xE0\x80\xBF\xF0\x81\x82\x41", "\\ufffd"
-                                                         "\\ufffd"
-                                                         "\\ufffd"
-                                                         "\\ufffd"
-                                                         "\\ufffd"
-                                                         "\\ufffd"
-                                                         "\\ufffd"
-                                                         "\\ufffd"
-                                                         "\x41");
-            test("\xED\xA0\x80\xED\xBF\xBF\xED\xAF\x41", "\\ufffd"
-                                                         "\\ufffd"
-                                                         "\\ufffd"
-                                                         "\\ufffd"
-                                                         "\\ufffd"
-                                                         "\\ufffd"
-                                                         "\\ufffd"
-                                                         "\\ufffd"
-                                                         "\x41");
-            test("\xF4\x91\x92\x93\xFF\x41\x80\xBF\x42", "\\ufffd"
-                                                         "\\ufffd"
-                                                         "\\ufffd"
-                                                         "\\ufffd"
-                                                         "\\ufffd"
-                                                         "\x41"
-                                                         "\\ufffd"
-                                                         "\\ufffd"
-                                                         "\x42");
-            test("\xE1\x80\xE2\xF0\x91\x92\xF1\xBF\x41", "\\ufffd"
-                                                         "\\ufffd"
-                                                         "\\ufffd"
-                                                         "\\ufffd"
-                                                         "\x41");
+            test("\xC0\xAF\xE0\x80\xBF\xF0\x81\x82\x41",
+                 "\\ufffd"
+                 "\\ufffd"
+                 "\\ufffd"
+                 "\\ufffd"
+                 "\\ufffd"
+                 "\\ufffd"
+                 "\\ufffd"
+                 "\\ufffd"
+                 "\x41");
+            test("\xED\xA0\x80\xED\xBF\xBF\xED\xAF\x41",
+                 "\\ufffd"
+                 "\\ufffd"
+                 "\\ufffd"
+                 "\\ufffd"
+                 "\\ufffd"
+                 "\\ufffd"
+                 "\\ufffd"
+                 "\\ufffd"
+                 "\x41");
+            test("\xF4\x91\x92\x93\xFF\x41\x80\xBF\x42",
+                 "\\ufffd"
+                 "\\ufffd"
+                 "\\ufffd"
+                 "\\ufffd"
+                 "\\ufffd"
+                 "\x41"
+                 "\\ufffd"
+                 "\\ufffd"
+                 "\x42");
+            test("\xE1\x80\xE2\xF0\x91\x92\xF1\xBF\x41",
+                 "\\ufffd"
+                 "\\ufffd"
+                 "\\ufffd"
+                 "\\ufffd"
+                 "\x41");
         }
     }
 
