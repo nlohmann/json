@@ -21,7 +21,7 @@ TEST_CASE("serialization")
         SECTION("no given width")
         {
             std::stringstream ss;
-            const json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
+            const json j = { "foo", 1, 2, 3, false, { { "one", 1 } } };
             ss << j;
             CHECK(ss.str() == "[\"foo\",1,2,3,false,{\"one\":1}]");
         }
@@ -29,7 +29,7 @@ TEST_CASE("serialization")
         SECTION("given width")
         {
             std::stringstream ss;
-            const json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
+            const json j = { "foo", 1, 2, 3, false, { { "one", 1 } } };
             ss << std::setw(4) << j;
             CHECK(ss.str() == "[\n    \"foo\",\n    1,\n    2,\n    3,\n    false,\n    {\n        \"one\": 1\n    }\n]");
         }
@@ -37,7 +37,7 @@ TEST_CASE("serialization")
         SECTION("given fill")
         {
             std::stringstream ss;
-            const json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
+            const json j = { "foo", 1, 2, 3, false, { { "one", 1 } } };
             ss << std::setw(1) << std::setfill('\t') << j;
             CHECK(ss.str() == "[\n\t\"foo\",\n\t1,\n\t2,\n\t3,\n\tfalse,\n\t{\n\t\t\"one\": 1\n\t}\n]");
         }
@@ -48,7 +48,7 @@ TEST_CASE("serialization")
         SECTION("no given width")
         {
             std::stringstream ss;
-            const json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
+            const json j = { "foo", 1, 2, 3, false, { { "one", 1 } } };
             j >> ss;
             CHECK(ss.str() == "[\"foo\",1,2,3,false,{\"one\":1}]");
         }
@@ -56,7 +56,7 @@ TEST_CASE("serialization")
         SECTION("given width")
         {
             std::stringstream ss;
-            const json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
+            const json j = { "foo", 1, 2, 3, false, { { "one", 1 } } };
             ss.width(4);
             j >> ss;
             CHECK(ss.str() == "[\n    \"foo\",\n    1,\n    2,\n    3,\n    false,\n    {\n        \"one\": 1\n    }\n]");
@@ -65,7 +65,7 @@ TEST_CASE("serialization")
         SECTION("given fill")
         {
             std::stringstream ss;
-            const json j = {"foo", 1, 2, 3, false, {{"one", 1}}};
+            const json j = { "foo", 1, 2, 3, false, { { "one", 1 } } };
             ss.width(1);
             ss.fill('\t');
             j >> ss;
@@ -249,20 +249,20 @@ TEST_CASE_TEMPLATE("serialization for extreme integer values", T, int32_t, uint3
 
 TEST_CASE("dump with binary values")
 {
-    auto binary = json::binary({1, 2, 3, 4});
+    auto binary = json::binary({ 1, 2, 3, 4 });
     auto binary_empty = json::binary({});
-    auto binary_with_subtype = json::binary({1, 2, 3, 4}, 128);
+    auto binary_with_subtype = json::binary({ 1, 2, 3, 4 }, 128);
     auto binary_empty_with_subtype = json::binary({}, 128);
 
-    const json object = {{"key", binary}};
-    const json object_empty = {{"key", binary_empty}};
-    const json object_with_subtype = {{"key", binary_with_subtype}};
-    const json object_empty_with_subtype = {{"key", binary_empty_with_subtype}};
+    const json object = { { "key", binary } };
+    const json object_empty = { { "key", binary_empty } };
+    const json object_with_subtype = { { "key", binary_with_subtype } };
+    const json object_empty_with_subtype = { { "key", binary_empty_with_subtype } };
 
-    const json array = {"value", 1, binary};
-    const json array_empty = {"value", 1, binary_empty};
-    const json array_with_subtype = {"value", 1, binary_with_subtype};
-    const json array_empty_with_subtype = {"value", 1, binary_empty_with_subtype};
+    const json array = { "value", 1, binary };
+    const json array_empty = { "value", 1, binary_empty };
+    const json array_with_subtype = { "value", 1, binary_with_subtype };
+    const json array_empty_with_subtype = { "value", 1, binary_empty_with_subtype };
 
     SECTION("normal")
     {

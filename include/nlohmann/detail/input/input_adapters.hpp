@@ -338,7 +338,7 @@ class wide_string_input_adapter
     }
 
     /// a buffer for UTF-8 bytes
-    std::array<std::char_traits<char>::int_type, 4> utf8_bytes = {{0, 0, 0, 0}};
+    std::array<std::char_traits<char>::int_type, 4> utf8_bytes = { { 0, 0, 0, 0 } };
 
     /// index to the utf8_codes array for the next valid byte
     std::size_t utf8_bytes_index = 0;

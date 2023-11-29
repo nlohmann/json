@@ -48,8 +48,8 @@ inline void replace_substring(StringType& s, const StringType& f, const StringTy
 template<typename StringType>
 inline StringType escape(StringType s)
 {
-    replace_substring(s, StringType{"~"}, StringType{"~0"});
-    replace_substring(s, StringType{"/"}, StringType{"~1"});
+    replace_substring(s, StringType{ "~" }, StringType{ "~0" });
+    replace_substring(s, StringType{ "/" }, StringType{ "~1" });
     return s;
 }
 
@@ -63,8 +63,8 @@ inline StringType escape(StringType s)
 template<typename StringType>
 static void unescape(StringType& s)
 {
-    replace_substring(s, StringType{"~1"}, StringType{"/"});
-    replace_substring(s, StringType{"~0"}, StringType{"~"});
+    replace_substring(s, StringType{ "~1" }, StringType{ "/" });
+    replace_substring(s, StringType{ "~0" }, StringType{ "~" });
 }
 
 }  // namespace detail

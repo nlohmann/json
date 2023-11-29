@@ -48,7 +48,7 @@ TEST_CASE("check_for_mem_leak_on_adl_to_json-1")
 {
     try
     {
-        const nlohmann::json j = Foo{1, 0};
+        const nlohmann::json j = Foo{ 1, 0 };
         std::cout << j.dump() << "\n";
     }
     catch (...)  // NOLINT(bugprone-empty-catch)
@@ -61,7 +61,7 @@ TEST_CASE("check_for_mem_leak_on_adl_to_json-2")
 {
     try
     {
-        const nlohmann::json j = Foo{1, 1};
+        const nlohmann::json j = Foo{ 1, 1 };
         std::cout << j.dump() << "\n";
     }
     catch (...)  // NOLINT(bugprone-empty-catch)
@@ -74,7 +74,7 @@ TEST_CASE("check_for_mem_leak_on_adl_to_json-2")
 {
     try
     {
-        const nlohmann::json j = Foo{1, 2};
+        const nlohmann::json j = Foo{ 1, 2 };
         std::cout << j.dump() << "\n";
     }
     catch (...)  // NOLINT(bugprone-empty-catch)

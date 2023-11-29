@@ -14,16 +14,16 @@ using nlohmann::json;
 TEST_CASE("reference access")
 {
     // create a JSON value with different types
-    const json json_types = {{"boolean", true},
-                             {"number", {{"integer", 42}, {"floating-point", 17.23}}},
-                             {"string", "Hello, world!"},
-                             {"array", {1, 2, 3, 4, 5}},
-                             {"null", nullptr}};
+    const json json_types = { { "boolean", true },
+                              { "number", { { "integer", 42 }, { "floating-point", 17.23 } } },
+                              { "string", "Hello, world!" },
+                              { "array", { 1, 2, 3, 4, 5 } },
+                              { "null", nullptr } };
 
     SECTION("reference access to object_t")
     {
         using test_type = json::object_t;
-        json value = {{"one", 1}, {"two", 2}};
+        json value = { { "one", 1 }, { "two", 2 } };
 
         // check if references are returned correctly
         auto& p1 = value.get_ref<test_type&>();
@@ -59,7 +59,7 @@ TEST_CASE("reference access")
     SECTION("const reference access to const object_t")
     {
         using test_type = json::object_t;
-        const json value = {{"one", 1}, {"two", 2}};
+        const json value = { { "one", 1 }, { "two", 2 } };
 
         // this should not compile
         // test_type& p1 = value.get_ref<test_type&>();
@@ -73,7 +73,7 @@ TEST_CASE("reference access")
     SECTION("reference access to array_t")
     {
         using test_type = json::array_t;
-        json value = {1, 2, 3, 4};
+        json value = { 1, 2, 3, 4 };
 
         // check if references are returned correctly
         auto& p1 = value.get_ref<test_type&>();

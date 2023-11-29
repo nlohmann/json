@@ -46,7 +46,7 @@ BreakStringLiterals: false
 ColumnLimit: 160
 CompactNamespaces: false
 ConstructorInitializerIndentWidth: 2
-Cpp11BracedListStyle: true
+Cpp11BracedListStyle: false
 PointerAlignment: Left
 FixNamespaceComments: true
 #IndentCaseBlocks: false
@@ -92,3 +92,6 @@ IncludeCategories:
     Priority:        3
   - Regex:           '.*'
     Priority:        4
+
+Macros:
+  - JSON_PRIVATE_UNLESS_TESTED=private

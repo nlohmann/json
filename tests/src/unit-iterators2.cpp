@@ -27,7 +27,7 @@ TEST_CASE("iterators 2")
 {
     SECTION("iterator comparisons")
     {
-        json j_values = {nullptr, true, 42, 42u, 23.23, {{"one", 1}, {"two", 2}}, {1, 2, 3, 4, 5}, "Hello, world"};
+        json j_values = { nullptr, true, 42, 42u, 23.23, { { "one", 1 }, { "two", 2 } }, { 1, 2, 3, 4, 5 }, "Hello, world" };
 
         for (json& j : j_values)
         {
@@ -347,8 +347,8 @@ TEST_CASE("iterators 2")
 
     SECTION("iterator arithmetic")
     {
-        json j_object = {{"one", 1}, {"two", 2}, {"three", 3}};
-        json j_array = {1, 2, 3, 4, 5, 6};
+        json j_object = { { "one", 1 }, { "two", 2 }, { "three", 3 } };
+        json j_array = { 1, 2, 3, 4, 5, 6 };
         json j_null = nullptr;
         json j_value = 42;
 
@@ -555,7 +555,7 @@ TEST_CASE("iterators 2")
 
     SECTION("reverse iterator comparisons")
     {
-        json j_values = {nullptr, true, 42, 42u, 23.23, {{"one", 1}, {"two", 2}}, {1, 2, 3, 4, 5}, "Hello, world"};
+        json j_values = { nullptr, true, 42, 42u, 23.23, { { "one", 1 }, { "two", 2 } }, { 1, 2, 3, 4, 5 }, "Hello, world" };
 
         for (json& j : j_values)
         {
@@ -875,8 +875,8 @@ TEST_CASE("iterators 2")
 
     SECTION("reverse iterator arithmetic")
     {
-        json j_object = {{"one", 1}, {"two", 2}, {"three", 3}};
-        json j_array = {1, 2, 3, 4, 5, 6};
+        json j_object = { { "one", 1 }, { "two", 2 }, { "three", 3 } };
+        json j_array = { 1, 2, 3, 4, 5, 6 };
         json j_null = nullptr;
         json j_value = 42;
 
@@ -1107,7 +1107,7 @@ TEST_CASE("iterators 2")
         {
             SECTION("copy")
             {
-                json j{"foo", "bar"};
+                json j{ "foo", "bar" };
                 auto j_copied = json::array();
 
                 std::ranges::copy(j, std::back_inserter(j_copied));
@@ -1117,7 +1117,7 @@ TEST_CASE("iterators 2")
 
             SECTION("find_if")
             {
-                json j{1, 3, 2, 4};
+                json j{ 1, 3, 2, 4 };
                 auto j_even = json::array();
 
         #if JSON_USE_IMPLICIT_CONVERSIONS
@@ -1144,8 +1144,8 @@ TEST_CASE("iterators 2")
         {
             SECTION("reverse")
             {
-                json j{1, 2, 3, 4, 5};
-                json j_expected{5, 4, 3, 2, 1};
+                json j{ 1, 2, 3, 4, 5 };
+                json j_expected{ 5, 4, 3, 2, 1 };
 
                 auto reversed = j | std::views::reverse;
                 CHECK(std::ranges::equal(reversed, j_expected));
@@ -1154,11 +1154,11 @@ TEST_CASE("iterators 2")
             SECTION("transform")
             {
                 json j{
-                    {"a_key", "a_value"},
-                    {"b_key", "b_value"},
-                    {"c_key", "c_value"},
+                    { "a_key", "a_value" },
+                    { "b_key", "b_value" },
+                    { "c_key", "c_value" },
                 };
-                json j_expected{"a_key", "b_key", "c_key"};
+                json j_expected{ "a_key", "b_key", "c_key" };
 
                 auto transformed = j.items() | std::views::transform([](const auto& item) {
                                        return item.key();

@@ -45,11 +45,11 @@ TEST_CASE("ordered_json")
     CHECK(oj.dump() == "{\"element3\":3,\"element2\":2}");
 
     // There are no dup keys cause constructor calls emplace...
-    json const multi{{"z", 1}, {"m", 2}, {"m", 3}, {"y", 4}, {"m", 5}};
+    json const multi{ { "z", 1 }, { "m", 2 }, { "m", 3 }, { "y", 4 }, { "m", 5 } };
     CHECK(multi.size() == 3);
     CHECK(multi.dump() == "{\"m\":2,\"y\":4,\"z\":1}");
 
-    ordered_json multi_ordered{{"z", 1}, {"m", 2}, {"m", 3}, {"y", 4}, {"m", 5}};
+    ordered_json multi_ordered{ { "z", 1 }, { "m", 2 }, { "m", 3 }, { "y", 4 }, { "m", 5 } };
     CHECK(multi_ordered.size() == 3);
     CHECK(multi_ordered.dump() == "{\"z\":1,\"m\":2,\"y\":4}");
     CHECK(multi_ordered.erase("m") == 1);
@@ -57,14 +57,14 @@ TEST_CASE("ordered_json")
 
     // Ranged insert test.
     // It seems that values shouldn't be overwritten. Only new values are added
-    json j1{{"c", 1}, {"b", 2}, {"a", 3}};
-    const json j2{{"c", 77}, {"d", 42}, {"a", 4}};
+    json j1{ { "c", 1 }, { "b", 2 }, { "a", 3 } };
+    const json j2{ { "c", 77 }, { "d", 42 }, { "a", 4 } };
     j1.insert(j2.cbegin(), j2.cend());
     CHECK(j1.size() == 4);
     CHECK(j1.dump() == "{\"a\":3,\"b\":2,\"c\":1,\"d\":42}");
 
-    ordered_json oj1{{"c", 1}, {"b", 2}, {"a", 3}};
-    const ordered_json oj2{{"c", 77}, {"d", 42}, {"a", 4}};
+    ordered_json oj1{ { "c", 1 }, { "b", 2 }, { "a", 3 } };
+    const ordered_json oj2{ { "c", 77 }, { "d", 42 }, { "a", 4 } };
     oj1.insert(oj2.cbegin(), oj2.cend());
     CHECK(oj1.size() == 4);
     CHECK(oj1.dump() == "{\"c\":1,\"b\":2,\"a\":3,\"d\":42}");

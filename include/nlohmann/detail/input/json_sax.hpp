@@ -568,7 +568,7 @@ class json_sax_dom_callback_parser
         // container
         if (!keep_stack.back())
         {
-            return {false, nullptr};
+            return { false, nullptr };
         }
 
         // create value
@@ -580,20 +580,20 @@ class json_sax_dom_callback_parser
         // do not handle this value if we just learnt it shall be discarded
         if (!keep)
         {
-            return {false, nullptr};
+            return { false, nullptr };
         }
 
         if (ref_stack.empty())
         {
             root = std::move(value);
-            return {true, &root};
+            return { true, &root };
         }
 
         // skip this value if we already decided to skip the parent
         // (https://github.com/nlohmann/json/issues/971#issuecomment-413678360)
         if (!ref_stack.back())
         {
-            return {false, nullptr};
+            return { false, nullptr };
         }
 
         // we now only expect arrays and objects
@@ -603,7 +603,7 @@ class json_sax_dom_callback_parser
         if (ref_stack.back()->is_array())
         {
             ref_stack.back()->m_data.m_value.array->emplace_back(std::move(value));
-            return {true, &(ref_stack.back()->m_data.m_value.array->back())};
+            return { true, &(ref_stack.back()->m_data.m_value.array->back()) };
         }
 
         // object
@@ -615,12 +615,12 @@ class json_sax_dom_callback_parser
 
         if (!store_element)
         {
-            return {false, nullptr};
+            return { false, nullptr };
         }
 
         JSON_ASSERT(object_element);
         *object_element = std::move(value);
-        return {true, object_element};
+        return { true, object_element };
     }
 
     /// the parsed JSON value

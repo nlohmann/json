@@ -126,8 +126,8 @@ class basic_json  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spe
     using json_base_class_t = ::nlohmann::detail::json_base_class<CustomBaseClass>;
 
     JSON_PRIVATE_UNLESS_TESTED :
-      // convenience aliases for types residing in namespace detail;
-      using lexer = ::nlohmann::detail::lexer_base<basic_json>;
+    // convenience aliases for types residing in namespace detail;
+    using lexer = ::nlohmann::detail::lexer_base<basic_json>;
 
     template<typename InputAdapterType>
     static ::nlohmann::detail::parser<basic_json, InputAdapterType>
@@ -155,7 +155,8 @@ class basic_json  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spe
     template<typename CharType>
     using binary_writer = ::nlohmann::detail::binary_writer<basic_json, CharType>;
 
-    JSON_PRIVATE_UNLESS_TESTED : using serializer = ::nlohmann::detail::serializer<basic_json>;
+    JSON_PRIVATE_UNLESS_TESTED :
+    using serializer = ::nlohmann::detail::serializer<basic_json>;
 
   public:
     using value_t = detail::value_t;
@@ -271,25 +272,25 @@ class basic_json  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spe
 #endif
 
 #if defined(__ICC) || defined(__INTEL_COMPILER)
-        result["compiler"] = {{"family", "icc"}, { "version", __INTEL_COMPILER }};
+        result["compiler"] = { { "family", "icc" }, { "version", __INTEL_COMPILER } };
 #elif defined(__clang__)
-        result["compiler"] = {{"family", "clang"}, { "version", __clang_version__ }};
+        result["compiler"] = { { "family", "clang" }, { "version", __clang_version__ } };
 #elif defined(__GNUC__) || defined(__GNUG__)
-        result["compiler"] = {{"family", "gcc"},
-                              { "version",
-                                detail::concat(std::to_string(__GNUC__), '.', std::to_string(__GNUC_MINOR__), '.', std::to_string(__GNUC_PATCHLEVEL__)) }};
+        result["compiler"] = { { "family", "gcc" },
+                               { "version",
+                                 detail::concat(std::to_string(__GNUC__), '.', std::to_string(__GNUC_MINOR__), '.', std::to_string(__GNUC_PATCHLEVEL__)) } };
 #elif defined(__HP_cc) || defined(__HP_aCC)
         result["compiler"] = "hp"
 #elif defined(__IBMCPP__)
-        result["compiler"] = {{"family", "ilecpp"}, { "version", __IBMCPP__ }};
+        result["compiler"] = { { "family", "ilecpp" }, { "version", __IBMCPP__ } };
 #elif defined(_MSC_VER)
-        result["compiler"] = {{"family", "msvc"}, { "version", _MSC_VER }};
+        result["compiler"] = { { "family", "msvc" }, { "version", _MSC_VER } };
 #elif defined(__PGI)
-        result["compiler"] = {{"family", "pgcpp"}, { "version", __PGI }};
+        result["compiler"] = { { "family", "pgcpp" }, { "version", __PGI } };
 #elif defined(__SUNPRO_CC)
-        result["compiler"] = {{"family", "sunpro"}, { "version", __SUNPRO_CC }};
+        result["compiler"] = { { "family", "sunpro" }, { "version", __SUNPRO_CC } };
 #else
-        result["compiler"] = {{"family", "unknown"}, {"version", "unknown"}};
+        result["compiler"] = { { "family", "unknown" }, { "version", "unknown" } };
 #endif
 
 #if defined(_MSVC_LANG)
@@ -383,7 +384,7 @@ class basic_json  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spe
     ////////////////////////
 
     JSON_PRIVATE_UNLESS_TESTED :
-      /*!
+    /*!
     @brief a JSON value
 
     The actual storage for a JSON value of the @ref basic_json class. This
@@ -408,7 +409,7 @@ class basic_json  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spe
 
     @since version 1.0.0
     */
-      union json_value
+    union json_value
     {
         /// object (stored with pointer to save storage)
         object_t* object;
@@ -1022,7 +1023,7 @@ class basic_json  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spe
     /// @brief construct an array with count copies of given value
     /// @sa https://json.nlohmann.me/api/basic_json/basic_json/
     basic_json(size_type cnt, const basic_json& val)
-      : m_data{cnt, val}
+      : m_data{ cnt, val }
     {
         set_parents();
         assert_invariant();
@@ -3210,7 +3211,7 @@ class basic_json  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spe
         it.m_it.object_iterator = res.first;
 
         // return pair of iterator and boolean
-        return {it, res.second};
+        return { it, res.second };
     }
 
     /// Helper for insertion of an iterator
@@ -3599,13 +3600,12 @@ class basic_json  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spe
     return (default_result);
 
     JSON_PRIVATE_UNLESS_TESTED :
-      // returns true if:
-      // - any operand is NaN and the other operand is of number type
-      // - any operand is discarded
-      // in legacy mode, discarded values are considered ordered if
-      // an operation is computed as an odd number of inverses of others
-      static bool
-      compares_unordered(const_reference lhs, const_reference rhs, bool inverse = false) noexcept
+    // returns true if:
+    // - any operand is NaN and the other operand is of number type
+    // - any operand is discarded
+    // in legacy mode, discarded values are considered ordered if
+    // an operation is computed as an odd number of inverses of others
+    static bool compares_unordered(const_reference lhs, const_reference rhs, bool inverse = false) noexcept
     {
         if ((lhs.is_number_float() && std::isnan(lhs.m_data.m_value.number_float) && rhs.is_number()) ||
             (rhs.is_number_float() && std::isnan(rhs.m_data.m_value.number_float) && lhs.is_number()))
@@ -4106,11 +4106,11 @@ class basic_json  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spe
     }
 
     JSON_PRIVATE_UNLESS_TESTED :
-      //////////////////////
-      // member variables //
-      //////////////////////
+    //////////////////////
+    // member variables //
+    //////////////////////
 
-      struct data
+    struct data
     {
         /// the type of the current element
         value_t m_type = value_t::null;
@@ -4872,7 +4872,7 @@ class basic_json  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spe
         if (source.type() != target.type())
         {
             // different types: replace value
-            result.push_back({{"op", "replace"}, {"path", path}, {"value", target}});
+            result.push_back({ { "op", "replace" }, { "path", path }, { "value", target } });
             return result;
         }
 
@@ -4899,14 +4899,14 @@ class basic_json  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spe
                 {
                     // add operations in reverse order to avoid invalid
                     // indices
-                    result.insert(result.begin() + end_index, object({{"op", "remove"}, {"path", detail::concat(path, '/', std::to_string(i))}}));
+                    result.insert(result.begin() + end_index, object({ { "op", "remove" }, { "path", detail::concat(path, '/', std::to_string(i)) } }));
                     ++i;
                 }
 
                 // add other remaining elements
                 while (i < target.size())
                 {
-                    result.push_back({{"op", "add"}, {"path", detail::concat(path, "/-")}, {"value", target[i]}});
+                    result.push_back({ { "op", "add" }, { "path", detail::concat(path, "/-") }, { "value", target[i] } });
                     ++i;
                 }
 
@@ -4930,7 +4930,7 @@ class basic_json  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spe
                     else
                     {
                         // found a key that is not in o -> remove it
-                        result.push_back(object({{"op", "remove"}, {"path", path_key}}));
+                        result.push_back(object({ { "op", "remove" }, { "path", path_key } }));
                     }
                 }
 
@@ -4941,7 +4941,7 @@ class basic_json  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spe
                     {
                         // found a key that is not in this -> add it
                         const auto path_key = detail::concat(path, '/', detail::escape(it.key()));
-                        result.push_back({{"op", "add"}, {"path", path_key}, {"value", it.value()}});
+                        result.push_back({ { "op", "add" }, { "path", path_key }, { "value", it.value() } });
                     }
                 }
 
@@ -4959,7 +4959,7 @@ class basic_json  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spe
             default:
             {
                 // both primitive type: replace value
-                result.push_back({{"op", "replace"}, {"path", path}, {"value", target}});
+                result.push_back({ { "op", "replace" }, { "path", path }, { "value", target } });
                 break;
             }
         }

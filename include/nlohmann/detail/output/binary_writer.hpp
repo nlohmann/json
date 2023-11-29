@@ -789,7 +789,7 @@ class binary_writer
                         return ubjson_prefix(v, use_bjdata) == first_prefix;
                     });
 
-                    std::vector<CharType> bjdx = {'[', '{', 'S', 'H', 'T', 'F', 'N', 'Z'};  // excluded markers in bjdata optimized type
+                    std::vector<CharType> bjdx = { '[', '{', 'S', 'H', 'T', 'F', 'N', 'Z' };  // excluded markers in bjdata optimized type
 
                     if (same_prefix && !(use_bjdata && std::find(bjdx.begin(), bjdx.end(), first_prefix) != bjdx.end()))
                     {
@@ -887,7 +887,7 @@ class binary_writer
                         return ubjson_prefix(v, use_bjdata) == first_prefix;
                     });
 
-                    std::vector<CharType> bjdx = {'[', '{', 'S', 'H', 'T', 'F', 'N', 'Z'};  // excluded markers in bjdata optimized type
+                    std::vector<CharType> bjdx = { '[', '{', 'S', 'H', 'T', 'F', 'N', 'Z' };  // excluded markers in bjdata optimized type
 
                     if (same_prefix && !(use_bjdata && std::find(bjdx.begin(), bjdx.end(), first_prefix) != bjdx.end()))
                     {
@@ -1579,17 +1579,8 @@ class binary_writer
     */
     bool write_bjdata_ndarray(const typename BasicJsonType::object_t& value, const bool use_count, const bool use_type)
     {
-        std::map<string_t, CharType> bjdtype = {{"uint8", 'U'},
-                                                {"int8", 'i'},
-                                                {"uint16", 'u'},
-                                                {"int16", 'I'},
-                                                {"uint32", 'm'},
-                                                {"int32", 'l'},
-                                                {"uint64", 'M'},
-                                                {"int64", 'L'},
-                                                {"single", 'd'},
-                                                {"double", 'D'},
-                                                {"char", 'C'}};
+        std::map<string_t, CharType> bjdtype = { { "uint8", 'U' },  { "int8", 'i' },  { "uint16", 'u' }, { "int16", 'I' },  { "uint32", 'm' }, { "int32", 'l' },
+                                                 { "uint64", 'M' }, { "int64", 'L' }, { "single", 'd' }, { "double", 'D' }, { "char", 'C' } };
 
         string_t key = "_ArrayType_";
         auto it = bjdtype.find(static_cast<string_t>(value.at(key)));

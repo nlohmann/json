@@ -25,7 +25,7 @@ TEST_CASE("iterator_wrapper")
     {
         SECTION("value")
         {
-            json j = {{"A", 1}, {"B", 2}};
+            json j = { { "A", 1 }, { "B", 2 } };
             int counter = 1;
 
             for (auto i : json::iterator_wrapper(j))  // NOLINT(performance-for-range-copy)
@@ -58,7 +58,7 @@ TEST_CASE("iterator_wrapper")
 
         SECTION("reference")
         {
-            json j = {{"A", 1}, {"B", 2}};
+            json j = { { "A", 1 }, { "B", 2 } };
             int counter = 1;
 
             for (auto& i : json::iterator_wrapper(j))  // NOLINT(readability-qualified-auto)
@@ -97,12 +97,12 @@ TEST_CASE("iterator_wrapper")
             CHECK(counter == 3);
 
             // check if values where changed
-            CHECK(j == json({{"A", 11}, {"B", 22}}));
+            CHECK(j == json({ { "A", 11 }, { "B", 22 } }));
         }
 
         SECTION("const value")
         {
-            json j = {{"A", 1}, {"B", 2}};
+            json j = { { "A", 1 }, { "B", 2 } };
             int counter = 1;
 
             for (const auto i : json::iterator_wrapper(j))  // NOLINT(performance-for-range-copy)
@@ -135,7 +135,7 @@ TEST_CASE("iterator_wrapper")
 
         SECTION("const reference")
         {
-            json j = {{"A", 1}, {"B", 2}};
+            json j = { { "A", 1 }, { "B", 2 } };
             int counter = 1;
 
             for (const auto& i : json::iterator_wrapper(j))
@@ -171,7 +171,7 @@ TEST_CASE("iterator_wrapper")
     {
         SECTION("value")
         {
-            const json j = {{"A", 1}, {"B", 2}};
+            const json j = { { "A", 1 }, { "B", 2 } };
             int counter = 1;
 
             for (auto i : json::iterator_wrapper(j))  // NOLINT(performance-for-range-copy)
@@ -204,7 +204,7 @@ TEST_CASE("iterator_wrapper")
 
         SECTION("reference")
         {
-            const json j = {{"A", 1}, {"B", 2}};
+            const json j = { { "A", 1 }, { "B", 2 } };
             int counter = 1;
 
             for (auto& i : json::iterator_wrapper(j))  // NOLINT(readability-qualified-auto)
@@ -237,7 +237,7 @@ TEST_CASE("iterator_wrapper")
 
         SECTION("const value")
         {
-            const json j = {{"A", 1}, {"B", 2}};
+            const json j = { { "A", 1 }, { "B", 2 } };
             int counter = 1;
 
             for (const auto i : json::iterator_wrapper(j))  // NOLINT(performance-for-range-copy)
@@ -270,7 +270,7 @@ TEST_CASE("iterator_wrapper")
 
         SECTION("const reference")
         {
-            const json j = {{"A", 1}, {"B", 2}};
+            const json j = { { "A", 1 }, { "B", 2 } };
             int counter = 1;
 
             for (const auto& i : json::iterator_wrapper(j))
@@ -306,7 +306,7 @@ TEST_CASE("iterator_wrapper")
     {
         SECTION("value")
         {
-            json j = {"A", "B"};
+            json j = { "A", "B" };
             int counter = 1;
 
             for (auto i : json::iterator_wrapper(j))  // NOLINT(performance-for-range-copy)
@@ -339,7 +339,7 @@ TEST_CASE("iterator_wrapper")
 
         SECTION("reference")
         {
-            json j = {"A", "B"};
+            json j = { "A", "B" };
             int counter = 1;
 
             for (auto& i : json::iterator_wrapper(j))  // NOLINT(readability-qualified-auto)
@@ -378,12 +378,12 @@ TEST_CASE("iterator_wrapper")
             CHECK(counter == 3);
 
             // check if values where changed
-            CHECK(j == json({"AA", "BB"}));
+            CHECK(j == json({ "AA", "BB" }));
         }
 
         SECTION("const value")
         {
-            json j = {"A", "B"};
+            json j = { "A", "B" };
             int counter = 1;
 
             for (const auto i : json::iterator_wrapper(j))  // NOLINT(performance-for-range-copy)
@@ -416,7 +416,7 @@ TEST_CASE("iterator_wrapper")
 
         SECTION("const reference")
         {
-            json j = {"A", "B"};
+            json j = { "A", "B" };
             int counter = 1;
 
             for (const auto& i : json::iterator_wrapper(j))
@@ -452,7 +452,7 @@ TEST_CASE("iterator_wrapper")
     {
         SECTION("value")
         {
-            const json j = {"A", "B"};
+            const json j = { "A", "B" };
             int counter = 1;
 
             for (auto i : json::iterator_wrapper(j))  // NOLINT(performance-for-range-copy)
@@ -485,7 +485,7 @@ TEST_CASE("iterator_wrapper")
 
         SECTION("reference")
         {
-            const json j = {"A", "B"};
+            const json j = { "A", "B" };
             int counter = 1;
 
             for (auto& i : json::iterator_wrapper(j))  // NOLINT(readability-qualified-auto)
@@ -518,7 +518,7 @@ TEST_CASE("iterator_wrapper")
 
         SECTION("const value")
         {
-            const json j = {"A", "B"};
+            const json j = { "A", "B" };
             int counter = 1;
 
             for (const auto i : json::iterator_wrapper(j))  // NOLINT(performance-for-range-copy)
@@ -551,7 +551,7 @@ TEST_CASE("iterator_wrapper")
 
         SECTION("const reference")
         {
-            const json j = {"A", "B"};
+            const json j = { "A", "B" };
             int counter = 1;
 
             for (const auto& i : json::iterator_wrapper(j))
@@ -718,7 +718,7 @@ TEST_CASE("iterator_wrapper")
 
 TEST_CASE("items()")
 {
-    SECTION("object"){SECTION("value"){json j = {{"A", 1}, {"B", 2}};
+    SECTION("object"){ SECTION("value"){ json j = { { "A", 1 }, { "B", 2 } };
     int counter = 1;
 
     for (auto i : j.items())  // NOLINT(performance-for-range-copy)
@@ -751,7 +751,7 @@ TEST_CASE("items()")
 
 SECTION("reference")
 {
-    json j = {{"A", 1}, {"B", 2}};
+    json j = { { "A", 1 }, { "B", 2 } };
     int counter = 1;
 
     for (auto& i : j.items())  // NOLINT(readability-qualified-auto)
@@ -790,12 +790,12 @@ SECTION("reference")
     CHECK(counter == 3);
 
     // check if values where changed
-    CHECK(j == json({{"A", 11}, {"B", 22}}));
+    CHECK(j == json({ { "A", 11 }, { "B", 22 } }));
 }
 
 SECTION("const value")
 {
-    json j = {{"A", 1}, {"B", 2}};
+    json j = { { "A", 1 }, { "B", 2 } };
     int counter = 1;
 
     for (const auto i : j.items())  // NOLINT(performance-for-range-copy)
@@ -828,7 +828,7 @@ SECTION("const value")
 
 SECTION("const reference")
 {
-    json j = {{"A", 1}, {"B", 2}};
+    json j = { { "A", 1 }, { "B", 2 } };
     int counter = 1;
 
     for (const auto& i : j.items())
@@ -862,7 +862,7 @@ SECTION("const reference")
 #ifdef JSON_HAS_CPP_17
 SECTION("structured bindings")
 {
-    json j = {{"A", 1}, {"B", 2}};
+    json j = { { "A", 1 }, { "B", 2 } };
 
     std::map<std::string, int> m;
 
@@ -880,7 +880,7 @@ SECTION("const object")
 {
     SECTION("value")
     {
-        const json j = {{"A", 1}, {"B", 2}};
+        const json j = { { "A", 1 }, { "B", 2 } };
         int counter = 1;
 
         for (auto i : j.items())  // NOLINT(performance-for-range-copy)
@@ -913,7 +913,7 @@ SECTION("const object")
 
     SECTION("reference")
     {
-        const json j = {{"A", 1}, {"B", 2}};
+        const json j = { { "A", 1 }, { "B", 2 } };
         int counter = 1;
 
         for (auto& i : j.items())  // NOLINT(readability-qualified-auto)
@@ -946,7 +946,7 @@ SECTION("const object")
 
     SECTION("const value")
     {
-        const json j = {{"A", 1}, {"B", 2}};
+        const json j = { { "A", 1 }, { "B", 2 } };
         int counter = 1;
 
         for (const auto i : j.items())  // NOLINT(performance-for-range-copy)
@@ -979,7 +979,7 @@ SECTION("const object")
 
     SECTION("const reference")
     {
-        const json j = {{"A", 1}, {"B", 2}};
+        const json j = { { "A", 1 }, { "B", 2 } };
         int counter = 1;
 
         for (const auto& i : j.items())
@@ -1015,7 +1015,7 @@ SECTION("array")
 {
     SECTION("value")
     {
-        json j = {"A", "B"};
+        json j = { "A", "B" };
         int counter = 1;
 
         for (auto i : j.items())  // NOLINT(performance-for-range-copy)
@@ -1048,7 +1048,7 @@ SECTION("array")
 
     SECTION("reference")
     {
-        json j = {"A", "B"};
+        json j = { "A", "B" };
         int counter = 1;
 
         for (auto& i : j.items())  // NOLINT(readability-qualified-auto)
@@ -1087,12 +1087,12 @@ SECTION("array")
         CHECK(counter == 3);
 
         // check if values where changed
-        CHECK(j == json({"AA", "BB"}));
+        CHECK(j == json({ "AA", "BB" }));
     }
 
     SECTION("const value")
     {
-        json j = {"A", "B"};
+        json j = { "A", "B" };
         int counter = 1;
 
         for (const auto i : j.items())  // NOLINT(performance-for-range-copy)
@@ -1125,7 +1125,7 @@ SECTION("array")
 
     SECTION("const reference")
     {
-        json j = {"A", "B"};
+        json j = { "A", "B" };
         int counter = 1;
 
         for (const auto& i : j.items())
@@ -1161,7 +1161,7 @@ SECTION("const array")
 {
     SECTION("value")
     {
-        const json j = {"A", "B"};
+        const json j = { "A", "B" };
         int counter = 1;
 
         for (auto i : j.items())  // NOLINT(performance-for-range-copy)
@@ -1194,7 +1194,7 @@ SECTION("const array")
 
     SECTION("reference")
     {
-        const json j = {"A", "B"};
+        const json j = { "A", "B" };
         int counter = 1;
 
         for (auto& i : j.items())  // NOLINT(readability-qualified-auto)
@@ -1227,7 +1227,7 @@ SECTION("const array")
 
     SECTION("const value")
     {
-        const json j = {"A", "B"};
+        const json j = { "A", "B" };
         int counter = 1;
 
         for (const auto i : j.items())  // NOLINT(performance-for-range-copy)
@@ -1260,7 +1260,7 @@ SECTION("const array")
 
     SECTION("const reference")
     {
-        const json j = {"A", "B"};
+        const json j = { "A", "B" };
         int counter = 1;
 
         for (const auto& i : j.items())

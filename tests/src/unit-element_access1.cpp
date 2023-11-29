@@ -16,7 +16,7 @@ TEST_CASE("element access 1")
 {
     SECTION("array")
     {
-        json j = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+        json j = { 1, 1u, true, nullptr, "string", 42.23, json::object(), { 1, 2, 3 } };
         const json j_const = j;
 
         SECTION("access specified element with bounds checking")
@@ -30,7 +30,7 @@ TEST_CASE("element access 1")
                 CHECK(j.at(4) == json("string"));
                 CHECK(j.at(5) == json(42.23));
                 CHECK(j.at(6) == json::object());
-                CHECK(j.at(7) == json({1, 2, 3}));
+                CHECK(j.at(7) == json({ 1, 2, 3 }));
 
                 CHECK(j_const.at(0) == json(1));
                 CHECK(j_const.at(1) == json(1u));
@@ -39,7 +39,7 @@ TEST_CASE("element access 1")
                 CHECK(j_const.at(4) == json("string"));
                 CHECK(j_const.at(5) == json(42.23));
                 CHECK(j_const.at(6) == json::object());
-                CHECK(j_const.at(7) == json({1, 2, 3}));
+                CHECK(j_const.at(7) == json({ 1, 2, 3 }));
             }
 
             SECTION("access outside bounds")
@@ -119,8 +119,8 @@ TEST_CASE("element access 1")
         {
             CHECK(j.front() == json(1));
             CHECK(j_const.front() == json(1));
-            CHECK(j.back() == json({1, 2, 3}));
-            CHECK(j_const.back() == json({1, 2, 3}));
+            CHECK(j.back() == json({ 1, 2, 3 }));
+            CHECK(j_const.back() == json({ 1, 2, 3 }));
         }
 
         SECTION("access specified element")
@@ -134,7 +134,7 @@ TEST_CASE("element access 1")
                 CHECK(j[4] == json("string"));
                 CHECK(j[5] == json(42.23));
                 CHECK(j[6] == json::object());
-                CHECK(j[7] == json({1, 2, 3}));
+                CHECK(j[7] == json({ 1, 2, 3 }));
 
                 CHECK(j_const[0] == json(1));
                 CHECK(j_const[1] == json(1u));
@@ -143,7 +143,7 @@ TEST_CASE("element access 1")
                 CHECK(j_const[4] == json("string"));
                 CHECK(j_const[5] == json(42.23));
                 CHECK(j_const[6] == json::object());
-                CHECK(j_const[7] == json({1, 2, 3}));
+                CHECK(j_const[7] == json({ 1, 2, 3 }));
             }
 
             SECTION("access on non-array type")
@@ -164,7 +164,7 @@ TEST_CASE("element access 1")
                     {
                         json j_nonarray;
                         j_nonarray[3] = 42;
-                        CHECK(j_nonarray == json({nullptr, nullptr, nullptr, 42}));
+                        CHECK(j_nonarray == json({ nullptr, nullptr, nullptr, 42 }));
                     }
                 }
 
@@ -247,47 +247,47 @@ TEST_CASE("element access 1")
             SECTION("remove element by index")
             {
                 {
-                    json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                    json jarray = { 1, 1u, true, nullptr, "string", 42.23, json::object(), { 1, 2, 3 } };
                     jarray.erase(0);
-                    CHECK(jarray == json({1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}}));
+                    CHECK(jarray == json({ 1u, true, nullptr, "string", 42.23, json::object(), { 1, 2, 3 } }));
                 }
                 {
-                    json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                    json jarray = { 1, 1u, true, nullptr, "string", 42.23, json::object(), { 1, 2, 3 } };
                     jarray.erase(1);
-                    CHECK(jarray == json({1, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}}));
+                    CHECK(jarray == json({ 1, true, nullptr, "string", 42.23, json::object(), { 1, 2, 3 } }));
                 }
                 {
-                    json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                    json jarray = { 1, 1u, true, nullptr, "string", 42.23, json::object(), { 1, 2, 3 } };
                     jarray.erase(2);
-                    CHECK(jarray == json({1, 1u, nullptr, "string", 42.23, json::object(), {1, 2, 3}}));
+                    CHECK(jarray == json({ 1, 1u, nullptr, "string", 42.23, json::object(), { 1, 2, 3 } }));
                 }
                 {
-                    json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                    json jarray = { 1, 1u, true, nullptr, "string", 42.23, json::object(), { 1, 2, 3 } };
                     jarray.erase(3);
-                    CHECK(jarray == json({1, 1u, true, "string", 42.23, json::object(), {1, 2, 3}}));
+                    CHECK(jarray == json({ 1, 1u, true, "string", 42.23, json::object(), { 1, 2, 3 } }));
                 }
                 {
-                    json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                    json jarray = { 1, 1u, true, nullptr, "string", 42.23, json::object(), { 1, 2, 3 } };
                     jarray.erase(4);
-                    CHECK(jarray == json({1, 1u, true, nullptr, 42.23, json::object(), {1, 2, 3}}));
+                    CHECK(jarray == json({ 1, 1u, true, nullptr, 42.23, json::object(), { 1, 2, 3 } }));
                 }
                 {
-                    json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                    json jarray = { 1, 1u, true, nullptr, "string", 42.23, json::object(), { 1, 2, 3 } };
                     jarray.erase(5);
-                    CHECK(jarray == json({1, 1u, true, nullptr, "string", json::object(), {1, 2, 3}}));
+                    CHECK(jarray == json({ 1, 1u, true, nullptr, "string", json::object(), { 1, 2, 3 } }));
                 }
                 {
-                    json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                    json jarray = { 1, 1u, true, nullptr, "string", 42.23, json::object(), { 1, 2, 3 } };
                     jarray.erase(6);
-                    CHECK(jarray == json({1, 1u, true, nullptr, "string", 42.23, {1, 2, 3}}));
+                    CHECK(jarray == json({ 1, 1u, true, nullptr, "string", 42.23, { 1, 2, 3 } }));
                 }
                 {
-                    json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                    json jarray = { 1, 1u, true, nullptr, "string", 42.23, json::object(), { 1, 2, 3 } };
                     jarray.erase(7);
-                    CHECK(jarray == json({1, 1u, true, nullptr, "string", 42.23, json::object()}));
+                    CHECK(jarray == json({ 1, 1u, true, nullptr, "string", 42.23, json::object() }));
                 }
                 {
-                    json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                    json jarray = { 1, 1u, true, nullptr, "string", 42.23, json::object(), { 1, 2, 3 } };
                     CHECK_THROWS_WITH_AS(jarray.erase(8), "[json.exception.out_of_range.401] array index 8 is out of range", json::out_of_range&);
                 }
             }
@@ -297,15 +297,15 @@ TEST_CASE("element access 1")
                 SECTION("erase(begin())")
                 {
                     {
-                        json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                        json jarray = { 1, 1u, true, nullptr, "string", 42.23, json::object(), { 1, 2, 3 } };
                         json::iterator const it2 = jarray.erase(jarray.begin());
-                        CHECK(jarray == json({1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}}));
+                        CHECK(jarray == json({ 1u, true, nullptr, "string", 42.23, json::object(), { 1, 2, 3 } }));
                         CHECK(*it2 == json(1u));
                     }
                     {
-                        json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                        json jarray = { 1, 1u, true, nullptr, "string", 42.23, json::object(), { 1, 2, 3 } };
                         json::const_iterator const it2 = jarray.erase(jarray.cbegin());
-                        CHECK(jarray == json({1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}}));
+                        CHECK(jarray == json({ 1u, true, nullptr, "string", 42.23, json::object(), { 1, 2, 3 } }));
                         CHECK(*it2 == json(1u));
                     }
                 }
@@ -313,13 +313,13 @@ TEST_CASE("element access 1")
                 SECTION("erase(begin(), end())")
                 {
                     {
-                        json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                        json jarray = { 1, 1u, true, nullptr, "string", 42.23, json::object(), { 1, 2, 3 } };
                         json::iterator it2 = jarray.erase(jarray.begin(), jarray.end());
                         CHECK(jarray == json::array());
                         CHECK(it2 == jarray.end());
                     }
                     {
-                        json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                        json jarray = { 1, 1u, true, nullptr, "string", 42.23, json::object(), { 1, 2, 3 } };
                         json::const_iterator it2 = jarray.erase(jarray.cbegin(), jarray.cend());
                         CHECK(jarray == json::array());
                         CHECK(it2 == jarray.cend());
@@ -329,15 +329,15 @@ TEST_CASE("element access 1")
                 SECTION("erase(begin(), begin())")
                 {
                     {
-                        json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                        json jarray = { 1, 1u, true, nullptr, "string", 42.23, json::object(), { 1, 2, 3 } };
                         json::iterator const it2 = jarray.erase(jarray.begin(), jarray.begin());
-                        CHECK(jarray == json({1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}}));
+                        CHECK(jarray == json({ 1, 1u, true, nullptr, "string", 42.23, json::object(), { 1, 2, 3 } }));
                         CHECK(*it2 == json(1));
                     }
                     {
-                        json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                        json jarray = { 1, 1u, true, nullptr, "string", 42.23, json::object(), { 1, 2, 3 } };
                         json::const_iterator const it2 = jarray.erase(jarray.cbegin(), jarray.cbegin());
-                        CHECK(jarray == json({1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}}));
+                        CHECK(jarray == json({ 1, 1u, true, nullptr, "string", 42.23, json::object(), { 1, 2, 3 } }));
                         CHECK(*it2 == json(1));
                     }
                 }
@@ -345,17 +345,17 @@ TEST_CASE("element access 1")
                 SECTION("erase at offset")
                 {
                     {
-                        json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                        json jarray = { 1, 1u, true, nullptr, "string", 42.23, json::object(), { 1, 2, 3 } };
                         json::iterator const it = jarray.begin() + 4;
                         json::iterator const it2 = jarray.erase(it);
-                        CHECK(jarray == json({1, 1u, true, nullptr, 42.23, json::object(), {1, 2, 3}}));
+                        CHECK(jarray == json({ 1, 1u, true, nullptr, 42.23, json::object(), { 1, 2, 3 } }));
                         CHECK(*it2 == json(42.23));
                     }
                     {
-                        json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                        json jarray = { 1, 1u, true, nullptr, "string", 42.23, json::object(), { 1, 2, 3 } };
                         json::const_iterator const it = jarray.cbegin() + 4;
                         json::const_iterator const it2 = jarray.erase(it);
-                        CHECK(jarray == json({1, 1u, true, nullptr, 42.23, json::object(), {1, 2, 3}}));
+                        CHECK(jarray == json({ 1, 1u, true, nullptr, 42.23, json::object(), { 1, 2, 3 } }));
                         CHECK(*it2 == json(42.23));
                     }
                 }
@@ -363,15 +363,15 @@ TEST_CASE("element access 1")
                 SECTION("erase subrange")
                 {
                     {
-                        json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                        json jarray = { 1, 1u, true, nullptr, "string", 42.23, json::object(), { 1, 2, 3 } };
                         json::iterator const it2 = jarray.erase(jarray.begin() + 3, jarray.begin() + 6);
-                        CHECK(jarray == json({1, 1u, true, json::object(), {1, 2, 3}}));
+                        CHECK(jarray == json({ 1, 1u, true, json::object(), { 1, 2, 3 } }));
                         CHECK(*it2 == json::object());
                     }
                     {
-                        json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
+                        json jarray = { 1, 1u, true, nullptr, "string", 42.23, json::object(), { 1, 2, 3 } };
                         json::const_iterator const it2 = jarray.erase(jarray.cbegin() + 3, jarray.cbegin() + 6);
-                        CHECK(jarray == json({1, 1u, true, json::object(), {1, 2, 3}}));
+                        CHECK(jarray == json({ 1, 1u, true, json::object(), { 1, 2, 3 } }));
                         CHECK(*it2 == json::object());
                     }
                 }
@@ -379,8 +379,8 @@ TEST_CASE("element access 1")
                 SECTION("different arrays")
                 {
                     {
-                        json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
-                        json jarray2 = {"foo", "bar"};
+                        json jarray = { 1, 1u, true, nullptr, "string", 42.23, json::object(), { 1, 2, 3 } };
+                        json jarray2 = { "foo", "bar" };
 
                         CHECK_THROWS_WITH_AS(jarray.erase(jarray2.begin()),
                                              "[json.exception.invalid_iterator.202] iterator does not fit current value",
@@ -396,8 +396,8 @@ TEST_CASE("element access 1")
                                              json::invalid_iterator&);
                     }
                     {
-                        json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
-                        json const jarray2 = {"foo", "bar"};
+                        json jarray = { 1, 1u, true, nullptr, "string", 42.23, json::object(), { 1, 2, 3 } };
+                        json const jarray2 = { "foo", "bar" };
 
                         CHECK_THROWS_WITH_AS(jarray.erase(jarray2.cbegin()),
                                              "[json.exception.invalid_iterator.202] iterator does not fit current value",
@@ -648,13 +648,13 @@ TEST_CASE("element access 1")
             SECTION("binary")
             {
                 {
-                    json j = json::binary({1, 2, 3});
+                    json j = json::binary({ 1, 2, 3 });
                     json::iterator it = j.erase(j.begin());
                     CHECK(j.type() == json::value_t::null);
                     CHECK(it == j.end());
                 }
                 {
-                    json j = json::binary({1, 2, 3});
+                    json j = json::binary({ 1, 2, 3 });
                     json::const_iterator it = j.erase(j.cbegin());
                     CHECK(j.type() == json::value_t::null);
                     CHECK(it == j.end());
@@ -822,13 +822,13 @@ TEST_CASE("element access 1")
             SECTION("binary")
             {
                 {
-                    json j = json::binary({1, 2, 3});
+                    json j = json::binary({ 1, 2, 3 });
                     json::iterator it = j.erase(j.begin(), j.end());
                     CHECK(j.type() == json::value_t::null);
                     CHECK(it == j.end());
                 }
                 {
-                    json j = json::binary({1, 2, 3});
+                    json j = json::binary({ 1, 2, 3 });
                     json::const_iterator it = j.erase(j.cbegin(), j.cend());
                     CHECK(j.type() == json::value_t::null);
                     CHECK(it == j.end());

@@ -74,8 +74,8 @@ TEST_CASE("capacity")
 
             SECTION("filled array")
             {
-                json j = {1, 2, 3};  // NOLINT(misc-const-correctness)
-                const json j_const = {1, 2, 3};
+                json j = { 1, 2, 3 };  // NOLINT(misc-const-correctness)
+                const json j_const = { 1, 2, 3 };
 
                 SECTION("result of empty")
                 {
@@ -113,8 +113,8 @@ TEST_CASE("capacity")
 
             SECTION("filled object")
             {
-                json j = {{"one", 1}, {"two", 2}, {"three", 3}};  // NOLINT(misc-const-correctness)
-                const json j_const = {{"one", 1}, {"two", 2}, {"three", 3}};
+                json j = { { "one", 1 }, { "two", 2 }, { "three", 3 } };  // NOLINT(misc-const-correctness)
+                const json j_const = { { "one", 1 }, { "two", 2 }, { "three", 3 } };
 
                 SECTION("result of empty")
                 {
@@ -269,8 +269,8 @@ TEST_CASE("capacity")
 
             SECTION("filled array")
             {
-                json j = {1, 2, 3};  // NOLINT(misc-const-correctness)
-                const json j_const = {1, 2, 3};
+                json j = { 1, 2, 3 };  // NOLINT(misc-const-correctness)
+                const json j_const = { 1, 2, 3 };
 
                 SECTION("result of size")
                 {
@@ -312,8 +312,8 @@ TEST_CASE("capacity")
 
             SECTION("filled object")
             {
-                json j = {{"one", 1}, {"two", 2}, {"three", 3}};  // NOLINT(misc-const-correctness)
-                const json j_const = {{"one", 1}, {"two", 2}, {"three", 3}};
+                json j = { { "one", 1 }, { "two", 2 }, { "three", 3 } };  // NOLINT(misc-const-correctness)
+                const json j_const = { { "one", 1 }, { "two", 2 }, { "three", 3 } };
 
                 SECTION("result of size")
                 {
@@ -454,8 +454,8 @@ TEST_CASE("capacity")
 
             SECTION("filled array")
             {
-                json j = {1, 2, 3};  // NOLINT(misc-const-correctness)
-                const json j_const = {1, 2, 3};
+                json j = { 1, 2, 3 };  // NOLINT(misc-const-correctness)
+                const json j_const = { 1, 2, 3 };
 
                 SECTION("result of max_size")
                 {
@@ -481,8 +481,8 @@ TEST_CASE("capacity")
 
             SECTION("filled object")
             {
-                json j = {{"one", 1}, {"two", 2}, {"three", 3}};  // NOLINT(misc-const-correctness)
-                const json j_const = {{"one", 1}, {"two", 2}, {"three", 3}};
+                json j = { { "one", 1 }, { "two", 2 }, { "three", 3 } };  // NOLINT(misc-const-correctness)
+                const json j_const = { { "one", 1 }, { "two", 2 }, { "three", 3 } };
 
                 SECTION("result of max_size")
                 {

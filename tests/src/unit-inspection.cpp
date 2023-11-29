@@ -21,7 +21,7 @@ TEST_CASE("object inspection")
     {
         SECTION("object")
         {
-            json const j{{"foo", 1}, {"bar", false}};
+            json const j{ { "foo", 1 }, { "bar", false } };
             CHECK(!j.is_null());
             CHECK(!j.is_boolean());
             CHECK(!j.is_number());
@@ -39,7 +39,7 @@ TEST_CASE("object inspection")
 
         SECTION("array")
         {
-            json const j{"foo", 1, 1u, 42.23, false};
+            json const j{ "foo", 1, 1u, 42.23, false };
             CHECK(!j.is_null());
             CHECK(!j.is_boolean());
             CHECK(!j.is_number());
@@ -202,7 +202,8 @@ TEST_CASE("object inspection")
 
     SECTION("serialization")
     {
-        json const j{{"object", json::object()}, {"array", {1, 2, 3, 4}}, {"number", 42}, {"boolean", false}, {"null", nullptr}, {"string", "Hello world"}};
+        json const j{ { "object", json::object() }, { "array", { 1, 2, 3, 4 } }, { "number", 42 },
+                      { "boolean", false },         { "null", nullptr },         { "string", "Hello world" } };
 
         SECTION("no indent / indent=-1")
         {
@@ -242,7 +243,7 @@ TEST_CASE("object inspection")
             // inside the dump() function
             CHECK(j.dump(1024).size() == 15472);
 
-            const auto binary = json::binary({1, 2, 3}, 128);
+            const auto binary = json::binary({ 1, 2, 3 }, 128);
             CHECK(binary.dump(1024).size() == 2086);
         }
 
@@ -328,7 +329,7 @@ TEST_CASE("object inspection")
 
     SECTION("round trips")
     {
-        for (const auto& s : {"3.141592653589793", "1000000000000000010E5"})
+        for (const auto& s : { "3.141592653589793", "1000000000000000010E5" })
         {
             json const j1 = json::parse(s);
             std::string s1 = j1.dump();
@@ -348,13 +349,13 @@ TEST_CASE("object inspection")
 
         SECTION("object")
         {
-            json const j = {{"foo", "bar"}};
+            json const j = { { "foo", "bar" } };
             CHECK(j.type() == json::value_t::object);
         }
 
         SECTION("array")
         {
-            json const j = {1, 2, 3, 4};
+            json const j = { 1, 2, 3, 4 };
             CHECK(j.type() == json::value_t::array);
         }
 
@@ -400,14 +401,14 @@ TEST_CASE("object inspection")
 
         SECTION("object")
         {
-            json const j = {{"foo", "bar"}};
+            json const j = { { "foo", "bar" } };
             json::value_t t = j;
             CHECK(t == j.type());
         }
 
         SECTION("array")
         {
-            json const j = {1, 2, 3, 4};
+            json const j = { 1, 2, 3, 4 };
             json::value_t t = j;
             CHECK(t == j.type());
         }

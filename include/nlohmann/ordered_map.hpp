@@ -46,14 +46,14 @@ struct ordered_map : std::vector<std::pair<const Key, T>, Allocator>
       : Container{}
     {}
     explicit ordered_map(const Allocator& alloc) noexcept(noexcept(Container(alloc)))
-      : Container{alloc}
+      : Container{ alloc }
     {}
     template<class It>
     ordered_map(It first, It last, const Allocator& alloc = Allocator())
-      : Container{first, last, alloc}
+      : Container{ first, last, alloc }
     {}
     ordered_map(std::initializer_list<value_type> init, const Allocator& alloc = Allocator())
-      : Container{init, alloc}
+      : Container{ init, alloc }
     {}
 
     std::pair<iterator, bool> emplace(const key_type& key, T&& t)
@@ -62,11 +62,11 @@ struct ordered_map : std::vector<std::pair<const Key, T>, Allocator>
         {
             if (m_compare(it->first, key))
             {
-                return {it, false};
+                return { it, false };
             }
         }
         Container::emplace_back(key, std::forward<T>(t));
-        return {std::prev(this->end()), true};
+        return { std::prev(this->end()), true };
     }
 
     template<class KeyType, detail::enable_if_t<detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
@@ -76,11 +76,11 @@ struct ordered_map : std::vector<std::pair<const Key, T>, Allocator>
         {
             if (m_compare(it->first, key))
             {
-                return {it, false};
+                return { it, false };
             }
         }
         Container::emplace_back(std::forward<KeyType>(key), std::forward<T>(t));
-        return {std::prev(this->end()), true};
+        return { std::prev(this->end()), true };
     }
 
     T& operator[](const key_type& key)
@@ -169,7 +169,7 @@ struct ordered_map : std::vector<std::pair<const Key, T>, Allocator>
                 for (auto next = it; ++next != this->end(); ++it)
                 {
                     it->~value_type();  // Destroy but keep allocation
-                    new (&*it) value_type{std::move(*next)};
+                    new (&*it) value_type{ std::move(*next) };
                 }
                 Container::pop_back();
                 return 1;
@@ -189,7 +189,7 @@ struct ordered_map : std::vector<std::pair<const Key, T>, Allocator>
                 for (auto next = it; ++next != this->end(); ++it)
                 {
                     it->~value_type();  // Destroy but keep allocation
-                    new (&*it) value_type{std::move(*next)};
+                    new (&*it) value_type{ std::move(*next) };
                 }
                 Container::pop_back();
                 return 1;
@@ -235,8 +235,8 @@ struct ordered_map : std::vector<std::pair<const Key, T>, Allocator>
 
         for (auto it = first; std::next(it, elements_affected) != Container::end(); ++it)
         {
-            it->~value_type();                                                    // destroy but keep allocation
-            new (&*it) value_type{std::move(*std::next(it, elements_affected))};  // "move" next element to it
+            it->~value_type();                                                      // destroy but keep allocation
+            new (&*it) value_type{ std::move(*std::next(it, elements_affected)) };  // "move" next element to it
         }
 
         // [ a, b, c, d, h, i, j, h, i, j ]
@@ -329,11 +329,11 @@ struct ordered_map : std::vector<std::pair<const Key, T>, Allocator>
         {
             if (m_compare(it->first, value.first))
             {
-                return {it, false};
+                return { it, false };
             }
         }
         Container::push_back(value);
-        return {--this->end(), true};
+        return { --this->end(), true };
     }
 
     template<typename InputIt>

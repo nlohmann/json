@@ -242,7 +242,8 @@ class json_pointer
         return static_cast<size_type>(res);
     }
 
-    JSON_PRIVATE_UNLESS_TESTED : json_pointer top() const
+    JSON_PRIVATE_UNLESS_TESTED :
+    json_pointer top() const
     {
         if (JSON_HEDLEY_UNLIKELY(empty()))
         {
@@ -250,7 +251,7 @@ class json_pointer
         }
 
         json_pointer result = *this;
-        result.reference_tokens = {reference_tokens[0]};
+        result.reference_tokens = { reference_tokens[0] };
         return result;
     }
 

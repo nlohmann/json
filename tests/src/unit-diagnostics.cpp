@@ -90,8 +90,8 @@ TEST_CASE("Better diagnostics")
 
     SECTION("Wrong type in update()")
     {
-        json j = {{"foo", "bar"}};
-        json k = {{"bla", 1}};
+        json j = { { "foo", "bar" } };
+        json k = { { "bla", 1 } };
 
         CHECK_THROWS_WITH_AS(j.update(k["bla"].begin(), k["bla"].end()),
                              "[json.exception.type_error.312] (/bla) cannot use update() with number",
@@ -104,14 +104,14 @@ TEST_CASE("Regression tests for extended diagnostics")
 {
     SECTION("Regression test for https://github.com/nlohmann/json/pull/2562#pullrequestreview-574858448")
     {
-        CHECK_THROWS_WITH_AS(json({"0", "0"})[1].get<int>(), "[json.exception.type_error.302] (/1) type must be number, but is string", json::type_error);
-        CHECK_THROWS_WITH_AS(json({"0", "1"})[1].get<int>(), "[json.exception.type_error.302] (/1) type must be number, but is string", json::type_error);
+        CHECK_THROWS_WITH_AS(json({ "0", "0" })[1].get<int>(), "[json.exception.type_error.302] (/1) type must be number, but is string", json::type_error);
+        CHECK_THROWS_WITH_AS(json({ "0", "1" })[1].get<int>(), "[json.exception.type_error.302] (/1) type must be number, but is string", json::type_error);
     }
 
     SECTION("Regression test for https://github.com/nlohmann/json/pull/2562/files/380a613f2b5d32425021129cd1f371ddcfd54ddf#r563259793")
     {
         json j;
-        j["/foo"] = {1, 2, 3};
+        j["/foo"] = { 1, 2, 3 };
         CHECK_THROWS_WITH_AS(j.unflatten(), "[json.exception.type_error.315] (/~1foo) values in object must be primitive", json::type_error);
     }
 
@@ -173,7 +173,7 @@ TEST_CASE("Regression tests for extended diagnostics")
         // iterator insert(const_iterator pos, const_iterator first, const_iterator last)
         {
             json j_arr = json::array();
-            json j_objects = {json::object(), json::object()};
+            json j_objects = { json::object(), json::object() };
             j_arr.insert(j_arr.begin(), j_objects.begin(), j_objects.end());
             json j_obj = json::object();
             j_obj["key"] = j_arr;

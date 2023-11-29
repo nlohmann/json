@@ -392,20 +392,20 @@ template<typename BasicJsonType,
          enable_if_t<std::is_constructible<BasicJsonType, T1>::value && std::is_constructible<BasicJsonType, T2>::value, int> = 0>
 inline void to_json(BasicJsonType& j, const std::pair<T1, T2>& p)
 {
-    j = {p.first, p.second};
+    j = { p.first, p.second };
 }
 
 // for https://github.com/nlohmann/json/pull/1134
 template<typename BasicJsonType, typename T, enable_if_t<std::is_same<T, iteration_proxy_value<typename BasicJsonType::iterator>>::value, int> = 0>
 inline void to_json(BasicJsonType& j, const T& b)
 {
-    j = {{b.key(), b.value()}};
+    j = { { b.key(), b.value() } };
 }
 
 template<typename BasicJsonType, typename Tuple, std::size_t... Idx>
 inline void to_json_tuple_impl(BasicJsonType& j, const Tuple& t, index_sequence<Idx...> /*unused*/)
 {
-    j = {std::get<Idx>(t)...};
+    j = { std::get<Idx>(t)... };
 }
 
 template<typename BasicJsonType, typename T, enable_if_t<is_constructible_tuple<BasicJsonType, T>::value, int> = 0>

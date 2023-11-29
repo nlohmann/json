@@ -162,8 +162,8 @@ static void BinaryToCbor(benchmark::State& state)
         ++it;
     }
 
-    json::binary_t bin{in};
-    json j{{"type", "binary"}, {"data", bin}};
+    json::binary_t bin{ in };
+    json j{ { "type", "binary" }, { "data", bin } };
 
     while (state.KeepRunning())
     {

@@ -17,14 +17,14 @@ TEST_CASE("ordered_map")
     {
         SECTION("constructor from iterator range")
         {
-            std::map<std::string, std::string> m{{"eins", "one"}, {"zwei", "two"}, {"drei", "three"}};
+            std::map<std::string, std::string> m{ { "eins", "one" }, { "zwei", "two" }, { "drei", "three" } };
             ordered_map<std::string, std::string> const om(m.begin(), m.end());
             CHECK(om.size() == 3);
         }
 
         SECTION("copy assignment")
         {
-            std::map<std::string, std::string> m{{"eins", "one"}, {"zwei", "two"}, {"drei", "three"}};
+            std::map<std::string, std::string> m{ { "eins", "one" }, { "zwei", "two" }, { "drei", "three" } };
             ordered_map<std::string, std::string> om(m.begin(), m.end());
             const auto com = om;
             om.clear();  // silence a warning by forbidding having "const auto& com = om;"
@@ -34,7 +34,7 @@ TEST_CASE("ordered_map")
 
     SECTION("at")
     {
-        std::map<std::string, std::string> m{{"eins", "one"}, {"zwei", "two"}, {"drei", "three"}};
+        std::map<std::string, std::string> m{ { "eins", "one" }, { "zwei", "two" }, { "drei", "three" } };
         ordered_map<std::string, std::string> om(m.begin(), m.end());
         const auto com = om;
 
@@ -67,7 +67,7 @@ TEST_CASE("ordered_map")
 
     SECTION("operator[]")
     {
-        std::map<std::string, std::string> m{{"eins", "one"}, {"zwei", "two"}, {"drei", "three"}};
+        std::map<std::string, std::string> m{ { "eins", "one" }, { "zwei", "two" }, { "drei", "three" } };
         ordered_map<std::string, std::string> om(m.begin(), m.end());
         const auto com = om;
 
@@ -280,8 +280,8 @@ TEST_CASE("ordered_map")
 
         SECTION("const value_type&")
         {
-            ordered_map<std::string, std::string>::value_type const vt1{"eins", "1"};
-            ordered_map<std::string, std::string>::value_type const vt4{"vier", "four"};
+            ordered_map<std::string, std::string>::value_type const vt1{ "eins", "1" };
+            ordered_map<std::string, std::string>::value_type const vt4{ "vier", "four" };
 
             auto res1 = om.insert(vt1);
             CHECK(res1.first == om.begin());
@@ -296,12 +296,12 @@ TEST_CASE("ordered_map")
 
         SECTION("value_type&&")
         {
-            auto res1 = om.insert({"eins", "1"});
+            auto res1 = om.insert({ "eins", "1" });
             CHECK(res1.first == om.begin());
             CHECK(res1.second == false);
             CHECK(om.size() == 3);
 
-            auto res4 = om.insert({"vier", "four"});
+            auto res4 = om.insert({ "vier", "four" });
             CHECK(res4.first == om.begin() + 3);
             CHECK(res4.second == true);
             CHECK(om.size() == 4);

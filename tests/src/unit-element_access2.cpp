@@ -21,14 +21,8 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
 {
     SECTION("object")
     {
-        Json j = {{"integer", 1},
-                  {"unsigned", 1u},
-                  {"floating", 42.23},
-                  {"null", nullptr},
-                  {"string", "hello world"},
-                  {"boolean", true},
-                  {"object", Json::object()},
-                  {"array", {1, 2, 3}}};
+        Json j = { { "integer", 1 },    { "unsigned", 1u },           { "floating", 42.23 },   { "null", nullptr }, { "string", "hello world" },
+                   { "boolean", true }, { "object", Json::object() }, { "array", { 1, 2, 3 } } };
         const Json j_const = j;
 
         SECTION("access specified element with bounds checking")
@@ -42,7 +36,7 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                 CHECK(j.at("string") == Json("hello world"));
                 CHECK(j.at("floating") == Json(42.23));
                 CHECK(j.at("object") == Json::object());
-                CHECK(j.at("array") == Json({1, 2, 3}));
+                CHECK(j.at("array") == Json({ 1, 2, 3 }));
 
                 CHECK(j_const.at("integer") == Json(1));
                 CHECK(j_const.at("unsigned") == Json(1u));
@@ -51,7 +45,7 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                 CHECK(j_const.at("string") == Json("hello world"));
                 CHECK(j_const.at("floating") == Json(42.23));
                 CHECK(j_const.at("object") == Json::object());
-                CHECK(j_const.at("array") == Json({1, 2, 3}));
+                CHECK(j_const.at("array") == Json({ 1, 2, 3 }));
 
 #ifdef JSON_HAS_CPP_17
                 CHECK(j.at(std::string_view("integer")) == Json(1));
@@ -61,7 +55,7 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                 CHECK(j.at(std::string_view("string")) == Json("hello world"));
                 CHECK(j.at(std::string_view("floating")) == Json(42.23));
                 CHECK(j.at(std::string_view("object")) == Json::object());
-                CHECK(j.at(std::string_view("array")) == Json({1, 2, 3}));
+                CHECK(j.at(std::string_view("array")) == Json({ 1, 2, 3 }));
 
                 CHECK(j_const.at(std::string_view("integer")) == Json(1));
                 CHECK(j_const.at(std::string_view("unsigned")) == Json(1u));
@@ -70,7 +64,7 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                 CHECK(j_const.at(std::string_view("string")) == Json("hello world"));
                 CHECK(j_const.at(std::string_view("floating")) == Json(42.23));
                 CHECK(j_const.at(std::string_view("object")) == Json::object());
-                CHECK(j_const.at(std::string_view("array")) == Json({1, 2, 3}));
+                CHECK(j_const.at(std::string_view("array")) == Json({ 1, 2, 3 }));
 #endif
             }
 
@@ -236,8 +230,8 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                     CHECK(j.value("string", std::string("bar")) == "hello world");
                     CHECK(j.value("floating", 12.34) == Approx(42.23));
                     CHECK(j.value("floating", 12) == 42);
-                    CHECK(j.value("object", Json({{"foo", "bar"}})) == Json::object());
-                    CHECK(j.value("array", Json({10, 100})) == Json({1, 2, 3}));
+                    CHECK(j.value("object", Json({ { "foo", "bar" } })) == Json::object());
+                    CHECK(j.value("array", Json({ 10, 100 })) == Json({ 1, 2, 3 }));
 
                     CHECK(j_const.value("integer", 2) == 1);
                     CHECK(j_const.value("integer", 1.0) == Approx(1));
@@ -248,8 +242,8 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                     CHECK(j_const.value("string", std::string("bar")) == "hello world");
                     CHECK(j_const.value("floating", 12.34) == Approx(42.23));
                     CHECK(j_const.value("floating", 12) == 42);
-                    CHECK(j_const.value("object", Json({{"foo", "bar"}})) == Json::object());
-                    CHECK(j_const.value("array", Json({10, 100})) == Json({1, 2, 3}));
+                    CHECK(j_const.value("object", Json({ { "foo", "bar" } })) == Json::object());
+                    CHECK(j_const.value("array", Json({ 10, 100 })) == Json({ 1, 2, 3 }));
 
 #ifdef JSON_HAS_CPP_17
                     CHECK(j.value(std::string_view("integer"), 2) == 1);
@@ -262,8 +256,8 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                     CHECK(j.value(std::string_view("string"), std::string("bar")) == "hello world");
                     CHECK(j.value(std::string_view("floating"), 12.34) == Approx(42.23));
                     CHECK(j.value(std::string_view("floating"), 12) == 42);
-                    CHECK(j.value(std::string_view("object"), Json({{"foo", "bar"}})) == Json::object());
-                    CHECK(j.value(std::string_view("array"), Json({10, 100})) == Json({1, 2, 3}));
+                    CHECK(j.value(std::string_view("object"), Json({ { "foo", "bar" } })) == Json::object());
+                    CHECK(j.value(std::string_view("array"), Json({ 10, 100 })) == Json({ 1, 2, 3 }));
 
                     CHECK(j_const.value(std::string_view("integer"), 2) == 1);
                     CHECK(j_const.value(std::string_view("integer"), 1.0) == Approx(1));
@@ -274,8 +268,8 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                     CHECK(j_const.value(std::string_view("string"), std::string("bar")) == "hello world");
                     CHECK(j_const.value(std::string_view("floating"), 12.34) == Approx(42.23));
                     CHECK(j_const.value(std::string_view("floating"), 12) == 42);
-                    CHECK(j_const.value(std::string_view("object"), Json({{"foo", "bar"}})) == Json::object());
-                    CHECK(j_const.value(std::string_view("array"), Json({10, 100})) == Json({1, 2, 3}));
+                    CHECK(j_const.value(std::string_view("object"), Json({ { "foo", "bar" } })) == Json::object());
+                    CHECK(j_const.value(std::string_view("array"), Json({ 10, 100 })) == Json({ 1, 2, 3 }));
 #endif
                 }
 
@@ -286,16 +280,16 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                     CHECK(j.value("_", false) == false);
                     CHECK(j.value("_", "bar") == "bar");
                     CHECK(j.value("_", 12.34) == Approx(12.34));
-                    CHECK(j.value("_", Json({{"foo", "bar"}})) == Json({{"foo", "bar"}}));
-                    CHECK(j.value("_", Json({10, 100})) == Json({10, 100}));
+                    CHECK(j.value("_", Json({ { "foo", "bar" } })) == Json({ { "foo", "bar" } }));
+                    CHECK(j.value("_", Json({ 10, 100 })) == Json({ 10, 100 }));
 
                     CHECK(j_const.value("_", 2) == 2);
                     CHECK(j_const.value("_", 2u) == 2u);
                     CHECK(j_const.value("_", false) == false);
                     CHECK(j_const.value("_", "bar") == "bar");
                     CHECK(j_const.value("_", 12.34) == Approx(12.34));
-                    CHECK(j_const.value("_", Json({{"foo", "bar"}})) == Json({{"foo", "bar"}}));
-                    CHECK(j_const.value("_", Json({10, 100})) == Json({10, 100}));
+                    CHECK(j_const.value("_", Json({ { "foo", "bar" } })) == Json({ { "foo", "bar" } }));
+                    CHECK(j_const.value("_", Json({ 10, 100 })) == Json({ 10, 100 }));
 
 #ifdef JSON_HAS_CPP_17
                     CHECK(j.value(std::string_view("_"), 2) == 2);
@@ -303,16 +297,16 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                     CHECK(j.value(std::string_view("_"), false) == false);
                     CHECK(j.value(std::string_view("_"), "bar") == "bar");
                     CHECK(j.value(std::string_view("_"), 12.34) == Approx(12.34));
-                    CHECK(j.value(std::string_view("_"), Json({{"foo", "bar"}})) == Json({{"foo", "bar"}}));
-                    CHECK(j.value(std::string_view("_"), Json({10, 100})) == Json({10, 100}));
+                    CHECK(j.value(std::string_view("_"), Json({ { "foo", "bar" } })) == Json({ { "foo", "bar" } }));
+                    CHECK(j.value(std::string_view("_"), Json({ 10, 100 })) == Json({ 10, 100 }));
 
                     CHECK(j_const.value(std::string_view("_"), 2) == 2);
                     CHECK(j_const.value(std::string_view("_"), 2u) == 2u);
                     CHECK(j_const.value(std::string_view("_"), false) == false);
                     CHECK(j_const.value(std::string_view("_"), "bar") == "bar");
                     CHECK(j_const.value(std::string_view("_"), 12.34) == Approx(12.34));
-                    CHECK(j_const.value(std::string_view("_"), Json({{"foo", "bar"}})) == Json({{"foo", "bar"}}));
-                    CHECK(j_const.value(std::string_view("_"), Json({10, 100})) == Json({10, 100}));
+                    CHECK(j_const.value(std::string_view("_"), Json({ { "foo", "bar" } })) == Json({ { "foo", "bar" } }));
+                    CHECK(j_const.value(std::string_view("_"), Json({ 10, 100 })) == Json({ 10, 100 }));
 #endif
                 }
 
@@ -481,8 +475,8 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                     CHECK(j.value("/string"_json_pointer, std::string("bar")) == "hello world");
                     CHECK(j.value("/floating"_json_pointer, 12.34) == Approx(42.23));
                     CHECK(j.value("/floating"_json_pointer, 12) == 42);
-                    CHECK(j.value("/object"_json_pointer, Json({{"foo", "bar"}})) == Json::object());
-                    CHECK(j.value("/array"_json_pointer, Json({10, 100})) == Json({1, 2, 3}));
+                    CHECK(j.value("/object"_json_pointer, Json({ { "foo", "bar" } })) == Json::object());
+                    CHECK(j.value("/array"_json_pointer, Json({ 10, 100 })) == Json({ 1, 2, 3 }));
 
                     CHECK(j_const.value("/integer"_json_pointer, 2) == 1);
                     CHECK(j_const.value("/integer"_json_pointer, 1.0) == Approx(1));
@@ -493,8 +487,8 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                     CHECK(j_const.value("/string"_json_pointer, std::string("bar")) == "hello world");
                     CHECK(j_const.value("/floating"_json_pointer, 12.34) == Approx(42.23));
                     CHECK(j_const.value("/floating"_json_pointer, 12) == 42);
-                    CHECK(j_const.value("/object"_json_pointer, Json({{"foo", "bar"}})) == Json::object());
-                    CHECK(j_const.value("/array"_json_pointer, Json({10, 100})) == Json({1, 2, 3}));
+                    CHECK(j_const.value("/object"_json_pointer, Json({ { "foo", "bar" } })) == Json::object());
+                    CHECK(j_const.value("/array"_json_pointer, Json({ 10, 100 })) == Json({ 1, 2, 3 }));
                 }
 
                 SECTION("access on non-object type")
@@ -586,7 +580,7 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
             }
         }
 
-        SECTION("non-const operator[]"){{Json j_null;
+        SECTION("non-const operator[]"){ { Json j_null;
         CHECK(j_null.is_null());
         j_null["key"] = 1;
         CHECK(j_null.is_object());
@@ -616,14 +610,14 @@ SECTION("front and back")
         CHECK(j.front() == Json(1));
         CHECK(j_const.front() == Json(1));
         // "array" is last key
-        CHECK(j.back() == Json({1, 2, 3}));
-        CHECK(j_const.back() == Json({1, 2, 3}));
+        CHECK(j.back() == Json({ 1, 2, 3 }));
+        CHECK(j_const.back() == Json({ 1, 2, 3 }));
     }
     else
     {
         // "array" is the smallest key
-        CHECK(j.front() == Json({1, 2, 3}));
-        CHECK(j_const.front() == Json({1, 2, 3}));
+        CHECK(j.front() == Json({ 1, 2, 3 }));
+        CHECK(j_const.front() == Json({ 1, 2, 3 }));
         // "unsigned" is the largest key
         CHECK(j.back() == Json(1u));
         CHECK(j_const.back() == Json(1u));
@@ -655,7 +649,7 @@ SECTION("access specified element")
         CHECK(j["object"] == Json::object());
         CHECK(j[typename Json::object_t::key_type("object")] == j["object"]);
 
-        CHECK(j["array"] == Json({1, 2, 3}));
+        CHECK(j["array"] == Json({ 1, 2, 3 }));
         CHECK(j[typename Json::object_t::key_type("array")] == j["array"]);
 
         CHECK(j_const["integer"] == Json(1));
@@ -676,7 +670,7 @@ SECTION("access specified element")
         CHECK(j_const["object"] == Json::object());
         CHECK(j_const[typename Json::object_t::key_type("object")] == j["object"]);
 
-        CHECK(j_const["array"] == Json({1, 2, 3}));
+        CHECK(j_const["array"] == Json({ 1, 2, 3 }));
         CHECK(j_const[typename Json::object_t::key_type("array")] == j["array"]);
     }
 
@@ -704,7 +698,7 @@ SECTION("access specified element")
         CHECK(j["object"] == Json::object());
         CHECK(j[std::string_view("object")] == j["object"]);
 
-        CHECK(j["array"] == Json({1, 2, 3}));
+        CHECK(j["array"] == Json({ 1, 2, 3 }));
         CHECK(j[std::string_view("array")] == j["array"]);
 
         CHECK(j_const["integer"] == Json(1));
@@ -725,7 +719,7 @@ SECTION("access specified element")
         CHECK(j_const["object"] == Json::object());
         CHECK(j_const[std::string_view("object")] == j["object"]);
 
-        CHECK(j_const["array"] == Json({1, 2, 3}));
+        CHECK(j_const["array"] == Json({ 1, 2, 3 }));
         CHECK(j_const[std::string_view("array")] == j["array"]);
     }
 #endif
@@ -1014,15 +1008,15 @@ SECTION("remove specified element")
         SECTION("erase(begin())")
         {
             {
-                Json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}};
+                Json jobject = { { "a", "a" }, { "b", 1 }, { "c", 17u } };
                 typename Json::iterator const it2 = jobject.erase(jobject.begin());
-                CHECK(jobject == Json({{"b", 1}, {"c", 17u}}));
+                CHECK(jobject == Json({ { "b", 1 }, { "c", 17u } }));
                 CHECK(*it2 == Json(1));
             }
             {
-                Json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}};
+                Json jobject = { { "a", "a" }, { "b", 1 }, { "c", 17u } };
                 typename Json::const_iterator const it2 = jobject.erase(jobject.cbegin());
-                CHECK(jobject == Json({{"b", 1}, {"c", 17u}}));
+                CHECK(jobject == Json({ { "b", 1 }, { "c", 17u } }));
                 CHECK(*it2 == Json(1));
             }
         }
@@ -1030,13 +1024,13 @@ SECTION("remove specified element")
         SECTION("erase(begin(), end())")
         {
             {
-                Json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}};
+                Json jobject = { { "a", "a" }, { "b", 1 }, { "c", 17u } };
                 typename Json::iterator it2 = jobject.erase(jobject.begin(), jobject.end());
                 CHECK(jobject == Json::object());
                 CHECK(it2 == jobject.end());
             }
             {
-                Json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}};
+                Json jobject = { { "a", "a" }, { "b", 1 }, { "c", 17u } };
                 typename Json::const_iterator it2 = jobject.erase(jobject.cbegin(), jobject.cend());
                 CHECK(jobject == Json::object());
                 CHECK(it2 == jobject.cend());
@@ -1046,15 +1040,15 @@ SECTION("remove specified element")
         SECTION("erase(begin(), begin())")
         {
             {
-                Json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}};
+                Json jobject = { { "a", "a" }, { "b", 1 }, { "c", 17u } };
                 typename Json::iterator const it2 = jobject.erase(jobject.begin(), jobject.begin());
-                CHECK(jobject == Json({{"a", "a"}, {"b", 1}, {"c", 17u}}));
+                CHECK(jobject == Json({ { "a", "a" }, { "b", 1 }, { "c", 17u } }));
                 CHECK(*it2 == Json("a"));
             }
             {
-                Json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}};
+                Json jobject = { { "a", "a" }, { "b", 1 }, { "c", 17u } };
                 typename Json::const_iterator const it2 = jobject.erase(jobject.cbegin(), jobject.cbegin());
-                CHECK(jobject == Json({{"a", "a"}, {"b", 1}, {"c", 17u}}));
+                CHECK(jobject == Json({ { "a", "a" }, { "b", 1 }, { "c", 17u } }));
                 CHECK(*it2 == Json("a"));
             }
         }
@@ -1062,17 +1056,17 @@ SECTION("remove specified element")
         SECTION("erase at offset")
         {
             {
-                Json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}};
+                Json jobject = { { "a", "a" }, { "b", 1 }, { "c", 17u } };
                 typename Json::iterator const it = jobject.find("b");
                 typename Json::iterator const it2 = jobject.erase(it);
-                CHECK(jobject == Json({{"a", "a"}, {"c", 17u}}));
+                CHECK(jobject == Json({ { "a", "a" }, { "c", 17u } }));
                 CHECK(*it2 == Json(17));
             }
             {
-                Json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}};
+                Json jobject = { { "a", "a" }, { "b", 1 }, { "c", 17u } };
                 typename Json::const_iterator const it = jobject.find("b");
                 typename Json::const_iterator const it2 = jobject.erase(it);
-                CHECK(jobject == Json({{"a", "a"}, {"c", 17u}}));
+                CHECK(jobject == Json({ { "a", "a" }, { "c", 17u } }));
                 CHECK(*it2 == Json(17));
             }
         }
@@ -1080,15 +1074,15 @@ SECTION("remove specified element")
         SECTION("erase subrange")
         {
             {
-                Json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}, {"d", false}, {"e", true}};
+                Json jobject = { { "a", "a" }, { "b", 1 }, { "c", 17u }, { "d", false }, { "e", true } };
                 typename Json::iterator const it2 = jobject.erase(jobject.find("b"), jobject.find("e"));
-                CHECK(jobject == Json({{"a", "a"}, {"e", true}}));
+                CHECK(jobject == Json({ { "a", "a" }, { "e", true } }));
                 CHECK(*it2 == Json(true));
             }
             {
-                Json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}, {"d", false}, {"e", true}};
+                Json jobject = { { "a", "a" }, { "b", 1 }, { "c", 17u }, { "d", false }, { "e", true } };
                 typename Json::const_iterator const it2 = jobject.erase(jobject.find("b"), jobject.find("e"));
-                CHECK(jobject == Json({{"a", "a"}, {"e", true}}));
+                CHECK(jobject == Json({ { "a", "a" }, { "e", true } }));
                 CHECK(*it2 == Json(true));
             }
         }
@@ -1096,8 +1090,8 @@ SECTION("remove specified element")
         SECTION("different objects")
         {
             {
-                Json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}, {"d", false}, {"e", true}};
-                Json jobject2 = {{"a", "a"}, {"b", 1}, {"c", 17u}};
+                Json jobject = { { "a", "a" }, { "b", 1 }, { "c", 17u }, { "d", false }, { "e", true } };
+                Json jobject2 = { { "a", "a" }, { "b", 1 }, { "c", 17u } };
                 CHECK_THROWS_WITH_AS(jobject.erase(jobject2.begin()),
                                      "[json.exception.invalid_iterator.202] iterator does not fit current value",
                                      typename Json::invalid_iterator&);
@@ -1112,8 +1106,8 @@ SECTION("remove specified element")
                                      typename Json::invalid_iterator&);
             }
             {
-                Json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}, {"d", false}, {"e", true}};
-                Json jobject2 = {{"a", "a"}, {"b", 1}, {"c", 17u}};
+                Json jobject = { { "a", "a" }, { "b", 1 }, { "c", 17u }, { "d", false }, { "e", true } };
+                Json jobject2 = { { "a", "a" }, { "b", 1 }, { "c", 17u } };
                 CHECK_THROWS_WITH_AS(jobject.erase(jobject2.cbegin()),
                                      "[json.exception.invalid_iterator.202] iterator does not fit current value",
                                      typename Json::invalid_iterator&);
@@ -1210,7 +1204,7 @@ SECTION("find an element in an object")
 {
     SECTION("existing element")
     {
-        for (const auto* key : {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"})
+        for (const auto* key : { "integer", "unsigned", "floating", "null", "string", "boolean", "object", "array" })
         {
             CHECK(j.find(key) != j.end());
             CHECK(*j.find(key) == j.at(key));
@@ -1218,7 +1212,7 @@ SECTION("find an element in an object")
             CHECK(*j_const.find(key) == j_const.at(key));
         }
 #ifdef JSON_HAS_CPP_17
-        for (const std::string_view key : {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"})
+        for (const std::string_view key : { "integer", "unsigned", "floating", "null", "string", "boolean", "object", "array" })
         {
             CHECK(j.find(key) != j.end());
             CHECK(*j.find(key) == j.at(key));
@@ -1359,13 +1353,13 @@ SECTION("count keys in an object")
 {
     SECTION("existing element")
     {
-        for (const auto* key : {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"})
+        for (const auto* key : { "integer", "unsigned", "floating", "null", "string", "boolean", "object", "array" })
         {
             CHECK(j.count(key) == 1);
             CHECK(j_const.count(key) == 1);
         }
 #ifdef JSON_HAS_CPP_17
-        for (const std::string_view key : {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"})
+        for (const std::string_view key : { "integer", "unsigned", "floating", "null", "string", "boolean", "object", "array" })
         {
             CHECK(j.count(key) == 1);
             CHECK(j_const.count(key) == 1);
@@ -1504,14 +1498,14 @@ SECTION("check existence of key in an object")
 {
     SECTION("existing element")
     {
-        for (const auto* key : {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"})
+        for (const auto* key : { "integer", "unsigned", "floating", "null", "string", "boolean", "object", "array" })
         {
             CHECK(j.contains(key) == true);
             CHECK(j_const.contains(key) == true);
         }
 
 #ifdef JSON_HAS_CPP_17
-        for (const std::string_view key : {"integer", "unsigned", "floating", "null", "string", "boolean", "object", "array"})
+        for (const std::string_view key : { "integer", "unsigned", "floating", "null", "string", "boolean", "object", "array" })
         {
             CHECK(j.contains(key) == true);
             CHECK(j_const.contains(key) == true);
@@ -1651,22 +1645,10 @@ TEST_CASE_TEMPLATE("element access 2 (throwing tests)", Json, nlohmann::json, nl
 {
     SECTION("object")
     {
-        Json j = {{"integer", 1},
-                  {"unsigned", 1u},
-                  {"floating", 42.23},
-                  {"null", nullptr},
-                  {"string", "hello world"},
-                  {"boolean", true},
-                  {"object", Json::object()},
-                  {"array", {1, 2, 3}}};
-        const Json j_const = {{"integer", 1},
-                              {"unsigned", 1u},
-                              {"floating", 42.23},
-                              {"null", nullptr},
-                              {"string", "hello world"},
-                              {"boolean", true},
-                              {"object", Json::object()},
-                              {"array", {1, 2, 3}}};
+        Json j = { { "integer", 1 },    { "unsigned", 1u },           { "floating", 42.23 },   { "null", nullptr }, { "string", "hello world" },
+                   { "boolean", true }, { "object", Json::object() }, { "array", { 1, 2, 3 } } };
+        const Json j_const = { { "integer", 1 },    { "unsigned", 1u },           { "floating", 42.23 },   { "null", nullptr }, { "string", "hello world" },
+                               { "boolean", true }, { "object", Json::object() }, { "array", { 1, 2, 3 } } };
 
         SECTION("access specified element with default value")
         {
@@ -1679,16 +1661,16 @@ TEST_CASE_TEMPLATE("element access 2 (throwing tests)", Json, nlohmann::json, nl
                     CHECK(j.value("/not/existing"_json_pointer, false) == false);
                     CHECK(j.value("/not/existing"_json_pointer, "bar") == "bar");
                     CHECK(j.value("/not/existing"_json_pointer, 12.34) == Approx(12.34));
-                    CHECK(j.value("/not/existing"_json_pointer, Json({{"foo", "bar"}})) == Json({{"foo", "bar"}}));
-                    CHECK(j.value("/not/existing"_json_pointer, Json({10, 100})) == Json({10, 100}));
+                    CHECK(j.value("/not/existing"_json_pointer, Json({ { "foo", "bar" } })) == Json({ { "foo", "bar" } }));
+                    CHECK(j.value("/not/existing"_json_pointer, Json({ 10, 100 })) == Json({ 10, 100 }));
 
                     CHECK(j_const.value("/not/existing"_json_pointer, 2) == 2);
                     CHECK(j_const.value("/not/existing"_json_pointer, 2u) == 2u);
                     CHECK(j_const.value("/not/existing"_json_pointer, false) == false);
                     CHECK(j_const.value("/not/existing"_json_pointer, "bar") == "bar");
                     CHECK(j_const.value("/not/existing"_json_pointer, 12.34) == Approx(12.34));
-                    CHECK(j_const.value("/not/existing"_json_pointer, Json({{"foo", "bar"}})) == Json({{"foo", "bar"}}));
-                    CHECK(j_const.value("/not/existing"_json_pointer, Json({10, 100})) == Json({10, 100}));
+                    CHECK(j_const.value("/not/existing"_json_pointer, Json({ { "foo", "bar" } })) == Json({ { "foo", "bar" } }));
+                    CHECK(j_const.value("/not/existing"_json_pointer, Json({ 10, 100 })) == Json({ 10, 100 }));
                 }
             }
         }
@@ -1705,7 +1687,7 @@ TEST_CASE_TEMPLATE("element access 2 (additional value() tests)", Json, nlohmann
     // test assumes string_t and object_t::key_type are the same
     REQUIRE(std::is_same<string_t, typename Json::object_t::key_type>::value);
 
-    Json j{{"foo", "bar"}, {"baz", 42}};
+    Json j{ { "foo", "bar" }, { "baz", 42 } };
 
     const char* cpstr = "default";
     const char castr[] = "default";  // NOLINT(hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
@@ -1714,7 +1696,7 @@ TEST_CASE_TEMPLATE("element access 2 (additional value() tests)", Json, nlohmann
     number_integer_t integer = 69;
     std::size_t size = 69;
 
-    SECTION("deduced ValueType"){SECTION("literal key"){CHECK(j.value("foo", "default") == "bar");
+    SECTION("deduced ValueType"){ SECTION("literal key"){ CHECK(j.value("foo", "default") == "bar");
     CHECK(j.value("foo", cpstr) == "bar");
     CHECK(j.value("foo", castr) == "bar");
     CHECK(j.value("foo", str) == "bar");

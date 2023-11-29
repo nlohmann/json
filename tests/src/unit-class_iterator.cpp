@@ -131,14 +131,14 @@ TEST_CASE("iterator class")
 
             SECTION("object")
             {
-                json j({{"foo", "bar"}});
+                json j({ { "foo", "bar" } });
                 json::iterator const it = j.begin();
                 CHECK(*it == json("bar"));
             }
 
             SECTION("array")
             {
-                json j({1, 2, 3, 4});
+                json j({ 1, 2, 3, 4 });
                 json::iterator const it = j.begin();
                 CHECK(*it == json(1));
             }
@@ -164,14 +164,14 @@ TEST_CASE("iterator class")
 
             SECTION("object")
             {
-                json j({{"foo", "bar"}});
+                json j({ { "foo", "bar" } });
                 json::iterator const it = j.begin();
                 CHECK(std::string(it->type_name()) == "string");
             }
 
             SECTION("array")
             {
-                json j({1, 2, 3, 4});
+                json j({ 1, 2, 3, 4 });
                 json::iterator const it = j.begin();
                 CHECK(std::string(it->type_name()) == "number");
             }
@@ -204,7 +204,7 @@ TEST_CASE("iterator class")
 
             SECTION("object")
             {
-                json j({{"foo", "bar"}});
+                json j({ { "foo", "bar" } });
                 json::iterator it = j.begin();
                 CHECK((it.m_it.object_iterator == it.m_object->m_data.m_value.object->begin()));
                 it++;
@@ -213,7 +213,7 @@ TEST_CASE("iterator class")
 
             SECTION("array")
             {
-                json j({1, 2, 3, 4});
+                json j({ 1, 2, 3, 4 });
                 json::iterator it = j.begin();
                 CHECK((it.m_it.array_iterator == it.m_object->m_data.m_value.array->begin()));
                 it++;
@@ -255,7 +255,7 @@ TEST_CASE("iterator class")
 
             SECTION("object")
             {
-                json j({{"foo", "bar"}});
+                json j({ { "foo", "bar" } });
                 json::iterator it = j.begin();
                 CHECK((it.m_it.object_iterator == it.m_object->m_data.m_value.object->begin()));
                 ++it;
@@ -264,7 +264,7 @@ TEST_CASE("iterator class")
 
             SECTION("array")
             {
-                json j({1, 2, 3, 4});
+                json j({ 1, 2, 3, 4 });
                 json::iterator it = j.begin();
                 CHECK((it.m_it.array_iterator == it.m_object->m_data.m_value.array->begin()));
                 ++it;
@@ -304,7 +304,7 @@ TEST_CASE("iterator class")
 
             SECTION("object")
             {
-                json j({{"foo", "bar"}});
+                json j({ { "foo", "bar" } });
                 json::iterator it = j.end();
                 CHECK((it.m_it.object_iterator == it.m_object->m_data.m_value.object->end()));
                 it--;
@@ -313,7 +313,7 @@ TEST_CASE("iterator class")
 
             SECTION("array")
             {
-                json j({1, 2, 3, 4});
+                json j({ 1, 2, 3, 4 });
                 json::iterator it = j.end();
                 CHECK((it.m_it.array_iterator == it.m_object->m_data.m_value.array->end()));
                 it--;
@@ -353,7 +353,7 @@ TEST_CASE("iterator class")
 
             SECTION("object")
             {
-                json j({{"foo", "bar"}});
+                json j({ { "foo", "bar" } });
                 json::iterator it = j.end();
                 CHECK((it.m_it.object_iterator == it.m_object->m_data.m_value.object->end()));
                 --it;
@@ -362,7 +362,7 @@ TEST_CASE("iterator class")
 
             SECTION("array")
             {
-                json j({1, 2, 3, 4});
+                json j({ 1, 2, 3, 4 });
                 json::iterator it = j.end();
                 CHECK((it.m_it.array_iterator == it.m_object->m_data.m_value.array->end()));
                 --it;

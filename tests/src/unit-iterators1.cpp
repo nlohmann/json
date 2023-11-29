@@ -531,7 +531,7 @@ TEST_CASE("iterators 1")
 
         SECTION("array")
         {
-            json j = {1, 2, 3};
+            json j = { 1, 2, 3 };
             json j_const(j);
 
             SECTION("json + begin/end")
@@ -715,7 +715,7 @@ TEST_CASE("iterators 1")
 
         SECTION("object")
         {
-            json j = {{"A", 1}, {"B", 2}, {"C", 3}};
+            json j = { { "A", 1 }, { "B", 2 }, { "C", 3 } };
             json j_const(j);
 
             SECTION("json + begin/end")
@@ -1580,7 +1580,7 @@ TEST_CASE("iterators 1")
         }
         SECTION("array")
         {
-            json j = {1, 2, 3};
+            json j = { 1, 2, 3 };
             json::const_iterator it = j.begin();
             CHECK(it == j.cbegin());
             it = j.begin();
@@ -1588,7 +1588,7 @@ TEST_CASE("iterators 1")
         }
         SECTION("object")
         {
-            json j = {{"A", 1}, {"B", 2}, {"C", 3}};
+            json j = { { "A", 1 }, { "B", 2 }, { "C", 3 } };
             json::const_iterator it = j.begin();
             CHECK(it == j.cbegin());
             it = j.begin();

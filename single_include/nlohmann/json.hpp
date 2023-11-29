@@ -213,6 +213,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
+#include <utility>  // declval, pair
 // #include <nlohmann/detail/meta/detected.hpp>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
@@ -2023,8 +2024,6 @@ JSON_HEDLEY_DIAGNOSTIC_POP
     #define JSON_HEDLEY_CLANG_HAS_WARNING(warning) JSON_HEDLEY_HAS_WARNING(warning)
 
 #endif /* !defined(JSON_HEDLEY_VERSION) || (JSON_HEDLEY_VERSION < X) */
-
-#include <utility>  // declval, pair
 
 // This file contains all internal macro definitions (except those affecting ABI)
 // You MUST include macro_unscope.hpp at the end of json.hpp to undef all of them
@@ -6107,7 +6106,7 @@ constexpr T static_const<T>::value;
 template<typename T, typename... Args>
 inline constexpr std::array<T, sizeof...(Args)> make_array(Args&&... args)
 {
-    return std::array<T, sizeof...(Args)>{{static_cast<T>(std::forward<Args>(args))...}};
+    return std::array<T, sizeof...(Args)>{ { static_cast<T>(std::forward<Args>(args))... } };
 }
 
 }  // namespace detail
@@ -7272,8 +7271,8 @@ inline void replace_substring(StringType& s, const StringType& f, const StringTy
 template<typename StringType>
 inline StringType escape(StringType s)
 {
-    replace_substring(s, StringType{"~"}, StringType{"~0"});
-    replace_substring(s, StringType{"/"}, StringType{"~1"});
+    replace_substring(s, StringType{ "~" }, StringType{ "~0" });
+    replace_substring(s, StringType{ "/" }, StringType{ "~1" });
     return s;
 }
 
@@ -7287,8 +7286,8 @@ inline StringType escape(StringType s)
 template<typename StringType>
 static void unescape(StringType& s)
 {
-    replace_substring(s, StringType{"~1"}, StringType{"/"});
-    replace_substring(s, StringType{"~0"}, StringType{"~"});
+    replace_substring(s, StringType{ "~1" }, StringType{ "/" });
+    replace_substring(s, StringType{ "~0" }, StringType{ "~" });
 }
 
 }  // namespace detail
@@ -7379,7 +7378,7 @@ inline std::partial_ordering operator<=>(const value_t lhs, const value_t rhs) n
 inline bool operator<(const value_t lhs, const value_t rhs) noexcept
 #endif
 {
-    static constexpr std::array<std::uint8_t, 9> order = {{
+    static constexpr std::array<std::uint8_t, 9> order = { {
         0 /* null */,
         3 /* object */,
         4 /* array */,
@@ -7389,7 +7388,7 @@ inline bool operator<(const value_t lhs, const value_t rhs) noexcept
         2 /* unsigned */,
         2 /* float */,
         6 /* binary */
-    }};
+    } };
 
     const auto l_index = static_cast<std::size_t>(lhs);
     const auto r_index = static_cast<std::size_t>(rhs);
@@ -7444,8 +7443,8 @@ class exception : public std::exception
     JSON_HEDLEY_NON_NULL(3)
     exception(int id_, const char* what_arg)
       : id(id_)
-      , m(what_arg)
-    {}  // NOLINT(bugprone-throw-keyword-missing)
+      , m(what_arg)  // NOLINT(bugprone-throw-keyword-missing)
+    {}
 
     static std::string name(const std::string& ename, int id_)
     {
@@ -7543,7 +7542,7 @@ class parse_error : public exception
     static parse_error create(int id_, const position_t& pos, const std::string& what_arg, BasicJsonContext context)
     {
         const std::string w = concat(exception::name("parse_error", id_), "parse error", position_string(pos), ": ", exception::diagnostics(context), what_arg);
-        return {id_, pos.chars_read_total, w.c_str()};
+        return { id_, pos.chars_read_total, w.c_str() };
     }
 
     template<typename BasicJsonContext, enable_if_t<is_basic_json_context<BasicJsonContext>::value, int> = 0>
@@ -7555,7 +7554,7 @@ class parse_error : public exception
                                      ": ",
                                      exception::diagnostics(context),
                                      what_arg);
-        return {id_, byte_, w.c_str()};
+        return { id_, byte_, w.c_str() };
     }
 
     /*!
@@ -7590,7 +7589,7 @@ class invalid_iterator : public exception
     static invalid_iterator create(int id_, const std::string& what_arg, BasicJsonContext context)
     {
         const std::string w = concat(exception::name("invalid_iterator", id_), exception::diagnostics(context), what_arg);
-        return {id_, w.c_str()};
+        return { id_, w.c_str() };
     }
 
   private:
@@ -7609,7 +7608,7 @@ class type_error : public exception
     static type_error create(int id_, const std::string& what_arg, BasicJsonContext context)
     {
         const std::string w = concat(exception::name("type_error", id_), exception::diagnostics(context), what_arg);
-        return {id_, w.c_str()};
+        return { id_, w.c_str() };
     }
 
   private:
@@ -7628,7 +7627,7 @@ class out_of_range : public exception
     static out_of_range create(int id_, const std::string& what_arg, BasicJsonContext context)
     {
         const std::string w = concat(exception::name("out_of_range", id_), exception::diagnostics(context), what_arg);
-        return {id_, w.c_str()};
+        return { id_, w.c_str() };
     }
 
   private:
@@ -7647,7 +7646,7 @@ class other_error : public exception
     static other_error create(int id_, const std::string& what_arg, BasicJsonContext context)
     {
         const std::string w = concat(exception::name("other_error", id_), exception::diagnostics(context), what_arg);
-        return {id_, w.c_str()};
+        return { id_, w.c_str() };
     }
 
   private:
@@ -7945,7 +7944,7 @@ template<typename BasicJsonType, typename T, std::size_t... Idx>
 std::array<T, sizeof...(Idx)>
 from_json_inplace_array_impl(BasicJsonType&& j, identity_tag<std::array<T, sizeof...(Idx)>> /*unused*/, index_sequence<Idx...> /*unused*/)
 {
-    return {{std::forward<BasicJsonType>(j).at(Idx).template get<T>()...}};
+    return { { std::forward<BasicJsonType>(j).at(Idx).template get<T>()... } };
 }
 
 template<typename BasicJsonType, typename T, std::size_t N>
@@ -8046,7 +8045,7 @@ std::tuple<Args...> from_json_tuple_impl_base(BasicJsonType&& j, index_sequence<
 template<typename BasicJsonType, class A1, class A2>
 std::pair<A1, A2> from_json_tuple_impl(BasicJsonType&& j, identity_tag<std::pair<A1, A2>> /*unused*/, priority_tag<0> /*unused*/)
 {
-    return {std::forward<BasicJsonType>(j).at(0).template get<A1>(), std::forward<BasicJsonType>(j).at(1).template get<A2>()};
+    return { std::forward<BasicJsonType>(j).at(0).template get<A1>(), std::forward<BasicJsonType>(j).at(1).template get<A2>() };
 }
 
 template<typename BasicJsonType, typename A1, typename A2>
@@ -8806,20 +8805,20 @@ template<typename BasicJsonType,
          enable_if_t<std::is_constructible<BasicJsonType, T1>::value && std::is_constructible<BasicJsonType, T2>::value, int> = 0>
 inline void to_json(BasicJsonType& j, const std::pair<T1, T2>& p)
 {
-    j = {p.first, p.second};
+    j = { p.first, p.second };
 }
 
 // for https://github.com/nlohmann/json/pull/1134
 template<typename BasicJsonType, typename T, enable_if_t<std::is_same<T, iteration_proxy_value<typename BasicJsonType::iterator>>::value, int> = 0>
 inline void to_json(BasicJsonType& j, const T& b)
 {
-    j = {{b.key(), b.value()}};
+    j = { { b.key(), b.value() } };
 }
 
 template<typename BasicJsonType, typename Tuple, std::size_t... Idx>
 inline void to_json_tuple_impl(BasicJsonType& j, const Tuple& t, index_sequence<Idx...> /*unused*/)
 {
-    j = {std::get<Idx>(t)...};
+    j = { std::get<Idx>(t)... };
 }
 
 template<typename BasicJsonType, typename T, enable_if_t<is_constructible_tuple<BasicJsonType, T>::value, int> = 0>
@@ -9503,7 +9502,7 @@ class wide_string_input_adapter
     }
 
     /// a buffer for UTF-8 bytes
-    std::array<std::char_traits<char>::int_type, 4> utf8_bytes = {{0, 0, 0, 0}};
+    std::array<std::char_traits<char>::int_type, 4> utf8_bytes = { { 0, 0, 0, 0 } };
 
     /// index to the utf8_codes array for the next valid byte
     std::size_t utf8_bytes_index = 0;
@@ -10233,7 +10232,7 @@ class json_sax_dom_callback_parser
         // container
         if (!keep_stack.back())
         {
-            return {false, nullptr};
+            return { false, nullptr };
         }
 
         // create value
@@ -10245,20 +10244,20 @@ class json_sax_dom_callback_parser
         // do not handle this value if we just learnt it shall be discarded
         if (!keep)
         {
-            return {false, nullptr};
+            return { false, nullptr };
         }
 
         if (ref_stack.empty())
         {
             root = std::move(value);
-            return {true, &root};
+            return { true, &root };
         }
 
         // skip this value if we already decided to skip the parent
         // (https://github.com/nlohmann/json/issues/971#issuecomment-413678360)
         if (!ref_stack.back())
         {
-            return {false, nullptr};
+            return { false, nullptr };
         }
 
         // we now only expect arrays and objects
@@ -10268,7 +10267,7 @@ class json_sax_dom_callback_parser
         if (ref_stack.back()->is_array())
         {
             ref_stack.back()->m_data.m_value.array->emplace_back(std::move(value));
-            return {true, &(ref_stack.back()->m_data.m_value.array->back())};
+            return { true, &(ref_stack.back()->m_data.m_value.array->back()) };
         }
 
         // object
@@ -10280,12 +10279,12 @@ class json_sax_dom_callback_parser
 
         if (!store_element)
         {
-            return {false, nullptr};
+            return { false, nullptr };
         }
 
         JSON_ASSERT(object_element);
         *object_element = std::move(value);
-        return {true, object_element};
+        return { true, object_element };
     }
 
     /// the parsed JSON value
@@ -10564,7 +10563,7 @@ class lexer : public lexer_base<BasicJsonType>
         JSON_ASSERT(current == 'u');
         int codepoint = 0;
 
-        const auto factors = {12u, 8u, 4u, 0u};
+        const auto factors = { 12u, 8u, 4u, 0u };
         for (const auto factor : factors)
         {
             get();
@@ -11136,7 +11135,7 @@ class lexer : public lexer_base<BasicJsonType>
                 case 0xDE:
                 case 0xDF:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!next_byte_in_range({0x80, 0xBF})))
+                    if (JSON_HEDLEY_UNLIKELY(!next_byte_in_range({ 0x80, 0xBF })))
                     {
                         return token_type::parse_error;
                     }
@@ -11146,7 +11145,7 @@ class lexer : public lexer_base<BasicJsonType>
                 // U+0800..U+0FFF: bytes E0 A0..BF 80..BF
                 case 0xE0:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({0xA0, 0xBF, 0x80, 0xBF}))))
+                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({ 0xA0, 0xBF, 0x80, 0xBF }))))
                     {
                         return token_type::parse_error;
                     }
@@ -11170,7 +11169,7 @@ class lexer : public lexer_base<BasicJsonType>
                 case 0xEE:
                 case 0xEF:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({0x80, 0xBF, 0x80, 0xBF}))))
+                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({ 0x80, 0xBF, 0x80, 0xBF }))))
                     {
                         return token_type::parse_error;
                     }
@@ -11180,7 +11179,7 @@ class lexer : public lexer_base<BasicJsonType>
                 // U+D000..U+D7FF: bytes ED 80..9F 80..BF
                 case 0xED:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({0x80, 0x9F, 0x80, 0xBF}))))
+                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({ 0x80, 0x9F, 0x80, 0xBF }))))
                     {
                         return token_type::parse_error;
                     }
@@ -11190,7 +11189,7 @@ class lexer : public lexer_base<BasicJsonType>
                 // U+10000..U+3FFFF F0 90..BF 80..BF 80..BF
                 case 0xF0:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({0x90, 0xBF, 0x80, 0xBF, 0x80, 0xBF}))))
+                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({ 0x90, 0xBF, 0x80, 0xBF, 0x80, 0xBF }))))
                     {
                         return token_type::parse_error;
                     }
@@ -11202,7 +11201,7 @@ class lexer : public lexer_base<BasicJsonType>
                 case 0xF2:
                 case 0xF3:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({0x80, 0xBF, 0x80, 0xBF, 0x80, 0xBF}))))
+                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({ 0x80, 0xBF, 0x80, 0xBF, 0x80, 0xBF }))))
                     {
                         return token_type::parse_error;
                     }
@@ -11212,7 +11211,7 @@ class lexer : public lexer_base<BasicJsonType>
                 // U+100000..U+10FFFF F4 80..8F 80..BF 80..BF
                 case 0xF4:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({0x80, 0x8F, 0x80, 0xBF, 0x80, 0xBF}))))
+                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({ 0x80, 0x8F, 0x80, 0xBF, 0x80, 0xBF }))))
                     {
                         return token_type::parse_error;
                     }
@@ -11844,9 +11843,9 @@ scan_number_done:
             if (static_cast<unsigned char>(c) <= '\x1F')
             {
                 // escape control characters
-                std::array<char, 9> cs{{}};
-                static_cast<void>((
-                    std::snprintf)(cs.data(), cs.size(), "<U+%.4X>", static_cast<unsigned char>(c)));  // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+                std::array<char, 9> cs{ {} };
+                static_cast<void>((  // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+                    std::snprintf)(cs.data(), cs.size(), "<U+%.4X>", static_cast<unsigned char>(c)));
                 result += cs.data();
             }
             else
@@ -11940,22 +11939,24 @@ scan_number_done:
             case 't':
             {
                 std::array<char_type, 4> true_literal = {
-                    {static_cast<char_type>('t'), static_cast<char_type>('r'), static_cast<char_type>('u'), static_cast<char_type>('e')}};
+                    { static_cast<char_type>('t'), static_cast<char_type>('r'), static_cast<char_type>('u'), static_cast<char_type>('e') }
+                };
                 return scan_literal(true_literal.data(), true_literal.size(), token_type::literal_true);
             }
             case 'f':
             {
-                std::array<char_type, 5> false_literal = {{static_cast<char_type>('f'),
-                                                           static_cast<char_type>('a'),
-                                                           static_cast<char_type>('l'),
-                                                           static_cast<char_type>('s'),
-                                                           static_cast<char_type>('e')}};
+                std::array<char_type, 5> false_literal = { { static_cast<char_type>('f'),
+                                                             static_cast<char_type>('a'),
+                                                             static_cast<char_type>('l'),
+                                                             static_cast<char_type>('s'),
+                                                             static_cast<char_type>('e') } };
                 return scan_literal(false_literal.data(), false_literal.size(), token_type::literal_false);
             }
             case 'n':
             {
                 std::array<char_type, 4> null_literal = {
-                    {static_cast<char_type>('n'), static_cast<char_type>('u'), static_cast<char_type>('l'), static_cast<char_type>('l')}};
+                    { static_cast<char_type>('n'), static_cast<char_type>('u'), static_cast<char_type>('l'), static_cast<char_type>('l') }
+                };
                 return scan_literal(null_literal.data(), null_literal.size(), token_type::literal_null);
             }
 
@@ -12470,12 +12471,12 @@ class binary_reader
 
             default:  // anything else not supported (yet)
             {
-                std::array<char, 3> cr{{}};
-                static_cast<void>((std::snprintf)(cr.data(),
+                std::array<char, 3> cr{ {} };
+                static_cast<void>((std::snprintf)(cr.data(),  // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
                                                   cr.size(),
                                                   "%.2hhX",
-                                                  static_cast<unsigned char>(element_type)));  // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
-                const std::string cr_str{cr.data()};
+                                                  static_cast<unsigned char>(element_type)));
+                const std::string cr_str{ cr.data() };
                 return sax->parse_error(element_type_parse_position,
                                         cr_str,
                                         parse_error::create(114, element_type_parse_position, concat("Unsupported BSON record type 0x", cr_str), nullptr));
@@ -15100,10 +15101,10 @@ class binary_reader
     */
     std::string get_token_string() const
     {
-        std::array<char, 3> cr{{}};
+        std::array<char, 3> cr{ {} };
         static_cast<void>(
             (std::snprintf)(cr.data(), cr.size(), "%.2hhX", static_cast<unsigned char>(current)));  // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
-        return std::string{cr.data()};
+        return std::string{ cr.data() };
     }
 
     /*!
@@ -15171,22 +15172,22 @@ class binary_reader
 #define JSON_BINARY_READER_MAKE_BJD_OPTIMIZED_TYPE_MARKERS_ make_array<char_int_type>('F', 'H', 'N', 'S', 'T', 'Z', '[', '{')
 
 #define JSON_BINARY_READER_MAKE_BJD_TYPES_MAP_                                                                                                                 \
-    make_array<bjd_type>(bjd_type{'C', "char"},                                                                                                                \
-                         bjd_type{'D', "double"},                                                                                                              \
-                         bjd_type{'I', "int16"},                                                                                                               \
-                         bjd_type{'L', "int64"},                                                                                                               \
-                         bjd_type{'M', "uint64"},                                                                                                              \
-                         bjd_type{'U', "uint8"},                                                                                                               \
-                         bjd_type{'d', "single"},                                                                                                              \
-                         bjd_type{'i', "int8"},                                                                                                                \
-                         bjd_type{'l', "int32"},                                                                                                               \
-                         bjd_type{'m', "uint32"},                                                                                                              \
-                         bjd_type{'u', "uint16"})
+    make_array<bjd_type>(bjd_type{ 'C', "char" },                                                                                                              \
+                         bjd_type{ 'D', "double" },                                                                                                            \
+                         bjd_type{ 'I', "int16" },                                                                                                             \
+                         bjd_type{ 'L', "int64" },                                                                                                             \
+                         bjd_type{ 'M', "uint64" },                                                                                                            \
+                         bjd_type{ 'U', "uint8" },                                                                                                             \
+                         bjd_type{ 'd', "single" },                                                                                                            \
+                         bjd_type{ 'i', "int8" },                                                                                                              \
+                         bjd_type{ 'l', "int32" },                                                                                                             \
+                         bjd_type{ 'm', "uint32" },                                                                                                            \
+                         bjd_type{ 'u', "uint16" })
 
     JSON_PRIVATE_UNLESS_TESTED :
-      // lookup tables
-      // NOLINTNEXTLINE(cppcoreguidelines-non-private-member-variables-in-classes)
-      const decltype(JSON_BINARY_READER_MAKE_BJD_OPTIMIZED_TYPE_MARKERS_) bjd_optimized_type_markers = JSON_BINARY_READER_MAKE_BJD_OPTIMIZED_TYPE_MARKERS_;
+    // lookup tables
+    // NOLINTNEXTLINE(cppcoreguidelines-non-private-member-variables-in-classes)
+    const decltype(JSON_BINARY_READER_MAKE_BJD_OPTIMIZED_TYPE_MARKERS_) bjd_optimized_type_markers = JSON_BINARY_READER_MAKE_BJD_OPTIMIZED_TYPE_MARKERS_;
 
     using bjd_type = std::pair<char_int_type, string_t>;
     // NOLINTNEXTLINE(cppcoreguidelines-non-private-member-variables-in-classes)
@@ -15787,8 +15788,8 @@ class primitive_iterator_t
     static constexpr difference_type end_value = begin_value + 1;
 
     JSON_PRIVATE_UNLESS_TESTED :
-      /// iterator as signed integer type
-      difference_type m_it = (std::numeric_limits<std::ptrdiff_t>::min)();
+    /// iterator as signed integer type
+    difference_type m_it = (std::numeric_limits<std::ptrdiff_t>::min)();
 
   public:
     constexpr difference_type get_value() const noexcept
@@ -16107,12 +16108,11 @@ class iter_impl  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 
     JSON_PRIVATE_UNLESS_TESTED :
-      /*!
+    /*!
     @brief set the iterator to the first value
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
-      void
-      set_begin() noexcept
+    void set_begin() noexcept
     {
         JSON_ASSERT(m_object != nullptr);
 
@@ -16661,8 +16661,8 @@ class iter_impl  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 
     JSON_PRIVATE_UNLESS_TESTED :
-      /// associated JSON instance
-      pointer m_object = nullptr;
+    /// associated JSON instance
+    pointer m_object = nullptr;
     /// the actual iterator of the associated instance
     internal_iterator<typename std::remove_const<BasicJsonType>::type> m_it{};
 };
@@ -17090,7 +17090,8 @@ class json_pointer
         return static_cast<size_type>(res);
     }
 
-    JSON_PRIVATE_UNLESS_TESTED : json_pointer top() const
+    JSON_PRIVATE_UNLESS_TESTED :
+    json_pointer top() const
     {
         if (JSON_HEDLEY_UNLIKELY(empty()))
         {
@@ -17098,7 +17099,7 @@ class json_pointer
         }
 
         json_pointer result = *this;
-        result.reference_tokens = {reference_tokens[0]};
+        result.reference_tokens = { reference_tokens[0] };
         return result;
     }
 
@@ -18828,7 +18829,7 @@ class binary_writer
                         return ubjson_prefix(v, use_bjdata) == first_prefix;
                     });
 
-                    std::vector<CharType> bjdx = {'[', '{', 'S', 'H', 'T', 'F', 'N', 'Z'};  // excluded markers in bjdata optimized type
+                    std::vector<CharType> bjdx = { '[', '{', 'S', 'H', 'T', 'F', 'N', 'Z' };  // excluded markers in bjdata optimized type
 
                     if (same_prefix && !(use_bjdata && std::find(bjdx.begin(), bjdx.end(), first_prefix) != bjdx.end()))
                     {
@@ -18926,7 +18927,7 @@ class binary_writer
                         return ubjson_prefix(v, use_bjdata) == first_prefix;
                     });
 
-                    std::vector<CharType> bjdx = {'[', '{', 'S', 'H', 'T', 'F', 'N', 'Z'};  // excluded markers in bjdata optimized type
+                    std::vector<CharType> bjdx = { '[', '{', 'S', 'H', 'T', 'F', 'N', 'Z' };  // excluded markers in bjdata optimized type
 
                     if (same_prefix && !(use_bjdata && std::find(bjdx.begin(), bjdx.end(), first_prefix) != bjdx.end()))
                     {
@@ -19618,17 +19619,8 @@ class binary_writer
     */
     bool write_bjdata_ndarray(const typename BasicJsonType::object_t& value, const bool use_count, const bool use_type)
     {
-        std::map<string_t, CharType> bjdtype = {{"uint8", 'U'},
-                                                {"int8", 'i'},
-                                                {"uint16", 'u'},
-                                                {"int16", 'I'},
-                                                {"uint32", 'm'},
-                                                {"int32", 'l'},
-                                                {"uint64", 'M'},
-                                                {"int64", 'L'},
-                                                {"single", 'd'},
-                                                {"double", 'D'},
-                                                {"char", 'C'}};
+        std::map<string_t, CharType> bjdtype = { { "uint8", 'U' },  { "int8", 'i' },  { "uint16", 'u' }, { "int16", 'I' },  { "uint32", 'm' }, { "int32", 'l' },
+                                                 { "uint64", 'M' }, { "int64", 'L' }, { "single", 'd' }, { "double", 'D' }, { "char", 'C' } };
 
         string_t key = "_ArrayType_";
         auto it = bjdtype.find(static_cast<string_t>(value.at(key)));
@@ -19939,7 +19931,7 @@ struct diyfp  // f * 2^e
         JSON_ASSERT(x.e == y.e);
         JSON_ASSERT(x.f >= y.f);
 
-        return {x.f - y.f, x.e};
+        return { x.f - y.f, x.e };
     }
 
     /*!
@@ -20000,11 +19992,11 @@ struct diyfp  // f * 2^e
         // Effectively we only need to add the highest bit in p_lo to p_hi (and
         // Q_hi + 1 does not overflow).
 
-        Q += std::uint64_t{1} << (64u - 32u - 1u);  // round, ties up
+        Q += std::uint64_t{ 1 } << (64u - 32u - 1u);  // round, ties up
 
         const std::uint64_t h = p3 + p2_hi + p1_hi + (Q >> 32u);
 
-        return {h, x.e + y.e + 64};
+        return { h, x.e + y.e + 64 };
     }
 
     /*!
@@ -20035,7 +20027,7 @@ struct diyfp  // f * 2^e
         JSON_ASSERT(delta >= 0);
         JSON_ASSERT(((x.f << delta) >> delta) == x.f);
 
-        return {x.f << delta, target_exponent};
+        return { x.f << delta, target_exponent };
     }
 };
 
@@ -20070,7 +20062,7 @@ boundaries compute_boundaries(FloatType value)
     constexpr int kPrecision = std::numeric_limits<FloatType>::digits;  // = p (includes the hidden bit)
     constexpr int kBias = std::numeric_limits<FloatType>::max_exponent - 1 + (kPrecision - 1);
     constexpr int kMinExp = 1 - kBias;
-    constexpr std::uint64_t kHiddenBit = std::uint64_t{1} << (kPrecision - 1);  // = 2^(p-1)
+    constexpr std::uint64_t kHiddenBit = std::uint64_t{ 1 } << (kPrecision - 1);  // = 2^(p-1)
 
     using bits_type = typename std::conditional<kPrecision == 24, std::uint32_t, std::uint64_t>::type;
 
@@ -20113,7 +20105,7 @@ boundaries compute_boundaries(FloatType value)
     // Determine w- = m- such that e_(w-) = e_(w+).
     const diyfp w_minus = diyfp::normalize_to(m_minus, w_plus.e);
 
-    return {diyfp::normalize(v), w_minus, w_plus};
+    return { diyfp::normalize(v), w_minus, w_plus };
 }
 
 // Given normalized diyfp w, Grisu needs to find a (normalized) cached
@@ -20243,28 +20235,28 @@ inline cached_power get_cached_power_for_binary_exponent(int e)
     constexpr int kCachedPowersMinDecExp = -300;
     constexpr int kCachedPowersDecStep = 8;
 
-    static constexpr std::array<cached_power, 79> kCachedPowers = {{
-        {0xAB70FE17C79AC6CA, -1060, -300}, {0xFF77B1FCBEBCDC4F, -1034, -292}, {0xBE5691EF416BD60C, -1007, -284}, {0x8DD01FAD907FFC3C, -980, -276},
-        {0xD3515C2831559A83, -954, -268},  {0x9D71AC8FADA6C9B5, -927, -260},  {0xEA9C227723EE8BCB, -901, -252},  {0xAECC49914078536D, -874, -244},
-        {0x823C12795DB6CE57, -847, -236},  {0xC21094364DFB5637, -821, -228},  {0x9096EA6F3848984F, -794, -220},  {0xD77485CB25823AC7, -768, -212},
-        {0xA086CFCD97BF97F4, -741, -204},  {0xEF340A98172AACE5, -715, -196},  {0xB23867FB2A35B28E, -688, -188},  {0x84C8D4DFD2C63F3B, -661, -180},
-        {0xC5DD44271AD3CDBA, -635, -172},  {0x936B9FCEBB25C996, -608, -164},  {0xDBAC6C247D62A584, -582, -156},  {0xA3AB66580D5FDAF6, -555, -148},
-        {0xF3E2F893DEC3F126, -529, -140},  {0xB5B5ADA8AAFF80B8, -502, -132},  {0x87625F056C7C4A8B, -475, -124},  {0xC9BCFF6034C13053, -449, -116},
-        {0x964E858C91BA2655, -422, -108},  {0xDFF9772470297EBD, -396, -100},  {0xA6DFBD9FB8E5B88F, -369, -92},   {0xF8A95FCF88747D94, -343, -84},
-        {0xB94470938FA89BCF, -316, -76},   {0x8A08F0F8BF0F156B, -289, -68},   {0xCDB02555653131B6, -263, -60},   {0x993FE2C6D07B7FAC, -236, -52},
-        {0xE45C10C42A2B3B06, -210, -44},   {0xAA242499697392D3, -183, -36},   {0xFD87B5F28300CA0E, -157, -28},   {0xBCE5086492111AEB, -130, -20},
-        {0x8CBCCC096F5088CC, -103, -12},   {0xD1B71758E219652C, -77, -4},     {0x9C40000000000000, -50, 4},      {0xE8D4A51000000000, -24, 12},
-        {0xAD78EBC5AC620000, 3, 20},       {0x813F3978F8940984, 30, 28},      {0xC097CE7BC90715B3, 56, 36},      {0x8F7E32CE7BEA5C70, 83, 44},
-        {0xD5D238A4ABE98068, 109, 52},     {0x9F4F2726179A2245, 136, 60},     {0xED63A231D4C4FB27, 162, 68},     {0xB0DE65388CC8ADA8, 189, 76},
-        {0x83C7088E1AAB65DB, 216, 84},     {0xC45D1DF942711D9A, 242, 92},     {0x924D692CA61BE758, 269, 100},    {0xDA01EE641A708DEA, 295, 108},
-        {0xA26DA3999AEF774A, 322, 116},    {0xF209787BB47D6B85, 348, 124},    {0xB454E4A179DD1877, 375, 132},    {0x865B86925B9BC5C2, 402, 140},
-        {0xC83553C5C8965D3D, 428, 148},    {0x952AB45CFA97A0B3, 455, 156},    {0xDE469FBD99A05FE3, 481, 164},    {0xA59BC234DB398C25, 508, 172},
-        {0xF6C69A72A3989F5C, 534, 180},    {0xB7DCBF5354E9BECE, 561, 188},    {0x88FCF317F22241E2, 588, 196},    {0xCC20CE9BD35C78A5, 614, 204},
-        {0x98165AF37B2153DF, 641, 212},    {0xE2A0B5DC971F303A, 667, 220},    {0xA8D9D1535CE3B396, 694, 228},    {0xFB9B7CD9A4A7443C, 720, 236},
-        {0xBB764C4CA7A44410, 747, 244},    {0x8BAB8EEFB6409C1A, 774, 252},    {0xD01FEF10A657842C, 800, 260},    {0x9B10A4E5E9913129, 827, 268},
-        {0xE7109BFBA19C0C9D, 853, 276},    {0xAC2820D9623BF429, 880, 284},    {0x80444B5E7AA7CF85, 907, 292},    {0xBF21E44003ACDD2D, 933, 300},
-        {0x8E679C2F5E44FF8F, 960, 308},    {0xD433179D9C8CB841, 986, 316},    {0x9E19DB92B4E31BA9, 1013, 324},
-    }};
+    static constexpr std::array<cached_power, 79> kCachedPowers = { {
+        { 0xAB70FE17C79AC6CA, -1060, -300 }, { 0xFF77B1FCBEBCDC4F, -1034, -292 }, { 0xBE5691EF416BD60C, -1007, -284 }, { 0x8DD01FAD907FFC3C, -980, -276 },
+        { 0xD3515C2831559A83, -954, -268 },  { 0x9D71AC8FADA6C9B5, -927, -260 },  { 0xEA9C227723EE8BCB, -901, -252 },  { 0xAECC49914078536D, -874, -244 },
+        { 0x823C12795DB6CE57, -847, -236 },  { 0xC21094364DFB5637, -821, -228 },  { 0x9096EA6F3848984F, -794, -220 },  { 0xD77485CB25823AC7, -768, -212 },
+        { 0xA086CFCD97BF97F4, -741, -204 },  { 0xEF340A98172AACE5, -715, -196 },  { 0xB23867FB2A35B28E, -688, -188 },  { 0x84C8D4DFD2C63F3B, -661, -180 },
+        { 0xC5DD44271AD3CDBA, -635, -172 },  { 0x936B9FCEBB25C996, -608, -164 },  { 0xDBAC6C247D62A584, -582, -156 },  { 0xA3AB66580D5FDAF6, -555, -148 },
+        { 0xF3E2F893DEC3F126, -529, -140 },  { 0xB5B5ADA8AAFF80B8, -502, -132 },  { 0x87625F056C7C4A8B, -475, -124 },  { 0xC9BCFF6034C13053, -449, -116 },
+        { 0x964E858C91BA2655, -422, -108 },  { 0xDFF9772470297EBD, -396, -100 },  { 0xA6DFBD9FB8E5B88F, -369, -92 },   { 0xF8A95FCF88747D94, -343, -84 },
+        { 0xB94470938FA89BCF, -316, -76 },   { 0x8A08F0F8BF0F156B, -289, -68 },   { 0xCDB02555653131B6, -263, -60 },   { 0x993FE2C6D07B7FAC, -236, -52 },
+        { 0xE45C10C42A2B3B06, -210, -44 },   { 0xAA242499697392D3, -183, -36 },   { 0xFD87B5F28300CA0E, -157, -28 },   { 0xBCE5086492111AEB, -130, -20 },
+        { 0x8CBCCC096F5088CC, -103, -12 },   { 0xD1B71758E219652C, -77, -4 },     { 0x9C40000000000000, -50, 4 },      { 0xE8D4A51000000000, -24, 12 },
+        { 0xAD78EBC5AC620000, 3, 20 },       { 0x813F3978F8940984, 30, 28 },      { 0xC097CE7BC90715B3, 56, 36 },      { 0x8F7E32CE7BEA5C70, 83, 44 },
+        { 0xD5D238A4ABE98068, 109, 52 },     { 0x9F4F2726179A2245, 136, 60 },     { 0xED63A231D4C4FB27, 162, 68 },     { 0xB0DE65388CC8ADA8, 189, 76 },
+        { 0x83C7088E1AAB65DB, 216, 84 },     { 0xC45D1DF942711D9A, 242, 92 },     { 0x924D692CA61BE758, 269, 100 },    { 0xDA01EE641A708DEA, 295, 108 },
+        { 0xA26DA3999AEF774A, 322, 116 },    { 0xF209787BB47D6B85, 348, 124 },    { 0xB454E4A179DD1877, 375, 132 },    { 0x865B86925B9BC5C2, 402, 140 },
+        { 0xC83553C5C8965D3D, 428, 148 },    { 0x952AB45CFA97A0B3, 455, 156 },    { 0xDE469FBD99A05FE3, 481, 164 },    { 0xA59BC234DB398C25, 508, 172 },
+        { 0xF6C69A72A3989F5C, 534, 180 },    { 0xB7DCBF5354E9BECE, 561, 188 },    { 0x88FCF317F22241E2, 588, 196 },    { 0xCC20CE9BD35C78A5, 614, 204 },
+        { 0x98165AF37B2153DF, 641, 212 },    { 0xE2A0B5DC971F303A, 667, 220 },    { 0xA8D9D1535CE3B396, 694, 228 },    { 0xFB9B7CD9A4A7443C, 720, 236 },
+        { 0xBB764C4CA7A44410, 747, 244 },    { 0x8BAB8EEFB6409C1A, 774, 252 },    { 0xD01FEF10A657842C, 800, 260 },    { 0x9B10A4E5E9913129, 827, 268 },
+        { 0xE7109BFBA19C0C9D, 853, 276 },    { 0xAC2820D9623BF429, 880, 284 },    { 0x80444B5E7AA7CF85, 907, 292 },    { 0xBF21E44003ACDD2D, 933, 300 },
+        { 0x8E679C2F5E44FF8F, 960, 308 },    { 0xD433179D9C8CB841, 986, 316 },    { 0x9E19DB92B4E31BA9, 1013, 324 },
+    } };
 
     // This computation gives exactly the same results for k as
     //      k = ceil((kAlpha - e - 1) * 0.30102999566398114)
@@ -20412,7 +20404,7 @@ inline void grisu2_digit_gen(char* buffer, int& length, int& decimal_exponent, d
     //         = ((p1        ) * 2^-e + (p2        )) * 2^e
     //         = p1 + p2 * 2^e
 
-    const diyfp one(std::uint64_t{1} << -M_plus.e, M_plus.e);
+    const diyfp one(std::uint64_t{ 1 } << -M_plus.e, M_plus.e);
 
     auto p1 = static_cast<std::uint32_t>(M_plus.f >> -one.e);  // p1 = f div 2^-e (Since -e >= 32, p1 fits into a 32-bit int.)
     std::uint64_t p2 = M_plus.f & (one.f - 1);                 // p2 = f mod 2^-e
@@ -20477,7 +20469,7 @@ inline void grisu2_digit_gen(char* buffer, int& length, int& decimal_exponent, d
         // Note:
         // Since rest and delta share the same exponent e, it suffices to
         // compare the significands.
-        const std::uint64_t rest = (std::uint64_t{p1} << -one.e) + p2;
+        const std::uint64_t rest = (std::uint64_t{ p1 } << -one.e) + p2;
         if (rest <= delta)
         {
             // V = buffer * 10^n, with M- <= V <= M+.
@@ -20493,7 +20485,7 @@ inline void grisu2_digit_gen(char* buffer, int& length, int& decimal_exponent, d
             //
             //      10^n = (10^n * 2^-e) * 2^e = ulp * 2^e
             //
-            const std::uint64_t ten_n = std::uint64_t{pow10} << -one.e;
+            const std::uint64_t ten_n = std::uint64_t{ pow10 } << -one.e;
             grisu2_round(buffer, length, dist, delta, rest, ten_n);
 
             return;
@@ -21258,7 +21250,7 @@ class serializer
     }
 
     JSON_PRIVATE_UNLESS_TESTED :
-      /*!
+    /*!
     @brief dump escaped string
 
     Escape a string by replacing certain special characters by a sequence of an
@@ -21272,8 +21264,7 @@ class serializer
 
     @complexity Linear in the length of string @a s.
     */
-      void
-      dump_escaped(const string_t& s, const bool ensure_ascii)
+    void dump_escaped(const string_t& s, const bool ensure_ascii)
     {
         std::uint32_t codepoint{};
         std::uint8_t state = UTF8_ACCEPT;
@@ -21599,18 +21590,21 @@ class serializer
                                  int> = 0>
     void dump_integer(NumberType x)
     {
-        static constexpr std::array<std::array<char, 2>, 100> digits_to_99{{
-            {{'0', '0'}}, {{'0', '1'}}, {{'0', '2'}}, {{'0', '3'}}, {{'0', '4'}}, {{'0', '5'}}, {{'0', '6'}}, {{'0', '7'}}, {{'0', '8'}}, {{'0', '9'}},
-            {{'1', '0'}}, {{'1', '1'}}, {{'1', '2'}}, {{'1', '3'}}, {{'1', '4'}}, {{'1', '5'}}, {{'1', '6'}}, {{'1', '7'}}, {{'1', '8'}}, {{'1', '9'}},
-            {{'2', '0'}}, {{'2', '1'}}, {{'2', '2'}}, {{'2', '3'}}, {{'2', '4'}}, {{'2', '5'}}, {{'2', '6'}}, {{'2', '7'}}, {{'2', '8'}}, {{'2', '9'}},
-            {{'3', '0'}}, {{'3', '1'}}, {{'3', '2'}}, {{'3', '3'}}, {{'3', '4'}}, {{'3', '5'}}, {{'3', '6'}}, {{'3', '7'}}, {{'3', '8'}}, {{'3', '9'}},
-            {{'4', '0'}}, {{'4', '1'}}, {{'4', '2'}}, {{'4', '3'}}, {{'4', '4'}}, {{'4', '5'}}, {{'4', '6'}}, {{'4', '7'}}, {{'4', '8'}}, {{'4', '9'}},
-            {{'5', '0'}}, {{'5', '1'}}, {{'5', '2'}}, {{'5', '3'}}, {{'5', '4'}}, {{'5', '5'}}, {{'5', '6'}}, {{'5', '7'}}, {{'5', '8'}}, {{'5', '9'}},
-            {{'6', '0'}}, {{'6', '1'}}, {{'6', '2'}}, {{'6', '3'}}, {{'6', '4'}}, {{'6', '5'}}, {{'6', '6'}}, {{'6', '7'}}, {{'6', '8'}}, {{'6', '9'}},
-            {{'7', '0'}}, {{'7', '1'}}, {{'7', '2'}}, {{'7', '3'}}, {{'7', '4'}}, {{'7', '5'}}, {{'7', '6'}}, {{'7', '7'}}, {{'7', '8'}}, {{'7', '9'}},
-            {{'8', '0'}}, {{'8', '1'}}, {{'8', '2'}}, {{'8', '3'}}, {{'8', '4'}}, {{'8', '5'}}, {{'8', '6'}}, {{'8', '7'}}, {{'8', '8'}}, {{'8', '9'}},
-            {{'9', '0'}}, {{'9', '1'}}, {{'9', '2'}}, {{'9', '3'}}, {{'9', '4'}}, {{'9', '5'}}, {{'9', '6'}}, {{'9', '7'}}, {{'9', '8'}}, {{'9', '9'}},
-        }};
+        static constexpr std::array<std::array<char, 2>, 100> digits_to_99{ {
+            { { '0', '0' } }, { { '0', '1' } }, { { '0', '2' } }, { { '0', '3' } }, { { '0', '4' } }, { { '0', '5' } }, { { '0', '6' } }, { { '0', '7' } },
+            { { '0', '8' } }, { { '0', '9' } }, { { '1', '0' } }, { { '1', '1' } }, { { '1', '2' } }, { { '1', '3' } }, { { '1', '4' } }, { { '1', '5' } },
+            { { '1', '6' } }, { { '1', '7' } }, { { '1', '8' } }, { { '1', '9' } }, { { '2', '0' } }, { { '2', '1' } }, { { '2', '2' } }, { { '2', '3' } },
+            { { '2', '4' } }, { { '2', '5' } }, { { '2', '6' } }, { { '2', '7' } }, { { '2', '8' } }, { { '2', '9' } }, { { '3', '0' } }, { { '3', '1' } },
+            { { '3', '2' } }, { { '3', '3' } }, { { '3', '4' } }, { { '3', '5' } }, { { '3', '6' } }, { { '3', '7' } }, { { '3', '8' } }, { { '3', '9' } },
+            { { '4', '0' } }, { { '4', '1' } }, { { '4', '2' } }, { { '4', '3' } }, { { '4', '4' } }, { { '4', '5' } }, { { '4', '6' } }, { { '4', '7' } },
+            { { '4', '8' } }, { { '4', '9' } }, { { '5', '0' } }, { { '5', '1' } }, { { '5', '2' } }, { { '5', '3' } }, { { '5', '4' } }, { { '5', '5' } },
+            { { '5', '6' } }, { { '5', '7' } }, { { '5', '8' } }, { { '5', '9' } }, { { '6', '0' } }, { { '6', '1' } }, { { '6', '2' } }, { { '6', '3' } },
+            { { '6', '4' } }, { { '6', '5' } }, { { '6', '6' } }, { { '6', '7' } }, { { '6', '8' } }, { { '6', '9' } }, { { '7', '0' } }, { { '7', '1' } },
+            { { '7', '2' } }, { { '7', '3' } }, { { '7', '4' } }, { { '7', '5' } }, { { '7', '6' } }, { { '7', '7' } }, { { '7', '8' } }, { { '7', '9' } },
+            { { '8', '0' } }, { { '8', '1' } }, { { '8', '2' } }, { { '8', '3' } }, { { '8', '4' } }, { { '8', '5' } }, { { '8', '6' } }, { { '8', '7' } },
+            { { '8', '8' } }, { { '8', '9' } }, { { '9', '0' } }, { { '9', '1' } }, { { '9', '2' } }, { { '9', '3' } }, { { '9', '4' } }, { { '9', '5' } },
+            { { '9', '6' } }, { { '9', '7' } }, { { '9', '8' } }, { { '9', '9' } },
+        } };
 
         // special case for "0"
         if (x == 0)
@@ -21780,7 +21774,7 @@ class serializer
     */
     static std::uint8_t decode(std::uint8_t& state, std::uint32_t& codep, const std::uint8_t byte) noexcept
     {
-        static const std::array<std::uint8_t, 400> utf8d = {{
+        static const std::array<std::uint8_t, 400> utf8d = { {
             0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0,  // 00..1F
             0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -21809,7 +21803,7 @@ class serializer
             1,  // s5..s6
             1,   3,   1,   1,   1,   1,   1,   3,   1,   3,   1,   1,   1,   1,   1,   1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
             1  // s7..s8
-        }};
+        } };
 
         JSON_ASSERT(byte < utf8d.size());
         const std::uint8_t type = utf8d[byte];
@@ -21853,7 +21847,7 @@ class serializer
     output_adapter_t<char> o = nullptr;
 
     /// a (hopefully) large enough character buffer
-    std::array<char, 64> number_buffer{{}};
+    std::array<char, 64> number_buffer{ {} };
 
     /// the locale
     const std::lconv* loc = nullptr;
@@ -21863,7 +21857,7 @@ class serializer
     const char decimal_point = '\0';
 
     /// string buffer
-    std::array<char, 512> string_buffer{{}};
+    std::array<char, 512> string_buffer{ {} };
 
     /// the indentation character
     const char indent_char;
@@ -21933,14 +21927,14 @@ struct ordered_map : std::vector<std::pair<const Key, T>, Allocator>
       : Container{}
     {}
     explicit ordered_map(const Allocator& alloc) noexcept(noexcept(Container(alloc)))
-      : Container{alloc}
+      : Container{ alloc }
     {}
     template<class It>
     ordered_map(It first, It last, const Allocator& alloc = Allocator())
-      : Container{first, last, alloc}
+      : Container{ first, last, alloc }
     {}
     ordered_map(std::initializer_list<value_type> init, const Allocator& alloc = Allocator())
-      : Container{init, alloc}
+      : Container{ init, alloc }
     {}
 
     std::pair<iterator, bool> emplace(const key_type& key, T&& t)
@@ -21949,11 +21943,11 @@ struct ordered_map : std::vector<std::pair<const Key, T>, Allocator>
         {
             if (m_compare(it->first, key))
             {
-                return {it, false};
+                return { it, false };
             }
         }
         Container::emplace_back(key, std::forward<T>(t));
-        return {std::prev(this->end()), true};
+        return { std::prev(this->end()), true };
     }
 
     template<class KeyType, detail::enable_if_t<detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
@@ -21963,11 +21957,11 @@ struct ordered_map : std::vector<std::pair<const Key, T>, Allocator>
         {
             if (m_compare(it->first, key))
             {
-                return {it, false};
+                return { it, false };
             }
         }
         Container::emplace_back(std::forward<KeyType>(key), std::forward<T>(t));
-        return {std::prev(this->end()), true};
+        return { std::prev(this->end()), true };
     }
 
     T& operator[](const key_type& key)
@@ -22056,7 +22050,7 @@ struct ordered_map : std::vector<std::pair<const Key, T>, Allocator>
                 for (auto next = it; ++next != this->end(); ++it)
                 {
                     it->~value_type();  // Destroy but keep allocation
-                    new (&*it) value_type{std::move(*next)};
+                    new (&*it) value_type{ std::move(*next) };
                 }
                 Container::pop_back();
                 return 1;
@@ -22076,7 +22070,7 @@ struct ordered_map : std::vector<std::pair<const Key, T>, Allocator>
                 for (auto next = it; ++next != this->end(); ++it)
                 {
                     it->~value_type();  // Destroy but keep allocation
-                    new (&*it) value_type{std::move(*next)};
+                    new (&*it) value_type{ std::move(*next) };
                 }
                 Container::pop_back();
                 return 1;
@@ -22122,8 +22116,8 @@ struct ordered_map : std::vector<std::pair<const Key, T>, Allocator>
 
         for (auto it = first; std::next(it, elements_affected) != Container::end(); ++it)
         {
-            it->~value_type();                                                    // destroy but keep allocation
-            new (&*it) value_type{std::move(*std::next(it, elements_affected))};  // "move" next element to it
+            it->~value_type();                                                      // destroy but keep allocation
+            new (&*it) value_type{ std::move(*std::next(it, elements_affected)) };  // "move" next element to it
         }
 
         // [ a, b, c, d, h, i, j, h, i, j ]
@@ -22216,11 +22210,11 @@ struct ordered_map : std::vector<std::pair<const Key, T>, Allocator>
         {
             if (m_compare(it->first, value.first))
             {
-                return {it, false};
+                return { it, false };
             }
         }
         Container::push_back(value);
-        return {--this->end(), true};
+        return { --this->end(), true };
     }
 
     template<typename InputIt>
@@ -22307,8 +22301,8 @@ class basic_json  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spe
     using json_base_class_t = ::nlohmann::detail::json_base_class<CustomBaseClass>;
 
     JSON_PRIVATE_UNLESS_TESTED :
-      // convenience aliases for types residing in namespace detail;
-      using lexer = ::nlohmann::detail::lexer_base<basic_json>;
+    // convenience aliases for types residing in namespace detail;
+    using lexer = ::nlohmann::detail::lexer_base<basic_json>;
 
     template<typename InputAdapterType>
     static ::nlohmann::detail::parser<basic_json, InputAdapterType>
@@ -22336,7 +22330,8 @@ class basic_json  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spe
     template<typename CharType>
     using binary_writer = ::nlohmann::detail::binary_writer<basic_json, CharType>;
 
-    JSON_PRIVATE_UNLESS_TESTED : using serializer = ::nlohmann::detail::serializer<basic_json>;
+    JSON_PRIVATE_UNLESS_TESTED :
+    using serializer = ::nlohmann::detail::serializer<basic_json>;
 
   public:
     using value_t = detail::value_t;
@@ -22452,25 +22447,25 @@ class basic_json  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spe
 #endif
 
 #if defined(__ICC) || defined(__INTEL_COMPILER)
-        result["compiler"] = {{"family", "icc"}, { "version", __INTEL_COMPILER }};
+        result["compiler"] = { { "family", "icc" }, { "version", __INTEL_COMPILER } };
 #elif defined(__clang__)
-        result["compiler"] = {{"family", "clang"}, { "version", __clang_version__ }};
+        result["compiler"] = { { "family", "clang" }, { "version", __clang_version__ } };
 #elif defined(__GNUC__) || defined(__GNUG__)
-        result["compiler"] = {{"family", "gcc"},
-                              { "version",
-                                detail::concat(std::to_string(__GNUC__), '.', std::to_string(__GNUC_MINOR__), '.', std::to_string(__GNUC_PATCHLEVEL__)) }};
+        result["compiler"] = { { "family", "gcc" },
+                               { "version",
+                                 detail::concat(std::to_string(__GNUC__), '.', std::to_string(__GNUC_MINOR__), '.', std::to_string(__GNUC_PATCHLEVEL__)) } };
 #elif defined(__HP_cc) || defined(__HP_aCC)
         result["compiler"] = "hp"
 #elif defined(__IBMCPP__)
-        result["compiler"] = {{"family", "ilecpp"}, { "version", __IBMCPP__ }};
+        result["compiler"] = { { "family", "ilecpp" }, { "version", __IBMCPP__ } };
 #elif defined(_MSC_VER)
-        result["compiler"] = {{"family", "msvc"}, { "version", _MSC_VER }};
+        result["compiler"] = { { "family", "msvc" }, { "version", _MSC_VER } };
 #elif defined(__PGI)
-        result["compiler"] = {{"family", "pgcpp"}, { "version", __PGI }};
+        result["compiler"] = { { "family", "pgcpp" }, { "version", __PGI } };
 #elif defined(__SUNPRO_CC)
-        result["compiler"] = {{"family", "sunpro"}, { "version", __SUNPRO_CC }};
+        result["compiler"] = { { "family", "sunpro" }, { "version", __SUNPRO_CC } };
 #else
-        result["compiler"] = {{"family", "unknown"}, {"version", "unknown"}};
+        result["compiler"] = { { "family", "unknown" }, { "version", "unknown" } };
 #endif
 
 #if defined(_MSVC_LANG)
@@ -22564,7 +22559,7 @@ class basic_json  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spe
     ////////////////////////
 
     JSON_PRIVATE_UNLESS_TESTED :
-      /*!
+    /*!
     @brief a JSON value
 
     The actual storage for a JSON value of the @ref basic_json class. This
@@ -22589,7 +22584,7 @@ class basic_json  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spe
 
     @since version 1.0.0
     */
-      union json_value
+    union json_value
     {
         /// object (stored with pointer to save storage)
         object_t* object;
@@ -23203,7 +23198,7 @@ class basic_json  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spe
     /// @brief construct an array with count copies of given value
     /// @sa https://json.nlohmann.me/api/basic_json/basic_json/
     basic_json(size_type cnt, const basic_json& val)
-      : m_data{cnt, val}
+      : m_data{ cnt, val }
     {
         set_parents();
         assert_invariant();
@@ -25391,7 +25386,7 @@ class basic_json  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spe
         it.m_it.object_iterator = res.first;
 
         // return pair of iterator and boolean
-        return {it, res.second};
+        return { it, res.second };
     }
 
     /// Helper for insertion of an iterator
@@ -25780,13 +25775,12 @@ class basic_json  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spe
     return (default_result);
 
     JSON_PRIVATE_UNLESS_TESTED :
-      // returns true if:
-      // - any operand is NaN and the other operand is of number type
-      // - any operand is discarded
-      // in legacy mode, discarded values are considered ordered if
-      // an operation is computed as an odd number of inverses of others
-      static bool
-      compares_unordered(const_reference lhs, const_reference rhs, bool inverse = false) noexcept
+    // returns true if:
+    // - any operand is NaN and the other operand is of number type
+    // - any operand is discarded
+    // in legacy mode, discarded values are considered ordered if
+    // an operation is computed as an odd number of inverses of others
+    static bool compares_unordered(const_reference lhs, const_reference rhs, bool inverse = false) noexcept
     {
         if ((lhs.is_number_float() && std::isnan(lhs.m_data.m_value.number_float) && rhs.is_number()) ||
             (rhs.is_number_float() && std::isnan(rhs.m_data.m_value.number_float) && lhs.is_number()))
@@ -26287,11 +26281,11 @@ class basic_json  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spe
     }
 
     JSON_PRIVATE_UNLESS_TESTED :
-      //////////////////////
-      // member variables //
-      //////////////////////
+    //////////////////////
+    // member variables //
+    //////////////////////
 
-      struct data
+    struct data
     {
         /// the type of the current element
         value_t m_type = value_t::null;
@@ -27053,7 +27047,7 @@ class basic_json  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spe
         if (source.type() != target.type())
         {
             // different types: replace value
-            result.push_back({{"op", "replace"}, {"path", path}, {"value", target}});
+            result.push_back({ { "op", "replace" }, { "path", path }, { "value", target } });
             return result;
         }
 
@@ -27080,14 +27074,14 @@ class basic_json  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spe
                 {
                     // add operations in reverse order to avoid invalid
                     // indices
-                    result.insert(result.begin() + end_index, object({{"op", "remove"}, {"path", detail::concat(path, '/', std::to_string(i))}}));
+                    result.insert(result.begin() + end_index, object({ { "op", "remove" }, { "path", detail::concat(path, '/', std::to_string(i)) } }));
                     ++i;
                 }
 
                 // add other remaining elements
                 while (i < target.size())
                 {
-                    result.push_back({{"op", "add"}, {"path", detail::concat(path, "/-")}, {"value", target[i]}});
+                    result.push_back({ { "op", "add" }, { "path", detail::concat(path, "/-") }, { "value", target[i] } });
                     ++i;
                 }
 
@@ -27111,7 +27105,7 @@ class basic_json  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spe
                     else
                     {
                         // found a key that is not in o -> remove it
-                        result.push_back(object({{"op", "remove"}, {"path", path_key}}));
+                        result.push_back(object({ { "op", "remove" }, { "path", path_key } }));
                     }
                 }
 
@@ -27122,7 +27116,7 @@ class basic_json  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spe
                     {
                         // found a key that is not in this -> add it
                         const auto path_key = detail::concat(path, '/', detail::escape(it.key()));
-                        result.push_back({{"op", "add"}, {"path", path_key}, {"value", it.value()}});
+                        result.push_back({ { "op", "add" }, { "path", path_key }, { "value", it.value() } });
                     }
                 }
 
@@ -27140,7 +27134,7 @@ class basic_json  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spe
             default:
             {
                 // both primitive type: replace value
-                result.push_back({{"op", "replace"}, {"path", path}, {"value", target}});
+                result.push_back({ { "op", "replace" }, { "path", path }, { "value", target } });
                 break;
             }
         }

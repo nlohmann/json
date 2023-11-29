@@ -43,19 +43,19 @@ TEST_CASE("hash<nlohmann::json>")
 
     // array
     hashes.insert(std::hash<json>{}(json::array()));
-    hashes.insert(std::hash<json>{}(json::array({1, 2, 3})));
+    hashes.insert(std::hash<json>{}(json::array({ 1, 2, 3 })));
 
     // object
     hashes.insert(std::hash<json>{}(json::object()));
-    hashes.insert(std::hash<json>{}(json::object({{"foo", "bar"}})));
+    hashes.insert(std::hash<json>{}(json::object({ { "foo", "bar" } })));
 
     // binary
     hashes.insert(std::hash<json>{}(json::binary({})));
     hashes.insert(std::hash<json>{}(json::binary({}, 0)));
     hashes.insert(std::hash<json>{}(json::binary({}, 42)));
-    hashes.insert(std::hash<json>{}(json::binary({1, 2, 3})));
-    hashes.insert(std::hash<json>{}(json::binary({1, 2, 3}, 0)));
-    hashes.insert(std::hash<json>{}(json::binary({1, 2, 3}, 42)));
+    hashes.insert(std::hash<json>{}(json::binary({ 1, 2, 3 })));
+    hashes.insert(std::hash<json>{}(json::binary({ 1, 2, 3 }, 0)));
+    hashes.insert(std::hash<json>{}(json::binary({ 1, 2, 3 }, 42)));
 
     // discarded
     hashes.insert(std::hash<json>{}(json(json::value_t::discarded)));
@@ -92,19 +92,19 @@ TEST_CASE("hash<nlohmann::ordered_json>")
 
     // array
     hashes.insert(std::hash<ordered_json>{}(ordered_json::array()));
-    hashes.insert(std::hash<ordered_json>{}(ordered_json::array({1, 2, 3})));
+    hashes.insert(std::hash<ordered_json>{}(ordered_json::array({ 1, 2, 3 })));
 
     // object
     hashes.insert(std::hash<ordered_json>{}(ordered_json::object()));
-    hashes.insert(std::hash<ordered_json>{}(ordered_json::object({{"foo", "bar"}})));
+    hashes.insert(std::hash<ordered_json>{}(ordered_json::object({ { "foo", "bar" } })));
 
     // binary
     hashes.insert(std::hash<ordered_json>{}(ordered_json::binary({})));
     hashes.insert(std::hash<ordered_json>{}(ordered_json::binary({}, 0)));
     hashes.insert(std::hash<ordered_json>{}(ordered_json::binary({}, 42)));
-    hashes.insert(std::hash<ordered_json>{}(ordered_json::binary({1, 2, 3})));
-    hashes.insert(std::hash<ordered_json>{}(ordered_json::binary({1, 2, 3}, 0)));
-    hashes.insert(std::hash<ordered_json>{}(ordered_json::binary({1, 2, 3}, 42)));
+    hashes.insert(std::hash<ordered_json>{}(ordered_json::binary({ 1, 2, 3 })));
+    hashes.insert(std::hash<ordered_json>{}(ordered_json::binary({ 1, 2, 3 }, 0)));
+    hashes.insert(std::hash<ordered_json>{}(ordered_json::binary({ 1, 2, 3 }, 42)));
 
     // discarded
     hashes.insert(std::hash<ordered_json>{}(ordered_json(ordered_json::value_t::discarded)));

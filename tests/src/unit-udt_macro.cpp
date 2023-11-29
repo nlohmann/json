@@ -245,8 +245,8 @@ class person_without_default_constructor_1
     }
 
     person_without_default_constructor_1(std::string name_, int age_)
-      : name{std::move(name_)}
-      , age{age_}
+      : name{ std::move(name_) }
+      , age{ age_ }
     {}
 
     NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE(person_without_default_constructor_1, name, age)
@@ -264,8 +264,8 @@ class person_without_default_constructor_2
     }
 
     person_without_default_constructor_2(std::string name_, int age_)
-      : name{std::move(name_)}
-      , age{age_}
+      : name{ std::move(name_) }
+      , age{ age_ }
     {}
 };
 
@@ -282,7 +282,7 @@ TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRU
     SECTION("person")
     {
         // serialization
-        T p1("Erik", 1, {{"haircuts", 2}});
+        T p1("Erik", 1, { { "haircuts", 2 } });
         CHECK(json(p1).dump() == "{\"age\":1,\"metadata\":{\"haircuts\":2},\"name\":\"Erik\"}");
 
         // deserialization
@@ -312,7 +312,7 @@ TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRU
         CHECK(json(p0).dump() == "{\"age\":0,\"metadata\":null,\"name\":\"\"}");
 
         // serialization
-        T p1("Erik", 1, {{"haircuts", 2}});
+        T p1("Erik", 1, { { "haircuts", 2 } });
         CHECK(json(p1).dump() == "{\"age\":1,\"metadata\":{\"haircuts\":2},\"name\":\"Erik\"}");
 
         // deserialization
@@ -419,11 +419,11 @@ TEST_CASE_TEMPLATE(
     {
         {
             // serialization of a single object
-            T person{"Erik", 1};
+            T person{ "Erik", 1 };
             CHECK(json(person).dump() == "{\"age\":1,\"name\":\"Erik\"}");
 
             // serialization of a container with objects
-            std::vector<T> const two_persons{{"Erik", 1}, {"Kyle", 2}};
+            std::vector<T> const two_persons{ { "Erik", 1 }, { "Kyle", 2 } };
             CHECK(json(two_persons).dump() == "[{\"age\":1,\"name\":\"Erik\"},{\"age\":2,\"name\":\"Kyle\"}]");
         }
     }

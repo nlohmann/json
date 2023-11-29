@@ -130,7 +130,7 @@ static void to_json(BasicJsonType& j, country c)
 template<typename BasicJsonType>
 static void to_json(BasicJsonType& j, const person& p)
 {
-    j = BasicJsonType{{"age", p.m_age}, {"name", p.m_name}, {"country", p.m_country}};
+    j = BasicJsonType{ { "age", p.m_age }, { "name", p.m_name }, { "country", p.m_country } };
 }
 
 static void to_json(nlohmann::json& j, const address& a)
@@ -140,12 +140,12 @@ static void to_json(nlohmann::json& j, const address& a)
 
 static void to_json(nlohmann::json& j, const contact& c)
 {
-    j = json{{"person", c.m_person}, {"address", c.m_address}};
+    j = json{ { "person", c.m_person }, { "address", c.m_address } };
 }
 
 static void to_json(nlohmann::json& j, const contact_book& cb)
 {
-    j = json{{"name", cb.m_book_name}, {"contacts", cb.m_contacts}};
+    j = json{ { "name", cb.m_book_name }, { "contacts", cb.m_contacts } };
 }
 
 // operators
@@ -199,7 +199,9 @@ template<typename BasicJsonType>
 static void from_json(const BasicJsonType& j, country& c)
 {
     const auto str = j.template get<std::string>();
-    const std::map<std::string, country> m = {{"中华人民共和国", country::china}, {"France", country::france}, {"Российская Федерация", country::russia}};
+    const std::map<std::string, country> m = { { "中华人民共和国", country::china },
+                                               { "France", country::france },
+                                               { "Российская Федерация", country::russia } };
 
     const auto it = m.find(str);
     // TODO(nlohmann) test exceptions
@@ -235,14 +237,14 @@ static void from_json(const nlohmann::json& j, contact_book& cb)
 TEST_CASE("basic usage" * doctest::test_suite("udt"))
 {
     // a bit narcissistic maybe :) ?
-    const udt::age a{23};
-    const udt::name n{"theo"};
-    const udt::country c{udt::country::france};
-    const udt::person sfinae_addict{a, n, c};
-    const udt::person senior_programmer{{42}, {"王芳"}, udt::country::china};
-    const udt::address addr{"Paris"};
-    const udt::contact cpp_programmer{sfinae_addict, addr};
-    const udt::contact_book book{{"C++"}, {cpp_programmer, {senior_programmer, addr}}};
+    const udt::age a{ 23 };
+    const udt::name n{ "theo" };
+    const udt::country c{ udt::country::france };
+    const udt::person sfinae_addict{ a, n, c };
+    const udt::person senior_programmer{ { 42 }, { "王芳" }, udt::country::china };
+    const udt::address addr{ "Paris" };
+    const udt::contact cpp_programmer{ sfinae_addict, addr };
+    const udt::contact_book book{ { "C++" }, { cpp_programmer, { senior_programmer, addr } } };
 
     SECTION("conversion to json via free-functions")
     {
@@ -282,7 +284,7 @@ TEST_CASE("basic usage" * doctest::test_suite("udt"))
             CHECK(person == sfinae_addict);
             CHECK(contact == cpp_programmer);
             CHECK(contacts == book.m_contacts);
-            CHECK(book_name == udt::name{"C++"});
+            CHECK(book_name == udt::name{ "C++" });
             CHECK(book == parsed_book);
         }
 
@@ -320,7 +322,7 @@ TEST_CASE("basic usage" * doctest::test_suite("udt"))
             CHECK(person == sfinae_addict);
             CHECK(contact == cpp_programmer);
             CHECK(contacts == book.m_contacts);
-            CHECK(book_name == udt::name{"C++"});
+            CHECK(book_name == udt::name{ "C++" });
             CHECK(book == parsed_book);
         }
 #endif
@@ -395,7 +397,7 @@ TEST_CASE("adl_serializer specialization" * doctest::test_suite("udt"))
             json j = optPerson;
             CHECK(j.is_null());
 
-            optPerson.reset(new udt::person{{42}, {"John Doe"}, udt::country::russia});  // NOLINT(cppcoreguidelines-owning-memory,modernize-make-shared)
+            optPerson.reset(new udt::person{ { 42 }, { "John Doe" }, udt::country::russia });  // NOLINT(cppcoreguidelines-owning-memory,modernize-make-shared)
             j = optPerson;
             CHECK_FALSE(j.is_null());
 
@@ -404,7 +406,7 @@ TEST_CASE("adl_serializer specialization" * doctest::test_suite("udt"))
 
         SECTION("from_json")
         {
-            auto person = udt::person{{42}, {"John Doe"}, udt::country::russia};
+            auto person = udt::person{ { 42 }, { "John Doe" }, udt::country::russia };
             json j = person;
 
             auto optPerson = j.get<std::shared_ptr<udt::person>>();
@@ -421,7 +423,7 @@ TEST_CASE("adl_serializer specialization" * doctest::test_suite("udt"))
     {
         SECTION("to_json")
         {
-            udt::legacy_type const lt{"4242"};
+            udt::legacy_type const lt{ "4242" };
 
             json const j = lt;
             CHECK(j.get<int>() == 4242);
@@ -449,24 +451,24 @@ struct adl_serializer<std::vector<float>>
 
     static void from_json(const json& /*unnamed*/, type& opt)
     {
-        opt = {42.0, 42.0, 42.0};
+        opt = { 42.0, 42.0, 42.0 };
     }
 
     // preferred version
     static type from_json(const json& /*unnamed*/)
     {
-        return {4.0, 5.0, 6.0};
+        return { 4.0, 5.0, 6.0 };
     }
 };
 }  // namespace nlohmann
 
 TEST_CASE("even supported types can be specialized" * doctest::test_suite("udt"))
 {
-    json const j = std::vector<float>{1.0, 2.0, 3.0};
+    json const j = std::vector<float>{ 1.0, 2.0, 3.0 };
     CHECK(j.dump() == R"("hijacked!")");
     auto f = j.get<std::vector<float>>();
     // the single argument from_json method is preferred
-    CHECK((f == std::vector<float>{4.0, 5.0, 6.0}));
+    CHECK((f == std::vector<float>{ 4.0, 5.0, 6.0 }));
 }
 
 namespace nlohmann
@@ -508,7 +510,7 @@ TEST_CASE("Non-copyable types" * doctest::test_suite("udt"))
         json j = optPerson;
         CHECK(j.is_null());
 
-        optPerson.reset(new udt::person{{42}, {"John Doe"}, udt::country::russia});  // NOLINT(cppcoreguidelines-owning-memory,modernize-make-unique)
+        optPerson.reset(new udt::person{ { 42 }, { "John Doe" }, udt::country::russia });  // NOLINT(cppcoreguidelines-owning-memory,modernize-make-unique)
         j = optPerson;
         CHECK_FALSE(j.is_null());
 
@@ -517,7 +519,7 @@ TEST_CASE("Non-copyable types" * doctest::test_suite("udt"))
 
     SECTION("from_json")
     {
-        auto person = udt::person{{42}, {"John Doe"}, udt::country::russia};
+        auto person = udt::person{ { 42 }, { "John Doe" }, udt::country::russia };
         json j = person;
 
         auto optPerson = j.get<std::unique_ptr<udt::person>>();
@@ -635,14 +637,14 @@ TEST_CASE("custom serializer for pods" * doctest::test_suite("udt"))
 {
     using custom_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, double, std::allocator, pod_serializer>;
 
-    auto p = udt::small_pod{42, '/', 42};
+    auto p = udt::small_pod{ 42, '/', 42 };
     custom_json const j = p;
 
     auto p2 = j.get<udt::small_pod>();
 
     CHECK(p == p2);
 
-    auto np = udt::non_pod{{"non-pod"}};
+    auto np = udt::non_pod{ { "non-pod" } };
     custom_json const j2 = np;
     auto np2 = j2.get<udt::non_pod>();
     CHECK(np == np2);
@@ -671,7 +673,7 @@ struct another_adl_serializer
 
 TEST_CASE("custom serializer that does adl by default" * doctest::test_suite("udt"))
 {
-    auto me = udt::person{{23}, {"theo"}, udt::country::france};
+    auto me = udt::person{ { 23 }, { "theo" }, udt::country::france };
 
     json const j = me;
     custom_json const cj = me;
@@ -708,9 +710,9 @@ TEST_CASE("different basic_json types conversions")
 
     SECTION("array")
     {
-        json const j = {1, 2, 3};
+        json const j = { 1, 2, 3 };
         custom_json const cj = j;
-        CHECK((cj == std::vector<int>{1, 2, 3}));
+        CHECK((cj == std::vector<int>{ 1, 2, 3 }));
     }
 
     SECTION("integer")
@@ -743,7 +745,7 @@ TEST_CASE("different basic_json types conversions")
 
     SECTION("binary")
     {
-        json j = json::binary({1, 2, 3}, 42);
+        json j = json::binary({ 1, 2, 3 }, 42);
         custom_json cj = j;
         CHECK(cj.get_binary().subtype() == 42);
         std::vector<std::uint8_t> cv = cj.get_binary();
@@ -753,7 +755,7 @@ TEST_CASE("different basic_json types conversions")
 
     SECTION("object")
     {
-        json const j = {{"forty", "two"}};
+        json const j = { { "forty", "two" } };
         custom_json cj = j;
         auto m = j.get<std::map<std::string, std::string>>();
         CHECK(cj == m);
@@ -853,7 +855,7 @@ class no_iterator_type
 
 TEST_CASE("compatible array type, without iterator type alias")
 {
-    no_iterator_type const vec{1, 2, 3};
+    no_iterator_type const vec{ 1, 2, 3 };
     json const j = vec;
 }
 

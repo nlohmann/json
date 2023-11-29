@@ -40,7 +40,7 @@ TEST_CASE("JSON pointers")
 
         SECTION("array index error")
         {
-            json v = {1, 2, 3, 4};
+            json v = { 1, 2, 3, 4 };
             json::json_pointer const ptr("/10e");
             CHECK_THROWS_WITH_AS(v[ptr], "[json.exception.out_of_range.404] unresolved reference token '10e'", json::out_of_range&);
         }
@@ -131,15 +131,15 @@ TEST_CASE("JSON pointers")
 
             CHECK(!j.contains(json::json_pointer("/a/c/1")));
             CHECK_NOTHROW(j[json::json_pointer("/a/c/1")] = 42);
-            CHECK(j["a"]["c"] == json({nullptr, 42}));
+            CHECK(j["a"]["c"] == json({ nullptr, 42 }));
             CHECK(j.contains(json::json_pointer("/a/c/1")));
 
             CHECK(!j.contains(json::json_pointer("/a/d/-")));
             CHECK_NOTHROW(j[json::json_pointer("/a/d/-")] = 42);
             CHECK(!j.contains(json::json_pointer("/a/d/-")));
-            CHECK(j["a"]["d"] == json::array({42}));
+            CHECK(j["a"]["d"] == json::array({ 42 }));
             // "/a/b" works for JSON {"a": {"b": 42}}
-            CHECK(json({{"a", {{"b", 42}}}})[json::json_pointer("/a/b")] == json(42));
+            CHECK(json({ { "a", { { "b", 42 } } } })[json::json_pointer("/a/b")] == json(42));
 
             // unresolved access
             json j_primitive = 1;
@@ -251,7 +251,7 @@ TEST_CASE("JSON pointers")
     {
         SECTION("nonconst access")
         {
-            json j = {1, 2, 3};
+            json j = { 1, 2, 3 };
             const json j_const = j;
 
             // check reading access
@@ -269,7 +269,7 @@ TEST_CASE("JSON pointers")
 
             // assign to nonexisting index (with gap)
             j["/5"_json_pointer] = 55;
-            CHECK(j == json({1, 13, 3, 33, nullptr, 55}));
+            CHECK(j == json({ 1, 13, 3, 33, nullptr, 55 }));
 
             // error with leading 0
             CHECK_THROWS_WITH_AS(j["/01"_json_pointer],
@@ -353,13 +353,13 @@ TEST_CASE("JSON pointers")
             CHECK(!j_const.contains("/one"_json_pointer));
             CHECK(!j_const.contains("/one"_json_pointer));
 
-            CHECK_THROWS_WITH_AS(json({{"/list/0", 1}, {"/list/1", 2}, {"/list/three", 3}}).unflatten(),
+            CHECK_THROWS_WITH_AS(json({ { "/list/0", 1 }, { "/list/1", 2 }, { "/list/three", 3 } }).unflatten(),
                                  "[json.exception.parse_error.109] parse error: array index 'three' is not a number",
                                  json::parse_error&);
 
             // assign to "-"
             j["/-"_json_pointer] = 99;
-            CHECK(j == json({1, 13, 3, 33, nullptr, 55, 99}));
+            CHECK(j == json({ 1, 13, 3, 33, nullptr, 55, 99 }));
 
             // error when using "-" in const object
             CHECK_THROWS_WITH_AS(j_const["/-"_json_pointer], "[json.exception.out_of_range.402] array index '-' (3) is out of range", json::out_of_range&);
@@ -373,7 +373,7 @@ TEST_CASE("JSON pointers")
 
         SECTION("const access")
         {
-            const json j = {1, 2, 3};
+            const json j = { 1, 2, 3 };
 
             // check reading access
             CHECK(j["/0"_json_pointer] == j[0]);
@@ -397,28 +397,29 @@ TEST_CASE("JSON pointers")
 
     SECTION("flatten")
     {
-        json j = {{"pi", 3.141},
-                  {"happy", true},
-                  {"name", "Niels"},
-                  {"nothing", nullptr},
-                  {"answer", {{"everything", 42}}},
-                  {"list", {1, 0, 2}},
-                  {"object", {{"currency", "USD"}, {"value", 42.99}, {"", "empty string"}, {"/", "slash"}, {"~", "tilde"}, {"~1", "tilde1"}}}};
+        json j = { { "pi", 3.141 },
+                   { "happy", true },
+                   { "name", "Niels" },
+                   { "nothing", nullptr },
+                   { "answer", { { "everything", 42 } } },
+                   { "list", { 1, 0, 2 } },
+                   { "object",
+                     { { "currency", "USD" }, { "value", 42.99 }, { "", "empty string" }, { "/", "slash" }, { "~", "tilde" }, { "~1", "tilde1" } } } };
 
-        json j_flatten = {{"/pi", 3.141},
-                          {"/happy", true},
-                          {"/name", "Niels"},
-                          {"/nothing", nullptr},
-                          {"/answer/everything", 42},
-                          {"/list/0", 1},
-                          {"/list/1", 0},
-                          {"/list/2", 2},
-                          {"/object/currency", "USD"},
-                          {"/object/value", 42.99},
-                          {"/object/", "empty string"},
-                          {"/object/~1", "slash"},
-                          {"/object/~0", "tilde"},
-                          {"/object/~01", "tilde1"}};
+        json j_flatten = { { "/pi", 3.141 },
+                           { "/happy", true },
+                           { "/name", "Niels" },
+                           { "/nothing", nullptr },
+                           { "/answer/everything", 42 },
+                           { "/list/0", 1 },
+                           { "/list/1", 0 },
+                           { "/list/2", 2 },
+                           { "/object/currency", "USD" },
+                           { "/object/value", 42.99 },
+                           { "/object/", "empty string" },
+                           { "/object/~1", "slash" },
+                           { "/object/~0", "tilde" },
+                           { "/object/~01", "tilde1" } };
 
         // check if flattened result is as expected
         CHECK(j.flatten() == j_flatten);
@@ -431,15 +432,17 @@ TEST_CASE("JSON pointers")
 
         // error for nonprimitve values
 #if JSON_DIAGNOSTICS
-        CHECK_THROWS_WITH_AS(json({{"/1", {1, 2, 3}}}).unflatten(),
+        CHECK_THROWS_WITH_AS(json({ { "/1", { 1, 2, 3 } } }).unflatten(),
                              "[json.exception.type_error.315] (/~11) values in object must be primitive",
                              json::type_error&);
 #else
-        CHECK_THROWS_WITH_AS(json({{"/1", {1, 2, 3}}}).unflatten(), "[json.exception.type_error.315] values in object must be primitive", json::type_error&);
+        CHECK_THROWS_WITH_AS(json({ { "/1", { 1, 2, 3 } } }).unflatten(),
+                             "[json.exception.type_error.315] values in object must be primitive",
+                             json::type_error&);
 #endif
 
         // error for conflicting values
-        json const j_error = {{"", 42}, {"/foo", 17}};
+        json const j_error = { { "", 42 }, { "/foo", 17 } };
         CHECK_THROWS_WITH_AS(j_error.unflatten(), "[json.exception.type_error.313] invalid value to unflatten", json::type_error&);
 
         // explicit roundtrip check
@@ -464,7 +467,7 @@ TEST_CASE("JSON pointers")
 
     SECTION("string representation")
     {
-        for (const auto* ptr_str : {"", "/foo", "/foo/0", "/", "/a~1b", "/c%d", "/e^f", "/g|h", "/i\\j", "/k\"l", "/ ", "/m~0n"})
+        for (const auto* ptr_str : { "", "/foo", "/foo/0", "/", "/a~1b", "/c%d", "/e^f", "/g|h", "/i\\j", "/k\"l", "/ ", "/m~0n" })
         {
             json::json_pointer const ptr(ptr_str);
             std::stringstream ss;
@@ -496,14 +499,15 @@ TEST_CASE("JSON pointers")
 
     SECTION("empty, push, pop and parent")
     {
-        const json j = {{"", "Hello"},
-                        {"pi", 3.141},
-                        {"happy", true},
-                        {"name", "Niels"},
-                        {"nothing", nullptr},
-                        {"answer", {{"everything", 42}}},
-                        {"list", {1, 0, 2}},
-                        {"object", {{"currency", "USD"}, {"value", 42.99}, {"", "empty string"}, {"/", "slash"}, {"~", "tilde"}, {"~1", "tilde1"}}}};
+        const json j = { { "", "Hello" },
+                         { "pi", 3.141 },
+                         { "happy", true },
+                         { "name", "Niels" },
+                         { "nothing", nullptr },
+                         { "answer", { { "everything", 42 } } },
+                         { "list", { 1, 0, 2 } },
+                         { "object",
+                           { { "currency", "USD" }, { "value", 42.99 }, { "", "empty string" }, { "/", "slash" }, { "~", "tilde" }, { "~1", "tilde1" } } } };
 
         // empty json_pointer returns the root JSON-object
         auto ptr = ""_json_pointer;
@@ -555,14 +559,15 @@ TEST_CASE("JSON pointers")
 
     SECTION("operators")
     {
-        const json j = {{"", "Hello"},
-                        {"pi", 3.141},
-                        {"happy", true},
-                        {"name", "Niels"},
-                        {"nothing", nullptr},
-                        {"answer", {{"everything", 42}}},
-                        {"list", {1, 0, 2}},
-                        {"object", {{"currency", "USD"}, {"value", 42.99}, {"", "empty string"}, {"/", "slash"}, {"~", "tilde"}, {"~1", "tilde1"}}}};
+        const json j = { { "", "Hello" },
+                         { "pi", 3.141 },
+                         { "happy", true },
+                         { "name", "Niels" },
+                         { "nothing", nullptr },
+                         { "answer", { { "everything", 42 } } },
+                         { "list", { 1, 0, 2 } },
+                         { "object",
+                           { { "currency", "USD" }, { "value", 42.99 }, { "", "empty string" }, { "/", "slash" }, { "~", "tilde" }, { "~1", "tilde1" } } } };
 
         // empty json_pointer returns the root JSON-object
         auto ptr = ""_json_pointer;
@@ -602,7 +607,7 @@ TEST_CASE("JSON pointers")
     {
         const char* ptr_cpstring = "/foo/bar";
         const char ptr_castring[] = "/foo/bar";  // NOLINT(hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
-        std::string ptr_string{"/foo/bar"};
+        std::string ptr_string{ "/foo/bar" };
         auto ptr1 = json::json_pointer(ptr_string);
         auto ptr2 = json::json_pointer(ptr_string);
 
@@ -694,10 +699,10 @@ TEST_CASE("JSON pointers")
         CHECK(std::is_same<json_ptr_str::string_t, json_ptr_j::string_t>::value);
         CHECK(std::is_same<json_ptr_str::string_t, json_ptr_oj::string_t>::value);
 
-        std::string const ptr_string{"/foo/0"};
-        json_ptr_str ptr{ptr_string};
-        json_ptr_j ptr_j{ptr_string};
-        json_ptr_oj ptr_oj{ptr_string};
+        std::string const ptr_string{ "/foo/0" };
+        json_ptr_str ptr{ ptr_string };
+        json_ptr_j ptr_j{ ptr_string };
+        json_ptr_oj ptr_oj{ ptr_string };
 
         CHECK(j.contains(ptr));
         CHECK(j.contains(ptr_j));

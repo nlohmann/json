@@ -83,7 +83,7 @@ inline std::partial_ordering operator<=>(const value_t lhs, const value_t rhs) n
 inline bool operator<(const value_t lhs, const value_t rhs) noexcept
 #endif
 {
-    static constexpr std::array<std::uint8_t, 9> order = {{
+    static constexpr std::array<std::uint8_t, 9> order = { {
         0 /* null */,
         3 /* object */,
         4 /* array */,
@@ -93,7 +93,7 @@ inline bool operator<(const value_t lhs, const value_t rhs) noexcept
         2 /* unsigned */,
         2 /* float */,
         6 /* binary */
-    }};
+    } };
 
     const auto l_index = static_cast<std::size_t>(lhs);
     const auto r_index = static_cast<std::size_t>(rhs);

@@ -16,7 +16,7 @@ TEST_CASE("pointer access")
     SECTION("pointer access to object_t")
     {
         using test_type = json::object_t;
-        json value = {{"one", 1}, {"two", 2}};
+        json value = { { "one", 1 }, { "two", 2 } };
 
         // check if pointers are returned correctly
         test_type* p1 = value.get_ptr<test_type*>();
@@ -45,7 +45,7 @@ TEST_CASE("pointer access")
     SECTION("pointer access to const object_t")
     {
         using test_type = const json::object_t;
-        const json value = {{"one", 1}, {"two", 2}};
+        const json value = { { "one", 1 }, { "two", 2 } };
 
         // check if pointers are returned correctly
         test_type* p1 = value.get_ptr<test_type*>();
@@ -74,7 +74,7 @@ TEST_CASE("pointer access")
     SECTION("pointer access to array_t")
     {
         using test_type = json::array_t;
-        json value = {1, 2, 3, 4};
+        json value = { 1, 2, 3, 4 };
 
         // check if pointers are returned correctly
         test_type* p1 = value.get_ptr<test_type*>();
@@ -103,7 +103,7 @@ TEST_CASE("pointer access")
     SECTION("pointer access to const array_t")
     {
         using test_type = const json::array_t;
-        const json value = {1, 2, 3, 4};
+        const json value = { 1, 2, 3, 4 };
 
         // check if pointers are returned correctly
         test_type* p1 = value.get_ptr<test_type*>();
@@ -422,7 +422,7 @@ TEST_CASE("pointer access")
     SECTION("pointer access to const binary_t")
     {
         using test_type = const json::binary_t;
-        const json value = json::binary({1, 2, 3});
+        const json value = json::binary({ 1, 2, 3 });
 
         // check if pointers are returned correctly
         test_type* p1 = value.get_ptr<test_type*>();

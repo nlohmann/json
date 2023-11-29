@@ -154,7 +154,7 @@ class alt_string
     alt_string substr(std::size_t pos = 0, std::size_t count = npos) const
     {
         const std::string s = str_impl.substr(pos, count);
-        return {s.data(), s.size()};
+        return { s.data(), s.size() };
     }
 
     alt_string& replace(std::size_t pos, std::size_t count, const alt_string& str)
@@ -222,14 +222,14 @@ TEST_CASE("alternative string type")
 
         {
             alt_json doc;
-            doc["list"] = {1, 0, 2};
+            doc["list"] = { 1, 0, 2 };
             alt_string dump = doc.dump();
             CHECK(dump == R"({"list":[1,0,2]})");
         }
 
         {
             alt_json doc;
-            doc["object"] = {{"currency", "USD"}, {"value", 42.99}};
+            doc["object"] = { { "currency", "USD" }, { "value", 42.99 } };
             alt_string dump = doc.dump();
             CHECK(dump == R"({"object":{"currency":"USD","value":42.99}})");
         }

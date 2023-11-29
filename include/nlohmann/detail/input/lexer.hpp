@@ -173,7 +173,7 @@ class lexer : public lexer_base<BasicJsonType>
         JSON_ASSERT(current == 'u');
         int codepoint = 0;
 
-        const auto factors = {12u, 8u, 4u, 0u};
+        const auto factors = { 12u, 8u, 4u, 0u };
         for (const auto factor : factors)
         {
             get();
@@ -745,7 +745,7 @@ class lexer : public lexer_base<BasicJsonType>
                 case 0xDE:
                 case 0xDF:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!next_byte_in_range({0x80, 0xBF})))
+                    if (JSON_HEDLEY_UNLIKELY(!next_byte_in_range({ 0x80, 0xBF })))
                     {
                         return token_type::parse_error;
                     }
@@ -755,7 +755,7 @@ class lexer : public lexer_base<BasicJsonType>
                 // U+0800..U+0FFF: bytes E0 A0..BF 80..BF
                 case 0xE0:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({0xA0, 0xBF, 0x80, 0xBF}))))
+                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({ 0xA0, 0xBF, 0x80, 0xBF }))))
                     {
                         return token_type::parse_error;
                     }
@@ -779,7 +779,7 @@ class lexer : public lexer_base<BasicJsonType>
                 case 0xEE:
                 case 0xEF:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({0x80, 0xBF, 0x80, 0xBF}))))
+                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({ 0x80, 0xBF, 0x80, 0xBF }))))
                     {
                         return token_type::parse_error;
                     }
@@ -789,7 +789,7 @@ class lexer : public lexer_base<BasicJsonType>
                 // U+D000..U+D7FF: bytes ED 80..9F 80..BF
                 case 0xED:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({0x80, 0x9F, 0x80, 0xBF}))))
+                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({ 0x80, 0x9F, 0x80, 0xBF }))))
                     {
                         return token_type::parse_error;
                     }
@@ -799,7 +799,7 @@ class lexer : public lexer_base<BasicJsonType>
                 // U+10000..U+3FFFF F0 90..BF 80..BF 80..BF
                 case 0xF0:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({0x90, 0xBF, 0x80, 0xBF, 0x80, 0xBF}))))
+                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({ 0x90, 0xBF, 0x80, 0xBF, 0x80, 0xBF }))))
                     {
                         return token_type::parse_error;
                     }
@@ -811,7 +811,7 @@ class lexer : public lexer_base<BasicJsonType>
                 case 0xF2:
                 case 0xF3:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({0x80, 0xBF, 0x80, 0xBF, 0x80, 0xBF}))))
+                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({ 0x80, 0xBF, 0x80, 0xBF, 0x80, 0xBF }))))
                     {
                         return token_type::parse_error;
                     }
@@ -821,7 +821,7 @@ class lexer : public lexer_base<BasicJsonType>
                 // U+100000..U+10FFFF F4 80..8F 80..BF 80..BF
                 case 0xF4:
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({0x80, 0x8F, 0x80, 0xBF, 0x80, 0xBF}))))
+                    if (JSON_HEDLEY_UNLIKELY(!(next_byte_in_range({ 0x80, 0x8F, 0x80, 0xBF, 0x80, 0xBF }))))
                     {
                         return token_type::parse_error;
                     }
@@ -1453,9 +1453,9 @@ scan_number_done:
             if (static_cast<unsigned char>(c) <= '\x1F')
             {
                 // escape control characters
-                std::array<char, 9> cs{{}};
-                static_cast<void>((
-                    std::snprintf)(cs.data(), cs.size(), "<U+%.4X>", static_cast<unsigned char>(c)));  // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+                std::array<char, 9> cs{ {} };
+                static_cast<void>((  // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+                    std::snprintf)(cs.data(), cs.size(), "<U+%.4X>", static_cast<unsigned char>(c)));
                 result += cs.data();
             }
             else
@@ -1549,22 +1549,24 @@ scan_number_done:
             case 't':
             {
                 std::array<char_type, 4> true_literal = {
-                    {static_cast<char_type>('t'), static_cast<char_type>('r'), static_cast<char_type>('u'), static_cast<char_type>('e')}};
+                    { static_cast<char_type>('t'), static_cast<char_type>('r'), static_cast<char_type>('u'), static_cast<char_type>('e') }
+                };
                 return scan_literal(true_literal.data(), true_literal.size(), token_type::literal_true);
             }
             case 'f':
             {
-                std::array<char_type, 5> false_literal = {{static_cast<char_type>('f'),
-                                                           static_cast<char_type>('a'),
-                                                           static_cast<char_type>('l'),
-                                                           static_cast<char_type>('s'),
-                                                           static_cast<char_type>('e')}};
+                std::array<char_type, 5> false_literal = { { static_cast<char_type>('f'),
+                                                             static_cast<char_type>('a'),
+                                                             static_cast<char_type>('l'),
+                                                             static_cast<char_type>('s'),
+                                                             static_cast<char_type>('e') } };
                 return scan_literal(false_literal.data(), false_literal.size(), token_type::literal_false);
             }
             case 'n':
             {
                 std::array<char_type, 4> null_literal = {
-                    {static_cast<char_type>('n'), static_cast<char_type>('u'), static_cast<char_type>('l'), static_cast<char_type>('l')}};
+                    { static_cast<char_type>('n'), static_cast<char_type>('u'), static_cast<char_type>('l'), static_cast<char_type>('l') }
+                };
                 return scan_literal(null_literal.data(), null_literal.size(), token_type::literal_null);
             }
 

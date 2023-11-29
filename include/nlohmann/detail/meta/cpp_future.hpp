@@ -167,7 +167,7 @@ constexpr T static_const<T>::value;
 template<typename T, typename... Args>
 inline constexpr std::array<T, sizeof...(Args)> make_array(Args&&... args)
 {
-    return std::array<T, sizeof...(Args)>{{static_cast<T>(std::forward<Args>(args))...}};
+    return std::array<T, sizeof...(Args)>{ { static_cast<T>(std::forward<Args>(args))... } };
 }
 
 }  // namespace detail

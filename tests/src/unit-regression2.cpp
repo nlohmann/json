@@ -74,8 +74,8 @@ enum class for_1647
 // NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays): this is a false positive
 NLOHMANN_JSON_SERIALIZE_ENUM(for_1647,
                              {
-                                 {for_1647::one, "one"},
-                                 {for_1647::two, "two"},
+                                 { for_1647::one, "one" },
+                                 { for_1647::two, "two" },
                              })
 }  // namespace
 
@@ -418,15 +418,15 @@ TEST_CASE("regression tests 2")
         CHECK(float_json::from_msgpack(float_json::to_msgpack(j)) == j);
         CHECK(float_json::from_ubjson(float_json::to_ubjson(j)) == j);
 
-        float_json j2 = {1000.0, 2000.0, 3000.0};
+        float_json j2 = { 1000.0, 2000.0, 3000.0 };
         CHECK(float_json::from_ubjson(float_json::to_ubjson(j2, true, true)) == j2);
     }
 
     SECTION("issue #1045 - Using STL algorithms with JSON containers with expected results?")
     {
         json diffs = nlohmann::json::array();
-        json m1{{"key1", 42}};
-        json m2{{"key2", 42}};
+        json m1{ { "key1", 42 } };
+        json m2{ { "key2", 42 } };
         auto p1 = m1.items();
         auto p2 = m2.items();
 
@@ -451,15 +451,15 @@ TEST_CASE("regression tests 2")
             "with std::pair")
     {
         const json j = {
-            {"1", {{"a", "testa_1"}, {"b", "testb_1"}}},
-            {"2", {{"a", "testa_2"}, {"b", "testb_2"}}},
-            {"3", {{"a", "testa_3"}, {"b", "testb_3"}}},
+            { "1", { { "a", "testa_1" }, { "b", "testb_1" } } },
+            { "2", { { "a", "testa_2" }, { "b", "testb_2" } } },
+            { "3", { { "a", "testa_3" }, { "b", "testb_3" } } },
         };
 
         std::map<std::string, Data> expected{
-            {"1", {"testa_1", "testb_1"}},
-            {"2", {"testa_2", "testb_2"}},
-            {"3", {"testa_3", "testb_3"}},
+            { "1", { "testa_1", "testb_1" } },
+            { "2", { "testa_2", "testb_2" } },
+            { "3", { "testa_3", "testb_3" } },
         };
         const auto data = j.get<decltype(expected)>();
         CHECK(expected == data);
@@ -504,11 +504,12 @@ TEST_CASE("regression tests 2")
         SECTION("test case in issue #1445")
         {
             nlohmann::json dump_test;
-            const std::array<int, 108> data = {{109, 108,  103, 125,  -122, -53, 115, 18,  3,   0,  102, 19,  1,   15, -110, 13,  -3,  -1,  -81,  32, 2,  0,
-                                                0,   0,    0,   0,    0,    0,   8,   0,   0,   0,  0,   0,   0,   0,  0,    0,   0,   0,   -80,  2,  0,  0,
-                                                96,  -118, 46,  -116, 46,   109, -84, -87, 108, 14, 109, -24, -83, 13, -18,  -51, -83, -52, -115, 14, 6,  32,
-                                                0,   0,    0,   0,    0,    0,   0,   0,   0,   0,  0,   64,  3,   0,  0,    0,   35,  -74, -73,  55, 57, -128,
-                                                0,   0,    0,   0,    0,    0,   0,   0,   0,   0,  0,   0,   33,  0,  0,    0,   -96, -54, -28,  -26}};
+            const std::array<int, 108> data = {
+                { 109, 108, 103, 125, -122, -53, 115,  18,  3,    0,  102, 19, 1, 15,  -110, 13, -3, -1, -81,  32, 2,    0,  0,   0,   0,   0,   0,
+                  0,   8,   0,   0,   0,    0,   0,    0,   0,    0,  0,   0,  0, -80, 2,    0,  0,  96, -118, 46, -116, 46, 109, -84, -87, 108, 14,
+                  109, -24, -83, 13,  -18,  -51, -83,  -52, -115, 14, 6,   32, 0, 0,   0,    0,  0,  0,  0,    0,  0,    0,  0,   64,  3,   0,   0,
+                  0,   35,  -74, -73, 55,   57,  -128, 0,   0,    0,  0,   0,  0, 0,   0,    0,  0,  0,  0,    33, 0,    0,  0,   -96, -54, -28, -26 }
+            };
             std::string s;
             for (const int i : data)
             {
@@ -534,10 +535,10 @@ TEST_CASE("regression tests 2")
 
     SECTION("issue #1727 - Contains with non-const lvalue json_pointer picks the wrong overload")
     {
-        const json j = {{"root", {{"settings", {{"logging", true}}}}}};
+        const json j = { { "root", { { "settings", { { "logging", true } } } } } };
 
         auto jptr1 = "/root/settings/logging"_json_pointer;
-        auto jptr2 = json::json_pointer{"/root/settings/logging"};
+        auto jptr2 = json::json_pointer{ "/root/settings/logging" };
 
         CHECK(j.contains(jptr1));
         CHECK(j.contains(jptr2));
@@ -570,7 +571,7 @@ TEST_CASE("regression tests 2")
 
         SECTION("string array")
         {
-            const std::array<char, 2> input = {{'B', 0x00}};
+            const std::array<char, 2> input = { { 'B', 0x00 } };
             const json cbor = json::from_cbor(input, true, false);
             CHECK(cbor.is_discarded());
         }
@@ -605,8 +606,8 @@ TEST_CASE("regression tests 2")
 
     SECTION("issue #2067 - cannot serialize binary data to text JSON")
     {
-        const std::array<unsigned char, 23> data = {
-            {0x81, 0xA4, 0x64, 0x61, 0x74, 0x61, 0xC4, 0x0F, 0x33, 0x30, 0x30, 0x32, 0x33, 0x34, 0x30, 0x31, 0x30, 0x37, 0x30, 0x35, 0x30, 0x31, 0x30}};
+        const std::array<unsigned char, 23> data = { { 0x81, 0xA4, 0x64, 0x61, 0x74, 0x61, 0xC4, 0x0F, 0x33, 0x30, 0x30, 0x32,
+                                                       0x33, 0x34, 0x30, 0x31, 0x30, 0x37, 0x30, 0x35, 0x30, 0x31, 0x30 } };
         const json j = json::from_msgpack(data.data(), data.size());
         CHECK_NOTHROW(j.dump(4,                             // Indent
                              ' ',                           // Indent char
@@ -618,7 +619,7 @@ TEST_CASE("regression tests 2")
     SECTION("PR #2181 - regression bug with lvalue")
     {
         // see https://github.com/nlohmann/json/pull/2181#issuecomment-653326060
-        const json j{{"x", "test"}};
+        const json j{ { "x", "test" } };
         const std::string defval = "default value";
         auto val = j.value("x", defval);
         auto val2 = j.value("y", defval);
@@ -626,22 +627,22 @@ TEST_CASE("regression tests 2")
 
     SECTION("issue #2293 - eof doesn't cause parsing to stop")
     {
-        const std::vector<uint8_t> data = {0x7B, 0x6F, 0x62, 0x6A, 0x65, 0x63, 0x74, 0x20, 0x4F, 0x42};
+        const std::vector<uint8_t> data = { 0x7B, 0x6F, 0x62, 0x6A, 0x65, 0x63, 0x74, 0x20, 0x4F, 0x42 };
         const json result = json::from_cbor(data, true, false);
         CHECK(result.is_discarded());
     }
 
     SECTION("issue #2315 - json.update and vector<pair>does not work with ordered_json")
     {
-        nlohmann::ordered_json jsonAnimals = {{"animal", "dog"}};
-        const nlohmann::ordered_json jsonCat = {{"animal", "cat"}};
+        nlohmann::ordered_json jsonAnimals = { { "animal", "dog" } };
+        const nlohmann::ordered_json jsonCat = { { "animal", "cat" } };
         jsonAnimals.update(jsonCat);
         CHECK(jsonAnimals["animal"] == "cat");
 
         auto jsonAnimals_parsed = nlohmann::ordered_json::parse(jsonAnimals.dump());
         CHECK(jsonAnimals == jsonAnimals_parsed);
 
-        const std::vector<std::pair<std::string, int64_t>> intData = {std::make_pair("aaaa", 11), std::make_pair("bbb", 222)};
+        const std::vector<std::pair<std::string, int64_t>> intData = { std::make_pair("aaaa", 11), std::make_pair("bbb", 222) };
         nlohmann::ordered_json jsonObj;
         for (const auto& data : intData)
         {
@@ -675,7 +676,7 @@ TEST_CASE("regression tests 2")
         SECTION("std::array")
         {
             {
-                const json j = {7, 4};
+                const json j = { 7, 4 };
                 auto arr = j.get<std::array<NonDefaultConstructible, 2>>();
                 CHECK(arr[0].x == 7);
                 CHECK(arr[1].x == 4);
@@ -690,21 +691,21 @@ TEST_CASE("regression tests 2")
         SECTION("std::pair")
         {
             {
-                const json j = {3, 8};
+                const json j = { 3, 8 };
                 auto p = j.get<std::pair<NonDefaultConstructible, NonDefaultConstructible>>();
                 CHECK(p.first.x == 3);
                 CHECK(p.second.x == 8);
             }
 
             {
-                const json j = {4, 1};
+                const json j = { 4, 1 };
                 auto p = j.get<std::pair<int, NonDefaultConstructible>>();
                 CHECK(p.first == 4);
                 CHECK(p.second.x == 1);
             }
 
             {
-                const json j = {6, 7};
+                const json j = { 6, 7 };
                 auto p = j.get<std::pair<NonDefaultConstructible, int>>();
                 CHECK(p.first.x == 6);
                 CHECK(p.second == 7);
@@ -719,13 +720,13 @@ TEST_CASE("regression tests 2")
         SECTION("std::tuple")
         {
             {
-                const json j = {9};
+                const json j = { 9 };
                 auto t = j.get<std::tuple<NonDefaultConstructible>>();
                 CHECK(std::get<0>(t).x == 9);
             }
 
             {
-                const json j = {9, 8, 7};
+                const json j = { 9, 8, 7 };
                 auto t = j.get<std::tuple<NonDefaultConstructible, int, NonDefaultConstructible>>();
                 CHECK(std::get<0>(t).x == 9);
                 CHECK(std::get<1>(t) == 8);
@@ -803,7 +804,7 @@ TEST_CASE("regression tests 2")
     SECTION("issue #2982 - to_{binary format} does not provide a mechanism for specifying a custom allocator for the returned type")
     {
         std::vector<std::uint8_t, my_allocator<std::uint8_t>> my_vector;
-        json j = {1, 2, 3, 4};
+        json j = { 1, 2, 3, 4 };
         json::to_cbor(j, my_vector);
         json k = json::from_cbor(my_vector);
         CHECK(j == k);
@@ -836,7 +837,7 @@ TEST_CASE("regression tests 2")
 
     SECTION("issue #3108 - ordered_json doesn't support range based erase")
     {
-        ordered_json j = {1, 2, 2, 4};
+        ordered_json j = { 1, 2, 2, 4 };
 
         auto last = std::unique(j.begin(), j.end());
         j.erase(last, j.end());
@@ -855,8 +856,8 @@ TEST_CASE("regression tests 2")
 
     SECTION("issue #3343 - json and ordered_json are not interchangable")
     {
-        json::object_t jobj({{"product", "one"}});
-        ordered_json::object_t ojobj({{"product", "one"}});
+        json::object_t jobj({ { "product", "one" } });
+        ordered_json::object_t ojobj({ { "product", "one" } });
 
         auto jit = jobj.begin();
         auto ojit = ojobj.begin();
@@ -867,7 +868,7 @@ TEST_CASE("regression tests 2")
 
     SECTION("issue #3171 - if class is_constructible from std::string wrong from_json overload is being selected, compilation failed")
     {
-        const json j{{"str", "value"}};
+        const json j{ { "str", "value" } };
 
         // failed with: error: no match for ‘operator=’ (operand types are ‘for_3171_derived’ and ‘const nlohmann::basic_json<>::string_t’
         //                                               {aka ‘const std::__cxx11::basic_string<char>’})
@@ -881,7 +882,7 @@ TEST_CASE("regression tests 2")
     SECTION("issue #3312 - Parse to custom class from unordered_json breaks on G++11.2.0 with C++20")
     {
         // see test for #3171
-        const ordered_json j = {{"name", "class"}};
+        const ordered_json j = { { "name", "class" } };
         for_3312 obj{};
 
         j.get_to(obj);
@@ -913,7 +914,7 @@ TEST_CASE("regression tests 2")
 
     SECTION("issue #3333 - Ambiguous conversion from nlohmann::basic_json<> to custom class")
     {
-        const json j{{"x", 1}, {"y", 2}};
+        const json j{ { "x", 1 }, { "y", 2 } };
         for_3333 p = j;
 
         CHECK(p.x == 1);

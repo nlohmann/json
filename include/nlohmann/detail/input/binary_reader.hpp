@@ -340,12 +340,12 @@ class binary_reader
 
             default:  // anything else not supported (yet)
             {
-                std::array<char, 3> cr{{}};
-                static_cast<void>((std::snprintf)(cr.data(),
+                std::array<char, 3> cr{ {} };
+                static_cast<void>((std::snprintf)(cr.data(),  // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
                                                   cr.size(),
                                                   "%.2hhX",
-                                                  static_cast<unsigned char>(element_type)));  // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
-                const std::string cr_str{cr.data()};
+                                                  static_cast<unsigned char>(element_type)));
+                const std::string cr_str{ cr.data() };
                 return sax->parse_error(element_type_parse_position,
                                         cr_str,
                                         parse_error::create(114, element_type_parse_position, concat("Unsupported BSON record type 0x", cr_str), nullptr));
@@ -2970,10 +2970,10 @@ class binary_reader
     */
     std::string get_token_string() const
     {
-        std::array<char, 3> cr{{}};
+        std::array<char, 3> cr{ {} };
         static_cast<void>(
             (std::snprintf)(cr.data(), cr.size(), "%.2hhX", static_cast<unsigned char>(current)));  // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
-        return std::string{cr.data()};
+        return std::string{ cr.data() };
     }
 
     /*!
@@ -3041,22 +3041,22 @@ class binary_reader
 #define JSON_BINARY_READER_MAKE_BJD_OPTIMIZED_TYPE_MARKERS_ make_array<char_int_type>('F', 'H', 'N', 'S', 'T', 'Z', '[', '{')
 
 #define JSON_BINARY_READER_MAKE_BJD_TYPES_MAP_                                                                                                                 \
-    make_array<bjd_type>(bjd_type{'C', "char"},                                                                                                                \
-                         bjd_type{'D', "double"},                                                                                                              \
-                         bjd_type{'I', "int16"},                                                                                                               \
-                         bjd_type{'L', "int64"},                                                                                                               \
-                         bjd_type{'M', "uint64"},                                                                                                              \
-                         bjd_type{'U', "uint8"},                                                                                                               \
-                         bjd_type{'d', "single"},                                                                                                              \
-                         bjd_type{'i', "int8"},                                                                                                                \
-                         bjd_type{'l', "int32"},                                                                                                               \
-                         bjd_type{'m', "uint32"},                                                                                                              \
-                         bjd_type{'u', "uint16"})
+    make_array<bjd_type>(bjd_type{ 'C', "char" },                                                                                                              \
+                         bjd_type{ 'D', "double" },                                                                                                            \
+                         bjd_type{ 'I', "int16" },                                                                                                             \
+                         bjd_type{ 'L', "int64" },                                                                                                             \
+                         bjd_type{ 'M', "uint64" },                                                                                                            \
+                         bjd_type{ 'U', "uint8" },                                                                                                             \
+                         bjd_type{ 'd', "single" },                                                                                                            \
+                         bjd_type{ 'i', "int8" },                                                                                                              \
+                         bjd_type{ 'l', "int32" },                                                                                                             \
+                         bjd_type{ 'm', "uint32" },                                                                                                            \
+                         bjd_type{ 'u', "uint16" })
 
     JSON_PRIVATE_UNLESS_TESTED :
-      // lookup tables
-      // NOLINTNEXTLINE(cppcoreguidelines-non-private-member-variables-in-classes)
-      const decltype(JSON_BINARY_READER_MAKE_BJD_OPTIMIZED_TYPE_MARKERS_) bjd_optimized_type_markers = JSON_BINARY_READER_MAKE_BJD_OPTIMIZED_TYPE_MARKERS_;
+    // lookup tables
+    // NOLINTNEXTLINE(cppcoreguidelines-non-private-member-variables-in-classes)
+    const decltype(JSON_BINARY_READER_MAKE_BJD_OPTIMIZED_TYPE_MARKERS_) bjd_optimized_type_markers = JSON_BINARY_READER_MAKE_BJD_OPTIMIZED_TYPE_MARKERS_;
 
     using bjd_type = std::pair<char_int_type, string_t>;
     // NOLINTNEXTLINE(cppcoreguidelines-non-private-member-variables-in-classes)

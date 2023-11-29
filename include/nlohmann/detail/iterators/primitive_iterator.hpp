@@ -34,8 +34,8 @@ class primitive_iterator_t
     static constexpr difference_type end_value = begin_value + 1;
 
     JSON_PRIVATE_UNLESS_TESTED :
-      /// iterator as signed integer type
-      difference_type m_it = (std::numeric_limits<std::ptrdiff_t>::min)();
+    /// iterator as signed integer type
+    difference_type m_it = (std::numeric_limits<std::ptrdiff_t>::min)();
 
   public:
     constexpr difference_type get_value() const noexcept

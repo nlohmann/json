@@ -192,12 +192,11 @@ class iter_impl  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 
     JSON_PRIVATE_UNLESS_TESTED :
-      /*!
+    /*!
     @brief set the iterator to the first value
     @pre The iterator is initialized; i.e. `m_object != nullptr`.
     */
-      void
-      set_begin() noexcept
+    void set_begin() noexcept
     {
         JSON_ASSERT(m_object != nullptr);
 
@@ -746,8 +745,8 @@ class iter_impl  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 
     JSON_PRIVATE_UNLESS_TESTED :
-      /// associated JSON instance
-      pointer m_object = nullptr;
+    /// associated JSON instance
+    pointer m_object = nullptr;
     /// the actual iterator of the associated instance
     internal_iterator<typename std::remove_const<BasicJsonType>::type> m_it{};
 };
